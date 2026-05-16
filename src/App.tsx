@@ -11,6 +11,7 @@ import { Bewertungen } from './pages/Bewertungen'
 import { Profil } from './pages/Profil'
 import { PublicProfile } from './pages/PublicProfile'
 import { FAQ } from './pages/FAQ'
+import { Rechner } from './pages/Rechner'
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />
             <Route path="peptide" element={<Peptide />} />
+            <Route path="rechner" element={<Rechner />} />
             <Route path="tagebuch" element={<Tagebuch />} />
             <Route path="bewertungen" element={<Bewertungen />} />
             <Route path="profil" element={<Profil />} />

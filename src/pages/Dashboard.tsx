@@ -9,6 +9,7 @@ import {
 import { de } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Plus, CalendarDays, Syringe, X, TrendingUp, Check, XCircle, Bell } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { getPeptideColor } from '../lib/peptideColors'
 
 interface DoseLog {
   id: string
@@ -305,15 +306,25 @@ export function Dashboard() {
                   {format(day, 'd')}
                 </span>
 
-                {/* Indikatoren */}
-                <div className="flex gap-0.5 mt-1 h-1.5">
-                  {hasLog && (
-                    <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-sky-400'}`} />
-                  )}
-                  {hasCycle && !hasLog && (
-                    <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-violet-400'}`} />
-                  )}
-                </div>
+                {/* Indikatoren – je Punkt ein Peptid */}
+                {(() => {
+                  const logIds   = dayLogs.map(l => l.peptide_id)
+                  const cycleIds = dayCycles.map(c => c.peptide_id)
+                  const unique   = [...new Set([...logIds, ...cycleIds])].slice(0, 4)
+                  if (unique.length === 0) return <div className="h-1.5 mt-1" />
+                  return (
+                    <div className="flex gap-0.5 mt-1 h-1.5">
+                      {unique.map(pid => {
+                        const idx   = peptides.findIndex(p => p.id === pid)
+                        const color = isSelected ? '#ffffff' : getPeptideColor(idx)
+                        return (
+                          <span key={pid} className="w-1.5 h-1.5 rounded-full shrink-0"
+                            style={{ backgroundColor: color }} />
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
               </button>
             )
           })}
@@ -322,13 +333,19 @@ export function Dashboard() {
         {/* Legende */}
         <div className="flex gap-4 px-4 py-2.5 border-t border-slate-800 bg-slate-900/60">
           <div className="flex items-center gap-1.5 text-xs text-slate-500">
-            <span className="w-2.5 h-2.5 rounded-full bg-sky-400" /> Protokolliert
+            <div className="flex gap-0.5">
+              {[0,1,2].map(i => (
+                <span key={i} className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: getPeptideColor(i) }} />
+              ))}
+            </div>
+            je Punkt = ein Peptid
           </div>
           <div className="flex items-center gap-1.5 text-xs text-slate-500">
             <span className="w-2.5 h-2.5 rounded bg-violet-500/30 border border-violet-500/40" /> Zyklus aktiv
           </div>
           <div className="flex items-center gap-1.5 text-xs text-slate-500">
-            <TrendingUp size={10} className="text-orange-400" /> Erhöhung aktiv
+            <TrendingUp size={10} className="text-orange-400" /> Erhöhung
           </div>
         </div>
       </div>
@@ -336,34 +353,20 @@ export function Dashboard() {
       {/* ── Tages-Panel (ausgewählter Tag / Standard = heute) ─────────────── */}
       <div className="card">
         {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <CalendarDays size={15} className="text-slate-400" />
-              <h2 className="font-semibold text-slate-200 text-sm">
-                {isTodaySelected
-                  ? 'Heutiges Protokoll'
-                  : format(selectedDay, 'EEEE, d. MMMM', { locale: de })}
-              </h2>
-              {!isTodaySelected && (
-                <button
-                  onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
-                  className="text-xs text-sky-400 hover:text-sky-300 transition-colors">
-                  → Heute
-                </button>
-              )}
-            </div>
-            {isTodaySelected && (
-              <p className="text-slate-500 text-xs mt-0.5 ml-5">
-                {format(new Date(), 'EEEE, d. MMMM yyyy', { locale: de })}
-              </p>
-            )}
-          </div>
-          <button
-            className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3"
-            onClick={() => openLogForm(selectedDay)}>
-            <Plus size={13} /> Protokollieren
-          </button>
+        <div className="flex items-center gap-2 mb-3">
+          <CalendarDays size={15} className="text-slate-400" />
+          <h2 className="font-semibold text-slate-200 text-sm">
+            {isTodaySelected
+              ? 'Heutiges Protokoll'
+              : format(selectedDay, 'EEEE, d. MMMM', { locale: de })}
+          </h2>
+          {!isTodaySelected && (
+            <button
+              onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
+              className="text-xs text-sky-400 hover:text-sky-300 transition-colors">
+              → Heute
+            </button>
+          )}
         </div>
 
         {/* Aktive Zyklen für diesen Tag */}
@@ -373,7 +376,6 @@ export function Dashboard() {
               const dose = effectiveDose(c, selectedDay, escalations)
               const isEscalated = dose !== c.dose
               const cycleEscs = escalations.filter(e => e.cycle_id === c.id)
-              // Wie viele Stufen sind aktiv?
               const activeEscCount = cycleEscs.filter(e => {
                 if (e.start_type === 'date' && e.start_date)
                   return selectedDay >= parseISO(e.start_date)
@@ -381,15 +383,21 @@ export function Dashboard() {
                   return differenceInDays(selectedDay, parseISO(c.start_date)) >= e.start_after_days
                 return false
               }).length
+              const pidx  = peptides.findIndex(p => p.id === c.peptide_id)
+              const pcolor = getPeptideColor(pidx)
               return (
                 <button
                   key={c.id}
                   onClick={() => openLogForm(selectedDay, c)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-violet-500/8 border border-violet-500/20 rounded-xl hover:border-violet-400/40 hover:bg-violet-500/15 transition-colors text-left">
-                  <span className="w-2 h-2 rounded-full bg-violet-400 shrink-0" />
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-colors text-left hover:opacity-90"
+                  style={{
+                    backgroundColor: pcolor + '10',
+                    borderColor:      pcolor + '30',
+                  }}>
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: pcolor }} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-violet-300 text-sm font-medium">{c.peptides?.name}</span>
+                      <span className="text-sm font-medium" style={{ color: pcolor }}>{c.peptides?.name}</span>
                       <span className={`text-xs font-semibold ${isEscalated ? 'text-orange-400' : 'text-slate-300'}`}>
                         {dose} {c.unit}
                       </span>
@@ -407,7 +415,7 @@ export function Dashboard() {
                     )}
                   </div>
                   <span className="text-slate-600 text-xs shrink-0 hidden sm:block">{c.name}</span>
-                  <Plus size={13} className="text-violet-400 shrink-0 opacity-70" />
+                  <Plus size={13} className="shrink-0 opacity-70" style={{ color: pcolor }} />
                 </button>
               )
             })}
