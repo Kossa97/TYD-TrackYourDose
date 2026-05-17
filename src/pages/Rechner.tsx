@@ -1,5 +1,7 @@
-import { useState } from 'react'
-import { Calculator, ChevronDown } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Calculator, ChevronDown, FlaskConical, X } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
 
 // ─── Konstanten ───────────────────────────────────────────────────────────────
 const SYRINGE_PRESETS = [
@@ -10,6 +12,13 @@ const SYRINGE_PRESETS = [
   { label: '1 mL · 40 Einh. (U-40)',    ml: 1,   units: 40  },
 ]
 const DOSE_UNITS = ['mcg', 'mg', 'IU']
+
+interface Peptide {
+  id: string
+  name: string
+  vial_amount_mg: number | null
+  reconstitution_ml: number | null
+}
 
 // ─── Rechnung ─────────────────────────────────────────────────────────────────
 function calculate(
@@ -55,23 +64,19 @@ function SyringeScale({ drawUnits, maxUnits }: { drawUnits: number; maxUnits: nu
 
   return (
     <div className="mb-4">
-      {/* Große Zahl */}
       <p className="text-xs text-slate-400 text-center mb-0.5">Einheiten aufziehen</p>
       <p className="text-6xl font-bold text-center mb-4"
         style={{ background: 'linear-gradient(90deg,#38bdf8,#818cf8,#c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
         {drawUnits}
       </p>
 
-      {/* Zahlen über der Skala */}
       <div className="flex justify-between px-0.5 mb-1">
         {labels.map(l => (
           <span key={l} className="text-[10px] text-slate-500 leading-none">{l}</span>
         ))}
       </div>
 
-      {/* Skala */}
       <div className="relative h-10 rounded-xl bg-slate-800 overflow-hidden">
-        {/* Farbverlauf-Füllung */}
         <div
           className="absolute left-0 top-0 h-full rounded-xl transition-all duration-500"
           style={{
@@ -80,8 +85,6 @@ function SyringeScale({ drawUnits, maxUnits }: { drawUnits: number; maxUnits: nu
             opacity: 0.85,
           }}
         />
-
-        {/* Tick-Striche via SVG */}
         <svg
           className="absolute inset-0 w-full h-full"
           preserveAspectRatio="none"
@@ -100,15 +103,12 @@ function SyringeScale({ drawUnits, maxUnits }: { drawUnits: number; maxUnits: nu
             )
           })}
         </svg>
-
-        {/* Positionsnadel */}
         <div
           className="absolute top-0 bottom-0 w-0.5 bg-white/90 transition-all duration-500"
           style={{ left: `calc(${pct}% - 1px)` }}
         />
       </div>
 
-      {/* mL-Anzeige darunter */}
       <p className="text-xs text-slate-500 text-right mt-1 pr-1">
         entspricht <span className="text-slate-300 font-medium">{(drawUnits / (maxUnits / (maxUnits <= 50 ? 0.5 : 1))).toFixed(3)} mL</span>
       </p>
@@ -118,6 +118,7 @@ function SyringeScale({ drawUnits, maxUnits }: { drawUnits: number; maxUnits: nu
 
 // ─── Haupt-Komponente ─────────────────────────────────────────────────────────
 export function Rechner() {
+  const { user } = useAuth()
   const [vialMg,    setVialMg]    = useState('')
   const [reconMl,   setReconMl]   = useState('2')
   const [dose,      setDose]      = useState('')
@@ -125,6 +126,34 @@ export function Rechner() {
   const [sMl,       setSMl]       = useState('1')
   const [sUnits,    setSUnits]    = useState('100')
   const [syringeOpen, setSyringeOpen] = useState(false)
+
+  // Peptid-Auswahl
+  const [peptides,        setPeptides]        = useState<Peptide[]>([])
+  const [selectedPeptide, setSelectedPeptide] = useState<Peptide | null>(null)
+  const [peptideOpen,     setPeptideOpen]     = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    supabase
+      .from('peptides')
+      .select('id, name, vial_amount_mg, reconstitution_ml')
+      .eq('user_id', user.id)
+      .not('vial_amount_mg', 'is', null)
+      .order('name')
+      .then(({ data }) => { if (data) setPeptides(data as Peptide[]) })
+  }, [user])
+
+  const selectPeptide = (p: Peptide) => {
+    setSelectedPeptide(p)
+    if (p.vial_amount_mg)    setVialMg(p.vial_amount_mg.toString())
+    if (p.reconstitution_ml) setReconMl(p.reconstitution_ml.toString())
+    setPeptideOpen(false)
+  }
+
+  const clearPeptide = () => {
+    setSelectedPeptide(null)
+    setVialMg('')
+  }
 
   const result = calculate(vialMg, reconMl, dose, doseUnit, sMl, sUnits)
 
@@ -150,8 +179,6 @@ export function Rechner() {
         {result ? (
           <>
             <SyringeScale drawUnits={result.drawUnits} maxUnits={result.maxUnits} />
-
-            {/* 3 Chips */}
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-slate-800/60 rounded-xl p-3 text-center">
                 <p className="text-white font-bold text-base">{result.concMgPerMl}</p>
@@ -181,6 +208,63 @@ export function Rechner() {
       {/* ── Eingaben ───────────────────────────────────────────────────── */}
       <div className="card space-y-0 divide-y divide-slate-800">
 
+        {/* Peptid aus Meine Peptide */}
+        {peptides.length > 0 && (
+          <div className="relative">
+            <button
+              onClick={() => setPeptideOpen(o => !o)}
+              className="w-full flex items-center justify-between py-3.5 px-1 text-left"
+            >
+              <span className="text-slate-300 text-sm font-medium flex items-center gap-1.5">
+                <FlaskConical size={13} className="text-sky-400" />
+                Peptid übernehmen
+              </span>
+              <div className="flex items-center gap-1.5">
+                {selectedPeptide ? (
+                  <>
+                    <span className="text-sky-400 text-sm font-medium">{selectedPeptide.name}</span>
+                    <button
+                      onClick={e => { e.stopPropagation(); clearPeptide() }}
+                      className="p-0.5 text-slate-500 hover:text-slate-300 transition-colors">
+                      <X size={13} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-slate-500 text-sm">auswählen</span>
+                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${peptideOpen ? 'rotate-180' : ''}`} />
+                  </>
+                )}
+              </div>
+            </button>
+            {peptideOpen && (
+              <div className="absolute left-0 right-0 top-full bg-slate-800 border border-slate-700 rounded-xl z-10 overflow-hidden shadow-xl max-h-52 overflow-y-auto">
+                {peptides.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => selectPeptide(p)}
+                    className={`w-full text-left px-4 py-3 text-sm transition-colors flex items-center justify-between
+                      ${selectedPeptide?.id === p.id
+                        ? 'bg-sky-500/20 text-sky-300'
+                        : 'hover:bg-slate-700 text-slate-300'}`}
+                  >
+                    <span>{p.name}</span>
+                    <span className="text-slate-500 text-xs ml-2 shrink-0">
+                      {p.vial_amount_mg} mg
+                      {p.reconstitution_ml ? ` · ${p.reconstitution_ml} mL` : ''}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {selectedPeptide && (
+              <p className="text-xs text-slate-600 px-1 pb-2 -mt-1">
+                Wirkstoff und Flüssigkeit wurden übernommen — du kannst sie unten anpassen.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Spritzengröße */}
         <div className="relative">
           <button
@@ -207,7 +291,6 @@ export function Rechner() {
                   {p.label}
                 </button>
               ))}
-              {/* Eigene Werte */}
               <div className="px-4 py-3 border-t border-slate-700">
                 <p className="text-xs text-slate-500 mb-2">Eigene Werte</p>
                 <div className="flex gap-2">
@@ -234,7 +317,7 @@ export function Rechner() {
             <input
               className="input py-1.5 text-sm text-right pr-8"
               type="number" placeholder="z.B. 10"
-              value={vialMg} onChange={e => setVialMg(e.target.value)}
+              value={vialMg} onChange={e => { setVialMg(e.target.value); setSelectedPeptide(null) }}
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">mg</span>
           </div>

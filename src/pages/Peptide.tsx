@@ -7,7 +7,7 @@ import {
   CalendarDays, ChevronDown, ChevronUp,
   TrendingUp, Search, Bell, Check,
   Package, FileUp, Droplets, X, FileText, ExternalLink,
-  Archive, Lock,
+  Archive, Lock, Minus, RefreshCw,
 } from 'lucide-react'
 import { getPeptideColor } from '../lib/peptideColors'
 import { useNew } from '../lib/useNew'
@@ -138,53 +138,60 @@ const emptyCycleForm = (p: Peptide): CycleForm => ({
 })
 
 // ─── Inventar-Bestand-Grafik ─────────────────────────────────────────────────
-function VialStockDisplay({ current, initial }: { current: number; initial: number | null }) {
+function VialStockDisplay({ current, initial, inUse = 0 }: {
+  current: number; initial: number | null; inUse?: number
+}) {
   if (!initial || initial <= 0) return null
-  const pct   = Math.max(0, Math.min(100, (current / initial) * 100))
-  const color = pct > 50 ? '#10b981' : pct > 25 ? '#f59e0b' : '#ef4444'
-  const used  = Math.max(0, initial - current)
+  const available = Math.max(0, current - inUse)
+  const lowStock  = available <= 2
+  const color     = lowStock ? '#ef4444' : '#10b981'
 
   if (initial > 10) {
+    const availPct = (available / initial) * 100
+    const inUsePct = (Math.min(inUse, current) / initial) * 100
     return (
       <div className="mt-2.5">
-        <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-          <span>{current} verbleibend</span>
-          {used > 0 && <span className="text-slate-600">{used} verbraucht</span>}
+        <div className="flex items-center justify-between text-xs mb-1">
+          <span className={lowStock ? 'text-red-400 font-medium' : 'text-slate-500'}>
+            {available} verfügbar{lowStock ? ' · Bestand niedrig' : ''}
+          </span>
+          {inUse > 0 && <span className="text-amber-400">{inUse} in Verwendung</span>}
         </div>
-        <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-          <div className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${pct}%`, backgroundColor: color }} />
+        <div className="h-2 bg-slate-700 rounded-full overflow-hidden flex">
+          <div className="h-full transition-all duration-500 rounded-l-full"
+            style={{ width: `${availPct}%`, backgroundColor: color }} />
+          {inUse > 0 && (
+            <div className="h-full transition-all duration-500"
+              style={{ width: `${inUsePct}%`, backgroundColor: '#f59e0b', opacity: 0.7 }} />
+          )}
         </div>
       </div>
     )
   }
 
+  // Nur current Vials anzeigen (keine verbrauchten)
   return (
     <div className="mt-2.5 flex items-end gap-1 flex-wrap">
-      {Array.from({ length: initial }, (_, i) => {
-        const filled = i < current
+      {Array.from({ length: current }, (_, i) => {
+        const isInUse = i >= available
+        const fill    = isInUse ? '#f59e0b' : color
         return (
           <svg key={i} width="13" height="28" viewBox="0 0 13 28">
-            {/* Kappe */}
-            <rect x="4" y="0" width="5" height="3" rx="1"
-              fill={filled ? color : '#334155'} opacity={filled ? 1 : 0.45} />
-            {/* Hals */}
-            <rect x="3" y="3" width="7" height="2" rx="0.5"
-              fill={filled ? color : '#334155'} opacity={filled ? 0.85 : 0.35} />
-            {/* Körper */}
+            <rect x="4" y="0" width="5" height="3" rx="1" fill={fill} opacity={isInUse ? 0.85 : 1} />
+            <rect x="3" y="3" width="7" height="2" rx="0.5" fill={fill} opacity={isInUse ? 0.75 : 0.85} />
             <rect x="1" y="5" width="11" height="22" rx="3"
-              fill={filled ? color : '#0f172a'}
-              stroke={filled ? color : '#334155'}
-              strokeWidth="1.5"
-              opacity={filled ? 0.65 : 1} />
+              fill={fill} stroke={fill} strokeWidth="1.5" opacity={isInUse ? 0.4 : 0.65} />
           </svg>
         )
       })}
-      {used > 0 && (
-        <span className="text-xs text-slate-600 ml-0.5 self-center leading-none">
-          {used} verbraucht
-        </span>
-      )}
+      <div className="flex flex-col ml-1 self-center gap-0.5">
+        {inUse > 0 && (
+          <span className="text-xs text-amber-400/70 leading-none">{inUse} in Verwendung</span>
+        )}
+        {lowStock && (
+          <span className="text-xs text-red-400 font-medium leading-none">Bestand niedrig</span>
+        )}
+      </div>
     </div>
   )
 }
@@ -234,6 +241,14 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
 // ─── Hauptkomponente ──────────────────────────────────────────────────────────
 export function Peptide() {
   const { user } = useAuth()
+
+  // ── Bestätigungs-Dialoge ──────────────────────────────────────────────────
+  const [verwerfenTarget,      setVerwerfenTarget]      = useState<Peptide | null>(null)
+  const [rekonstitutionTarget, setRekonstitutionTarget] = useState<Peptide | null>(null)
+  const [verwerfenDontAsk,     setVerwerfenDontAsk]     = useState(false)
+  const [rekonstitutionDontAsk,setRekonstitutionDontAsk]= useState(false)
+  const [skipVerwerfen]        = useState(() => !!localStorage.getItem('_skip_verwerfen'))
+  const [skipRekonstitution]   = useState(() => !!localStorage.getItem('_skip_rekonstitution'))
 
   // ── Neu-Signale ───────────────────────────────────────────────────────────
   const [inventarTabNew, dismissInventarTab]   = useNew('inventar_tab')
@@ -381,6 +396,65 @@ export function Peptide() {
       batch_file_url: item.batch_file_url ?? '',
     })
     setBatchFile(null); setActiveTab('peptide'); setShowPeptideForm(true)
+  }
+
+  // ── Inventar Bestand anpassen ─────────────────────────────────────────────
+  const adjustInventoryCount = async (id: string, delta: number, current: number) => {
+    const newCount = Math.max(0, current + delta)
+    await supabase.from('inventory_items').update({ vials_count: newCount }).eq('id', id)
+    loadInventory()
+  }
+
+  // ── Peptid verwerfen ──────────────────────────────────────────────────────
+  const handleVerwerfen = (p: Peptide) => {
+    if (skipVerwerfen) { doVerwerfen(p); return }
+    setVerwerfenDontAsk(false); setVerwerfenTarget(p)
+  }
+  const doVerwerfen = async (p: Peptide) => {
+    await supabase.from('peptides').delete().eq('id', p.id)
+    if (p.inventory_item_id) {
+      const invItem = inventory.find(i => i.id === p.inventory_item_id)
+      if (invItem) {
+        await supabase.from('inventory_items')
+          .update({ vials_count: Math.max(0, invItem.vials_count - 1) })
+          .eq('id', p.inventory_item_id)
+        loadInventory()
+      }
+    }
+    toast.success('Peptid verworfen')
+    setVerwerfenTarget(null); loadPeptides(); loadCycles()
+  }
+  const confirmVerwerfen = () => {
+    if (!verwerfenTarget) return
+    if (verwerfenDontAsk) localStorage.setItem('_skip_verwerfen', '1')
+    doVerwerfen(verwerfenTarget)
+  }
+
+  // ── Rekonstitution wiederholen ────────────────────────────────────────────
+  const handleRekonstitution = (p: Peptide) => {
+    if (skipRekonstitution) { doRekonstitution(p); return }
+    setRekonstitutionDontAsk(false); setRekonstitutionTarget(p)
+  }
+  const doRekonstitution = async (p: Peptide) => {
+    await supabase.from('peptides')
+      .update({ reconstitution_date: format(new Date(), 'yyyy-MM-dd') })
+      .eq('id', p.id)
+    if (p.inventory_item_id) {
+      const invItem = inventory.find(i => i.id === p.inventory_item_id)
+      if (invItem) {
+        await supabase.from('inventory_items')
+          .update({ vials_count: Math.max(0, invItem.vials_count - 1) })
+          .eq('id', p.inventory_item_id)
+        loadInventory()
+      }
+    }
+    toast.success('Rekonstitution erneuert')
+    setRekonstitutionTarget(null); loadPeptides()
+  }
+  const confirmRekonstitution = () => {
+    if (!rekonstitutionTarget) return
+    if (rekonstitutionDontAsk) localStorage.setItem('_skip_rekonstitution', '1')
+    doRekonstitution(rekonstitutionTarget)
   }
 
   // ── Peptid CRUD ───────────────────────────────────────────────────────────
@@ -623,6 +697,9 @@ export function Peptide() {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  const reconstitutedItemIds = new Set(
+    peptides.map(p => p.inventory_item_id).filter((id): id is string => !!id)
+  )
   const isLinked = !!pForm.inventory_item_id
 
   return (
@@ -688,16 +765,34 @@ export function Peptide() {
             </div>
           ) : (
             <div className="space-y-3">
-              {inventory.map(item => (
-                <div key={item.id} className="card">
+              {inventory.map(item => {
+                const isUsed     = reconstitutedItemIds.has(item.id)
+                const inUseCount = peptides.filter(p => p.inventory_item_id === item.id).length
+                const isDepleted = item.vials_count === 0
+                return (
+                <div key={item.id} className="card transition-opacity" style={isDepleted ? { opacity: 0.5 } : {}}>
                   <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <p className="font-semibold text-white">{item.name}</p>
                         <span className="badge bg-sky-500/10 text-sky-400">{item.mg_per_vial} mg/Vial</span>
-                        <span className={`badge ${item.vials_count <= 1 ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
-                          {item.vials_count} Vial{item.vials_count !== 1 ? 's' : ''}
-                        </span>
+                        {isUsed && <span className="badge bg-slate-700 text-slate-400">Rekonstitutiert</span>}
+                        {/* Vials mit +/- */}
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => adjustInventoryCount(item.id, -1, item.vials_count)}
+                            className="w-5 h-5 rounded bg-slate-700 text-slate-300 hover:bg-slate-600 flex items-center justify-center transition-colors">
+                            <Minus size={10} />
+                          </button>
+                          <span className={`badge ${item.vials_count <= 1 ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                            {item.vials_count} Vial{item.vials_count !== 1 ? 's' : ''}
+                          </span>
+                          <button
+                            onClick={() => adjustInventoryCount(item.id, +1, item.vials_count)}
+                            className="w-5 h-5 rounded bg-slate-700 text-slate-300 hover:bg-slate-600 flex items-center justify-center transition-colors">
+                            <Plus size={10} />
+                          </button>
+                        </div>
                       </div>
                       {(item.batch_number || item.batch_source) && (
                         <div className="flex gap-x-3 text-xs text-slate-500 flex-wrap">
@@ -711,7 +806,7 @@ export function Peptide() {
                           <FileText size={10} /> Dokument
                         </a>
                       )}
-                      <VialStockDisplay current={item.vials_count} initial={item.vials_initial} />
+                      <VialStockDisplay current={item.vials_count} initial={item.vials_initial} inUse={inUseCount} />
                     </div>
                     <div className="flex flex-col gap-1.5 shrink-0 items-end">
                       <button
@@ -729,7 +824,8 @@ export function Peptide() {
                     </div>
                   </div>
                 </div>
-              ))}
+              )
+              })}
             </div>
           )}
         </div>
@@ -816,21 +912,6 @@ export function Peptide() {
                           {p.vial_amount_mg && <span>Vial: {p.vial_amount_mg} mg</span>}
                         </div>
 
-                        {(p.vials_initial ?? 0) > 0 && (() => {
-                          const pct = Math.max(0, Math.min(100, ((p.vials_in_stock ?? 0) / p.vials_initial!) * 100))
-                          const barColor  = pct > 50 ? 'bg-emerald-500' : pct > 25 ? 'bg-amber-500' : 'bg-red-500'
-                          const textColor = pct > 50 ? 'text-emerald-400' : pct > 25 ? 'text-amber-400' : 'text-red-400'
-                          return (
-                            <div className="mt-2 flex items-center gap-2">
-                              <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                                <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
-                              </div>
-                              <span className={`text-xs font-medium shrink-0 ${textColor}`}>
-                                {Math.round(pct)}% · {p.vials_in_stock ?? 0}/{p.vials_initial} Vials
-                              </span>
-                            </div>
-                          )
-                        })()}
 
                         {p.reconstitution_date && p.expiry_days && (() => {
                           const exp  = addDays(parseISO(p.reconstitution_date), p.expiry_days)
@@ -856,6 +937,22 @@ export function Peptide() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Verwerfen + Rekonstitution (nur bei Inventar-Verknüpfung) */}
+                  {p.inventory_item_id && (
+                    <div className="flex gap-2 mt-2 pt-2 border-t border-slate-800/60">
+                      <button
+                        onClick={() => handleVerwerfen(p)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors text-xs font-medium">
+                        <Trash2 size={11} /> Peptid verwerfen
+                      </button>
+                      <button
+                        onClick={() => handleRekonstitution(p)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 hover:bg-sky-500/20 transition-colors text-xs font-medium">
+                        <RefreshCw size={11} /> Rekonstitution wiederholen
+                      </button>
+                    </div>
+                  )}
 
                   {/* Zyklus-Zeile */}
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/60">
@@ -1221,23 +1318,6 @@ export function Peptide() {
                   <label className="label">Datum Rekonstitution</label>
                   <input className="input" type="date" value={pForm.reconstitution_date}
                     onChange={e => setPForm(f => ({ ...f, reconstitution_date: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="label">Spritzenvolumen</label>
-                  <select
-                    className="select"
-                    value={`${pForm.syringe_ml}:${pForm.syringe_units}`}
-                    onChange={e => {
-                      const preset = SYRINGE_PRESETS.find(p => `${p.ml}:${p.units}` === e.target.value)
-                      if (preset) setPForm(f => ({ ...f, syringe_ml: preset.ml, syringe_units: preset.units }))
-                    }}
-                  >
-                    {SYRINGE_PRESETS.map(p => (
-                      <option key={`${p.ml}:${p.units}`} value={`${p.ml}:${p.units}`}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </select>
                 </div>
               </div>
 
@@ -1683,6 +1763,57 @@ export function Peptide() {
               <button className="btn-secondary flex-1" onClick={() => setShowEscForm(false)}>Abbrechen</button>
               <button className="btn-primary flex-1" onClick={saveEsc} disabled={savingEsc}>
                 {savingEsc ? 'Speichert...' : 'Speichern'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ VERWERFEN DIALOG ═════════════════════════════════════════════════ */}
+      {verwerfenTarget && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4">
+          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-sm w-full space-y-4">
+            <h3 className="font-bold text-white text-lg">Peptid wirklich verwerfen?</h3>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              <span className="text-white font-medium">{verwerfenTarget.name}</span> wird aus deiner Liste entfernt.
+            </p>
+            <label className="flex items-center gap-2.5 text-sm text-slate-400 cursor-pointer">
+              <input type="checkbox" className="w-4 h-4 rounded accent-sky-500"
+                checked={verwerfenDontAsk}
+                onChange={e => setVerwerfenDontAsk(e.target.checked)} />
+              Nicht erneut fragen
+            </label>
+            <div className="flex gap-3 pt-1">
+              <button className="btn-secondary flex-1" onClick={() => setVerwerfenTarget(null)}>Nein</button>
+              <button onClick={confirmVerwerfen}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors text-sm">
+                Ja, verwerfen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ REKONSTITUTION DIALOG ═════════════════════════════════════════════ */}
+      {rekonstitutionTarget && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4">
+          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-sm w-full space-y-4">
+            <h3 className="font-bold text-white text-lg">Erneut rekonstituieren?</h3>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              Das Datum der Rekonstitution wird auf <span className="text-white font-medium">heute</span> gesetzt und
+              ein Vial wird aus dem Inventar abgezogen.
+            </p>
+            <label className="flex items-center gap-2.5 text-sm text-slate-400 cursor-pointer">
+              <input type="checkbox" className="w-4 h-4 rounded accent-sky-500"
+                checked={rekonstitutionDontAsk}
+                onChange={e => setRekonstitutionDontAsk(e.target.checked)} />
+              Nicht erneut fragen
+            </label>
+            <div className="flex gap-3 pt-1">
+              <button className="btn-secondary flex-1" onClick={() => setRekonstitutionTarget(null)}>Nein</button>
+              <button onClick={confirmRekonstitution}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-semibold transition-colors text-sm">
+                Ja, wiederholen
               </button>
             </div>
           </div>

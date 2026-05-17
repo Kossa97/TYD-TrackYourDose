@@ -7,7 +7,7 @@ import {
   differenceInDays, parseISO,
 } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, Syringe, X, TrendingUp, Check, XCircle, Bell } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CalendarDays, Syringe, X, TrendingUp, Check, XCircle, Bell } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
 
@@ -36,6 +36,8 @@ interface Cycle {
   start_date: string
   end_date: string | null
   active: boolean
+  intake_time: string | null
+  intake_time_custom: string | null
   peptides: { name: string }
 }
 
@@ -54,8 +56,6 @@ interface Escalation {
   start_after_days: number | null
 }
 
-const METHODS = ['Subkutan', 'Intramuskulär', 'Nasal', 'Oral', 'Transdermal', 'Intravenös', 'Andere']
-const UNITS = ['mcg', 'mg', 'IU', 'ml', 'nmol']
 const WEEKDAYS_DE: Record<number, string> = { 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 6: 'Sa', 0: 'So' }
 const WEEKDAY_LABELS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
@@ -93,6 +93,36 @@ function effectiveDose(cycle: Cycle, day: Date, escalations: Escalation[]): numb
   return total
 }
 
+function cycleIntakeMinutes(c: Cycle): number {
+  if (c.intake_time === 'morgens') return 8 * 60
+  if (c.intake_time === 'mittags') return 12 * 60
+  if (c.intake_time === 'abends')  return 20 * 60
+  if (c.intake_time === 'custom' && c.intake_time_custom) {
+    const [h, m] = c.intake_time_custom.split(':').map(Number)
+    return h * 60 + m
+  }
+  return 25 * 60 // keine Zeit → ganz unten
+}
+
+function cycleTimeLabel(c: Cycle): { emoji: string; label: string } | null {
+  if (c.intake_time === 'morgens') return { emoji: '🌅', label: 'Morgens' }
+  if (c.intake_time === 'mittags') return { emoji: '☀️', label: 'Mittags' }
+  if (c.intake_time === 'abends')  return { emoji: '🌙', label: 'Abends' }
+  if (c.intake_time === 'custom' && c.intake_time_custom)
+    return { emoji: '🕐', label: c.intake_time_custom + ' Uhr' }
+  return null
+}
+
+function timeLabel(dateStr: string): string {
+  const date = new Date(dateStr)
+  const h    = date.getHours()
+  const time = format(date, 'HH:mm')
+  if (h >= 5  && h < 12) return `Morgens · ${time} Uhr`
+  if (h >= 12 && h < 18) return `Mittags · ${time} Uhr`
+  if (h >= 18)            return `Abends · ${time} Uhr`
+  return `${time} Uhr`
+}
+
 export function Dashboard() {
   const { user } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -104,15 +134,6 @@ export function Dashboard() {
   // selectedDay steuert den Tages-Bereich unten — Standard = heute
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
 
-  // Formular für einen bestimmten Tag (öffnet als Modal)
-  const [showLogForm, setShowLogForm] = useState(false)
-  const [logDay, setLogDay] = useState<Date>(new Date())
-  const [form, setForm] = useState({
-    peptide_id: '', dose: '', unit: 'mcg', method: 'Subkutan', notes: '',
-    logged_at: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-  })
-  const [saving, setSaving] = useState(false)
-
   const loadLogs = async () => {
     const start = format(startOfMonth(currentDate), 'yyyy-MM-dd')
     const end = format(endOfMonth(currentDate), 'yyyy-MM-dd')
@@ -122,7 +143,7 @@ export function Dashboard() {
       .eq('user_id', user!.id)
       .gte('logged_at', start)
       .lte('logged_at', end + 'T23:59:59')
-      .order('logged_at', { ascending: false })
+      .order('logged_at', { ascending: true })
     if (data) setLogs(data as DoseLog[])
   }
 
@@ -157,65 +178,9 @@ export function Dashboard() {
   const cyclesForDay = (day: Date) => cycles.filter(c => cycleAppliesToDay(c, day))
 
   // ── Tages-Ansicht (unten) ────────────────────────────────────────────────
-  const todayLogs   = logsForDay(new Date())
-  const todayCycles = cyclesForDay(new Date())
   const selLogs     = logsForDay(selectedDay)
   const selCycles   = cyclesForDay(selectedDay)
   const isTodaySelected = isToday(selectedDay)
-
-  // ── Protokollieren ───────────────────────────────────────────────────────
-  const openLogForm = (day: Date, prefillCycle?: Cycle) => {
-    if (peptides.length === 0) return toast.error('Zuerst ein Peptid anlegen!')
-    setLogDay(day)
-
-    // Zyklus für diesen Tag bevorzugen (entweder per Klick übergeben oder erster aktiver)
-    const cycle = prefillCycle ?? cyclesForDay(day)[0]
-    if (cycle) {
-      const dose = effectiveDose(cycle, day, escalations)
-      const pep = peptides.find(x => x.id === cycle.peptide_id) ?? peptides[0]
-      setForm({
-        peptide_id: pep.id,
-        dose: dose.toString(),
-        unit: cycle.unit,
-        method: cycle.method,
-        notes: '',
-        logged_at: format(day, "yyyy-MM-dd'T'") + format(new Date(), 'HH:mm'),
-      })
-    } else {
-      const p = peptides[0]
-      setForm({
-        peptide_id: p.id,
-        dose: p.default_dose?.toString() ?? '',
-        unit: p.default_unit,
-        method: p.default_method,
-        notes: '',
-        logged_at: format(day, "yyyy-MM-dd'T'") + format(new Date(), 'HH:mm'),
-      })
-    }
-    setShowLogForm(true)
-  }
-
-  const onPeptideChange = (id: string) => {
-    const p = peptides.find(x => x.id === id)
-    if (p) setForm(f => ({ ...f, peptide_id: id, dose: p.default_dose?.toString() ?? '', unit: p.default_unit, method: p.default_method }))
-  }
-
-  const saveLog = async () => {
-    if (!form.dose) return toast.error('Dosis eingeben')
-    setSaving(true)
-    const { error } = await supabase.from('dose_logs').insert({
-      user_id: user!.id,
-      peptide_id: form.peptide_id,
-      dose: parseFloat(form.dose),
-      unit: form.unit,
-      method: form.method,
-      notes: form.notes || null,
-      logged_at: new Date(form.logged_at).toISOString(),
-    })
-    if (error) toast.error('Fehler beim Speichern')
-    else { toast.success('Dosis protokolliert!'); setShowLogForm(false); loadLogs() }
-    setSaving(false)
-  }
 
   const deleteLog = async (id: string) => {
     if (!confirm('Eintrag löschen?')) return
@@ -372,7 +337,7 @@ export function Dashboard() {
         {/* Aktive Zyklen für diesen Tag */}
         {selCycles.length > 0 && (
           <div className="space-y-1.5 mb-3">
-            {selCycles.map(c => {
+            {[...selCycles].sort((a, b) => cycleIntakeMinutes(a) - cycleIntakeMinutes(b)).map(c => {
               const dose = effectiveDose(c, selectedDay, escalations)
               const isEscalated = dose !== c.dose
               const cycleEscs = escalations.filter(e => e.cycle_id === c.id)
@@ -383,13 +348,12 @@ export function Dashboard() {
                   return differenceInDays(selectedDay, parseISO(c.start_date)) >= e.start_after_days
                 return false
               }).length
-              const pidx  = peptides.findIndex(p => p.id === c.peptide_id)
+              const pidx   = peptides.findIndex(p => p.id === c.peptide_id)
               const pcolor = getPeptideColor(pidx)
               return (
-                <button
+                <div
                   key={c.id}
-                  onClick={() => openLogForm(selectedDay, c)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-colors text-left hover:opacity-90"
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border"
                   style={{
                     backgroundColor: pcolor + '10',
                     borderColor:      pcolor + '30',
@@ -408,15 +372,24 @@ export function Dashboard() {
                       )}
                       <span className="text-slate-500 text-xs">{c.method}</span>
                     </div>
-                    {isEscalated && (
-                      <p className="text-slate-600 text-xs mt-0.5">
-                        Basis: {c.dose} {c.unit} · +{dose - c.dose} {c.unit} Erhöhung
-                      </p>
-                    )}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {(() => {
+                        const tl = cycleTimeLabel(c)
+                        return tl ? (
+                          <span className="text-xs text-amber-400 flex items-center gap-1">
+                            {tl.emoji} {tl.label}
+                          </span>
+                        ) : null
+                      })()}
+                      {isEscalated && (
+                        <span className="text-slate-600 text-xs">
+                          Basis: {c.dose} {c.unit} · +{dose - c.dose} {c.unit}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <span className="text-slate-600 text-xs shrink-0 hidden sm:block">{c.name}</span>
-                  <Plus size={13} className="shrink-0 opacity-70" style={{ color: pcolor }} />
-                </button>
+                </div>
               )
             })}
           </div>
@@ -459,7 +432,7 @@ export function Dashboard() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-slate-500 text-xs">{format(new Date(log.logged_at), 'HH:mm')} Uhr</span>
+                      <span className="text-slate-500 text-xs">{timeLabel(log.logged_at)}</span>
                       {log.notes && <span className="text-slate-600 text-xs truncate">· {log.notes}</span>}
                     </div>
                   </div>
@@ -517,74 +490,6 @@ export function Dashboard() {
         )}
       </div>
 
-      {/* ── Protokoll-Formular (Modal) ─────────────────────────────────────── */}
-      {showLogForm && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center"
-          onClick={() => setShowLogForm(false)}>
-          <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4"
-            onClick={e => e.stopPropagation()}>
-
-            <div>
-              <h2 className="text-lg font-bold">Dosis protokollieren</h2>
-              <p className="text-sky-400 text-sm mt-0.5">
-                {format(logDay, 'EEEE, d. MMMM yyyy', { locale: de })}
-              </p>
-            </div>
-
-            <div>
-              <label className="label">Peptid</label>
-              <select className="select" value={form.peptide_id}
-                onChange={e => onPeptideChange(e.target.value)}>
-                {peptides.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="label">Dosis</label>
-                <input className="input" type="number" value={form.dose}
-                  onChange={e => setForm(f => ({ ...f, dose: e.target.value }))} />
-              </div>
-              <div>
-                <label className="label">Einheit</label>
-                <select className="select" value={form.unit}
-                  onChange={e => setForm(f => ({ ...f, unit: e.target.value }))}>
-                  {UNITS.map(u => <option key={u}>{u}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="label">Applikationsart</label>
-              <select className="select" value={form.method}
-                onChange={e => setForm(f => ({ ...f, method: e.target.value }))}>
-                {METHODS.map(m => <option key={m}>{m}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label className="label">Uhrzeit</label>
-              <input className="input" type="datetime-local" value={form.logged_at}
-                onChange={e => setForm(f => ({ ...f, logged_at: e.target.value }))} />
-            </div>
-
-            <div>
-              <label className="label">Notizen (optional)</label>
-              <input className="input" placeholder="z.B. nach dem Training" value={form.notes}
-                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button className="btn-secondary flex-1"
-                onClick={() => setShowLogForm(false)}>Abbrechen</button>
-              <button className="btn-primary flex-1"
-                onClick={saveLog} disabled={saving}>
-                {saving ? 'Speichert...' : 'Speichern'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
