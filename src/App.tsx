@@ -5,6 +5,7 @@ import { OnboardingProvider } from './context/OnboardingContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { Layout } from './components/Layout'
 import { Auth } from './pages/Auth'
+import { Home } from './pages/Home'
 import { Dashboard } from './pages/Dashboard'
 import { Peptide } from './pages/Peptide'
 import { Tagebuch } from './pages/Tagebuch'
@@ -29,7 +30,8 @@ export default function App() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/u/:username" element={<PublicProfile />} />
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-            <Route index element={<Dashboard />} />
+            <Route index element={<Home />} />
+            <Route path="kalender" element={<Dashboard />} />
             <Route path="peptide" element={<Peptide />} />
             <Route path="rechner" element={<Rechner />} />
             <Route path="tagebuch" element={<Tagebuch />} />

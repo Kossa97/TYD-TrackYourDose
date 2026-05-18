@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
@@ -269,8 +270,14 @@ export function Peptide() {
   const [zyklusBtnNew,   dismissZyklusBtn]     = useNew('zyklus_btn')
   const [anlegenBtnNew,  dismissAnlegenBtn]    = useNew('peptid_anlegen')
 
-  // ── Tab ──────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<'inventar' | 'peptide'>('peptide')
+  // ── Tab (per URL-Parameter: ?tab=inventar) ───────────────────────────────
+  const [searchParams] = useSearchParams()
+  const [activeTab, setActiveTab] = useState<'inventar' | 'peptide'>(
+    searchParams.get('tab') === 'inventar' ? 'inventar' : 'peptide'
+  )
+  useEffect(() => {
+    setActiveTab(searchParams.get('tab') === 'inventar' ? 'inventar' : 'peptide')
+  }, [searchParams])
 
   // ── Inventar ─────────────────────────────────────────────────────────────
   const [inventory, setInventory]             = useState<InventoryItem[]>([])

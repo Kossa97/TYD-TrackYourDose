@@ -27,15 +27,25 @@ const CATEGORIES: Category[] = [
       },
       {
         q: 'Wie navigiere ich zwischen den Bereichen?',
-        a: 'Unten am Bildschirm befindet sich eine Navigationsleiste mit 7 Symbolen: Kalender, Peptide, Rechner, Tagebuch, Bewertungen, Profil und FAQ. Tippe einfach auf das jeweilige Symbol um den Bereich zu öffnen.',
+        a: 'Unten am Bildschirm befindet sich die Navigation mit 5 Symbolen: Lager, Peptide, Home (Mitte), Kalender und Profil. Alle weiteren Bereiche erreichst du über den Home-Bildschirm in der Mitte.',
       },
       {
-        q: 'Was sind die 7 Hauptbereiche der App?',
+        q: 'Was ist der Home-Bildschirm?',
         a: [
-          '📅 Kalender – Übersicht aller Aktivitäten, Dosen protokollieren & bestätigen',
-          '🧪 Peptide – Peptide anlegen, Bestand & Batch verwalten, Zyklen & Dosiserhöhungen',
+          'Der Home-Bildschirm (mittlerer Button in der Navigation) ist deine Zentrale:',
+          '• Oben siehst du 3 Schnellinfos: Aktive Zyklen, Vials im Lager, Meine Peptide',
+          '• Darunter findest du Kacheln für alle 8 Bereiche der App',
+          '• Tippe auf eine Kachel um direkt dorthin zu springen',
+        ],
+      },
+      {
+        q: 'Was sind alle Bereiche der App?',
+        a: [
+          '📅 Kalender – Tagesprotokoll, Einnahmen bestätigen & Zyklusübersicht',
+          '📦 Lager – Rohstoff-Inventar, Vials einlagern & verwalten',
+          '🧪 Peptide – Rekonstitutierte Peptide & Zyklen anlegen',
           '🧮 Rechner – Dosierungsrechner mit Spritzenskala',
-          '📖 Tagebuch – Wirkungen und Nebenwirkungen aufzeichnen',
+          '📓 Tagebuch – Wirkungen und Nebenwirkungen aufzeichnen',
           '⭐ Bewertungen – Erfahrungsberichte zu einzelnen Peptiden',
           '👤 Profil – Accountdaten, öffentliches Profil & Teilen-Link',
           '❓ FAQ – Diese Hilfeseite',
