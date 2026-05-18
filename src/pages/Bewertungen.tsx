@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { Plus, Trash2, Star, Pencil, Search } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
+import { useTranslation } from 'react-i18next'
 
 interface Review {
   id: string
@@ -68,6 +69,7 @@ const emptyForm = (firstPeptideId = ''): Form => ({
 
 export function Bewertungen() {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const [reviews, setReviews]   = useState<Review[]>([])
   const [peptides, setPeptides] = useState<Peptide[]>([])
   const [search, setSearch]   = useState('')
@@ -93,7 +95,7 @@ export function Bewertungen() {
   useEffect(() => { load(); loadPeptides() }, [])
 
   const openNew = () => {
-    if (peptides.length === 0) return toast.error('Zuerst ein Peptid anlegen!')
+    if (peptides.length === 0) return toast.error(t('zuerst_peptid'))
     setEditingId(null)
     setForm(emptyForm(peptides[0].id))
     setShowForm(true)
@@ -110,7 +112,7 @@ export function Bewertungen() {
   }
 
   const save = async () => {
-    if (!form.title.trim()) return toast.error('Titel erforderlich')
+    if (!form.title.trim()) return toast.error(t('titel_erforderlich'))
     setSaving(true)
     const payload = {
       user_id: user!.id,
@@ -125,23 +127,23 @@ export function Bewertungen() {
     const { error } = editingId
       ? await supabase.from('reviews').update(payload).eq('id', editingId)
       : await supabase.from('reviews').insert(payload)
-    if (error) toast.error('Fehler')
-    else { toast.success(editingId ? 'Bewertung aktualisiert' : 'Bewertung gespeichert'); setShowForm(false); load() }
+    if (error) toast.error(t('error'))
+    else { toast.success(editingId ? t('bewertung_aktualisiert') : t('bewertung_gespeichert')); setShowForm(false); load() }
     setSaving(false)
   }
 
   const remove = async (id: string) => {
-    if (!confirm('Bewertung löschen?')) return
+    if (!confirm(t('bewertung_loeschen'))) return
     await supabase.from('reviews').delete().eq('id', id)
-    toast.success('Gelöscht'); load()
+    toast.success(t('deleted')); load()
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold">Bewertungen</h1>
+        <h1 className="text-xl font-bold">{t('bewertungen_title')}</h1>
         <button className="btn-primary flex items-center gap-2" onClick={openNew}>
-          <Plus size={16} /> Neu
+          <Plus size={16} /> {t('new')}
         </button>
       </div>
 
@@ -150,15 +152,15 @@ export function Bewertungen() {
         <div className="flex gap-2 mb-4">
           <div className="relative flex-1">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-            <input className="input pl-9 text-sm" placeholder="Bewertung suchen..."
+            <input className="input pl-9 text-sm" placeholder={t('bewertung_suchen')}
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <select className="select text-sm shrink-0 w-auto pr-8" value={sortBy}
             onChange={e => setSortBy(e.target.value as typeof sortBy)}>
-            <option value="date_new">Neueste</option>
-            <option value="date_old">Älteste</option>
-            <option value="rating_high">Bewertung ↓</option>
-            <option value="rating_low">Bewertung ↑</option>
+            <option value="date_new">{t('neueste')}</option>
+            <option value="date_old">{t('aelteste')}</option>
+            <option value="rating_high">{t('bewertung_ab')}</option>
+            <option value="rating_low">{t('bewertung_auf')}</option>
           </select>
         </div>
       )}
@@ -166,7 +168,7 @@ export function Bewertungen() {
       {reviews.length === 0 && (
         <div className="card text-center py-10 text-slate-500">
           <Star size={32} className="mx-auto mb-2 opacity-40" />
-          <p>Noch keine Bewertungen</p>
+          <p>{t('noch_keine_bewertungen')}</p>
         </div>
       )}
 
@@ -184,7 +186,7 @@ export function Bewertungen() {
           })
         if (search && displayed.length === 0) return (
           <div className="card text-center py-8 text-slate-500 text-sm">
-            Nichts gefunden für „{search}"
+            {t('nichts_gefunden', { search })}
           </div>
         )
         return (
@@ -227,7 +229,7 @@ export function Bewertungen() {
                       boxShadow: 'inset 0 1px 0 rgba(0,200,120,0.06)',
                     }}>
                       <p style={{ color: '#00d488', fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>
-                        Vorteile
+                        {t('vorteile')}
                       </p>
                       <p className="text-slate-300 text-xs">{r.pros}</p>
                     </div>
@@ -241,7 +243,7 @@ export function Bewertungen() {
                       boxShadow: 'inset 0 1px 0 rgba(220,0,60,0.06)',
                     }}>
                       <p style={{ color: '#ff4060', fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>
-                        Nachteile
+                        {t('nachteile')}
                       </p>
                       <p className="text-slate-300 text-xs">{r.cons}</p>
                     </div>
@@ -266,11 +268,11 @@ export function Bewertungen() {
             overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
 
             <h2 className="text-lg font-bold">
-              {editingId ? 'Bewertung bearbeiten' : 'Neue Bewertung'}
+              {editingId ? t('bewertung_bearbeiten') : t('neue_bewertung')}
             </h2>
 
             <div>
-              <label className="label">Peptid</label>
+              <label className="label">{t('peptid_label')}</label>
               <select className="select" value={form.peptide_id}
                 onChange={e => setForm(f => ({ ...f, peptide_id: e.target.value }))}>
                 {peptides.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -278,13 +280,13 @@ export function Bewertungen() {
             </div>
 
             <div>
-              <label className="label">Sterne-Bewertung</label>
+              <label className="label">{t('sterne_bewertung')}</label>
               <StarRating value={form.rating} onChange={v => setForm(f => ({ ...f, rating: v }))} />
             </div>
 
             {/* Erfahrung */}
             <div>
-              <label className="label">Wie war deine Erfahrung?</label>
+              <label className="label">{t('erfahrung_frage')}</label>
               <div className="flex gap-2">
                 {(Object.entries(EXPERIENCE_CONFIG) as [keyof typeof EXPERIENCE_CONFIG, typeof EXPERIENCE_CONFIG[keyof typeof EXPERIENCE_CONFIG]][]).map(([key, cfg]) => (
                   <button key={key}
@@ -300,37 +302,37 @@ export function Bewertungen() {
             </div>
 
             <div>
-              <label className="label">Titel *</label>
-              <input className="input" placeholder="Kurze Zusammenfassung..."
+              <label className="label">{t('titel_required')}</label>
+              <input className="input" placeholder={t('titel_placeholder')}
                 value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
             </div>
 
             <div>
-              <label className="label">Erfahrungsbericht (optional)</label>
+              <label className="label">{t('bericht_optional')}</label>
               <textarea className="input resize-none" rows={3}
-                placeholder="Detaillierte Erfahrungen..." value={form.body}
+                placeholder={t('bericht_placeholder')} value={form.body}
                 onChange={e => setForm(f => ({ ...f, body: e.target.value }))} />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="label">Vorteile</label>
+                <label className="label">{t('vorteile')}</label>
                 <textarea className="input resize-none" rows={2}
-                  placeholder="Was hat gut funktioniert?" value={form.pros}
+                  placeholder={t('pros_placeholder')} value={form.pros}
                   onChange={e => setForm(f => ({ ...f, pros: e.target.value }))} />
               </div>
               <div>
-                <label className="label">Nachteile</label>
+                <label className="label">{t('nachteile')}</label>
                 <textarea className="input resize-none" rows={2}
-                  placeholder="Was war negativ?" value={form.cons}
+                  placeholder={t('cons_placeholder')} value={form.cons}
                   onChange={e => setForm(f => ({ ...f, cons: e.target.value }))} />
               </div>
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button className="btn-secondary flex-1" onClick={() => setShowForm(false)}>Abbrechen</button>
+              <button className="btn-secondary flex-1" onClick={() => setShowForm(false)}>{t('cancel')}</button>
               <button className="btn-primary flex-1" onClick={save} disabled={saving}>
-                {saving ? 'Speichert...' : 'Speichern'}
+                {saving ? t('saving') : t('save')}
               </button>
             </div>
           </div>

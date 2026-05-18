@@ -322,12 +322,14 @@ export function Profil() {
 function LanguageSwitcher() {
   const { i18n, t } = useTranslation()
   const [open, setOpen] = useState(false)
+  const [selected, setSelected] = useState(i18n.language)
   const current = LANGUAGES.find(l => l.code === i18n.language) ?? LANGUAGES[0]
+  const selectedLang = LANGUAGES.find(l => l.code === selected) ?? current
 
-  function select(code: string) {
-    i18n.changeLanguage(code)
-    localStorage.setItem('tyd_lang', code)
-    applyDirection(code)
+  function apply() {
+    i18n.changeLanguage(selected)
+    localStorage.setItem('tyd_lang', selected)
+    applyDirection(selected)
     setOpen(false)
   }
 
@@ -339,7 +341,7 @@ function LanguageSwitcher() {
 
       {/* Aktuell gewählte Sprache */}
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={() => { setOpen(o => !o); setSelected(i18n.language) }}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '12px 14px', borderRadius: 13,
@@ -354,33 +356,62 @@ function LanguageSwitcher() {
         <span style={{ fontSize: 12, opacity: 0.6 }}>{open ? '▲' : '▼'}</span>
       </button>
 
-      {/* Sprachenliste */}
+      {/* Sprachenliste + Übernehmen */}
       {open && (
         <div style={{
           marginTop: 6, borderRadius: 13, overflow: 'hidden',
           border: '1px solid rgba(255,255,255,0.07)',
           background: 'rgba(8,10,24,0.98)',
-          maxHeight: 320, overflowY: 'auto',
         }}>
-          {LANGUAGES.map(lang => (
+          <div style={{ maxHeight: 280, overflowY: 'auto' }}>
+            {LANGUAGES.map(lang => (
+              <button
+                key={lang.code}
+                onClick={() => setSelected(lang.code)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '11px 16px', textAlign: 'left', cursor: 'pointer',
+                  background: lang.code === selected ? 'rgba(0,204,245,0.10)' : 'transparent',
+                  borderBottom: '1px solid rgba(255,255,255,0.04)',
+                  color: lang.code === selected ? '#00ccf5' : 'rgba(200,215,235,0.8)',
+                  fontWeight: lang.code === selected ? 700 : 400,
+                  fontSize: '0.875rem',
+                }}
+              >
+                <span style={{ fontSize: 18 }}>{lang.flag}</span>
+                <span>{lang.name}</span>
+                {lang.code === selected && <span style={{ marginLeft: 'auto', fontSize: 12 }}>✓</span>}
+              </button>
+            ))}
+          </div>
+
+          {/* Übernehmen Button */}
+          <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 8 }}>
             <button
-              key={lang.code}
-              onClick={() => select(lang.code)}
+              onClick={() => setOpen(false)}
               style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                padding: '11px 16px', textAlign: 'left', cursor: 'pointer',
-                background: lang.code === i18n.language ? 'rgba(0,204,245,0.08)' : 'transparent',
-                borderBottom: '1px solid rgba(255,255,255,0.04)',
-                color: lang.code === i18n.language ? '#00ccf5' : 'rgba(200,215,235,0.8)',
-                fontWeight: lang.code === i18n.language ? 700 : 400,
-                fontSize: '0.875rem',
+                flex: 1, padding: '9px', borderRadius: 10,
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                color: 'rgba(200,215,235,0.6)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
               }}
             >
-              <span style={{ fontSize: 18 }}>{lang.flag}</span>
-              <span>{lang.name}</span>
-              {lang.code === i18n.language && <span style={{ marginLeft: 'auto', fontSize: 12 }}>✓</span>}
+              {t('cancel')}
             </button>
-          ))}
+            <button
+              onClick={apply}
+              style={{
+                flex: 2, padding: '9px', borderRadius: 10,
+                background: selected !== i18n.language
+                  ? 'linear-gradient(135deg, #00ccf5, #0088dd)'
+                  : 'rgba(0,204,245,0.10)',
+                border: '1px solid rgba(0,204,245,0.3)',
+                color: selected !== i18n.language ? '#07091a' : 'rgba(0,204,245,0.6)',
+                fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer',
+              }}
+            >
+              {selectedLang.flag} {t('apply')}
+            </button>
+          </div>
         </div>
       )}
     </div>

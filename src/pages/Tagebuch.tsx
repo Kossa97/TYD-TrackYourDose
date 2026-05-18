@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { Plus, Trash2, BookHeart, Zap, AlertTriangle, Clock, Search } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
+import { useTranslation } from 'react-i18next'
 
 interface Effect {
   id: string
@@ -35,6 +36,10 @@ const DURATION_PRESETS = [
 
 export function Tagebuch() {
   const { user } = useAuth()
+  const { t } = useTranslation()
+
+  const severityLabel = (n: number) =>
+    [t('sehr_leicht'), t('leicht'), t('mittel'), t('stark'), t('sehr_stark')][n - 1]
   const [effects, setEffects]   = useState<Effect[]>([])
   const [peptides, setPeptides] = useState<Peptide[]>([])
   const [filter, setFilter]     = useState<'all' | 'effect' | 'side_effect'>('all')
@@ -79,7 +84,7 @@ export function Tagebuch() {
   }
 
   const save = async () => {
-    if (!form.description.trim()) return toast.error('Beschreibung erforderlich')
+    if (!form.description.trim()) return toast.error(t('beschreibung_erforderlich'))
     setSaving(true)
     const { error } = await supabase.from('effects').insert({
       user_id:     user!.id,
@@ -92,15 +97,15 @@ export function Tagebuch() {
       peptide_id:  form.peptide_id || null,
       notes:       form.notes || null,
     })
-    if (error) toast.error('Fehler beim Speichern')
-    else { toast.success('Eintrag gespeichert'); setShowForm(false); resetForm(); load() }
+    if (error) toast.error(t('fehler_speichern'))
+    else { toast.success(t('eintrag_gespeichert')); setShowForm(false); resetForm(); load() }
     setSaving(false)
   }
 
   const remove = async (id: string) => {
-    if (!confirm('Eintrag löschen?')) return
+    if (!confirm(t('eintrag_loeschen'))) return
     await supabase.from('effects').delete().eq('id', id)
-    toast.success('Gelöscht'); load()
+    toast.success(t('deleted')); load()
   }
 
   const filtered = effects
@@ -118,17 +123,17 @@ export function Tagebuch() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold">Tagebuch</h1>
+        <h1 className="text-xl font-bold">{t('tagebuch_title')}</h1>
         <button className="btn-primary flex items-center gap-2"
           onClick={() => { resetForm(); setShowForm(true) }}>
-          <Plus size={16} /> Neu
+          <Plus size={16} /> {t('new')}
         </button>
       </div>
 
       {/* Filter */}
       <div className="flex bg-slate-900 border border-slate-800 rounded-lg p-1 mb-4 gap-1">
-        {([['all', 'Alle'], ['effect', 'Wirkungen'], ['side_effect', 'Nebenwirkungen']] as const).map(([val, label]) => (
-          <button key={val} onClick={() => setFilter(val)}
+        {([['all', t('alle')], ['effect', t('wirkungen')], ['side_effect', t('nebenwirkungen')]] as const).map(([val, label]) => (
+          <button key={val} onClick={() => setFilter(val as typeof filter)}
             className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${
               filter === val ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-slate-200'
             }`}>
@@ -141,22 +146,22 @@ export function Tagebuch() {
       <div className="flex gap-2 mb-4">
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-          <input className="input pl-9 text-sm" placeholder="Eintrag suchen..."
+          <input className="input pl-9 text-sm" placeholder={t('suchen_placeholder')}
             value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="select text-sm shrink-0 w-auto pr-8" value={sortBy}
           onChange={e => setSortBy(e.target.value as typeof sortBy)}>
-          <option value="date_new">Neueste</option>
-          <option value="date_old">Älteste</option>
-          <option value="sev_high">Intensität ↓</option>
-          <option value="sev_low">Intensität ↑</option>
+          <option value="date_new">{t('neueste')}</option>
+          <option value="date_old">{t('aelteste')}</option>
+          <option value="sev_high">{t('intensitaet_ab')}</option>
+          <option value="sev_low">{t('intensitaet_auf')}</option>
         </select>
       </div>
 
       {filtered.length === 0 && (
         <div className="card text-center py-10 text-slate-500">
           <BookHeart size={32} className="mx-auto mb-2 opacity-40" />
-          <p>{search ? `Nichts gefunden für „${search}"` : 'Noch keine Einträge'}</p>
+          <p>{search ? t('nichts_gefunden', { search }) : t('noch_keine_eintraege')}</p>
         </div>
       )}
 
@@ -174,10 +179,10 @@ export function Tagebuch() {
                     ? <Zap size={13} className="text-emerald-400 shrink-0" />
                     : <AlertTriangle size={13} className="text-amber-400 shrink-0" />}
                   <span className={`text-xs font-medium ${e.type === 'effect' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {e.type === 'effect' ? 'Wirkung' : 'Nebenwirkung'}
+                    {e.type === 'effect' ? t('wirkung') : t('nebenwirkung')}
                   </span>
                   <span className={`text-xs font-medium ml-auto ${SEVERITY_COLORS[e.severity]}`}>
-                    {SEVERITY_LABELS[e.severity]}
+                    {severityLabel(e.severity)}
                   </span>
                 </div>
 
@@ -212,7 +217,7 @@ export function Tagebuch() {
           onClick={() => setShowForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4
             overflow-y-auto max-h-[92vh]" onClick={e => e.stopPropagation()}>
-            <h2 className="text-lg font-bold">Neuer Tagebuch-Eintrag</h2>
+            <h2 className="text-lg font-bold">{t('neuer_tagebuch_eintrag')}</h2>
 
             {/* 1. Wirkung / Nebenwirkung */}
             <div className="flex bg-slate-800 rounded-lg p-1 gap-1">
@@ -221,57 +226,57 @@ export function Tagebuch() {
                   form.type === 'effect' ? 'bg-emerald-500 text-white' : 'text-slate-400'
                 }`}
                 onClick={() => setForm(f => ({ ...f, type: 'effect' }))}>
-                Wirkung
+                {t('wirkung')}
               </button>
               <button
                 className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${
                   form.type === 'side_effect' ? 'bg-amber-500 text-white' : 'text-slate-400'
                 }`}
                 onClick={() => setForm(f => ({ ...f, type: 'side_effect' }))}>
-                Nebenwirkung
+                {t('nebenwirkung')}
               </button>
             </div>
 
             {/* 2. Beschreibung */}
             <div>
-              <label className="label">Beschreibung *</label>
+              <label className="label">{t('beschreibung_required')}</label>
               <input className="input"
-                placeholder="z.B. Besserer Schlaf, Schmerzen an Injektionsstelle..."
+                placeholder={t('beschreibung_placeholder')}
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
             </div>
 
             {/* 3. Peptid */}
             <div>
-              <label className="label">Peptid (optional)</label>
+              <label className="label">{t('peptid_optional')}</label>
               <select className="select" value={form.peptide_id}
                 onChange={e => setForm(f => ({ ...f, peptide_id: e.target.value }))}>
-                <option value="">— Kein Peptid zuordnen —</option>
+                <option value="">{t('kein_peptid')}</option>
                 {peptides.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
 
             {/* 4. Intensität */}
             <div>
-              <label className="label">Intensität: {SEVERITY_LABELS[form.severity]}</label>
+              <label className="label">{t('intensitaet_label', { value: severityLabel(form.severity) })}</label>
               <input type="range" min={1} max={5} value={form.severity}
                 onChange={e => setForm(f => ({ ...f, severity: parseInt(e.target.value) }))}
                 className="w-full accent-sky-500" />
               <div className="flex justify-between text-xs text-slate-500 mt-1">
-                <span>Sehr leicht</span><span>Sehr stark</span>
+                <span>{t('sehr_leicht')}</span><span>{t('sehr_stark')}</span>
               </div>
             </div>
 
             {/* 5. Zeitpunkt */}
             <div>
-              <label className="label">Zeitpunkt</label>
+              <label className="label">{t('zeitpunkt')}</label>
               <input className="input" type="datetime-local" value={form.occurred_at}
                 onChange={e => setForm(f => ({ ...f, occurred_at: e.target.value }))} />
             </div>
 
             {/* 6. Dauer */}
             <div>
-              <label className="label">Dauer</label>
+              <label className="label">{t('dauer')}</label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {DURATION_PRESETS.filter(d => d !== 'Individuell').map(d => (
                   <button key={d}
@@ -293,7 +298,7 @@ export function Tagebuch() {
                 </button>
               </div>
               {customDuration && (
-                <input className="input" placeholder="z.B. 3 Stunden 20 Min"
+                <input className="input" placeholder={t('dauer_placeholder')}
                   value={form.duration}
                   onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} />
               )}
@@ -301,15 +306,15 @@ export function Tagebuch() {
 
             {/* 7. Notizen */}
             <div>
-              <label className="label">Notizen (optional)</label>
+              <label className="label">{t('notizen_optional')}</label>
               <textarea className="input resize-none" rows={2} value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button className="btn-secondary flex-1" onClick={() => setShowForm(false)}>Abbrechen</button>
+              <button className="btn-secondary flex-1" onClick={() => setShowForm(false)}>{t('cancel')}</button>
               <button className="btn-primary flex-1" onClick={save} disabled={saving}>
-                {saving ? 'Speichert...' : 'Speichern'}
+                {saving ? t('saving') : t('save')}
               </button>
             </div>
           </div>
