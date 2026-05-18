@@ -1,10 +1,12 @@
 import { CalendarDays, FlaskConical, Archive, User, Home, HelpCircle } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Onboarding } from './Onboarding'
 
 export function Layout() {
   const location = useLocation()
   const { pathname, search } = location
+  const { t } = useTranslation()
 
   const isLager    = pathname === '/peptide' && search.includes('inventar')
   const isPeptide  = pathname === '/peptide' && !search.includes('inventar')
@@ -67,7 +69,7 @@ export function Layout() {
           <NavItem
             to="/peptide?tab=inventar"
             icon={<Archive size={20} />}
-            label="Lager"
+            label={t('nav_lager')}
             active={isLager}
             obKey="nav-lager"
           />
@@ -76,7 +78,7 @@ export function Layout() {
           <NavItem
             to="/peptide"
             icon={<FlaskConical size={20} />}
-            label="Peptide"
+            label={t('nav_peptide')}
             active={isPeptide}
             obKey="nav-peptide"
           />
@@ -108,7 +110,7 @@ export function Layout() {
               letterSpacing: '0.02em',
               transition: 'color 0.2s',
             }}>
-              Home
+              {t('nav_home')}
             </span>
           </NavLink>
 
@@ -116,7 +118,7 @@ export function Layout() {
           <NavItem
             to="/kalender"
             icon={<CalendarDays size={20} />}
-            label="Kalender"
+            label={t('nav_kalender')}
             active={isKalender}
             obKey="nav-kalender"
           />
@@ -125,7 +127,7 @@ export function Layout() {
           <NavItem
             to="/profil"
             icon={<User size={20} />}
-            label="Profil"
+            label={t('nav_profil')}
             active={isProfil}
           />
         </div>

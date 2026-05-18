@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { LogOut, Save, User, Globe, Lock, Copy, Check, FlaskConical, CalendarDays, BookHeart, Star } from 'lucide-react'
+import { LogOut, Save, User, Globe, Lock, Copy, Check, FlaskConical, CalendarDays, BookHeart, Star, Languages } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { OnboardingRestartButton } from '../components/Onboarding'
+import { LANGUAGES, applyDirection } from '../i18n'
 
 interface Profile {
   username: string; display_name: string; age: number | null
@@ -306,10 +308,81 @@ export function Profil() {
         <Save size={16} /> {saving ? 'Speichert...' : 'Profil speichern'}
       </button>
 
+      {/* ── Sprache / Language ── */}
+      <LanguageSwitcher />
+
       {/* App-Anleitung */}
-      <div className="mt-4">
+      <div className="mt-3">
         <OnboardingRestartButton />
       </div>
+    </div>
+  )
+}
+
+function LanguageSwitcher() {
+  const { i18n, t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const current = LANGUAGES.find(l => l.code === i18n.language) ?? LANGUAGES[0]
+
+  function select(code: string) {
+    i18n.changeLanguage(code)
+    localStorage.setItem('tyd_lang', code)
+    applyDirection(code)
+    setOpen(false)
+  }
+
+  return (
+    <div className="mt-4">
+      <p style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.5)', marginBottom: 8 }}>
+        {t('language')}
+      </p>
+
+      {/* Aktuell gewählte Sprache */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 14px', borderRadius: 13,
+          background: 'rgba(0,204,245,0.06)', border: '1px solid rgba(0,204,245,0.14)',
+          color: 'rgba(0,204,245,0.85)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Languages size={15} />
+          <span>{current.flag} {current.name}</span>
+        </div>
+        <span style={{ fontSize: 12, opacity: 0.6 }}>{open ? '▲' : '▼'}</span>
+      </button>
+
+      {/* Sprachenliste */}
+      {open && (
+        <div style={{
+          marginTop: 6, borderRadius: 13, overflow: 'hidden',
+          border: '1px solid rgba(255,255,255,0.07)',
+          background: 'rgba(8,10,24,0.98)',
+          maxHeight: 320, overflowY: 'auto',
+        }}>
+          {LANGUAGES.map(lang => (
+            <button
+              key={lang.code}
+              onClick={() => select(lang.code)}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                padding: '11px 16px', textAlign: 'left', cursor: 'pointer',
+                background: lang.code === i18n.language ? 'rgba(0,204,245,0.08)' : 'transparent',
+                borderBottom: '1px solid rgba(255,255,255,0.04)',
+                color: lang.code === i18n.language ? '#00ccf5' : 'rgba(200,215,235,0.8)',
+                fontWeight: lang.code === i18n.language ? 700 : 400,
+                fontSize: '0.875rem',
+              }}
+            >
+              <span style={{ fontSize: 18 }}>{lang.flag}</span>
+              <span>{lang.name}</span>
+              {lang.code === i18n.language && <span style={{ marginLeft: 'auto', fontSize: 12 }}>✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

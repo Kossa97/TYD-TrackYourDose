@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   CalendarDays, FlaskConical, Archive, Calculator,
   BookHeart, Star, HelpCircle, User, ChevronRight,
@@ -9,39 +10,15 @@ import { useAuth } from '../context/AuthContext'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 
-const TILES = [
-  {
-    icon: CalendarDays, label: 'Kalender',    desc: 'Tagesprotokoll & Einnahmen',
-    path: '/kalender',              color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',  wide: true,
-  },
-  {
-    icon: Archive,      label: 'Lager',        desc: 'Rohstoff-Inventar',
-    path: '/peptide?tab=inventar',  color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',
-  },
-  {
-    icon: FlaskConical, label: 'Peptide',      desc: 'Meine Peptide & Zyklen',
-    path: '/peptide',               color: '#22d3ee', bg: 'rgba(34,211,238,0.10)',
-  },
-  {
-    icon: Calculator,   label: 'Rechner',      desc: 'Dosis berechnen',
-    path: '/rechner',               color: '#3b82f6', bg: 'rgba(59,130,246,0.10)',
-  },
-  {
-    icon: BookHeart,    label: 'Tagebuch',     desc: 'Wirkungen & Nebenwirkungen',
-    path: '/tagebuch',              color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)',
-  },
-  {
-    icon: Star,         label: 'Bewertungen',  desc: 'Peptide bewerten',
-    path: '/bewertungen',           color: '#f59e0b', bg: 'rgba(245,158,11,0.10)',
-  },
-  {
-    icon: HelpCircle,   label: 'FAQ',          desc: 'Hilfe & Anleitung',
-    path: '/faq',                   color: '#10b981', bg: 'rgba(16,185,129,0.10)',
-  },
-  {
-    icon: User,         label: 'Profil',       desc: 'Einstellungen & Sharing',
-    path: '/profil',                color: '#f43f5e', bg: 'rgba(244,63,94,0.10)',
-  },
+const TILE_DEFS = [
+  { icon: CalendarDays, labelKey: 'tile_kalender', descKey: 'tile_kalender_desc', path: '/kalender',             color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',   wide: true },
+  { icon: Archive,      labelKey: 'tile_lager',     descKey: 'tile_lager_desc',    path: '/peptide?tab=inventar', color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
+  { icon: FlaskConical, labelKey: 'tile_peptide',   descKey: 'tile_peptide_desc',  path: '/peptide',              color: '#22d3ee', bg: 'rgba(34,211,238,0.10)'         },
+  { icon: Calculator,   labelKey: 'tile_rechner',   descKey: 'tile_rechner_desc',  path: '/rechner',              color: '#3b82f6', bg: 'rgba(59,130,246,0.10)'         },
+  { icon: BookHeart,    labelKey: 'tile_tagebuch',  descKey: 'tile_tagebuch_desc', path: '/tagebuch',             color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },
+  { icon: Star,         labelKey: 'tile_bewertungen',descKey:'tile_bewertungen_desc',path:'/bewertungen',          color: '#f59e0b', bg: 'rgba(245,158,11,0.10)'         },
+  { icon: HelpCircle,   labelKey: 'tile_faq',       descKey: 'tile_faq_desc',      path: '/faq',                  color: '#10b981', bg: 'rgba(16,185,129,0.10)'         },
+  { icon: User,         labelKey: 'tile_profil',    descKey: 'tile_profil_desc',   path: '/profil',               color: '#f43f5e', bg: 'rgba(244,63,94,0.10)'          },
 ]
 
 export function Home() {
@@ -66,9 +43,11 @@ export function Home() {
     load()
   }, [user])
 
+  const { t, i18n } = useTranslation()
   const hour    = new Date().getHours()
-  const greeting = hour < 12 ? 'Guten Morgen' : hour < 18 ? 'Guten Tag' : 'Guten Abend'
+  const greeting = hour < 12 ? t('greeting_morning') : hour < 18 ? t('greeting_day') : t('greeting_evening')
   const dateStr  = format(new Date(), "EEEE, d. MMMM", { locale: de })
+  void i18n
 
   return (
     <div>
@@ -85,9 +64,9 @@ export function Home() {
       {/* ── Quick Stats ── */}
       <div className="grid grid-cols-3 gap-2 mb-6">
         {[
-          { label: 'Aktive Zyklen', value: activeCycles, color: '#00ccf5' },
-          { label: 'Vials im Lager', value: totalVials,  color: '#00ccf5' },
-          { label: 'Meine Peptide', value: peptideCount, color: '#eaeefc' },
+          { label: t('stat_active_cycles'), value: activeCycles, color: '#00ccf5' },
+          { label: t('stat_vials'),         value: totalVials,   color: '#00ccf5' },
+          { label: t('stat_peptides'),      value: peptideCount, color: '#eaeefc' },
         ].map(s => (
           <div key={s.label} style={{
             background: 'rgba(10,14,30,0.85)',
@@ -106,27 +85,27 @@ export function Home() {
 
       {/* ── Section Label ── */}
       <p style={{ fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.4)', marginBottom: 12 }}>
-        Bereiche
+        {t('sections')}
       </p>
 
       {/* ── Tiles Grid ── */}
       <div className="grid grid-cols-2 gap-3">
-        {TILES.map((t) => (
+        {TILE_DEFS.map((tile) => (
           <button
-            key={t.label}
-            onClick={() => navigate(t.path)}
-            className={t.wide ? 'col-span-2' : ''}
+            key={tile.labelKey}
+            onClick={() => navigate(tile.path)}
+            className={tile.wide ? 'col-span-2' : ''}
             style={{
               background: 'rgba(10,14,30,0.85)',
               border: '1px solid rgba(255,255,255,0.06)',
               borderRadius: 20,
-              padding: t.wide ? '14px 18px' : '16px 14px',
+              padding: tile.wide ? '14px 18px' : '16px 14px',
               textAlign: 'left',
               cursor: 'pointer',
               display: 'flex',
-              alignItems: t.wide ? 'center' : 'flex-start',
-              flexDirection: t.wide ? 'row' : 'column',
-              gap: t.wide ? 14 : 0,
+              alignItems: tile.wide ? 'center' : 'flex-start',
+              flexDirection: tile.wide ? 'row' : 'column',
+              gap: tile.wide ? 14 : 0,
               position: 'relative',
               overflow: 'hidden',
               transition: 'opacity 0.15s',
@@ -137,26 +116,26 @@ export function Home() {
             {/* Icon */}
             <div style={{
               width: 40, height: 40, borderRadius: 12,
-              background: t.bg,
+              background: tile.bg,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: t.wide ? 0 : 12, flexShrink: 0,
+              marginBottom: tile.wide ? 0 : 12, flexShrink: 0,
             }}>
-              <t.icon size={18} color={t.color} />
+              <tile.icon size={18} color={tile.color} />
             </div>
 
             {/* Text */}
-            <div style={{ flex: t.wide ? 1 : undefined, minWidth: 0 }}>
-              <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#eaeefc', marginBottom: 2 }}>{t.label}</p>
-              <p style={{ fontSize: '0.72rem', color: 'rgba(154,170,191,0.55)', lineHeight: 1.4 }}>{t.desc}</p>
+            <div style={{ flex: tile.wide ? 1 : undefined, minWidth: 0 }}>
+              <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#eaeefc', marginBottom: 2 }}>{t(tile.labelKey)}</p>
+              <p style={{ fontSize: '0.72rem', color: 'rgba(154,170,191,0.55)', lineHeight: 1.4 }}>{t(tile.descKey)}</p>
             </div>
 
-            {t.wide && <ChevronRight size={16} color="rgba(0,204,245,0.4)" style={{ flexShrink: 0 }} />}
+            {tile.wide && <ChevronRight size={16} color="rgba(0,204,245,0.4)" style={{ flexShrink: 0 }} />}
 
             {/* Glow */}
             <div style={{
               position: 'absolute', bottom: -20, right: -20,
               width: 80, height: 80, borderRadius: '50%',
-              background: t.color, opacity: 0.06, filter: 'blur(20px)',
+              background: tile.color, opacity: 0.06, filter: 'blur(20px)',
               pointerEvents: 'none',
             }} />
           </button>
