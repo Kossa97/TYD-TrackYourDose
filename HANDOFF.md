@@ -5,43 +5,18 @@
 
 ## 0. Projektstatus
 
-**Ziel:** Eine vollständige, mobile-first Peptid-Tracking-App — Inventar, Rekonstitution, Zyklen, Kalender, Dosierungsrechner, Tagebuch, Bewertungen, Profil.
+**Ziel:** Eine vollständige, mobile-first Peptid-Tracking-App — Inventar, Rekonstitution, Zyklen, Kalender, Dosierungsrechner, Tagebuch, Bewertungen, Profil — international verfügbar in 14 Sprachen.
 
-**Aktueller Stand:** App ist funktionsfähig und vollständig. Alle Kernfunktionen implementiert. Visuelles Design (Premium Biotech / Luxury Cyberpunk) abgeschlossen. Onboarding für neue Nutzer integriert.
+**Aktueller Stand:** App ist funktionsfähig, vollständig und deployed auf Vercel. PWA-fähig (installierbar auf iPhone & Android). Internationalisierung (i18n) mit 14 Sprachen implementiert. Homescreen mit Kacheln und Quick-Stats. Interaktives Onboarding mit Highlight-Ring.
 
-**Files — aktiv genutzte Hauptdateien:**
-- `src/pages/Peptide.tsx` — Inventar + Meine Peptide (größte Datei, ~1700 Zeilen)
-- `src/pages/Dashboard.tsx` — Kalender + Tagesprotokoll
-- `src/index.css` — Gesamtes Design-System
-- `src/components/Onboarding.tsx` — 9-Schritte Nutzer-Anleitung
-- `src/context/OnboardingContext.tsx` — Onboarding-State
-- `tailwind.config.js` — Überschriebene Slate/Sky-Farben
-
-**Geändert (verschoben gegenüber ursprünglichem Plan):**
-- Bestand-Abzug im Inventar erfolgt NICHT mehr beim Anlegen eines Peptids — nur noch bei Verwerfen oder Rekonstitution wiederholen
-- „Status"-Feld im Tagebuch entfernt (immer `eingetreten` gesetzt)
-- Spritzenvolumen-Feld aus dem Peptid-Formular entfernt (nur noch im Rechner)
-- Protokollieren-Button im Dashboard entfernt
-- `backdrop-filter` aus Bottom-Sheet-Modals entfernt (bricht Scroll)
-
-**Gescheitert / Nicht umsetzbar:**
-- Push-Notifications für Snooze: kein Service Worker → `setTimeout` only (App muss offen sein)
-- PDF-Vorschau direkt in der App: wird extern im Browser geöffnet
-- Spotlight-Effekt im Onboarding (DOM-Highlighting): zu komplex → floating Panel stattdessen
-
-**› Next — mögliche nächste Schritte:**
-- SQL-Migration für `inventory_items` + `taken`-Spalte in Supabase ausführen (falls noch nicht getan)
-- Ungenutzte Altdateien löschen: `Vorrat.tsx`, `Journal.tsx`, `Inventar.tsx`, `Zyklen.tsx`
-- PWA / Offline-Support (Service Worker)
-- Tablet-Sync via `git pull` nach jedem Push vom PC
+**Deployment:**
+- **Vercel:** Automatisches Deployment bei jedem `git push` auf `main`
+- **GitHub:** `https://github.com/Kossa97/TYD-TrackYourDose`
+- **Lokal:** `cd C:\Users\Devin\peptid-tracker && npm run dev`
 
 ---
 
-## 1. Projektübersicht
-
-**TYD (Track Your Dose)** ist eine persönliche Peptid-Management-App als Progressive Web App (PWA). Sie läuft im Browser, ist mobil-optimiert (max-w-lg, Bottom-Navigation) und ist für den privaten Gebrauch einer einzelnen Person ausgelegt.
-
-### Tech-Stack
+## 1. Tech-Stack
 
 | Schicht | Technologie |
 |---|---|
@@ -52,19 +27,20 @@
 | Icons | lucide-react |
 | Notifications | react-hot-toast |
 | Datums-Utils | date-fns (de locale) |
-| Deployment | Lokal via `npm run dev` |
+| i18n | i18next + react-i18next + i18next-browser-languagedetector |
+| PWA | vite-plugin-pwa |
+| Deployment | Vercel (Auto-Deploy via GitHub) |
 
 ### Zugang
-
 - **GitHub:** `https://github.com/Kossa97/TYD-TrackYourDose`
-- **Supabase:** Dashboard unter `app.supabase.com` (Account: `devinko97@gmail.com`)
+- **Supabase:** `app.supabase.com` (Account: `devinko97@gmail.com`)
 - **Lokal starten:** `cd C:\Users\Devin\peptid-tracker && npm run dev`
 
 ---
 
 ## 2. Datenbankschema (Supabase)
 
-Alle Tabellen haben Row Level Security (RLS) aktiviert — jeder User sieht nur seine eigenen Daten.
+Alle Tabellen haben Row Level Security (RLS) aktiviert.
 
 ### `profiles`
 ```
@@ -74,15 +50,14 @@ notes, is_public, public_bio
 share_peptide, share_kalender, share_tagebuch, share_bewertungen (boolean)
 ```
 
-### `inventory_items` ← NEU
+### `inventory_items`
 ```
 id, user_id
 name, batch_number, batch_source, batch_file_url
-vials_count, vials_initial      ← vials_initial = Ausgangsbestand (nie überschreiben)
+vials_count, vials_initial      ← vials_initial = Ausgangsbestand (NIE überschreiben)
 mg_per_vial
 created_at
 ```
-> **Wichtig:** `vials_initial` wird nur beim ersten Einlagern gesetzt. Beim Bearbeiten nicht überschreiben.
 
 ### `peptides`
 ```
@@ -90,12 +65,11 @@ id, user_id
 name, default_unit, default_dose, default_method
 vial_amount_mg, reconstitution_ml
 syringe_type                    ← Format: "1:100" (mL:Einheiten)
-vials_in_stock, vials_initial   ← 100%-Basis für Vial-Balken
+vials_in_stock, vials_initial
 reconstitution_date, expiry_days
 batch_number, batch_source, batch_file_url
-inventory_item_id (FK → inventory_items)  ← NEU: Verknüpfung zum Rohstofflager
-notes
-created_at
+inventory_item_id (FK → inventory_items)
+notes, created_at
 ```
 
 ### `cycles`
@@ -105,7 +79,7 @@ name, dose, unit, method
 frequency, x_days_interval, schedule_days (text[])
 start_date, end_date, active
 intake_time, intake_time_custom
-reminder                        ← Format: "on_time,2h" (komma-getrennt)
+reminder    ← Format: "on_time,2h" (komma-getrennt)
 ```
 
 ### `dose_escalations`
@@ -113,43 +87,35 @@ reminder                        ← Format: "on_time,2h" (komma-getrennt)
 id, user_id, cycle_id
 increase_amount, unit
 start_type ('date' | 'after_days' | 'after_weeks')
-start_date, start_after_days
-notes
+start_date, start_after_days, notes
 ```
 
 ### `dose_logs`
 ```
 id, user_id, peptide_id
-dose, unit, method
-logged_at (timestamptz)
-notes
-taken (boolean | null)          ← null=ausstehend, true=eingenommen, false=übersprungen
+dose, unit, method, logged_at (timestamptz), notes
+taken (boolean | null)   ← null=ausstehend, true=eingenommen, false=übersprungen
 ```
 
 ### `effects` (Tagebuch)
 ```
 id, user_id, peptide_id
 type ('effect' | 'side_effect')
-description, severity (1-5)
-status                          ← wird als 'eingetreten' gesetzt (UI-Feld entfernt)
-duration, occurred_at
-notes
+description, severity (1-5), status, duration, occurred_at, notes
 ```
 
-### `reviews` (Bewertungen)
+### `reviews`
 ```
 id, user_id, peptide_id
 rating (1-5), title, body, pros, cons
-experience ('gut' | 'mittel' | 'schlecht')
-created_at
+experience ('gut' | 'mittel' | 'schlecht'), created_at
 ```
 
 ### Storage Buckets
 - `batch-files` — PDFs und Bilder für Analyse-Dokumente (public)
 
-### SQL das noch ausgeführt werden muss (falls noch nicht getan)
+### SQL (falls noch nicht ausgeführt)
 ```sql
--- Inventar-Tabelle
 create table if not exists inventory_items (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade not null,
@@ -164,11 +130,9 @@ alter table inventory_items enable row level security;
 create policy "Users manage own inventory" on inventory_items
   for all using (auth.uid() = user_id);
 
--- FK auf peptides
 alter table peptides
   add column if not exists inventory_item_id uuid references inventory_items(id);
 
--- Taken-Status auf dose_logs
 alter table dose_logs
   add column if not exists taken boolean default null;
 ```
@@ -180,178 +144,227 @@ alter table dose_logs
 ```
 src/
 ├── App.tsx                    ← Routes + Provider-Stack
-├── main.tsx
-├── index.css                  ← Gesamtes Design-System (Tokens, Components, Utilities)
+├── main.tsx                   ← i18n-Import + RTL-Richtung setzen
+├── index.css                  ← Design-System (Tokens, Components, Utilities)
+│
+├── i18n/
+│   ├── index.ts               ← i18next-Konfiguration, LANGUAGES-Array, applyDirection()
+│   └── locales/
+│       ├── de.json            ← Deutsch (Basis-Sprache, ~160 Keys)
+│       ├── en.json            ← English
+│       ├── es.json            ← Español
+│       ├── fr.json            ← Français
+│       ├── it.json            ← Italiano
+│       ├── pt.json            ← Português
+│       ├── ru.json            ← Русский
+│       ├── tr.json            ← Türkçe
+│       ├── ar.json            ← العربية (RTL)
+│       ├── hi.json            ← हिन्दी
+│       ├── id.json            ← Bahasa Indonesia
+│       ├── zh.json            ← 中文
+│       ├── ja.json            ← 日本語
+│       └── ko.json            ← 한국어
 │
 ├── context/
 │   ├── AuthContext.tsx        ← Supabase Auth
-│   └── OnboardingContext.tsx  ← Onboarding-Schritte (localStorage-basiert)
+│   └── OnboardingContext.tsx  ← Onboarding-Schritte (localStorage: _ob_done)
 │
 ├── components/
-│   ├── Layout.tsx             ← Bottom-Nav + Onboarding eingebunden
+│   ├── Layout.tsx             ← 5-Item Bottom-Nav + FAQ Floating Button + Onboarding
 │   ├── ProtectedRoute.tsx
-│   ├── NewDot.tsx             ← Pulsierender Punkt für unbesuchte Features
-│   └── Onboarding.tsx        ← 9-Schritte Onboarding-Panel + RestartButton
+│   ├── NewDot.tsx             ← Pulsierender Punkt für neue Features
+│   └── Onboarding.tsx        ← 9-Schritte Onboarding mit Highlight-Ring + RestartButton
 │
 ├── pages/
-│   ├── Dashboard.tsx          ← Kalender + Tagesprotokoll
-│   ├── Peptide.tsx            ← Inventar-Tab + Meine Peptide-Tab (GROSSE Datei ~1700 Zeilen)
+│   ├── Home.tsx               ← Homescreen: Quick-Stats + Kacheln für alle Bereiche
+│   ├── Dashboard.tsx          ← Kalender + Tagesprotokoll (/kalender)
+│   ├── Peptide.tsx            ← Lager-Tab + Meine Peptide-Tab (~1700 Zeilen)
 │   ├── Rechner.tsx            ← Dosierungsrechner mit SyringeScale
 │   ├── Tagebuch.tsx           ← Wirkungen & Nebenwirkungen
-│   ├── Bewertungen.tsx        ← Sterne-Bewertungen für Peptide
-│   ├── Profil.tsx             ← Profil + Sharing + Onboarding-Restart
-│   ├── FAQ.tsx                ← Hilfe (11 Kategorien, accordion)
+│   ├── Bewertungen.tsx        ← Sterne-Bewertungen
+│   ├── Profil.tsx             ← Profil + Sharing + Sprache + Onboarding-Restart
+│   ├── FAQ.tsx                ← Hilfe (Kategorien, Accordion)
 │   ├── PublicProfile.tsx      ← Öffentliches Profil (/u/username)
 │   └── Auth.tsx               ← Login / Registrierung
 │
 ├── lib/
 │   ├── supabase.ts            ← Supabase Client
 │   ├── peptideColors.ts       ← 12 Peptid-Farben + getPeptideColor(index)
-│   └── useNew.ts              ← Hook: erstes Mal sehen eines Features tracken
+│   └── useNew.ts              ← Hook: erstes Mal sehen tracken
 │
-└── [ungenutzte Altdateien]
-    ├── pages/Vorrat.tsx       ← Nie verlinkt, kann gelöscht werden
-    ├── pages/Journal.tsx      ← Nie verlinkt, kann gelöscht werden
-    ├── pages/Inventar.tsx     ← Nie verlinkt, kann gelöscht werden
-    └── pages/Zyklen.tsx       ← Nie verlinkt, kann gelöscht werden
+└── public/
+    ├── icon-192.png           ← PWA Icon (Peptid-Vial Design)
+    ├── icon-512.png           ← PWA Icon groß
+    └── favicon.svg
 ```
 
 ---
 
-## 4. Kernfunktionen im Detail
+## 4. Navigation & Routing
 
-### Inventar-Workflow (wichtigste Logik)
+### Bottom-Nav (5 Items)
 ```
-1. User legt Peptid im Inventar an (inventory_items)
-   → vials_count & vials_initial werden gesetzt
+Lager → /peptide?tab=inventar
+Peptide → /peptide
+🏠 Home (Mitte, hervorgehoben) → /
+Kalender → /kalender
+Profil → /profil
+```
+- Home-Button ist ein Cyan-Quadrat das sich leicht nach oben hebt
+- FAQ erreichbar über schwebendes `?` Icon unten rechts über der Nav
+
+### Alle Routen
+```
+/              ← Homescreen (Standard-Route)
+/kalender      ← Kalender + Tagesprotokoll
+/peptide       ← Lager + Meine Peptide (Tab per ?tab=inventar)
+/rechner       ← Dosierungsrechner
+/tagebuch      ← Wirkungen & Nebenwirkungen
+/bewertungen   ← Sterne-Bewertungen
+/profil        ← Nutzer-Einstellungen + Sprache
+/faq           ← Hilfe
+/auth          ← Login (außerhalb Layout)
+/u/:username   ← Öffentliches Profil (außerhalb Layout)
+```
+
+---
+
+## 5. Internationalisierung (i18n)
+
+### 14 Sprachen
+🇩🇪 Deutsch · 🇬🇧 English · 🇪🇸 Español · 🇫🇷 Français · 🇮🇹 Italiano · 🇧🇷 Português · 🇷🇺 Русский · 🇹🇷 Türkçe · 🇸🇦 العربية · 🇮🇳 हिन्दी · 🇮🇩 Bahasa Indonesia · 🇨🇳 中文 · 🇯🇵 日本語 · 🇰🇷 한국어
+
+### Sprache wechseln
+- **Profil-Seite → Sprache** → Dropdown → Sprache auswählen → **Übernehmen**
+- Sprache wird in `localStorage('tyd_lang')` gespeichert
+- Arabisch aktiviert automatisch RTL-Layout (`dir="rtl"`)
+- Browser-Sprache wird beim ersten Start automatisch erkannt
+
+### Übersetzt
+- Navigation, Homescreen, Auth, Dashboard, Peptide/Lager, Rechner, Tagebuch, Bewertungen, Profil
+- FAQ-Inhalte: noch auf Deutsch (sehr umfangreich)
+- Supabase-Fehlermeldungen: kommen vom Server auf Englisch
+
+### Keys hinzufügen
+```ts
+// 1. Key in src/i18n/locales/de.json + en.json hinzufügen
+// 2. In Komponente:
+import { useTranslation } from 'react-i18next'
+const { t } = useTranslation()
+// 3. Verwenden:
+{t('mein_key')}
+```
+
+---
+
+## 6. Kernfunktionen
+
+### Homescreen (Home.tsx)
+- Begrüßung mit Uhrzeit (Morgen/Tag/Abend) + Datum
+- 3 Quick-Stats: Aktive Zyklen, Vials im Lager, Meine Peptide (live aus Supabase)
+- 8 Kacheln für alle App-Bereiche
+- Kalender-Kachel ist breit (spanning 2 Spalten)
+
+### Inventar-Workflow (kritische Logik)
+```
+1. Einlagern → inventory_items erstellt (vials_count & vials_initial gesetzt)
    → vials_initial wird NIEMALS danach überschrieben
 
-2. User klickt "Peptid anlegen" auf einem Inventar-Item
-   → peptides-Eintrag wird erstellt mit inventory_item_id
-   → Wirkstoff/Batch/Vials kommen aus Inventar (gesperrt im Formular)
+2. "Peptid anlegen" → peptides-Eintrag mit inventory_item_id
    → Kein Abzug von vials_count bei Anlage!
 
-3. Vials-Abzug erfolgt NUR bei:
+3. Vials-Abzug NUR bei:
    a) "Peptid verwerfen" → vials_count - 1
    b) "Rekonstitution wiederholen" → vials_count - 1
 
-4. Vials-Grafik (VialStockDisplay):
-   - Grüne Vials = verfügbar (vials_count - inUse)
-   - Amber Vials = in Verwendung (= verknüpfte Peptide)
-   - Grau (opacity 0.5) = nur wenn vials_count === 0
+4. VialStockDisplay:
+   Grün = verfügbar · Amber = in Verwendung · Grau = leer
 ```
 
-### Peptid-Farben (peptideColors.ts)
-Jedes Peptid bekommt eine konsistente Farbe basierend auf seinem Index in der `peptides`-Liste (sortiert nach Name aus DB). Verwendet in:
-- Kalender-Punkte (Dashboard)
-- Zyklus-Zeilen (Dashboard)
-- Vial-Animation (Peptide)
-
-### Onboarding (OnboardingContext + Onboarding.tsx)
-- Startet automatisch beim ersten App-Aufruf (localStorage-Check: `_ob_done`)
-- 9 Schritte mit Vor/Zurück-Navigation und Skip
-- Floating Panel über der Nav-Bar (z-index 40, `bottom: 76px`)
+### Onboarding (Onboarding.tsx)
+- Startet automatisch beim ersten Aufruf (`localStorage: _ob_done`)
+- 9 Schritte mit interaktivem Highlight-Ring (z-index 45, sichtbar über Nav)
+- Klick auf den markierten Button → nächster Schritt automatisch
+- Panel passt Größe und Position pro Schritt an (kompakt/groß, oben/unten)
+- Schritt 5 (Formular): Panel erscheint oben (Form belegt unteren Bereich)
 - Restart-Button in Profil-Seite
-- **Achtung:** Kein `backdrop-filter` auf dem Panel (würde Scroll in Modals brechen)
 
-### "Neu"-Signale (useNew.ts + NewDot.tsx)
-localStorage-Keys `_new_*` tracken ob ein Feature zum ersten Mal gesehen wurde:
-- `_new_nav_*` — Nav-Items (werden beim Besuchen der Route gecleart)
-- `_new_inventar_tab` — Inventar-Tab
-- `_new_peptide_info` — Info-Button (FileText) auf Peptid-Karten
-- `_new_zyklus_btn` — Zyklus-hinzufügen-Button
-- `_new_peptid_anlegen` — Peptid-anlegen-Button im Inventar
-
-### Snooze (Dashboard)
-`setTimeout` basiert — funktioniert NUR wenn die App offen ist. Kein Service Worker / Push.
+### PWA (vite.config.ts)
+```
+Name: "TYD – Track Your Dose"
+Short name: "TYD"
+Theme color: #00ccf5
+Background: #07091a
+Icons: icon-192.png, icon-512.png
+```
+iPhone installieren: Safari → Teilen → „Zum Home-Bildschirm" → „Als Web-App öffnen" aktivieren
 
 ---
 
-## 5. Design-System
+## 7. Design-System
 
-### Tailwind-Farb-Overrides (tailwind.config.js)
-Die Standard-Tailwind-Farben `slate` und `sky` sind überschrieben:
-- `slate-900` → `#07091a` (tiefes Blauschwarz)
-- `slate-800` → `#0e1428`
-- `sky-400` → `#00ccf5` (Neon-Cyan)
-- `sky-500` → `#00aad4`
+### Farben (tailwind.config.js)
+- `slate-900` → `#07091a` · `slate-800` → `#0e1428`
+- `sky-400` → `#00ccf5` (Neon-Cyan) · `sky-500` → `#00aad4`
 
 ### CSS-Architektur (index.css)
 ```
-:root          → Design-Tokens (CSS-Variablen)
-@layer base    → Body-Gradient, Scrollbar, Range-Slider, Checkbox
+:root          → Design-Tokens
+@layer base    → html/body overflow-x:hidden, overscroll-behavior-x:none
 @layer components → .card, .btn-primary/secondary/danger, .input, .select, .label, .badge
-[global]       → Targeted Overrides für Tailwind-Klassen-Kombinationen
-               → Tab-Switcher, Chips, Toggles, Bottom Sheets, Dropdowns
 @layer utilities → .glass, .glow-cyan-sm/md, .text-gradient-cyan
 ```
 
-### Bekannte CSS-Einschränkungen
-- `backdrop-filter` auf scrollbaren Containern (`.rounded-t-2xl`) entfernt — bricht `overflow-y: auto`
-- `.rounded-xl.p-1` und `.rounded-lg.p-1` Selektoren sind breit — treffen alle Tab-Container-Divs
-- `button.bg-slate-800` und `button.bg-sky-500` sind globale Selektoren — wirken auf alle Inline-Buttons
+### Wichtige CSS-Regeln
+- **KEIN** `backdrop-filter` auf scrollbaren Bottom-Sheet-Containern (bricht overflow-y)
+- `html, body, #root` haben `overflow-x: hidden` + `max-width: 100vw` → kein horizontales Scrollen
+- `min-h-dvh` statt `min-h-screen` (mobile Browser korrekt)
+- iOS Safe-Area: `padding-bottom: env(safe-area-inset-bottom)` in Nav + Main
 
 ---
 
-## 6. Nav-Struktur
-
-```
-/ (Kalender/Dashboard)   ← Standard-Route
-/peptide                 ← Inventar + Meine Peptide
-/rechner                 ← Dosierungsrechner
-/tagebuch                ← Wirkungen & Nebenwirkungen
-/bewertungen             ← Sterne-Bewertungen
-/profil                  ← Nutzer-Einstellungen
-/faq                     ← Hilfe
-/auth                    ← Login (außerhalb des Layouts)
-/u/:username             ← Öffentliches Profil (außerhalb des Layouts)
-```
-
----
-
-## 7. Bekannte Limitierungen & TODOs
+## 8. Bekannte Limitierungen
 
 | Thema | Detail |
 |---|---|
-| **Snooze** | Nur während App offen. Kein persistentes Reminder-System. |
-| **PDF-Upload** | Funktioniert nur wenn `batch-files` Storage Bucket existiert |
-| **IU-Einheit im Rechner** | IU wird identisch wie mcg berechnet — keine Umrechnung. Pre-existing. |
-| **useEffect-Deps** | In mehreren Dateien fehlen `user`/`loadX` in Dependency Arrays. Lint-Warnungen, kein Crash. |
-| **Tote Dateien** | `Vorrat.tsx`, `Journal.tsx`, `Inventar.tsx`, `Zyklen.tsx` — können sicher gelöscht werden |
-| **Tablet-Sync** | Über GitHub (`git pull` auf Tablet nach jedem `git push` vom PC) |
-| **Offline** | Keine PWA-Offline-Unterstützung. App braucht Internet. |
+| **Push-Notifications** | Nicht implementiert. Snooze nur via `setTimeout` (App muss offen sein) |
+| **FAQ-Übersetzung** | FAQ-Inhalte noch auf Deutsch — ~100 Strings, zu umfangreich |
+| **IU-Einheit** | IU wird identisch wie mcg berechnet — keine Umrechnung |
+| **useEffect-Deps** | Lint-Warnungen in mehreren Dateien, kein Crash |
+| **Offline** | Keine PWA-Offline-Unterstützung. App braucht Internet |
+| **Registrierung** | Offen für alle — in Supabase auf Invite-only einschränkbar |
 
 ---
 
-## 8. Häufige Fehler & Fixes
+## 9. Häufige Fehler & Fixes
 
 | Fehler | Ursache | Fix |
 |---|---|---|
 | Modal-Scrollen funktioniert nicht | `backdrop-filter` auf `.rounded-t-2xl` | Nicht hinzufügen |
-| Formular springt beim Öffnen | CSS-Animation auf `main > *` | Nicht animieren |
-| Push rejected | Tablet hat neuere Commits | `git pull --rebase origin main` dann `git push` |
+| Horizontales Scrollen | Element breiter als Viewport | `overflow-x: hidden` auf Wrapper |
+| Push rejected | Tablet hat neuere Commits | `git pull --rebase origin main` dann push |
 | App startet nicht | PowerShell Execution Policy | `Set-ExecutionPolicy Bypass -Scope Process` |
-| Vials werden komplett abgezogen | Falsche `savePeptide`-Logik | Kein Abzug bei Neuanlage, nur bei Verwerfen/Rekonstitution |
+| Vials falsch abgezogen | `savePeptide`-Logik | Kein Abzug bei Neuanlage |
+| Sprache zeigt Keys statt Text | i18n resources nicht in `{ translation: {} }` | `resources: { de: { translation: de } }` |
 
 ---
 
-## 9. Entwicklungs-Workflow
+## 10. Entwicklungs-Workflow
 
 ```bash
 # Lokal starten (PC)
 cd C:\Users\Devin\peptid-tracker
-npm run dev          # öffnet http://localhost:5173
+npm run dev          # http://localhost:5173
 
-# Änderungen pushen
+# Änderungen deployen
 git add .
 git commit -m "Beschreibung"
-git push             # Passwort = Personal Access Token
+git push             # → Vercel deployed automatisch
 
 # Auf Tablet aktualisieren
-git pull
-npm run dev
+git pull && npm run dev
 ```
 
 ---
 
-*Erstellt am 18. Mai 2026*
+*Zuletzt aktualisiert: Mai 2026*
