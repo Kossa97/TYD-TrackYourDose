@@ -8,11 +8,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Peptid Tracker',
-        short_name: 'PeptidTracker',
-        description: 'Persönlicher Peptid-Tracker für Forschungszwecke',
-        theme_color: '#0ea5e9',
-        background_color: '#0f172a',
+        name: 'TYD – Track Your Dose',
+        short_name: 'TYD',
+        description: 'Persönliche Peptid-Management-App für Inventar, Zyklen und Protokoll.',
+        theme_color: '#00ccf5',
+        background_color: '#07091a',
         display: 'standalone',
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
