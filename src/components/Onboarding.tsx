@@ -140,7 +140,7 @@ export function Onboarding() {
   // ── Panel-Position ───────────────────────────────────────────────────────
   const panelStyle: React.CSSProperties = s.panelPos === 'top'
     ? { top: '16px', left: 0, right: 0 }
-    : { bottom: '76px', left: 0, right: 0 }
+    : { bottom: 'calc(62px + env(safe-area-inset-bottom))', left: 0, right: 0 }
 
   // ── Padding & Schriftgröße je nach Kompaktheit ───────────────────────────
   const pad      = s.panelCompact ? '13px 16px 11px' : '22px 20px 18px'

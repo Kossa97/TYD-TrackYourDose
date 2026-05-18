@@ -42,8 +42,8 @@ export function Layout() {
   }, [location.pathname])
 
   return (
-    <div className="flex flex-col min-h-screen max-w-lg mx-auto">
-      <main className="flex-1 pb-20 px-4 pt-4">
+    <div className="flex flex-col min-h-dvh w-full overflow-x-hidden" style={{ maxWidth: '100vw' }}>
+      <main className="flex-1 w-full overflow-x-hidden px-3 pt-4" style={{ paddingBottom: 'calc(72px + env(safe-area-inset-bottom))' }}>
         <Outlet />
       </main>
 
@@ -55,8 +55,9 @@ export function Layout() {
         backdropFilter: 'blur(28px) saturate(180%)',
         WebkitBackdropFilter: 'blur(28px) saturate(180%)',
         boxShadow: '0 -8px 32px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
       }}>
-        <div className="max-w-lg mx-auto flex items-center justify-around py-2">
+        <div className="flex items-center justify-around py-1.5 px-1" style={{ maxWidth: '640px', margin: '0 auto' }}>
           {navItems.map(({ to, icon: Icon, label, newKey, obKey }) => {
             const isNew = newKey ? newPaths.has(to) : false
             return (
@@ -66,15 +67,16 @@ export function Layout() {
                 end={to === '/'}
                 {...(obKey ? { 'data-ob': obKey } : {})}
                 className={({ isActive }) =>
-                  `flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl transition-all duration-200 ${
+                  `flex flex-col items-center gap-0.5 py-1 rounded-xl transition-all duration-200 ${
                     isActive
                       ? 'text-sky-400 nav-item-active'
                       : 'text-slate-600 hover:text-slate-400 nav-item-inactive'
                   }`
                 }
+                style={{ minWidth: 0, flex: '1 1 0' }}
               >
                 <div className="relative">
-                  <Icon size={16} />
+                  <Icon size={15} />
                   {isNew && (
                     <>
                       <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping opacity-75 pointer-events-none" />
@@ -82,7 +84,7 @@ export function Layout() {
                     </>
                   )}
                 </div>
-                <span className="text-[8px] font-medium">{label}</span>
+                <span className="text-[7.5px] font-medium text-center leading-tight w-full truncate px-0.5">{label}</span>
               </NavLink>
             )
           })}

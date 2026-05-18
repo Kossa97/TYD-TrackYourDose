@@ -70,6 +70,11 @@
   ::-webkit-scrollbar-thumb:hover { background: rgba(0,204,245,0.28); }
   ::selection { background: rgba(0,204,245,0.17); color: #00ccf5; }
 
+  html {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
   body {
     background-color: var(--c-bg);
     background-image:
@@ -77,7 +82,9 @@
       radial-gradient(ellipse 70% 50% at 90% 10%,  rgba(105,55,235,0.026) 0%, transparent 55%),
       radial-gradient(ellipse 50% 70% at 55% 95%,  rgba(0,95,195,0.020) 0%, transparent 60%);
     color: var(--c-text);
-    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: 0.005em;
