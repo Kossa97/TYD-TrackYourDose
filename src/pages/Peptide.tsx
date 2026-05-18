@@ -797,8 +797,6 @@ export function Peptide() {
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <p className="font-semibold text-white">{item.name}</p>
                         <span className="badge bg-sky-500/10 text-sky-400">{item.mg_per_vial} mg/Vial</span>
-                        {isUsed && <span className="badge bg-slate-700 text-slate-400">Rekonstitutiert</span>}
-                        {/* Vials mit +/- */}
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => adjustInventoryCount(item.id, -1, item.vials_count)}
