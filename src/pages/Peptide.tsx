@@ -149,20 +149,33 @@ function VialStockDisplay({ current, initial, inUse = 0 }: {
   if (initial > 10) {
     const availPct = (available / initial) * 100
     const inUsePct = (Math.min(inUse, current) / initial) * 100
+    const barColor = lowStock ? '#ff3355' : '#00ccf5'
+    const barGlow  = lowStock ? 'rgba(255,40,80,0.35)' : 'rgba(0,204,245,0.35)'
     return (
       <div className="mt-2.5">
-        <div className="flex items-center justify-between text-xs mb-1">
-          <span className={lowStock ? 'text-red-400 font-medium' : 'text-slate-500'}>
+        <div className="flex items-center justify-between mb-1.5" style={{ fontSize: '10px' }}>
+          <span style={{ color: lowStock ? '#ff4466' : 'rgba(0,204,245,0.60)', fontWeight: 600, letterSpacing: '0.04em' }}>
             {available} verfügbar{lowStock ? ' · Bestand niedrig' : ''}
           </span>
-          {inUse > 0 && <span className="text-amber-400">{inUse} in Verwendung</span>}
+          {inUse > 0 && <span style={{ color: 'rgba(245,160,0,0.75)', fontWeight: 600 }}>{inUse} in Verwendung</span>}
         </div>
-        <div className="h-2 bg-slate-700 rounded-full overflow-hidden flex">
-          <div className="h-full transition-all duration-500 rounded-l-full"
-            style={{ width: `${availPct}%`, backgroundColor: color }} />
+        <div className="overflow-hidden flex" style={{
+          height: '6px', borderRadius: '3px',
+          background: 'rgba(0,0,0,0.7)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.8)',
+        }}>
+          <div className="transition-all duration-500" style={{
+            width: `${availPct}%`,
+            background: `linear-gradient(90deg, ${barColor}aa, ${barColor})`,
+            boxShadow: `0 0 8px ${barGlow}`,
+          }} />
           {inUse > 0 && (
-            <div className="h-full transition-all duration-500"
-              style={{ width: `${inUsePct}%`, backgroundColor: '#f59e0b', opacity: 0.7 }} />
+            <div className="transition-all duration-500" style={{
+              width: `${inUsePct}%`,
+              background: 'linear-gradient(90deg, #e09000aa, #f5a000)',
+              opacity: 0.75,
+            }} />
           )}
         </div>
       </div>
@@ -708,6 +721,7 @@ export function Peptide() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex bg-slate-800 rounded-xl p-1 gap-1">
           <button
+            data-ob="tab-inventar"
             onClick={() => { setActiveTab('inventar'); dismissInventarTab() }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'inventar' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-300'
@@ -736,7 +750,7 @@ export function Peptide() {
         </div>
 
         {activeTab === 'inventar' ? (
-          <button className="btn-primary flex items-center gap-1.5 text-sm py-2"
+          <button data-ob="btn-einlagern" className="btn-primary flex items-center gap-1.5 text-sm py-2"
             onClick={() => { setEditingInvId(null); setIForm(emptyInventoryForm()); setInvBatchFile(null); setShowInvDropdown(false); setShowInvForm(true) }}>
             <Plus size={15} /> Einlagern
           </button>
@@ -810,6 +824,7 @@ export function Peptide() {
                     </div>
                     <div className="flex flex-col gap-1.5 shrink-0 items-end">
                       <button
+                        data-ob="btn-peptid-anlegen"
                         onClick={() => { createPeptideFromInventory(item); dismissAnlegenBtn() }}
                         className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-500/15 border border-sky-500/30 text-sky-400 hover:bg-sky-500/25 transition-colors text-xs font-medium whitespace-nowrap">
                         <FlaskConical size={11} /> Peptid anlegen
@@ -963,6 +978,7 @@ export function Peptide() {
                       {pCycles.length > 0 ? `${pCycles.length} Zyklus${pCycles.length > 1 ? 'en' : ''}` : 'Keine Zyklen'}
                     </button>
                     <button
+                      data-ob="btn-zyklus-add"
                       onClick={() => { openNewCycle(p); dismissZyklusBtn() }}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/15 border border-violet-500/30 text-violet-400 hover:bg-violet-500/25 hover:border-violet-400/50 transition-colors text-xs font-medium">
                       <Plus size={12} /> Zyklus hinzufügen

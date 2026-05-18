@@ -64,29 +64,72 @@ function SyringeScale({ drawUnits, maxUnits }: { drawUnits: number; maxUnits: nu
 
   return (
     <div className="mb-4">
-      <p className="text-xs text-slate-400 text-center mb-0.5">Einheiten aufziehen</p>
-      <p className="text-6xl font-bold text-center mb-4"
-        style={{ background: 'linear-gradient(90deg,#38bdf8,#818cf8,#c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+      {/* Label */}
+      <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-center mb-1"
+        style={{ color: 'rgba(0,204,245,0.55)' }}>
+        Einheiten aufziehen
+      </p>
+
+      {/* Large HUD number */}
+      <p className="text-6xl font-bold text-center mb-5 tabular-nums"
+        style={{
+          background: 'linear-gradient(160deg, #ffffff 0%, #a0eeff 40%, #00ccf5 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          textShadow: 'none',
+          filter: 'drop-shadow(0 0 18px rgba(0,204,245,0.35))',
+          letterSpacing: '-0.03em',
+        }}>
         {drawUnits}
       </p>
 
-      <div className="flex justify-between px-0.5 mb-1">
+      {/* Scale labels */}
+      <div className="flex justify-between px-0.5 mb-1.5">
         {labels.map(l => (
-          <span key={l} className="text-[10px] text-slate-500 leading-none">{l}</span>
+          <span key={l} className="text-[9px] font-mono tabular-nums leading-none"
+            style={{ color: 'rgba(0,204,245,0.40)' }}>
+            {l}
+          </span>
         ))}
       </div>
 
-      <div className="relative h-10 rounded-xl bg-slate-800 overflow-hidden">
+      {/* HUD Scale bar */}
+      <div className="relative h-10 overflow-hidden"
+        style={{
+          borderRadius: '10px',
+          background: 'rgba(1, 3, 12, 0.92)',
+          border: '1px solid rgba(0,204,245,0.12)',
+          boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.7), inset 0 1px 0 rgba(0,0,0,0.5)',
+        }}>
+
+        {/* Cyan fill with glow */}
         <div
-          className="absolute left-0 top-0 h-full rounded-xl transition-all duration-500"
+          className="absolute left-0 top-0 h-full transition-all duration-500"
           style={{
             width: `${pct}%`,
-            background: 'linear-gradient(90deg, #38bdf8 0%, #818cf8 60%, #c084fc 100%)',
-            opacity: 0.85,
+            background: 'linear-gradient(90deg, rgba(0,180,240,0.18) 0%, rgba(0,204,245,0.30) 70%, rgba(0,220,255,0.40) 100%)',
+            borderRight: pct > 1 ? '1px solid rgba(0,220,255,0.50)' : 'none',
+            boxShadow: 'inset -4px 0 12px rgba(0,204,245,0.15)',
           }}
         />
+
+        {/* Glow stripe at fill edge */}
+        {pct > 1 && (
+          <div
+            className="absolute top-0 bottom-0 transition-all duration-500"
+            style={{
+              left: `calc(${pct}% - 2px)`,
+              width: '3px',
+              background: 'linear-gradient(180deg, rgba(0,230,255,0.0) 0%, rgba(0,230,255,0.8) 45%, rgba(0,230,255,0.8) 55%, rgba(0,230,255,0.0) 100%)',
+              boxShadow: '0 0 10px rgba(0,220,255,0.6)',
+              filter: 'blur(0.5px)',
+            }}
+          />
+        )}
+
+        {/* Precision tick marks */}
         <svg
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full pointer-events-none"
           preserveAspectRatio="none"
           viewBox={`0 0 ${tickCount} 1`}
         >
@@ -95,22 +138,26 @@ function SyringeScale({ drawUnits, maxUnits }: { drawUnits: number; maxUnits: nu
             return (
               <line
                 key={i}
-                x1={i} y1={0}
-                x2={i} y2={isMajor ? 0.65 : 0.4}
-                stroke="rgba(255,255,255,0.25)"
-                strokeWidth={isMajor ? 0.15 : 0.08}
+                x1={i} y1={isMajor ? 0 : 0.3}
+                x2={i} y2={isMajor ? 0.7 : 0.55}
+                stroke={isMajor ? 'rgba(0,204,245,0.30)' : 'rgba(255,255,255,0.10)'}
+                strokeWidth={isMajor ? 0.12 : 0.07}
               />
             )
           })}
         </svg>
-        <div
-          className="absolute top-0 bottom-0 w-0.5 bg-white/90 transition-all duration-500"
-          style={{ left: `calc(${pct}% - 1px)` }}
-        />
+
+        {/* Corner accents */}
+        <div className="absolute top-0 left-0 w-2 h-full"
+          style={{ background: 'linear-gradient(90deg, rgba(0,204,245,0.08), transparent)' }} />
       </div>
 
-      <p className="text-xs text-slate-500 text-right mt-1 pr-1">
-        entspricht <span className="text-slate-300 font-medium">{(drawUnits / (maxUnits / (maxUnits <= 50 ? 0.5 : 1))).toFixed(3)} mL</span>
+      {/* mL readout */}
+      <p className="text-right mt-1.5 pr-0.5"
+        style={{ fontSize: '10px', color: 'rgba(0,204,245,0.45)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
+        ≈ <span style={{ color: 'rgba(0,204,245,0.80)', fontWeight: 600 }}>
+          {(drawUnits / (maxUnits / (maxUnits <= 50 ? 0.5 : 1))).toFixed(3)}
+        </span> mL
       </p>
     </div>
   )
@@ -180,21 +227,30 @@ export function Rechner() {
           <>
             <SyringeScale drawUnits={result.drawUnits} maxUnits={result.maxUnits} />
             <div className="grid grid-cols-3 gap-2">
-              <div className="bg-slate-800/60 rounded-xl p-3 text-center">
-                <p className="text-white font-bold text-base">{result.concMgPerMl}</p>
-                <p className="text-slate-500 text-xs mt-0.5">mg/mL</p>
-                <p className="text-slate-600 text-xs">Konzentration</p>
-              </div>
-              <div className="bg-slate-800/60 rounded-xl p-3 text-center">
-                <p className="text-white font-bold text-base">{result.fillPct}%</p>
-                <p className="text-slate-500 text-xs mt-0.5">Spritze gefüllt</p>
-                <p className="text-slate-600 text-xs">{result.doseMl} mL</p>
-              </div>
-              <div className="bg-slate-800/60 rounded-xl p-3 text-center">
-                <p className="text-white font-bold text-base">{result.dosesPerVial}</p>
-                <p className="text-slate-500 text-xs mt-0.5">Dosen / Vial</p>
-                <p className="text-slate-600 text-xs">bei dieser Dosis</p>
-              </div>
+              {[
+                { value: result.concMgPerMl, unit: 'mg/mL',   label: 'Konzentration', sub: null },
+                { value: `${result.fillPct}%`, unit: 'Spritze', label: 'gefüllt',     sub: `${result.doseMl} mL` },
+                { value: String(result.dosesPerVial), unit: 'Dosen', label: 'pro Vial', sub: null },
+              ].map(({ value, unit, label, sub }) => (
+                <div key={label} style={{
+                  background: 'rgba(0,10,24,0.82)',
+                  border: '1px solid rgba(0,204,245,0.10)',
+                  borderRadius: '13px',
+                  padding: '10px 6px',
+                  textAlign: 'center' as const,
+                  boxShadow: 'inset 0 1px 0 rgba(0,204,245,0.05), 0 4px 14px rgba(0,0,0,0.55)',
+                }}>
+                  <p style={{ fontSize: '1rem', fontWeight: 700, color: '#e8f4ff', letterSpacing: '-0.01em', fontVariantNumeric: 'tabular-nums' }}>
+                    {value}
+                  </p>
+                  <p style={{ fontSize: '9px', color: 'rgba(0,204,245,0.55)', marginTop: '3px', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+                    {unit}
+                  </p>
+                  <p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.20)', marginTop: '1px' }}>
+                    {sub ?? label}
+                  </p>
+                </div>
+              ))}
             </div>
           </>
         ) : (

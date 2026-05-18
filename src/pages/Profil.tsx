@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { LogOut, Save, User, Globe, Lock, Copy, Check, FlaskConical, CalendarDays, BookHeart, Star } from 'lucide-react'
+import { OnboardingRestartButton } from '../components/Onboarding'
 
 interface Profile {
   username: string; display_name: string; age: number | null
@@ -304,6 +305,11 @@ export function Profil() {
       <button className="btn-primary w-full flex items-center justify-center gap-2" onClick={save} disabled={saving}>
         <Save size={16} /> {saving ? 'Speichert...' : 'Profil speichern'}
       </button>
+
+      {/* App-Anleitung */}
+      <div className="mt-4">
+        <OnboardingRestartButton />
+      </div>
     </div>
   )
 }

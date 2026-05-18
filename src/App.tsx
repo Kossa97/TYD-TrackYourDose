@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
+import { OnboardingProvider } from './context/OnboardingContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { Layout } from './components/Layout'
 import { Auth } from './pages/Auth'
@@ -17,10 +18,11 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <OnboardingProvider>
         <Toaster
           position="top-center"
           toastOptions={{
-            style: { background: '#1e293b', color: '#f1f5f9', border: '1px solid #334155' },
+            style: { background: '#07091a', color: '#eaeefc', border: '1px solid rgba(0,204,245,0.15)' },
           }}
         />
         <Routes>
@@ -36,6 +38,7 @@ export default function App() {
             <Route path="faq" element={<FAQ />} />
           </Route>
         </Routes>
+        </OnboardingProvider>
       </AuthProvider>
     </BrowserRouter>
   )

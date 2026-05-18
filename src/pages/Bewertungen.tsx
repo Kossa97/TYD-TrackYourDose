@@ -37,8 +37,19 @@ const StarRating = ({ value, onChange }: { value: number; onChange?: (v: number)
   <div className="flex gap-1">
     {[1,2,3,4,5].map(i => (
       <button key={i} type="button" onClick={() => onChange?.(i)}
-        className={onChange ? 'cursor-pointer' : 'cursor-default'}>
-        <Star size={20} className={i <= value ? 'text-amber-400 fill-amber-400' : 'text-slate-600'} />
+        className={onChange ? 'cursor-pointer transition-transform hover:scale-110' : 'cursor-default'}
+        style={{ transition: 'transform 0.15s ease' }}>
+        <Star
+          size={20}
+          style={i <= value ? {
+            color: '#f5a800',
+            fill: '#f5a800',
+            filter: 'drop-shadow(0 0 5px rgba(245,168,0,0.65)) drop-shadow(0 0 2px rgba(255,200,0,0.4))',
+          } : {
+            color: 'rgba(255,255,255,0.12)',
+            fill: 'transparent',
+          }}
+        />
       </button>
     ))}
   </div>
@@ -208,14 +219,30 @@ export function Bewertungen() {
               {(r.pros || r.cons) && (
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   {r.pros && (
-                    <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-2">
-                      <p className="text-emerald-400 text-xs font-medium mb-1">Vorteile</p>
+                    <div style={{
+                      background: 'rgba(0,180,100,0.05)',
+                      border: '1px solid rgba(0,200,120,0.16)',
+                      borderRadius: '10px',
+                      padding: '8px',
+                      boxShadow: 'inset 0 1px 0 rgba(0,200,120,0.06)',
+                    }}>
+                      <p style={{ color: '#00d488', fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                        Vorteile
+                      </p>
                       <p className="text-slate-300 text-xs">{r.pros}</p>
                     </div>
                   )}
                   {r.cons && (
-                    <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-2">
-                      <p className="text-red-400 text-xs font-medium mb-1">Nachteile</p>
+                    <div style={{
+                      background: 'rgba(200,0,60,0.05)',
+                      border: '1px solid rgba(220,0,60,0.16)',
+                      borderRadius: '10px',
+                      padding: '8px',
+                      boxShadow: 'inset 0 1px 0 rgba(220,0,60,0.06)',
+                    }}>
+                      <p style={{ color: '#ff4060', fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                        Nachteile
+                      </p>
                       <p className="text-slate-300 text-xs">{r.cons}</p>
                     </div>
                   )}

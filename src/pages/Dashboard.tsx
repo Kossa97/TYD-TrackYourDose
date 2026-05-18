@@ -247,20 +247,26 @@ export function Dashboard() {
               <button
                 key={i}
                 onClick={() => setSelectedDay(day)}
-                className={`
-                  relative flex flex-col items-center justify-center py-2 transition-colors
-                  border-r border-b border-slate-800/50 last:border-r-0
-                  ${!inMonth ? 'opacity-25' : ''}
-                  ${isSelected
-                    ? 'bg-sky-500'
-                    : hasCycle
-                      ? 'bg-violet-500/10 hover:bg-violet-500/20'
-                      : 'hover:bg-slate-800'}
+                className={`relative flex flex-col items-center justify-center py-2 transition-all duration-150
+                  border-r border-b last:border-r-0
+                  ${!inMonth ? 'opacity-20' : ''}
                 `}
+                style={{
+                  borderColor: 'rgba(255,255,255,0.04)',
+                  background: isSelected
+                    ? 'linear-gradient(145deg, rgba(0,190,240,0.85), rgba(0,120,210,0.75))'
+                    : hasCycle
+                      ? 'rgba(120,80,255,0.07)'
+                      : 'transparent',
+                  boxShadow: isSelected
+                    ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 16px rgba(0,200,240,0.25)'
+                    : undefined,
+                }}
               >
                 {/* Heute-Ring */}
                 {isToday(day) && !isSelected && (
-                  <span className="absolute inset-1 rounded-lg ring-1 ring-sky-500 pointer-events-none" />
+                  <span className="absolute inset-1 rounded-md pointer-events-none"
+                    style={{ boxShadow: '0 0 0 1px rgba(0,204,245,0.50), 0 0 6px rgba(0,204,245,0.15)' }} />
                 )}
 
                 <span className={`text-sm font-semibold leading-none ${
@@ -296,21 +302,27 @@ export function Dashboard() {
         </div>
 
         {/* Legende */}
-        <div className="flex gap-4 px-4 py-2.5 border-t border-slate-800 bg-slate-900/60">
-          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+        <div className="flex gap-4 px-4 py-2.5" style={{
+          borderTop: '1px solid rgba(255,255,255,0.04)',
+          background: 'rgba(1,2,10,0.60)',
+        }}>
+          <div className="flex items-center gap-1.5" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.30)' }}>
             <div className="flex gap-0.5">
               {[0,1,2].map(i => (
-                <span key={i} className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: getPeptideColor(i) }} />
+                <span key={i} className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: getPeptideColor(i), boxShadow: `0 0 4px ${getPeptideColor(i)}88` }} />
               ))}
             </div>
             je Punkt = ein Peptid
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-slate-500">
-            <span className="w-2.5 h-2.5 rounded bg-violet-500/30 border border-violet-500/40" /> Zyklus aktiv
+          <div className="flex items-center gap-1.5" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.30)' }}>
+            <span className="w-2 h-2 rounded-sm" style={{
+              background: 'rgba(120,80,255,0.25)',
+              border: '1px solid rgba(120,80,255,0.35)',
+            }} /> Zyklus
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-slate-500">
-            <TrendingUp size={10} className="text-orange-400" /> Erhöhung
+          <div className="flex items-center gap-1.5" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.30)' }}>
+            <TrendingUp size={10} style={{ color: '#f59e0b' }} /> Erhöhung
           </div>
         </div>
       </div>
