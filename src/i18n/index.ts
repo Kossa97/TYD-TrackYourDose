@@ -41,7 +41,22 @@ i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources: { de, en, es, fr, ja, ko, zh, pt, ar, ru, id, hi, tr, it },
+    resources: {
+      de: { translation: de },
+      en: { translation: en },
+      es: { translation: es },
+      fr: { translation: fr },
+      ja: { translation: ja },
+      ko: { translation: ko },
+      zh: { translation: zh },
+      pt: { translation: pt },
+      ar: { translation: ar },
+      ru: { translation: ru },
+      id: { translation: id },
+      hi: { translation: hi },
+      tr: { translation: tr },
+      it: { translation: it },
+    },
     fallbackLng: 'de',
     detection: {
       order: ['localStorage', 'navigator'],
