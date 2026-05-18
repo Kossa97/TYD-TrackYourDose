@@ -1,4 +1,4 @@
-import { CalendarDays, FlaskConical, Archive, User, LayoutGrid } from 'lucide-react'
+import { CalendarDays, FlaskConical, Archive, User, Home, HelpCircle } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Onboarding } from './Onboarding'
 
@@ -16,12 +16,37 @@ export function Layout() {
     <div className="flex flex-col min-h-dvh w-full overflow-x-hidden" style={{ maxWidth: '100vw' }}>
       <main
         className="flex-1 w-full overflow-x-hidden px-3 pt-4"
-        style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}
+        style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom))' }}
       >
         <Outlet />
       </main>
 
       <Onboarding />
+
+      {/* FAQ Floating Button */}
+      <NavLink
+        to="/faq"
+        style={{
+          position: 'fixed',
+          bottom: `calc(78px + env(safe-area-inset-bottom))`,
+          right: 16,
+          zIndex: 39,
+          width: 38,
+          height: 38,
+          borderRadius: '50%',
+          background: 'rgba(10,14,30,0.92)',
+          border: '1px solid rgba(255,255,255,0.10)',
+          backdropFilter: 'blur(12px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.45)',
+          transition: 'all 0.2s',
+          color: pathname === '/faq' ? '#00ccf5' : 'rgba(154,170,191,0.55)',
+        }}
+      >
+        <HelpCircle size={17} />
+      </NavLink>
 
       <nav
         className="fixed bottom-0 left-0 right-0 z-40"
@@ -36,12 +61,12 @@ export function Layout() {
       >
         <div
           className="flex items-end justify-around"
-          style={{ maxWidth: 640, margin: '0 auto', padding: '8px 8px 10px' }}
+          style={{ maxWidth: 640, margin: '0 auto', padding: '6px 4px 10px' }}
         >
           {/* Lager */}
           <NavItem
             to="/peptide?tab=inventar"
-            icon={<Archive size={16} />}
+            icon={<Archive size={20} />}
             label="Lager"
             active={isLager}
             obKey="nav-lager"
@@ -50,35 +75,35 @@ export function Layout() {
           {/* Peptide */}
           <NavItem
             to="/peptide"
-            icon={<FlaskConical size={16} />}
+            icon={<FlaskConical size={20} />}
             label="Peptide"
             active={isPeptide}
             obKey="nav-peptide"
           />
 
           {/* Home — Mitte, hervorgehoben */}
-          <NavLink to="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+          <NavLink to="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
             <div
               data-ob="nav-home"
               style={{
-                width: 52, height: 52,
-                borderRadius: 18,
+                width: 56, height: 56,
+                borderRadius: 20,
                 background: isHome
                   ? 'linear-gradient(135deg, #00ccf5, #0088dd)'
                   : 'rgba(0,204,245,0.10)',
                 border: isHome ? 'none' : '1px solid rgba(0,204,245,0.25)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginTop: -14,
+                marginTop: -18,
                 boxShadow: isHome
-                  ? '0 0 24px rgba(0,204,245,0.45), 0 4px 16px rgba(0,0,0,0.5)'
+                  ? '0 0 28px rgba(0,204,245,0.5), 0 6px 20px rgba(0,0,0,0.55)'
                   : '0 2px 12px rgba(0,0,0,0.4)',
                 transition: 'all 0.2s',
               }}
             >
-              <LayoutGrid size={20} color={isHome ? '#07091a' : 'rgba(0,204,245,0.7)'} />
+              <Home size={24} color={isHome ? '#07091a' : 'rgba(0,204,245,0.75)'} />
             </div>
             <span style={{
-              fontSize: '7.5px', fontWeight: 700,
+              fontSize: '9px', fontWeight: 700,
               color: isHome ? '#00ccf5' : 'rgba(154,170,191,0.45)',
               letterSpacing: '0.02em',
               transition: 'color 0.2s',
@@ -90,7 +115,7 @@ export function Layout() {
           {/* Kalender */}
           <NavItem
             to="/kalender"
-            icon={<CalendarDays size={16} />}
+            icon={<CalendarDays size={20} />}
             label="Kalender"
             active={isKalender}
             obKey="nav-kalender"
@@ -99,7 +124,7 @@ export function Layout() {
           {/* Profil */}
           <NavItem
             to="/profil"
-            icon={<User size={16} />}
+            icon={<User size={20} />}
             label="Profil"
             active={isProfil}
           />
@@ -109,7 +134,6 @@ export function Layout() {
   )
 }
 
-// ── Kleine Nav-Item Komponente ─────────────────────────────────────────────
 function NavItem({
   to, icon, label, active, obKey,
 }: {
@@ -123,18 +147,18 @@ function NavItem({
     <NavLink
       to={to}
       {...(obKey ? { 'data-ob': obKey } : {})}
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, flex: '1 1 0', minWidth: 0 }}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: '1 1 0', minWidth: 0 }}
     >
       <div style={{
-        padding: '5px 10px', borderRadius: 10,
-        color: active ? '#00ccf5' : 'rgba(100,115,135,0.8)',
+        padding: '5px 12px', borderRadius: 12,
+        color: active ? '#00ccf5' : 'rgba(100,115,135,0.85)',
         transition: 'color 0.2s',
       }}>
         {icon}
       </div>
       <span style={{
-        fontSize: '7.5px', fontWeight: 600,
-        color: active ? '#00ccf5' : 'rgba(100,115,135,0.7)',
+        fontSize: '9px', fontWeight: 600,
+        color: active ? '#00ccf5' : 'rgba(100,115,135,0.75)',
         letterSpacing: '0.02em',
         transition: 'color 0.2s',
         textAlign: 'center',
