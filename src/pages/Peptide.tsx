@@ -639,7 +639,7 @@ export function Peptide() {
     loadCycles()
   }
   const removeCycle = async (id: string) => {
-    if (!confirm('Zyklus löschen?')) return
+    if (!confirm(t('zyklus_loeschen'))) return
     await supabase.from('cycles').delete().eq('id', id)
     toast.success('Gelöscht'); loadCycles()
   }
@@ -682,7 +682,7 @@ export function Peptide() {
     setSavingEsc(false)
   }
   const removeEsc = async (id: string) => {
-    if (!confirm('Dosiserhöhung löschen?')) return
+    if (!confirm(t('esc_loeschen'))) return
     await supabase.from('dose_escalations').delete().eq('id', id)
     toast.success('Gelöscht'); loadEscalations()
   }
@@ -864,7 +864,7 @@ export function Peptide() {
             <div className="flex gap-2 mb-4">
               <div className="relative flex-1">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-                <input className="input pl-9 text-sm" placeholder="Peptid suchen..."
+                <input className="input pl-9 text-sm" placeholder={t('peptid_suchen')}
                   value={search} onChange={e => setSearch(e.target.value)} />
               </div>
               <select className="select text-sm shrink-0 w-auto pr-8" value={sortBy}
@@ -970,7 +970,7 @@ export function Peptide() {
                       <button
                         onClick={() => handleRekonstitution(p)}
                         className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 hover:bg-sky-500/20 transition-colors text-xs font-medium">
-                        <RefreshCw size={11} /> Rekonstitution wiederholen
+                        <RefreshCw size={11} /> {t('rekonstitution_wdh')}
                       </button>
                     </div>
                   )}
@@ -981,7 +981,7 @@ export function Peptide() {
                       onClick={() => setExpandedId(isOpen ? null : p.id)}
                       className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors">
                       {isOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                      {pCycles.length > 0 ? `${pCycles.length} Zyklus${pCycles.length > 1 ? 'en' : ''}` : 'Keine Zyklen'}
+                      {pCycles.length > 0 ? (pCycles.length === 1 ? t('zyklus_count_one') : t('zyklus_count_many', { n: pCycles.length })) : t('keine_zyklen')}
                     </button>
                     <button
                       data-ob="btn-zyklus-add"
@@ -1001,12 +1001,12 @@ export function Peptide() {
                         </span>
                         <button className="btn-secondary py-1 px-3 text-xs flex items-center gap-1"
                           onClick={() => openNewCycle(p)}>
-                          <Plus size={12} /> Neuer Zyklus
+                          <Plus size={12} /> {t('neuer_zyklus_btn')}
                         </button>
                       </div>
                       {pCycles.length === 0 && (
                         <p className="text-slate-500 text-sm text-center py-4">
-                          Noch kein Zyklus — klick auf "+ Neuer Zyklus"
+                          {t('noch_kein_zyklus')}
                         </p>
                       )}
                       {pCycles.map(c => {
@@ -1054,7 +1054,7 @@ export function Peptide() {
                             <div className="border-t border-slate-800/60 px-3 pb-3 pt-2">
                               <div className="flex items-center justify-between mb-2">
                                 <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
-                                  <TrendingUp size={12} className="text-orange-400" /> Dosiserhöhungen
+                                  <TrendingUp size={12} className="text-orange-400" /> {t('dosiserhoehungen')}
                                 </span>
                                 <button className="text-xs flex items-center gap-1 text-orange-400 hover:text-orange-300 transition-colors"
                                   onClick={() => openNewEsc(c)}>
@@ -1062,7 +1062,7 @@ export function Peptide() {
                                 </button>
                               </div>
                               {pEscs.length === 0 && (
-                                <p className="text-slate-600 text-xs italic">Keine Dosiserhöhungen geplant</p>
+                                <p className="text-slate-600 text-xs italic">{t('keine_dosiserhoehungen')}</p>
                               )}
                               <div className="space-y-1.5">
                                 {pEscs.map((e, idx) => (
@@ -1120,7 +1120,7 @@ export function Peptide() {
 
               {/* Name */}
               <div>
-                <label className="label">Peptidname *</label>
+                <label className="label">{t('peptidname_star')}</label>
                 <div className="relative flex gap-2">
                   <input className="input flex-1" placeholder="z.B. BPC-157"
                     value={iForm.name} onChange={e => setIForm(f => ({ ...f, name: e.target.value }))} />
@@ -1144,7 +1144,7 @@ export function Peptide() {
               {/* Anzahl + Wirkstoff */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Anzahl Vials *</label>
+                  <label className="label">{t('anzahl_vials_star')}</label>
                   <input className="input" type="number" min="1" placeholder="z.B. 5"
                     value={iForm.vials_count} onChange={e => setIForm(f => ({ ...f, vials_count: e.target.value }))} />
                 </div>
@@ -1290,7 +1290,7 @@ export function Peptide() {
                 <FlaskConical size={12} /> Peptid
               </p>
               <div className="relative flex gap-2">
-                <input className="input flex-1" placeholder="Peptidname *"
+                <input className="input flex-1" placeholder={t('peptidname_star')}
                   value={pForm.name} onChange={e => setPForm(f => ({ ...f, name: e.target.value }))} />
                 <button className="btn-secondary flex items-center gap-1 shrink-0 text-sm px-3"
                   onClick={() => setShowDropdown(d => !d)}>
@@ -1312,7 +1312,7 @@ export function Peptide() {
             {/* ── 2. Wirkstoff & Rekonstitution ──────────────────────────── */}
             <div className="px-5 py-4 border-b border-slate-800 space-y-3">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Droplets size={12} /> Wirkstoff & Rekonstitution
+                <Droplets size={12} /> {t('wirkstoff_rekonstitution')}
               </p>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1329,7 +1329,7 @@ export function Peptide() {
                   )}
                 </div>
                 <div>
-                  <label className="label">Zugefügte Flüssigkeit (mL)</label>
+                  <label className="label">{t('zugefuegte_fl_ml')}</label>
                   <input className="input" type="number" step="0.1" placeholder="z.B. 2"
                     value={pForm.reconstitution_ml} onChange={e => setPForm(f => ({ ...f, reconstitution_ml: e.target.value }))} />
                 </div>
@@ -1337,14 +1337,14 @@ export function Peptide() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Datum Rekonstitution</label>
+                  <label className="label">{t('datum_rekonstitution')}</label>
                   <input className="input" type="date" value={pForm.reconstitution_date}
                     onChange={e => setPForm(f => ({ ...f, reconstitution_date: e.target.value }))} />
                 </div>
               </div>
 
               <div>
-                <label className="label">Haltbarkeit nach Rekonstitution</label>
+                <label className="label">{t('haltbarkeit')}</label>
                 <div className="flex gap-2 flex-wrap mb-2">
                   {EXPIRY_PRESETS.map(d => (
                     <button key={d} type="button"
@@ -1378,7 +1378,7 @@ export function Peptide() {
                 <Package size={12} /> Bestand
               </p>
               <div>
-                <label className="label">Vorrätige Vials</label>
+                <label className="label">{t('vorraetige_vials')}</label>
                 {isLinked ? (
                   <div className="input bg-slate-800/30 text-slate-300 flex items-center justify-between cursor-default">
                     <span>{pForm.vials_in_stock}</span>
@@ -1391,7 +1391,7 @@ export function Peptide() {
                 <p className="text-slate-600 text-xs mt-1">
                   {isLinked
                     ? 'Wird aus dem Inventar übernommen. Im Inventar anpassen falls nötig.'
-                    : 'Beim ersten Speichern wird dieser Wert als 100%-Basis gemerkt.'}
+                    : t('basis_info')}
                 </p>
               </div>
             </div>
@@ -1482,7 +1482,7 @@ export function Peptide() {
                 💉 Dosierung & Applikation
               </p>
               <div>
-                <label className="label">Standard-Dosis</label>
+                <label className="label">{t('standard_dosis_label')}</label>
                 <div className="flex gap-2">
                   <input className="input flex-1" type="number" placeholder="z.B. 500"
                     value={pForm.default_dose} onChange={e => setPForm(f => ({ ...f, default_dose: e.target.value }))} />
@@ -1491,7 +1491,7 @@ export function Peptide() {
                     {UNITS.map(u => <option key={u}>{u}</option>)}
                   </select>
                 </div>
-                <p className="text-slate-600 text-xs mt-1">Fallback wenn kein Zyklus aktiv ist. Aktive Zyklen überschreiben diese Dosis.</p>
+                <p className="text-slate-600 text-xs mt-1">{t('fallback_info')}</p>
               </div>
               <div>
                 <label className="label">Applikationsart</label>
@@ -1501,7 +1501,7 @@ export function Peptide() {
                 </select>
               </div>
               <div>
-                <label className="label">Notizen (optional)</label>
+                <label className="label">{t('notizen_optional')}</label>
                 <textarea className="input resize-none" rows={2}
                   value={pForm.notes} onChange={e => setPForm(f => ({ ...f, notes: e.target.value }))} />
               </div>
@@ -1528,20 +1528,20 @@ export function Peptide() {
             <div>
               <div className="flex items-center gap-2">
                 <CalendarDays size={18} className="text-violet-400" />
-                <h2 className="text-lg font-bold">{editingCycleId ? 'Zyklus bearbeiten' : 'Neuer Zyklus'}</h2>
+                <h2 className="text-lg font-bold">{editingCycleId ? t('zyklus_bearbeiten') : t('neuer_zyklus_title')}</h2>
               </div>
               {cycleForPeptide && <p className="text-sky-400 text-sm mt-0.5 ml-6">{cycleForPeptide.name}</p>}
             </div>
 
             <div>
-              <label className="label">Zyklus-Name</label>
+              <label className="label">{t('zyklus_name')}</label>
               <input className="input" placeholder="z.B. Heilungsprotokoll"
                 value={cForm.name} onChange={e => setCForm(f => f ? { ...f, name: e.target.value } : f)} />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="label">Dosis</label>
+                <label className="label">{t('dosis_label')}</label>
                 <input className="input" type="number" value={cForm.dose}
                   onChange={e => setCForm(f => f ? { ...f, dose: e.target.value } : f)} />
               </div>
@@ -1563,7 +1563,7 @@ export function Peptide() {
             </div>
 
             <div>
-              <label className="label">Frequenz</label>
+              <label className="label">{t('frequenz')}</label>
               <select className="select" value={cForm.frequency}
                 onChange={e => setCForm(f => f ? { ...f, frequency: e.target.value } : f)}>
                 {BASE_FREQUENCIES.map(freq => <option key={freq}>{freq}</option>)}
@@ -1617,7 +1617,7 @@ export function Peptide() {
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="label mb-0">Einnahmezeitpunkt</label>
+                <label className="label mb-0">{t('einnahmezeitpunkt')}</label>
                 <span className="text-xs text-slate-500">optional</span>
               </div>
               <div className="grid grid-cols-4 gap-2">
@@ -1703,14 +1703,14 @@ export function Peptide() {
               <div className="flex items-center gap-2">
                 <TrendingUp size={18} className="text-orange-400" />
                 <h2 className="text-lg font-bold">
-                  {editingEscId ? 'Dosiserhöhung bearbeiten' : 'Dosiserhöhung hinzufügen'}
+                  {editingEscId ? t('esc_bearbeiten') : t('esc_hinzufuegen')}
                 </h2>
               </div>
               {escForCycle && <p className="text-slate-400 text-sm mt-0.5 ml-6">{escForCycle.name}</p>}
             </div>
 
             <div>
-              <label className="label">Dosis wird erhöht um *</label>
+              <label className="label">{t('dosis_erhoeht_um')}</label>
               <div className="flex gap-2">
                 <input className="input flex-1" type="number" placeholder="z.B. 100"
                   value={eForm.increase_amount}
@@ -1750,7 +1750,7 @@ export function Peptide() {
             )}
             {eForm.start_type === 'after_days' && (
               <div>
-                <label className="label">Anzahl Tage nach Zyklusstart</label>
+                <label className="label">{t('tage_nach_start')}</label>
                 <div className="flex items-center gap-3">
                   <span className="text-slate-400 text-sm shrink-0">Nach</span>
                   <input className="input w-24" type="number" min="1"
@@ -1762,7 +1762,7 @@ export function Peptide() {
             )}
             {eForm.start_type === 'after_weeks' && (
               <div>
-                <label className="label">Anzahl Wochen nach Zyklusstart</label>
+                <label className="label">{t('wochen_nach_start')}</label>
                 <div className="flex items-center gap-3">
                   <span className="text-slate-400 text-sm shrink-0">Nach</span>
                   <input className="input w-24" type="number" min="1"
@@ -1774,7 +1774,7 @@ export function Peptide() {
             )}
 
             <div>
-              <label className="label">Notizen (optional)</label>
+              <label className="label">{t('notizen_optional')}</label>
               <textarea className="input resize-none" rows={2}
                 placeholder="z.B. schrittweise erhöhen, Verträglichkeit prüfen..."
                 value={eForm.notes}
@@ -1795,21 +1795,21 @@ export function Peptide() {
       {verwerfenTarget && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4">
           <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-sm w-full space-y-4">
-            <h3 className="font-bold text-white text-lg">Peptid wirklich verwerfen?</h3>
+            <h3 className="font-bold text-white text-lg">{t('peptid_verwerfen_title')}</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
-              <span className="text-white font-medium">{verwerfenTarget.name}</span> wird aus deiner Liste entfernt.
+              <span className="text-white font-medium">{verwerfenTarget.name}</span> {t('peptid_verwerfen_desc')}
             </p>
             <label className="flex items-center gap-2.5 text-sm text-slate-400 cursor-pointer">
               <input type="checkbox" className="w-4 h-4 rounded accent-sky-500"
                 checked={verwerfenDontAsk}
                 onChange={e => setVerwerfenDontAsk(e.target.checked)} />
-              Nicht erneut fragen
+              {t('nicht_mehr_fragen')}
             </label>
             <div className="flex gap-3 pt-1">
-              <button className="btn-secondary flex-1" onClick={() => setVerwerfenTarget(null)}>Nein</button>
+              <button className="btn-secondary flex-1" onClick={() => setVerwerfenTarget(null)}>{t('no')}</button>
               <button onClick={confirmVerwerfen}
                 className="flex-1 py-2.5 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors text-sm">
-                Ja, verwerfen
+                {t('yes')}
               </button>
             </div>
           </div>
@@ -1820,22 +1820,21 @@ export function Peptide() {
       {rekonstitutionTarget && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4">
           <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-sm w-full space-y-4">
-            <h3 className="font-bold text-white text-lg">Erneut rekonstituieren?</h3>
+            <h3 className="font-bold text-white text-lg">{t('rekonstitution_wdh_title')}</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Das Datum der Rekonstitution wird auf <span className="text-white font-medium">heute</span> gesetzt und
-              ein Vial wird aus dem Inventar abgezogen.
+              {t('rekonstitution_wdh_desc')}
             </p>
             <label className="flex items-center gap-2.5 text-sm text-slate-400 cursor-pointer">
               <input type="checkbox" className="w-4 h-4 rounded accent-sky-500"
                 checked={rekonstitutionDontAsk}
                 onChange={e => setRekonstitutionDontAsk(e.target.checked)} />
-              Nicht erneut fragen
+              {t('nicht_mehr_fragen')}
             </label>
             <div className="flex gap-3 pt-1">
-              <button className="btn-secondary flex-1" onClick={() => setRekonstitutionTarget(null)}>Nein</button>
+              <button className="btn-secondary flex-1" onClick={() => setRekonstitutionTarget(null)}>{t('no')}</button>
               <button onClick={confirmRekonstitution}
                 className="flex-1 py-2.5 px-4 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-semibold transition-colors text-sm">
-                Ja, wiederholen
+                {t('yes')}
               </button>
             </div>
           </div>
@@ -1890,7 +1889,7 @@ export function Peptide() {
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Dosierung</p>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="bg-slate-800/60 rounded-xl p-3">
-                      <p className="text-slate-400 text-xs">Standard-Dosis</p>
+                      <p className="text-slate-400 text-xs">{t('standard_dosis_label')}</p>
                       <p className="text-white font-semibold mt-0.5">
                         {p.default_dose ? `${p.default_dose} ${p.default_unit}` : '—'}
                       </p>
@@ -1905,7 +1904,7 @@ export function Peptide() {
                 {/* Rekonstitution */}
                 {(p.vial_amount_mg || p.reconstitution_ml) && (
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Wirkstoff & Rekonstitution</p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('wirkstoff_rekonstitution')}</p>
                     <div className="grid grid-cols-3 gap-2">
                       {p.vial_amount_mg && (
                         <div className="bg-slate-800/60 rounded-xl p-3 text-center">
@@ -1936,7 +1935,7 @@ export function Peptide() {
                     <div className="grid grid-cols-2 gap-2">
                       {p.reconstitution_date && (
                         <div className="bg-slate-800/60 rounded-xl p-3">
-                          <p className="text-slate-400 text-xs">Rekonstitution</p>
+                          <p className="text-slate-400 text-xs">{t('datum_rekonstitution')}</p>
                           <p className="text-white font-semibold mt-0.5">{format(parseISO(p.reconstitution_date), 'dd.MM.yyyy')}</p>
                         </div>
                       )}

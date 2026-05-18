@@ -114,13 +114,13 @@ function cycleTimeLabel(c: Cycle, t: (key: string) => string): { emoji: string; 
   return null
 }
 
-function timeLabel(dateStr: string): string {
+function timeLabel(dateStr: string, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const date = new Date(dateStr)
   const h    = date.getHours()
   const time = format(date, 'HH:mm')
-  if (h >= 5  && h < 12) return `Morgens · ${time} Uhr`
-  if (h >= 12 && h < 18) return `Mittags · ${time} Uhr`
-  if (h >= 18)            return `Abends · ${time} Uhr`
+  if (h >= 5  && h < 12) return t('morgens_uhr', { time })
+  if (h >= 12 && h < 18) return t('mittags_uhr', { time })
+  if (h >= 18)            return t('abends_uhr', { time })
   return `${time} Uhr`
 }
 
@@ -193,7 +193,7 @@ export function Dashboard() {
   const confirmDose = async (id: string, taken: boolean) => {
     await supabase.from('dose_logs').update({ taken }).eq('id', id)
     loadLogs()
-    if (taken) toast.success('Einnahme bestätigt ✓')
+    if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast('Einnahme übersprungen', { icon: '⏭️' })
   }
 
@@ -446,7 +446,7 @@ export function Dashboard() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-slate-500 text-xs">{timeLabel(log.logged_at)}</span>
+                      <span className="text-slate-500 text-xs">{timeLabel(log.logged_at, t)}</span>
                       {log.notes && <span className="text-slate-600 text-xs truncate">· {log.notes}</span>}
                     </div>
                   </div>
