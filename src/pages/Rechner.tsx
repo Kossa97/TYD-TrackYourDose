@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Calculator, ChevronDown, FlaskConical, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -52,7 +53,7 @@ function calculate(
 }
 
 // ─── Spritzenskala ────────────────────────────────────────────────────────────
-function SyringeScale({ drawUnits, maxUnits }: { drawUnits: number; maxUnits: number }) {
+function SyringeScale({ drawUnits, maxUnits, t }: { drawUnits: number; maxUnits: number; t: (key: string) => string }) {
   const pct        = Math.min(100, Math.max(0, (drawUnits / maxUnits) * 100))
   const majorStep  = maxUnits <= 50 ? 5 : 10
   const minorStep  = majorStep / 2
@@ -67,7 +68,7 @@ function SyringeScale({ drawUnits, maxUnits }: { drawUnits: number; maxUnits: nu
       {/* Label */}
       <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-center mb-1"
         style={{ color: 'rgba(0,204,245,0.55)' }}>
-        Einheiten aufziehen
+        {t('einheiten_aufziehen')}
       </p>
 
       {/* Large HUD number */}
@@ -165,6 +166,7 @@ function SyringeScale({ drawUnits, maxUnits }: { drawUnits: number; maxUnits: nu
 
 // ─── Haupt-Komponente ─────────────────────────────────────────────────────────
 export function Rechner() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [vialMg,    setVialMg]    = useState('')
   const [reconMl,   setReconMl]   = useState('2')
@@ -218,19 +220,19 @@ export function Rechner() {
     <div>
       <div className="flex items-center gap-2 mb-5">
         <Calculator size={20} className="text-sky-400" />
-        <h1 className="text-xl font-bold">Rechner</h1>
+        <h1 className="text-xl font-bold">{t('rechner_title')}</h1>
       </div>
 
       {/* ── Ergebnis-Karte ─────────────────────────────────────────────── */}
       <div className="card mb-4">
         {result ? (
           <>
-            <SyringeScale drawUnits={result.drawUnits} maxUnits={result.maxUnits} />
+            <SyringeScale drawUnits={result.drawUnits} maxUnits={result.maxUnits} t={t} />
             <div className="grid grid-cols-3 gap-2">
               {[
-                { value: result.concMgPerMl, unit: 'mg/mL',   label: 'Konzentration', sub: null },
-                { value: `${result.fillPct}%`, unit: 'Spritze', label: 'gefüllt',     sub: `${result.doseMl} mL` },
-                { value: String(result.dosesPerVial), unit: 'Dosen', label: 'pro Vial', sub: null },
+                { value: result.concMgPerMl, unit: 'mg/mL',   label: t('konzentration'), sub: null },
+                { value: `${result.fillPct}%`, unit: 'Spritze', label: t('gefuellt'),     sub: `${result.doseMl} mL` },
+                { value: String(result.dosesPerVial), unit: 'Dosen', label: t('pro_vial'), sub: null },
               ].map(({ value, unit, label, sub }) => (
                 <div key={label} style={{
                   background: 'rgba(0,10,24,0.82)',
@@ -256,7 +258,7 @@ export function Rechner() {
         ) : (
           <div className="text-center py-8">
             <Calculator size={32} className="mx-auto mb-3 text-slate-700" />
-            <p className="text-slate-500 text-sm">Felder ausfüllen um das Ergebnis zu sehen</p>
+            <p className="text-slate-500 text-sm">{t('felder_ausfullen')}</p>
           </div>
         )}
       </div>
@@ -273,7 +275,7 @@ export function Rechner() {
             >
               <span className="text-slate-300 text-sm font-medium flex items-center gap-1.5">
                 <FlaskConical size={13} className="text-sky-400" />
-                Peptid übernehmen
+                {t('peptid_uebernehmen')}
               </span>
               <div className="flex items-center gap-1.5">
                 {selectedPeptide ? (
@@ -287,7 +289,7 @@ export function Rechner() {
                   </>
                 ) : (
                   <>
-                    <span className="text-slate-500 text-sm">auswählen</span>
+                    <span className="text-slate-500 text-sm">{t('auswaehlen')}</span>
                     <ChevronDown size={14} className={`text-slate-400 transition-transform ${peptideOpen ? 'rotate-180' : ''}`} />
                   </>
                 )}
@@ -315,7 +317,7 @@ export function Rechner() {
             )}
             {selectedPeptide && (
               <p className="text-xs text-slate-600 px-1 pb-2 -mt-1">
-                Wirkstoff und Flüssigkeit wurden übernommen — du kannst sie unten anpassen.
+                {t('wirkstoff_uebernommen')}
               </p>
             )}
           </div>
@@ -327,7 +329,7 @@ export function Rechner() {
             onClick={() => setSyringeOpen(o => !o)}
             className="w-full flex items-center justify-between py-3.5 px-1 text-left"
           >
-            <span className="text-slate-300 text-sm font-medium">Spritzengröße</span>
+            <span className="text-slate-300 text-sm font-medium">{t('spritzengroesse')}</span>
             <div className="flex items-center gap-1.5 text-slate-400 text-sm">
               <span>{currentSyringeLabel}</span>
               <ChevronDown size={14} className={`transition-transform ${syringeOpen ? 'rotate-180' : ''}`} />
@@ -348,7 +350,7 @@ export function Rechner() {
                 </button>
               ))}
               <div className="px-4 py-3 border-t border-slate-700">
-                <p className="text-xs text-slate-500 mb-2">Eigene Werte</p>
+                <p className="text-xs text-slate-500 mb-2">{t('eigene_werte')}</p>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <input className="input py-1.5 text-sm pr-7" type="number" step="0.1" placeholder="mL"
@@ -368,11 +370,11 @@ export function Rechner() {
 
         {/* Wirkstoff pro Vial */}
         <div className="flex items-center justify-between py-3.5 px-1">
-          <span className="text-slate-300 text-sm font-medium">Wirkstoff pro Vial</span>
+          <span className="text-slate-300 text-sm font-medium">{t('wirkstoff_pro_vial')}</span>
           <div className="relative w-32">
             <input
               className="input py-1.5 text-sm text-right pr-8"
-              type="number" placeholder="z.B. 10"
+              type="number" placeholder={t('eg_10')}
               value={vialMg} onChange={e => { setVialMg(e.target.value); setSelectedPeptide(null) }}
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">mg</span>
@@ -381,7 +383,7 @@ export function Rechner() {
 
         {/* Zugefügte Flüssigkeit */}
         <div className="flex items-center justify-between py-3.5 px-1">
-          <span className="text-slate-300 text-sm font-medium">Zugefügte Flüssigkeit</span>
+          <span className="text-slate-300 text-sm font-medium">{t('zugefuegte_fluessigkeit')}</span>
           <div className="relative w-32">
             <input
               className="input py-1.5 text-sm text-right pr-8"
@@ -394,12 +396,12 @@ export function Rechner() {
 
         {/* Dosis */}
         <div className="flex items-center justify-between py-3.5 px-1">
-          <span className="text-slate-300 text-sm font-medium">Dosis</span>
+          <span className="text-slate-300 text-sm font-medium">{t('dosis_label')}</span>
           <div className="flex gap-1.5 items-center">
             <div className="relative w-24">
               <input
                 className="input py-1.5 text-sm text-right"
-                type="number" placeholder="z.B. 500"
+                type="number" placeholder={t('eg_500')}
                 value={dose} onChange={e => setDose(e.target.value)}
               />
             </div>
@@ -415,7 +417,7 @@ export function Rechner() {
       </div>
 
       <p className="text-slate-600 text-xs text-center mt-4 px-4">
-        Nur zu Informationszwecken. Keine medizinische Beratung.
+        {t('info_disclaimer')}
       </p>
     </div>
   )

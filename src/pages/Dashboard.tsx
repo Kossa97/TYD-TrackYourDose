@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -104,10 +105,10 @@ function cycleIntakeMinutes(c: Cycle): number {
   return 25 * 60 // keine Zeit → ganz unten
 }
 
-function cycleTimeLabel(c: Cycle): { emoji: string; label: string } | null {
-  if (c.intake_time === 'morgens') return { emoji: '🌅', label: 'Morgens' }
-  if (c.intake_time === 'mittags') return { emoji: '☀️', label: 'Mittags' }
-  if (c.intake_time === 'abends')  return { emoji: '🌙', label: 'Abends' }
+function cycleTimeLabel(c: Cycle, t: (key: string) => string): { emoji: string; label: string } | null {
+  if (c.intake_time === 'morgens') return { emoji: '🌅', label: t('morgens') }
+  if (c.intake_time === 'mittags') return { emoji: '☀️', label: t('mittags') }
+  if (c.intake_time === 'abends')  return { emoji: '🌙', label: t('abends') }
   if (c.intake_time === 'custom' && c.intake_time_custom)
     return { emoji: '🕐', label: c.intake_time_custom + ' Uhr' }
   return null
@@ -124,6 +125,7 @@ function timeLabel(dateStr: string): string {
 }
 
 export function Dashboard() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [logs, setLogs] = useState<DoseLog[]>([])
@@ -228,7 +230,7 @@ export function Dashboard() {
       <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden mb-4">
         {/* Wochentag-Kopf */}
         <div className="grid grid-cols-7 border-b border-slate-800">
-          {WEEKDAY_LABELS.map(d => (
+          {[t('mon'),t('tue'),t('wed'),t('thu'),t('fri'),t('sat'),t('sun')].map(d => (
             <div key={d} className="text-center text-slate-500 text-xs font-medium py-2">{d}</div>
           ))}
         </div>
@@ -313,16 +315,16 @@ export function Dashboard() {
                   style={{ backgroundColor: getPeptideColor(i), boxShadow: `0 0 4px ${getPeptideColor(i)}88` }} />
               ))}
             </div>
-            je Punkt = ein Peptid
+            {t('per_dot_peptid')}
           </div>
           <div className="flex items-center gap-1.5" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.30)' }}>
             <span className="w-2 h-2 rounded-sm" style={{
               background: 'rgba(120,80,255,0.25)',
               border: '1px solid rgba(120,80,255,0.35)',
-            }} /> Zyklus
+            }} /> {t('zyklus')}
           </div>
           <div className="flex items-center gap-1.5" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.30)' }}>
-            <TrendingUp size={10} style={{ color: '#f59e0b' }} /> Erhöhung
+            <TrendingUp size={10} style={{ color: '#f59e0b' }} /> {t('erhoehung')}
           </div>
         </div>
       </div>
@@ -334,7 +336,7 @@ export function Dashboard() {
           <CalendarDays size={15} className="text-slate-400" />
           <h2 className="font-semibold text-slate-200 text-sm">
             {isTodaySelected
-              ? 'Heutiges Protokoll'
+              ? t('heutiges_protokoll')
               : format(selectedDay, 'EEEE, d. MMMM', { locale: de })}
           </h2>
           {!isTodaySelected && (
@@ -386,7 +388,7 @@ export function Dashboard() {
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       {(() => {
-                        const tl = cycleTimeLabel(c)
+                        const tl = cycleTimeLabel(c, t)
                         return tl ? (
                           <span className="text-xs text-amber-400 flex items-center gap-1">
                             {tl.emoji} {tl.label}
@@ -434,12 +436,12 @@ export function Dashboard() {
                       <span className="text-slate-500 text-xs">{log.method}</span>
                       {log.taken === true && (
                         <span className="flex items-center gap-0.5 text-emerald-400 text-xs font-medium">
-                          <Check size={11} /> Eingenommen
+                          <Check size={11} /> {t('eingenommen')}
                         </span>
                       )}
                       {log.taken === false && (
                         <span className="flex items-center gap-0.5 text-red-400 text-xs font-medium">
-                          <XCircle size={11} /> Übersprungen
+                          <XCircle size={11} /> {t('uebersprungen')}
                         </span>
                       )}
                     </div>
@@ -460,12 +462,12 @@ export function Dashboard() {
                     <button
                       onClick={() => confirmDose(log.id, true)}
                       className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
-                      <Check size={11} /> Eingenommen
+                      <Check size={11} /> {t('eingenommen')}
                     </button>
                     <button
                       onClick={() => confirmDose(log.id, false)}
                       className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">
-                      <XCircle size={11} /> Nicht eingenommen
+                      <XCircle size={11} /> {t('uebersprungen')}
                     </button>
                   </div>
                 )}

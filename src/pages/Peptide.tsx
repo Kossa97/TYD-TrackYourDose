@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -254,6 +255,7 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
 
 // ─── Hauptkomponente ──────────────────────────────────────────────────────────
 export function Peptide() {
+  const { t } = useTranslation()
   const { user } = useAuth()
 
   // ── Bestätigungs-Dialoge ──────────────────────────────────────────────────
@@ -733,7 +735,7 @@ export function Peptide() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'inventar' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-300'
             }`}>
-            <Archive size={14} /> Inventar
+            <Archive size={14} /> {t('inventar')}
             {inventory.length > 0 ? (
               <span className="ml-0.5 bg-slate-600 text-slate-300 text-xs rounded-full px-1.5 py-px leading-none">
                 {inventory.length}
@@ -747,7 +749,7 @@ export function Peptide() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'peptide' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-300'
             }`}>
-            <FlaskConical size={14} /> Meine Peptide
+            <FlaskConical size={14} /> {t('meine_peptide')}
             {peptides.length > 0 && (
               <span className="ml-0.5 bg-slate-600 text-slate-300 text-xs rounded-full px-1.5 py-px leading-none">
                 {peptides.length}
@@ -759,11 +761,11 @@ export function Peptide() {
         {activeTab === 'inventar' ? (
           <button data-ob="btn-einlagern" className="btn-primary flex items-center gap-1.5 text-sm py-2"
             onClick={() => { setEditingInvId(null); setIForm(emptyInventoryForm()); setInvBatchFile(null); setShowInvDropdown(false); setShowInvForm(true) }}>
-            <Plus size={15} /> Einlagern
+            <Plus size={15} /> {t('einlagern')}
           </button>
         ) : (
           <button className="btn-primary flex items-center gap-1.5 text-sm py-2" onClick={handleNewPeptide}>
-            <Plus size={15} /> Neu
+            <Plus size={15} /> {t('new')}
           </button>
         )}
       </div>
@@ -774,10 +776,9 @@ export function Peptide() {
           {inventory.length === 0 ? (
             <div className="card text-center py-12 text-slate-500">
               <Archive size={36} className="mx-auto mb-3 opacity-30" />
-              <p className="font-semibold text-slate-400 mb-1">Noch kein Inventar vorhanden</p>
+              <p className="font-semibold text-slate-400 mb-1">{t('kein_inventar')}</p>
               <p className="text-xs text-slate-600 mb-5 px-6 leading-relaxed">
-                Lagere hier zuerst deine rohen, lyophilisierten Peptid-Vials ein.
-                Danach kannst du daraus ein rekonstitutiertes Peptid anlegen.
+                {t('kein_inventar_desc')}
               </p>
               <button className="btn-primary flex items-center gap-2 mx-auto"
                 onClick={() => { setEditingInvId(null); setIForm(emptyInventoryForm()); setShowInvForm(true) }}>
@@ -832,7 +833,7 @@ export function Peptide() {
                         data-ob="btn-peptid-anlegen"
                         onClick={() => { createPeptideFromInventory(item); dismissAnlegenBtn() }}
                         className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-500/15 border border-sky-500/30 text-sky-400 hover:bg-sky-500/25 transition-colors text-xs font-medium">
-                        <FlaskConical size={11} /> Peptid anlegen
+                        <FlaskConical size={11} /> {t('peptid_anlegen')}
                         {anlegenBtnNew && <NewDot />}
                       </button>
                       <div className="flex gap-1">
@@ -877,7 +878,7 @@ export function Peptide() {
           {peptides.length === 0 && (
             <div className="card text-center py-10 text-slate-500">
               <FlaskConical size={32} className="mx-auto mb-2 opacity-40" />
-              <p className="mb-1">Noch keine Peptide rekonstituiert</p>
+              <p className="mb-1">{t('keine_peptide')}</p>
               {inventory.length === 0 ? (
                 <>
                   <p className="text-xs text-slate-600 mb-4">Lege zuerst ein Peptid im Inventar an.</p>
@@ -986,7 +987,7 @@ export function Peptide() {
                       data-ob="btn-zyklus-add"
                       onClick={() => { openNewCycle(p); dismissZyklusBtn() }}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/15 border border-violet-500/30 text-violet-400 hover:bg-violet-500/25 hover:border-violet-400/50 transition-colors text-xs font-medium">
-                      <Plus size={12} /> Zyklus hinzufügen
+                      <Plus size={12} /> {t('zyklus_hinzufuegen')}
                       {zyklusBtnNew && <NewDot />}
                     </button>
                   </div>
@@ -1157,12 +1158,12 @@ export function Peptide() {
               {/* Batch & Herkunft */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Batch-Nummer</label>
+                  <label className="label">{t('batch')}</label>
                   <input className="input" placeholder="z.B. BPC-2024-01"
                     value={iForm.batch_number} onChange={e => setIForm(f => ({ ...f, batch_number: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="label">Quelle / Hersteller</label>
+                  <label className="label">{t('quelle')}</label>
                   <input className="input" placeholder="z.B. Peptide Sciences"
                     value={iForm.batch_source} onChange={e => setIForm(f => ({ ...f, batch_source: e.target.value }))} />
                 </div>
@@ -1203,10 +1204,10 @@ export function Peptide() {
             </div>
 
             <div className="px-5 py-4 flex gap-3">
-              <button className="btn-secondary flex-1" onClick={() => setShowInvForm(false)}>Abbrechen</button>
+              <button className="btn-secondary flex-1" onClick={() => setShowInvForm(false)}>{t('cancel')}</button>
               <button className="btn-primary flex-1" onClick={saveInventory}
                 disabled={savingInv || uploadingInvFile}>
-                {uploadingInvFile ? 'Lädt hoch…' : savingInv ? 'Speichert…' : 'Einlagern'}
+                {uploadingInvFile ? 'Lädt hoch…' : savingInv ? t('loading') : t('einlagern')}
               </button>
             </div>
           </div>
@@ -1403,14 +1404,14 @@ export function Peptide() {
               {isLinked ? (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="label">Batch-Nummer</label>
+                    <label className="label">{t('batch')}</label>
                     <div className="input bg-slate-800/30 text-slate-300 flex items-center justify-between cursor-default">
                       <span className="truncate">{pForm.batch_number || '—'}</span>
                       <Lock size={9} className="text-slate-600 shrink-0 ml-1"/>
                     </div>
                   </div>
                   <div>
-                    <label className="label">Quelle / Hersteller</label>
+                    <label className="label">{t('quelle')}</label>
                     <div className="input bg-slate-800/30 text-slate-300 flex items-center justify-between cursor-default">
                       <span className="truncate">{pForm.batch_source || '—'}</span>
                       <Lock size={9} className="text-slate-600 shrink-0 ml-1"/>
@@ -1430,12 +1431,12 @@ export function Peptide() {
                 <>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="label">Batch-Nummer</label>
+                      <label className="label">{t('batch')}</label>
                       <input className="input" placeholder="z.B. BPC-2024-01"
                         value={pForm.batch_number} onChange={e => setPForm(f => ({ ...f, batch_number: e.target.value }))} />
                     </div>
                     <div>
-                      <label className="label">Quelle / Hersteller</label>
+                      <label className="label">{t('quelle')}</label>
                       <input className="input" placeholder="z.B. Peptide Sciences"
                         value={pForm.batch_source} onChange={e => setPForm(f => ({ ...f, batch_source: e.target.value }))} />
                     </div>
@@ -1507,10 +1508,10 @@ export function Peptide() {
             </div>
 
             <div className="px-5 py-4 flex gap-3">
-              <button className="btn-secondary flex-1" onClick={() => setShowPeptideForm(false)}>Abbrechen</button>
+              <button className="btn-secondary flex-1" onClick={() => setShowPeptideForm(false)}>{t('cancel')}</button>
               <button className="btn-primary flex-1" onClick={savePeptide}
                 disabled={savingPeptide || uploadingFile}>
-                {uploadingFile ? 'Lädt hoch…' : savingPeptide ? 'Speichert…' : 'Speichern'}
+                {uploadingFile ? 'Lädt hoch…' : savingPeptide ? t('loading') : t('save')}
               </button>
             </div>
           </div>
@@ -1682,9 +1683,9 @@ export function Peptide() {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button className="btn-secondary flex-1" onClick={() => setShowCycleForm(false)}>Abbrechen</button>
+              <button className="btn-secondary flex-1" onClick={() => setShowCycleForm(false)}>{t('cancel')}</button>
               <button className="btn-primary flex-1" onClick={saveCycle} disabled={savingCycle}>
-                {savingCycle ? 'Speichert...' : 'Speichern'}
+                {savingCycle ? t('loading') : t('save')}
               </button>
             </div>
           </div>
@@ -1781,9 +1782,9 @@ export function Peptide() {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button className="btn-secondary flex-1" onClick={() => setShowEscForm(false)}>Abbrechen</button>
+              <button className="btn-secondary flex-1" onClick={() => setShowEscForm(false)}>{t('cancel')}</button>
               <button className="btn-primary flex-1" onClick={saveEsc} disabled={savingEsc}>
-                {savingEsc ? 'Speichert...' : 'Speichern'}
+                {savingEsc ? t('loading') : t('save')}
               </button>
             </div>
           </div>
