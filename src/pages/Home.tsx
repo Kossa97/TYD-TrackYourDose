@@ -42,7 +42,7 @@ const TILES = [
     icon: User,         label: 'Profil',       desc: 'Einstellungen & Sharing',
     path: '/profil',                color: '#f43f5e', bg: 'rgba(244,63,94,0.10)',
   },
-] as const
+]
 
 export function Home() {
   const { user } = useAuth()
