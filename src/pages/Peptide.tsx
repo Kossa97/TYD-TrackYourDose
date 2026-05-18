@@ -826,7 +826,7 @@ export function Peptide() {
                       <button
                         data-ob="btn-peptid-anlegen"
                         onClick={() => { createPeptideFromInventory(item); dismissAnlegenBtn() }}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-500/15 border border-sky-500/30 text-sky-400 hover:bg-sky-500/25 transition-colors text-xs font-medium whitespace-nowrap">
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-500/15 border border-sky-500/30 text-sky-400 hover:bg-sky-500/25 transition-colors text-xs font-medium">
                         <FlaskConical size={11} /> Peptid anlegen
                         {anlegenBtnNew && <NewDot />}
                       </button>
