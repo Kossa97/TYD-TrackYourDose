@@ -1361,15 +1361,15 @@ export function Peptide() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="label">{t('datum_rekonstitution')}</label>
-                  <input className="input" type="date" value={pForm.reconstitution_date}
-                    onChange={e => setPForm(f => ({ ...f, reconstitution_date: e.target.value }))} />
+              <div data-ob="pep-expiry" className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="label">{t('datum_rekonstitution')}</label>
+                    <input className="input" type="date" value={pForm.reconstitution_date}
+                      onChange={e => setPForm(f => ({ ...f, reconstitution_date: e.target.value }))} />
+                  </div>
                 </div>
-              </div>
-
-              <div data-ob="pep-expiry">
+                <div>
                 <label className="label">{t('haltbarkeit')}</label>
                 <div className="flex gap-2 flex-wrap mb-2">
                   {EXPIRY_PRESETS.map(d => (
@@ -1394,6 +1394,7 @@ export function Peptide() {
                     </p>
                   )
                 })()}
+                </div>
               </div>
             </div>
 
