@@ -64,12 +64,17 @@ function SpotlightScrim({ hole }: { hole: DOMRect | null }) {
   const h = hole.height + SPOT_PAD * 2
   const r = 10
 
+  // Ring is rendered OUTSIDE #ob-scrim-root so its z-index is in the global stacking context.
+  // Inside #ob-scrim-root (z-index 10000), any child z-index is capped by the parent — the nav
+  // and modals at 10030/10040 would cover a ring at 10045 if it were nested inside the scrim root.
   return (
-    <div id="ob-scrim-root" aria-hidden>
-      <div className="ob-scrim-pane" style={{ ...paneStyle, zIndex: OB_Z.scrim, top: 0, left: 0, right: 0, height: y }} />
-      <div className="ob-scrim-pane" style={{ ...paneStyle, zIndex: OB_Z.scrim, top: y, left: 0, width: x, height: h }} />
-      <div className="ob-scrim-pane" style={{ ...paneStyle, zIndex: OB_Z.scrim, top: y, left: x + w, right: 0, height: h }} />
-      <div className="ob-scrim-pane" style={{ ...paneStyle, zIndex: OB_Z.scrim, top: y + h, left: 0, right: 0, bottom: 0 }} />
+    <>
+      <div id="ob-scrim-root" aria-hidden>
+        <div className="ob-scrim-pane" style={{ ...paneStyle, zIndex: OB_Z.scrim, top: 0, left: 0, right: 0, height: y }} />
+        <div className="ob-scrim-pane" style={{ ...paneStyle, zIndex: OB_Z.scrim, top: y, left: 0, width: x, height: h }} />
+        <div className="ob-scrim-pane" style={{ ...paneStyle, zIndex: OB_Z.scrim, top: y, left: x + w, right: 0, height: h }} />
+        <div className="ob-scrim-pane" style={{ ...paneStyle, zIndex: OB_Z.scrim, top: y + h, left: 0, right: 0, bottom: 0 }} />
+      </div>
       <div
         className="ob-highlight-ring pointer-events-none"
         style={{
@@ -82,7 +87,7 @@ function SpotlightScrim({ hole }: { hole: DOMRect | null }) {
           borderRadius: r,
         }}
       />
-    </div>
+    </>
   )
 }
 
@@ -254,41 +259,6 @@ export function Onboarding() {
     return () => el.removeAttribute('data-ob-active')
   }, [step, active, needsLanguagePick, meta, showSpotlight])
 
-  // Auto-advance: Enter key in inputs, value change in selects (for 'next' advance steps)
-  useEffect(() => {
-    if (!active || needsLanguagePick || meta?.advance !== 'next' || !showSpotlight) return
-    const el = getOnboardingInteractionEl(meta)
-    if (!el) return
-
-    const inputs = el.tagName === 'INPUT'
-      ? [el as HTMLInputElement]
-      : [...el.querySelectorAll<HTMLInputElement>('input')]
-    const selects = el.tagName === 'SELECT'
-      ? [el as HTMLSelectElement]
-      : [...el.querySelectorAll<HTMLSelectElement>('select')]
-
-    if (inputs.length === 0 && selects.length === 0) return
-
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        e.preventDefault()
-        window.setTimeout(() => nextRef.current(), 80)
-      }
-    }
-    let selectTimer: ReturnType<typeof setTimeout>
-    const handleSelectChange = () => {
-      clearTimeout(selectTimer)
-      selectTimer = window.setTimeout(() => nextRef.current(), 600)
-    }
-
-    inputs.forEach(inp => inp.addEventListener('keydown', handleKey))
-    selects.forEach(sel => sel.addEventListener('change', handleSelectChange))
-    return () => {
-      inputs.forEach(inp => inp.removeEventListener('keydown', handleKey))
-      selects.forEach(sel => sel.removeEventListener('change', handleSelectChange))
-      clearTimeout(selectTimer)
-    }
-  }, [step, active, needsLanguagePick, meta, showSpotlight])
 
   useEffect(() => {
     if (!active || needsLanguagePick) return
@@ -404,13 +374,8 @@ export function Onboarding() {
             {t('skip')}
           </button>
           <button type="button" onClick={() => nextRef.current()} className="ob-primary-btn flex-1 justify-center">
-            {isLast
-              ? t('finish')
-              : s.advance === 'click'
-                ? <>{t('ob_continue')} <ChevronRight size={14} /></>
-                : isModalTarget
-                  ? '✓'
-                  : <>{t('next')} <ChevronRight size={14} /></>}
+            {isLast ? t('finish') : s.advance === 'click' ? t('ob_continue') : t('next')}
+            <ChevronRight size={14} />
           </button>
         </div>
 
@@ -424,9 +389,44 @@ export function Onboarding() {
     </div>
   )
 
+  // Confirm button: inline right-edge overlay on the highlighted field for modal form steps
+  const confirmBtn =
+    isModalTarget && meta?.advance === 'next' && targetRect
+      ? createPortal(
+          <button
+            type="button"
+            onClick={() => nextRef.current()}
+            aria-label="Confirm"
+            style={{
+              position: 'fixed',
+              zIndex: OB_Z.panel - 2,
+              top: targetRect.top,
+              left: targetRect.right - 52,
+              width: 52,
+              height: targetRect.height,
+              background: 'linear-gradient(135deg, rgba(0,204,245,0.97), rgba(0,110,190,0.97))',
+              border: 'none',
+              borderRadius: '0 10px 10px 0',
+              color: '#07091a',
+              fontWeight: 800,
+              fontSize: '1.15rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '-4px 0 16px rgba(0,204,245,0.25)',
+            }}
+          >
+            ✓
+          </button>,
+          document.body,
+        )
+      : null
+
   return (
     <>
       {createPortal(scrimLayer, document.body)}
+      {confirmBtn}
       {createPortal(calloutLayer, document.body)}
     </>
   )

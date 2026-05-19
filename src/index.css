@@ -157,6 +157,16 @@ body.onboarding-active [data-ob-active] {
   position: relative !important;
   z-index: 10032 !important;
   pointer-events: auto !important;
+  animation: ob-active-glow 1.4s ease-in-out infinite;
+}
+
+@keyframes ob-active-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(0, 204, 245, 0.7), 0 0 14px rgba(0, 204, 245, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(0, 238, 255, 0.95), 0 0 28px rgba(0, 204, 245, 0.65);
+  }
 }
 
 .ob-callout-card {
