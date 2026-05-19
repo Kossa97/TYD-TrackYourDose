@@ -390,28 +390,18 @@ export function Onboarding() {
     </div>
   )
 
-  // Confirm button: round button outside the highlighted target rect
+  // Confirm button: round button INSIDE the pulsing highlight ring
   const confirmBtn = (() => {
     if (!isModalTarget || meta?.advance !== 'next' || !targetRect) return null
     const SIZE = 44
-    const GAP = 14 // gap outside the spotlight ring (SPOT_PAD=8 + 6)
-    const tabH = parseInt(
-      getComputedStyle(document.documentElement).getPropertyValue('--bottom-nav-height') || '90',
-      10,
-    )
-    const vw = window.innerWidth
-    const vh = window.innerHeight
+    const PAD = 5 // distance from inner edge of target rect
 
-    // Prefer: below the target rect, right-aligned
-    let top = targetRect.bottom + GAP
-    const left = Math.min(targetRect.right - SIZE - 8, vw - SIZE - 8)
-
-    // If below goes off-screen or into tab-bar zone → place above instead
-    if (top + SIZE > vh - tabH - 8) {
-      top = targetRect.top - GAP - SIZE
-    }
-    // Final clamp so button is always fully on-screen
-    top = Math.max(8, Math.min(top, vh - tabH - SIZE - 8))
+    // Single row (one input line) → right-center; multi-row section → bottom-right
+    const isSingleRow = targetRect.height <= 58
+    const top = isSingleRow
+      ? targetRect.top + (targetRect.height - SIZE) / 2
+      : targetRect.bottom - SIZE - PAD
+    const left = targetRect.right - SIZE - PAD
 
     return createPortal(
       <button
