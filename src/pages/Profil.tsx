@@ -362,53 +362,55 @@ function LanguageSwitcher() {
           border: '1px solid rgba(255,255,255,0.07)',
           background: 'rgba(8,10,24,0.98)',
         }}>
-          <div style={{ maxHeight: 280, overflowY: 'auto' }}>
-            {LANGUAGES.map(lang => (
-              <button
-                key={lang.code}
-                onClick={() => setSelected(lang.code)}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '11px 16px', textAlign: 'left', cursor: 'pointer',
-                  background: lang.code === selected ? 'rgba(0,204,245,0.10)' : 'transparent',
-                  borderBottom: '1px solid rgba(255,255,255,0.04)',
-                  color: lang.code === selected ? '#00ccf5' : 'rgba(200,215,235,0.8)',
-                  fontWeight: lang.code === selected ? 700 : 400,
-                  fontSize: '0.875rem',
-                }}
-              >
-                <span style={{ fontSize: 18 }}>{lang.flag}</span>
-                <span>{lang.name}</span>
-                {lang.code === selected && <span style={{ marginLeft: 'auto', fontSize: 12 }}>✓</span>}
-              </button>
-            ))}
-          </div>
+          <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+            {LANGUAGES.map(lang => {
+              const isSelected = lang.code === selected
+              return (
+                <div
+                  key={lang.code}
+                  style={{
+                    display: 'flex', alignItems: 'center',
+                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    background: isSelected ? 'rgba(0,204,245,0.10)' : 'transparent',
+                  }}
+                >
+                  <button
+                    onClick={() => setSelected(lang.code)}
+                    style={{
+                      flex: 1, display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '11px 16px', textAlign: 'left', cursor: 'pointer',
+                      color: isSelected ? '#00ccf5' : 'rgba(200,215,235,0.8)',
+                      fontWeight: isSelected ? 700 : 400,
+                      fontSize: '0.875rem',
+                      background: 'transparent',
+                    }}
+                  >
+                    <span style={{ fontSize: 18 }}>{lang.flag}</span>
+                    <span>{lang.name}</span>
+                  </button>
 
-          <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => setOpen(false)}
-              style={{
-                flex: 1, padding: '9px', borderRadius: 10,
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                color: 'rgba(200,215,235,0.6)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
-              }}
-            >
-              {t('cancel')}
-            </button>
-            <button
-              onClick={apply}
-              style={{
-                flex: 2, padding: '9px', borderRadius: 10,
-                background: selected !== i18n.language
-                  ? 'linear-gradient(135deg, #00ccf5, #0088dd)'
-                  : 'rgba(0,204,245,0.10)',
-                border: '1px solid rgba(0,204,245,0.3)',
-                color: selected !== i18n.language ? '#07091a' : 'rgba(0,204,245,0.6)',
-                fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer',
-              }}
-            >
-              {selectedLang.flag} {t('apply')}
-            </button>
+                  {isSelected && (
+                    <button
+                      onClick={apply}
+                      style={{
+                        margin: '6px 10px 6px 0',
+                        padding: '6px 14px',
+                        borderRadius: 8,
+                        background: lang.code !== i18n.language
+                          ? 'linear-gradient(135deg, #00ccf5, #0088dd)'
+                          : 'rgba(0,204,245,0.15)',
+                        border: '1px solid rgba(0,204,245,0.4)',
+                        color: lang.code !== i18n.language ? '#07091a' : '#00ccf5',
+                        fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {lang.code !== i18n.language ? t('apply') : '✓'}
+                    </button>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
