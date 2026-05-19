@@ -5,9 +5,9 @@
 
 ## 0. Projektstatus
 
-**Ziel:** Eine vollständige, mobile-first Peptid-Tracking-App — Inventar, Rekonstitution, Zyklen, Kalender, Dosierungsrechner, Tagebuch, Bewertungen, Profil — international verfügbar in 14 Sprachen.
+**Ziel:** Eine vollständige, mobile-first Peptid-Tracking-App — Inventar, Rekonstitution, Zyklen, Kalender, Dosierungsrechner, Tagebuch, Bewertungen, Profil, Injektionsstellen-Rotation — international in 14 Sprachen.
 
-**Aktueller Stand:** App ist funktionsfähig, vollständig und deployed auf Vercel. PWA-fähig (installierbar auf iPhone & Android). Internationalisierung (i18n) mit 14 Sprachen implementiert. Homescreen mit Kacheln und Quick-Stats. **Geführtes Onboarding** (21 Schritte): Sprach-Gate beim ersten Start, verankerte Tour-Karten neben Buttons/Feldern, Spotlight-Ring auf echten Eingabefeldern, Tour-Karte immer im Vordergrund (z-index 10050).
+**Aktueller Stand:** App ist funktionsfähig, vollständig und deployed auf Vercel. PWA-fähig (installierbar auf iPhone & Android). 14 Sprachen. Homescreen mit Quick-Stats (Nächste Einnahme, Streak, Studie des Tages) + Kacheln. Geführtes **Onboarding** (24 Schritte): Sprach-Gate beim ersten Start, Spotlight-Ring auf Eingabefeldern, Feld-für-Feld-Cycling mit ✓-Button, Tour-Karte immer im Vordergrund (z-index 10050). Neues **Injektionsstellen-Modul** (/injektionen) mit SVG-Körperkarte und Rotationsprotokoll.
 
 **Deployment:**
 - **Vercel:** Automatisches Deployment bei jedem `git push` auf `main`
@@ -26,7 +26,7 @@
 | Routing | React Router v6 |
 | Icons | lucide-react |
 | Notifications | react-hot-toast |
-| Datums-Utils | date-fns (de locale) |
+| Datums-Utils | date-fns (14 Locales) |
 | i18n | i18next + react-i18next + i18next-browser-languagedetector |
 | PWA | vite-plugin-pwa |
 | Deployment | Vercel (Auto-Deploy via GitHub) |
@@ -78,8 +78,9 @@ id, user_id, peptide_id
 name, dose, unit, method
 frequency, x_days_interval, schedule_days (text[])
 start_date, end_date, active
-intake_time, intake_time_custom
-reminder    ← Format: "on_time,2h" (komma-getrennt)
+intake_time, intake_time_custom  ← komma-getrennte Slot-Keys: morgens,mittags,abends,custom
+intake_time_custom               ← komma-getrennte HH:MM-Strings für custom-Slots
+reminder                         ← Format: "on_time,2h" (komma-getrennt)
 ```
 
 ### `dose_escalations`
@@ -145,75 +146,58 @@ alter table dose_logs
 src/
 ├── App.tsx                    ← Routes + Provider-Stack
 ├── main.tsx                   ← i18n-Import + RTL-Richtung setzen
-├── index.css                  ← Design-System (Tokens, Components, Utilities)
+├── index.css                  ← Design-System (Tokens, Components, ob-*-Klassen)
 │
 ├── i18n/
 │   ├── index.ts               ← i18next-Konfiguration, LANGUAGES-Array, applyDirection()
-│   ├── faq/                   ← FAQ-Bundles: `getFaqBundle(lang)` (alle 14 Sprachen)
-│   │   ├── types.ts
-│   │   ├── index.ts
-│   │   └── locales/           ← de.ts, en.ts, de.categories.ts, en.categories.ts, …
+│   ├── faq/                   ← FAQ-Bundles: getFaqBundle(lang) (alle 14 Sprachen)
+│   │   ├── types.ts / index.ts
+│   │   └── locales/           ← de.ts, en.ts, *.categories.ts …
 │   ├── data/
-│   │   └── onboarding-i18n.json  ← generierte Onboarding-Strings (12 Nicht-DE/EN-Locales)
+│   │   └── onboarding-i18n.json
 │   └── locales/
-│       ├── de.json            ← Deutsch (Basis-Sprache, ~160 Keys)
-│       ├── en.json            ← English
-│       ├── es.json            ← Español
-│       ├── fr.json            ← Français
-│       ├── it.json            ← Italiano
-│       ├── pt.json            ← Português
-│       ├── ru.json            ← Русский
-│       ├── tr.json            ← Türkçe
-│       ├── ar.json            ← العربية (RTL)
-│       ├── hi.json            ← हिन्दी
-│       ├── id.json            ← Bahasa Indonesia
-│       ├── zh.json            ← 中文
-│       ├── ja.json            ← 日本語
-│       └── ko.json            ← 한국어
+│       ├── de.json            ← Deutsch (Basis, ~200 Keys)
+│       ├── en.json … ko.json  ← 13 weitere Sprachen
 │
 ├── context/
-│   ├── AuthContext.tsx        ← Supabase Auth
-│   └── OnboardingContext.tsx  ← Tour-Status (localStorage: `_ob_done`, `tyd_lang_picked`)
+│   ├── AuthContext.tsx
+│   └── OnboardingContext.tsx  ← Keys: `_ob_done_${uid}`, `tyd_lang_picked_${uid}`
 │
 ├── components/
-│   ├── Layout.tsx             ← 5-Item Bottom-Nav (`data-ob` auf Nav-Links) + FAQ + Onboarding
+│   ├── Layout.tsx             ← 5-Item Bottom-Nav + FAQ-Button + Onboarding-Overlay
 │   ├── ProtectedRoute.tsx
-│   ├── NewDot.tsx             ← Pulsierender Punkt für neue Features
-│   ├── LanguageGate.tsx       ← Erststart: Sprache wählen (z-index 60, vor Tutorial)
-│   ├── Onboarding.tsx         ← Overlay: Scrim + verankerte Tour-Karte (Portal → body)
-│   ├── onboardingSteps.ts     ← 21 Schritte (Metadaten, Routen, Selektoren)
-│   ├── onboardingTarget.ts    ← Highlight-Rect auf Inputs/Buttons, Modal-Erkennung
-│   ├── onboardingPlacement.ts ← Position der Tour-Karte (Viewport, Tab-Bar)
-│   ├── onboardingLayers.ts    ← z-index-Stapel (Scrim 10000 … Panel 10050)
-│   └── OnboardingRestartButton
+│   ├── NewDot.tsx
+│   ├── LanguageGate.tsx       ← Erststart-Sprachwahl (i18n.language.split('-')[0] für Erkennung)
+│   ├── Onboarding.tsx         ← Scrim + Tour-Karte + ✓-Button + Feld-Cycling
+│   ├── onboardingSteps.ts     ← 24 Schritte (Metadaten, Routen, Selektoren)
+│   ├── onboardingTarget.ts    ← Rect-Messung, Modal-Erkennung
+│   ├── onboardingPlacement.ts ← Karten-Position (Viewport, Tab-Bar, snap top/bottom)
+│   └── onboardingLayers.ts   ← z-index-Stapel (Scrim 10000 … Panel 10050)
 │
 ├── pages/
-│   ├── Home.tsx               ← Homescreen: Quick-Stats + Kacheln für alle Bereiche
+│   ├── Home.tsx               ← Begrüßung + Stats (Nächste Einnahme, Streak, Studie) + Kacheln
 │   ├── Dashboard.tsx          ← Kalender + Tagesprotokoll (/kalender)
-│   ├── Peptide.tsx            ← Lager-Tab + Meine Peptide-Tab (~1700 Zeilen)
-│   ├── Rechner.tsx            ← Dosierungsrechner mit SyringeScale
-│   ├── Tagebuch.tsx           ← Wirkungen & Nebenwirkungen
-│   ├── Bewertungen.tsx        ← Sterne-Bewertungen
-│   ├── Profil.tsx             ← Profil + Sharing + Sprache + Onboarding-Restart
-│   ├── FAQ.tsx                ← Hilfe: Inhalt aus `i18n/faq` je nach App-Sprache
-│   ├── PublicProfile.tsx      ← Öffentliches Profil (/u/username)
-│   └── Auth.tsx               ← Login / Registrierung
+│   ├── Peptide.tsx            ← Lager-Tab + Meine Peptide-Tab (~1900 Zeilen)
+│   ├── InjectionTracker.tsx   ← Injektionsstellen-Rotation (/injektionen) ← NEU
+│   ├── Rechner.tsx
+│   ├── Tagebuch.tsx
+│   ├── Bewertungen.tsx
+│   ├── Profil.tsx
+│   ├── FAQ.tsx
+│   ├── PublicProfile.tsx
+│   └── Auth.tsx
 │
-├── lib/
-│   ├── supabase.ts            ← Supabase Client
-│   ├── peptideColors.ts       ← 12 Peptid-Farben + getPeptideColor(index)
-│   └── useNew.ts              ← Hook: erstes Mal sehen tracken
-│
-└── public/
-    ├── icon-192.png           ← PWA Icon (Peptid-Vial Design)
-    ├── icon-512.png           ← PWA Icon groß
-    └── favicon.svg
+└── lib/
+    ├── supabase.ts
+    ├── peptideColors.ts       ← 12 Farben + getPeptideColor(index)
+    └── useNew.ts
 
 scripts/
-├── merge-onboarding-i18n.mjs  ← `ob_step_*` aus onboarding-i18n-source → alle locales/*.json
-├── onboarding-i18n-source.mjs ← EN/DE Master-Texte für Onboarding
-├── export-faq-en.ts / generate-faq-locales.mjs
-└── generate-onboarding-i18n.mjs  ← optional (API); bei Fehler: merge-Skript nutzen
+├── update-ob-texts.cjs        ← Onboarding-Texte in alle 14 Locales schreiben
+├── update-escalation-steps.cjs ← Dosiserhöhungs-Steps (16-18) initial hinzugefügt
+├── fix-subtitle-numbers.cjs   ← Schritt-Nummern in Subtiteln korrigieren
+├── merge-onboarding-i18n.mjs  ← Legacy-Merge-Skript
+└── generate-faq-locales.mjs
 ```
 
 ---
@@ -222,25 +206,25 @@ scripts/
 
 ### Bottom-Nav (5 Items)
 ```
-Lager → /peptide?tab=inventar
-Peptide → /peptide
-🏠 Home (Mitte, hervorgehoben) → /
+Lager    → /peptide?tab=inventar
+Peptide  → /peptide
+🏠 Home  → /   (Mitte, Cyan-hervorgehoben)
 Kalender → /kalender
-Profil → /profil
+Profil   → /profil
 ```
-- Home-Button ist ein Cyan-Quadrat das sich leicht nach oben hebt
-- FAQ erreichbar über schwebendes `?` Icon unten rechts über der Nav
+FAQ erreichbar über schwebendes `?`-Icon (unten rechts über der Nav).
 
 ### Alle Routen
 ```
-/              ← Homescreen (Standard-Route)
+/              ← Homescreen
 /kalender      ← Kalender + Tagesprotokoll
-/peptide       ← Lager + Meine Peptide (Tab per ?tab=inventar)
+/peptide       ← Lager + Meine Peptide (?tab=inventar)
 /rechner       ← Dosierungsrechner
 /tagebuch      ← Wirkungen & Nebenwirkungen
 /bewertungen   ← Sterne-Bewertungen
 /profil        ← Nutzer-Einstellungen + Sprache
 /faq           ← Hilfe
+/injektionen   ← Injektionsstellen-Rotation ← NEU
 /auth          ← Login (außerhalb Layout)
 /u/:username   ← Öffentliches Profil (außerhalb Layout)
 ```
@@ -253,37 +237,35 @@ Profil → /profil
 🇩🇪 Deutsch · 🇬🇧 English · 🇪🇸 Español · 🇫🇷 Français · 🇮🇹 Italiano · 🇧🇷 Português · 🇷🇺 Русский · 🇹🇷 Türkçe · 🇸🇦 العربية · 🇮🇳 हिन्दी · 🇮🇩 Bahasa Indonesia · 🇨🇳 中文 · 🇯🇵 日本語 · 🇰🇷 한국어
 
 ### Sprache wechseln
-- **Profil-Seite → Sprache** → Dropdown → Sprache auswählen → **Übernehmen**
-- Sprache wird in `localStorage('tyd_lang')` gespeichert
-- Arabisch aktiviert automatisch RTL-Layout (`dir="rtl"`)
-- Browser-Sprache wird beim ersten Start automatisch erkannt
-
-### Übersetzt
-- Navigation, Homescreen, Auth, Dashboard, Peptide/Lager, Rechner, Tagebuch, Bewertungen, Profil
-- **FAQ** (`src/i18n/faq/`): vollständig in allen **14 Sprachen** (`*.categories.ts` + UI-Strings in `*.ts`)
-- **Onboarding & Sprach-Gate**: alle **14 Sprachen** (`lang_gate_*`, `ob_step_0`…`ob_step_20`, `ob_step_*_tap` in `locales/*.json`); beim ersten Start zuerst Sprachwahl (`tyd_lang_picked`), dann Tutorial (`_ob_done`)
-- Onboarding-Texte pflegen: `scripts/onboarding-i18n-source.mjs` → `npm run i18n:onboarding:merge`
-- Supabase-Fehlermeldungen: kommen vom Server auf Englisch
+- **LanguageGate** beim ersten Start (User-spezifisch: `tyd_lang_picked_${uid}`)
+- **Profil → Sprache** jederzeit änderbar
+- `localStorage('tyd_lang')` speichert die Wahl, i18n liest sie beim Start
+- `i18n.language.split('-')[0]` — regionaler Code (z.B. `de-DE`) wird korrekt auf `de` gemappt
+- Arabisch aktiviert RTL (`dir="rtl"`)
 
 ### Keys hinzufügen
 ```ts
-// 1. Key in src/i18n/locales/de.json + en.json hinzufügen
-// 2. In Komponente:
-import { useTranslation } from 'react-i18next'
+// 1. Key in src/i18n/locales/de.json + en.json eintragen
+// 2. Für alle 14 Sprachen via Node-Skript in scripts/ schreiben
+// 3. In Komponente:
 const { t } = useTranslation()
-// 3. Verwenden:
 {t('mein_key')}
 ```
+
+**KRITISCH:** Locale-JSON-Dateien nur per `node` schreiben — PowerShell `ConvertTo-Json` escaped keine Zeilenumbrüche in Strings und erzeugt kaputtes JSON.
 
 ---
 
 ## 6. Kernfunktionen
 
-### Homescreen (Home.tsx)
-- Begrüßung mit Uhrzeit (Morgen/Tag/Abend) + Datum
-- 3 Quick-Stats: Aktive Zyklen, Vials im Lager, Meine Peptide (live aus Supabase)
-- 8 Kacheln für alle App-Bereiche
-- Kalender-Kachel ist breit (spanning 2 Spalten)
+### Homescreen — Quick-Stats (Home.tsx)
+Drei Karten oben, live aus Supabase:
+
+| Karte | Inhalt | Datenquelle |
+|---|---|---|
+| ⏱ Nächste Einnahme | Nächste geplante Uhrzeit (HH:MM) oder ✓ wenn erledigt | `cycles.intake_time` aktiver Zyklen |
+| 🔥 Streak | Aufeinanderfolgende Tage mit mind. 1 `taken=true` Log | `dose_logs` |
+| 📰 Studie des Tages | Täglich rotierend aus 14 Peptid-Forschungsschnipseln | Statisches Array in `Home.tsx`, `Math.floor(Date.now()/86400000) % 14` |
 
 ### Inventar-Workflow (kritische Logik)
 ```
@@ -291,72 +273,125 @@ const { t } = useTranslation()
    → vials_initial wird NIEMALS danach überschrieben
 
 2. "Peptid anlegen" → peptides-Eintrag mit inventory_item_id
-   → Kein Abzug von vials_count bei Anlage!
+   → KEIN Abzug von vials_count bei Anlage
 
 3. Vials-Abzug NUR bei:
-   a) "Peptid verwerfen" → vials_count - 1
+   a) "Peptid verwerfen"           → vials_count - 1
    b) "Rekonstitution wiederholen" → vials_count - 1
 
-4. VialStockDisplay:
-   Grün = verfügbar · Amber = in Verwendung · Grau = leer
+4. Nach savePeptide/saveCycle: setExpandedId(savedId) → Peptid-Karte klappt auf
 ```
 
-### Onboarding (LanguageGate + Onboarding.tsx)
+### Frequenzen & Einnahmezeiten (cycles)
+```
+BASE_FREQUENCIES: Täglich | Jeden 2. Tag | 5 Tage an / 2 aus | Mo-Fr |
+                  Wöchentlich | Alle X Tage | Wochentage wählen
 
-**Ablauf beim ersten Start**
-1. `LanguageGate` — Sprache wählen → `tyd_lang_picked` + `tyd_lang` in localStorage  
-2. Willkommen (Schritt 0, zentriert) → Route `/`  
-3. Tour Schritte 1–19 → Finish (Schritt 20)
+INTAKE_TIME_CONFIG:
+  morgens → 08:00
+  mittags → 12:00
+  abends  → 20:00
+  custom  → HH:MM aus intake_time_custom
 
-**21 Schritte** (`onboardingSteps.ts`, Anzeige „Schritt 1–19“ ohne Welcome/Finish)
-
-| # | ID | Fokus | Route / Hinweis |
-|---|---|---|---|
-| 0 | welcome | — | `/` |
-| 1 | inv-nav | Bottom-Nav **Lager** | `/`, Klick auf Tab |
-| 2 | add-stock | **+ Einlagern** | `/peptide?tab=inventar` → Sheet öffnet → auto Weiter |
-| 3–5 | inv-name / amounts / batch | Felder im Inventar-Sheet | `advance: next` |
-| 6 | inv-save | **Einlagern** speichern | Klick |
-| 7 | create-peptide | Peptid anlegen | Klick |
-| 8–10 | pep-liquid / expiry / dose | Peptid-Formular | next |
-| 11 | pep-save | Peptid speichern | Klick |
-| 12 | pep-tab | Tab Meine Peptide | Klick |
-| 13–15 | Zyklus anlegen / Plan / speichern | | |
-| 16–17 | Kalender-Nav + Monatsansicht | `/kalender` | |
-| 18–19 | Home-Nav + Kacheln | `/` | |
-| 20 | finish | — | zentriert |
-
-**Technik**
-- **Tour-Karte** (`#ob-callout`): z-index **10050**, immer klickbar; verankert neben Ziel mit Pfeil (`onboardingPlacement.ts`)
-- **Scrim**: vier Paneelen um „Loch“ (`SpotlightScrim`), Ring auf **Inputs/Buttons** (`getOnboardingHighlightRect` in `onboardingTarget.ts`)
-- **Sheets** (`data-app-modal`): z-index 10040; Klicks im offenen Sheet erlaubt, Ring nicht auf Buttons hinter dem Sheet
-- **Bottom-Nav**: `data-ob` auf `<NavLink>` (nicht nur inneres Div); während Tour z-index 10030
-- **Restart** (Profil): `OnboardingRestartButton` setzt `_ob_done` zurück und `navigate('/')`
-
-**Onboarding zurücksetzen (Browser-Konsole)**
-```js
-localStorage.removeItem('_ob_done')
-localStorage.removeItem('tyd_lang_picked')
-location.reload()
+daily_freq: '1' | '2' | '3'  ← Wie oft täglich (Buttons im Formular)
 ```
 
-**`data-ob` in Peptide.tsx** (Auszug): `nav-lager` (Layout), `btn-einlagern`, `inv-name`, `inv-amounts`, `inv-batch`, `btn-inv-save`, `btn-peptid-anlegen`, `pep-liquid`, `pep-expiry`, `pep-dose`, `btn-pep-save`, `tab-peptide`, `btn-zyklus-add`, `cycle-core`, `btn-cycle-save`; Kalender: `calendar-main`; Home: `home-tiles`
-
-### PWA (vite.config.ts)
-```
-Name: "TYD – Track Your Dose"
-Short name: "TYD"
-Theme color: #00ccf5
-Background: #07091a
-Icons: icon-192.png, icon-512.png
-```
-iPhone installieren: Safari → Teilen → „Zum Home-Bildschirm" → „Als Web-App öffnen" aktivieren
+### Injektionsstellen (/injektionen) — NEU
+- **12 Zonen**: Deltoid L/R, Bauch L/R, Oberschenkel L/R (front) + Gesäß L/R, Oberschenkel hinten L/R, Deltoid hinten L/R (back)
+- **SVG-Körperkarte** bei 1.65× Skalierung via `<g transform="scale(1.65,1.65)">` — `shapeRendering="geometricPrecision"`
+- **Farbcodierung** nach Tagen seit letzter Injektion: grün (5+T) → gelb (2–3T) → orange (gestern) → rot (heute)
+- **Empfehlung** — Zone mit längster Pause, ⭐-Markierung + Puls-Ring
+- **✓ Markieren** — Tap auf Zone oder ✓-Button in Liste → setzt `days[key] = 0`
+- **Undo-Toast** — erscheint 6 Sekunden, Rückgängig stellt exakten Vorwert wieder her
+- **Verlauf** — letzte 5 Aktionen mit Rückgängig-Button
+- **Aktuell:** Mock-Daten (`INITIAL_DAYS`). Für Produktion: Supabase-Tabelle `injection_sites` anlegen
 
 ---
 
-## 7. Design-System
+## 7. Onboarding (24 Schritte)
 
-### Farben (tailwind.config.js)
+### Ablauf beim ersten Start
+1. `LanguageGate` — Sprache wählen → `tyd_lang_picked_${uid}` + `tyd_lang` gesetzt
+2. Willkommen (Schritt 0, zentriert) → Route `/`
+3. Tour Schritte 1–22 → Finish (Schritt 23)
+
+### Schritte (`onboardingSteps.ts`)
+
+| # | ID | Fokus | Advance |
+|---|---|---|---|
+| 0 | welcome | — | next |
+| 1 | inv-nav | Bottom-Nav Lager | click |
+| 2 | add-stock | + Einlagern | click (auto-advance bei Modal) |
+| 3 | inv-name | Peptidname-Feld | next + ✓ |
+| 4 | inv-amounts | Vials + mg | next + ✓ |
+| 5 | inv-batch | Batch + Quelle | next + ✓ |
+| 6 | inv-save | Einlagern-Button | click |
+| 7 | create-peptide | Peptid anlegen | click |
+| 8 | pep-liquid | Zugefügte Flüssigkeit | next + ✓ |
+| 9 | pep-expiry | Datum + Haltbarkeit | next + ✓ (2 Felder) |
+| 10 | pep-dose | Dosis + Einheit + Methode | next + ✓ |
+| 11 | pep-save | Peptid speichern | click |
+| 12 | pep-tab | Tab Meine Peptide | click |
+| 13 | add-cycle | + Zyklus hinzufügen | click |
+| 14 | cycle-plan | Zyklus-Formular (alle Felder) | next + ✓ |
+| 15 | cycle-save | Zyklus speichern | click |
+| 16 | esc-open | + Dosiserhöhung hinzufügen | click |
+| 17 | esc-form | Dosiserhöhungs-Formular | next + ✓ |
+| 18 | esc-save | Erhöhung speichern | click |
+| 19 | calendar-nav | Kalender-Nav | click |
+| 20 | calendar-use | Monatsansicht | next |
+| 21 | home-nav | Home-Button | click |
+| 22 | home-features | Kacheln-Übersicht | next |
+| 23 | finish | — | next |
+
+### Feld-Cycling & ✓-Button
+- `getCycleFields(el)` sammelt sichtbare `input`/`select` **und** `[data-ob-self]`-Container in DOM-Reihenfolge
+- `data-ob-self` = ganzer Block als eine Einheit (z.B. Haltbarkeit-Buttons, Wochentage, Einnahmezeitpunkt, Erinnerung)
+- `isModalTarget = showSpotlight && modalOpen` → Karte snapped via `snap='top'|'bottom'` weg vom aktiven Feld
+- `confirmBtn` (Portal, runder ✓-Button rechts im Feld): erscheint bei `isModalTarget && advance==='next'`
+- Datum-Inputs: Button um 32px nach links verschoben (freie Kalender-Icon-Zone)
+- `ob_confirm_hint`-Banner in der Karte wenn Feld-Cycling aktiv
+
+### Klick-Handler (Event-Delegation)
+```typescript
+// Alle advance:'click' Steps nutzen document-Level Delegation
+// → Handler funktioniert auch wenn Element erst nach dem Effect im DOM erscheint
+document.addEventListener('click', delegated, true)
+```
+
+### data-ob Attribute (Übersicht)
+```
+Layout:    nav-lager, nav-kalender, nav-home
+Inventar:  btn-einlagern, inv-name, inv-amounts, inv-batch, btn-inv-save
+Peptid:    btn-peptid-anlegen, pep-liquid, pep-expiry (+ data-ob-self Haltbarkeit),
+           pep-dose, btn-pep-save, tab-peptide
+Zyklus:    btn-zyklus-add, cycle-core (umschließt ALLE Felder), btn-cycle-save
+Eskalation:btn-esc-add, esc-core, btn-esc-save
+Kalender:  calendar-main
+Home:      home-tiles
+```
+
+### z-Index-Stapel (onboardingLayers.ts)
+```
+Scrim:     10000
+Nav:       10030
+Modal:     10040
+Ring:      10045  ← außerhalb #ob-scrim-root (eigener Stacking Context)
+Panel:     10050
+```
+
+### Onboarding zurücksetzen (Browser-Konsole)
+```js
+localStorage.removeItem('_ob_done_' + userId)
+localStorage.removeItem('tyd_lang_picked_' + userId)
+location.reload()
+```
+
+---
+
+## 8. Design-System
+
+### Farben
 - `slate-900` → `#07091a` · `slate-800` → `#0e1428`
 - `sky-400` → `#00ccf5` (Neon-Cyan) · `sky-500` → `#00aad4`
 
@@ -364,78 +399,79 @@ iPhone installieren: Safari → Teilen → „Zum Home-Bildschirm" → „Als We
 ```
 :root          → Design-Tokens
 @layer base    → html/body overflow-x:hidden, overscroll-behavior-x:none
-@layer components → .card, .btn-primary/secondary/danger, .input, .select, .label, .badge
+@layer components → .card, .btn-primary/secondary/danger, .input, .select, .label
 @layer utilities → .glass, .glow-cyan-sm/md, .text-gradient-cyan
+Onboarding-CSS → #ob-callout, .ob-highlight-ring, .ob-scrim-pane,
+                 .ob-tap-cue, .ob-confirm-cue, .ob-callout-actions,
+                 @keyframes ob-ring-pulse, ob-step-enter
 ```
 
 ### Wichtige CSS-Regeln
-- **KEIN** `backdrop-filter` auf scrollbaren Bottom-Sheet-Containern (bricht overflow-y)
-- `html, body, #root` haben `overflow-x: hidden` + `max-width: 100vw` → kein horizontales Scrollen
-- `min-h-dvh` statt `min-h-screen` (mobile Browser korrekt)
+- **KEIN** `backdrop-filter` auf scrollbaren Containern (bricht overflow-y)
+- `html, body, #root` haben `overflow-x: hidden` — kein horizontales Scrollen
+- `min-h-dvh` statt `min-h-screen` (mobile Browser)
 - iOS Safe-Area: `padding-bottom: env(safe-area-inset-bottom)` in Nav + Main
-- **Onboarding** (`body.onboarding-active`): Stapel in `index.css` + `onboardingLayers.ts` — Scrim 10000, Modal 10040, Nav 10030, **`#ob-callout` 10050**; Ring-Animation **ohne** `transform: scale` (sonst versatz)
-
-### Onboarding-CSS-Klassen (index.css)
-`#ob-callout`, `.ob-callout-header`, `.ob-callout-main`, `.ob-callout-anchored`, `.ob-highlight-ring`, `.ob-scrim-pane`, `.ob-tap-cue`, `.ob-callout-actions`
 
 ---
 
-## 8. Bekannte Limitierungen
+## 9. Bekannte Limitierungen
 
 | Thema | Detail |
 |---|---|
-| **Push-Notifications** | Nicht implementiert. Snooze nur via `setTimeout` (App muss offen sein) |
-| **FAQ aktualisieren** | Englisch in `en.categories.ts` ändern → `npm run faq:export` → `npm run faq:generate` (oder `*.categories.ts` manuell pflegen) |
-| **Onboarding-Texte** | `scripts/onboarding-i18n-source.mjs` (EN/DE) bearbeiten → `npm run i18n:onboarding:merge` |
-| **generate-onboarding-i18n.mjs** | API-Übersetzung oft fehlerhaft unter Windows/PowerShell — Merge-Skript + manuelle `locales/*.json` bevorzugen |
-| **IU-Einheit** | IU wird identisch wie mcg berechnet — keine Umrechnung |
+| **Injektionsstellen DB** | Aktuell Mock-Daten — Supabase-Tabelle `injection_sites` noch nicht erstellt |
+| **Push-Notifications** | Nur `setTimeout` (App muss offen sein) |
+| **FAQ aktualisieren** | `en.categories.ts` → `npm run faq:export` → `npm run faq:generate` |
+| **Onboarding-Texte** | Via `scripts/update-ob-texts.cjs` oder direkt in `locales/*.json` |
+| **IU-Einheit** | IU = mcg (keine Umrechnung) |
+| **Offline** | Keine PWA-Offline-Unterstützung |
+| **Registrierung** | Offen für alle (in Supabase einschränkbar) |
 | **useEffect-Deps** | Lint-Warnungen in mehreren Dateien, kein Crash |
-| **Offline** | Keine PWA-Offline-Unterstützung. App braucht Internet |
-| **Registrierung** | Offen für alle — in Supabase auf Invite-only einschränkbar |
 
 ---
 
-## 9. Häufige Fehler & Fixes
+## 10. Häufige Fehler & Fixes
 
 | Fehler | Ursache | Fix |
 |---|---|---|
-| Modal-Scrollen funktioniert nicht | `backdrop-filter` auf `.rounded-t-2xl` | Nicht hinzufügen |
-| Horizontales Scrollen | Element breiter als Viewport | `overflow-x: hidden` auf Wrapper |
-| Push rejected | Tablet hat neuere Commits | `git pull --rebase origin main` dann push |
-| App startet nicht | PowerShell Execution Policy | `Set-ExecutionPolicy Bypass -Scope Process` |
-| Vials falsch abgezogen | `savePeptide`-Logik | Kein Abzug bei Neuanlage |
-| Sprache zeigt Keys statt Text | i18n resources nicht in `{ translation: {} }` | `resources: { de: { translation: de } }` |
-| Onboarding schwarzer Bildschirm | Kaputtes SVG-Mask oder Scrim über allem | Vier-Panel-Scrim in `SpotlightScrim`; Panel z-index 10050 |
-| Tour-Karte nicht klickbar | Scrim oder falsche z-index | `#ob-callout` mit `pointer-events: auto`; siehe `onboardingLayers.ts` |
-| Ring neben Feld / Button | `data-ob` auf großem Wrapper | `getOnboardingHighlightRect` nutzt Union der `input`/`button` |
-| Stock-Tab im Tutorial tot | Klick-Blocker / Nav unter Scrim | `data-ob` auf `<NavLink>`; Nav z-index 10030 |
-| Restart bleibt auf Profil | Keine Navigation | `OnboardingRestartButton` → `navigate('/')` |
-| `<motion>` in TSX | Tippfehler beim Generieren | Immer `<div>` — Build mit `npx tsc -b` prüfen |
+| Modal-Scrollen kaputt | `backdrop-filter` auf `.rounded-t-2xl` | Nicht hinzufügen |
+| JSON-Fehler nach PowerShell | `ConvertTo-Json` escaped keine `\n` | Immer Node.js für JSON-Writes |
+| Sprache zeigt Keys | i18n resources nicht in `{ translation: {} }` | `resources: { de: { translation: de } }` |
+| LanguageGate zeigt 'en' auf DE-Gerät | `i18n.language` = `'de-DE'` → kein Match | `split('-')[0]` bereits implementiert |
+| Ring unsichtbar | Ring in `#ob-scrim-root` (z-index gebunden) | Ring als SVG-Geschwister außerhalb des Scrim-Root rendern |
+| ✓-Button blockiert | Click-Blocker fing `data-ob-confirm` ab | `node.closest('[data-ob-confirm]')` Exception |
+| btn-zyklus-add nicht gefunden | Peptid nicht aufgeklappt | `setExpandedId(savedId)` nach `savePeptide` + `saveCycle` |
+| Klick-Step geht nicht weiter | Handler zu früh attached (Element noch nicht im DOM) | Event-Delegation auf `document` statt direktes `addEventListener` |
+| Karte überdeckt Eingabefeld | Immer `snap='top'` bei modalen Schritten | Jetzt dynamisch: `fieldTop < cardBottomWhenAtTop ? 'bottom' : 'top'` |
+| Karte bleibt bei Resize | `targetRect=null` → kein State-Change → kein Recompute | `viewportKey` State, inkrementiert bei `resize` |
+| Push rejected | Remote hat neuere Commits | `git pull --rebase origin main` |
+| App startet nicht (Windows) | PowerShell Execution Policy | `Set-ExecutionPolicy Bypass -Scope Process` |
 
 ---
 
-## 10. Entwicklungs-Workflow
+## 11. Entwicklungs-Workflow
 
 ```bash
-# Lokal starten (PC)
+# Lokal starten
 cd C:\Users\Devin\peptid-tracker
 npm run dev          # http://localhost:5173
 
-# Änderungen deployen
+# Deployen
 git add .
 git commit -m "Beschreibung"
 git push             # → Vercel deployed automatisch
 
-# Auf Tablet aktualisieren
-git pull && npm run dev
-
-# Onboarding-Strings in alle Locale-JSONs mergen
-npm run i18n:onboarding:merge
+# Locale-Keys in alle 14 Sprachen schreiben (Node-Skript)
+node scripts/update-ob-texts.cjs
 
 # Typecheck
 npx tsc -b
+
+# Onboarding zurücksetzen (Konsole)
+localStorage.removeItem('_ob_done_' + userId)
+localStorage.removeItem('tyd_lang_picked_' + userId)
+location.reload()
 ```
 
 ---
 
-*Zuletzt aktualisiert: 19. Mai 2026 (Onboarding-Überarbeitung: verankerte Prompts, z-index, Highlight auf Feldern)*
+*Zuletzt aktualisiert: 20. Mai 2026 — 24-Schritt-Onboarding, Feld-Cycling mit ✓-Button, Injektionsstellen-Modul, Homescreen-Stats (Streak/Nächste Einnahme/Studie), Dosiserhöhungs-Steps, LanguageGate-Fix*
