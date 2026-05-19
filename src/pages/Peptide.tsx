@@ -1084,7 +1084,7 @@ export function Peptide() {
                                 </span>
                                 <button data-ob="btn-esc-add" className="text-xs flex items-center gap-1 text-orange-400 hover:text-orange-300 transition-colors"
                                   onClick={() => openNewEsc(c)}>
-                                  <Plus size={11} /> {t('hinzufuegen')}
+                                  <Plus size={11} /> {t('esc_hinzufuegen')}
                                 </button>
                               </div>
                               {pEscs.length === 0 && (
