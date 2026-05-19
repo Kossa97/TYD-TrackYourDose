@@ -524,5 +524,9 @@
   "ob_step_18_subtitle": "步骤 18 · 确认",
   "ob_step_18_description": "保存剂量递增 – 它将在日历中以颜色标记显示。",
   "ob_step_18_tap": "点击\"保存\"",
-  "ob_confirm_hint": "点击✓确认此字段并进入下一个"
+  "ob_confirm_hint": "点击✓确认此字段并进入下一个",
+  "stat_next_intake": "下次服用",
+  "stat_today_done": "今日完成",
+  "stat_days": "天",
+  "stat_study": "今日研究"
 }

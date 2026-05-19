@@ -524,5 +524,9 @@
   "ob_step_18_subtitle": "Paso 18 · Confirmar",
   "ob_step_18_description": "Guarda la escalada de dosis – aparecerá marcada en el calendario.",
   "ob_step_18_tap": "Pulsa \"Guardar\"",
-  "ob_confirm_hint": "Pulsa ✓ para confirmar el campo y pasar al siguiente"
+  "ob_confirm_hint": "Pulsa ✓ para confirmar el campo y pasar al siguiente",
+  "stat_next_intake": "Próxima toma",
+  "stat_today_done": "Hecho hoy",
+  "stat_days": "Días",
+  "stat_study": "Estudio del día"
 }

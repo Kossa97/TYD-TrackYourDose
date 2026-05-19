@@ -524,5 +524,9 @@
   "ob_step_18_subtitle": "단계 18 · 확인",
   "ob_step_18_description": "용량 증가를 저장합니다 – 달력에 색상으로 표시됩니다.",
   "ob_step_18_tap": "\"저장\" 탭",
-  "ob_confirm_hint": "✓를 탭하여 필드를 확인하고 다음으로 이동하세요"
+  "ob_confirm_hint": "✓를 탭하여 필드를 확인하고 다음으로 이동하세요",
+  "stat_next_intake": "다음 섭취",
+  "stat_today_done": "오늘 완료",
+  "stat_days": "일",
+  "stat_study": "오늘의 연구"
 }

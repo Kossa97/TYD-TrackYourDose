@@ -524,5 +524,9 @@
   "ob_step_18_subtitle": "Schritt 18 · Bestätigen",
   "ob_step_18_description": "Tippe auf „Speichern\" – die Dosiserhöhung wird zum richtigen Zeitpunkt im Kalender eingeblendet.",
   "ob_step_18_tap": "Tippe auf „Speichern\"",
-  "ob_confirm_hint": "✓ drücken um das Feld zu bestätigen und zum nächsten zu wechseln"
+  "ob_confirm_hint": "✓ drücken um das Feld zu bestätigen und zum nächsten zu wechseln",
+  "stat_next_intake": "Nächste Einnahme",
+  "stat_today_done": "Heute erledigt",
+  "stat_days": "Tage",
+  "stat_study": "Studie des Tages"
 }

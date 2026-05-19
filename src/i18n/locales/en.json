@@ -524,5 +524,9 @@
   "ob_step_18_subtitle": "Step 18 · Confirm",
   "ob_step_18_description": "Tap \"Save\" – the dose increase will appear in the calendar at the right time.",
   "ob_step_18_tap": "Tap \"Save\"",
-  "ob_confirm_hint": "Tap ✓ to confirm the field and move to the next one"
+  "ob_confirm_hint": "Tap ✓ to confirm the field and move to the next one",
+  "stat_next_intake": "Next Intake",
+  "stat_today_done": "Done today",
+  "stat_days": "Days",
+  "stat_study": "Study of the Day"
 }

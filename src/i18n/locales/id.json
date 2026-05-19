@@ -525,5 +525,9 @@
   "ob_step_18_subtitle": "Langkah 18 · Konfirmasi",
   "ob_step_18_description": "Simpan eskalasi dosis – akan muncul berwarna di kalender.",
   "ob_step_18_tap": "Ketuk \"Simpan\"",
-  "ob_confirm_hint": "Ketuk ✓ untuk mengonfirmasi bidang dan lanjut ke berikutnya"
+  "ob_confirm_hint": "Ketuk ✓ untuk mengonfirmasi bidang dan lanjut ke berikutnya",
+  "stat_next_intake": "Asupan berikutnya",
+  "stat_today_done": "Selesai hari ini",
+  "stat_days": "Hari",
+  "stat_study": "Studi hari ini"
 }

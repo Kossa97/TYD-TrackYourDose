@@ -524,5 +524,9 @@
   "ob_step_18_subtitle": "Adım 18 · Onayla",
   "ob_step_18_description": "Doz artışını kaydedin – takvimde renkli olarak görünecektir.",
   "ob_step_18_tap": "\"Kaydet\" düğmesine dokunun",
-  "ob_confirm_hint": "Alanı onaylamak ve bir sonrakine geçmek için ✓ tuşuna dokunun"
+  "ob_confirm_hint": "Alanı onaylamak ve bir sonrakine geçmek için ✓ tuşuna dokunun",
+  "stat_next_intake": "Sonraki alım",
+  "stat_today_done": "Bugün tamamlandı",
+  "stat_days": "Gün",
+  "stat_study": "Günün çalışması"
 }

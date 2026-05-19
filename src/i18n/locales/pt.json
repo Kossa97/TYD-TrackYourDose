@@ -524,5 +524,9 @@
   "ob_step_18_subtitle": "Passo 18 · Confirmar",
   "ob_step_18_description": "Salve o escalonamento de dose – ele aparecerá marcado no calendário.",
   "ob_step_18_tap": "Toque em \"Salvar\"",
-  "ob_confirm_hint": "Toque ✓ para confirmar o campo e ir para o próximo"
+  "ob_confirm_hint": "Toque ✓ para confirmar o campo e ir para o próximo",
+  "stat_next_intake": "Próxima dose",
+  "stat_today_done": "Feito hoje",
+  "stat_days": "Dias",
+  "stat_study": "Estudo do dia"
 }

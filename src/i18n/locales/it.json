@@ -524,5 +524,9 @@
   "ob_step_18_subtitle": "Passo 18 · Conferma",
   "ob_step_18_description": "Salva l'aumento del dosaggio – apparirà evidenziato nel calendario.",
   "ob_step_18_tap": "Tocca \"Salva\"",
-  "ob_confirm_hint": "Tocca ✓ per confermare il campo e passare al successivo"
+  "ob_confirm_hint": "Tocca ✓ per confermare il campo e passare al successivo",
+  "stat_next_intake": "Prossima assunzione",
+  "stat_today_done": "Fatto oggi",
+  "stat_days": "Giorni",
+  "stat_study": "Studio del giorno"
 }

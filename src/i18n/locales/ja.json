@@ -524,5 +524,9 @@
   "ob_step_18_subtitle": "ステップ 18 · 確認",
   "ob_step_18_description": "用量増加を保存します – カレンダーにカラーマークで表示されます。",
   "ob_step_18_tap": "「保存」をタップ",
-  "ob_confirm_hint": "✓をタップしてフィールドを確認し、次へ進みます"
+  "ob_confirm_hint": "✓をタップしてフィールドを確認し、次へ進みます",
+  "stat_next_intake": "次の摂取",
+  "stat_today_done": "今日完了",
+  "stat_days": "日",
+  "stat_study": "今日の研究"
 }

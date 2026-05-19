@@ -524,5 +524,9 @@
   "ob_step_18_subtitle": "Étape 18 · Confirmer",
   "ob_step_18_description": "Enregistrez l'escalade de dose – elle apparaîtra en couleur dans le calendrier.",
   "ob_step_18_tap": "Appuyez sur \"Enregistrer\"",
-  "ob_confirm_hint": "Appuie sur ✓ pour valider le champ et passer au suivant"
+  "ob_confirm_hint": "Appuie sur ✓ pour valider le champ et passer au suivant",
+  "stat_next_intake": "Prochaine prise",
+  "stat_today_done": "Terminé aujourd'hui",
+  "stat_days": "Jours",
+  "stat_study": "Étude du jour"
 }
