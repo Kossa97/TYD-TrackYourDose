@@ -291,11 +291,22 @@ export function Onboarding() {
     cleanupRef.current?.()
     cleanupRef.current = null
     if (!active || needsLanguagePick || meta?.advance !== 'click' || meta?.id === 'add-stock') return
-    const el = getOnboardingInteractionEl(meta)
-    if (!el) return
-    const handler = () => window.setTimeout(() => nextRef.current(), 80)
-    el.addEventListener('click', handler, { once: true })
-    cleanupRef.current = () => el.removeEventListener('click', handler)
+
+    // Use event delegation so the handler works even if the target element
+    // appears in the DOM after this effect runs (e.g. btn-peptid-anlegen
+    // only exists after loadInventory() resolves, which is async).
+    let fired = false
+    const delegated = (e: Event) => {
+      if (fired) return
+      const target = getOnboardingInteractionEl(meta)
+      if (!target) return
+      if (target === e.target || target.contains(e.target as Node)) {
+        fired = true
+        window.setTimeout(() => nextRef.current(), 80)
+      }
+    }
+    document.addEventListener('click', delegated, true)
+    cleanupRef.current = () => document.removeEventListener('click', delegated, true)
     return () => {
       cleanupRef.current?.()
       cleanupRef.current = null

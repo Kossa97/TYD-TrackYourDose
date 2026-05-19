@@ -110,9 +110,10 @@ export const ONBOARDING_STEPS: OnboardingStepMeta[] = [
     subtitleKey: 'ob_step_7_subtitle',
     descriptionKey: 'ob_step_7_description',
     targetSelector: '[data-ob="btn-peptid-anlegen"]',
-    placement: 'top',
+    placement: 'bottom',
     advance: 'click',
     tapHintKey: 'ob_step_7_tap',
+    route: '/peptide?tab=inventar',
     scrollTarget: true,
   },
   {
