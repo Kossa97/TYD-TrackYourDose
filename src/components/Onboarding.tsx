@@ -113,6 +113,7 @@ export function Onboarding() {
 
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [fieldIndex, setFieldIndex] = useState(0)
   const [panelH, setPanelH] = useState(200)
   const [layout, setLayout] = useState<ReturnType<typeof computeCalloutLayout>>(() =>
     computeCalloutLayout(null, window.innerWidth, window.innerHeight, 200, { prefer: 'center' }),
@@ -181,10 +182,34 @@ export function Onboarding() {
     }
   }, [active, needsLanguagePick, syncModalLayer])
 
+  // Returns all single-line inputs/selects inside the target element for field cycling
+  const getCycleFields = useCallback((el: HTMLElement | null): HTMLElement[] => {
+    if (!el) return []
+    const SINGLE = 'input:not([type="hidden"]):not([type="file"]):not([disabled]), select:not([disabled])'
+    if (el.matches(SINGLE)) return [el]
+    return [...el.querySelectorAll<HTMLElement>(SINGLE)].filter(f => {
+      const r = f.getBoundingClientRect()
+      return r.height > 4 && r.height < 72 && r.width > 20
+    })
+  }, [])
+
   const measureTarget = useCallback(() => {
-    setTargetRect(measureOnboardingTarget(meta))
     setModalOpen(!!getOpenAppModal())
-  }, [meta])
+    const el = getOnboardingInteractionEl(meta)
+    // In cycle mode, measure the specific active field instead of the whole section
+    if (meta?.advance === 'next' && el) {
+      const fields = getCycleFields(el)
+      if (fields.length > 0) {
+        const active = fields[Math.min(fieldIndex, fields.length - 1)]
+        const r = active.getBoundingClientRect()
+        if (r.width >= 2 && r.height >= 2) { setTargetRect(r); return }
+      }
+    }
+    setTargetRect(measureOnboardingTarget(meta))
+  }, [meta, fieldIndex, getCycleFields])
+
+  // Reset field cycling on step change
+  useEffect(() => { setFieldIndex(0) }, [step])
 
   useEffect(() => {
     cleanupRef.current?.()
@@ -390,29 +415,36 @@ export function Onboarding() {
     </div>
   )
 
-  // Confirm button: round button INSIDE the pulsing highlight ring
+  // Confirm button: cycles through single-line fields one by one within a step
   const confirmBtn = (() => {
     if (!isModalTarget || meta?.advance !== 'next' || !targetRect) return null
-    const SIZE = 44
-    const PAD = 5
 
-    // targetRect (from getOnboardingHighlightRect) may snap to inner <input> elements only.
-    // Use the full bounding rect of the section element itself for button positioning.
     const el = getOnboardingInteractionEl(meta)
-    const posRect = el?.getBoundingClientRect() ?? targetRect
+    const fields = getCycleFields(el)
+    const hasCycle = fields.length > 1
+    const currentField = fields[Math.min(fieldIndex, fields.length - 1)] ?? null
 
-    // Single row → right-center; multi-row section → bottom-right
-    const isSingleRow = posRect.height <= 58
-    const top = isSingleRow
-      ? posRect.top + (posRect.height - SIZE) / 2
-      : posRect.bottom - SIZE - PAD
-    const left = posRect.right - SIZE - PAD
+    const handleConfirm = () => {
+      if (hasCycle && fieldIndex < fields.length - 1) {
+        setFieldIndex(i => i + 1)
+      } else {
+        setFieldIndex(0)
+        nextRef.current()
+      }
+    }
+
+    // Position: inside the current field, vertically centred, at the far right
+    const r = currentField?.getBoundingClientRect() ?? targetRect
+    const SIZE = 40
+    const INNER = 4 // gap from field's right/top edge
+    const top = r.top + (r.height - SIZE) / 2
+    const left = r.right - SIZE - INNER
 
     return createPortal(
       <button
         type="button"
         data-ob-confirm
-        onClick={() => nextRef.current()}
+        onClick={handleConfirm}
         aria-label="Confirm"
         style={{
           position: 'fixed',
@@ -426,12 +458,12 @@ export function Onboarding() {
           borderRadius: '50%',
           color: '#07091a',
           fontWeight: 800,
-          fontSize: '1.15rem',
+          fontSize: '1.1rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          boxShadow: '0 0 20px rgba(0,204,245,0.45)',
+          boxShadow: '0 0 18px rgba(0,204,245,0.5)',
         }}
       >
         ✓
