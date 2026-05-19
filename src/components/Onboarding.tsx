@@ -331,8 +331,18 @@ export function Onboarding() {
     const hole = showSpotlight ? targetRect : null
 
     if (useCenteredCallout) {
-      // Modal steps: card snaps to top so entire form is visible below
-      const snap = meta?.snapToViewport ?? (isModalTarget ? 'top' : undefined)
+      let snap: 'top' | 'bottom' | undefined = meta?.snapToViewport
+      if (snap === undefined && isModalTarget) {
+        // Pick snap direction so the card doesn't cover the active cycling field.
+        // Card when snapped-to-top occupies y ≈ 20 … 20+panelH.
+        // If the field starts inside that band, push card to bottom instead.
+        const el = getOnboardingInteractionEl(meta)
+        const fields = getCycleFields(el)
+        const currentField = fields[Math.min(fieldIndex, fields.length - 1)] ?? null
+        const fieldTop = currentField?.getBoundingClientRect().top ?? vh
+        const cardBottomWhenAtTop = 20 + panelH + 24 // 24px buffer
+        snap = fieldTop < cardBottomWhenAtTop ? 'bottom' : 'top'
+      }
       setLayout(computeCalloutLayout(null, vw, vh, panelH, { prefer: 'center', snap }))
       return
     }
@@ -343,7 +353,7 @@ export function Onboarding() {
     setLayout(
       computeCalloutLayout(hole, vw, vh, panelH, { prefer, maxBottom }),
     )
-  }, [targetRect, panelH, step, useCenteredCallout, showSpotlight, meta?.placement, meta?.snapToViewport, isModalTarget])
+  }, [targetRect, panelH, step, useCenteredCallout, showSpotlight, meta?.placement, meta?.snapToViewport, isModalTarget, fieldIndex, getCycleFields])
 
   if (!active || needsLanguagePick || !s) return null
 
