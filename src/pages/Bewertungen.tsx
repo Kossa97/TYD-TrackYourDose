@@ -4,8 +4,13 @@ import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { Plus, Trash2, Star, Pencil, Search } from 'lucide-react'
 import { format } from 'date-fns'
-import { de } from 'date-fns/locale'
+import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
+import type { Locale } from 'date-fns'
 import { useTranslation } from 'react-i18next'
+
+const DATE_LOCALES: Record<string, Locale> = {
+  de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
+}
 
 interface Review {
   id: string
@@ -23,9 +28,9 @@ interface Review {
 interface Peptide { id: string; name: string }
 
 const EXPERIENCE_CONFIG = {
-  gut:     { label: 'Gut',    emoji: '😊', color: 'bg-emerald-500 text-white', inactive: 'bg-slate-800 text-slate-400' },
-  mittel:  { label: 'Mittel', emoji: '😐', color: 'bg-amber-500 text-white',   inactive: 'bg-slate-800 text-slate-400' },
-  schlecht:{ label: 'Schlecht',emoji:'😞', color: 'bg-red-500 text-white',     inactive: 'bg-slate-800 text-slate-400' },
+  gut:     { emoji: '😊', color: 'bg-emerald-500 text-white', inactive: 'bg-slate-800 text-slate-400' },
+  mittel:  { emoji: '😐', color: 'bg-amber-500 text-white',   inactive: 'bg-slate-800 text-slate-400' },
+  schlecht:{ emoji: '😞', color: 'bg-red-500 text-white',     inactive: 'bg-slate-800 text-slate-400' },
 }
 
 const EXPERIENCE_BADGE = {
@@ -69,7 +74,8 @@ const emptyForm = (firstPeptideId = ''): Form => ({
 
 export function Bewertungen() {
   const { user } = useAuth()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = DATE_LOCALES[i18n.language] ?? enUS
   const [reviews, setReviews]   = useState<Review[]>([])
   const [peptides, setPeptides] = useState<Peptide[]>([])
   const [search, setSearch]   = useState('')
@@ -203,7 +209,7 @@ export function Bewertungen() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className={`badge ${EXPERIENCE_BADGE[r.experience ?? 'gut']}`}>
-                    {exp.emoji} {exp.label}
+                    {exp.emoji} {t(r.experience ?? 'gut')}
                   </span>
                   <button className="p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
                     onClick={() => openEdit(r)}>
@@ -251,7 +257,7 @@ export function Bewertungen() {
                 </div>
               )}
               <p className="text-slate-600 text-xs mt-2">
-                {format(new Date(r.created_at), 'dd. MMMM yyyy', { locale: de })}
+                {format(new Date(r.created_at), 'dd. MMMM yyyy', { locale })}
               </p>
             </div>
           )
@@ -295,7 +301,7 @@ export function Bewertungen() {
                       form.experience === key ? cfg.color : cfg.inactive
                     }`}>
                     <span className="text-xl">{cfg.emoji}</span>
-                    {cfg.label}
+                    {t(key)}
                   </button>
                 ))}
               </div>

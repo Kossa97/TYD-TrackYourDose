@@ -7,10 +7,15 @@ import {
   isSameDay, isToday, startOfWeek, endOfWeek,
   differenceInDays, parseISO,
 } from 'date-fns'
-import { de } from 'date-fns/locale'
+import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
+import type { Locale } from 'date-fns'
 import { ChevronLeft, ChevronRight, CalendarDays, Syringe, X, TrendingUp, Check, XCircle, Bell } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
+
+const DATE_LOCALES: Record<string, Locale> = {
+  de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
+}
 
 interface DoseLog {
   id: string
@@ -110,7 +115,7 @@ function cycleTimeLabel(c: Cycle, t: (key: string) => string): { emoji: string; 
   if (c.intake_time === 'mittags') return { emoji: '☀️', label: t('mittags') }
   if (c.intake_time === 'abends')  return { emoji: '🌙', label: t('abends') }
   if (c.intake_time === 'custom' && c.intake_time_custom)
-    return { emoji: '🕐', label: c.intake_time_custom + ' Uhr' }
+    return { emoji: '🕐', label: c.intake_time_custom }
   return null
 }
 
@@ -125,7 +130,8 @@ function timeLabel(dateStr: string, t: (key: string, opts?: Record<string, unkno
 }
 
 export function Dashboard() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = DATE_LOCALES[i18n.language] ?? enUS
   const { user } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [logs, setLogs] = useState<DoseLog[]>([])
@@ -185,23 +191,24 @@ export function Dashboard() {
   const isTodaySelected = isToday(selectedDay)
 
   const deleteLog = async (id: string) => {
-    if (!confirm('Eintrag löschen?')) return
+    if (!confirm(t('eintrag_loeschen'))) return
     await supabase.from('dose_logs').delete().eq('id', id)
-    toast.success('Gelöscht'); loadLogs()
+    toast.success(t('deleted')); loadLogs()
   }
 
   const confirmDose = async (id: string, taken: boolean) => {
     await supabase.from('dose_logs').update({ taken }).eq('id', id)
     loadLogs()
     if (taken) toast.success(t('einnahme_bestaetigt'))
-    else toast('Einnahme übersprungen', { icon: '⏭️' })
+    else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
   }
 
   const snoozeDose = (log: DoseLog, minutes: number) => {
-    toast(`Erinnerung in ${minutes < 60 ? minutes + ' Min.' : minutes / 60 + ' Std.'}`, { icon: '⏰' })
+    const time = minutes < 60 ? `${minutes} min` : `${minutes / 60} h`
+    toast(t('erinnerung_toast', { time }), { icon: '⏰' })
     setTimeout(() => {
       toast(
-        `Erinnerung: ${log.peptides?.name} ${log.dose} ${log.unit} noch nicht bestätigt!`,
+        t('dose_nicht_best', { name: log.peptides?.name, dose: log.dose, unit: log.unit }),
         { icon: '💉', duration: 10000 }
       )
     }, minutes * 60 * 1000)
@@ -218,7 +225,7 @@ export function Dashboard() {
           <ChevronLeft size={20} />
         </button>
         <h1 className="text-base font-bold capitalize">
-          {format(currentDate, 'MMMM yyyy', { locale: de })}
+          {format(currentDate, 'MMMM yyyy', { locale })}
         </h1>
         <button className="p-2 text-slate-400 hover:text-white transition-colors"
           onClick={() => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>
@@ -337,13 +344,13 @@ export function Dashboard() {
           <h2 className="font-semibold text-slate-200 text-sm">
             {isTodaySelected
               ? t('heutiges_protokoll')
-              : format(selectedDay, 'EEEE, d. MMMM', { locale: de })}
+              : format(selectedDay, 'EEEE, d. MMMM', { locale })}
           </h2>
           {!isTodaySelected && (
             <button
               onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
               className="text-xs text-sky-400 hover:text-sky-300 transition-colors">
-              → Heute
+              {t('heute_link')}
             </button>
           )}
         </div>
@@ -381,7 +388,7 @@ export function Dashboard() {
                       </span>
                       {isEscalated && (
                         <span className="flex items-center gap-0.5 text-orange-400 text-xs">
-                          <TrendingUp size={11} /> Stufe {activeEscCount}
+                          <TrendingUp size={11} /> {t('stufe_n', { n: activeEscCount })}
                         </span>
                       )}
                       <span className="text-slate-500 text-xs">{c.method}</span>
@@ -397,7 +404,7 @@ export function Dashboard() {
                       })()}
                       {isEscalated && (
                         <span className="text-slate-600 text-xs">
-                          Basis: {c.dose} {c.unit} · +{dose - c.dose} {c.unit}
+                          {t('basis_label')} {c.dose} {c.unit} · +{dose - c.dose} {c.unit}
                         </span>
                       )}
                     </div>
@@ -476,7 +483,7 @@ export function Dashboard() {
                 {log.taken === false && (
                   <div className="mt-2 ml-[26px]">
                     <p className="text-slate-500 text-xs mb-1.5 flex items-center gap-1">
-                      <Bell size={10} /> Erinnere mich nochmal in:
+                      <Bell size={10} /> {t('erinnere_nochmal')}
                     </p>
                     <div className="flex gap-1.5 flex-wrap">
                       {[15, 30, 60, 120].map(min => (
@@ -484,7 +491,7 @@ export function Dashboard() {
                           key={min}
                           onClick={() => snoozeDose(log, min)}
                           className="text-xs px-2 py-0.5 rounded-lg bg-slate-700/60 text-slate-300 border border-slate-600/50 hover:bg-slate-600/60 transition-colors">
-                          {min < 60 ? `${min} Min` : `${min / 60} Std`}
+                          {min < 60 ? `${min} min` : `${min / 60} h`}
                         </button>
                       ))}
                     </div>
@@ -495,11 +502,11 @@ export function Dashboard() {
           </div>
         ) : selCycles.length === 0 ? (
           <p className="text-slate-600 text-sm text-center py-4">
-            {isTodaySelected ? 'Noch nichts für heute protokolliert' : 'Kein Eintrag für diesen Tag'}
+            {isTodaySelected ? t('noch_nichts_heute') : t('kein_eintrag_tag')}
           </p>
         ) : (
           <p className="text-slate-600 text-xs text-center py-2">
-            Noch keine Dosis protokolliert
+            {t('noch_keine_dosis_prot')}
           </p>
         )}
       </div>

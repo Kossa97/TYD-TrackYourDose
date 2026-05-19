@@ -4,8 +4,13 @@ import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { Plus, Trash2, BookHeart, Zap, AlertTriangle, Clock, Search } from 'lucide-react'
 import { format } from 'date-fns'
-import { de } from 'date-fns/locale'
+import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
+import type { Locale } from 'date-fns'
 import { useTranslation } from 'react-i18next'
+
+const DATE_LOCALES: Record<string, Locale> = {
+  de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
+}
 
 interface Effect {
   id: string
@@ -21,22 +26,20 @@ interface Effect {
 
 interface Peptide { id: string; name: string }
 
-const SEVERITY_LABELS: Record<number, string> = {
-  1: 'Sehr leicht', 2: 'Leicht', 3: 'Mittel', 4: 'Stark', 5: 'Sehr stark',
-}
 const SEVERITY_COLORS: Record<number, string> = {
   1: 'text-emerald-400', 2: 'text-lime-400', 3: 'text-amber-400',
   4: 'text-orange-400', 5: 'text-red-400',
 }
 
-const DURATION_PRESETS = [
-  '15 Min', '30 Min', '1 Std', '2 Std', '4 Std', '8 Std', '12 Std',
-  '1 Tag', '2 Tage', '1 Woche', 'Noch anhaltend', 'Individuell',
+const DURATION_KEYS = [
+  'min_15', 'min_30', 'std_1', 'std_2', 'std_4', 'std_8', 'std_12',
+  'tag_1', 'tage_2', 'woche_1', 'noch_anhaltend',
 ]
 
 export function Tagebuch() {
   const { user } = useAuth()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = DATE_LOCALES[i18n.language] ?? enUS
 
   const severityLabel = (n: number) =>
     [t('sehr_leicht'), t('leicht'), t('mittel'), t('stark'), t('sehr_stark')][n - 1]
@@ -190,7 +193,7 @@ export function Tagebuch() {
 
                 {/* Meta */}
                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-slate-500 text-xs">
-                  <span>{format(new Date(e.occurred_at), 'dd.MM.yyyy HH:mm', { locale: de })}</span>
+                  <span>{format(new Date(e.occurred_at), 'dd.MM.yyyy HH:mm', { locale })}</span>
                   {e.peptides && <span className="text-sky-400">{e.peptides.name}</span>}
                   {e.duration && (
                     <span className="flex items-center gap-1">
@@ -278,15 +281,15 @@ export function Tagebuch() {
             <div>
               <label className="label">{t('dauer')}</label>
               <div className="flex flex-wrap gap-2 mb-2">
-                {DURATION_PRESETS.filter(d => d !== 'Individuell').map(d => (
-                  <button key={d}
-                    onClick={() => { setForm(f => ({ ...f, duration: d })); setCustomDuration(false) }}
+                {DURATION_KEYS.map(key => (
+                  <button key={key}
+                    onClick={() => { setForm(f => ({ ...f, duration: t(key) })); setCustomDuration(false) }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      form.duration === d && !customDuration
+                      form.duration === t(key) && !customDuration
                         ? 'bg-sky-500 text-white'
                         : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                     }`}>
-                    {d}
+                    {t(key)}
                   </button>
                 ))}
                 <button
@@ -294,7 +297,7 @@ export function Tagebuch() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     customDuration ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                   }`}>
-                  Individuell
+                  {t('individuell')}
                 </button>
               </div>
               {customDuration && (

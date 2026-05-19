@@ -214,7 +214,7 @@ export function Rechner() {
 
   const currentSyringeLabel = SYRINGE_PRESETS.find(
     p => p.ml === parseFloat(sMl) && p.units === parseFloat(sUnits)
-  )?.label ?? `${sMl} mL · ${sUnits} Einh.`
+  )?.label ?? `${sMl} mL · ${sUnits} ${t('einh_kurz')}`
 
   return (
     <div>
@@ -231,8 +231,8 @@ export function Rechner() {
             <div className="grid grid-cols-3 gap-2">
               {[
                 { value: result.concMgPerMl, unit: 'mg/mL',   label: t('konzentration'), sub: null },
-                { value: `${result.fillPct}%`, unit: 'Spritze', label: t('gefuellt'),     sub: `${result.doseMl} mL` },
-                { value: String(result.dosesPerVial), unit: 'Dosen', label: t('pro_vial'), sub: null },
+                { value: `${result.fillPct}%`, unit: t('spritze_unit'), label: t('gefuellt'),     sub: `${result.doseMl} mL` },
+                { value: String(result.dosesPerVial), unit: t('dosen_unit'), label: t('pro_vial'), sub: null },
               ].map(({ value, unit, label, sub }) => (
                 <div key={label} style={{
                   background: 'rgba(0,10,24,0.82)',
@@ -358,9 +358,9 @@ export function Rechner() {
                     <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs">mL</span>
                   </div>
                   <div className="relative flex-1">
-                    <input className="input py-1.5 text-sm pr-10" type="number" placeholder="Einh."
+                    <input className="input py-1.5 text-sm pr-10" type="number" placeholder={t('einh_kurz')}
                       value={sUnits} onChange={e => setSUnits(e.target.value)} onClick={e => e.stopPropagation()} />
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs">Einh.</span>
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs">{t('einh_kurz')}</span>
                   </div>
                 </div>
               </div>

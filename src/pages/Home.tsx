@@ -8,7 +8,12 @@ import {
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { format } from 'date-fns'
-import { de } from 'date-fns/locale'
+import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
+import type { Locale } from 'date-fns'
+
+const DATE_LOCALES: Record<string, Locale> = {
+  de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
+}
 
 const TILE_DEFS = [
   { icon: CalendarDays, labelKey: 'tile_kalender', descKey: 'tile_kalender_desc', path: '/kalender',             color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',   wide: true },
@@ -44,10 +49,10 @@ export function Home() {
   }, [user])
 
   const { t, i18n } = useTranslation()
+  const locale = DATE_LOCALES[i18n.language] ?? enUS
   const hour    = new Date().getHours()
   const greeting = hour < 12 ? t('greeting_morning') : hour < 18 ? t('greeting_day') : t('greeting_evening')
-  const dateStr  = format(new Date(), "EEEE, d. MMMM", { locale: de })
-  void i18n
+  const dateStr  = format(new Date(), "EEEE, d. MMMM", { locale })
 
   return (
     <div>

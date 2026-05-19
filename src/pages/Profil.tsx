@@ -64,6 +64,7 @@ function ShareToggle({ icon, label, description, value, onChange, disabled }: Sh
 
 export function Profil() {
   const { user, signOut } = useAuth()
+  const { t } = useTranslation()
   const [profile, setProfile] = useState<Profile>(defaultProfile())
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -84,7 +85,7 @@ export function Profil() {
   }, [])
 
   const save = async () => {
-    if (!profile.username.trim()) return toast.error('Benutzername erforderlich')
+    if (!profile.username.trim()) return toast.error(t('benutzername_req'))
     setSaving(true)
     const { error } = await supabase.from('profiles').upsert({
       id: user!.id,
@@ -98,18 +99,18 @@ export function Profil() {
       share_tagebuch: profile.share_tagebuch,
       share_bewertungen: profile.share_bewertungen,
     })
-    if (error) toast.error('Fehler beim Speichern')
-    else toast.success('Profil gespeichert')
+    if (error) toast.error(t('fehler_speichern'))
+    else toast.success(t('profil_gespeichert'))
     setSaving(false)
   }
 
   const profileUrl = `${window.location.origin}/u/${profile.username?.toLowerCase() || '...'}`
 
   const copyLink = async () => {
-    if (!profile.username) return toast.error('Zuerst Benutzername speichern')
+    if (!profile.username) return toast.error(t('zuerst_username'))
     await navigator.clipboard.writeText(profileUrl)
     setCopied(true)
-    toast.success('Link kopiert!')
+    toast.success(t('link_kopiert'))
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -124,10 +125,10 @@ export function Profil() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold">Mein Profil</h1>
+        <h1 className="text-xl font-bold">{t('mein_profil')}</h1>
         <button className="btn-danger flex items-center gap-2 text-sm"
-          onClick={() => { if (confirm('Abmelden?')) signOut() }}>
-          <LogOut size={15} /> Abmelden
+          onClick={() => { if (confirm(t('abmelden_confirm'))) signOut() }}>
+          <LogOut size={15} /> {t('abmelden_btn')}
         </button>
       </div>
 
@@ -149,10 +150,10 @@ export function Profil() {
             {profile.is_public
               ? <Globe size={16} className="text-sky-400" />
               : <Lock size={16} className="text-slate-400" />}
-            <h2 className="font-semibold text-slate-300">Profil teilen</h2>
+            <h2 className="font-semibold text-slate-300">{t('profil_teilen')}</h2>
             {profile.is_public && (
               <span className="badge bg-sky-500/10 text-sky-400 text-xs">
-                {sharedCount} Bereiche
+                {t('bereiche_count', { n: sharedCount })}
               </span>
             )}
           </div>
@@ -184,42 +185,42 @@ export function Profil() {
 
             {/* Öffentliche Bio */}
             <div>
-              <label className="label">Öffentliche Bio (optional)</label>
+              <label className="label">{t('public_bio_label')}</label>
               <textarea className="input resize-none" rows={2}
-                placeholder="Kurze Beschreibung für dein öffentliches Profil..."
+                placeholder={t('public_bio_placeholder')}
                 value={profile.public_bio}
                 onChange={e => setProfile(p => ({ ...p, public_bio: e.target.value }))} />
             </div>
 
             {/* Inhalts-Schalter */}
             <div>
-              <p className="label mb-2">Welche Inhalte sollen sichtbar sein?</p>
+              <p className="label mb-2">{t('inhalte_sichtbar')}</p>
               <div className="space-y-2">
                 <ShareToggle
                   icon={<FlaskConical size={16} />}
-                  label="Peptide"
-                  description="Deine Peptid-Liste mit Dosierungen"
+                  label={t('nav_peptide')}
+                  description={t('share_peptide_desc')}
                   value={profile.share_peptide}
                   onChange={set('share_peptide')}
                 />
                 <ShareToggle
                   icon={<CalendarDays size={16} />}
-                  label="Kalender & Zyklen"
-                  description="Protokollierte Dosen & aktive Zyklen"
+                  label={t('share_kalender_voll')}
+                  description={t('share_kalender_desc_t')}
                   value={profile.share_kalender}
                   onChange={set('share_kalender')}
                 />
                 <ShareToggle
                   icon={<BookHeart size={16} />}
-                  label="Tagebuch"
-                  description="Wirkungen & Nebenwirkungen"
+                  label={t('tile_tagebuch')}
+                  description={t('share_tagebuch_desc_t')}
                   value={profile.share_tagebuch}
                   onChange={set('share_tagebuch')}
                 />
                 <ShareToggle
                   icon={<Star size={16} />}
-                  label="Bewertungen"
-                  description="Deine Peptid-Bewertungen & Erfahrungsberichte"
+                  label={t('tile_bewertungen')}
+                  description={t('share_bewertungen_desc_t')}
                   value={profile.share_bewertungen}
                   onChange={set('share_bewertungen')}
                 />
@@ -229,14 +230,14 @@ export function Profil() {
             {sharedCount === 0 && (
               <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
                 <p className="text-amber-400 text-xs">
-                  ⚠ Kein Bereich ausgewählt — dein Profil zeigt nur Name und Bio.
+                  {t('kein_bereich_warning')}
                 </p>
               </div>
             )}
           </div>
         ) : (
           <p className="text-slate-500 text-sm">
-            Aktiviere den Schalter um ein öffentliches Profil mit Teilen-Link zu erstellen.
+            {t('profil_teilen_hint')}
           </p>
         )}
       </div>
@@ -245,15 +246,15 @@ export function Profil() {
       <div className="card space-y-4 mb-4">
         <h2 className="font-semibold text-slate-300">Account</h2>
         <div>
-          <label className="label">Benutzername *</label>
-          <input className="input" placeholder="mein_username"
+          <label className="label">{t('benutzername_pflicht')}</label>
+          <input className="input" placeholder={t('username_placeholder')}
             value={profile.username}
             onChange={e => setProfile(p => ({ ...p, username: e.target.value }))} />
-          <p className="text-slate-600 text-xs mt-1">Nur Kleinbuchstaben · erscheint im Teilen-Link</p>
+          <p className="text-slate-600 text-xs mt-1">{t('benutzername_hinweis')}</p>
         </div>
         <div>
-          <label className="label">Anzeigename</label>
-          <input className="input" placeholder="Mein Name (optional)"
+          <label className="label">{t('anzeigename')}</label>
+          <input className="input" placeholder={t('anzeigename_ph')}
             value={profile.display_name}
             onChange={e => setProfile(p => ({ ...p, display_name: e.target.value }))} />
         </div>
@@ -262,50 +263,50 @@ export function Profil() {
       {/* ── Gesundheitsdaten ─────────────────────────────────────────────── */}
       <div className="card space-y-4 mb-4">
         <div className="flex items-center gap-2">
-          <h2 className="font-semibold text-slate-300">Gesundheitsdaten</h2>
-          <span className="badge bg-slate-700 text-slate-400">Freiwillig</span>
+          <h2 className="font-semibold text-slate-300">{t('gesundheitsdaten')}</h2>
+          <span className="badge bg-slate-700 text-slate-400">{t('freiwillig')}</span>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label">Alter</label>
-            <input className="input" type="number" placeholder="Jahre"
+            <label className="label">{t('alter')}</label>
+            <input className="input" type="number" placeholder={t('jahre_einheit')}
               value={profile.age ?? ''}
               onChange={e => setProfile(p => ({ ...p, age: e.target.value ? parseInt(e.target.value) : null }))} />
           </div>
           <div>
-            <label className="label">Geschlecht</label>
+            <label className="label">{t('geschlecht')}</label>
             <select className="select" value={profile.gender}
               onChange={e => setProfile(p => ({ ...p, gender: e.target.value }))}>
               <option value="">—</option>
-              <option value="männlich">Männlich</option>
-              <option value="weiblich">Weiblich</option>
-              <option value="divers">Divers</option>
+              <option value="männlich">{t('maennlich')}</option>
+              <option value="weiblich">{t('weiblich')}</option>
+              <option value="divers">{t('divers')}</option>
             </select>
           </div>
           <div>
-            <label className="label">Gewicht (kg)</label>
+            <label className="label">{t('gewicht_label')}</label>
             <input className="input" type="number" placeholder="kg"
               value={profile.weight_kg ?? ''}
               onChange={e => setProfile(p => ({ ...p, weight_kg: e.target.value ? parseFloat(e.target.value) : null }))} />
           </div>
           <div>
-            <label className="label">Größe (cm)</label>
+            <label className="label">{t('groesse_label')}</label>
             <input className="input" type="number" placeholder="cm"
               value={profile.height_cm ?? ''}
               onChange={e => setProfile(p => ({ ...p, height_cm: e.target.value ? parseFloat(e.target.value) : null }))} />
           </div>
         </div>
         <div>
-          <label className="label">Persönliche Notizen (nur für dich)</label>
+          <label className="label">{t('pers_notizen_label')}</label>
           <textarea className="input resize-none" rows={3}
-            placeholder="Vorerkrankungen, Medikamente, etc."
+            placeholder={t('pers_notizen_ph')}
             value={profile.notes}
             onChange={e => setProfile(p => ({ ...p, notes: e.target.value }))} />
         </div>
       </div>
 
       <button className="btn-primary w-full flex items-center justify-center gap-2" onClick={save} disabled={saving}>
-        <Save size={16} /> {saving ? 'Speichert...' : 'Profil speichern'}
+        <Save size={16} /> {saving ? t('saving') : t('profil_speichern')}
       </button>
 
       {/* ── Sprache / Language ── */}
@@ -339,7 +340,6 @@ function LanguageSwitcher() {
         {t('language')}
       </p>
 
-      {/* Aktuell gewählte Sprache */}
       <button
         onClick={() => { setOpen(o => !o); setSelected(i18n.language) }}
         style={{
@@ -356,7 +356,6 @@ function LanguageSwitcher() {
         <span style={{ fontSize: 12, opacity: 0.6 }}>{open ? '▲' : '▼'}</span>
       </button>
 
-      {/* Sprachenliste + Übernehmen */}
       {open && (
         <div style={{
           marginTop: 6, borderRadius: 13, overflow: 'hidden',
@@ -385,7 +384,6 @@ function LanguageSwitcher() {
             ))}
           </div>
 
-          {/* Übernehmen Button */}
           <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 8 }}>
             <button
               onClick={() => setOpen(false)}
