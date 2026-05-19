@@ -15,6 +15,7 @@ import { PublicProfile } from './pages/PublicProfile'
 import { FAQ } from './pages/FAQ'
 import { Rechner } from './pages/Rechner'
 import { InjectionTracker } from './pages/InjectionTracker'
+import { InjectionTracker3D } from './pages/InjectionTracker3D'
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="profil" element={<Profil />} />
             <Route path="faq" element={<FAQ />} />
             <Route path="injektionen" element={<InjectionTracker />} />
+            <Route path="injektionen3d" element={<InjectionTracker3D />} />
           </Route>
         </Routes>
         </OnboardingProvider>
