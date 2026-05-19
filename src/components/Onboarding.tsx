@@ -265,6 +265,7 @@ export function Onboarding() {
     const block = (e: Event) => {
       const node = e.target
       if (isPanelNode(node)) return
+      if (node instanceof Element && node.closest('[data-ob-confirm]')) return
       if (node instanceof Node && isInsideOpenModal(node)) return
       if (isOnboardingInteractionNode(node, meta)) return
       e.preventDefault()
@@ -395,6 +396,7 @@ export function Onboarding() {
       ? createPortal(
           <button
             type="button"
+            data-ob-confirm
             onClick={() => nextRef.current()}
             aria-label="Confirm"
             style={{
