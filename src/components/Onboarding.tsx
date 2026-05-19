@@ -1,415 +1,409 @@
-import { useEffect, useState, useRef } from 'react'
+import {
+  useEffect,
+  useState,
+  useRef,
+  useLayoutEffect,
+  useCallback,
+  type CSSProperties,
+} from 'react'
+import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, X, RotateCcw } from 'lucide-react'
 import { useOnboarding } from '../context/OnboardingContext'
+import { ONBOARDING_STEPS, ONBOARDING_TOUR_STEP_COUNT } from './onboardingSteps'
+import { OB_Z } from './onboardingLayers'
+import { computeCalloutLayout, type CalloutPlacement } from './onboardingPlacement'
+import {
+  getOnboardingInteractionEl,
+  getOpenAppModal,
+  isInsideOpenModal,
+  isOnboardingInteractionNode,
+  measureOnboardingTarget,
+  shouldShowOnboardingSpotlight,
+} from './onboardingTarget'
 
-interface StepDef {
-  emoji: string
-  title: string
-  subtitle: string
-  description: string
-  hint: string | null
-  targetSelector: string | null
-  tooltipPos: 'above' | 'below'
-  tooltipText: string | null
-  // Panel-Verhalten
-  panelPos: 'top' | 'bottom'
-  panelCompact: boolean
+const SPOT_PAD = 8
+const SCRIM = 'rgba(0, 6, 18, 0.58)'
+
+function CalloutArrow({ placement, left }: { placement: CalloutPlacement; left: number }) {
+  if (placement === 'center') return null
+  const above = placement === 'top'
+  return (
+    <span
+      className="ob-callout-arrow"
+      style={{
+        position: 'absolute',
+        left,
+        ...(above
+          ? { bottom: -7, borderTop: '8px solid rgba(12, 24, 48, 0.99)' }
+          : { top: -7, borderBottom: '8px solid rgba(12, 24, 48, 0.99)' }),
+      }}
+    />
+  )
 }
 
-const STEPS: StepDef[] = [
-  {
-    emoji: '👋', title: 'Willkommen bei TYD', subtitle: 'Track Your Dose',
-    description: 'Deine persönliche Peptid-Management-App für Inventar, Zyklen, Kalender und Tagebuch. Wir führen dich jetzt Schritt für Schritt durch alle Funktionen.',
-    hint: null, targetSelector: null, tooltipPos: 'above', tooltipText: null,
-    panelPos: 'bottom', panelCompact: false,
-  },
-  {
-    emoji: '🧭', title: 'Navigation', subtitle: 'Schritt 1 · Starte hier',
-    description: 'Unten findest du 7 Bereiche der App. Tippe jetzt auf „Peptide" um loszulegen.',
-    hint: '👇 Tippe auf „Peptide" in der Navigation',
-    targetSelector: '[data-ob="nav-peptide"]', tooltipPos: 'above', tooltipText: null,
-    panelPos: 'bottom', panelCompact: true,
-  },
-  {
-    emoji: '📦', title: 'Inventar', subtitle: 'Schritt 2 · Rohstofflager',
-    description: 'Hier lagerst du deine rohen, gefriertrockneten Peptid-Vials ein. Wähle zuerst den Tab „Inventar".',
-    hint: '👆 Tippe auf den Tab „Inventar"',
-    targetSelector: '[data-ob="tab-inventar"]', tooltipPos: 'below', tooltipText: 'Hier tippen',
-    panelPos: 'bottom', panelCompact: true,
-  },
-  {
-    emoji: '➕', title: 'Einlagern', subtitle: 'Schritt 3 · Vials aufnehmen',
-    description: 'Gib Peptidname, Anzahl Vials und mg/Vial ein. Batch-Nummer und Quelle sind optional.',
-    hint: '👆 Tippe auf „+ Einlagern"',
-    targetSelector: '[data-ob="btn-einlagern"]', tooltipPos: 'below', tooltipText: 'Hier tippen',
-    panelPos: 'bottom', panelCompact: true,
-  },
-  {
-    emoji: '🧪', title: 'Peptid anlegen', subtitle: 'Schritt 4 · Rekonstitution',
-    description: 'Tippe auf „Peptid anlegen" bei einem Inventar-Eintrag. Wirkstoff und Batch werden automatisch übernommen.',
-    hint: '👉 Tippe auf „Peptid anlegen"',
-    targetSelector: '[data-ob="btn-peptid-anlegen"]', tooltipPos: 'above', tooltipText: 'Hier tippen',
-    panelPos: 'bottom', panelCompact: true,
-  },
-  {
-    emoji: '💧', title: 'Formular ausfüllen', subtitle: 'Schritt 5 · Flüssigkeit & Dosis',
-    description: 'Gib die zugefügte Flüssigkeit (z.B. 2 mL BAC-Wasser) und deine Standard-Dosis ein. Alles andere kommt aus dem Inventar.',
-    hint: '✏️ Formular ausfüllen → „Speichern" tippen',
-    targetSelector: null, tooltipPos: 'above', tooltipText: null,
-    panelPos: 'top', panelCompact: true,  // Form belegt das untere Bildschirmende
-  },
-  {
-    emoji: '🔄', title: 'Zyklus anlegen', subtitle: 'Schritt 6 · Einnahmeplan',
-    description: 'Lege Dosis, Frequenz (täglich, jeden 2. Tag…) und Einnahmezeit für dein Peptid fest.',
-    hint: '👉 Tippe auf „+ Zyklus hinzufügen"',
-    targetSelector: '[data-ob="btn-zyklus-add"]', tooltipPos: 'above', tooltipText: 'Hier tippen',
-    panelPos: 'bottom', panelCompact: true,
-  },
-  {
-    emoji: '📅', title: 'Kalender', subtitle: 'Schritt 7 · Tagesübersicht',
-    description: 'Der Kalender zeigt deine aktiven Zyklen mit farbigen Punkten. Tippe auf einen Tag um Einnahmen zu sehen.',
-    hint: '👇 Tippe auf „Kalender" in der Navigation',
-    targetSelector: '[data-ob="nav-kalender"]', tooltipPos: 'above', tooltipText: null,
-    panelPos: 'bottom', panelCompact: true,
-  },
-  {
-    emoji: '🚀', title: 'Alles klar!', subtitle: 'Fertig · Du kennst dich aus',
-    description: 'Der Rechner berechnet die aufzuziehende Menge. Im Tagebuch hältst du Wirkungen und Nebenwirkungen fest. Bewertungen helfen dir den Überblick zu behalten.\n\nViel Erfolg mit TYD!',
-    hint: null,
-    targetSelector: null, tooltipPos: 'above', tooltipText: null,
-    panelPos: 'bottom', panelCompact: false,
-  },
-]
+function SpotlightScrim({ hole }: { hole: DOMRect | null }) {
+  const paneStyle: CSSProperties = {
+    position: 'fixed',
+    background: SCRIM,
+    pointerEvents: 'auto',
+  }
 
-// ─── Komponente ───────────────────────────────────────────────────────────────
+  if (!hole || hole.width < 2 || hole.height < 2) {
+    return (
+      <div id="ob-scrim-root" aria-hidden>
+        <div className="ob-scrim-pane fixed inset-0" style={{ ...paneStyle, zIndex: OB_Z.scrim }} />
+      </div>
+    )
+  }
+
+  const x = Math.max(0, hole.left - SPOT_PAD)
+  const y = Math.max(0, hole.top - SPOT_PAD)
+  const w = hole.width + SPOT_PAD * 2
+  const h = hole.height + SPOT_PAD * 2
+  const r = 10
+
+  return (
+    <div id="ob-scrim-root" aria-hidden>
+      <div className="ob-scrim-pane" style={{ ...paneStyle, zIndex: OB_Z.scrim, top: 0, left: 0, right: 0, height: y }} />
+      <div className="ob-scrim-pane" style={{ ...paneStyle, zIndex: OB_Z.scrim, top: y, left: 0, width: x, height: h }} />
+      <div className="ob-scrim-pane" style={{ ...paneStyle, zIndex: OB_Z.scrim, top: y, left: x + w, right: 0, height: h }} />
+      <div className="ob-scrim-pane" style={{ ...paneStyle, zIndex: OB_Z.scrim, top: y + h, left: 0, right: 0, bottom: 0 }} />
+      <div
+        className="ob-highlight-ring pointer-events-none"
+        style={{
+          position: 'fixed',
+          zIndex: OB_Z.ring,
+          top: y,
+          left: x,
+          width: w,
+          height: h,
+          borderRadius: r,
+        }}
+      />
+    </div>
+  )
+}
+
+function isPanelNode(node: EventTarget | null): boolean {
+  if (!(node instanceof Node)) return false
+  return !!document.getElementById('ob-callout')?.contains(node)
+}
+
 export function Onboarding() {
-  const { step, total, active, next, prev, skip } = useOnboarding()
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const { step, total, active, needsLanguagePick, next, prev, skip } = useOnboarding()
+
+  const meta = ONBOARDING_STEPS[step]
+  const steps = ONBOARDING_STEPS.map(m => ({
+    ...m,
+    title: t(m.titleKey),
+    subtitle: t(m.subtitleKey),
+    description: t(m.descriptionKey),
+    tapHint: m.tapHintKey ? t(m.tapHintKey) : null,
+  }))
+  const s = steps[step]
+
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
+  const [panelH, setPanelH] = useState(200)
+  const [layout, setLayout] = useState<ReturnType<typeof computeCalloutLayout>>(() =>
+    computeCalloutLayout(null, window.innerWidth, window.innerHeight, 200, { prefer: 'center' }),
+  )
+
+  const panelRef = useRef<HTMLDivElement>(null)
   const cleanupRef = useRef<(() => void) | null>(null)
   const nextRef = useRef(next)
-  nextRef.current = next
+
+  useEffect(() => {
+    nextRef.current = next
+  }, [next])
+
+  const wantsTarget = !!meta?.targetSelector
+  const showSpotlight = shouldShowOnboardingSpotlight(meta, targetRect)
+  const useCenteredCallout = !showSpotlight || meta?.placement === 'center'
+  const isFirst = step === 0
+  const isLast = step === total - 1
+  const tourStepNumber = step > 0 && !isLast ? step : null
+  const progressLabel =
+    tourStepNumber === null
+      ? isFirst
+        ? t('ob_intro')
+        : t('finish')
+      : t('step_of', { current: tourStepNumber, total: ONBOARDING_TOUR_STEP_COUNT })
+
+  useEffect(() => {
+    document.body.classList.toggle('onboarding-active', active && !needsLanguagePick)
+    return () => document.body.classList.remove('onboarding-active')
+  }, [active, needsLanguagePick])
+
+  useEffect(() => {
+    if (!active || needsLanguagePick) return
+    const route = meta?.route ?? (step === 0 ? '/' : undefined)
+    if (route) navigate(route)
+  }, [step, active, needsLanguagePick, meta?.route, navigate])
+
+  const syncModalLayer = useCallback(() => {
+    document.querySelectorAll('[data-app-modal]').forEach(el => {
+      const modal = el as HTMLElement
+      const visible = modal.getBoundingClientRect().height > 0
+      if (visible && active && !needsLanguagePick) {
+        modal.style.zIndex = String(OB_Z.appModal)
+        modal.style.pointerEvents = 'auto'
+      } else {
+        modal.style.zIndex = ''
+        modal.style.pointerEvents = ''
+      }
+    })
+  }, [active, needsLanguagePick])
+
+  useEffect(() => {
+    if (!active || needsLanguagePick) return
+    syncModalLayer()
+    const mo = new MutationObserver(syncModalLayer)
+    mo.observe(document.body, { childList: true, subtree: true, attributes: true })
+    return () => {
+      mo.disconnect()
+      document.querySelectorAll('[data-app-modal]').forEach(el => {
+        const modal = el as HTMLElement
+        modal.style.zIndex = ''
+        modal.style.pointerEvents = ''
+      })
+    }
+  }, [active, needsLanguagePick, syncModalLayer])
+
+  const measureTarget = useCallback(() => {
+    setTargetRect(measureOnboardingTarget(meta))
+  }, [meta])
 
   useEffect(() => {
     cleanupRef.current?.()
     cleanupRef.current = null
     setTargetRect(null)
 
-    if (!active) return
+    if (!active || needsLanguagePick || !meta) return
 
-    const s = STEPS[step]
-    if (!s.targetSelector) return
+    const el = getOnboardingInteractionEl(meta)
 
-    let listenerAdded = false
-
-    const setup = () => {
-      const el = document.querySelector(s.targetSelector!) as HTMLElement | null
-      if (!el) return
-      setTargetRect(el.getBoundingClientRect())
-      if (!listenerAdded) {
-        listenerAdded = true
-        const handler = () => nextRef.current()
-        el.addEventListener('click', handler, { once: true })
-        cleanupRef.current = () => el.removeEventListener('click', handler)
-      }
+    if (meta.scrollTarget && el) {
+      requestAnimationFrame(() => {
+        el.scrollIntoView({ block: 'center', behavior: 'smooth', inline: 'nearest' })
+        window.setTimeout(measureTarget, 350)
+      })
+    } else {
+      measureTarget()
     }
 
-    setup()
-    const t = setTimeout(setup, 350)
+    const poll = window.setInterval(measureTarget, 100)
+    const stopPoll = window.setTimeout(() => clearInterval(poll), 10000)
 
-    const onResize = () => {
-      const el = document.querySelector(s.targetSelector!) as HTMLElement | null
-      if (el) setTargetRect(el.getBoundingClientRect())
-    }
-    window.addEventListener('resize', onResize)
+    const onLayout = () => measureTarget()
+    window.addEventListener('resize', onLayout)
+    window.addEventListener('scroll', onLayout, true)
+    const modalEl = el?.closest('[data-app-modal]')
+    modalEl?.addEventListener('scroll', onLayout, true)
 
     return () => {
-      clearTimeout(t)
+      clearInterval(poll)
+      clearTimeout(stopPoll)
+      window.removeEventListener('resize', onLayout)
+      window.removeEventListener('scroll', onLayout, true)
+      modalEl?.removeEventListener('scroll', onLayout, true)
+    }
+  }, [step, active, needsLanguagePick, meta, measureTarget])
+
+  useEffect(() => {
+    if (!active || needsLanguagePick || meta?.id !== 'add-stock') return
+    let advanced = false
+    const tryAdvance = () => {
+      if (advanced || !getOpenAppModal()) return
+      advanced = true
+      nextRef.current()
+    }
+    tryAdvance()
+    const mo = new MutationObserver(tryAdvance)
+    mo.observe(document.body, { childList: true, subtree: true })
+    return () => mo.disconnect()
+  }, [step, active, needsLanguagePick, meta?.id])
+
+  useEffect(() => {
+    cleanupRef.current?.()
+    cleanupRef.current = null
+    if (!active || needsLanguagePick || meta?.advance !== 'click' || meta?.id === 'add-stock') return
+    const el = getOnboardingInteractionEl(meta)
+    if (!el) return
+    const handler = () => window.setTimeout(() => nextRef.current(), 80)
+    el.addEventListener('click', handler, { once: true })
+    cleanupRef.current = () => el.removeEventListener('click', handler)
+    return () => {
       cleanupRef.current?.()
       cleanupRef.current = null
-      window.removeEventListener('resize', onResize)
     }
-  }, [step, active])
+  }, [step, active, needsLanguagePick, meta])
 
-  if (!active) return null
+  useEffect(() => {
+    if (!active || needsLanguagePick || !showSpotlight) return
+    const el = getOnboardingInteractionEl(meta)
+    if (!el) return
+    el.setAttribute('data-ob-active', '')
+    return () => el.removeAttribute('data-ob-active')
+  }, [step, active, needsLanguagePick, meta, showSpotlight])
 
-  const s = STEPS[step]
-  const pct = ((step + 1) / total) * 100
-  const isFirst = step === 0
-  const isLast  = step === total - 1
+  useEffect(() => {
+    if (!active || needsLanguagePick) return
+    const block = (e: Event) => {
+      const node = e.target
+      if (isPanelNode(node)) return
+      if (node instanceof Node && isInsideOpenModal(node)) return
+      if (isOnboardingInteractionNode(node, meta)) return
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    document.addEventListener('click', block, true)
+    document.addEventListener('pointerdown', block, true)
+    return () => {
+      document.removeEventListener('click', block, true)
+      document.removeEventListener('pointerdown', block, true)
+    }
+  }, [step, active, needsLanguagePick, meta])
 
-  // ── Panel-Position ───────────────────────────────────────────────────────
-  const panelStyle: React.CSSProperties = s.panelPos === 'top'
-    ? { top: '16px', left: 0, right: 0 }
-    : { bottom: 'calc(62px + env(safe-area-inset-bottom))', left: 0, right: 0 }
+  useLayoutEffect(() => {
+    const el = panelRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setPanelH(el.offsetHeight))
+    ro.observe(el)
+    setPanelH(el.offsetHeight)
+    return () => ro.disconnect()
+  }, [step, s?.title, s?.description, s?.tapHint, showSpotlight, useCenteredCallout])
 
-  // ── Padding & Schriftgröße je nach Kompaktheit ───────────────────────────
-  const pad      = s.panelCompact ? '13px 16px 11px' : '22px 20px 18px'
-  const descSize = s.panelCompact ? '0.775rem' : '0.8375rem'
-  const emojiSize = (isFirst || isLast) ? '2.4rem' : '1.5rem'
+  useLayoutEffect(() => {
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const hole = showSpotlight ? targetRect : null
+
+    if (useCenteredCallout) {
+      setLayout(computeCalloutLayout(null, vw, vh, panelH, { prefer: 'center' }))
+      return
+    }
+
+    const prefer =
+      meta?.placement === 'top' ? 'top' : meta?.placement === 'bottom' ? 'bottom' : 'auto'
+    const maxBottom = hole ? hole.top - 12 : undefined
+    setLayout(
+      computeCalloutLayout(hole, vw, vh, panelH, {
+        prefer,
+        maxBottom,
+      }),
+    )
+  }, [targetRect, panelH, step, useCenteredCallout, showSpotlight, meta?.placement])
+
+  if (!active || needsLanguagePick || !s) return null
+
+  const panelStyle: CSSProperties = {
+    position: 'fixed',
+    zIndex: OB_Z.panel,
+    top: layout.top,
+    left: layout.left,
+    width: layout.width,
+    pointerEvents: 'auto',
+  }
+
+  const scrimLayer = <SpotlightScrim hole={showSpotlight ? targetRect : null} />
+
+  const calloutLayer = (
+    <div
+      id="ob-callout"
+      ref={panelRef}
+      className={`ob-callout-card ob-callout-panel ${useCenteredCallout ? 'ob-callout-center' : 'ob-callout-anchored'}`}
+      style={panelStyle}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ob-callout-title"
+    >
+      {!useCenteredCallout && (
+        <CalloutArrow placement={layout.placement} left={layout.arrowLeft} />
+      )}
+
+      <div key={step} className="ob-step-enter">
+        <div className="ob-callout-header">
+          <span className="ob-step-badge">{progressLabel}</span>
+          <button type="button" onClick={skip} className="ob-callout-close" aria-label={t('skip')}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className={`ob-callout-main ${useCenteredCallout ? 'ob-callout-main--center' : ''}`}>
+          <div className="ob-callout-title-row">
+            <span className="ob-emoji-glow text-xl leading-none" aria-hidden>
+              {s.emoji}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="ob-callout-kicker">{s.subtitle}</p>
+              <p id="ob-callout-title" className="ob-callout-title">
+                {s.title}
+              </p>
+            </div>
+          </div>
+
+          <p className="ob-callout-body whitespace-pre-line">{s.description}</p>
+
+          {s.advance === 'click' && showSpotlight && (
+            <p className="ob-tap-cue">{s.tapHint ?? t('ob_tap_highlight')}</p>
+          )}
+
+          {wantsTarget && !showSpotlight && !getOnboardingInteractionEl(meta) && (
+            <p className="ob-waiting-hint">{t('ob_waiting_target')}</p>
+          )}
+        </div>
+
+        <div className="ob-callout-actions">
+          <button type="button" onClick={prev} disabled={isFirst} className="ob-nav-btn" aria-label={t('back')}>
+            <ChevronLeft size={16} />
+          </button>
+          <button type="button" onClick={skip} className="ob-skip-inline">
+            {t('skip')}
+          </button>
+          <button type="button" onClick={() => nextRef.current()} className="ob-primary-btn flex-1 justify-center">
+            {isLast ? t('finish') : s.advance === 'click' ? t('ob_continue') : t('next')}
+            <ChevronRight size={14} />
+          </button>
+        </div>
+
+        {isFirst && (
+          <button type="button" onClick={skip} className="ob-skip-tour-link">
+            {t('ob_skip_tour')}
+          </button>
+        )}
+        {isLast && <p className="ob-profile-hint">{t('ob_profile_hint')}</p>}
+      </div>
+    </div>
+  )
 
   return (
     <>
-      {/* Backdrop — kein pointer-events, damit alles noch klickbar ist */}
-      <div
-        className="fixed inset-0 z-30 pointer-events-none"
-        style={{ background: 'rgba(0,0,0,0.50)' }}
-      />
-
-      {/* ── Highlight-Ring um Ziel-Element ── z-45 damit er über der Nav (z-40) sichtbar ist */}
-      {targetRect && (
-        <div
-          className="fixed pointer-events-none"
-          style={{
-            top:    targetRect.top    - 5,
-            left:   targetRect.left   - 5,
-            width:  targetRect.width  + 10,
-            height: targetRect.height + 10,
-            borderRadius: '14px',
-            border: '2px solid rgba(0,204,245,0.92)',
-            boxShadow: [
-              '0 0 0 4px rgba(0,204,245,0.14)',
-              '0 0 20px rgba(0,204,245,0.55)',
-              '0 0 40px rgba(0,204,245,0.22)',
-            ].join(', '),
-            zIndex: 45,
-            transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)',
-          }}
-        />
-      )}
-
-      {/* ── Tooltip-Bubble neben Ziel-Element ── */}
-      {targetRect && s.tooltipText && (
-        <div
-          className="fixed pointer-events-none"
-          style={{
-            zIndex: 46,
-            ...(s.tooltipPos === 'above'
-              ? { top: targetRect.top - 5 - 10 - 28, left: targetRect.left + targetRect.width / 2 }
-              : { top: targetRect.top + targetRect.height + 5 + 10, left: targetRect.left + targetRect.width / 2 }),
-            transform: 'translateX(-50%)',
-          }}
-        >
-          <div style={{
-            background: 'rgba(0,204,245,0.14)',
-            border: '1px solid rgba(0,204,245,0.6)',
-            borderRadius: '8px',
-            padding: '4px 10px',
-            color: '#00eeff',
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            whiteSpace: 'nowrap',
-            boxShadow: '0 0 12px rgba(0,204,245,0.35)',
-          }}>
-            {s.tooltipText}
-          </div>
-          {s.tooltipPos === 'above' && (
-            <div style={{
-              position: 'absolute', bottom: -5, left: '50%', transform: 'translateX(-50%)',
-              width: 0, height: 0,
-              borderLeft: '5px solid transparent', borderRight: '5px solid transparent',
-              borderTop: '5px solid rgba(0,204,245,0.6)',
-            }} />
-          )}
-          {s.tooltipPos === 'below' && (
-            <div style={{
-              position: 'absolute', top: -5, left: '50%', transform: 'translateX(-50%)',
-              width: 0, height: 0,
-              borderLeft: '5px solid transparent', borderRight: '5px solid transparent',
-              borderBottom: '5px solid rgba(0,204,245,0.6)',
-            }} />
-          )}
-        </div>
-      )}
-
-      {/* ── Panel ── */}
-      <div className="fixed z-40 px-3" style={panelStyle}>
-        <div style={{
-          background: 'rgba(5, 6, 18, 0.98)',
-          border: '1px solid rgba(0, 204, 245, 0.18)',
-          borderRadius: '20px',
-          padding: pad,
-          boxShadow: '0 -4px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,204,245,0.06), 0 0 40px rgba(0,204,245,0.06)',
-          backdropFilter: 'none',
-          transition: 'padding 0.3s ease',
-        }}>
-
-          {/* ── Willkommen / Abschluss: zentriert & prominent ── */}
-          {(isFirst || isLast) ? (
-            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-              <div style={{ fontSize: emojiSize, lineHeight: 1, marginBottom: '10px' }}>{s.emoji}</div>
-              <p style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(0,204,245,0.55)', marginBottom: '4px' }}>
-                {s.subtitle}
-              </p>
-              <p style={{ fontSize: '1.1rem', fontWeight: 800, color: '#eaeefc', letterSpacing: '-0.02em', marginBottom: '10px' }}>
-                {s.title}
-              </p>
-              <p style={{ fontSize: descSize, color: 'rgba(200,215,235,0.80)', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
-                {s.description}
-              </p>
-            </div>
-          ) : (
-            /* ── Reguläre Schritte: kompakte Zeile ── */
-            <>
-              <div className="flex items-start justify-between mb-2.5">
-                <div className="flex items-center gap-2">
-                  <span style={{ fontSize: emojiSize, lineHeight: 1 }}>{s.emoji}</span>
-                  <div>
-                    <p style={{ fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'rgba(0,204,245,0.55)', marginBottom: '1px' }}>
-                      {s.subtitle}
-                    </p>
-                    <p style={{ fontSize: '0.9rem', fontWeight: 700, color: '#eaeefc', letterSpacing: '-0.01em' }}>
-                      {s.title}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={skip}
-                  style={{ padding: '4px', color: 'rgba(255,255,255,0.22)', transition: 'color 0.15s', flexShrink: 0 }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.22)')}>
-                  <X size={15} />
-                </button>
-              </div>
-
-              <p style={{ fontSize: descSize, color: 'rgba(200,215,235,0.80)', lineHeight: 1.50, marginBottom: s.hint ? '10px' : '12px' }}>
-                {s.description}
-              </p>
-
-              {s.hint && (
-                <div style={{
-                  background: 'rgba(0,204,245,0.07)', border: '1px solid rgba(0,204,245,0.15)',
-                  borderRadius: '9px', padding: '7px 11px', marginBottom: '12px',
-                  fontSize: '0.775rem', color: 'rgba(0,220,255,0.85)', fontWeight: 600,
-                }}>
-                  {s.hint}
-                </div>
-              )}
-            </>
-          )}
-
-          {/* ── Progress-Bar ── */}
-          <div style={{ height: '2px', borderRadius: '1px', background: 'rgba(255,255,255,0.06)', marginBottom: s.panelCompact ? '10px' : '14px', overflow: 'hidden' }}>
-            <div style={{
-              height: '100%', borderRadius: '1px', width: `${pct}%`,
-              background: 'linear-gradient(90deg, rgba(0,180,240,0.7), rgba(0,220,255,0.9))',
-              boxShadow: '0 0 8px rgba(0,204,245,0.5)',
-              transition: 'width 0.35s cubic-bezier(0.4,0,0.2,1)',
-            }} />
-          </div>
-
-          {/* ── Navigation ── */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={prev}
-              disabled={isFirst}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: '34px', height: '34px', borderRadius: '10px',
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)',
-                color: isFirst ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.55)',
-                cursor: isFirst ? 'not-allowed' : 'pointer', transition: 'all 0.15s', flexShrink: 0,
-              }}>
-              <ChevronLeft size={15} />
-            </button>
-
-            <div className="flex gap-1 flex-1 justify-center">
-              {Array.from({ length: total }, (_, i) => (
-                <div key={i} style={{
-                  width: i === step ? '14px' : '4px', height: '4px', borderRadius: '3px',
-                  transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
-                  background: i === step
-                    ? 'rgba(0,204,245,0.85)'
-                    : i < step ? 'rgba(0,204,245,0.30)' : 'rgba(255,255,255,0.10)',
-                  boxShadow: i === step ? '0 0 6px rgba(0,204,245,0.5)' : undefined,
-                }} />
-              ))}
-            </div>
-
-            {!isFirst && !isLast && (
-              <button
-                onClick={skip}
-                style={{
-                  fontSize: '0.70rem', color: 'rgba(255,255,255,0.22)', padding: '0 2px',
-                  cursor: 'pointer', transition: 'color 0.15s', whiteSpace: 'nowrap', flexShrink: 0,
-                }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.48)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.22)')}>
-                Überspringen
-              </button>
-            )}
-
-            <button
-              onClick={next}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '4px',
-                padding: isLast ? '10px 20px' : '8px 14px',
-                borderRadius: '10px',
-                background: isLast
-                  ? 'linear-gradient(135deg, #00ccf5, #0088dd)'
-                  : s.targetSelector
-                    ? 'rgba(0,204,245,0.08)'     // Hat Ziel-Button → dezenter "Weiter"
-                    : 'rgba(0,204,245,0.13)',
-                border: '1px solid rgba(0,204,245,0.28)',
-                color: isLast ? 'rgba(0,8,20,0.95)' : 'rgba(0,204,245,0.85)',
-                fontWeight: 700,
-                fontSize: isLast ? '0.875rem' : '0.8rem',
-                cursor: 'pointer',
-                boxShadow: isLast ? '0 0 20px rgba(0,204,245,0.3)' : undefined,
-                transition: 'all 0.2s', whiteSpace: 'nowrap', flexShrink: 0,
-              }}>
-              {isLast ? 'Los geht\'s!' : 'Weiter'}
-              <ChevronRight size={14} />
-            </button>
-          </div>
-
-          {isLast && (
-            <p style={{ textAlign: 'center', marginTop: '10px', fontSize: '0.68rem', color: 'rgba(255,255,255,0.18)' }}>
-              Anleitung jederzeit im Profil neu starten
-            </p>
-          )}
-
-          {/* Skip-Button nur auf Welcome-Screen */}
-          {isFirst && (
-            <button
-              onClick={skip}
-              style={{
-                display: 'block', margin: '10px auto 0', fontSize: '0.70rem',
-                color: 'rgba(255,255,255,0.22)', cursor: 'pointer', transition: 'color 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.48)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.22)')}>
-              Anleitung überspringen
-            </button>
-          )}
-        </div>
-      </div>
+      {createPortal(scrimLayer, document.body)}
+      {createPortal(calloutLayer, document.body)}
     </>
   )
 }
 
-// ─── Restart-Button für Profil ────────────────────────────────────────────────
 export function OnboardingRestartButton() {
   const { restart } = useOnboarding()
+  const navigate = useNavigate()
+  const { t } = useTranslation()
+
   return (
     <button
-      onClick={restart}
-      style={{
-        display: 'flex', alignItems: 'center', gap: '8px',
-        width: '100%', padding: '12px 14px', borderRadius: '13px',
-        background: 'rgba(0,204,245,0.06)', border: '1px solid rgba(0,204,245,0.14)',
-        color: 'rgba(0,204,245,0.80)', fontWeight: 600, fontSize: '0.875rem',
-        cursor: 'pointer', transition: 'all 0.18s', textAlign: 'left' as const,
+      type="button"
+      onClick={() => {
+        restart()
+        navigate('/')
       }}
-      onMouseEnter={e => {
-        e.currentTarget.style.background = 'rgba(0,204,245,0.10)'
-        e.currentTarget.style.borderColor = 'rgba(0,204,245,0.25)'
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.background = 'rgba(0,204,245,0.06)'
-        e.currentTarget.style.borderColor = 'rgba(0,204,245,0.14)'
-      }}>
+      className="ob-restart-btn"
+    >
       <RotateCcw size={15} />
-      App-Anleitung neu starten
+      {t('ob_restart')}
     </button>
   )
 }
