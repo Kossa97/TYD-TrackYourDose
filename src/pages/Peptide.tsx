@@ -646,7 +646,7 @@ export function Peptide() {
         }
       }
     }
-    setSavingCycle(false); setShowCycleForm(false); loadCycles()
+    setSavingCycle(false); setShowCycleForm(false); setExpandedId(cycleForPeptide.id); loadCycles()
   }
   const toggleCycleActive = async (c: Cycle) => {
     await supabase.from('cycles').update({ active: !c.active }).eq('id', c.id)
@@ -1082,7 +1082,7 @@ export function Peptide() {
                                 <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
                                   <TrendingUp size={12} className="text-orange-400" /> {t('dosiserhoehungen')}
                                 </span>
-                                <button className="text-xs flex items-center gap-1 text-orange-400 hover:text-orange-300 transition-colors"
+                                <button data-ob="btn-esc-add" className="text-xs flex items-center gap-1 text-orange-400 hover:text-orange-300 transition-colors"
                                   onClick={() => openNewEsc(c)}>
                                   <Plus size={11} /> {t('hinzufuegen')}
                                 </button>
@@ -1786,6 +1786,7 @@ export function Peptide() {
               {escForCycle && <p className="text-slate-400 text-sm mt-0.5 ml-6">{escForCycle.name}</p>}
             </div>
 
+            <div data-ob="esc-core" className="space-y-4">
             <div>
               <label className="label">{t('dosis_erhoeht_um')}</label>
               <div className="flex gap-2">
@@ -1858,9 +1859,11 @@ export function Peptide() {
                 onChange={e => setEForm(f => f ? { ...f, notes: e.target.value } : f)} />
             </div>
 
+            </div>{/* /esc-core */}
+
             <div className="flex gap-3 pt-2">
               <button className="btn-secondary flex-1" onClick={() => setShowEscForm(false)}>{t('cancel')}</button>
-              <button className="btn-primary flex-1" onClick={saveEsc} disabled={savingEsc}>
+              <button data-ob="btn-esc-save" className="btn-primary flex-1" onClick={saveEsc} disabled={savingEsc}>
                 {savingEsc ? t('loading') : t('save')}
               </button>
             </div>
