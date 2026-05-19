@@ -93,15 +93,17 @@ const SYRINGE_PRESETS = [
   { label: '1 mL · 40 Einh. (U-40)',    ml: '1',   units: '40'  },
 ]
 const BASE_FREQUENCIES = [
-  'Täglich','2x täglich','Jeden 2. Tag',
+  'Täglich','2x täglich','3x täglich','Jeden 2. Tag',
   '5 Tage an / 2 aus','Mo-Fr','Wöchentlich',
   'Alle X Tage','Wochentage wählen',
 ]
 const FREQ_KEYS: Record<string,string> = {
-  'Täglich':'freq_taeglich','2x täglich':'freq_2x','Jeden 2. Tag':'freq_jeden2',
+  'Täglich':'freq_taeglich','2x täglich':'freq_2x','3x täglich':'freq_3x','Jeden 2. Tag':'freq_jeden2',
   '5 Tage an / 2 aus':'freq_5an2aus','Mo-Fr':'freq_mofr','Wöchentlich':'freq_woechentlich',
   'Alle X Tage':'freq_alle_x','Wochentage wählen':'freq_wochentage',
 }
+const intakeSlots = (freq: string) =>
+  freq === '3x täglich' ? 3 : freq === '2x täglich' ? 2 : 1
 const INTAKE_TIME_CONFIG = {
   morgens: { labelKey: 'morgens', emoji: '🌅', time: '08:00' },
   mittags: { labelKey: 'mittags', emoji: '☀️',  time: '12:00' },
@@ -137,7 +139,7 @@ interface CycleForm {
   name: string; dose: string; unit: string; method: string
   frequency: string; x_days_interval: string; schedule_days: string[]
   start_date: string; end_date: string
-  intake_time: string; intake_time_custom: string; reminder: string[]
+  intake_times: string[]; intake_time_customs: string[]; reminder: string[]
 }
 const emptyCycleForm = (p: Peptide, tFn: (k:string)=>string): CycleForm => ({
   name: p.name + ' ' + tFn('zyklus'),
@@ -145,7 +147,7 @@ const emptyCycleForm = (p: Peptide, tFn: (k:string)=>string): CycleForm => ({
   method: p.default_method, frequency: 'Täglich',
   x_days_interval: '3', schedule_days: [],
   start_date: format(new Date(), 'yyyy-MM-dd'), end_date: '',
-  intake_time: '', intake_time_custom: '', reminder: [],
+  intake_times: [], intake_time_customs: [], reminder: [],
 })
 
 // ─── Inventar-Bestand-Grafik ─────────────────────────────────────────────────
@@ -587,8 +589,8 @@ export function Peptide() {
       x_days_interval: c.x_days_interval?.toString() ?? '3',
       schedule_days: c.schedule_days ?? [],
       start_date: c.start_date, end_date: c.end_date ?? '',
-      intake_time: c.intake_time ?? '',
-      intake_time_custom: c.intake_time_custom ?? '',
+      intake_times: (c.intake_time ?? '').split(',').filter(Boolean),
+      intake_time_customs: (c.intake_time_custom ?? '').split(',').filter(Boolean),
       reminder: (c.reminder && c.reminder !== 'none') ? c.reminder.split(',').filter(Boolean) : [],
     })
     setShowCycleForm(true)
@@ -606,8 +608,10 @@ export function Peptide() {
       x_days_interval: cForm.frequency === 'Alle X Tage' ? parseInt(cForm.x_days_interval) : null,
       schedule_days: cForm.frequency === 'Wochentage wählen' ? cForm.schedule_days : null,
       start_date: cForm.start_date, end_date: cForm.end_date || null, active: true,
-      intake_time: cForm.intake_time,
-      intake_time_custom: cForm.intake_time === 'custom' ? cForm.intake_time_custom : null,
+      intake_time: cForm.intake_times.filter(Boolean).join(',') || null,
+      intake_time_custom: cForm.intake_times.some(t => t === 'custom')
+        ? cForm.intake_time_customs.join(',')
+        : null,
       reminder: cForm.reminder.length > 0 ? cForm.reminder.join(',') : 'none',
     }
     const { error } = editingCycleId
@@ -618,9 +622,10 @@ export function Peptide() {
     if (cForm.reminder.length > 0 && 'Notification' in window) {
       const perm = await Notification.requestPermission()
       if (perm === 'granted') {
-        const baseTime = cForm.intake_time === 'custom'
-          ? cForm.intake_time_custom
-          : (INTAKE_TIME_CONFIG as Record<string, { time: string }>)[cForm.intake_time]?.time ?? ''
+        const firstSlot = cForm.intake_times[0] ?? ''
+        const baseTime = firstSlot === 'custom'
+          ? (cForm.intake_time_customs[0] ?? '')
+          : (INTAKE_TIME_CONFIG as Record<string, { time: string }>)[firstSlot]?.time ?? ''
         if (baseTime) {
           const [h, m] = baseTime.split(':').map(Number)
           let scheduled = 0
@@ -711,9 +716,14 @@ export function Peptide() {
   }
   const intakeLabel = (c: Cycle) => {
     if (!c.intake_time) return null
-    if (c.intake_time === 'custom') return c.intake_time_custom ?? null
-    const key = (INTAKE_TIME_CONFIG as Record<string, { labelKey: string }>)[c.intake_time]?.labelKey
-    return key ? t(key) : null
+    const keys = c.intake_time.split(',').filter(Boolean)
+    const customs = (c.intake_time_custom ?? '').split(',')
+    const labels = keys.map((key, i) => {
+      if (key === 'custom') return customs[i] ?? null
+      const cfg = (INTAKE_TIME_CONFIG as Record<string, { labelKey: string }>)[key]
+      return cfg ? t(cfg.labelKey) : null
+    }).filter(Boolean)
+    return labels.length > 0 ? labels.join(' · ') : null
   }
   const freqLabel = (c: Cycle) => {
     if (c.frequency === 'Alle X Tage' && c.x_days_interval)
@@ -759,6 +769,7 @@ export function Peptide() {
             ) : null}
           </button>
           <button
+            data-ob="tab-peptide"
             onClick={() => setActiveTab('peptide')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               activeTab === 'peptide' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-300'
@@ -1034,7 +1045,7 @@ export function Peptide() {
                                   <span className="font-medium text-slate-300">{c.dose} {c.unit}</span>
                                   <span>{t(METHOD_KEYS[c.method] ?? c.method)}</span>
                                   <span>{freqLabel(c)}</span>
-                                  {(() => { const lbl = intakeLabel(c); return lbl ? <span className="text-amber-400">{(INTAKE_TIME_CONFIG as Record<string,{emoji:string}>)[c.intake_time!]?.emoji ?? '🕐'} {lbl}</span> : null })()}
+                                  {(() => { const lbl = intakeLabel(c); const firstKey = c.intake_time?.split(',')[0] ?? ''; return lbl ? <span className="text-amber-400">{(INTAKE_TIME_CONFIG as Record<string,{emoji:string}>)[firstKey]?.emoji ?? '🕐'} {lbl}</span> : null })()}
                                   <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
                                   {c.end_date && <span>{t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}</span>}
                                 </div>
@@ -1114,7 +1125,7 @@ export function Peptide() {
 
       {/* ══ INVENTAR-FORMULAR ════════════════════════════════════════════════ */}
       {showInvForm && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
           onClick={() => setShowInvForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg overflow-y-auto max-h-[90vh]"
             onClick={e => e.stopPropagation()}>
@@ -1134,7 +1145,7 @@ export function Peptide() {
             <div className="px-5 py-4 space-y-4">
 
               {/* Name */}
-              <div>
+              <div data-ob="inv-name">
                 <label className="label">{t('peptidname_star')}</label>
                 <div className="relative flex gap-2">
                   <input className="input flex-1" placeholder={t('eg_bpc157')}
@@ -1157,7 +1168,7 @@ export function Peptide() {
               </div>
 
               {/* Anzahl + Wirkstoff */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3" data-ob="inv-amounts">
                 <div>
                   <label className="label">{t('anzahl_vials_star')}</label>
                   <input className="input" type="number" min="1" placeholder={t('eg_5')}
@@ -1171,7 +1182,7 @@ export function Peptide() {
               </div>
 
               {/* Batch & Herkunft */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3" data-ob="inv-batch">
                 <div>
                   <label className="label">{t('batch')}</label>
                   <input className="input" placeholder={t('eg_batch_nr')}
@@ -1220,7 +1231,7 @@ export function Peptide() {
 
             <div className="px-5 py-4 flex gap-3">
               <button className="btn-secondary flex-1" onClick={() => setShowInvForm(false)}>{t('cancel')}</button>
-              <button className="btn-primary flex-1" onClick={saveInventory}
+              <button data-ob="btn-inv-save" className="btn-primary flex-1" onClick={saveInventory}
                 disabled={savingInv || uploadingInvFile}>
                 {uploadingInvFile ? t('laedt_hoch') : savingInv ? t('loading') : t('einlagern')}
               </button>
@@ -1231,7 +1242,7 @@ export function Peptide() {
 
       {/* ══ PEPTID-FORMULAR ══════════════════════════════════════════════════ */}
       {showPeptideForm && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
           onClick={() => setShowPeptideForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg overflow-y-auto max-h-[95vh]"
             onClick={e => e.stopPropagation()}>
@@ -1343,7 +1354,7 @@ export function Peptide() {
                       value={pForm.vial_amount_mg} onChange={e => setPForm(f => ({ ...f, vial_amount_mg: e.target.value }))} />
                   )}
                 </div>
-                <div>
+                <div data-ob="pep-liquid">
                   <label className="label">{t('zugefuegte_fl_ml')}</label>
                   <input className="input" type="number" step="0.1" placeholder={t('eg_2')}
                     value={pForm.reconstitution_ml} onChange={e => setPForm(f => ({ ...f, reconstitution_ml: e.target.value }))} />
@@ -1358,7 +1369,7 @@ export function Peptide() {
                 </div>
               </div>
 
-              <div>
+              <div data-ob="pep-expiry">
                 <label className="label">{t('haltbarkeit')}</label>
                 <div className="flex gap-2 flex-wrap mb-2">
                   {EXPIRY_PRESETS.map(d => (
@@ -1491,7 +1502,7 @@ export function Peptide() {
             </div>
 
             {/* ── 5. Dosierung & Applikation ──────────────────────────────── */}
-            <div className="px-5 py-4 border-b border-slate-800 space-y-3">
+            <div className="px-5 py-4 border-b border-slate-800 space-y-3" data-ob="pep-dose">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 {t('dosierung_applikation_section')}
               </p>
@@ -1523,7 +1534,7 @@ export function Peptide() {
 
             <div className="px-5 py-4 flex gap-3">
               <button className="btn-secondary flex-1" onClick={() => setShowPeptideForm(false)}>{t('cancel')}</button>
-              <button className="btn-primary flex-1" onClick={savePeptide}
+              <button data-ob="btn-pep-save" className="btn-primary flex-1" onClick={savePeptide}
                 disabled={savingPeptide || uploadingFile}>
                 {uploadingFile ? t('laedt_hoch') : savingPeptide ? t('loading') : t('save')}
               </button>
@@ -1534,7 +1545,7 @@ export function Peptide() {
 
       {/* ══ ZYKLUS-FORMULAR ══════════════════════════════════════════════════ */}
       {showCycleForm && cForm && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
           onClick={() => setShowCycleForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4 overflow-y-auto max-h-[90vh]"
             onClick={e => e.stopPropagation()}>
@@ -1547,6 +1558,7 @@ export function Peptide() {
               {cycleForPeptide && <p className="text-sky-400 text-sm mt-0.5 ml-6">{cycleForPeptide.name}</p>}
             </div>
 
+            <div data-ob="cycle-core" className="space-y-4">
             <div>
               <label className="label">{t('zyklus_name')}</label>
               <input className="input" placeholder={t('zyklus_name_placeholder')}
@@ -1579,9 +1591,20 @@ export function Peptide() {
             <div>
               <label className="label">{t('frequenz')}</label>
               <select className="select" value={cForm.frequency}
-                onChange={e => setCForm(f => f ? { ...f, frequency: e.target.value } : f)}>
+                onChange={e => setCForm(f => {
+                  if (!f) return f
+                  const newFreq = e.target.value
+                  const newSlots = intakeSlots(newFreq)
+                  return {
+                    ...f,
+                    frequency: newFreq,
+                    intake_times: f.intake_times.slice(0, newSlots),
+                    intake_time_customs: f.intake_time_customs.slice(0, newSlots),
+                  }
+                })}>
                 {BASE_FREQUENCIES.map(freq => <option key={freq} value={freq}>{t(FREQ_KEYS[freq] ?? freq)}</option>)}
               </select>
+            </div>
             </div>
 
             {cForm.frequency === 'Alle X Tage' && (
@@ -1634,27 +1657,47 @@ export function Peptide() {
                 <label className="label mb-0">{t('einnahmezeitpunkt')}</label>
                 <span className="text-xs text-slate-500">optional</span>
               </div>
-              <div className="grid grid-cols-4 gap-2">
-                {(Object.entries(INTAKE_TIME_CONFIG) as [string, { labelKey: string; emoji: string }][]).map(([key, cfg]) => (
-                  <button key={key} type="button"
-                    onClick={() => setCForm(f => f ? {
-                      ...f,
-                      intake_time: f.intake_time === key ? '' : key,
-                      intake_time_custom: f.intake_time === key ? '' : f.intake_time_custom,
-                    } : f)}
-                    className={`py-2.5 rounded-xl text-xs font-medium transition-colors flex flex-col items-center gap-1 ${
-                      cForm.intake_time === key ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                    }`}>
-                    <span className="text-base">{cfg.emoji}</span>
-                    {t(cfg.labelKey)}
-                  </button>
-                ))}
-              </div>
-              {cForm.intake_time === 'custom' && (
-                <input className="input mt-2" type="time"
-                  value={cForm.intake_time_custom}
-                  onChange={e => setCForm(f => f ? { ...f, intake_time_custom: e.target.value } : f)} />
-              )}
+              {Array.from({ length: intakeSlots(cForm.frequency) }, (_, slotIdx) => (
+                <div key={slotIdx} className={slotIdx > 0 ? 'mt-3' : ''}>
+                  {intakeSlots(cForm.frequency) > 1 && (
+                    <p className="text-xs text-slate-400 mb-1.5 font-medium">
+                      {t('einnahme_nr', { n: slotIdx + 1 })}
+                    </p>
+                  )}
+                  <div className="grid grid-cols-4 gap-2">
+                    {(Object.entries(INTAKE_TIME_CONFIG) as [string, { labelKey: string; emoji: string }][]).map(([key, cfg]) => {
+                      const isActive = cForm.intake_times[slotIdx] === key
+                      return (
+                        <button key={key} type="button"
+                          onClick={() => setCForm(f => {
+                            if (!f) return f
+                            const newTimes = [...f.intake_times]
+                            const newCustoms = [...f.intake_time_customs]
+                            newTimes[slotIdx] = isActive ? '' : key
+                            if (isActive) newCustoms[slotIdx] = ''
+                            return { ...f, intake_times: newTimes, intake_time_customs: newCustoms }
+                          })}
+                          className={`py-2.5 rounded-xl text-xs font-medium transition-colors flex flex-col items-center gap-1 ${
+                            isActive ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                          }`}>
+                          <span className="text-base">{cfg.emoji}</span>
+                          {t(cfg.labelKey)}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {cForm.intake_times[slotIdx] === 'custom' && (
+                    <input className="input mt-2" type="time"
+                      value={cForm.intake_time_customs[slotIdx] ?? ''}
+                      onChange={e => setCForm(f => {
+                        if (!f) return f
+                        const newCustoms = [...f.intake_time_customs]
+                        newCustoms[slotIdx] = e.target.value
+                        return { ...f, intake_time_customs: newCustoms }
+                      })} />
+                  )}
+                </div>
+              ))}
             </div>
 
             <div>
@@ -1698,7 +1741,7 @@ export function Peptide() {
 
             <div className="flex gap-3 pt-2">
               <button className="btn-secondary flex-1" onClick={() => setShowCycleForm(false)}>{t('cancel')}</button>
-              <button className="btn-primary flex-1" onClick={saveCycle} disabled={savingCycle}>
+              <button data-ob="btn-cycle-save" className="btn-primary flex-1" onClick={saveCycle} disabled={savingCycle}>
                 {savingCycle ? t('loading') : t('save')}
               </button>
             </div>
@@ -1708,7 +1751,7 @@ export function Peptide() {
 
       {/* ══ DOSISERHÖHUNG-FORMULAR ═══════════════════════════════════════════ */}
       {showEscForm && eForm && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
           onClick={() => setShowEscForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4 overflow-y-auto max-h-[90vh]"
             onClick={e => e.stopPropagation()}>
@@ -1807,7 +1850,7 @@ export function Peptide() {
 
       {/* ══ VERWERFEN DIALOG ═════════════════════════════════════════════════ */}
       {verwerfenTarget && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4">
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4" data-app-modal>
           <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-sm w-full space-y-4">
             <h3 className="font-bold text-white text-lg">{t('peptid_verwerfen_title')}</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
@@ -1832,7 +1875,7 @@ export function Peptide() {
 
       {/* ══ REKONSTITUTION DIALOG ═════════════════════════════════════════════ */}
       {rekonstitutionTarget && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4">
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4" data-app-modal>
           <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-sm w-full space-y-4">
             <h3 className="font-bold text-white text-lg">{t('rekonstitution_wdh_title')}</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
@@ -1873,7 +1916,7 @@ export function Peptide() {
         }
 
         return (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
             onClick={() => setInfoPeptide(null)}>
             <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg overflow-y-auto max-h-[90vh]"
               onClick={e => e.stopPropagation()}>
