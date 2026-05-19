@@ -115,6 +115,7 @@ export function Onboarding() {
   const [modalOpen, setModalOpen] = useState(false)
   const [fieldIndex, setFieldIndex] = useState(0)
   const [panelH, setPanelH] = useState(200)
+  const [viewportKey, setViewportKey] = useState(0)
   const [layout, setLayout] = useState<ReturnType<typeof computeCalloutLayout>>(() =>
     computeCalloutLayout(null, window.innerWidth, window.innerHeight, 200, { prefer: 'center' }),
   )
@@ -146,6 +147,13 @@ export function Onboarding() {
     document.body.classList.toggle('onboarding-active', active && !needsLanguagePick)
     return () => document.body.classList.remove('onboarding-active')
   }, [active, needsLanguagePick])
+
+  // Force layout recalculation on viewport resize (needed when targetRect doesn't change)
+  useEffect(() => {
+    const onResize = () => setViewportKey(k => k + 1)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   useEffect(() => {
     if (!active || needsLanguagePick) return
@@ -353,7 +361,7 @@ export function Onboarding() {
     setLayout(
       computeCalloutLayout(hole, vw, vh, panelH, { prefer, maxBottom }),
     )
-  }, [targetRect, panelH, step, useCenteredCallout, showSpotlight, meta?.placement, meta?.snapToViewport, isModalTarget, fieldIndex, getCycleFields])
+  }, [targetRect, panelH, step, useCenteredCallout, showSpotlight, meta?.placement, meta?.snapToViewport, isModalTarget, fieldIndex, getCycleFields, viewportKey])
 
   if (!active || needsLanguagePick || !s) return null
 
