@@ -1369,7 +1369,7 @@ export function Peptide() {
                       onChange={e => setPForm(f => ({ ...f, reconstitution_date: e.target.value }))} />
                   </div>
                 </div>
-                <div>
+                <div data-ob-self>
                 <label className="label">{t('haltbarkeit')}</label>
                 <div className="flex gap-2 flex-wrap mb-2">
                   {EXPIRY_PRESETS.map(d => (

@@ -182,15 +182,27 @@ export function Onboarding() {
     }
   }, [active, needsLanguagePick, syncModalLayer])
 
-  // Returns all single-line inputs/selects inside the target element for field cycling
+  // Returns cycle fields: individual inputs OR data-ob-self containers (treated as one field block)
   const getCycleFields = useCallback((el: HTMLElement | null): HTMLElement[] => {
     if (!el) return []
     const SINGLE = 'input:not([type="hidden"]):not([type="file"]):not([disabled]), select:not([disabled])'
     if (el.matches(SINGLE)) return [el]
-    return [...el.querySelectorAll<HTMLElement>(SINGLE)].filter(f => {
-      const r = f.getBoundingClientRect()
-      return r.height > 4 && r.height < 72 && r.width > 20
-    })
+
+    const selfContainers = [...el.querySelectorAll<HTMLElement>('[data-ob-self]')]
+    const result: HTMLElement[] = []
+
+    for (const input of [...el.querySelectorAll<HTMLElement>(SINGLE)]) {
+      const r = input.getBoundingClientRect()
+      if (r.height <= 4 || r.height >= 72 || r.width <= 20) continue
+      // If inside a data-ob-self container, use the container as the field (once)
+      const parent = selfContainers.find(c => c.contains(input))
+      if (parent) {
+        if (!result.includes(parent)) result.push(parent)
+      } else {
+        result.push(input)
+      }
+    }
+    return result
   }, [])
 
   const measureTarget = useCallback(() => {
