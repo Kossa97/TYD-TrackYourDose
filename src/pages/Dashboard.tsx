@@ -234,7 +234,7 @@ export function Dashboard() {
       </div>
 
       {/* ── Kalender ──────────────────────────────────────────────────────── */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden mb-4">
+      <div data-ob="calendar-main" data-ob-self className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden mb-4">
         {/* Wochentag-Kopf */}
         <div className="grid grid-cols-7 border-b border-slate-800">
           {[t('mon'),t('tue'),t('wed'),t('thu'),t('fri'),t('sat'),t('sun')].map(d => (

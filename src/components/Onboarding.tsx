@@ -283,7 +283,10 @@ export function Onboarding() {
     const hole = showSpotlight ? targetRect : null
 
     if (useCenteredCallout) {
-      setLayout(computeCalloutLayout(null, vw, vh, panelH, { prefer: 'center' }))
+      setLayout(computeCalloutLayout(null, vw, vh, panelH, {
+        prefer: 'center',
+        snap: meta?.snapToViewport,
+      }))
       return
     }
 

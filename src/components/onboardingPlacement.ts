@@ -16,6 +16,8 @@ export interface CalloutLayoutOptions {
   /** Keep clear of bottom tab bar */
   bottomReserve?: number
   topReserve?: number
+  /** For center mode: snap to viewport top or bottom instead of centering */
+  snap?: 'top' | 'bottom'
 }
 
 const MARGIN = 12
@@ -47,8 +49,16 @@ export function computeCalloutLayout(
 
   if (!target || prefer === 'center') {
     const h = Math.min(calloutH, maxPanelH)
+    let top: number
+    if (options.snap === 'top') {
+      top = topReserve + 8
+    } else if (options.snap === 'bottom') {
+      top = viewportH - bottomReserve - h - 8
+    } else {
+      top = Math.max(topReserve, (viewportH - h) / 2)
+    }
     return {
-      top: Math.max(topReserve, (viewportH - h) / 2),
+      top,
       left: (viewportW - width) / 2,
       width,
       maxHeight: h,
