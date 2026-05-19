@@ -390,40 +390,60 @@ export function Onboarding() {
     </div>
   )
 
-  // Confirm button: inline right-edge overlay on the highlighted field for modal form steps
-  const confirmBtn =
-    isModalTarget && meta?.advance === 'next' && targetRect
-      ? createPortal(
-          <button
-            type="button"
-            data-ob-confirm
-            onClick={() => nextRef.current()}
-            aria-label="Confirm"
-            style={{
-              position: 'fixed',
-              zIndex: OB_Z.panel - 2,
-              top: targetRect.bottom - 22 - 20,
-              left: targetRect.right - 44 - 10,
-              width: 44,
-              height: 44,
-              background: 'linear-gradient(135deg, rgba(0,204,245,0.97), rgba(0,110,190,0.97))',
-              border: '2px solid rgba(0,238,255,0.6)',
-              borderRadius: '50%',
-              color: '#07091a',
-              fontWeight: 800,
-              fontSize: '1.15rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              boxShadow: '-4px 0 16px rgba(0,204,245,0.25)',
-            }}
-          >
-            ✓
-          </button>,
-          document.body,
-        )
-      : null
+  // Confirm button: round button outside the highlighted target rect
+  const confirmBtn = (() => {
+    if (!isModalTarget || meta?.advance !== 'next' || !targetRect) return null
+    const SIZE = 44
+    const GAP = 14 // gap outside the spotlight ring (SPOT_PAD=8 + 6)
+    const tabH = parseInt(
+      getComputedStyle(document.documentElement).getPropertyValue('--bottom-nav-height') || '90',
+      10,
+    )
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+
+    // Prefer: below the target rect, right-aligned
+    let top = targetRect.bottom + GAP
+    const left = Math.min(targetRect.right - SIZE - 8, vw - SIZE - 8)
+
+    // If below goes off-screen or into tab-bar zone → place above instead
+    if (top + SIZE > vh - tabH - 8) {
+      top = targetRect.top - GAP - SIZE
+    }
+    // Final clamp so button is always fully on-screen
+    top = Math.max(8, Math.min(top, vh - tabH - SIZE - 8))
+
+    return createPortal(
+      <button
+        type="button"
+        data-ob-confirm
+        onClick={() => nextRef.current()}
+        aria-label="Confirm"
+        style={{
+          position: 'fixed',
+          zIndex: OB_Z.panel - 2,
+          top,
+          left,
+          width: SIZE,
+          height: SIZE,
+          background: 'linear-gradient(135deg, rgba(0,204,245,0.97), rgba(0,110,190,0.97))',
+          border: '2px solid rgba(0,238,255,0.6)',
+          borderRadius: '50%',
+          color: '#07091a',
+          fontWeight: 800,
+          fontSize: '1.15rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          boxShadow: '0 0 20px rgba(0,204,245,0.45)',
+        }}
+      >
+        ✓
+      </button>,
+      document.body,
+    )
+  })()
 
   return (
     <>
