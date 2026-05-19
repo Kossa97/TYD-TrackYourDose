@@ -1137,7 +1137,7 @@ export function Peptide() {
               <div>
                 <label className="label">{t('peptidname_star')}</label>
                 <div className="relative flex gap-2">
-                  <input className="input flex-1" placeholder="z.B. BPC-157"
+                  <input className="input flex-1" placeholder={t('eg_bpc157')}
                     value={iForm.name} onChange={e => setIForm(f => ({ ...f, name: e.target.value }))} />
                   <button className="btn-secondary flex items-center gap-1 shrink-0 text-sm px-3"
                     onClick={() => setShowInvDropdown(d => !d)}>
@@ -1160,12 +1160,12 @@ export function Peptide() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="label">{t('anzahl_vials_star')}</label>
-                  <input className="input" type="number" min="1" placeholder="z.B. 5"
+                  <input className="input" type="number" min="1" placeholder={t('eg_5')}
                     value={iForm.vials_count} onChange={e => setIForm(f => ({ ...f, vials_count: e.target.value }))} />
                 </div>
                 <div>
                   <label className="label">{t('wirkstoff_pro_vial_pflicht')}</label>
-                  <input className="input" type="number" step="0.1" placeholder="z.B. 10"
+                  <input className="input" type="number" step="0.1" placeholder={t('eg_10')}
                     value={iForm.mg_per_vial} onChange={e => setIForm(f => ({ ...f, mg_per_vial: e.target.value }))} />
                 </div>
               </div>
@@ -1174,12 +1174,12 @@ export function Peptide() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="label">{t('batch')}</label>
-                  <input className="input" placeholder="z.B. BPC-2024-01"
+                  <input className="input" placeholder={t('eg_batch_nr')}
                     value={iForm.batch_number} onChange={e => setIForm(f => ({ ...f, batch_number: e.target.value }))} />
                 </div>
                 <div>
                   <label className="label">{t('quelle')}</label>
-                  <input className="input" placeholder="z.B. Peptide Sciences"
+                  <input className="input" placeholder={t('eg_source_name')}
                     value={iForm.batch_source} onChange={e => setIForm(f => ({ ...f, batch_source: e.target.value }))} />
                 </div>
               </div>
@@ -1339,13 +1339,13 @@ export function Peptide() {
                       <span className="text-xs text-slate-600 flex items-center gap-0.5 shrink-0 ml-1"><Lock size={9}/> {t('nav_lager')}</span>
                     </div>
                   ) : (
-                    <input className="input" type="number" placeholder="z.B. 10"
+                    <input className="input" type="number" placeholder={t('eg_10')}
                       value={pForm.vial_amount_mg} onChange={e => setPForm(f => ({ ...f, vial_amount_mg: e.target.value }))} />
                   )}
                 </div>
                 <div>
                   <label className="label">{t('zugefuegte_fl_ml')}</label>
-                  <input className="input" type="number" step="0.1" placeholder="z.B. 2"
+                  <input className="input" type="number" step="0.1" placeholder={t('eg_2')}
                     value={pForm.reconstitution_ml} onChange={e => setPForm(f => ({ ...f, reconstitution_ml: e.target.value }))} />
                 </div>
               </div>
@@ -1446,12 +1446,12 @@ export function Peptide() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="label">{t('batch')}</label>
-                      <input className="input" placeholder="z.B. BPC-2024-01"
+                      <input className="input" placeholder={t('eg_batch_nr')}
                         value={pForm.batch_number} onChange={e => setPForm(f => ({ ...f, batch_number: e.target.value }))} />
                     </div>
                     <div>
                       <label className="label">{t('quelle')}</label>
-                      <input className="input" placeholder="z.B. Peptide Sciences"
+                      <input className="input" placeholder={t('eg_source_name')}
                         value={pForm.batch_source} onChange={e => setPForm(f => ({ ...f, batch_source: e.target.value }))} />
                     </div>
                   </div>
@@ -1498,7 +1498,7 @@ export function Peptide() {
               <div>
                 <label className="label">{t('standard_dosis_label')}</label>
                 <div className="flex gap-2">
-                  <input className="input flex-1" type="number" placeholder="z.B. 500"
+                  <input className="input flex-1" type="number" placeholder={t('eg_500')}
                     value={pForm.default_dose} onChange={e => setPForm(f => ({ ...f, default_dose: e.target.value }))} />
                   <select className="select w-24" value={pForm.default_unit}
                     onChange={e => setPForm(f => ({ ...f, default_unit: e.target.value }))}>
@@ -1726,7 +1726,7 @@ export function Peptide() {
             <div>
               <label className="label">{t('dosis_erhoeht_um')}</label>
               <div className="flex gap-2">
-                <input className="input flex-1" type="number" placeholder="z.B. 100"
+                <input className="input flex-1" type="number" placeholder={t('eg_100')}
                   value={eForm.increase_amount}
                   onChange={e => setEForm(f => f ? { ...f, increase_amount: e.target.value } : f)} />
                 <select className="select w-28" value={eForm.unit}
