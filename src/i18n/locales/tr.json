@@ -511,5 +511,6 @@
   "ob_step_6_description": "Alanlar doğru göründüğünde envanter kaydını kaydedin.",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "Adım 4 · Zorunlu alan",
-  "ob_step_15_description": "Çekim hacmi için hesaplayıcıyı, etkiler için günlüğü ve düzen için değerlendirmeleri kullanın.\n\nTYD ile iyi şanslar!"
+  "ob_step_15_description": "Çekim hacmi için hesaplayıcıyı, etkiler için günlüğü ve düzen için değerlendirmeleri kullanın.\n\nTYD ile iyi şanslar!",
+  "wie_oft_taeglich": "Günde kaç kez?"
 }

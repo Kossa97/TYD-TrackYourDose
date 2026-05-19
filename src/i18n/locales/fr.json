@@ -511,5 +511,6 @@
   "ob_step_6_description": "Lorsque les champs sont corrects, enregistrez l'entrée d'inventaire.",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "Étape 4 · Champ obligatoire",
-  "ob_step_15_description": "Utilisez le calculateur pour le volume à prélever, le journal pour les effets et les évaluations pour rester organisé.\n\nBonne chance avec TYD !"
+  "ob_step_15_description": "Utilisez le calculateur pour le volume à prélever, le journal pour les effets et les évaluations pour rester organisé.\n\nBonne chance avec TYD !",
+  "wie_oft_taeglich": "Combien de fois par jour?"
 }

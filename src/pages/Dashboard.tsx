@@ -75,9 +75,15 @@ function cycleAppliesToDay(cycle: Cycle, day: Date): boolean {
   const dayOfWeek = WEEKDAYS_DE[day.getDay()]
   const diff = differenceInDays(day, start)
 
-  if (freq === 'Täglich' || freq === '2x täglich') return true
+  // schedule_days override: applies to Wochentage wählen, Alle X Tage, and legacy 2x/3x täglich
+  const hasDayFilter = (cycle.schedule_days ?? []).length > 0
+  if (freq === 'Täglich' || freq === '2x täglich' || freq === '3x täglich')
+    return hasDayFilter ? (cycle.schedule_days ?? []).includes(dayOfWeek) : true
   if (freq === 'Jeden 2. Tag') return diff % 2 === 0
-  if (freq === 'Alle X Tage') return diff % (cycle.x_days_interval ?? 2) === 0
+  if (freq === 'Alle X Tage') {
+    const intervalOk = diff % (cycle.x_days_interval ?? 2) === 0
+    return intervalOk && (hasDayFilter ? (cycle.schedule_days ?? []).includes(dayOfWeek) : true)
+  }
   if (freq === '5 Tage an / 2 aus') return diff % 7 < 5
   if (freq === 'Mo-Fr') return day.getDay() >= 1 && day.getDay() <= 5
   if (freq === 'Wöchentlich') return diff % 7 === 0
@@ -99,24 +105,41 @@ function effectiveDose(cycle: Cycle, day: Date, escalations: Escalation[]): numb
   return total
 }
 
+const INTAKE_MINUTES: Record<string, number> = {
+  morgens: 8 * 60, mittags: 12 * 60, abends: 20 * 60,
+}
+const INTAKE_EMOJI: Record<string, string> = {
+  morgens: '🌅', mittags: '☀️', abends: '🌙', custom: '🕐',
+}
+
 function cycleIntakeMinutes(c: Cycle): number {
-  if (c.intake_time === 'morgens') return 8 * 60
-  if (c.intake_time === 'mittags') return 12 * 60
-  if (c.intake_time === 'abends')  return 20 * 60
-  if (c.intake_time === 'custom' && c.intake_time_custom) {
-    const [h, m] = c.intake_time_custom.split(':').map(Number)
+  // Sort by first intake time slot
+  const firstKey = (c.intake_time ?? '').split(',').filter(Boolean)[0] ?? ''
+  if (INTAKE_MINUTES[firstKey]) return INTAKE_MINUTES[firstKey]
+  if (firstKey === 'custom' && c.intake_time_custom) {
+    const firstCustom = c.intake_time_custom.split(',')[0]
+    const [h, m] = firstCustom.split(':').map(Number)
     return h * 60 + m
   }
-  return 25 * 60 // keine Zeit → ganz unten
+  return 25 * 60
 }
 
 function cycleTimeLabel(c: Cycle, t: (key: string) => string): { emoji: string; label: string } | null {
-  if (c.intake_time === 'morgens') return { emoji: '🌅', label: t('morgens') }
-  if (c.intake_time === 'mittags') return { emoji: '☀️', label: t('mittags') }
-  if (c.intake_time === 'abends')  return { emoji: '🌙', label: t('abends') }
-  if (c.intake_time === 'custom' && c.intake_time_custom)
-    return { emoji: '🕐', label: c.intake_time_custom }
-  return null
+  if (!c.intake_time) return null
+  const keys = c.intake_time.split(',').filter(Boolean)
+  const customs = (c.intake_time_custom ?? '').split(',')
+  const parts = keys.map((key, i) => {
+    if (key === 'morgens') return { emoji: '🌅', label: t('morgens') }
+    if (key === 'mittags') return { emoji: '☀️', label: t('mittags') }
+    if (key === 'abends')  return { emoji: '🌙', label: t('abends') }
+    if (key === 'custom' && customs[i]) return { emoji: '🕐', label: customs[i] }
+    return null
+  }).filter(Boolean) as { emoji: string; label: string }[]
+  if (parts.length === 0) return null
+  return {
+    emoji: parts.map(p => p.emoji).join(''),
+    label: parts.map(p => p.label).join(' · '),
+  }
 }
 
 function timeLabel(dateStr: string, t: (key: string, opts?: Record<string, unknown>) => string): string {

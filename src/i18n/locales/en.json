@@ -511,5 +511,6 @@
   "ob_step_6_description": "Save the entry. It appears in your inventory list and can be used for reconstitution.",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "Step 4 · Amounts",
-  "ob_step_15_description": "Active cycles appear in the calendar with color markers. You can pause or edit them later."
+  "ob_step_15_description": "Active cycles appear in the calendar with color markers. You can pause or edit them later.",
+  "wie_oft_taeglich": "How often per day?"
 }

@@ -93,17 +93,15 @@ const SYRINGE_PRESETS = [
   { label: '1 mL · 40 Einh. (U-40)',    ml: '1',   units: '40'  },
 ]
 const BASE_FREQUENCIES = [
-  'Täglich','2x täglich','3x täglich','Jeden 2. Tag',
+  'Täglich','Jeden 2. Tag',
   '5 Tage an / 2 aus','Mo-Fr','Wöchentlich',
   'Alle X Tage','Wochentage wählen',
 ]
 const FREQ_KEYS: Record<string,string> = {
-  'Täglich':'freq_taeglich','2x täglich':'freq_2x','3x täglich':'freq_3x','Jeden 2. Tag':'freq_jeden2',
+  'Täglich':'freq_taeglich','Jeden 2. Tag':'freq_jeden2',
   '5 Tage an / 2 aus':'freq_5an2aus','Mo-Fr':'freq_mofr','Wöchentlich':'freq_woechentlich',
   'Alle X Tage':'freq_alle_x','Wochentage wählen':'freq_wochentage',
 }
-const intakeSlots = (freq: string) =>
-  freq === '3x täglich' ? 3 : freq === '2x täglich' ? 2 : 1
 const INTAKE_TIME_CONFIG = {
   morgens: { labelKey: 'morgens', emoji: '🌅', time: '08:00' },
   mittags: { labelKey: 'mittags', emoji: '☀️',  time: '12:00' },
@@ -139,6 +137,7 @@ interface CycleForm {
   name: string; dose: string; unit: string; method: string
   frequency: string; x_days_interval: string; schedule_days: string[]
   start_date: string; end_date: string
+  daily_freq: string  // '1' | '2' | '3' — how many times per day
   intake_times: string[]; intake_time_customs: string[]; reminder: string[]
 }
 const emptyCycleForm = (p: Peptide, tFn: (k:string)=>string): CycleForm => ({
@@ -147,7 +146,7 @@ const emptyCycleForm = (p: Peptide, tFn: (k:string)=>string): CycleForm => ({
   method: p.default_method, frequency: 'Täglich',
   x_days_interval: '3', schedule_days: [],
   start_date: format(new Date(), 'yyyy-MM-dd'), end_date: '',
-  intake_times: [], intake_time_customs: [], reminder: [],
+  daily_freq: '1', intake_times: [], intake_time_customs: [], reminder: [],
 })
 
 // ─── Inventar-Bestand-Grafik ─────────────────────────────────────────────────
@@ -591,6 +590,7 @@ export function Peptide() {
       start_date: c.start_date, end_date: c.end_date ?? '',
       intake_times: (c.intake_time ?? '').split(',').filter(Boolean),
       intake_time_customs: (c.intake_time_custom ?? '').split(',').filter(Boolean),
+      daily_freq: String(Math.max(1, Math.min(3, (c.intake_time ?? '').split(',').filter(Boolean).length || 1))),
       reminder: (c.reminder && c.reminder !== 'none') ? c.reminder.split(',').filter(Boolean) : [],
     })
     setShowCycleForm(true)
@@ -598,7 +598,7 @@ export function Peptide() {
   const saveCycle = async () => {
     if (!cForm || !cycleForPeptide) return
     if (!cForm.name || !cForm.dose) return toast.error(t('name_dosis_erforderlich'))
-    if (['Wochentage wählen', '2x täglich', '3x täglich'].includes(cForm.frequency) && cForm.schedule_days.length === 0)
+    if (cForm.frequency === 'Wochentage wählen' && cForm.schedule_days.length === 0)
       return toast.error(t('wochentag_auswaehlen_hint'))
     setSavingCycle(true)
     const payload = {
@@ -606,7 +606,7 @@ export function Peptide() {
       name: cForm.name, dose: parseFloat(cForm.dose),
       unit: cForm.unit, method: cForm.method, frequency: cForm.frequency,
       x_days_interval: cForm.frequency === 'Alle X Tage' ? parseInt(cForm.x_days_interval) : null,
-      schedule_days: ['Wochentage wählen', '2x täglich', '3x täglich', 'Alle X Tage'].includes(cForm.frequency) ? cForm.schedule_days : null,
+      schedule_days: ['Wochentage wählen', 'Alle X Tage'].includes(cForm.frequency) ? cForm.schedule_days : null,
       start_date: cForm.start_date, end_date: cForm.end_date || null, active: true,
       intake_time: cForm.intake_times.filter(Boolean).join(',') || null,
       intake_time_custom: cForm.intake_times.some(t => t === 'custom')
@@ -1594,8 +1594,8 @@ export function Peptide() {
                 onChange={e => setCForm(f => {
                   if (!f) return f
                   const newFreq = e.target.value
-                  const newSlots = intakeSlots(newFreq)
-                  const keepDays = ['Wochentage wählen', '2x täglich', '3x täglich', 'Alle X Tage'].includes(newFreq)
+                  const newSlots = parseInt(f?.daily_freq ?? '1')
+                  const keepDays = ['Wochentage wählen', 'Alle X Tage'].includes(newFreq)
                   return {
                     ...f,
                     frequency: newFreq,
@@ -1622,7 +1622,7 @@ export function Peptide() {
               </div>
             )}
 
-            {(['Wochentage wählen', '2x täglich', '3x täglich', 'Alle X Tage'].includes(cForm.frequency)) && (
+            {(['Wochentage wählen', 'Alle X Tage'].includes(cForm.frequency)) && (
               <div>
                 <label className="label">{t('injektionstage_label')}</label>
                 <div className="flex gap-2">
@@ -1655,13 +1655,30 @@ export function Peptide() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-2">
                 <label className="label mb-0">{t('einnahmezeitpunkt')}</label>
                 <span className="text-xs text-slate-500">optional</span>
               </div>
-              {Array.from({ length: intakeSlots(cForm.frequency) }, (_, slotIdx) => (
+              {/* Wie oft täglich? */}
+              <div className="flex gap-2 mb-3">
+                {(['1','2','3'] as const).map(n => (
+                  <button key={n} type="button"
+                    onClick={() => setCForm(f => f ? {
+                      ...f,
+                      daily_freq: n,
+                      intake_times: f.intake_times.slice(0, parseInt(n)),
+                      intake_time_customs: f.intake_time_customs.slice(0, parseInt(n)),
+                    } : f)}
+                    className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                      cForm.daily_freq === n ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                    }`}>
+                    {n}× {t('freq_taeglich')}
+                  </button>
+                ))}
+              </div>
+              {Array.from({ length: parseInt(cForm.daily_freq) }, (_, slotIdx) => (
                 <div key={slotIdx} className={slotIdx > 0 ? 'mt-3' : ''}>
-                  {intakeSlots(cForm.frequency) > 1 && (
+                  {parseInt(cForm.daily_freq) > 1 && (
                     <p className="text-xs text-slate-400 mb-1.5 font-medium">
                       {t('einnahme_nr', { n: slotIdx + 1 })}
                     </p>

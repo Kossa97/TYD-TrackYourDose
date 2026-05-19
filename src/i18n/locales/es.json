@@ -511,5 +511,6 @@
   "ob_step_6_description": "Cuando los campos estén correctos, guarda la entrada del inventario.",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "Paso 4 · Campo obligatorio",
-  "ob_step_15_description": "Usa la calculadora para el volumen a extraer, el diario para los efectos y las reseñas para mantenerte organizado.\n\n¡Mucha suerte con TYD!"
+  "ob_step_15_description": "Usa la calculadora para el volumen a extraer, el diario para los efectos y las reseñas para mantenerte organizado.\n\n¡Mucha suerte con TYD!",
+  "wie_oft_taeglich": "¿Cuántas veces al día?"
 }

@@ -511,5 +511,6 @@
   "ob_step_6_description": "Speichern – der Eintrag erscheint in der Liste und steht für die Rekonstitution bereit.",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "Schritt 4 · Mengen",
-  "ob_step_15_description": "Aktive Zyklen erscheinen im Kalender farbig markiert. Später pausieren oder bearbeiten."
+  "ob_step_15_description": "Aktive Zyklen erscheinen im Kalender farbig markiert. Später pausieren oder bearbeiten.",
+  "wie_oft_taeglich": "Wie oft täglich?"
 }

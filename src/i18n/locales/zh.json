@@ -511,5 +511,6 @@
   "ob_step_6_description": "字段无误后，保存库存条目。",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "第 4 步 · 必填项",
-  "ob_step_15_description": "用计算器查看抽取量，用日记记录效果，用评价保持条理。\n\n祝您使用 TYD 顺利！"
+  "ob_step_15_description": "用计算器查看抽取量，用日记记录效果，用评价保持条理。\n\n祝您使用 TYD 顺利！",
+  "wie_oft_taeglich": "每天几次?"
 }
