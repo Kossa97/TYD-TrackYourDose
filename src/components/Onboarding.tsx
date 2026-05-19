@@ -394,14 +394,19 @@ export function Onboarding() {
   const confirmBtn = (() => {
     if (!isModalTarget || meta?.advance !== 'next' || !targetRect) return null
     const SIZE = 44
-    const PAD = 5 // distance from inner edge of target rect
+    const PAD = 5
 
-    // Single row (one input line) → right-center; multi-row section → bottom-right
-    const isSingleRow = targetRect.height <= 58
+    // targetRect (from getOnboardingHighlightRect) may snap to inner <input> elements only.
+    // Use the full bounding rect of the section element itself for button positioning.
+    const el = getOnboardingInteractionEl(meta)
+    const posRect = el?.getBoundingClientRect() ?? targetRect
+
+    // Single row → right-center; multi-row section → bottom-right
+    const isSingleRow = posRect.height <= 58
     const top = isSingleRow
-      ? targetRect.top + (targetRect.height - SIZE) / 2
-      : targetRect.bottom - SIZE - PAD
-    const left = targetRect.right - SIZE - PAD
+      ? posRect.top + (posRect.height - SIZE) / 2
+      : posRect.bottom - SIZE - PAD
+    const left = posRect.right - SIZE - PAD
 
     return createPortal(
       <button
