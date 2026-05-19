@@ -943,7 +943,7 @@ export function Peptide() {
                         </div>
                         <div className="flex flex-wrap gap-x-3 text-slate-400 text-xs mt-1">
                           {p.default_dose && <span>{p.default_dose} {p.default_unit}</span>}
-                          <span>{p.default_method}</span>
+                          <span>{t(METHOD_KEYS[p.default_method] ?? p.default_method)}</span>
                           {p.vial_amount_mg && <span>Vial: {p.vial_amount_mg} mg</span>}
                         </div>
 
@@ -1032,7 +1032,7 @@ export function Peptide() {
                                 <p className="text-sm font-medium text-white truncate">{c.name}</p>
                                 <div className="flex flex-wrap gap-x-3 text-slate-400 text-xs mt-0.5">
                                   <span className="font-medium text-slate-300">{c.dose} {c.unit}</span>
-                                  <span>{c.method}</span>
+                                  <span>{t(METHOD_KEYS[c.method] ?? c.method)}</span>
                                   <span>{freqLabel(c)}</span>
                                   {(() => { const lbl = intakeLabel(c); return lbl ? <span className="text-amber-400">{(INTAKE_TIME_CONFIG as Record<string,{emoji:string}>)[c.intake_time!]?.emoji ?? '🕐'} {lbl}</span> : null })()}
                                   <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
@@ -1910,7 +1910,7 @@ export function Peptide() {
                     </div>
                     <div className="bg-slate-800/60 rounded-xl p-3">
                       <p className="text-slate-400 text-xs">{t('applikation_info')}</p>
-                      <p className="text-white font-semibold mt-0.5">{p.default_method}</p>
+                      <p className="text-white font-semibold mt-0.5">{t(METHOD_KEYS[p.default_method] ?? p.default_method)}</p>
                     </div>
                   </div>
                 </div>
