@@ -598,7 +598,7 @@ export function Peptide() {
   const saveCycle = async () => {
     if (!cForm || !cycleForPeptide) return
     if (!cForm.name || !cForm.dose) return toast.error(t('name_dosis_erforderlich'))
-    if (['Wochentage wählen', '2x täglich', '3x täglich'].includes(cForm.frequency) && cForm.schedule_days.length === 0)
+    if (['Wochentage wählen', '2x täglich', '3x täglich', 'Alle X Tage'].includes(cForm.frequency) && cForm.schedule_days.length === 0)
       return toast.error(t('wochentag_auswaehlen_hint'))
     setSavingCycle(true)
     const payload = {
@@ -606,7 +606,7 @@ export function Peptide() {
       name: cForm.name, dose: parseFloat(cForm.dose),
       unit: cForm.unit, method: cForm.method, frequency: cForm.frequency,
       x_days_interval: cForm.frequency === 'Alle X Tage' ? parseInt(cForm.x_days_interval) : null,
-      schedule_days: ['Wochentage wählen', '2x täglich', '3x täglich'].includes(cForm.frequency) ? cForm.schedule_days : null,
+      schedule_days: ['Wochentage wählen', '2x täglich', '3x täglich', 'Alle X Tage'].includes(cForm.frequency) ? cForm.schedule_days : null,
       start_date: cForm.start_date, end_date: cForm.end_date || null, active: true,
       intake_time: cForm.intake_times.filter(Boolean).join(',') || null,
       intake_time_custom: cForm.intake_times.some(t => t === 'custom')
@@ -1622,7 +1622,7 @@ export function Peptide() {
               </div>
             )}
 
-            {(['Wochentage wählen', '2x täglich', '3x täglich'].includes(cForm.frequency)) && (
+            {(['Wochentage wählen', '2x täglich', '3x täglich', 'Alle X Tage'].includes(cForm.frequency)) && (
               <div>
                 <label className="label">{t('injektionstage_label')}</label>
                 <div className="flex gap-2">
