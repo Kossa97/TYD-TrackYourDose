@@ -598,7 +598,7 @@ export function Peptide() {
   const saveCycle = async () => {
     if (!cForm || !cycleForPeptide) return
     if (!cForm.name || !cForm.dose) return toast.error(t('name_dosis_erforderlich'))
-    if (['Wochentage wählen', '2x täglich', '3x täglich', 'Alle X Tage'].includes(cForm.frequency) && cForm.schedule_days.length === 0)
+    if (['Wochentage wählen', '2x täglich', '3x täglich'].includes(cForm.frequency) && cForm.schedule_days.length === 0)
       return toast.error(t('wochentag_auswaehlen_hint'))
     setSavingCycle(true)
     const payload = {
@@ -1595,7 +1595,7 @@ export function Peptide() {
                   if (!f) return f
                   const newFreq = e.target.value
                   const newSlots = intakeSlots(newFreq)
-                  const keepDays = ['Wochentage wählen', '2x täglich', '3x täglich'].includes(newFreq)
+                  const keepDays = ['Wochentage wählen', '2x täglich', '3x täglich', 'Alle X Tage'].includes(newFreq)
                   return {
                     ...f,
                     frequency: newFreq,
