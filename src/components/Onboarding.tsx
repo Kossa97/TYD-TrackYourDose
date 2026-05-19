@@ -107,6 +107,7 @@ export function Onboarding() {
   const s = steps[step]
 
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
   const [panelH, setPanelH] = useState(200)
   const [layout, setLayout] = useState<ReturnType<typeof computeCalloutLayout>>(() =>
     computeCalloutLayout(null, window.innerWidth, window.innerHeight, 200, { prefer: 'center' }),
@@ -122,7 +123,9 @@ export function Onboarding() {
 
   const wantsTarget = !!meta?.targetSelector
   const showSpotlight = shouldShowOnboardingSpotlight(meta, targetRect)
-  const useCenteredCallout = !showSpotlight || meta?.placement === 'center'
+  // Target inside an open modal → snap card to top of viewport, ring stays on field
+  const isModalTarget = showSpotlight && modalOpen
+  const useCenteredCallout = !showSpotlight || meta?.placement === 'center' || isModalTarget
   const isFirst = step === 0
   const isLast = step === total - 1
   const tourStepNumber = step > 0 && !isLast ? step : null
@@ -175,6 +178,7 @@ export function Onboarding() {
 
   const measureTarget = useCallback(() => {
     setTargetRect(measureOnboardingTarget(meta))
+    setModalOpen(!!getOpenAppModal())
   }, [meta])
 
   useEffect(() => {
@@ -250,6 +254,42 @@ export function Onboarding() {
     return () => el.removeAttribute('data-ob-active')
   }, [step, active, needsLanguagePick, meta, showSpotlight])
 
+  // Auto-advance: Enter key in inputs, value change in selects (for 'next' advance steps)
+  useEffect(() => {
+    if (!active || needsLanguagePick || meta?.advance !== 'next' || !showSpotlight) return
+    const el = getOnboardingInteractionEl(meta)
+    if (!el) return
+
+    const inputs = el.tagName === 'INPUT'
+      ? [el as HTMLInputElement]
+      : [...el.querySelectorAll<HTMLInputElement>('input')]
+    const selects = el.tagName === 'SELECT'
+      ? [el as HTMLSelectElement]
+      : [...el.querySelectorAll<HTMLSelectElement>('select')]
+
+    if (inputs.length === 0 && selects.length === 0) return
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        window.setTimeout(() => nextRef.current(), 80)
+      }
+    }
+    let selectTimer: ReturnType<typeof setTimeout>
+    const handleSelectChange = () => {
+      clearTimeout(selectTimer)
+      selectTimer = window.setTimeout(() => nextRef.current(), 600)
+    }
+
+    inputs.forEach(inp => inp.addEventListener('keydown', handleKey))
+    selects.forEach(sel => sel.addEventListener('change', handleSelectChange))
+    return () => {
+      inputs.forEach(inp => inp.removeEventListener('keydown', handleKey))
+      selects.forEach(sel => sel.removeEventListener('change', handleSelectChange))
+      clearTimeout(selectTimer)
+    }
+  }, [step, active, needsLanguagePick, meta, showSpotlight])
+
   useEffect(() => {
     if (!active || needsLanguagePick) return
     const block = (e: Event) => {
@@ -283,10 +323,9 @@ export function Onboarding() {
     const hole = showSpotlight ? targetRect : null
 
     if (useCenteredCallout) {
-      setLayout(computeCalloutLayout(null, vw, vh, panelH, {
-        prefer: 'center',
-        snap: meta?.snapToViewport,
-      }))
+      // Modal steps: card snaps to top so entire form is visible below
+      const snap = meta?.snapToViewport ?? (isModalTarget ? 'top' : undefined)
+      setLayout(computeCalloutLayout(null, vw, vh, panelH, { prefer: 'center', snap }))
       return
     }
 
@@ -294,12 +333,9 @@ export function Onboarding() {
       meta?.placement === 'top' ? 'top' : meta?.placement === 'bottom' ? 'bottom' : 'auto'
     const maxBottom = hole ? hole.top - 12 : undefined
     setLayout(
-      computeCalloutLayout(hole, vw, vh, panelH, {
-        prefer,
-        maxBottom,
-      }),
+      computeCalloutLayout(hole, vw, vh, panelH, { prefer, maxBottom }),
     )
-  }, [targetRect, panelH, step, useCenteredCallout, showSpotlight, meta?.placement])
+  }, [targetRect, panelH, step, useCenteredCallout, showSpotlight, meta?.placement, meta?.snapToViewport, isModalTarget])
 
   if (!active || needsLanguagePick || !s) return null
 
@@ -368,8 +404,13 @@ export function Onboarding() {
             {t('skip')}
           </button>
           <button type="button" onClick={() => nextRef.current()} className="ob-primary-btn flex-1 justify-center">
-            {isLast ? t('finish') : s.advance === 'click' ? t('ob_continue') : t('next')}
-            <ChevronRight size={14} />
+            {isLast
+              ? t('finish')
+              : s.advance === 'click'
+                ? <>{t('ob_continue')} <ChevronRight size={14} /></>
+                : isModalTarget
+                  ? '✓'
+                  : <>{t('next')} <ChevronRight size={14} /></>}
           </button>
         </div>
 
