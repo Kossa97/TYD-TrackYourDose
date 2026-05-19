@@ -317,6 +317,18 @@ body.onboarding-active [data-ob-active] {
   transform: translateX(-50%);
 }
 
+.ob-confirm-cue {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(0, 238, 180, 0.9);
+  text-align: center;
+  padding: 6px 10px;
+  line-height: 1.4;
+  border-radius: 8px;
+  background: rgba(0, 200, 140, 0.08);
+  border: 1px solid rgba(0, 200, 140, 0.22);
+}
+
 .ob-tap-cue {
   font-size: 0.75rem;
   font-weight: 600;

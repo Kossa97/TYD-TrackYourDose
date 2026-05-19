@@ -539,11 +539,15 @@ export function Peptide() {
       batch_file_url: fileUrl              || null,
       inventory_item_id: pForm.inventory_item_id || null,
     }
-    const { error } = editingPeptideId
-      ? await supabase.from('peptides').update(payload).eq('id', editingPeptideId)
-      : await supabase.from('peptides').insert(payload)
+    const { error, data: savedRow } = editingPeptideId
+      ? await supabase.from('peptides').update(payload).eq('id', editingPeptideId).select('id').single()
+      : await supabase.from('peptides').insert(payload).select('id').single()
     if (error) toast.error(t('fehler_speichern'))
-    else toast.success(editingPeptideId ? t('peptid_aktualisiert') : t('peptid_hinzugefuegt'))
+    else {
+      toast.success(editingPeptideId ? t('peptid_aktualisiert') : t('peptid_hinzugefuegt'))
+      const savedId = editingPeptideId ?? savedRow?.id
+      if (savedId) setExpandedId(savedId)
+    }
     setSavingPeptide(false); setShowPeptideForm(false); setBatchFile(null); loadPeptides()
   }
 

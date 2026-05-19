@@ -8,10 +8,11 @@ export function LanguageGate() {
   const { needsLanguagePick, confirmLanguage } = useOnboarding()
   const { i18n, t } = useTranslation()
 
+  const detectedBase = i18n.language?.split('-')[0] ?? ''
   const initialCode =
-    LANGUAGES.find(l => l.code === i18n.language)?.code ??
+    LANGUAGES.find(l => l.code === detectedBase)?.code ??
     LANGUAGES.find(l => l.code === localStorage.getItem('tyd_lang'))?.code ??
-    'en'
+    'de'
 
   const [selected, setSelected] = useState(initialCode)
 

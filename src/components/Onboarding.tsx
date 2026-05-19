@@ -405,6 +405,10 @@ export function Onboarding() {
 
           <p className="ob-callout-body whitespace-pre-line">{s.description}</p>
 
+          {isModalTarget && meta?.advance === 'next' && (
+            <p className="ob-confirm-cue">{t('ob_confirm_hint')}</p>
+          )}
+
           {s.advance === 'click' && showSpotlight && (
             <p className="ob-tap-cue">{s.tapHint ?? t('ob_tap_highlight')}</p>
           )}
