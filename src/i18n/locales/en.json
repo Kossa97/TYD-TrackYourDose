@@ -419,8 +419,7 @@
   "eg_batch_nr": "e.g. BPC-2024-01",
   "eg_source_name": "e.g. Peptide Sciences",
   "eg_2": "e.g. 2",
-  "eg_100": "e.g. 100"
-,
+  "eg_100": "e.g. 100",
   "ob_step_5_description": "Batch number and supplier help you trace quality. You can also attach a lab report (COA) below.",
   "ob_profile_hint": "Restart the tutorial anytime from Profile",
   "ob_step_2_title": "Add to stock",
@@ -479,9 +478,7 @@
   "lang_gate_subtitle": "You can change it later in Profile.",
   "ob_step_7_description": "On your saved inventory row, tap “Create peptide”. Active ingredient and batch are copied automatically.",
   "lang_gate_title": "Choose your language",
-  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.
-
-Good luck with TYD!",
+  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.\n\nGood luck with TYD!",
   "ob_step_12_tap": "Tap “My peptides”",
   "ob_step_13_title": "Add cycle",
   "ob_step_14_subtitle": "Step 14 · Plan",

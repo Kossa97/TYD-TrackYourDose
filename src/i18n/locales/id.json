@@ -420,8 +420,7 @@
   "eg_batch_nr": "mis. BPC-2024-01",
   "eg_source_name": "mis. Peptide Sciences",
   "eg_2": "mis. 2",
-  "eg_100": "mis. 100"
-,
+  "eg_100": "mis. 100",
   "ob_step_5_description": "Berapa banyak vial Anda miliki dan berapa mg bahan aktif per vial? Batch dan sumber opsional di bawah.",
   "ob_profile_hint": "Mulai ulang tutorial kapan saja dari Profil",
   "ob_step_2_title": "Tab Inventaris",
@@ -480,9 +479,7 @@
   "lang_gate_subtitle": "Anda dapat mengubahnya nanti di Profil.",
   "ob_step_7_description": "Ubah vial stok menjadi peptida siap pakai. Ketuk «Buat peptida» pada baris inventaris Anda.",
   "lang_gate_title": "Pilih bahasa Anda",
-  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.
-
-Good luck with TYD!",
+  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.\n\nGood luck with TYD!",
   "ob_step_12_tap": "Tap “My peptides”",
   "ob_step_13_title": "Simpan siklus",
   "ob_step_14_subtitle": "Langkah 14 · Tampilan harian",
@@ -515,7 +512,5 @@ Good luck with TYD!",
   "ob_step_6_description": "Saat bidang sudah benar, simpan entri inventaris.",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "Langkah 4 · Bidang wajib",
-  "ob_step_15_description": "Gunakan kalkulator untuk volume tarikan, jurnal untuk efek, dan ulasan agar tetap teratur.
-
-Semoga sukses dengan TYD!"
+  "ob_step_15_description": "Gunakan kalkulator untuk volume tarikan, jurnal untuk efek, dan ulasan agar tetap teratur.\n\nSemoga sukses dengan TYD!"
 }

@@ -419,8 +419,7 @@
   "eg_batch_nr": "p.ej. BPC-2024-01",
   "eg_source_name": "p.ej. Peptide Sciences",
   "eg_2": "p.ej. 2",
-  "eg_100": "p.ej. 100"
-,
+  "eg_100": "p.ej. 100",
   "ob_step_5_description": "¿Cuántos viales tienes y cuántos mg de principio activo por vial? Lote y origen son opcionales más abajo.",
   "ob_profile_hint": "Reinicia el tutorial en cualquier momento desde Perfil",
   "ob_step_2_title": "Pestaña Inventario",
@@ -479,9 +478,7 @@
   "lang_gate_subtitle": "Puedes cambiarlo más tarde en Perfil.",
   "ob_step_7_description": "Convierte un vial de stock en un péptido listo para usar. Toca «Crear péptido» en tu fila de inventario.",
   "lang_gate_title": "Elige tu idioma",
-  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.
-
-Good luck with TYD!",
+  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.\n\nGood luck with TYD!",
   "ob_step_12_tap": "Tap “My peptides”",
   "ob_step_13_title": "Guardar ciclo",
   "ob_step_14_subtitle": "Paso 14 · Vista diaria",
@@ -514,7 +511,5 @@ Good luck with TYD!",
   "ob_step_6_description": "Cuando los campos estén correctos, guarda la entrada del inventario.",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "Paso 4 · Campo obligatorio",
-  "ob_step_15_description": "Usa la calculadora para el volumen a extraer, el diario para los efectos y las reseñas para mantenerte organizado.
-
-¡Mucha suerte con TYD!"
+  "ob_step_15_description": "Usa la calculadora para el volumen a extraer, el diario para los efectos y las reseñas para mantenerte organizado.\n\n¡Mucha suerte con TYD!"
 }

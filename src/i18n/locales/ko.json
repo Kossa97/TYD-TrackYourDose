@@ -419,8 +419,7 @@
   "eg_batch_nr": "예: BPC-2024-01",
   "eg_source_name": "예: Peptide Sciences",
   "eg_2": "예: 2",
-  "eg_100": "예: 100"
-,
+  "eg_100": "예: 100",
   "ob_step_5_description": "바이얼이 몇 개이고 바이얼당 활성 성분이 몇 mg인가요? 배치와 출처는 아래에서 선택 사항입니다.",
   "ob_profile_hint": "프로필에서 언제든 튜토리얼을 다시 시작할 수 있습니다",
   "ob_step_2_title": "재고 탭",
@@ -479,9 +478,7 @@
   "lang_gate_subtitle": "나중에 프로필에서 변경할 수 있습니다.",
   "ob_step_7_description": "재고 바이얼을 사용 준비된 펩타이드로 만드세요. 재고 행에서 «펩타이드 만들기»를 탭하세요.",
   "lang_gate_title": "언어를 선택하세요",
-  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.
-
-Good luck with TYD!",
+  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.\n\nGood luck with TYD!",
   "ob_step_12_tap": "Tap “My peptides”",
   "ob_step_13_title": "사이클 저장",
   "ob_step_14_subtitle": "14단계 · 일일 보기",
@@ -514,7 +511,5 @@ Good luck with TYD!",
   "ob_step_6_description": "필드가 맞으면 재고 항목을 저장하세요.",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "4단계 · 필수 항목",
-  "ob_step_15_description": "흡입량은 계산기로, 효과는 일지로, 정리는 리뷰로 관리하세요.
-
-TYD와 함께 행운을 빕니다!"
+  "ob_step_15_description": "흡입량은 계산기로, 효과는 일지로, 정리는 리뷰로 관리하세요.\n\nTYD와 함께 행운을 빕니다!"
 }

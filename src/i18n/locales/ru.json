@@ -419,8 +419,7 @@
   "eg_batch_nr": "напр. BPC-2024-01",
   "eg_source_name": "напр. Peptide Sciences",
   "eg_2": "напр. 2",
-  "eg_100": "напр. 100"
-,
+  "eg_100": "напр. 100",
   "ob_step_5_description": "Сколько у вас флаконов и сколько мг действующего вещества в каждом? Партия и источник ниже необязательны.",
   "ob_profile_hint": "Перезапустить обучение можно в любое время в Профиле",
   "ob_step_2_title": "Вкладка «Инвентарь»",
@@ -479,9 +478,7 @@
   "lang_gate_subtitle": "Его можно изменить позже в Профиле.",
   "ob_step_7_description": "Превратите флакон со склада в готовый к применению пептид. Нажмите «Создать пептид» в строке инвентаря.",
   "lang_gate_title": "Выберите язык",
-  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.
-
-Good luck with TYD!",
+  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.\n\nGood luck with TYD!",
   "ob_step_12_tap": "Tap “My peptides”",
   "ob_step_13_title": "Сохранить цикл",
   "ob_step_14_subtitle": "Шаг 14 · Дневной обзор",
@@ -514,7 +511,5 @@ Good luck with TYD!",
   "ob_step_6_description": "Когда поля заполнены верно, сохраните запись инвентаря.",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "Шаг 4 · Обязательное поле",
-  "ob_step_15_description": "Используйте калькулятор для объёма набора, дневник для эффектов и отзывы для порядка.
-
-Удачи с TYD!"
+  "ob_step_15_description": "Используйте калькулятор для объёма набора, дневник для эффектов и отзывы для порядка.\n\nУдачи с TYD!"
 }

@@ -419,8 +419,7 @@
   "eg_batch_nr": "例如 BPC-2024-01",
   "eg_source_name": "例如 Peptide Sciences",
   "eg_2": "例如 2",
-  "eg_100": "例如 100"
-,
+  "eg_100": "例如 100",
   "ob_step_5_description": "您有多少瓶，每瓶多少 mg 活性成分？批号和来源可在下方选填。",
   "ob_profile_hint": "随时可在个人资料中重新开始教程",
   "ob_step_2_title": "库存标签页",
@@ -479,9 +478,7 @@
   "lang_gate_subtitle": "您可以稍后在个人资料中更改。",
   "ob_step_7_description": "将库存瓶转为即用肽。在库存行上点击「创建肽」。",
   "lang_gate_title": "选择您的语言",
-  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.
-
-Good luck with TYD!",
+  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.\n\nGood luck with TYD!",
   "ob_step_12_tap": "Tap “My peptides”",
   "ob_step_13_title": "保存周期",
   "ob_step_14_subtitle": "第 14 步 · 每日视图",
@@ -514,7 +511,5 @@ Good luck with TYD!",
   "ob_step_6_description": "字段无误后，保存库存条目。",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "第 4 步 · 必填项",
-  "ob_step_15_description": "用计算器查看抽取量，用日记记录效果，用评价保持条理。
-
-祝您使用 TYD 顺利！"
+  "ob_step_15_description": "用计算器查看抽取量，用日记记录效果，用评价保持条理。\n\n祝您使用 TYD 顺利！"
 }

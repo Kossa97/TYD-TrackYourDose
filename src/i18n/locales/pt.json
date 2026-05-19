@@ -419,8 +419,7 @@
   "eg_batch_nr": "ex. BPC-2024-01",
   "eg_source_name": "ex. Peptide Sciences",
   "eg_2": "ex. 2",
-  "eg_100": "ex. 100"
-,
+  "eg_100": "ex. 100",
   "ob_step_5_description": "Quantos frascos você tem e quantos mg de princípio ativo por frasco? Lote e origem são opcionais abaixo.",
   "ob_profile_hint": "Reinicie o tutorial a qualquer momento em Perfil",
   "ob_step_2_title": "Aba Inventário",
@@ -479,9 +478,7 @@
   "lang_gate_subtitle": "Você pode alterá-lo depois em Perfil.",
   "ob_step_7_description": "Transforme um frasco de estoque em peptídeo pronto para uso. Toque em «Criar peptídeo» na linha do inventário.",
   "lang_gate_title": "Escolha seu idioma",
-  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.
-
-Good luck with TYD!",
+  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.\n\nGood luck with TYD!",
   "ob_step_12_tap": "Tap “My peptides”",
   "ob_step_13_title": "Salvar ciclo",
   "ob_step_14_subtitle": "Passo 14 · Visão diária",
@@ -514,7 +511,5 @@ Good luck with TYD!",
   "ob_step_6_description": "Quando os campos estiverem corretos, salve a entrada do inventário.",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "Passo 4 · Campo obrigatório",
-  "ob_step_15_description": "Use a calculadora para o volume a aspirar, o diário para efeitos e as avaliações para se manter organizado.
-
-Boa sorte com o TYD!"
+  "ob_step_15_description": "Use a calculadora para o volume a aspirar, o diário para efeitos e as avaliações para se manter organizado.\n\nBoa sorte com o TYD!"
 }

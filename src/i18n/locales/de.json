@@ -419,8 +419,7 @@
   "eg_batch_nr": "z.B. BPC-2024-01",
   "eg_source_name": "z.B. Peptide Sciences",
   "eg_2": "z.B. 2",
-  "eg_100": "z.B. 100"
-,
+  "eg_100": "z.B. 100",
   "ob_step_5_description": "Batch-Nummer und Lieferant helfen bei der Rückverfolgung. Unten kannst du ein Analyse-Dokument (COA) anhängen.",
   "ob_profile_hint": "Anleitung jederzeit im Profil neu starten",
   "ob_step_2_title": "Einlagern",
@@ -479,9 +478,7 @@
   "lang_gate_subtitle": "Du kannst sie später im Profil ändern.",
   "ob_step_7_description": "Bei deinem Inventar-Eintrag auf „Peptid anlegen“ tippen. Wirkstoff und Batch werden übernommen.",
   "lang_gate_title": "Wähle deine Sprache",
-  "ob_step_20_description": "Du kennst den Ablauf: Einlagern → anmischen → Zyklus → Kalender.
-
-Viel Erfolg mit TYD!",
+  "ob_step_20_description": "Du kennst den Ablauf: Einlagern → anmischen → Zyklus → Kalender.\n\nViel Erfolg mit TYD!",
   "ob_step_12_tap": "Tippe auf „Meine Peptide“",
   "ob_step_13_title": "Zyklus hinzufügen",
   "ob_step_14_subtitle": "Schritt 14 · Zeitplan",

@@ -419,8 +419,7 @@
   "eg_batch_nr": "p.ex. BPC-2024-01",
   "eg_source_name": "p.ex. Peptide Sciences",
   "eg_2": "p.ex. 2",
-  "eg_100": "p.ex. 100"
-,
+  "eg_100": "p.ex. 100",
   "ob_step_5_description": "Combien de flacons avez-vous et combien de mg de principe actif par flacon ? Lot et source sont facultatifs ci-dessous.",
   "ob_profile_hint": "Relancez le tutoriel à tout moment depuis Profil",
   "ob_step_2_title": "Onglet Inventaire",
@@ -479,9 +478,7 @@
   "lang_gate_subtitle": "Vous pourrez la modifier plus tard dans Profil.",
   "ob_step_7_description": "Transformez un flacon de stock en peptide prêt à l'emploi. Appuyez sur « Créer un peptide » sur votre ligne d'inventaire.",
   "lang_gate_title": "Choisissez votre langue",
-  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.
-
-Good luck with TYD!",
+  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.\n\nGood luck with TYD!",
   "ob_step_12_tap": "Tap “My peptides”",
   "ob_step_13_title": "Enregistrer le cycle",
   "ob_step_14_subtitle": "Étape 14 · Vue quotidienne",
@@ -514,7 +511,5 @@ Good luck with TYD!",
   "ob_step_6_description": "Lorsque les champs sont corrects, enregistrez l'entrée d'inventaire.",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "Étape 4 · Champ obligatoire",
-  "ob_step_15_description": "Utilisez le calculateur pour le volume à prélever, le journal pour les effets et les évaluations pour rester organisé.
-
-Bonne chance avec TYD !"
+  "ob_step_15_description": "Utilisez le calculateur pour le volume à prélever, le journal pour les effets et les évaluations pour rester organisé.\n\nBonne chance avec TYD !"
 }

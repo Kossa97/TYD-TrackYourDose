@@ -419,8 +419,7 @@
   "eg_batch_nr": "उदा. BPC-2024-01",
   "eg_source_name": "उदा. Peptide Sciences",
   "eg_2": "उदा. 2",
-  "eg_100": "उदा. 100"
-,
+  "eg_100": "उदा. 100",
   "ob_step_5_description": "आपके पास कितने वायल हैं और प्रति वायल कितने mg सक्रिय तत्व? बैच और स्रोत नीचे वैकल्पिक हैं।",
   "ob_profile_hint": "प्रोफ़ाइल से कभी भी ट्यूटोरियल फिर से शुरू करें",
   "ob_step_2_title": "इन्वेंटरी टैब",
@@ -479,9 +478,7 @@
   "lang_gate_subtitle": "आप इसे बाद में प्रोफ़ाइल में बदल सकते हैं।",
   "ob_step_7_description": "स्टॉक वायल को उपयोग के लिए तैयार पेप्टाइड में बदलें। इन्वेंटरी पंक्ति पर «पेप्टाइड बनाएँ» टैप करें।",
   "lang_gate_title": "अपनी भाषा चुनें",
-  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.
-
-Good luck with TYD!",
+  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.\n\nGood luck with TYD!",
   "ob_step_12_tap": "Tap “My peptides”",
   "ob_step_13_title": "साइकिल सहेजें",
   "ob_step_14_subtitle": "चरण 14 · दैनिक दृश्य",
@@ -514,7 +511,5 @@ Good luck with TYD!",
   "ob_step_6_description": "जब फ़ील्ड सही लगें, इन्वेंटरी प्रविष्टि सहेजें।",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "चरण 4 · आवश्यक फ़ील्ड",
-  "ob_step_15_description": "खींचने की मात्रा के लिए कैलकुलेटर, प्रभावों के लिए जर्नल और व्यवस्था के लिए समीक्षाएँ उपयोग करें।
-
-TYD के साथ शुभकामनाएँ!"
+  "ob_step_15_description": "खींचने की मात्रा के लिए कैलकुलेटर, प्रभावों के लिए जर्नल और व्यवस्था के लिए समीक्षाएँ उपयोग करें।\n\nTYD के साथ शुभकामनाएँ!"
 }

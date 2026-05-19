@@ -419,8 +419,7 @@
   "eg_batch_nr": "örn. BPC-2024-01",
   "eg_source_name": "örn. Peptide Sciences",
   "eg_2": "örn. 2",
-  "eg_100": "örn. 100"
-,
+  "eg_100": "örn. 100",
   "ob_step_5_description": "Kaç flakonunuz var ve flakon başına kaç mg etken madde? Parti ve kaynak aşağıda isteğe bağlıdır.",
   "ob_profile_hint": "Eğitimi istediğiniz zaman Profil'den yeniden başlatın",
   "ob_step_2_title": "Envanter sekmesi",
@@ -479,9 +478,7 @@
   "lang_gate_subtitle": "Daha sonra Profil'den değiştirebilirsiniz.",
   "ob_step_7_description": "Stok flakonunu kullanıma hazır peptide dönüştürün. Envanter satırınızda «Peptit oluştur»a dokunun.",
   "lang_gate_title": "Dilinizi seçin",
-  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.
-
-Good luck with TYD!",
+  "ob_step_20_description": "You know the full workflow: stock → reconstitute → cycle → calendar.\n\nGood luck with TYD!",
   "ob_step_12_tap": "Tap “My peptides”",
   "ob_step_13_title": "Döngüyü kaydet",
   "ob_step_14_subtitle": "Adım 14 · Günlük görünüm",
@@ -514,7 +511,5 @@ Good luck with TYD!",
   "ob_step_6_description": "Alanlar doğru göründüğünde envanter kaydını kaydedin.",
   "ob_step_0_subtitle": "Track Your Dose",
   "ob_step_4_subtitle": "Adım 4 · Zorunlu alan",
-  "ob_step_15_description": "Çekim hacmi için hesaplayıcıyı, etkiler için günlüğü ve düzen için değerlendirmeleri kullanın.
-
-TYD ile iyi şanslar!"
+  "ob_step_15_description": "Çekim hacmi için hesaplayıcıyı, etkiler için günlüğü ve düzen için değerlendirmeleri kullanın.\n\nTYD ile iyi şanslar!"
 }
