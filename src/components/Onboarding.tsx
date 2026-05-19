@@ -405,7 +405,7 @@ export function Onboarding() {
               top: targetRect.top,
               left: targetRect.right - 52,
               width: 52,
-              height: targetRect.height,
+              height: Math.min(targetRect.height, 44),
               background: 'linear-gradient(135deg, rgba(0,204,245,0.97), rgba(0,110,190,0.97))',
               border: 'none',
               borderRadius: '0 10px 10px 0',
