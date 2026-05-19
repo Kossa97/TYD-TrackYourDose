@@ -528,5 +528,7 @@
   "stat_next_intake": "下次服用",
   "stat_today_done": "今日完成",
   "stat_days": "天",
-  "stat_study": "今日研究"
+  "stat_study": "今日研究",
+  "tile_injektionen": "注射",
+  "tile_injektionen_desc": "部位轮换与3D追踪器"
 }

@@ -528,5 +528,7 @@
   "stat_next_intake": "अगली खुराक",
   "stat_today_done": "आज पूर्ण",
   "stat_days": "दिन",
-  "stat_study": "आज का अध्ययन"
+  "stat_study": "आज का अध्ययन",
+  "tile_injektionen": "इंजेक्शन",
+  "tile_injektionen_desc": "साइट रोटेशन और 3D ट्रैकर"
 }

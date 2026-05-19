@@ -528,5 +528,7 @@
   "stat_next_intake": "Próxima dose",
   "stat_today_done": "Feito hoje",
   "stat_days": "Dias",
-  "stat_study": "Estudo do dia"
+  "stat_study": "Estudo do dia",
+  "tile_injektionen": "Injeções",
+  "tile_injektionen_desc": "Rotação de locais & rastreador 3D"
 }

@@ -528,5 +528,7 @@
   "stat_next_intake": "Prossima assunzione",
   "stat_today_done": "Fatto oggi",
   "stat_days": "Giorni",
-  "stat_study": "Studio del giorno"
+  "stat_study": "Studio del giorno",
+  "tile_injektionen": "Iniezioni",
+  "tile_injektionen_desc": "Rotazione siti & tracker 3D"
 }

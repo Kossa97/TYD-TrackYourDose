@@ -528,5 +528,7 @@
   "stat_next_intake": "次の摂取",
   "stat_today_done": "今日完了",
   "stat_days": "日",
-  "stat_study": "今日の研究"
+  "stat_study": "今日の研究",
+  "tile_injektionen": "注射",
+  "tile_injektionen_desc": "部位ローテーション・3Dトラッカー"
 }

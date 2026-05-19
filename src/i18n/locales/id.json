@@ -529,5 +529,7 @@
   "stat_next_intake": "Asupan berikutnya",
   "stat_today_done": "Selesai hari ini",
   "stat_days": "Hari",
-  "stat_study": "Studi hari ini"
+  "stat_study": "Studi hari ini",
+  "tile_injektionen": "Injeksi",
+  "tile_injektionen_desc": "Rotasi lokasi & pelacak 3D"
 }

@@ -528,5 +528,7 @@
   "stat_next_intake": "الجرعة القادمة",
   "stat_today_done": "اكتمل اليوم",
   "stat_days": "أيام",
-  "stat_study": "دراسة اليوم"
+  "stat_study": "دراسة اليوم",
+  "tile_injektionen": "الحقن",
+  "tile_injektionen_desc": "تناوب المواقع ومتعقب ثلاثي الأبعاد"
 }

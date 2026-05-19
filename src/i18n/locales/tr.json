@@ -528,5 +528,7 @@
   "stat_next_intake": "Sonraki alım",
   "stat_today_done": "Bugün tamamlandı",
   "stat_days": "Gün",
-  "stat_study": "Günün çalışması"
+  "stat_study": "Günün çalışması",
+  "tile_injektionen": "Enjeksiyonlar",
+  "tile_injektionen_desc": "Bölge rotasyonu & 3D izleyici"
 }

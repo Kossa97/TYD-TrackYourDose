@@ -528,5 +528,7 @@
   "stat_next_intake": "다음 섭취",
   "stat_today_done": "오늘 완료",
   "stat_days": "일",
-  "stat_study": "오늘의 연구"
+  "stat_study": "오늘의 연구",
+  "tile_injektionen": "주사",
+  "tile_injektionen_desc": "부위 로테이션 & 3D 트래커"
 }

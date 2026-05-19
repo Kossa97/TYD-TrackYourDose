@@ -528,5 +528,7 @@
   "stat_next_intake": "Следующий приём",
   "stat_today_done": "Выполнено сегодня",
   "stat_days": "Дни",
-  "stat_study": "Исследование дня"
+  "stat_study": "Исследование дня",
+  "tile_injektionen": "Инъекции",
+  "tile_injektionen_desc": "Ротация зон & 3D-трекер"
 }
