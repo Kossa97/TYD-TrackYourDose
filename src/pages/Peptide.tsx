@@ -1612,7 +1612,6 @@ export function Peptide() {
                 {BASE_FREQUENCIES.map(freq => <option key={freq} value={freq}>{t(FREQ_KEYS[freq] ?? freq)}</option>)}
               </select>
             </div>
-            </div>
 
             {cForm.frequency === 'Alle X Tage' && (
               <div>
@@ -1628,7 +1627,7 @@ export function Peptide() {
             )}
 
             {(['Wochentage wählen', 'Alle X Tage'].includes(cForm.frequency)) && (
-              <div>
+              <div data-ob-self>
                 <label className="label">{t('injektionstage_label')}</label>
                 <div className="flex gap-2">
                   {WOCHENTAGE.map(day => (
@@ -1646,20 +1645,20 @@ export function Peptide() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div data-ob-self>
               <div>
                 <label className="label">{t('startdatum_label')}</label>
                 <input className="input" type="date" value={cForm.start_date}
                   onChange={e => setCForm(f => f ? { ...f, start_date: e.target.value } : f)} />
               </div>
-              <div>
+              <div className="mt-3">
                 <label className="label">{t('enddatum_optional_label')}</label>
                 <input className="input" type="date" value={cForm.end_date}
                   onChange={e => setCForm(f => f ? { ...f, end_date: e.target.value } : f)} />
               </div>
             </div>
 
-            <div>
+            <div data-ob-self>
               <div className="flex items-center justify-between mb-2">
                 <label className="label mb-0">{t('einnahmezeitpunkt')}</label>
                 <span className="text-xs text-slate-500">optional</span>
@@ -1722,9 +1721,9 @@ export function Peptide() {
                   )}
                 </div>
               ))}
-            </div>
+            </div>{/* /einnahmezeitpunkt data-ob-self */}
 
-            <div>
+            <div data-ob-self>
               <div className="flex items-center justify-between mb-1">
                 <label className="label mb-0 flex items-center gap-1.5">
                   <Bell size={13} className="text-sky-400" /> {t('erinnerung_label')}
@@ -1761,7 +1760,9 @@ export function Peptide() {
                   {t('erinnerung_info', { n: cForm.reminder.length })}
                 </p>
               )}
-            </div>
+            </div>{/* /erinnerung data-ob-self */}
+
+            </div>{/* /cycle-core */}
 
             <div className="flex gap-3 pt-2">
               <button className="btn-secondary flex-1" onClick={() => setShowCycleForm(false)}>{t('cancel')}</button>

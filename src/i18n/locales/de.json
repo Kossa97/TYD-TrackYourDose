@@ -428,7 +428,7 @@
   "ob_tap_highlight": "Tippe auf den markierten Bereich",
   "ob_step_5_hint": "✏️ Formular ausfüllen → „{{save}}“ tippen",
   "ob_step_13_tap": "Tippe auf „+ Zyklus\"",
-  "ob_step_14_description": "Fülle die Felder aus: Name, Dosis, Einheit, Applikationsart und Frequenz.",
+  "ob_step_14_description": "Fülle alle Felder aus: Name, Dosis, Einheit, Applikationsart, Frequenz, Start-/Enddatum, Einnahmezeitpunkt und Erinnerung.",
   "ob_step_2_hint": "👆 Tippe auf den Tab „{{tab}}“",
   "ob_step_4_description": "Trage Anzahl der Vials und Wirkstoffgehalt pro Vial ein (z.B. 5 Vials × 10 mg).",
   "ob_step_9_title": "Haltbarkeit",

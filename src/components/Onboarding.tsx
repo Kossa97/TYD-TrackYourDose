@@ -199,15 +199,21 @@ export function Onboarding() {
     const selfContainers = [...el.querySelectorAll<HTMLElement>('[data-ob-self]')]
     const result: HTMLElement[] = []
 
-    for (const input of [...el.querySelectorAll<HTMLElement>(SINGLE)]) {
-      const r = input.getBoundingClientRect()
-      if (r.height <= 4 || r.height >= 72 || r.width <= 20) continue
-      // If inside a data-ob-self container, use the container as the field (once)
-      const parent = selfContainers.find(c => c.contains(input))
-      if (parent) {
-        if (!result.includes(parent)) result.push(parent)
+    // Walk all descendants in DOM order — collect data-ob-self containers as blocks,
+    // and visible standalone inputs/selects not inside a data-ob-self container.
+    for (const node of el.querySelectorAll<HTMLElement>('[data-ob-self], ' + SINGLE)) {
+      if (node.matches('[data-ob-self]')) {
+        // Always include self-containers (weekday picker, dates, intake, reminder)
+        if (!result.includes(node)) result.push(node)
       } else {
-        result.push(input)
+        const r = node.getBoundingClientRect()
+        if (r.height <= 4 || r.height >= 72 || r.width <= 20) continue
+        const parent = selfContainers.find(c => c.contains(node))
+        if (parent) {
+          if (!result.includes(parent)) result.push(parent)
+        } else {
+          result.push(node)
+        }
       }
     }
     return result
