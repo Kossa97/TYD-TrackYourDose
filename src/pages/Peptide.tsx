@@ -1016,7 +1016,7 @@ export function Peptide() {
                       data-ob="btn-zyklus-add"
                       onClick={() => { openNewCycle(p); dismissZyklusBtn() }}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/15 border border-violet-500/30 text-violet-400 hover:bg-violet-500/25 hover:border-violet-400/50 transition-colors text-xs font-medium">
-                      <Plus size={12} /> {t('zyklus_hinzufuegen')}
+                      {t('zyklus_hinzufuegen')}
                       {zyklusBtnNew && <NewDot />}
                     </button>
                   </div>
@@ -1028,10 +1028,6 @@ export function Peptide() {
                         <span className="text-sm font-semibold text-slate-300 flex items-center gap-2">
                           <CalendarDays size={14} className="text-violet-400" /> {t('zyklen_header')}
                         </span>
-                        <button className="btn-secondary py-1 px-3 text-xs flex items-center gap-1"
-                          onClick={() => openNewCycle(p)}>
-                          <Plus size={12} /> {t('neuer_zyklus_btn')}
-                        </button>
                       </div>
                       {pCycles.length === 0 && (
                         <p className="text-slate-500 text-sm text-center py-4">
