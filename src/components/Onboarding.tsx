@@ -449,8 +449,10 @@ export function Onboarding() {
     const r = currentField?.getBoundingClientRect() ?? targetRect
     const SIZE = 40
     const INNER = 4 // gap from field's right/top edge
+    // Date inputs have a native calendar picker icon (~30px) — shift left to avoid overlap
+    const isDateInput = currentField instanceof HTMLInputElement && currentField.type === 'date'
     const top = r.top + (r.height - SIZE) / 2
-    const left = r.right - SIZE - INNER
+    const left = r.right - SIZE - INNER - (isDateInput ? 32 : 0)
 
     return createPortal(
       <button
