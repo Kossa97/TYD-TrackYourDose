@@ -402,10 +402,10 @@ export function Onboarding() {
             style={{
               position: 'fixed',
               zIndex: OB_Z.panel - 2,
-              top: targetRect.top,
+              top: targetRect.bottom - 44,
               left: targetRect.right - 52,
               width: 52,
-              height: Math.min(targetRect.height, 44),
+              height: 44,
               background: 'linear-gradient(135deg, rgba(0,204,245,0.97), rgba(0,110,190,0.97))',
               border: 'none',
               borderRadius: '0 10px 10px 0',
