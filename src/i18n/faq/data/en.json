@@ -1,0 +1,577 @@
+{
+  "categories": [
+    {
+      "id": "start",
+      "title": "Getting started & navigation",
+      "items": [
+        {
+          "q": "What is Peptid Tracker?",
+          "a": "Peptid Tracker is a personal app for research use. You can manage your peptides, plan intake cycles, log doses, calculate dosing, record effects in the journal, and write reviews—all in one place."
+        },
+        {
+          "q": "How do I move between sections?",
+          "a": "At the bottom of the screen there is navigation with 5 icons: Stock, Peptides, Home (center), Calendar, and Profile. You reach all other areas from the Home screen in the middle."
+        },
+        {
+          "q": "What is the Home screen?",
+          "a": [
+            "The Home screen (middle button in the navigation) is your hub:",
+            "• At the top you see 3 quick stats: Active cycles, Vials in stock, My peptides",
+            "• Below that are tiles for all 8 areas of the app",
+            "• Tap a tile to jump there directly"
+          ]
+        },
+        {
+          "q": "What are all the areas of the app?",
+          "a": [
+            "📅 Calendar – daily log, confirm doses & cycle overview",
+            "📦 Stock – raw material inventory, store & manage vials",
+            "🧪 Peptides – reconstituted peptides & create cycles",
+            "🧮 Calculator – dose calculator with syringe scale",
+            "📓 Journal – record effects and side effects",
+            "⭐ Reviews – experience reports for individual peptides",
+            "👤 Profile – account data, public profile & share link",
+            "❓ FAQ – this help page"
+          ]
+        },
+        {
+          "q": "How do I sign out?",
+          "a": "Go to “Profile” and tap the red “Sign out” button at the top right."
+        },
+        {
+          "q": "Is my data stored securely?",
+          "a": "Yes. All data is stored in a Supabase database. Each user only sees their own data—this is enforced with Row Level Security (RLS). Batch files (PDFs/images) live in a separate storage bucket and are only accessible to you."
+        },
+        {
+          "q": "Can I install the app on my phone?",
+          "a": [
+            "Yes! Peptid Tracker is a PWA (Progressive Web App):",
+            "iPhone/Safari: Share icon → “Add to Home Screen” → “Add”",
+            "Android/Chrome: Three dots → “Install app” or “Add to Home screen”",
+            "The app then runs without the browser chrome and feels like a native app."
+          ]
+        },
+        {
+          "q": "Where should I start?",
+          "a": [
+            "Suggested order:",
+            "1. “Peptides” → “+ New” → create a peptide (name, active ingredient, reconstitution, stock)",
+            "2. “Add cycle” directly on the peptide card",
+            "3. Use “Calculator” to compute units & concentration",
+            "4. Open “Calendar” – the cycle appears with a purple background",
+            "5. Tap a cycle day → log dose & confirm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kalender",
+      "title": "Calendar & log",
+      "items": [
+        {
+          "q": "What does the calendar show?",
+          "a": [
+            "The calendar gives you an at-a-glance overview:",
+            "🟣 Purple background = active cycle planned for that day",
+            "🔵 Blue dot = a dose was logged for that day",
+            "🔵 Sky ring = today",
+            "🟠 Orange arrow icon = a dose increase is active on that day"
+          ]
+        },
+        {
+          "q": "How do I log a dose?",
+          "a": [
+            "1. Tap a day in the calendar",
+            "2. Active cycles appear as cards in the day panel below",
+            "3. Tap a cycle → the log form opens prefilled",
+            "4. Adjust dose, method, or time if needed",
+            "5. Tap “Save”"
+          ]
+        },
+        {
+          "q": "What is dose confirmation?",
+          "a": [
+            "After logging you can confirm each dose:",
+            "✅ “Taken” – entry is marked green",
+            "❌ “Not taken” – entry is marked red and snooze options appear",
+            "Until you confirm, both buttons appear on the entry card."
+          ]
+        },
+        {
+          "q": "What is snooze?",
+          "a": [
+            "When you tap “Not taken”, snooze buttons appear:",
+            "⏰ 15 min – reminder in 15 minutes",
+            "⏰ 30 min – reminder in 30 minutes",
+            "⏰ 1 h – reminder in 1 hour",
+            "⏰ 2 h – reminder in 2 hours",
+            "When it fires, a toast shows the peptide and dose."
+          ]
+        },
+        {
+          "q": "What does the orange arrow in the calendar mean?",
+          "a": "The orange arrow (📈 increase active) means a dose increase from your cycle applies that day. The dose shown in the day panel is already the increased total dose."
+        },
+        {
+          "q": "How do I move between months?",
+          "a": "Tap the arrows left/right of the month name."
+        },
+        {
+          "q": "Can I delete a logged dose?",
+          "a": "Yes. In the day panel there is an ✕ button to the right of each entry → tap it and confirm."
+        },
+        {
+          "q": "Why is there no purple background even though I have a cycle?",
+          "a": [
+            "Possible reasons:",
+            "• Cycle is “Inactive” → in Peptides → cycle → turn the switch on",
+            "• Wrong month shown → browse to the cycle’s start month",
+            "• Start/end dates exclude this month"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "peptide",
+      "title": "Peptides & stock",
+      "items": [
+        {
+          "q": "How do I create a new peptide?",
+          "a": [
+            "1. Tap “+ New” at the top right",
+            "2. Enter a name or pick from “Known”",
+            "3. Fill in active ingredient & reconstitution (mg/vial, liquid, syringe)",
+            "4. Enter stock, batch info, and dosing",
+            "5. Optionally upload a PDF or image of the analysis document",
+            "6. Tap “Save”"
+          ]
+        },
+        {
+          "q": "What does the animated vial on the peptide card show?",
+          "a": [
+            "If you entered stock, an animated vial appears on the left of the card:",
+            "🟢 Green = more than 50% stock left",
+            "🟡 Yellow = 25–50% stock",
+            "🔴 Red = less than 25% – running low soon",
+            "The liquid animates. On phones the vial tilts with device orientation."
+          ]
+        },
+        {
+          "q": "What is the info button (note icon) on the peptide card?",
+          "a": [
+            "The note icon (📄) opens an info sheet with all saved data:",
+            "• Dose & route",
+            "• Active ingredient, liquid volume, syringe",
+            "• Reconstitution date & expiry with countdown",
+            "• Stock & progress bar",
+            "• Batch number & source",
+            "• Analysis document: images inline, PDFs as a link",
+            "• Notes"
+          ]
+        },
+        {
+          "q": "What is stock management?",
+          "a": [
+            "You can enter how many vials you have:",
+            "• “Vials on hand” = current stock",
+            "• On first save this value is remembered as the 100% baseline",
+            "• The progress bar on the card shows consumption in color",
+            "• Expiry is calculated from reconstitution date + shelf life"
+          ]
+        },
+        {
+          "q": "What is batch information?",
+          "a": [
+            "Batch information documents where your peptide came from:",
+            "• Batch number = manufacturer lot ID",
+            "• Source = manufacturer or supplier (e.g. “Peptide Sciences”)",
+            "• Analysis document = upload PDF or image (COA, lab report, invoice)",
+            "This also appears in the peptide info sheet."
+          ]
+        },
+        {
+          "q": "What does “Added liquid (mL)” mean?",
+          "a": "That is how much water (e.g. BAC water, NaCl, or sterile water for injection) you add to the vial. More liquid means lower concentration. Typical values are 1–2 mL."
+        },
+        {
+          "q": "What do the syringe fields “mL” and “units” mean?",
+          "a": [
+            "These two fields describe your syringe:",
+            "• mL = total syringe volume (e.g. 1 mL)",
+            "• Units = maximum scale marks (e.g. 100 on a U-100 syringe)",
+            "→ From that: units/mL = marks per milliliter",
+            "Standard U-100 insulin syringe: 1 mL / 100 units = 100 units/mL"
+          ]
+        },
+        {
+          "q": "What is shelf life after reconstitution?",
+          "a": [
+            "After dissolving the peptide it is only stable for a limited time (in the fridge):",
+            "10–14 days = short-lived peptides",
+            "21–28 days = typical for reconstituted peptides",
+            "42–90 days = especially stable peptides",
+            "Expiry is calculated from reconstitution date + selected days and shown in color."
+          ]
+        },
+        {
+          "q": "How do I add a cycle from the peptide card?",
+          "a": "Each peptide card has a purple “Add cycle” button at the bottom right. Tap it—you don’t need to expand the peptide first."
+        },
+        {
+          "q": "What does the arrow with cycle count at the bottom show?",
+          "a": "The small arrow at the bottom left (e.g. “▼ 2 cycles”) expands or collapses the cycle view. You see at a glance how many cycles exist for this peptide."
+        },
+        {
+          "q": "How do I search for a peptide?",
+          "a": "Once peptides exist, a search field appears at the top. Type a name—the list filters automatically. Use the dropdown next to it to sort A→Z or Z→A."
+        }
+      ]
+    },
+    {
+      "id": "rechner",
+      "title": "Calculator",
+      "items": [
+        {
+          "q": "What can the calculator do?",
+          "a": [
+            "From your inputs the calculator computes:",
+            "• Units to draw – how many marks on the syringe",
+            "• Concentration – mg/mL of the finished solution",
+            "• Syringe fill – what percent of the syringe you draw",
+            "• Doses per vial – how many injections you get from one vial"
+          ]
+        },
+        {
+          "q": "What is the syringe scale?",
+          "a": [
+            "The colored scale at the top shows visually how many units to draw:",
+            "• The bar fills left (blue) to right (purple → pink)",
+            "• The white line marks the exact point",
+            "• The large number above shows units",
+            "You immediately see whether your dose fits in the syringe."
+          ]
+        },
+        {
+          "q": "What inputs does the calculator need?",
+          "a": [
+            "• Syringe size – pick a preset (e.g. 1 mL / 100 units) or enter custom values",
+            "• Active per vial – mg on the vial (e.g. 10 mg)",
+            "• Added liquid – how many mL you added (e.g. 2 mL)",
+            "• Dose – your target dose with unit (mcg, mg, IU)"
+          ]
+        },
+        {
+          "q": "Which syringe presets exist?",
+          "a": [
+            "• 1 mL · 100 units (U-100) – standard insulin syringe",
+            "• 0.5 mL · 50 units (U-100) – small insulin syringe",
+            "• 0.3 mL · 30 units (U-100) – very small syringe",
+            "• 2 mL · 200 units (U-100) – larger syringe",
+            "• 1 mL · 40 units (U-40) – older U-40 syringe",
+            "Or: enter custom mL and units."
+          ]
+        },
+        {
+          "q": "Example – how does the math work?",
+          "a": [
+            "Example: BPC-157, 5 mg vial, 2 mL water, 500 mcg dose, U-100 syringe",
+            "→ Concentration: 5 mg ÷ 2 mL = 2.5 mg/mL = 2500 mcg/mL",
+            "→ Volume: 500 mcg ÷ 2500 mcg/mL = 0.200 mL",
+            "→ Units: 0.200 mL × 100 units/mL = 20 units",
+            "→ Doses/vial: 5000 mcg ÷ 500 mcg = 10 doses"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zyklen",
+      "title": "Cycles",
+      "items": [
+        {
+          "q": "What is a cycle?",
+          "a": "A cycle is a structured intake plan for a peptide. It defines dose, method, frequency, time range, optional intake time, and reminders."
+        },
+        {
+          "q": "How do I create a cycle?",
+          "a": [
+            "1. On the peptide card tap “+ Add cycle” (purple button)",
+            "2. Fill in name, dose, frequency, and dates",
+            "3. Optionally set intake time and reminders",
+            "4. Tap “Save”",
+            "The cycle appears in the calendar automatically!"
+          ]
+        },
+        {
+          "q": "Which frequency options exist?",
+          "a": [
+            "• Daily · Twice daily · Every other day",
+            "• 5 days on / 2 off (5on/2off)",
+            "• Mon–Fri · Weekly",
+            "• Every X days – custom interval",
+            "• Pick weekdays – e.g. only Mon, Wed, Fri"
+          ]
+        },
+        {
+          "q": "What does the Active/Inactive switch mean?",
+          "a": "Active = cycle shows in the calendar (purple days). Inactive = cycle paused, not visible in the calendar. Toggle by tapping the switch on the right of the cycle."
+        },
+        {
+          "q": "What is intake time?",
+          "a": [
+            "Optional – sets time of day:",
+            "🌅 Morning = 08:00 · ☀️ Noon = 12:00 · 🌙 Evening = 20:00 · 🕐 Custom time",
+            "Used for reminders. It is optional—you can leave it empty."
+          ]
+        },
+        {
+          "q": "How do reminders work?",
+          "a": [
+            "Reminders are multi-select—you can pick several:",
+            "• 1 day before – reminder 24 hours before intake",
+            "• 2 h before – 2 hour lead time",
+            "• At intake – exactly at the set time",
+            "The app asks for notification permission when you save.",
+            "Important: only works while the app is open."
+          ]
+        },
+        {
+          "q": "Can I have multiple cycles for one peptide?",
+          "a": "Yes, as many as you like. All active cycles show in the calendar. Useful e.g. for morning + evening or different dosing phases."
+        }
+      ]
+    },
+    {
+      "id": "escalation",
+      "title": "Dose increases",
+      "items": [
+        {
+          "q": "What is a dose increase?",
+          "a": "A planned rise in dose within a cycle. Example: start at 200 mcg, after 2 weeks +100 mcg, after 4 weeks another +100 mcg. Multiple steps are possible."
+        },
+        {
+          "q": "How do I add a dose increase?",
+          "a": [
+            "1. Expand peptide → find cycle → “Dose increases” section",
+            "2. Tap “+ Add”",
+            "3. Enter increase amount and unit",
+            "4. Pick start: fixed date / after X days / after X weeks",
+            "5. Optionally add a note → Save"
+          ]
+        },
+        {
+          "q": "Is the dose increase shown in the calendar?",
+          "a": [
+            "Yes! From when an increase applies:",
+            "• Orange 📈 in the day panel shows “Stage X active”",
+            "• The displayed dose is already the increased total (base + increase)",
+            "• The increase icon appears in the calendar legend"
+          ]
+        },
+        {
+          "q": "What do the start options mean?",
+          "a": [
+            "• Fixed date – from which day the increase applies",
+            "• After X days – X days after cycle start",
+            "• After X weeks – equivalent days after cycle start"
+          ]
+        },
+        {
+          "q": "Can I have multiple steps?",
+          "a": "Yes, as many as you like. They are numbered #1, #2, #3. All active steps add together."
+        }
+      ]
+    },
+    {
+      "id": "tagebuch",
+      "title": "Journal",
+      "items": [
+        {
+          "q": "What is the journal?",
+          "a": "Here you document effects and side effects of your peptides. It helps you spot patterns—which effects occur when, how strong, and how long they last."
+        },
+        {
+          "q": "What is the difference between effect and side effect?",
+          "a": [
+            "✅ Effect (green) = desired outcome (sleep, healing, energy...)",
+            "⚠️ Side effect (orange) = unwanted outcome (pain, fatigue...)"
+          ]
+        },
+        {
+          "q": "What do the status options mean?",
+          "a": [
+            "🔘 Pending – not yet occurred",
+            "✅ Occurred – actively present",
+            "⏳ Still ongoing – continues",
+            "✅ Faded – over",
+            "Change status on the card directly without opening the form."
+          ]
+        },
+        {
+          "q": "What is the intensity scale (1–5)?",
+          "a": [
+            "1 = Barely noticeable · 2 = Mild · 3 = Moderate · 4 = Strong · 5 = Very strong"
+          ]
+        },
+        {
+          "q": "How do I filter and search the journal?",
+          "a": [
+            "• Tabs: All / Effects / Side effects",
+            "• Search: filters by description and peptide name",
+            "• Sort: date (new/old), intensity (high/low)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bewertungen",
+      "title": "Reviews",
+      "items": [
+        {
+          "q": "What are reviews?",
+          "a": "Personal experience reports for individual peptides. With stars (1–5), overall experience (good/medium/bad), pros and cons, and a detailed write-up."
+        },
+        {
+          "q": "How do I create a review?",
+          "a": [
+            "1. In “Reviews” tap “+ New”",
+            "2. Pick peptide → assign stars → pick experience",
+            "3. Enter title (required) → optional report, pros, cons",
+            "4. Save"
+          ]
+        },
+        {
+          "q": "How do I search and sort reviews?",
+          "a": [
+            "• Search: title and peptide name",
+            "• Sort: newest / oldest / rating high / rating low"
+          ]
+        },
+        {
+          "q": "Can I share reviews on my profile?",
+          "a": "Yes. In “Profile” turn on the “Reviews” switch—they then appear on your public profile link."
+        }
+      ]
+    },
+    {
+      "id": "profil",
+      "title": "Profile & sharing",
+      "items": [
+        {
+          "q": "What can I enter in my profile?",
+          "a": [
+            "• Username (for the share link) – required",
+            "• Display name, age, sex, weight, height",
+            "• Personal notes (only for you)",
+            "• Public bio (shown on the shared profile)"
+          ]
+        },
+        {
+          "q": "How do I enable the public profile?",
+          "a": [
+            "1. Enter username and save profile",
+            "2. Turn on the main “Share profile” switch",
+            "3. Enable individual areas (Peptides / Calendar / Journal / Reviews)",
+            "4. Save → link appears and can be copied"
+          ]
+        },
+        {
+          "q": "Which content can I share?",
+          "a": [
+            "Each area has its own switch:",
+            "🧪 Peptides · 📅 Calendar & cycles · 📖 Journal · ⭐ Reviews",
+            "You can e.g. share only reviews and keep everything else private."
+          ]
+        },
+        {
+          "q": "Can I turn off sharing anytime?",
+          "a": "Yes. Turn main “Share profile” off → save. The link immediately shows “This profile is private”."
+        }
+      ]
+    },
+    {
+      "id": "erinnerung",
+      "title": "Reminders & snooze",
+      "items": [
+        {
+          "q": "How do I set up reminders?",
+          "a": [
+            "1. Create or edit a cycle",
+            "2. Set intake time (morning/noon/evening/custom)",
+            "3. Under “Reminder” pick one or more options (multi-select)",
+            "4. Save → app asks for notification permission"
+          ]
+        },
+        {
+          "q": "Can I pick multiple reminder times?",
+          "a": "Yes. You can e.g. enable “1 day before” and “At intake” at the same time. Checkmarks show which are active."
+        },
+        {
+          "q": "What is the difference between reminder and snooze?",
+          "a": [
+            "Reminder (in cycle) = planned notification before intake",
+            "Snooze (in calendar) = follow-up reminder after you mark a dose “Not taken” (15 min / 30 min / 1 h / 2 h)"
+          ]
+        },
+        {
+          "q": "Why am I not getting reminders?",
+          "a": [
+            "• Notification permission denied → enable in phone settings",
+            "• App was not open at reminder time",
+            "• Reminder time for today has already passed",
+            "• Cycle is “Inactive”"
+          ]
+        },
+        {
+          "q": "Do reminders work when the app is closed?",
+          "a": "Not currently. Notifications are browser-based and need an open app (tab or PWA). Background delivery would need a push service."
+        }
+      ]
+    },
+    {
+      "id": "technik",
+      "title": "Technical & privacy",
+      "items": [
+        {
+          "q": "Why do I see “Error saving”?",
+          "a": [
+            "• No internet connection",
+            "• Required fields missing",
+            "• Session expired → sign out and back in",
+            "• PDF upload: storage bucket not set up yet → run SQL in Supabase"
+          ]
+        },
+        {
+          "q": "Why can’t I upload a PDF?",
+          "a": [
+            "The “batch-files” storage bucket must be set up once in Supabase:",
+            "1. supabase.com → your project → SQL Editor → new tab",
+            "2. Paste and run the SQL from “supabase-inventory.sql”",
+            "Uploads work immediately afterward."
+          ]
+        },
+        {
+          "q": "What happens to my data when I sign out?",
+          "a": "Your data stays on the server. After the next login all entries are still there."
+        },
+        {
+          "q": "Is data deleted if I uninstall the app?",
+          "a": "No. Data lives on the server (Supabase)—independent of the device. Just sign in again on any device."
+        },
+        {
+          "q": "Is the app suitable for medical use?",
+          "a": "No. For research and documentation only. Not a substitute for medical advice. Always consult a doctor."
+        },
+        {
+          "q": "Can I use the app on a tablet or second device?",
+          "a": [
+            "Yes. Because everything is in the cloud, the app works on any number of devices:",
+            "1. Open the same URL in the browser",
+            "2. Sign in with the same account",
+            "3. All data is available immediately",
+            "For code access (development): clone the repository on GitHub."
+          ]
+        }
+      ]
+    }
+  ]
+}

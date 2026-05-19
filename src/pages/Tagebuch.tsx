@@ -36,6 +36,21 @@ const DURATION_KEYS = [
   'tag_1', 'tage_2', 'woche_1', 'noch_anhaltend',
 ]
 
+// Rück-Mapping: ältere DB-Werte auf deutschen Strings → Übersetzungs-Keys
+const DURATION_DE_TO_KEY: Record<string, string> = {
+  '15 Min': 'min_15', '30 Min': 'min_30',
+  '1 Std': 'std_1', '2 Std': 'std_2', '4 Std': 'std_4',
+  '8 Std': 'std_8', '12 Std': 'std_12',
+  '1 Tag': 'tag_1', '2 Tage': 'tage_2', '1 Woche': 'woche_1',
+  'Noch anhaltend': 'noch_anhaltend', 'Individuell': 'individuell',
+  // English variants (stored if app was in EN)
+  '15 min': 'min_15', '30 min': 'min_30',
+  '1 hr': 'std_1', '2 hrs': 'std_2', '4 hrs': 'std_4',
+  '8 hrs': 'std_8', '12 hrs': 'std_12',
+  '1 day': 'tag_1', '2 days': 'tage_2', '1 week': 'woche_1',
+  'Still ongoing': 'noch_anhaltend', 'Custom': 'individuell',
+}
+
 export function Tagebuch() {
   const { user } = useAuth()
   const { t, i18n } = useTranslation()
@@ -197,7 +212,8 @@ export function Tagebuch() {
                   {e.peptides && <span className="text-sky-400">{e.peptides.name}</span>}
                   {e.duration && (
                     <span className="flex items-center gap-1">
-                      <Clock size={11} /> {e.duration}
+                      <Clock size={11} />
+                      {DURATION_DE_TO_KEY[e.duration] ? t(DURATION_DE_TO_KEY[e.duration]) : e.duration}
                     </span>
                   )}
                 </div>

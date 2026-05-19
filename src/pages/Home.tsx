@@ -94,7 +94,7 @@ export function Home() {
       </p>
 
       {/* ── Tiles Grid ── */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3" data-ob="home-tiles">
         {TILE_DEFS.map((tile) => (
           <button
             key={tile.labelKey}

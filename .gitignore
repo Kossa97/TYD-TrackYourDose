@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# FAQ translation script cache (regeneratable)
+src/i18n/faq/data/translation-cache.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

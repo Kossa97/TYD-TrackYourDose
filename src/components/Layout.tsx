@@ -2,6 +2,7 @@ import { CalendarDays, FlaskConical, Archive, User, Home, HelpCircle } from 'luc
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Onboarding } from './Onboarding'
+import { LanguageGate } from './LanguageGate'
 
 export function Layout() {
   const location = useLocation()
@@ -18,11 +19,12 @@ export function Layout() {
     <div className="flex flex-col min-h-dvh w-full overflow-x-hidden" style={{ maxWidth: '100vw' }}>
       <main
         className="flex-1 w-full overflow-x-hidden px-3 pt-4"
-        style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom))' }}
+        style={{ paddingBottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))' }}
       >
         <Outlet />
       </main>
 
+      <LanguageGate />
       <Onboarding />
 
       {/* FAQ Floating Button */}
@@ -30,7 +32,7 @@ export function Layout() {
         to="/faq"
         style={{
           position: 'fixed',
-          bottom: `calc(78px + env(safe-area-inset-bottom))`,
+          bottom: `calc(var(--bottom-nav-height) + 4px + env(safe-area-inset-bottom))`,
           right: 16,
           zIndex: 39,
           width: 38,
@@ -84,9 +86,12 @@ export function Layout() {
           />
 
           {/* Home — Mitte, hervorgehoben */}
-          <NavLink to="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+          <NavLink
+            to="/"
+            data-ob="nav-home"
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+          >
             <div
-              data-ob="nav-home"
               style={{
                 width: 56, height: 56,
                 borderRadius: 20,
@@ -149,8 +154,18 @@ function NavItem({
     <NavLink
       to={to}
       {...(obKey ? { 'data-ob': obKey } : {})}
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: '1 1 0', minWidth: 0 }}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '1 1 0', minWidth: 0 }}
     >
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 4,
+          padding: '2px 4px',
+          borderRadius: 14,
+        }}
+      >
       <div style={{
         padding: '5px 12px', borderRadius: 12,
         color: active ? '#00ccf5' : 'rgba(100,115,135,0.85)',
@@ -167,6 +182,7 @@ function NavItem({
       }}>
         {label}
       </span>
+      </div>
     </NavLink>
   )
 }

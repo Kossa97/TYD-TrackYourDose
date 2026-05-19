@@ -7,7 +7,7 @@
 
 **Ziel:** Eine vollständige, mobile-first Peptid-Tracking-App — Inventar, Rekonstitution, Zyklen, Kalender, Dosierungsrechner, Tagebuch, Bewertungen, Profil — international verfügbar in 14 Sprachen.
 
-**Aktueller Stand:** App ist funktionsfähig, vollständig und deployed auf Vercel. PWA-fähig (installierbar auf iPhone & Android). Internationalisierung (i18n) mit 14 Sprachen implementiert. Homescreen mit Kacheln und Quick-Stats. Interaktives Onboarding mit Highlight-Ring.
+**Aktueller Stand:** App ist funktionsfähig, vollständig und deployed auf Vercel. PWA-fähig (installierbar auf iPhone & Android). Internationalisierung (i18n) mit 14 Sprachen implementiert. Homescreen mit Kacheln und Quick-Stats. **Geführtes Onboarding** (21 Schritte): Sprach-Gate beim ersten Start, verankerte Tour-Karten neben Buttons/Feldern, Spotlight-Ring auf echten Eingabefeldern, Tour-Karte immer im Vordergrund (z-index 10050).
 
 **Deployment:**
 - **Vercel:** Automatisches Deployment bei jedem `git push` auf `main`
@@ -149,6 +149,12 @@ src/
 │
 ├── i18n/
 │   ├── index.ts               ← i18next-Konfiguration, LANGUAGES-Array, applyDirection()
+│   ├── faq/                   ← FAQ-Bundles: `getFaqBundle(lang)` (alle 14 Sprachen)
+│   │   ├── types.ts
+│   │   ├── index.ts
+│   │   └── locales/           ← de.ts, en.ts, de.categories.ts, en.categories.ts, …
+│   ├── data/
+│   │   └── onboarding-i18n.json  ← generierte Onboarding-Strings (12 Nicht-DE/EN-Locales)
 │   └── locales/
 │       ├── de.json            ← Deutsch (Basis-Sprache, ~160 Keys)
 │       ├── en.json            ← English
@@ -167,13 +173,19 @@ src/
 │
 ├── context/
 │   ├── AuthContext.tsx        ← Supabase Auth
-│   └── OnboardingContext.tsx  ← Onboarding-Schritte (localStorage: _ob_done)
+│   └── OnboardingContext.tsx  ← Tour-Status (localStorage: `_ob_done`, `tyd_lang_picked`)
 │
 ├── components/
-│   ├── Layout.tsx             ← 5-Item Bottom-Nav + FAQ Floating Button + Onboarding
+│   ├── Layout.tsx             ← 5-Item Bottom-Nav (`data-ob` auf Nav-Links) + FAQ + Onboarding
 │   ├── ProtectedRoute.tsx
 │   ├── NewDot.tsx             ← Pulsierender Punkt für neue Features
-│   └── Onboarding.tsx        ← 9-Schritte Onboarding mit Highlight-Ring + RestartButton
+│   ├── LanguageGate.tsx       ← Erststart: Sprache wählen (z-index 60, vor Tutorial)
+│   ├── Onboarding.tsx         ← Overlay: Scrim + verankerte Tour-Karte (Portal → body)
+│   ├── onboardingSteps.ts     ← 21 Schritte (Metadaten, Routen, Selektoren)
+│   ├── onboardingTarget.ts    ← Highlight-Rect auf Inputs/Buttons, Modal-Erkennung
+│   ├── onboardingPlacement.ts ← Position der Tour-Karte (Viewport, Tab-Bar)
+│   ├── onboardingLayers.ts    ← z-index-Stapel (Scrim 10000 … Panel 10050)
+│   └── OnboardingRestartButton
 │
 ├── pages/
 │   ├── Home.tsx               ← Homescreen: Quick-Stats + Kacheln für alle Bereiche
@@ -183,7 +195,7 @@ src/
 │   ├── Tagebuch.tsx           ← Wirkungen & Nebenwirkungen
 │   ├── Bewertungen.tsx        ← Sterne-Bewertungen
 │   ├── Profil.tsx             ← Profil + Sharing + Sprache + Onboarding-Restart
-│   ├── FAQ.tsx                ← Hilfe (Kategorien, Accordion)
+│   ├── FAQ.tsx                ← Hilfe: Inhalt aus `i18n/faq` je nach App-Sprache
 │   ├── PublicProfile.tsx      ← Öffentliches Profil (/u/username)
 │   └── Auth.tsx               ← Login / Registrierung
 │
@@ -196,6 +208,12 @@ src/
     ├── icon-192.png           ← PWA Icon (Peptid-Vial Design)
     ├── icon-512.png           ← PWA Icon groß
     └── favicon.svg
+
+scripts/
+├── merge-onboarding-i18n.mjs  ← `ob_step_*` aus onboarding-i18n-source → alle locales/*.json
+├── onboarding-i18n-source.mjs ← EN/DE Master-Texte für Onboarding
+├── export-faq-en.ts / generate-faq-locales.mjs
+└── generate-onboarding-i18n.mjs  ← optional (API); bei Fehler: merge-Skript nutzen
 ```
 
 ---
@@ -242,7 +260,9 @@ Profil → /profil
 
 ### Übersetzt
 - Navigation, Homescreen, Auth, Dashboard, Peptide/Lager, Rechner, Tagebuch, Bewertungen, Profil
-- FAQ-Inhalte: noch auf Deutsch (sehr umfangreich)
+- **FAQ** (`src/i18n/faq/`): vollständig in allen **14 Sprachen** (`*.categories.ts` + UI-Strings in `*.ts`)
+- **Onboarding & Sprach-Gate**: alle **14 Sprachen** (`lang_gate_*`, `ob_step_0`…`ob_step_20`, `ob_step_*_tap` in `locales/*.json`); beim ersten Start zuerst Sprachwahl (`tyd_lang_picked`), dann Tutorial (`_ob_done`)
+- Onboarding-Texte pflegen: `scripts/onboarding-i18n-source.mjs` → `npm run i18n:onboarding:merge`
 - Supabase-Fehlermeldungen: kommen vom Server auf Englisch
 
 ### Keys hinzufügen
@@ -281,13 +301,46 @@ const { t } = useTranslation()
    Grün = verfügbar · Amber = in Verwendung · Grau = leer
 ```
 
-### Onboarding (Onboarding.tsx)
-- Startet automatisch beim ersten Aufruf (`localStorage: _ob_done`)
-- 9 Schritte mit interaktivem Highlight-Ring (z-index 45, sichtbar über Nav)
-- Klick auf den markierten Button → nächster Schritt automatisch
-- Panel passt Größe und Position pro Schritt an (kompakt/groß, oben/unten)
-- Schritt 5 (Formular): Panel erscheint oben (Form belegt unteren Bereich)
-- Restart-Button in Profil-Seite
+### Onboarding (LanguageGate + Onboarding.tsx)
+
+**Ablauf beim ersten Start**
+1. `LanguageGate` — Sprache wählen → `tyd_lang_picked` + `tyd_lang` in localStorage  
+2. Willkommen (Schritt 0, zentriert) → Route `/`  
+3. Tour Schritte 1–19 → Finish (Schritt 20)
+
+**21 Schritte** (`onboardingSteps.ts`, Anzeige „Schritt 1–19“ ohne Welcome/Finish)
+
+| # | ID | Fokus | Route / Hinweis |
+|---|---|---|---|
+| 0 | welcome | — | `/` |
+| 1 | inv-nav | Bottom-Nav **Lager** | `/`, Klick auf Tab |
+| 2 | add-stock | **+ Einlagern** | `/peptide?tab=inventar` → Sheet öffnet → auto Weiter |
+| 3–5 | inv-name / amounts / batch | Felder im Inventar-Sheet | `advance: next` |
+| 6 | inv-save | **Einlagern** speichern | Klick |
+| 7 | create-peptide | Peptid anlegen | Klick |
+| 8–10 | pep-liquid / expiry / dose | Peptid-Formular | next |
+| 11 | pep-save | Peptid speichern | Klick |
+| 12 | pep-tab | Tab Meine Peptide | Klick |
+| 13–15 | Zyklus anlegen / Plan / speichern | | |
+| 16–17 | Kalender-Nav + Monatsansicht | `/kalender` | |
+| 18–19 | Home-Nav + Kacheln | `/` | |
+| 20 | finish | — | zentriert |
+
+**Technik**
+- **Tour-Karte** (`#ob-callout`): z-index **10050**, immer klickbar; verankert neben Ziel mit Pfeil (`onboardingPlacement.ts`)
+- **Scrim**: vier Paneelen um „Loch“ (`SpotlightScrim`), Ring auf **Inputs/Buttons** (`getOnboardingHighlightRect` in `onboardingTarget.ts`)
+- **Sheets** (`data-app-modal`): z-index 10040; Klicks im offenen Sheet erlaubt, Ring nicht auf Buttons hinter dem Sheet
+- **Bottom-Nav**: `data-ob` auf `<NavLink>` (nicht nur inneres Div); während Tour z-index 10030
+- **Restart** (Profil): `OnboardingRestartButton` setzt `_ob_done` zurück und `navigate('/')`
+
+**Onboarding zurücksetzen (Browser-Konsole)**
+```js
+localStorage.removeItem('_ob_done')
+localStorage.removeItem('tyd_lang_picked')
+location.reload()
+```
+
+**`data-ob` in Peptide.tsx** (Auszug): `nav-lager` (Layout), `btn-einlagern`, `inv-name`, `inv-amounts`, `inv-batch`, `btn-inv-save`, `btn-peptid-anlegen`, `pep-liquid`, `pep-expiry`, `pep-dose`, `btn-pep-save`, `tab-peptide`, `btn-zyklus-add`, `cycle-core`, `btn-cycle-save`; Kalender: `calendar-main`; Home: `home-tiles`
 
 ### PWA (vite.config.ts)
 ```
@@ -320,6 +373,10 @@ iPhone installieren: Safari → Teilen → „Zum Home-Bildschirm" → „Als We
 - `html, body, #root` haben `overflow-x: hidden` + `max-width: 100vw` → kein horizontales Scrollen
 - `min-h-dvh` statt `min-h-screen` (mobile Browser korrekt)
 - iOS Safe-Area: `padding-bottom: env(safe-area-inset-bottom)` in Nav + Main
+- **Onboarding** (`body.onboarding-active`): Stapel in `index.css` + `onboardingLayers.ts` — Scrim 10000, Modal 10040, Nav 10030, **`#ob-callout` 10050**; Ring-Animation **ohne** `transform: scale` (sonst versatz)
+
+### Onboarding-CSS-Klassen (index.css)
+`#ob-callout`, `.ob-callout-header`, `.ob-callout-main`, `.ob-callout-anchored`, `.ob-highlight-ring`, `.ob-scrim-pane`, `.ob-tap-cue`, `.ob-callout-actions`
 
 ---
 
@@ -328,7 +385,9 @@ iPhone installieren: Safari → Teilen → „Zum Home-Bildschirm" → „Als We
 | Thema | Detail |
 |---|---|
 | **Push-Notifications** | Nicht implementiert. Snooze nur via `setTimeout` (App muss offen sein) |
-| **FAQ-Übersetzung** | FAQ-Inhalte noch auf Deutsch — ~100 Strings, zu umfangreich |
+| **FAQ aktualisieren** | Englisch in `en.categories.ts` ändern → `npm run faq:export` → `npm run faq:generate` (oder `*.categories.ts` manuell pflegen) |
+| **Onboarding-Texte** | `scripts/onboarding-i18n-source.mjs` (EN/DE) bearbeiten → `npm run i18n:onboarding:merge` |
+| **generate-onboarding-i18n.mjs** | API-Übersetzung oft fehlerhaft unter Windows/PowerShell — Merge-Skript + manuelle `locales/*.json` bevorzugen |
 | **IU-Einheit** | IU wird identisch wie mcg berechnet — keine Umrechnung |
 | **useEffect-Deps** | Lint-Warnungen in mehreren Dateien, kein Crash |
 | **Offline** | Keine PWA-Offline-Unterstützung. App braucht Internet |
@@ -346,6 +405,12 @@ iPhone installieren: Safari → Teilen → „Zum Home-Bildschirm" → „Als We
 | App startet nicht | PowerShell Execution Policy | `Set-ExecutionPolicy Bypass -Scope Process` |
 | Vials falsch abgezogen | `savePeptide`-Logik | Kein Abzug bei Neuanlage |
 | Sprache zeigt Keys statt Text | i18n resources nicht in `{ translation: {} }` | `resources: { de: { translation: de } }` |
+| Onboarding schwarzer Bildschirm | Kaputtes SVG-Mask oder Scrim über allem | Vier-Panel-Scrim in `SpotlightScrim`; Panel z-index 10050 |
+| Tour-Karte nicht klickbar | Scrim oder falsche z-index | `#ob-callout` mit `pointer-events: auto`; siehe `onboardingLayers.ts` |
+| Ring neben Feld / Button | `data-ob` auf großem Wrapper | `getOnboardingHighlightRect` nutzt Union der `input`/`button` |
+| Stock-Tab im Tutorial tot | Klick-Blocker / Nav unter Scrim | `data-ob` auf `<NavLink>`; Nav z-index 10030 |
+| Restart bleibt auf Profil | Keine Navigation | `OnboardingRestartButton` → `navigate('/')` |
+| `<motion>` in TSX | Tippfehler beim Generieren | Immer `<div>` — Build mit `npx tsc -b` prüfen |
 
 ---
 
@@ -363,8 +428,14 @@ git push             # → Vercel deployed automatisch
 
 # Auf Tablet aktualisieren
 git pull && npm run dev
+
+# Onboarding-Strings in alle Locale-JSONs mergen
+npm run i18n:onboarding:merge
+
+# Typecheck
+npx tsc -b
 ```
 
 ---
 
-*Zuletzt aktualisiert: Mai 2026*
+*Zuletzt aktualisiert: 19. Mai 2026 (Onboarding-Überarbeitung: verankerte Prompts, z-index, Highlight auf Feldern)*
