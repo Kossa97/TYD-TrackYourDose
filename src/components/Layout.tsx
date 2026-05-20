@@ -1,4 +1,4 @@
-import { CalendarDays, FlaskConical, Archive, User, Home, HelpCircle, Microscope } from 'lucide-react'
+import { CalendarDays, FlaskConical, Archive, User, Home, HelpCircle } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Onboarding } from './Onboarding'
@@ -13,7 +13,6 @@ export function Layout() {
   const isPeptide  = pathname === '/peptide' && !search.includes('inventar')
   const isHome     = pathname === '/'
   const isKalender = pathname === '/kalender'
-  const isLab      = pathname === '/lab'
   const isProfil   = pathname === '/profil'
 
   return (
@@ -65,8 +64,8 @@ export function Layout() {
         }}
       >
         <div
-          className="grid items-end"
-          style={{ maxWidth: 680, margin: '0 auto', padding: '6px 4px 10px', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))' }}
+          className="flex items-end justify-around"
+          style={{ maxWidth: 640, margin: '0 auto', padding: '6px 4px 10px' }}
         >
           {/* Lager */}
           <NavItem
@@ -90,11 +89,11 @@ export function Layout() {
           <NavLink
             to="/"
             data-ob="nav-home"
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 0 }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
           >
             <div
               style={{
-                width: 52, height: 52,
+                width: 56, height: 56,
                 borderRadius: 20,
                 background: isHome
                   ? 'linear-gradient(135deg, #00ccf5, #0088dd)'
@@ -111,24 +110,14 @@ export function Layout() {
               <Home size={24} color={isHome ? '#07091a' : 'rgba(0,204,245,0.75)'} />
             </div>
             <span style={{
-              fontSize: '8.5px', fontWeight: 700,
+              fontSize: '9px', fontWeight: 700,
               color: isHome ? '#00ccf5' : 'rgba(154,170,191,0.45)',
               letterSpacing: '0.02em',
               transition: 'color 0.2s',
-              textAlign: 'center',
             }}>
               {t('nav_home')}
             </span>
           </NavLink>
-
-          {/* The Lab */}
-          <NavItem
-            to="/lab"
-            icon={<Microscope size={20} />}
-            label={t('nav_lab')}
-            active={isLab}
-            obKey="nav-lab"
-          />
 
           {/* Kalender */}
           <NavItem
@@ -165,7 +154,7 @@ function NavItem({
     <NavLink
       to={to}
       {...(obKey ? { 'data-ob': obKey } : {})}
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '1 1 0', minWidth: 0 }}
     >
       <div
         style={{
@@ -178,14 +167,14 @@ function NavItem({
         }}
       >
       <div style={{
-        padding: '5px 8px', borderRadius: 12,
+        padding: '5px 12px', borderRadius: 12,
         color: active ? '#00ccf5' : 'rgba(100,115,135,0.85)',
         transition: 'color 0.2s',
       }}>
         {icon}
       </div>
       <span style={{
-        fontSize: '8.5px', fontWeight: 600,
+        fontSize: '9px', fontWeight: 600,
         color: active ? '#00ccf5' : 'rgba(100,115,135,0.75)',
         letterSpacing: '0.02em',
         transition: 'color 0.2s',
