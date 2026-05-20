@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   CalendarDays, FlaskConical, Archive, Calculator,
   BookHeart, Star, HelpCircle, User, ChevronRight,
+  Microscope,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -29,6 +30,7 @@ const PEPTIDE_STUDIES = [
   { emoji: '🌿', title: 'Epithalon reduziert oxidativen Stress & verbessert Schlafqualität', source: 'Biogerontology · 2023' },
   { emoji: '🦴', title: 'BPC-157 fördert Knochenregeneration nach Fraktur – Tierstudie', source: 'Bone · 2024' },
 ]
+const TODAY_STUDY = PEPTIDE_STUDIES[Math.floor(Date.now() / 86_400_000) % PEPTIDE_STUDIES.length]
 
 const DATE_LOCALES: Record<string, Locale> = {
   de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
@@ -40,6 +42,7 @@ const TILE_DEFS = [
   { icon: FlaskConical, labelKey: 'tile_peptide',   descKey: 'tile_peptide_desc',  path: '/peptide',              color: '#22d3ee', bg: 'rgba(34,211,238,0.10)'         },
   { icon: FlaskConical, labelKey: 'tile_lab',       descKey: 'tile_lab_desc',      path: '/lab',                  color: '#a855f7', bg: 'rgba(168,85,247,0.10)'         },
   { icon: Calculator,   labelKey: 'tile_rechner',   descKey: 'tile_rechner_desc',  path: '/rechner',              color: '#3b82f6', bg: 'rgba(59,130,246,0.10)'         },
+  { icon: Microscope,   labelKey: 'tile_lab',       descKey: 'tile_lab_desc',      path: '/the-lab',              color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
   { icon: BookHeart,    labelKey: 'tile_tagebuch',  descKey: 'tile_tagebuch_desc', path: '/tagebuch',             color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },
   { icon: Star,         labelKey: 'tile_bewertungen',descKey:'tile_bewertungen_desc',path:'/bewertungen',          color: '#f59e0b', bg: 'rgba(245,158,11,0.10)'         },
   { icon: HelpCircle,   labelKey: 'tile_faq',       descKey: 'tile_faq_desc',      path: '/faq',                  color: '#10b981', bg: 'rgba(16,185,129,0.10)'         },
@@ -54,7 +57,7 @@ export function Home() {
   const [streak,      setStreak]      = useState(0)
 
   // Rotate study daily
-  const todayStudy = PEPTIDE_STUDIES[Math.floor(Date.now() / 86_400_000) % PEPTIDE_STUDIES.length]
+  const todayStudy = TODAY_STUDY
 
   useEffect(() => {
     if (!user) return

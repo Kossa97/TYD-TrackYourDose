@@ -14,6 +14,7 @@ import { Profil } from './pages/Profil'
 import { PublicProfile } from './pages/PublicProfile'
 import { FAQ } from './pages/FAQ'
 import { Rechner } from './pages/Rechner'
+import { TheLab } from './pages/TheLab'
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="kalender" element={<Dashboard />} />
             <Route path="peptide" element={<Peptide />} />
             <Route path="rechner" element={<Rechner />} />
+            <Route path="the-lab" element={<TheLab />} />
             <Route path="tagebuch" element={<Tagebuch />} />
             <Route path="bewertungen" element={<Bewertungen />} />
             <Route path="profil" element={<Profil />} />
