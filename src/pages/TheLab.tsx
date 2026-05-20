@@ -46,10 +46,9 @@ interface ESummaryResponse {
   result?: ESummaryResult
 }
 
-const CORS_PROXY_PREFIX = 'https://corsproxy.io/?'
+const PROXY = 'https://corsproxy.io/?'
 const EUTILS_BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils'
 const PUBMED_ARTICLE_BASE_URL = 'https://pubmed.ncbi.nlm.nih.gov'
-const PUBMED_MAX_RESULTS = 8
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -65,8 +64,8 @@ function getErrorMessage(error: unknown) {
   return 'Unexpected error while loading PubMed data.'
 }
 
-async function searchPubMedArticles(query: string, maxResults: number): Promise<PubMedArticle[]> {
-  const ids = await searchPubMedIds(query, maxResults)
+async function searchPubMedArticles(query: string): Promise<PubMedArticle[]> {
+  const ids = await searchPubMedIds(query)
 
   if (ids.length === 0) {
     return []
@@ -96,16 +95,10 @@ async function searchPubMedArticles(query: string, maxResults: number): Promise<
     .filter(article => Boolean(article.title))
 }
 
-async function searchPubMedIds(query: string, maxResults: number): Promise<string[]> {
-  const url = buildProxiedEutilsUrl('esearch.fcgi', {
-    db: 'pubmed',
-    term: query,
-    retmax: String(maxResults),
-    retmode: 'json',
-    sort: 'relevance',
-  })
+async function searchPubMedIds(query: string): Promise<string[]> {
+  const searchUrl = `${PROXY}https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmax=6&sort=date&retmode=json`
 
-  const data = await fetchJson<ESearchResponse>(url)
+  const data = await fetchJson<ESearchResponse>(searchUrl)
 
   return data.esearchresult?.idlist ?? []
 }
@@ -196,7 +189,7 @@ function buildProxiedEutilsUrl(path: string, params: Record<string, string>): st
     url.searchParams.set(key, value)
   }
 
-  return `${CORS_PROXY_PREFIX}${url.toString()}`
+  return `${PROXY}${url.toString()}`
 }
 
 function extractAuthorNames(summary?: ESummaryArticle): string[] {
@@ -235,7 +228,7 @@ export function TheLab() {
     setExpanded(new Set())
 
     try {
-      const articles = await searchPubMedArticles(searchQuery, PUBMED_MAX_RESULTS)
+      const articles = await searchPubMedArticles(searchQuery)
       setResults(articles)
     } catch (error) {
       console.error('PubMed search failed', error)
