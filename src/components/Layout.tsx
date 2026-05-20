@@ -1,4 +1,4 @@
-import { CalendarDays, FlaskConical, Archive, User, Home, HelpCircle, Microscope } from 'lucide-react'
+import { CalendarDays, FlaskConical, Archive, User, Home, HelpCircle } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Onboarding } from './Onboarding'
@@ -13,7 +13,6 @@ export function Layout() {
   const isPeptide  = pathname === '/peptide' && !search.includes('inventar')
   const isHome     = pathname === '/'
   const isKalender = pathname === '/kalender'
-  const isLab      = pathname === '/lab'
   const isProfil   = pathname === '/profil'
 
   return (
@@ -66,7 +65,7 @@ export function Layout() {
       >
         <div
           className="grid items-end"
-          style={{ maxWidth: 680, margin: '0 auto', padding: '6px 4px 10px', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))' }}
+          style={{ maxWidth: 680, margin: '0 auto', padding: '6px 4px 10px', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }}
         >
           {/* Lager */}
           <NavItem
@@ -120,15 +119,6 @@ export function Layout() {
               {t('nav_home')}
             </span>
           </NavLink>
-
-          {/* The Lab */}
-          <NavItem
-            to="/lab"
-            icon={<Microscope size={20} />}
-            label={t('nav_lab')}
-            active={isLab}
-            obKey="nav-lab"
-          />
 
           {/* Kalender */}
           <NavItem
