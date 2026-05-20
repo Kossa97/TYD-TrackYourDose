@@ -34,6 +34,7 @@ export default function App() {
             <Route index element={<Home />} />
             <Route path="kalender" element={<Dashboard />} />
             <Route path="peptide" element={<Peptide />} />
+            <Route path="lab" element={<TheLab />} />
             <Route path="rechner" element={<Rechner />} />
             <Route path="the-lab" element={<TheLab />} />
             <Route path="tagebuch" element={<Tagebuch />} />
