@@ -17,6 +17,8 @@
   "tile_lager_desc": "Rohstoff-Inventar",
   "tile_peptide": "Peptide",
   "tile_peptide_desc": "Meine Peptide & Zyklen",
+  "tile_lab": "The Lab",
+  "tile_lab_desc": "Forschungs-Tools",
   "tile_rechner": "Rechner",
   "tile_rechner_desc": "Dosis berechnen",
   "tile_tagebuch": "Tagebuch",

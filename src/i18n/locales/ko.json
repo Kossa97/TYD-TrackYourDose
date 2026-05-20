@@ -17,6 +17,8 @@
   "tile_lager_desc": "원료 재고 관리",
   "tile_peptide": "펩타이드",
   "tile_peptide_desc": "내 펩타이드 & 사이클",
+  "tile_lab": "The Lab",
+  "tile_lab_desc": "연구 도구",
   "tile_rechner": "계산기",
   "tile_rechner_desc": "용량 계산",
   "tile_tagebuch": "일지",

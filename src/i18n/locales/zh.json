@@ -17,6 +17,8 @@
   "tile_lager_desc": "原料库存管理",
   "tile_peptide": "肽类",
   "tile_peptide_desc": "我的肽类 & 周期",
+  "tile_lab": "The Lab",
+  "tile_lab_desc": "研究工具",
   "tile_rechner": "计算器",
   "tile_rechner_desc": "计算剂量",
   "tile_tagebuch": "日志",

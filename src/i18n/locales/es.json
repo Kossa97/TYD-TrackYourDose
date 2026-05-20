@@ -17,6 +17,8 @@
   "tile_lager_desc": "Inventario de materias primas",
   "tile_peptide": "Péptidos",
   "tile_peptide_desc": "Mis péptidos & ciclos",
+  "tile_lab": "The Lab",
+  "tile_lab_desc": "Herramientas de investigación",
   "tile_rechner": "Calculadora",
   "tile_rechner_desc": "Calcular dosis",
   "tile_tagebuch": "Diario",

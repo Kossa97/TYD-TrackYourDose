@@ -17,6 +17,8 @@
   "tile_lager_desc": "Инвентарь сырья",
   "tile_peptide": "Пептиды",
   "tile_peptide_desc": "Мои пептиды & циклы",
+  "tile_lab": "The Lab",
+  "tile_lab_desc": "Инструменты исследования",
   "tile_rechner": "Калькулятор",
   "tile_rechner_desc": "Рассчитать дозу",
   "tile_tagebuch": "Журнал",

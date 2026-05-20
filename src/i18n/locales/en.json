@@ -17,6 +17,8 @@
   "tile_lager_desc": "Raw material inventory",
   "tile_peptide": "Peptides",
   "tile_peptide_desc": "My peptides & cycles",
+  "tile_lab": "The Lab",
+  "tile_lab_desc": "Research tools",
   "tile_rechner": "Calculator",
   "tile_rechner_desc": "Calculate dose",
   "tile_tagebuch": "Journal",
