@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import { AlertTriangle, BookOpen, ExternalLink, FlaskConical, Loader2, Search } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -72,8 +73,9 @@ export function TheLab() {
   }
 
   useEffect(() => {
+    // This initial network sync intentionally surfaces deployment/config errors on first render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void searchPubMed(DEFAULT_QUERY)
-    // Run once on mount so function/config errors are visible immediately.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
