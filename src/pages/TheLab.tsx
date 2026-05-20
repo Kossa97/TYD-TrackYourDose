@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
@@ -23,8 +23,6 @@ const QUICK_FILTERS = [
   { value: 'Selank', labelKey: 'lab_filter_selank' },
   { value: 'Epithalon', labelKey: 'lab_filter_epithalon' },
 ]
-
-const DEFAULT_QUERY = 'BPC-157 peptide'
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -108,8 +106,8 @@ function normalizeResults(data: unknown) {
 
 export function TheLab() {
   const { t } = useTranslation()
-  const [query, setQuery] = useState(DEFAULT_QUERY)
-  const [lastQuery, setLastQuery] = useState(DEFAULT_QUERY)
+  const [query, setQuery] = useState('')
+  const [lastQuery, setLastQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('')
   const [results, setResults] = useState<PubMedArticle[]>([])
   const [loading, setLoading] = useState(false)
@@ -117,14 +115,12 @@ export function TheLab() {
   const [hasSearched, setHasSearched] = useState(false)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
-  const trimmedQuery = query.trim()
-
   const emptyStateText = useMemo(() => {
     if (!hasSearched) return t('lab_empty_initial')
     return t('lab_no_results', { query: lastQuery })
   }, [hasSearched, lastQuery, t])
 
-  const runSearch = async (nextQuery = trimmedQuery) => {
+  const runSearch = async (nextQuery = query) => {
     const searchQuery = nextQuery.trim()
     if (!searchQuery) {
       toast.error(t('lab_query_required'))
@@ -155,6 +151,7 @@ export function TheLab() {
 
       setResults(normalizeResults(data))
     } catch (error) {
+      console.error('PubMed search failed', error)
       setErrorMessage(getErrorMessage(error))
       toast.error(t('lab_search_failed'))
       setResults([])
@@ -162,13 +159,6 @@ export function TheLab() {
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    // Surface PubMed function deployment/configuration errors immediately.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void runSearch(DEFAULT_QUERY)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
