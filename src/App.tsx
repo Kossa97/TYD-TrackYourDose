@@ -14,6 +14,7 @@ import { Profil } from './pages/Profil'
 import { PublicProfile } from './pages/PublicProfile'
 import { FAQ } from './pages/FAQ'
 import { Rechner } from './pages/Rechner'
+import { TheLab } from './pages/TheLab'
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
             <Route index element={<Home />} />
             <Route path="kalender" element={<Dashboard />} />
             <Route path="peptide" element={<Peptide />} />
+            <Route path="lab" element={<TheLab />} />
             <Route path="rechner" element={<Rechner />} />
             <Route path="tagebuch" element={<Tagebuch />} />
             <Route path="bewertungen" element={<Bewertungen />} />
