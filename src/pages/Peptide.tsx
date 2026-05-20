@@ -222,43 +222,170 @@ function VialStockDisplay({ current, initial, inUse = 0 }: {
   )
 }
 
-// ─── Vial-Visualisierung ─────────────────────────────────────────────────────
-function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: string }) {
+// ─── Shared liquid-tilt engine (spring physics, one rAF loop) ────────────────
+// Singleton: all VialDisplay instances share one deviceorientation listener
+// and one spring simulation loop → no jank, no duplicate handlers.
+let _targetGamma = 0
+let _smoothGamma = 0
+let _velocity    = 0
+let _rafId: number | null = null
+const _tiltSubs  = new Set<(g: number) => void>()
+let _listenerInit = false
+
+function _springLoop() {
+  const stiffness = 0.09
+  const damping   = 0.78
+  _velocity    = _velocity * damping + (_targetGamma - _smoothGamma) * stiffness
+  _smoothGamma += _velocity
+  _tiltSubs.forEach(fn => fn(_smoothGamma))
+  if (Math.abs(_velocity) > 0.04 || Math.abs(_targetGamma - _smoothGamma) > 0.08) {
+    _rafId = requestAnimationFrame(_springLoop)
+  } else {
+    _smoothGamma = _targetGamma
+    _tiltSubs.forEach(fn => fn(_smoothGamma))
+    _rafId = null
+  }
+}
+function _kick() { if (_rafId === null) _rafId = requestAnimationFrame(_springLoop) }
+
+function _initTilt() {
+  if (_listenerInit) return
+  _listenerInit = true
+  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+  if (!isTouch) {
+    // Desktop: mouse-x as tilt proxy
+    window.addEventListener('mousemove', (e: MouseEvent) => {
+      _targetGamma = ((e.clientX / window.innerWidth) - 0.5) * 60
+      _kick()
+    }, { passive: true })
+    return
+  }
+  // Mobile: request iOS 13+ permission if needed
+  const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> }
+  const attach = () =>
+    window.addEventListener('deviceorientation', (e: DeviceOrientationEvent) => {
+      _targetGamma = Math.max(-70, Math.min(70, e.gamma ?? 0))
+      _kick()
+    }, { passive: true })
+
+  if (typeof DOE.requestPermission === 'function') {
+    DOE.requestPermission().then(p => { if (p === 'granted') attach() }).catch(() => {})
+  } else {
+    attach()
+  }
+}
+
+function useLiquidTilt(): number {
   const [tilt, setTilt] = useState(0)
   useEffect(() => {
-    const handle = (e: DeviceOrientationEvent) => {
-      setTilt(Math.max(-45, Math.min(45, e.gamma ?? 0)))
-    }
-    window.addEventListener('deviceorientation', handle)
-    return () => window.removeEventListener('deviceorientation', handle)
+    _tiltSubs.add(setTilt)
+    _initTilt()
+    return () => { _tiltSubs.delete(setTilt) }
   }, [])
-  const W = 32, H = 70
-  const fillH   = Math.max(3, Math.round((pct / 100) * H))
-  const liquidY = H - fillH
-  const waveH   = 6
-  const ww      = W * 2
-  const wavePath = `M0,${waveH/2} C${ww*.25},0 ${ww*.25},${waveH} ${ww*.5},${waveH/2} C${ww*.75},0 ${ww*.75},${waveH} ${ww},${waveH/2} L${ww},${waveH} L0,${waveH} Z`
-  const clipId  = `vc${uid}`
+  return tilt
+}
+
+// ─── Vial-Visualisierung ─────────────────────────────────────────────────────
+function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: string }) {
+  const tilt = useLiquidTilt()   // smooth spring-damped device tilt in degrees
+
+  // Geometry
+  const OX = 4, OY = 13          // glass body top-left inside SVG canvas
+  const W  = 32, H = 70          // glass body inner dimensions
+  const fillH = Math.max(4, (pct / 100) * H)
+
+  // Surface shift: how many px the liquid level changes from center to edge
+  // Uses arctan physics: at 45° tilt the shift = W/2 = 16 px max
+  const angleRad  = (Math.min(70, Math.abs(tilt)) * Math.PI) / 180
+  const rawShift  = Math.tan(angleRad) * (W / 2)
+  const direction = tilt >= 0 ? 1 : -1
+  // Clamp so we don't exceed the available fill height
+  const shift     = direction * Math.min(rawShift, fillH * 0.88)
+
+  // Liquid surface Y coordinates inside glass (0 = top of glass, H = bottom)
+  const centerTop = H - fillH
+  const leftTop   = Math.max(0, Math.min(H - 2, centerTop - shift))   // left edge y
+  const rightTop  = Math.max(0, Math.min(H - 2, centerTop + shift))   // right edge y
+
+  // Absolute SVG coords
+  const aLeftTop  = OY + leftTop
+  const aRightTop = OY + rightTop
+
+  // Surface angle for wave rotation
+  const surfaceDeg = Math.atan2(rightTop - leftTop, W) * (180 / Math.PI)
+
+  // Wave path (two periods for seamless looping)
+  const wW = W * 2, wH = 4.5
+  const wp = `M0,${wH/2} C${wW*.25},0 ${wW*.25},${wH} ${wW*.5},${wH/2} C${wW*.75},0 ${wW*.75},${wH} ${wW},${wH/2} L${wW},${wH} L0,${wH} Z`
+  const waveSpeed = 2.0 + Math.abs(tilt) * 0.03  // faster wave when tilted more
+  const clipId    = `vc${uid}`
+  const waveId    = `wv${uid}`
+  const gradId    = `lg${uid}`
+
   return (
-    <div className="shrink-0 select-none"
-      style={{ transform: `rotate(${tilt * 0.38}deg)`, transition: 'transform 0.1s ease-out' }}>
-      <svg width={W + 8} height={H + 22} viewBox={`0 0 ${W + 8} ${H + 22}`}>
+    <div className="shrink-0 select-none">
+      <svg width={W + 8} height={H + 22} viewBox={`0 0 ${W + 8} ${H + 22}`}
+        shapeRendering="geometricPrecision">
         <defs>
-          <clipPath id={clipId}><rect x="4" y="13" width={W} height={H} rx="5"/></clipPath>
-          <style>{`@keyframes wv${uid}{from{transform:translateX(0)}to{transform:translateX(-50%)}}`}</style>
+          <clipPath id={clipId}>
+            <rect x={OX} y={OY} width={W} height={H} rx="5"/>
+          </clipPath>
+          <linearGradient id={gradId} x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%"   stopColor={color} stopOpacity="0.85"/>
+            <stop offset="100%" stopColor={color} stopOpacity="0.35"/>
+          </linearGradient>
+          <style>{`
+            @keyframes ${waveId} {
+              from { transform: translateX(0) }
+              to   { transform: translateX(-50%) }
+            }
+          `}</style>
         </defs>
-        <rect x="12" y="1" width={W - 16} height="8" rx="2.5" fill="#64748b"/>
-        <rect x="7"  y="7" width={W - 6}  height="7" rx="2"   fill="#475569"/>
-        <rect x="4" y="13" width={W} height={H} rx="5" fill="#0f172a" stroke="#1e293b" strokeWidth="2"/>
+
+        {/* Cap */}
+        <rect x="12" y="1"  width={W - 16} height="8" rx="2.5" fill="#64748b"/>
+        <rect x="7"  y="7"  width={W - 6}  height="7" rx="2"   fill="#475569"/>
+        {/* Cap shine */}
+        <rect x="8"  y="2"  width={W - 20} height="3" rx="1.5" fill="rgba(255,255,255,0.18)"/>
+
+        {/* Glass body */}
+        <rect x={OX} y={OY} width={W} height={H} rx="5"
+          fill="#0a1222" stroke="#1e293b" strokeWidth="2"/>
+
+        {/* ── Liquid (all clipped to glass shape) ── */}
         <g clipPath={`url(#${clipId})`}>
-          <rect x="4" y={13 + liquidY + waveH * 0.6} width={W} height={fillH} fill={color} opacity="0.25"/>
-          <g transform={`translate(4, ${13 + liquidY})`}>
-            <path d={wavePath} fill={color} opacity="0.55"
-              style={{ animation: `wv${uid} 2.6s linear infinite` }}/>
+
+          {/* Bulk liquid fill (below surface) */}
+          <polygon
+            points={`${OX},${OY+H} ${OX+W},${OY+H} ${OX+W},${aRightTop} ${OX},${aLeftTop}`}
+            fill={`url(#${gradId})`}/>
+
+          {/* Surface band (brighter strip right at the top surface) */}
+          <polygon
+            points={`${OX},${aLeftTop} ${OX+W},${aRightTop} ${OX+W},${aRightTop+5} ${OX},${aLeftTop+5}`}
+            fill={color} fillOpacity="0.55"/>
+
+          {/* Wave — rotated to follow surface angle, scrolling */}
+          <g style={{
+            transform: `translate(${OX}px, ${Math.min(aLeftTop, aRightTop) - wH + 1}px) rotate(${surfaceDeg}deg)`,
+            transformOrigin: `${OX}px ${Math.min(aLeftTop, aRightTop)}px`,
+          }}>
+            <path d={wp} fill={color} fillOpacity="0.65"
+              style={{ animation: `${waveId} ${waveSpeed}s linear infinite` }}/>
           </g>
+
+          {/* Inner liquid shine (left side reflection) */}
+          <rect x={OX+1} y={aLeftTop} width="5" height={H - leftTop} rx="2.5"
+            fill="rgba(255,255,255,0.12)"/>
         </g>
-        <rect x="4" y="13" width={W} height={H} rx="5" fill="none" stroke="#334155" strokeWidth="1.5"/>
-        <rect x="8" y="16" width="3" height={H - 8} rx="1.5" fill="white" opacity="0.06"/>
+
+        {/* Glass rim overlay */}
+        <rect x={OX} y={OY} width={W} height={H} rx="5"
+          fill="none" stroke="#2d3f5e" strokeWidth="1.5"/>
+        {/* Glass left-edge highlight */}
+        <rect x={OX+1} y={OY+3} width="3" height={H - 8} rx="1.5"
+          fill="rgba(255,255,255,0.07)"/>
       </svg>
     </div>
   )
