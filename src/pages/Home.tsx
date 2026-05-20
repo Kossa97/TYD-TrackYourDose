@@ -30,6 +30,7 @@ const PEPTIDE_STUDIES = [
   { emoji: '🌿', title: 'Epithalon reduziert oxidativen Stress & verbessert Schlafqualität', source: 'Biogerontology · 2023' },
   { emoji: '🦴', title: 'BPC-157 fördert Knochenregeneration nach Fraktur – Tierstudie', source: 'Bone · 2024' },
 ]
+const TODAY_STUDY = PEPTIDE_STUDIES[Math.floor(Date.now() / 86_400_000) % PEPTIDE_STUDIES.length]
 
 const DATE_LOCALES: Record<string, Locale> = {
   de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
@@ -55,7 +56,7 @@ export function Home() {
   const [streak,      setStreak]      = useState(0)
 
   // Rotate study daily
-  const todayStudy = PEPTIDE_STUDIES[Math.floor(Date.now() / 86_400_000) % PEPTIDE_STUDIES.length]
+  const todayStudy = TODAY_STUDY
 
   useEffect(() => {
     if (!user) return
