@@ -3,7 +3,6 @@ import type { FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { AlertTriangle, BookOpen, ChevronDown, ChevronUp, ExternalLink, FlaskConical, Loader2, Search } from 'lucide-react'
-import { supabase } from '../lib/supabase'
 
 interface PubMedArticle {
   id: string
@@ -24,6 +23,34 @@ const QUICK_FILTERS = [
   { value: 'Epithalon', labelKey: 'lab_filter_epithalon' },
 ]
 
+interface ESearchResponse {
+  esearchresult?: {
+    idlist?: string[]
+  }
+}
+
+interface ESummaryArticle {
+  uid?: string
+  title?: string
+  authors?: Array<{ name?: string }>
+  fulljournalname?: string
+  source?: string
+  pubdate?: string
+}
+
+type ESummaryResult = {
+  uids?: string[]
+} & Record<string, ESummaryArticle | string[] | undefined>
+
+interface ESummaryResponse {
+  result?: ESummaryResult
+}
+
+const CORS_PROXY_PREFIX = 'https://corsproxy.io/?'
+const EUTILS_BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils'
+const PUBMED_ARTICLE_BASE_URL = 'https://pubmed.ncbi.nlm.nih.gov'
+const PUBMED_MAX_RESULTS = 8
+
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
     const context = 'context' in error ? (error as { context?: unknown }).context : null
@@ -38,70 +65,144 @@ function getErrorMessage(error: unknown) {
   return 'Unexpected error while loading PubMed data.'
 }
 
-function pickString(record: Record<string, unknown>, keys: string[]) {
-  for (const key of keys) {
-    const value = record[key]
-    if (typeof value === 'string' && value.trim()) return value.trim()
-    if (typeof value === 'number') return String(value)
+async function searchPubMedArticles(query: string, maxResults: number): Promise<PubMedArticle[]> {
+  const ids = await searchPubMedIds(query, maxResults)
+
+  if (ids.length === 0) {
+    return []
   }
-  return ''
+
+  const [summaries, abstracts] = await Promise.all([
+    fetchPubMedSummaries(ids),
+    fetchPubMedAbstracts(ids),
+  ])
+
+  return ids
+    .map(uid => {
+      const summary = summaries.get(uid)
+      const journal = summary?.fulljournalname ?? summary?.source ?? ''
+      const pubmedUrl = `${PUBMED_ARTICLE_BASE_URL}/${uid}/`
+
+      return {
+        id: uid,
+        title: summary?.title ?? '',
+        authors: extractAuthorNames(summary),
+        journal,
+        pubdate: summary?.pubdate ?? '',
+        abstract: abstracts.get(uid) ?? '',
+        link: pubmedUrl,
+      }
+    })
+    .filter(article => Boolean(article.title))
 }
 
-function normalizeAuthors(value: unknown) {
-  if (Array.isArray(value)) {
-    return value
-      .map(author => {
-        if (typeof author === 'string') return author.trim()
-        if (author && typeof author === 'object') {
-          const record = author as Record<string, unknown>
-          return pickString(record, ['name', 'fullName', 'full_name', 'lastname', 'lastName'])
+async function searchPubMedIds(query: string, maxResults: number): Promise<string[]> {
+  const url = buildProxiedEutilsUrl('esearch.fcgi', {
+    db: 'pubmed',
+    term: query,
+    retmax: String(maxResults),
+    retmode: 'json',
+    sort: 'relevance',
+  })
+
+  const data = await fetchJson<ESearchResponse>(url)
+
+  return data.esearchresult?.idlist ?? []
+}
+
+async function fetchPubMedSummaries(ids: string[]): Promise<Map<string, ESummaryArticle>> {
+  const url = buildProxiedEutilsUrl('esummary.fcgi', {
+    db: 'pubmed',
+    id: ids.join(','),
+    retmode: 'json',
+  })
+
+  const data = await fetchJson<ESummaryResponse>(url)
+  const summaries = new Map<string, ESummaryArticle>()
+
+  for (const id of ids) {
+    const summary = data.result?.[id]
+
+    if (summary && !Array.isArray(summary)) {
+      summaries.set(id, summary)
+    }
+  }
+
+  return summaries
+}
+
+async function fetchPubMedAbstracts(ids: string[]): Promise<Map<string, string>> {
+  const url = buildProxiedEutilsUrl('efetch.fcgi', {
+    db: 'pubmed',
+    id: ids.join(','),
+    retmode: 'xml',
+  })
+
+  const response = await fetch(url, {
+    headers: { Accept: 'application/xml' },
+  })
+
+  if (!response.ok) {
+    throw new Error(`PubMed efetch request failed with status ${response.status}`)
+  }
+
+  const xml = await response.text()
+  const document = new DOMParser().parseFromString(xml, 'application/xml')
+  const abstracts = new Map<string, string>()
+
+  for (const article of document.querySelectorAll('PubmedArticle')) {
+    const uid = article.querySelector('PMID')?.textContent?.trim()
+
+    if (!uid) {
+      continue
+    }
+
+    const abstractParts = Array.from(article.querySelectorAll('AbstractText'))
+      .map(node => {
+        const text = node.textContent?.replace(/\s+/g, ' ').trim()
+
+        if (!text) {
+          return ''
         }
-        return ''
+
+        const label = node.getAttribute('Label')?.trim()
+
+        return label ? `${label}: ${text}` : text
       })
       .filter(Boolean)
+
+    abstracts.set(uid, abstractParts.join('\n\n'))
   }
-  if (typeof value === 'string') {
-    return value.split(/,\s*|;\s*/).map(author => author.trim()).filter(Boolean)
-  }
-  return []
+
+  return abstracts
 }
 
-function normalizeArticle(item: unknown, index: number): PubMedArticle | null {
-  if (!item || typeof item !== 'object') return null
+async function fetchJson<T>(url: string): Promise<T> {
+  const response = await fetch(url, {
+    headers: { Accept: 'application/json' },
+  })
 
-  const record = item as Record<string, unknown>
-  const pmid = pickString(record, ['pmid', 'id', 'uid', 'pubmedId', 'pubmed_id'])
-  const title = pickString(record, ['title', 'articleTitle', 'article_title', 'name'])
-  const link = pickString(record, ['link', 'url', 'pubmedUrl', 'pubmed_url'])
-  const abstract = pickString(record, ['abstract', 'abstractText', 'abstract_text', 'summary'])
-
-  return {
-    id: pmid || `${title}-${index}`,
-    title,
-    authors: normalizeAuthors(record.authors ?? record.authorList ?? record.author_list),
-    journal: pickString(record, ['journal', 'source', 'journalTitle', 'journal_title', 'fulljournalname']),
-    pubdate: pickString(record, ['pubdate', 'pubDate', 'publicationDate', 'publication_date', 'date']),
-    abstract,
-    link: link || (pmid ? `https://pubmed.ncbi.nlm.nih.gov/${pmid}/` : ''),
+  if (!response.ok) {
+    throw new Error(`PubMed request failed with status ${response.status}`)
   }
+
+  return await response.json() as T
 }
 
-function normalizeResults(data: unknown) {
-  const rawResults = Array.isArray(data)
-    ? data
-    : data && typeof data === 'object'
-      ? (
-        (data as Record<string, unknown>).results ??
-        (data as Record<string, unknown>).articles ??
-        (data as Record<string, unknown>).items ??
-        []
-      )
-      : []
+function buildProxiedEutilsUrl(path: string, params: Record<string, string>): string {
+  const url = new URL(`${EUTILS_BASE_URL}/${path}`)
 
-  if (!Array.isArray(rawResults)) return []
-  return rawResults
-    .map((item, index) => normalizeArticle(item, index))
-    .filter((article): article is PubMedArticle => Boolean(article?.title))
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, value)
+  }
+
+  return `${CORS_PROXY_PREFIX}${url.toString()}`
+}
+
+function extractAuthorNames(summary?: ESummaryArticle): string[] {
+  return summary?.authors
+    ?.map(author => author.name?.trim() ?? '')
+    .filter(Boolean) ?? []
 }
 
 export function TheLab() {
@@ -134,22 +235,8 @@ export function TheLab() {
     setExpanded(new Set())
 
     try {
-      const { data, error } = await supabase.functions.invoke('pubmed', {
-        body: { query: searchQuery, maxResults: 8 },
-      })
-
-      if (error) {
-        throw error
-      }
-
-      if (data && typeof data === 'object') {
-        const responseError = (data as Record<string, unknown>).error
-        if (typeof responseError === 'string' && responseError.trim()) {
-          throw new Error(responseError)
-        }
-      }
-
-      setResults(normalizeResults(data))
+      const articles = await searchPubMedArticles(searchQuery, PUBMED_MAX_RESULTS)
+      setResults(articles)
     } catch (error) {
       console.error('PubMed search failed', error)
       setErrorMessage(getErrorMessage(error))
