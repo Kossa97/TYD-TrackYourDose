@@ -117,18 +117,24 @@ export function TheLab() {
     setHasSearched(true)
     setExpanded(new Set())
 
-    const { data, error } = await supabase.functions.invoke('pubmed', {
-      body: { query: searchQuery },
-    })
+    try {
+      const { data, error } = await supabase.functions.invoke('pubmed', {
+        body: { query: searchQuery },
+      })
 
-    if (error) {
+      if (error) {
+        toast.error(t('lab_search_failed'))
+        setResults([])
+        return
+      }
+
+      setResults(normalizeResults(data))
+    } catch {
       toast.error(t('lab_search_failed'))
       setResults([])
-    } else {
-      setResults(normalizeResults(data))
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
