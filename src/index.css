@@ -423,6 +423,30 @@ body.onboarding-active [data-ob-active] {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   INJECTION TRACKER
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes it-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes it-slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes it-toast-in {
+  from { transform: translateX(-50%) translateY(16px); opacity: 0; }
+  to   { transform: translateX(-50%) translateY(0);   opacity: 1; }
+}
+@keyframes it-zone-pulse {
+  0%, 100% { transform: scale(1);    opacity: 0.50; }
+  50%       { transform: scale(1.22); opacity: 0.18; }
+}
+@keyframes it-dot-breathe {
+  0%, 100% { opacity: 0.9; }
+  50%       { opacity: 0.5; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    DESIGN TOKENS
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
