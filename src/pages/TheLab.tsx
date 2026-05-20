@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { BookOpen, ChevronDown, ChevronUp, ExternalLink, FlaskConical, Search } from 'lucide-react'
+import { AlertTriangle, BookOpen, ChevronDown, ChevronUp, ExternalLink, FlaskConical, Loader2, Search } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 interface PubMedArticle {
@@ -23,6 +23,22 @@ const QUICK_FILTERS = [
   { value: 'Selank', labelKey: 'lab_filter_selank' },
   { value: 'Epithalon', labelKey: 'lab_filter_epithalon' },
 ]
+
+const DEFAULT_QUERY = 'BPC-157 peptide'
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    const context = 'context' in error ? (error as { context?: unknown }).context : null
+    if (context instanceof Response) {
+      return `${error.message} (${context.status} ${context.statusText})`
+    }
+    return error.message
+  }
+
+  if (typeof error === 'string') return error
+
+  return 'Unexpected error while loading PubMed data.'
+}
 
 function pickString(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
@@ -92,10 +108,12 @@ function normalizeResults(data: unknown) {
 
 export function TheLab() {
   const { t } = useTranslation()
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(DEFAULT_QUERY)
+  const [lastQuery, setLastQuery] = useState(DEFAULT_QUERY)
   const [activeFilter, setActiveFilter] = useState('')
   const [results, setResults] = useState<PubMedArticle[]>([])
   const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
@@ -103,8 +121,8 @@ export function TheLab() {
 
   const emptyStateText = useMemo(() => {
     if (!hasSearched) return t('lab_empty_initial')
-    return t('lab_no_results', { query: trimmedQuery })
-  }, [hasSearched, t, trimmedQuery])
+    return t('lab_no_results', { query: lastQuery })
+  }, [hasSearched, lastQuery, t])
 
   const runSearch = async (nextQuery = trimmedQuery) => {
     const searchQuery = nextQuery.trim()
@@ -114,22 +132,30 @@ export function TheLab() {
     }
 
     setLoading(true)
+    setErrorMessage(null)
     setHasSearched(true)
+    setLastQuery(searchQuery)
     setExpanded(new Set())
 
     try {
       const { data, error } = await supabase.functions.invoke('pubmed', {
-        body: { query: searchQuery },
+        body: { query: searchQuery, maxResults: 8 },
       })
 
       if (error) {
-        toast.error(t('lab_search_failed'))
-        setResults([])
-        return
+        throw error
+      }
+
+      if (data && typeof data === 'object') {
+        const responseError = (data as Record<string, unknown>).error
+        if (typeof responseError === 'string' && responseError.trim()) {
+          throw new Error(responseError)
+        }
       }
 
       setResults(normalizeResults(data))
-    } catch {
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error))
       toast.error(t('lab_search_failed'))
       setResults([])
     } finally {
@@ -137,16 +163,23 @@ export function TheLab() {
     }
   }
 
+  useEffect(() => {
+    // Surface PubMed function deployment/configuration errors immediately.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void runSearch(DEFAULT_QUERY)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setActiveFilter('')
-    runSearch()
+    void runSearch()
   }
 
   const handleQuickFilter = (value: string) => {
     setQuery(value)
     setActiveFilter(value)
-    runSearch(value)
+    void runSearch(value)
   }
 
   const toggleExpanded = (id: string) => {
@@ -185,6 +218,7 @@ export function TheLab() {
               className="input pl-9 text-sm"
               placeholder={t('lab_search_placeholder')}
               value={query}
+              disabled={loading}
               onChange={event => {
                 setQuery(event.target.value)
                 setActiveFilter('')
@@ -215,19 +249,41 @@ export function TheLab() {
 
       {loading && (
         <div className="card text-center py-10 text-slate-500">
-          <FlaskConical size={32} className="mx-auto mb-3 text-sky-400/60 animate-pulse" />
+          <Loader2 size={32} className="mx-auto mb-3 text-sky-400/60 animate-spin" />
           <p className="text-sm">{t('lab_loading_results')}</p>
         </div>
       )}
 
-      {!loading && results.length === 0 && (
+      {!loading && errorMessage && (
+        <div
+          className="card border border-red-500/30 bg-red-950/30"
+          role="alert"
+        >
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={22} className="mt-0.5 shrink-0 text-red-400" />
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-red-100">{t('lab_search_failed')}</p>
+              <p className="mt-1 break-words text-sm text-red-100/75">{errorMessage}</p>
+              <button
+                type="button"
+                className="btn-secondary mt-4 text-sm"
+                onClick={() => void runSearch(lastQuery)}
+              >
+                {t('lab_search_button')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!loading && !errorMessage && results.length === 0 && (
         <div className="card text-center py-10 text-slate-500">
           <BookOpen size={32} className="mx-auto mb-2 opacity-40" />
           <p className="text-sm">{emptyStateText}</p>
         </div>
       )}
 
-      {!loading && results.length > 0 && (
+      {!loading && !errorMessage && results.length > 0 && (
         <div className="space-y-4">
           {results.map(article => {
             const isExpanded = expanded.has(article.id)

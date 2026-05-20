@@ -2,12 +2,21 @@
 
 type PubMedArticle = {
   uid: string;
+  id: string;
   title: string;
   authors: string[];
   journal: string;
+  source: string;
   pubdate: string;
   abstract: string;
+  link: string;
+  url: string;
   pubmedUrl: string;
+};
+
+type PubMedSearchRequest = {
+  query?: string;
+  maxResults?: number;
 };
 
 type ESearchResponse = {
@@ -43,7 +52,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-Deno.serve(async (request) => {
+Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -53,17 +62,18 @@ Deno.serve(async (request) => {
   }
 
   try {
-    const body = await request.json().catch(() => null);
+    const body = (await request.json().catch(() => ({}))) as PubMedSearchRequest;
     const query = typeof body?.query === "string" ? body.query.trim() : "";
+    const maxResults = getMaxResults(body.maxResults);
 
     if (!query) {
       return jsonResponse({ error: "A non-empty query string is required" }, 400);
     }
 
-    const ids = await searchPubMedIds(query);
+    const ids = await searchPubMedIds(query, maxResults);
 
     if (ids.length === 0) {
-      return jsonResponse([]);
+      return jsonResponse({ query, results: [] });
     }
 
     const [summaries, abstracts] = await Promise.all([
@@ -73,19 +83,25 @@ Deno.serve(async (request) => {
 
     const articles = ids.map((uid) => {
       const summary = summaries.get(uid);
+      const journal = summary?.fulljournalname ?? summary?.source ?? "";
+      const pubmedUrl = `${PUBMED_ARTICLE_BASE_URL}/${uid}/`;
 
       return {
         uid,
+        id: uid,
         title: summary?.title ?? "",
         authors: extractAuthorNames(summary),
-        journal: summary?.fulljournalname ?? summary?.source ?? "",
+        journal,
+        source: journal,
         pubdate: summary?.pubdate ?? "",
         abstract: abstracts.get(uid) ?? "",
-        pubmedUrl: `${PUBMED_ARTICLE_BASE_URL}/${uid}/`,
+        link: pubmedUrl,
+        url: pubmedUrl,
+        pubmedUrl,
       } satisfies PubMedArticle;
     });
 
-    return jsonResponse(articles);
+    return jsonResponse({ query, results: articles });
   } catch (error) {
     console.error("PubMed function error:", error);
 
@@ -106,13 +122,18 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
-async function searchPubMedIds(query: string): Promise<string[]> {
+function getMaxResults(value: number | undefined): number {
+  if (!Number.isFinite(value)) return 8;
+  return Math.max(1, Math.min(Math.trunc(value), 20));
+}
+
+async function searchPubMedIds(query: string, maxResults: number): Promise<string[]> {
   const url = buildEutilsUrl("esearch.fcgi", {
     db: "pubmed",
     term: query,
-    retmax: "6",
+    retmax: String(maxResults),
     retmode: "json",
-    sort: "pub date",
+    sort: "relevance",
   });
 
   const data = await fetchJson<ESearchResponse>(url);
