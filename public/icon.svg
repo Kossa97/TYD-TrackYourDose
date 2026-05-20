@@ -1,184 +1,123 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
 <defs>
-  <!-- Hintergrund-Gradient -->
-  <radialGradient id="bgr" cx="50%" cy="40%" r="65%">
-    <stop offset="0%" stop-color="#0e1633"/>
-    <stop offset="100%" stop-color="#040610"/>
+
+  <!-- Background -->
+  <linearGradient id="bgG" x1="0.2" y1="0" x2="0.8" y2="1">
+    <stop offset="0%"   stop-color="#0d1526"/>
+    <stop offset="100%" stop-color="#060c17"/>
+  </linearGradient>
+
+  <!-- Silver cap -->
+  <linearGradient id="capG" x1="0.15" y1="0" x2="0.85" y2="1">
+    <stop offset="0%"   stop-color="#edf0f5"/>
+    <stop offset="38%"  stop-color="#cdd3de"/>
+    <stop offset="72%"  stop-color="#adb5c6"/>
+    <stop offset="100%" stop-color="#8e96a8"/>
+  </linearGradient>
+  <linearGradient id="capShine" x1="0.1" y1="0" x2="0.9" y2="0.6">
+    <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.40"/>
+    <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+  </linearGradient>
+
+  <!-- Glass body -->
+  <linearGradient id="glassG" x1="0" y1="0.5" x2="1" y2="0.5">
+    <stop offset="0%"   stop-color="#1a2c52"/>
+    <stop offset="18%"  stop-color="#0c1830"/>
+    <stop offset="82%"  stop-color="#0c1830"/>
+    <stop offset="100%" stop-color="#1a2c52"/>
+  </linearGradient>
+
+  <!-- Cyan liquid -->
+  <linearGradient id="liqG" x1="0.15" y1="0" x2="0.85" y2="1">
+    <stop offset="0%"   stop-color="#00e8ff"/>
+    <stop offset="42%"  stop-color="#00b8f5"/>
+    <stop offset="100%" stop-color="#0074d9"/>
+  </linearGradient>
+  <linearGradient id="liqShineG" x1="0.1" y1="0" x2="0.7" y2="0.55">
+    <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.38"/>
+    <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+  </linearGradient>
+
+  <!-- Glass left-edge reflection -->
+  <linearGradient id="reflL" x1="0" y1="0.5" x2="1" y2="0.5">
+    <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.18"/>
+    <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+  </linearGradient>
+  <!-- Glass right-edge subtle highlight -->
+  <linearGradient id="reflR" x1="0" y1="0.5" x2="1" y2="0.5">
+    <stop offset="0%"   stop-color="#ffffff" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#ffffff" stop-opacity="0.09"/>
+  </linearGradient>
+
+  <!-- Ambient glow behind vial -->
+  <radialGradient id="ambientG" cx="50%" cy="60%" r="38%">
+    <stop offset="0%"   stop-color="#0055bb" stop-opacity="0.28"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
   </radialGradient>
 
-  <!-- Vignette -->
-  <radialGradient id="vig" cx="50%" cy="50%" r="70%">
-    <stop offset="35%" stop-color="transparent"/>
-    <stop offset="100%" stop-color="#00000f" stop-opacity="0.88"/>
-  </radialGradient>
-
-  <!-- Buchstaben-Gradient (kalt-metallisch) -->
-  <linearGradient id="ltg" x1="0%" y1="0%" x2="0%" y2="100%">
-    <stop offset="0%"   stop-color="#f0f4ff"/>
-    <stop offset="45%"  stop-color="#cdd8f2"/>
-    <stop offset="100%" stop-color="#8098c4"/>
-  </linearGradient>
-
-  <!-- Kolben-Strich-Gradient (Cyan) -->
-  <linearGradient id="fsg" x1="0%" y1="0%" x2="0%" y2="100%">
-    <stop offset="0%"   stop-color="#60eeff"/>
-    <stop offset="55%"  stop-color="#00ccf5"/>
-    <stop offset="100%" stop-color="#007aaa"/>
-  </linearGradient>
-
-  <!-- Flüssigkeit im Kolben-Kopf -->
-  <linearGradient id="liq" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="0%"   stop-color="#00ccf5" stop-opacity="0.05"/>
-    <stop offset="25%"  stop-color="#40eeff" stop-opacity="0.75"/>
-    <stop offset="50%"  stop-color="#aaffff" stop-opacity="1.0"/>
-    <stop offset="75%"  stop-color="#40eeff" stop-opacity="0.75"/>
-    <stop offset="100%" stop-color="#00ccf5" stop-opacity="0.05"/>
-  </linearGradient>
-
-  <!-- Innere Kolben-Füllung -->
-  <linearGradient id="ifg" x1="0%" y1="0%" x2="0%" y2="100%">
-    <stop offset="0%"   stop-color="#010d1a"/>
-    <stop offset="100%" stop-color="#000810"/>
-  </linearGradient>
-
-  <!-- Hintergrund-Glow-Blur -->
-  <filter id="bokeh" x="-60%" y="-60%" width="220%" height="220%">
-    <feGaussianBlur stdDeviation="28"/>
+  <!-- Drop shadow -->
+  <filter id="vialShad" x="-20%" y="-10%" width="140%" height="130%">
+    <feDropShadow dx="0" dy="14" stdDeviation="24"
+      flood-color="#000000" flood-opacity="0.65"/>
   </filter>
 
-  <!-- Cyan-Leuchten für Kolben-Outline -->
-  <filter id="cglow" x="-25%" y="-25%" width="150%" height="150%">
-    <feGaussianBlur in="SourceGraphic" stdDeviation="4.5" result="blur"/>
-    <feColorMatrix in="blur" type="matrix"
-      values="0 0 0 0 0   0 0.85 0 0 0.85   0 0 0 0 1   0 0 0 0.75 0" result="cyan"/>
-    <feMerge>
-      <feMergeNode in="cyan"/>
-      <feMergeNode in="SourceGraphic"/>
-    </feMerge>
+  <!-- Soft glow on liquid -->
+  <filter id="liqGlow" x="-8%" y="-8%" width="116%" height="116%">
+    <feGaussianBlur stdDeviation="5" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
   </filter>
 
-  <!-- Feines Text-Leuchten -->
-  <filter id="tglow" x="-8%" y="-8%" width="116%" height="116%">
-    <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
-    <feColorMatrix in="blur" type="matrix"
-      values="0.3 0 0 0 0.2   0.4 0 0 0 0.3   0.8 0 0 0 0.55   0 0 0 0.45 0" result="tg"/>
-    <feMerge>
-      <feMergeNode in="tg"/>
-      <feMergeNode in="SourceGraphic"/>
-    </feMerge>
-  </filter>
+  <!-- Clip liquid to glass interior -->
+  <clipPath id="bodyClip">
+    <rect x="162" y="178" width="188" height="258" rx="16" ry="16"/>
+  </clipPath>
 
-  <!-- Molekül-Partikel-Glow -->
-  <filter id="mglow" x="-60%" y="-60%" width="220%" height="220%">
-    <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
-    <feColorMatrix in="blur" type="matrix"
-      values="0 0 0 0 0   0 0.9 0 0 0.9   0 0 0 0 1   0 0 0 1 0" result="c"/>
-    <feMerge>
-      <feMergeNode in="c"/>
-      <feMergeNode in="SourceGraphic"/>
-    </feMerge>
-  </filter>
 </defs>
 
-<!-- ═══ HINTERGRUND ═══ -->
-<rect width="512" height="512" fill="#07091a"/>
-<rect width="512" height="512" fill="url(#bgr)"/>
+<!-- Background rounded square -->
+<rect width="512" height="512" rx="112" ry="112" fill="url(#bgG)"/>
+<rect width="512" height="512" rx="112" ry="112" fill="url(#ambientG)"/>
 
-<!-- Ambiente Lichtquellen (weit entfernt, unscharf) -->
-<ellipse cx="256" cy="190" rx="110" ry="70" fill="#00ccf5" opacity="0.038" filter="url(#bokeh)"/>
-<ellipse cx="150" cy="370" rx="70"  ry="50" fill="#0044aa" opacity="0.055" filter="url(#bokeh)"/>
-<ellipse cx="370" cy="365" rx="70"  ry="50" fill="#0044aa" opacity="0.055" filter="url(#bokeh)"/>
+<!-- VIAL -->
+<g filter="url(#vialShad)">
 
-<!-- Vignette -->
-<rect width="512" height="512" fill="url(#vig)"/>
+  <!-- Glass body — white outline -->
+  <rect x="155" y="173" width="202" height="268" rx="22" ry="22"
+        fill="rgba(255,255,255,0.55)"/>
+  <!-- Glass body — dark fill -->
+  <rect x="162" y="178" width="188" height="258" rx="16" ry="16"
+        fill="url(#glassG)"/>
 
-<!-- ═══ BUCHSTABE T ═══ -->
-<!-- Querstrich -->
-<rect x="108" y="160" width="88" height="22" rx="4" fill="url(#ltg)" filter="url(#tglow)"/>
-<!-- Schaft -->
-<rect x="143" y="160" width="18" height="192" rx="4" fill="url(#ltg)" filter="url(#tglow)"/>
+  <!-- Cyan liquid (clipped to glass) -->
+  <g clip-path="url(#bodyClip)" filter="url(#liqGlow)">
+    <rect x="162" y="275" width="188" height="161" fill="url(#liqG)"/>
+    <rect x="162" y="275" width="188" height="50"  fill="url(#liqShineG)"/>
+    <ellipse cx="256" cy="277" rx="84" ry="8" fill="rgba(255,255,255,0.26)"/>
+  </g>
 
-<!-- ═══ ERLENMEYERKOLBEN als Y (Mittelstück) ═══ -->
-<!--
-  Umgekehrter Kolben = Y-Form:
-  • Breite Kappe oben  (212–300, y=158–172)  = der "Kopf"
-  • Konischer Körper   (nach unten verjüngend)
-  • Schmaler Hals unten (247–265, y=270–352) = der "Stiel"
--->
+  <!-- Glass reflections over liquid -->
+  <rect x="162" y="178" width="26" height="258" rx="13" ry="13" fill="url(#reflL)"/>
+  <rect x="324" y="178" width="26" height="258" rx="13" ry="13" fill="url(#reflR)"/>
 
-<!-- Ambientes Leuchten hinter dem Kolben -->
-<path d="M 212 158 H 300 V 172 L 265 270 V 352 H 247 V 270 L 212 172 Z"
-      fill="#00ccf5" opacity="0.07" filter="url(#bokeh)"/>
+  <!-- Neck — white outline -->
+  <rect x="180" y="147" width="152" height="34" rx="7" ry="7"
+        fill="rgba(255,255,255,0.55)"/>
+  <!-- Neck — glass fill -->
+  <rect x="186" y="151" width="140" height="28" rx="5" ry="5"
+        fill="url(#glassG)"/>
 
-<!-- Innere Kolben-Füllung (Glasdunkel) -->
-<path d="M 215 161 H 297 V 174 L 263 269 V 350 H 249 V 269 L 215 174 Z"
-      fill="url(#ifg)"/>
+  <!-- Cap — white outline -->
+  <rect x="150" y="108" width="212" height="54" rx="18" ry="18"
+        fill="rgba(255,255,255,0.70)"/>
+  <!-- Cap — silver fill -->
+  <rect x="155" y="111" width="202" height="50" rx="15" ry="15"
+        fill="url(#capG)"/>
+  <!-- Cap top shine -->
+  <ellipse cx="256" cy="115" rx="90" ry="11" fill="url(#capShine)"/>
+  <!-- Cap bottom separator -->
+  <rect x="150" y="149" width="212" height="13" rx="4" ry="4"
+        fill="rgba(0,0,0,0.16)"/>
 
-<!-- Flüssigkeit im Kolben-Kopf (leuchtendes Teal oben) -->
-<rect x="219" y="161" width="74" height="10" rx="2.5" fill="url(#liq)"/>
-
-<!-- Glas-Reflektion links im Konus -->
-<path d="M 219 175 L 250 262 V 275 L 219 188 Z"
-      fill="white" opacity="0.055"/>
-
-<!-- Feine Reflektion rechts -->
-<path d="M 293 175 Q 278 218 270 250"
-      fill="none" stroke="white" stroke-width="1.2" opacity="0.04" stroke-linecap="round"/>
-
-<!-- Molekül-Cluster im Konus -->
-<g filter="url(#mglow)">
-  <circle cx="256" cy="210" r="3"   fill="#00ccf5" opacity="0.72"/>
-  <circle cx="242" cy="228" r="2.2" fill="#00aad4" opacity="0.62"/>
-  <circle cx="270" cy="225" r="2.4" fill="#00ddff" opacity="0.68"/>
-  <circle cx="255" cy="243" r="1.8" fill="#00eeff" opacity="0.55"/>
-  <line x1="256" y1="210" x2="242" y2="228" stroke="#00bbdd" stroke-width="1"   opacity="0.45"/>
-  <line x1="256" y1="210" x2="270" y2="225" stroke="#00bbdd" stroke-width="1"   opacity="0.45"/>
-  <line x1="242" y1="228" x2="255" y2="243" stroke="#00aabb" stroke-width="0.8" opacity="0.32"/>
-  <line x1="270" y1="225" x2="255" y2="243" stroke="#00aabb" stroke-width="0.8" opacity="0.32"/>
 </g>
-
-<!-- Kleine Blasen im Hals -->
-<circle cx="256" cy="298" r="2"   fill="#00ccf5" opacity="0.38"/>
-<circle cx="253" cy="318" r="1.3" fill="#00eeff" opacity="0.28"/>
-<circle cx="259" cy="334" r="1.6" fill="#00ccf5" opacity="0.32"/>
-
-<!-- Kolben-Outline (mit Cyan-Leuchten) -->
-<path d="M 212 158 H 300 V 172 L 265 270 V 352 H 247 V 270 L 212 172 Z"
-      fill="none"
-      stroke="url(#fsg)"
-      stroke-width="2.6"
-      stroke-linejoin="round"
-      filter="url(#cglow)"/>
-
-<!-- Kolben-Kappe oben: abgerundete Ecken durch extra Rect-Outline -->
-<rect x="212" y="158" width="88" height="14" rx="4"
-      fill="none" stroke="url(#fsg)" stroke-width="2.6" filter="url(#cglow)"/>
-
-<!-- Helle Oberkante der Kappe (Licht-Highlight) -->
-<line x1="217" y1="159.5" x2="295" y2="159.5"
-      stroke="rgba(255,255,255,0.22)" stroke-width="1.2" stroke-linecap="round"/>
-
-<!-- ═══ BUCHSTABE D ═══ -->
-<!--
-  Linker Balken: x=316–334, Höhe voll
-  Rechte Kurve: Halbellipse rx=70 ry=96 → Außen bis x=404
-  Innere Aussparung: rx=52 ry=78 → bis x=386
--->
-<g fill-rule="evenodd" fill="url(#ltg)" filter="url(#tglow)">
-  <path d="
-    M 316 160 H 334
-    A 70 96 0 0 1 334 352
-    H 316 Z
-    M 334 178
-    A 52 78 0 0 1 334 334
-    Z
-  "/>
-</g>
-
-<!-- ═══ LICHT-AKZENTE ═══ -->
-<!-- Subtiler Lichtfleck oben mittig -->
-<ellipse cx="256" cy="138" rx="38" ry="10" fill="white" opacity="0.022" filter="url(#bokeh)"/>
-<!-- Sehr feiner horizontaler Licht-Schimmer -->
-<rect x="60" y="253" width="392" height="1" fill="rgba(0,204,245,0.025)" rx="0.5"/>
 
 </svg>
