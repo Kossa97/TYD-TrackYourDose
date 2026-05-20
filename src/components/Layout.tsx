@@ -64,8 +64,8 @@ export function Layout() {
         }}
       >
         <div
-          className="flex items-end justify-around"
-          style={{ maxWidth: 640, margin: '0 auto', padding: '6px 4px 10px' }}
+          className="grid items-end"
+          style={{ maxWidth: 680, margin: '0 auto', padding: '6px 4px 10px', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }}
         >
           {/* Lager */}
           <NavItem
@@ -89,11 +89,11 @@ export function Layout() {
           <NavLink
             to="/"
             data-ob="nav-home"
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 0 }}
           >
             <div
               style={{
-                width: 56, height: 56,
+                width: 52, height: 52,
                 borderRadius: 20,
                 background: isHome
                   ? 'linear-gradient(135deg, #00ccf5, #0088dd)'
@@ -110,10 +110,11 @@ export function Layout() {
               <Home size={24} color={isHome ? '#07091a' : 'rgba(0,204,245,0.75)'} />
             </div>
             <span style={{
-              fontSize: '9px', fontWeight: 700,
+              fontSize: '8.5px', fontWeight: 700,
               color: isHome ? '#00ccf5' : 'rgba(154,170,191,0.45)',
               letterSpacing: '0.02em',
               transition: 'color 0.2s',
+              textAlign: 'center',
             }}>
               {t('nav_home')}
             </span>
@@ -154,7 +155,7 @@ function NavItem({
     <NavLink
       to={to}
       {...(obKey ? { 'data-ob': obKey } : {})}
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '1 1 0', minWidth: 0 }}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }}
     >
       <div
         style={{
@@ -167,14 +168,14 @@ function NavItem({
         }}
       >
       <div style={{
-        padding: '5px 12px', borderRadius: 12,
+        padding: '5px 8px', borderRadius: 12,
         color: active ? '#00ccf5' : 'rgba(100,115,135,0.85)',
         transition: 'color 0.2s',
       }}>
         {icon}
       </div>
       <span style={{
-        fontSize: '9px', fontWeight: 600,
+        fontSize: '8.5px', fontWeight: 600,
         color: active ? '#00ccf5' : 'rgba(100,115,135,0.75)',
         letterSpacing: '0.02em',
         transition: 'color 0.2s',
