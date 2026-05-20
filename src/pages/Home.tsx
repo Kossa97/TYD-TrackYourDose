@@ -74,7 +74,7 @@ export function Home() {
       for (const c of cycleData ?? []) {
         const slots   = (c.intake_time ?? '').split(',').filter(Boolean)
         const customs = (c.intake_time_custom ?? '').split(',')
-        slots.forEach((slot, i) => {
+        slots.forEach((slot: string, i: number) => {
           const t = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
           if (!t) return
           const [h, m] = t.split(':').map(Number)
