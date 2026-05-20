@@ -46,7 +46,7 @@ interface ESummaryResponse {
   result?: ESummaryResult
 }
 
-const PROXY = 'https://corsproxy.io/?'
+const PROXY = 'https://api.allorigins.win/raw?url='
 const EUTILS_BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils'
 const PUBMED_ARTICLE_BASE_URL = 'https://pubmed.ncbi.nlm.nih.gov'
 
@@ -96,7 +96,13 @@ async function searchPubMedArticles(query: string): Promise<PubMedArticle[]> {
 }
 
 async function searchPubMedIds(query: string): Promise<string[]> {
-  const searchUrl = `${PROXY}https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(query)}&retmax=6&sort=date&retmode=json`
+  const searchUrl = buildProxiedEutilsUrl('esearch.fcgi', {
+    db: 'pubmed',
+    term: query,
+    retmax: '6',
+    sort: 'date',
+    retmode: 'json',
+  })
 
   const data = await fetchJson<ESearchResponse>(searchUrl)
 
@@ -189,7 +195,7 @@ function buildProxiedEutilsUrl(path: string, params: Record<string, string>): st
     url.searchParams.set(key, value)
   }
 
-  return `${PROXY}${url.toString()}`
+  return `${PROXY}${encodeURIComponent(url.toString())}`
 }
 
 function extractAuthorNames(summary?: ESummaryArticle): string[] {
