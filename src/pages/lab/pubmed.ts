@@ -136,6 +136,9 @@ async function fetchAbstracts(ids: string[]): Promise<Map<string, string>> {
   if (!response.ok) throw new Error(`PubMed efetch failed: ${response.status}`)
   const xml = await response.text()
   const doc = new DOMParser().parseFromString(xml, 'application/xml')
+  if (doc.querySelector('parsererror')) {
+    throw new Error('PubMed efetch returned invalid XML')
+  }
   const abstracts = new Map<string, string>()
   for (const article of doc.querySelectorAll('PubmedArticle')) {
     const uid = article.querySelector('PMID')?.textContent?.trim()
@@ -158,7 +161,7 @@ async function fetchAbstracts(ids: string[]): Promise<Map<string, string>> {
 export async function searchPubMedArticles(
   query: string,
   retmax = 6,
-  sort = 'date',
+  sort: SortMode = 'date',
 ): Promise<PubMedArticle[]> {
   const ids = await fetchIds(query, retmax, sort)
   if (ids.length === 0) return []
