@@ -103,13 +103,23 @@ export const CHART_PEPTIDES: Array<{ name: string; query: string; color: string 
 
 // ── Internal fetch primitives ──────────────────────────────────────────────────
 
+// Optional NCBI API key — create .env.local with VITE_NCBI_API_KEY=your_key
+// Free key at: https://www.ncbi.nlm.nih.gov/account/ (raises limit 3→10 req/sec)
+const NCBI_API_KEY = import.meta.env.VITE_NCBI_API_KEY as string | undefined
+
 function buildEutilsUrl(path: string, params: Record<string, string>): string {
-  const searchParams = new URLSearchParams(params)
+  const allParams = NCBI_API_KEY ? { ...params, api_key: NCBI_API_KEY } : params
+  const searchParams = new URLSearchParams(allParams)
   return `${EUTILS_BASE_URL}/${path}?${searchParams.toString()}`
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
+async function fetchJson<T>(url: string, attempt = 1): Promise<T> {
   const response = await fetch(url, { headers: { Accept: 'application/json' } })
+  if (response.status === 429 && attempt < 3) {
+    // Rate limited — wait, then retry (up to 2 retries)
+    await new Promise(resolve => setTimeout(resolve, attempt * 1000))
+    return fetchJson<T>(url, attempt + 1)
+  }
   if (!response.ok) throw new Error(`PubMed request failed: ${response.status}`)
   return response.json() as Promise<T>
 }
