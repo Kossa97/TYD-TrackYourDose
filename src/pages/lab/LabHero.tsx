@@ -1,0 +1,106 @@
+// src/pages/lab/LabHero.tsx
+import { useState } from 'react'
+import type { FormEvent } from 'react'
+import { Search } from 'lucide-react'
+
+const QUICK_TAGS = ['BPC-157', 'TB-500', 'GLP-1', 'Recovery', 'Healing', 'Longevity']
+
+interface LabHeroProps {
+  onSearch: (query: string) => void
+  loading: boolean
+}
+
+export function LabHero({ onSearch, loading }: LabHeroProps) {
+  const [query, setQuery] = useState('')
+  const [activeTag, setActiveTag] = useState('')
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    const q = query.trim()
+    if (q) {
+      setActiveTag('')
+      onSearch(q)
+    }
+  }
+
+  const handleTag = (tag: string) => {
+    setQuery(tag)
+    setActiveTag(tag)
+    onSearch(tag)
+  }
+
+  return (
+    <div className="relative -mx-4 px-4 pb-8 pt-6 mb-6 overflow-hidden">
+      {/* Dot-grid background */}
+      <div
+        className="absolute inset-0 opacity-30"
+        style={{
+          backgroundImage: 'radial-gradient(circle, #1e293b 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}
+      />
+      {/* Fade-out gradient at bottom */}
+      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#070B11] to-transparent pointer-events-none" />
+
+      <div className="relative">
+        {/* Kicker */}
+        <p
+          className="text-[0.58rem] font-black uppercase tracking-[0.2em] text-sky-400/65 mb-3"
+          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+        >
+          FORSCHUNG
+        </p>
+
+        {/* Title */}
+        <h1
+          className="text-3xl font-black text-white mb-1 leading-tight"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          The Lab
+        </h1>
+        <p className="text-sm text-slate-400 mb-5">
+          Explore peptide research & clinical intelligence.
+        </p>
+
+        {/* Search bar */}
+        <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search
+              size={16}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+            />
+            <input
+              value={query}
+              onChange={e => { setQuery(e.target.value); setActiveTag('') }}
+              disabled={loading}
+              placeholder="Peptid, Studie oder Thema suchen…"
+              className="w-full bg-[#0B1220] border border-white/10 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 focus:border-sky-500/50 focus:shadow-[0_0_30px_rgba(0,204,245,0.12)]"
+            />
+          </div>
+          <button type="submit" disabled={loading} className="btn-primary shrink-0">
+            {loading ? '…' : 'Suchen'}
+          </button>
+        </form>
+
+        {/* Quick tags */}
+        <div className="flex flex-wrap gap-2">
+          {QUICK_TAGS.map(tag => (
+            <button
+              key={tag}
+              type="button"
+              disabled={loading}
+              onClick={() => handleTag(tag)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${
+                activeTag === tag
+                  ? 'bg-sky-500 border-transparent text-white'
+                  : 'border-white/10 text-slate-400 hover:bg-sky-500/10 hover:border-sky-500/30 hover:text-sky-400'
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
