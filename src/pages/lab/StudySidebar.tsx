@@ -1,4 +1,5 @@
 // src/pages/lab/StudySidebar.tsx
+import { useTranslation } from 'react-i18next'
 import type { FilterState, SortMode, StudyTypeFilter, YearFilter } from './pubmed'
 
 interface StudySidebarProps {
@@ -38,24 +39,26 @@ function FilterOption({
   )
 }
 
-const STUDY_TYPE_OPTIONS: Array<{ label: string; value: StudyTypeFilter }> = [
-  { label: 'Alle',             value: '' },
-  { label: 'Human Studien',    value: 'human' },
-  { label: 'Tier / Labor',     value: 'animal' },
-  { label: 'Meta-Analysen',    value: 'meta' },
-  { label: 'Klinische Trials', value: 'clinical' },
-]
-
 export function StudySidebar({ filters, onFilterChange }: StudySidebarProps) {
+  const { t } = useTranslation()
+
   function set(patch: Partial<FilterState>) {
     onFilterChange({ ...filters, ...patch })
   }
 
+  const studyTypeOptions: Array<{ label: string; value: StudyTypeFilter }> = [
+    { label: t('lab_filter_all'),      value: '' },
+    { label: t('lab_filter_human'),    value: 'human' },
+    { label: t('lab_filter_animal'),   value: 'animal' },
+    { label: t('lab_filter_meta'),     value: 'meta' },
+    { label: t('lab_filter_clinical'), value: 'clinical' },
+  ]
+
   return (
     <aside className="space-y-6">
       <div className="space-y-1.5">
-        <SectionLabel>Studientyp</SectionLabel>
-        {STUDY_TYPE_OPTIONS.map(opt => (
+        <SectionLabel>{t('lab_filter_studytype')}</SectionLabel>
+        {studyTypeOptions.map(opt => (
           <FilterOption
             key={opt.value}
             label={opt.label}
@@ -66,11 +69,11 @@ export function StudySidebar({ filters, onFilterChange }: StudySidebarProps) {
       </div>
 
       <div className="space-y-1.5">
-        <SectionLabel>Sortieren</SectionLabel>
+        <SectionLabel>{t('lab_filter_sort')}</SectionLabel>
         {(['date', 'relevance'] as SortMode[]).map(s => (
           <FilterOption
             key={s}
-            label={s === 'date' ? 'Neueste' : 'Relevanz'}
+            label={s === 'date' ? t('lab_filter_newest') : t('lab_filter_relevance')}
             active={filters.sort === s}
             onClick={() => set({ sort: s })}
           />
@@ -78,11 +81,11 @@ export function StudySidebar({ filters, onFilterChange }: StudySidebarProps) {
       </div>
 
       <div className="space-y-1.5">
-        <SectionLabel>Jahr</SectionLabel>
+        <SectionLabel>{t('lab_filter_year')}</SectionLabel>
         {(['all', '2024plus', '2025'] as YearFilter[]).map(y => (
           <FilterOption
             key={y}
-            label={y === 'all' ? 'Alle' : y === '2024plus' ? '2024+' : '2025'}
+            label={y === 'all' ? t('lab_filter_year_all') : y === '2024plus' ? '2024+' : '2025'}
             active={filters.year === y}
             onClick={() => set({ year: y })}
           />

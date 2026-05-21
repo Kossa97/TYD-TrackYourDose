@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { PubMedArticle } from './lab/pubmed'
 import {
   getEvidenceScore,
@@ -43,6 +44,7 @@ function SectionCard({ label, children }: { label: string; children: ReactNode }
 }
 
 export function StudyDetail() {
+  const { t }     = useTranslation()
   const navigate  = useNavigate()
   const location  = useLocation()
   const article   = (location.state as { article?: PubMedArticle } | null)?.article
@@ -51,9 +53,9 @@ export function StudyDetail() {
   if (!article) {
     return (
       <div className="text-center py-16">
-        <p className="text-slate-500 text-sm mb-4">Studie nicht gefunden.</p>
+        <p className="text-slate-500 text-sm mb-4">{t('lab_study_not_found')}</p>
         <button type="button" onClick={() => navigate('/lab')} className="btn-secondary text-sm">
-          ← Zurück zur Forschung
+          ← {t('lab_back_to_research')}
         </button>
       </div>
     )
@@ -72,7 +74,7 @@ export function StudyDetail() {
         className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300 transition-colors"
       >
         <ArrowLeft size={14} />
-        Zurück zur Forschung
+        {t('lab_back_to_research')}
       </button>
 
       {/* Header */}
@@ -82,13 +84,13 @@ export function StudyDetail() {
             className={`text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-md ${STUDY_TYPE_STYLES[studyType]}`}
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
-            {getStudyTypeLabel(studyType)}
+            {t(getStudyTypeLabel(studyType))}
           </span>
           <span
             className={`text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-full ${EVIDENCE_STYLES[evidenceScore]}`}
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
-            {getEvidenceLabel(evidenceScore)}
+            {t(getEvidenceLabel(evidenceScore))}
           </span>
           {article.pubdate && (
             <span
@@ -122,15 +124,15 @@ export function StudyDetail() {
       </div>
 
       {/* Summary */}
-      <SectionCard label="Zusammenfassung">
+      <SectionCard label={t('lab_summary_label')}>
         <p className="text-sm text-slate-300 leading-relaxed">
-          {article.abstract || 'Kein Abstract verfügbar.'}
+          {article.abstract || t('lab_no_abstract')}
         </p>
       </SectionCard>
 
       {/* Key Findings */}
       {keyFindings.length > 0 && (
-        <SectionCard label="Key Findings">
+        <SectionCard label={t('lab_key_findings')}>
           <ul className="space-y-2">
             {keyFindings.map((finding, i) => (
               <li key={i} className="flex gap-3 text-sm text-slate-300">
@@ -143,29 +145,29 @@ export function StudyDetail() {
       )}
 
       {/* Evidence Analysis */}
-      <SectionCard label="Evidence Analyse">
+      <SectionCard label={t('lab_evidence_analysis')}>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500">Studientyp</span>
+            <span className="text-xs text-slate-500">{t('lab_study_type_label')}</span>
             <span
               className={`text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-md ${STUDY_TYPE_STYLES[studyType]}`}
               style={{ fontFamily: "'IBM Plex Mono', monospace" }}
             >
-              {getStudyTypeLabel(studyType)}
+              {t(getStudyTypeLabel(studyType))}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500">Evidenzlevel</span>
+            <span className="text-xs text-slate-500">{t('lab_evidence_level')}</span>
             <span
               className={`text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-full ${EVIDENCE_STYLES[evidenceScore]}`}
               style={{ fontFamily: "'IBM Plex Mono', monospace" }}
             >
-              {getEvidenceLabel(evidenceScore)}
+              {t(getEvidenceLabel(evidenceScore))}
             </span>
           </div>
           <div className="border-t border-white/[0.06] pt-3">
             <p className="text-xs text-slate-400 leading-relaxed">
-              {getEvidenceContext(evidenceScore)}
+              {t(getEvidenceContext(evidenceScore))}
             </p>
           </div>
         </div>
@@ -182,7 +184,7 @@ export function StudyDetail() {
             className="text-[0.58rem] font-black uppercase tracking-widest text-slate-500"
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
-            Originaler Abstract
+            {t('lab_original_abstract')}
           </span>
           {abstractOpen
             ? <ChevronUp size={14} className="text-slate-500" />
@@ -192,7 +194,7 @@ export function StudyDetail() {
         {abstractOpen && (
           <div className="px-5 pb-5 border-t border-white/[0.06]">
             <p className="text-sm text-slate-400 leading-relaxed pt-4">
-              {article.abstract || 'Kein Abstract verfügbar.'}
+              {article.abstract || t('lab_no_abstract')}
             </p>
           </div>
         )}
@@ -206,7 +208,7 @@ export function StudyDetail() {
           rel="noreferrer"
           className="btn-primary w-full flex items-center justify-center gap-2"
         >
-          Auf PubMed öffnen <ExternalLink size={14} />
+          {t('lab_open_pubmed')} <ExternalLink size={14} />
         </a>
       )}
     </div>

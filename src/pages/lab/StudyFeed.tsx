@@ -1,5 +1,6 @@
 // src/pages/lab/StudyFeed.tsx
 import { Flame, Loader2, BookOpen, Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { PubMedArticle, FilterState } from './pubmed'
 import { StudyCard } from './StudyCard'
 import { StudySidebar } from './StudySidebar'
@@ -25,6 +26,7 @@ export function StudyFeed({
   lastQuery,
   onRetry,
 }: StudyFeedProps) {
+  const { t } = useTranslation()
   const featured = articles[0]
   const rest     = articles.slice(1)
 
@@ -48,7 +50,7 @@ export function StudyFeed({
                     className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-white"
                     style={{ fontFamily: "'IBM Plex Mono', monospace" }}
                   >
-                    Trending
+                    {t('lab_trending_label')}
                   </span>
                 </div>
               ) : (
@@ -64,15 +66,15 @@ export function StudyFeed({
               )}
               <p className="text-[0.6rem] text-slate-600 mt-0.5">
                 {isTrending
-                  ? 'Neueste Peptid-Studien · PubMed'
-                  : `${articles.length} Studien gefunden`}
+                  ? t('lab_trending_sub')
+                  : t('lab_results_count', { count: articles.length })}
               </p>
             </div>
             <span
               className="text-[0.6rem] text-slate-700"
               style={{ fontFamily: "'IBM Plex Mono', monospace" }}
             >
-              pubmed.ncbi
+              {t('lab_source_label')}
             </span>
           </div>
         )}
@@ -81,7 +83,9 @@ export function StudyFeed({
         {loading && (
           <div className="card text-center py-10 text-slate-500">
             <Loader2 size={28} className="mx-auto mb-3 text-sky-400/60 animate-spin" />
-            <p className="text-sm">{isTrending ? 'Lade neueste Studien…' : 'Suche läuft…'}</p>
+            <p className="text-sm">
+              {isTrending ? t('lab_loading_trending') : t('lab_loading_search')}
+            </p>
           </div>
         )}
 
@@ -90,7 +94,7 @@ export function StudyFeed({
           <div className="card border border-red-500/20 bg-red-950/20 text-center py-8">
             <p className="text-sm text-red-300 mb-3">{errorMessage}</p>
             <button type="button" onClick={onRetry} className="btn-secondary text-sm">
-              Erneut versuchen
+              {t('lab_retry')}
             </button>
           </div>
         )}
@@ -100,7 +104,7 @@ export function StudyFeed({
           <div className="card text-center py-10 text-slate-500">
             <BookOpen size={28} className="mx-auto mb-2 opacity-30" />
             <p className="text-sm">
-              {isTrending ? 'Keine Studien gefunden.' : `Keine Ergebnisse für „${lastQuery}".`}
+              {isTrending ? t('lab_no_studies') : t('lab_no_results_query', { query: lastQuery })}
             </p>
           </div>
         )}

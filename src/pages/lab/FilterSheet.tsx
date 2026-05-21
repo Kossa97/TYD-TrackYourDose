@@ -1,6 +1,7 @@
 // src/pages/lab/FilterSheet.tsx
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { DEFAULT_FILTER_STATE } from './pubmed'
 import type { FilterState, SortMode, YearFilter } from './pubmed'
 
@@ -26,6 +27,8 @@ export function FilterSheet({
   onChange,
   onApply,
 }: FilterSheetProps) {
+  const { t } = useTranslation()
+
   // Close on Escape key
   useEffect(() => {
     if (!open) return
@@ -67,7 +70,7 @@ export function FilterSheet({
 
           {/* Header */}
           <div className="flex items-center justify-between px-4 pt-2 pb-3 border-b border-slate-800">
-            <h2 className="text-sm font-black text-white">Filter & Sortierung</h2>
+            <h2 className="text-sm font-black text-white">{t('lab_filter_title')}</h2>
             <button
               type="button"
               onClick={onClose}
@@ -81,7 +84,7 @@ export function FilterSheet({
           <div className="overflow-y-auto max-h-[55vh] px-4 py-4 space-y-5">
             {/* Peptid */}
             <div>
-              <p className="label">Peptid (Mehrfach)</p>
+              <p className="label">{t('lab_filter_peptide')}</p>
               <div className="flex flex-wrap gap-2">
                 {ALL_PEPTIDES.map(p => {
                   const active = filters.peptides.includes(p)
@@ -105,7 +108,7 @@ export function FilterSheet({
 
             {/* Sortieren */}
             <div>
-              <p className="label">Sortieren</p>
+              <p className="label">{t('lab_filter_sort')}</p>
               <div className="flex gap-2">
                 {(['date', 'relevance'] as SortMode[]).map(s => (
                   <button
@@ -118,7 +121,7 @@ export function FilterSheet({
                         : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                     }`}
                   >
-                    {s === 'date' ? 'Neueste' : 'Relevanz'}
+                    {s === 'date' ? t('lab_filter_newest') : t('lab_filter_relevance')}
                   </button>
                 ))}
               </div>
@@ -126,7 +129,7 @@ export function FilterSheet({
 
             {/* Jahr */}
             <div>
-              <p className="label">Erscheinungsjahr</p>
+              <p className="label">{t('lab_filter_year_label')}</p>
               <div className="flex gap-2">
                 {(['all', '2024plus', '2025'] as YearFilter[]).map(y => (
                   <button
@@ -139,7 +142,7 @@ export function FilterSheet({
                         : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                     }`}
                   >
-                    {y === 'all' ? 'Alle' : y === '2024plus' ? '2024+' : '2025'}
+                    {y === 'all' ? t('lab_filter_year_all') : y === '2024plus' ? '2024+' : '2025'}
                   </button>
                 ))}
               </div>
@@ -149,7 +152,7 @@ export function FilterSheet({
           {/* Actions */}
           <div className="flex gap-3 px-4 py-4 border-t border-slate-800">
             <button type="button" className="btn-secondary flex-1 text-sm" onClick={reset}>
-              Zurücksetzen
+              {t('lab_filter_reset')}
             </button>
             <button
               type="button"
@@ -160,7 +163,7 @@ export function FilterSheet({
                 onClose()
               }}
             >
-              Anzeigen ({resultCount})
+              {t('lab_filter_apply', { count: resultCount })}
             </button>
           </div>
         </div>

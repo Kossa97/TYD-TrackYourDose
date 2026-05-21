@@ -1,4 +1,5 @@
 // src/pages/lab/ResearchSnapshot.tsx
+import { useTranslation } from 'react-i18next'
 import type { ChartEntry, PubMedArticle } from './pubmed'
 
 interface ResearchSnapshotProps {
@@ -51,35 +52,40 @@ function SnapshotCard({
 }
 
 export function ResearchSnapshot({ chartData, articles, onSearch }: ResearchSnapshotProps) {
+  const { t } = useTranslation()
   const top = chartData[0]
   const second = chartData[1]
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 mb-6">
       <SnapshotCard
-        kicker="⚡ Trending"
+        kicker={t('lab_snapshot_trending')}
         kickerColor="text-sky-400/70"
         topBorderColor="border-t-2 border-t-sky-500"
         title={top?.name ?? '—'}
-        sub={top ? `${top.count.toLocaleString('de-DE')} Studien · PubMed` : 'Lade Daten…'}
-        cta="Entdecken"
+        sub={top
+          ? t('lab_snapshot_studies', { count: top.count.toLocaleString() })
+          : t('lab_snapshot_loading')}
+        cta={t('lab_snapshot_discover')}
         onCta={() => top && onSearch(top.name)}
       />
       <SnapshotCard
-        kicker="🧬 Meisterforscht"
+        kicker={t('lab_snapshot_top')}
         kickerColor="text-violet-400/70"
         topBorderColor="border-t-2 border-t-violet-500"
         title={second?.name ?? '—'}
-        sub={second ? `${second.count.toLocaleString('de-DE')} Papers` : 'Lade Daten…'}
-        cta="Entdecken"
+        sub={second
+          ? t('lab_snapshot_papers', { count: second.count.toLocaleString() })
+          : t('lab_snapshot_loading')}
+        cta={t('lab_snapshot_discover')}
         onCta={() => second && onSearch(second.name)}
       />
       <SnapshotCard
-        kicker="🔬 Neu Geladen"
+        kicker={t('lab_snapshot_new')}
         kickerColor="text-blue-400/70"
         topBorderColor="border-t-2 border-t-blue-500"
         title={String(articles.length)}
-        sub="Studien geladen · sortiert nach Datum"
+        sub={t('lab_snapshot_loaded', { count: articles.length })}
       />
     </div>
   )

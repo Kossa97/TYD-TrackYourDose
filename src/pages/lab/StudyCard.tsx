@@ -1,6 +1,7 @@
 // src/pages/lab/StudyCard.tsx
 import { ExternalLink } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { PubMedArticle } from './pubmed'
 import {
   getEvidenceScore,
@@ -55,7 +56,8 @@ function formatAuthors(authors: string[]): string {
 }
 
 function BadgeRow({ article }: { article: PubMedArticle }) {
-  const studyType    = getStudyType(article.title, article.abstract)
+  const { t }         = useTranslation()
+  const studyType     = getStudyType(article.title, article.abstract)
   const evidenceScore = getEvidenceScore(article.title, article.abstract)
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -63,19 +65,20 @@ function BadgeRow({ article }: { article: PubMedArticle }) {
         className={`text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-md ${STUDY_TYPE_STYLES[studyType]}`}
         style={{ fontFamily: "'IBM Plex Mono', monospace" }}
       >
-        {getStudyTypeLabel(studyType)}
+        {t(getStudyTypeLabel(studyType))}
       </span>
       <span
         className={`text-[0.6rem] font-black uppercase px-2 py-0.5 rounded-full ${EVIDENCE_STYLES[evidenceScore]}`}
         style={{ fontFamily: "'IBM Plex Mono', monospace" }}
       >
-        {getEvidenceLabel(evidenceScore)}
+        {t(getEvidenceLabel(evidenceScore))}
       </span>
     </div>
   )
 }
 
 export function StudyCard({ article, variant }: StudyCardProps) {
+  const { t }        = useTranslation()
   const navigate     = useNavigate()
   const keyFindings  = getKeyFindings(article.abstract)
   const accent       = detectAccent(article.title)
@@ -89,7 +92,7 @@ export function StudyCard({ article, variant }: StudyCardProps) {
       ? article.abstract.length > 350
         ? `${article.abstract.slice(0, 350).trim()}…`
         : article.abstract
-      : 'Kein Abstract verfügbar.'
+      : t('lab_no_abstract')
 
     return (
       <article className={`bg-[#0B1220] border border-white/[0.06] border-l-4 ${accent} rounded-2xl p-5 mb-4`}>
@@ -128,7 +131,7 @@ export function StudyCard({ article, variant }: StudyCardProps) {
             className="text-[0.58rem] uppercase tracking-widest text-sky-400/60 shrink-0"
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
-            Zusammenfassung
+            {t('lab_summary')}
           </span>
           <div className="flex-1 h-px bg-white/[0.06]" />
         </div>
@@ -150,7 +153,7 @@ export function StudyCard({ article, variant }: StudyCardProps) {
         {/* Actions */}
         <div className="flex gap-2">
           <button type="button" onClick={openDetail} className="btn-primary text-xs flex-1">
-            Zusammenfassung lesen
+            {t('lab_read_summary')}
           </button>
           {article.link && (
             <a
@@ -221,7 +224,7 @@ export function StudyCard({ article, variant }: StudyCardProps) {
         onClick={e => e.stopPropagation()}
       >
         <span className="text-xs text-slate-700 cursor-not-allowed" title="Coming soon">
-          ♡ Speichern
+          {t('lab_save')}
         </span>
         {article.link && (
           <a

@@ -93,7 +93,7 @@ export function TheLab() {
       {/* Mobile filter button — hidden on desktop (sidebar handles it) */}
       <div className="flex items-center justify-between mb-4 md:hidden">
         <span className="text-xs text-slate-500">
-          {isTrending ? 'Trending Studien' : `„${lastQuery}"`}
+          {isTrending ? t('lab_trending_mobile') : `„${lastQuery}"`}
         </span>
         <button
           type="button"
@@ -102,7 +102,7 @@ export function TheLab() {
             activeFilterCount > 0 ? 'border-sky-500/50 text-sky-400' : ''
           }`}
         >
-          Filter
+          {t('lab_filter_button')}
           {activeFilterCount > 0 && (
             <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-sky-500 text-[0.55rem] font-black text-white flex items-center justify-center">
               {activeFilterCount}

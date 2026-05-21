@@ -20,35 +20,38 @@ export function getStudyType(title: string, abstract: string): StudyType {
   return 'study'
 }
 
+// Returns an i18n key — callers do t(getStudyTypeLabel(type))
 export function getStudyTypeLabel(type: StudyType): string {
-  const labels: Record<StudyType, string> = {
-    clinical: 'CLINICAL TRIAL',
-    meta:     'META-ANALYSE',
-    human:    'HUMAN STUDIE',
-    animal:   'TIER / LABOR',
-    study:    'STUDIE',
+  const keys: Record<StudyType, string> = {
+    clinical: 'lab_type_clinical',
+    meta:     'lab_type_meta',
+    human:    'lab_type_human',
+    animal:   'lab_type_animal',
+    study:    'lab_type_study',
   }
-  return labels[type]
+  return keys[type]
 }
 
+// Returns an i18n key — callers do t(getEvidenceLabel(score))
 export function getEvidenceLabel(score: EvidenceScore): string {
-  const labels: Record<EvidenceScore, string> = {
-    strong:      'Stark',
-    moderate:    'Moderat',
-    preclinical: 'Präklinisch',
-    unknown:     'Unbekannt',
+  const keys: Record<EvidenceScore, string> = {
+    strong:      'lab_evidence_strong',
+    moderate:    'lab_evidence_moderate',
+    preclinical: 'lab_evidence_preclinical',
+    unknown:     'lab_evidence_unknown',
   }
-  return labels[score]
+  return keys[score]
 }
 
+// Returns an i18n key — callers do t(getEvidenceContext(score))
 export function getEvidenceContext(score: EvidenceScore): string {
-  const contexts: Record<EvidenceScore, string> = {
-    strong:      'Hochqualitative Evidenz, direkt auf Menschen anwendbar.',
-    moderate:    'Solide Humandaten, weitere Studien empfohlen.',
-    preclinical: 'Tierstudie — zeigt Potenzial, braucht Human-Bestätigung.',
-    unknown:     'Studientyp nicht klassifiziert.',
+  const keys: Record<EvidenceScore, string> = {
+    strong:      'lab_context_strong',
+    moderate:    'lab_context_moderate',
+    preclinical: 'lab_context_preclinical',
+    unknown:     'lab_context_unknown',
   }
-  return contexts[score]
+  return keys[score]
 }
 
 // Returns up to 4 key sentences from the abstract (skips the first intro sentence).

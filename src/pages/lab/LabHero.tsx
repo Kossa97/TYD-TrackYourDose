@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 const QUICK_TAGS = ['BPC-157', 'TB-500', 'GLP-1', 'Recovery', 'Healing', 'Longevity']
 
@@ -11,6 +12,7 @@ interface LabHeroProps {
 }
 
 export function LabHero({ onSearch, loading }: LabHeroProps) {
+  const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [activeTag, setActiveTag] = useState('')
 
@@ -48,7 +50,7 @@ export function LabHero({ onSearch, loading }: LabHeroProps) {
           className="text-[0.58rem] font-black uppercase tracking-[0.2em] text-sky-400/65 mb-3"
           style={{ fontFamily: "'IBM Plex Mono', monospace" }}
         >
-          FORSCHUNG
+          {t('lab_kicker')}
         </p>
 
         {/* Title */}
@@ -56,10 +58,10 @@ export function LabHero({ onSearch, loading }: LabHeroProps) {
           className="text-3xl font-black text-white mb-1 leading-tight"
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
-          The Lab
+          {t('lab_title')}
         </h1>
         <p className="text-sm text-slate-400 mb-5">
-          Explore peptide research & clinical intelligence.
+          {t('lab_subtitle')}
         </p>
 
         {/* Search bar */}
@@ -73,12 +75,12 @@ export function LabHero({ onSearch, loading }: LabHeroProps) {
               value={query}
               onChange={e => { setQuery(e.target.value); setActiveTag('') }}
               disabled={loading}
-              placeholder="Peptid, Studie oder Thema suchen…"
+              placeholder={t('lab_search_placeholder')}
               className="w-full bg-[#0B1220] border border-white/10 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 focus:border-sky-500/50 focus:shadow-[0_0_30px_rgba(0,204,245,0.12)]"
             />
           </div>
           <button type="submit" disabled={loading} className="btn-primary shrink-0">
-            {loading ? '…' : 'Suchen'}
+            {loading ? '…' : t('lab_search_button')}
           </button>
         </form>
 
