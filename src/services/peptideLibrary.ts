@@ -1,5 +1,5 @@
 // src/services/peptideLibrary.ts
-// Liest die wissenschaftliche Peptid-Referenzdatenbank aus Supabase.
+// Wissenschaftliche Peptid-Referenzdatenbank.
 // Kein medizinischer Rat — nur Forschungsdaten.
 
 import { supabase } from '../lib/supabase'
@@ -20,24 +20,33 @@ export type ResearchStatus =
   | 'phase_2'
   | 'approved'
 
+export type EvidenceLevel   = 'none' | 'limited' | 'moderate' | 'strong'
+export type ClinicalLevel   = 'none' | 'sparse'  | 'moderate' | 'extensive'
+
 export interface PeptideEntry {
-  id: string
-  slug: string
-  name: string
-  full_name: string | null
-  category: PeptideCategory
-  tldr: string
-  mechanism: string
-  benefits: string[]
-  research_dosage: string | null
-  half_life: string | null
-  administration: string[]
-  research_status: ResearchStatus
-  side_effects: string[]
+  id:                string
+  slug:              string
+  name:              string
+  full_name:         string | null
+  category:          PeptideCategory
+  tldr:              string
+  mechanism:         string
+  benefits:          string[]
+  research_dosage:   string | null
+  half_life:         string | null
+  administration:    string[]
+  research_status:   ResearchStatus
+  side_effects:      string[]
   contraindications: string[]
-  pubmed_query: string | null
-  sort_order: number
-  created_at: string
+  pubmed_query:      string | null
+  // Evidence breakdown (v2)
+  evidence_human:    EvidenceLevel
+  evidence_animal:   EvidenceLevel
+  evidence_clinical: ClinicalLevel
+  evidence_score:    number          // 1–10
+  research_gaps:     string[]
+  sort_order:        number
+  created_at:        string
 }
 
 // ─── Display helpers ──────────────────────────────────────────────────────────
@@ -49,6 +58,15 @@ export const CATEGORY_LABELS: Record<PeptideCategory, string> = {
   stoffwechsel:     'Stoffwechsel',
   anti_aging:       'Anti-Aging',
   sexualgesundheit: 'Sexualgesundheit',
+}
+
+export const CATEGORY_COLORS: Record<PeptideCategory, { text: string; topBorder: string; scoreDot: string }> = {
+  heilung:          { text: 'text-sky-300',     topBorder: 'border-t-sky-500',     scoreDot: 'bg-sky-400' },
+  wachstumshormon:  { text: 'text-violet-300',  topBorder: 'border-t-violet-500',  scoreDot: 'bg-violet-400' },
+  nootropikum:      { text: 'text-indigo-300',  topBorder: 'border-t-indigo-500',  scoreDot: 'bg-indigo-400' },
+  stoffwechsel:     { text: 'text-emerald-300', topBorder: 'border-t-emerald-500', scoreDot: 'bg-emerald-400' },
+  anti_aging:       { text: 'text-amber-300',   topBorder: 'border-t-amber-500',   scoreDot: 'bg-amber-400' },
+  sexualgesundheit: { text: 'text-rose-300',    topBorder: 'border-t-rose-500',    scoreDot: 'bg-rose-400' },
 }
 
 export const STATUS_LABELS: Record<ResearchStatus, string> = {
@@ -65,13 +83,39 @@ export const STATUS_STYLES: Record<ResearchStatus, string> = {
   approved:    'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25',
 }
 
-export const CATEGORY_STYLES: Record<PeptideCategory, { icon: string; color: string; border: string }> = {
-  heilung:          { icon: '🩹', color: 'text-sky-300',     border: 'border-t-sky-500' },
-  wachstumshormon:  { icon: '📈', color: 'text-violet-300',  border: 'border-t-violet-500' },
-  nootropikum:      { icon: '🧠', color: 'text-indigo-300',  border: 'border-t-indigo-500' },
-  stoffwechsel:     { icon: '⚡',  color: 'text-emerald-300', border: 'border-t-emerald-500' },
-  anti_aging:       { icon: '⏳', color: 'text-amber-300',   border: 'border-t-amber-500' },
-  sexualgesundheit: { icon: '💊', color: 'text-rose-300',    border: 'border-t-rose-500' },
+// Evidence bar widths (CSS class)
+export const EVIDENCE_BAR_WIDTH: Record<EvidenceLevel | ClinicalLevel, string> = {
+  none:      'w-0',
+  limited:   'w-1/4',
+  sparse:    'w-1/4',
+  moderate:  'w-1/2',
+  strong:    'w-full',
+  extensive: 'w-full',
+}
+
+// Human-readable evidence labels
+export const EVIDENCE_LABELS: Record<EvidenceLevel | ClinicalLevel, string> = {
+  none:      'Keine',
+  limited:   'Begrenzt',
+  sparse:    'Gering',
+  moderate:  'Moderat',
+  strong:    'Stark',
+  extensive: 'Umfangreich',
+}
+
+// Confidence label derived from evidence_score
+export function getConfidenceLabel(score: number): string {
+  if (score >= 8) return 'Hohe Konfidenz'
+  if (score >= 5) return 'Moderate Konfidenz'
+  if (score >= 3) return 'Niedrige Konfidenz'
+  return 'Sehr begrenzte Evidenz'
+}
+
+export function getConfidenceStyle(score: number): string {
+  if (score >= 8) return 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25'
+  if (score >= 5) return 'text-amber-300 bg-amber-500/10 border-amber-500/25'
+  if (score >= 3) return 'text-orange-300 bg-orange-500/10 border-orange-500/25'
+  return 'text-rose-300 bg-rose-500/10 border-rose-500/25'
 }
 
 // ─── Queries ─────────────────────────────────────────────────────────────────

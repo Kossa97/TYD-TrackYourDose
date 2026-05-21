@@ -1,7 +1,8 @@
 // src/pages/lab/LabHero.tsx
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Search } from 'lucide-react'
+import { Search, FlaskConical, ArrowRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 const QUICK_TAGS = ['BPC-157', 'TB-500', 'GLP-1', 'Recovery', 'Healing', 'Longevity']
@@ -12,7 +13,8 @@ interface LabHeroProps {
 }
 
 export function LabHero({ onSearch, loading }: LabHeroProps) {
-  const { t } = useTranslation()
+  const { t }      = useTranslation()
+  const navigate   = useNavigate()
   const [query, setQuery] = useState('')
   const [activeTag, setActiveTag] = useState('')
 
@@ -84,8 +86,8 @@ export function LabHero({ onSearch, loading }: LabHeroProps) {
           </button>
         </form>
 
-        {/* Quick tags */}
-        <div className="flex flex-wrap gap-2">
+        {/* Quick tags + Library link */}
+        <div className="flex flex-wrap gap-2 items-center">
           {QUICK_TAGS.map(tag => (
             <button
               key={tag}
@@ -101,6 +103,20 @@ export function LabHero({ onSearch, loading }: LabHeroProps) {
               {tag}
             </button>
           ))}
+
+          {/* Separator */}
+          <span className="text-slate-700 text-xs">·</span>
+
+          {/* Library entry */}
+          <button
+            type="button"
+            onClick={() => navigate('/lab/library')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-violet-500/25 text-violet-300/70 hover:bg-violet-500/10 hover:border-violet-500/40 hover:text-violet-300 transition-all duration-200"
+          >
+            <FlaskConical size={11} />
+            Peptid-Bibliothek
+            <ArrowRight size={10} className="opacity-60" />
+          </button>
         </div>
       </div>
     </div>
