@@ -1,6 +1,11 @@
 // src/pages/lab/pubmed.ts
 
-const EUTILS_BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils'
+// In development: route through Vite's proxy (/ncbi → eutils.ncbi.nlm.nih.gov)
+// This bypasses browser CORS issues on home networks.
+// In production (Vercel): call NCBI directly — no proxy needed.
+const EUTILS_BASE_URL = import.meta.env.DEV
+  ? '/ncbi'
+  : 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils'
 const PUBMED_ARTICLE_BASE_URL = 'https://pubmed.ncbi.nlm.nih.gov'
 
 export const TRENDING_QUERY =
