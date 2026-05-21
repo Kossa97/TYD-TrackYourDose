@@ -1,6 +1,7 @@
 // src/pages/lab/FilterSheet.tsx
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
+import { DEFAULT_FILTER_STATE } from './pubmed'
 import type { FilterState, SortMode, YearFilter } from './pubmed'
 
 const ALL_PEPTIDES = [
@@ -45,7 +46,7 @@ export function FilterSheet({
   }
 
   function reset() {
-    onChange({ peptides: [], sort: 'date', year: 'all' })
+    onChange(DEFAULT_FILTER_STATE)
   }
 
   return (
