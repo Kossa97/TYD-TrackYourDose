@@ -86,7 +86,7 @@ export function LabStats({ chartData, chartLoading, totalFound }: LabStatsProps)
               }}
               itemStyle={{ color: '#9aaabf' }}
               labelStyle={{ color: '#eaeefc', fontWeight: 700 }}
-              formatter={(value: number) => [`${value.toLocaleString('de-DE')} Studien`, '']}
+              formatter={(value) => [`${Number(value).toLocaleString('de-DE')} Studien`, '']}
             />
             <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={12}>
               {chartData.map(entry => (
