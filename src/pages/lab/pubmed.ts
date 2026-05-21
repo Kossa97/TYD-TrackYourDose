@@ -184,21 +184,23 @@ export async function searchPubMedArticles(
     .filter(a => Boolean(a.title))
 }
 
+// Sequential with delay to stay within NCBI's 3 req/sec rate limit
 export async function fetchChartCounts(): Promise<ChartEntry[]> {
-  const results = await Promise.allSettled(
-    CHART_PEPTIDES.map(async ({ name, query, color }) => {
+  const results: ChartEntry[] = []
+  for (const { name, query, color } of CHART_PEPTIDES) {
+    await new Promise(resolve => setTimeout(resolve, 400))
+    try {
       const url = buildEutilsUrl('esearch.fcgi', {
         db: 'pubmed', term: query, retmax: '0', retmode: 'json',
       })
       const data = await fetchJson<ESearchResponse>(url)
       const count = parseInt(data.esearchresult?.count ?? '0', 10)
-      return { name, count, color } satisfies ChartEntry
-    }),
-  )
-  return results
-    .filter((r): r is PromiseFulfilledResult<ChartEntry> => r.status === 'fulfilled')
-    .map(r => r.value)
-    .sort((a, b) => b.count - a.count)
+      results.push({ name, count, color })
+    } catch {
+      // skip failed peptide, show rest of chart
+    }
+  }
+  return results.sort((a, b) => b.count - a.count)
 }
 
 export function getErrorMessage(error: unknown): string {

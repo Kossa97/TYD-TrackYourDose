@@ -45,16 +45,18 @@ export function TheLab() {
   const [filters, setFilters]           = useState<FilterState>(DEFAULT_FILTER_STATE)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
 
-  // Auto-load on mount — trending articles + chart counts in parallel
+  // Auto-load on mount — articles first, chart after (NCBI rate limit: 3 req/sec)
   useEffect(() => {
     searchPubMedArticles(TRENDING_QUERY, 10)
       .then(setArticles)
       .catch(err => setErrorMessage(getErrorMessage(err)))
-      .finally(() => setLoading(false))
-
-    fetchChartCounts()
-      .then(setChartData)
-      .finally(() => setChartLoading(false))
+      .finally(() => {
+        setLoading(false)
+        // Start chart only after articles finished to avoid rate limiting
+        fetchChartCounts()
+          .then(setChartData)
+          .finally(() => setChartLoading(false))
+      })
   }, [])
 
   async function runSearch(textQuery: string, nextFilters: FilterState) {
