@@ -1,0 +1,106 @@
+// src/pages/lab/PeptideChart.tsx
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip } from 'recharts'
+import type { ChartEntry } from './pubmed'
+
+interface LabStatsProps {
+  chartData: ChartEntry[]
+  chartLoading: boolean
+  totalFound: number
+}
+
+export function LabStats({ chartData, chartLoading, totalFound }: LabStatsProps) {
+  const activePeptides = chartData.filter(e => e.count > 0).length
+  const currentYear = new Date().getFullYear().toString()
+
+  return (
+    <div className="card mb-4">
+      {/* Stat tiles */}
+      <div className="flex gap-2 mb-4">
+        <div className="flex-1 bg-black/25 rounded-xl p-3 text-center">
+          <div className="text-lg font-black text-sky-400">
+            {totalFound > 0 ? totalFound : '—'}
+          </div>
+          <div className="text-[0.55rem] uppercase tracking-[0.1em] text-slate-600 mt-0.5">
+            Treffer
+          </div>
+        </div>
+        <div className="flex-1 bg-black/25 rounded-xl p-3 text-center">
+          <div className="text-lg font-black text-emerald-400">
+            {chartLoading ? '…' : activePeptides || '—'}
+          </div>
+          <div className="text-[0.55rem] uppercase tracking-[0.1em] text-slate-600 mt-0.5">
+            Peptide
+          </div>
+        </div>
+        <div className="flex-1 bg-black/25 rounded-xl p-3 text-center">
+          <div className="text-lg font-black text-orange-400">{currentYear}</div>
+          <div className="text-[0.55rem] uppercase tracking-[0.1em] text-slate-600 mt-0.5">
+            Aktuell
+          </div>
+        </div>
+      </div>
+
+      {/* Chart label */}
+      <p className="label mb-3">Studien pro Peptid (PubMed)</p>
+
+      {/* Loading skeleton */}
+      {chartLoading && (
+        <div className="space-y-2">
+          {[90, 65, 50, 38, 28, 20, 14, 9].map((w, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <div className="w-[72px] h-2.5 bg-slate-800 rounded animate-pulse" />
+              <div
+                className="h-2.5 bg-slate-800 rounded animate-pulse"
+                style={{ width: `${w}%` }}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Chart */}
+      {!chartLoading && chartData.length > 0 && (
+        <ResponsiveContainer width="100%" height={chartData.length * 28 + 10}>
+          <BarChart
+            data={chartData}
+            layout="vertical"
+            margin={{ left: 0, right: 32, top: 0, bottom: 0 }}
+          >
+            <XAxis type="number" hide />
+            <YAxis
+              type="category"
+              dataKey="name"
+              width={72}
+              tick={{ fill: '#465265', fontSize: 10, fontFamily: 'inherit' }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <Tooltip
+              cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+              contentStyle={{
+                background: '#0e1428',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 8,
+                fontSize: 11,
+                padding: '6px 10px',
+              }}
+              itemStyle={{ color: '#9aaabf' }}
+              labelStyle={{ color: '#eaeefc', fontWeight: 700 }}
+              formatter={(value: number) => [`${value.toLocaleString('de-DE')} Studien`, '']}
+            />
+            <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={12}>
+              {chartData.map(entry => (
+                <Cell key={entry.name} fill={entry.color} fillOpacity={0.85} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+
+      {/* Empty */}
+      {!chartLoading && chartData.length === 0 && (
+        <p className="text-xs text-slate-600 text-center py-3">Keine Chart-Daten verfügbar</p>
+      )}
+    </div>
+  )
+}
