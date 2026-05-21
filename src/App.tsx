@@ -18,6 +18,7 @@ import { TheLab } from './pages/TheLab'
 import { StudyDetail } from './pages/StudyDetail'
 import { PeptideLibrary } from './pages/PeptideLibrary'
 import { PeptideDetailPage } from './pages/PeptideDetailPage'
+import { AdminPanel } from './pages/lab/AdminPanel'
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
             <Route path="lab/study/:id" element={<StudyDetail />} />
             <Route path="lab/library" element={<PeptideLibrary />} />
             <Route path="lab/library/:slug" element={<PeptideDetailPage />} />
+            <Route path="lab/admin" element={<AdminPanel />} />
             <Route path="rechner" element={<Rechner />} />
             <Route path="the-lab" element={<TheLab />} />
             <Route path="tagebuch" element={<Tagebuch />} />
