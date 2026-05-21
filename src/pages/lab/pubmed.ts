@@ -1,6 +1,5 @@
 // src/pages/lab/pubmed.ts
 
-const CORS_PROXY = 'https://corsproxy.io/?'
 const EUTILS_BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils'
 const PUBMED_ARTICLE_BASE_URL = 'https://pubmed.ncbi.nlm.nih.gov'
 
@@ -89,7 +88,7 @@ export const CHART_PEPTIDES: Array<{ name: string; query: string; color: string 
 function buildEutilsUrl(path: string, params: Record<string, string>): string {
   const url = new URL(`${EUTILS_BASE_URL}/${path}`)
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value)
-  return `${CORS_PROXY}${encodeURIComponent(url.toString())}`
+  return url.toString()
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
