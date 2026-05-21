@@ -164,7 +164,10 @@ export async function searchPubMedArticles(
 ): Promise<PubMedArticle[]> {
   const ids = await fetchIds(query, retmax, sort)
   if (ids.length === 0) return []
-  const [summaries, abstracts] = await Promise.all([fetchSummaries(ids), fetchAbstracts(ids)])
+  const [summaries, abstracts] = await Promise.all([
+    fetchSummaries(ids),
+    fetchAbstracts(ids).catch(() => new Map<string, string>()),
+  ])
   return ids
     .map(uid => {
       const s = summaries.get(uid)
