@@ -16,6 +16,7 @@ import { LabHero } from './lab/LabHero'
 import { ResearchSnapshot } from './lab/ResearchSnapshot'
 import { StudyFeed } from './lab/StudyFeed'
 import { FilterSheet } from './lab/FilterSheet'
+import { LabLoader } from '../components/LabLoader'
 
 export function TheLab() {
   const { t } = useTranslation()
@@ -29,6 +30,10 @@ export function TheLab() {
   const [filters, setFilters]                 = useState<FilterState>(DEFAULT_FILTER_STATE)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
 
+  // Initial loader state — full-screen on first visit only
+  const [initialLoad, setInitialLoad]         = useState(true)
+  const [loaderFading, setLoaderFading]       = useState(false)
+
   // Auto-load on mount — articles first, chart after (NCBI rate limit: 3 req/sec)
   useEffect(() => {
     searchPubMedArticles(TRENDING_QUERY, 10)
@@ -36,6 +41,9 @@ export function TheLab() {
       .catch(err => setErrorMessage(getErrorMessage(err)))
       .finally(() => {
         setLoading(false)
+        // Fade out the full-screen loader, then unmount it
+        setLoaderFading(true)
+        setTimeout(() => setInitialLoad(false), 500)
         fetchChartCounts()
           .then(setChartData)
           .catch(() => { /* chart errors are non-fatal */ })
@@ -60,18 +68,15 @@ export function TheLab() {
     }
   }
 
-  // Called by LabHero when user submits search or clicks quick tag
   function handleHeroSearch(query: string) {
     void runSearch(query, filters)
   }
 
-  // Called by StudySidebar on immediate filter change (desktop)
   function handleSidebarFilter(newFilters: FilterState) {
     setFilters(newFilters)
     void runSearch(lastQuery, newFilters)
   }
 
-  // Called by FilterSheet Apply button (mobile)
   function handleSheetApply() {
     void runSearch(lastQuery, filters)
   }
@@ -79,59 +84,64 @@ export function TheLab() {
   const activeFilterCount = countActiveFilters(filters)
 
   return (
-    <div>
-      {/* Cinematic Hero */}
-      <LabHero onSearch={handleHeroSearch} loading={loading} />
+    <>
+      {/* Full-screen loader — only on initial page load */}
+      {initialLoad && <LabLoader fadingOut={loaderFading} />}
 
-      {/* Research Snapshot (uses chartData + articles, no extra API calls) */}
-      <ResearchSnapshot
-        chartData={chartData}
-        articles={articles}
-        onSearch={query => void runSearch(query, filters)}
-      />
+      <div>
+        {/* Cinematic Hero */}
+        <LabHero onSearch={handleHeroSearch} loading={loading} />
 
-      {/* Mobile filter button — hidden on desktop (sidebar handles it) */}
-      <div className="flex items-center justify-between mb-4 md:hidden">
-        <span className="text-xs text-slate-500">
-          {isTrending ? t('lab_trending_mobile') : `„${lastQuery}"`}
-        </span>
-        <button
-          type="button"
-          onClick={() => setFilterSheetOpen(true)}
-          className={`relative btn-secondary text-xs px-3 py-2 ${
-            activeFilterCount > 0 ? 'border-sky-500/50 text-sky-400' : ''
-          }`}
-        >
-          {t('lab_filter_button')}
-          {activeFilterCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-sky-500 text-[0.55rem] font-black text-white flex items-center justify-center">
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
+        {/* Research Snapshot */}
+        <ResearchSnapshot
+          chartData={chartData}
+          articles={articles}
+          onSearch={query => void runSearch(query, filters)}
+        />
+
+        {/* Mobile filter button */}
+        <div className="flex items-center justify-between mb-4 md:hidden">
+          <span className="text-xs text-slate-500">
+            {isTrending ? t('lab_trending_mobile') : `„${lastQuery}"`}
+          </span>
+          <button
+            type="button"
+            onClick={() => setFilterSheetOpen(true)}
+            className={`relative btn-secondary text-xs px-3 py-2 ${
+              activeFilterCount > 0 ? 'border-sky-500/50 text-sky-400' : ''
+            }`}
+          >
+            {t('lab_filter_button')}
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-sky-500 text-[0.55rem] font-black text-white flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Study Feed */}
+        <StudyFeed
+          articles={articles}
+          filters={filters}
+          onSidebarFilter={handleSidebarFilter}
+          loading={loading}
+          errorMessage={errorMessage}
+          isTrending={isTrending}
+          lastQuery={lastQuery}
+          onRetry={() => void runSearch(lastQuery, filters)}
+        />
+
+        {/* Mobile Bottom Sheet Filter */}
+        <FilterSheet
+          open={filterSheetOpen}
+          filters={filters}
+          resultCount={articles.length}
+          onClose={() => setFilterSheetOpen(false)}
+          onChange={setFilters}
+          onApply={handleSheetApply}
+        />
       </div>
-
-      {/* Study Feed — includes sticky desktop sidebar */}
-      <StudyFeed
-        articles={articles}
-        filters={filters}
-        onSidebarFilter={handleSidebarFilter}
-        loading={loading}
-        errorMessage={errorMessage}
-        isTrending={isTrending}
-        lastQuery={lastQuery}
-        onRetry={() => void runSearch(lastQuery, filters)}
-      />
-
-      {/* Mobile Bottom Sheet Filter */}
-      <FilterSheet
-        open={filterSheetOpen}
-        filters={filters}
-        resultCount={articles.length}
-        onClose={() => setFilterSheetOpen(false)}
-        onChange={setFilters}
-        onApply={handleSheetApply}
-      />
-    </div>
+    </>
   )
 }
