@@ -104,9 +104,8 @@ export const CHART_PEPTIDES: Array<{ name: string; query: string; color: string 
 // ── Internal fetch primitives ──────────────────────────────────────────────────
 
 function buildEutilsUrl(path: string, params: Record<string, string>): string {
-  const url = new URL(`${EUTILS_BASE_URL}/${path}`)
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value)
-  return url.toString()
+  const searchParams = new URLSearchParams(params)
+  return `${EUTILS_BASE_URL}/${path}?${searchParams.toString()}`
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
