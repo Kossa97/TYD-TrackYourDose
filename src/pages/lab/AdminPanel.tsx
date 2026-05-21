@@ -173,7 +173,9 @@ export function AdminPanel() {
     }
   }
 
-  const isLoading = status === 'loading' || status === 'saving'
+  const isLoading  = status === 'loading' || status === 'saving'
+  const isSaving   = status === 'saving'
+  const showPreview = (status === 'preview' || status === 'saving') && result !== null
 
   return (
     <div className="max-w-2xl mx-auto pb-12">
@@ -326,7 +328,7 @@ export function AdminPanel() {
       )}
 
       {/* ── PREVIEW ─────────────────────────────────────────────────────────── */}
-      {status === 'preview' && result && (
+      {showPreview && result && (
         <div className="mt-5 bg-[#0B1220] border border-sky-500/20 rounded-2xl overflow-hidden">
           {/* Preview Header */}
           <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
@@ -380,10 +382,10 @@ export function AdminPanel() {
             <button
               type="button"
               onClick={tab === 'update' ? saveUpdate : saveNew}
-              disabled={status === 'saving'}
+              disabled={isSaving}
               className="btn-primary flex-1 flex items-center justify-center gap-2 text-sm"
             >
-              {status === 'saving'
+              {isSaving
                 ? <><Loader2 size={14} className="animate-spin" /> Speichern…</>
                 : <><Save size={14} /> In Bibliothek speichern</>
               }
