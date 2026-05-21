@@ -126,7 +126,9 @@ export function ArticleHero({ article }: { article: PubMedArticle }) {
 export function ArticleGridCard({ article }: { article: PubMedArticle }) {
   const { peptide, style } = getPeptideStyle(article.title)
   const recent = isRecent(article.pubdate)
-  const snippet = article.abstract ? `${article.abstract.slice(0, 110).trim()}…` : ''
+  const snippet = article.abstract.length > 110
+    ? `${article.abstract.slice(0, 110).trim()}…`
+    : article.abstract
 
   return (
     <article className={`card border-l-4 ${style.accent} border-slate-800/60 flex flex-col`}>
