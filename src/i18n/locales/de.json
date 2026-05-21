@@ -618,5 +618,6 @@
   "lab_context_strong": "Hochqualitative Evidenz, direkt auf Menschen anwendbar.",
   "lab_context_moderate": "Solide Humandaten, weitere Studien empfohlen.",
   "lab_context_preclinical": "Tierstudie — zeigt Potenzial, braucht Human-Bestätigung.",
-  "lab_context_unknown": "Studientyp nicht klassifiziert."
+  "lab_context_unknown": "Studientyp nicht klassifiziert.",
+  "lab_evidence_bar_label": "Evidenz"
 }
