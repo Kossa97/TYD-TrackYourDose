@@ -26,17 +26,20 @@ export interface ChartEntry {
 
 export type SortMode = 'date' | 'relevance'
 export type YearFilter = 'all' | '2024plus' | '2025'
+export type StudyTypeFilter = '' | 'human' | 'animal' | 'meta' | 'clinical'
 
 export interface FilterState {
   peptides: string[]
   sort: SortMode
   year: YearFilter
+  studyType: StudyTypeFilter
 }
 
 export const DEFAULT_FILTER_STATE: FilterState = {
   peptides: [],
   sort: 'date',
   year: 'all',
+  studyType: '',
 }
 
 // ── Filter helpers ─────────────────────────────────────────────────────────────
@@ -46,6 +49,7 @@ export function countActiveFilters(f: FilterState): number {
   if (f.peptides.length > 0) n++
   if (f.sort !== 'date') n++
   if (f.year !== 'all') n++
+  if (f.studyType !== '') n++
   return n
 }
 
@@ -55,11 +59,20 @@ const YEAR_CLAUSE: Record<YearFilter, string> = {
   '2025': ' AND "2025"[PDat]',
 }
 
+const STUDY_TYPE_CLAUSE: Record<StudyTypeFilter, string> = {
+  '':       '',
+  human:    ' AND human[MeSH]',
+  animal:   ' AND (rat[MeSH] OR mouse[MeSH] OR animal[MeSH Terms])',
+  meta:     ' AND (systematic review[pt] OR meta-analysis[pt])',
+  clinical: ' AND clinical trial[pt]',
+}
+
 export function buildQuery(textQuery: string, filters: FilterState): string {
-  const yearClause = YEAR_CLAUSE[filters.year]
+  const yearClause      = YEAR_CLAUSE[filters.year]
+  const studyTypeClause = STUDY_TYPE_CLAUSE[filters.studyType]
 
   if (textQuery.trim()) {
-    return textQuery.trim() + yearClause
+    return textQuery.trim() + yearClause + studyTypeClause
   }
 
   const peptideClause =
@@ -67,7 +80,7 @@ export function buildQuery(textQuery: string, filters: FilterState): string {
       ? filters.peptides.map(p => `"${p}"`).join(' OR ')
       : TRENDING_QUERY
 
-  return peptideClause + yearClause
+  return peptideClause + yearClause + studyTypeClause
 }
 
 // ── Chart config ───────────────────────────────────────────────────────────────
