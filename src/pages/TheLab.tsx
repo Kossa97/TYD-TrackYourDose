@@ -1,274 +1,101 @@
-import { useMemo, useState } from 'react'
+// src/pages/TheLab.tsx
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { AlertTriangle, BookOpen, ChevronDown, ChevronUp, ExternalLink, FlaskConical, Loader2, Search } from 'lucide-react'
-
-interface PubMedArticle {
-  id: string
-  title: string
-  authors: string[]
-  journal: string
-  pubdate: string
-  abstract: string
-  link: string
-}
+import {
+  AlertTriangle, BookOpen, Flame, FlaskConical,
+  Loader2, Search, SlidersHorizontal,
+} from 'lucide-react'
+import {
+  searchPubMedArticles,
+  fetchChartCounts,
+  buildQuery,
+  countActiveFilters,
+  getErrorMessage,
+  TRENDING_QUERY,
+  DEFAULT_FILTER_STATE,
+} from './lab/pubmed'
+import type { PubMedArticle, ChartEntry, FilterState } from './lab/pubmed'
+import { LabStats } from './lab/PeptideChart'
+import { FilterSheet } from './lab/FilterSheet'
+import { ArticleHero, ArticleGridCard, ArticleMiniItem } from './lab/ArticleCards'
 
 const QUICK_FILTERS = [
-  { value: 'BPC-157', labelKey: 'lab_filter_bpc_157' },
-  { value: 'TB-500', labelKey: 'lab_filter_tb_500' },
+  { value: 'BPC-157',    labelKey: 'lab_filter_bpc_157' },
+  { value: 'TB-500',     labelKey: 'lab_filter_tb_500' },
   { value: 'Ipamorelin', labelKey: 'lab_filter_ipamorelin' },
-  { value: 'CJC-1295', labelKey: 'lab_filter_cjc_1295' },
-  { value: 'Selank', labelKey: 'lab_filter_selank' },
-  { value: 'Epithalon', labelKey: 'lab_filter_epithalon' },
+  { value: 'CJC-1295',   labelKey: 'lab_filter_cjc_1295' },
+  { value: 'Selank',     labelKey: 'lab_filter_selank' },
+  { value: 'Epithalon',  labelKey: 'lab_filter_epithalon' },
 ]
-
-interface ESearchResponse {
-  esearchresult?: {
-    idlist?: string[]
-  }
-}
-
-interface ESummaryArticle {
-  uid?: string
-  title?: string
-  authors?: Array<{ name?: string }>
-  fulljournalname?: string
-  source?: string
-  pubdate?: string
-}
-
-type ESummaryResult = {
-  uids?: string[]
-} & Record<string, ESummaryArticle | string[] | undefined>
-
-interface ESummaryResponse {
-  result?: ESummaryResult
-}
-
-const PROXY = 'https://api.allorigins.win/raw?url='
-const EUTILS_BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils'
-const PUBMED_ARTICLE_BASE_URL = 'https://pubmed.ncbi.nlm.nih.gov'
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    const context = 'context' in error ? (error as { context?: unknown }).context : null
-    if (context instanceof Response) {
-      return `${error.message} (${context.status} ${context.statusText})`
-    }
-    return error.message
-  }
-
-  if (typeof error === 'string') return error
-
-  return 'Unexpected error while loading PubMed data.'
-}
-
-async function searchPubMedArticles(query: string): Promise<PubMedArticle[]> {
-  const ids = await searchPubMedIds(query)
-
-  if (ids.length === 0) {
-    return []
-  }
-
-  const [summaries, abstracts] = await Promise.all([
-    fetchPubMedSummaries(ids),
-    fetchPubMedAbstracts(ids),
-  ])
-
-  return ids
-    .map(uid => {
-      const summary = summaries.get(uid)
-      const journal = summary?.fulljournalname ?? summary?.source ?? ''
-      const pubmedUrl = `${PUBMED_ARTICLE_BASE_URL}/${uid}/`
-
-      return {
-        id: uid,
-        title: summary?.title ?? '',
-        authors: extractAuthorNames(summary),
-        journal,
-        pubdate: summary?.pubdate ?? '',
-        abstract: abstracts.get(uid) ?? '',
-        link: pubmedUrl,
-      }
-    })
-    .filter(article => Boolean(article.title))
-}
-
-async function searchPubMedIds(query: string): Promise<string[]> {
-  const searchUrl = buildProxiedEutilsUrl('esearch.fcgi', {
-    db: 'pubmed',
-    term: query,
-    retmax: '6',
-    sort: 'date',
-    retmode: 'json',
-  })
-
-  const data = await fetchJson<ESearchResponse>(searchUrl)
-
-  return data.esearchresult?.idlist ?? []
-}
-
-async function fetchPubMedSummaries(ids: string[]): Promise<Map<string, ESummaryArticle>> {
-  const url = buildProxiedEutilsUrl('esummary.fcgi', {
-    db: 'pubmed',
-    id: ids.join(','),
-    retmode: 'json',
-  })
-
-  const data = await fetchJson<ESummaryResponse>(url)
-  const summaries = new Map<string, ESummaryArticle>()
-
-  for (const id of ids) {
-    const summary = data.result?.[id]
-
-    if (summary && !Array.isArray(summary)) {
-      summaries.set(id, summary)
-    }
-  }
-
-  return summaries
-}
-
-async function fetchPubMedAbstracts(ids: string[]): Promise<Map<string, string>> {
-  const url = buildProxiedEutilsUrl('efetch.fcgi', {
-    db: 'pubmed',
-    id: ids.join(','),
-    retmode: 'xml',
-  })
-
-  const response = await fetch(url, {
-    headers: { Accept: 'application/xml' },
-  })
-
-  if (!response.ok) {
-    throw new Error(`PubMed efetch request failed with status ${response.status}`)
-  }
-
-  const xml = await response.text()
-  const document = new DOMParser().parseFromString(xml, 'application/xml')
-  const abstracts = new Map<string, string>()
-
-  for (const article of document.querySelectorAll('PubmedArticle')) {
-    const uid = article.querySelector('PMID')?.textContent?.trim()
-
-    if (!uid) {
-      continue
-    }
-
-    const abstractParts = Array.from(article.querySelectorAll('AbstractText'))
-      .map(node => {
-        const text = node.textContent?.replace(/\s+/g, ' ').trim()
-
-        if (!text) {
-          return ''
-        }
-
-        const label = node.getAttribute('Label')?.trim()
-
-        return label ? `${label}: ${text}` : text
-      })
-      .filter(Boolean)
-
-    abstracts.set(uid, abstractParts.join('\n\n'))
-  }
-
-  return abstracts
-}
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, {
-    headers: { Accept: 'application/json' },
-  })
-
-  if (!response.ok) {
-    throw new Error(`PubMed request failed with status ${response.status}`)
-  }
-
-  return await response.json() as T
-}
-
-function buildProxiedEutilsUrl(path: string, params: Record<string, string>): string {
-  const url = new URL(`${EUTILS_BASE_URL}/${path}`)
-
-  for (const [key, value] of Object.entries(params)) {
-    url.searchParams.set(key, value)
-  }
-
-  return `${PROXY}${encodeURIComponent(url.toString())}`
-}
-
-function extractAuthorNames(summary?: ESummaryArticle): string[] {
-  return summary?.authors
-    ?.map(author => author.name?.trim() ?? '')
-    .filter(Boolean) ?? []
-}
 
 export function TheLab() {
   const { t } = useTranslation()
-  const [query, setQuery] = useState('')
-  const [lastQuery, setLastQuery] = useState('')
+
+  const [query, setQuery]               = useState('')
   const [activeFilter, setActiveFilter] = useState('')
-  const [results, setResults] = useState<PubMedArticle[]>([])
-  const [loading, setLoading] = useState(false)
+  const [articles, setArticles]         = useState<PubMedArticle[]>([])
+  const [chartData, setChartData]       = useState<ChartEntry[]>([])
+  const [loading, setLoading]           = useState(true)
+  const [chartLoading, setChartLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [hasSearched, setHasSearched] = useState(false)
-  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const [isTrending, setIsTrending]     = useState(true)
+  const [lastQuery, setLastQuery]       = useState('')
+  const [filters, setFilters]           = useState<FilterState>(DEFAULT_FILTER_STATE)
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
 
-  const emptyStateText = useMemo(() => {
-    if (!hasSearched) return t('lab_empty_initial')
-    return t('lab_no_results', { query: lastQuery })
-  }, [hasSearched, lastQuery, t])
+  // Auto-load on mount — trending articles + chart counts in parallel
+  useEffect(() => {
+    searchPubMedArticles(TRENDING_QUERY, 10)
+      .then(setArticles)
+      .catch(err => setErrorMessage(getErrorMessage(err)))
+      .finally(() => setLoading(false))
 
-  const runSearch = async (nextQuery = query) => {
-    const searchQuery = nextQuery.trim()
-    if (!searchQuery) {
-      toast.error(t('lab_query_required'))
-      return
-    }
+    fetchChartCounts()
+      .then(setChartData)
+      .finally(() => setChartLoading(false))
+  }, [])
 
+  async function runSearch(textQuery: string, nextFilters: FilterState) {
+    const finalQuery = buildQuery(textQuery, nextFilters)
     setLoading(true)
     setErrorMessage(null)
-    setHasSearched(true)
-    setLastQuery(searchQuery)
-    setExpanded(new Set())
-
+    setLastQuery(textQuery.trim() || 'Peptide')
     try {
-      const articles = await searchPubMedArticles(searchQuery)
-      setResults(articles)
-    } catch (error) {
-      console.error('PubMed search failed', error)
-      setErrorMessage(getErrorMessage(error))
+      const results = await searchPubMedArticles(finalQuery, 10, nextFilters.sort)
+      setArticles(results)
+      setIsTrending(false)
+    } catch (err) {
+      setErrorMessage(getErrorMessage(err))
       toast.error(t('lab_search_failed'))
-      setResults([])
+      setArticles([])
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     setActiveFilter('')
-    void runSearch()
+    void runSearch(query, filters)
   }
 
   const handleQuickFilter = (value: string) => {
     setQuery(value)
     setActiveFilter(value)
-    void runSearch(value)
+    void runSearch(value, filters)
   }
 
-  const toggleExpanded = (id: string) => {
-    setExpanded(current => {
-      const next = new Set(current)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
+  const activeFilterCount = countActiveFilters(filters)
+
+  const hero = articles[0]
+  const grid = articles.slice(1, 5)
+  const mini = articles.slice(5)
 
   return (
     <div>
+      {/* ── Page Header ──────────────────────────────────────────── */}
       <div className="mb-5 pt-1">
         <p className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-sky-400/65 mb-1">
           {t('lab_kicker')}
@@ -284,57 +111,132 @@ export function TheLab() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="card mb-4">
-        <label className="label" htmlFor="lab-search">{t('lab_search_label')}</label>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-            <input
-              id="lab-search"
-              className="input pl-9 text-sm"
-              placeholder={t('lab_search_placeholder')}
-              value={query}
-              disabled={loading}
-              onChange={event => {
-                setQuery(event.target.value)
-                setActiveFilter('')
-              }}
-            />
-          </div>
-          <button className="btn-primary shrink-0" type="submit" disabled={loading}>
-            {loading ? t('loading') : t('lab_search_button')}
-          </button>
+      {/* ── Search Row ────────────────────────────────────────────── */}
+      <form onSubmit={handleSubmit} className="flex gap-2 mb-3">
+        <div className="relative flex-1">
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+          />
+          <input
+            className="input pl-9 text-sm"
+            placeholder={t('lab_search_placeholder')}
+            value={query}
+            disabled={loading}
+            onChange={e => {
+              setQuery(e.target.value)
+              setActiveFilter('')
+            }}
+          />
         </div>
+
+        {/* Filter button with active-count badge */}
+        <button
+          type="button"
+          onClick={() => setFilterSheetOpen(true)}
+          className={`relative btn-secondary shrink-0 px-3 ${
+            activeFilterCount > 0 ? 'border-sky-500/50 text-sky-400' : ''
+          }`}
+        >
+          <SlidersHorizontal size={15} />
+          {activeFilterCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-sky-500 text-[0.55rem] font-black text-white flex items-center justify-center">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+
+        <button className="btn-primary shrink-0" type="submit" disabled={loading}>
+          {loading ? t('loading') : t('lab_search_button')}
+        </button>
       </form>
 
+      {/* ── Active filter chips ───────────────────────────────────── */}
+      {activeFilterCount > 0 && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {filters.peptides.map(p => (
+            <span
+              key={p}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-500/15 border border-sky-500/25 text-sky-400 text-xs font-bold"
+            >
+              {p}
+              <button
+                type="button"
+                className="hover:text-white transition-colors"
+                onClick={() =>
+                  setFilters(f => ({ ...f, peptides: f.peptides.filter(x => x !== p) }))
+                }
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          {filters.sort !== 'date' && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-500/15 border border-sky-500/25 text-sky-400 text-xs font-bold">
+              Relevanz
+              <button
+                type="button"
+                className="hover:text-white transition-colors"
+                onClick={() => setFilters(f => ({ ...f, sort: 'date' }))}
+              >
+                ×
+              </button>
+            </span>
+          )}
+          {filters.year !== 'all' && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-500/15 border border-sky-500/25 text-sky-400 text-xs font-bold">
+              {filters.year === '2024plus' ? '2024+' : '2025'}
+              <button
+                type="button"
+                className="hover:text-white transition-colors"
+                onClick={() => setFilters(f => ({ ...f, year: 'all' }))}
+              >
+                ×
+              </button>
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* ── Quick Filters ─────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-2 mb-5">
-        {QUICK_FILTERS.map(filter => (
+        {QUICK_FILTERS.map(f => (
           <button
-            key={filter.value}
+            key={f.value}
             type="button"
-            onClick={() => handleQuickFilter(filter.value)}
             disabled={loading}
+            onClick={() => handleQuickFilter(f.value)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              activeFilter === filter.value ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+              activeFilter === f.value
+                ? 'bg-sky-500 text-white'
+                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
             }`}
           >
-            {t(filter.labelKey)}
+            {t(f.labelKey)}
           </button>
         ))}
       </div>
 
+      {/* ── Stats + Chart ─────────────────────────────────────────── */}
+      <LabStats
+        chartData={chartData}
+        chartLoading={chartLoading}
+        totalFound={articles.length}
+      />
+
+      {/* ── Loading ───────────────────────────────────────────────── */}
       {loading && (
         <div className="card text-center py-10 text-slate-500">
           <Loader2 size={32} className="mx-auto mb-3 text-sky-400/60 animate-spin" />
-          <p className="text-sm">{t('lab_loading_results')}</p>
+          <p className="text-sm">
+            {isTrending ? 'Lade neueste Studien…' : t('lab_loading_results')}
+          </p>
         </div>
       )}
 
+      {/* ── Error ────────────────────────────────────────────────── */}
       {!loading && errorMessage && (
-        <div
-          className="card border border-red-500/30 bg-red-950/30"
-          role="alert"
-        >
+        <div className="card border border-red-500/30 bg-red-950/30" role="alert">
           <div className="flex items-start gap-3">
             <AlertTriangle size={22} className="mt-0.5 shrink-0 text-red-400" />
             <div className="min-w-0 flex-1">
@@ -343,7 +245,7 @@ export function TheLab() {
               <button
                 type="button"
                 className="btn-secondary mt-4 text-sm"
-                onClick={() => void runSearch(lastQuery)}
+                onClick={() => void runSearch(query, filters)}
               >
                 {t('lab_search_button')}
               </button>
@@ -352,66 +254,80 @@ export function TheLab() {
         </div>
       )}
 
-      {!loading && !errorMessage && results.length === 0 && (
+      {/* ── Empty ────────────────────────────────────────────────── */}
+      {!loading && !errorMessage && articles.length === 0 && (
         <div className="card text-center py-10 text-slate-500">
           <BookOpen size={32} className="mx-auto mb-2 opacity-40" />
-          <p className="text-sm">{emptyStateText}</p>
+          <p className="text-sm">
+            {isTrending
+              ? 'Keine Studien gefunden.'
+              : t('lab_no_results', { query: lastQuery })}
+          </p>
         </div>
       )}
 
-      {!loading && !errorMessage && results.length > 0 && (
-        <div className="space-y-4">
-          {results.map(article => {
-            const isExpanded = expanded.has(article.id)
-            const abstractText = article.abstract || t('lab_no_abstract')
-            const shouldCollapse = abstractText.length > 260
-            const visibleAbstract = isExpanded || !shouldCollapse
-              ? abstractText
-              : `${abstractText.slice(0, 260).trim()}...`
-
-            return (
-              <article key={article.id} className="card border border-sky-500/10">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="min-w-0 flex-1">
-                    <h2 className="text-white font-semibold leading-snug">{article.title}</h2>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-slate-500">
-                      <span>{article.authors.length ? article.authors.join(', ') : t('lab_unknown_authors')}</span>
-                      {article.journal && <span className="text-sky-400">{article.journal}</span>}
-                      {article.pubdate && <span>{article.pubdate}</span>}
-                    </div>
-                  </div>
+      {/* ── Articles ─────────────────────────────────────────────── */}
+      {!loading && !errorMessage && articles.length > 0 && (
+        <div>
+          {/* Section label */}
+          <div className="flex items-end justify-between border-b border-white/[0.06] pb-2 mb-4">
+            <div>
+              {isTrending ? (
+                <div className="flex items-center gap-1.5">
+                  <Flame size={13} className="text-orange-400" />
+                  <span className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-white">
+                    Trending
+                  </span>
                 </div>
-
-                <div className="rounded-2xl border border-slate-800 bg-black/20 p-3">
-                  <p className="label mb-2">{t('lab_abstract_label')}</p>
-                  <p className="text-sm text-slate-300 leading-relaxed">{visibleAbstract}</p>
-                  {shouldCollapse && (
-                    <button
-                      type="button"
-                      onClick={() => toggleExpanded(article.id)}
-                      className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors"
-                    >
-                      {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                      {isExpanded ? t('lab_show_less') : t('lab_show_more')}
-                    </button>
-                  )}
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <Search size={12} className="text-slate-500" />
+                  <span className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-white">
+                    „{lastQuery}"
+                  </span>
                 </div>
+              )}
+              <p className="text-[0.6rem] text-slate-600 mt-0.5">
+                {isTrending
+                  ? 'Neueste Peptid-Studien · PubMed'
+                  : `${articles.length} Studien gefunden`}
+              </p>
+            </div>
+            <span className="text-[0.6rem] text-slate-700 font-mono">pubmed.ncbi</span>
+          </div>
 
-                {article.link && (
-                  <a
-                    className="btn-secondary mt-3 w-full text-sm"
-                    href={article.link}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {t('lab_pubmed_link')} <ExternalLink size={14} />
-                  </a>
-                )}
-              </article>
-            )
-          })}
+          {/* Hero article — full width */}
+          {hero && <ArticleHero article={hero} />}
+
+          {/* Grid articles — 2 columns */}
+          {grid.length > 0 && (
+            <div className="grid grid-cols-2 gap-2.5 mb-3">
+              {grid.map(a => (
+                <ArticleGridCard key={a.id} article={a} />
+              ))}
+            </div>
+          )}
+
+          {/* Mini list — remaining articles */}
+          {mini.length > 0 && (
+            <div className="card">
+              {mini.map(a => (
+                <ArticleMiniItem key={a.id} article={a} />
+              ))}
+            </div>
+          )}
         </div>
       )}
+
+      {/* ── Filter Sheet ─────────────────────────────────────────── */}
+      <FilterSheet
+        open={filterSheetOpen}
+        filters={filters}
+        resultCount={articles.length}
+        onClose={() => setFilterSheetOpen(false)}
+        onChange={setFilters}
+        onApply={() => void runSearch(query, filters)}
+      />
     </div>
   )
 }
