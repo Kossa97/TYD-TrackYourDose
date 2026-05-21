@@ -15,6 +15,7 @@ import { PublicProfile } from './pages/PublicProfile'
 import { FAQ } from './pages/FAQ'
 import { Rechner } from './pages/Rechner'
 import { TheLab } from './pages/TheLab'
+import { StudyDetail } from './pages/StudyDetail'
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="kalender" element={<Dashboard />} />
             <Route path="peptide" element={<Peptide />} />
             <Route path="lab" element={<TheLab />} />
+              <Route path="lab/study/:id" element={<StudyDetail />} />
             <Route path="rechner" element={<Rechner />} />
             <Route path="the-lab" element={<TheLab />} />
             <Route path="tagebuch" element={<Tagebuch />} />
