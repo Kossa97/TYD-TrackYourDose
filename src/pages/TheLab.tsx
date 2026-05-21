@@ -23,7 +23,6 @@ export function TheLab() {
   const [articles, setArticles]               = useState<PubMedArticle[]>([])
   const [chartData, setChartData]             = useState<ChartEntry[]>([])
   const [loading, setLoading]                 = useState(true)
-  const [chartLoading, setChartLoading]       = useState(true)
   const [errorMessage, setErrorMessage]       = useState<string | null>(null)
   const [isTrending, setIsTrending]           = useState(true)
   const [lastQuery, setLastQuery]             = useState('')
@@ -39,7 +38,7 @@ export function TheLab() {
         setLoading(false)
         fetchChartCounts()
           .then(setChartData)
-          .finally(() => setChartLoading(false))
+          .catch(() => { /* chart errors are non-fatal */ })
       })
   }, [])
 

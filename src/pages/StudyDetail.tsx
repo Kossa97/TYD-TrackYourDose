@@ -2,6 +2,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import type { PubMedArticle } from './lab/pubmed'
 import {
   getEvidenceScore,
@@ -27,7 +28,7 @@ const EVIDENCE_STYLES: Record<string, string> = {
   unknown:     'bg-slate-700/40 text-slate-400',
 }
 
-function SectionCard({ label, children }: { label: string; children: React.ReactNode }) {
+function SectionCard({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="bg-[#0B1220] border border-white/[0.06] rounded-2xl p-5">
       <p
