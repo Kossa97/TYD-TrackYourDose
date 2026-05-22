@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { format, subDays } from 'date-fns'
 import toast from 'react-hot-toast'
-import { Activity, BedDouble, ChevronRight, HeartPulse, Plus, Scale, Shield, Shoe } from 'lucide-react'
+import { Activity, BedDouble, ChevronRight, Footprints, HeartPulse, Plus, Scale, Shield, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -22,7 +22,7 @@ interface WeightForm {
 
 interface DeviceMetric {
   key: string
-  icon: typeof Shoe
+  icon: LucideIcon
   value: string
   label: string
   color: string
@@ -137,7 +137,6 @@ export function Health() {
 
   const loadWeights = useCallback(async () => {
     if (!user) return
-    setLoadingWeights(true)
 
     const { data, error } = await supabase
       .from('weight_logs')
@@ -154,7 +153,11 @@ export function Health() {
   }, [user])
 
   useEffect(() => {
-    loadWeights()
+    const timer = window.setTimeout(() => {
+      void loadWeights()
+    }, 0)
+
+    return () => window.clearTimeout(timer)
   }, [loadWeights])
 
   useEffect(() => {
@@ -163,7 +166,6 @@ export function Health() {
     let cancelled = false
 
     async function loadDeviceMetrics() {
-      setLoadingDevice(true)
       try {
         const permissions = await requestPermissions()
         if (!permissions.granted) {
@@ -195,7 +197,7 @@ export function Health() {
           .filter(entry => entry.state !== 'InBed')
           .reduce((sum, entry) => sum + entry.durationHours, 0)
         setSleepLastNight(totalSleepHours > 0 ? `${formatNumber(totalSleepHours, 1)} h` : '—')
-      } catch (error) {
+      } catch {
         if (!cancelled) toast.error('Device-Gesundheitsdaten konnten nicht geladen werden')
       } finally {
         if (!cancelled) setLoadingDevice(false)
@@ -212,7 +214,7 @@ export function Health() {
   const latestWeight = weightLogs[0]
 
   const deviceMetrics: DeviceMetric[] = [
-    { key: 'steps', icon: Shoe, value: stepsToday, label: 'Schritte heute', color: '#00ccf5', loading: loadingDevice },
+    { key: 'steps', icon: Footprints, value: stepsToday, label: 'Schritte heute', color: '#00ccf5', loading: loadingDevice },
     { key: 'heart', icon: HeartPulse, value: heartRate, label: 'Herzrate', color: '#f43f5e', loading: loadingDevice },
     { key: 'sleep', icon: BedDouble, value: sleepLastNight, label: 'Schlaf letzte Nacht', color: '#8b5cf6', loading: loadingDevice },
     { key: 'hrv', icon: Activity, value: '—', label: 'HRV', color: '#10b981', loading: false },
