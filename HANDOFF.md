@@ -9,6 +9,8 @@
 
 **Aktueller Stand:** App ist funktionsfähig, vollständig und deployed auf Vercel. PWA-fähig (installierbar auf iPhone & Android). 14 Sprachen. Homescreen mit Quick-Stats (Nächste Einnahme, Streak, Studie des Tages) + Kacheln. Geführtes **Onboarding** (24 Schritte): Sprach-Gate beim ersten Start, Spotlight-Ring auf Eingabefeldern, Feld-für-Feld-Cycling mit ✓-Button, Tour-Karte immer im Vordergrund (z-index 10050). Neues **Injektionsstellen-Modul** (/injektionen) mit SVG-Körperkarte und Rotationsprotokoll.
 
+Neu in dieser Session: **Peptipedia** (evidenzbasierte Peptid-Datenbank) + **Studies** (PubMed-Forschungsmodul) komplett umgesetzt und auf Home-Screen integriert.
+
 **Deployment:**
 - **Vercel:** Automatisches Deployment bei jedem `git push` auf `main`
 - **GitHub:** `https://github.com/Kossa97/TYD-TrackYourDose`
@@ -178,7 +180,21 @@ src/
 │   ├── Home.tsx               ← Begrüßung + Stats (Nächste Einnahme, Streak, Studie) + Kacheln
 │   ├── Dashboard.tsx          ← Kalender + Tagesprotokoll (/kalender)
 │   ├── Peptide.tsx            ← Lager-Tab + Meine Peptide-Tab (~1900 Zeilen)
-│   ├── InjectionTracker.tsx   ← Injektionsstellen-Rotation (/injektionen) ← NEU
+│   ├── InjectionTracker.tsx   ← Injektionsstellen-Rotation (/injektionen)
+│   ├── TheLab.tsx             ← Studies / PubMed-Forschungsmodul (/lab)
+│   ├── StudyDetail.tsx        ← Studien-Detail-Seite (/lab/study/:id)
+│   ├── PeptideLibrary.tsx     ← Peptipedia-Übersicht (/lab/library) ⚠️ noch nicht i18n
+│   ├── PeptideDetailPage.tsx  ← Peptid-Profil (/lab/library/:slug) ⚠️ noch nicht i18n
+│   ├── lab/
+│   │   ├── PeptideCard.tsx    ← Karte für Peptipedia ⚠️ noch nicht i18n
+│   │   ├── AdminPanel.tsx     ← AI-gestütztes Admin-Panel (/lab/admin)
+│   │   ├── pubmed.ts          ← PubMed eutils API (esearch, esummary, efetch)
+│   │   ├── LabHero.tsx        ← Hero-Section mit Search
+│   │   ├── ResearchSnapshot.tsx ← 3 Snapshot-Karten
+│   │   ├── StudyCard.tsx      ← Studie-Kachel im Feed
+│   │   ├── StudySidebar.tsx   ← Desktop-Sidebar mit Filtern
+│   │   ├── StudyFeed.tsx      ← Study-Feed + Sidebar-Layout
+│   │   └── FilterSheet.tsx    ← Mobile Bottom-Sheet Filter
 │   ├── Rechner.tsx
 │   ├── Tagebuch.tsx
 │   ├── Bewertungen.tsx
@@ -187,10 +203,18 @@ src/
 │   ├── PublicProfile.tsx
 │   └── Auth.tsx
 │
-└── lib/
-    ├── supabase.ts
-    ├── peptideColors.ts       ← 12 Farben + getPeptideColor(index)
-    └── useNew.ts
+├── lib/
+│   ├── supabase.ts
+│   ├── peptideColors.ts       ← 12 Farben + getPeptideColor(index)
+│   └── useNew.ts
+│
+├── services/
+│   └── peptideLibrary.ts      ← Typen (PeptideEntry etc.), Supabase-Queries, Display-Helpers
+│                              ← ⚠️ CATEGORY_LABELS, STATUS_LABELS, EVIDENCE_LABELS, getConfidenceLabel
+│                              ←    sind noch hardcoded Deutsch — für i18n durch t()-Calls ersetzen
+│
+└── components/
+    └── LabLoader.tsx          ← Full-Screen Ladeanimation (spinning FlaskConical)
 
 scripts/
 ├── update-ob-texts.cjs        ← Onboarding-Texte in alle 14 Locales schreiben
@@ -216,17 +240,22 @@ FAQ erreichbar über schwebendes `?`-Icon (unten rechts über der Nav).
 
 ### Alle Routen
 ```
-/              ← Homescreen
-/kalender      ← Kalender + Tagesprotokoll
-/peptide       ← Lager + Meine Peptide (?tab=inventar)
-/rechner       ← Dosierungsrechner
-/tagebuch      ← Wirkungen & Nebenwirkungen
-/bewertungen   ← Sterne-Bewertungen
-/profil        ← Nutzer-Einstellungen + Sprache
-/faq           ← Hilfe
-/injektionen   ← Injektionsstellen-Rotation ← NEU
-/auth          ← Login (außerhalb Layout)
-/u/:username   ← Öffentliches Profil (außerhalb Layout)
+/                    ← Homescreen
+/kalender            ← Kalender + Tagesprotokoll
+/peptide             ← Lager + Meine Peptide (?tab=inventar)
+/rechner             ← Dosierungsrechner
+/tagebuch            ← Wirkungen & Nebenwirkungen
+/bewertungen         ← Sterne-Bewertungen
+/profil              ← Nutzer-Einstellungen + Sprache
+/faq                 ← Hilfe
+/injektionen         ← Injektionsstellen-Rotation
+/lab                 ← Studies (PubMed-Forschung) ← NEU
+/lab/study/:id       ← Studien-Detail-Seite ← NEU
+/lab/library         ← Peptipedia (Peptid-Datenbank) ← NEU
+/lab/library/:slug   ← Peptid-Detail-Profil ← NEU
+/lab/admin           ← Admin-Panel (AI-gestützt, nur eingeloggte User) ← NEU
+/auth                ← Login (außerhalb Layout)
+/u/:username         ← Öffentliches Profil (außerhalb Layout)
 ```
 
 ---
@@ -426,10 +455,60 @@ Onboarding-CSS → #ob-callout, .ob-highlight-ring, .ob-scrim-pane,
 | **Offline** | Keine PWA-Offline-Unterstützung |
 | **Registrierung** | Offen für alle (in Supabase einschränkbar) |
 | **useEffect-Deps** | Lint-Warnungen in mehreren Dateien, kein Crash |
+| **⚠️ Peptipedia nicht i18n-fertig** | `PeptideLibrary.tsx`, `PeptideCard.tsx`, `PeptideDetailPage.tsx` und `peptideLibrary.ts` (CATEGORY_LABELS, STATUS_LABELS, EVIDENCE_LABELS, getConfidenceLabel) haben noch hardcoded deutsche Strings — Seite bleibt auf Deutsch bei anderen Sprachen. Nächste Aufgabe: alle durch `t()`-Calls ersetzen + Keys in alle 14 Locales eintragen |
 
 ---
 
-## 10. Häufige Fehler & Fixes
+## 10. Peptipedia & Studies — Details
+
+### Neue DB-Tabelle: `peptide_library`
+Angelegt via SQL-Skripte (im Supabase SQL Editor ausführen):
+- `supabase-peptide-library.sql` — Tabelle + 11 Peptide
+- `supabase-peptide-library-v2.sql` — evidence_human/animal/clinical + evidence_score + research_gaps
+- `supabase-peptide-library-v3.sql` — tags[] Column
+- `supabase-admin-policies.sql` — RLS INSERT/UPDATE für eingeloggte User
+
+```
+peptide_library-Felder:
+  id, slug, name, full_name, category, tldr, mechanism
+  benefits (text[]), research_dosage, half_life, administration (text[])
+  research_status ('preclinical'|'phase_1'|'phase_2'|'approved')
+  side_effects (text[]), contraindications (text[])
+  pubmed_query, tags (text[])
+  evidence_human, evidence_animal ('none'|'limited'|'sparse'|'moderate'|'strong'|'extensive')
+  evidence_clinical ('none'|'sparse'|'limited'|'moderate'|'extensive')
+  evidence_score (int, 1–10)
+  research_gaps (text[])
+  sort_order (int)
+```
+
+**RLS:** Alle User lesen, eingeloggte User schreiben (für Admin-Panel).
+
+### Admin-Panel (/lab/admin)
+- Vercel Serverless Function: `api/peptide-ai.js` (plain JS, ES module)
+- Anthropic API Key als `VITE_ANTHROPIC_KEY` in Vercel Environment Variables
+- Modell: `claude-haiku-4-5` (stand 2026 — frühere Claude-3-Modelle deprecated)
+- Action `create`: Tippfehler korrigieren, vollständiges Profil generieren + tags
+- Action `update`: bestehendes Profil verbessern + tags aktualisieren
+- Name + Slug editierbar vor dem Speichern
+- `package.json` hat `"type": "module"` → API-Funktionen müssen `export default` nutzen (KEIN `module.exports`)
+- `"engines": { "node": "20.x" }` in package.json → globales `fetch` in Vercel verfügbar
+
+### Studies (/lab) — PubMed-Integration
+- `src/pages/lab/pubmed.ts` — eutils API (esearch, esummary, efetch), 429-Retry-Logik
+- Vite Dev Proxy: `/ncbi` → `eutils.ncbi.nlm.nih.gov` (CORS-Workaround lokal)
+- In Production: direkter Aufruf (kein Proxy)
+- `LabLoader.tsx` — Full-Screen-Ladeanimation beim ersten Laden (faded sich aus)
+- `src/pages/lab/` enthält: LabHero, ResearchSnapshot, StudyCard, StudySidebar, StudyFeed, StudyDetail, FilterSheet, PeptideCard, AdminPanel
+- `src/services/peptideLibrary.ts` — Typen, Supabase-Queries, Display-Helpers
+
+### Naming-Konventionen
+- **"Studies"** = PubMed-Recherche-Modul (`tile_lab` in i18n → "Studies")
+- **"Peptipedia"** = Evidenz-Datenbank (`tile_bibliothek` in i18n → "Peptipedia")
+
+---
+
+## 11. Häufige Fehler & Fixes
 
 | Fehler | Ursache | Fix |
 |---|---|---|
@@ -448,7 +527,7 @@ Onboarding-CSS → #ob-callout, .ob-highlight-ring, .ob-scrim-pane,
 
 ---
 
-## 11. Entwicklungs-Workflow
+## 12. Entwicklungs-Workflow
 
 ```bash
 # Lokal starten
@@ -474,4 +553,4 @@ location.reload()
 
 ---
 
-*Zuletzt aktualisiert: 20. Mai 2026 — 24-Schritt-Onboarding, Feld-Cycling mit ✓-Button, Injektionsstellen-Modul, Homescreen-Stats (Streak/Nächste Einnahme/Studie), Dosiserhöhungs-Steps, LanguageGate-Fix*
+*Zuletzt aktualisiert: 22. Mai 2026 — Peptipedia (AI-Admin, evidence scoring, tags, filtering), Studies (PubMed-Integration, LabLoader), Homescreen-Kachel für Peptipedia, i18n-Vervollständigung (63 Keys × 12 Sprachen). Offenes Ticket: Peptipedia-Seiten sind noch nicht vollständig internationalisiert (hardcoded DE-Strings in PeptideLibrary/Card/DetailPage und peptideLibrary.ts).*
