@@ -22,6 +22,8 @@
   "tile_lab_desc": "PubMed research & studies",
   "tile_rechner": "Calculator",
   "tile_rechner_desc": "Calculate dose",
+  "tile_protokoll": "Protocol",
+  "tile_protokoll_desc": "Cycle analytics & PDF export",
   "tile_tagebuch": "Journal",
   "tile_tagebuch_desc": "Effects & side effects",
   "tile_bewertungen": "Reviews",

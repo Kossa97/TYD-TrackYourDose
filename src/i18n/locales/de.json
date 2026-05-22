@@ -24,6 +24,8 @@
   "tile_rechner_desc": "Dosis berechnen",
   "tile_health": "Health",
   "tile_health_desc": "Körperdaten & Vitals",
+  "tile_protokoll": "Protokoll",
+  "tile_protokoll_desc": "Zyklusauswertung & PDF-Export",
   "tile_tagebuch": "Tagebuch",
   "tile_tagebuch_desc": "Wirkungen & Nebenwirkungen",
   "tile_bewertungen": "Bewertungen",
