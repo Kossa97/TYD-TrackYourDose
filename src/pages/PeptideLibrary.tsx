@@ -1,7 +1,7 @@
 // src/pages/PeptideLibrary.tsx
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, FlaskConical, Search } from 'lucide-react'
+import { ArrowLeft, FlaskConical, Search, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   getAllPeptides,
@@ -67,15 +67,26 @@ export function PeptideLibrary() {
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#070B11] to-transparent pointer-events-none" />
 
         <div className="relative">
-          {/* Breadcrumb */}
-          <button
-            type="button"
-            onClick={() => navigate('/lab')}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors mb-4"
-          >
-            <ArrowLeft size={12} />
-            <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>The Lab</span>
-          </button>
+          {/* Breadcrumb + Admin button */}
+          <div className="flex items-center justify-between mb-4">
+            <button
+              type="button"
+              onClick={() => navigate('/lab')}
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              <ArrowLeft size={12} />
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>The Lab</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/lab/admin')}
+              className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-violet-400 transition-colors"
+              title="Bibliothek verwalten"
+            >
+              <Settings size={13} />
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Admin</span>
+            </button>
+          </div>
 
           <p
             className="text-[0.58rem] font-black uppercase tracking-[0.2em] text-sky-400/65 mb-2"
