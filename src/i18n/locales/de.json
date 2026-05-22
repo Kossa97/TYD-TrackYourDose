@@ -536,6 +536,8 @@
   "stat_study": "Studie des Tages",
   "tile_injektionen": "Injektionen",
   "tile_injektionen_desc": "Stellen-Rotation & 3D-Tracker",
+  "tile_bibliothek": "Bibliothek",
+  "tile_bibliothek_desc": "Evidenzbasierte Peptid-Forschungsprofile",
   "lab_kicker": "Forschung",
   "lab_title": "The Lab",
   "lab_subtitle": "Erkunde Peptid-Forschung & klinische Intelligenz.",

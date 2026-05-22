@@ -536,6 +536,8 @@
   "stat_study": "Study of the Day",
   "tile_injektionen": "Injections",
   "tile_injektionen_desc": "Site rotation & 3D tracker",
+  "tile_bibliothek": "Library",
+  "tile_bibliothek_desc": "Evidence-based peptide research profiles",
   "lab_kicker": "Research",
   "lab_title": "The Lab",
   "lab_subtitle": "Search PubMed for studies and abstracts.",
