@@ -1,10 +1,7 @@
-// api/peptide-ai.ts
+// api/peptide-ai.js
 // Vercel Serverless Function — Anthropic API server-seitig aufrufen
-// Der Key bleibt sicher im Server, nie im Browser sichtbar.
 
-export const config = { maxDuration: 30 }
-
-function buildCreatePrompt(name: string): string {
+function buildCreatePrompt(name) {
   return `Du bist ein wissenschaftlicher Forschungsassistent. Erstelle ein umfassendes, wissenschaftlich korrektes Forschungsprofil für das Peptid: ${name}
 
 PFLICHTREGELN:
@@ -46,7 +43,7 @@ evidence_clinical: none | sparse | moderate | extensive
 evidence_score: Ganzzahl 1-10`
 }
 
-function buildUpdatePrompt(existing: Record<string, unknown>): string {
+function buildUpdatePrompt(existing) {
   return `Du bist ein wissenschaftlicher Forschungsassistent. Aktualisiere und verbessere dieses Peptid-Forschungsprofil.
 
 BESTEHENDES PROFIL:
@@ -79,8 +76,7 @@ Antworte AUSSCHLIESSLICH mit einem validen JSON-Objekt:
 }`
 }
 
-export default async function handler(req: any, res: any) {
-  // CORS für Vercel Preview URLs
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
@@ -90,14 +86,13 @@ export default async function handler(req: any, res: any) {
 
   const apiKey = process.env.VITE_ANTHROPIC_KEY
   if (!apiKey) {
-    return res.status(500).json({
-      error: 'VITE_ANTHROPIC_KEY nicht konfiguriert. Bitte in Vercel Environment Variables setzen.',
-    })
+    return res.status(500).json({ error: 'VITE_ANTHROPIC_KEY nicht konfiguriert in Vercel' })
   }
 
-  const { action, name, existing } = req.body ?? {}
+  const body = req.body ?? {}
+  const { action, name, existing } = body
 
-  if (!action) return res.status(400).json({ error: 'action fehlt (create | update)' })
+  if (!action) return res.status(400).json({ error: 'action fehlt' })
 
   let prompt = ''
   if (action === 'create') {
@@ -131,9 +126,8 @@ export default async function handler(req: any, res: any) {
     }
 
     const aiData = await aiRes.json()
-    const text: string = aiData.content?.[0]?.text ?? ''
+    const text = aiData.content?.[0]?.text ?? ''
 
-    // JSON aus Antwort extrahieren
     const match = text.match(/\{[\s\S]*\}/)
     if (!match) {
       return res.status(500).json({ error: 'Kein JSON in KI-Antwort', raw: text })
@@ -143,7 +137,7 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ result })
   } catch (err) {
     return res.status(500).json({
-      error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+      error: err instanceof Error ? err.message : String(err),
     })
   }
 }
