@@ -24,23 +24,28 @@ interface BloodworkForm {
   notes: string
 }
 
+interface MarkerOption {
+  label: string
+  units: string[]
+}
+
 const MARKERS = [
-  { label: 'IGF-1', unit: 'ng/mL' },
-  { label: 'Testosteron', unit: 'ng/dL' },
-  { label: 'Östradiol', unit: 'pg/mL' },
-  { label: 'SHBG', unit: 'nmol/L' },
-  { label: 'LH', unit: 'mIU/mL' },
-  { label: 'FSH', unit: 'mIU/mL' },
-  { label: 'TSH', unit: 'mIU/mL' },
-  { label: 'CRP', unit: 'mg/L' },
-  { label: 'Vitamin D', unit: 'ng/mL' },
-  { label: 'Ferritin', unit: 'ng/mL' },
-  { label: 'Hämoglobin', unit: 'g/dL' },
-  { label: 'Hematokrit', unit: '%' },
-  { label: 'GH', unit: 'ng/mL' },
-  { label: 'Kortisol', unit: 'µg/dL' },
-  { label: 'Insulin', unit: 'µIU/mL' },
-]
+  { label: 'IGF-1', units: ['ng/mL', 'µg/L', 'nmol/L'] },
+  { label: 'Testosteron', units: ['ng/dL', 'nmol/L', 'ng/mL', 'pg/mL'] },
+  { label: 'Östradiol', units: ['pg/mL', 'pmol/L'] },
+  { label: 'SHBG', units: ['nmol/L', 'µg/mL'] },
+  { label: 'LH', units: ['mIU/mL', 'IU/L'] },
+  { label: 'FSH', units: ['mIU/mL', 'IU/L'] },
+  { label: 'TSH', units: ['mIU/mL', 'µIU/mL', 'mU/L'] },
+  { label: 'CRP', units: ['mg/L', 'mg/dL'] },
+  { label: 'Vitamin D', units: ['ng/mL', 'nmol/L'] },
+  { label: 'Ferritin', units: ['ng/mL', 'µg/L', 'pmol/L'] },
+  { label: 'Hämoglobin', units: ['g/dL', 'g/L', 'mmol/L'] },
+  { label: 'Hematokrit', units: ['%', 'L/L'] },
+  { label: 'GH', units: ['ng/mL', 'µg/L', 'mIU/L'] },
+  { label: 'Kortisol', units: ['µg/dL', 'nmol/L', 'µg/L'] },
+  { label: 'Insulin', units: ['µIU/mL', 'mIU/L', 'pmol/L'] },
+] satisfies MarkerOption[]
 
 const today = () => format(new Date(), 'yyyy-MM-dd')
 
@@ -99,9 +104,21 @@ export function Blutwerte() {
     const presetLabels = new Set(MARKERS.map(marker => marker.label))
     const customMarkers = markers
       .filter(marker => !presetLabels.has(marker))
-      .map(marker => ({ label: marker, unit: entries.find(entry => entry.marker === marker)?.unit ?? '' }))
+      .map(marker => ({
+        label: marker,
+        units: Array.from(new Set(entries
+          .filter(entry => entry.marker === marker)
+          .map(entry => entry.unit)
+          .filter(Boolean))),
+      }))
     return [...MARKERS, ...customMarkers]
   }, [entries, markers])
+
+  const unitOptions = useMemo(() => {
+    const selectedMarker = markerOptions.find(option => option.label === form.marker)
+    const units = selectedMarker?.units ?? []
+    return form.unit && !units.includes(form.unit) ? [...units, form.unit] : units
+  }, [form.marker, form.unit, markerOptions])
 
   const filteredEntries = useMemo(() => {
     const needle = search.trim().toLowerCase()
@@ -144,7 +161,7 @@ export function Blutwerte() {
     setForm(current => ({
       ...current,
       marker: label,
-      unit: marker?.unit || current.unit,
+      unit: marker?.units[0] ?? '',
     }))
   }
 
@@ -331,12 +348,12 @@ export function Blutwerte() {
                 <option value="">Marker auswählen</option>
                 {markerOptions.map(marker => (
                   <option key={marker.label} value={marker.label}>
-                    {marker.label} · {marker.unit}
+                    {marker.label}
                   </option>
                 ))}
               </select>
               <p className="text-slate-600 text-xs mt-1">
-                Die Einheit wird anhand des ausgewählten Markers automatisch vorbelegt.
+                Nach der Auswahl kannst du alle gängigen Einheiten für diesen Marker wählen.
               </p>
             </div>
 
@@ -353,12 +370,15 @@ export function Blutwerte() {
               </div>
               <div>
                 <label className="label">Einheit</label>
-                <input
-                  className="input"
-                  placeholder="ng/ml"
+                <select
+                  className="select"
                   value={form.unit}
                   onChange={e => setForm(f => ({ ...f, unit: e.target.value }))}
-                />
+                  disabled={!form.marker}
+                >
+                  <option value="">Einheit auswählen</option>
+                  {unitOptions.map(unit => <option key={unit} value={unit}>{unit}</option>)}
+                </select>
               </div>
             </div>
 
