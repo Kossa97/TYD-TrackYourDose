@@ -23,9 +23,15 @@ async function callAI(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, ...payload }),
   })
-  const data = await res.json()
-  if (!res.ok || data.error) throw new Error(data.error ?? 'Unbekannter Fehler')
-  return data.result
+  const text = await res.text()
+  let data: Record<string, unknown>
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new Error(`Server-Fehler (${res.status}): ${text.slice(0, 120)}`)
+  }
+  if (!res.ok || data.error) throw new Error(String(data.error ?? 'Unbekannter Fehler'))
+  return data.result as Record<string, unknown>
 }
 
 // ─── Preview Card ─────────────────────────────────────────────────────────────
