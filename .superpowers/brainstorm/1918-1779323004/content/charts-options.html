@@ -1,0 +1,115 @@
+<h2>Grafik & Statistik-Bereich</h2>
+<p class="subtitle">Was soll im Dashboard angezeigt werden? (Recharts ist bereits installiert)</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:12px;border-radius:8px;font-family:monospace;font-size:11px;color:#94a3b8">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div style="flex:1;background:#1e293b;border-radius:6px;padding:8px;text-align:center">
+          <div style="color:#00ccf5;font-size:18px;font-weight:black">847</div>
+          <div style="color:#475569;font-size:8px;margin-top:2px">STUDIEN 2024–25</div>
+        </div>
+        <div style="flex:1;background:#1e293b;border-radius:6px;padding:8px;text-align:center">
+          <div style="color:#10b981;font-size:18px;font-weight:black">↑32%</div>
+          <div style="color:#475569;font-size:8px;margin-top:2px">VS. VORJAHR</div>
+        </div>
+        <div style="flex:1;background:#1e293b;border-radius:6px;padding:8px;text-align:center">
+          <div style="color:#f97316;font-size:18px;font-weight:black">9</div>
+          <div style="color:#475569;font-size:8px;margin-top:2px">PEPTIDE AKTIV</div>
+        </div>
+      </div>
+      <div style="background:#1e293b;border-radius:6px;padding:8px">
+        <div style="color:#475569;font-size:8px;margin-bottom:6px;font-weight:bold">NEUESTE PUBLIKATION</div>
+        <div style="color:#e2e8f0;font-size:9px">BPC-157 · J Peptide Res · 14. Mai 2025</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Statistik-Kacheln</h3>
+      <p>3 große Zahlen + neueste Publikation. Schnell zu laden, keine Diagramme nötig. Fokus bleibt auf den Artikeln.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:12px;border-radius:8px;font-family:monospace;font-size:11px;color:#94a3b8">
+      <div style="background:#1e293b;border-radius:6px;padding:8px;margin-bottom:8px">
+        <div style="color:#475569;font-size:8px;margin-bottom:6px;font-weight:bold">STUDIEN PRO PEPTID (2024–25)</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="color:#94a3b8;font-size:8px;width:60px">Semaglutide</span>
+            <div style="flex:1;background:#0f172a;border-radius:2px;height:10px;overflow:hidden">
+              <div style="width:95%;height:100%;background:linear-gradient(90deg,#0ea5e9,#06b6d4);border-radius:2px"></div>
+            </div>
+            <span style="color:#64748b;font-size:8px">312</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="color:#94a3b8;font-size:8px;width:60px">BPC-157</span>
+            <div style="flex:1;background:#0f172a;border-radius:2px;height:10px;overflow:hidden">
+              <div style="width:60%;height:100%;background:linear-gradient(90deg,#8b5cf6,#a78bfa);border-radius:2px"></div>
+            </div>
+            <span style="color:#64748b;font-size:8px">197</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="color:#94a3b8;font-size:8px;width:60px">TB-500</span>
+            <div style="flex:1;background:#0f172a;border-radius:2px;height:10px;overflow:hidden">
+              <div style="width:38%;height:100%;background:linear-gradient(90deg,#10b981,#34d399);border-radius:2px"></div>
+            </div>
+            <span style="color:#64748b;font-size:8px">124</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="color:#94a3b8;font-size:8px;width:60px">Ipamorelin</span>
+            <div style="flex:1;background:#0f172a;border-radius:2px;height:10px;overflow:hidden">
+              <div style="width:22%;height:100%;background:linear-gradient(90deg,#f97316,#fb923c);border-radius:2px"></div>
+            </div>
+            <span style="color:#64748b;font-size:8px">71</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Balkendiagramm pro Peptid</h3>
+      <p>Horizontales Balkendiagramm zeigt Forschungsintensität je Peptid. Daten kommen aus mehreren PubMed-Suchen beim Laden.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:12px;border-radius:8px;font-family:monospace;font-size:11px;color:#94a3b8">
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <div style="flex:1;background:#1e293b;border-radius:6px;padding:8px;text-align:center">
+          <div style="color:#00ccf5;font-size:16px;font-weight:black">847</div>
+          <div style="color:#475569;font-size:8px">STUDIEN</div>
+        </div>
+        <div style="flex:1;background:#1e293b;border-radius:6px;padding:8px;text-align:center">
+          <div style="color:#10b981;font-size:16px;font-weight:black">↑32%</div>
+          <div style="color:#475569;font-size:8px">WACHSTUM</div>
+        </div>
+      </div>
+      <div style="background:#1e293b;border-radius:6px;padding:8px">
+        <div style="color:#475569;font-size:8px;margin-bottom:6px;font-weight:bold">TREND (LETZTE 12 MONATE)</div>
+        <div style="display:flex;align-items:flex-end;gap:3px;height:40px">
+          <div style="flex:1;background:#1d4ed8;border-radius:2px 2px 0 0;height:40%"></div>
+          <div style="flex:1;background:#1d4ed8;border-radius:2px 2px 0 0;height:55%"></div>
+          <div style="flex:1;background:#1d4ed8;border-radius:2px 2px 0 0;height:45%"></div>
+          <div style="flex:1;background:#1d4ed8;border-radius:2px 2px 0 0;height:65%"></div>
+          <div style="flex:1;background:#1d4ed8;border-radius:2px 2px 0 0;height:70%"></div>
+          <div style="flex:1;background:#1d4ed8;border-radius:2px 2px 0 0;height:60%"></div>
+          <div style="flex:1;background:#0ea5e9;border-radius:2px 2px 0 0;height:80%"></div>
+          <div style="flex:1;background:#0ea5e9;border-radius:2px 2px 0 0;height:75%"></div>
+          <div style="flex:1;background:#00ccf5;border-radius:2px 2px 0 0;height:90%"></div>
+          <div style="flex:1;background:#00ccf5;border-radius:2px 2px 0 0;height:85%"></div>
+          <div style="flex:1;background:#00ccf5;border-radius:2px 2px 0 0;height:95%"></div>
+          <div style="flex:1;background:#22d3ee;border-radius:2px 2px 0 0;height:100%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:3px">
+          <span style="color:#334155;font-size:7px">Jun 24</span>
+          <span style="color:#334155;font-size:7px">Mai 25</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Kacheln + Trendbalken</h3>
+      <p>Statistik-Kacheln oben + mini Balkendiagramm das den Forschungstrend der letzten 12 Monate zeigt. Visuell stark, realistisch implementierbar.</p>
+    </div>
+  </div>
+
+</div>

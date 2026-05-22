@@ -101,6 +101,18 @@ export function PeptideCard({ peptide }: PeptideCardProps) {
           />
         </div>
 
+        {/* Tags */}
+        {peptide.tags && peptide.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {peptide.tags.slice(0, 4).map((tag, i) => (
+              <span key={i}
+                className="text-[0.55rem] px-1.5 py-0.5 rounded-full bg-white/[0.04] text-slate-500 border border-white/[0.06]">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Footer: status + CTA */}
         <div className="flex items-center justify-between">
           <span

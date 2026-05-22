@@ -89,15 +89,18 @@ function EvidencePreview({ result }: { result: Record<string, unknown> }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function AdminPanel() {
-  const navigate                    = useNavigate()
-  const [tab, setTab]               = useState<Tab>('update')
-  const [peptides, setPeptides]     = useState<PeptideEntry[]>([])
-  const [selected, setSelected]     = useState<PeptideEntry | null>(null)
-  const [newName, setNewName]       = useState('')
-  const [status, setStatus]         = useState<Status>('idle')
-  const [result, setResult]         = useState<Record<string, unknown> | null>(null)
-  const [errorMsg, setErrorMsg]     = useState('')
-  const [savedMsg, setSavedMsg]     = useState('')
+  const navigate                      = useNavigate()
+  const [tab, setTab]                 = useState<Tab>('update')
+  const [peptides, setPeptides]       = useState<PeptideEntry[]>([])
+  const [selected, setSelected]       = useState<PeptideEntry | null>(null)
+  const [newName, setNewName]         = useState('')
+  const [status, setStatus]           = useState<Status>('idle')
+  const [result, setResult]           = useState<Record<string, unknown> | null>(null)
+  const [errorMsg, setErrorMsg]       = useState('')
+  const [savedMsg, setSavedMsg]       = useState('')
+  // Editierbare Felder in der Vorschau
+  const [editedName, setEditedName]   = useState('')
+  const [editedSlug, setEditedSlug]   = useState('')
 
   useEffect(() => {
     getAllPeptides().then(data => {
@@ -105,6 +108,19 @@ export function AdminPanel() {
       if (data.length > 0) setSelected(data[0])
     })
   }, [])
+
+  // Wenn KI-Ergebnis ankommt → editierbare Felder befüllen
+  useEffect(() => {
+    if (result) {
+      setEditedName(String(result.name ?? ''))
+      setEditedSlug(String(result.slug ?? ''))
+    }
+  }, [result])
+
+  // Finales Ergebnis mit editierten Feldern zusammenführen
+  function getFinalResult() {
+    return { ...result, name: editedName, slug: editedSlug }
+  }
 
   // ── Update existing ──────────────────────────────────────────────────────────
   async function handleUpdate() {
@@ -127,15 +143,14 @@ export function AdminPanel() {
     setStatus('saving')
     const { error } = await supabase
       .from('peptide_library')
-      .update(result)
+      .update(getFinalResult())
       .eq('slug', selected.slug)
     if (error) {
       setErrorMsg(error.message)
       setStatus('error')
     } else {
       setStatus('done')
-      setSavedMsg(`${selected.name} aktualisiert.`)
-      // Reload peptides
+      setSavedMsg(`${editedName} aktualisiert.`)
       const fresh = await getAllPeptides()
       setPeptides(fresh)
       const updated = fresh.find(p => p.slug === selected.slug)
@@ -165,13 +180,13 @@ export function AdminPanel() {
     setStatus('saving')
     const { error } = await supabase
       .from('peptide_library')
-      .insert({ ...result, sort_order: peptides.length + 1 })
+      .insert({ ...getFinalResult(), sort_order: peptides.length + 1 })
     if (error) {
       setErrorMsg(error.message)
       setStatus('error')
     } else {
       setStatus('done')
-      setSavedMsg(`${String(result.name)} zur Bibliothek hinzugefügt.`)
+      setSavedMsg(`${editedName} zur Bibliothek hinzugefügt.`)
       setNewName('')
       const fresh = await getAllPeptides()
       setPeptides(fresh)
@@ -337,27 +352,52 @@ export function AdminPanel() {
       {showPreview && result && (
         <div className="mt-5 bg-[#0B1220] border border-sky-500/20 rounded-2xl overflow-hidden">
           {/* Preview Header */}
-          <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
-            <div>
+          <div className="px-5 py-4 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between mb-3">
               <p
                 className="text-[0.55rem] font-black uppercase tracking-[0.18em] text-sky-400/55"
                 style={{ fontFamily: "'IBM Plex Mono', monospace" }}
               >
-                KI-Vorschau
+                KI-Vorschau — vor dem Speichern bearbeiten
               </p>
-              <p className="text-sm font-bold text-white mt-0.5"
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              <button
+                type="button"
+                onClick={() => { setResult(null); setStatus('idle') }}
+                className="text-slate-600 hover:text-slate-400 transition-colors"
               >
-                {String(result.name ?? result.slug ?? '—')}
-              </p>
+                <X size={16} />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => { setResult(null); setStatus('idle') }}
-              className="text-slate-600 hover:text-slate-400 transition-colors"
-            >
-              <X size={16} />
-            </button>
+
+            {/* Editierbarer Name */}
+            <div className="space-y-2">
+              <div>
+                <label className="text-[0.52rem] uppercase tracking-widest text-slate-600 block mb-1"
+                  style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                  Name (editierbar)
+                </label>
+                <input
+                  value={editedName}
+                  onChange={e => {
+                    setEditedName(e.target.value)
+                    setEditedSlug(e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''))
+                  }}
+                  className="w-full bg-[#111827] border border-white/10 rounded-lg px-3 py-2 text-sm font-bold text-white outline-none focus:border-sky-500/50 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[0.52rem] uppercase tracking-widest text-slate-600 block mb-1"
+                  style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                  Slug (URL)
+                </label>
+                <input
+                  value={editedSlug}
+                  onChange={e => setEditedSlug(e.target.value)}
+                  className="w-full bg-[#111827] border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-400 outline-none focus:border-sky-500/50 transition-colors"
+                  style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Evidence quick view */}
@@ -365,8 +405,23 @@ export function AdminPanel() {
             <EvidencePreview result={result} />
           </div>
 
+          {/* Tags */}
+          {Array.isArray(result.tags) && result.tags.length > 0 && (
+            <div className="px-5 py-3 border-b border-white/[0.06]">
+              <p className="text-[0.52rem] uppercase tracking-widest text-slate-600 mb-2"
+                style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Tags</p>
+              <div className="flex flex-wrap gap-1.5">
+                {(result.tags as string[]).map((tag, i) => (
+                  <span key={i} className="text-[0.6rem] px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-300 border border-sky-500/20">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Fields */}
-          <div className="px-5 py-4 space-y-3 max-h-[40vh] overflow-y-auto">
+          <div className="px-5 py-4 space-y-3 max-h-[35vh] overflow-y-auto">
             <PreviewField label="TLDR"             value={result.tldr} />
             <PreviewField label="Mechanismus"      value={result.mechanism} />
             <PreviewField label="Forschungsbereiche" value={result.benefits} />

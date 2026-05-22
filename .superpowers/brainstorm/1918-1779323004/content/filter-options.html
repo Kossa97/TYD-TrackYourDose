@@ -1,0 +1,122 @@
+<h2>Filter & Sortierung</h2>
+<p class="subtitle">Wie soll der Nutzer filtern und sortieren? (App ist mobile-first)</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:12px;border-radius:8px;font-family:monospace;font-size:11px;color:#94a3b8">
+      <!-- Scrollable chips row -->
+      <div style="display:flex;gap:5px;overflow:hidden;margin-bottom:8px;padding-bottom:2px">
+        <span style="background:#0ea5e9;color:white;padding:3px 10px;border-radius:20px;font-size:9px;white-space:nowrap;font-weight:bold">Alle</span>
+        <span style="background:#1e293b;padding:3px 10px;border-radius:20px;font-size:9px;white-space:nowrap">BPC-157</span>
+        <span style="background:#1e293b;padding:3px 10px;border-radius:20px;font-size:9px;white-space:nowrap">TB-500</span>
+        <span style="background:#1e293b;padding:3px 10px;border-radius:20px;font-size:9px;white-space:nowrap">Semaglutide</span>
+      </div>
+      <div style="display:flex;gap:5px;margin-bottom:10px">
+        <div style="flex:1;background:#1e293b;border-radius:6px;padding:5px 8px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:9px;color:#64748b">Sortieren</span>
+          <span style="font-size:9px;color:#00ccf5">Datum ↓ ▾</span>
+        </div>
+        <div style="flex:1;background:#1e293b;border-radius:6px;padding:5px 8px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:9px;color:#64748b">Jahr</span>
+          <span style="font-size:9px;color:#00ccf5">2024+ ▾</span>
+        </div>
+      </div>
+      <div style="background:#1e293b;border-left:3px solid #0ea5e9;border-radius:4px;padding:6px;margin-bottom:5px">
+        <div style="color:#e2e8f0;font-size:9px;font-weight:bold">BPC-157 wound healing study…</div>
+        <div style="color:#64748b;font-size:8px">Smith et al. · 2024</div>
+      </div>
+      <div style="background:#1e293b;border-left:3px solid #8b5cf6;border-radius:4px;padding:6px">
+        <div style="color:#e2e8f0;font-size:9px;font-weight:bold">TB-500 dosage protocol…</div>
+        <div style="color:#64748b;font-size:8px">Jones M. · 2024</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Chips + Dropdowns</h3>
+      <p>Scrollbare Peptid-Chips oben, darunter 2 Dropdowns (Sortieren + Jahr). Alles sichtbar, sofort bedienbar.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:12px;border-radius:8px;font-family:monospace;font-size:11px;color:#94a3b8">
+      <!-- Compact single filter bar -->
+      <div style="display:flex;align-items:center;gap:5px;background:#1e293b;border-radius:8px;padding:6px 10px;margin-bottom:8px">
+        <span style="color:#64748b;font-size:9px">🔧</span>
+        <span style="color:#00ccf5;font-size:9px;font-weight:bold">BPC-157</span>
+        <span style="color:#334155">·</span>
+        <span style="color:#00ccf5;font-size:9px">2024+</span>
+        <span style="color:#334155">·</span>
+        <span style="color:#00ccf5;font-size:9px">Datum ↓</span>
+        <span style="margin-left:auto;background:#0ea5e9;color:white;padding:1px 6px;border-radius:4px;font-size:8px">3 aktiv</span>
+      </div>
+      <!-- Expanded filter panel (shown open) -->
+      <div style="background:#1e293b;border-radius:8px;padding:8px;margin-bottom:8px;border:1px solid #334155">
+        <div style="color:#475569;font-size:8px;font-weight:bold;margin-bottom:6px;letter-spacing:0.08em">PEPTID</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
+          <span style="background:#0ea5e9;color:white;padding:2px 7px;border-radius:4px;font-size:8px">BPC-157 ✓</span>
+          <span style="background:#0f172a;padding:2px 7px;border-radius:4px;font-size:8px">TB-500</span>
+          <span style="background:#0f172a;padding:2px 7px;border-radius:4px;font-size:8px">Ipamorelin</span>
+          <span style="background:#0f172a;padding:2px 7px;border-radius:4px;font-size:8px">Selank</span>
+        </div>
+        <div style="color:#475569;font-size:8px;font-weight:bold;margin-bottom:6px;letter-spacing:0.08em">SORTIEREN</div>
+        <div style="display:flex;gap:4px;margin-bottom:8px">
+          <span style="background:#0ea5e9;color:white;padding:2px 7px;border-radius:4px;font-size:8px">Datum ↓ ✓</span>
+          <span style="background:#0f172a;padding:2px 7px;border-radius:4px;font-size:8px">Relevanz</span>
+          <span style="background:#0f172a;padding:2px 7px;border-radius:4px;font-size:8px">Zitate</span>
+        </div>
+        <div style="display:flex;gap:5px">
+          <div style="flex:1;background:#334155;color:white;text-align:center;padding:4px;border-radius:4px;font-size:9px">Zurücksetzen</div>
+          <div style="flex:1;background:#0ea5e9;color:white;text-align:center;padding:4px;border-radius:4px;font-size:9px;font-weight:bold">Anwenden</div>
+        </div>
+      </div>
+      <div style="background:#1e293b;border-left:3px solid #0ea5e9;border-radius:4px;padding:6px">
+        <div style="color:#e2e8f0;font-size:9px;font-weight:bold">BPC-157 wound healing study…</div>
+        <div style="color:#64748b;font-size:8px">Smith et al. · 2024</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Kompakte Filterleiste (ein/ausklappbar)</h3>
+      <p>Eine Zeile zeigt aktive Filter. Klick klappt ein Panel aus (Peptid, Sort, Jahr). "Anwenden" Button. Zeigt Anzahl aktiver Filter.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:12px;border-radius:8px;font-family:monospace;font-size:11px;color:#94a3b8">
+      <!-- Normal view with filter button -->
+      <div style="display:flex;gap:5px;margin-bottom:8px">
+        <div style="flex:1;background:#1e293b;border-radius:6px;padding:5px 8px;display:flex;align-items:center;gap:5px">
+          <span style="color:#475569;font-size:9px">🔍</span>
+          <span style="color:#334155;font-size:9px">Suche…</span>
+        </div>
+        <div style="background:#1e293b;border-radius:6px;padding:5px 10px;display:flex;align-items:center;gap:4px;border:1px solid #0ea5e9">
+          <span style="font-size:9px">⚙</span>
+          <span style="font-size:9px;color:#00ccf5;font-weight:bold">Filter</span>
+          <span style="background:#f97316;color:white;border-radius:50%;width:12px;height:12px;display:flex;align-items:center;justify-content:center;font-size:7px">2</span>
+        </div>
+      </div>
+      <!-- Bottom sheet overlay (shown open) -->
+      <div style="background:#1e293b;border-radius:12px 12px 0 0;padding:10px;border-top:2px solid #334155;position:relative">
+        <div style="width:30px;height:3px;background:#334155;border-radius:2px;margin:0 auto 8px"></div>
+        <div style="color:#e2e8f0;font-size:10px;font-weight:bold;margin-bottom:8px">Filter & Sortierung</div>
+        <div style="color:#475569;font-size:8px;font-weight:bold;margin-bottom:4px">PEPTID (Mehrfach)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px">
+          <span style="background:#0ea5e9;color:white;padding:2px 7px;border-radius:4px;font-size:8px">BPC-157 ✓</span>
+          <span style="background:#8b5cf6;color:white;padding:2px 7px;border-radius:4px;font-size:8px">TB-500 ✓</span>
+          <span style="background:#0f172a;border:1px solid #334155;padding:2px 7px;border-radius:4px;font-size:8px">Ipamorelin</span>
+          <span style="background:#0f172a;border:1px solid #334155;padding:2px 7px;border-radius:4px;font-size:8px">Selank</span>
+        </div>
+        <div style="color:#475569;font-size:8px;font-weight:bold;margin-bottom:4px">SORTIEREN</div>
+        <div style="display:flex;gap:3px;margin-bottom:8px">
+          <span style="background:#0ea5e9;color:white;padding:2px 7px;border-radius:4px;font-size:8px">Neueste ✓</span>
+          <span style="background:#0f172a;border:1px solid #334155;padding:2px 7px;border-radius:4px;font-size:8px">Relevanz</span>
+        </div>
+        <div style="background:#0ea5e9;color:white;text-align:center;padding:6px;border-radius:6px;font-size:9px;font-weight:bold">Ergebnisse anzeigen (12)</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Bottom Sheet</h3>
+      <p>Filter-Button öffnet ein Sheet von unten (mobile-native). Mehrfachauswahl für Peptide, Badge zeigt aktive Filter-Anzahl.</p>
+    </div>
+  </div>
+
+</div>

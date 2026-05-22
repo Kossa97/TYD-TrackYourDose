@@ -39,6 +39,7 @@ export interface PeptideEntry {
   side_effects:      string[]
   contraindications: string[]
   pubmed_query:      string | null
+  tags:              string[]
   // Evidence breakdown (v2)
   evidence_human:    EvidenceLevel
   evidence_animal:   EvidenceLevel

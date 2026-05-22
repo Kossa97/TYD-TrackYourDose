@@ -27,8 +27,13 @@ async function readBody(req) {
 function buildCreatePrompt(name) {
   return `Du bist ein wissenschaftlicher Forschungsassistent. Erstelle ein umfassendes, wissenschaftlich korrektes Forschungsprofil für das Peptid: ${name}
 
+WICHTIG — NAMENSKORREKTUR:
+Der Nutzer hat möglicherweise den Namen falsch geschrieben oder unvollständig eingegeben.
+Erkenne das Peptid anhand des eingegebenen Namens und verwende IMMER den korrekten offiziellen Namen.
+Beispiele: "Retatrutid" → "Retatrutide", "BPC157" → "BPC-157", "Tirzepatide" → "Tirzepatid"
+
 PFLICHTREGELN:
-- Alle Texte auf DEUTSCH
+- Alle Texte auf DEUTSCH (außer pubmed_query und tags)
 - Neutrale wissenschaftliche Sprache, KEINE Therapieempfehlungen
 - Dosierungen NUR aus veröffentlichten Studien (nicht "empfohlen")
 - Formulierungen: "wurde untersucht für", "in Studien beobachtet", "potenzielle Effekte"
@@ -38,8 +43,8 @@ Antworte AUSSCHLIESSLICH mit einem validen JSON-Objekt, ohne Text davor oder dan
 
 {
   "slug": "kleinbuchstaben-bindestrich",
-  "name": "Offizieller Kurzname",
-  "full_name": "Vollständiger Name oder null",
+  "name": "Korrekter offizieller Kurzname",
+  "full_name": "Vollständiger wissenschaftlicher Name oder null",
   "category": "heilung",
   "tldr": "1-2 Sätze neutrale Zusammenfassung.",
   "mechanism": "Detaillierter Wirkmechanismus: Rezeptoren, Signalwege.",
@@ -55,7 +60,8 @@ Antworte AUSSCHLIESSLICH mit einem validen JSON-Objekt, ohne Text davor oder dan
   "evidence_clinical": "none",
   "evidence_score": 1,
   "research_gaps": ["Wissenslücke 1", "Wissenslücke 2"],
-  "pubmed_query": "english pubmed query"
+  "pubmed_query": "english pubmed query",
+  "tags": ["Tag1", "Tag2", "Tag3"]
 }
 
 category: heilung | wachstumshormon | nootropikum | stoffwechsel | anti_aging | sexualgesundheit
@@ -63,7 +69,8 @@ research_status: preclinical | phase_1 | phase_2 | approved
 evidence_human: none | limited | moderate | strong
 evidence_animal: none | limited | moderate | strong
 evidence_clinical: none | sparse | moderate | extensive
-evidence_score: Ganzzahl 1-10`
+evidence_score: Ganzzahl 1-10
+tags: 3-6 kurze Schlagwörter auf Deutsch, z.B. ["GLP-1", "Gewichtsverlust", "Zugelassen", "Muskelaufbau"]`
 }
 
 function buildUpdatePrompt(existing) {
@@ -93,8 +100,11 @@ Antworte AUSSCHLIESSLICH mit einem validen JSON-Objekt:
   "evidence_animal": "none|limited|moderate|strong",
   "evidence_clinical": "none|sparse|moderate|extensive",
   "evidence_score": 1,
-  "research_gaps": [...]
-}`
+  "research_gaps": [...],
+  "tags": ["Tag1", "Tag2"]
+}
+
+tags: 3-6 kurze Schlagwörter auf Deutsch`
 }
 
 export default async function handler(req, res) {

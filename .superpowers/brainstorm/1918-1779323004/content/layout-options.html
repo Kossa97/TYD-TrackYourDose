@@ -1,0 +1,137 @@
+<h2>The Lab — Layout-Konzept</h2>
+<p class="subtitle">Welche Grundstruktur passt am besten? (App ist mobile-first)</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:12px;border-radius:8px;font-family:monospace;font-size:11px;color:#94a3b8;line-height:1.6">
+      <div style="background:#1e293b;border-radius:6px;padding:8px 10px;margin-bottom:8px;display:flex;align-items:center;gap:8px">
+        <span style="color:#00ccf5">🔍</span>
+        <span style="color:#64748b;flex:1">Suchen…</span>
+        <span style="background:#0ea5e9;color:white;padding:2px 8px;border-radius:4px;font-size:10px">Filter ▼</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:8px;overflow:hidden">
+        <span style="background:#0ea5e9;color:white;padding:2px 8px;border-radius:12px;font-size:10px;white-space:nowrap">Alle</span>
+        <span style="background:#1e293b;padding:2px 8px;border-radius:12px;font-size:10px;white-space:nowrap">BPC-157</span>
+        <span style="background:#1e293b;padding:2px 8px;border-radius:12px;font-size:10px;white-space:nowrap">Dosierung</span>
+        <span style="background:#1e293b;padding:2px 8px;border-radius:12px;font-size:10px;white-space:nowrap">2024+</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="color:#475569;font-size:10px">12 Studien · Sortiert nach: Datum ↓</span>
+      </div>
+      <div style="background:#1e293b;border-left:3px solid #0ea5e9;border-radius:4px;padding:8px;margin-bottom:6px">
+        <div style="color:#e2e8f0;font-size:10px;font-weight:bold;margin-bottom:2px">BPC-157 accelerates wound healing…</div>
+        <div style="color:#64748b;font-size:9px">Smith et al. · J Peptide Res · 2024</div>
+      </div>
+      <div style="background:#1e293b;border-left:3px solid #8b5cf6;border-radius:4px;padding:8px;margin-bottom:6px">
+        <div style="color:#e2e8f0;font-size:10px;font-weight:bold;margin-bottom:2px">TB-500 clinical dosage protocol…</div>
+        <div style="color:#64748b;font-size:9px">Jones M. · Clin Biochem · 2024</div>
+      </div>
+      <div style="background:#1e293b;border-left:3px solid #10b981;border-radius:4px;padding:8px">
+        <div style="color:#e2e8f0;font-size:10px;font-weight:bold;margin-bottom:2px">Ipamorelin GH release mechanism…</div>
+        <div style="color:#64748b;font-size:9px">Lee K. · Endocrinology · 2023</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Search + Filter-Chips</h3>
+      <p>Klare Suche oben, scrollbare Filter-Chips, Sortierung sichtbar. Einfach & schnell zu bedienen.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:12px;border-radius:8px;font-family:monospace;font-size:11px;color:#94a3b8;line-height:1.6">
+      <div style="background:#0f172a;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:8px">
+        <div style="display:flex;gap:0;margin-bottom:8px">
+          <span style="flex:1;text-align:center;padding:5px;border-bottom:2px solid #00ccf5;color:#00ccf5;font-size:10px;font-weight:bold">🔥 TRENDING</span>
+          <span style="flex:1;text-align:center;padding:5px;border-bottom:2px solid transparent;color:#475569;font-size:10px">🔍 SUCHE</span>
+          <span style="flex:1;text-align:center;padding:5px;border-bottom:2px solid transparent;color:#475569;font-size:10px">📊 STATS</span>
+        </div>
+      </div>
+      <div style="background:#1e293b;border-radius:6px;padding:8px;margin-bottom:6px;border-top:3px solid #0ea5e9">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="background:#0ea5e9/20;color:#0ea5e9;padding:1px 6px;border-radius:3px;font-size:9px">BPC-157</span>
+          <span style="background:#f97316/10;color:#f97316;padding:1px 6px;border-radius:3px;font-size:9px">✦ NEU 2025</span>
+        </div>
+        <div style="color:#e2e8f0;font-size:10px;font-weight:bold;margin-bottom:3px">BPC-157 accelerates wound healing in rat models</div>
+        <div style="color:#64748b;font-size:9px">Smith et al. · 2024 · 12 Zitate</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="background:#1e293b;border-radius:6px;padding:6px;border-top:2px solid #8b5cf6">
+          <span style="color:#8b5cf6;font-size:8px">TB-500</span>
+          <div style="color:#e2e8f0;font-size:9px;font-weight:bold;margin-top:2px">TB-500 dosage study</div>
+          <div style="color:#64748b;font-size:8px">2024</div>
+        </div>
+        <div style="background:#1e293b;border-radius:6px;padding:6px;border-top:2px solid #10b981">
+          <span style="color:#10b981;font-size:8px">Ipamorelin</span>
+          <div style="color:#e2e8f0;font-size:9px;font-weight:bold;margin-top:2px">GH releasing effects</div>
+          <div style="color:#64748b;font-size:8px">2024</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Tabs (Trending / Suche / Stats)</h3>
+      <p>3 Tabs trennen Funktionen klar. Trending-Tab mit Hero + Grid, Suche als eigener Bereich, Stats-Tab für Grafiken.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:12px;border-radius:8px;font-family:monospace;font-size:11px;color:#94a3b8;line-height:1.6">
+      <div style="background:linear-gradient(135deg,#0c1a2e,#0f172a);border:1px solid #1e3a5f;border-radius:8px;padding:10px;margin-bottom:8px">
+        <div style="color:#00ccf5;font-size:9px;font-weight:bold;letter-spacing:0.1em;margin-bottom:4px">🧬 RESEARCH DIGEST</div>
+        <div style="background:#1e293b;border-radius:4px;padding:6px 10px;display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span style="color:#64748b">🔍</span>
+          <span style="color:#334155;flex:1;font-size:10px">Suche in 2.4M Studien…</span>
+        </div>
+        <div style="display:flex;gap:8px;font-size:9px">
+          <span style="color:#64748b">Sortieren: <span style="color:#00ccf5">Datum ↓</span></span>
+          <span style="color:#64748b">|</span>
+          <span style="color:#64748b">Typ: <span style="color:#00ccf5">Alle</span></span>
+          <span style="color:#64748b">|</span>
+          <span style="color:#64748b">Jahr: <span style="color:#00ccf5">2024+</span></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <div style="flex:2;background:#1e293b;border-radius:6px;padding:8px;border-left:3px solid #0ea5e9">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span style="background:#0ea5e9;color:white;padding:1px 5px;border-radius:3px;font-size:8px">BPC-157</span>
+            <span style="color:#f97316;font-size:8px">HOT 🔥</span>
+          </div>
+          <div style="color:#e2e8f0;font-size:10px;font-weight:bold;margin-bottom:2px">BPC-157 promotes tendon repair</div>
+          <div style="color:#64748b;font-size:8px;margin-bottom:4px">Smith et al. · J Peptide Res · 2025</div>
+          <div style="background:#0f172a;border-radius:3px;padding:4px;font-size:8px;color:#94a3b8">BPC-157 accelerates healing in rat models with dose-dependent effects…</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <div style="background:#1e293b;border-radius:6px;padding:6px;border-left:2px solid #8b5cf6;flex:1">
+            <span style="color:#8b5cf6;font-size:8px">TB-500</span>
+            <div style="color:#e2e8f0;font-size:9px;font-weight:bold">Thymosin dosage</div>
+            <div style="color:#64748b;font-size:8px">2024</div>
+          </div>
+          <div style="background:#1e293b;border-radius:6px;padding:6px;border-left:2px solid #f97316;flex:1">
+            <span style="color:#f97316;font-size:8px">Semaglutide</span>
+            <div style="color:#e2e8f0;font-size:9px;font-weight:bold">Weight study</div>
+            <div style="color:#64748b;font-size:8px">2024</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;background:#0a1628;border-radius:6px;padding:6px">
+        <div style="text-align:center;flex:1">
+          <div style="color:#00ccf5;font-size:12px;font-weight:bold">847</div>
+          <div style="color:#475569;font-size:8px">Studien 2024</div>
+        </div>
+        <div style="text-align:center;flex:1">
+          <div style="color:#10b981;font-size:12px;font-weight:bold">12</div>
+          <div style="color:#475569;font-size:8px">Peptide</div>
+        </div>
+        <div style="text-align:center;flex:1">
+          <div style="color:#f97316;font-size:12px;font-weight:bold">↑32%</div>
+          <div style="color:#475569;font-size:8px">vs. 2023</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Research Dashboard</h3>
+      <p>Professionelles Dashboard mit Suche, Inline-Sortierung, Hero + Side-Grid, Live-Statistik-Leiste unten.</p>
+    </div>
+  </div>
+
+</div>
