@@ -14,6 +14,7 @@ import { Profil } from './pages/Profil'
 import { PublicProfile } from './pages/PublicProfile'
 import { FAQ } from './pages/FAQ'
 import { Rechner } from './pages/Rechner'
+import { Blutwerte } from './pages/Blutwerte'
 import { TheLab } from './pages/TheLab'
 import { StudyDetail } from './pages/StudyDetail'
 import { PeptideLibrary } from './pages/PeptideLibrary'
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="lab/library/:slug" element={<PeptideDetailPage />} />
             <Route path="lab/admin" element={<AdminPanel />} />
             <Route path="rechner" element={<Rechner />} />
+            <Route path="blutwerte" element={<Blutwerte />} />
             <Route path="the-lab" element={<TheLab />} />
             <Route path="tagebuch" element={<Tagebuch />} />
             <Route path="bewertungen" element={<Bewertungen />} />

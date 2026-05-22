@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   CalendarDays, FlaskConical, Archive, Calculator,
   BookHeart, Star, HelpCircle, User, ChevronRight,
-  Microscope, Library,
+  Microscope, Library, Droplets, type LucideIcon,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -36,11 +36,24 @@ const DATE_LOCALES: Record<string, Locale> = {
   de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
 }
 
-const TILE_DEFS = [
+interface TileDef {
+  icon: LucideIcon
+  labelKey: string
+  descKey: string
+  label?: string
+  desc?: string
+  path: string
+  color: string
+  bg: string
+  wide?: boolean
+}
+
+const TILE_DEFS: TileDef[] = [
   { icon: CalendarDays, labelKey: 'tile_kalender', descKey: 'tile_kalender_desc', path: '/kalender',             color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',   wide: true },
   { icon: Archive,      labelKey: 'tile_lager',     descKey: 'tile_lager_desc',    path: '/peptide?tab=inventar', color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
   { icon: FlaskConical, labelKey: 'tile_peptide',   descKey: 'tile_peptide_desc',  path: '/peptide',              color: '#22d3ee', bg: 'rgba(34,211,238,0.10)'         },
   { icon: Calculator,   labelKey: 'tile_rechner',   descKey: 'tile_rechner_desc',  path: '/rechner',              color: '#3b82f6', bg: 'rgba(59,130,246,0.10)'         },
+  { icon: Droplets,     labelKey: 'tile_blutwerte', descKey: 'tile_blutwerte_desc', path: '/blutwerte',            color: '#f43f5e', bg: 'rgba(244,63,94,0.10)', label: 'Blutwerte', desc: 'Laborwerte erfassen' },
   { icon: Microscope,   labelKey: 'tile_lab',       descKey: 'tile_lab_desc',      path: '/lab',                  color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
   { icon: Library,      labelKey: 'tile_bibliothek', descKey: 'tile_bibliothek_desc', path: '/lab/library',          color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },
   { icon: BookHeart,    labelKey: 'tile_tagebuch',  descKey: 'tile_tagebuch_desc', path: '/tagebuch',             color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },
@@ -211,8 +224,8 @@ export function Home() {
 
             {/* Text */}
             <div style={{ flex: tile.wide ? 1 : undefined, minWidth: 0 }}>
-              <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#eaeefc', marginBottom: 2 }}>{t(tile.labelKey)}</p>
-              <p style={{ fontSize: '0.72rem', color: 'rgba(154,170,191,0.55)', lineHeight: 1.4 }}>{t(tile.descKey)}</p>
+              <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#eaeefc', marginBottom: 2 }}>{t(tile.labelKey, { defaultValue: tile.label ?? tile.labelKey })}</p>
+              <p style={{ fontSize: '0.72rem', color: 'rgba(154,170,191,0.55)', lineHeight: 1.4 }}>{t(tile.descKey, { defaultValue: tile.desc ?? tile.descKey })}</p>
             </div>
 
             {tile.wide && <ChevronRight size={16} color="rgba(0,204,245,0.4)" style={{ flexShrink: 0 }} />}
