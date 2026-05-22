@@ -26,8 +26,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { jsPDF } from 'jspdf'
-import html2canvas from 'html2canvas'
+import type { jsPDF as JsPDFType } from 'jspdf'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import heroLogo from '../assets/hero.png'
@@ -187,11 +186,11 @@ const COPY: Record<'de' | 'en', ProtocolCopy> = {
 const FOOTER_TEXT = 'Track Your Dose · tyd-track-your-dose.vercel.app'
 const SHARE_URL = 'https://tyd-track-your-dose.vercel.app/protokoll?ref=share'
 
-type JsPdfWithGState = jsPDF & {
+type JsPdfWithGState = JsPDFType & {
   GState?: new (options: { opacity: number }) => unknown
-  setGState?: (state: unknown) => jsPDF
-  saveGraphicsState?: () => jsPDF
-  restoreGraphicsState?: () => jsPDF
+  setGState?: (state: unknown) => JsPDFType
+  saveGraphicsState?: () => JsPDFType
+  restoreGraphicsState?: () => JsPDFType
 }
 
 function copyFor(language: string): ProtocolCopy {
@@ -311,7 +310,7 @@ function loadImage(src: string) {
   })
 }
 
-function withOpacity(doc: jsPDF, opacity: number, draw: () => void) {
+function withOpacity(doc: JsPDFType, opacity: number, draw: () => void) {
   const pdf = doc as JsPdfWithGState
   if (pdf.GState && pdf.setGState) {
     const state = new pdf.GState({ opacity })
@@ -324,7 +323,7 @@ function withOpacity(doc: jsPDF, opacity: number, draw: () => void) {
   draw()
 }
 
-function decoratePdf(doc: jsPDF, logo: HTMLImageElement) {
+function decoratePdf(doc: JsPDFType, logo: HTMLImageElement) {
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
   const pageCount = doc.getNumberOfPages()
@@ -340,7 +339,7 @@ function decoratePdf(doc: jsPDF, logo: HTMLImageElement) {
   }
 }
 
-function addCoverPage(doc: jsPDF, logo: HTMLImageElement, copy: ProtocolCopy, userName: string, range: DateRange, language: string) {
+function addCoverPage(doc: JsPDFType, logo: HTMLImageElement, copy: ProtocolCopy, userName: string, range: DateRange, language: string) {
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
 
@@ -588,6 +587,10 @@ export function Protokoll() {
     setExporting(true)
 
     try {
+      const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas'),
+      ])
       const doc = new jsPDF('p', 'mm', 'a4')
       const pageWidth = doc.internal.pageSize.getWidth()
       const pageHeight = doc.internal.pageSize.getHeight()
