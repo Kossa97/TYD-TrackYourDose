@@ -69,6 +69,10 @@ interface Cycle {
   peptides: { name: string } | null
 }
 
+type SupabaseCycleRow = Omit<Cycle, 'peptides'> & {
+  peptides: { name: string } | { name: string }[] | null
+}
+
 interface Profile {
   display_name: string | null
   username: string | null
@@ -230,8 +234,27 @@ function formatNumber(value: number, language: string, maximumFractionDigits = 1
   return new Intl.NumberFormat(language, { maximumFractionDigits }).format(value)
 }
 
+function formatTooltipValue(value: unknown, language: string, unit: string, maximumFractionDigits = 1) {
+  const number = typeof value === 'number' ? value : Number(value)
+  return `${Number.isFinite(number) ? formatNumber(number, language, maximumFractionDigits) : String(value)}${unit ? ` ${unit}` : ''}`
+}
+
 function cycleEnd(cycle: Cycle) {
   return cycle.end_date ?? todayIso()
+}
+
+function normalizeCycles(rows: SupabaseCycleRow[] | null | undefined): Cycle[] {
+  return (rows ?? []).map(row => ({
+    ...row,
+    peptides: Array.isArray(row.peptides) ? row.peptides[0] ?? null : row.peptides,
+  }))
+}
+
+function rangeFromActiveCycles(cycles: Cycle[]): DateRange {
+  if (cycles.length === 0) return defaultRange()
+  const starts = cycles.map(cycle => cycle.start_date).sort()
+  const ends = cycles.map(cycle => cycle.end_date ?? todayIso()).sort()
+  return { from: starts[0], to: ends[ends.length - 1] }
 }
 
 function cycleDuration(cycle: Cycle) {
@@ -378,10 +401,7 @@ export function Protokoll() {
   ), [profile, user])
 
   const currentCycleRange = useMemo<DateRange>(() => {
-    if (activeCycles.length === 0) return defaultRange()
-    const starts = activeCycles.map(cycle => cycle.start_date).sort()
-    const ends = activeCycles.map(cycle => cycle.end_date ?? todayIso()).sort()
-    return { from: starts[0], to: ends[ends.length - 1] }
+    return rangeFromActiveCycles(activeCycles)
   }, [activeCycles])
 
   const loadBaseData = useCallback(async () => {
@@ -408,10 +428,13 @@ export function Protokoll() {
         .maybeSingle(),
     ])
 
-    const completed = (completedData ?? []) as Cycle[]
-    setActiveCycles((activeData ?? []) as Cycle[])
+    const active = normalizeCycles(activeData as unknown as SupabaseCycleRow[])
+    const completed = normalizeCycles(completedData as unknown as SupabaseCycleRow[])
+    setActiveCycles(active)
     setCompletedCycles(completed)
     setProfile((profileData ?? null) as Profile | null)
+    setRange(current => selectorMode === 'current' ? rangeFromActiveCycles(active) : current)
+    setSelectedCycleId(current => selectorMode === 'current' ? null : current)
 
     if (completed.length > 0) {
       const from = completed.map(cycle => cycle.start_date).sort()[0]
@@ -428,18 +451,14 @@ export function Protokoll() {
     }
 
     setLoadingBase(false)
-  }, [user])
+  }, [selectorMode, user])
 
   useEffect(() => {
-    void loadBaseData()
+    const timer = window.setTimeout(() => {
+      void loadBaseData()
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [loadBaseData])
-
-  useEffect(() => {
-    if (selectorMode === 'current') {
-      setRange(currentCycleRange)
-      setSelectedCycleId(null)
-    }
-  }, [currentCycleRange, selectorMode])
 
   const loadRangeData = useCallback(async () => {
     if (!user || !isValidRange(range)) return
@@ -470,28 +489,30 @@ export function Protokoll() {
         .order('logged_at', { ascending: true }),
     ])
 
+    const bloodEntries = (blood ?? []) as BloodworkEntry[]
+    const nextMarkers = Array.from(new Set(bloodEntries.map(entry => entry.marker))).sort((a, b) => a.localeCompare(b))
+
     setWeightLogs((weights ?? []) as WeightLog[])
-    setBloodwork((blood ?? []) as BloodworkEntry[])
+    setBloodwork(bloodEntries)
     setDoseLogs((doses ?? []) as DoseLog[])
+    setSelectedMarker(current => {
+      if (nextMarkers.length === 0) return ''
+      return current && nextMarkers.includes(current) ? current : nextMarkers[0]
+    })
     setLoadingCharts(false)
   }, [range, user])
 
   useEffect(() => {
-    void loadRangeData()
+    const timer = window.setTimeout(() => {
+      void loadRangeData()
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [loadRangeData])
 
   const markers = useMemo(
     () => Array.from(new Set(bloodwork.map(entry => entry.marker))).sort((a, b) => a.localeCompare(b)),
     [bloodwork],
   )
-
-  useEffect(() => {
-    if (markers.length === 0) {
-      setSelectedMarker('')
-      return
-    }
-    if (!selectedMarker || !markers.includes(selectedMarker)) setSelectedMarker(markers[0])
-  }, [markers, selectedMarker])
 
   const weightChartData = useMemo(() => (
     weightLogs
@@ -630,7 +651,11 @@ export function Protokoll() {
         <div className="grid grid-cols-2 gap-2 mb-4">
           <button
             className={`rounded-xl px-3 py-2 text-sm font-bold transition-colors ${selectorMode === 'current' ? 'bg-sky-400 text-slate-950' : 'bg-white/[0.04] text-slate-400 hover:text-white'}`}
-            onClick={() => setSelectorMode('current')}
+            onClick={() => {
+              setSelectorMode('current')
+              setRange(currentCycleRange)
+              setSelectedCycleId(null)
+            }}
           >
             {copy.currentCycle}
           </button>
@@ -719,7 +744,7 @@ export function Protokoll() {
                   <Tooltip
                     contentStyle={{ background: '#0a0e1e', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, color: '#eaeefc' }}
                     labelStyle={{ color: '#9aaabf' }}
-                    formatter={(value: number) => [`${formatNumber(value, language)} kg`, copy.weightTitle]}
+                    formatter={value => [formatTooltipValue(value, language, 'kg'), copy.weightTitle]}
                   />
                   <Line type="monotone" dataKey="weight" stroke="#00ccf5" strokeWidth={3} dot={{ r: 4, fill: '#07091a', stroke: '#00ccf5', strokeWidth: 2 }} activeDot={{ r: 6 }} />
                 </LineChart>
@@ -749,7 +774,7 @@ export function Protokoll() {
                   <Tooltip
                     contentStyle={{ background: '#0a0e1e', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, color: '#eaeefc' }}
                     labelStyle={{ color: '#9aaabf' }}
-                    formatter={(value: number) => [`${formatNumber(value, language, 3)} ${selectedMarkerUnit}`, selectedMarker]}
+                    formatter={value => [formatTooltipValue(value, language, selectedMarkerUnit, 3), selectedMarker]}
                   />
                   <Line type="monotone" dataKey="value" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, fill: '#07091a', stroke: '#f43f5e', strokeWidth: 2 }} activeDot={{ r: 6 }} />
                 </LineChart>
