@@ -24,6 +24,24 @@ interface BloodworkForm {
   notes: string
 }
 
+const MARKERS = [
+  { label: 'IGF-1', unit: 'ng/mL' },
+  { label: 'Testosteron', unit: 'ng/dL' },
+  { label: 'Östradiol', unit: 'pg/mL' },
+  { label: 'SHBG', unit: 'nmol/L' },
+  { label: 'LH', unit: 'mIU/mL' },
+  { label: 'FSH', unit: 'mIU/mL' },
+  { label: 'TSH', unit: 'mIU/mL' },
+  { label: 'CRP', unit: 'mg/L' },
+  { label: 'Vitamin D', unit: 'ng/mL' },
+  { label: 'Ferritin', unit: 'ng/mL' },
+  { label: 'Hämoglobin', unit: 'g/dL' },
+  { label: 'Hematokrit', unit: '%' },
+  { label: 'GH', unit: 'ng/mL' },
+  { label: 'Kortisol', unit: 'µg/dL' },
+  { label: 'Insulin', unit: 'µIU/mL' },
+]
+
 const today = () => format(new Date(), 'yyyy-MM-dd')
 
 const emptyForm = (): BloodworkForm => ({
@@ -77,6 +95,14 @@ export function Blutwerte() {
     [entries],
   )
 
+  const markerOptions = useMemo(() => {
+    const presetLabels = new Set(MARKERS.map(marker => marker.label))
+    const customMarkers = markers
+      .filter(marker => !presetLabels.has(marker))
+      .map(marker => ({ label: marker, unit: entries.find(entry => entry.marker === marker)?.unit ?? '' }))
+    return [...MARKERS, ...customMarkers]
+  }, [entries, markers])
+
   const filteredEntries = useMemo(() => {
     const needle = search.trim().toLowerCase()
     return entries.filter(entry => {
@@ -111,6 +137,15 @@ export function Blutwerte() {
       notes: entry.notes ?? '',
     })
     setShowForm(true)
+  }
+
+  const setMarker = (label: string) => {
+    const marker = markerOptions.find(option => option.label === label)
+    setForm(current => ({
+      ...current,
+      marker: label,
+      unit: marker?.unit || current.unit,
+    }))
   }
 
   const save = async () => {
@@ -288,12 +323,21 @@ export function Blutwerte() {
 
             <div>
               <label className="label">Marker</label>
-              <input
-                className="input"
-                placeholder="z. B. Vitamin D, Ferritin, HbA1c"
+              <select
+                className="select"
                 value={form.marker}
-                onChange={e => setForm(f => ({ ...f, marker: e.target.value }))}
-              />
+                onChange={e => setMarker(e.target.value)}
+              >
+                <option value="">Marker auswählen</option>
+                {markerOptions.map(marker => (
+                  <option key={marker.label} value={marker.label}>
+                    {marker.label} · {marker.unit}
+                  </option>
+                ))}
+              </select>
+              <p className="text-slate-600 text-xs mt-1">
+                Die Einheit wird anhand des ausgewählten Markers automatisch vorbelegt.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
