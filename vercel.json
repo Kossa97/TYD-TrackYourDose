@@ -1,11 +1,5 @@
 {
-  "framework": "vite",
-  "functions": {
-    "api/peptide-ai.js": {
-      "runtime": "nodejs20.x"
-    }
-  },
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
