@@ -1,5 +1,28 @@
-// api/peptide-ai.js
-// Vercel Serverless Function — Anthropic API server-seitig aufrufen
+// api/peptide-ai.js — Vercel Serverless Function
+
+// Immer JSON zurückgeben, niemals HTML-Fehlerseite
+function sendJSON(res, status, obj) {
+  if (!res.headersSent) {
+    res.setHeader('Content-Type', 'application/json')
+    res.statusCode = status
+    res.end(JSON.stringify(obj))
+  }
+}
+
+// Body lesen — Fallback falls req.body nicht automatisch geparst wird
+async function readBody(req) {
+  if (req.body !== undefined && req.body !== null) {
+    return typeof req.body === 'string' ? JSON.parse(req.body) : req.body
+  }
+  return new Promise((resolve) => {
+    let raw = ''
+    req.on('data', (chunk) => { raw += chunk.toString() })
+    req.on('end', () => {
+      try { resolve(JSON.parse(raw)) } catch { resolve({}) }
+    })
+    req.on('error', () => resolve({}))
+  })
+}
 
 function buildCreatePrompt(name) {
   return `Du bist ein wissenschaftlicher Forschungsassistent. Erstelle ein umfassendes, wissenschaftlich korrektes Forschungsprofil für das Peptid: ${name}
@@ -53,8 +76,6 @@ PFLICHTREGELN:
 - Alle Texte auf DEUTSCH
 - Neutrale wissenschaftliche Sprache ohne Therapieempfehlungen
 - Verbessere Formulierungen wo nötig
-- Aktualisiere Evidenzbewertungen wenn nötig
-- Ergänze research_gaps
 
 Antworte AUSSCHLIESSLICH mit einem validen JSON-Objekt:
 
@@ -77,35 +98,52 @@ Antworte AUSSCHLIESSLICH mit einem validen JSON-Objekt:
 }
 
 module.exports = async function handler(req, res) {
+  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 
-  if (req.method === 'OPTIONS') return res.status(200).end()
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-
-  const apiKey = process.env.VITE_ANTHROPIC_KEY
-  if (!apiKey) {
-    return res.status(500).json({ error: 'VITE_ANTHROPIC_KEY nicht konfiguriert in Vercel' })
+  if (req.method === 'OPTIONS') {
+    res.statusCode = 200
+    res.end()
+    return
   }
 
-  const body = req.body ?? {}
-  const { action, name, existing } = body
-
-  if (!action) return res.status(400).json({ error: 'action fehlt' })
-
-  let prompt = ''
-  if (action === 'create') {
-    if (!name) return res.status(400).json({ error: 'name fehlt' })
-    prompt = buildCreatePrompt(name)
-  } else if (action === 'update') {
-    if (!existing) return res.status(400).json({ error: 'existing fehlt' })
-    prompt = buildUpdatePrompt(existing)
-  } else {
-    return res.status(400).json({ error: `Unbekannte action: ${action}` })
-  }
-
+  // Alles in einem großen try-catch — garantiert JSON zurück
   try {
+    if (req.method !== 'POST') {
+      sendJSON(res, 405, { error: 'Method not allowed' })
+      return
+    }
+
+    const apiKey = process.env.VITE_ANTHROPIC_KEY
+    if (!apiKey) {
+      sendJSON(res, 500, { error: 'VITE_ANTHROPIC_KEY fehlt in Vercel Environment Variables' })
+      return
+    }
+
+    const body = await readBody(req)
+    const action   = body.action
+    const name     = body.name
+    const existing = body.existing
+
+    if (!action) {
+      sendJSON(res, 400, { error: 'action fehlt (create | update)' })
+      return
+    }
+
+    let prompt
+    if (action === 'create') {
+      if (!name) { sendJSON(res, 400, { error: 'name fehlt' }); return }
+      prompt = buildCreatePrompt(name)
+    } else if (action === 'update') {
+      if (!existing) { sendJSON(res, 400, { error: 'existing fehlt' }); return }
+      prompt = buildUpdatePrompt(existing)
+    } else {
+      sendJSON(res, 400, { error: `Unbekannte action: ${action}` })
+      return
+    }
+
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -122,22 +160,23 @@ module.exports = async function handler(req, res) {
 
     if (!aiRes.ok) {
       const detail = await aiRes.text()
-      return res.status(500).json({ error: `KI API Fehler ${aiRes.status}`, detail })
+      sendJSON(res, 500, { error: `Anthropic ${aiRes.status}: ${detail.slice(0, 300)}` })
+      return
     }
 
     const aiData = await aiRes.json()
-    const text = aiData.content?.[0]?.text ?? ''
-
+    const text = (aiData.content?.[0]?.text) ?? ''
     const match = text.match(/\{[\s\S]*\}/)
+
     if (!match) {
-      return res.status(500).json({ error: 'Kein JSON in KI-Antwort', raw: text })
+      sendJSON(res, 500, { error: 'Kein JSON in KI-Antwort', raw: text.slice(0, 300) })
+      return
     }
 
     const result = JSON.parse(match[0])
-    return res.status(200).json({ result })
+    sendJSON(res, 200, { result })
+
   } catch (err) {
-    return res.status(500).json({
-      error: err instanceof Error ? err.message : String(err),
-    })
+    sendJSON(res, 500, { error: String(err && err.message ? err.message : err) })
   }
 }
