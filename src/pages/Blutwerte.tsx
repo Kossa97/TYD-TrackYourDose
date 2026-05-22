@@ -120,7 +120,7 @@ export function Blutwerte() {
 
     if (!form.tested_at) return toast.error('Bitte ein Testdatum eintragen')
     if (!marker) return toast.error('Bitte einen Marker eintragen')
-    if (!Number.isFinite(parsedValue)) return toast.error('Bitte einen gueltigen Wert eintragen')
+    if (!Number.isFinite(parsedValue)) return toast.error('Bitte einen gültigen Wert eintragen')
     if (!unit) return toast.error('Bitte eine Einheit eintragen')
     if (!user) return
 
@@ -149,11 +149,11 @@ export function Blutwerte() {
   }
 
   const remove = async (entry: BloodworkEntry) => {
-    if (!confirm(`${entry.marker} vom ${formatDisplayDate(entry.tested_at)} loeschen?`)) return
+    if (!confirm(`${entry.marker} vom ${formatDisplayDate(entry.tested_at)} löschen?`)) return
     const { error } = await supabase.from('bloodwork').delete().eq('id', entry.id).eq('user_id', user!.id)
-    if (error) toast.error('Blutwert konnte nicht geloescht werden')
+    if (error) toast.error('Blutwert konnte nicht gelöscht werden')
     else {
-      toast.success('Blutwert geloescht')
+      toast.success('Blutwert gelöscht')
       load()
     }
   }
@@ -174,7 +174,7 @@ export function Blutwerte() {
         <div className="card py-3 px-3">
           <Activity size={16} className="text-sky-400 mb-2" />
           <p className="text-lg font-bold text-white">{entries.length}</p>
-          <p className="text-[0.65rem] text-slate-500 uppercase tracking-wide">Eintraege</p>
+          <p className="text-[0.65rem] text-slate-500 uppercase tracking-wide">Einträge</p>
         </div>
         <div className="card py-3 px-3">
           <Droplets size={16} className="text-rose-400 mb-2" />
