@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   CalendarDays, FlaskConical, Archive, Calculator,
   BookHeart, Star, HelpCircle, User, ChevronRight,
-  Microscope, Library, Droplets, type LucideIcon,
+  Microscope, Library, Droplets, Heart, type LucideIcon,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -54,6 +54,7 @@ const TILE_DEFS: TileDef[] = [
   { icon: FlaskConical, labelKey: 'tile_peptide',   descKey: 'tile_peptide_desc',  path: '/peptide',              color: '#22d3ee', bg: 'rgba(34,211,238,0.10)'         },
   { icon: Calculator,   labelKey: 'tile_rechner',   descKey: 'tile_rechner_desc',  path: '/rechner',              color: '#3b82f6', bg: 'rgba(59,130,246,0.10)'         },
   { icon: Droplets,     labelKey: 'tile_blutwerte', descKey: 'tile_blutwerte_desc', path: '/blutwerte',            color: '#f43f5e', bg: 'rgba(244,63,94,0.10)', label: 'Blutwerte', desc: 'Laborwerte erfassen' },
+  { icon: Heart,        labelKey: 'tile_health',    descKey: 'tile_health_desc',   path: '/health',               color: '#f43f5e', bg: 'rgba(244,63,94,0.10)'          },
   { icon: Microscope,   labelKey: 'tile_lab',       descKey: 'tile_lab_desc',      path: '/lab',                  color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
   { icon: Library,      labelKey: 'tile_bibliothek', descKey: 'tile_bibliothek_desc', path: '/lab/library',          color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },
   { icon: BookHeart,    labelKey: 'tile_tagebuch',  descKey: 'tile_tagebuch_desc', path: '/tagebuch',             color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },

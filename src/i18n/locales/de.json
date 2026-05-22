@@ -22,6 +22,8 @@
   "tile_lab_desc": "PubMed-Recherche & Studien",
   "tile_rechner": "Rechner",
   "tile_rechner_desc": "Dosis berechnen",
+  "tile_health": "Health",
+  "tile_health_desc": "Körperdaten & Vitals",
   "tile_tagebuch": "Tagebuch",
   "tile_tagebuch_desc": "Wirkungen & Nebenwirkungen",
   "tile_bewertungen": "Bewertungen",
