@@ -148,6 +148,14 @@ function timeLabel(dateStr: string, t: (key: string, opts?: Record<string, unkno
   return `${time} Uhr`
 }
 
+function cycleLogTimestamp(cycle: Cycle, day: Date): string {
+  const date = new Date(day)
+  const minutes = cycleIntakeMinutes(cycle)
+  const safeMinutes = minutes >= 24 * 60 ? 12 * 60 : minutes
+  date.setHours(Math.floor(safeMinutes / 60), safeMinutes % 60, 0, 0)
+  return date.toISOString()
+}
+
 export function Dashboard() {
   const { t, i18n } = useTranslation()
   const locale = DATE_LOCALES[i18n.language] ?? enUS
@@ -235,8 +243,14 @@ export function Dashboard() {
   const selectedDayTitle = isTodaySelected
     ? t('heutiges_protokoll')
     : format(selectedDay, 'EEEE, d. MMMM', { locale })
-  const pendingLogs = selLogs.filter(log => log.taken === null).length
+  const pendingLogItems = selLogs.filter(log => log.taken === null)
+  const pendingCycles = selCycles.filter(cycle =>
+    !selLogs.some(log => log.peptide_id === cycle.peptide_id)
+  )
+  const pendingLogs = pendingLogItems.length
   const takenLogs = selLogs.filter(log => log.taken === true).length
+  const openConfirmationCount = pendingLogs + pendingCycles.length
+  const firstOpenConfirmationName = pendingLogItems[0]?.peptides?.name ?? pendingCycles[0]?.peptides?.name
 
   const deleteLog = async (id: string) => {
     if (!confirm(t('eintrag_loeschen'))) return
@@ -246,6 +260,24 @@ export function Dashboard() {
 
   const confirmDose = async (id: string, taken: boolean) => {
     await supabase.from('dose_logs').update({ taken }).eq('id', id)
+    loadLogs()
+    if (taken) toast.success(t('einnahme_bestaetigt'))
+    else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
+  }
+
+  const confirmCycleDose = async (cycle: Cycle, taken: boolean) => {
+    if (!user) return
+    const dose = effectiveDose(cycle, selectedDay, escalations)
+    const { error } = await supabase.from('dose_logs').insert({
+      user_id: user.id,
+      peptide_id: cycle.peptide_id,
+      dose,
+      unit: cycle.unit,
+      method: cycle.method,
+      logged_at: cycleLogTimestamp(cycle, selectedDay),
+      taken,
+    })
+    if (error) return toast.error(t('fehler_speichern'))
     loadLogs()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
@@ -302,9 +334,11 @@ export function Dashboard() {
           <MetricCard
             icon={Bell}
             label={t('ausstehend')}
-            value={pendingLogs}
-            hint={`${selCycles.length} ${t('zyklus')}`}
-            accent={pendingLogs > 0 ? '#f59e0b' : '#10b981'}
+            value={openConfirmationCount}
+            hint={openConfirmationCount > 0
+              ? t('dose_confirm_open_short', { defaultValue: 'Bestätigung offen' })
+              : `${selCycles.length} ${t('zyklus')}`}
+            accent={openConfirmationCount > 0 ? '#f59e0b' : '#10b981'}
           />
         </div>
       </PageHero>
@@ -431,6 +465,87 @@ export function Dashboard() {
             )}
           />
         </div>
+
+        {openConfirmationCount > 0 && (
+          <div
+            className="mb-3 rounded-2xl border px-3 py-3"
+            style={{
+              background: 'linear-gradient(135deg, rgba(245,158,11,0.16), rgba(8,12,30,0.82))',
+              borderColor: 'rgba(245,158,11,0.42)',
+              boxShadow: '0 0 22px rgba(245,158,11,0.18), inset 0 1px 0 rgba(255,255,255,0.06)',
+            }}
+          >
+            <div className="flex items-start gap-2.5">
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-300 border border-amber-500/25">
+                <Bell size={15} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-extrabold text-amber-200">
+                  {openConfirmationCount === 1
+                    ? t('dose_confirm_open_one', {
+                        defaultValue: 'Einnahmebestätigung für {{name}} noch offen',
+                        name: firstOpenConfirmationName ?? t('zyklus'),
+                      })
+                    : t('dose_confirm_open_many', {
+                        defaultValue: '{{count}} Einnahmebestätigungen noch offen',
+                        count: openConfirmationCount,
+                      })}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-amber-100/60">
+                  {t('dose_confirm_open_hint', { defaultValue: 'Bitte bestätige manuell, ob die geplante Einnahme erfolgt ist oder übersprungen wurde.' })}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {pendingCycles.length > 0 && (
+          <div className="space-y-2 mb-3">
+            {pendingCycles.sort((a, b) => cycleIntakeMinutes(a) - cycleIntakeMinutes(b)).map(c => {
+              const dose = effectiveDose(c, selectedDay, escalations)
+              const tl = cycleTimeLabel(c, t)
+              return (
+                <div
+                  key={`pending-${c.id}`}
+                  className="px-3 py-2.5 rounded-xl border"
+                  style={{
+                    backgroundColor: 'rgba(245,158,11,0.07)',
+                    borderColor: 'rgba(245,158,11,0.24)',
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <Syringe size={14} className="mt-0.5 shrink-0 text-amber-300" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium text-white text-sm">{c.peptides?.name}</span>
+                        <span className="text-xs font-semibold text-amber-300">{dose} {c.unit}</span>
+                        <span className="text-slate-500 text-xs">{c.method}</span>
+                        <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                          {t('dose_confirm_pending_badge', { defaultValue: 'Bestätigung offen' })}
+                        </span>
+                      </div>
+                      {tl && (
+                        <p className="mt-1 text-xs text-amber-400">{tl.emoji} {tl.label}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-2 ml-[26px] flex gap-2">
+                    <button
+                      onClick={() => confirmCycleDose(c, true)}
+                      className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
+                      <Check size={11} /> {t('eingenommen')}
+                    </button>
+                    <button
+                      onClick={() => confirmCycleDose(c, false)}
+                      className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">
+                      <XCircle size={11} /> {t('uebersprungen')}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
 
         {/* Aktive Zyklen für diesen Tag */}
         {selCycles.length > 0 && (
