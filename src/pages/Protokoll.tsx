@@ -578,7 +578,6 @@ export function Protokoll() {
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([])
   const [bloodwork, setBloodwork] = useState<BloodworkEntry[]>([])
   const [doseLogs, setDoseLogs] = useState<DoseLog[]>([])
-  const [selectedMarker, setSelectedMarker] = useState('')
   const [selectedCycleId, setSelectedCycleId] = useState<string | null>(null)
   const [activeMarkers, setActiveMarkers] = useState<string[]>(['Gewicht', 'IGF-1'])
   const [selectedPreset, setSelectedPreset] = useState<string>('weight-igf1')
@@ -848,9 +847,12 @@ export function Protokoll() {
     setWeightLogs((weights ?? []) as WeightLog[])
     setBloodwork(bloodEntries)
     setDoseLogs((doses ?? []) as DoseLog[])
-    setSelectedMarker(current => {
-      if (nextMarkers.length === 0) return ''
-      return current && nextMarkers.includes(current) ? current : nextMarkers[0]
+    // auto-apply preset if current activeMarkers have no data
+    setActiveMarkers(prev => {
+      const hasBlood = nextMarkers.length > 0
+      if (!hasBlood) return ['Gewicht']
+      const valid = prev.filter(m => m === 'Gewicht' || nextMarkers.includes(m))
+      return valid.length > 0 ? valid : ['Gewicht', nextMarkers[0]]
     })
     setLoadingCharts(false)
   }, [range, user])
@@ -862,48 +864,6 @@ export function Protokoll() {
     return () => window.clearTimeout(timer)
   }, [loadRangeData])
 
-  const markers = useMemo(
-    () => Array.from(new Set(bloodwork.map(entry => entry.marker))).sort((a, b) => a.localeCompare(b)),
-    [bloodwork],
-  )
-
-  const weightChartData = useMemo(() => (
-    weightLogs
-      .map(log => ({ date: dateKey(log.logged_at), label: formatDate(dateKey(log.logged_at), language), weight: numericValue(log.weight_kg) }))
-      .filter((item): item is { date: string; label: string; weight: number } => item.weight != null)
-  ), [language, weightLogs])
-
-  const bloodworkChartData = useMemo(() => (
-    bloodwork
-      .filter(entry => entry.marker === selectedMarker)
-      .map(entry => ({ date: entry.tested_at, label: formatDate(entry.tested_at, language), value: numericValue(entry.value), unit: entry.unit }))
-      .filter((item): item is { date: string; label: string; value: number; unit: string } => item.value != null)
-  ), [bloodwork, language, selectedMarker])
-
-  const selectedMarkerUnit = bloodworkChartData[0]?.unit ?? ''
-
-  const adherenceData = useMemo(() => {
-    const days = new Map<string, { taken: boolean; missed: boolean }>()
-    doseLogs.forEach(log => {
-      if (log.taken == null) return
-      const key = dateKey(log.logged_at)
-      const value = days.get(key) ?? { taken: false, missed: false }
-      if (log.taken) value.taken = true
-      else value.missed = true
-      days.set(key, value)
-    })
-
-    const dayValues = Array.from(days.values())
-    return [{
-      name: copy.adherenceTitle,
-      taken: dayValues.filter(day => day.taken).length,
-      missed: dayValues.filter(day => !day.taken && day.missed).length,
-    }]
-  }, [copy.adherenceTitle, doseLogs])
-
-  const bloodworkRows = useMemo(() => (
-    [...bloodwork].sort((a, b) => b.tested_at.localeCompare(a.tested_at) || a.marker.localeCompare(b.marker))
-  ), [bloodwork])
 
   const adherenceForCycle = useCallback((cycle: Cycle) => {
     const cycleRange = { from: cycle.start_date, to: cycleEnd(cycle) }
@@ -1240,117 +1200,6 @@ export function Protokoll() {
           </section>
         )}
 
-        {/* PLACEHOLDER — old weight chart start (to be removed below) */}
-        <ChartCard title={copy.weightTitle} icon={<Scale size={17} />}>
-          {weightChartData.length > 0 ? (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={weightChartData} margin={{ top: 10, right: 8, bottom: 0, left: -18 }}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fill: '#64748b', fontSize: 11 }} tickLine={false} axisLine={false} unit=" kg" />
-                  <Tooltip
-                    contentStyle={{ background: '#0a0e1e', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, color: '#eaeefc' }}
-                    labelStyle={{ color: '#9aaabf' }}
-                    formatter={value => [formatTooltipValue(value, language, 'kg'), copy.weightTitle]}
-                  />
-                  <Line type="monotone" dataKey="weight" stroke="#00ccf5" strokeWidth={3} dot={{ r: 4, fill: '#07091a', stroke: '#00ccf5', strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <EmptyChart label={copy.emptyChart} />
-          )}
-        </ChartCard>
-
-        <ChartCard
-          title={copy.bloodworkTitle}
-          icon={<TestTube2 size={17} />}
-          action={markers.length > 0 && (
-            <select className="select text-sm max-w-[160px]" value={selectedMarker} onChange={event => setSelectedMarker(event.target.value)}>
-              {markers.map(marker => <option key={marker} value={marker}>{marker}</option>)}
-            </select>
-          )}
-        >
-          {bloodworkChartData.length > 0 ? (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={bloodworkChartData} margin={{ top: 10, right: 8, bottom: 0, left: -18 }}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fill: '#64748b', fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    contentStyle={{ background: '#0a0e1e', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, color: '#eaeefc' }}
-                    labelStyle={{ color: '#9aaabf' }}
-                    formatter={value => [formatTooltipValue(value, language, selectedMarkerUnit, 3), selectedMarker]}
-                  />
-                  <Line type="monotone" dataKey="value" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, fill: '#07091a', stroke: '#f43f5e', strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <EmptyChart label={copy.emptyChart} />
-          )}
-        </ChartCard>
-
-        <ChartCard title={copy.adherenceTitle} icon={<Activity size={17} />}>
-          {adherenceData[0].taken + adherenceData[0].missed > 0 ? (
-            <div className="h-60">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={adherenceData} margin={{ top: 10, right: 8, bottom: 0, left: -18 }}>
-                  <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <YAxis allowDecimals={false} tick={{ fill: '#64748b', fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    contentStyle={{ background: '#0a0e1e', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, color: '#eaeefc' }}
-                    labelStyle={{ color: '#9aaabf' }}
-                  />
-                  <Legend wrapperStyle={{ color: '#9aaabf', fontSize: 12 }} />
-                  <Bar dataKey="taken" name={copy.takenDays} fill="#10b981" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="missed" name={copy.missedDays} fill="#f43f5e" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <EmptyChart label={copy.emptyChart} />
-          )}
-        </ChartCard>
-
-        <section className="card">
-          <div className="flex items-center gap-2 mb-4">
-            <TestTube2 size={17} className="text-sky-400" />
-            <h2 className="text-base font-bold text-white">{copy.bloodworkTable}</h2>
-          </div>
-          {bloodworkRows.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-[0.62rem] uppercase tracking-[0.12em] text-slate-500 border-b border-white/[0.06]">
-                    <th className="py-2 pr-3">{copy.exportedAt}</th>
-                    <th className="py-2 pr-3">{copy.marker}</th>
-                    <th className="py-2 pr-3">Wert</th>
-                    <th className="py-2 pr-3">Einheit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bloodworkRows.map(entry => {
-                    const value = numericValue(entry.value)
-                    return (
-                      <tr key={entry.id} className="border-b border-white/[0.04] text-slate-300">
-                        <td className="py-2 pr-3 whitespace-nowrap">{formatDate(entry.tested_at, language)}</td>
-                        <td className="py-2 pr-3 font-semibold text-white">{entry.marker}</td>
-                        <td className="py-2 pr-3">{value == null ? String(entry.value) : formatNumber(value, language, 3)}</td>
-                        <td className="py-2 pr-3">{entry.unit}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-sm text-slate-500">{copy.emptyChart}</p>
-          )}
-        </section>
       </div>
 
       <section>
