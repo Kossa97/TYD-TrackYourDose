@@ -9,7 +9,7 @@ import {
 } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
-import { Activity, ChevronLeft, ChevronRight, CalendarDays, Syringe, X, TrendingUp, Check, XCircle, Bell } from 'lucide-react'
+import { Activity, ChevronLeft, ChevronRight, CalendarDays, Syringe, X, TrendingUp, Check, XCircle, Bell, RotateCcw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
 import { GlassPanel, MetricCard, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
@@ -51,6 +51,8 @@ interface Cycle {
 interface Peptide {
   id: string; name: string; default_unit: string
   default_dose: number | null; default_method: string
+  vial_amount_mg: number | null; reconstitution_ml: number | null
+  vials_in_stock: number | null; vials_initial: number | null
 }
 
 interface Escalation {
@@ -156,6 +158,27 @@ function cycleLogTimestamp(cycle: Cycle, day: Date): string {
   return date.toISOString()
 }
 
+function doseToVialDelta(dose: number, unit: string, peptide: Peptide): number | null {
+  const normalizedUnit = unit.toLowerCase()
+  if (normalizedUnit === 'ml') {
+    if (!peptide.reconstitution_ml || peptide.reconstitution_ml <= 0) return null
+    return dose / peptide.reconstitution_ml
+  }
+
+  if (!peptide.vial_amount_mg || peptide.vial_amount_mg <= 0) return null
+  const doseMg = normalizedUnit === 'mcg'
+    ? dose / 1000
+    : normalizedUnit === 'mg'
+      ? dose
+      : null
+  if (doseMg == null) return null
+  return doseMg / peptide.vial_amount_mg
+}
+
+function roundStock(value: number) {
+  return Math.round(value * 10000) / 10000
+}
+
 export function Dashboard() {
   const { t, i18n } = useTranslation()
   const locale = DATE_LOCALES[i18n.language] ?? enUS
@@ -252,17 +275,63 @@ export function Dashboard() {
   const openConfirmationCount = pendingLogs + pendingCycles.length
   const firstOpenConfirmationName = pendingLogItems[0]?.peptides?.name ?? pendingCycles[0]?.peptides?.name
 
-  const deleteLog = async (id: string) => {
-    if (!confirm(t('eintrag_loeschen'))) return
-    await supabase.from('dose_logs').delete().eq('id', id)
-    toast.success(t('deleted')); loadLogs()
+  const adjustPeptideStockForDose = async (peptideId: string, dose: number, unit: string, mode: 'debit' | 'credit') => {
+    if (!user) return false
+    const peptide = peptides.find(p => p.id === peptideId)
+    if (!peptide) return false
+    const delta = doseToVialDelta(dose, unit, peptide)
+    if (!delta || delta <= 0) return false
+
+    const current = Number(peptide.vials_in_stock ?? 0)
+    const maxStock = Number(peptide.vials_initial ?? 0)
+    const next = mode === 'debit'
+      ? Math.max(0, current - delta)
+      : maxStock > 0
+        ? Math.min(maxStock, current + delta)
+        : current + delta
+    const rounded = roundStock(next)
+
+    const { error } = await supabase
+      .from('peptides')
+      .update({ vials_in_stock: rounded })
+      .eq('id', peptideId)
+      .eq('user_id', user.id)
+    if (error) {
+      toast.error(t('stock_update_failed', { defaultValue: 'Bestand konnte nicht aktualisiert werden' }))
+      return false
+    }
+
+    setPeptides(currentPeptides => currentPeptides.map(p =>
+      p.id === peptideId ? { ...p, vials_in_stock: rounded } : p
+    ))
+    return true
   }
 
-  const confirmDose = async (id: string, taken: boolean) => {
-    await supabase.from('dose_logs').update({ taken }).eq('id', id)
-    loadLogs()
+  const deleteLog = async (log: DoseLog) => {
+    if (!confirm(t('eintrag_loeschen'))) return
+    const { error } = await supabase.from('dose_logs').delete().eq('id', log.id)
+    if (error) return toast.error(t('error'))
+    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit')
+    toast.success(t('deleted')); loadLogs(); loadPeptides()
+  }
+
+  const confirmDose = async (log: DoseLog, taken: boolean) => {
+    const previousTaken = log.taken
+    const { error } = await supabase.from('dose_logs').update({ taken }).eq('id', log.id)
+    if (error) return toast.error(t('error'))
+    if (previousTaken !== true && taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'debit')
+    if (previousTaken === true && taken !== true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit')
+    loadLogs(); loadPeptides()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
+  }
+
+  const undoDose = async (log: DoseLog) => {
+    const { error } = await supabase.from('dose_logs').update({ taken: null }).eq('id', log.id)
+    if (error) return toast.error(t('error'))
+    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit')
+    loadLogs(); loadPeptides()
+    toast.success(t('dose_undo_success', { defaultValue: 'Einnahme zurückgesetzt' }))
   }
 
   const confirmCycleDose = async (cycle: Cycle, taken: boolean) => {
@@ -278,7 +347,8 @@ export function Dashboard() {
       taken,
     })
     if (error) return toast.error(t('fehler_speichern'))
-    loadLogs()
+    if (taken) await adjustPeptideStockForDose(cycle.peptide_id, dose, cycle.unit, 'debit')
+    loadLogs(); loadPeptides()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
   }
@@ -650,7 +720,7 @@ export function Dashboard() {
                     </div>
                   </div>
                   <button className="p-1.5 text-slate-600 hover:text-red-400 transition-colors shrink-0"
-                    onClick={() => deleteLog(log.id)}>
+                    onClick={() => deleteLog(log)}>
                     <X size={13} />
                   </button>
                 </div>
@@ -659,14 +729,24 @@ export function Dashboard() {
                 {log.taken === null && (
                   <div className="flex gap-2 mt-2 ml-[26px]">
                     <button
-                      onClick={() => confirmDose(log.id, true)}
+                      onClick={() => confirmDose(log, true)}
                       className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
                       <Check size={11} /> {t('eingenommen')}
                     </button>
                     <button
-                      onClick={() => confirmDose(log.id, false)}
+                      onClick={() => confirmDose(log, false)}
                       className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">
                       <XCircle size={11} /> {t('uebersprungen')}
+                    </button>
+                  </div>
+                )}
+
+                {log.taken !== null && (
+                  <div className="flex gap-2 mt-2 ml-[26px]">
+                    <button
+                      onClick={() => undoDose(log)}
+                      className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-slate-700/60 text-slate-300 border border-slate-600/50 hover:bg-slate-600/60 transition-colors">
+                      <RotateCcw size={11} /> {t('dose_undo', { defaultValue: 'Rückgängig' })}
                     </button>
                   </div>
                 )}
