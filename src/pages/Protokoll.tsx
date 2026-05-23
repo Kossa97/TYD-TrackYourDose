@@ -15,12 +15,16 @@ import {
   XCircle,
 } from 'lucide-react'
 import {
+  Area,
   Bar,
   BarChart,
   CartesianGrid,
+  ComposedChart,
   Legend,
   Line,
   LineChart,
+  ReferenceArea,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -181,6 +185,92 @@ const COPY: Record<'de' | 'en', ProtocolCopy> = {
     exportedAt: 'Date',
     coverTitle: 'TYD Protocol',
   },
+}
+
+// ─── Design constants ────────────────────────────────────────────────────────
+
+const NORMAL_RANGES: Record<string, { min: number | null; max: number | null }> = {
+  'IGF-1':       { min: 100,  max: 300  },
+  'Testosteron': { min: 264,  max: 916  },
+  'Östradiol':   { min: 10,   max: 40   },
+  'SHBG':        { min: 10,   max: 57   },
+  'LH':          { min: 1.5,  max: 9.3  },
+  'FSH':         { min: 1.5,  max: 12.4 },
+  'TSH':         { min: 0.4,  max: 4.0  },
+  'CRP':         { min: 0,    max: 5.0  },
+  'Vitamin D':   { min: 30,   max: 100  },
+  'Ferritin':    { min: 30,   max: 400  },
+  'Hämoglobin':  { min: 13.5, max: 17.5 },
+  'Hematokrit':  { min: 40,   max: 52   },
+  'GH':          { min: 0,    max: 3.0  },
+  'Kortisol':    { min: 6,    max: 23   },
+  'Insulin':     { min: 2,    max: 25   },
+}
+
+const SERIES_COLORS: Record<string, string> = {
+  'Gewicht':     '#00ccf5',
+  'IGF-1':       '#8b5cf6',
+  'CRP':         '#10b981',
+  'Testosteron': '#f59e0b',
+  'Insulin':     '#f43f5e',
+  'Vitamin D':   '#38bdf8',
+  'Östradiol':   '#a78bfa',
+  'TSH':         '#34d399',
+  'Hämoglobin':  '#fb923c',
+  'Hematokrit':  '#e879f9',
+  'GH':          '#67e8f9',
+  'Kortisol':    '#fde68a',
+  'Ferritin':    '#86efac',
+  'SHBG':        '#c084fc',
+  'LH':          '#f472b6',
+  'FSH':         '#94a3b8',
+}
+
+const PRESETS: { key: string; label: string; markers: string[] }[] = [
+  { key: 'weight-igf1',  label: '⚖️ Gewicht + IGF-1',  markers: ['Gewicht', 'IGF-1'] },
+  { key: 'gh-panel',     label: '💉 GH-Panel',          markers: ['Gewicht', 'IGF-1', 'Vitamin D'] },
+  { key: 'inflammation', label: '🔥 Entzündung',        markers: ['Gewicht', 'CRP'] },
+  { key: 'metabolismus', label: '🧬 Metabolismus',      markers: ['Gewicht', 'Insulin'] },
+  { key: 'hormone',      label: '⚗️ Hormone',           markers: ['Testosteron', 'IGF-1', 'Insulin'] },
+  { key: 'full',         label: '📊 Alle Marker',       markers: [] },
+]
+
+const CYCLE_COLORS = ['#00ccf5', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#38bdf8']
+
+function getSeriesColor(marker: string): string {
+  return SERIES_COLORS[marker] ?? '#00ccf5'
+}
+
+function getNormalRange(marker: string): { min: number | null; max: number | null } {
+  return NORMAL_RANGES[marker] ?? { min: null, max: null }
+}
+
+function toPercentChange(entries: { date: string; value: number }[]): { date: string; pct: number }[] {
+  if (entries.length === 0) return []
+  const first = entries[0].value
+  if (first === 0) return entries.map(e => ({ date: e.date, pct: 0 }))
+  return entries.map(e => ({
+    date: e.date,
+    pct: Math.round(((e.value - first) / Math.abs(first)) * 1000) / 10,
+  }))
+}
+
+function interpolatePct(date: string, anchors: { date: string; pct: number }[]): number | undefined {
+  if (anchors.length === 0) return undefined
+  if (date <= anchors[0].date) return anchors[0].pct
+  if (date >= anchors[anchors.length - 1].date) return anchors[anchors.length - 1].pct
+  for (let i = 0; i < anchors.length - 1; i++) {
+    if (date >= anchors[i].date && date <= anchors[i + 1].date) {
+      const span = anchors[i + 1].date.localeCompare(anchors[i].date)
+      const t = span > 0 ? date.localeCompare(anchors[i].date) / span : 0
+      return Math.round((anchors[i].pct + t * (anchors[i + 1].pct - anchors[i].pct)) * 10) / 10
+    }
+  }
+  return undefined
+}
+
+function gradId(marker: string): string {
+  return `grad-${marker.replace(/[^a-zA-Z0-9]/g, '')}`
 }
 
 const FOOTER_TEXT = 'Track Your Dose · tyd-track-your-dose.vercel.app'
