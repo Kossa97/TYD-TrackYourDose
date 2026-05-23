@@ -68,6 +68,7 @@ export function GlassPanel({
         width: asButton ? '100%' : undefined,
         textAlign: asButton ? 'left' : undefined,
         cursor: asButton ? 'pointer' : undefined,
+        transition: asButton ? 'transform 0.16s ease, border-color 0.16s ease' : undefined,
         padding: paddingMap[padding],
         borderRadius: 24,
         border: `1px solid ${accentAlpha(accent, '18')}`,
