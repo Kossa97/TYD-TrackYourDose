@@ -82,13 +82,13 @@ export function GlassPanel({
       <div
         style={{
           position: 'absolute',
-          right: -28,
-          bottom: -32,
-          width: 104,
-          height: 104,
+          right: -58,
+          bottom: -64,
+          width: 128,
+          height: 128,
           borderRadius: '50%',
           background: accent,
-          opacity: 0.055,
+          opacity: 0.035,
           filter: 'blur(18px)',
           pointerEvents: 'none',
         }}
@@ -151,7 +151,7 @@ export function PageHero({
         style={{
           position: 'absolute',
           inset: 0,
-          background: `radial-gradient(circle at 88% 8%, ${accentAlpha(accent, '2b')}, transparent 34%), radial-gradient(circle at 8% 92%, rgba(139,92,246,0.17), transparent 36%)`,
+          background: `radial-gradient(circle at 82% 22%, ${accentAlpha(accent, '24')}, transparent 38%), radial-gradient(circle at 18% 78%, rgba(139,92,246,0.12), transparent 42%)`,
           pointerEvents: 'none',
         }}
       />
