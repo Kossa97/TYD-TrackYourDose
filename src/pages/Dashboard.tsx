@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -9,9 +9,10 @@ import {
 } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
-import { ChevronLeft, ChevronRight, CalendarDays, Syringe, X, TrendingUp, Check, XCircle, Bell } from 'lucide-react'
+import { Activity, ChevronLeft, ChevronRight, CalendarDays, Syringe, X, TrendingUp, Check, XCircle, Bell } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
+import { GlassPanel, MetricCard, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
 
 const DATE_LOCALES: Record<string, Locale> = {
   de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
@@ -63,7 +64,6 @@ interface Escalation {
 }
 
 const WEEKDAYS_DE: Record<number, string> = { 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 6: 'Sa', 0: 'So' }
-const WEEKDAY_LABELS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
 function cycleAppliesToDay(cycle: Cycle, day: Date): boolean {
   const start = parseISO(cycle.start_date)
@@ -108,10 +108,6 @@ function effectiveDose(cycle: Cycle, day: Date, escalations: Escalation[]): numb
 const INTAKE_MINUTES: Record<string, number> = {
   morgens: 8 * 60, mittags: 12 * 60, abends: 20 * 60,
 }
-const INTAKE_EMOJI: Record<string, string> = {
-  morgens: '🌅', mittags: '☀️', abends: '🌙', custom: '🕐',
-}
-
 function cycleIntakeMinutes(c: Cycle): number {
   // Sort by first intake time slot
   const firstKey = (c.intake_time ?? '').split(',').filter(Boolean)[0] ?? ''
@@ -165,40 +161,63 @@ export function Dashboard() {
   // selectedDay steuert den Tages-Bereich unten — Standard = heute
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
 
-  const loadLogs = async () => {
+  const loadLogs = useCallback(async () => {
+    if (!user) return
     const start = format(startOfMonth(currentDate), 'yyyy-MM-dd')
     const end = format(endOfMonth(currentDate), 'yyyy-MM-dd')
     const { data } = await supabase
       .from('dose_logs')
       .select('*, peptides(name)')
-      .eq('user_id', user!.id)
+      .eq('user_id', user.id)
       .gte('logged_at', start)
       .lte('logged_at', end + 'T23:59:59')
       .order('logged_at', { ascending: true })
     if (data) setLogs(data as DoseLog[])
-  }
+  }, [currentDate, user])
 
-  const loadCycles = async () => {
+  const loadCycles = useCallback(async () => {
+    if (!user) return
     const { data } = await supabase
       .from('cycles')
       .select('*, peptides(name)')
-      .eq('user_id', user!.id)
+      .eq('user_id', user.id)
       .eq('active', true)
     if (data) setCycles(data as Cycle[])
-  }
+  }, [user])
 
-  const loadPeptides = async () => {
-    const { data } = await supabase.from('peptides').select('*').eq('user_id', user!.id).order('name')
+  const loadPeptides = useCallback(async () => {
+    if (!user) return
+    const { data } = await supabase.from('peptides').select('*').eq('user_id', user.id).order('name')
     if (data) setPeptides(data)
-  }
+  }, [user])
 
-  const loadEscalations = async () => {
-    const { data } = await supabase.from('dose_escalations').select('*').eq('user_id', user!.id)
+  const loadEscalations = useCallback(async () => {
+    if (!user) return
+    const { data } = await supabase.from('dose_escalations').select('*').eq('user_id', user.id)
     if (data) setEscalations(data as Escalation[])
-  }
+  }, [user])
 
-  useEffect(() => { loadLogs(); loadCycles() }, [currentDate])
-  useEffect(() => { loadPeptides(); loadEscalations() }, [])
+  useEffect(() => {
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled) {
+        void loadLogs()
+        void loadCycles()
+      }
+    })
+    return () => { cancelled = true }
+  }, [loadCycles, loadLogs])
+
+  useEffect(() => {
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled) {
+        void loadPeptides()
+        void loadEscalations()
+      }
+    })
+    return () => { cancelled = true }
+  }, [loadEscalations, loadPeptides])
 
   const calendarDays = eachDayOfInterval({
     start: startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 }),
@@ -212,6 +231,12 @@ export function Dashboard() {
   const selLogs     = logsForDay(selectedDay)
   const selCycles   = cyclesForDay(selectedDay)
   const isTodaySelected = isToday(selectedDay)
+  const monthTitle = format(currentDate, 'MMMM yyyy', { locale })
+  const selectedDayTitle = isTodaySelected
+    ? t('heutiges_protokoll')
+    : format(selectedDay, 'EEEE, d. MMMM', { locale })
+  const pendingLogs = selLogs.filter(log => log.taken === null).length
+  const takenLogs = selLogs.filter(log => log.taken === true).length
 
   const deleteLog = async (id: string) => {
     if (!confirm(t('eintrag_loeschen'))) return
@@ -239,25 +264,54 @@ export function Dashboard() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div>
-
-      {/* ── Monats-Navigation ─────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-3">
-        <button className="p-2 text-slate-400 hover:text-white transition-colors"
-          onClick={() => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>
-          <ChevronLeft size={20} />
-        </button>
-        <h1 className="text-base font-bold capitalize">
-          {format(currentDate, 'MMMM yyyy', { locale })}
-        </h1>
-        <button className="p-2 text-slate-400 hover:text-white transition-colors"
-          onClick={() => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>
-          <ChevronRight size={20} />
-        </button>
-      </div>
+    <PageShell>
+      <PageHero
+        kicker={t('nav_kalender')}
+        title={monthTitle}
+        subtitle={selectedDayTitle}
+        icon={CalendarDays}
+        accent="#00ccf5"
+        action={(
+          <div className="flex items-center gap-2">
+            <button className="btn-secondary !px-3 !py-2"
+              onClick={() => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>
+              <ChevronLeft size={17} />
+            </button>
+            <button className="btn-secondary !px-3 !py-2"
+              onClick={() => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>
+              <ChevronRight size={17} />
+            </button>
+          </div>
+        )}
+      >
+        <div className="grid grid-cols-3 gap-2">
+          <MetricCard
+            icon={Activity}
+            label={t('zyklus')}
+            value={cycles.length}
+            hint={t('stat_active_cycles')}
+            accent="#8b5cf6"
+          />
+          <MetricCard
+            icon={Syringe}
+            label={t('protokollierte_dosen')}
+            value={selLogs.length}
+            hint={`${takenLogs} ${t('eingenommen')}`}
+            accent="#00ccf5"
+          />
+          <MetricCard
+            icon={Bell}
+            label={t('ausstehend')}
+            value={pendingLogs}
+            hint={`${selCycles.length} ${t('zyklus')}`}
+            accent={pendingLogs > 0 ? '#f59e0b' : '#10b981'}
+          />
+        </div>
+      </PageHero>
 
       {/* ── Kalender ──────────────────────────────────────────────────────── */}
-      <div data-ob="calendar-main" data-ob-self className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden mb-4">
+      <div data-ob="calendar-main" data-ob-self>
+      <GlassPanel accent="#00ccf5" padding="sm" style={{ padding: 0 }}>
         {/* Wochentag-Kopf */}
         <div className="grid grid-cols-7 border-b border-slate-800">
           {[t('mon'),t('tue'),t('wed'),t('thu'),t('fri'),t('sat'),t('sun')].map(d => (
@@ -273,7 +327,6 @@ export function Dashboard() {
             const inMonth    = day.getMonth() === currentDate.getMonth()
             const isSelected = isSameDay(day, selectedDay)
             const hasCycle   = dayCycles.length > 0
-            const hasLog     = dayLogs.length > 0
 
             return (
               <button
@@ -357,25 +410,26 @@ export function Dashboard() {
             <TrendingUp size={10} style={{ color: '#f59e0b' }} /> {t('erhoehung')}
           </div>
         </div>
+      </GlassPanel>
       </div>
 
       {/* ── Tages-Panel (ausgewählter Tag / Standard = heute) ─────────────── */}
-      <div className="card">
+      <GlassPanel accent="#00ccf5" padding="md">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-3">
-          <CalendarDays size={15} className="text-slate-400" />
-          <h2 className="font-semibold text-slate-200 text-sm">
-            {isTodaySelected
-              ? t('heutiges_protokoll')
-              : format(selectedDay, 'EEEE, d. MMMM', { locale })}
-          </h2>
-          {!isTodaySelected && (
-            <button
-              onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
-              className="text-xs text-sky-400 hover:text-sky-300 transition-colors">
-              {t('heute_link')}
-            </button>
-          )}
+        <div className="mb-3">
+          <SectionHeader
+            kicker={format(selectedDay, 'dd.MM.yyyy')}
+            title={selectedDayTitle}
+            icon={CalendarDays}
+            accent="#00ccf5"
+            action={!isTodaySelected && (
+              <button
+                onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
+                className="text-xs text-sky-400 hover:text-sky-300 transition-colors">
+                {t('heute_link')}
+              </button>
+            )}
+          />
         </div>
 
         {/* Aktive Zyklen für diesen Tag */}
@@ -532,8 +586,8 @@ export function Dashboard() {
             {t('noch_keine_dosis_prot')}
           </p>
         )}
-      </div>
+      </GlassPanel>
 
-    </div>
+    </PageShell>
   )
 }
