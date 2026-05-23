@@ -569,60 +569,13 @@ export function Dashboard() {
           </div>
         )}
 
-        {pendingCycles.length > 0 && (
-          <div className="space-y-2 mb-3">
-            {pendingCycles.sort((a, b) => cycleIntakeMinutes(a) - cycleIntakeMinutes(b)).map(c => {
-              const dose = effectiveDose(c, selectedDay, escalations)
-              const tl = cycleTimeLabel(c, t)
-              return (
-                <div
-                  key={`pending-${c.id}`}
-                  className="px-3 py-2.5 rounded-xl border"
-                  style={{
-                    backgroundColor: 'rgba(245,158,11,0.07)',
-                    borderColor: 'rgba(245,158,11,0.24)',
-                  }}
-                >
-                  <div className="flex items-start gap-3">
-                    <Syringe size={14} className="mt-0.5 shrink-0 text-amber-300" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium text-white text-sm">{c.peptides?.name}</span>
-                        <span className="text-xs font-semibold text-amber-300">{dose} {c.unit}</span>
-                        <span className="text-slate-500 text-xs">{c.method}</span>
-                        <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
-                          {t('dose_confirm_pending_badge', { defaultValue: 'Bestätigung offen' })}
-                        </span>
-                      </div>
-                      {tl && (
-                        <p className="mt-1 text-xs text-amber-400">{tl.emoji} {tl.label}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-2 ml-[26px] flex gap-2">
-                    <button
-                      onClick={() => confirmCycleDose(c, true)}
-                      className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
-                      <Check size={11} /> {t('eingenommen')}
-                    </button>
-                    <button
-                      onClick={() => confirmCycleDose(c, false)}
-                      className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">
-                      <XCircle size={11} /> {t('uebersprungen')}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-
         {/* Aktive Zyklen für diesen Tag */}
         {selCycles.length > 0 && (
           <div className="space-y-1.5 mb-3">
             {[...selCycles].sort((a, b) => cycleIntakeMinutes(a) - cycleIntakeMinutes(b)).map(c => {
               const dose = effectiveDose(c, selectedDay, escalations)
               const isEscalated = dose !== c.dose
+              const needsConfirmation = pendingCycles.some(pending => pending.id === c.id)
               const cycleEscs = escalations.filter(e => e.cycle_id === c.id)
               const activeEscCount = cycleEscs.filter(e => {
                 if (e.start_type === 'date' && e.start_date)
@@ -633,45 +586,70 @@ export function Dashboard() {
               }).length
               const pidx   = peptides.findIndex(p => p.id === c.peptide_id)
               const pcolor = getPeptideColor(pidx)
+              const tl = cycleTimeLabel(c, t)
               return (
                 <div
                   key={c.id}
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border"
+                  className="rounded-xl border px-3 py-2.5 transition-colors"
                   style={{
-                    backgroundColor: pcolor + '10',
-                    borderColor:      pcolor + '30',
+                    background: needsConfirmation
+                      ? `linear-gradient(90deg, rgba(245,158,11,0.16), ${pcolor}12)`
+                      : pcolor + '10',
+                    borderColor: needsConfirmation ? 'rgba(245,158,11,0.42)' : pcolor + '30',
+                    boxShadow: needsConfirmation ? '0 0 18px rgba(245,158,11,0.14)' : undefined,
                   }}>
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: pcolor }} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium" style={{ color: pcolor }}>{c.peptides?.name}</span>
-                      <span className={`text-xs font-semibold ${isEscalated ? 'text-orange-400' : 'text-slate-300'}`}>
-                        {dose} {c.unit}
-                      </span>
-                      {isEscalated && (
-                        <span className="flex items-center gap-0.5 text-orange-400 text-xs">
-                          <TrendingUp size={11} /> {t('stufe_n', { n: activeEscCount })}
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${needsConfirmation ? 'animate-pulse' : ''}`}
+                      style={{ backgroundColor: needsConfirmation ? '#f59e0b' : pcolor }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium" style={{ color: needsConfirmation ? '#fbbf24' : pcolor }}>{c.peptides?.name}</span>
+                        <span className={`text-xs font-semibold ${isEscalated || needsConfirmation ? 'text-orange-400' : 'text-slate-300'}`}>
+                          {dose} {c.unit}
                         </span>
-                      )}
-                      <span className="text-slate-500 text-xs">{c.method}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {(() => {
-                        const tl = cycleTimeLabel(c, t)
-                        return tl ? (
+                        {isEscalated && (
+                          <span className="flex items-center gap-0.5 text-orange-400 text-xs">
+                            <TrendingUp size={11} /> {t('stufe_n', { n: activeEscCount })}
+                          </span>
+                        )}
+                        <span className="text-slate-500 text-xs">{c.method}</span>
+                        {needsConfirmation && (
+                          <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                            {t('dose_confirm_pending_badge', { defaultValue: 'Bestätigung offen' })}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {tl && (
                           <span className="text-xs text-amber-400 flex items-center gap-1">
                             {tl.emoji} {tl.label}
                           </span>
-                        ) : null
-                      })()}
-                      {isEscalated && (
-                        <span className="text-slate-600 text-xs">
-                          {t('basis_label')} {c.dose} {c.unit} · +{dose - c.dose} {c.unit}
-                        </span>
-                      )}
+                        )}
+                        {isEscalated && (
+                          <span className="text-slate-600 text-xs">
+                            {t('basis_label')} {c.dose} {c.unit} · +{dose - c.dose} {c.unit}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    <span className="text-slate-600 text-xs shrink-0 hidden sm:block">{c.name}</span>
                   </div>
-                  <span className="text-slate-600 text-xs shrink-0 hidden sm:block">{c.name}</span>
+                  {needsConfirmation && (
+                    <div className="mt-2 ml-[18px] flex gap-2">
+                      <button
+                        onClick={() => confirmCycleDose(c, true)}
+                        className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
+                        <Check size={11} /> {t('eingenommen')}
+                      </button>
+                      <button
+                        onClick={() => confirmCycleDose(c, false)}
+                        className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">
+                        <XCircle size={11} /> {t('uebersprungen')}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
             })}
