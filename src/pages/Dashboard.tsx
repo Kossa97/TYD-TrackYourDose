@@ -270,6 +270,7 @@ export function Dashboard() {
   const pendingCycles = selCycles.filter(cycle =>
     !selLogs.some(log => log.peptide_id === cycle.peptide_id)
   )
+  const confirmedLogs = selLogs.filter(log => log.taken !== null)
   const pendingLogs = pendingLogItems.length
   const takenLogs = selLogs.filter(log => log.taken === true).length
   const openConfirmationCount = pendingLogs + pendingCycles.length
@@ -397,7 +398,7 @@ export function Dashboard() {
           <MetricCard
             icon={Syringe}
             label={t('protokollierte_dosen')}
-            value={selLogs.length}
+            value={confirmedLogs.length}
             hint={`${takenLogs} ${t('eingenommen')}`}
             accent="#00ccf5"
           />
@@ -575,7 +576,8 @@ export function Dashboard() {
             {[...selCycles].sort((a, b) => cycleIntakeMinutes(a) - cycleIntakeMinutes(b)).map(c => {
               const dose = effectiveDose(c, selectedDay, escalations)
               const isEscalated = dose !== c.dose
-              const needsConfirmation = pendingCycles.some(pending => pending.id === c.id)
+              const pendingLog = pendingLogItems.find(log => log.peptide_id === c.peptide_id)
+              const needsConfirmation = !!pendingLog || pendingCycles.some(pending => pending.id === c.id)
               const cycleEscs = escalations.filter(e => e.cycle_id === c.id)
               const activeEscCount = cycleEscs.filter(e => {
                 if (e.start_type === 'date' && e.start_date)
@@ -639,12 +641,12 @@ export function Dashboard() {
                   {needsConfirmation && (
                     <div className="mt-2 ml-[18px] flex gap-2">
                       <button
-                        onClick={() => confirmCycleDose(c, true)}
+                        onClick={() => pendingLog ? confirmDose(pendingLog, true) : confirmCycleDose(c, true)}
                         className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
                         <Check size={11} /> {t('eingenommen')}
                       </button>
                       <button
-                        onClick={() => confirmCycleDose(c, false)}
+                        onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false)}
                         className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">
                         <XCircle size={11} /> {t('uebersprungen')}
                       </button>
@@ -657,9 +659,9 @@ export function Dashboard() {
         )}
 
         {/* Protokollierte Dosen */}
-        {selLogs.length > 0 ? (
+        {confirmedLogs.length > 0 ? (
           <div className="space-y-2">
-            {selLogs.map(log => (
+            {confirmedLogs.map(log => (
               <div key={log.id} className={`px-3 py-2.5 border rounded-xl transition-colors ${
                 log.taken === true
                   ? 'bg-emerald-500/5 border-emerald-500/20'
