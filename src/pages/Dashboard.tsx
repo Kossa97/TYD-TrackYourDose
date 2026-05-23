@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type TouchEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type PointerEvent, type WheelEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -207,31 +207,56 @@ export function Dashboard() {
 
   // selectedDay steuert den Tages-Bereich unten — Standard = heute
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
-  const calendarSwipeStart = useRef<{ x: number; y: number } | null>(null)
+  const calendarSwipeStart = useRef<{ x: number; y: number; pointerId: number } | null>(null)
+  const suppressCalendarClick = useRef(false)
+  const calendarWheelLocked = useRef(false)
 
   const changeMonth = useCallback((delta: number) => {
     setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + delta, 1))
   }, [])
 
-  const handleCalendarTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    const touch = event.touches[0]
-    if (!touch) return
-    calendarSwipeStart.current = { x: touch.clientX, y: touch.clientY }
-  }
-
-  const handleCalendarTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
-    const start = calendarSwipeStart.current
-    const touch = event.changedTouches[0]
-    calendarSwipeStart.current = null
-    if (!start || !touch) return
-
-    const deltaX = touch.clientX - start.x
-    const deltaY = touch.clientY - start.y
+  const finishCalendarSwipe = (deltaX: number, deltaY: number) => {
     const absX = Math.abs(deltaX)
     const absY = Math.abs(deltaY)
-    if (absY < 48 || absY < absX * 1.25) return
-
+    if (absY < 44 || absY < absX * 1.2) return false
     changeMonth(deltaY < 0 ? 1 : -1)
+    return true
+  }
+
+  const handleCalendarPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+    calendarSwipeStart.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId }
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const handleCalendarPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    const start = calendarSwipeStart.current
+    calendarSwipeStart.current = null
+    if (!start || start.pointerId !== event.pointerId) return
+    const didSwipe = finishCalendarSwipe(event.clientX - start.x, event.clientY - start.y)
+    if (didSwipe) suppressCalendarClick.current = true
+  }
+
+  const handleCalendarPointerCancel = () => {
+    calendarSwipeStart.current = null
+  }
+
+  const handleCalendarClickCapture = (event: PointerEvent<HTMLDivElement>) => {
+    if (!suppressCalendarClick.current) return
+    suppressCalendarClick.current = false
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  const handleCalendarWheel = (event: WheelEvent<HTMLDivElement>) => {
+    const absX = Math.abs(event.deltaX)
+    const absY = Math.abs(event.deltaY)
+    if (absY < 40 || absY < absX * 1.2) return
+    event.preventDefault()
+    if (calendarWheelLocked.current) return
+    calendarWheelLocked.current = true
+    changeMonth(event.deltaY > 0 ? 1 : -1)
+    window.setTimeout(() => { calendarWheelLocked.current = false }, 450)
   }
 
   const loadLogs = useCallback(async () => {
@@ -464,13 +489,7 @@ export function Dashboard() {
       </PageHero>
 
       {/* ── Kalender ──────────────────────────────────────────────────────── */}
-      <div
-        data-ob="calendar-main"
-        data-ob-self
-        onTouchStart={handleCalendarTouchStart}
-        onTouchEnd={handleCalendarTouchEnd}
-        style={{ touchAction: 'pan-y' }}
-      >
+      <div data-ob="calendar-main" data-ob-self>
       <GlassPanel accent="#00ccf5" padding="sm" style={{ padding: 0 }}>
         {/* Wochentag-Kopf */}
         <div className="grid grid-cols-7 border-b border-slate-800">
@@ -480,7 +499,15 @@ export function Dashboard() {
         </div>
 
         {/* Tage */}
-        <div className="grid grid-cols-7">
+        <div
+          className="grid grid-cols-7 select-none"
+          onPointerDown={handleCalendarPointerDown}
+          onPointerUp={handleCalendarPointerUp}
+          onPointerCancel={handleCalendarPointerCancel}
+          onClickCapture={handleCalendarClickCapture}
+          onWheel={handleCalendarWheel}
+          style={{ touchAction: 'none', cursor: 'grab' }}
+        >
           {calendarDays.map((day, i) => {
             const dayLogs    = logsForDay(day)
             const dayCycles  = cyclesForDay(day)
