@@ -629,22 +629,20 @@ export function Dashboard() {
                       return differenceInDays(selectedDay, parseISO(c.start_date)) >= e.start_after_days
                     return false
                   }).length
-                  const pidx = peptides.findIndex(p => p.id === c.peptide_id)
-                  const pcolor = getPeptideColor(pidx)
                   const tl = cycleTimeLabel(c, t)
                   return (
                     <div
                       key={c.id}
                       className="rounded-xl border px-3 py-2.5 transition-colors"
                       style={{
-                        background: pcolor + '10',
-                        borderColor: pcolor + '30',
+                        background: 'rgba(8,14,30,0.68)',
+                        borderColor: 'rgba(255,255,255,0.075)',
                       }}>
                       <div className="flex items-center gap-2.5">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: pcolor }} />
+                        <span className="w-2 h-2 rounded-full shrink-0 bg-slate-500" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium" style={{ color: pcolor }}>{c.peptides?.name}</span>
+                            <span className="text-sm font-medium text-white">{c.peptides?.name}</span>
                             <span className={`text-xs font-semibold ${isEscalated ? 'text-orange-400' : 'text-slate-300'}`}>
                               {dose} {c.unit}
                             </span>
