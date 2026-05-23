@@ -140,6 +140,22 @@ function cycleTimeLabel(c: Cycle, t: (key: string) => string): { emoji: string; 
   }
 }
 
+type IntakeGroupKey = 'morgens' | 'mittags' | 'abends' | 'custom' | 'later'
+
+function cycleTimeGroupKey(cycle: Cycle): IntakeGroupKey {
+  const firstKey = (cycle.intake_time ?? '').split(',').filter(Boolean)[0] ?? ''
+  if (firstKey === 'morgens' || firstKey === 'mittags' || firstKey === 'abends' || firstKey === 'custom') return firstKey
+  return 'later'
+}
+
+function intakeGroupMeta(key: IntakeGroupKey, t: (key: string) => string): { emoji: string; label: string } {
+  if (key === 'morgens') return { emoji: '🌅', label: t('morgens') }
+  if (key === 'mittags') return { emoji: '☀️', label: t('mittags') }
+  if (key === 'abends') return { emoji: '🌙', label: t('abends') }
+  if (key === 'custom') return { emoji: '🕐', label: t('uhrzeit_label') }
+  return { emoji: '📌', label: t('ausstehend') }
+}
+
 function timeLabel(dateStr: string, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const date = new Date(dateStr)
   const h    = date.getHours()
@@ -271,6 +287,13 @@ export function Dashboard() {
     !selLogs.some(log => log.peptide_id === cycle.peptide_id)
   )
   const confirmedLogs = selLogs.filter(log => log.taken !== null)
+  const confirmedLogsSorted = [...confirmedLogs].sort((a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime())
+  const dueCycles = [...selCycles]
+    .filter(cycle => pendingLogItems.some(log => log.peptide_id === cycle.peptide_id) || pendingCycles.some(pending => pending.id === cycle.id))
+    .sort((a, b) => cycleIntakeMinutes(a) - cycleIntakeMinutes(b))
+  const dueCycleSections = (['morgens', 'mittags', 'abends', 'custom', 'later'] as IntakeGroupKey[])
+    .map(key => ({ ...intakeGroupMeta(key, t), cycles: dueCycles.filter(cycle => cycleTimeGroupKey(cycle) === key) }))
+    .filter(section => section.cycles.length > 0)
   const pendingLogs = pendingLogItems.length
   const takenLogs = selLogs.filter(log => log.taken === true).length
   const openConfirmationCount = pendingLogs + pendingCycles.length
@@ -570,107 +593,136 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* Aktive Zyklen für diesen Tag */}
-        {selCycles.length > 0 && (
-          <div className="space-y-1.5 mb-3">
-            {[...selCycles].sort((a, b) => cycleIntakeMinutes(a) - cycleIntakeMinutes(b)).map(c => {
-              const dose = effectiveDose(c, selectedDay, escalations)
-              const isEscalated = dose !== c.dose
-              const pendingLog = pendingLogItems.find(log => log.peptide_id === c.peptide_id)
-              const needsConfirmation = !!pendingLog || pendingCycles.some(pending => pending.id === c.id)
-              const cycleEscs = escalations.filter(e => e.cycle_id === c.id)
-              const activeEscCount = cycleEscs.filter(e => {
-                if (e.start_type === 'date' && e.start_date)
-                  return selectedDay >= parseISO(e.start_date)
-                if (e.start_after_days != null)
-                  return differenceInDays(selectedDay, parseISO(c.start_date)) >= e.start_after_days
-                return false
-              }).length
-              const pidx   = peptides.findIndex(p => p.id === c.peptide_id)
-              const pcolor = getPeptideColor(pidx)
-              const tl = cycleTimeLabel(c, t)
-              return (
-                <div
-                  key={c.id}
-                  className="rounded-xl border px-3 py-2.5 transition-colors"
-                  style={{
-                    background: pcolor + '10',
-                    borderColor: pcolor + '30',
-                  }}>
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: pcolor }} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium" style={{ color: pcolor }}>{c.peptides?.name}</span>
-                        <span className={`text-xs font-semibold ${isEscalated ? 'text-orange-400' : 'text-slate-300'}`}>
-                          {dose} {c.unit}
-                        </span>
-                        {isEscalated && (
-                          <span className="flex items-center gap-0.5 text-orange-400 text-xs">
-                            <TrendingUp size={11} /> {t('stufe_n', { n: activeEscCount })}
-                          </span>
-                        )}
-                        <span className="text-slate-500 text-xs">{c.method}</span>
-                        {needsConfirmation && (
-                          <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+        {/* Noch fällig */}
+        {dueCycles.length > 0 && (
+          <div className="mb-3 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-amber-300/80">
+                  {t('due_intakes_title', { defaultValue: 'Noch fällig' })}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {t('due_intakes_hint', { defaultValue: 'Bitte Einnahme pro Peptid bestätigen oder überspringen.' })}
+                </p>
+              </div>
+              <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs font-bold text-amber-300">
+                {dueCycles.length}
+              </span>
+            </div>
+
+            {dueCycleSections.map(section => (
+              <div key={section.label} className="space-y-1.5">
+                <div className="flex items-center gap-2 px-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                  <span>{section.emoji}</span>
+                  <span>{section.label}</span>
+                </div>
+
+                {section.cycles.map(c => {
+                  const dose = effectiveDose(c, selectedDay, escalations)
+                  const isEscalated = dose !== c.dose
+                  const pendingLog = pendingLogItems.find(log => log.peptide_id === c.peptide_id)
+                  const cycleEscs = escalations.filter(e => e.cycle_id === c.id)
+                  const activeEscCount = cycleEscs.filter(e => {
+                    if (e.start_type === 'date' && e.start_date)
+                      return selectedDay >= parseISO(e.start_date)
+                    if (e.start_after_days != null)
+                      return differenceInDays(selectedDay, parseISO(c.start_date)) >= e.start_after_days
+                    return false
+                  }).length
+                  const pidx = peptides.findIndex(p => p.id === c.peptide_id)
+                  const pcolor = getPeptideColor(pidx)
+                  const tl = cycleTimeLabel(c, t)
+                  return (
+                    <div
+                      key={c.id}
+                      className="rounded-xl border px-3 py-2.5 transition-colors"
+                      style={{
+                        background: pcolor + '10',
+                        borderColor: pcolor + '30',
+                      }}>
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: pcolor }} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium" style={{ color: pcolor }}>{c.peptides?.name}</span>
+                            <span className={`text-xs font-semibold ${isEscalated ? 'text-orange-400' : 'text-slate-300'}`}>
+                              {dose} {c.unit}
+                            </span>
+                            {isEscalated && (
+                              <span className="flex items-center gap-0.5 text-orange-400 text-xs">
+                                <TrendingUp size={11} /> {t('stufe_n', { n: activeEscCount })}
+                              </span>
+                            )}
+                            <span className="text-slate-500 text-xs">{c.method}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {tl && (
+                              <span className="text-xs text-amber-400 flex items-center gap-1">
+                                {tl.emoji} {tl.label}
+                              </span>
+                            )}
+                            {isEscalated && (
+                              <span className="text-slate-600 text-xs">
+                                {t('basis_label')} {c.dose} {c.unit} · +{dose - c.dose} {c.unit}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-slate-600 text-xs shrink-0 hidden sm:block">{c.name}</span>
+                      </div>
+
+                      <div
+                        className="mt-2 ml-[18px] rounded-xl border px-2.5 py-2"
+                        style={{
+                          background: 'linear-gradient(90deg, rgba(245,158,11,0.14), rgba(245,158,11,0.055))',
+                          borderColor: 'rgba(245,158,11,0.34)',
+                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 0 16px rgba(245,158,11,0.12)',
+                        }}
+                      >
+                        <div className="mb-2 flex items-center gap-2 text-amber-300">
+                          <Bell size={12} className="animate-pulse" />
+                          <span className="text-[11px] font-extrabold uppercase tracking-wide">
                             {t('dose_confirm_pending_badge', { defaultValue: 'Bestätigung offen' })}
                           </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {tl && (
-                          <span className="text-xs text-amber-400 flex items-center gap-1">
-                            {tl.emoji} {tl.label}
-                          </span>
-                        )}
-                        {isEscalated && (
-                          <span className="text-slate-600 text-xs">
-                            {t('basis_label')} {c.dose} {c.unit} · +{dose - c.dose} {c.unit}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <span className="text-slate-600 text-xs shrink-0 hidden sm:block">{c.name}</span>
-                  </div>
-                  {needsConfirmation && (
-                    <div
-                      className="mt-2 ml-[18px] rounded-xl border px-2.5 py-2"
-                      style={{
-                        background: 'linear-gradient(90deg, rgba(245,158,11,0.14), rgba(245,158,11,0.055))',
-                        borderColor: 'rgba(245,158,11,0.34)',
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 0 16px rgba(245,158,11,0.12)',
-                      }}
-                    >
-                      <div className="mb-2 flex items-center gap-2 text-amber-300">
-                        <Bell size={12} className="animate-pulse" />
-                        <span className="text-[11px] font-extrabold uppercase tracking-wide">
-                          {t('dose_confirm_pending_badge', { defaultValue: 'Bestätigung offen' })}
-                        </span>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => pendingLog ? confirmDose(pendingLog, true) : confirmCycleDose(c, true)}
-                          className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
-                          <Check size={11} /> {t('eingenommen')}
-                        </button>
-                        <button
-                          onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false)}
-                          className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">
-                          <XCircle size={11} /> {t('uebersprungen')}
-                        </button>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => pendingLog ? confirmDose(pendingLog, true) : confirmCycleDose(c, true)}
+                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
+                            <Check size={11} /> {t('eingenommen')}
+                          </button>
+                          <button
+                            onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false)}
+                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">
+                            <XCircle size={11} /> {t('uebersprungen')}
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              )
-            })}
+                  )
+                })}
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Protokollierte Dosen */}
-        {confirmedLogs.length > 0 ? (
+        {/* Bereits protokolliert */}
+        {confirmedLogsSorted.length > 0 ? (
           <div className="space-y-2">
-            {confirmedLogs.map(log => (
+            <div className="flex items-center justify-between gap-3 px-1">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-emerald-300/80">
+                  {t('completed_intakes_title', { defaultValue: 'Bereits protokolliert' })}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {t('completed_intakes_hint', { defaultValue: 'Bestätigte und übersprungene Einnahmen.' })}
+                </p>
+              </div>
+              <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-300">
+                {confirmedLogsSorted.length}
+              </span>
+            </div>
+            {confirmedLogsSorted.map(log => (
               <div key={log.id} className={`px-3 py-2.5 border rounded-xl transition-colors ${
                 log.taken === true
                   ? 'bg-emerald-500/5 border-emerald-500/20'
@@ -761,15 +813,15 @@ export function Dashboard() {
               </div>
             ))}
           </div>
-        ) : selCycles.length === 0 ? (
+        ) : dueCycles.length === 0 && selCycles.length === 0 ? (
           <p className="text-slate-600 text-sm text-center py-4">
             {isTodaySelected ? t('noch_nichts_heute') : t('kein_eintrag_tag')}
           </p>
-        ) : (
+        ) : dueCycles.length === 0 ? (
           <p className="text-slate-600 text-xs text-center py-2">
-            {t('noch_keine_dosis_prot')}
+            {t('all_intakes_done', { defaultValue: 'Alle geplanten Einnahmen sind bestätigt.' })}
           </p>
-        )}
+        ) : null}
       </GlassPanel>
 
     </PageShell>
