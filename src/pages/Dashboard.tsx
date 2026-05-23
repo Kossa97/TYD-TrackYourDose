@@ -594,21 +594,15 @@ export function Dashboard() {
                   key={c.id}
                   className="rounded-xl border px-3 py-2.5 transition-colors"
                   style={{
-                    background: needsConfirmation
-                      ? `linear-gradient(90deg, rgba(245,158,11,0.16), ${pcolor}12)`
-                      : pcolor + '10',
-                    borderColor: needsConfirmation ? 'rgba(245,158,11,0.42)' : pcolor + '30',
-                    boxShadow: needsConfirmation ? '0 0 18px rgba(245,158,11,0.14)' : undefined,
+                    background: pcolor + '10',
+                    borderColor: pcolor + '30',
                   }}>
                   <div className="flex items-center gap-2.5">
-                    <span
-                      className={`w-2 h-2 rounded-full shrink-0 ${needsConfirmation ? 'animate-pulse' : ''}`}
-                      style={{ backgroundColor: needsConfirmation ? '#f59e0b' : pcolor }}
-                    />
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: pcolor }} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium" style={{ color: needsConfirmation ? '#fbbf24' : pcolor }}>{c.peptides?.name}</span>
-                        <span className={`text-xs font-semibold ${isEscalated || needsConfirmation ? 'text-orange-400' : 'text-slate-300'}`}>
+                        <span className="text-sm font-medium" style={{ color: pcolor }}>{c.peptides?.name}</span>
+                        <span className={`text-xs font-semibold ${isEscalated ? 'text-orange-400' : 'text-slate-300'}`}>
                           {dose} {c.unit}
                         </span>
                         {isEscalated && (
@@ -639,17 +633,32 @@ export function Dashboard() {
                     <span className="text-slate-600 text-xs shrink-0 hidden sm:block">{c.name}</span>
                   </div>
                   {needsConfirmation && (
-                    <div className="mt-2 ml-[18px] flex gap-2">
-                      <button
-                        onClick={() => pendingLog ? confirmDose(pendingLog, true) : confirmCycleDose(c, true)}
-                        className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
-                        <Check size={11} /> {t('eingenommen')}
-                      </button>
-                      <button
-                        onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false)}
-                        className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">
-                        <XCircle size={11} /> {t('uebersprungen')}
-                      </button>
+                    <div
+                      className="mt-2 ml-[18px] rounded-xl border px-2.5 py-2"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(245,158,11,0.14), rgba(245,158,11,0.055))',
+                        borderColor: 'rgba(245,158,11,0.34)',
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 0 16px rgba(245,158,11,0.12)',
+                      }}
+                    >
+                      <div className="mb-2 flex items-center gap-2 text-amber-300">
+                        <Bell size={12} className="animate-pulse" />
+                        <span className="text-[11px] font-extrabold uppercase tracking-wide">
+                          {t('dose_confirm_pending_badge', { defaultValue: 'Bestätigung offen' })}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => pendingLog ? confirmDose(pendingLog, true) : confirmCycleDose(c, true)}
+                          className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
+                          <Check size={11} /> {t('eingenommen')}
+                        </button>
+                        <button
+                          onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false)}
+                          className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">
+                          <XCircle size={11} /> {t('uebersprungen')}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
