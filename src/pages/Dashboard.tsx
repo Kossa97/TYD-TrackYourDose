@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type TouchEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -207,6 +207,32 @@ export function Dashboard() {
 
   // selectedDay steuert den Tages-Bereich unten — Standard = heute
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
+  const calendarSwipeStart = useRef<{ x: number; y: number } | null>(null)
+
+  const changeMonth = useCallback((delta: number) => {
+    setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + delta, 1))
+  }, [])
+
+  const handleCalendarTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0]
+    if (!touch) return
+    calendarSwipeStart.current = { x: touch.clientX, y: touch.clientY }
+  }
+
+  const handleCalendarTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = calendarSwipeStart.current
+    const touch = event.changedTouches[0]
+    calendarSwipeStart.current = null
+    if (!start || !touch) return
+
+    const deltaX = touch.clientX - start.x
+    const deltaY = touch.clientY - start.y
+    const absX = Math.abs(deltaX)
+    const absY = Math.abs(deltaY)
+    if (absY < 48 || absY < absX * 1.25) return
+
+    changeMonth(deltaY < 0 ? 1 : -1)
+  }
 
   const loadLogs = useCallback(async () => {
     if (!user) return
@@ -400,11 +426,11 @@ export function Dashboard() {
         action={(
           <div className="flex items-center gap-2">
             <button className="btn-secondary !px-3 !py-2"
-              onClick={() => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>
+              onClick={() => changeMonth(-1)}>
               <ChevronLeft size={17} />
             </button>
             <button className="btn-secondary !px-3 !py-2"
-              onClick={() => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>
+              onClick={() => changeMonth(1)}>
               <ChevronRight size={17} />
             </button>
           </div>
@@ -438,7 +464,13 @@ export function Dashboard() {
       </PageHero>
 
       {/* ── Kalender ──────────────────────────────────────────────────────── */}
-      <div data-ob="calendar-main" data-ob-self>
+      <div
+        data-ob="calendar-main"
+        data-ob-self
+        onTouchStart={handleCalendarTouchStart}
+        onTouchEnd={handleCalendarTouchEnd}
+        style={{ touchAction: 'pan-y' }}
+      >
       <GlassPanel accent="#00ccf5" padding="sm" style={{ padding: 0 }}>
         {/* Wochentag-Kopf */}
         <div className="grid grid-cols-7 border-b border-slate-800">
