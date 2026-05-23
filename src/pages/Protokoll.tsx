@@ -477,6 +477,8 @@ export function Protokoll() {
   const [doseLogs, setDoseLogs] = useState<DoseLog[]>([])
   const [selectedMarker, setSelectedMarker] = useState('')
   const [selectedCycleId, setSelectedCycleId] = useState<string | null>(null)
+  const [activeMarkers, setActiveMarkers] = useState<string[]>(['Gewicht', 'IGF-1'])
+  const [selectedPreset, setSelectedPreset] = useState<string>('weight-igf1')
   const [loadingBase, setLoadingBase] = useState(true)
   const [loadingCharts, setLoadingCharts] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -492,6 +494,165 @@ export function Protokoll() {
   const currentCycleRange = useMemo<DateRange>(() => {
     return rangeFromActiveCycles(activeCycles)
   }, [activeCycles])
+
+  // ─── New derived data ──────────────────────────────────────────────────────
+
+  const availableMarkers = useMemo(() => {
+    const blood = Array.from(new Set(bloodwork.map(e => e.marker))).sort()
+    return ['Gewicht', ...blood]
+  }, [bloodwork])
+
+  const bloodTestDates = useMemo(
+    () => Array.from(new Set(bloodwork.map(e => e.tested_at))).sort(),
+    [bloodwork],
+  )
+
+  const cycleBands = useMemo(() => (
+    [...activeCycles, ...completedCycles].map((c, i) => ({
+      x1: c.start_date,
+      x2: cycleEnd(c),
+      name: c.peptides?.name ?? c.name,
+      color: CYCLE_COLORS[i % CYCLE_COLORS.length],
+    }))
+  ), [activeCycles, completedCycles])
+
+  const kpiValues = useMemo(() => {
+    const logsWithValue = doseLogs.filter(l => l.taken != null)
+    const takenCount = logsWithValue.filter(l => l.taken).length
+    const adherencePct = logsWithValue.length > 0
+      ? Math.round((takenCount / logsWithValue.length) * 100)
+      : null
+
+    const sortedWeights = [...weightLogs]
+      .map(l => ({ date: dateKey(l.logged_at), value: numericValue(l.weight_kg) }))
+      .filter((e): e is { date: string; value: number } => e.value != null)
+      .sort((a, b) => a.date.localeCompare(b.date))
+    const firstWeight = sortedWeights[0]?.value ?? null
+    const lastWeight  = sortedWeights[sortedWeights.length - 1]?.value ?? null
+    const weightDelta = firstWeight != null && lastWeight != null
+      ? Math.round((lastWeight - firstWeight) * 10) / 10 : null
+
+    function markerDelta(marker: string): number | null {
+      const entries = bloodwork
+        .filter(e => e.marker === marker)
+        .map(e => ({ date: e.tested_at, value: numericValue(e.value) }))
+        .filter((e): e is { date: string; value: number } => e.value != null)
+        .sort((a, b) => a.date.localeCompare(b.date))
+      if (entries.length < 2) return null
+      const first = entries[0].value
+      if (first === 0) return null
+      return Math.round(((entries[entries.length - 1].value - first) / Math.abs(first)) * 1000) / 10
+    }
+
+    return {
+      adherencePct,
+      weightDelta,
+      igf1Delta: markerDelta('IGF-1'),
+      crpDelta:  markerDelta('CRP'),
+    }
+  }, [doseLogs, weightLogs, bloodwork])
+
+  const normalizedChartData = useMemo(() => {
+    const weightSorted = [...weightLogs]
+      .map(l => ({ date: dateKey(l.logged_at), value: numericValue(l.weight_kg) }))
+      .filter((e): e is { date: string; value: number } => e.value != null)
+      .sort((a, b) => a.date.localeCompare(b.date))
+    const weightPcts = toPercentChange(weightSorted)
+
+    const bloodPcts = new Map<string, { date: string; pct: number }[]>()
+    for (const marker of activeMarkers) {
+      if (marker === 'Gewicht') continue
+      const entries = bloodwork
+        .filter(e => e.marker === marker)
+        .map(e => ({ date: e.tested_at, value: numericValue(e.value) }))
+        .filter((e): e is { date: string; value: number } => e.value != null)
+        .sort((a, b) => a.date.localeCompare(b.date))
+      bloodPcts.set(marker, toPercentChange(entries))
+    }
+
+    const allDates = new Set<string>()
+    if (activeMarkers.includes('Gewicht')) weightSorted.forEach(e => allDates.add(e.date))
+    bloodPcts.forEach(arr => arr.forEach(p => allDates.add(p.date)))
+    const sortedDates = Array.from(allDates).sort()
+
+    return sortedDates.map(date => {
+      const row: Record<string, string | number | null> = {
+        date,
+        label: formatDate(date, language),
+      }
+      if (activeMarkers.includes('Gewicht')) {
+        const exact = weightPcts.find(p => p.date === date)
+        row['Gewicht'] = exact ? exact.pct : (interpolatePct(date, weightPcts) ?? null)
+      }
+      for (const [marker, pcts] of bloodPcts) {
+        const exact = pcts.find(p => p.date === date)
+        row[marker] = exact ? exact.pct : null
+      }
+      return row
+    })
+  }, [activeMarkers, weightLogs, bloodwork, language])
+
+  interface SmallMultipleSeries {
+    marker: string
+    unit: string
+    color: string
+    normalMin: number | null
+    normalMax: number | null
+    yDomain: [number, number]
+    data: { date: string; label: string; value: number | null }[]
+    lastValue: number | null
+  }
+
+  const smallMultiplesData = useMemo((): SmallMultipleSeries[] => (
+    activeMarkers.map(marker => {
+      const color = getSeriesColor(marker)
+      const { min: normalMin, max: normalMax } = getNormalRange(marker)
+      let data: { date: string; label: string; value: number | null }[]
+      let unit = ''
+
+      if (marker === 'Gewicht') {
+        data = [...weightLogs]
+          .sort((a, b) => dateKey(a.logged_at).localeCompare(dateKey(b.logged_at)))
+          .map(l => ({ date: dateKey(l.logged_at), label: formatDate(dateKey(l.logged_at), language), value: numericValue(l.weight_kg) }))
+        unit = 'kg'
+      } else {
+        const entries = bloodwork.filter(e => e.marker === marker).sort((a, b) => a.tested_at.localeCompare(b.tested_at))
+        unit = entries[0]?.unit ?? ''
+        data = entries.map(e => ({ date: e.tested_at, label: formatDate(e.tested_at, language), value: numericValue(e.value) }))
+      }
+
+      const nums = data.map(d => d.value).filter((v): v is number => v != null)
+      const dataMin = nums.length > 0 ? Math.min(...nums) : 0
+      const dataMax = nums.length > 0 ? Math.max(...nums) : 1
+      const pad = (dataMax - dataMin) * 0.2 || dataMax * 0.2 || 1
+      const yMin = normalMin != null ? Math.min(normalMin, dataMin - pad) : dataMin - pad
+      const yMax = normalMax != null ? Math.max(normalMax, dataMax + pad) : dataMax + pad
+      const lastValue = [...data].reverse().find(d => d.value != null)?.value ?? null
+
+      return { marker, unit, color, normalMin, normalMax, yDomain: [Math.round(yMin * 10) / 10, Math.round(yMax * 10) / 10], data, lastValue }
+    })
+  ), [activeMarkers, weightLogs, bloodwork, language])
+
+  const adherencePerPeptide = useMemo(() => {
+    const nameMap = new Map<string, string>()
+    ;[...activeCycles, ...completedCycles].forEach(c => {
+      if (c.peptide_id && c.peptides?.name) nameMap.set(c.peptide_id, c.peptides.name)
+    })
+    const grouped = new Map<string, { taken: number; total: number }>()
+    doseLogs.forEach(log => {
+      if (log.taken == null || !log.peptide_id) return
+      const name = nameMap.get(log.peptide_id) ?? log.peptide_id
+      const existing = grouped.get(name) ?? { taken: 0, total: 0 }
+      existing.total++
+      if (log.taken) existing.taken++
+      grouped.set(name, existing)
+    })
+    return Array.from(grouped.entries())
+      .map(([name, stats], i) => ({ name, pct: Math.round((stats.taken / stats.total) * 100), color: CYCLE_COLORS[i % CYCLE_COLORS.length] }))
+      .sort((a, b) => b.pct - a.pct)
+  }, [doseLogs, activeCycles, completedCycles])
+
+  // ─── End new derived data ──────────────────────────────────────────────────
 
   const loadBaseData = useCallback(async () => {
     if (!user) return
