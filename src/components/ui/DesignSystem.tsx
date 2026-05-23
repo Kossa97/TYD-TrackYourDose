@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 
+// Shared dashboard primitives used to keep refreshed screens visually consistent.
 const accentAlpha = (accent: string, alpha: string) => `${accent}${alpha}`
 
 type PaddingSize = 'sm' | 'md' | 'lg'
