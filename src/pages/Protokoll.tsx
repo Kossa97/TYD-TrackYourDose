@@ -459,6 +459,109 @@ function addCoverPage(doc: JsPDFType, logo: HTMLImageElement, copy: ProtocolCopy
   })
 }
 
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function KpiCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color: string }) {
+  return (
+    <div style={{ background: 'rgba(8,11,26,0.95)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '12px 14px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: color, opacity: 0.7 }} />
+      <p style={{ fontSize: '8px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#475569', marginBottom: 6 }}>{label}</p>
+      <p style={{ fontSize: 20, fontWeight: 900, letterSpacing: '-0.04em', color, lineHeight: 1 }}>{value}</p>
+      {sub && <p style={{ fontSize: 9, color: '#475569', marginTop: 4 }}>{sub}</p>}
+    </div>
+  )
+}
+
+function NormalizedChartDefs({ markers }: { markers: string[] }) {
+  return (
+    <defs>
+      {markers.map(marker => {
+        const color = getSeriesColor(marker)
+        const id = gradId(marker)
+        return (
+          <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%"  stopColor={color} stopOpacity={0.22} />
+            <stop offset="95%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        )
+      })}
+    </defs>
+  )
+}
+
+function NormalizedTooltip({ active, payload, label }: {
+  active?: boolean
+  payload?: { name: string; value: number; color: string }[]
+  label?: string
+}) {
+  if (!active || !payload?.length) return null
+  const visible = payload.filter(p => p.value != null && !p.name.endsWith('-glow') && !p.name.endsWith('-area'))
+  if (!visible.length) return null
+  return (
+    <div style={{ background: 'rgba(8,11,26,0.97)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 14px', boxShadow: '0 8px 32px rgba(0,0,0,0.6)', fontSize: 11 }}>
+      <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#475569', marginBottom: 6 }}>{label}</p>
+      {visible.map(p => (
+        <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, fontWeight: 700, color: p.color }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color, flexShrink: 0 }} />
+          <span>{p.name}: {p.value > 0 ? '+' : ''}{p.value}%</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+interface SmallMultipleSeriesProps {
+  marker: string; unit: string; color: string
+  normalMin: number | null; normalMax: number | null
+  yDomain: [number, number]
+  data: { date: string; label: string; value: number | null }[]
+  lastValue: number | null
+}
+
+function SmallMultipleRow({ series, isLast, language }: { series: SmallMultipleSeriesProps; isLast: boolean; language: string }) {
+  const { marker, unit, color, normalMin, normalMax, yDomain, data, lastValue } = series
+  return (
+    <div style={{ marginBottom: isLast ? 0 : 4 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 2, paddingLeft: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+          <span style={{ fontSize: 11, fontWeight: 800, color }}>{marker}</span>
+          <span style={{ fontSize: 9, color: '#334155', fontWeight: 600 }}>{unit}</span>
+          {normalMin != null && normalMax != null && (
+            <span style={{ fontSize: 8, color: '#334155' }}>Norm: {normalMin}–{normalMax}</span>
+          )}
+        </div>
+        {lastValue != null && (
+          <span style={{ fontSize: 12, fontWeight: 900, color, letterSpacing: '-0.02em' }}>
+            {formatNumber(lastValue, language, 2)} {unit}
+          </span>
+        )}
+      </div>
+      <ResponsiveContainer width="100%" height={isLast ? 75 : 65}>
+        <LineChart data={data} margin={{ top: 4, right: 50, bottom: 0, left: 0 }} syncId="protokoll-small">
+          {normalMin != null && normalMax != null && (
+            <ReferenceArea y1={normalMin} y2={normalMax} fill={color} fillOpacity={0.08} strokeOpacity={0} />
+          )}
+          {normalMax != null && <ReferenceLine y={normalMax} stroke={color} strokeOpacity={0.2} strokeWidth={1} strokeDasharray="2 3" />}
+          {normalMin != null && normalMin > 0 && <ReferenceLine y={normalMin} stroke={color} strokeOpacity={0.2} strokeWidth={1} strokeDasharray="2 3" />}
+          <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
+          <YAxis domain={yDomain} tick={{ fill: '#334155', fontSize: 9, fontWeight: 600 }} tickLine={false} axisLine={false} width={38} tickCount={3} />
+          {isLast && <XAxis dataKey="label" tick={{ fill: '#334155', fontSize: 9, fontWeight: 600 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />}
+          <Tooltip contentStyle={{ background: 'rgba(8,11,26,0.97)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, fontSize: 11 }} labelStyle={{ color: '#475569', fontSize: 9 }}
+            formatter={(value: unknown) => [`${typeof value === 'number' ? formatNumber(value, language, 2) : value} ${unit}`, marker]} />
+          <Line dataKey="value" stroke={color} strokeWidth={6} strokeOpacity={0.12} dot={false} activeDot={false} connectNulls isAnimationActive={false} legendType="none" name="glow" />
+          <Line dataKey="value" stroke={color} strokeWidth={2.5} strokeLinecap="round" connectNulls isAnimationActive={false} name={marker}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            dot={(props: any) => props.payload?.value != null
+              ? <circle key={`${props.cx}-${props.cy}`} cx={props.cx} cy={props.cy} r={4} fill="#07091a" stroke={color} strokeWidth={2} />
+              : <g key="empty" />}
+            activeDot={{ r: 6, fill: color, stroke: '#07091a', strokeWidth: 2 }} />
+        </LineChart>
+      </ResponsiveContainer>
+      {!isLast && <div style={{ height: 1, background: 'rgba(255,255,255,0.04)', margin: '4px 0' }} />}
+    </div>
+  )
+}
+
 export function Protokoll() {
   const { user } = useAuth()
   const { i18n } = useTranslation()
@@ -814,6 +917,24 @@ export function Protokoll() {
     return Math.round((taken / logs.length) * 100)
   }, [cycleDoseLogs])
 
+  const applyPreset = (presetKey: string) => {
+    const preset = PRESETS.find(p => p.key === presetKey)
+    if (!preset) return
+    const candidates = preset.key === 'full' ? availableMarkers : preset.markers
+    const valid = candidates.filter(m => m === 'Gewicht' || bloodwork.some(e => e.marker === m))
+    setActiveMarkers(valid.length > 0 ? valid : ['Gewicht'])
+    setSelectedPreset(presetKey)
+  }
+
+  const toggleMarker = (marker: string) => {
+    setSelectedPreset('')
+    setActiveMarkers(prev =>
+      prev.includes(marker)
+        ? prev.length > 1 ? prev.filter(m => m !== marker) : prev
+        : prev.length < 5 ? [...prev, marker] : prev,
+    )
+  }
+
   const selectCycle = (cycle: Cycle) => {
     setSelectorMode('custom')
     setSelectedCycleId(cycle.id)
@@ -901,6 +1022,19 @@ export function Protokoll() {
         </div>
       </header>
 
+      {/* ── KPI Strip ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
+        <KpiCard label="Adherence" color="#10b981"
+          value={kpiValues.adherencePct != null ? `${kpiValues.adherencePct}%` : '—'}
+          sub={kpiValues.adherencePct != null && kpiValues.adherencePct >= 80 ? '↑ gut' : undefined} />
+        <KpiCard label="Gewicht Δ" color="#00ccf5"
+          value={kpiValues.weightDelta != null ? `${kpiValues.weightDelta > 0 ? '+' : ''}${formatNumber(kpiValues.weightDelta, language, 1)} kg` : '—'} />
+        <KpiCard label="IGF-1 Δ" color="#8b5cf6"
+          value={kpiValues.igf1Delta != null ? `${kpiValues.igf1Delta > 0 ? '+' : ''}${kpiValues.igf1Delta}%` : '—'} />
+        <KpiCard label="CRP Δ" color={kpiValues.crpDelta != null && kpiValues.crpDelta < 0 ? '#10b981' : '#f43f5e'}
+          value={kpiValues.crpDelta != null ? `${kpiValues.crpDelta > 0 ? '+' : ''}${kpiValues.crpDelta}%` : '—'} />
+      </div>
+
       <section className="card">
         <div className="grid grid-cols-2 gap-2 mb-4">
           <button
@@ -977,6 +1111,45 @@ export function Protokoll() {
       )}
 
       <div ref={reportRef} className="space-y-4 rounded-[1.5rem] bg-[#07091a]">
+
+        {/* ── Schnell-Ansichten ── */}
+        <div>
+          <p style={{ fontSize: '8px', fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#334155', marginBottom: 8 }}>Schnell-Ansichten</p>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+            {PRESETS.map(p => (
+              <button key={p.key} onClick={() => applyPreset(p.key)} style={{
+                padding: '5px 13px', borderRadius: 100, fontSize: 10, fontWeight: 700, letterSpacing: '0.02em',
+                cursor: 'pointer', whiteSpace: 'nowrap',
+                border: selectedPreset === p.key ? '1px solid rgba(0,204,245,0.45)' : '1px solid rgba(255,255,255,0.08)',
+                background: selectedPreset === p.key ? 'rgba(0,204,245,0.12)' : 'rgba(255,255,255,0.03)',
+                color: selectedPreset === p.key ? '#00ccf5' : '#64748b',
+                boxShadow: selectedPreset === p.key ? '0 0 14px rgba(0,204,245,0.15)' : 'none',
+                transition: 'all 0.18s',
+              }}>{p.label}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Marker-Toggles ── */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+          {availableMarkers.map(marker => {
+            const on = activeMarkers.includes(marker)
+            const color = getSeriesColor(marker)
+            return (
+              <button key={marker} onClick={() => toggleMarker(marker)} style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '5px 11px', borderRadius: 10,
+                fontSize: 10, fontWeight: 700, letterSpacing: '0.02em', cursor: 'pointer',
+                border: on ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.07)',
+                background: on ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)',
+                color: on ? '#eaeefc' : '#475569', transition: 'all 0.18s',
+              }}>
+                <span style={{ width: 10, height: 10, borderRadius: 3, background: color, opacity: on ? 1 : 0.3, flexShrink: 0 }} />
+                {marker}
+              </button>
+            )
+          })}
+        </div>
+
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-[0.62rem] font-bold uppercase tracking-[0.12em] text-slate-500">{copy.period}</p>
