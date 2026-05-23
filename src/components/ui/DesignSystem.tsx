@@ -79,20 +79,6 @@ export function GlassPanel({
         ...style,
       }}
     >
-      <div
-        style={{
-          position: 'absolute',
-          right: -58,
-          bottom: -64,
-          width: 128,
-          height: 128,
-          borderRadius: '50%',
-          background: accent,
-          opacity: 0.035,
-          filter: 'blur(18px)',
-          pointerEvents: 'none',
-        }}
-      />
       <div style={{ position: 'relative' }}>{children}</div>
     </Component>
   )
@@ -147,14 +133,6 @@ export function PageHero({
 }) {
   return (
     <GlassPanel padding="lg" accent={accent}>
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: `radial-gradient(circle at 82% 22%, ${accentAlpha(accent, '24')}, transparent 38%), radial-gradient(circle at 18% 78%, rgba(139,92,246,0.12), transparent 42%)`,
-          pointerEvents: 'none',
-        }}
-      />
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start' }}>
         <div style={{ display: 'flex', gap: 12, minWidth: 0 }}>
           {icon && <IconBadge icon={icon} accent={accent} size={44} />}
