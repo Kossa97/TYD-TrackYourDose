@@ -1160,6 +1160,87 @@ export function Protokoll() {
           </div>
         </div>
 
+        {/* ── Chart 1: % Veränderung ── */}
+        <section style={{ background: 'rgba(8,11,26,0.95)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 800, color: '#eaeefc' }}>Verlauf — % Veränderung</p>
+              <p style={{ fontSize: 9, color: '#334155', marginTop: 2, fontWeight: 600, letterSpacing: '0.04em' }}>Normalisiert ab Start · Zyklusphasen im Hintergrund</p>
+            </div>
+            <span style={{ background: 'rgba(0,204,245,0.08)', border: '1px solid rgba(0,204,245,0.15)', borderRadius: 8, padding: '4px 9px', fontSize: 9, fontWeight: 700, color: 'rgba(0,204,245,0.7)' }}>% Δ ab Start</span>
+          </div>
+          {normalizedChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart data={normalizedChartData} margin={{ top: 10, right: 50, bottom: 0, left: -10 }}>
+                <NormalizedChartDefs markers={activeMarkers} />
+                {cycleBands.map((band, i) => (
+                  <ReferenceArea key={i} x1={band.x1} x2={band.x2} fill={band.color} fillOpacity={0.06} strokeOpacity={0}
+                    label={{ value: band.name, position: 'insideTopLeft', fontSize: 8, fill: band.color, opacity: 0.55, fontWeight: 700 }} />
+                ))}
+                {bloodTestDates.map((date, i) => (
+                  <ReferenceLine key={date} x={date} stroke="rgba(0,204,245,0.25)" strokeWidth={1} strokeDasharray="2 5"
+                    label={i === 0 ? { value: 'Bluttest', position: 'top', fontSize: 8, fill: 'rgba(0,204,245,0.55)', fontWeight: 700 } : undefined} />
+                ))}
+                <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
+                <XAxis dataKey="label" tick={{ fill: '#334155', fontSize: 10, fontWeight: 700 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                <YAxis tickFormatter={v => `${v > 0 ? '+' : ''}${v}%`} tick={{ fill: '#334155', fontSize: 10, fontWeight: 700 }} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                <Tooltip content={<NormalizedTooltip />} />
+                {activeMarkers.map(marker => {
+                  const color = getSeriesColor(marker)
+                  return [
+                    <Line key={`${marker}-glow`} dataKey={marker} stroke={color} strokeWidth={7} strokeOpacity={0.12} dot={false} activeDot={false} connectNulls legendType="none" name={`${marker}-glow`} isAnimationActive={false} />,
+                    <Area key={`${marker}-area`} dataKey={marker} stroke="none" fill={`url(#${gradId(marker)})`} connectNulls legendType="none" name={`${marker}-area`} isAnimationActive={false} activeDot={false} />,
+                    <Line key={marker} dataKey={marker} stroke={color} strokeWidth={2.5} strokeLinecap="round" connectNulls name={marker} isAnimationActive={false}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      dot={(props: any) => props.payload?.[marker] != null && props.cx != null
+                        ? <circle key={`${props.cx}-${props.cy}`} cx={props.cx} cy={props.cy} r={4} fill="#07091a" stroke={color} strokeWidth={2} />
+                        : <g key="empty" />}
+                      activeDot={{ r: 6, fill: color, stroke: '#07091a', strokeWidth: 2 }} />,
+                  ]
+                })}
+                <Legend wrapperStyle={{ fontSize: 10, fontWeight: 700, paddingTop: 8 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          ) : (
+            <EmptyChart label={copy.emptyChart} />
+          )}
+        </section>
+
+        {/* ── Chart 2: Small Multiples ── */}
+        {smallMultiplesData.length > 0 && (
+          <section style={{ background: 'rgba(8,11,26,0.95)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 800, color: '#eaeefc' }}>Detailansicht — echte Einheiten</p>
+                <p style={{ fontSize: 9, color: '#334155', marginTop: 2, fontWeight: 600, letterSpacing: '0.04em' }}>Absolute Werte · Farbband = Normalbereich</p>
+              </div>
+            </div>
+            {smallMultiplesData.map((series, i) => (
+              <SmallMultipleRow key={series.marker} series={series} isLast={i === smallMultiplesData.length - 1} language={language} />
+            ))}
+          </section>
+        )}
+
+        {/* ── Adherence je Peptid ── */}
+        {adherencePerPeptide.length > 0 && (
+          <section style={{ background: 'rgba(8,11,26,0.95)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: 18 }}>
+            <p style={{ fontSize: 13, fontWeight: 800, color: '#eaeefc', marginBottom: 4 }}>{copy.adherenceTitle}</p>
+            <p style={{ fontSize: 9, color: '#334155', fontWeight: 600, letterSpacing: '0.04em', marginBottom: 14 }}>Anteil eingenommener Dosen im Zeitraum je Peptid</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {adherencePerPeptide.map(({ name, pct, color }) => (
+                <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', width: 96, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                  <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 6, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, borderRadius: 6, background: `linear-gradient(90deg,${color},${color}aa)`, transition: 'width 0.5s cubic-bezier(.4,0,.2,1)' }} />
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 800, width: 36, textAlign: 'right', flexShrink: 0, color }}>{pct}%</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* PLACEHOLDER — old weight chart start (to be removed below) */}
         <ChartCard title={copy.weightTitle} icon={<Scale size={17} />}>
           {weightChartData.length > 0 ? (
             <div className="h-64">
