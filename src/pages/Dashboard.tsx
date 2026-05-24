@@ -9,7 +9,7 @@ import {
 } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
-import { Activity, ChevronLeft, ChevronRight, CalendarDays, Syringe, X, TrendingUp, Check, XCircle, Bell, RotateCcw } from 'lucide-react'
+import { Activity, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CalendarDays, Syringe, X, TrendingUp, Check, XCircle, Bell, RotateCcw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
 import { GlassPanel, MetricCard, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
@@ -210,6 +210,8 @@ export function Dashboard() {
   const calendarSwipeStart = useRef<{ x: number; y: number; pointerId: number } | null>(null)
   const suppressCalendarClick = useRef(false)
   const calendarWheelLocked = useRef(false)
+  const [calendarDragOffset, setCalendarDragOffset] = useState(0)
+  const [calendarDragging, setCalendarDragging] = useState(false)
 
   const changeMonth = useCallback((delta: number) => {
     setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + delta, 1))
@@ -226,12 +228,27 @@ export function Dashboard() {
   const handleCalendarPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
     calendarSwipeStart.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId }
+    setCalendarDragging(true)
+    setCalendarDragOffset(0)
     event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  const handleCalendarPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const start = calendarSwipeStart.current
+    if (!start || start.pointerId !== event.pointerId) return
+    const deltaX = event.clientX - start.x
+    const deltaY = event.clientY - start.y
+    if (Math.abs(deltaY) < 6 || Math.abs(deltaY) < Math.abs(deltaX) * 0.75) return
+    event.preventDefault()
+    const dampened = Math.max(-64, Math.min(64, deltaY * 0.42))
+    setCalendarDragOffset(dampened)
   }
 
   const handleCalendarPointerUp = (event: PointerEvent<HTMLDivElement>) => {
     const start = calendarSwipeStart.current
     calendarSwipeStart.current = null
+    setCalendarDragging(false)
+    setCalendarDragOffset(0)
     if (!start || start.pointerId !== event.pointerId) return
     const didSwipe = finishCalendarSwipe(event.clientX - start.x, event.clientY - start.y)
     if (didSwipe) suppressCalendarClick.current = true
@@ -239,6 +256,8 @@ export function Dashboard() {
 
   const handleCalendarPointerCancel = () => {
     calendarSwipeStart.current = null
+    setCalendarDragging(false)
+    setCalendarDragOffset(0)
   }
 
   const handleCalendarClickCapture = (event: PointerEvent<HTMLDivElement>) => {
@@ -499,15 +518,29 @@ export function Dashboard() {
         </div>
 
         {/* Tage */}
-        <div
-          className="grid grid-cols-7 select-none"
-          onPointerDown={handleCalendarPointerDown}
-          onPointerUp={handleCalendarPointerUp}
-          onPointerCancel={handleCalendarPointerCancel}
-          onClickCapture={handleCalendarClickCapture}
-          onWheel={handleCalendarWheel}
-          style={{ touchAction: 'none', cursor: 'grab' }}
-        >
+        <div className="relative overflow-hidden">
+          <div className="pointer-events-none absolute left-0 right-0 top-1 z-10 flex justify-center">
+            <div className="flex items-center gap-1 rounded-full border border-sky-500/10 bg-black/20 px-3 py-0.5 text-sky-400/45 backdrop-blur-sm">
+              <ChevronUp size={13} strokeWidth={3} />
+              <span className="h-0.5 w-8 rounded-full bg-sky-400/30" />
+            </div>
+          </div>
+          <div
+            className="grid grid-cols-7 select-none"
+            onPointerDown={handleCalendarPointerDown}
+            onPointerMove={handleCalendarPointerMove}
+            onPointerUp={handleCalendarPointerUp}
+            onPointerCancel={handleCalendarPointerCancel}
+            onClickCapture={handleCalendarClickCapture}
+            onWheel={handleCalendarWheel}
+            style={{
+              touchAction: 'none',
+              cursor: calendarDragging ? 'grabbing' : 'grab',
+              transform: `translateY(${calendarDragOffset}px)`,
+              transition: calendarDragging ? 'none' : 'transform 0.18s ease',
+              willChange: 'transform',
+            }}
+          >
           {calendarDays.map((day, i) => {
             const dayLogs    = logsForDay(day)
             const dayCycles  = cyclesForDay(day)
@@ -571,6 +604,13 @@ export function Dashboard() {
               </button>
             )
           })}
+          </div>
+          <div className="pointer-events-none absolute bottom-1 left-0 right-0 z-10 flex justify-center">
+            <div className="flex items-center gap-1 rounded-full border border-sky-500/10 bg-black/20 px-3 py-0.5 text-sky-400/45 backdrop-blur-sm">
+              <span className="h-0.5 w-8 rounded-full bg-sky-400/30" />
+              <ChevronDown size={13} strokeWidth={3} />
+            </div>
+          </div>
         </div>
 
         {/* Legende */}
