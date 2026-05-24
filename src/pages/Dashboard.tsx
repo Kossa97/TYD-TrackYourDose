@@ -9,7 +9,7 @@ import {
 } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
-import { Activity, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CalendarDays, Syringe, X, TrendingUp, Check, XCircle, Bell, RotateCcw } from 'lucide-react'
+import { Activity, ChevronLeft, ChevronRight, CalendarDays, Syringe, X, TrendingUp, Check, XCircle, Bell, RotateCcw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
 import { GlassPanel, MetricCard, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
@@ -513,18 +513,12 @@ export function Dashboard() {
         {/* Wochentag-Kopf */}
         <div className="grid grid-cols-7 border-b border-slate-800">
           {[t('mon'),t('tue'),t('wed'),t('thu'),t('fri'),t('sat'),t('sun')].map(d => (
-            <div key={d} className="text-center text-slate-500 text-xs font-medium py-2">{d}</div>
+            <div key={d} className="text-center text-slate-500 text-xs font-medium py-2.5">{d}</div>
           ))}
         </div>
 
         {/* Tage */}
         <div className="relative overflow-hidden">
-          <div className="pointer-events-none absolute left-0 right-0 top-1 z-10 flex justify-center">
-            <div className="flex items-center gap-1 rounded-full border border-sky-500/10 bg-black/20 px-3 py-0.5 text-sky-400/45 backdrop-blur-sm">
-              <ChevronUp size={13} strokeWidth={3} />
-              <span className="h-0.5 w-8 rounded-full bg-sky-400/30" />
-            </div>
-          </div>
           <div
             className="grid grid-cols-7 select-none"
             onPointerDown={handleCalendarPointerDown}
@@ -552,7 +546,7 @@ export function Dashboard() {
               <button
                 key={i}
                 onClick={() => setSelectedDay(day)}
-                className={`relative flex flex-col items-center justify-center py-2 transition-all duration-150
+                className={`relative flex min-h-[50px] flex-col items-center justify-center py-3 transition-all duration-150
                   border-r border-b last:border-r-0
                   ${!inMonth ? 'opacity-20' : ''}
                 `}
@@ -574,7 +568,7 @@ export function Dashboard() {
                     style={{ boxShadow: '0 0 0 1px rgba(0,204,245,0.50), 0 0 6px rgba(0,204,245,0.15)' }} />
                 )}
 
-                <span className={`text-sm font-semibold leading-none ${
+                <span className={`text-base font-semibold leading-none ${
                   isSelected ? 'text-white' :
                   isToday(day) ? 'text-sky-400' :
                   inMonth ? 'text-slate-200' : 'text-slate-600'
@@ -604,12 +598,6 @@ export function Dashboard() {
               </button>
             )
           })}
-          </div>
-          <div className="pointer-events-none absolute bottom-1 left-0 right-0 z-10 flex justify-center">
-            <div className="flex items-center gap-1 rounded-full border border-sky-500/10 bg-black/20 px-3 py-0.5 text-sky-400/45 backdrop-blur-sm">
-              <span className="h-0.5 w-8 rounded-full bg-sky-400/30" />
-              <ChevronDown size={13} strokeWidth={3} />
-            </div>
           </div>
         </div>
 
