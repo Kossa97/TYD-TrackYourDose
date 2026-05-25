@@ -11,7 +11,7 @@ import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date
 import type { Locale } from 'date-fns'
 import {
   Bell, CalendarDays, Check, CheckCircle2,
-  ChevronLeft, ChevronRight, Clock3, RotateCcw,
+  ChevronDown, ChevronUp, Clock3, RotateCcw,
   Syringe, TrendingUp, X, XCircle,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -206,6 +206,36 @@ const calendarLegendText: CSSProperties = {
   fontWeight: 700,
 }
 
+function CalendarInfoPill({
+  label,
+  value,
+  accent,
+}: {
+  label: string
+  value: number | string
+  accent: string
+}) {
+  return (
+    <div
+      style={{
+        minWidth: 0,
+        borderRadius: 18,
+        border: `1px solid ${accent}2d`,
+        background: `linear-gradient(145deg, ${accent}16, rgba(6,10,24,0.72))`,
+        padding: '10px 12px',
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04), 0 0 18px ${accent}12`,
+      }}
+    >
+      <p style={{ color: accent, fontWeight: 900, fontSize: '1.05rem', lineHeight: 1 }}>
+        {value}
+      </p>
+      <p style={{ color: 'rgba(213,224,242,0.62)', fontSize: '0.64rem', fontWeight: 780, marginTop: 5 }}>
+        {label}
+      </p>
+    </div>
+  )
+}
+
 export function Dashboard() {
   const { t, i18n } = useTranslation()
   const locale = DATE_LOCALES[i18n.language] ?? enUS
@@ -387,6 +417,14 @@ export function Dashboard() {
     .map(key => ({ ...intakeGroupMeta(key, t), cycles: dueCycles.filter(cycle => cycleTimeGroupKey(cycle) === key) }))
     .filter(section => section.cycles.length > 0)
   const today = new Date()
+  const todayLogs = logsForDay(today)
+  const todayCycles = cyclesForDay(today)
+  const todayPendingLogs = todayLogs.filter(log => log.taken === null)
+  const todayPendingCycles = todayCycles.filter(cycle =>
+    !todayLogs.some(log => log.peptide_id === cycle.peptide_id)
+  )
+  const todayDue = todayPendingLogs.length + todayPendingCycles.length
+  const selectedPlanned = selCycles.length
   const activePeptideLegend = cycles
     .map(cycle => cycle.peptide_id)
     .filter((peptideId, index, all) => all.indexOf(peptideId) === index)
@@ -496,40 +534,67 @@ export function Dashboard() {
       {/* ── Kalender ──────────────────────────────────────────────────────── */}
       <div data-ob="calendar-main" data-ob-self>
       <GlassPanel accent="#00ccf5" padding="sm" style={{ padding: 0 }}>
-        <div style={{ padding: '14px 14px 12px' }}>
-          <div className="flex items-center justify-between gap-3">
+        <div style={{ padding: '16px 14px 12px' }}>
+          <button
+            className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-xs font-extrabold uppercase tracking-[0.12em] transition-colors"
+            onClick={() => changeMonth(-1)}
+            aria-label={t('prev_month', { defaultValue: 'Vorheriger Monat' })}
+            style={{
+              borderColor: 'rgba(0,204,245,0.20)',
+              background: 'linear-gradient(180deg, rgba(0,204,245,0.12), rgba(0,204,245,0.035))',
+              color: 'rgba(125,229,255,0.92)',
+              boxShadow: '0 0 24px rgba(0,204,245,0.10), inset 0 1px 0 rgba(255,255,255,0.06)',
+            }}
+          >
+            <ChevronUp size={16} />
+            {t('prev_month_short', { defaultValue: 'Vorheriger Monat' })}
+          </button>
+
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-500">
                 {t('month_overview_kicker', { defaultValue: 'Kalender' })}
               </p>
-              <h2 className="mt-1 text-lg font-black tracking-[-0.04em] text-white">{monthTitle}</h2>
+              <h2 className="mt-1 text-2xl font-black tracking-[-0.05em] text-white">{monthTitle}</h2>
               <p className="mt-1 text-xs text-slate-500">
                 {t('month_overview_subtitle', { defaultValue: 'Tippe einen Tag an oder swipe vertikal zum Monatswechsel.' })}
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <button
-                className="btn-secondary !px-3 !py-2"
-                onClick={() => changeMonth(-1)}
-                aria-label={t('prev_month', { defaultValue: 'Vorheriger Monat' })}
-              >
-                <ChevronLeft size={17} />
-              </button>
-              <button
-                className="btn-secondary !px-3 !py-2"
-                onClick={() => changeMonth(1)}
-                aria-label={t('next_month', { defaultValue: 'Nächster Monat' })}
-              >
-                <ChevronRight size={17} />
-              </button>
-            </div>
+            <button
+              className="shrink-0 rounded-2xl border px-3 py-2 text-xs font-bold text-sky-200"
+              onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
+              style={{
+                borderColor: 'rgba(0,204,245,0.18)',
+                background: 'rgba(0,204,245,0.08)',
+              }}
+            >
+              {t('heute_link')}
+            </button>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <CalendarInfoPill
+              label={t('stat_active_cycles', { defaultValue: 'Aktive Zyklen' })}
+              value={cycles.length}
+              accent="#8b5cf6"
+            />
+            <CalendarInfoPill
+              label={t('today_due_short', { defaultValue: 'Heute fällig' })}
+              value={todayDue}
+              accent={todayDue > 0 ? '#f59e0b' : '#10b981'}
+            />
+            <CalendarInfoPill
+              label={t('selected_planned_short', { defaultValue: 'Am Tag geplant' })}
+              value={selectedPlanned}
+              accent="#00ccf5"
+            />
           </div>
         </div>
 
         {/* Wochentag-Kopf */}
-        <div className="grid grid-cols-7 border-b border-slate-800">
+        <div className="grid grid-cols-7 border-y border-slate-800">
           {[t('mon'),t('tue'),t('wed'),t('thu'),t('fri'),t('sat'),t('sun')].map(d => (
-            <div key={d} className="text-center text-slate-500 text-xs font-medium py-2.5">{d}</div>
+            <div key={d} className="py-3 text-center text-xs font-extrabold uppercase tracking-[0.08em] text-slate-500">{d}</div>
           ))}
         </div>
 
@@ -587,7 +652,7 @@ export function Dashboard() {
               <button
                 key={i}
                 data-calendar-date={format(day, 'yyyy-MM-dd')}
-                className={`relative flex min-h-[64px] flex-col items-center justify-center py-2 transition-all duration-150
+                className={`relative flex min-h-[82px] flex-col items-center justify-center py-3 transition-all duration-150
                   border-r border-b last:border-r-0
                   ${!inMonth ? 'opacity-20' : ''}
                 `}
@@ -605,18 +670,18 @@ export function Dashboard() {
               >
                 {hasCycle && !isSelected && (
                   <span
-                    className="absolute left-1.5 top-1.5 h-1.5 w-1.5 rounded-full"
+                    className="absolute left-2 top-2 h-2 w-2 rounded-full"
                     style={{ background: statusAccent, boxShadow: `0 0 10px ${statusAccent}66` }}
                   />
                 )}
 
                 {/* Heute-Ring */}
                 {isToday(day) && !isSelected && (
-                  <span className="absolute inset-1 rounded-md pointer-events-none"
+                  <span className="absolute inset-1 rounded-2xl pointer-events-none"
                     style={{ boxShadow: '0 0 0 1px rgba(0,204,245,0.50), 0 0 6px rgba(0,204,245,0.15)' }} />
                 )}
 
-                <span className={`text-base font-semibold leading-none ${
+                <span className={`text-lg font-black leading-none ${
                   isSelected ? 'text-white' :
                   isToday(day) ? 'text-sky-400' :
                   inMonth ? 'text-slate-200' : 'text-slate-600'
@@ -629,15 +694,18 @@ export function Dashboard() {
                   const logIds   = dayLogs.map(l => l.peptide_id)
                   const cycleIds = dayCycles.map(c => c.peptide_id)
                   const unique   = [...new Set([...logIds, ...cycleIds])].slice(0, 4)
-                  if (unique.length === 0) return <div className="h-1.5 mt-1" />
+                  if (unique.length === 0) return <div className="h-2.5 mt-2" />
                   return (
-                    <div className="flex gap-0.5 mt-1 h-1.5">
+                    <div className="flex gap-1 mt-2 h-2.5">
                       {unique.map(pid => {
                         const idx   = peptides.findIndex(p => p.id === pid)
                         const color = isSelected ? '#ffffff' : getPeptideColor(idx)
                         return (
-                          <span key={pid} className="w-1.5 h-1.5 rounded-full shrink-0"
-                            style={{ backgroundColor: color }} />
+                          <span
+                            key={pid}
+                            className="h-2 w-2 shrink-0 rounded-full"
+                            style={{ backgroundColor: color, boxShadow: `0 0 7px ${color}88` }}
+                          />
                         )
                       })}
                     </div>
@@ -645,15 +713,15 @@ export function Dashboard() {
                 })()}
 
                 {(dayOpen > 0 || dayTaken > 0 || daySkipped > 0) && (
-                  <div className="mt-1 flex items-center justify-center gap-1">
+                  <div className="mt-2 flex items-center justify-center gap-1">
                     {dayOpen > 0 && (
-                      <span className="h-1 w-3 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.55)]" />
+                      <span className="h-1.5 w-4 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.55)]" />
                     )}
                     {dayTaken > 0 && (
-                      <span className="h-1 w-3 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.45)]" />
+                      <span className="h-1.5 w-4 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.45)]" />
                     )}
                     {daySkipped > 0 && (
-                      <span className="h-1 w-3 rounded-full bg-red-400 shadow-[0_0_6px_rgba(239,68,68,0.45)]" />
+                      <span className="h-1.5 w-4 rounded-full bg-red-400 shadow-[0_0_8px_rgba(239,68,68,0.45)]" />
                     )}
                   </div>
                 )}
@@ -705,25 +773,25 @@ export function Dashboard() {
         </div>
 
         <div
-          className="flex items-center justify-between gap-3 px-4 py-3"
+          className="px-4 py-3"
           style={{
             borderTop: '1px solid rgba(255,255,255,0.04)',
             background: 'rgba(4,7,18,0.72)',
           }}
         >
           <button
-            className="btn-secondary flex items-center gap-2 !rounded-2xl !px-3 !py-2 text-xs"
-            onClick={() => changeMonth(-1)}
-          >
-            <ChevronLeft size={15} />
-            {t('prev_month_short', { defaultValue: 'Zurück' })}
-          </button>
-          <button
-            className="btn-secondary flex items-center gap-2 !rounded-2xl !px-3 !py-2 text-xs"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-xs font-extrabold uppercase tracking-[0.12em] transition-colors"
             onClick={() => changeMonth(1)}
+            aria-label={t('next_month', { defaultValue: 'Nächster Monat' })}
+            style={{
+              borderColor: 'rgba(0,204,245,0.20)',
+              background: 'linear-gradient(180deg, rgba(0,204,245,0.035), rgba(0,204,245,0.12))',
+              color: 'rgba(125,229,255,0.92)',
+              boxShadow: '0 0 24px rgba(0,204,245,0.10), inset 0 1px 0 rgba(255,255,255,0.06)',
+            }}
           >
-            {t('next_month_short', { defaultValue: 'Weiter' })}
-            <ChevronRight size={15} />
+            {t('next_month_short', { defaultValue: 'Nächster Monat' })}
+            <ChevronDown size={16} />
           </button>
         </div>
       </GlassPanel>
