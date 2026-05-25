@@ -91,20 +91,20 @@ const EMPTY_OVERVIEW: OverviewStats = {
 }
 
 const TILE_DEFS: TileDef[] = [
-  { icon: CalendarDays, labelKey: 'tile_kalender', descKey: 'tile_kalender_desc', path: '/kalender',             color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',   wide: true },
-  { icon: Archive,      labelKey: 'tile_lager',     descKey: 'tile_lager_desc',    path: '/peptide?tab=inventar', color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
-  { icon: FlaskConical, labelKey: 'tile_peptide',   descKey: 'tile_peptide_desc',  path: '/peptide',              color: '#22d3ee', bg: 'rgba(34,211,238,0.10)'         },
-  { icon: Syringe,      labelKey: 'tile_injektionen', descKey: 'tile_injektionen_desc', path: '/injektionen',    color: '#10b981', bg: 'rgba(16,185,129,0.10)'         },
-  { icon: Calculator,   labelKey: 'tile_rechner',   descKey: 'tile_rechner_desc',  path: '/rechner',              color: '#3b82f6', bg: 'rgba(59,130,246,0.10)'         },
-  { icon: Droplets,     labelKey: 'tile_blutwerte', descKey: 'tile_blutwerte_desc', path: '/blutwerte',            color: '#f43f5e', bg: 'rgba(244,63,94,0.10)', label: 'Blutwerte', desc: 'Laborwerte erfassen' },
-  { icon: Heart,        labelKey: 'tile_health',    descKey: 'tile_health_desc',   path: '/health',               color: '#f43f5e', bg: 'rgba(244,63,94,0.10)'          },
-  { icon: FileText,     labelKey: 'tile_protokoll', descKey: 'tile_protokoll_desc', path: '/protokoll',            color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',   wide: true },
-  { icon: Microscope,   labelKey: 'tile_lab',       descKey: 'tile_lab_desc',      path: '/lab',                  color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
-  { icon: Library,      labelKey: 'tile_bibliothek', descKey: 'tile_bibliothek_desc', path: '/lab/library',          color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },
-  { icon: BookHeart,    labelKey: 'tile_tagebuch',  descKey: 'tile_tagebuch_desc', path: '/tagebuch',             color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },
-  { icon: Star,         labelKey: 'tile_bewertungen',descKey:'tile_bewertungen_desc',path:'/bewertungen',          color: '#f59e0b', bg: 'rgba(245,158,11,0.10)'         },
-  { icon: HelpCircle,   labelKey: 'tile_faq',       descKey: 'tile_faq_desc',      path: '/faq',                  color: '#10b981', bg: 'rgba(16,185,129,0.10)'         },
-  { icon: User,         labelKey: 'tile_profil',    descKey: 'tile_profil_desc',   path: '/profil',               color: '#f43f5e', bg: 'rgba(244,63,94,0.10)'          },
+  { icon: CalendarDays, labelKey: 'tile_kalender',    descKey: 'tile_kalender_desc',    path: '/kalender',             color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',   wide: true },
+  { icon: Syringe,      labelKey: 'tile_injektionen', descKey: 'tile_injektionen_desc', path: '/injektionen',          color: '#10b981', bg: 'rgba(16,185,129,0.10)',  wide: true },
+  { icon: Archive,      labelKey: 'tile_lager',       descKey: 'tile_lager_desc',       path: '/peptide?tab=inventar', color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
+  { icon: FlaskConical, labelKey: 'tile_peptide',     descKey: 'tile_peptide_desc',     path: '/peptide',              color: '#22d3ee', bg: 'rgba(34,211,238,0.10)'         },
+  { icon: Calculator,   labelKey: 'tile_rechner',     descKey: 'tile_rechner_desc',     path: '/rechner',              color: '#3b82f6', bg: 'rgba(59,130,246,0.10)'         },
+  { icon: Droplets,     labelKey: 'tile_blutwerte',   descKey: 'tile_blutwerte_desc',   path: '/blutwerte',            color: '#f43f5e', bg: 'rgba(244,63,94,0.10)', label: 'Blutwerte', desc: 'Laborwerte erfassen' },
+  { icon: Heart,        labelKey: 'tile_health',      descKey: 'tile_health_desc',      path: '/health',               color: '#f43f5e', bg: 'rgba(244,63,94,0.10)'          },
+  { icon: FileText,     labelKey: 'tile_protokoll',   descKey: 'tile_protokoll_desc',   path: '/protokoll',            color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',   wide: true },
+  { icon: Microscope,   labelKey: 'tile_lab',         descKey: 'tile_lab_desc',         path: '/lab',                  color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
+  { icon: Library,      labelKey: 'tile_bibliothek',  descKey: 'tile_bibliothek_desc',  path: '/lab/library',          color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },
+  { icon: BookHeart,    labelKey: 'tile_tagebuch',    descKey: 'tile_tagebuch_desc',    path: '/tagebuch',             color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },
+  { icon: Star,         labelKey: 'tile_bewertungen', descKey: 'tile_bewertungen_desc', path: '/bewertungen',          color: '#f59e0b', bg: 'rgba(245,158,11,0.10)'         },
+  { icon: HelpCircle,   labelKey: 'tile_faq',         descKey: 'tile_faq_desc',         path: '/faq',                  color: '#10b981', bg: 'rgba(16,185,129,0.10)'         },
+  { icon: User,         labelKey: 'tile_profil',      descKey: 'tile_profil_desc',      path: '/profil',               color: '#f43f5e', bg: 'rgba(244,63,94,0.10)'          },
 ]
 
 const QUICK_ACTIONS: QuickActionDef[] = [
@@ -118,12 +118,12 @@ const QUICK_ACTIONS: QuickActionDef[] = [
     accent: '#10b981',
   },
   {
-    icon: Plus,
-    labelKey: 'home_action_cycle',
-    label: 'Zyklus planen',
-    descKey: 'home_action_cycle_desc',
-    desc: 'Dosis & Zeiten festlegen',
-    path: '/peptide',
+    icon: Syringe,
+    labelKey: 'home_action_injection',
+    label: 'Injektion loggen',
+    descKey: 'home_action_injection_desc',
+    desc: 'Stelle & Rotation tracken',
+    path: '/injektionen',
     accent: '#00ccf5',
   },
   {

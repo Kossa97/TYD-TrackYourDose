@@ -577,6 +577,8 @@
   "inj_copy_sql": "SQL kopieren",
   "inj_copied": "Kopiert ✓",
   "inj_retry": "Erneut versuchen",
+  "home_action_injection": "Injektion loggen",
+  "home_action_injection_desc": "Stelle & Rotation tracken",
   "tile_bibliothek": "Peptipedia",
   "tile_bibliothek_desc": "Evidenzbasierte Peptid-Forschungsprofile",
   "lab_kicker": "Forschung",
