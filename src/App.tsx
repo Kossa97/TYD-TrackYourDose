@@ -22,6 +22,7 @@ import { StudyDetail } from './pages/StudyDetail'
 import { PeptideLibrary } from './pages/PeptideLibrary'
 import { PeptideDetailPage } from './pages/PeptideDetailPage'
 import { AdminPanel } from './pages/lab/AdminPanel'
+import { InjektionsTracker } from './pages/InjektionsTracker'
 
 export default function App() {
   return (
@@ -55,6 +56,7 @@ export default function App() {
             <Route path="bewertungen" element={<Bewertungen />} />
             <Route path="profil" element={<Profil />} />
             <Route path="faq" element={<FAQ />} />
+            <Route path="injektionen" element={<InjektionsTracker />} />
           </Route>
         </Routes>
         </OnboardingProvider>

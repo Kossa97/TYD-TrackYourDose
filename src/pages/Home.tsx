@@ -7,7 +7,7 @@ import {
   Microscope, Library, Droplets, Heart, FileText, type LucideIcon,
   Activity, ArrowUpRight, Beaker, CheckCircle2, ClipboardList,
   Clock3, Flame, Gauge, Package, Plus, ShieldCheck, Sparkles,
-  TrendingUp,
+  TrendingUp, Syringe,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -94,6 +94,7 @@ const TILE_DEFS: TileDef[] = [
   { icon: CalendarDays, labelKey: 'tile_kalender', descKey: 'tile_kalender_desc', path: '/kalender',             color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',   wide: true },
   { icon: Archive,      labelKey: 'tile_lager',     descKey: 'tile_lager_desc',    path: '/peptide?tab=inventar', color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
   { icon: FlaskConical, labelKey: 'tile_peptide',   descKey: 'tile_peptide_desc',  path: '/peptide',              color: '#22d3ee', bg: 'rgba(34,211,238,0.10)'         },
+  { icon: Syringe,      labelKey: 'tile_injektionen', descKey: 'tile_injektionen_desc', path: '/injektionen',    color: '#10b981', bg: 'rgba(16,185,129,0.10)'         },
   { icon: Calculator,   labelKey: 'tile_rechner',   descKey: 'tile_rechner_desc',  path: '/rechner',              color: '#3b82f6', bg: 'rgba(59,130,246,0.10)'         },
   { icon: Droplets,     labelKey: 'tile_blutwerte', descKey: 'tile_blutwerte_desc', path: '/blutwerte',            color: '#f43f5e', bg: 'rgba(244,63,94,0.10)', label: 'Blutwerte', desc: 'Laborwerte erfassen' },
   { icon: Heart,        labelKey: 'tile_health',    descKey: 'tile_health_desc',   path: '/health',               color: '#f43f5e', bg: 'rgba(244,63,94,0.10)'          },
