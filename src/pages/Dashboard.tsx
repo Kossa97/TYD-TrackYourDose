@@ -1,15 +1,19 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent, type WheelEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode, type WheelEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
-  format, startOfMonth, endOfMonth, eachDayOfInterval,
+  addDays, format, startOfMonth, endOfMonth, eachDayOfInterval,
   isSameDay, isToday, startOfWeek, endOfWeek,
   differenceInDays, parseISO,
 } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
-import { Activity, ChevronLeft, ChevronRight, CalendarDays, Syringe, X, TrendingUp, Check, XCircle, Bell, RotateCcw } from 'lucide-react'
+import {
+  Activity, AlertTriangle, Bell, CalendarDays, Check, CheckCircle2,
+  ChevronLeft, ChevronRight, Clock3, Package, RotateCcw, ShieldCheck,
+  Syringe, TrendingUp, X, XCircle,
+} from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
 import { GlassPanel, MetricCard, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
@@ -53,6 +57,7 @@ interface Peptide {
   default_dose: number | null; default_method: string
   vial_amount_mg: number | null; reconstitution_ml: number | null
   vials_in_stock: number | null; vials_initial: number | null
+  reconstitution_date: string | null; expiry_days: number | null
 }
 
 interface Escalation {
@@ -195,6 +200,140 @@ function roundStock(value: number) {
   return Math.round(value * 10000) / 10000
 }
 
+function ProgressRing({
+  value,
+  label,
+  accent = '#10b981',
+}: {
+  value: number
+  label: string
+  accent?: string
+}) {
+  const safeValue = Math.max(0, Math.min(100, value))
+
+  return (
+    <div
+      style={{
+        width: 94,
+        height: 94,
+        borderRadius: '50%',
+        display: 'grid',
+        placeItems: 'center',
+        background: `conic-gradient(${accent} ${safeValue * 3.6}deg, rgba(255,255,255,0.08) 0deg)`,
+        boxShadow: `0 0 34px ${accent}26`,
+        flexShrink: 0,
+      }}
+    >
+      <div
+        style={{
+          width: 74,
+          height: 74,
+          borderRadius: '50%',
+          background: 'linear-gradient(145deg, rgba(6,10,24,0.96), rgba(2,4,12,0.98))',
+          border: '1px solid rgba(255,255,255,0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <span style={{ color: '#f8fbff', fontSize: '1.25rem', fontWeight: 900, lineHeight: 1 }}>
+          {safeValue}%
+        </span>
+        <span style={{ color: 'rgba(154,170,191,0.62)', fontSize: '0.58rem', fontWeight: 800, marginTop: 3 }}>
+          {label}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function StatusPill({
+  label,
+  value,
+  accent,
+}: {
+  label: string
+  value: number | string
+  accent: string
+}) {
+  return (
+    <div
+      style={{
+        flex: '1 1 0',
+        minWidth: 86,
+        borderRadius: 16,
+        border: `1px solid ${accent}2f`,
+        background: `linear-gradient(145deg, ${accent}18, rgba(7,11,26,0.72))`,
+        padding: '10px 11px',
+      }}
+    >
+      <p style={{ color: accent, fontWeight: 900, fontSize: '1.18rem', letterSpacing: '-0.04em', lineHeight: 1 }}>
+        {value}
+      </p>
+      <p style={{ color: 'rgba(213,224,242,0.64)', fontSize: '0.66rem', fontWeight: 760, marginTop: 4 }}>
+        {label}
+      </p>
+    </div>
+  )
+}
+
+function WarningTile({
+  icon,
+  title,
+  detail,
+  accent,
+}: {
+  icon: ReactNode
+  title: string
+  detail: string
+  accent: string
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: 10,
+        alignItems: 'flex-start',
+        borderRadius: 16,
+        border: `1px solid ${accent}2e`,
+        background: `linear-gradient(145deg, ${accent}16, rgba(5,8,20,0.78))`,
+        padding: '11px 12px',
+      }}
+    >
+      <div
+        style={{
+          width: 30,
+          height: 30,
+          borderRadius: 11,
+          display: 'grid',
+          placeItems: 'center',
+          color: accent,
+          background: `${accent}16`,
+          border: `1px solid ${accent}26`,
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </div>
+      <div style={{ minWidth: 0 }}>
+        <p style={{ color: '#f8fbff', fontWeight: 850, fontSize: '0.78rem', lineHeight: 1.25 }}>
+          {title}
+        </p>
+        <p style={{ color: 'rgba(154,170,191,0.62)', fontSize: '0.66rem', lineHeight: 1.45, marginTop: 3 }}>
+          {detail}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+const calendarLegendText: CSSProperties = {
+  fontSize: '0.66rem',
+  color: 'rgba(213,224,242,0.58)',
+  fontWeight: 700,
+}
+
 export function Dashboard() {
   const { t, i18n } = useTranslation()
   const locale = DATE_LOCALES[i18n.language] ?? enUS
@@ -280,8 +419,13 @@ export function Dashboard() {
 
   const loadLogs = useCallback(async () => {
     if (!user) return
-    const start = format(startOfMonth(currentDate), 'yyyy-MM-dd')
-    const end = format(endOfMonth(currentDate), 'yyyy-MM-dd')
+    const today = new Date()
+    const monthStart = startOfMonth(currentDate)
+    const monthEnd = endOfMonth(currentDate)
+    const rangeStart = monthStart < today ? monthStart : today
+    const rangeEnd = monthEnd > today ? monthEnd : today
+    const start = format(rangeStart, 'yyyy-MM-dd')
+    const end = format(rangeEnd, 'yyyy-MM-dd')
     const { data } = await supabase
       .from('dose_logs')
       .select('*, peptides(name)')
@@ -366,8 +510,65 @@ export function Dashboard() {
     .filter(section => section.cycles.length > 0)
   const pendingLogs = pendingLogItems.length
   const takenLogs = selLogs.filter(log => log.taken === true).length
+  const skippedLogs = selLogs.filter(log => log.taken === false).length
   const openConfirmationCount = pendingLogs + pendingCycles.length
   const firstOpenConfirmationName = pendingLogItems[0]?.peptides?.name ?? pendingCycles[0]?.peptides?.name
+  const selectedTotalIntakes = takenLogs + skippedLogs + openConfirmationCount
+  const selectedCompletion = selectedTotalIntakes > 0
+    ? Math.round(((takenLogs + skippedLogs) / selectedTotalIntakes) * 100)
+    : 0
+
+  const today = new Date()
+  const todayLogs = logsForDay(today)
+  const todayCycles = cyclesForDay(today)
+  const todayPendingLogs = todayLogs.filter(log => log.taken === null)
+  const todayPendingCycles = todayCycles.filter(cycle =>
+    !todayLogs.some(log => log.peptide_id === cycle.peptide_id)
+  )
+  const todayTaken = todayLogs.filter(log => log.taken === true).length
+  const todaySkipped = todayLogs.filter(log => log.taken === false).length
+  const todayOpen = todayPendingLogs.length + todayPendingCycles.length
+  const todayTotal = todayTaken + todaySkipped + todayOpen
+  const todayCompletion = todayTotal > 0
+    ? Math.round(((todayTaken + todaySkipped) / todayTotal) * 100)
+    : 0
+  const nextOpenToday = [...todayPendingLogs, ...todayPendingCycles]
+    .map(item => ({
+      name: item.peptides?.name ?? t('zyklus'),
+      minutes: 'logged_at' in item ? new Date(item.logged_at).getHours() * 60 + new Date(item.logged_at).getMinutes() : cycleIntakeMinutes(item),
+    }))
+    .sort((a, b) => a.minutes - b.minutes)[0]
+
+  const lowStockPeptides = peptides.filter(peptide => {
+    if (peptide.vials_in_stock == null) return false
+    const current = Number(peptide.vials_in_stock)
+    const initial = Number(peptide.vials_initial ?? 0)
+    const threshold = initial > 0 ? Math.max(1, initial * 0.2) : 1
+    return current <= threshold
+  })
+  const expiringSoonPeptides = peptides
+    .map(peptide => {
+      if (!peptide.reconstitution_date || !peptide.expiry_days) return null
+      const expiryDate = addDays(parseISO(peptide.reconstitution_date), peptide.expiry_days)
+      const daysLeft = differenceInDays(expiryDate, today)
+      return daysLeft >= 0 && daysLeft <= 7 ? { peptide, daysLeft } : null
+    })
+    .filter(Boolean) as Array<{ peptide: Peptide; daysLeft: number }>
+
+  const monthDays = calendarDays.filter(day => day.getMonth() === currentDate.getMonth())
+  const monthLogs = logs.filter(log => {
+    const loggedAt = new Date(log.logged_at)
+    return loggedAt.getMonth() === currentDate.getMonth() && loggedAt.getFullYear() === currentDate.getFullYear()
+  })
+  const scheduledThisMonth = monthDays.reduce((sum, day) => sum + cyclesForDay(day).length, 0)
+  const takenThisMonth = monthLogs.filter(log => log.taken === true).length
+  const skippedThisMonth = monthLogs.filter(log => log.taken === false).length
+  const monthAdherence = scheduledThisMonth > 0 ? Math.round((takenThisMonth / scheduledThisMonth) * 100) : 0
+  const activePeptideLegend = cycles
+    .map(cycle => cycle.peptide_id)
+    .filter((peptideId, index, all) => all.indexOf(peptideId) === index)
+    .map(peptideId => peptides.find(peptide => peptide.id === peptideId))
+    .filter(Boolean) as Peptide[]
 
   const adjustPeptideStockForDose = async (peptideId: string, dose: number, unit: string, mode: 'debit' | 'credit') => {
     if (!user) return false
@@ -507,9 +708,134 @@ export function Dashboard() {
         </div>
       </PageHero>
 
+      {/* ── Tages-Fokus ──────────────────────────────────────────────────── */}
+      <GlassPanel accent={todayOpen > 0 ? '#f59e0b' : '#10b981'} padding="lg">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <ProgressRing
+              value={todayCompletion}
+              label={t('progress_label', { defaultValue: 'Status' })}
+              accent={todayOpen > 0 ? '#f59e0b' : '#10b981'}
+            />
+            <div className="min-w-0">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                {t('today_focus_kicker', { defaultValue: 'Tageskarte' })}
+              </p>
+              <h2 className="mt-1 text-xl font-black tracking-[-0.04em] text-white">
+                {todayOpen > 0
+                  ? t('today_focus_open_title', { defaultValue: 'Heute noch {{count}} offen', count: todayOpen })
+                  : todayTotal > 0
+                    ? t('today_focus_done_title', { defaultValue: 'Heute ist alles geklärt' })
+                    : t('today_focus_empty_title', { defaultValue: 'Heute nichts geplant' })}
+              </h2>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                {nextOpenToday
+                  ? t('today_focus_next_hint', {
+                      defaultValue: 'Nächster offener Punkt: {{name}}.',
+                      name: nextOpenToday.name,
+                    })
+                  : t('today_focus_hint', {
+                      defaultValue: 'Bestätigte, übersprungene und offene Einnahmen bleiben im Tagesverlauf sichtbar.',
+                    })}
+              </p>
+            </div>
+          </div>
+
+          <button
+            className="btn-secondary self-start !rounded-2xl !px-4 !py-2.5 text-xs font-extrabold sm:self-center"
+            onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
+          >
+            {t('today_focus_open_button', { defaultValue: 'Heute öffnen' })}
+          </button>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <StatusPill label={t('ausstehend')} value={todayOpen} accent="#f59e0b" />
+          <StatusPill label={t('eingenommen')} value={todayTaken} accent="#10b981" />
+          <StatusPill label={t('uebersprungen')} value={todaySkipped} accent="#ef4444" />
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          {todayOpen > 0 && (
+            <WarningTile
+              icon={<Bell size={14} />}
+              title={t('warning_unconfirmed_title', { defaultValue: 'Bestätigung offen' })}
+              detail={t('warning_unconfirmed_detail', {
+                defaultValue: '{{count}} Einnahme(n) müssen noch bestätigt oder übersprungen werden.',
+                count: todayOpen,
+              })}
+              accent="#f59e0b"
+            />
+          )}
+          {lowStockPeptides.length > 0 && (
+            <WarningTile
+              icon={<Package size={14} />}
+              title={t('warning_low_stock_title', { defaultValue: 'Bestand niedrig' })}
+              detail={t('warning_low_stock_detail', {
+                defaultValue: '{{count}} Peptid(e) liegen am Nachfüll-Limit.',
+                count: lowStockPeptides.length,
+              })}
+              accent="#f97316"
+            />
+          )}
+          {expiringSoonPeptides.length > 0 && (
+            <WarningTile
+              icon={<AlertTriangle size={14} />}
+              title={t('warning_expiry_title', { defaultValue: 'Ablauf bald' })}
+              detail={t('warning_expiry_detail', {
+                defaultValue: '{{name}} läuft in {{days}} Tag(en) ab.',
+                name: expiringSoonPeptides[0].peptide.name,
+                days: expiringSoonPeptides[0].daysLeft,
+              })}
+              accent="#ef4444"
+            />
+          )}
+          {todayOpen === 0 && lowStockPeptides.length === 0 && expiringSoonPeptides.length === 0 && (
+            <WarningTile
+              icon={<ShieldCheck size={14} />}
+              title={t('warning_clear_title', { defaultValue: 'Keine akuten Warnungen' })}
+              detail={t('warning_clear_detail', { defaultValue: 'Plan, Bestand und Ablaufdaten sehen aktuell unkritisch aus.' })}
+              accent="#10b981"
+            />
+          )}
+        </div>
+      </GlassPanel>
+
       {/* ── Kalender ──────────────────────────────────────────────────────── */}
       <div data-ob="calendar-main" data-ob-self>
       <GlassPanel accent="#00ccf5" padding="sm" style={{ padding: 0 }}>
+        <div style={{ padding: '14px 14px 12px' }}>
+          <SectionHeader
+            kicker={t('month_overview_kicker', { defaultValue: 'Monatsüberblick' })}
+            title={monthTitle}
+            subtitle={t('month_overview_subtitle', {
+              defaultValue: 'Swipe vertikal oder nutze die Pfeile, um den Plan zu wechseln.',
+            })}
+            icon={CalendarDays}
+            accent="#00ccf5"
+          />
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="rounded-2xl border border-sky-400/20 bg-sky-400/10 px-3 py-2">
+              <p className="text-lg font-black leading-none text-sky-200">{scheduledThisMonth}</p>
+              <p className="mt-1 text-[10px] font-bold text-slate-400">
+                {t('scheduled_short', { defaultValue: 'geplant' })}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2">
+              <p className="text-lg font-black leading-none text-emerald-200">{monthAdherence}%</p>
+              <p className="mt-1 text-[10px] font-bold text-slate-400">
+                {t('adherence_short', { defaultValue: 'Adhärenz' })}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-red-400/20 bg-red-400/10 px-3 py-2">
+              <p className="text-lg font-black leading-none text-red-200">{skippedThisMonth}</p>
+              <p className="mt-1 text-[10px] font-bold text-slate-400">
+                {t('skipped_short', { defaultValue: 'übersprungen' })}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Wochentag-Kopf */}
         <div className="grid grid-cols-7 border-b border-slate-800">
           {[t('mon'),t('tue'),t('wed'),t('thu'),t('fri'),t('sat'),t('sun')].map(d => (
@@ -541,12 +867,38 @@ export function Dashboard() {
             const inMonth    = day.getMonth() === currentDate.getMonth()
             const isSelected = isSameDay(day, selectedDay)
             const hasCycle   = dayCycles.length > 0
+            const isFuture = differenceInDays(day, today) > 0
+            const dayTaken = dayLogs.filter(log => log.taken === true).length
+            const daySkipped = dayLogs.filter(log => log.taken === false).length
+            const dayPendingLogs = dayLogs.filter(log => log.taken === null)
+            const dayPendingCycles = dayCycles.filter(cycle =>
+              !dayLogs.some(log => log.peptide_id === cycle.peptide_id)
+            )
+            const dayOpen = isFuture ? 0 : dayPendingLogs.length + dayPendingCycles.length
+            const statusAccent = dayOpen > 0
+              ? '#f59e0b'
+              : daySkipped > 0
+                ? '#ef4444'
+                : dayTaken > 0
+                  ? '#10b981'
+                  : hasCycle
+                    ? '#8b5cf6'
+                    : 'rgba(255,255,255,0.08)'
+            const statusBg = dayOpen > 0
+              ? 'rgba(245,158,11,0.12)'
+              : daySkipped > 0
+                ? 'rgba(239,68,68,0.10)'
+                : dayTaken > 0
+                  ? 'rgba(16,185,129,0.10)'
+                  : hasCycle
+                    ? 'rgba(139,92,246,0.09)'
+                    : 'transparent'
 
             return (
               <button
                 key={i}
                 onClick={() => setSelectedDay(day)}
-                className={`relative flex min-h-[50px] flex-col items-center justify-center py-3 transition-all duration-150
+                className={`relative flex min-h-[64px] flex-col items-center justify-center py-2 transition-all duration-150
                   border-r border-b last:border-r-0
                   ${!inMonth ? 'opacity-20' : ''}
                 `}
@@ -554,14 +906,21 @@ export function Dashboard() {
                   borderColor: 'rgba(255,255,255,0.04)',
                   background: isSelected
                     ? 'linear-gradient(145deg, rgba(0,190,240,0.85), rgba(0,120,210,0.75))'
-                    : hasCycle
-                      ? 'rgba(120,80,255,0.07)'
-                      : 'transparent',
+                    : statusBg,
                   boxShadow: isSelected
                     ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 16px rgba(0,200,240,0.25)'
+                    : hasCycle || dayLogs.length > 0
+                      ? `inset 0 1px 0 ${statusAccent}18`
                     : undefined,
                 }}
               >
+                {hasCycle && !isSelected && (
+                  <span
+                    className="absolute left-1.5 top-1.5 h-1.5 w-1.5 rounded-full"
+                    style={{ background: statusAccent, boxShadow: `0 0 10px ${statusAccent}66` }}
+                  />
+                )}
+
                 {/* Heute-Ring */}
                 {isToday(day) && !isSelected && (
                   <span className="absolute inset-1 rounded-md pointer-events-none"
@@ -595,6 +954,20 @@ export function Dashboard() {
                     </div>
                   )
                 })()}
+
+                {(dayOpen > 0 || dayTaken > 0 || daySkipped > 0) && (
+                  <div className="mt-1 flex items-center justify-center gap-1">
+                    {dayOpen > 0 && (
+                      <span className="h-1 w-3 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.55)]" />
+                    )}
+                    {dayTaken > 0 && (
+                      <span className="h-1 w-3 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.45)]" />
+                    )}
+                    {daySkipped > 0 && (
+                      <span className="h-1 w-3 rounded-full bg-red-400 shadow-[0_0_6px_rgba(239,68,68,0.45)]" />
+                    )}
+                  </div>
+                )}
               </button>
             )
           })}
@@ -602,11 +975,11 @@ export function Dashboard() {
         </div>
 
         {/* Legende */}
-        <div className="flex gap-4 px-4 py-2.5" style={{
+        <div className="flex flex-wrap gap-3 px-4 py-3" style={{
           borderTop: '1px solid rgba(255,255,255,0.04)',
           background: 'rgba(1,2,10,0.60)',
         }}>
-          <div className="flex items-center gap-1.5" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.30)' }}>
+          <div className="flex items-center gap-1.5" style={calendarLegendText}>
             <div className="flex gap-0.5">
               {[0,1,2].map(i => (
                 <span key={i} className="w-1.5 h-1.5 rounded-full"
@@ -615,15 +988,31 @@ export function Dashboard() {
             </div>
             {t('per_dot_peptid')}
           </div>
-          <div className="flex items-center gap-1.5" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.30)' }}>
-            <span className="w-2 h-2 rounded-sm" style={{
-              background: 'rgba(120,80,255,0.25)',
-              border: '1px solid rgba(120,80,255,0.35)',
-            }} /> {t('zyklus')}
+          <div className="flex items-center gap-1.5" style={calendarLegendText}>
+            <Clock3 size={11} style={{ color: '#f59e0b' }} /> {t('ausstehend')}
           </div>
-          <div className="flex items-center gap-1.5" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.30)' }}>
+          <div className="flex items-center gap-1.5" style={calendarLegendText}>
+            <CheckCircle2 size={11} style={{ color: '#10b981' }} /> {t('eingenommen')}
+          </div>
+          <div className="flex items-center gap-1.5" style={calendarLegendText}>
+            <XCircle size={11} style={{ color: '#ef4444' }} /> {t('uebersprungen')}
+          </div>
+          <div className="flex items-center gap-1.5" style={calendarLegendText}>
             <TrendingUp size={10} style={{ color: '#f59e0b' }} /> {t('erhoehung')}
           </div>
+          {activePeptideLegend.slice(0, 4).map(peptide => {
+            const idx = peptides.findIndex(p => p.id === peptide.id)
+            const color = getPeptideColor(idx)
+            return (
+              <div key={peptide.id} className="flex items-center gap-1.5" style={calendarLegendText}>
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: color, boxShadow: `0 0 6px ${color}99` }}
+                />
+                <span className="max-w-[92px] truncate">{peptide.name}</span>
+              </div>
+            )
+          })}
         </div>
       </GlassPanel>
       </div>
@@ -645,6 +1034,43 @@ export function Dashboard() {
               </button>
             )}
           />
+        </div>
+
+        <div className="mb-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-500">
+                {t('day_status_kicker', { defaultValue: 'Tagesstatus' })}
+              </p>
+              <p className="mt-1 text-sm font-bold text-white">
+                {selectedTotalIntakes > 0
+                  ? t('day_status_summary', {
+                      defaultValue: '{{done}} erledigt · {{open}} offen · {{skipped}} übersprungen',
+                      done: takenLogs,
+                      open: openConfirmationCount,
+                      skipped: skippedLogs,
+                    })
+                  : t('day_status_empty', { defaultValue: 'Für diesen Tag ist kein Zyklus geplant.' })}
+              </p>
+            </div>
+            <div className="flex min-w-[132px] items-center gap-2">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${selectedCompletion}%`,
+                    background: openConfirmationCount > 0
+                      ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
+                      : 'linear-gradient(90deg, #10b981, #34d399)',
+                    boxShadow: openConfirmationCount > 0
+                      ? '0 0 12px rgba(245,158,11,0.45)'
+                      : '0 0 12px rgba(16,185,129,0.38)',
+                  }}
+                />
+              </div>
+              <span className="text-xs font-black text-slate-300">{selectedCompletion}%</span>
+            </div>
+          </div>
         </div>
 
         {openConfirmationCount > 0 && (
@@ -717,6 +1143,7 @@ export function Dashboard() {
                     return false
                   }).length
                   const tl = cycleTimeLabel(c, t)
+                  const peptideColor = getPeptideColor(peptides.findIndex(peptide => peptide.id === c.peptide_id))
                   return (
                     <div
                       key={c.id}
@@ -726,7 +1153,10 @@ export function Dashboard() {
                         borderColor: 'rgba(255,255,255,0.075)',
                       }}>
                       <div className="flex items-center gap-2.5">
-                        <span className="w-2 h-2 rounded-full shrink-0 bg-slate-500" />
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ background: peptideColor, boxShadow: `0 0 10px ${peptideColor}80` }}
+                        />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-medium text-white">{c.peptides?.name}</span>
