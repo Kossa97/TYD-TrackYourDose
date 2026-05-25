@@ -1,22 +1,22 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode, type WheelEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent, type WheelEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
-  addDays, format, startOfMonth, endOfMonth, eachDayOfInterval,
+  format, startOfMonth, endOfMonth, eachDayOfInterval,
   isSameDay, isToday, startOfWeek, endOfWeek,
   differenceInDays, parseISO,
 } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
 import {
-  Activity, AlertTriangle, Bell, CalendarDays, Check, CheckCircle2,
-  ChevronLeft, ChevronRight, Clock3, Package, RotateCcw, ShieldCheck,
+  Bell, CalendarDays, Check, CheckCircle2,
+  ChevronLeft, ChevronRight, Clock3, RotateCcw,
   Syringe, TrendingUp, X, XCircle,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
-import { GlassPanel, MetricCard, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
+import { GlassPanel, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
 
 const DATE_LOCALES: Record<string, Locale> = {
   de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
@@ -200,134 +200,6 @@ function roundStock(value: number) {
   return Math.round(value * 10000) / 10000
 }
 
-function ProgressRing({
-  value,
-  label,
-  accent = '#10b981',
-}: {
-  value: number
-  label: string
-  accent?: string
-}) {
-  const safeValue = Math.max(0, Math.min(100, value))
-
-  return (
-    <div
-      style={{
-        width: 94,
-        height: 94,
-        borderRadius: '50%',
-        display: 'grid',
-        placeItems: 'center',
-        background: `conic-gradient(${accent} ${safeValue * 3.6}deg, rgba(255,255,255,0.08) 0deg)`,
-        boxShadow: `0 0 34px ${accent}26`,
-        flexShrink: 0,
-      }}
-    >
-      <div
-        style={{
-          width: 74,
-          height: 74,
-          borderRadius: '50%',
-          background: 'linear-gradient(145deg, rgba(6,10,24,0.96), rgba(2,4,12,0.98))',
-          border: '1px solid rgba(255,255,255,0.08)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <span style={{ color: '#f8fbff', fontSize: '1.25rem', fontWeight: 900, lineHeight: 1 }}>
-          {safeValue}%
-        </span>
-        <span style={{ color: 'rgba(154,170,191,0.62)', fontSize: '0.58rem', fontWeight: 800, marginTop: 3 }}>
-          {label}
-        </span>
-      </div>
-    </div>
-  )
-}
-
-function StatusPill({
-  label,
-  value,
-  accent,
-}: {
-  label: string
-  value: number | string
-  accent: string
-}) {
-  return (
-    <div
-      style={{
-        flex: '1 1 0',
-        minWidth: 86,
-        borderRadius: 16,
-        border: `1px solid ${accent}2f`,
-        background: `linear-gradient(145deg, ${accent}18, rgba(7,11,26,0.72))`,
-        padding: '10px 11px',
-      }}
-    >
-      <p style={{ color: accent, fontWeight: 900, fontSize: '1.18rem', letterSpacing: '-0.04em', lineHeight: 1 }}>
-        {value}
-      </p>
-      <p style={{ color: 'rgba(213,224,242,0.64)', fontSize: '0.66rem', fontWeight: 760, marginTop: 4 }}>
-        {label}
-      </p>
-    </div>
-  )
-}
-
-function WarningTile({
-  icon,
-  title,
-  detail,
-  accent,
-}: {
-  icon: ReactNode
-  title: string
-  detail: string
-  accent: string
-}) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 10,
-        alignItems: 'flex-start',
-        borderRadius: 16,
-        border: `1px solid ${accent}2e`,
-        background: `linear-gradient(145deg, ${accent}16, rgba(5,8,20,0.78))`,
-        padding: '11px 12px',
-      }}
-    >
-      <div
-        style={{
-          width: 30,
-          height: 30,
-          borderRadius: 11,
-          display: 'grid',
-          placeItems: 'center',
-          color: accent,
-          background: `${accent}16`,
-          border: `1px solid ${accent}26`,
-          flexShrink: 0,
-        }}
-      >
-        {icon}
-      </div>
-      <div style={{ minWidth: 0 }}>
-        <p style={{ color: '#f8fbff', fontWeight: 850, fontSize: '0.78rem', lineHeight: 1.25 }}>
-          {title}
-        </p>
-        <p style={{ color: 'rgba(154,170,191,0.62)', fontSize: '0.66rem', lineHeight: 1.45, marginTop: 3 }}>
-          {detail}
-        </p>
-      </div>
-    </div>
-  )
-}
-
 const calendarLegendText: CSSProperties = {
   fontSize: '0.66rem',
   color: 'rgba(213,224,242,0.58)',
@@ -347,7 +219,6 @@ export function Dashboard() {
   // selectedDay steuert den Tages-Bereich unten — Standard = heute
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
   const calendarSwipeStart = useRef<{ x: number; y: number; pointerId: number } | null>(null)
-  const suppressCalendarClick = useRef(false)
   const calendarWheelLocked = useRef(false)
   const [calendarDragOffset, setCalendarDragOffset] = useState(0)
   const [calendarDragging, setCalendarDragging] = useState(false)
@@ -355,6 +226,13 @@ export function Dashboard() {
   const changeMonth = useCallback((delta: number) => {
     setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + delta, 1))
   }, [])
+
+  const selectCalendarDay = useCallback((day: Date) => {
+    setSelectedDay(day)
+    if (day.getMonth() !== currentDate.getMonth() || day.getFullYear() !== currentDate.getFullYear()) {
+      setCurrentDate(new Date(day.getFullYear(), day.getMonth(), 1))
+    }
+  }, [currentDate])
 
   const finishCalendarSwipe = (deltaX: number, deltaY: number) => {
     const absX = Math.abs(deltaX)
@@ -369,7 +247,6 @@ export function Dashboard() {
     calendarSwipeStart.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId }
     setCalendarDragging(true)
     setCalendarDragOffset(0)
-    event.currentTarget.setPointerCapture?.(event.pointerId)
   }
 
   const handleCalendarPointerMove = (event: PointerEvent<HTMLDivElement>) => {
@@ -389,21 +266,22 @@ export function Dashboard() {
     setCalendarDragging(false)
     setCalendarDragOffset(0)
     if (!start || start.pointerId !== event.pointerId) return
-    const didSwipe = finishCalendarSwipe(event.clientX - start.x, event.clientY - start.y)
-    if (didSwipe) suppressCalendarClick.current = true
+    const deltaX = event.clientX - start.x
+    const deltaY = event.clientY - start.y
+    const didSwipe = finishCalendarSwipe(deltaX, deltaY)
+    if (didSwipe || Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) return
+
+    const button = (event.target as Element | null)?.closest<HTMLButtonElement>('[data-calendar-date]')
+    const dateKey = button?.dataset.calendarDate
+    if (!dateKey) return
+    const [year, month, date] = dateKey.split('-').map(Number)
+    selectCalendarDay(new Date(year, month - 1, date))
   }
 
   const handleCalendarPointerCancel = () => {
     calendarSwipeStart.current = null
     setCalendarDragging(false)
     setCalendarDragOffset(0)
-  }
-
-  const handleCalendarClickCapture = (event: PointerEvent<HTMLDivElement>) => {
-    if (!suppressCalendarClick.current) return
-    suppressCalendarClick.current = false
-    event.preventDefault()
-    event.stopPropagation()
   }
 
   const handleCalendarWheel = (event: WheelEvent<HTMLDivElement>) => {
@@ -508,62 +386,7 @@ export function Dashboard() {
   const dueCycleSections = (['morgens', 'mittags', 'abends', 'custom', 'later'] as IntakeGroupKey[])
     .map(key => ({ ...intakeGroupMeta(key, t), cycles: dueCycles.filter(cycle => cycleTimeGroupKey(cycle) === key) }))
     .filter(section => section.cycles.length > 0)
-  const pendingLogs = pendingLogItems.length
-  const takenLogs = selLogs.filter(log => log.taken === true).length
-  const skippedLogs = selLogs.filter(log => log.taken === false).length
-  const openConfirmationCount = pendingLogs + pendingCycles.length
-  const firstOpenConfirmationName = pendingLogItems[0]?.peptides?.name ?? pendingCycles[0]?.peptides?.name
-  const selectedTotalIntakes = takenLogs + skippedLogs + openConfirmationCount
-  const selectedCompletion = selectedTotalIntakes > 0
-    ? Math.round(((takenLogs + skippedLogs) / selectedTotalIntakes) * 100)
-    : 0
-
   const today = new Date()
-  const todayLogs = logsForDay(today)
-  const todayCycles = cyclesForDay(today)
-  const todayPendingLogs = todayLogs.filter(log => log.taken === null)
-  const todayPendingCycles = todayCycles.filter(cycle =>
-    !todayLogs.some(log => log.peptide_id === cycle.peptide_id)
-  )
-  const todayTaken = todayLogs.filter(log => log.taken === true).length
-  const todaySkipped = todayLogs.filter(log => log.taken === false).length
-  const todayOpen = todayPendingLogs.length + todayPendingCycles.length
-  const todayTotal = todayTaken + todaySkipped + todayOpen
-  const todayCompletion = todayTotal > 0
-    ? Math.round(((todayTaken + todaySkipped) / todayTotal) * 100)
-    : 0
-  const nextOpenToday = [...todayPendingLogs, ...todayPendingCycles]
-    .map(item => ({
-      name: item.peptides?.name ?? t('zyklus'),
-      minutes: 'logged_at' in item ? new Date(item.logged_at).getHours() * 60 + new Date(item.logged_at).getMinutes() : cycleIntakeMinutes(item),
-    }))
-    .sort((a, b) => a.minutes - b.minutes)[0]
-
-  const lowStockPeptides = peptides.filter(peptide => {
-    if (peptide.vials_in_stock == null) return false
-    const current = Number(peptide.vials_in_stock)
-    const initial = Number(peptide.vials_initial ?? 0)
-    const threshold = initial > 0 ? Math.max(1, initial * 0.2) : 1
-    return current <= threshold
-  })
-  const expiringSoonPeptides = peptides
-    .map(peptide => {
-      if (!peptide.reconstitution_date || !peptide.expiry_days) return null
-      const expiryDate = addDays(parseISO(peptide.reconstitution_date), peptide.expiry_days)
-      const daysLeft = differenceInDays(expiryDate, today)
-      return daysLeft >= 0 && daysLeft <= 7 ? { peptide, daysLeft } : null
-    })
-    .filter(Boolean) as Array<{ peptide: Peptide; daysLeft: number }>
-
-  const monthDays = calendarDays.filter(day => day.getMonth() === currentDate.getMonth())
-  const monthLogs = logs.filter(log => {
-    const loggedAt = new Date(log.logged_at)
-    return loggedAt.getMonth() === currentDate.getMonth() && loggedAt.getFullYear() === currentDate.getFullYear()
-  })
-  const scheduledThisMonth = monthDays.reduce((sum, day) => sum + cyclesForDay(day).length, 0)
-  const takenThisMonth = monthLogs.filter(log => log.taken === true).length
-  const skippedThisMonth = monthLogs.filter(log => log.taken === false).length
-  const monthAdherence = scheduledThisMonth > 0 ? Math.round((takenThisMonth / scheduledThisMonth) * 100) : 0
   const activePeptideLegend = cycles
     .map(cycle => cycle.peptide_id)
     .filter((peptideId, index, all) => all.indexOf(peptideId) === index)
@@ -663,175 +486,42 @@ export function Dashboard() {
   return (
     <PageShell>
       <PageHero
-        kicker={t('nav_kalender')}
-        title={monthTitle}
+        kicker={t('calendar_plan_kicker', { defaultValue: 'Peptid-Plan' })}
+        title={t('nav_kalender')}
         subtitle={selectedDayTitle}
         icon={CalendarDays}
         accent="#00ccf5"
-        action={(
-          <div className="flex items-center gap-2">
-            <button className="btn-secondary !px-3 !py-2"
-              onClick={() => changeMonth(-1)}>
-              <ChevronLeft size={17} />
-            </button>
-            <button className="btn-secondary !px-3 !py-2"
-              onClick={() => changeMonth(1)}>
-              <ChevronRight size={17} />
-            </button>
-          </div>
-        )}
-      >
-        <div className="grid grid-cols-3 gap-2">
-          <MetricCard
-            icon={Activity}
-            label={t('zyklus')}
-            value={cycles.length}
-            hint={t('stat_active_cycles')}
-            accent="#8b5cf6"
-          />
-          <MetricCard
-            icon={Syringe}
-            label={t('protokollierte_dosen')}
-            value={confirmedLogs.length}
-            hint={`${takenLogs} ${t('eingenommen')}`}
-            accent="#00ccf5"
-          />
-          <MetricCard
-            icon={Bell}
-            label={t('ausstehend')}
-            value={openConfirmationCount}
-            hint={openConfirmationCount > 0
-              ? t('dose_confirm_open_short', { defaultValue: 'Bestätigung offen' })
-              : `${selCycles.length} ${t('zyklus')}`}
-            accent={openConfirmationCount > 0 ? '#f59e0b' : '#10b981'}
-          />
-        </div>
-      </PageHero>
-
-      {/* ── Tages-Fokus ──────────────────────────────────────────────────── */}
-      <GlassPanel accent={todayOpen > 0 ? '#f59e0b' : '#10b981'} padding="lg">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <ProgressRing
-              value={todayCompletion}
-              label={t('progress_label', { defaultValue: 'Status' })}
-              accent={todayOpen > 0 ? '#f59e0b' : '#10b981'}
-            />
-            <div className="min-w-0">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-                {t('today_focus_kicker', { defaultValue: 'Tageskarte' })}
-              </p>
-              <h2 className="mt-1 text-xl font-black tracking-[-0.04em] text-white">
-                {todayOpen > 0
-                  ? t('today_focus_open_title', { defaultValue: 'Heute noch {{count}} offen', count: todayOpen })
-                  : todayTotal > 0
-                    ? t('today_focus_done_title', { defaultValue: 'Heute ist alles geklärt' })
-                    : t('today_focus_empty_title', { defaultValue: 'Heute nichts geplant' })}
-              </h2>
-              <p className="mt-2 text-xs leading-relaxed text-slate-400">
-                {nextOpenToday
-                  ? t('today_focus_next_hint', {
-                      defaultValue: 'Nächster offener Punkt: {{name}}.',
-                      name: nextOpenToday.name,
-                    })
-                  : t('today_focus_hint', {
-                      defaultValue: 'Bestätigte, übersprungene und offene Einnahmen bleiben im Tagesverlauf sichtbar.',
-                    })}
-              </p>
-            </div>
-          </div>
-
-          <button
-            className="btn-secondary self-start !rounded-2xl !px-4 !py-2.5 text-xs font-extrabold sm:self-center"
-            onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
-          >
-            {t('today_focus_open_button', { defaultValue: 'Heute öffnen' })}
-          </button>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <StatusPill label={t('ausstehend')} value={todayOpen} accent="#f59e0b" />
-          <StatusPill label={t('eingenommen')} value={todayTaken} accent="#10b981" />
-          <StatusPill label={t('uebersprungen')} value={todaySkipped} accent="#ef4444" />
-        </div>
-
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          {todayOpen > 0 && (
-            <WarningTile
-              icon={<Bell size={14} />}
-              title={t('warning_unconfirmed_title', { defaultValue: 'Bestätigung offen' })}
-              detail={t('warning_unconfirmed_detail', {
-                defaultValue: '{{count}} Einnahme(n) müssen noch bestätigt oder übersprungen werden.',
-                count: todayOpen,
-              })}
-              accent="#f59e0b"
-            />
-          )}
-          {lowStockPeptides.length > 0 && (
-            <WarningTile
-              icon={<Package size={14} />}
-              title={t('warning_low_stock_title', { defaultValue: 'Bestand niedrig' })}
-              detail={t('warning_low_stock_detail', {
-                defaultValue: '{{count}} Peptid(e) liegen am Nachfüll-Limit.',
-                count: lowStockPeptides.length,
-              })}
-              accent="#f97316"
-            />
-          )}
-          {expiringSoonPeptides.length > 0 && (
-            <WarningTile
-              icon={<AlertTriangle size={14} />}
-              title={t('warning_expiry_title', { defaultValue: 'Ablauf bald' })}
-              detail={t('warning_expiry_detail', {
-                defaultValue: '{{name}} läuft in {{days}} Tag(en) ab.',
-                name: expiringSoonPeptides[0].peptide.name,
-                days: expiringSoonPeptides[0].daysLeft,
-              })}
-              accent="#ef4444"
-            />
-          )}
-          {todayOpen === 0 && lowStockPeptides.length === 0 && expiringSoonPeptides.length === 0 && (
-            <WarningTile
-              icon={<ShieldCheck size={14} />}
-              title={t('warning_clear_title', { defaultValue: 'Keine akuten Warnungen' })}
-              detail={t('warning_clear_detail', { defaultValue: 'Plan, Bestand und Ablaufdaten sehen aktuell unkritisch aus.' })}
-              accent="#10b981"
-            />
-          )}
-        </div>
-      </GlassPanel>
+      />
 
       {/* ── Kalender ──────────────────────────────────────────────────────── */}
       <div data-ob="calendar-main" data-ob-self>
       <GlassPanel accent="#00ccf5" padding="sm" style={{ padding: 0 }}>
         <div style={{ padding: '14px 14px 12px' }}>
-          <SectionHeader
-            kicker={t('month_overview_kicker', { defaultValue: 'Monatsüberblick' })}
-            title={monthTitle}
-            subtitle={t('month_overview_subtitle', {
-              defaultValue: 'Swipe vertikal oder nutze die Pfeile, um den Plan zu wechseln.',
-            })}
-            icon={CalendarDays}
-            accent="#00ccf5"
-          />
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            <div className="rounded-2xl border border-sky-400/20 bg-sky-400/10 px-3 py-2">
-              <p className="text-lg font-black leading-none text-sky-200">{scheduledThisMonth}</p>
-              <p className="mt-1 text-[10px] font-bold text-slate-400">
-                {t('scheduled_short', { defaultValue: 'geplant' })}
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-500">
+                {t('month_overview_kicker', { defaultValue: 'Kalender' })}
+              </p>
+              <h2 className="mt-1 text-lg font-black tracking-[-0.04em] text-white">{monthTitle}</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                {t('month_overview_subtitle', { defaultValue: 'Tippe einen Tag an oder swipe vertikal zum Monatswechsel.' })}
               </p>
             </div>
-            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2">
-              <p className="text-lg font-black leading-none text-emerald-200">{monthAdherence}%</p>
-              <p className="mt-1 text-[10px] font-bold text-slate-400">
-                {t('adherence_short', { defaultValue: 'Adhärenz' })}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-red-400/20 bg-red-400/10 px-3 py-2">
-              <p className="text-lg font-black leading-none text-red-200">{skippedThisMonth}</p>
-              <p className="mt-1 text-[10px] font-bold text-slate-400">
-                {t('skipped_short', { defaultValue: 'übersprungen' })}
-              </p>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                className="btn-secondary !px-3 !py-2"
+                onClick={() => changeMonth(-1)}
+                aria-label={t('prev_month', { defaultValue: 'Vorheriger Monat' })}
+              >
+                <ChevronLeft size={17} />
+              </button>
+              <button
+                className="btn-secondary !px-3 !py-2"
+                onClick={() => changeMonth(1)}
+                aria-label={t('next_month', { defaultValue: 'Nächster Monat' })}
+              >
+                <ChevronRight size={17} />
+              </button>
             </div>
           </div>
         </div>
@@ -851,7 +541,6 @@ export function Dashboard() {
             onPointerMove={handleCalendarPointerMove}
             onPointerUp={handleCalendarPointerUp}
             onPointerCancel={handleCalendarPointerCancel}
-            onClickCapture={handleCalendarClickCapture}
             onWheel={handleCalendarWheel}
             style={{
               touchAction: 'none',
@@ -897,7 +586,7 @@ export function Dashboard() {
             return (
               <button
                 key={i}
-                onClick={() => setSelectedDay(day)}
+                data-calendar-date={format(day, 'yyyy-MM-dd')}
                 className={`relative flex min-h-[64px] flex-col items-center justify-center py-2 transition-all duration-150
                   border-r border-b last:border-r-0
                   ${!inMonth ? 'opacity-20' : ''}
@@ -1014,6 +703,29 @@ export function Dashboard() {
             )
           })}
         </div>
+
+        <div
+          className="flex items-center justify-between gap-3 px-4 py-3"
+          style={{
+            borderTop: '1px solid rgba(255,255,255,0.04)',
+            background: 'rgba(4,7,18,0.72)',
+          }}
+        >
+          <button
+            className="btn-secondary flex items-center gap-2 !rounded-2xl !px-3 !py-2 text-xs"
+            onClick={() => changeMonth(-1)}
+          >
+            <ChevronLeft size={15} />
+            {t('prev_month_short', { defaultValue: 'Zurück' })}
+          </button>
+          <button
+            className="btn-secondary flex items-center gap-2 !rounded-2xl !px-3 !py-2 text-xs"
+            onClick={() => changeMonth(1)}
+          >
+            {t('next_month_short', { defaultValue: 'Weiter' })}
+            <ChevronRight size={15} />
+          </button>
+        </div>
       </GlassPanel>
       </div>
 
@@ -1035,76 +747,6 @@ export function Dashboard() {
             )}
           />
         </div>
-
-        <div className="mb-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-500">
-                {t('day_status_kicker', { defaultValue: 'Tagesstatus' })}
-              </p>
-              <p className="mt-1 text-sm font-bold text-white">
-                {selectedTotalIntakes > 0
-                  ? t('day_status_summary', {
-                      defaultValue: '{{done}} erledigt · {{open}} offen · {{skipped}} übersprungen',
-                      done: takenLogs,
-                      open: openConfirmationCount,
-                      skipped: skippedLogs,
-                    })
-                  : t('day_status_empty', { defaultValue: 'Für diesen Tag ist kein Zyklus geplant.' })}
-              </p>
-            </div>
-            <div className="flex min-w-[132px] items-center gap-2">
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${selectedCompletion}%`,
-                    background: openConfirmationCount > 0
-                      ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
-                      : 'linear-gradient(90deg, #10b981, #34d399)',
-                    boxShadow: openConfirmationCount > 0
-                      ? '0 0 12px rgba(245,158,11,0.45)'
-                      : '0 0 12px rgba(16,185,129,0.38)',
-                  }}
-                />
-              </div>
-              <span className="text-xs font-black text-slate-300">{selectedCompletion}%</span>
-            </div>
-          </div>
-        </div>
-
-        {openConfirmationCount > 0 && (
-          <div
-            className="mb-3 rounded-2xl border px-3 py-3"
-            style={{
-              background: 'linear-gradient(135deg, rgba(245,158,11,0.16), rgba(8,12,30,0.82))',
-              borderColor: 'rgba(245,158,11,0.42)',
-              boxShadow: '0 0 22px rgba(245,158,11,0.18), inset 0 1px 0 rgba(255,255,255,0.06)',
-            }}
-          >
-            <div className="flex items-start gap-2.5">
-              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-300 border border-amber-500/25">
-                <Bell size={15} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-extrabold text-amber-200">
-                  {openConfirmationCount === 1
-                    ? t('dose_confirm_open_one', {
-                        defaultValue: 'Einnahmebestätigung für {{name}} noch offen',
-                        name: firstOpenConfirmationName ?? t('zyklus'),
-                      })
-                    : t('dose_confirm_open_many', {
-                        defaultValue: '{{count}} Einnahmebestätigungen noch offen',
-                        count: openConfirmationCount,
-                      })}
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-amber-100/60">
-                  {t('dose_confirm_open_hint', { defaultValue: 'Bitte bestätige manuell, ob die geplante Einnahme erfolgt ist oder übersprungen wurde.' })}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Noch fällig */}
         {dueCycles.length > 0 && (
