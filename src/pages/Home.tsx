@@ -1,14 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   CalendarDays, FlaskConical, Archive, Calculator,
   BookHeart, Star, HelpCircle, User, ChevronRight,
-  Microscope, Library,
+  Microscope, Library, Droplets, Heart, FileText, type LucideIcon,
+  Activity, ArrowUpRight, Beaker, CheckCircle2, ClipboardList,
+  Clock3, Flame, Gauge, Package, Plus, ShieldCheck, Sparkles,
+  TrendingUp, Syringe,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { format, parseISO, subDays } from 'date-fns'
+import { addDays, differenceInCalendarDays, format, parseISO, subDays } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
 
@@ -36,11 +39,66 @@ const DATE_LOCALES: Record<string, Locale> = {
   de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
 }
 
-const TILE_DEFS = [
+interface TileDef {
+  icon: LucideIcon
+  labelKey: string
+  descKey: string
+  label?: string
+  desc?: string
+  path: string
+  color: string
+  bg: string
+  wide?: boolean
+}
+
+interface QuickActionDef {
+  icon: LucideIcon
+  labelKey: string
+  label: string
+  descKey: string
+  desc: string
+  path: string
+  accent: string
+}
+
+interface FeatureDef {
+  icon: LucideIcon
+  labelKey: string
+  label: string
+  descKey: string
+  desc: string
+  path: string
+  accent: string
+  metric: string
+}
+
+interface OverviewStats {
+  activeCycles: number
+  peptides: number
+  inventoryVials: number
+  loggedToday: number
+  expiringSoon: number
+  lowStock: number
+}
+
+const EMPTY_OVERVIEW: OverviewStats = {
+  activeCycles: 0,
+  peptides: 0,
+  inventoryVials: 0,
+  loggedToday: 0,
+  expiringSoon: 0,
+  lowStock: 0,
+}
+
+const TILE_DEFS: TileDef[] = [
   { icon: CalendarDays, labelKey: 'tile_kalender', descKey: 'tile_kalender_desc', path: '/kalender',             color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',   wide: true },
   { icon: Archive,      labelKey: 'tile_lager',     descKey: 'tile_lager_desc',    path: '/peptide?tab=inventar', color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
   { icon: FlaskConical, labelKey: 'tile_peptide',   descKey: 'tile_peptide_desc',  path: '/peptide',              color: '#22d3ee', bg: 'rgba(34,211,238,0.10)'         },
+  { icon: Syringe,      labelKey: 'tile_injektionen', descKey: 'tile_injektionen_desc', path: '/injektionen',    color: '#10b981', bg: 'rgba(16,185,129,0.10)'         },
   { icon: Calculator,   labelKey: 'tile_rechner',   descKey: 'tile_rechner_desc',  path: '/rechner',              color: '#3b82f6', bg: 'rgba(59,130,246,0.10)'         },
+  { icon: Droplets,     labelKey: 'tile_blutwerte', descKey: 'tile_blutwerte_desc', path: '/blutwerte',            color: '#f43f5e', bg: 'rgba(244,63,94,0.10)', label: 'Blutwerte', desc: 'Laborwerte erfassen' },
+  { icon: Heart,        labelKey: 'tile_health',    descKey: 'tile_health_desc',   path: '/health',               color: '#f43f5e', bg: 'rgba(244,63,94,0.10)'          },
+  { icon: FileText,     labelKey: 'tile_protokoll', descKey: 'tile_protokoll_desc', path: '/protokoll',            color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',   wide: true },
   { icon: Microscope,   labelKey: 'tile_lab',       descKey: 'tile_lab_desc',      path: '/lab',                  color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
   { icon: Library,      labelKey: 'tile_bibliothek', descKey: 'tile_bibliothek_desc', path: '/lab/library',          color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },
   { icon: BookHeart,    labelKey: 'tile_tagebuch',  descKey: 'tile_tagebuch_desc', path: '/tagebuch',             color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },
@@ -49,12 +107,115 @@ const TILE_DEFS = [
   { icon: User,         labelKey: 'tile_profil',    descKey: 'tile_profil_desc',   path: '/profil',               color: '#f43f5e', bg: 'rgba(244,63,94,0.10)'          },
 ]
 
+const QUICK_ACTIONS: QuickActionDef[] = [
+  {
+    icon: CheckCircle2,
+    labelKey: 'home_action_log',
+    label: 'Heute loggen',
+    descKey: 'home_action_log_desc',
+    desc: 'Einnahmen bestätigen',
+    path: '/kalender',
+    accent: '#10b981',
+  },
+  {
+    icon: Plus,
+    labelKey: 'home_action_cycle',
+    label: 'Zyklus planen',
+    descKey: 'home_action_cycle_desc',
+    desc: 'Dosis & Zeiten festlegen',
+    path: '/peptide',
+    accent: '#00ccf5',
+  },
+  {
+    icon: Calculator,
+    labelKey: 'home_action_calc',
+    label: 'Dosis rechnen',
+    descKey: 'home_action_calc_desc',
+    desc: 'Einheiten berechnen',
+    path: '/rechner',
+    accent: '#3b82f6',
+  },
+]
+
+const FEATURE_CARDS: FeatureDef[] = [
+  {
+    icon: FileText,
+    labelKey: 'home_feature_protocol',
+    label: 'PDF-Protokoll',
+    descKey: 'home_feature_protocol_desc',
+    desc: 'Zyklen auswerten und als Report exportieren.',
+    path: '/protokoll',
+    accent: '#00ccf5',
+    metric: 'Export',
+  },
+  {
+    icon: Droplets,
+    labelKey: 'home_feature_bloodwork',
+    label: 'Blutwerte',
+    descKey: 'home_feature_bloodwork_desc',
+    desc: 'Laborwerte strukturiert erfassen und vergleichen.',
+    path: '/blutwerte',
+    accent: '#f43f5e',
+    metric: 'Labs',
+  },
+  {
+    icon: Microscope,
+    labelKey: 'home_feature_research',
+    label: 'Research Feed',
+    descKey: 'home_feature_research_desc',
+    desc: 'PubMed-Studien und Peptipedia schneller finden.',
+    path: '/lab',
+    accent: '#8b5cf6',
+    metric: 'PubMed',
+  },
+]
+
+const WORKFLOW_STEPS = [
+  { icon: Archive, labelKey: 'home_flow_stock', label: 'Einlagern', descKey: 'home_flow_stock_desc', desc: 'Vials & Batch sichern' },
+  { icon: Beaker, labelKey: 'home_flow_mix', label: 'Anmischen', descKey: 'home_flow_mix_desc', desc: 'Rekonstitution dokumentieren' },
+  { icon: CalendarDays, labelKey: 'home_flow_cycle', label: 'Zyklus', descKey: 'home_flow_cycle_desc', desc: 'Frequenz & Reminder planen' },
+  { icon: Gauge, labelKey: 'home_flow_track', label: 'Tracken', descKey: 'home_flow_track_desc', desc: 'Dosen, Effekte, Reports' },
+]
+
+const pageStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 18,
+  paddingBottom: 8,
+}
+
+const panelStyle: CSSProperties = {
+  background: 'linear-gradient(145deg, rgba(9,14,34,0.94), rgba(4,7,18,0.96))',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 24,
+  boxShadow: '0 18px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
+  position: 'relative',
+  overflow: 'hidden',
+}
+
+const labelStyle: CSSProperties = {
+  fontSize: '0.62rem',
+  fontWeight: 800,
+  letterSpacing: '0.13em',
+  textTransform: 'uppercase',
+  color: 'rgba(154,170,191,0.52)',
+}
+
+const sectionHeaderStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+  marginBottom: 10,
+}
+
 export function Home() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [nextIntake,  setNextIntake]  = useState<string | null>(null)
   const [todayDone,   setTodayDone]   = useState(false)
   const [streak,      setStreak]      = useState(0)
+  const [overview, setOverview] = useState<OverviewStats>(EMPTY_OVERVIEW)
 
   // Rotate study daily
   const todayStudy = TODAY_STUDY
@@ -62,43 +223,73 @@ export function Home() {
   useEffect(() => {
     if (!user) return
     async function load() {
-      const [{ data: cycleData }, { data: logData }] = await Promise.all([
-        supabase.from('cycles')
-          .select('intake_time, intake_time_custom')
-          .eq('user_id', user!.id).eq('active', true),
-        supabase.from('dose_logs')
-          .select('logged_at')
-          .eq('user_id', user!.id).eq('taken', true)
-          .order('logged_at', { ascending: false }),
-      ])
+      const todayKey = format(new Date(), 'yyyy-MM-dd')
 
-      // ── Next intake time ─────────────────────────────────────────
-      const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
-      let bestMin = Infinity, bestTime = ''
-      for (const c of cycleData ?? []) {
-        const slots   = (c.intake_time ?? '').split(',').filter(Boolean)
-        const customs = (c.intake_time_custom ?? '').split(',')
-        slots.forEach((slot: string, i: number) => {
-          const t = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
-          if (!t) return
-          const [h, m] = t.split(':').map(Number)
-          const min = h * 60 + m
-          if (min > nowMin && min < bestMin) { bestMin = min; bestTime = t }
+      try {
+        const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }] = await Promise.all([
+          supabase.from('cycles')
+            .select('intake_time, intake_time_custom')
+            .eq('user_id', user!.id).eq('active', true),
+          supabase.from('dose_logs')
+            .select('logged_at')
+            .eq('user_id', user!.id).eq('taken', true)
+            .order('logged_at', { ascending: false }),
+          supabase.from('peptides')
+            .select('id, vials_in_stock, reconstitution_date, expiry_days')
+            .eq('user_id', user!.id),
+          supabase.from('inventory_items')
+            .select('id, vials_count')
+            .eq('user_id', user!.id),
+        ])
+
+        // ── Next intake time ─────────────────────────────────────────
+        const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
+        let bestMin = Infinity, bestTime = ''
+        for (const c of cycleData ?? []) {
+          const slots   = (c.intake_time ?? '').split(',').filter(Boolean)
+          const customs = (c.intake_time_custom ?? '').split(',')
+          slots.forEach((slot: string, i: number) => {
+            const t = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
+            if (!t) return
+            const [h, m] = t.split(':').map(Number)
+            const min = h * 60 + m
+            if (min > nowMin && min < bestMin) { bestMin = min; bestTime = t }
+          })
+        }
+        setNextIntake(bestTime || null)
+        setTodayDone(!bestTime && (cycleData ?? []).length > 0)
+
+        // ── Streak (consecutive days with ≥1 taken log) ─────────────
+        const takenDates = new Set(
+          (logData ?? []).map(l => format(parseISO(l.logged_at), 'yyyy-MM-dd'))
+        )
+        let s = 0
+        let d = new Date()
+        // If nothing logged today yet, start checking from yesterday
+        if (!takenDates.has(format(d, 'yyyy-MM-dd'))) d = subDays(d, 1)
+        while (takenDates.has(format(d, 'yyyy-MM-dd'))) { s++; d = subDays(d, 1) }
+        setStreak(s)
+
+        const expiringSoon = (peptideData ?? []).filter((p) => {
+          if (!p.reconstitution_date || !p.expiry_days) return false
+          const daysLeft = differenceInCalendarDays(
+            addDays(parseISO(p.reconstitution_date), Number(p.expiry_days)),
+            new Date()
+          )
+          return daysLeft >= 0 && daysLeft <= 7
+        }).length
+
+        setOverview({
+          activeCycles: (cycleData ?? []).length,
+          peptides: (peptideData ?? []).length,
+          inventoryVials: (inventoryData ?? []).reduce((sum, item) => sum + Number(item.vials_count ?? 0), 0),
+          loggedToday: (logData ?? []).filter((log) => format(parseISO(log.logged_at), 'yyyy-MM-dd') === todayKey).length,
+          expiringSoon,
+          lowStock: (peptideData ?? []).filter((p) => p.vials_in_stock != null && Number(p.vials_in_stock) <= 1).length,
         })
+      } catch {
+        setOverview(EMPTY_OVERVIEW)
       }
-      setNextIntake(bestTime || null)
-      setTodayDone(!bestTime && (cycleData ?? []).length > 0)
-
-      // ── Streak (consecutive days with ≥1 taken log) ─────────────
-      const takenDates = new Set(
-        (logData ?? []).map(l => format(parseISO(l.logged_at), 'yyyy-MM-dd'))
-      )
-      let s = 0
-      let d = new Date()
-      // If nothing logged today yet, start checking from yesterday
-      if (!takenDates.has(format(d, 'yyyy-MM-dd'))) d = subDays(d, 1)
-      while (takenDates.has(format(d, 'yyyy-MM-dd'))) { s++; d = subDays(d, 1) }
-      setStreak(s)
     }
     load()
   }, [user])
@@ -108,125 +299,598 @@ export function Home() {
   const hour    = new Date().getHours()
   const greeting = hour < 12 ? t('greeting_morning') : hour < 18 ? t('greeting_day') : t('greeting_evening')
   const dateStr  = format(new Date(), "EEEE, d. MMMM", { locale })
+  const statusLabel = todayDone
+    ? t('stat_today_done')
+    : nextIntake
+      ? `${t('stat_next_intake')}: ${nextIntake}`
+      : t('home_status_empty', { defaultValue: 'Kein aktiver Plan' })
+  const completionLevel = overview.activeCycles > 0
+    ? Math.min(100, Math.round((overview.loggedToday / Math.max(overview.activeCycles, 1)) * 100))
+    : 0
 
   return (
-    <div>
-      {/* ── Header ── */}
-      <div className="mb-5 pt-1">
-        <p style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(0,204,245,0.65)', marginBottom: 4 }}>
-          {dateStr}
-        </p>
-        <h1 style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.03em', color: '#eaeefc', lineHeight: 1.1 }}>
-          {greeting} 👋
-        </h1>
-      </div>
+    <div style={pageStyle}>
+      <section style={{ ...panelStyle, padding: 18 }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 88% 10%, rgba(0,204,245,0.22), transparent 32%), radial-gradient(circle at 8% 88%, rgba(139,92,246,0.18), transparent 34%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ ...labelStyle, color: 'rgba(0,204,245,0.74)', marginBottom: 7 }}>
+                {dateStr}
+              </p>
+              <h1 style={{ fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.045em', color: '#f8fbff', lineHeight: 1.04, marginBottom: 8 }}>
+                {greeting} 👋
+              </h1>
+              <p style={{ fontSize: '0.82rem', color: 'rgba(213,224,242,0.72)', lineHeight: 1.55, maxWidth: 390 }}>
+                {t('home_hero_subtitle', { defaultValue: 'Dein Research-Cockpit für Einnahmen, Vorrat, Laborwerte und Protokolle.' })}
+              </p>
+            </div>
 
-      {/* ── Quick Stats ── */}
-      <div className="grid grid-cols-3 gap-2 mb-6">
+            <button
+              onClick={() => navigate('/profil')}
+              aria-label={String(t('tile_profil'))}
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 16,
+                border: '1px solid rgba(255,255,255,0.10)',
+                background: 'rgba(255,255,255,0.045)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                color: '#00ccf5',
+              }}
+            >
+              <User size={18} />
+            </button>
+          </div>
 
-        {/* Nächste Einnahme */}
-        <div style={{ background: 'rgba(10,14,30,0.85)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '12px 10px' }}>
-          <p style={{ fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.55)', marginBottom: 4 }}>
-            ⏱ {t('stat_next_intake')}
-          </p>
-          {todayDone ? (
-            <>
-              <p style={{ fontSize: '1.1rem', fontWeight: 800, color: '#10b981', lineHeight: 1 }}>✓</p>
-              <p style={{ fontSize: '0.58rem', color: '#10b981', marginTop: 2 }}>{t('stat_today_done')}</p>
-            </>
-          ) : nextIntake ? (
-            <p style={{ fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#00ccf5', lineHeight: 1 }}>
-              {nextIntake}
-            </p>
-          ) : (
-            <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'rgba(154,170,191,0.35)', lineHeight: 1 }}>–</p>
-          )}
+          <div className="grid grid-cols-3 gap-2">
+            <HeroStat
+              icon={Clock3}
+              label={String(t('stat_next_intake'))}
+              value={todayDone ? '✓' : (nextIntake ?? '–')}
+              hint={String(todayDone ? t('stat_today_done') : t('home_next_hint', { defaultValue: 'Heute im Plan' }))}
+              accent={todayDone ? '#10b981' : '#00ccf5'}
+            />
+            <HeroStat
+              icon={Flame}
+              label="Streak"
+              value={String(streak)}
+              hint={String(t('stat_days'))}
+              accent={streak > 0 ? '#f59e0b' : '#64748b'}
+            />
+            <HeroStat
+              icon={Activity}
+              label={String(t('home_completion', { defaultValue: 'Heute' }))}
+              value={`${completionLevel}%`}
+              hint={String(t('home_completion_hint', { defaultValue: 'erledigt' }))}
+              accent="#8b5cf6"
+            />
+          </div>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '10px 12px',
+            borderRadius: 18,
+            background: todayDone ? 'rgba(16,185,129,0.10)' : 'rgba(0,204,245,0.09)',
+            border: todayDone ? '1px solid rgba(16,185,129,0.22)' : '1px solid rgba(0,204,245,0.18)',
+          }}>
+            <ShieldCheck size={18} color={todayDone ? '#10b981' : '#00ccf5'} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: '0.78rem', fontWeight: 800, color: '#eaeefc', lineHeight: 1.2 }}>
+                {statusLabel}
+              </p>
+              <p style={{ fontSize: '0.66rem', color: 'rgba(154,170,191,0.62)', marginTop: 2 }}>
+                {t('home_status_hint', { defaultValue: 'Schnellzugriff auf die wichtigsten Schritte.' })}
+              </p>
+            </div>
+            <ChevronRight size={16} color="rgba(255,255,255,0.35)" />
+          </div>
         </div>
+      </section>
 
-        {/* Streak */}
-        <div style={{ background: 'rgba(10,14,30,0.85)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '12px 10px' }}>
-          <p style={{ fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.55)', marginBottom: 4 }}>
-            🔥 Streak
-          </p>
-          <p style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.03em', color: streak > 0 ? '#f59e0b' : 'rgba(154,170,191,0.35)', lineHeight: 1 }}>
-            {streak}
-          </p>
-          <p style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.45)', marginTop: 2 }}>{t('stat_days')}</p>
+      <section>
+        <div style={sectionHeaderStyle}>
+          <div>
+            <p style={labelStyle}>{t('home_quick_actions', { defaultValue: 'Quick Actions' })}</p>
+            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+              {t('home_quick_title', { defaultValue: 'Direkt loslegen' })}
+            </h2>
+          </div>
+          <Sparkles size={18} color="rgba(0,204,245,0.72)" />
         </div>
-
-        {/* Tägliche Peptid-Studie */}
-        <div style={{ background: 'rgba(10,14,30,0.85)', border: '1px solid rgba(0,204,245,0.10)', borderRadius: 16, padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <p style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(0,204,245,0.55)' }}>
-            📰 {t('stat_study')}
-          </p>
-          <p style={{ fontSize: '0.63rem', fontWeight: 700, color: '#eaeefc', lineHeight: 1.35, flex: 1 }}>
-            {todayStudy.emoji} {todayStudy.title}
-          </p>
-          <p style={{ fontSize: '0.5rem', color: 'rgba(154,170,191,0.38)', marginTop: 2 }}>
-            {todayStudy.source}
-          </p>
+        <div className="grid grid-cols-3 gap-2">
+          {QUICK_ACTIONS.map((action) => (
+            <QuickAction
+              key={action.labelKey}
+              icon={action.icon}
+              label={String(t(action.labelKey, { defaultValue: action.label }))}
+              desc={String(t(action.descKey, { defaultValue: action.desc }))}
+              accent={action.accent}
+              onClick={() => navigate(action.path)}
+            />
+          ))}
         </div>
+      </section>
 
-      </div>
-
-      {/* ── Section Label ── */}
-      <p style={{ fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.4)', marginBottom: 12 }}>
-        {t('sections')}
-      </p>
-
-      {/* ── Tiles Grid ── */}
-      <div className="grid grid-cols-2 gap-3" data-ob="home-tiles">
-        {TILE_DEFS.map((tile) => (
+      <section>
+        <div style={sectionHeaderStyle}>
+          <div>
+            <p style={labelStyle}>{t('home_overview', { defaultValue: 'Übersicht' })}</p>
+            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+              {t('home_overview_title', { defaultValue: 'Heute im Blick' })}
+            </h2>
+          </div>
           <button
-            key={tile.labelKey}
-            onClick={() => navigate(tile.path)}
-            className={tile.wide ? 'col-span-2' : ''}
-            style={{
-              background: 'rgba(10,14,30,0.85)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 20,
-              padding: tile.wide ? '14px 18px' : '16px 14px',
-              textAlign: 'left',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: tile.wide ? 'center' : 'flex-start',
-              flexDirection: tile.wide ? 'row' : 'column',
-              gap: tile.wide ? 14 : 0,
-              position: 'relative',
-              overflow: 'hidden',
-              transition: 'opacity 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+            onClick={() => navigate('/kalender')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#00ccf5', fontSize: '0.72rem', fontWeight: 750 }}
           >
-            {/* Icon */}
-            <div style={{
-              width: 40, height: 40, borderRadius: 12,
-              background: tile.bg,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: tile.wide ? 0 : 12, flexShrink: 0,
-            }}>
-              <tile.icon size={18} color={tile.color} />
-            </div>
-
-            {/* Text */}
-            <div style={{ flex: tile.wide ? 1 : undefined, minWidth: 0 }}>
-              <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#eaeefc', marginBottom: 2 }}>{t(tile.labelKey)}</p>
-              <p style={{ fontSize: '0.72rem', color: 'rgba(154,170,191,0.55)', lineHeight: 1.4 }}>{t(tile.descKey)}</p>
-            </div>
-
-            {tile.wide && <ChevronRight size={16} color="rgba(0,204,245,0.4)" style={{ flexShrink: 0 }} />}
-
-            {/* Glow */}
-            <div style={{
-              position: 'absolute', bottom: -20, right: -20,
-              width: 80, height: 80, borderRadius: '50%',
-              background: tile.color, opacity: 0.06, filter: 'blur(20px)',
-              pointerEvents: 'none',
-            }} />
+            {t('today')} <ArrowUpRight size={13} />
           </button>
-        ))}
-      </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <InsightCard
+            icon={CalendarDays}
+            label={String(t('stat_active_cycles'))}
+            value={String(overview.activeCycles)}
+            hint={String(t('home_active_cycles_hint', { defaultValue: 'laufende Pläne' }))}
+            accent="#00ccf5"
+            onClick={() => navigate('/kalender')}
+          />
+          <InsightCard
+            icon={FlaskConical}
+            label={String(t('stat_peptides'))}
+            value={String(overview.peptides)}
+            hint={String(t('home_peptides_hint', { defaultValue: 'rekonstituiert' }))}
+            accent="#22d3ee"
+            onClick={() => navigate('/peptide')}
+          />
+          <InsightCard
+            icon={Package}
+            label={String(t('stat_vials'))}
+            value={String(overview.inventoryVials)}
+            hint={overview.lowStock > 0
+              ? String(t('home_low_stock', { defaultValue: '{{count}} niedrig', count: overview.lowStock }))
+              : String(t('home_stock_ok', { defaultValue: 'Vorrat erfasst' }))}
+            accent={overview.lowStock > 0 ? '#f59e0b' : '#10b981'}
+            onClick={() => navigate('/peptide?tab=inventar')}
+          />
+          <InsightCard
+            icon={TrendingUp}
+            label={String(t('home_expiry_watch', { defaultValue: 'Ablauf-Watch' }))}
+            value={String(overview.expiringSoon)}
+            hint={String(t('home_expiry_hint', { defaultValue: 'in 7 Tagen fällig' }))}
+            accent={overview.expiringSoon > 0 ? '#f43f5e' : '#8b5cf6'}
+            onClick={() => navigate('/peptide')}
+          />
+        </div>
+      </section>
+
+      <section style={{ ...panelStyle, padding: 14 }}>
+        <div style={{ position: 'absolute', top: -34, right: -28, width: 120, height: 120, borderRadius: '50%', background: 'rgba(0,204,245,0.10)', filter: 'blur(20px)' }} />
+        <div style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
+            <span style={{ fontSize: '1.35rem' }}>{todayStudy.emoji}</span>
+            <div>
+              <p style={{ ...labelStyle, color: 'rgba(0,204,245,0.66)' }}>{t('stat_study')}</p>
+              <p style={{ fontSize: '0.86rem', fontWeight: 850, color: '#eaeefc', lineHeight: 1.25 }}>
+                {t('home_daily_research', { defaultValue: 'Daily Research' })}
+              </p>
+            </div>
+          </div>
+          <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#eaeefc', lineHeight: 1.45 }}>
+            {todayStudy.title}
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', marginTop: 10 }}>
+            <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.50)' }}>
+              {todayStudy.source}
+            </p>
+            <button
+              onClick={() => navigate('/lab')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#00ccf5', fontSize: '0.68rem', fontWeight: 800 }}
+            >
+              {t('lab_snapshot_discover', { defaultValue: 'Entdecken' })} <ChevronRight size={13} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div style={sectionHeaderStyle}>
+          <div>
+            <p style={labelStyle}>{t('home_features', { defaultValue: 'Features' })}</p>
+            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+              {t('home_features_title', { defaultValue: 'Mehr aus deinen Daten machen' })}
+            </h2>
+          </div>
+          <ClipboardList size={18} color="rgba(154,170,191,0.6)" />
+        </div>
+        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 2 }}>
+          {FEATURE_CARDS.map((feature) => (
+            <FeatureCard
+              key={feature.labelKey}
+              icon={feature.icon}
+              label={String(t(feature.labelKey, { defaultValue: feature.label }))}
+              desc={String(t(feature.descKey, { defaultValue: feature.desc }))}
+              cta={String(t('home_feature_cta', { defaultValue: 'Öffnen' }))}
+              metric={feature.metric}
+              accent={feature.accent}
+              onClick={() => navigate(feature.path)}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section style={{ ...panelStyle, padding: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
+          <div>
+            <p style={labelStyle}>{t('home_workflow', { defaultValue: 'Workflow' })}</p>
+            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+              {t('home_workflow_title', { defaultValue: 'Vom Vial zum Report' })}
+            </h2>
+          </div>
+          <button
+            onClick={() => navigate('/peptide?tab=inventar')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#00ccf5', fontSize: '0.7rem', fontWeight: 800 }}
+          >
+            {t('add')} <Plus size={13} />
+          </button>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {WORKFLOW_STEPS.map((step, index) => (
+            <div key={step.labelKey} style={{ position: 'relative' }}>
+              {index < WORKFLOW_STEPS.length - 1 && (
+                <div style={{ position: 'absolute', top: 18, left: '58%', right: '-42%', height: 1, background: 'linear-gradient(90deg, rgba(0,204,245,0.35), rgba(0,204,245,0))' }} />
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, textAlign: 'center', position: 'relative' }}>
+                <div style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 14,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'rgba(0,204,245,0.09)',
+                  border: '1px solid rgba(0,204,245,0.18)',
+                  color: '#00ccf5',
+                }}>
+                  <step.icon size={16} />
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.68rem', color: '#eaeefc', fontWeight: 800, lineHeight: 1.2 }}>
+                    {t(step.labelKey, { defaultValue: step.label })}
+                  </p>
+                  <p style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.48)', lineHeight: 1.25, marginTop: 2 }}>
+                    {t(step.descKey, { defaultValue: step.desc })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <div style={sectionHeaderStyle}>
+          <div>
+            <p style={labelStyle}>{t('sections')}</p>
+            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+              {t('home_all_tools', { defaultValue: 'Alle Tools' })}
+            </h2>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3" data-ob="home-tiles">
+          {TILE_DEFS.map((tile) => (
+            <TileButton
+              key={tile.labelKey}
+              icon={tile.icon}
+              label={String(t(tile.labelKey, { defaultValue: tile.label ?? tile.labelKey }))}
+              desc={String(t(tile.descKey, { defaultValue: tile.desc ?? tile.descKey }))}
+              color={tile.color}
+              bg={tile.bg}
+              wide={tile.wide}
+              onClick={() => navigate(tile.path)}
+            />
+          ))}
+        </div>
+      </section>
     </div>
+  )
+}
+
+function HeroStat({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  accent,
+}: {
+  icon: LucideIcon
+  label: string
+  value: string
+  hint: string
+  accent: string
+}) {
+  return (
+    <div style={{
+      background: 'rgba(2,6,18,0.48)',
+      border: '1px solid rgba(255,255,255,0.07)',
+      borderRadius: 18,
+      padding: '11px 9px',
+      minWidth: 0,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8, color: 'rgba(154,170,191,0.58)' }}>
+        <Icon size={13} color={accent} />
+        <p style={{ fontSize: '0.52rem', fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {label}
+        </p>
+      </div>
+      <p style={{ fontSize: value.length > 4 ? '1.03rem' : '1.34rem', fontWeight: 900, letterSpacing: '-0.04em', color: accent, lineHeight: 1 }}>
+        {value}
+      </p>
+      <p style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.48)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {hint}
+      </p>
+    </div>
+  )
+}
+
+function QuickAction({
+  icon: Icon,
+  label,
+  desc,
+  accent,
+  onClick,
+}: {
+  icon: LucideIcon
+  label: string
+  desc: string
+  accent: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        minHeight: 104,
+        padding: '12px 9px',
+        borderRadius: 20,
+        border: `1px solid ${accent}33`,
+        background: `linear-gradient(155deg, ${accent}20, rgba(8,12,30,0.88))`,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: 9,
+        textAlign: 'left',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      <div style={{
+        width: 34,
+        height: 34,
+        borderRadius: 13,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: `${accent}1f`,
+        color: accent,
+        boxShadow: `0 0 20px ${accent}22`,
+      }}>
+        <Icon size={16} />
+      </div>
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <p style={{ fontSize: '0.75rem', fontWeight: 850, color: '#f8fbff', lineHeight: 1.15 }}>
+          {label}
+        </p>
+        <p style={{ fontSize: '0.59rem', color: 'rgba(213,224,242,0.58)', lineHeight: 1.3, marginTop: 3 }}>
+          {desc}
+        </p>
+      </div>
+      <div style={{ position: 'absolute', right: -18, bottom: -18, width: 62, height: 62, borderRadius: '50%', background: accent, opacity: 0.08, filter: 'blur(12px)' }} />
+    </button>
+  )
+}
+
+function InsightCard({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  accent,
+  onClick,
+}: {
+  icon: LucideIcon
+  label: string
+  value: string
+  hint: string
+  accent: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        ...panelStyle,
+        padding: 14,
+        textAlign: 'left',
+        minHeight: 112,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, position: 'relative' }}>
+        <div style={{
+          width: 38,
+          height: 38,
+          borderRadius: 14,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: accent,
+          background: `${accent}17`,
+          border: `1px solid ${accent}24`,
+        }}>
+          <Icon size={17} />
+        </div>
+        <ChevronRight size={15} color="rgba(154,170,191,0.35)" />
+      </div>
+      <p style={{ fontSize: '1.55rem', fontWeight: 900, color: '#f8fbff', letterSpacing: '-0.04em', lineHeight: 1, marginTop: 14 }}>
+        {value}
+      </p>
+      <p style={{ fontSize: '0.72rem', color: 'rgba(234,238,252,0.82)', fontWeight: 750, marginTop: 5 }}>
+        {label}
+      </p>
+      <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.50)', marginTop: 2 }}>
+        {hint}
+      </p>
+      <div style={{ position: 'absolute', right: -24, bottom: -28, width: 86, height: 86, borderRadius: '50%', background: accent, opacity: 0.06, filter: 'blur(16px)' }} />
+    </button>
+  )
+}
+
+function FeatureCard({
+  icon: Icon,
+  label,
+  desc,
+  cta,
+  metric,
+  accent,
+  onClick,
+}: {
+  icon: LucideIcon
+  label: string
+  desc: string
+  cta: string
+  metric: string
+  accent: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        ...panelStyle,
+        minWidth: 226,
+        padding: 14,
+        textAlign: 'left',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 16, position: 'relative' }}>
+        <div style={{
+          width: 40,
+          height: 40,
+          borderRadius: 15,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: `${accent}18`,
+          color: accent,
+          border: `1px solid ${accent}24`,
+        }}>
+          <Icon size={18} />
+        </div>
+        <span style={{
+          padding: '3px 8px',
+          borderRadius: 999,
+          background: `${accent}14`,
+          border: `1px solid ${accent}24`,
+          color: accent,
+          fontSize: '0.58rem',
+          fontWeight: 850,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+        }}>
+          {metric}
+        </span>
+      </div>
+      <p style={{ fontSize: '0.9rem', fontWeight: 850, color: '#f8fbff', marginBottom: 5, position: 'relative' }}>
+        {label}
+      </p>
+      <p style={{ fontSize: '0.7rem', color: 'rgba(154,170,191,0.62)', lineHeight: 1.45, position: 'relative' }}>
+        {desc}
+      </p>
+      <div style={{ marginTop: 13, display: 'inline-flex', alignItems: 'center', gap: 5, color: accent, fontSize: '0.66rem', fontWeight: 850, position: 'relative' }}>
+        {cta} <ArrowUpRight size={12} />
+      </div>
+    </button>
+  )
+}
+
+function TileButton({
+  icon: Icon,
+  label,
+  desc,
+  color,
+  bg,
+  wide,
+  onClick,
+}: {
+  icon: LucideIcon
+  label: string
+  desc: string
+  color: string
+  bg: string
+  wide?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={wide ? 'col-span-2' : ''}
+      style={{
+        background: 'linear-gradient(145deg, rgba(10,14,30,0.90), rgba(4,7,18,0.92))',
+        border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: 22,
+        padding: wide ? '14px 16px' : '15px 13px',
+        textAlign: 'left',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: wide ? 'center' : 'flex-start',
+        flexDirection: wide ? 'row' : 'column',
+        gap: wide ? 13 : 0,
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+      }}
+    >
+      <div style={{
+        width: 42,
+        height: 42,
+        borderRadius: 15,
+        background: bg,
+        border: `1px solid ${color}20`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: wide ? 0 : 12,
+        flexShrink: 0,
+        color,
+      }}>
+        <Icon size={18} />
+      </div>
+
+      <div style={{ flex: wide ? 1 : undefined, minWidth: 0, position: 'relative' }}>
+        <p style={{ fontSize: '0.86rem', fontWeight: 820, color: '#eaeefc', marginBottom: 3 }}>{label}</p>
+        <p style={{ fontSize: '0.68rem', color: 'rgba(154,170,191,0.58)', lineHeight: 1.4 }}>{desc}</p>
+      </div>
+
+      {wide && <ChevronRight size={16} color="rgba(0,204,245,0.42)" style={{ flexShrink: 0 }} />}
+
+      <div style={{
+        position: 'absolute',
+        bottom: -24,
+        right: -24,
+        width: 88,
+        height: 88,
+        borderRadius: '50%',
+        background: color,
+        opacity: 0.055,
+        filter: 'blur(20px)',
+        pointerEvents: 'none',
+      }} />
+    </button>
   )
 }

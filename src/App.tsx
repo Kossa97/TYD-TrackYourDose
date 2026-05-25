@@ -14,11 +14,15 @@ import { Profil } from './pages/Profil'
 import { PublicProfile } from './pages/PublicProfile'
 import { FAQ } from './pages/FAQ'
 import { Rechner } from './pages/Rechner'
+import { Blutwerte } from './pages/Blutwerte'
+import { Health } from './pages/Health'
+import { Protokoll } from './pages/Protokoll'
 import { TheLab } from './pages/TheLab'
 import { StudyDetail } from './pages/StudyDetail'
 import { PeptideLibrary } from './pages/PeptideLibrary'
 import { PeptideDetailPage } from './pages/PeptideDetailPage'
 import { AdminPanel } from './pages/lab/AdminPanel'
+import { InjektionsTracker } from './pages/InjektionsTracker'
 
 export default function App() {
   return (
@@ -44,11 +48,15 @@ export default function App() {
             <Route path="lab/library/:slug" element={<PeptideDetailPage />} />
             <Route path="lab/admin" element={<AdminPanel />} />
             <Route path="rechner" element={<Rechner />} />
+            <Route path="blutwerte" element={<Blutwerte />} />
+            <Route path="health" element={<Health />} />
+            <Route path="protokoll" element={<Protokoll />} />
             <Route path="the-lab" element={<TheLab />} />
             <Route path="tagebuch" element={<Tagebuch />} />
             <Route path="bewertungen" element={<Bewertungen />} />
             <Route path="profil" element={<Profil />} />
             <Route path="faq" element={<FAQ />} />
+            <Route path="injektionen" element={<InjektionsTracker />} />
           </Route>
         </Routes>
         </OnboardingProvider>

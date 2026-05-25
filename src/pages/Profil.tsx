@@ -260,51 +260,6 @@ export function Profil() {
         </div>
       </div>
 
-      {/* ── Gesundheitsdaten ─────────────────────────────────────────────── */}
-      <div className="card space-y-4 mb-4">
-        <div className="flex items-center gap-2">
-          <h2 className="font-semibold text-slate-300">{t('gesundheitsdaten')}</h2>
-          <span className="badge bg-slate-700 text-slate-400">{t('freiwillig')}</span>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label">{t('alter')}</label>
-            <input className="input" type="number" placeholder={t('jahre_einheit')}
-              value={profile.age ?? ''}
-              onChange={e => setProfile(p => ({ ...p, age: e.target.value ? parseInt(e.target.value) : null }))} />
-          </div>
-          <div>
-            <label className="label">{t('geschlecht')}</label>
-            <select className="select" value={profile.gender}
-              onChange={e => setProfile(p => ({ ...p, gender: e.target.value }))}>
-              <option value="">—</option>
-              <option value="männlich">{t('maennlich')}</option>
-              <option value="weiblich">{t('weiblich')}</option>
-              <option value="divers">{t('divers')}</option>
-            </select>
-          </div>
-          <div>
-            <label className="label">{t('gewicht_label')}</label>
-            <input className="input" type="number" placeholder="kg"
-              value={profile.weight_kg ?? ''}
-              onChange={e => setProfile(p => ({ ...p, weight_kg: e.target.value ? parseFloat(e.target.value) : null }))} />
-          </div>
-          <div>
-            <label className="label">{t('groesse_label')}</label>
-            <input className="input" type="number" placeholder="cm"
-              value={profile.height_cm ?? ''}
-              onChange={e => setProfile(p => ({ ...p, height_cm: e.target.value ? parseFloat(e.target.value) : null }))} />
-          </div>
-        </div>
-        <div>
-          <label className="label">{t('pers_notizen_label')}</label>
-          <textarea className="input resize-none" rows={3}
-            placeholder={t('pers_notizen_ph')}
-            value={profile.notes}
-            onChange={e => setProfile(p => ({ ...p, notes: e.target.value }))} />
-        </div>
-      </div>
-
       <button className="btn-primary w-full flex items-center justify-center gap-2" onClick={save} disabled={saving}>
         <Save size={16} /> {saving ? t('saving') : t('profil_speichern')}
       </button>

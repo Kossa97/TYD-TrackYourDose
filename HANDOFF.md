@@ -9,7 +9,16 @@
 
 **Aktueller Stand:** App ist funktionsfähig, vollständig und deployed auf Vercel. PWA-fähig (installierbar auf iPhone & Android). 14 Sprachen. Homescreen mit Quick-Stats (Nächste Einnahme, Streak, Studie des Tages) + Kacheln. Geführtes **Onboarding** (24 Schritte): Sprach-Gate beim ersten Start, Spotlight-Ring auf Eingabefeldern, Feld-für-Feld-Cycling mit ✓-Button, Tour-Karte immer im Vordergrund (z-index 10050). Neues **Injektionsstellen-Modul** (/injektionen) mit SVG-Körperkarte und Rotationsprotokoll.
 
-Neu in dieser Session: **Peptipedia** (evidenzbasierte Peptid-Datenbank) + **Studies** (PubMed-Forschungsmodul) komplett umgesetzt und auf Home-Screen integriert.
+**Peptipedia** (evidenzbasierte Peptid-Datenbank) + **Studies** (PubMed-Forschungsmodul) komplett umgesetzt und auf Home-Screen integriert.
+
+Neu in dieser Session (23. Mai 2026):
+- **Home-/Design-System-Update**: Home-Dashboard modernisiert; gemeinsame Dashboard-Komponenten eingeführt und auf Rechner + Blutwerte angewendet.
+- **Protokoll-Redesign** (/protokoll): Biohacking-Dashboard mit KPI-Streifen (Adherence, Gewicht Δ, IGF-1 Δ, CRP Δ), 6 Preset-Chips, freie Marker-Toggles, Chart 1 (% Veränderung ab Start, alle Marker normalisiert auf einer Achse, Glow-Linien + Gradient-Fills + Zyklusphasen-Hintergründe + Bluttest-Ereignislinien + Hover-Tooltip), Chart 2 (Small Multiples — ein Mini-Chart je aktivem Marker mit echter Einheit + Normalbereich-Band, synchronisierter Hover), Gradient-Adherence-Balken je Peptid
+- **Health-Seite** (/health): BMI, Körperfett-Schätzung (Deurenberg-Formel), Idealgewicht (Devine-Formel), Körperprofil aus Profil-Daten (Alter, Geschlecht, Größe)
+- **Profil-Seite**: "Gesundheitsdaten"-Karte entfernt (Daten jetzt auf /health)
+- **Blutwerte + Gewichtslogs geseedet**: `scripts/seed-health-data.mjs` — 3 Bluttests × 15 Marker (45 Einträge) + 26 Gewichts-Wochenmessungen (90.3 → 82.6 kg)
+- **Test-Account vollständig geseedet**: `scripts/seed-test-data.mjs` — 6 Monate rückwirkend, 6 Peptide, 7 Zyklen, 533 Dose-Logs, Effekte, Bewertungen
+- **Vercel-MIME-Fix**: vercel.json von `rewrites` auf `routes` mit `{ "handle": "filesystem" }` umgestellt (JS-Assets wurden als HTML ausgeliefert)
 
 **Deployment:**
 - **Vercel:** Automatisches Deployment bei jedem `git push` auf `main`
@@ -114,6 +123,25 @@ rating (1-5), title, body, pros, cons
 experience ('gut' | 'mittel' | 'schlecht'), created_at
 ```
 
+### `bloodwork`
+```
+id, user_id
+test_date (date)
+marker (text)       ← z.B. 'IGF-1', 'Testosteron', 'CRP', 'TSH', ...
+value (numeric)
+unit (text)
+notes (text)
+created_at
+```
+
+### `weight_logs`
+```
+id, user_id
+logged_at (timestamptz)
+weight_kg (numeric)
+notes (text)
+```
+
 ### Storage Buckets
 - `batch-files` — PDFs und Bilder für Analyse-Dokumente (public)
 
@@ -198,6 +226,9 @@ src/
 │   ├── Rechner.tsx
 │   ├── Tagebuch.tsx
 │   ├── Bewertungen.tsx
+│   ├── Protokoll.tsx          ← Biohacking-Dashboard (KPI-Strip, Preset-Chips, 2 Charts, Adherence)
+│   ├── Health.tsx             ← Körperprofil (BMI, Körperfett, Idealgewicht) + Gewicht-Sparkline
+│   ├── Blutwerte.tsx          ← Bluttest-Verlauf + Marker-Tabelle (/blutwerte)
 │   ├── Profil.tsx
 │   ├── FAQ.tsx
 │   ├── PublicProfile.tsx
@@ -217,6 +248,8 @@ src/
     └── LabLoader.tsx          ← Full-Screen Ladeanimation (spinning FlaskConical)
 
 scripts/
+├── seed-test-data.mjs         ← Test-Account seeden (6 Monate, alle Features)
+├── seed-health-data.mjs       ← Blutwerte + Gewichtslogs seeden
 ├── update-ob-texts.cjs        ← Onboarding-Texte in alle 14 Locales schreiben
 ├── update-escalation-steps.cjs ← Dosiserhöhungs-Steps (16-18) initial hinzugefügt
 ├── fix-subtitle-numbers.cjs   ← Schritt-Nummern in Subtiteln korrigieren
@@ -254,6 +287,9 @@ FAQ erreichbar über schwebendes `?`-Icon (unten rechts über der Nav).
 /lab/library         ← Peptipedia (Peptid-Datenbank) ← NEU
 /lab/library/:slug   ← Peptid-Detail-Profil ← NEU
 /lab/admin           ← Admin-Panel (AI-gestützt, nur eingeloggte User) ← NEU
+/protokoll           ← Biohacking-Dashboard (Zyklusauswertung)
+/health              ← Körperprofil (BMI, Körperfett, Idealgewicht)
+/blutwerte           ← Bluttest-Verlauf
 /auth                ← Login (außerhalb Layout)
 /u/:username         ← Öffentliches Profil (außerhalb Layout)
 ```
@@ -456,6 +492,8 @@ Onboarding-CSS → #ob-callout, .ob-highlight-ring, .ob-scrim-pane,
 | **Registrierung** | Offen für alle (in Supabase einschränkbar) |
 | **useEffect-Deps** | Lint-Warnungen in mehreren Dateien, kein Crash |
 | **⚠️ Peptipedia nicht i18n-fertig** | `PeptideLibrary.tsx`, `PeptideCard.tsx`, `PeptideDetailPage.tsx` und `peptideLibrary.ts` (CATEGORY_LABELS, STATUS_LABELS, EVIDENCE_LABELS, getConfidenceLabel) haben noch hardcoded deutsche Strings — Seite bleibt auf Deutsch bei anderen Sprachen. Nächste Aufgabe: alle durch `t()`-Calls ersetzen + Keys in alle 14 Locales eintragen |
+| **⚠️ Protokoll-Redesign nicht genehmigt** | Der neue Protokoll-Stand (Biohacking-Dashboard mit 2 Charts, KPI-Strip etc.) wurde technisch umgesetzt und deployed, aber dem User hat das Ergebnis nicht gefallen. Ggf. überarbeiten oder zurückrollen. |
+| **Injektionsstellen DB** | Aktuell Mock-Daten — Supabase-Tabelle `injection_sites` noch nicht erstellt |
 
 ---
 
@@ -522,6 +560,7 @@ peptide_library-Felder:
 | Klick-Step geht nicht weiter | Handler zu früh attached (Element noch nicht im DOM) | Event-Delegation auf `document` statt direktes `addEventListener` |
 | Karte überdeckt Eingabefeld | Immer `snap='top'` bei modalen Schritten | Jetzt dynamisch: `fieldTop < cardBottomWhenAtTop ? 'bottom' : 'top'` |
 | Karte bleibt bei Resize | `targetRect=null` → kein State-Change → kein Recompute | `viewportKey` State, inkrementiert bei `resize` |
+| Vercel schwarzer Screen / MIME-Fehler | `rewrites: [{ source: "/(.*)", destination: "/index.html" }]` fängt JS-Assets ab → Browser bekommt HTML statt JS | `routes` mit `{ "handle": "filesystem" }` zuerst, dann SPA-Fallback. Außerdem alten Service Worker in DevTools deregistrieren (cached bad response) |
 | Push rejected | Remote hat neuere Commits | `git pull --rebase origin main` |
 | App startet nicht (Windows) | PowerShell Execution Policy | `Set-ExecutionPolicy Bypass -Scope Process` |
 
@@ -553,4 +592,4 @@ location.reload()
 
 ---
 
-*Zuletzt aktualisiert: 22. Mai 2026 — Peptipedia (AI-Admin, evidence scoring, tags, filtering), Studies (PubMed-Integration, LabLoader), Homescreen-Kachel für Peptipedia, i18n-Vervollständigung (63 Keys × 12 Sprachen). Offenes Ticket: Peptipedia-Seiten sind noch nicht vollständig internationalisiert (hardcoded DE-Strings in PeptideLibrary/Card/DetailPage und peptideLibrary.ts).*
+*Zuletzt aktualisiert: 23. Mai 2026 — Protokoll-Redesign (Biohacking-Dashboard, 2 Charts, KPI-Strip, Preset-Chips), Health-Seite (BMI, Körperfett, Idealgewicht), Profil-Bereinigung (Gesundheitsdaten ausgelagert), Test-Account vollständig geseedet (6 Monate), Vercel-MIME-Fix (vercel.json routes), bloodwork + weight_logs Tabellen. Offene Tickets: Peptipedia nicht i18n-fertig; Protokoll-Redesign dem User nicht gefallen → ggf. überarbeiten.*

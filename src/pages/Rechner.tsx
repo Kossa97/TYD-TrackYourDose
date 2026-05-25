@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Calculator, ChevronDown, FlaskConical, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { GlassPanel, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
 
 // ─── Konstanten ───────────────────────────────────────────────────────────────
 const SYRINGE_PRESETS = [
@@ -217,14 +218,24 @@ export function Rechner() {
   )?.label ?? `${sMl} mL · ${sUnits} ${t('einh_kurz')}`
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-5">
-        <Calculator size={20} className="text-sky-400" />
-        <h1 className="text-xl font-bold">{t('rechner_title')}</h1>
-      </div>
+    <PageShell>
+      <PageHero
+        kicker={t('dosierung_section')}
+        title={t('rechner_title')}
+        subtitle={t('info_disclaimer')}
+        icon={Calculator}
+        accent="#3b82f6"
+      />
 
       {/* ── Ergebnis-Karte ─────────────────────────────────────────────── */}
-      <div className="card mb-4">
+      <GlassPanel accent={result ? '#00ccf5' : '#3b82f6'} padding="lg">
+        <SectionHeader
+          kicker={t('rechner_title')}
+          title={result ? t('einheiten_aufziehen') : t('felder_ausfullen')}
+          icon={Calculator}
+          accent={result ? '#00ccf5' : '#3b82f6'}
+        />
+        <div className="mt-4">
         {result ? (
           <>
             <SyringeScale drawUnits={result.drawUnits} maxUnits={result.maxUnits} t={t} />
@@ -261,10 +272,18 @@ export function Rechner() {
             <p className="text-slate-500 text-sm">{t('felder_ausfullen')}</p>
           </div>
         )}
-      </div>
+        </div>
+      </GlassPanel>
 
       {/* ── Eingaben ───────────────────────────────────────────────────── */}
-      <div className="card space-y-0 divide-y divide-slate-800">
+      <GlassPanel accent="#00ccf5" padding="md">
+        <SectionHeader
+          kicker={t('eigene_werte')}
+          title={t('wirkstoff_rekonstitution')}
+          icon={FlaskConical}
+          accent="#00ccf5"
+        />
+        <div className="mt-3 space-y-0 divide-y divide-slate-800">
 
         {/* Peptid aus Meine Peptide */}
         {peptides.length > 0 && (
@@ -414,11 +433,12 @@ export function Rechner() {
           </div>
         </div>
 
-      </div>
+        </div>
+      </GlassPanel>
 
       <p className="text-slate-600 text-xs text-center mt-4 px-4">
         {t('info_disclaimer')}
       </p>
-    </div>
+    </PageShell>
   )
 }
