@@ -6,6 +6,7 @@ import { Onboarding } from './Onboarding'
 import { LanguageGate } from './LanguageGate'
 import { useAuth } from '../context/AuthContext'
 import { usePushNotifications } from '../lib/usePushNotifications'
+import { PushNotificationListener } from './PushNotificationListener'
 
 const PUSH_DISMISSED_KEY    = 'tyd_push_dismissed'
 const IOS_INSTALL_SHOWN_KEY = 'tyd_ios_install_shown'
@@ -98,7 +99,6 @@ export function Layout() {
 
       <LanguageGate />
       <Onboarding />
-      <PushNotificationListener />
 
       {/* FAQ Floating Button */}
       <NavLink
