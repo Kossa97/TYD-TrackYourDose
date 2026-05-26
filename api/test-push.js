@@ -133,7 +133,7 @@ export default async function handler(req, res) {
       } catch (err) {
         failed++
         lastErr = `${err.statusCode ?? '?'}: ${err.message}`
-        if (err.statusCode === 410 || err.statusCode === 404) stale.push(row.endpoint)
+        if (err.statusCode === 410 || err.statusCode === 404 || err.statusCode === 403) stale.push(row.endpoint)
       }
     }
 
@@ -145,9 +145,12 @@ export default async function handler(req, res) {
     }
 
     if (sent === 0) {
+      const isVapidReject = /403|401/.test(String(lastErr))
       return res.status(500).end(JSON.stringify({
-        error: 'send_failed',
-        hint:  `Versand fehlgeschlagen: ${lastErr}`,
+        error: isVapidReject ? 'vapid_mismatch' : 'send_failed',
+        hint:  isVapidReject
+          ? 'Apple hat den Push abgelehnt (VAPID). Im Profil „Neu“ tippen. In Vercel: VITE_VAPID_PUBLIC_KEY = VAPID_PUBLIC_KEY setzen.'
+          : `Versand fehlgeschlagen: ${lastErr}`,
       }))
     }
 

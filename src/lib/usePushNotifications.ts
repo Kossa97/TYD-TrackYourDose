@@ -4,7 +4,18 @@ import { supabase } from './supabase'
 import type { User } from '@supabase/supabase-js'
 import { showPageNotification, waitForServiceWorkerPush, TEST_BODY, TEST_TITLE } from './pushLocal'
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
+const VITE_VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
+
+async function fetchServerVapidPublicKey(): Promise<string | null> {
+  try {
+    const res = await fetch('/api/vapid-public')
+    if (!res.ok) return null
+    const data = (await res.json()) as { publicKey?: string }
+    return data.publicKey?.trim() || null
+  } catch {
+    return null
+  }
+}
 
 function isIOSDevice(): boolean {
   return (
@@ -78,29 +89,36 @@ export function usePushNotifications(user: User | null): UsePushNotificationsRet
       .catch(() => setState('default'))
   }, [user])
 
-  const saveSubscription = useCallback(async (freshOnIos: boolean): Promise<boolean> => {
-    if (!user || !VAPID_PUBLIC_KEY) {
-      if (!VAPID_PUBLIC_KEY) console.warn('[Push] VITE_VAPID_PUBLIC_KEY not set')
+  const saveSubscription = useCallback(async (forceFresh: boolean): Promise<boolean> => {
+    if (!user) return false
+    if (!('PushManager' in window)) return false
+
+    const serverKey = await fetchServerVapidPublicKey()
+    const vapidKey  = serverKey ?? VITE_VAPID_PUBLIC_KEY?.trim() ?? null
+    if (!vapidKey) {
+      console.warn('[Push] Kein VAPID public key (/api/vapid-public und VITE leer)')
       return false
     }
-    if (!('PushManager' in window)) return false
+    if (serverKey && VITE_VAPID_PUBLIC_KEY && serverKey !== VITE_VAPID_PUBLIC_KEY.trim()) {
+      console.warn('[Push] VITE_VAPID_PUBLIC_KEY ≠ Server – nutze Server-Key')
+    }
 
     const permission = await Notification.requestPermission()
     if (permission !== 'granted') { setState('denied'); return false }
 
     const reg = await navigator.serviceWorker.ready
 
-    if (freshOnIos && isIOSDevice()) {
+    if (forceFresh) {
       const old = await reg.pushManager.getSubscription()
       if (old) await old.unsubscribe().catch(() => {})
       await supabase.from('push_subscriptions').delete().eq('user_id', user.id)
     }
 
-    let sub = await reg.pushManager.getSubscription()
-    if (!sub || freshOnIos) {
+    let sub = forceFresh ? null : await reg.pushManager.getSubscription()
+    if (!sub) {
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToArrayBuffer(VAPID_PUBLIC_KEY),
+        applicationServerKey: urlBase64ToArrayBuffer(vapidKey),
       })
     }
 
