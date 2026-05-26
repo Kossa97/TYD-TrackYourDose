@@ -1,5 +1,9 @@
 // api/send-reminders.js — Vercel Cron: every hour (0 * * * *)
 
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
+
 const SLOT_TIMES = { morgens: '08:00', mittags: '12:00', abends: '20:00' }
 
 function getLocalHHMM(date, timezone) {
@@ -27,12 +31,10 @@ async function sbGet(url, key) {
   return JSON.parse(text)
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json')
 
   try {
-    // Require inside handler so crashes are caught
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const webPush = require('web-push')
 
     const cronSecret = (req.headers['authorization'] ?? '').replace('Bearer ', '')
