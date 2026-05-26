@@ -10,8 +10,8 @@ import {
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
 import {
-  Bell, CalendarDays, Check, ChevronLeft, ChevronRight, RotateCcw,
-  Syringe, TrendingUp, X, XCircle,
+  Activity, Bell, CalendarCheck2, CalendarDays, Check, ChevronLeft, ChevronRight,
+  Clock4, RotateCcw, Syringe, TrendingUp, X, XCircle,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
@@ -631,6 +631,65 @@ export function Dashboard() {
         accent="#00ccf5"
       />
 
+      {/* ── Übersichts-Karten ─────────────────────────────────────────────── */}
+      <div className="grid grid-cols-3 gap-2">
+        {/* Aktive Zyklen */}
+        <div
+          className="flex flex-col gap-1.5 rounded-2xl border p-3"
+          style={{
+            background: 'linear-gradient(145deg, rgba(139,92,246,0.13), rgba(6,10,24,0.80))',
+            borderColor: 'rgba(139,92,246,0.22)',
+            boxShadow: '0 0 20px rgba(139,92,246,0.08)',
+          }}
+        >
+          <Activity size={15} style={{ color: '#8b5cf6' }} />
+          <p style={{ color: '#8b5cf6', fontWeight: 900, fontSize: '1.4rem', lineHeight: 1 }}>
+            {cycles.length}
+          </p>
+          <p style={{ color: 'rgba(213,224,242,0.55)', fontSize: '0.6rem', fontWeight: 750, lineHeight: 1.3 }}>
+            {t('stat_active_cycles', { defaultValue: 'Aktive Zyklen' })}
+          </p>
+        </div>
+
+        {/* Heute fällig */}
+        <div
+          className="flex flex-col gap-1.5 rounded-2xl border p-3"
+          style={{
+            background: todayDue > 0
+              ? 'linear-gradient(145deg, rgba(245,158,11,0.13), rgba(6,10,24,0.80))'
+              : 'linear-gradient(145deg, rgba(16,185,129,0.13), rgba(6,10,24,0.80))',
+            borderColor: todayDue > 0 ? 'rgba(245,158,11,0.22)' : 'rgba(16,185,129,0.22)',
+            boxShadow: todayDue > 0 ? '0 0 20px rgba(245,158,11,0.08)' : '0 0 20px rgba(16,185,129,0.08)',
+          }}
+        >
+          <Clock4 size={15} style={{ color: todayDue > 0 ? '#f59e0b' : '#10b981' }} />
+          <p style={{ color: todayDue > 0 ? '#f59e0b' : '#10b981', fontWeight: 900, fontSize: '1.4rem', lineHeight: 1 }}>
+            {todayDue}
+          </p>
+          <p style={{ color: 'rgba(213,224,242,0.55)', fontSize: '0.6rem', fontWeight: 750, lineHeight: 1.3 }}>
+            {t('today_due_short', { defaultValue: 'Heute noch fällig' })}
+          </p>
+        </div>
+
+        {/* Am ausgewählten Tag geplant */}
+        <div
+          className="flex flex-col gap-1.5 rounded-2xl border p-3"
+          style={{
+            background: 'linear-gradient(145deg, rgba(0,204,245,0.11), rgba(6,10,24,0.80))',
+            borderColor: 'rgba(0,204,245,0.20)',
+            boxShadow: '0 0 20px rgba(0,204,245,0.07)',
+          }}
+        >
+          <CalendarCheck2 size={15} style={{ color: '#00ccf5' }} />
+          <p style={{ color: '#00ccf5', fontWeight: 900, fontSize: '1.4rem', lineHeight: 1 }}>
+            {selectedPlanned}
+          </p>
+          <p style={{ color: 'rgba(213,224,242,0.55)', fontSize: '0.6rem', fontWeight: 750, lineHeight: 1.3 }}>
+            {t('selected_planned_short', { defaultValue: 'Am Tag geplant' })}
+          </p>
+        </div>
+      </div>
+
       {/* ── Kalender ──────────────────────────────────────────────────────── */}
       <div data-ob="calendar-main" data-ob-self>
       <GlassPanel accent="#00ccf5" padding="sm" style={{ padding: 0 }}>
@@ -668,25 +727,6 @@ export function Dashboard() {
             >
               {t('heute_link')}
             </button>
-          </div>
-
-          {/* Info pills */}
-          <div className="mt-2.5 grid grid-cols-3 gap-1.5">
-            <CalendarInfoPill
-              label={t('stat_active_cycles', { defaultValue: 'Aktive Zyklen' })}
-              value={cycles.length}
-              accent="#8b5cf6"
-            />
-            <CalendarInfoPill
-              label={t('today_due_short', { defaultValue: 'Heute fällig' })}
-              value={todayDue}
-              accent={todayDue > 0 ? '#f59e0b' : '#10b981'}
-            />
-            <CalendarInfoPill
-              label={t('selected_planned_short', { defaultValue: 'Am Tag' })}
-              value={selectedPlanned}
-              accent="#00ccf5"
-            />
           </div>
         </div>
 
