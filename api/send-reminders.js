@@ -31,9 +31,14 @@ function getLocalHHMM(date, timezone) {
   }
 }
 
-/** Returns true if slotTime matches the current local minute exactly */
+/**
+ * Hobby-plan cron fires once per hour (at :00).
+ * We match when the slot's HOUR equals the user's current local hour.
+ * Standard slots (08:00 / 12:00 / 20:00) hit exactly.
+ * Custom times (e.g. 08:30) fire at the start of that hour (:00) — close enough.
+ */
 function isNow(slotTime, localHHMM) {
-  return slotTime === localHHMM
+  return slotTime.split(':')[0] === localHHMM.split(':')[0]
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
