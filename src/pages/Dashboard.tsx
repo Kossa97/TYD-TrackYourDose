@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent, type WheelEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -10,8 +10,7 @@ import {
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
 import {
-  Bell, CalendarDays, Check, CheckCircle2,
-  ChevronDown, ChevronUp, Clock3, RotateCcw,
+  Bell, CalendarDays, Check, ChevronLeft, ChevronRight, RotateCcw,
   Syringe, TrendingUp, X, XCircle,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -82,7 +81,6 @@ function cycleAppliesToDay(cycle: Cycle, day: Date): boolean {
   const dayOfWeek = WEEKDAYS_DE[day.getDay()]
   const diff = differenceInDays(day, start)
 
-  // schedule_days override: applies to Wochentage wählen, Alle X Tage, and legacy 2x/3x täglich
   const hasDayFilter = (cycle.schedule_days ?? []).length > 0
   if (freq === 'Täglich' || freq === '2x täglich' || freq === '3x täglich')
     return hasDayFilter ? (cycle.schedule_days ?? []).includes(dayOfWeek) : true
@@ -116,7 +114,6 @@ const INTAKE_MINUTES: Record<string, number> = {
   morgens: 8 * 60, mittags: 12 * 60, abends: 20 * 60,
 }
 function cycleIntakeMinutes(c: Cycle): number {
-  // Sort by first intake time slot
   const firstKey = (c.intake_time ?? '').split(',').filter(Boolean)[0] ?? ''
   if (INTAKE_MINUTES[firstKey]) return INTAKE_MINUTES[firstKey]
   if (firstKey === 'custom' && c.intake_time_custom) {
@@ -185,7 +182,6 @@ function doseToVialDelta(dose: number, unit: string, peptide: Peptide): number |
     if (!peptide.reconstitution_ml || peptide.reconstitution_ml <= 0) return null
     return dose / peptide.reconstitution_ml
   }
-
   if (!peptide.vial_amount_mg || peptide.vial_amount_mg <= 0) return null
   const doseMg = normalizedUnit === 'mcg'
     ? dose / 1000
@@ -219,22 +215,25 @@ function CalendarInfoPill({
     <div
       style={{
         minWidth: 0,
-        borderRadius: 18,
+        borderRadius: 14,
         border: `1px solid ${accent}2d`,
-        background: `linear-gradient(145deg, ${accent}16, rgba(6,10,24,0.72))`,
-        padding: '10px 12px',
-        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04), 0 0 18px ${accent}12`,
+        background: `linear-gradient(145deg, ${accent}14, rgba(6,10,24,0.72))`,
+        padding: '8px 10px',
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04), 0 0 14px ${accent}10`,
       }}
     >
-      <p style={{ color: accent, fontWeight: 900, fontSize: '1.05rem', lineHeight: 1 }}>
+      <p style={{ color: accent, fontWeight: 900, fontSize: '0.95rem', lineHeight: 1 }}>
         {value}
       </p>
-      <p style={{ color: 'rgba(213,224,242,0.62)', fontSize: '0.64rem', fontWeight: 780, marginTop: 5 }}>
+      <p style={{ color: 'rgba(213,224,242,0.55)', fontSize: '0.6rem', fontWeight: 780, marginTop: 4 }}>
         {label}
       </p>
     </div>
   )
 }
+
+// Minimum horizontal swipe distance to trigger month change
+const SWIPE_THRESHOLD = 80
 
 export function Dashboard() {
   const { t, i18n } = useTranslation()
@@ -246,12 +245,13 @@ export function Dashboard() {
   const [peptides, setPeptides] = useState<Peptide[]>([])
   const [escalations, setEscalations] = useState<Escalation[]>([])
 
-  // selectedDay steuert den Tages-Bereich unten — Standard = heute
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
+
+  // Horizontal swipe state
   const calendarSwipeStart = useRef<{ x: number; y: number; pointerId: number } | null>(null)
-  const calendarWheelLocked = useRef(false)
-  const [calendarDragOffset, setCalendarDragOffset] = useState(0)
-  const [calendarDragging, setCalendarDragging] = useState(false)
+  const [calendarDragX, setCalendarDragX] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const [peekDir, setPeekDir] = useState<-1 | 0 | 1>(0)
 
   const changeMonth = useCallback((delta: number) => {
     setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + delta, 1))
@@ -264,19 +264,10 @@ export function Dashboard() {
     }
   }, [currentDate])
 
-  const finishCalendarSwipe = (deltaX: number, deltaY: number) => {
-    const absX = Math.abs(deltaX)
-    const absY = Math.abs(deltaY)
-    if (absY < 44 || absY < absX * 1.2) return false
-    changeMonth(deltaY < 0 ? 1 : -1)
-    return true
-  }
-
   const handleCalendarPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
     calendarSwipeStart.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId }
-    setCalendarDragging(true)
-    setCalendarDragOffset(0)
+    setIsDragging(true)
   }
 
   const handleCalendarPointerMove = (event: PointerEvent<HTMLDivElement>) => {
@@ -284,45 +275,47 @@ export function Dashboard() {
     if (!start || start.pointerId !== event.pointerId) return
     const deltaX = event.clientX - start.x
     const deltaY = event.clientY - start.y
-    if (Math.abs(deltaY) < 6 || Math.abs(deltaY) < Math.abs(deltaX) * 0.75) return
+    // Only track if horizontal movement is meaningful and dominant
+    if (Math.abs(deltaX) < 6) return
+    if (Math.abs(deltaY) > Math.abs(deltaX) * 0.8) return
     event.preventDefault()
-    const dampened = Math.max(-64, Math.min(64, deltaY * 0.42))
-    setCalendarDragOffset(dampened)
+    setCalendarDragX(deltaX)
+    const dir = (deltaX < 0 ? 1 : -1) as -1 | 1
+    if (peekDir !== dir) setPeekDir(dir)
   }
 
   const handleCalendarPointerUp = (event: PointerEvent<HTMLDivElement>) => {
     const start = calendarSwipeStart.current
     calendarSwipeStart.current = null
-    setCalendarDragging(false)
-    setCalendarDragOffset(0)
+    setIsDragging(false)
+    setCalendarDragX(0)
+    setPeekDir(0)
     if (!start || start.pointerId !== event.pointerId) return
     const deltaX = event.clientX - start.x
     const deltaY = event.clientY - start.y
-    const didSwipe = finishCalendarSwipe(deltaX, deltaY)
-    if (didSwipe || Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) return
 
-    const button = (event.target as Element | null)?.closest<HTMLButtonElement>('[data-calendar-date]')
-    const dateKey = button?.dataset.calendarDate
-    if (!dateKey) return
-    const [year, month, date] = dateKey.split('-').map(Number)
-    selectCalendarDay(new Date(year, month - 1, date))
+    // Tap: select day
+    if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) {
+      const button = (event.target as Element | null)?.closest<HTMLButtonElement>('[data-calendar-date]')
+      const dateKey = button?.dataset.calendarDate
+      if (dateKey) {
+        const [year, month, date] = dateKey.split('-').map(Number)
+        selectCalendarDay(new Date(year, month - 1, date))
+      }
+      return
+    }
+
+    // Swipe: require horizontal dominance + minimum distance
+    if (Math.abs(deltaX) >= SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+      changeMonth(deltaX < 0 ? 1 : -1)
+    }
   }
 
   const handleCalendarPointerCancel = () => {
     calendarSwipeStart.current = null
-    setCalendarDragging(false)
-    setCalendarDragOffset(0)
-  }
-
-  const handleCalendarWheel = (event: WheelEvent<HTMLDivElement>) => {
-    const absX = Math.abs(event.deltaX)
-    const absY = Math.abs(event.deltaY)
-    if (absY < 40 || absY < absX * 1.2) return
-    event.preventDefault()
-    if (calendarWheelLocked.current) return
-    calendarWheelLocked.current = true
-    changeMonth(event.deltaY > 0 ? 1 : -1)
-    window.setTimeout(() => { calendarWheelLocked.current = false }, 450)
+    setIsDragging(false)
+    setCalendarDragX(0)
+    setPeekDir(0)
   }
 
   const loadLogs = useCallback(async () => {
@@ -393,10 +386,20 @@ export function Dashboard() {
     end: endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 }),
   })
 
+  // Peek month (adjacent month shown while swiping)
+  const peekDate = peekDir !== 0
+    ? new Date(currentDate.getFullYear(), currentDate.getMonth() + peekDir, 1)
+    : null
+  const peekCalendarDays = peekDate
+    ? eachDayOfInterval({
+        start: startOfWeek(startOfMonth(peekDate), { weekStartsOn: 1 }),
+        end: endOfWeek(endOfMonth(peekDate), { weekStartsOn: 1 }),
+      })
+    : []
+
   const logsForDay = (day: Date) => logs.filter(l => isSameDay(new Date(l.logged_at), day))
   const cyclesForDay = (day: Date) => cycles.filter(c => cycleAppliesToDay(c, day))
 
-  // ── Tages-Ansicht (unten) ────────────────────────────────────────────────
   const selLogs     = logsForDay(selectedDay)
   const selCycles   = cyclesForDay(selectedDay)
   const isTodaySelected = isToday(selectedDay)
@@ -425,11 +428,6 @@ export function Dashboard() {
   )
   const todayDue = todayPendingLogs.length + todayPendingCycles.length
   const selectedPlanned = selCycles.length
-  const activePeptideLegend = cycles
-    .map(cycle => cycle.peptide_id)
-    .filter((peptideId, index, all) => all.indexOf(peptideId) === index)
-    .map(peptideId => peptides.find(peptide => peptide.id === peptideId))
-    .filter(Boolean) as Peptide[]
 
   const adjustPeptideStockForDose = async (peptideId: string, dose: number, unit: string, mode: 'debit' | 'credit') => {
     if (!user) return false
@@ -456,7 +454,6 @@ export function Dashboard() {
       toast.error(t('stock_update_failed', { defaultValue: 'Bestand konnte nicht aktualisiert werden' }))
       return false
     }
-
     setPeptides(currentPeptides => currentPeptides.map(p =>
       p.id === peptideId ? { ...p, vials_in_stock: rounded } : p
     ))
@@ -520,6 +517,109 @@ export function Dashboard() {
     }, minutes * 60 * 1000)
   }
 
+  // ── Day cell renderer ─────────────────────────────────────────────────────
+  const renderDayCell = (day: Date, monthDate: Date, key: number, isPeek: boolean) => {
+    const inMonth = day.getMonth() === monthDate.getMonth()
+    const isSelected = !isPeek && isSameDay(day, selectedDay)
+    const isTodayDay = isToday(day)
+    const isFuture = differenceInDays(day, today) > 0
+
+    const dayCycles = isPeek ? [] : cyclesForDay(day)
+    const dayLogsList = isPeek ? [] : logsForDay(day)
+
+    const hasCycle = dayCycles.length > 0
+
+    // All planned cycles for this day have been taken
+    const fullyTracked = !isFuture && hasCycle
+      && dayCycles.every(c => dayLogsList.some(l => l.peptide_id === c.peptide_id && l.taken === true))
+
+    // At least one escalation is active on this day
+    const hasEscalation = hasCycle && dayCycles.some(c => {
+      const cycleStart = parseISO(c.start_date)
+      return escalations.some(e => {
+        if (e.cycle_id !== c.id) return false
+        if (e.start_type === 'date' && e.start_date) return day >= parseISO(e.start_date)
+        if (e.start_after_days != null)
+          return differenceInDays(day, cycleStart) >= e.start_after_days
+        return false
+      })
+    })
+
+    return (
+      <button
+        key={key}
+        data-calendar-date={!isPeek ? format(day, 'yyyy-MM-dd') : undefined}
+        className={[
+          'relative flex flex-col items-center border-r border-b last:border-r-0 transition-all duration-150 select-none',
+          !inMonth ? 'opacity-20' : '',
+          isPeek ? 'pointer-events-none' : '',
+        ].filter(Boolean).join(' ')}
+        style={{
+          padding: '8px 0 6px',
+          minHeight: 52,
+          borderColor: 'rgba(255,255,255,0.04)',
+          background: isSelected
+            ? 'linear-gradient(145deg, rgba(0,190,240,0.85), rgba(0,120,210,0.75))'
+            : 'transparent',
+          boxShadow: isSelected
+            ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 16px rgba(0,200,240,0.25)'
+            : undefined,
+        }}
+      >
+        {/* Today ring */}
+        {isTodayDay && !isSelected && (
+          <span
+            className="absolute inset-0.5 rounded-xl pointer-events-none"
+            style={{ boxShadow: '0 0 0 1.5px rgba(0,204,245,0.60), 0 0 6px rgba(0,204,245,0.12)' }}
+          />
+        )}
+
+        {/* Date number */}
+        <span className={`text-sm font-black leading-none ${
+          isSelected ? 'text-white' :
+          isTodayDay ? 'text-sky-400' :
+          inMonth ? 'text-slate-200' : 'text-slate-600'
+        }`}>
+          {format(day, 'd')}
+        </span>
+
+        {/* Three markers */}
+        <div className="flex gap-0.5 mt-1.5 h-1.5 items-center">
+          {/* Cyan: dose planned but not yet fully tracked */}
+          {hasCycle && !fullyTracked && (
+            <span
+              className="w-1.5 h-1.5 rounded-full shrink-0"
+              style={{
+                background: isSelected ? 'rgba(255,255,255,0.85)' : '#00ccf5',
+                boxShadow: isSelected ? undefined : '0 0 4px #00ccf555',
+              }}
+            />
+          )}
+          {/* Orange: escalation active */}
+          {hasEscalation && (
+            <span
+              className="w-1.5 h-1.5 rounded-full shrink-0"
+              style={{
+                background: isSelected ? 'rgba(255,255,255,0.85)' : '#f97316',
+                boxShadow: isSelected ? undefined : '0 0 4px #f9731655',
+              }}
+            />
+          )}
+          {/* Green: all doses taken */}
+          {fullyTracked && (
+            <span
+              className="w-1.5 h-1.5 rounded-full shrink-0"
+              style={{
+                background: isSelected ? 'rgba(255,255,255,0.85)' : '#10b981',
+                boxShadow: isSelected ? undefined : '0 0 4px #10b98155',
+              }}
+            />
+          )}
+        </div>
+      </button>
+    )
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <PageShell>
@@ -534,45 +634,44 @@ export function Dashboard() {
       {/* ── Kalender ──────────────────────────────────────────────────────── */}
       <div data-ob="calendar-main" data-ob-self>
       <GlassPanel accent="#00ccf5" padding="sm" style={{ padding: 0 }}>
-        <div style={{ padding: '16px 14px 12px' }}>
-          <button
-            className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-xs font-extrabold uppercase tracking-[0.12em] transition-colors"
-            onClick={() => changeMonth(-1)}
-            aria-label={t('prev_month', { defaultValue: 'Vorheriger Monat' })}
-            style={{
-              borderColor: 'rgba(0,204,245,0.20)',
-              background: 'linear-gradient(180deg, rgba(0,204,245,0.12), rgba(0,204,245,0.035))',
-              color: 'rgba(125,229,255,0.92)',
-              boxShadow: '0 0 24px rgba(0,204,245,0.10), inset 0 1px 0 rgba(255,255,255,0.06)',
-            }}
-          >
-            <ChevronUp size={16} />
-            {t('prev_month_short', { defaultValue: 'Vorheriger Monat' })}
-          </button>
 
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-500">
-                {t('month_overview_kicker', { defaultValue: 'Kalender' })}
-              </p>
-              <h2 className="mt-1 text-2xl font-black tracking-[-0.05em] text-white">{monthTitle}</h2>
-              <p className="mt-1 text-xs text-slate-500">
-                {t('month_overview_subtitle', { defaultValue: 'Tippe einen Tag an oder swipe vertikal zum Monatswechsel.' })}
-              </p>
+        {/* Header */}
+        <div style={{ padding: '12px 12px 10px' }}>
+          <div className="flex items-center justify-between gap-2">
+            {/* Month title with arrow buttons */}
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={() => changeMonth(-1)}
+                aria-label={t('prev_month', { defaultValue: 'Vorheriger Monat' })}
+                className="p-1.5 rounded-xl text-sky-400 hover:bg-sky-400/10 transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <h2
+                className="text-base font-black tracking-[-0.03em] text-white text-center"
+                style={{ minWidth: 140 }}
+              >
+                {monthTitle}
+              </h2>
+              <button
+                onClick={() => changeMonth(1)}
+                aria-label={t('next_month', { defaultValue: 'Nächster Monat' })}
+                className="p-1.5 rounded-xl text-sky-400 hover:bg-sky-400/10 transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
             </div>
             <button
-              className="shrink-0 rounded-2xl border px-3 py-2 text-xs font-bold text-sky-200"
+              className="shrink-0 rounded-xl border px-2.5 py-1.5 text-xs font-bold text-sky-200"
               onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
-              style={{
-                borderColor: 'rgba(0,204,245,0.18)',
-                background: 'rgba(0,204,245,0.08)',
-              }}
+              style={{ borderColor: 'rgba(0,204,245,0.18)', background: 'rgba(0,204,245,0.08)' }}
             >
               {t('heute_link')}
             </button>
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-2">
+          {/* Info pills */}
+          <div className="mt-2.5 grid grid-cols-3 gap-1.5">
             <CalendarInfoPill
               label={t('stat_active_cycles', { defaultValue: 'Aktive Zyklen' })}
               value={cycles.length}
@@ -584,222 +683,80 @@ export function Dashboard() {
               accent={todayDue > 0 ? '#f59e0b' : '#10b981'}
             />
             <CalendarInfoPill
-              label={t('selected_planned_short', { defaultValue: 'Am Tag geplant' })}
+              label={t('selected_planned_short', { defaultValue: 'Am Tag' })}
               value={selectedPlanned}
               accent="#00ccf5"
             />
           </div>
         </div>
 
-        {/* Wochentag-Kopf */}
+        {/* Weekday header */}
         <div className="grid grid-cols-7 border-y border-slate-800">
           {[t('mon'),t('tue'),t('wed'),t('thu'),t('fri'),t('sat'),t('sun')].map(d => (
-            <div key={d} className="py-3 text-center text-xs font-extrabold uppercase tracking-[0.08em] text-slate-500">{d}</div>
+            <div key={d} className="py-2 text-center text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-500">{d}</div>
           ))}
         </div>
 
-        {/* Tage */}
-        <div className="relative overflow-hidden">
+        {/* Calendar grid — horizontal swipe to change month */}
+        <div
+          className="relative overflow-hidden"
+          style={{ touchAction: 'pan-y', cursor: isDragging ? 'grabbing' : 'default' }}
+          onPointerDown={handleCalendarPointerDown}
+          onPointerMove={handleCalendarPointerMove}
+          onPointerUp={handleCalendarPointerUp}
+          onPointerCancel={handleCalendarPointerCancel}
+        >
+          {/* Current month */}
           <div
             className="grid grid-cols-7 select-none"
-            onPointerDown={handleCalendarPointerDown}
-            onPointerMove={handleCalendarPointerMove}
-            onPointerUp={handleCalendarPointerUp}
-            onPointerCancel={handleCalendarPointerCancel}
-            onWheel={handleCalendarWheel}
             style={{
-              touchAction: 'none',
-              cursor: calendarDragging ? 'grabbing' : 'grab',
-              transform: `translateY(${calendarDragOffset}px)`,
-              transition: calendarDragging ? 'none' : 'transform 0.18s ease',
+              transform: `translateX(${calendarDragX}px)`,
+              transition: isDragging ? 'none' : 'transform 0.26s cubic-bezier(0.4,0,0.2,1)',
               willChange: 'transform',
             }}
           >
-          {calendarDays.map((day, i) => {
-            const dayLogs    = logsForDay(day)
-            const dayCycles  = cyclesForDay(day)
-            const inMonth    = day.getMonth() === currentDate.getMonth()
-            const isSelected = isSameDay(day, selectedDay)
-            const hasCycle   = dayCycles.length > 0
-            const isFuture = differenceInDays(day, today) > 0
-            const dayTaken = dayLogs.filter(log => log.taken === true).length
-            const daySkipped = dayLogs.filter(log => log.taken === false).length
-            const dayPendingLogs = dayLogs.filter(log => log.taken === null)
-            const dayPendingCycles = dayCycles.filter(cycle =>
-              !dayLogs.some(log => log.peptide_id === cycle.peptide_id)
-            )
-            const dayOpen = isFuture ? 0 : dayPendingLogs.length + dayPendingCycles.length
-            const statusAccent = dayOpen > 0
-              ? '#f59e0b'
-              : daySkipped > 0
-                ? '#ef4444'
-                : dayTaken > 0
-                  ? '#10b981'
-                  : hasCycle
-                    ? '#8b5cf6'
-                    : 'rgba(255,255,255,0.08)'
-            const statusBg = dayOpen > 0
-              ? 'rgba(245,158,11,0.12)'
-              : daySkipped > 0
-                ? 'rgba(239,68,68,0.10)'
-                : dayTaken > 0
-                  ? 'rgba(16,185,129,0.10)'
-                  : hasCycle
-                    ? 'rgba(139,92,246,0.09)'
-                    : 'transparent'
-
-            return (
-              <button
-                key={i}
-                data-calendar-date={format(day, 'yyyy-MM-dd')}
-                className={`relative flex min-h-[82px] flex-col items-center justify-center py-3 transition-all duration-150
-                  border-r border-b last:border-r-0
-                  ${!inMonth ? 'opacity-20' : ''}
-                `}
-                style={{
-                  borderColor: 'rgba(255,255,255,0.04)',
-                  background: isSelected
-                    ? 'linear-gradient(145deg, rgba(0,190,240,0.85), rgba(0,120,210,0.75))'
-                    : statusBg,
-                  boxShadow: isSelected
-                    ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 16px rgba(0,200,240,0.25)'
-                    : hasCycle || dayLogs.length > 0
-                      ? `inset 0 1px 0 ${statusAccent}18`
-                    : undefined,
-                }}
-              >
-                {hasCycle && !isSelected && (
-                  <span
-                    className="absolute left-2 top-2 h-2 w-2 rounded-full"
-                    style={{ background: statusAccent, boxShadow: `0 0 10px ${statusAccent}66` }}
-                  />
-                )}
-
-                {/* Heute-Ring */}
-                {isToday(day) && !isSelected && (
-                  <span className="absolute inset-1 rounded-2xl pointer-events-none"
-                    style={{ boxShadow: '0 0 0 1px rgba(0,204,245,0.50), 0 0 6px rgba(0,204,245,0.15)' }} />
-                )}
-
-                <span className={`text-lg font-black leading-none ${
-                  isSelected ? 'text-white' :
-                  isToday(day) ? 'text-sky-400' :
-                  inMonth ? 'text-slate-200' : 'text-slate-600'
-                }`}>
-                  {format(day, 'd')}
-                </span>
-
-                {/* Indikatoren – je Punkt ein Peptid */}
-                {(() => {
-                  const logIds   = dayLogs.map(l => l.peptide_id)
-                  const cycleIds = dayCycles.map(c => c.peptide_id)
-                  const unique   = [...new Set([...logIds, ...cycleIds])].slice(0, 4)
-                  if (unique.length === 0) return <div className="h-2.5 mt-2" />
-                  return (
-                    <div className="flex gap-1 mt-2 h-2.5">
-                      {unique.map(pid => {
-                        const idx   = peptides.findIndex(p => p.id === pid)
-                        const color = isSelected ? '#ffffff' : getPeptideColor(idx)
-                        return (
-                          <span
-                            key={pid}
-                            className="h-2 w-2 shrink-0 rounded-full"
-                            style={{ backgroundColor: color, boxShadow: `0 0 7px ${color}88` }}
-                          />
-                        )
-                      })}
-                    </div>
-                  )
-                })()}
-
-                {(dayOpen > 0 || dayTaken > 0 || daySkipped > 0) && (
-                  <div className="mt-2 flex items-center justify-center gap-1">
-                    {dayOpen > 0 && (
-                      <span className="h-1.5 w-4 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.55)]" />
-                    )}
-                    {dayTaken > 0 && (
-                      <span className="h-1.5 w-4 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.45)]" />
-                    )}
-                    {daySkipped > 0 && (
-                      <span className="h-1.5 w-4 rounded-full bg-red-400 shadow-[0_0_8px_rgba(239,68,68,0.45)]" />
-                    )}
-                  </div>
-                )}
-              </button>
-            )
-          })}
+            {calendarDays.map((day, i) => renderDayCell(day, currentDate, i, false))}
           </div>
+
+          {/* Peek month — slides in from the side while swiping */}
+          {peekDir !== 0 && (
+            <div
+              className="absolute inset-x-0 top-0 grid grid-cols-7 select-none pointer-events-none"
+              style={{
+                transform: `translateX(calc(${peekDir === 1 ? '100%' : '-100%'} + ${calendarDragX}px))`,
+                transition: isDragging ? 'none' : 'transform 0.26s cubic-bezier(0.4,0,0.2,1)',
+                willChange: 'transform',
+              }}
+            >
+              {peekCalendarDays.map((day, i) => renderDayCell(day, peekDate!, i, true))}
+            </div>
+          )}
         </div>
 
-        {/* Legende */}
+        {/* Legend */}
         <div className="flex flex-wrap gap-3 px-4 py-3" style={{
           borderTop: '1px solid rgba(255,255,255,0.04)',
           background: 'rgba(1,2,10,0.60)',
         }}>
           <div className="flex items-center gap-1.5" style={calendarLegendText}>
-            <div className="flex gap-0.5">
-              {[0,1,2].map(i => (
-                <span key={i} className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: getPeptideColor(i), boxShadow: `0 0 4px ${getPeptideColor(i)}88` }} />
-              ))}
-            </div>
-            {t('per_dot_peptid')}
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#00ccf5', boxShadow: '0 0 4px #00ccf555' }} />
+            {t('geplant', { defaultValue: 'Geplant' })}
           </div>
           <div className="flex items-center gap-1.5" style={calendarLegendText}>
-            <Clock3 size={11} style={{ color: '#f59e0b' }} /> {t('ausstehend')}
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#f97316', boxShadow: '0 0 4px #f9731655' }} />
+            {t('erhoehung')}
           </div>
           <div className="flex items-center gap-1.5" style={calendarLegendText}>
-            <CheckCircle2 size={11} style={{ color: '#10b981' }} /> {t('eingenommen')}
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#10b981', boxShadow: '0 0 4px #10b98155' }} />
+            {t('erfolgreich', { defaultValue: 'Erfolgreich' })}
           </div>
-          <div className="flex items-center gap-1.5" style={calendarLegendText}>
-            <XCircle size={11} style={{ color: '#ef4444' }} /> {t('uebersprungen')}
-          </div>
-          <div className="flex items-center gap-1.5" style={calendarLegendText}>
-            <TrendingUp size={10} style={{ color: '#f59e0b' }} /> {t('erhoehung')}
-          </div>
-          {activePeptideLegend.slice(0, 4).map(peptide => {
-            const idx = peptides.findIndex(p => p.id === peptide.id)
-            const color = getPeptideColor(idx)
-            return (
-              <div key={peptide.id} className="flex items-center gap-1.5" style={calendarLegendText}>
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ background: color, boxShadow: `0 0 6px ${color}99` }}
-                />
-                <span className="max-w-[92px] truncate">{peptide.name}</span>
-              </div>
-            )
-          })}
         </div>
 
-        <div
-          className="px-4 py-3"
-          style={{
-            borderTop: '1px solid rgba(255,255,255,0.04)',
-            background: 'rgba(4,7,18,0.72)',
-          }}
-        >
-          <button
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-xs font-extrabold uppercase tracking-[0.12em] transition-colors"
-            onClick={() => changeMonth(1)}
-            aria-label={t('next_month', { defaultValue: 'Nächster Monat' })}
-            style={{
-              borderColor: 'rgba(0,204,245,0.20)',
-              background: 'linear-gradient(180deg, rgba(0,204,245,0.035), rgba(0,204,245,0.12))',
-              color: 'rgba(125,229,255,0.92)',
-              boxShadow: '0 0 24px rgba(0,204,245,0.10), inset 0 1px 0 rgba(255,255,255,0.06)',
-            }}
-          >
-            {t('next_month_short', { defaultValue: 'Nächster Monat' })}
-            <ChevronDown size={16} />
-          </button>
-        </div>
       </GlassPanel>
       </div>
 
-      {/* ── Tages-Panel (ausgewählter Tag / Standard = heute) ─────────────── */}
+      {/* ── Tages-Panel ───────────────────────────────────────────────────── */}
       <GlassPanel accent="#00ccf5" padding="md">
-        {/* Header */}
         <div className="mb-3">
           <SectionHeader
             kicker={format(selectedDay, 'dd.MM.yyyy')}
@@ -955,7 +912,6 @@ export function Dashboard() {
                     ? 'bg-red-500/5 border-red-500/20'
                     : 'bg-sky-500/5 border-sky-500/15'
               }`}>
-                {/* Zeile 1: Icon + Name + Dosis + Löschen */}
                 <div className="flex items-center gap-3">
                   <Syringe size={14} className={`shrink-0 ${
                     log.taken === true ? 'text-emerald-400' :
@@ -991,7 +947,6 @@ export function Dashboard() {
                   </button>
                 </div>
 
-                {/* Zeile 2: Bestätigungs-Buttons (nur wenn noch nicht bestätigt) */}
                 {log.taken === null && (
                   <div className="flex gap-2 mt-2 ml-[26px]">
                     <button
@@ -1017,7 +972,6 @@ export function Dashboard() {
                   </div>
                 )}
 
-                {/* Zeile 3: Snooze-Buttons (nur wenn übersprungen) */}
                 {log.taken === false && (
                   <div className="mt-2 ml-[26px]">
                     <p className="text-slate-500 text-xs mb-1.5 flex items-center gap-1">
