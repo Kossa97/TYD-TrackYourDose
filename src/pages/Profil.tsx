@@ -374,6 +374,18 @@ function PushSettings() {
           </div>
         )}
 
+        {state === 'ios-native-app' && (
+          <div style={{
+            padding: '10px 12px', borderRadius: 12, marginBottom: 10,
+            background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)',
+          }}>
+            <p style={{ fontSize: '0.72rem', color: 'rgba(245,158,11,0.9)', lineHeight: 1.5 }}>
+              In der installierten iOS-App (App Store / Xcode) gibt es keine Mitteilungszentrale über Web-Push.
+              Öffne <strong>tyd.app in Safari</strong>, tippe <strong>Teilen → Zum Home-Bildschirm</strong> und nutze diese Icon-App für Erinnerungen.
+            </p>
+          </div>
+        )}
+
         {/* Action buttons */}
         <div style={{ display: 'flex', gap: 8 }}>
           {(state === 'default') && (

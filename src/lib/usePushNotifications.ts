@@ -38,6 +38,7 @@ export type PushState =
   | 'loading'
   | 'unsupported'      // Browser doesn't support Push API
   | 'ios-needs-install'// iOS Safari – must install PWA first
+  | 'ios-native-app'   // Capacitor-App: Web-Push nur über Home-Bildschirm-PWA
   | 'denied'           // User blocked notifications
   | 'default'          // Supported, not yet asked
   | 'subscribed'       // Active subscription in DB
@@ -153,12 +154,11 @@ export function usePushNotifications(user: User | null): UsePushNotificationsRet
         method:  'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}` },
       })
-      const raw  = await res.text()
-      let body: { hint?: string; error?: string } = {}
-      try { body = raw ? JSON.parse(raw) : {} } catch { /* non-JSON (e.g. Vercel HTML error page) */ }
+      const body = await res.json().catch(() => ({}))
 
       if (res.ok) return { ok: true }
-      const msg = body.hint ?? body.error ?? (raw && !raw.startsWith('<') ? raw.slice(0, 200) : `HTTP ${res.status}`)
+      // Surface the specific server error
+      const msg = body.hint ?? body.error ?? `HTTP ${res.status}`
       return { ok: false, error: msg }
     } catch (err) {
       return { ok: false, error: String(err) }
