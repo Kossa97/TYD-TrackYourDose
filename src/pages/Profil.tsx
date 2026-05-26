@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { LogOut, Save, User, Globe, Lock, Copy, Check, FlaskConical, CalendarDays, BookHeart, Star, Languages } from 'lucide-react'
+import { LogOut, Save, User, Globe, Lock, Copy, Check, FlaskConical, CalendarDays, BookHeart, Star, Languages, Bell, BellOff, Send } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { OnboardingRestartButton } from '../components/Onboarding'
 import { LANGUAGES, applyDirection } from '../i18n'
+import { usePushNotifications } from '../lib/usePushNotifications'
 
 interface Profile {
   username: string; display_name: string; age: number | null
@@ -267,9 +268,165 @@ export function Profil() {
       {/* ── Sprache / Language ── */}
       <LanguageSwitcher />
 
+      {/* ── Push-Notifications ── */}
+      <PushSettings />
+
       {/* App-Anleitung */}
       <div className="mt-3">
         <OnboardingRestartButton />
+      </div>
+    </div>
+  )
+}
+
+// ── PushSettings ─────────────────────────────────────────────────────────────
+
+function PushSettings() {
+  const { user } = useAuth()
+  const { state, subscribe, unsubscribe, sendTestPush } = usePushNotifications(user)
+  const [testing, setTesting] = useState(false)
+  const [subscribing, setSubscribing] = useState(false)
+
+  const handleSubscribe = async () => {
+    setSubscribing(true)
+    const ok = await subscribe()
+    setSubscribing(false)
+    if (ok) toast.success('Notifications aktiviert ✓')
+    else toast.error('Activation fehlgeschlagen – Permission verweigert?')
+  }
+
+  const handleUnsubscribe = async () => {
+    await unsubscribe()
+    toast.success('Notifications deaktiviert')
+  }
+
+  const handleTest = async () => {
+    setTesting(true)
+    const ok = await sendTestPush()
+    setTesting(false)
+    if (ok) toast.success('Test-Push gesendet! Schau auf dein Gerät.')
+    else toast.error('Test fehlgeschlagen – prüfe Vercel-Env-Vars & Supabase-Tabelle')
+  }
+
+  const stateLabels: Record<string, string> = {
+    loading:             'Wird geladen…',
+    unsupported:         'Nicht unterstützt (Browser)',
+    'ios-needs-install': 'App am Home-Bildschirm installieren',
+    denied:              'Vom Browser blockiert',
+    default:             'Nicht aktiviert',
+    subscribed:          'Aktiv ✓',
+  }
+  const stateColors: Record<string, string> = {
+    loading:             'rgba(154,170,191,0.5)',
+    unsupported:         'rgba(154,170,191,0.5)',
+    'ios-needs-install': '#f59e0b',
+    denied:              '#f43f5e',
+    default:             'rgba(154,170,191,0.5)',
+    subscribed:          '#10b981',
+  }
+
+  return (
+    <div style={{ marginTop: 16 }}>
+      <p style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.5)', marginBottom: 8 }}>
+        Benachrichtigungen
+      </p>
+      <div style={{
+        background: 'linear-gradient(145deg, rgba(9,14,34,0.94), rgba(4,7,18,0.96))',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 18, padding: '14px 16px',
+      }}>
+        {/* Status row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 12, flexShrink: 0,
+            background: state === 'subscribed' ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.05)',
+            border: `1px solid ${stateColors[state] ?? 'rgba(255,255,255,0.08)'}30`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {state === 'subscribed'
+              ? <Bell size={16} color="#10b981" />
+              : <BellOff size={16} color="rgba(154,170,191,0.5)" />}
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: '0.82rem', fontWeight: 800, color: '#eaeefc' }}>
+              Einnahme-Erinnerungen
+            </p>
+            <p style={{ fontSize: '0.62rem', marginTop: 2, color: stateColors[state] ?? 'rgba(154,170,191,0.5)', fontWeight: 700 }}>
+              {stateLabels[state] ?? state}
+            </p>
+          </div>
+        </div>
+
+        {/* iOS install hint */}
+        {state === 'ios-needs-install' && (
+          <div style={{
+            padding: '10px 12px', borderRadius: 12, marginBottom: 10,
+            background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)',
+          }}>
+            <p style={{ fontSize: '0.72rem', color: 'rgba(245,158,11,0.9)', lineHeight: 1.5 }}>
+              1. Tippe unten auf das <strong>Teilen-Symbol ↑</strong>{'\n'}
+              2. Wähle <strong>„Zum Home-Bildschirm"</strong>{'\n'}
+              3. App vom Home-Bildschirm öffnen → Notifications aktivieren
+            </p>
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {(state === 'default') && (
+            <button
+              onClick={handleSubscribe}
+              disabled={subscribing}
+              style={{
+                flex: 1, padding: '10px 0', borderRadius: 12,
+                background: 'rgba(0,204,245,0.14)', border: '1px solid rgba(0,204,245,0.28)',
+                color: '#00ccf5', fontSize: '0.76rem', fontWeight: 800,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                opacity: subscribing ? 0.5 : 1,
+              }}
+            >
+              <Bell size={14} />
+              {subscribing ? 'Aktiviere…' : 'Aktivieren'}
+            </button>
+          )}
+
+          {state === 'subscribed' && (
+            <>
+              <button
+                onClick={handleTest}
+                disabled={testing}
+                style={{
+                  flex: 1, padding: '10px 0', borderRadius: 12,
+                  background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.28)',
+                  color: '#10b981', fontSize: '0.76rem', fontWeight: 800,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  opacity: testing ? 0.5 : 1,
+                }}
+              >
+                <Send size={14} />
+                {testing ? 'Sende…' : 'Test senden'}
+              </button>
+              <button
+                onClick={handleUnsubscribe}
+                style={{
+                  padding: '10px 14px', borderRadius: 12,
+                  background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.18)',
+                  color: '#f43f5e', fontSize: '0.76rem', fontWeight: 800,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                }}
+              >
+                <BellOff size={14} />
+                Aus
+              </button>
+            </>
+          )}
+
+          {state === 'denied' && (
+            <p style={{ fontSize: '0.7rem', color: 'rgba(244,63,94,0.7)', lineHeight: 1.5 }}>
+              Notifications in den Browser-Einstellungen erneut erlauben, dann Seite neu laden.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   )

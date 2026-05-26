@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { CalendarDays, FlaskConical, Archive, User, Home, HelpCircle, Bell, X } from 'lucide-react'
+import { CalendarDays, FlaskConical, Archive, User, Home, HelpCircle, Bell, X, Share } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Onboarding } from './Onboarding'
@@ -7,7 +7,8 @@ import { LanguageGate } from './LanguageGate'
 import { useAuth } from '../context/AuthContext'
 import { usePushNotifications } from '../lib/usePushNotifications'
 
-const PUSH_DISMISSED_KEY = 'tyd_push_dismissed'
+const PUSH_DISMISSED_KEY    = 'tyd_push_dismissed'
+const IOS_INSTALL_SHOWN_KEY = 'tyd_ios_install_shown'
 
 export function Layout() {
   const location = useLocation()
@@ -16,15 +17,18 @@ export function Layout() {
   const { user } = useAuth()
   const { state: pushState, subscribe } = usePushNotifications(user)
 
-  const [showPushBanner, setShowPushBanner] = useState(false)
+  const [showPushBanner,    setShowPushBanner]    = useState(false)
+  const [showIOSBanner,     setShowIOSBanner]      = useState(false)
 
-  // Show push banner once if permission not yet decided
   useEffect(() => {
     if (!user) return
-    if (pushState === 'unsupported' || pushState === 'denied' || pushState === 'subscribed') return
-    if (localStorage.getItem(PUSH_DISMISSED_KEY) === 'true') return
-    // Small delay so it doesn't flash on first render
-    const timer = setTimeout(() => setShowPushBanner(true), 1200)
+    const timer = setTimeout(() => {
+      if (pushState === 'ios-needs-install') {
+        if (localStorage.getItem(IOS_INSTALL_SHOWN_KEY) !== 'true') setShowIOSBanner(true)
+      } else if (pushState === 'default') {
+        if (localStorage.getItem(PUSH_DISMISSED_KEY) !== 'true') setShowPushBanner(true)
+      }
+    }, 1200)
     return () => clearTimeout(timer)
   }, [user, pushState])
 
@@ -32,10 +36,13 @@ export function Layout() {
     setShowPushBanner(false)
     await subscribe()
   }
-
   const handlePushDismiss = () => {
     setShowPushBanner(false)
     localStorage.setItem(PUSH_DISMISSED_KEY, 'true')
+  }
+  const handleIOSDismiss = () => {
+    setShowIOSBanner(false)
+    localStorage.setItem(IOS_INSTALL_SHOWN_KEY, 'true')
   }
 
   const isLager    = pathname === '/peptide' && search.includes('inventar')
@@ -47,71 +54,43 @@ export function Layout() {
   return (
     <div className="flex flex-col min-h-dvh w-full overflow-x-hidden" style={{ maxWidth: '100vw' }}>
 
+      {/* ── iOS install guide banner ── */}
+      {showIOSBanner && (
+        <PushBanner
+          icon={<Share size={15} color="#f59e0b" />}
+          iconBg="rgba(245,158,11,0.15)"
+          iconBorder="rgba(245,158,11,0.28)"
+          title="App installieren für Notifications"
+          desc={'Tippe auf ↑ Teilen → „Zum Home-Bildschirm" → dann Notifications aktivieren'}
+          ctaLabel={undefined}
+          ctaColor="#f59e0b"
+          onCta={undefined}
+          onDismiss={handleIOSDismiss}
+        />
+      )}
+
       {/* ── Push permission banner ── */}
       {showPushBanner && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0,
-          zIndex: 50,
-          background: 'linear-gradient(135deg, rgba(0,204,245,0.16), rgba(8,12,28,0.97))',
-          borderBottom: '1px solid rgba(0,204,245,0.22)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          padding: '12px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          paddingTop: 'calc(12px + env(safe-area-inset-top))',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-        }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 12, flexShrink: 0,
-            background: 'rgba(0,204,245,0.15)', border: '1px solid rgba(0,204,245,0.28)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Bell size={16} color="#00ccf5" />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: '0.78rem', fontWeight: 800, color: '#eaeefc', lineHeight: 1.2 }}>
-              {t('push_banner_title', { defaultValue: 'Einnahme-Erinnerungen' })}
-            </p>
-            <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.62)', marginTop: 2 }}>
-              {t('push_banner_desc', { defaultValue: 'Zur eingestellten Zeit automatisch benachrichtigt werden.' })}
-            </p>
-          </div>
-          <button
-            onClick={handlePushAccept}
-            style={{
-              padding: '7px 14px', borderRadius: 12, flexShrink: 0,
-              background: 'linear-gradient(135deg, rgba(0,204,245,0.25), rgba(0,204,245,0.12))',
-              border: '1px solid rgba(0,204,245,0.35)',
-              color: '#00ccf5', fontSize: '0.72rem', fontWeight: 800,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {t('push_banner_allow', { defaultValue: 'Aktivieren' })}
-          </button>
-          <button
-            onClick={handlePushDismiss}
-            aria-label="Schließen"
-            style={{
-              width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.09)',
-              color: 'rgba(154,170,191,0.55)',
-            }}
-          >
-            <X size={13} />
-          </button>
-        </div>
+        <PushBanner
+          icon={<Bell size={15} color="#00ccf5" />}
+          iconBg="rgba(0,204,245,0.15)"
+          iconBorder="rgba(0,204,245,0.28)"
+          title={t('push_banner_title', { defaultValue: 'Einnahme-Erinnerungen' })}
+          desc={t('push_banner_desc', { defaultValue: 'Zur eingestellten Zeit automatisch benachrichtigt werden.' })}
+          ctaLabel={t('push_banner_allow', { defaultValue: 'Aktivieren' })}
+          ctaColor="#00ccf5"
+          onCta={handlePushAccept}
+          onDismiss={handlePushDismiss}
+        />
       )}
 
       <main
         className="flex-1 w-full overflow-x-hidden px-3 pt-4"
         style={{
           paddingBottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))',
-          paddingTop: showPushBanner ? 'calc(1rem + 68px + env(safe-area-inset-top))' : undefined,
+          paddingTop: (showPushBanner || showIOSBanner)
+            ? 'calc(1rem + 72px + env(safe-area-inset-top))'
+            : undefined,
         }}
       >
         <Outlet />
@@ -230,6 +209,79 @@ export function Layout() {
           />
         </div>
       </nav>
+    </div>
+  )
+}
+
+// ── PushBanner ────────────────────────────────────────────────────────────────
+
+function PushBanner({
+  icon, iconBg, iconBorder, title, desc,
+  ctaLabel, ctaColor, onCta, onDismiss,
+}: {
+  icon: React.ReactNode
+  iconBg: string
+  iconBorder: string
+  title: string
+  desc: string
+  ctaLabel?: string
+  ctaColor: string
+  onCta?: () => void
+  onDismiss: () => void
+}) {
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+      background: 'linear-gradient(135deg, rgba(8,12,28,0.97), rgba(4,7,18,0.99))',
+      borderBottom: '1px solid rgba(255,255,255,0.08)',
+      backdropFilter: 'blur(18px)',
+      WebkitBackdropFilter: 'blur(18px)',
+      padding: '12px 14px',
+      paddingTop: 'calc(12px + env(safe-area-inset-top))',
+      display: 'flex', alignItems: 'center', gap: 10,
+      boxShadow: '0 4px 24px rgba(0,0,0,0.45)',
+    }}>
+      <div style={{
+        width: 34, height: 34, borderRadius: 11, flexShrink: 0,
+        background: iconBg, border: `1px solid ${iconBorder}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: '0.76rem', fontWeight: 800, color: '#eaeefc', lineHeight: 1.2 }}>
+          {title}
+        </p>
+        <p style={{ fontSize: '0.6rem', color: 'rgba(154,170,191,0.6)', marginTop: 2, lineHeight: 1.4 }}>
+          {desc}
+        </p>
+      </div>
+      {ctaLabel && onCta && (
+        <button
+          onClick={onCta}
+          style={{
+            padding: '7px 12px', borderRadius: 11, flexShrink: 0,
+            background: `${ctaColor}22`, border: `1px solid ${ctaColor}40`,
+            color: ctaColor, fontSize: '0.7rem', fontWeight: 800,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {ctaLabel}
+        </button>
+      )}
+      <button
+        onClick={onDismiss}
+        aria-label="Schließen"
+        style={{
+          width: 26, height: 26, borderRadius: 8, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          color: 'rgba(154,170,191,0.5)',
+        }}
+      >
+        <X size={12} />
+      </button>
     </div>
   )
 }
