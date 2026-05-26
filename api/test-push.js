@@ -1,22 +1,26 @@
-// api/test-push.js — Sends a test push to the authenticated user
+// api/test-push.js
 // POST /api/test-push   Authorization: Bearer <supabase-access-token>
-// Uses only fetch() + web-push — no @supabase/supabase-js (avoids ESM/CJS issues)
-
-const webPush = require('web-push')
 
 module.exports = async function handler(req, res) {
-  // Always return JSON, never crash silently
+  res.setHeader('Content-Type', 'application/json')
+
   try {
+    // Require inside handler so crashes are caught and returned as JSON
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const webPush = require('web-push')
+
     if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method not allowed' })
+      return res.status(405).end(JSON.stringify({ error: 'Method not allowed' }))
     }
 
-    const token = req.headers['authorization']?.split(' ')[1]
-    if (!token) return res.status(401).json({ error: 'No token' })
+    const token = (req.headers['authorization'] ?? '').replace('Bearer ', '')
+    if (!token) return res.status(401).end(JSON.stringify({ error: 'No token' }))
 
-    const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_EMAIL, SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env
+    const {
+      VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_EMAIL,
+      SUPABASE_URL, SUPABASE_SERVICE_KEY,
+    } = process.env
 
-    // Report exactly which vars are missing
     const missing = [
       !VAPID_PUBLIC_KEY     && 'VAPID_PUBLIC_KEY',
       !VAPID_PRIVATE_KEY    && 'VAPID_PRIVATE_KEY',
@@ -25,60 +29,45 @@ module.exports = async function handler(req, res) {
     ].filter(Boolean)
 
     if (missing.length) {
-      return res.status(500).json({
-        error: 'Missing environment variables',
+      return res.status(500).end(JSON.stringify({
+        error: 'Missing env vars',
         hint:  `Fehlend in Vercel: ${missing.join(', ')}`,
-      })
+      }))
     }
 
-    // ── 1. Verify Supabase JWT via REST API ────────────────────────────────
+    // ── Verify JWT ─────────────────────────────────────────────────────────
     const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'apikey': SUPABASE_SERVICE_KEY,
-      },
+      headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_SERVICE_KEY },
     })
-
     if (!userRes.ok) {
-      return res.status(401).json({ error: 'Invalid token', hint: 'Supabase auth fehlgeschlagen' })
+      return res.status(401).end(JSON.stringify({ error: 'Invalid token' }))
     }
-
     const user = await userRes.json()
-    if (!user?.id) {
-      return res.status(401).json({ error: 'User not found' })
-    }
+    if (!user?.id) return res.status(401).end(JSON.stringify({ error: 'User not found' }))
 
-    // ── 2. Load push subscriptions via REST API ────────────────────────────
+    // ── Load subscriptions ─────────────────────────────────────────────────
     const subsRes = await fetch(
       `${SUPABASE_URL}/rest/v1/push_subscriptions?user_id=eq.${user.id}&select=subscription,endpoint`,
-      {
-        headers: {
-          'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-          'apikey': SUPABASE_SERVICE_KEY,
-        },
-      },
+      { headers: { 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`, 'apikey': SUPABASE_SERVICE_KEY } },
     )
-
+    const subsBody = await subsRes.text()
     if (!subsRes.ok) {
-      const err = await subsRes.text()
-      return res.status(500).json({
-        error: 'DB query failed',
-        hint: err.includes('does not exist')
-          ? 'Tabelle push_subscriptions fehlt – SQL-Migration ausführen'
-          : err,
-      })
+      return res.status(500).end(JSON.stringify({
+        error: 'DB error',
+        hint:  subsBody.includes('does not exist')
+          ? 'Tabelle push_subscriptions fehlt – SQL in Supabase ausführen'
+          : subsBody,
+      }))
     }
-
-    const subs = await subsRes.json()
-
+    const subs = JSON.parse(subsBody)
     if (!Array.isArray(subs) || subs.length === 0) {
-      return res.status(404).json({
-        error:  'no_subscription',
-        hint:   'Keine Subscription gefunden – Notifications in der App aktivieren',
-      })
+      return res.status(404).end(JSON.stringify({
+        error: 'no_subscription',
+        hint:  'Keine Subscription in DB – Notifications in der App aktivieren',
+      }))
     }
 
-    // ── 3. Send test notification ──────────────────────────────────────────
+    // ── Send test push ─────────────────────────────────────────────────────
     webPush.setVapidDetails(
       `mailto:${VAPID_EMAIL ?? 'admin@tyd.app'}`,
       VAPID_PUBLIC_KEY,
@@ -87,15 +76,13 @@ module.exports = async function handler(req, res) {
 
     const payload = JSON.stringify({
       title: '✅ TYD – Test erfolgreich',
-      body:  'Push-Notifications funktionieren korrekt!',
+      body:  'Push-Notifications funktionieren!',
       url:   '/kalender',
       tag:   'tyd-test',
     })
 
-    let sent   = 0
-    let failed = 0
+    let sent = 0, failed = 0, lastErr = ''
     const stale = []
-    let lastErr = null
 
     for (const sub of subs) {
       try {
@@ -103,42 +90,32 @@ module.exports = async function handler(req, res) {
         sent++
       } catch (err) {
         failed++
-        lastErr = `${err.statusCode}: ${err.message}`
+        lastErr = `${err.statusCode ?? '?'}: ${err.message}`
         if (err.statusCode === 410 || err.statusCode === 404) stale.push(sub.endpoint)
       }
     }
 
-    // Remove expired subscriptions
     if (stale.length) {
-      const inList = stale.map(e => encodeURIComponent(e)).join(',')
       await fetch(
         `${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=in.(${stale.map(e => `"${e}"`).join(',')})`,
-        {
-          method:  'DELETE',
-          headers: {
-            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-            'apikey': SUPABASE_SERVICE_KEY,
-          },
-        },
-      ).catch(() => { /* ignore cleanup errors */ })
-      void inList
+        { method: 'DELETE', headers: { 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`, 'apikey': SUPABASE_SERVICE_KEY } },
+      ).catch(() => {})
     }
 
     if (sent === 0) {
-      return res.status(500).json({
-        error:  'send_failed',
-        hint:   `Subscription vorhanden, aber Versand fehlgeschlagen. Prüfe VAPID-Keys. Detail: ${lastErr}`,
-        failed,
-      })
+      return res.status(500).end(JSON.stringify({
+        error: 'send_failed',
+        hint:  `Subscription vorhanden, Versand fehlgeschlagen: ${lastErr}`,
+      }))
     }
 
-    return res.status(200).json({ success: true, sent, failed })
+    return res.status(200).end(JSON.stringify({ success: true, sent, failed }))
 
   } catch (err) {
-    // Catch-all: always return JSON, never HTML
-    return res.status(500).json({
-      error: 'Unexpected server error',
-      hint:  String(err?.message ?? err),
-    })
+    // Catches require('web-push') failures and any other unexpected error
+    return res.status(500).end(JSON.stringify({
+      error: 'Server crash',
+      hint:  String(err && err.message ? err.message : err),
+    }))
   }
 }
