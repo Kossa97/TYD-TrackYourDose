@@ -98,6 +98,7 @@ export function Layout() {
 
       <LanguageGate />
       <Onboarding />
+      <PushNotificationListener />
 
       {/* FAQ Floating Button */}
       <NavLink
