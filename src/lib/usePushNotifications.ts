@@ -153,11 +153,12 @@ export function usePushNotifications(user: User | null): UsePushNotificationsRet
         method:  'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}` },
       })
-      const body = await res.json().catch(() => ({}))
+      const raw  = await res.text()
+      let body: { hint?: string; error?: string } = {}
+      try { body = raw ? JSON.parse(raw) : {} } catch { /* non-JSON (e.g. Vercel HTML error page) */ }
 
       if (res.ok) return { ok: true }
-      // Surface the specific server error
-      const msg = body.hint ?? body.error ?? `HTTP ${res.status}`
+      const msg = body.hint ?? body.error ?? (raw && !raw.startsWith('<') ? raw.slice(0, 200) : `HTTP ${res.status}`)
       return { ok: false, error: msg }
     } catch (err) {
       return { ok: false, error: String(err) }
