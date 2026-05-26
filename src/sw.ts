@@ -49,10 +49,11 @@ self.addEventListener('push', (event) => {
   const title   = payload.title ?? 'TYD – Track Your Dose'
   const body    = payload.body ?? ''
 
-  // iOS: weniger Optionen = zuverlässiger
+  // iOS braucht absolute Icon-URLs
+  const iconUrl = new URL('/icon-192.png', self.location.origin).href
   const options: NotificationOptions = {
     body,
-    icon: '/icon-192.png',
+    icon: iconUrl,
     tag:  payload.tag ?? 'tyd-reminder',
     data: { url: payload.url ?? '/kalender' },
   }
