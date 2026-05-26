@@ -162,7 +162,7 @@ const labelStyle: CSSProperties = {
 const SETUP_SQL = `create table if not exists injection_logs (
   id          uuid        default gen_random_uuid() primary key,
   user_id     uuid        references auth.users on delete cascade not null,
-  dose_log_id uuid        references dose_logs on delete set null,
+  dose_log_id uuid,
   site        text        not null,
   notes       text,
   logged_at   timestamptz not null default now(),
@@ -170,7 +170,23 @@ const SETUP_SQL = `create table if not exists injection_logs (
 );
 alter table injection_logs enable row level security;
 create policy "Own injection logs" on injection_logs
-  for all using (auth.uid() = user_id);`
+  for all
+  using     (auth.uid() = user_id)
+  with check(auth.uid() = user_id);`
+
+// ── Supabase error helpers ────────────────────────────────────────────────────
+
+function isTableMissingError(error: { message?: string; code?: string } | null): boolean {
+  if (!error) return false
+  const msg = (error.message ?? '').toLowerCase()
+  return (
+    error.code === '42P01' ||
+    error.code === 'PGRST116' ||
+    msg.includes('does not exist') ||
+    msg.includes('undefined table') ||
+    msg.includes('relation') && msg.includes('not exist')
+  )
+}
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
@@ -198,11 +214,11 @@ export function InjektionsTracker() {
         .order('logged_at', { ascending: false })
         .limit(200)
       if (error) {
-        if (error.message?.includes('does not exist') || error.code === '42P01') {
-          setTableError(true)
-        }
+        console.error('[InjektionsTracker] loadLogs error:', error)
+        if (isTableMissingError(error)) setTableError(true)
         return
       }
+      setTableError(false)
       setLogs(data ?? [])
     } finally {
       setLoading(false)
@@ -219,7 +235,17 @@ export function InjektionsTracker() {
       notes: notes.trim() || null,
       logged_at: new Date().toISOString(),
     })
-    if (error) { toast.error(t('inj_save_err', { defaultValue: 'Fehler beim Speichern' })); return }
+    if (error) {
+      console.error('[InjektionsTracker] handleLog error:', error)
+      if (isTableMissingError(error)) {
+        setShowSheet(false)
+        setSelectedSite(null)
+        setTableError(true)
+        return
+      }
+      toast.error(t('inj_save_err', { defaultValue: 'Fehler beim Speichern' }))
+      return
+    }
     toast.success(t('inj_save_ok', { defaultValue: 'Injektion gespeichert ✓' }))
     setShowSheet(false)
     setSelectedSite(null)
