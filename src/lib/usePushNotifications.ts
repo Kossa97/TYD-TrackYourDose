@@ -46,7 +46,7 @@ interface UsePushNotificationsReturn {
   state: PushState
   subscribe: () => Promise<boolean>
   unsubscribe: () => Promise<void>
-  sendTestPush: () => Promise<boolean>
+  sendTestPush: () => Promise<{ ok: boolean; error?: string }>
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
@@ -144,18 +144,23 @@ export function usePushNotifications(user: User | null): UsePushNotificationsRet
   }, [user])
 
   // ── Test push (calls /api/test-push with user JWT) ─────────────────────────
-  const sendTestPush = useCallback(async (): Promise<boolean> => {
+  const sendTestPush = useCallback(async (): Promise<{ ok: boolean; error?: string }> => {
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return false
+      if (!session) return { ok: false, error: 'Nicht eingeloggt' }
 
-      const res = await fetch('/api/test-push', {
+      const res  = await fetch('/api/test-push', {
         method:  'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}` },
       })
-      return res.ok
-    } catch {
-      return false
+      const body = await res.json().catch(() => ({}))
+
+      if (res.ok) return { ok: true }
+      // Surface the specific server error
+      const msg = body.hint ?? body.error ?? `HTTP ${res.status}`
+      return { ok: false, error: msg }
+    } catch (err) {
+      return { ok: false, error: String(err) }
     }
   }, [])
 
