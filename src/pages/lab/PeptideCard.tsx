@@ -9,7 +9,6 @@ import {
   STATUS_STYLES,
   EVIDENCE_BAR_WIDTH,
   EVIDENCE_LABELS,
-  getConfidenceLabel,
   getConfidenceStyle,
 } from '../../services/peptideLibrary'
 
