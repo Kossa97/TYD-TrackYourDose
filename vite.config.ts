@@ -15,10 +15,12 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       registerType: 'autoUpdate',
-      workbox: {
-        skipWaiting: true,
-        clientsClaim: true,
+      injectManifest: {
+        rollupFormat: 'es',
       },
       manifest: {
         name: 'TYD – Track Your Dose',

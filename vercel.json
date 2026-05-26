@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/send-reminders",
+      "schedule": "* * * * *"
+    }
+  ],
   "routes": [
     { "handle": "filesystem" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
