@@ -33,6 +33,14 @@ import {
 import type { jsPDF as JsPDFType } from 'jspdf'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import {
+  effectsByPeptide,
+  reviewsByPeptide,
+  topSideEffects,
+  type EffectRow,
+  type ReviewRow,
+} from '../lib/insights'
+import { ResearchDisclaimer } from '../components/ui/DesignSystem'
 import heroLogo from '../assets/hero.png'
 
 interface DateRange {
@@ -114,6 +122,7 @@ interface ProtocolCopy {
   user: string
   exportedAt: string
   coverTitle: string
+  researchExportHint: string
 }
 
 const COPY: Record<'de' | 'en', ProtocolCopy> = {
@@ -150,6 +159,7 @@ const COPY: Record<'de' | 'en', ProtocolCopy> = {
     user: 'Name',
     exportedAt: 'Datum',
     coverTitle: 'TYD Protokoll',
+    researchExportHint: 'PDF-Export = Research-Protokoll für deine Dokumentation',
   },
   en: {
     title: 'Protocol',
@@ -184,6 +194,7 @@ const COPY: Record<'de' | 'en', ProtocolCopy> = {
     user: 'Name',
     exportedAt: 'Date',
     coverTitle: 'TYD Protocol',
+    researchExportHint: 'PDF export = research protocol for your documentation',
   },
 }
 
@@ -564,7 +575,7 @@ function SmallMultipleRow({ series, isLast, language }: { series: SmallMultipleS
 
 export function Protokoll() {
   const { user } = useAuth()
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const language = i18n.language || 'de'
   const copy = useMemo(() => copyFor(language), [language])
   const reportRef = useRef<HTMLDivElement>(null)
@@ -584,6 +595,8 @@ export function Protokoll() {
   const [loadingBase, setLoadingBase] = useState(true)
   const [loadingCharts, setLoadingCharts] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [effects, setEffects] = useState<EffectRow[]>([])
+  const [reviews, setReviews] = useState<ReviewRow[]>([])
 
   const userName = useMemo(() => (
     profile?.display_name
@@ -754,7 +767,9 @@ export function Protokoll() {
       .sort((a, b) => b.pct - a.pct)
   }, [doseLogs, activeCycles, completedCycles])
 
-  // ─── End new derived data ──────────────────────────────────────────────────
+  const sideEffectStats = useMemo(() => topSideEffects(effects), [effects])
+  const peptideEffectStats = useMemo(() => effectsByPeptide(effects), [effects])
+  const peptideReviewStats = useMemo(() => reviewsByPeptide(reviews), [reviews])
 
   const loadBaseData = useCallback(async () => {
     if (!user) return
@@ -816,7 +831,7 @@ export function Protokoll() {
     if (!user || !isValidRange(range)) return
     setLoadingCharts(true)
 
-    const [{ data: weights }, { data: blood }, { data: doses }] = await Promise.all([
+    const [{ data: weights }, { data: blood }, { data: doses }, { data: effectRows }, { data: reviewRows }] = await Promise.all([
       supabase
         .from('weight_logs')
         .select('id, logged_at, weight_kg')
@@ -839,6 +854,19 @@ export function Protokoll() {
         .gte('logged_at', range.from)
         .lte('logged_at', `${range.to}T23:59:59`)
         .order('logged_at', { ascending: true }),
+      supabase
+        .from('effects')
+        .select('id, type, description, severity, peptide_id, occurred_at, peptides(name)')
+        .eq('user_id', user.id)
+        .gte('occurred_at', `${range.from}T00:00:00`)
+        .lte('occurred_at', `${range.to}T23:59:59`)
+        .order('occurred_at', { ascending: false }),
+      supabase
+        .from('reviews')
+        .select('id, peptide_id, rating, experience, peptides(name)')
+        .eq('user_id', user.id)
+        .gte('created_at', `${range.from}T00:00:00`)
+        .lte('created_at', `${range.to}T23:59:59`),
     ])
 
     const bloodEntries = (blood ?? []) as BloodworkEntry[]
@@ -847,6 +875,14 @@ export function Protokoll() {
     setWeightLogs((weights ?? []) as WeightLog[])
     setBloodwork(bloodEntries)
     setDoseLogs((doses ?? []) as DoseLog[])
+    setEffects((effectRows ?? []).map(row => ({
+      ...row,
+      peptides: Array.isArray(row.peptides) ? row.peptides[0] ?? null : row.peptides,
+    })) as EffectRow[])
+    setReviews((reviewRows ?? []).map(row => ({
+      ...row,
+      peptides: Array.isArray(row.peptides) ? row.peptides[0] ?? { name: '—' } : row.peptides,
+    })) as ReviewRow[])
     // auto-apply preset if current activeMarkers have no data
     setActiveMarkers(prev => {
       const hasBlood = nextMarkers.length > 0
@@ -981,6 +1017,13 @@ export function Protokoll() {
           </button>
         </div>
       </header>
+
+      <ResearchDisclaimer
+        compact
+        title={t('safety_banner_title')}
+        body={t('protokoll_research_export_hint')}
+        accent="#00ccf5"
+      />
 
       {/* ── KPI Strip ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
@@ -1178,6 +1221,70 @@ export function Protokoll() {
             {smallMultiplesData.map((series, i) => (
               <SmallMultipleRow key={series.marker} series={series} isLast={i === smallMultiplesData.length - 1} language={language} />
             ))}
+          </section>
+        )}
+
+        {/* ── Persönliche Insights ── */}
+        {(sideEffectStats.length > 0 || peptideEffectStats.length > 0 || peptideReviewStats.length > 0) && (
+          <section style={{ background: 'rgba(8,11,26,0.95)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: 18 }}>
+            <p style={{ fontSize: 13, fontWeight: 800, color: '#eaeefc', marginBottom: 4 }}>{t('protokoll_insights_title')}</p>
+            <p style={{ fontSize: 9, color: '#334155', fontWeight: 600, letterSpacing: '0.04em', marginBottom: 16 }}>{t('protokoll_insights_sub')}</p>
+
+            {sideEffectStats.length > 0 ? (
+              <div style={{ marginBottom: 18 }}>
+                <p style={{ fontSize: 10, fontWeight: 800, color: '#f59e0b', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>
+                  {t('protokoll_side_effects_title')}
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {sideEffectStats.map(item => (
+                    <div key={item.text} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ flex: 1, fontSize: 11, color: '#cbd5e1', lineHeight: 1.35 }}>{item.text}</span>
+                      <span style={{ fontSize: 10, fontWeight: 800, color: '#f59e0b', background: 'rgba(245,158,11,0.12)', padding: '2px 8px', borderRadius: 8 }}>
+                        ×{item.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p style={{ fontSize: 10, color: '#475569', marginBottom: 14 }}>{t('protokoll_side_effects_empty')}</p>
+            )}
+
+            {peptideEffectStats.length > 0 && (
+              <div style={{ marginBottom: peptideReviewStats.length > 0 ? 18 : 0 }}>
+                <p style={{ fontSize: 10, fontWeight: 800, color: '#8b5cf6', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>
+                  {t('protokoll_effects_by_peptide')}
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {peptideEffectStats.map(row => (
+                    <div key={row.name}>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: '#eaeefc', marginBottom: 4 }}>{row.name}</p>
+                      <p style={{ fontSize: 10, color: '#64748b' }}>
+                        {t('protokoll_effect_count', { effects: row.effects, side: row.sideEffects, severity: row.avgSeverity })}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {peptideReviewStats.length > 0 && (
+              <div>
+                <p style={{ fontSize: 10, fontWeight: 800, color: '#10b981', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>
+                  {t('protokoll_reviews_by_peptide')}
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {peptideReviewStats.map(row => (
+                    <div key={row.name} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#eaeefc' }}>{row.name}</span>
+                      <span style={{ fontSize: 10, color: '#64748b', textAlign: 'right' }}>
+                        {t('protokoll_review_stat', { rating: row.avgRating, count: row.count })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         )}
 

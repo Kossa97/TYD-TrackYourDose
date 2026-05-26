@@ -12,7 +12,10 @@ import {
   getEvidenceLabel,
   getEvidenceContext,
   getKeyFindings,
+  getLimitationsAndRisks,
+  getDefaultLimitationKey,
 } from './lab/labUtils'
+import { ResearchDisclaimer } from '../components/ui/DesignSystem'
 
 const STUDY_TYPE_STYLES: Record<string, string> = {
   clinical: 'bg-violet-500/15 text-violet-400',
@@ -64,9 +67,16 @@ export function StudyDetail() {
   const studyType     = getStudyType(article.title, article.abstract)
   const evidenceScore = getEvidenceScore(article.title, article.abstract)
   const keyFindings   = getKeyFindings(article.abstract)
+  const limitations   = getLimitationsAndRisks(article.abstract)
+  const fallbackLimitationKey = getDefaultLimitationKey(studyType, evidenceScore)
 
   return (
     <div className="max-w-2xl mx-auto space-y-5 pb-10">
+      <ResearchDisclaimer
+        compact
+        title={t('lab_disclaimer_title')}
+        body={t('lab_disclaimer_body')}
+      />
       {/* Back */}
       <button
         type="button"
@@ -143,6 +153,22 @@ export function StudyDetail() {
           </ul>
         </SectionCard>
       )}
+
+      {/* Risks & limitations */}
+      <SectionCard label={t('lab_risks_limitations')}>
+        {limitations.length > 0 ? (
+          <ul className="space-y-2">
+            {limitations.map((line, i) => (
+              <li key={i} className="flex gap-3 text-sm text-amber-200/80">
+                <span className="text-amber-400/60 shrink-0 mt-0.5">!</span>
+                <span>{line.endsWith('.') ? line : `${line}.`}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-slate-400 leading-relaxed">{t(fallbackLimitationKey)}</p>
+        )}
+      </SectionCard>
 
       {/* Evidence Analysis */}
       <SectionCard label={t('lab_evidence_analysis')}>

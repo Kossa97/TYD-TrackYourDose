@@ -1,5 +1,5 @@
 // src/pages/lab/PeptideCard.tsx
-import { ArrowRight, FlaskConical } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { PeptideEntry } from '../../services/peptideLibrary'
 import {
@@ -20,7 +20,6 @@ interface PeptideCardProps {
 export function PeptideCard({ peptide }: PeptideCardProps) {
   const navigate    = useNavigate()
   const catColors   = CATEGORY_COLORS[peptide.category]
-  const confidence  = getConfidenceLabel(peptide.evidence_score)
   const confStyle   = getConfidenceStyle(peptide.evidence_score)
 
   const openDetail = () => navigate(`/lab/library/${peptide.slug}`)

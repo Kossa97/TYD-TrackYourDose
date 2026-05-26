@@ -17,6 +17,7 @@ import { ResearchSnapshot } from './lab/ResearchSnapshot'
 import { StudyFeed } from './lab/StudyFeed'
 import { FilterSheet } from './lab/FilterSheet'
 import { LabLoader } from '../components/LabLoader'
+import { ResearchDisclaimer } from '../components/ui/DesignSystem'
 
 export function TheLab() {
   const { t } = useTranslation()
@@ -88,7 +89,12 @@ export function TheLab() {
       {/* Full-screen loader — only on initial page load */}
       {initialLoad && <LabLoader fadingOut={loaderFading} />}
 
-      <div>
+      <div className="space-y-4">
+        <ResearchDisclaimer
+          title={t('lab_disclaimer_title')}
+          body={t('lab_disclaimer_body')}
+        />
+
         {/* Cinematic Hero */}
         <LabHero onSearch={handleHeroSearch} loading={loading} />
 

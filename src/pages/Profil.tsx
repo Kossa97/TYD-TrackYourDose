@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { LogOut, Save, User, Globe, Lock, Copy, Check, FlaskConical, CalendarDays, BookHeart, Star, Languages, Bell, BellOff, Send } from 'lucide-react'
+import { LogOut, Save, User, Globe, Lock, Copy, Check, FlaskConical, CalendarDays, BookHeart, Star, Languages, Bell, BellOff, Send, ShieldCheck, FileText } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ResearchDisclaimer } from '../components/ui/DesignSystem'
 import { useTranslation } from 'react-i18next'
 import { OnboardingRestartButton } from '../components/Onboarding'
 import { LANGUAGES, applyDirection } from '../i18n'
@@ -241,6 +243,34 @@ export function Profil() {
             {t('profil_teilen_hint')}
           </p>
         )}
+      </div>
+
+      {/* ── Sicherheit & Datenschutz ── */}
+      <div className="card mb-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <ShieldCheck size={16} className="text-amber-400" />
+          <h2 className="font-semibold text-slate-300">{t('profil_safety_title')}</h2>
+        </div>
+        <ResearchDisclaimer
+          compact
+          title={t('safety_banner_title')}
+          body={t('safety_banner_body')}
+        />
+        <ul className="space-y-2 text-sm text-slate-400 leading-relaxed">
+          <li className="flex gap-2">
+            <FileText size={14} className="text-sky-400 shrink-0 mt-0.5" />
+            <span>{t('profil_safety_export')}</span>
+          </li>
+          <li className="flex gap-2">
+            <Lock size={14} className="text-sky-400 shrink-0 mt-0.5" />
+            <span>{t('profil_safety_data')}</span>
+          </li>
+          <li>{t('profil_safety_medical')}</li>
+        </ul>
+        <Link to="/protokoll" className="btn-secondary w-full flex items-center justify-center gap-2 text-sm">
+          <FileText size={15} />
+          {t('tile_protokoll')}
+        </Link>
       </div>
 
       {/* ── Account ──────────────────────────────────────────────────────── */}

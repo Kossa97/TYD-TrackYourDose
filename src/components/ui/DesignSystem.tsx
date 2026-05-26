@@ -255,6 +255,97 @@ export function MetricCard({
   )
 }
 
+export function ResearchDisclaimer({
+  compact = false,
+  title,
+  body,
+  accent = '#f59e0b',
+}: {
+  compact?: boolean
+  title: ReactNode
+  body: ReactNode
+  accent?: string
+}) {
+  return (
+    <div
+      style={{
+        padding: compact ? '10px 12px' : '14px 16px',
+        borderRadius: compact ? 16 : 20,
+        border: `1px solid ${accentAlpha(accent, '33')}`,
+        background: `linear-gradient(145deg, ${accentAlpha(accent, '12')}, rgba(8,11,26,0.92))`,
+      }}
+    >
+      <p
+        style={{
+          fontSize: compact ? '0.62rem' : '0.68rem',
+          fontWeight: 850,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: accentAlpha(accent, 'dd'),
+          marginBottom: compact ? 4 : 6,
+        }}
+      >
+        {title}
+      </p>
+      <p style={{ fontSize: compact ? '0.72rem' : '0.78rem', color: 'rgba(213,224,242,0.72)', lineHeight: 1.5 }}>
+        {body}
+      </p>
+    </div>
+  )
+}
+
+export function PrimaryButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  type = 'button',
+}: {
+  children: ReactNode
+  onClick?: () => void
+  disabled?: boolean
+  className?: string
+  type?: 'button' | 'submit'
+}) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={combineClassNames('btn-primary', className)}
+      style={{ opacity: disabled ? 0.55 : 1 }}
+    >
+      {children}
+    </button>
+  )
+}
+
+export function SecondaryButton({
+  children,
+  onClick,
+  disabled,
+  className,
+  type = 'button',
+}: {
+  children: ReactNode
+  onClick?: () => void
+  disabled?: boolean
+  className?: string
+  type?: 'button' | 'submit'
+}) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={combineClassNames('btn-secondary', className)}
+      style={{ opacity: disabled ? 0.55 : 1 }}
+    >
+      {children}
+    </button>
+  )
+}
+
 export function ActionTile({
   icon,
   label,

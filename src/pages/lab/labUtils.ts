@@ -63,3 +63,24 @@ export function getKeyFindings(abstract: string): string[] {
     .filter(s => s.length > 25)
     .slice(1, 5)
 }
+
+const LIMITATION_PATTERN =
+  /limitation|however|caution|risk|adverse|unclear|conflict|bias|warrant|preliminary|small sample|further (research|study|investigation)|not (yet )?established|inconclusive/i
+
+// Sentences that mention limits, risks, or open questions in the abstract.
+export function getLimitationsAndRisks(abstract: string): string[] {
+  if (!abstract) return []
+  return abstract
+    .split(/\.\s+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 25 && LIMITATION_PATTERN.test(s))
+    .slice(0, 4)
+}
+
+// Returns an i18n key when the abstract has no explicit limitation sentences.
+export function getDefaultLimitationKey(studyType: StudyType, evidence: EvidenceScore): string {
+  if (studyType === 'animal' || evidence === 'preclinical') return 'lab_limitation_preclinical'
+  if (evidence === 'unknown') return 'lab_limitation_unknown'
+  if (evidence === 'moderate') return 'lab_limitation_moderate'
+  return 'lab_limitation_general'
+}
