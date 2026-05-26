@@ -1,12 +1,14 @@
 // api/test-push.js
 // POST /api/test-push   Authorization: Bearer <supabase-access-token>
 
-module.exports = async function handler(req, res) {
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
+
+export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json')
 
   try {
-    // Require inside handler so crashes are caught and returned as JSON
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const webPush = require('web-push')
 
     if (req.method !== 'POST') {
@@ -112,7 +114,6 @@ module.exports = async function handler(req, res) {
     return res.status(200).end(JSON.stringify({ success: true, sent, failed }))
 
   } catch (err) {
-    // Catches require('web-push') failures and any other unexpected error
     return res.status(500).end(JSON.stringify({
       error: 'Server crash',
       hint:  String(err && err.message ? err.message : err),
