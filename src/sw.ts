@@ -16,53 +16,80 @@ self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting()
 })
 
+type PushPayload = {
+  title?: string
+  body?: string
+  tag?: string
+  url?: string
+}
+
+function parsePushPayload(event: PushEvent): PushPayload {
+  try {
+    return (event.data?.json() ?? {}) as PushPayload
+  } catch {
+    return { body: event.data?.text() ?? '' }
+  }
+}
+
+async function notifyOpenClients(payload: PushPayload, title: string, body: string) {
+  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  for (const client of clients) {
+    client.postMessage({
+      type:  'PUSH_RECEIVED',
+      title,
+      body,
+      url:   payload.url ?? '/kalender',
+    })
+  }
+}
+
 // ── Push notification handler ─────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
-  let payload: {
-    title?: string
-    body?: string
-    tag?: string
-    url?: string
-  } = {}
-
-  try {
-    payload = event.data?.json() ?? {}
-  } catch {
-    payload = { body: event.data?.text() ?? '' }
-  }
-
+  const payload = parsePushPayload(event)
   const title   = payload.title ?? 'TYD – Track Your Dose'
+  const body    = payload.body ?? ''
+
+  // iOS: weniger Optionen = zuverlässiger
   const options: NotificationOptions = {
-    body:             payload.body ?? '',
-    icon:             '/icon-192.png',
-    badge:            '/icon-192.png',
-    tag:              payload.tag ?? 'tyd-reminder',
-    data:             { url: payload.url ?? '/kalender' },
-    requireInteraction: false,
-    silent:           false,
+    body,
+    icon: '/icon-192.png',
+    tag:  payload.tag ?? 'tyd-reminder',
+    data: { url: payload.url ?? '/kalender' },
   }
 
-  event.waitUntil(self.registration.showNotification(title, options))
+  event.waitUntil(
+    (async () => {
+      await notifyOpenClients(payload, title, body)
+      try {
+        await self.registration.showNotification(title, options)
+      } catch (err) {
+        console.error('[SW] showNotification failed:', err)
+        await self.registration.showNotification(title, { body, tag: options.tag })
+      }
+    })(),
+  )
 })
 
-// ── Notification click → open / focus app ────────────────────────────────────
+// ── Notification click → open / focus app (iOS: navigate statt nur focus) ───
 self.addEventListener('notificationclick', (event) => {
+  event.preventDefault()
   event.notification.close()
-  const targetUrl = (event.notification.data?.url as string | undefined) ?? '/kalender'
+
+  const rawUrl = (event.notification.data?.url as string | undefined) ?? '/kalender'
+  const targetUrl = rawUrl.startsWith('http') ? rawUrl : new URL(rawUrl, self.location.origin).href
 
   event.waitUntil(
     self.clients
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        // Focus existing window if URL matches
         for (const client of clientList) {
-          if (client.url.includes(targetUrl) && 'focus' in client) {
-            return (client as WindowClient).focus()
+          if ('navigate' in client) {
+            return (client as WindowClient).navigate(targetUrl).then((c) => c?.focus())
           }
+          if ('focus' in client) return (client as WindowClient).focus()
         }
-        // Otherwise open a new window
         if (self.clients.openWindow) return self.clients.openWindow(targetUrl)
         return undefined
-      })
+      }),
   )
 })
