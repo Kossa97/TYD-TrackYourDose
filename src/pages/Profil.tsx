@@ -283,9 +283,10 @@ export function Profil() {
 
 function PushSettings() {
   const { user } = useAuth()
-  const { state, subscribe, unsubscribe, sendTestPush } = usePushNotifications(user)
+  const { state, subscribe, unsubscribe, reconnect, sendTestPush } = usePushNotifications(user)
   const [testing, setTesting] = useState(false)
   const [subscribing, setSubscribing] = useState(false)
+  const [reconnecting, setReconnecting] = useState(false)
 
   const handleSubscribe = async () => {
     setSubscribing(true)
@@ -300,12 +301,27 @@ function PushSettings() {
     toast.success('Notifications deaktiviert')
   }
 
+  const handleReconnect = async () => {
+    setReconnecting(true)
+    const ok = await reconnect()
+    setReconnecting(false)
+    if (ok) toast.success('Push neu verbunden – bitte erneut testen')
+    else toast.error('Neu verbinden fehlgeschlagen')
+  }
+
   const handleTest = async () => {
     setTesting(true)
     const result = await sendTestPush()
     setTesting(false)
     if (result.ok) {
-      toast.success('Test-Push gesendet! Schau auf dein Gerät.')
+      if (result.delivered) {
+        toast.success('Push angekommen! (In-App-Banner sichtbar)', { duration: 7000 })
+      } else {
+        toast.success(
+          'Server hat gesendet. Für Mitteilungszentrale: App schließen oder iPhone sperren, dann testen. Oder „Neu“ tippen.',
+          { duration: 10000 },
+        )
+      }
     } else {
       toast.error(`Test fehlgeschlagen: ${result.error ?? 'Unbekannter Fehler'}`, { duration: 6000 })
     }
@@ -315,6 +331,7 @@ function PushSettings() {
     loading:             'Wird geladen…',
     unsupported:         'Nicht unterstützt (Browser)',
     'ios-needs-install': 'App am Home-Bildschirm installieren',
+    'ios-native-app':    'Nur Home-Bildschirm-App',
     denied:              'Vom Browser blockiert',
     default:             'Nicht aktiviert',
     subscribed:          'Aktiv ✓',
@@ -323,6 +340,7 @@ function PushSettings() {
     loading:             'rgba(154,170,191,0.5)',
     unsupported:         'rgba(154,170,191,0.5)',
     'ios-needs-install': '#f59e0b',
+    'ios-native-app':    '#f59e0b',
     denied:              '#f43f5e',
     default:             'rgba(154,170,191,0.5)',
     subscribed:          '#10b981',
@@ -374,16 +392,22 @@ function PushSettings() {
           </div>
         )}
 
+
         {state === 'ios-native-app' && (
           <div style={{
             padding: '10px 12px', borderRadius: 12, marginBottom: 10,
             background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)',
           }}>
             <p style={{ fontSize: '0.72rem', color: 'rgba(245,158,11,0.9)', lineHeight: 1.5 }}>
-              In der installierten iOS-App (App Store / Xcode) gibt es keine Mitteilungszentrale über Web-Push.
-              Öffne <strong>tyd.app in Safari</strong>, tippe <strong>Teilen → Zum Home-Bildschirm</strong> und nutze diese Icon-App für Erinnerungen.
+              Store-/Xcode-App: keine Web-Push-Mitteilungszentrale. Safari → <strong>Zum Home-Bildschirm</strong> → Icon-App nutzen.
             </p>
           </div>
+        )}
+
+        {state === 'subscribed' && (
+          <p style={{ fontSize: '0.65rem', color: 'rgba(154,170,191,0.55)', lineHeight: 1.45, marginBottom: 10 }}>
+            iPhone: Einstellungen → Mitteilungen → TYD erlauben. Test mit geschlossener App oder gesperrtem Display.
+          </p>
         )}
 
         {/* Action buttons */}
@@ -420,6 +444,18 @@ function PushSettings() {
               >
                 <Send size={14} />
                 {testing ? 'Sende…' : 'Test senden'}
+              </button>
+              <button
+                onClick={handleReconnect}
+                disabled={reconnecting}
+                style={{
+                  padding: '10px 12px', borderRadius: 12,
+                  background: 'rgba(0,204,245,0.08)', border: '1px solid rgba(0,204,245,0.22)',
+                  color: '#00ccf5', fontSize: '0.7rem', fontWeight: 800,
+                  opacity: reconnecting ? 0.5 : 1,
+                }}
+              >
+                {reconnecting ? '…' : 'Neu'}
               </button>
               <button
                 onClick={handleUnsubscribe}

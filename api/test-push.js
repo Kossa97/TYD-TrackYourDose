@@ -20,7 +20,7 @@ function readJsonBody(req) {
   if (req.body !== undefined && req.body !== null) {
     return typeof req.body === 'string' ? JSON.parse(req.body) : req.body
   }
-  const chunks = []
+  return {}
 }
 
 export default async function handler(req, res) {
