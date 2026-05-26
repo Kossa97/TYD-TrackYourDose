@@ -11,8 +11,17 @@ module.exports = async function handler(req, res) {
   if (!token) return res.status(401).json({ error: 'No token' })
 
   const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_EMAIL, SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env
-  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-    return res.status(500).json({ error: 'Missing environment variables' })
+  const missing = [
+    !VAPID_PUBLIC_KEY    && 'VAPID_PUBLIC_KEY',
+    !VAPID_PRIVATE_KEY   && 'VAPID_PRIVATE_KEY',
+    !SUPABASE_URL        && 'SUPABASE_URL',
+    !SUPABASE_SERVICE_KEY && 'SUPABASE_SERVICE_KEY',
+  ].filter(Boolean)
+  if (missing.length) {
+    return res.status(500).json({
+      error: 'Missing environment variables',
+      hint:  `Fehlend in Vercel: ${missing.join(', ')}`,
+    })
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)

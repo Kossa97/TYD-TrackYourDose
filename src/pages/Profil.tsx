@@ -302,10 +302,13 @@ function PushSettings() {
 
   const handleTest = async () => {
     setTesting(true)
-    const ok = await sendTestPush()
+    const result = await sendTestPush()
     setTesting(false)
-    if (ok) toast.success('Test-Push gesendet! Schau auf dein Gerät.')
-    else toast.error('Test fehlgeschlagen – prüfe Vercel-Env-Vars & Supabase-Tabelle')
+    if (result.ok) {
+      toast.success('Test-Push gesendet! Schau auf dein Gerät.')
+    } else {
+      toast.error(`Test fehlgeschlagen: ${result.error ?? 'Unbekannter Fehler'}`, { duration: 6000 })
+    }
   }
 
   const stateLabels: Record<string, string> = {
