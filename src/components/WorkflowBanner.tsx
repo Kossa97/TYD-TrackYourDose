@@ -1,18 +1,21 @@
 import { useEffect, useState, type CSSProperties, type MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Archive, Beaker, CalendarDays, Gauge, Plus, X, type LucideIcon } from 'lucide-react'
+import { Archive, Beaker, CalendarDays, Gauge, X, type LucideIcon } from 'lucide-react'
+
+const STOCK_STEP_KEY = 'home_flow_stock'
 
 const WORKFLOW_STEPS: { icon: LucideIcon; labelKey: string; label: string; descKey: string; desc: string }[] = [
-  { icon: Archive, labelKey: 'home_flow_stock', label: 'Einlagern', descKey: 'home_flow_stock_desc', desc: 'Vials & Batch sichern' },
+  { icon: Archive, labelKey: STOCK_STEP_KEY, label: 'Einlagern', descKey: 'home_flow_stock_desc', desc: 'Vials & Batch sichern' },
   { icon: Beaker, labelKey: 'home_flow_mix', label: 'Anmischen', descKey: 'home_flow_mix_desc', desc: 'Rekonstitution dokumentieren' },
   { icon: CalendarDays, labelKey: 'home_flow_cycle', label: 'Zyklus', descKey: 'home_flow_cycle_desc', desc: 'Frequenz & Reminder planen' },
   { icon: Gauge, labelKey: 'home_flow_track', label: 'Tracken', descKey: 'home_flow_track_desc', desc: 'Dosen, Effekte, Reports' },
 ]
 
-const panelBase: CSSProperties = {
+const panelStyle: CSSProperties = {
   background: 'linear-gradient(145deg, rgba(9,14,34,0.94), rgba(4,7,18,0.96))',
   borderRadius: 24,
+  border: '1px solid rgba(255,255,255,0.08)',
   boxShadow: '0 18px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
   padding: 14,
   position: 'relative',
@@ -26,6 +29,18 @@ const labelStyle: CSSProperties = {
   letterSpacing: '0.13em',
   textTransform: 'uppercase',
   color: 'rgba(154,170,191,0.52)',
+}
+
+const iconBoxBase: CSSProperties = {
+  width: 36,
+  height: 36,
+  borderRadius: 14,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'rgba(0,204,245,0.09)',
+  border: '1px solid rgba(0,204,245,0.18)',
+  color: '#00ccf5',
 }
 
 function storageKey(userId: string) {
@@ -60,142 +75,124 @@ export function WorkflowBanner({ peptideCount, userId }: { peptideCount: number;
     setSessionDismissed(true)
   }
 
-  const openInventar = () => {
-    if (isNewUser) navigate('/peptide?tab=inventar')
-  }
-
-  const panelStyle: CSSProperties = {
-    ...panelBase,
-    border: isNewUser ? '1px solid rgba(0,204,245,0.55)' : '1px solid rgba(255,255,255,0.08)',
-    animation: isNewUser ? 'tyd-workflow-glow 2.2s ease-in-out infinite' : undefined,
-    cursor: isNewUser ? 'pointer' : 'default',
-  }
-
-  const inner = (
-    <>
-      <div
-        style={{ position: 'absolute', top: 10, right: 10, zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}
-        onClick={stopNav}
-      >
-        <button
-          type="button"
-          onClick={dismiss}
-          aria-label={String(t('close'))}
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: 10,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            color: 'rgba(154,170,191,0.65)',
-          }}
-        >
-          <X size={14} />
-        </button>
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: '0.58rem',
-            color: 'rgba(154,170,191,0.72)',
-            cursor: 'pointer',
-            userSelect: 'none',
-            maxWidth: 120,
-            lineHeight: 1.3,
-            textAlign: 'right',
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={dontShowAgain}
-            onChange={e => setDontShowAgain(e.target.checked)}
-            style={{ width: 13, height: 13, accentColor: '#00ccf5', flexShrink: 0 }}
-          />
-          {t('home_workflow_hide', { defaultValue: 'Nicht mehr anzeigen' })}
-        </label>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12, paddingRight: 36 }}>
-        <div>
-          <p style={labelStyle}>{t('home_workflow', { defaultValue: 'Workflow' })}</p>
-          <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
-            {t('home_workflow_title', { defaultValue: 'Vom Vial zum Report' })}
-          </h2>
-        </div>
-        {!isNewUser && (
-          <button
-            type="button"
-            onClick={e => {
-              stopNav(e)
-              navigate('/peptide?tab=inventar')
-            }}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#00ccf5', fontSize: '0.7rem', fontWeight: 800, flexShrink: 0 }}
-          >
-            {t('add')} <Plus size={13} />
-          </button>
-        )}
-      </div>
-
-      <div className="grid grid-cols-4 gap-2" onClick={stopNav}>
-        {WORKFLOW_STEPS.map((step, index) => (
-          <div key={step.labelKey} style={{ position: 'relative' }}>
-            {index < WORKFLOW_STEPS.length - 1 && (
-              <div style={{ position: 'absolute', top: 18, left: '58%', right: '-42%', height: 1, background: 'linear-gradient(90deg, rgba(0,204,245,0.35), rgba(0,204,245,0))' }} />
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, textAlign: 'center', position: 'relative' }}>
-              <div style={{
-                width: 36,
-                height: 36,
-                borderRadius: 14,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(0,204,245,0.09)',
-                border: '1px solid rgba(0,204,245,0.18)',
-                color: '#00ccf5',
-              }}>
-                <step.icon size={16} />
-              </div>
-              <div>
-                <p style={{ fontSize: '0.68rem', color: '#eaeefc', fontWeight: 800, lineHeight: 1.2 }}>
-                  {t(step.labelKey, { defaultValue: step.label })}
-                </p>
-                <p style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.48)', lineHeight: 1.25, marginTop: 2 }}>
-                  {t(step.descKey, { defaultValue: step.desc })}
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </>
-  )
-
   return (
     <>
       <style>{`
-        @keyframes tyd-workflow-glow {
+        @keyframes tyd-stock-step-glow {
           0%, 100% {
-            box-shadow: 0 0 0 1px rgba(0,204,245,0.35), 0 0 16px rgba(0,204,245,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+            box-shadow: 0 0 0 1px rgba(0,204,245,0.4), 0 0 14px rgba(0,204,245,0.25);
           }
           50% {
-            box-shadow: 0 0 0 1px rgba(0,204,245,0.85), 0 0 32px rgba(0,204,245,0.45), inset 0 1px 0 rgba(255,255,255,0.05);
+            box-shadow: 0 0 0 1px rgba(0,204,245,0.95), 0 0 26px rgba(0,204,245,0.55);
           }
         }
       `}</style>
 
       <section>
-        {isNewUser ? (
-          <button type="button" onClick={openInventar} style={panelStyle}>
-            {inner}
-          </button>
-        ) : (
-          <div style={panelStyle}>{inner}</div>
-        )}
+        <div style={panelStyle}>
+          <div
+            style={{ position: 'absolute', top: 10, right: 10, zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}
+            onClick={stopNav}
+          >
+            <button
+              type="button"
+              onClick={dismiss}
+              aria-label={String(t('close'))}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.10)',
+                color: 'rgba(154,170,191,0.65)',
+              }}
+            >
+              <X size={14} />
+            </button>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: '0.58rem',
+                color: 'rgba(154,170,191,0.72)',
+                cursor: 'pointer',
+                userSelect: 'none',
+                maxWidth: 120,
+                lineHeight: 1.3,
+                textAlign: 'right',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={dontShowAgain}
+                onChange={e => setDontShowAgain(e.target.checked)}
+                style={{ width: 13, height: 13, accentColor: '#00ccf5', flexShrink: 0 }}
+              />
+              {t('home_workflow_hide', { defaultValue: 'Nicht mehr anzeigen' })}
+            </label>
+          </div>
+
+          <div style={{ marginBottom: 12, paddingRight: 36 }}>
+            <p style={labelStyle}>{t('home_workflow', { defaultValue: 'Workflow' })}</p>
+            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+              {t('home_workflow_title', { defaultValue: 'Vom Vial zum Report' })}
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-4 gap-2">
+            {WORKFLOW_STEPS.map((step, index) => {
+              const highlightStock = isNewUser && step.labelKey === STOCK_STEP_KEY
+              const Icon = step.icon
+
+              return (
+                <div key={step.labelKey} style={{ position: 'relative' }}>
+                  {index < WORKFLOW_STEPS.length - 1 && (
+                    <div style={{ position: 'absolute', top: 18, left: '58%', right: '-42%', height: 1, background: 'linear-gradient(90deg, rgba(0,204,245,0.35), rgba(0,204,245,0))' }} />
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, textAlign: 'center', position: 'relative' }}>
+                    {highlightStock ? (
+                      <button
+                        type="button"
+                        onClick={() => navigate('/peptide?tab=inventar')}
+                        aria-label={String(t('home_flow_stock', { defaultValue: 'Einlagern' }))}
+                        style={{
+                          ...iconBoxBase,
+                          cursor: 'pointer',
+                          animation: 'tyd-stock-step-glow 2.2s ease-in-out infinite',
+                          background: 'rgba(0,204,245,0.16)',
+                          border: '1px solid rgba(0,204,245,0.55)',
+                        }}
+                      >
+                        <Icon size={16} />
+                      </button>
+                    ) : (
+                      <div style={iconBoxBase}>
+                        <Icon size={16} />
+                      </div>
+                    )}
+                    <div>
+                      <p style={{
+                        fontSize: '0.68rem',
+                        color: highlightStock ? '#00ccf5' : '#eaeefc',
+                        fontWeight: 800,
+                        lineHeight: 1.2,
+                      }}>
+                        {t(step.labelKey, { defaultValue: step.label })}
+                      </p>
+                      <p style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.48)', lineHeight: 1.25, marginTop: 2 }}>
+                        {t(step.descKey, { defaultValue: step.desc })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </section>
     </>
   )
