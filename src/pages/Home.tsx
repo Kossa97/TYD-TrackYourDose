@@ -7,13 +7,15 @@ import {
   Microscope, Library, Droplets, Heart, FileText, type LucideIcon,
   Activity, ArrowUpRight, Beaker, CheckCircle2, ClipboardList,
   Clock3, Flame, Gauge, Package, Plus, ShieldCheck, Sparkles,
-  TrendingUp, Syringe,
+  Syringe,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { DailyLogCard } from '../components/DailyLogCard'
 import { wellbeingSummary, type DailyLogRow } from '../lib/dailyLogs'
-import { addDays, differenceInCalendarDays, format, parseISO, subDays } from 'date-fns'
+import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
+import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
+import { format, parseISO, subDays } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
 
@@ -79,7 +81,6 @@ interface OverviewStats {
   peptides: number
   inventoryVials: number
   loggedToday: number
-  expiringSoon: number
   lowStock: number
 }
 
@@ -88,7 +89,6 @@ const EMPTY_OVERVIEW: OverviewStats = {
   peptides: 0,
   inventoryVials: 0,
   loggedToday: 0,
-  expiringSoon: 0,
   lowStock: 0,
 }
 
@@ -219,6 +219,7 @@ export function Home() {
   const [streak,      setStreak]      = useState(0)
   const [overview, setOverview] = useState<OverviewStats>(EMPTY_OVERVIEW)
   const [dailyLogToday, setDailyLogToday] = useState<DailyLogRow | null>(null)
+  const [expiryAlerts, setExpiryAlerts] = useState<PeptideExpiryAlert[]>([])
 
   // Rotate study daily
   const todayStudy = TODAY_STUDY
@@ -238,7 +239,7 @@ export function Home() {
             .eq('user_id', user!.id).eq('taken', true)
             .order('logged_at', { ascending: false }),
           supabase.from('peptides')
-            .select('id, vials_in_stock, reconstitution_date, expiry_days')
+            .select('id, name, vials_in_stock, reconstitution_date, expiry_days')
             .eq('user_id', user!.id),
           supabase.from('inventory_items')
             .select('id, vials_count')
@@ -280,26 +281,19 @@ export function Home() {
         while (takenDates.has(format(d, 'yyyy-MM-dd'))) { s++; d = subDays(d, 1) }
         setStreak(s)
 
-        const expiringSoon = (peptideData ?? []).filter((p) => {
-          if (!p.reconstitution_date || !p.expiry_days) return false
-          const daysLeft = differenceInCalendarDays(
-            addDays(parseISO(p.reconstitution_date), Number(p.expiry_days)),
-            new Date()
-          )
-          return daysLeft >= 0 && daysLeft <= 7
-        }).length
+        setExpiryAlerts(getPeptideExpiryAlerts(peptideData ?? []))
 
         setOverview({
           activeCycles: (cycleData ?? []).length,
           peptides: (peptideData ?? []).length,
           inventoryVials: (inventoryData ?? []).reduce((sum, item) => sum + Number(item.vials_count ?? 0), 0),
           loggedToday: (logData ?? []).filter((log) => format(parseISO(log.logged_at), 'yyyy-MM-dd') === todayKey).length,
-          expiringSoon,
           lowStock: (peptideData ?? []).filter((p) => p.vials_in_stock != null && Number(p.vials_in_stock) <= 1).length,
         })
       } catch {
         setOverview(EMPTY_OVERVIEW)
         setDailyLogToday(null)
+        setExpiryAlerts([])
       }
     }
     load()
@@ -422,6 +416,8 @@ export function Home() {
         </div>
       </section>
 
+      <ExpiryWarningBanners alerts={expiryAlerts} />
+
       <section>
         <div style={sectionHeaderStyle}>
           <div>
@@ -487,14 +483,6 @@ export function Home() {
               : String(t('home_stock_ok', { defaultValue: 'Vorrat erfasst' }))}
             accent={overview.lowStock > 0 ? '#f59e0b' : '#10b981'}
             onClick={() => navigate('/peptide?tab=inventar')}
-          />
-          <InsightCard
-            icon={TrendingUp}
-            label={String(t('home_expiry_watch', { defaultValue: 'Ablauf-Watch' }))}
-            value={String(overview.expiringSoon)}
-            hint={String(t('home_expiry_hint', { defaultValue: 'in 7 Tagen fällig' }))}
-            accent={overview.expiringSoon > 0 ? '#f43f5e' : '#8b5cf6'}
-            onClick={() => navigate('/peptide')}
           />
           <InsightCard
             icon={Sparkles}

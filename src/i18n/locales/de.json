@@ -743,5 +743,8 @@
   "home_befinden_section_sub": "Kurz loggen — im Protokoll mit Zyklen vergleichen",
   "home_befinden_stat": "Befinden",
   "home_befinden_open": "Noch offen",
-  "home_befinden_hint_avg": "Ø {{avg}}/5 · {{count}}/3"
+  "home_befinden_hint_avg": "Ø {{avg}}/5 · {{count}}/3",
+  "expiry_banner_soon": "⚠️ {{name}} läuft in {{days}} Tagen ab – jetzt neu rekonstitutieren",
+  "expiry_banner_today": "⚠️ {{name}} läuft heute ab – jetzt neu rekonstitutieren",
+  "expiry_banner_expired": "❌ {{name}} ist abgelaufen – bitte neu rekonstitutieren"
 }
