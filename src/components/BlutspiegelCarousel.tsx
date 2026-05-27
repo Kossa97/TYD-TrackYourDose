@@ -92,70 +92,6 @@ function formatPeakDisplay(peakLabel: string): string {
   return `Peak ${peakLabel}`
 }
 
-// ── SVG: Arc-Gauge ──────────────────────────────────────────────────────────
-
-function ArcGauge({ level, accent, size = 132 }: { level: number; accent: string; size?: number }) {
-  const stroke = size <= 100 ? 7 : 9
-  const valueFontSize = size <= 100 ? 20 : 26
-  const unitFontSize = size <= 100 ? 9 : 11
-  const valueYOffset = size <= 100 ? -3 : -4
-  const unitYOffset = size <= 100 ? 13 : 16
-  const r = (size - stroke) / 2
-  const cx = size / 2
-  const cy = size / 2
-  const circumference = 2 * Math.PI * r
-  const clamped = Math.min(100, Math.max(0, level))
-  const offset = circumference * (1 - clamped / 100)
-
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden>
-      <circle
-        cx={cx}
-        cy={cy}
-        r={r}
-        fill="none"
-        stroke="rgba(255,255,255,0.08)"
-        strokeWidth={stroke}
-      />
-      <circle
-        cx={cx}
-        cy={cy}
-        r={r}
-        fill="none"
-        stroke={accent}
-        strokeWidth={stroke}
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        transform={`rotate(-90 ${cx} ${cy})`}
-        style={{ filter: `drop-shadow(0 0 8px ${accent}55)` }}
-      />
-      <text
-        x={cx}
-        y={cy + valueYOffset}
-        textAnchor="middle"
-        fill="#f8fbff"
-        fontSize={valueFontSize}
-        fontWeight="900"
-        fontFamily="system-ui, sans-serif"
-      >
-        {Math.round(clamped)}
-      </text>
-      <text
-        x={cx}
-        y={cy + unitYOffset}
-        textAnchor="middle"
-        fill="rgba(154,170,191,0.62)"
-        fontSize={unitFontSize}
-        fontWeight="700"
-        fontFamily="system-ui, sans-serif"
-      >
-        %
-      </text>
-    </svg>
-  )
-}
-
 // ── SVG: Sparkline ──────────────────────────────────────────────────────────
 
 function Sparkline({
@@ -212,29 +148,64 @@ function Sparkline({
 }
 
 const TREND_DISPLAY: Record<BlutspiegelTrend, { label: string; color: string }> = {
-  rising: { label: '↑ Steigend', color: '#10b981' },
-  falling: { label: '↓ Fallend', color: '#f43f5e' },
-  stable: { label: '→ Stabil', color: '#94a3b8' },
+  rising: { label: '↑ STEIGEND', color: '#10b981' },
+  falling: { label: '↓ FALLEND', color: '#f43f5e' },
+  stable: { label: '→ STABIL', color: '#94a3b8' },
 }
 
-function TrendLabel({ trend }: { trend: BlutspiegelTrend }) {
+function LevelDisplay({
+  value,
+  accent,
+  unit,
+  trend,
+}: {
+  value: number
+  accent: string
+  unit: string
+  trend: BlutspiegelTrend
+}) {
   const { label, color } = TREND_DISPLAY[trend]
+  const clamped = Math.min(100, Math.max(0, value))
+
   return (
-    <p
-      style={{
-        marginTop: 6,
-        fontSize: '0.58rem',
-        fontWeight: 700,
-        fontFamily: 'monospace',
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        color,
-        textAlign: 'center',
-      }}
-      aria-label={label}
-    >
-      {label}
-    </p>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div>
+        <p
+          style={{
+            fontSize: 48,
+            fontWeight: 700,
+            color: accent,
+            lineHeight: 1,
+            letterSpacing: '-0.03em',
+          }}
+        >
+          {clamped.toFixed(2)}
+        </p>
+        <p
+          style={{
+            fontSize: '0.62rem',
+            color: 'rgba(154,170,191,0.62)',
+            marginTop: 4,
+          }}
+        >
+          % {unit}
+        </p>
+      </div>
+      <p
+        style={{
+          fontSize: '0.58rem',
+          fontWeight: 700,
+          fontFamily: 'monospace',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color,
+          whiteSpace: 'nowrap',
+        }}
+        aria-label={label}
+      >
+        {label}
+      </p>
+    </div>
   )
 }
 
@@ -283,7 +254,7 @@ function LiveIndicator() {
 // ── Karte ───────────────────────────────────────────────────────────────────
 
 function BlutspiegelCard({ card }: { card: CarouselCard }) {
-  const { accent, level, peptideName, profileName, category } = card
+  const { accent, level, peptideName, category, unit } = card
 
   return (
     <div
@@ -323,17 +294,16 @@ function BlutspiegelCard({ card }: { card: CarouselCard }) {
               {peptideName}
             </p>
             <span style={categoryBadgeStyle(accent)}>{CATEGORY_LABEL[category]}</span>
-            <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.55)', marginTop: 6 }}>
-              {profileName}
-            </p>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 14 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <ArcGauge level={level.currentLevel} accent={accent} />
-            <TrendLabel trend={level.trend} />
-          </div>
+          <LevelDisplay
+            value={level.currentLevel}
+            accent={accent}
+            unit={unit}
+            trend={level.trend}
+          />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
             <p style={{ fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.52)' }}>
               Verlauf
@@ -356,10 +326,14 @@ function BlutspiegelCard({ card }: { card: CarouselCard }) {
 
       {/* Desktop (≥ sm) */}
       <div className="relative hidden sm:grid sm:grid-cols-3 sm:min-h-[200px]">
-        <div className="flex flex-col items-center justify-center px-4 py-4">
-          <ArcGauge level={level.currentLevel} accent={accent} size={100} />
-          <TrendLabel trend={level.trend} />
-          <span style={{ ...categoryBadgeStyle(accent), marginTop: 10 }}>{CATEGORY_LABEL[category]}</span>
+        <div className="flex flex-col items-center justify-center px-4 py-4 gap-3">
+          <LevelDisplay
+            value={level.currentLevel}
+            accent={accent}
+            unit={unit}
+            trend={level.trend}
+          />
+          <span style={categoryBadgeStyle(accent)}>{CATEGORY_LABEL[category]}</span>
         </div>
 
         <div className="flex flex-col border-l border-white/[0.06] px-5 py-4 min-h-[200px]">
@@ -397,9 +371,6 @@ function BlutspiegelCard({ card }: { card: CarouselCard }) {
               }}
             >
               {peptideName}
-            </p>
-            <p style={{ fontSize: '0.68rem', color: 'rgba(154,170,191,0.55)', marginTop: 8 }}>
-              {profileName}
             </p>
           </div>
           <p
