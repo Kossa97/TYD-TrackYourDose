@@ -3,7 +3,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ReferenceLine, ResponsiveContainer,
 } from 'recharts'
-import { Activity, ChevronDown, Info } from 'lucide-react'
+import { Activity, CalendarDays, ChevronDown, Info } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -21,11 +21,30 @@ interface PkProfile {
   category: string
 }
 
-interface ActiveCycle {
+interface ProtocolCycle {
+  id: string
   peptide_id: string
   dose: number
   unit: string
-  peptides: { name: string }
+  method: string
+  peptides: {
+    name: string
+    pk_profile_id: string | null
+  } | null
+}
+
+function normalizeUnit(unit: string): 'mg' | 'mcg' | 'IU' {
+  const u = unit.trim().toLowerCase()
+  if (u === 'mg') return 'mg'
+  if (u === 'iu') return 'IU'
+  return 'mcg'
+}
+
+function methodToRoute(method: string): 'SC' | 'IM' | 'oral' {
+  const m = method.trim().toLowerCase()
+  if (m.includes('intramuskul')) return 'IM'
+  if (m === 'oral' || m.includes('oral')) return 'oral'
+  return 'SC'
 }
 
 // ── PK-Mathematik ─────────────────────────────────────────────────────────
@@ -263,7 +282,10 @@ export function BlutspiegelSimulation() {
   const { user } = useAuth()
 
   const [pkProfiles, setPkProfiles]   = useState<PkProfile[]>([])
-  const [activeCycles, setActiveCycles] = useState<ActiveCycle[]>([])
+  const [protocolCycles, setProtocolCycles] = useState<ProtocolCycle[]>([])
+  const [protocolLoading, setProtocolLoading] = useState(false)
+  const [protocolOpen, setProtocolOpen] = useState(false)
+  const [selectedProtocolCycleId, setSelectedProtocolCycleId] = useState<string | null>(null)
   const [selectedPkId, setSelectedPkId] = useState('')
   const [dose, setDose]               = useState('')
   const [unit, setUnit]               = useState<'mg' | 'mcg' | 'IU'>('mcg')
@@ -285,13 +307,36 @@ export function BlutspiegelSimulation() {
 
   useEffect(() => {
     if (!user) return
+    setProtocolLoading(true)
     supabase
       .from('cycles')
-      .select('peptide_id, dose, unit, peptides(name)')
+      .select('id, peptide_id, dose, unit, method, peptides ( name, pk_profile_id )')
       .eq('user_id', user.id)
       .eq('active', true)
-      .then(({ data }) => setActiveCycles((data as unknown as ActiveCycle[]) ?? []))
+      .then(({ data }) => {
+        setProtocolCycles((data as unknown as ProtocolCycle[]) ?? [])
+        setProtocolLoading(false)
+      })
   }, [user])
+
+  const linkedProtocolCycles = useMemo(
+    () => protocolCycles.filter(c => c.peptides?.pk_profile_id),
+    [protocolCycles],
+  )
+  const unlinkedProtocolCycles = useMemo(
+    () => protocolCycles.filter(c => !c.peptides?.pk_profile_id),
+    [protocolCycles],
+  )
+
+  const applyProtocolCycle = useCallback((cycle: ProtocolCycle) => {
+    const pkId = cycle.peptides?.pk_profile_id
+    if (!pkId) return
+    setSelectedPkId(pkId)
+    setDose(String(cycle.dose))
+    setUnit(normalizeUnit(cycle.unit))
+    setRoute(methodToRoute(cycle.method))
+    setSelectedProtocolCycleId(cycle.id)
+  }, [])
 
   const selectedProfile = useMemo(
     () => pkProfiles.find(p => p.id === selectedPkId) ?? null,
@@ -302,11 +347,11 @@ export function BlutspiegelSimulation() {
   useEffect(() => {
     if (!selectedProfile) return
     const profileNames = [selectedProfile.name, ...selectedProfile.aliases].map(n => n.toLowerCase())
-    const match = activeCycles.find(c =>
+    const match = protocolCycles.find(c =>
       profileNames.includes(c.peptides?.name?.toLowerCase() ?? '')
     )
-    if (match) { setDose(String(match.dose)); setUnit(match.unit as 'mg' | 'mcg' | 'IU') }
-  }, [selectedProfile, activeCycles])
+    if (match) { setDose(String(match.dose)); setUnit(normalizeUnit(match.unit)) }
+  }, [selectedProfile, protocolCycles])
 
   const startSimulation = useCallback(() => {
     if (!selectedProfile) return
@@ -386,6 +431,88 @@ export function BlutspiegelSimulation() {
                 Die Werte sind Schätzungen basierend auf wissenschaftlichen Durchschnittswerten. Individuelle Faktoren wie Körpergewicht, Stoffwechsel und Injektionstechnik beeinflussen die tatsächlichen Werte.
               </p>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Aus meinem Protokoll simulieren */}
+      <div style={{ ...PANEL, padding: protocolOpen ? 16 : '12px 16px' }}>
+        <button
+          type="button"
+          onClick={() => setProtocolOpen(v => !v)}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+            background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#00ccf5',
+            fontSize: '0.82rem', fontWeight: 800, fontFamily: 'inherit',
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <CalendarDays size={16} />
+            Aus meinem Protokoll simulieren
+          </span>
+          <ChevronDown
+            size={18}
+            style={{ transition: 'transform 0.2s', transform: protocolOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          />
+        </button>
+        {protocolOpen && (
+          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {protocolLoading ? (
+              <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.5)' }}>Lädt aktive Zyklen …</p>
+            ) : protocolCycles.length === 0 ? (
+              <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.5)', lineHeight: 1.5 }}>
+                Noch keine aktiven Zyklen mit PK-Profil
+              </p>
+            ) : (
+              <>
+                {linkedProtocolCycles.length === 0 && (
+                  <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.5)', lineHeight: 1.5, marginBottom: 4 }}>
+                    Noch keine aktiven Zyklen mit PK-Profil
+                  </p>
+                )}
+                {linkedProtocolCycles.map(cycle => {
+                  const selected = selectedProtocolCycleId === cycle.id
+                  return (
+                    <button
+                      key={cycle.id}
+                      type="button"
+                      onClick={() => applyProtocolCycle(cycle)}
+                      style={{
+                        width: '100%', textAlign: 'left', padding: '12px 14px', borderRadius: 14,
+                        background: selected ? 'rgba(0,204,245,0.10)' : 'rgba(255,255,255,0.03)',
+                        border: selected ? '1px solid rgba(0,204,245,0.35)' : '1px solid rgba(255,255,255,0.08)',
+                        cursor: 'pointer', fontFamily: 'inherit', transition: 'border-color 0.15s, background 0.15s',
+                      }}
+                    >
+                      <p style={{ fontSize: '0.88rem', fontWeight: 800, color: '#eaeefc', marginBottom: 2 }}>
+                        {cycle.peptides?.name ?? 'Peptid'}
+                      </p>
+                      <p style={{ fontSize: '0.78rem', color: 'rgba(0,204,245,0.85)', fontWeight: 700 }}>
+                        {cycle.dose} {cycle.unit}
+                      </p>
+                    </button>
+                  )
+                })}
+                {unlinkedProtocolCycles.map(cycle => (
+                  <div
+                    key={cycle.id}
+                    style={{
+                      padding: '12px 14px', borderRadius: 14,
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.05)',
+                      opacity: 0.5,
+                    }}
+                  >
+                    <p style={{ fontSize: '0.88rem', fontWeight: 700, color: 'rgba(234,238,252,0.55)', marginBottom: 2 }}>
+                      {cycle.peptides?.name ?? 'Peptid'} · {cycle.dose} {cycle.unit}
+                    </p>
+                    <p style={{ fontSize: '0.68rem', color: 'rgba(154,170,191,0.55)', lineHeight: 1.45 }}>
+                      Kein PK-Profil — beim Einlagern Substanz aus der Liste wählen
+                    </p>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         )}
       </div>
