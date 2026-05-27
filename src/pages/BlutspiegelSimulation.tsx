@@ -4,6 +4,7 @@ import {
   ReferenceLine, ResponsiveContainer,
 } from 'recharts'
 import { Activity, CalendarDays, ChevronDown, Info } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -280,6 +281,8 @@ const METRIC_EXPLANATIONS = {
 
 export function BlutspiegelSimulation() {
   const { user } = useAuth()
+  const [searchParams] = useSearchParams()
+  const pkFromUrl = searchParams.get('pk')
 
   const [pkProfiles, setPkProfiles]   = useState<PkProfile[]>([])
   const [protocolCycles, setProtocolCycles] = useState<ProtocolCycle[]>([])
@@ -301,9 +304,14 @@ export function BlutspiegelSimulation() {
     supabase.from('pk_profiles').select('*').order('name').then(({ data }) => {
       const profiles = (data as PkProfile[]) ?? []
       setPkProfiles(profiles)
-      if (profiles.length > 0) setSelectedPkId(profiles[0].id)
+      if (pkFromUrl && profiles.some(p => p.id === pkFromUrl)) {
+        setSelectedPkId(pkFromUrl)
+        setProtocolOpen(true)
+      } else if (profiles.length > 0) {
+        setSelectedPkId(profiles[0].id)
+      }
     })
-  }, [])
+  }, [pkFromUrl])
 
   useEffect(() => {
     if (!user) return

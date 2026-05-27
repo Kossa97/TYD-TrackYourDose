@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import {
-  Plus, Trash2, Pencil, FlaskConical,
+  Plus, Trash2, Pencil, FlaskConical, Activity,
   CalendarDays, ChevronDown, ChevronUp,
   TrendingUp, Search, Bell, Check,
   Package, FileUp, Droplets, X, FileText, ExternalLink,
@@ -405,6 +405,7 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
 export function Peptide() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   // ── Bestätigungs-Dialoge ──────────────────────────────────────────────────
   const [verwerfenTarget,      setVerwerfenTarget]      = useState<Peptide | null>(null)
@@ -2356,6 +2357,25 @@ export function Peptide() {
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('notizen_section')}</p>
                     <p className="text-slate-300 text-sm bg-slate-800/60 rounded-xl px-4 py-3 whitespace-pre-wrap">{p.notes}</p>
                   </div>
+                )}
+
+                {p.pk_profile_id && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInfoPeptide(null)
+                      navigate(`/simulation?pk=${p.pk_profile_id}`)
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-colors"
+                    style={{
+                      color: '#00ccf5',
+                      background: 'rgba(0,204,245,0.12)',
+                      border: '1px solid rgba(0,204,245,0.32)',
+                    }}
+                  >
+                    <Activity size={16} />
+                    Blutspiegel simulieren
+                  </button>
                 )}
               </div>
 
