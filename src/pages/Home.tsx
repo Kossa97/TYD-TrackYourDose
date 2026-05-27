@@ -12,6 +12,7 @@ import {
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { DailyLogCard } from '../components/DailyLogCard'
+import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
 import { wellbeingSummary, type DailyLogRow } from '../lib/dailyLogs'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
@@ -425,6 +426,13 @@ export function Home() {
             <ChevronRight size={16} color="rgba(255,255,255,0.35)" />
           </div>
         </div>
+      </section>
+
+      <section>
+        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'monospace', marginBottom: 8 }}>
+          Live-Blutspiegel
+        </p>
+        <BlutspiegelCarousel />
       </section>
 
       <ExpiryWarningBanners alerts={expiryAlerts} />
