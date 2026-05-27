@@ -729,5 +729,12 @@
   "protokoll_reviews_by_peptide": "Subjektive Bewertungen",
   "protokoll_effect_count": "{{effects}} Wirkungen · {{side}} Nebenwirkungen · Ø Stärke {{severity}}",
   "protokoll_review_stat": "Ø {{rating}}★ · {{count}} Bewertungen",
-  "protokoll_research_export_hint": "PDF-Export = Research-Protokoll für deine Dokumentation"
+  "protokoll_research_export_hint": "PDF-Export = Research-Protokoll für deine Dokumentation",
+  "daily_log_title": "Wie geht's dir heute?",
+  "daily_log_energie": "Energie",
+  "daily_log_schlaf": "Schlaf",
+  "daily_log_libido": "Libido",
+  "daily_log_saved": "Befinden für heute gespeichert",
+  "daily_log_save_error": "Speichern fehlgeschlagen",
+  "daily_log_load_error": "Tageslog konnte nicht geladen werden"
 }

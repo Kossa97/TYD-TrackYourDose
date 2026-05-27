@@ -40,6 +40,13 @@ import {
   type EffectRow,
   type ReviewRow,
 } from '../lib/insights'
+import {
+  isWellnessMarker,
+  wellnessMarkersWithData,
+  wellnessSeries,
+  WELLNESS_MARKER_FIELD,
+  type DailyLogRow,
+} from '../lib/dailyLogs'
 import { ResearchDisclaimer } from '../components/ui/DesignSystem'
 import heroLogo from '../assets/hero.png'
 
@@ -216,6 +223,9 @@ const NORMAL_RANGES: Record<string, { min: number | null; max: number | null }> 
   'GH':          { min: 0,    max: 3.0  },
   'Kortisol':    { min: 6,    max: 23   },
   'Insulin':     { min: 2,    max: 25   },
+  'Energie':     { min: 1,    max: 5    },
+  'Schlaf':      { min: 1,    max: 5    },
+  'Libido':      { min: 1,    max: 5    },
 }
 
 const SERIES_COLORS: Record<string, string> = {
@@ -235,6 +245,9 @@ const SERIES_COLORS: Record<string, string> = {
   'SHBG':        '#c084fc',
   'LH':          '#f472b6',
   'FSH':         '#94a3b8',
+  'Energie':     '#00ccf5',
+  'Schlaf':      '#6366f1',
+  'Libido':      '#f43f5e',
 }
 
 const PRESETS: { key: string; label: string; markers: string[] }[] = [
@@ -243,6 +256,7 @@ const PRESETS: { key: string; label: string; markers: string[] }[] = [
   { key: 'inflammation', label: '🔥 Entzündung',        markers: ['Gewicht', 'CRP'] },
   { key: 'metabolismus', label: '🧬 Metabolismus',      markers: ['Gewicht', 'Insulin'] },
   { key: 'hormone',      label: '⚗️ Hormone',           markers: ['Testosteron', 'IGF-1', 'Insulin'] },
+  { key: 'wellness',     label: '⚡ Befinden',           markers: ['Energie', 'Schlaf', 'Libido'] },
   { key: 'full',         label: '📊 Alle Marker',       markers: [] },
 ]
 
@@ -597,6 +611,7 @@ export function Protokoll() {
   const [exporting, setExporting] = useState(false)
   const [effects, setEffects] = useState<EffectRow[]>([])
   const [reviews, setReviews] = useState<ReviewRow[]>([])
+  const [dailyLogs, setDailyLogs] = useState<DailyLogRow[]>([])
 
   const userName = useMemo(() => (
     profile?.display_name
@@ -614,8 +629,9 @@ export function Protokoll() {
 
   const availableMarkers = useMemo(() => {
     const blood = Array.from(new Set(bloodwork.map(e => e.marker))).sort()
-    return ['Gewicht', ...blood]
-  }, [bloodwork])
+    const wellness = wellnessMarkersWithData(dailyLogs)
+    return ['Gewicht', ...wellness, ...blood]
+  }, [bloodwork, dailyLogs])
 
   const bloodTestDates = useMemo(
     () => Array.from(new Set(bloodwork.map(e => e.tested_at))).sort(),
@@ -675,8 +691,9 @@ export function Protokoll() {
     const weightPcts = toPercentChange(weightSorted)
 
     const bloodPcts = new Map<string, { date: string; pct: number }[]>()
+    const wellnessPcts = new Map<string, { date: string; pct: number }[]>()
     for (const marker of activeMarkers) {
-      if (marker === 'Gewicht') continue
+      if (marker === 'Gewicht' || isWellnessMarker(marker)) continue
       const entries = bloodwork
         .filter(e => e.marker === marker)
         .map(e => ({ date: e.tested_at, value: numericValue(e.value) }))
@@ -684,10 +701,15 @@ export function Protokoll() {
         .sort((a, b) => a.date.localeCompare(b.date))
       bloodPcts.set(marker, toPercentChange(entries))
     }
+    for (const marker of activeMarkers) {
+      if (!isWellnessMarker(marker)) continue
+      wellnessPcts.set(marker, toPercentChange(wellnessSeries(dailyLogs, marker)))
+    }
 
     const allDates = new Set<string>()
     if (activeMarkers.includes('Gewicht')) weightSorted.forEach(e => allDates.add(e.date))
     bloodPcts.forEach(arr => arr.forEach(p => allDates.add(p.date)))
+    wellnessPcts.forEach(arr => arr.forEach(p => allDates.add(p.date)))
     const sortedDates = Array.from(allDates).sort()
 
     return sortedDates.map(date => {
@@ -703,9 +725,13 @@ export function Protokoll() {
         const exact = pcts.find(p => p.date === date)
         row[marker] = exact ? exact.pct : null
       }
+      for (const [marker, pcts] of wellnessPcts) {
+        const exact = pcts.find(p => p.date === date)
+        row[marker] = exact ? exact.pct : (interpolatePct(date, pcts) ?? null)
+      }
       return row
     })
-  }, [activeMarkers, weightLogs, bloodwork, language])
+  }, [activeMarkers, weightLogs, bloodwork, dailyLogs, language])
 
   interface SmallMultipleSeries {
     marker: string
@@ -730,6 +756,10 @@ export function Protokoll() {
           .sort((a, b) => dateKey(a.logged_at).localeCompare(dateKey(b.logged_at)))
           .map(l => ({ date: dateKey(l.logged_at), label: formatDate(dateKey(l.logged_at), language), value: numericValue(l.weight_kg) }))
         unit = 'kg'
+      } else if (isWellnessMarker(marker)) {
+        const entries = wellnessSeries(dailyLogs, marker)
+        unit = '/5'
+        data = entries.map(e => ({ date: e.date, label: formatDate(e.date, language), value: e.value }))
       } else {
         const entries = bloodwork.filter(e => e.marker === marker).sort((a, b) => a.tested_at.localeCompare(b.tested_at))
         unit = entries[0]?.unit ?? ''
@@ -746,7 +776,7 @@ export function Protokoll() {
 
       return { marker, unit, color, normalMin, normalMax, yDomain: [Math.round(yMin * 10) / 10, Math.round(yMax * 10) / 10], data, lastValue }
     })
-  ), [activeMarkers, weightLogs, bloodwork, language])
+  ), [activeMarkers, weightLogs, bloodwork, dailyLogs, language])
 
   const adherencePerPeptide = useMemo(() => {
     const nameMap = new Map<string, string>()
@@ -831,7 +861,7 @@ export function Protokoll() {
     if (!user || !isValidRange(range)) return
     setLoadingCharts(true)
 
-    const [{ data: weights }, { data: blood }, { data: doses }, { data: effectRows }, { data: reviewRows }] = await Promise.all([
+    const [{ data: weights }, { data: blood }, { data: doses }, { data: effectRows }, { data: reviewRows }, { data: daily }] = await Promise.all([
       supabase
         .from('weight_logs')
         .select('id, logged_at, weight_kg')
@@ -867,6 +897,13 @@ export function Protokoll() {
         .eq('user_id', user.id)
         .gte('created_at', `${range.from}T00:00:00`)
         .lte('created_at', `${range.to}T23:59:59`),
+      supabase
+        .from('daily_logs')
+        .select('id, log_date, energie, schlaf, libido, notes')
+        .eq('user_id', user.id)
+        .gte('log_date', range.from)
+        .lte('log_date', range.to)
+        .order('log_date', { ascending: true }),
     ])
 
     const bloodEntries = (blood ?? []) as BloodworkEntry[]
@@ -883,12 +920,22 @@ export function Protokoll() {
       ...row,
       peptides: Array.isArray(row.peptides) ? row.peptides[0] ?? { name: '—' } : row.peptides,
     })) as ReviewRow[])
+    const dailyEntries = (daily ?? []) as DailyLogRow[]
+    setDailyLogs(dailyEntries)
+    const wellnessAvailable = wellnessMarkersWithData(dailyEntries)
     // auto-apply preset if current activeMarkers have no data
     setActiveMarkers(prev => {
       const hasBlood = nextMarkers.length > 0
-      if (!hasBlood) return ['Gewicht']
-      const valid = prev.filter(m => m === 'Gewicht' || nextMarkers.includes(m))
-      return valid.length > 0 ? valid : ['Gewicht', nextMarkers[0]]
+      const hasWellness = wellnessAvailable.length > 0
+      if (!hasBlood && !hasWellness) return ['Gewicht']
+      const valid = prev.filter(m => {
+        if (m === 'Gewicht') return true
+        if (isWellnessMarker(m)) return wellnessAvailable.includes(m)
+        return nextMarkers.includes(m)
+      })
+      if (valid.length > 0) return valid
+      if (hasWellness) return [...wellnessAvailable]
+      return ['Gewicht', nextMarkers[0]]
     })
     setLoadingCharts(false)
   }, [range, user])
@@ -917,7 +964,11 @@ export function Protokoll() {
     const preset = PRESETS.find(p => p.key === presetKey)
     if (!preset) return
     const candidates = preset.key === 'full' ? availableMarkers : preset.markers
-    const valid = candidates.filter(m => m === 'Gewicht' || bloodwork.some(e => e.marker === m))
+    const valid = candidates.filter(m => {
+      if (m === 'Gewicht') return true
+      if (isWellnessMarker(m)) return dailyLogs.some(row => row[WELLNESS_MARKER_FIELD[m]] != null)
+      return bloodwork.some(e => e.marker === m)
+    })
     setActiveMarkers(valid.length > 0 ? valid : ['Gewicht'])
     setSelectedPreset(presetKey)
   }
