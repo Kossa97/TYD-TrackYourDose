@@ -664,5 +664,12 @@
   "home_flow_cycle_desc": "Plan frequency & reminders",
   "home_flow_track": "Track",
   "home_flow_track_desc": "Doses, effects, reports",
-  "home_all_tools": "All tools"
+  "home_all_tools": "All tools",
+  "daily_log_title": "How are you today?",
+  "daily_log_energie": "Energy",
+  "daily_log_schlaf": "Sleep",
+  "daily_log_libido": "Libido",
+  "daily_log_saved": "Saved for today",
+  "daily_log_save_error": "Could not save",
+  "daily_log_load_error": "Could not load daily log"
 }

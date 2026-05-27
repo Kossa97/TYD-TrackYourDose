@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { DailyLogCard } from '../components/DailyLogCard'
 import { addDays, differenceInCalendarDays, format, parseISO, subDays } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
@@ -469,6 +470,8 @@ export function Home() {
           />
         </div>
       </section>
+
+      <DailyLogCard />
 
       <section style={{ ...panelStyle, padding: 14 }}>
         <div style={{ position: 'absolute', top: -34, right: -28, width: 120, height: 120, borderRadius: '50%', background: 'rgba(0,204,245,0.10)', filter: 'blur(20px)' }} />

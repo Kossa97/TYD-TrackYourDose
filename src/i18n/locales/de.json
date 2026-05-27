@@ -707,5 +707,12 @@
   "home_flow_cycle_desc": "Frequenz & Reminder planen",
   "home_flow_track": "Tracken",
   "home_flow_track_desc": "Dosen, Effekte, Reports",
-  "home_all_tools": "Alle Tools"
+  "home_all_tools": "Alle Tools",
+  "daily_log_title": "Wie geht's dir heute?",
+  "daily_log_energie": "Energie",
+  "daily_log_schlaf": "Schlaf",
+  "daily_log_libido": "Libido",
+  "daily_log_saved": "Befinden für heute gespeichert",
+  "daily_log_save_error": "Speichern fehlgeschlagen",
+  "daily_log_load_error": "Tageslog konnte nicht geladen werden"
 }
