@@ -65,3 +65,69 @@ export async function loadDoseHistory(cycleId: string): Promise<DoseEvent[]> {
     status: log.taken === true ? 'taken' as const : 'skipped' as const,
   }))
 }
+
+export interface BlutspiegelCurvePoint {
+  time: Date
+  level: number
+}
+
+function doseContributionAt(
+  dose: number,
+  bioavailability: number,
+  deltaTHours: number,
+  ke: number,
+  ka: number,
+): number {
+  if (deltaTHours <= 0) return 0
+
+  const scaled = dose * bioavailability
+  if (Math.abs(ka - ke) < 1e-8) {
+    return scaled * ka * deltaTHours * Math.exp(-ke * deltaTHours)
+  }
+  return scaled * (ka / (ka - ke)) * (Math.exp(-ke * deltaTHours) - Math.exp(-ka * deltaTHours))
+}
+
+/** Berechnet den Blutspiegel-Verlauf basierend auf echten Einnahme-Events. */
+export function calculateHistoryBlutspiegelCurve(
+  events: DoseEvent[],
+  halfLifeHours: number,
+  tmaxHours: number,
+  bioavailability: number = 1.0,
+  resolutionMinutes: number = 30,
+): BlutspiegelCurvePoint[] {
+  if (events.length === 0 || halfLifeHours <= 0 || tmaxHours <= 0 || resolutionMinutes <= 0) {
+    return []
+  }
+
+  const ke = Math.LN2 / halfLifeHours
+  const ka = Math.LN2 / tmaxHours
+  const start = events[0].timestamp
+  const end = new Date()
+
+  if (start.getTime() > end.getTime()) return []
+
+  const stepMs = resolutionMinutes * 60_000
+  const raw: BlutspiegelCurvePoint[] = []
+
+  for (let tMs = start.getTime(); tMs <= end.getTime(); tMs += stepMs) {
+    let total = 0
+
+    for (const event of events) {
+      if (event.status !== 'taken') continue
+      const deltaTHours = (tMs - event.timestamp.getTime()) / 3_600_000
+      total += doseContributionAt(event.dose, bioavailability, deltaTHours, ke, ka)
+    }
+
+    raw.push({ time: new Date(tMs), level: Math.max(0, total) })
+  }
+
+  const peak = Math.max(...raw.map(p => p.level), 0)
+  if (peak <= 0) {
+    return raw.map(p => ({ time: p.time, level: 0 }))
+  }
+
+  return raw.map(p => ({
+    time: p.time,
+    level: Math.round((p.level / peak) * 1000) / 10,
+  }))
+}
