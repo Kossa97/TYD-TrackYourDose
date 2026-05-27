@@ -19,7 +19,9 @@ create table if not exists public.pk_profiles (
 alter table public.pk_profiles
   add column if not exists bioavailability_sc numeric not null default 1.0,
   add column if not exists vd_l_kg numeric not null default 0.3,
-  add column if not exists notes text;
+  add column if not exists notes text,
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists updated_at timestamptz not null default now();
 
 create index if not exists pk_profiles_category_idx on public.pk_profiles (category);
 
