@@ -693,5 +693,12 @@
   "daily_log_libido": "Libido",
   "daily_log_saved": "Saved for today",
   "daily_log_save_error": "Could not save",
-  "daily_log_load_error": "Could not load daily log"
+  "daily_log_load_error": "Could not load daily log",
+  "home_befinden_kicker": "Wellbeing",
+  "home_befinden_title": "How you feel",
+  "home_befinden_sub": "For your protocol & cycle comparison",
+  "home_befinden_section_sub": "Quick log — compare with cycles in Protocol",
+  "home_befinden_stat": "Wellbeing",
+  "home_befinden_open": "Not logged yet",
+  "home_befinden_hint_avg": "avg {{avg}}/5 · {{count}}/3"
 }

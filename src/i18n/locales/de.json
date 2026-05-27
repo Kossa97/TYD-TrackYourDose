@@ -736,5 +736,12 @@
   "daily_log_libido": "Libido",
   "daily_log_saved": "Befinden für heute gespeichert",
   "daily_log_save_error": "Speichern fehlgeschlagen",
-  "daily_log_load_error": "Tageslog konnte nicht geladen werden"
+  "daily_log_load_error": "Tageslog konnte nicht geladen werden",
+  "home_befinden_kicker": "Befinden",
+  "home_befinden_title": "Wohlbefinden",
+  "home_befinden_sub": "Für dein Protokoll & Zyklus-Vergleich",
+  "home_befinden_section_sub": "Kurz loggen — im Protokoll mit Zyklen vergleichen",
+  "home_befinden_stat": "Befinden",
+  "home_befinden_open": "Noch offen",
+  "home_befinden_hint_avg": "Ø {{avg}}/5 · {{count}}/3"
 }

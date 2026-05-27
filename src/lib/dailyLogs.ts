@@ -39,3 +39,13 @@ export function wellnessMarkersWithData(logs: DailyLogRow[]): WellnessMarker[] {
 export function hasAnyRating(values: { energie: number | null; schlaf: number | null; libido: number | null }) {
   return values.energie != null || values.schlaf != null || values.libido != null
 }
+
+export function wellbeingSummary(row: DailyLogRow | null) {
+  if (!row) return { logged: false, count: 0, avg: null as number | null }
+  const values = [row.energie, row.schlaf, row.libido].filter((v): v is number => v != null)
+  const count = values.length
+  const avg = count > 0
+    ? Math.round((values.reduce((sum, value) => sum + value, 0) / count) * 10) / 10
+    : null
+  return { logged: count > 0, count, avg }
+}

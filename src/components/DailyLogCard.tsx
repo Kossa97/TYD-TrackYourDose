@@ -81,7 +81,7 @@ function StarRow({
   )
 }
 
-export function DailyLogCard() {
+export function DailyLogCard({ onSaved }: { onSaved?: () => void }) {
   const { user } = useAuth()
   const { t } = useTranslation()
   const today = format(new Date(), 'yyyy-MM-dd')
@@ -153,6 +153,7 @@ export function DailyLogCard() {
     setDraft(ratingsFromRow(row))
     setEditing(false)
     toast.success(t('daily_log_saved'))
+    onSaved?.()
   }
 
   const startEdit = () => {
@@ -171,8 +172,8 @@ export function DailyLogCard() {
   }
 
   return (
-    <section style={panelStyle}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
+    <section style={panelStyle} id="home-befinden-card">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
         <h2 style={{ fontSize: '0.95rem', fontWeight: 850, color: '#f8fbff', letterSpacing: '-0.02em' }}>
           {t('daily_log_title')}
         </h2>
@@ -188,6 +189,9 @@ export function DailyLogCard() {
           </button>
         )}
       </div>
+      <p style={{ fontSize: '0.68rem', color: 'rgba(154,170,191,0.58)', lineHeight: 1.45, marginBottom: 12 }}>
+        {t('home_befinden_sub')}
+      </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {ROWS.map(row => (
