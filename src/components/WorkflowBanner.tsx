@@ -51,11 +51,9 @@ function stopNav(e: MouseEvent) {
   e.stopPropagation()
 }
 
-export function WorkflowBanner({ peptideCount, userId }: { peptideCount: number; userId: string | undefined }) {
+export function WorkflowBanner({ userId }: { userId: string | undefined }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const isNewUser = peptideCount === 0
-
   const [sessionDismissed, setSessionDismissed] = useState(false)
   const [dontShowAgain, setDontShowAgain] = useState(false)
   const [permanentlyHidden, setPermanentlyHidden] = useState(false)
@@ -145,7 +143,7 @@ export function WorkflowBanner({ peptideCount, userId }: { peptideCount: number;
 
           <div className="grid grid-cols-4 gap-2">
             {WORKFLOW_STEPS.map((step, index) => {
-              const highlightStock = isNewUser && step.labelKey === STOCK_STEP_KEY
+              const isStockStep = step.labelKey === STOCK_STEP_KEY
               const Icon = step.icon
 
               return (
@@ -154,7 +152,7 @@ export function WorkflowBanner({ peptideCount, userId }: { peptideCount: number;
                     <div style={{ position: 'absolute', top: 18, left: '58%', right: '-42%', height: 1, background: 'linear-gradient(90deg, rgba(0,204,245,0.35), rgba(0,204,245,0))' }} />
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, textAlign: 'center', position: 'relative' }}>
-                    {highlightStock ? (
+                    {isStockStep ? (
                       <button
                         type="button"
                         onClick={() => navigate('/peptide?tab=inventar')}
@@ -177,7 +175,7 @@ export function WorkflowBanner({ peptideCount, userId }: { peptideCount: number;
                     <div>
                       <p style={{
                         fontSize: '0.68rem',
-                        color: highlightStock ? '#00ccf5' : '#eaeefc',
+                        color: isStockStep ? '#00ccf5' : '#eaeefc',
                         fontWeight: 800,
                         lineHeight: 1.2,
                       }}>

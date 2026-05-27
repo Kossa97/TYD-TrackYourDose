@@ -564,7 +564,7 @@ export function Home() {
         </div>
       </section>
 
-      <WorkflowBanner peptideCount={overview.peptides} userId={user?.id} />
+      <WorkflowBanner userId={user?.id} />
 
       <section>
         <div style={sectionHeaderStyle}>
