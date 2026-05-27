@@ -746,5 +746,6 @@
   "home_befinden_hint_avg": "Ø {{avg}}/5 · {{count}}/3",
   "expiry_banner_soon": "⚠️ {{name}} läuft in {{days}} Tagen ab – jetzt neu rekonstitutieren",
   "expiry_banner_today": "⚠️ {{name}} läuft heute ab – jetzt neu rekonstitutieren",
-  "expiry_banner_expired": "❌ {{name}} ist abgelaufen – bitte neu rekonstitutieren"
+  "expiry_banner_expired": "❌ {{name}} ist abgelaufen – bitte neu rekonstitutieren",
+  "home_workflow_hide": "Nicht mehr anzeigen"
 }

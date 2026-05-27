@@ -703,5 +703,6 @@
   "home_befinden_hint_avg": "avg {{avg}}/5 · {{count}}/3",
   "expiry_banner_soon": "⚠️ {{name}} expires in {{days}} days – reconstitute now",
   "expiry_banner_today": "⚠️ {{name}} expires today – reconstitute now",
-  "expiry_banner_expired": "❌ {{name}} has expired – please reconstitute"
+  "expiry_banner_expired": "❌ {{name}} has expired – please reconstitute",
+  "home_workflow_hide": "Don't show again"
 }

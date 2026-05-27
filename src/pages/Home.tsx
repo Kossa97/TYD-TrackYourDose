@@ -5,8 +5,8 @@ import {
   CalendarDays, FlaskConical, Archive, Calculator,
   BookHeart, Star, HelpCircle, User, ChevronRight,
   Microscope, Library, Droplets, Heart, FileText, type LucideIcon,
-  Activity, ArrowUpRight, Beaker, CheckCircle2, ClipboardList,
-  Clock3, Flame, Gauge, Package, Plus, ShieldCheck, Sparkles,
+  Activity, ArrowUpRight, CheckCircle2, ClipboardList,
+  Clock3, Flame, Package, Plus, ShieldCheck, Sparkles,
   Syringe,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -15,6 +15,7 @@ import { DailyLogCard } from '../components/DailyLogCard'
 import { wellbeingSummary, type DailyLogRow } from '../lib/dailyLogs'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
+import { WorkflowBanner } from '../components/WorkflowBanner'
 import { format, parseISO, subDays } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
@@ -169,13 +170,6 @@ const FEATURE_CARDS: FeatureDef[] = [
     accent: '#8b5cf6',
     metric: 'PubMed',
   },
-]
-
-const WORKFLOW_STEPS = [
-  { icon: Archive, labelKey: 'home_flow_stock', label: 'Einlagern', descKey: 'home_flow_stock_desc', desc: 'Vials & Batch sichern' },
-  { icon: Beaker, labelKey: 'home_flow_mix', label: 'Anmischen', descKey: 'home_flow_mix_desc', desc: 'Rekonstitution dokumentieren' },
-  { icon: CalendarDays, labelKey: 'home_flow_cycle', label: 'Zyklus', descKey: 'home_flow_cycle_desc', desc: 'Frequenz & Reminder planen' },
-  { icon: Gauge, labelKey: 'home_flow_track', label: 'Tracken', descKey: 'home_flow_track_desc', desc: 'Dosen, Effekte, Reports' },
 ]
 
 const pageStyle: CSSProperties = {
@@ -570,54 +564,7 @@ export function Home() {
         </div>
       </section>
 
-      <section style={{ ...panelStyle, padding: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
-          <div>
-            <p style={labelStyle}>{t('home_workflow', { defaultValue: 'Workflow' })}</p>
-            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
-              {t('home_workflow_title', { defaultValue: 'Vom Vial zum Report' })}
-            </h2>
-          </div>
-          <button
-            onClick={() => navigate('/peptide?tab=inventar')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#00ccf5', fontSize: '0.7rem', fontWeight: 800 }}
-          >
-            {t('add')} <Plus size={13} />
-          </button>
-        </div>
-        <div className="grid grid-cols-4 gap-2">
-          {WORKFLOW_STEPS.map((step, index) => (
-            <div key={step.labelKey} style={{ position: 'relative' }}>
-              {index < WORKFLOW_STEPS.length - 1 && (
-                <div style={{ position: 'absolute', top: 18, left: '58%', right: '-42%', height: 1, background: 'linear-gradient(90deg, rgba(0,204,245,0.35), rgba(0,204,245,0))' }} />
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, textAlign: 'center', position: 'relative' }}>
-                <div style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 14,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'rgba(0,204,245,0.09)',
-                  border: '1px solid rgba(0,204,245,0.18)',
-                  color: '#00ccf5',
-                }}>
-                  <step.icon size={16} />
-                </div>
-                <div>
-                  <p style={{ fontSize: '0.68rem', color: '#eaeefc', fontWeight: 800, lineHeight: 1.2 }}>
-                    {t(step.labelKey, { defaultValue: step.label })}
-                  </p>
-                  <p style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.48)', lineHeight: 1.25, marginTop: 2 }}>
-                    {t(step.descKey, { defaultValue: step.desc })}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <WorkflowBanner peptideCount={overview.peptides} userId={user?.id} />
 
       <section>
         <div style={sectionHeaderStyle}>
