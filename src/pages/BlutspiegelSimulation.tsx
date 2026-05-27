@@ -3,7 +3,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ReferenceLine, ResponsiveContainer,
 } from 'recharts'
-import { Activity, Info } from 'lucide-react'
+import { Activity, ChevronDown, Info } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -168,9 +168,59 @@ const INPUT = {
   fontFamily: 'inherit',
 } as const
 
-// ── Custom Tooltip ─────────────────────────────────────────────────────────
+// ── UI-Hilfen (Erklärungsebene) ────────────────────────────────────────────
 
-function PkTooltip({ active, payload, label }: {
+function InfoTip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <span
+      style={{ position: 'relative', display: 'inline-flex', verticalAlign: 'middle', marginLeft: 4 }}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        aria-label="Mehr Infos"
+        onClick={() => setOpen(v => !v)}
+        style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          width: 18, height: 18, padding: 0, border: 'none', background: 'transparent',
+          color: '#00ccf5', cursor: 'pointer', flexShrink: 0,
+        }}
+      >
+        <Info size={14} strokeWidth={2.5} />
+      </button>
+      {open && (
+        <span
+          role="tooltip"
+          style={{
+            position: 'absolute', zIndex: 50, left: '50%', bottom: 'calc(100% + 8px)',
+            transform: 'translateX(-50%)', width: 'max(200px, 14vw)', maxWidth: 260,
+            padding: '10px 12px', borderRadius: 10,
+            background: 'rgba(7,9,26,0.98)', border: '1px solid rgba(0,204,245,0.22)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
+            fontSize: '0.72rem', fontWeight: 500, lineHeight: 1.5,
+            color: 'rgba(213,224,242,0.88)', pointerEvents: 'none',
+          }}
+        >
+          {text}
+        </span>
+      )}
+    </span>
+  )
+}
+
+function FieldLabel({ children, tip }: { children: string; tip: string }) {
+  return (
+    <label style={{ ...LABEL, display: 'flex', alignItems: 'center', marginBottom: 6 }}>
+      <span>{children}</span>
+      <InfoTip text={tip} />
+    </label>
+  )
+}
+
+function PkChartTooltip({ active, payload, label }: {
   active?: boolean
   payload?: Array<{ value: number }>
   label?: number
@@ -178,11 +228,34 @@ function PkTooltip({ active, payload, label }: {
   if (!active || !payload?.length) return null
   return (
     <div style={{ background: 'rgba(7,9,26,0.96)', border: '1px solid rgba(0,204,245,0.25)', borderRadius: 10, padding: '8px 12px' }}>
-      <p style={{ fontSize: '0.7rem', color: 'rgba(154,170,191,0.6)', marginBottom: 3 }}>t = {label} h</p>
-      <p style={{ fontSize: '0.9rem', fontWeight: 900, color: '#00ccf5' }}>{payload[0].value}%</p>
+      <p style={{ fontSize: '0.7rem', color: 'rgba(154,170,191,0.6)', marginBottom: 3 }}>Nach {label} Stunden</p>
+      <p style={{ fontSize: '0.9rem', fontWeight: 900, color: '#00ccf5' }}>{payload[0].value}% Wirkstoffspiegel</p>
     </div>
   )
 }
+
+const METRIC_EXPLANATIONS = {
+  peak: {
+    title: 'Peak-Konzentration',
+    explain: 'Der höchste Wirkstoffspiegel in deinem Blut. Zu diesem Zeitpunkt ist die Wirkung am stärksten.',
+  },
+  tmax: {
+    title: 'Zeit bis zum Peak (Tmax)',
+    explain: 'So lange dauert es nach der Injektion, bis der Wirkstoff seinen Höchstwert erreicht.',
+  },
+  halfLife: {
+    title: 'Halbwertzeit',
+    explain: 'Nach dieser Zeit ist die Hälfte des Wirkstoffs abgebaut. Nach 2 Halbwertzeiten sind es 75 %, nach 5 Halbwertzeiten ist der Wirkstoff praktisch weg.',
+  },
+  duration: {
+    title: 'Wirkungsdauer',
+    explain: 'Geschätzte Zeit, bis der Spiegel unter 10 % fällt — ab hier ist die Wirkung vernachlässigbar.',
+  },
+  accum: {
+    title: 'Akkumulationsfaktor',
+    explain: 'Zeigt, wie stark sich der Wirkstoff bei regelmäßiger Einnahme im Körper ansammelt. Wert 2,0 bedeutet: Nach mehreren Dosen ist der Spiegel doppelt so hoch wie nach der ersten Injektion.',
+  },
+} as const
 
 // ── Haupt-Komponente ───────────────────────────────────────────────────────
 
@@ -198,8 +271,8 @@ export function BlutspiegelSimulation() {
   const [multiDose, setMultiDose]     = useState(false)
   const [interval, setInterval]       = useState('8')
   const [numDoses, setNumDoses]       = useState('3')
-  const [simResult, setSimResult]     = useState<PkResult | null>(null)
-  const [showTooltip, setShowTooltip] = useState(false)
+  const [simResult, setSimResult]       = useState<PkResult | null>(null)
+  const [pageInfoOpen, setPageInfoOpen] = useState(false)
 
   // Lade PK-Profile und aktive Zyklen
   useEffect(() => {
@@ -262,28 +335,57 @@ export function BlutspiegelSimulation() {
       {/* Header */}
       <div style={{ ...PANEL, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 88% 10%, rgba(0,204,245,0.15), transparent 34%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-          <div>
-            <p style={{ fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.13em', textTransform: 'uppercase', color: 'rgba(0,204,245,0.74)', marginBottom: 4 }}>
-              Pharmakokinstik
-            </p>
-            <h1 style={{ fontSize: '1.55rem', fontWeight: 900, letterSpacing: '-0.04em', color: '#f8fbff', lineHeight: 1.05 }}>
-              Blutspiegel-Simulation
-            </h1>
-            <p style={{ fontSize: '0.72rem', color: 'rgba(213,224,242,0.52)', marginTop: 5, lineHeight: 1.5 }}>
-              Geschätzter Wirkstoffspiegel basierend auf PK-Modellen
-            </p>
-          </div>
-          <button
-            onClick={() => setShowTooltip(v => !v)}
-            style={{ marginTop: 4, color: 'rgba(154,170,191,0.5)', flexShrink: 0 }}
-          >
-            <Info size={18} />
-          </button>
+        <div style={{ position: 'relative' }}>
+          <p style={{ fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.13em', textTransform: 'uppercase', color: 'rgba(0,204,245,0.74)', marginBottom: 4 }}>
+            Pharmakokinetik
+          </p>
+          <h1 style={{ fontSize: '1.55rem', fontWeight: 900, letterSpacing: '-0.04em', color: '#f8fbff', lineHeight: 1.05 }}>
+            Blutspiegel-Simulation
+          </h1>
+          <p style={{ fontSize: '0.72rem', color: 'rgba(213,224,242,0.52)', marginTop: 5, lineHeight: 1.5 }}>
+            Sieh auf einen Blick, wann dein Peptid wirkt und wann es wieder abgebaut ist
+          </p>
         </div>
-        {showTooltip && (
-          <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 12, background: 'rgba(0,204,245,0.07)', border: '1px solid rgba(0,204,245,0.15)', fontSize: '0.72rem', color: 'rgba(213,224,242,0.65)', lineHeight: 1.55 }}>
-            Zeigt den geschätzten relativen Wirkstoffspiegel im Blut basierend auf pharmakokinetischen Modellen (1-Compartment, First-Order-Absorption). Kein medizinischer Rat. Individuelle Werte können abweichen.
+      </div>
+
+      {/* Seiten-Erklärung (einklappbar) */}
+      <div style={{ ...PANEL, padding: pageInfoOpen ? 16 : '12px 16px' }}>
+        <button
+          type="button"
+          onClick={() => setPageInfoOpen(v => !v)}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+            background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#00ccf5',
+            fontSize: '0.82rem', fontWeight: 800, fontFamily: 'inherit',
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Info size={16} />
+            {pageInfoOpen ? 'Weniger anzeigen' : 'Mehr erfahren'}
+          </span>
+          <ChevronDown
+            size={18}
+            style={{ transition: 'transform 0.2s', transform: pageInfoOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          />
+        </button>
+        {pageInfoOpen && (
+          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <p style={{ fontSize: '0.68rem', fontWeight: 800, color: 'rgba(0,204,245,0.85)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Was macht diese Funktion?
+              </p>
+              <p style={{ fontSize: '0.8rem', color: 'rgba(213,224,242,0.75)', lineHeight: 1.55 }}>
+                Die Blutspiegel-Simulation zeigt dir, wie sich ein Peptid nach der Injektion in deinem Körper verhält — wann es wirkt, wann es am stärksten ist und wann es abgebaut ist.
+              </p>
+            </div>
+            <div style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p style={{ fontSize: '0.68rem', fontWeight: 800, color: 'rgba(154,170,191,0.65)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Wichtig zu wissen
+              </p>
+              <p style={{ fontSize: '0.78rem', color: 'rgba(213,224,242,0.62)', lineHeight: 1.55 }}>
+                Die Werte sind Schätzungen basierend auf wissenschaftlichen Durchschnittswerten. Individuelle Faktoren wie Körpergewicht, Stoffwechsel und Injektionstechnik beeinflussen die tatsächlichen Werte.
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -294,7 +396,11 @@ export function BlutspiegelSimulation() {
 
         {/* Peptid-Auswahl */}
         <div style={{ marginBottom: 12 }}>
-          <label style={LABEL}>Wirkstoff</label>
+          <FieldLabel
+            tip="Wähle den Wirkstoff, den du simulieren möchtest. Die pharmakokinetischen Daten (Halbwertzeit, Tmax) werden automatisch geladen."
+          >
+            Peptid
+          </FieldLabel>
           {pkProfiles.length === 0 ? (
             <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.45)', padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
               Noch keine PK-Profile hinterlegt. Im Admin-Panel hinzufügen.
@@ -315,7 +421,11 @@ export function BlutspiegelSimulation() {
         {/* Dosis + Einheit */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 8, marginBottom: 12 }}>
           <div>
-            <label style={LABEL}>Dosis</label>
+            <FieldLabel
+              tip="Die Menge, die du injizierst. Tipp: Schau in deinen aktiven Zyklus für deine übliche Dosis."
+            >
+              Dosis
+            </FieldLabel>
             <input
               type="number"
               inputMode="decimal"
@@ -326,7 +436,11 @@ export function BlutspiegelSimulation() {
             />
           </div>
           <div>
-            <label style={LABEL}>Einheit</label>
+            <FieldLabel
+              tip="mcg = Mikrogramm (kleiner), mg = Milligramm (größer), IU = Internationale Einheiten (für HGH/HCG)"
+            >
+              Einheit
+            </FieldLabel>
             <select value={unit} onChange={e => setUnit(e.target.value as 'mg' | 'mcg' | 'IU')} style={{ ...INPUT, width: 'auto' }}>
               <option>mcg</option>
               <option>mg</option>
@@ -334,7 +448,11 @@ export function BlutspiegelSimulation() {
             </select>
           </div>
           <div>
-            <label style={LABEL}>Route</label>
+            <FieldLabel
+              tip="SC = subkutan (unter die Haut, langsamer), IM = intramuskulär (in den Muskel, etwas schneller)"
+            >
+              Applikationsroute
+            </FieldLabel>
             <select value={route} onChange={e => setRoute(e.target.value as 'SC' | 'IM' | 'oral')} style={{ ...INPUT, width: 'auto' }}>
               <option>SC</option>
               <option>IM</option>
@@ -406,8 +524,8 @@ export function BlutspiegelSimulation() {
               Relativer Wirkstoffspiegel in % (normalisiert auf Peak = 100 %)
             </p>
 
-            <ResponsiveContainer width="100%" height={240}>
-              <AreaChart data={simResult.data} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={simResult.data} margin={{ top: 36, right: 12, left: 8, bottom: 28 }}>
                 <defs>
                   <linearGradient id="pkGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%"  stopColor="#00ccf5" stopOpacity={0.32} />
@@ -424,6 +542,14 @@ export function BlutspiegelSimulation() {
                   axisLine={false}
                   tick={{ fill: 'rgba(154,170,191,0.45)', fontSize: 10 }}
                   tickFormatter={v => `${v}h`}
+                  label={{
+                    value: 'Zeit nach Injektion (Stunden)',
+                    position: 'insideBottom',
+                    offset: -4,
+                    fill: 'rgba(154,170,191,0.55)',
+                    fontSize: 10,
+                    fontWeight: 600,
+                  }}
                 />
                 <YAxis
                   domain={[0, 105]}
@@ -432,9 +558,18 @@ export function BlutspiegelSimulation() {
                   tick={{ fill: 'rgba(154,170,191,0.45)', fontSize: 10 }}
                   tickFormatter={v => `${v}%`}
                   ticks={[0, 25, 50, 75, 100]}
+                  label={{
+                    value: 'Wirkstoffspiegel (%)',
+                    angle: -90,
+                    position: 'insideLeft',
+                    offset: 12,
+                    fill: 'rgba(154,170,191,0.55)',
+                    fontSize: 10,
+                    fontWeight: 600,
+                  }}
                 />
 
-                <Tooltip content={<PkTooltip />} cursor={{ stroke: 'rgba(0,204,245,0.3)', strokeWidth: 1 }} />
+                <Tooltip content={<PkChartTooltip />} cursor={{ stroke: 'rgba(0,204,245,0.3)', strokeWidth: 1 }} />
 
                 {/* Tmax — Peak */}
                 <ReferenceLine
@@ -442,7 +577,13 @@ export function BlutspiegelSimulation() {
                   stroke="#f59e0b"
                   strokeDasharray="4 3"
                   strokeWidth={1.5}
-                  label={{ value: 'Tmax', position: 'top', fill: '#f59e0b', fontSize: 9, fontWeight: 700 }}
+                  label={{
+                    value: '⚡ Peak — maximale Wirkung',
+                    position: 'insideTopLeft',
+                    fill: '#f59e0b',
+                    fontSize: 8,
+                    fontWeight: 700,
+                  }}
                 />
 
                 {/* Halbwertzeit */}
@@ -451,7 +592,13 @@ export function BlutspiegelSimulation() {
                   stroke="#8b5cf6"
                   strokeDasharray="4 3"
                   strokeWidth={1.5}
-                  label={{ value: 'T½', position: 'top', fill: '#8b5cf6', fontSize: 9, fontWeight: 700 }}
+                  label={{
+                    value: '½ Halbwertzeit — halbe Menge abgebaut',
+                    position: 'insideTop',
+                    fill: '#a78bfa',
+                    fontSize: 8,
+                    fontWeight: 700,
+                  }}
                 />
 
                 {/* Ende der Wirkung <10% */}
@@ -461,7 +608,13 @@ export function BlutspiegelSimulation() {
                     stroke="rgba(255,255,255,0.28)"
                     strokeDasharray="4 3"
                     strokeWidth={1.5}
-                    label={{ value: '<10%', position: 'top', fill: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 700 }}
+                    label={{
+                      value: '🔚 Wirkungsende',
+                      position: 'insideTopRight',
+                      fill: 'rgba(255,255,255,0.55)',
+                      fontSize: 8,
+                      fontWeight: 700,
+                    }}
                   />
                 )}
 
@@ -483,9 +636,9 @@ export function BlutspiegelSimulation() {
             {/* Legende Referenzlinien */}
             <div style={{ display: 'flex', gap: 14, marginTop: 10, flexWrap: 'wrap' }}>
               {[
-                { color: '#f59e0b', label: 'Tmax (Peak)' },
-                { color: '#8b5cf6', label: 'Halbwertzeit' },
-                { color: 'rgba(255,255,255,0.35)', label: 'Ende Wirkung (<10%)' },
+                { color: '#f59e0b', label: '⚡ Peak — maximale Wirkung' },
+                { color: '#8b5cf6', label: '½ Halbwertzeit' },
+                { color: 'rgba(255,255,255,0.35)', label: '🔚 Wirkungsende' },
               ].map(({ color, label }) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <div style={{ width: 16, height: 1.5, background: color, borderRadius: 1 }} />
@@ -495,42 +648,64 @@ export function BlutspiegelSimulation() {
             </div>
           </div>
 
-          {/* Info-Box */}
-          <div style={{ ...PANEL, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {[
-              {
-                label: 'Peak-Konzentration',
-                value: '100 %',
-                sub: 'normalisierter Maximalwert',
-                color: '#00ccf5',
-              },
-              {
-                label: 'Zeit bis Peak (Tmax)',
-                value: `${Math.round(simResult.tmaxActual * 10) / 10} h`,
-                sub: 'Zeitpunkt max. Spiegel',
-                color: '#f59e0b',
-              },
-              {
-                label: 'Effektives Ende',
-                value: simResult.t10 < selectedProfile.half_life_hours * 5
-                  ? `${Math.round(simResult.t10 * 10) / 10} h`
-                  : `>${Math.round(selectedProfile.half_life_hours * 5)} h`,
-                sub: 'Zeit bis <10 % des Peaks',
-                color: 'rgba(213,224,242,0.5)',
-              },
-              {
-                label: 'Akkumulationsfaktor',
-                value: multiDose ? `${simResult.accumFactor.toFixed(2)}×` : '—',
-                sub: multiDose ? 'Multi- vs. Einzeldosis' : 'Einzeldosis gewählt',
-                color: multiDose ? '#10b981' : 'rgba(154,170,191,0.35)',
-              },
-            ].map(({ label, value, sub, color }) => (
-              <div key={label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '12px 14px' }}>
-                <p style={{ fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.5)', marginBottom: 6 }}>{label}</p>
-                <p style={{ fontSize: '1.25rem', fontWeight: 900, color, letterSpacing: '-0.03em', lineHeight: 1 }}>{value}</p>
-                <p style={{ fontSize: '0.58rem', color: 'rgba(154,170,191,0.4)', marginTop: 4 }}>{sub}</p>
-              </div>
-            ))}
+          {/* Info-Box — Werte erklärt */}
+          <div style={PANEL}>
+            <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#eaeefc', marginBottom: 12 }}>
+              Deine Ergebnisse — einfach erklärt
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                {
+                  ...METRIC_EXPLANATIONS.peak,
+                  value: '100 %',
+                  color: '#00ccf5',
+                },
+                {
+                  ...METRIC_EXPLANATIONS.tmax,
+                  value: `${Math.round(simResult.tmaxActual * 10) / 10} Stunden`,
+                  color: '#f59e0b',
+                },
+                {
+                  ...METRIC_EXPLANATIONS.halfLife,
+                  value: `${selectedProfile.half_life_hours} Stunden`,
+                  color: '#a78bfa',
+                },
+                {
+                  ...METRIC_EXPLANATIONS.duration,
+                  value: simResult.t10 < selectedProfile.half_life_hours * 5
+                    ? `${Math.round(simResult.t10 * 10) / 10} Stunden`
+                    : `über ${Math.round(selectedProfile.half_life_hours * 5)} Stunden`,
+                  color: 'rgba(213,224,242,0.75)',
+                },
+                ...(multiDose
+                  ? [{
+                      ...METRIC_EXPLANATIONS.accum,
+                      value: `${simResult.accumFactor.toFixed(2)}×`,
+                      color: '#10b981',
+                    }]
+                  : []),
+              ].map(({ title, value, explain, color }) => (
+                <div
+                  key={title}
+                  style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: 14,
+                    padding: '14px 16px',
+                  }}
+                >
+                  <p style={{ fontSize: '0.72rem', fontWeight: 800, color: 'rgba(154,170,191,0.65)', marginBottom: 4 }}>
+                    {title}
+                  </p>
+                  <p style={{ fontSize: '1.35rem', fontWeight: 900, color, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 8 }}>
+                    {value}
+                  </p>
+                  <p style={{ fontSize: '0.78rem', color: 'rgba(213,224,242,0.58)', lineHeight: 1.55 }}>
+                    {explain}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* PK-Parameter des gewählten Profils */}
@@ -569,10 +744,21 @@ export function BlutspiegelSimulation() {
             <Activity size={26} color="rgba(0,204,245,0.55)" />
           </div>
           <p style={{ fontSize: '0.85rem', color: 'rgba(154,170,191,0.45)' }}>
-            Wirkstoff wählen und Simulation starten
+            Peptid wählen und Simulation starten
           </p>
         </div>
       )}
+
+      <p style={{
+        fontSize: '0.68rem',
+        lineHeight: 1.55,
+        color: 'rgba(255,255,255,0.30)',
+        textAlign: 'center',
+        padding: '4px 8px 12px',
+      }}>
+        Diese Simulation dient ausschließlich zu Informationszwecken und ersetzt keine medizinische Beratung.
+        Konsultiere einen Arzt, bevor du Peptide verwendest.
+      </p>
     </div>
   )
 }
