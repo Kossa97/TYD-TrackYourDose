@@ -94,9 +94,12 @@ function formatPeakDisplay(peakLabel: string): string {
 
 // ── SVG: Arc-Gauge ──────────────────────────────────────────────────────────
 
-function ArcGauge({ level, accent }: { level: number; accent: string }) {
-  const size = 132
-  const stroke = 9
+function ArcGauge({ level, accent, size = 132 }: { level: number; accent: string; size?: number }) {
+  const stroke = size <= 100 ? 7 : 9
+  const valueFontSize = size <= 100 ? 20 : 26
+  const unitFontSize = size <= 100 ? 9 : 11
+  const valueYOffset = size <= 100 ? -3 : -4
+  const unitYOffset = size <= 100 ? 13 : 16
   const r = (size - stroke) / 2
   const cx = size / 2
   const cy = size / 2
@@ -129,10 +132,10 @@ function ArcGauge({ level, accent }: { level: number; accent: string }) {
       />
       <text
         x={cx}
-        y={cy - 4}
+        y={cy + valueYOffset}
         textAnchor="middle"
         fill="#f8fbff"
-        fontSize="26"
+        fontSize={valueFontSize}
         fontWeight="900"
         fontFamily="system-ui, sans-serif"
       >
@@ -140,10 +143,10 @@ function ArcGauge({ level, accent }: { level: number; accent: string }) {
       </text>
       <text
         x={cx}
-        y={cy + 16}
+        y={cy + unitYOffset}
         textAnchor="middle"
         fill="rgba(154,170,191,0.62)"
-        fontSize="11"
+        fontSize={unitFontSize}
         fontWeight="700"
         fontFamily="system-ui, sans-serif"
       >
@@ -155,9 +158,18 @@ function ArcGauge({ level, accent }: { level: number; accent: string }) {
 
 // ── SVG: Sparkline ──────────────────────────────────────────────────────────
 
-function Sparkline({ data, accent }: { data: number[]; accent: string }) {
-  const w = 128
-  const h = 36
+function Sparkline({
+  data,
+  accent,
+  className,
+}: {
+  data: number[]
+  accent: string
+  className?: string
+}) {
+  const isLarge = Boolean(className)
+  const w = isLarge ? 280 : 128
+  const h = isLarge ? 200 : 36
   const pad = 2
   const values = data.length ? data : [0]
   const min = Math.min(...values)
@@ -177,7 +189,14 @@ function Sparkline({ data, accent }: { data: number[]; accent: string }) {
   const lastY = pad + (1 - (last - min) / span) * (h - pad * 2)
 
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden>
+    <svg
+      width={isLarge ? undefined : w}
+      height={isLarge ? undefined : h}
+      className={className}
+      viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio={isLarge ? 'none' : undefined}
+      aria-hidden
+    >
       <polyline
         fill="none"
         stroke={accent}
@@ -219,13 +238,58 @@ function TrendLabel({ trend }: { trend: BlutspiegelTrend }) {
   )
 }
 
+const categoryBadgeStyle = (accent: string): CSSProperties => ({
+  display: 'inline-block',
+  padding: '3px 8px',
+  borderRadius: 999,
+  fontSize: '0.55rem',
+  fontWeight: 800,
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  color: accent,
+  background: `${accent}18`,
+  border: `1px solid ${accent}33`,
+})
+
+function LiveIndicator() {
+  return (
+    <>
+      <span
+        className="blutspiegel-live-dot"
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: '50%',
+          background: '#ef4444',
+          flexShrink: 0,
+        }}
+      />
+      <span
+        style={{
+          fontSize: '0.55rem',
+          fontWeight: 700,
+          fontFamily: 'monospace',
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: '#ef4444',
+        }}
+      >
+        LIVE
+      </span>
+    </>
+  )
+}
+
 // ── Karte ───────────────────────────────────────────────────────────────────
 
 function BlutspiegelCard({ card }: { card: CarouselCard }) {
   const { accent, level, peptideName, profileName, category } = card
 
   return (
-    <div style={{ ...shellStyle, padding: '16px 16px 14px', minHeight: 280 }}>
+    <div
+      className="w-full sm:max-w-[800px] sm:mx-auto"
+      style={{ ...shellStyle, padding: '16px 16px 14px', minHeight: 280 }}
+    >
       <style>{`
         @keyframes blutspiegel-live-pulse {
           0%, 100% { opacity: 1; }
@@ -244,63 +308,21 @@ function BlutspiegelCard({ card }: { card: CarouselCard }) {
         }}
       />
 
-      <div
-        style={{
-          position: 'absolute',
-          top: 12,
-          left: 12,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 5,
-          zIndex: 2,
-        }}
-      >
-        <span
-          className="blutspiegel-live-dot"
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            background: '#ef4444',
-            flexShrink: 0,
-          }}
-        />
-        <span
-          style={{
-            fontSize: '0.55rem',
-            fontWeight: 700,
-            fontFamily: 'monospace',
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: '#ef4444',
-          }}
+      {/* Mobile (< sm) */}
+      <div className="relative sm:hidden">
+        <div
+          className="absolute top-0 left-0 z-[2] flex items-center gap-1.5"
+          style={{ top: 0, left: 0 }}
         >
-          LIVE
-        </span>
-      </div>
+          <LiveIndicator />
+        </div>
 
-      <div style={{ position: 'relative' }}>
         <div style={{ marginBottom: 12, paddingTop: 4 }}>
           <div style={{ minWidth: 0 }}>
             <p style={{ fontSize: '0.95rem', fontWeight: 850, color: '#f8fbff', lineHeight: 1.2, marginBottom: 6 }}>
               {peptideName}
             </p>
-            <span
-              style={{
-                display: 'inline-block',
-                padding: '3px 8px',
-                borderRadius: 999,
-                fontSize: '0.55rem',
-                fontWeight: 800,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: accent,
-                background: `${accent}18`,
-                border: `1px solid ${accent}33`,
-              }}
-            >
-              {CATEGORY_LABEL[category]}
-            </span>
+            <span style={categoryBadgeStyle(accent)}>{CATEGORY_LABEL[category]}</span>
             <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.55)', marginTop: 6 }}>
               {profileName}
             </p>
@@ -330,6 +352,67 @@ function BlutspiegelCard({ card }: { card: CarouselCard }) {
         >
           {formatPeakDisplay(level.peakLabel)}
         </p>
+      </div>
+
+      {/* Desktop (≥ sm) */}
+      <div className="relative hidden sm:grid sm:grid-cols-3 sm:min-h-[200px]">
+        <div className="flex flex-col items-center justify-center px-4 py-4">
+          <ArcGauge level={level.currentLevel} accent={accent} size={100} />
+          <TrendLabel trend={level.trend} />
+          <span style={{ ...categoryBadgeStyle(accent), marginTop: 10 }}>{CATEGORY_LABEL[category]}</span>
+        </div>
+
+        <div className="flex flex-col border-l border-white/[0.06] px-5 py-4 min-h-[200px]">
+          <p
+            style={{
+              fontSize: '0.58rem',
+              fontWeight: 800,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: 'rgba(154,170,191,0.52)',
+              marginBottom: 8,
+            }}
+          >
+            VERLAUF
+          </p>
+          <Sparkline
+            data={level.sparkData}
+            accent={accent}
+            className="w-full h-[200px] flex-1"
+          />
+        </div>
+
+        <div className="flex flex-col justify-between border-l border-white/[0.06] px-5 py-4 min-h-[200px]">
+          <div className="flex items-center gap-1.5">
+            <LiveIndicator />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <p
+              style={{
+                fontSize: '1.35rem',
+                fontWeight: 900,
+                color: '#f8fbff',
+                lineHeight: 1.15,
+                letterSpacing: '-0.03em',
+              }}
+            >
+              {peptideName}
+            </p>
+            <p style={{ fontSize: '0.68rem', color: 'rgba(154,170,191,0.55)', marginTop: 8 }}>
+              {profileName}
+            </p>
+          </div>
+          <p
+            style={{
+              fontSize: '0.72rem',
+              fontWeight: 750,
+              color: 'rgba(154,170,191,0.58)',
+              textAlign: 'right',
+            }}
+          >
+            {formatPeakDisplay(level.peakLabel)}
+          </p>
+        </div>
       </div>
     </div>
   )
