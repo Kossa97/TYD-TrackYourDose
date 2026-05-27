@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "seed:pk": "tsx scripts/seed-pk-profiles.ts",
+    "seed:test": "tsx scripts/seed-test-data.ts",
     "faq:export": "tsx scripts/export-faq-en.ts",
     "faq:generate": "node scripts/generate-faq-locales.mjs",
     "i18n:onboarding:merge": "node scripts/merge-onboarding-i18n.mjs",
