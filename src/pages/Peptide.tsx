@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -17,10 +17,17 @@ import { NewDot } from '../components/NewDot'
 import { format, parseISO, addDays, differenceInDays } from 'date-fns'
 
 // ─── Inventar-Typen ───────────────────────────────────────────────────────────
+interface PkProfileOption {
+  id: string
+  name: string
+  aliases: string[]
+}
+
 interface InventoryItem {
   id: string; user_id: string; name: string
   batch_number: string | null; batch_source: string | null; batch_file_url: string | null
   vials_count: number; vials_initial: number | null; mg_per_vial: number; created_at: string
+  pk_profile_id: string | null
 }
 interface InventoryForm {
   name: string; batch_number: string; batch_source: string
@@ -41,6 +48,7 @@ interface Peptide {
   reconstitution_date: string | null; expiry_days: number | null
   batch_number: string | null; batch_source: string | null; batch_file_url: string | null
   inventory_item_id: string | null
+  pk_profile_id: string | null
 }
 interface Cycle {
   id: string; peptide_id: string; name: string
@@ -117,6 +125,7 @@ const REMINDER_OPTIONS = [
 // ─── Formular-Typen ───────────────────────────────────────────────────────────
 interface PeptideForm {
   inventory_item_id: string
+  pk_profile_id: string
   name: string; default_unit: string; default_dose: string; default_method: string
   vial_amount_mg: string; reconstitution_ml: string
   syringe_ml: string; syringe_units: string
@@ -126,6 +135,7 @@ interface PeptideForm {
 }
 const emptyPeptideForm = (): PeptideForm => ({
   inventory_item_id: '',
+  pk_profile_id: '',
   name:'', default_unit:'mcg', default_dose:'', default_method:'Subkutan',
   vial_amount_mg:'', reconstitution_ml:'2',
   syringe_ml:'1', syringe_units:'100',
@@ -428,6 +438,9 @@ export function Peptide() {
   const [invBatchFile, setInvBatchFile]       = useState<File | null>(null)
   const [uploadingInvFile, setUploadingInvFile] = useState(false)
   const [showInvDropdown, setShowInvDropdown] = useState(false)
+  const [pkProfileCatalog, setPkProfileCatalog]   = useState<PkProfileOption[]>([])
+  const [invPkProfileId, setInvPkProfileId]       = useState<string | null>(null)
+  const [invPkSuggestOpen, setInvPkSuggestOpen]   = useState(false)
 
   // ── Peptide ───────────────────────────────────────────────────────────────
   const [peptides, setPeptides]               = useState<Peptide[]>([])
@@ -478,6 +491,51 @@ export function Peptide() {
   }
   useEffect(() => { loadInventory(); loadPeptides(); loadCycles(); loadEscalations() }, [])
 
+  useEffect(() => {
+    if (!showInvForm) return
+    supabase.from('pk_profiles').select('id, name, aliases').order('name')
+      .then(({ data }) => setPkProfileCatalog((data as PkProfileOption[]) ?? []))
+  }, [showInvForm])
+
+  const invPkSuggestions = useMemo(() => {
+    const q = iForm.name.trim().toLowerCase()
+    if (!q) return []
+    return pkProfileCatalog
+      .filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.aliases.some(a => a.toLowerCase().includes(q)),
+      )
+      .slice(0, 5)
+  }, [iForm.name, pkProfileCatalog])
+
+  const linkedPkProfile = useMemo(
+    () => pkProfileCatalog.find(p => p.id === invPkProfileId) ?? null,
+    [pkProfileCatalog, invPkProfileId],
+  )
+
+  const resetInvFormState = () => {
+    setEditingInvId(null)
+    setIForm(emptyInventoryForm())
+    setInvBatchFile(null)
+    setShowInvDropdown(false)
+    setInvPkProfileId(null)
+    setInvPkSuggestOpen(false)
+  }
+
+  const handleInvNameChange = (value: string) => {
+    setIForm(f => ({ ...f, name: value }))
+    setInvPkSuggestOpen(true)
+    if (invPkProfileId && linkedPkProfile && value.trim().toLowerCase() !== linkedPkProfile.name.toLowerCase()) {
+      setInvPkProfileId(null)
+    }
+  }
+
+  const selectInvPkProfile = (profile: PkProfileOption) => {
+    setIForm(f => ({ ...f, name: profile.name }))
+    setInvPkProfileId(profile.id)
+    setInvPkSuggestOpen(false)
+  }
+
   const displayPeptides = peptides
     .filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => sortBy === 'name_asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name))
@@ -518,12 +576,21 @@ export function Peptide() {
       vials_count:    currentCount,
       vials_initial:  initialCount,
       mg_per_vial:    parseFloat(iForm.mg_per_vial),
+      pk_profile_id:  invPkProfileId,
     }
-    const { error } = editingInvId
-      ? await supabase.from('inventory_items').update(payload).eq('id', editingInvId)
-      : await supabase.from('inventory_items').insert(payload)
+    const { error, data: savedInv } = editingInvId
+      ? await supabase.from('inventory_items').update(payload).eq('id', editingInvId).select('id').single()
+      : await supabase.from('inventory_items').insert(payload).select('id').single()
     if (error) toast.error(t('fehler_speichern'))
-    else toast.success(editingInvId ? t('inventar_aktualisiert') : t('ins_lager_eingetragen'))
+    else {
+      const invId = editingInvId ?? savedInv?.id
+      if (invId) {
+        await supabase.from('peptides')
+          .update({ pk_profile_id: invPkProfileId })
+          .eq('inventory_item_id', invId)
+      }
+      toast.success(editingInvId ? t('inventar_aktualisiert') : t('ins_lager_eingetragen'))
+    }
     setSavingInv(false); setShowInvForm(false); setInvBatchFile(null); loadInventory()
   }
 
@@ -534,6 +601,8 @@ export function Peptide() {
       batch_source: item.batch_source ?? '', batch_file_url: item.batch_file_url ?? '',
       vials_count: item.vials_count.toString(), mg_per_vial: item.mg_per_vial.toString(),
     })
+    setInvPkProfileId(item.pk_profile_id ?? null)
+    setInvPkSuggestOpen(false)
     setInvBatchFile(null); setShowInvForm(true)
   }
 
@@ -548,6 +617,7 @@ export function Peptide() {
     setPForm({
       ...emptyPeptideForm(),
       inventory_item_id: item.id,
+      pk_profile_id:  item.pk_profile_id ?? '',
       name:           item.name,
       vial_amount_mg: item.mg_per_vial.toString(),
       vials_in_stock: item.vials_count.toString(),
@@ -665,6 +735,7 @@ export function Peptide() {
       batch_source:   pForm.batch_source   || null,
       batch_file_url: fileUrl              || null,
       inventory_item_id: pForm.inventory_item_id || null,
+      pk_profile_id:     pForm.pk_profile_id || null,
     }
     const { error, data: savedRow } = editingPeptideId
       ? await supabase.from('peptides').update(payload).eq('id', editingPeptideId).select('id').single()
@@ -682,6 +753,7 @@ export function Peptide() {
     setEditingPeptideId(p.id)
     setPForm({
       inventory_item_id: p.inventory_item_id ?? '',
+      pk_profile_id:     p.pk_profile_id ?? '',
       name: p.name, default_unit: p.default_unit,
       default_dose:      p.default_dose?.toString() ?? '',
       default_method:    p.default_method,
@@ -916,7 +988,7 @@ export function Peptide() {
 
         {activeTab === 'inventar' ? (
           <button data-ob="btn-einlagern" className="btn-primary flex items-center gap-1.5 text-sm py-2"
-            onClick={() => { setEditingInvId(null); setIForm(emptyInventoryForm()); setInvBatchFile(null); setShowInvDropdown(false); setShowInvForm(true) }}>
+            onClick={() => { resetInvFormState(); setShowInvForm(true) }}>
             <Plus size={15} /> {t('einlagern')}
           </button>
         ) : (
@@ -937,7 +1009,7 @@ export function Peptide() {
                 {t('kein_inventar_desc')}
               </p>
               <button className="btn-primary flex items-center gap-2 mx-auto"
-                onClick={() => { setEditingInvId(null); setIForm(emptyInventoryForm()); setShowInvForm(true) }}>
+                onClick={() => { resetInvFormState(); setShowInvForm(true) }}>
                 <Plus size={16} /> {t('einlagern')}
               </button>
             </div>
@@ -1273,19 +1345,56 @@ export function Peptide() {
 
               {/* Name */}
               <div data-ob="inv-name">
-                <label className="label">{t('peptidname_star')}</label>
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <label className="label mb-0">{t('peptidname_star')}</label>
+                  {invPkProfileId && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      style={{ color: '#00ccf5', background: 'rgba(0,204,245,0.12)', border: '1px solid rgba(0,204,245,0.28)' }}>
+                      ✓ PK-Profil verknüpft
+                    </span>
+                  )}
+                </div>
                 <div className="relative flex gap-2">
-                  <input className="input flex-1" placeholder={t('eg_bpc157')}
-                    value={iForm.name} onChange={e => setIForm(f => ({ ...f, name: e.target.value }))} />
+                  <div className="relative flex-1 min-w-0">
+                    <input
+                      className="input w-full"
+                      placeholder={t('eg_bpc157')}
+                      value={iForm.name}
+                      onChange={e => handleInvNameChange(e.target.value)}
+                      onFocus={() => setInvPkSuggestOpen(true)}
+                      onBlur={() => { setTimeout(() => setInvPkSuggestOpen(false), 150) }}
+                      autoComplete="off"
+                    />
+                    {invPkSuggestOpen && invPkSuggestions.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-20 overflow-hidden">
+                        {invPkSuggestions.map(profile => (
+                          <button
+                            key={profile.id}
+                            type="button"
+                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-700 transition-colors border-b border-slate-700/50 last:border-0"
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={() => selectInvPkProfile(profile)}
+                          >
+                            <span className="text-white font-medium">{profile.name}</span>
+                            {profile.aliases.length > 0 && (
+                              <span className="block text-xs text-slate-500 mt-0.5 truncate">
+                                {profile.aliases.join(', ')}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <button className="btn-secondary flex items-center gap-1 shrink-0 text-sm px-3"
-                    onClick={() => setShowInvDropdown(d => !d)}>
+                    onClick={() => { setShowInvDropdown(d => !d); setInvPkSuggestOpen(false) }}>
                     {t('bekannte_btn')} <ChevronDown size={14} />
                   </button>
                   {showInvDropdown && (
                     <div className="absolute top-full right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-10 w-56 max-h-52 overflow-y-auto">
                       {POPULAR_PEPTIDES.map(name => (
                         <button key={name} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-700 transition-colors first:rounded-t-xl last:rounded-b-xl"
-                          onClick={() => { setIForm(f => ({ ...f, name })); setShowInvDropdown(false) }}>
+                          onClick={() => { handleInvNameChange(name); setInvPkProfileId(null); setShowInvDropdown(false) }}>
                           {name}
                         </button>
                       ))}
