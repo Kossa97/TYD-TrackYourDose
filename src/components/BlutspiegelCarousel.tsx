@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
-import { Activity, Loader2, Minus, TrendingDown, TrendingUp } from 'lucide-react'
+import { Activity, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -192,35 +192,49 @@ function Sparkline({ data, accent }: { data: number[]; accent: string }) {
   )
 }
 
-function TrendIndicator({ trend }: { trend: BlutspiegelTrend }) {
-  if (trend === 'rising') {
-    return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', color: '#10b981' }} aria-label="steigend">
-        <TrendingUp size={18} strokeWidth={2.5} />
-      </span>
-    )
-  }
-  if (trend === 'falling') {
-    return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', color: '#f43f5e' }} aria-label="fallend">
-        <TrendingDown size={18} strokeWidth={2.5} />
-      </span>
-    )
-  }
+const TREND_DISPLAY: Record<BlutspiegelTrend, { label: string; color: string }> = {
+  rising: { label: '↑ Steigend', color: '#10b981' },
+  falling: { label: '↓ Fallend', color: '#f43f5e' },
+  stable: { label: '→ Stabil', color: '#94a3b8' },
+}
+
+function TrendLabel({ trend }: { trend: BlutspiegelTrend }) {
+  const { label, color } = TREND_DISPLAY[trend]
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', color: '#94a3b8' }} aria-label="stabil">
-      <Minus size={18} strokeWidth={2.5} />
-    </span>
+    <p
+      style={{
+        marginTop: 6,
+        fontSize: '0.58rem',
+        fontWeight: 700,
+        fontFamily: 'monospace',
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
+        color,
+        textAlign: 'center',
+      }}
+      aria-label={label}
+    >
+      {label}
+    </p>
   )
 }
 
 // ── Karte ───────────────────────────────────────────────────────────────────
 
 function BlutspiegelCard({ card }: { card: CarouselCard }) {
-  const { accent, level, peptideName, profileName, category, dose, unit, halfLifeHours } = card
+  const { accent, level, peptideName, profileName, category } = card
 
   return (
     <div style={{ ...shellStyle, padding: '16px 16px 14px', minHeight: 280 }}>
+      <style>{`
+        @keyframes blutspiegel-live-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+        .blutspiegel-live-dot {
+          animation: blutspiegel-live-pulse 1.5s ease-in-out infinite;
+        }
+      `}</style>
       <div
         style={{
           position: 'absolute',
@@ -230,8 +244,43 @@ function BlutspiegelCard({ card }: { card: CarouselCard }) {
         }}
       />
 
+      <div
+        style={{
+          position: 'absolute',
+          top: 12,
+          left: 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 5,
+          zIndex: 2,
+        }}
+      >
+        <span
+          className="blutspiegel-live-dot"
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: '#ef4444',
+            flexShrink: 0,
+          }}
+        />
+        <span
+          style={{
+            fontSize: '0.55rem',
+            fontWeight: 700,
+            fontFamily: 'monospace',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: '#ef4444',
+          }}
+        >
+          LIVE
+        </span>
+      </div>
+
       <div style={{ position: 'relative' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
+        <div style={{ marginBottom: 12, paddingTop: 4 }}>
           <div style={{ minWidth: 0 }}>
             <p style={{ fontSize: '0.95rem', fontWeight: 850, color: '#f8fbff', lineHeight: 1.2, marginBottom: 6 }}>
               {peptideName}
@@ -256,55 +305,18 @@ function BlutspiegelCard({ card }: { card: CarouselCard }) {
               {profileName}
             </p>
           </div>
-          <TrendIndicator trend={level.trend} />
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 14 }}>
-          <ArcGauge level={level.currentLevel} accent={accent} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <ArcGauge level={level.currentLevel} accent={accent} />
+            <TrendLabel trend={level.trend} />
+          </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
             <p style={{ fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.52)' }}>
               Verlauf
             </p>
             <Sparkline data={level.sparkData} accent={accent} />
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-          <div
-            style={{
-              padding: '10px 10px',
-              borderRadius: 14,
-              background: 'rgba(2,6,18,0.55)',
-              border: '1px solid rgba(255,255,255,0.07)',
-            }}
-          >
-            <p style={{ fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.52)', marginBottom: 4 }}>
-              Nächste Dosis
-            </p>
-            <p style={{ fontSize: '1.05rem', fontWeight: 900, color: accent, letterSpacing: '-0.03em' }}>
-              {level.nextDoseIn}
-            </p>
-            <p style={{ fontSize: '0.66rem', color: 'rgba(213,224,242,0.65)', marginTop: 3 }}>
-              {dose} {unit}
-            </p>
-          </div>
-          <div
-            style={{
-              padding: '10px 10px',
-              borderRadius: 14,
-              background: 'rgba(2,6,18,0.55)',
-              border: '1px solid rgba(255,255,255,0.07)',
-            }}
-          >
-            <p style={{ fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.52)', marginBottom: 4 }}>
-              Spiegel danach
-            </p>
-            <p style={{ fontSize: '1.05rem', fontWeight: 900, color: '#f8fbff', letterSpacing: '-0.03em' }}>
-              {Math.round(level.levelAfterNextDose)}%
-            </p>
-            <p style={{ fontSize: '0.66rem', color: 'rgba(213,224,242,0.65)', marginTop: 3 }}>
-              T½ {halfLifeHours}h
-            </p>
           </div>
         </div>
 
