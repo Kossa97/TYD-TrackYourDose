@@ -1,106 +1,21 @@
 import { useEffect, useState } from 'react'
 import { Flame } from 'lucide-react'
 
-// ── CSS animations ────────────────────────────────────────────────────────
+// ── CSS animations (injected once) ───────────────────────────────────────
 const STAT_CSS = `
-/* Intake: border pulse when <1h */
+@keyframes qsc-fire-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 @keyframes qsc-intake-pulse {
-  0%,100% { box-shadow: 0 0 10px rgba(0,204,245,0.32); }
-  50%     { box-shadow: 0 0 24px rgba(0,204,245,0.72), 0 0 44px rgba(0,204,245,0.22); }
+  0%,100% { box-shadow: 0 0 8px rgba(0,204,245,0.30); }
+  50%     { box-shadow: 0 0 22px rgba(0,204,245,0.68), 0 0 38px rgba(0,204,245,0.20); }
 }
-
-/* Fire level 1 — 1-3 days: soft orange flicker */
-@keyframes qsc-fire-1 {
-  0%,100% {
-    box-shadow:
-      0 0 0 1.5px #f97316,
-      0 0 6px  2px rgba(249,115,22,0.45),
-      0 0 14px 3px rgba(249,115,22,0.20);
-  }
-  50% {
-    box-shadow:
-      0 0 0 1.5px #fbbf24,
-      0 0 10px 3px rgba(251,191,36,0.60),
-      0 0 20px 5px rgba(251,191,36,0.22);
-  }
-}
-
-/* Fire level 2 — 4-7 days: orange/red, faster */
-@keyframes qsc-fire-2 {
-  0%,100% {
-    box-shadow:
-      0 0 0 2px #f97316,
-      0 0 10px 3px rgba(249,115,22,0.60),
-      0 0 24px 6px rgba(239, 68, 68,0.32),
-      0 0 40px 8px rgba(249,115,22,0.16);
-  }
-  33% {
-    box-shadow:
-      0 0 0 2px #ef4444,
-      0 0  8px 3px rgba(239, 68, 68,0.70),
-      0 0 20px 5px rgba(249,115,22,0.40),
-      0 0 36px 8px rgba(239, 68, 68,0.18);
-  }
-  66% {
-    box-shadow:
-      0 0 0 2px #fbbf24,
-      0 0 14px 4px rgba(251,191,36,0.65),
-      0 0 28px 7px rgba(249,115,22,0.45),
-      0 0 46px 10px rgba(251,191,36,0.18);
-  }
-}
-
-/* Fire level 3 — 8+ days: inferno, fast irregular */
-@keyframes qsc-fire-3 {
-  0% {
-    box-shadow:
-      0 0 0 2.5px #fef08a,
-      0 0 10px 4px  #f97316,
-      0 0 24px 7px  rgba(239, 68, 68,0.60),
-      0 0 44px 12px rgba(249,115,22,0.32),
-      0 0 70px 18px rgba(239, 68, 68,0.14);
-  }
-  25% {
-    box-shadow:
-      0 0 0 3px   #ef4444,
-      0 0 16px 6px  #fbbf24,
-      0 0 34px 10px rgba(249,115,22,0.68),
-      0 0 58px 16px rgba(239, 68, 68,0.28),
-      0 0 90px 22px rgba(249,115,22,0.12);
-  }
-  50% {
-    box-shadow:
-      0 0 0 2px   #f97316,
-      0 0  8px 3px  #ef4444,
-      0 0 20px 6px  rgba(251,191,36,0.55),
-      0 0 40px 10px rgba(249,115,22,0.30),
-      0 0 64px 16px rgba(239, 68, 68,0.14);
-  }
-  75% {
-    box-shadow:
-      0 0 0 3px   #fef08a,
-      0 0 20px 7px  #f97316,
-      0 0 38px 11px rgba(239, 68, 68,0.65),
-      0 0 66px 18px rgba(249,115,22,0.34),
-      0 0 96px 24px rgba(239, 68, 68,0.14);
-  }
-  100% {
-    box-shadow:
-      0 0 0 2.5px #fef08a,
-      0 0 10px 4px  #f97316,
-      0 0 24px 7px  rgba(239, 68, 68,0.60),
-      0 0 44px 12px rgba(249,115,22,0.32),
-      0 0 70px 18px rgba(239, 68, 68,0.14);
-  }
-}
-
-/* Today 100%: celebration glow */
 @keyframes qsc-celebrate {
-  0%,100% { box-shadow: 0 0 10px rgba(16,185,129,0.42); }
-  50%     { box-shadow: 0 0 22px rgba(16,185,129,0.80), 0 0 44px rgba(16,185,129,0.28); }
+  0%,100% { box-shadow: 0 0 8px rgba(16,185,129,0.38); }
+  50%     { box-shadow: 0 0 20px rgba(16,185,129,0.75), 0 0 40px rgba(16,185,129,0.26); }
 }
 `
-
 let cssReady = false
 function ensureCSS() {
   if (cssReady || typeof document === 'undefined') return
@@ -110,6 +25,12 @@ function ensureCSS() {
   document.head.appendChild(el)
   cssReady = true
 }
+
+const CELL_BASE = {
+  borderRadius: 18,
+  padding: '11px 9px',
+  minWidth: 0,
+} as const
 
 const LABEL_STYLE = {
   fontSize: '0.52rem',
@@ -165,29 +86,24 @@ export function NextIntakeStat({
     return () => clearInterval(id)
   }, [nextIntake, todayDone])
 
-  const value   = todayDone ? '✓' : (nextIntake ?? '–')
-  const empty   = todayDone ? 'rgba(16,185,129,0.14)' : 'rgba(0,204,245,0.12)'
-  const deg     = progress * 360
+  const value    = todayDone ? '✓' : (nextIntake ?? '–')
+  const empty    = todayDone ? 'rgba(16,185,129,0.13)' : 'rgba(0,204,245,0.11)'
+  const deg      = progress * 360
 
   return (
-    // Outer wrapper: 1.5px padding shows the conic-gradient as a thin border strip
     <div
       style={{
-        padding: '1.5px',
+        padding: 2,
         borderRadius: 20,
+        // Conic gradient traces the border: filled = progress, rest = unfilled
         background: `conic-gradient(from -90deg, ${accent} ${deg}deg, ${empty} ${deg}deg)`,
         animation: underOneHour ? 'qsc-intake-pulse 1.8s ease-in-out infinite' : undefined,
         willChange: underOneHour ? 'box-shadow' : undefined,
       }}
     >
-      {/* Inner card — fully opaque so gradient can't bleed through */}
-      <div style={{
-        background: 'rgb(5, 8, 20)',
-        borderRadius: 18,
-        padding: '11px 9px',
-        minWidth: 0,
-      }}>
+      <div style={{ ...CELL_BASE, background: 'rgba(2,6,18,0.90)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
+          {/* Clock icon inline SVG to avoid an extra import */}
           <svg width={13} height={13} viewBox="0 0 24 24" fill="none"
             stroke={accent} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <circle cx={12} cy={12} r={10} />
@@ -210,13 +126,16 @@ export function NextIntakeStat({
   )
 }
 
-// ── 2. StreakStat — animated box-shadow fire border ───────────────────────
-//
-// box-shadow: 0 0 0 Npx COLOR → solid ring around all 4 sides (like outline)
-// Additional spread/blur layers create the glow/fire effect.
-// This goes uniformly around the entire card perimeter unlike rotating gradients.
+// ── 2. StreakStat — rotating fire conic-gradient border ──────────────────
 
-const FIRE_ANIM = ['', 'qsc-fire-1 2.4s ease-in-out infinite', 'qsc-fire-2 1.5s ease-in-out infinite', 'qsc-fire-3 0.85s ease-in-out infinite']
+const FIRE_GRADIENT = [
+  '',                                                                                // level 0 (unused)
+  '#f97316 0%, #fbbf24 30%, #f97316 60%, #d97706 100%',                           // level 1 (1–3 days)
+  '#f97316 0%, #fbbf24 20%, #ef4444 45%, #fbbf24 70%, #f97316 100%',              // level 2 (4–7 days)
+  '#f97316 0%, #fef08a 15%, #ef4444 35%, #fbbf24 55%, #dc2626 75%, #fef08a 90%, #f97316 100%', // level 3 (8+)
+]
+const FIRE_SPEED   = ['', '2.8s', '2.0s', '1.1s']
+const FIRE_OPACITY = [0,   0.48,   0.72,   0.94]
 
 export function StreakStat({
   streak,
@@ -228,49 +147,71 @@ export function StreakStat({
   hint: string
 }) {
   ensureCSS()
-  const level  = streak === 0 ? 0 : streak <= 3 ? 1 : streak <= 7 ? 2 : 3
-  const accent = streak === 0 ? '#64748b' : '#f59e0b'
+  const level   = streak === 0 ? 0 : streak <= 3 ? 1 : streak <= 7 ? 2 : 3
+  const accent  = streak === 0 ? '#64748b' : '#f59e0b'
   const hasfire = level > 0
+  const glow    = level === 3
+    ? '0 0 20px rgba(249,115,22,0.44), 0 0 40px rgba(249,115,22,0.16)'
+    : undefined
 
   return (
     <div style={{
-      background: 'rgb(5, 8, 20)',
-      borderRadius: 18,
-      padding: '11px 9px',
-      minWidth: 0,
-      border: !hasfire ? '1px solid rgba(255,255,255,0.07)' : 'none',
-      animation: hasfire ? FIRE_ANIM[level] : undefined,
-      willChange: hasfire ? 'box-shadow' : undefined,
+      position: 'relative',
+      borderRadius: 20,
+      overflow: 'hidden',
+      boxShadow: glow,
+      willChange: hasfire ? 'transform' : undefined,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
-        <Flame
-          size={13}
-          color={streak > 0 ? '#f97316' : '#64748b'}
-          fill={streak >= 4 ? '#f97316' : 'none'}
+      {/* Rotating gradient — clipped by parent overflow:hidden */}
+      {hasfire && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            // Center a large square so all card edges are covered at any rotation angle
+            top: '50%',
+            left: '50%',
+            width: 280,
+            height: 280,
+            marginTop: -140,
+            marginLeft: -140,
+            background: `conic-gradient(${FIRE_GRADIENT[level]})`,
+            opacity: FIRE_OPACITY[level],
+            animation: `qsc-fire-rotate ${FIRE_SPEED[level]} linear infinite`,
+            willChange: 'transform',
+          }}
         />
-        <p style={LABEL_STYLE}>{label}</p>
-      </div>
-      <p style={{
-        fontSize: '1.34rem',
-        fontWeight: 900,
-        letterSpacing: '-0.04em',
-        color: accent,
-        lineHeight: 1,
+      )}
+
+      {/* Inner card — sits on top, margin creates the visible fire strip */}
+      <div style={{
+        ...CELL_BASE,
+        position: 'relative',
+        margin: hasfire ? 2 : 0,
+        borderRadius: hasfire ? 17 : 20,
+        background: 'rgba(2,6,18,0.92)',
+        border: !hasfire ? '1px solid rgba(255,255,255,0.07)' : undefined,
+        zIndex: 1,
       }}>
-        {streak}
-      </p>
-      <p style={HINT_STYLE}>{hint}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
+          <Flame size={13} color={streak > 0 ? '#f97316' : '#64748b'} fill={streak > 2 ? '#f97316' : 'none'} />
+          <p style={LABEL_STYLE}>{label}</p>
+        </div>
+        <p style={{ fontSize: '1.34rem', fontWeight: 900, letterSpacing: '-0.04em', color: accent, lineHeight: 1 }}>
+          {streak}
+        </p>
+        <p style={HINT_STYLE}>{hint}</p>
+      </div>
     </div>
   )
 }
 
-// ── 3. TodayStat — large SVG progress ring ───────────────────────────────
+// ── 3. TodayStat — SVG progress ring ─────────────────────────────────────
 
-const RING_SZ  = 64
-const RING_C   = RING_SZ / 2   // 32
-const RING_R   = 26
-const RING_SW  = 4.5           // stroke width
-const RING_CIR = 2 * Math.PI * RING_R   // ≈ 163.4
+const RING_R   = 17
+const RING_SZ  = 44
+const RING_C   = RING_SZ / 2
+const RING_CIR = 2 * Math.PI * RING_R
 
 export function TodayStat({
   completionLevel,
@@ -285,35 +226,29 @@ export function TodayStat({
   const color  = pct >= 50 ? '#10b981' : '#00ccf5'
   const filled = RING_CIR * (pct / 100)
   const empty  = RING_CIR - filled
-  // Offset to start arc at 12-o'clock (default SVG start = 3-o'clock → shift 25%)
+  // strokeDashoffset shifts start point to 12-o'clock (default is 3-o'clock = circ*0.25 back)
   const offset = RING_CIR * 0.25
 
   return (
     <div style={{
-      background: 'rgb(5, 8, 20)',
+      ...CELL_BASE,
+      background: 'rgba(2,6,18,0.48)',
       border: '1px solid rgba(255,255,255,0.07)',
-      borderRadius: 18,
-      padding: '10px 6px',
-      minWidth: 0,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 5,
+      gap: 6,
       animation: done ? 'qsc-celebrate 1.8s ease-in-out infinite' : undefined,
       willChange: done ? 'box-shadow' : undefined,
     }}>
-      <svg
-        width={RING_SZ}
-        height={RING_SZ}
-        viewBox={`0 0 ${RING_SZ} ${RING_SZ}`}
-      >
+      <svg width={RING_SZ} height={RING_SZ} viewBox={`0 0 ${RING_SZ} ${RING_SZ}`}>
         {/* Background track */}
         <circle
           cx={RING_C} cy={RING_C} r={RING_R}
           fill="none"
           stroke="rgba(255,255,255,0.08)"
-          strokeWidth={RING_SW}
+          strokeWidth={3.5}
         />
         {/* Progress arc */}
         {pct > 0 && (
@@ -321,27 +256,27 @@ export function TodayStat({
             cx={RING_C} cy={RING_C} r={RING_R}
             fill="none"
             stroke={color}
-            strokeWidth={RING_SW}
+            strokeWidth={3.5}
             strokeLinecap="round"
             strokeDasharray={`${filled} ${empty}`}
             strokeDashoffset={offset}
             style={{
               filter: done
-                ? `drop-shadow(0 0 5px ${color}) drop-shadow(0 0 10px ${color}88)`
-                : `drop-shadow(0 0 3px ${color}cc)`,
+                ? `drop-shadow(0 0 4px ${color}) drop-shadow(0 0 9px ${color}66)`
+                : `drop-shadow(0 0 2px ${color}99)`,
               transition: 'stroke 0.4s ease',
             }}
           />
         )}
-        {/* Percentage in center */}
+        {/* Percentage text, centered */}
         <text
           x={RING_C}
           y={RING_C}
           textAnchor="middle"
           dominantBaseline="central"
-          fill={pct === 0 ? 'rgba(154,170,191,0.40)' : color}
+          fill={pct === 0 ? 'rgba(154,170,191,0.4)' : color}
           style={{
-            fontSize: 11,
+            fontSize: 9,
             fontWeight: 900,
             fontFamily: 'inherit',
           }}
@@ -350,6 +285,7 @@ export function TodayStat({
         </text>
       </svg>
 
+      {/* Label below ring */}
       <p style={{
         ...LABEL_STYLE,
         color: done ? color : 'rgba(154,170,191,0.58)',
