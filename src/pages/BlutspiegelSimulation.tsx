@@ -1,12 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ReferenceLine, ResponsiveContainer,
+  Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ReferenceLine, ResponsiveContainer, ComposedChart, Scatter,
 } from 'recharts'
-import { Activity, CalendarDays, ChevronDown, Info } from 'lucide-react'
+import { format } from 'date-fns'
+import { de as deLocale } from 'date-fns/locale'
+import { Activity, CalendarDays, ChevronDown, Info, Loader2 } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import {
+  calculateHistoryBlutspiegelCurve,
+  loadDoseHistory,
+  type BlutspiegelCurvePoint,
+  type DoseEvent,
+} from '../services/blutspiegelHistory'
 
 // ── Typen ─────────────────────────────────────────────────────────────────
 
@@ -254,6 +262,34 @@ function PkChartTooltip({ active, payload, label }: {
   )
 }
 
+function levelAtTime(curve: BlutspiegelCurvePoint[], time: Date): number {
+  if (!curve.length) return 0
+  const t = time.getTime()
+  let best = curve[0]
+  let bestDiff = Math.abs(best.time.getTime() - t)
+  for (const p of curve) {
+    const d = Math.abs(p.time.getTime() - t)
+    if (d < bestDiff) { bestDiff = d; best = p }
+  }
+  return best.level
+}
+
+function HistoryChartTooltip({ active, payload }: {
+  active?: boolean
+  payload?: Array<{ payload?: { ts: number; level: number } }>
+}) {
+  if (!active || !payload?.[0]?.payload) return null
+  const { ts, level } = payload[0].payload
+  return (
+    <div style={{ background: 'rgba(7,9,26,0.96)', border: '1px solid rgba(0,204,245,0.25)', borderRadius: 10, padding: '8px 12px' }}>
+      <p style={{ fontSize: '0.7rem', color: 'rgba(154,170,191,0.6)', marginBottom: 3 }}>
+        {format(new Date(ts), 'dd. MMM yyyy, HH:mm', { locale: deLocale })}
+      </p>
+      <p style={{ fontSize: '0.9rem', fontWeight: 900, color: '#00ccf5' }}>{level}% Wirkstoffspiegel</p>
+    </div>
+  )
+}
+
 const METRIC_EXPLANATIONS = {
   peak: {
     title: 'Peak-Konzentration',
@@ -298,6 +334,11 @@ export function BlutspiegelSimulation() {
   const [numDoses, setNumDoses]       = useState('3')
   const [simResult, setSimResult]       = useState<PkResult | null>(null)
   const [pageInfoOpen, setPageInfoOpen] = useState(false)
+  const [protocolSimMode, setProtocolSimMode] = useState<'single' | 'history'>('single')
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyEvents, setHistoryEvents] = useState<DoseEvent[]>([])
+  const [historyCurve, setHistoryCurve] = useState<BlutspiegelCurvePoint[]>([])
+  const [historyNoConfirmed, setHistoryNoConfirmed] = useState(false)
 
   // Lade PK-Profile und aktive Zyklen
   useEffect(() => {
@@ -336,6 +377,11 @@ export function BlutspiegelSimulation() {
     [protocolCycles],
   )
 
+  const selectedProfile = useMemo(
+    () => pkProfiles.find(p => p.id === selectedPkId) ?? null,
+    [pkProfiles, selectedPkId],
+  )
+
   const applyProtocolCycle = useCallback((cycle: ProtocolCycle) => {
     const pkId = cycle.peptides?.pk_profile_id
     if (!pkId) return
@@ -346,10 +392,88 @@ export function BlutspiegelSimulation() {
     setSelectedProtocolCycleId(cycle.id)
   }, [])
 
-  const selectedProfile = useMemo(
-    () => pkProfiles.find(p => p.id === selectedPkId) ?? null,
-    [pkProfiles, selectedPkId]
+  useEffect(() => {
+    if (protocolSimMode !== 'history' || !selectedProtocolCycleId || !selectedProfile) {
+      setHistoryEvents([])
+      setHistoryCurve([])
+      setHistoryNoConfirmed(false)
+      setHistoryLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setHistoryLoading(true)
+    setHistoryNoConfirmed(false)
+
+    void loadDoseHistory(selectedProtocolCycleId).then((events) => {
+      if (cancelled) return
+
+      if (events.length === 0 || !events.some(e => e.status === 'taken')) {
+        setHistoryEvents(events)
+        setHistoryCurve([])
+        setHistoryNoConfirmed(true)
+        setHistoryLoading(false)
+        return
+      }
+
+      const curve = calculateHistoryBlutspiegelCurve(
+        events,
+        selectedProfile.half_life_hours,
+        selectedProfile.tmax_hours,
+        selectedProfile.bioavailability_sc,
+      )
+
+      setHistoryEvents(events)
+      setHistoryCurve(curve)
+      setHistoryNoConfirmed(curve.length === 0)
+      setHistoryLoading(false)
+    })
+
+    return () => { cancelled = true }
+  }, [protocolSimMode, selectedProtocolCycleId, selectedProfile])
+
+  const historyChartData = useMemo(
+    () => historyCurve.map(p => ({ ts: p.time.getTime(), level: p.level })),
+    [historyCurve],
   )
+
+  const historyXTicks = useMemo(() => {
+    if (!historyChartData.length) return []
+    const min = historyChartData[0].ts
+    const max = historyChartData[historyChartData.length - 1].ts
+    const span = max - min
+    const steps = Math.min(6, Math.max(2, Math.ceil(historyChartData.length / 8)))
+    return Array.from({ length: steps }, (_, i) =>
+      Math.round(min + (span * i) / (steps - 1)),
+    )
+  }, [historyChartData])
+
+  const historyTakenMarkers = useMemo(
+    () => historyEvents
+      .filter(e => e.status === 'taken')
+      .map(e => ({ ts: e.timestamp.getTime(), level: levelAtTime(historyCurve, e.timestamp) })),
+    [historyEvents, historyCurve],
+  )
+
+  const historyStats = useMemo(() => {
+    if (!historyCurve.length || !historyEvents.length) return null
+    const taken = historyEvents.filter(e => e.status === 'taken').length
+    const total = historyEvents.length
+    const last = historyCurve[historyCurve.length - 1]
+    let peak = historyCurve[0]
+    for (const p of historyCurve) {
+      if (p.level > peak.level) peak = p
+    }
+    const avg = historyCurve.reduce((s, p) => s + p.level, 0) / historyCurve.length
+    return {
+      taken,
+      total,
+      current: last.level,
+      peak: peak.level,
+      peakDate: peak.time,
+      avg: Math.round(avg * 10) / 10,
+    }
+  }, [historyCurve, historyEvents])
 
   // Auto-fill Dosis aus aktivem Zyklus wenn Peptid-Name übereinstimmt
   useEffect(() => {
@@ -465,6 +589,34 @@ export function BlutspiegelSimulation() {
         </button>
         {protocolOpen && (
           <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{
+              display: 'flex', gap: 6, padding: 4, borderRadius: 12,
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              {([
+                { id: 'single' as const, label: 'Einzeldosis simulieren' },
+                { id: 'history' as const, label: 'Zyklus-Verlauf simulieren' },
+              ]).map(({ id, label }) => {
+                const active = protocolSimMode === id
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setProtocolSimMode(id)}
+                    style={{
+                      flex: 1, padding: '8px 10px', borderRadius: 9, border: 'none',
+                      fontSize: '0.68rem', fontWeight: 800, fontFamily: 'inherit', lineHeight: 1.3,
+                      cursor: 'pointer', transition: 'background 0.15s, color 0.15s',
+                      background: active ? 'rgba(0,204,245,0.18)' : 'transparent',
+                      color: active ? '#00ccf5' : 'rgba(154,170,191,0.55)',
+                    }}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+
             {protocolLoading ? (
               <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.5)' }}>Lädt aktive Zyklen …</p>
             ) : protocolCycles.length === 0 ? (
@@ -520,6 +672,169 @@ export function BlutspiegelSimulation() {
                   </div>
                 ))}
               </>
+            )}
+
+            {protocolSimMode === 'history' && selectedProtocolCycleId && (
+              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {historyLoading && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px 12px', justifyContent: 'center' }}>
+                    <Loader2 size={18} color="#00ccf5" className="animate-spin" />
+                    <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.6)' }}>Einnahmen werden geladen …</p>
+                  </div>
+                )}
+
+                {!historyLoading && historyNoConfirmed && (
+                  <p style={{
+                    fontSize: '0.78rem', color: 'rgba(154,170,191,0.65)', lineHeight: 1.55,
+                    padding: '12px 14px', borderRadius: 12,
+                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+                  }}>
+                    Noch keine bestätigten Einnahmen in diesem Zyklus. Bestätige zuerst Einnahmen im Kalender.
+                  </p>
+                )}
+
+                {!historyLoading && historyCurve.length > 0 && selectedProfile && (
+                  <>
+                    <div style={{ paddingBottom: 8 }}>
+                      <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#eaeefc', marginBottom: 4 }}>
+                        Zyklus-Verlauf — {selectedProfile.name}
+                      </p>
+                      <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.45)', marginBottom: 12 }}>
+                        Basierend auf deinen bestätigten Einnahmen im Kalender
+                      </p>
+
+                      <ResponsiveContainer width="100%" height={260}>
+                        <ComposedChart data={historyChartData} margin={{ top: 36, right: 12, left: 8, bottom: 28 }}>
+                          <defs>
+                            <linearGradient id="pkHistGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#00ccf5" stopOpacity={0.32} />
+                              <stop offset="95%" stopColor="#00ccf5" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+
+                          <XAxis
+                            dataKey="ts"
+                            type="number"
+                            scale="time"
+                            domain={['dataMin', 'dataMax']}
+                            ticks={historyXTicks}
+                            tickLine={false}
+                            axisLine={false}
+                            tick={{ fill: 'rgba(154,170,191,0.45)', fontSize: 10 }}
+                            tickFormatter={(ts: number) => format(new Date(ts), 'd. MMM', { locale: deLocale })}
+                            label={{
+                              value: 'Zeitraum',
+                              position: 'insideBottom',
+                              offset: -4,
+                              fill: 'rgba(154,170,191,0.55)',
+                              fontSize: 10,
+                              fontWeight: 600,
+                            }}
+                          />
+                          <YAxis
+                            domain={[0, 105]}
+                            tickLine={false}
+                            axisLine={false}
+                            tick={{ fill: 'rgba(154,170,191,0.45)', fontSize: 10 }}
+                            tickFormatter={v => `${v}%`}
+                            ticks={[0, 25, 50, 75, 100]}
+                            label={{
+                              value: 'Wirkstoffspiegel (%)',
+                              angle: -90,
+                              position: 'insideLeft',
+                              offset: 12,
+                              fill: 'rgba(154,170,191,0.55)',
+                              fontSize: 10,
+                              fontWeight: 600,
+                            }}
+                          />
+
+                          <Tooltip content={<HistoryChartTooltip />} cursor={{ stroke: 'rgba(0,204,245,0.3)', strokeWidth: 1 }} />
+
+                          {historyEvents
+                            .filter(e => e.status === 'skipped')
+                            .map(e => (
+                              <ReferenceLine
+                                key={`skip-${e.timestamp.getTime()}`}
+                                x={e.timestamp.getTime()}
+                                stroke="rgba(154,170,191,0.35)"
+                                strokeDasharray="4 3"
+                                strokeWidth={1.5}
+                                label={{
+                                  value: '⚠️ Einnahme übersprungen',
+                                  position: 'insideTopLeft',
+                                  fill: 'rgba(154,170,191,0.55)',
+                                  fontSize: 7,
+                                  fontWeight: 700,
+                                }}
+                              />
+                            ))}
+
+                          <Area
+                            type="monotone"
+                            dataKey="level"
+                            stroke="#00ccf5"
+                            strokeWidth={2.5}
+                            fill="url(#pkHistGrad)"
+                            dot={false}
+                            activeDot={{ r: 4, fill: '#07091a', stroke: '#00ccf5', strokeWidth: 2 }}
+                          />
+
+                          <Scatter
+                            data={historyTakenMarkers}
+                            dataKey="level"
+                            fill="#10b981"
+                            stroke="#07091a"
+                            strokeWidth={1.5}
+                            r={5}
+                            isAnimationActive={false}
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {historyStats && (
+                      <div style={{
+                        display: 'flex', flexDirection: 'column', gap: 8,
+                        padding: '12px 14px', borderRadius: 14,
+                        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+                      }}>
+                        {[
+                          {
+                            label: 'Einnahmen',
+                            value: `${historyStats.taken} von ${historyStats.total} Dosen eingenommen`,
+                            color: '#10b981',
+                          },
+                          {
+                            label: 'Aktueller Spiegel',
+                            value: `${historyStats.current} %`,
+                            color: '#00ccf5',
+                          },
+                          {
+                            label: 'Höchster Spiegel',
+                            value: `${historyStats.peak} % · ${format(historyStats.peakDate, 'd. MMM yyyy', { locale: deLocale })}`,
+                            color: '#f59e0b',
+                          },
+                          {
+                            label: 'Durchschnitt',
+                            value: `${historyStats.avg} % über den Zyklus`,
+                            color: 'rgba(213,224,242,0.75)',
+                          },
+                        ].map(({ label, value, color }) => (
+                          <div key={label}>
+                            <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'rgba(154,170,191,0.55)', marginBottom: 2 }}>
+                              {label}
+                            </p>
+                            <p style={{ fontSize: '0.88rem', fontWeight: 800, color }}>{value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -660,7 +975,7 @@ export function BlutspiegelSimulation() {
             </p>
 
             <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={simResult.data} margin={{ top: 36, right: 12, left: 8, bottom: 28 }}>
+              <ComposedChart data={simResult.data} margin={{ top: 36, right: 12, left: 8, bottom: 28 }}>
                 <defs>
                   <linearGradient id="pkGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%"  stopColor="#00ccf5" stopOpacity={0.32} />
@@ -765,7 +1080,7 @@ export function BlutspiegelSimulation() {
                   dot={false}
                   activeDot={{ r: 4, fill: '#07091a', stroke: '#00ccf5', strokeWidth: 2 }}
                 />
-              </AreaChart>
+              </ComposedChart>
             </ResponsiveContainer>
 
             {/* Legende Referenzlinien */}
@@ -873,7 +1188,7 @@ export function BlutspiegelSimulation() {
       )}
 
       {/* Empty state wenn noch keine Simulation */}
-      {!simResult && (
+      {!simResult && !(protocolSimMode === 'history' && historyCurve.length > 0) && (
         <div style={{ ...PANEL, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '40px 20px', textAlign: 'center' }}>
           <div style={{ width: 56, height: 56, borderRadius: 18, background: 'rgba(0,204,245,0.08)', border: '1px solid rgba(0,204,245,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Activity size={26} color="rgba(0,204,245,0.55)" />
