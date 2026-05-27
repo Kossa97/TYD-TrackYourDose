@@ -11,6 +11,11 @@ clientsClaim()
 precacheAndRoute((self as any).__WB_MANIFEST ?? [])
 cleanupOutdatedCaches()
 
+// ── Activate new SW immediately so Home/features updates reach PWA users ───
+self.addEventListener('install', () => {
+  void self.skipWaiting()
+})
+
 // ── Skip waiting on explicit message ─────────────────────────────────────────
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting()
