@@ -5,11 +5,10 @@ import {
   CalendarDays, FlaskConical, Archive, Calculator,
   BookHeart, Star, HelpCircle, User, ChevronRight,
   Microscope, Library, Droplets, Heart, FileText, type LucideIcon,
-  ArrowUpRight, CheckCircle2, ClipboardList,
-  Package, Plus, ShieldCheck, Sparkles,
+  Activity, ArrowUpRight, CheckCircle2, ClipboardList,
+  Clock3, Flame, Package, Plus, ShieldCheck, Sparkles,
   Syringe,
 } from 'lucide-react'
-import { NextIntakeStat, StreakStat, TodayStat } from '../components/QuickStatCards'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { DailyLogCard } from '../components/DailyLogCard'
@@ -364,20 +363,26 @@ export function Home() {
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <NextIntakeStat
-              nextIntake={nextIntake}
-              todayDone={todayDone}
+            <HeroStat
+              icon={Clock3}
               label={String(t('stat_next_intake'))}
+              value={todayDone ? '✓' : (nextIntake ?? '–')}
               hint={String(todayDone ? t('stat_today_done') : t('home_next_hint', { defaultValue: 'Heute im Plan' }))}
+              accent={todayDone ? '#10b981' : '#00ccf5'}
             />
-            <StreakStat
-              streak={streak}
+            <HeroStat
+              icon={Flame}
               label="Streak"
+              value={String(streak)}
               hint={String(t('stat_days'))}
+              accent={streak > 0 ? '#f59e0b' : '#64748b'}
             />
-            <TodayStat
-              completionLevel={completionLevel}
+            <HeroStat
+              icon={Activity}
               label={String(t('home_completion', { defaultValue: 'Heute' }))}
+              value={`${completionLevel}%`}
+              hint={String(t('home_completion_hint', { defaultValue: 'erledigt' }))}
+              accent="#8b5cf6"
             />
           </div>
 
@@ -592,6 +597,42 @@ export function Home() {
   )
 }
 
+function HeroStat({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  accent,
+}: {
+  icon: LucideIcon
+  label: string
+  value: string
+  hint: string
+  accent: string
+}) {
+  return (
+    <div style={{
+      background: 'rgba(2,6,18,0.48)',
+      border: '1px solid rgba(255,255,255,0.07)',
+      borderRadius: 18,
+      padding: '11px 9px',
+      minWidth: 0,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8, color: 'rgba(154,170,191,0.58)' }}>
+        <Icon size={13} color={accent} />
+        <p style={{ fontSize: '0.52rem', fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {label}
+        </p>
+      </div>
+      <p style={{ fontSize: value.length > 4 ? '1.03rem' : '1.34rem', fontWeight: 900, letterSpacing: '-0.04em', color: accent, lineHeight: 1 }}>
+        {value}
+      </p>
+      <p style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.48)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {hint}
+      </p>
+    </div>
+  )
+}
 
 function QuickAction({
   icon: Icon,
