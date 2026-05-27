@@ -5,7 +5,7 @@ import {
   CalendarDays, FlaskConical, Archive, Calculator,
   BookHeart, Star, HelpCircle, User, ChevronRight,
   Microscope, Library, Droplets, Heart, FileText, type LucideIcon,
-  Activity, ArrowUpRight, CheckCircle2, ClipboardList,
+  Activity, ArrowUpRight, Camera, CheckCircle2, ClipboardList,
   Clock3, Flame, Package, Plus, ShieldCheck, Sparkles,
   Syringe,
 } from 'lucide-react'
@@ -136,6 +136,15 @@ const QUICK_ACTIONS: QuickActionDef[] = [
     desc: 'Einheiten berechnen',
     path: '/rechner',
     accent: '#3b82f6',
+  },
+  {
+    icon: Camera,
+    labelKey: 'home_action_progress',
+    label: 'Foto-Fortschritt',
+    descKey: 'home_action_progress_desc',
+    desc: 'Körper-Entwicklung tracken',
+    path: '/progress',
+    accent: '#8b5cf6',
   },
 ]
 
@@ -421,7 +430,7 @@ export function Home() {
           </div>
           <Sparkles size={18} color="rgba(0,204,245,0.72)" />
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {QUICK_ACTIONS.map((action) => (
             <QuickAction
               key={action.labelKey}

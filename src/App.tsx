@@ -25,6 +25,7 @@ const PeptideLibrary = lazy(() => import('./pages/PeptideLibrary').then(m => ({ 
 const PeptideDetailPage = lazy(() => import('./pages/PeptideDetailPage').then(m => ({ default: m.PeptideDetailPage })))
 const AdminPanel = lazy(() => import('./pages/lab/AdminPanel').then(m => ({ default: m.AdminPanel })))
 const InjektionsTracker = lazy(() => import('./pages/InjektionsTracker').then(m => ({ default: m.InjektionsTracker })))
+const Progress = lazy(() => import('./pages/Progress').then(m => ({ default: m.Progress })))
 
 function RouteFallback() {
   return (
@@ -71,6 +72,7 @@ export default function App() {
             <Route path="profil" element={<LazyPage><Profil /></LazyPage>} />
             <Route path="faq" element={<LazyPage><FAQ /></LazyPage>} />
             <Route path="injektionen" element={<LazyPage><InjektionsTracker /></LazyPage>} />
+            <Route path="progress" element={<LazyPage><Progress /></LazyPage>} />
           </Route>
         </Routes>
         </OnboardingProvider>
