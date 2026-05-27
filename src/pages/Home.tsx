@@ -52,7 +52,6 @@ interface TileDef {
   path: string
   color: string
   bg: string
-  wide?: boolean
 }
 
 interface QuickActionDef {
@@ -93,14 +92,14 @@ const EMPTY_OVERVIEW: OverviewStats = {
 }
 
 const TILE_DEFS: TileDef[] = [
-  { icon: CalendarDays, labelKey: 'tile_kalender',    descKey: 'tile_kalender_desc',    path: '/kalender',             color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',   wide: true },
-  { icon: Syringe,      labelKey: 'tile_injektionen', descKey: 'tile_injektionen_desc', path: '/injektionen',          color: '#10b981', bg: 'rgba(16,185,129,0.10)',  wide: true },
+  { icon: CalendarDays, labelKey: 'tile_kalender',    descKey: 'tile_kalender_desc',    path: '/kalender',             color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
+  { icon: Syringe,      labelKey: 'tile_injektionen', descKey: 'tile_injektionen_desc', path: '/injektionen',          color: '#10b981', bg: 'rgba(16,185,129,0.10)'         },
   { icon: Archive,      labelKey: 'tile_lager',       descKey: 'tile_lager_desc',       path: '/peptide?tab=inventar', color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
   { icon: FlaskConical, labelKey: 'tile_peptide',     descKey: 'tile_peptide_desc',     path: '/peptide',              color: '#22d3ee', bg: 'rgba(34,211,238,0.10)'         },
   { icon: Calculator,   labelKey: 'tile_rechner',     descKey: 'tile_rechner_desc',     path: '/rechner',              color: '#3b82f6', bg: 'rgba(59,130,246,0.10)'         },
   { icon: Droplets,     labelKey: 'tile_blutwerte',   descKey: 'tile_blutwerte_desc',   path: '/blutwerte',            color: '#f43f5e', bg: 'rgba(244,63,94,0.10)', label: 'Blutwerte', desc: 'Laborwerte erfassen' },
   { icon: Heart,        labelKey: 'tile_health',      descKey: 'tile_health_desc',      path: '/health',               color: '#f43f5e', bg: 'rgba(244,63,94,0.10)'          },
-  { icon: FileText,     labelKey: 'tile_protokoll',   descKey: 'tile_protokoll_desc',   path: '/protokoll',            color: '#00ccf5', bg: 'rgba(0,204,245,0.10)',   wide: true },
+  { icon: FileText,     labelKey: 'tile_protokoll',   descKey: 'tile_protokoll_desc',   path: '/protokoll',            color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
   { icon: Microscope,   labelKey: 'tile_lab',         descKey: 'tile_lab_desc',         path: '/lab',                  color: '#00ccf5', bg: 'rgba(0,204,245,0.10)'          },
   { icon: Library,      labelKey: 'tile_bibliothek',  descKey: 'tile_bibliothek_desc',  path: '/lab/library',          color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },
   { icon: BookHeart,    labelKey: 'tile_tagebuch',    descKey: 'tile_tagebuch_desc',    path: '/tagebuch',             color: '#8b5cf6', bg: 'rgba(139,92,246,0.10)'         },
@@ -630,18 +629,21 @@ export function Home() {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3" data-ob="home-tiles">
-          {TILE_DEFS.map((tile) => (
-            <TileButton
-              key={tile.labelKey}
-              icon={tile.icon}
-              label={String(t(tile.labelKey, { defaultValue: tile.label ?? tile.labelKey }))}
-              desc={String(t(tile.descKey, { defaultValue: tile.desc ?? tile.descKey }))}
-              color={tile.color}
-              bg={tile.bg}
-              wide={tile.wide}
-              onClick={() => navigate(tile.path)}
-            />
-          ))}
+          {TILE_DEFS.map((tile, index) => {
+            const stretchLast = TILE_DEFS.length % 2 === 1 && index === TILE_DEFS.length - 1
+            return (
+              <TileButton
+                key={tile.labelKey}
+                icon={tile.icon}
+                label={String(t(tile.labelKey, { defaultValue: tile.label ?? tile.labelKey }))}
+                desc={String(t(tile.descKey, { defaultValue: tile.desc ?? tile.descKey }))}
+                color={tile.color}
+                bg={tile.bg}
+                wide={stretchLast}
+                onClick={() => navigate(tile.path)}
+              />
+            )
+          })}
         </div>
       </section>
     </div>
