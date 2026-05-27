@@ -146,6 +146,15 @@ const QUICK_ACTIONS: QuickActionDef[] = [
     path: '/progress',
     accent: '#8b5cf6',
   },
+  {
+    icon: Activity,
+    labelKey: 'home_action_simulation',
+    label: 'Blutspiegel',
+    descKey: 'home_action_simulation_desc',
+    desc: 'PK-Kurve simulieren',
+    path: '/simulation',
+    accent: '#00ccf5',
+  },
 ]
 
 const FEATURE_CARDS: FeatureDef[] = [
@@ -431,16 +440,20 @@ export function Home() {
           <Sparkles size={18} color="rgba(0,204,245,0.72)" />
         </div>
         <div className="grid grid-cols-2 gap-2">
-          {QUICK_ACTIONS.map((action) => (
-            <QuickAction
-              key={action.labelKey}
-              icon={action.icon}
-              label={String(t(action.labelKey, { defaultValue: action.label }))}
-              desc={String(t(action.descKey, { defaultValue: action.desc }))}
-              accent={action.accent}
-              onClick={() => navigate(action.path)}
-            />
-          ))}
+          {QUICK_ACTIONS.map((action, idx) => {
+            const isLastOdd = QUICK_ACTIONS.length % 2 === 1 && idx === QUICK_ACTIONS.length - 1
+            return (
+              <QuickAction
+                key={action.labelKey}
+                icon={action.icon}
+                label={String(t(action.labelKey, { defaultValue: action.label }))}
+                desc={String(t(action.descKey, { defaultValue: action.desc }))}
+                accent={action.accent}
+                wide={isLastOdd}
+                onClick={() => navigate(action.path)}
+              />
+            )
+          })}
         </div>
       </section>
 
@@ -648,17 +661,20 @@ function QuickAction({
   label,
   desc,
   accent,
+  wide,
   onClick,
 }: {
   icon: LucideIcon
   label: string
   desc: string
   accent: string
+  wide?: boolean
   onClick: () => void
 }) {
   return (
     <button
       onClick={onClick}
+      className={wide ? 'col-span-2' : ''}
       style={{
         minHeight: 104,
         padding: '12px 9px',
@@ -666,9 +682,9 @@ function QuickAction({
         border: `1px solid ${accent}33`,
         background: `linear-gradient(155deg, ${accent}20, rgba(8,12,30,0.88))`,
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        gap: 9,
+        flexDirection: wide ? 'row' : 'column',
+        alignItems: wide ? 'center' : 'flex-start',
+        gap: wide ? 12 : 9,
         textAlign: 'left',
         position: 'relative',
         overflow: 'hidden',
