@@ -238,7 +238,7 @@ function LevelDisplay({
           color: 'rgba(255,255,255,0.35)',
         }}
       >
-        So viel Wirkstoff ist aktuell in deinem Blut.
+        Geschätzter Wirkstoff in deinem Blut basierend auf deinen Einnahmen.
       </p>
     </div>
   )
