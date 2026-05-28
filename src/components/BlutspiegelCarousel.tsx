@@ -99,14 +99,17 @@ function LevelDisplay({
   accent,
   unit,
   trend,
+  halfLifeHours,
 }: {
   value: number
   accent: string
   unit: string
   trend: BlutspiegelTrend
+  halfLifeHours: number
 }) {
   const { label, color } = TREND_DISPLAY[trend]
   const clamped = Math.min(100, Math.max(0, value))
+  const decimals = halfLifeHours < 12 ? 4 : 2
 
   return (
     <div>
@@ -120,7 +123,7 @@ function LevelDisplay({
           margin: 0,
         }}
       >
-        {clamped.toFixed(2)}%{' '}
+        {clamped.toFixed(decimals)}%{' '}
         <span style={{ fontSize: 28, fontWeight: 700 }}>{unit}</span>
       </p>
       <p
