@@ -129,6 +129,10 @@ function FlipChar({ char }: { char: string }) {
   )
 }
 
+function easeOutCubic(t: number) {
+  return 1 - Math.pow(1 - t, 3)
+}
+
 function LevelDisplay({
   value,
   accent,
@@ -143,10 +147,17 @@ function LevelDisplay({
   refreshFlashing: boolean
 }) {
   const { label, color } = TREND_DISPLAY[trend]
-  const clamped = Math.min(100, Math.max(0, value))
   const decimals = 4
-  const valueStr = clamped.toFixed(decimals)
+  const [displayValue, setDisplayValue] = useState(value)
+  const [animatedValue, setAnimatedValue] = useState(value)
   const [opacity, setOpacity] = useState(1)
+  const [glowing, setGlowing] = useState(false)
+  const prevAnimatedRef = useRef(value)
+
+  useEffect(() => {
+    if (refreshFlashing) return
+    setDisplayValue(value)
+  }, [value, refreshFlashing])
 
   useEffect(() => {
     if (!refreshFlashing) return
@@ -155,18 +166,56 @@ function LevelDisplay({
     return () => clearTimeout(t)
   }, [refreshFlashing])
 
+  useEffect(() => {
+    if (refreshFlashing || opacity !== 1) return
+    setDisplayValue(value)
+  }, [value, refreshFlashing, opacity])
+
+  useEffect(() => {
+    if (!refreshFlashing) return
+    setGlowing(true)
+    const t = setTimeout(() => setGlowing(false), 600)
+    return () => clearTimeout(t)
+  }, [refreshFlashing])
+
+  useEffect(() => {
+    if (prevAnimatedRef.current === displayValue) return
+    const start = prevAnimatedRef.current
+    const end = displayValue
+    const startTime = performance.now()
+    const duration = 800
+
+    let raf = 0
+    const tick = (now: number) => {
+      const t = Math.min((now - startTime) / duration, 1)
+      const eased = easeOutCubic(t)
+      setAnimatedValue(start + (end - start) * eased)
+      if (t < 1) {
+        raf = requestAnimationFrame(tick)
+      } else {
+        setAnimatedValue(end)
+        prevAnimatedRef.current = end
+      }
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [displayValue])
+
+  const clamped = Math.min(100, Math.max(0, animatedValue))
+  const valueStr = clamped.toFixed(decimals)
+
   return (
     <div>
       <p
         style={{
           fontSize: 48,
           fontWeight: 700,
-          color: accent,
+          color: glowing ? '#ffffff' : accent,
           lineHeight: 1.1,
           letterSpacing: '-0.03em',
           margin: 0,
           opacity,
-          transition: 'opacity 150ms ease',
+          transition: 'color 300ms ease, opacity 150ms ease',
         }}
       >
         {valueStr.split('').map((ch, i) => (
