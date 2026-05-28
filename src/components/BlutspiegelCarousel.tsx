@@ -134,15 +134,18 @@ function LevelDisplay({
   accent,
   unit,
   trend,
+  halfLifeHours,
 }: {
   value: number
   accent: string
   unit: string
   trend: BlutspiegelTrend
+  halfLifeHours: number
 }) {
   const { label, color } = TREND_DISPLAY[trend]
   const clamped = Math.min(100, Math.max(0, value))
-  const valueStr = clamped.toFixed(4)
+  const decimals = halfLifeHours < 12 ? 4 : halfLifeHours <= 72 ? 5 : 7
+  const valueStr = clamped.toFixed(decimals)
 
   return (
     <div>
@@ -301,7 +304,7 @@ function BlutspiegelCard({
           accent={accent}
           unit={level.unit}
           trend={level.trend}
-          halfLifeHours={halfLifeHours}
+          halfLifeHours={card.halfLifeHours}
         />
 
         <div
