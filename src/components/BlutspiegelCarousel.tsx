@@ -134,18 +134,26 @@ function LevelDisplay({
   accent,
   unit,
   trend,
-  halfLifeHours,
+  refreshFlashing,
 }: {
   value: number
   accent: string
   unit: string
   trend: BlutspiegelTrend
-  halfLifeHours: number
+  refreshFlashing: boolean
 }) {
   const { label, color } = TREND_DISPLAY[trend]
   const clamped = Math.min(100, Math.max(0, value))
-  const decimals = halfLifeHours < 12 ? 4 : halfLifeHours <= 72 ? 5 : 7
+  const decimals = 4
   const valueStr = clamped.toFixed(decimals)
+  const [opacity, setOpacity] = useState(1)
+
+  useEffect(() => {
+    if (!refreshFlashing) return
+    setOpacity(0)
+    const t = setTimeout(() => setOpacity(1), 150)
+    return () => clearTimeout(t)
+  }, [refreshFlashing])
 
   return (
     <div>
@@ -157,6 +165,8 @@ function LevelDisplay({
           lineHeight: 1.1,
           letterSpacing: '-0.03em',
           margin: 0,
+          opacity,
+          transition: 'opacity 150ms ease',
         }}
       >
         {valueStr.split('').map((ch, i) => (
@@ -304,7 +314,7 @@ function BlutspiegelCard({
           accent={accent}
           unit={level.unit}
           trend={level.trend}
-          halfLifeHours={card.halfLifeHours}
+          refreshFlashing={refreshFlashing}
         />
 
         <div
