@@ -55,14 +55,6 @@ const CATEGORY_ACCENT: Record<PkCategory, string> = {
   other: '#94a3b8',
 }
 
-const CATEGORY_LABEL: Record<PkCategory, string> = {
-  peptide: 'Peptid',
-  glp1: 'GLP-1',
-  hormone: 'Hormon',
-  sarm: 'SARM',
-  other: 'Sonstige',
-}
-
 const SWIPE_THRESHOLD_PX = 50
 const SWIPE_TRANSITION = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
 
@@ -290,19 +282,6 @@ function LiveStatusBar({
   )
 }
 
-const categoryBadgeStyle = (accent: string): CSSProperties => ({
-  display: 'inline-block',
-  padding: '3px 8px',
-  borderRadius: 999,
-  fontSize: '0.55rem',
-  fontWeight: 800,
-  letterSpacing: '0.12em',
-  textTransform: 'uppercase',
-  color: accent,
-  background: `${accent}18`,
-  border: `1px solid ${accent}33`,
-})
-
 // ── Karte ───────────────────────────────────────────────────────────────────
 
 function BlutspiegelCard({
@@ -315,7 +294,7 @@ function BlutspiegelCard({
   refreshFlashing: boolean
 }) {
   const navigate = useNavigate()
-  const { accent, level, peptideName, category, pkProfileId } = card
+  const { accent, level, peptideName, pkProfileId } = card
 
   return (
     <div
@@ -349,9 +328,8 @@ function BlutspiegelCard({
       />
 
       <div style={{ position: 'relative', zIndex: 2 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
           <LiveStatusBar remainingMs={remainingMs} refreshFlashing={refreshFlashing} />
-          <span style={categoryBadgeStyle(accent)}>{CATEGORY_LABEL[category]}</span>
         </div>
 
         <p style={{ fontSize: '0.9rem', fontWeight: 850, color: '#f8fbff', lineHeight: 1.2, marginBottom: 8 }}>
@@ -394,6 +372,19 @@ function BlutspiegelCard({
             mehr
           </button>
         </div>
+
+        <p
+          style={{
+            marginTop: 8,
+            fontSize: 9,
+            color: 'rgba(255,255,255,0.2)',
+            fontFamily: 'monospace',
+            textAlign: 'center',
+            lineHeight: 1.45,
+          }}
+        >
+          Die angezeigten Werte basieren auf pharmakokinetischen Modellen und sind Schätzungen. Kein medizinischer Rat.
+        </p>
       </div>
     </div>
   )
