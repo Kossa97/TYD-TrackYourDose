@@ -357,6 +357,7 @@ export function BlutspiegelCarousel() {
   const [remainingMs, setRemainingMs] = useState(REFRESH_INTERVAL_MS)
   const [refreshFlashing, setRefreshFlashing] = useState(false)
   const flashTriggeredRef = useRef(false)
+  const refreshInFlightRef = useRef(false)
 
   const loadLevels = useCallback(async (showLoader: boolean) => {
     if (!user) {
@@ -448,33 +449,30 @@ export function BlutspiegelCarousel() {
   useEffect(() => {
     if (!user || !cards.length) return
 
-    const id = window.setInterval(() => {
-      void loadLevels(false)
-    }, REFRESH_INTERVAL_MS)
-
-    return () => window.clearInterval(id)
-  }, [user, cards.length, loadLevels])
-
-  useEffect(() => {
-    if (!cards.length) return
-
     const tickId = window.setInterval(() => {
       const elapsed = Date.now() - cycleStart
       const remaining = Math.max(0, REFRESH_INTERVAL_MS - elapsed)
       setRemainingMs(remaining)
 
-      if (remaining <= 0 && !flashTriggeredRef.current) {
-        flashTriggeredRef.current = true
-        setRefreshFlashing(true)
+      if (remaining > 0 || refreshInFlightRef.current) return
+
+      refreshInFlightRef.current = true
+      flashTriggeredRef.current = true
+      setRefreshFlashing(true)
+
+      void loadLevels(false).finally(() => {
+        setCycleStart(Date.now())
+        setRemainingMs(REFRESH_INTERVAL_MS)
         window.setTimeout(() => {
           setRefreshFlashing(false)
           flashTriggeredRef.current = false
+          refreshInFlightRef.current = false
         }, 1000)
-      }
+      })
     }, 50)
 
     return () => window.clearInterval(tickId)
-  }, [cycleStart, cards.length])
+  }, [user, cycleStart, cards.length, loadLevels])
 
   const finishDrag = useCallback(() => {
     if (!pointerActive.current) return
