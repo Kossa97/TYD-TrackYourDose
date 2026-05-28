@@ -86,63 +86,7 @@ function isCycleActiveForCarousel(cycle: CycleWithPk, todayKey: string): boolean
   return false
 }
 
-function formatPeakDisplay(peakLabel: string): string {
-  if (!peakLabel || peakLabel === '—') return '—'
-  if (peakLabel.startsWith('Peak')) return peakLabel
-  return `Peak ${peakLabel}`
-}
-
-// ── SVG: Sparkline ──────────────────────────────────────────────────────────
-
-function Sparkline({
-  data,
-  accent,
-  className = 'w-full h-[60px]',
-}: {
-  data: number[]
-  accent: string
-  className?: string
-}) {
-  const w = 280
-  const h = 60
-  const pad = 2
-  const values = data.length ? data : [0]
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const span = max - min || 1
-
-  const points = values
-    .map((v, i) => {
-      const x = pad + (i / Math.max(values.length - 1, 1)) * (w - pad * 2)
-      const y = pad + (1 - (v - min) / span) * (h - pad * 2)
-      return `${x},${y}`
-    })
-    .join(' ')
-
-  const last = values[values.length - 1] ?? 0
-  const lastX = pad + ((values.length - 1) / Math.max(values.length - 1, 1)) * (w - pad * 2)
-  const lastY = pad + (1 - (last - min) / span) * (h - pad * 2)
-
-  return (
-    <svg
-      className={className}
-      viewBox={`0 0 ${w} ${h}`}
-      preserveAspectRatio="none"
-      aria-hidden
-    >
-      <polyline
-        fill="none"
-        stroke={accent}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        points={points}
-        opacity={0.9}
-      />
-      <circle cx={lastX} cy={lastY} r="3" fill={accent} />
-    </svg>
-  )
-}
+const REFRESH_INTERVAL_MS = 5000
 
 const TREND_DISPLAY: Record<BlutspiegelTrend, { label: string; color: string }> = {
   rising: { label: '↑ STEIGEND', color: '#10b981' },
@@ -165,44 +109,68 @@ function LevelDisplay({
   const clamped = Math.min(100, Math.max(0, value))
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-      <div>
-        <p
-          style={{
-            fontSize: 48,
-            fontWeight: 700,
-            color: accent,
-            lineHeight: 1,
-            letterSpacing: '-0.03em',
-          }}
-        >
-          {clamped.toFixed(2)}
-        </p>
-        <p
-          style={{
-            fontSize: '0.62rem',
-            color: 'rgba(154,170,191,0.62)',
-            marginTop: 4,
-          }}
-        >
-          % {unit}
-        </p>
-      </div>
+    <div>
       <p
         style={{
+          fontSize: 48,
+          fontWeight: 700,
+          color: accent,
+          lineHeight: 1.1,
+          letterSpacing: '-0.03em',
+          margin: 0,
+        }}
+      >
+        {clamped.toFixed(2)}%{' '}
+        <span style={{ fontSize: 28, fontWeight: 700 }}>{unit}</span>
+      </p>
+      <p
+        style={{
+          marginTop: 6,
           fontSize: '0.58rem',
           fontWeight: 700,
           fontFamily: 'monospace',
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
           color,
-          whiteSpace: 'nowrap',
         }}
         aria-label={label}
       >
         {label}
       </p>
+      <p
+        style={{
+          marginTop: 6,
+          fontSize: 11,
+          lineHeight: 1.4,
+          color: 'rgba(255,255,255,0.35)',
+        }}
+      >
+        So viel Wirkstoff ist aktuell in deinem Blut.
+      </p>
     </div>
+  )
+}
+
+function RefreshCountdown({
+  remainingMs,
+  flashing,
+}: {
+  remainingMs: number
+  flashing: boolean
+}) {
+  return (
+    <span
+      style={{
+        fontSize: 9,
+        fontFamily: 'monospace',
+        color: flashing ? 'rgba(0,204,245,0.85)' : 'rgba(255,255,255,0.25)',
+        letterSpacing: '0.04em',
+        transition: 'color 0.15s ease',
+      }}
+      aria-live="polite"
+    >
+      {flashing ? '↻' : `${(remainingMs / 1000).toFixed(2)}`}
+    </span>
   )
 }
 
@@ -250,14 +218,22 @@ function LiveIndicator() {
 
 // ── Karte ───────────────────────────────────────────────────────────────────
 
-function BlutspiegelCard({ card }: { card: CarouselCard }) {
+function BlutspiegelCard({
+  card,
+  remainingMs,
+  refreshFlashing,
+}: {
+  card: CarouselCard
+  remainingMs: number
+  refreshFlashing: boolean
+}) {
   const navigate = useNavigate()
   const { accent, level, peptideName, category, pkProfileId } = card
 
   return (
     <div
       className="w-full sm:max-w-[800px] sm:mx-auto"
-      style={{ ...shellStyle, padding: '16px 16px 14px', minHeight: 280 }}
+      style={{ ...shellStyle, padding: 12 }}
     >
       <style>{`
         @keyframes blutspiegel-live-pulse {
@@ -277,134 +253,54 @@ function BlutspiegelCard({ card }: { card: CarouselCard }) {
         }}
       />
 
-      {/* Mobile (< sm) */}
-      <div className="relative sm:hidden">
-        <div
-          className="absolute top-0 left-0 z-[2] flex items-center gap-1.5"
-          style={{ top: 0, left: 0 }}
-        >
+      <div style={{ position: 'relative', zIndex: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
           <LiveIndicator />
-        </div>
-
-        <div style={{ marginBottom: 12, paddingTop: 4 }}>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: '0.95rem', fontWeight: 850, color: '#f8fbff', lineHeight: 1.2, marginBottom: 6 }}>
-              {peptideName}
-            </p>
-            <span style={categoryBadgeStyle(accent)}>{CATEGORY_LABEL[category]}</span>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 14 }}>
-          <LevelDisplay
-            value={level.currentLevel}
-            accent={accent}
-            unit={level.unit}
-            trend={level.trend}
-          />
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-            <p style={{ fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.52)' }}>
-              Verlauf
-            </p>
-            <Sparkline data={level.sparkData} accent={accent} className="w-full h-[60px]" />
-          </div>
-        </div>
-
-        <p
-          style={{
-            textAlign: 'right',
-            fontSize: '0.62rem',
-            fontWeight: 750,
-            color: 'rgba(154,170,191,0.58)',
-          }}
-        >
-          {formatPeakDisplay(level.peakLabel)}
-        </p>
-      </div>
-
-      {/* Desktop (≥ sm) */}
-      <div className="relative hidden sm:grid sm:grid-cols-3 sm:min-h-[200px]">
-        <div className="flex flex-col items-center justify-center px-4 py-4 gap-3">
-          <LevelDisplay
-            value={level.currentLevel}
-            accent={accent}
-            unit={level.unit}
-            trend={level.trend}
-          />
           <span style={categoryBadgeStyle(accent)}>{CATEGORY_LABEL[category]}</span>
         </div>
 
-        <div className="flex flex-col border-l border-white/[0.06] px-5 py-4 min-h-[200px]">
-          <p
-            style={{
-              fontSize: '0.58rem',
-              fontWeight: 800,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: 'rgba(154,170,191,0.52)',
-              marginBottom: 8,
-            }}
-          >
-            VERLAUF
-          </p>
-          <Sparkline
-            data={level.sparkData}
-            accent={accent}
-            className="w-full h-[60px] flex-1"
-          />
-        </div>
+        <p style={{ fontSize: '0.9rem', fontWeight: 850, color: '#f8fbff', lineHeight: 1.2, marginBottom: 8 }}>
+          {peptideName}
+        </p>
 
-        <div className="flex flex-col justify-between border-l border-white/[0.06] px-5 py-4 min-h-[200px]">
-          <div className="flex items-center gap-1.5">
-            <LiveIndicator />
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <p
-              style={{
-                fontSize: '1.35rem',
-                fontWeight: 900,
-                color: '#f8fbff',
-                lineHeight: 1.15,
-                letterSpacing: '-0.03em',
-              }}
-            >
-              {peptideName}
-            </p>
-          </div>
-          <p
+        <LevelDisplay
+          value={level.currentLevel}
+          accent={accent}
+          unit={level.unit}
+          trend={level.trend}
+        />
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: 10,
+            gap: 8,
+          }}
+        >
+          <RefreshCountdown remainingMs={remainingMs} flashing={refreshFlashing} />
+          <button
+            type="button"
+            onClick={() => navigate(`/simulation?pk=${pkProfileId}`)}
             style={{
-              fontSize: '0.72rem',
-              fontWeight: 750,
-              color: 'rgba(154,170,191,0.58)',
-              textAlign: 'right',
+              width: 'auto',
+              background: 'transparent',
+              border: `1px solid ${accent}40`,
+              borderRadius: '10px',
+              padding: '6px 12px',
+              fontSize: 11,
+              fontFamily: 'monospace',
+              letterSpacing: '0.05em',
+              color: accent,
+              cursor: 'pointer',
+              marginLeft: 'auto',
             }}
           >
-            {formatPeakDisplay(level.peakLabel)}
-          </p>
+            mehr
+          </button>
         </div>
       </div>
-
-      <button
-        type="button"
-        onClick={() => navigate(`/simulation?pk=${pkProfileId}`)}
-        style={{
-          width: '100%',
-          background: 'transparent',
-          border: `1px solid ${accent}40`,
-          borderRadius: '10px',
-          padding: '10px',
-          fontSize: '12px',
-          fontFamily: 'monospace',
-          letterSpacing: '0.05em',
-          color: accent,
-          cursor: 'pointer',
-          marginTop: '12px',
-          position: 'relative',
-          zIndex: 2,
-        }}
-      >
-        Details & Simulation →
-      </button>
     </div>
   )
 }
@@ -422,6 +318,10 @@ export function BlutspiegelCarousel() {
   const dragStartX = useRef(0)
   const dragPxRef = useRef(0)
   const pointerActive = useRef(false)
+  const [cycleStart, setCycleStart] = useState(() => Date.now())
+  const [remainingMs, setRemainingMs] = useState(REFRESH_INTERVAL_MS)
+  const [refreshFlashing, setRefreshFlashing] = useState(false)
+  const flashTriggeredRef = useRef(false)
 
   const loadLevels = useCallback(async (showLoader: boolean) => {
     if (!user) {
@@ -501,6 +401,8 @@ export function BlutspiegelCarousel() {
 
     setCards(levels)
     setActiveIndex((prev) => (levels.length ? Math.min(prev, levels.length - 1) : 0))
+    setCycleStart(Date.now())
+    flashTriggeredRef.current = false
     setLoading(false)
   }, [user])
 
@@ -513,10 +415,31 @@ export function BlutspiegelCarousel() {
 
     const id = window.setInterval(() => {
       void loadLevels(false)
-    }, 10_000)
+    }, REFRESH_INTERVAL_MS)
 
     return () => window.clearInterval(id)
   }, [user, cards.length, loadLevels])
+
+  useEffect(() => {
+    if (!cards.length) return
+
+    const tickId = window.setInterval(() => {
+      const elapsed = Date.now() - cycleStart
+      const remaining = Math.max(0, REFRESH_INTERVAL_MS - elapsed)
+      setRemainingMs(remaining)
+
+      if (remaining <= 0 && !flashTriggeredRef.current) {
+        flashTriggeredRef.current = true
+        setRefreshFlashing(true)
+        window.setTimeout(() => {
+          setRefreshFlashing(false)
+          flashTriggeredRef.current = false
+        }, 300)
+      }
+    }, 50)
+
+    return () => window.clearInterval(tickId)
+  }, [cycleStart, cards.length])
 
   const finishDrag = useCallback(() => {
     if (!pointerActive.current) return
@@ -631,7 +554,11 @@ export function BlutspiegelCarousel() {
         >
           {cards.map((card) => (
             <div key={card.cycleId} style={{ flex: '0 0 100%', width: '100%', paddingRight: 0 }}>
-              <BlutspiegelCard card={card} />
+              <BlutspiegelCard
+                card={card}
+                remainingMs={remainingMs}
+                refreshFlashing={refreshFlashing}
+              />
             </div>
           ))}
         </div>
