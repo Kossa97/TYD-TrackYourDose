@@ -353,11 +353,11 @@ export function BlutspiegelCarousel() {
   const dragStartX = useRef(0)
   const dragPxRef = useRef(0)
   const pointerActive = useRef(false)
-  const [cycleStart, setCycleStart] = useState(() => Date.now())
   const [remainingMs, setRemainingMs] = useState(REFRESH_INTERVAL_MS)
   const [refreshFlashing, setRefreshFlashing] = useState(false)
   const flashTriggeredRef = useRef(false)
   const refreshInFlightRef = useRef(false)
+  const nextRefreshAt = useRef(Date.now() + REFRESH_INTERVAL_MS)
 
   const loadLevels = useCallback(async (showLoader: boolean) => {
     if (!user) {
@@ -437,7 +437,7 @@ export function BlutspiegelCarousel() {
 
     setCards(levels)
     setActiveIndex((prev) => (levels.length ? Math.min(prev, levels.length - 1) : 0))
-    setCycleStart(Date.now())
+    nextRefreshAt.current = Date.now() + REFRESH_INTERVAL_MS
     flashTriggeredRef.current = false
     setLoading(false)
   }, [user])
@@ -450,29 +450,25 @@ export function BlutspiegelCarousel() {
     if (!user || !cards.length) return
 
     const tickId = window.setInterval(() => {
-      const elapsed = Date.now() - cycleStart
-      const remaining = Math.max(0, REFRESH_INTERVAL_MS - elapsed)
+      const remaining = Math.max(0, nextRefreshAt.current - Date.now())
       setRemainingMs(remaining)
 
       if (remaining > 0 || refreshInFlightRef.current) return
 
       refreshInFlightRef.current = true
-      flashTriggeredRef.current = true
       setRefreshFlashing(true)
+      nextRefreshAt.current = Date.now() + REFRESH_INTERVAL_MS
 
       void loadLevels(false).finally(() => {
-        setCycleStart(Date.now())
-        setRemainingMs(REFRESH_INTERVAL_MS)
         window.setTimeout(() => {
           setRefreshFlashing(false)
-          flashTriggeredRef.current = false
           refreshInFlightRef.current = false
         }, 1000)
       })
     }, 50)
 
     return () => window.clearInterval(tickId)
-  }, [user, cycleStart, cards.length, loadLevels])
+  }, [user, cards.length, loadLevels])
 
   const finishDrag = useCallback(() => {
     if (!pointerActive.current) return
