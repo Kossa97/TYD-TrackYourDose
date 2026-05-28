@@ -301,6 +301,7 @@ function BlutspiegelCard({
           accent={accent}
           unit={level.unit}
           trend={level.trend}
+          halfLifeHours={halfLifeHours}
         />
 
         <div
