@@ -13,6 +13,7 @@ export interface CurrentBlutspiegelLevel {
   nextDoseIn: string
   levelAfterNextDose: number
   peakLabel: string
+  unit: string
 }
 
 export interface DoseEvent {
@@ -147,6 +148,7 @@ export function calculateHistoryBlutspiegelCurve(
 
 interface CycleScheduleRow {
   dose: number
+  unit: string
   intake_time: string | null
   intake_time_custom: string | null
   frequency: string
@@ -173,6 +175,7 @@ const EMPTY_CURRENT_LEVEL: CurrentBlutspiegelLevel = {
   nextDoseIn: '—',
   levelAfterNextDose: 0,
   peakLabel: '—',
+  unit: 'mcg',
 }
 
 function cycleAppliesToDay(cycle: CycleScheduleRow, day: Date): boolean {
@@ -347,13 +350,14 @@ export async function getCurrentBlutspiegelLevel(
 
   const { data: cycle, error: cycleErr } = await supabase
     .from('cycles')
-    .select('dose, intake_time, intake_time_custom, frequency, schedule_days, x_days_interval, start_date, end_date')
+    .select('dose, unit, intake_time, intake_time_custom, frequency, schedule_days, x_days_interval, start_date, end_date')
     .eq('id', cycleId)
     .maybeSingle()
 
   if (cycleErr || !cycle) return { ...EMPTY_CURRENT_LEVEL }
 
   const schedule = cycle as CycleScheduleRow
+  const cycleUnit = schedule.unit ?? 'mcg'
   const now = new Date()
   const nextDose = findNextDoseTime(schedule, now)
   const nextDoseIn = formatDurationShort(nextDose.getTime() - now.getTime())
@@ -363,6 +367,7 @@ export async function getCurrentBlutspiegelLevel(
       ...EMPTY_CURRENT_LEVEL,
       nextDoseIn,
       levelAfterNextDose: 0,
+      unit: cycleUnit,
     }
   }
 
@@ -378,6 +383,7 @@ export async function getCurrentBlutspiegelLevel(
     return {
       ...EMPTY_CURRENT_LEVEL,
       nextDoseIn,
+      unit: cycleUnit,
     }
   }
 
@@ -425,5 +431,6 @@ export async function getCurrentBlutspiegelLevel(
     nextDoseIn,
     levelAfterNextDose,
     peakLabel: peakLabelFromCurve(curve, now),
+    unit: cycleUnit,
   }
 }

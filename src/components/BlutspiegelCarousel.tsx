@@ -43,7 +43,6 @@ interface CarouselCard {
   category: PkCategory
   accent: string
   dose: number
-  unit: string
   halfLifeHours: number
   level: CurrentBlutspiegelLevel
 }
@@ -253,7 +252,7 @@ function LiveIndicator() {
 
 function BlutspiegelCard({ card }: { card: CarouselCard }) {
   const navigate = useNavigate()
-  const { accent, level, peptideName, category, unit, pkProfileId } = card
+  const { accent, level, peptideName, category, pkProfileId } = card
 
   return (
     <div
@@ -300,7 +299,7 @@ function BlutspiegelCard({ card }: { card: CarouselCard }) {
           <LevelDisplay
             value={level.currentLevel}
             accent={accent}
-            unit={unit}
+            unit={level.unit}
             trend={level.trend}
           />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
@@ -329,7 +328,7 @@ function BlutspiegelCard({ card }: { card: CarouselCard }) {
           <LevelDisplay
             value={level.currentLevel}
             accent={accent}
-            unit={unit}
+            unit={level.unit}
             trend={level.trend}
           />
           <span style={categoryBadgeStyle(accent)}>{CATEGORY_LABEL[category]}</span>
@@ -494,7 +493,6 @@ export function BlutspiegelCarousel() {
           category,
           accent: CATEGORY_ACCENT[category],
           dose: Number(cycle.dose),
-          unit: cycle.unit,
           halfLifeHours: pk.half_life_hours,
           level,
         } satisfies CarouselCard
