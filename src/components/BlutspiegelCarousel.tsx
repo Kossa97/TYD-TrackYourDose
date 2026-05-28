@@ -231,7 +231,7 @@ function BlutspiegelCard({
   refreshFlashing: boolean
 }) {
   const navigate = useNavigate()
-  const { accent, level, peptideName, category, pkProfileId } = card
+  const { accent, level, peptideName, category, pkProfileId, halfLifeHours } = card
 
   return (
     <div
@@ -271,6 +271,7 @@ function BlutspiegelCard({
           accent={accent}
           unit={level.unit}
           trend={level.trend}
+          halfLifeHours={halfLifeHours}
         />
 
         <div
