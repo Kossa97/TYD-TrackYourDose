@@ -1200,7 +1200,7 @@ export function BlutspiegelSimulation() {
       )}
 
       {/* Empty state wenn noch keine Simulation */}
-      {!simResult && !(protocolSimMode === 'history' && historyCurve.length > 0) && (
+      {!simResult && (
         <div style={{ ...PANEL, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '40px 20px', textAlign: 'center' }}>
           <div style={{ width: 56, height: 56, borderRadius: 18, background: 'rgba(0,204,245,0.08)', border: '1px solid rgba(0,204,245,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Activity size={26} color="rgba(0,204,245,0.55)" />
