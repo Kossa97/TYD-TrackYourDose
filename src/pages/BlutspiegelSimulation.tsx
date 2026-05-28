@@ -18,6 +18,8 @@ import {
   type CurrentBlutspiegelLevel,
   type DoseEvent,
 } from '../services/blutspiegelHistory'
+import { loadAllCycleChartData, type CycleChartData } from '../services/liveBlutspiegelChart'
+import { LiveBlutspiegelChart } from '../components/LiveBlutspiegelChart'
 
 // ── Typen ─────────────────────────────────────────────────────────────────
 
@@ -769,6 +771,11 @@ export function BlutspiegelSimulation() {
   const [liveRefreshing, setLiveRefreshing] = useState(false)
   const liveIntervalRef = useRef<number | null>(null)
 
+  // Verlaufs-Chart
+  const [chartData, setChartData]         = useState<CycleChartData[]>([])
+  const [chartLoading, setChartLoading]   = useState(false)
+  const chartIntervalRef = useRef<number | null>(null)
+
   // Lade PK-Profile
   useEffect(() => {
     supabase.from('pk_profiles').select('*').order('name').then(({ data }) => {
@@ -839,6 +846,19 @@ export function BlutspiegelSimulation() {
     liveIntervalRef.current = window.setInterval(() => void loadLiveLevels(true), 5000)
     return () => { if (liveIntervalRef.current) window.clearInterval(liveIntervalRef.current) }
   }, [protocolCycles, loadLiveLevels])
+
+  // Verlaufs-Chart: laden + alle 10s neu laden
+  useEffect(() => {
+    if (!user) return
+    setChartLoading(true)
+    const load = () => loadAllCycleChartData(user.id).then(data => {
+      setChartData(data)
+      setChartLoading(false)
+    })
+    void load()
+    chartIntervalRef.current = window.setInterval(() => void load(), 10_000)
+    return () => { if (chartIntervalRef.current) window.clearInterval(chartIntervalRef.current) }
+  }, [user])
 
   // Auto-fill Dosis aus aktivem Zyklus wenn Peptid-Name übereinstimmt
   useEffect(() => {
@@ -936,6 +956,19 @@ export function BlutspiegelSimulation() {
                 })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Verlaufs-Graph ───────────────────────────────────────────────── */}
+      {(chartLoading || chartData.length > 0) && (
+        <div style={PANEL}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#eaeefc', marginBottom: 2 }}>
+            Verlaufs-Graph
+          </p>
+          <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.45)', marginBottom: 12, lineHeight: 1.5 }}>
+            7-Tage-Fenster mit echten Einnahmen · wischen zum Scrollen
+          </p>
+          <LiveBlutspiegelChart cycles={chartData} loading={chartLoading} />
         </div>
       )}
 
