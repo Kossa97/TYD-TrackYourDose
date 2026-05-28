@@ -97,15 +97,14 @@ function formatPeakDisplay(peakLabel: string): string {
 function Sparkline({
   data,
   accent,
-  className,
+  className = 'w-full h-[60px]',
 }: {
   data: number[]
   accent: string
   className?: string
 }) {
-  const isLarge = Boolean(className)
-  const w = isLarge ? 280 : 128
-  const h = isLarge ? 200 : 36
+  const w = 280
+  const h = 60
   const pad = 2
   const values = data.length ? data : [0]
   const min = Math.min(...values)
@@ -126,11 +125,9 @@ function Sparkline({
 
   return (
     <svg
-      width={isLarge ? undefined : w}
-      height={isLarge ? undefined : h}
       className={className}
       viewBox={`0 0 ${w} ${h}`}
-      preserveAspectRatio={isLarge ? 'none' : undefined}
+      preserveAspectRatio="none"
       aria-hidden
     >
       <polyline
@@ -308,7 +305,7 @@ function BlutspiegelCard({ card }: { card: CarouselCard }) {
             <p style={{ fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.52)' }}>
               Verlauf
             </p>
-            <Sparkline data={level.sparkData} accent={accent} />
+            <Sparkline data={level.sparkData} accent={accent} className="w-full h-[60px]" />
           </div>
         </div>
 
@@ -352,7 +349,7 @@ function BlutspiegelCard({ card }: { card: CarouselCard }) {
           <Sparkline
             data={level.sparkData}
             accent={accent}
-            className="w-full h-[200px] flex-1"
+            className="w-full h-[60px] flex-1"
           />
         </div>
 

@@ -169,7 +169,7 @@ const INTAKE_MINUTES: Record<string, number> = {
 const EMPTY_CURRENT_LEVEL: CurrentBlutspiegelLevel = {
   currentLevel: 0,
   trend: 'stable',
-  sparkData: Array(10).fill(0),
+  sparkData: Array(20).fill(0),
   nextDoseIn: '—',
   levelAfterNextDose: 0,
   peakLabel: '—',
@@ -390,11 +390,13 @@ export async function getCurrentBlutspiegelLevel(
     halfLifeHours,
     tmaxHours,
     bioavailability,
-    120,
+    30,
   )
+  const tenHoursAgo = new Date(now.getTime() - 10 * 3_600_000)
+  const recentSpark = sparkCurve.filter(p => p.time.getTime() >= tenHoursAgo.getTime())
   const sparkData = sampleSparkData(
-    sparkCurve.length >= 10 ? sparkCurve.slice(-10) : sparkCurve,
-    10,
+    recentSpark.length >= 20 ? recentSpark.slice(-20) : recentSpark,
+    20,
   )
 
   const futureDose: DoseEvent = {
