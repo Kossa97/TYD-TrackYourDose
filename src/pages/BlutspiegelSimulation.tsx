@@ -5,8 +5,8 @@ import {
 } from 'recharts'
 import { format } from 'date-fns'
 import { de as deLocale } from 'date-fns/locale'
-import { Activity, CalendarDays, ChevronDown, Info, Loader2 } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Activity, Info, Loader2 } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -350,22 +350,111 @@ const METRIC_EXPLANATIONS = {
 
 function LiveCycleCard({
   cycleId,
-  pkProfileId,
   peptideName,
   pk,
   level,
   accent,
 }: {
   cycleId: string
-  pkProfileId: string
   peptideName: string
   pk: PkProfileEmbed
   level: CurrentBlutspiegelLevel | undefined
   accent: string
 }) {
-  const navigate = useNavigate()
-  const spark = (level?.sparkData ?? Array(20).fill(0)).map((v, i) => ({ i, v }))
-  const trend = level ? TREND_META[level.trend] : TREND_META.stable
+  const [curve, setCurve]             = useState<BlutspiegelCurvePoint[]>([])
+  const [events, setEvents]           = useState<DoseEvent[]>([])
+  const [curveLoading, setCurveLoading] = useState(true)
+  const [windowOffsetHours, setWindowOffsetHours] = useState(0)
+  const chartRef    = useRef<HTMLDivElement>(null)
+  const panStartX   = useRef<number | null>(null)
+  const panStartOff = useRef(0)
+  const isPanning   = useRef(false)
+
+  useEffect(() => {
+    setCurveLoading(true)
+    void loadDoseHistory(cycleId).then(evts => {
+      setEvents(evts)
+      if (evts.some(e => e.status === 'taken')) {
+        setCurve(calculateHistoryBlutspiegelCurve(
+          evts, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc,
+        ))
+      }
+      setCurveLoading(false)
+    })
+  }, [cycleId, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc])
+
+  const chartData = useMemo(
+    () => curve.map(p => ({ ts: p.time.getTime(), level: p.level })),
+    [curve],
+  )
+
+  const windowDomain = useMemo((): [number, number] => {
+    if (!chartData.length) return [0, 0]
+    const dataEnd = chartData[chartData.length - 1].ts
+    const dataStart = chartData[0].ts
+    const wEnd = dataEnd - windowOffsetHours * 3_600_000
+    const wStart = wEnd - WINDOW_HOURS * 3_600_000
+    return [Math.max(dataStart, wStart), Math.min(dataEnd, wEnd)]
+  }, [chartData, windowOffsetHours])
+
+  const tickList = useMemo(() => {
+    const [s, e] = windowDomain
+    if (s === 0 && e === 0) return []
+    const spanH = (e - s) / 3_600_000
+    const tickMs = spanH <= 12 ? 2 * 3_600_000 : spanH <= 48 ? 6 * 3_600_000 : 24 * 3_600_000
+    const result: number[] = []
+    const first = Math.ceil(s / tickMs) * tickMs
+    for (let t = first; t <= e; t += tickMs) result.push(t)
+    return result
+  }, [windowDomain])
+
+  const visibleData = useMemo(() => {
+    const [s, e] = windowDomain
+    if (s === 0 && e === 0) return chartData
+    return chartData.filter(p => p.ts >= s && p.ts <= e)
+  }, [chartData, windowDomain])
+
+  const visibleMarkers = useMemo(
+    () => events
+      .filter(ev => ev.status === 'taken'
+        && ev.timestamp.getTime() >= windowDomain[0]
+        && ev.timestamp.getTime() <= windowDomain[1])
+      .map(ev => ({ ts: ev.timestamp.getTime(), level: levelAtTime(curve, ev.timestamp) })),
+    [events, curve, windowDomain],
+  )
+
+  const maxOffset = useMemo(() => {
+    if (!chartData.length) return 0
+    const spanH = (chartData[chartData.length - 1].ts - chartData[0].ts) / 3_600_000
+    return Math.max(0, spanH - WINDOW_HOURS)
+  }, [chartData])
+
+  const formatTick = useCallback((ts: number) => {
+    const spanH = (windowDomain[1] - windowDomain[0]) / 3_600_000
+    return format(new Date(ts), spanH <= 48 ? 'HH:mm' : 'EEE', { locale: deLocale })
+  }, [windowDomain])
+
+  const handlePanStart = useCallback((clientX: number) => {
+    isPanning.current = true; panStartX.current = clientX; panStartOff.current = windowOffsetHours
+  }, [windowOffsetHours])
+
+  const handlePanMove = useCallback((clientX: number) => {
+    if (!isPanning.current || panStartX.current === null) return
+    if (chartRef.current) chartRef.current.style.transform = `translateX(${(clientX - panStartX.current) * 0.12}px)`
+  }, [])
+
+  const handlePanEnd = useCallback((clientX: number) => {
+    if (!isPanning.current || panStartX.current === null) return
+    const dx = clientX - panStartX.current
+    if (chartRef.current) chartRef.current.style.transform = ''
+    isPanning.current = false; panStartX.current = null
+    if (!chartData.length) return
+    const deltaH = -(dx / (chartRef.current?.offsetWidth ?? 300)) * WINDOW_HOURS * 2
+    setWindowOffsetHours(prev => Math.max(0, Math.min(maxOffset, panStartOff.current + deltaH)))
+  }, [chartData.length, maxOffset])
+
+  const trend   = level ? TREND_META[level.trend] : TREND_META.stable
+  const hasCurve = curve.length > 0
 
   return (
     <div style={{
@@ -376,10 +465,9 @@ function LiveCycleCard({
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {/* Hintergrund-Glow */}
       <div style={{ position: 'absolute', top: -30, right: -30, width: 100, height: 100, borderRadius: '50%', background: accent, opacity: 0.06, filter: 'blur(24px)', pointerEvents: 'none' }} />
 
-      {/* Header: Peptid + Kategorie + Level */}
+      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
         <div style={{ minWidth: 0 }}>
           <p style={{ fontSize: '0.92rem', fontWeight: 850, color: '#f8fbff', marginBottom: 4 }}>{peptideName}</p>
@@ -407,38 +495,138 @@ function LiveCycleCard({
         </div>
       </div>
 
-      {/* Sparkline — letzte 10h */}
+      {/* Chart-Bereich */}
       <div style={{ margin: '0 -2px 10px' }}>
-        <ResponsiveContainer width="100%" height={52}>
-          <AreaChart data={spark} margin={{ top: 4, right: 2, bottom: 0, left: 2 }}>
-            <defs>
-              <linearGradient id={`spk-${cycleId}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor={accent} stopOpacity={0.38} />
-                <stop offset="95%" stopColor={accent} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <Area
-              type="monotone"
-              dataKey="v"
-              stroke={accent}
-              fill={`url(#spk-${cycleId})`}
-              dot={false}
-              strokeWidth={2}
-              isAnimationActive={false}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-        <p style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.4)', textAlign: 'right', marginTop: -2, fontFamily: 'monospace' }}>
-          Verlauf · letzte 10h
-        </p>
+        {curveLoading ? (
+          <div style={{ height: 130, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Loader2 size={16} color={accent} className="animate-spin" />
+          </div>
+        ) : hasCurve ? (
+          <>
+            {/* Nav-Zeile */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <p style={{ fontSize: '0.52rem', color: 'rgba(154,170,191,0.38)', fontFamily: 'monospace' }}>
+                12h-Fenster · ← wischen
+              </p>
+              {windowOffsetHours > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setWindowOffsetHours(0)}
+                  style={{
+                    fontSize: '0.52rem', fontWeight: 800, color: accent,
+                    background: `${accent}15`, border: `1px solid ${accent}25`,
+                    borderRadius: 6, padding: '2px 6px', cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  Jetzt ↩
+                </button>
+              )}
+            </div>
+            {/* Fortschrittsbalken */}
+            {maxOffset > 0 && (
+              <div style={{ height: 2, borderRadius: 99, background: 'rgba(255,255,255,0.06)', marginBottom: 5, overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%', borderRadius: 99, background: accent,
+                  width: `${Math.round((1 - windowOffsetHours / maxOffset) * 100)}%`,
+                  transition: 'width 0.2s',
+                }} />
+              </div>
+            )}
+            {/* Wisch-Container */}
+            <div
+              style={{ touchAction: 'pan-y', userSelect: 'none', cursor: 'grab' }}
+              onPointerDown={e => {
+                ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+                handlePanStart(e.clientX)
+              }}
+              onPointerMove={e => handlePanMove(e.clientX)}
+              onPointerUp={e => handlePanEnd(e.clientX)}
+              onPointerCancel={e => handlePanEnd(e.clientX)}
+            >
+              <div ref={chartRef} style={{ willChange: 'transform' }}>
+                <ResponsiveContainer width="100%" height={150}>
+                  <ComposedChart data={visibleData} margin={{ top: 4, right: 4, left: -18, bottom: 14 }}>
+                    <defs>
+                      <linearGradient id={`liveGrad-${cycleId}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor={accent} stopOpacity={0.32} />
+                        <stop offset="95%" stopColor={accent} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                    <XAxis
+                      dataKey="ts" type="number" scale="time"
+                      domain={windowDomain} ticks={tickList}
+                      tickLine={false} axisLine={false}
+                      tick={{ fill: 'rgba(154,170,191,0.38)', fontSize: 9 }}
+                      tickFormatter={formatTick}
+                    />
+                    <YAxis
+                      domain={[0, 105]} ticks={[0, 50, 100]}
+                      tickLine={false} axisLine={false}
+                      tick={{ fill: 'rgba(154,170,191,0.38)', fontSize: 9 }}
+                      tickFormatter={v => `${v}%`} width={34}
+                    />
+                    <Tooltip content={<HistoryChartTooltip />} cursor={{ stroke: `${accent}44`, strokeWidth: 1 }} />
+                    {events
+                      .filter(ev => ev.status === 'skipped'
+                        && ev.timestamp.getTime() >= windowDomain[0]
+                        && ev.timestamp.getTime() <= windowDomain[1])
+                      .map(ev => (
+                        <ReferenceLine
+                          key={`skip-${ev.timestamp.getTime()}`}
+                          x={ev.timestamp.getTime()}
+                          stroke="rgba(154,170,191,0.28)"
+                          strokeDasharray="4 3"
+                          strokeWidth={1}
+                        />
+                      ))}
+                    <Area
+                      type="monotone" dataKey="level"
+                      stroke={accent} strokeWidth={2}
+                      fill={`url(#liveGrad-${cycleId})`}
+                      dot={false} activeDot={{ r: 3, fill: '#07091a', stroke: accent, strokeWidth: 2 }}
+                      isAnimationActive={false}
+                    />
+                    <Scatter
+                      data={visibleMarkers} dataKey="level"
+                      fill="#10b981" stroke="#07091a" strokeWidth={1.5} r={4}
+                      isAnimationActive={false}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </>
+        ) : (
+          /* Fallback: keine bestätigten Einnahmen */
+          <>
+            <ResponsiveContainer width="100%" height={60}>
+              <AreaChart
+                data={(level?.sparkData ?? Array(20).fill(0)).map((v, i) => ({ i, v }))}
+                margin={{ top: 4, right: 2, bottom: 0, left: 2 }}
+              >
+                <defs>
+                  <linearGradient id={`spk-${cycleId}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor={accent} stopOpacity={0.38} />
+                    <stop offset="95%" stopColor={accent} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <Area type="monotone" dataKey="v" stroke={accent} fill={`url(#spk-${cycleId})`} dot={false} strokeWidth={2} isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+            <p style={{ fontSize: '0.52rem', color: 'rgba(154,170,191,0.35)', textAlign: 'center', marginTop: 6 }}>
+              Einnahmen im Kalender bestätigen für vollständigen Verlauf
+            </p>
+          </>
+        )}
       </div>
 
       {/* Stats 3er-Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
         {[
           { label: 'Nächste Dosis', value: level?.nextDoseIn ?? '—', color: '#eaeefc' },
-          { label: 'Level danach', value: level ? `~${level.levelAfterNextDose.toFixed(0)}%` : '—', color: accent },
-          { label: 'Peak',         value: level?.peakLabel ?? '—',   color: '#f59e0b' },
+          { label: 'Level danach',  value: level ? `~${level.levelAfterNextDose.toFixed(0)}%` : '—', color: accent },
+          { label: 'Peak',          value: level?.peakLabel ?? '—', color: '#f59e0b' },
         ].map(({ label, value, color }) => (
           <div key={label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '7px 8px' }}>
             <p style={{ fontSize: '0.52rem', color: 'rgba(154,170,191,0.5)', fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
@@ -447,33 +635,19 @@ function LiveCycleCard({
         ))}
       </div>
 
-      {/* PK-Parameter Zeile */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
-        {[
-          { k: 'T½',    v: `${pk.half_life_hours}h` },
-          { k: 'Tmax',  v: `${pk.tmax_hours}h` },
-          { k: 'F',     v: `${Math.round(pk.bioavailability_sc * 100)}%` },
-        ].map(({ k, v }) => (
-          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      {/* PK-Parameter */}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {([
+          { k: 'T½',   v: `${pk.half_life_hours}h`, tip: 'Halbwertzeit — nach dieser Zeit sind 50% abgebaut' },
+          { k: 'Tmax', v: `${pk.tmax_hours}h`,       tip: 'Zeit bis zum Peak nach der Injektion' },
+          { k: 'F',    v: `${Math.round(pk.bioavailability_sc * 100)}%`, tip: 'Bioverfügbarkeit — wie viel tatsächlich wirkt' },
+        ] as const).map(({ k, v, tip }) => (
+          <div key={k} title={tip} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'help' }}>
             <span style={{ fontSize: '0.58rem', color: 'rgba(154,170,191,0.45)', fontFamily: 'monospace' }}>{k}:</span>
             <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'rgba(213,224,242,0.7)' }}>{v}</span>
           </div>
         ))}
       </div>
-
-      {/* Zyklus-Verlauf Button */}
-      <button
-        type="button"
-        onClick={() => navigate(`/simulation?pk=${pkProfileId}`)}
-        style={{
-          width: '100%', padding: '9px 0', borderRadius: 12,
-          background: `${accent}12`, border: `1px solid ${accent}28`,
-          color: accent, fontSize: '0.75rem', fontWeight: 800,
-          cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.02em',
-        }}
-      >
-        Zyklus-Verlauf ansehen →
-      </button>
     </div>
   )
 }
@@ -487,47 +661,30 @@ export function BlutspiegelSimulation() {
   const [searchParams] = useSearchParams()
   const pkFromUrl = searchParams.get('pk')
 
-  const [pkProfiles, setPkProfiles]   = useState<PkProfile[]>([])
+  const [pkProfiles, setPkProfiles]       = useState<PkProfile[]>([])
   const [protocolCycles, setProtocolCycles] = useState<ProtocolCycle[]>([])
-  const [protocolLoading, setProtocolLoading] = useState(false)
-  const [protocolOpen, setProtocolOpen] = useState(false)
-  const [selectedProtocolCycleId, setSelectedProtocolCycleId] = useState<string | null>(null)
-  const [selectedPkId, setSelectedPkId] = useState('')
-  const [dose, setDose]               = useState('')
-  const [unit, setUnit]               = useState<'mg' | 'mcg' | 'IU'>('mcg')
-  const [route, setRoute]             = useState<'SC' | 'IM' | 'oral'>('SC')
-  const [multiDose, setMultiDose]     = useState(false)
-  const [interval, setInterval]       = useState('8')
-  const [numDoses, setNumDoses]       = useState('3')
-  const [simResult, setSimResult]       = useState<PkResult | null>(null)
-  const [pageInfoOpen, setPageInfoOpen] = useState(false)
-  const [protocolSimMode, setProtocolSimMode] = useState<'single' | 'history'>('single')
-  const [historyLoading, setHistoryLoading] = useState(false)
-  const [historyEvents, setHistoryEvents] = useState<DoseEvent[]>([])
-  const [historyCurve, setHistoryCurve] = useState<BlutspiegelCurvePoint[]>([])
-  const [historyNoConfirmed, setHistoryNoConfirmed] = useState(false)
+  const [selectedPkId, setSelectedPkId]   = useState('')
+  const [dose, setDose]                   = useState('')
+  const [unit, setUnit]                   = useState<'mg' | 'mcg' | 'IU'>('mcg')
+  const [route, setRoute]                 = useState<'SC' | 'IM' | 'oral'>('SC')
+  const [multiDose, setMultiDose]         = useState(false)
+  const [interval, setInterval]           = useState('8')
+  const [numDoses, setNumDoses]           = useState('3')
+  const [simResult, setSimResult]         = useState<PkResult | null>(null)
 
   // Live-Übersicht für alle aktiven Zyklen
-  const [liveData, setLiveData] = useState<Map<string, CurrentBlutspiegelLevel>>(new Map())
-  const [liveLoading, setLiveLoading] = useState(false)
+  const [liveData, setLiveData]           = useState<Map<string, CurrentBlutspiegelLevel>>(new Map())
+  const [liveLoading, setLiveLoading]     = useState(false)
   const [liveRefreshing, setLiveRefreshing] = useState(false)
   const liveIntervalRef = useRef<number | null>(null)
 
-  // Zyklus-Verlauf Chart — 12h-Fenster + Wisch-Navigation
-  const [windowOffsetHours, setWindowOffsetHours] = useState(0)
-  const histChartRef = useRef<HTMLDivElement>(null)
-  const histPanStartX = useRef<number | null>(null)
-  const histPanStartOffset = useRef(0)
-  const histIsPanning = useRef(false)
-
-  // Lade PK-Profile und aktive Zyklen
+  // Lade PK-Profile
   useEffect(() => {
     supabase.from('pk_profiles').select('*').order('name').then(({ data }) => {
       const profiles = (data as PkProfile[]) ?? []
       setPkProfiles(profiles)
       if (pkFromUrl && profiles.some(p => p.id === pkFromUrl)) {
         setSelectedPkId(pkFromUrl)
-        setProtocolOpen(true)
       } else if (profiles.length > 0) {
         setSelectedPkId(profiles[0].id)
       }
@@ -536,7 +693,6 @@ export function BlutspiegelSimulation() {
 
   useEffect(() => {
     if (!user) return
-    setProtocolLoading(true)
     supabase
       .from('cycles')
       .select(`id, peptide_id, dose, unit, method,
@@ -547,33 +703,13 @@ export function BlutspiegelSimulation() {
       .eq('active', true)
       .then(({ data }) => {
         setProtocolCycles((data as unknown as ProtocolCycle[]) ?? [])
-        setProtocolLoading(false)
       })
   }, [user])
-
-  const linkedProtocolCycles = useMemo(
-    () => protocolCycles.filter(c => c.peptides?.pk_profile_id),
-    [protocolCycles],
-  )
-  const unlinkedProtocolCycles = useMemo(
-    () => protocolCycles.filter(c => !c.peptides?.pk_profile_id),
-    [protocolCycles],
-  )
 
   const selectedProfile = useMemo(
     () => pkProfiles.find(p => p.id === selectedPkId) ?? null,
     [pkProfiles, selectedPkId],
   )
-
-  const applyProtocolCycle = useCallback((cycle: ProtocolCycle) => {
-    const pkId = cycle.peptides?.pk_profile_id
-    if (!pkId) return
-    setSelectedPkId(pkId)
-    setDose(String(cycle.dose))
-    setUnit(normalizeUnit(cycle.unit))
-    setRoute(methodToRoute(cycle.method))
-    setSelectedProtocolCycleId(cycle.id)
-  }, [])
 
   // ── Live-Übersicht: alle Zyklen mit PK-Profil laden ───────────────────
   const loadLiveLevels = useCallback(async (isRefresh = false) => {
@@ -613,134 +749,6 @@ export function BlutspiegelSimulation() {
     return () => { if (liveIntervalRef.current) window.clearInterval(liveIntervalRef.current) }
   }, [protocolCycles, loadLiveLevels])
 
-  useEffect(() => {
-    if (protocolSimMode !== 'history' || !selectedProtocolCycleId || !selectedProfile) {
-      setHistoryEvents([])
-      setHistoryCurve([])
-      setHistoryNoConfirmed(false)
-      setHistoryLoading(false)
-      return
-    }
-
-    let cancelled = false
-    setHistoryLoading(true)
-    setHistoryNoConfirmed(false)
-
-    void loadDoseHistory(selectedProtocolCycleId).then((events) => {
-      if (cancelled) return
-
-      if (events.length === 0 || !events.some(e => e.status === 'taken')) {
-        setHistoryEvents(events)
-        setHistoryCurve([])
-        setHistoryNoConfirmed(true)
-        setHistoryLoading(false)
-        return
-      }
-
-      const curve = calculateHistoryBlutspiegelCurve(
-        events,
-        selectedProfile.half_life_hours,
-        selectedProfile.tmax_hours,
-        selectedProfile.bioavailability_sc,
-      )
-
-      setHistoryEvents(events)
-      setHistoryCurve(curve)
-      setHistoryNoConfirmed(curve.length === 0)
-      setHistoryLoading(false)
-    })
-
-    return () => { cancelled = true }
-  }, [protocolSimMode, selectedProtocolCycleId, selectedProfile])
-
-  // Fenster zurücksetzen wenn Zyklus gewechselt wird
-  useEffect(() => { setWindowOffsetHours(0) }, [selectedProtocolCycleId])
-
-  const historyChartData = useMemo(
-    () => historyCurve.map(p => ({ ts: p.time.getTime(), level: p.level })),
-    [historyCurve],
-  )
-
-  // 12h-Sichtfenster basierend auf Wisch-Offset
-  const historyWindowDomain = useMemo((): [number, number] => {
-    if (!historyChartData.length) return [0, 0]
-    const dataStart = historyChartData[0].ts
-    const dataEnd   = historyChartData[historyChartData.length - 1].ts
-    const windowMs  = WINDOW_HOURS * 3_600_000
-    const offsetMs  = windowOffsetHours * 3_600_000
-    const windowEnd   = dataEnd - offsetMs
-    const windowStart = windowEnd - windowMs
-    return [Math.max(dataStart, windowStart), Math.min(dataEnd, windowEnd)]
-  }, [historyChartData, windowOffsetHours])
-
-  const histTicks = useMemo(() => {
-    const [start, end] = historyWindowDomain
-    if (start === 0 && end === 0) return []
-    const spanH = (end - start) / 3_600_000
-    const tickIntervalMs =
-      spanH <= 12 ? 2 * 3_600_000 :
-      spanH <= 48 ? 6 * 3_600_000 :
-      spanH <= 168 ? 24 * 3_600_000 :
-      48 * 3_600_000
-    const ticks: number[] = []
-    const firstTick = Math.ceil(start / tickIntervalMs) * tickIntervalMs
-    for (let t = firstTick; t <= end; t += tickIntervalMs) ticks.push(t)
-    return ticks
-  }, [historyWindowDomain])
-
-  const formatHistTick = useCallback((ts: number) => {
-    const spanH = (historyWindowDomain[1] - historyWindowDomain[0]) / 3_600_000
-    if (spanH <= 48)  return format(new Date(ts), 'HH:mm', { locale: deLocale })
-    if (spanH <= 168) return format(new Date(ts), 'EEE', { locale: deLocale })
-    return format(new Date(ts), 'd. MMM', { locale: deLocale })
-  }, [historyWindowDomain])
-
-  const visibleHistoryData = useMemo(() => {
-    const [start, end] = historyWindowDomain
-    if (start === 0 && end === 0) return historyChartData
-    return historyChartData.filter(p => p.ts >= start && p.ts <= end)
-  }, [historyChartData, historyWindowDomain])
-
-  const histMaxOffsetHours = useMemo(() => {
-    if (!historyChartData.length) return 0
-    const spanH = (historyChartData[historyChartData.length - 1].ts - historyChartData[0].ts) / 3_600_000
-    return Math.max(0, spanH - WINDOW_HOURS)
-  }, [historyChartData])
-
-  const historyTakenMarkers = useMemo(
-    () => historyEvents
-      .filter(e => e.status === 'taken')
-      .map(e => ({ ts: e.timestamp.getTime(), level: levelAtTime(historyCurve, e.timestamp) })),
-    [historyEvents, historyCurve],
-  )
-
-  const visibleTakenMarkers = useMemo(
-    () => historyTakenMarkers.filter(m =>
-      m.ts >= historyWindowDomain[0] && m.ts <= historyWindowDomain[1],
-    ),
-    [historyTakenMarkers, historyWindowDomain],
-  )
-
-  const historyStats = useMemo(() => {
-    if (!historyCurve.length || !historyEvents.length) return null
-    const taken = historyEvents.filter(e => e.status === 'taken').length
-    const total = historyEvents.length
-    const last = historyCurve[historyCurve.length - 1]
-    let peak = historyCurve[0]
-    for (const p of historyCurve) {
-      if (p.level > peak.level) peak = p
-    }
-    const avg = historyCurve.reduce((s, p) => s + p.level, 0) / historyCurve.length
-    return {
-      taken,
-      total,
-      current: last.level,
-      peak: peak.level,
-      peakDate: peak.time,
-      avg: Math.round(avg * 10) / 10,
-    }
-  }, [historyCurve, historyEvents])
-
   // Auto-fill Dosis aus aktivem Zyklus wenn Peptid-Name übereinstimmt
   useEffect(() => {
     if (!selectedProfile) return
@@ -750,37 +758,6 @@ export function BlutspiegelSimulation() {
     )
     if (match) { setDose(String(match.dose)); setUnit(normalizeUnit(match.unit)) }
   }, [selectedProfile, protocolCycles])
-
-  // ── 60fps Wisch-Handler für Zyklus-Verlauf-Chart ──────────────────────────
-  const handleHistPanStart = useCallback((clientX: number) => {
-    histIsPanning.current = true
-    histPanStartX.current = clientX
-    histPanStartOffset.current = windowOffsetHours
-  }, [windowOffsetHours])
-
-  const handleHistPanMove = useCallback((clientX: number) => {
-    if (!histIsPanning.current || histPanStartX.current === null) return
-    // Leichter visueller Nudge — kein React-Re-render während der Geste
-    const panDeltaPx = clientX - histPanStartX.current
-    if (histChartRef.current) {
-      histChartRef.current.style.transform = `translateX(${panDeltaPx * 0.12}px)`
-    }
-  }, [])
-
-  const handleHistPanEnd = useCallback((clientX: number) => {
-    if (!histIsPanning.current || histPanStartX.current === null) return
-    const panDeltaPx = clientX - histPanStartX.current
-    if (histChartRef.current) histChartRef.current.style.transform = ''
-    histIsPanning.current = false
-    histPanStartX.current = null
-    if (!historyChartData.length) return
-    const containerW = histChartRef.current?.offsetWidth ?? 300
-    // Swipe rechts (panDeltaPx > 0) → weiter in die Vergangenheit (offset erhöhen)
-    const deltaHours = -(panDeltaPx / containerW) * WINDOW_HOURS * 2
-    setWindowOffsetHours(prev =>
-      Math.max(0, Math.min(histMaxOffsetHours, histPanStartOffset.current + deltaHours))
-    )
-  }, [historyChartData.length, histMaxOffsetHours])
 
   const startSimulation = useCallback(() => {
     if (!selectedProfile) return
@@ -859,7 +836,6 @@ export function BlutspiegelSimulation() {
                     <LiveCycleCard
                       key={c.id}
                       cycleId={c.id}
-                      pkProfileId={c.peptides!.pk_profile_id!}
                       peptideName={c.peptides!.name}
                       pk={pk}
                       level={liveData.get(c.id)}
@@ -872,372 +848,13 @@ export function BlutspiegelSimulation() {
         </div>
       )}
 
-      {/* Seiten-Erklärung (einklappbar) */}
-      <div style={{ ...PANEL, padding: pageInfoOpen ? 16 : '12px 16px' }}>
-        <button
-          type="button"
-          onClick={() => setPageInfoOpen(v => !v)}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-            background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#00ccf5',
-            fontSize: '0.82rem', fontWeight: 800, fontFamily: 'inherit',
-          }}
-        >
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Info size={16} />
-            {pageInfoOpen ? 'Weniger anzeigen' : 'Mehr erfahren'}
-          </span>
-          <ChevronDown
-            size={18}
-            style={{ transition: 'transform 0.2s', transform: pageInfoOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
-          />
-        </button>
-        {pageInfoOpen && (
-          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div>
-              <p style={{ fontSize: '0.68rem', fontWeight: 800, color: 'rgba(0,204,245,0.85)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Was macht diese Funktion?
-              </p>
-              <p style={{ fontSize: '0.8rem', color: 'rgba(213,224,242,0.75)', lineHeight: 1.55 }}>
-                Die Blutspiegel-Simulation zeigt dir, wie sich ein Peptid nach der Injektion in deinem Körper verhält — wann es wirkt, wann es am stärksten ist und wann es abgebaut ist.
-              </p>
-            </div>
-            <div style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p style={{ fontSize: '0.68rem', fontWeight: 800, color: 'rgba(154,170,191,0.65)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Wichtig zu wissen
-              </p>
-              <p style={{ fontSize: '0.78rem', color: 'rgba(213,224,242,0.62)', lineHeight: 1.55 }}>
-                Die Werte sind Schätzungen basierend auf wissenschaftlichen Durchschnittswerten. Individuelle Faktoren wie Körpergewicht, Stoffwechsel und Injektionstechnik beeinflussen die tatsächlichen Werte.
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Aus meinem Protokoll simulieren */}
-      <div style={{ ...PANEL, padding: protocolOpen ? 16 : '12px 16px' }}>
-        <button
-          type="button"
-          onClick={() => setProtocolOpen(v => !v)}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-            background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#00ccf5',
-            fontSize: '0.82rem', fontWeight: 800, fontFamily: 'inherit',
-          }}
-        >
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <CalendarDays size={16} />
-            Aus meinem Protokoll simulieren
-          </span>
-          <ChevronDown
-            size={18}
-            style={{ transition: 'transform 0.2s', transform: protocolOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
-          />
-        </button>
-        {protocolOpen && (
-          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{
-              display: 'flex', gap: 6, padding: 4, borderRadius: 12,
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
-            }}>
-              {([
-                { id: 'single' as const, label: 'Einzeldosis simulieren' },
-                { id: 'history' as const, label: 'Zyklus-Verlauf simulieren' },
-              ]).map(({ id, label }) => {
-                const active = protocolSimMode === id
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setProtocolSimMode(id)}
-                    style={{
-                      flex: 1, padding: '8px 10px', borderRadius: 9, border: 'none',
-                      fontSize: '0.68rem', fontWeight: 800, fontFamily: 'inherit', lineHeight: 1.3,
-                      cursor: 'pointer', transition: 'background 0.15s, color 0.15s',
-                      background: active ? 'rgba(0,204,245,0.18)' : 'transparent',
-                      color: active ? '#00ccf5' : 'rgba(154,170,191,0.55)',
-                    }}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
-
-            {protocolLoading ? (
-              <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.5)' }}>Lädt aktive Zyklen …</p>
-            ) : protocolCycles.length === 0 ? (
-              <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.5)', lineHeight: 1.5 }}>
-                Noch keine aktiven Zyklen mit PK-Profil
-              </p>
-            ) : (
-              <>
-                {linkedProtocolCycles.length === 0 && (
-                  <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.5)', lineHeight: 1.5, marginBottom: 4 }}>
-                    Noch keine aktiven Zyklen mit PK-Profil
-                  </p>
-                )}
-                {linkedProtocolCycles.map(cycle => {
-                  const selected = selectedProtocolCycleId === cycle.id
-                  return (
-                    <button
-                      key={cycle.id}
-                      type="button"
-                      onClick={() => applyProtocolCycle(cycle)}
-                      style={{
-                        width: '100%', textAlign: 'left', padding: '12px 14px', borderRadius: 14,
-                        background: selected ? 'rgba(0,204,245,0.10)' : 'rgba(255,255,255,0.03)',
-                        border: selected ? '1px solid rgba(0,204,245,0.35)' : '1px solid rgba(255,255,255,0.08)',
-                        cursor: 'pointer', fontFamily: 'inherit', transition: 'border-color 0.15s, background 0.15s',
-                      }}
-                    >
-                      <p style={{ fontSize: '0.88rem', fontWeight: 800, color: '#eaeefc', marginBottom: 2 }}>
-                        {cycle.peptides?.name ?? 'Peptid'}
-                      </p>
-                      <p style={{ fontSize: '0.78rem', color: 'rgba(0,204,245,0.85)', fontWeight: 700 }}>
-                        {cycle.dose} {cycle.unit}
-                      </p>
-                    </button>
-                  )
-                })}
-                {unlinkedProtocolCycles.map(cycle => (
-                  <div
-                    key={cycle.id}
-                    style={{
-                      padding: '12px 14px', borderRadius: 14,
-                      background: 'rgba(255,255,255,0.02)',
-                      border: '1px solid rgba(255,255,255,0.05)',
-                      opacity: 0.5,
-                    }}
-                  >
-                    <p style={{ fontSize: '0.88rem', fontWeight: 700, color: 'rgba(234,238,252,0.55)', marginBottom: 2 }}>
-                      {cycle.peptides?.name ?? 'Peptid'} · {cycle.dose} {cycle.unit}
-                    </p>
-                    <p style={{ fontSize: '0.68rem', color: 'rgba(154,170,191,0.55)', lineHeight: 1.45 }}>
-                      Kein PK-Profil — beim Einlagern Substanz aus der Liste wählen
-                    </p>
-                  </div>
-                ))}
-              </>
-            )}
-
-            {protocolSimMode === 'history' && selectedProtocolCycleId && (
-              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {historyLoading && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '16px 12px', justifyContent: 'center' }}>
-                    <Loader2 size={18} color="#00ccf5" className="animate-spin" />
-                    <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.6)' }}>Einnahmen werden geladen …</p>
-                  </div>
-                )}
-
-                {!historyLoading && historyNoConfirmed && (
-                  <p style={{
-                    fontSize: '0.78rem', color: 'rgba(154,170,191,0.65)', lineHeight: 1.55,
-                    padding: '12px 14px', borderRadius: 12,
-                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-                  }}>
-                    Noch keine bestätigten Einnahmen in diesem Zyklus. Bestätige zuerst Einnahmen im Kalender.
-                  </p>
-                )}
-
-                {!historyLoading && historyCurve.length > 0 && selectedProfile && (
-                  <>
-                    <div style={{ paddingBottom: 8 }}>
-                      {/* Header + Navigation */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#eaeefc' }}>
-                          Zyklus-Verlauf — {selectedProfile.name}
-                        </p>
-                        {windowOffsetHours > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setWindowOffsetHours(0)}
-                            style={{
-                              fontSize: '0.6rem', fontWeight: 800, color: '#00ccf5',
-                              background: 'rgba(0,204,245,0.10)', border: '1px solid rgba(0,204,245,0.25)',
-                              borderRadius: 8, padding: '3px 8px', cursor: 'pointer', fontFamily: 'inherit',
-                            }}
-                          >
-                            Jetzt ↩
-                          </button>
-                        )}
-                      </div>
-                      <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.45)', marginBottom: 6 }}>
-                        12h-Fenster · ← wischen für ältere Daten
-                      </p>
-
-                      {/* Fortschrittsbalken: zeigt wo im Zyklus wir sind */}
-                      {histMaxOffsetHours > 0 && (
-                        <div style={{
-                          height: 3, borderRadius: 99, background: 'rgba(255,255,255,0.06)',
-                          marginBottom: 10, overflow: 'hidden',
-                        }}>
-                          <div style={{
-                            height: '100%', borderRadius: 99, background: '#00ccf5',
-                            width: `${Math.round((1 - windowOffsetHours / histMaxOffsetHours) * 100)}%`,
-                            transition: 'width 0.2s',
-                          }} />
-                        </div>
-                      )}
-
-                      {/* Chart-Container mit Wisch-Erkennung */}
-                      <div
-                        style={{ touchAction: 'pan-y', userSelect: 'none', cursor: histIsPanning.current ? 'grabbing' : 'grab' }}
-                        onPointerDown={e => {
-                          ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-                          handleHistPanStart(e.clientX)
-                        }}
-                        onPointerMove={e => handleHistPanMove(e.clientX)}
-                        onPointerUp={e => handleHistPanEnd(e.clientX)}
-                        onPointerCancel={e => handleHistPanEnd(e.clientX)}
-                      >
-                        <div ref={histChartRef} style={{ willChange: 'transform' }}>
-                          <ResponsiveContainer width="100%" height={260}>
-                            <ComposedChart data={visibleHistoryData} margin={{ top: 20, right: 12, left: 8, bottom: 28 }}>
-                              <defs>
-                                <linearGradient id="pkHistGrad" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#00ccf5" stopOpacity={0.32} />
-                                  <stop offset="95%" stopColor="#00ccf5" stopOpacity={0} />
-                                </linearGradient>
-                              </defs>
-
-                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-
-                              <XAxis
-                                dataKey="ts"
-                                type="number"
-                                scale="time"
-                                domain={historyWindowDomain}
-                                ticks={histTicks}
-                                tickLine={false}
-                                axisLine={false}
-                                tick={{ fill: 'rgba(154,170,191,0.45)', fontSize: 10 }}
-                                tickFormatter={formatHistTick}
-                                label={{
-                                  value: 'Zeit (← wischen für Vergangenheit)',
-                                  position: 'insideBottom',
-                                  offset: -4,
-                                  fill: 'rgba(154,170,191,0.4)',
-                                  fontSize: 9,
-                                  fontWeight: 600,
-                                }}
-                              />
-                              <YAxis
-                                domain={[0, 105]}
-                                tickLine={false}
-                                axisLine={false}
-                                tick={{ fill: 'rgba(154,170,191,0.45)', fontSize: 10 }}
-                                tickFormatter={v => `${v}%`}
-                                ticks={[0, 25, 50, 75, 100]}
-                                label={{
-                                  value: 'Wirkstoffspiegel (%)',
-                                  angle: -90,
-                                  position: 'insideLeft',
-                                  offset: 12,
-                                  fill: 'rgba(154,170,191,0.45)',
-                                  fontSize: 9,
-                                  fontWeight: 600,
-                                }}
-                              />
-
-                              <Tooltip content={<HistoryChartTooltip />} cursor={{ stroke: 'rgba(0,204,245,0.3)', strokeWidth: 1 }} />
-
-                              {historyEvents
-                                .filter(e => e.status === 'skipped' &&
-                                  e.timestamp.getTime() >= historyWindowDomain[0] &&
-                                  e.timestamp.getTime() <= historyWindowDomain[1]
-                                )
-                                .map(e => (
-                                  <ReferenceLine
-                                    key={`skip-${e.timestamp.getTime()}`}
-                                    x={e.timestamp.getTime()}
-                                    stroke="rgba(154,170,191,0.35)"
-                                    strokeDasharray="4 3"
-                                    strokeWidth={1.5}
-                                    label={{
-                                      value: '⚠️ übersprungen',
-                                      position: 'insideTopLeft',
-                                      fill: 'rgba(154,170,191,0.55)',
-                                      fontSize: 7,
-                                      fontWeight: 700,
-                                    }}
-                                  />
-                                ))}
-
-                              <Area
-                                type="monotone"
-                                dataKey="level"
-                                stroke="#00ccf5"
-                                strokeWidth={2.5}
-                                fill="url(#pkHistGrad)"
-                                dot={false}
-                                activeDot={{ r: 4, fill: '#07091a', stroke: '#00ccf5', strokeWidth: 2 }}
-                                isAnimationActive={false}
-                              />
-
-                              <Scatter
-                                data={visibleTakenMarkers}
-                                dataKey="level"
-                                fill="#10b981"
-                                stroke="#07091a"
-                                strokeWidth={1.5}
-                                r={5}
-                                isAnimationActive={false}
-                              />
-                            </ComposedChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-                    </div>
-
-                    {historyStats && (
-                      <div style={{
-                        display: 'flex', flexDirection: 'column', gap: 8,
-                        padding: '12px 14px', borderRadius: 14,
-                        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-                      }}>
-                        {[
-                          {
-                            label: 'Einnahmen',
-                            value: `${historyStats.taken} von ${historyStats.total} Dosen eingenommen`,
-                            color: '#10b981',
-                          },
-                          {
-                            label: 'Aktueller Spiegel',
-                            value: `${historyStats.current} %`,
-                            color: '#00ccf5',
-                          },
-                          {
-                            label: 'Höchster Spiegel',
-                            value: `${historyStats.peak} % · ${format(historyStats.peakDate, 'd. MMM yyyy', { locale: deLocale })}`,
-                            color: '#f59e0b',
-                          },
-                          {
-                            label: 'Durchschnitt',
-                            value: `${historyStats.avg} % über den Zyklus`,
-                            color: 'rgba(213,224,242,0.75)',
-                          },
-                        ].map(({ label, value, color }) => (
-                          <div key={label}>
-                            <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'rgba(154,170,191,0.55)', marginBottom: 2 }}>
-                              {label}
-                            </p>
-                            <p style={{ fontSize: '0.88rem', fontWeight: 800, color }}>{value}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Konfiguration */}
+      {/* Manuelle Simulation */}
       <div style={PANEL}>
-        <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#eaeefc', marginBottom: 12 }}>Konfiguration</p>
+        <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#eaeefc', marginBottom: 2 }}>Manuelle Simulation</p>
+        <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.45)', marginBottom: 14, lineHeight: 1.5 }}>
+          Simuliere den theoretischen Verlauf einer Einzeldosis — wähle Substanz, Dosis und Route.
+          Die Werte sind Schätzungen auf Basis pharmakologischer Durchschnittsdaten.
+        </p>
 
         {/* Peptid-Auswahl */}
         <div style={{ marginBottom: 12 }}>
