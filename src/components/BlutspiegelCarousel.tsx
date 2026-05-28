@@ -493,7 +493,7 @@ export function BlutspiegelCarousel() {
 
     const id = window.setInterval(() => {
       void loadLevels(false)
-    }, 60_000)
+    }, 10_000)
 
     return () => window.clearInterval(id)
   }, [user, cards.length, loadLevels])
