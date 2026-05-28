@@ -106,7 +106,6 @@ export function calculateHistoryBlutspiegelCurve(
   tmaxHours: number,
   bioavailability: number = 1.0,
   resolutionMinutes: number = 30,
-  preciseLevels = false,
 ): BlutspiegelCurvePoint[] {
   if (events.length === 0 || halfLifeHours <= 0 || tmaxHours <= 0 || resolutionMinutes <= 0) {
     return []
@@ -141,9 +140,7 @@ export function calculateHistoryBlutspiegelCurve(
 
   return raw.map(p => ({
     time: p.time,
-    level: preciseLevels
-      ? (p.level / peak) * 100
-      : Math.round((p.level / peak) * 1000) / 10,
+    level: (p.level / peak) * 100,
   }))
 }
 
@@ -284,7 +281,7 @@ function calculateCurveTo(
 
   return raw.map(p => ({
     time: p.time,
-    level: Math.round((p.level / peak) * 1000) / 10,
+    level: (p.level / peak) * 100,
   }))
 }
 
@@ -380,7 +377,6 @@ export async function getCurrentBlutspiegelLevel(
     tmaxHours,
     bioavailability,
     30,
-    true,
   )
 
   if (!curve.length) {
