@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { Activity, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -37,6 +37,7 @@ interface CycleWithPk {
 
 interface CarouselCard {
   cycleId: string
+  pkProfileId: string
   peptideName: string
   profileName: string
   category: PkCategory
@@ -251,7 +252,8 @@ function LiveIndicator() {
 // ── Karte ───────────────────────────────────────────────────────────────────
 
 function BlutspiegelCard({ card }: { card: CarouselCard }) {
-  const { accent, level, peptideName, category, unit } = card
+  const navigate = useNavigate()
+  const { accent, level, peptideName, category, unit, pkProfileId } = card
 
   return (
     <div
@@ -382,6 +384,28 @@ function BlutspiegelCard({ card }: { card: CarouselCard }) {
           </p>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => navigate(`/simulation?pk=${pkProfileId}`)}
+        style={{
+          width: '100%',
+          background: 'transparent',
+          border: `1px solid ${accent}40`,
+          borderRadius: '10px',
+          padding: '10px',
+          fontSize: '12px',
+          fontFamily: 'monospace',
+          letterSpacing: '0.05em',
+          color: accent,
+          cursor: 'pointer',
+          marginTop: '12px',
+          position: 'relative',
+          zIndex: 2,
+        }}
+      >
+        Details & Simulation →
+      </button>
     </div>
   )
 }
@@ -464,6 +488,7 @@ export function BlutspiegelCarousel() {
         )
         return {
           cycleId: cycle.id,
+          pkProfileId: cycle.peptides!.pk_profile_id!,
           peptideName: cycle.peptides!.name,
           profileName: pk.name,
           category,
