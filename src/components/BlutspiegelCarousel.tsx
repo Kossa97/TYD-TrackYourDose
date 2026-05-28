@@ -94,22 +94,55 @@ const TREND_DISPLAY: Record<BlutspiegelTrend, { label: string; color: string }> 
   stable: { label: '→ STABIL', color: '#94a3b8' },
 }
 
+function FlipChar({ char }: { char: string }) {
+  const prevChar = useRef(char)
+  const [rotateX, setRotateX] = useState(0)
+
+  useEffect(() => {
+    if (prevChar.current === char) return
+    prevChar.current = char
+    setRotateX(90)
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setRotateX(0))
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [char])
+
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        perspective: 200,
+      }}
+    >
+      <span
+        style={{
+          display: 'inline-block',
+          transform: `rotateX(${rotateX}deg)`,
+          transformOrigin: 'center bottom',
+          transition: rotateX === 0 ? 'transform 150ms ease' : 'none',
+        }}
+      >
+        {char}
+      </span>
+    </span>
+  )
+}
+
 function LevelDisplay({
   value,
   accent,
   unit,
   trend,
-  halfLifeHours,
 }: {
   value: number
   accent: string
   unit: string
   trend: BlutspiegelTrend
-  halfLifeHours: number
 }) {
   const { label, color } = TREND_DISPLAY[trend]
   const clamped = Math.min(100, Math.max(0, value))
-  const decimals = halfLifeHours < 12 ? 4 : 2
+  const valueStr = clamped.toFixed(4)
 
   return (
     <div>
@@ -123,7 +156,10 @@ function LevelDisplay({
           margin: 0,
         }}
       >
-        {clamped.toFixed(decimals)}%{' '}
+        {valueStr.split('').map((ch, i) => (
+          <FlipChar key={i} char={ch} />
+        ))}
+        %{' '}
         <span style={{ fontSize: 28, fontWeight: 700 }}>{unit}</span>
       </p>
       <p
@@ -154,26 +190,41 @@ function LevelDisplay({
   )
 }
 
-function RefreshCountdown({
+function LiveStatusBar({
   remainingMs,
-  flashing,
+  refreshFlashing,
 }: {
   remainingMs: number
-  flashing: boolean
+  refreshFlashing: boolean
 }) {
+  const monoRed: CSSProperties = {
+    fontSize: 10,
+    fontFamily: 'monospace',
+    color: '#ef4444',
+    letterSpacing: '0.04em',
+  }
+
   return (
-    <span
-      style={{
-        fontSize: 9,
-        fontFamily: 'monospace',
-        color: flashing ? 'rgba(0,204,245,0.85)' : 'rgba(255,255,255,0.25)',
-        letterSpacing: '0.04em',
-        transition: 'color 0.15s ease',
-      }}
-      aria-live="polite"
-    >
-      {flashing ? '↻' : `${(remainingMs / 1000).toFixed(2)}`}
-    </span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} aria-live="polite">
+      <span
+        className="blutspiegel-live-dot"
+        style={{
+          width: 7,
+          height: 7,
+          borderRadius: '50%',
+          background: '#ef4444',
+          flexShrink: 0,
+        }}
+      />
+      <span style={{ ...monoRed, fontWeight: 700, textTransform: 'uppercase' }}>LIVE</span>
+      {refreshFlashing ? (
+        <span className="blutspiegel-refresh-spin" style={monoRed}>
+          ↻
+        </span>
+      ) : (
+        <span style={monoRed}>{(remainingMs / 1000).toFixed(2)}</span>
+      )}
+    </div>
   )
 }
 
@@ -190,35 +241,6 @@ const categoryBadgeStyle = (accent: string): CSSProperties => ({
   border: `1px solid ${accent}33`,
 })
 
-function LiveIndicator() {
-  return (
-    <>
-      <span
-        className="blutspiegel-live-dot"
-        style={{
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          background: '#ef4444',
-          flexShrink: 0,
-        }}
-      />
-      <span
-        style={{
-          fontSize: '0.55rem',
-          fontWeight: 700,
-          fontFamily: 'monospace',
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: '#ef4444',
-        }}
-      >
-        LIVE
-      </span>
-    </>
-  )
-}
-
 // ── Karte ───────────────────────────────────────────────────────────────────
 
 function BlutspiegelCard({
@@ -231,7 +253,7 @@ function BlutspiegelCard({
   refreshFlashing: boolean
 }) {
   const navigate = useNavigate()
-  const { accent, level, peptideName, category, pkProfileId, halfLifeHours } = card
+  const { accent, level, peptideName, category, pkProfileId } = card
 
   return (
     <div
@@ -243,8 +265,16 @@ function BlutspiegelCard({
           0%, 100% { opacity: 1; }
           50% { opacity: 0.3; }
         }
+        @keyframes blutspiegel-refresh-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
         .blutspiegel-live-dot {
           animation: blutspiegel-live-pulse 1.5s ease-in-out infinite;
+        }
+        .blutspiegel-refresh-spin {
+          display: inline-block;
+          animation: blutspiegel-refresh-spin 0.8s linear infinite;
         }
       `}</style>
       <div
@@ -258,7 +288,7 @@ function BlutspiegelCard({
 
       <div style={{ position: 'relative', zIndex: 2 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-          <LiveIndicator />
+          <LiveStatusBar remainingMs={remainingMs} refreshFlashing={refreshFlashing} />
           <span style={categoryBadgeStyle(accent)}>{CATEGORY_LABEL[category]}</span>
         </div>
 
@@ -271,19 +301,16 @@ function BlutspiegelCard({
           accent={accent}
           unit={level.unit}
           trend={level.trend}
-          halfLifeHours={halfLifeHours}
         />
 
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            justifyContent: 'flex-end',
             marginTop: 10,
-            gap: 8,
           }}
         >
-          <RefreshCountdown remainingMs={remainingMs} flashing={refreshFlashing} />
           <button
             type="button"
             onClick={() => navigate(`/simulation?pk=${pkProfileId}`)}
@@ -438,7 +465,7 @@ export function BlutspiegelCarousel() {
         window.setTimeout(() => {
           setRefreshFlashing(false)
           flashTriggeredRef.current = false
-        }, 300)
+        }, 1000)
       }
     }, 50)
 
