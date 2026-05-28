@@ -381,6 +381,7 @@ function LiveCycleCard({
   const panStartX   = useRef<number | null>(null)
   const panStartOff = useRef(0)
   const isPanning   = useRef(false)
+  const rafId       = useRef<number | null>(null)
 
   // Einmaliges Laden der Einnahmen + Kurvenberechnung
   useEffect(() => {
@@ -473,22 +474,28 @@ function LiveCycleCard({
     panStartOff.current = windowOffsetHours
   }, [windowOffsetHours])
 
+  // Aktiengraph-Style: Daten folgen dem Finger 1:1, live während des Wischens.
+  // Wischen nach rechts (dx>0) zeigt die Vergangenheit → Offset steigt.
   const handlePanMove = useCallback((clientX: number) => {
-    if (!isPanning.current || panStartX.current === null) return
-    if (chartRef.current) chartRef.current.style.transform = `translateX(${(clientX - panStartX.current) * 0.08}px)`
-  }, [])
-
-  const handlePanEnd = useCallback((clientX: number) => {
-    if (!isPanning.current || panStartX.current === null) return
+    if (!isPanning.current || panStartX.current === null || !chartData.length) return
     const dx = clientX - panStartX.current
-    if (chartRef.current) chartRef.current.style.transform = ''
+    if (rafId.current !== null) cancelAnimationFrame(rafId.current)
+    rafId.current = requestAnimationFrame(() => {
+      const width = chartRef.current?.offsetWidth ?? 320
+      const deltaH = (dx / width) * WINDOW_HOURS
+      setWindowOffsetHours(Math.max(0, Math.min(maxOffset, panStartOff.current + deltaH)))
+    })
+  }, [chartData.length, maxOffset])
+
+  const handlePanEnd = useCallback(() => {
+    // Da wo der Finger aufhört, bleibt das Fenster stehen — kein Snap, kein Momentum.
     isPanning.current = false
     panStartX.current = null
-    if (!chartData.length) return
-    // 1 Vollwisch (= Containerbreite) = 7 Tage Navigation
-    const deltaH = -(dx / (chartRef.current?.offsetWidth ?? 320)) * WINDOW_HOURS
-    setWindowOffsetHours(prev => Math.max(0, Math.min(maxOffset, panStartOff.current + deltaH)))
-  }, [chartData.length, maxOffset])
+    if (rafId.current !== null) {
+      cancelAnimationFrame(rafId.current)
+      rafId.current = null
+    }
+  }, [])
 
   const trend    = level ? TREND_META[level.trend] : TREND_META.stable
   const hasCurve = curve.length > 0
@@ -543,7 +550,7 @@ function LiveCycleCard({
             {/* Nav-Zeile */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <p style={{ fontSize: '0.52rem', color: 'rgba(154,170,191,0.38)', fontFamily: 'monospace' }}>
-                7 Tage · ← wischen für Verlauf
+                7-Tage-Fenster · → wischen für Verlauf
               </p>
               {windowOffsetHours > 0 && (
                 <button
@@ -566,7 +573,6 @@ function LiveCycleCard({
                 <div style={{
                   height: '100%', borderRadius: 99, background: accent,
                   width: `${Math.round((1 - windowOffsetHours / maxOffset) * 100)}%`,
-                  transition: 'width 0.2s',
                 }} />
               </div>
             )}
@@ -591,10 +597,10 @@ function LiveCycleCard({
                 handlePanStart(e.clientX)
               }}
               onPointerMove={e => handlePanMove(e.clientX)}
-              onPointerUp={e => handlePanEnd(e.clientX)}
-              onPointerCancel={e => handlePanEnd(e.clientX)}
+              onPointerUp={handlePanEnd}
+              onPointerCancel={handlePanEnd}
             >
-              <div ref={chartRef} style={{ willChange: 'transform' }}>
+              <div ref={chartRef}>
                 <ResponsiveContainer width="100%" height={180}>
                   <ComposedChart
                     data={chartData}
