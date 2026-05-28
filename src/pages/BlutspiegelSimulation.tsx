@@ -1,18 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ReferenceLine, ResponsiveContainer, ComposedChart, Scatter,
+  ReferenceLine, ResponsiveContainer, ComposedChart, Scatter, AreaChart,
 } from 'recharts'
 import { format } from 'date-fns'
 import { de as deLocale } from 'date-fns/locale'
 import { Activity, CalendarDays, ChevronDown, Info, Loader2 } from 'lucide-react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
   calculateHistoryBlutspiegelCurve,
+  getCurrentBlutspiegelLevel,
   loadDoseHistory,
   type BlutspiegelCurvePoint,
+  type BlutspiegelTrend,
+  type CurrentBlutspiegelLevel,
   type DoseEvent,
 } from '../services/blutspiegelHistory'
 
@@ -30,6 +33,14 @@ interface PkProfile {
   category: string
 }
 
+interface PkProfileEmbed {
+  name: string
+  half_life_hours: number
+  tmax_hours: number
+  bioavailability_sc: number
+  category: string
+}
+
 interface ProtocolCycle {
   id: string
   peptide_id: string
@@ -39,7 +50,29 @@ interface ProtocolCycle {
   peptides: {
     name: string
     pk_profile_id: string | null
+    pk_profiles: PkProfileEmbed | null
   } | null
+}
+
+type PkCategory = 'peptide' | 'glp1' | 'hormone' | 'sarm' | 'other'
+
+const CATEGORY_ACCENT: Record<PkCategory, string> = {
+  peptide: '#00ccf5',
+  glp1: '#10b981',
+  hormone: '#f59e0b',
+  sarm: '#a855f7',
+  other: '#94a3b8',
+}
+
+const TREND_META: Record<BlutspiegelTrend, { label: string; icon: string; color: string }> = {
+  rising:  { label: 'Steigend', icon: '↑', color: '#10b981' },
+  falling: { label: 'Fallend',  icon: '↓', color: '#f43f5e' },
+  stable:  { label: 'Stabil',   icon: '→', color: '#94a3b8' },
+}
+
+function normCat(raw: string | undefined): PkCategory {
+  if (raw === 'peptide' || raw === 'glp1' || raw === 'hormone' || raw === 'sarm') return raw
+  return 'other'
 }
 
 function normalizeUnit(unit: string): 'mg' | 'mcg' | 'IU' {
@@ -313,6 +346,138 @@ const METRIC_EXPLANATIONS = {
   },
 } as const
 
+// ── Live-Zyklus-Karte ─────────────────────────────────────────────────────
+
+function LiveCycleCard({
+  cycleId,
+  pkProfileId,
+  peptideName,
+  pk,
+  level,
+  accent,
+}: {
+  cycleId: string
+  pkProfileId: string
+  peptideName: string
+  pk: PkProfileEmbed
+  level: CurrentBlutspiegelLevel | undefined
+  accent: string
+}) {
+  const navigate = useNavigate()
+  const spark = (level?.sparkData ?? Array(20).fill(0)).map((v, i) => ({ i, v }))
+  const trend = level ? TREND_META[level.trend] : TREND_META.stable
+
+  return (
+    <div style={{
+      background: `linear-gradient(145deg, ${accent}0d, rgba(6,10,24,0.92))`,
+      border: `1px solid ${accent}28`,
+      borderRadius: 18,
+      padding: '14px 14px 12px',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Hintergrund-Glow */}
+      <div style={{ position: 'absolute', top: -30, right: -30, width: 100, height: 100, borderRadius: '50%', background: accent, opacity: 0.06, filter: 'blur(24px)', pointerEvents: 'none' }} />
+
+      {/* Header: Peptid + Kategorie + Level */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+        <div style={{ minWidth: 0 }}>
+          <p style={{ fontSize: '0.92rem', fontWeight: 850, color: '#f8fbff', marginBottom: 4 }}>{peptideName}</p>
+          <span style={{
+            fontSize: '0.55rem', padding: '2px 7px', borderRadius: 99,
+            background: `${accent}18`, color: accent, fontWeight: 800,
+            border: `1px solid ${accent}30`, textTransform: 'uppercase', letterSpacing: '0.08em',
+          }}>
+            {pk.category}
+          </span>
+        </div>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          {level ? (
+            <>
+              <p style={{ fontSize: '2rem', fontWeight: 900, color: accent, letterSpacing: '-0.04em', lineHeight: 1 }}>
+                {level.currentLevel.toFixed(1)}<span style={{ fontSize: '1rem' }}>%</span>
+              </p>
+              <p style={{ fontSize: '0.6rem', fontWeight: 800, color: trend.color, marginTop: 2, fontFamily: 'monospace', letterSpacing: '0.06em' }}>
+                {trend.icon} {trend.label.toUpperCase()}
+              </p>
+            </>
+          ) : (
+            <Loader2 size={20} color={accent} className="animate-spin" />
+          )}
+        </div>
+      </div>
+
+      {/* Sparkline — letzte 10h */}
+      <div style={{ margin: '0 -2px 10px' }}>
+        <ResponsiveContainer width="100%" height={52}>
+          <AreaChart data={spark} margin={{ top: 4, right: 2, bottom: 0, left: 2 }}>
+            <defs>
+              <linearGradient id={`spk-${cycleId}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor={accent} stopOpacity={0.38} />
+                <stop offset="95%" stopColor={accent} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <Area
+              type="monotone"
+              dataKey="v"
+              stroke={accent}
+              fill={`url(#spk-${cycleId})`}
+              dot={false}
+              strokeWidth={2}
+              isAnimationActive={false}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+        <p style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.4)', textAlign: 'right', marginTop: -2, fontFamily: 'monospace' }}>
+          Verlauf · letzte 10h
+        </p>
+      </div>
+
+      {/* Stats 3er-Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
+        {[
+          { label: 'Nächste Dosis', value: level?.nextDoseIn ?? '—', color: '#eaeefc' },
+          { label: 'Level danach', value: level ? `~${level.levelAfterNextDose.toFixed(0)}%` : '—', color: accent },
+          { label: 'Peak',         value: level?.peakLabel ?? '—',   color: '#f59e0b' },
+        ].map(({ label, value, color }) => (
+          <div key={label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '7px 8px' }}>
+            <p style={{ fontSize: '0.52rem', color: 'rgba(154,170,191,0.5)', fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
+            <p style={{ fontSize: '0.82rem', fontWeight: 900, color }}>{value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* PK-Parameter Zeile */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+        {[
+          { k: 'T½',    v: `${pk.half_life_hours}h` },
+          { k: 'Tmax',  v: `${pk.tmax_hours}h` },
+          { k: 'F',     v: `${Math.round(pk.bioavailability_sc * 100)}%` },
+        ].map(({ k, v }) => (
+          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: '0.58rem', color: 'rgba(154,170,191,0.45)', fontFamily: 'monospace' }}>{k}:</span>
+            <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'rgba(213,224,242,0.7)' }}>{v}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Zyklus-Verlauf Button */}
+      <button
+        type="button"
+        onClick={() => navigate(`/simulation?pk=${pkProfileId}`)}
+        style={{
+          width: '100%', padding: '9px 0', borderRadius: 12,
+          background: `${accent}12`, border: `1px solid ${accent}28`,
+          color: accent, fontSize: '0.75rem', fontWeight: 800,
+          cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '0.02em',
+        }}
+      >
+        Zyklus-Verlauf ansehen →
+      </button>
+    </div>
+  )
+}
+
 // ── Haupt-Komponente ───────────────────────────────────────────────────────
 
 export function BlutspiegelSimulation() {
@@ -340,6 +505,12 @@ export function BlutspiegelSimulation() {
   const [historyCurve, setHistoryCurve] = useState<BlutspiegelCurvePoint[]>([])
   const [historyNoConfirmed, setHistoryNoConfirmed] = useState(false)
 
+  // Live-Übersicht für alle aktiven Zyklen
+  const [liveData, setLiveData] = useState<Map<string, CurrentBlutspiegelLevel>>(new Map())
+  const [liveLoading, setLiveLoading] = useState(false)
+  const [liveRefreshing, setLiveRefreshing] = useState(false)
+  const liveIntervalRef = useRef<number | null>(null)
+
   // Lade PK-Profile und aktive Zyklen
   useEffect(() => {
     supabase.from('pk_profiles').select('*').order('name').then(({ data }) => {
@@ -359,7 +530,10 @@ export function BlutspiegelSimulation() {
     setProtocolLoading(true)
     supabase
       .from('cycles')
-      .select('id, peptide_id, dose, unit, method, peptides ( name, pk_profile_id )')
+      .select(`id, peptide_id, dose, unit, method,
+        peptides ( name, pk_profile_id,
+          pk_profiles ( name, half_life_hours, tmax_hours, bioavailability_sc, category )
+        )`)
       .eq('user_id', user.id)
       .eq('active', true)
       .then(({ data }) => {
@@ -391,6 +565,44 @@ export function BlutspiegelSimulation() {
     setRoute(methodToRoute(cycle.method))
     setSelectedProtocolCycleId(cycle.id)
   }, [])
+
+  // ── Live-Übersicht: alle Zyklen mit PK-Profil laden ───────────────────
+  const loadLiveLevels = useCallback(async (isRefresh = false) => {
+    const cyclesWithPk = protocolCycles.filter(c => c.peptides?.pk_profiles)
+    if (!cyclesWithPk.length) return
+    if (isRefresh) setLiveRefreshing(true)
+    else setLiveLoading(true)
+
+    const results = await Promise.all(
+      cyclesWithPk.map(async c => {
+        const pk = c.peptides!.pk_profiles!
+        const level = await getCurrentBlutspiegelLevel(
+          c.id,
+          pk.half_life_hours,
+          pk.tmax_hours,
+          pk.bioavailability_sc,
+        )
+        return [c.id, level] as [string, CurrentBlutspiegelLevel]
+      })
+    )
+    setLiveData(new Map(results))
+    if (isRefresh) setLiveRefreshing(false)
+    else setLiveLoading(false)
+  }, [protocolCycles])
+
+  // Initial laden sobald Zyklen da sind
+  useEffect(() => {
+    if (protocolCycles.length > 0) void loadLiveLevels()
+  }, [protocolCycles, loadLiveLevels])
+
+  // Auto-Refresh alle 5 Sekunden
+  useEffect(() => {
+    if (liveIntervalRef.current) window.clearInterval(liveIntervalRef.current)
+    const cyclesWithPk = protocolCycles.filter(c => c.peptides?.pk_profiles)
+    if (!cyclesWithPk.length) return
+    liveIntervalRef.current = window.setInterval(() => void loadLiveLevels(true), 5000)
+    return () => { if (liveIntervalRef.current) window.clearInterval(liveIntervalRef.current) }
+  }, [protocolCycles, loadLiveLevels])
 
   useEffect(() => {
     if (protocolSimMode !== 'history' || !selectedProtocolCycleId || !selectedProfile) {
@@ -524,6 +736,56 @@ export function BlutspiegelSimulation() {
           </p>
         </div>
       </div>
+
+      {/* ── Live-Übersicht aller aktiven Zyklen ─────────────────────────── */}
+      {(liveLoading || protocolCycles.filter(c => c.peptides?.pk_profiles).length > 0) && (
+        <div style={PANEL}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: liveLoading ? 0 : 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{
+                width: 8, height: 8, borderRadius: '50%', background: '#ef4444', flexShrink: 0,
+                display: 'inline-block',
+                animation: 'liveBlutPulse 1.5s ease-in-out infinite',
+              }} />
+              <style>{`@keyframes liveBlutPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
+              <p style={{ fontSize: '0.85rem', fontWeight: 850, color: '#eaeefc' }}>Live-Blutspiegel</p>
+              <span style={{ fontSize: '0.58rem', color: 'rgba(154,170,191,0.5)', fontFamily: 'monospace', fontWeight: 700 }}>
+                · alle 5s
+              </span>
+            </div>
+            {liveRefreshing && <Loader2 size={14} color="#00ccf5" className="animate-spin" />}
+          </div>
+
+          {liveLoading ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 0', justifyContent: 'center' }}>
+              <Loader2 size={18} color="#00ccf5" className="animate-spin" />
+              <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.6)' }}>
+                Live-Spiegel wird berechnet…
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {protocolCycles
+                .filter(c => c.peptides?.pk_profiles)
+                .map(c => {
+                  const pk = c.peptides!.pk_profiles!
+                  const accent = CATEGORY_ACCENT[normCat(pk.category)]
+                  return (
+                    <LiveCycleCard
+                      key={c.id}
+                      cycleId={c.id}
+                      pkProfileId={c.peptides!.pk_profile_id!}
+                      peptideName={c.peptides!.name}
+                      pk={pk}
+                      level={liveData.get(c.id)}
+                      accent={accent}
+                    />
+                  )
+                })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Seiten-Erklärung (einklappbar) */}
       <div style={{ ...PANEL, padding: pageInfoOpen ? 16 : '12px 16px' }}>
