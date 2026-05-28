@@ -478,6 +478,8 @@ function LiveCycleCard({
   )
 }
 
+const WINDOW_HOURS = 12
+
 // ── Haupt-Komponente ───────────────────────────────────────────────────────
 
 export function BlutspiegelSimulation() {
@@ -510,6 +512,13 @@ export function BlutspiegelSimulation() {
   const [liveLoading, setLiveLoading] = useState(false)
   const [liveRefreshing, setLiveRefreshing] = useState(false)
   const liveIntervalRef = useRef<number | null>(null)
+
+  // Zyklus-Verlauf Chart — 12h-Fenster + Wisch-Navigation
+  const [windowOffsetHours, setWindowOffsetHours] = useState(0)
+  const histChartRef = useRef<HTMLDivElement>(null)
+  const histPanStartX = useRef<number | null>(null)
+  const histPanStartOffset = useRef(0)
+  const histIsPanning = useRef(false)
 
   // Lade PK-Profile und aktive Zyklen
   useEffect(() => {
@@ -644,20 +653,58 @@ export function BlutspiegelSimulation() {
     return () => { cancelled = true }
   }, [protocolSimMode, selectedProtocolCycleId, selectedProfile])
 
+  // Fenster zurücksetzen wenn Zyklus gewechselt wird
+  useEffect(() => { setWindowOffsetHours(0) }, [selectedProtocolCycleId])
+
   const historyChartData = useMemo(
     () => historyCurve.map(p => ({ ts: p.time.getTime(), level: p.level })),
     [historyCurve],
   )
 
-  const historyXTicks = useMemo(() => {
-    if (!historyChartData.length) return []
-    const min = historyChartData[0].ts
-    const max = historyChartData[historyChartData.length - 1].ts
-    const span = max - min
-    const steps = Math.min(6, Math.max(2, Math.ceil(historyChartData.length / 8)))
-    return Array.from({ length: steps }, (_, i) =>
-      Math.round(min + (span * i) / (steps - 1)),
-    )
+  // 12h-Sichtfenster basierend auf Wisch-Offset
+  const historyWindowDomain = useMemo((): [number, number] => {
+    if (!historyChartData.length) return [0, 0]
+    const dataStart = historyChartData[0].ts
+    const dataEnd   = historyChartData[historyChartData.length - 1].ts
+    const windowMs  = WINDOW_HOURS * 3_600_000
+    const offsetMs  = windowOffsetHours * 3_600_000
+    const windowEnd   = dataEnd - offsetMs
+    const windowStart = windowEnd - windowMs
+    return [Math.max(dataStart, windowStart), Math.min(dataEnd, windowEnd)]
+  }, [historyChartData, windowOffsetHours])
+
+  const histTicks = useMemo(() => {
+    const [start, end] = historyWindowDomain
+    if (start === 0 && end === 0) return []
+    const spanH = (end - start) / 3_600_000
+    const tickIntervalMs =
+      spanH <= 12 ? 2 * 3_600_000 :
+      spanH <= 48 ? 6 * 3_600_000 :
+      spanH <= 168 ? 24 * 3_600_000 :
+      48 * 3_600_000
+    const ticks: number[] = []
+    const firstTick = Math.ceil(start / tickIntervalMs) * tickIntervalMs
+    for (let t = firstTick; t <= end; t += tickIntervalMs) ticks.push(t)
+    return ticks
+  }, [historyWindowDomain])
+
+  const formatHistTick = useCallback((ts: number) => {
+    const spanH = (historyWindowDomain[1] - historyWindowDomain[0]) / 3_600_000
+    if (spanH <= 48)  return format(new Date(ts), 'HH:mm', { locale: deLocale })
+    if (spanH <= 168) return format(new Date(ts), 'EEE', { locale: deLocale })
+    return format(new Date(ts), 'd. MMM', { locale: deLocale })
+  }, [historyWindowDomain])
+
+  const visibleHistoryData = useMemo(() => {
+    const [start, end] = historyWindowDomain
+    if (start === 0 && end === 0) return historyChartData
+    return historyChartData.filter(p => p.ts >= start && p.ts <= end)
+  }, [historyChartData, historyWindowDomain])
+
+  const histMaxOffsetHours = useMemo(() => {
+    if (!historyChartData.length) return 0
+    const spanH = (historyChartData[historyChartData.length - 1].ts - historyChartData[0].ts) / 3_600_000
+    return Math.max(0, spanH - WINDOW_HOURS)
   }, [historyChartData])
 
   const historyTakenMarkers = useMemo(
@@ -665,6 +712,13 @@ export function BlutspiegelSimulation() {
       .filter(e => e.status === 'taken')
       .map(e => ({ ts: e.timestamp.getTime(), level: levelAtTime(historyCurve, e.timestamp) })),
     [historyEvents, historyCurve],
+  )
+
+  const visibleTakenMarkers = useMemo(
+    () => historyTakenMarkers.filter(m =>
+      m.ts >= historyWindowDomain[0] && m.ts <= historyWindowDomain[1],
+    ),
+    [historyTakenMarkers, historyWindowDomain],
   )
 
   const historyStats = useMemo(() => {
@@ -696,6 +750,37 @@ export function BlutspiegelSimulation() {
     )
     if (match) { setDose(String(match.dose)); setUnit(normalizeUnit(match.unit)) }
   }, [selectedProfile, protocolCycles])
+
+  // ── 60fps Wisch-Handler für Zyklus-Verlauf-Chart ──────────────────────────
+  const handleHistPanStart = useCallback((clientX: number) => {
+    histIsPanning.current = true
+    histPanStartX.current = clientX
+    histPanStartOffset.current = windowOffsetHours
+  }, [windowOffsetHours])
+
+  const handleHistPanMove = useCallback((clientX: number) => {
+    if (!histIsPanning.current || histPanStartX.current === null) return
+    // Leichter visueller Nudge — kein React-Re-render während der Geste
+    const panDeltaPx = clientX - histPanStartX.current
+    if (histChartRef.current) {
+      histChartRef.current.style.transform = `translateX(${panDeltaPx * 0.12}px)`
+    }
+  }, [])
+
+  const handleHistPanEnd = useCallback((clientX: number) => {
+    if (!histIsPanning.current || histPanStartX.current === null) return
+    const panDeltaPx = clientX - histPanStartX.current
+    if (histChartRef.current) histChartRef.current.style.transform = ''
+    histIsPanning.current = false
+    histPanStartX.current = null
+    if (!historyChartData.length) return
+    const containerW = histChartRef.current?.offsetWidth ?? 300
+    // Swipe rechts (panDeltaPx > 0) → weiter in die Vergangenheit (offset erhöhen)
+    const deltaHours = -(panDeltaPx / containerW) * WINDOW_HOURS * 2
+    setWindowOffsetHours(prev =>
+      Math.max(0, Math.min(histMaxOffsetHours, histPanStartOffset.current + deltaHours))
+    )
+  }, [historyChartData.length, histMaxOffsetHours])
 
   const startSimulation = useCallback(() => {
     if (!selectedProfile) return
@@ -958,103 +1043,151 @@ export function BlutspiegelSimulation() {
                 {!historyLoading && historyCurve.length > 0 && selectedProfile && (
                   <>
                     <div style={{ paddingBottom: 8 }}>
-                      <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#eaeefc', marginBottom: 4 }}>
-                        Zyklus-Verlauf — {selectedProfile.name}
-                      </p>
-                      <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.45)', marginBottom: 12 }}>
-                        Basierend auf deinen bestätigten Einnahmen im Kalender
-                      </p>
-
-                      <ResponsiveContainer width="100%" height={260}>
-                        <ComposedChart data={historyChartData} margin={{ top: 36, right: 12, left: 8, bottom: 28 }}>
-                          <defs>
-                            <linearGradient id="pkHistGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#00ccf5" stopOpacity={0.32} />
-                              <stop offset="95%" stopColor="#00ccf5" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-
-                          <XAxis
-                            dataKey="ts"
-                            type="number"
-                            scale="time"
-                            domain={['dataMin', 'dataMax']}
-                            ticks={historyXTicks}
-                            tickLine={false}
-                            axisLine={false}
-                            tick={{ fill: 'rgba(154,170,191,0.45)', fontSize: 10 }}
-                            tickFormatter={(ts: number) => format(new Date(ts), 'd. MMM', { locale: deLocale })}
-                            label={{
-                              value: 'Zeitraum',
-                              position: 'insideBottom',
-                              offset: -4,
-                              fill: 'rgba(154,170,191,0.55)',
-                              fontSize: 10,
-                              fontWeight: 600,
+                      {/* Header + Navigation */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#eaeefc' }}>
+                          Zyklus-Verlauf — {selectedProfile.name}
+                        </p>
+                        {windowOffsetHours > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setWindowOffsetHours(0)}
+                            style={{
+                              fontSize: '0.6rem', fontWeight: 800, color: '#00ccf5',
+                              background: 'rgba(0,204,245,0.10)', border: '1px solid rgba(0,204,245,0.25)',
+                              borderRadius: 8, padding: '3px 8px', cursor: 'pointer', fontFamily: 'inherit',
                             }}
-                          />
-                          <YAxis
-                            domain={[0, 105]}
-                            tickLine={false}
-                            axisLine={false}
-                            tick={{ fill: 'rgba(154,170,191,0.45)', fontSize: 10 }}
-                            tickFormatter={v => `${v}%`}
-                            ticks={[0, 25, 50, 75, 100]}
-                            label={{
-                              value: 'Wirkstoffspiegel (%)',
-                              angle: -90,
-                              position: 'insideLeft',
-                              offset: 12,
-                              fill: 'rgba(154,170,191,0.55)',
-                              fontSize: 10,
-                              fontWeight: 600,
-                            }}
-                          />
+                          >
+                            Jetzt ↩
+                          </button>
+                        )}
+                      </div>
+                      <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.45)', marginBottom: 6 }}>
+                        12h-Fenster · ← wischen für ältere Daten
+                      </p>
 
-                          <Tooltip content={<HistoryChartTooltip />} cursor={{ stroke: 'rgba(0,204,245,0.3)', strokeWidth: 1 }} />
+                      {/* Fortschrittsbalken: zeigt wo im Zyklus wir sind */}
+                      {histMaxOffsetHours > 0 && (
+                        <div style={{
+                          height: 3, borderRadius: 99, background: 'rgba(255,255,255,0.06)',
+                          marginBottom: 10, overflow: 'hidden',
+                        }}>
+                          <div style={{
+                            height: '100%', borderRadius: 99, background: '#00ccf5',
+                            width: `${Math.round((1 - windowOffsetHours / histMaxOffsetHours) * 100)}%`,
+                            transition: 'width 0.2s',
+                          }} />
+                        </div>
+                      )}
 
-                          {historyEvents
-                            .filter(e => e.status === 'skipped')
-                            .map(e => (
-                              <ReferenceLine
-                                key={`skip-${e.timestamp.getTime()}`}
-                                x={e.timestamp.getTime()}
-                                stroke="rgba(154,170,191,0.35)"
-                                strokeDasharray="4 3"
-                                strokeWidth={1.5}
+                      {/* Chart-Container mit Wisch-Erkennung */}
+                      <div
+                        style={{ touchAction: 'pan-y', userSelect: 'none', cursor: histIsPanning.current ? 'grabbing' : 'grab' }}
+                        onPointerDown={e => {
+                          ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+                          handleHistPanStart(e.clientX)
+                        }}
+                        onPointerMove={e => handleHistPanMove(e.clientX)}
+                        onPointerUp={e => handleHistPanEnd(e.clientX)}
+                        onPointerCancel={e => handleHistPanEnd(e.clientX)}
+                      >
+                        <div ref={histChartRef} style={{ willChange: 'transform' }}>
+                          <ResponsiveContainer width="100%" height={260}>
+                            <ComposedChart data={visibleHistoryData} margin={{ top: 20, right: 12, left: 8, bottom: 28 }}>
+                              <defs>
+                                <linearGradient id="pkHistGrad" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#00ccf5" stopOpacity={0.32} />
+                                  <stop offset="95%" stopColor="#00ccf5" stopOpacity={0} />
+                                </linearGradient>
+                              </defs>
+
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+
+                              <XAxis
+                                dataKey="ts"
+                                type="number"
+                                scale="time"
+                                domain={historyWindowDomain}
+                                ticks={histTicks}
+                                tickLine={false}
+                                axisLine={false}
+                                tick={{ fill: 'rgba(154,170,191,0.45)', fontSize: 10 }}
+                                tickFormatter={formatHistTick}
                                 label={{
-                                  value: '⚠️ Einnahme übersprungen',
-                                  position: 'insideTopLeft',
-                                  fill: 'rgba(154,170,191,0.55)',
-                                  fontSize: 7,
-                                  fontWeight: 700,
+                                  value: 'Zeit (← wischen für Vergangenheit)',
+                                  position: 'insideBottom',
+                                  offset: -4,
+                                  fill: 'rgba(154,170,191,0.4)',
+                                  fontSize: 9,
+                                  fontWeight: 600,
                                 }}
                               />
-                            ))}
+                              <YAxis
+                                domain={[0, 105]}
+                                tickLine={false}
+                                axisLine={false}
+                                tick={{ fill: 'rgba(154,170,191,0.45)', fontSize: 10 }}
+                                tickFormatter={v => `${v}%`}
+                                ticks={[0, 25, 50, 75, 100]}
+                                label={{
+                                  value: 'Wirkstoffspiegel (%)',
+                                  angle: -90,
+                                  position: 'insideLeft',
+                                  offset: 12,
+                                  fill: 'rgba(154,170,191,0.45)',
+                                  fontSize: 9,
+                                  fontWeight: 600,
+                                }}
+                              />
 
-                          <Area
-                            type="monotone"
-                            dataKey="level"
-                            stroke="#00ccf5"
-                            strokeWidth={2.5}
-                            fill="url(#pkHistGrad)"
-                            dot={false}
-                            activeDot={{ r: 4, fill: '#07091a', stroke: '#00ccf5', strokeWidth: 2 }}
-                          />
+                              <Tooltip content={<HistoryChartTooltip />} cursor={{ stroke: 'rgba(0,204,245,0.3)', strokeWidth: 1 }} />
 
-                          <Scatter
-                            data={historyTakenMarkers}
-                            dataKey="level"
-                            fill="#10b981"
-                            stroke="#07091a"
-                            strokeWidth={1.5}
-                            r={5}
-                            isAnimationActive={false}
-                          />
-                        </ComposedChart>
-                      </ResponsiveContainer>
+                              {historyEvents
+                                .filter(e => e.status === 'skipped' &&
+                                  e.timestamp.getTime() >= historyWindowDomain[0] &&
+                                  e.timestamp.getTime() <= historyWindowDomain[1]
+                                )
+                                .map(e => (
+                                  <ReferenceLine
+                                    key={`skip-${e.timestamp.getTime()}`}
+                                    x={e.timestamp.getTime()}
+                                    stroke="rgba(154,170,191,0.35)"
+                                    strokeDasharray="4 3"
+                                    strokeWidth={1.5}
+                                    label={{
+                                      value: '⚠️ übersprungen',
+                                      position: 'insideTopLeft',
+                                      fill: 'rgba(154,170,191,0.55)',
+                                      fontSize: 7,
+                                      fontWeight: 700,
+                                    }}
+                                  />
+                                ))}
+
+                              <Area
+                                type="monotone"
+                                dataKey="level"
+                                stroke="#00ccf5"
+                                strokeWidth={2.5}
+                                fill="url(#pkHistGrad)"
+                                dot={false}
+                                activeDot={{ r: 4, fill: '#07091a', stroke: '#00ccf5', strokeWidth: 2 }}
+                                isAnimationActive={false}
+                              />
+
+                              <Scatter
+                                data={visibleTakenMarkers}
+                                dataKey="level"
+                                fill="#10b981"
+                                stroke="#07091a"
+                                strokeWidth={1.5}
+                                r={5}
+                                isAnimationActive={false}
+                              />
+                            </ComposedChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
                     </div>
 
                     {historyStats && (
