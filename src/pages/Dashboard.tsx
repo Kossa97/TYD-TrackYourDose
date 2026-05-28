@@ -247,6 +247,11 @@ export function Dashboard() {
 
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
 
+  // Einnahme-Bestätigungs-Sheet
+  interface ConfirmSheet { cycle?: Cycle; log?: DoseLog }
+  const [confirmSheet, setConfirmSheet] = useState<ConfirmSheet | null>(null)
+  const [confirmTime, setConfirmTime]   = useState('')
+
   // Horizontal swipe state
   const calendarSwipeStart = useRef<{ x: number; y: number; pointerId: number } | null>(null)
   const [calendarDragX, setCalendarDragX] = useState(0)
@@ -468,9 +473,11 @@ export function Dashboard() {
     toast.success(t('deleted')); loadLogs(); loadPeptides()
   }
 
-  const confirmDose = async (log: DoseLog, taken: boolean) => {
+  const confirmDose = async (log: DoseLog, taken: boolean, loggedAt?: string) => {
     const previousTaken = log.taken
-    const { error } = await supabase.from('dose_logs').update({ taken }).eq('id', log.id)
+    const update: Record<string, unknown> = { taken }
+    if (taken && loggedAt) update.logged_at = loggedAt
+    const { error } = await supabase.from('dose_logs').update(update).eq('id', log.id)
     if (error) return toast.error(t('error'))
     if (previousTaken !== true && taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'debit')
     if (previousTaken === true && taken !== true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit')
@@ -487,7 +494,7 @@ export function Dashboard() {
     toast.success(t('dose_undo_success', { defaultValue: 'Einnahme zurückgesetzt' }))
   }
 
-  const confirmCycleDose = async (cycle: Cycle, taken: boolean) => {
+  const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string) => {
     if (!user) return
     const dose = effectiveDose(cycle, selectedDay, escalations)
     const { error } = await supabase.from('dose_logs').insert({
@@ -496,7 +503,7 @@ export function Dashboard() {
       dose,
       unit: cycle.unit,
       method: cycle.method,
-      logged_at: cycleLogTimestamp(cycle, selectedDay),
+      logged_at: loggedAt ?? cycleLogTimestamp(cycle, selectedDay),
       taken,
     })
     if (error) return toast.error(t('fehler_speichern'))
@@ -504,6 +511,41 @@ export function Dashboard() {
     loadLogs(); loadPeptides()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
+  }
+
+  // ── Bestätigungs-Sheet ───────────────────────────────────────────────────
+  const openConfirmSheet = (cycle?: Cycle, log?: DoseLog) => {
+    let defaultTime: string
+    if (cycle) {
+      const intakeMin = cycleIntakeMinutes(cycle)
+      const safe = intakeMin >= 24 * 60 ? 12 * 60 : intakeMin
+      defaultTime = `${Math.floor(safe / 60).toString().padStart(2, '0')}:${(safe % 60).toString().padStart(2, '0')}`
+    } else if (log) {
+      const d = new Date(log.logged_at)
+      defaultTime = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+    } else {
+      const now = new Date()
+      defaultTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+    }
+    setConfirmTime(defaultTime)
+    setConfirmSheet({ cycle, log })
+  }
+
+  const handleConfirmSheet = async () => {
+    if (!confirmSheet) return
+    const [h, m] = confirmTime.split(':').map(Number)
+    if (confirmSheet.cycle) {
+      const day = new Date(selectedDay)
+      day.setHours(h, m, 0, 0)
+      const pendingLog = pendingLogItems.find(l => l.peptide_id === confirmSheet.cycle!.peptide_id)
+      if (pendingLog) await confirmDose(pendingLog, true, day.toISOString())
+      else            await confirmCycleDose(confirmSheet.cycle, true, day.toISOString())
+    } else if (confirmSheet.log) {
+      const logDate = new Date(confirmSheet.log.logged_at)
+      logDate.setHours(h, m, 0, 0)
+      await confirmDose(confirmSheet.log, true, logDate.toISOString())
+    }
+    setConfirmSheet(null)
   }
 
   const snoozeDose = (log: DoseLog, minutes: number) => {
@@ -622,6 +664,7 @@ export function Dashboard() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
+    <>
     <PageShell>
       <PageHero
         kicker={t('calendar_plan_kicker', { defaultValue: 'Peptid-Plan' })}
@@ -909,7 +952,7 @@ export function Dashboard() {
                         </div>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => pendingLog ? confirmDose(pendingLog, true) : confirmCycleDose(c, true)}
+                            onClick={() => openConfirmSheet(c, pendingLog ?? undefined)}
                             className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
                             <Check size={11} /> {t('eingenommen')}
                           </button>
@@ -990,7 +1033,7 @@ export function Dashboard() {
                 {log.taken === null && (
                   <div className="flex gap-2 mt-2 ml-[26px]">
                     <button
-                      onClick={() => confirmDose(log, true)}
+                      onClick={() => openConfirmSheet(undefined, log)}
                       className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
                       <Check size={11} /> {t('eingenommen')}
                     </button>
@@ -1044,5 +1087,49 @@ export function Dashboard() {
       </GlassPanel>
 
     </PageShell>
+
+      {/* ── Einnahme-Zeitpunkt-Sheet ──────────────────────────────────────── */}
+      {confirmSheet && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/60" onClick={() => setConfirmSheet(null)} />
+          <div
+            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border border-white/10 pb-10"
+            style={{ background: 'linear-gradient(180deg, rgba(11,16,38,0.99), rgba(5,9,22,0.99))' }}
+          >
+            <div style={{ padding: '20px 18px 0' }}>
+              <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
+              <div className="flex items-center gap-2 mb-1">
+                <Check size={15} className="text-emerald-400" />
+                <h2 className="text-base font-black text-white">Einnahme bestätigen</h2>
+              </div>
+              <p className="text-xs text-slate-500 mb-5">
+                Wann hast du tatsächlich eingenommen? Vorausgefüllt mit der geplanten Zykluszeit.
+              </p>
+              <label className="block text-[0.6rem] font-bold uppercase tracking-widest text-slate-500 mb-2">
+                Uhrzeit
+              </label>
+              <input
+                type="time"
+                value={confirmTime}
+                onChange={e => setConfirmTime(e.target.value)}
+                className="mb-5 w-full rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-white outline-none focus:border-sky-500/50 transition-colors"
+                style={{ background: 'rgba(255,255,255,0.05)', colorScheme: 'dark' }}
+              />
+              <div className="flex gap-3">
+                <button onClick={() => setConfirmSheet(null)} className="btn-secondary flex-1">
+                  Abbrechen
+                </button>
+                <button
+                  onClick={() => void handleConfirmSheet()}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2"
+                >
+                  <Check size={14} /> Eingenommen
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </>
   )
 }
