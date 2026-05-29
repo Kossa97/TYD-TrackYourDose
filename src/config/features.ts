@@ -15,7 +15,7 @@ export const FEATURES = {
 
   // 🚧 Post-release — versteckt bis fertig
   LIVE_VERLAUF_CHART: false,
-  FOTO_PROGRESS: false,
+  FOTO_PROGRESS: true,
   PAYWALL: false,
   ZYKLUS_VERGLEICH: false,
 } as const
