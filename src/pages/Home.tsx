@@ -396,7 +396,7 @@ export function Home() {
                 {t('home_status_hint', { defaultValue: 'Schnellzugriff auf die wichtigsten Schritte.' })}
               </p>
             </div>
-            <ChevronRight size={16} color="rgba(255,255,255,0.35)" />
+            <ChevronRight size={16} color="var(--text-muted)" />
           </div>
         </div>
       </section>
@@ -588,8 +588,8 @@ function HeroStat({
 }) {
   return (
     <div style={{
-      background: 'rgba(2,6,18,0.48)',
-      border: '1px solid rgba(255,255,255,0.07)',
+      background: 'var(--surface-input)',
+      border: '1px solid var(--border)',
       borderRadius: 18,
       padding: '11px 9px',
       minWidth: 0,

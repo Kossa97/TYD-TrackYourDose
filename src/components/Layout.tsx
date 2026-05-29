@@ -279,9 +279,9 @@ export function Layout() {
             <div style={{
               width: 52, height: 52, borderRadius: 18, flexShrink: 0,
               background: showQuickActions
-                ? 'rgba(255,255,255,0.12)'
+                ? 'var(--surface-raised)'
                 : 'linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #003a6e))',
-              border: showQuickActions ? '1px solid rgba(255,255,255,0.18)' : 'none',
+              border: showQuickActions ? '1px solid var(--border-strong)' : 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               marginTop: -16,
               boxShadow: showQuickActions
@@ -290,7 +290,7 @@ export function Layout() {
               transition: 'all 0.2s cubic-bezier(0.22,1,0.36,1)',
             }}>
               {showQuickActions
-                ? <X size={22} color="rgba(255,255,255,0.85)" style={{ transition: 'transform 0.2s', transform: 'rotate(0deg)' }} />
+                ? <X size={22} color="var(--text)" style={{ transition: 'transform 0.2s', transform: 'rotate(0deg)' }} />
                 : <Plus size={24} color="var(--accent-contrast)" />
               }
             </div>
