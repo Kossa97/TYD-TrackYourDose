@@ -908,69 +908,37 @@ export function Peptide() {
                     </div>
                   </div>
 
-                  {/* Lagerbestand — visuell mit Segment-Balken */}
+                  {/* Lagerbestand — minimalistisch */}
                   {invItem && (() => {
                     const total = Math.max(invItem.vials_initial ?? invItem.vials_count, invItem.vials_count, 1)
                     const filled = invItem.vials_count
-                    const segments = Math.min(total, 10)
-                    const filledSegs = total <= 10
-                      ? filled
-                      : Math.round((filled / total) * segments)
+                    const pct = Math.round((filled / total) * 100)
                     return (
-                      <div className="mt-3 flex items-center gap-3 rounded-xl bg-slate-800/40 border border-slate-700/50 px-3 py-2.5">
-                        <div
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                          style={{ background: `${peptideColor}18`, border: `1px solid ${peptideColor}30` }}
-                        >
-                          <Archive size={16} style={{ color: peptideColor }} />
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <span className="text-[11px] tabular-nums text-slate-500">
+                          {filled}{(invItem.vials_initial ?? 0) > 0 ? ` / ${invItem.vials_initial}` : ''}
+                          <span className="ml-1 text-slate-600">{t('vials')}</span>
+                        </span>
+                        <div className="h-1 w-10 shrink-0 overflow-hidden rounded-full bg-slate-800">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{ width: `${pct}%`, background: peptideColor, opacity: 0.7 }}
+                          />
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                            <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                              {t('stat_vials')}
-                            </span>
-                            <span className="text-sm font-bold tabular-nums text-white">
-                              {filled}
-                              {(invItem.vials_initial ?? 0) > 0 && (
-                                <span className="ml-0.5 text-xs font-normal text-slate-500">
-                                  / {invItem.vials_initial}
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                          <div className="flex gap-1">
-                            {Array.from({ length: segments }).map((_, i) => (
-                              <div
-                                key={i}
-                                className="h-2 flex-1 rounded-full transition-colors"
-                                style={{
-                                  background: i < filledSegs
-                                    ? peptideColor
-                                    : 'rgba(255,255,255,0.08)',
-                                  opacity: i < filledSegs ? 0.85 : 1,
-                                }}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1.5">
+                        <div className="ml-auto flex items-center gap-0.5">
                           <button
                             onClick={e => { e.stopPropagation(); adjustInventoryCount(invItem.id, -1, invItem.vials_count) }}
                             disabled={filled <= 0}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-600/60 bg-slate-800 text-slate-300 transition-colors hover:border-slate-500 hover:text-white disabled:opacity-30"
+                            className="flex h-5 w-5 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300 disabled:opacity-25"
                           >
-                            <Minus size={14} />
+                            <Minus size={10} />
                           </button>
                           <button
                             onClick={e => { e.stopPropagation(); adjustInventoryCount(invItem.id, +1, invItem.vials_count) }}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border transition-colors hover:opacity-90"
-                            style={{
-                              background: `${peptideColor}20`,
-                              borderColor: `${peptideColor}40`,
-                              color: peptideColor,
-                            }}
+                            className="flex h-5 w-5 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300"
+                            style={{ color: peptideColor }}
                           >
-                            <Plus size={14} />
+                            <Plus size={10} />
                           </button>
                         </div>
                       </div>
