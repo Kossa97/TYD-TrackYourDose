@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FEATURES } from '../config/features'
 import { useTranslation } from 'react-i18next'
@@ -9,6 +9,7 @@ import {
   Activity, ArrowUpRight, CheckCircle2, ClipboardList,
   Clock3, Flame, Package, Plus, ShieldCheck, Sparkles,
   Syringe, TrendingUp,
+  Dumbbell, Dna, Zap, Moon, Brain, Bandage, HeartPulse, Lightbulb, Leaf, Bone,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -23,21 +24,21 @@ import type { Locale } from 'date-fns'
 const SLOT_TIMES: Record<string, string> = { morgens: '08:00', mittags: '12:00', abends: '20:00' }
 
 const PEPTIDE_STUDIES = [
-  { emoji: '🧪', title: 'BPC-157 beschleunigt Sehnen- & Muskelheilung signifikant', source: 'J. Physiol. · 2024' },
-  { emoji: '💪', title: 'TB-500 fördert Angiogenese & Wundheilung bei Gewebeschäden', source: 'Wound Rep. Reg. · 2023' },
-  { emoji: '🧬', title: 'GHK-Cu aktiviert über 4.000 Gene – Gewebereparatur & Anti-Aging', source: 'Biomolecules · 2024' },
-  { emoji: '⚡', title: 'Ipamorelin: selektive GH-Freisetzung ohne Cortisol- oder Prolaktin-Spitzen', source: 'Endocrinology · 2023' },
-  { emoji: '🌙', title: 'Epitalon verlängert Telomere & hemmt Tumorwachstum in Langzeitstudie', source: 'Aging · 2023' },
-  { emoji: '🧠', title: 'Selank (TP-7) zeigt anxiolytische Wirkung ohne Abhängigkeitspotenzial', source: 'Neuropharmacology · 2024' },
-  { emoji: '🔬', title: 'MOTS-c verbessert Insulinsensitivität & Mitochondrienfunktion', source: 'Cell Metab. · 2024' },
-  { emoji: '🩹', title: 'AOD-9604: gezielter Fettabbau ohne diabetogene Nebenwirkungen', source: 'Obes. Res. · 2023' },
-  { emoji: '🫀', title: 'Thymosin α1 stärkt Immunantwort bei chronischer Entzündung', source: 'Immunology · 2024' },
-  { emoji: '💡', title: 'PT-141 (Bremelanotide) – erstes FDA-zugelassenes Peptid gegen Libidostörungen', source: 'FDA Approval · 2019' },
-  { emoji: '📈', title: 'CJC-1295 hält IGF-1-Spiegel über 14 Tage erhöht', source: 'J. Clin. Endocrinol. · 2006' },
-  { emoji: '🛡️', title: 'Humanin schützt Neuronen vor amyloidbedingtem Zelltod – neue Daten', source: 'PNAS · 2024' },
-  { emoji: '🌿', title: 'Epithalon reduziert oxidativen Stress & verbessert Schlafqualität', source: 'Biogerontology · 2023' },
-  { emoji: '🦴', title: 'BPC-157 fördert Knochenregeneration nach Fraktur – Tierstudie', source: 'Bone · 2024' },
-]
+  { icon: FlaskConical, title: 'BPC-157 beschleunigt Sehnen- & Muskelheilung signifikant', source: 'J. Physiol. · 2024' },
+  { icon: Dumbbell,     title: 'TB-500 fördert Angiogenese & Wundheilung bei Gewebeschäden', source: 'Wound Rep. Reg. · 2023' },
+  { icon: Dna,          title: 'GHK-Cu aktiviert über 4.000 Gene – Gewebereparatur & Anti-Aging', source: 'Biomolecules · 2024' },
+  { icon: Zap,          title: 'Ipamorelin: selektive GH-Freisetzung ohne Cortisol- oder Prolaktin-Spitzen', source: 'Endocrinology · 2023' },
+  { icon: Moon,         title: 'Epitalon verlängert Telomere & hemmt Tumorwachstum in Langzeitstudie', source: 'Aging · 2023' },
+  { icon: Brain,        title: 'Selank (TP-7) zeigt anxiolytische Wirkung ohne Abhängigkeitspotenzial', source: 'Neuropharmacology · 2024' },
+  { icon: Microscope,   title: 'MOTS-c verbessert Insulinsensitivität & Mitochondrienfunktion', source: 'Cell Metab. · 2024' },
+  { icon: Bandage,      title: 'AOD-9604: gezielter Fettabbau ohne diabetogene Nebenwirkungen', source: 'Obes. Res. · 2023' },
+  { icon: HeartPulse,   title: 'Thymosin α1 stärkt Immunantwort bei chronischer Entzündung', source: 'Immunology · 2024' },
+  { icon: Lightbulb,    title: 'PT-141 (Bremelanotide) – erstes FDA-zugelassenes Peptid gegen Libidostörungen', source: 'FDA Approval · 2019' },
+  { icon: TrendingUp,   title: 'CJC-1295 hält IGF-1-Spiegel über 14 Tage erhöht', source: 'J. Clin. Endocrinol. · 2006' },
+  { icon: ShieldCheck,  title: 'Humanin schützt Neuronen vor amyloidbedingtem Zelltod – neue Daten', source: 'PNAS · 2024' },
+  { icon: Leaf,         title: 'Epithalon reduziert oxidativen Stress & verbessert Schlafqualität', source: 'Biogerontology · 2023' },
+  { icon: Bone,         title: 'BPC-157 fördert Knochenregeneration nach Fraktur – Tierstudie', source: 'Bone · 2024' },
+] as const
 const TODAY_STUDY = PEPTIDE_STUDIES[Math.floor(Date.now() / 86_400_000) % PEPTIDE_STUDIES.length]
 
 const DATE_LOCALES: Record<string, Locale> = {
@@ -326,7 +327,7 @@ export function Home() {
                 {dateStr}
               </p>
               <h1 style={{ fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.045em', color: '#f8fbff', lineHeight: 1.04, marginBottom: 8 }}>
-                {greeting} 👋
+                {greeting}
               </h1>
               <p style={{ fontSize: '0.82rem', color: 'rgba(213,224,242,0.72)', lineHeight: 1.55, maxWidth: 390 }}>
                 {t('home_hero_subtitle', { defaultValue: 'Dein Research-Cockpit für Einnahmen, Vorrat, Laborwerte und Protokolle.' })}
@@ -357,7 +358,7 @@ export function Home() {
             <HeroStat
               icon={Clock3}
               label={String(t('stat_next_intake'))}
-              value={todayDone ? '✓' : (nextIntake ?? '–')}
+              value={todayDone ? <CheckCircle2 size={26} /> : (nextIntake ?? '–')}
               hint={String(todayDone ? t('stat_today_done') : t('home_next_hint', { defaultValue: 'Heute im Plan' }))}
               accent={todayDone ? '#10b981' : '#00ccf5'}
             />
@@ -488,7 +489,7 @@ export function Home() {
         <div style={{ position: 'absolute', top: -34, right: -28, width: 120, height: 120, borderRadius: '50%', background: 'rgba(0,204,245,0.10)', filter: 'blur(20px)' }} />
         <div style={{ position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
-            <span style={{ fontSize: '1.35rem' }}>{todayStudy.emoji}</span>
+            {(() => { const StudyIcon = todayStudy.icon; return <StudyIcon size={22} color="var(--accent)" /> })()}
             <div>
               <p style={{ ...labelStyle, color: 'rgba(0,204,245,0.66)' }}>{t('stat_study')}</p>
               <p style={{ fontSize: '0.86rem', fontWeight: 850, color: '#eaeefc', lineHeight: 1.25 }}>
@@ -581,7 +582,7 @@ function HeroStat({
 }: {
   icon: LucideIcon
   label: string
-  value: string
+  value: ReactNode
   hint: string
   accent: string
 }) {
@@ -599,7 +600,7 @@ function HeroStat({
           {label}
         </p>
       </div>
-      <p style={{ fontSize: value.length > 4 ? '1.03rem' : '1.34rem', fontWeight: 900, letterSpacing: '-0.04em', color: accent, lineHeight: 1 }}>
+      <p style={{ fontSize: typeof value === 'string' && value.length > 4 ? '1.03rem' : '1.34rem', fontWeight: 900, letterSpacing: '-0.04em', color: accent, lineHeight: 1 }}>
         {value}
       </p>
       <p style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.48)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
