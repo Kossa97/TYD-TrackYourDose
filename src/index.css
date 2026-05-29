@@ -628,13 +628,19 @@ body.onboarding-active [data-ob-active] {
     width: 15px; height: 15px;
   }
 
-  /* ── Date/Time ───────────────────────────────────────────────────────────── */
+  /* ── Native control color scheme (date/time pickers, select popups) ──────── */
+  /* Root color-scheme drives native UI; overridden per theme below. */
+  html { color-scheme: dark; }
   input[type='date'],
   input[type='datetime-local'],
-  input[type='time'] { color-scheme: dark; }
+  input[type='time'] { color-scheme: inherit; }
 
   /* ── Select options ──────────────────────────────────────────────────────── */
   select option { background: #0a0c22; color: #eaeefc; }
+
+  /* ── Light theme: flip native controls + option list ─────────────────────── */
+  html[data-theme="light"] { color-scheme: light; }
+  [data-theme="light"] select option { background: #ffffff; color: #0c1626; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
