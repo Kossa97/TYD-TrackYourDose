@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -245,6 +246,7 @@ const SWIPE_THRESHOLD = 80
 
 export function Dashboard() {
   const { t, i18n } = useTranslation()
+  const location = useLocation()
   const locale = DATE_LOCALES[i18n.language] ?? enUS
   const { user } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -437,6 +439,22 @@ export function Dashboard() {
         .sort((a, b) => cycleIntakeMinutes(a) - cycleIntakeMinutes(b)),
     }))
     .filter(section => section.cycles.length > 0)
+
+  useEffect(() => {
+    if (location.hash !== '#due-intakes') return
+    const today = new Date()
+    setSelectedDay(today)
+    setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1))
+  }, [location.hash])
+
+  useEffect(() => {
+    if (location.hash !== '#due-intakes') return
+    const scrollToDue = () => {
+      document.getElementById('due-intakes')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    const timer = window.setTimeout(scrollToDue, 150)
+    return () => window.clearTimeout(timer)
+  }, [location.hash, dueCycles.length, selCycles.length, logs.length])
 
   const adjustPeptideStockForDose = async (peptideId: string, dose: number, unit: string, mode: 'debit' | 'credit') => {
     if (!user) return false
@@ -785,6 +803,7 @@ export function Dashboard() {
       </div>
 
       {/* ── Tages-Panel ───────────────────────────────────────────────────── */}
+      <div id="due-intakes">
       <GlassPanel accent="#00ccf5" padding="md">
         <div className="mb-3">
           <SectionHeader
@@ -1031,6 +1050,7 @@ export function Dashboard() {
           </p>
         ) : null}
       </GlassPanel>
+      </div>
 
     </PageShell>
 

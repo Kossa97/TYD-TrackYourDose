@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   CalendarDays, FlaskConical, User, Home, HelpCircle, Bell, X, Share,
-  Plus, Syringe, Activity, Droplets, Calculator, Microscope, BookHeart,
+  Plus, Syringe, Activity, Droplets, Calculator, Microscope, BookHeart, CheckCircle2,
 } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -12,6 +12,7 @@ import { usePushNotifications } from '../lib/usePushNotifications'
 import { PushNotificationListener } from './PushNotificationListener'
 
 const QUICK_ACTIONS = [
+  { icon: CheckCircle2, label: 'Einnahme bestätigen', path: '/kalender#due-intakes', color: '#10b981' },
   { icon: FlaskConical, label: 'Peptid anlegen',    path: '/peptide',      color: '#00ccf5' },
   { icon: Syringe,      label: 'Injektion loggen',  path: '/injektionen',  color: '#10b981' },
   { icon: CalendarDays, label: 'Kalender / Zyklus', path: '/kalender',     color: '#8b5cf6' },
@@ -71,6 +72,11 @@ export function Layout() {
 
   const handleQuickNav = (path: string) => {
     setShowQuickActions(false)
+    const hashIndex = path.indexOf('#')
+    if (hashIndex >= 0) {
+      navigate({ pathname: path.slice(0, hashIndex), hash: path.slice(hashIndex + 1) })
+      return
+    }
     navigate(path)
   }
 
