@@ -1743,7 +1743,7 @@ export function Peptide() {
         return (
           <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
             onClick={() => setInfoPeptide(null)}>
-            <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg overflow-y-auto max-h-[90vh]"
+            <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg overflow-y-auto max-h-[90vh] motion-fade-up"
               onClick={e => e.stopPropagation()}>
 
               <div className="sticky top-0 bg-slate-900 border-b border-slate-800 px-5 py-4 flex items-center justify-between z-10">
@@ -1756,7 +1756,7 @@ export function Peptide() {
                 </button>
               </div>
 
-              <div className="px-5 py-4 space-y-4">
+              <div className="px-5 py-4 space-y-4 stagger-in">
 
                 {/* Inventar-Verknüpfung */}
                 {invItem && (
@@ -1770,13 +1770,13 @@ export function Peptide() {
                 <div>
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('dosierung_section')}</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-slate-800/60 rounded-xl p-3">
+                    <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                       <p className="text-slate-400 text-xs">{t('standard_dosis_label')}</p>
                       <p className="text-white font-semibold mt-0.5">
                         {p.default_dose ? `${p.default_dose} ${p.default_unit}` : '—'}
                       </p>
                     </div>
-                    <div className="bg-slate-800/60 rounded-xl p-3">
+                    <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                       <p className="text-slate-400 text-xs">{t('applikation_info')}</p>
                       <p className="text-white font-semibold mt-0.5">{t(METHOD_KEYS[p.default_method] ?? p.default_method)}</p>
                     </div>
@@ -1789,19 +1789,19 @@ export function Peptide() {
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('wirkstoff_rekonstitution')}</p>
                     <div className="grid grid-cols-3 gap-2">
                       {p.vial_amount_mg && (
-                        <div className="bg-slate-800/60 rounded-xl p-3 text-center">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3 text-center">
                           <p className="text-sky-400 text-base font-bold">{p.vial_amount_mg}</p>
                           <p className="text-slate-500 text-xs mt-0.5">mg / Vial</p>
                         </div>
                       )}
                       {p.reconstitution_ml && (
-                        <div className="bg-slate-800/60 rounded-xl p-3 text-center">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3 text-center">
                           <p className="text-sky-400 text-base font-bold">{p.reconstitution_ml}</p>
                           <p className="text-slate-500 text-xs mt-0.5">{t('ml_fluessigkeit')}</p>
                         </div>
                       )}
                       {syringeMl && syringeUnits && (
-                        <div className="bg-slate-800/60 rounded-xl p-3 text-center">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3 text-center">
                           <p className="text-sky-400 text-base font-bold">{syringeMl} mL</p>
                           <p className="text-slate-500 text-xs mt-0.5">{syringeUnits} {t('einh_kurz')}</p>
                         </div>
@@ -1816,13 +1816,13 @@ export function Peptide() {
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('haltbarkeit_section_info')}</p>
                     <div className="grid grid-cols-2 gap-2">
                       {p.reconstitution_date && (
-                        <div className="bg-slate-800/60 rounded-xl p-3">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                           <p className="text-slate-400 text-xs">{t('datum_rekonstitution')}</p>
                           <p className="text-white font-semibold mt-0.5">{format(parseISO(p.reconstitution_date), 'dd.MM.yyyy')}</p>
                         </div>
                       )}
                       {expiryDate && expiryDays !== null && (
-                        <div className="bg-slate-800/60 rounded-xl p-3">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                           <p className="text-slate-400 text-xs">{t('ablauf_label')}</p>
                           <p className={`font-semibold mt-0.5 ${expiryDays > 7 ? 'text-emerald-400' : expiryDays > 0 ? 'text-amber-400' : 'text-red-400'}`}>
                             {expiryDate}
@@ -1840,7 +1840,7 @@ export function Peptide() {
                 {(p.vials_in_stock !== null || p.vials_initial) && (
                   <div>
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('bestand_section')}</p>
-                    <div className="bg-slate-800/60 rounded-xl p-3">
+                    <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-white font-semibold">{p.vials_in_stock ?? 0} Vials</span>
                         {(p.vials_initial ?? 0) > 0 && (
@@ -1870,13 +1870,13 @@ export function Peptide() {
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('batch_herkunft_section')}</p>
                     <div className="grid grid-cols-2 gap-2">
                       {p.batch_number && (
-                        <div className="bg-slate-800/60 rounded-xl p-3">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                           <p className="text-slate-400 text-xs">{t('batch')}</p>
                           <p className="text-white font-medium mt-0.5 text-sm">{p.batch_number}</p>
                         </div>
                       )}
                       {p.batch_source && (
-                        <div className="bg-slate-800/60 rounded-xl p-3">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                           <p className="text-slate-400 text-xs">{t('quelle')}</p>
                           <p className="text-white font-medium mt-0.5 text-sm">{p.batch_source}</p>
                         </div>
@@ -1919,7 +1919,7 @@ export function Peptide() {
                 {p.notes && (
                   <div>
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('notizen_section')}</p>
-                    <p className="text-slate-300 text-sm bg-slate-800/60 rounded-xl px-4 py-3 whitespace-pre-wrap">{p.notes}</p>
+                    <p className="text-slate-300 text-sm bg-slate-800/60 border border-slate-800 rounded-xl px-4 py-3 whitespace-pre-wrap">{p.notes}</p>
                   </div>
                 )}
 
@@ -1932,9 +1932,9 @@ export function Peptide() {
                     }}
                     className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-colors"
                     style={{
-                      color: '#00ccf5',
-                      background: 'rgba(0,204,245,0.12)',
-                      border: '1px solid rgba(0,204,245,0.32)',
+                      color: 'var(--accent)',
+                      background: 'var(--accent-weak)',
+                      border: '1px solid var(--accent-border)',
                     }}
                   >
                     <Activity size={16} />
