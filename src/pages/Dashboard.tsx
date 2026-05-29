@@ -551,6 +551,7 @@ export function Dashboard() {
   }
 
   // ── Day cell renderer ─────────────────────────────────────────────────────
+  const today = new Date()
   const renderDayCell = (day: Date, monthDate: Date, key: number, isPeek: boolean) => {
     const inMonth = day.getMonth() === monthDate.getMonth()
     const isSelected = !isPeek && isSameDay(day, selectedDay)
