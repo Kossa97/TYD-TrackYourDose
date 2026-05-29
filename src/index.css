@@ -1191,6 +1191,13 @@ main.flex-1 {
 [data-theme="light"] .bg-slate-600,
 [data-theme="light"] [class*="bg-slate-600/"] { background-color: #e2e8f0; }
 
+/* Hover/active state variants (hover:bg-slate-800 etc.) → subtle light feedback */
+[data-theme="light"] [class*="hover:bg-slate-800"]:hover,
+[data-theme="light"] [class*="hover:bg-slate-700"]:hover { background-color: #e2e8f0; }
+[data-theme="light"] [class*="hover:bg-slate-600"]:hover { background-color: #cbd5e1; }
+[data-theme="light"] [class*="active:bg-slate-800"]:active,
+[data-theme="light"] [class*="active:bg-slate-700"]:active { background-color: #e2e8f0; }
+
 /* ── Borders ─────────────────────────────────────────────────────────────── */
 [data-theme="light"] .border-slate-800 { border-color: #e8edf3; }
 [data-theme="light"] .border-slate-700 { border-color: #d8dfe8; }
