@@ -336,6 +336,7 @@ function ThemeSwitcher() {
             <button
               key={opt.value}
               onClick={() => setMode(opt.value)}
+              aria-pressed={active}
               className={active ? 'bg-sky-500' : ''}
               style={{
                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',

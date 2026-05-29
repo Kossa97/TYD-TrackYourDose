@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 const STORAGE_KEY = 'tyd_theme'
@@ -31,6 +31,7 @@ export function useTheme() {
   const [mode, setMode] = useState<ThemeMode>(getThemeMode)
 
   useEffect(() => {
+    applyTheme(mode)
     if (mode !== 'system') return
     const mq = window.matchMedia('(prefers-color-scheme: light)')
     const onChange = () => applyTheme('system')
@@ -38,10 +39,10 @@ export function useTheme() {
     return () => mq.removeEventListener('change', onChange)
   }, [mode])
 
-  const update = (next: ThemeMode) => {
+  const update = useCallback((next: ThemeMode) => {
     setThemeMode(next)
     setMode(next)
-  }
+  }, [])
 
   return { mode, resolved: resolveTheme(mode), setMode: update }
 }
