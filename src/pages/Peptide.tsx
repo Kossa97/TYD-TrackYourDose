@@ -668,7 +668,7 @@ export function Peptide() {
   }
   const doRekonstitution = async (p: Peptide) => {
     await supabase.from('peptides')
-      .update({ reconstitution_date: format(new Date(), 'yyyy-MM-dd') })
+      .update({ reconstitution_date: format(new Date(), 'yyyy-MM-dd'), vials_in_stock: 1 })
       .eq('id', p.id)
     if (p.inventory_item_id) {
       const invItem = inventory.find(i => i.id === p.inventory_item_id)
@@ -1136,8 +1136,9 @@ export function Peptide() {
               const pCycles   = cyclesOf(p.id)
               const isOpen    = expandedId === p.id
               const hasActive = pCycles.some(c => c.active)
-              const vialPct = (p.vials_initial ?? 0) > 0
-                ? Math.max(0, Math.min(100, ((p.vials_in_stock ?? 0) / p.vials_initial!) * 100))
+              const stock = p.vials_in_stock ?? 0
+              const vialPct = (p.vials_initial ?? 0) > 0 || stock > 0
+                ? stock <= 0 ? 0 : stock % 1 === 0 ? 100 : (stock % 1) * 100
                 : null
               const colorIdx   = peptides.findIndex(pp => pp.id === p.id)
               const peptideColor = getPeptideColor(colorIdx)
