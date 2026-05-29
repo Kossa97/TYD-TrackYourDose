@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   CalendarDays, FlaskConical, User, Home, HelpCircle, Bell, X, Share,
-  Plus, Syringe, Activity, Droplets, Calculator, Microscope, Sparkles, BookHeart,
+  Plus, Syringe, Activity, Droplets, Calculator, Microscope, BookHeart,
 } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -17,7 +17,6 @@ const QUICK_ACTIONS = [
   { icon: CalendarDays, label: 'Kalender / Zyklus', path: '/kalender',     color: '#8b5cf6' },
   { icon: Activity,     label: 'Blutspiegel',       path: '/simulation',   color: '#06b6d4' },
   { icon: Droplets,     label: 'Blutwerte',         path: '/blutwerte',    color: '#f43f5e' },
-  { icon: Sparkles,     label: 'Wohlbefinden',      path: '/',             color: '#f59e0b' },
 ] as const
 
 const QUICK_TILES = [

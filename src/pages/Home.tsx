@@ -12,9 +12,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { DailyLogCard } from '../components/DailyLogCard'
 import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
-import { wellbeingSummary, type DailyLogRow } from '../lib/dailyLogs'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
@@ -144,7 +142,7 @@ const QUICK_ACTIONS: QuickActionDef[] = [
     labelKey: 'home_action_progress',
     label: 'Fortschritt',
     descKey: 'home_action_progress_desc',
-    desc: 'Gewicht, Befinden & Fotos',
+    desc: 'Gewicht & Fotos',
     path: '/progress',
     accent: '#10b981',
   },
@@ -231,7 +229,6 @@ export function Home() {
   const [todayDone,   setTodayDone]   = useState(false)
   const [streak,      setStreak]      = useState(0)
   const [overview, setOverview] = useState<OverviewStats>(EMPTY_OVERVIEW)
-  const [dailyLogToday, setDailyLogToday] = useState<DailyLogRow | null>(null)
   const [expiryAlerts, setExpiryAlerts] = useState<PeptideExpiryAlert[]>([])
 
   // Rotate study daily
@@ -243,7 +240,7 @@ export function Home() {
       const todayKey = format(new Date(), 'yyyy-MM-dd')
 
       try {
-        const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }, { data: dailyLog }] = await Promise.all([
+        const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }] = await Promise.all([
           supabase.from('cycles')
             .select('intake_time, intake_time_custom')
             .eq('user_id', user!.id).eq('active', true),
@@ -257,14 +254,7 @@ export function Home() {
           supabase.from('inventory_items')
             .select('id, vials_count')
             .eq('user_id', user!.id),
-          supabase.from('daily_logs')
-            .select('id, log_date, energie, schlaf, libido, notes')
-            .eq('user_id', user!.id)
-            .eq('log_date', todayKey)
-            .maybeSingle(),
         ])
-
-        setDailyLogToday((dailyLog ?? null) as DailyLogRow | null)
 
         // ── Next intake time ─────────────────────────────────────────
         const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
@@ -305,7 +295,6 @@ export function Home() {
         })
       } catch {
         setOverview(EMPTY_OVERVIEW)
-        setDailyLogToday(null)
         setExpiryAlerts([])
       }
     }
@@ -325,24 +314,6 @@ export function Home() {
   const completionLevel = overview.activeCycles > 0
     ? Math.min(100, Math.round((overview.loggedToday / Math.max(overview.activeCycles, 1)) * 100))
     : 0
-
-  const wellbeing = wellbeingSummary(dailyLogToday)
-
-  const scrollToBefinden = () => {
-    document.getElementById('home-befinden-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
-  const refreshDailyLog = async () => {
-    if (!user) return
-    const todayKey = format(new Date(), 'yyyy-MM-dd')
-    const { data } = await supabase
-      .from('daily_logs')
-      .select('id, log_date, energie, schlaf, libido, notes')
-      .eq('user_id', user.id)
-      .eq('log_date', todayKey)
-      .maybeSingle()
-    setDailyLogToday((data ?? null) as DailyLogRow | null)
-  }
 
   return (
     <div style={pageStyle}>
@@ -510,39 +481,8 @@ export function Home() {
             accent={overview.lowStock > 0 ? '#f59e0b' : '#10b981'}
             onClick={() => navigate('/peptide?tab=inventar')}
           />
-          <InsightCard
-            icon={Sparkles}
-            label={String(t('home_befinden_stat', { defaultValue: 'Befinden' }))}
-            value={wellbeing.logged ? '✓' : '—'}
-            hint={wellbeing.logged && wellbeing.avg != null
-              ? String(t('home_befinden_hint_avg', {
-                  defaultValue: 'Ø {{avg}}/5 · {{count}}/3',
-                  avg: wellbeing.avg,
-                  count: wellbeing.count,
-                }))
-              : String(t('home_befinden_open', { defaultValue: 'Noch offen' }))}
-            accent={wellbeing.logged ? '#10b981' : '#f59e0b'}
-            onClick={scrollToBefinden}
-          />
         </div>
       </section>
-
-      {FEATURES.BEFINDLICHKEIT_LOG && (
-        <section id="home-befinden-section">
-          <div style={sectionHeaderStyle}>
-            <div>
-              <p style={labelStyle}>{t('home_befinden_kicker', { defaultValue: 'Befinden' })}</p>
-              <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
-                {t('home_befinden_title', { defaultValue: 'Wohlbefinden' })}
-              </h2>
-              <p style={{ fontSize: '0.68rem', color: 'rgba(154,170,191,0.55)', marginTop: 4, lineHeight: 1.45 }}>
-                {t('home_befinden_section_sub', { defaultValue: 'Kurz loggen — im Protokoll mit Zyklen vergleichen' })}
-              </p>
-            </div>
-          </div>
-          <DailyLogCard onSaved={() => void refreshDailyLog()} />
-        </section>
-      )}
 
       <section style={{ ...panelStyle, padding: 14 }}>
         <div style={{ position: 'absolute', top: -34, right: -28, width: 120, height: 120, borderRadius: '50%', background: 'rgba(0,204,245,0.10)', filter: 'blur(20px)' }} />

@@ -8,7 +8,6 @@ export const FEATURES = {
   LIVE_BLUTSPIEGEL_CAROUSEL: true,
   PUSH_NOTIFICATIONS: true,
   ABLAUF_WARNUNGEN: true,
-  BEFINDLICHKEIT_LOG: true,
   INJEKTIONEN: true,
   THE_LAB: true,
   PEPTIPEDIA: true,
