@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
-import { CalendarDays, FlaskConical, User, Home, HelpCircle, Bell, X, Share } from 'lucide-react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import {
+  CalendarDays, FlaskConical, User, Home, HelpCircle, Bell, X, Share,
+  Plus, Syringe, Activity, Droplets, Calculator, Microscope, Sparkles, BookHeart,
+} from 'lucide-react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Onboarding } from './Onboarding'
 import { LanguageGate } from './LanguageGate'
@@ -8,18 +11,36 @@ import { useAuth } from '../context/AuthContext'
 import { usePushNotifications } from '../lib/usePushNotifications'
 import { PushNotificationListener } from './PushNotificationListener'
 
+const QUICK_ACTIONS = [
+  { icon: FlaskConical, label: 'Peptid anlegen',    path: '/peptide',      color: '#00ccf5' },
+  { icon: Syringe,      label: 'Injektion loggen',  path: '/injektionen',  color: '#10b981' },
+  { icon: CalendarDays, label: 'Kalender / Zyklus', path: '/kalender',     color: '#8b5cf6' },
+  { icon: Activity,     label: 'Blutspiegel',       path: '/simulation',   color: '#06b6d4' },
+  { icon: Droplets,     label: 'Blutwerte',         path: '/blutwerte',    color: '#f43f5e' },
+  { icon: Sparkles,     label: 'Wohlbefinden',      path: '/',             color: '#f59e0b' },
+] as const
+
+const QUICK_TILES = [
+  { icon: Calculator,  label: 'Rechner',   path: '/rechner', color: '#3b82f6' },
+  { icon: Microscope,  label: 'The Lab',   path: '/lab',     color: '#8b5cf6' },
+  { icon: BookHeart,   label: 'Tagebuch',  path: '/tagebuch',color: '#ec4899' },
+  { icon: FlaskConical,label: 'Peptipedia',path: '/lab/library', color: '#06b6d4' },
+] as const
+
 const PUSH_DISMISSED_KEY    = 'tyd_push_dismissed'
 const IOS_INSTALL_SHOWN_KEY = 'tyd_ios_install_shown'
 
 export function Layout() {
   const location = useLocation()
-  const { pathname, search } = location
+  const { pathname } = location
+  const navigate = useNavigate()
   const { t } = useTranslation()
   const { user } = useAuth()
   const { state: pushState, subscribe } = usePushNotifications(user)
 
   const [showPushBanner,    setShowPushBanner]    = useState(false)
   const [showIOSBanner,     setShowIOSBanner]      = useState(false)
+  const [showQuickActions,  setShowQuickActions]   = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -44,6 +65,14 @@ export function Layout() {
   const handleIOSDismiss = () => {
     setShowIOSBanner(false)
     localStorage.setItem(IOS_INSTALL_SHOWN_KEY, 'true')
+  }
+
+  // Close quick-action sheet on any route change
+  useEffect(() => { setShowQuickActions(false) }, [pathname])
+
+  const handleQuickNav = (path: string) => {
+    setShowQuickActions(false)
+    navigate(path)
   }
 
   const isPeptide  = pathname === '/peptide'
@@ -125,6 +154,91 @@ export function Layout() {
         <HelpCircle size={17} />
       </NavLink>
 
+      {/* ── Quick-Action backdrop + sheet ──────────────────────────────────── */}
+      {showQuickActions && (
+        <>
+          <div
+            onClick={() => setShowQuickActions(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 45,
+              background: 'rgba(0,0,0,0.65)',
+              backdropFilter: 'blur(5px)',
+              WebkitBackdropFilter: 'blur(5px)',
+            }}
+          />
+          <div style={{
+            position: 'fixed',
+            bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 10px)',
+            left: 10, right: 10,
+            zIndex: 46,
+            borderRadius: 22,
+            background: 'linear-gradient(160deg, rgba(13,18,40,0.99), rgba(5,8,20,0.99))',
+            border: '1px solid rgba(255,255,255,0.09)',
+            boxShadow: '0 -6px 48px rgba(0,0,0,0.65)',
+            overflow: 'hidden',
+            animation: 'tydSlideUp 0.22s cubic-bezier(0.22,1,0.36,1)',
+          }}>
+            <style>{`
+              @keyframes tydSlideUp {
+                from { transform: translateY(24px); opacity: 0 }
+                to   { transform: translateY(0);    opacity: 1 }
+              }
+            `}</style>
+
+            {/* Action list */}
+            {QUICK_ACTIONS.map((action, i) => (
+              <button
+                key={action.path + action.label}
+                onClick={() => handleQuickNav(action.path)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '13px 18px', textAlign: 'left', cursor: 'pointer',
+                  borderBottom: i < QUICK_ACTIONS.length - 1
+                    ? '1px solid rgba(255,255,255,0.055)' : 'none',
+                  transition: 'background 0.14s',
+                }}
+              >
+                <div style={{
+                  width: 38, height: 38, borderRadius: 12, flexShrink: 0,
+                  background: `${action.color}18`,
+                  border: `1px solid ${action.color}28`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: action.color,
+                }}>
+                  <action.icon size={18} />
+                </div>
+                <span style={{ fontSize: '0.92rem', fontWeight: 650, color: '#eaeefc' }}>
+                  {action.label}
+                </span>
+              </button>
+            ))}
+
+            {/* Tile grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: 10 }}>
+              {QUICK_TILES.map(tile => (
+                <button
+                  key={tile.path + tile.label}
+                  onClick={() => handleQuickNav(tile.path)}
+                  style={{
+                    padding: '15px 10px', borderRadius: 14, cursor: 'pointer',
+                    background: `${tile.color}12`,
+                    border: `1px solid ${tile.color}24`,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
+                    transition: 'background 0.14s',
+                  }}
+                >
+                  <tile.icon size={20} color={tile.color} />
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#eaeefc' }}>
+                    {tile.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Bottom nav ─────────────────────────────────────────────────────── */}
       <nav
         className="fixed bottom-0 left-0 right-0 z-40"
         style={{
@@ -140,6 +254,15 @@ export function Layout() {
           className="flex items-end justify-around"
           style={{ maxWidth: 640, margin: '0 auto', padding: '6px 4px 10px' }}
         >
+          {/* Home — links, normal */}
+          <NavItem
+            to="/"
+            icon={<Home size={20} />}
+            label={t('nav_home')}
+            active={isHome}
+            obKey="nav-home"
+          />
+
           {/* My Stack */}
           <NavItem
             to="/peptide"
@@ -149,39 +272,38 @@ export function Layout() {
             obKey="nav-peptide"
           />
 
-          {/* Home — Mitte, hervorgehoben */}
-          <NavLink
-            to="/"
-            data-ob="nav-home"
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+          {/* Quick Action — Mitte, hervorgehoben */}
+          <button
+            aria-label="Quick Actions"
+            onClick={() => setShowQuickActions(v => !v)}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '1 1 0', minWidth: 0, cursor: 'pointer' }}
           >
-            <div
-              style={{
-                width: 56, height: 56,
-                borderRadius: 20,
-                background: isHome
-                  ? 'linear-gradient(135deg, #00ccf5, #0088dd)'
-                  : 'rgba(0,204,245,0.10)',
-                border: isHome ? 'none' : '1px solid rgba(0,204,245,0.25)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginTop: -18,
-                boxShadow: isHome
-                  ? '0 0 28px rgba(0,204,245,0.5), 0 6px 20px rgba(0,0,0,0.55)'
-                  : '0 2px 12px rgba(0,0,0,0.4)',
-                transition: 'all 0.2s',
-              }}
-            >
-              <Home size={24} color={isHome ? '#07091a' : 'rgba(0,204,245,0.75)'} />
+            <div style={{
+              width: 52, height: 52, borderRadius: 18, flexShrink: 0,
+              background: showQuickActions
+                ? 'rgba(255,255,255,0.12)'
+                : 'linear-gradient(135deg, #00ccf5, #0077cc)',
+              border: showQuickActions ? '1px solid rgba(255,255,255,0.18)' : 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginTop: -16,
+              boxShadow: showQuickActions
+                ? 'none'
+                : '0 0 24px rgba(0,204,245,0.45), 0 4px 16px rgba(0,0,0,0.5)',
+              transition: 'all 0.2s cubic-bezier(0.22,1,0.36,1)',
+            }}>
+              {showQuickActions
+                ? <X size={22} color="rgba(255,255,255,0.85)" style={{ transition: 'transform 0.2s', transform: 'rotate(0deg)' }} />
+                : <Plus size={24} color="#07091a" />
+              }
             </div>
             <span style={{
-              fontSize: '9px', fontWeight: 700,
-              color: isHome ? '#00ccf5' : 'rgba(154,170,191,0.45)',
-              letterSpacing: '0.02em',
+              fontSize: '9px', fontWeight: 700, letterSpacing: '0.02em',
+              color: showQuickActions ? '#00ccf5' : 'rgba(154,170,191,0.45)',
               transition: 'color 0.2s',
             }}>
-              {t('nav_home')}
+              Quick
             </span>
-          </NavLink>
+          </button>
 
           {/* Kalender */}
           <NavItem
