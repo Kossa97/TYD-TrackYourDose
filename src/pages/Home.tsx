@@ -7,7 +7,7 @@ import {
   BookHeart, Star, HelpCircle, User, ChevronRight,
   Microscope, Library, Droplets, Heart, FileText, type LucideIcon,
   Activity, ArrowUpRight, CheckCircle2, ClipboardList,
-  Clock3, Flame, Package, Plus, ShieldCheck, Sparkles,
+  Clock3, Flame, Package, ShieldCheck, Sparkles,
   Syringe, TrendingUp,
   Dumbbell, Dna, Zap, Moon, Brain, Bandage, HeartPulse, Lightbulb, Leaf, Bone,
 } from 'lucide-react'
@@ -199,8 +199,8 @@ const pageStyle: CSSProperties = {
 }
 
 const panelStyle: CSSProperties = {
-  background: 'linear-gradient(145deg, rgba(9,14,34,0.94), rgba(4,7,18,0.96))',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
   borderRadius: 24,
   boxShadow: '0 18px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
   position: 'relative',
@@ -212,7 +212,7 @@ const labelStyle: CSSProperties = {
   fontWeight: 800,
   letterSpacing: '0.13em',
   textTransform: 'uppercase',
-  color: 'rgba(154,170,191,0.52)',
+  color: 'var(--text-muted)',
 }
 
 const sectionHeaderStyle: CSSProperties = {
@@ -317,19 +317,19 @@ export function Home() {
     : 0
 
   return (
-    <div style={pageStyle}>
+    <div style={pageStyle} className="stagger-in">
       <section style={{ ...panelStyle, padding: 18 }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 88% 10%, rgba(0,204,245,0.22), transparent 32%), radial-gradient(circle at 8% 88%, rgba(139,92,246,0.18), transparent 34%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
             <div style={{ minWidth: 0 }}>
-              <p style={{ ...labelStyle, color: 'rgba(0,204,245,0.74)', marginBottom: 7 }}>
+              <p style={{ ...labelStyle, color: 'var(--accent)', marginBottom: 7 }}>
                 {dateStr}
               </p>
-              <h1 style={{ fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.045em', color: '#f8fbff', lineHeight: 1.04, marginBottom: 8 }}>
+              <h1 style={{ fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.045em', color: 'var(--text)', lineHeight: 1.04, marginBottom: 8 }}>
                 {greeting}
               </h1>
-              <p style={{ fontSize: '0.82rem', color: 'rgba(213,224,242,0.72)', lineHeight: 1.55, maxWidth: 390 }}>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)', lineHeight: 1.55, maxWidth: 390 }}>
                 {t('home_hero_subtitle', { defaultValue: 'Dein Research-Cockpit für Einnahmen, Vorrat, Laborwerte und Protokolle.' })}
               </p>
             </div>
@@ -341,13 +341,13 @@ export function Home() {
                 width: 42,
                 height: 42,
                 borderRadius: 16,
-                border: '1px solid rgba(255,255,255,0.10)',
+                border: '1px solid var(--border)',
                 background: 'rgba(255,255,255,0.045)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
-                color: '#00ccf5',
+                color: 'var(--accent)',
               }}
             >
               <User size={18} />
@@ -384,15 +384,15 @@ export function Home() {
             gap: 10,
             padding: '10px 12px',
             borderRadius: 18,
-            background: todayDone ? 'rgba(16,185,129,0.10)' : 'rgba(0,204,245,0.09)',
-            border: todayDone ? '1px solid rgba(16,185,129,0.22)' : '1px solid rgba(0,204,245,0.18)',
+            background: todayDone ? 'rgba(16,185,129,0.10)' : 'var(--accent-weak)',
+            border: todayDone ? '1px solid rgba(16,185,129,0.22)' : '1px solid var(--accent-border)',
           }}>
-            <ShieldCheck size={18} color={todayDone ? '#10b981' : '#00ccf5'} />
+            <ShieldCheck size={18} color={todayDone ? '#10b981' : 'var(--accent)'} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: '0.78rem', fontWeight: 800, color: '#eaeefc', lineHeight: 1.2 }}>
+              <p style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1.2 }}>
                 {statusLabel}
               </p>
-              <p style={{ fontSize: '0.66rem', color: 'rgba(154,170,191,0.62)', marginTop: 2 }}>
+              <p style={{ fontSize: '0.66rem', color: 'var(--text-muted)', marginTop: 2 }}>
                 {t('home_status_hint', { defaultValue: 'Schnellzugriff auf die wichtigsten Schritte.' })}
               </p>
             </div>
@@ -402,7 +402,7 @@ export function Home() {
       </section>
 
       <section>
-        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'monospace', marginBottom: 8 }}>
+        <p style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'monospace', marginBottom: 8 }}>
           Live-Blutspiegel
         </p>
         <BlutspiegelCarousel />
@@ -414,11 +414,11 @@ export function Home() {
         <div style={sectionHeaderStyle}>
           <div>
             <p style={labelStyle}>{t('home_quick_actions', { defaultValue: 'Quick Actions' })}</p>
-            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: 'var(--text)', marginTop: 2 }}>
               {t('home_quick_title', { defaultValue: 'Direkt loslegen' })}
             </h2>
           </div>
-          <Sparkles size={18} color="rgba(0,204,245,0.72)" />
+          <Sparkles size={18} color="var(--accent)" />
         </div>
         <div className="grid grid-cols-2 gap-2">
           {QUICK_ACTIONS
@@ -444,13 +444,13 @@ export function Home() {
         <div style={sectionHeaderStyle}>
           <div>
             <p style={labelStyle}>{t('home_overview', { defaultValue: 'Übersicht' })}</p>
-            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: 'var(--text)', marginTop: 2 }}>
               {t('home_overview_title', { defaultValue: 'Heute im Blick' })}
             </h2>
           </div>
           <button
             onClick={() => navigate('/kalender')}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#00ccf5', fontSize: '0.72rem', fontWeight: 750 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--accent)', fontSize: '0.72rem', fontWeight: 750 }}
           >
             {t('today')} <ArrowUpRight size={13} />
           </button>
@@ -486,27 +486,27 @@ export function Home() {
       </section>
 
       <section style={{ ...panelStyle, padding: 14 }}>
-        <div style={{ position: 'absolute', top: -34, right: -28, width: 120, height: 120, borderRadius: '50%', background: 'rgba(0,204,245,0.10)', filter: 'blur(20px)' }} />
+        <div style={{ position: 'absolute', top: -34, right: -28, width: 120, height: 120, borderRadius: '50%', background: 'var(--accent-weak)', filter: 'blur(20px)' }} />
         <div style={{ position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
             {(() => { const StudyIcon = todayStudy.icon; return <StudyIcon size={22} color="var(--accent)" /> })()}
             <div>
-              <p style={{ ...labelStyle, color: 'rgba(0,204,245,0.66)' }}>{t('stat_study')}</p>
-              <p style={{ fontSize: '0.86rem', fontWeight: 850, color: '#eaeefc', lineHeight: 1.25 }}>
+              <p style={{ ...labelStyle, color: 'var(--accent)' }}>{t('stat_study')}</p>
+              <p style={{ fontSize: '0.86rem', fontWeight: 850, color: 'var(--text)', lineHeight: 1.25 }}>
                 {t('home_daily_research', { defaultValue: 'Daily Research' })}
               </p>
             </div>
           </div>
-          <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#eaeefc', lineHeight: 1.45 }}>
+          <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.45 }}>
             {todayStudy.title}
           </p>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', marginTop: 10 }}>
-            <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.50)' }}>
+            <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>
               {todayStudy.source}
             </p>
             <button
               onClick={() => navigate('/lab')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#00ccf5', fontSize: '0.68rem', fontWeight: 800 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--accent)', fontSize: '0.68rem', fontWeight: 800 }}
             >
               {t('lab_snapshot_discover', { defaultValue: 'Entdecken' })} <ChevronRight size={13} />
             </button>
@@ -518,11 +518,11 @@ export function Home() {
         <div style={sectionHeaderStyle}>
           <div>
             <p style={labelStyle}>{t('home_features', { defaultValue: 'Features' })}</p>
-            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: 'var(--text)', marginTop: 2 }}>
               {t('home_features_title', { defaultValue: 'Mehr aus deinen Daten machen' })}
             </h2>
           </div>
-          <ClipboardList size={18} color="rgba(154,170,191,0.6)" />
+          <ClipboardList size={18} color="var(--text-muted)" />
         </div>
         <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 2 }}>
           {FEATURE_CARDS.map((feature) => (
@@ -546,7 +546,7 @@ export function Home() {
         <div style={sectionHeaderStyle}>
           <div>
             <p style={labelStyle}>{t('sections')}</p>
-            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: 'var(--text)', marginTop: 2 }}>
               {t('home_all_tools', { defaultValue: 'Alle Tools' })}
             </h2>
           </div>
@@ -594,7 +594,7 @@ function HeroStat({
       padding: '11px 9px',
       minWidth: 0,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8, color: 'rgba(154,170,191,0.58)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8, color: 'var(--text-muted)' }}>
         <Icon size={13} color={accent} />
         <p style={{ fontSize: '0.52rem', fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {label}
@@ -603,7 +603,7 @@ function HeroStat({
       <p style={{ fontSize: typeof value === 'string' && value.length > 4 ? '1.03rem' : '1.34rem', fontWeight: 900, letterSpacing: '-0.04em', color: accent, lineHeight: 1 }}>
         {value}
       </p>
-      <p style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.48)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <p style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {hint}
       </p>
     </div>
@@ -628,13 +628,13 @@ function QuickAction({
   return (
     <button
       onClick={onClick}
-      className={wide ? 'col-span-2' : ''}
+      className={wide ? 'col-span-2 motion-press' : 'motion-press'}
       style={{
         minHeight: 104,
         padding: '12px 9px',
         borderRadius: 20,
         border: `1px solid ${accent}33`,
-        background: `linear-gradient(155deg, ${accent}20, rgba(8,12,30,0.88))`,
+        background: `linear-gradient(155deg, ${accent}20, var(--surface))`,
         display: 'flex',
         flexDirection: wide ? 'row' : 'column',
         alignItems: wide ? 'center' : 'flex-start',
@@ -658,10 +658,10 @@ function QuickAction({
         <Icon size={16} />
       </div>
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <p style={{ fontSize: '0.75rem', fontWeight: 850, color: '#f8fbff', lineHeight: 1.15 }}>
+        <p style={{ fontSize: '0.75rem', fontWeight: 850, color: 'var(--text)', lineHeight: 1.15 }}>
           {label}
         </p>
-        <p style={{ fontSize: '0.59rem', color: 'rgba(213,224,242,0.58)', lineHeight: 1.3, marginTop: 3 }}>
+        <p style={{ fontSize: '0.59rem', color: 'var(--text-dim)', lineHeight: 1.3, marginTop: 3 }}>
           {desc}
         </p>
       </div>
@@ -709,15 +709,15 @@ function InsightCard({
         }}>
           <Icon size={17} />
         </div>
-        <ChevronRight size={15} color="rgba(154,170,191,0.35)" />
+        <ChevronRight size={15} color="var(--text-muted)" />
       </div>
-      <p style={{ fontSize: '1.55rem', fontWeight: 900, color: '#f8fbff', letterSpacing: '-0.04em', lineHeight: 1, marginTop: 14 }}>
+      <p style={{ fontSize: '1.55rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.04em', lineHeight: 1, marginTop: 14 }}>
         {value}
       </p>
-      <p style={{ fontSize: '0.72rem', color: 'rgba(234,238,252,0.82)', fontWeight: 750, marginTop: 5 }}>
+      <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 750, marginTop: 5 }}>
         {label}
       </p>
-      <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.50)', marginTop: 2 }}>
+      <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginTop: 2 }}>
         {hint}
       </p>
       <div style={{ position: 'absolute', right: -24, bottom: -28, width: 86, height: 86, borderRadius: '50%', background: accent, opacity: 0.06, filter: 'blur(16px)' }} />
@@ -780,10 +780,10 @@ function FeatureCard({
           {metric}
         </span>
       </div>
-      <p style={{ fontSize: '0.9rem', fontWeight: 850, color: '#f8fbff', marginBottom: 5, position: 'relative' }}>
+      <p style={{ fontSize: '0.9rem', fontWeight: 850, color: 'var(--text)', marginBottom: 5, position: 'relative' }}>
         {label}
       </p>
-      <p style={{ fontSize: '0.7rem', color: 'rgba(154,170,191,0.62)', lineHeight: 1.45, position: 'relative' }}>
+      <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', lineHeight: 1.45, position: 'relative' }}>
         {desc}
       </p>
       <div style={{ marginTop: 13, display: 'inline-flex', alignItems: 'center', gap: 5, color: accent, fontSize: '0.66rem', fontWeight: 850, position: 'relative' }}>
@@ -813,10 +813,10 @@ function TileButton({
   return (
     <button
       onClick={onClick}
-      className={wide ? 'col-span-2' : ''}
+      className={wide ? 'col-span-2 motion-press' : 'motion-press'}
       style={{
-        background: 'linear-gradient(145deg, rgba(10,14,30,0.90), rgba(4,7,18,0.92))',
-        border: '1px solid rgba(255,255,255,0.07)',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
         borderRadius: 22,
         padding: wide ? '14px 16px' : '15px 13px',
         textAlign: 'left',
@@ -847,11 +847,11 @@ function TileButton({
       </div>
 
       <div style={{ flex: wide ? 1 : undefined, minWidth: 0, position: 'relative' }}>
-        <p style={{ fontSize: '0.86rem', fontWeight: 820, color: '#eaeefc', marginBottom: 3 }}>{label}</p>
-        <p style={{ fontSize: '0.68rem', color: 'rgba(154,170,191,0.58)', lineHeight: 1.4 }}>{desc}</p>
+        <p style={{ fontSize: '0.86rem', fontWeight: 820, color: 'var(--text)', marginBottom: 3 }}>{label}</p>
+        <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{desc}</p>
       </div>
 
-      {wide && <ChevronRight size={16} color="rgba(0,204,245,0.42)" style={{ flexShrink: 0 }} />}
+      {wide && <ChevronRight size={16} color="var(--accent)" style={{ flexShrink: 0 }} />}
 
       <div style={{
         position: 'absolute',
