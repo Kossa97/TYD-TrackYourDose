@@ -234,105 +234,23 @@ function VialStockDisplay({ current, initial, inUse = 0 }: {
   )
 }
 
-// ─── Shared liquid-tilt engine (spring physics, one rAF loop) ────────────────
-// Singleton: all VialDisplay instances share one deviceorientation listener
-// and one spring simulation loop → no jank, no duplicate handlers.
-let _targetGamma = 0
-let _smoothGamma = 0
-let _velocity    = 0
-let _rafId: number | null = null
-const _tiltSubs  = new Set<(g: number) => void>()
-let _listenerInit = false
-
-function _springLoop() {
-  const stiffness = 0.09
-  const damping   = 0.78
-  _velocity    = _velocity * damping + (_targetGamma - _smoothGamma) * stiffness
-  _smoothGamma += _velocity
-  _tiltSubs.forEach(fn => fn(_smoothGamma))
-  if (Math.abs(_velocity) > 0.04 || Math.abs(_targetGamma - _smoothGamma) > 0.08) {
-    _rafId = requestAnimationFrame(_springLoop)
-  } else {
-    _smoothGamma = _targetGamma
-    _tiltSubs.forEach(fn => fn(_smoothGamma))
-    _rafId = null
-  }
-}
-function _kick() { if (_rafId === null) _rafId = requestAnimationFrame(_springLoop) }
-
-function _initTilt() {
-  if (_listenerInit) return
-  _listenerInit = true
-  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-
-  if (!isTouch) {
-    // Desktop: mouse-x as tilt proxy
-    window.addEventListener('mousemove', (e: MouseEvent) => {
-      _targetGamma = ((e.clientX / window.innerWidth) - 0.5) * 60
-      _kick()
-    }, { passive: true })
-    return
-  }
-  // Mobile: request iOS 13+ permission if needed
-  const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> }
-  const attach = () =>
-    window.addEventListener('deviceorientation', (e: DeviceOrientationEvent) => {
-      _targetGamma = Math.max(-70, Math.min(70, e.gamma ?? 0))
-      _kick()
-    }, { passive: true })
-
-  if (typeof DOE.requestPermission === 'function') {
-    DOE.requestPermission().then(p => { if (p === 'granted') attach() }).catch(() => {})
-  } else {
-    attach()
-  }
-}
-
-function useLiquidTilt(): number {
-  const [tilt, setTilt] = useState(0)
-  useEffect(() => {
-    _tiltSubs.add(setTilt)
-    _initTilt()
-    return () => { _tiltSubs.delete(setTilt) }
-  }, [])
-  return tilt
-}
-
 // ─── Vial-Visualisierung ─────────────────────────────────────────────────────
+// Pure CSS animations — no device-orientation or mouse tracking.
+// Two animations create a "living liquid" feel:
+//   waveId    → wave scrolls horizontally (2 s linear loop)
+//   breatheId → wave surface gently rises/falls (3 s ease-in-out loop)
 function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: string }) {
-  const tilt = useLiquidTilt()   // smooth spring-damped device tilt in degrees
+  const OX = 4, OY = 13
+  const W  = 32, H = 70
+  const fillH   = Math.max(4, (pct / 100) * H)
+  const surfaceY = OY + (H - fillH)   // top of liquid in absolute SVG coords
 
-  // Geometry
-  const OX = 4, OY = 13          // glass body top-left inside SVG canvas
-  const W  = 32, H = 70          // glass body inner dimensions
-  const fillH = Math.max(4, (pct / 100) * H)
-
-  // Surface shift: how many px the liquid level changes from center to edge
-  // Uses arctan physics: at 45° tilt the shift = W/2 = 16 px max
-  const angleRad  = (Math.min(70, Math.abs(tilt)) * Math.PI) / 180
-  const rawShift  = Math.tan(angleRad) * (W / 2)
-  const direction = tilt >= 0 ? 1 : -1
-  // Clamp so we don't exceed the available fill height
-  const shift     = direction * Math.min(rawShift, fillH * 0.88)
-
-  // Liquid surface Y coordinates inside glass (0 = top of glass, H = bottom)
-  const centerTop = H - fillH
-  const leftTop   = Math.max(0, Math.min(H - 2, centerTop - shift))   // left edge y
-  const rightTop  = Math.max(0, Math.min(H - 2, centerTop + shift))   // right edge y
-
-  // Absolute SVG coords
-  const aLeftTop  = OY + leftTop
-  const aRightTop = OY + rightTop
-
-  // Surface angle for wave rotation
-  const surfaceDeg = Math.atan2(rightTop - leftTop, W) * (180 / Math.PI)
-
-  // Wave path (two periods for seamless looping)
   const wW = W * 2, wH = 4.5
   const wp = `M0,${wH/2} C${wW*.25},0 ${wW*.25},${wH} ${wW*.5},${wH/2} C${wW*.75},0 ${wW*.75},${wH} ${wW},${wH/2} L${wW},${wH} L0,${wH} Z`
-  const waveSpeed = 2.0 + Math.abs(tilt) * 0.03  // faster wave when tilted more
+
   const clipId    = `vc${uid}`
   const waveId    = `wv${uid}`
+  const breatheId = `br${uid}`
   const gradId    = `lg${uid}`
 
   return (
@@ -352,50 +270,54 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
               from { transform: translateX(0) }
               to   { transform: translateX(-50%) }
             }
+            @keyframes ${breatheId} {
+              0%, 100% { transform: translateY(0px) }
+              50%       { transform: translateY(-2px) }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .vd-wave-${uid}, .vd-breathe-${uid} { animation: none !important; }
+            }
           `}</style>
         </defs>
 
         {/* Cap */}
         <rect x="12" y="1"  width={W - 16} height="8" rx="2.5" fill="#64748b"/>
         <rect x="7"  y="7"  width={W - 6}  height="7" rx="2"   fill="#475569"/>
-        {/* Cap shine */}
         <rect x="8"  y="2"  width={W - 20} height="3" rx="1.5" fill="rgba(255,255,255,0.18)"/>
 
         {/* Glass body */}
         <rect x={OX} y={OY} width={W} height={H} rx="5"
           fill="#0a1222" stroke="#1e293b" strokeWidth="2"/>
 
-        {/* ── Liquid (all clipped to glass shape) ── */}
+        {/* Liquid (clipped to glass) */}
         <g clipPath={`url(#${clipId})`}>
 
-          {/* Bulk liquid fill (below surface) */}
-          <polygon
-            points={`${OX},${OY+H} ${OX+W},${OY+H} ${OX+W},${aRightTop} ${OX},${aLeftTop}`}
+          {/* Bulk fill */}
+          <rect x={OX} y={surfaceY} width={W} height={fillH}
             fill={`url(#${gradId})`}/>
 
-          {/* Surface band (brighter strip right at the top surface) */}
-          <polygon
-            points={`${OX},${aLeftTop} ${OX+W},${aRightTop} ${OX+W},${aRightTop+5} ${OX},${aLeftTop+5}`}
+          {/* Surface highlight band */}
+          <rect x={OX} y={surfaceY} width={W} height={5}
             fill={color} fillOpacity="0.55"/>
 
-          {/* Wave — rotated to follow surface angle, scrolling */}
-          <g style={{
-            transform: `translate(${OX}px, ${Math.min(aLeftTop, aRightTop) - wH + 1}px) rotate(${surfaceDeg}deg)`,
-            transformOrigin: `${OX}px ${Math.min(aLeftTop, aRightTop)}px`,
-          }}>
-            <path d={wp} fill={color} fillOpacity="0.65"
-              style={{ animation: `${waveId} ${waveSpeed}s linear infinite` }}/>
+          {/* Wave: positioned at surface, breathing vertically */}
+          <g style={{ transform: `translate(${OX}px, ${surfaceY - wH + 1}px)` }}>
+            <g className={`vd-breathe-${uid}`}
+              style={{ animation: `${breatheId} 3s ease-in-out infinite` }}>
+              <path className={`vd-wave-${uid}`} d={wp}
+                fill={color} fillOpacity="0.65"
+                style={{ animation: `${waveId} 2s linear infinite` }}/>
+            </g>
           </g>
 
-          {/* Inner liquid shine (left side reflection) */}
-          <rect x={OX+1} y={aLeftTop} width="5" height={H - leftTop} rx="2.5"
+          {/* Inner shine */}
+          <rect x={OX+1} y={surfaceY} width="5" height={fillH} rx="2.5"
             fill="rgba(255,255,255,0.12)"/>
         </g>
 
-        {/* Glass rim overlay */}
+        {/* Glass rim */}
         <rect x={OX} y={OY} width={W} height={H} rx="5"
           fill="none" stroke="#2d3f5e" strokeWidth="1.5"/>
-        {/* Glass left-edge highlight */}
         <rect x={OX+1} y={OY+3} width="3" height={H - 8} rx="1.5"
           fill="rgba(255,255,255,0.07)"/>
       </svg>
