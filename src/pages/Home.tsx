@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { FEATURES } from '../config/features'
 import { useTranslation } from 'react-i18next'
 import {
   CalendarDays, FlaskConical, Archive, Calculator,
@@ -448,20 +449,22 @@ export function Home() {
           <Sparkles size={18} color="rgba(0,204,245,0.72)" />
         </div>
         <div className="grid grid-cols-2 gap-2">
-          {QUICK_ACTIONS.map((action, idx) => {
-            const isLastOdd = QUICK_ACTIONS.length % 2 === 1 && idx === QUICK_ACTIONS.length - 1
-            return (
-              <QuickAction
-                key={action.labelKey}
-                icon={action.icon}
-                label={String(t(action.labelKey, { defaultValue: action.label }))}
-                desc={String(t(action.descKey, { defaultValue: action.desc }))}
-                accent={action.accent}
-                wide={isLastOdd}
-                onClick={() => navigate(action.path)}
-              />
-            )
-          })}
+          {QUICK_ACTIONS
+            .filter(action => action.path !== '/progress' || FEATURES.FOTO_PROGRESS)
+            .map((action, idx, arr) => {
+              const isLastOdd = arr.length % 2 === 1 && idx === arr.length - 1
+              return (
+                <QuickAction
+                  key={action.labelKey}
+                  icon={action.icon}
+                  label={String(t(action.labelKey, { defaultValue: action.label }))}
+                  desc={String(t(action.descKey, { defaultValue: action.desc }))}
+                  accent={action.accent}
+                  wide={isLastOdd}
+                  onClick={() => navigate(action.path)}
+                />
+              )
+            })}
         </div>
       </section>
 
@@ -524,20 +527,22 @@ export function Home() {
         </div>
       </section>
 
-      <section id="home-befinden-section">
-        <div style={sectionHeaderStyle}>
-          <div>
-            <p style={labelStyle}>{t('home_befinden_kicker', { defaultValue: 'Befinden' })}</p>
-            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
-              {t('home_befinden_title', { defaultValue: 'Wohlbefinden' })}
-            </h2>
-            <p style={{ fontSize: '0.68rem', color: 'rgba(154,170,191,0.55)', marginTop: 4, lineHeight: 1.45 }}>
-              {t('home_befinden_section_sub', { defaultValue: 'Kurz loggen — im Protokoll mit Zyklen vergleichen' })}
-            </p>
+      {FEATURES.BEFINDLICHKEIT_LOG && (
+        <section id="home-befinden-section">
+          <div style={sectionHeaderStyle}>
+            <div>
+              <p style={labelStyle}>{t('home_befinden_kicker', { defaultValue: 'Befinden' })}</p>
+              <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+                {t('home_befinden_title', { defaultValue: 'Wohlbefinden' })}
+              </h2>
+              <p style={{ fontSize: '0.68rem', color: 'rgba(154,170,191,0.55)', marginTop: 4, lineHeight: 1.45 }}>
+                {t('home_befinden_section_sub', { defaultValue: 'Kurz loggen — im Protokoll mit Zyklen vergleichen' })}
+              </p>
+            </div>
           </div>
-        </div>
-        <DailyLogCard onSaved={() => void refreshDailyLog()} />
-      </section>
+          <DailyLogCard onSaved={() => void refreshDailyLog()} />
+        </section>
+      )}
 
       <section style={{ ...panelStyle, padding: 14 }}>
         <div style={{ position: 'absolute', top: -34, right: -28, width: 120, height: 120, borderRadius: '50%', background: 'rgba(0,204,245,0.10)', filter: 'blur(20px)' }} />

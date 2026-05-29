@@ -1,5 +1,6 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { FEATURES } from './config/features'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
 import { OnboardingProvider } from './context/OnboardingContext'
@@ -73,7 +74,9 @@ export default function App() {
             <Route path="profil" element={<LazyPage><Profil /></LazyPage>} />
             <Route path="faq" element={<LazyPage><FAQ /></LazyPage>} />
             <Route path="injektionen" element={<LazyPage><InjektionsTracker /></LazyPage>} />
-            <Route path="progress" element={<LazyPage><Progress /></LazyPage>} />
+            {FEATURES.FOTO_PROGRESS && (
+              <Route path="progress" element={<LazyPage><Progress /></LazyPage>} />
+            )}
             <Route path="simulation" element={<LazyPage><BlutspiegelSimulation /></LazyPage>} />
           </Route>
         </Routes>

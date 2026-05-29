@@ -3,6 +3,7 @@ import {
   Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ReferenceLine, ResponsiveContainer, ComposedChart, Scatter, AreaChart,
 } from 'recharts'
+import { FEATURES } from '../config/features'
 import { format } from 'date-fns'
 import { de as deLocale } from 'date-fns/locale'
 import { Activity, Info, Loader2 } from 'lucide-react'
@@ -960,7 +961,7 @@ export function BlutspiegelSimulation() {
       )}
 
       {/* ── Verlaufs-Graph ───────────────────────────────────────────────── */}
-      {(chartLoading || chartData.length > 0) && (
+      {FEATURES.LIVE_VERLAUF_CHART && (chartLoading || chartData.length > 0) && (
         <div style={PANEL}>
           <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#eaeefc', marginBottom: 2 }}>
             Verlaufs-Graph
