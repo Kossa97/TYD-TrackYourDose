@@ -867,28 +867,8 @@ export function Peptide() {
                   {/* Kopfzeile */}
                   <div className="flex items-start gap-3">
                     {vialPct !== null && (
-                      <div className="flex flex-col items-center gap-0.5 shrink-0">
+                      <div className="shrink-0">
                         <VialDisplay pct={Math.round(vialPct)} uid={p.id.replace(/-/g, '')} color={peptideColor} />
-                        <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(154,170,191,0.6)', lineHeight: 1 }}>
-                          {Math.round(vialPct)}%
-                        </span>
-                        {invItem && (
-                          <div className="flex items-center gap-0.5 mt-0.5">
-                            <button
-                              onClick={e => { e.stopPropagation(); adjustInventoryCount(invItem.id, -1, invItem.vials_count) }}
-                              style={{ width: 16, height: 16, borderRadius: 5, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(154,170,191,0.7)' }}>
-                              <Minus size={8} />
-                            </button>
-                            <span style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(154,170,191,0.5)', minWidth: 14, textAlign: 'center' }}>
-                              {invItem.vials_count}
-                            </span>
-                            <button
-                              onClick={e => { e.stopPropagation(); adjustInventoryCount(invItem.id, +1, invItem.vials_count) }}
-                              style={{ width: 16, height: 16, borderRadius: 5, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(154,170,191,0.7)' }}>
-                              <Plus size={8} />
-                            </button>
-                          </div>
-                        )}
                       </div>
                     )}
                     <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
@@ -898,7 +878,6 @@ export function Peptide() {
                           {hasActive && <span className="badge bg-emerald-500/10 text-emerald-400">{t('aktiv_badge')}</span>}
                         </div>
                         <div className="flex flex-wrap gap-x-3 text-slate-400 text-xs mt-1">
-                          {p.default_dose && <span>{p.default_dose} {p.default_unit}</span>}
                           <span>{t(METHOD_KEYS[p.default_method] ?? p.default_method)}</span>
                           {p.vial_amount_mg && <span>Vial: {p.vial_amount_mg} mg</span>}
                         </div>
@@ -928,6 +907,75 @@ export function Peptide() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Lagerbestand — visuell mit Segment-Balken */}
+                  {invItem && (() => {
+                    const total = Math.max(invItem.vials_initial ?? invItem.vials_count, invItem.vials_count, 1)
+                    const filled = invItem.vials_count
+                    const segments = Math.min(total, 10)
+                    const filledSegs = total <= 10
+                      ? filled
+                      : Math.round((filled / total) * segments)
+                    return (
+                      <div className="mt-3 flex items-center gap-3 rounded-xl bg-slate-800/40 border border-slate-700/50 px-3 py-2.5">
+                        <div
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                          style={{ background: `${peptideColor}18`, border: `1px solid ${peptideColor}30` }}
+                        >
+                          <Archive size={16} style={{ color: peptideColor }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                            <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                              {t('stat_vials')}
+                            </span>
+                            <span className="text-sm font-bold tabular-nums text-white">
+                              {filled}
+                              {(invItem.vials_initial ?? 0) > 0 && (
+                                <span className="ml-0.5 text-xs font-normal text-slate-500">
+                                  / {invItem.vials_initial}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex gap-1">
+                            {Array.from({ length: segments }).map((_, i) => (
+                              <div
+                                key={i}
+                                className="h-2 flex-1 rounded-full transition-colors"
+                                style={{
+                                  background: i < filledSegs
+                                    ? peptideColor
+                                    : 'rgba(255,255,255,0.08)',
+                                  opacity: i < filledSegs ? 0.85 : 1,
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <button
+                            onClick={e => { e.stopPropagation(); adjustInventoryCount(invItem.id, -1, invItem.vials_count) }}
+                            disabled={filled <= 0}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-600/60 bg-slate-800 text-slate-300 transition-colors hover:border-slate-500 hover:text-white disabled:opacity-30"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <button
+                            onClick={e => { e.stopPropagation(); adjustInventoryCount(invItem.id, +1, invItem.vials_count) }}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border transition-colors hover:opacity-90"
+                            style={{
+                              background: `${peptideColor}20`,
+                              borderColor: `${peptideColor}40`,
+                              color: peptideColor,
+                            }}
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })()}
 
                   {/* Verwerfen + Rekonstitution (nur bei Inventar-Verknüpfung) */}
                   {p.inventory_item_id && (
