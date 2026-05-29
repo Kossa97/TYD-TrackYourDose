@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { CalendarDays, FlaskConical, Archive, User, Home, HelpCircle, Bell, X, Share } from 'lucide-react'
+import { CalendarDays, FlaskConical, User, Home, HelpCircle, Bell, X, Share } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Onboarding } from './Onboarding'
@@ -46,8 +46,7 @@ export function Layout() {
     localStorage.setItem(IOS_INSTALL_SHOWN_KEY, 'true')
   }
 
-  const isLager    = pathname === '/peptide' && search.includes('inventar')
-  const isPeptide  = pathname === '/peptide' && !search.includes('inventar')
+  const isPeptide  = pathname === '/peptide'
   const isHome     = pathname === '/'
   const isKalender = pathname === '/kalender'
   const isProfil   = pathname === '/profil'
@@ -141,20 +140,11 @@ export function Layout() {
           className="flex items-end justify-around"
           style={{ maxWidth: 640, margin: '0 auto', padding: '6px 4px 10px' }}
         >
-          {/* Lager */}
-          <NavItem
-            to="/peptide?tab=inventar"
-            icon={<Archive size={20} />}
-            label={t('nav_lager')}
-            active={isLager}
-            obKey="nav-lager"
-          />
-
-          {/* Peptide */}
+          {/* My Stack */}
           <NavItem
             to="/peptide"
             icon={<FlaskConical size={20} />}
-            label={t('nav_peptide')}
+            label="My Stack"
             active={isPeptide}
             obKey="nav-peptide"
           />

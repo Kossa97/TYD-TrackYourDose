@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import {
-  Plus, Trash2, Pencil, FlaskConical, Activity,
+  Plus, Minus, Trash2, Pencil, FlaskConical, Activity,
   CalendarDays, ChevronDown, ChevronUp,
   TrendingUp, Search, Bell, Check,
   Package, FileUp, Droplets, X, FileText, ExternalLink,
@@ -132,6 +132,7 @@ interface PeptideForm {
   notes: string; vials_in_stock: string
   reconstitution_date: string; expiry_days: string
   batch_number: string; batch_source: string; batch_file_url: string
+  color_hex: string
 }
 const emptyPeptideForm = (): PeptideForm => ({
   inventory_item_id: '',
@@ -142,6 +143,7 @@ const emptyPeptideForm = (): PeptideForm => ({
   notes:'', vials_in_stock:'0',
   reconstitution_date:'', expiry_days:'28',
   batch_number:'', batch_source:'', batch_file_url:'',
+  color_hex: '',
 })
 interface CycleForm {
   name: string; dose: string; unit: string; method: string
@@ -424,6 +426,11 @@ export function Peptide() {
   const [pkProfileCatalog, setPkProfileCatalog]   = useState<PkProfileOption[]>([])
   const [pkSuggestOpen, setPkSuggestOpen]         = useState(false)
 
+  // ── Flüssigkeits-Farben (localStorage) ───────────────────────────────────
+  const [peptideColors, setPeptideColors] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem('tyd_peptide_colors') ?? '{}') } catch { return {} }
+  })
+
   // ── Peptide ───────────────────────────────────────────────────────────────
   const [peptides, setPeptides]               = useState<Peptide[]>([])
   const [cycles, setCycles]                   = useState<Cycle[]>([])
@@ -515,7 +522,7 @@ export function Peptide() {
   const cyclesOf      = (pid: string) => cycles.filter(c => c.peptide_id === pid)
   const escalationsOf = (cid: string) => escalations.filter(e => e.cycle_id === cid)
 
-  // ── Inventar Bestand anpassen (dead code — kept for reconstitution logic) ──
+  // ── Inventar Bestand anpassen ─────────────────────────────────────────────
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const adjustInventoryCount = async (id: string, delta: number, current: number) => {
     const newCount = Math.max(0, current + delta)
@@ -653,7 +660,14 @@ export function Peptide() {
     else {
       toast.success(editingPeptideId ? t('peptid_aktualisiert') : t('peptid_hinzugefuegt'))
       const savedId = editingPeptideId ?? savedRow?.id
-      if (savedId) setExpandedId(savedId)
+      if (savedId) {
+        setExpandedId(savedId)
+        if (pForm.color_hex) {
+          const updated = { ...peptideColors, [savedId]: pForm.color_hex }
+          setPeptideColors(updated)
+          localStorage.setItem('tyd_peptide_colors', JSON.stringify(updated))
+        }
+      }
     }
     setSavingPeptide(false); setShowPeptideForm(false); setBatchFile(null); loadPeptides(); loadInventory()
   }
@@ -677,8 +691,9 @@ export function Peptide() {
       batch_number:  p.batch_number  ?? '',
       batch_source:  p.batch_source  ?? '',
       batch_file_url: p.batch_file_url ?? '',
+      color_hex: peptideColors[p.id] ?? '',
     })
-    setBatchFile(null); setShowPeptideForm(true)
+    setBatchFile(null); setPkSuggestOpen(false); setShowPeptideForm(true)
   }
 
   const removePeptide = async (id: string) => {
@@ -922,21 +937,43 @@ export function Peptide() {
                 ? stock <= 0 ? 0 : stock % 1 === 0 ? 100 : (stock % 1) * 100
                 : null
               const colorIdx   = peptides.findIndex(pp => pp.id === p.id)
-              const peptideColor = getPeptideColor(colorIdx)
+              const peptideColor = peptideColors[p.id] ?? getPeptideColor(colorIdx)
+              const invItem = p.inventory_item_id ? inventory.find(i => i.id === p.inventory_item_id) : null
 
               return (
                 <div key={p.id} className="card">
                   {/* Kopfzeile */}
                   <div className="flex items-start gap-3">
                     {vialPct !== null && (
-                      <VialDisplay pct={Math.round(vialPct)} uid={p.id.replace(/-/g, '')} color={peptideColor} />
+                      <div className="flex flex-col items-center gap-0.5 shrink-0">
+                        <VialDisplay pct={Math.round(vialPct)} uid={p.id.replace(/-/g, '')} color={peptideColor} />
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(154,170,191,0.6)', lineHeight: 1 }}>
+                          {Math.round(vialPct)}%
+                        </span>
+                        {invItem && (
+                          <div className="flex items-center gap-0.5 mt-0.5">
+                            <button
+                              onClick={e => { e.stopPropagation(); adjustInventoryCount(invItem.id, -1, invItem.vials_count) }}
+                              style={{ width: 16, height: 16, borderRadius: 5, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(154,170,191,0.7)' }}>
+                              <Minus size={8} />
+                            </button>
+                            <span style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(154,170,191,0.5)', minWidth: 14, textAlign: 'center' }}>
+                              {invItem.vials_count}
+                            </span>
+                            <button
+                              onClick={e => { e.stopPropagation(); adjustInventoryCount(invItem.id, +1, invItem.vials_count) }}
+                              style={{ width: 16, height: 16, borderRadius: 5, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(154,170,191,0.7)' }}>
+                              <Plus size={8} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
                     <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
                       <button className="flex-1 text-left min-w-0" onClick={() => setExpandedId(isOpen ? null : p.id)}>
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-semibold text-white">{p.name}</p>
                           {hasActive && <span className="badge bg-emerald-500/10 text-emerald-400">{t('aktiv_badge')}</span>}
-                          {p.inventory_item_id && <span className="badge bg-slate-700 text-slate-400 flex items-center gap-0.5"><Archive size={9} /> {t('nav_lager')}</span>}
                         </div>
                         <div className="flex flex-wrap gap-x-3 text-slate-400 text-xs mt-1">
                           {p.default_dose && <span>{p.default_dose} {p.default_unit}</span>}
@@ -1184,6 +1221,23 @@ export function Peptide() {
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Farbe der Flüssigkeit */}
+              <div>
+                <label className="label">Farbe der Flüssigkeit</label>
+                <div className="flex gap-2 flex-wrap">
+                  {['#06b6d4','#a855f7','#f59e0b','#ec4899','#34d399','#f97316','#60a5fa','#fb7185','#2dd4bf','#facc15','#c084fc','#4ade80'].map(c => (
+                    <button key={c} type="button"
+                      onClick={() => setPForm(f => ({ ...f, color_hex: c }))}
+                      style={{
+                        width: 26, height: 26, borderRadius: 8, background: c, flexShrink: 0,
+                        border: pForm.color_hex === c ? '2px solid #fff' : '2px solid transparent',
+                        opacity: pForm.color_hex === c ? 1 : 0.55,
+                        transition: 'opacity 0.15s, border-color 0.15s',
+                      }} />
+                  ))}
                 </div>
               </div>
             </div>
