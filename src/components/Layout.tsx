@@ -145,15 +145,15 @@ export function Layout() {
           width: 38,
           height: 38,
           borderRadius: '50%',
-          background: 'rgba(10,14,30,0.92)',
-          border: '1px solid rgba(255,255,255,0.10)',
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
           backdropFilter: 'blur(12px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           boxShadow: '0 4px 16px rgba(0,0,0,0.45)',
           transition: 'all 0.2s',
-          color: pathname === '/faq' ? '#00ccf5' : 'rgba(154,170,191,0.55)',
+          color: pathname === '/faq' ? 'var(--accent)' : 'var(--text-muted)',
         }}
       >
         <HelpCircle size={17} />
@@ -177,8 +177,8 @@ export function Layout() {
             left: 10, right: 10,
             zIndex: 46,
             borderRadius: 22,
-            background: 'linear-gradient(160deg, rgba(13,18,40,0.99), rgba(5,8,20,0.99))',
-            border: '1px solid rgba(255,255,255,0.09)',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
             boxShadow: '0 -6px 48px rgba(0,0,0,0.65)',
             overflow: 'hidden',
             animation: 'tydSlideUp 0.22s cubic-bezier(0.22,1,0.36,1)',
@@ -199,7 +199,7 @@ export function Layout() {
                   width: '100%', display: 'flex', alignItems: 'center', gap: 14,
                   padding: '13px 18px', textAlign: 'left', cursor: 'pointer',
                   borderBottom: i < QUICK_ACTIONS.length - 1
-                    ? '1px solid rgba(255,255,255,0.055)' : 'none',
+                    ? '1px solid var(--border)' : 'none',
                   transition: 'background 0.14s',
                 }}
               >
@@ -212,7 +212,7 @@ export function Layout() {
                 }}>
                   <action.icon size={18} />
                 </div>
-                <span style={{ fontSize: '0.92rem', fontWeight: 650, color: '#eaeefc' }}>
+                <span style={{ fontSize: '0.92rem', fontWeight: 650, color: 'var(--text)' }}>
                   {action.label}
                 </span>
               </button>
@@ -233,7 +233,7 @@ export function Layout() {
                   }}
                 >
                   <tile.icon size={20} color={tile.color} />
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#eaeefc' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text)' }}>
                     {tile.label}
                   </span>
                 </button>
@@ -247,8 +247,8 @@ export function Layout() {
       <nav
         className="fixed bottom-0 left-0 right-0 z-40"
         style={{
-          background: 'rgba(3, 4, 16, 0.92)',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--surface)',
+          borderTop: '1px solid var(--border)',
           backdropFilter: 'blur(28px) saturate(180%)',
           WebkitBackdropFilter: 'blur(28px) saturate(180%)',
           boxShadow: '0 -8px 32px rgba(0,0,0,0.55)',
@@ -287,7 +287,7 @@ export function Layout() {
               width: 52, height: 52, borderRadius: 18, flexShrink: 0,
               background: showQuickActions
                 ? 'rgba(255,255,255,0.12)'
-                : 'linear-gradient(135deg, #00ccf5, #0077cc)',
+                : 'linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #003a6e))',
               border: showQuickActions ? '1px solid rgba(255,255,255,0.18)' : 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               marginTop: -16,
@@ -298,12 +298,12 @@ export function Layout() {
             }}>
               {showQuickActions
                 ? <X size={22} color="rgba(255,255,255,0.85)" style={{ transition: 'transform 0.2s', transform: 'rotate(0deg)' }} />
-                : <Plus size={24} color="#07091a" />
+                : <Plus size={24} color="var(--accent-contrast)" />
               }
             </div>
             <span style={{
               fontSize: '9px', fontWeight: 700, letterSpacing: '0.02em',
-              color: showQuickActions ? '#00ccf5' : 'rgba(154,170,191,0.45)',
+              color: showQuickActions ? 'var(--accent)' : 'var(--text-muted)',
               transition: 'color 0.2s',
             }}>
               Quick
@@ -351,8 +351,8 @@ function PushBanner({
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-      background: 'linear-gradient(135deg, rgba(8,12,28,0.97), rgba(4,7,18,0.99))',
-      borderBottom: '1px solid rgba(255,255,255,0.08)',
+      background: 'var(--surface)',
+      borderBottom: '1px solid var(--border)',
       backdropFilter: 'blur(18px)',
       WebkitBackdropFilter: 'blur(18px)',
       padding: '12px 14px',
@@ -368,10 +368,10 @@ function PushBanner({
         {icon}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: '0.76rem', fontWeight: 800, color: '#eaeefc', lineHeight: 1.2 }}>
+        <p style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1.2 }}>
           {title}
         </p>
-        <p style={{ fontSize: '0.6rem', color: 'rgba(154,170,191,0.6)', marginTop: 2, lineHeight: 1.4 }}>
+        <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.4 }}>
           {desc}
         </p>
       </div>
@@ -395,8 +395,8 @@ function PushBanner({
           width: 26, height: 26, borderRadius: 8, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          color: 'rgba(154,170,191,0.5)',
+          border: '1px solid var(--border)',
+          color: 'var(--text-muted)',
         }}
       >
         <X size={12} />
@@ -432,14 +432,14 @@ function NavItem({
       >
       <div style={{
         padding: '5px 12px', borderRadius: 12,
-        color: active ? '#00ccf5' : 'rgba(100,115,135,0.85)',
+        color: active ? 'var(--accent)' : 'var(--text-muted)',
         transition: 'color 0.2s',
       }}>
         {icon}
       </div>
       <span style={{
         fontSize: '9px', fontWeight: 600,
-        color: active ? '#00ccf5' : 'rgba(100,115,135,0.75)',
+        color: active ? 'var(--accent)' : 'var(--text-muted)',
         letterSpacing: '0.02em',
         transition: 'color 0.2s',
         textAlign: 'center',
