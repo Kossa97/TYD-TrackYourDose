@@ -144,9 +144,17 @@ function cycleTimeLabel(c: Cycle, t: (key: string) => string): { emoji: string; 
 
 type IntakeGroupKey = 'morgens' | 'mittags' | 'abends' | 'custom' | 'later'
 
+function intakePeriodFromMinutes(minutes: number): 'morgens' | 'mittags' | 'abends' {
+  const h = Math.floor(minutes / 60) % 24
+  if (h < 12) return 'morgens'
+  if (h < 18) return 'mittags'
+  return 'abends'
+}
+
 function cycleTimeGroupKey(cycle: Cycle): IntakeGroupKey {
   const firstKey = (cycle.intake_time ?? '').split(',').filter(Boolean)[0] ?? ''
-  if (firstKey === 'morgens' || firstKey === 'mittags' || firstKey === 'abends' || firstKey === 'custom') return firstKey
+  if (firstKey === 'morgens' || firstKey === 'mittags' || firstKey === 'abends') return firstKey
+  if (firstKey === 'custom') return intakePeriodFromMinutes(cycleIntakeMinutes(cycle))
   return 'later'
 }
 
@@ -422,7 +430,12 @@ export function Dashboard() {
     .filter(cycle => pendingLogItems.some(log => log.peptide_id === cycle.peptide_id) || pendingCycles.some(pending => pending.id === cycle.id))
     .sort((a, b) => cycleIntakeMinutes(a) - cycleIntakeMinutes(b))
   const dueCycleSections = (['morgens', 'mittags', 'abends', 'custom', 'later'] as IntakeGroupKey[])
-    .map(key => ({ ...intakeGroupMeta(key, t), cycles: dueCycles.filter(cycle => cycleTimeGroupKey(cycle) === key) }))
+    .map(key => ({
+      ...intakeGroupMeta(key, t),
+      cycles: dueCycles
+        .filter(cycle => cycleTimeGroupKey(cycle) === key)
+        .sort((a, b) => cycleIntakeMinutes(a) - cycleIntakeMinutes(b)),
+    }))
     .filter(section => section.cycles.length > 0)
 
   const adjustPeptideStockForDose = async (peptideId: string, dose: number, unit: string, mode: 'debit' | 'credit') => {
