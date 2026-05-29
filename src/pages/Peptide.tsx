@@ -9,7 +9,7 @@ import {
   CalendarDays, ChevronDown, ChevronUp,
   TrendingUp, Search, Bell, Check,
   Package, FileUp, Droplets, X, FileText, ExternalLink,
-  Archive, RefreshCw,
+  Archive, RefreshCw, Sunrise, Sun, Moon, Clock, type LucideIcon,
 } from 'lucide-react'
 import { getPeptideColor } from '../lib/peptideColors'
 import { useNew } from '../lib/useNew'
@@ -111,10 +111,10 @@ const FREQ_KEYS: Record<string,string> = {
   'Alle X Tage':'freq_alle_x','Wochentage wählen':'freq_wochentage',
 }
 const INTAKE_TIME_CONFIG = {
-  morgens: { labelKey: 'morgens', emoji: '🌅', time: '08:00' },
-  mittags: { labelKey: 'mittags', emoji: '☀️',  time: '12:00' },
-  abends:  { labelKey: 'abends',  emoji: '🌙', time: '20:00' },
-  custom:  { labelKey: 'uhrzeit_label', emoji: '🕐', time: '' },
+  morgens: { labelKey: 'morgens', icon: Sunrise, time: '08:00' },
+  mittags: { labelKey: 'mittags', icon: Sun,  time: '12:00' },
+  abends:  { labelKey: 'abends',  icon: Moon, time: '20:00' },
+  custom:  { labelKey: 'uhrzeit_label', icon: Clock, time: '' },
 } as const
 const REMINDER_OPTIONS = [
   { value: '1day',    labelKey: 'reminder_1day' },
@@ -1006,7 +1006,7 @@ export function Peptide() {
                                   <span className="font-medium text-slate-300">{c.dose} {c.unit}</span>
                                   <span>{t(METHOD_KEYS[c.method] ?? c.method)}</span>
                                   <span>{freqLabel(c)}</span>
-                                  {(() => { const lbl = intakeLabel(c); const firstKey = c.intake_time?.split(',')[0] ?? ''; return lbl ? <span className="text-amber-400">{(INTAKE_TIME_CONFIG as Record<string,{emoji:string}>)[firstKey]?.emoji ?? '🕐'} {lbl}</span> : null })()}
+                                  {(() => { const lbl = intakeLabel(c); const firstKey = c.intake_time?.split(',')[0] ?? ''; const SlotIcon = (INTAKE_TIME_CONFIG as Record<string,{icon:LucideIcon}>)[firstKey]?.icon ?? Clock; return lbl ? <span className="text-amber-400 inline-flex items-center gap-1"><SlotIcon size={12} /> {lbl}</span> : null })()}
                                   <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
                                   {c.end_date && <span>{t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}</span>}
                                 </div>
@@ -1111,9 +1111,9 @@ export function Peptide() {
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <label className="label mb-0">{t('peptidname_star')}</label>
                   {pForm.pk_profile_id && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                      style={{ color: '#00ccf5', background: 'rgba(0,204,245,0.12)', border: '1px solid rgba(0,204,245,0.28)' }}>
-                      ✓ PK-Profil verknüpft
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+                      style={{ color: 'var(--accent)', background: 'var(--accent-weak)', border: '1px solid var(--accent-border)' }}>
+                      <Check size={11} /> PK-Profil verknüpft
                     </span>
                   )}
                 </div>
@@ -1485,7 +1485,7 @@ export function Peptide() {
                     </p>
                   )}
                   <div className="grid grid-cols-4 gap-2">
-                    {(Object.entries(INTAKE_TIME_CONFIG) as [string, { labelKey: string; emoji: string }][]).map(([key, cfg]) => {
+                    {(Object.entries(INTAKE_TIME_CONFIG) as [string, { labelKey: string; icon: LucideIcon }][]).map(([key, cfg]) => {
                       const isActive = cForm.intake_times[slotIdx] === key
                       return (
                         <button key={key} type="button"
@@ -1500,7 +1500,7 @@ export function Peptide() {
                           className={`py-2.5 rounded-xl text-xs font-medium transition-colors flex flex-col items-center gap-1 ${
                             isActive ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                           }`}>
-                          <span className="text-base">{cfg.emoji}</span>
+                          <cfg.icon size={18} />
                           {t(cfg.labelKey)}
                         </button>
                       )

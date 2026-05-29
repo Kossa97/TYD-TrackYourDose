@@ -1140,3 +1140,45 @@ main.flex-1 {
     scroll-behavior: auto !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIGHT-MODE TAILWIND UTILITY REMAP
+   Scoped ONLY to [data-theme="light"] — dark mode is untouched (no rule applies).
+   Maps the dark "slate/white/sky" utility palette to light-appropriate values so
+   class-based pages theme correctly without per-element edits.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Text colors (preserve hierarchy: brighter slate → darker on light) ──── */
+[data-theme="light"] .text-white,
+[data-theme="light"] .text-slate-100,
+[data-theme="light"] .text-slate-200 { color: var(--text); }
+[data-theme="light"] .text-slate-300 { color: #334155; }
+[data-theme="light"] .text-slate-400 { color: #475569; }
+[data-theme="light"] .text-slate-500 { color: #64748b; }
+[data-theme="light"] .text-slate-600 { color: #94a3b8; }
+
+/* Keep white text on solid colored buttons/badges (contrast in both themes) */
+[data-theme="light"] .bg-sky-500.text-white,
+[data-theme="light"] .bg-sky-600.text-white,
+[data-theme="light"] .bg-red-500.text-white,
+[data-theme="light"] .bg-red-600.text-white,
+[data-theme="light"] .bg-emerald-500.text-white,
+[data-theme="light"] .bg-emerald-600.text-white,
+[data-theme="light"] .bg-violet-500.text-white,
+[data-theme="light"] .bg-amber-500.text-white,
+[data-theme="light"] .bg-rose-500.text-white { color: #ffffff; }
+
+/* ── Accent text (darker cyan for AA contrast on white) ──────────────────── */
+[data-theme="light"] .text-sky-400 { color: var(--accent); }
+[data-theme="light"] .text-sky-300 { color: #0369a1; }
+
+/* ── Surface backgrounds (layered light grays for depth) ─────────────────── */
+[data-theme="light"] .bg-slate-950 { background-color: #f8fafc; }
+[data-theme="light"] .bg-slate-900 { background-color: #ffffff; }
+[data-theme="light"] .bg-slate-800 { background-color: #f1f5f9; }
+[data-theme="light"] .bg-slate-700 { background-color: #e2e8f0; }
+
+/* ── Borders ─────────────────────────────────────────────────────────────── */
+[data-theme="light"] .border-slate-800 { border-color: #e8edf3; }
+[data-theme="light"] .border-slate-700 { border-color: #d8dfe8; }
+[data-theme="light"] .border-slate-600 { border-color: #cbd5e1; }
