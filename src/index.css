@@ -427,18 +427,39 @@ body.onboarding-active [data-ob-active] {
    DESIGN TOKENS
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
-  --c-bg:          #020308;
-  --c-surface:     rgba(6, 7, 20, 0.92);
-  --c-input:       rgba(2, 3, 12, 0.82);
-  --c-cyan:        #00ccf5;
-  --c-cyan-10:     rgba(0,204,245,0.10);
+  /* ── Semantic theme tokens (dark defaults) ── */
+  --app-bg:          #020308;
+  --surface:         rgba(6,7,20,0.92);
+  --surface-raised:  rgba(18,22,48,0.92);
+  --surface-input:   rgba(2,3,12,0.82);
+  --glass-bg:        rgba(6,7,20,0.78);
+  --text:            #eaeefc;
+  --text-dim:        #9aaabf;
+  --text-muted:      #465265;
+  --border:          rgba(255,255,255,0.07);
+  --border-strong:   rgba(255,255,255,0.12);
+  --accent:          #00ccf5;
+  --accent-weak:     rgba(0,204,245,0.10);
+  --accent-border:   rgba(0,204,245,0.28);
+  --accent-contrast: rgba(0,8,20,0.95);
+  --cat-violet:      #8b5cf6;
+  --cat-emerald:     #10b981;
+  --cat-amber:       #f59e0b;
+  --cat-rose:        #f43f5e;
+  --glow-accent:     0 0 28px rgba(0,204,245,0.24);
+
+  --c-bg:          var(--app-bg);
+  --c-surface:     var(--surface);
+  --c-input:       var(--surface-input);
+  --c-cyan:        var(--accent);
+  --c-cyan-10:     var(--accent-weak);
   --c-cyan-20:     rgba(0,204,245,0.20);
-  --c-cyan-border: rgba(0,204,245,0.28);
-  --c-border:      rgba(255,255,255,0.07);
-  --c-border-hi:   rgba(255,255,255,0.12);
-  --c-text:        #eaeefc;
-  --c-text-dim:    #9aaabf;
-  --c-text-muted:  #465265;
+  --c-cyan-border: var(--accent-border);
+  --c-border:      var(--border);
+  --c-border-hi:   var(--border-strong);
+  --c-text:        var(--text);
+  --c-text-dim:    var(--text-dim);
+  --c-text-muted:  var(--text-muted);
 
   --r-sm:   10px;
   --r-md:   13px;
