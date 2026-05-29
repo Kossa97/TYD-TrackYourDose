@@ -492,6 +492,33 @@ body.onboarding-active [data-ob-active] {
   --bottom-nav-gap: 12px;
 }
 
+/* ── Light theme overrides ── */
+[data-theme="light"] {
+  --app-bg:          #f4f7fb;
+  --surface:         #ffffff;
+  --surface-raised:  #ffffff;
+  --surface-input:   #ffffff;
+  --glass-bg:        rgba(255,255,255,0.80);
+  --text:            #0c1626;
+  --text-dim:        #556070;
+  --text-muted:      #9aa3b0;
+  --border:          rgba(15,30,60,0.10);
+  --border-strong:   rgba(15,30,60,0.18);
+  --accent:          #0091c4;
+  --accent-weak:     rgba(0,145,196,0.10);
+  --accent-border:   rgba(0,145,196,0.30);
+  --accent-contrast: #ffffff;
+  --cat-violet:      #7c4dff;
+  --cat-emerald:     #059669;
+  --cat-amber:       #d97706;
+  --cat-rose:        #e11d48;
+  --glow-accent:     none;
+  --c-cyan-20:       rgba(0,145,196,0.20);
+  --shadow-card:     0 6px 20px rgba(20,40,80,0.10);
+  --shadow-btn-primary: 0 2px 10px rgba(0,145,196,0.25), inset 0 1px 0 rgba(255,255,255,0.4);
+  --shadow-input:    inset 0 1px 3px rgba(20,40,80,0.08);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    BASE
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -533,6 +560,12 @@ body.onboarding-active [data-ob-active] {
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+  }
+
+  [data-theme="light"] body {
+    background-image:
+      radial-gradient(ellipse 90% 60% at 10% 35%, rgba(0,145,196,0.05) 0%, transparent 65%),
+      radial-gradient(ellipse 70% 50% at 90% 10%, rgba(120,90,255,0.04) 0%, transparent 55%);
   }
 
   #root {
