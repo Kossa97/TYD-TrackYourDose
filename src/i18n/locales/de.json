@@ -87,6 +87,7 @@
   "kein_inventar_desc": "Lagere hier zuerst deine rohen, lyophilisierten Peptid-Vials ein.",
   "keine_peptide": "Noch keine Peptide",
   "vials": "Vials",
+  "vials_vorratig": "{{n}} Vials vorrätig",
   "mg_per_vial": "mg/Vial",
   "batch": "Batch",
   "quelle": "Quelle",

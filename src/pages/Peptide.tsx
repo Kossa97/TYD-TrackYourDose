@@ -909,26 +909,15 @@ export function Peptide() {
                   </div>
 
                   {/* Lagerbestand — minimalistisch */}
-                  {invItem && (() => {
-                    const total = Math.max(invItem.vials_initial ?? invItem.vials_count, invItem.vials_count, 1)
-                    const filled = invItem.vials_count
-                    const pct = Math.round((filled / total) * 100)
-                    return (
+                  {invItem && (
                       <div className="mt-1.5 flex items-center gap-2">
                         <span className="text-[11px] tabular-nums text-slate-500">
-                          {filled}{(invItem.vials_initial ?? 0) > 0 ? ` / ${invItem.vials_initial}` : ''}
-                          <span className="ml-1 text-slate-600">{t('vials')}</span>
+                          {t('vials_vorratig', { n: invItem.vials_count })}
                         </span>
-                        <div className="h-1 w-10 shrink-0 overflow-hidden rounded-full bg-slate-800">
-                          <div
-                            className="h-full rounded-full transition-all"
-                            style={{ width: `${pct}%`, background: peptideColor, opacity: 0.7 }}
-                          />
-                        </div>
                         <div className="ml-auto flex items-center gap-0.5">
                           <button
                             onClick={e => { e.stopPropagation(); adjustInventoryCount(invItem.id, -1, invItem.vials_count) }}
-                            disabled={filled <= 0}
+                            disabled={invItem.vials_count <= 0}
                             className="flex h-5 w-5 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300 disabled:opacity-25"
                           >
                             <Minus size={10} />
@@ -942,8 +931,7 @@ export function Peptide() {
                           </button>
                         </div>
                       </div>
-                    )
-                  })()}
+                  )}
 
                   {/* Verwerfen + Rekonstitution (nur bei Inventar-Verknüpfung) */}
                   {p.inventory_item_id && (

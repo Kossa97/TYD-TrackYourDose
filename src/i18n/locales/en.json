@@ -85,6 +85,7 @@
   "kein_inventar_desc": "First add your raw lyophilized peptide vials here.",
   "keine_peptide": "No peptides yet",
   "vials": "Vials",
+  "vials_vorratig": "{{n}} vials in stock",
   "mg_per_vial": "mg/Vial",
   "batch": "Batch",
   "quelle": "Source",
