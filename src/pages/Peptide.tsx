@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
@@ -330,6 +330,7 @@ export function Peptide() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   // ── Bestätigungs-Dialoge ──────────────────────────────────────────────────
   const [verwerfenTarget,      setVerwerfenTarget]      = useState<Peptide | null>(null)
@@ -407,6 +408,16 @@ export function Peptide() {
     supabase.from('pk_profiles').select('id, name, aliases').order('name')
       .then(({ data }) => setPkProfileCatalog((data as PkProfileOption[]) ?? []))
   }, [showPeptideForm])
+
+  useEffect(() => {
+    if (location.hash !== '#new-substance') return
+    setEditingPeptideId(null)
+    setPForm(emptyPeptideForm())
+    setBatchFile(null)
+    setPkSuggestOpen(false)
+    setShowPeptideForm(true)
+    navigate(location.pathname, { replace: true })
+  }, [location.hash, location.pathname, navigate])
 
   const pepPkSuggestions = useMemo(() => {
     const q = pForm.name.trim().toLowerCase()
