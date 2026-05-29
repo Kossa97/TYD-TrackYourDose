@@ -667,9 +667,13 @@ export function Peptide() {
     setRekonstitutionDontAsk(false); setRekonstitutionTarget(p)
   }
   const doRekonstitution = async (p: Peptide) => {
+    const today = format(new Date(), 'yyyy-MM-dd')
     await supabase.from('peptides')
-      .update({ reconstitution_date: format(new Date(), 'yyyy-MM-dd'), vials_in_stock: 1 })
+      .update({ reconstitution_date: today, vials_in_stock: 1 })
       .eq('id', p.id)
+    setPeptides(prev => prev.map(pp =>
+      pp.id === p.id ? { ...pp, reconstitution_date: today, vials_in_stock: 1 } : pp
+    ))
     if (p.inventory_item_id) {
       const invItem = inventory.find(i => i.id === p.inventory_item_id)
       if (invItem) {
