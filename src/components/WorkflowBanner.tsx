@@ -13,9 +13,9 @@ const WORKFLOW_STEPS: { icon: LucideIcon; labelKey: string; label: string; descK
 ]
 
 const panelStyle: CSSProperties = {
-  background: 'linear-gradient(145deg, rgba(9,14,34,0.94), rgba(4,7,18,0.96))',
+  background: 'var(--surface)',
   borderRadius: 24,
-  border: '1px solid rgba(255,255,255,0.08)',
+  border: '1px solid var(--border)',
   boxShadow: '0 18px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
   padding: 14,
   position: 'relative',
@@ -28,7 +28,7 @@ const labelStyle: CSSProperties = {
   fontWeight: 800,
   letterSpacing: '0.13em',
   textTransform: 'uppercase',
-  color: 'rgba(154,170,191,0.52)',
+  color: 'var(--text-muted)',
 }
 
 const iconBoxBase: CSSProperties = {
@@ -38,9 +38,9 @@ const iconBoxBase: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  background: 'rgba(0,204,245,0.09)',
-  border: '1px solid rgba(0,204,245,0.18)',
-  color: '#00ccf5',
+  background: 'var(--accent-weak)',
+  border: '1px solid var(--accent-border)',
+  color: 'var(--accent)',
 }
 
 function storageKey(userId: string) {
@@ -103,9 +103,9 @@ export function WorkflowBanner({ userId }: { userId: string | undefined }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.10)',
-                color: 'rgba(154,170,191,0.65)',
+                background: 'var(--border)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-muted)',
               }}
             >
               <X size={14} />
@@ -116,7 +116,7 @@ export function WorkflowBanner({ userId }: { userId: string | undefined }) {
                 alignItems: 'center',
                 gap: 6,
                 fontSize: '0.58rem',
-                color: 'rgba(154,170,191,0.72)',
+                color: 'var(--text-muted)',
                 cursor: 'pointer',
                 userSelect: 'none',
                 maxWidth: 120,
@@ -128,7 +128,7 @@ export function WorkflowBanner({ userId }: { userId: string | undefined }) {
                 type="checkbox"
                 checked={dontShowAgain}
                 onChange={e => setDontShowAgain(e.target.checked)}
-                style={{ width: 13, height: 13, accentColor: '#00ccf5', flexShrink: 0 }}
+                style={{ width: 13, height: 13, accentColor: 'var(--accent)', flexShrink: 0 }}
               />
               {t('home_workflow_hide', { defaultValue: 'Nicht mehr anzeigen' })}
             </label>
@@ -136,7 +136,7 @@ export function WorkflowBanner({ userId }: { userId: string | undefined }) {
 
           <div style={{ marginBottom: 12, paddingRight: 36 }}>
             <p style={labelStyle}>{t('home_workflow', { defaultValue: 'Workflow' })}</p>
-            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: 'var(--text)', marginTop: 2 }}>
               {t('home_workflow_title', { defaultValue: 'Vom Vial zum Report' })}
             </h2>
           </div>
@@ -149,7 +149,7 @@ export function WorkflowBanner({ userId }: { userId: string | undefined }) {
               return (
                 <div key={step.labelKey} style={{ position: 'relative' }}>
                   {index < WORKFLOW_STEPS.length - 1 && (
-                    <div style={{ position: 'absolute', top: 18, left: '58%', right: '-42%', height: 1, background: 'linear-gradient(90deg, rgba(0,204,245,0.35), rgba(0,204,245,0))' }} />
+                    <div style={{ position: 'absolute', top: 18, left: '58%', right: '-42%', height: 1, background: 'linear-gradient(90deg, var(--accent-border), transparent)' }} />
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, textAlign: 'center', position: 'relative' }}>
                     {isStockStep ? (
@@ -161,7 +161,7 @@ export function WorkflowBanner({ userId }: { userId: string | undefined }) {
                           ...iconBoxBase,
                           cursor: 'pointer',
                           animation: 'tyd-stock-step-glow 2.2s ease-in-out infinite',
-                          background: 'rgba(0,204,245,0.16)',
+                          background: 'var(--accent-weak)',
                           border: '1px solid rgba(0,204,245,0.55)',
                         }}
                       >
@@ -175,13 +175,13 @@ export function WorkflowBanner({ userId }: { userId: string | undefined }) {
                     <div>
                       <p style={{
                         fontSize: '0.68rem',
-                        color: isStockStep ? '#00ccf5' : '#eaeefc',
+                        color: isStockStep ? 'var(--accent)' : 'var(--text)',
                         fontWeight: 800,
                         lineHeight: 1.2,
                       }}>
                         {t(step.labelKey, { defaultValue: step.label })}
                       </p>
-                      <p style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.48)', lineHeight: 1.25, marginTop: 2 }}>
+                      <p style={{ fontSize: '0.55rem', color: 'var(--text-muted)', lineHeight: 1.25, marginTop: 2 }}>
                         {t(step.descKey, { defaultValue: step.desc })}
                       </p>
                     </div>
