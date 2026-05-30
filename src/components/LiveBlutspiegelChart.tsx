@@ -124,8 +124,14 @@ export function LiveBlutspiegelChart({
       const tsToX = (ts: number) => dX + ((ts - viewStart) / WINDOW_MS) * dW
       const lvToY = (lv: number) => dY + (1 - Math.max(0, Math.min(100, lv)) / 100) * dH
 
+      // ── Resolve theme tokens for canvas ─────────────────────────────────
+      const docStyle    = getComputedStyle(document.documentElement)
+      const tokenBorder = docStyle.getPropertyValue('--border').trim() || 'rgba(255,255,255,0.06)'
+      const tokenMuted  = docStyle.getPropertyValue('--text-muted').trim() || 'rgba(255,255,255,0.28)'
+      const tokenSurface = docStyle.getPropertyValue('--surface').trim() || 'rgba(6,10,24,0.92)'
+
       // ── Horizontal gridlines ────────────────────────────────────────────
-      ctx.strokeStyle = 'rgba(255,255,255,0.06)'
+      ctx.strokeStyle = tokenBorder
       ctx.lineWidth   = 1
       for (let lv = 0; lv <= 100; lv += 10) {
         const y = lvToY(lv)
@@ -140,10 +146,10 @@ export function LiveBlutspiegelChart({
       for (let ts = firstTick; ts <= viewEnd + 1; ts += DAY_MS) {
         const x = tsToX(ts)
         if (x < dX - 2 || x > dX + dW + 2) continue
-        ctx.strokeStyle = 'rgba(255,255,255,0.05)'
+        ctx.strokeStyle = tokenBorder
         ctx.lineWidth   = 1
         ctx.beginPath(); ctx.moveTo(x, dY); ctx.lineTo(x, dY + dH); ctx.stroke()
-        ctx.fillStyle = 'rgba(255,255,255,0.28)'
+        ctx.fillStyle = tokenMuted
         ctx.fillText(
           format(new Date(ts), 'EEE dd.', { locale: deLocale }),
           x, dY + dH + 5,
@@ -253,13 +259,13 @@ export function LiveBlutspiegelChart({
       }
 
       // ── Y-axis overlay (covers curve overflow) ──────────────────────────
-      ctx.fillStyle = 'rgba(6,10,24,0.92)'
+      ctx.fillStyle = tokenSurface
       ctx.fillRect(0, 0, PAD.left - 1, cssH)
 
       ctx.font         = '10px ui-monospace,monospace'
       ctx.textAlign    = 'right'
       ctx.textBaseline = 'middle'
-      ctx.fillStyle    = 'rgba(255,255,255,0.28)'
+      ctx.fillStyle    = tokenMuted
       for (let lv = 10; lv <= 100; lv += 10) {
         ctx.fillText(String(lv), PAD.left - 5, lvToY(lv))
       }
@@ -270,7 +276,7 @@ export function LiveBlutspiegelChart({
       ctx.textAlign    = 'center'
       ctx.textBaseline = 'middle'
       ctx.font         = '9px ui-monospace,monospace'
-      ctx.fillStyle    = 'rgba(255,255,255,0.18)'
+      ctx.fillStyle    = tokenMuted
       ctx.fillText('%', 0, 0)
       ctx.restore()
     })
@@ -389,7 +395,7 @@ export function LiveBlutspiegelChart({
   if (loading) {
     return (
       <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: 'rgba(154,170,191,0.45)', fontSize: '0.78rem' }}>Verlauf wird geladen…</span>
+        <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>Verlauf wird geladen…</span>
       </div>
     )
   }
@@ -413,7 +419,7 @@ export function LiveBlutspiegelChart({
                   fontSize: '0.68rem', fontWeight: 800, fontFamily: 'inherit',
                   border: `1px solid ${c.accent}50`,
                   background: active ? c.accent + '22' : 'transparent',
-                  color: active ? c.accent : 'rgba(154,170,191,0.40)',
+                  color: active ? c.accent : 'var(--text-muted)',
                   cursor: 'pointer', transition: 'all 0.15s',
                 }}
               >
@@ -450,8 +456,8 @@ export function LiveBlutspiegelChart({
                   (wrapRef.current?.offsetWidth ?? 300) - 135,
                 ),
                 top: PAD.top,
-                background: 'rgba(7,9,26,0.97)',
-                border: '1px solid rgba(0,204,245,0.25)',
+                background: 'var(--surface)',
+                border: '1px solid var(--accent-border)',
                 borderRadius: 10,
                 padding: '8px 10px',
                 pointerEvents: 'none',
@@ -459,13 +465,13 @@ export function LiveBlutspiegelChart({
                 minWidth: 124,
               }}
             >
-              <p style={{ fontSize: '0.58rem', color: 'rgba(154,170,191,0.55)', marginBottom: 5, fontFamily: 'monospace' }}>
+              <p style={{ fontSize: '0.58rem', color: 'var(--text-muted)', marginBottom: 5, fontFamily: 'monospace' }}>
                 {format(new Date(tooltip.timestamp), 'EEE dd.MM · HH:mm', { locale: deLocale })}
               </p>
               {tooltip.items.map(item => (
                 <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: item.accent, flexShrink: 0 }} />
-                  <span style={{ fontSize: '0.6rem', color: 'rgba(213,224,242,0.65)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '0.6rem', color: 'var(--text-dim)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {item.name}
                   </span>
                   <span style={{ fontSize: '0.75rem', fontWeight: 900, color: item.accent, fontFamily: 'monospace', flexShrink: 0 }}>
@@ -483,8 +489,8 @@ export function LiveBlutspiegelChart({
             onClick={() => { cancelMomentum(); panOffsetRef.current = 0; setShowJetzt(false); scheduleRedraw() }}
             style={{
               position: 'absolute', bottom: 40, right: 14,
-              fontSize: '0.55rem', fontWeight: 800, color: '#00ccf5',
-              background: 'rgba(0,204,245,0.12)', border: '1px solid rgba(0,204,245,0.25)',
+              fontSize: '0.55rem', fontWeight: 800, color: 'var(--accent)',
+              background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
               borderRadius: 6, padding: '3px 7px', cursor: 'pointer', fontFamily: 'inherit',
             }}
           >
@@ -498,11 +504,11 @@ export function LiveBlutspiegelChart({
         {[
           { dot: <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />, label: 'Einnahme' },
           { dot: <span style={{ fontSize: '0.8rem', color: '#ef4444', lineHeight: 1 }}>×</span>, label: 'Übersprungen' },
-          { dot: <span style={{ fontSize: '0.7rem', color: 'rgba(154,170,191,0.55)', lineHeight: 1 }}>▲</span>, label: 'Peak' },
+          { dot: <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', lineHeight: 1 }}>▲</span>, label: 'Peak' },
         ].map(({ dot, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             {dot}
-            <span style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.42)' }}>{label}</span>
+            <span style={{ fontSize: '0.55rem', color: 'var(--text-muted)' }}>{label}</span>
           </div>
         ))}
       </div>
