@@ -202,7 +202,7 @@ const panelStyle: CSSProperties = {
   background: 'var(--surface)',
   border: '1px solid var(--border)',
   borderRadius: 24,
-  boxShadow: '0 18px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
+  boxShadow: 'var(--shadow-card)',
   position: 'relative',
   overflow: 'hidden',
 }
