@@ -459,10 +459,17 @@ export function Dashboard() {
     return () => window.clearTimeout(timer)
   }, [location.hash, location.search, dueCycles.length, selCycles.length, logs.length])
 
-  const adjustPeptideStockForDose = async (peptideId: string, dose: number, unit: string, mode: 'debit' | 'credit') => {
+  const adjustPeptideStockForDose = async (peptideId: string, dose: number, unit: string, mode: 'debit' | 'credit', loggedAt?: string) => {
     if (!user) return false
     const peptide = peptides.find(p => p.id === peptideId)
     if (!peptide) return false
+    // Don't credit a dose that belongs to a PAST reconstitution back into the
+    // current vial (e.g. undoing an old intake after the vial was renewed/discarded).
+    if (mode === 'credit' && loggedAt && peptide.reconstitution_date) {
+      const logDay = format(parseISO(loggedAt), 'yyyy-MM-dd')
+      const reconDay = format(parseISO(peptide.reconstitution_date), 'yyyy-MM-dd')
+      if (logDay < reconDay) return false
+    }
     const delta = doseToVialDelta(dose, unit, peptide)
     if (!delta || delta <= 0) return false
 
@@ -494,7 +501,7 @@ export function Dashboard() {
     if (!confirm(t('eintrag_loeschen'))) return
     const { error } = await supabase.from('dose_logs').delete().eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit')
+    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit', log.logged_at)
     toast.success(t('deleted')); loadLogs(); loadPeptides()
   }
 
@@ -505,7 +512,7 @@ export function Dashboard() {
     const { error } = await supabase.from('dose_logs').update(update).eq('id', log.id)
     if (error) return toast.error(t('error'))
     if (previousTaken !== true && taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'debit')
-    if (previousTaken === true && taken !== true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit')
+    if (previousTaken === true && taken !== true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit', log.logged_at)
     loadLogs(); loadPeptides()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
@@ -514,7 +521,7 @@ export function Dashboard() {
   const undoDose = async (log: DoseLog) => {
     const { error } = await supabase.from('dose_logs').update({ taken: null }).eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit')
+    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit', log.logged_at)
     loadLogs(); loadPeptides()
     toast.success(t('dose_undo_success', { defaultValue: 'Einnahme zurückgesetzt' }))
   }
