@@ -29,6 +29,69 @@ interface PkProfile {
 
 const PK_CATEGORIES = ['peptide', 'glp1', 'sarm', 'hormone', 'other'] as const
 
+const LIBRARY_WRITE_FIELDS = [
+  'slug', 'name', 'full_name', 'category', 'tldr', 'mechanism',
+  'benefits', 'research_dosage', 'half_life', 'administration',
+  'research_status', 'side_effects', 'contraindications', 'pubmed_query',
+  'tags', 'evidence_human', 'evidence_animal', 'evidence_clinical',
+  'evidence_score', 'research_gaps', 'sort_order',
+] as const
+
+const LIBRARY_ARRAY_FIELDS = new Set([
+  'benefits', 'administration', 'side_effects', 'contraindications', 'research_gaps', 'tags',
+])
+
+const MISSING_LIBRARY_COLUMN_RE = /Could not find the '(\w+)' column of 'peptide_library'/i
+
+function supabaseErrorText(error: { message?: string; details?: string; hint?: string }): string {
+  return [error.message, error.details, error.hint].filter(Boolean).join(' ')
+}
+
+function buildLibraryPayload(
+  source: Record<string, unknown>,
+  extras?: Record<string, unknown>,
+): Record<string, unknown> {
+  const raw = { ...source, ...extras }
+  const payload: Record<string, unknown> = {}
+  for (const key of LIBRARY_WRITE_FIELDS) {
+    if (raw[key] === undefined) continue
+    let val = raw[key]
+    if (LIBRARY_ARRAY_FIELDS.has(key) && !Array.isArray(val)) val = []
+    if (key === 'evidence_score' && val != null) val = Number(val)
+    payload[key] = val
+  }
+  return payload
+}
+
+async function saveLibraryRow(
+  payload: Record<string, unknown>,
+  mode: { type: 'insert' } | { type: 'update'; slug: string },
+): Promise<{ error: string | null; omitted: string[] }> {
+  const current = { ...payload }
+  const omitted: string[] = []
+
+  for (let attempt = 0; attempt < LIBRARY_WRITE_FIELDS.length; attempt++) {
+    const { error } = mode.type === 'insert'
+      ? await supabase.from('peptide_library').insert(current)
+      : await supabase.from('peptide_library').update(current).eq('slug', mode.slug)
+
+    if (!error) return { error: null, omitted }
+
+    const match = supabaseErrorText(error).match(MISSING_LIBRARY_COLUMN_RE)
+    if (!match || !(match[1] in current)) return { error: supabaseErrorText(error), omitted }
+
+    omitted.push(match[1])
+    delete current[match[1]]
+  }
+
+  return { error: 'Speichern fehlgeschlagen — peptide_library-Schema unvollständig.', omitted }
+}
+
+function saveSuccessHint(omitted: string[]): string {
+  if (omitted.length === 0) return ''
+  return ` (Hinweis: Spalten fehlen in Supabase — ${omitted.join(', ')}. Bitte supabase-peptide-library-v2.sql und v3.sql ausführen.)`
+}
+
 // ─── API Call ─────────────────────────────────────────────────────────────────
 
 async function callAI(
@@ -197,6 +260,16 @@ export function AdminPanel() {
   // ── Peptide-Library actions ──────────────────────────────────────────────
   function getFinalResult() { return { ...result, name: editedName, slug: editedSlug } }
 
+  async function persistLibrary(
+    mode: { type: 'insert'; sortOrder: number } | { type: 'update'; slug: string },
+  ) {
+    const payload = buildLibraryPayload(
+      getFinalResult() as Record<string, unknown>,
+      mode.type === 'insert' ? { sort_order: mode.sortOrder } : undefined,
+    )
+    return saveLibraryRow(payload, mode)
+  }
+
   async function handleUpdate() {
     if (!selected) return
     setStatus('loading'); setResult(null); setErrorMsg('')
@@ -207,9 +280,9 @@ export function AdminPanel() {
   async function saveUpdate() {
     if (!selected || !result) return
     setStatus('saving')
-    const { error } = await supabase.from('peptide_library').update(getFinalResult()).eq('slug', selected.slug)
-    if (error) { setErrorMsg(error.message); setStatus('error'); return }
-    setStatus('done'); setSavedMsg(`${editedName} aktualisiert.`)
+    const { error, omitted } = await persistLibrary({ type: 'update', slug: selected.slug })
+    if (error) { setErrorMsg(error); setStatus('error'); return }
+    setStatus('done'); setSavedMsg(`${editedName} aktualisiert.${saveSuccessHint(omitted)}`)
     const fresh = await getAllPeptides(); setPeptides(fresh)
     const updated = fresh.find(p => p.slug === selected.slug); if (updated) setSelected(updated)
     setTimeout(() => { setStatus('idle'); setResult(null) }, 3000)
@@ -225,9 +298,9 @@ export function AdminPanel() {
   async function saveNew() {
     if (!result) return
     setStatus('saving')
-    const { error } = await supabase.from('peptide_library').insert({ ...getFinalResult(), sort_order: peptides.length + 1 })
-    if (error) { setErrorMsg(error.message); setStatus('error'); return }
-    setStatus('done'); setSavedMsg(`${editedName} zur Bibliothek hinzugefügt.`); setNewName('')
+    const { error, omitted } = await persistLibrary({ type: 'insert', sortOrder: peptides.length + 1 })
+    if (error) { setErrorMsg(error); setStatus('error'); return }
+    setStatus('done'); setSavedMsg(`${editedName} zur Bibliothek hinzugefügt.${saveSuccessHint(omitted)}`); setNewName('')
     setPeptides(await getAllPeptides())
     setTimeout(() => { setStatus('idle'); setResult(null) }, 3000)
   }
@@ -335,7 +408,7 @@ export function AdminPanel() {
       {tab === 'create' && (
         <div className="bg-[#0B1220] border border-white/[0.07] rounded-2xl p-5">
           <p className="text-[0.55rem] font-black uppercase tracking-[0.18em] text-sky-400/55 mb-3"
-            style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Neues Peptid</p>
+            style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Neue Substanz</p>
           <input value={newName} onChange={e => setNewName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') void handleCreate() }} disabled={isLoading}
             placeholder="z.B. Hexarelin, PT-141, Melanotan II…" className={`${inp} mb-4`} />
