@@ -274,28 +274,26 @@ export function Layout() {
           <button
             aria-label="Quick Actions"
             onClick={() => setShowQuickActions(v => !v)}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '1 1 0', minWidth: 0, cursor: 'pointer' }}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              alignSelf: 'stretch',   // fill full bar height (incl. the others' label row)
+              flex: '1 1 0', minWidth: 0, cursor: 'pointer',
+            }}
           >
-            {/* Mirror NavItem geometry (wrapper + icon slot + label slot) so the
-                + lines up exactly with the labeled items. */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '2px 4px' }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: 12, flexShrink: 0,
-                background: showQuickActions
-                  ? 'var(--surface-raised)'
-                  : 'linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #003a6e))',
-                border: showQuickActions ? '1px solid var(--border-strong)' : 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: showQuickActions ? 'none' : '0 2px 8px rgba(0,0,0,0.28)',
-                transition: 'all 0.2s cubic-bezier(0.22,1,0.36,1)',
-              }}>
-                {showQuickActions
-                  ? <X size={18} color="var(--text)" />
-                  : <Plus size={20} color="var(--accent-contrast)" />
-                }
-              </div>
-              {/* hidden label slot keeps the same column height as labeled items */}
-              <span aria-hidden="true" style={{ fontSize: '9px', fontWeight: 600, visibility: 'hidden' }}>·</span>
+            <div style={{
+              width: 46, height: 46, borderRadius: 16, flexShrink: 0,
+              background: showQuickActions
+                ? 'var(--surface-raised)'
+                : 'linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #003a6e))',
+              border: showQuickActions ? '1px solid var(--border-strong)' : 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: showQuickActions ? 'none' : '0 2px 10px rgba(0,0,0,0.30)',
+              transition: 'all 0.2s cubic-bezier(0.22,1,0.36,1)',
+            }}>
+              {showQuickActions
+                ? <X size={24} color="var(--text)" />
+                : <Plus size={26} color="var(--accent-contrast)" />
+              }
             </div>
           </button>
 
