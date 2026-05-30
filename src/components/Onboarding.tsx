@@ -245,7 +245,7 @@ export function Onboarding() {
   }, [meta, fieldIndex, getCycleFields])
 
   // Reset field cycling on step change
-  useEffect(() => { setFieldIndex(0) }, [step])
+  useEffect(() => { setFieldIndex(0); setFilled(true) }, [step])
 
   useEffect(() => {
     cleanupRef.current?.()
@@ -314,7 +314,7 @@ export function Onboarding() {
     if (!active || needsLanguagePick || !meta?.optionalTarget) return
     const id = window.setTimeout(() => {
       if (!getOnboardingInteractionEl(meta)) nextRef.current()
-    }, 700)
+    }, 1100)
     return () => clearTimeout(id)
   }, [step, active, needsLanguagePick, meta])
 
