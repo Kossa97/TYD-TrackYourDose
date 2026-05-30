@@ -328,35 +328,32 @@ function BlutspiegelCard({
       />
 
       <div style={{ position: 'relative', zIndex: 2 }}>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-          <LiveStatusBar remainingMs={remainingMs} refreshFlashing={refreshFlashing} />
+        {/* Name (left) + LIVE status (right) in one row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+          <p style={{ fontSize: '0.9rem', fontWeight: 850, color: 'var(--text)', lineHeight: 1.2, margin: 0, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {peptideName}
+          </p>
+          <div style={{ flexShrink: 0 }}>
+            <LiveStatusBar remainingMs={remainingMs} refreshFlashing={refreshFlashing} />
+          </div>
         </div>
 
-        <p style={{ fontSize: '0.9rem', fontWeight: 850, color: 'var(--text)', lineHeight: 1.2, marginBottom: 8 }}>
-          {peptideName}
-        </p>
-
-        <LevelDisplay
-          value={level.currentLevel}
-          accent={accent}
-          unit={level.unit}
-          trend={level.trend}
-          refreshFlashing={refreshFlashing}
-        />
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            marginTop: 10,
-          }}
-        >
+        {/* Value (left) + "mehr" button (right) */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <LevelDisplay
+              value={level.currentLevel}
+              accent={accent}
+              unit={level.unit}
+              trend={level.trend}
+              refreshFlashing={refreshFlashing}
+            />
+          </div>
           <button
             type="button"
             onClick={() => navigate(`/simulation?pk=${pkProfileId}`)}
             style={{
-              width: 'auto',
+              flexShrink: 0,
               background: 'transparent',
               border: `1px solid ${accent}40`,
               borderRadius: '10px',
@@ -366,7 +363,6 @@ function BlutspiegelCard({
               letterSpacing: '0.05em',
               color: accent,
               cursor: 'pointer',
-              marginLeft: 'auto',
             }}
           >
             mehr
