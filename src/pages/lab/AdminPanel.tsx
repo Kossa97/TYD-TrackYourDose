@@ -41,7 +41,11 @@ const LIBRARY_ARRAY_FIELDS = new Set([
   'benefits', 'administration', 'side_effects', 'contraindications', 'research_gaps', 'tags',
 ])
 
-const MISSING_LIBRARY_COLUMN_RE = /Could not find the '(\w+)' column of 'peptide_library'/
+const MISSING_LIBRARY_COLUMN_RE = /Could not find the '(\w+)' column of 'peptide_library'/i
+
+function supabaseErrorText(error: { message?: string; details?: string; hint?: string }): string {
+  return [error.message, error.details, error.hint].filter(Boolean).join(' ')
+}
 
 function buildLibraryPayload(
   source: Record<string, unknown>,
@@ -73,8 +77,8 @@ async function saveLibraryRow(
 
     if (!error) return { error: null, omitted }
 
-    const match = error.message.match(MISSING_LIBRARY_COLUMN_RE)
-    if (!match || !(match[1] in current)) return { error: error.message, omitted }
+    const match = supabaseErrorText(error).match(MISSING_LIBRARY_COLUMN_RE)
+    if (!match || !(match[1] in current)) return { error: supabaseErrorText(error), omitted }
 
     omitted.push(match[1])
     delete current[match[1]]
@@ -404,7 +408,7 @@ export function AdminPanel() {
       {tab === 'create' && (
         <div className="bg-[#0B1220] border border-white/[0.07] rounded-2xl p-5">
           <p className="text-[0.55rem] font-black uppercase tracking-[0.18em] text-sky-400/55 mb-3"
-            style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Neues Peptid</p>
+            style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Neue Substanz</p>
           <input value={newName} onChange={e => setNewName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') void handleCreate() }} disabled={isLoading}
             placeholder="z.B. Hexarelin, PT-141, Melanotan II…" className={`${inp} mb-4`} />
