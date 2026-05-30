@@ -438,6 +438,7 @@ body.onboarding-active [data-ob-active] {
   --text-muted:      #465265;
   --border:          rgba(255,255,255,0.07);
   --border-strong:   rgba(255,255,255,0.12);
+  --card-border:     rgba(255,255,255,0.07);
   --accent:          #00ccf5;
   --accent-weak:     rgba(0,204,245,0.10);
   --accent-border:   rgba(0,204,245,0.28);
@@ -504,6 +505,7 @@ body.onboarding-active [data-ob-active] {
   --text-muted:      #69727f;
   --border:          rgba(15,30,60,0.10);
   --border-strong:   rgba(15,30,60,0.18);
+  --card-border:     transparent;
   --accent:          #0091c4;
   --accent-weak:     rgba(0,145,196,0.10);
   --accent-border:   rgba(0,145,196,0.30);

@@ -200,7 +200,7 @@ const pageStyle: CSSProperties = {
 
 const panelStyle: CSSProperties = {
   background: 'var(--surface)',
-  border: '1px solid var(--border)',
+  border: '1px solid var(--card-border)',
   borderRadius: 24,
   boxShadow: 'var(--shadow-card)',
   position: 'relative',
