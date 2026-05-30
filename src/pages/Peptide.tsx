@@ -287,7 +287,7 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
 
         {/* Glass body */}
         <rect x={OX} y={OY} width={W} height={H} rx="5"
-          fill="#0a1222" stroke="#1e293b" strokeWidth="2"/>
+          style={{ fill: 'var(--surface-input)', stroke: 'var(--border-strong)' }} strokeWidth="2"/>
 
         {/* Liquid (clipped to glass) */}
         <g clipPath={`url(#${clipId})`}>
@@ -317,7 +317,7 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
 
         {/* Glass rim */}
         <rect x={OX} y={OY} width={W} height={H} rx="5"
-          fill="none" stroke="#2d3f5e" strokeWidth="1.5"/>
+          fill="none" style={{ stroke: 'var(--border-strong)' }} strokeWidth="1.5"/>
         <rect x={OX+1} y={OY+3} width="3" height={H - 8} rx="1.5"
           fill="rgba(255,255,255,0.07)"/>
       </svg>
