@@ -59,8 +59,8 @@ const SWIPE_THRESHOLD_PX = 50
 const SWIPE_TRANSITION = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
 
 const shellStyle: CSSProperties = {
-  background: 'linear-gradient(155deg, rgba(9,14,34,0.96), rgba(4,7,18,0.98))',
-  border: '1px solid rgba(255,255,255,0.10)',
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
   borderRadius: 16,
   boxShadow: '0 16px 48px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.05)',
   position: 'relative',
@@ -235,7 +235,7 @@ function LevelDisplay({
           marginTop: 6,
           fontSize: 11,
           lineHeight: 1.4,
-          color: 'rgba(255,255,255,0.35)',
+          color: 'var(--text-dim)',
         }}
       >
         Geschätzter Wirkstoff in deinem Blut basierend auf deinen Einnahmen.
@@ -332,7 +332,7 @@ function BlutspiegelCard({
           <LiveStatusBar remainingMs={remainingMs} refreshFlashing={refreshFlashing} />
         </div>
 
-        <p style={{ fontSize: '0.9rem', fontWeight: 850, color: '#f8fbff', lineHeight: 1.2, marginBottom: 8 }}>
+        <p style={{ fontSize: '0.9rem', fontWeight: 850, color: 'var(--text)', lineHeight: 1.2, marginBottom: 8 }}>
           {peptideName}
         </p>
 
@@ -377,7 +377,7 @@ function BlutspiegelCard({
           style={{
             marginTop: 8,
             fontSize: 9,
-            color: 'rgba(255,255,255,0.2)',
+            color: 'var(--text-muted)',
             fontFamily: 'monospace',
             textAlign: 'center',
             lineHeight: 1.45,
@@ -570,8 +570,8 @@ export function BlutspiegelCarousel() {
           minHeight: 200,
         }}
       >
-        <Loader2 size={22} color="#00ccf5" className="animate-spin" />
-        <span style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.65)', fontWeight: 700 }}>
+        <Loader2 size={22} color="var(--accent)" className="animate-spin" />
+        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700 }}>
           Live-Spiegel wird berechnet…
         </span>
       </div>
@@ -581,8 +581,8 @@ export function BlutspiegelCarousel() {
   if (!cards.length) {
     return (
       <div style={{ ...shellStyle, padding: 20, textAlign: 'center' }}>
-        <Activity size={28} color="rgba(0,204,245,0.55)" style={{ margin: '0 auto 12px' }} />
-        <p style={{ fontSize: '0.82rem', fontWeight: 750, color: 'rgba(234,238,252,0.88)', lineHeight: 1.5, marginBottom: 14 }}>
+        <Activity size={28} color="var(--accent)" style={{ margin: '0 auto 12px' }} />
+        <p style={{ fontSize: '0.82rem', fontWeight: 750, color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: 14 }}>
           Verknüpfe Peptide mit PK-Profilen um den Live-Spiegel zu sehen
         </p>
         <Link
@@ -593,7 +593,7 @@ export function BlutspiegelCarousel() {
             gap: 6,
             fontSize: '0.72rem',
             fontWeight: 800,
-            color: '#00ccf5',
+            color: 'var(--accent)',
           }}
         >
           Zur Simulation
@@ -671,7 +671,7 @@ export function BlutspiegelCarousel() {
                   borderRadius: 999,
                   border: 'none',
                   padding: 0,
-                  background: active ? card.accent : 'rgba(255,255,255,0.18)',
+                  background: active ? card.accent : 'var(--border)',
                   transition: 'width 0.25s ease, background 0.25s ease',
                   cursor: 'pointer',
                 }}
