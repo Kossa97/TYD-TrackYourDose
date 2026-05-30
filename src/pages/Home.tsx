@@ -15,6 +15,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
+import { findOldestOverdueIntake } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
 import { format, parseISO, subDays } from 'date-fns'
@@ -228,7 +229,7 @@ export function Home() {
   const navigate = useNavigate()
   const [nextIntake,  setNextIntake]  = useState<string | null>(null)
   const [nextSubstance, setNextSubstance] = useState<string | null>(null)
-  const [dueIntake, setDueIntake] = useState<{ time: string; substance: string | null } | null>(null)
+  const [dueIntake, setDueIntake] = useState<{ time: string; substance: string | null; daysOverdue: number } | null>(null)
   const [plannedToday, setPlannedToday] = useState(0)
   const [todayDone,   setTodayDone]   = useState(false)
   const [streak,      setStreak]      = useState(0)
@@ -246,10 +247,10 @@ export function Home() {
       try {
         const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }] = await Promise.all([
           supabase.from('cycles')
-            .select('intake_time, intake_time_custom, peptide_id')
+            .select('intake_time, intake_time_custom, peptide_id, start_date, end_date, frequency, x_days_interval, schedule_days')
             .eq('user_id', user!.id).eq('active', true),
           supabase.from('dose_logs')
-            .select('logged_at')
+            .select('logged_at, peptide_id')
             .eq('user_id', user!.id).eq('taken', true)
             .order('logged_at', { ascending: false }),
           supabase.from('peptides')
@@ -264,11 +265,8 @@ export function Home() {
         const peptideNameById = new Map<string, string>(
           (peptideData ?? []).map((p) => [p.id as string, p.name as string])
         )
-        const loggedTodayCount = (logData ?? []).filter(
-          (l) => format(parseISO(l.logged_at), 'yyyy-MM-dd') === todayKey
-        ).length
         const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
-        const allSlots: { min: number; time: string; substance: string | null }[] = []
+        const todaySlots: { min: number; time: string; substance: string | null }[] = []
         for (const c of cycleData ?? []) {
           const slots   = (c.intake_time ?? '').split(',').filter(Boolean)
           const customs = (c.intake_time_custom ?? '').split(',')
@@ -276,21 +274,19 @@ export function Home() {
             const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
             if (!tm) return
             const [h, m] = tm.split(':').map(Number)
-            allSlots.push({ min: h * 60 + m, time: tm, substance: peptideNameById.get(c.peptide_id as string) ?? null })
+            todaySlots.push({ min: h * 60 + m, time: tm, substance: peptideNameById.get(c.peptide_id as string) ?? null })
           })
         }
-        allSlots.sort((a, b) => a.min - b.min)
-        // Past slots are assumed logged earliest-first; the first unlogged past
-        // slot (index = loggedTodayCount) is the one still due.
-        const pastSlots = allSlots.filter((s) => s.min <= nowMin)
-        const nextSlot  = allSlots.find((s) => s.min > nowMin) ?? null
-        const dueSlot   = loggedTodayCount < pastSlots.length ? pastSlots[loggedTodayCount] : null
+        todaySlots.sort((a, b) => a.min - b.min)
+        const nextSlot = todaySlots.find((s) => s.min > nowMin) ?? null
+        // Oldest unlogged scheduled intake across the past weeks (today included).
+        const overdue = findOldestOverdueIntake(cycleData ?? [], logData ?? [], peptideNameById)
 
-        setPlannedToday(allSlots.length)
+        setPlannedToday(todaySlots.length)
         setNextIntake(nextSlot?.time ?? null)
         setNextSubstance(nextSlot?.substance ?? null)
-        setDueIntake(dueSlot ? { time: dueSlot.time, substance: dueSlot.substance } : null)
-        setTodayDone(allSlots.length > 0 && !nextSlot && !dueSlot)
+        setDueIntake(overdue)
+        setTodayDone(todaySlots.length > 0 && !nextSlot && !overdue)
 
         // ── Streak (consecutive days with ≥1 taken log) ─────────────
         const takenDates = new Set(
@@ -394,6 +390,7 @@ export function Home() {
               time={dueIntake.time}
               substance={dueIntake.substance}
               forceDue
+              daysOverdue={dueIntake.daysOverdue}
               onClick={() => navigate('/kalender#due-intakes')}
             />
           ) : nextIntake ? (
@@ -772,11 +769,13 @@ function NextIntakeBanner({
   substance,
   onClick,
   forceDue = false,
+  daysOverdue = 0,
 }: {
   time: string
   substance: string | null
   onClick: () => void
   forceDue?: boolean
+  daysOverdue?: number
 }) {
   const { t } = useTranslation()
   const [remaining, setRemaining] = useState(() => msUntilTime(time))
@@ -822,8 +821,13 @@ function NextIntakeBanner({
             {fmtCountdown(remaining)}
           </p>
         )}
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {substance ? `${substance} · ${t('home_at_time', { defaultValue: 'um' })} ${time}` : `${t('home_at_time', { defaultValue: 'um' })} ${time}`}
+        <p style={{ fontSize: '0.7rem', color: due && daysOverdue >= 1 ? c : 'var(--text-muted)', fontWeight: due && daysOverdue >= 1 ? 700 : 400, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {(() => {
+            const when = due && daysOverdue >= 1
+              ? t('home_overdue_days', { days: daysOverdue, defaultValue: `seit ${daysOverdue} ${daysOverdue === 1 ? 'Tag' : 'Tagen'} überfällig` })
+              : `${t('home_at_time', { defaultValue: 'um' })} ${time}`
+            return substance ? `${substance} · ${when}` : when
+          })()}
         </p>
       </div>
     </button>
