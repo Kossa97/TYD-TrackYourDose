@@ -72,8 +72,8 @@ export function GlassPanel({
         padding: paddingMap[padding],
         borderRadius: 24,
         border: `1px solid ${accentAlpha(accent, '18')}`,
-        background: 'linear-gradient(145deg, rgba(9,14,34,0.94), rgba(4,7,18,0.96))',
-        boxShadow: '0 18px 60px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.05)',
+        background: 'var(--surface)',
+        boxShadow: 'var(--shadow-card)',
         position: 'relative',
         overflow: 'hidden',
         ...style,
@@ -156,14 +156,14 @@ export function PageHero({
                 fontSize: '1.72rem',
                 fontWeight: 900,
                 letterSpacing: '-0.045em',
-                color: '#f8fbff',
+                color: 'var(--text)',
                 lineHeight: 1.05,
               }}
             >
               {title}
             </h1>
             {subtitle && (
-              <p style={{ fontSize: '0.82rem', color: 'rgba(213,224,242,0.70)', lineHeight: 1.55, marginTop: 8 }}>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)', lineHeight: 1.55, marginTop: 8 }}>
                 {subtitle}
               </p>
             )}
@@ -203,7 +203,7 @@ export function SectionHeader({
               fontWeight: 850,
               letterSpacing: '0.13em',
               textTransform: 'uppercase',
-              color: 'rgba(154,170,191,0.52)',
+              color: 'var(--text-muted)',
             }}
           >
             {kicker}
@@ -211,10 +211,10 @@ export function SectionHeader({
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: kicker ? 2 : 0 }}>
           {Icon && <Icon size={17} color={accent} />}
-          <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', lineHeight: 1.25 }}>{title}</h2>
+          <h2 style={{ fontSize: '1rem', fontWeight: 850, color: 'var(--text)', lineHeight: 1.25 }}>{title}</h2>
         </div>
         {subtitle && (
-          <p style={{ fontSize: '0.7rem', color: 'rgba(154,170,191,0.58)', marginTop: 3, lineHeight: 1.45 }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 3, lineHeight: 1.45 }}>
             {subtitle}
           </p>
         )}
@@ -244,13 +244,13 @@ export function MetricCard({
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
         <IconBadge icon={icon} accent={accent} size={36} />
       </div>
-      <p style={{ fontSize: '1.5rem', fontWeight: 900, color: '#f8fbff', letterSpacing: '-0.04em', lineHeight: 1, marginTop: 13 }}>
+      <p style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.04em', lineHeight: 1, marginTop: 13 }}>
         {value}
       </p>
-      <p style={{ fontSize: '0.72rem', color: 'rgba(234,238,252,0.82)', fontWeight: 760, marginTop: 5 }}>
+      <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', fontWeight: 760, marginTop: 5 }}>
         {label}
       </p>
-      {hint && <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.50)', marginTop: 2 }}>{hint}</p>}
+      {hint && <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginTop: 2 }}>{hint}</p>}
     </GlassPanel>
   )
 }
@@ -272,7 +272,7 @@ export function ResearchDisclaimer({
         padding: compact ? '10px 12px' : '14px 16px',
         borderRadius: compact ? 16 : 20,
         border: `1px solid ${accentAlpha(accent, '33')}`,
-        background: `linear-gradient(145deg, ${accentAlpha(accent, '12')}, rgba(8,11,26,0.92))`,
+        background: `linear-gradient(145deg, ${accentAlpha(accent, '12')}, var(--surface))`,
       }}
     >
       <p
@@ -287,7 +287,7 @@ export function ResearchDisclaimer({
       >
         {title}
       </p>
-      <p style={{ fontSize: compact ? '0.72rem' : '0.78rem', color: 'rgba(213,224,242,0.72)', lineHeight: 1.5 }}>
+      <p style={{ fontSize: compact ? '0.72rem' : '0.78rem', color: 'var(--text-dim)', lineHeight: 1.5 }}>
         {body}
       </p>
     </div>
@@ -371,7 +371,7 @@ export function ActionTile({
         padding: '12px 10px',
         borderRadius: 20,
         border: `1px solid ${accentAlpha(accent, '33')}`,
-        background: `linear-gradient(155deg, ${accentAlpha(accent, '20')}, rgba(8,12,30,0.88))`,
+        background: `linear-gradient(155deg, ${accentAlpha(accent, '20')}, var(--surface))`,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
@@ -383,9 +383,9 @@ export function ActionTile({
     >
       <IconBadge icon={icon} accent={accent} size={34} />
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <p style={{ fontSize: '0.78rem', fontWeight: 850, color: '#f8fbff', lineHeight: 1.16 }}>{label}</p>
+        <p style={{ fontSize: '0.78rem', fontWeight: 850, color: 'var(--text)', lineHeight: 1.16 }}>{label}</p>
         {description && (
-          <p style={{ fontSize: '0.61rem', color: 'rgba(213,224,242,0.58)', lineHeight: 1.32, marginTop: 3 }}>
+          <p style={{ fontSize: '0.61rem', color: 'var(--text-dim)', lineHeight: 1.32, marginTop: 3 }}>
             {description}
           </p>
         )}

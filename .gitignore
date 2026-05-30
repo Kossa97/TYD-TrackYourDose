@@ -27,3 +27,6 @@ src/i18n/faq/data/translation-cache.json
 *.sw?
 
 .vercel
+
+# Superpowers brainstorm mockups (visual companion)
+.superpowers/

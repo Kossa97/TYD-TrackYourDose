@@ -9,7 +9,7 @@ import {
   CalendarDays, ChevronDown, ChevronUp,
   TrendingUp, Search, Bell, Check,
   Package, FileUp, Droplets, X, FileText, ExternalLink,
-  Archive, RefreshCw,
+  Archive, RefreshCw, Sunrise, Sun, Moon, Clock, type LucideIcon,
 } from 'lucide-react'
 import { getPeptideColor } from '../lib/peptideColors'
 import { useNew } from '../lib/useNew'
@@ -111,10 +111,10 @@ const FREQ_KEYS: Record<string,string> = {
   'Alle X Tage':'freq_alle_x','Wochentage wählen':'freq_wochentage',
 }
 const INTAKE_TIME_CONFIG = {
-  morgens: { labelKey: 'morgens', emoji: '🌅', time: '08:00' },
-  mittags: { labelKey: 'mittags', emoji: '☀️',  time: '12:00' },
-  abends:  { labelKey: 'abends',  emoji: '🌙', time: '20:00' },
-  custom:  { labelKey: 'uhrzeit_label', emoji: '🕐', time: '' },
+  morgens: { labelKey: 'morgens', icon: Sunrise, time: '08:00' },
+  mittags: { labelKey: 'mittags', icon: Sun,  time: '12:00' },
+  abends:  { labelKey: 'abends',  icon: Moon, time: '20:00' },
+  custom:  { labelKey: 'uhrzeit_label', icon: Clock, time: '' },
 } as const
 const REMINDER_OPTIONS = [
   { value: '1day',    labelKey: 'reminder_1day' },
@@ -1006,7 +1006,7 @@ export function Peptide() {
                                   <span className="font-medium text-slate-300">{c.dose} {c.unit}</span>
                                   <span>{t(METHOD_KEYS[c.method] ?? c.method)}</span>
                                   <span>{freqLabel(c)}</span>
-                                  {(() => { const lbl = intakeLabel(c); const firstKey = c.intake_time?.split(',')[0] ?? ''; return lbl ? <span className="text-amber-400">{(INTAKE_TIME_CONFIG as Record<string,{emoji:string}>)[firstKey]?.emoji ?? '🕐'} {lbl}</span> : null })()}
+                                  {(() => { const lbl = intakeLabel(c); const firstKey = c.intake_time?.split(',')[0] ?? ''; const SlotIcon = (INTAKE_TIME_CONFIG as Record<string,{icon:LucideIcon}>)[firstKey]?.icon ?? Clock; return lbl ? <span className="text-amber-400 inline-flex items-center gap-1"><SlotIcon size={12} /> {lbl}</span> : null })()}
                                   <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
                                   {c.end_date && <span>{t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}</span>}
                                 </div>
@@ -1111,9 +1111,9 @@ export function Peptide() {
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <label className="label mb-0">{t('peptidname_star')}</label>
                   {pForm.pk_profile_id && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                      style={{ color: '#00ccf5', background: 'rgba(0,204,245,0.12)', border: '1px solid rgba(0,204,245,0.28)' }}>
-                      ✓ PK-Profil verknüpft
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+                      style={{ color: 'var(--accent)', background: 'var(--accent-weak)', border: '1px solid var(--accent-border)' }}>
+                      <Check size={11} /> PK-Profil verknüpft
                     </span>
                   )}
                 </div>
@@ -1485,7 +1485,7 @@ export function Peptide() {
                     </p>
                   )}
                   <div className="grid grid-cols-4 gap-2">
-                    {(Object.entries(INTAKE_TIME_CONFIG) as [string, { labelKey: string; emoji: string }][]).map(([key, cfg]) => {
+                    {(Object.entries(INTAKE_TIME_CONFIG) as [string, { labelKey: string; icon: LucideIcon }][]).map(([key, cfg]) => {
                       const isActive = cForm.intake_times[slotIdx] === key
                       return (
                         <button key={key} type="button"
@@ -1500,7 +1500,7 @@ export function Peptide() {
                           className={`py-2.5 rounded-xl text-xs font-medium transition-colors flex flex-col items-center gap-1 ${
                             isActive ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                           }`}>
-                          <span className="text-base">{cfg.emoji}</span>
+                          <cfg.icon size={18} />
                           {t(cfg.labelKey)}
                         </button>
                       )
@@ -1743,7 +1743,7 @@ export function Peptide() {
         return (
           <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
             onClick={() => setInfoPeptide(null)}>
-            <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg overflow-y-auto max-h-[90vh]"
+            <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg overflow-y-auto max-h-[90vh] motion-fade-up"
               onClick={e => e.stopPropagation()}>
 
               <div className="sticky top-0 bg-slate-900 border-b border-slate-800 px-5 py-4 flex items-center justify-between z-10">
@@ -1756,7 +1756,7 @@ export function Peptide() {
                 </button>
               </div>
 
-              <div className="px-5 py-4 space-y-4">
+              <div className="px-5 py-4 space-y-4 stagger-in">
 
                 {/* Inventar-Verknüpfung */}
                 {invItem && (
@@ -1770,13 +1770,13 @@ export function Peptide() {
                 <div>
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('dosierung_section')}</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-slate-800/60 rounded-xl p-3">
+                    <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                       <p className="text-slate-400 text-xs">{t('standard_dosis_label')}</p>
                       <p className="text-white font-semibold mt-0.5">
                         {p.default_dose ? `${p.default_dose} ${p.default_unit}` : '—'}
                       </p>
                     </div>
-                    <div className="bg-slate-800/60 rounded-xl p-3">
+                    <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                       <p className="text-slate-400 text-xs">{t('applikation_info')}</p>
                       <p className="text-white font-semibold mt-0.5">{t(METHOD_KEYS[p.default_method] ?? p.default_method)}</p>
                     </div>
@@ -1789,19 +1789,19 @@ export function Peptide() {
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('wirkstoff_rekonstitution')}</p>
                     <div className="grid grid-cols-3 gap-2">
                       {p.vial_amount_mg && (
-                        <div className="bg-slate-800/60 rounded-xl p-3 text-center">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3 text-center">
                           <p className="text-sky-400 text-base font-bold">{p.vial_amount_mg}</p>
                           <p className="text-slate-500 text-xs mt-0.5">mg / Vial</p>
                         </div>
                       )}
                       {p.reconstitution_ml && (
-                        <div className="bg-slate-800/60 rounded-xl p-3 text-center">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3 text-center">
                           <p className="text-sky-400 text-base font-bold">{p.reconstitution_ml}</p>
                           <p className="text-slate-500 text-xs mt-0.5">{t('ml_fluessigkeit')}</p>
                         </div>
                       )}
                       {syringeMl && syringeUnits && (
-                        <div className="bg-slate-800/60 rounded-xl p-3 text-center">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3 text-center">
                           <p className="text-sky-400 text-base font-bold">{syringeMl} mL</p>
                           <p className="text-slate-500 text-xs mt-0.5">{syringeUnits} {t('einh_kurz')}</p>
                         </div>
@@ -1816,13 +1816,13 @@ export function Peptide() {
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('haltbarkeit_section_info')}</p>
                     <div className="grid grid-cols-2 gap-2">
                       {p.reconstitution_date && (
-                        <div className="bg-slate-800/60 rounded-xl p-3">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                           <p className="text-slate-400 text-xs">{t('datum_rekonstitution')}</p>
                           <p className="text-white font-semibold mt-0.5">{format(parseISO(p.reconstitution_date), 'dd.MM.yyyy')}</p>
                         </div>
                       )}
                       {expiryDate && expiryDays !== null && (
-                        <div className="bg-slate-800/60 rounded-xl p-3">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                           <p className="text-slate-400 text-xs">{t('ablauf_label')}</p>
                           <p className={`font-semibold mt-0.5 ${expiryDays > 7 ? 'text-emerald-400' : expiryDays > 0 ? 'text-amber-400' : 'text-red-400'}`}>
                             {expiryDate}
@@ -1840,7 +1840,7 @@ export function Peptide() {
                 {(p.vials_in_stock !== null || p.vials_initial) && (
                   <div>
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('bestand_section')}</p>
-                    <div className="bg-slate-800/60 rounded-xl p-3">
+                    <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-white font-semibold">{p.vials_in_stock ?? 0} Vials</span>
                         {(p.vials_initial ?? 0) > 0 && (
@@ -1870,13 +1870,13 @@ export function Peptide() {
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('batch_herkunft_section')}</p>
                     <div className="grid grid-cols-2 gap-2">
                       {p.batch_number && (
-                        <div className="bg-slate-800/60 rounded-xl p-3">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                           <p className="text-slate-400 text-xs">{t('batch')}</p>
                           <p className="text-white font-medium mt-0.5 text-sm">{p.batch_number}</p>
                         </div>
                       )}
                       {p.batch_source && (
-                        <div className="bg-slate-800/60 rounded-xl p-3">
+                        <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                           <p className="text-slate-400 text-xs">{t('quelle')}</p>
                           <p className="text-white font-medium mt-0.5 text-sm">{p.batch_source}</p>
                         </div>
@@ -1919,7 +1919,7 @@ export function Peptide() {
                 {p.notes && (
                   <div>
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('notizen_section')}</p>
-                    <p className="text-slate-300 text-sm bg-slate-800/60 rounded-xl px-4 py-3 whitespace-pre-wrap">{p.notes}</p>
+                    <p className="text-slate-300 text-sm bg-slate-800/60 border border-slate-800 rounded-xl px-4 py-3 whitespace-pre-wrap">{p.notes}</p>
                   </div>
                 )}
 
@@ -1932,9 +1932,9 @@ export function Peptide() {
                     }}
                     className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-colors"
                     style={{
-                      color: '#00ccf5',
-                      background: 'rgba(0,204,245,0.12)',
-                      border: '1px solid rgba(0,204,245,0.32)',
+                      color: 'var(--accent)',
+                      background: 'var(--accent-weak)',
+                      border: '1px solid var(--accent-border)',
                     }}
                   >
                     <Activity size={16} />
