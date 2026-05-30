@@ -807,26 +807,24 @@ export function Peptide() {
   return (
     <div>
       {/* ── Header + Aktions-Button ─────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <FlaskConical size={16} className="text-sky-400" />
-          <h2 className="font-semibold text-white">{t('meine_peptide')}</h2>
-          {peptides.length > 0 && (
-            <span className="badge bg-slate-700 text-slate-400">{peptides.length}</span>
-          )}
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <FlaskConical size={16} className="text-sky-400" />
+            <h2 className="font-semibold text-white">{t('meine_peptide')}</h2>
+            {peptides.length > 0 && (
+              <span className="badge bg-slate-700 text-slate-400">{peptides.length}</span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500 mt-1">{t('fertig_rekonst')}</p>
         </div>
-        <button className="btn-primary flex items-center gap-1.5 text-sm py-2" onClick={handleNewPeptide}>
+        <button className="btn-primary flex items-center gap-1.5 text-sm py-2 shrink-0" onClick={handleNewPeptide}>
           <Plus size={15} /> {t('new')}
         </button>
       </div>
 
       {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
       <div>
-          <p className="text-xs text-slate-500 mb-3 flex items-center gap-1.5">
-            <FlaskConical size={12} className="text-sky-400" />
-            {t('fertig_rekonst')}
-          </p>
-
           {peptides.length > 0 && (
             <div className="flex gap-2 mb-4">
               <div className="relative flex-1">
