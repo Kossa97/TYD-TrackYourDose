@@ -85,8 +85,8 @@ function idealWeightRange(heightCm: number, gender: string): { min: number; max:
 }
 
 const cardStyle = {
-  background: 'rgba(10,14,30,0.85)',
-  border: '1px solid rgba(255,255,255,0.06)',
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
 }
 
 // ─── Sparkline ───────────────────────────────────────────────────────────────
@@ -126,7 +126,7 @@ function WeightSparkline({ entries }: { entries: WeightLog[] }) {
       <polyline points={points} fill="none" stroke="url(#weightLine)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
       {points.split(' ').map(point => {
         const [x, y] = point.split(',')
-        return <circle key={point} cx={x} cy={y} r="3.5" fill="#07091a" stroke="#00ccf5" strokeWidth="2" />
+        return <circle key={point} cx={x} cy={y} r="3.5" fill="var(--surface)" stroke="var(--accent)" strokeWidth="2" />
       })}
     </svg>
   )
@@ -325,7 +325,7 @@ export function Health() {
           </div>
           <button
             className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
-            style={{ background: '#00ccf5', color: '#00111f', boxShadow: '0 0 24px rgba(0,204,245,0.25)' }}
+            style={{ background: 'var(--accent)', color: 'var(--accent-contrast)', boxShadow: '0 0 24px rgba(0,204,245,0.25)' }}
             onClick={() => { setWeightForm({ logged_at: todayStr(), weight_kg: latestWeight ? String(latestWeight.weight_kg) : '' }); setShowWeightForm(true) }}
           >
             <Plus size={22} strokeWidth={3} />
@@ -382,7 +382,7 @@ export function Health() {
           />
 
           {/* BMI */}
-          <div className="rounded-2xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="rounded-2xl p-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <p className="text-[0.62rem] font-bold uppercase tracking-[0.08em] text-slate-500 mb-1">BMI</p>
             {bmi && bmiInfo ? (
               <>
@@ -517,9 +517,9 @@ export function Health() {
 
 function StatCell({ label, value, color, note }: { label: string; value: string; color: string; note?: string }) {
   return (
-    <div className="rounded-2xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+    <div className="rounded-2xl p-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
       <p className="text-[0.62rem] font-bold uppercase tracking-[0.08em] text-slate-500 mb-1">{label}</p>
-      <p className="text-xl font-black leading-tight" style={{ color: value === '—' ? 'rgba(100,116,139,0.6)' : 'white' }}>{value}</p>
+      <p className="text-xl font-black leading-tight" style={{ color: value === '—' ? 'var(--text-muted)' : 'var(--text)' }}>{value}</p>
       {note && <p className="text-[0.58rem] text-slate-600 mt-0.5">{note}</p>}
     </div>
   )
@@ -530,7 +530,7 @@ function QuickLink({ to, icon, bg, border, title, sub }: {
 }) {
   return (
     <Link to={to} className="rounded-2xl p-4 flex items-center justify-between gap-3 transition-opacity hover:opacity-85"
-      style={{ background: 'rgba(10,14,30,0.85)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
           style={{ background: bg, border: `1px solid ${border}` }}>
