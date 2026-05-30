@@ -9,7 +9,7 @@ import {
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, ChevronRight, X, RotateCcw } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, X, RotateCcw } from 'lucide-react'
 import { useOnboarding } from '../context/OnboardingContext'
 import { ONBOARDING_STEPS, ONBOARDING_TOUR_STEP_COUNT } from './onboardingSteps'
 import { OB_Z } from './onboardingLayers'
@@ -519,7 +519,7 @@ export function Onboarding() {
           boxShadow: '0 0 18px rgba(0,204,245,0.5)',
         }}
       >
-        ✓
+        <Check size={20} />
       </button>,
       document.body,
     )
