@@ -227,6 +227,8 @@ export function Home() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [nextIntake,  setNextIntake]  = useState<string | null>(null)
+  const [nextSubstance, setNextSubstance] = useState<string | null>(null)
+  const [plannedToday, setPlannedToday] = useState(0)
   const [todayDone,   setTodayDone]   = useState(false)
   const [streak,      setStreak]      = useState(0)
   const [overview, setOverview] = useState<OverviewStats>(EMPTY_OVERVIEW)
@@ -243,7 +245,7 @@ export function Home() {
       try {
         const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }] = await Promise.all([
           supabase.from('cycles')
-            .select('intake_time, intake_time_custom')
+            .select('intake_time, intake_time_custom, peptide_id')
             .eq('user_id', user!.id).eq('active', true),
           supabase.from('dose_logs')
             .select('logged_at')
@@ -258,20 +260,30 @@ export function Home() {
         ])
 
         // ── Next intake time ─────────────────────────────────────────
+        const peptideNameById = new Map<string, string>(
+          (peptideData ?? []).map((p) => [p.id as string, p.name as string])
+        )
         const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
-        let bestMin = Infinity, bestTime = ''
+        let bestMin = Infinity, bestTime = '', bestSubstance: string | null = null
+        let planned = 0
         for (const c of cycleData ?? []) {
           const slots   = (c.intake_time ?? '').split(',').filter(Boolean)
           const customs = (c.intake_time_custom ?? '').split(',')
+          planned += slots.length
           slots.forEach((slot: string, i: number) => {
             const t = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
             if (!t) return
             const [h, m] = t.split(':').map(Number)
             const min = h * 60 + m
-            if (min > nowMin && min < bestMin) { bestMin = min; bestTime = t }
+            if (min > nowMin && min < bestMin) {
+              bestMin = min; bestTime = t
+              bestSubstance = peptideNameById.get(c.peptide_id as string) ?? null
+            }
           })
         }
         setNextIntake(bestTime || null)
+        setNextSubstance(bestSubstance)
+        setPlannedToday(planned)
         setTodayDone(!bestTime && (cycleData ?? []).length > 0)
 
         // ── Streak (consecutive days with ≥1 taken log) ─────────────
@@ -312,8 +324,8 @@ export function Home() {
     : nextIntake
       ? `${t('stat_next_intake')}: ${nextIntake}`
       : t('home_status_empty', { defaultValue: 'Kein aktiver Plan' })
-  const completionLevel = overview.activeCycles > 0
-    ? Math.min(100, Math.round((overview.loggedToday / Math.max(overview.activeCycles, 1)) * 100))
+  const completionLevel = plannedToday > 0
+    ? Math.min(100, Math.round((overview.loggedToday / plannedToday) * 100))
     : 0
 
   return (
@@ -354,14 +366,7 @@ export function Home() {
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <HeroStat
-              icon={Clock3}
-              label={String(t('stat_next_intake'))}
-              value={todayDone ? <CheckCircle2 size={26} /> : (nextIntake ?? '–')}
-              hint={String(todayDone ? t('stat_today_done') : t('home_next_hint', { defaultValue: 'Heute im Plan' }))}
-              accent={todayDone ? '#10b981' : '#00ccf5'}
-            />
+          <div className="grid grid-cols-2 gap-2">
             <HeroStat
               icon={Flame}
               label="Streak"
@@ -371,33 +376,41 @@ export function Home() {
             />
             <HeroStat
               icon={Activity}
-              label={String(t('home_completion', { defaultValue: 'Heute' }))}
+              label={String(t('home_completion', { defaultValue: 'Heute erledigt' }))}
               value={`${completionLevel}%`}
-              hint={String(t('home_completion_hint', { defaultValue: 'erledigt' }))}
+              hint={`${overview.loggedToday}/${plannedToday} ${t('home_completion_unit', { defaultValue: 'Einnahmen geloggt' })}`}
               accent="#8b5cf6"
             />
           </div>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '10px 12px',
-            borderRadius: 18,
-            background: todayDone ? 'rgba(16,185,129,0.10)' : 'var(--accent-weak)',
-            border: todayDone ? '1px solid rgba(16,185,129,0.22)' : '1px solid var(--accent-border)',
-          }}>
-            <ShieldCheck size={18} color={todayDone ? '#10b981' : 'var(--accent)'} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1.2 }}>
-                {statusLabel}
-              </p>
-              <p style={{ fontSize: '0.66rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                {t('home_status_hint', { defaultValue: 'Schnellzugriff auf die wichtigsten Schritte.' })}
-              </p>
+          {nextIntake ? (
+            <NextIntakeBanner
+              time={nextIntake}
+              substance={nextSubstance}
+              onClick={() => navigate('/kalender#due-intakes')}
+            />
+          ) : (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 12px',
+              borderRadius: 18,
+              background: todayDone ? 'rgba(16,185,129,0.10)' : 'var(--accent-weak)',
+              border: todayDone ? '1px solid rgba(16,185,129,0.22)' : '1px solid var(--accent-border)',
+            }}>
+              <ShieldCheck size={18} color={todayDone ? '#10b981' : 'var(--accent)'} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1.2 }}>
+                  {statusLabel}
+                </p>
+                <p style={{ fontSize: '0.66rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  {t('home_status_hint', { defaultValue: 'Schnellzugriff auf die wichtigsten Schritte.' })}
+                </p>
+              </div>
+              <ChevronRight size={16} color="var(--text-muted)" />
             </div>
-            <ChevronRight size={16} color="var(--text-muted)" />
-          </div>
+          )}
         </div>
       </section>
 
@@ -721,6 +734,72 @@ function InsightCard({
         {hint}
       </p>
       <div style={{ position: 'absolute', right: -24, bottom: -28, width: 86, height: 86, borderRadius: '50%', background: accent, opacity: 0.06, filter: 'blur(16px)' }} />
+    </button>
+  )
+}
+
+function fmtCountdown(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(h)}:${pad(m)}:${pad(s)}`
+}
+
+function msUntilTime(time: string): number {
+  const [h, m] = time.split(':').map(Number)
+  const target = new Date()
+  target.setHours(h, m, 0, 0)
+  return target.getTime() - Date.now()
+}
+
+function NextIntakeBanner({
+  time,
+  substance,
+  onClick,
+}: {
+  time: string
+  substance: string | null
+  onClick: () => void
+}) {
+  const { t } = useTranslation()
+  const [remaining, setRemaining] = useState(() => msUntilTime(time))
+  useEffect(() => {
+    const id = setInterval(() => setRemaining(msUntilTime(time)), 1000)
+    return () => clearInterval(id)
+  }, [time])
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="motion-press"
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', cursor: 'pointer',
+        padding: '12px 14px', borderRadius: 18,
+        background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
+      }}
+    >
+      <div style={{
+        width: 42, height: 42, borderRadius: 14, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'var(--accent-weak)', color: 'var(--accent)', border: '1px solid var(--accent-border)',
+      }}>
+        <Clock3 size={20} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ ...labelStyle, color: 'var(--accent)', marginBottom: 3 }}>
+          {t('stat_next_intake', { defaultValue: 'Nächste Einnahme' })}
+        </p>
+        <p style={{ fontFamily: 'monospace', fontSize: '1.2rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1, letterSpacing: '0.02em' }}>
+          {fmtCountdown(remaining)}
+        </p>
+        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {substance ? `${substance} · ${t('home_at_time', { defaultValue: 'um' })} ${time}` : `${t('home_at_time', { defaultValue: 'um' })} ${time}`}
+        </p>
+      </div>
+      <ChevronRight size={16} color="var(--text-muted)" style={{ flexShrink: 0 }} />
     </button>
   )
 }
