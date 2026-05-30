@@ -71,21 +71,21 @@ export function LabStats({ chartData, chartLoading, totalFound }: LabStatsProps)
               type="category"
               dataKey="name"
               width={72}
-              tick={{ fill: '#465265', fontSize: 10, fontFamily: 'inherit' }}
+              tick={{ fill: 'var(--text-muted)', fontSize: 10, fontFamily: 'inherit' }}
               tickLine={false}
               axisLine={false}
             />
             <Tooltip
-              cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+              cursor={{ fill: 'var(--border)' }}
               contentStyle={{
-                background: '#0e1428',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
                 borderRadius: 8,
                 fontSize: 11,
                 padding: '6px 10px',
               }}
-              itemStyle={{ color: '#9aaabf' }}
-              labelStyle={{ color: '#eaeefc', fontWeight: 700 }}
+              itemStyle={{ color: 'var(--text-muted)' }}
+              labelStyle={{ color: 'var(--text)', fontWeight: 700 }}
               formatter={(value) => [`${Number(value).toLocaleString('de-DE')} Studien`, '']}
             />
             <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={12}>

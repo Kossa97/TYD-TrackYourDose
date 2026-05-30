@@ -245,7 +245,7 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
   const fillH   = Math.max(4, (pct / 100) * H)
   const surfaceY = OY + (H - fillH)   // top of liquid in absolute SVG coords
 
-  const wW = W * 2, wH = 4.5
+  const wW = W * 2, wH = 3.5
   const wp = `M0,${wH/2} C${wW*.25},0 ${wW*.25},${wH} ${wW*.5},${wH/2} C${wW*.75},0 ${wW*.75},${wH} ${wW},${wH/2} L${wW},${wH} L0,${wH} Z`
 
   const clipId    = `vc${uid}`
@@ -268,11 +268,11 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
           <style>{`
             @keyframes ${waveId} {
               from { transform: translateX(0) }
-              to   { transform: translateX(-50%) }
+              to   { transform: translateX(-${W}px) }
             }
             @keyframes ${breatheId} {
               0%, 100% { transform: translateY(0px) }
-              50%       { transform: translateY(-2px) }
+              50%       { transform: translateY(-1px) }
             }
             @media (prefers-reduced-motion: reduce) {
               .vd-wave-${uid}, .vd-breathe-${uid} { animation: none !important; }
@@ -287,7 +287,7 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
 
         {/* Glass body */}
         <rect x={OX} y={OY} width={W} height={H} rx="5"
-          fill="#0a1222" stroke="#1e293b" strokeWidth="2"/>
+          style={{ fill: 'var(--surface-input)', stroke: 'var(--border-strong)' }} strokeWidth="2"/>
 
         {/* Liquid (clipped to glass) */}
         <g clipPath={`url(#${clipId})`}>
@@ -301,7 +301,7 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
             fill={color} fillOpacity="0.55"/>
 
           {/* Wave: positioned at surface, breathing vertically */}
-          <g style={{ transform: `translate(${OX}px, ${surfaceY - wH + 1}px)` }}>
+          <g style={{ transform: `translate(${OX}px, ${Math.max(OY, surfaceY - wH + 1)}px)` }}>
             <g className={`vd-breathe-${uid}`}
               style={{ animation: `${breatheId} 3s ease-in-out infinite` }}>
               <path className={`vd-wave-${uid}`} d={wp}
@@ -317,7 +317,7 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
 
         {/* Glass rim */}
         <rect x={OX} y={OY} width={W} height={H} rx="5"
-          fill="none" stroke="#2d3f5e" strokeWidth="1.5"/>
+          fill="none" style={{ stroke: 'var(--border-strong)' }} strokeWidth="1.5"/>
         <rect x={OX+1} y={OY+3} width="3" height={H - 8} rx="1.5"
           fill="rgba(255,255,255,0.07)"/>
       </svg>
@@ -807,26 +807,24 @@ export function Peptide() {
   return (
     <div>
       {/* ── Header + Aktions-Button ─────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <FlaskConical size={16} className="text-sky-400" />
-          <h2 className="font-semibold text-white">{t('meine_peptide')}</h2>
-          {peptides.length > 0 && (
-            <span className="badge bg-slate-700 text-slate-400">{peptides.length}</span>
-          )}
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <FlaskConical size={16} className="text-sky-400" />
+            <h2 className="font-semibold text-white">{t('meine_peptide')}</h2>
+            {peptides.length > 0 && (
+              <span className="badge bg-slate-700 text-slate-400">{peptides.length}</span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500 mt-1">{t('fertig_rekonst')}</p>
         </div>
-        <button className="btn-primary flex items-center gap-1.5 text-sm py-2" onClick={handleNewPeptide}>
+        <button className="btn-primary flex items-center gap-1.5 text-sm py-2 shrink-0" onClick={handleNewPeptide}>
           <Plus size={15} /> {t('new')}
         </button>
       </div>
 
       {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
       <div>
-          <p className="text-xs text-slate-500 mb-3 flex items-center gap-1.5">
-            <FlaskConical size={12} className="text-sky-400" />
-            {t('fertig_rekonst')}
-          </p>
-
           {peptides.length > 0 && (
             <div className="flex gap-2 mb-4">
               <div className="relative flex-1">

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Languages, ChevronRight } from 'lucide-react'
+import { Check, Languages, ChevronRight } from 'lucide-react'
 import { LANGUAGES, applyDirection } from '../i18n'
 import { useOnboarding } from '../context/OnboardingContext'
 
@@ -19,8 +19,8 @@ export function LanguageGate() {
   if (!needsLanguagePick) return null
 
   const panelStyle: React.CSSProperties = {
-    background: 'rgba(5, 6, 18, 0.98)',
-    border: '1px solid rgba(0, 204, 245, 0.18)',
+    background: 'var(--surface)',
+    border: '1px solid var(--accent-weak)',
     borderRadius: 20,
     padding: '22px 18px 18px',
     boxShadow: '0 -4px 40px rgba(0,0,0,0.7), 0 0 40px rgba(0,204,245,0.06)',
@@ -36,12 +36,12 @@ export function LanguageGate() {
       }}
     >
       <div className="w-full max-w-md" style={panelStyle}>
-        <div className="flex items-center justify-center mb-2" style={{ color: 'rgba(0,204,245,0.85)' }}>
+        <div className="flex items-center justify-center mb-2" style={{ color: 'var(--accent)' }}>
           <Languages size={20} />
         </div>
         <h1
           className="text-center font-bold mb-1"
-          style={{ fontSize: '1.15rem', color: '#eaeefc', letterSpacing: '-0.02em' }}
+          style={{ fontSize: '1.15rem', color: 'var(--text-dim)', letterSpacing: '-0.02em' }}
         >
           {t('lang_gate_title')}
         </h1>
@@ -55,7 +55,7 @@ export function LanguageGate() {
         <div
           className="rounded-xl overflow-hidden mb-4"
           style={{
-            border: '1px solid rgba(255,255,255,0.07)',
+            border: '1px solid var(--border)',
             background: 'rgba(8,10,24,0.98)',
             maxHeight: 'min(52vh, 360px)',
             overflowY: 'auto',
@@ -80,9 +80,9 @@ export function LanguageGate() {
                   padding: '12px 16px',
                   textAlign: 'start',
                   cursor: 'pointer',
-                  borderBottom: '1px solid rgba(255,255,255,0.04)',
-                  background: isSelected ? 'rgba(0,204,245,0.10)' : 'transparent',
-                  color: isSelected ? '#00ccf5' : 'rgba(200,215,235,0.85)',
+                  borderBottom: '1px solid var(--border)',
+                  background: isSelected ? 'var(--accent-weak)' : 'transparent',
+                  color: isSelected ? 'var(--accent)' : 'rgba(200,215,235,0.85)',
                   fontWeight: isSelected ? 700 : 400,
                   fontSize: '0.9rem',
                 }}
@@ -90,8 +90,8 @@ export function LanguageGate() {
                 <span style={{ fontSize: 20 }}>{lang.flag}</span>
                 <span>{lang.name}</span>
                 {isSelected && (
-                  <span style={{ marginInlineStart: 'auto', fontSize: '0.7rem', color: 'rgba(0,204,245,0.7)' }}>
-                    ✓
+                  <span style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', color: 'var(--accent)' }}>
+                    <Check size={14} />
                   </span>
                 )}
               </button>
@@ -111,7 +111,7 @@ export function LanguageGate() {
             padding: '12px 18px',
             borderRadius: 12,
             background: 'linear-gradient(135deg, #00ccf5, #0088dd)',
-            border: '1px solid rgba(0,204,245,0.35)',
+            border: '1px solid var(--accent-border)',
             color: '#07091a',
             fontWeight: 700,
             fontSize: '0.9rem',

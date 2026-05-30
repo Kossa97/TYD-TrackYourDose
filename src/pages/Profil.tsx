@@ -413,23 +413,23 @@ function PushSettings() {
     subscribed:          'Aktiv ✓',
   }
   const stateColors: Record<string, string> = {
-    loading:             'rgba(154,170,191,0.5)',
-    unsupported:         'rgba(154,170,191,0.5)',
+    loading:             'var(--text-muted)',
+    unsupported:         'var(--text-muted)',
     'ios-needs-install': '#f59e0b',
     'ios-native-app':    '#f59e0b',
     denied:              '#f43f5e',
-    default:             'rgba(154,170,191,0.5)',
+    default:             'var(--text-muted)',
     subscribed:          '#10b981',
   }
 
   return (
     <div style={{ marginTop: 16 }}>
-      <p style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.5)', marginBottom: 8 }}>
+      <p style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>
         Benachrichtigungen
       </p>
       <div style={{
-        background: 'linear-gradient(145deg, rgba(9,14,34,0.94), rgba(4,7,18,0.96))',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
         borderRadius: 18, padding: '14px 16px',
       }}>
         {/* Status row */}
@@ -442,13 +442,13 @@ function PushSettings() {
           }}>
             {state === 'subscribed'
               ? <Bell size={16} color="#10b981" />
-              : <BellOff size={16} color="rgba(154,170,191,0.5)" />}
+              : <BellOff size={16} color="var(--text-muted)" />}
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: '0.82rem', fontWeight: 800, color: '#eaeefc' }}>
+            <p style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text)' }}>
               Einnahme-Erinnerungen
             </p>
-            <p style={{ fontSize: '0.62rem', marginTop: 2, color: stateColors[state] ?? 'rgba(154,170,191,0.5)', fontWeight: 700 }}>
+            <p style={{ fontSize: '0.62rem', marginTop: 2, color: stateColors[state] ?? 'var(--text-muted)', fontWeight: 700 }}>
               {stateLabels[state] ?? state}
             </p>
           </div>
@@ -481,7 +481,7 @@ function PushSettings() {
         )}
 
         {state === 'subscribed' && (
-          <p style={{ fontSize: '0.65rem', color: 'rgba(154,170,191,0.55)', lineHeight: 1.45, marginBottom: 10 }}>
+          <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', lineHeight: 1.45, marginBottom: 10 }}>
             iPhone: Einstellungen → Mitteilungen → TYD erlauben. Test mit geschlossener App oder gesperrtem Display.
           </p>
         )}
@@ -494,8 +494,8 @@ function PushSettings() {
               disabled={subscribing}
               style={{
                 flex: 1, padding: '10px 0', borderRadius: 12,
-                background: 'rgba(0,204,245,0.14)', border: '1px solid rgba(0,204,245,0.28)',
-                color: '#00ccf5', fontSize: '0.76rem', fontWeight: 800,
+                background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
+                color: 'var(--accent)', fontSize: '0.76rem', fontWeight: 800,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 opacity: subscribing ? 0.5 : 1,
               }}
@@ -526,8 +526,8 @@ function PushSettings() {
                 disabled={reconnecting}
                 style={{
                   padding: '10px 12px', borderRadius: 12,
-                  background: 'rgba(0,204,245,0.08)', border: '1px solid rgba(0,204,245,0.22)',
-                  color: '#00ccf5', fontSize: '0.7rem', fontWeight: 800,
+                  background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
+                  color: 'var(--accent)', fontSize: '0.7rem', fontWeight: 800,
                   opacity: reconnecting ? 0.5 : 1,
                 }}
               >
@@ -575,7 +575,7 @@ function LanguageSwitcher() {
 
   return (
     <div className="mt-4">
-      <p style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(154,170,191,0.5)', marginBottom: 8 }}>
+      <p style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>
         {t('language')}
       </p>
 
@@ -584,8 +584,8 @@ function LanguageSwitcher() {
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '12px 14px', borderRadius: 13,
-          background: 'rgba(0,204,245,0.06)', border: '1px solid rgba(0,204,245,0.14)',
-          color: 'rgba(0,204,245,0.85)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer',
+          background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
+          color: 'var(--accent)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -598,8 +598,8 @@ function LanguageSwitcher() {
       {open && (
         <div style={{
           marginTop: 6, borderRadius: 13, overflow: 'hidden',
-          border: '1px solid rgba(255,255,255,0.07)',
-          background: 'rgba(8,10,24,0.98)',
+          border: '1px solid var(--border)',
+          background: 'var(--surface)',
         }}>
           <div style={{ maxHeight: 300, overflowY: 'auto' }}>
             {LANGUAGES.map(lang => {
@@ -609,8 +609,8 @@ function LanguageSwitcher() {
                   key={lang.code}
                   style={{
                     display: 'flex', alignItems: 'center',
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
-                    background: isSelected ? 'rgba(0,204,245,0.10)' : 'transparent',
+                    borderBottom: '1px solid var(--border)',
+                    background: isSelected ? 'var(--accent-weak)' : 'transparent',
                   }}
                 >
                   <button
@@ -618,7 +618,7 @@ function LanguageSwitcher() {
                     style={{
                       flex: 1, display: 'flex', alignItems: 'center', gap: 12,
                       padding: '11px 16px', textAlign: 'left', cursor: 'pointer',
-                      color: isSelected ? '#00ccf5' : 'rgba(200,215,235,0.8)',
+                      color: isSelected ? 'var(--accent)' : 'var(--text-dim)',
                       fontWeight: isSelected ? 700 : 400,
                       fontSize: '0.875rem',
                       background: 'transparent',
@@ -637,14 +637,14 @@ function LanguageSwitcher() {
                         borderRadius: 8,
                         background: lang.code !== i18n.language
                           ? 'linear-gradient(135deg, #00ccf5, #0088dd)'
-                          : 'rgba(0,204,245,0.15)',
-                        border: '1px solid rgba(0,204,245,0.4)',
-                        color: lang.code !== i18n.language ? '#07091a' : '#00ccf5',
+                          : 'var(--accent-weak)',
+                        border: '1px solid var(--accent-border)',
+                        color: lang.code !== i18n.language ? '#07091a' : 'var(--accent)',
                         fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer',
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      {lang.code !== i18n.language ? t('apply') : '✓'}
+                      {lang.code !== i18n.language ? t('apply') : <Check size={14} />}
                     </button>
                   )}
                 </div>

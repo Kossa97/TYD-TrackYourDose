@@ -93,8 +93,8 @@ const MARKERS = [
 // ── Styles ────────────────────────────────────────────────────────────────
 
 const panel: CSSProperties = {
-  background: 'linear-gradient(145deg, rgba(9,14,34,0.94), rgba(4,7,18,0.96))',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
   borderRadius: 20,
 }
 
@@ -103,16 +103,16 @@ const sectionLabel: CSSProperties = {
   fontWeight: 800,
   letterSpacing: '0.13em',
   textTransform: 'uppercase',
-  color: 'rgba(154,170,191,0.52)',
+  color: 'var(--text-muted)',
 }
 
 const inputStyle: CSSProperties = {
   width: '100%',
   padding: '11px 14px',
   borderRadius: 14,
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.10)',
-  color: '#eaeefc',
+  background: 'var(--surface-input)',
+  border: '1px solid var(--border)',
+  color: 'var(--text-dim)',
   fontSize: '0.9rem',
   fontWeight: 700,
   boxSizing: 'border-box',
@@ -124,24 +124,24 @@ const fieldLabel: CSSProperties = {
   fontWeight: 800,
   letterSpacing: '0.12em',
   textTransform: 'uppercase',
-  color: 'rgba(154,170,191,0.60)',
+  color: 'var(--text-muted)',
   display: 'block',
   marginBottom: 6,
 }
 
-const tooltipStyle = { background: '#07091a', border: '1px solid rgba(0,204,245,0.2)', borderRadius: 12 }
-const axisTick = { fill: 'rgba(154,170,191,0.55)', fontSize: 10 }
+const tooltipStyle = { background: 'var(--surface)', border: '1px solid var(--accent-border)', borderRadius: 12 }
+const axisTick = { fill: 'var(--text-muted)', fontSize: 10 }
 
 // ── Cyan slider styling ────────────────────────────────────────────────────
 
 const SLIDER_CSS = `
   input.tyd-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 6px;
-    border-radius: 99px; background: rgba(255,255,255,0.12); outline: none; }
+    border-radius: 99px; background: var(--border); outline: none; }
   input.tyd-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none;
     width: 20px; height: 20px; border-radius: 50%; background: #00ccf5; cursor: pointer;
-    border: 2px solid #07091a; box-shadow: 0 0 10px rgba(0,204,245,0.5); }
+    border: 2px solid var(--surface); box-shadow: 0 0 10px rgba(0,204,245,0.5); }
   input.tyd-slider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%;
-    background: #00ccf5; cursor: pointer; border: 2px solid #07091a;
+    background: #00ccf5; cursor: pointer; border: 2px solid var(--surface);
     box-shadow: 0 0 10px rgba(0,204,245,0.5); }
 `
 
@@ -201,9 +201,9 @@ export function Progress() {
                   fontWeight: 800,
                   whiteSpace: 'nowrap',
                   cursor: 'pointer',
-                  background: active ? 'rgba(0,204,245,0.12)' : 'transparent',
-                  color: active ? '#00ccf5' : 'rgba(154,170,191,0.55)',
-                  border: active ? '1px solid rgba(0,204,245,0.25)' : '1px solid rgba(255,255,255,0.08)',
+                  background: active ? 'var(--accent-weak)' : 'transparent',
+                  color: active ? 'var(--accent)' : 'var(--text-muted)',
+                  border: active ? '1px solid var(--accent-border)' : '1px solid var(--border)',
                 }}
               >
                 {t.label}
@@ -259,15 +259,15 @@ function UebersichtTab({
     <>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 900, letterSpacing: '-0.04em', color: '#f8fbff' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 900, letterSpacing: '-0.04em', color: 'var(--text)' }}>
           Fortschritt
         </h1>
         <button
           onClick={() => setSheetOpen(true)}
           style={{
             width: 44, height: 44, borderRadius: 16, flexShrink: 0,
-            background: 'rgba(0,204,245,0.14)', border: '1px solid rgba(0,204,245,0.28)',
-            color: '#00ccf5', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
+            color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 0 20px rgba(0,204,245,0.16)',
           }}
         >
@@ -285,7 +285,7 @@ function UebersichtTab({
           return (
             <div key={card.key} style={{ ...panel, padding: 14 }}>
               <p style={{ ...sectionLabel, marginBottom: 4 }}>{card.label}</p>
-              <p style={{ fontSize: '1.5rem', fontWeight: 900, color: '#eaeefc', lineHeight: 1.1 }}>
+              <p style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--text-dim)', lineHeight: 1.1 }}>
                 {lastVal != null ? lastVal : '–'}
               </p>
               <div style={{ marginTop: 6 }}>
@@ -324,9 +324,9 @@ function UebersichtTab({
             style={{ width: 56, height: 72, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ ...sectionLabel, marginBottom: 4 }}>Letztes Foto</p>
-            <p style={{ fontSize: '0.85rem', fontWeight: 800, color: '#eaeefc' }}>{fmtDate(lastPhoto.taken_at)}</p>
+            <p style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-dim)' }}>{fmtDate(lastPhoto.taken_at)}</p>
           </div>
-          <ChevronRight size={18} color="rgba(154,170,191,0.55)" />
+          <ChevronRight size={18} color="var(--text-muted)" />
         </button>
       )}
 
@@ -382,15 +382,15 @@ function EntrySheet({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 49 }} />
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-        background: 'linear-gradient(180deg, rgba(11,16,38,0.99), rgba(5,9,22,0.99))',
-        border: '1px solid rgba(255,255,255,0.09)', borderRadius: '24px 24px 0 0',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)', borderRadius: '24px 24px 0 0',
         padding: '0 18px 40px', maxHeight: '92vh', overflowY: 'auto',
       }}>
         <div style={{ position: 'sticky', top: 0, paddingTop: 16, paddingBottom: 14, background: 'inherit', zIndex: 1 }}>
-          <div style={{ width: 40, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.16)', margin: '0 auto 18px' }} />
+          <div style={{ width: 40, height: 4, borderRadius: 99, background: 'var(--border)', margin: '0 auto 18px' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#f8fbff' }}>Fortschritt eintragen</h2>
-            <button onClick={onClose} style={{ color: 'rgba(154,170,191,0.55)', display: 'flex' }}><X size={20} /></button>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text)' }}>Fortschritt eintragen</h2>
+            <button onClick={onClose} style={{ color: 'var(--text-muted)', display: 'flex' }}><X size={20} /></button>
           </div>
         </div>
 
@@ -403,7 +403,7 @@ function EntrySheet({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
           <div key={s.label} style={{ marginBottom: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <label style={{ ...fieldLabel, marginBottom: 0 }}>{s.label}</label>
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#00ccf5' }}>{s.value}/10</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--accent)' }}>{s.value}/10</span>
             </div>
             <input
               className="tyd-slider" type="range" min={1} max={10} step={1}
@@ -477,8 +477,8 @@ function VerlaufTab({ logs }: { logs: DailyLog[] }) {
                 flexShrink: 0, padding: '7px 13px', borderRadius: 99, fontSize: '0.76rem',
                 fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer',
                 background: on ? `${m.color}22` : 'transparent',
-                color: on ? m.color : 'rgba(154,170,191,0.55)',
-                border: `1px solid ${on ? `${m.color}55` : 'rgba(255,255,255,0.08)'}`,
+                color: on ? m.color : 'var(--text-muted)',
+                border: `1px solid ${on ? `${m.color}55` : 'var(--border)'}`,
               }}
             >
               {m.label}
@@ -498,9 +498,9 @@ function VerlaufTab({ logs }: { logs: DailyLog[] }) {
               style={{
                 flex: 1, padding: '7px 0', borderRadius: 12, fontSize: '0.76rem', fontWeight: 800,
                 cursor: 'pointer',
-                background: on ? 'rgba(0,204,245,0.12)' : 'transparent',
-                color: on ? '#00ccf5' : 'rgba(154,170,191,0.55)',
-                border: on ? '1px solid rgba(0,204,245,0.25)' : '1px solid rgba(255,255,255,0.08)',
+                background: on ? 'var(--accent-weak)' : 'transparent',
+                color: on ? 'var(--accent)' : 'var(--text-muted)',
+                border: on ? '1px solid var(--accent-border)' : '1px solid var(--border)',
               }}
             >
               {r.label}
@@ -512,13 +512,13 @@ function VerlaufTab({ logs }: { logs: DailyLog[] }) {
       {/* Chart */}
       <div style={{ ...panel, padding: '16px 8px 8px 0' }}>
         {data.length === 0 ? (
-          <p style={{ textAlign: 'center', color: 'rgba(154,170,191,0.45)', fontSize: '0.85rem', padding: '40px 0' }}>
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '40px 0' }}>
             Keine Daten im gewählten Zeitraum
           </p>
         ) : (
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={data} margin={{ top: 4, right: 12, bottom: 0, left: -12 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="date" tick={axisTick} />
               <YAxis tick={axisTick} />
               <Tooltip contentStyle={tooltipStyle} />
@@ -590,20 +590,20 @@ function BlutwerteTab() {
             onClick={() => setSelected(m)}
             style={{
               ...panel, padding: 14, textAlign: 'left', cursor: 'pointer',
-              border: has ? '1px solid rgba(0,204,245,0.30)' : '1px solid rgba(255,255,255,0.05)',
+              border: has ? '1px solid var(--accent-border)' : '1px solid var(--border)',
               opacity: has ? 1 : 0.6,
             }}
           >
-            <p style={{ fontSize: '0.82rem', fontWeight: 800, color: '#eaeefc', marginBottom: 6 }}>{m.label}</p>
+            <p style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-dim)', marginBottom: 6 }}>{m.label}</p>
             {latest ? (
               <>
-                <p style={{ fontSize: '1.3rem', fontWeight: 900, color: '#00ccf5', lineHeight: 1.1 }}>
-                  {latest.value} <span style={{ fontSize: '0.7rem', color: 'rgba(154,170,191,0.6)' }}>{latest.unit}</span>
+                <p style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--accent)', lineHeight: 1.1 }}>
+                  {latest.value} <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{latest.unit}</span>
                 </p>
-                <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.5)', marginTop: 4 }}>{fmtDate(latest.tested_at)}</p>
+                <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginTop: 4 }}>{fmtDate(latest.tested_at)}</p>
               </>
             ) : (
-              <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.4)' }}>Kein Eintrag</p>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Kein Eintrag</p>
             )}
           </button>
         )
@@ -659,14 +659,14 @@ function MarkerDetail({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(154,170,191,0.7)', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}>
+        <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}>
           <ArrowLeft size={18} /> Zurück
         </button>
         <button
           onClick={() => setShowForm(s => !s)}
           style={{
-            width: 38, height: 38, borderRadius: 12, background: 'rgba(0,204,245,0.14)',
-            border: '1px solid rgba(0,204,245,0.28)', color: '#00ccf5',
+            width: 38, height: 38, borderRadius: 12, background: 'var(--accent-weak)',
+            border: '1px solid var(--accent-border)', color: 'var(--accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
           }}
         >
@@ -675,8 +675,8 @@ function MarkerDetail({
       </div>
 
       <div>
-        <h2 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#f8fbff' }}>{marker.label}</h2>
-        <p style={{ fontSize: '0.74rem', color: 'rgba(154,170,191,0.55)', marginTop: 2 }}>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--text)' }}>{marker.label}</h2>
+        <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 2 }}>
           Referenz: {marker.ref} {marker.unit}
         </p>
       </div>
@@ -705,13 +705,13 @@ function MarkerDetail({
       {/* Chart */}
       <div style={{ ...panel, padding: '16px 8px 8px 0' }}>
         {chartData.length === 0 ? (
-          <p style={{ textAlign: 'center', color: 'rgba(154,170,191,0.45)', fontSize: '0.85rem', padding: '40px 0' }}>
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '40px 0' }}>
             Noch keine Einträge
           </p>
         ) : (
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={chartData} margin={{ top: 4, right: 12, bottom: 0, left: -12 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="date" tick={axisTick} />
               <YAxis tick={axisTick} />
               <Tooltip contentStyle={tooltipStyle} />
@@ -727,10 +727,10 @@ function MarkerDetail({
         {sorted.map(e => (
           <div key={e.id} style={{ ...panel, padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <div>
-              <p style={{ fontSize: '0.92rem', fontWeight: 800, color: '#eaeefc' }}>
-                {e.value} <span style={{ fontSize: '0.7rem', color: 'rgba(154,170,191,0.6)' }}>{e.unit}</span>
+              <p style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-dim)' }}>
+                {e.value} <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{e.unit}</span>
               </p>
-              <p style={{ fontSize: '0.66rem', color: 'rgba(154,170,191,0.5)', marginTop: 2 }}>{fmtDate(e.tested_at)}</p>
+              <p style={{ fontSize: '0.66rem', color: 'var(--text-muted)', marginTop: 2 }}>{fmtDate(e.tested_at)}</p>
             </div>
             <button
               onClick={() => void del(e)}
@@ -828,8 +828,8 @@ function FotosTab({ photos, onChange }: { photos: ProgressPhoto[]; onChange: () 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <div>
-          <h2 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#f8fbff' }}>Fotos</h2>
-          <p style={{ fontSize: '0.72rem', color: 'rgba(154,170,191,0.55)', marginTop: 2 }}>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--text)' }}>Fotos</h2>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>
             {photos.length} {photos.length === 1 ? 'Foto' : 'Fotos'} gespeichert
           </p>
         </div>
@@ -837,8 +837,8 @@ function FotosTab({ photos, onChange }: { photos: ProgressPhoto[]; onChange: () 
           onClick={openSheet}
           style={{
             width: 44, height: 44, borderRadius: 16, flexShrink: 0,
-            background: 'rgba(0,204,245,0.14)', border: '1px solid rgba(0,204,245,0.28)',
-            color: '#00ccf5', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
+            color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 0 20px rgba(0,204,245,0.16)',
           }}
         >
@@ -848,12 +848,12 @@ function FotosTab({ photos, onChange }: { photos: ProgressPhoto[]; onChange: () 
 
       {photos.length === 0 ? (
         <div style={{ ...panel, padding: '52px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
-          <div style={{ width: 68, height: 68, borderRadius: 22, background: 'rgba(0,204,245,0.09)', border: '1px solid rgba(0,204,245,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ImageOff size={30} color="rgba(0,204,245,0.55)" />
+          <div style={{ width: 68, height: 68, borderRadius: 22, background: 'var(--accent-weak)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ImageOff size={30} color="var(--accent)" />
           </div>
           <div>
-            <p style={{ fontSize: '0.95rem', fontWeight: 800, color: '#eaeefc', marginBottom: 6 }}>Noch keine Fotos</p>
-            <p style={{ fontSize: '0.74rem', color: 'rgba(154,170,191,0.52)', lineHeight: 1.55 }}>
+            <p style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-dim)', marginBottom: 6 }}>Noch keine Fotos</p>
+            <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
               Füge dein erstes Fortschrittsfoto hinzu und verfolge deine Entwicklung.
             </p>
           </div>
@@ -861,8 +861,8 @@ function FotosTab({ photos, onChange }: { photos: ProgressPhoto[]; onChange: () 
             onClick={openSheet}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 22px', borderRadius: 14,
-              background: 'rgba(0,204,245,0.12)', border: '1px solid rgba(0,204,245,0.24)',
-              color: '#00ccf5', fontSize: '0.82rem', fontWeight: 800, cursor: 'pointer',
+              background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
+              color: 'var(--accent)', fontSize: '0.82rem', fontWeight: 800, cursor: 'pointer',
             }}
           >
             <Camera size={15} /> Foto hinzufügen
@@ -875,7 +875,7 @@ function FotosTab({ photos, onChange }: { photos: ProgressPhoto[]; onChange: () 
               key={photo.id}
               onClick={() => setActivePhoto(photo)}
               style={{
-                background: 'rgba(9,14,34,0.94)', border: '1px solid rgba(255,255,255,0.08)',
+                background: 'var(--surface)', border: '1px solid var(--border)',
                 borderRadius: 18, overflow: 'hidden', padding: 0, textAlign: 'left', cursor: 'pointer',
               }}
             >
@@ -884,9 +884,9 @@ function FotosTab({ photos, onChange }: { photos: ProgressPhoto[]; onChange: () 
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </div>
               <div style={{ padding: '9px 11px' }}>
-                <p style={{ fontSize: '0.72rem', fontWeight: 800, color: '#eaeefc', marginBottom: 2 }}>{fmtDate(photo.taken_at)}</p>
+                <p style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-dim)', marginBottom: 2 }}>{fmtDate(photo.taken_at)}</p>
                 {photo.weight_kg != null && (
-                  <p style={{ fontSize: '0.62rem', color: '#00ccf5', fontWeight: 700 }}>{photo.weight_kg} kg</p>
+                  <p style={{ fontSize: '0.62rem', color: 'var(--accent)', fontWeight: 700 }}>{photo.weight_kg} kg</p>
                 )}
               </div>
             </button>
@@ -899,11 +899,11 @@ function FotosTab({ photos, onChange }: { photos: ProgressPhoto[]; onChange: () 
         <div onClick={() => setActivePhoto(null)}
           style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.93)', display: 'flex', flexDirection: 'column' }}>
           <div onClick={e => e.stopPropagation()}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
             <div>
-              <p style={{ fontSize: '0.92rem', fontWeight: 800, color: '#f8fbff' }}>{fmtDate(activePhoto.taken_at)}</p>
+              <p style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text)' }}>{fmtDate(activePhoto.taken_at)}</p>
               {activePhoto.weight_kg != null && (
-                <p style={{ fontSize: '0.72rem', color: '#00ccf5', fontWeight: 700, marginTop: 2 }}>{activePhoto.weight_kg} kg</p>
+                <p style={{ fontSize: '0.72rem', color: 'var(--accent)', fontWeight: 700, marginTop: 2 }}>{activePhoto.weight_kg} kg</p>
               )}
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
@@ -912,7 +912,7 @@ function FotosTab({ photos, onChange }: { photos: ProgressPhoto[]; onChange: () 
                 <Trash2 size={16} />
               </button>
               <button onClick={e => { e.stopPropagation(); setActivePhoto(null) }}
-                style={{ width: 38, height: 38, borderRadius: 12, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#eaeefc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--surface-input)', border: '1px solid var(--border)', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <X size={16} />
               </button>
             </div>
@@ -922,8 +922,8 @@ function FotosTab({ photos, onChange }: { photos: ProgressPhoto[]; onChange: () 
           </div>
           {activePhoto.notes && (
             <div onClick={e => e.stopPropagation()}
-              style={{ padding: '14px 18px', borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(9,14,34,0.96)' }}>
-              <p style={{ fontSize: '0.75rem', color: 'rgba(213,224,242,0.68)', lineHeight: 1.55 }}>{activePhoto.notes}</p>
+              style={{ padding: '14px 18px', borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', lineHeight: 1.55 }}>{activePhoto.notes}</p>
             </div>
           )}
         </div>
@@ -935,18 +935,18 @@ function FotosTab({ photos, onChange }: { photos: ProgressPhoto[]; onChange: () 
       )}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-        background: 'linear-gradient(180deg, rgba(11,16,38,0.99), rgba(5,9,22,0.99))',
-        border: '1px solid rgba(255,255,255,0.09)', borderRadius: '24px 24px 0 0',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)', borderRadius: '24px 24px 0 0',
         padding: '0 18px 40px',
         transform: sheetOpen ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.30s cubic-bezier(0.4,0,0.2,1)',
         maxHeight: '92vh', overflowY: 'auto',
       }}>
         <div style={{ position: 'sticky', top: 0, paddingTop: 16, paddingBottom: 14, background: 'inherit', zIndex: 1 }}>
-          <div style={{ width: 40, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.16)', margin: '0 auto 18px' }} />
+          <div style={{ width: 40, height: 4, borderRadius: 99, background: 'var(--border)', margin: '0 auto 18px' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#f8fbff' }}>Foto hinzufügen</h2>
-            <button onClick={closeSheet} style={{ color: 'rgba(154,170,191,0.55)', display: 'flex' }}><X size={20} /></button>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text)' }}>Foto hinzufügen</h2>
+            <button onClick={closeSheet} style={{ color: 'var(--text-muted)', display: 'flex' }}><X size={20} /></button>
           </div>
         </div>
 
@@ -958,14 +958,14 @@ function FotosTab({ photos, onChange }: { photos: ProgressPhoto[]; onChange: () 
             <img src={previewUrl} alt="Vorschau" style={{ width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 16, display: 'block' }} />
             <button
               onClick={() => { setSelectedFile(null); if (previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(null) }}
-              style={{ position: 'absolute', top: 8, right: 8, width: 30, height: 30, borderRadius: 10, background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              style={{ position: 'absolute', top: 8, right: 8, width: 30, height: 30, borderRadius: 10, background: 'rgba(0,0,0,0.72)', border: '1px solid var(--border)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <X size={14} />
             </button>
           </div>
         ) : (
           <button
             onClick={() => fileInputRef.current?.click()}
-            style={{ width: '100%', padding: '30px 0', borderRadius: 18, marginBottom: 16, border: '2px dashed rgba(0,204,245,0.24)', background: 'rgba(0,204,245,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, color: '#00ccf5', cursor: 'pointer' }}>
+            style={{ width: '100%', padding: '30px 0', borderRadius: 18, marginBottom: 16, border: '2px dashed var(--accent-border)', background: 'var(--accent-weak)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, color: 'var(--accent)', cursor: 'pointer' }}>
             <Camera size={30} />
             <span style={{ fontSize: '0.82rem', fontWeight: 800 }}>Foto aufnehmen oder aus Galerie wählen</span>
           </button>
@@ -993,9 +993,9 @@ function FotosTab({ photos, onChange }: { photos: ProgressPhoto[]; onChange: () 
           disabled={!selectedFile || uploading}
           style={{
             width: '100%', padding: '14px 0', borderRadius: 16,
-            background: (!selectedFile || uploading) ? 'rgba(255,255,255,0.05)' : 'rgba(0,204,245,0.16)',
-            border: (!selectedFile || uploading) ? '1px solid rgba(255,255,255,0.09)' : '1px solid rgba(0,204,245,0.32)',
-            color: (!selectedFile || uploading) ? 'rgba(154,170,191,0.38)' : '#00ccf5',
+            background: (!selectedFile || uploading) ? 'var(--surface-input)' : 'var(--accent-weak)',
+            border: (!selectedFile || uploading) ? '1px solid var(--border)' : '1px solid var(--accent-border)',
+            color: (!selectedFile || uploading) ? 'var(--text-muted)' : 'var(--accent)',
             fontSize: '0.92rem', fontWeight: 900,
             cursor: (!selectedFile || uploading) ? 'not-allowed' : 'pointer',
             transition: 'all 0.18s',

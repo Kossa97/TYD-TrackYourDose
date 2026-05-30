@@ -12,8 +12,9 @@ import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date
 import type { Locale } from 'date-fns'
 import {
   Bell, CalendarDays, Check, ChevronLeft, ChevronRight, Clock,
-  RotateCcw, Syringe, TrendingUp, X, XCircle,
+  Moon, Pin, RotateCcw, Sun, Sunrise, Syringe, TrendingUp, X, XCircle,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
 import { GlassPanel, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
@@ -125,20 +126,20 @@ function cycleIntakeMinutes(c: Cycle): number {
   return 25 * 60
 }
 
-function cycleTimeLabel(c: Cycle, t: (key: string) => string): { emoji: string; label: string } | null {
+function cycleTimeLabel(c: Cycle, t: (key: string) => string): { icon: LucideIcon; label: string } | null {
   if (!c.intake_time) return null
   const keys = c.intake_time.split(',').filter(Boolean)
   const customs = (c.intake_time_custom ?? '').split(',')
   const parts = keys.map((key, i) => {
-    if (key === 'morgens') return { emoji: '🌅', label: t('morgens') }
-    if (key === 'mittags') return { emoji: '☀️', label: t('mittags') }
-    if (key === 'abends')  return { emoji: '🌙', label: t('abends') }
-    if (key === 'custom' && customs[i]) return { emoji: '🕐', label: customs[i] }
+    if (key === 'morgens') return { icon: Sunrise, label: t('morgens') }
+    if (key === 'mittags') return { icon: Sun, label: t('mittags') }
+    if (key === 'abends')  return { icon: Moon, label: t('abends') }
+    if (key === 'custom' && customs[i]) return { icon: Clock, label: customs[i] }
     return null
-  }).filter(Boolean) as { emoji: string; label: string }[]
+  }).filter(Boolean) as { icon: LucideIcon; label: string }[]
   if (parts.length === 0) return null
   return {
-    emoji: parts.map(p => p.emoji).join(''),
+    icon: parts[0].icon,
     label: parts.map(p => p.label).join(' · '),
   }
 }
@@ -159,12 +160,12 @@ function cycleTimeGroupKey(cycle: Cycle): IntakeGroupKey {
   return 'later'
 }
 
-function intakeGroupMeta(key: IntakeGroupKey, t: (key: string) => string): { emoji: string; label: string } {
-  if (key === 'morgens') return { emoji: '🌅', label: t('morgens') }
-  if (key === 'mittags') return { emoji: '☀️', label: t('mittags') }
-  if (key === 'abends') return { emoji: '🌙', label: t('abends') }
-  if (key === 'custom') return { emoji: '🕐', label: t('uhrzeit_label') }
-  return { emoji: '📌', label: t('ausstehend') }
+function intakeGroupMeta(key: IntakeGroupKey, t: (key: string) => string): { icon: LucideIcon; label: string } {
+  if (key === 'morgens') return { icon: Sunrise, label: t('morgens') }
+  if (key === 'mittags') return { icon: Sun, label: t('mittags') }
+  if (key === 'abends') return { icon: Moon, label: t('abends') }
+  if (key === 'custom') return { icon: Clock, label: t('uhrzeit_label') }
+  return { icon: Pin, label: t('ausstehend') }
 }
 
 function timeLabel(dateStr: string, t: (key: string, opts?: Record<string, unknown>) => string): string {
@@ -207,7 +208,7 @@ function roundStock(value: number) {
 
 const calendarLegendText: CSSProperties = {
   fontSize: '0.66rem',
-  color: 'rgba(213,224,242,0.58)',
+  color: 'var(--text-dim)',
   fontWeight: 700,
 }
 
@@ -234,7 +235,7 @@ function CalendarInfoPill({
       <p style={{ color: accent, fontWeight: 900, fontSize: '0.95rem', lineHeight: 1 }}>
         {value}
       </p>
-      <p style={{ color: 'rgba(213,224,242,0.55)', fontSize: '0.6rem', fontWeight: 780, marginTop: 4 }}>
+      <p style={{ color: 'var(--text-dim)', fontSize: '0.6rem', fontWeight: 780, marginTop: 4 }}>
         {label}
       </p>
     </div>
@@ -442,10 +443,12 @@ export function Dashboard() {
 
   useEffect(() => {
     if (location.hash !== '#due-intakes') return
-    const today = new Date()
-    setSelectedDay(today)
-    setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1))
-  }, [location.hash])
+    const dateParam = new URLSearchParams(location.search).get('date')
+    const parsed = dateParam ? parseISO(dateParam) : null
+    const target = parsed && !isNaN(parsed.getTime()) ? parsed : new Date()
+    setSelectedDay(target)
+    setCurrentDate(new Date(target.getFullYear(), target.getMonth(), 1))
+  }, [location.hash, location.search])
 
   useEffect(() => {
     if (location.hash !== '#due-intakes') return
@@ -454,12 +457,19 @@ export function Dashboard() {
     }
     const timer = window.setTimeout(scrollToDue, 150)
     return () => window.clearTimeout(timer)
-  }, [location.hash, dueCycles.length, selCycles.length, logs.length])
+  }, [location.hash, location.search, dueCycles.length, selCycles.length, logs.length])
 
-  const adjustPeptideStockForDose = async (peptideId: string, dose: number, unit: string, mode: 'debit' | 'credit') => {
+  const adjustPeptideStockForDose = async (peptideId: string, dose: number, unit: string, mode: 'debit' | 'credit', loggedAt?: string) => {
     if (!user) return false
     const peptide = peptides.find(p => p.id === peptideId)
     if (!peptide) return false
+    // Don't credit a dose that belongs to a PAST reconstitution back into the
+    // current vial (e.g. undoing an old intake after the vial was renewed/discarded).
+    if (mode === 'credit' && loggedAt && peptide.reconstitution_date) {
+      const logDay = format(parseISO(loggedAt), 'yyyy-MM-dd')
+      const reconDay = format(parseISO(peptide.reconstitution_date), 'yyyy-MM-dd')
+      if (logDay < reconDay) return false
+    }
     const delta = doseToVialDelta(dose, unit, peptide)
     if (!delta || delta <= 0) return false
 
@@ -491,7 +501,7 @@ export function Dashboard() {
     if (!confirm(t('eintrag_loeschen'))) return
     const { error } = await supabase.from('dose_logs').delete().eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit')
+    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit', log.logged_at)
     toast.success(t('deleted')); loadLogs(); loadPeptides()
   }
 
@@ -502,7 +512,7 @@ export function Dashboard() {
     const { error } = await supabase.from('dose_logs').update(update).eq('id', log.id)
     if (error) return toast.error(t('error'))
     if (previousTaken !== true && taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'debit')
-    if (previousTaken === true && taken !== true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit')
+    if (previousTaken === true && taken !== true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit', log.logged_at)
     loadLogs(); loadPeptides()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
@@ -511,7 +521,7 @@ export function Dashboard() {
   const undoDose = async (log: DoseLog) => {
     const { error } = await supabase.from('dose_logs').update({ taken: null }).eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit')
+    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit', log.logged_at)
     loadLogs(); loadPeptides()
     toast.success(t('dose_undo_success', { defaultValue: 'Einnahme zurückgesetzt' }))
   }
@@ -576,7 +586,7 @@ export function Dashboard() {
     setTimeout(() => {
       toast(
         t('dose_nicht_best', { name: log.peptides?.name, dose: log.dose, unit: log.unit }),
-        { icon: '💉', duration: 10000 }
+        { icon: <Syringe size={18} />, duration: 10000 }
       )
     }, minutes * 60 * 1000)
   }
@@ -622,7 +632,7 @@ export function Dashboard() {
         style={{
           padding: '8px 0 6px',
           minHeight: 52,
-          borderColor: 'rgba(255,255,255,0.04)',
+          borderColor: 'var(--border)',
           background: isSelected
             ? 'linear-gradient(145deg, rgba(0,190,240,0.85), rgba(0,120,210,0.75))'
             : 'transparent',
@@ -655,7 +665,7 @@ export function Dashboard() {
             <span
               className="w-1.5 h-1.5 rounded-full shrink-0"
               style={{
-                background: isSelected ? 'rgba(255,255,255,0.85)' : '#00ccf5',
+                background: isSelected ? 'rgba(255,255,255,0.85)' : 'var(--accent)',
                 boxShadow: isSelected ? undefined : '0 0 4px #00ccf555',
               }}
             />
@@ -730,7 +740,7 @@ export function Dashboard() {
             <button
               className="shrink-0 rounded-xl border px-2.5 py-1.5 text-xs font-bold text-sky-200"
               onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
-              style={{ borderColor: 'rgba(0,204,245,0.18)', background: 'rgba(0,204,245,0.08)' }}
+              style={{ borderColor: 'var(--accent-border)', background: 'var(--accent-weak)' }}
             >
               {t('heute_link')}
             </button>
@@ -782,11 +792,11 @@ export function Dashboard() {
 
         {/* Legend */}
         <div className="flex flex-wrap gap-3 px-4 py-3" style={{
-          borderTop: '1px solid rgba(255,255,255,0.04)',
-          background: 'rgba(1,2,10,0.60)',
+          borderTop: '1px solid var(--border)',
+          background: 'var(--surface)',
         }}>
           <div className="flex items-center gap-1.5" style={calendarLegendText}>
-            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#00ccf5', boxShadow: '0 0 4px #00ccf555' }} />
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--accent)', boxShadow: '0 0 4px #00ccf555' }} />
             {t('geplant', { defaultValue: 'Geplant' })}
           </div>
           <div className="flex items-center gap-1.5" style={calendarLegendText}>
@@ -841,7 +851,7 @@ export function Dashboard() {
             {dueCycleSections.map(section => (
               <div key={section.label} className="space-y-1.5">
                 <div className="flex items-center gap-2 px-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                  <span>{section.emoji}</span>
+                  {(() => { const Ic = section.icon; return <Ic size={13} /> })()}
                   <span>{section.label}</span>
                 </div>
 
@@ -864,8 +874,8 @@ export function Dashboard() {
                       key={c.id}
                       className="rounded-xl border px-3 py-2.5 transition-colors"
                       style={{
-                        background: 'rgba(8,14,30,0.68)',
-                        borderColor: 'rgba(255,255,255,0.075)',
+                        background: 'var(--surface)',
+                        borderColor: 'var(--border)',
                       }}>
                       <div className="flex items-center gap-2.5">
                         <span
@@ -888,7 +898,8 @@ export function Dashboard() {
                           <div className="flex items-center gap-2 mt-0.5">
                             {tl && (
                               <span className="text-xs text-amber-400 flex items-center gap-1">
-                                {tl.emoji} {tl.label}
+                                {(() => { const Ic = tl.icon; return <Ic size={12} /> })()}
+                                {tl.label}
                               </span>
                             )}
                             {isEscalated && (
@@ -1060,7 +1071,7 @@ export function Dashboard() {
           <div className="fixed inset-0 z-40 bg-black/60" onClick={() => setConfirmSheet(null)} />
           <div
             className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border border-white/10 pb-10"
-            style={{ background: 'linear-gradient(180deg, rgba(11,16,38,0.99), rgba(5,9,22,0.99))' }}
+            style={{ background: 'var(--surface)' }}
           >
             <div style={{ padding: '20px 18px 0' }}>
               <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
@@ -1089,7 +1100,7 @@ export function Dashboard() {
                 value={confirmTime}
                 onChange={e => setConfirmTime(e.target.value)}
                 className="mb-5 w-full rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-white outline-none focus:border-sky-500/50 transition-colors"
-                style={{ background: 'rgba(255,255,255,0.05)', colorScheme: 'dark' }}
+                style={{ background: 'var(--surface-input)', colorScheme: 'dark' }}
               />
               <div className="flex gap-3">
                 <button onClick={() => setConfirmSheet(null)} className="btn-secondary flex-1">

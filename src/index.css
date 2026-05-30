@@ -438,6 +438,7 @@ body.onboarding-active [data-ob-active] {
   --text-muted:      #465265;
   --border:          rgba(255,255,255,0.07);
   --border-strong:   rgba(255,255,255,0.12);
+  --card-border:     rgba(255,255,255,0.07);
   --accent:          #00ccf5;
   --accent-weak:     rgba(0,204,245,0.10);
   --accent-border:   rgba(0,204,245,0.28);
@@ -504,6 +505,7 @@ body.onboarding-active [data-ob-active] {
   --text-muted:      #69727f;
   --border:          rgba(15,30,60,0.10);
   --border-strong:   rgba(15,30,60,0.18);
+  --card-border:     transparent;
   --accent:          #0091c4;
   --accent-weak:     rgba(0,145,196,0.10);
   --accent-border:   rgba(0,145,196,0.30);
@@ -1126,6 +1128,8 @@ main.flex-1 {
   from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes tydPulseSoft { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.pulse-soft { animation: tydPulseSoft 1.2s ease-in-out infinite; }
 .motion-fade-up { animation: tydFadeUp var(--t-std) cubic-bezier(0.22,1,0.36,1) both; }
 .motion-press   { transition: transform var(--t-fast); }
 .motion-press:active { transform: scale(0.98); }

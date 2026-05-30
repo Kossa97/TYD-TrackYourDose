@@ -8,13 +8,14 @@ import {
   Microscope, Library, Droplets, Heart, FileText, type LucideIcon,
   Activity, ArrowUpRight, CheckCircle2, ClipboardList,
   Clock3, Flame, Package, ShieldCheck, Sparkles,
-  Syringe, TrendingUp,
+  Syringe, TrendingUp, Bell,
   Dumbbell, Dna, Zap, Moon, Brain, Bandage, HeartPulse, Lightbulb, Leaf, Bone,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
+import { findOldestOverdueIntake } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
 import { format, parseISO, subDays } from 'date-fns'
@@ -200,9 +201,9 @@ const pageStyle: CSSProperties = {
 
 const panelStyle: CSSProperties = {
   background: 'var(--surface)',
-  border: '1px solid var(--border)',
+  border: '1px solid var(--card-border)',
   borderRadius: 24,
-  boxShadow: '0 18px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
+  boxShadow: 'var(--shadow-card)',
   position: 'relative',
   overflow: 'hidden',
 }
@@ -227,6 +228,9 @@ export function Home() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [nextIntake,  setNextIntake]  = useState<string | null>(null)
+  const [nextSubstance, setNextSubstance] = useState<string | null>(null)
+  const [dueIntake, setDueIntake] = useState<{ time: string; substance: string | null; daysOverdue: number; dateKey: string } | null>(null)
+  const [plannedToday, setPlannedToday] = useState(0)
   const [todayDone,   setTodayDone]   = useState(false)
   const [streak,      setStreak]      = useState(0)
   const [overview, setOverview] = useState<OverviewStats>(EMPTY_OVERVIEW)
@@ -243,10 +247,10 @@ export function Home() {
       try {
         const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }] = await Promise.all([
           supabase.from('cycles')
-            .select('intake_time, intake_time_custom')
+            .select('intake_time, intake_time_custom, peptide_id, start_date, end_date, frequency, x_days_interval, schedule_days')
             .eq('user_id', user!.id).eq('active', true),
           supabase.from('dose_logs')
-            .select('logged_at')
+            .select('logged_at, peptide_id')
             .eq('user_id', user!.id).eq('taken', true)
             .order('logged_at', { ascending: false }),
           supabase.from('peptides')
@@ -258,21 +262,31 @@ export function Home() {
         ])
 
         // ── Next intake time ─────────────────────────────────────────
+        const peptideNameById = new Map<string, string>(
+          (peptideData ?? []).map((p) => [p.id as string, p.name as string])
+        )
         const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
-        let bestMin = Infinity, bestTime = ''
+        const todaySlots: { min: number; time: string; substance: string | null }[] = []
         for (const c of cycleData ?? []) {
           const slots   = (c.intake_time ?? '').split(',').filter(Boolean)
           const customs = (c.intake_time_custom ?? '').split(',')
           slots.forEach((slot: string, i: number) => {
-            const t = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
-            if (!t) return
-            const [h, m] = t.split(':').map(Number)
-            const min = h * 60 + m
-            if (min > nowMin && min < bestMin) { bestMin = min; bestTime = t }
+            const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
+            if (!tm) return
+            const [h, m] = tm.split(':').map(Number)
+            todaySlots.push({ min: h * 60 + m, time: tm, substance: peptideNameById.get(c.peptide_id as string) ?? null })
           })
         }
-        setNextIntake(bestTime || null)
-        setTodayDone(!bestTime && (cycleData ?? []).length > 0)
+        todaySlots.sort((a, b) => a.min - b.min)
+        const nextSlot = todaySlots.find((s) => s.min > nowMin) ?? null
+        // Oldest unlogged scheduled intake across the past weeks (today included).
+        const overdue = findOldestOverdueIntake(cycleData ?? [], logData ?? [], peptideNameById)
+
+        setPlannedToday(todaySlots.length)
+        setNextIntake(nextSlot?.time ?? null)
+        setNextSubstance(nextSlot?.substance ?? null)
+        setDueIntake(overdue)
+        setTodayDone(todaySlots.length > 0 && !nextSlot && !overdue)
 
         // ── Streak (consecutive days with ≥1 taken log) ─────────────
         const takenDates = new Set(
@@ -312,8 +326,8 @@ export function Home() {
     : nextIntake
       ? `${t('stat_next_intake')}: ${nextIntake}`
       : t('home_status_empty', { defaultValue: 'Kein aktiver Plan' })
-  const completionLevel = overview.activeCycles > 0
-    ? Math.min(100, Math.round((overview.loggedToday / Math.max(overview.activeCycles, 1)) * 100))
+  const completionLevel = plannedToday > 0
+    ? Math.min(100, Math.round((overview.loggedToday / plannedToday) * 100))
     : 0
 
   return (
@@ -354,14 +368,7 @@ export function Home() {
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <HeroStat
-              icon={Clock3}
-              label={String(t('stat_next_intake'))}
-              value={todayDone ? <CheckCircle2 size={26} /> : (nextIntake ?? '–')}
-              hint={String(todayDone ? t('stat_today_done') : t('home_next_hint', { defaultValue: 'Heute im Plan' }))}
-              accent={todayDone ? '#10b981' : '#00ccf5'}
-            />
+          <div className="grid grid-cols-2 gap-2">
             <HeroStat
               icon={Flame}
               label="Streak"
@@ -371,33 +378,49 @@ export function Home() {
             />
             <HeroStat
               icon={Activity}
-              label={String(t('home_completion', { defaultValue: 'Heute' }))}
+              label={String(t('home_completion', { defaultValue: 'Heute erledigt' }))}
               value={`${completionLevel}%`}
-              hint={String(t('home_completion_hint', { defaultValue: 'erledigt' }))}
+              hint={`${overview.loggedToday}/${plannedToday} ${t('home_completion_unit', { defaultValue: 'Einnahmen geloggt' })}`}
               accent="#8b5cf6"
             />
           </div>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '10px 12px',
-            borderRadius: 18,
-            background: todayDone ? 'rgba(16,185,129,0.10)' : 'var(--accent-weak)',
-            border: todayDone ? '1px solid rgba(16,185,129,0.22)' : '1px solid var(--accent-border)',
-          }}>
-            <ShieldCheck size={18} color={todayDone ? '#10b981' : 'var(--accent)'} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1.2 }}>
-                {statusLabel}
-              </p>
-              <p style={{ fontSize: '0.66rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                {t('home_status_hint', { defaultValue: 'Schnellzugriff auf die wichtigsten Schritte.' })}
-              </p>
+          {dueIntake ? (
+            <NextIntakeBanner
+              time={dueIntake.time}
+              substance={dueIntake.substance}
+              forceDue
+              daysOverdue={dueIntake.daysOverdue}
+              onClick={() => navigate(`/kalender?date=${dueIntake.dateKey}#due-intakes`)}
+            />
+          ) : nextIntake ? (
+            <NextIntakeBanner
+              time={nextIntake}
+              substance={nextSubstance}
+              onClick={() => navigate('/kalender#due-intakes')}
+            />
+          ) : (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 12px',
+              borderRadius: 18,
+              background: todayDone ? 'rgba(16,185,129,0.10)' : 'var(--accent-weak)',
+              border: todayDone ? '1px solid rgba(16,185,129,0.22)' : '1px solid var(--accent-border)',
+            }}>
+              <ShieldCheck size={18} color={todayDone ? '#10b981' : 'var(--accent)'} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1.2 }}>
+                  {statusLabel}
+                </p>
+                <p style={{ fontSize: '0.66rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  {t('home_status_hint', { defaultValue: 'Schnellzugriff auf die wichtigsten Schritte.' })}
+                </p>
+              </div>
+              <ChevronRight size={16} color="var(--text-muted)" />
             </div>
-            <ChevronRight size={16} color="var(--text-muted)" />
-          </div>
+          )}
         </div>
       </section>
 
@@ -721,6 +744,92 @@ function InsightCard({
         {hint}
       </p>
       <div style={{ position: 'absolute', right: -24, bottom: -28, width: 86, height: 86, borderRadius: '50%', background: accent, opacity: 0.06, filter: 'blur(16px)' }} />
+    </button>
+  )
+}
+
+function fmtCountdown(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(h)}:${pad(m)}:${pad(s)}`
+}
+
+function msUntilTime(time: string): number {
+  const [h, m] = time.split(':').map(Number)
+  const target = new Date()
+  target.setHours(h, m, 0, 0)
+  return target.getTime() - Date.now()
+}
+
+function NextIntakeBanner({
+  time,
+  substance,
+  onClick,
+  forceDue = false,
+  daysOverdue = 0,
+}: {
+  time: string
+  substance: string | null
+  onClick: () => void
+  forceDue?: boolean
+  daysOverdue?: number
+}) {
+  const { t } = useTranslation()
+  const [remaining, setRemaining] = useState(() => msUntilTime(time))
+  useEffect(() => {
+    const id = setInterval(() => setRemaining(msUntilTime(time)), 1000)
+    return () => clearInterval(id)
+  }, [time])
+
+  const due = forceDue || remaining <= 0
+  const c       = due ? '#f59e0b' : 'var(--accent)'
+  const cWeak   = due ? 'rgba(245,158,11,0.12)' : 'var(--accent-weak)'
+  const cBorder = due ? 'rgba(245,158,11,0.34)' : 'var(--accent-border)'
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="motion-press"
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', cursor: 'pointer',
+        padding: '12px 14px', borderRadius: 18,
+        background: cWeak, border: `1px solid ${cBorder}`,
+      }}
+    >
+      <div style={{
+        width: 42, height: 42, borderRadius: 14, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: cWeak, color: c, border: `1px solid ${cBorder}`,
+      }}>
+        {due ? <Bell size={20} className="pulse-soft" /> : <Clock3 size={20} />}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ ...labelStyle, color: c, marginBottom: 3 }}>
+          {due ? t('home_due_label', { defaultValue: 'Jetzt fällig' }) : t('stat_next_intake', { defaultValue: 'Nächste Einnahme' })}
+        </p>
+        {due ? (
+          <p style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1.05rem', fontWeight: 850, color: c, lineHeight: 1 }}>
+            <span className="pulse-soft" style={{ width: 9, height: 9, borderRadius: '50%', background: c, display: 'inline-block', flexShrink: 0 }} />
+            {t('home_due', { defaultValue: 'Einnahme fällig!' })}
+          </p>
+        ) : (
+          <p style={{ fontFamily: 'monospace', fontSize: '1.2rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1, letterSpacing: '0.02em' }}>
+            {fmtCountdown(remaining)}
+          </p>
+        )}
+        <p style={{ fontSize: '0.7rem', color: due && daysOverdue >= 1 ? c : 'var(--text-muted)', fontWeight: due && daysOverdue >= 1 ? 700 : 400, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {(() => {
+            const when = due && daysOverdue >= 1
+              ? t('home_overdue_days', { days: daysOverdue, defaultValue: `seit ${daysOverdue} ${daysOverdue === 1 ? 'Tag' : 'Tagen'} überfällig` })
+              : `${t('home_at_time', { defaultValue: 'um' })} ${time}`
+            return substance ? `${substance} · ${when}` : when
+          })()}
+        </p>
+      </div>
     </button>
   )
 }

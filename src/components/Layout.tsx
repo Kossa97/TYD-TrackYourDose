@@ -274,33 +274,27 @@ export function Layout() {
           <button
             aria-label="Quick Actions"
             onClick={() => setShowQuickActions(v => !v)}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '1 1 0', minWidth: 0, cursor: 'pointer' }}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              alignSelf: 'stretch',   // fill full bar height (incl. the others' label row)
+              flex: '1 1 0', minWidth: 0, cursor: 'pointer',
+            }}
           >
             <div style={{
-              width: 52, height: 52, borderRadius: 18, flexShrink: 0,
+              width: 46, height: 46, borderRadius: 16, flexShrink: 0,
               background: showQuickActions
                 ? 'var(--surface-raised)'
                 : 'linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #003a6e))',
               border: showQuickActions ? '1px solid var(--border-strong)' : 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginTop: -16,
-              boxShadow: showQuickActions
-                ? 'none'
-                : '0 0 24px rgba(0,204,245,0.45), 0 4px 16px rgba(0,0,0,0.5)',
+              boxShadow: showQuickActions ? 'none' : '0 2px 10px rgba(0,0,0,0.30)',
               transition: 'all 0.2s cubic-bezier(0.22,1,0.36,1)',
             }}>
               {showQuickActions
-                ? <X size={22} color="var(--text)" style={{ transition: 'transform 0.2s', transform: 'rotate(0deg)' }} />
-                : <Plus size={24} color="var(--accent-contrast)" />
+                ? <X size={24} color="var(--text)" />
+                : <Plus size={26} color="var(--accent-contrast)" />
               }
             </div>
-            <span style={{
-              fontSize: '9px', fontWeight: 700, letterSpacing: '0.02em',
-              color: showQuickActions ? 'var(--accent)' : 'var(--text-muted)',
-              transition: 'color 0.2s',
-            }}>
-              Quick
-            </span>
           </button>
 
           {/* Kalender */}

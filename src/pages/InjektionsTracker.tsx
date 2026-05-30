@@ -143,8 +143,8 @@ function groupLogs(logs: InjectionLog[]) {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const panelStyle: CSSProperties = {
-  background: 'linear-gradient(145deg, rgba(9,14,34,0.94), rgba(4,7,18,0.96))',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: 'linear-gradient(145deg, var(--surface), var(--surface))',
+  border: '1px solid var(--border)',
   borderRadius: 22,
   boxShadow: '0 8px 32px rgba(0,0,0,0.28)',
   position: 'relative',
@@ -156,7 +156,7 @@ const labelStyle: CSSProperties = {
   fontWeight: 800,
   letterSpacing: '0.12em',
   textTransform: 'uppercase',
-  color: 'rgba(154,170,191,0.55)',
+  color: 'var(--text-muted)',
 }
 
 const SETUP_SQL = `create table if not exists injection_logs (
@@ -338,7 +338,7 @@ export function InjektionsTracker() {
         <div style={{ padding: '14px 14px 0' }}>
           <div style={{
             display: 'flex', gap: 4,
-            background: 'rgba(255,255,255,0.04)',
+            background: 'var(--border)',
             borderRadius: 12, padding: 3,
           }}>
             {(['front', 'back'] as ViewMode[]).map(v => (
@@ -348,9 +348,9 @@ export function InjektionsTracker() {
                 style={{
                   flex: 1, padding: '7px 0', borderRadius: 9,
                   fontSize: '0.76rem', fontWeight: 800,
-                  background: view === v ? 'rgba(0,204,245,0.18)' : 'transparent',
-                  border: view === v ? '1px solid rgba(0,204,245,0.30)' : '1px solid transparent',
-                  color: view === v ? '#00ccf5' : 'rgba(154,170,191,0.6)',
+                  background: view === v ? 'var(--accent-weak)' : 'transparent',
+                  border: view === v ? '1px solid var(--accent-border)' : '1px solid transparent',
+                  color: view === v ? 'var(--accent)' : 'var(--text-muted)',
                   transition: 'all 0.18s ease',
                 }}
               >
@@ -380,7 +380,7 @@ export function InjektionsTracker() {
           ].map(item => (
             <div key={item.color} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, boxShadow: `0 0 6px ${item.color}60` }} />
-              <span style={{ fontSize: '0.58rem', color: 'rgba(154,170,191,0.55)', fontWeight: 700 }}>{item.label}</span>
+              <span style={{ fontSize: '0.58rem', color: 'var(--text-muted)', fontWeight: 700 }}>{item.label}</span>
             </div>
           ))}
         </div>
@@ -391,19 +391,19 @@ export function InjektionsTracker() {
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
           padding: '11px 14px', borderRadius: 18,
-          background: 'rgba(0,204,245,0.07)',
-          border: '1px solid rgba(0,204,245,0.15)',
+          background: 'var(--accent-weak)',
+          border: '1px solid var(--accent-border)',
         }}>
-          <Syringe size={16} color="#00ccf5" />
+          <Syringe size={16} color="var(--accent)" />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: '0.76rem', fontWeight: 800, color: '#eaeefc', lineHeight: 1.2 }}>
+            <p style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1.2 }}>
               {t('inj_last_label', { defaultValue: 'Letzte Injektion' })}: {lastSiteDef.label}
             </p>
-            <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.5)', marginTop: 2 }}>
+            <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginTop: 2 }}>
               {formatLogTime(lastLog.logged_at)}
             </p>
           </div>
-          <ChevronRight size={14} color="rgba(255,255,255,0.25)" />
+          <ChevronRight size={14} color="var(--border-strong)" />
         </div>
       )}
 
@@ -412,11 +412,11 @@ export function InjektionsTracker() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <div>
             <p style={labelStyle}>{t('inj_rotation', { defaultValue: 'Rotation' })}</p>
-            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: 'var(--text)', marginTop: 2 }}>
               {t('inj_site_status', { defaultValue: 'Stellen-Status' })}
             </h2>
           </div>
-          <RotateCcw size={16} color="rgba(0,204,245,0.6)" />
+          <RotateCcw size={16} color="var(--accent)" />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
           {SITE_DEFS.map(site => {
@@ -437,7 +437,7 @@ export function InjektionsTracker() {
                   textAlign: 'left',
                   border: isRec
                     ? '1px solid rgba(16,185,129,0.35)'
-                    : '1px solid rgba(255,255,255,0.07)',
+                    : '1px solid var(--border)',
                 }}
               >
                 {/* Status dot */}
@@ -448,10 +448,10 @@ export function InjektionsTracker() {
                   flexShrink: 0,
                 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: '0.78rem', fontWeight: 800, color: '#eaeefc', lineHeight: 1.2 }}>
+                  <p style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1.2 }}>
                     {site.label}
                   </p>
-                  <p style={{ fontSize: '0.6rem', color: 'rgba(154,170,191,0.5)', marginTop: 2 }}>
+                  <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: 2 }}>
                     {days === null
                       ? t('inj_never_used', { defaultValue: 'Noch nie' })
                       : days === 0
@@ -480,7 +480,7 @@ export function InjektionsTracker() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <div>
             <p style={labelStyle}>{t('inj_history', { defaultValue: 'Verlauf' })}</p>
-            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: '#eaeefc', marginTop: 2 }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 850, color: 'var(--text)', marginTop: 2 }}>
               {t('inj_latest', { defaultValue: 'Letzte Injektionen' })}
             </h2>
           </div>
@@ -491,8 +491,8 @@ export function InjektionsTracker() {
             {[0, 1, 2].map(i => (
               <div key={i} style={{
                 height: 68, borderRadius: 18,
-                background: 'rgba(9,14,34,0.6)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
                 animation: 'pulse 1.6s ease-in-out infinite',
                 animationDelay: `${i * 0.15}s`,
               }} />
@@ -502,13 +502,13 @@ export function InjektionsTracker() {
           <div style={{ ...panelStyle, padding: '28px 20px', textAlign: 'center' }}>
             <div style={{
               width: 48, height: 48, borderRadius: 18,
-              background: 'rgba(0,204,245,0.08)', border: '1px solid rgba(0,204,245,0.15)',
+              background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 14px',
             }}>
-              <Syringe size={20} color="rgba(0,204,245,0.5)" />
+              <Syringe size={20} color="var(--accent)" />
             </div>
-            <p style={{ fontSize: '0.82rem', color: 'rgba(154,170,191,0.6)', lineHeight: 1.6 }}>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               {t('inj_no_logs', { defaultValue: 'Noch keine Injektionen erfasst.' })}
               {'\n'}
               {t('inj_no_logs_hint', { defaultValue: 'Tippe eine Zone im Body-Map an oder nutze „Loggen".' })}
@@ -541,16 +541,16 @@ export function InjektionsTracker() {
                           boxShadow: `0 0 6px ${color}50`,
                         }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: '0.82rem', fontWeight: 800, color: '#eaeefc' }}>
+                          <p style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text)' }}>
                             {siteDef?.label ?? log.site}
                           </p>
                           <div style={{ display: 'flex', gap: 8, marginTop: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-                            <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.5)' }}>
+                            <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>
                               {format(parseISO(log.logged_at), 'dd.MM.yyyy · HH:mm')}
                             </p>
                             {log.notes && (
                               <p style={{
-                                fontSize: '0.62rem', color: 'rgba(154,170,191,0.38)',
+                                fontSize: '0.62rem', color: 'var(--text-muted)',
                                 fontStyle: 'italic',
                                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                                 maxWidth: 140,
@@ -610,9 +610,9 @@ function PageHeader({ onBack, onLog }: { onBack: () => void; onLog?: () => void 
         style={{
           width: 38, height: 38, borderRadius: 14, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          color: 'rgba(213,224,242,0.7)',
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          color: 'var(--text-dim)',
         }}
       >
         <ArrowLeft size={16} />
@@ -620,11 +620,11 @@ function PageHeader({ onBack, onLog }: { onBack: () => void; onLog?: () => void 
       <div style={{ flex: 1 }}>
         <p style={{
           fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.12em',
-          textTransform: 'uppercase', color: 'rgba(0,204,245,0.7)',
+          textTransform: 'uppercase', color: 'var(--accent)',
         }}>
           {t('inj_kicker', { defaultValue: 'Stellen-Rotation' })}
         </p>
-        <h1 style={{ fontSize: '1.32rem', fontWeight: 900, color: '#f8fbff', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+        <h1 style={{ fontSize: '1.32rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
           {t('inj_title', { defaultValue: 'Injektions-Tracker' })}
         </h1>
       </div>
@@ -634,9 +634,9 @@ function PageHeader({ onBack, onLog }: { onBack: () => void; onLog?: () => void 
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '9px 14px', borderRadius: 16, flexShrink: 0,
-            background: 'linear-gradient(135deg, rgba(0,204,245,0.22), rgba(0,204,245,0.10))',
-            border: '1px solid rgba(0,204,245,0.32)',
-            color: '#00ccf5', fontSize: '0.76rem', fontWeight: 800,
+            background: 'var(--accent-weak)',
+            border: '1px solid var(--accent-border)',
+            color: 'var(--accent)', fontSize: '0.76rem', fontWeight: 800,
           }}
         >
           <Plus size={15} />
@@ -657,8 +657,8 @@ function StatPill({ label, value, icon, accent }: {
 }) {
   return (
     <div style={{
-      background: 'rgba(2,6,18,0.48)',
-      border: '1px solid rgba(255,255,255,0.07)',
+      background: 'var(--surface)',
+      border: '1px solid var(--border)',
       borderRadius: 18,
       padding: '11px 10px',
     }}>
@@ -666,7 +666,7 @@ function StatPill({ label, value, icon, accent }: {
         {icon}
         <p style={{
           fontSize: '0.5rem', fontWeight: 800, letterSpacing: '0.07em',
-          textTransform: 'uppercase', color: 'rgba(154,170,191,0.55)',
+          textTransform: 'uppercase', color: 'var(--text-muted)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {label}
@@ -726,7 +726,7 @@ function BodyMap({ view, zones, siteStatuses, recommendedSite, onSiteClick }: {
             textAnchor="middle"
             fontSize="8"
             fontWeight="700"
-            fill="rgba(154,170,191,0.4)"
+            fill="var(--text-muted)"
             letterSpacing="0.1em"
           >
             RÜCKANSICHT
@@ -830,8 +830,8 @@ function LogSheet({ site, status, daysSince, onClose, onSave }: {
       {/* Bottom sheet */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 101,
-        background: 'linear-gradient(180deg, rgba(8,12,28,0.99) 0%, rgba(4,7,18,1) 100%)',
-        border: '1px solid rgba(255,255,255,0.10)',
+        background: 'var(--surface)',
+        border: '1px solid var(--border-strong)',
         borderRadius: '26px 26px 0 0',
         padding: '20px 18px',
         paddingBottom: 'calc(28px + env(safe-area-inset-bottom))',
@@ -840,7 +840,7 @@ function LogSheet({ site, status, daysSince, onClose, onSave }: {
         {/* Handle */}
         <div style={{
           width: 36, height: 4, borderRadius: 2,
-          background: 'rgba(255,255,255,0.12)',
+          background: 'var(--border-strong)',
           margin: '0 auto 22px',
         }} />
 
@@ -865,10 +865,10 @@ function LogSheet({ site, status, daysSince, onClose, onSave }: {
           </div>
           {/* Info */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: '1.02rem', fontWeight: 900, color: '#f8fbff', lineHeight: 1.2 }}>
+            <p style={{ fontSize: '1.02rem', fontWeight: 900, color: 'var(--text)', lineHeight: 1.2 }}>
               {site.label}
             </p>
-            <p style={{ fontSize: '0.68rem', color: 'rgba(154,170,191,0.6)', marginTop: 3 }}>
+            <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 3 }}>
               {site.methodHint}
             </p>
           </div>
@@ -877,7 +877,7 @@ function LogSheet({ site, status, daysSince, onClose, onSave }: {
             <p style={{ fontSize: '0.66rem', fontWeight: 800, color }}>
               {statusLabels[status]}
             </p>
-            <p style={{ fontSize: '0.6rem', color: 'rgba(154,170,191,0.5)', marginTop: 2 }}>
+            <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: 2 }}>
               {daysSince === null
                 ? t('inj_never_used', { defaultValue: 'Noch nie' })
                 : daysSince === 0
@@ -904,7 +904,7 @@ function LogSheet({ site, status, daysSince, onClose, onSave }: {
 
         {/* Notes */}
         <div style={{ marginBottom: 18 }}>
-          <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'rgba(213,224,242,0.7)', marginBottom: 8 }}>
+          <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dim)', marginBottom: 8 }}>
             {t('inj_notes_label', { defaultValue: 'Notizen (optional)' })}
           </p>
           <textarea
@@ -914,11 +914,11 @@ function LogSheet({ site, status, daysSince, onClose, onSave }: {
             rows={2}
             style={{
               width: '100%',
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.10)',
+              background: 'var(--surface-input)',
+              border: '1px solid var(--border-strong)',
               borderRadius: 14,
               padding: '10px 14px',
-              color: '#eaeefc',
+              color: 'var(--text)',
               fontSize: '0.84rem',
               resize: 'none',
               outline: 'none',
@@ -934,9 +934,9 @@ function LogSheet({ site, status, daysSince, onClose, onSave }: {
             onClick={onClose}
             style={{
               flex: 1, padding: '13px 0', borderRadius: 16,
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.10)',
-              color: 'rgba(213,224,242,0.7)',
+              background: 'var(--surface)',
+              border: '1px solid var(--border-strong)',
+              color: 'var(--text-dim)',
               fontSize: '0.84rem', fontWeight: 800,
             }}
           >
@@ -981,8 +981,8 @@ function SetupRequired({ onRetry }: { onRetry: () => void }) {
 
   return (
     <div style={{
-      background: 'linear-gradient(145deg, rgba(9,14,34,0.94), rgba(4,7,18,0.96))',
-      border: '1px solid rgba(255,255,255,0.08)',
+      background: 'var(--surface)',
+      border: '1px solid var(--border)',
       borderRadius: 22,
       padding: 22,
     }}>
@@ -994,20 +994,20 @@ function SetupRequired({ onRetry }: { onRetry: () => void }) {
       }}>
         <AlertTriangle size={22} color="#f59e0b" />
       </div>
-      <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#f8fbff', textAlign: 'center', marginBottom: 8 }}>
+      <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text)', textAlign: 'center', marginBottom: 8 }}>
         {t('inj_setup_required', { defaultValue: 'Datenbank-Setup erforderlich' })}
       </h2>
-      <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.62)', lineHeight: 1.6, textAlign: 'center', marginBottom: 18 }}>
+      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.6, textAlign: 'center', marginBottom: 18 }}>
         {t('inj_setup_hint', { defaultValue: 'Führe folgendes SQL im Supabase SQL-Editor aus, um den Injektions-Tracker zu aktivieren.' })}
       </p>
 
       {/* SQL block */}
       <div style={{
-        background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(0,204,245,0.15)',
+        background: 'rgba(0,0,0,0.45)', border: '1px solid var(--accent-border)',
         borderRadius: 14, padding: '12px 14px', marginBottom: 14,
       }}>
         <pre style={{
-          fontSize: '0.6rem', color: 'rgba(0,204,245,0.75)',
+          fontSize: '0.6rem', color: 'var(--accent)',
           overflowX: 'auto', margin: 0, lineHeight: 1.65,
           whiteSpace: 'pre-wrap', wordBreak: 'break-word',
           fontFamily: "'SF Mono', 'Fira Code', monospace",
@@ -1021,8 +1021,8 @@ function SetupRequired({ onRetry }: { onRetry: () => void }) {
           onClick={handleCopy}
           style={{
             flex: 1, padding: '11px 0', borderRadius: 14,
-            background: 'rgba(0,204,245,0.10)', border: '1px solid rgba(0,204,245,0.22)',
-            color: '#00ccf5', fontSize: '0.78rem', fontWeight: 800,
+            background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
+            color: 'var(--accent)', fontSize: '0.78rem', fontWeight: 800,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           }}
         >
@@ -1035,8 +1035,8 @@ function SetupRequired({ onRetry }: { onRetry: () => void }) {
           onClick={onRetry}
           style={{
             flex: 1, padding: '11px 0', borderRadius: 14,
-            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)',
-            color: 'rgba(213,224,242,0.7)', fontSize: '0.78rem', fontWeight: 800,
+            background: 'var(--surface)', border: '1px solid var(--border-strong)',
+            color: 'var(--text-dim)', fontSize: '0.78rem', fontWeight: 800,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           }}
         >
