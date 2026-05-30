@@ -532,10 +532,37 @@ export function Onboarding() {
     )
   })()
 
+  const simConfirm = meta?.id === 'sim-confirm' ? createPortal(
+    <div style={{
+      position:'fixed', left:12, right:12,
+      bottom:'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px)',
+      zIndex: OB_Z.panel - 2,
+      background:'var(--surface)', border:'1px solid var(--accent-border)',
+      borderRadius:18, padding:'14px 16px',
+      boxShadow:'0 12px 40px rgba(0,0,0,0.45)',
+      display:'flex', alignItems:'center', gap:12,
+    }}>
+      <div style={{ flex:1, minWidth:0 }}>
+        <p style={{ fontSize:'0.66rem', fontWeight:800, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--accent)' }}>
+          {t('obx_sim_kicker')}
+        </p>
+        <p style={{ fontSize:'0.9rem', fontWeight:800, color:'var(--text)' }}>{t('obx_sim_substance')}</p>
+        <p style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{t('obx_sim_time')}</p>
+      </div>
+      <button type="button" data-ob="ob-sim-confirm" data-ob-confirm
+        style={{ flexShrink:0, padding:'10px 16px', borderRadius:12, border:'none',
+          background:'linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #003a6e))',
+          color:'var(--accent-contrast)', fontWeight:800, fontSize:'0.85rem', cursor:'pointer',
+          display:'inline-flex', alignItems:'center', gap:4 }}>
+        <Check size={16} />{t('obx_sim_btn')}
+      </button>
+    </div>, document.body) : null
+
   return (
     <>
       {createPortal(scrimLayer, document.body)}
       {confirmBtn}
+      {simConfirm}
       {createPortal(calloutLayer, document.body)}
     </>
   )
