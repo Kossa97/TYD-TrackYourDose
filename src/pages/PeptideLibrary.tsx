@@ -177,7 +177,7 @@ export function PeptideLibrary() {
           <p className="text-[0.58rem] font-black uppercase tracking-[0.2em] text-sky-400/65 mb-2"
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Forschungsdatenbank</p>
           <h1 className="text-3xl font-black text-white mb-1 leading-tight"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Peptid-Bibliothek</h1>
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Peptipedia</h1>
           <p className="text-sm text-slate-400 mb-5">Evidenzbasierte Forschungsprofile. Kein medizinischer Rat.</p>
 
           {/* Search + Filter toggle */}
@@ -199,14 +199,6 @@ export function PeptideLibrary() {
             </button>
           </div>
         </div>
-      </div>
-
-      {/* Disclaimer */}
-      <div className="flex items-start gap-3 bg-amber-500/5 border border-amber-500/15 rounded-xl px-4 py-3 mb-4">
-        <FlaskConical size={14} className="text-amber-400/70 shrink-0 mt-0.5" />
-        <p className="text-xs text-amber-300/60 leading-relaxed">
-          Alle Angaben basieren auf veröffentlichten Forschungsstudien. Keine Therapieempfehlung.
-        </p>
       </div>
 
       {/* ── Filter Panel ──────────────────────────────────────────────────────── */}
@@ -349,10 +341,10 @@ export function PeptideLibrary() {
         </div>
       )}
 
-      <div className="mt-8 pt-6 border-t border-white/[0.05]">
-        <p className="text-[0.58rem] text-slate-700 text-center"
-          style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
-          FORSCHUNGSDATEN ONLY · KEIN MEDIZINISCHER RAT
+      <div className="mt-8 flex items-start gap-3 bg-amber-500/5 border border-amber-500/15 rounded-xl px-4 py-3">
+        <FlaskConical size={14} className="text-amber-400/70 shrink-0 mt-0.5" />
+        <p className="text-xs text-amber-300/60 leading-relaxed">
+          Alle Angaben basieren auf veröffentlichten Forschungsstudien. Keine Therapieempfehlung.
         </p>
       </div>
     </div>
