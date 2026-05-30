@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, Star, Pencil, Search } from 'lucide-react'
+import { Plus, Trash2, Star, Pencil, Search, Smile, Meh, Frown, type LucideIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
@@ -27,10 +27,11 @@ interface Review {
 
 interface Peptide { id: string; name: string }
 
-const EXPERIENCE_CONFIG = {
-  gut:     { emoji: '😊', color: 'bg-emerald-500 text-white', inactive: 'bg-slate-800 text-slate-400' },
-  mittel:  { emoji: '😐', color: 'bg-amber-500 text-white',   inactive: 'bg-slate-800 text-slate-400' },
-  schlecht:{ emoji: '😞', color: 'bg-red-500 text-white',     inactive: 'bg-slate-800 text-slate-400' },
+type ExperienceCfg = { icon: LucideIcon; color: string; inactive: string }
+const EXPERIENCE_CONFIG: { gut: ExperienceCfg; mittel: ExperienceCfg; schlecht: ExperienceCfg } = {
+  gut:     { icon: Smile,  color: 'bg-emerald-500 text-white', inactive: 'bg-slate-800 text-slate-400' },
+  mittel:  { icon: Meh,    color: 'bg-amber-500 text-white',   inactive: 'bg-slate-800 text-slate-400' },
+  schlecht:{ icon: Frown,  color: 'bg-red-500 text-white',     inactive: 'bg-slate-800 text-slate-400' },
 }
 
 const EXPERIENCE_BADGE = {
@@ -52,7 +53,7 @@ const StarRating = ({ value, onChange }: { value: number; onChange?: (v: number)
             fill: '#f5a800',
             filter: 'drop-shadow(0 0 5px rgba(245,168,0,0.65)) drop-shadow(0 0 2px rgba(255,200,0,0.4))',
           } : {
-            color: 'rgba(255,255,255,0.12)',
+            color: 'var(--border)',
             fill: 'transparent',
           }}
         />
@@ -209,7 +210,7 @@ export function Bewertungen() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className={`badge ${EXPERIENCE_BADGE[r.experience ?? 'gut']}`}>
-                    {exp.emoji} {t(r.experience ?? 'gut')}
+                    <exp.icon size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }} /> {t(r.experience ?? 'gut')}
                   </span>
                   <button className="p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
                     onClick={() => openEdit(r)}>
@@ -300,7 +301,7 @@ export function Bewertungen() {
                     className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors flex flex-col items-center gap-1 ${
                       form.experience === key ? cfg.color : cfg.inactive
                     }`}>
-                    <span className="text-xl">{cfg.emoji}</span>
+                    <cfg.icon size={20} />
                     {t(key)}
                   </button>
                 ))}
