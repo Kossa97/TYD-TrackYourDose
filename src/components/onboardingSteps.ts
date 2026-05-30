@@ -16,6 +16,10 @@ export interface OnboardingStepMeta {
   navTarget?: boolean
   /** For center placement: snap card to top or bottom of viewport instead of center */
   snapToViewport?: 'top' | 'bottom'
+  /** Next/confirm stays disabled until the target input has a value. */
+  requireFilled?: boolean
+  /** If the target does not appear within ~700ms, auto-skip this step. */
+  optionalTarget?: boolean
 }
 
 /**

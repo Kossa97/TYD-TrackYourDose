@@ -114,6 +114,7 @@ export function Onboarding() {
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [fieldIndex, setFieldIndex] = useState(0)
+  const [filled, setFilled] = useState(true)
   const [panelH, setPanelH] = useState(200)
   const [viewportKey, setViewportKey] = useState(0)
   const [layout, setLayout] = useState<ReturnType<typeof computeCalloutLayout>>(() =>
@@ -221,6 +222,15 @@ export function Onboarding() {
 
   const measureTarget = useCallback(() => {
     setModalOpen(!!getOpenAppModal())
+    if (meta?.requireFilled) {
+      const tgt = getOnboardingInteractionEl(meta)
+      const input = tgt?.matches('input,select,textarea')
+        ? (tgt as HTMLInputElement)
+        : tgt?.querySelector<HTMLInputElement>('input,select,textarea') ?? null
+      setFilled(!!input && String(input.value).trim().length > 0)
+    } else {
+      setFilled(true)
+    }
     const el = getOnboardingInteractionEl(meta)
     // In cycle mode, measure the specific active field instead of the whole section
     if (meta?.advance === 'next' && el) {
@@ -274,23 +284,9 @@ export function Onboarding() {
   }, [step, active, needsLanguagePick, meta, measureTarget])
 
   useEffect(() => {
-    if (!active || needsLanguagePick || meta?.id !== 'add-stock') return
-    let advanced = false
-    const tryAdvance = () => {
-      if (advanced || !getOpenAppModal()) return
-      advanced = true
-      nextRef.current()
-    }
-    tryAdvance()
-    const mo = new MutationObserver(tryAdvance)
-    mo.observe(document.body, { childList: true, subtree: true })
-    return () => mo.disconnect()
-  }, [step, active, needsLanguagePick, meta?.id])
-
-  useEffect(() => {
     cleanupRef.current?.()
     cleanupRef.current = null
-    if (!active || needsLanguagePick || meta?.advance !== 'click' || meta?.id === 'add-stock') return
+    if (!active || needsLanguagePick || meta?.advance !== 'click') return
 
     // Use event delegation so the handler works even if the target element
     // appears in the DOM after this effect runs (e.g. btn-peptid-anlegen
@@ -311,6 +307,15 @@ export function Onboarding() {
       cleanupRef.current?.()
       cleanupRef.current = null
     }
+  }, [step, active, needsLanguagePick, meta])
+
+  // Auto-skip optional steps whose target never appears.
+  useEffect(() => {
+    if (!active || needsLanguagePick || !meta?.optionalTarget) return
+    const id = window.setTimeout(() => {
+      if (!getOnboardingInteractionEl(meta)) nextRef.current()
+    }, 700)
+    return () => clearTimeout(id)
   }, [step, active, needsLanguagePick, meta])
 
   useEffect(() => {
@@ -450,7 +455,7 @@ export function Onboarding() {
           <button type="button" onClick={skip} className="ob-skip-inline">
             {t('skip')}
           </button>
-          <button type="button" onClick={() => nextRef.current()} className="ob-primary-btn flex-1 justify-center">
+          <button type="button" onClick={() => nextRef.current()} className="ob-primary-btn flex-1 justify-center" disabled={meta?.requireFilled ? !filled : false} style={{ opacity: meta?.requireFilled && !filled ? 0.4 : 1 }}>
             {isLast ? t('finish') : s.advance === 'click' ? t('ob_continue') : t('next')}
             <ChevronRight size={14} />
           </button>
@@ -476,6 +481,7 @@ export function Onboarding() {
     const currentField = fields[Math.min(fieldIndex, fields.length - 1)] ?? null
 
     const handleConfirm = () => {
+      if (meta?.requireFilled && !filled) return
       if (hasCycle && fieldIndex < fields.length - 1) {
         setFieldIndex(i => i + 1)
       } else {
@@ -515,7 +521,8 @@ export function Onboarding() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: 'pointer',
+          cursor: meta?.requireFilled && !filled ? 'not-allowed' : 'pointer',
+          opacity: meta?.requireFilled && !filled ? 0.4 : 1,
           boxShadow: '0 0 18px rgba(0,204,245,0.5)',
         }}
       >
