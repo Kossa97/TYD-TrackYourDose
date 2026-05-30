@@ -203,8 +203,8 @@ function runSimulation(
 // ── Design-Tokens ──────────────────────────────────────────────────────────
 
 const PANEL = {
-  background: 'linear-gradient(145deg, rgba(9,14,34,0.94), rgba(4,7,18,0.96))',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: 'linear-gradient(145deg, var(--surface), var(--surface))',
+  border: '1px solid var(--border)',
   borderRadius: 20,
   padding: 16,
 } as const
@@ -214,7 +214,7 @@ const LABEL = {
   fontWeight: 800,
   letterSpacing: '0.12em',
   textTransform: 'uppercase',
-  color: 'rgba(154,170,191,0.60)',
+  color: 'var(--text-muted)',
   display: 'block',
   marginBottom: 6,
 } as const
@@ -223,9 +223,9 @@ const INPUT = {
   width: '100%',
   padding: '10px 14px',
   borderRadius: 12,
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.10)',
-  color: '#eaeefc',
+  background: 'var(--surface-input)',
+  border: '1px solid var(--border)',
+  color: 'var(--text)',
   fontSize: '0.88rem',
   fontWeight: 700,
   boxSizing: 'border-box',
@@ -250,7 +250,7 @@ function InfoTip({ text }: { text: string }) {
         style={{
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           width: 18, height: 18, padding: 0, border: 'none', background: 'transparent',
-          color: '#00ccf5', cursor: 'pointer', flexShrink: 0,
+          color: 'var(--accent)', cursor: 'pointer', flexShrink: 0,
         }}
       >
         <Info size={14} strokeWidth={2.5} />
@@ -262,10 +262,10 @@ function InfoTip({ text }: { text: string }) {
             position: 'absolute', zIndex: 50, left: '50%', bottom: 'calc(100% + 8px)',
             transform: 'translateX(-50%)', width: 'max(200px, 14vw)', maxWidth: 260,
             padding: '10px 12px', borderRadius: 10,
-            background: 'rgba(7,9,26,0.98)', border: '1px solid rgba(0,204,245,0.22)',
+            background: 'var(--surface)', border: '1px solid var(--accent-border)',
             boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
             fontSize: '0.72rem', fontWeight: 500, lineHeight: 1.5,
-            color: 'rgba(213,224,242,0.88)', pointerEvents: 'none',
+            color: 'var(--text-dim)', pointerEvents: 'none',
           }}
         >
           {text}
@@ -291,9 +291,9 @@ function PkChartTooltip({ active, payload, label }: {
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: 'rgba(7,9,26,0.96)', border: '1px solid rgba(0,204,245,0.25)', borderRadius: 10, padding: '8px 12px' }}>
-      <p style={{ fontSize: '0.7rem', color: 'rgba(154,170,191,0.6)', marginBottom: 3 }}>Nach {label} Stunden</p>
-      <p style={{ fontSize: '0.9rem', fontWeight: 900, color: '#00ccf5' }}>{payload[0].value}% Wirkstoffspiegel</p>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--accent-border)', borderRadius: 10, padding: '8px 12px' }}>
+      <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 3 }}>Nach {label} Stunden</p>
+      <p style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--accent)' }}>{payload[0].value}% Wirkstoffspiegel</p>
     </div>
   )
 }
@@ -319,21 +319,21 @@ function HistoryChartTooltip({ active, payload }: {
   const d = new Date(ts)
   return (
     <div style={{
-      background: 'rgba(7,9,26,0.97)', border: '1px solid rgba(0,204,245,0.22)',
+      background: 'var(--surface)', border: '1px solid var(--accent-border)',
       borderRadius: 12, padding: '10px 14px', minWidth: 140,
       boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
     }}>
-      <p style={{ fontSize: '0.68rem', fontWeight: 700, color: 'rgba(154,170,191,0.55)', marginBottom: 1 }}>
+      <p style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 1 }}>
         {format(d, 'EEE, dd. MMM yyyy', { locale: deLocale })}
       </p>
-      <p style={{ fontSize: '0.72rem', fontWeight: 800, color: 'rgba(154,170,191,0.75)', marginBottom: 6 }}>
+      <p style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: 6 }}>
         {format(d, 'HH:mm', { locale: deLocale })} Uhr
       </p>
-      <p style={{ fontSize: '1.1rem', fontWeight: 900, color: '#00ccf5', letterSpacing: '-0.02em' }}>
+      <p style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--accent)', letterSpacing: '-0.02em' }}>
         {typeof level === 'number' ? level.toFixed(1) : level}
         <span style={{ fontSize: '0.72rem', fontWeight: 700, marginLeft: 3 }}>%</span>
       </p>
-      <p style={{ fontSize: '0.58rem', color: 'rgba(154,170,191,0.4)', marginTop: 2 }}>Wirkstoffspiegel</p>
+      <p style={{ fontSize: '0.58rem', color: 'var(--text-muted)', marginTop: 2 }}>Wirkstoffspiegel</p>
     </div>
   )
 }
@@ -517,7 +517,7 @@ function LiveCycleCard({
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
         <div style={{ minWidth: 0 }}>
-          <p style={{ fontSize: '0.92rem', fontWeight: 850, color: '#f8fbff', marginBottom: 4 }}>{peptideName}</p>
+          <p style={{ fontSize: '0.92rem', fontWeight: 850, color: 'var(--text)', marginBottom: 4 }}>{peptideName}</p>
           <span style={{
             fontSize: '0.55rem', padding: '2px 7px', borderRadius: 99,
             background: `${accent}18`, color: accent, fontWeight: 800,
@@ -552,7 +552,7 @@ function LiveCycleCard({
           <>
             {/* Nav-Zeile */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <p style={{ fontSize: '0.52rem', color: 'rgba(154,170,191,0.38)', fontFamily: 'monospace' }}>
+              <p style={{ fontSize: '0.52rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
                 7-Tage-Fenster · → wischen für Verlauf
               </p>
               {windowOffsetHours > 0 && (
@@ -584,11 +584,11 @@ function LiveCycleCard({
             <div style={{ display: 'flex', gap: 10, marginBottom: 6 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-                <span style={{ fontSize: '0.5rem', color: 'rgba(154,170,191,0.45)' }}>Einnahme</span>
+                <span style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>Einnahme</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
-                <span style={{ fontSize: '0.5rem', color: 'rgba(154,170,191,0.45)' }}>Peak</span>
+                <span style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>Peak</span>
               </div>
             </div>
 
@@ -708,7 +708,7 @@ function LiveCycleCard({
                 <Area type="monotone" dataKey="v" stroke={accent} fill={`url(#spk-${cycleId})`} dot={false} strokeWidth={2} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
-            <p style={{ fontSize: '0.52rem', color: 'rgba(154,170,191,0.35)', textAlign: 'center', marginTop: 6 }}>
+            <p style={{ fontSize: '0.52rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: 6 }}>
               Einnahmen im Kalender bestätigen für vollständigen Verlauf
             </p>
           </>
@@ -718,12 +718,12 @@ function LiveCycleCard({
       {/* Stats 3er-Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
         {[
-          { label: 'Nächste Dosis', value: level?.nextDoseIn ?? '—', color: '#eaeefc' },
+          { label: 'Nächste Dosis', value: level?.nextDoseIn ?? '—', color: 'var(--text)' },
           { label: 'Level danach',  value: level ? `~${level.levelAfterNextDose.toFixed(0)}%` : '—', color: accent },
           { label: 'Peak',          value: level?.peakLabel ?? '—', color: '#f59e0b' },
         ].map(({ label, value, color }) => (
           <div key={label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '7px 8px' }}>
-            <p style={{ fontSize: '0.52rem', color: 'rgba(154,170,191,0.5)', fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
+            <p style={{ fontSize: '0.52rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
             <p style={{ fontSize: '0.82rem', fontWeight: 900, color }}>{value}</p>
           </div>
         ))}
@@ -737,8 +737,8 @@ function LiveCycleCard({
           { k: 'F',    v: `${Math.round(pk.bioavailability_sc * 100)}%`, tip: 'Bioverfügbarkeit — wie viel tatsächlich wirkt' },
         ] as const).map(({ k, v, tip }) => (
           <div key={k} title={tip} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'help' }}>
-            <span style={{ fontSize: '0.58rem', color: 'rgba(154,170,191,0.45)', fontFamily: 'monospace' }}>{k}:</span>
-            <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'rgba(213,224,242,0.7)' }}>{v}</span>
+            <span style={{ fontSize: '0.58rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{k}:</span>
+            <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-dim)' }}>{v}</span>
           </div>
         ))}
       </div>
@@ -899,13 +899,13 @@ export function BlutspiegelSimulation() {
       <div style={{ ...PANEL, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 88% 10%, rgba(0,204,245,0.15), transparent 34%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative' }}>
-          <p style={{ fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.13em', textTransform: 'uppercase', color: 'rgba(0,204,245,0.74)', marginBottom: 4 }}>
+          <p style={{ fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.13em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 4 }}>
             Pharmakokinetik
           </p>
-          <h1 style={{ fontSize: '1.55rem', fontWeight: 900, letterSpacing: '-0.04em', color: '#f8fbff', lineHeight: 1.05 }}>
+          <h1 style={{ fontSize: '1.55rem', fontWeight: 900, letterSpacing: '-0.04em', color: 'var(--text)', lineHeight: 1.05 }}>
             Blutspiegel-Simulation
           </h1>
-          <p style={{ fontSize: '0.72rem', color: 'rgba(213,224,242,0.52)', marginTop: 5, lineHeight: 1.5 }}>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: 5, lineHeight: 1.5 }}>
             Sieh auf einen Blick, wann dein Peptid wirkt und wann es wieder abgebaut ist
           </p>
         </div>
@@ -922,18 +922,18 @@ export function BlutspiegelSimulation() {
                 animation: 'liveBlutPulse 1.5s ease-in-out infinite',
               }} />
               <style>{`@keyframes liveBlutPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
-              <p style={{ fontSize: '0.85rem', fontWeight: 850, color: '#eaeefc' }}>Live-Blutspiegel</p>
-              <span style={{ fontSize: '0.58rem', color: 'rgba(154,170,191,0.5)', fontFamily: 'monospace', fontWeight: 700 }}>
+              <p style={{ fontSize: '0.85rem', fontWeight: 850, color: 'var(--text)' }}>Live-Blutspiegel</p>
+              <span style={{ fontSize: '0.58rem', color: 'var(--text-muted)', fontFamily: 'monospace', fontWeight: 700 }}>
                 · alle 5s
               </span>
             </div>
-            {liveRefreshing && <Loader2 size={14} color="#00ccf5" className="animate-spin" />}
+            {liveRefreshing && <Loader2 size={14} color="var(--accent)" className="animate-spin" />}
           </div>
 
           {liveLoading ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 0', justifyContent: 'center' }}>
-              <Loader2 size={18} color="#00ccf5" className="animate-spin" />
-              <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.6)' }}>
+              <Loader2 size={18} color="var(--accent)" className="animate-spin" />
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                 Live-Spiegel wird berechnet…
               </p>
             </div>
@@ -963,10 +963,10 @@ export function BlutspiegelSimulation() {
       {/* ── Verlaufs-Graph ───────────────────────────────────────────────── */}
       {FEATURES.LIVE_VERLAUF_CHART && (chartLoading || chartData.length > 0) && (
         <div style={PANEL}>
-          <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#eaeefc', marginBottom: 2 }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text)', marginBottom: 2 }}>
             Verlaufs-Graph
           </p>
-          <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.45)', marginBottom: 12, lineHeight: 1.5 }}>
+          <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
             7-Tage-Fenster mit echten Einnahmen · wischen zum Scrollen
           </p>
           <LiveBlutspiegelChart cycles={chartData} loading={chartLoading} />
@@ -975,8 +975,8 @@ export function BlutspiegelSimulation() {
 
       {/* Manuelle Simulation */}
       <div style={PANEL}>
-        <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#eaeefc', marginBottom: 2 }}>Manuelle Simulation</p>
-        <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.45)', marginBottom: 14, lineHeight: 1.5 }}>
+        <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text)', marginBottom: 2 }}>Manuelle Simulation</p>
+        <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
           Simuliere den theoretischen Verlauf einer Einzeldosis — wähle Substanz, Dosis und Route.
           Die Werte sind Schätzungen auf Basis pharmakologischer Durchschnittsdaten.
         </p>
@@ -989,7 +989,7 @@ export function BlutspiegelSimulation() {
             Peptid
           </FieldLabel>
           {pkProfiles.length === 0 ? (
-            <p style={{ fontSize: '0.78rem', color: 'rgba(154,170,191,0.45)', padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.03)' }}>
               Noch keine PK-Profile hinterlegt. Im Admin-Panel hinzufügen.
             </p>
           ) : (
@@ -1051,14 +1051,14 @@ export function BlutspiegelSimulation() {
         {/* Mehrfachdosis Toggle */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: multiDose ? 12 : 0 }}>
           <div>
-            <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#eaeefc' }}>Mehrfachdosis simulieren</p>
-            <p style={{ fontSize: '0.65rem', color: 'rgba(154,170,191,0.5)', marginTop: 2 }}>Zeigt Akkumulation über mehrere Gaben</p>
+            <p style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>Mehrfachdosis simulieren</p>
+            <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 2 }}>Zeigt Akkumulation über mehrere Gaben</p>
           </div>
           <button
             onClick={() => setMultiDose(v => !v)}
             style={{
               width: 44, height: 24, borderRadius: 99,
-              background: multiDose ? '#00ccf5' : 'rgba(255,255,255,0.12)',
+              background: multiDose ? 'var(--accent)' : 'rgba(255,255,255,0.12)',
               position: 'relative', transition: 'background 0.2s', flexShrink: 0,
             }}
           >
@@ -1088,9 +1088,9 @@ export function BlutspiegelSimulation() {
           disabled={!selectedProfile}
           style={{
             width: '100%', marginTop: 14, padding: '12px 0', borderRadius: 14,
-            background: selectedProfile ? 'rgba(0,204,245,0.16)' : 'rgba(255,255,255,0.05)',
-            border: selectedProfile ? '1px solid rgba(0,204,245,0.32)' : '1px solid rgba(255,255,255,0.08)',
-            color: selectedProfile ? '#00ccf5' : 'rgba(154,170,191,0.3)',
+            background: selectedProfile ? 'var(--accent-weak)' : 'rgba(255,255,255,0.05)',
+            border: selectedProfile ? '1px solid var(--accent-border)' : '1px solid var(--border)',
+            color: selectedProfile ? 'var(--accent)' : 'var(--text-muted)',
             fontSize: '0.9rem', fontWeight: 900,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             cursor: selectedProfile ? 'pointer' : 'not-allowed', transition: 'all 0.18s',
@@ -1104,10 +1104,10 @@ export function BlutspiegelSimulation() {
       {simResult && selectedProfile && (
         <>
           <div style={{ ...PANEL, paddingBottom: 20 }}>
-            <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#eaeefc', marginBottom: 4 }}>
+            <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>
               Blutspiegel-Kurve — {selectedProfile.name}
             </p>
-            <p style={{ fontSize: '0.62rem', color: 'rgba(154,170,191,0.45)', marginBottom: 14 }}>
+            <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: 14 }}>
               Relativer Wirkstoffspiegel in % (normalisiert auf Peak = 100 %)
             </p>
 
@@ -1165,7 +1165,7 @@ export function BlutspiegelSimulation() {
                   strokeDasharray="4 3"
                   strokeWidth={1.5}
                   label={{
-                    value: '⚡ Peak — maximale Wirkung',
+                    value: 'Peak — maximale Wirkung',
                     position: 'insideTopLeft',
                     fill: '#f59e0b',
                     fontSize: 8,
@@ -1196,7 +1196,7 @@ export function BlutspiegelSimulation() {
                     strokeDasharray="4 3"
                     strokeWidth={1.5}
                     label={{
-                      value: '🔚 Wirkungsende',
+                      value: 'Wirkungsende',
                       position: 'insideTopRight',
                       fill: 'rgba(255,255,255,0.55)',
                       fontSize: 8,
@@ -1223,13 +1223,13 @@ export function BlutspiegelSimulation() {
             {/* Legende Referenzlinien */}
             <div style={{ display: 'flex', gap: 14, marginTop: 10, flexWrap: 'wrap' }}>
               {[
-                { color: '#f59e0b', label: '⚡ Peak — maximale Wirkung' },
+                { color: '#f59e0b', label: 'Peak — maximale Wirkung' },
                 { color: '#8b5cf6', label: '½ Halbwertzeit' },
-                { color: 'rgba(255,255,255,0.35)', label: '🔚 Wirkungsende' },
+                { color: 'rgba(255,255,255,0.35)', label: 'Wirkungsende' },
               ].map(({ color, label }) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <div style={{ width: 16, height: 1.5, background: color, borderRadius: 1 }} />
-                  <span style={{ fontSize: '0.6rem', color: 'rgba(154,170,191,0.55)', fontWeight: 700 }}>{label}</span>
+                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700 }}>{label}</span>
                 </div>
               ))}
             </div>
@@ -1237,7 +1237,7 @@ export function BlutspiegelSimulation() {
 
           {/* Info-Box — Werte erklärt */}
           <div style={PANEL}>
-            <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#eaeefc', marginBottom: 12 }}>
+            <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text)', marginBottom: 12 }}>
               Deine Ergebnisse — einfach erklärt
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1245,7 +1245,7 @@ export function BlutspiegelSimulation() {
                 {
                   ...METRIC_EXPLANATIONS.peak,
                   value: '100 %',
-                  color: '#00ccf5',
+                  color: 'var(--accent)',
                 },
                 {
                   ...METRIC_EXPLANATIONS.tmax,
@@ -1262,7 +1262,7 @@ export function BlutspiegelSimulation() {
                   value: simResult.t10 < selectedProfile.half_life_hours * 5
                     ? `${Math.round(simResult.t10 * 10) / 10} Stunden`
                     : `über ${Math.round(selectedProfile.half_life_hours * 5)} Stunden`,
-                  color: 'rgba(213,224,242,0.75)',
+                  color: 'var(--text-dim)',
                 },
                 ...(multiDose
                   ? [{
@@ -1281,13 +1281,13 @@ export function BlutspiegelSimulation() {
                     padding: '14px 16px',
                   }}
                 >
-                  <p style={{ fontSize: '0.72rem', fontWeight: 800, color: 'rgba(154,170,191,0.65)', marginBottom: 4 }}>
+                  <p style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: 4 }}>
                     {title}
                   </p>
                   <p style={{ fontSize: '1.35rem', fontWeight: 900, color, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 8 }}>
                     {value}
                   </p>
-                  <p style={{ fontSize: '0.78rem', color: 'rgba(213,224,242,0.58)', lineHeight: 1.55 }}>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', lineHeight: 1.55 }}>
                     {explain}
                   </p>
                 </div>
@@ -1297,7 +1297,7 @@ export function BlutspiegelSimulation() {
 
           {/* PK-Parameter des gewählten Profils */}
           <div style={{ ...PANEL }}>
-            <p style={{ fontSize: '0.62rem', fontWeight: 800, color: 'rgba(154,170,191,0.55)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
+            <p style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
               PK-Parameter — {selectedProfile.name}
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
@@ -1309,14 +1309,14 @@ export function BlutspiegelSimulation() {
                 { k: 'Kategorie', v: selectedProfile.category },
                 { k: 'ke', v: `${(Math.LN2 / selectedProfile.half_life_hours).toFixed(3)} /h` },
               ].map(({ k, v }) => (
-                <div key={k} style={{ padding: '8px 10px', borderRadius: 10, background: 'rgba(0,204,245,0.05)', border: '1px solid rgba(0,204,245,0.10)' }}>
-                  <p style={{ fontSize: '0.55rem', color: 'rgba(154,170,191,0.45)', marginBottom: 3 }}>{k}</p>
-                  <p style={{ fontSize: '0.82rem', fontWeight: 800, color: '#eaeefc' }}>{v}</p>
+                <div key={k} style={{ padding: '8px 10px', borderRadius: 10, background: 'var(--accent-weak)', border: '1px solid var(--accent-border)' }}>
+                  <p style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginBottom: 3 }}>{k}</p>
+                  <p style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text)' }}>{v}</p>
                 </div>
               ))}
             </div>
             {selectedProfile.notes && (
-              <p style={{ marginTop: 10, fontSize: '0.72rem', color: 'rgba(154,170,191,0.5)', lineHeight: 1.5 }}>
+              <p style={{ marginTop: 10, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
                 {selectedProfile.notes}
               </p>
             )}
@@ -1327,10 +1327,10 @@ export function BlutspiegelSimulation() {
       {/* Empty state wenn noch keine Simulation */}
       {!simResult && (
         <div style={{ ...PANEL, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '40px 20px', textAlign: 'center' }}>
-          <div style={{ width: 56, height: 56, borderRadius: 18, background: 'rgba(0,204,245,0.08)', border: '1px solid rgba(0,204,245,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Activity size={26} color="rgba(0,204,245,0.55)" />
+          <div style={{ width: 56, height: 56, borderRadius: 18, background: 'var(--accent-weak)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Activity size={26} color="var(--accent)" />
           </div>
-          <p style={{ fontSize: '0.85rem', color: 'rgba(154,170,191,0.45)' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             Peptid wählen und Simulation starten
           </p>
         </div>
@@ -1339,7 +1339,7 @@ export function BlutspiegelSimulation() {
       <p style={{
         fontSize: '0.68rem',
         lineHeight: 1.55,
-        color: 'rgba(255,255,255,0.30)',
+        color: 'var(--text-muted)',
         textAlign: 'center',
         padding: '4px 8px 12px',
       }}>
