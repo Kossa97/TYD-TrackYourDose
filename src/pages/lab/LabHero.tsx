@@ -114,7 +114,7 @@ export function LabHero({ onSearch, loading }: LabHeroProps) {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-violet-500/25 text-violet-300/70 hover:bg-violet-500/10 hover:border-violet-500/40 hover:text-violet-300 transition-all duration-200"
           >
             <FlaskConical size={11} />
-            Peptid-Bibliothek
+            Peptipedia
             <ArrowRight size={10} className="opacity-60" />
           </button>
         </div>
