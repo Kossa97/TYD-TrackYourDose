@@ -4,16 +4,23 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import {
   Activity,
+  BarChart3,
   CalendarDays,
   CheckCircle2,
   ChevronRight,
+  Dna,
   Download,
   FileText,
+  Flame,
+  FlaskConical,
   Link2,
   Scale,
+  Syringe,
   TestTube2,
   XCircle,
+  Zap,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import {
   Area,
   Bar,
@@ -250,14 +257,14 @@ const SERIES_COLORS: Record<string, string> = {
   'Libido':      '#f43f5e',
 }
 
-const PRESETS: { key: string; label: string; markers: string[] }[] = [
-  { key: 'weight-igf1',  label: '⚖️ Gewicht + IGF-1',  markers: ['Gewicht', 'IGF-1'] },
-  { key: 'gh-panel',     label: '💉 GH-Panel',          markers: ['Gewicht', 'IGF-1', 'Vitamin D'] },
-  { key: 'inflammation', label: '🔥 Entzündung',        markers: ['Gewicht', 'CRP'] },
-  { key: 'metabolismus', label: '🧬 Metabolismus',      markers: ['Gewicht', 'Insulin'] },
-  { key: 'hormone',      label: '⚗️ Hormone',           markers: ['Testosteron', 'IGF-1', 'Insulin'] },
-  { key: 'wellness',     label: '⚡ Befinden',           markers: ['Energie', 'Schlaf', 'Libido'] },
-  { key: 'full',         label: '📊 Alle Marker',       markers: [] },
+const PRESETS: { key: string; label: string; icon: LucideIcon; markers: string[] }[] = [
+  { key: 'weight-igf1',  label: 'Gewicht + IGF-1', icon: Scale,       markers: ['Gewicht', 'IGF-1'] },
+  { key: 'gh-panel',     label: 'GH-Panel',         icon: Syringe,     markers: ['Gewicht', 'IGF-1', 'Vitamin D'] },
+  { key: 'inflammation', label: 'Entzündung',       icon: Flame,       markers: ['Gewicht', 'CRP'] },
+  { key: 'metabolismus', label: 'Metabolismus',     icon: Dna,         markers: ['Gewicht', 'Insulin'] },
+  { key: 'hormone',      label: 'Hormone',          icon: FlaskConical, markers: ['Testosteron', 'IGF-1', 'Insulin'] },
+  { key: 'wellness',     label: 'Befinden',         icon: Zap,         markers: ['Energie', 'Schlaf', 'Libido'] },
+  { key: 'full',         label: 'Alle Marker',      icon: BarChart3,   markers: [] },
 ]
 
 const CYCLE_COLORS = ['#00ccf5', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#38bdf8']
@@ -488,7 +495,7 @@ function addCoverPage(doc: JsPDFType, logo: HTMLImageElement, copy: ProtocolCopy
 
 function KpiCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color: string }) {
   return (
-    <div style={{ background: 'rgba(8,11,26,0.95)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '12px 14px', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '12px 14px', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: color, opacity: 0.7 }} />
       <p style={{ fontSize: '8px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#475569', marginBottom: 6 }}>{label}</p>
       <p style={{ fontSize: 20, fontWeight: 900, letterSpacing: '-0.04em', color, lineHeight: 1 }}>{value}</p>
@@ -523,7 +530,7 @@ function NormalizedTooltip({ active, payload, label }: {
   const visible = payload.filter(p => p.value != null && !p.name.endsWith('-glow') && !p.name.endsWith('-area'))
   if (!visible.length) return null
   return (
-    <div style={{ background: 'rgba(8,11,26,0.97)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 14px', boxShadow: '0 8px 32px rgba(0,0,0,0.6)', fontSize: 11 }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 14px', boxShadow: '0 8px 32px rgba(0,0,0,0.6)', fontSize: 11 }}>
       <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#475569', marginBottom: 6 }}>{label}</p>
       {visible.map(p => (
         <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, fontWeight: 700, color: p.color }}>
@@ -571,7 +578,7 @@ function SmallMultipleRow({ series, isLast, language }: { series: SmallMultipleS
           <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
           <YAxis domain={yDomain} tick={{ fill: '#334155', fontSize: 9, fontWeight: 600 }} tickLine={false} axisLine={false} width={38} tickCount={3} />
           {isLast && <XAxis dataKey="label" tick={{ fill: '#334155', fontSize: 9, fontWeight: 600 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />}
-          <Tooltip contentStyle={{ background: 'rgba(8,11,26,0.97)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, fontSize: 11 }} labelStyle={{ color: '#475569', fontSize: 9 }}
+          <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 11 }} labelStyle={{ color: '#475569', fontSize: 9 }}
             formatter={(value: unknown) => [`${typeof value === 'number' ? formatNumber(value, language, 2) : value} ${unit}`, marker]} />
           <Line dataKey="value" stroke={color} strokeWidth={6} strokeOpacity={0.12} dot={false} activeDot={false} connectNulls isAnimationActive={false} legendType="none" name="glow" />
           <Line dataKey="value" stroke={color} strokeWidth={2.5} strokeLinecap="round" connectNulls isAnimationActive={false} name={marker}
@@ -582,7 +589,7 @@ function SmallMultipleRow({ series, isLast, language }: { series: SmallMultipleS
             activeDot={{ r: 6, fill: color, stroke: '#07091a', strokeWidth: 2 }} />
         </LineChart>
       </ResponsiveContainer>
-      {!isLast && <div style={{ height: 1, background: 'rgba(255,255,255,0.04)', margin: '4px 0' }} />}
+      {!isLast && <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />}
     </div>
   )
 }
@@ -1164,7 +1171,7 @@ export function Protokoll() {
         </div>
       )}
 
-      <div ref={reportRef} className="space-y-4 rounded-[1.5rem] bg-[#07091a]">
+      <div ref={reportRef} className="space-y-4 rounded-[1.5rem] bg-[var(--surface)]">
 
         {/* ── Schnell-Ansichten ── */}
         <div>
@@ -1172,14 +1179,15 @@ export function Protokoll() {
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
             {PRESETS.map(p => (
               <button key={p.key} onClick={() => applyPreset(p.key)} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
                 padding: '5px 13px', borderRadius: 100, fontSize: 10, fontWeight: 700, letterSpacing: '0.02em',
                 cursor: 'pointer', whiteSpace: 'nowrap',
-                border: selectedPreset === p.key ? '1px solid rgba(0,204,245,0.45)' : '1px solid rgba(255,255,255,0.08)',
-                background: selectedPreset === p.key ? 'rgba(0,204,245,0.12)' : 'rgba(255,255,255,0.03)',
-                color: selectedPreset === p.key ? '#00ccf5' : '#64748b',
+                border: selectedPreset === p.key ? '1px solid var(--accent-border)' : '1px solid var(--border)',
+                background: selectedPreset === p.key ? 'var(--accent-weak)' : 'var(--surface)',
+                color: selectedPreset === p.key ? 'var(--accent)' : 'var(--text-muted)',
                 boxShadow: selectedPreset === p.key ? '0 0 14px rgba(0,204,245,0.15)' : 'none',
                 transition: 'all 0.18s',
-              }}>{p.label}</button>
+              }}><p.icon size={12} />{p.label}</button>
             ))}
           </div>
         </div>
@@ -1193,9 +1201,9 @@ export function Protokoll() {
               <button key={marker} onClick={() => toggleMarker(marker)} style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '5px 11px', borderRadius: 10,
                 fontSize: 10, fontWeight: 700, letterSpacing: '0.02em', cursor: 'pointer',
-                border: on ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.07)',
-                background: on ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)',
-                color: on ? '#eaeefc' : '#475569', transition: 'all 0.18s',
+                border: on ? '1px solid var(--border)' : '1px solid var(--border)',
+                background: on ? 'var(--surface)' : 'var(--surface)',
+                color: on ? 'var(--text-dim)' : 'var(--text-muted)', transition: 'all 0.18s',
               }}>
                 <span style={{ width: 10, height: 10, borderRadius: 3, background: color, opacity: on ? 1 : 0.3, flexShrink: 0 }} />
                 {marker}
@@ -1215,13 +1223,13 @@ export function Protokoll() {
         </div>
 
         {/* ── Chart 1: % Veränderung ── */}
-        <section style={{ background: 'rgba(8,11,26,0.95)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: 18 }}>
+        <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
             <div>
-              <p style={{ fontSize: 13, fontWeight: 800, color: '#eaeefc' }}>Verlauf — % Veränderung</p>
+              <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-dim)' }}>Verlauf — % Veränderung</p>
               <p style={{ fontSize: 9, color: '#334155', marginTop: 2, fontWeight: 600, letterSpacing: '0.04em' }}>Normalisiert ab Start · Zyklusphasen im Hintergrund</p>
             </div>
-            <span style={{ background: 'rgba(0,204,245,0.08)', border: '1px solid rgba(0,204,245,0.15)', borderRadius: 8, padding: '4px 9px', fontSize: 9, fontWeight: 700, color: 'rgba(0,204,245,0.7)' }}>% Δ ab Start</span>
+            <span style={{ background: 'var(--accent-weak)', border: '1px solid var(--accent-border)', borderRadius: 8, padding: '4px 9px', fontSize: 9, fontWeight: 700, color: 'var(--accent)' }}>% Δ ab Start</span>
           </div>
           {normalizedChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
@@ -1262,10 +1270,10 @@ export function Protokoll() {
 
         {/* ── Chart 2: Small Multiples ── */}
         {smallMultiplesData.length > 0 && (
-          <section style={{ background: 'rgba(8,11,26,0.95)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: 18 }}>
+          <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, padding: 18 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
               <div>
-                <p style={{ fontSize: 13, fontWeight: 800, color: '#eaeefc' }}>Detailansicht — echte Einheiten</p>
+                <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-dim)' }}>Detailansicht — echte Einheiten</p>
                 <p style={{ fontSize: 9, color: '#334155', marginTop: 2, fontWeight: 600, letterSpacing: '0.04em' }}>Absolute Werte · Farbband = Normalbereich</p>
               </div>
             </div>
@@ -1277,8 +1285,8 @@ export function Protokoll() {
 
         {/* ── Persönliche Insights ── */}
         {(sideEffectStats.length > 0 || peptideEffectStats.length > 0 || peptideReviewStats.length > 0) && (
-          <section style={{ background: 'rgba(8,11,26,0.95)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: 18 }}>
-            <p style={{ fontSize: 13, fontWeight: 800, color: '#eaeefc', marginBottom: 4 }}>{t('protokoll_insights_title')}</p>
+          <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, padding: 18 }}>
+            <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-dim)', marginBottom: 4 }}>{t('protokoll_insights_title')}</p>
             <p style={{ fontSize: 9, color: '#334155', fontWeight: 600, letterSpacing: '0.04em', marginBottom: 16 }}>{t('protokoll_insights_sub')}</p>
 
             {sideEffectStats.length > 0 ? (
@@ -1289,7 +1297,7 @@ export function Protokoll() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {sideEffectStats.map(item => (
                     <div key={item.text} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ flex: 1, fontSize: 11, color: '#cbd5e1', lineHeight: 1.35 }}>{item.text}</span>
+                      <span style={{ flex: 1, fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.35 }}>{item.text}</span>
                       <span style={{ fontSize: 10, fontWeight: 800, color: '#f59e0b', background: 'rgba(245,158,11,0.12)', padding: '2px 8px', borderRadius: 8 }}>
                         ×{item.count}
                       </span>
@@ -1309,7 +1317,7 @@ export function Protokoll() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {peptideEffectStats.map(row => (
                     <div key={row.name}>
-                      <p style={{ fontSize: 11, fontWeight: 700, color: '#eaeefc', marginBottom: 4 }}>{row.name}</p>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', marginBottom: 4 }}>{row.name}</p>
                       <p style={{ fontSize: 10, color: '#64748b' }}>
                         {t('protokoll_effect_count', { effects: row.effects, side: row.sideEffects, severity: row.avgSeverity })}
                       </p>
@@ -1327,7 +1335,7 @@ export function Protokoll() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {peptideReviewStats.map(row => (
                     <div key={row.name} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#eaeefc' }}>{row.name}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)' }}>{row.name}</span>
                       <span style={{ fontSize: 10, color: '#64748b', textAlign: 'right' }}>
                         {t('protokoll_review_stat', { rating: row.avgRating, count: row.count })}
                       </span>
@@ -1341,8 +1349,8 @@ export function Protokoll() {
 
         {/* ── Adherence je Peptid ── */}
         {adherencePerPeptide.length > 0 && (
-          <section style={{ background: 'rgba(8,11,26,0.95)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: 18 }}>
-            <p style={{ fontSize: 13, fontWeight: 800, color: '#eaeefc', marginBottom: 4 }}>{copy.adherenceTitle}</p>
+          <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, padding: 18 }}>
+            <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-dim)', marginBottom: 4 }}>{copy.adherenceTitle}</p>
             <p style={{ fontSize: 9, color: '#334155', fontWeight: 600, letterSpacing: '0.04em', marginBottom: 14 }}>Anteil eingenommener Dosen im Zeitraum je Peptid</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {adherencePerPeptide.map(({ name, pct, color }) => (
