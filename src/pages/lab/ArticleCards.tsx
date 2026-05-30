@@ -1,6 +1,6 @@
 // src/pages/lab/ArticleCards.tsx
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
+import { ChevronDown, ChevronUp, ExternalLink, Sparkles } from 'lucide-react'
 import type { PubMedArticle } from './pubmed'
 
 // ── Peptide style map ──────────────────────────────────────────────────────────
@@ -61,8 +61,8 @@ function PeptideTag({ peptide, style }: { peptide: string | null; style: typeof 
 
 function NewBadge() {
   return (
-    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[0.58rem] font-black uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/25">
-      ✦ NEU
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[0.58rem] font-black uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/25">
+      <Sparkles size={12} /> NEU
     </span>
   )
 }
