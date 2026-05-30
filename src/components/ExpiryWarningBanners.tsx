@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { X } from 'lucide-react'
+import { AlertTriangle, X, XCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import type { PeptideExpiryAlert } from '../lib/peptideExpiry'
@@ -19,16 +19,21 @@ const STYLES = {
 
 function alertMessage(alert: PeptideExpiryAlert, t: (key: string, opts?: Record<string, unknown>) => string) {
   if (alert.status === 'expired') {
-    return t('expiry_banner_expired', { name: alert.name, defaultValue: `❌ ${alert.name} ist abgelaufen – bitte neu rekonstitutieren` })
+    return t('expiry_banner_expired', { name: alert.name, defaultValue: `${alert.name} ist abgelaufen – bitte neu rekonstitutieren` })
   }
   if (alert.daysLeft === 0) {
-    return t('expiry_banner_today', { name: alert.name, defaultValue: `⚠️ ${alert.name} läuft heute ab – jetzt neu rekonstitutieren` })
+    return t('expiry_banner_today', { name: alert.name, defaultValue: `${alert.name} läuft heute ab – jetzt neu rekonstitutieren` })
   }
   return t('expiry_banner_soon', {
     name: alert.name,
     days: alert.daysLeft,
-    defaultValue: `⚠️ ${alert.name} läuft in ${alert.daysLeft} Tagen ab – jetzt neu rekonstitutieren`,
+    defaultValue: `${alert.name} läuft in ${alert.daysLeft} Tagen ab – jetzt neu rekonstitutieren`,
   })
+}
+
+function AlertIcon({ status }: { status: PeptideExpiryAlert['status'] }) {
+  if (status === 'expired') return <XCircle size={16} />
+  return <AlertTriangle size={16} />
 }
 
 export function ExpiryWarningBanners({ alerts }: { alerts: PeptideExpiryAlert[] }) {
@@ -62,6 +67,9 @@ export function ExpiryWarningBanners({ alerts }: { alerts: PeptideExpiryAlert[] 
               boxShadow: '0 10px 32px rgba(0,0,0,0.28)',
             }}
           >
+            <span style={{ flexShrink: 0, color: style.color, display: 'flex', alignItems: 'center' }}>
+              <AlertIcon status={alert.status} />
+            </span>
             <button
               type="button"
               onClick={() => navigate('/peptide')}
@@ -89,9 +97,9 @@ export function ExpiryWarningBanners({ alerts }: { alerts: PeptideExpiryAlert[] 
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.10)',
-                color: 'rgba(154,170,191,0.65)',
+                background: 'var(--border)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-muted)',
               }}
             >
               <X size={14} />
