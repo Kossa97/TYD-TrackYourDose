@@ -24,6 +24,8 @@ export interface OverdueIntake {
   time: string
   substance: string | null
   daysOverdue: number
+  /** yyyy-MM-dd of the overdue intake's scheduled day. */
+  dateKey: string
 }
 
 // NOTE: kept in sync with the identical predicate in Dashboard.tsx (cycleAppliesToDay).
@@ -102,7 +104,7 @@ export function findOldestOverdueIntake(
       }
     }
     if (candidate) {
-      return { time: candidate.time, substance: candidate.substance, daysOverdue: differenceInDays(now, day) }
+      return { time: candidate.time, substance: candidate.substance, daysOverdue: differenceInDays(now, day), dateKey: dayKey }
     }
   }
   return null

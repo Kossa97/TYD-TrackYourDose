@@ -443,10 +443,12 @@ export function Dashboard() {
 
   useEffect(() => {
     if (location.hash !== '#due-intakes') return
-    const today = new Date()
-    setSelectedDay(today)
-    setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1))
-  }, [location.hash])
+    const dateParam = new URLSearchParams(location.search).get('date')
+    const parsed = dateParam ? parseISO(dateParam) : null
+    const target = parsed && !isNaN(parsed.getTime()) ? parsed : new Date()
+    setSelectedDay(target)
+    setCurrentDate(new Date(target.getFullYear(), target.getMonth(), 1))
+  }, [location.hash, location.search])
 
   useEffect(() => {
     if (location.hash !== '#due-intakes') return
@@ -455,7 +457,7 @@ export function Dashboard() {
     }
     const timer = window.setTimeout(scrollToDue, 150)
     return () => window.clearTimeout(timer)
-  }, [location.hash, dueCycles.length, selCycles.length, logs.length])
+  }, [location.hash, location.search, dueCycles.length, selCycles.length, logs.length])
 
   const adjustPeptideStockForDose = async (peptideId: string, dose: number, unit: string, mode: 'debit' | 'credit') => {
     if (!user) return false

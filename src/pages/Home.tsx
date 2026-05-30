@@ -229,7 +229,7 @@ export function Home() {
   const navigate = useNavigate()
   const [nextIntake,  setNextIntake]  = useState<string | null>(null)
   const [nextSubstance, setNextSubstance] = useState<string | null>(null)
-  const [dueIntake, setDueIntake] = useState<{ time: string; substance: string | null; daysOverdue: number } | null>(null)
+  const [dueIntake, setDueIntake] = useState<{ time: string; substance: string | null; daysOverdue: number; dateKey: string } | null>(null)
   const [plannedToday, setPlannedToday] = useState(0)
   const [todayDone,   setTodayDone]   = useState(false)
   const [streak,      setStreak]      = useState(0)
@@ -391,7 +391,7 @@ export function Home() {
               substance={dueIntake.substance}
               forceDue
               daysOverdue={dueIntake.daysOverdue}
-              onClick={() => navigate('/kalender#due-intakes')}
+              onClick={() => navigate(`/kalender?date=${dueIntake.dateKey}#due-intakes`)}
             />
           ) : nextIntake ? (
             <NextIntakeBanner
