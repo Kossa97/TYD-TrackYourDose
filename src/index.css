@@ -499,9 +499,9 @@ body.onboarding-active [data-ob-active] {
   --surface-raised:  #ffffff;
   --surface-input:   #ffffff;
   --glass-bg:        rgba(255,255,255,0.80);
-  --text:            #0c1626;
-  --text-dim:        #556070;
-  --text-muted:      #9aa3b0;
+  --text:            #0a1220;
+  --text-dim:        #3d4655;
+  --text-muted:      #69727f;
   --border:          rgba(15,30,60,0.10);
   --border-strong:   rgba(15,30,60,0.18);
   --accent:          #0091c4;
@@ -1158,10 +1158,10 @@ main.flex-1 {
 [data-theme="light"] .text-white,
 [data-theme="light"] .text-slate-100,
 [data-theme="light"] .text-slate-200 { color: var(--text); }
-[data-theme="light"] .text-slate-300 { color: #334155; }
-[data-theme="light"] .text-slate-400 { color: #475569; }
-[data-theme="light"] .text-slate-500 { color: #64748b; }
-[data-theme="light"] .text-slate-600 { color: #94a3b8; }
+[data-theme="light"] .text-slate-300 { color: #1e293b; }
+[data-theme="light"] .text-slate-400 { color: #334155; }
+[data-theme="light"] .text-slate-500 { color: #475569; }
+[data-theme="light"] .text-slate-600 { color: #64748b; }
 
 /* Keep white text on solid colored buttons/badges (contrast in both themes) */
 [data-theme="light"] .bg-sky-500.text-white,
