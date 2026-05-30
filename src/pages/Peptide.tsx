@@ -268,7 +268,7 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
           <style>{`
             @keyframes ${waveId} {
               from { transform: translateX(0) }
-              to   { transform: translateX(-50%) }
+              to   { transform: translateX(-${W}px) }
             }
             @keyframes ${breatheId} {
               0%, 100% { transform: translateY(0px) }
