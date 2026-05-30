@@ -11,7 +11,7 @@ import {
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
 import {
-  Bell, CalendarDays, Check, ChevronLeft, ChevronRight,
+  Bell, CalendarDays, Check, ChevronLeft, ChevronRight, Clock,
   RotateCcw, Syringe, TrendingUp, X, XCircle,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -1071,9 +1071,19 @@ export function Dashboard() {
               <p className="text-xs text-slate-500 mb-5">
                 Wann hast du tatsächlich eingenommen? Vorausgefüllt mit der geplanten Zykluszeit.
               </p>
-              <label className="block text-[0.6rem] font-bold uppercase tracking-widest text-slate-500 mb-2">
-                Uhrzeit
-              </label>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <label className="text-[0.6rem] font-bold uppercase tracking-widest text-slate-500">
+                  Uhrzeit
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setConfirmTime(format(new Date(), 'HH:mm'))}
+                  className="flex items-center gap-1.5 rounded-lg border border-sky-500/25 bg-sky-500/10 px-2.5 py-1 text-[0.65rem] font-bold text-sky-400 transition-colors hover:bg-sky-500/20"
+                >
+                  <Clock size={11} />
+                  {t('confirm_time_now', { defaultValue: 'Jetzt' })}
+                </button>
+              </div>
               <input
                 type="time"
                 value={confirmTime}

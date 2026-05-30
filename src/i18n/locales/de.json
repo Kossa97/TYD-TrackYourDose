@@ -237,6 +237,7 @@
   "mittags_uhr": "Mittags · {{time}} Uhr",
   "abends_uhr": "Abends · {{time}} Uhr",
   "einnahme_bestaetigt": "Einnahme bestätigt ✓",
+  "confirm_time_now": "Jetzt",
   "erinnern": "Erinnern",
   "snooze_min": "{{n}} Min",
   "protokollierte_dosen": "Protokollierte Dosen",
