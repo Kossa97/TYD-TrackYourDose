@@ -388,7 +388,7 @@ export function Blutwerte() {
                   <span className="badge" style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444' }}>Außerhalb</span>
                 )}
                 {inRange === null && (
-                  <span className="badge" style={{ background: 'rgba(154,170,191,0.12)', color: MUTED }}>Kein Referenzbereich</span>
+                  <span className="badge" style={{ background: 'var(--border)', color: MUTED }}>Kein Referenzbereich</span>
                 )}
               </div>
             </>
@@ -423,7 +423,7 @@ export function Blutwerte() {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                 <XAxis dataKey="date_label" tick={{ fill: 'rgba(154,170,191,0.55)', fontSize: 10 }} />
                 <YAxis tick={{ fill: 'rgba(154,170,191,0.55)', fontSize: 10 }} />
-                <Tooltip contentStyle={{ background: '#07091a', border: '1px solid rgba(0,204,245,0.2)', borderRadius: 12, color: '#eaeefc' }} />
+                <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--accent-border)', borderRadius: 12, color: 'var(--text)' }} />
                 {range?.min != null && range?.max != null && (
                   <ReferenceArea y1={range.min} y2={range.max} fill="rgba(16,185,129,0.08)" stroke="rgba(16,185,129,0.2)" />
                 )}
