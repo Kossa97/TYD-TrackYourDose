@@ -54,14 +54,14 @@ const ALL_MARKERS = [
 ]
 
 const PANEL_STYLE: React.CSSProperties = {
-  background: 'linear-gradient(145deg, rgba(9,14,34,0.94), rgba(4,7,18,0.96))',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
   borderRadius: 20,
 }
 
-const CYAN = '#00ccf5'
-const TEXT = '#eaeefc'
-const MUTED = 'rgba(154,170,191,0.55)'
+const CYAN = 'var(--accent)'
+const TEXT = 'var(--text)'
+const MUTED = 'var(--text-muted)'
 
 const today = () => format(new Date(), 'yyyy-MM-dd')
 
@@ -242,7 +242,7 @@ export function Blutwerte() {
       >
         <div
           className="w-full max-w-lg p-6 pb-8 space-y-4 overflow-y-auto max-h-[90vh] rounded-t-2xl"
-          style={{ background: 'linear-gradient(145deg, rgba(9,14,34,0.98), rgba(4,7,18,0.99))', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
           onClick={e => e.stopPropagation()}
         >
           <h2 className="text-lg font-bold" style={{ color: TEXT }}>Neuer Eintrag</h2>
@@ -252,7 +252,7 @@ export function Blutwerte() {
             {locked ? (
               <div
                 className="rounded-2xl px-4 py-3 font-semibold"
-                style={{ border: '1px solid rgba(0,204,245,0.25)', color: CYAN }}
+                style={{ border: '1px solid var(--accent-border)', color: CYAN }}
               >
                 {form.marker}
               </div>
@@ -406,8 +406,8 @@ export function Blutwerte() {
               className="px-3 py-1.5 rounded-full text-sm font-semibold transition-colors"
               style={
                 rangeFilter === key
-                  ? { background: 'rgba(0,204,245,0.15)', color: CYAN, border: '1px solid rgba(0,204,245,0.25)' }
-                  : { color: MUTED, border: '1px solid rgba(255,255,255,0.08)' }
+                  ? { background: 'var(--accent-weak)', color: CYAN, border: '1px solid var(--accent-border)' }
+                  : { color: MUTED, border: '1px solid var(--border)' }
               }
             >
               {label}
@@ -446,7 +446,7 @@ export function Blutwerte() {
             <div
               key={entry.id}
               className="flex items-center justify-between px-5 py-3.5"
-              style={i > 0 ? { borderTop: '1px solid rgba(255,255,255,0.06)' } : undefined}
+              style={i > 0 ? { borderTop: '1px solid var(--border)' } : undefined}
             >
               <span className="text-sm" style={{ color: MUTED }}>{formatDisplayDate(entry.tested_at)}</span>
               <span className="text-sm font-semibold flex-1 text-right mr-3" style={{ color: TEXT }}>
@@ -481,11 +481,11 @@ export function Blutwerte() {
 
       {/* Mini stats */}
       <div className="flex mb-4 p-4" style={PANEL_STYLE}>
-        <div className="flex-1 text-center" style={{ borderRight: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="flex-1 text-center" style={{ borderRight: '1px solid var(--border)' }}>
           <p className="text-[0.65rem] uppercase tracking-wide" style={{ color: MUTED }}>Einträge gesamt</p>
           <p className="text-lg font-bold" style={{ color: TEXT }}>{entries.length}</p>
         </div>
-        <div className="flex-1 text-center" style={{ borderRight: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="flex-1 text-center" style={{ borderRight: '1px solid var(--border)' }}>
           <p className="text-[0.65rem] uppercase tracking-wide" style={{ color: MUTED }}>Marker getestet</p>
           <p className="text-lg font-bold" style={{ color: TEXT }}>{markersTested}</p>
         </div>
@@ -522,8 +522,8 @@ export function Blutwerte() {
                 style={{
                   padding: 14,
                   borderRadius: 16,
-                  background: 'linear-gradient(145deg, rgba(9,14,34,0.94), rgba(4,7,18,0.96))',
-                  border: hasData ? '1px solid rgba(0,204,245,0.25)' : '1px solid rgba(255,255,255,0.08)',
+                  background: 'var(--surface)',
+                  border: hasData ? '1px solid var(--accent-border)' : '1px solid var(--border)',
                   cursor: 'pointer',
                   opacity: hasData ? 1 : 0.55,
                 }}
