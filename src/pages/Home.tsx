@@ -228,6 +228,7 @@ export function Home() {
   const navigate = useNavigate()
   const [nextIntake,  setNextIntake]  = useState<string | null>(null)
   const [nextSubstance, setNextSubstance] = useState<string | null>(null)
+  const [dueIntake, setDueIntake] = useState<{ time: string; substance: string | null } | null>(null)
   const [plannedToday, setPlannedToday] = useState(0)
   const [todayDone,   setTodayDone]   = useState(false)
   const [streak,      setStreak]      = useState(0)
@@ -263,28 +264,33 @@ export function Home() {
         const peptideNameById = new Map<string, string>(
           (peptideData ?? []).map((p) => [p.id as string, p.name as string])
         )
+        const loggedTodayCount = (logData ?? []).filter(
+          (l) => format(parseISO(l.logged_at), 'yyyy-MM-dd') === todayKey
+        ).length
         const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
-        let bestMin = Infinity, bestTime = '', bestSubstance: string | null = null
-        let planned = 0
+        const allSlots: { min: number; time: string; substance: string | null }[] = []
         for (const c of cycleData ?? []) {
           const slots   = (c.intake_time ?? '').split(',').filter(Boolean)
           const customs = (c.intake_time_custom ?? '').split(',')
-          planned += slots.length
           slots.forEach((slot: string, i: number) => {
-            const t = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
-            if (!t) return
-            const [h, m] = t.split(':').map(Number)
-            const min = h * 60 + m
-            if (min > nowMin && min < bestMin) {
-              bestMin = min; bestTime = t
-              bestSubstance = peptideNameById.get(c.peptide_id as string) ?? null
-            }
+            const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
+            if (!tm) return
+            const [h, m] = tm.split(':').map(Number)
+            allSlots.push({ min: h * 60 + m, time: tm, substance: peptideNameById.get(c.peptide_id as string) ?? null })
           })
         }
-        setNextIntake(bestTime || null)
-        setNextSubstance(bestSubstance)
-        setPlannedToday(planned)
-        setTodayDone(!bestTime && (cycleData ?? []).length > 0)
+        allSlots.sort((a, b) => a.min - b.min)
+        // Past slots are assumed logged earliest-first; the first unlogged past
+        // slot (index = loggedTodayCount) is the one still due.
+        const pastSlots = allSlots.filter((s) => s.min <= nowMin)
+        const nextSlot  = allSlots.find((s) => s.min > nowMin) ?? null
+        const dueSlot   = loggedTodayCount < pastSlots.length ? pastSlots[loggedTodayCount] : null
+
+        setPlannedToday(allSlots.length)
+        setNextIntake(nextSlot?.time ?? null)
+        setNextSubstance(nextSlot?.substance ?? null)
+        setDueIntake(dueSlot ? { time: dueSlot.time, substance: dueSlot.substance } : null)
+        setTodayDone(allSlots.length > 0 && !nextSlot && !dueSlot)
 
         // ── Streak (consecutive days with ≥1 taken log) ─────────────
         const takenDates = new Set(
@@ -383,7 +389,14 @@ export function Home() {
             />
           </div>
 
-          {nextIntake ? (
+          {dueIntake ? (
+            <NextIntakeBanner
+              time={dueIntake.time}
+              substance={dueIntake.substance}
+              forceDue
+              onClick={() => navigate('/kalender#due-intakes')}
+            />
+          ) : nextIntake ? (
             <NextIntakeBanner
               time={nextIntake}
               substance={nextSubstance}
@@ -758,10 +771,12 @@ function NextIntakeBanner({
   time,
   substance,
   onClick,
+  forceDue = false,
 }: {
   time: string
   substance: string | null
   onClick: () => void
+  forceDue?: boolean
 }) {
   const { t } = useTranslation()
   const [remaining, setRemaining] = useState(() => msUntilTime(time))
@@ -770,7 +785,7 @@ function NextIntakeBanner({
     return () => clearInterval(id)
   }, [time])
 
-  const due = remaining <= 0
+  const due = forceDue || remaining <= 0
   const c       = due ? '#f59e0b' : 'var(--accent)'
   const cWeak   = due ? 'rgba(245,158,11,0.12)' : 'var(--accent-weak)'
   const cBorder = due ? 'rgba(245,158,11,0.34)' : 'var(--accent-border)'
