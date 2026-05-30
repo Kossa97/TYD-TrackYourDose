@@ -68,7 +68,7 @@ function SyringeScale({ drawUnits, maxUnits, t }: { drawUnits: number; maxUnits:
     <div className="mb-4">
       {/* Label */}
       <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-center mb-1"
-        style={{ color: 'rgba(0,204,245,0.55)' }}>
+        style={{ color: 'var(--accent)' }}>
         {t('einheiten_aufziehen')}
       </p>
 
@@ -99,7 +99,7 @@ function SyringeScale({ drawUnits, maxUnits, t }: { drawUnits: number; maxUnits:
       <div className="relative h-10 overflow-hidden"
         style={{
           borderRadius: '10px',
-          background: 'rgba(1, 3, 12, 0.92)',
+          background: 'var(--surface)',
           border: '1px solid rgba(0,204,245,0.12)',
           boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.7), inset 0 1px 0 rgba(0,0,0,0.5)',
         }}>
@@ -157,7 +157,7 @@ function SyringeScale({ drawUnits, maxUnits, t }: { drawUnits: number; maxUnits:
       {/* mL readout */}
       <p className="text-right mt-1.5 pr-0.5"
         style={{ fontSize: '10px', color: 'rgba(0,204,245,0.45)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
-        ≈ <span style={{ color: 'rgba(0,204,245,0.80)', fontWeight: 600 }}>
+        ≈ <span style={{ color: 'var(--accent)', fontWeight: 600 }}>
           {(drawUnits / (maxUnits / (maxUnits <= 50 ? 0.5 : 1))).toFixed(3)}
         </span> mL
       </p>
@@ -246,17 +246,17 @@ export function Rechner() {
                 { value: String(result.dosesPerVial), unit: t('dosen_unit'), label: t('pro_vial'), sub: null },
               ].map(({ value, unit, label, sub }) => (
                 <div key={label} style={{
-                  background: 'rgba(0,10,24,0.82)',
+                  background: 'var(--surface)',
                   border: '1px solid rgba(0,204,245,0.10)',
                   borderRadius: '13px',
                   padding: '10px 6px',
                   textAlign: 'center' as const,
                   boxShadow: 'inset 0 1px 0 rgba(0,204,245,0.05), 0 4px 14px rgba(0,0,0,0.55)',
                 }}>
-                  <p style={{ fontSize: '1rem', fontWeight: 700, color: '#e8f4ff', letterSpacing: '-0.01em', fontVariantNumeric: 'tabular-nums' }}>
+                  <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em', fontVariantNumeric: 'tabular-nums' }}>
                     {value}
                   </p>
-                  <p style={{ fontSize: '9px', color: 'rgba(0,204,245,0.55)', marginTop: '3px', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+                  <p style={{ fontSize: '9px', color: 'var(--accent)', marginTop: '3px', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
                     {unit}
                   </p>
                   <p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.20)', marginTop: '1px' }}>
