@@ -235,6 +235,7 @@
   "mittags_uhr": "Midday · {{time}}",
   "abends_uhr": "Evening · {{time}}",
   "einnahme_bestaetigt": "Dose confirmed ✓",
+  "confirm_time_now": "Now",
   "erinnern": "Remind",
   "snooze_min": "{{n}} min",
   "protokollierte_dosen": "Logged doses",
