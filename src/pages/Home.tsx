@@ -8,7 +8,7 @@ import {
   Microscope, Library, Droplets, Heart, FileText, type LucideIcon,
   Activity, ArrowUpRight, CheckCircle2, ClipboardList,
   Clock3, Flame, Package, ShieldCheck, Sparkles,
-  Syringe, TrendingUp,
+  Syringe, TrendingUp, Bell,
   Dumbbell, Dna, Zap, Moon, Brain, Bandage, HeartPulse, Lightbulb, Leaf, Bone,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -770,6 +770,11 @@ function NextIntakeBanner({
     return () => clearInterval(id)
   }, [time])
 
+  const due = remaining <= 0
+  const c       = due ? '#f59e0b' : 'var(--accent)'
+  const cWeak   = due ? 'rgba(245,158,11,0.12)' : 'var(--accent-weak)'
+  const cBorder = due ? 'rgba(245,158,11,0.34)' : 'var(--accent-border)'
+
   return (
     <button
       type="button"
@@ -778,28 +783,34 @@ function NextIntakeBanner({
       style={{
         display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', cursor: 'pointer',
         padding: '12px 14px', borderRadius: 18,
-        background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
+        background: cWeak, border: `1px solid ${cBorder}`,
       }}
     >
       <div style={{
         width: 42, height: 42, borderRadius: 14, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'var(--accent-weak)', color: 'var(--accent)', border: '1px solid var(--accent-border)',
+        background: cWeak, color: c, border: `1px solid ${cBorder}`,
       }}>
-        <Clock3 size={20} />
+        {due ? <Bell size={20} className="pulse-soft" /> : <Clock3 size={20} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ ...labelStyle, color: 'var(--accent)', marginBottom: 3 }}>
-          {t('stat_next_intake', { defaultValue: 'Nächste Einnahme' })}
+        <p style={{ ...labelStyle, color: c, marginBottom: 3 }}>
+          {due ? t('home_due_label', { defaultValue: 'Jetzt fällig' }) : t('stat_next_intake', { defaultValue: 'Nächste Einnahme' })}
         </p>
-        <p style={{ fontFamily: 'monospace', fontSize: '1.2rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1, letterSpacing: '0.02em' }}>
-          {fmtCountdown(remaining)}
-        </p>
+        {due ? (
+          <p style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1.05rem', fontWeight: 850, color: c, lineHeight: 1 }}>
+            <span className="pulse-soft" style={{ width: 9, height: 9, borderRadius: '50%', background: c, display: 'inline-block', flexShrink: 0 }} />
+            {t('home_due', { defaultValue: 'Einnahme fällig!' })}
+          </p>
+        ) : (
+          <p style={{ fontFamily: 'monospace', fontSize: '1.2rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1, letterSpacing: '0.02em' }}>
+            {fmtCountdown(remaining)}
+          </p>
+        )}
         <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {substance ? `${substance} · ${t('home_at_time', { defaultValue: 'um' })} ${time}` : `${t('home_at_time', { defaultValue: 'um' })} ${time}`}
         </p>
       </div>
-      <ChevronRight size={16} color="var(--text-muted)" style={{ flexShrink: 0 }} />
     </button>
   )
 }
