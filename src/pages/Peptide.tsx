@@ -245,7 +245,7 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
   const fillH   = Math.max(4, (pct / 100) * H)
   const surfaceY = OY + (H - fillH)   // top of liquid in absolute SVG coords
 
-  const wW = W * 2, wH = 4.5
+  const wW = W * 2, wH = 3.5
   const wp = `M0,${wH/2} C${wW*.25},0 ${wW*.25},${wH} ${wW*.5},${wH/2} C${wW*.75},0 ${wW*.75},${wH} ${wW},${wH/2} L${wW},${wH} L0,${wH} Z`
 
   const clipId    = `vc${uid}`
@@ -272,7 +272,7 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
             }
             @keyframes ${breatheId} {
               0%, 100% { transform: translateY(0px) }
-              50%       { transform: translateY(-2px) }
+              50%       { transform: translateY(-1px) }
             }
             @media (prefers-reduced-motion: reduce) {
               .vd-wave-${uid}, .vd-breathe-${uid} { animation: none !important; }
@@ -301,7 +301,7 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
             fill={color} fillOpacity="0.55"/>
 
           {/* Wave: positioned at surface, breathing vertically */}
-          <g style={{ transform: `translate(${OX}px, ${surfaceY - wH + 1}px)` }}>
+          <g style={{ transform: `translate(${OX}px, ${Math.max(OY, surfaceY - wH + 1)}px)` }}>
             <g className={`vd-breathe-${uid}`}
               style={{ animation: `${breatheId} 3s ease-in-out infinite` }}>
               <path className={`vd-wave-${uid}`} d={wp}
