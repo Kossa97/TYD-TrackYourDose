@@ -721,7 +721,7 @@
   "obx_pepexpiry_desc": "Scegli la durata o inserisci il numero di giorni — riceverai un avviso prima della scadenza.",
   "obx_pepvials_title": "Flaconcini disponibili",
   "obx_pepvials_sub": "Riserva grezza",
-  "obx_pepvials_desc": "Quanti flaconi non ricostituiti hai in riserva? 0 è valido se hai già ricostituito il tuo unico flacone.",
+  "obx_pepvials_desc": "Quanti flaconi non ricostituiti hai in riserva? 0 è valido se stai ricostituendo il tuo unico flacone adesso.",
   "obx_pepbatch_title": "Batch",
   "obx_pepbatch_sub": "Provenienza (opzionale)",
   "obx_pepbatch_desc": "Opzionale: numero di lotto per la tua tracciabilità.",

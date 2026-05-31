@@ -721,7 +721,7 @@
   "obx_pepexpiry_desc": "Son kullanma süresini seç ya da özel gün gir — süresi dolmadan önce uyarılırsın.",
   "obx_pepvials_title": "Mevcut Flakonlar",
   "obx_pepvials_sub": "Ham rezerv",
-  "obx_pepvials_desc": "Rezervde kaç adet ham/sulandırılmamış flakon var? 0 geçerlidir — tek flakonunuzu zaten sulandırdıysanız.",
+  "obx_pepvials_desc": "Rezervde kaç adet ham/sulandırılmamış flakon var? 0 geçerlidir — şu an tek flakonunuzu sulandırıyorsanız.",
   "obx_pepbatch_title": "Batch",
   "obx_pepbatch_sub": "Kaynak (isteğe bağlı)",
   "obx_pepbatch_desc": "İsteğe bağlı: takibine ait parti numarası.",

@@ -721,7 +721,7 @@
   "obx_pepexpiry_desc": "Selecciona la caducidad o introduce los días manualmente — recibirás un aviso antes de que expire.",
   "obx_pepvials_title": "Viales en existencias",
   "obx_pepvials_sub": "Reserva cruda",
-  "obx_pepvials_desc": "¿Cuántos viales sin mezclar tienes en reserva? 0 es válido si ya has reconstituido tu único vial.",
+  "obx_pepvials_desc": "¿Cuántos viales sin mezclar tienes en reserva? 0 es válido si estás reconstituyendo tu único vial ahora mismo.",
   "obx_pepbatch_title": "Lote",
   "obx_pepbatch_sub": "Origen (opcional)",
   "obx_pepbatch_desc": "Opcional: número de lote para tu seguimiento.",

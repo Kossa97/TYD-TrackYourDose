@@ -721,7 +721,7 @@
   "obx_pepexpiry_desc": "Escolha a validade ou insira um número de dias personalizado — você será avisado antes do vencimento.",
   "obx_pepvials_title": "Frascos em estoque",
   "obx_pepvials_sub": "Reserva bruta",
-  "obx_pepvials_desc": "Quantos frascos sem reconstituir você ainda tem em reserva? 0 é válido se você já reconstituiu seu único frasco.",
+  "obx_pepvials_desc": "Quantos frascos sem reconstituir você ainda tem em reserva? 0 é válido se você está reconstituindo seu único frasco agora.",
   "obx_pepbatch_title": "Lote",
   "obx_pepbatch_sub": "Origem (opcional)",
   "obx_pepbatch_desc": "Opcional: número do lote para seu controle.",

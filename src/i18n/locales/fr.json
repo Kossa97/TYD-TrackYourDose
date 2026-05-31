@@ -721,7 +721,7 @@
   "obx_pepexpiry_desc": "Choisis la durée de péremption ou saisis le nombre de jours — tu seras averti avant expiration.",
   "obx_pepvials_title": "Flacons en stock",
   "obx_pepvials_sub": "Réserve brute",
-  "obx_pepvials_desc": "Combien de flacons non reconstitués avez-vous en réserve ? 0 est valide si vous avez déjà reconstitué votre seul flacon.",
+  "obx_pepvials_desc": "Combien de flacons non reconstitués avez-vous en réserve ? 0 est valide si vous êtes en train de reconstituer votre seul flacon.",
   "obx_pepbatch_title": "Batch",
   "obx_pepbatch_sub": "Origine (optionnel)",
   "obx_pepbatch_desc": "Optionnel : numéro de lot pour ton suivi.",

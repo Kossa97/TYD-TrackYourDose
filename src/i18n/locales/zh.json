@@ -721,7 +721,7 @@
   "obx_pepexpiry_desc": "选择有效期或自定义天数，到期前系统将发出提醒。",
   "obx_pepvials_title": "在库瓶数",
   "obx_pepvials_sub": "原料备用量",
-  "obx_pepvials_desc": "您还有多少未复溶的原料小瓶？0也可以——如果您已经复溶了唯一的一瓶。",
+  "obx_pepvials_desc": "您还有多少未复溶的原料小瓶？0也可以——如果您正在复溶唯一的一瓶。",
   "obx_pepbatch_title": "批次",
   "obx_pepbatch_sub": "来源（可选）",
   "obx_pepbatch_desc": "可选：输入批号以便追溯。",

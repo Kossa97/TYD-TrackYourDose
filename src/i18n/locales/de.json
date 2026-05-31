@@ -721,7 +721,7 @@
   "obx_pepexpiry_desc": "Wähle die Haltbarkeit oder gib eigene Tage ein — du wirst vor Ablauf gewarnt.",
   "obx_pepvials_title": "Vorrätige Vials",
   "obx_pepvials_sub": "Rohe Reserve",
-  "obx_pepvials_desc": "Wie viele Vials hast du noch roh/unangemischt in Reserve? 0 ist ok — wenn du dein einziges Vial bereits angemischt hast.",
+  "obx_pepvials_desc": "Wie viele Vials hast du noch roh/unangemischt in Reserve? 0 ist ok — wenn du dein einziges Vial gerade anmischt.",
   "obx_pepbatch_title": "Batch",
   "obx_pepbatch_sub": "Herkunft (optional)",
   "obx_pepbatch_desc": "Optional: Chargennummer für deine Nachverfolgung.",

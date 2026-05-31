@@ -721,7 +721,7 @@
   "obx_pepexpiry_desc": "Choose a shelf life or enter custom days — you’ll be warned before it expires.",
   "obx_pepvials_title": "Vials in Stock",
   "obx_pepvials_sub": "Raw reserve",
-  "obx_pepvials_desc": "How many vials do you still have raw/unmixed in reserve? 0 is fine — if you already reconstituted your only vial.",
+  "obx_pepvials_desc": "How many vials do you still have raw/unmixed in reserve? 0 is fine — if you are reconstituting your only vial right now.",
   "obx_pepbatch_title": "Batch",
   "obx_pepbatch_sub": "Origin (optional)",
   "obx_pepbatch_desc": "Optional: batch number for your own tracking.",

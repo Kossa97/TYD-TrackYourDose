@@ -721,7 +721,7 @@
   "obx_pepexpiry_desc": "유효기간을 선택하거나 직접 일수를 입력하세요 — 만료 전에 알림을 받게 됩니다.",
   "obx_pepvials_title": "보유 바이알 수",
   "obx_pepvials_sub": "미용해 예비량",
-  "obx_pepvials_desc": "예비로 남은 미용해 바이알이 몇 개인가요? 0이어도 괜찮습니다 — 이미 유일한 바이알을 용해했다면요.",
+  "obx_pepvials_desc": "예비로 남은 미용해 바이알이 몇 개인가요? 0이어도 괜찮습니다 — 지금 유일한 바이알을 용해 중이라면요.",
   "obx_pepbatch_title": "배치",
   "obx_pepbatch_sub": "출처 (선택)",
   "obx_pepbatch_desc": "선택: 추적을 위한 배치 번호.",

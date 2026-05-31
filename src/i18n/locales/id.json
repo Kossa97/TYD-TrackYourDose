@@ -722,7 +722,7 @@
   "obx_pepexpiry_desc": "Pilih masa kedaluwarsa atau masukkan jumlah hari sendiri — kamu akan diperingatkan sebelum habis.",
   "obx_pepvials_title": "Vial Tersedia",
   "obx_pepvials_sub": "Cadangan mentah",
-  "obx_pepvials_desc": "Berapa vial mentah/belum dilarutkan yang masih ada di cadangan Anda? 0 boleh — jika Anda sudah melarutkan satu-satunya vial.",
+  "obx_pepvials_desc": "Berapa vial mentah/belum dilarutkan yang masih ada di cadangan? 0 boleh — jika Anda sedang melarutkan satu-satunya vial sekarang.",
   "obx_pepbatch_title": "Batch",
   "obx_pepbatch_sub": "Asal (opsional)",
   "obx_pepbatch_desc": "Opsional: nomor batch untuk pencatatanmu.",
