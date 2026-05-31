@@ -828,5 +828,6 @@
   "obx_sim_sheet_title": "Conferma assunzione",
   "obx_sim_sheet_hint": "Quando hai effettivamente assunto?",
   "obx_sim_sheet_btn": "Assunto",
-  "obx_sim_sheet_cancel": "Annulla"
+  "obx_sim_sheet_cancel": "Annulla",
+  "obx_sim_time_hint": "Regola l'orario se necessario — è precompilato con l'orario di assunzione pianificato."
 }

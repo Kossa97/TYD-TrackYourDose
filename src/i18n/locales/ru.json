@@ -828,5 +828,6 @@
   "obx_sim_sheet_title": "Подтвердить приём",
   "obx_sim_sheet_hint": "Когда вы фактически приняли?",
   "obx_sim_sheet_btn": "Принято",
-  "obx_sim_sheet_cancel": "Отмена"
+  "obx_sim_sheet_cancel": "Отмена",
+  "obx_sim_time_hint": "При необходимости скорректируйте время — оно предзаполнено запланированным временем приёма."
 }

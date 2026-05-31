@@ -828,5 +828,6 @@
   "obx_sim_sheet_title": "Confirmer la prise",
   "obx_sim_sheet_hint": "Quand avez-vous réellement pris ?",
   "obx_sim_sheet_btn": "Pris",
-  "obx_sim_sheet_cancel": "Annuler"
+  "obx_sim_sheet_cancel": "Annuler",
+  "obx_sim_time_hint": "Ajustez l'heure si nécessaire — elle est préremplie avec l'heure de prise prévue."
 }

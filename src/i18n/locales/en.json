@@ -828,5 +828,6 @@
   "obx_sim_sheet_title": "Confirm Intake",
   "obx_sim_sheet_hint": "When did you actually take it?",
   "obx_sim_sheet_btn": "Taken",
-  "obx_sim_sheet_cancel": "Cancel"
+  "obx_sim_sheet_cancel": "Cancel",
+  "obx_sim_time_hint": "Adjust the time if needed — it is pre-filled with the planned intake time."
 }

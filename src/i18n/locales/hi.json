@@ -828,5 +828,6 @@
   "obx_sim_sheet_title": "खुराक की पुष्टि करें",
   "obx_sim_sheet_hint": "आपने वास्तव में कब लिया?",
   "obx_sim_sheet_btn": "ले लिया",
-  "obx_sim_sheet_cancel": "रद्द करें"
+  "obx_sim_sheet_cancel": "रद्द करें",
+  "obx_sim_time_hint": "यदि आवश्यक हो तो समय समायोजित करें — यह नियोजित सेवन समय के साथ पूर्व-भरा हुआ है।"
 }

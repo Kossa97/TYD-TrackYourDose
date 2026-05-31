@@ -451,13 +451,20 @@ export function Onboarding() {
       return
     }
 
+    // When the sim confirmation sheet is open, snap callout to top so it
+    // doesn't overlap the bottom sheet content.
+    if (meta?.id === 'sim-confirm' && simPhase === 'sheet') {
+      setLayout(computeCalloutLayout(null, vw, vh, panelH, { prefer: 'center', snap: 'top' }))
+      return
+    }
+
     const prefer =
       meta?.placement === 'top' ? 'top' : meta?.placement === 'bottom' ? 'bottom' : 'auto'
     const maxBottom = hole ? hole.top - 12 : undefined
     setLayout(
       computeCalloutLayout(hole, vw, vh, panelH, { prefer, maxBottom }),
     )
-  }, [targetRect, panelH, step, useCenteredCallout, showSpotlight, meta?.placement, meta?.snapToViewport, isModalTarget, fieldIndex, getCycleFields, viewportKey])
+  }, [targetRect, panelH, step, useCenteredCallout, showSpotlight, meta?.placement, meta?.snapToViewport, isModalTarget, fieldIndex, getCycleFields, viewportKey, simPhase, meta?.id])
 
   if (!active || needsLanguagePick || !s) return null
 
@@ -605,7 +612,10 @@ export function Onboarding() {
               </label>
               <input type="time" value={simTime} onChange={e => setSimTime(e.target.value)}
                 className="input"
-                style={{ marginBottom:20, fontWeight:700, colorScheme:'inherit' }} />
+                style={{ marginBottom:6, fontWeight:700, colorScheme:'inherit' }} />
+              <p style={{ fontSize:'0.68rem', color:'var(--text-muted)', marginBottom:20, lineHeight:1.4 }}>
+                {t('obx_sim_time_hint', { defaultValue: 'Passe die Uhrzeit an falls nötig — sie wird vorausgefüllt mit der geplanten Einnahmezeit.' })}
+              </p>
               <div style={{ display:'flex', gap:12 }}>
                 <button type="button" data-ob-confirm
                   onClick={() => setSimPhase('card')}

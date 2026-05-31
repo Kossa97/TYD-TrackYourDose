@@ -828,5 +828,6 @@
   "obx_sim_sheet_title": "确认用药",
   "obx_sim_sheet_hint": "您实际是什么时候服用的？",
   "obx_sim_sheet_btn": "已服用",
-  "obx_sim_sheet_cancel": "取消"
+  "obx_sim_sheet_cancel": "取消",
+  "obx_sim_time_hint": "如有需要请调整时间——已预填计划的用药时间。"
 }

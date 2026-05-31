@@ -829,5 +829,6 @@
   "obx_sim_sheet_title": "摂取を確認",
   "obx_sim_sheet_hint": "実際にいつ摂取しましたか？",
   "obx_sim_sheet_btn": "摂取済み",
-  "obx_sim_sheet_cancel": "キャンセル"
+  "obx_sim_sheet_cancel": "キャンセル",
+  "obx_sim_time_hint": "必要に応じて時刻を調整してください。予定の摂取時刻があらかじめ入力されています。"
 }

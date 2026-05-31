@@ -828,5 +828,6 @@
   "obx_sim_sheet_title": "تأكيد الجرعة",
   "obx_sim_sheet_hint": "متى تناولتها فعلاً؟",
   "obx_sim_sheet_btn": "تم التناول",
-  "obx_sim_sheet_cancel": "إلغاء"
+  "obx_sim_sheet_cancel": "إلغاء",
+  "obx_sim_time_hint": "اضبط الوقت إذا لزم الأمر — يتم ملؤه مسبقاً بوقت الجرعة المخطط."
 }

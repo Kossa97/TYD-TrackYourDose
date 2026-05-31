@@ -828,5 +828,6 @@
   "obx_sim_sheet_title": "Alımı onayla",
   "obx_sim_sheet_hint": "Gerçekte ne zaman aldınız?",
   "obx_sim_sheet_btn": "Alındı",
-  "obx_sim_sheet_cancel": "İptal"
+  "obx_sim_sheet_cancel": "İptal",
+  "obx_sim_time_hint": "Gerekirse saati ayarlayın — planlanan alım saatiyle önceden doldurulmuştur."
 }

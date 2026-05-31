@@ -828,5 +828,6 @@
   "obx_sim_sheet_title": "Confirmar tomada",
   "obx_sim_sheet_hint": "Quando você tomou de verdade?",
   "obx_sim_sheet_btn": "Tomado",
-  "obx_sim_sheet_cancel": "Cancelar"
+  "obx_sim_sheet_cancel": "Cancelar",
+  "obx_sim_time_hint": "Ajuste o horário se necessário — está pré-preenchido com o horário de tomada planejado."
 }
