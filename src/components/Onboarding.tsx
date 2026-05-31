@@ -17,7 +17,6 @@ import { computeCalloutLayout, type CalloutPlacement } from './onboardingPlaceme
 import {
   getOnboardingInteractionEl,
   getOpenAppModal,
-  isOnboardingInteractionNode,
   measureOnboardingTarget,
   shouldShowOnboardingSpotlight,
 } from './onboardingTarget'
@@ -127,6 +126,13 @@ export function Onboarding() {
   const cleanupRef = useRef<(() => void) | null>(null)
   const nextRef = useRef(next)
 
+  // When a step has clickSelector, that element is interactive (not the ring target).
+  const getInteractionEl = useCallback((m: typeof meta) => {
+    if (!m) return null
+    if (m.clickSelector) return document.querySelector<HTMLElement>(m.clickSelector)
+    return getOnboardingInteractionEl(m)
+  }, [])
+
   useEffect(() => {
     nextRef.current = next
   }, [next])
@@ -228,14 +234,14 @@ export function Onboarding() {
     setCanAdvance((() => {
       switch (meta?.precondition) {
         case 'filled': {
-          const tgt = getOnboardingInteractionEl(meta)
+          const tgt = getInteractionEl(meta)
           const input = tgt?.matches('input,select,textarea')
             ? (tgt as HTMLInputElement)
             : tgt?.querySelector<HTMLInputElement>('input,select,textarea') ?? null
           return !!input && String(input.value).trim().length > 0
         }
         case 'positive': {
-          const tgt = getOnboardingInteractionEl(meta)
+          const tgt = getInteractionEl(meta)
           const input = tgt?.matches('input') ? (tgt as HTMLInputElement)
             : tgt?.querySelector<HTMLInputElement>('input') ?? null
           return !!input && Number(input.value) > 0
@@ -246,7 +252,7 @@ export function Onboarding() {
         default:         return true
       }
     })())
-    const el = getOnboardingInteractionEl(meta)
+    const el = getInteractionEl(meta)
 
     // Compute base rect: use active cycling field if available, else primary target.
     let baseRect: DOMRect | null = null
@@ -297,7 +303,7 @@ export function Onboarding() {
 
     if (!active || needsLanguagePick || !meta) return
 
-    const el = getOnboardingInteractionEl(meta)
+    const el = getInteractionEl(meta)
 
     if (meta.scrollTarget && el) {
       requestAnimationFrame(() => {
@@ -343,7 +349,7 @@ export function Onboarding() {
     let fired = false
     const delegated = (e: Event) => {
       if (fired) return
-      const target = getOnboardingInteractionEl(meta)
+      const target = getInteractionEl(meta)
       if (!target) return
       // Only auto-advance for action steps (navigate / open modal / save).
       // For 'next' steps (field explanations) the user must press "Weiter".
@@ -370,14 +376,14 @@ export function Onboarding() {
   useEffect(() => {
     if (!active || needsLanguagePick || !meta?.optionalTarget) return
     const id = window.setTimeout(() => {
-      if (!getOnboardingInteractionEl(meta)) nextRef.current()
+      if (!getInteractionEl(meta)) nextRef.current()
     }, 1100)
     return () => clearTimeout(id)
   }, [step, active, needsLanguagePick, meta])
 
   useEffect(() => {
     if (!active || needsLanguagePick || !showSpotlight) return
-    const el = getOnboardingInteractionEl(meta)
+    const el = getInteractionEl(meta)
     if (!el) return
     el.setAttribute('data-ob-active', '')
     return () => el.removeAttribute('data-ob-active')
@@ -390,7 +396,11 @@ export function Onboarding() {
       const node = e.target
       if (isPanelNode(node)) return
       if (node instanceof Element && node.closest('[data-ob-confirm]')) return
-      if (isOnboardingInteractionNode(node, meta)) return
+      // Use clickSelector element if available, otherwise targetSelector.
+      const interactionRoot = meta?.clickSelector
+        ? document.querySelector<HTMLElement>(meta.clickSelector)
+        : getOnboardingInteractionEl(meta)
+      if (interactionRoot && node instanceof Node && interactionRoot.contains(node)) return
       // Allow clicks inside extra-target subtrees (e.g. interval + weekdays at freq step)
       if (meta?.extraTargets && node instanceof Element) {
         const inside = meta.extraTargets.some(sel => {
@@ -430,7 +440,7 @@ export function Onboarding() {
         // Put the card in the OPPOSITE half of the viewport from the highlighted
         // target so it never covers it. Use the active cycling field if present,
         // otherwise the target rect itself (e.g. badge/button targets with no input).
-        const el = getOnboardingInteractionEl(meta)
+        const el = getInteractionEl(meta)
         const fields = getCycleFields(el)
         const currentField = fields[Math.min(fieldIndex, fields.length - 1)] ?? null
         const rect = currentField?.getBoundingClientRect() ?? targetRect
@@ -503,7 +513,7 @@ export function Onboarding() {
             <p className="ob-tap-cue">{s.tapHint ?? t('ob_tap_highlight')}</p>
           )}
 
-          {wantsTarget && !showSpotlight && !getOnboardingInteractionEl(meta) && (
+          {wantsTarget && !showSpotlight && !getInteractionEl(meta) && (
             <p className="ob-waiting-hint">{t('ob_waiting_target')}</p>
           )}
         </div>
