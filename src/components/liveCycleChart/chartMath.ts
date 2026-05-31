@@ -32,3 +32,23 @@ export function clampViewEnd(viewEnd: number, dataStart: number, now: number, wi
   if (viewEnd > now) return now
   return viewEnd
 }
+
+const DAY_MS = 24 * 3_600_000
+
+/**
+ * Tages-ausgerichtete X-Ticks für [startTs, endTs]. Wählt ein Tages-Vielfaches als
+ * Schrittweite, sodass bei gegebener Pixelbreite der Mindestabstand minPxPerTick
+ * eingehalten wird (keine überlappenden Labels).
+ */
+export function pickDayTicks(startTs: number, endTs: number, widthPx: number, minPxPerTick: number): number[] {
+  if (endTs <= startTs || widthPx <= 0) return []
+  const span = endTs - startTs
+  const maxTicks = Math.max(1, Math.floor(widthPx / minPxPerTick))
+  let stepDays = 1
+  while (span / DAY_MS / stepDays > maxTicks) stepDays *= 2
+  const stepMs = stepDays * DAY_MS
+  const first = Math.ceil(startTs / DAY_MS) * DAY_MS
+  const ticks: number[] = []
+  for (let t = first; t <= endTs; t += stepMs) ticks.push(t)
+  return ticks
+}

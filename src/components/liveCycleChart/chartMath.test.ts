@@ -57,3 +57,20 @@ describe('clampViewEnd', () => {
     expect(clampViewEnd(5 * DAY, dataStart, 3 * DAY, win)).toBe(3 * DAY)
   })
 })
+
+import { pickDayTicks } from './chartMath'
+
+describe('pickDayTicks', () => {
+  it('tägliche Ticks wenn genug Platz', () => {
+    const ticks = pickDayTicks(0, 7 * DAY, 700, 56)
+    expect(ticks).toEqual([0, DAY, 2 * DAY, 3 * DAY, 4 * DAY, 5 * DAY, 6 * DAY, 7 * DAY])
+  })
+  it('gröbere Ticks wenn wenig Platz (kein Überlappen)', () => {
+    const ticks = pickDayTicks(0, 7 * DAY, 140, 56)
+    expect(ticks).toEqual([0, 4 * DAY])
+  })
+  it('leeres Array bei ungültigem Bereich', () => {
+    expect(pickDayTicks(10, 10, 700, 56)).toEqual([])
+    expect(pickDayTicks(0, 7 * DAY, 0, 56)).toEqual([])
+  })
+})
