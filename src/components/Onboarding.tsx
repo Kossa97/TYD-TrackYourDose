@@ -370,15 +370,15 @@ export function Onboarding() {
     if (useCenteredCallout) {
       let snap: 'top' | 'bottom' | undefined = meta?.snapToViewport
       if (snap === undefined && isModalTarget) {
-        // Pick snap direction so the card doesn't cover the active cycling field.
-        // Card when snapped-to-top occupies y ≈ 20 … 20+panelH.
-        // If the field starts inside that band, push card to bottom instead.
+        // Put the card in the OPPOSITE half of the viewport from the highlighted
+        // target so it never covers it. Use the active cycling field if present,
+        // otherwise the target rect itself (e.g. badge/button targets with no input).
         const el = getOnboardingInteractionEl(meta)
         const fields = getCycleFields(el)
         const currentField = fields[Math.min(fieldIndex, fields.length - 1)] ?? null
-        const fieldTop = currentField?.getBoundingClientRect().top ?? vh
-        const cardBottomWhenAtTop = 20 + panelH + 24 // 24px buffer
-        snap = fieldTop < cardBottomWhenAtTop ? 'bottom' : 'top'
+        const rect = currentField?.getBoundingClientRect() ?? targetRect
+        const targetCenter = rect ? rect.top + rect.height / 2 : vh / 2
+        snap = targetCenter < vh / 2 ? 'bottom' : 'top'
       }
       setLayout(computeCalloutLayout(null, vw, vh, panelH, { prefer: 'center', snap }))
       return
