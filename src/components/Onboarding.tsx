@@ -233,6 +233,12 @@ export function Onboarding() {
             : tgt?.querySelector<HTMLInputElement>('input,select,textarea') ?? null
           return !!input && String(input.value).trim().length > 0
         }
+        case 'positive': {
+          const tgt = getOnboardingInteractionEl(meta)
+          const input = tgt?.matches('input') ? (tgt as HTMLInputElement)
+            : tgt?.querySelector<HTMLInputElement>('input') ?? null
+          return !!input && Number(input.value) > 0
+        }
         case 'modal':    return !!getOpenAppModal()
         case 'no-modal': return !getOpenAppModal()
         case 'sim':      return simConfirmedRef.current

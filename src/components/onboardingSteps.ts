@@ -24,7 +24,7 @@ export interface OnboardingStepMeta {
    * - 'sim'       → the simulated confirmation was clicked
    * undefined → enabled immediately (pure explanation steps).
    */
-  precondition?: 'filled' | 'modal' | 'no-modal' | 'sim'
+  precondition?: 'filled' | 'positive' | 'modal' | 'no-modal' | 'sim'
   /** If the target does not appear within ~700ms, auto-skip this step. */
   optionalTarget?: boolean
 }
@@ -44,7 +44,7 @@ export const ONBOARDING_STEPS: OnboardingStepMeta[] = [
   { id:'pep-liquid', emoji:'💧', titleKey:'obx_pepliquid_title', subtitleKey:'obx_pepliquid_sub', descriptionKey:'obx_pepliquid_desc', targetSelector:'[data-ob="pep-liquid"]', placement:'auto', advance:'next', precondition:'filled' },
   { id:'pep-recon', emoji:'📅', titleKey:'obx_peprecon_title', subtitleKey:'obx_peprecon_sub', descriptionKey:'obx_peprecon_desc', targetSelector:'[data-ob="pep-recon-date"]', placement:'auto', advance:'next', precondition:'filled' },
   { id:'pep-expiry', emoji:'⏳', titleKey:'obx_pepexpiry_title', subtitleKey:'obx_pepexpiry_sub', descriptionKey:'obx_pepexpiry_desc', targetSelector:'[data-ob="pep-expiry"]', placement:'auto', advance:'next' },
-  { id:'pep-vials', emoji:'🧴', titleKey:'obx_pepvials_title', subtitleKey:'obx_pepvials_sub', descriptionKey:'obx_pepvials_desc', targetSelector:'[data-ob="pep-vials"]', placement:'auto', advance:'next' },
+  { id:'pep-vials', emoji:'🧴', titleKey:'obx_pepvials_title', subtitleKey:'obx_pepvials_sub', descriptionKey:'obx_pepvials_desc', targetSelector:'[data-ob="pep-vials"]', placement:'auto', advance:'next', precondition:'positive' },
   { id:'pep-batch', emoji:'🔖', titleKey:'obx_pepbatch_title', subtitleKey:'obx_pepbatch_sub', descriptionKey:'obx_pepbatch_desc', targetSelector:'[data-ob="pep-batch"]', placement:'auto', advance:'next' },
   { id:'pep-source', emoji:'🏭', titleKey:'obx_pepsource_title', subtitleKey:'obx_pepsource_sub', descriptionKey:'obx_pepsource_desc', targetSelector:'[data-ob="pep-source"]', placement:'auto', advance:'next' },
   { id:'pep-doc', emoji:'📎', titleKey:'obx_pepdoc_title', subtitleKey:'obx_pepdoc_sub', descriptionKey:'obx_pepdoc_desc', targetSelector:'[data-ob="pep-doc"]', placement:'auto', advance:'next' },
@@ -53,7 +53,7 @@ export const ONBOARDING_STEPS: OnboardingStepMeta[] = [
   { id:'pep-notes', emoji:'📝', titleKey:'obx_pepnotes_title', subtitleKey:'obx_pepnotes_sub', descriptionKey:'obx_pepnotes_desc', targetSelector:'[data-ob="pep-notes"]', placement:'auto', advance:'next' },
   { id:'pep-save', emoji:'✅', titleKey:'obx_pepsave_title', subtitleKey:'obx_pepsave_sub', descriptionKey:'obx_pepsave_desc', targetSelector:'[data-ob="btn-pep-save"]', placement:'top', advance:'click', tapHintKey:'obx_pepsave_tap', scrollTarget:true, precondition:'no-modal' },
   { id:'open-cycle', emoji:'🔄', titleKey:'obx_opencyc_title', subtitleKey:'obx_opencyc_sub', descriptionKey:'obx_opencyc_desc', targetSelector:'[data-ob="btn-zyklus-add"]', placement:'top', advance:'click', tapHintKey:'obx_opencyc_tap', scrollTarget:true, precondition:'modal' },
-  { id:'cyc-name', emoji:'🏷️', titleKey:'obx_cycname_title', subtitleKey:'obx_cycname_sub', descriptionKey:'obx_cycname_desc', targetSelector:'[data-ob="cyc-name"]', placement:'auto', advance:'next', precondition:'filled' },
+  { id:'cyc-name', emoji:'🏷️', titleKey:'obx_cycname_title', subtitleKey:'obx_cycname_sub', descriptionKey:'obx_cycname_desc', targetSelector:'[data-ob="cyc-name"]', placement:'auto', advance:'next' },
   { id:'cyc-dose', emoji:'💉', titleKey:'obx_cycdose_title', subtitleKey:'obx_cycdose_sub', descriptionKey:'obx_cycdose_desc', targetSelector:'[data-ob="cyc-dose"]', placement:'auto', advance:'next', precondition:'filled' },
   { id:'cyc-unit', emoji:'⚖️', titleKey:'obx_cycunit_title', subtitleKey:'obx_cycunit_sub', descriptionKey:'obx_cycunit_desc', targetSelector:'[data-ob="cyc-unit"]', placement:'auto', advance:'next' },
   { id:'cyc-method', emoji:'🧭', titleKey:'obx_cycmethod_title', subtitleKey:'obx_cycmethod_sub', descriptionKey:'obx_cycmethod_desc', targetSelector:'[data-ob="cyc-method"]', placement:'auto', advance:'next' },
