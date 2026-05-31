@@ -823,5 +823,10 @@
   "obx_peppk_title": "PK प्रोफ़ाइल",
   "obx_peppk_sub": "स्वतः लिंक",
   "obx_peppk_desc": "ज्ञात पदार्थों के लिए हम स्वचालित रूप से एक फार्माकोकाइनेटिक प्रोफ़ाइल लिंक करते हैं — रक्त स्तर सिमुलेशन का आधार।",
-  "pk_profil_verknuepft": "PK प्रोफ़ाइल लिंक"
+  "pk_profil_verknuepft": "PK प्रोफ़ाइल लिंक",
+  "obx_calshow_tap": "👆 «आज» पर टैप करें",
+  "obx_sim_sheet_title": "खुराक की पुष्टि करें",
+  "obx_sim_sheet_hint": "आपने वास्तव में कब लिया?",
+  "obx_sim_sheet_btn": "ले लिया",
+  "obx_sim_sheet_cancel": "रद्द करें"
 }

@@ -114,8 +114,9 @@ export function Onboarding() {
   const [modalOpen, setModalOpen] = useState(false)
   const [fieldIndex, setFieldIndex] = useState(0)
   const [canAdvance, setCanAdvance] = useState(true)
-  const [simConfirmed, setSimConfirmed] = useState(false)
   const simConfirmedRef = useRef(false)
+  const [simPhase, setSimPhase] = useState<'card'|'sheet'|'done'>('card')
+  const [simTime, setSimTime] = useState('')
   const [panelH, setPanelH] = useState(200)
   const [viewportKey, setViewportKey] = useState(0)
   const [layout, setLayout] = useState<ReturnType<typeof computeCalloutLayout>>(() =>
@@ -283,7 +284,9 @@ export function Onboarding() {
   useEffect(() => {
     setFieldIndex(0)
     simConfirmedRef.current = false
-    setSimConfirmed(false)
+    setSimPhase('card')
+    const now = new Date()
+    setSimTime(`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`)
     setCanAdvance(!meta?.precondition)
   }, [step, meta?.precondition])
 
@@ -541,33 +544,93 @@ export function Onboarding() {
   )
 
   const simConfirm = meta?.id === 'sim-confirm' ? createPortal(
-    <div style={{
-      position:'fixed', left:12, right:12,
-      bottom:'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px)',
-      zIndex: OB_Z.panel - 2,
-      background:'var(--surface)', border:'1px solid var(--accent-border)',
-      borderRadius:18, padding:'14px 16px',
-      boxShadow:'0 12px 40px rgba(0,0,0,0.45)',
-      display:'flex', alignItems:'center', gap:12,
-    }}>
-      <div style={{ flex:1, minWidth:0 }}>
-        <p style={{ fontSize:'0.66rem', fontWeight:800, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--accent)' }}>
-          {t('obx_sim_kicker')}
-        </p>
-        <p style={{ fontSize:'0.9rem', fontWeight:800, color:'var(--text)' }}>{t('obx_sim_substance')}</p>
-        <p style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{t('obx_sim_time')}</p>
-      </div>
-      <button type="button" data-ob="ob-sim-confirm" data-ob-confirm
-        onClick={() => { simConfirmedRef.current = true; setSimConfirmed(true); setCanAdvance(true) }}
-        disabled={simConfirmed}
-        style={{ flexShrink:0, padding:'10px 16px', borderRadius:12, border:'none',
-          background:'linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #003a6e))',
-          color:'var(--accent-contrast)', fontWeight:800, fontSize:'0.85rem',
-          cursor: simConfirmed ? 'default' : 'pointer', opacity: simConfirmed ? 0.7 : 1,
-          display:'inline-flex', alignItems:'center', gap:4 }}>
-        <Check size={16} />{t('obx_sim_btn')}
-      </button>
-    </div>, document.body) : null
+    <>
+      {/* ── Amber "Noch fällig" card — matches real calendar style ── */}
+      {simPhase !== 'done' && (
+        <div style={{
+          position:'fixed', left:12, right:12,
+          bottom:'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px)',
+          zIndex: OB_Z.panel - 2,
+          background:'rgba(245,158,11,0.10)', border:'1px solid rgba(245,158,11,0.32)',
+          borderRadius:18, padding:'14px 16px',
+          boxShadow:'0 12px 40px rgba(0,0,0,0.45)',
+          display:'flex', alignItems:'center', gap:12,
+        }}>
+          <div style={{ flex:1, minWidth:0 }}>
+            <p style={{ fontSize:'0.62rem', fontWeight:800, letterSpacing:'0.1em', textTransform:'uppercase', color:'#f59e0b' }}>
+              {t('obx_sim_kicker')}
+            </p>
+            <p style={{ fontSize:'0.88rem', fontWeight:800, color:'var(--text)' }}>{t('obx_sim_substance')}</p>
+            <p style={{ fontSize:'0.7rem', color:'#d97706', fontWeight:600 }}>{t('obx_sim_time')}</p>
+          </div>
+          <button type="button" data-ob="ob-sim-confirm" data-ob-confirm
+            onClick={() => setSimPhase('sheet')}
+            style={{ flexShrink:0, padding:'10px 16px', borderRadius:12, border:'none',
+              background:'linear-gradient(135deg,#f59e0b,#d97706)',
+              color:'#07091a', fontWeight:800, fontSize:'0.85rem', cursor:'pointer',
+              display:'inline-flex', alignItems:'center', gap:6 }}>
+            <Check size={16} />{t('obx_sim_btn')}
+          </button>
+        </div>
+      )}
+
+      {/* ── Mock confirmation sheet (matches real Dashboard confirmSheet) ── */}
+      {simPhase === 'sheet' && (
+        <>
+          <div style={{ position:'fixed', inset:0, zIndex: OB_Z.panel - 1, background:'rgba(0,0,0,0.60)' }} />
+          <div style={{
+            position:'fixed', bottom:0, left:0, right:0, zIndex: OB_Z.panel - 1,
+            borderRadius:'24px 24px 0 0', border:'1px solid rgba(255,255,255,0.10)',
+            paddingBottom:40, background:'var(--surface)',
+          }}>
+            <div style={{ padding:'20px 18px 0' }}>
+              <div style={{ margin:'0 auto 20px', height:4, width:40, borderRadius:2, background:'rgba(255,255,255,0.2)' }} />
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                <Check size={15} color="#10b981" />
+                <h2 style={{ fontSize:'1rem', fontWeight:900, color:'var(--text)' }}>{t('obx_sim_sheet_title')}</h2>
+              </div>
+              <p style={{ fontSize:'0.72rem', color:'var(--text-muted)', marginBottom:20 }}>{t('obx_sim_sheet_hint')}</p>
+              <label style={{ fontSize:'0.6rem', fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-muted)', display:'block', marginBottom:6 }}>
+                {t('uhrzeit_label', { defaultValue: 'Uhrzeit' })}
+              </label>
+              <input type="time" value={simTime} onChange={e => setSimTime(e.target.value)}
+                className="input"
+                style={{ marginBottom:20, fontWeight:700, colorScheme:'inherit' }} />
+              <div style={{ display:'flex', gap:12 }}>
+                <button type="button" data-ob-confirm
+                  onClick={() => setSimPhase('card')}
+                  className="btn-secondary" style={{ flex:1 }}>
+                  {t('obx_sim_sheet_cancel')}
+                </button>
+                <button type="button" data-ob="ob-sim-confirm" data-ob-confirm
+                  onClick={() => { simConfirmedRef.current = true; setCanAdvance(true); setSimPhase('done') }}
+                  className="btn-primary" style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
+                  <Check size={14} />{t('obx_sim_sheet_btn')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Done state: green confirmation ── */}
+      {simPhase === 'done' && (
+        <div style={{
+          position:'fixed', left:12, right:12,
+          bottom:'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px)',
+          zIndex: OB_Z.panel - 2,
+          background:'rgba(16,185,129,0.12)', border:'1px solid rgba(16,185,129,0.30)',
+          borderRadius:18, padding:'14px 16px',
+          display:'flex', alignItems:'center', gap:12,
+        }}>
+          <Check size={22} color="#10b981" />
+          <div>
+            <p style={{ fontSize:'0.82rem', fontWeight:800, color:'#10b981' }}>{t('einnahme_bestaetigt', { defaultValue: 'Einnahme bestätigt' })}</p>
+            <p style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{t('obx_sim_substance')} · {simTime}</p>
+          </div>
+        </div>
+      )}
+    </>, document.body) : null
 
   return (
     <>

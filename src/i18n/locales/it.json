@@ -823,5 +823,10 @@
   "obx_peppk_title": "Profilo PK",
   "obx_peppk_sub": "Collegato automaticamente",
   "obx_peppk_desc": "Per le sostanze note colleghiamo automaticamente un profilo farmacocinetico — la base della simulazione del livello ematico.",
-  "pk_profil_verknuepft": "Profilo PK collegato"
+  "pk_profil_verknuepft": "Profilo PK collegato",
+  "obx_calshow_tap": "👆 Tocca «Oggi»",
+  "obx_sim_sheet_title": "Conferma assunzione",
+  "obx_sim_sheet_hint": "Quando hai effettivamente assunto?",
+  "obx_sim_sheet_btn": "Assunto",
+  "obx_sim_sheet_cancel": "Annulla"
 }

@@ -823,5 +823,10 @@
   "obx_peppk_title": "ملف PK",
   "obx_peppk_sub": "مرتبط تلقائيًا",
   "obx_peppk_desc": "بالنسبة للمواد المعروفة، نربط تلقائيًا ملفًا حركيًا دوائيًا — أساس محاكاة مستوى الدم.",
-  "pk_profil_verknuepft": "تم ربط ملف PK"
+  "pk_profil_verknuepft": "تم ربط ملف PK",
+  "obx_calshow_tap": "👆 انقر على «اليوم»",
+  "obx_sim_sheet_title": "تأكيد الجرعة",
+  "obx_sim_sheet_hint": "متى تناولتها فعلاً؟",
+  "obx_sim_sheet_btn": "تم التناول",
+  "obx_sim_sheet_cancel": "إلغاء"
 }

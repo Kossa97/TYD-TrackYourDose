@@ -823,5 +823,10 @@
   "obx_peppk_title": "PK 프로파일",
   "obx_peppk_sub": "자동 연결됨",
   "obx_peppk_desc": "알려진 물질에는 약동학 프로파일을 자동으로 연결합니다 — 혈중 농도 시뮬레이션의 기반입니다.",
-  "pk_profil_verknuepft": "PK 프로파일 연결됨"
+  "pk_profil_verknuepft": "PK 프로파일 연결됨",
+  "obx_calshow_tap": "👆 «오늘»을 탭하세요",
+  "obx_sim_sheet_title": "복용 확인",
+  "obx_sim_sheet_hint": "실제로 언제 복용했나요?",
+  "obx_sim_sheet_btn": "복용 완료",
+  "obx_sim_sheet_cancel": "취소"
 }

@@ -823,5 +823,10 @@
   "obx_peppk_title": "PK-Profil",
   "obx_peppk_sub": "Automatisch verknüpft",
   "obx_peppk_desc": "Bei bekannten Substanzen verknüpfen wir automatisch ein pharmakokinetisches Profil — die Basis für die Blutspiegel-Simulation.",
-  "pk_profil_verknuepft": "PK-Profil verknüpft"
+  "pk_profil_verknuepft": "PK-Profil verknüpft",
+  "obx_calshow_tap": "👆 Tippe auf „Heute\"",
+  "obx_sim_sheet_title": "Einnahme bestätigen",
+  "obx_sim_sheet_hint": "Wann hast du tatsächlich eingenommen?",
+  "obx_sim_sheet_btn": "Eingenommen",
+  "obx_sim_sheet_cancel": "Abbrechen"
 }

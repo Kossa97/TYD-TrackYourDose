@@ -823,5 +823,10 @@
   "obx_peppk_title": "PK-профиль",
   "obx_peppk_sub": "Связан автоматически",
   "obx_peppk_desc": "Для известных веществ мы автоматически связываем фармакокинетический профиль — основу симуляции уровня в крови.",
-  "pk_profil_verknuepft": "PK-профиль связан"
+  "pk_profil_verknuepft": "PK-профиль связан",
+  "obx_calshow_tap": "👆 Нажмите «Сегодня»",
+  "obx_sim_sheet_title": "Подтвердить приём",
+  "obx_sim_sheet_hint": "Когда вы фактически приняли?",
+  "obx_sim_sheet_btn": "Принято",
+  "obx_sim_sheet_cancel": "Отмена"
 }

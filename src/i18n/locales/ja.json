@@ -824,5 +824,10 @@
   "obx_peppk_sub": "自動リンク",
   "obx_peppk_desc": "既知の物質には薬物動態プロファイルを自動でリンクします——血中濃度シミュレーションの基礎です。",
   "pk_profil_verknuepft": "PKプロファイルをリンク済み",
-  "vorraelike_vials": "備蓄バイアル（未溶解）"
+  "vorraelike_vials": "備蓄バイアル（未溶解）",
+  "obx_calshow_tap": "👆「今日」をタップ",
+  "obx_sim_sheet_title": "摂取を確認",
+  "obx_sim_sheet_hint": "実際にいつ摂取しましたか？",
+  "obx_sim_sheet_btn": "摂取済み",
+  "obx_sim_sheet_cancel": "キャンセル"
 }

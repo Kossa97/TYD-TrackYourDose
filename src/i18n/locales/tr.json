@@ -823,5 +823,10 @@
   "obx_peppk_title": "PK profili",
   "obx_peppk_sub": "Otomatik bağlandı",
   "obx_peppk_desc": "Bilinen maddeler için otomatik olarak bir farmakokinetik profil bağlarız — kan seviyesi simülasyonunun temeli.",
-  "pk_profil_verknuepft": "PK profili bağlandı"
+  "pk_profil_verknuepft": "PK profili bağlandı",
+  "obx_calshow_tap": "👆 «Bugün»a dokunun",
+  "obx_sim_sheet_title": "Alımı onayla",
+  "obx_sim_sheet_hint": "Gerçekte ne zaman aldınız?",
+  "obx_sim_sheet_btn": "Alındı",
+  "obx_sim_sheet_cancel": "İptal"
 }

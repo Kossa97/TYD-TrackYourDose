@@ -823,5 +823,10 @@
   "obx_peppk_title": "Profil PK",
   "obx_peppk_sub": "Lié automatiquement",
   "obx_peppk_desc": "Pour les substances connues, nous associons automatiquement un profil pharmacocinétique — la base de la simulation du taux sanguin.",
-  "pk_profil_verknuepft": "Profil PK lié"
+  "pk_profil_verknuepft": "Profil PK lié",
+  "obx_calshow_tap": "👆 Appuyez sur «Aujourd'hui»",
+  "obx_sim_sheet_title": "Confirmer la prise",
+  "obx_sim_sheet_hint": "Quand avez-vous réellement pris ?",
+  "obx_sim_sheet_btn": "Pris",
+  "obx_sim_sheet_cancel": "Annuler"
 }

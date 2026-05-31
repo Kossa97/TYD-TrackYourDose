@@ -823,5 +823,10 @@
   "obx_peppk_title": "PK 档案",
   "obx_peppk_sub": "自动关联",
   "obx_peppk_desc": "对于已知物质，我们会自动关联一个药代动力学档案——血药浓度模拟的基础。",
-  "pk_profil_verknuepft": "已关联 PK 档案"
+  "pk_profil_verknuepft": "已关联 PK 档案",
+  "obx_calshow_tap": "👆 点击「今天」",
+  "obx_sim_sheet_title": "确认用药",
+  "obx_sim_sheet_hint": "您实际是什么时候服用的？",
+  "obx_sim_sheet_btn": "已服用",
+  "obx_sim_sheet_cancel": "取消"
 }
