@@ -811,7 +811,7 @@
   "obx_calshow_desc": "予定された投与がここに表示されます。日付をタップすると詳細が確認できます。",
   "obx_simconfirm_title": "投与を確認",
   "obx_simconfirm_sub": "ステップ6 · 練習",
-  "obx_simconfirm_desc": "予定された投与の確認方法を練習します。これは練習です — データは保存されません。",
+  "obx_simconfirm_desc": "未確認の摂取を確認する方法です。「確認」をタップ——ウィンドウが開きます。これは練習なので保存されません。",
   "obx_simconfirm_tap": "👉「確認」をタップ",
   "obx_finish_title": "完了！ 🚀",
   "obx_finish_sub": "お疲れさまでした",

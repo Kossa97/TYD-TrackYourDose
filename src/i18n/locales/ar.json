@@ -811,7 +811,7 @@
   "obx_calshow_desc": "تظهر هنا الجرعات المستحقة. اضغط على يوم لعرض التفاصيل.",
   "obx_simconfirm_title": "تأكيد الجرعة",
   "obx_simconfirm_sub": "الخطوة 6 · تدريب",
-  "obx_simconfirm_desc": "هكذا تؤكد جرعة مستحقة. هذا تدريب فقط — لن يُحفظ أي شيء.",
+  "obx_simconfirm_desc": "هكذا تؤكد جرعة معلقة. انقر على \"تأكيد\" — سيفتح نافذة. هذا تمرين، لا يُحفظ شيء.",
   "obx_simconfirm_tap": "👉 اضغط على «تأكيد»",
   "obx_finish_title": "تم! 🚀",
   "obx_finish_sub": "أحسنت",

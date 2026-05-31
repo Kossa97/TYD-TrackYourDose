@@ -811,7 +811,7 @@
   "obx_calshow_desc": "Aquí aparecen las tomas pendientes. Pulsa un día para ver los detalles.",
   "obx_simconfirm_title": "Confirmar toma",
   "obx_simconfirm_sub": "Paso 6 · Práctica",
-  "obx_simconfirm_desc": "Así confirmas una toma pendiente. Esto es una práctica — no se guardará nada.",
+  "obx_simconfirm_desc": "Así confirmas una toma pendiente. Toca \"Confirmar\" — se abrirá una ventana. Esto es un ejercicio, no se guarda nada.",
   "obx_simconfirm_tap": "👉 Pulsa «Confirmar»",
   "obx_finish_title": "¡Listo! 🚀",
   "obx_finish_sub": "Completado",

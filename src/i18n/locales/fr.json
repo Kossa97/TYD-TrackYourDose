@@ -811,7 +811,7 @@
   "obx_calshow_desc": "Les prises à venir apparaissent ici. Appuie sur un jour pour voir les détails.",
   "obx_simconfirm_title": "Confirmer la prise",
   "obx_simconfirm_sub": "Étape 6 · Entraînement",
-  "obx_simconfirm_desc": "Voici comment confirmer une prise à effectuer. C'est un entraînement — rien n'est enregistré.",
+  "obx_simconfirm_desc": "Voici comment confirmer une prise en attente. Appuyez sur \"Confirmer\" — une feuille s'ouvrira. C'est un entraînement, rien n'est sauvegardé.",
   "obx_simconfirm_tap": "👉 Appuie sur «Confirmer»",
   "obx_finish_title": "Terminé ! 🚀",
   "obx_finish_sub": "Bravo",

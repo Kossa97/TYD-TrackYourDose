@@ -811,7 +811,7 @@
   "obx_calshow_desc": "到期用药将显示于此。点击某天可查看详情。",
   "obx_simconfirm_title": "确认用药",
   "obx_simconfirm_sub": "第6步 · 练习",
-  "obx_simconfirm_desc": "这是确认到期用药的操作练习，不会保存任何数据。",
+  "obx_simconfirm_desc": "这是确认待处理用药的方法。点击\"确认\"——将打开一个窗口。这是练习，不会保存任何内容。",
   "obx_simconfirm_tap": "👉 点击「确认」",
   "obx_finish_title": "完成！🚀",
   "obx_finish_sub": "大功告成",
