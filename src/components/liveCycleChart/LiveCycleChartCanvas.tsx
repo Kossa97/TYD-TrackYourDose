@@ -265,7 +265,12 @@ export function LiveCycleChartCanvas({
     isPanning.current = true
     panStartX.current = e.clientX
     panStartViewEnd.current = viewEndRef.current
-    if (e.pointerType !== 'mouse') {
+    if (e.pointerType === 'mouse') {
+      // Maus: Drücken startet Pan → Hover-Ablesen beenden
+      isReadingRef.current = false
+      scheduleRedraw()
+    } else {
+      // Touch/Pen: ~300ms halten → Ablesen
       if (holdTimer.current) clearTimeout(holdTimer.current)
       const cx = e.clientX
       holdTimer.current = window.setTimeout(() => {
