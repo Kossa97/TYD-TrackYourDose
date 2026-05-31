@@ -830,5 +830,6 @@
   "obx_sim_sheet_btn": "Eingenommen",
   "obx_sim_sheet_cancel": "Abbrechen",
   "obx_sim_time_hint": "Passe die Uhrzeit an falls nötig — sie wird vorausgefüllt mit der geplanten Einnahmezeit.",
-  "obx_sim_sheet_callout_desc": "Die Uhrzeit ist vorausgefüllt mit deiner geplanten Einnahmezeit. Passe sie bei Bedarf an und tippe dann auf „Eingenommen\"."
+  "obx_sim_sheet_callout_desc": "Die Uhrzeit ist vorausgefüllt mit deiner geplanten Einnahmezeit. Passe sie bei Bedarf an und tippe dann auf „Eingenommen\".",
+  "aktiver_zyklus_hinweis": "Dieses Peptid hat bereits einen aktiven Zyklus. Bitte deaktiviere ihn zuerst, bevor du einen neuen anlegst."
 }

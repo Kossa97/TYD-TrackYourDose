@@ -830,5 +830,6 @@
   "obx_sim_sheet_btn": "Tomado",
   "obx_sim_sheet_cancel": "Cancelar",
   "obx_sim_time_hint": "Ajusta la hora si es necesario — está rellenada con la hora de toma planificada.",
-  "obx_sim_sheet_callout_desc": "La hora está rellenada con tu hora de toma planificada. Ajústala si es necesario y toca \"Tomado\"."
+  "obx_sim_sheet_callout_desc": "La hora está rellenada con tu hora de toma planificada. Ajústala si es necesario y toca \"Tomado\".",
+  "aktiver_zyklus_hinweis": "Este péptido ya tiene un ciclo activo. Por favor, desactívalo antes de crear uno nuevo."
 }

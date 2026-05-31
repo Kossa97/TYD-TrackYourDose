@@ -831,5 +831,6 @@
   "obx_sim_sheet_btn": "Sudah dikonsumsi",
   "obx_sim_sheet_cancel": "Batal",
   "obx_sim_time_hint": "Sesuaikan waktu jika perlu — sudah diisi sebelumnya dengan waktu asupan yang direncanakan.",
-  "obx_sim_sheet_callout_desc": "Waktu sudah diisi dengan waktu asupan yang direncanakan. Sesuaikan jika perlu, lalu ketuk \"Sudah dikonsumsi\"."
+  "obx_sim_sheet_callout_desc": "Waktu sudah diisi dengan waktu asupan yang direncanakan. Sesuaikan jika perlu, lalu ketuk \"Sudah dikonsumsi\".",
+  "aktiver_zyklus_hinweis": "Peptida ini sudah memiliki siklus aktif. Harap nonaktifkan terlebih dahulu sebelum membuat yang baru."
 }

@@ -641,6 +641,11 @@ export function Peptide() {
 
   // ── Zyklus-Aktionen ───────────────────────────────────────────────────────
   const openNewCycle = (p: Peptide) => {
+    const activeExists = cycles.filter(c => c.peptide_id === p.id).some(c => c.active)
+    if (activeExists) {
+      toast(t('aktiver_zyklus_hinweis'), { icon: '⚠️', duration: 4000 })
+      return
+    }
     setCycleForPeptide(p); setEditingCycleId(null)
     setCForm(emptyCycleForm(p, t)); setShowCycleForm(true)
   }

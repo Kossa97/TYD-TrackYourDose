@@ -830,5 +830,6 @@
   "obx_sim_sheet_btn": "Taken",
   "obx_sim_sheet_cancel": "Cancel",
   "obx_sim_time_hint": "Adjust the time if needed — it is pre-filled with the planned intake time.",
-  "obx_sim_sheet_callout_desc": "The time is pre-filled with your planned intake time. Adjust it if needed, then tap \"Taken\"."
+  "obx_sim_sheet_callout_desc": "The time is pre-filled with your planned intake time. Adjust it if needed, then tap \"Taken\".",
+  "aktiver_zyklus_hinweis": "This peptide already has an active cycle. Please deactivate it first before creating a new one."
 }
