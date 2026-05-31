@@ -169,6 +169,32 @@ body.onboarding-active [data-ob-active] {
   }
 }
 
+/* Onboarding: amber beacon on the specific clickable calendar day.
+   Overrides the default cyan glow to create clear visual hierarchy:
+   large cyan ring = "look at calendar", small amber pulse = "tap this day". */
+@keyframes ob-day-beacon {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 2px rgba(251,191,36,0.95),
+      0 0 0 0   rgba(251,191,36,0.55),
+      0 0 0 0   rgba(251,191,36,0.20);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 2.5px rgba(251,191,36,1),
+      0 0 0 7px  rgba(251,191,36,0.28),
+      0 0 0 14px rgba(251,191,36,0.08);
+    transform: scale(1.06);
+  }
+}
+body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
+  animation: ob-day-beacon 1.4s cubic-bezier(0.4,0,0.6,1) infinite !important;
+  border-radius: 10px !important;
+  z-index: 10033 !important;
+  position: relative !important;
+}
+
 .ob-callout-card {
   background: linear-gradient(165deg, rgba(10, 18, 42, 0.99), rgba(6, 10, 26, 0.99));
   border: 1.5px solid rgba(0, 204, 245, 0.45);
