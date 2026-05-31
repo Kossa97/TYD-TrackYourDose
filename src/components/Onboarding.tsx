@@ -514,7 +514,11 @@ export function Onboarding() {
             </div>
           </div>
 
-          <p className="ob-callout-body whitespace-pre-line">{s.description}</p>
+          <p className="ob-callout-body whitespace-pre-line">
+            {meta?.id === 'sim-confirm' && simPhase === 'sheet'
+              ? t('obx_sim_sheet_callout_desc')
+              : s.description}
+          </p>
 
           {s.advance === 'click' && showSpotlight && (
             <p className="ob-tap-cue">{s.tapHint ?? t('ob_tap_highlight')}</p>

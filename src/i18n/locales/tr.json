@@ -829,5 +829,6 @@
   "obx_sim_sheet_hint": "Gerçekte ne zaman aldınız?",
   "obx_sim_sheet_btn": "Alındı",
   "obx_sim_sheet_cancel": "İptal",
-  "obx_sim_time_hint": "Gerekirse saati ayarlayın — planlanan alım saatiyle önceden doldurulmuştur."
+  "obx_sim_time_hint": "Gerekirse saati ayarlayın — planlanan alım saatiyle önceden doldurulmuştur.",
+  "obx_sim_sheet_callout_desc": "Saat, planlanan alım saatinizle önceden doldurulmuştur. Gerekirse ayarlayın, ardından \"Alındı\"ya dokunun."
 }

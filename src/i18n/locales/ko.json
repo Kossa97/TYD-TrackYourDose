@@ -829,5 +829,6 @@
   "obx_sim_sheet_hint": "실제로 언제 복용했나요?",
   "obx_sim_sheet_btn": "복용 완료",
   "obx_sim_sheet_cancel": "취소",
-  "obx_sim_time_hint": "필요하면 시간을 조정하세요 — 계획된 복용 시간이 미리 채워져 있습니다."
+  "obx_sim_time_hint": "필요하면 시간을 조정하세요 — 계획된 복용 시간이 미리 채워져 있습니다.",
+  "obx_sim_sheet_callout_desc": "시간은 계획된 복용 시간으로 미리 채워져 있습니다. 필요하면 조정하고 \"복용 완료\"를 탭하세요."
 }

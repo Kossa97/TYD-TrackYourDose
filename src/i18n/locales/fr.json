@@ -829,5 +829,6 @@
   "obx_sim_sheet_hint": "Quand avez-vous réellement pris ?",
   "obx_sim_sheet_btn": "Pris",
   "obx_sim_sheet_cancel": "Annuler",
-  "obx_sim_time_hint": "Ajustez l'heure si nécessaire — elle est préremplie avec l'heure de prise prévue."
+  "obx_sim_time_hint": "Ajustez l'heure si nécessaire — elle est préremplie avec l'heure de prise prévue.",
+  "obx_sim_sheet_callout_desc": "L'heure est préremplie avec votre heure de prise prévue. Ajustez-la si besoin, puis appuyez sur \"Pris\"."
 }
