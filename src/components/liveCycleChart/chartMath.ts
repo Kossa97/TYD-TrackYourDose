@@ -18,3 +18,17 @@ export function lerpLevel(points: ChartPoint[], ts: number): number {
   const t = (ts - points[lo].ts) / span
   return points[lo].level + t * (points[hi].level - points[lo].level)
 }
+
+/** Neues Fenster-Ende beim Wischen. Finger nach rechts (dx>0) → Vergangenheit (kleiner). */
+export function panViewEnd(startViewEnd: number, dxPx: number, widthPx: number, windowMs: number): number {
+  if (widthPx <= 0) return startViewEnd
+  return startViewEnd - (dxPx / widthPx) * windowMs
+}
+
+/** Begrenzt das Fenster-Ende: rechts nicht über jetzt, links nicht über (erster Punkt + Fenster). */
+export function clampViewEnd(viewEnd: number, dataStart: number, now: number, windowMs: number): number {
+  const lower = Math.min(dataStart + windowMs, now)
+  if (viewEnd < lower) return lower
+  if (viewEnd > now) return now
+  return viewEnd
+}
