@@ -540,6 +540,14 @@ export function Peptide() {
       setUploadingFile(false)
     }
 
+    // "Vorrätige Vials" = raw/unangemischte reserve → goes to inventory.
+    // The peptide itself always tracks 1 mixed vial at 100% when newly created;
+    // edits preserve the current fill level so it isn't reset mid-use.
+    const rawReserve = parseFloat(pForm.vials_in_stock) || 0
+    const existingPep = editingPeptideId ? peptides.find(p => p.id === editingPeptideId) : null
+    const stock   = existingPep ? (existingPep.vials_in_stock ?? 1) : 1
+    const initial = existingPep ? (existingPep.vials_initial  ?? 1) : 1
+
     // Auto-create or update inventory_item
     let invItemId = pForm.inventory_item_id || null
     if (pForm.vial_amount_mg) {
@@ -562,13 +570,6 @@ export function Peptide() {
       }
     }
 
-    // "Vorrätige Vials" = raw/unangemischte reserve → goes to inventory.
-    // The peptide itself always tracks 1 mixed vial at 100% when newly created;
-    // edits preserve the current fill level so it isn't reset mid-use.
-    const rawReserve = parseFloat(pForm.vials_in_stock) || 0
-    const existingPep = editingPeptideId ? peptides.find(p => p.id === editingPeptideId) : null
-    const stock   = existingPep ? (existingPep.vials_in_stock   ?? 1) : 1
-    const initial = existingPep ? (existingPep.vials_initial    ?? 1) : 1
 
     const payload = {
       user_id:        user!.id, name: pForm.name.trim(),
