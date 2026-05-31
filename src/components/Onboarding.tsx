@@ -17,6 +17,7 @@ import { computeCalloutLayout, type CalloutPlacement } from './onboardingPlaceme
 import {
   getOnboardingInteractionEl,
   getOpenAppModal,
+  isInsideOpenModal,
   isOnboardingInteractionNode,
   measureOnboardingTarget,
   shouldShowOnboardingSpotlight,
@@ -366,10 +367,11 @@ export function Onboarding() {
       const node = e.target
       if (isPanelNode(node)) return
       if (node instanceof Element && node.closest('[data-ob-confirm]')) return
-      // Strict gating: only the step's dictated target is interactive (besides the
-      // panel/confirm). Other clicks — including elsewhere in an open form modal —
-      // are blocked, so the user can only do what the tour asks (or skip via X).
       if (isOnboardingInteractionNode(node, meta)) return
+      // For 'next' (field/explanation) steps inside a modal, allow all clicks
+      // within that modal so conditional sub-fields (interval, weekdays, etc.)
+      // remain interactive. Strict gating applies only to 'click' action steps.
+      if (meta?.advance === 'next' && node instanceof Node && isInsideOpenModal(node)) return
       e.preventDefault()
       e.stopPropagation()
     }
