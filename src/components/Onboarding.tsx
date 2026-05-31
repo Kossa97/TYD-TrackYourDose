@@ -17,8 +17,6 @@ import { computeCalloutLayout, type CalloutPlacement } from './onboardingPlaceme
 import {
   getOnboardingInteractionEl,
   getOpenAppModal,
-  isInsideOpenModal,
-  isOnboardingInteractionNode,
   measureOnboardingTarget,
   shouldShowOnboardingSpotlight,
 } from './onboardingTarget'
@@ -114,6 +112,10 @@ export function Onboarding() {
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [fieldIndex, setFieldIndex] = useState(0)
+  const [canAdvance, setCanAdvance] = useState(true)
+  const simConfirmedRef = useRef(false)
+  const [simPhase, setSimPhase] = useState<'card'|'sheet'|'done'>('card')
+  const [simTime, setSimTime] = useState('')
   const [panelH, setPanelH] = useState(200)
   const [viewportKey, setViewportKey] = useState(0)
   const [layout, setLayout] = useState<ReturnType<typeof computeCalloutLayout>>(() =>
@@ -123,6 +125,13 @@ export function Onboarding() {
   const panelRef = useRef<HTMLDivElement>(null)
   const cleanupRef = useRef<(() => void) | null>(null)
   const nextRef = useRef(next)
+
+  // When a step has clickSelector, that element is interactive (not the ring target).
+  const getInteractionEl = useCallback((m: typeof meta) => {
+    if (!m) return null
+    if (m.clickSelector) return document.querySelector<HTMLElement>(m.clickSelector)
+    return getOnboardingInteractionEl(m)
+  }, [])
 
   useEffect(() => {
     nextRef.current = next
@@ -221,21 +230,71 @@ export function Onboarding() {
 
   const measureTarget = useCallback(() => {
     setModalOpen(!!getOpenAppModal())
-    const el = getOnboardingInteractionEl(meta)
-    // In cycle mode, measure the specific active field instead of the whole section
+    // Gate the "Weiter" button: enabled only once the step's precondition is met.
+    setCanAdvance((() => {
+      switch (meta?.precondition) {
+        case 'filled': {
+          const tgt = getInteractionEl(meta)
+          const input = tgt?.matches('input,select,textarea')
+            ? (tgt as HTMLInputElement)
+            : tgt?.querySelector<HTMLInputElement>('input,select,textarea') ?? null
+          return !!input && String(input.value).trim().length > 0
+        }
+        case 'positive': {
+          const tgt = getInteractionEl(meta)
+          const input = tgt?.matches('input') ? (tgt as HTMLInputElement)
+            : tgt?.querySelector<HTMLInputElement>('input') ?? null
+          return !!input && Number(input.value) > 0
+        }
+        case 'modal':    return !!getOpenAppModal()
+        case 'no-modal': return !getOpenAppModal()
+        case 'sim':      return simConfirmedRef.current
+        default:         return true
+      }
+    })())
+    const el = getInteractionEl(meta)
+
+    // Compute base rect: use active cycling field if available, else primary target.
+    let baseRect: DOMRect | null = null
     if (meta?.advance === 'next' && el) {
       const fields = getCycleFields(el)
       if (fields.length > 0) {
         const active = fields[Math.min(fieldIndex, fields.length - 1)]
         const r = active.getBoundingClientRect()
-        if (r.width >= 2 && r.height >= 2) { setTargetRect(r); return }
+        if (r.width >= 2 && r.height >= 2) baseRect = r
       }
     }
-    setTargetRect(measureOnboardingTarget(meta))
+    if (!baseRect) baseRect = measureOnboardingTarget(meta)
+
+    // Expand ring to cover visible extra-target subtrees (e.g. interval/weekdays).
+    if (meta?.extraTargets?.length && baseRect) {
+      const extras = meta.extraTargets
+        .map(s => document.querySelector<HTMLElement>(s))
+        .filter((e): e is HTMLElement => !!e)
+        .map(e => e.getBoundingClientRect())
+        .filter(r => r.width >= 2 && r.height >= 2)
+      if (extras.length > 0) {
+        const all = [baseRect, ...extras]
+        const l  = Math.min(...all.map(r => r.left))
+        const t  = Math.min(...all.map(r => r.top))
+        const ri = Math.max(...all.map(r => r.right))
+        const b  = Math.max(...all.map(r => r.bottom))
+        setTargetRect(new DOMRect(l, t, ri - l, b - t))
+        return
+      }
+    }
+    setTargetRect(baseRect)
   }, [meta, fieldIndex, getCycleFields])
 
-  // Reset field cycling on step change
-  useEffect(() => { setFieldIndex(0) }, [step])
+  // Reset per-step gating on step change (precondition steps start dimmed)
+  useEffect(() => {
+    setFieldIndex(0)
+    simConfirmedRef.current = false
+    setSimPhase('card')
+    const now = new Date()
+    setSimTime(`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`)
+    setCanAdvance(!meta?.precondition)
+  }, [step, meta?.precondition])
 
   useEffect(() => {
     cleanupRef.current?.()
@@ -244,7 +303,7 @@ export function Onboarding() {
 
     if (!active || needsLanguagePick || !meta) return
 
-    const el = getOnboardingInteractionEl(meta)
+    const el = getInteractionEl(meta)
 
     if (meta.scrollTarget && el) {
       requestAnimationFrame(() => {
@@ -261,6 +320,10 @@ export function Onboarding() {
     const onLayout = () => measureTarget()
     window.addEventListener('resize', onLayout)
     window.addEventListener('scroll', onLayout, true)
+    // Recompute on every keystroke/select change so requireFilled gating is live
+    // (independent of the 100ms poll window which stops after 10s).
+    document.addEventListener('input', onLayout, true)
+    document.addEventListener('change', onLayout, true)
     const modalEl = el?.closest('[data-app-modal]')
     modalEl?.addEventListener('scroll', onLayout, true)
 
@@ -269,40 +332,35 @@ export function Onboarding() {
       clearTimeout(stopPoll)
       window.removeEventListener('resize', onLayout)
       window.removeEventListener('scroll', onLayout, true)
+      document.removeEventListener('input', onLayout, true)
+      document.removeEventListener('change', onLayout, true)
       modalEl?.removeEventListener('scroll', onLayout, true)
     }
   }, [step, active, needsLanguagePick, meta, measureTarget])
 
-  useEffect(() => {
-    if (!active || needsLanguagePick || meta?.id !== 'add-stock') return
-    let advanced = false
-    const tryAdvance = () => {
-      if (advanced || !getOpenAppModal()) return
-      advanced = true
-      nextRef.current()
-    }
-    tryAdvance()
-    const mo = new MutationObserver(tryAdvance)
-    mo.observe(document.body, { childList: true, subtree: true })
-    return () => mo.disconnect()
-  }, [step, active, needsLanguagePick, meta?.id])
-
+  // Clicking the designated target auto-advances — same as pressing "Weiter".
+  // This makes tapping the highlighted element feel natural, while "Weiter"
+  // still lights up as a visible backup once the precondition is met.
   useEffect(() => {
     cleanupRef.current?.()
     cleanupRef.current = null
-    if (!active || needsLanguagePick || meta?.advance !== 'click' || meta?.id === 'add-stock') return
+    if (!active || needsLanguagePick) return
 
-    // Use event delegation so the handler works even if the target element
-    // appears in the DOM after this effect runs (e.g. btn-peptid-anlegen
-    // only exists after loadInventory() resolves, which is async).
     let fired = false
     const delegated = (e: Event) => {
       if (fired) return
-      const target = getOnboardingInteractionEl(meta)
+      const target = getInteractionEl(meta)
       if (!target) return
+      // Only auto-advance for action steps (navigate / open modal / save).
+      // For 'next' steps (field explanations) the user must press "Weiter".
+      if (meta?.advance !== 'click') return
       if (target === e.target || target.contains(e.target as Node)) {
         fired = true
-        window.setTimeout(() => nextRef.current(), 80)
+        window.setTimeout(() => {
+          // Re-measure so canAdvance is current, then advance
+          measureTarget()
+          window.setTimeout(() => nextRef.current(), 20)
+        }, 80)
       }
     }
     document.addEventListener('click', delegated, true)
@@ -311,11 +369,21 @@ export function Onboarding() {
       cleanupRef.current?.()
       cleanupRef.current = null
     }
+  }, [step, active, needsLanguagePick, meta, measureTarget])
+
+
+  // Auto-skip optional steps whose target never appears.
+  useEffect(() => {
+    if (!active || needsLanguagePick || !meta?.optionalTarget) return
+    const id = window.setTimeout(() => {
+      if (!getInteractionEl(meta)) nextRef.current()
+    }, 1100)
+    return () => clearTimeout(id)
   }, [step, active, needsLanguagePick, meta])
 
   useEffect(() => {
     if (!active || needsLanguagePick || !showSpotlight) return
-    const el = getOnboardingInteractionEl(meta)
+    const el = getInteractionEl(meta)
     if (!el) return
     el.setAttribute('data-ob-active', '')
     return () => el.removeAttribute('data-ob-active')
@@ -328,8 +396,19 @@ export function Onboarding() {
       const node = e.target
       if (isPanelNode(node)) return
       if (node instanceof Element && node.closest('[data-ob-confirm]')) return
-      if (node instanceof Node && isInsideOpenModal(node)) return
-      if (isOnboardingInteractionNode(node, meta)) return
+      // Use clickSelector element if available, otherwise targetSelector.
+      const interactionRoot = meta?.clickSelector
+        ? document.querySelector<HTMLElement>(meta.clickSelector)
+        : getOnboardingInteractionEl(meta)
+      if (interactionRoot && node instanceof Node && interactionRoot.contains(node)) return
+      // Allow clicks inside extra-target subtrees (e.g. interval + weekdays at freq step)
+      if (meta?.extraTargets && node instanceof Element) {
+        const inside = meta.extraTargets.some(sel => {
+          const el = document.querySelector(sel)
+          return el ? el.contains(node) : false
+        })
+        if (inside) return
+      }
       e.preventDefault()
       e.stopPropagation()
     }
@@ -358,17 +437,24 @@ export function Onboarding() {
     if (useCenteredCallout) {
       let snap: 'top' | 'bottom' | undefined = meta?.snapToViewport
       if (snap === undefined && isModalTarget) {
-        // Pick snap direction so the card doesn't cover the active cycling field.
-        // Card when snapped-to-top occupies y ≈ 20 … 20+panelH.
-        // If the field starts inside that band, push card to bottom instead.
-        const el = getOnboardingInteractionEl(meta)
+        // Put the card in the OPPOSITE half of the viewport from the highlighted
+        // target so it never covers it. Use the active cycling field if present,
+        // otherwise the target rect itself (e.g. badge/button targets with no input).
+        const el = getInteractionEl(meta)
         const fields = getCycleFields(el)
         const currentField = fields[Math.min(fieldIndex, fields.length - 1)] ?? null
-        const fieldTop = currentField?.getBoundingClientRect().top ?? vh
-        const cardBottomWhenAtTop = 20 + panelH + 24 // 24px buffer
-        snap = fieldTop < cardBottomWhenAtTop ? 'bottom' : 'top'
+        const rect = currentField?.getBoundingClientRect() ?? targetRect
+        const targetCenter = rect ? rect.top + rect.height / 2 : vh / 2
+        snap = targetCenter < vh / 2 ? 'bottom' : 'top'
       }
       setLayout(computeCalloutLayout(null, vw, vh, panelH, { prefer: 'center', snap }))
+      return
+    }
+
+    // When the sim confirmation sheet is open, snap callout to top so it
+    // doesn't overlap the bottom sheet content.
+    if (meta?.id === 'sim-confirm' && simPhase === 'sheet') {
+      setLayout(computeCalloutLayout(null, vw, vh, panelH, { prefer: 'center', snap: 'top' }))
       return
     }
 
@@ -378,7 +464,7 @@ export function Onboarding() {
     setLayout(
       computeCalloutLayout(hole, vw, vh, panelH, { prefer, maxBottom }),
     )
-  }, [targetRect, panelH, step, useCenteredCallout, showSpotlight, meta?.placement, meta?.snapToViewport, isModalTarget, fieldIndex, getCycleFields, viewportKey])
+  }, [targetRect, panelH, step, useCenteredCallout, showSpotlight, meta?.placement, meta?.snapToViewport, isModalTarget, fieldIndex, getCycleFields, viewportKey, simPhase, meta?.id])
 
   if (!active || needsLanguagePick || !s) return null
 
@@ -428,30 +514,42 @@ export function Onboarding() {
             </div>
           </div>
 
-          <p className="ob-callout-body whitespace-pre-line">{s.description}</p>
-
-          {isModalTarget && meta?.advance === 'next' && (
-            <p className="ob-confirm-cue">{t('ob_confirm_hint')}</p>
-          )}
+          <p className="ob-callout-body whitespace-pre-line">
+            {meta?.id === 'sim-confirm' && simPhase === 'sheet'
+              ? t('obx_sim_sheet_callout_desc')
+              : s.description}
+          </p>
 
           {s.advance === 'click' && showSpotlight && (
             <p className="ob-tap-cue">{s.tapHint ?? t('ob_tap_highlight')}</p>
           )}
 
-          {wantsTarget && !showSpotlight && !getOnboardingInteractionEl(meta) && (
+          {wantsTarget && !showSpotlight && !getInteractionEl(meta) && (
             <p className="ob-waiting-hint">{t('ob_waiting_target')}</p>
           )}
         </div>
 
         <div className="ob-callout-actions">
-          <button type="button" onClick={prev} disabled={isFirst} className="ob-nav-btn" aria-label={t('back')}>
-            <ChevronLeft size={16} />
+          <button
+            type="button"
+            onClick={prev}
+            disabled={isFirst}
+            className="ob-nav-btn"
+            aria-label={t('back')}
+            style={{ width: 'auto', padding: '0 12px', gap: 5 }}
+          >
+            <ChevronLeft size={16} /> {t('back')}
           </button>
-          <button type="button" onClick={skip} className="ob-skip-inline">
-            {t('skip')}
-          </button>
-          <button type="button" onClick={() => nextRef.current()} className="ob-primary-btn flex-1 justify-center">
-            {isLast ? t('finish') : s.advance === 'click' ? t('ob_continue') : t('next')}
+          {/* "Weiter" exists on every step but stays dimmed until the step's
+              precondition (canAdvance) is met, then lights up. */}
+          <button
+            type="button"
+            onClick={() => { if (canAdvance) nextRef.current() }}
+            disabled={!canAdvance}
+            className="ob-primary-btn flex-1 justify-center"
+            style={{ opacity: canAdvance ? 1 : 0.4, cursor: canAdvance ? 'pointer' : 'not-allowed' }}
+          >
+            {isLast ? t('finish') : t('next')}
             <ChevronRight size={14} />
           </button>
         </div>
@@ -466,69 +564,102 @@ export function Onboarding() {
     </div>
   )
 
-  // Confirm button: cycles through single-line fields one by one within a step
-  const confirmBtn = (() => {
-    if (!isModalTarget || meta?.advance !== 'next' || !targetRect) return null
-
-    const el = getOnboardingInteractionEl(meta)
-    const fields = getCycleFields(el)
-    const hasCycle = fields.length > 1
-    const currentField = fields[Math.min(fieldIndex, fields.length - 1)] ?? null
-
-    const handleConfirm = () => {
-      if (hasCycle && fieldIndex < fields.length - 1) {
-        setFieldIndex(i => i + 1)
-      } else {
-        setFieldIndex(0)
-        nextRef.current()
-      }
-    }
-
-    // Position: inside the current field, vertically centred, at the far right
-    const r = currentField?.getBoundingClientRect() ?? targetRect
-    const SIZE = 40
-    const INNER = 4 // gap from field's right/top edge
-    // Date inputs have a native calendar picker icon (~30px) — shift left to avoid overlap
-    const isDateInput = currentField instanceof HTMLInputElement && currentField.type === 'date'
-    const top = r.top + (r.height - SIZE) / 2
-    const left = r.right - SIZE - INNER - (isDateInput ? 32 : 0)
-
-    return createPortal(
-      <button
-        type="button"
-        data-ob-confirm
-        onClick={handleConfirm}
-        aria-label="Confirm"
-        style={{
-          position: 'fixed',
+  const simConfirm = meta?.id === 'sim-confirm' ? createPortal(
+    <>
+      {/* ── Amber "Noch fällig" card — matches real calendar style ── */}
+      {simPhase !== 'done' && (
+        <div style={{
+          position:'fixed', left:12, right:12,
+          bottom:'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px)',
           zIndex: OB_Z.panel - 2,
-          top,
-          left,
-          width: SIZE,
-          height: SIZE,
-          background: 'linear-gradient(135deg, rgba(0,204,245,0.97), rgba(0,110,190,0.97))',
-          border: '2px solid rgba(0,238,255,0.6)',
-          borderRadius: '50%',
-          color: '#07091a',
-          fontWeight: 800,
-          fontSize: '1.1rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          boxShadow: '0 0 18px rgba(0,204,245,0.5)',
-        }}
-      >
-        <Check size={20} />
-      </button>,
-      document.body,
-    )
-  })()
+          background:'rgba(245,158,11,0.10)', border:'1px solid rgba(245,158,11,0.32)',
+          borderRadius:18, padding:'14px 16px',
+          boxShadow:'0 12px 40px rgba(0,0,0,0.45)',
+          display:'flex', alignItems:'center', gap:12,
+        }}>
+          <div style={{ flex:1, minWidth:0 }}>
+            <p style={{ fontSize:'0.62rem', fontWeight:800, letterSpacing:'0.1em', textTransform:'uppercase', color:'#f59e0b' }}>
+              {t('obx_sim_kicker')}
+            </p>
+            <p style={{ fontSize:'0.88rem', fontWeight:800, color:'var(--text)' }}>{t('obx_sim_substance')}</p>
+            <p style={{ fontSize:'0.7rem', color:'#d97706', fontWeight:600 }}>{t('obx_sim_time')}</p>
+          </div>
+          <button type="button" data-ob="ob-sim-confirm" data-ob-confirm
+            onClick={() => setSimPhase('sheet')}
+            style={{ flexShrink:0, padding:'10px 16px', borderRadius:12, border:'none',
+              background:'linear-gradient(135deg,#f59e0b,#d97706)',
+              color:'#07091a', fontWeight:800, fontSize:'0.85rem', cursor:'pointer',
+              display:'inline-flex', alignItems:'center', gap:6 }}>
+            <Check size={16} />{t('obx_sim_btn')}
+          </button>
+        </div>
+      )}
+
+      {/* ── Mock confirmation sheet (matches real Dashboard confirmSheet) ── */}
+      {simPhase === 'sheet' && (
+        <>
+          <div style={{ position:'fixed', inset:0, zIndex: OB_Z.panel - 1, background:'rgba(0,0,0,0.60)' }} />
+          <div style={{
+            position:'fixed', bottom:0, left:0, right:0, zIndex: OB_Z.panel - 1,
+            borderRadius:'24px 24px 0 0', border:'1px solid rgba(255,255,255,0.10)',
+            paddingBottom:40, background:'var(--surface)',
+          }}>
+            <div style={{ padding:'20px 18px 0' }}>
+              <div style={{ margin:'0 auto 20px', height:4, width:40, borderRadius:2, background:'rgba(255,255,255,0.2)' }} />
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                <Check size={15} color="#10b981" />
+                <h2 style={{ fontSize:'1rem', fontWeight:900, color:'var(--text)' }}>{t('obx_sim_sheet_title')}</h2>
+              </div>
+              <p style={{ fontSize:'0.72rem', color:'var(--text-muted)', marginBottom:20 }}>{t('obx_sim_sheet_hint')}</p>
+              <label style={{ fontSize:'0.6rem', fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-muted)', display:'block', marginBottom:6 }}>
+                {t('uhrzeit_label', { defaultValue: 'Uhrzeit' })}
+              </label>
+              <input type="time" value={simTime} onChange={e => setSimTime(e.target.value)}
+                className="input"
+                style={{ marginBottom:6, fontWeight:700, colorScheme:'inherit' }} />
+              <p style={{ fontSize:'0.68rem', color:'var(--text-muted)', marginBottom:20, lineHeight:1.4 }}>
+                {t('obx_sim_time_hint', { defaultValue: 'Passe die Uhrzeit an falls nötig — sie wird vorausgefüllt mit der geplanten Einnahmezeit.' })}
+              </p>
+              <div style={{ display:'flex', gap:12 }}>
+                <button type="button" data-ob-confirm
+                  onClick={() => setSimPhase('card')}
+                  className="btn-secondary" style={{ flex:1 }}>
+                  {t('obx_sim_sheet_cancel')}
+                </button>
+                <button type="button" data-ob="ob-sim-confirm" data-ob-confirm
+                  onClick={() => { simConfirmedRef.current = true; setCanAdvance(true); setSimPhase('done') }}
+                  className="btn-primary" style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
+                  <Check size={14} />{t('obx_sim_sheet_btn')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Done state: green confirmation ── */}
+      {simPhase === 'done' && (
+        <div style={{
+          position:'fixed', left:12, right:12,
+          bottom:'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px)',
+          zIndex: OB_Z.panel - 2,
+          background:'rgba(16,185,129,0.12)', border:'1px solid rgba(16,185,129,0.30)',
+          borderRadius:18, padding:'14px 16px',
+          display:'flex', alignItems:'center', gap:12,
+        }}>
+          <Check size={22} color="#10b981" />
+          <div>
+            <p style={{ fontSize:'0.82rem', fontWeight:800, color:'#10b981' }}>{t('einnahme_bestaetigt', { defaultValue: 'Einnahme bestätigt' })}</p>
+            <p style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{t('obx_sim_substance')} · {simTime}</p>
+          </div>
+        </div>
+      )}
+    </>, document.body) : null
 
   return (
     <>
       {createPortal(scrimLayer, document.body)}
-      {confirmBtn}
+      {simConfirm}
       {createPortal(calloutLayer, document.body)}
     </>
   )

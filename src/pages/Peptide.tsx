@@ -540,15 +540,23 @@ export function Peptide() {
       setUploadingFile(false)
     }
 
+    // "Vorrätige Vials" = raw/unangemischte reserve → goes to inventory.
+    // The peptide itself always tracks 1 mixed vial at 100% when newly created;
+    // edits preserve the current fill level so it isn't reset mid-use.
+    const rawReserve = parseFloat(pForm.vials_in_stock) || 0
+    const existingPep = editingPeptideId ? peptides.find(p => p.id === editingPeptideId) : null
+    const stock   = existingPep ? (existingPep.vials_in_stock ?? 1) : 1
+    const initial = existingPep ? (existingPep.vials_initial  ?? 1) : 1
+
     // Auto-create or update inventory_item
     let invItemId = pForm.inventory_item_id || null
-    if (pForm.vial_amount_mg && pForm.vials_in_stock) {
+    if (pForm.vial_amount_mg) {
       const invPayload = {
         user_id: user!.id,
         name: pForm.name.trim(),
         mg_per_vial: parseFloat(pForm.vial_amount_mg),
-        vials_count: parseFloat(pForm.vials_in_stock) || 0,
-        vials_initial: parseFloat(pForm.vials_in_stock) || 0,
+        vials_count: rawReserve,
+        vials_initial: rawReserve,
         batch_number: pForm.batch_number || null,
         batch_source: pForm.batch_source || null,
         batch_file_url: fileUrl || null,
@@ -562,11 +570,6 @@ export function Peptide() {
       }
     }
 
-    const stock = parseFloat(pForm.vials_in_stock) || 0
-    const existingInitial = editingPeptideId
-      ? (peptides.find(p => p.id === editingPeptideId)?.vials_initial ?? 0)
-      : 0
-    const initial = existingInitial > 0 ? existingInitial : stock
 
     const payload = {
       user_id:        user!.id, name: pForm.name.trim(),
@@ -618,7 +621,8 @@ export function Peptide() {
       syringe_ml:    p.syringe_type?.split(':')[0] ?? '1',
       syringe_units: p.syringe_type?.split(':')[1] ?? '100',
       notes:         p.notes ?? '',
-      vials_in_stock: p.vials_in_stock?.toString() ?? '0',
+      // Pre-fill with raw reserve (inventory count), not the mixed-vial fill level.
+      vials_in_stock: (inventory.find(i => i.id === p.inventory_item_id)?.vials_count ?? 0).toString(),
       reconstitution_date: p.reconstitution_date ?? '',
       expiry_days:   p.expiry_days?.toString() ?? '28',
       batch_number:  p.batch_number  ?? '',
@@ -818,7 +822,7 @@ export function Peptide() {
           </div>
           <p className="text-xs text-slate-500 mt-1">{t('fertig_rekonst')}</p>
         </div>
-        <button className="btn-primary flex items-center gap-1.5 text-sm py-2 shrink-0" onClick={handleNewPeptide}>
+        <button data-ob="btn-peptid-anlegen" className="btn-primary flex items-center gap-1.5 text-sm py-2 shrink-0" onClick={handleNewPeptide}>
           <Plus size={15} /> {t('new')}
         </button>
       </div>
@@ -1105,13 +1109,13 @@ export function Peptide() {
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                 <FlaskConical size={12} /> {t('peptid_section')}
               </p>
-              <div>
+              <div data-ob="pep-name">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <label className="label mb-0">{t('peptidname_star')}</label>
                   {pForm.pk_profile_id && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+                    <span data-ob="pep-pk-badge" className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
                       style={{ color: 'var(--accent)', background: 'var(--accent-weak)', border: '1px solid var(--accent-border)' }}>
-                      <Check size={11} /> PK-Profil verknüpft
+                      <Check size={11} /> {t('pk_profil_verknuepft', { defaultValue: 'PK-Profil verknüpft' })}
                     </span>
                   )}
                 </div>
@@ -1165,7 +1169,7 @@ export function Peptide() {
               </div>
 
               {/* Farbe der Flüssigkeit */}
-              <div>
+              <div data-ob="pep-color">
                 <label className="label">Farbe der Flüssigkeit</label>
                 <div className="flex gap-2 flex-wrap">
                   {['#06b6d4','#a855f7','#f59e0b','#ec4899','#34d399','#f97316','#60a5fa','#fb7185','#2dd4bf','#facc15','#c084fc','#4ade80'].map(c => (
@@ -1189,7 +1193,7 @@ export function Peptide() {
               </p>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                <div data-ob="pep-mg">
                   <label className="label">{t('wirkstoff_pro_vial_form')}</label>
                   <input className="input" type="number" placeholder={t('eg_10')}
                     value={pForm.vial_amount_mg} onChange={e => setPForm(f => ({ ...f, vial_amount_mg: e.target.value }))} />
@@ -1201,15 +1205,15 @@ export function Peptide() {
                 </div>
               </div>
 
-              <div data-ob="pep-expiry" className="space-y-3">
+              <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
+                  <div data-ob="pep-recon-date">
                     <label className="label">{t('datum_rekonstitution')}</label>
                     <input className="input" type="date" value={pForm.reconstitution_date}
                       onChange={e => setPForm(f => ({ ...f, reconstitution_date: e.target.value }))} />
                   </div>
                 </div>
-                <div data-ob-self>
+                <div data-ob="pep-expiry" data-ob-self>
                 <label className="label">{t('haltbarkeit')}</label>
                 <div className="flex gap-2 flex-wrap mb-2">
                   {EXPIRY_PRESETS.map(d => (
@@ -1243,7 +1247,7 @@ export function Peptide() {
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                 <Package size={12} /> {t('bestand_section')}
               </p>
-              <div>
+              <div data-ob="pep-vials">
                 <label className="label">{t('vorraetige_vials')}</label>
                 <input className="input" type="number" min="0" step="0.5" placeholder="0"
                   value={pForm.vials_in_stock} onChange={e => setPForm(f => ({ ...f, vials_in_stock: e.target.value }))} />
@@ -1257,18 +1261,18 @@ export function Peptide() {
                 <FileUp size={12} /> {t('batch_herkunft_section')}
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                <div data-ob="pep-batch">
                   <label className="label">{t('batch')}</label>
                   <input className="input" placeholder={t('eg_batch_nr')}
                     value={pForm.batch_number} onChange={e => setPForm(f => ({ ...f, batch_number: e.target.value }))} />
                 </div>
-                <div>
+                <div data-ob="pep-source">
                   <label className="label">{t('quelle')}</label>
                   <input className="input" placeholder={t('eg_source_name')}
                     value={pForm.batch_source} onChange={e => setPForm(f => ({ ...f, batch_source: e.target.value }))} />
                 </div>
               </div>
-              <div>
+              <div data-ob="pep-doc">
                 <label className="label">{t('analyse_dok_pdf_bild')}</label>
                 <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
                   batchFile ? 'border-sky-500/50 bg-sky-500/5' : 'border-slate-700 hover:border-slate-600'
@@ -1306,7 +1310,7 @@ export function Peptide() {
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 {t('dosierung_applikation_section')}
               </p>
-              <div>
+              <div data-ob="pep-dose-amount">
                 <label className="label">{t('standard_dosis_label')}</label>
                 <div className="flex gap-2">
                   <input className="input flex-1" type="number" placeholder={t('eg_500')}
@@ -1318,14 +1322,14 @@ export function Peptide() {
                 </div>
                 <p className="text-slate-600 text-xs mt-1">{t('fallback_info')}</p>
               </div>
-              <div>
+              <div data-ob="pep-method">
                 <label className="label">{t('applikationsart_label')}</label>
                 <select className="select" value={pForm.default_method}
                   onChange={e => setPForm(f => ({ ...f, default_method: e.target.value }))}>
                   {METHODS.map(m => <option key={m} value={m}>{t(METHOD_KEYS[m] ?? m)}</option>)}
                 </select>
               </div>
-              <div>
+              <div data-ob="pep-notes">
                 <label className="label">{t('notizen_optional')}</label>
                 <textarea className="input resize-none" rows={2}
                   value={pForm.notes} onChange={e => setPForm(f => ({ ...f, notes: e.target.value }))} />
@@ -1359,19 +1363,19 @@ export function Peptide() {
             </div>
 
             <div data-ob="cycle-core" className="space-y-4">
-            <div>
+            <div data-ob="cyc-name">
               <label className="label">{t('zyklus_name')}</label>
               <input className="input" placeholder={t('zyklus_name_placeholder')}
                 value={cForm.name} onChange={e => setCForm(f => f ? { ...f, name: e.target.value } : f)} />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div>
+              <div data-ob="cyc-dose">
                 <label className="label">{t('dosis_label')}</label>
                 <input className="input" type="number" value={cForm.dose}
                   onChange={e => setCForm(f => f ? { ...f, dose: e.target.value } : f)} />
               </div>
-              <div>
+              <div data-ob="cyc-unit">
                 <label className="label">{t('einheit_label')}</label>
                 <select className="select" value={cForm.unit}
                   onChange={e => setCForm(f => f ? { ...f, unit: e.target.value } : f)}>
@@ -1380,7 +1384,7 @@ export function Peptide() {
               </div>
             </div>
 
-            <div>
+            <div data-ob="cyc-method">
               <label className="label">{t('applikationsart_label')}</label>
               <select className="select" value={cForm.method}
                 onChange={e => setCForm(f => f ? { ...f, method: e.target.value } : f)}>
@@ -1388,7 +1392,7 @@ export function Peptide() {
               </select>
             </div>
 
-            <div>
+            <div data-ob="cyc-frequency">
               <label className="label">{t('frequenz')}</label>
               <select className="select" value={cForm.frequency}
                 onChange={e => setCForm(f => {
@@ -1409,7 +1413,7 @@ export function Peptide() {
             </div>
 
             {cForm.frequency === 'Alle X Tage' && (
-              <div>
+              <div data-ob="cyc-interval">
                 <label className="label">{t('alle_x_tage_frage')}</label>
                 <div className="flex items-center gap-3">
                   <span className="text-slate-400 text-sm">{t('alle_prefix')}</span>
@@ -1421,8 +1425,8 @@ export function Peptide() {
               </div>
             )}
 
-            {(['Wochentage wählen', 'Alle X Tage'].includes(cForm.frequency)) && (
-              <div data-ob-self>
+            {cForm.frequency === 'Wochentage wählen' && (
+              <div data-ob="cyc-weekdays" data-ob-self>
                 <label className="label">{t('injektionstage_label')}</label>
                 <div className="flex gap-2">
                   {WOCHENTAGE.map(day => (
@@ -1440,7 +1444,7 @@ export function Peptide() {
               </div>
             )}
 
-            <div data-ob-self>
+            <div data-ob="cyc-dates" data-ob-self>
               <div>
                 <label className="label">{t('startdatum_label')}</label>
                 <input className="input" type="date" value={cForm.start_date}
@@ -1453,7 +1457,7 @@ export function Peptide() {
               </div>
             </div>
 
-            <div data-ob-self>
+            <div data-ob="cyc-intake" data-ob-self>
               <div className="flex items-center justify-between mb-2">
                 <label className="label mb-0">{t('einnahmezeitpunkt')}</label>
                 <span className="text-xs text-slate-500">optional</span>
@@ -1518,7 +1522,7 @@ export function Peptide() {
               ))}
             </div>{/* /einnahmezeitpunkt data-ob-self */}
 
-            <div data-ob-self>
+            <div data-ob="cyc-reminder" data-ob-self>
               <div className="flex items-center justify-between mb-1">
                 <label className="label mb-0 flex items-center gap-1.5">
                   <Bell size={13} className="text-sky-400" /> {t('erinnerung_label')}
@@ -1587,7 +1591,7 @@ export function Peptide() {
             </div>
 
             <div data-ob="esc-core" className="space-y-4">
-            <div>
+            <div data-ob="esc-amount">
               <label className="label">{t('dosis_erhoeht_um')}</label>
               <div className="flex gap-2">
                 <input className="input flex-1" type="number" placeholder={t('eg_100')}
@@ -1600,7 +1604,7 @@ export function Peptide() {
               </div>
             </div>
 
-            <div>
+            <div data-ob="esc-when">
               <label className="label">{t('ab_wann_label')}</label>
               <div className="grid grid-cols-3 gap-2">
                 {([
@@ -1620,14 +1624,14 @@ export function Peptide() {
             </div>
 
             {eForm.start_type === 'date' && (
-              <div>
+              <div data-ob="esc-when-detail">
                 <label className="label">{t('datum_label')}</label>
                 <input className="input" type="date" value={eForm.start_date}
                   onChange={e => setEForm(f => f ? { ...f, start_date: e.target.value } : f)} />
               </div>
             )}
             {eForm.start_type === 'after_days' && (
-              <div>
+              <div data-ob="esc-when-detail">
                 <label className="label">{t('tage_nach_start')}</label>
                 <div className="flex items-center gap-3">
                   <span className="text-slate-400 text-sm shrink-0">{t('nach_prefix')}</span>
@@ -1639,7 +1643,7 @@ export function Peptide() {
               </div>
             )}
             {eForm.start_type === 'after_weeks' && (
-              <div>
+              <div data-ob="esc-when-detail">
                 <label className="label">{t('wochen_nach_start')}</label>
                 <div className="flex items-center gap-3">
                   <span className="text-slate-400 text-sm shrink-0">{t('nach_prefix')}</span>
@@ -1651,7 +1655,7 @@ export function Peptide() {
               </div>
             )}
 
-            <div>
+            <div data-ob="esc-notes">
               <label className="label">{t('notizen_optional')}</label>
               <textarea className="input resize-none" rows={2}
                 placeholder={t('esc_notes_placeholder')}

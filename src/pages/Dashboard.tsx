@@ -624,6 +624,7 @@ export function Dashboard() {
       <button
         key={key}
         data-calendar-date={!isPeek ? format(day, 'yyyy-MM-dd') : undefined}
+        {...(isTodayDay && !isPeek ? { 'data-ob': 'ob-cal-today' } : {})}
         className={[
           'relative flex flex-col items-center border-r border-b last:border-r-0 transition-all duration-150 select-none',
           !inMonth ? 'opacity-20' : '',
