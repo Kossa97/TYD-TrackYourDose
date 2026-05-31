@@ -17,7 +17,6 @@ import { computeCalloutLayout, type CalloutPlacement } from './onboardingPlaceme
 import {
   getOnboardingInteractionEl,
   getOpenAppModal,
-  isInsideOpenModal,
   isOnboardingInteractionNode,
   measureOnboardingTarget,
   shouldShowOnboardingSpotlight,
@@ -368,10 +367,6 @@ export function Onboarding() {
       if (isPanelNode(node)) return
       if (node instanceof Element && node.closest('[data-ob-confirm]')) return
       if (isOnboardingInteractionNode(node, meta)) return
-      // For 'next' (field/explanation) steps inside a modal, allow all clicks
-      // within that modal so conditional sub-fields (interval, weekdays, etc.)
-      // remain interactive. Strict gating applies only to 'click' action steps.
-      if (meta?.advance === 'next' && node instanceof Node && isInsideOpenModal(node)) return
       e.preventDefault()
       e.stopPropagation()
     }
