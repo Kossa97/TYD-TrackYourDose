@@ -255,7 +255,26 @@ export function Onboarding() {
         if (r.width >= 2 && r.height >= 2) { setTargetRect(r); return }
       }
     }
-    setTargetRect(measureOnboardingTarget(meta))
+    // Union primary rect with any VISIBLE extra-target rects so the highlight
+    // ring expands to cover sub-fields (e.g. interval/weekdays at freq step).
+    const primary = measureOnboardingTarget(meta)
+    if (meta?.extraTargets?.length && primary) {
+      const extras = meta.extraTargets
+        .map(s => document.querySelector<HTMLElement>(s))
+        .filter((e): e is HTMLElement => !!e)
+        .map(e => e.getBoundingClientRect())
+        .filter(r => r.width >= 2 && r.height >= 2)
+      if (extras.length > 0) {
+        const all = [primary, ...extras]
+        const l = Math.min(...all.map(r => r.left))
+        const t = Math.min(...all.map(r => r.top))
+        const ri = Math.max(...all.map(r => r.right))
+        const b = Math.max(...all.map(r => r.bottom))
+        setTargetRect(new DOMRect(l, t, ri - l, b - t))
+        return
+      }
+    }
+    setTargetRect(primary)
   }, [meta, fieldIndex, getCycleFields])
 
   // Reset per-step gating on step change (precondition steps start dimmed)

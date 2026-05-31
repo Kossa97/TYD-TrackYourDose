@@ -1421,7 +1421,7 @@ export function Peptide() {
               </div>
             )}
 
-            {(['Wochentage wählen', 'Alle X Tage'].includes(cForm.frequency)) && (
+            {cForm.frequency === 'Wochentage wählen' && (
               <div data-ob="cyc-weekdays" data-ob-self>
                 <label className="label">{t('injektionstage_label')}</label>
                 <div className="flex gap-2">
