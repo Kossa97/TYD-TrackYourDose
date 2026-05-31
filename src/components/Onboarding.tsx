@@ -246,35 +246,37 @@ export function Onboarding() {
       }
     })())
     const el = getOnboardingInteractionEl(meta)
-    // In cycle mode, measure the specific active field instead of the whole section
+
+    // Compute base rect: use active cycling field if available, else primary target.
+    let baseRect: DOMRect | null = null
     if (meta?.advance === 'next' && el) {
       const fields = getCycleFields(el)
       if (fields.length > 0) {
         const active = fields[Math.min(fieldIndex, fields.length - 1)]
         const r = active.getBoundingClientRect()
-        if (r.width >= 2 && r.height >= 2) { setTargetRect(r); return }
+        if (r.width >= 2 && r.height >= 2) baseRect = r
       }
     }
-    // Union primary rect with any VISIBLE extra-target rects so the highlight
-    // ring expands to cover sub-fields (e.g. interval/weekdays at freq step).
-    const primary = measureOnboardingTarget(meta)
-    if (meta?.extraTargets?.length && primary) {
+    if (!baseRect) baseRect = measureOnboardingTarget(meta)
+
+    // Expand ring to cover visible extra-target subtrees (e.g. interval/weekdays).
+    if (meta?.extraTargets?.length && baseRect) {
       const extras = meta.extraTargets
         .map(s => document.querySelector<HTMLElement>(s))
         .filter((e): e is HTMLElement => !!e)
         .map(e => e.getBoundingClientRect())
         .filter(r => r.width >= 2 && r.height >= 2)
       if (extras.length > 0) {
-        const all = [primary, ...extras]
-        const l = Math.min(...all.map(r => r.left))
-        const t = Math.min(...all.map(r => r.top))
+        const all = [baseRect, ...extras]
+        const l  = Math.min(...all.map(r => r.left))
+        const t  = Math.min(...all.map(r => r.top))
         const ri = Math.max(...all.map(r => r.right))
-        const b = Math.max(...all.map(r => r.bottom))
+        const b  = Math.max(...all.map(r => r.bottom))
         setTargetRect(new DOMRect(l, t, ri - l, b - t))
         return
       }
     }
-    setTargetRect(primary)
+    setTargetRect(baseRect)
   }, [meta, fieldIndex, getCycleFields])
 
   // Reset per-step gating on step change (precondition steps start dimmed)
