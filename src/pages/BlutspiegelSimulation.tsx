@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ReferenceLine, ResponsiveContainer, ComposedChart, Scatter, AreaChart,
+  ReferenceLine, ResponsiveContainer, ComposedChart, AreaChart,
 } from 'recharts'
 import { FEATURES } from '../config/features'
 import { format } from 'date-fns'
@@ -21,6 +21,8 @@ import {
 } from '../services/blutspiegelHistory'
 import { loadAllCycleChartData, type CycleChartData } from '../services/liveBlutspiegelChart'
 import { LiveBlutspiegelChart } from '../components/LiveBlutspiegelChart'
+import { LiveCycleChartCanvas } from '../components/liveCycleChart/LiveCycleChartCanvas'
+import { lerpLevel } from '../components/liveCycleChart/chartMath'
 
 // ── Typen ─────────────────────────────────────────────────────────────────
 
@@ -298,46 +300,6 @@ function PkChartTooltip({ active, payload, label }: {
   )
 }
 
-function levelAtTime(curve: BlutspiegelCurvePoint[], time: Date): number {
-  if (!curve.length) return 0
-  const t = time.getTime()
-  let best = curve[0]
-  let bestDiff = Math.abs(best.time.getTime() - t)
-  for (const p of curve) {
-    const d = Math.abs(p.time.getTime() - t)
-    if (d < bestDiff) { bestDiff = d; best = p }
-  }
-  return best.level
-}
-
-function HistoryChartTooltip({ active, payload }: {
-  active?: boolean
-  payload?: Array<{ payload?: { ts: number; level: number } }>
-}) {
-  if (!active || !payload?.[0]?.payload) return null
-  const { ts, level } = payload[0].payload
-  const d = new Date(ts)
-  return (
-    <div style={{
-      background: 'var(--surface)', border: '1px solid var(--accent-border)',
-      borderRadius: 12, padding: '10px 14px', minWidth: 140,
-      boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-    }}>
-      <p style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 1 }}>
-        {format(d, 'EEE, dd. MMM yyyy', { locale: deLocale })}
-      </p>
-      <p style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: 6 }}>
-        {format(d, 'HH:mm', { locale: deLocale })} Uhr
-      </p>
-      <p style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--accent)', letterSpacing: '-0.02em' }}>
-        {typeof level === 'number' ? level.toFixed(1) : level}
-        <span style={{ fontSize: '0.72rem', fontWeight: 700, marginLeft: 3 }}>%</span>
-      </p>
-      <p style={{ fontSize: '0.58rem', color: 'var(--text-muted)', marginTop: 2 }}>Wirkstoffspiegel</p>
-    </div>
-  )
-}
-
 const METRIC_EXPLANATIONS = {
   peak: {
     title: 'Peak-Konzentration',
@@ -379,12 +341,6 @@ function LiveCycleCard({
   const [curve, setCurve]               = useState<BlutspiegelCurvePoint[]>([])
   const [events, setEvents]             = useState<DoseEvent[]>([])
   const [curveLoading, setCurveLoading] = useState(true)
-  const [windowOffsetHours, setWindowOffsetHours] = useState(0)
-  const chartRef    = useRef<HTMLDivElement>(null)
-  const panStartX   = useRef<number | null>(null)
-  const panStartOff = useRef(0)
-  const isPanning   = useRef(false)
-  const rafId       = useRef<number | null>(null)
 
   // Einmaliges Laden der Einnahmen + Kurvenberechnung
   useEffect(() => {
@@ -407,98 +363,34 @@ function LiveCycleCard({
       setCurve(calculateHistoryBlutspiegelCurve(
         events, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc,
       ))
-    }, 60_000)
+    }, 10_000)
     return () => window.clearInterval(id)
   }, [events, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc])
 
-  // Volle Kurve als Chart-Daten (ungefiltert — Recharts clipped via XAxis domain)
+  // Volle Kurve als Chart-Daten
   const chartData = useMemo(
     () => curve.map(p => ({ ts: p.time.getTime(), level: p.level })),
     [curve],
   )
 
-  // 7-Tage-Sichtfenster
-  const windowDomain = useMemo((): [number, number] => {
-    if (!chartData.length) return [0, 0]
-    const dataEnd   = chartData[chartData.length - 1].ts
-    const dataStart = chartData[0].ts
-    const wEnd   = dataEnd - windowOffsetHours * 3_600_000
-    const wStart = wEnd - WINDOW_HOURS * 3_600_000
-    return [Math.max(dataStart, wStart), Math.min(dataEnd, wEnd)]
-  }, [chartData, windowOffsetHours])
-
-  // Tages-Ticks (alle 24h für 7-Tage-Fenster)
-  const tickList = useMemo(() => {
-    const [s, e] = windowDomain
-    if (s === 0 && e === 0) return []
-    const tickMs = 24 * 3_600_000  // 1 Tag
-    const result: number[] = []
-    const first = Math.ceil(s / tickMs) * tickMs
-    for (let t = first; t <= e; t += tickMs) result.push(t)
-    return result
-  }, [windowDomain])
-
-  // Einnahme-Marker (nur im sichtbaren Fenster, für Scatter)
-  const visibleIntakeMarkers = useMemo(
+  // Einnahme-Marker (alle, ungefiltert — Fenster-Clipping macht die Canvas-Komponente)
+  const doseMarkers = useMemo(
     () => events
-      .filter(ev => ev.status === 'taken'
-        && ev.timestamp.getTime() >= windowDomain[0]
-        && ev.timestamp.getTime() <= windowDomain[1])
-      .map(ev => ({ ts: ev.timestamp.getTime(), level: levelAtTime(curve, ev.timestamp) })),
-    [events, curve, windowDomain],
+      .filter(ev => ev.status === 'taken')
+      .map(ev => ({ ts: ev.timestamp.getTime(), level: lerpLevel(chartData, ev.timestamp.getTime()) })),
+    [events, chartData],
   )
 
-  // Peak-Marker: für jede Einnahme der theoretische Peak-Zeitpunkt (tmax nach Einnahme)
-  const visiblePeakMarkers = useMemo(
+  // Peak-Marker je Dosis (Injektion + Tmax), alle, ungefiltert
+  const peakMarkers = useMemo(
     () => events
       .filter(ev => ev.status === 'taken')
       .map(ev => {
         const peakTs = ev.timestamp.getTime() + pk.tmax_hours * 3_600_000
-        return { ts: peakTs, level: levelAtTime(curve, new Date(peakTs)) }
-      })
-      .filter(m => m.ts >= windowDomain[0] && m.ts <= windowDomain[1]),
-    [events, curve, pk.tmax_hours, windowDomain],
+        return { ts: peakTs, level: lerpLevel(chartData, peakTs) }
+      }),
+    [events, chartData, pk.tmax_hours],
   )
-
-  const maxOffset = useMemo(() => {
-    if (!chartData.length) return 0
-    return Math.max(0, (chartData[chartData.length - 1].ts - chartData[0].ts) / 3_600_000 - WINDOW_HOURS)
-  }, [chartData])
-
-  // Wochentag + Datum für X-Achse
-  const formatTick = useCallback(
-    (ts: number) => format(new Date(ts), 'EEE\ndd.', { locale: deLocale }),
-    [],
-  )
-
-  const handlePanStart = useCallback((clientX: number) => {
-    isPanning.current = true
-    panStartX.current = clientX
-    panStartOff.current = windowOffsetHours
-  }, [windowOffsetHours])
-
-  // Aktiengraph-Style: Daten folgen dem Finger 1:1, live während des Wischens.
-  // Wischen nach rechts (dx>0) zeigt die Vergangenheit → Offset steigt.
-  const handlePanMove = useCallback((clientX: number) => {
-    if (!isPanning.current || panStartX.current === null || !chartData.length) return
-    const dx = clientX - panStartX.current
-    if (rafId.current !== null) cancelAnimationFrame(rafId.current)
-    rafId.current = requestAnimationFrame(() => {
-      const width = chartRef.current?.offsetWidth ?? 320
-      const deltaH = (dx / width) * WINDOW_HOURS
-      setWindowOffsetHours(Math.max(0, Math.min(maxOffset, panStartOff.current + deltaH)))
-    })
-  }, [chartData.length, maxOffset])
-
-  const handlePanEnd = useCallback(() => {
-    // Da wo der Finger aufhört, bleibt das Fenster stehen — kein Snap, kein Momentum.
-    isPanning.current = false
-    panStartX.current = null
-    if (rafId.current !== null) {
-      cancelAnimationFrame(rafId.current)
-      rafId.current = null
-    }
-  }, [])
 
   const trend    = level ? TREND_META[level.trend] : TREND_META.stable
   const hasCurve = curve.length > 0
@@ -550,35 +442,10 @@ function LiveCycleCard({
           </div>
         ) : hasCurve ? (
           <>
-            {/* Nav-Zeile */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <p style={{ fontSize: '0.52rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-                7-Tage-Fenster · → wischen für Verlauf
-              </p>
-              {windowOffsetHours > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setWindowOffsetHours(0)}
-                  style={{
-                    fontSize: '0.52rem', fontWeight: 800, color: accent,
-                    background: `${accent}15`, border: `1px solid ${accent}25`,
-                    borderRadius: 6, padding: '2px 6px', cursor: 'pointer', fontFamily: 'inherit',
-                  }}
-                >
-                  Jetzt ↩
-                </button>
-              )}
-            </div>
-
-            {/* Fortschrittsbalken */}
-            {maxOffset > 0 && (
-              <div style={{ height: 2, borderRadius: 99, background: 'rgba(255,255,255,0.06)', marginBottom: 5, overflow: 'hidden' }}>
-                <div style={{
-                  height: '100%', borderRadius: 99, background: accent,
-                  width: `${Math.round((1 - windowOffsetHours / maxOffset) * 100)}%`,
-                }} />
-              </div>
-            )}
+            {/* Hinweis */}
+            <p style={{ fontSize: '0.52rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginBottom: 4 }}>
+              7-Tage-Fenster · wischen für Verlauf · halten zum Ablesen
+            </p>
 
             {/* Legende */}
             <div style={{ display: 'flex', gap: 10, marginBottom: 6 }}>
@@ -587,109 +454,19 @@ function LiveCycleCard({
                 <span style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>Einnahme</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+                <span style={{ width: 8, height: 8, borderRadius: '50%', border: '1.5px solid #f59e0b', display: 'inline-block', boxSizing: 'border-box' }} />
                 <span style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>Peak</span>
               </div>
             </div>
 
-            {/* Wisch-Container — voller chartData, XAxis clippt auf windowDomain */}
-            <div
-              style={{ touchAction: 'pan-y', userSelect: 'none', cursor: 'grab' }}
-              onPointerDown={e => {
-                ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-                handlePanStart(e.clientX)
-              }}
-              onPointerMove={e => handlePanMove(e.clientX)}
-              onPointerUp={handlePanEnd}
-              onPointerCancel={handlePanEnd}
-            >
-              <div ref={chartRef}>
-                <ResponsiveContainer width="100%" height={180}>
-                  <ComposedChart
-                    data={chartData}
-                    margin={{ top: 6, right: 8, left: 2, bottom: 20 }}
-                  >
-                    <defs>
-                      <linearGradient id={`liveGrad-${cycleId}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor={accent} stopOpacity={0.28} />
-                        <stop offset="95%" stopColor={accent} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-
-                    <XAxis
-                      dataKey="ts"
-                      type="number"
-                      scale="time"
-                      domain={windowDomain}
-                      ticks={tickList}
-                      tickLine={false}
-                      axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
-                      tick={{ fill: 'rgba(154,170,191,0.5)', fontSize: 9 }}
-                      tickFormatter={formatTick}
-                      interval={0}
-                    />
-
-                    <YAxis
-                      domain={[0, 100]}
-                      ticks={[0, 25, 50, 75, 100]}
-                      tickLine={false}
-                      axisLine={false}
-                      tick={{ fill: 'rgba(154,170,191,0.5)', fontSize: 9 }}
-                      tickFormatter={v => `${v}%`}
-                      width={38}
-                      label={{
-                        value: 'Spiegel %',
-                        angle: -90,
-                        position: 'insideLeft',
-                        offset: 8,
-                        fill: 'rgba(154,170,191,0.35)',
-                        fontSize: 8,
-                      }}
-                    />
-
-                    <Tooltip
-                      content={<HistoryChartTooltip />}
-                      cursor={{ stroke: `${accent}55`, strokeWidth: 1, strokeDasharray: '4 2' }}
-                    />
-
-                    <Area
-                      type="monotone"
-                      dataKey="level"
-                      stroke={accent}
-                      strokeWidth={2}
-                      fill={`url(#liveGrad-${cycleId})`}
-                      dot={false}
-                      activeDot={{ r: 4, fill: '#07091a', stroke: accent, strokeWidth: 2 }}
-                      isAnimationActive={false}
-                    />
-
-                    {/* Einnahme-Marker (grün) */}
-                    <Scatter
-                      data={visibleIntakeMarkers}
-                      dataKey="level"
-                      fill="#10b981"
-                      stroke="#07091a"
-                      strokeWidth={1.5}
-                      r={5}
-                      isAnimationActive={false}
-                    />
-
-                    {/* Peak-Marker nach jeder Einnahme (orange) */}
-                    <Scatter
-                      data={visiblePeakMarkers}
-                      dataKey="level"
-                      fill="#f59e0b"
-                      stroke="#07091a"
-                      strokeWidth={1.5}
-                      r={4}
-                      isAnimationActive={false}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            <LiveCycleChartCanvas
+              points={chartData}
+              doseMarkers={doseMarkers}
+              peakMarkers={peakMarkers}
+              accent={accent}
+              windowMs={WINDOW_HOURS * 3_600_000}
+              height={180}
+            />
           </>
         ) : (
           /* Fallback: noch keine bestätigten Einnahmen */
