@@ -819,5 +819,9 @@
   "obx_sim_kicker": "अभ्यास · अभी देय",
   "obx_sim_substance": "BPC-157 · 250 mcg",
   "obx_sim_time": "आज · 20:00",
-  "obx_sim_btn": "पुष्टि करें"
+  "obx_sim_btn": "पुष्टि करें",
+  "obx_peppk_title": "PK प्रोफ़ाइल",
+  "obx_peppk_sub": "स्वतः लिंक",
+  "obx_peppk_desc": "ज्ञात पदार्थों के लिए हम स्वचालित रूप से एक फार्माकोकाइनेटिक प्रोफ़ाइल लिंक करते हैं — रक्त स्तर सिमुलेशन का आधार।",
+  "pk_profil_verknuepft": "PK प्रोफ़ाइल लिंक"
 }

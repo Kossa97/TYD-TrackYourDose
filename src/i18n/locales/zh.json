@@ -819,5 +819,9 @@
   "obx_sim_kicker": "练习 · 待确认",
   "obx_sim_substance": "BPC-157 · 250 mcg",
   "obx_sim_time": "今天 · 20:00",
-  "obx_sim_btn": "确认"
+  "obx_sim_btn": "确认",
+  "obx_peppk_title": "PK 档案",
+  "obx_peppk_sub": "自动关联",
+  "obx_peppk_desc": "对于已知物质，我们会自动关联一个药代动力学档案——血药浓度模拟的基础。",
+  "pk_profil_verknuepft": "已关联 PK 档案"
 }

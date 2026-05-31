@@ -819,5 +819,9 @@
   "obx_sim_kicker": "Esercizio · In attesa",
   "obx_sim_substance": "BPC-157 · 250 mcg",
   "obx_sim_time": "Oggi · 20:00",
-  "obx_sim_btn": "Conferma"
+  "obx_sim_btn": "Conferma",
+  "obx_peppk_title": "Profilo PK",
+  "obx_peppk_sub": "Collegato automaticamente",
+  "obx_peppk_desc": "Per le sostanze note colleghiamo automaticamente un profilo farmacocinetico — la base della simulazione del livello ematico.",
+  "pk_profil_verknuepft": "Profilo PK collegato"
 }

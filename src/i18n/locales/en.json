@@ -819,5 +819,9 @@
   "obx_sim_kicker": "Practice · Due",
   "obx_sim_substance": "BPC-157 · 250 mcg",
   "obx_sim_time": "Today · 20:00",
-  "obx_sim_btn": "Confirm"
+  "obx_sim_btn": "Confirm",
+  "obx_peppk_title": "PK profile",
+  "obx_peppk_sub": "Auto-linked",
+  "obx_peppk_desc": "For known substances we automatically link a pharmacokinetic profile — the basis for the blood-level simulation.",
+  "pk_profil_verknuepft": "PK profile linked"
 }

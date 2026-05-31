@@ -271,6 +271,10 @@ export function Onboarding() {
     const onLayout = () => measureTarget()
     window.addEventListener('resize', onLayout)
     window.addEventListener('scroll', onLayout, true)
+    // Recompute on every keystroke/select change so requireFilled gating is live
+    // (independent of the 100ms poll window which stops after 10s).
+    document.addEventListener('input', onLayout, true)
+    document.addEventListener('change', onLayout, true)
     const modalEl = el?.closest('[data-app-modal]')
     modalEl?.addEventListener('scroll', onLayout, true)
 
@@ -279,6 +283,8 @@ export function Onboarding() {
       clearTimeout(stopPoll)
       window.removeEventListener('resize', onLayout)
       window.removeEventListener('scroll', onLayout, true)
+      document.removeEventListener('input', onLayout, true)
+      document.removeEventListener('change', onLayout, true)
       modalEl?.removeEventListener('scroll', onLayout, true)
     }
   }, [step, active, needsLanguagePick, meta, measureTarget])
@@ -481,7 +487,10 @@ export function Onboarding() {
     const currentField = fields[Math.min(fieldIndex, fields.length - 1)] ?? null
 
     const handleConfirm = () => {
-      if (meta?.requireFilled && !filled) return
+      if (meta?.requireFilled) {
+        const inp = (el?.matches('input,select,textarea') ? el : el?.querySelector('input,select,textarea')) as HTMLInputElement | null
+        if (!inp || !String(inp.value).trim()) return
+      }
       if (hasCycle && fieldIndex < fields.length - 1) {
         setFieldIndex(i => i + 1)
       } else {

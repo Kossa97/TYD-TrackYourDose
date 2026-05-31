@@ -819,5 +819,9 @@
   "obx_sim_kicker": "연습 · 아직 미완료",
   "obx_sim_substance": "BPC-157 · 250 mcg",
   "obx_sim_time": "오늘 · 20:00",
-  "obx_sim_btn": "확인"
+  "obx_sim_btn": "확인",
+  "obx_peppk_title": "PK 프로파일",
+  "obx_peppk_sub": "자동 연결됨",
+  "obx_peppk_desc": "알려진 물질에는 약동학 프로파일을 자동으로 연결합니다 — 혈중 농도 시뮬레이션의 기반입니다.",
+  "pk_profil_verknuepft": "PK 프로파일 연결됨"
 }

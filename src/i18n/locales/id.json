@@ -820,5 +820,9 @@
   "obx_sim_kicker": "Latihan · Masih Jatuh Tempo",
   "obx_sim_substance": "BPC-157 · 250 mcg",
   "obx_sim_time": "Hari Ini · 20:00",
-  "obx_sim_btn": "Konfirmasi"
+  "obx_sim_btn": "Konfirmasi",
+  "obx_peppk_title": "Profil PK",
+  "obx_peppk_sub": "Tertaut otomatis",
+  "obx_peppk_desc": "Untuk zat yang dikenal, kami otomatis menautkan profil farmakokinetik — dasar simulasi kadar dalam darah.",
+  "pk_profil_verknuepft": "Profil PK tertaut"
 }

@@ -819,5 +819,9 @@
   "obx_sim_kicker": "練習 · 摂取予定",
   "obx_sim_substance": "BPC-157 · 250 mcg",
   "obx_sim_time": "今日 · 20:00",
-  "obx_sim_btn": "確認"
+  "obx_sim_btn": "確認",
+  "obx_peppk_title": "PKプロファイル",
+  "obx_peppk_sub": "自動リンク",
+  "obx_peppk_desc": "既知の物質には薬物動態プロファイルを自動でリンクします——血中濃度シミュレーションの基礎です。",
+  "pk_profil_verknuepft": "PKプロファイルをリンク済み"
 }

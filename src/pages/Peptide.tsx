@@ -1109,9 +1109,9 @@ export function Peptide() {
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <label className="label mb-0">{t('peptidname_star')}</label>
                   {pForm.pk_profile_id && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+                    <span data-ob="pep-pk-badge" className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
                       style={{ color: 'var(--accent)', background: 'var(--accent-weak)', border: '1px solid var(--accent-border)' }}>
-                      <Check size={11} /> PK-Profil verknüpft
+                      <Check size={11} /> {t('pk_profil_verknuepft', { defaultValue: 'PK-Profil verknüpft' })}
                     </span>
                   )}
                 </div>
