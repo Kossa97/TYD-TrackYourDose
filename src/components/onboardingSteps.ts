@@ -25,6 +25,8 @@ export interface OnboardingStepMeta {
    * undefined → enabled immediately (pure explanation steps).
    */
   precondition?: 'filled' | 'positive' | 'modal' | 'no-modal' | 'sim'
+  /** Additional selectors whose subtrees are also interactive at this step. */
+  extraTargets?: string[]
   /** If the target does not appear within ~700ms, auto-skip this step. */
   optionalTarget?: boolean
 }
@@ -57,9 +59,7 @@ export const ONBOARDING_STEPS: OnboardingStepMeta[] = [
   { id:'cyc-dose', emoji:'💉', titleKey:'obx_cycdose_title', subtitleKey:'obx_cycdose_sub', descriptionKey:'obx_cycdose_desc', targetSelector:'[data-ob="cyc-dose"]', placement:'auto', advance:'next', precondition:'filled' },
   { id:'cyc-unit', emoji:'⚖️', titleKey:'obx_cycunit_title', subtitleKey:'obx_cycunit_sub', descriptionKey:'obx_cycunit_desc', targetSelector:'[data-ob="cyc-unit"]', placement:'auto', advance:'next' },
   { id:'cyc-method', emoji:'🧭', titleKey:'obx_cycmethod_title', subtitleKey:'obx_cycmethod_sub', descriptionKey:'obx_cycmethod_desc', targetSelector:'[data-ob="cyc-method"]', placement:'auto', advance:'next' },
-  { id:'cyc-freq', emoji:'🔁', titleKey:'obx_cycfreq_title', subtitleKey:'obx_cycfreq_sub', descriptionKey:'obx_cycfreq_desc', targetSelector:'[data-ob="cyc-frequency"]', placement:'auto', advance:'next' },
-  { id:'cyc-interval', emoji:'📆', titleKey:'obx_cycinterval_title', subtitleKey:'obx_cycinterval_sub', descriptionKey:'obx_cycinterval_desc', targetSelector:'[data-ob="cyc-interval"]', placement:'auto', advance:'next', optionalTarget:true },
-  { id:'cyc-weekdays', emoji:'🗓️', titleKey:'obx_cycweekdays_title', subtitleKey:'obx_cycweekdays_sub', descriptionKey:'obx_cycweekdays_desc', targetSelector:'[data-ob="cyc-weekdays"]', placement:'auto', advance:'next', optionalTarget:true },
+  { id:'cyc-freq', emoji:'🔁', titleKey:'obx_cycfreq_title', subtitleKey:'obx_cycfreq_sub', descriptionKey:'obx_cycfreq_desc', targetSelector:'[data-ob="cyc-frequency"]', placement:'auto', advance:'next', extraTargets:['[data-ob="cyc-interval"]','[data-ob="cyc-weekdays"]'] },
   { id:'cyc-dates', emoji:'📅', titleKey:'obx_cycdates_title', subtitleKey:'obx_cycdates_sub', descriptionKey:'obx_cycdates_desc', targetSelector:'[data-ob="cyc-dates"]', placement:'auto', advance:'next', precondition:'filled' },
   { id:'cyc-intake', emoji:'⏰', titleKey:'obx_cycintake_title', subtitleKey:'obx_cycintake_sub', descriptionKey:'obx_cycintake_desc', targetSelector:'[data-ob="cyc-intake"]', placement:'auto', advance:'next' },
   { id:'cyc-reminder', emoji:'🔔', titleKey:'obx_cycreminder_title', subtitleKey:'obx_cycreminder_sub', descriptionKey:'obx_cycreminder_desc', targetSelector:'[data-ob="cyc-reminder"]', placement:'auto', advance:'next' },

@@ -367,6 +367,14 @@ export function Onboarding() {
       if (isPanelNode(node)) return
       if (node instanceof Element && node.closest('[data-ob-confirm]')) return
       if (isOnboardingInteractionNode(node, meta)) return
+      // Allow clicks inside extra-target subtrees (e.g. interval + weekdays at freq step)
+      if (meta?.extraTargets && node instanceof Element) {
+        const inside = meta.extraTargets.some(sel => {
+          const el = document.querySelector(sel)
+          return el ? el.contains(node) : false
+        })
+        if (inside) return
+      }
       e.preventDefault()
       e.stopPropagation()
     }
