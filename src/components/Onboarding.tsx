@@ -302,6 +302,36 @@ export function Onboarding() {
     }
   }, [step, active, needsLanguagePick, meta, measureTarget])
 
+  // Clicking the designated target auto-advances — same as pressing "Weiter".
+  // This makes tapping the highlighted element feel natural, while "Weiter"
+  // still lights up as a visible backup once the precondition is met.
+  useEffect(() => {
+    cleanupRef.current?.()
+    cleanupRef.current = null
+    if (!active || needsLanguagePick) return
+
+    let fired = false
+    const delegated = (e: Event) => {
+      if (fired) return
+      const target = getOnboardingInteractionEl(meta)
+      if (!target) return
+      if (target === e.target || target.contains(e.target as Node)) {
+        fired = true
+        window.setTimeout(() => {
+          // Re-measure so canAdvance is current, then advance
+          measureTarget()
+          window.setTimeout(() => nextRef.current(), 20)
+        }, 80)
+      }
+    }
+    document.addEventListener('click', delegated, true)
+    cleanupRef.current = () => document.removeEventListener('click', delegated, true)
+    return () => {
+      cleanupRef.current?.()
+      cleanupRef.current = null
+    }
+  }, [step, active, needsLanguagePick, meta, measureTarget])
+
 
   // Auto-skip optional steps whose target never appears.
   useEffect(() => {
