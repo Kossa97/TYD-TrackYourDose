@@ -212,7 +212,7 @@
   "zugefuegte_fl_ml": "追加した液体 (mL)",
   "datum_rekonstitution": "再調製日",
   "haltbarkeit": "再調製後の保存期間",
-  "vorraetige_vials": "利用可能なバイアル",
+  "vorraetige_vials": "備蓄バイアル（未溶解）",
   "standard_dosis_label": "標準用量",
   "zyklus_bearbeiten": "サイクルを編集",
   "neuer_zyklus_title": "新しいサイクル",
@@ -227,7 +227,7 @@
   "verwerfen": "廃棄",
   "infos": "情報",
   "fallback_info": "アクティブなサイクルがない場合のフォールバック。アクティブなサイクルはこの用量を上書きします。",
-  "basis_info": "最初の保存時、この値が100%の基準として記録されます。",
+  "basis_info": "まだ溶解していないバイアルの在庫。保存時に1本が自動的に溶解済みとしてカウントされます。",
   "morgens_uhr": "朝 · {{time}}",
   "mittags_uhr": "昼 · {{time}}",
   "abends_uhr": "夜 · {{time}}",
@@ -720,8 +720,8 @@
   "obx_pepexpiry_sub": "使用期限",
   "obx_pepexpiry_desc": "使用期限を選択するか、任意の日数を入力してください — 期限前に通知されます。",
   "obx_pepvials_title": "在庫バイアル数",
-  "obx_pepvials_sub": "在庫 · 最低1",
-  "obx_pepvials_desc": "現在のバイアル数を入力してください（最低1本）。投与のたびに在庫が自動的に減ります。",
+  "obx_pepvials_sub": "未溶解の備蓄",
+  "obx_pepvials_desc": "未溶解で備蓄しているバイアルは何本ですか？0でも問題ありません——唯一のバイアルをすでに溶解した場合など。",
   "obx_pepbatch_title": "バッチ",
   "obx_pepbatch_sub": "出所（任意）",
   "obx_pepbatch_desc": "任意：追跡用のロット番号を入力してください。",
@@ -823,5 +823,6 @@
   "obx_peppk_title": "PKプロファイル",
   "obx_peppk_sub": "自動リンク",
   "obx_peppk_desc": "既知の物質には薬物動態プロファイルを自動でリンクします——血中濃度シミュレーションの基礎です。",
-  "pk_profil_verknuepft": "PKプロファイルをリンク済み"
+  "pk_profil_verknuepft": "PKプロファイルをリンク済み",
+  "vorraelike_vials": "備蓄バイアル（未溶解）"
 }

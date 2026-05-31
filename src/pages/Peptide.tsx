@@ -542,13 +542,13 @@ export function Peptide() {
 
     // Auto-create or update inventory_item
     let invItemId = pForm.inventory_item_id || null
-    if (pForm.vial_amount_mg && pForm.vials_in_stock) {
+    if (pForm.vial_amount_mg) {
       const invPayload = {
         user_id: user!.id,
         name: pForm.name.trim(),
         mg_per_vial: parseFloat(pForm.vial_amount_mg),
-        vials_count: parseFloat(pForm.vials_in_stock) || 0,
-        vials_initial: parseFloat(pForm.vials_in_stock) || 0,
+        vials_count: rawReserve,
+        vials_initial: rawReserve,
         batch_number: pForm.batch_number || null,
         batch_source: pForm.batch_source || null,
         batch_file_url: fileUrl || null,
@@ -562,11 +562,13 @@ export function Peptide() {
       }
     }
 
-    const stock = parseFloat(pForm.vials_in_stock) || 0
-    const existingInitial = editingPeptideId
-      ? (peptides.find(p => p.id === editingPeptideId)?.vials_initial ?? 0)
-      : 0
-    const initial = existingInitial > 0 ? existingInitial : stock
+    // "Vorrätige Vials" = raw/unangemischte reserve → goes to inventory.
+    // The peptide itself always tracks 1 mixed vial at 100% when newly created;
+    // edits preserve the current fill level so it isn't reset mid-use.
+    const rawReserve = parseFloat(pForm.vials_in_stock) || 0
+    const existingPep = editingPeptideId ? peptides.find(p => p.id === editingPeptideId) : null
+    const stock   = existingPep ? (existingPep.vials_in_stock   ?? 1) : 1
+    const initial = existingPep ? (existingPep.vials_initial    ?? 1) : 1
 
     const payload = {
       user_id:        user!.id, name: pForm.name.trim(),
@@ -618,7 +620,8 @@ export function Peptide() {
       syringe_ml:    p.syringe_type?.split(':')[0] ?? '1',
       syringe_units: p.syringe_type?.split(':')[1] ?? '100',
       notes:         p.notes ?? '',
-      vials_in_stock: p.vials_in_stock?.toString() ?? '0',
+      // Pre-fill with raw reserve (inventory count), not the mixed-vial fill level.
+      vials_in_stock: (inventory.find(i => i.id === p.inventory_item_id)?.vials_count ?? 0).toString(),
       reconstitution_date: p.reconstitution_date ?? '',
       expiry_days:   p.expiry_days?.toString() ?? '28',
       batch_number:  p.batch_number  ?? '',
