@@ -315,6 +315,9 @@ export function Onboarding() {
       if (fired) return
       const target = getOnboardingInteractionEl(meta)
       if (!target) return
+      // For 'filled' steps the user must type first; clicking the field
+      // just focuses it — don't auto-advance.
+      if (meta?.precondition === 'filled') return
       if (target === e.target || target.contains(e.target as Node)) {
         fired = true
         window.setTimeout(() => {
