@@ -17,7 +17,6 @@ import { computeCalloutLayout, type CalloutPlacement } from './onboardingPlaceme
 import {
   getOnboardingInteractionEl,
   getOpenAppModal,
-  isInsideOpenModal,
   isOnboardingInteractionNode,
   measureOnboardingTarget,
   shouldShowOnboardingSpotlight,
@@ -339,7 +338,9 @@ export function Onboarding() {
       const node = e.target
       if (isPanelNode(node)) return
       if (node instanceof Element && node.closest('[data-ob-confirm]')) return
-      if (node instanceof Node && isInsideOpenModal(node)) return
+      // Strict gating: only the step's dictated target is interactive (besides the
+      // panel/confirm). Other clicks — including elsewhere in an open form modal —
+      // are blocked, so the user can only do what the tour asks (or skip via X).
       if (isOnboardingInteractionNode(node, meta)) return
       e.preventDefault()
       e.stopPropagation()
@@ -458,13 +459,15 @@ export function Onboarding() {
           <button type="button" onClick={prev} disabled={isFirst} className="ob-nav-btn" aria-label={t('back')}>
             <ChevronLeft size={16} />
           </button>
-          <button type="button" onClick={skip} className="ob-skip-inline">
-            {t('skip')}
-          </button>
-          <button type="button" onClick={() => nextRef.current()} className="ob-primary-btn flex-1 justify-center" disabled={meta?.requireFilled ? !filled : false} style={{ opacity: meta?.requireFilled && !filled ? 0.4 : 1 }}>
-            {isLast ? t('finish') : s.advance === 'click' ? t('ob_continue') : t('next')}
-            <ChevronRight size={14} />
-          </button>
+          {/* "Weiter" only when there is no other advance affordance:
+              click steps advance by tapping the target, modal field steps advance
+              via the confirm check. Center + non-modal next steps need it. */}
+          {meta?.advance === 'next' && !isModalTarget && (
+            <button type="button" onClick={() => nextRef.current()} className="ob-primary-btn flex-1 justify-center">
+              {isLast ? t('finish') : t('next')}
+              <ChevronRight size={14} />
+            </button>
+          )}
         </div>
 
         {isFirst && (
