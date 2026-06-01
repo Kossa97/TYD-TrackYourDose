@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ReferenceLine, ResponsiveContainer, ComposedChart, AreaChart,
-} from 'recharts'
+import { Area, ResponsiveContainer, AreaChart } from 'recharts'
 import { FEATURES } from '../config/features'
 import { format } from 'date-fns'
 import { de as deLocale } from 'date-fns/locale'
@@ -22,6 +19,7 @@ import {
 import { loadAllCycleChartData, type CycleChartData } from '../services/liveBlutspiegelChart'
 import { LiveBlutspiegelChart } from '../components/LiveBlutspiegelChart'
 import { LiveCycleChartCanvas } from '../components/liveCycleChart/LiveCycleChartCanvas'
+import { SimulationChartCanvas } from '../components/liveCycleChart/SimulationChartCanvas'
 import { lerpLevel } from '../components/liveCycleChart/chartMath'
 
 // ── Typen ─────────────────────────────────────────────────────────────────
@@ -669,6 +667,12 @@ export function BlutspiegelSimulation() {
     return ticks
   }, [selectedProfile])
 
+  // Sim-Kurve als Canvas-Punkte (ts = Stunden, level = %)
+  const simPoints = useMemo(
+    () => (simResult ? simResult.data.map(p => ({ ts: p.t, level: p.c })) : []),
+    [simResult],
+  )
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 8 }}>
 
@@ -888,128 +892,12 @@ export function BlutspiegelSimulation() {
               Relativer Wirkstoffspiegel in % (normalisiert auf Peak = 100 %)
             </p>
 
-            <ResponsiveContainer width="100%" height={260}>
-              <ComposedChart data={simResult.data} margin={{ top: 36, right: 12, left: 8, bottom: 28 }}>
-                <defs>
-                  <linearGradient id="pkGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#00ccf5" stopOpacity={0.32} />
-                    <stop offset="95%" stopColor="#00ccf5" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-
-                <XAxis
-                  dataKey="t"
-                  ticks={xTicks}
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fill: 'rgba(154,170,191,0.45)', fontSize: 10 }}
-                  tickFormatter={v => `${v}h`}
-                  label={{
-                    value: 'Zeit nach Injektion (Stunden)',
-                    position: 'insideBottom',
-                    offset: -4,
-                    fill: 'rgba(154,170,191,0.55)',
-                    fontSize: 10,
-                    fontWeight: 600,
-                  }}
-                />
-                <YAxis
-                  domain={[0, 105]}
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fill: 'rgba(154,170,191,0.45)', fontSize: 10 }}
-                  tickFormatter={v => `${v}%`}
-                  ticks={[0, 25, 50, 75, 100]}
-                  label={{
-                    value: 'Wirkstoffspiegel (%)',
-                    angle: -90,
-                    position: 'insideLeft',
-                    offset: 12,
-                    fill: 'rgba(154,170,191,0.55)',
-                    fontSize: 10,
-                    fontWeight: 600,
-                  }}
-                />
-
-                <Tooltip content={<PkChartTooltip />} cursor={{ stroke: 'rgba(0,204,245,0.3)', strokeWidth: 1 }} />
-
-                {/* Tmax — Peak */}
-                <ReferenceLine
-                  x={Math.round(simResult.tmaxActual * 10) / 10}
-                  stroke="#f59e0b"
-                  strokeDasharray="4 3"
-                  strokeWidth={1.5}
-                  label={{
-                    value: 'Peak — maximale Wirkung',
-                    position: 'insideTopLeft',
-                    fill: '#f59e0b',
-                    fontSize: 8,
-                    fontWeight: 700,
-                  }}
-                />
-
-                {/* Halbwertzeit */}
-                <ReferenceLine
-                  x={selectedProfile.half_life_hours}
-                  stroke="#8b5cf6"
-                  strokeDasharray="4 3"
-                  strokeWidth={1.5}
-                  label={{
-                    value: '½ Halbwertzeit — halbe Menge abgebaut',
-                    position: 'insideTop',
-                    fill: '#a78bfa',
-                    fontSize: 8,
-                    fontWeight: 700,
-                  }}
-                />
-
-                {/* Ende der Wirkung <10% */}
-                {simResult.t10 < selectedProfile.half_life_hours * 5 && (
-                  <ReferenceLine
-                    x={Math.round(simResult.t10 * 10) / 10}
-                    stroke="rgba(255,255,255,0.28)"
-                    strokeDasharray="4 3"
-                    strokeWidth={1.5}
-                    label={{
-                      value: 'Wirkungsende',
-                      position: 'insideTopRight',
-                      fill: 'rgba(255,255,255,0.55)',
-                      fontSize: 8,
-                      fontWeight: 700,
-                    }}
-                  />
-                )}
-
-                {/* 10% Referenzlinie horizontal */}
-                <ReferenceLine y={10} stroke="rgba(255,255,255,0.10)" strokeDasharray="2 4" />
-
-                <Area
-                  type="monotone"
-                  dataKey="c"
-                  stroke="#00ccf5"
-                  strokeWidth={2.5}
-                  fill="url(#pkGrad)"
-                  dot={false}
-                  activeDot={{ r: 4, fill: '#07091a', stroke: '#00ccf5', strokeWidth: 2 }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
-
-            {/* Legende Referenzlinien */}
-            <div style={{ display: 'flex', gap: 14, marginTop: 10, flexWrap: 'wrap' }}>
-              {[
-                { color: '#f59e0b', label: 'Peak — maximale Wirkung' },
-                { color: '#8b5cf6', label: '½ Halbwertzeit' },
-                { color: 'rgba(255,255,255,0.35)', label: 'Wirkungsende' },
-              ].map(({ color, label }) => (
-                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 16, height: 1.5, background: color, borderRadius: 1 }} />
-                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700 }}>{label}</span>
-                </div>
-              ))}
-            </div>
+            <SimulationChartCanvas
+              points={simPoints}
+              xTicks={xTicks}
+              accent="#00ccf5"
+              height={260}
+            />
           </div>
 
           {/* Info-Box — Werte erklärt */}
