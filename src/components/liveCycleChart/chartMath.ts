@@ -1,5 +1,6 @@
 export interface ChartPoint { ts: number; level: number }
 export interface MarkerPoint { ts: number; level: number }
+export interface NamedMarker { ts: number; label: string; color: string }
 
 /** Lineare Interpolation des Levels am Zeitpunkt ts über aufsteigend sortierte Punkte. */
 export function lerpLevel(points: ChartPoint[], ts: number): number {
@@ -50,5 +51,26 @@ export function pickDayTicks(startTs: number, endTs: number, widthPx: number, mi
   const first = Math.ceil(startTs / DAY_MS) * DAY_MS
   const ticks: number[] = []
   for (let t = first; t <= endTs; t += stepMs) ticks.push(t)
+  return ticks
+}
+
+/**
+ * Achsen-Ticks mit "schönen" Schrittweiten (1·10ⁿ, 2·10ⁿ, 5·10ⁿ), sodass bei
+ * gegebener Pixelbreite der Mindestabstand minPxPerTick grob eingehalten wird.
+ * Für beliebige numerische Achsen (z.B. Stunden nach Injektion).
+ */
+export function pickNiceTicks(start: number, end: number, widthPx: number, minPxPerTick: number): number[] {
+  if (end <= start || widthPx <= 0) return []
+  const maxTicks = Math.max(1, Math.floor(widthPx / minPxPerTick))
+  const rawStep = (end - start) / maxTicks
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)))
+  const norm = rawStep / mag
+  const mult = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10
+  const step = mult * mag
+  const first = Math.ceil(start / step) * step
+  const ticks: number[] = []
+  for (let t = first; t <= end + step * 1e-6; t += step) {
+    ticks.push(Math.round(t * 1000) / 1000)
+  }
   return ticks
 }

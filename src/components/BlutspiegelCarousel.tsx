@@ -369,16 +369,7 @@ function BlutspiegelCard({
           </button>
         </div>
 
-        <p
-          style={{
-            marginTop: 8,
-            fontSize: 9,
-            color: 'var(--text-muted)',
-            fontFamily: 'monospace',
-            textAlign: 'center',
-            lineHeight: 1.45,
-          }}
-        >
+        <p className="disclaimer" style={{ marginTop: 8, textAlign: 'center' }}>
           Die angezeigten Werte basieren auf pharmakokinetischen Modellen und sind Schätzungen. Kein medizinischer Rat.
         </p>
       </div>

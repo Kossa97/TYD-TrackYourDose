@@ -5,7 +5,7 @@
  * Ablesen: Maus-Hover (Desktop) bzw. Berühren/Ziehen (Touch) → exakter Wert.
  */
 import { useCallback, useEffect, useRef } from 'react'
-import { lerpLevel, type ChartPoint } from './chartMath'
+import { lerpLevel, pickNiceTicks, type ChartPoint, type NamedMarker } from './chartMath'
 
 const PAD = { top: 16, right: 12, bottom: 40, left: 46 } as const
 
@@ -19,17 +19,8 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath()
 }
 
-export interface SimMarker {
-  /** Stunden nach Injektion */
-  ts: number
-  label: string
-  /** Hex-Farbe (#rrggbb) */
-  color: string
-}
-
 export function SimulationChartCanvas({
   points,
-  xTicks,
   accent,
   markers = [],
   phaseSplitTs,
@@ -37,9 +28,8 @@ export function SimulationChartCanvas({
 }: {
   /** ts = Stunden nach Injektion, level = % (auf Peak = 100 normiert) */
   points: ChartPoint[]
-  xTicks: number[]
   accent: string
-  markers?: SimMarker[]
+  markers?: NamedMarker[]
   /** Stunde, an der Anstiegs- in Abbauphase übergeht (Peak) — für dezente Tönung */
   phaseSplitTs?: number
   height?: number
@@ -48,7 +38,6 @@ export function SimulationChartCanvas({
   const wrapRef = useRef<HTMLDivElement>(null)
 
   const pointsRef = useRef(points)
-  const xTicksRef = useRef(xTicks)
   const accentRef = useRef(accent)
   const markersRef = useRef(markers)
   const phaseRef = useRef(phaseSplitTs)
@@ -97,17 +86,19 @@ export function SimulationChartCanvas({
       ctx.beginPath(); ctx.moveTo(dX, y); ctx.lineTo(dX + dW, y); ctx.stroke()
     }
 
-    // X-Ticks (Stunden)
+    // X-Ticks (Stunden) — adaptive, runde Schritte gegen Überlappung
+    const xTickVals = pickNiceTicks(xStart, xEnd, dW, 64)
     ctx.font = '10px ui-monospace,monospace'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
-    for (const tick of xTicksRef.current) {
+    for (const tick of xTickVals) {
       if (tick < xStart || tick > xEnd) continue
       const x = tsToX(tick)
       ctx.strokeStyle = border
       ctx.beginPath(); ctx.moveTo(x, dY); ctx.lineTo(x, dY + dH); ctx.stroke()
       ctx.fillStyle = muted
-      ctx.fillText(`${tick}h`, x, dY + dH + 5)
+      const lbl = (Number.isInteger(tick) ? `${tick}` : tick.toFixed(1)) + 'h'
+      ctx.fillText(lbl, x, dY + dH + 5)
     }
 
     // X-Achsentitel
@@ -165,32 +156,92 @@ export function SimulationChartCanvas({
     ctx.fillText('Wirkstoffspiegel (%)', 0, 0)
     ctx.restore()
 
-    // Marker (Peak / ½ HWZ / Wirkungsende) — dezente Punkte, Labels nur beim Ablesen in der Nähe
+    // Marker — nahe Marker (< 10px) werden als Split-Kreis gezeichnet
     const readingX = isReadingRef.current
       ? tsToX(Math.max(xStart, Math.min(xEnd, readXRef.current)))
       : null
+
+    // 1. Sichtbare Marker berechnen
+    type MkEntry = { mx: number; my: number; label: string; color: string; dist: number }
+    const visible: MkEntry[] = []
     for (const mk of markersRef.current) {
       if (mk.ts < xStart || mk.ts > xEnd) continue
       const mx = tsToX(mk.ts)
       const my = lvToY(lerpLevel(pts, mk.ts))
-      // feine Hairline zur Achse
-      ctx.strokeStyle = mk.color + '2b'
-      ctx.lineWidth = 1
-      ctx.setLineDash([2, 3])
-      ctx.beginPath(); ctx.moveTo(mx, my + 4); ctx.lineTo(mx, dY + dH); ctx.stroke()
+      const dist = readingX != null ? Math.abs(mx - readingX) : Infinity
+      visible.push({ mx, my, label: mk.label, color: mk.color, dist })
+    }
+
+    // 2. Marker nach x-Position gruppieren (innerhalb 10px = selber Kreis)
+    const SPLIT_THRESH = 10
+    const groups: MkEntry[][] = []
+    for (const m of visible) {
+      const grp = groups.find(g => Math.abs(g[0].mx - m.mx) <= SPLIT_THRESH)
+      if (grp) grp.push(m)
+      else groups.push([m])
+    }
+
+    const simNear: MkEntry[] = []
+    for (const grp of groups) {
+      const cx = grp.reduce((s, m) => s + m.mx, 0) / grp.length
+      const cy = grp.reduce((s, m) => s + m.my, 0) / grp.length
+      const nearDist = Math.min(...grp.map(m => m.dist))
+      const near = nearDist <= 26
+      const r = near ? 4.4 : 3.2
+
+      // Hairline (gemeinsam, mittlere Farbe bei Gruppe)
+      ctx.strokeStyle = grp[0].color + (near ? '40' : '2b')
+      ctx.lineWidth = 1; ctx.setLineDash([2, 3])
+      ctx.beginPath(); ctx.moveTo(cx, cy + r + 2); ctx.lineTo(cx, dY + dH); ctx.stroke()
       ctx.setLineDash([])
-      // Punkt
-      ctx.beginPath(); ctx.arc(mx, my, 2.6, 0, Math.PI * 2)
-      ctx.globalAlpha = 0.9; ctx.fillStyle = mk.color; ctx.fill(); ctx.globalAlpha = 1
-      ctx.lineWidth = 1; ctx.strokeStyle = surface; ctx.stroke()
-      // Label nur beim Ablesen in der Nähe
-      if (readingX != null && Math.abs(mx - readingX) <= 24) {
-        ctx.font = '9px ui-monospace,monospace'
-        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'
-        ctx.globalAlpha = 0.95; ctx.fillStyle = mk.color
-        ctx.fillText(mk.label, mx, my - 7)
-        ctx.globalAlpha = 1
+
+      if (grp.length === 1) {
+        // Einfacher Punkt
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2)
+        ctx.globalAlpha = near ? 1 : 0.9; ctx.fillStyle = grp[0].color; ctx.fill(); ctx.globalAlpha = 1
+        ctx.lineWidth = 1; ctx.strokeStyle = surface; ctx.stroke()
+      } else {
+        // Split-Kreis: N gleichmäßige Tortensegmente
+        const n = grp.length
+        const step = (2 * Math.PI) / n
+        const start = -Math.PI / 2
+        grp.forEach((m, i) => {
+          ctx.beginPath()
+          ctx.moveTo(cx, cy)
+          ctx.arc(cx, cy, r, start + i * step, start + (i + 1) * step)
+          ctx.closePath()
+          ctx.globalAlpha = near ? 1 : 0.9; ctx.fillStyle = m.color; ctx.fill(); ctx.globalAlpha = 1
+        })
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2)
+        ctx.lineWidth = 1; ctx.strokeStyle = surface; ctx.stroke()
       }
+
+      if (near) grp.forEach(m => simNear.push({ ...m, mx: cx, my: cy }))
+    }
+
+    // Alle nahen Marker-Labels gestapelt anzeigen (jeder in seiner Farbe)
+    if (simNear.length > 0) {
+      simNear.sort((a, b) => a.dist - b.dist)
+      ctx.font = '9px ui-monospace,monospace'
+      const LINE = 13
+      const refX = simNear[0].mx
+      const minY = Math.min(...simNear.map(c => c.my))
+      const stackH = simNear.length * LINE
+      const placeBelow = minY - stackH < dY + 6
+      let labelY = placeBelow
+        ? Math.max(...simNear.map(c => c.my)) + 16
+        : minY - 6
+      ctx.globalAlpha = 0.95
+      for (const lb of simNear) {
+        const tw = ctx.measureText(lb.label).width
+        const lx = Math.max(dX + 2, Math.min(dX + dW - tw - 2, refX - tw / 2))
+        ctx.textAlign = 'left'
+        ctx.textBaseline = placeBelow ? 'top' : 'bottom'
+        ctx.fillStyle = lb.color
+        ctx.fillText(lb.label, lx, labelY)
+        labelY += placeBelow ? LINE : -LINE
+      }
+      ctx.globalAlpha = 1
     }
 
     // Ables-Linie
@@ -204,9 +255,13 @@ export function SimulationChartCanvas({
       ctx.setLineDash([3, 2])
       ctx.beginPath(); ctx.moveTo(x, dY); ctx.lineTo(x, dY + dH); ctx.stroke()
       ctx.setLineDash([])
-      ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2)
-      ctx.fillStyle = surface; ctx.fill()
-      ctx.strokeStyle = accentRef.current; ctx.lineWidth = 2; ctx.stroke()
+      // Ables-Punkt nur zeigen, wenn kein Marker in der Nähe ist (< 8px) — sonst doppelte Punkte
+      const nearestSimDist = simNear.length > 0 ? simNear[0].dist : Infinity
+      if (nearestSimDist >= 8) {
+        ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2)
+        ctx.fillStyle = surface; ctx.fill()
+        ctx.strokeStyle = accentRef.current; ctx.lineWidth = 2; ctx.stroke()
+      }
 
       const label = `${ts.toFixed(1)}h · ${lv.toFixed(1)}%`
       ctx.font = '11px ui-monospace,monospace'
@@ -233,12 +288,11 @@ export function SimulationChartCanvas({
 
   useEffect(() => {
     pointsRef.current = points
-    xTicksRef.current = xTicks
     accentRef.current = accent
     markersRef.current = markers
     phaseRef.current = phaseSplitTs
     scheduleRedraw()
-  }, [points, xTicks, accent, markers, phaseSplitTs, scheduleRedraw])
+  }, [points, accent, markers, phaseSplitTs, scheduleRedraw])
 
   useEffect(() => {
     const el = wrapRef.current

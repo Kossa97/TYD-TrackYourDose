@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Disclaimer ──────────────────────────────────────────────────────────── */
+.disclaimer {
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+  line-height: 1.5;
+}
+
 /* ── Keyframes ───────────────────────────────────────────────────────────── */
 @keyframes shimmer {
   0%   { background-position: -200% 0; }

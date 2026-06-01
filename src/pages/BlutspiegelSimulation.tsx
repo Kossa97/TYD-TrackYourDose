@@ -3,7 +3,7 @@ import { Area, ResponsiveContainer, AreaChart } from 'recharts'
 import { FEATURES } from '../config/features'
 import { format } from 'date-fns'
 import { de as deLocale } from 'date-fns/locale'
-import { Activity, Info, Loader2 } from 'lucide-react'
+import { Activity, ChevronDown, ChevronUp, Info, Loader2 } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -18,8 +18,9 @@ import {
 } from '../services/blutspiegelHistory'
 import { loadAllCycleChartData, type CycleChartData } from '../services/liveBlutspiegelChart'
 import { LiveBlutspiegelChart } from '../components/LiveBlutspiegelChart'
-import { LiveCycleChartCanvas } from '../components/liveCycleChart/LiveCycleChartCanvas'
+import { LiveCycleChartCanvas, type LiveCycleChartHandle } from '../components/liveCycleChart/LiveCycleChartCanvas'
 import { SimulationChartCanvas } from '../components/liveCycleChart/SimulationChartCanvas'
+import type { NamedMarker } from '../components/liveCycleChart/chartMath'
 import { lerpLevel } from '../components/liveCycleChart/chartMath'
 
 // ── Typen ─────────────────────────────────────────────────────────────────
@@ -41,6 +42,7 @@ interface PkProfileEmbed {
   half_life_hours: number
   tmax_hours: number
   bioavailability_sc: number
+  vd_l_kg: number | null
   category: string
 }
 
@@ -284,28 +286,6 @@ function FieldLabel({ children, tip }: { children: string; tip: string }) {
   )
 }
 
-const METRIC_EXPLANATIONS = {
-  peak: {
-    title: 'Peak-Konzentration',
-    explain: 'Der höchste Wirkstoffspiegel in deinem Blut. Zu diesem Zeitpunkt ist die Wirkung am stärksten.',
-  },
-  tmax: {
-    title: 'Zeit bis zum Peak (Tmax)',
-    explain: 'So lange dauert es nach der Injektion, bis der Wirkstoff seinen Höchstwert erreicht.',
-  },
-  halfLife: {
-    title: 'Halbwertzeit',
-    explain: 'Nach dieser Zeit ist die Hälfte des Wirkstoffs abgebaut. Nach 2 Halbwertzeiten sind es 75 %, nach 5 Halbwertzeiten ist der Wirkstoff praktisch weg.',
-  },
-  duration: {
-    title: 'Wirkungsdauer',
-    explain: 'Geschätzte Zeit, bis der Spiegel unter 10 % fällt — ab hier ist die Wirkung vernachlässigbar.',
-  },
-  accum: {
-    title: 'Akkumulationsfaktor',
-    explain: 'Zeigt, wie stark sich der Wirkstoff bei regelmäßiger Einnahme im Körper ansammelt. Wert 2,0 bedeutet: Nach mehreren Dosen ist der Spiegel doppelt so hoch wie nach der ersten Injektion.',
-  },
-} as const
 
 // ── Live-Zyklus-Karte ─────────────────────────────────────────────────────
 
@@ -325,6 +305,9 @@ function LiveCycleCard({
   const [curve, setCurve]               = useState<BlutspiegelCurvePoint[]>([])
   const [events, setEvents]             = useState<DoseEvent[]>([])
   const [curveLoading, setCurveLoading] = useState(true)
+  const chartRef                        = useRef<LiveCycleChartHandle>(null)
+  const [showJetzt, setShowJetzt]       = useState(false)
+  const [hasHistory, setHasHistory]     = useState(false)
 
   // Einmaliges Laden der Einnahmen + Kurvenberechnung
   useEffect(() => {
@@ -376,6 +359,12 @@ function LiveCycleCard({
     [events, chartData, pk.tmax_hours],
   )
 
+  // Wirkungsbeginn: erster Punkt wo der akkumulierte Spiegel >= 25%
+  const onsetMarkers = useMemo((): NamedMarker[] => {
+    const onset = chartData.find(p => p.level >= 25)
+    return onset ? [{ ts: onset.ts, label: 'Wirkungsbeginn', color: '#06b6d4' }] : []
+  }, [chartData])
+
   const trend    = level ? TREND_META[level.trend] : TREND_META.stable
   const hasCurve = curve.length > 0
 
@@ -426,30 +415,66 @@ function LiveCycleCard({
           </div>
         ) : hasCurve ? (
           <>
-            {/* Hinweis */}
-            <p style={{ fontSize: '0.52rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginBottom: 4 }}>
-              7-Tage-Fenster · wischen für Verlauf · halten zum Ablesen
-            </p>
+            {/* Hinweis + Navigationsbuttons in einer Zeile */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, minHeight: 40 }}>
+              <div>
+                <p style={{ fontSize: '0.52rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginBottom: 4 }}>
+                  7-Tage-Fenster · wischen für Verlauf · halten zum Ablesen
+                </p>
+                {/* Legende */}
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {[
+                    { bg: '#06b6d4', label: 'Wirkungsbeginn' },
+                    { bg: '#10b981', label: 'Einnahme' },
+                    { bg: '#f59e0b', label: 'Peak' },
+                  ].map(({ bg, label }) => (
+                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: bg, display: 'inline-block', flexShrink: 0 }} />
+                      <span style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-            {/* Legende */}
-            <div style={{ display: 'flex', gap: 10, marginBottom: 6 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-                <span style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>Einnahme</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', border: '1.5px solid #f59e0b', display: 'inline-block', boxSizing: 'border-box' }} />
-                <span style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>Peak</span>
-              </div>
+              {/* Navigationsbuttons rechts — nebeneinander, gleicher Stil */}
+              {(hasHistory || showJetzt) && (
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0, paddingLeft: 12 }}>
+                  {hasHistory && (
+                    <button type="button" onClick={() => chartRef.current?.jumpToStart()} style={{
+                      fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.03em',
+                      color: 'rgba(255,255,255,0.75)', background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.18)',
+                      borderRadius: 20, padding: '5px 14px', cursor: 'pointer', fontFamily: 'inherit',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      ⏮ Zyklusstart
+                    </button>
+                  )}
+                  {showJetzt && (
+                    <button type="button" onClick={() => chartRef.current?.jumpToNow()} style={{
+                      fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.03em',
+                      color: 'rgba(255,255,255,0.75)', background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.18)',
+                      borderRadius: 20, padding: '5px 14px', cursor: 'pointer', fontFamily: 'inherit',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      Live ↩
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             <LiveCycleChartCanvas
+              ref={chartRef}
               points={chartData}
               doseMarkers={doseMarkers}
               peakMarkers={peakMarkers}
+              namedMarkers={onsetMarkers}
               accent={accent}
               windowMs={WINDOW_HOURS * 3_600_000}
               height={180}
+              onNavState={(sj, hh) => { setShowJetzt(sj); setHasHistory(hh) }}
             />
           </>
         ) : (
@@ -476,30 +501,57 @@ function LiveCycleCard({
         )}
       </div>
 
-      {/* Stats 3er-Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
+      {/* Stats — einheitliches 2×3-Raster */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
         {[
-          { label: 'Nächste Dosis', value: level?.nextDoseIn ?? '—', color: 'var(--text)' },
-          { label: 'Level danach',  value: level ? `~${level.levelAfterNextDose.toFixed(0)}%` : '—', color: accent },
-          { label: 'Peak',          value: level?.peakLabel ?? '—', color: '#f59e0b' },
-        ].map(({ label, value, color }) => (
-          <div key={label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '7px 8px' }}>
-            <p style={{ fontSize: '0.52rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
-            <p style={{ fontSize: '0.82rem', fontWeight: 900, color }}>{value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* PK-Parameter */}
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        {([
-          { k: 'T½',   v: `${pk.half_life_hours}h`, tip: 'Halbwertzeit — nach dieser Zeit sind 50% abgebaut' },
-          { k: 'Tmax', v: `${pk.tmax_hours}h`,       tip: 'Zeit bis zum Peak nach der Injektion' },
-          { k: 'F',    v: `${Math.round(pk.bioavailability_sc * 100)}%`, tip: 'Bioverfügbarkeit — wie viel tatsächlich wirkt' },
-        ] as const).map(({ k, v, tip }) => (
-          <div key={k} title={tip} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'help' }}>
-            <span style={{ fontSize: '0.58rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{k}:</span>
-            <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-dim)' }}>{v}</span>
+          {
+            label: 'Peak',
+            value: level?.peakLabel ?? '—',
+            sub: 'Zeitpunkt des letzten oder nächsten Höchstspiegels',
+            color: '#f59e0b',
+          },
+          {
+            label: 'Halbwertzeit T½ (h)',
+            value: `${pk.half_life_hours} h`,
+            sub: 'Nach dieser Zeit sind 50 % des Wirkstoffs abgebaut',
+            color: 'var(--text-dim)',
+          },
+          {
+            label: 'Tmax (h)',
+            value: `${pk.tmax_hours} h`,
+            sub: 'Zeit von der Injektion bis zum Höchstspiegel im Blut',
+            color: 'var(--text-dim)',
+          },
+          {
+            label: 'Bioverfügbarkeit F (%)',
+            value: `${Math.round(pk.bioavailability_sc * 100)} %`,
+            sub: 'Anteil des Wirkstoffs, der tatsächlich in den Blutkreislauf gelangt',
+            color: 'var(--text-dim)',
+          },
+          {
+            label: 'Verteilungsvolumen Vd (L/kg)',
+            value: pk.vd_l_kg != null ? `${pk.vd_l_kg} L/kg` : '—',
+            sub: 'Wie stark sich der Wirkstoff im Körpergewebe verteilt',
+            color: 'var(--text-dim)',
+          },
+          {
+            label: 'Eliminationskonstante ke (1/h)',
+            value: `${(Math.LN2 / pk.half_life_hours).toFixed(3)} /h`,
+            sub: 'Anteil des Wirkstoffs, der pro Stunde abgebaut wird',
+            color: 'var(--text-dim)',
+          },
+        ].map(({ label, value, sub, color }) => (
+          <div key={label} style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.05)',
+            borderRadius: 12, padding: '8px 10px',
+          }}>
+            <p style={{
+              fontSize: '0.48rem', color: 'var(--text-muted)', fontWeight: 700,
+              textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3,
+            }}>{label}</p>
+            <p style={{ fontSize: '0.88rem', fontWeight: 900, color, marginBottom: 3, lineHeight: 1 }}>{value}</p>
+            <p style={{ fontSize: '0.46rem', color: 'var(--text-muted)', lineHeight: 1.4, opacity: 0.75 }}>{sub}</p>
           </div>
         ))}
       </div>
@@ -526,6 +578,7 @@ export function BlutspiegelSimulation() {
   const [interval, setInterval]           = useState('8')
   const [numDoses, setNumDoses]           = useState('3')
   const [simResult, setSimResult]         = useState<PkResult | null>(null)
+  const [simOpen, setSimOpen]             = useState(true)
 
   // Live-Übersicht für alle aktiven Zyklen
   const [liveData, setLiveData]           = useState<Map<string, CurrentBlutspiegelLevel>>(new Map())
@@ -557,7 +610,7 @@ export function BlutspiegelSimulation() {
       .from('cycles')
       .select(`id, peptide_id, dose, unit, method,
         peptides ( name, pk_profile_id,
-          pk_profiles ( name, half_life_hours, tmax_hours, bioavailability_sc, category )
+          pk_profiles ( name, half_life_hours, tmax_hours, bioavailability_sc, vd_l_kg, category )
         )`)
       .eq('user_id', user.id)
       .eq('active', true)
@@ -643,16 +696,6 @@ export function BlutspiegelSimulation() {
     setSimResult(result)
   }, [selectedProfile, multiDose, interval, numDoses])
 
-  // X-Achsen Ticks
-  const xTicks = useMemo(() => {
-    if (!selectedProfile) return []
-    const max = selectedProfile.half_life_hours * 5
-    const step = max > 40 ? 10 : max > 20 ? 5 : max > 10 ? 2 : 1
-    const ticks: number[] = []
-    for (let t = 0; t <= max; t += step) ticks.push(Math.round(t * 10) / 10)
-    return ticks
-  }, [selectedProfile])
-
   // Sim-Kurve als Canvas-Punkte (ts = Stunden, level = %)
   const simPoints = useMemo(
     () => (simResult ? simResult.data.map(p => ({ ts: p.t, level: p.c })) : []),
@@ -660,9 +703,14 @@ export function BlutspiegelSimulation() {
   )
 
   // Dezente Marker (Labels erscheinen nur beim Ablesen in der Nähe)
-  const simMarkers = useMemo(() => {
+  const simMarkers = useMemo((): NamedMarker[] => {
     if (!simResult || !selectedProfile) return []
+
+    // Wirkungsbeginn: erster Punkt wo Level > 25% (Anstiegsphase)
+    const onset = simResult.data.find(p => p.c >= 25)
+
     const list = [
+      ...(onset ? [{ ts: onset.t, label: 'Wirkungsbeginn', color: '#06b6d4' }] : []),
       { ts: simResult.tmaxActual, label: 'Peak', color: '#f59e0b' },
       { ts: selectedProfile.half_life_hours, label: '½ Halbwertzeit', color: '#a78bfa' },
     ]
@@ -687,6 +735,9 @@ export function BlutspiegelSimulation() {
           </h1>
           <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: 5, lineHeight: 1.5 }}>
             Sieh auf einen Blick, wann dein Peptid wirkt und wann es wieder abgebaut ist
+          </p>
+          <p className="disclaimer" style={{ marginTop: 6 }}>
+            Alle Werte basieren auf pharmakologischen Modellen und sind Schätzungen — kein medizinischer Rat.
           </p>
         </div>
       </div>
@@ -755,7 +806,33 @@ export function BlutspiegelSimulation() {
 
       {/* Manuelle Simulation */}
       <div style={PANEL}>
-        <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text)', marginBottom: 2 }}>Manuelle Simulation</p>
+        {/* Header — klickbar zum Ein-/Ausklappen */}
+        <button
+          type="button"
+          onClick={() => setSimOpen(o => !o)}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center',
+            justifyContent: 'space-between', gap: 8,
+            background: 'none', border: 'none', padding: 0,
+            cursor: 'pointer', marginBottom: simOpen ? 2 : 0,
+          }}
+        >
+          <div style={{ textAlign: 'left' }}>
+            <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text)', marginBottom: 1 }}>
+              Manuelle Simulation
+            </p>
+            {!simOpen && (
+              <p style={{ fontSize: '0.58rem', color: 'var(--text-muted)' }}>
+                Tippen zum Öffnen
+              </p>
+            )}
+          </div>
+          {simOpen
+            ? <ChevronUp size={16} color="var(--text-muted)" />
+            : <ChevronDown size={16} color="var(--text-muted)" />}
+        </button>
+
+        {simOpen && <>
         <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
           Simuliere den theoretischen Verlauf einer Einzeldosis — wähle Substanz, Dosis und Route.
           Die Werte sind Schätzungen auf Basis pharmakologischer Durchschnittsdaten.
@@ -878,9 +955,11 @@ export function BlutspiegelSimulation() {
         >
           <Activity size={16} /> Simulation starten
         </button>
+        </>}
       </div>
 
-      {/* Chart */}
+      {/* Chart + Ergebnisse — nur sichtbar wenn Sim offen oder Ergebnis vorhanden */}
+      {simOpen && <>
       {simResult && selectedProfile && (
         <>
           <div style={{ ...PANEL, paddingBottom: 20 }}>
@@ -893,7 +972,6 @@ export function BlutspiegelSimulation() {
 
             <SimulationChartCanvas
               points={simPoints}
-              xTicks={xTicks}
               markers={simMarkers}
               phaseSplitTs={simResult.tmaxActual}
               accent="#00ccf5"
@@ -901,89 +979,89 @@ export function BlutspiegelSimulation() {
             />
           </div>
 
-          {/* Info-Box — Werte erklärt */}
+          {/* Ergebnisse & Parameter — kombiniert, einfach erklärt */}
           <div style={PANEL}>
-            <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text)', marginBottom: 12 }}>
-              Deine Ergebnisse — einfach erklärt
+            <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>
+              Ergebnisse & Parameter — einfach erklärt
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {[
+            <p style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
+              Was die Simulation für <strong style={{ color: 'var(--text-dim)' }}>{selectedProfile.name}</strong> bedeutet — in einfachen Worten.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {([
                 {
-                  ...METRIC_EXPLANATIONS.peak,
+                  label: 'Höchster Spiegel (Peak)',
                   value: '100 %',
                   color: 'var(--accent)',
+                  explain: 'Der maximale Wirkstoffspiegel, den du mit dieser Dosis erreichst — normiert auf 100 %. Alle anderen Werte werden relativ dazu angezeigt.',
                 },
                 {
-                  ...METRIC_EXPLANATIONS.tmax,
+                  label: `Zeit bis zum Peak — Tmax (${Math.round(simResult.tmaxActual * 10) / 10} h)`,
                   value: `${Math.round(simResult.tmaxActual * 10) / 10} Stunden`,
                   color: '#f59e0b',
+                  explain: `Nach der Injektion dauert es ca. ${Math.round(simResult.tmaxActual * 10) / 10} Stunden, bis der Wirkstoff seinen Höchstwert im Blut erreicht. Erst ab diesem Punkt bist du auf dem Wirkungsmaximum.`,
                 },
                 {
-                  ...METRIC_EXPLANATIONS.halfLife,
+                  label: `Halbwertzeit — T½ (${selectedProfile.half_life_hours} h)`,
                   value: `${selectedProfile.half_life_hours} Stunden`,
                   color: '#a78bfa',
+                  explain: `Nach ${selectedProfile.half_life_hours} Stunden ist die Hälfte des Wirkstoffs abgebaut. Nach ${selectedProfile.half_life_hours * 2} h sind es 75 %, nach ${selectedProfile.half_life_hours * 5} h ist er praktisch vollständig eliminiert. Je länger die Halbwertzeit, desto seltener muss dosiert werden.`,
                 },
                 {
-                  ...METRIC_EXPLANATIONS.duration,
+                  label: `Wirkungsdauer (bis < 10 %)`,
                   value: simResult.t10 < selectedProfile.half_life_hours * 5
                     ? `${Math.round(simResult.t10 * 10) / 10} Stunden`
                     : `über ${Math.round(selectedProfile.half_life_hours * 5)} Stunden`,
                   color: 'var(--text-dim)',
+                  explain: 'Ab dem Zeitpunkt, wo der Spiegel unter 10 % fällt, ist die Wirkung vernachlässigbar gering. Das gibt dir einen Anhaltspunkt, wie lange eine Dosis tatsächlich aktiv wirkt.',
                 },
-                ...(multiDose
-                  ? [{
-                      ...METRIC_EXPLANATIONS.accum,
-                      value: `${simResult.accumFactor.toFixed(2)}×`,
-                      color: '#10b981',
-                    }]
-                  : []),
-              ].map(({ title, value, explain, color }) => (
-                <div
-                  key={title}
-                  style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: 14,
-                    padding: '14px 16px',
-                  }}
-                >
-                  <p style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: 4 }}>
-                    {title}
-                  </p>
-                  <p style={{ fontSize: '1.35rem', fontWeight: 900, color, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 8 }}>
-                    {value}
-                  </p>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', lineHeight: 1.55 }}>
-                    {explain}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* PK-Parameter des gewählten Profils */}
-          <div style={{ ...PANEL }}>
-            <p style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
-              PK-Parameter — {selectedProfile.name}
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-              {[
-                { k: 'Halbwertzeit', v: `${selectedProfile.half_life_hours} h` },
-                { k: 'Tmax (Profil)', v: `${selectedProfile.tmax_hours} h` },
-                { k: 'Bioverfügbarkeit', v: `${Math.round(selectedProfile.bioavailability_sc * 100)} %` },
-                { k: 'Vd', v: `${selectedProfile.vd_l_kg} L/kg` },
-                { k: 'Kategorie', v: selectedProfile.category },
-                { k: 'ke', v: `${(Math.LN2 / selectedProfile.half_life_hours).toFixed(3)} /h` },
-              ].map(({ k, v }) => (
-                <div key={k} style={{ padding: '8px 10px', borderRadius: 10, background: 'var(--accent-weak)', border: '1px solid var(--accent-border)' }}>
-                  <p style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginBottom: 3 }}>{k}</p>
-                  <p style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text)' }}>{v}</p>
+                {
+                  label: `Bioverfügbarkeit — F (${Math.round(selectedProfile.bioavailability_sc * 100)} %)`,
+                  value: `${Math.round(selectedProfile.bioavailability_sc * 100)} %`,
+                  color: '#10b981',
+                  explain: `Von der injizierten Menge kommen tatsächlich ${Math.round(selectedProfile.bioavailability_sc * 100)} % in den Blutkreislauf an. Der Rest wird vor der Wirkung abgebaut. Bei subkutaner Injektion (SC) ist dieser Wert typischerweise hoch.`,
+                },
+                {
+                  label: `Verteilungsvolumen — Vd (${selectedProfile.vd_l_kg != null ? selectedProfile.vd_l_kg + ' L/kg' : '—'})`,
+                  value: selectedProfile.vd_l_kg != null ? `${selectedProfile.vd_l_kg} L/kg` : '—',
+                  color: 'var(--text-dim)',
+                  explain: 'Gibt an, wie stark sich der Wirkstoff im Körpergewebe verteilt. Ein hoher Wert (> 1 L/kg) bedeutet: Der Wirkstoff speichert sich stark im Gewebe, nicht nur im Blut. Das erklärt oft eine längere Wirkdauer.',
+                },
+                {
+                  label: `Eliminationskonstante — ke (${(Math.LN2 / selectedProfile.half_life_hours).toFixed(3)} /h)`,
+                  value: `${(Math.LN2 / selectedProfile.half_life_hours).toFixed(3)} /h`,
+                  color: 'var(--text-dim)',
+                  explain: `Pro Stunde werden ${((Math.LN2 / selectedProfile.half_life_hours) * 100).toFixed(1)} % des noch vorhandenen Wirkstoffs abgebaut. Kleiner Wert = langsamer Abbau = lange Wirkdauer.`,
+                },
+                ...(multiDose ? [{
+                  label: `Akkumulationsfaktor (${simResult.accumFactor.toFixed(2)}×)`,
+                  value: `${simResult.accumFactor.toFixed(2)}×`,
+                  color: '#f59e0b',
+                  explain: `Bei regelmäßiger Einnahme mit deinem gewählten Intervall ist der Steady-State-Spiegel ${simResult.accumFactor.toFixed(2)}-mal so hoch wie nach der ersten Dosis. ${simResult.accumFactor > 2 ? 'Das ist eine starke Akkumulation — der Wirkstoff sammelt sich deutlich an.' : simResult.accumFactor > 1.5 ? 'Der Wirkstoff reichert sich spürbar an.' : 'Die Akkumulation ist gering.'}`,
+                }] : []),
+              ] as { label: string; value: string; color: string; explain: string }[])
+              .map(({ label, value, color, explain }) => (
+                <div key={label} style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 2fr',
+                  gap: '8px 16px',
+                  alignItems: 'start',
+                  padding: '12px 14px',
+                  background: 'rgba(255,255,255,0.025)',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  borderRadius: 12,
+                }}>
+                  <div>
+                    <p style={{ fontSize: '0.58rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: 4, lineHeight: 1.3 }}>{label}</p>
+                    <p style={{ fontSize: '1.1rem', fontWeight: 900, color, letterSpacing: '-0.02em', lineHeight: 1 }}>{value}</p>
+                  </div>
+                  <p style={{ fontSize: '0.68rem', color: 'var(--text-dim)', lineHeight: 1.6, paddingTop: 2 }}>{explain}</p>
                 </div>
               ))}
             </div>
             {selectedProfile.notes && (
-              <p style={{ marginTop: 10, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                {selectedProfile.notes}
+              <p style={{ marginTop: 12, fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.55, padding: '10px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: 10, borderLeft: '2px solid var(--accent-border)' }}>
+                <strong style={{ color: 'var(--text-dim)' }}>Hinweis: </strong>{selectedProfile.notes}
               </p>
             )}
           </div>
@@ -1001,15 +1079,9 @@ export function BlutspiegelSimulation() {
           </p>
         </div>
       )}
+      </>}
 
-      <p style={{
-        fontSize: '0.68rem',
-        lineHeight: 1.55,
-        color: 'var(--text-muted)',
-        textAlign: 'center',
-        padding: '4px 8px 12px',
-      }}>
-        Diese Simulation dient ausschließlich zu Informationszwecken und ersetzt keine medizinische Beratung.
+      <p className="disclaimer" style={{ textAlign: 'center', padding: '4px 8px 12px' }}>
         Konsultiere einen Arzt, bevor du Peptide verwendest.
       </p>
     </div>

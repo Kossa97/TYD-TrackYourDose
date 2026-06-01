@@ -74,3 +74,27 @@ describe('pickDayTicks', () => {
     expect(pickDayTicks(0, 7 * DAY, 0, 56)).toEqual([])
   })
 })
+
+import { pickNiceTicks } from './chartMath'
+
+describe('pickNiceTicks', () => {
+  it('grobe, runde Schritte bei großem Bereich (kein Überlappen)', () => {
+    // 0..840h, breit: maxTicks=25, rawStep=33.6 → nice 50
+    expect(pickNiceTicks(0, 840, 1800, 70)).toEqual([
+      0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800,
+    ])
+  })
+  it('feine Schritte bei kleinem Bereich', () => {
+    // 0..20h, breit: rawStep≈0.8 → nice 1
+    expect(pickNiceTicks(0, 20, 1800, 70)).toEqual([
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    ])
+  })
+  it('wenig Platz → wenige Ticks', () => {
+    expect(pickNiceTicks(0, 100, 140, 70)).toEqual([0, 50, 100])
+  })
+  it('leeres Array bei ungültigem Bereich', () => {
+    expect(pickNiceTicks(5, 5, 700, 70)).toEqual([])
+    expect(pickNiceTicks(0, 100, 0, 70)).toEqual([])
+  })
+})

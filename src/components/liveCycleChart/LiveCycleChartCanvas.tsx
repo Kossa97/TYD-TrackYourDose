@@ -4,12 +4,12 @@
  * Wischen: Finger rechts = Vergangenheit, kein Momentum/Snap.
  * Ablesen: Touch ~300ms halten (dann scrubben) / Maus-Hover.
  */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { format } from 'date-fns'
 import { de as deLocale } from 'date-fns/locale'
 import {
   lerpLevel, panViewEnd, clampViewEnd, pickDayTicks,
-  type ChartPoint, type MarkerPoint,
+  type ChartPoint, type MarkerPoint, type NamedMarker,
 } from './chartMath'
 
 const PAD = { top: 16, right: 10, bottom: 24, left: 40 } as const
@@ -27,21 +27,33 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath()
 }
 
-export function LiveCycleChartCanvas({
-  points,
-  doseMarkers,
-  peakMarkers,
-  accent,
-  windowMs,
-  height = 180,
-}: {
+export interface LiveCycleChartHandle {
+  jumpToStart: () => void
+  jumpToNow: () => void
+}
+
+interface LiveCycleChartProps {
   points: ChartPoint[]
   doseMarkers: MarkerPoint[]
   peakMarkers: MarkerPoint[]
+  namedMarkers?: NamedMarker[]
   accent: string
   windowMs: number
   height?: number
-}) {
+  onNavState?: (showJetzt: boolean, hasHistory: boolean) => void
+}
+
+export const LiveCycleChartCanvas = forwardRef<LiveCycleChartHandle, LiveCycleChartProps>(
+function LiveCycleChartCanvas({
+  points,
+  doseMarkers,
+  peakMarkers,
+  namedMarkers = [],
+  accent,
+  windowMs,
+  height = 180,
+  onNavState,
+}, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
 
@@ -49,6 +61,7 @@ export function LiveCycleChartCanvas({
   const pointsRef = useRef(points)
   const doseRef = useRef(doseMarkers)
   const peakRef = useRef(peakMarkers)
+  const namedRef = useRef(namedMarkers)
   const accentRef = useRef(accent)
   const windowMsRef = useRef(windowMs)
 
@@ -65,6 +78,13 @@ export function LiveCycleChartCanvas({
   const drawRaf = useRef<number | null>(null)
 
   const [showJetzt, setShowJetzt] = useState(false)
+  const [hasHistory, setHasHistory] = useState(false)
+  const onNavStateRef = useRef(onNavState)
+  useEffect(() => { onNavStateRef.current = onNavState }, [onNavState])
+  const notifyNav = useCallback((jetzt: boolean, hist: boolean) => {
+    setShowJetzt(jetzt); setHasHistory(hist)
+    onNavStateRef.current?.(jetzt, hist)
+  }, [])
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current
@@ -142,23 +162,121 @@ export function LiveCycleChartCanvas({
       for (let i = 1; i < vis.length; i++) ctx.lineTo(tsToX(vis[i].ts), lvToY(vis[i].level))
       ctx.strokeStyle = accentRef.current; ctx.lineWidth = 1.8; ctx.stroke()
     }
+    const readingX = isReadingRef.current
+      ? tsToX(Math.max(viewStart, Math.min(viewEnd, readTsRef.current)))
+      : null
+
+    // Alle Marker sammeln
+    type LiveMk = { x: number; y: number; text: string; color: string; dist: number; filled: boolean }
+    const allMarkers: LiveMk[] = []
     for (const m of doseRef.current) {
       const x = tsToX(m.ts)
       if (x < dX - 6 || x > dX + dW + 6) continue
-      ctx.beginPath(); ctx.arc(x, lvToY(m.level), 3, 0, Math.PI * 2)
-      ctx.fillStyle = '#10b981'; ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1
+      const dist = readingX != null ? Math.abs(x - readingX) : Infinity
+      allMarkers.push({ x, y: lvToY(m.level), text: 'Einnahme', color: '#10b981', dist, filled: true })
     }
     for (const m of peakRef.current) {
       const x = tsToX(m.ts)
       if (x < dX - 6 || x > dX + dW + 6) continue
-      ctx.beginPath(); ctx.arc(x, lvToY(m.level), 3, 0, Math.PI * 2)
-      ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1.3; ctx.globalAlpha = 0.85; ctx.stroke(); ctx.globalAlpha = 1
+      const dist = readingX != null ? Math.abs(x - readingX) : Infinity
+      allMarkers.push({ x, y: lvToY(m.level), text: 'Peak', color: '#f59e0b', dist, filled: false })
+    }
+
+    // Gruppieren (< 10px = Split-Kreis)
+    const SPLIT_THRESH = 10
+    const liveGroups: LiveMk[][] = []
+    for (const m of allMarkers) {
+      const grp = liveGroups.find(g => Math.abs(g[0].x - m.x) <= SPLIT_THRESH)
+      if (grp) grp.push(m)
+      else liveGroups.push([m])
+    }
+
+    const nearCandidates: { x: number; y: number; text: string; color: string; dist: number }[] = []
+    for (const grp of liveGroups) {
+      const cx = grp.reduce((s, m) => s + m.x, 0) / grp.length
+      const cy = grp.reduce((s, m) => s + m.y, 0) / grp.length
+      const nearDist = Math.min(...grp.map(m => m.dist))
+      const near = nearDist <= 26
+      const r = near ? 4.5 : 3
+
+      if (grp.length === 1) {
+        const m = grp[0]
+        if (m.filled) {
+          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2)
+          ctx.fillStyle = m.color; ctx.globalAlpha = near ? 1 : 0.9; ctx.fill(); ctx.globalAlpha = 1
+          if (near) { ctx.lineWidth = 1.5; ctx.strokeStyle = surface; ctx.stroke() }
+        } else {
+          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2)
+          ctx.fillStyle = m.color; ctx.globalAlpha = near ? 1 : 0.85; ctx.fill(); ctx.globalAlpha = 1
+          ctx.lineWidth = 1; ctx.strokeStyle = surface; ctx.stroke()
+        }
+      } else {
+        // Split-Kreis
+        const n = grp.length
+        const step = (2 * Math.PI) / n
+        const start = -Math.PI / 2
+        grp.forEach((m, i) => {
+          ctx.beginPath()
+          ctx.moveTo(cx, cy)
+          ctx.arc(cx, cy, r, start + i * step, start + (i + 1) * step)
+          ctx.closePath()
+          ctx.globalAlpha = near ? 1 : 0.9; ctx.fillStyle = m.color; ctx.fill(); ctx.globalAlpha = 1
+        })
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2)
+        ctx.lineWidth = 1; ctx.strokeStyle = surface; ctx.stroke()
+      }
+
+      if (near) grp.forEach(m => nearCandidates.push({ x: cx, y: cy, text: m.text, color: m.color, dist: m.dist }))
     }
     ctx.restore()
 
-    // Y-Maske (deckt Überlauf links) + Labels
-    ctx.fillStyle = surface
-    ctx.fillRect(0, 0, dX - 1, cssH)
+    // Nahe NamedMarkers (Wirkungsbeginn etc.) zeichnen — gleich behandelt wie Sim-Marker
+    for (const nm of namedRef.current) {
+      const nx = tsToX(nm.ts)
+      if (nx < dX - 6 || nx > dX + dW + 6) continue
+      const ny = lvToY(lerpLevel(pts, nm.ts))
+      const ndist = readingX != null ? Math.abs(nx - readingX) : Infinity
+      const nnear = ndist <= 26
+      ctx.beginPath(); ctx.arc(nx, ny, nnear ? 4 : 3, 0, Math.PI * 2)
+      ctx.fillStyle = nm.color; ctx.globalAlpha = nnear ? 1 : 0.8; ctx.fill(); ctx.globalAlpha = 1
+      ctx.lineWidth = 1; ctx.strokeStyle = surface; ctx.stroke()
+      if (nnear) nearCandidates.push({ x: nx, y: ny, text: nm.label, color: nm.color, dist: ndist })
+    }
+
+    // Labels gestapelt — gleiche Namen zusammenfassen ("Peak ×2" statt doppelt)
+    if (nearCandidates.length > 0) {
+      nearCandidates.sort((a, b) => a.dist - b.dist)
+      // Dedup: gleicher Text → zusammenfassen mit Zähler
+      const seen = new Map<string, { text: string; x: number; y: number; color: string; count: number; dist: number }>()
+      for (const c of nearCandidates) {
+        if (seen.has(c.text)) seen.get(c.text)!.count++
+        else seen.set(c.text, { text: c.text, x: c.x, y: c.y, color: c.color, count: 1, dist: c.dist })
+      }
+      const unique = [...seen.values()].sort((a, b) => a.dist - b.dist)
+      ctx.font = '9px ui-monospace,monospace'
+      const LINE = 13
+      const refX = unique[0].x
+      const minY = Math.min(...unique.map(c => c.y))
+      const stackH = unique.length * LINE
+      const placeBelow = minY - stackH < dY + 6
+      let labelY = placeBelow
+        ? Math.max(...unique.map(c => c.y)) + 16
+        : minY - 6
+      ctx.globalAlpha = 0.95
+      for (const lb of unique) {
+        const text = lb.count > 1 ? `${lb.text} ×${lb.count}` : lb.text
+        const tw = ctx.measureText(text).width
+        const lx = Math.max(dX + 2, Math.min(dX + dW - tw - 2, refX - tw / 2))
+        ctx.textAlign = 'left'
+        ctx.textBaseline = placeBelow ? 'top' : 'bottom'
+        ctx.fillStyle = lb.color
+        ctx.fillText(text, lx, labelY)
+        labelY += placeBelow ? LINE : -LINE
+      }
+      ctx.globalAlpha = 1
+    }
+
+    // Y-Achsen-Labels (ohne Balken — direkt auf dem Karten-Hintergrund)
     ctx.font = '9px ui-monospace,monospace'
     ctx.fillStyle = muted
     ctx.textAlign = 'right'
@@ -194,9 +312,15 @@ export function LiveCycleChartCanvas({
       ctx.setLineDash([3, 2])
       ctx.beginPath(); ctx.moveTo(x, dY); ctx.lineTo(x, dY + dH); ctx.stroke()
       ctx.setLineDash([])
-      ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2)
-      ctx.fillStyle = surface; ctx.fill()
-      ctx.strokeStyle = accentRef.current; ctx.lineWidth = 2; ctx.stroke()
+      // Ables-Punkt nur zeigen, wenn kein Marker in der Nähe ist (< 8px)
+      const nearestMarkerDist = nearCandidates.length > 0
+        ? Math.min(...nearCandidates.map(c => c.dist))
+        : Infinity
+      if (nearestMarkerDist >= 8) {
+        ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2)
+        ctx.fillStyle = surface; ctx.fill()
+        ctx.strokeStyle = accentRef.current; ctx.lineWidth = 2; ctx.stroke()
+      }
 
       const label = format(new Date(ts), 'EEE dd.MM · HH:mm', { locale: deLocale })
       const valStr = lv.toFixed(1) + '%'
@@ -229,6 +353,7 @@ export function LiveCycleChartCanvas({
     pointsRef.current = points
     doseRef.current = doseMarkers
     peakRef.current = peakMarkers
+    namedRef.current = namedMarkers
     accentRef.current = accent
     windowMsRef.current = windowMs
     if (points.length) {
@@ -236,10 +361,10 @@ export function LiveCycleChartCanvas({
       const start = points[0].ts
       if (followLiveRef.current) viewEndRef.current = now
       viewEndRef.current = clampViewEnd(viewEndRef.current, start, now, windowMs)
-      setShowJetzt(!followLiveRef.current)
+      notifyNav(!followLiveRef.current, now - start > windowMs)
     }
     scheduleRedraw()
-  }, [points, doseMarkers, peakMarkers, accent, windowMs, scheduleRedraw])
+  }, [points, doseMarkers, peakMarkers, namedMarkers, accent, windowMs, scheduleRedraw])
 
   // ResizeObserver
   useEffect(() => {
@@ -312,7 +437,7 @@ export function LiveCycleChartCanvas({
     )
     viewEndRef.current = ve
     followLiveRef.current = ve >= now - 1000
-    setShowJetzt(!followLiveRef.current)
+    notifyNav(!followLiveRef.current, hasHistory)
     scheduleRedraw()
   }
 
@@ -337,37 +462,35 @@ export function LiveCycleChartCanvas({
     if (!pts.length) return
     followLiveRef.current = true
     viewEndRef.current = pts[pts.length - 1].ts
-    setShowJetzt(false)
+    notifyNav(false, hasHistory)
     scheduleRedraw()
   }
 
+  const jumpToStart = () => {
+    const pts = pointsRef.current
+    if (!pts.length) return
+    followLiveRef.current = false
+    const now = pts[pts.length - 1].ts
+    const start = pts[0].ts
+    viewEndRef.current = clampViewEnd(start + windowMsRef.current, start, now, windowMsRef.current)
+    notifyNav(true, hasHistory)
+    scheduleRedraw()
+  }
+
+  useImperativeHandle(ref, () => ({ jumpToStart, jumpToNow }), [jumpToStart, jumpToNow])
+
   return (
-    <div style={{ position: 'relative' }}>
-      <div
-        ref={wrapRef}
-        style={{ height, touchAction: 'pan-y', userSelect: 'none', cursor: 'crosshair' }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endInteraction}
-        onPointerCancel={endInteraction}
-        onPointerLeave={onPointerLeave}
-      >
-        <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
-      </div>
-      {showJetzt && (
-        <button
-          type="button"
-          onClick={jumpToNow}
-          style={{
-            position: 'absolute', top: 0, right: 2,
-            fontSize: '0.52rem', fontWeight: 800, color: accent,
-            background: `${accent}15`, border: `1px solid ${accent}25`,
-            borderRadius: 6, padding: '2px 6px', cursor: 'pointer', fontFamily: 'inherit',
-          }}
-        >
-          Jetzt ↩
-        </button>
-      )}
+    <div
+      ref={wrapRef}
+      style={{ height, touchAction: 'pan-y', userSelect: 'none', cursor: 'crosshair' }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endInteraction}
+      onPointerCancel={endInteraction}
+      onPointerLeave={onPointerLeave}
+    >
+      <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
     </div>
   )
-}
+})
+
