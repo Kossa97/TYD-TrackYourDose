@@ -284,20 +284,6 @@ function FieldLabel({ children, tip }: { children: string; tip: string }) {
   )
 }
 
-function PkChartTooltip({ active, payload, label }: {
-  active?: boolean
-  payload?: Array<{ value: number }>
-  label?: number
-}) {
-  if (!active || !payload?.length) return null
-  return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--accent-border)', borderRadius: 10, padding: '8px 12px' }}>
-      <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 3 }}>Nach {label} Stunden</p>
-      <p style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--accent)' }}>{payload[0].value}% Wirkstoffspiegel</p>
-    </div>
-  )
-}
-
 const METRIC_EXPLANATIONS = {
   peak: {
     title: 'Peak-Konzentration',
