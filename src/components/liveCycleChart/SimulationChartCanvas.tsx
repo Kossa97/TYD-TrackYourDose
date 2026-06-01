@@ -19,16 +19,29 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath()
 }
 
+export interface SimMarker {
+  /** Stunden nach Injektion */
+  ts: number
+  label: string
+  /** Hex-Farbe (#rrggbb) */
+  color: string
+}
+
 export function SimulationChartCanvas({
   points,
   xTicks,
   accent,
+  markers = [],
+  phaseSplitTs,
   height = 260,
 }: {
   /** ts = Stunden nach Injektion, level = % (auf Peak = 100 normiert) */
   points: ChartPoint[]
   xTicks: number[]
   accent: string
+  markers?: SimMarker[]
+  /** Stunde, an der Anstiegs- in Abbauphase übergeht (Peak) — für dezente Tönung */
+  phaseSplitTs?: number
   height?: number
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -37,6 +50,8 @@ export function SimulationChartCanvas({
   const pointsRef = useRef(points)
   const xTicksRef = useRef(xTicks)
   const accentRef = useRef(accent)
+  const markersRef = useRef(markers)
+  const phaseRef = useRef(phaseSplitTs)
   const isReadingRef = useRef(false)
   const readXRef = useRef(0)
   const drawRaf = useRef<number | null>(null)
@@ -114,6 +129,19 @@ export function SimulationChartCanvas({
     ctx.lineTo(tsToX(pts[pts.length - 1].ts), dY + dH)
     ctx.lineTo(tsToX(pts[0].ts), dY + dH)
     ctx.closePath(); ctx.fillStyle = grad; ctx.fill()
+    // Phasen-Tönung: Anstiegsphase (bis Peak) ganz leicht heller
+    const splitTs = phaseRef.current
+    if (splitTs != null && splitTs > xStart && splitTs < xEnd) {
+      ctx.save()
+      ctx.beginPath(); ctx.rect(dX, dY, tsToX(splitTs) - dX, dH); ctx.clip()
+      ctx.beginPath()
+      ctx.moveTo(tsToX(pts[0].ts), lvToY(pts[0].level))
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(tsToX(pts[i].ts), lvToY(pts[i].level))
+      ctx.lineTo(tsToX(pts[pts.length - 1].ts), dY + dH)
+      ctx.lineTo(tsToX(pts[0].ts), dY + dH)
+      ctx.closePath(); ctx.fillStyle = accentRef.current + '16'; ctx.fill()
+      ctx.restore()
+    }
     ctx.beginPath()
     ctx.moveTo(tsToX(pts[0].ts), lvToY(pts[0].level))
     for (let i = 1; i < pts.length; i++) ctx.lineTo(tsToX(pts[i].ts), lvToY(pts[i].level))
@@ -136,6 +164,34 @@ export function SimulationChartCanvas({
     ctx.fillStyle = muted
     ctx.fillText('Wirkstoffspiegel (%)', 0, 0)
     ctx.restore()
+
+    // Marker (Peak / ½ HWZ / Wirkungsende) — dezente Punkte, Labels nur beim Ablesen in der Nähe
+    const readingX = isReadingRef.current
+      ? tsToX(Math.max(xStart, Math.min(xEnd, readXRef.current)))
+      : null
+    for (const mk of markersRef.current) {
+      if (mk.ts < xStart || mk.ts > xEnd) continue
+      const mx = tsToX(mk.ts)
+      const my = lvToY(lerpLevel(pts, mk.ts))
+      // feine Hairline zur Achse
+      ctx.strokeStyle = mk.color + '2b'
+      ctx.lineWidth = 1
+      ctx.setLineDash([2, 3])
+      ctx.beginPath(); ctx.moveTo(mx, my + 4); ctx.lineTo(mx, dY + dH); ctx.stroke()
+      ctx.setLineDash([])
+      // Punkt
+      ctx.beginPath(); ctx.arc(mx, my, 2.6, 0, Math.PI * 2)
+      ctx.globalAlpha = 0.9; ctx.fillStyle = mk.color; ctx.fill(); ctx.globalAlpha = 1
+      ctx.lineWidth = 1; ctx.strokeStyle = surface; ctx.stroke()
+      // Label nur beim Ablesen in der Nähe
+      if (readingX != null && Math.abs(mx - readingX) <= 24) {
+        ctx.font = '9px ui-monospace,monospace'
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'
+        ctx.globalAlpha = 0.95; ctx.fillStyle = mk.color
+        ctx.fillText(mk.label, mx, my - 7)
+        ctx.globalAlpha = 1
+      }
+    }
 
     // Ables-Linie
     if (isReadingRef.current) {
@@ -179,8 +235,10 @@ export function SimulationChartCanvas({
     pointsRef.current = points
     xTicksRef.current = xTicks
     accentRef.current = accent
+    markersRef.current = markers
+    phaseRef.current = phaseSplitTs
     scheduleRedraw()
-  }, [points, xTicks, accent, scheduleRedraw])
+  }, [points, xTicks, accent, markers, phaseSplitTs, scheduleRedraw])
 
   useEffect(() => {
     const el = wrapRef.current

@@ -192,10 +192,10 @@ function runSimulation(
     accumFactor = singlePeak > 0 ? peak / singlePeak : 1
   }
 
-  const data: ChartPoint[] = rawT.map((t, i) => ({
-    t: Math.round(t * 10) / 10,
-    c: Math.round(pctArr[i] * 10) / 10,
-  }))
+  // Volle Präzision behalten — Runden der Zeit auf 0,1 h würde Punkte auf
+  // denselben x-Wert kollabieren und im Canvas Treppenstufen erzeugen.
+  // Das Ablesen rundet erst bei der Anzeige (Chip).
+  const data: ChartPoint[] = rawT.map((t, i) => ({ t, c: pctArr[i] }))
 
   return { data, tmaxActual, peakPct: 100, t10, accumFactor }
 }
@@ -659,6 +659,19 @@ export function BlutspiegelSimulation() {
     [simResult],
   )
 
+  // Dezente Marker (Labels erscheinen nur beim Ablesen in der Nähe)
+  const simMarkers = useMemo(() => {
+    if (!simResult || !selectedProfile) return []
+    const list = [
+      { ts: simResult.tmaxActual, label: 'Peak', color: '#f59e0b' },
+      { ts: selectedProfile.half_life_hours, label: '½ Halbwertzeit', color: '#a78bfa' },
+    ]
+    if (simResult.t10 < selectedProfile.half_life_hours * 5) {
+      list.push({ ts: simResult.t10, label: 'Wirkungsende', color: '#9aa6bf' })
+    }
+    return list
+  }, [simResult, selectedProfile])
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 8 }}>
 
@@ -881,6 +894,8 @@ export function BlutspiegelSimulation() {
             <SimulationChartCanvas
               points={simPoints}
               xTicks={xTicks}
+              markers={simMarkers}
+              phaseSplitTs={simResult.tmaxActual}
               accent="#00ccf5"
               height={260}
             />
