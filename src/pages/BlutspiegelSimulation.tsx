@@ -348,16 +348,15 @@ function LiveCycleCard({
     [events, chartData],
   )
 
-  // Peak-Marker je Dosis (Injektion + Tmax), alle, ungefiltert
-  const peakMarkers = useMemo(
-    () => events
-      .filter(ev => ev.status === 'taken')
-      .map(ev => {
-        const peakTs = ev.timestamp.getTime() + pk.tmax_hours * 3_600_000
-        return { ts: peakTs, level: lerpLevel(chartData, peakTs) }
-      }),
-    [events, chartData, pk.tmax_hours],
-  )
+  // Peak-Marker: echtes Maximum der Kurve nach der letzten Injektion
+  const peakMarkers = useMemo(() => {
+    const lastDose = events.filter(ev => ev.status === 'taken').at(-1)
+    if (!lastDose || !chartData.length) return []
+    const afterLast = chartData.filter(p => p.ts >= lastDose.timestamp.getTime())
+    if (!afterLast.length) return []
+    const peak = afterLast.reduce((max, p) => p.level > max.level ? p : max, afterLast[0])
+    return [{ ts: peak.ts, level: peak.level }]
+  }, [events, chartData])
 
   // Wirkungsbeginn: erster Punkt wo der akkumulierte Spiegel >= 25%
   const onsetMarkers = useMemo((): NamedMarker[] => {
@@ -507,40 +506,34 @@ function LiveCycleCard({
           {
             label: 'Peak',
             value: level?.peakLabel ?? '—',
-            sub: 'Zeitpunkt des letzten oder nächsten Höchstspiegels',
-            color: '#f59e0b',
+            sub: 'Zeitpunkt, an dem nach der letzten Injektion der meiste Wirkstoff im Blut ist.',
           },
           {
             label: 'Halbwertzeit T½ (h)',
             value: `${pk.half_life_hours} h`,
-            sub: 'Nach dieser Zeit sind 50 % des Wirkstoffs abgebaut',
-            color: 'var(--text-dim)',
+            sub: `Nach ${pk.half_life_hours} h ist die Hälfte abgebaut. Nach ${pk.half_life_hours * 2} h sind es 75 %, nach ${pk.half_life_hours * 5} h ist der Wirkstoff praktisch weg. Je länger die Halbwertzeit, desto seltener muss dosiert werden.`,
           },
           {
             label: 'Tmax (h)',
             value: `${pk.tmax_hours} h`,
-            sub: 'Zeit von der Injektion bis zum Höchstspiegel im Blut',
-            color: 'var(--text-dim)',
+            sub: `Nach der Injektion dauert es ca. ${pk.tmax_hours} h, bis der Wirkstoff seinen Höchstwert im Blut erreicht. Erst ab diesem Punkt bist du auf dem Wirkungsmaximum.`,
           },
           {
             label: 'Bioverfügbarkeit F (%)',
             value: `${Math.round(pk.bioavailability_sc * 100)} %`,
-            sub: 'Anteil des Wirkstoffs, der tatsächlich in den Blutkreislauf gelangt',
-            color: 'var(--text-dim)',
+            sub: `Von der injizierten Menge kommen ${Math.round(pk.bioavailability_sc * 100)} % in den Blutkreislauf an. Bei subkutaner Injektion (SC) ist dieser Wert typischerweise hoch.`,
           },
           {
             label: 'Verteilungsvolumen Vd (L/kg)',
             value: pk.vd_l_kg != null ? `${pk.vd_l_kg} L/kg` : '—',
-            sub: 'Wie stark sich der Wirkstoff im Körpergewebe verteilt',
-            color: 'var(--text-dim)',
+            sub: `Gibt an, wie stark sich der Wirkstoff im Körpergewebe verteilt.${pk.vd_l_kg != null && pk.vd_l_kg > 1 ? ' Hoher Wert — speichert sich stark im Gewebe, was oft eine längere Wirkdauer erklärt.' : ' Niedriger Wert — bleibt hauptsächlich im Blut.'}`,
           },
           {
             label: 'Eliminationskonstante ke (1/h)',
             value: `${(Math.LN2 / pk.half_life_hours).toFixed(3)} /h`,
-            sub: 'Anteil des Wirkstoffs, der pro Stunde abgebaut wird',
-            color: 'var(--text-dim)',
+            sub: `Pro Stunde werden ${((Math.LN2 / pk.half_life_hours) * 100).toFixed(1)} % des noch vorhandenen Wirkstoffs abgebaut. Kleiner Wert = langsamer Abbau = lange Wirkdauer.`,
           },
-        ].map(({ label, value, sub, color }) => (
+        ].map(({ label, value, sub }) => (
           <div key={label} style={{
             background: 'rgba(255,255,255,0.03)',
             border: '1px solid rgba(255,255,255,0.05)',
@@ -550,7 +543,7 @@ function LiveCycleCard({
               fontSize: '0.48rem', color: 'var(--text-muted)', fontWeight: 700,
               textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3,
             }}>{label}</p>
-            <p style={{ fontSize: '0.88rem', fontWeight: 900, color, marginBottom: 3, lineHeight: 1 }}>{value}</p>
+            <p style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--text)', marginBottom: 3, lineHeight: 1 }}>{value}</p>
             <p style={{ fontSize: '0.46rem', color: 'var(--text-muted)', lineHeight: 1.4, opacity: 0.75 }}>{sub}</p>
           </div>
         ))}
@@ -992,55 +985,47 @@ export function BlutspiegelSimulation() {
                 {
                   label: 'Höchster Spiegel (Peak)',
                   value: '100 %',
-                  color: 'var(--accent)',
                   explain: 'Der maximale Wirkstoffspiegel, den du mit dieser Dosis erreichst — normiert auf 100 %. Alle anderen Werte werden relativ dazu angezeigt.',
                 },
                 {
                   label: `Zeit bis zum Peak — Tmax (${Math.round(simResult.tmaxActual * 10) / 10} h)`,
                   value: `${Math.round(simResult.tmaxActual * 10) / 10} Stunden`,
-                  color: '#f59e0b',
                   explain: `Nach der Injektion dauert es ca. ${Math.round(simResult.tmaxActual * 10) / 10} Stunden, bis der Wirkstoff seinen Höchstwert im Blut erreicht. Erst ab diesem Punkt bist du auf dem Wirkungsmaximum.`,
                 },
                 {
                   label: `Halbwertzeit — T½ (${selectedProfile.half_life_hours} h)`,
                   value: `${selectedProfile.half_life_hours} Stunden`,
-                  color: '#a78bfa',
                   explain: `Nach ${selectedProfile.half_life_hours} Stunden ist die Hälfte des Wirkstoffs abgebaut. Nach ${selectedProfile.half_life_hours * 2} h sind es 75 %, nach ${selectedProfile.half_life_hours * 5} h ist er praktisch vollständig eliminiert. Je länger die Halbwertzeit, desto seltener muss dosiert werden.`,
                 },
                 {
-                  label: `Wirkungsdauer (bis < 10 %)`,
+                  label: 'Wirkungsdauer (bis < 10 %)',
                   value: simResult.t10 < selectedProfile.half_life_hours * 5
                     ? `${Math.round(simResult.t10 * 10) / 10} Stunden`
                     : `über ${Math.round(selectedProfile.half_life_hours * 5)} Stunden`,
-                  color: 'var(--text-dim)',
                   explain: 'Ab dem Zeitpunkt, wo der Spiegel unter 10 % fällt, ist die Wirkung vernachlässigbar gering. Das gibt dir einen Anhaltspunkt, wie lange eine Dosis tatsächlich aktiv wirkt.',
                 },
                 {
                   label: `Bioverfügbarkeit — F (${Math.round(selectedProfile.bioavailability_sc * 100)} %)`,
                   value: `${Math.round(selectedProfile.bioavailability_sc * 100)} %`,
-                  color: '#10b981',
                   explain: `Von der injizierten Menge kommen tatsächlich ${Math.round(selectedProfile.bioavailability_sc * 100)} % in den Blutkreislauf an. Der Rest wird vor der Wirkung abgebaut. Bei subkutaner Injektion (SC) ist dieser Wert typischerweise hoch.`,
                 },
                 {
                   label: `Verteilungsvolumen — Vd (${selectedProfile.vd_l_kg != null ? selectedProfile.vd_l_kg + ' L/kg' : '—'})`,
                   value: selectedProfile.vd_l_kg != null ? `${selectedProfile.vd_l_kg} L/kg` : '—',
-                  color: 'var(--text-dim)',
-                  explain: 'Gibt an, wie stark sich der Wirkstoff im Körpergewebe verteilt. Ein hoher Wert (> 1 L/kg) bedeutet: Der Wirkstoff speichert sich stark im Gewebe, nicht nur im Blut. Das erklärt oft eine längere Wirkdauer.',
+                  explain: `Gibt an, wie stark sich der Wirkstoff im Körpergewebe verteilt.${selectedProfile.vd_l_kg != null && selectedProfile.vd_l_kg > 1 ? ' Hoher Wert (> 1 L/kg) — der Wirkstoff speichert sich stark im Gewebe, nicht nur im Blut. Das erklärt oft eine längere Wirkdauer.' : ' Niedriger Wert — der Wirkstoff bleibt hauptsächlich im Blut.'}`,
                 },
                 {
                   label: `Eliminationskonstante — ke (${(Math.LN2 / selectedProfile.half_life_hours).toFixed(3)} /h)`,
                   value: `${(Math.LN2 / selectedProfile.half_life_hours).toFixed(3)} /h`,
-                  color: 'var(--text-dim)',
                   explain: `Pro Stunde werden ${((Math.LN2 / selectedProfile.half_life_hours) * 100).toFixed(1)} % des noch vorhandenen Wirkstoffs abgebaut. Kleiner Wert = langsamer Abbau = lange Wirkdauer.`,
                 },
                 ...(multiDose ? [{
                   label: `Akkumulationsfaktor (${simResult.accumFactor.toFixed(2)}×)`,
                   value: `${simResult.accumFactor.toFixed(2)}×`,
-                  color: '#f59e0b',
                   explain: `Bei regelmäßiger Einnahme mit deinem gewählten Intervall ist der Steady-State-Spiegel ${simResult.accumFactor.toFixed(2)}-mal so hoch wie nach der ersten Dosis. ${simResult.accumFactor > 2 ? 'Das ist eine starke Akkumulation — der Wirkstoff sammelt sich deutlich an.' : simResult.accumFactor > 1.5 ? 'Der Wirkstoff reichert sich spürbar an.' : 'Die Akkumulation ist gering.'}`,
                 }] : []),
-              ] as { label: string; value: string; color: string; explain: string }[])
-              .map(({ label, value, color, explain }) => (
+              ] as { label: string; value: string; explain: string }[])
+              .map(({ label, value, explain }) => (
                 <div key={label} style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr 2fr',
@@ -1053,7 +1038,7 @@ export function BlutspiegelSimulation() {
                 }}>
                   <div>
                     <p style={{ fontSize: '0.58rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: 4, lineHeight: 1.3 }}>{label}</p>
-                    <p style={{ fontSize: '1.1rem', fontWeight: 900, color, letterSpacing: '-0.02em', lineHeight: 1 }}>{value}</p>
+                    <p style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.02em', lineHeight: 1 }}>{value}</p>
                   </div>
                   <p style={{ fontSize: '0.68rem', color: 'var(--text-dim)', lineHeight: 1.6, paddingTop: 2 }}>{explain}</p>
                 </div>

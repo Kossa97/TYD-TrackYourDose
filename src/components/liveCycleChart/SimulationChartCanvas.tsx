@@ -70,8 +70,9 @@ export function SimulationChartCanvas({
     const xStart = pts[0].ts
     const xEnd = pts[pts.length - 1].ts
     const xSpan = xEnd - xStart || 1
+    const Y_MAX = 112
     const tsToX = (ts: number) => dX + ((ts - xStart) / xSpan) * dW
-    const lvToY = (lv: number) => dY + (1 - Math.max(0, Math.min(100, lv)) / 100) * dH
+    const lvToY = (lv: number) => dY + (1 - Math.max(0, Math.min(Y_MAX, lv)) / Y_MAX) * dH
 
     const style = getComputedStyle(document.documentElement)
     const border = style.getPropertyValue('--border').trim() || 'rgba(255,255,255,0.06)'

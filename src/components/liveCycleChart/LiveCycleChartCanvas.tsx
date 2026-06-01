@@ -112,8 +112,9 @@ function LiveCycleChartCanvas({
     const now = pts[pts.length - 1].ts
     const viewEnd = viewEndRef.current
     const viewStart = viewEnd - win
+    const Y_MAX = 112
     const tsToX = (ts: number) => dX + ((ts - viewStart) / win) * dW
-    const lvToY = (lv: number) => dY + (1 - Math.max(0, Math.min(100, lv)) / 100) * dH
+    const lvToY = (lv: number) => dY + (1 - Math.max(0, Math.min(Y_MAX, lv)) / Y_MAX) * dH
 
     const style = getComputedStyle(document.documentElement)
     const border = style.getPropertyValue('--border').trim() || 'rgba(255,255,255,0.06)'
@@ -264,7 +265,7 @@ function LiveCycleChartCanvas({
         : minY - 6
       ctx.globalAlpha = 0.95
       for (const lb of unique) {
-        const text = lb.count > 1 ? `${lb.text} ×${lb.count}` : lb.text
+        const text = lb.text
         const tw = ctx.measureText(text).width
         const lx = Math.max(dX + 2, Math.min(dX + dW - tw - 2, refX - tw / 2))
         ctx.textAlign = 'left'
