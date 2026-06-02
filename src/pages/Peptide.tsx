@@ -58,6 +58,7 @@ interface Cycle {
   start_date: string; end_date: string | null; active: boolean
   intake_time: string | null; intake_time_custom: string | null
   reminder: string | null
+  created_at: string
 }
 interface Escalation {
   id: string; cycle_id: string
@@ -452,7 +453,12 @@ export function Peptide() {
     .filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => sortBy === 'name_asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name))
 
-  const cyclesOf      = (pid: string) => cycles.filter(c => c.peptide_id === pid)
+  const cyclesOf      = (pid: string) => cycles
+    .filter(c => c.peptide_id === pid)
+    .sort((a, b) =>
+      (a.active === b.active)
+        ? b.created_at.localeCompare(a.created_at)
+        : (a.active ? -1 : 1))
   const escalationsOf = (cid: string) => escalations.filter(e => e.cycle_id === cid)
 
   // ── Inventar Bestand anpassen ─────────────────────────────────────────────
@@ -893,7 +899,13 @@ export function Peptide() {
                       </div>
                     )}
                     <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
-                      <button className="flex-1 text-left min-w-0" onClick={() => setExpandedId(isOpen ? null : p.id)}>
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        className="flex-1 text-left min-w-0 cursor-pointer"
+                        onClick={() => setExpandedId(isOpen ? null : p.id)}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedId(isOpen ? null : p.id) } }}
+                      >
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-semibold text-white">{p.name}</p>
                           {hasActive && <span className="badge bg-emerald-500/10 text-emerald-400">{t('aktiv_badge')}</span>}
@@ -941,7 +953,7 @@ export function Peptide() {
                             </div>
                           </div>
                         )}
-                      </button>
+                      </div>
                       <div className="flex gap-1 shrink-0">
                         <button className="relative p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
                           title="Infos" onClick={() => { setInfoPeptide(p); dismissInfoBtn() }}>
