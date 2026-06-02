@@ -350,6 +350,14 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
   border-right: 8px solid transparent;
   transform: translateX(-50%);
 }
+.ob-callout-arrow--top {
+  bottom: -7px;
+  border-top: 8px solid rgba(10, 18, 42, 0.99);
+}
+.ob-callout-arrow--bottom {
+  top: -7px;
+  border-bottom: 8px solid rgba(10, 18, 42, 0.99);
+}
 
 .ob-confirm-cue {
   font-size: 0.72rem;
@@ -456,6 +464,106 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
   text-align: left;
 }
 
+/* ── Onboarding light-mode overrides ─────────────────────────────────────── */
+[data-theme="light"] .ob-callout-card {
+  background: #ffffff;
+  border-color: rgba(0, 160, 200, 0.35);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(0, 160, 200, 0.08),
+    0 0 40px rgba(0, 160, 200, 0.08);
+}
+[data-theme="light"] .ob-callout-header {
+  border-bottom-color: rgba(0, 0, 0, 0.07);
+}
+[data-theme="light"] .ob-callout-title {
+  color: #0f172a;
+}
+[data-theme="light"] .ob-callout-body {
+  color: #334155;
+}
+[data-theme="light"] .ob-callout-kicker {
+  color: rgba(0, 140, 180, 0.85);
+}
+[data-theme="light"] .ob-callout-close {
+  color: #64748b;
+}
+[data-theme="light"] .ob-callout-close:hover {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.05);
+}
+[data-theme="light"] .ob-callout-actions {
+  background: rgba(248, 250, 252, 0.95);
+  border-top-color: rgba(0, 0, 0, 0.07);
+}
+[data-theme="light"] .ob-nav-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #334155;
+}
+[data-theme="light"] .ob-primary-btn {
+  color: #007599;
+  background: rgba(0, 160, 200, 0.1);
+  border-color: rgba(0, 160, 200, 0.35);
+}
+[data-theme="light"] .ob-skip-tour-link {
+  color: #64748b;
+}
+[data-theme="light"] .ob-skip-tour-link:hover {
+  color: #1e293b;
+}
+[data-theme="light"] .ob-profile-hint {
+  color: #64748b;
+}
+[data-theme="light"] .ob-step-badge {
+  color: #007599;
+  background: rgba(0, 160, 200, 0.08);
+  border-color: rgba(0, 160, 200, 0.2);
+}
+[data-theme="light"] .ob-tap-cue {
+  color: #005f7a;
+  background: rgba(0, 160, 200, 0.07);
+  border-color: rgba(0, 160, 200, 0.2);
+}
+[data-theme="light"] .ob-hint-callout {
+  background: linear-gradient(135deg, rgba(0, 160, 200, 0.08), rgba(0, 100, 160, 0.04));
+  border-color: rgba(0, 160, 200, 0.3);
+  color: #005f7a;
+  text-shadow: none;
+}
+[data-theme="light"] .ob-panel-card {
+  background: #ffffff;
+  border-color: rgba(0, 160, 200, 0.25);
+}
+[data-theme="light"] .ob-controls-bar {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(0, 160, 200, 0.18);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .ob-progress-track {
+  background: rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .ob-restart-btn {
+  background: rgba(0, 160, 200, 0.05);
+  border-color: rgba(0, 160, 200, 0.12);
+  color: #007599;
+}
+[data-theme="light"] .ob-callout-arrow--top {
+  border-top-color: #ffffff;
+}
+[data-theme="light"] .ob-callout-arrow--bottom {
+  border-bottom-color: #ffffff;
+}
+[data-theme="light"] .ob-highlight-ring {
+  border-color: rgba(0, 150, 200, 0.9);
+}
+[data-theme="light"] body.onboarding-active [data-ob-active] {
+  animation: ob-active-glow-light 1.4s ease-in-out infinite;
+}
+@keyframes ob-active-glow-light {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(0,150,200,0.6), 0 0 14px rgba(0,150,200,0.2); }
+  50%       { box-shadow: 0 0 0 4px rgba(0,150,200,0.8), 0 0 28px rgba(0,150,200,0.35); }
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DESIGN TOKENS

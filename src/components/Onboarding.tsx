@@ -29,14 +29,8 @@ function CalloutArrow({ placement, left }: { placement: CalloutPlacement; left: 
   const above = placement === 'top'
   return (
     <span
-      className="ob-callout-arrow"
-      style={{
-        position: 'absolute',
-        left,
-        ...(above
-          ? { bottom: -7, borderTop: '8px solid rgba(12, 24, 48, 0.99)' }
-          : { top: -7, borderBottom: '8px solid rgba(12, 24, 48, 0.99)' }),
-      }}
+      className={`ob-callout-arrow ob-callout-arrow--${above ? 'top' : 'bottom'}`}
+      style={{ position: 'absolute', left }}
     />
   )
 }
@@ -601,11 +595,11 @@ export function Onboarding() {
           <div style={{ position:'fixed', inset:0, zIndex: OB_Z.panel - 1, background:'rgba(0,0,0,0.60)' }} />
           <div style={{
             position:'fixed', bottom:0, left:0, right:0, zIndex: OB_Z.panel - 1,
-            borderRadius:'24px 24px 0 0', border:'1px solid rgba(255,255,255,0.10)',
+            borderRadius:'24px 24px 0 0', border:'1px solid var(--border)',
             paddingBottom:40, background:'var(--surface)',
           }}>
             <div style={{ padding:'20px 18px 0' }}>
-              <div style={{ margin:'0 auto 20px', height:4, width:40, borderRadius:2, background:'rgba(255,255,255,0.2)' }} />
+              <div style={{ margin:'0 auto 20px', height:4, width:40, borderRadius:2, background:'var(--border)' }} />
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
                 <Check size={15} color="#10b981" />
                 <h2 style={{ fontSize:'1rem', fontWeight:900, color:'var(--text)' }}>{t('obx_sim_sheet_title')}</h2>
