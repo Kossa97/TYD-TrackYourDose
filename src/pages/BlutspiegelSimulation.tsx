@@ -348,14 +348,20 @@ function LiveCycleCard({
     [events, chartData],
   )
 
-  // Peak-Marker: echtes Maximum der Kurve nach der letzten Injektion
+  // Peak-Marker: tatsächliches lokales Maximum der akkumulierten Kurve nach jeder Injektion
+  // (nicht theoretisches Tmax — das stimmt nur für Einzeldosen ohne Akkumulation)
   const peakMarkers = useMemo(() => {
-    const lastDose = events.filter(ev => ev.status === 'taken').at(-1)
-    if (!lastDose || !chartData.length) return []
-    const afterLast = chartData.filter(p => p.ts >= lastDose.timestamp.getTime())
-    if (!afterLast.length) return []
-    const peak = afterLast.reduce((max, p) => p.level > max.level ? p : max, afterLast[0])
-    return [{ ts: peak.ts, level: peak.level }]
+    const taken = events.filter(ev => ev.status === 'taken')
+    if (!taken.length || !chartData.length) return []
+    return taken.map((ev, i) => {
+      const fromTs = ev.timestamp.getTime()
+      const toTs   = taken[i + 1]?.timestamp.getTime() ?? chartData[chartData.length - 1].ts
+      // Suche das Maximum der Kurve zwischen dieser und der nächsten Injektion
+      const window = chartData.filter(p => p.ts >= fromTs && p.ts <= toTs)
+      if (!window.length) return null
+      const peak = window.reduce((max, p) => p.level > max.level ? p : max, window[0])
+      return { ts: peak.ts, level: peak.level }
+    }).filter((m): m is { ts: number; level: number } => m !== null)
   }, [events, chartData])
 
   // Wirkungsbeginn: erster Punkt wo der akkumulierte Spiegel >= 25%
