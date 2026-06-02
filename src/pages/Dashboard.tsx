@@ -703,7 +703,7 @@ export function Dashboard() {
       <PageHero
         kicker={t('calendar_plan_kicker', { defaultValue: 'Peptid-Plan' })}
         title={t('nav_kalender')}
-        subtitle={selectedDayTitle}
+        subtitle={t('calendar_plan_subtitle', { defaultValue: 'Plane deine Zyklen und bestätige fällige Einnahmen – Tag für Tag.' })}
         icon={CalendarDays}
         accent="#00ccf5"
       />
