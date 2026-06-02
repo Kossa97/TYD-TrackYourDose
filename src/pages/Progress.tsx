@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { format, parseISO, subDays } from 'date-fns'
 import { ArrowLeft, Camera, ChevronRight, ImageOff, Plus, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -8,6 +8,7 @@ import {
 } from 'recharts'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { panViewEnd, clampViewEnd } from '../components/liveCycleChart/chartMath'
 
 // ── Typen ─────────────────────────────────────────────────────────────────
 
@@ -159,12 +160,16 @@ export function Progress() {
 
   const loadLogs = useCallback(async () => {
     if (!user) return
+    // Neueste zuerst laden (PostgREST liefert max. 1000 Zeilen) und für die
+    // Charts wieder aufsteigend sortieren. Verhindert, dass bei >1000 Logs
+    // nur die ältesten Einträge geladen werden und aktuelle Daten fehlen.
     const { data } = await supabase
       .from('daily_logs')
       .select('log_date, energie, schlaf, libido, weight_kg, body_fat_pct')
       .eq('user_id', user.id)
-      .order('log_date', { ascending: true })
-    setLogs((data as DailyLog[]) ?? [])
+      .order('log_date', { ascending: false })
+      .limit(1000)
+    setLogs(((data as DailyLog[]) ?? []).reverse())
   }, [user])
 
   const loadPhotos = useCallback(async () => {
@@ -276,6 +281,8 @@ function UebersichtTab({
       </div>
 
       {/* 2×2 Mini-Charts */}
+      <div>
+      <p style={{ ...sectionLabel, marginBottom: 8 }}>Letzte 30 Tage</p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         {cards.map(card => {
           const series = last30
@@ -310,6 +317,7 @@ function UebersichtTab({
           )
         })}
       </div>
+      </div>
 
       {/* Letztes Foto */}
       {lastPhoto && (
@@ -330,47 +338,80 @@ function UebersichtTab({
         </button>
       )}
 
-      {sheetOpen && <EntrySheet onClose={() => setSheetOpen(false)} onSaved={onSaved} />}
+      {sheetOpen && <EntrySheet logs={logs} onClose={() => setSheetOpen(false)} onSaved={onSaved} />}
     </>
   )
 }
 
 // ── Eintrag-Modal ───────────────────────────────────────────────────────────
 
-function EntrySheet({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+function EntrySheet({
+  logs, onClose, onSaved,
+}: {
+  logs: DailyLog[]
+  onClose: () => void
+  onSaved: () => void
+}) {
   const { user } = useAuth()
   const [date, setDate]           = useState(todayStr())
-  const [energie, setEnergie]     = useState(7)
-  const [schlaf, setSchlaf]       = useState(7)
-  const [wohl, setWohl]           = useState(7)
-  const [libido, setLibido]       = useState(7)
+  const [energie, setEnergie]     = useState<number | null>(null)
+  const [schlaf, setSchlaf]       = useState<number | null>(null)
+  const [wohl, setWohl]           = useState<number | null>(null)
+  const [libido, setLibido]       = useState<number | null>(null)
   const [weight, setWeight]       = useState('')
   const [bodyFat, setBodyFat]     = useState('')
   const [saving, setSaving]       = useState(false)
 
+  useEffect(() => {
+    const existing = logs.find(l => l.log_date === date)
+    setEnergie(existing?.energie ?? null)
+    setSchlaf(existing?.schlaf ?? null)
+    setWohl(existing?.libido ?? null)
+    setLibido(existing?.libido ?? null)
+    setWeight(existing?.weight_kg != null ? String(existing.weight_kg) : '')
+    setBodyFat(existing?.body_fat_pct != null ? String(existing.body_fat_pct) : '')
+  }, [date, logs])
+
   const save = async () => {
     if (!user) return
+
+    const hasData =
+      energie != null || schlaf != null || wohl != null || libido != null ||
+      weight.trim() !== '' || bodyFat.trim() !== ''
+    if (!hasData) {
+      toast.error('Bitte mindestens einen Wert eintragen')
+      return
+    }
+
     setSaving(true)
     const payload = {
       user_id: user.id,
       log_date: date,
       energie,
       schlaf,
-      libido: wohl, // Wohlbefinden → libido-Feld
-      weight_kg: weight ? Number(weight) : null,
-      body_fat_pct: bodyFat ? Number(bodyFat) : null,
+      libido: wohl ?? libido,
+      weight_kg: weight.trim() ? Number(weight) : null,
+      body_fat_pct: bodyFat.trim() ? Number(bodyFat) : null,
     }
     const { error } = await supabase
       .from('daily_logs')
       .upsert(payload, { onConflict: 'user_id,log_date' })
     setSaving(false)
-    if (error) { toast.error('Konnte nicht gespeichert werden'); return }
+    if (error) {
+      console.error('daily_logs upsert:', error)
+      toast.error(
+        error.message.includes('check constraint') || error.message.includes('weight_kg')
+          ? 'Datenbank-Schema veraltet — bitte supabase-daily-logs-update.sql in Supabase ausführen.'
+          : `Speichern fehlgeschlagen: ${error.message}`,
+      )
+      return
+    }
     toast.success('Fortschritt gespeichert')
     onSaved()
     onClose()
   }
 
-  const sliders: { label: string; value: number; set: (v: number) => void }[] = [
+  const sliders: { label: string; value: number | null; set: (v: number | null) => void }[] = [
     { label: 'Energie',        value: energie, set: setEnergie },
     { label: 'Schlafqualität', value: schlaf,  set: setSchlaf },
     { label: 'Wohlbefinden',   value: wohl,    set: setWohl },
@@ -402,24 +443,45 @@ function EntrySheet({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
         {sliders.map(s => (
           <div key={s.label} style={{ marginBottom: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <label style={{ ...fieldLabel, marginBottom: 0 }}>{s.label}</label>
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--accent)' }}>{s.value}/10</span>
+              <label style={{ ...fieldLabel, marginBottom: 0 }}>
+                {s.label} <span style={{ fontWeight: 600, opacity: 0.65 }}>(optional)</span>
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  fontSize: '0.8rem', fontWeight: 800,
+                  color: s.value != null ? 'var(--accent)' : 'var(--text-muted)',
+                }}>
+                  {s.value != null ? `${s.value}/10` : '–'}
+                </span>
+                {s.value != null && (
+                  <button
+                    type="button"
+                    onClick={() => s.set(null)}
+                    aria-label={`${s.label} zurücksetzen`}
+                    style={{ color: 'var(--text-muted)', display: 'flex', padding: 2 }}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
             </div>
             <input
               className="tyd-slider" type="range" min={1} max={10} step={1}
-              value={s.value} onChange={e => s.set(Number(e.target.value))}
+              value={s.value ?? 5}
+              onChange={e => s.set(Number(e.target.value))}
+              style={{ opacity: s.value != null ? 1 : 0.45 }}
             />
           </div>
         ))}
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
           <div>
-            <label style={fieldLabel}>Gewicht (kg)</label>
+            <label style={fieldLabel}>Gewicht (kg) <span style={{ fontWeight: 600, opacity: 0.65 }}>(optional)</span></label>
             <input type="number" inputMode="decimal" placeholder="82.5" value={weight}
               onChange={e => setWeight(e.target.value)} style={inputStyle} />
           </div>
           <div>
-            <label style={fieldLabel}>Körperfett (%)</label>
+            <label style={fieldLabel}>Körperfett (%) <span style={{ fontWeight: 600, opacity: 0.65 }}>(optional)</span></label>
             <input type="number" inputMode="decimal" placeholder="18" value={bodyFat}
               onChange={e => setBodyFat(e.target.value)} style={inputStyle} />
           </div>
@@ -440,6 +502,22 @@ function EntrySheet({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
 // Tab 2: Verlauf
 // ════════════════════════════════════════════════════════════════════════════
 
+const DAY_MS = 86_400_000
+const HOLD_MS = 300
+const HOLD_MOVE_PX = 6
+const PAD_LEFT = 34
+const PAD_RIGHT = 12
+
+interface VerlaufPoint {
+  ts: number
+  weight_kg: number | null
+  body_fat_pct: number | null
+  energie: number | null
+  schlaf: number | null
+  wellbeing: number | null
+  libido: number | null
+}
+
 function VerlaufTab({ logs }: { logs: DailyLog[] }) {
   const [active, setActive] = useState<MetricKey[]>(['weight_kg', 'energie'])
   const [range, setRange]   = useState('30t')
@@ -447,21 +525,186 @@ function VerlaufTab({ logs }: { logs: DailyLog[] }) {
   const toggle = (key: MetricKey) =>
     setActive(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
 
-  const data = useMemo(() => {
+  // Logs → numerische Zeit-Punkte (aufsteigend sortiert)
+  const pts = useMemo<VerlaufPoint[]>(() =>
+    logs.map(l => ({
+      ts: parseISO(`${l.log_date}T00:00:00`).getTime(),
+      weight_kg: l.weight_kg,
+      body_fat_pct: l.body_fat_pct,
+      energie: l.energie,
+      schlaf: l.schlaf,
+      wellbeing: l.libido,
+      libido: l.libido,
+    })), [logs])
+
+  const firstTs = pts.length ? pts[0].ts : 0
+  const lastTs  = pts.length ? pts[pts.length - 1].ts : 0
+
+  // Range-Button = Fensterbreite
+  const windowMs = useMemo(() => {
     const days = RANGES.find(r => r.key === range)?.days ?? null
-    const cutoff = days != null ? subDays(new Date(), days) : null
-    return logs
-      .filter(l => !cutoff || parseISO(`${l.log_date}T00:00:00`) >= cutoff)
-      .map(l => ({
-        date: fmtShort(l.log_date),
-        weight_kg: l.weight_kg,
-        body_fat_pct: l.body_fat_pct,
-        energie: l.energie,
-        schlaf: l.schlaf,
-        wellbeing: l.libido,
-        libido: l.libido,
-      }))
-  }, [logs, range])
+    if (days != null) return days * DAY_MS
+    const span = lastTs - firstTs
+    return span > 0 ? span : DAY_MS
+  }, [range, firstTs, lastTs])
+
+  // Fenster-Ende: kontinuierlich (kein Snap), Start beim jüngsten Eintrag
+  const [viewEnd, setViewEnd] = useState<number | null>(null)
+  useEffect(() => {
+    if (!pts.length) return
+    setViewEnd(prev => prev == null ? lastTs : clampViewEnd(prev, firstTs, lastTs, windowMs))
+  }, [pts.length, firstTs, lastTs, windowMs])
+
+  const effViewEnd = viewEnd ?? lastTs
+  const viewStart  = effViewEnd - windowMs
+
+  // nur sichtbares Fenster (+Puffer) an recharts → flüssiges Pannen
+  const visible = useMemo(() => {
+    const buf = windowMs * 0.05
+    return pts.filter(p => p.ts >= viewStart - buf && p.ts <= effViewEnd + buf)
+  }, [pts, viewStart, effViewEnd, windowMs])
+
+  // Geometrie
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [wrapW, setWrapW] = useState(0)
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setWrapW(el.clientWidth))
+    ro.observe(el)
+    setWrapW(el.clientWidth)
+    return () => ro.disconnect()
+  }, [pts.length])
+
+  // Refs für Gesten (keine Stale-Closures)
+  const viewEndRef  = useRef(effViewEnd);  viewEndRef.current = effViewEnd
+  const windowMsRef = useRef(windowMs);    windowMsRef.current = windowMs
+  const firstTsRef  = useRef(firstTs);     firstTsRef.current = firstTs
+  const lastTsRef   = useRef(lastTs);      lastTsRef.current = lastTs
+
+  const isPanning = useRef(false)
+  const panStartX = useRef(0)
+  const panStartViewEnd = useRef(0)
+  const holdTimer = useRef<number | null>(null)
+  const isReadingRef = useRef(false)
+  const pointerType = useRef('mouse')
+
+  const [readTs, setReadTs] = useState<number | null>(null)
+
+  // rAF-gedrosseltes Pan-Update (max. 1×/Frame)
+  const rafRef = useRef(0)
+  const pendingVE = useRef<number | null>(null)
+  const scheduleViewEnd = (ve: number) => {
+    pendingVE.current = ve
+    if (rafRef.current) return
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = 0
+      if (pendingVE.current != null) setViewEnd(pendingVE.current)
+    })
+  }
+  useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }, [])
+
+  const plotW = () => Math.max(1, wrapW - PAD_LEFT - PAD_RIGHT)
+  const clientXToTs = (clientX: number) => {
+    const rect = wrapRef.current?.getBoundingClientRect()
+    if (!rect) return viewEndRef.current
+    const frac = Math.max(0, Math.min(1, (clientX - rect.left - PAD_LEFT) / plotW()))
+    return (viewEndRef.current - windowMsRef.current) + frac * windowMsRef.current
+  }
+
+  const onPointerDown = (e: ReactPointerEvent) => {
+    if (!pts.length) return
+    pointerType.current = e.pointerType
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    isPanning.current = true
+    panStartX.current = e.clientX
+    panStartViewEnd.current = viewEndRef.current
+    if (e.pointerType === 'mouse') {
+      // Maus: Drücken = Pannen → Hover-Ablesen beenden
+      isReadingRef.current = false
+      setReadTs(null)
+    } else {
+      // Touch: ~300ms halten → Ablesen
+      const cx = e.clientX
+      if (holdTimer.current) clearTimeout(holdTimer.current)
+      holdTimer.current = window.setTimeout(() => {
+        isReadingRef.current = true
+        setReadTs(clientXToTs(cx))
+      }, HOLD_MS)
+    }
+  }
+
+  const onPointerMove = (e: ReactPointerEvent) => {
+    // Maus-Hover (kein Knopf) → ablesen
+    if (e.pointerType === 'mouse' && e.buttons === 0) {
+      isReadingRef.current = true
+      setReadTs(clientXToTs(e.clientX))
+      return
+    }
+    if (!isPanning.current) return
+    if (isReadingRef.current) {
+      setReadTs(clientXToTs(e.clientX))
+      return
+    }
+    const dx = e.clientX - panStartX.current
+    if (Math.abs(dx) > HOLD_MOVE_PX && holdTimer.current) {
+      clearTimeout(holdTimer.current)
+      holdTimer.current = null
+    }
+    const ve = clampViewEnd(
+      panViewEnd(panStartViewEnd.current, dx, plotW(), windowMsRef.current),
+      firstTsRef.current, lastTsRef.current, windowMsRef.current,
+    )
+    scheduleViewEnd(ve)
+  }
+
+  const endInteraction = () => {
+    if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null }
+    isPanning.current = false
+    if (isReadingRef.current && pointerType.current !== 'mouse') {
+      isReadingRef.current = false
+      setReadTs(null)
+    }
+  }
+
+  const onPointerLeave = (e: ReactPointerEvent) => {
+    if (e.pointerType === 'mouse') {
+      isReadingRef.current = false
+      setReadTs(null)
+    }
+  }
+
+  // Chart memoisiert → re-rendert nur bei Pan/Range/Metrik, nicht beim Ablesen
+  const chartEl = useMemo(() => (
+    <ResponsiveContainer width="100%" height={280}>
+      <LineChart data={visible} margin={{ top: 4, right: PAD_RIGHT, bottom: 0, left: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+        <XAxis
+          dataKey="ts" type="number" scale="time"
+          domain={[viewStart, effViewEnd]} allowDataOverflow
+          tickFormatter={(ts: number) => format(ts, 'dd.MM.')}
+          tick={axisTick}
+        />
+        <YAxis tick={axisTick} width={PAD_LEFT} />
+        <Legend />
+        {METRICS.filter(m => active.includes(m.key)).map(m => (
+          <Line key={m.key} type="monotone" dataKey={m.key} name={m.label}
+            stroke={m.color} strokeWidth={2} dot={false} connectNulls
+            isAnimationActive={false} />
+        ))}
+      </LineChart>
+    </ResponsiveContainer>
+  ), [visible, viewStart, effViewEnd, active])
+
+  // Ablese-Overlay
+  const readClamped = readTs != null ? Math.max(viewStart, Math.min(effViewEnd, readTs)) : null
+  const readX = readClamped != null ? PAD_LEFT + ((readClamped - viewStart) / windowMs) * plotW() : null
+  const readPoint = useMemo(() => {
+    if (readClamped == null || !pts.length) return null
+    let best = pts[0], bd = Infinity
+    for (const p of pts) { const d = Math.abs(p.ts - readClamped); if (d < bd) { bd = d; best = p } }
+    return best
+  }, [readClamped, pts])
 
   return (
     <>
@@ -511,25 +754,50 @@ function VerlaufTab({ logs }: { logs: DailyLog[] }) {
 
       {/* Chart */}
       <div style={{ ...panel, padding: '16px 8px 8px 0' }}>
-        {data.length === 0 ? (
+        {pts.length === 0 ? (
           <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '40px 0' }}>
             Keine Daten im gewählten Zeitraum
           </p>
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={data} margin={{ top: 4, right: 12, bottom: 0, left: -12 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="date" tick={axisTick} />
-              <YAxis tick={axisTick} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Legend />
-              {METRICS.filter(m => active.includes(m.key)).map(m => (
-                <Line key={m.key} type="monotone" dataKey={m.key} name={m.label}
-                  stroke={m.color} strokeWidth={2} dot={false} connectNulls
-                  isAnimationActive={false} />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+          <div
+            ref={wrapRef}
+            style={{ position: 'relative', height: 280, touchAction: 'pan-y', userSelect: 'none', cursor: 'crosshair' }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={endInteraction}
+            onPointerCancel={endInteraction}
+            onPointerLeave={onPointerLeave}
+          >
+            {chartEl}
+            {readX != null && readPoint != null && (
+              <>
+                <div style={{
+                  position: 'absolute', left: readX, top: 4, height: 232, width: 1,
+                  background: 'rgba(226,232,240,0.55)', pointerEvents: 'none',
+                }} />
+                <div style={{
+                  position: 'absolute', top: 6,
+                  left: Math.max(2, Math.min(Math.max(2, wrapW - 132), readX + 8)),
+                  width: 124, pointerEvents: 'none',
+                  background: 'rgba(7,9,26,0.95)', border: '1px solid var(--accent-border)',
+                  borderRadius: 8, padding: '6px 8px',
+                }}>
+                  <p style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: 4, fontFamily: 'monospace' }}>
+                    {format(readPoint.ts, 'dd.MM.yyyy')}
+                  </p>
+                  {METRICS.filter(m => active.includes(m.key)).map(m => {
+                    const v = readPoint[m.key as keyof VerlaufPoint] as number | null
+                    if (v == null) return null
+                    return (
+                      <p key={m.key} style={{ fontSize: '0.7rem', fontWeight: 800, color: m.color, lineHeight: 1.5 }}>
+                        {m.label}: {v}
+                      </p>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
     </>

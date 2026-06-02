@@ -1,13 +1,12 @@
 import { useEffect, useState, type CSSProperties, type MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Archive, Beaker, CalendarDays, Gauge, X, type LucideIcon } from 'lucide-react'
+import { CalendarDays, FlaskConical, Gauge, X, type LucideIcon } from 'lucide-react'
 
 const STOCK_STEP_KEY = 'home_flow_stock'
 
 const WORKFLOW_STEPS: { icon: LucideIcon; labelKey: string; label: string; descKey: string; desc: string }[] = [
-  { icon: Archive, labelKey: STOCK_STEP_KEY, label: 'Einlagern', descKey: 'home_flow_stock_desc', desc: 'Vials & Batch sichern' },
-  { icon: Beaker, labelKey: 'home_flow_mix', label: 'Anmischen', descKey: 'home_flow_mix_desc', desc: 'Rekonstitution dokumentieren' },
+  { icon: FlaskConical, labelKey: STOCK_STEP_KEY, label: 'Vorbereiten', descKey: 'home_flow_stock_desc', desc: 'Einlagern & anmischen' },
   { icon: CalendarDays, labelKey: 'home_flow_cycle', label: 'Zyklus', descKey: 'home_flow_cycle_desc', desc: 'Frequenz & Reminder planen' },
   { icon: Gauge, labelKey: 'home_flow_track', label: 'Tracken', descKey: 'home_flow_track_desc', desc: 'Dosen, Effekte, Reports' },
 ]
@@ -141,7 +140,7 @@ export function WorkflowBanner({ userId }: { userId: string | undefined }) {
             </h2>
           </div>
 
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {WORKFLOW_STEPS.map((step, index) => {
               const isStockStep = step.labelKey === STOCK_STEP_KEY
               const Icon = step.icon
