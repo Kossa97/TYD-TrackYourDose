@@ -11,6 +11,7 @@ import {
   lerpLevel, panViewEnd, clampViewEnd, pickDayTicks,
   type ChartPoint, type MarkerPoint, type NamedMarker,
 } from './chartMath'
+import { hapticTick } from '../../lib/haptics'
 
 const PAD = { top: 16, right: 10, bottom: 24, left: 40 } as const
 const HOLD_MS = 300
@@ -76,6 +77,7 @@ function LiveCycleChartCanvas({
   const readTsRef = useRef(0)
   const pointerTypeRef = useRef<string>('mouse')
   const drawRaf = useRef<number | null>(null)
+  const lastHapticDay = useRef<number | null>(null)
 
   const [showJetzt, setShowJetzt] = useState(false)
   const [hasHistory, setHasHistory] = useState(false)
@@ -391,6 +393,7 @@ function LiveCycleChartCanvas({
     isPanning.current = true
     panStartX.current = e.clientX
     panStartViewEnd.current = viewEndRef.current
+    lastHapticDay.current = Math.floor(viewEndRef.current / (24 * 3_600_000))
     if (e.pointerType === 'mouse') {
       // Maus: Drücken startet Pan → Hover-Ablesen beenden
       isReadingRef.current = false
@@ -440,6 +443,14 @@ function LiveCycleChartCanvas({
     followLiveRef.current = ve >= now - 1000
     notifyNav(!followLiveRef.current, hasHistory)
     scheduleRedraw()
+
+    // Haptic tick: einmal pro überschrittener Tagsgrenze
+    const DAY_MS = 24 * 3_600_000
+    const currentDay = Math.floor(ve / DAY_MS)
+    if (lastHapticDay.current !== null && lastHapticDay.current !== currentDay) {
+      void hapticTick()
+    }
+    lastHapticDay.current = currentDay
   }
 
   const endInteraction = () => {
