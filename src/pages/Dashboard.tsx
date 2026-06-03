@@ -126,22 +126,37 @@ function cycleIntakeMinutes(c: Cycle): number {
   return 25 * 60
 }
 
-function cycleTimeLabel(c: Cycle, t: (key: string) => string): { icon: LucideIcon; label: string } | null {
-  if (!c.intake_time) return null
-  const keys = c.intake_time.split(',').filter(Boolean)
+function minutesToHHmm(min: number): string {
+  return `${Math.floor(min / 60).toString().padStart(2, '0')}:${(min % 60).toString().padStart(2, '0')}`
+}
+
+interface DaySlot { key: string; minutes: number; time: string; groupKey: IntakeGroupKey }
+
+// Expand a cycle's intake times into individual day-slots (one per scheduled time).
+function cycleSlots(c: Cycle): DaySlot[] {
+  const keys = (c.intake_time ?? '').split(',').filter(Boolean)
   const customs = (c.intake_time_custom ?? '').split(',')
-  const parts = keys.map((key, i) => {
-    if (key === 'morgens') return { icon: Sunrise, label: t('morgens') }
-    if (key === 'mittags') return { icon: Sun, label: t('mittags') }
-    if (key === 'abends')  return { icon: Moon, label: t('abends') }
-    if (key === 'custom' && customs[i]) return { icon: Clock, label: customs[i] }
-    return null
-  }).filter(Boolean) as { icon: LucideIcon; label: string }[]
-  if (parts.length === 0) return null
-  return {
-    icon: parts[0].icon,
-    label: parts.map(p => p.label).join(' · '),
-  }
+  const out: DaySlot[] = []
+  keys.forEach((key, i) => {
+    if (key === 'morgens' || key === 'mittags' || key === 'abends') {
+      const minutes = INTAKE_MINUTES[key]
+      out.push({ key, minutes, time: minutesToHHmm(minutes), groupKey: key })
+    } else if (key === 'custom' && customs[i]) {
+      const [h, m] = customs[i].split(':').map(Number)
+      const minutes = h * 60 + m
+      out.push({ key: customs[i], minutes, time: customs[i], groupKey: intakePeriodFromMinutes(minutes) })
+    }
+  })
+  if (out.length === 0) out.push({ key: 'later', minutes: 25 * 60, time: '', groupKey: 'later' })
+  return out
+}
+
+// Timestamp on a given day at the slot's planned minute (defaults to noon for "later").
+function slotTimestamp(day: Date, minutes: number): string {
+  const d = new Date(day)
+  const safe = minutes >= 24 * 60 ? 12 * 60 : minutes
+  d.setHours(Math.floor(safe / 60), safe % 60, 0, 0)
+  return d.toISOString()
 }
 
 type IntakeGroupKey = 'morgens' | 'mittags' | 'abends' | 'custom' | 'later'
@@ -151,13 +166,6 @@ function intakePeriodFromMinutes(minutes: number): 'morgens' | 'mittags' | 'aben
   if (h < 12) return 'morgens'
   if (h < 18) return 'mittags'
   return 'abends'
-}
-
-function cycleTimeGroupKey(cycle: Cycle): IntakeGroupKey {
-  const firstKey = (cycle.intake_time ?? '').split(',').filter(Boolean)[0] ?? ''
-  if (firstKey === 'morgens' || firstKey === 'mittags' || firstKey === 'abends') return firstKey
-  if (firstKey === 'custom') return intakePeriodFromMinutes(cycleIntakeMinutes(cycle))
-  return 'later'
 }
 
 function intakeGroupMeta(key: IntakeGroupKey, t: (key: string) => string): { icon: LucideIcon; label: string } {
@@ -423,23 +431,43 @@ export function Dashboard() {
   const selectedDayTitle = isTodaySelected
     ? t('heutiges_protokoll')
     : format(selectedDay, 'EEEE, d. MMMM', { locale })
-  const pendingLogItems = selLogs.filter(log => log.taken === null)
-  const pendingCycles = selCycles.filter(cycle =>
-    !selLogs.some(log => log.peptide_id === cycle.peptide_id)
-  )
   const confirmedLogs = selLogs.filter(log => log.taken !== null)
   const confirmedLogsSorted = [...confirmedLogs].sort((a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime())
-  const dueCycles = [...selCycles]
-    .filter(cycle => pendingLogItems.some(log => log.peptide_id === cycle.peptide_id) || pendingCycles.some(pending => pending.id === cycle.id))
-    .sort((a, b) => cycleIntakeMinutes(a) - cycleIntakeMinutes(b))
-  const dueCycleSections = (['morgens', 'mittags', 'abends', 'custom', 'later'] as IntakeGroupKey[])
+
+  // Per-slot due list: expand each cycle into its individual intake slots, then drop the
+  // slots already covered (in time order) by decided logs (taken !== null) for that peptide.
+  // Reset logs (taken === null) keep a slot "due" and are reused on confirm to avoid duplicates.
+  interface DueSlot { cycle: Cycle; minutes: number; time: string; groupKey: IntakeGroupKey; pendingLog?: DoseLog }
+  const decidedByPeptide = new Map<string, number>()
+  const pendingByPeptide = new Map<string, DoseLog[]>()
+  for (const log of selLogs) {
+    if (log.taken !== null) decidedByPeptide.set(log.peptide_id, (decidedByPeptide.get(log.peptide_id) ?? 0) + 1)
+    else { const arr = pendingByPeptide.get(log.peptide_id) ?? []; arr.push(log); pendingByPeptide.set(log.peptide_id, arr) }
+  }
+  const slotsByPeptide = new Map<string, DueSlot[]>()
+  for (const cycle of selCycles) {
+    for (const s of cycleSlots(cycle)) {
+      const arr = slotsByPeptide.get(cycle.peptide_id) ?? []
+      arr.push({ cycle, minutes: s.minutes, time: s.time, groupKey: s.groupKey })
+      slotsByPeptide.set(cycle.peptide_id, arr)
+    }
+  }
+  const dueSlots: DueSlot[] = []
+  for (const [peptideId, slots] of slotsByPeptide) {
+    const ordered = [...slots].sort((a, b) => a.minutes - b.minutes)
+    const decided = decidedByPeptide.get(peptideId) ?? 0
+    const pendings = [...(pendingByPeptide.get(peptideId) ?? [])]
+    ordered.slice(decided).forEach(slot => {
+      slot.pendingLog = pendings.shift()
+      dueSlots.push(slot)
+    })
+  }
+  const dueSlotSections = (['morgens', 'mittags', 'abends', 'custom', 'later'] as IntakeGroupKey[])
     .map(key => ({
       ...intakeGroupMeta(key, t),
-      cycles: dueCycles
-        .filter(cycle => cycleTimeGroupKey(cycle) === key)
-        .sort((a, b) => cycleIntakeMinutes(a) - cycleIntakeMinutes(b)),
+      slots: dueSlots.filter(slot => slot.groupKey === key).sort((a, b) => a.minutes - b.minutes),
     }))
-    .filter(section => section.cycles.length > 0)
+    .filter(section => section.slots.length > 0)
 
   useEffect(() => {
     if (location.hash !== '#due-intakes') return
@@ -457,7 +485,7 @@ export function Dashboard() {
     }
     const timer = window.setTimeout(scrollToDue, 150)
     return () => window.clearTimeout(timer)
-  }, [location.hash, location.search, dueCycles.length, selCycles.length, logs.length])
+  }, [location.hash, location.search, dueSlots.length, selCycles.length, logs.length])
 
   const adjustPeptideStockForDose = async (peptideId: string, dose: number, unit: string, mode: 'debit' | 'credit', loggedAt?: string) => {
     if (!user) return false
@@ -546,9 +574,11 @@ export function Dashboard() {
   }
 
   // ── Bestätigungs-Sheet ───────────────────────────────────────────────────
-  const openConfirmSheet = (cycle?: Cycle, log?: DoseLog) => {
+  const openConfirmSheet = (cycle?: Cycle, log?: DoseLog, slotTime?: string) => {
     let defaultTime: string
-    if (cycle) {
+    if (cycle && slotTime) {
+      defaultTime = slotTime
+    } else if (cycle) {
       const intakeMin = cycleIntakeMinutes(cycle)
       const safe = intakeMin >= 24 * 60 ? 12 * 60 : intakeMin
       defaultTime = `${Math.floor(safe / 60).toString().padStart(2, '0')}:${(safe % 60).toString().padStart(2, '0')}`
@@ -569,9 +599,8 @@ export function Dashboard() {
     if (confirmSheet.cycle) {
       const day = new Date(selectedDay)
       day.setHours(h, m, 0, 0)
-      const pendingLog = pendingLogItems.find(l => l.peptide_id === confirmSheet.cycle!.peptide_id)
-      if (pendingLog) await confirmDose(pendingLog, true, day.toISOString())
-      else            await confirmCycleDose(confirmSheet.cycle, true, day.toISOString())
+      if (confirmSheet.log) await confirmDose(confirmSheet.log, true, day.toISOString())
+      else                  await confirmCycleDose(confirmSheet.cycle, true, day.toISOString())
     } else if (confirmSheet.log) {
       const logDate = new Date(confirmSheet.log.logged_at)
       logDate.setHours(h, m, 0, 0)
@@ -833,7 +862,7 @@ export function Dashboard() {
         </div>
 
         {/* Noch fällig */}
-        {dueCycles.length > 0 && (
+        {dueSlots.length > 0 && (
           <div className="mb-3 space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -845,21 +874,22 @@ export function Dashboard() {
                 </p>
               </div>
               <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs font-bold text-amber-300">
-                {dueCycles.length}
+                {dueSlots.length}
               </span>
             </div>
 
-            {dueCycleSections.map(section => (
+            {dueSlotSections.map(section => (
               <div key={section.label} className="space-y-1.5">
                 <div className="flex items-center gap-2 px-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
                   {(() => { const Ic = section.icon; return <Ic size={13} /> })()}
                   <span>{section.label}</span>
                 </div>
 
-                {section.cycles.map(c => {
+                {section.slots.map(slot => {
+                  const c = slot.cycle
                   const dose = effectiveDose(c, selectedDay, escalations)
                   const isEscalated = dose !== c.dose
-                  const pendingLog = pendingLogItems.find(log => log.peptide_id === c.peptide_id)
+                  const pendingLog = slot.pendingLog
                   const cycleEscs = escalations.filter(e => e.cycle_id === c.id)
                   const activeEscCount = cycleEscs.filter(e => {
                     if (e.start_type === 'date' && e.start_date)
@@ -868,11 +898,11 @@ export function Dashboard() {
                       return differenceInDays(selectedDay, parseISO(c.start_date)) >= e.start_after_days
                     return false
                   }).length
-                  const tl = cycleTimeLabel(c, t)
+                  const slotMeta = intakeGroupMeta(slot.groupKey, t)
                   const peptideColor = getPeptideColor(peptides.findIndex(peptide => peptide.id === c.peptide_id))
                   return (
                     <div
-                      key={c.id}
+                      key={`${c.id}-${slot.minutes}`}
                       className="rounded-xl border px-3 py-2.5 transition-colors"
                       style={{
                         background: 'var(--surface)',
@@ -897,12 +927,10 @@ export function Dashboard() {
                             <span className="text-slate-500 text-xs">{c.method}</span>
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
-                            {tl && (
-                              <span className="text-xs text-amber-400 flex items-center gap-1">
-                                {(() => { const Ic = tl.icon; return <Ic size={12} /> })()}
-                                {tl.label}
-                              </span>
-                            )}
+                            <span className="text-xs text-amber-400 flex items-center gap-1">
+                              {(() => { const Ic = slotMeta.icon; return <Ic size={12} /> })()}
+                              {slot.time || slotMeta.label}
+                            </span>
                             {isEscalated && (
                               <span className="text-slate-600 text-xs">
                                 {t('basis_label')} {c.dose} {c.unit} · +{dose - c.dose} {c.unit}
@@ -929,12 +957,12 @@ export function Dashboard() {
                         </div>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => openConfirmSheet(c, pendingLog ?? undefined)}
+                            onClick={() => openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined)}
                             className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
                             <Check size={11} /> {t('eingenommen')}
                           </button>
                           <button
-                            onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false)}
+                            onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false, slotTimestamp(selectedDay, slot.minutes))}
                             className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">
                             <XCircle size={11} /> {t('uebersprungen')}
                           </button>
@@ -1052,11 +1080,11 @@ export function Dashboard() {
               </div>
             ))}
           </div>
-        ) : dueCycles.length === 0 && selCycles.length === 0 ? (
+        ) : dueSlots.length === 0 && selCycles.length === 0 ? (
           <p className="text-slate-600 text-sm text-center py-4">
             {isTodaySelected ? t('noch_nichts_heute') : t('kein_eintrag_tag')}
           </p>
-        ) : dueCycles.length === 0 ? (
+        ) : dueSlots.length === 0 ? (
           <p className="text-slate-600 text-xs text-center py-2">
             {t('all_intakes_done', { defaultValue: 'Alle geplanten Einnahmen sind bestätigt.' })}
           </p>

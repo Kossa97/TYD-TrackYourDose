@@ -18,11 +18,38 @@ import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideE
 import { findOldestOverdueIntake } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
-import { format, parseISO, subDays } from 'date-fns'
+import { differenceInDays, format, parseISO, subDays } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
 
 const SLOT_TIMES: Record<string, string> = { morgens: '08:00', mittags: '12:00', abends: '20:00' }
+
+interface EscalationRow {
+  cycle_id: string
+  increase_amount: number
+  start_type: 'date' | 'after_days' | 'after_weeks'
+  start_date: string | null
+  start_after_days: number | null
+}
+
+// Effective dose for a cycle on a given day, including active escalations.
+// Mirrors effectiveDose() in Dashboard.tsx / Peptide.tsx.
+function effectiveDose(
+  cycle: { id: string; dose: number; start_date: string },
+  day: Date,
+  escalations: EscalationRow[],
+): number {
+  const daysFromStart = differenceInDays(day, parseISO(cycle.start_date))
+  let total = cycle.dose
+  for (const esc of escalations.filter(e => e.cycle_id === cycle.id)) {
+    if (esc.start_type === 'date' && esc.start_date) {
+      if (day >= parseISO(esc.start_date)) total += esc.increase_amount
+    } else if (esc.start_after_days != null) {
+      if (daysFromStart >= esc.start_after_days) total += esc.increase_amount
+    }
+  }
+  return total
+}
 
 const PEPTIDE_STUDIES = [
   { icon: FlaskConical, title: 'BPC-157 beschleunigt Sehnen- & Muskelheilung signifikant', source: 'J. Physiol. · 2024' },
@@ -229,7 +256,8 @@ export function Home() {
   const navigate = useNavigate()
   const [nextIntake,  setNextIntake]  = useState<string | null>(null)
   const [nextSubstance, setNextSubstance] = useState<string | null>(null)
-  const [dueIntake, setDueIntake] = useState<{ time: string; substance: string | null; daysOverdue: number; dateKey: string } | null>(null)
+  const [nextDose, setNextDose] = useState<string | null>(null)
+  const [dueIntake, setDueIntake] = useState<{ time: string; substance: string | null; daysOverdue: number; dateKey: string; dose: string | null } | null>(null)
   const [plannedToday, setPlannedToday] = useState(0)
   const [todayDone,   setTodayDone]   = useState(false)
   const [streak,      setStreak]      = useState(0)
@@ -245,9 +273,9 @@ export function Home() {
       const todayKey = format(new Date(), 'yyyy-MM-dd')
 
       try {
-        const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }] = await Promise.all([
+        const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }, { data: escalationData }, { data: decidedTodayData }] = await Promise.all([
           supabase.from('cycles')
-            .select('intake_time, intake_time_custom, peptide_id, start_date, end_date, frequency, x_days_interval, schedule_days')
+            .select('id, intake_time, intake_time_custom, peptide_id, dose, unit, start_date, end_date, frequency, x_days_interval, schedule_days')
             .eq('user_id', user!.id).eq('active', true),
           supabase.from('dose_logs')
             .select('logged_at, peptide_id')
@@ -259,33 +287,68 @@ export function Home() {
           supabase.from('inventory_items')
             .select('id, vials_count')
             .eq('user_id', user!.id),
+          supabase.from('dose_escalations')
+            .select('cycle_id, increase_amount, start_type, start_date, start_after_days')
+            .eq('user_id', user!.id),
+          // Today's decided intakes (taken or skipped) — used to consume slots in the timer.
+          supabase.from('dose_logs')
+            .select('peptide_id, taken')
+            .eq('user_id', user!.id)
+            .gte('logged_at', todayKey)
+            .lte('logged_at', todayKey + 'T23:59:59'),
         ])
+        const escalations = (escalationData ?? []) as EscalationRow[]
+        // How many of today's intakes are already decided (taken=true/false) per peptide.
+        const decidedCountByPeptide = new Map<string, number>()
+        for (const l of decidedTodayData ?? []) {
+          if (l.taken !== null) decidedCountByPeptide.set(l.peptide_id, (decidedCountByPeptide.get(l.peptide_id) ?? 0) + 1)
+        }
 
         // ── Next intake time ─────────────────────────────────────────
         const peptideNameById = new Map<string, string>(
           (peptideData ?? []).map((p) => [p.id as string, p.name as string])
         )
-        const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
-        const todaySlots: { min: number; time: string; substance: string | null }[] = []
+        const now = new Date()
+        const nowMin = now.getHours() * 60 + now.getMinutes()
+        const todaySlots: { min: number; time: string; substance: string | null; dose: string | null; peptideId: string }[] = []
         for (const c of cycleData ?? []) {
           const slots   = (c.intake_time ?? '').split(',').filter(Boolean)
           const customs = (c.intake_time_custom ?? '').split(',')
+          const doseLabel = c.dose != null
+            ? `${effectiveDose(c, now, escalations)} ${c.unit ?? ''}`.trim()
+            : null
           slots.forEach((slot: string, i: number) => {
             const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
             if (!tm) return
             const [h, m] = tm.split(':').map(Number)
-            todaySlots.push({ min: h * 60 + m, time: tm, substance: peptideNameById.get(c.peptide_id as string) ?? null })
+            todaySlots.push({ min: h * 60 + m, time: tm, substance: peptideNameById.get(c.peptide_id as string) ?? null, dose: doseLabel, peptideId: c.peptide_id as string })
           })
         }
         todaySlots.sort((a, b) => a.min - b.min)
-        const nextSlot = todaySlots.find((s) => s.min > nowMin) ?? null
+        // Consume already-decided intakes per peptide in time order; the timer points
+        // at the earliest still-open slot in the future.
+        const consumedByPeptide = new Map<string, number>()
+        let nextSlot: typeof todaySlots[number] | null = null
+        for (const s of todaySlots) {
+          const used = consumedByPeptide.get(s.peptideId) ?? 0
+          if (used < (decidedCountByPeptide.get(s.peptideId) ?? 0)) {
+            consumedByPeptide.set(s.peptideId, used + 1)
+            continue
+          }
+          if (s.min > nowMin) { nextSlot = s; break }
+        }
         // Oldest unlogged scheduled intake across the past weeks (today included).
         const overdue = findOldestOverdueIntake(cycleData ?? [], logData ?? [], peptideNameById)
+        const overdueCycle = overdue ? (cycleData ?? []).find(c => c.id === overdue.cycleId) : null
+        const overdueDose = overdue && overdueCycle && overdueCycle.dose != null
+          ? `${effectiveDose(overdueCycle, parseISO(overdue.dateKey), escalations)} ${overdueCycle.unit ?? ''}`.trim()
+          : null
 
         setPlannedToday(todaySlots.length)
         setNextIntake(nextSlot?.time ?? null)
         setNextSubstance(nextSlot?.substance ?? null)
-        setDueIntake(overdue)
+        setNextDose(nextSlot?.dose ?? null)
+        setDueIntake(overdue ? { ...overdue, dose: overdueDose } : null)
         setTodayDone(todaySlots.length > 0 && !nextSlot && !overdue)
 
         // ── Streak (consecutive days with ≥1 taken log) ─────────────
@@ -389,6 +452,7 @@ export function Home() {
             <NextIntakeBanner
               time={dueIntake.time}
               substance={dueIntake.substance}
+              dose={dueIntake.dose}
               forceDue
               daysOverdue={dueIntake.daysOverdue}
               onClick={() => navigate(`/kalender?date=${dueIntake.dateKey}#due-intakes`)}
@@ -397,6 +461,7 @@ export function Home() {
             <NextIntakeBanner
               time={nextIntake}
               substance={nextSubstance}
+              dose={nextDose}
               onClick={() => navigate('/kalender#due-intakes')}
             />
           ) : (
@@ -767,12 +832,14 @@ function msUntilTime(time: string): number {
 function NextIntakeBanner({
   time,
   substance,
+  dose,
   onClick,
   forceDue = false,
   daysOverdue = 0,
 }: {
   time: string
   substance: string | null
+  dose?: string | null
   onClick: () => void
   forceDue?: boolean
   daysOverdue?: number
@@ -826,7 +893,7 @@ function NextIntakeBanner({
             const when = due && daysOverdue >= 1
               ? t('home_overdue_days', { days: daysOverdue, defaultValue: `seit ${daysOverdue} ${daysOverdue === 1 ? 'Tag' : 'Tagen'} überfällig` })
               : `${t('home_at_time', { defaultValue: 'um' })} ${time}`
-            return substance ? `${substance} · ${when}` : when
+            return [substance, dose, when].filter(Boolean).join(' · ')
           })()}
         </p>
       </div>

@@ -5,6 +5,7 @@ const WEEKDAYS_DE: Record<number, string> = { 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do'
 const SLOT_TIMES: Record<string, string> = { morgens: '08:00', mittags: '12:00', abends: '20:00' }
 
 export interface ScheduleCycle {
+  id: string
   peptide_id: string
   start_date: string
   end_date: string | null
@@ -26,6 +27,8 @@ export interface OverdueIntake {
   daysOverdue: number
   /** yyyy-MM-dd of the overdue intake's scheduled day. */
   dateKey: string
+  /** id of the cycle this overdue intake belongs to. */
+  cycleId: string
 }
 
 // NOTE: kept in sync with the identical predicate in Dashboard.tsx (cycleAppliesToDay).
@@ -92,7 +95,7 @@ export function findOldestOverdueIntake(
     const dayKey = format(day, 'yyyy-MM-dd')
     const isToday = dayKey === todayKey
 
-    let candidate: { min: number; time: string; substance: string | null } | null = null
+    let candidate: { min: number; time: string; substance: string | null; cycleId: string } | null = null
     for (const c of cycles) {
       if (!cycleAppliesToDay(c, day)) continue
       if (satisfied.has(`${c.peptide_id}|${dayKey}`)) continue
@@ -100,11 +103,11 @@ export function findOldestOverdueIntake(
       if (!slot) continue
       if (isToday && slot.min > nowMin) continue // still upcoming today → not overdue
       if (!candidate || slot.min < candidate.min) {
-        candidate = { min: slot.min, time: slot.time, substance: peptideNameById.get(c.peptide_id) ?? null }
+        candidate = { min: slot.min, time: slot.time, substance: peptideNameById.get(c.peptide_id) ?? null, cycleId: c.id }
       }
     }
     if (candidate) {
-      return { time: candidate.time, substance: candidate.substance, daysOverdue: differenceInDays(now, day), dateKey: dayKey }
+      return { time: candidate.time, substance: candidate.substance, daysOverdue: differenceInDays(now, day), dateKey: dayKey, cycleId: candidate.cycleId }
     }
   }
   return null
