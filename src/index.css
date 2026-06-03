@@ -663,6 +663,69 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
   --shadow-input:    inset 0 1px 3px rgba(20,40,80,0.08);
 }
 
+/* ── Peptide expiry warning banners (Home) ── */
+.expiry-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--expiry-banner-border);
+  background: var(--expiry-banner-bg);
+  box-shadow: var(--expiry-banner-shadow);
+}
+.expiry-banner--soon {
+  --expiry-banner-border: rgba(245, 158, 11, 0.45);
+  --expiry-banner-bg: linear-gradient(145deg, rgba(245, 158, 11, 0.14), rgba(9, 14, 34, 0.92));
+  --expiry-banner-fg: #fcd34d;
+  --expiry-banner-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
+}
+.expiry-banner--expired {
+  --expiry-banner-border: rgba(244, 63, 94, 0.45);
+  --expiry-banner-bg: linear-gradient(145deg, rgba(244, 63, 94, 0.16), rgba(9, 14, 34, 0.92));
+  --expiry-banner-fg: #fda4af;
+  --expiry-banner-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
+}
+[data-theme="light"] .expiry-banner--soon {
+  --expiry-banner-border: rgba(217, 119, 6, 0.35);
+  --expiry-banner-bg: linear-gradient(145deg, rgba(251, 191, 36, 0.22), var(--surface));
+  --expiry-banner-fg: #92400e;
+  --expiry-banner-shadow: 0 4px 14px rgba(180, 83, 9, 0.12);
+}
+[data-theme="light"] .expiry-banner--expired {
+  --expiry-banner-border: rgba(225, 29, 72, 0.32);
+  --expiry-banner-bg: linear-gradient(145deg, rgba(251, 113, 133, 0.18), var(--surface));
+  --expiry-banner-fg: #9f1239;
+  --expiry-banner-shadow: 0 4px 14px rgba(190, 18, 60, 0.10);
+}
+.expiry-banner__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: var(--expiry-banner-fg);
+}
+.expiry-banner__message {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.45;
+  color: var(--expiry-banner-fg);
+}
+.expiry-banner__dismiss {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--border);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    BASE
    ═══════════════════════════════════════════════════════════════════════════ */
