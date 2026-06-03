@@ -4,6 +4,17 @@ import { differenceInDays, format, parseISO, startOfDay, subDays } from 'date-fn
 const WEEKDAYS_DE: Record<number, string> = { 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 6: 'Sa', 0: 'So' }
 const SLOT_TIMES: Record<string, string> = { morgens: '08:00', mittags: '12:00', abends: '20:00' }
 
+export interface ScheduleSegment {
+  effective_from: string            // 'yyyy-MM-dd'
+  frequency: string
+  x_days_interval: number | null
+  schedule_days: string[] | null
+  intake_time: string | null
+  intake_time_custom: string | null
+  dose: number
+  unit: string
+}
+
 export interface ScheduleCycle {
   id: string
   peptide_id: string
@@ -14,6 +25,17 @@ export interface ScheduleCycle {
   schedule_days: string[] | null
   intake_time: string | null
   intake_time_custom: string | null
+  dose: number
+  unit: string
+  schedule_history: ScheduleSegment[] | null
+}
+
+export interface EscalationRow {
+  cycle_id: string
+  increase_amount: number
+  start_type: 'date' | 'after_days' | 'after_weeks'
+  start_date: string | null
+  start_after_days: number | null
 }
 
 export interface IntakeLog {
@@ -21,6 +43,44 @@ export interface IntakeLog {
   logged_at: string
   /** true = taken, false = skipped, null = reset. Decided (non-null) logs cover a slot. */
   taken: boolean | null
+}
+
+// Active schedule segment for a given day. Empty history => flat cycle fields from start_date.
+export function scheduleForDay(cycle: ScheduleCycle, day: Date): ScheduleSegment {
+  const flat: ScheduleSegment = {
+    effective_from: cycle.start_date,
+    frequency: cycle.frequency,
+    x_days_interval: cycle.x_days_interval,
+    schedule_days: cycle.schedule_days,
+    intake_time: cycle.intake_time,
+    intake_time_custom: cycle.intake_time_custom,
+    dose: cycle.dose,
+    unit: cycle.unit,
+  }
+  const history = cycle.schedule_history
+  if (!history || history.length === 0) return flat
+  const dayKey = format(day, 'yyyy-MM-dd')
+  const sorted = [...history].sort((a, b) => a.effective_from.localeCompare(b.effective_from))
+  let seg = sorted[0]
+  for (const s of sorted) {
+    if (s.effective_from <= dayKey) seg = s
+    else break
+  }
+  return seg
+}
+
+// Effective dose for a cycle on a given day: segment base dose + active escalations.
+export function effectiveDose(cycle: ScheduleCycle, day: Date, escalations: EscalationRow[]): number {
+  const daysFromStart = differenceInDays(day, parseISO(cycle.start_date))
+  let total = scheduleForDay(cycle, day).dose
+  for (const esc of escalations.filter(e => e.cycle_id === cycle.id)) {
+    if (esc.start_type === 'date' && esc.start_date) {
+      if (day >= parseISO(esc.start_date)) total += esc.increase_amount
+    } else if (esc.start_after_days != null) {
+      if (daysFromStart >= esc.start_after_days) total += esc.increase_amount
+    }
+  }
+  return total
 }
 
 export interface OverdueIntake {
@@ -33,36 +93,38 @@ export interface OverdueIntake {
   cycleId: string
 }
 
-// NOTE: kept in sync with the identical predicate in Dashboard.tsx (cycleAppliesToDay).
+// Single source of truth — Dashboard.tsx imports this instead of duplicating it.
 export function cycleAppliesToDay(cycle: ScheduleCycle, day: Date): boolean {
   const start = parseISO(cycle.start_date)
   const end = cycle.end_date ? parseISO(cycle.end_date) : null
   if (day < start) return false
   if (end && day > end) return false
 
-  const freq = cycle.frequency
+  const seg = scheduleForDay(cycle, day)
+  const freq = seg.frequency
   const dayOfWeek = WEEKDAYS_DE[day.getDay()]
   const diff = differenceInDays(day, start)
-  const hasDayFilter = (cycle.schedule_days ?? []).length > 0
+  const hasDayFilter = (seg.schedule_days ?? []).length > 0
 
   if (freq === 'Täglich' || freq === '2x täglich' || freq === '3x täglich')
-    return hasDayFilter ? (cycle.schedule_days ?? []).includes(dayOfWeek) : true
+    return hasDayFilter ? (seg.schedule_days ?? []).includes(dayOfWeek) : true
   if (freq === 'Jeden 2. Tag') return diff % 2 === 0
   if (freq === 'Alle X Tage') {
-    const intervalOk = diff % (cycle.x_days_interval ?? 2) === 0
-    return intervalOk && (hasDayFilter ? (cycle.schedule_days ?? []).includes(dayOfWeek) : true)
+    const intervalOk = diff % (seg.x_days_interval ?? 2) === 0
+    return intervalOk && (hasDayFilter ? (seg.schedule_days ?? []).includes(dayOfWeek) : true)
   }
   if (freq === '5 Tage an / 2 aus') return diff % 7 < 5
   if (freq === 'Mo-Fr') return day.getDay() >= 1 && day.getDay() <= 5
   if (freq === 'Wöchentlich') return diff % 7 === 0
-  if (freq === 'Wochentage wählen') return (cycle.schedule_days ?? []).includes(dayOfWeek)
+  if (freq === 'Wochentage wählen') return (seg.schedule_days ?? []).includes(dayOfWeek)
   return false
 }
 
-// All scheduled slots of a cycle on any day, sorted by time. One entry per intake time.
-function cycleDaySlots(c: ScheduleCycle): { min: number; time: string }[] {
-  const slots = (c.intake_time ?? '').split(',').filter(Boolean)
-  const customs = (c.intake_time_custom ?? '').split(',')
+// All scheduled slots of a cycle ON a given day, sorted by time (segment-resolved).
+function cycleDaySlots(c: ScheduleCycle, day: Date): { min: number; time: string }[] {
+  const seg = scheduleForDay(c, day)
+  const slots = (seg.intake_time ?? '').split(',').filter(Boolean)
+  const customs = (seg.intake_time_custom ?? '').split(',')
   const out: { min: number; time: string }[] = []
   slots.forEach((slot, i) => {
     const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
@@ -107,7 +169,7 @@ export function findOldestOverdueIntake(
     const slotsByPeptide = new Map<string, { min: number; time: string; cycleId: string }[]>()
     for (const c of cycles) {
       if (!cycleAppliesToDay(c, day)) continue
-      for (const s of cycleDaySlots(c)) {
+      for (const s of cycleDaySlots(c, day)) {
         const arr = slotsByPeptide.get(c.peptide_id) ?? []
         arr.push({ min: s.min, time: s.time, cycleId: c.id })
         slotsByPeptide.set(c.peptide_id, arr)
