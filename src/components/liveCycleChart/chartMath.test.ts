@@ -58,42 +58,7 @@ describe('clampViewEnd', () => {
   })
 })
 
-import { pickChartTimeTicks, pickDayTicks, pickHourTicks, pickWindowTimeTicks } from './chartMath'
-
-describe('pickHourTicks', () => {
-  const HOUR = 3_600_000
-  it('liefert Stunden-Ticks für 24h bei typischer Mobilbreite', () => {
-    const ticks = pickHourTicks(0, 24 * HOUR, 320, 56)
-    expect(ticks.length).toBeGreaterThanOrEqual(3)
-    expect(ticks.length).toBeLessThanOrEqual(8)
-  })
-})
-
-describe('pickChartTimeTicks', () => {
-  it('nutzt viewport-Ticks bei 24h-Fenster', () => {
-    const span = 24 * 3_600_000
-    const ticks = pickChartTimeTicks(5_000_000, 5_000_000 + span, 320, 56)
-    expect(ticks[0]).toBe(5_000_000)
-  })
-  it('nutzt Tages-Ticks bei 7-Tage-Fenster', () => {
-    const ticks = pickChartTimeTicks(0, 7 * DAY, 700, 56)
-    expect(ticks).toEqual([0, DAY, 2 * DAY, 3 * DAY, 4 * DAY, 5 * DAY, 6 * DAY, 7 * DAY])
-  })
-})
-
-describe('pickWindowTimeTicks', () => {
-  const HOUR = 3_600_000
-  it('verschiebt Ticks parallel wenn viewStart sich bewegt', () => {
-    const span = 24 * HOUR
-    const a = pickWindowTimeTicks(1_000_000, 1_000_000 + span, 320, 56)
-    const b = pickWindowTimeTicks(1_000_000 + 2 * HOUR, 1_000_000 + 2 * HOUR + span, 320, 56)
-    expect(a.length).toBeGreaterThan(1)
-    expect(a[0]).not.toBe(b[0])
-    if (a.length >= 2 && b.length >= 2) {
-      expect(b[1] - b[0]).toBe(a[1] - a[0])
-    }
-  })
-})
+import { pickDayTicks } from './chartMath'
 
 describe('pickDayTicks', () => {
   it('tägliche Ticks wenn genug Platz', () => {
@@ -131,5 +96,71 @@ describe('pickNiceTicks', () => {
   it('leeres Array bei ungültigem Bereich', () => {
     expect(pickNiceTicks(5, 5, 700, 70)).toEqual([])
     expect(pickNiceTicks(0, 100, 0, 70)).toEqual([])
+  })
+})
+
+import {
+  pickSixHourScrollingTicks,
+  pickChartTimeTicks,
+  pickWindowTimeTicks,
+  panHapticStepMs,
+  LIVE_CHART_WINDOW_MS_MOBILE,
+} from './chartMath'
+
+const HOUR = 3_600_000
+const SIX_HOUR = 6 * HOUR
+
+function tickX(ts: number, viewStart: number, win: number, width = 300): number {
+  return ((ts - viewStart) / win) * width
+}
+
+describe('pickSixHourScrollingTicks', () => {
+  it('liefert 6h-Abstände im sichtbaren Fenster', () => {
+    const viewEnd = Date.UTC(2024, 5, 3, 18, 0, 0)
+    const viewStart = viewEnd - LIVE_CHART_WINDOW_MS_MOBILE
+    const ticks = pickSixHourScrollingTicks(viewStart, viewEnd)
+    expect(ticks.length).toBeGreaterThanOrEqual(4)
+    for (let i = 1; i < ticks.length; i++) {
+      expect(ticks[i] - ticks[i - 1]).toBe(SIX_HOUR)
+    }
+    for (const t of ticks) {
+      expect(t).toBeGreaterThanOrEqual(viewStart)
+      expect(t).toBeLessThanOrEqual(viewEnd)
+    }
+  })
+
+  it('verschiebt Tick-Positionen auf dem Screen beim Wischen', () => {
+    const viewEnd = Date.UTC(2024, 5, 3, 18, 0, 0)
+    const viewStart1 = viewEnd - LIVE_CHART_WINDOW_MS_MOBILE
+    const viewStart2 = viewStart1 + 3 * HOUR
+    const ticks1 = pickSixHourScrollingTicks(viewStart1, viewEnd)
+    const ticks2 = pickSixHourScrollingTicks(viewStart2, viewEnd)
+    const shared = ticks1.filter(t => t >= viewStart2)
+    expect(shared.length).toBeGreaterThan(0)
+    const t = shared[0]
+    expect(tickX(t, viewStart1, LIVE_CHART_WINDOW_MS_MOBILE)).not.toBeCloseTo(
+      tickX(t, viewStart2, LIVE_CHART_WINDOW_MS_MOBILE),
+    )
+    // Viewport-relative Ticks bleiben dagegen an festen Bildschirmpositionen
+    const w1 = pickWindowTimeTicks(viewStart1, viewEnd, 300, 56)
+    const w2 = pickWindowTimeTicks(viewStart2, viewEnd, 300, 56)
+    expect(tickX(w1[0], viewStart1, LIVE_CHART_WINDOW_MS_MOBILE)).toBeCloseTo(0)
+    expect(tickX(w2[0], viewStart2, LIVE_CHART_WINDOW_MS_MOBILE)).toBeCloseTo(0)
+  })
+})
+
+describe('pickChartTimeTicks (24h mobil)', () => {
+  it('nutzt 6h-Scroll-Raster für 24h-Fenster', () => {
+    const viewEnd = Date.UTC(2024, 5, 3, 12, 0, 0)
+    const viewStart = viewEnd - LIVE_CHART_WINDOW_MS_MOBILE
+    expect(pickChartTimeTicks(viewStart, viewEnd, 300, 56)).toEqual(
+      pickSixHourScrollingTicks(viewStart, viewEnd),
+    )
+  })
+
+  it('panHapticStepMs ist 6h im 24h-Fenster', () => {
+    const viewEnd = Date.UTC(2024, 5, 3, 12, 0, 0)
+    const viewStart = viewEnd - LIVE_CHART_WINDOW_MS_MOBILE
+    expect(panHapticStepMs(viewStart, viewEnd, 300, 56)).toBe(SIX_HOUR)
   })
 })

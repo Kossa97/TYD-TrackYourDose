@@ -36,6 +36,7 @@ export function clampViewEnd(viewEnd: number, dataStart: number, now: number, wi
 
 const DAY_MS = 24 * 3_600_000
 const HOUR_MS = 3_600_000
+const SIX_HOUR_MS = 6 * HOUR_MS
 
 /** Desktop: 7-Tage-Sichtfenster für Live-Blutspiegel-Verlauf. */
 export const LIVE_CHART_WINDOW_MS_DESKTOP = 7 * DAY_MS
@@ -101,6 +102,28 @@ export function pickHourTicks(startTs: number, endTs: number, widthPx: number, m
 }
 
 /**
+ * 6h-Raster (lokale Uhrzeit) — Grid-Linien wandern beim Wischen mit der Kurve (24h-Ansicht).
+ */
+export function pickSixHourScrollingTicks(viewStart: number, viewEnd: number): number[] {
+  if (viewEnd <= viewStart) return []
+  const ticks: number[] = []
+  let t = alignLocalSixHourFloor(viewStart)
+  if (t < viewStart) t += SIX_HOUR_MS
+  while (t <= viewEnd) {
+    ticks.push(t)
+    t += SIX_HOUR_MS
+  }
+  return ticks
+}
+
+function alignLocalSixHourFloor(ts: number): number {
+  const d = new Date(ts)
+  d.setMinutes(0, 0, 0)
+  d.setHours(Math.floor(d.getHours() / 6) * 6, 0, 0, 0)
+  return d.getTime()
+}
+
+/**
  * Ticks gleichmäßig im sichtbaren Fenster — bewegen sich beim Wischen parallel zur Kurve.
  */
 export function pickWindowTimeTicks(viewStart: number, viewEnd: number, widthPx: number, minPxPerTick: number): number[] {
@@ -112,16 +135,22 @@ export function pickWindowTimeTicks(viewStart: number, viewEnd: number, widthPx:
 
 /** Schrittweite für Haptic-Feedback beim Wischen (ms). */
 export function panHapticStepMs(viewStart: number, viewEnd: number, widthPx: number, minPxPerTick: number): number {
+  const span = viewEnd - viewStart
+  if (span <= LIVE_CHART_WINDOW_MS_MOBILE * 1.05) return SIX_HOUR_MS
   const ticks = pickWindowTimeTicks(viewStart, viewEnd, widthPx, minPxPerTick)
   if (ticks.length >= 2) return ticks[1] - ticks[0]
-  return Math.max(viewEnd - viewStart, HOUR_MS)
+  return Math.max(span, HOUR_MS)
 }
 
 /**
  * X-Ticks passend zur Fenstergröße: ≤3 Tage → viewport-relativ, sonst Kalendertage.
  */
 export function pickChartTimeTicks(startTs: number, endTs: number, widthPx: number, minPxPerTick: number): number[] {
-  if (endTs - startTs <= 3 * DAY_MS) {
+  const span = endTs - startTs
+  if (span <= LIVE_CHART_WINDOW_MS_MOBILE * 1.05) {
+    return pickSixHourScrollingTicks(startTs, endTs)
+  }
+  if (span <= 3 * DAY_MS) {
     return pickWindowTimeTicks(startTs, endTs, widthPx, minPxPerTick)
   }
   return pickDayTicks(startTs, endTs, widthPx, minPxPerTick)
