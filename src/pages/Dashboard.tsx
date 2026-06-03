@@ -17,6 +17,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
+import { cycleAppliesToDay, effectiveDose, scheduleForDay, type ScheduleSegment } from '../lib/intakeSchedule'
 import { GlassPanel, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
 
 const DATE_LOCALES: Record<string, Locale> = {
@@ -50,6 +51,7 @@ interface Cycle {
   active: boolean
   intake_time: string | null
   intake_time_custom: string | null
+  schedule_history: ScheduleSegment[] | null
   peptides: { name: string }
 }
 
@@ -69,47 +71,6 @@ interface Escalation {
   start_type: 'date' | 'after_days' | 'after_weeks'
   start_date: string | null
   start_after_days: number | null
-}
-
-const WEEKDAYS_DE: Record<number, string> = { 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 6: 'Sa', 0: 'So' }
-
-function cycleAppliesToDay(cycle: Cycle, day: Date): boolean {
-  const start = parseISO(cycle.start_date)
-  const end = cycle.end_date ? parseISO(cycle.end_date) : null
-  if (day < start) return false
-  if (end && day > end) return false
-
-  const freq = cycle.frequency
-  const dayOfWeek = WEEKDAYS_DE[day.getDay()]
-  const diff = differenceInDays(day, start)
-
-  const hasDayFilter = (cycle.schedule_days ?? []).length > 0
-  if (freq === 'Täglich' || freq === '2x täglich' || freq === '3x täglich')
-    return hasDayFilter ? (cycle.schedule_days ?? []).includes(dayOfWeek) : true
-  if (freq === 'Jeden 2. Tag') return diff % 2 === 0
-  if (freq === 'Alle X Tage') {
-    const intervalOk = diff % (cycle.x_days_interval ?? 2) === 0
-    return intervalOk && (hasDayFilter ? (cycle.schedule_days ?? []).includes(dayOfWeek) : true)
-  }
-  if (freq === '5 Tage an / 2 aus') return diff % 7 < 5
-  if (freq === 'Mo-Fr') return day.getDay() >= 1 && day.getDay() <= 5
-  if (freq === 'Wöchentlich') return diff % 7 === 0
-  if (freq === 'Wochentage wählen') return (cycle.schedule_days ?? []).includes(dayOfWeek)
-  return false
-}
-
-function effectiveDose(cycle: Cycle, day: Date, escalations: Escalation[]): number {
-  const cycleStart = parseISO(cycle.start_date)
-  const daysFromStart = differenceInDays(day, cycleStart)
-  let total = cycle.dose
-  for (const esc of escalations.filter(e => e.cycle_id === cycle.id)) {
-    if (esc.start_type === 'date' && esc.start_date) {
-      if (day >= parseISO(esc.start_date)) total += esc.increase_amount
-    } else if (esc.start_after_days != null) {
-      if (daysFromStart >= esc.start_after_days) total += esc.increase_amount
-    }
-  }
-  return total
 }
 
 const INTAKE_MINUTES: Record<string, number> = {
@@ -132,10 +93,11 @@ function minutesToHHmm(min: number): string {
 
 interface DaySlot { key: string; minutes: number; time: string; groupKey: IntakeGroupKey }
 
-// Expand a cycle's intake times into individual day-slots (one per scheduled time).
-function cycleSlots(c: Cycle): DaySlot[] {
-  const keys = (c.intake_time ?? '').split(',').filter(Boolean)
-  const customs = (c.intake_time_custom ?? '').split(',')
+// Expand a cycle's intake times into individual day-slots for a given day (segment-resolved).
+function cycleSlots(c: Cycle, day: Date): DaySlot[] {
+  const seg = scheduleForDay(c, day)
+  const keys = (seg.intake_time ?? '').split(',').filter(Boolean)
+  const customs = (seg.intake_time_custom ?? '').split(',')
   const out: DaySlot[] = []
   keys.forEach((key, i) => {
     if (key === 'morgens' || key === 'mittags' || key === 'abends') {
@@ -446,7 +408,7 @@ export function Dashboard() {
   }
   const slotsByPeptide = new Map<string, DueSlot[]>()
   for (const cycle of selCycles) {
-    for (const s of cycleSlots(cycle)) {
+    for (const s of cycleSlots(cycle, selectedDay)) {
       const arr = slotsByPeptide.get(cycle.peptide_id) ?? []
       arr.push({ cycle, minutes: s.minutes, time: s.time, groupKey: s.groupKey })
       slotsByPeptide.set(cycle.peptide_id, arr)
@@ -888,7 +850,8 @@ export function Dashboard() {
                 {section.slots.map(slot => {
                   const c = slot.cycle
                   const dose = effectiveDose(c, selectedDay, escalations)
-                  const isEscalated = dose !== c.dose
+                  const baseDose = scheduleForDay(c, selectedDay).dose
+                  const isEscalated = dose !== baseDose
                   const pendingLog = slot.pendingLog
                   const cycleEscs = escalations.filter(e => e.cycle_id === c.id)
                   const activeEscCount = cycleEscs.filter(e => {
@@ -933,7 +896,7 @@ export function Dashboard() {
                             </span>
                             {isEscalated && (
                               <span className="text-slate-600 text-xs">
-                                {t('basis_label')} {c.dose} {c.unit} · +{dose - c.dose} {c.unit}
+                                {t('basis_label')} {baseDose} {c.unit} · +{dose - baseDose} {c.unit}
                               </span>
                             )}
                           </div>

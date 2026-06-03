@@ -15,41 +15,14 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
-import { findOldestOverdueIntake } from '../lib/intakeSchedule'
+import { findOldestOverdueIntake, effectiveDose, type EscalationRow } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
-import { differenceInDays, format, parseISO, subDays } from 'date-fns'
+import { format, parseISO, subDays } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
 
 const SLOT_TIMES: Record<string, string> = { morgens: '08:00', mittags: '12:00', abends: '20:00' }
-
-interface EscalationRow {
-  cycle_id: string
-  increase_amount: number
-  start_type: 'date' | 'after_days' | 'after_weeks'
-  start_date: string | null
-  start_after_days: number | null
-}
-
-// Effective dose for a cycle on a given day, including active escalations.
-// Mirrors effectiveDose() in Dashboard.tsx / Peptide.tsx.
-function effectiveDose(
-  cycle: { id: string; dose: number; start_date: string },
-  day: Date,
-  escalations: EscalationRow[],
-): number {
-  const daysFromStart = differenceInDays(day, parseISO(cycle.start_date))
-  let total = cycle.dose
-  for (const esc of escalations.filter(e => e.cycle_id === cycle.id)) {
-    if (esc.start_type === 'date' && esc.start_date) {
-      if (day >= parseISO(esc.start_date)) total += esc.increase_amount
-    } else if (esc.start_after_days != null) {
-      if (daysFromStart >= esc.start_after_days) total += esc.increase_amount
-    }
-  }
-  return total
-}
 
 const PEPTIDE_STUDIES = [
   { icon: FlaskConical, title: 'BPC-157 beschleunigt Sehnen- & Muskelheilung signifikant', source: 'J. Physiol. · 2024' },
@@ -275,7 +248,7 @@ export function Home() {
       try {
         const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }, { data: escalationData }] = await Promise.all([
           supabase.from('cycles')
-            .select('id, intake_time, intake_time_custom, peptide_id, dose, unit, start_date, end_date, frequency, x_days_interval, schedule_days')
+            .select('id, intake_time, intake_time_custom, peptide_id, dose, unit, start_date, end_date, frequency, x_days_interval, schedule_days, schedule_history')
             .eq('user_id', user!.id).eq('active', true),
           // All decided/reset logs — taken filtered per use site (streak/overdue/timer).
           supabase.from('dose_logs')
