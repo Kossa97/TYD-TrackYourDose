@@ -58,7 +58,27 @@ describe('clampViewEnd', () => {
   })
 })
 
-import { pickDayTicks } from './chartMath'
+import { pickChartTimeTicks, pickDayTicks, pickHourTicks } from './chartMath'
+
+describe('pickHourTicks', () => {
+  const HOUR = 3_600_000
+  it('liefert Stunden-Ticks für 24h bei typischer Mobilbreite', () => {
+    const ticks = pickHourTicks(0, 24 * HOUR, 320, 56)
+    expect(ticks.length).toBeGreaterThanOrEqual(3)
+    expect(ticks.length).toBeLessThanOrEqual(8)
+  })
+})
+
+describe('pickChartTimeTicks', () => {
+  it('nutzt Stunden-Ticks bei 24h-Fenster', () => {
+    const ticks = pickChartTimeTicks(0, 24 * 3_600_000, 320, 56)
+    expect(ticks.length).toBeGreaterThan(1)
+  })
+  it('nutzt Tages-Ticks bei 7-Tage-Fenster', () => {
+    const ticks = pickChartTimeTicks(0, 7 * DAY, 700, 56)
+    expect(ticks).toEqual([0, DAY, 2 * DAY, 3 * DAY, 4 * DAY, 5 * DAY, 6 * DAY, 7 * DAY])
+  })
+})
 
 describe('pickDayTicks', () => {
   it('tägliche Ticks wenn genug Platz', () => {

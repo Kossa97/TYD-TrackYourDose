@@ -35,6 +35,45 @@ export function clampViewEnd(viewEnd: number, dataStart: number, now: number, wi
 }
 
 const DAY_MS = 24 * 3_600_000
+const HOUR_MS = 3_600_000
+
+/** Desktop: 7-Tage-Sichtfenster für Live-Blutspiegel-Verlauf. */
+export const LIVE_CHART_WINDOW_MS_DESKTOP = 7 * DAY_MS
+/** Mobil: 24h-Sichtfenster (weniger überladene X-Achse). */
+export const LIVE_CHART_WINDOW_MS_MOBILE = DAY_MS
+export const LIVE_CHART_MOBILE_MQ = '(max-width: 768px)'
+
+/**
+ * Stunden-Ticks für kurze Zeitfenster (z. B. 24h auf Mobil).
+ */
+export function pickHourTicks(startTs: number, endTs: number, widthPx: number, minPxPerTick: number): number[] {
+  if (endTs <= startTs || widthPx <= 0) return []
+  const span = endTs - startTs
+  const maxTicks = Math.max(1, Math.floor(widthPx / minPxPerTick))
+  const steps = [1, 2, 3, 4, 6, 8, 12, 24]
+  let stepHours = 24
+  for (const h of steps) {
+    if (span / HOUR_MS / h <= maxTicks) {
+      stepHours = h
+      break
+    }
+  }
+  const stepMs = stepHours * HOUR_MS
+  const first = Math.ceil(startTs / HOUR_MS) * HOUR_MS
+  const ticks: number[] = []
+  for (let t = first; t <= endTs; t += stepMs) ticks.push(t)
+  return ticks
+}
+
+/**
+ * X-Ticks passend zur Fenstergröße: ≤3 Tage → Stunden, sonst Tage.
+ */
+export function pickChartTimeTicks(startTs: number, endTs: number, widthPx: number, minPxPerTick: number): number[] {
+  if (endTs - startTs <= 3 * DAY_MS) {
+    return pickHourTicks(startTs, endTs, widthPx, minPxPerTick)
+  }
+  return pickDayTicks(startTs, endTs, widthPx, minPxPerTick)
+}
 
 /**
  * Tages-ausgerichtete X-Ticks für [startTs, endTs]. Wählt ein Tages-Vielfaches als

@@ -8,7 +8,8 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import { format } from 'date-fns'
 import { de as deLocale } from 'date-fns/locale'
 import {
-  lerpLevel, panViewEnd, clampViewEnd, pickDayTicks,
+  lerpLevel, panViewEnd, clampViewEnd, pickChartTimeTicks,
+  LIVE_CHART_WINDOW_MS_MOBILE,
   type ChartPoint, type MarkerPoint, type NamedMarker,
 } from './chartMath'
 import { hapticTick } from '../../lib/haptics'
@@ -122,8 +123,6 @@ function LiveCycleChartCanvas({
     const border = style.getPropertyValue('--border').trim() || 'rgba(255,255,255,0.06)'
     const muted = style.getPropertyValue('--text-muted').trim() || 'rgba(154,170,191,0.55)'
     const surface = style.getPropertyValue('--surface').trim() || 'rgba(6,10,24,0.92)'
-    const accentToken = style.getPropertyValue('--accent').trim() || accentRef.current
-    const readLine = style.getPropertyValue('--border-strong').trim() || border
 
     // Gridlines
     ctx.strokeStyle = border
@@ -133,8 +132,9 @@ function LiveCycleChartCanvas({
       ctx.beginPath(); ctx.moveTo(dX, y); ctx.lineTo(dX + dW, y); ctx.stroke()
     }
 
-    // X-Ticks
-    const ticks = pickDayTicks(viewStart, viewEnd, dW, MIN_PX_PER_TICK)
+    // X-Ticks (Stunden bei kurzem Fenster, sonst Tage)
+    const ticks = pickChartTimeTicks(viewStart, viewEnd, dW, MIN_PX_PER_TICK)
+    const hourLabels = win <= LIVE_CHART_WINDOW_MS_MOBILE * 1.5
     ctx.font = '9px ui-monospace,monospace'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
@@ -144,7 +144,10 @@ function LiveCycleChartCanvas({
       ctx.strokeStyle = border
       ctx.beginPath(); ctx.moveTo(x, dY); ctx.lineTo(x, dY + dH); ctx.stroke()
       ctx.fillStyle = muted
-      ctx.fillText(format(new Date(ts), 'EEE dd.', { locale: deLocale }), x, dY + dH + 4)
+      const label = hourLabels
+        ? format(new Date(ts), 'HH:mm', { locale: deLocale })
+        : format(new Date(ts), 'EEE dd.', { locale: deLocale })
+      ctx.fillText(label, x, dY + dH + 4)
     }
 
     // Kurve + Marker (auf Plot geclippt)
@@ -299,7 +302,7 @@ function LiveCycleChartCanvas({
     // "jetzt"-Label
     const nowX = tsToX(now)
     if (nowX >= dX && nowX <= dX + dW) {
-      ctx.fillStyle = accentToken
+      ctx.fillStyle = '#00ccf5'
       ctx.font = '8px ui-monospace,monospace'
       ctx.textAlign = 'right'
       ctx.textBaseline = 'top'
@@ -312,7 +315,7 @@ function LiveCycleChartCanvas({
       const x = tsToX(ts)
       const lv = lerpLevel(pts, ts)
       const y = lvToY(lv)
-      ctx.strokeStyle = readLine
+      ctx.strokeStyle = 'rgba(226,232,240,0.55)'
       ctx.lineWidth = 1
       ctx.setLineDash([3, 2])
       ctx.beginPath(); ctx.moveTo(x, dY); ctx.lineTo(x, dY + dH); ctx.stroke()
