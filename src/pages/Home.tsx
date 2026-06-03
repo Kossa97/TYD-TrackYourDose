@@ -273,13 +273,14 @@ export function Home() {
       const todayKey = format(new Date(), 'yyyy-MM-dd')
 
       try {
-        const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }, { data: escalationData }, { data: decidedTodayData }] = await Promise.all([
+        const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }, { data: escalationData }] = await Promise.all([
           supabase.from('cycles')
             .select('id, intake_time, intake_time_custom, peptide_id, dose, unit, start_date, end_date, frequency, x_days_interval, schedule_days')
             .eq('user_id', user!.id).eq('active', true),
+          // All decided/reset logs — taken filtered per use site (streak/overdue/timer).
           supabase.from('dose_logs')
-            .select('logged_at, peptide_id')
-            .eq('user_id', user!.id).eq('taken', true)
+            .select('logged_at, peptide_id, taken')
+            .eq('user_id', user!.id)
             .order('logged_at', { ascending: false }),
           supabase.from('peptides')
             .select('id, name, vials_in_stock, reconstitution_date, expiry_days')
@@ -290,18 +291,13 @@ export function Home() {
           supabase.from('dose_escalations')
             .select('cycle_id, increase_amount, start_type, start_date, start_after_days')
             .eq('user_id', user!.id),
-          // Today's decided intakes (taken or skipped) — used to consume slots in the timer.
-          supabase.from('dose_logs')
-            .select('peptide_id, taken')
-            .eq('user_id', user!.id)
-            .gte('logged_at', todayKey)
-            .lte('logged_at', todayKey + 'T23:59:59'),
         ])
         const escalations = (escalationData ?? []) as EscalationRow[]
         // How many of today's intakes are already decided (taken=true/false) per peptide.
         const decidedCountByPeptide = new Map<string, number>()
-        for (const l of decidedTodayData ?? []) {
-          if (l.taken !== null) decidedCountByPeptide.set(l.peptide_id, (decidedCountByPeptide.get(l.peptide_id) ?? 0) + 1)
+        for (const l of logData ?? []) {
+          if (l.taken !== null && format(parseISO(l.logged_at), 'yyyy-MM-dd') === todayKey)
+            decidedCountByPeptide.set(l.peptide_id, (decidedCountByPeptide.get(l.peptide_id) ?? 0) + 1)
         }
 
         // ── Next intake time ─────────────────────────────────────────
@@ -353,7 +349,7 @@ export function Home() {
 
         // ── Streak (consecutive days with ≥1 taken log) ─────────────
         const takenDates = new Set(
-          (logData ?? []).map(l => format(parseISO(l.logged_at), 'yyyy-MM-dd'))
+          (logData ?? []).filter(l => l.taken === true).map(l => format(parseISO(l.logged_at), 'yyyy-MM-dd'))
         )
         let s = 0
         let d = new Date()
@@ -368,7 +364,7 @@ export function Home() {
           activeCycles: (cycleData ?? []).length,
           peptides: (peptideData ?? []).length,
           inventoryVials: (inventoryData ?? []).reduce((sum, item) => sum + Number(item.vials_count ?? 0), 0),
-          loggedToday: (logData ?? []).filter((log) => format(parseISO(log.logged_at), 'yyyy-MM-dd') === todayKey).length,
+          loggedToday: (logData ?? []).filter((log) => log.taken === true && format(parseISO(log.logged_at), 'yyyy-MM-dd') === todayKey).length,
           lowStock: (peptideData ?? []).filter((p) => p.vials_in_stock != null && Number(p.vials_in_stock) <= 1).length,
         })
       } catch {

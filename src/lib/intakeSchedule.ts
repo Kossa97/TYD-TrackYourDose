@@ -19,6 +19,8 @@ export interface ScheduleCycle {
 export interface IntakeLog {
   peptide_id: string
   logged_at: string
+  /** true = taken, false = skipped, null = reset. Decided (non-null) logs cover a slot. */
+  taken: boolean | null
 }
 
 export interface OverdueIntake {
@@ -57,25 +59,26 @@ export function cycleAppliesToDay(cycle: ScheduleCycle, day: Date): boolean {
   return false
 }
 
-function earliestSlot(c: ScheduleCycle): { min: number; time: string } | null {
+// All scheduled slots of a cycle on any day, sorted by time. One entry per intake time.
+function cycleDaySlots(c: ScheduleCycle): { min: number; time: string }[] {
   const slots = (c.intake_time ?? '').split(',').filter(Boolean)
   const customs = (c.intake_time_custom ?? '').split(',')
-  let best: { min: number; time: string } | null = null
+  const out: { min: number; time: string }[] = []
   slots.forEach((slot, i) => {
     const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
     if (!tm) return
     const [h, m] = tm.split(':').map(Number)
-    const min = h * 60 + m
-    if (!best || min < best.min) best = { min, time: tm }
+    out.push({ min: h * 60 + m, time: tm })
   })
-  return best
+  return out.sort((a, b) => a.min - b.min)
 }
 
 /**
  * Walk backwards over the last `lookbackDays` and return the OLDEST scheduled
- * intake that has no confirmed log on its day. A day counts as satisfied if any
- * confirmed (taken) log exists for that peptide on that day. Today's intakes only
- * count as overdue once their time has passed.
+ * intake slot not yet covered by a decided log. Per peptide and day, the decided
+ * logs (taken === true/false) cover the earliest scheduled slots in time order;
+ * the first uncovered slot whose time has passed counts as overdue. This keeps
+ * multiple intakes per day (e.g. "2x täglich") tracked independently.
  */
 export function findOldestOverdueIntake(
   cycles: ScheduleCycle[],
@@ -84,8 +87,13 @@ export function findOldestOverdueIntake(
   now: Date = new Date(),
   lookbackDays = 90,
 ): OverdueIntake | null {
-  const satisfied = new Set<string>()
-  for (const l of logs) satisfied.add(`${l.peptide_id}|${format(parseISO(l.logged_at), 'yyyy-MM-dd')}`)
+  // Count decided logs per peptide per day — that many earliest slots are covered.
+  const decidedByDay = new Map<string, number>()
+  for (const l of logs) {
+    if (l.taken == null) continue
+    const key = `${l.peptide_id}|${format(parseISO(l.logged_at), 'yyyy-MM-dd')}`
+    decidedByDay.set(key, (decidedByDay.get(key) ?? 0) + 1)
+  }
 
   const nowMin = now.getHours() * 60 + now.getMinutes()
   const todayKey = format(now, 'yyyy-MM-dd')
@@ -95,15 +103,27 @@ export function findOldestOverdueIntake(
     const dayKey = format(day, 'yyyy-MM-dd')
     const isToday = dayKey === todayKey
 
-    let candidate: { min: number; time: string; substance: string | null; cycleId: string } | null = null
+    // Collect each peptide's scheduled slots for this day across all applicable cycles.
+    const slotsByPeptide = new Map<string, { min: number; time: string; cycleId: string }[]>()
     for (const c of cycles) {
       if (!cycleAppliesToDay(c, day)) continue
-      if (satisfied.has(`${c.peptide_id}|${dayKey}`)) continue
-      const slot = earliestSlot(c)
-      if (!slot) continue
-      if (isToday && slot.min > nowMin) continue // still upcoming today → not overdue
-      if (!candidate || slot.min < candidate.min) {
-        candidate = { min: slot.min, time: slot.time, substance: peptideNameById.get(c.peptide_id) ?? null, cycleId: c.id }
+      for (const s of cycleDaySlots(c)) {
+        const arr = slotsByPeptide.get(c.peptide_id) ?? []
+        arr.push({ min: s.min, time: s.time, cycleId: c.id })
+        slotsByPeptide.set(c.peptide_id, arr)
+      }
+    }
+
+    let candidate: { min: number; time: string; substance: string | null; cycleId: string } | null = null
+    for (const [peptideId, slots] of slotsByPeptide) {
+      const ordered = [...slots].sort((a, b) => a.min - b.min)
+      const covered = decidedByDay.get(`${peptideId}|${dayKey}`) ?? 0
+      for (const slot of ordered.slice(covered)) {
+        if (isToday && slot.min > nowMin) break // earliest uncovered slot still upcoming → none overdue
+        if (!candidate || slot.min < candidate.min) {
+          candidate = { min: slot.min, time: slot.time, substance: peptideNameById.get(peptideId) ?? null, cycleId: slot.cycleId }
+        }
+        break // only the earliest uncovered slot per peptide matters
       }
     }
     if (candidate) {
