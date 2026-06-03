@@ -374,14 +374,13 @@ function LiveCycleCard({
   const hasCurve = curve.length > 0
 
   return (
-    <div style={{
-      background: `linear-gradient(145deg, ${accent}0d, rgba(6,10,24,0.92))`,
-      border: `1px solid ${accent}28`,
-      borderRadius: 18,
-      padding: '14px 14px 12px',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
+    <div
+      className="live-cycle-card"
+      style={{
+        background: `linear-gradient(145deg, ${accent}14, var(--surface))`,
+        border: `1px solid ${accent}38`,
+      }}
+    >
       <div style={{ position: 'absolute', top: -30, right: -30, width: 100, height: 100, borderRadius: '50%', background: accent, opacity: 0.06, filter: 'blur(24px)', pointerEvents: 'none' }} />
 
       {/* Header */}
@@ -445,24 +444,12 @@ function LiveCycleCard({
               {(hasHistory || showJetzt) && (
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0, paddingLeft: 12 }}>
                   {hasHistory && (
-                    <button type="button" onClick={() => chartRef.current?.jumpToStart()} style={{
-                      fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.03em',
-                      color: 'rgba(255,255,255,0.75)', background: 'rgba(255,255,255,0.08)',
-                      border: '1px solid rgba(255,255,255,0.18)',
-                      borderRadius: 20, padding: '5px 14px', cursor: 'pointer', fontFamily: 'inherit',
-                      whiteSpace: 'nowrap',
-                    }}>
+                    <button type="button" className="live-cycle-nav-btn" onClick={() => chartRef.current?.jumpToStart()}>
                       ⏮ Zyklusstart
                     </button>
                   )}
                   {showJetzt && (
-                    <button type="button" onClick={() => chartRef.current?.jumpToNow()} style={{
-                      fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.03em',
-                      color: 'rgba(255,255,255,0.75)', background: 'rgba(255,255,255,0.08)',
-                      border: '1px solid rgba(255,255,255,0.18)',
-                      borderRadius: 20, padding: '5px 14px', cursor: 'pointer', fontFamily: 'inherit',
-                      whiteSpace: 'nowrap',
-                    }}>
+                    <button type="button" className="live-cycle-nav-btn" onClick={() => chartRef.current?.jumpToNow()}>
                       Live ↩
                     </button>
                   )}
@@ -540,11 +527,7 @@ function LiveCycleCard({
             sub: `Pro Stunde werden ${((Math.LN2 / pk.half_life_hours) * 100).toFixed(1)} % des noch vorhandenen Wirkstoffs abgebaut. Kleiner Wert = langsamer Abbau = lange Wirkdauer.`,
           },
         ].map(({ label, value, sub }) => (
-          <div key={label} style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.05)',
-            borderRadius: 12, padding: '8px 10px',
-          }}>
+          <div key={label} className="live-cycle-stat-cell">
             <p style={{
               fontSize: '0.48rem', color: 'var(--text-muted)', fontWeight: 700,
               textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3,
@@ -845,7 +828,7 @@ export function BlutspiegelSimulation() {
             Peptid
           </FieldLabel>
           {pkProfiles.length === 0 ? (
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.03)' }}>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--accent-weak)' }}>
               Noch keine PK-Profile hinterlegt. Im Admin-Panel hinzufügen.
             </p>
           ) : (
@@ -914,7 +897,7 @@ export function BlutspiegelSimulation() {
             onClick={() => setMultiDose(v => !v)}
             style={{
               width: 44, height: 24, borderRadius: 99,
-              background: multiDose ? 'var(--accent)' : 'rgba(255,255,255,0.12)',
+              background: multiDose ? 'var(--accent)' : 'var(--surface-raised)',
               position: 'relative', transition: 'background 0.2s', flexShrink: 0,
             }}
           >
@@ -944,7 +927,7 @@ export function BlutspiegelSimulation() {
           disabled={!selectedProfile}
           style={{
             width: '100%', marginTop: 14, padding: '12px 0', borderRadius: 14,
-            background: selectedProfile ? 'var(--accent-weak)' : 'rgba(255,255,255,0.05)',
+            background: selectedProfile ? 'var(--accent-weak)' : 'var(--surface-raised)',
             border: selectedProfile ? '1px solid var(--accent-border)' : '1px solid var(--border)',
             color: selectedProfile ? 'var(--accent)' : 'var(--text-muted)',
             fontSize: '0.9rem', fontWeight: 900,
@@ -1032,16 +1015,7 @@ export function BlutspiegelSimulation() {
                 }] : []),
               ] as { label: string; value: string; explain: string }[])
               .map(({ label, value, explain }) => (
-                <div key={label} style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 2fr',
-                  gap: '8px 16px',
-                  alignItems: 'start',
-                  padding: '12px 14px',
-                  background: 'rgba(255,255,255,0.025)',
-                  border: '1px solid rgba(255,255,255,0.05)',
-                  borderRadius: 12,
-                }}>
+                <div key={label} className="pk-stat-row">
                   <div>
                     <p style={{ fontSize: '0.58rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: 4, lineHeight: 1.3 }}>{label}</p>
                     <p style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.02em', lineHeight: 1 }}>{value}</p>
@@ -1051,7 +1025,7 @@ export function BlutspiegelSimulation() {
               ))}
             </div>
             {selectedProfile.notes && (
-              <p style={{ marginTop: 12, fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.55, padding: '10px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: 10, borderLeft: '2px solid var(--accent-border)' }}>
+              <p style={{ marginTop: 12, fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.55, padding: '10px 12px', background: 'var(--accent-weak)', borderRadius: 10, borderLeft: '2px solid var(--accent-border)' }}>
                 <strong style={{ color: 'var(--text-dim)' }}>Hinweis: </strong>{selectedProfile.notes}
               </p>
             )}

@@ -726,6 +726,58 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
   color: var(--text-muted);
 }
 
+/* ── Live-Blutspiegel (Simulation + Home-Carousel) ── */
+.blutspiegel-carousel-shell {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+.live-cycle-card {
+  border-radius: 18px;
+  padding: 14px 14px 12px;
+  position: relative;
+  overflow: hidden;
+}
+[data-theme="light"] .live-cycle-card {
+  box-shadow: 0 4px 18px rgba(20, 40, 80, 0.08);
+}
+.live-cycle-stat-cell {
+  background: var(--accent-weak);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+.live-cycle-nav-btn {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--text-dim);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  padding: 5px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.live-cycle-nav-btn:hover {
+  background: var(--accent-weak);
+  border-color: var(--accent-border);
+}
+.pk-stat-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 8px 16px;
+  align-items: start;
+  padding: 12px 14px;
+  background: var(--accent-weak);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    BASE
    ═══════════════════════════════════════════════════════════════════════════ */

@@ -58,14 +58,7 @@ const CATEGORY_ACCENT: Record<PkCategory, string> = {
 const SWIPE_THRESHOLD_PX = 50
 const SWIPE_TRANSITION = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
 
-const shellStyle: CSSProperties = {
-  background: 'var(--surface)',
-  border: '1px solid var(--border)',
-  borderRadius: 16,
-  boxShadow: '0 16px 48px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.05)',
-  position: 'relative',
-  overflow: 'hidden',
-}
+const shellClassName = 'blutspiegel-carousel-shell'
 
 function normalizeCategory(raw: string | undefined): PkCategory {
   if (raw === 'peptide' || raw === 'glp1' || raw === 'hormone' || raw === 'sarm') return raw
@@ -298,8 +291,8 @@ function BlutspiegelCard({
 
   return (
     <div
-      className="w-full sm:max-w-[800px] sm:mx-auto"
-      style={{ ...shellStyle, padding: 12 }}
+      className={`w-full sm:max-w-[800px] sm:mx-auto ${shellClassName}`}
+      style={{ padding: 12 }}
     >
       <style>{`
         @keyframes blutspiegel-live-pulse {
@@ -547,8 +540,8 @@ export function BlutspiegelCarousel() {
   if (loading) {
     return (
       <div
+        className={shellClassName}
         style={{
-          ...shellStyle,
           padding: 28,
           display: 'flex',
           alignItems: 'center',
@@ -567,7 +560,7 @@ export function BlutspiegelCarousel() {
 
   if (!cards.length) {
     return (
-      <div style={{ ...shellStyle, padding: 20, textAlign: 'center' }}>
+      <div className={shellClassName} style={{ padding: 20, textAlign: 'center' }}>
         <Activity size={28} color="var(--accent)" style={{ margin: '0 auto 12px' }} />
         <p style={{ fontSize: '0.82rem', fontWeight: 750, color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: 14 }}>
           Verknüpfe Peptide mit PK-Profilen um den Live-Spiegel zu sehen
