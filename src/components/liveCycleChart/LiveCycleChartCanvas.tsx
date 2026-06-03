@@ -123,6 +123,8 @@ function LiveCycleChartCanvas({
     const border = style.getPropertyValue('--border').trim() || 'rgba(255,255,255,0.06)'
     const muted = style.getPropertyValue('--text-muted').trim() || 'rgba(154,170,191,0.55)'
     const surface = style.getPropertyValue('--surface').trim() || 'rgba(6,10,24,0.92)'
+    const accentToken = style.getPropertyValue('--accent').trim() || accentRef.current
+    const readLine = style.getPropertyValue('--border-strong').trim() || border
 
     // Gridlines
     ctx.strokeStyle = border
@@ -302,7 +304,7 @@ function LiveCycleChartCanvas({
     // "jetzt"-Label
     const nowX = tsToX(now)
     if (nowX >= dX && nowX <= dX + dW) {
-      ctx.fillStyle = '#00ccf5'
+      ctx.fillStyle = accentToken
       ctx.font = '8px ui-monospace,monospace'
       ctx.textAlign = 'right'
       ctx.textBaseline = 'top'
@@ -315,7 +317,7 @@ function LiveCycleChartCanvas({
       const x = tsToX(ts)
       const lv = lerpLevel(pts, ts)
       const y = lvToY(lv)
-      ctx.strokeStyle = 'rgba(226,232,240,0.55)'
+      ctx.strokeStyle = readLine
       ctx.lineWidth = 1
       ctx.setLineDash([3, 2])
       ctx.beginPath(); ctx.moveTo(x, dY); ctx.lineTo(x, dY + dH); ctx.stroke()
