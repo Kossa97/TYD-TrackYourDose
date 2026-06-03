@@ -15,6 +15,7 @@ import { getPeptideColor } from '../lib/peptideColors'
 import { useNew } from '../lib/useNew'
 import { NewDot } from '../components/NewDot'
 import { format, parseISO, addDays, differenceInDays } from 'date-fns'
+import { type ScheduleSegment } from '../lib/intakeSchedule'
 
 // ─── Inventar-Typen ───────────────────────────────────────────────────────────
 interface PkProfileOption {
@@ -57,6 +58,7 @@ interface Cycle {
   schedule_days: string[] | null
   start_date: string; end_date: string | null; active: boolean
   intake_time: string | null; intake_time_custom: string | null
+  schedule_history: ScheduleSegment[] | null
   reminder: string | null
   created_at: string
 }
@@ -324,6 +326,31 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
       </svg>
     </div>
   )
+}
+
+// Schedule-relevante Felder eines Standes (für Vergleich + Segmentaufbau).
+type SchedFields = Pick<ScheduleSegment, 'frequency' | 'x_days_interval' | 'schedule_days' | 'intake_time' | 'intake_time_custom' | 'dose' | 'unit'>
+
+function schedKey(s: SchedFields): string {
+  return JSON.stringify([s.frequency, s.x_days_interval, [...(s.schedule_days ?? [])].sort(), s.intake_time, s.intake_time_custom, s.dose, s.unit])
+}
+
+// Neue Historie nach einem Edit. prev = geladener Zyklus vor dem Edit; next = neue Felder.
+function nextScheduleHistory(
+  prevHistory: ScheduleSegment[] | null,
+  prevFields: SchedFields,
+  prevStartDate: string,
+  next: SchedFields,
+  today: string,
+): ScheduleSegment[] | null {
+  if (schedKey(prevFields) === schedKey(next)) return prevHistory ?? null
+  const history: ScheduleSegment[] = (prevHistory && prevHistory.length > 0)
+    ? [...prevHistory]
+    : [{ effective_from: prevStartDate, ...prevFields }]
+  const todaySeg: ScheduleSegment = { effective_from: today, ...next }
+  if (history[history.length - 1].effective_from === today) history[history.length - 1] = todaySeg
+  else history.push(todaySeg)
+  return history
 }
 
 // ─── Hauptkomponente ──────────────────────────────────────────────────────────
@@ -689,8 +716,30 @@ export function Peptide() {
         : null,
       reminder: cForm.reminder.length > 0 ? cForm.reminder.join(',') : 'none',
     }
+    const nextFields: SchedFields = {
+      frequency: payload.frequency,
+      x_days_interval: payload.x_days_interval,
+      schedule_days: payload.schedule_days,
+      intake_time: payload.intake_time,
+      intake_time_custom: payload.intake_time_custom,
+      dose: payload.dose,
+      unit: payload.unit,
+    }
+    let scheduleHistory: ScheduleSegment[] | null = null
+    if (editingCycleId) {
+      const prev = cycles.find(c => c.id === editingCycleId)
+      if (prev) {
+        scheduleHistory = nextScheduleHistory(
+          prev.schedule_history ?? null,
+          { frequency: prev.frequency, x_days_interval: prev.x_days_interval, schedule_days: prev.schedule_days, intake_time: prev.intake_time, intake_time_custom: prev.intake_time_custom, dose: prev.dose, unit: prev.unit },
+          prev.start_date,
+          nextFields,
+          format(new Date(), 'yyyy-MM-dd'),
+        )
+      }
+    }
     const { error } = editingCycleId
-      ? await supabase.from('cycles').update(payload).eq('id', editingCycleId)
+      ? await supabase.from('cycles').update({ ...payload, schedule_history: scheduleHistory }).eq('id', editingCycleId)
       : await supabase.from('cycles').insert(payload)
     if (error) { toast.error(t('error')); setSavingCycle(false); return }
     toast.success(editingCycleId ? t('zyklus_aktualisiert') : t('zyklus_erstellt'))
