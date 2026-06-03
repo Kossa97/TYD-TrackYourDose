@@ -8,8 +8,9 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import { format } from 'date-fns'
 import { de as deLocale } from 'date-fns/locale'
 import {
-  lerpLevel, panViewEnd, clampViewEnd, pickChartTimeTicks,
+  lerpLevel, panViewEnd, clampViewEnd, pickChartTimeTicks, panHapticStepMs,
   LIVE_CHART_WINDOW_MS_MOBILE,
+  LIVE_CHART_WINDOW_MS_DESKTOP,
   type ChartPoint, type MarkerPoint, type NamedMarker,
 } from './chartMath'
 import { hapticTick } from '../../lib/haptics'
@@ -78,7 +79,7 @@ function LiveCycleChartCanvas({
   const readTsRef = useRef(0)
   const pointerTypeRef = useRef<string>('mouse')
   const drawRaf = useRef<number | null>(null)
-  const lastHapticDay = useRef<number | null>(null)
+  const lastHapticTick = useRef<number | null>(null)
 
   const [showJetzt, setShowJetzt] = useState(false)
   const [hasHistory, setHasHistory] = useState(false)
@@ -136,7 +137,7 @@ function LiveCycleChartCanvas({
 
     // X-Ticks (Stunden bei kurzem Fenster, sonst Tage)
     const ticks = pickChartTimeTicks(viewStart, viewEnd, dW, MIN_PX_PER_TICK)
-    const hourLabels = win <= LIVE_CHART_WINDOW_MS_MOBILE * 1.5
+    const shortWindow = win <= LIVE_CHART_WINDOW_MS_DESKTOP
     ctx.font = '9px ui-monospace,monospace'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
@@ -146,8 +147,10 @@ function LiveCycleChartCanvas({
       ctx.strokeStyle = border
       ctx.beginPath(); ctx.moveTo(x, dY); ctx.lineTo(x, dY + dH); ctx.stroke()
       ctx.fillStyle = muted
-      const label = hourLabels
-        ? format(new Date(ts), 'HH:mm', { locale: deLocale })
+      const label = shortWindow
+        ? (win <= LIVE_CHART_WINDOW_MS_MOBILE
+          ? format(new Date(ts), 'HH:mm', { locale: deLocale })
+          : format(new Date(ts), 'EEE HH:mm', { locale: deLocale }))
         : format(new Date(ts), 'EEE dd.', { locale: deLocale })
       ctx.fillText(label, x, dY + dH + 4)
     }
@@ -400,7 +403,7 @@ function LiveCycleChartCanvas({
     isPanning.current = true
     panStartX.current = e.clientX
     panStartViewEnd.current = viewEndRef.current
-    lastHapticDay.current = Math.floor(viewEndRef.current / (24 * 3_600_000))
+    lastHapticTick.current = null
     if (e.pointerType === 'mouse') {
       // Maus: Drücken startet Pan → Hover-Ablesen beenden
       isReadingRef.current = false
@@ -448,16 +451,17 @@ function LiveCycleChartCanvas({
     )
     viewEndRef.current = ve
     followLiveRef.current = ve >= now - 1000
-    notifyNav(!followLiveRef.current, hasHistory)
+    const hist = now - start > windowMsRef.current
+    notifyNav(!followLiveRef.current, hist)
     scheduleRedraw()
 
-    // Haptic tick: einmal pro überschrittener Tagsgrenze
-    const DAY_MS = 24 * 3_600_000
-    const currentDay = Math.floor(ve / DAY_MS)
-    if (lastHapticDay.current !== null && lastHapticDay.current !== currentDay) {
+    const viewStart = ve - windowMsRef.current
+    const stepMs = panHapticStepMs(viewStart, ve, dW, MIN_PX_PER_TICK)
+    const tickIdx = Math.floor((ve - viewStart) / stepMs)
+    if (lastHapticTick.current !== null && lastHapticTick.current !== tickIdx) {
       void hapticTick()
     }
-    lastHapticDay.current = currentDay
+    lastHapticTick.current = tickIdx
   }
 
   const endInteraction = () => {

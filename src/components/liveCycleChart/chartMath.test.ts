@@ -58,7 +58,7 @@ describe('clampViewEnd', () => {
   })
 })
 
-import { pickChartTimeTicks, pickDayTicks, pickHourTicks } from './chartMath'
+import { pickChartTimeTicks, pickDayTicks, pickHourTicks, pickWindowTimeTicks } from './chartMath'
 
 describe('pickHourTicks', () => {
   const HOUR = 3_600_000
@@ -70,13 +70,28 @@ describe('pickHourTicks', () => {
 })
 
 describe('pickChartTimeTicks', () => {
-  it('nutzt Stunden-Ticks bei 24h-Fenster', () => {
-    const ticks = pickChartTimeTicks(0, 24 * 3_600_000, 320, 56)
-    expect(ticks.length).toBeGreaterThan(1)
+  it('nutzt viewport-Ticks bei 24h-Fenster', () => {
+    const span = 24 * 3_600_000
+    const ticks = pickChartTimeTicks(5_000_000, 5_000_000 + span, 320, 56)
+    expect(ticks[0]).toBe(5_000_000)
   })
   it('nutzt Tages-Ticks bei 7-Tage-Fenster', () => {
     const ticks = pickChartTimeTicks(0, 7 * DAY, 700, 56)
     expect(ticks).toEqual([0, DAY, 2 * DAY, 3 * DAY, 4 * DAY, 5 * DAY, 6 * DAY, 7 * DAY])
+  })
+})
+
+describe('pickWindowTimeTicks', () => {
+  const HOUR = 3_600_000
+  it('verschiebt Ticks parallel wenn viewStart sich bewegt', () => {
+    const span = 24 * HOUR
+    const a = pickWindowTimeTicks(1_000_000, 1_000_000 + span, 320, 56)
+    const b = pickWindowTimeTicks(1_000_000 + 2 * HOUR, 1_000_000 + 2 * HOUR + span, 320, 56)
+    expect(a.length).toBeGreaterThan(1)
+    expect(a[0]).not.toBe(b[0])
+    if (a.length >= 2 && b.length >= 2) {
+      expect(b[1] - b[0]).toBe(a[1] - a[0])
+    }
   })
 })
 

@@ -44,7 +44,42 @@ export const LIVE_CHART_WINDOW_MS_MOBILE = DAY_MS
 export const LIVE_CHART_MOBILE_MQ = '(max-width: 768px)'
 
 /**
- * Stunden-Ticks für kurze Zeitfenster (z. B. 24h auf Mobil).
+ * Achsen-Ticks mit "schönen" Schrittweiten (1·10ⁿ, 2·10ⁿ, 5·10ⁿ).
+ */
+export function pickNiceTicks(start: number, end: number, widthPx: number, minPxPerTick: number): number[] {
+  if (end <= start || widthPx <= 0) return []
+  const maxTicks = Math.max(1, Math.floor(widthPx / minPxPerTick))
+  const rawStep = (end - start) / maxTicks
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)))
+  const norm = rawStep / mag
+  const mult = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10
+  const step = mult * mag
+  const first = Math.ceil(start / step) * step
+  const ticks: number[] = []
+  for (let t = first; t <= end + step * 1e-6; t += step) {
+    ticks.push(Math.round(t * 1000) / 1000)
+  }
+  return ticks
+}
+
+/**
+ * Tages-ausgerichtete X-Ticks für [startTs, endTs].
+ */
+export function pickDayTicks(startTs: number, endTs: number, widthPx: number, minPxPerTick: number): number[] {
+  if (endTs <= startTs || widthPx <= 0) return []
+  const span = endTs - startTs
+  const maxTicks = Math.max(1, Math.floor(widthPx / minPxPerTick))
+  let stepDays = 1
+  while (span / DAY_MS / stepDays > maxTicks) stepDays *= 2
+  const stepMs = stepDays * DAY_MS
+  const first = Math.ceil(startTs / DAY_MS) * DAY_MS
+  const ticks: number[] = []
+  for (let t = first; t <= endTs; t += stepMs) ticks.push(t)
+  return ticks
+}
+
+/**
+ * Stunden-Ticks (Legacy / Tests) — festes UTC-Stundenraster.
  */
 export function pickHourTicks(startTs: number, endTs: number, widthPx: number, minPxPerTick: number): number[] {
   if (endTs <= startTs || widthPx <= 0) return []
@@ -66,50 +101,28 @@ export function pickHourTicks(startTs: number, endTs: number, widthPx: number, m
 }
 
 /**
- * X-Ticks passend zur Fenstergröße: ≤3 Tage → Stunden, sonst Tage.
+ * Ticks gleichmäßig im sichtbaren Fenster — bewegen sich beim Wischen parallel zur Kurve.
+ */
+export function pickWindowTimeTicks(viewStart: number, viewEnd: number, widthPx: number, minPxPerTick: number): number[] {
+  const span = viewEnd - viewStart
+  if (span <= 0 || widthPx <= 0) return []
+  const offsets = pickNiceTicks(0, span, widthPx, minPxPerTick)
+  return offsets.map(off => viewStart + off)
+}
+
+/** Schrittweite für Haptic-Feedback beim Wischen (ms). */
+export function panHapticStepMs(viewStart: number, viewEnd: number, widthPx: number, minPxPerTick: number): number {
+  const ticks = pickWindowTimeTicks(viewStart, viewEnd, widthPx, minPxPerTick)
+  if (ticks.length >= 2) return ticks[1] - ticks[0]
+  return Math.max(viewEnd - viewStart, HOUR_MS)
+}
+
+/**
+ * X-Ticks passend zur Fenstergröße: ≤3 Tage → viewport-relativ, sonst Kalendertage.
  */
 export function pickChartTimeTicks(startTs: number, endTs: number, widthPx: number, minPxPerTick: number): number[] {
   if (endTs - startTs <= 3 * DAY_MS) {
-    return pickHourTicks(startTs, endTs, widthPx, minPxPerTick)
+    return pickWindowTimeTicks(startTs, endTs, widthPx, minPxPerTick)
   }
   return pickDayTicks(startTs, endTs, widthPx, minPxPerTick)
-}
-
-/**
- * Tages-ausgerichtete X-Ticks für [startTs, endTs]. Wählt ein Tages-Vielfaches als
- * Schrittweite, sodass bei gegebener Pixelbreite der Mindestabstand minPxPerTick
- * eingehalten wird (keine überlappenden Labels).
- */
-export function pickDayTicks(startTs: number, endTs: number, widthPx: number, minPxPerTick: number): number[] {
-  if (endTs <= startTs || widthPx <= 0) return []
-  const span = endTs - startTs
-  const maxTicks = Math.max(1, Math.floor(widthPx / minPxPerTick))
-  let stepDays = 1
-  while (span / DAY_MS / stepDays > maxTicks) stepDays *= 2
-  const stepMs = stepDays * DAY_MS
-  const first = Math.ceil(startTs / DAY_MS) * DAY_MS
-  const ticks: number[] = []
-  for (let t = first; t <= endTs; t += stepMs) ticks.push(t)
-  return ticks
-}
-
-/**
- * Achsen-Ticks mit "schönen" Schrittweiten (1·10ⁿ, 2·10ⁿ, 5·10ⁿ), sodass bei
- * gegebener Pixelbreite der Mindestabstand minPxPerTick grob eingehalten wird.
- * Für beliebige numerische Achsen (z.B. Stunden nach Injektion).
- */
-export function pickNiceTicks(start: number, end: number, widthPx: number, minPxPerTick: number): number[] {
-  if (end <= start || widthPx <= 0) return []
-  const maxTicks = Math.max(1, Math.floor(widthPx / minPxPerTick))
-  const rawStep = (end - start) / maxTicks
-  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)))
-  const norm = rawStep / mag
-  const mult = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10
-  const step = mult * mag
-  const first = Math.ceil(start / step) * step
-  const ticks: number[] = []
-  for (let t = first; t <= end + step * 1e-6; t += step) {
-    ticks.push(Math.round(t * 1000) / 1000)
-  }
-  return ticks
 }
