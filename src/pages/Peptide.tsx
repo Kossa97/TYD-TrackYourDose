@@ -403,6 +403,8 @@ export function Peptide() {
   const [editingCycleId, setEditingCycleId]       = useState<string | null>(null)
   const [cForm, setCForm]                         = useState<CycleForm | null>(null)
   const [savingCycle, setSavingCycle]             = useState(false)
+  // Beim Bearbeiten eines bestehenden Zyklus: Planänderung rückwirkend oder ab heute?
+  const [scheduleChoiceOpen, setScheduleChoiceOpen] = useState(false)
 
   // ── Dosiserhöhungen ───────────────────────────────────────────────────────
   const [escalations, setEscalations]             = useState<Escalation[]>([])
@@ -697,11 +699,37 @@ export function Peptide() {
     })
     setShowCycleForm(true)
   }
+  // Schedule-Felder des aktuellen Formularstands (für Vergleich + Segmentaufbau).
+  const formSchedFields = (): SchedFields => ({
+    frequency: cForm!.frequency,
+    x_days_interval: cForm!.frequency === 'Alle X Tage' ? parseInt(cForm!.x_days_interval) : null,
+    schedule_days: ['Wochentage wählen', 'Alle X Tage'].includes(cForm!.frequency) ? cForm!.schedule_days : null,
+    intake_time: cForm!.intake_times.filter(Boolean).join(',') || null,
+    intake_time_custom: cForm!.intake_times.some(time => time === 'custom') ? cForm!.intake_time_customs.join(',') : null,
+    dose: parseFloat(cForm!.dose),
+    unit: cForm!.unit,
+  })
+
   const saveCycle = async () => {
     if (!cForm || !cycleForPeptide) return
     if (!cForm.name || !cForm.dose) return toast.error(t('name_dosis_erforderlich'))
     if (cForm.frequency === 'Wochentage wählen' && cForm.schedule_days.length === 0)
       return toast.error(t('wochentag_auswaehlen_hint'))
+    // Bei einer Planungsänderung an einem bestehenden Zyklus erst fragen: rückwirkend oder ab heute?
+    if (editingCycleId) {
+      const prev = cycles.find(c => c.id === editingCycleId)
+      if (prev) {
+        const prevFields: SchedFields = { frequency: prev.frequency, x_days_interval: prev.x_days_interval, schedule_days: prev.schedule_days, intake_time: prev.intake_time, intake_time_custom: prev.intake_time_custom, dose: prev.dose, unit: prev.unit }
+        if (schedKey(prevFields) !== schedKey(formSchedFields())) { setScheduleChoiceOpen(true); return }
+      }
+    }
+    await finalizeSave(null)
+  }
+
+  // mode: 'retroactive' = neuer Plan gilt für gesamten Zyklus; 'fromToday' = neues Segment ab heute;
+  // null = keine Planänderung (oder neuer Zyklus) → bestehende Historie bleibt unverändert.
+  const finalizeSave = async (mode: 'retroactive' | 'fromToday' | null) => {
+    if (!cForm || !cycleForPeptide) return
     setSavingCycle(true)
     const payload = {
       user_id: user!.id, peptide_id: cycleForPeptide.id,
@@ -711,31 +739,30 @@ export function Peptide() {
       schedule_days: ['Wochentage wählen', 'Alle X Tage'].includes(cForm.frequency) ? cForm.schedule_days : null,
       start_date: cForm.start_date, end_date: cForm.end_date || null, active: true,
       intake_time: cForm.intake_times.filter(Boolean).join(',') || null,
-      intake_time_custom: cForm.intake_times.some(t => t === 'custom')
+      intake_time_custom: cForm.intake_times.some(time => time === 'custom')
         ? cForm.intake_time_customs.join(',')
         : null,
       reminder: cForm.reminder.length > 0 ? cForm.reminder.join(',') : 'none',
     }
-    const nextFields: SchedFields = {
-      frequency: payload.frequency,
-      x_days_interval: payload.x_days_interval,
-      schedule_days: payload.schedule_days,
-      intake_time: payload.intake_time,
-      intake_time_custom: payload.intake_time_custom,
-      dose: payload.dose,
-      unit: payload.unit,
-    }
+    const nextFields = formSchedFields()
     let scheduleHistory: ScheduleSegment[] | null = null
     if (editingCycleId) {
       const prev = cycles.find(c => c.id === editingCycleId)
       if (prev) {
-        scheduleHistory = nextScheduleHistory(
-          prev.schedule_history ?? null,
-          { frequency: prev.frequency, x_days_interval: prev.x_days_interval, schedule_days: prev.schedule_days, intake_time: prev.intake_time, intake_time_custom: prev.intake_time_custom, dose: prev.dose, unit: prev.unit },
-          prev.start_date,
-          nextFields,
-          format(new Date(), 'yyyy-MM-dd'),
-        )
+        const prevFields: SchedFields = { frequency: prev.frequency, x_days_interval: prev.x_days_interval, schedule_days: prev.schedule_days, intake_time: prev.intake_time, intake_time_custom: prev.intake_time_custom, dose: prev.dose, unit: prev.unit }
+        if (schedKey(prevFields) === schedKey(nextFields)) {
+          scheduleHistory = prev.schedule_history ?? null            // unverändert: Historie behalten
+        } else if (mode === 'retroactive') {
+          scheduleHistory = null                                     // neuer Plan rückwirkend für gesamten Zyklus
+        } else {
+          scheduleHistory = nextScheduleHistory(                     // neuer Plan erst ab heute
+            prev.schedule_history ?? null,
+            prevFields,
+            prev.start_date,
+            nextFields,
+            format(new Date(), 'yyyy-MM-dd'),
+          )
+        }
       }
     }
     const { error } = editingCycleId
@@ -1787,6 +1814,39 @@ export function Peptide() {
                 {t('yes')}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ PLANÄNDERUNG: RÜCKWIRKEND ODER AB HEUTE ═══════════════════════════ */}
+      {scheduleChoiceOpen && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4" data-app-modal>
+          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-sm w-full space-y-4">
+            <h3 className="font-bold text-white text-lg">
+              {t('schedule_change_title', { defaultValue: 'Änderung übernehmen' })}
+            </h3>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              {t('schedule_change_desc', { defaultValue: 'Du hast den Einnahmeplan geändert. Soll die Änderung rückwirkend für den gesamten Zyklus gelten oder erst ab heute?' })}
+            </p>
+            <div className="space-y-2.5 pt-1">
+              <button onClick={() => { setScheduleChoiceOpen(false); finalizeSave('fromToday') }}
+                className="w-full py-2.5 px-4 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-semibold text-sm text-left transition-colors">
+                {t('schedule_change_from_today', { defaultValue: 'Erst ab heute' })}
+                <span className="block text-xs font-normal text-sky-100/80 mt-0.5">
+                  {t('schedule_change_from_today_hint', { defaultValue: 'Vergangene Tage behalten den bisherigen Plan.' })}
+                </span>
+              </button>
+              <button onClick={() => { setScheduleChoiceOpen(false); finalizeSave('retroactive') }}
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm text-left border border-slate-700 transition-colors">
+                {t('schedule_change_retroactive', { defaultValue: 'Rückwirkend für den gesamten Zyklus' })}
+                <span className="block text-xs font-normal text-slate-400 mt-0.5">
+                  {t('schedule_change_retroactive_hint', { defaultValue: 'Der neue Plan gilt auch für alle vergangenen Tage. Erinnerungen werden entsprechend angepasst.' })}
+                </span>
+              </button>
+            </div>
+            <button className="btn-secondary w-full" onClick={() => { setScheduleChoiceOpen(false); setSavingCycle(false) }}>
+              {t('cancel', { defaultValue: 'Abbrechen' })}
+            </button>
           </div>
         </div>
       )}
