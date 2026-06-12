@@ -15,7 +15,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
-import { collectMissedIntakes, effectiveDose, AUTO_MISSED_NOTE, type EscalationRow } from '../lib/intakeSchedule'
+import { collectMissedIntakes, cycleAppliesToDay, scheduleForDay, effectiveDose, AUTO_MISSED_NOTE, type EscalationRow } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
 import { format, parseISO, startOfDay, subDays } from 'date-fns'
@@ -286,8 +286,11 @@ export function Home() {
         const now = new Date()
         const todaySlots: { min: number; time: string; substance: string | null; dose: string | null; peptideId: string }[] = []
         for (const c of cycleData ?? []) {
-          const slots   = (c.intake_time ?? '').split(',').filter(Boolean)
-          const customs = (c.intake_time_custom ?? '').split(',')
+          // Nur Zyklen, die HEUTE gelten (Frequenz/Start/Ende), wie im Kalender.
+          if (!cycleAppliesToDay(c, now)) continue
+          const seg = scheduleForDay(c, now)   // segment-/historienaufgelöste Slots
+          const slots   = (seg.intake_time ?? '').split(',').filter(Boolean)
+          const customs = (seg.intake_time_custom ?? '').split(',')
           const doseLabel = c.dose != null
             ? `${effectiveDose(c, now, escalations)} ${c.unit ?? ''}`.trim()
             : null
