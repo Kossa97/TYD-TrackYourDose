@@ -153,4 +153,16 @@ describe('collectMissedIntakes — Frist bis Tagesende', () => {
     expect(missed.length).toBe(100) // 04.03.–11.06. (Start inklusive, heute exklusive)
     expect(missed.map(m => m.dateKey)).toContain('2026-03-09') // ~95 Tage zurück, jenseits 90
   })
+
+  it('since begrenzt den Rückblick (kein Backfill vor Aktivierung)', () => {
+    const old: ScheduleCycle = { ...daily, id: 'c4', start_date: '2026-03-04' }
+    const since = new Date(2026, 5, 10) // Aktivierung am 10.06.
+    const days = collectMissedIntakes([old], [], now, since).map(m => m.dateKey)
+    expect(days).toEqual(['2026-06-10', '2026-06-11']) // nur ab Aktivierung bis gestern
+  })
+
+  it('since == heute → gar kein Backfill', () => {
+    const old: ScheduleCycle = { ...daily, id: 'c4', start_date: '2026-03-04' }
+    expect(collectMissedIntakes([old], [], now, new Date(2026, 5, 12))).toHaveLength(0)
+  })
 })

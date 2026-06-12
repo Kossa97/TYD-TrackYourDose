@@ -308,8 +308,11 @@ export function Home() {
         }
         // Frist = Tagesende: nicht bestätigte Slots vergangener Tage automatisch als
         // „verpasst" (taken=false) in die Historie schreiben, damit sie sich nicht stapeln.
+        // Nur ab Aktivierung (localStorage) — kein rückwirkendes Backfill der Historie.
+        let autoMissSince = localStorage.getItem('tyd_automiss_since')
+        if (!autoMissSince) { autoMissSince = todayKey; localStorage.setItem('tyd_automiss_since', autoMissSince) }
         const reconciledLogs = [...(logData ?? [])]
-        const missed = collectMissedIntakes(cycleData ?? [], logData ?? [], now)
+        const missed = collectMissedIntakes(cycleData ?? [], logData ?? [], now, parseISO(autoMissSince))
         if (missed.length > 0) {
           const cycleById = new Map((cycleData ?? []).map(c => [c.id, c]))
           const rows = missed.map(m => {
@@ -333,8 +336,8 @@ export function Home() {
           }
         }
 
-        // Oldest unlogged scheduled intake — nach Auto-Verpasst bleibt nur noch heute offen.
-        const overdue = findOldestOverdueIntake(cycleData ?? [], reconciledLogs, peptideNameById)
+        // Überfällig nur für HEUTE (Frist bis Tagesende gilt auch fürs Banner) → lookback 0.
+        const overdue = findOldestOverdueIntake(cycleData ?? [], reconciledLogs, peptideNameById, now, 0)
         const overdueCycle = overdue ? (cycleData ?? []).find(c => c.id === overdue.cycleId) : null
         const overdueDose = overdue && overdueCycle && overdueCycle.dose != null
           ? `${effectiveDose(overdueCycle, parseISO(overdue.dateKey), escalations)} ${overdueCycle.unit ?? ''}`.trim()
