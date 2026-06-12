@@ -440,10 +440,16 @@ export function Home() {
           </div>
 
           {todayIntakes.length > 0 ? (
-            <TodayIntakeCarousel
-              intakes={todayIntakes}
-              onItemClick={() => navigate('/kalender#due-intakes')}
-            />
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 6, padding: '0 4px' }}>
+                <p style={labelStyle}>{t('home_upcoming_intakes', { defaultValue: 'Anstehende Einnahmen' })}</p>
+                <p style={{ ...labelStyle, fontSize: '0.55rem' }}>{t('home_due_in', { defaultValue: 'fällig in:' })}</p>
+              </div>
+              <TodayIntakeCarousel
+                intakes={todayIntakes}
+                onItemClick={() => navigate('/kalender#due-intakes')}
+              />
+            </div>
           ) : (
             <div style={{
               display: 'flex',
@@ -793,13 +799,20 @@ function InsightCard({
   )
 }
 
+// Mitwachsendes Countdown-Format:
+//  >= 10h  -> "22h"
+//  >= 1h   -> "9h59min"
+//  >= 1min -> "59min23sek"
+//  < 1min  -> "23sek"
 function fmtCountdown(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000))
   const h = Math.floor(total / 3600)
   const m = Math.floor((total % 3600) / 60)
   const s = total % 60
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${pad(h)}:${pad(m)}:${pad(s)}`
+  if (h >= 10) return `${h}h`
+  if (h >= 1) return `${h}h${m}min`
+  if (m >= 1) return `${m}min${s}sek`
+  return `${s}sek`
 }
 
 function msUntilTime(time: string): number {
