@@ -15,10 +15,10 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
-import { findOldestOverdueIntake, effectiveDose, type EscalationRow } from '../lib/intakeSchedule'
+import { findOldestOverdueIntake, collectMissedIntakes, effectiveDose, AUTO_MISSED_NOTE, type EscalationRow } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
-import { format, parseISO, subDays } from 'date-fns'
+import { format, parseISO, startOfDay, subDays } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
 
@@ -248,7 +248,7 @@ export function Home() {
       try {
         const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }, { data: escalationData }] = await Promise.all([
           supabase.from('cycles')
-            .select('id, intake_time, intake_time_custom, peptide_id, dose, unit, start_date, end_date, frequency, x_days_interval, schedule_days, schedule_history')
+            .select('id, intake_time, intake_time_custom, peptide_id, dose, unit, method, start_date, end_date, frequency, x_days_interval, schedule_days, schedule_history')
             .eq('user_id', user!.id).eq('active', true),
           // All decided/reset logs — taken filtered per use site (streak/overdue/timer).
           supabase.from('dose_logs')
@@ -306,8 +306,35 @@ export function Home() {
           }
           if (s.min > nowMin) { nextSlot = s; break }
         }
-        // Oldest unlogged scheduled intake across the past weeks (today included).
-        const overdue = findOldestOverdueIntake(cycleData ?? [], logData ?? [], peptideNameById)
+        // Frist = Tagesende: nicht bestätigte Slots vergangener Tage automatisch als
+        // „verpasst" (taken=false) in die Historie schreiben, damit sie sich nicht stapeln.
+        const reconciledLogs = [...(logData ?? [])]
+        const missed = collectMissedIntakes(cycleData ?? [], logData ?? [], now)
+        if (missed.length > 0) {
+          const cycleById = new Map((cycleData ?? []).map(c => [c.id, c]))
+          const rows = missed.map(m => {
+            const c = cycleById.get(m.cycleId)!
+            const at = startOfDay(parseISO(m.dateKey))
+            at.setHours(Math.floor(m.minutes / 60), m.minutes % 60, 0, 0)
+            return {
+              user_id: user!.id,
+              peptide_id: c.peptide_id,
+              dose: effectiveDose(c, parseISO(m.dateKey), escalations),
+              unit: c.unit ?? '',
+              method: c.method ?? '',
+              logged_at: at.toISOString(),
+              taken: false,
+              notes: AUTO_MISSED_NOTE,
+            }
+          })
+          const { error } = await supabase.from('dose_logs').insert(rows)
+          if (!error) {
+            for (const r of rows) reconciledLogs.push({ logged_at: r.logged_at, peptide_id: r.peptide_id, taken: false })
+          }
+        }
+
+        // Oldest unlogged scheduled intake — nach Auto-Verpasst bleibt nur noch heute offen.
+        const overdue = findOldestOverdueIntake(cycleData ?? [], reconciledLogs, peptideNameById)
         const overdueCycle = overdue ? (cycleData ?? []).find(c => c.id === overdue.cycleId) : null
         const overdueDose = overdue && overdueCycle && overdueCycle.dose != null
           ? `${effectiveDose(overdueCycle, parseISO(overdue.dateKey), escalations)} ${overdueCycle.unit ?? ''}`.trim()

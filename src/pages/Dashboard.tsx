@@ -17,7 +17,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
-import { cycleAppliesToDay, effectiveDose, scheduleForDay, type ScheduleSegment } from '../lib/intakeSchedule'
+import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, type ScheduleSegment } from '../lib/intakeSchedule'
 import { GlassPanel, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
 
 const DATE_LOCALES: Record<string, Locale> = {
@@ -983,13 +983,15 @@ export function Dashboard() {
                       )}
                       {log.taken === false && (
                         <span className="flex items-center gap-0.5 text-red-400 text-xs font-medium">
-                          <XCircle size={11} /> {t('uebersprungen')}
+                          <XCircle size={11} /> {log.notes === AUTO_MISSED_NOTE
+                            ? t('verpasst', { defaultValue: 'Verpasst' })
+                            : t('uebersprungen')}
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-slate-500 text-xs">{timeLabel(log.logged_at, t)}</span>
-                      {log.notes && <span className="text-slate-600 text-xs truncate">· {log.notes}</span>}
+                      {log.notes && log.notes !== AUTO_MISSED_NOTE && <span className="text-slate-600 text-xs truncate">· {log.notes}</span>}
                     </div>
                   </div>
                   <button className="p-1.5 text-slate-600 hover:text-red-400 transition-colors shrink-0"

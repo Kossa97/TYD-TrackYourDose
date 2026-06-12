@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  findOldestOverdueIntake, scheduleForDay, effectiveDose,
+  findOldestOverdueIntake, collectMissedIntakes, scheduleForDay, effectiveDose,
   type ScheduleCycle, type IntakeLog, type ScheduleSegment, type EscalationRow,
 } from './intakeSchedule'
 
@@ -104,5 +104,45 @@ describe('findOldestOverdueIntake — Frequenzwechsel gilt ab Aenderung', () => 
     const now = new Date(2026, 5, 3, 21, 0)
     const overdue = findOldestOverdueIntake([changed], [lg('p2', '2026-06-03', '08:30:00', true)], names2, now, 0)
     expect(overdue?.time).toBe('20:00')
+  })
+})
+
+// ── collectMissedIntakes: Frist bis Tagesende ───────────────────────────────────
+describe('collectMissedIntakes — Frist bis Tagesende', () => {
+  // 1x täglich, Start vor 3 Tagen, keine Logs.
+  const daily: ScheduleCycle = {
+    id: 'c3', peptide_id: 'p3', start_date: '2026-06-09', end_date: null,
+    frequency: 'Täglich', x_days_interval: null, schedule_days: null,
+    intake_time: 'morgens', intake_time_custom: null, dose: 100, unit: 'mcg',
+    schedule_history: null,
+  }
+  const now = new Date(2026, 5, 12, 10, 0) // 12.06., 10:00
+
+  it('liefert vergangene unbestätigte Slots, aber NICHT heute', () => {
+    const missed = collectMissedIntakes([daily], [], now)
+    const days = missed.map(m => m.dateKey)
+    expect(days).toContain('2026-06-09')
+    expect(days).toContain('2026-06-10')
+    expect(days).toContain('2026-06-11')
+    expect(days).not.toContain('2026-06-12') // heute bleibt offen (Frist läuft erst Mitternacht ab)
+    expect(missed.every(m => m.minutes === 8 * 60)).toBe(true) // morgens = 08:00
+  })
+
+  it('bereits entschiedene Tage werden ausgelassen', () => {
+    const logs: IntakeLog[] = [{ peptide_id: 'p3', logged_at: '2026-06-10T08:30:00', taken: true }]
+    const days = collectMissedIntakes([daily], logs, now).map(m => m.dateKey)
+    expect(days).not.toContain('2026-06-10')
+    expect(days).toContain('2026-06-09')
+    expect(days).toContain('2026-06-11')
+  })
+
+  it('je nicht gedecktem Slot ein Eintrag (2x täglich)', () => {
+    const twice: ScheduleCycle = { ...daily, frequency: '2x täglich', intake_time: 'morgens,abends' }
+    // Am 11. nur eine Einnahme bestätigt → ein Slot bleibt offen.
+    const logs: IntakeLog[] = [{ peptide_id: 'p3', logged_at: '2026-06-11T08:30:00', taken: true }]
+    const missed = collectMissedIntakes([twice], logs, now)
+    const on11 = missed.filter(m => m.dateKey === '2026-06-11')
+    expect(on11).toHaveLength(1)
+    expect(on11[0].minutes).toBe(20 * 60) // der spätere (Abend-)Slot bleibt offen
   })
 })

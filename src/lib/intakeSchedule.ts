@@ -194,3 +194,60 @@ export function findOldestOverdueIntake(
   }
   return null
 }
+
+/** Marker in dose_logs.notes für automatisch als „verpasst" eingetragene Einnahmen. */
+export const AUTO_MISSED_NOTE = 'auto-missed'
+
+export interface MissedIntake {
+  cycleId: string
+  peptideId: string
+  /** yyyy-MM-dd des geplanten Tages. */
+  dateKey: string
+  /** Minuten seit Mitternacht (Slot-Zeit). */
+  minutes: number
+}
+
+/**
+ * Alle geplanten Slots der letzten `lookbackDays` VOR heute, die nicht durch einen
+ * entschiedenen Log (taken === true/false) gedeckt sind. Frist = Tagesende: heutige
+ * Slots werden bewusst ausgelassen (sie bleiben bis Mitternacht bestätigbar). Das
+ * Ergebnis wird vom Aufrufer als „verpasst" (taken=false) in dose_logs geschrieben.
+ */
+export function collectMissedIntakes(
+  cycles: ScheduleCycle[],
+  logs: IntakeLog[],
+  now: Date = new Date(),
+  lookbackDays = 90,
+): MissedIntake[] {
+  const decidedByDay = new Map<string, number>()
+  for (const l of logs) {
+    if (l.taken == null) continue
+    const key = `${l.peptide_id}|${format(parseISO(l.logged_at), 'yyyy-MM-dd')}`
+    decidedByDay.set(key, (decidedByDay.get(key) ?? 0) + 1)
+  }
+
+  const out: MissedIntake[] = []
+  for (let back = lookbackDays; back >= 1; back--) {   // back >= 1 → nur Tage vor heute
+    const day = startOfDay(subDays(now, back))
+    const dayKey = format(day, 'yyyy-MM-dd')
+
+    const slotsByPeptide = new Map<string, { min: number; cycleId: string }[]>()
+    for (const c of cycles) {
+      if (!cycleAppliesToDay(c, day)) continue
+      for (const s of cycleDaySlots(c, day)) {
+        const arr = slotsByPeptide.get(c.peptide_id) ?? []
+        arr.push({ min: s.min, cycleId: c.id })
+        slotsByPeptide.set(c.peptide_id, arr)
+      }
+    }
+
+    for (const [peptideId, slots] of slotsByPeptide) {
+      const ordered = [...slots].sort((a, b) => a.min - b.min)
+      const covered = decidedByDay.get(`${peptideId}|${dayKey}`) ?? 0
+      for (const slot of ordered.slice(covered)) {
+        out.push({ cycleId: slot.cycleId, peptideId, dateKey: dayKey, minutes: slot.min })
+      }
+    }
+  }
+  return out
+}
