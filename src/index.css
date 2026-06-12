@@ -792,6 +792,9 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
   ::-webkit-scrollbar-thumb:hover { background: rgba(0,204,245,0.28); }
   ::selection { background: rgba(0,204,245,0.17); color: #00ccf5; }
 
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
   html {
     overflow-x: hidden;
     width: 100%;
