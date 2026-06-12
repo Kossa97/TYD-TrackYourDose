@@ -15,7 +15,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
-import { findOldestOverdueIntake, collectMissedIntakes, effectiveDose, AUTO_MISSED_NOTE, type EscalationRow } from '../lib/intakeSchedule'
+import { collectMissedIntakes, effectiveDose, AUTO_MISSED_NOTE, type EscalationRow } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
 import { format, parseISO, startOfDay, subDays } from 'date-fns'
@@ -216,6 +216,14 @@ const labelStyle: CSSProperties = {
   color: 'var(--text-muted)',
 }
 
+interface TodayIntake {
+  time: string          // 'HH:MM'
+  min: number           // Minuten seit Mitternacht (Sortierung)
+  substance: string | null
+  dose: string | null
+  peptideId: string
+}
+
 const sectionHeaderStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -227,10 +235,8 @@ const sectionHeaderStyle: CSSProperties = {
 export function Home() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [nextIntake,  setNextIntake]  = useState<string | null>(null)
-  const [nextSubstance, setNextSubstance] = useState<string | null>(null)
-  const [nextDose, setNextDose] = useState<string | null>(null)
-  const [dueIntake, setDueIntake] = useState<{ time: string; substance: string | null; daysOverdue: number; dateKey: string; dose: string | null } | null>(null)
+  // Alle heute noch offenen (nicht bestätigten) Einnahmen, je mit eigenem Timer.
+  const [todayIntakes, setTodayIntakes] = useState<TodayIntake[]>([])
   const [plannedToday, setPlannedToday] = useState(0)
   const [todayDone,   setTodayDone]   = useState(false)
   const [streak,      setStreak]      = useState(0)
@@ -278,7 +284,6 @@ export function Home() {
           (peptideData ?? []).map((p) => [p.id as string, p.name as string])
         )
         const now = new Date()
-        const nowMin = now.getHours() * 60 + now.getMinutes()
         const todaySlots: { min: number; time: string; substance: string | null; dose: string | null; peptideId: string }[] = []
         for (const c of cycleData ?? []) {
           const slots   = (c.intake_time ?? '').split(',').filter(Boolean)
@@ -294,24 +299,23 @@ export function Home() {
           })
         }
         todaySlots.sort((a, b) => a.min - b.min)
-        // Consume already-decided intakes per peptide in time order; the timer points
-        // at the earliest still-open slot in the future.
+        // Alle heute noch offenen Slots sammeln (pro Peptid die bereits entschiedenen in
+        // Zeitreihenfolge abziehen). Übrig bleiben fällige + anstehende Einnahmen für heute.
         const consumedByPeptide = new Map<string, number>()
-        let nextSlot: typeof todaySlots[number] | null = null
+        const openSlots: typeof todaySlots = []
         for (const s of todaySlots) {
           const used = consumedByPeptide.get(s.peptideId) ?? 0
           if (used < (decidedCountByPeptide.get(s.peptideId) ?? 0)) {
             consumedByPeptide.set(s.peptideId, used + 1)
             continue
           }
-          if (s.min > nowMin) { nextSlot = s; break }
+          openSlots.push(s)
         }
         // Frist = Tagesende: nicht bestätigte Slots vergangener Tage automatisch als
         // „verpasst" (taken=false) in die Historie schreiben, damit sie sich nicht stapeln.
         // Nur ab Aktivierung (localStorage) — kein rückwirkendes Backfill der Historie.
         let autoMissSince = localStorage.getItem('tyd_automiss_since')
         if (!autoMissSince) { autoMissSince = todayKey; localStorage.setItem('tyd_automiss_since', autoMissSince) }
-        const reconciledLogs = [...(logData ?? [])]
         const missed = collectMissedIntakes(cycleData ?? [], logData ?? [], now, parseISO(autoMissSince))
         if (missed.length > 0) {
           const cycleById = new Map((cycleData ?? []).map(c => [c.id, c]))
@@ -330,25 +334,12 @@ export function Home() {
               notes: AUTO_MISSED_NOTE,
             }
           })
-          const { error } = await supabase.from('dose_logs').insert(rows)
-          if (!error) {
-            for (const r of rows) reconciledLogs.push({ logged_at: r.logged_at, peptide_id: r.peptide_id, taken: false })
-          }
+          await supabase.from('dose_logs').insert(rows)
         }
 
-        // Überfällig nur für HEUTE (Frist bis Tagesende gilt auch fürs Banner) → lookback 0.
-        const overdue = findOldestOverdueIntake(cycleData ?? [], reconciledLogs, peptideNameById, now, 0)
-        const overdueCycle = overdue ? (cycleData ?? []).find(c => c.id === overdue.cycleId) : null
-        const overdueDose = overdue && overdueCycle && overdueCycle.dose != null
-          ? `${effectiveDose(overdueCycle, parseISO(overdue.dateKey), escalations)} ${overdueCycle.unit ?? ''}`.trim()
-          : null
-
         setPlannedToday(todaySlots.length)
-        setNextIntake(nextSlot?.time ?? null)
-        setNextSubstance(nextSlot?.substance ?? null)
-        setNextDose(nextSlot?.dose ?? null)
-        setDueIntake(overdue ? { ...overdue, dose: overdueDose } : null)
-        setTodayDone(todaySlots.length > 0 && !nextSlot && !overdue)
+        setTodayIntakes(openSlots.map(s => ({ time: s.time, min: s.min, substance: s.substance, dose: s.dose, peptideId: s.peptideId })))
+        setTodayDone(todaySlots.length > 0 && openSlots.length === 0)
 
         // ── Streak (consecutive days with ≥1 taken log) ─────────────
         const takenDates = new Set(
@@ -385,9 +376,7 @@ export function Home() {
   const dateStr  = format(new Date(), "EEEE, d. MMMM", { locale })
   const statusLabel = todayDone
     ? t('stat_today_done')
-    : nextIntake
-      ? `${t('stat_next_intake')}: ${nextIntake}`
-      : t('home_status_empty', { defaultValue: 'Kein aktiver Plan' })
+    : t('home_status_empty', { defaultValue: 'Kein aktiver Plan' })
   const completionLevel = plannedToday > 0
     ? Math.min(100, Math.round((overview.loggedToday / plannedToday) * 100))
     : 0
@@ -447,22 +436,18 @@ export function Home() {
             />
           </div>
 
-          {dueIntake ? (
-            <NextIntakeBanner
-              time={dueIntake.time}
-              substance={dueIntake.substance}
-              dose={dueIntake.dose}
-              forceDue
-              daysOverdue={dueIntake.daysOverdue}
-              onClick={() => navigate(`/kalender?date=${dueIntake.dateKey}#due-intakes`)}
-            />
-          ) : nextIntake ? (
-            <NextIntakeBanner
-              time={nextIntake}
-              substance={nextSubstance}
-              dose={nextDose}
-              onClick={() => navigate('/kalender#due-intakes')}
-            />
+          {todayIntakes.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {todayIntakes.map((it, i) => (
+                <IntakeRow
+                  key={`${it.peptideId}-${it.min}-${i}`}
+                  time={it.time}
+                  substance={it.substance}
+                  dose={it.dose}
+                  onClick={() => navigate('/kalender#due-intakes')}
+                />
+              ))}
+            </div>
           ) : (
             <div style={{
               display: 'flex',
@@ -828,20 +813,18 @@ function msUntilTime(time: string): number {
   return target.getTime() - Date.now()
 }
 
-function NextIntakeBanner({
+// Eine Zeile der heutigen Einnahmen-Liste: Substanz + Dosis, Uhrzeit und ein
+// Live-Timer (Countdown bis zur Einnahme, danach „Jetzt fällig").
+function IntakeRow({
   time,
   substance,
   dose,
   onClick,
-  forceDue = false,
-  daysOverdue = 0,
 }: {
   time: string
   substance: string | null
   dose?: string | null
   onClick: () => void
-  forceDue?: boolean
-  daysOverdue?: number
 }) {
   const { t } = useTranslation()
   const [remaining, setRemaining] = useState(() => msUntilTime(time))
@@ -850,7 +833,7 @@ function NextIntakeBanner({
     return () => clearInterval(id)
   }, [time])
 
-  const due = forceDue || remaining <= 0
+  const due = remaining <= 0
   const c       = due ? '#f59e0b' : 'var(--accent)'
   const cWeak   = due ? 'rgba(245,158,11,0.12)' : 'var(--accent-weak)'
   const cBorder = due ? 'rgba(245,158,11,0.34)' : 'var(--accent-border)'
@@ -862,39 +845,36 @@ function NextIntakeBanner({
       className="motion-press"
       style={{
         display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', cursor: 'pointer',
-        padding: '12px 14px', borderRadius: 18,
+        padding: '10px 12px', borderRadius: 16,
         background: cWeak, border: `1px solid ${cBorder}`,
       }}
     >
       <div style={{
-        width: 42, height: 42, borderRadius: 14, flexShrink: 0,
+        width: 38, height: 38, borderRadius: 12, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: cWeak, color: c, border: `1px solid ${cBorder}`,
       }}>
-        {due ? <Bell size={20} className="pulse-soft" /> : <Clock3 size={20} />}
+        {due ? <Bell size={18} className="pulse-soft" /> : <Clock3 size={18} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ ...labelStyle, color: c, marginBottom: 3 }}>
-          {due ? t('home_due_label', { defaultValue: 'Jetzt fällig' }) : t('stat_next_intake', { defaultValue: 'Nächste Einnahme' })}
+        <p style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {[substance, dose].filter(Boolean).join(' · ') || t('stat_next_intake', { defaultValue: 'Nächste Einnahme' })}
         </p>
+        <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 2 }}>
+          {t('home_at_time', { defaultValue: 'um' })} {time}
+        </p>
+      </div>
+      <div style={{ flexShrink: 0, textAlign: 'right' }}>
         {due ? (
-          <p style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1.05rem', fontWeight: 850, color: c, lineHeight: 1 }}>
-            <span className="pulse-soft" style={{ width: 9, height: 9, borderRadius: '50%', background: c, display: 'inline-block', flexShrink: 0 }} />
-            {t('home_due', { defaultValue: 'Einnahme fällig!' })}
-          </p>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', fontWeight: 850, color: c }}>
+            <span className="pulse-soft" style={{ width: 8, height: 8, borderRadius: '50%', background: c, display: 'inline-block', flexShrink: 0 }} />
+            {t('home_due_label', { defaultValue: 'Jetzt fällig' })}
+          </span>
         ) : (
-          <p style={{ fontFamily: 'monospace', fontSize: '1.2rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1, letterSpacing: '0.02em' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '0.02em' }}>
             {fmtCountdown(remaining)}
-          </p>
+          </span>
         )}
-        <p style={{ fontSize: '0.7rem', color: due && daysOverdue >= 1 ? c : 'var(--text-muted)', fontWeight: due && daysOverdue >= 1 ? 700 : 400, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {(() => {
-            const when = due && daysOverdue >= 1
-              ? t('home_overdue_days', { days: daysOverdue, defaultValue: `seit ${daysOverdue} ${daysOverdue === 1 ? 'Tag' : 'Tagen'} überfällig` })
-              : `${t('home_at_time', { defaultValue: 'um' })} ${time}`
-            return [substance, dose, when].filter(Boolean).join(' · ')
-          })()}
-        </p>
       </div>
     </button>
   )
