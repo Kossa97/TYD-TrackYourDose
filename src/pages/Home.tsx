@@ -837,23 +837,29 @@ function MarqueeText({ children, style }: { children: ReactNode; style?: CSSProp
     const setup = () => {
       anim?.cancel()
       const overflow = inner.scrollWidth - wrap.clientWidth
-      if (overflow <= 4) return                       // passt → kein Durchlauf
+      if (overflow <= 4) { inner.style.transform = 'translateX(0)'; return }   // passt → statisch
+      const holdStart = 2200, holdEnd = 1200            // Pausen (still stehen)
+      const moveOut = Math.max(1800, overflow * 35)     // langsam durchlaufen
+      const moveBack = Math.max(700, overflow * 14)     // zügig zurück
+      const total = holdStart + moveOut + holdEnd + moveBack
       anim = inner.animate(
         [
           { transform: 'translateX(0)', offset: 0 },
-          { transform: 'translateX(0)', offset: 0.12 },                    // kurz halten
-          { transform: `translateX(-${overflow}px)`, offset: 0.5 },
-          { transform: `translateX(-${overflow}px)`, offset: 0.62 },       // am Ende halten
+          { transform: 'translateX(0)', offset: holdStart / total },
+          { transform: `translateX(-${overflow}px)`, offset: (holdStart + moveOut) / total },
+          { transform: `translateX(-${overflow}px)`, offset: (holdStart + moveOut + holdEnd) / total },
           { transform: 'translateX(0)', offset: 1 },
         ],
-        { duration: Math.max(4000, overflow * 60), iterations: Infinity, easing: 'ease-in-out' },
+        { duration: total, iterations: Infinity, easing: 'linear' },
       )
     }
     setup()
     const ro = new ResizeObserver(setup)
     ro.observe(wrap); ro.observe(inner)
     return () => { anim?.cancel(); ro.disconnect() }
-  }, [children])
+    // Inhalt pro Zeile ist stabil (Row ist gekeyed) → nur einmal aufsetzen,
+    // sonst würde der 1-Sekunden-Timer-Tick die Animation ständig neu starten.
+  }, [])
   return (
     <span ref={wrapRef} style={{ display: 'block', overflow: 'hidden', whiteSpace: 'nowrap', ...style }}>
       <span ref={innerRef} style={{ display: 'inline-block', willChange: 'transform' }}>
