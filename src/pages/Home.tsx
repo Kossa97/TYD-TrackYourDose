@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FEATURES } from '../config/features'
 import { useTranslation } from 'react-i18next'
@@ -812,6 +812,44 @@ function msUntilTime(time: string): number {
 // Höhe einer Einnahmen-Zeile (für das vertikale Karussell-Snapping).
 const INTAKE_ROW_H = 46
 
+// Text, der nur DANN horizontal durchläuft, wenn er nicht in eine Zeile passt
+// (sonst statisch). So bleibt der gesamte Zeileninhalt lesbar.
+function MarqueeText({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+  const wrapRef = useRef<HTMLSpanElement>(null)
+  const innerRef = useRef<HTMLSpanElement>(null)
+  useEffect(() => {
+    const wrap = wrapRef.current, inner = innerRef.current
+    if (!wrap || !inner) return
+    let anim: Animation | null = null
+    const setup = () => {
+      anim?.cancel()
+      const overflow = inner.scrollWidth - wrap.clientWidth
+      if (overflow <= 4) return                       // passt → kein Durchlauf
+      anim = inner.animate(
+        [
+          { transform: 'translateX(0)', offset: 0 },
+          { transform: 'translateX(0)', offset: 0.12 },                    // kurz halten
+          { transform: `translateX(-${overflow}px)`, offset: 0.5 },
+          { transform: `translateX(-${overflow}px)`, offset: 0.62 },       // am Ende halten
+          { transform: 'translateX(0)', offset: 1 },
+        ],
+        { duration: Math.max(4000, overflow * 60), iterations: Infinity, easing: 'ease-in-out' },
+      )
+    }
+    setup()
+    const ro = new ResizeObserver(setup)
+    ro.observe(wrap); ro.observe(inner)
+    return () => { anim?.cancel(); ro.disconnect() }
+  }, [children])
+  return (
+    <span ref={wrapRef} style={{ display: 'block', overflow: 'hidden', whiteSpace: 'nowrap', ...style }}>
+      <span ref={innerRef} style={{ display: 'inline-block', willChange: 'transform' }}>
+        {children}
+      </span>
+    </span>
+  )
+}
+
 // Eine kompakte, einzeilige Einnahmen-Zeile mit Live-Timer (Countdown bis zur
 // Einnahme, danach „Jetzt fällig").
 function IntakeRow({
@@ -851,10 +889,10 @@ function IntakeRow({
       {due
         ? <Bell size={16} className="pulse-soft" color={c} style={{ flexShrink: 0 }} />
         : <Clock3 size={16} color={c} style={{ flexShrink: 0 }} />}
-      <span style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <MarqueeText style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)' }}>
         {[substance, dose].filter(Boolean).join(' · ') || t('stat_next_intake', { defaultValue: 'Nächste Einnahme' })}
         <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>{` · ${t('home_at_time', { defaultValue: 'um' })} ${time}`}</span>
-      </span>
+      </MarqueeText>
       {due ? (
         <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.72rem', fontWeight: 850, color: c }}>
           <span className="pulse-soft" style={{ width: 7, height: 7, borderRadius: '50%', background: c, display: 'inline-block' }} />
