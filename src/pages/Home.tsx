@@ -440,17 +440,10 @@ export function Home() {
           </div>
 
           {todayIntakes.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {todayIntakes.map((it, i) => (
-                <IntakeRow
-                  key={`${it.peptideId}-${it.min}-${i}`}
-                  time={it.time}
-                  substance={it.substance}
-                  dose={it.dose}
-                  onClick={() => navigate('/kalender#due-intakes')}
-                />
-              ))}
-            </div>
+            <TodayIntakeCarousel
+              intakes={todayIntakes}
+              onItemClick={() => navigate('/kalender#due-intakes')}
+            />
           ) : (
             <div style={{
               display: 'flex',
@@ -816,8 +809,11 @@ function msUntilTime(time: string): number {
   return target.getTime() - Date.now()
 }
 
-// Eine Zeile der heutigen Einnahmen-Liste: Substanz + Dosis, Uhrzeit und ein
-// Live-Timer (Countdown bis zur Einnahme, danach „Jetzt fällig").
+// Höhe einer Einnahmen-Zeile (für das vertikale Karussell-Snapping).
+const INTAKE_ROW_H = 46
+
+// Eine kompakte, einzeilige Einnahmen-Zeile mit Live-Timer (Countdown bis zur
+// Einnahme, danach „Jetzt fällig").
 function IntakeRow({
   time,
   substance,
@@ -847,39 +843,59 @@ function IntakeRow({
       onClick={onClick}
       className="motion-press"
       style={{
-        display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', cursor: 'pointer',
-        padding: '10px 12px', borderRadius: 16,
+        display: 'flex', alignItems: 'center', gap: 10, width: '100%', height: INTAKE_ROW_H, textAlign: 'left', cursor: 'pointer',
+        padding: '0 12px', borderRadius: 14,
         background: cWeak, border: `1px solid ${cBorder}`,
       }}
     >
-      <div style={{
-        width: 38, height: 38, borderRadius: 12, flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: cWeak, color: c, border: `1px solid ${cBorder}`,
-      }}>
-        {due ? <Bell size={18} className="pulse-soft" /> : <Clock3 size={18} />}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {[substance, dose].filter(Boolean).join(' · ') || t('stat_next_intake', { defaultValue: 'Nächste Einnahme' })}
-        </p>
-        <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 2 }}>
-          {t('home_at_time', { defaultValue: 'um' })} {time}
-        </p>
-      </div>
-      <div style={{ flexShrink: 0, textAlign: 'right' }}>
-        {due ? (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', fontWeight: 850, color: c }}>
-            <span className="pulse-soft" style={{ width: 8, height: 8, borderRadius: '50%', background: c, display: 'inline-block', flexShrink: 0 }} />
-            {t('home_due_label', { defaultValue: 'Jetzt fällig' })}
-          </span>
-        ) : (
-          <span style={{ fontFamily: 'monospace', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '0.02em' }}>
-            {fmtCountdown(remaining)}
-          </span>
-        )}
-      </div>
+      {due
+        ? <Bell size={16} className="pulse-soft" color={c} style={{ flexShrink: 0 }} />
+        : <Clock3 size={16} color={c} style={{ flexShrink: 0 }} />}
+      <span style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {[substance, dose].filter(Boolean).join(' · ') || t('stat_next_intake', { defaultValue: 'Nächste Einnahme' })}
+        <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>{` · ${t('home_at_time', { defaultValue: 'um' })} ${time}`}</span>
+      </span>
+      {due ? (
+        <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.72rem', fontWeight: 850, color: c }}>
+          <span className="pulse-soft" style={{ width: 7, height: 7, borderRadius: '50%', background: c, display: 'inline-block' }} />
+          {t('home_due_label', { defaultValue: 'Jetzt fällig' })}
+        </span>
+      ) : (
+        <span style={{ flexShrink: 0, fontFamily: 'monospace', fontSize: '0.95rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '0.02em' }}>
+          {fmtCountdown(remaining)}
+        </span>
+      )}
     </button>
+  )
+}
+
+// Vertikales Einzeiler-Karussell: eine Einnahme im Fokus, Nachbarn oben/unten
+// lugen hervor und faden aus. Vertikal scroll-/wischbar mit Snap.
+function TodayIntakeCarousel({ intakes, onItemClick }: { intakes: TodayIntake[]; onItemClick: () => void }) {
+  if (intakes.length <= 1) {
+    return intakes.length === 1
+      ? <IntakeRow time={intakes[0].time} substance={intakes[0].substance} dose={intakes[0].dose} onClick={onItemClick} />
+      : null
+  }
+  const height = INTAKE_ROW_H * 2.5   // Fokus + Andeutung der Nachbarn
+  const padBlock = (height - INTAKE_ROW_H) / 2
+  return (
+    <div
+      className="no-scrollbar"
+      style={{
+        height, overflowY: 'auto', scrollSnapType: 'y mandatory',
+        display: 'flex', flexDirection: 'column', gap: 6,
+        paddingBlock: padBlock,
+        WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%)',
+        maskImage: 'linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%)',
+      }}
+    >
+      {intakes.map((it, i) => (
+        <div key={`${it.peptideId}-${it.min}-${i}`} style={{ scrollSnapAlign: 'center', flexShrink: 0 }}>
+          <IntakeRow time={it.time} substance={it.substance} dose={it.dose} onClick={onItemClick} />
+        </div>
+      ))}
+    </div>
   )
 }
 
