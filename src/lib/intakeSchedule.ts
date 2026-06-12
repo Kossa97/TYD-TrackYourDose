@@ -208,16 +208,17 @@ export interface MissedIntake {
 }
 
 /**
- * Alle geplanten Slots der letzten `lookbackDays` VOR heute, die nicht durch einen
- * entschiedenen Log (taken === true/false) gedeckt sind. Frist = Tagesende: heutige
- * Slots werden bewusst ausgelassen (sie bleiben bis Mitternacht bestätigbar). Das
- * Ergebnis wird vom Aufrufer als „verpasst" (taken=false) in dose_logs geschrieben.
+ * Alle geplanten Slots VOR heute über die gesamte Länge der Zyklen (ab dem frühesten
+ * start_date), die nicht durch einen entschiedenen Log (taken === true/false) gedeckt
+ * sind. Frist = Tagesende: heutige Slots werden bewusst ausgelassen (sie bleiben bis
+ * Mitternacht bestätigbar). Das Ergebnis wird vom Aufrufer als „verpasst" (taken=false)
+ * in dose_logs geschrieben. cycleAppliesToDay begrenzt jeden Zyklus auf sein eigenes
+ * start_date/end_date — das früheste start_date bestimmt nur das Gesamtfenster.
  */
 export function collectMissedIntakes(
   cycles: ScheduleCycle[],
   logs: IntakeLog[],
   now: Date = new Date(),
-  lookbackDays = 90,
 ): MissedIntake[] {
   const decidedByDay = new Map<string, number>()
   for (const l of logs) {
@@ -226,8 +227,16 @@ export function collectMissedIntakes(
     decidedByDay.set(key, (decidedByDay.get(key) ?? 0) + 1)
   }
 
+  // Rückblick = vom frühesten Zyklus-Start bis gestern (gesamte Zyklus-Länge).
+  let earliest: Date | null = null
+  for (const c of cycles) {
+    const s = startOfDay(parseISO(c.start_date))
+    if (!earliest || s < earliest) earliest = s
+  }
+  if (!earliest) return []
+
   const out: MissedIntake[] = []
-  for (let back = lookbackDays; back >= 1; back--) {   // back >= 1 → nur Tage vor heute
+  for (let back = differenceInDays(startOfDay(now), earliest); back >= 1; back--) {  // back >= 1 → nur Tage vor heute
     const day = startOfDay(subDays(now, back))
     const dayKey = format(day, 'yyyy-MM-dd')
 

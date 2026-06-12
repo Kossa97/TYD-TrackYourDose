@@ -145,4 +145,12 @@ describe('collectMissedIntakes — Frist bis Tagesende', () => {
     expect(on11).toHaveLength(1)
     expect(on11[0].minutes).toBe(20 * 60) // der spätere (Abend-)Slot bleibt offen
   })
+
+  it('erfasst die gesamte Zyklus-Länge, auch älter als 90 Tage', () => {
+    // Start 100 Tage vor "now" → ein Tag ~95 Tage zurück muss enthalten sein.
+    const old: ScheduleCycle = { ...daily, id: 'c4', start_date: '2026-03-04' } // 100 Tage vor 2026-06-12
+    const missed = collectMissedIntakes([old], [], now)
+    expect(missed.length).toBe(100) // 04.03.–11.06. (Start inklusive, heute exklusive)
+    expect(missed.map(m => m.dateKey)).toContain('2026-03-09') // ~95 Tage zurück, jenseits 90
+  })
 })
