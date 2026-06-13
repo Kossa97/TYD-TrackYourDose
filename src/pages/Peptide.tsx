@@ -108,6 +108,14 @@ function expiryDaysLeft(p: Peptide): number | null {
   return differenceInDays(addDays(parseISO(p.reconstitution_date), p.expiry_days), new Date())
 }
 
+/** Rest im aktuellen Vial in % — gleiche Logik wie die Vial-Anzeige in der Liste. */
+function getVialFillPct(p: Peptide): number | null {
+  const stock = p.vials_in_stock ?? 0
+  if ((p.vials_initial ?? 0) <= 0 && stock <= 0) return null
+  if (stock <= 0) return 0
+  return stock % 1 === 0 ? 100 : (stock % 1) * 100
+}
+
 function compareNullableNum(a: number | null | undefined, b: number | null | undefined, asc: boolean): number {
   const av = a ?? null
   const bv = b ?? null
@@ -135,8 +143,8 @@ function sortPeptides(list: Peptide[], sortBy: PeptideSortKey): Peptide[] {
       case 'name_desc': return b.name.localeCompare(a.name)
       case 'expiry_asc': return compareNullableNum(expiryDaysLeft(a), expiryDaysLeft(b), true)
       case 'expiry_desc': return compareNullableNum(expiryDaysLeft(a), expiryDaysLeft(b), false)
-      case 'fill_asc': return compareNullableNum(a.vial_amount_mg, b.vial_amount_mg, true)
-      case 'fill_desc': return compareNullableNum(a.vial_amount_mg, b.vial_amount_mg, false)
+      case 'fill_asc': return compareNullableNum(getVialFillPct(a), getVialFillPct(b), true)
+      case 'fill_desc': return compareNullableNum(getVialFillPct(a), getVialFillPct(b), false)
       case 'recon_asc': return compareNullableDate(a.reconstitution_date, b.reconstitution_date, true)
       case 'recon_desc': return compareNullableDate(a.reconstitution_date, b.reconstitution_date, false)
       case 'stock_asc': return compareNullableNum(a.vials_in_stock, b.vials_in_stock, true)
@@ -1024,10 +1032,7 @@ export function Peptide() {
               const pCycles   = cyclesOf(p.id)
               const isOpen    = expandedId === p.id
               const hasActive = pCycles.some(c => c.active)
-              const stock = p.vials_in_stock ?? 0
-              const vialPct = (p.vials_initial ?? 0) > 0 || stock > 0
-                ? stock <= 0 ? 0 : stock % 1 === 0 ? 100 : (stock % 1) * 100
-                : null
+              const vialPct = getVialFillPct(p)
               const colorIdx   = peptides.findIndex(pp => pp.id === p.id)
               const peptideColor = peptideColors[p.id] ?? getPeptideColor(colorIdx)
               const invItem = p.inventory_item_id ? inventory.find(i => i.id === p.inventory_item_id) : null
