@@ -633,7 +633,9 @@ export function Dashboard() {
           borderColor: 'var(--border)',
           background: isSelected
             ? 'linear-gradient(145deg, rgba(0,190,240,0.85), rgba(0,120,210,0.75))'
-            : hasMissed ? 'rgba(239,68,68,0.10)' : 'transparent',
+            : hasMissed ? 'rgba(239,68,68,0.10)'
+            : fullyTracked ? 'rgba(16,185,129,0.10)'
+            : 'transparent',
           boxShadow: isSelected
             ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 16px rgba(0,200,240,0.25)'
             : undefined,
