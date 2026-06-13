@@ -590,7 +590,10 @@ export function Dashboard() {
     const inMonth = day.getMonth() === monthDate.getMonth()
     const isSelected = !isPeek && isSameDay(day, selectedDay)
     const isTodayDay = isToday(day)
-    const isFuture = differenceInDays(day, today) > 0
+    // Tag-genau vergleichen (nicht mit Uhrzeit) — sonst gilt „morgen" < 24h als heute/vergangen.
+    const dayKey = format(day, 'yyyy-MM-dd')
+    const todayKey = format(today, 'yyyy-MM-dd')
+    const isFuture = dayKey > todayKey
 
     const dayCycles = isPeek ? [] : cyclesForDay(day)
     const dayLogsList = isPeek ? [] : logsForDay(day)
@@ -614,7 +617,7 @@ export function Dashboard() {
     })
 
     // Vergangener Tag mit geplanter, aber nicht (vollständig) genommener Einnahme → verpasst.
-    const isPastDay = !isFuture && !isTodayDay
+    const isPastDay = dayKey < todayKey
     const hasMissed = isPastDay && hasCycle && !fullyTracked
 
     return (
