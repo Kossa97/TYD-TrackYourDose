@@ -95,6 +95,57 @@ const METHOD_KEYS: Record<string,string> = {
 }
 const WOCHENTAGE = ['Mo','Di','Mi','Do','Fr','Sa','So']
 const EXPIRY_PRESETS = [10, 14, 21, 28, 42, 90]
+
+type PeptideSortKey =
+  | 'name_asc' | 'name_desc'
+  | 'expiry_asc' | 'expiry_desc'
+  | 'fill_asc' | 'fill_desc'
+  | 'recon_asc' | 'recon_desc'
+  | 'stock_asc' | 'stock_desc'
+
+function expiryDaysLeft(p: Peptide): number | null {
+  if (!p.reconstitution_date || !p.expiry_days) return null
+  return differenceInDays(addDays(parseISO(p.reconstitution_date), p.expiry_days), new Date())
+}
+
+function compareNullableNum(a: number | null | undefined, b: number | null | undefined, asc: boolean): number {
+  const av = a ?? null
+  const bv = b ?? null
+  if (av === null && bv === null) return 0
+  if (av === null) return 1
+  if (bv === null) return -1
+  const diff = av - bv
+  return asc ? diff : -diff
+}
+
+function compareNullableDate(a: string | null | undefined, b: string | null | undefined, asc: boolean): number {
+  const av = a || null
+  const bv = b || null
+  if (!av && !bv) return 0
+  if (!av) return 1
+  if (!bv) return -1
+  const diff = av.localeCompare(bv)
+  return asc ? diff : -diff
+}
+
+function sortPeptides(list: Peptide[], sortBy: PeptideSortKey): Peptide[] {
+  return [...list].sort((a, b) => {
+    switch (sortBy) {
+      case 'name_asc': return a.name.localeCompare(b.name)
+      case 'name_desc': return b.name.localeCompare(a.name)
+      case 'expiry_asc': return compareNullableNum(expiryDaysLeft(a), expiryDaysLeft(b), true)
+      case 'expiry_desc': return compareNullableNum(expiryDaysLeft(a), expiryDaysLeft(b), false)
+      case 'fill_asc': return compareNullableNum(a.vial_amount_mg, b.vial_amount_mg, true)
+      case 'fill_desc': return compareNullableNum(a.vial_amount_mg, b.vial_amount_mg, false)
+      case 'recon_asc': return compareNullableDate(a.reconstitution_date, b.reconstitution_date, true)
+      case 'recon_desc': return compareNullableDate(a.reconstitution_date, b.reconstitution_date, false)
+      case 'stock_asc': return compareNullableNum(a.vials_in_stock, b.vials_in_stock, true)
+      case 'stock_desc': return compareNullableNum(a.vials_in_stock, b.vials_in_stock, false)
+      default: return 0
+    }
+  })
+}
+
 const SYRINGE_PRESETS = [
   { label: '1 mL · 100 Einh. (U-100)',  ml: '1',   units: '100' },
   { label: '0,5 mL · 50 Einh. (U-100)', ml: '0.5', units: '50'  },
@@ -395,7 +446,7 @@ export function Peptide() {
   const [uploadingFile, setUploadingFile]     = useState(false)
   const [infoPeptide, setInfoPeptide]         = useState<Peptide | null>(null)
   const [search, setSearch]                   = useState('')
-  const [sortBy, setSortBy]                   = useState<'name_asc' | 'name_desc'>('name_asc')
+  const [sortBy, setSortBy]                   = useState<PeptideSortKey>('name_asc')
 
   // ── Zyklen ────────────────────────────────────────────────────────────────
   const [showCycleForm, setShowCycleForm]         = useState(false)
@@ -478,9 +529,10 @@ export function Peptide() {
     setPkSuggestOpen(false)
   }
 
-  const displayPeptides = peptides
-    .filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => sortBy === 'name_asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name))
+  const displayPeptides = sortPeptides(
+    peptides.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase())),
+    sortBy,
+  )
 
   const cyclesOf      = (pid: string) => cycles
     .filter(c => c.peptide_id === pid)
@@ -923,10 +975,28 @@ export function Peptide() {
                 <input className="input pl-9 text-sm" placeholder={t('peptid_suchen')}
                   value={search} onChange={e => setSearch(e.target.value)} />
               </div>
-              <select className="select text-sm shrink-0 w-auto pr-8" value={sortBy}
-                onChange={e => setSortBy(e.target.value as 'name_asc' | 'name_desc')}>
-                <option value="name_asc">A → Z</option>
-                <option value="name_desc">Z → A</option>
+              <select className="select text-sm shrink-0 w-auto min-w-[9.5rem] max-w-[48%] pr-8" value={sortBy}
+                onChange={e => setSortBy(e.target.value as PeptideSortKey)}>
+                <optgroup label={t('sort_group_name')}>
+                  <option value="name_asc">{t('sort_name_asc')}</option>
+                  <option value="name_desc">{t('sort_name_desc')}</option>
+                </optgroup>
+                <optgroup label={t('sort_group_expiry')}>
+                  <option value="expiry_asc">{t('sort_expiry_asc')}</option>
+                  <option value="expiry_desc">{t('sort_expiry_desc')}</option>
+                </optgroup>
+                <optgroup label={t('sort_group_fill')}>
+                  <option value="fill_asc">{t('sort_fill_asc')}</option>
+                  <option value="fill_desc">{t('sort_fill_desc')}</option>
+                </optgroup>
+                <optgroup label={t('sort_group_recon')}>
+                  <option value="recon_asc">{t('sort_recon_asc')}</option>
+                  <option value="recon_desc">{t('sort_recon_desc')}</option>
+                </optgroup>
+                <optgroup label={t('sort_group_stock')}>
+                  <option value="stock_asc">{t('sort_stock_asc')}</option>
+                  <option value="stock_desc">{t('sort_stock_desc')}</option>
+                </optgroup>
               </select>
             </div>
           )}
