@@ -613,6 +613,10 @@ export function Dashboard() {
       })
     })
 
+    // Vergangener Tag mit geplanter, aber nicht (vollständig) genommener Einnahme → verpasst.
+    const isPastDay = !isFuture && !isTodayDay
+    const hasMissed = isPastDay && hasCycle && !fullyTracked
+
     return (
       <button
         key={key}
@@ -629,7 +633,7 @@ export function Dashboard() {
           borderColor: 'var(--border)',
           background: isSelected
             ? 'linear-gradient(145deg, rgba(0,190,240,0.85), rgba(0,120,210,0.75))'
-            : 'transparent',
+            : hasMissed ? 'rgba(239,68,68,0.10)' : 'transparent',
           boxShadow: isSelected
             ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 16px rgba(0,200,240,0.25)'
             : undefined,
@@ -647,6 +651,7 @@ export function Dashboard() {
         <span className={`text-sm font-black leading-none ${
           isSelected ? 'text-white' :
           isTodayDay ? 'text-sky-400' :
+          hasMissed ? 'text-red-400' :
           inMonth ? 'text-slate-200' : 'text-slate-600'
         }`}>
           {format(day, 'd')}
@@ -654,13 +659,23 @@ export function Dashboard() {
 
         {/* Three markers */}
         <div className="flex gap-0.5 mt-1.5 h-1.5 items-center">
-          {/* Cyan: dose planned but not yet fully tracked */}
-          {hasCycle && !fullyTracked && (
+          {/* Cyan: dose planned but not yet fully tracked (heute/zukünftig) */}
+          {hasCycle && !fullyTracked && !hasMissed && (
             <span
               className="w-1.5 h-1.5 rounded-full shrink-0"
               style={{
                 background: isSelected ? 'rgba(255,255,255,0.85)' : 'var(--accent)',
                 boxShadow: isSelected ? undefined : '0 0 4px #00ccf555',
+              }}
+            />
+          )}
+          {/* Rot: vergangener Tag mit verpasster Einnahme */}
+          {hasMissed && (
+            <span
+              className="w-1.5 h-1.5 rounded-full shrink-0"
+              style={{
+                background: isSelected ? 'rgba(255,255,255,0.85)' : '#ef4444',
+                boxShadow: isSelected ? undefined : '0 0 4px #ef444455',
               }}
             />
           )}
@@ -800,6 +815,10 @@ export function Dashboard() {
           <div className="flex items-center gap-1.5" style={calendarLegendText}>
             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#10b981', boxShadow: '0 0 4px #10b98155' }} />
             {t('erfolgreich', { defaultValue: 'Erfolgreich' })}
+          </div>
+          <div className="flex items-center gap-1.5" style={calendarLegendText}>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#ef4444', boxShadow: '0 0 4px #ef444455' }} />
+            {t('verpasst', { defaultValue: 'Verpasst' })}
           </div>
         </div>
 
