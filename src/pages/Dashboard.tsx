@@ -389,6 +389,8 @@ export function Dashboard() {
   const selLogs     = logsForDay(selectedDay)
   const selCycles   = cyclesForDay(selectedDay)
   const isTodaySelected = isToday(selectedDay)
+  // Vergangener Tag (vor heute): nicht bestätigte Slots gelten als „verpasst".
+  const isPastSelected = format(selectedDay, 'yyyy-MM-dd') < format(new Date(), 'yyyy-MM-dd')
   const monthTitle = format(currentDate, 'MMMM yyyy', { locale })
   const selectedDayTitle = isTodaySelected
     ? t('heutiges_protokoll')
@@ -906,23 +908,33 @@ export function Dashboard() {
 
                       <div
                         className="mt-2 ml-[18px] rounded-xl border px-2.5 py-2"
-                        style={{
+                        style={isPastSelected ? {
+                          background: 'linear-gradient(90deg, rgba(239,68,68,0.14), rgba(239,68,68,0.05))',
+                          borderColor: 'rgba(239,68,68,0.34)',
+                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
+                        } : {
                           background: 'linear-gradient(90deg, rgba(245,158,11,0.14), rgba(245,158,11,0.055))',
                           borderColor: 'rgba(245,158,11,0.34)',
                           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 0 16px rgba(245,158,11,0.12)',
                         }}
                       >
-                        <div className="mb-2 flex items-center gap-2 text-amber-300">
-                          <Bell size={12} className="animate-pulse" />
+                        <div className={`mb-2 flex items-center gap-2 ${isPastSelected ? 'text-red-300' : 'text-amber-300'}`}>
+                          {isPastSelected ? <XCircle size={12} /> : <Bell size={12} className="animate-pulse" />}
                           <span className="text-[11px] font-extrabold uppercase tracking-wide">
-                            {t('dose_confirm_pending_badge', { defaultValue: 'Bestätigung offen' })}
+                            {isPastSelected
+                              ? t('verpasst', { defaultValue: 'Verpasst' })
+                              : t('dose_confirm_pending_badge', { defaultValue: 'Bestätigung offen' })}
                           </span>
                         </div>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined)}
+                            onClick={() => isPastSelected
+                              ? (pendingLog
+                                  ? confirmDose(pendingLog, true, slotTimestamp(selectedDay, slot.minutes))
+                                  : confirmCycleDose(c, true, slotTimestamp(selectedDay, slot.minutes)))
+                              : openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined)}
                             className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
-                            <Check size={11} /> {t('eingenommen')}
+                            <Check size={11} /> {isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}
                           </button>
                           <button
                             onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false, slotTimestamp(selectedDay, slot.minutes))}
@@ -1017,6 +1029,13 @@ export function Dashboard() {
 
                 {log.taken !== null && (
                   <div className="flex gap-2 mt-2 ml-[26px]">
+                    {log.taken === false && (
+                      <button
+                        onClick={() => confirmDose(log, true)}
+                        className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
+                        <Check size={11} /> {t('dose_mark_taken', { defaultValue: 'Doch eingenommen' })}
+                      </button>
+                    )}
                     <button
                       onClick={() => undoDose(log)}
                       className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-slate-700/60 text-slate-300 border border-slate-600/50 hover:bg-slate-600/60 transition-colors">
