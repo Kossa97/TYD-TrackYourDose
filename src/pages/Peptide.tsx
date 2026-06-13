@@ -103,12 +103,12 @@ type PeptideSortKey =
   | 'recon_asc' | 'recon_desc'
   | 'stock_asc' | 'stock_desc'
 
-const PEPTIDE_SORT_OPTIONS: PeptideSortKey[] = [
-  'name_asc', 'name_desc',
-  'expiry_asc', 'expiry_desc',
-  'fill_asc', 'fill_desc',
-  'recon_asc', 'recon_desc',
-  'stock_asc', 'stock_desc',
+const PEPTIDE_SORT_GROUPS: { labelKey: string; options: PeptideSortKey[] }[] = [
+  { labelKey: 'sort_group_name', options: ['name_asc', 'name_desc'] },
+  { labelKey: 'sort_group_expiry', options: ['expiry_asc', 'expiry_desc'] },
+  { labelKey: 'sort_group_fill', options: ['fill_asc', 'fill_desc'] },
+  { labelKey: 'sort_group_recon', options: ['recon_asc', 'recon_desc'] },
+  { labelKey: 'sort_group_stock', options: ['stock_asc', 'stock_desc'] },
 ]
 
 const SORT_OPTION_LABEL_KEYS: Record<PeptideSortKey, string> = {
@@ -1007,8 +1007,12 @@ export function Peptide() {
               <select className="select text-sm shrink-0 w-auto min-w-[8.5rem] max-w-[48%] pr-8" value={sortBy}
                 aria-label={t('sort_aria_label')}
                 onChange={e => setSortBy(e.target.value as PeptideSortKey)}>
-                {PEPTIDE_SORT_OPTIONS.map(key => (
-                  <option key={key} value={key}>{t(SORT_OPTION_LABEL_KEYS[key])}</option>
+                {PEPTIDE_SORT_GROUPS.map(group => (
+                  <optgroup key={group.labelKey} label={t(group.labelKey)}>
+                    {group.options.map(key => (
+                      <option key={key} value={key}>{t(SORT_OPTION_LABEL_KEYS[key])}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
