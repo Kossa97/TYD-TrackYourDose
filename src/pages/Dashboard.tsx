@@ -928,11 +928,7 @@ export function Dashboard() {
                         </div>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => isPastSelected
-                              ? (pendingLog
-                                  ? confirmDose(pendingLog, true, slotTimestamp(selectedDay, slot.minutes))
-                                  : confirmCycleDose(c, true, slotTimestamp(selectedDay, slot.minutes)))
-                              : openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined)}
+                            onClick={() => openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined)}
                             className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
                             <Check size={11} /> {isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}
                           </button>
@@ -1031,7 +1027,7 @@ export function Dashboard() {
                   <div className="flex gap-2 mt-2 ml-[26px]">
                     {log.taken === false && (
                       <button
-                        onClick={() => confirmDose(log, true)}
+                        onClick={() => openConfirmSheet(undefined, log)}
                         className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
                         <Check size={11} /> {t('dose_mark_taken', { defaultValue: 'Doch eingenommen' })}
                       </button>
