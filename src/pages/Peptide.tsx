@@ -103,6 +103,27 @@ type PeptideSortKey =
   | 'recon_asc' | 'recon_desc'
   | 'stock_asc' | 'stock_desc'
 
+const PEPTIDE_SORT_OPTIONS: PeptideSortKey[] = [
+  'name_asc', 'name_desc',
+  'expiry_asc', 'expiry_desc',
+  'fill_asc', 'fill_desc',
+  'recon_asc', 'recon_desc',
+  'stock_asc', 'stock_desc',
+]
+
+const SORT_OPTION_LABEL_KEYS: Record<PeptideSortKey, string> = {
+  name_asc: 'sort_option_name_asc',
+  name_desc: 'sort_option_name_desc',
+  expiry_asc: 'sort_option_expiry_asc',
+  expiry_desc: 'sort_option_expiry_desc',
+  fill_asc: 'sort_option_fill_asc',
+  fill_desc: 'sort_option_fill_desc',
+  recon_asc: 'sort_option_recon_asc',
+  recon_desc: 'sort_option_recon_desc',
+  stock_asc: 'sort_option_stock_asc',
+  stock_desc: 'sort_option_stock_desc',
+}
+
 function expiryDaysLeft(p: Peptide): number | null {
   if (!p.reconstitution_date || !p.expiry_days) return null
   return differenceInDays(addDays(parseISO(p.reconstitution_date), p.expiry_days), new Date())
@@ -983,28 +1004,12 @@ export function Peptide() {
                 <input className="input pl-9 text-sm" placeholder={t('peptid_suchen')}
                   value={search} onChange={e => setSearch(e.target.value)} />
               </div>
-              <select className="select text-sm shrink-0 w-auto min-w-[9.5rem] max-w-[48%] pr-8" value={sortBy}
+              <select className="select text-sm shrink-0 w-auto min-w-[8.5rem] max-w-[48%] pr-8" value={sortBy}
+                aria-label={t('sort_aria_label')}
                 onChange={e => setSortBy(e.target.value as PeptideSortKey)}>
-                <optgroup label={t('sort_group_name')}>
-                  <option value="name_asc">{t('sort_name_asc')}</option>
-                  <option value="name_desc">{t('sort_name_desc')}</option>
-                </optgroup>
-                <optgroup label={t('sort_group_expiry')}>
-                  <option value="expiry_asc">{t('sort_expiry_asc')}</option>
-                  <option value="expiry_desc">{t('sort_expiry_desc')}</option>
-                </optgroup>
-                <optgroup label={t('sort_group_fill')}>
-                  <option value="fill_asc">{t('sort_fill_asc')}</option>
-                  <option value="fill_desc">{t('sort_fill_desc')}</option>
-                </optgroup>
-                <optgroup label={t('sort_group_recon')}>
-                  <option value="recon_asc">{t('sort_recon_asc')}</option>
-                  <option value="recon_desc">{t('sort_recon_desc')}</option>
-                </optgroup>
-                <optgroup label={t('sort_group_stock')}>
-                  <option value="stock_asc">{t('sort_stock_asc')}</option>
-                  <option value="stock_desc">{t('sort_stock_desc')}</option>
-                </optgroup>
+                {PEPTIDE_SORT_OPTIONS.map(key => (
+                  <option key={key} value={key}>{t(SORT_OPTION_LABEL_KEYS[key])}</option>
+                ))}
               </select>
             </div>
           )}
