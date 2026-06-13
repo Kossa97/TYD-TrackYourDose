@@ -734,7 +734,7 @@ export function BlutspiegelSimulation() {
   const [interval, setInterval]           = useState('8')
   const [numDoses, setNumDoses]           = useState('3')
   const [simResult, setSimResult]         = useState<PkResult | null>(null)
-  const [simOpen, setSimOpen]             = useState(true)
+  const [simOpen, setSimOpen]             = useState(false)
 
   // Live-Übersicht für alle aktiven Zyklen
   const [liveData, setLiveData]           = useState<Map<string, CurrentBlutspiegelLevel>>(new Map())
