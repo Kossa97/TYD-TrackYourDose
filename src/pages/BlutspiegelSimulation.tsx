@@ -293,6 +293,167 @@ function FieldLabel({ children, tip }: { children: string; tip: string }) {
 }
 
 
+const SWIPE_THRESHOLD_PX = 50
+const SWIPE_TRANSITION = 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+
+// ── Live-Zyklus-Karussell ─────────────────────────────────────────────────
+
+function LiveCycleCarousel({
+  cycles,
+  liveData,
+}: {
+  cycles: ProtocolCycle[]
+  liveData: Map<string, CurrentBlutspiegelLevel>
+}) {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [dragPx, setDragPx] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const dragStartX = useRef(0)
+  const dragPxRef = useRef(0)
+  const pointerActive = useRef(false)
+
+  const eligible = useMemo(
+    () => cycles.filter(c => c.peptides?.pk_profiles),
+    [cycles],
+  )
+
+  useEffect(() => {
+    setActiveIndex(prev => (eligible.length ? Math.min(prev, eligible.length - 1) : 0))
+  }, [eligible.length])
+
+  const finishDrag = useCallback(() => {
+    if (!pointerActive.current) return
+    pointerActive.current = false
+    setIsDragging(false)
+
+    const delta = dragPxRef.current
+    setDragPx(0)
+    dragPxRef.current = 0
+
+    if (Math.abs(delta) >= SWIPE_THRESHOLD_PX) {
+      setActiveIndex(i => {
+        if (delta > 0) return Math.max(0, i - 1)
+        return Math.min(eligible.length - 1, i + 1)
+      })
+    }
+  }, [eligible.length])
+
+  const onPointerDown = (clientX: number, target: EventTarget | null) => {
+    if (eligible.length <= 1) return
+    if (target instanceof Element && target.closest('.live-cycle-chart-zone')) return
+    pointerActive.current = true
+    dragStartX.current = clientX
+    dragPxRef.current = 0
+    setIsDragging(true)
+    setDragPx(0)
+  }
+
+  const onPointerMove = (clientX: number) => {
+    if (!pointerActive.current) return
+    let delta = clientX - dragStartX.current
+    const maxDrag = 120
+    if (activeIndex === 0 && delta > 0) delta *= 0.35
+    if (activeIndex === eligible.length - 1 && delta < 0) delta *= 0.35
+    delta = Math.max(-maxDrag, Math.min(maxDrag, delta))
+    dragPxRef.current = delta
+    setDragPx(delta)
+  }
+
+  const trackTransform = `translateX(calc(${-activeIndex * 100}% + ${dragPx}px))`
+
+  return (
+    <div>
+      <div
+        style={{
+          overflow: 'hidden',
+          borderRadius: 18,
+          touchAction: 'pan-y',
+          cursor: eligible.length > 1 ? 'grab' : 'default',
+        }}
+        onTouchStart={e => onPointerDown(e.touches[0].clientX, e.target)}
+        onTouchMove={e => onPointerMove(e.touches[0].clientX)}
+        onTouchEnd={() => finishDrag()}
+        onTouchCancel={() => finishDrag()}
+        onMouseDown={e => {
+          e.preventDefault()
+          onPointerDown(e.clientX, e.target)
+        }}
+        onMouseMove={e => {
+          if (!pointerActive.current) return
+          onPointerMove(e.clientX)
+        }}
+        onMouseUp={() => finishDrag()}
+        onMouseLeave={() => finishDrag()}
+      >
+        <div
+          style={{
+            display: 'flex',
+            transform: trackTransform,
+            transition: isDragging ? 'none' : SWIPE_TRANSITION,
+            willChange: 'transform',
+          }}
+        >
+          {eligible.map(c => {
+            const pk = c.peptides!.pk_profiles!
+            const accent = CATEGORY_ACCENT[normCat(pk.category)]
+            return (
+              <div key={c.id} style={{ flex: '0 0 100%', width: '100%' }}>
+                <LiveCycleCard
+                  cycleId={c.id}
+                  peptideName={c.peptides!.name}
+                  pk={pk}
+                  level={liveData.get(c.id)}
+                  accent={accent}
+                />
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {eligible.length > 1 && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: 12,
+          }}
+          role="tablist"
+          aria-label="Zyklus-Auswahl"
+        >
+          {eligible.map((c, i) => {
+            const pk = c.peptides!.pk_profiles!
+            const accent = CATEGORY_ACCENT[normCat(pk.category)]
+            const active = i === activeIndex
+            return (
+              <button
+                key={c.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                aria-label={`${c.peptides!.name}, Karte ${i + 1}`}
+                onClick={() => setActiveIndex(i)}
+                style={{
+                  height: 6,
+                  width: active ? 22 : 6,
+                  borderRadius: 999,
+                  border: 'none',
+                  padding: 0,
+                  background: active ? accent : 'var(--border)',
+                  transition: 'width 0.25s ease, background 0.25s ease',
+                  cursor: 'pointer',
+                }}
+              />
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Live-Zyklus-Karte ─────────────────────────────────────────────────────
 
 function LiveCycleCard({
@@ -419,8 +580,14 @@ function LiveCycleCard({
         </div>
       </div>
 
-      {/* Chart-Bereich */}
-      <div style={{ margin: '0 -2px 10px' }}>
+      {/* Chart-Bereich — Touch-Events nicht an Karussell weitergeben */}
+      <div
+        className="live-cycle-chart-zone"
+        style={{ margin: '0 -2px 10px' }}
+        onTouchStart={e => e.stopPropagation()}
+        onTouchMove={e => e.stopPropagation()}
+        onTouchEnd={e => e.stopPropagation()}
+      >
         {curveLoading ? (
           <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Loader2 size={16} color={accent} className="animate-spin" />
@@ -758,24 +925,7 @@ export function BlutspiegelSimulation() {
               </p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {protocolCycles
-                .filter(c => c.peptides?.pk_profiles)
-                .map(c => {
-                  const pk = c.peptides!.pk_profiles!
-                  const accent = CATEGORY_ACCENT[normCat(pk.category)]
-                  return (
-                    <LiveCycleCard
-                      key={c.id}
-                      cycleId={c.id}
-                      peptideName={c.peptides!.name}
-                      pk={pk}
-                      level={liveData.get(c.id)}
-                      accent={accent}
-                    />
-                  )
-                })}
-            </div>
+            <LiveCycleCarousel cycles={protocolCycles} liveData={liveData} />
           )}
         </div>
       )}
