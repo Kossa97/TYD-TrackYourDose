@@ -7,7 +7,7 @@ import {
   BookHeart, Star, HelpCircle, User, ChevronRight,
   Microscope, Library, Droplets, Heart, FileText, type LucideIcon,
   Activity, ArrowUpRight, CheckCircle2, ClipboardList,
-  Clock3, Flame, Package, ShieldCheck, Sparkles,
+  Clock3, Package, ShieldCheck, Sparkles,
   Syringe, TrendingUp, Bell,
   Dumbbell, Dna, Zap, Moon, Brain, Bandage, HeartPulse, Lightbulb, Leaf, Bone,
 } from 'lucide-react'
@@ -18,7 +18,7 @@ import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideE
 import { collectMissedIntakes, cycleAppliesToDay, scheduleForDay, effectiveDose, AUTO_MISSED_NOTE, type EscalationRow } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
-import { format, parseISO, startOfDay, subDays } from 'date-fns'
+import { format, parseISO, startOfDay } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
 
@@ -239,7 +239,6 @@ export function Home() {
   const [todayIntakes, setTodayIntakes] = useState<TodayIntake[]>([])
   const [plannedToday, setPlannedToday] = useState(0)
   const [todayDone,   setTodayDone]   = useState(false)
-  const [streak,      setStreak]      = useState(0)
   const [overview, setOverview] = useState<OverviewStats>(EMPTY_OVERVIEW)
   const [expiryAlerts, setExpiryAlerts] = useState<PeptideExpiryAlert[]>([])
 
@@ -256,7 +255,7 @@ export function Home() {
           supabase.from('cycles')
             .select('id, intake_time, intake_time_custom, peptide_id, dose, unit, method, start_date, end_date, frequency, x_days_interval, schedule_days, schedule_history')
             .eq('user_id', user!.id).eq('active', true),
-          // All decided/reset logs — taken filtered per use site (streak/overdue/timer).
+          // All decided/reset logs — taken filtered per use site (overdue/timer).
           supabase.from('dose_logs')
             .select('logged_at, peptide_id, taken')
             .eq('user_id', user!.id)
@@ -344,17 +343,6 @@ export function Home() {
         setTodayIntakes(openSlots.map(s => ({ time: s.time, min: s.min, substance: s.substance, dose: s.dose, peptideId: s.peptideId })))
         setTodayDone(todaySlots.length > 0 && openSlots.length === 0)
 
-        // ── Streak (consecutive days with ≥1 taken log) ─────────────
-        const takenDates = new Set(
-          (logData ?? []).filter(l => l.taken === true).map(l => format(parseISO(l.logged_at), 'yyyy-MM-dd'))
-        )
-        let s = 0
-        let d = new Date()
-        // If nothing logged today yet, start checking from yesterday
-        if (!takenDates.has(format(d, 'yyyy-MM-dd'))) d = subDays(d, 1)
-        while (takenDates.has(format(d, 'yyyy-MM-dd'))) { s++; d = subDays(d, 1) }
-        setStreak(s)
-
         setExpiryAlerts(getPeptideExpiryAlerts(peptideData ?? []))
 
         setOverview({
@@ -394,12 +382,9 @@ export function Home() {
               <p style={{ ...labelStyle, color: 'var(--accent)', marginBottom: 7 }}>
                 {dateStr}
               </p>
-              <h1 style={{ fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.045em', color: 'var(--text)', lineHeight: 1.04, marginBottom: 8 }}>
+              <h1 style={{ fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.045em', color: 'var(--text)', lineHeight: 1.04 }}>
                 {greeting}
               </h1>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)', lineHeight: 1.55, maxWidth: 390 }}>
-                {t('home_hero_subtitle', { defaultValue: 'Dein Research-Cockpit für Einnahmen, Vorrat, Laborwerte und Protokolle.' })}
-              </p>
             </div>
 
             <button
@@ -422,35 +407,15 @@ export function Home() {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <HeroStat
-              icon={Flame}
-              label="Streak"
-              value={String(streak)}
-              hint={String(t('stat_days'))}
-              accent={streak > 0 ? '#f59e0b' : '#64748b'}
-            />
-            <HeroStat
-              icon={Activity}
-              label={String(t('home_completion', { defaultValue: 'Heute erledigt' }))}
-              value={`${completionLevel}%`}
-              hint={`${overview.loggedToday}/${plannedToday} ${t('home_completion_unit', { defaultValue: 'Einnahmen geloggt' })}`}
-              accent="#8b5cf6"
-            />
-          </div>
+          <HeroStat
+            icon={Activity}
+            label={String(t('home_completion', { defaultValue: 'Heute erledigt' }))}
+            value={`${completionLevel}%`}
+            hint={`${overview.loggedToday}/${plannedToday} ${t('home_completion_unit', { defaultValue: 'Einnahmen geloggt' })}`}
+            accent="#8b5cf6"
+          />
 
-          {todayIntakes.length > 0 ? (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 6, padding: '0 4px' }}>
-                <p style={labelStyle}>{t('home_upcoming_intakes', { defaultValue: 'Anstehende Einnahmen' })}</p>
-                <p style={{ ...labelStyle, fontSize: '0.55rem' }}>{t('home_due_in', { defaultValue: 'fällig in:' })}</p>
-              </div>
-              <TodayIntakeCarousel
-                intakes={todayIntakes}
-                onItemClick={() => navigate('/kalender#due-intakes')}
-              />
-            </div>
-          ) : (
+          {todayIntakes.length === 0 && (
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -474,6 +439,19 @@ export function Home() {
           )}
         </div>
       </section>
+
+      {todayIntakes.length > 0 && (
+        <section style={{ ...panelStyle, padding: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
+            <p style={labelStyle}>{t('home_upcoming_intakes', { defaultValue: 'Anstehende Einnahmen' })}</p>
+            <p style={{ ...labelStyle, fontSize: '0.55rem' }}>{t('home_due_in', { defaultValue: 'fällig in:' })}</p>
+          </div>
+          <TodayIntakeCarousel
+            intakes={todayIntakes}
+            onItemClick={() => navigate('/kalender#due-intakes')}
+          />
+        </section>
+      )}
 
       <section>
         <p style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'monospace', marginBottom: 8 }}>
