@@ -16,13 +16,8 @@ import { useNew } from '../lib/useNew'
 import { NewDot } from '../components/NewDot'
 import { format, parseISO, addDays, differenceInDays } from 'date-fns'
 import { type ScheduleSegment } from '../lib/intakeSchedule'
-
-// ─── Inventar-Typen ───────────────────────────────────────────────────────────
-interface PkProfileOption {
-  id: string
-  name: string
-  aliases: string[]
-}
+import { PeptideFormModal } from '../components/PeptideFormModal'
+import { emptyPeptideForm, type PeptideForm, type PkProfileOption } from '../lib/peptideFormTypes'
 
 interface InventoryItem {
   id: string; user_id: string; name: string
@@ -43,7 +38,8 @@ const emptyInventoryForm = (): InventoryForm => ({
 interface Peptide {
   id: string; name: string; default_unit: string
   default_dose: number | null; default_method: string
-  vial_amount_mg: number | null; reconstitution_ml: number | null
+  vial_amount_mg: number | null; vial_amount_unit: string | null
+  reconstitution_ml: number | null
   syringe_type: string | null; notes: string | null
   vials_in_stock: number | null; vials_initial: number | null
   reconstitution_date: string | null; expiry_days: number | null
@@ -206,28 +202,6 @@ const REMINDER_OPTIONS = [
 ]
 
 // ─── Formular-Typen ───────────────────────────────────────────────────────────
-interface PeptideForm {
-  inventory_item_id: string
-  pk_profile_id: string
-  name: string; default_unit: string; default_dose: string; default_method: string
-  vial_amount_mg: string; reconstitution_ml: string
-  syringe_ml: string; syringe_units: string
-  notes: string; vials_in_stock: string
-  reconstitution_date: string; expiry_days: string
-  batch_number: string; batch_source: string; batch_file_url: string
-  color_hex: string
-}
-const emptyPeptideForm = (): PeptideForm => ({
-  inventory_item_id: '',
-  pk_profile_id: '',
-  name:'', default_unit:'mcg', default_dose:'', default_method:'Subkutan',
-  vial_amount_mg:'', reconstitution_ml:'2',
-  syringe_ml:'1', syringe_units:'100',
-  notes:'', vials_in_stock:'0',
-  reconstitution_date:'', expiry_days:'28',
-  batch_number:'', batch_source:'', batch_file_url:'',
-  color_hex: '',
-})
 interface CycleForm {
   name: string; dose: string; unit: string; method: string
   frequency: string; x_days_interval: string; schedule_days: string[]
@@ -639,10 +613,12 @@ export function Peptide() {
     // Auto-create or update inventory_item
     let invItemId = pForm.inventory_item_id || null
     if (pForm.vial_amount_mg) {
+      const vialAmount = parseFloat(pForm.vial_amount_mg)
+      const mgPerVial = pForm.vial_amount_unit === 'mcg' ? vialAmount / 1000 : vialAmount
       const invPayload = {
         user_id: user!.id,
         name: pForm.name.trim(),
-        mg_per_vial: parseFloat(pForm.vial_amount_mg),
+        mg_per_vial: mgPerVial,
         vials_count: rawReserve,
         vials_initial: rawReserve,
         batch_number: pForm.batch_number || null,
@@ -663,8 +639,9 @@ export function Peptide() {
       user_id:        user!.id, name: pForm.name.trim(),
       default_unit:   pForm.default_unit,
       default_dose:   pForm.default_dose ? parseFloat(pForm.default_dose) : null,
-      default_method: pForm.default_method,
+      default_method: pForm.default_method || 'Subkutan',
       vial_amount_mg: pForm.vial_amount_mg ? parseFloat(pForm.vial_amount_mg) : null,
+      vial_amount_unit: pForm.vial_amount_mg ? pForm.vial_amount_unit : null,
       reconstitution_ml: pForm.reconstitution_ml ? parseFloat(pForm.reconstitution_ml) : null,
       syringe_type:   (pForm.syringe_ml && pForm.syringe_units) ? `${pForm.syringe_ml}:${pForm.syringe_units}` : null,
       notes:          pForm.notes || null,
@@ -705,14 +682,15 @@ export function Peptide() {
       default_dose:      p.default_dose?.toString() ?? '',
       default_method:    p.default_method,
       vial_amount_mg:    p.vial_amount_mg?.toString()    ?? '',
-      reconstitution_ml: p.reconstitution_ml?.toString() ?? '2',
+      vial_amount_unit:  p.vial_amount_unit ?? 'mg',
+      reconstitution_ml: p.reconstitution_ml?.toString() ?? '',
       syringe_ml:    p.syringe_type?.split(':')[0] ?? '1',
       syringe_units: p.syringe_type?.split(':')[1] ?? '100',
       notes:         p.notes ?? '',
       // Pre-fill with raw reserve (inventory count), not the mixed-vial fill level.
       vials_in_stock: (inventory.find(i => i.id === p.inventory_item_id)?.vials_count ?? 0).toString(),
       reconstitution_date: p.reconstitution_date ?? '',
-      expiry_days:   p.expiry_days?.toString() ?? '28',
+      expiry_days:   p.expiry_days?.toString() ?? '',
       batch_number:  p.batch_number  ?? '',
       batch_source:  p.batch_source  ?? '',
       batch_file_url: p.batch_file_url ?? '',
@@ -1044,7 +1022,7 @@ export function Peptide() {
                         </div>
                         <div className="flex flex-wrap gap-x-3 text-slate-400 text-xs mt-1">
                           <span>{t(METHOD_KEYS[p.default_method] ?? p.default_method)}</span>
-                          {p.vial_amount_mg && <span>Vial: {p.vial_amount_mg} mg</span>}
+                          {p.vial_amount_mg && <span>Vial: {p.vial_amount_mg} {p.vial_amount_unit ?? 'mg'}</span>}
                         </div>
 
 
@@ -1229,264 +1207,24 @@ export function Peptide() {
 
       {/* ══ PEPTID-FORMULAR ══════════════════════════════════════════════════ */}
       {showPeptideForm && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
-          onClick={() => setShowPeptideForm(false)}>
-          <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg overflow-y-auto max-h-[95vh]"
-            onClick={e => e.stopPropagation()}>
-
-            <div className="sticky top-0 bg-slate-900 border-b border-slate-800 px-5 py-4 flex items-center justify-between z-10">
-              <div className="flex items-center gap-2">
-                <FlaskConical size={18} className="text-sky-400" />
-                <h2 className="font-bold text-white text-lg">
-                  {editingPeptideId ? t('peptid_bearbeiten_title') : t('neues_peptid_title')}
-                </h2>
-              </div>
-              <button onClick={() => setShowPeptideForm(false)} className="p-1.5 text-slate-400 hover:text-white">
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* ── 1. Peptid ──────────────────────────────────────────────── */}
-            <div className="px-5 py-4 border-b border-slate-800 space-y-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <FlaskConical size={12} /> {t('peptid_section')}
-              </p>
-              <div data-ob="pep-name">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <label className="label mb-0">{t('peptidname_star')}</label>
-                  {pForm.pk_profile_id && (
-                    <span data-ob="pep-pk-badge" className="text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
-                      style={{ color: 'var(--accent)', background: 'var(--accent-weak)', border: '1px solid var(--accent-border)' }}>
-                      <Check size={11} /> {t('pk_profil_verknuepft', { defaultValue: 'PK-Profil verknüpft' })}
-                    </span>
-                  )}
-                </div>
-                <div className="relative flex gap-2">
-                  <div className="relative flex-1 min-w-0">
-                    <input
-                      className="input w-full"
-                      placeholder={t('peptidname_star')}
-                      value={pForm.name}
-                      onChange={e => handlePepNameChange(e.target.value)}
-                      onFocus={() => setPkSuggestOpen(true)}
-                      onBlur={() => { setTimeout(() => setPkSuggestOpen(false), 150) }}
-                      autoComplete="off"
-                    />
-                    {pkSuggestOpen && pepPkSuggestions.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-20 overflow-hidden">
-                        {pepPkSuggestions.map(profile => (
-                          <button
-                            key={profile.id}
-                            type="button"
-                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-700 transition-colors border-b border-slate-700/50 last:border-0"
-                            onMouseDown={e => e.preventDefault()}
-                            onClick={() => selectPepPkProfile(profile)}
-                          >
-                            <span className="text-white font-medium">{profile.name}</span>
-                            {profile.aliases.length > 0 && (
-                              <span className="block text-xs text-slate-500 mt-0.5 truncate">
-                                {profile.aliases.join(', ')}
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <button className="btn-secondary flex items-center gap-1 shrink-0 text-sm px-3"
-                    onClick={() => { setShowDropdown(d => !d); setPkSuggestOpen(false) }}>
-                    {t('bekannte_btn')} <ChevronDown size={14} />
-                  </button>
-                  {showDropdown && (
-                    <div className="absolute top-full right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-10 w-56 max-h-52 overflow-y-auto">
-                      {POPULAR_PEPTIDES.map(name => (
-                        <button key={name} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-700 transition-colors first:rounded-t-xl last:rounded-b-xl"
-                          onClick={() => { handlePepNameChange(name); setShowDropdown(false) }}>
-                          {name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Farbe der Flüssigkeit */}
-              <div data-ob="pep-color">
-                <label className="label">Farbe der Flüssigkeit</label>
-                <div className="flex gap-2 flex-wrap">
-                  {['#06b6d4','#a855f7','#f59e0b','#ec4899','#34d399','#f97316','#60a5fa','#fb7185','#2dd4bf','#facc15','#c084fc','#4ade80'].map(c => (
-                    <button key={c} type="button"
-                      onClick={() => setPForm(f => ({ ...f, color_hex: c }))}
-                      style={{
-                        width: 26, height: 26, borderRadius: 8, background: c, flexShrink: 0,
-                        border: pForm.color_hex === c ? '2px solid #fff' : '2px solid transparent',
-                        opacity: pForm.color_hex === c ? 1 : 0.55,
-                        transition: 'opacity 0.15s, border-color 0.15s',
-                      }} />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* ── 2. Wirkstoff & Rekonstitution ──────────────────────────── */}
-            <div className="px-5 py-4 border-b border-slate-800 space-y-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Droplets size={12} /> {t('wirkstoff_rekonstitution')}
-              </p>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div data-ob="pep-mg">
-                  <label className="label">{t('wirkstoff_pro_vial_form')}</label>
-                  <input className="input" type="number" placeholder={t('eg_10')}
-                    value={pForm.vial_amount_mg} onChange={e => setPForm(f => ({ ...f, vial_amount_mg: e.target.value }))} />
-                </div>
-                <div data-ob="pep-liquid">
-                  <label className="label">{t('zugefuegte_fl_ml')}</label>
-                  <input className="input" type="number" step="0.1" placeholder={t('eg_2')}
-                    value={pForm.reconstitution_ml} onChange={e => setPForm(f => ({ ...f, reconstitution_ml: e.target.value }))} />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div data-ob="pep-recon-date">
-                    <label className="label">{t('datum_rekonstitution')}</label>
-                    <input className="input" type="date" value={pForm.reconstitution_date}
-                      onChange={e => setPForm(f => ({ ...f, reconstitution_date: e.target.value }))} />
-                  </div>
-                </div>
-                <div data-ob="pep-expiry" data-ob-self>
-                <label className="label">{t('haltbarkeit')}</label>
-                <div className="flex gap-2 flex-wrap mb-2">
-                  {EXPIRY_PRESETS.map(d => (
-                    <button key={d} type="button"
-                      onClick={() => setPForm(f => ({ ...f, expiry_days: d.toString() }))}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        pForm.expiry_days === d.toString() ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                      }`}>
-                      {t('n_tage_expiry', { n: d })}
-                    </button>
-                  ))}
-                  <input className="input w-24 py-1.5 text-xs" type="number" placeholder={t('individuel_ph')}
-                    value={EXPIRY_PRESETS.includes(parseInt(pForm.expiry_days)) ? '' : pForm.expiry_days}
-                    onChange={e => setPForm(f => ({ ...f, expiry_days: e.target.value }))} />
-                </div>
-                {pForm.reconstitution_date && pForm.expiry_days && (() => {
-                  const exp  = addDays(parseISO(pForm.reconstitution_date), parseInt(pForm.expiry_days))
-                  const days = differenceInDays(exp, new Date())
-                  return (
-                    <p className={`text-xs ${days > 7 ? 'text-emerald-400' : days > 0 ? 'text-amber-400' : 'text-red-400'}`}>
-                      {days > 0 ? t('ablaufdatum_text', { date: format(exp, 'dd.MM.yyyy'), n: days }) : t('ablaufdatum_abgelaufen', { date: format(exp, 'dd.MM.yyyy') })}
-                    </p>
-                  )
-                })()}
-                </div>
-              </div>
-            </div>
-
-            {/* ── 3. Bestand ─────────────────────────────────────────────── */}
-            <div className="px-5 py-4 border-b border-slate-800 space-y-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Package size={12} /> {t('bestand_section')}
-              </p>
-              <div data-ob="pep-vials">
-                <label className="label">{t('vorraetige_vials')}</label>
-                <input className="input" type="number" min="0" step="0.5" placeholder="0"
-                  value={pForm.vials_in_stock} onChange={e => setPForm(f => ({ ...f, vials_in_stock: e.target.value }))} />
-                <p className="text-slate-600 text-xs mt-1">{t('basis_info')}</p>
-              </div>
-            </div>
-
-            {/* ── 4. Batch & Herkunft ─────────────────────────────────────── */}
-            <div className="px-5 py-4 border-b border-slate-800 space-y-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <FileUp size={12} /> {t('batch_herkunft_section')}
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div data-ob="pep-batch">
-                  <label className="label">{t('batch')}</label>
-                  <input className="input" placeholder={t('eg_batch_nr')}
-                    value={pForm.batch_number} onChange={e => setPForm(f => ({ ...f, batch_number: e.target.value }))} />
-                </div>
-                <div data-ob="pep-source">
-                  <label className="label">{t('quelle')}</label>
-                  <input className="input" placeholder={t('eg_source_name')}
-                    value={pForm.batch_source} onChange={e => setPForm(f => ({ ...f, batch_source: e.target.value }))} />
-                </div>
-              </div>
-              <div data-ob="pep-doc">
-                <label className="label">{t('analyse_dok_pdf_bild')}</label>
-                <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
-                  batchFile ? 'border-sky-500/50 bg-sky-500/5' : 'border-slate-700 hover:border-slate-600'
-                }`}>
-                  <FileUp size={18} className={batchFile ? 'text-sky-400' : 'text-slate-500'} />
-                  <div className="flex-1 min-w-0">
-                    {batchFile
-                      ? <p className="text-sky-400 text-sm font-medium truncate">{batchFile.name}</p>
-                      : pForm.batch_file_url
-                        ? <p className="text-slate-300 text-sm truncate">{t('datei_vorhanden_text')}</p>
-                        : <p className="text-slate-500 text-sm">{t('pdf_bild_auswaehlen')}</p>
-                    }
-                    <p className="text-slate-600 text-xs">{t('coa_rechnung_label')}</p>
-                  </div>
-                  <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp"
-                    onChange={e => { if (e.target.files?.[0]) setBatchFile(e.target.files[0]) }} />
-                </label>
-                {pForm.batch_file_url && !batchFile && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <a href={pForm.batch_file_url} target="_blank" rel="noopener noreferrer"
-                      className="text-sky-400 text-xs hover:underline flex-1 truncate">
-                      {t('dokument_anzeigen')}
-                    </a>
-                    <button className="text-red-400 text-xs hover:text-red-300"
-                      onClick={() => setPForm(f => ({ ...f, batch_file_url: '' }))}>
-                      {t('entfernen')}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* ── 5. Dosierung & Applikation ──────────────────────────────── */}
-            <div className="px-5 py-4 border-b border-slate-800 space-y-3" data-ob="pep-dose">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                {t('dosierung_applikation_section')}
-              </p>
-              <div data-ob="pep-dose-amount">
-                <label className="label">{t('standard_dosis_label')}</label>
-                <div className="flex gap-2">
-                  <input className="input flex-1" type="number" placeholder={t('eg_500')}
-                    value={pForm.default_dose} onChange={e => setPForm(f => ({ ...f, default_dose: e.target.value }))} />
-                  <select className="select w-24" value={pForm.default_unit}
-                    onChange={e => setPForm(f => ({ ...f, default_unit: e.target.value }))}>
-                    {UNITS.map(u => <option key={u}>{u}</option>)}
-                  </select>
-                </div>
-                <p className="text-slate-600 text-xs mt-1">{t('fallback_info')}</p>
-              </div>
-              <div data-ob="pep-method">
-                <label className="label">{t('applikationsart_label')}</label>
-                <select className="select" value={pForm.default_method}
-                  onChange={e => setPForm(f => ({ ...f, default_method: e.target.value }))}>
-                  {METHODS.map(m => <option key={m} value={m}>{t(METHOD_KEYS[m] ?? m)}</option>)}
-                </select>
-              </div>
-              <div data-ob="pep-notes">
-                <label className="label">{t('notizen_optional')}</label>
-                <textarea className="input resize-none" rows={2}
-                  value={pForm.notes} onChange={e => setPForm(f => ({ ...f, notes: e.target.value }))} />
-              </div>
-            </div>
-
-            <div className="px-5 py-4 flex gap-3">
-              <button className="btn-secondary flex-1" onClick={() => setShowPeptideForm(false)}>{t('cancel')}</button>
-              <button data-ob="btn-pep-save" className="btn-primary flex-1" onClick={savePeptide}
-                disabled={savingPeptide || uploadingFile}>
-                {uploadingFile ? t('laedt_hoch') : savingPeptide ? t('loading') : t('save')}
-              </button>
-            </div>
-          </div>
-        </div>
+        <PeptideFormModal
+          editingPeptideId={editingPeptideId}
+          pForm={pForm}
+          setPForm={setPForm}
+          batchFile={batchFile}
+          setBatchFile={setBatchFile}
+          savingPeptide={savingPeptide}
+          uploadingFile={uploadingFile}
+          onClose={() => setShowPeptideForm(false)}
+          onSave={savePeptide}
+          pkSuggestOpen={pkSuggestOpen}
+          setPkSuggestOpen={setPkSuggestOpen}
+          pepPkSuggestions={pepPkSuggestions}
+          selectPepPkProfile={selectPepPkProfile}
+          handlePepNameChange={handlePepNameChange}
+          showDropdown={showDropdown}
+          setShowDropdown={setShowDropdown}
+        />
       )}
 
       {/* ══ ZYKLUS-FORMULAR ══════════════════════════════════════════════════ */}
@@ -1943,7 +1681,7 @@ export function Peptide() {
                       {p.vial_amount_mg && (
                         <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3 text-center">
                           <p className="text-sky-400 text-base font-bold">{p.vial_amount_mg}</p>
-                          <p className="text-slate-500 text-xs mt-0.5">mg / Vial</p>
+                          <p className="text-slate-500 text-xs mt-0.5">{p.vial_amount_unit ?? 'mg'} / Vial</p>
                         </div>
                       )}
                       {p.reconstitution_ml && (
