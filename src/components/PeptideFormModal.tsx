@@ -49,15 +49,6 @@ interface PeptideFormModalProps {
   setShowDropdown: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-function FormListCard({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-800/25 overflow-hidden">
-      <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">{title}</p>
-      <div className="divide-y divide-slate-800/80">{children}</div>
-    </div>
-  )
-}
-
 function FormListRow({
   label,
   value,
@@ -519,8 +510,8 @@ export function PeptideFormModal({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-          <FormListCard title={t('peptide_form_group_substance', { defaultValue: 'Substanz' })}>
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-800/25 overflow-hidden divide-y divide-slate-800/80">
             <FormListRow
               label={t('peptidname_star')}
               value={displayValues.name}
@@ -539,9 +530,6 @@ export function PeptideFormModal({
               onClick={() => setActiveField('color')}
               dataOb="pep-color"
             />
-          </FormListCard>
-
-          <FormListCard title={t('peptide_form_group_recon', { defaultValue: 'Rekonstitution' })}>
             <FormListRow
               label={t('wirkstoff_pro_vial_form')}
               value={displayValues.vial_amount_mg}
@@ -566,18 +554,12 @@ export function PeptideFormModal({
               onClick={() => setActiveField('expiry_days')}
               dataOb="pep-expiry"
             />
-          </FormListCard>
-
-          <FormListCard title={t('bestand_section')}>
             <FormListRow
               label={t('vorraetige_vials')}
               value={displayValues.vials_in_stock}
               onClick={() => setActiveField('vials_in_stock')}
               dataOb="pep-vials"
             />
-          </FormListCard>
-
-          <FormListCard title={t('peptide_form_group_dosage', { defaultValue: 'Dosierung' })}>
             <FormListRow
               label={t('applikationsart_label')}
               value={displayValues.default_method}
@@ -590,9 +572,9 @@ export function PeptideFormModal({
               onClick={() => setActiveField('default_dose')}
               dataOb="pep-dose-amount"
             />
-          </FormListCard>
+          </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-800/25 overflow-hidden">
+          <div className="rounded-2xl border border-slate-800 bg-slate-800/25 overflow-hidden mt-3">
             <button
               type="button"
               onClick={() => setMoreOpen(o => !o)}
