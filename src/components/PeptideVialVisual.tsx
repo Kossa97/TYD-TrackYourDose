@@ -45,8 +45,8 @@ export function PeptideVialVisual({
   const neckClass = isLarge ? 'h-5 w-32' : 'h-3 w-12'
   const bodyClass = isLarge ? 'h-56 rounded-[1.4rem]' : 'h-20 rounded-lg'
   const labelClass = isLarge
-    ? 'left-2 right-2 top-[39%] rounded-xl px-3 py-2'
-    : 'left-0.5 right-0.5 top-[36%] rounded-md px-1 py-1'
+    ? 'left-0 right-0 top-[39%] rounded-none px-3 py-2'
+    : 'left-0 right-0 top-[36%] rounded-none px-1 py-1'
   const nameClass = isLarge
     ? 'text-xl sm:text-2xl leading-tight'
     : 'text-[9px] leading-tight'
