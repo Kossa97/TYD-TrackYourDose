@@ -112,6 +112,7 @@ export function PeptideVialVisual({
         <div className={`${neckClass} rounded-t-md border-x border-slate-500/70 bg-gradient-to-b from-slate-500/80 via-slate-800/70 to-slate-950/80`} />
 
         <div
+          data-vial-detail="glass-body"
           className={`relative w-full ${heightClass} ${bodyClass} overflow-hidden border border-slate-400/35 bg-slate-950/82 shadow-[inset_0_0_22px_rgba(255,255,255,0.1),inset_14px_0_28px_rgba(255,255,255,0.08),inset_-18px_0_28px_rgba(0,0,0,0.34),0_22px_60px_rgba(0,0,0,0.36)]`}
         >
           <div

@@ -1474,3 +1474,14 @@ main.flex-1 {
 [data-theme="light"] [data-vial-detail="full-width-label"] {
   background-color: rgba(248, 250, 252, 0.28) !important;
 }
+
+/* In light mode the dark inset shadow on the vial body stands out against
+   the white background. Replace with a subtle light-mode equivalent. */
+[data-theme="light"] [data-vial-detail="glass-body"] {
+  box-shadow:
+    inset 0 0 22px rgba(255,255,255,0.6),
+    inset 14px 0 28px rgba(255,255,255,0.45),
+    inset -18px 0 28px rgba(0,0,0,0.07),
+    0 22px 60px rgba(0,0,0,0.10) !important;
+  border-color: rgba(148,163,184,0.4) !important;
+}
