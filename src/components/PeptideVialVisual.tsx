@@ -70,6 +70,15 @@ export function PeptideVialVisual({
           0%, 100% { transform: translateX(0); opacity: .35; }
           50% { transform: translateX(14%); opacity: .7; }
         }
+        @keyframes vial-meniscus-drift {
+          0%, 100% { transform: translate3d(-2%, 0, 0) rotate(-1deg) scaleX(1.02); opacity: .78; }
+          45% { transform: translate3d(2%, -1px, 0) rotate(1deg) scaleX(.98); opacity: .92; }
+          70% { transform: translate3d(0, 1px, 0) rotate(.4deg) scaleX(1.04); opacity: .84; }
+        }
+        @keyframes vial-liquid-caustics {
+          0%, 100% { transform: translate3d(-10%, 0, 0) rotate(-4deg); opacity: .18; }
+          50% { transform: translate3d(12%, -3%, 0) rotate(3deg); opacity: .34; }
+        }
         @keyframes vial-label-marquee {
           0%, 24% { transform: translateX(0); }
           76%, 100% { transform: translateX(-38%); }
@@ -78,7 +87,7 @@ export function PeptideVialVisual({
           animation: vial-label-marquee 12s linear 2.4s infinite alternate;
         }
         @media (prefers-reduced-motion: reduce) {
-          .vial-fill-rise, .vial-shimmer, .vial-label-marquee { animation: none !important; }
+          .vial-fill-rise, .vial-shimmer, .vial-meniscus-drift, .vial-liquid-caustics, .vial-label-marquee { animation: none !important; }
         }
       `}</style>
 
@@ -113,8 +122,14 @@ export function PeptideVialVisual({
               animationFillMode: 'both',
             } as CSSProperties}
           >
-            <div className="absolute -top-2 left-0 right-0 h-4 rounded-[50%] bg-white/20 blur-[1px]" />
-            <div className="absolute -top-1 left-3 right-3 h-px bg-white/45" />
+            <div
+              data-vial-detail="animated-meniscus"
+              className="vial-meniscus-drift absolute -top-3 left-2 right-2 h-7 rounded-[50%] border-t border-white/22 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.28)_0%,rgba(255,255,255,0.12)_34%,rgba(255,255,255,0.04)_62%,rgba(255,255,255,0)_76%)] shadow-[0_-8px_22px_rgba(255,255,255,0.14),inset_0_1px_0_rgba(255,255,255,0.3)] blur-[0.2px]"
+            >
+              <div className="absolute left-[12%] right-[16%] top-2 h-2 rounded-[50%] bg-white/10 blur-sm" />
+              <div className="absolute left-[24%] right-[34%] top-3 h-1 rounded-[50%] bg-white/16 blur-[2px]" />
+            </div>
+            <div className="vial-liquid-caustics absolute inset-x-4 bottom-8 top-8 rounded-[45%] bg-[linear-gradient(105deg,transparent_0%,rgba(255,255,255,0.16)_30%,transparent_48%,rgba(255,255,255,0.1)_68%,transparent_100%)] blur-md" />
           </div>
 
           <div className="absolute inset-y-4 left-3 w-4 rounded-full bg-white/20 blur-[2px]" />

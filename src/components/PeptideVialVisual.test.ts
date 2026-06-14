@@ -71,4 +71,20 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('whitespace-nowrap')
     expect(html).not.toContain('break-words')
   })
+
+  test('renders a living animated meniscus instead of straight white surface lines', () => {
+    const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
+      name: 'BPC-157',
+      amount: '5',
+      unit: 'mg',
+      fillPct: 72,
+      color: '#06b6d4',
+    }))
+
+    expect(html).toContain('data-vial-detail="animated-meniscus"')
+    expect(html).toContain('vial-meniscus-drift')
+    expect(html).toContain('vial-liquid-caustics')
+    expect(html).not.toContain('h-px bg-white/45')
+    expect(html).not.toContain('absolute -top-2 left-0 right-0 h-4')
+  })
 })
