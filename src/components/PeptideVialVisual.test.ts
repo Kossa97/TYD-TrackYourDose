@@ -41,4 +41,19 @@ describe('PeptideVialVisual', () => {
 
     expect(html).toContain('vial-fill-rise')
   })
+
+  test('renders recognizable vial hardware details', () => {
+    const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
+      name: 'TB-500',
+      amount: '5',
+      unit: 'mg',
+      fillPct: 80,
+      color: '#06b6d4',
+    }))
+
+    expect(html).toContain('data-vial-detail="crimp-seal"')
+    expect(html).toContain('data-vial-detail="rubber-stopper"')
+    expect(html).toContain('data-vial-detail="glass-shoulder"')
+    expect(html).toContain('data-vial-detail="glass-base"')
+  })
 })

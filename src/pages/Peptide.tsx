@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -452,6 +452,8 @@ export function Peptide() {
     localStorage.getItem('tyd_peptide_view') === 'list' ? 'list' : 'vials'
   )
   const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
+  const vialCarouselRef = useRef<HTMLDivElement | null>(null)
+  const vialScrollFrameRef = useRef<number | null>(null)
 
   // ── Zyklen ────────────────────────────────────────────────────────────────
   const [showCycleForm, setShowCycleForm]         = useState(false)
@@ -946,11 +948,49 @@ export function Peptide() {
 
   const activeIndex = Math.max(0, displayPeptides.findIndex(p => p.id === activePeptideId))
   const activePeptide = displayPeptides[activeIndex] ?? null
+  const scrollToPeptideIndex = (index: number) => {
+    const carousel = vialCarouselRef.current
+    const item = carousel?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
+    item?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }
+  const handleVialCarouselScroll = () => {
+    const carousel = vialCarouselRef.current
+    if (!carousel) return
+    if (vialScrollFrameRef.current !== null) window.cancelAnimationFrame(vialScrollFrameRef.current)
+
+    vialScrollFrameRef.current = window.requestAnimationFrame(() => {
+      const items = Array.from(carousel.querySelectorAll<HTMLElement>('[data-vial-index]'))
+      const carouselCenter = carousel.scrollLeft + carousel.clientWidth / 2
+      let closestIndex = activeIndex
+      let closestDistance = Number.POSITIVE_INFINITY
+
+      for (const item of items) {
+        const index = Number(item.dataset.vialIndex)
+        const itemCenter = item.offsetLeft + item.offsetWidth / 2
+        const distance = Math.abs(itemCenter - carouselCenter)
+        if (Number.isFinite(index) && distance < closestDistance) {
+          closestDistance = distance
+          closestIndex = index
+        }
+      }
+
+      const next = displayPeptides[closestIndex]
+      if (next && next.id !== activePeptideId) setActivePeptideId(next.id)
+      vialScrollFrameRef.current = null
+    })
+  }
   const selectPeptideOffset = (offset: number) => {
     if (displayPeptides.length === 0) return
     const nextIndex = (activeIndex + offset + displayPeptides.length) % displayPeptides.length
+    scrollToPeptideIndex(nextIndex)
     setActivePeptideId(displayPeptides[nextIndex].id)
   }
+
+  useEffect(() => {
+    return () => {
+      if (vialScrollFrameRef.current !== null) window.cancelAnimationFrame(vialScrollFrameRef.current)
+    }
+  }, [])
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -1058,21 +1098,29 @@ export function Peptide() {
                   </button>
                 </div>
 
-                <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:none]">
-                  {displayPeptides.map(p => {
+                <div
+                  ref={vialCarouselRef}
+                  onScroll={handleVialCarouselScroll}
+                  className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  style={{
+                    paddingInline: 'calc((100% - min(17rem, 72vw)) / 2)',
+                    scrollPaddingInline: 'calc((100% - min(17rem, 72vw)) / 2)',
+                  }}
+                >
+                  {displayPeptides.map((p, index) => {
                     const isActive = p.id === activePeptide.id
                     const colorIdx = peptides.findIndex(pp => pp.id === p.id)
                     const peptideColor = peptideColors[p.id] ?? getPeptideColor(colorIdx)
                     const vialPct = Math.round(getVialFillPct(p) ?? 100)
 
                     return (
-                      <button
+                      <div
                         key={p.id}
-                        type="button"
-                        onClick={() => setActivePeptideId(p.id)}
-                        className={`snap-center shrink-0 rounded-2xl px-2 py-2 transition-all ${
+                        data-vial-index={index}
+                        className={`snap-center shrink-0 rounded-2xl px-2 py-2 transition-all duration-200 ${
                           isActive ? 'scale-100 opacity-100' : 'scale-90 opacity-45'
                         }`}
+                        style={{ width: 'min(17rem, 72vw)' }}
                         aria-label={p.name}
                       >
                         <PeptideVialVisual
@@ -1083,7 +1131,7 @@ export function Peptide() {
                           color={peptideColor}
                           animateOnMount={isActive}
                         />
-                      </button>
+                      </div>
                     )
                   })}
                 </div>

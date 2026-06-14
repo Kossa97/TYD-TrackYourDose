@@ -40,7 +40,7 @@ export function PeptideVialVisual({
   const neckClass = isLarge ? 'h-5 w-32' : 'h-3 w-12'
   const bodyClass = isLarge ? 'h-56 rounded-[1.4rem]' : 'h-20 rounded-lg'
   const labelClass = isLarge
-    ? 'left-5 right-5 top-[38%] rounded-xl px-3 py-2'
+    ? 'left-5 right-5 top-[39%] rounded-xl px-3 py-2'
     : 'left-1.5 right-1.5 top-[36%] rounded-md px-1.5 py-1'
   const nameClass = isLarge
     ? 'text-xl sm:text-2xl leading-tight'
@@ -50,8 +50,8 @@ export function PeptideVialVisual({
     : 'text-[7px] mt-0.5'
   const fillStyle = {
     height: `${clampedFill}%`,
-    background: `linear-gradient(180deg, ${color}88 0%, ${color} 100%)`,
-    boxShadow: `0 -10px 26px ${color}55, inset 0 1px 0 rgba(255,255,255,0.35)`,
+    background: `linear-gradient(180deg, ${color}70 0%, ${color}ee 42%, ${color} 100%)`,
+    boxShadow: `0 -10px 26px ${color}55, inset 0 1px 0 rgba(255,255,255,0.35), inset 18px 0 28px rgba(255,255,255,0.08), inset -18px 0 28px rgba(0,0,0,0.18)`,
   } as CSSProperties
 
   return (
@@ -75,12 +75,26 @@ export function PeptideVialVisual({
       `}</style>
 
       <div className="relative flex flex-col items-center">
-        <div className={`${capClass} rounded-t-lg border border-slate-500/70 bg-gradient-to-b from-slate-400 to-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]`} />
-        <div className={`${neckClass} rounded-t-md border-x border-slate-600/80 bg-gradient-to-b from-slate-600 to-slate-800`} />
+        <div
+          data-vial-detail="rubber-stopper"
+          className={`${isLarge ? 'h-3 w-16' : 'h-1.5 w-7'} rounded-t-md border border-slate-700/80 bg-gradient-to-b from-slate-500 to-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]`}
+        />
+        <div
+          data-vial-detail="crimp-seal"
+          className={`${capClass} relative overflow-hidden rounded-t-lg border border-slate-400/70 bg-gradient-to-b from-slate-300 via-slate-500 to-slate-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_5px_14px_rgba(15,23,42,0.5)]`}
+        >
+          <div className="absolute inset-x-2 top-1 h-1 rounded-full bg-white/35" />
+          <div className="absolute inset-y-0 left-1/2 w-px bg-white/25" />
+        </div>
+        <div className={`${neckClass} rounded-t-md border-x border-slate-500/70 bg-gradient-to-b from-slate-500/80 via-slate-800/70 to-slate-950/80`} />
 
         <div
-          className={`relative w-full ${heightClass} ${bodyClass} overflow-hidden border border-slate-500/45 bg-slate-950/80 shadow-[inset_0_0_22px_rgba(255,255,255,0.08),0_22px_60px_rgba(0,0,0,0.36)]`}
+          className={`relative w-full ${heightClass} ${bodyClass} overflow-hidden border border-slate-400/35 bg-slate-950/82 shadow-[inset_0_0_22px_rgba(255,255,255,0.1),inset_14px_0_28px_rgba(255,255,255,0.08),inset_-18px_0_28px_rgba(0,0,0,0.34),0_22px_60px_rgba(0,0,0,0.36)]`}
         >
+          <div
+            data-vial-detail="glass-shoulder"
+            className="absolute left-4 right-4 top-0 h-10 rounded-b-[50%] border-b border-white/10 bg-gradient-to-b from-white/12 to-transparent"
+          />
           <div
             className={`absolute bottom-0 left-0 right-0 ${animateOnMount ? 'vial-fill-rise' : ''}`}
             style={{
@@ -92,11 +106,16 @@ export function PeptideVialVisual({
             } as CSSProperties}
           >
             <div className="absolute -top-2 left-0 right-0 h-4 rounded-[50%] bg-white/20 blur-[1px]" />
+            <div className="absolute -top-1 left-3 right-3 h-px bg-white/45" />
           </div>
 
-          <div className="absolute inset-y-4 left-3 w-4 rounded-full bg-white/18 blur-[2px]" />
+          <div className="absolute inset-y-4 left-3 w-4 rounded-full bg-white/20 blur-[2px]" />
           <div className="absolute inset-y-6 right-3 w-2 rounded-full bg-white/10 blur-[1px]" />
           <div className="vial-shimmer absolute inset-y-8 left-8 w-10 rotate-6 rounded-full bg-white/10 blur-[6px]" />
+          <div
+            data-vial-detail="glass-base"
+            className="absolute bottom-0 left-4 right-4 h-5 rounded-t-[50%] border-t border-white/16 bg-gradient-to-t from-white/12 to-transparent"
+          />
 
           <div className={`absolute ${labelClass} border border-white/15 bg-slate-950/82 text-center shadow-[0_8px_22px_rgba(0,0,0,0.32)] backdrop-blur-sm`}>
             <p className={`${nameClass} font-black text-white tracking-normal break-words`}>

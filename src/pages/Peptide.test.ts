@@ -21,6 +21,16 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('animateOnMount')
   })
 
+  test('updates the active vial from carousel scroll position instead of direct vial taps', () => {
+    const text = source()
+
+    expect(text).toContain('vialCarouselRef')
+    expect(text).toContain('handleVialCarouselScroll')
+    expect(text).toContain('data-vial-index')
+    expect(text).toContain('scrollIntoView')
+    expect(text).not.toContain('onClick={() => setActivePeptideId(p.id)}')
+  })
+
   test('assigns a random palette color when creating a peptide', () => {
     const text = source()
 
