@@ -102,7 +102,7 @@ export function PeptideFormModal({
 }: PeptideFormModalProps) {
   const { t } = useTranslation()
   const [activeField, setActiveField] = useState<FieldId | null>(null)
-  const [moreOpen, setMoreOpen] = useState(true)
+  const [moreOpen, setMoreOpen] = useState(false)
 
   const notSet = String(t('peptide_form_not_set', { defaultValue: 'Nicht gesetzt' }))
 
