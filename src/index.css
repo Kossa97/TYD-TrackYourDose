@@ -1466,3 +1466,11 @@ main.flex-1 {
 [data-theme="light"] .border-slate-800 { border-color: #e8edf3; }
 [data-theme="light"] .border-slate-700 { border-color: #d8dfe8; }
 [data-theme="light"] .border-slate-600 { border-color: #cbd5e1; }
+
+/* Vial label: restore transparency in light mode.
+   The global bg-slate-950/* override replaces rgba(2,6,23,0.82) with a
+   solid #f8fafc, stripping the opacity and making the label opaque white.
+   Restore it to a semi-transparent white so the liquid colour shows through. */
+[data-theme="light"] [data-vial-detail="full-width-label"] {
+  background-color: rgba(248, 250, 252, 0.82) !important;
+}
