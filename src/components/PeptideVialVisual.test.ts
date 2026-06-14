@@ -56,4 +56,19 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('data-vial-detail="glass-shoulder"')
     expect(html).toContain('data-vial-detail="glass-base"')
   })
+
+  test('uses a full-width single-line label with delayed marquee for long names', () => {
+    const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
+      name: 'CJC-1295 DAC WITH EXTRA LONG NAME',
+      amount: '2',
+      unit: 'mg',
+      fillPct: 90,
+      color: '#a855f7',
+    }))
+
+    expect(html).toContain('data-vial-detail="full-width-label"')
+    expect(html).toContain('vial-label-marquee')
+    expect(html).toContain('whitespace-nowrap')
+    expect(html).not.toContain('break-words')
+  })
 })

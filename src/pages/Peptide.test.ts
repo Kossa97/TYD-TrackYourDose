@@ -31,6 +31,14 @@ describe('Peptide page vial view', () => {
     expect(text).not.toContain('onClick={() => setActivePeptideId(p.id)}')
   })
 
+  test('keeps neighboring vials partially visible around the centered active vial', () => {
+    const text = source()
+
+    expect(text).toContain('min(14rem, 58vw)')
+    expect(text).toContain('snap-center')
+    expect(text).toContain('scale-90 opacity-45')
+  })
+
   test('assigns a random palette color when creating a peptide', () => {
     const text = source()
 

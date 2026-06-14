@@ -34,14 +34,15 @@ export function PeptideVialVisual({
   const clampedFill = clampFill(fillPct)
   const labelName = name?.trim() || 'Peptidname'
   const isLarge = size === 'large'
+  const shouldMarqueeLabel = labelName.length > (isLarge ? 12 : 8)
   const widthClass = isLarge ? 'w-44 sm:w-52' : 'w-16'
   const heightClass = isLarge ? 'h-64 sm:h-72' : 'h-24'
   const capClass = isLarge ? 'h-7 w-24' : 'h-4 w-10'
   const neckClass = isLarge ? 'h-5 w-32' : 'h-3 w-12'
   const bodyClass = isLarge ? 'h-56 rounded-[1.4rem]' : 'h-20 rounded-lg'
   const labelClass = isLarge
-    ? 'left-5 right-5 top-[39%] rounded-xl px-3 py-2'
-    : 'left-1.5 right-1.5 top-[36%] rounded-md px-1.5 py-1'
+    ? 'left-2 right-2 top-[39%] rounded-xl px-3 py-2'
+    : 'left-0.5 right-0.5 top-[36%] rounded-md px-1 py-1'
   const nameClass = isLarge
     ? 'text-xl sm:text-2xl leading-tight'
     : 'text-[9px] leading-tight'
@@ -69,8 +70,15 @@ export function PeptideVialVisual({
           0%, 100% { transform: translateX(0); opacity: .35; }
           50% { transform: translateX(14%); opacity: .7; }
         }
+        @keyframes vial-label-marquee {
+          0%, 24% { transform: translateX(0); }
+          76%, 100% { transform: translateX(-38%); }
+        }
+        .vial-label-marquee {
+          animation: vial-label-marquee 12s linear 2.4s infinite alternate;
+        }
         @media (prefers-reduced-motion: reduce) {
-          .vial-fill-rise, .vial-shimmer { animation: none !important; }
+          .vial-fill-rise, .vial-shimmer, .vial-label-marquee { animation: none !important; }
         }
       `}</style>
 
@@ -117,9 +125,14 @@ export function PeptideVialVisual({
             className="absolute bottom-0 left-4 right-4 h-5 rounded-t-[50%] border-t border-white/16 bg-gradient-to-t from-white/12 to-transparent"
           />
 
-          <div className={`absolute ${labelClass} border border-white/15 bg-slate-950/82 text-center shadow-[0_8px_22px_rgba(0,0,0,0.32)] backdrop-blur-sm`}>
-            <p className={`${nameClass} font-black text-white tracking-normal break-words`}>
-              {labelName}
+          <div
+            data-vial-detail="full-width-label"
+            className={`absolute ${labelClass} overflow-hidden border-y border-white/15 bg-slate-950/82 text-center shadow-[0_8px_22px_rgba(0,0,0,0.32)] backdrop-blur-sm`}
+          >
+            <p className={`${nameClass} overflow-hidden font-black text-white tracking-normal whitespace-nowrap`}>
+              <span className={`${shouldMarqueeLabel ? 'vial-label-marquee inline-block pr-10' : ''}`}>
+                {labelName}
+              </span>
             </p>
             <p className={`${amountClass} font-bold uppercase tracking-wide text-slate-300`}>
               {vialAmountLabel(amount, unit)}
