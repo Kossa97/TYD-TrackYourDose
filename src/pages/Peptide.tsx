@@ -441,11 +441,8 @@ export function Peptide() {
   const location = useLocation()
 
   // ── Bestätigungs-Dialoge ──────────────────────────────────────────────────
-  const [verwerfenTarget,      setVerwerfenTarget]      = useState<Peptide | null>(null)
   const [rekonstitutionTarget, setRekonstitutionTarget] = useState<Peptide | null>(null)
-  const [verwerfenDontAsk,     setVerwerfenDontAsk]     = useState(false)
   const [rekonstitutionDontAsk,setRekonstitutionDontAsk]= useState(false)
-  const [skipVerwerfen]        = useState(() => !!localStorage.getItem('_skip_verwerfen'))
   const [skipRekonstitution]   = useState(() => !!localStorage.getItem('_skip_rekonstitution'))
 
   // ── Neu-Signale ───────────────────────────────────────────────────────────
@@ -577,31 +574,6 @@ export function Peptide() {
     const newCount = Math.max(0, current + delta)
     await supabase.from('inventory_items').update({ vials_count: newCount }).eq('id', id)
     loadInventory()
-  }
-
-  // ── Peptid verwerfen ──────────────────────────────────────────────────────
-  const handleVerwerfen = (p: Peptide) => {
-    if (skipVerwerfen) { doVerwerfen(p); return }
-    setVerwerfenDontAsk(false); setVerwerfenTarget(p)
-  }
-  const doVerwerfen = async (p: Peptide) => {
-    await supabase.from('peptides').delete().eq('id', p.id)
-    if (p.inventory_item_id) {
-      const invItem = inventory.find(i => i.id === p.inventory_item_id)
-      if (invItem) {
-        await supabase.from('inventory_items')
-          .update({ vials_count: Math.max(0, invItem.vials_count - 1) })
-          .eq('id', p.inventory_item_id)
-        loadInventory()
-      }
-    }
-    toast.success(t('peptid_verworfen'))
-    setVerwerfenTarget(null); loadPeptides(); loadCycles()
-  }
-  const confirmVerwerfen = () => {
-    if (!verwerfenTarget) return
-    if (verwerfenDontAsk) localStorage.setItem('_skip_verwerfen', '1')
-    doVerwerfen(verwerfenTarget)
   }
 
   // ── Rekonstitution wiederholen ────────────────────────────────────────────
@@ -1122,27 +1094,20 @@ export function Peptide() {
                         </button>
                         <button className="p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
                           onClick={() => openEditPeptide(p)}><Pencil size={15} /></button>
+                        {p.inventory_item_id && (
+                          <button
+                            className="p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
+                            title={t('rekonstitution_wdh')}
+                            onClick={(e) => { e.stopPropagation(); handleRekonstitution(p) }}
+                          >
+                            <RefreshCw size={15} />
+                          </button>
+                        )}
                         <button className="p-1.5 text-slate-400 hover:text-red-400 transition-colors"
                           onClick={() => removePeptide(p.id)}><Trash2 size={15} /></button>
                       </div>
                     </div>
                   </div>
-
-                  {/* Verwerfen + Rekonstitution (nur bei Inventar-Verknüpfung) */}
-                  {p.inventory_item_id && (
-                    <div className="flex gap-2 mt-2 pt-2 border-t border-slate-800/60">
-                      <button
-                        onClick={() => handleVerwerfen(p)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors text-xs font-medium">
-                        <Trash2 size={11} /> {t('verwerfen')}
-                      </button>
-                      <button
-                        onClick={() => handleRekonstitution(p)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 hover:bg-sky-500/20 transition-colors text-xs font-medium">
-                        <RefreshCw size={11} /> {t('rekonstitution_wdh')}
-                      </button>
-                    </div>
-                  )}
 
                   {/* Zyklus-Zeile */}
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/60">
@@ -1846,31 +1811,6 @@ export function Peptide() {
               <button className="btn-secondary flex-1" onClick={() => setShowEscForm(false)}>{t('cancel')}</button>
               <button data-ob="btn-esc-save" className="btn-primary flex-1" onClick={saveEsc} disabled={savingEsc}>
                 {savingEsc ? t('loading') : t('save')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ══ VERWERFEN DIALOG ═════════════════════════════════════════════════ */}
-      {verwerfenTarget && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4" data-app-modal>
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-sm w-full space-y-4">
-            <h3 className="font-bold text-white text-lg">{t('peptid_verwerfen_title')}</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              <span className="text-white font-medium">{verwerfenTarget.name}</span> {t('peptid_verwerfen_desc')}
-            </p>
-            <label className="flex items-center gap-2.5 text-sm text-slate-400 cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 rounded accent-sky-500"
-                checked={verwerfenDontAsk}
-                onChange={e => setVerwerfenDontAsk(e.target.checked)} />
-              {t('nicht_mehr_fragen')}
-            </label>
-            <div className="flex gap-3 pt-1">
-              <button className="btn-secondary flex-1" onClick={() => setVerwerfenTarget(null)}>{t('no')}</button>
-              <button onClick={confirmVerwerfen}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors text-sm">
-                {t('yes')}
               </button>
             </div>
           </div>
