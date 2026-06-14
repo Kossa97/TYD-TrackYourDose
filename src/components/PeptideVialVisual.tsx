@@ -70,14 +70,13 @@ export function PeptideVialVisual({
           0%, 100% { transform: translateX(0); opacity: .35; }
           50% { transform: translateX(14%); opacity: .7; }
         }
-        @keyframes vial-meniscus-drift {
-          0%, 100% { transform: translate3d(-2%, 0, 0) rotate(-1deg) scaleX(1.02); opacity: .78; }
-          45% { transform: translate3d(2%, -1px, 0) rotate(1deg) scaleX(.98); opacity: .92; }
-          70% { transform: translate3d(0, 1px, 0) rotate(.4deg) scaleX(1.04); opacity: .84; }
+        @keyframes vial-wave-scroll {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
         }
-        @keyframes vial-liquid-caustics {
-          0%, 100% { transform: translate3d(-10%, 0, 0) rotate(-4deg); opacity: .18; }
-          50% { transform: translate3d(12%, -3%, 0) rotate(3deg); opacity: .34; }
+        @keyframes vial-wave-breathe {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-1.5px); }
         }
         @keyframes vial-label-marquee {
           0%, 24% { transform: translateX(0); }
@@ -87,7 +86,7 @@ export function PeptideVialVisual({
           animation: vial-label-marquee 12s linear 2.4s infinite alternate;
         }
         @media (prefers-reduced-motion: reduce) {
-          .vial-fill-rise, .vial-shimmer, .vial-meniscus-drift, .vial-liquid-caustics, .vial-label-marquee { animation: none !important; }
+          .vial-fill-rise, .vial-shimmer, .vial-wave-scroll, .vial-wave-breathe, .vial-label-marquee { animation: none !important; }
         }
       `}</style>
 
@@ -123,13 +122,25 @@ export function PeptideVialVisual({
             } as CSSProperties}
           >
             <div
-              data-vial-detail="animated-meniscus"
-              className="vial-meniscus-drift absolute -top-3 left-2 right-2 h-7 rounded-[50%] border-t border-white/22 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.28)_0%,rgba(255,255,255,0.12)_34%,rgba(255,255,255,0.04)_62%,rgba(255,255,255,0)_76%)] shadow-[0_-8px_22px_rgba(255,255,255,0.14),inset_0_1px_0_rgba(255,255,255,0.3)] blur-[0.2px]"
+              data-vial-detail="list-style-wave-surface"
+              className="vial-wave-breathe absolute -top-2 left-0 right-0 h-7 overflow-hidden"
+              style={{ animation: 'vial-wave-breathe 3s ease-in-out infinite' }}
             >
-              <div className="absolute left-[12%] right-[16%] top-2 h-2 rounded-[50%] bg-white/10 blur-sm" />
-              <div className="absolute left-[24%] right-[34%] top-3 h-1 rounded-[50%] bg-white/16 blur-[2px]" />
+              <div className="absolute left-0 right-0 top-2 h-5 bg-current opacity-35" style={{ color }} />
+              <div
+                className="vial-wave-scroll absolute left-0 top-0 h-5 w-[200%] text-current"
+                style={{ color, animation: 'vial-wave-scroll 2.4s linear infinite' }}
+              >
+                <svg className="h-full w-full" viewBox="0 0 200 20" preserveAspectRatio="none" aria-hidden="true">
+                  <path
+                    d="M0 8 C12 3 25 13 37 8 C50 3 62 13 75 8 C87 3 100 13 112 8 C125 3 137 13 150 8 C162 3 175 13 187 8 C192 6 196 6 200 8 L200 20 L0 20 Z"
+                    fill="currentColor"
+                    fillOpacity="0.62"
+                  />
+                </svg>
+              </div>
+              <div className="absolute left-3 right-3 top-2 h-3 rounded-[50%] bg-white/10 blur-sm" />
             </div>
-            <div className="vial-liquid-caustics absolute inset-x-4 bottom-8 top-8 rounded-[45%] bg-[linear-gradient(105deg,transparent_0%,rgba(255,255,255,0.16)_30%,transparent_48%,rgba(255,255,255,0.1)_68%,transparent_100%)] blur-md" />
           </div>
 
           <div className="absolute inset-y-4 left-3 w-4 rounded-full bg-white/20 blur-[2px]" />
