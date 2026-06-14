@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ChevronDown, ChevronRight, ChevronUp, Check, FileUp, FlaskConical, X,
@@ -33,7 +33,7 @@ type FieldId =
 interface PeptideFormModalProps {
   editingPeptideId: string | null
   pForm: PeptideForm
-  setPForm: React.Dispatch<React.SetStateAction<PeptideForm>>
+  setPForm: Dispatch<SetStateAction<PeptideForm>>
   batchFile: File | null
   setBatchFile: (file: File | null) => void
   savingPeptide: boolean
@@ -46,7 +46,64 @@ interface PeptideFormModalProps {
   selectPepPkProfile: (profile: PkProfileOption) => void
   handlePepNameChange: (value: string) => void
   showDropdown: boolean
-  setShowDropdown: React.Dispatch<React.SetStateAction<boolean>>
+  setShowDropdown: Dispatch<SetStateAction<boolean>>
+}
+
+function FocusedNumericInput({
+  value,
+  onChange,
+  placeholder,
+  unit,
+  unitOptions,
+  unitValue,
+  onUnitChange,
+  step,
+  min,
+  hint,
+}: {
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  unit?: string
+  unitOptions?: string[]
+  unitValue?: string
+  onUnitChange?: (unit: string) => void
+  step?: string
+  min?: string
+  hint?: string
+}) {
+  const displayLen = Math.max(value.length, placeholder?.length ?? 0, 1)
+
+  return (
+    <div className="space-y-4 py-4">
+      <div className="flex items-baseline justify-center gap-2">
+        <input
+          type="number"
+          inputMode="decimal"
+          step={step}
+          min={min}
+          placeholder={placeholder}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          autoFocus
+          className="bg-transparent border-none outline-none text-center text-5xl font-black text-white tracking-tight placeholder:text-slate-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          style={{ width: `${Math.min(12, Math.max(2, displayLen + 0.5))}ch` }}
+        />
+        {unitOptions && onUnitChange ? (
+          <select
+            className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-lg font-semibold text-slate-300 shrink-0 -translate-y-1"
+            value={unitValue}
+            onChange={e => onUnitChange(e.target.value)}
+          >
+            {unitOptions.map(u => <option key={u} value={u}>{u}</option>)}
+          </select>
+        ) : unit ? (
+          <span className="text-2xl font-semibold text-slate-500 shrink-0">{unit}</span>
+        ) : null}
+      </div>
+      {hint && <p className="text-slate-600 text-xs text-center px-2">{hint}</p>}
+    </div>
+  )
 }
 
 function FormListRow({
@@ -250,35 +307,23 @@ export function PeptideFormModal({
         break
       case 'vial_amount_mg':
         body = (
-          <div className="flex gap-2 items-center">
-            <input
-              className="input flex-1 text-base"
-              type="number"
-              inputMode="decimal"
-              placeholder={t('eg_10')}
-              value={pForm.vial_amount_mg}
-              onChange={e => setPForm(f => ({ ...f, vial_amount_mg: e.target.value }))}
-              autoFocus
-            />
-            <span className="text-slate-500 text-sm font-semibold shrink-0">mg</span>
-          </div>
+          <FocusedNumericInput
+            value={pForm.vial_amount_mg}
+            onChange={v => setPForm(f => ({ ...f, vial_amount_mg: v }))}
+            placeholder={t('eg_10')}
+            unit="mg"
+          />
         )
         break
       case 'reconstitution_ml':
         body = (
-          <div className="flex gap-2 items-center">
-            <input
-              className="input flex-1 text-base"
-              type="number"
-              step="0.1"
-              inputMode="decimal"
-              placeholder={t('eg_2')}
-              value={pForm.reconstitution_ml}
-              onChange={e => setPForm(f => ({ ...f, reconstitution_ml: e.target.value }))}
-              autoFocus
-            />
-            <span className="text-slate-500 text-sm font-semibold shrink-0">mL</span>
-          </div>
+          <FocusedNumericInput
+            value={pForm.reconstitution_ml}
+            onChange={v => setPForm(f => ({ ...f, reconstitution_ml: v }))}
+            placeholder={t('eg_2')}
+            unit="mL"
+            step="0.1"
+          />
         )
         break
       case 'reconstitution_date':
@@ -334,19 +379,14 @@ export function PeptideFormModal({
         break
       case 'vials_in_stock':
         body = (
-          <div className="space-y-2">
-            <input
-              className="input w-full text-base"
-              type="number"
-              min="0"
-              step="0.5"
-              placeholder="0"
-              value={pForm.vials_in_stock}
-              onChange={e => setPForm(f => ({ ...f, vials_in_stock: e.target.value }))}
-              autoFocus
-            />
-            <p className="text-slate-600 text-xs">{t('basis_info')}</p>
-          </div>
+          <FocusedNumericInput
+            value={pForm.vials_in_stock}
+            onChange={v => setPForm(f => ({ ...f, vials_in_stock: v }))}
+            placeholder="0"
+            min="0"
+            step="0.5"
+            hint={t('basis_info')}
+          />
         )
         break
       case 'batch_number':
@@ -428,27 +468,15 @@ export function PeptideFormModal({
         break
       case 'default_dose':
         body = (
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <input
-                className="input flex-1 text-base"
-                type="number"
-                inputMode="decimal"
-                placeholder={t('eg_500')}
-                value={pForm.default_dose}
-                onChange={e => setPForm(f => ({ ...f, default_dose: e.target.value }))}
-                autoFocus
-              />
-              <select
-                className="select w-24 text-base"
-                value={pForm.default_unit}
-                onChange={e => setPForm(f => ({ ...f, default_unit: e.target.value }))}
-              >
-                {UNITS.map(u => <option key={u}>{u}</option>)}
-              </select>
-            </div>
-            <p className="text-slate-600 text-xs">{t('fallback_info')}</p>
-          </div>
+          <FocusedNumericInput
+            value={pForm.default_dose}
+            onChange={v => setPForm(f => ({ ...f, default_dose: v }))}
+            placeholder={t('eg_500')}
+            unitOptions={UNITS}
+            unitValue={pForm.default_unit}
+            onUnitChange={u => setPForm(f => ({ ...f, default_unit: u }))}
+            hint={t('fallback_info')}
+          />
         )
         break
       case 'notes':
