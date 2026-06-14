@@ -1472,5 +1472,5 @@ main.flex-1 {
    solid #f8fafc, stripping the opacity and making the label opaque white.
    Restore it to a semi-transparent white so the liquid colour shows through. */
 [data-theme="light"] [data-vial-detail="full-width-label"] {
-  background-color: rgba(248, 250, 252, 0.55) !important;
+  background-color: rgba(248, 250, 252, 0.28) !important;
 }
