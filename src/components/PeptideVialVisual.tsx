@@ -86,6 +86,9 @@ export function PeptideVialVisual({
           0%, 24% { transform: translateX(0); }
           76%, 100% { transform: translateX(-38%); }
         }
+        .vial-fill-rise {
+          animation: vial-fill-rise 850ms cubic-bezier(.22,1,.36,1) both;
+        }
         .vial-label-marquee {
           animation: vial-label-marquee 12s linear 2.4s infinite alternate;
         }
@@ -120,9 +123,6 @@ export function PeptideVialVisual({
             style={{
               ...fillStyle,
               '--vial-fill-target': `${visualFill}%`,
-              animationDuration: '850ms',
-              animationTimingFunction: 'cubic-bezier(.22,1,.36,1)',
-              animationFillMode: 'both',
             } as CSSProperties}
           >
             <div
