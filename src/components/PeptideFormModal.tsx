@@ -528,7 +528,7 @@ export function PeptideFormModal({
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal onClick={onClose}>
       <div
-        className="bg-slate-900 rounded-t-2xl w-full max-w-lg flex flex-col max-h-[95vh]"
+        className="bg-slate-900 rounded-none sm:rounded-t-2xl w-full sm:max-w-lg flex flex-col h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[95vh] pt-[env(safe-area-inset-top)] sm:pt-0"
         onClick={e => e.stopPropagation()}
       >
         <div className="shrink-0 border-b border-slate-800 px-5 py-4 flex items-center justify-between">
