@@ -18,7 +18,7 @@ import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideE
 import { collectMissedIntakes, cycleAppliesToDay, scheduleForDay, effectiveDose, AUTO_MISSED_NOTE, type EscalationRow } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
-import { format, parseISO, startOfDay, addDays, isSameDay } from 'date-fns'
+import { format, parseISO, startOfDay } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
 
@@ -217,88 +217,11 @@ const labelStyle: CSSProperties = {
 }
 
 interface TodayIntake {
-  scheduledAt: Date
-  min: number           // Unix-ms für Sortierung
+  time: string          // 'HH:MM'
+  min: number           // Minuten seit Mitternacht (Sortierung)
   substance: string | null
   dose: string | null
   peptideId: string
-}
-
-type IntakeLogRow = { logged_at: string; peptide_id: string; taken: boolean | null }
-
-function collectUpcomingIntakesWithin24h(
-  cycles: Parameters<typeof cycleAppliesToDay>[0][],
-  logData: IntakeLogRow[],
-  peptideNameById: Map<string, string>,
-  escalations: EscalationRow[],
-  now: Date,
-): TodayIntake[] {
-  const horizonMs = now.getTime() + 24 * 60 * 60 * 1000
-  const todayKey = format(now, 'yyyy-MM-dd')
-  const result: TodayIntake[] = []
-
-  let day = startOfDay(now)
-  const lastDay = startOfDay(new Date(horizonMs))
-  while (day <= lastDay) {
-    const dayKey = format(day, 'yyyy-MM-dd')
-    const decidedCountByPeptide = new Map<string, number>()
-    for (const l of logData) {
-      if (l.taken !== null && format(parseISO(l.logged_at), 'yyyy-MM-dd') === dayKey) {
-        decidedCountByPeptide.set(l.peptide_id, (decidedCountByPeptide.get(l.peptide_id) ?? 0) + 1)
-      }
-    }
-
-    const daySlots: { scheduledAt: Date; substance: string | null; dose: string | null; peptideId: string }[] = []
-    for (const c of cycles) {
-      if (!cycleAppliesToDay(c, day)) continue
-      const seg = scheduleForDay(c, day)
-      const slots = (seg.intake_time ?? '').split(',').filter(Boolean)
-      const customs = (seg.intake_time_custom ?? '').split(',')
-      const doseLabel = c.dose != null
-        ? `${effectiveDose(c, day, escalations)} ${c.unit ?? ''}`.trim()
-        : null
-      slots.forEach((slot: string, i: number) => {
-        const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
-        if (!tm) return
-        const [h, m] = tm.split(':').map(Number)
-        const scheduledAt = new Date(day)
-        scheduledAt.setHours(h, m, 0, 0)
-        daySlots.push({
-          scheduledAt,
-          substance: peptideNameById.get(c.peptide_id as string) ?? null,
-          dose: doseLabel,
-          peptideId: c.peptide_id as string,
-        })
-      })
-    }
-    daySlots.sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
-
-    const consumedByPeptide = new Map<string, number>()
-    for (const s of daySlots) {
-      const used = consumedByPeptide.get(s.peptideId) ?? 0
-      if (used < (decidedCountByPeptide.get(s.peptideId) ?? 0)) {
-        consumedByPeptide.set(s.peptideId, used + 1)
-        continue
-      }
-      const atMs = s.scheduledAt.getTime()
-      const isOverdueToday = dayKey === todayKey && atMs <= now.getTime()
-      const isUpcomingInWindow = atMs > now.getTime() && atMs <= horizonMs
-      if (!isOverdueToday && !isUpcomingInWindow) continue
-
-      result.push({
-        scheduledAt: s.scheduledAt,
-        min: atMs,
-        substance: s.substance,
-        dose: s.dose,
-        peptideId: s.peptideId,
-      })
-    }
-
-    day = addDays(day, 1)
-  }
-
-  result.sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
-  return result
 }
 
 const sectionHeaderStyle: CSSProperties = {
@@ -312,7 +235,7 @@ const sectionHeaderStyle: CSSProperties = {
 export function Home() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  // Alle offenen Einnahmen in den nächsten 24h (inkl. morgen), je mit eigenem Timer.
+  // Alle heute noch offenen (nicht bestätigten) Einnahmen, je mit eigenem Timer.
   const [todayIntakes, setTodayIntakes] = useState<TodayIntake[]>([])
   const [plannedToday, setPlannedToday] = useState(0)
   const [todayDone,   setTodayDone]   = useState(false)
@@ -417,14 +340,7 @@ export function Home() {
         }
 
         setPlannedToday(todaySlots.length)
-        const upcomingIntakes = collectUpcomingIntakesWithin24h(
-          cycleData ?? [],
-          (logData ?? []) as IntakeLogRow[],
-          peptideNameById,
-          escalations,
-          now,
-        )
-        setTodayIntakes(upcomingIntakes)
+        setTodayIntakes(openSlots.map(s => ({ time: s.time, min: s.min, substance: s.substance, dose: s.dose, peptideId: s.peptideId })))
         setTodayDone(todaySlots.length > 0 && openSlots.length === 0)
 
         setExpiryAlerts(getPeptideExpiryAlerts(peptideData ?? []))
@@ -877,16 +793,11 @@ function fmtCountdown(ms: number): string {
   return `${s}sek`
 }
 
-function msUntil(target: Date): number {
+function msUntilTime(time: string): number {
+  const [h, m] = time.split(':').map(Number)
+  const target = new Date()
+  target.setHours(h, m, 0, 0)
   return target.getTime() - Date.now()
-}
-
-function formatIntakeTimeLabel(scheduledAt: Date, locale: Locale, tomorrowLabel: string): string {
-  const now = new Date()
-  const hm = format(scheduledAt, 'HH:mm')
-  if (isSameDay(scheduledAt, now)) return hm
-  if (isSameDay(scheduledAt, addDays(now, 1))) return `${tomorrowLabel}, ${hm}`
-  return `${format(scheduledAt, 'EEE', { locale })}, ${hm}`
 }
 
 // Höhe einer Einnahmen-Zeile (für das vertikale Karussell-Snapping).
@@ -939,28 +850,22 @@ function MarqueeText({ children, style }: { children: ReactNode; style?: CSSProp
 // Eine kompakte, einzeilige Einnahmen-Zeile mit Live-Timer (Countdown bis zur
 // Einnahme, danach „Jetzt fällig").
 function IntakeRow({
-  scheduledAt,
+  time,
   substance,
   dose,
   onClick,
 }: {
-  scheduledAt: Date
+  time: string
   substance: string | null
   dose?: string | null
   onClick: () => void
 }) {
-  const { t, i18n } = useTranslation()
-  const locale = DATE_LOCALES[i18n.language] ?? enUS
-  const timeLabel = formatIntakeTimeLabel(
-    scheduledAt,
-    locale,
-    String(t('home_intake_tomorrow', { defaultValue: 'morgen' })),
-  )
-  const [remaining, setRemaining] = useState(() => msUntil(scheduledAt))
+  const { t } = useTranslation()
+  const [remaining, setRemaining] = useState(() => msUntilTime(time))
   useEffect(() => {
-    const id = setInterval(() => setRemaining(msUntil(scheduledAt)), 1000)
+    const id = setInterval(() => setRemaining(msUntilTime(time)), 1000)
     return () => clearInterval(id)
-  }, [scheduledAt])
+  }, [time])
 
   const due = remaining <= 0
   const c       = due ? '#f59e0b' : 'var(--accent)'
@@ -983,7 +888,7 @@ function IntakeRow({
         : <Clock3 size={16} color={c} style={{ flexShrink: 0 }} />}
       <MarqueeText style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)' }}>
         {[substance, dose].filter(Boolean).join(' · ') || t('stat_next_intake', { defaultValue: 'Nächste Einnahme' })}
-        <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>{` · ${t('home_at_time', { defaultValue: 'um' })} ${timeLabel}`}</span>
+        <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>{` · ${t('home_at_time', { defaultValue: 'um' })} ${time}`}</span>
       </MarqueeText>
       {due ? (
         <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.72rem', fontWeight: 850, color: c }}>
@@ -1004,7 +909,7 @@ function IntakeRow({
 function TodayIntakeCarousel({ intakes, onItemClick }: { intakes: TodayIntake[]; onItemClick: () => void }) {
   if (intakes.length <= 1) {
     return intakes.length === 1
-      ? <IntakeRow scheduledAt={intakes[0].scheduledAt} substance={intakes[0].substance} dose={intakes[0].dose} onClick={onItemClick} />
+      ? <IntakeRow time={intakes[0].time} substance={intakes[0].substance} dose={intakes[0].dose} onClick={onItemClick} />
       : null
   }
   const height = INTAKE_ROW_H * 2.5   // Fokus + Andeutung der Nachbarn
@@ -1022,7 +927,7 @@ function TodayIntakeCarousel({ intakes, onItemClick }: { intakes: TodayIntake[];
     >
       {intakes.map((it, i) => (
         <div key={`${it.peptideId}-${it.min}-${i}`} style={{ scrollSnapAlign: 'center', flexShrink: 0 }}>
-          <IntakeRow scheduledAt={it.scheduledAt} substance={it.substance} dose={it.dose} onClick={onItemClick} />
+          <IntakeRow time={it.time} substance={it.substance} dose={it.dose} onClick={onItemClick} />
         </div>
       ))}
     </div>
