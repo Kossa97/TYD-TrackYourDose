@@ -499,12 +499,12 @@ export function PeptideFormModal({
     return (
       <>
         <div className="fixed inset-0 bg-black/50 z-[60]" onClick={closeField} />
-        <div className="fixed bottom-0 left-0 right-0 z-[70] flex justify-center pointer-events-none">
+        <div className="fixed inset-0 sm:bottom-0 sm:left-0 sm:right-0 sm:top-auto z-[70] flex justify-center pointer-events-none">
           <div
-            className="w-full max-w-lg bg-slate-900 border border-slate-700/60 border-b-0 rounded-t-2xl pointer-events-auto shadow-card max-h-[85vh] flex flex-col"
+            className="w-full sm:max-w-lg bg-slate-900 border-0 sm:border sm:border-slate-700/60 sm:border-b-0 rounded-none sm:rounded-t-2xl pointer-events-auto shadow-card h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[85vh] flex flex-col pt-[env(safe-area-inset-top)] sm:pt-0"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex justify-center pt-3 pb-1 shrink-0">
+            <div className="hidden sm:flex justify-center pt-3 pb-1 shrink-0">
               <div className="w-8 h-1 bg-slate-700 rounded-full" />
             </div>
             <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 shrink-0">
