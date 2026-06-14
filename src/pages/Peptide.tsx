@@ -297,7 +297,7 @@ function VialStockDisplay({ current, initial, inUse = 0 }: {
 // Two animations create a "living liquid" feel:
 //   waveId    → wave scrolls horizontally (2 s linear loop)
 //   breatheId → wave surface gently rises/falls (3 s ease-in-out loop)
-function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: string }) {
+function VialDisplay({ pct, uid, color, animateOnMount = false }: { pct: number; uid: string; color: string; animateOnMount?: boolean }) {
   const OX = 4, OY = 13
   const W  = 32, H = 70
   const fillH   = Math.max(4, (pct / 100) * H)
@@ -306,10 +306,11 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
   const wW = W * 2, wH = 3.5
   const wp = `M0,${wH/2} C${wW*.25},0 ${wW*.25},${wH} ${wW*.5},${wH/2} C${wW*.75},0 ${wW*.75},${wH} ${wW},${wH/2} L${wW},${wH} L0,${wH} Z`
 
-  const clipId    = `vc${uid}`
-  const waveId    = `wv${uid}`
-  const breatheId = `br${uid}`
-  const gradId    = `lg${uid}`
+  const clipId     = `vc${uid}`
+  const waveId     = `wv${uid}`
+  const breatheId  = `br${uid}`
+  const gradId     = `lg${uid}`
+  const fillRiseId = `fr${uid}`
 
   return (
     <div className="shrink-0 select-none">
@@ -332,8 +333,17 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
               0%, 100% { transform: translateY(0px) }
               50%       { transform: translateY(-1px) }
             }
+            @keyframes ${fillRiseId} {
+              from { transform: scaleY(0); }
+              to   { transform: scaleY(1); }
+            }
+            .vd-fill-group-${uid} {
+              transform-box: fill-box;
+              transform-origin: center bottom;
+              animation: ${fillRiseId} 850ms cubic-bezier(.22,1,.36,1) both;
+            }
             @media (prefers-reduced-motion: reduce) {
-              .vd-wave-${uid}, .vd-breathe-${uid} { animation: none !important; }
+              .vd-wave-${uid}, .vd-breathe-${uid}, .vd-fill-group-${uid} { animation: none !important; }
             }
           `}</style>
         </defs>
@@ -349,28 +359,30 @@ function VialDisplay({ pct, uid, color }: { pct: number; uid: string; color: str
 
         {/* Liquid (clipped to glass) */}
         <g clipPath={`url(#${clipId})`}>
+          <g className={animateOnMount ? `vd-fill-group-${uid}` : ''}>
 
-          {/* Bulk fill */}
-          <rect x={OX} y={surfaceY} width={W} height={fillH}
-            fill={`url(#${gradId})`}/>
+            {/* Bulk fill */}
+            <rect x={OX} y={surfaceY} width={W} height={fillH}
+              fill={`url(#${gradId})`}/>
 
-          {/* Surface highlight band */}
-          <rect x={OX} y={surfaceY} width={W} height={5}
-            fill={color} fillOpacity="0.55"/>
+            {/* Surface highlight band */}
+            <rect x={OX} y={surfaceY} width={W} height={5}
+              fill={color} fillOpacity="0.55"/>
 
-          {/* Wave: positioned at surface, breathing vertically */}
-          <g style={{ transform: `translate(${OX}px, ${Math.max(OY, surfaceY - wH + 1)}px)` }}>
-            <g className={`vd-breathe-${uid}`}
-              style={{ animation: `${breatheId} 3s ease-in-out infinite` }}>
-              <path className={`vd-wave-${uid}`} d={wp}
-                fill={color} fillOpacity="0.65"
-                style={{ animation: `${waveId} 2s linear infinite` }}/>
+            {/* Wave: positioned at surface, breathing vertically */}
+            <g style={{ transform: `translate(${OX}px, ${Math.max(OY, surfaceY - wH + 1)}px)` }}>
+              <g className={`vd-breathe-${uid}`}
+                style={{ animation: `${breatheId} 3s ease-in-out infinite` }}>
+                <path className={`vd-wave-${uid}`} d={wp}
+                  fill={color} fillOpacity="0.65"
+                  style={{ animation: `${waveId} 2s linear infinite` }}/>
+              </g>
             </g>
-          </g>
 
-          {/* Inner shine */}
-          <rect x={OX+1} y={surfaceY} width="5" height={fillH} rx="2.5"
-            fill="rgba(255,255,255,0.12)"/>
+            {/* Inner shine */}
+            <rect x={OX+1} y={surfaceY} width="5" height={fillH} rx="2.5"
+              fill="rgba(255,255,255,0.12)"/>
+          </g>
         </g>
 
         {/* Glass rim */}
@@ -454,6 +466,7 @@ export function Peptide() {
   const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
   const vialCarouselRef = useRef<HTMLDivElement | null>(null)
   const vialScrollFrameRef = useRef<number | null>(null)
+  const [animationEpoch, setAnimationEpoch] = useState(0)
 
   // ── Zyklen ────────────────────────────────────────────────────────────────
   const [showCycleForm, setShowCycleForm]         = useState(false)
@@ -496,6 +509,10 @@ export function Peptide() {
     supabase.from('pk_profiles').select('id, name, aliases').order('name')
       .then(({ data }) => setPkProfileCatalog((data as PkProfileOption[]) ?? []))
   }, [showPeptideForm])
+
+  useEffect(() => {
+    setAnimationEpoch(e => e + 1)
+  }, [location.key])
 
   useEffect(() => {
     if (location.hash !== '#new-substance') return
@@ -1124,12 +1141,13 @@ export function Peptide() {
                         aria-label={p.name}
                       >
                         <PeptideVialVisual
+                          key={animationEpoch}
                           name={p.name}
                           amount={p.vial_amount_mg}
                           unit={p.vial_amount_unit ?? 'mg'}
                           fillPct={vialPct}
                           color={peptideColor}
-                          animateOnMount={isActive}
+                          animateOnMount={true}
                         />
                       </div>
                     )
@@ -1237,7 +1255,7 @@ export function Peptide() {
                   <div className="flex items-start gap-3">
                     {vialPct !== null && (
                       <div className="flex flex-col items-center gap-0.5 shrink-0">
-                        <VialDisplay pct={Math.round(vialPct)} uid={p.id.replace(/-/g, '')} color={peptideColor} />
+                        <VialDisplay key={animationEpoch} pct={Math.round(vialPct)} uid={p.id.replace(/-/g, '')} color={peptideColor} animateOnMount={true} />
                         <span className="text-[10px] font-bold tabular-nums text-slate-500 leading-none">
                           {Math.round(vialPct)}%
                         </span>
