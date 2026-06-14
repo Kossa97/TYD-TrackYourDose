@@ -598,7 +598,10 @@ export function Dashboard() {
     const dayCycles = isPeek ? [] : cyclesForDay(day)
     const dayLogsList = isPeek ? [] : logsForDay(day)
 
-    const hasCycle = dayCycles.length > 0
+    // Status nur für Tage des angezeigten Monats — Füll-Tage des Vor-/Folgemonats
+    // bleiben neutral (deren Logs sind im aktuellen Bereich nicht geladen → sonst
+    // fälschlich „verpasst"/rot).
+    const hasCycle = inMonth && dayCycles.length > 0
 
     // All planned cycles for this day have been taken
     const fullyTracked = !isFuture && hasCycle
