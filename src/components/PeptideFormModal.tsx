@@ -173,7 +173,9 @@ export function PeptideFormModal({
   const displayValues: Record<FieldId, string> = {
     name: pForm.name.trim() || notSet,
     color: pForm.color_hex ? t('peptide_form_color_set', { defaultValue: 'Gewählt' }) : notSet,
-    vial_amount_mg: pForm.vial_amount_mg ? `${pForm.vial_amount_mg} mg` : notSet,
+    vial_amount_mg: pForm.vial_amount_mg
+      ? `${pForm.vial_amount_mg} ${pForm.vial_amount_unit}`
+      : notSet,
     reconstitution_ml: pForm.reconstitution_ml ? `${pForm.reconstitution_ml} mL` : notSet,
     reconstitution_date: pForm.reconstitution_date
       ? format(parseISO(pForm.reconstitution_date), 'dd.MM.yyyy')
@@ -311,7 +313,9 @@ export function PeptideFormModal({
             value={pForm.vial_amount_mg}
             onChange={v => setPForm(f => ({ ...f, vial_amount_mg: v }))}
             placeholder={t('eg_10')}
-            unit="mg"
+            unitOptions={UNITS}
+            unitValue={pForm.vial_amount_unit}
+            onUnitChange={u => setPForm(f => ({ ...f, vial_amount_unit: u }))}
           />
         )
         break

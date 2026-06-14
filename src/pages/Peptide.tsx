@@ -38,7 +38,8 @@ const emptyInventoryForm = (): InventoryForm => ({
 interface Peptide {
   id: string; name: string; default_unit: string
   default_dose: number | null; default_method: string
-  vial_amount_mg: number | null; reconstitution_ml: number | null
+  vial_amount_mg: number | null; vial_amount_unit: string | null
+  reconstitution_ml: number | null
   syringe_type: string | null; notes: string | null
   vials_in_stock: number | null; vials_initial: number | null
   reconstitution_date: string | null; expiry_days: number | null
@@ -612,10 +613,12 @@ export function Peptide() {
     // Auto-create or update inventory_item
     let invItemId = pForm.inventory_item_id || null
     if (pForm.vial_amount_mg) {
+      const vialAmount = parseFloat(pForm.vial_amount_mg)
+      const mgPerVial = pForm.vial_amount_unit === 'mcg' ? vialAmount / 1000 : vialAmount
       const invPayload = {
         user_id: user!.id,
         name: pForm.name.trim(),
-        mg_per_vial: parseFloat(pForm.vial_amount_mg),
+        mg_per_vial: mgPerVial,
         vials_count: rawReserve,
         vials_initial: rawReserve,
         batch_number: pForm.batch_number || null,
@@ -638,6 +641,7 @@ export function Peptide() {
       default_dose:   pForm.default_dose ? parseFloat(pForm.default_dose) : null,
       default_method: pForm.default_method || 'Subkutan',
       vial_amount_mg: pForm.vial_amount_mg ? parseFloat(pForm.vial_amount_mg) : null,
+      vial_amount_unit: pForm.vial_amount_mg ? pForm.vial_amount_unit : null,
       reconstitution_ml: pForm.reconstitution_ml ? parseFloat(pForm.reconstitution_ml) : null,
       syringe_type:   (pForm.syringe_ml && pForm.syringe_units) ? `${pForm.syringe_ml}:${pForm.syringe_units}` : null,
       notes:          pForm.notes || null,
@@ -678,6 +682,7 @@ export function Peptide() {
       default_dose:      p.default_dose?.toString() ?? '',
       default_method:    p.default_method,
       vial_amount_mg:    p.vial_amount_mg?.toString()    ?? '',
+      vial_amount_unit:  p.vial_amount_unit ?? 'mg',
       reconstitution_ml: p.reconstitution_ml?.toString() ?? '',
       syringe_ml:    p.syringe_type?.split(':')[0] ?? '1',
       syringe_units: p.syringe_type?.split(':')[1] ?? '100',
@@ -1017,7 +1022,7 @@ export function Peptide() {
                         </div>
                         <div className="flex flex-wrap gap-x-3 text-slate-400 text-xs mt-1">
                           <span>{t(METHOD_KEYS[p.default_method] ?? p.default_method)}</span>
-                          {p.vial_amount_mg && <span>Vial: {p.vial_amount_mg} mg</span>}
+                          {p.vial_amount_mg && <span>Vial: {p.vial_amount_mg} {p.vial_amount_unit ?? 'mg'}</span>}
                         </div>
 
 
@@ -1676,7 +1681,7 @@ export function Peptide() {
                       {p.vial_amount_mg && (
                         <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3 text-center">
                           <p className="text-sky-400 text-base font-bold">{p.vial_amount_mg}</p>
-                          <p className="text-slate-500 text-xs mt-0.5">mg / Vial</p>
+                          <p className="text-slate-500 text-xs mt-0.5">{p.vial_amount_unit ?? 'mg'} / Vial</p>
                         </div>
                       )}
                       {p.reconstitution_ml && (

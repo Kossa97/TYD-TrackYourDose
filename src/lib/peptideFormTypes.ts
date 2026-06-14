@@ -12,6 +12,7 @@ export interface PeptideForm {
   default_dose: string
   default_method: string
   vial_amount_mg: string
+  vial_amount_unit: string
   reconstitution_ml: string
   syringe_ml: string
   syringe_units: string
@@ -33,6 +34,7 @@ export const emptyPeptideForm = (): PeptideForm => ({
   default_dose: '',
   default_method: '',
   vial_amount_mg: '',
+  vial_amount_unit: 'mg',
   reconstitution_ml: '',
   syringe_ml: '1',
   syringe_units: '100',
