@@ -300,7 +300,8 @@ function VialStockDisplay({ current, initial, inUse = 0 }: {
 function VialDisplay({ pct, uid, color, animateOnMount = false }: { pct: number; uid: string; color: string; animateOnMount?: boolean }) {
   const OX = 4, OY = 13
   const W  = 32, H = 70
-  const fillH   = Math.max(4, (pct / 100) * H)
+  // Cap at H-6 so there's always a small air gap at the top (wave surface stays visible)
+  const fillH   = pct <= 0 ? 4 : Math.max(4, Math.min((pct / 100) * H, H - 6))
   const surfaceY = OY + (H - fillH)   // top of liquid in absolute SVG coords
 
   const wW = W * 2, wH = 3.5

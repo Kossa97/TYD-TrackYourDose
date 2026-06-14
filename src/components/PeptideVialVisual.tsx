@@ -32,6 +32,8 @@ export function PeptideVialVisual({
   className = '',
 }: PeptideVialVisualProps) {
   const clampedFill = clampFill(fillPct)
+  // Leave a small air gap at the top so the wave surface is always visible
+  const visualFill = clampedFill === 0 ? 0 : clampedFill * 0.92
   const labelName = name?.trim() || 'Peptidname'
   const isLarge = size === 'large'
   const shouldMarqueeLabel = labelName.length > (isLarge ? 12 : 8)
@@ -50,7 +52,7 @@ export function PeptideVialVisual({
     ? 'text-xs sm:text-sm mt-1'
     : 'text-[7px] mt-0.5'
   const fillStyle = {
-    height: `${clampedFill}%`,
+    height: `${visualFill}%`,
     background: `linear-gradient(180deg, ${color}70 0%, ${color}ee 42%, ${color} 100%)`,
     boxShadow: `0 -10px 26px ${color}55, inset 0 1px 0 rgba(255,255,255,0.35), inset 18px 0 28px rgba(255,255,255,0.08), inset -18px 0 28px rgba(0,0,0,0.18)`,
   } as CSSProperties
@@ -115,7 +117,7 @@ export function PeptideVialVisual({
             className={`absolute bottom-0 left-0 right-0 ${animateOnMount ? 'vial-fill-rise' : ''}`}
             style={{
               ...fillStyle,
-              '--vial-fill-target': `${clampedFill}%`,
+              '--vial-fill-target': `${visualFill}%`,
               animationDuration: '850ms',
               animationTimingFunction: 'cubic-bezier(.22,1,.36,1)',
               animationFillMode: 'both',
