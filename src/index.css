@@ -1466,13 +1466,3 @@ main.flex-1 {
 [data-theme="light"] .border-slate-800 { border-color: #e8edf3; }
 [data-theme="light"] .border-slate-700 { border-color: #d8dfe8; }
 [data-theme="light"] .border-slate-600 { border-color: #cbd5e1; }
-
-/* ── Vial label: light-mode fix ──────────────────────────────────────────────
-   In light mode bg-slate-950/82 → #f8fafc (white) and border-white/15 becomes
-   invisible. Make the label stand out with a white background, dark borders
-   and a subtle shadow so it looks like a proper pharmaceutical label.          */
-[data-theme="light"] [data-vial-detail="full-width-label"] {
-  background: rgba(255, 255, 255, 0.97) !important;
-  border-color: rgba(15, 30, 60, 0.18) !important;
-  box-shadow: 0 3px 10px rgba(15,30,60,0.10), 0 -2px 8px rgba(15,30,60,0.07) !important;
-}
