@@ -32,8 +32,9 @@ export function PeptideVialVisual({
   className = '',
 }: PeptideVialVisualProps) {
   const clampedFill = clampFill(fillPct)
-  // Leave a small air gap at the top so the wave surface is always visible
-  const visualFill = clampedFill === 0 ? 0 : clampedFill * 0.92
+  // Map fill to max 85 % so there is always a visible air gap at the top,
+  // keeping 100 % clearly distinct from 95 % / 92 % etc.
+  const visualFill = clampedFill === 0 ? 0 : clampedFill * 0.85
   const labelName = name?.trim() || 'Peptidname'
   const isLarge = size === 'large'
   const shouldMarqueeLabel = labelName.length > (isLarge ? 12 : 8)
