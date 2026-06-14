@@ -17,3 +17,8 @@ export function getPeptideColor(index: number): string {
   if (index < 0) return '#64748b'
   return PEPTIDE_COLORS[index % PEPTIDE_COLORS.length]
 }
+
+export function getRandomPeptideColor(random: () => number = Math.random): string {
+  const index = Math.min(PEPTIDE_COLORS.length - 1, Math.floor(random() * PEPTIDE_COLORS.length))
+  return PEPTIDE_COLORS[Math.max(0, index)]
+}

@@ -5,6 +5,9 @@ import {
 } from 'lucide-react'
 import { addDays, differenceInDays, format, parseISO } from 'date-fns'
 import type { PeptideForm, PkProfileOption } from '../lib/peptideFormTypes'
+import { PEPTIDE_COLORS } from '../lib/peptideColors'
+import { PeptideColorPalette } from './PeptideColorPalette'
+import { PeptideVialVisual } from './PeptideVialVisual'
 
 const EXPIRY_PRESETS = [10, 14, 21, 28, 42, 90]
 const POPULAR_PEPTIDES = [
@@ -19,11 +22,6 @@ const METHOD_KEYS: Record<string, string> = {
   Subkutan: 'method_subkutan', Intramuskulär: 'method_intramusk', Nasal: 'method_nasal',
   Oral: 'method_oral', Transdermal: 'method_transdermal', Intravenös: 'method_intravenoese', Andere: 'method_andere',
 }
-const COLOR_OPTIONS = [
-  '#06b6d4', '#a855f7', '#f59e0b', '#ec4899', '#34d399', '#f97316',
-  '#60a5fa', '#fb7185', '#2dd4bf', '#facc15', '#c084fc', '#4ade80',
-]
-
 type FieldId =
   | 'name' | 'color' | 'vial_amount_mg' | 'reconstitution_ml'
   | 'reconstitution_date' | 'expiry_days' | 'vials_in_stock'
@@ -291,20 +289,10 @@ export function PeptideFormModal({
         break
       case 'color':
         body = (
-          <div className="flex gap-2 flex-wrap">
-            {COLOR_OPTIONS.map(c => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setPForm(f => ({ ...f, color_hex: c }))}
-                style={{
-                  width: 36, height: 36, borderRadius: 10, background: c, flexShrink: 0,
-                  border: pForm.color_hex === c ? '2px solid #fff' : '2px solid transparent',
-                  opacity: pForm.color_hex === c ? 1 : 0.55,
-                }}
-              />
-            ))}
-          </div>
+          <PeptideColorPalette
+            value={pForm.color_hex || PEPTIDE_COLORS[0]}
+            onChange={color => setPForm(f => ({ ...f, color_hex: color }))}
+          />
         )
         break
       case 'vial_amount_mg':
@@ -544,6 +532,17 @@ export function PeptideFormModal({
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="mb-5 rounded-2xl border border-slate-800 bg-slate-950/40 px-4 py-5">
+            <PeptideVialVisual
+              name={pForm.name}
+              amount={pForm.vial_amount_mg}
+              unit={pForm.vial_amount_unit}
+              fillPct={100}
+              color={pForm.color_hex || PEPTIDE_COLORS[0]}
+              animateOnMount
+            />
+          </div>
+
           <div className="rounded-2xl border border-slate-800 bg-slate-800/25 overflow-hidden divide-y divide-slate-800/80">
             <FormListRow
               label={t('peptidname_star')}

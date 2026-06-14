@@ -19,4 +19,13 @@ describe('PeptideFormModal mobile layout', () => {
     expect(source).toContain('h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[85vh]')
     expect(source).toContain('pt-[env(safe-area-inset-top)] sm:pt-0')
   })
+
+  test('shows the live vial preview and curated palette in the peptide form', () => {
+    const source = readFileSync(new URL('./PeptideFormModal.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('PeptideVialVisual')
+    expect(source).toContain('PeptideColorPalette')
+    expect(source).toContain('fillPct={100}')
+    expect(source).toContain('animateOnMount')
+  })
 })

@@ -6,17 +6,18 @@ import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import {
   Plus, Minus, Trash2, Pencil, FlaskConical, Activity,
-  CalendarDays, ChevronDown, ChevronUp,
+  CalendarDays, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, List,
   TrendingUp, Search, Bell, Check,
   Package, FileUp, Droplets, X, FileText, ExternalLink,
   Archive, RefreshCw, Sunrise, Sun, Moon, Clock, type LucideIcon,
 } from 'lucide-react'
-import { getPeptideColor } from '../lib/peptideColors'
+import { getPeptideColor, getRandomPeptideColor } from '../lib/peptideColors'
 import { useNew } from '../lib/useNew'
 import { NewDot } from '../components/NewDot'
 import { format, parseISO, addDays, differenceInDays } from 'date-fns'
 import { type ScheduleSegment } from '../lib/intakeSchedule'
 import { PeptideFormModal } from '../components/PeptideFormModal'
+import { PeptideVialVisual } from '../components/PeptideVialVisual'
 import { emptyPeptideForm, type PeptideForm, type PkProfileOption } from '../lib/peptideFormTypes'
 
 interface InventoryItem {
@@ -447,6 +448,10 @@ export function Peptide() {
   const [infoPeptide, setInfoPeptide]         = useState<Peptide | null>(null)
   const [search, setSearch]                   = useState('')
   const [sortBy, setSortBy]                   = useState<PeptideSortKey>('name_asc')
+  const [viewMode, setViewModeState]          = useState<'vials' | 'list'>(() =>
+    localStorage.getItem('tyd_peptide_view') === 'list' ? 'list' : 'vials'
+  )
+  const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
 
   // ── Zyklen ────────────────────────────────────────────────────────────────
   const [showCycleForm, setShowCycleForm]         = useState(false)
@@ -493,7 +498,7 @@ export function Peptide() {
   useEffect(() => {
     if (location.hash !== '#new-substance') return
     setEditingPeptideId(null)
-    setPForm(emptyPeptideForm())
+    setPForm({ ...emptyPeptideForm(), color_hex: getRandomPeptideColor() })
     setBatchFile(null)
     setPkSuggestOpen(false)
     setShowPeptideForm(true)
@@ -533,6 +538,21 @@ export function Peptide() {
     peptides.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase())),
     sortBy,
   )
+
+  const setViewMode = (mode: 'vials' | 'list') => {
+    setViewModeState(mode)
+    localStorage.setItem('tyd_peptide_view', mode)
+  }
+
+  useEffect(() => {
+    if (displayPeptides.length === 0) {
+      if (activePeptideId) setActivePeptideId(null)
+      return
+    }
+    if (!activePeptideId || !displayPeptides.some(p => p.id === activePeptideId)) {
+      setActivePeptideId(displayPeptides[0].id)
+    }
+  }, [activePeptideId, displayPeptides])
 
   const cyclesOf      = (pid: string) => cycles
     .filter(c => c.peptide_id === pid)
@@ -583,7 +603,7 @@ export function Peptide() {
 
   // ── Peptid CRUD ───────────────────────────────────────────────────────────
   const handleNewPeptide = () => {
-    setEditingPeptideId(null); setPForm(emptyPeptideForm()); setBatchFile(null)
+    setEditingPeptideId(null); setPForm({ ...emptyPeptideForm(), color_hex: getRandomPeptideColor() }); setBatchFile(null)
     setPkSuggestOpen(false); setShowPeptideForm(true)
   }
 
@@ -924,6 +944,14 @@ export function Peptide() {
     })
   }
 
+  const activeIndex = Math.max(0, displayPeptides.findIndex(p => p.id === activePeptideId))
+  const activePeptide = displayPeptides[activeIndex] ?? null
+  const selectPeptideOffset = (offset: number) => {
+    if (displayPeptides.length === 0) return
+    const nextIndex = (activeIndex + offset + displayPeptides.length) % displayPeptides.length
+    setActivePeptideId(displayPeptides[nextIndex].id)
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
@@ -948,8 +976,8 @@ export function Peptide() {
       {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
       <div>
           {peptides.length > 0 && (
-            <div className="flex gap-2 mb-4">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap gap-2 mb-4">
+              <div className="relative flex-1 min-w-[13rem]">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
                 <input className="input pl-9 text-sm" placeholder={t('peptid_suchen')}
                   value={search} onChange={e => setSearch(e.target.value)} />
@@ -965,6 +993,26 @@ export function Peptide() {
                   </optgroup>
                 ))}
               </select>
+              <div className="flex shrink-0 rounded-xl border border-slate-800 bg-slate-900/70 p-1">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('vials')}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    viewMode === 'vials' ? 'bg-cyan-400 text-slate-950 shadow-cyan-400/20' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <FlaskConical size={14} /> Vials
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    viewMode === 'list' ? 'bg-cyan-400 text-slate-950 shadow-cyan-400/20' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <List size={14} /> Liste
+                </button>
+              </div>
             </div>
           )}
 
@@ -985,8 +1033,147 @@ export function Peptide() {
             </div>
           )}
 
+          {viewMode === 'vials' && activePeptide && (
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/40 px-2 py-5 sm:px-5">
+                <div className="mb-2 flex items-center justify-between px-2">
+                  <button
+                    type="button"
+                    onClick={() => selectPeptideOffset(-1)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-900/80 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+                    aria-label="Vorheriges Peptid"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <span className="text-xs font-semibold tabular-nums text-slate-500">
+                    {activeIndex + 1} / {displayPeptides.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => selectPeptideOffset(1)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-900/80 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+                    aria-label="Nächstes Peptid"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+
+                <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:none]">
+                  {displayPeptides.map(p => {
+                    const isActive = p.id === activePeptide.id
+                    const colorIdx = peptides.findIndex(pp => pp.id === p.id)
+                    const peptideColor = peptideColors[p.id] ?? getPeptideColor(colorIdx)
+                    const vialPct = Math.round(getVialFillPct(p) ?? 100)
+
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setActivePeptideId(p.id)}
+                        className={`snap-center shrink-0 rounded-2xl px-2 py-2 transition-all ${
+                          isActive ? 'scale-100 opacity-100' : 'scale-90 opacity-45'
+                        }`}
+                        aria-label={p.name}
+                      >
+                        <PeptideVialVisual
+                          name={p.name}
+                          amount={p.vial_amount_mg}
+                          unit={p.vial_amount_unit ?? 'mg'}
+                          fillPct={vialPct}
+                          color={peptideColor}
+                          animateOnMount={isActive}
+                        />
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {(() => {
+                const p = activePeptide
+                const pCycles = cyclesOf(p.id)
+                const hasActive = pCycles.some(c => c.active)
+                const invItem = p.inventory_item_id ? inventory.find(i => i.id === p.inventory_item_id) : null
+                const vialPct = Math.round(getVialFillPct(p) ?? 100)
+                const days = expiryDaysLeft(p)
+                const daysClass = days === null ? 'text-slate-300' : days > 7 ? 'text-emerald-400' : days > 0 ? 'text-amber-400' : 'text-red-400'
+                const expiryLabel = days === null
+                  ? t('peptide_form_not_set', { defaultValue: 'Nicht gesetzt' })
+                  : days > 0
+                    ? (days === 1 ? t('haltbar_noch_1') : t('haltbar_noch_n', { n: days }))
+                    : t('abgelaufen_warn')
+
+                return (
+                  <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="truncate text-xl font-bold text-white">{p.name}</h3>
+                          <span className={`badge ${hasActive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}>
+                            {hasActive ? t('aktiv_badge') : t('inaktiv_badge')}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm text-slate-400">
+                          {t(METHOD_KEYS[p.default_method] ?? p.default_method)}
+                          {p.vial_amount_mg ? ` · Vial: ${p.vial_amount_mg} ${p.vial_amount_unit ?? 'mg'}` : ''}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 gap-1">
+                        <button className="p-2 text-slate-400 transition-colors hover:text-sky-400"
+                          title="Infos" onClick={() => { setInfoPeptide(p); dismissInfoBtn() }}>
+                          <FileText size={16} />
+                        </button>
+                        <button className="p-2 text-slate-400 transition-colors hover:text-sky-400"
+                          onClick={() => openEditPeptide(p)}><Pencil size={16} /></button>
+                        {p.inventory_item_id && (
+                          <button
+                            className="p-2 text-slate-400 transition-colors hover:text-sky-400"
+                            title={t('rekonstitution_wdh')}
+                            onClick={() => handleRekonstitution(p)}
+                          >
+                            <RefreshCw size={16} />
+                          </button>
+                        )}
+                        <button className="p-2 text-slate-400 transition-colors hover:text-red-400"
+                          onClick={() => removePeptide(p.id)}><Trash2 size={16} /></button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Haltbarkeit</p>
+                        <p className={`mt-1 font-semibold ${daysClass}`}>{expiryLabel}</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Vorrat</p>
+                        <p className="mt-1 font-semibold text-white">{invItem ? t('vials_vorratig', { n: invItem.vials_count }) : '-'}</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Füllstand</p>
+                        <p className="mt-1 font-semibold text-white">{vialPct}%</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Zyklen</p>
+                        <p className="mt-1 font-semibold text-white">{pCycles.length}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      data-ob="btn-zyklus-add"
+                      onClick={() => { openNewCycle(p); dismissZyklusBtn() }}
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/15 px-4 py-3 text-sm font-semibold text-violet-300 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
+                    >
+                      <Plus size={15} /> {t('zyklus_hinzufuegen')}
+                      {zyklusBtnNew && <NewDot />}
+                    </button>
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+
           {/* ── Peptid-Liste ────────────────────────────────────────────── */}
-          <div className="space-y-3">
+          <div className={`space-y-3 ${viewMode === 'list' ? '' : 'hidden'}`}>
             {displayPeptides.map(p => {
               const pCycles   = cyclesOf(p.id)
               const isOpen    = expandedId === p.id
