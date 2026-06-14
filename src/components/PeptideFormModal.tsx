@@ -419,6 +419,7 @@ export function PeptideFormModal({
             onChange={e => setPForm(f => ({ ...f, default_method: e.target.value }))}
             autoFocus
           >
+            <option value="">{notSet}</option>
             {METHODS.map(m => (
               <option key={m} value={m}>{t(METHOD_KEYS[m] ?? m)}</option>
             ))}
