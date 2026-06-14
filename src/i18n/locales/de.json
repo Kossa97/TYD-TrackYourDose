@@ -694,6 +694,7 @@
   "home_due": "Einnahme fällig!",
   "home_overdue_days": "seit {{days}} Tagen überfällig",
   "home_at_time": "um",
+  "home_intake_tomorrow": "morgen",
   "theme_system": "System",
   "theme_light": "Hell",
   "theme_dark": "Dunkel",
