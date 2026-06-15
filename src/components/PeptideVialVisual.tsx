@@ -131,7 +131,7 @@ export function PeptideVialVisual({
               className="vial-wave-breathe absolute -top-2 left-0 right-0 h-7 overflow-hidden"
               style={{ animation: 'vial-wave-breathe 3s ease-in-out infinite' }}
             >
-              <div className="absolute left-0 right-0 top-2 h-5 bg-current opacity-35" style={{ color }} />
+              <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, transparent 0%, ${color}99 100%)` }} />
               <div
                 className="vial-wave-scroll absolute left-0 top-0 h-5 w-[200%] text-current"
                 style={{ color, animation: 'vial-wave-scroll 2.4s linear infinite' }}
