@@ -1136,8 +1136,8 @@ export function Peptide() {
                       <div
                         key={p.id}
                         data-vial-index={index}
-                        className={`snap-center shrink-0 rounded-2xl px-2 py-2 transition-all duration-500 ease-out ${
-                          isActive ? 'scale-100 opacity-100' : 'scale-90 opacity-45'
+                        className={`snap-center shrink-0 rounded-2xl px-2 py-2 transition-all duration-300 ${
+                          isActive ? 'scale-100' : 'scale-90'
                         }`}
                         style={{ width: 'min(14rem, 58vw)' }}
                         aria-label={p.name}
