@@ -39,6 +39,14 @@ describe('Peptide page vial view', () => {
     expect(text).toContain("isActive ? 'scale-100' : 'scale-90'")
   })
 
+  test('shows the fill percentage directly under the active vial in My Stack', () => {
+    const text = source()
+
+    expect(text).toContain("{isActive && (")
+    expect(text).toContain('mt-2 text-center')
+    expect(text).toContain('{Math.round(vialPct)}%')
+  })
+
   test('assigns a random palette color when creating a peptide', () => {
     const text = source()
 

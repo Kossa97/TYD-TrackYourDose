@@ -1152,6 +1152,11 @@ export function Peptide() {
                           animateOnMount={true}
                           isActive={isActive}
                         />
+                        {isActive && (
+                          <p className="mt-2 text-center text-sm font-semibold tabular-nums text-slate-400">
+                            {Math.round(vialPct)}%
+                          </p>
+                        )}
                       </div>
                     )
                   })}
