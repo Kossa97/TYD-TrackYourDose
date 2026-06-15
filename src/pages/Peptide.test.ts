@@ -47,6 +47,23 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('{Math.round(vialPct)}%')
   })
 
+  test('supports desktop drag, wheel navigation, and vial clicks in the carousel', () => {
+    const text = source()
+
+    expect(text).toContain('handleVialCarouselPointerDown')
+    expect(text).toContain('handleVialCarouselPointerMove')
+    expect(text).toContain('handleVialCarouselPointerUp')
+    expect(text).toContain('handleVialCarouselWheel')
+    expect(text).toContain('onPointerDown={handleVialCarouselPointerDown}')
+    expect(text).toContain('onPointerMove={handleVialCarouselPointerMove}')
+    expect(text).toContain('onPointerUp={handleVialCarouselPointerUp}')
+    expect(text).toContain('onPointerCancel={handleVialCarouselPointerUp}')
+    expect(text).toContain('onWheel={handleVialCarouselWheel}')
+    expect(text).toContain('selectPeptideOffset(e.deltaY > 0 ? 1 : -1)')
+    expect(text).toContain('handleVialCarouselItemClick(index)')
+    expect(text).toContain("isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'")
+  })
+
   test('assigns a random palette color when creating a peptide', () => {
     const text = source()
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -466,8 +466,15 @@ export function Peptide() {
     localStorage.getItem('tyd_peptide_view') === 'list' ? 'list' : 'vials'
   )
   const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
+  const [isVialCarouselDragging, setIsVialCarouselDragging] = useState(false)
   const vialCarouselRef = useRef<HTMLDivElement | null>(null)
   const vialScrollFrameRef = useRef<number | null>(null)
+  const vialDraggingRef = useRef(false)
+  const vialDragStartXRef = useRef(0)
+  const vialDragStartScrollLeftRef = useRef(0)
+  const vialDragMovedRef = useRef(false)
+  const vialSuppressClickRef = useRef(false)
+  const vialWheelCooldownRef = useRef<number | null>(null)
   const [animationEpoch, setAnimationEpoch] = useState(0)
 
   // ── Zyklen ────────────────────────────────────────────────────────────────
@@ -972,6 +979,12 @@ export function Peptide() {
     const item = carousel?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
     item?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
   }
+  const selectPeptideIndex = (index: number) => {
+    const next = displayPeptides[index]
+    if (!next) return
+    scrollToPeptideIndex(index)
+    setActivePeptideId(next.id)
+  }
   const handleVialCarouselScroll = () => {
     const carousel = vialCarouselRef.current
     if (!carousel) return
@@ -1001,13 +1014,68 @@ export function Peptide() {
   const selectPeptideOffset = (offset: number) => {
     if (displayPeptides.length === 0) return
     const nextIndex = (activeIndex + offset + displayPeptides.length) % displayPeptides.length
-    scrollToPeptideIndex(nextIndex)
-    setActivePeptideId(displayPeptides[nextIndex].id)
+    selectPeptideIndex(nextIndex)
+  }
+  const handleVialCarouselPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return
+    const carousel = vialCarouselRef.current
+    if (!carousel) return
+
+    vialDragStartXRef.current = e.clientX
+    vialDragStartScrollLeftRef.current = carousel.scrollLeft
+    vialDraggingRef.current = true
+    vialDragMovedRef.current = false
+    setIsVialCarouselDragging(true)
+    e.currentTarget.setPointerCapture(e.pointerId)
+    e.preventDefault()
+  }
+  const handleVialCarouselPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!vialDraggingRef.current) return
+    const carousel = vialCarouselRef.current
+    if (!carousel) return
+
+    const delta = e.clientX - vialDragStartXRef.current
+    if (Math.abs(delta) > 4) vialDragMovedRef.current = true
+    carousel.scrollLeft = vialDragStartScrollLeftRef.current - delta
+    e.preventDefault()
+  }
+  const handleVialCarouselPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!vialDraggingRef.current) return
+    vialDraggingRef.current = false
+    setIsVialCarouselDragging(false)
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+    if (vialDragMovedRef.current) {
+      vialSuppressClickRef.current = true
+      window.setTimeout(() => { vialSuppressClickRef.current = false }, 0)
+      handleVialCarouselScroll()
+    }
+  }
+  const handleVialCarouselWheel = (e: ReactWheelEvent<HTMLDivElement>) => {
+    if (displayPeptides.length <= 1 || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return
+    e.preventDefault()
+    if (vialWheelCooldownRef.current !== null) return
+
+    selectPeptideOffset(e.deltaY > 0 ? 1 : -1)
+    vialWheelCooldownRef.current = window.setTimeout(() => {
+      vialWheelCooldownRef.current = null
+    }, 280)
+  }
+  const handleVialCarouselItemClick = (index: number) => {
+    if (vialSuppressClickRef.current) return
+    selectPeptideIndex(index)
+  }
+  const handleVialCarouselItemKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>, index: number) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return
+    e.preventDefault()
+    selectPeptideIndex(index)
   }
 
   useEffect(() => {
     return () => {
       if (vialScrollFrameRef.current !== null) window.cancelAnimationFrame(vialScrollFrameRef.current)
+      if (vialWheelCooldownRef.current !== null) window.clearTimeout(vialWheelCooldownRef.current)
     }
   }, [])
 
@@ -1120,7 +1188,14 @@ export function Peptide() {
                 <div
                   ref={vialCarouselRef}
                   onScroll={handleVialCarouselScroll}
-                  className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  onPointerDown={handleVialCarouselPointerDown}
+                  onPointerMove={handleVialCarouselPointerMove}
+                  onPointerUp={handleVialCarouselPointerUp}
+                  onPointerCancel={handleVialCarouselPointerUp}
+                  onWheel={handleVialCarouselWheel}
+                  className={`flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                    isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
+                  }`}
                   style={{
                     paddingInline: 'calc((100% - min(9rem, 38vw)) / 2)',
                     scrollPaddingInline: 'calc((100% - min(9rem, 38vw)) / 2)',
@@ -1141,6 +1216,10 @@ export function Peptide() {
                         }`}
                         style={{ width: 'min(9rem, 38vw)' }}
                         aria-label={p.name}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleVialCarouselItemClick(index)}
+                        onKeyDown={e => handleVialCarouselItemKeyDown(e, index)}
                       >
                         <PeptideVialVisual
                           key={animationEpoch}
