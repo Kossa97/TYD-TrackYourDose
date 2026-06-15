@@ -974,6 +974,8 @@ export function Peptide() {
 
   const activeIndex = Math.max(0, displayPeptides.findIndex(p => p.id === activePeptideId))
   const activePeptide = displayPeptides[activeIndex] ?? null
+  const vialSnapClassName = isVialCarouselDragging ? 'snap-none' : 'snap-x snap-mandatory'
+  const vialItemSnapClassName = isVialCarouselDragging ? '' : 'snap-center'
   const scrollToPeptideIndex = (index: number) => {
     const carousel = vialCarouselRef.current
     const item = carousel?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
@@ -985,31 +987,41 @@ export function Peptide() {
     scrollToPeptideIndex(index)
     setActivePeptideId(next.id)
   }
+  const getClosestVialIndex = (carousel: HTMLDivElement) => {
+    const items = Array.from(carousel.querySelectorAll<HTMLElement>('[data-vial-index]'))
+    const carouselCenter = carousel.scrollLeft + carousel.clientWidth / 2
+    let closestIndex = activeIndex
+    let closestDistance = Number.POSITIVE_INFINITY
+
+    for (const item of items) {
+      const index = Number(item.dataset.vialIndex)
+      const itemCenter = item.offsetLeft + item.offsetWidth / 2
+      const distance = Math.abs(itemCenter - carouselCenter)
+      if (Number.isFinite(index) && distance < closestDistance) {
+        closestDistance = distance
+        closestIndex = index
+      }
+    }
+
+    return closestIndex
+  }
   const handleVialCarouselScroll = () => {
     const carousel = vialCarouselRef.current
     if (!carousel) return
     if (vialScrollFrameRef.current !== null) window.cancelAnimationFrame(vialScrollFrameRef.current)
 
     vialScrollFrameRef.current = window.requestAnimationFrame(() => {
-      const items = Array.from(carousel.querySelectorAll<HTMLElement>('[data-vial-index]'))
-      const carouselCenter = carousel.scrollLeft + carousel.clientWidth / 2
-      let closestIndex = activeIndex
-      let closestDistance = Number.POSITIVE_INFINITY
-
-      for (const item of items) {
-        const index = Number(item.dataset.vialIndex)
-        const itemCenter = item.offsetLeft + item.offsetWidth / 2
-        const distance = Math.abs(itemCenter - carouselCenter)
-        if (Number.isFinite(index) && distance < closestDistance) {
-          closestDistance = distance
-          closestIndex = index
-        }
-      }
-
+      const closestIndex = getClosestVialIndex(carousel)
       const next = displayPeptides[closestIndex]
       if (next && next.id !== activePeptideId) setActivePeptideId(next.id)
       vialScrollFrameRef.current = null
     })
+  }
+  const scrollToClosestVial = () => {
+    const carousel = vialCarouselRef.current
+    if (!carousel) return
+
+    selectPeptideIndex(getClosestVialIndex(carousel))
   }
   const selectPeptideOffset = (offset: number) => {
     if (displayPeptides.length === 0) return
@@ -1026,8 +1038,6 @@ export function Peptide() {
     vialDraggingRef.current = true
     vialDragMovedRef.current = false
     setIsVialCarouselDragging(true)
-    e.currentTarget.setPointerCapture(e.pointerId)
-    e.preventDefault()
   }
   const handleVialCarouselPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!vialDraggingRef.current) return
@@ -1035,7 +1045,12 @@ export function Peptide() {
     if (!carousel) return
 
     const delta = e.clientX - vialDragStartXRef.current
-    if (Math.abs(delta) > 4) vialDragMovedRef.current = true
+    if (Math.abs(delta) > 4) {
+      vialDragMovedRef.current = true
+      if (!e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.setPointerCapture(e.pointerId)
+      }
+    }
     carousel.scrollLeft = vialDragStartScrollLeftRef.current - delta
     e.preventDefault()
   }
@@ -1049,7 +1064,7 @@ export function Peptide() {
     if (vialDragMovedRef.current) {
       vialSuppressClickRef.current = true
       window.setTimeout(() => { vialSuppressClickRef.current = false }, 0)
-      handleVialCarouselScroll()
+      scrollToClosestVial()
     }
   }
   const handleVialCarouselWheel = (e: ReactWheelEvent<HTMLDivElement>) => {
@@ -1193,7 +1208,7 @@ export function Peptide() {
                   onPointerUp={handleVialCarouselPointerUp}
                   onPointerCancel={handleVialCarouselPointerUp}
                   onWheel={handleVialCarouselWheel}
-                  className={`flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                  className={`flex ${vialSnapClassName} gap-4 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
                     isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
                   }`}
                   style={{
@@ -1211,7 +1226,9 @@ export function Peptide() {
                       <div
                         key={p.id}
                         data-vial-index={index}
-                        className={`snap-center shrink-0 rounded-2xl px-2 py-2 transition-all duration-300 ${
+                        className={`${vialItemSnapClassName} shrink-0 rounded-2xl px-2 py-2 ${
+                          isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
+                        } ${
                           isActive ? 'scale-100' : 'scale-90'
                         }`}
                         style={{ width: 'min(9rem, 38vw)' }}

@@ -54,6 +54,9 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('handleVialCarouselPointerMove')
     expect(text).toContain('handleVialCarouselPointerUp')
     expect(text).toContain('handleVialCarouselWheel')
+    expect(text).toContain('scrollToClosestVial')
+    expect(text).toContain("const vialSnapClassName = isVialCarouselDragging ? 'snap-none' : 'snap-x snap-mandatory'")
+    expect(text).toContain("const vialItemSnapClassName = isVialCarouselDragging ? '' : 'snap-center'")
     expect(text).toContain('onPointerDown={handleVialCarouselPointerDown}')
     expect(text).toContain('onPointerMove={handleVialCarouselPointerMove}')
     expect(text).toContain('onPointerUp={handleVialCarouselPointerUp}')
@@ -62,6 +65,7 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('selectPeptideOffset(e.deltaY > 0 ? 1 : -1)')
     expect(text).toContain('handleVialCarouselItemClick(index)')
     expect(text).toContain("isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'")
+    expect(text).not.toContain('setPointerCapture(e.pointerId)\n    e.preventDefault()')
   })
 
   test('assigns a random palette color when creating a peptide', () => {
