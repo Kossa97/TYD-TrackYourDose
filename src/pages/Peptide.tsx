@@ -1150,6 +1150,7 @@ export function Peptide() {
                           fillPct={vialPct}
                           color={peptideColor}
                           animateOnMount={true}
+                          isActive={isActive}
                         />
                       </div>
                     )

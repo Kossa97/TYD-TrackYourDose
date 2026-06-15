@@ -9,6 +9,7 @@ interface PeptideVialVisualProps {
   animateOnMount?: boolean
   size?: 'large' | 'compact'
   className?: string
+  isActive?: boolean
 }
 
 function clampFill(fillPct: number): number {
@@ -30,6 +31,7 @@ export function PeptideVialVisual({
   animateOnMount = false,
   size = 'large',
   className = '',
+  isActive = true,
 }: PeptideVialVisualProps) {
   const clampedFill = clampFill(fillPct)
   // Scale to max 96 % so 100 % always shows a tiny air gap above the wave
@@ -113,7 +115,7 @@ export function PeptideVialVisual({
 
         <div
           data-vial-detail="glass-body"
-          className={`relative w-full ${heightClass} ${bodyClass} overflow-hidden border border-slate-400/35 bg-slate-950/82 shadow-[inset_0_0_22px_rgba(255,255,255,0.1),inset_14px_0_28px_rgba(255,255,255,0.08),inset_-18px_0_28px_rgba(0,0,0,0.34),0_22px_60px_rgba(0,0,0,0.36)]`}
+          className={`relative w-full ${heightClass} ${bodyClass} overflow-hidden border border-slate-400/35 bg-slate-950/82 shadow-[inset_0_0_22px_rgba(255,255,255,0.1),inset_14px_0_28px_rgba(255,255,255,0.08),inset_-18px_0_28px_rgba(0,0,0,0.14),0_22px_60px_rgba(0,0,0,0.36)]`}
         >
           <div
             data-vial-detail="glass-shoulder"
@@ -154,6 +156,10 @@ export function PeptideVialVisual({
             data-vial-detail="glass-base"
             className="absolute bottom-0 left-4 right-4 h-5 rounded-t-[50%] border-t border-white/16 bg-gradient-to-t from-white/12 to-transparent"
           />
+
+          {!isActive && (
+            <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+          )}
 
           <div
             data-vial-detail="full-width-label"
