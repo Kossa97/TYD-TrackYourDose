@@ -1486,9 +1486,13 @@ main.flex-1 {
   border-color: rgba(148,163,184,0.4) !important;
 }
 
-/* Remove glass-shoulder and glass-base gradient overlays in both modes —
-   replaced by realistic thin reflection lines in the component. */
-[data-vial-detail="glass-shoulder"],
-[data-vial-detail="glass-base"] {
+/* Hide the glass-shoulder gradient/border in light mode — on bright fills
+   it appears as two visible horizontal stripes instead of a subtle reflection. */
+[data-theme="light"] [data-vial-detail="glass-shoulder"] {
+  display: none !important;
+}
+
+/* Also hide the glass-base reflection for consistency in light mode. */
+[data-theme="light"] [data-vial-detail="glass-base"] {
   display: none !important;
 }

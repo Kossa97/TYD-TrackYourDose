@@ -148,9 +148,9 @@ export function PeptideVialVisual({
             </div>
           </div>
 
-          <div className="absolute inset-y-3 left-[16%] w-px rounded-full bg-white/70" />
-          <div className="absolute inset-y-3 left-[11%] w-3 rounded-full bg-white/15 blur-[5px]" />
-          <div className="absolute top-4 left-[15%] h-10 w-px rounded-full bg-white/95" />
+          <div className="absolute inset-y-4 left-3 w-4 rounded-full bg-white/20 blur-[2px]" />
+          <div className="absolute inset-y-6 right-3 w-2 rounded-full bg-white/10 blur-[1px]" />
+          <div className="vial-shimmer absolute inset-y-8 left-8 w-10 rotate-6 rounded-full bg-white/10 blur-[6px]" />
           <div
             data-vial-detail="glass-base"
             className="absolute bottom-0 left-4 right-4 h-5 rounded-t-[50%] border-t border-white/16 bg-gradient-to-t from-white/12 to-transparent"
