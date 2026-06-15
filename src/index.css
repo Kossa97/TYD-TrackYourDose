@@ -1491,3 +1491,8 @@ main.flex-1 {
 [data-vial-detail="glass-base"] {
   display: none !important;
 }
+
+/* Inactive vial overlay is less aggressive in light mode. */
+[data-theme="light"] [data-vial-detail="inactive-overlay"] {
+  background-color: rgba(0, 0, 0, 0.15) !important;
+}

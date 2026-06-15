@@ -158,7 +158,7 @@ export function PeptideVialVisual({
           />
 
           {!isActive && (
-            <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+            <div data-vial-detail="inactive-overlay" className="absolute inset-0 bg-black/40 pointer-events-none" />
           )}
 
           <div
