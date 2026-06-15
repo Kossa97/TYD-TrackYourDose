@@ -138,7 +138,7 @@ export function PeptideVialVisual({
               >
                 <svg className="h-full w-full" viewBox="0 0 200 20" preserveAspectRatio="none" aria-hidden="true">
                   <path
-                    d="M0 8 C12 3 25 13 37 8 C50 3 62 13 75 8 C87 3 100 13 112 8 C125 3 137 13 150 8 C162 3 175 13 187 8 C192 6 196 6 200 8 L200 20 L0 20 Z"
+                    d="M0 8 C13.8 3 36.2 3 50 8 C63.8 13 86.2 13 100 8 C113.8 3 136.2 3 150 8 C163.8 13 186.2 13 200 8 L200 20 L0 20 Z"
                     fill="currentColor"
                     fillOpacity="0.62"
                   />
