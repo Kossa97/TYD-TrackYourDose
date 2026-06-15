@@ -1,4 +1,5 @@
-import type { CSSProperties } from 'react'
+import { useEffect, useRef } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
 interface PeptideVialVisualProps {
   name?: string | null
@@ -22,6 +23,75 @@ function vialAmountLabel(amount?: string | number | null, unit?: string | null):
   return `${amount} ${unit || 'mg'} / Vial`
 }
 
+function VialLabelMarquee({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className: string
+}) {
+  const wrapRef = useRef<HTMLSpanElement | null>(null)
+  const innerRef = useRef<HTMLSpanElement | null>(null)
+
+  useEffect(() => {
+    const wrap = wrapRef.current
+    const inner = innerRef.current
+    if (!wrap || !inner || typeof window === 'undefined') return
+
+    let anim: Animation | null = null
+
+    const setup = () => {
+      anim?.cancel()
+      inner.style.transform = 'translateX(0)'
+
+      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+
+      const overflow = inner.scrollWidth - wrap.clientWidth
+      if (overflow <= 4) return
+
+      const holdStart = 2200
+      const holdEnd = 1200
+      const moveOut = Math.max(1800, overflow * 35)
+      const moveBack = Math.max(700, overflow * 14)
+      const total = holdStart + moveOut + holdEnd + moveBack
+
+      anim = inner.animate(
+        [
+          { transform: 'translateX(0)', offset: 0 },
+          { transform: 'translateX(0)', offset: holdStart / total },
+          { transform: `translateX(-${overflow}px)`, offset: (holdStart + moveOut) / total },
+          { transform: `translateX(-${overflow}px)`, offset: (holdStart + moveOut + holdEnd) / total },
+          { transform: 'translateX(0)', offset: 1 },
+        ],
+        { duration: total, iterations: Infinity, easing: 'linear' },
+      )
+    }
+
+    setup()
+
+    if (typeof ResizeObserver === 'undefined') {
+      return () => anim?.cancel()
+    }
+
+    const ro = new ResizeObserver(setup)
+    ro.observe(wrap)
+    ro.observe(inner)
+
+    return () => {
+      anim?.cancel()
+      ro.disconnect()
+    }
+  }, [children])
+
+  return (
+    <span ref={wrapRef} className={`block overflow-hidden whitespace-nowrap ${className}`}>
+      <span ref={innerRef} className="vial-label-marquee inline-block will-change-transform">
+        {children}
+      </span>
+    </span>
+  )
+}
+
 export function PeptideVialVisual({
   name,
   amount,
@@ -40,10 +110,8 @@ export function PeptideVialVisual({
   const visualFill = clampedFill === 0 ? 0 : clampedFill * 0.96
   const labelName = name?.trim() || 'Peptidname'
   const isLarge = size === 'large'
-  const shouldMarqueeLabel = labelName.length > (isLarge ? 12 : 8)
   const widthClass = isLarge ? 'w-28 sm:w-36' : 'w-16'
   const heightClass = isLarge ? 'h-44 sm:h-52' : 'h-24'
-  const capClass = isLarge ? 'h-5 w-16' : 'h-4 w-10'
   const neckClass = isLarge ? 'h-3 w-24' : 'h-3 w-12'
   const bodyClass = isLarge ? 'h-36 rounded-[1.4rem]' : 'h-20 rounded-lg'
   const labelClass = isLarge
@@ -84,18 +152,11 @@ export function PeptideVialVisual({
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-1.5px); }
         }
-        @keyframes vial-label-marquee {
-          0%, 24% { transform: translateX(0); }
-          76%, 100% { transform: translateX(-38%); }
-        }
         .vial-fill-rise {
           animation: vial-fill-rise 850ms cubic-bezier(.22,1,.36,1) both;
         }
-        .vial-label-marquee {
-          animation: vial-label-marquee 12s linear 2.4s infinite alternate;
-        }
         @media (prefers-reduced-motion: reduce) {
-          .vial-fill-rise, .vial-shimmer, .vial-wave-scroll, .vial-wave-breathe, .vial-label-marquee { animation: none !important; }
+          .vial-fill-rise, .vial-shimmer, .vial-wave-scroll, .vial-wave-breathe { animation: none !important; }
         }
       `}</style>
 
@@ -157,11 +218,11 @@ export function PeptideVialVisual({
             data-vial-detail="full-width-label"
             className={`absolute ${labelClass} overflow-hidden border-y border-[var(--border-strong)] bg-slate-950/82 text-center shadow-[0_8px_22px_rgba(0,0,0,0.32)] backdrop-blur-sm`}
           >
-            <p className={`${nameClass} overflow-hidden font-black text-white tracking-normal whitespace-nowrap`}>
-              <span className={`${shouldMarqueeLabel ? 'vial-label-marquee inline-block pr-10' : ''}`}>
+            <VialLabelMarquee className={`${nameClass} font-black text-white tracking-normal`}>
+              <span className="pr-10">
                 {labelName}
               </span>
-            </p>
+            </VialLabelMarquee>
             <p className={`${amountClass} font-bold uppercase tracking-wide text-white`}>
               {vialAmountLabel(amount, unit)}
             </p>

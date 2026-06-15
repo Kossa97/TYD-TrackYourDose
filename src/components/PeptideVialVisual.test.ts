@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
@@ -71,6 +72,15 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('vial-label-marquee')
     expect(html).toContain('whitespace-nowrap')
     expect(html).not.toContain('break-words')
+  })
+
+  test('measures real overflow for vial label marquee instead of using a name-length heuristic', () => {
+    const source = readFileSync(new URL('./PeptideVialVisual.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('ResizeObserver')
+    expect(source).toContain('inner.scrollWidth - wrap.clientWidth')
+    expect(source).toContain('inner.animate(')
+    expect(source).not.toContain('labelName.length >')
   })
 
   test('renders a list-style animated wave surface instead of the rejected meniscus effects', () => {
