@@ -1139,7 +1139,7 @@ export function Peptide() {
                         className={`snap-center shrink-0 rounded-2xl px-2 py-2 transition-all duration-300 ${
                           isActive ? 'scale-100' : 'scale-90'
                         }`}
-                        style={{ width: 'min(14rem, 58vw)' }}
+                        style={{ width: 'min(11rem, 46vw)' }}
                         aria-label={p.name}
                       >
                         <PeptideVialVisual
