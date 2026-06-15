@@ -163,7 +163,7 @@ export function PeptideVialVisual({
 
           <div
             data-vial-detail="full-width-label"
-            className={`absolute ${labelClass} overflow-hidden bg-slate-950/82 text-center shadow-[0_8px_22px_rgba(0,0,0,0.32)] backdrop-blur-sm`}
+            className={`absolute ${labelClass} overflow-hidden border-y border-[var(--border-strong)] bg-slate-950/82 text-center shadow-[0_8px_22px_rgba(0,0,0,0.32)] backdrop-blur-sm`}
           >
             <p className={`${nameClass} overflow-hidden font-black text-white tracking-normal whitespace-nowrap`}>
               <span className={`${shouldMarqueeLabel ? 'vial-label-marquee inline-block pr-10' : ''}`}>
