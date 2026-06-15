@@ -101,17 +101,9 @@ export function PeptideVialVisual({
 
       <div className="relative flex flex-col items-center">
         <div
-          data-vial-detail="rubber-stopper"
-          className={`${isLarge ? 'h-3 w-16' : 'h-1.5 w-7'} rounded-t-md border border-slate-700/80 bg-gradient-to-b from-slate-500 to-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]`}
+          data-vial-detail="single-cap"
+          className={`${neckClass} rounded-t-lg border border-slate-500/70 bg-gradient-to-b from-slate-500/80 via-slate-800/70 to-slate-950/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_4px_10px_rgba(15,23,42,0.35)]`}
         />
-        <div
-          data-vial-detail="crimp-seal"
-          className={`${capClass} relative overflow-hidden rounded-t-lg border border-slate-400/70 bg-gradient-to-b from-slate-300 via-slate-500 to-slate-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_5px_14px_rgba(15,23,42,0.5)]`}
-        >
-          <div className="absolute inset-x-2 top-1 h-1 rounded-full bg-white/35" />
-          <div className="absolute inset-y-0 left-1/2 w-px bg-white/25" />
-        </div>
-        <div className={`${neckClass} rounded-t-md border-x border-slate-500/70 bg-gradient-to-b from-slate-500/80 via-slate-800/70 to-slate-950/80`} />
 
         <div
           data-vial-detail="glass-body"
