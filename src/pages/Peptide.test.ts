@@ -34,9 +34,9 @@ describe('Peptide page vial view', () => {
   test('keeps neighboring vials partially visible around the centered active vial', () => {
     const text = source()
 
-    expect(text).toContain('min(14rem, 58vw)')
+    expect(text).toContain('min(9rem, 38vw)')
     expect(text).toContain('snap-center')
-    expect(text).toContain('scale-90 opacity-45')
+    expect(text).toContain("isActive ? 'scale-100' : 'scale-90'")
   })
 
   test('assigns a random palette color when creating a peptide', () => {
