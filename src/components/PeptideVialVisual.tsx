@@ -219,9 +219,7 @@ export function PeptideVialVisual({
             className={`absolute ${labelClass} overflow-hidden border-y border-[var(--border-strong)] bg-slate-950/82 text-center shadow-[0_8px_22px_rgba(0,0,0,0.32)] backdrop-blur-sm`}
           >
             <VialLabelMarquee className={`${nameClass} font-black text-white tracking-normal`}>
-              <span className="pr-10">
-                {labelName}
-              </span>
+              {labelName}
             </VialLabelMarquee>
             <p className={`${amountClass} font-bold uppercase tracking-wide text-white`}>
               {vialAmountLabel(amount, unit)}

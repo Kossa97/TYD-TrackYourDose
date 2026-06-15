@@ -83,6 +83,12 @@ describe('PeptideVialVisual', () => {
     expect(source).not.toContain('labelName.length >')
   })
 
+  test('does not add fixed extra width that would trigger marquee without real overflow', () => {
+    const source = readFileSync(new URL('./PeptideVialVisual.tsx', import.meta.url), 'utf8')
+
+    expect(source).not.toContain('className="pr-10"')
+  })
+
   test('renders a list-style animated wave surface instead of the rejected meniscus effects', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
       name: 'BPC-157',
