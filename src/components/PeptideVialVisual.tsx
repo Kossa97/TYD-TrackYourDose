@@ -128,16 +128,16 @@ export function PeptideVialVisual({
           >
             <div
               data-vial-detail="list-style-wave-surface"
-              className="absolute -top-5 left-0 right-0 h-7 overflow-hidden"
+              className="absolute -top-3 left-0 right-0 h-7 overflow-hidden"
               style={{ animation: 'vial-wave-breathe 3s ease-in-out infinite' }}
             >
               <div
-                className="vial-wave-scroll absolute left-0 top-0 h-5 w-[200%] text-current"
+                className="vial-wave-scroll absolute left-0 top-0 h-6 w-[200%] text-current"
                 style={{ color, animation: 'vial-wave-scroll 2.4s linear infinite' }}
               >
-                <svg className="h-full w-full" viewBox="0 0 200 20" preserveAspectRatio="none" aria-hidden="true">
+                <svg className="h-full w-full" viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true">
                   <path
-                    d="M0 8 C13.8 3 36.2 3 50 8 C63.8 13 86.2 13 100 8 C113.8 3 136.2 3 150 8 C163.8 13 186.2 13 200 8 L200 20 L0 20 Z"
+                    d="M0 8 C13.8 3 36.2 3 50 8 C63.8 13 86.2 13 100 8 C113.8 3 136.2 3 150 8 C163.8 13 186.2 13 200 8 L200 24 L0 24 Z"
                     fill="currentColor"
                     fillOpacity="0.62"
                   />
