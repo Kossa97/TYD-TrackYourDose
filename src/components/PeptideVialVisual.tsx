@@ -55,7 +55,7 @@ export function PeptideVialVisual({
     : 'text-[7px] mt-0.5'
   const fillStyle = {
     height: `${visualFill}%`,
-    background: `linear-gradient(180deg, ${color}70 0%, ${color}ee 42%, ${color} 100%)`,
+    background: `linear-gradient(180deg, ${color}9f 0%, ${color}ee 42%, ${color} 100%)`,
     boxShadow: `0 -10px 26px ${color}55, inset 0 1px 0 rgba(255,255,255,0.35), inset 18px 0 28px rgba(255,255,255,0.08), inset -18px 0 28px rgba(0,0,0,0.18)`,
   } as CSSProperties
 
@@ -128,10 +128,9 @@ export function PeptideVialVisual({
           >
             <div
               data-vial-detail="list-style-wave-surface"
-              className="vial-wave-breathe absolute -top-2 left-0 right-0 h-7 overflow-hidden"
+              className="absolute -top-5 left-0 right-0 h-7 overflow-hidden"
               style={{ animation: 'vial-wave-breathe 3s ease-in-out infinite' }}
             >
-              <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, transparent 0%, ${color}99 100%)` }} />
               <div
                 className="vial-wave-scroll absolute left-0 top-0 h-5 w-[200%] text-current"
                 style={{ color, animation: 'vial-wave-scroll 2.4s linear infinite' }}
