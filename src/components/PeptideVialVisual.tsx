@@ -164,7 +164,7 @@ export function PeptideVialVisual({
                 {labelName}
               </span>
             </p>
-            <p className={`${amountClass} font-bold uppercase tracking-wide text-slate-300`}>
+            <p className={`${amountClass} font-bold uppercase tracking-wide text-white`}>
               {vialAmountLabel(amount, unit)}
             </p>
           </div>
