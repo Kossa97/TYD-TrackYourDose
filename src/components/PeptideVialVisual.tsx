@@ -41,11 +41,11 @@ export function PeptideVialVisual({
   const labelName = name?.trim() || 'Peptidname'
   const isLarge = size === 'large'
   const shouldMarqueeLabel = labelName.length > (isLarge ? 12 : 8)
-  const widthClass = isLarge ? 'w-36 sm:w-44' : 'w-16'
-  const heightClass = isLarge ? 'h-52 sm:h-60' : 'h-24'
-  const capClass = isLarge ? 'h-6 w-20' : 'h-4 w-10'
-  const neckClass = isLarge ? 'h-4 w-28' : 'h-3 w-12'
-  const bodyClass = isLarge ? 'h-44 rounded-[1.4rem]' : 'h-20 rounded-lg'
+  const widthClass = isLarge ? 'w-28 sm:w-36' : 'w-16'
+  const heightClass = isLarge ? 'h-44 sm:h-52' : 'h-24'
+  const capClass = isLarge ? 'h-5 w-16' : 'h-4 w-10'
+  const neckClass = isLarge ? 'h-3 w-24' : 'h-3 w-12'
+  const bodyClass = isLarge ? 'h-36 rounded-[1.4rem]' : 'h-20 rounded-lg'
   const labelClass = isLarge
     ? 'left-0 right-0 top-[39%] rounded-none px-3 py-2'
     : 'left-0 right-0 top-[36%] rounded-none px-1 py-1'

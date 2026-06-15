@@ -1122,8 +1122,8 @@ export function Peptide() {
                   onScroll={handleVialCarouselScroll}
                   className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                   style={{
-                    paddingInline: 'calc((100% - min(11rem, 46vw)) / 2)',
-                    scrollPaddingInline: 'calc((100% - min(11rem, 46vw)) / 2)',
+                    paddingInline: 'calc((100% - min(9rem, 38vw)) / 2)',
+                    scrollPaddingInline: 'calc((100% - min(9rem, 38vw)) / 2)',
                   }}
                 >
                   {displayPeptides.map((p, index) => {
@@ -1139,7 +1139,7 @@ export function Peptide() {
                         className={`snap-center shrink-0 rounded-2xl px-2 py-2 transition-all duration-300 ${
                           isActive ? 'scale-100' : 'scale-90'
                         }`}
-                        style={{ width: 'min(11rem, 46vw)' }}
+                        style={{ width: 'min(9rem, 38vw)' }}
                         aria-label={p.name}
                       >
                         <PeptideVialVisual
