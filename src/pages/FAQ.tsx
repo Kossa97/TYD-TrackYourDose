@@ -4,6 +4,7 @@ import {
   ChevronDown, ChevronUp, Search,
   CalendarDays, FlaskConical, BookHeart, Star, User,
   TrendingUp, Bell, HelpCircle, Shield, Calculator, Package,
+  Syringe, Archive, FileText,
 } from 'lucide-react'
 import { getFaqBundle } from '../i18n/faq'
 import type { FaqCategory, FaqItem } from '../i18n/faq/types'
@@ -25,6 +26,9 @@ const CAT_META: Record<string, { icon: React.ReactNode; color: string }> = {
   bewertungen: { icon: <Star size={16} />, color: 'text-amber-400' },
   profil: { icon: <User size={16} />, color: 'text-slate-300' },
   erinnerung: { icon: <Bell size={16} />, color: 'text-sky-400' },
+  injections: { icon: <Syringe size={16} />, color: 'text-emerald-400' },
+  inventory: { icon: <Archive size={16} />, color: 'text-cyan-400' },
+  reports: { icon: <FileText size={16} />, color: 'text-sky-400' },
   technik: { icon: <Shield size={16} />, color: 'text-slate-400' },
 }
 

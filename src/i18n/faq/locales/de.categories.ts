@@ -1,344 +1,257 @@
 import type { FaqCategory } from '../types'
 
-/** German FAQ — canonical copy (was inline in FAQ.tsx) */
+/** German FAQ */
 export const deCategories: FaqCategory[] = [
   {
     id: 'start',
     title: 'Erste Schritte & Navigation',
     items: [
       {
-        q: 'Was ist der Peptid Tracker?',
-        a: 'Der Peptid Tracker ist eine persönliche App für Forschungszwecke. Du kannst damit deine Peptide verwalten, Einnahmezyklen planen, Dosen protokollieren, Dosierungen berechnen, Wirkungen im Tagebuch festhalten und Bewertungen schreiben – alles an einem Ort.',
+        q: 'Was ist Track Your Dose?',
+        a: 'Track Your Dose ist eine private Dokumentations-App für Peptide, Zyklen, Dosen, Vorrat, Injektionsstellen, Blutwerte, Effekte und Reports. Die App ersetzt keine medizinische Beratung und ist für Recherche, Struktur und persönliche Dokumentation gedacht.',
       },
       {
-        q: 'Wie navigiere ich zwischen den Bereichen?',
-        a: 'Unten am Bildschirm befindet sich die Navigation mit 5 Symbolen: Lager, Peptide, Home (Mitte), Kalender und Profil. Alle weiteren Bereiche erreichst du über den Home-Bildschirm in der Mitte.',
-      },
-      {
-        q: 'Was ist der Home-Bildschirm?',
+        q: 'Wie ist die App aufgebaut?',
         a: [
-          'Der Home-Bildschirm (mittlerer Button in der Navigation) ist deine Zentrale:',
-          '• Oben siehst du 3 Schnellinfos: Aktive Zyklen, Vials im Lager, Meine Peptide',
-          '• Darunter findest du Kacheln für alle 8 Bereiche der App',
-          '• Tippe auf eine Kachel um direkt dorthin zu springen',
+          'Die wichtigsten Bereiche erreichst du über die untere Navigation und den Home-Bildschirm:',
+          '- Home: Überblick, Schnellaktionen und Kacheln',
+          '- Kalender: geplante und protokollierte Dosen',
+          '- My Stack: Substanzen, Vials, Zyklen und Dosiserhöhungen',
+          '- Profil: Account, Sprache, Theme, Sharing und Benachrichtigungen',
         ],
       },
       {
-        q: 'Was sind alle Bereiche der App?',
+        q: 'Was macht der Home-Bildschirm?',
         a: [
-          '📅 Kalender – Tagesprotokoll, Einnahmen bestätigen & Zyklusübersicht',
-          '📦 Lager – Rohstoff-Inventar, Vials einlagern & verwalten',
-          '🧪 Peptide – Rekonstitutierte Peptide & Zyklen anlegen',
-          '🧮 Rechner – Dosierungsrechner mit Spritzenskala',
-          '📓 Tagebuch – Wirkungen und Nebenwirkungen aufzeichnen',
-          '⭐ Bewertungen – Erfahrungsberichte zu einzelnen Peptiden',
-          '👤 Profil – Accountdaten, öffentliches Profil & Teilen-Link',
-          '❓ FAQ – Diese Hilfeseite',
+          'Home ist die Startzentrale der App.',
+          '- Oben stehen Statuskarten wie aktive Zyklen, heutige Logs oder niedriger Vorrat',
+          '- Schnellaktionen führen direkt zu Logging, Rechner, Fortschritt oder Simulation',
+          '- Feature-Kacheln führen zu Kalender, My Stack, Rechner, Injektionen, Protokoll, Lab, Blutwerte, Health, Tagebuch, Bewertungen, FAQ und Profil',
         ],
       },
       {
-        q: 'Wie melde ich mich ab?',
-        a: 'Gehe zu „Profil" und tippe oben rechts auf den roten „Abmelden"-Button.',
-      },
-      {
-        q: 'Werden meine Daten sicher gespeichert?',
-        a: 'Ja. Alle Daten werden in einer Supabase-Datenbank gespeichert. Jeder Nutzer sieht ausschließlich seine eigenen Daten – das wird durch Row Level Security (RLS) erzwungen. Batch-Dateien (PDFs/Bilder) liegen in einem separaten Storage-Bucket ebenfalls nur für dich zugänglich.',
-      },
-      {
-        q: 'Kann ich die App auf meinem Handy installieren?',
+        q: 'Was bedeuten die Schnellaktionen auf Home?',
         a: [
-          'Ja! Der Peptid Tracker ist eine PWA (Progressive Web App):',
-          'iPhone/Safari: Teilen-Symbol → „Zum Home-Bildschirm" → „Hinzufügen"',
-          'Android/Chrome: Drei Punkte → „App installieren" oder „Zum Startbildschirm"',
-          'Die App funktioniert dann ohne Browser und sieht aus wie eine native App.',
+          'Schnellaktionen springen direkt in typische Tagesaufgaben:',
+          '- Heute loggen: öffnet den Kalender zum Bestätigen oder Eintragen von Dosen',
+          '- Injektion loggen: öffnet die Injektionsstellen-Rotation',
+          '- Dosis rechnen: öffnet den Rechner',
+          '- Fortschritt: öffnet Gewicht, Fotos und Verlauf',
+          '- Blutspiegel: öffnet die PK-Simulation',
         ],
       },
       {
-        q: 'Wo fange ich am besten an?',
-        a: [
-          'Empfohlene Reihenfolge:',
-          '1. „Peptide" → „+ Neu" → Peptid anlegen (Name, Wirkstoff, Rekonstitution, Bestand)',
-          '2. „Zyklus hinzufügen" direkt auf der Peptid-Karte',
-          '3. „Rechner" nutzen um Einheiten & Konzentration zu berechnen',
-          '4. „Kalender" öffnen – Zyklus erscheint violett hinterlegt',
-          '5. Auf einen Zyklus-Tag tippen → Dosis protokollieren & bestätigen',
-        ],
+        q: 'Wie suche ich nach Funktionen oder Einträgen?',
+        a: 'Viele Bereiche haben eine eigene Suche. In My Stack öffnest du die Suche über die Lupe, tippst den Namen ein und schließt sie wieder über das X. Die FAQ-Suche durchsucht Fragen und Antworten.',
       },
-    ],
-  },
-  {
-    id: 'kalender',
-    title: 'Kalender & Protokoll',
-    items: [
       {
-        q: 'Was zeigt der Kalender an?',
+        q: 'Kann ich die App auf dem Handy wie eine native App nutzen?',
         a: [
-          'Der Kalender gibt dir auf einen Blick eine Übersicht:',
-          '🟣 Violetter Hintergrund = aktiver Zyklus für diesen Tag geplant',
-          '🔵 Blauer Punkt = Dosis wurde für diesen Tag protokolliert',
-          '🔵 Sky-Ring = heute',
-          '🟠 Orange Pfeil-Icon = eine Dosiserhöhung ist an diesem Tag aktiv',
+          'Ja. Die App ist als PWA nutzbar.',
+          '- iPhone/Safari: Teilen-Symbol, dann Zum Home-Bildschirm',
+          '- Android/Chrome: Menü mit drei Punkten, dann App installieren oder Zum Startbildschirm',
+          '- Danach startet sie ohne Browserleiste und fühlt sich wie eine App an',
         ],
       },
       {
-        q: 'Wie protokolliere ich eine Dosis?',
+        q: 'In welcher Reihenfolge sollte ich starten?',
         a: [
-          '1. Tippe im Kalender auf einen Tag',
-          '2. Im Tages-Panel unten erscheinen die aktiven Zyklen als Karten',
-          '3. Tippe auf einen Zyklus → das Protokoll-Formular öffnet sich vorausgefüllt',
-          '4. Passe Dosis, Methode oder Uhrzeit bei Bedarf an',
-          '5. Tippe auf „Speichern"',
+          'Empfohlener Ablauf:',
+          '1. In My Stack eine neue Substanz anlegen',
+          '2. Direkt danach einen Zyklus anlegen oder später über Neu/Zyklus hinzufügen',
+          '3. Optional die Dosis im Rechner prüfen',
+          '4. Im Kalender Dosen loggen und bestätigen',
+          '5. In Injektionen, Tagebuch, Blutwerte und Protokoll ergänzend dokumentieren',
         ],
       },
       {
-        q: 'Was ist die Einnahme-Bestätigung?',
-        a: [
-          'Nach dem Protokollieren kannst du jede Dosis bestätigen:',
-          '✅ „Eingenommen" – Eintrag wird grün markiert',
-          '❌ „Nicht eingenommen" – Eintrag wird rot markiert und Snooze-Optionen erscheinen',
-          'Solange nichts bestätigt ist, erscheinen beide Buttons auf der Eintragskarte.',
-        ],
-      },
-      {
-        q: 'Was ist die Snooze-Funktion?',
-        a: [
-          'Wenn du „Nicht eingenommen" tippst, erscheinen Snooze-Buttons:',
-          '⏰ 15 Min – Erinnerung in 15 Minuten',
-          '⏰ 30 Min – Erinnerung in 30 Minuten',
-          '⏰ 1 Std – Erinnerung in 1 Stunde',
-          '⏰ 2 Std – Erinnerung in 2 Stunden',
-          'Nach Ablauf erscheint ein Toast-Hinweis mit Peptid und Dosis.',
-        ],
-      },
-      {
-        q: 'Was bedeutet der orange Pfeil im Kalender?',
-        a: 'Das orange Pfeil-Symbol (📈 Erhöhung aktiv) zeigt dass an diesem Tag eine Dosiserhöhung aus deinem Zyklus greift. Die angezeigte Dosis im Tages-Panel ist bereits die erhöhte Gesamtdosis.',
-      },
-      {
-        q: 'Wie navigiere ich zwischen Monaten?',
-        a: 'Tippe auf die Pfeile links/rechts neben dem Monatsnamen.',
-      },
-      {
-        q: 'Kann ich eine protokollierte Dosis löschen?',
-        a: 'Ja. Im Tages-Panel rechts neben jedem Eintrag steht ein ✕-Button → tippe darauf und bestätige.',
-      },
-      {
-        q: 'Warum sehe ich keinen violetten Hintergrund obwohl ich einen Zyklus habe?',
-        a: [
-          'Mögliche Gründe:',
-          '• Zyklus ist „Inaktiv" → in Peptide → Zyklus → Schalter aktivieren',
-          '• Falscher Monat angezeigt → zum Startmonat des Zyklus blättern',
-          '• Start-/Enddatum schließt den Monat aus',
-        ],
+        q: 'Warum steht in der App häufig "Nur für Forschungszwecke"?',
+        a: 'Weil die App Daten dokumentiert und berechnet, aber keine Diagnose, Dosierungsempfehlung oder Therapieentscheidung trifft. Dosis, Substanz, Frequenz und Anwendung bleiben deine Verantwortung beziehungsweise gehören in fachliche Beratung.',
       },
     ],
   },
   {
     id: 'peptide',
-    title: 'Peptide & Bestand',
+    title: 'My Stack, Vials & Substanzen',
     items: [
       {
-        q: 'Wie lege ich ein neues Peptid an?',
+        q: 'Was ist My Stack?',
+        a: 'My Stack ist der Bereich für deine Substanzen. Dort verwaltest du Vials, Rekonstitution, Haltbarkeit, aktive Zyklen, Dosiserhöhungen, Notizen, Batch-Daten und Analyse-Dokumente.',
+      },
+      {
+        q: 'Was ist der Unterschied zwischen Vials-Ansicht und Liste?',
         a: [
-          '1. Tippe oben rechts auf „+ Neu"',
-          '2. Gib den Namen ein oder wähle aus „Bekannte"',
-          '3. Fülle Wirkstoff & Rekonstitution aus (mg/Vial, Flüssigkeit, Spritze)',
-          '4. Trage Bestand, Batch-Infos und Dosierung ein',
-          '5. Optional: PDF oder Bild des Analyse-Dokuments hochladen',
-          '6. Tippe auf „Speichern"',
+          'Die Vials-Ansicht ist die visuelle mobile Hauptansicht.',
+          '- Vials: großes Karussell mit aktivem Vial, Haltbarkeit, Aktionen, Info und aktivem Zyklus',
+          '- Liste: kompakte Kartenansicht mit mehreren Substanzen untereinander',
+          '- Wechsel: über den Filter-/Ansicht-Button oben rechts',
         ],
       },
       {
-        q: 'Was zeigt das animierte Vial auf der Peptid-Karte?',
+        q: 'Wie bediene ich das Vial-Karussell?',
         a: [
-          'Wenn du einen Bestand eingetragen hast, erscheint links auf der Karte ein animiertes Fläschchen:',
-          '🟢 Grün = mehr als 50% Vorrat vorhanden',
-          '🟡 Gelb = 25–50% Vorrat',
-          '🔴 Rot = weniger als 25% – bald leer',
-          'Die Flüssigkeit bewegt sich animiert. Auf dem Handy neigt sich das Vial mit der Geräteschräglage.',
+          'Du kannst auf mehrere Arten wechseln:',
+          '- Handy: horizontal wischen oder ein Vial antippen',
+          '- Desktop: mit gedrückter Maus ziehen',
+          '- Desktop: Mausrad nach unten wechselt weiter nach links im Karussell',
+          '- Pfeile links und rechts wechseln zum vorherigen oder nächsten Vial',
         ],
       },
       {
-        q: 'Was ist der Info-Button (Zettel-Symbol) auf der Peptid-Karte?',
+        q: 'Was bedeutet die Prozentzahl unter dem aktiven Vial?',
+        a: 'Sie zeigt den berechneten Füllstand des aktuell angezeigten Vials. Ganze Vials werden als 100 % angezeigt; angebrochene Vials werden als anteiliger Rest dargestellt.',
+      },
+      {
+        q: 'Was bedeuten "Haltbar", "Aktiv" und "x / y" oben im Vial-Modus?',
         a: [
-          'Das Zettel-Symbol (📄) öffnet ein Info-Sheet mit allen gespeicherten Daten:',
-          '• Dosierung & Applikationsart',
-          '• Wirkstoff, Flüssigkeitsmenge, Spritze',
-          '• Rekonstitutionsdatum & Ablaufdatum mit Countdown',
-          '• Bestand & Fortschrittsbalken',
-          '• Batch-Nummer & Quelle',
-          '• Analyse-Dokument: Bilder werden direkt angezeigt, PDFs als Link',
-          '• Notizen',
+          '- Haltbar: zeigt Resttage bis zum berechneten Ablauf oder Nicht gesetzt',
+          '- Aktiv: mindestens ein aktiver Zyklus existiert für diese Substanz',
+          '- x / y: aktuelle Position im Karussell',
         ],
       },
       {
-        q: 'Was ist die Bestandsverwaltung?',
+        q: 'Was macht der Button "Rekonst."?',
+        a: 'Rekonst. startet den Rekonstitutions-Dialog. Wenn du bestätigst, werden Rekonstitutionsdatum und Bestand für die verbundene Substanz aktualisiert. Wenn kein Inventar verknüpft ist, ist der Button deaktiviert.',
+      },
+      {
+        q: 'Was macht "Edit"?',
+        a: 'Edit öffnet die Substanz zum Bearbeiten. Du kannst Name, Farbe, Wirkstoff pro Vial, Flüssigkeit, Rekonstitutionsdatum, Haltbarkeit, Vials, Applikationsart, Batch, Quelle, Dokument und Notizen ändern.',
+      },
+      {
+        q: 'Was macht "Löschen"?',
+        a: 'Löschen entfernt die Substanz nach Bestätigung. Nutze das nur, wenn du die Substanz wirklich nicht mehr in deinem Stack brauchst.',
+      },
+      {
+        q: 'Was steht in der aufklappbaren "Info"-Leiste?',
         a: [
-          'Du kannst die Anzahl vorhandener Vials eintragen:',
-          '• „Vorrätige Vials" = aktueller Bestand',
-          '• Beim ersten Speichern wird dieser Wert automatisch als 100%-Basis gemerkt',
-          '• Der Fortschrittsbalken auf der Karte zeigt den Verbrauch farblich an',
-          '• Ablaufdatum: wird aus Rekonstitutionsdatum + Haltbarkeit berechnet',
+          'Info ist standardmäßig eingeklappt und zeigt nach dem Öffnen alle kompakten Substanzdaten:',
+          '- Peptidname',
+          '- Wirkstoff pro Vial',
+          '- hinzugefügte Flüssigkeit',
+          '- Rekonstitutionsdatum',
+          '- Haltbarkeit',
+          '- rohe Vials in Reserve',
+          '- Applikationsart',
+          '- Batch, Quelle, Analyse-Dokument und Notizen',
         ],
       },
       {
-        q: 'Was sind Batch-Informationen?',
+        q: 'Warum stehen Farbe und Füllstand nicht in der Info-Leiste?',
+        a: 'Farbe und Füllstand sind bereits direkt am Vial sichtbar. Die Info-Leiste konzentriert sich auf Daten, die man sonst nicht auf einen Blick sieht.',
+      },
+      {
+        q: 'Wie lege ich eine neue Substanz an?',
         a: [
-          'Batch-Informationen dokumentieren die Herkunft deines Peptids:',
-          '• Batch-Nummer = Chargen-ID des Herstellers',
-          '• Quelle = Hersteller oder Lieferant (z.B. "Peptide Sciences")',
-          '• Analyse-Dokument = PDF oder Bild hochladen (COA, Laborbericht, Rechnung)',
-          'Diese Infos erscheinen auch im Info-Sheet des Peptids.',
+          'Tippe in My Stack auf die Add-Vial-Kachel oder auf Neue Substanz.',
+          '- Die Felder sind als Liste aufgebaut',
+          '- Ein Tipp auf eine Zeile öffnet den passenden Editor',
+          '- Auf dem Handy liegt der aktive Eingabebereich zentraler, damit er mit dem Daumen leichter erreichbar ist',
+          '- Speichern legt die Substanz an',
         ],
       },
       {
-        q: 'Was bedeutet "Zugefügte Flüssigkeit (mL)"?',
-        a: 'Das ist die Menge Wasser (z.B. BAC-Wasser, NaCl oder Wasser für Injektionszwecke) die du in das Vial gibst. Je mehr Flüssigkeit, desto geringer die Konzentration. Standard sind 1–2 mL.',
-      },
-      {
-        q: 'Was bedeuten die Spritzenfelder "mL" und "Einheiten"?',
+        q: 'Welche Felder gehören zu "Neue Substanz"?',
         a: [
-          'Diese zwei Felder beschreiben deine Spritze:',
-          '• mL = Gesamtvolumen der Spritze (z.B. 1 mL)',
-          '• Einheiten = maximale Skalenstriche (z.B. 100 bei U-100-Spritze)',
-          '→ Daraus berechnet sich: Einheiten/mL = Skalenstriche pro Milliliter',
-          'Standard-Insulinspritze U-100: 1 mL / 100 Einheiten = 100 Einh./mL',
+          'Wichtige Felder sind:',
+          '- Peptidname',
+          '- Farbe',
+          '- Wirkstoff pro Vial',
+          '- zugefügte Flüssigkeit',
+          '- Datum Rekonstitution',
+          '- Haltbarkeit nach Rekonstitution',
+          '- vorrätige Vials',
+          '- Applikationsart',
+          '- Batch, Quelle, Analyse-Dokument und Notizen',
         ],
       },
       {
-        q: 'Was ist die Haltbarkeit nach Rekonstitution?',
-        a: [
-          'Nach dem Auflösen des Peptids ist es nur begrenzt haltbar (im Kühlschrank):',
-          '10–14 Tage = kurzfristige Peptide',
-          '21–28 Tage = typische Haltbarkeit rekonstituierter Peptide',
-          '42–90 Tage = für besonders stabile Peptide',
-          'Das Ablaufdatum wird aus Rekonstitutionsdatum + gewählten Tagen berechnet und farblich angezeigt.',
-        ],
+        q: 'Warum gibt es keine Standard-Dosis mehr bei einer Substanz?',
+        a: 'Die App nutzt keine Standard-Dosis mehr auf Substanzebene. Entscheidend ist immer die Dosis im jeweiligen Zyklus, plus aktive Dosiserhöhungen. Dadurch ist klar, welche Dosis für welchen Zeitraum gilt.',
       },
       {
-        q: 'Wie füge ich einen Zyklus direkt von der Peptid-Karte hinzu?',
-        a: 'Jede Peptid-Karte hat unten rechts den violetten Button „Zyklus hinzufügen". Tippe darauf – du musst das Peptid nicht erst aufklappen.',
+        q: 'Was passiert nach dem Speichern einer neuen Substanz?',
+        a: 'Nach dem Speichern kann die App dich fragen, ob du direkt einen Zyklus für diese Substanz anlegen möchtest. Du kannst sofort Zyklus anlegen wählen oder mit Später zurück in My Stack gehen.',
       },
       {
-        q: 'Was zeigt der Pfeil mit Zyklusanzahl unten auf der Karte?',
-        a: 'Der kleine Pfeil links unten (z.B. „▼ 2 Zyklen") klappt die Zyklus-Ansicht auf oder zu. Du siehst auf einen Blick wie viele Zyklen für dieses Peptid existieren.',
-      },
-      {
-        q: 'Wie suche ich nach einem Peptid?',
-        a: 'Sobald Peptide vorhanden sind, erscheint oben ein Suchfeld. Tippe den Namen ein – die Liste filtert automatisch. Mit dem Dropdown daneben kannst du A→Z oder Z→A sortieren.',
-      },
-    ],
-  },
-  {
-    id: 'rechner',
-    title: 'Rechner',
-    items: [
-      {
-        q: 'Was kann der Rechner?',
-        a: [
-          'Der Rechner berechnet aus deinen Eingaben:',
-          '• Einheiten aufziehen – wie viele Skalenstriche auf der Spritze',
-          '• Konzentration – mg/mL der fertigen Lösung',
-          '• Spritze gefüllt – wie viel Prozent der Spritze du aufziehst',
-          '• Dosen pro Vial – wie viele Injektionen du aus einem Vial bekommst',
-        ],
-      },
-      {
-        q: 'Was ist die Spritzenskala?',
-        a: [
-          'Die farbige Skala oben im Rechner zeigt visuell wie viele Einheiten du aufziehen musst:',
-          '• Der Balken füllt sich von links (blau) nach rechts (lila → pink)',
-          '• Die weiße Linie markiert den exakten Punkt',
-          '• Die große Zahl darüber zeigt die Einheiten',
-          'Du siehst sofort ob deine Dosis in die Spritze passt.',
-        ],
-      },
-      {
-        q: 'Welche Eingaben brauche ich für den Rechner?',
-        a: [
-          '• Spritzengröße – wähle einen Preset (z.B. 1 mL / 100 Einh.) oder trage eigene Werte ein',
-          '• Wirkstoff pro Vial – mg-Menge auf dem Fläschchen (z.B. 10 mg)',
-          '• Zugefügte Flüssigkeit – wie viel mL du hinzugegeben hast (z.B. 2 mL)',
-          '• Dosis – deine gewünschte Dosis mit Einheit (mcg, mg, IU)',
-        ],
-      },
-      {
-        q: 'Welche Spritzen-Presets gibt es?',
-        a: [
-          '• 1 mL · 100 Einh. (U-100) – Standard-Insulinspritze',
-          '• 0,5 mL · 50 Einh. (U-100) – kleine Insulinspritze',
-          '• 0,3 mL · 30 Einh. (U-100) – sehr kleine Spritze',
-          '• 2 mL · 200 Einh. (U-100) – größere Spritze',
-          '• 1 mL · 40 Einh. (U-40) – ältere U-40-Spritze',
-          'Oder: eigene mL und Einheiten eingeben.',
-        ],
-      },
-      {
-        q: 'Rechenbeispiel – wie funktioniert die Berechnung?',
-        a: [
-          'Beispiel: BPC-157, 5 mg Vial, 2 mL Wasser, 500 mcg Dosis, U-100 Spritze',
-          '→ Konzentration: 5 mg ÷ 2 mL = 2,5 mg/mL = 2500 mcg/mL',
-          '→ Volumen: 500 mcg ÷ 2500 mcg/mL = 0,200 mL',
-          '→ Einheiten: 0,200 mL × 100 Einh./mL = 20 Einheiten',
-          '→ Dosen/Vial: 5000 mcg ÷ 500 mcg = 10 Dosen',
-        ],
+        q: 'Was ist die Add-Vial-Kachel im Karussell?',
+        a: 'Die Add-Vial-Kachel ist der schnelle Einstieg für eine neue Substanz. Sie sitzt im Vial-Karussell wie ein eigener Platz und öffnet das Formular Neue Substanz.',
       },
     ],
   },
   {
     id: 'zyklen',
-    title: 'Zyklen',
+    title: 'Zyklen & aktive Dosis',
     items: [
       {
         q: 'Was ist ein Zyklus?',
-        a: 'Ein Zyklus ist ein strukturierter Einnahmeplan für ein Peptid. Er legt fest: Dosis, Methode, Frequenz, Zeitraum, optionaler Einnahmezeitpunkt und Erinnerungen.',
+        a: 'Ein Zyklus ist ein Einnahme- oder Dokumentationsplan für eine Substanz. Er enthält Name, Dosis, Einheit, Methode, Frequenz, Startdatum, optionales Enddatum, Einnahmezeiten und Reminder.',
       },
       {
-        q: 'Wie erstelle ich einen Zyklus?',
+        q: 'Wie lege ich einen Zyklus an?',
         a: [
-          '1. Tippe auf der Peptid-Karte auf „+ Zyklus hinzufügen" (lila Button)',
-          '2. Fülle Name, Dosis, Frequenz und Datum aus',
-          '3. Optional: Einnahmezeitpunkt und Erinnerungen wählen',
-          '4. Tippe auf „Speichern"',
-          'Der Zyklus erscheint automatisch im Kalender!',
+          'Du kannst einen Zyklus an mehreren Stellen anlegen:',
+          '- direkt nach dem Speichern einer neuen Substanz über Zyklus anlegen',
+          '- im Vial-Modus über Neu oder Zyklus hinzufügen im Bereich Aktiver Zyklus',
+          '- in der Listenansicht über Zyklus hinzufügen auf der Substanzkarte',
         ],
       },
       {
-        q: 'Welche Frequenz-Optionen gibt es?',
+        q: 'Kann ich mehrere aktive Zyklen für dieselbe Substanz anlegen?',
+        a: 'Ja. Die Sperre wurde entfernt. Du kannst mehrere Zyklen anlegen, auch wenn bereits ein aktiver Zyklus existiert. Alle aktiven Zyklen können im Kalender erscheinen.',
+      },
+      {
+        q: 'Was zeigt der Bereich "Aktiver Zyklus" im Vial-Modus?',
         a: [
-          '• Täglich · 2x täglich · Jeden 2. Tag',
-          '• 5 Tage an / 2 aus (5on/2off)',
-          '• Mo-Fr · Wöchentlich',
-          '• Alle X Tage – eigenes Intervall',
-          '• Wochentage wählen – z.B. nur Mo, Mi, Fr',
+          'Der Bereich zeigt die wichtigsten aktuellen Zyklusdaten:',
+          '- Zyklusname',
+          '- Tag im Zyklus als x / Gesamtdauer oder x / Ende offen',
+          '- aktuelle Dosis',
+          '- Frequenz inklusive Morgens/Mittags/Abends, falls gewählt',
+          '- Methode',
+          '- Reminder',
+          '- Fortschrittsbalken, wenn ein Enddatum existiert',
         ],
       },
       {
-        q: 'Was bedeutet der Aktiv/Inaktiv-Schalter?',
-        a: 'Aktiv = Zyklus erscheint im Kalender (violette Tage). Inaktiv = Zyklus pausiert, nicht im Kalender sichtbar. Umschalten per Tippen auf den Schalter rechts am Zyklus.',
+        q: 'Was bedeutet "Tag x / Ende offen"?',
+        a: 'Der erste Wert ist der aktuelle Tag seit Zyklusstart. Ende offen bedeutet, dass der Zyklus kein Enddatum hat. Bei einem Enddatum steht dort zum Beispiel 17 / 42.',
       },
       {
-        q: 'Was ist der Einnahmezeitpunkt?',
+        q: 'Wie wird die aktuelle Dosis berechnet?',
+        a: 'Die aktuelle Dosis kommt aus dem aktiven Zyklus. Wenn eine Dosiserhöhung für heute aktiv ist, wird sie zur Zyklus-Basisdosis addiert. Eine frühere Standard-Dosis der Substanz spielt keine Rolle mehr.',
+      },
+      {
+        q: 'Was bedeutet "Frequenz" im aktiven Zyklus?',
+        a: 'Frequenz kombiniert den Rhythmus und, falls ausgewählt, die Tageszeit. Beispiel: Täglich · Morgens · Mittags · Abends oder Mo, Mi, Fr · Abends.',
+      },
+      {
+        q: 'Welche Frequenzen kann ich im Zyklus wählen?',
         a: [
-          'Optional – legt die Tageszeit fest:',
-          '🌅 Morgens = 08:00 · ☀️ Mittags = 12:00 · 🌙 Abends = 20:00 · 🕐 Eigene Uhrzeit',
-          'Wird für die Erinnerungsfunktion verwendet. Ist optional – du kannst ihn leer lassen.',
+          'Mögliche Frequenzen sind:',
+          '- Täglich',
+          '- Jeden 2. Tag',
+          '- 5 Tage an / 2 aus',
+          '- Mo-Fr',
+          '- Wöchentlich',
+          '- Alle X Tage',
+          '- Wochentage wählen',
         ],
       },
       {
-        q: 'Wie funktioniert die Erinnerungsfunktion?',
-        a: [
-          'Erinnerungen sind Mehrfachauswahl – du kannst mehrere gleichzeitig wählen:',
-          '• 1 Tag vorher – Erinnerung 24 Stunden vor der Einnahme',
-          '• 2 Std vorher – 2 Stunden Vorlauf',
-          '• Bei Einnahme – genau zur eingestellten Zeit',
-          'Die App fragt beim Speichern nach der Benachrichtigungs-Berechtigung.',
-          'Wichtig: Funktioniert nur wenn die App geöffnet ist.',
-        ],
+        q: 'Was bedeutet 1x, 2x oder 3x täglich?',
+        a: 'Damit legst du fest, wie viele Einnahmezeitpunkte pro Tag geplant sind. Für jeden Slot kannst du morgens, mittags, abends oder eine eigene Uhrzeit wählen.',
       },
       {
-        q: 'Kann ich mehrere Zyklen für ein Peptid haben?',
-        a: 'Ja, beliebig viele. Alle aktiven Zyklen erscheinen im Kalender. Nützlich z.B. für morgens + abends oder verschiedene Dosierungsphasen.',
+        q: 'Was macht der Button "Dosis loggen"?',
+        a: 'Dosis loggen führt dich zum Kalender. Dort kannst du die für den Tag geplante Dosis speichern und anschließend als eingenommen oder nicht eingenommen markieren.',
+      },
+      {
+        q: 'Was passiert, wenn ich einen Zyklus bearbeite und den Plan ändere?',
+        a: 'Wenn du relevante Planwerte änderst, fragt die App, ob die Änderung erst ab heute oder rückwirkend für den gesamten Zyklus gelten soll.',
+      },
+      {
+        q: 'Was bedeutet Aktiv/Inaktiv bei einem Zyklus?',
+        a: 'Aktiv bedeutet, dass der Zyklus im Kalender und in der Planung berücksichtigt wird. Inaktiv pausiert den Zyklus, ohne ihn zu löschen.',
       },
     ],
   },
@@ -348,230 +261,429 @@ export const deCategories: FaqCategory[] = [
     items: [
       {
         q: 'Was ist eine Dosiserhöhung?',
-        a: 'Ein geplanter Anstieg der Dosis innerhalb eines Zyklus. Beispiel: Start mit 200 mcg, nach 2 Wochen +100 mcg, nach 4 Wochen nochmals +100 mcg. Mehrere Stufen sind möglich.',
+        a: 'Eine Dosiserhöhung ist eine geplante Erhöhung innerhalb eines Zyklus. Sie wird ab einem definierten Zeitpunkt zur Basisdosis des Zyklus addiert.',
       },
       {
         q: 'Wie füge ich eine Dosiserhöhung hinzu?',
         a: [
-          '1. Peptid aufklappen → Zyklus suchen → Bereich „Dosiserhöhungen"',
-          '2. Tippe auf „+ Hinzufügen"',
-          '3. Erhöhungsbetrag und Einheit eingeben',
-          '4. Startzeitpunkt wählen: Festes Datum / Nach X Tagen / Nach X Wochen',
-          '5. Optional eine Notiz hinzufügen → Speichern',
+          'Im aktiven Zyklus oder in der aufgeklappten Zyklusliste:',
+          '1. Dosiserhöhungen öffnen',
+          '2. Dosiserhöhung hinzufügen tippen',
+          '3. Betrag und Einheit eintragen',
+          '4. Startzeitpunkt wählen',
+          '5. Optional Notiz ergänzen und speichern',
         ],
       },
       {
-        q: 'Wird die Dosiserhöhung im Kalender angezeigt?',
+        q: 'Welche Startzeitpunkte gibt es?',
         a: [
-          'Ja! Ab dem Zeitpunkt wo eine Erhöhung greift:',
-          '• Oranges 📈-Symbol im Tages-Panel zeigt „Stufe X aktiv"',
-          '• Die angezeigte Dosis ist bereits die erhöhte Gesamtdosis (Basis + Erhöhung)',
-          '• Im Kalender erscheint das Erhöhungs-Icon in der Legende',
+          'Du kannst wählen:',
+          '- festes Datum',
+          '- nach X Tagen ab Zyklusstart',
+          '- nach X Wochen ab Zyklusstart',
         ],
       },
       {
-        q: 'Was bedeuten die Startzeitpunkt-Optionen?',
+        q: 'Was bedeutet die Timeline mit den Punkten links?',
         a: [
-          '• Festes Datum – konkret ab wann die Erhöhung gilt',
-          '• Nach X Tagen – X Tage nach Zyklusstart',
-          '• Nach X Wochen – entsprechende Tagesanzahl nach Zyklusstart',
+          'Die Timeline zeigt Basisdosis und geplante Erhöhungen chronologisch.',
+          '- Der aktuelle Punkt markiert die Dosis, die gerade gilt',
+          '- Abgehakte Punkte liegen bereits in der Vergangenheit',
+          '- Uhr-Symbole stehen für geplante zukünftige Stufen',
         ],
       },
       {
-        q: 'Kann ich mehrere Stufen haben?',
-        a: 'Ja, beliebig viele. Sie werden #1, #2, #3 nummeriert. Alle aktiven Stufen werden addiert.',
+        q: 'Warum steht "Basis" in der Dosiserhöhungs-Liste?',
+        a: 'Basis ist die ursprüngliche Zyklusdosis. Sie bleibt sichtbar, damit du die aktuelle Dosis immer gegen den Startwert vergleichen kannst.',
+      },
+      {
+        q: 'Was bedeutet "Aktuell" in der Dosiserhöhung?',
+        a: 'Aktuell markiert die Stufe, die am heutigen Tag gilt. Wenn keine Erhöhung aktiv ist, ist die Basis als aktuell markiert.',
+      },
+      {
+        q: 'Was bedeutet "Keine Dosiserhöhungen geplant"?',
+        a: 'Für diesen Zyklus gibt es nur die Basisdosis. Du kannst darunter über Dosiserhöhung hinzufügen eine neue Stufe anlegen.',
+      },
+      {
+        q: 'Kann ich mehrere Dosiserhöhungen haben?',
+        a: 'Ja. Mehrere Stufen sind möglich. Die App sortiert sie nach Startzeitpunkt und berechnet daraus die heute wirksame Dosis.',
+      },
+      {
+        q: 'Werden Dosiserhöhungen im Kalender berücksichtigt?',
+        a: 'Ja. Kalender und Tagespanel verwenden die effektive Dosis für den jeweiligen Tag. Wenn eine Erhöhung aktiv ist, wird die angezeigte Dosis entsprechend angepasst.',
       },
     ],
   },
   {
-    id: 'tagebuch',
-    title: 'Tagebuch',
+    id: 'kalender',
+    title: 'Kalender & Dosis-Logging',
     items: [
       {
-        q: 'Was ist das Tagebuch?',
-        a: 'Hier dokumentierst du Wirkungen und Nebenwirkungen deiner Peptide. Hilft dir Muster zu erkennen – welche Effekte wann auftreten, wie stark und wie lange sie anhalten.',
-      },
-      {
-        q: 'Was ist der Unterschied zwischen Wirkung und Nebenwirkung?',
+        q: 'Was zeigt der Kalender?',
         a: [
-          '✅ Wirkung (grün) = gewünschter Effekt (Schlaf, Heilung, Energie...)',
-          '⚠️ Nebenwirkung (orange) = unerwünschter Effekt (Schmerzen, Müdigkeit...)',
+          'Der Kalender zeigt geplante und protokollierte Einnahmen.',
+          '- farbige Tage für aktive Zyklen',
+          '- Markierungen für Logs',
+          '- heutiger Tag',
+          '- Hinweise auf aktive Dosiserhöhungen',
         ],
       },
       {
-        q: 'Was bedeuten die Status-Optionen?',
-        a: [
-          '🔘 Steht noch an – noch nicht eingetreten',
-          '✅ Eingetreten – aktiv vorhanden',
-          '⏳ Noch anhaltend – dauert an',
-          '✅ Abgeklungen – vorbei',
-          'Status direkt auf der Karte ändern ohne Formular zu öffnen.',
-        ],
+        q: 'Wie wechsle ich den Monat?',
+        a: 'Nutze die Pfeile links und rechts am Monatskopf oder wische horizontal über den Kalender.',
       },
       {
-        q: 'Was ist die Intensitätsskala (1–5)?',
+        q: 'Wie logge ich eine geplante Dosis?',
         a: [
-          '1 = Kaum spürbar · 2 = Leicht · 3 = Mittel · 4 = Stark · 5 = Sehr stark',
-        ],
-      },
-      {
-        q: 'Wie filtere und suche ich im Tagebuch?',
-        a: [
-          '• Tabs: Alle / Wirkungen / Nebenwirkungen',
-          '• Suchfeld: filtert nach Beschreibung und Peptidname',
-          '• Sortierung: Datum (neu/alt), Intensität (hoch/niedrig)',
-        ],
-      },
-    ],
-  },
-  {
-    id: 'bewertungen',
-    title: 'Bewertungen',
-    items: [
-      {
-        q: 'Was sind Bewertungen?',
-        a: 'Persönliche Erfahrungsberichte zu einzelnen Peptiden. Mit Sternen (1–5), Gesamterfahrung (Gut/Mittel/Schlecht), Vor- und Nachteilen sowie einem ausführlichen Bericht.',
-      },
-      {
-        q: 'Wie erstelle ich eine Bewertung?',
-        a: [
-          '1. In „Bewertungen" auf „+ Neu" tippen',
-          '2. Peptid auswählen → Sterne vergeben → Erfahrung wählen',
-          '3. Titel eingeben (Pflicht) → optional Bericht, Vorteile, Nachteile',
+          '1. Im Kalender den passenden Tag wählen',
+          '2. Im Tagesbereich den geplanten Zyklus antippen',
+          '3. Dosis, Methode und Uhrzeit prüfen',
           '4. Speichern',
+          '5. Danach optional als eingenommen oder nicht eingenommen bestätigen',
         ],
       },
       {
-        q: 'Wie suche und sortiere ich Bewertungen?',
+        q: 'Was ist der Unterschied zwischen Loggen und Bestätigen?',
+        a: 'Loggen erstellt den Dosiseintrag. Bestätigen markiert, ob die Dosis wirklich eingenommen wurde. Dadurch kann die App Adherence und Reports sauberer darstellen.',
+      },
+      {
+        q: 'Was passiert bei "Eingenommen"?',
+        a: 'Der Log wird als genommen markiert und in Auswertungen als erledigt gezählt.',
+      },
+      {
+        q: 'Was passiert bei "Nicht eingenommen"?',
+        a: 'Der Log wird als nicht genommen markiert. Danach können Snooze-Optionen erscheinen, damit du später erneut erinnert wirst.',
+      },
+      {
+        q: 'Was ist Snooze?',
+        a: 'Snooze ist eine nachträgliche Erinnerung für eine nicht eingenommene Dosis, zum Beispiel nach 15 Minuten, 30 Minuten, 1 Stunde oder 2 Stunden.',
+      },
+      {
+        q: 'Warum sehe ich keinen geplanten Zyklus im Kalender?',
         a: [
-          '• Suchfeld: Titel und Peptidname',
-          '• Sortierung: Neueste / Älteste / Bewertung hoch / Bewertung niedrig',
+          'Prüfe diese Punkte:',
+          '- Zyklus ist aktiv',
+          '- Start- und Enddatum umfassen den gewählten Tag',
+          '- Frequenz passt zum Tag',
+          '- du bist im richtigen Monat',
         ],
       },
       {
-        q: 'Kann ich Bewertungen im Profil teilen?',
-        a: 'Ja. In „Profil" den Schalter „Bewertungen" aktivieren – dann erscheinen sie auf deinem öffentlichen Profil-Link.',
-      },
-    ],
-  },
-  {
-    id: 'profil',
-    title: 'Profil & Teilen',
-    items: [
-      {
-        q: 'Was kann ich im Profil eintragen?',
-        a: [
-          '• Benutzername (für den Teilen-Link) – Pflichtfeld',
-          '• Anzeigename, Alter, Geschlecht, Gewicht, Größe',
-          '• Persönliche Notizen (nur für dich)',
-          '• Öffentliche Bio (erscheint auf dem geteilten Profil)',
-        ],
-      },
-      {
-        q: 'Wie aktiviere ich das öffentliche Profil?',
-        a: [
-          '1. Benutzernamen eintragen und Profil speichern',
-          '2. Hauptschalter „Profil teilen" aktivieren',
-          '3. Einzelne Bereiche freigeben (Peptide / Kalender / Tagebuch / Bewertungen)',
-          '4. Speichern → Link erscheint und kann kopiert werden',
-        ],
-      },
-      {
-        q: 'Welche Inhalte kann ich freigeben?',
-        a: [
-          'Jeder Bereich hat einen eigenen Schalter:',
-          '🧪 Peptide · 📅 Kalender & Zyklen · 📖 Tagebuch · ⭐ Bewertungen',
-          'Du kannst z.B. nur Bewertungen teilen, alles andere bleibt privat.',
-        ],
-      },
-      {
-        q: 'Kann ich das Teilen jederzeit deaktivieren?',
-        a: 'Ja. Hauptschalter „Profil teilen" aus → speichern. Der Link zeigt sofort „Dieses Profil ist privat".',
+        q: 'Wird mein Vorrat beim Loggen reduziert?',
+        a: 'Wenn die App die Dosis in Vial-Anteile umrechnen kann, kann der Bestand entsprechend reduziert werden. Dafür braucht sie Wirkstoff pro Vial, rekonstituierte Flüssigkeit und eine passende Einheit.',
       },
     ],
   },
   {
     id: 'erinnerung',
-    title: 'Erinnerungen & Snooze',
+    title: 'Reminder, Push & Snooze',
     items: [
       {
-        q: 'Wie richte ich Erinnerungen ein?',
+        q: 'Welche Reminder kann ich im Zyklus wählen?',
+        a: 'Du kannst 1 Tag vorher, 2 Stunden vorher und Bei Einnahme kombinieren. Die Auswahl ist mehrfach möglich.',
+      },
+      {
+        q: 'Warum stehen Morgens, Mittags und Abends bei Frequenz?',
+        a: 'Wenn du diese Einnahmezeiten im Zyklus wählst, werden sie in der aktiven Zykluskarte direkt bei Frequenz angezeigt. So ist auf einen Blick sichtbar, wann die Dosis geplant ist.',
+      },
+      {
+        q: 'Was bedeutet "Bei Einnahme"?',
+        a: 'Der Reminder ist zur geplanten Einnahmezeit fällig. Ohne Einnahmezeit kann die App keine genaue Tageszeit ableiten.',
+      },
+      {
+        q: 'Muss ich Benachrichtigungen erlauben?',
+        a: 'Ja, für echte Benachrichtigungen braucht die App die Browser- oder Systemberechtigung. Ohne Berechtigung bleiben die Daten gespeichert, aber es erscheint keine Benachrichtigung.',
+      },
+      {
+        q: 'Warum bekomme ich keine Push-Mitteilung?',
         a: [
-          '1. Zyklus erstellen oder bearbeiten',
-          '2. Einnahmezeitpunkt setzen (Morgens/Mittags/Abends/Eigene Uhrzeit)',
-          '3. Unter „Erinnerung" eine oder mehrere Optionen wählen (Mehrfachauswahl)',
-          '4. Speichern → App fragt nach Benachrichtigungs-Berechtigung',
+          'Mögliche Gründe:',
+          '- Benachrichtigungen sind im Browser oder Betriebssystem blockiert',
+          '- die PWA ist nicht korrekt installiert',
+          '- der Reminder liegt in der Vergangenheit',
+          '- der Zyklus ist inaktiv',
+          '- die Push-Verbindung muss im Profil neu verbunden werden',
         ],
       },
       {
-        q: 'Kann ich mehrere Erinnerungszeitpunkte gleichzeitig wählen?',
-        a: 'Ja. Du kannst z.B. „1 Tag vorher" und „Bei Einnahme" gleichzeitig aktivieren. Häkchen zeigen welche aktiv sind.',
+        q: 'Was macht "Neu verbinden" im Profil?',
+        a: 'Neu verbinden setzt die Push-Verbindung neu auf. Das ist nützlich, wenn Benachrichtigungen nach Browser-, iOS- oder App-Änderungen nicht mehr ankommen.',
       },
       {
-        q: 'Was ist der Unterschied zwischen Erinnerung und Snooze?',
+        q: 'Was macht "Test senden" im Profil?',
+        a: 'Test senden prüft, ob Benachrichtigungen auf deinem aktuellen Gerät ankommen. Auf iPhone kann die Mitteilung je nach Zustand erst sichtbar werden, wenn die App geschlossen oder das Gerät gesperrt ist.',
+      },
+    ],
+  },
+  {
+    id: 'rechner',
+    title: 'Rechner',
+    items: [
+      {
+        q: 'Wofür ist der Rechner da?',
+        a: 'Der Rechner hilft, aus Vial-Menge, hinzugefügter Flüssigkeit, Ziel-Dosis und Spritzenskala das aufzuziehende Volumen beziehungsweise die Einheiten zu berechnen.',
+      },
+      {
+        q: 'Welche Eingaben braucht der Rechner?',
         a: [
-          'Erinnerung (im Zyklus) = geplante Benachrichtigung vor der Einnahme',
-          'Snooze (im Kalender) = nachträgliche Erinnerung wenn du eine Dosis als „Nicht eingenommen" markiert hast (15 Min / 30 Min / 1 Std / 2 Std)',
+          '- Spritzengröße und Einheiten',
+          '- Wirkstoff pro Vial',
+          '- rekonstituierte Flüssigkeit',
+          '- Ziel-Dosis und Einheit',
         ],
       },
       {
-        q: 'Warum bekomme ich keine Erinnerung?',
+        q: 'Kann ich gespeicherte Substanzen im Rechner verwenden?',
+        a: 'Ja. Wenn eine Substanz Wirkstoff pro Vial und Flüssigkeit gespeichert hat, kannst du sie im Rechner auswählen und die Werte automatisch übernehmen.',
+      },
+      {
+        q: 'Was zeigt die große Zahl im Rechner?',
+        a: 'Sie zeigt die berechneten Spritzeneinheiten, die du für die eingegebene Dosis aufziehen würdest.',
+      },
+      {
+        q: 'Was bedeuten Konzentration, Gefüllt und Pro Vial?',
         a: [
-          '• Benachrichtigungs-Berechtigung verweigert → in Handyeinstellungen freischalten',
-          '• App war zur Erinnerungszeit nicht geöffnet',
-          '• Erinnerungszeit ist heute bereits vergangen',
-          '• Zyklus ist „Inaktiv"',
+          '- Konzentration: Wirkstoff pro mL nach Rekonstitution',
+          '- Gefüllt: wie viel Prozent der Spritze die berechnete Dosis belegt',
+          '- Pro Vial: ungefähre Anzahl Dosen aus einem Vial',
         ],
       },
       {
-        q: 'Funktionieren Erinnerungen bei geschlossener App?',
-        a: 'Aktuell nicht. Die Benachrichtigungen sind Browser-basiert und benötigen eine geöffnete App (Tab oder PWA). Für Hintergrund-Benachrichtigungen wäre ein Push-Service nötig.',
+        q: 'Warum kann der Rechner keine medizinische Dosis empfehlen?',
+        a: 'Der Rechner rechnet nur deine Eingaben um. Er entscheidet nicht, welche Dosis sinnvoll, sicher oder passend ist.',
+      },
+    ],
+  },
+  {
+    id: 'injections',
+    title: 'Injektionen & Rotation',
+    items: [
+      {
+        q: 'Wofür ist der Bereich Injektionen da?',
+        a: 'Der Injektionsbereich dokumentiert, welche Körperstelle du wann genutzt hast. So kannst du Stellen rotieren und Übernutzung vermeiden.',
+      },
+      {
+        q: 'Was bedeuten die Farben der Injektionsstellen?',
+        a: [
+          '- Grün: frei beziehungsweise lange nicht genutzt',
+          '- Gelb: kürzlich genutzt, vorsichtig planen',
+          '- Rot: sehr kürzlich genutzt, besser ausweichen',
+        ],
+      },
+      {
+        q: 'Was macht "Empfohlen"?',
+        a: 'Die App empfiehlt bevorzugt eine noch nie genutzte oder am längsten nicht genutzte Stelle.',
+      },
+      {
+        q: 'Wie logge ich eine Injektionsstelle?',
+        a: 'Tippe auf eine Stelle im Körperdiagramm, ergänze optional Notizen und speichere den Eintrag.',
+      },
+      {
+        q: 'Kann ich zwischen Vorder- und Rückseite wechseln?',
+        a: 'Ja. Der Bereich hat Vorder- und Rückansicht, damit Bauch, Oberschenkel, Deltoid und Gesäß getrennt dokumentiert werden können.',
+      },
+      {
+        q: 'Kann ich einen Injektionslog löschen?',
+        a: 'Ja. In der Historie kannst du Einträge entfernen, falls du dich vertippt hast.',
+      },
+    ],
+  },
+  {
+    id: 'inventory',
+    title: 'Lager, Vorrat & Rekonstitution',
+    items: [
+      {
+        q: 'Was ist der Unterschied zwischen Lager und My Stack?',
+        a: 'Das Lager beschreibt rohe beziehungsweise verfügbare Vials. My Stack beschreibt Substanzen, die du aktiv dokumentierst, rekonstituierst und mit Zyklen verbindest.',
+      },
+      {
+        q: 'Was bedeutet "Rohe Vials in Reserve"?',
+        a: 'Das ist der Bestand, der noch als Reserve im Lager geführt wird. Er erscheint in der Info-Leiste, wenn die Substanz mit einem Inventar-Eintrag verknüpft ist.',
+      },
+      {
+        q: 'Was passiert beim Rekonstituieren?',
+        a: 'Beim Rekonstituieren wird dokumentiert, dass ein Vial angesetzt wurde. Datum, Haltbarkeit und Vorrat können dadurch aktualisiert werden.',
+      },
+      {
+        q: 'Was bedeutet Haltbarkeit nach Rekonstitution?',
+        a: 'Die App berechnet aus Rekonstitutionsdatum und Haltbarkeit das Ablaufdatum. Die Anzeige wechselt je nach Restzeit farblich.',
+      },
+      {
+        q: 'Was passiert, wenn die Haltbarkeit nicht gesetzt ist?',
+        a: 'Dann zeigt die App Nicht gesetzt. Es wird kein verlässlicher Countdown berechnet.',
+      },
+      {
+        q: 'Wofür sind Batch, Quelle und Analyse-Dokument?',
+        a: 'Diese Felder dokumentieren Herkunft, Charge und Nachweise wie COA, Laborbericht oder Bild. Sie erscheinen in der Info-Leiste und im Detail-Sheet.',
+      },
+    ],
+  },
+  {
+    id: 'reports',
+    title: 'Protokoll, Fortschritt, Blutwerte & Health',
+    items: [
+      {
+        q: 'Was macht der Bereich Protokoll?',
+        a: 'Protokoll bündelt Daten aus Zyklen, Dosislogs, Gewicht, Blutwerten und Adherence zu Auswertungen und kann daraus einen PDF-Report erzeugen.',
+      },
+      {
+        q: 'Was bedeutet "PDF generieren"?',
+        a: 'Die App erstellt einen strukturierten Report für deine Dokumentation. Je nach Datenlage enthält er Zeitraum, aktive Zyklen, Charts, Blutwerte, Gewicht und Adherence.',
+      },
+      {
+        q: 'Was ist der Share-Link im Protokoll?',
+        a: 'Der Share-Link kopiert einen Link beziehungsweise eine Referenz, mit der du deinen Report oder die relevante Ansicht weiterverwenden kannst, sofern die App diese Daten bereitstellt.',
+      },
+      {
+        q: 'Wofür sind Blutwerte?',
+        a: 'Blutwerte dokumentieren Laborwerte mit Datum, Marker, Wert, Einheit und Notizen. Sie können später im Protokoll und in Verlaufsgrafiken auftauchen.',
+      },
+      {
+        q: 'Wofür ist Fortschritt?',
+        a: 'Fortschritt ist für Gewicht, Fotos und Verlauf gedacht. Er hilft, sichtbare und messbare Veränderungen über Zeit zu dokumentieren.',
+      },
+      {
+        q: 'Was macht Health?',
+        a: 'Health ist für Gesundheitsdaten und Integrationen vorgesehen. Verfügbarkeit und Umfang hängen vom Gerät, der Plattform und den Berechtigungen ab.',
+      },
+      {
+        q: 'Warum sind manche Diagramme leer?',
+        a: 'Diagramme brauchen passende Daten im gewählten Zeitraum. Wenn keine Logs, Blutwerte, Gewichtseinträge oder abgeschlossenen Zyklen vorhanden sind, bleibt die Auswertung leer.',
+      },
+    ],
+  },
+  {
+    id: 'tagebuch',
+    title: 'Tagebuch & Effekte',
+    items: [
+      {
+        q: 'Wofür ist das Tagebuch?',
+        a: 'Im Tagebuch dokumentierst du Wirkungen, Nebenwirkungen, Intensität, Zeitpunkt und Verlauf. Es hilft, Muster zwischen Substanz, Zyklus und Effekt zu erkennen.',
+      },
+      {
+        q: 'Was ist der Unterschied zwischen Wirkung und Nebenwirkung?',
+        a: 'Wirkung beschreibt einen gewünschten Effekt. Nebenwirkung beschreibt einen unerwünschten oder auffälligen Effekt.',
+      },
+      {
+        q: 'Was bedeutet die Intensität?',
+        a: 'Die Intensität bewertet, wie stark ein Effekt war. Sie ist eine subjektive Skala für deine spätere Auswertung.',
+      },
+      {
+        q: 'Kann ich Einträge filtern?',
+        a: 'Ja. Du kannst nach Typ, Peptid, Text, Datum oder Intensität suchen beziehungsweise sortieren, je nachdem welche Filter im Bereich aktiv sind.',
+      },
+      {
+        q: 'Fließen Tagebuchdaten in Reports ein?',
+        a: 'Ja, Tagebuchdaten können in Auswertungen und im Protokoll genutzt werden, wenn der Bereich entsprechende Daten findet.',
+      },
+    ],
+  },
+  {
+    id: 'bewertungen',
+    title: 'Bewertungen & Research',
+    items: [
+      {
+        q: 'Wofür sind Bewertungen?',
+        a: 'Bewertungen sind persönliche Erfahrungsberichte zu Substanzen. Du kannst Sterne, Gesamturteil, Vorteile, Nachteile und einen Text erfassen.',
+      },
+      {
+        q: 'Sind Bewertungen öffentlich?',
+        a: 'Nein, nicht automatisch. Sie werden nur sichtbar, wenn du dein Profil freigibst und den Bereich Bewertungen aktivierst.',
+      },
+      {
+        q: 'Was ist The Lab?',
+        a: 'The Lab ist der Research-Bereich für Studien, Suchergebnisse und Peptidinformationen. Er hilft beim Nachschlagen, ersetzt aber keine fachliche Bewertung.',
+      },
+      {
+        q: 'Was ist die Bibliothek?',
+        a: 'Die Bibliothek ist eine strukturierte Peptid-Übersicht mit Detailseiten. Sie dient als Nachschlagebereich innerhalb der App.',
+      },
+      {
+        q: 'Kann ich Research-Inhalte direkt als Empfehlung verstehen?',
+        a: 'Nein. Studien- und Bibliotheksinhalte sind Informationsmaterial und müssen fachlich eingeordnet werden.',
+      },
+    ],
+  },
+  {
+    id: 'profil',
+    title: 'Profil, Sprache, Theme & Teilen',
+    items: [
+      {
+        q: 'Was kann ich im Profil einstellen?',
+        a: 'Im Profil verwaltest du Accountdaten, Anzeigenamen, Benutzername, Sprache, Theme, Push-Status, öffentliches Profil und Freigaben.',
+      },
+      {
+        q: 'Wofür ist der Benutzername?',
+        a: 'Der Benutzername wird für deinen öffentlichen Profil-Link verwendet. Ohne Benutzername kann kein sauberer Share-Link erstellt werden.',
+      },
+      {
+        q: 'Wie funktioniert das öffentliche Profil?',
+        a: [
+          'Du aktivierst zuerst Profil teilen.',
+          'Danach wählst du einzeln, welche Bereiche sichtbar sein dürfen: Peptide, Kalender, Tagebuch oder Bewertungen.',
+          'Nicht freigegebene Bereiche bleiben privat.',
+        ],
+      },
+      {
+        q: 'Kann ich Teilen jederzeit ausschalten?',
+        a: 'Ja. Wenn du Profil teilen deaktivierst und speicherst, ist der öffentliche Link nicht mehr sichtbar nutzbar.',
+      },
+      {
+        q: 'Was macht der Kopieren-Button beim Profil-Link?',
+        a: 'Er kopiert deinen öffentlichen Link in die Zwischenablage, damit du ihn teilen kannst.',
+      },
+      {
+        q: 'Wie ändere ich Sprache oder Theme?',
+        a: 'Im Profil kannst du Sprache und Darstellung umstellen. Das Theme kann je nach App-Stand System, Hell oder Dunkel verwenden.',
+      },
+      {
+        q: 'Wie melde ich mich ab?',
+        a: 'Im Profil gibt es den Abmelden-Button. Deine Daten bleiben serverseitig gespeichert und sind beim nächsten Login wieder verfügbar.',
       },
     ],
   },
   {
     id: 'technik',
-    title: 'Technisches & Datenschutz',
+    title: 'Technik, Datenschutz & Fehler',
     items: [
+      {
+        q: 'Wo werden meine Daten gespeichert?',
+        a: 'Die App speichert Daten in Supabase. Zugriff ist nutzerbezogen abgesichert, sodass du nur deine eigenen Daten siehst.',
+      },
+      {
+        q: 'Werden Daten gelöscht, wenn ich die App vom Handy entferne?',
+        a: 'Nein. Die Daten liegen nicht nur lokal auf dem Gerät, sondern serverseitig. Nach erneutem Login sind sie wieder verfügbar.',
+      },
       {
         q: 'Warum erscheint "Fehler beim Speichern"?',
         a: [
-          '• Keine Internetverbindung',
-          '• Pflichtfelder nicht ausgefüllt',
-          '• Sitzung abgelaufen → ab- und wieder anmelden',
-          '• Bei PDF-Upload: Storage-Bucket noch nicht eingerichtet → SQL in Supabase ausführen',
+          'Typische Ursachen sind:',
+          '- fehlende Pflichtfelder',
+          '- keine Internetverbindung',
+          '- abgelaufene Sitzung',
+          '- fehlende Datenbanktabelle oder Storage-Konfiguration',
+          '- blockierte Datei- oder Upload-Berechtigung',
         ],
       },
       {
-        q: 'Warum kann ich keine PDF hochladen?',
-        a: [
-          'Der Speicher-Bucket „batch-files" muss einmalig in Supabase eingerichtet werden:',
-          '1. supabase.com → dein Projekt → SQL Editor → neuer Tab',
-          '2. Den SQL-Code aus „supabase-inventory.sql" einfügen und ausführen',
-          'Danach funktioniert der Upload sofort.',
-        ],
+        q: 'Warum kann ein Upload fehlschlagen?',
+        a: 'Uploads brauchen eine stabile Verbindung und den passenden Storage-Bucket. Wenn der Bucket nicht eingerichtet ist oder die Datei blockiert wird, kann der Upload scheitern.',
       },
       {
-        q: 'Was passiert mit meinen Daten wenn ich mich abmelde?',
-        a: 'Deine Daten bleiben erhalten. Beim nächsten Login sind alle Einträge noch vorhanden.',
+        q: 'Warum sehe ich nach einem Update alte Daten oder altes Design?',
+        a: 'Browser und PWA können alte Dateien zwischenspeichern. Lade die App neu, schließe sie komplett oder installiere die PWA neu, wenn ein Deployment noch nicht sichtbar ist.',
       },
       {
-        q: 'Werden Daten gelöscht wenn ich die App deinstalliere?',
-        a: 'Nein. Die Daten liegen auf dem Server (Supabase) – unabhängig vom Gerät. Auf jedem Gerät einfach neu anmelden.',
+        q: 'Was bedeutet es, wenn ein Button deaktiviert ist?',
+        a: 'Ein deaktivierter Button weist meist darauf hin, dass Daten fehlen oder die Aktion für diesen Eintrag nicht möglich ist, zum Beispiel Rekonst. ohne verknüpftes Inventar.',
       },
       {
-        q: 'Ist die App für medizinische Zwecke geeignet?',
-        a: 'Nein. Ausschließlich für Forschungs- und Dokumentationszwecke. Kein Ersatz für medizinische Beratung. Konsultiere immer einen Arzt.',
+        q: 'Warum können Zahlen leicht gerundet wirken?',
+        a: 'Füllstand, Dosen, Einheiten und Reports werden teilweise gerundet, damit sie in der App lesbar bleiben. Für Entscheidungen solltest du immer die gespeicherten Rohdaten prüfen.',
       },
       {
-        q: 'Kann ich die App auf Tablet oder zweitem Gerät nutzen?',
-        a: [
-          'Ja. Da alle Daten in der Cloud liegen, funktioniert die App auf beliebig vielen Geräten:',
-          '1. Gleiche URL im Browser öffnen',
-          '2. Mit demselben Account einloggen',
-          '3. Alle Daten sind sofort verfügbar',
-          'Für den Code-Zugriff (Entwicklung): Repository auf GitHub klonen.',
-        ],
+        q: 'Ist die App offline nutzbar?',
+        a: 'Die PWA kann Teile der App zwischenspeichern. Für Login, Speichern, Uploads, Sync, Push und aktuelle Daten wird aber eine Verbindung benötigt.',
       },
     ],
   },
