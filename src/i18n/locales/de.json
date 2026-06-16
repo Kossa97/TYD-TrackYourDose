@@ -209,6 +209,7 @@
   "sort_group_fill": "Füllstand · Rest im aktuellen Vial (%)",
   "sort_group_recon": "Rekonstitution · Mischungsdatum",
   "sort_group_stock": "Lagerbestand · Rohe Vials in Reserve",
+  "sort_option_active_name": "Aktive zuerst (A–Z)",
   "sort_option_name_asc": "Name ↑",
   "sort_option_name_desc": "Name ↓",
   "sort_option_expiry_asc": "Haltbarkeit ↑",

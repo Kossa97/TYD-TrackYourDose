@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import {
   Plus, Minus, Trash2, Pencil, FlaskConical, Activity,
   CalendarDays, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, List,
-  TrendingUp, Search, Bell, Check,
+  TrendingUp, Search, Bell, Check, SlidersHorizontal,
   Package, FileUp, Droplets, X, FileText, ExternalLink,
   Archive, RefreshCw, Sunrise, Sun, Moon, Clock, type LucideIcon,
 } from 'lucide-react'
@@ -18,6 +18,7 @@ import { format, parseISO, addDays, differenceInDays } from 'date-fns'
 import { effectiveDose, type ScheduleSegment } from '../lib/intakeSchedule'
 import { PeptideFormModal } from '../components/PeptideFormModal'
 import { PeptideVialVisual } from '../components/PeptideVialVisual'
+import { LabLoader } from '../components/LabLoader'
 import { emptyPeptideForm, type PeptideForm, type PkProfileOption } from '../lib/peptideFormTypes'
 
 interface InventoryItem {
@@ -99,6 +100,7 @@ const WOCHENTAGE = ['Mo','Di','Mi','Do','Fr','Sa','So']
 const EXPIRY_PRESETS = [10, 14, 21, 28, 42, 90]
 
 type PeptideSortKey =
+  | 'active_name'
   | 'name_asc' | 'name_desc'
   | 'expiry_asc' | 'expiry_desc'
   | 'fill_asc' | 'fill_desc'
@@ -114,6 +116,7 @@ const PEPTIDE_SORT_GROUPS: { labelKey: string; options: PeptideSortKey[] }[] = [
 ]
 
 const SORT_OPTION_LABEL_KEYS: Record<PeptideSortKey, string> = {
+  active_name: 'sort_option_active_name',
   name_asc: 'sort_option_name_asc',
   name_desc: 'sort_option_name_desc',
   expiry_asc: 'sort_option_expiry_asc',
@@ -159,9 +162,14 @@ function compareNullableDate(a: string | null | undefined, b: string | null | un
   return asc ? diff : -diff
 }
 
-function sortPeptides(list: Peptide[], sortBy: PeptideSortKey): Peptide[] {
+function sortPeptides(list: Peptide[], sortBy: PeptideSortKey, activeIds: Set<string>): Peptide[] {
   return [...list].sort((a, b) => {
     switch (sortBy) {
+      case 'active_name': {
+        // Default order: active peptides first (alphabetically), then inactive ones (alphabetically).
+        const rank = (p: Peptide) => (activeIds.has(p.id) ? 0 : 1)
+        return rank(a) - rank(b) || a.name.localeCompare(b.name)
+      }
       case 'name_asc': return a.name.localeCompare(b.name)
       case 'name_desc': return b.name.localeCompare(a.name)
       case 'expiry_asc': return compareNullableNum(expiryDaysLeft(a), expiryDaysLeft(b), true)
@@ -426,6 +434,26 @@ function nextScheduleHistory(
   return history
 }
 
+// Empty "ghost" vial that adds a new substance when clicked. Mirrors the vial
+// silhouette (neck + body) used by PeptideVialVisual so it sits naturally in the carousel.
+function AddVialTile({ onClick, label, obKey }: { onClick: () => void; label: string; obKey?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      {...(obKey ? { 'data-ob': obKey } : {})}
+      className="group mx-auto flex w-28 flex-col items-center sm:w-36"
+    >
+      <div className="h-3 w-24 rounded-t-lg border border-dashed border-slate-600/70 bg-slate-900/40 transition-colors group-hover:border-cyan-400/50" />
+      <div className="flex h-44 w-full flex-col items-center justify-center gap-2 rounded-[1.4rem] border border-dashed border-slate-600/70 bg-slate-900/30 text-slate-500 transition-colors group-hover:border-cyan-400/60 group-hover:text-cyan-300 sm:h-52">
+        <Plus size={34} strokeWidth={1.5} />
+        <span className="px-3 text-center text-sm font-semibold leading-tight">{label}</span>
+      </div>
+    </button>
+  )
+}
+
 // ─── Hauptkomponente ──────────────────────────────────────────────────────────
 export function Peptide() {
   const { t } = useTranslation()
@@ -454,6 +482,9 @@ export function Peptide() {
 
   // ── Peptide ───────────────────────────────────────────────────────────────
   const [peptides, setPeptides]               = useState<Peptide[]>([])
+  const [loading, setLoading]                 = useState(true)
+  const [initialLoad, setInitialLoad]         = useState(true)
+  const [loaderFading, setLoaderFading]       = useState(false)
   const [cycles, setCycles]                   = useState<Cycle[]>([])
   const [expandedId, setExpandedId]           = useState<string | null>(null)
   const [showPeptideForm, setShowPeptideForm] = useState(false)
@@ -465,13 +496,17 @@ export function Peptide() {
   const [uploadingFile, setUploadingFile]     = useState(false)
   const [infoPeptide, setInfoPeptide]         = useState<Peptide | null>(null)
   const [search, setSearch]                   = useState('')
-  const [sortBy, setSortBy]                   = useState<PeptideSortKey>('name_asc')
+  const [searchOpen, setSearchOpen]           = useState(false)
+  const [filterOpen, setFilterOpen]           = useState(false)
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
+  const [sortBy, setSortBy]                   = useState<PeptideSortKey>('active_name')
   const [viewMode, setViewModeState]          = useState<'vials' | 'list'>(() =>
     localStorage.getItem('tyd_peptide_view') === 'list' ? 'list' : 'vials'
   )
   const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
   const [vialDetailsOpen, setVialDetailsOpen] = useState(false)
   const [isVialCarouselDragging, setIsVialCarouselDragging] = useState(false)
+  const [addTileActive, setAddTileActive] = useState(false)
   const vialCarouselRef = useRef<HTMLDivElement | null>(null)
   const vialScrollFrameRef = useRef<number | null>(null)
   const vialDraggingRef = useRef(false)
@@ -517,7 +552,15 @@ export function Peptide() {
     const { data } = await supabase.from('dose_escalations').select('*').eq('user_id', user!.id).order('start_after_days').order('start_date')
     if (data) setEscalations(data as Escalation[])
   }
-  useEffect(() => { loadInventory(); loadPeptides(); loadCycles(); loadEscalations() }, [])
+  useEffect(() => {
+    Promise.all([loadInventory(), loadPeptides(), loadCycles(), loadEscalations()])
+      .finally(() => {
+        setLoading(false)
+        // Fade out the full-screen loader, then unmount it (same as The Lab).
+        setLoaderFading(true)
+        setTimeout(() => setInitialLoad(false), 500)
+      })
+  }, [])
 
   useEffect(() => {
     if (!showPeptideForm) return
@@ -568,9 +611,14 @@ export function Peptide() {
     setPkSuggestOpen(false)
   }
 
+  const activePeptideIds = useMemo(
+    () => new Set(cycles.filter(c => c.active).map(c => c.peptide_id)),
+    [cycles],
+  )
   const displayPeptides = sortPeptides(
     peptides.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase())),
     sortBy,
+    activePeptideIds,
   )
 
   const setViewMode = (mode: 'vials' | 'list') => {
@@ -1006,6 +1054,25 @@ export function Peptide() {
   useEffect(() => {
     setVialDetailsOpen(false)
   }, [activePeptideId])
+  // Focus the search field right after it expands.
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus()
+  }, [searchOpen])
+  const closeSearch = () => { setSearchOpen(false); setSearch('') }
+  // On entering the vials view (toggle or page load), always reset to the first
+  // peptide and center it, so the leading add tile isn't the centered item.
+  useEffect(() => {
+    if (viewMode !== 'vials') return
+    const first = displayPeptides[0]
+    if (!first) return
+    setActivePeptideId(first.id)
+    setAddTileActive(false)
+    requestAnimationFrame(() => {
+      const item = vialCarouselRef.current?.querySelector<HTMLElement>('[data-vial-index="0"]')
+      item?.scrollIntoView({ block: 'nearest', inline: 'center' })
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, loading])
   const vialSnapClassName = isVialCarouselDragging ? 'snap-none' : 'snap-x snap-mandatory'
   const vialItemSnapClassName = isVialCarouselDragging ? '' : 'snap-center'
   const scrollToPeptideIndex = (index: number) => {
@@ -1016,6 +1083,7 @@ export function Peptide() {
   const selectPeptideIndex = (index: number) => {
     const next = displayPeptides[index]
     if (!next) return
+    setAddTileActive(false)
     scrollToPeptideIndex(index)
     setActivePeptideId(next.id)
   }
@@ -1037,6 +1105,19 @@ export function Peptide() {
 
     return closestIndex
   }
+  // True when the leading "add substance" tile is the carousel item closest to center.
+  const isAddTileClosest = (carousel: HTMLDivElement) => {
+    const addEl = carousel.querySelector<HTMLElement>('[data-vial-add]')
+    if (!addEl) return false
+    const carouselCenter = carousel.scrollLeft + carousel.clientWidth / 2
+    const addDistance = Math.abs(addEl.offsetLeft + addEl.offsetWidth / 2 - carouselCenter)
+    let closestPeptideDistance = Number.POSITIVE_INFINITY
+    for (const item of carousel.querySelectorAll<HTMLElement>('[data-vial-index]')) {
+      const distance = Math.abs(item.offsetLeft + item.offsetWidth / 2 - carouselCenter)
+      if (distance < closestPeptideDistance) closestPeptideDistance = distance
+    }
+    return addDistance < closestPeptideDistance
+  }
   const handleVialCarouselScroll = () => {
     const carousel = vialCarouselRef.current
     if (!carousel) return
@@ -1046,6 +1127,7 @@ export function Peptide() {
       const closestIndex = getClosestVialIndex(carousel)
       const next = displayPeptides[closestIndex]
       if (next && next.id !== activePeptideId) setActivePeptideId(next.id)
+      setAddTileActive(isAddTileClosest(carousel))
       vialScrollFrameRef.current = null
     })
   }
@@ -1130,74 +1212,134 @@ export function Peptide() {
 
   return (
     <div>
-      {/* ── Header + Aktions-Button ─────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <FlaskConical size={16} className="text-sky-400" />
-            <h2 className="font-semibold text-white">{t('meine_peptide')}</h2>
-            {peptides.length > 0 && (
-              <span className="badge bg-slate-700 text-slate-400">{peptides.length}</span>
-            )}
-          </div>
-          <p className="text-xs text-slate-500 mt-1">{t('fertig_rekonst')}</p>
+      {/* ── Header (single row): Titel · Suche · Ansicht/Filter ─────────── */}
+      <div className="relative flex items-center gap-2 mb-4">
+        {/* Titel — kollabiert smooth, sobald die Suche geöffnet wird */}
+        <div className={`flex min-w-0 items-center gap-2 overflow-hidden transition-all duration-300 ${searchOpen ? 'max-w-0 opacity-0' : 'max-w-[70%] opacity-100'}`}>
+          <FlaskConical size={18} className="shrink-0 text-sky-400" />
+          <h2 className="whitespace-nowrap font-semibold text-white">{t('meine_peptide')}</h2>
+          {peptides.length > 0 && (
+            <span className="badge bg-slate-700 text-slate-400">{peptides.length}</span>
+          )}
         </div>
-        <button data-ob="btn-peptid-anlegen" className="btn-primary flex items-center gap-1.5 text-sm py-2 shrink-0" onClick={handleNewPeptide}>
-          <Plus size={15} /> {t('new')}
-        </button>
+
+        {peptides.length > 0 && (
+          <>
+            {/* Suchfeld — wächst smooth von rechts in die Zeile */}
+            <div className={`relative overflow-hidden transition-[max-width] duration-300 ease-out ${searchOpen ? 'max-w-full flex-1' : 'max-w-0'}`}>
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                className="input w-full pl-9 text-sm"
+                placeholder={t('peptid_suchen')}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Escape') closeSearch() }}
+              />
+            </div>
+
+            {!searchOpen && <div className="flex-1" />}
+
+            {/* Lupe / Schließen */}
+            <button
+              type="button"
+              onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
+              aria-label={searchOpen ? t('close') : t('peptid_suchen')}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+            >
+              {searchOpen ? <X size={18} /> : <Search size={18} />}
+            </button>
+
+            {/* Ansicht + Sortierung (Popover) */}
+            {!searchOpen && (
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setFilterOpen(o => !o)}
+                  aria-label={t('sort_aria_label')}
+                  aria-expanded={filterOpen}
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-colors ${
+                    filterOpen
+                      ? 'border-cyan-400/50 bg-cyan-400/10 text-cyan-300'
+                      : 'border-slate-800 bg-slate-900/70 text-slate-300 hover:border-cyan-400/50 hover:text-cyan-300'
+                  }`}
+                >
+                  <SlidersHorizontal size={18} />
+                </button>
+
+                {filterOpen && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setFilterOpen(false)} />
+                    <div className="absolute right-0 top-full z-30 mt-2 w-56 space-y-3 rounded-xl border border-slate-800 bg-[var(--surface-raised)] p-3 shadow-2xl">
+                      <div>
+                        <p className="mb-1.5 text-xs font-semibold text-slate-400">Ansicht</p>
+                        <div className="flex rounded-xl border border-slate-800 bg-slate-900/70 p-1">
+                          <button
+                            type="button"
+                            onClick={() => setViewMode('vials')}
+                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                              viewMode === 'vials' ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <FlaskConical size={14} /> Vials
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setViewMode('list')}
+                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                              viewMode === 'list' ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <List size={14} /> Liste
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="mb-1.5 text-xs font-semibold text-slate-400">{t('sort_aria_label')}</p>
+                        <select
+                          className="select w-full pr-8 text-sm"
+                          value={sortBy}
+                          aria-label={t('sort_aria_label')}
+                          onChange={e => setSortBy(e.target.value as PeptideSortKey)}
+                        >
+                          <option value="active_name">{t('sort_option_active_name')}</option>
+                          {PEPTIDE_SORT_GROUPS.map(group => (
+                            <optgroup key={group.labelKey} label={t(group.labelKey)}>
+                              {group.options.map(key => (
+                                <option key={key} value={key}>{t(SORT_OPTION_LABEL_KEYS[key])}</option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
       <div>
-          {peptides.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              <div className="relative flex-1 min-w-[13rem]">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-                <input className="input pl-9 text-sm" placeholder={t('peptid_suchen')}
-                  value={search} onChange={e => setSearch(e.target.value)} />
-              </div>
-              <select className="select text-sm shrink-0 w-auto min-w-[8.5rem] max-w-[48%] pr-8" value={sortBy}
-                aria-label={t('sort_aria_label')}
-                onChange={e => setSortBy(e.target.value as PeptideSortKey)}>
-                {PEPTIDE_SORT_GROUPS.map(group => (
-                  <optgroup key={group.labelKey} label={t(group.labelKey)}>
-                    {group.options.map(key => (
-                      <option key={key} value={key}>{t(SORT_OPTION_LABEL_KEYS[key])}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-              <div className="flex shrink-0 rounded-xl border border-slate-800 bg-slate-900/70 p-1">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('vials')}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    viewMode === 'vials' ? 'bg-cyan-400 text-slate-950 shadow-cyan-400/20' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <FlaskConical size={14} /> Vials
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('list')}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    viewMode === 'list' ? 'bg-cyan-400 text-slate-950 shadow-cyan-400/20' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <List size={14} /> Liste
-                </button>
-              </div>
-            </div>
+          {initialLoad && <LabLoader fadingOut={loaderFading} />}
+
+          {!loading && peptides.length > 0 && viewMode === 'list' && (
+            <button
+              type="button"
+              data-ob="btn-peptid-anlegen"
+              onClick={handleNewPeptide}
+              className="mb-4 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-700 bg-slate-900/40 py-2.5 text-sm font-semibold text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+            >
+              <Plus size={15} /> {t('neues_peptid_title')}
+            </button>
           )}
 
-          {peptides.length === 0 && (
+          {!loading && peptides.length === 0 && (
             <div className="card text-center py-10 text-slate-500">
-              <FlaskConical size={32} className="mx-auto mb-2 opacity-40" />
-              <p className="mb-1">{t('keine_peptide')}</p>
-              <p className="text-xs text-slate-600 mb-4">{t('keine_peptide')}</p>
-              <button className="btn-primary flex items-center gap-2 mx-auto" onClick={handleNewPeptide}>
-                <Plus size={14} /> {t('new')}
-              </button>
+              <p className="mb-4">{t('keine_peptide')}</p>
+              <AddVialTile onClick={handleNewPeptide} label={t('neues_peptid_title')} obKey="btn-peptid-anlegen" />
             </div>
           )}
 
@@ -1207,7 +1349,7 @@ export function Peptide() {
             </div>
           )}
 
-          {viewMode === 'vials' && activePeptide && (
+          {!loading && viewMode === 'vials' && activePeptide && (
             <div className="space-y-4">
               <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/40 px-2 py-5 sm:px-5">
                 <div className="mb-2 flex items-center justify-between px-2">
@@ -1219,7 +1361,7 @@ export function Peptide() {
                   >
                     <ChevronLeft size={18} />
                   </button>
-                  {(() => {
+                  {addTileActive ? <div aria-hidden /> : (() => {
                     const days = expiryDaysLeft(activePeptide)
                     const expiryTone = days === null ? 'border-slate-700 bg-slate-900 text-slate-300' : days > 7 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : days > 0 ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-red-500/30 bg-red-500/10 text-red-300'
                     const expiryLabel = days === null
@@ -1267,6 +1409,18 @@ export function Peptide() {
                     scrollPaddingInline: 'calc((100% - min(9rem, 38vw)) / 2)',
                   }}
                 >
+                  <div
+                    data-vial-add
+                    className={`${vialItemSnapClassName} shrink-0 rounded-2xl px-2 py-2 ${
+                      isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
+                    } ${addTileActive ? 'scale-100' : 'scale-90'}`}
+                    style={{ width: 'min(9rem, 38vw)' }}
+                  >
+                    <AddVialTile
+                      onClick={() => { if (!vialSuppressClickRef.current) handleNewPeptide() }}
+                      label={t('neues_peptid_title')}
+                    />
+                  </div>
                   {displayPeptides.map((p, index) => {
                     const isActive = p.id === activePeptide.id
                     const colorIdx = peptides.findIndex(pp => pp.id === p.id)
@@ -1726,7 +1880,7 @@ export function Peptide() {
           )}
 
           {/* ── Peptid-Liste ────────────────────────────────────────────── */}
-          <div className={`space-y-3 ${viewMode === 'list' ? '' : 'hidden'}`}>
+          <div className={`space-y-3 ${!loading && viewMode === 'list' ? '' : 'hidden'}`}>
             {displayPeptides.map(p => {
               const pCycles   = cyclesOf(p.id)
               const isOpen    = expandedId === p.id

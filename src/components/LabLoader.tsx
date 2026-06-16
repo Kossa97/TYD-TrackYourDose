@@ -26,22 +26,6 @@ export function LabLoader({ fadingOut = false }: LabLoaderProps) {
           style={{ animation: 'spin 2s linear infinite' }}
         />
       </div>
-
-      {/* Label */}
-      <div className="flex flex-col items-center gap-1.5">
-        <p
-          className="text-[0.65rem] font-black uppercase tracking-[0.35em] text-sky-400/60"
-          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-        >
-          The Lab
-        </p>
-        <p
-          className="text-[0.52rem] uppercase tracking-[0.2em] text-slate-700 animate-pulse"
-          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-        >
-          Lade Studien…
-        </p>
-      </div>
     </div>
   )
 }

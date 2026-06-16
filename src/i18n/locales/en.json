@@ -207,6 +207,7 @@
   "sort_group_fill": "Fill level · Remaining in current vial (%)",
   "sort_group_recon": "Reconstitution · Mix date",
   "sort_group_stock": "Stock · Raw vials in reserve",
+  "sort_option_active_name": "Active first (A–Z)",
   "sort_option_name_asc": "Name ↑",
   "sort_option_name_desc": "Name ↓",
   "sort_option_expiry_asc": "Shelf life ↑",
