@@ -56,8 +56,7 @@ interface Cycle {
 }
 
 interface Peptide {
-  id: string; name: string; default_unit: string
-  default_dose: number | null; default_method: string
+  id: string; name: string; default_method: string
   vial_amount_mg: number | null; reconstitution_ml: number | null
   vials_in_stock: number | null; vials_initial: number | null
   reconstitution_date: string | null; expiry_days: number | null

@@ -26,7 +26,7 @@ type FieldId =
   | 'name' | 'color' | 'vial_amount_mg' | 'reconstitution_ml'
   | 'reconstitution_date' | 'expiry_days' | 'vials_in_stock'
   | 'batch_number' | 'batch_source' | 'batch_doc'
-  | 'default_method' | 'default_dose' | 'notes'
+  | 'default_method' | 'notes'
 
 interface PeptideFormModalProps {
   editingPeptideId: string | null
@@ -192,9 +192,6 @@ export function PeptideFormModal({
     default_method: pForm.default_method
       ? String(t(METHOD_KEYS[pForm.default_method] ?? pForm.default_method))
       : notSet,
-    default_dose: pForm.default_dose
-      ? `${pForm.default_dose} ${pForm.default_unit}`
-      : notSet,
     notes: pForm.notes.trim()
       ? (pForm.notes.length > 28 ? `${pForm.notes.slice(0, 28)}…` : pForm.notes)
       : notSet,
@@ -212,7 +209,6 @@ export function PeptideFormModal({
     batch_source: t('quelle'),
     batch_doc: t('analyse_dok_pdf_bild'),
     default_method: t('applikationsart_label'),
-    default_dose: t('standard_dosis_label'),
     notes: t('notizen_optional'),
   }
 
@@ -458,19 +454,6 @@ export function PeptideFormModal({
           </select>
         )
         break
-      case 'default_dose':
-        body = (
-          <FocusedNumericInput
-            value={pForm.default_dose}
-            onChange={v => setPForm(f => ({ ...f, default_dose: v }))}
-            placeholder={t('eg_500')}
-            unitOptions={UNITS}
-            unitValue={pForm.default_unit}
-            onUnitChange={u => setPForm(f => ({ ...f, default_unit: u }))}
-            hint={t('fallback_info')}
-          />
-        )
-        break
       case 'notes':
         body = (
           <textarea
@@ -501,7 +484,11 @@ export function PeptideFormModal({
                 <X size={18} />
               </button>
             </div>
-            <div className="px-5 py-4 overflow-y-auto flex-1">{body}</div>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <div className="flex min-h-full items-center justify-center py-8 sm:py-4">
+                <div className="w-full">{body}</div>
+              </div>
+            </div>
             <div className="px-5 py-4 border-t border-slate-800 shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <button type="button" className="btn-primary w-full" onClick={closeField}>
                 {t('peptide_form_apply', { defaultValue: 'Übernehmen' })}
@@ -598,12 +585,6 @@ export function PeptideFormModal({
               onClick={() => setActiveField('default_method')}
               dataOb="pep-method"
             />
-            <FormListRow
-              label={t('standard_dosis_label')}
-              value={displayValues.default_dose}
-              onClick={() => setActiveField('default_dose')}
-              dataOb="pep-dose-amount"
-            />
           </div>
 
           <div className="rounded-2xl border border-slate-800 bg-slate-800/25 overflow-hidden mt-3">
@@ -650,7 +631,6 @@ export function PeptideFormModal({
 
         <div
           className="shrink-0 border-t border-slate-800 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-slate-900"
-          data-ob="pep-dose"
         >
           <button
             type="button"

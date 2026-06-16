@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest'
 
 describe('Peptide page vial view', () => {
   const source = () => readFileSync(new URL('./Peptide.tsx', import.meta.url), 'utf8')
+  const peptideFormSource = () => readFileSync(new URL('../components/PeptideFormModal.tsx', import.meta.url), 'utf8')
 
   test('defaults My Stack to the vial carousel view with a persisted toggle', () => {
     const text = source()
@@ -66,6 +67,88 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('handleVialCarouselItemClick(index)')
     expect(text).toContain("isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'")
     expect(text).not.toContain('setPointerCapture(e.pointerId)\n    e.preventDefault()')
+  })
+
+  test('uses a compact mobile cockpit for vial details and the active cycle', () => {
+    const text = source()
+
+    expect(text).toContain('vialDetailsOpen')
+    expect(text).toContain('const [vialDetailsOpen, setVialDetailsOpen] = useState(false)')
+    expect(text).toContain('setVialDetailsOpen(false)')
+    expect(text).toContain('<FileText size={15} className="text-cyan-300" />')
+    expect(text).toContain('<span>Info</span>')
+    expect(text).toContain('justify-center gap-2')
+    expect(text).toContain('Aktiver Zyklus')
+    expect(text).toContain('Dosiserhöhungen')
+    expect(text).toContain('effectiveDose(activeCycle')
+    expect(text).toContain('activeFrequency')
+    expect(text).toContain("[freqLabel(activeCycle), activeIntake].filter(Boolean).join(' · ')")
+    expect(text).toContain('currentEscalationId')
+    expect(text).toContain('absolute bottom-5 left-3 top-5 w-px')
+    expect(text).toContain('ring-orange-500/15')
+    expect(text).toContain('<Clock size={15} />')
+    expect(text).toContain('mt-2 flex justify-center')
+    expect(text).toContain('cycleProgressPct')
+    expect(text).toContain("cycleDay ? `${cycleDay} / ${cycleTotalDays ?? 'Ende offen'}` : '-'")
+    expect(text).toContain('{cycleDayLabel}')
+    expect(text).toContain('Haltbar')
+    expect(text).toContain('Rekonst.')
+    expect(text).toContain('Peptidname')
+    expect(text).toContain('Rohe Vials in Reserve')
+    expect(text).toContain('grid grid-cols-2 gap-2')
+    expect(text).toContain('compactInfoRows.map')
+    expect(text).toContain('Analyse-Dokument')
+    expect(text).not.toContain('Nächste Dosis')
+    expect(text).not.toContain('Zeit offen')
+    const mojibakeSeparator = String.fromCharCode(0xc3, 0x201a, 0xc2, 0xb7)
+    expect(text).not.toContain(`labels.join('${mojibakeSeparator}')`)
+    expect(text).not.toContain("{ label: 'Farbe'")
+    expect(text).not.toContain("{ label: 'Füllstand'")
+    expect(text).not.toContain('Standard-Dosis')
+    expect(text).not.toContain('standard_dosis_label')
+    expect(text).not.toContain('Mehr Optionen')
+    expect(text).toContain('aria-expanded={vialDetailsOpen}')
+    expect(text).toContain('sortedEscalationsOf(activeCycle.id)')
+    expect(text.indexOf('Rekonst.')).toBeLessThan(text.indexOf('<span>Info</span>'))
+    expect(text).not.toContain('<h3 className="truncate text-xl font-bold text-white">{p.name}</h3>')
+  })
+
+  test('uses the full mobile screen for the cycle form', () => {
+    const text = source()
+
+    expect(text).toContain('fixed inset-0 z-50 flex items-stretch justify-center bg-slate-950 sm:items-end sm:bg-black/80')
+    expect(text).toContain('flex h-full w-full flex-col overflow-hidden bg-slate-900 sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-t-2xl')
+    expect(text).toContain('flex-1 space-y-4 overflow-y-auto px-6 py-4')
+    expect(text).toContain('pb-[calc(1rem+env(safe-area-inset-bottom))]')
+  })
+
+  test('allows adding a new cycle even when another cycle is active', () => {
+    const text = source()
+    const openNewCycleStart = text.indexOf('const openNewCycle = (p: Peptide) => {')
+    const openEditCycleStart = text.indexOf('const openEditCycle = (p: Peptide, c: Cycle) => {')
+    const openNewCycleSource = text.slice(openNewCycleStart, openEditCycleStart)
+
+    expect(openNewCycleSource).toContain('setShowCycleForm(true)')
+    expect(openNewCycleSource).not.toContain('aktiver_zyklus_hinweis')
+    expect(openNewCycleSource).not.toContain('activeExists')
+  })
+
+  test('offers creating a cycle after adding a new peptide', () => {
+    const text = source()
+
+    expect(text).toContain('cyclePromptPeptide')
+    expect(text).toContain('Substanz gespeichert')
+    expect(text).toContain('Zyklus anlegen')
+    expect(text).toContain('openNewCycle(peptide)')
+    expect(text).toContain('Später')
+  })
+
+  test('centers Neue Substanz field editors for mobile thumb reach', () => {
+    const text = peptideFormSource()
+
+    expect(text).toContain('flex min-h-full items-center justify-center py-8')
+    expect(text).toContain('<div className="w-full">{body}</div>')
+    expect(text).toContain('h-[100dvh] max-h-[100dvh]')
   })
 
   test('assigns a random palette color when creating a peptide', () => {

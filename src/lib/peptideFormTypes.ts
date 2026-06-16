@@ -8,8 +8,6 @@ export interface PeptideForm {
   inventory_item_id: string
   pk_profile_id: string
   name: string
-  default_unit: string
-  default_dose: string
   default_method: string
   vial_amount_mg: string
   vial_amount_unit: string
@@ -30,8 +28,6 @@ export const emptyPeptideForm = (): PeptideForm => ({
   inventory_item_id: '',
   pk_profile_id: '',
   name: '',
-  default_unit: 'mcg',
-  default_dose: '',
   default_method: '',
   vial_amount_mg: '',
   vial_amount_unit: 'mg',

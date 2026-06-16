@@ -11,7 +11,7 @@ interface Profile {
   public_bio: string | null; share_peptide: boolean
   share_kalender: boolean; share_tagebuch: boolean; share_bewertungen: boolean
 }
-interface Peptide { id: string; name: string; default_dose: number | null; default_unit: string; default_method: string }
+interface Peptide { id: string; name: string; default_method: string }
 interface Review { id: string; rating: number; title: string; body: string | null; created_at: string; peptides: { name: string } | null }
 interface Effect { id: string; type: string; description: string; severity: number; status: string; duration: string | null; occurred_at: string }
 interface DoseLog { id: string; dose: number; unit: string; method: string; logged_at: string; peptides: { name: string } | null }
@@ -67,7 +67,7 @@ export function PublicProfile() {
 
       const fetches = await Promise.all([
         prof.share_peptide
-          ? supabase.from('peptides').select('id, name, default_dose, default_unit, default_method').eq('user_id', uid).order('name')
+          ? supabase.from('peptides').select('id, name, default_method').eq('user_id', uid).order('name')
           : Promise.resolve({ data: [] }),
         prof.share_bewertungen
           ? supabase.from('reviews').select('id, rating, title, body, created_at, peptides(name)').eq('user_id', uid).order('created_at', { ascending: false })
@@ -154,7 +154,6 @@ export function PublicProfile() {
                 <div key={p.id} className="card flex items-center justify-between">
                   <p className="font-medium text-white">{p.name}</p>
                   <div className="text-slate-400 text-xs text-right">
-                    {p.default_dose && <span>{p.default_dose} {p.default_unit} · </span>}
                     <span>{p.default_method}</span>
                   </div>
                 </div>
