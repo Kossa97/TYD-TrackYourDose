@@ -1497,28 +1497,30 @@ export function Peptide() {
                 </div>
                 </SloshProvider>
 
-                <div className="mt-2 grid grid-cols-3 gap-2 px-1 text-xs font-semibold">
+                <div className="mt-2 flex gap-2 px-1 text-xs font-semibold">
                   <button
                     type="button"
                     onClick={() => handleRekonstitution(activePeptide)}
                     disabled={!activePeptide.inventory_item_id}
-                    className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-2 text-cyan-200 transition-colors hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-900/60 disabled:text-slate-600"
+                    className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 text-cyan-200 transition-colors hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-900/60 disabled:text-slate-600"
                   >
-                    <RefreshCw size={14} /> Rekonst.
+                    <RefreshCw size={14} /> Erneut rekonstitutieren
                   </button>
                   <button
                     type="button"
                     onClick={() => openEditPeptide(activePeptide)}
-                    className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/70 px-2 text-slate-200 transition-colors hover:border-sky-400/40 hover:text-sky-300"
+                    className="flex min-h-10 w-20 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/70 px-2 text-slate-200 transition-colors hover:border-sky-400/40 hover:text-sky-300"
                   >
                     <Pencil size={14} /> Edit
                   </button>
                   <button
                     type="button"
                     onClick={() => removePeptide(activePeptide.id)}
-                    className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/5 px-2 text-red-300 transition-colors hover:border-red-400/40 hover:bg-red-500/10"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/5 text-red-300 transition-colors hover:border-red-400/40 hover:bg-red-500/10"
+                    aria-label="Substanz löschen"
+                    title="Substanz löschen"
                   >
-                    <Trash2 size={14} /> Löschen
+                    <Trash2 size={14} />
                   </button>
                 </div>
 
