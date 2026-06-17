@@ -435,8 +435,7 @@ function nextScheduleHistory(
   return history
 }
 
-// Empty "ghost" vial that adds a new substance when clicked. Mirrors the vial
-// silhouette (neck + body) used by PeptideVialVisual so it sits naturally in the carousel.
+// Empty "ghost" vial that adds a new substance when clicked.
 function AddVialTile({ onClick, label, obKey }: { onClick: () => void; label: string; obKey?: string }) {
   return (
     <button
@@ -446,9 +445,10 @@ function AddVialTile({ onClick, label, obKey }: { onClick: () => void; label: st
       {...(obKey ? { 'data-ob': obKey } : {})}
       className="group mx-auto flex w-28 flex-col items-center sm:w-36"
     >
-      <div className="h-3 w-24 rounded-t-lg border border-dashed border-slate-600/70 bg-slate-900/40 transition-colors group-hover:border-cyan-400/50" />
-      <div className="flex h-44 w-full flex-col items-center justify-center gap-2 rounded-[1.4rem] border border-dashed border-slate-600/70 bg-slate-900/30 text-slate-500 transition-colors group-hover:border-cyan-400/60 group-hover:text-cyan-300 sm:h-52">
-        <Plus size={34} strokeWidth={1.5} />
+      <div className="flex h-44 w-full flex-col items-center justify-center gap-3 rounded-[1.4rem] border border-dashed border-slate-600/55 bg-slate-900/25 text-slate-500 transition-colors group-hover:border-cyan-400/45 group-hover:text-cyan-200 group-focus-visible:border-cyan-300/60 sm:h-52">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full border border-cyan-300/15 bg-cyan-300/[0.03] text-cyan-200 shadow-[0_0_22px_rgba(34,211,238,0.08)] transition-all duration-500 group-hover:border-cyan-300/35 group-hover:bg-cyan-300/10 group-hover:shadow-[0_0_30px_rgba(34,211,238,0.18)] group-focus-visible:border-cyan-300/45 group-focus-visible:bg-cyan-300/10 group-focus-visible:shadow-[0_0_30px_rgba(34,211,238,0.22)]">
+          <Plus size={30} strokeWidth={1.45} />
+        </span>
         <span className="px-3 text-center text-sm font-semibold leading-tight">{label}</span>
       </div>
     </button>
