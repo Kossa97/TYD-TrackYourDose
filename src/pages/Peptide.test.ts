@@ -56,6 +56,8 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('handleVialCarouselPointerUp')
     expect(text).toContain('handleVialCarouselWheel')
     expect(text).toContain('scrollToClosestVial')
+    expect(text).toContain('pushVialSlosh')
+    expect(text).toContain('vialLastScrollLeftRef')
     expect(text).toContain("const vialSnapClassName = isVialCarouselDragging ? 'snap-none' : 'snap-x snap-mandatory'")
     expect(text).toContain("const vialItemSnapClassName = isVialCarouselDragging ? '' : 'snap-center'")
     expect(text).toContain('onPointerDown={handleVialCarouselPointerDown}')
@@ -67,6 +69,22 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('handleVialCarouselItemClick(index)')
     expect(text).toContain("isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'")
     expect(text).not.toContain('setPointerCapture(e.pointerId)\n    e.preventDefault()')
+  })
+
+  test('drives the carousel liquid with the shared spring physics engine', () => {
+    const text = source()
+
+    // The page owns one engine and shares it with the vials via the provider.
+    expect(text).toContain('useSloshEngine')
+    expect(text).toContain('<SloshProvider engine={sloshEngine}>')
+    // Interaction velocity is fed into the engine as a slosh impulse.
+    expect(text).toContain('sloshEngine.pushImpulse(velocity)')
+    // The old per-render slosh state / keyframe epoch wiring is gone.
+    expect(text).not.toContain('setVialSlosh')
+    expect(text).not.toContain('vialSloshEpoch')
+    expect(text).not.toContain('vialSloshSettleRef')
+    expect(text).not.toContain('slosh={vialSlosh}')
+    expect(text).not.toContain('sloshEpoch={vialSloshEpoch}')
   })
 
   test('uses a compact mobile cockpit for vial details and the active cycle', () => {

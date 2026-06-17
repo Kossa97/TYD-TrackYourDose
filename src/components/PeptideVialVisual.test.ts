@@ -4,6 +4,8 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { PeptideVialVisual } from './PeptideVialVisual'
 
+const source = () => readFileSync(new URL('./PeptideVialVisual.tsx', import.meta.url), 'utf8')
+
 describe('PeptideVialVisual', () => {
   test('renders readable vial label content', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
@@ -40,7 +42,7 @@ describe('PeptideVialVisual', () => {
       animateOnMount: true,
     }))
 
-    expect(html).toContain('vial-fill-rise')
+    expect(html).toContain('vial-liquid-rise')
   })
 
   test('renders a single lower vial cap without the two upper cap stages', () => {
@@ -75,21 +77,19 @@ describe('PeptideVialVisual', () => {
   })
 
   test('measures real overflow for vial label marquee instead of using a name-length heuristic', () => {
-    const source = readFileSync(new URL('./PeptideVialVisual.tsx', import.meta.url), 'utf8')
+    const text = source()
 
-    expect(source).toContain('ResizeObserver')
-    expect(source).toContain('inner.scrollWidth - wrap.clientWidth')
-    expect(source).toContain('inner.animate(')
-    expect(source).not.toContain('labelName.length >')
+    expect(text).toContain('ResizeObserver')
+    expect(text).toContain('inner.scrollWidth - wrap.clientWidth')
+    expect(text).toContain('inner.animate(')
+    expect(text).not.toContain('labelName.length >')
   })
 
   test('does not add fixed extra width that would trigger marquee without real overflow', () => {
-    const source = readFileSync(new URL('./PeptideVialVisual.tsx', import.meta.url), 'utf8')
-
-    expect(source).not.toContain('className="pr-10"')
+    expect(source()).not.toContain('className="pr-10"')
   })
 
-  test('renders a list-style animated wave surface instead of the rejected meniscus effects', () => {
+  test('draws the liquid as one SVG graphic, not a block with a separate waterline band', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
       name: 'BPC-157',
       amount: '5',
@@ -98,12 +98,40 @@ describe('PeptideVialVisual', () => {
       color: '#06b6d4',
     }))
 
-    expect(html).toContain('data-vial-detail="list-style-wave-surface"')
-    expect(html).toContain('vial-wave-scroll')
-    expect(html).toContain('vial-wave-breathe')
-    expect(html).not.toContain('vial-meniscus-drift')
-    expect(html).not.toContain('vial-liquid-caustics')
-    expect(html).not.toContain('h-px bg-white/45')
-    expect(html).not.toContain('absolute -top-2 left-0 right-0 h-4')
+    // One graphic whose body, surface, glow and rim share the same geometry.
+    expect(html).toContain('data-vial-detail="liquid-graphic"')
+    expect(html).toContain('viewBox="0 0 120 200"')
+    expect(html).toContain('data-vial-detail="liquid-body"')
+    expect(html).toContain('data-vial-detail="liquid-surface"')
+    expect(html).toContain('data-vial-detail="liquid-glow"')
+    expect(html).toContain('data-vial-detail="liquid-rim"')
+
+    // The old stacked block + pill waterline must be gone.
+    expect(html).not.toContain('realistic-meniscus-surface')
+    expect(html).not.toContain('liquid-motion-layer')
+    expect(html).not.toContain('realistic-liquid-body')
+    expect(html).not.toContain('viewBox="0 0 120 28"')
+    expect(html).not.toContain('vial-liquid-slosh')
+  })
+
+  test('drives a living, physics-coupled surface with rising bubbles', () => {
+    const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
+      name: 'Ipamorelin',
+      amount: '2',
+      unit: 'mg',
+      fillPct: 95,
+      color: '#ec4899',
+    }))
+
+    // Ambient life: rising bubbles rendered as animated SVG circles.
+    expect(html).toContain('data-vial-detail="liquid-bubble"')
+    expect(html).toContain('<animateTransform')
+
+    const text = source()
+    // Surface is redrawn imperatively from the shared slosh engine each frame.
+    expect(text).toContain('useSloshSubscribe')
+    expect(text).toContain('buildLiquid')
+    expect(text).toContain("setAttribute('d'")
+    expect(text).toContain('(prefers-reduced-motion: reduce)')
   })
 })

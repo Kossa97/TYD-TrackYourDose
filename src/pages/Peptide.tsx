@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type WheelEvent as ReactWheelEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type UIEvent as ReactUIEvent, type WheelEvent as ReactWheelEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -18,6 +18,7 @@ import { format, parseISO, addDays, differenceInDays } from 'date-fns'
 import { effectiveDose, type ScheduleSegment } from '../lib/intakeSchedule'
 import { PeptideFormModal } from '../components/PeptideFormModal'
 import { PeptideVialVisual } from '../components/PeptideVialVisual'
+import { SloshProvider, useSloshEngine } from '../components/SloshContext'
 import { LabLoader } from '../components/LabLoader'
 import { emptyPeptideForm, type PeptideForm, type PkProfileOption } from '../lib/peptideFormTypes'
 
@@ -507,14 +508,19 @@ export function Peptide() {
   const [vialDetailsOpen, setVialDetailsOpen] = useState(false)
   const [isVialCarouselDragging, setIsVialCarouselDragging] = useState(false)
   const [addTileActive, setAddTileActive] = useState(false)
+  const sloshEngine = useSloshEngine()
   const vialCarouselRef = useRef<HTMLDivElement | null>(null)
   const vialScrollFrameRef = useRef<number | null>(null)
   const vialDraggingRef = useRef(false)
   const vialDragStartXRef = useRef(0)
+  const vialDragLastXRef = useRef(0)
+  const vialDragLastTimeRef = useRef(0)
   const vialDragStartScrollLeftRef = useRef(0)
   const vialDragMovedRef = useRef(false)
   const vialSuppressClickRef = useRef(false)
   const vialWheelCooldownRef = useRef<number | null>(null)
+  const vialLastScrollLeftRef = useRef(0)
+  const vialLastScrollTimeRef = useRef(0)
   const [animationEpoch, setAnimationEpoch] = useState(0)
 
   // ── Zyklen ────────────────────────────────────────────────────────────────
@@ -1075,6 +1081,8 @@ export function Peptide() {
   }, [viewMode, loading])
   const vialSnapClassName = isVialCarouselDragging ? 'snap-none' : 'snap-x snap-mandatory'
   const vialItemSnapClassName = isVialCarouselDragging ? '' : 'snap-center'
+  // Feed carousel interaction velocity into the shared liquid physics engine.
+  const pushVialSlosh = (velocity: number) => sloshEngine.pushImpulse(velocity)
   const scrollToPeptideIndex = (index: number) => {
     const carousel = vialCarouselRef.current
     const item = carousel?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
@@ -1118,9 +1126,19 @@ export function Peptide() {
     }
     return addDistance < closestPeptideDistance
   }
-  const handleVialCarouselScroll = () => {
+  const handleVialCarouselScroll = (e: ReactUIEvent<HTMLDivElement>) => {
     const carousel = vialCarouselRef.current
     if (!carousel) return
+
+    const now = e.timeStamp
+    if (vialLastScrollTimeRef.current > 0) {
+      const delta = carousel.scrollLeft - vialLastScrollLeftRef.current
+      const dt = Math.max(16, now - vialLastScrollTimeRef.current)
+      if (Math.abs(delta) > 0.5) pushVialSlosh((delta / dt) * 2.6)
+    }
+    vialLastScrollLeftRef.current = carousel.scrollLeft
+    vialLastScrollTimeRef.current = now
+
     if (vialScrollFrameRef.current !== null) window.cancelAnimationFrame(vialScrollFrameRef.current)
 
     vialScrollFrameRef.current = window.requestAnimationFrame(() => {
@@ -1140,6 +1158,7 @@ export function Peptide() {
   const selectPeptideOffset = (offset: number) => {
     if (displayPeptides.length === 0) return
     const nextIndex = (activeIndex + offset + displayPeptides.length) % displayPeptides.length
+    pushVialSlosh(offset > 0 ? 1 : -1)
     selectPeptideIndex(nextIndex)
   }
   const handleVialCarouselPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -1148,7 +1167,11 @@ export function Peptide() {
     if (!carousel) return
 
     vialDragStartXRef.current = e.clientX
+    vialDragLastXRef.current = e.clientX
+    vialDragLastTimeRef.current = e.timeStamp
     vialDragStartScrollLeftRef.current = carousel.scrollLeft
+    vialLastScrollLeftRef.current = carousel.scrollLeft
+    vialLastScrollTimeRef.current = e.timeStamp
     vialDraggingRef.current = true
     vialDragMovedRef.current = false
     setIsVialCarouselDragging(true)
@@ -1159,12 +1182,18 @@ export function Peptide() {
     if (!carousel) return
 
     const delta = e.clientX - vialDragStartXRef.current
+    const now = e.timeStamp
+    const stepDelta = e.clientX - vialDragLastXRef.current
+    const dt = Math.max(16, now - vialDragLastTimeRef.current)
     if (Math.abs(delta) > 4) {
       vialDragMovedRef.current = true
       if (!e.currentTarget.hasPointerCapture(e.pointerId)) {
         e.currentTarget.setPointerCapture(e.pointerId)
       }
     }
+    if (Math.abs(stepDelta) > 0.5) pushVialSlosh((-stepDelta / dt) * 2.4)
+    vialDragLastXRef.current = e.clientX
+    vialDragLastTimeRef.current = now
     carousel.scrollLeft = vialDragStartScrollLeftRef.current - delta
     e.preventDefault()
   }
@@ -1193,11 +1222,13 @@ export function Peptide() {
   }
   const handleVialCarouselItemClick = (index: number) => {
     if (vialSuppressClickRef.current) return
+    if (index !== activeIndex) pushVialSlosh(index > activeIndex ? 1 : -1)
     selectPeptideIndex(index)
   }
   const handleVialCarouselItemKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>, index: number) => {
     if (e.key !== 'Enter' && e.key !== ' ') return
     e.preventDefault()
+    if (index !== activeIndex) pushVialSlosh(index > activeIndex ? 1 : -1)
     selectPeptideIndex(index)
   }
 
@@ -1393,6 +1424,7 @@ export function Peptide() {
                   </button>
                 </div>
 
+                <SloshProvider engine={sloshEngine}>
                 <div
                   ref={vialCarouselRef}
                   onScroll={handleVialCarouselScroll}
@@ -1462,6 +1494,7 @@ export function Peptide() {
                     )
                   })}
                 </div>
+                </SloshProvider>
 
                 <div className="mt-2 grid grid-cols-3 gap-2 px-1 text-xs font-semibold">
                   <button

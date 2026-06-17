@@ -1,5 +1,31 @@
-import { useEffect, useRef } from 'react'
-import type { CSSProperties, ReactNode } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
+import { buildLiquid, LIQUID_VB_H, LIQUID_VB_W } from './liquidGeometry'
+import { useSloshSubscribe } from './SloshContext'
+import type { SloshState } from './sloshEngine'
+
+// A few rising bubbles give the liquid life. Positions are in viewBox units and
+// the body clip-path makes them pop out of existence at the waterline.
+const LIQUID_BUBBLES = [
+  { cx: 24, r: 1.5, dur: 5.4, delay: 0 },
+  { cx: 46, r: 1.0, dur: 6.6, delay: 1.4 },
+  { cx: 63, r: 1.9, dur: 5.0, delay: 2.6 },
+  { cx: 82, r: 1.1, dur: 7.2, delay: 0.7 },
+  { cx: 98, r: 1.4, dur: 5.9, delay: 3.2 },
+]
+
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setReduced(mq.matches)
+    update()
+    mq.addEventListener?.('change', update)
+    return () => mq.removeEventListener?.('change', update)
+  }, [])
+  return reduced
+}
 
 interface PeptideVialVisualProps {
   name?: string | null
@@ -11,11 +37,17 @@ interface PeptideVialVisualProps {
   size?: 'large' | 'compact'
   className?: string
   isActive?: boolean
+  slosh?: number
 }
 
 function clampFill(fillPct: number): number {
   if (!Number.isFinite(fillPct)) return 0
   return Math.max(0, Math.min(100, Math.round(fillPct)))
+}
+
+function clampSlosh(slosh: number): number {
+  if (!Number.isFinite(slosh)) return 0
+  return Math.max(-1, Math.min(1, slosh))
 }
 
 function vialAmountLabel(amount?: string | number | null, unit?: string | null): string {
@@ -102,12 +134,57 @@ export function PeptideVialVisual({
   size = 'large',
   className = '',
   isActive = true,
+  slosh = 0,
 }: PeptideVialVisualProps) {
   const clampedFill = clampFill(fillPct)
-  // Scale to max 96 % so 100 % always shows a tiny air gap above the wave
-  // surface, while every single percentage point still changes the fill level
-  // proportionally (1 % ≈ 0.96 % visual).
-  const visualFill = clampedFill === 0 ? 0 : clampedFill * 0.96
+  const tilt = clampSlosh(slosh)
+  const uid = useId()
+  const reducedMotion = usePrefersReducedMotion()
+  const subscribe = useSloshSubscribe()
+  const fillFrac = Math.min(clampedFill / 100, 0.97)
+  // One graphic for the whole liquid. The air gap is baked into the geometry,
+  // so a raised wall during slosh still stays clipped below the rim. This is the
+  // resting first paint; once subscribed, the engine redraws it every frame.
+  const geom = buildLiquid({ fill: fillFrac, tilt })
+
+  const bodyRef = useRef<SVGPathElement | null>(null)
+  const surfaceRef = useRef<SVGPathElement | null>(null)
+  const glowRef = useRef<SVGPathElement | null>(null)
+  const rimRef = useRef<SVGPathElement | null>(null)
+  const specHaloRef = useRef<SVGEllipseElement | null>(null)
+  const specCoreRef = useRef<SVGEllipseElement | null>(null)
+  const leftGlintRef = useRef<SVGEllipseElement | null>(null)
+  const rightGlintRef = useRef<SVGEllipseElement | null>(null)
+
+  const draw = useCallback(
+    (s: SloshState) => {
+      const g = buildLiquid({ fill: fillFrac, tilt: s.tilt, energy: s.energy, time: s.time })
+      bodyRef.current?.setAttribute('d', g.body)
+      surfaceRef.current?.setAttribute('d', g.surface)
+      glowRef.current?.setAttribute('d', g.glow)
+      rimRef.current?.setAttribute('d', g.rim)
+      const sx = g.highlightX.toFixed(2)
+      const sy = g.highlightY.toFixed(2)
+      // the sheen stays faint at rest and flares as the surface agitates
+      const halo = (0.18 + s.energy * 0.5).toFixed(2)
+      const core = (0.14 + s.energy * 0.6).toFixed(2)
+      specHaloRef.current?.setAttribute('cx', sx)
+      specHaloRef.current?.setAttribute('cy', sy)
+      specHaloRef.current?.setAttribute('opacity', halo)
+      specCoreRef.current?.setAttribute('cx', sx)
+      specCoreRef.current?.setAttribute('cy', sy)
+      specCoreRef.current?.setAttribute('opacity', core)
+      leftGlintRef.current?.setAttribute('cy', g.leftWallY.toFixed(2))
+      rightGlintRef.current?.setAttribute('cy', g.rightWallY.toFixed(2))
+    },
+    [fillFrac],
+  )
+
+  useEffect(() => {
+    if (!subscribe) return
+    return subscribe(draw)
+  }, [subscribe, draw])
+
   const labelName = name?.trim() || 'Peptidname'
   const isLarge = size === 'large'
   const widthClass = isLarge ? 'w-28 sm:w-36' : 'w-16'
@@ -123,12 +200,6 @@ export function PeptideVialVisual({
   const amountClass = isLarge
     ? 'text-xs sm:text-sm mt-1'
     : 'text-[7px] mt-0.5'
-  const fillStyle = {
-    height: `${visualFill}%`,
-    background: `linear-gradient(180deg, ${color}9f 0%, ${color}ee 42%, ${color} 100%)`,
-    boxShadow: `0 -10px 26px ${color}55, inset 0 1px 0 rgba(255,255,255,0.35), inset 18px 0 28px rgba(255,255,255,0.08), inset -18px 0 28px rgba(0,0,0,0.18)`,
-  } as CSSProperties
-
   return (
     <div
       className={`relative mx-auto select-none ${widthClass} ${className}`}
@@ -136,27 +207,19 @@ export function PeptideVialVisual({
       aria-label={`${labelName}, ${vialAmountLabel(amount, unit)}, ${clampedFill}%`}
     >
       <style>{`
-        @keyframes vial-fill-rise {
-          from { height: 0%; }
-          to { height: var(--vial-fill-target); }
+        @keyframes vial-liquid-rise {
+          from { transform: translateY(38%); opacity: .25; }
+          to { transform: translateY(0); opacity: 1; }
         }
         @keyframes vial-shimmer {
           0%, 100% { transform: translateX(0); opacity: .35; }
           50% { transform: translateX(14%); opacity: .7; }
         }
-        @keyframes vial-wave-scroll {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-        @keyframes vial-wave-breathe {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-1.5px); }
-        }
-        .vial-fill-rise {
-          animation: vial-fill-rise 850ms cubic-bezier(.22,1,.36,1) both;
+        .vial-liquid-rise {
+          animation: vial-liquid-rise 820ms cubic-bezier(.22,1,.36,1) both;
         }
         @media (prefers-reduced-motion: reduce) {
-          .vial-fill-rise, .vial-shimmer, .vial-wave-scroll, .vial-wave-breathe { animation: none !important; }
+          .vial-liquid-rise, .vial-shimmer { animation: none !important; }
         }
       `}</style>
 
@@ -174,33 +237,119 @@ export function PeptideVialVisual({
             data-vial-detail="glass-shoulder"
             className="absolute left-4 right-4 top-0 h-10 rounded-b-[50%] border-b border-white/10 bg-gradient-to-b from-white/12 to-transparent"
           />
-          <div
-            className={`absolute bottom-0 left-0 right-0 ${animateOnMount ? 'vial-fill-rise' : ''}`}
-            style={{
-              ...fillStyle,
-              '--vial-fill-target': `${visualFill}%`,
-            } as CSSProperties}
+          {/* Single-graphic liquid: body, tilting surface, meniscus rim and
+              highlight all derive from one geometry so they move as one. */}
+          <svg
+            data-vial-detail="liquid-graphic"
+            className={`absolute inset-0 h-full w-full ${animateOnMount ? 'vial-liquid-rise' : ''}`}
+            viewBox={`0 0 ${LIQUID_VB_W} ${LIQUID_VB_H}`}
+            preserveAspectRatio="none"
+            aria-hidden="true"
+            style={{ color }}
           >
-            <div
-              data-vial-detail="list-style-wave-surface"
-              className="absolute -top-3 left-0 right-0 h-7 overflow-hidden"
-              style={{ animation: 'vial-wave-breathe 3s ease-in-out infinite' }}
-            >
-              <div
-                className="vial-wave-scroll absolute left-0 top-0 h-6 w-[200%] text-current"
-                style={{ color, animation: 'vial-wave-scroll 2.4s linear infinite' }}
-              >
-                <svg className="h-full w-full" viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true">
-                  <path
-                    d="M0 8 C13.8 3 36.2 3 50 8 C63.8 13 86.2 13 100 8 C113.8 3 136.2 3 150 8 C163.8 13 186.2 13 200 8 L200 24 L0 24 Z"
-                    fill="currentColor"
-                    fillOpacity="0.62"
+            <defs>
+              {/* one template path drives the body fills and the clip together */}
+              <path id={`${uid}-bodyPath`} ref={bodyRef} d={geom.body} />
+              <clipPath id={`${uid}-clip`}>
+                <use href={`#${uid}-bodyPath`} />
+              </clipPath>
+              <linearGradient id={`${uid}-depth`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.26)" />
+                <stop offset="18%" stopColor="rgba(255,255,255,0.05)" />
+                <stop offset="100%" stopColor="rgba(0,0,0,0.58)" />
+              </linearGradient>
+              <linearGradient id={`${uid}-side`} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
+                <stop offset="30%" stopColor="rgba(255,255,255,0)" />
+                <stop offset="72%" stopColor="rgba(0,0,0,0.05)" />
+                <stop offset="100%" stopColor="rgba(0,0,0,0.3)" />
+              </linearGradient>
+              <linearGradient id={`${uid}-glow`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.58)" />
+                <stop offset="55%" stopColor="rgba(255,255,255,0.14)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+              </linearGradient>
+              <linearGradient id={`${uid}-refract`} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="rgba(255,255,255,0)" />
+                <stop offset="50%" stopColor="rgba(255,255,255,0.5)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+              </linearGradient>
+              <linearGradient id={`${uid}-surface`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.58)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0.05)" />
+              </linearGradient>
+              <radialGradient id={`${uid}-caustic`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.58)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+              </radialGradient>
+              <radialGradient id={`${uid}-floor`} cx="50%" cy="100%" r="70%">
+                <stop offset="0%" stopColor="rgba(0,0,0,0.4)" />
+                <stop offset="100%" stopColor="rgba(0,0,0,0)" />
+              </radialGradient>
+              <radialGradient id={`${uid}-spec`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+              </radialGradient>
+              <filter id={`${uid}-soft`} x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="2.4" />
+              </filter>
+            </defs>
+
+            {/* translucent body so the dark glass shows through for a glassy look */}
+            <use data-vial-detail="liquid-body" href={`#${uid}-bodyPath`} fill="currentColor" fillOpacity="0.8" />
+            <g clipPath={`url(#${uid}-clip)`}>
+              <use href={`#${uid}-bodyPath`} fill={`url(#${uid}-depth)`} />
+              <use href={`#${uid}-bodyPath`} fill={`url(#${uid}-side)`} />
+              {/* darker floor + caustic: shadow then light pooling at the base */}
+              <rect x="0" y={LIQUID_VB_H - 34} width={LIQUID_VB_W} height="34" fill={`url(#${uid}-floor)`} />
+              <ellipse cx={LIQUID_VB_W / 2} cy={LIQUID_VB_H - 13} rx="48" ry="15" fill={`url(#${uid}-caustic)`} />
+              {/* refraction: bright light column left, faint reflection right */}
+              <rect x="5" y="0" width="16" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity="0.62" filter={`url(#${uid}-soft)`} />
+              <rect x="99" y="0" width="10" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity="0.22" filter={`url(#${uid}-soft)`} />
+              {/* sub-surface scattering band hugging the waterline */}
+              <path ref={glowRef} data-vial-detail="liquid-glow" d={geom.glow} fill={`url(#${uid}-glow)`} filter={`url(#${uid}-soft)`} />
+              {/* rising bubbles, clipped to the body so they pop at the surface */}
+              {!reducedMotion && LIQUID_BUBBLES.map((b, i) => (
+                <circle key={i} data-vial-detail="liquid-bubble" cx={b.cx} cy="0" r={b.r} fill="rgba(255,255,255,0.55)">
+                  <animateTransform
+                    attributeName="transform"
+                    type="translate"
+                    from="0 192"
+                    to="0 30"
+                    dur={`${b.dur}s`}
+                    begin={`${b.delay}s`}
+                    repeatCount="indefinite"
                   />
-                </svg>
-              </div>
-              <div className="absolute left-3 right-3 top-2 h-3 rounded-[50%] bg-white/10 blur-sm" />
-            </div>
-          </div>
+                  <animate
+                    attributeName="opacity"
+                    values="0;0.5;0.5;0"
+                    keyTimes="0;0.18;0.72;1"
+                    dur={`${b.dur}s`}
+                    begin={`${b.delay}s`}
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              ))}
+            </g>
+            <path ref={surfaceRef} data-vial-detail="liquid-surface" d={geom.surface} fill={`url(#${uid}-surface)`} opacity="0.5" />
+            {/* meniscus glints where the liquid climbs each glass wall */}
+            <ellipse ref={leftGlintRef} cx="4" cy={geom.leftWallY} rx="3" ry="5.5" fill="rgba(255,255,255,0.4)" filter={`url(#${uid}-soft)`} />
+            <ellipse ref={rightGlintRef} cx={LIQUID_VB_W - 4} cy={geom.rightWallY} rx="3" ry="5.5" fill="rgba(255,255,255,0.4)" filter={`url(#${uid}-soft)`} />
+            {/* specular sheen: a soft diffuse reflection that flares with motion,
+                not a painted dash — both ellipses use the radial spec gradient */}
+            <ellipse ref={specHaloRef} cx={geom.highlightX} cy={geom.highlightY} rx="22" ry="3.6" fill={`url(#${uid}-spec)`} opacity="0.22" filter={`url(#${uid}-soft)`} />
+            <ellipse ref={specCoreRef} cx={geom.highlightX} cy={geom.highlightY} rx="7" ry="2.4" fill={`url(#${uid}-spec)`} opacity="0.18" filter={`url(#${uid}-soft)`} />
+            <path
+              ref={rimRef}
+              data-vial-detail="liquid-rim"
+              d={geom.rim}
+              fill="none"
+              stroke="rgba(255,255,255,0.66)"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
 
           <div className="absolute inset-y-4 left-3 w-4 rounded-full bg-white/20 blur-[2px]" />
           <div className="absolute inset-y-6 right-3 w-2 rounded-full bg-white/10 blur-[1px]" />
