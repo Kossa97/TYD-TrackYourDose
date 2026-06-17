@@ -50,12 +50,16 @@ describe('scheduleForDay', () => {
 })
 
 // ── effectiveDose ──────────────────────────────────────────────────────────────
-describe('effectiveDose mit versionierter Basis-Dosis + Eskalation', () => {
+describe('effectiveDose mit versionierter Basis-Dosis + Dosisanpassung', () => {
   const esc: EscalationRow = { cycle_id: 'c1', increase_amount: 50, start_type: 'after_days', start_date: null, start_after_days: 14 }
   it('Basis aus Segment + aktive Eskalation', () => {
     expect(effectiveDose(versioned, new Date(2026, 0, 5), [esc])).toBe(200)   // Tag 4, keine Eskalation
     expect(effectiveDose(versioned, new Date(2026, 0, 20), [esc])).toBe(250)  // Tag 19, +50
     expect(effectiveDose(versioned, new Date(2026, 5, 1), [esc])).toBe(350)   // Segment 300 + 50
+  })
+  it('unterstuetzt Reduktionen als negative Anpassung', () => {
+    const reduction: EscalationRow = { cycle_id: 'c1', increase_amount: -75, start_type: 'after_days', start_date: null, start_after_days: 21 }
+    expect(effectiveDose(versioned, new Date(2026, 0, 25), [esc, reduction])).toBe(175)
   })
 })
 

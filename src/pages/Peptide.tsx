@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import {
   Plus, Minus, Trash2, Pencil, FlaskConical, Activity,
   CalendarDays, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, List,
-  TrendingUp, Search, Bell, Check, SlidersHorizontal,
+  TrendingUp, TrendingDown, Search, Bell, Check, SlidersHorizontal,
   Package, FileUp, Droplets, X, FileText, ExternalLink,
   Archive, RefreshCw, Sunrise, Sun, Moon, Clock, type LucideIcon,
 } from 'lucide-react'
@@ -534,7 +534,7 @@ export function Peptide() {
   // Beim Bearbeiten eines bestehenden Zyklus: Planänderung rückwirkend oder ab heute?
   const [scheduleChoiceOpen, setScheduleChoiceOpen] = useState(false)
 
-  // ── Dosiserhöhungen ───────────────────────────────────────────────────────
+  // ── Dosisanpassungen ──────────────────────────────────────────────────────
   const [escalations, setEscalations]             = useState<Escalation[]>([])
   const [showEscForm, setShowEscForm]             = useState(false)
   const [escForCycle, setEscForCycle]             = useState<Cycle | null>(null)
@@ -947,18 +947,21 @@ export function Peptide() {
     toast.success(t('geloescht')); loadCycles()
   }
 
-  // ── Dosiserhöhungs-Aktionen ───────────────────────────────────────────────
+  // ── Dosisanpassungs-Aktionen ──────────────────────────────────────────────
   const openNewEsc = (c: Cycle) => {
     setEscForCycle(c); setEditingEscId(null)
     setEForm(emptyEscalationForm(c.unit)); setShowEscForm(true)
   }
   const openEditEsc = (c: Cycle, e: Escalation) => {
     setEscForCycle(c); setEditingEscId(e.id)
+    const startAfterValue = e.start_after_days !== null && e.start_after_days !== undefined
+      ? (e.start_type === 'after_weeks' ? e.start_after_days / 7 : e.start_after_days).toString()
+      : '2'
     setEForm({
-      increase_amount: e.increase_amount.toString(), unit: e.unit,
+      increase_amount: escalationTargetDose(c, e).toString(), unit: e.unit,
       start_type: e.start_type,
       start_date: e.start_date ?? format(new Date(), 'yyyy-MM-dd'),
-      start_after_days: e.start_after_days?.toString() ?? '2',
+      start_after_days: startAfterValue,
       notes: e.notes ?? '',
     })
     setShowEscForm(true)
@@ -967,14 +970,31 @@ export function Peptide() {
     if (!eForm || !escForCycle) return
     if (!eForm.increase_amount) return toast.error(t('erhoeht_erforderlich'))
     setSavingEsc(true)
+    const targetDose = parseFloat(eForm.increase_amount)
+    if (!Number.isFinite(targetDose)) {
+      setSavingEsc(false)
+      return toast.error(t('erhoeht_erforderlich'))
+    }
+    const startAfterDays = eForm.start_type !== 'date'
+      ? parseInt(eForm.start_after_days) * (eForm.start_type === 'after_weeks' ? 7 : 1)
+      : null
+    const draftEsc: Escalation = {
+      id: editingEscId ?? '__new_adjustment__',
+      cycle_id: escForCycle.id,
+      increase_amount: 0,
+      unit: eForm.unit,
+      start_type: eForm.start_type,
+      start_date: eForm.start_type === 'date' ? eForm.start_date : null,
+      start_after_days: startAfterDays,
+      notes: eForm.notes || null,
+    }
+    const baseDoseAtStart = doseBeforeAdjustment(escForCycle, draftEsc)
     const payload = {
       user_id: user!.id, cycle_id: escForCycle.id,
-      increase_amount: parseFloat(eForm.increase_amount),
+      increase_amount: targetDose - baseDoseAtStart,
       unit: eForm.unit, start_type: eForm.start_type,
       start_date: eForm.start_type === 'date' ? eForm.start_date : null,
-      start_after_days: eForm.start_type !== 'date'
-        ? parseInt(eForm.start_after_days) * (eForm.start_type === 'after_weeks' ? 7 : 1)
-        : null,
+      start_after_days: startAfterDays,
       notes: eForm.notes || null,
     }
     const { error } = editingEscId
@@ -1037,6 +1057,20 @@ export function Peptide() {
       const bStart = escalationStartDate(cycle, b)?.getTime() ?? Number.MAX_SAFE_INTEGER
       return aStart - bStart
     })
+  }
+  const escalationTargetDose = (c: Cycle, e: Escalation) => {
+    const start = escalationStartDate(c, e)
+    return start ? effectiveDose(c, start, sortedEscalationsOf(c.id)) : c.dose + e.increase_amount
+  }
+  const doseBeforeAdjustment = (c: Cycle, e: Escalation) => {
+    const start = escalationStartDate(c, e)
+    if (!start) return c.dose
+    return effectiveDose(c, start, sortedEscalationsOf(c.id).filter(row => row.id !== e.id))
+  }
+  const doseAdjustmentIcon = (c: Cycle, e: Escalation) => {
+    const target = escalationTargetDose(c, e)
+    const previous = doseBeforeAdjustment(c, e)
+    return target > previous ? TrendingUp : target < previous ? TrendingDown : Minus
   }
   const reminderLabel = (c: Cycle) => {
     if (!c.reminder || c.reminder === 'none') return null
@@ -1841,7 +1875,7 @@ export function Peptide() {
                           <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-2">
                             <div className="mb-2 flex items-center justify-between gap-2">
                               <p className="flex items-center gap-1.5 text-xs font-semibold text-orange-300">
-                                <TrendingUp size={13} /> {t('dosiserhoehungen')}
+                                <SlidersHorizontal size={13} /> {t('dosiserhoehungen')}
                               </p>
                             </div>
                             <div className="relative space-y-1.5 pl-8">
@@ -1864,13 +1898,17 @@ export function Peptide() {
                               {activeEscs.map(e => {
                                 const isCurrent = e.id === currentEscalationId
                                 const isPast = escalationIsActive(activeCycle, e) && !isCurrent
+                                const targetDose = escalationTargetDose(activeCycle, e)
+                                const AdjustmentIcon = doseAdjustmentIcon(activeCycle, e)
                                 return (
                                   <div key={e.id} className={`relative flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${isCurrent ? 'border-orange-500/50 bg-orange-500/15 text-orange-100 shadow-[0_0_0_1px_rgba(249,115,22,0.16)]' : 'border-slate-800 bg-slate-950/70 text-slate-300'}`}>
                                     <span className={`absolute -left-8 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border-2 ${isCurrent ? 'border-orange-400 bg-orange-500/25 text-orange-100 ring-4 ring-orange-500/15' : isPast ? 'border-slate-500 bg-slate-900 text-slate-300' : 'border-slate-600 bg-slate-950 text-slate-500'}`}>
                                       {isCurrent ? <span className="h-2.5 w-2.5 rounded-full bg-orange-300" /> : isPast ? <Check size={13} /> : <span className="h-2.5 w-2.5 rounded-full border border-slate-500" />}
                                     </span>
                                     <span className="min-w-0 truncate">{escLabel(e)}</span>
-                                    <span className="shrink-0 font-semibold">+{e.increase_amount} {e.unit}</span>
+                                    <span className="flex shrink-0 items-center gap-1 font-semibold">
+                                      <AdjustmentIcon size={13} /> {targetDose} {e.unit}
+                                    </span>
                                     {isCurrent ? (
                                       <span className="shrink-0 rounded-md border border-orange-400/40 bg-orange-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-200">
                                         Aktuell
@@ -2098,11 +2136,11 @@ export function Peptide() {
                               </div>
                             </div>
 
-                            {/* Dosiserhöhungen */}
+                            {/* Dosisanpassungen */}
                             <div className="border-t border-slate-800/60 px-3 pb-3 pt-2">
                               <div className="flex items-center justify-between mb-2">
                                 <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
-                                  <TrendingUp size={12} className="text-orange-400" /> {t('dosiserhoehungen')}
+                                  <SlidersHorizontal size={12} className="text-orange-400" /> {t('dosiserhoehungen')}
                                 </span>
                                 <button data-ob="btn-esc-add" className="text-xs flex items-center gap-1 text-orange-400 hover:text-orange-300 transition-colors"
                                   onClick={() => openNewEsc(c)}>
@@ -2113,24 +2151,29 @@ export function Peptide() {
                                 <p className="text-slate-600 text-xs italic">{t('keine_dosiserhoehungen')}</p>
                               )}
                               <div className="space-y-1.5">
-                                {pEscs.map((e, idx) => (
-                                  <div key={e.id} className="flex items-center justify-between gap-2 bg-orange-500/5 border border-orange-500/20 rounded-lg px-3 py-1.5">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <span className="text-orange-400 text-xs font-bold shrink-0">#{idx + 1}</span>
-                                      <div className="min-w-0">
-                                        <span className="text-white text-xs font-medium">+{e.increase_amount} {e.unit}</span>
-                                        <span className="text-slate-400 text-xs ml-2">{escLabel(e)}</span>
-                                        {e.notes && <p className="text-slate-500 text-xs truncate">{e.notes}</p>}
+                                {pEscs.map((e, idx) => {
+                                  const AdjustmentIcon = doseAdjustmentIcon(c, e)
+                                  return (
+                                    <div key={e.id} className="flex items-center justify-between gap-2 bg-orange-500/5 border border-orange-500/20 rounded-lg px-3 py-1.5">
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        <span className="text-orange-400 text-xs font-bold shrink-0">#{idx + 1}</span>
+                                        <div className="min-w-0">
+                                          <span className="inline-flex items-center gap-1 text-white text-xs font-medium">
+                                            <AdjustmentIcon size={11} /> {escalationTargetDose(c, e)} {e.unit}
+                                          </span>
+                                          <span className="text-slate-400 text-xs ml-2">{escLabel(e)}</span>
+                                          {e.notes && <p className="text-slate-500 text-xs truncate">{e.notes}</p>}
+                                        </div>
+                                      </div>
+                                      <div className="flex gap-1 shrink-0">
+                                        <button className="p-1 text-slate-500 hover:text-sky-400 transition-colors"
+                                          onClick={() => openEditEsc(c, e)}><Pencil size={11} /></button>
+                                        <button className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                                          onClick={() => removeEsc(e.id)}><Trash2 size={11} /></button>
                                       </div>
                                     </div>
-                                    <div className="flex gap-1 shrink-0">
-                                      <button className="p-1 text-slate-500 hover:text-sky-400 transition-colors"
-                                        onClick={() => openEditEsc(c, e)}><Pencil size={11} /></button>
-                                      <button className="p-1 text-slate-500 hover:text-red-400 transition-colors"
-                                        onClick={() => removeEsc(e.id)}><Trash2 size={11} /></button>
-                                    </div>
-                                  </div>
-                                ))}
+                                  )
+                                })}
                               </div>
                             </div>
                           </div>
@@ -2268,7 +2311,7 @@ export function Peptide() {
                       <div className="border-t border-slate-800/70 px-3 pb-3 pt-2">
                         <div className="mb-2 flex items-center justify-between gap-2">
                           <p className="flex items-center gap-1.5 text-xs font-semibold text-orange-300">
-                            <TrendingUp size={12} /> {t('dosiserhoehungen')}
+                            <SlidersHorizontal size={12} /> {t('dosiserhoehungen')}
                           </p>
                           <button
                             type="button"
@@ -2291,36 +2334,41 @@ export function Peptide() {
                           {pEscs.length === 0 && (
                             <p className="px-1 py-1 text-xs italic text-slate-500">{t('keine_dosiserhoehungen')}</p>
                           )}
-                          {pEscs.map((e, idx) => (
-                            <div key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2">
-                              <div className="min-w-0 text-xs">
-                                <p className="truncate font-semibold text-white">#{idx + 1} +{e.increase_amount} {e.unit}</p>
-                                <p className="truncate text-slate-400">{escLabel(e)}</p>
-                                {e.notes && <p className="truncate text-slate-500">{e.notes}</p>}
+                          {pEscs.map((e, idx) => {
+                            const AdjustmentIcon = doseAdjustmentIcon(c, e)
+                            return (
+                              <div key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2">
+                                <div className="min-w-0 text-xs">
+                                  <p className="flex items-center gap-1 truncate font-semibold text-white">
+                                    <AdjustmentIcon size={12} /> #{idx + 1} {escalationTargetDose(c, e)} {e.unit}
+                                  </p>
+                                  <p className="truncate text-slate-400">{escLabel(e)}</p>
+                                  {e.notes && <p className="truncate text-slate-500">{e.notes}</p>}
+                                </div>
+                                <div className="flex shrink-0 items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      openEditEsc(c, e)
+                                      setCycleManagerPeptide(null)
+                                    }}
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-800 hover:text-sky-300"
+                                    aria-label="Dosisanpassung bearbeiten"
+                                  >
+                                    <Pencil size={12} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeEsc(e.id)}
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-500/10 hover:text-red-300"
+                                    aria-label="Dosisanpassung löschen"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
                               </div>
-                              <div className="flex shrink-0 items-center gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    openEditEsc(c, e)
-                                    setCycleManagerPeptide(null)
-                                  }}
-                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-800 hover:text-sky-300"
-                                  aria-label="Dosiserhöhung bearbeiten"
-                                >
-                                  <Pencil size={12} />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => removeEsc(e.id)}
-                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-500/10 hover:text-red-300"
-                                  aria-label="Dosiserhöhung löschen"
-                                >
-                                  <Trash2 size={12} />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       </div>
                     </div>
@@ -2625,7 +2673,7 @@ export function Peptide() {
         </div>
       )}
 
-      {/* ══ DOSISERHÖHUNG-FORMULAR ═══════════════════════════════════════════ */}
+      {/* DOSISANPASSUNG-FORMULAR */}
       {showEscForm && eForm && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
           onClick={() => setShowEscForm(false)}>
@@ -2634,7 +2682,7 @@ export function Peptide() {
 
             <div>
               <div className="flex items-center gap-2">
-                <TrendingUp size={18} className="text-orange-400" />
+                <SlidersHorizontal size={18} className="text-orange-400" />
                 <h2 className="text-lg font-bold">
                   {editingEscId ? t('esc_bearbeiten') : t('esc_hinzufuegen')}
                 </h2>

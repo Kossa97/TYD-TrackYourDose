@@ -16,7 +16,7 @@ export const deCategories: FaqCategory[] = [
           'Die wichtigsten Bereiche erreichst du über die untere Navigation und den Home-Bildschirm:',
           '- Home: Überblick, Schnellaktionen und Kacheln',
           '- Kalender: geplante und protokollierte Dosen',
-          '- My Stack: Substanzen, Vials, Zyklen und Dosiserhöhungen',
+          '- My Stack: Substanzen, Vials, Zyklen und Dosisanpassungen',
           '- Profil: Account, Sprache, Theme, Sharing und Benachrichtigungen',
         ],
       },
@@ -76,7 +76,7 @@ export const deCategories: FaqCategory[] = [
     items: [
       {
         q: 'Was ist My Stack?',
-        a: 'My Stack ist der Bereich für deine Substanzen. Dort verwaltest du Vials, Rekonstitution, Haltbarkeit, aktive Zyklen, Dosiserhöhungen, Notizen, Batch-Daten und Analyse-Dokumente.',
+        a: 'My Stack ist der Bereich für deine Substanzen. Dort verwaltest du Vials, Rekonstitution, Haltbarkeit, aktive Zyklen, Dosisanpassungen, Notizen, Batch-Daten und Analyse-Dokumente.',
       },
       {
         q: 'Was ist der Unterschied zwischen Vials-Ansicht und Liste?',
@@ -166,7 +166,7 @@ export const deCategories: FaqCategory[] = [
       },
       {
         q: 'Warum gibt es keine Standard-Dosis mehr bei einer Substanz?',
-        a: 'Die App nutzt keine Standard-Dosis mehr auf Substanzebene. Entscheidend ist immer die Dosis im jeweiligen Zyklus, plus aktive Dosiserhöhungen. Dadurch ist klar, welche Dosis für welchen Zeitraum gilt.',
+        a: 'Die App nutzt keine Standard-Dosis mehr auf Substanzebene. Entscheidend ist immer die Dosis im jeweiligen Zyklus und die aktive Dosisanpassung. Dadurch ist klar, welche Dosis für welchen Zeitraum gilt.',
       },
       {
         q: 'Was passiert nach dem Speichern einer neuen Substanz?',
@@ -218,7 +218,7 @@ export const deCategories: FaqCategory[] = [
       },
       {
         q: 'Wie wird die aktuelle Dosis berechnet?',
-        a: 'Die aktuelle Dosis kommt aus dem aktiven Zyklus. Wenn eine Dosiserhöhung für heute aktiv ist, wird sie zur Zyklus-Basisdosis addiert. Eine frühere Standard-Dosis der Substanz spielt keine Rolle mehr.',
+        a: 'Die aktuelle Dosis kommt aus dem aktiven Zyklus. Wenn eine Dosisanpassung für heute aktiv ist, gilt die dort definierte Ziel-Dosis. Eine frühere Standard-Dosis der Substanz spielt keine Rolle mehr.',
       },
       {
         q: 'Was bedeutet "Frequenz" im aktiven Zyklus?',
@@ -257,19 +257,19 @@ export const deCategories: FaqCategory[] = [
   },
   {
     id: 'escalation',
-    title: 'Dosiserhöhungen',
+    title: 'Dosisanpassungen',
     items: [
       {
-        q: 'Was ist eine Dosiserhöhung?',
-        a: 'Eine Dosiserhöhung ist eine geplante Erhöhung innerhalb eines Zyklus. Sie wird ab einem definierten Zeitpunkt zur Basisdosis des Zyklus addiert.',
+        q: 'Was ist eine Dosisanpassung?',
+        a: 'Eine Dosisanpassung ist eine geplante Ziel-Dosis innerhalb eines Zyklus. Sie kann die Dosis erhöhen, reduzieren oder auf einen bestimmten Wert setzen.',
       },
       {
-        q: 'Wie füge ich eine Dosiserhöhung hinzu?',
+        q: 'Wie füge ich eine Dosisanpassung hinzu?',
         a: [
           'Im aktiven Zyklus oder in der aufgeklappten Zyklusliste:',
-          '1. Dosiserhöhungen öffnen',
-          '2. Dosiserhöhung hinzufügen tippen',
-          '3. Betrag und Einheit eintragen',
+          '1. Dosisanpassungen öffnen',
+          '2. Dosisanpassung hinzufügen tippen',
+          '3. Neue Ziel-Dosis und Einheit eintragen',
           '4. Startzeitpunkt wählen',
           '5. Optional Notiz ergänzen und speichern',
         ],
@@ -286,31 +286,31 @@ export const deCategories: FaqCategory[] = [
       {
         q: 'Was bedeutet die Timeline mit den Punkten links?',
         a: [
-          'Die Timeline zeigt Basisdosis und geplante Erhöhungen chronologisch.',
+          'Die Timeline zeigt Basisdosis und geplante Dosisanpassungen chronologisch.',
           '- Der aktuelle Punkt markiert die Dosis, die gerade gilt',
           '- Abgehakte Punkte liegen bereits in der Vergangenheit',
           '- Uhr-Symbole stehen für geplante zukünftige Stufen',
         ],
       },
       {
-        q: 'Warum steht "Basis" in der Dosiserhöhungs-Liste?',
+        q: 'Warum steht "Basis" in der Dosisanpassungs-Liste?',
         a: 'Basis ist die ursprüngliche Zyklusdosis. Sie bleibt sichtbar, damit du die aktuelle Dosis immer gegen den Startwert vergleichen kannst.',
       },
       {
-        q: 'Was bedeutet "Aktuell" in der Dosiserhöhung?',
-        a: 'Aktuell markiert die Stufe, die am heutigen Tag gilt. Wenn keine Erhöhung aktiv ist, ist die Basis als aktuell markiert.',
+        q: 'Was bedeutet "Aktuell" in der Dosisanpassung?',
+        a: 'Aktuell markiert die Stufe, die am heutigen Tag gilt. Wenn keine spätere Anpassung aktiv ist, ist die Basis als aktuell markiert.',
       },
       {
-        q: 'Was bedeutet "Keine Dosiserhöhungen geplant"?',
-        a: 'Für diesen Zyklus gibt es nur die Basisdosis. Du kannst darunter über Dosiserhöhung hinzufügen eine neue Stufe anlegen.',
+        q: 'Was bedeutet "Keine Dosisanpassungen geplant"?',
+        a: 'Für diesen Zyklus gibt es nur die Basisdosis. Du kannst darunter über Dosisanpassung hinzufügen eine neue Stufe anlegen.',
       },
       {
-        q: 'Kann ich mehrere Dosiserhöhungen haben?',
+        q: 'Kann ich mehrere Dosisanpassungen haben?',
         a: 'Ja. Mehrere Stufen sind möglich. Die App sortiert sie nach Startzeitpunkt und berechnet daraus die heute wirksame Dosis.',
       },
       {
-        q: 'Werden Dosiserhöhungen im Kalender berücksichtigt?',
-        a: 'Ja. Kalender und Tagespanel verwenden die effektive Dosis für den jeweiligen Tag. Wenn eine Erhöhung aktiv ist, wird die angezeigte Dosis entsprechend angepasst.',
+        q: 'Werden Dosisanpassungen im Kalender berücksichtigt?',
+        a: 'Ja. Kalender und Tagespanel verwenden die effektive Dosis für den jeweiligen Tag. Wenn eine Anpassung aktiv ist, wird die angezeigte Dosis entsprechend angepasst.',
       },
     ],
   },
@@ -325,7 +325,7 @@ export const deCategories: FaqCategory[] = [
           '- farbige Tage für aktive Zyklen',
           '- Markierungen für Logs',
           '- heutiger Tag',
-          '- Hinweise auf aktive Dosiserhöhungen',
+          '- Hinweise auf aktive Dosisanpassungen',
         ],
       },
       {

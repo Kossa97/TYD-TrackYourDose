@@ -69,7 +69,7 @@ export function scheduleForDay(cycle: ScheduleCycle, day: Date): ScheduleSegment
   return seg
 }
 
-// Effective dose for a cycle on a given day: segment base dose + active escalations.
+// Effective dose for a cycle on a given day: segment base dose + active dose adjustments.
 export function effectiveDose(cycle: ScheduleCycle, day: Date, escalations: EscalationRow[]): number {
   const daysFromStart = differenceInDays(day, parseISO(cycle.start_date))
   let total = scheduleForDay(cycle, day).dose

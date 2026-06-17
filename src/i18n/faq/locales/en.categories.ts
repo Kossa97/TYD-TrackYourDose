@@ -16,7 +16,7 @@ export const enCategories: FaqCategory[] = [
           'The main areas are available from the bottom navigation and the Home screen:',
           '- Home: overview, quick actions, and feature tiles',
           '- Calendar: planned and logged doses',
-          '- My Stack: substances, vials, cycles, and dose increases',
+          '- My Stack: substances, vials, cycles, and dose adjustments',
           '- Profile: account, language, theme, sharing, and notifications',
         ],
       },
@@ -76,7 +76,7 @@ export const enCategories: FaqCategory[] = [
     items: [
       {
         q: 'What is My Stack?',
-        a: 'My Stack is where you manage your substances. It includes vials, reconstitution, shelf life, active cycles, dose increases, notes, batch data, and analysis documents.',
+        a: 'My Stack is where you manage your substances. It includes vials, reconstitution, shelf life, active cycles, dose adjustments, notes, batch data, and analysis documents.',
       },
       {
         q: 'What is the difference between Vials view and List view?',
@@ -166,7 +166,7 @@ export const enCategories: FaqCategory[] = [
       },
       {
         q: 'Why is there no standard dose on a substance anymore?',
-        a: 'The app no longer uses a substance-level standard dose. The relevant dose always comes from the cycle, plus any active dose increases. This keeps each dosing phase explicit.',
+        a: 'The app no longer uses a substance-level standard dose. The relevant dose always comes from the cycle and the active dose adjustment. This keeps each dosing phase explicit.',
       },
       {
         q: 'What happens after I save a new substance?',
@@ -218,7 +218,7 @@ export const enCategories: FaqCategory[] = [
       },
       {
         q: 'How is the current dose calculated?',
-        a: 'The current dose comes from the active cycle. If a dose increase is active today, it is added to the cycle base dose. An old substance-level standard dose is no longer used.',
+        a: 'The current dose comes from the active cycle. If a dose adjustment is active today, the defined target dose applies. An old substance-level standard dose is no longer used.',
       },
       {
         q: 'What does "Frequency" mean in the active cycle panel?',
@@ -257,19 +257,19 @@ export const enCategories: FaqCategory[] = [
   },
   {
     id: 'escalation',
-    title: 'Dose increases',
+    title: 'Dose adjustments',
     items: [
       {
-        q: 'What is a dose increase?',
-        a: 'A dose increase is a planned increase within a cycle. Starting from a defined point, it is added to the cycle base dose.',
+        q: 'What is a dose adjustment?',
+        a: 'A dose adjustment is a planned target dose within a cycle. It can increase, reduce, or set the dose to a specific value.',
       },
       {
-        q: 'How do I add a dose increase?',
+        q: 'How do I add a dose adjustment?',
         a: [
           'In the active cycle panel or expanded cycle list:',
-          '1. Open Dose increases',
-          '2. Tap Add dose increase',
-          '3. Enter amount and unit',
+          '1. Open Dose adjustments',
+          '2. Tap Add dose adjustment',
+          '3. Enter the new target dose and unit',
           '4. Choose when it starts',
           '5. Optionally add a note and save',
         ],
@@ -286,31 +286,31 @@ export const enCategories: FaqCategory[] = [
       {
         q: 'What does the timeline with dots on the left mean?',
         a: [
-          'The timeline shows base dose and planned increases in order.',
+          'The timeline shows the base dose and planned dose adjustments in order.',
           '- The current dot marks the dose that applies now',
           '- Checked dots are already in the past',
           '- Clock icons are planned future steps',
         ],
       },
       {
-        q: 'Why does "Base" appear in dose increases?',
+        q: 'Why does "Base" appear in dose adjustments?',
         a: 'Base is the original cycle dose. It stays visible so you can compare the current dose with the starting point.',
       },
       {
-        q: 'What does "Current" mean in the dose increase list?',
-        a: 'Current marks the step that applies today. If no increase is active, the base dose is marked current.',
+        q: 'What does "Current" mean in the dose adjustment list?',
+        a: 'Current marks the step that applies today. If no later adjustment is active, the base dose is marked current.',
       },
       {
-        q: 'What does "No dose increases planned" mean?',
-        a: 'This cycle only has its base dose. You can add a new step below with Add dose increase.',
+        q: 'What does "No dose adjustments planned" mean?',
+        a: 'This cycle only has its base dose. You can add a new step below with Add dose adjustment.',
       },
       {
-        q: 'Can I have multiple dose-increase steps?',
+        q: 'Can I have multiple dose adjustment steps?',
         a: 'Yes. Multiple steps are supported. The app sorts them by start point and calculates the dose that applies today.',
       },
       {
-        q: 'Are dose increases considered in the calendar?',
-        a: 'Yes. Calendar and day panels use the effective dose for each day. If an increase is active, the displayed dose is adjusted.',
+        q: 'Are dose adjustments considered in the calendar?',
+        a: 'Yes. Calendar and day panels use the effective dose for each day. If an adjustment is active, the displayed dose is adjusted.',
       },
     ],
   },
@@ -325,7 +325,7 @@ export const enCategories: FaqCategory[] = [
           '- colored days for active cycles',
           '- markers for logs',
           '- today',
-          '- indicators for active dose increases',
+          '- indicators for active dose adjustments',
         ],
       },
       {
