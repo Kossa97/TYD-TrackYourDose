@@ -527,6 +527,7 @@ export function Peptide() {
   const [showCycleForm, setShowCycleForm]         = useState(false)
   const [cycleForPeptide, setCycleForPeptide]     = useState<Peptide | null>(null)
   const [cyclePromptPeptide, setCyclePromptPeptide] = useState<Peptide | null>(null)
+  const [cycleManagerPeptide, setCycleManagerPeptide] = useState<Peptide | null>(null)
   const [editingCycleId, setEditingCycleId]       = useState<string | null>(null)
   const [cForm, setCForm]                         = useState<CycleForm | null>(null)
   const [savingCycle, setSavingCycle]             = useState(false)
@@ -1777,14 +1778,23 @@ export function Peptide() {
                           </p>
                           <p className="mt-1 truncate text-base font-bold text-white">{activeCycle?.name ?? t('noch_kein_zyklus')}</p>
                         </div>
-                        <button
-                          data-ob="btn-zyklus-add"
-                          onClick={() => { openNewCycle(p); dismissZyklusBtn() }}
-                          className="flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/15 px-3 text-xs font-semibold text-violet-300 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
-                        >
-                          {activeCycle && <Plus size={14} />} {activeCycle ? 'Neu' : t('zyklus_hinzufuegen')}
-                          {zyklusBtnNew && <NewDot />}
-                        </button>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <button
+                            data-ob="btn-zyklus-add"
+                            onClick={() => { openNewCycle(p); dismissZyklusBtn() }}
+                            className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/15 px-3 text-xs font-semibold text-violet-300 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
+                          >
+                            {activeCycle && <Plus size={14} />} {activeCycle ? 'Neu' : t('zyklus_hinzufuegen')}
+                            {zyklusBtnNew && <NewDot />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setCycleManagerPeptide(p)}
+                            className="flex min-h-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/70 px-3 text-xs font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
+                          >
+                            Verwalten
+                          </button>
+                        </div>
                       </div>
 
                       {activeCycle ? (
@@ -2132,7 +2142,195 @@ export function Peptide() {
           </div>
       </div>
 
-      {/* ══ PEPTID-FORMULAR ══════════════════════════════════════════════════ */}
+      {/* ZYKLUS-MANAGER */}
+      {cycleManagerPeptide && (() => {
+        const managerCycles = cyclesOf(cycleManagerPeptide.id)
+
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/80"
+            data-app-modal
+            onClick={() => setCycleManagerPeptide(null)}
+          >
+            <div
+              className="flex h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-slate-800 bg-slate-950 shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="shrink-0 border-b border-slate-800 px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))]">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-violet-300">Alle erstellten Zyklen</p>
+                    <h2 className="mt-1 text-lg font-bold text-white">Zyklen verwalten</h2>
+                    <p className="mt-0.5 truncate text-sm text-slate-500">{cycleManagerPeptide.name}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCycleManagerPeptide(null)}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 transition-colors hover:border-slate-600 hover:text-white"
+                    aria-label="Schließen"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+                <button
+                  type="button"
+                  data-ob="btn-zyklus-add"
+                  onClick={() => {
+                    openNewCycle(cycleManagerPeptide)
+                    dismissZyklusBtn()
+                    setCycleManagerPeptide(null)
+                  }}
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/15 px-4 text-sm font-bold text-violet-200 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
+                >
+                  <Plus size={16} /> Neuer Zyklus
+                </button>
+
+                {managerCycles.length === 0 && (
+                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
+                    <p className="text-sm font-semibold text-white">{t('noch_kein_zyklus')}</p>
+                    <p className="mt-1 text-xs text-slate-500">Erstelle einen Zyklus, um Dosis, Frequenz und Reminder zu planen.</p>
+                  </div>
+                )}
+
+                {managerCycles.map(c => {
+                  const pEscs = escalationsOf(c.id)
+                  const isEnded = c.end_date ? parseISO(c.end_date).getTime() < Date.now() : false
+                  const statusLabel = c.active ? t('aktiv_badge') : isEnded ? 'Beendet' : t('inaktiv_badge')
+
+                  return (
+                    <div key={c.id} className={`rounded-xl border ${c.active ? 'border-violet-500/35 bg-violet-500/5' : 'border-slate-800 bg-slate-900/35'}`}>
+                      <div className="space-y-3 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate text-sm font-bold text-white">{c.name}</p>
+                              <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${c.active ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-300' : 'border-slate-700 bg-slate-900 text-slate-400'}`}>
+                                {statusLabel}
+                              </span>
+                            </div>
+                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
+                              <span className="font-semibold text-slate-200">{c.dose} {c.unit}</span>
+                              <span>{freqLabel(c)}</span>
+                              <span>{t(METHOD_KEYS[c.method] ?? c.method)}</span>
+                              <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
+                              {c.end_date ? (
+                                <span>{t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}</span>
+                              ) : (
+                                <span>Ende offen</span>
+                              )}
+                            </div>
+                            {(() => {
+                              const intake = intakeLabel(c)
+                              const reminder = reminderLabel(c)
+                              return intake || reminder ? (
+                                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                                  {intake && <span className="text-amber-300">{intake}</span>}
+                                  {reminder && <span className="text-sky-300">{reminder}</span>}
+                                </div>
+                              ) : null
+                            })()}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleCycleActive(c)}
+                            className={`min-h-10 rounded-lg border px-2 text-xs font-semibold transition-colors ${c.active ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/15' : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300'}`}
+                          >
+                            {c.active ? 'Deaktivieren' : 'Aktivieren'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              openEditCycle(cycleManagerPeptide, c)
+                              setCycleManagerPeptide(null)
+                            }}
+                            className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs font-semibold text-slate-300 transition-colors hover:border-sky-500/40 hover:text-sky-300"
+                          >
+                            <Pencil size={13} /> Bearbeiten
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeCycle(c.id)}
+                            className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-red-500/25 bg-red-500/10 px-2 text-xs font-semibold text-red-300 transition-colors hover:border-red-400/45 hover:bg-red-500/15"
+                          >
+                            <Trash2 size={13} /> Löschen
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-slate-800/70 px-3 pb-3 pt-2">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <p className="flex items-center gap-1.5 text-xs font-semibold text-orange-300">
+                            <TrendingUp size={12} /> {t('dosiserhoehungen')}
+                          </p>
+                          <button
+                            type="button"
+                            data-ob="btn-esc-add"
+                            onClick={() => {
+                              openNewEsc(c)
+                              setCycleManagerPeptide(null)
+                            }}
+                            className="flex min-h-8 items-center justify-center gap-1 rounded-lg border border-orange-500/25 bg-orange-500/10 px-2.5 text-xs font-semibold text-orange-300 transition-colors hover:border-orange-400/45 hover:bg-orange-500/15"
+                          >
+                            <Plus size={11} /> {t('esc_hinzufuegen')}
+                          </button>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <div className="flex min-h-10 items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs">
+                            <span className="min-w-0 truncate text-orange-100">Basis</span>
+                            <span className="shrink-0 font-semibold text-white">{c.dose} {c.unit}</span>
+                          </div>
+                          {pEscs.length === 0 && (
+                            <p className="px-1 py-1 text-xs italic text-slate-500">{t('keine_dosiserhoehungen')}</p>
+                          )}
+                          {pEscs.map((e, idx) => (
+                            <div key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2">
+                              <div className="min-w-0 text-xs">
+                                <p className="truncate font-semibold text-white">#{idx + 1} +{e.increase_amount} {e.unit}</p>
+                                <p className="truncate text-slate-400">{escLabel(e)}</p>
+                                {e.notes && <p className="truncate text-slate-500">{e.notes}</p>}
+                              </div>
+                              <div className="flex shrink-0 items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    openEditEsc(c, e)
+                                    setCycleManagerPeptide(null)
+                                  }}
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-800 hover:text-sky-300"
+                                  aria-label="Dosiserhöhung bearbeiten"
+                                >
+                                  <Pencil size={12} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeEsc(e.id)}
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-500/10 hover:text-red-300"
+                                  aria-label="Dosiserhöhung löschen"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* PEPTID-FORMULAR */}
       {showPeptideForm && (
         <PeptideFormModal
           editingPeptideId={editingPeptideId}

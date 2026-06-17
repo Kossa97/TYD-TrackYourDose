@@ -131,6 +131,23 @@ describe('Peptide page vial view', () => {
     expect(text).not.toContain('<h3 className="truncate text-xl font-bold text-white">{p.name}</h3>')
   })
 
+  test('offers a mobile cycle manager from the vial cockpit', () => {
+    const text = source()
+
+    expect(text).toContain('cycleManagerPeptide')
+    expect(text).toContain('setCycleManagerPeptide(p)')
+    expect(text).toContain('Zyklen verwalten')
+    expect(text).toContain('Alle erstellten Zyklen')
+    expect(text).toContain('cyclesOf(cycleManagerPeptide.id)')
+    expect(text).toContain('openEditCycle(cycleManagerPeptide, c)')
+    expect(text).toContain('toggleCycleActive(c)')
+    expect(text).toContain('removeCycle(c.id)')
+    expect(text).toContain('openNewEsc(c)')
+    expect(text).toContain('openEditEsc(c, e)')
+    expect(text).toContain('removeEsc(e.id)')
+    expect(text).toContain('escalationsOf(c.id)')
+  })
+
   test('uses the full mobile screen for the cycle form', () => {
     const text = source()
 
