@@ -107,9 +107,9 @@ function Scene({
       <directionalLight position={[2.5, 3, 3]} intensity={2.2} />
       <PlaceholderTorso onLongPress={handleLongPress} />
       {logs.filter(log => visibleLogIds.has(log.id)).map(log => (
-        <InjectionPin key={log.id} position={log.position} reference onClick={() => onLogFocus(log)} />
+        <InjectionPin key={log.id} position={log.position} normal={log.normal} reference onClick={() => onLogFocus(log)} />
       ))}
-      {draftPin && <InjectionPin position={draftPin.position} active />}
+      {draftPin && <InjectionPin position={draftPin.position} normal={draftPin.normal} active />}
       <ContactShadows opacity={0.22} scale={4} blur={2.5} far={3} position={[0, -1.55, 0]} />
       <OrbitControls enablePan enableZoom enableRotate minDistance={1.4} maxDistance={4.5} target={[0, -0.05, 0]} />
       <Environment preset="city" />
