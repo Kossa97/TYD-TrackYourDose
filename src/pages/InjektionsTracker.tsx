@@ -9,6 +9,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { differenceInDays, format, isToday, isYesterday, parseISO } from 'date-fns'
 import toast from 'react-hot-toast'
+import { InjectionMapCanvas } from '../components/injection3d/InjectionMapCanvas'
+import type { InjectionLog3D, InjectionPinDraft } from '../lib/injectionLogTypes'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -202,6 +204,8 @@ export function InjektionsTracker() {
   const [loading, setLoading] = useState(true)
   const [tableError, setTableError] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [draftPin, setDraftPin] = useState<InjectionPinDraft | null>(null)
+  const [visibleLogIds, setVisibleLogIds] = useState<Set<string>>(() => new Set())
 
   const loadLogs = useCallback(async () => {
     if (!user) return
@@ -291,6 +295,24 @@ export function InjektionsTracker() {
   const currentZones = view === 'front' ? FRONT_ZONES : BACK_ZONES
   const logGroups = groupLogs(logs.slice(0, 40))
 
+  // Temporary bridge: existing 2D logs carry no 3D position, so this is empty
+  // during the spike. Task 4 switches `logs` to the enriched InjectionLog3D shape.
+  const mapped3dLogs: InjectionLog3D[] = logs
+    .filter(log => (log as any).position)
+    .map(log => ({
+      ...(log as any),
+      peptide_name: null,
+      cycle_name: null,
+      model_version: (log as any).model_version ?? 'placeholder-v1',
+      body_region: (log as any).body_region ?? 'outside_typical',
+      body_side: (log as any).body_side ?? 'center',
+      position: (log as any).position,
+      normal: (log as any).normal ?? { x: 0, y: 0, z: 1 },
+      uv: (log as any).uv ?? null,
+      camera_state: (log as any).camera_state ?? null,
+      warning_state: (log as any).warning_state ?? null,
+    }))
+
   if (tableError) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 8 }}>
@@ -332,58 +354,15 @@ export function InjektionsTracker() {
         />
       </div>
 
-      {/* ── Body Map ── */}
+      {/* ── 3D Injektionskarte (Spike) ── */}
       <section style={{ ...panelStyle, padding: 0 }}>
-        {/* View toggle */}
-        <div style={{ padding: '14px 14px 0' }}>
-          <div style={{
-            display: 'flex', gap: 4,
-            background: 'var(--border)',
-            borderRadius: 12, padding: 3,
-          }}>
-            {(['front', 'back'] as ViewMode[]).map(v => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                style={{
-                  flex: 1, padding: '7px 0', borderRadius: 9,
-                  fontSize: '0.76rem', fontWeight: 800,
-                  background: view === v ? 'var(--accent-weak)' : 'transparent',
-                  border: view === v ? '1px solid var(--accent-border)' : '1px solid transparent',
-                  color: view === v ? 'var(--accent)' : 'var(--text-muted)',
-                  transition: 'all 0.18s ease',
-                }}
-              >
-                {v === 'front'
-                  ? t('inj_front', { defaultValue: 'Vorne' })
-                  : t('inj_back',  { defaultValue: 'Hinten' })}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* SVG body + zones */}
-        <BodyMap
-          view={view}
-          zones={currentZones}
-          siteStatuses={siteStatuses}
-          recommendedSite={recommendedSite}
-          onSiteClick={openSheet}
+        <InjectionMapCanvas
+          draftPin={draftPin}
+          logs={mapped3dLogs}
+          visibleLogIds={visibleLogIds}
+          onDraftPinChange={setDraftPin}
+          onLogFocus={(log) => setVisibleLogIds(prev => new Set(prev).add(log.id))}
         />
-
-        {/* Legend */}
-        <div style={{ padding: '4px 14px 14px', display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-          {[
-            { color: '#10b981', label: t('inj_legend_free',    { defaultValue: 'Frei (>7 Tage)' }) },
-            { color: '#f59e0b', label: t('inj_legend_caution', { defaultValue: 'Kürzlich (3–7)' }) },
-            { color: '#f43f5e', label: t('inj_legend_warn',    { defaultValue: 'Schonen (<3)' }) },
-          ].map(item => (
-            <div key={item.color} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, boxShadow: `0 0 6px ${item.color}60` }} />
-              <span style={{ fontSize: '0.58rem', color: 'var(--text-muted)', fontWeight: 700 }}>{item.label}</span>
-            </div>
-          ))}
-        </div>
       </section>
 
       {/* Last injection banner */}
