@@ -18,6 +18,7 @@ import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
 import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, type ScheduleSegment } from '../lib/intakeSchedule'
+import { computeNextVialStock } from '../lib/peptideStock'
 import { GlassPanel, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
 
 const DATE_LOCALES: Record<string, Locale> = {
@@ -153,26 +154,6 @@ function cycleLogTimestamp(cycle: Cycle, day: Date): string {
   const safeMinutes = minutes >= 24 * 60 ? 12 * 60 : minutes
   date.setHours(Math.floor(safeMinutes / 60), safeMinutes % 60, 0, 0)
   return date.toISOString()
-}
-
-function doseToVialDelta(dose: number, unit: string, peptide: Peptide): number | null {
-  const normalizedUnit = unit.toLowerCase()
-  if (normalizedUnit === 'ml') {
-    if (!peptide.reconstitution_ml || peptide.reconstitution_ml <= 0) return null
-    return dose / peptide.reconstitution_ml
-  }
-  if (!peptide.vial_amount_mg || peptide.vial_amount_mg <= 0) return null
-  const doseMg = normalizedUnit === 'mcg'
-    ? dose / 1000
-    : normalizedUnit === 'mg'
-      ? dose
-      : null
-  if (doseMg == null) return null
-  return doseMg / peptide.vial_amount_mg
-}
-
-function roundStock(value: number) {
-  return Math.round(value * 10000) / 10000
 }
 
 const calendarLegendText: CSSProperties = {
@@ -454,24 +435,10 @@ export function Dashboard() {
     if (!user) return false
     const peptide = peptides.find(p => p.id === peptideId)
     if (!peptide) return false
-    // Don't credit a dose that belongs to a PAST reconstitution back into the
-    // current vial (e.g. undoing an old intake after the vial was renewed/discarded).
-    if (mode === 'credit' && loggedAt && peptide.reconstitution_date) {
-      const logDay = format(parseISO(loggedAt), 'yyyy-MM-dd')
-      const reconDay = format(parseISO(peptide.reconstitution_date), 'yyyy-MM-dd')
-      if (logDay < reconDay) return false
-    }
-    const delta = doseToVialDelta(dose, unit, peptide)
-    if (!delta || delta <= 0) return false
-
-    const current = Number(peptide.vials_in_stock ?? 0)
-    const maxStock = Number(peptide.vials_initial ?? 0)
-    const next = mode === 'debit'
-      ? Math.max(0, current - delta)
-      : maxStock > 0
-        ? Math.min(maxStock, current + delta)
-        : current + delta
-    const rounded = roundStock(next)
+    // computeNextVialStock returns null when the delta is unknown or when a credit
+    // would belong to a past reconstitution (vial renewed/discarded since).
+    const rounded = computeNextVialStock(peptide, dose, unit, mode, loggedAt)
+    if (rounded == null) return false
 
     const { error } = await supabase
       .from('peptides')
