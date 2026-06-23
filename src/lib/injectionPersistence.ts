@@ -1,6 +1,11 @@
 // src/lib/injectionPersistence.ts
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { parseISO, startOfDay } from 'date-fns'
+import { collectOpenIntakes, effectiveDose, type EscalationRow, type IntakeLog, type ScheduleCycle } from './intakeSchedule'
+import { debitPeptideStockForDoseById } from './peptideStock'
 import type { InjectionLog3D, InjectionPinDraft, SelectableInjectionCycle } from './injectionLogTypes'
+
+const INJECTABLE_METHODS = ['Subkutan', 'Intramuskulär', 'Intramuskulaer']
 
 interface SaveInjectionInput {
   userId: string
@@ -100,7 +105,7 @@ export async function loadSelectableInjectionCycles(
     .select('id, peptide_id, name, dose, unit, method, active, peptides(name)')
     .eq('user_id', userId)
     .eq('active', true)
-    .in('method', ['Subkutan', 'Intramuskulär', 'Intramuskulaer'])
+    .in('method', INJECTABLE_METHODS)
   if (error) throw error
   return (data ?? []).map((row: any) => ({
     id: row.id,
@@ -111,4 +116,78 @@ export async function loadSelectableInjectionCycles(
     unit: row.unit,
     method: row.method,
   }))
+}
+
+export interface OpenInjectionIntake {
+  cycleId: string
+  peptideId: string
+  peptideName: string
+  cycleName: string
+  dose: number
+  unit: string
+  method: string
+  scheduledAt: string
+  daysOverdue: number
+}
+
+// Active injectable cycles' open (due/overdue) intakes, enriched with the
+// effective dose and a concrete scheduled timestamp for retroactive logging.
+export async function loadOpenInjectionIntakes(
+  supabase: SupabaseClient,
+  userId: string,
+  now: Date = new Date(),
+): Promise<OpenInjectionIntake[]> {
+  const [cyclesRes, logsRes, escRes] = await Promise.all([
+    supabase.from('cycles').select('*, peptides(name)').eq('user_id', userId).eq('active', true).in('method', INJECTABLE_METHODS),
+    supabase.from('dose_logs').select('peptide_id, logged_at, taken').eq('user_id', userId),
+    supabase.from('dose_escalations').select('cycle_id, increase_amount, start_type, start_date, start_after_days').eq('user_id', userId),
+  ])
+  if (cyclesRes.error) throw cyclesRes.error
+  const cycles = (cyclesRes.data ?? []) as any[]
+  const logs = (logsRes.data ?? []) as IntakeLog[]
+  const escalations = (escRes.data ?? []) as EscalationRow[]
+
+  return collectOpenIntakes(cycles as ScheduleCycle[], logs, now).map(open => {
+    const cycle = cycles.find(c => c.id === open.cycleId)
+    const day = startOfDay(parseISO(open.dateKey))
+    const scheduledAt = new Date(day.getTime() + open.minutes * 60000)
+    const peptideName = Array.isArray(cycle?.peptides)
+      ? cycle?.peptides[0]?.name ?? cycle?.name
+      : cycle?.peptides?.name ?? cycle?.name
+    return {
+      cycleId: open.cycleId,
+      peptideId: open.peptideId,
+      peptideName: peptideName ?? 'Substanz',
+      cycleName: cycle?.name ?? '',
+      dose: cycle ? effectiveDose(cycle as ScheduleCycle, day, escalations) : 0,
+      unit: cycle?.unit ?? '',
+      method: cycle?.method ?? 'Subkutan',
+      scheduledAt: scheduledAt.toISOString(),
+      daysOverdue: Math.max(0, Math.round((startOfDay(now).getTime() - day.getTime()) / 86_400_000)),
+    }
+  })
+}
+
+// Insert a confirmed dose_log for an intake and debit the peptide vial stock,
+// matching the Dashboard confirmation. Returns the new dose_log id to link.
+export async function confirmIntakeDoseLog(
+  supabase: SupabaseClient,
+  input: { userId: string; peptideId: string; dose: number; unit: string; method: string; loggedAt: string },
+): Promise<string> {
+  const { data, error } = await supabase
+    .from('dose_logs')
+    .insert({
+      user_id: input.userId,
+      peptide_id: input.peptideId,
+      dose: input.dose,
+      unit: input.unit,
+      method: input.method,
+      logged_at: input.loggedAt,
+      taken: true,
+    })
+    .select('id')
+    .single()
+  if (error) throw error
+  await debitPeptideStockForDoseById(supabase, input.userId, input.peptideId, input.dose, input.unit)
+  return data.id as string
 }
