@@ -9,8 +9,8 @@ const PIN_AXIS = new THREE.Vector3(0, 1, 0)
 const ACTIVE_HEAD = '#2b82d9'
 const REFERENCE_HEAD = '#8a94a6'
 const STEM_COLOR = '#c4c9d4'
-const HEAD_RADIUS = 0.032
-const STEM_LENGTH = 0.07
+const HEAD_RADIUS = 0.013
+const STEM_LENGTH = 0.034
 const TILT = 0.3 // ~17° lean, like a real pushpin
 
 // Realistic "pushpin" injection marker: a glossy ball head on a thin tapered
@@ -57,7 +57,7 @@ export function InjectionPin({
       <group scale={scale} rotation={[0, 0, TILT]}>
         {/* Tapered metallic needle: thin tip at the skin, wider near the head */}
         <mesh position={[0, STEM_LENGTH / 2, 0]}>
-          <cylinderGeometry args={[0.006, 0.0028, STEM_LENGTH, 16]} />
+          <cylinderGeometry args={[0.0034, 0.0014, STEM_LENGTH, 14]} />
           <meshStandardMaterial color={STEM_COLOR} metalness={0.85} roughness={0.32} envMapIntensity={1} />
         </mesh>
         {/* Glossy ball head */}

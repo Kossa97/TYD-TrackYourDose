@@ -1,37 +1,52 @@
 // src/components/injection3d/InjectionMapCanvas.tsx
-import { Canvas, type ThreeEvent } from '@react-three/fiber'
-import { ContactShadows, Environment, OrbitControls } from '@react-three/drei'
-import { useMemo, useRef } from 'react'
+import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
+import { ContactShadows, Environment, OrbitControls, useGLTF } from '@react-three/drei'
+import { Suspense, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { inferBodyRegion } from '../../lib/injectionGeometry'
 import type { InjectionLog3D, InjectionPinDraft } from '../../lib/injectionLogTypes'
 import { InjectionPin } from './InjectionPin'
 
+// Coordinate space pins are placed in (the fitted visible model). Kept stable so
+// region inference + proximity stay comparable across saved pins.
 const MODEL_VERSION = 'placeholder-v1'
+const MODEL_URL = '/models/torso_hybrid_v1.glb'
 const LONG_PRESS_MS = 420
+
+// Fit params: scale/position the model into the region-inference coordinate space
+// so inferBodyRegion thresholds stay valid while the torso fills the mobile canvas.
+const FIT_HEIGHT = 2.85
+const FIT_Y_OFFSET = 0.12
+
+// Camera framing so the body fills the (portrait) canvas. Lower distance = fuller.
+const CAMERA_DISTANCE = 3.25
+const CAMERA_FOV = 48
+
+useGLTF.preload(MODEL_URL)
 
 function toJson(v: THREE.Vector3) {
   return { x: Number(v.x.toFixed(5)), y: Number(v.y.toFixed(5)), z: Number(v.z.toFixed(5)) }
 }
 
-function PlaceholderTorso({
-  onLongPress,
-}: {
-  onLongPress: (event: ThreeEvent<PointerEvent>) => void
-}) {
+// Visible textured torso. Raycast directly on long-press (a one-shot pick, not
+// per-frame) so pins land exactly on the surface. A decimated simplified hit
+// mesh remains a worthwhile later asset-pipeline optimization.
+function Torso({ onLongPress }: { onLongPress: (event: ThreeEvent<PointerEvent>) => void }) {
+  const { scene } = useGLTF(MODEL_URL)
   const timer = useRef<number | null>(null)
 
-  const material = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#c9a58f',
-    roughness: 0.58,
-    metalness: 0.04,
-  }), [])
-
-  const armMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#b8927d',
-    roughness: 0.62,
-    metalness: 0.03,
-  }), [])
+  const model = useMemo(() => {
+    const root = scene.clone(true)
+    const box = new THREE.Box3().setFromObject(root)
+    const size = new THREE.Vector3()
+    const center = new THREE.Vector3()
+    box.getSize(size)
+    box.getCenter(center)
+    const s = FIT_HEIGHT / size.y
+    root.scale.setScalar(s)
+    root.position.set(-center.x * s, -center.y * s + FIT_Y_OFFSET, -center.z * s)
+    return root
+  }, [scene])
 
   const startPress = (event: ThreeEvent<PointerEvent>) => {
     event.stopPropagation()
@@ -44,32 +59,55 @@ function PlaceholderTorso({
     timer.current = null
   }
 
-  const handlers = {
-    onPointerDown: startPress,
-    onPointerUp: cancelPress,
-    onPointerLeave: cancelPress,
-    onPointerMove: cancelPress,
-  }
-
   return (
-    <group>
-      <mesh {...handlers} material={material} scale={[0.72, 1.05, 0.34]} position={[0, 0.18, 0]}>
-        <capsuleGeometry args={[0.52, 1.05, 18, 36]} />
-      </mesh>
-      <mesh {...handlers} material={armMaterial} scale={[0.22, 0.75, 0.22]} rotation={[0, 0, 0.22]} position={[-0.74, 0.08, 0]}>
-        <capsuleGeometry args={[0.23, 0.9, 12, 24]} />
-      </mesh>
-      <mesh {...handlers} material={armMaterial} scale={[0.22, 0.75, 0.22]} rotation={[0, 0, -0.22]} position={[0.74, 0.08, 0]}>
-        <capsuleGeometry args={[0.23, 0.9, 12, 24]} />
-      </mesh>
-      <mesh {...handlers} material={material} scale={[0.28, 0.85, 0.26]} position={[-0.28, -0.92, 0]}>
-        <capsuleGeometry args={[0.22, 0.85, 12, 24]} />
-      </mesh>
-      <mesh {...handlers} material={material} scale={[0.28, 0.85, 0.26]} position={[0.28, -0.92, 0]}>
-        <capsuleGeometry args={[0.22, 0.85, 12, 24]} />
-      </mesh>
+    <group
+      onPointerDown={startPress}
+      onPointerUp={cancelPress}
+      onPointerLeave={cancelPress}
+      onPointerMove={cancelPress}
+    >
+      <primitive object={model} />
     </group>
   )
+}
+
+// Frames the body to fill the canvas by driving the active camera + controls
+// imperatively (declarative camera props don't take effect in this setup).
+function applyCameraFrame(
+  camera: THREE.Camera,
+  controls: { target: THREE.Vector3; update: () => void } | null,
+) {
+  const cam = camera as THREE.PerspectiveCamera
+  cam.position.set(0, FIT_Y_OFFSET, CAMERA_DISTANCE)
+  cam.fov = CAMERA_FOV
+  cam.zoom = 1
+  cam.near = 0.05
+  cam.far = 50
+  cam.updateProjectionMatrix()
+
+  if (controls) {
+    controls.target.set(0, FIT_Y_OFFSET, 0)
+    controls.update()
+  }
+}
+
+function CameraRig() {
+  const camera = useThree((s) => s.camera)
+  const controls = useThree((s) => s.controls) as { target: THREE.Vector3; update: () => void } | null
+  const warmupFrames = useRef(0)
+
+  useLayoutEffect(() => {
+    applyCameraFrame(camera, controls)
+    warmupFrames.current = 0
+  }, [camera, controls])
+
+  useFrame(() => {
+    if (warmupFrames.current >= 6) return
+    applyCameraFrame(camera, controls)
+    warmupFrames.current += 1
+  })
+
+  return null
 }
 
 function Scene({
@@ -103,15 +141,18 @@ function Scene({
 
   return (
     <>
+      <CameraRig />
       <ambientLight intensity={0.9} />
       <directionalLight position={[2.5, 3, 3]} intensity={2.2} />
-      <PlaceholderTorso onLongPress={handleLongPress} />
+      <Suspense fallback={null}>
+        <Torso onLongPress={handleLongPress} />
+      </Suspense>
       {logs.filter(log => visibleLogIds.has(log.id)).map(log => (
         <InjectionPin key={log.id} position={log.position} normal={log.normal} reference onClick={() => onLogFocus(log)} />
       ))}
       {draftPin && <InjectionPin position={draftPin.position} normal={draftPin.normal} active />}
-      <ContactShadows opacity={0.22} scale={4} blur={2.5} far={3} position={[0, -1.55, 0]} />
-      <OrbitControls enablePan enableZoom enableRotate minDistance={1.4} maxDistance={4.5} target={[0, -0.05, 0]} />
+      <ContactShadows opacity={0.22} scale={4} blur={2.5} far={3} position={[0, -1.22, 0]} />
+      <OrbitControls makeDefault enablePan enableZoom enableRotate minDistance={0.65} maxDistance={6} target={[0, FIT_Y_OFFSET, 0]} />
       <Environment preset="city" />
     </>
   )
@@ -125,10 +166,18 @@ export function InjectionMapCanvas(props: {
   onLogFocus: (log: InjectionLog3D) => void
 }) {
   return (
-    <div style={{ position: 'relative', minHeight: 'min(76vh, 760px)', borderRadius: 24, overflow: 'hidden', background: 'radial-gradient(circle at 50% 20%, rgba(0,204,245,0.16), transparent 42%), #07111d' }}>
-      <Canvas camera={{ position: [0, 0.35, 2.55], fov: 42 }} dpr={[1, 1.7]}>
+    <div style={{ position: 'relative', height: 'min(62vh, 540px)', minHeight: 360, borderRadius: 24, overflow: 'hidden', background: 'radial-gradient(circle at 50% 20%, rgba(0,204,245,0.16), transparent 42%), #07111d' }}>
+      <Canvas
+        camera={{ position: [0, FIT_Y_OFFSET, CAMERA_DISTANCE], fov: CAMERA_FOV, near: 0.05, far: 50 }}
+        dpr={[1, 1.7]}
+        onCreated={({ camera }) => applyCameraFrame(camera, null)}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+      >
         <Scene {...props} />
       </Canvas>
     </div>
   )
 }
+
+
+
