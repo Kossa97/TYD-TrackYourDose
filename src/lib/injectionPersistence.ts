@@ -13,6 +13,7 @@ interface SaveInjectionInput {
   notes: string | null
   loggedAt: string
   warningState: string | null
+  substanceLabel?: string | null
   pin: InjectionPinDraft
 }
 
@@ -28,6 +29,7 @@ export function buildInjectionInsertPayload(input: SaveInjectionInput) {
     notes: input.notes?.trim() || null,
     logged_at: input.loggedAt,
     site: `${input.pin.body_region}_${input.pin.body_side}`,
+    substance_label: input.substanceLabel?.trim() || null,
     body_region: input.pin.body_region,
     body_side: input.pin.body_side,
     model_version: input.pin.model_version,
@@ -72,6 +74,7 @@ export async function loadInjectionLogs(
     uv: row.uv ?? null,
     camera_state: row.camera_state ?? null,
     warning_state: row.warning_state ?? null,
+    substance_label: row.substance_label ?? null,
   })) as InjectionLog3D[]
 }
 

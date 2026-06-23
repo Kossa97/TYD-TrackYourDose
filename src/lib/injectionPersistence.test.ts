@@ -41,4 +41,33 @@ describe('buildInjectionInsertPayload', () => {
     })
     expect(payload.position).toEqual({ x: 0.1, y: 0.2, z: 0.3 })
   })
+
+  it('stores a trimmed manual substance label without a dose_log link', () => {
+    const payload = buildInjectionInsertPayload({
+      userId: 'user-1',
+      doseLogId: null,
+      peptideId: null,
+      cycleId: null,
+      dose: 10,
+      unit: 'mg',
+      method: 'Intramuskulär',
+      notes: null,
+      loggedAt: '2026-06-17T08:00:00.000Z',
+      warningState: null,
+      substanceLabel: '  Testosteron  ',
+      pin: {
+        model_version: 'placeholder-v1',
+        body_region: 'glute',
+        body_side: 'left',
+        position: { x: 0, y: -0.8, z: 0.1 },
+        normal: { x: 0, y: 0, z: 1 },
+        uv: null,
+        camera_state: null,
+      },
+    })
+
+    expect(payload.substance_label).toBe('Testosteron')
+    expect(payload.dose_log_id).toBeNull()
+    expect(payload.unit).toBe('mg')
+  })
 })

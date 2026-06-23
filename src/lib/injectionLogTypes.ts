@@ -45,6 +45,7 @@ export interface InjectionLog3D extends InjectionPinDraft {
   logged_at: string
   created_at: string | null
   warning_state: string | null
+  substance_label?: string | null
 }
 
 export interface SelectableInjectionCycle {

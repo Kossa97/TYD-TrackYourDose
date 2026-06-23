@@ -13,7 +13,8 @@ alter table injection_logs
   add column if not exists normal jsonb,
   add column if not exists uv jsonb,
   add column if not exists camera_state jsonb,
-  add column if not exists warning_state text;
+  add column if not exists warning_state text,
+  add column if not exists substance_label text;
 
 create index if not exists injection_logs_user_logged_at_idx
   on injection_logs (user_id, logged_at desc);
