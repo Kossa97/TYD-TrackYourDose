@@ -1,7 +1,7 @@
 // src/components/injection3d/InjectionMapCanvas.tsx
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { ContactShadows, Environment, OrbitControls, useGLTF } from '@react-three/drei'
-import { Suspense, useLayoutEffect, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { inferBodyRegion } from '../../lib/injectionGeometry'
 import type { InjectionLog3D, InjectionPinDraft } from '../../lib/injectionLogTypes'
@@ -21,6 +21,13 @@ const FIT_Y_OFFSET = 0.12
 // Camera framing so the body fills the (portrait) canvas. Lower distance = fuller.
 const CAMERA_DISTANCE = 3.25
 const CAMERA_FOV = 48
+
+export interface InjectionFocusRequest {
+  log: InjectionLog3D
+  requestId: number
+}
+
+type OrbitControlsApi = { target: THREE.Vector3; update: () => void }
 
 useGLTF.preload(MODEL_URL)
 
@@ -75,7 +82,7 @@ function Torso({ onLongPress }: { onLongPress: (event: ThreeEvent<PointerEvent>)
 // imperatively (declarative camera props don't take effect in this setup).
 function applyCameraFrame(
   camera: THREE.Camera,
-  controls: { target: THREE.Vector3; update: () => void } | null,
+  controls: OrbitControlsApi | null,
 ) {
   const cam = camera as THREE.PerspectiveCamera
   cam.position.set(0, FIT_Y_OFFSET, CAMERA_DISTANCE)
@@ -91,17 +98,60 @@ function applyCameraFrame(
   }
 }
 
-function CameraRig() {
+function CameraRig({ focusRequest }: { focusRequest: InjectionFocusRequest | null }) {
   const camera = useThree((s) => s.camera)
-  const controls = useThree((s) => s.controls) as { target: THREE.Vector3; update: () => void } | null
+  const controls = useThree((s) => s.controls) as OrbitControlsApi | null
   const warmupFrames = useRef(0)
+  const animation = useRef<{
+    fromPosition: THREE.Vector3
+    toPosition: THREE.Vector3
+    fromTarget: THREE.Vector3
+    toTarget: THREE.Vector3
+    progress: number
+  } | null>(null)
 
   useLayoutEffect(() => {
     applyCameraFrame(camera, controls)
     warmupFrames.current = 0
   }, [camera, controls])
 
-  useFrame(() => {
+  useEffect(() => {
+    if (!focusRequest || !controls) return
+
+    const point = new THREE.Vector3(
+      focusRequest.log.position.x,
+      focusRequest.log.position.y,
+      focusRequest.log.position.z,
+    )
+    const normal = new THREE.Vector3(
+      focusRequest.log.normal.x,
+      focusRequest.log.normal.y,
+      focusRequest.log.normal.z,
+    )
+    if (normal.lengthSq() < 0.001) normal.set(0, 0, 1)
+    normal.normalize()
+
+    animation.current = {
+      fromPosition: camera.position.clone(),
+      toPosition: point.clone().addScaledVector(normal, 0.82),
+      fromTarget: controls.target.clone(),
+      toTarget: point,
+      progress: 0,
+    }
+  }, [camera, controls, focusRequest])
+
+  useFrame((_, delta) => {
+    const active = animation.current
+    if (active) {
+      active.progress = Math.min(1, active.progress + delta / 0.55)
+      const t = active.progress * active.progress * (3 - 2 * active.progress)
+      camera.position.lerpVectors(active.fromPosition, active.toPosition, t)
+      controls?.target.lerpVectors(active.fromTarget, active.toTarget, t)
+      controls?.update()
+      if (active.progress >= 1) animation.current = null
+      return
+    }
+
     if (warmupFrames.current >= 6) return
     applyCameraFrame(camera, controls)
     warmupFrames.current += 1
@@ -114,24 +164,28 @@ function Scene({
   draftPin,
   logs,
   visibleLogIds,
+  focusRequest,
   onDraftPinChange,
   onLogFocus,
 }: {
   draftPin: InjectionPinDraft | null
   logs: InjectionLog3D[]
   visibleLogIds: Set<string>
+  focusRequest: InjectionFocusRequest | null
   onDraftPinChange: (pin: InjectionPinDraft) => void
   onLogFocus: (log: InjectionLog3D) => void
 }) {
   const handleLongPress = (event: ThreeEvent<PointerEvent>) => {
     const point = event.point
     const normal = event.face?.normal.clone() ?? new THREE.Vector3(0, 0, 1)
-    normal.transformDirection(event.object.matrixWorld)
-    const inferred = inferBodyRegion(toJson(point))
+    normal.transformDirection(event.object.matrixWorld).normalize()
+    const positionJson = toJson(point)
+    const normalJson = toJson(normal)
+    const inferred = inferBodyRegion(positionJson, normalJson)
     onDraftPinChange({
       model_version: MODEL_VERSION,
-      position: toJson(point),
-      normal: toJson(normal.normalize()),
+      position: positionJson,
+      normal: normalJson,
       body_region: inferred.body_region,
       body_side: inferred.body_side,
       uv: event.uv ? { x: Number(event.uv.x.toFixed(5)), y: Number(event.uv.y.toFixed(5)) } : null,
@@ -141,7 +195,7 @@ function Scene({
 
   return (
     <>
-      <CameraRig />
+      <CameraRig focusRequest={focusRequest} />
       <ambientLight intensity={0.9} />
       <directionalLight position={[2.5, 3, 3]} intensity={2.2} />
       <Suspense fallback={null}>
@@ -162,6 +216,7 @@ export function InjectionMapCanvas(props: {
   draftPin: InjectionPinDraft | null
   logs: InjectionLog3D[]
   visibleLogIds: Set<string>
+  focusRequest: InjectionFocusRequest | null
   onDraftPinChange: (pin: InjectionPinDraft) => void
   onLogFocus: (log: InjectionLog3D) => void
 }) {

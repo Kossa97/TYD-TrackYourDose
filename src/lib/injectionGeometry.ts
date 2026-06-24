@@ -25,16 +25,24 @@ function sideFromX(x: number): BodySide {
   return 'center'
 }
 
-function regionFromY(y: number): BodyRegion {
-  if (y > 0.58) return 'deltoid'
-  if (y > -0.2) return 'abdomen'
-  if (y > -0.78) return 'thigh'
+function regionFromPoint(point: Vector3Json, normal?: Vector3Json): BodyRegion {
+  const isRearSurface = (normal?.z ?? 0) < -0.35
+  const distanceFromCenter = Math.abs(point.x)
+  if (point.y > 0.58) return distanceFromCenter > 0.38 ? 'deltoid' : 'chest'
+  if (distanceFromCenter > 0.5) return point.y > 0.15 ? 'upper_arm' : 'forearm'
+  if (isRearSurface && point.y <= -0.15 && point.y > -0.58) return 'glute'
+  if (point.y > -0.2) return 'abdomen'
+  if (point.y > -0.78) return 'thigh'
+  if (point.y > -1.24) return 'lower_leg'
   return 'outside_typical'
 }
 
-export function inferBodyRegion(point: Vector3Json): { body_region: BodyRegion; body_side: BodySide } {
+export function inferBodyRegion(
+  point: Vector3Json,
+  normal?: Vector3Json,
+): { body_region: BodyRegion; body_side: BodySide } {
   return {
-    body_region: regionFromY(point.y),
+    body_region: regionFromPoint(point, normal),
     body_side: sideFromX(point.x),
   }
 }

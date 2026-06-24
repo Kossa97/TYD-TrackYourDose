@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, AlertTriangle, Copy, RefreshCw } from 'lucide-react'
@@ -7,19 +7,23 @@ import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { InjectionMapCanvas } from '../components/injection3d/InjectionMapCanvas'
 import { InjectionIntroSheet, INJECTION_INTRO_VERSION } from '../components/injection3d/InjectionIntroSheet'
-import { InjectionLogSheet } from '../components/injection3d/InjectionLogSheet'
+import { InjectionLogSheet, type InjectionSaveInput } from '../components/injection3d/InjectionLogSheet'
 import { InjectionHistorySheet } from '../components/injection3d/InjectionHistorySheet'
 import {
+  assertInjectionProSchema,
+  confirmIntakeDoseLog,
   loadInjectionLogs,
-  loadSelectableInjectionCycles,
+  loadOpenInjectionIntakes,
+  isInjectionProSchemaError,
   saveInjectionLog,
+  type OpenInjectionIntake,
 } from '../lib/injectionPersistence'
-import { filterRecentInjectionLogs, proximityWarning } from '../lib/injectionGeometry'
+import { proximityWarning } from '../lib/injectionGeometry'
+import type { InjectionHistoryDays } from '../lib/injectionHistory'
 import type {
   InjectionLog3D,
   InjectionPinDraft,
   InjectionProximityWarning,
-  SelectableInjectionCycle,
 } from '../lib/injectionLogTypes'
 
 const INTRO_STORAGE_KEY = 'tyd_injection_intro_version'
@@ -36,19 +40,46 @@ const panelStyle: CSSProperties = {
 }
 
 const SETUP_SQL = `create table if not exists injection_logs (
-  id          uuid        default gen_random_uuid() primary key,
-  user_id     uuid        references auth.users on delete cascade not null,
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users on delete cascade not null,
   dose_log_id uuid,
-  site        text        not null,
-  notes       text,
-  logged_at   timestamptz not null default now(),
-  created_at  timestamptz default now()
+  site text not null,
+  notes text,
+  logged_at timestamptz not null default now(),
+  created_at timestamptz default now()
 );
+
+alter table injection_logs
+  add column if not exists peptide_id uuid references peptides on delete set null,
+  add column if not exists cycle_id uuid references cycles on delete set null,
+  add column if not exists dose numeric(10,3),
+  add column if not exists unit text,
+  add column if not exists method text,
+  add column if not exists body_region text,
+  add column if not exists body_side text,
+  add column if not exists model_version text,
+  add column if not exists position jsonb,
+  add column if not exists normal jsonb,
+  add column if not exists uv jsonb,
+  add column if not exists camera_state jsonb,
+  add column if not exists warning_state text,
+  add column if not exists substance_label text;
+
 alter table injection_logs enable row level security;
-create policy "Own injection logs" on injection_logs
-  for all
-  using     (auth.uid() = user_id)
-  with check(auth.uid() = user_id);`
+
+do $$ begin
+  create policy "Own injection logs" on injection_logs
+    for all using (auth.uid() = user_id)
+    with check (auth.uid() = user_id);
+exception when duplicate_object then null;
+end $$;
+
+create index if not exists injection_logs_user_logged_at_idx
+  on injection_logs (user_id, logged_at desc);
+create index if not exists injection_logs_user_cycle_idx
+  on injection_logs (user_id, cycle_id, logged_at desc);
+create index if not exists injection_logs_user_region_idx
+  on injection_logs (user_id, body_region, body_side, logged_at desc);`;
 
 // ── Supabase error helpers ────────────────────────────────────────────────────
 
@@ -72,14 +103,16 @@ export function InjektionsTracker() {
   const { user } = useAuth()
   const navigate = useNavigate()
 
+  const mapSectionRef = useRef<HTMLElement | null>(null)
   const [logs, setLogs] = useState<InjectionLog3D[]>([])
-  const [cycles, setCycles] = useState<SelectableInjectionCycle[]>([])
+  const [openIntakes, setOpenIntakes] = useState<OpenInjectionIntake[]>([])
   const [loading, setLoading] = useState(true)
   const [tableError, setTableError] = useState(false)
 
   const [draftPin, setDraftPin] = useState<InjectionPinDraft | null>(null)
   const [showLogSheet, setShowLogSheet] = useState(false)
-  const [showLast7Days, setShowLast7Days] = useState(false)
+  const [historyDays, setHistoryDays] = useState<InjectionHistoryDays>(7)
+  const [focusRequest, setFocusRequest] = useState<{ log: InjectionLog3D; requestId: number } | null>(null)
   const [visibleLogIds, setVisibleLogIds] = useState<Set<string>>(() => new Set())
   const [showIntro, setShowIntro] = useState(
     () => Number(localStorage.getItem(INTRO_STORAGE_KEY) ?? 0) < INJECTION_INTRO_VERSION,
@@ -89,12 +122,12 @@ export function InjektionsTracker() {
     if (!user) return
     setLoading(true)
     try {
-      const [loadedLogs, loadedCycles] = await Promise.all([
+      const [loadedLogs, loadedIntakes] = await Promise.all([
         loadInjectionLogs(supabase, user.id),
-        loadSelectableInjectionCycles(supabase, user.id),
+        loadOpenInjectionIntakes(supabase, user.id),
       ])
       setLogs(loadedLogs)
-      setCycles(loadedCycles)
+      setOpenIntakes(loadedIntakes)
       setTableError(false)
     } catch (error) {
       console.error('[InjektionsTracker] loadData error:', error)
@@ -112,8 +145,11 @@ export function InjektionsTracker() {
     setShowIntro(false)
   }
 
-  const focusLog = (log: InjectionLog3D) =>
+  const focusLog = (log: InjectionLog3D) => {
     setVisibleLogIds(prev => new Set(prev).add(log.id))
+    setFocusRequest(previous => ({ log, requestId: (previous?.requestId ?? 0) + 1 }))
+    requestAnimationFrame(() => mapSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+  }
 
   const toggleLogVisibility = (id: string) => {
     setVisibleLogIds(prev => {
@@ -124,47 +160,59 @@ export function InjektionsTracker() {
     })
   }
 
-  const toggleLast7Days = () => {
-    setShowLast7Days(prev => {
-      const nextEnabled = !prev
-      if (nextEnabled) {
-        const ids = filterRecentInjectionLogs(logs, new Date(), 7).map(log => log.id)
-        setVisibleLogIds(prevIds => new Set([...prevIds, ...ids]))
-      }
-      return nextEnabled
-    })
-  }
-
   const warning = draftPin ? proximityWarning(draftPin, logs, new Date()) : NO_WARNING
 
-  const saveDraftPin = async (input: {
-    cycle: SelectableInjectionCycle | null
-    dose: number | null
-    unit: string | null
-    method: string | null
-    notes: string | null
-  }) => {
+  const saveDraftPin = async (input: InjectionSaveInput) => {
     if (!user || !draftPin) return
     try {
+      await assertInjectionProSchema(supabase)
+
+      let doseLogId: string | null = null
+      let peptideId: string | null = null
+      let cycleId: string | null = null
+
+      // From an open intake: confirm the dose (writes the dose_log + debits stock)
+      // and link the injection to it.
+      if (input.mode === 'intake' && input.intake) {
+        peptideId = input.intake.peptideId
+        cycleId = input.intake.cycleId
+        doseLogId = await confirmIntakeDoseLog(supabase, {
+          userId: user.id,
+          peptideId: input.intake.peptideId,
+          dose: input.dose ?? input.intake.dose,
+          unit: input.unit ?? input.intake.unit,
+          method: input.method ?? input.intake.method,
+          loggedAt: input.loggedAt,
+        })
+      }
+
       await saveInjectionLog(supabase, {
         userId: user.id,
-        doseLogId: null,
-        peptideId: input.cycle?.peptide_id ?? null,
-        cycleId: input.cycle?.id ?? null,
+        doseLogId,
+        peptideId,
+        cycleId,
         dose: input.dose,
         unit: input.unit,
         method: input.method,
         notes: input.notes,
-        loggedAt: new Date().toISOString(),
+        loggedAt: input.loggedAt,
         warningState: warning.level === 'none' ? null : warning.level,
+        substanceLabel: input.substanceLabel,
         pin: draftPin,
       })
-      toast.success('Injektion gespeichert')
+
+      toast.success(input.mode === 'intake' ? 'Injektion & Einnahme gespeichert' : 'Injektion gespeichert')
       setDraftPin(null)
       setShowLogSheet(false)
       await loadData()
     } catch (error) {
       console.error('[InjektionsTracker] saveDraftPin error:', error)
+      if (isInjectionProSchemaError(error)) {
+        setShowLogSheet(false)
+        setTableError(true)
+        toast.error('Datenbank-Update erforderlich')
+        return
+      }
       toast.error('Fehler beim Speichern')
     }
   }
@@ -183,50 +231,50 @@ export function InjektionsTracker() {
       <PageHeader onBack={() => navigate(-1)} />
 
       {/* ── 3D Injektionskarte ── */}
-      <section style={{ ...panelStyle, padding: 0 }}>
+      <section ref={mapSectionRef} style={{ ...panelStyle, padding: 0 }}>
         <InjectionMapCanvas
           draftPin={draftPin}
           logs={logs}
           visibleLogIds={visibleLogIds}
+          focusRequest={focusRequest}
           onDraftPinChange={(pin) => { setDraftPin(pin); setShowLogSheet(false) }}
           onLogFocus={focusLog}
         />
+
+        {draftPin && !showLogSheet && (
+          <div
+            className="absolute bottom-3 left-3 right-3 z-20 rounded-2xl border p-3"
+            style={{
+              background: 'var(--surface)',
+              borderColor: 'var(--border)',
+              boxShadow: '0 -6px 32px rgba(0,0,0,0.5)',
+            }}
+          >
+            <div className="flex gap-3">
+              <button type="button" className="btn-secondary flex-1" onClick={() => setDraftPin(null)}>Abbrechen</button>
+              <button type="button" className="btn-primary flex-1" onClick={() => setShowLogSheet(true)}>Position übernehmen</button>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ── History ── */}
       <InjectionHistorySheet
         logs={loading ? [] : logs}
-        showLast7Days={showLast7Days}
+        historyDays={historyDays}
         visibleLogIds={visibleLogIds}
-        onToggleLast7Days={toggleLast7Days}
+        onHistoryDaysChange={setHistoryDays}
         onToggleLog={toggleLogVisibility}
         onFocusLog={focusLog}
       />
 
-      {/* ── Draft confirm bar (floats above the fixed bottom nav) ── */}
-      {draftPin && !showLogSheet && (
-        <div
-          className="fixed rounded-2xl border p-3"
-          style={{
-            left: 10, right: 10, zIndex: 46,
-            bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 10px)',
-            background: 'var(--surface)',
-            borderColor: 'var(--border)',
-            boxShadow: '0 -6px 32px rgba(0,0,0,0.5)',
-          }}
-        >
-          <div className="flex gap-3">
-            <button type="button" className="btn-secondary flex-1" onClick={() => setDraftPin(null)}>Abbrechen</button>
-            <button type="button" className="btn-primary flex-1" onClick={() => setShowLogSheet(true)}>Position übernehmen</button>
-          </div>
-        </div>
-      )}
 
       {/* ── Log sheet ── */}
       {showLogSheet && draftPin && (
         <InjectionLogSheet
           pin={draftPin}
-          cycles={cycles}
+          openIntakes={openIntakes}
+          cycles={[]}
           warning={warning}
           onCancel={() => setShowLogSheet(false)}
           onSave={saveDraftPin}

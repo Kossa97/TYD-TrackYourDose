@@ -46,16 +46,50 @@ export function buildInjectionInsertPayload(input: SaveInjectionInput) {
   }
 }
 
+export function isInjectionProSchemaError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const candidate = error as { code?: string; message?: string }
+  const message = candidate.message?.toLowerCase() ?? ''
+  return (
+    candidate.code === 'PGRST204' ||
+    candidate.code === '42703' ||
+    (message.includes('schema cache') && message.includes('injection_logs') && message.includes('column'))
+  )
+}
+
+export async function assertInjectionProSchema(supabase: SupabaseClient): Promise<void> {
+  const { error } = await supabase
+    .from('injection_logs')
+    .select('peptide_id, cycle_id, dose, unit, method, body_region, body_side, model_version, position, normal, uv, camera_state, warning_state, substance_label')
+    .limit(0)
+  if (error) throw error
+}
+
 export async function loadInjectionLogs(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<InjectionLog3D[]> {
-  const { data, error } = await supabase
+  const enrichedResult = await supabase
     .from('injection_logs')
     .select('*, peptides(name), cycles(name)')
     .eq('user_id', userId)
     .order('logged_at', { ascending: false })
     .limit(300)
+
+  let data = enrichedResult.data as any[] | null
+  let error = enrichedResult.error
+
+  if (error?.code === 'PGRST200') {
+    const plainResult = await supabase
+      .from('injection_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('logged_at', { ascending: false })
+      .limit(300)
+    data = plainResult.data as any[] | null
+    error = plainResult.error
+  }
+
   if (error) throw error
   return (data ?? []).map((row: any) => ({
     id: row.id,

@@ -1,5 +1,15 @@
 // src/lib/injectionLogTypes.ts
-export type BodyRegion = 'abdomen' | 'thigh' | 'deltoid' | 'glute' | 'torso' | 'outside_typical'
+export type BodyRegion =
+  | 'abdomen'
+  | 'chest'
+  | 'thigh'
+  | 'lower_leg'
+  | 'deltoid'
+  | 'upper_arm'
+  | 'forearm'
+  | 'glute'
+  | 'torso'
+  | 'outside_typical'
 export type BodySide = 'left' | 'right' | 'center'
 export type InjectionVisualMode = 'clean' | 'hybrid' | 'anatomy'
 

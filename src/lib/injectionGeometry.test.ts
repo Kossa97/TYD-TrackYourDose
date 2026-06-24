@@ -53,6 +53,30 @@ describe('inferBodyRegion', () => {
       body_side: 'left',
     })
   })
+
+  it('uses the surface direction to distinguish a rear glute site from the thigh', () => {
+    expect(inferBodyRegion(
+      { x: 0.28, y: -0.34, z: -0.2 },
+      { x: 0, y: 0, z: -1 },
+    )).toEqual({
+      body_region: 'glute',
+      body_side: 'right',
+    })
+  })
+
+  it('distinguishes the central chest from the shoulder', () => {
+    expect(inferBodyRegion({ x: 0.16, y: 0.86, z: 0.2 })).toEqual({
+      body_region: 'chest',
+      body_side: 'right',
+    })
+  })
+
+  it('does not classify a lateral forearm as abdomen', () => {
+    expect(inferBodyRegion({ x: 0.72, y: -0.05, z: 0.05 })).toEqual({
+      body_region: 'forearm',
+      body_side: 'right',
+    })
+  })
 })
 
 describe('filterRecentInjectionLogs', () => {
