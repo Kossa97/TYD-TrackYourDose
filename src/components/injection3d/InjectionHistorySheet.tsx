@@ -17,6 +17,7 @@ export function InjectionHistorySheet({
   onHistoryDaysChange,
   onToggleLog,
   onFocusLog,
+  embedded = false,
 }: {
   logs: InjectionLog3D[]
   historyDays: InjectionHistoryDays
@@ -24,6 +25,7 @@ export function InjectionHistorySheet({
   onHistoryDaysChange: (days: InjectionHistoryDays) => void
   onToggleLog: (id: string) => void
   onFocusLog: (log: InjectionLog3D) => void
+  embedded?: boolean
 }) {
   const { t } = useTranslation()
   const groupLabel = (date: Date) => {
@@ -42,8 +44,8 @@ export function InjectionHistorySheet({
   }, [])
 
   return (
-    <section className="rounded-3xl border border-white/10 p-4" style={{ background: 'var(--surface)' }}>
-      <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" />
+    <section className={embedded ? 'space-y-3' : 'rounded-3xl border border-white/10 p-4'} style={embedded ? undefined : { background: 'var(--surface)' }}>
+      {!embedded && <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" />}
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <History size={16} color="var(--accent)" aria-hidden="true" />

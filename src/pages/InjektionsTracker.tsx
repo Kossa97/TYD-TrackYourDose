@@ -8,7 +8,7 @@ import toast from 'react-hot-toast'
 import { InjectionMapCanvas } from '../components/injection3d/InjectionMapCanvas'
 import { InjectionIntroSheet, INJECTION_INTRO_VERSION } from '../components/injection3d/InjectionIntroSheet'
 import { InjectionLogSheet, type InjectionSaveInput } from '../components/injection3d/InjectionLogSheet'
-import { InjectionHistorySheet } from '../components/injection3d/InjectionHistorySheet'
+import { InjectionTrackerTabs } from '../components/injection3d/InjectionTrackerTabs'
 import {
   assertInjectionProSchema,
   confirmIntakeDoseLog,
@@ -275,9 +275,10 @@ export function InjektionsTracker() {
         )}
       </section>
 
-      {/* ── History ── */}
-      <InjectionHistorySheet
+      {/* Tracker tabs */}
+      <InjectionTrackerTabs
         logs={loading ? [] : logs}
+        openIntakes={loading ? [] : openIntakes}
         historyDays={historyDays}
         visibleLogIds={visibleLogIds}
         onHistoryDaysChange={setHistoryDays}
