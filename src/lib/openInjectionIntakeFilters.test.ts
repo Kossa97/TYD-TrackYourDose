@@ -16,6 +16,8 @@ const intake = (
   method: 'Subkutan',
   scheduledAt,
   daysOverdue,
+  status: cycleId === 'cycle-b' ? 'confirmed' : 'open',
+  doseLogId: cycleId === 'cycle-b' ? 'dose-b' : null,
 })
 
 describe('filterOpenInjectionIntakes', () => {
@@ -25,7 +27,7 @@ describe('filterOpenInjectionIntakes', () => {
     intake('cycle-a', '2026-06-14T20:00:00.000Z', 10),
   ]
 
-  it('defaults to all cycles, the last 7 days, newest first', () => {
+  it('defaults to all cycles, all statuses, the last 7 days, newest first', () => {
     expect(filterOpenInjectionIntakes(intakes).map(item => item.scheduledAt)).toEqual([
       '2026-06-23T20:00:00.000Z',
       '2026-06-20T20:00:00.000Z',
@@ -40,6 +42,15 @@ describe('filterOpenInjectionIntakes', () => {
     }).map(item => item.scheduledAt)).toEqual([
       '2026-06-14T20:00:00.000Z',
       '2026-06-23T20:00:00.000Z',
+    ])
+  })
+
+  it('filters open and confirmed intakes by status', () => {
+    expect(filterOpenInjectionIntakes(intakes, { status: 'open' }).map(item => item.status)).toEqual([
+      'open',
+    ])
+    expect(filterOpenInjectionIntakes(intakes, { status: 'confirmed' }).map(item => item.status)).toEqual([
+      'confirmed',
     ])
   })
 })

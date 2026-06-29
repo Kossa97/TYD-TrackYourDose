@@ -1511,7 +1511,7 @@ git commit -m "Link injection tracking to dose confirmations"
 - Produces:
   - Prominent Home hero card with title **Injektionstracker Pro** and subtitle **Praezises 3D-Injektionstracking**.
 
-- [ ] **Step 1: Add hero component**
+- [x] **Step 1: Add hero component**
 
 Create:
 
@@ -1574,7 +1574,7 @@ export function InjectionTrackerHero({
 }
 ```
 
-- [ ] **Step 2: Load hero summary in Home**
+- [x] **Step 2: Load hero summary in Home**
 
 In `src/pages/Home.tsx`, import:
 
@@ -1624,7 +1624,7 @@ const hasDueInjectable = openSlots.some(slot => {
 })
 ```
 
-- [ ] **Step 3: Render hero relatively high on Home**
+- [x] **Step 3: Render hero relatively high on Home**
 
 Place after the top status section and before lower feature sections:
 
@@ -1640,7 +1640,7 @@ Place after the top status section and before lower feature sections:
 
 Use `hasDueInjectable` when it is available in state; if it is scoped inside `load()`, promote it to state.
 
-- [ ] **Step 4: Build and manually verify**
+- [x] **Step 4: Build and manually verify**
 
 Run:
 

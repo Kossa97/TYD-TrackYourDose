@@ -209,7 +209,7 @@ export interface MissedIntake {
 
 /**
  * Alle geplanten Slots VOR heute über die gesamte Länge der Zyklen (ab dem frühesten
- * start_date), die nicht durch einen entschiedenen Log (taken === true/false) gedeckt
+ * start_date), die nicht durch einen vorhandenen Log fuer denselben Slot gedeckt
  * sind. Frist = Tagesende: heutige Slots werden bewusst ausgelassen (sie bleiben bis
  * Mitternacht bestätigbar). Optional begrenzt `since` den Rückblick (kein rückwirkendes
  * Backfill vor dem Aktivierungszeitpunkt). Das Ergebnis wird vom Aufrufer als „verpasst"
@@ -222,11 +222,10 @@ export function collectMissedIntakes(
   now: Date = new Date(),
   since?: Date,
 ): MissedIntake[] {
-  const decidedByDay = new Map<string, number>()
+  const loggedByDay = new Map<string, number>()
   for (const l of logs) {
-    if (l.taken == null) continue
     const key = `${l.peptide_id}|${format(parseISO(l.logged_at), 'yyyy-MM-dd')}`
-    decidedByDay.set(key, (decidedByDay.get(key) ?? 0) + 1)
+    loggedByDay.set(key, (loggedByDay.get(key) ?? 0) + 1)
   }
 
   // Rückblick = vom frühesten Zyklus-Start bis gestern (gesamte Zyklus-Länge).
@@ -259,7 +258,7 @@ export function collectMissedIntakes(
 
     for (const [peptideId, slots] of slotsByPeptide) {
       const ordered = [...slots].sort((a, b) => a.min - b.min)
-      const covered = decidedByDay.get(`${peptideId}|${dayKey}`) ?? 0
+      const covered = loggedByDay.get(`${peptideId}|${dayKey}`) ?? 0
       for (const slot of ordered.slice(covered)) {
         out.push({ cycleId: slot.cycleId, peptideId, dateKey: dayKey, minutes: slot.min })
       }

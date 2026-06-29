@@ -18,6 +18,7 @@ import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideE
 import { collectMissedIntakes, cycleAppliesToDay, scheduleForDay, effectiveDose, AUTO_MISSED_NOTE, type EscalationRow } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
+import { InjectionTrackerHero, type InjectionHeroPin } from '../components/injection3d/InjectionTrackerHero'
 import { format, parseISO, startOfDay } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
@@ -224,6 +225,46 @@ interface TodayIntake {
   peptideId: string
 }
 
+interface InjectionHeroState {
+  lastLabel: string
+  sevenDayCount: number
+  hasDueInjectable: boolean
+  pins: InjectionHeroPin[]
+}
+
+const EMPTY_INJECTION_HERO: InjectionHeroState = {
+  lastLabel: 'Noch keine Stelle geloggt',
+  sevenDayCount: 0,
+  hasDueInjectable: false,
+  pins: [],
+}
+
+const INJECTABLE_METHODS = new Set(['Subkutan', 'Intramuskulaer', 'Intramuskulär'])
+
+function injectionSiteLabel(row: { body_side?: string | null; body_region?: string | null }): string {
+  const sideLabels: Record<string, string> = { left: 'links', right: 'rechts', center: 'mittig' }
+  const regionLabels: Record<string, string> = {
+    abdomen: 'Bauch',
+    thigh: 'Oberschenkel',
+    deltoid: 'Schulter',
+    glute: 'Gesaess',
+    chest: 'Brust',
+    upper_arm: 'Oberarm',
+    forearm: 'Unterarm',
+    lower_leg: 'Unterschenkel',
+    outside_typical: 'Stelle',
+  }
+  const side = row.body_side ? sideLabels[row.body_side] ?? row.body_side : ''
+  const region = row.body_region ? regionLabels[row.body_region] ?? row.body_region : 'Stelle'
+  return [side, region].filter(Boolean).join(' ')
+}
+
+function isHeroVector(value: unknown): value is InjectionHeroPin['position'] {
+  if (!value || typeof value !== 'object') return false
+  const vector = value as Record<string, unknown>
+  return typeof vector.x === 'number' && typeof vector.y === 'number' && typeof vector.z === 'number'
+}
+
 const sectionHeaderStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -241,6 +282,7 @@ export function Home() {
   const [todayDone,   setTodayDone]   = useState(false)
   const [overview, setOverview] = useState<OverviewStats>(EMPTY_OVERVIEW)
   const [expiryAlerts, setExpiryAlerts] = useState<PeptideExpiryAlert[]>([])
+  const [injectionHero, setInjectionHero] = useState<InjectionHeroState>(EMPTY_INJECTION_HERO)
 
   // Rotate study daily
   const todayStudy = TODAY_STUDY
@@ -251,7 +293,7 @@ export function Home() {
       const todayKey = format(new Date(), 'yyyy-MM-dd')
 
       try {
-        const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }, { data: escalationData }] = await Promise.all([
+        const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }, { data: escalationData }, { data: injectionData }] = await Promise.all([
           supabase.from('cycles')
             .select('id, intake_time, intake_time_custom, peptide_id, dose, unit, method, start_date, end_date, frequency, x_days_interval, schedule_days, schedule_history')
             .eq('user_id', user!.id).eq('active', true),
@@ -269,6 +311,11 @@ export function Home() {
           supabase.from('dose_escalations')
             .select('cycle_id, increase_amount, start_type, start_date, start_after_days')
             .eq('user_id', user!.id),
+          supabase.from('injection_logs')
+            .select('id, logged_at, body_region, body_side, position, normal')
+            .eq('user_id', user!.id)
+            .order('logged_at', { ascending: false })
+            .limit(30),
         ])
         const escalations = (escalationData ?? []) as EscalationRow[]
         // How many of today's intakes are already decided (taken=true/false) per peptide.
@@ -339,9 +386,33 @@ export function Home() {
           await supabase.from('dose_logs').insert(rows)
         }
 
+        const cycleMethodByPeptide = new Map((cycleData ?? []).map(c => [c.peptide_id as string, c.method as string]))
+        const hasDueInjectable = openSlots.some(slot => INJECTABLE_METHODS.has(cycleMethodByPeptide.get(slot.peptideId) ?? ''))
+        const injectionRows = injectionData ?? []
+        const lastInjection = injectionRows[0]
+        const recentInjectionRows = injectionRows.filter(row => {
+          const ageMs = Date.now() - parseISO(row.logged_at as string).getTime()
+          return ageMs >= 0 && ageMs <= 7 * 24 * 60 * 60 * 1000
+        })
+        const sevenDayCount = recentInjectionRows.length
+        const pins = recentInjectionRows
+          .filter(row => isHeroVector(row.position) && isHeroVector(row.normal))
+          .slice(0, 4)
+          .map(row => ({
+            id: row.id as string,
+            position: row.position,
+            normal: row.normal,
+          }))
+
         setPlannedToday(todaySlots.length)
         setTodayIntakes(openSlots.map(s => ({ time: s.time, min: s.min, substance: s.substance, dose: s.dose, peptideId: s.peptideId })))
         setTodayDone(todaySlots.length > 0 && openSlots.length === 0)
+        setInjectionHero({
+          lastLabel: lastInjection ? injectionSiteLabel(lastInjection) : EMPTY_INJECTION_HERO.lastLabel,
+          sevenDayCount,
+          hasDueInjectable,
+          pins,
+        })
 
         setExpiryAlerts(getPeptideExpiryAlerts(peptideData ?? []))
 
@@ -355,6 +426,7 @@ export function Home() {
       } catch {
         setOverview(EMPTY_OVERVIEW)
         setExpiryAlerts([])
+        setInjectionHero(EMPTY_INJECTION_HERO)
       }
     }
     load()
@@ -439,6 +511,15 @@ export function Home() {
           )}
         </div>
       </section>
+
+      <InjectionTrackerHero
+        lastLabel={injectionHero.lastLabel}
+        sevenDayCount={injectionHero.sevenDayCount}
+        hasDueInjectable={injectionHero.hasDueInjectable}
+        pins={injectionHero.pins}
+        onOpen={() => navigate('/injektionen')}
+        onLogToday={() => navigate('/injektionen')}
+      />
 
       {todayIntakes.length > 0 && (
         <section style={{ ...panelStyle, padding: 18 }}>

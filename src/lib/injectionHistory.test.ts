@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { filterInjectionHistory, formatInjectionSite } from './injectionHistory'
+import { filterInjectionHistory, formatInjectionSite, isDoseConfirmationOpen } from './injectionHistory'
 import type { InjectionLog3D } from './injectionLogTypes'
 
 const log = (overrides: Partial<InjectionLog3D> = {}): InjectionLog3D => ({
   id: overrides.id ?? 'log-1',
   user_id: 'user-1',
-  dose_log_id: null,
+  dose_log_id: overrides.dose_log_id ?? null,
+  dose_taken: overrides.dose_taken,
   peptide_id: null,
   cycle_id: null,
   peptide_name: null,
@@ -45,7 +46,7 @@ describe('filterInjectionHistory', () => {
 
 describe('formatInjectionSite', () => {
   it('describes a precise right upper outer abdominal site in German', () => {
-    expect(formatInjectionSite(log())).toBe('Bauch rechts · oben außen · Vorderseite')
+    expect(formatInjectionSite(log())).toBe('Bauch rechts Â· oben auÃŸen Â· Vorderseite')
   })
 
   it('does not invent a position for legacy entries', () => {
@@ -54,6 +55,14 @@ describe('formatInjectionSite', () => {
       body_region: 'outside_typical',
       body_side: 'center',
       position: { x: 0, y: 0, z: 0 },
-    }))).toBe('Alter Eintrag · keine genaue Position')
+    }))).toBe('Alter Eintrag Â· keine genaue Position')
+  })
+})
+
+describe('isDoseConfirmationOpen', () => {
+  it('marks linked injections with reset dose confirmations as open', () => {
+    expect(isDoseConfirmationOpen(log({ dose_log_id: 'dose-1', dose_taken: null }))).toBe(true)
+    expect(isDoseConfirmationOpen(log({ dose_log_id: 'dose-1', dose_taken: true }))).toBe(false)
+    expect(isDoseConfirmationOpen(log({ dose_log_id: null, dose_taken: null }))).toBe(false)
   })
 })

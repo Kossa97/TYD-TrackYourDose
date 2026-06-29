@@ -13,8 +13,10 @@ import {
   assertInjectionProSchema,
   confirmIntakeDoseLog,
   loadInjectionLogs,
-  loadOpenInjectionIntakes,
+  loadSelectableInjectionIntakes,
+  isDoseLogAlreadyLinkedError,
   isInjectionProSchemaError,
+  resolveInjectionDoseLogId,
   saveInjectionLog,
   type OpenInjectionIntake,
 } from '../lib/injectionPersistence'
@@ -79,7 +81,10 @@ create index if not exists injection_logs_user_logged_at_idx
 create index if not exists injection_logs_user_cycle_idx
   on injection_logs (user_id, cycle_id, logged_at desc);
 create index if not exists injection_logs_user_region_idx
-  on injection_logs (user_id, body_region, body_side, logged_at desc);`;
+  on injection_logs (user_id, body_region, body_side, logged_at desc);
+create unique index if not exists injection_logs_dose_log_id_unique_idx
+  on injection_logs (dose_log_id)
+  where dose_log_id is not null;`;
 
 // ── Supabase error helpers ────────────────────────────────────────────────────
 
@@ -124,7 +129,7 @@ export function InjektionsTracker() {
     try {
       const [loadedLogs, loadedIntakes] = await Promise.all([
         loadInjectionLogs(supabase, user.id),
-        loadOpenInjectionIntakes(supabase, user.id),
+        loadSelectableInjectionIntakes(supabase, user.id),
       ])
       setLogs(loadedLogs)
       setOpenIntakes(loadedIntakes)
@@ -176,14 +181,15 @@ export function InjektionsTracker() {
       if (input.mode === 'intake' && input.intake) {
         peptideId = input.intake.peptideId
         cycleId = input.intake.cycleId
-        doseLogId = await confirmIntakeDoseLog(supabase, {
+        doseLogId = await resolveInjectionDoseLogId(input.intake, () => confirmIntakeDoseLog(supabase, {
           userId: user.id,
-          peptideId: input.intake.peptideId,
-          dose: input.dose ?? input.intake.dose,
-          unit: input.unit ?? input.intake.unit,
-          method: input.method ?? input.intake.method,
+          peptideId: input.intake!.peptideId,
+          dose: input.dose ?? input.intake!.dose,
+          unit: input.unit ?? input.intake!.unit,
+          method: input.method ?? input.intake!.method,
           loggedAt: input.loggedAt,
-        })
+          doseLogId: input.intake!.doseLogId,
+        }))
       }
 
       await saveInjectionLog(supabase, {
@@ -201,12 +207,22 @@ export function InjektionsTracker() {
         pin: draftPin,
       })
 
-      toast.success(input.mode === 'intake' ? 'Injektion & Einnahme gespeichert' : 'Injektion gespeichert')
+      toast.success(input.mode === 'intake'
+        ? input.intake?.status === 'confirmed'
+          ? 'Injektionsstelle hinzugefügt'
+          : 'Injektion & Einnahme gespeichert'
+        : 'Injektion gespeichert')
       setDraftPin(null)
       setShowLogSheet(false)
       await loadData()
     } catch (error) {
       console.error('[InjektionsTracker] saveDraftPin error:', error)
+      if (isDoseLogAlreadyLinkedError(error)) {
+        toast.error('Für diese Einnahme wurde bereits eine Injektionsstelle gespeichert')
+        setShowLogSheet(false)
+        await loadData()
+        return
+      }
       if (isInjectionProSchemaError(error)) {
         setShowLogSheet(false)
         setTableError(true)

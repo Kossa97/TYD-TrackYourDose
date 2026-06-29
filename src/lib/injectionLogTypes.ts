@@ -44,6 +44,7 @@ export interface InjectionLog3D extends InjectionPinDraft {
   id: string
   user_id: string
   dose_log_id: string | null
+  dose_taken?: boolean | null
   peptide_id: string | null
   cycle_id: string | null
   peptide_name: string | null

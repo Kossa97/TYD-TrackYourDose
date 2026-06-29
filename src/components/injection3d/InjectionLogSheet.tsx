@@ -1,15 +1,20 @@
 // src/components/injection3d/InjectionLogSheet.tsx
 import { useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
-import { AlertTriangle, Check, Clock, Syringe, X } from 'lucide-react'
+import { AlertTriangle, Check, Clock, X } from 'lucide-react'
 import type { InjectionPinDraft, InjectionProximityWarning } from '../../lib/injectionLogTypes'
 import type { OpenInjectionIntake } from '../../lib/injectionPersistence'
 import {
   filterOpenInjectionIntakes,
   type IntakeHistoryDays,
   type IntakeSortOrder,
+  type IntakeStatusFilter,
 } from '../../lib/openInjectionIntakeFilters'
-import { areInjectionDetailsLocked } from '../../lib/injectionLogSheetState'
+import {
+  areInjectionDetailsLocked,
+  injectionSaveActionLabel,
+  replaceTimeInLocalDateTime,
+} from '../../lib/injectionLogSheetState'
 
 const UNIT_OPTIONS = ['mcg', 'mg', 'IU', 'ml', 'nmol']
 const METHOD_OPTIONS = ['Subkutan', 'Intramuskulär']
@@ -27,7 +32,7 @@ export interface InjectionSaveInput {
   loggedAt: string
 }
 
-const intakeKey = (i: OpenInjectionIntake) => `${i.cycleId}|${i.scheduledAt}`
+const intakeKey = (i: OpenInjectionIntake) => i.doseLogId ?? `${i.cycleId}|${i.scheduledAt}`
 const toLocalInput = (iso: string) => format(parseISO(iso), "yyyy-MM-dd'T'HH:mm")
 
 function overdueLabel(days: number): string {
@@ -54,6 +59,7 @@ export function InjectionLogSheet({
   const [cycleFilter, setCycleFilter] = useState('all')
   const [historyDays, setHistoryDays] = useState<IntakeHistoryDays>(7)
   const [sortOrder, setSortOrder] = useState<IntakeSortOrder>('newest')
+  const [statusFilter, setStatusFilter] = useState<IntakeStatusFilter>('all')
   const [selectedKey, setSelectedKey] = useState('')
   const [substance, setSubstance] = useState('')
   const [dose, setDose] = useState('')
@@ -64,17 +70,18 @@ export function InjectionLogSheet({
   const [saving, setSaving] = useState(false)
 
   const cycleOptions = useMemo(() => Array.from(
-    new Map(openIntakes.map(intake => [
+    new Map(openIntakes.flatMap(intake => intake.cycleId ? [[
       intake.cycleId,
       { id: intake.cycleId, label: intake.cycleName || intake.peptideName },
-    ])).values(),
+    ] as const] : [])).values(),
   ).sort((a, b) => a.label.localeCompare(b.label, 'de')), [openIntakes])
 
   const filteredIntakes = useMemo(() => filterOpenInjectionIntakes(openIntakes, {
     cycleId: cycleFilter,
     days: historyDays,
     order: sortOrder,
-  }), [cycleFilter, historyDays, openIntakes, sortOrder])
+    status: statusFilter,
+  }), [cycleFilter, historyDays, openIntakes, sortOrder, statusFilter])
 
   const selectedIntake = filteredIntakes.find(i => intakeKey(i) === selectedKey) ?? null
   const detailsLocked = areInjectionDetailsLocked(mode, selectedIntake !== null)
@@ -131,7 +138,7 @@ export function InjectionLogSheet({
               onClick={() => setMode(m)}
               className={`rounded-xl px-3 py-2 text-sm font-bold transition-colors ${mode === m ? 'bg-sky-400/15 text-sky-300' : 'text-slate-400'}`}
             >
-              {m === 'intake' ? 'Offene Einnahme' : 'Manuell'}
+              {m === 'intake' ? 'Einnahme' : 'Manuell'}
             </button>
           ))}
         </div>
@@ -160,6 +167,28 @@ export function InjectionLogSheet({
                     ))}
                   </select>
                 </label>
+                <div className="col-span-2">
+                  <span className="label">Status</span>
+                  <div className="grid grid-cols-3 gap-1 rounded-xl border border-white/10 p-1" style={{ background: 'var(--surface-input)' }}>
+                    {([
+                      ['all', 'Alle'],
+                      ['open', 'Offen'],
+                      ['confirmed', 'Bestätigt'],
+                    ] as const).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => {
+                          setStatusFilter(value)
+                          setSelectedKey('')
+                        }}
+                        className={`min-w-0 rounded-lg px-2 py-2 text-xs font-bold ${statusFilter === value ? 'bg-sky-400/15 text-sky-300' : 'text-slate-400'}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <label>
                   <span className="label">Rückwirkend</span>
                   <select className="input" value={historyDays} onChange={event => {
@@ -188,11 +217,11 @@ export function InjectionLogSheet({
 
             {openIntakes.length === 0 ? (
               <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-slate-400">
-                Keine offenen Einnahmen. Wechsle zu <span className="font-bold text-slate-200">Manuell</span>.
+                Keine passenden Einnahmen. Wechsle zu <span className="font-bold text-slate-200">Manuell</span>.
               </p>
             ) : filteredIntakes.length === 0 ? (
               <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-slate-400">
-                Keine offenen Einnahmen für diese Filter.
+                Keine Einnahmen für diese Filter.
               </p>
             ) : (
               <div className="max-h-[34vh] space-y-2 overflow-y-auto pr-1">
@@ -206,13 +235,16 @@ export function InjectionLogSheet({
                       className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left ${active ? 'border-sky-400/50 bg-sky-400/10' : 'border-white/10 bg-white/[0.03]'}`}
                     >
                       <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${active ? 'bg-sky-400/20 text-sky-300' : 'bg-white/5 text-slate-400'}`}>
-                        <Syringe size={16} />
+                        {intake.status === 'confirmed' ? <Check size={16} /> : <Clock size={16} />}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-white">{intake.peptideName}</p>
-                        <p className="flex items-center gap-1.5 text-xs text-slate-400">
-                          <Clock size={11} />
-                          {format(parseISO(intake.scheduledAt), 'dd.MM. HH:mm')} · {overdueLabel(intake.daysOverdue)}
+                        <p className="text-xs text-slate-400">
+                          <span className={intake.status === 'confirmed' ? 'text-emerald-300' : 'text-amber-300'}>
+                            {intake.status === 'confirmed' ? 'Bereits bestätigt' : 'Offen'}
+                          </span>
+                          {' · '}{format(parseISO(intake.scheduledAt), 'dd.MM. HH:mm')}
+                          {intake.status === 'open' ? ` · ${overdueLabel(intake.daysOverdue)}` : ''}
                         </p>
                       </div>
                       <div className="shrink-0 text-right">
@@ -256,10 +288,28 @@ export function InjectionLogSheet({
               {!METHOD_OPTIONS.includes(method) && <option value={method}>{method}</option>}
             </select>
           </label>
-          <label className="block">
+          <div className="block">
             <span className="label">Zeitpunkt (rückwirkend möglich)</span>
-            <input className="input" type="datetime-local" value={loggedAt} onChange={e => setLoggedAt(e.target.value)} disabled={detailsLocked} />
-          </label>
+            {mode === 'intake' && selectedIntake ? (
+              <div className="grid grid-cols-2 gap-3">
+                <label>
+                  <span className="label">Datum</span>
+                  <input className="input opacity-70" type="date" value={loggedAt.slice(0, 10)} readOnly aria-readonly="true" />
+                </label>
+                <label>
+                  <span className="label">Uhrzeit</span>
+                  <input
+                    className="input"
+                    type="time"
+                    value={loggedAt.slice(11, 16)}
+                    onChange={event => setLoggedAt(replaceTimeInLocalDateTime(loggedAt, event.target.value))}
+                  />
+                </label>
+              </div>
+            ) : (
+              <input className="input" type="datetime-local" value={loggedAt} onChange={event => setLoggedAt(event.target.value)} />
+            )}
+          </div>
           <label className="block">
             <span className="label">Notiz optional</span>
             <textarea className="input min-h-20 resize-none" value={notes} onChange={e => setNotes(e.target.value)} />
@@ -270,7 +320,7 @@ export function InjectionLogSheet({
           <div className="flex gap-3 pt-1">
             <button type="button" className="btn-secondary flex-1" onClick={onCancel}>Abbrechen</button>
             <button type="button" className="btn-primary flex-1" onClick={save} disabled={saving || !canSave}>
-              <Check size={14} /> {mode === 'intake' ? 'Speichern & bestätigen' : 'Speichern'}
+              <Check size={14} /> {mode === 'intake' && selectedIntake ? injectionSaveActionLabel(selectedIntake.status) : 'Speichern'}
             </button>
           </div>
         </div>

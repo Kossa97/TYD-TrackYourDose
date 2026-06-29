@@ -32,9 +32,9 @@ function regionLabel(log: InjectionLog3D): string {
     case 'deltoid': return 'Schulter'
     case 'upper_arm': return 'Oberarm'
     case 'forearm': return 'Unterarm'
-    case 'glute': return 'Gesäß'
+    case 'glute': return 'GesÃ¤ÃŸ'
     case 'torso': return 'Rumpf'
-    default: return 'Körperstelle'
+    default: return 'KÃ¶rperstelle'
   }
 }
 
@@ -62,20 +62,24 @@ function verticalLabel(log: InjectionLog3D): string {
 
 function lateralLabel(log: InjectionLog3D): string {
   const distanceFromCenter = Math.abs(log.position.x)
-  if (distanceFromCenter > 0.3) return 'außen'
+  if (distanceFromCenter > 0.3) return 'auÃŸen'
   if (distanceFromCenter < 0.16) return 'innen'
   return 'mittig'
 }
 
 function surfaceLabel(log: InjectionLog3D): string {
   if (log.normal.z > 0.35) return 'Vorderseite'
-  if (log.normal.z < -0.35) return 'Rückseite'
-  return 'Außenseite'
+  if (log.normal.z < -0.35) return 'RÃ¼ckseite'
+  return 'AuÃŸenseite'
 }
 
 export function formatInjectionSite(log: InjectionLog3D): string {
-  if (!hasExactInjectionPosition(log)) return 'Alter Eintrag · keine genaue Position'
+  if (!hasExactInjectionPosition(log)) return 'Alter Eintrag Â· keine genaue Position'
 
   const detail = [verticalLabel(log), lateralLabel(log)].filter(Boolean).join(' ')
-  return `${regionLabel(log)} ${sideLabel(log)} · ${detail} · ${surfaceLabel(log)}`
+  return `${regionLabel(log)} ${sideLabel(log)} Â· ${detail} Â· ${surfaceLabel(log)}`
+}
+
+export function isDoseConfirmationOpen(log: InjectionLog3D): boolean {
+  return log.dose_log_id != null && log.dose_taken === null
 }

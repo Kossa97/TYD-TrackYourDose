@@ -1,9 +1,10 @@
 import { format, isToday, isYesterday, parseISO } from 'date-fns'
-import { Eye, EyeOff, History, LocateFixed } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff, History, LocateFixed } from 'lucide-react'
 import {
   filterInjectionHistory,
   formatInjectionSite,
   hasExactInjectionPosition,
+  isDoseConfirmationOpen,
   type InjectionHistoryDays,
 } from '../../lib/injectionHistory'
 import type { InjectionLog3D } from '../../lib/injectionLogTypes'
@@ -73,10 +74,11 @@ export function InjectionHistorySheet({
                 const exactPosition = hasExactInjectionPosition(log)
                 const substance = log.peptide_name ?? log.substance_label ?? 'Injektion'
                 const dose = [log.dose, log.unit].filter(value => value != null && value !== '').join(' ')
-                const metadata = [format(parseISO(log.logged_at), 'HH:mm'), dose, log.method].filter(Boolean).join(' · ')
+                const metadata = [format(parseISO(log.logged_at), 'HH:mm'), dose, log.method].filter(Boolean).join(' Â· ')
+                const confirmationOpen = isDoseConfirmationOpen(log)
 
                 return (
-                  <article key={log.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                  <article key={log.id} className={`rounded-2xl border p-3 ${confirmationOpen ? 'border-amber-400/30 bg-amber-400/[0.06]' : 'border-white/10 bg-white/[0.03]'}`}>
                     <div className="flex items-start gap-2.5">
                       <div className="flex shrink-0 gap-1.5">
                         <button
@@ -104,6 +106,11 @@ export function InjectionHistorySheet({
                         <p className="truncate text-sm font-black text-white">{substance}</p>
                         <p className="mt-0.5 text-xs font-semibold leading-5 text-slate-300">{formatInjectionSite(log)}</p>
                         <p className="mt-1 text-[0.68rem] text-slate-500">{metadata}</p>
+                        {confirmationOpen && (
+                          <p className="mt-2 inline-flex items-center gap-1 rounded-lg border border-amber-400/25 bg-amber-400/10 px-2 py-1 text-[0.68rem] font-bold text-amber-300">
+                            <AlertCircle size={12} /> Einnahmebestätigung offen
+                          </p>
+                        )}
                       </div>
                     </div>
                     {log.notes?.trim() && (

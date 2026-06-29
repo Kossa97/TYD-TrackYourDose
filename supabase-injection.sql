@@ -22,3 +22,8 @@ create policy "Own injection logs" on injection_logs
 -- Index für schnelle Abfragen nach User + Stelle
 create index if not exists injection_logs_user_site_idx
   on injection_logs (user_id, site, logged_at desc);
+
+-- Eine bestätigte Einnahme darf höchstens einen Injektions-Pin besitzen.
+create unique index if not exists injection_logs_dose_log_id_unique_idx
+  on injection_logs (dose_log_id)
+  where dose_log_id is not null;

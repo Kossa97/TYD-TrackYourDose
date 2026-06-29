@@ -140,6 +140,13 @@ describe('collectMissedIntakes — Frist bis Tagesende', () => {
     expect(days).toContain('2026-06-11')
   })
 
+  it('zurueckgesetzte Logs werden nicht erneut automatisch als verpasst eingetragen', () => {
+    const logs: IntakeLog[] = [{ peptide_id: 'p3', logged_at: '2026-06-10T08:30:00', taken: null }]
+    const days = collectMissedIntakes([daily], logs, now).map(m => m.dateKey)
+    expect(days).not.toContain('2026-06-10')
+    expect(days).toContain('2026-06-09')
+    expect(days).toContain('2026-06-11')
+  })
   it('je nicht gedecktem Slot ein Eintrag (2x täglich)', () => {
     const twice: ScheduleCycle = { ...daily, frequency: '2x täglich', intake_time: 'morgens,abends' }
     // Am 11. nur eine Einnahme bestätigt → ein Slot bleibt offen.

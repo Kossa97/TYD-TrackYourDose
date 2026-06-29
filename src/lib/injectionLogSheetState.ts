@@ -6,3 +6,18 @@ export function areInjectionDetailsLocked(
 ): boolean {
   return mode === 'intake' && hasSelectedIntake
 }
+
+export function replaceTimeInLocalDateTime(
+  localDateTime: string,
+  time: string,
+): string {
+  return `${localDateTime.slice(0, 10)}T${time}`
+}
+
+export function injectionSaveActionLabel(
+  status: 'open' | 'confirmed',
+): string {
+  return status === 'confirmed'
+    ? 'Injektionsstelle hinzufügen'
+    : 'Speichern & bestätigen'
+}

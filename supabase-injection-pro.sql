@@ -24,3 +24,7 @@ create index if not exists injection_logs_user_cycle_idx
 
 create index if not exists injection_logs_user_region_idx
   on injection_logs (user_id, body_region, body_side, logged_at desc);
+
+create unique index if not exists injection_logs_dose_log_id_unique_idx
+  on injection_logs (dose_log_id)
+  where dose_log_id is not null;
