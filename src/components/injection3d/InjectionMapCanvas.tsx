@@ -1,6 +1,6 @@
 // src/components/injection3d/InjectionMapCanvas.tsx
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
-import { ContactShadows, Environment, OrbitControls, useGLTF } from '@react-three/drei'
+import { ContactShadows, OrbitControls, useGLTF } from '@react-three/drei'
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { inferBodyRegion } from '../../lib/injectionGeometry'
@@ -209,7 +209,6 @@ function Scene({
       {draftPin && <InjectionPin position={draftPin.position} normal={draftPin.normal} active />}
       <ContactShadows opacity={0.22} scale={4} blur={2.5} far={3} position={[0, -1.22, 0]} />
       <OrbitControls makeDefault enablePan enableZoom enableRotate minDistance={0.65} maxDistance={6} target={[0, FIT_Y_OFFSET, 0]} />
-      <Environment preset="city" />
     </>
   )
 }
