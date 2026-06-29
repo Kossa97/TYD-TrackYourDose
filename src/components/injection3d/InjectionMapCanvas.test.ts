@@ -8,4 +8,12 @@ describe('InjectionMapCanvas external assets', () => {
     expect(source).not.toContain('Environment')
     expect(source).not.toContain('preset=')
   })
+
+  it('keeps explicit rear and rim lighting for the back view', () => {
+    const source = readFileSync(new URL('./InjectionMapCanvas.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('INJECTION_MAP_LIGHTS')
+    expect(source).toContain('rearFill')
+    expect(source).toContain('rim')
+  })
 })

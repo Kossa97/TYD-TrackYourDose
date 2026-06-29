@@ -23,6 +23,17 @@ const FIT_Y_OFFSET = 0.12
 const CAMERA_DISTANCE = 3.25
 const CAMERA_FOV = 48
 
+type LightPosition = [number, number, number]
+
+// Local lights keep the model readable from front and back without remote HDR assets.
+const INJECTION_MAP_LIGHTS = {
+  ambient: 1.02,
+  key: { position: [2.5, 3.1, 3] as LightPosition, intensity: 2.05 },
+  rearFill: { position: [-2.6, 2.4, -3.2] as LightPosition, intensity: 1.5, color: '#dff7ff' },
+  rim: { position: [0, 1.4, -4.5] as LightPosition, intensity: 1.15, color: '#7dd3fc' },
+  lowerFill: { position: [0, -0.55, 2.4] as LightPosition, intensity: 0.5, color: '#ffe4c7' },
+}
+
 export interface InjectionFocusRequest {
   log: InjectionLog3D
   requestId: number
@@ -198,8 +209,27 @@ function Scene({
   return (
     <>
       <CameraRig focusRequest={focusRequest} />
-      <ambientLight intensity={0.9} />
-      <directionalLight position={[2.5, 3, 3]} intensity={2.2} />
+      <ambientLight intensity={INJECTION_MAP_LIGHTS.ambient} />
+      <directionalLight
+        position={INJECTION_MAP_LIGHTS.key.position}
+        intensity={INJECTION_MAP_LIGHTS.key.intensity}
+      />
+      <directionalLight
+        position={INJECTION_MAP_LIGHTS.rearFill.position}
+        intensity={INJECTION_MAP_LIGHTS.rearFill.intensity}
+        color={INJECTION_MAP_LIGHTS.rearFill.color}
+      />
+      <directionalLight
+        position={INJECTION_MAP_LIGHTS.rim.position}
+        intensity={INJECTION_MAP_LIGHTS.rim.intensity}
+        color={INJECTION_MAP_LIGHTS.rim.color}
+      />
+      <pointLight
+        position={INJECTION_MAP_LIGHTS.lowerFill.position}
+        intensity={INJECTION_MAP_LIGHTS.lowerFill.intensity}
+        color={INJECTION_MAP_LIGHTS.lowerFill.color}
+        distance={4}
+      />
       <Suspense fallback={null}>
         <Torso onLongPress={handleLongPress} />
       </Suspense>
