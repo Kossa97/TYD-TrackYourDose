@@ -107,6 +107,7 @@ const NO_WARNING: InjectionProximityWarning = { level: 'none', nearestLogId: nul
 export function InjektionsTracker() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const mapSectionRef = useRef<HTMLElement | null>(null)
   const [logs, setLogs] = useState<InjectionLog3D[]>([])
@@ -267,8 +268,8 @@ export function InjektionsTracker() {
             }}
           >
             <div className="flex gap-3">
-              <button type="button" className="btn-secondary flex-1" onClick={() => setDraftPin(null)}>Abbrechen</button>
-              <button type="button" className="btn-primary flex-1" onClick={() => setShowLogSheet(true)}>Position übernehmen</button>
+              <button type="button" className="btn-secondary min-h-11 flex-1" onClick={() => setDraftPin(null)}>{t('injection_position_cancel', { defaultValue: 'Abbrechen' })}</button>
+              <button type="button" className="btn-primary min-h-11 flex-1" onClick={() => setShowLogSheet(true)}>{t('injection_position_accept', { defaultValue: 'Position uebernehmen' })}</button>
             </div>
           </div>
         )}
@@ -313,9 +314,9 @@ function PageHeader({ onBack }: { onBack: () => void }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       <button
         onClick={onBack}
-        aria-label={t('inj_back_aria', { defaultValue: 'Zurück' })}
+        aria-label={String(t('back', { defaultValue: 'Zurueck' }))}
         style={{
-          width: 38, height: 38, borderRadius: 14, flexShrink: 0,
+          width: 44, height: 44, borderRadius: 14, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'var(--surface)',
           border: '1px solid var(--border)',
@@ -329,10 +330,10 @@ function PageHeader({ onBack }: { onBack: () => void }) {
           fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.12em',
           textTransform: 'uppercase', color: 'var(--accent)',
         }}>
-          {t('inj3d_kicker', { defaultValue: 'Injektionstracker Pro' })}
+          {t('injection_pro_title', { defaultValue: 'Injektionstracker Pro' })}
         </p>
         <h1 style={{ fontSize: '1.32rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
-          {t('inj3d_title', { defaultValue: '3D Injektionskarte' })}
+          {t('injection_map_title', { defaultValue: '3D Injektionskarte' })}
         </h1>
       </div>
     </div>

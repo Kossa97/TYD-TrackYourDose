@@ -1,6 +1,7 @@
 import { Suspense, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
+import { useTranslation } from 'react-i18next'
 import * as THREE from 'three'
 import { ArrowUpRight, MapPin, Rotate3D, Syringe } from 'lucide-react'
 import type { Vector3Json } from '../../lib/injectionLogTypes'
@@ -72,10 +73,10 @@ useGLTF.preload(MODEL_URL)
 
 function TorsoPreview({ pins }: { pins: InjectionHeroPin[] }) {
   return (
-    <div className="relative min-h-[208px] overflow-hidden rounded-[20px] border border-cyan-300/20 bg-[#06111b] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+    <div className="relative min-h-[208px] overflow-hidden rounded-[20px] border border-cyan-300/20 bg-[#06111b] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" aria-hidden="true">
       <div className="absolute inset-0 opacity-[0.13] [background-image:linear-gradient(rgba(125,211,252,0.42)_1px,transparent_1px),linear-gradient(90deg,rgba(125,211,252,0.34)_1px,transparent_1px)] [background-size:24px_24px]" />
-      <div className="absolute inset-x-7 top-2 h-24 rounded-full bg-cyan-300/10 blur-2xl" />
-      <div className="absolute bottom-0 left-1/2 h-20 w-56 -translate-x-1/2 rounded-[50%] bg-cyan-950/60 blur-xl" />
+      <div className="injection-map-glow absolute inset-x-7 top-2 h-24 rounded-full bg-cyan-300/10 blur-2xl" />
+      <div className="injection-map-glow absolute bottom-0 left-1/2 h-20 w-56 -translate-x-1/2 rounded-[50%] bg-cyan-950/60 blur-xl" />
 
       <div className="absolute inset-0">
         <Canvas
@@ -98,7 +99,7 @@ function TorsoPreview({ pins }: { pins: InjectionHeroPin[] }) {
 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,transparent_0,transparent_34%,rgba(6,17,27,0.18)_58%,rgba(6,17,27,0.58)_100%)]" />
 
-      <div className="absolute left-3 top-3 grid h-9 w-9 place-items-center rounded-full border border-cyan-200/15 bg-black/24 text-cyan-200">
+      <div className="absolute left-3 top-3 grid h-11 w-11 place-items-center rounded-full border border-cyan-200/15 bg-black/24 text-cyan-200">
         <Rotate3D size={15} />
       </div>
     </div>
@@ -120,8 +121,11 @@ export function InjectionTrackerHero({
   onOpen: () => void
   onLogToday: () => void
 }) {
+  const { t } = useTranslation()
+
   return (
     <section
+      aria-label={String(t('injection_pro_title', { defaultValue: 'Injektionstracker Pro' }))}
       className="relative overflow-hidden rounded-[24px] border border-cyan-300/20 p-4 shadow-[0_18px_54px_rgba(0,0,0,0.32)]"
       style={{ background: 'linear-gradient(145deg, rgba(5,18,30,0.98), rgba(7,14,25,0.97) 48%, rgba(6,27,26,0.96))' }}
     >
@@ -133,28 +137,37 @@ export function InjectionTrackerHero({
 
         <div className="min-w-0">
           <div className="mb-1 flex items-center gap-2 text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-cyan-300">
-            <Rotate3D size={13} /> Pro Feature
+            <Rotate3D size={13} aria-hidden="true" /> {t('injection_hero_kicker', { defaultValue: 'Pro Feature' })}
           </div>
-          <h2 className="text-xl font-black text-white">Injektionstracker Pro</h2>
-          <p className="mt-1 text-sm font-semibold text-cyan-100/80">Praezises 3D-Injektionstracking</p>
+          <h2 className="text-xl font-black text-white">{t('injection_pro_title', { defaultValue: 'Injektionstracker Pro' })}</h2>
+          <p className="mt-1 text-sm font-semibold text-cyan-100/80">{t('injection_pro_subtitle', { defaultValue: 'Praezises 3D-Injektionstracking' })}</p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-300">
             <span className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
-              <MapPin size={12} className="shrink-0" /> <span className="truncate">{lastLabel}</span>
+              <MapPin size={12} className="shrink-0" aria-hidden="true" /> <span className="truncate">{lastLabel}</span>
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
-              <Syringe size={12} /> 7 Tage: {sevenDayCount}
+              <Syringe size={12} aria-hidden="true" /> {t('injection_hero_week_count', { count: sevenDayCount, defaultValue: `7 Tage: ${sevenDayCount}` })}
             </span>
           </div>
         </div>
       </div>
 
       <div className="relative mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <button type="button" onClick={onOpen} className="btn-primary flex min-h-11 items-center justify-center gap-2">
-          3D Tracker oeffnen <ArrowUpRight size={14} />
+        <button
+          type="button"
+          onClick={onOpen}
+          aria-label={String(t('injection_hero_open', { defaultValue: '3D Tracker oeffnen' }))}
+          className="btn-primary flex min-h-11 items-center justify-center gap-2"
+        >
+          {t('injection_hero_open', { defaultValue: '3D Tracker oeffnen' })} <ArrowUpRight size={14} aria-hidden="true" />
         </button>
         {hasDueInjectable && (
-          <button type="button" onClick={onLogToday} className="btn-secondary flex min-h-11 items-center justify-center gap-2">
-            Mit Stelle loggen
+          <button
+            type="button"
+            onClick={onLogToday}
+            className="btn-secondary flex min-h-11 items-center justify-center gap-2"
+          >
+            {t('injection_hero_log_today', { defaultValue: 'Mit Stelle loggen' })}
           </button>
         )}
       </div>

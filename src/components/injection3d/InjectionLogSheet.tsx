@@ -2,6 +2,7 @@
 import { useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { AlertTriangle, Check, Clock, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { InjectionPinDraft, InjectionProximityWarning } from '../../lib/injectionLogTypes'
 import type { OpenInjectionIntake } from '../../lib/injectionPersistence'
 import {
@@ -12,7 +13,6 @@ import {
 } from '../../lib/openInjectionIntakeFilters'
 import {
   areInjectionDetailsLocked,
-  injectionSaveActionLabel,
   replaceTimeInLocalDateTime,
 } from '../../lib/injectionLogSheetState'
 
@@ -35,12 +35,6 @@ export interface InjectionSaveInput {
 const intakeKey = (i: OpenInjectionIntake) => i.doseLogId ?? `${i.cycleId}|${i.scheduledAt}`
 const toLocalInput = (iso: string) => format(parseISO(iso), "yyyy-MM-dd'T'HH:mm")
 
-function overdueLabel(days: number): string {
-  if (days <= 0) return 'heute fällig'
-  if (days === 1) return 'gestern fällig'
-  return `vor ${days} Tagen fällig`
-}
-
 export function InjectionLogSheet({
   pin,
   openIntakes = [],
@@ -55,6 +49,7 @@ export function InjectionLogSheet({
   onCancel: () => void
   onSave: (input: InjectionSaveInput) => Promise<void>
 }) {
+  const { t } = useTranslation()
   const [mode, setMode] = useState<InjectionSaveMode>(openIntakes.length > 0 ? 'intake' : 'manual')
   const [cycleFilter, setCycleFilter] = useState('all')
   const [historyDays, setHistoryDays] = useState<IntakeHistoryDays>(7)
@@ -68,6 +63,12 @@ export function InjectionLogSheet({
   const [notes, setNotes] = useState('')
   const [loggedAt, setLoggedAt] = useState(() => format(new Date(), "yyyy-MM-dd'T'HH:mm"))
   const [saving, setSaving] = useState(false)
+
+  const overdueLabel = (days: number): string => {
+    if (days <= 0) return String(t('injection_due_today', { defaultValue: 'heute faellig' }))
+    if (days === 1) return String(t('injection_due_yesterday', { defaultValue: 'gestern faellig' }))
+    return String(t('injection_due_days_ago', { days, defaultValue: `vor ${days} Tagen faellig` }))
+  }
 
   const cycleOptions = useMemo(() => Array.from(
     new Map(openIntakes.flatMap(intake => intake.cycleId ? [[
@@ -114,6 +115,12 @@ export function InjectionLogSheet({
     setSaving(false)
   }
 
+  const saveActionLabel = mode === 'intake' && selectedIntake
+    ? selectedIntake.status === 'confirmed'
+      ? t('injection_add_site_action', { defaultValue: 'Injektionsstelle hinzufuegen' })
+      : t('injection_save_and_confirm', { defaultValue: 'Speichern & bestaetigen' })
+    : t('injection_save', { defaultValue: 'Speichern' })
+
   return (
     <>
       <div className="fixed inset-0 z-50 bg-black/60" onClick={onCancel} />
@@ -121,59 +128,66 @@ export function InjectionLogSheet({
         <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-sky-400">3D Injektionskarte</p>
-            <h2 className="text-lg font-black text-white">Injektion speichern</h2>
+            <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-sky-400">{t('injection_map_title', { defaultValue: '3D Injektionskarte' })}</p>
+            <h2 className="text-lg font-black text-white">{t('injection_log_title', { defaultValue: 'Injektion speichern' })}</h2>
           </div>
-          <button type="button" aria-label="Abbrechen" onClick={onCancel} className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 text-slate-400">
-            <X size={16} />
+          <button
+            type="button"
+            aria-label={String(t('injection_position_cancel', { defaultValue: 'Abbrechen' }))}
+            onClick={onCancel}
+            className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 text-slate-400"
+          >
+            <X size={16} aria-hidden="true" />
           </button>
         </div>
 
-        {/* Mode toggle */}
         <div className="mb-4 grid grid-cols-2 gap-1 rounded-2xl border border-white/10 p-1" style={{ background: 'var(--surface-input)' }}>
           {(['intake', 'manual'] as InjectionSaveMode[]).map(m => (
             <button
               key={m}
               type="button"
               onClick={() => setMode(m)}
-              className={`rounded-xl px-3 py-2 text-sm font-bold transition-colors ${mode === m ? 'bg-sky-400/15 text-sky-300' : 'text-slate-400'}`}
+              className={`min-h-11 rounded-xl px-3 py-2 text-sm font-bold transition-colors ${mode === m ? 'bg-sky-400/15 text-sky-300' : 'text-slate-400'}`}
             >
-              {m === 'intake' ? 'Einnahme' : 'Manuell'}
+              {m === 'intake'
+                ? t('injection_mode_intake', { defaultValue: 'Einnahme' })
+                : t('injection_mode_manual', { defaultValue: 'Manuell' })}
             </button>
           ))}
         </div>
 
         {warning.level !== 'none' && (
           <div className="mb-4 flex gap-2 rounded-2xl border border-amber-400/25 bg-amber-400/10 p-3 text-sm text-amber-200">
-            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-            <p>{warning.level === 'strong' ? 'Sehr nahe an einer kürzlichen Injektion.' : 'Nahe an einer Injektion der letzten 7 Tage.'}</p>
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+            <p>{warning.level === 'strong'
+              ? t('injection_warning_strong', { defaultValue: 'Sehr nahe an einer kuerzlichen Injektion.' })
+              : t('injection_warning_caution', { defaultValue: 'Nahe an einer Injektion der letzten 7 Tage.' })}</p>
           </div>
         )}
 
-        {/* ── Intake mode: pick an open/overdue intake ── */}
         {mode === 'intake' && (
           <div className="mb-4 space-y-2">
             {openIntakes.length > 0 && (
               <div className="mb-3 grid grid-cols-2 gap-2">
                 <label className="col-span-2">
-                  <span className="label">Zyklus</span>
+                  <span className="label">{t('injection_cycle_label', { defaultValue: 'Zyklus' })}</span>
                   <select className="input" value={cycleFilter} onChange={event => {
                     setCycleFilter(event.target.value)
                     setSelectedKey('')
                   }}>
-                    <option value="all">Alle Zyklen</option>
+                    <option value="all">{t('injection_all_cycles', { defaultValue: 'Alle Zyklen' })}</option>
                     {cycleOptions.map(cycle => (
                       <option key={cycle.id} value={cycle.id}>{cycle.label}</option>
                     ))}
                   </select>
                 </label>
                 <div className="col-span-2">
-                  <span className="label">Status</span>
+                  <span className="label">{t('injection_status_label', { defaultValue: 'Status' })}</span>
                   <div className="grid grid-cols-3 gap-1 rounded-xl border border-white/10 p-1" style={{ background: 'var(--surface-input)' }}>
                     {([
-                      ['all', 'Alle'],
-                      ['open', 'Offen'],
-                      ['confirmed', 'Bestätigt'],
+                      ['all', t('injection_status_all', { defaultValue: 'Alle' })],
+                      ['open', t('injection_status_open', { defaultValue: 'Offen' })],
+                      ['confirmed', t('injection_status_confirmed', { defaultValue: 'Bestaetigt' })],
                     ] as const).map(([value, label]) => (
                       <button
                         key={value}
@@ -182,7 +196,7 @@ export function InjectionLogSheet({
                           setStatusFilter(value)
                           setSelectedKey('')
                         }}
-                        className={`min-w-0 rounded-lg px-2 py-2 text-xs font-bold ${statusFilter === value ? 'bg-sky-400/15 text-sky-300' : 'text-slate-400'}`}
+                        className={`min-h-11 min-w-0 rounded-lg px-2 py-2 text-xs font-bold ${statusFilter === value ? 'bg-sky-400/15 text-sky-300' : 'text-slate-400'}`}
                       >
                         {label}
                       </button>
@@ -190,26 +204,26 @@ export function InjectionLogSheet({
                   </div>
                 </div>
                 <label>
-                  <span className="label">Rückwirkend</span>
+                  <span className="label">{t('injection_history_back', { defaultValue: 'Rueckwirkend' })}</span>
                   <select className="input" value={historyDays} onChange={event => {
                     const value = event.target.value
                     setHistoryDays(value === 'all' ? 'all' : Number(value) as IntakeHistoryDays)
                     setSelectedKey('')
                   }}>
                     {[7, 14, 30, 60, 90].map(days => (
-                      <option key={days} value={days}>{days} Tage</option>
+                      <option key={days} value={days}>{t('injection_history_days', { days, defaultValue: `${days} Tage` })}</option>
                     ))}
-                    <option value="all">Alle</option>
+                    <option value="all">{t('injection_history_all', { defaultValue: 'Alle' })}</option>
                   </select>
                 </label>
                 <label>
-                  <span className="label">Reihenfolge</span>
+                  <span className="label">{t('injection_sort_order', { defaultValue: 'Reihenfolge' })}</span>
                   <select className="input" value={sortOrder} onChange={event => {
                     setSortOrder(event.target.value as IntakeSortOrder)
                     setSelectedKey('')
                   }}>
-                    <option value="newest">Neueste zuerst</option>
-                    <option value="oldest">Älteste zuerst</option>
+                    <option value="newest">{t('injection_sort_newest', { defaultValue: 'Neueste zuerst' })}</option>
+                    <option value="oldest">{t('injection_sort_oldest', { defaultValue: 'Aelteste zuerst' })}</option>
                   </select>
                 </label>
               </div>
@@ -217,11 +231,11 @@ export function InjectionLogSheet({
 
             {openIntakes.length === 0 ? (
               <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-slate-400">
-                Keine passenden Einnahmen. Wechsle zu <span className="font-bold text-slate-200">Manuell</span>.
+                {t('injection_no_matching_intakes', { defaultValue: 'Keine passenden Einnahmen. Wechsle zu Manuell.' })}
               </p>
             ) : filteredIntakes.length === 0 ? (
               <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-slate-400">
-                Keine Einnahmen für diese Filter.
+                {t('injection_no_filtered_intakes', { defaultValue: 'Keine Einnahmen fuer diese Filter.' })}
               </p>
             ) : (
               <div className="max-h-[34vh] space-y-2 overflow-y-auto pr-1">
@@ -234,17 +248,19 @@ export function InjectionLogSheet({
                       onClick={() => selectIntake(intake)}
                       className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left ${active ? 'border-sky-400/50 bg-sky-400/10' : 'border-white/10 bg-white/[0.03]'}`}
                     >
-                      <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${active ? 'bg-sky-400/20 text-sky-300' : 'bg-white/5 text-slate-400'}`}>
-                        {intake.status === 'confirmed' ? <Check size={16} /> : <Clock size={16} />}
+                      <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${active ? 'bg-sky-400/20 text-sky-300' : 'bg-white/5 text-slate-400'}`}>
+                        {intake.status === 'confirmed' ? <Check size={16} aria-hidden="true" /> : <Clock size={16} aria-hidden="true" />}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-white">{intake.peptideName}</p>
                         <p className="text-xs text-slate-400">
                           <span className={intake.status === 'confirmed' ? 'text-emerald-300' : 'text-amber-300'}>
-                            {intake.status === 'confirmed' ? 'Bereits bestätigt' : 'Offen'}
+                            {intake.status === 'confirmed'
+                              ? t('injection_already_confirmed', { defaultValue: 'Bereits bestaetigt' })
+                              : t('injection_status_open', { defaultValue: 'Offen' })}
                           </span>
-                          {' · '}{format(parseISO(intake.scheduledAt), 'dd.MM. HH:mm')}
-                          {intake.status === 'open' ? ` · ${overdueLabel(intake.daysOverdue)}` : ''}
+                          {' - '}{format(parseISO(intake.scheduledAt), 'dd.MM. HH:mm')}
+                          {intake.status === 'open' ? ` - ${overdueLabel(intake.daysOverdue)}` : ''}
                         </p>
                       </div>
                       <div className="shrink-0 text-right">
@@ -259,45 +275,48 @@ export function InjectionLogSheet({
           </div>
         )}
 
-        {/* ── Manual mode: free-text substance ── */}
         {mode === 'manual' && (
           <label className="mb-4 block">
-            <span className="label">Substanz</span>
-            <input className="input" value={substance} onChange={e => setSubstance(e.target.value)} placeholder="z.B. Testosteron Enantat" />
+            <span className="label">{t('injection_substance_label', { defaultValue: 'Substanz' })}</span>
+            <input
+              className="input"
+              value={substance}
+              onChange={e => setSubstance(e.target.value)}
+              placeholder={String(t('injection_substance_placeholder', { defaultValue: 'z.B. Testosteron Enantat' }))}
+            />
           </label>
         )}
 
-        {/* ── Shared fields ── */}
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <label>
-              <span className="label">Dosis</span>
+              <span className="label">{t('injection_dose_label', { defaultValue: 'Dosis' })}</span>
               <input className="input" value={dose} onChange={e => setDose(e.target.value)} inputMode="decimal" disabled={detailsLocked} />
             </label>
             <label>
-              <span className="label">Einheit</span>
+              <span className="label">{t('injection_unit_label', { defaultValue: 'Einheit' })}</span>
               <select className="input" value={unit} onChange={e => setUnit(e.target.value)} disabled={detailsLocked}>
                 {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
             </label>
           </div>
           <label className="block">
-            <span className="label">Methode</span>
+            <span className="label">{t('injection_method_label', { defaultValue: 'Methode' })}</span>
             <select className="input" value={method} onChange={e => setMethod(e.target.value)} disabled={detailsLocked}>
               {METHOD_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
               {!METHOD_OPTIONS.includes(method) && <option value={method}>{method}</option>}
             </select>
           </label>
           <div className="block">
-            <span className="label">Zeitpunkt (rückwirkend möglich)</span>
+            <span className="label">{t('injection_time_label', { defaultValue: 'Zeitpunkt (rueckwirkend moeglich)' })}</span>
             {mode === 'intake' && selectedIntake ? (
               <div className="grid grid-cols-2 gap-3">
                 <label>
-                  <span className="label">Datum</span>
+                  <span className="label">{t('injection_date_label', { defaultValue: 'Datum' })}</span>
                   <input className="input opacity-70" type="date" value={loggedAt.slice(0, 10)} readOnly aria-readonly="true" />
                 </label>
                 <label>
-                  <span className="label">Uhrzeit</span>
+                  <span className="label">{t('injection_clock_label', { defaultValue: 'Uhrzeit' })}</span>
                   <input
                     className="input"
                     type="time"
@@ -311,16 +330,16 @@ export function InjectionLogSheet({
             )}
           </div>
           <label className="block">
-            <span className="label">Notiz optional</span>
+            <span className="label">{t('injection_notes_label', { defaultValue: 'Notiz optional' })}</span>
             <textarea className="input min-h-20 resize-none" value={notes} onChange={e => setNotes(e.target.value)} />
           </label>
           <p className="text-xs text-slate-500">
-            Stelle: {pin.body_side} · {pin.body_region}
+            {t('injection_site_label', { defaultValue: 'Stelle' })}: {pin.body_side} - {pin.body_region}
           </p>
           <div className="flex gap-3 pt-1">
-            <button type="button" className="btn-secondary flex-1" onClick={onCancel}>Abbrechen</button>
-            <button type="button" className="btn-primary flex-1" onClick={save} disabled={saving || !canSave}>
-              <Check size={14} /> {mode === 'intake' && selectedIntake ? injectionSaveActionLabel(selectedIntake.status) : 'Speichern'}
+            <button type="button" className="btn-secondary min-h-11 flex-1" onClick={onCancel}>{t('injection_position_cancel', { defaultValue: 'Abbrechen' })}</button>
+            <button type="button" className="btn-primary min-h-11 flex-1" onClick={save} disabled={saving || !canSave}>
+              <Check size={14} aria-hidden="true" /> {saveActionLabel}
             </button>
           </div>
         </div>

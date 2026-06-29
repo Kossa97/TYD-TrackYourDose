@@ -1,5 +1,6 @@
 import { format, isToday, isYesterday, parseISO } from 'date-fns'
 import { AlertCircle, Eye, EyeOff, History, LocateFixed } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   filterInjectionHistory,
   formatInjectionSite,
@@ -8,12 +9,6 @@ import {
   type InjectionHistoryDays,
 } from '../../lib/injectionHistory'
 import type { InjectionLog3D } from '../../lib/injectionLogTypes'
-
-function groupLabel(date: Date) {
-  if (isToday(date)) return 'Heute'
-  if (isYesterday(date)) return 'Gestern'
-  return format(date, 'dd.MM.yyyy')
-}
 
 export function InjectionHistorySheet({
   logs,
@@ -30,6 +25,13 @@ export function InjectionHistorySheet({
   onToggleLog: (id: string) => void
   onFocusLog: (log: InjectionLog3D) => void
 }) {
+  const { t } = useTranslation()
+  const groupLabel = (date: Date) => {
+    if (isToday(date)) return String(t('injection_history_today', { defaultValue: 'Heute' }))
+    if (isYesterday(date)) return String(t('injection_history_yesterday', { defaultValue: 'Gestern' }))
+    return format(date, 'dd.MM.yyyy')
+  }
+
   const filteredLogs = filterInjectionHistory(logs, new Date(), historyDays)
   const groups = filteredLogs.reduce<Array<{ label: string; logs: InjectionLog3D[] }>>((acc, log) => {
     const label = groupLabel(parseISO(log.logged_at))
@@ -44,11 +46,11 @@ export function InjectionHistorySheet({
       <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" />
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <History size={16} color="var(--accent)" />
-          <h2 className="text-sm font-black text-white">Historie</h2>
+          <History size={16} color="var(--accent)" aria-hidden="true" />
+          <h2 className="text-sm font-black text-white">{t('injection_history', { defaultValue: 'Historie' })}</h2>
         </div>
         <label>
-          <span className="sr-only">Historienzeitraum</span>
+          <span className="sr-only">{t('injection_history_period', { defaultValue: 'Historienzeitraum' })}</span>
           <select
             className="rounded-xl border border-white/10 bg-transparent px-3 py-2 text-xs font-bold text-slate-300"
             value={historyDays}
@@ -57,14 +59,18 @@ export function InjectionHistorySheet({
               onHistoryDaysChange(value === 'all' ? 'all' : Number(value) as InjectionHistoryDays)
             }}
           >
-            {[7, 14, 30, 60, 90].map(days => <option key={days} value={days}>{days} Tage</option>)}
-            <option value="all">Alle</option>
+            {[7, 14, 30, 60, 90].map(days => (
+              <option key={days} value={days}>{t('injection_history_days', { days, defaultValue: `${days} Tage` })}</option>
+            ))}
+            <option value="all">{t('injection_history_all', { defaultValue: 'Alle' })}</option>
           </select>
         </label>
       </div>
 
       <div className="max-h-[48vh] space-y-3 overflow-y-auto pr-1">
-        {groups.length === 0 && <p className="py-5 text-center text-sm text-slate-500">Keine Injektionen in diesem Zeitraum.</p>}
+        {groups.length === 0 && (
+          <p className="py-5 text-center text-sm text-slate-500">{t('injection_history_empty', { defaultValue: 'Keine Injektionen in diesem Zeitraum.' })}</p>
+        )}
         {groups.map(group => (
           <div key={group.label}>
             <p className="mb-1.5 text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-slate-500">{group.label}</p>
@@ -72,10 +78,13 @@ export function InjectionHistorySheet({
               {group.logs.map(log => {
                 const visible = visibleLogIds.has(log.id)
                 const exactPosition = hasExactInjectionPosition(log)
-                const substance = log.peptide_name ?? log.substance_label ?? 'Injektion'
+                const substance = log.peptide_name ?? log.substance_label ?? t('injection_default_label', { defaultValue: 'Injektion' })
                 const dose = [log.dose, log.unit].filter(value => value != null && value !== '').join(' ')
-                const metadata = [format(parseISO(log.logged_at), 'HH:mm'), dose, log.method].filter(Boolean).join(' Â· ')
+                const metadata = [format(parseISO(log.logged_at), 'HH:mm'), dose, log.method].filter(Boolean).join(' - ')
                 const confirmationOpen = isDoseConfirmationOpen(log)
+                const pinLabel = visible
+                  ? t('injection_pin_hide', { defaultValue: 'Pin ausblenden' })
+                  : t('injection_pin_show', { defaultValue: 'Pin dauerhaft anzeigen' })
 
                 return (
                   <article key={log.id} className={`rounded-2xl border p-3 ${confirmationOpen ? 'border-amber-400/30 bg-amber-400/[0.06]' : 'border-white/10 bg-white/[0.03]'}`}>
@@ -83,22 +92,24 @@ export function InjectionHistorySheet({
                       <div className="flex shrink-0 gap-1.5">
                         <button
                           type="button"
-                          aria-label={visible ? 'Pin ausblenden' : 'Pin dauerhaft anzeigen'}
-                          title={visible ? 'Pin ausblenden' : 'Pin dauerhaft anzeigen'}
+                          aria-label={String(pinLabel)}
+                          title={String(pinLabel)}
                           onClick={() => onToggleLog(log.id)}
                           className={`grid h-11 w-11 place-items-center rounded-xl border ${visible ? 'border-sky-400/40 bg-sky-400/15 text-sky-300' : 'border-white/10 text-slate-500'}`}
                         >
-                          {visible ? <Eye size={16} /> : <EyeOff size={16} />}
+                          {visible ? <Eye size={16} aria-hidden="true" /> : <EyeOff size={16} aria-hidden="true" />}
                         </button>
                         <button
                           type="button"
-                          aria-label="Kamera zur Injektionsstelle bewegen"
-                          title={exactPosition ? 'Zur Injektionsstelle' : 'Keine genaue Position gespeichert'}
+                          aria-label={String(t('injection_focus_site', { defaultValue: 'Kamera zur Injektionsstelle bewegen' }))}
+                          title={String(exactPosition
+                            ? t('injection_focus_site_title', { defaultValue: 'Zur Injektionsstelle' })
+                            : t('injection_focus_site_unavailable', { defaultValue: 'Keine genaue Position gespeichert' }))}
                           disabled={!exactPosition}
                           onClick={() => onFocusLog(log)}
                           className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 text-slate-400 disabled:cursor-not-allowed disabled:opacity-30"
                         >
-                          <LocateFixed size={16} />
+                          <LocateFixed size={16} aria-hidden="true" />
                         </button>
                       </div>
 
@@ -108,14 +119,14 @@ export function InjectionHistorySheet({
                         <p className="mt-1 text-[0.68rem] text-slate-500">{metadata}</p>
                         {confirmationOpen && (
                           <p className="mt-2 inline-flex items-center gap-1 rounded-lg border border-amber-400/25 bg-amber-400/10 px-2 py-1 text-[0.68rem] font-bold text-amber-300">
-                            <AlertCircle size={12} /> Einnahmebestätigung offen
+                            <AlertCircle size={12} aria-hidden="true" /> {t('injection_confirmation_open', { defaultValue: 'Einnahmebestaetigung offen' })}
                           </p>
                         )}
                       </div>
                     </div>
                     {log.notes?.trim() && (
                       <p className="mt-2 border-t border-white/10 pt-2 text-xs leading-5 text-slate-400">
-                        Notiz: {log.notes.trim()}
+                        {t('injection_note_prefix', { defaultValue: 'Notiz' })}: {log.notes.trim()}
                       </p>
                     )}
                   </article>
