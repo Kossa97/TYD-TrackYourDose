@@ -84,6 +84,8 @@ export function Layout() {
   const isHome     = pathname === '/'
   const isKalender = pathname === '/kalender'
   const isProfil   = pathname === '/profil'
+  const hideBottomNav = pathname === '/injektionen'
+  const hideFloatingFaq = pathname === '/injektionen'
 
   return (
     <div className="flex flex-col min-h-dvh w-full overflow-x-hidden" style={{ maxWidth: '100vw' }}>
@@ -119,9 +121,9 @@ export function Layout() {
       )}
 
       <main
-        className="flex-1 w-full overflow-x-hidden px-3 pt-4"
+        className={`flex-1 w-full overflow-x-hidden ${hideBottomNav ? 'px-0 pt-0' : 'px-3 pt-4'}`}
         style={{
-          paddingBottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))',
+          paddingBottom: hideBottomNav ? 'env(safe-area-inset-bottom)' : 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))',
           paddingTop: (showPushBanner || showIOSBanner)
             ? 'calc(1rem + 72px + env(safe-area-inset-top))'
             : undefined,
@@ -135,6 +137,7 @@ export function Layout() {
       <PushNotificationListener />
 
       {/* FAQ Floating Button */}
+      {!hideFloatingFaq && (
       <NavLink
         to="/faq"
         style={{
@@ -158,9 +161,10 @@ export function Layout() {
       >
         <HelpCircle size={17} />
       </NavLink>
+      )}
 
       {/* ── Quick-Action backdrop + sheet ──────────────────────────────────── */}
-      {showQuickActions && (
+      {!hideBottomNav && showQuickActions && (
         <>
           <div
             onClick={() => setShowQuickActions(false)}
@@ -237,6 +241,7 @@ export function Layout() {
       )}
 
       {/* ── Bottom nav ─────────────────────────────────────────────────────── */}
+      {!hideBottomNav && (
       <nav
         className="fixed bottom-0 left-0 right-0 z-40"
         style={{
@@ -315,6 +320,7 @@ export function Layout() {
           />
         </div>
       </nav>
+      )}
     </div>
   )
 }

@@ -244,50 +244,70 @@ export function InjektionsTracker() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 8 }}>
-      <PageHeader onBack={() => navigate(-1)} />
+    <div
+      className="min-h-dvh overflow-hidden px-3 pb-2"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        paddingTop: 'calc(0.75rem + env(safe-area-inset-top))',
+        paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))',
+      }}
+    >
+      {/* 3D Injektionskarte */}
+      <section
+        ref={mapSectionRef}
+        style={{
+          ...panelStyle,
+          padding: 0,
+          flex: '1 1 auto',
+          minHeight: 0,
+          borderRadius: 24,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <div style={{ position: 'relative', flex: '1 1 auto', minHeight: 0 }}>
+          <PageHeader onBack={() => navigate(-1)} overlay />
+          <InjectionMapCanvas
+            height="100%"
+            minHeight={0}
+            draftPin={draftPin}
+            logs={logs}
+            visibleLogIds={visibleLogIds}
+            focusRequest={focusRequest}
+            onDraftPinChange={(pin) => { setDraftPin(pin); setShowLogSheet(false) }}
+            onLogFocus={focusLog}
+          />
 
-      {/* ── 3D Injektionskarte ── */}
-      <section ref={mapSectionRef} style={{ ...panelStyle, padding: 0 }}>
-        <InjectionMapCanvas
-          draftPin={draftPin}
-          logs={logs}
-          visibleLogIds={visibleLogIds}
-          focusRequest={focusRequest}
-          onDraftPinChange={(pin) => { setDraftPin(pin); setShowLogSheet(false) }}
-          onLogFocus={focusLog}
-        />
-
-        {draftPin && !showLogSheet && (
-          <div
-            className="absolute bottom-3 left-3 right-3 z-20 rounded-2xl border p-3"
-            style={{
-              background: 'var(--surface)',
-              borderColor: 'var(--border)',
-              boxShadow: '0 -6px 32px rgba(0,0,0,0.5)',
-            }}
-          >
-            <div className="flex gap-3">
-              <button type="button" className="btn-secondary min-h-11 flex-1" onClick={() => setDraftPin(null)}>{t('injection_position_cancel', { defaultValue: 'Abbrechen' })}</button>
-              <button type="button" className="btn-primary min-h-11 flex-1" onClick={() => setShowLogSheet(true)}>{t('injection_position_accept', { defaultValue: 'Position uebernehmen' })}</button>
+          {draftPin && !showLogSheet && (
+            <div
+              className="absolute bottom-3 left-3 right-3 z-20 rounded-2xl border p-3"
+              style={{
+                background: 'var(--surface)',
+                borderColor: 'var(--border)',
+                boxShadow: '0 -6px 32px rgba(0,0,0,0.5)',
+              }}
+            >
+              <div className="flex gap-3">
+                <button type="button" className="btn-secondary min-h-11 flex-1" onClick={() => setDraftPin(null)}>{t('injection_position_cancel', { defaultValue: 'Abbrechen' })}</button>
+                <button type="button" className="btn-primary min-h-11 flex-1" onClick={() => setShowLogSheet(true)}>{t('injection_position_accept', { defaultValue: 'Position uebernehmen' })}</button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* Tracker tabs */}
+        <InjectionTrackerTabs
+          logs={loading ? [] : logs}
+          openIntakes={loading ? [] : openIntakes}
+          historyDays={historyDays}
+          visibleLogIds={visibleLogIds}
+          onHistoryDaysChange={setHistoryDays}
+          onToggleLog={toggleLogVisibility}
+          onFocusLog={focusLog}
+        />
       </section>
 
-      {/* Tracker tabs */}
-      <InjectionTrackerTabs
-        logs={loading ? [] : logs}
-        openIntakes={loading ? [] : openIntakes}
-        historyDays={historyDays}
-        visibleLogIds={visibleLogIds}
-        onHistoryDaysChange={setHistoryDays}
-        onToggleLog={toggleLogVisibility}
-        onFocusLog={focusLog}
-      />
-
-
-      {/* ── Log sheet ── */}
       {showLogSheet && draftPin && (
         <InjectionLogSheet
           pin={draftPin}
@@ -309,18 +329,33 @@ export function InjektionsTracker() {
 
 // ── PageHeader ─────────────────────────────────────────────────────────────────
 
-function PageHeader({ onBack }: { onBack: () => void }) {
+function PageHeader({ onBack, overlay = false }: { onBack: () => void; overlay?: boolean }) {
   const { t } = useTranslation()
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      ...(overlay ? {
+        position: 'absolute',
+        top: 14,
+        left: 14,
+        right: 14,
+        zIndex: 25,
+        pointerEvents: 'none',
+      } : null),
+    }}>
       <button
         onClick={onBack}
         aria-label={String(t('back', { defaultValue: 'Zurueck' }))}
         style={{
           width: 44, height: 44, borderRadius: 14, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'var(--surface)',
+          background: overlay ? 'rgba(8,13,26,0.72)' : 'var(--surface)',
           border: '1px solid var(--border)',
+          backdropFilter: overlay ? 'blur(16px)' : undefined,
+          WebkitBackdropFilter: overlay ? 'blur(16px)' : undefined,
+          pointerEvents: overlay ? 'auto' : undefined,
           color: 'var(--text-dim)',
         }}
       >
@@ -328,12 +363,13 @@ function PageHeader({ onBack }: { onBack: () => void }) {
       </button>
       <div style={{ flex: 1 }}>
         <p style={{
-          fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.12em',
+          fontSize: '0.62rem', fontWeight: 800, letterSpacing: 0,
           textTransform: 'uppercase', color: 'var(--accent)',
+          textShadow: overlay ? '0 2px 12px rgba(0,0,0,0.75)' : undefined,
         }}>
           {t('injection_pro_title', { defaultValue: 'Injektionstracker Pro' })}
         </p>
-        <h1 style={{ fontSize: '1.32rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+        <h1 style={{ fontSize: '1.32rem', fontWeight: 900, color: 'var(--text)', letterSpacing: 0, lineHeight: 1.1, textShadow: overlay ? '0 2px 14px rgba(0,0,0,0.8)' : undefined }}>
           {t('injection_map_title', { defaultValue: '3D Injektionskarte' })}
         </h1>
       </div>

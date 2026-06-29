@@ -1,7 +1,7 @@
 // src/components/injection3d/InjectionMapCanvas.tsx
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { ContactShadows, OrbitControls, useGLTF } from '@react-three/drei'
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react'
 import * as THREE from 'three'
 import { inferBodyRegion } from '../../lib/injectionGeometry'
 import { prepareInjectionTorsoModel } from '../../lib/injectionModelMaterial'
@@ -243,16 +243,22 @@ function Scene({
   )
 }
 
-export function InjectionMapCanvas(props: {
+export function InjectionMapCanvas({
+  height = 'min(62vh, 540px)',
+  minHeight = 360,
+  ...props
+}: {
   draftPin: InjectionPinDraft | null
   logs: InjectionLog3D[]
   visibleLogIds: Set<string>
   focusRequest: InjectionFocusRequest | null
   onDraftPinChange: (pin: InjectionPinDraft) => void
   onLogFocus: (log: InjectionLog3D) => void
+  height?: CSSProperties['height']
+  minHeight?: CSSProperties['minHeight']
 }) {
   return (
-    <div style={{ position: 'relative', height: 'min(62vh, 540px)', minHeight: 360, borderRadius: 24, overflow: 'hidden', background: 'radial-gradient(circle at 50% 20%, rgba(0,204,245,0.16), transparent 42%), #07111d' }}>
+    <div style={{ position: 'relative', height, minHeight, borderRadius: 24, overflow: 'hidden', background: 'radial-gradient(circle at 50% 20%, rgba(0,204,245,0.16), transparent 42%), #07111d' }}>
       <Canvas
         camera={{ position: [0, FIT_Y_OFFSET, CAMERA_DISTANCE], fov: CAMERA_FOV, near: 0.05, far: 50 }}
         dpr={[1, 1.7]}
