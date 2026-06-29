@@ -4,6 +4,7 @@ import { ContactShadows, Environment, OrbitControls, useGLTF } from '@react-thre
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { inferBodyRegion } from '../../lib/injectionGeometry'
+import { prepareInjectionTorsoModel } from '../../lib/injectionModelMaterial'
 import type { InjectionLog3D, InjectionPinDraft } from '../../lib/injectionLogTypes'
 import { InjectionPin } from './InjectionPin'
 
@@ -52,6 +53,7 @@ function Torso({ onLongPress }: { onLongPress: (event: ThreeEvent<PointerEvent>)
     const s = FIT_HEIGHT / size.y
     root.scale.setScalar(s)
     root.position.set(-center.x * s, -center.y * s + FIT_Y_OFFSET, -center.z * s)
+    prepareInjectionTorsoModel(root)
     return root
   }, [scene])
 

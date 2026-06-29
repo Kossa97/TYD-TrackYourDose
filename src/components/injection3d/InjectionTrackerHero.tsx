@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import * as THREE from 'three'
 import { ArrowUpRight, MapPin, Rotate3D, Syringe } from 'lucide-react'
 import type { Vector3Json } from '../../lib/injectionLogTypes'
+import { prepareInjectionTorsoModel } from '../../lib/injectionModelMaterial'
 
 const MODEL_URL = '/models/torso_hybrid_v1.glb'
 const HERO_MODEL_HEIGHT = 2.85
@@ -30,6 +31,7 @@ function HeroTorsoModel() {
     const scale = HERO_MODEL_HEIGHT / size.y
     root.scale.setScalar(scale)
     root.position.set(-center.x * scale, -center.y * scale + HERO_MODEL_Y_OFFSET, -center.z * scale)
+    prepareInjectionTorsoModel(root)
     root.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.castShadow = false
