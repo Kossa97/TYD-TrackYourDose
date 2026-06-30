@@ -226,37 +226,11 @@ interface TodayIntake {
 }
 
 interface InjectionHeroState {
-  lastLabel: string
-  sevenDayCount: number
-  hasDueInjectable: boolean
   pins: InjectionHeroPin[]
 }
 
 const EMPTY_INJECTION_HERO: InjectionHeroState = {
-  lastLabel: 'Noch keine Stelle geloggt',
-  sevenDayCount: 0,
-  hasDueInjectable: false,
   pins: [],
-}
-
-const INJECTABLE_METHODS = new Set(['Subkutan', 'Intramuskulaer', 'Intramuskulär'])
-
-function injectionSiteLabel(row: { body_side?: string | null; body_region?: string | null }): string {
-  const sideLabels: Record<string, string> = { left: 'links', right: 'rechts', center: 'mittig' }
-  const regionLabels: Record<string, string> = {
-    abdomen: 'Bauch',
-    thigh: 'Oberschenkel',
-    deltoid: 'Schulter',
-    glute: 'Gesäß',
-    chest: 'Brust',
-    upper_arm: 'Oberarm',
-    forearm: 'Unterarm',
-    lower_leg: 'Unterschenkel',
-    outside_typical: 'Stelle',
-  }
-  const side = row.body_side ? sideLabels[row.body_side] ?? row.body_side : ''
-  const region = row.body_region ? regionLabels[row.body_region] ?? row.body_region : 'Stelle'
-  return [side, region].filter(Boolean).join(' ')
 }
 
 function isHeroVector(value: unknown): value is InjectionHeroPin['position'] {
@@ -386,15 +360,11 @@ export function Home() {
           await supabase.from('dose_logs').insert(rows)
         }
 
-        const cycleMethodByPeptide = new Map((cycleData ?? []).map(c => [c.peptide_id as string, c.method as string]))
-        const hasDueInjectable = openSlots.some(slot => INJECTABLE_METHODS.has(cycleMethodByPeptide.get(slot.peptideId) ?? ''))
         const injectionRows = injectionData ?? []
-        const lastInjection = injectionRows[0]
         const recentInjectionRows = injectionRows.filter(row => {
           const ageMs = Date.now() - parseISO(row.logged_at as string).getTime()
           return ageMs >= 0 && ageMs <= 7 * 24 * 60 * 60 * 1000
         })
-        const sevenDayCount = recentInjectionRows.length
         const pins = recentInjectionRows
           .filter(row => isHeroVector(row.position) && isHeroVector(row.normal))
           .slice(0, 4)
@@ -407,12 +377,7 @@ export function Home() {
         setPlannedToday(todaySlots.length)
         setTodayIntakes(openSlots.map(s => ({ time: s.time, min: s.min, substance: s.substance, dose: s.dose, peptideId: s.peptideId })))
         setTodayDone(todaySlots.length > 0 && openSlots.length === 0)
-        setInjectionHero({
-          lastLabel: lastInjection ? injectionSiteLabel(lastInjection) : EMPTY_INJECTION_HERO.lastLabel,
-          sevenDayCount,
-          hasDueInjectable,
-          pins,
-        })
+        setInjectionHero({ pins })
 
         setExpiryAlerts(getPeptideExpiryAlerts(peptideData ?? []))
 
@@ -513,12 +478,8 @@ export function Home() {
       </section>
 
       <InjectionTrackerHero
-        lastLabel={injectionHero.lastLabel}
-        sevenDayCount={injectionHero.sevenDayCount}
-        hasDueInjectable={injectionHero.hasDueInjectable}
         pins={injectionHero.pins}
         onOpen={() => navigate('/injektionen')}
-        onLogToday={() => navigate('/injektionen')}
       />
 
       {todayIntakes.length > 0 && (

@@ -76,6 +76,21 @@ describe('InjektionsTracker fullscreen map layout', () => {
     expect(source).toContain('setTrackerSheetOpen(false)')
   })
 
+  it('keeps the home injection hero focused on opening the tracker', () => {
+    const hero = readFileSync(new URL('../components/injection3d/InjectionTrackerHero.tsx', import.meta.url), 'utf8')
+    const home = readFileSync(new URL('./Home.tsx', import.meta.url), 'utf8')
+
+    expect(hero).toContain('className="btn-primary flex min-h-11 w-full items-center justify-center gap-2"')
+    expect(hero).not.toContain('MapPin')
+    expect(hero).not.toContain('Syringe')
+    expect(hero).not.toContain('lastLabel')
+    expect(hero).not.toContain('sevenDayCount')
+    expect(hero).not.toContain('hasDueInjectable')
+    expect(hero).not.toContain('onLogToday')
+    expect(home).not.toContain('onLogToday')
+    expect(home).not.toContain('hasDueInjectable={')
+  })
+
   it('uses German umlauts in injection tracker copy', () => {
     const de = readFileSync(new URL('../i18n/locales/de.json', import.meta.url), 'utf8')
     const hero = readFileSync(new URL('../components/injection3d/InjectionTrackerHero.tsx', import.meta.url), 'utf8')

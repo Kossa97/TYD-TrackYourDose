@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import { useTranslation } from 'react-i18next'
 import * as THREE from 'three'
-import { ArrowUpRight, MapPin, Rotate3D, Syringe } from 'lucide-react'
+import { ArrowUpRight, Rotate3D } from 'lucide-react'
 import type { Vector3Json } from '../../lib/injectionLogTypes'
 import { prepareInjectionTorsoModel } from '../../lib/injectionModelMaterial'
 
@@ -109,19 +109,11 @@ function TorsoPreview({ pins }: { pins: InjectionHeroPin[] }) {
 }
 
 export function InjectionTrackerHero({
-  lastLabel,
-  sevenDayCount,
-  hasDueInjectable,
   pins,
   onOpen,
-  onLogToday,
 }: {
-  lastLabel: string
-  sevenDayCount: number
-  hasDueInjectable: boolean
   pins: InjectionHeroPin[]
   onOpen: () => void
-  onLogToday: () => void
 }) {
   const { t } = useTranslation()
 
@@ -143,35 +135,18 @@ export function InjectionTrackerHero({
           </div>
           <h2 className="text-xl font-black text-white">{t('injection_pro_title', { defaultValue: 'Injektionstracker Pro' })}</h2>
           <p className="mt-1 text-sm font-semibold text-cyan-100/80">{t('injection_pro_subtitle', { defaultValue: 'Präzises 3D-Injektionstracking' })}</p>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-300">
-            <span className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
-              <MapPin size={12} className="shrink-0" aria-hidden="true" /> <span className="truncate">{lastLabel}</span>
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
-              <Syringe size={12} aria-hidden="true" /> {t('injection_hero_week_count', { count: sevenDayCount, defaultValue: `7 Tage: ${sevenDayCount}` })}
-            </span>
-          </div>
         </div>
       </div>
 
-      <div className="relative mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <div className="relative mt-4">
         <button
           type="button"
           onClick={onOpen}
           aria-label={String(t('injection_hero_open', { defaultValue: '3D Tracker öffnen' }))}
-          className="btn-primary flex min-h-11 items-center justify-center gap-2"
+          className="btn-primary flex min-h-11 w-full items-center justify-center gap-2"
         >
           {t('injection_hero_open', { defaultValue: '3D Tracker öffnen' })} <ArrowUpRight size={14} aria-hidden="true" />
         </button>
-        {hasDueInjectable && (
-          <button
-            type="button"
-            onClick={onLogToday}
-            className="btn-secondary flex min-h-11 items-center justify-center gap-2"
-          >
-            {t('injection_hero_log_today', { defaultValue: 'Mit Stelle loggen' })}
-          </button>
-        )}
       </div>
     </section>
   )
