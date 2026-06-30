@@ -23,12 +23,14 @@ export function InjectionPin({
   active = false,
   reference = false,
   onClick,
+  color,
 }: {
   position: Vector3Json
   normal?: Vector3Json | null
   active?: boolean
   reference?: boolean
   onClick?: () => void
+  color?: string
 }) {
   const { anchor, quaternion } = useMemo(() => {
     const n = normal
@@ -42,7 +44,7 @@ export function InjectionPin({
   }, [position.x, position.y, position.z, normal])
 
   const scale = active ? 1 : 0.72
-  const headColor = active ? ACTIVE_HEAD : REFERENCE_HEAD
+  const headColor = color ?? (active ? ACTIVE_HEAD : REFERENCE_HEAD)
 
   return (
     <group
@@ -60,6 +62,12 @@ export function InjectionPin({
           <cylinderGeometry args={[0.0034, 0.0014, STEM_LENGTH, 14]} />
           <meshStandardMaterial color={STEM_COLOR} metalness={0.85} roughness={0.32} envMapIntensity={1} />
         </mesh>
+        {active && (
+          <mesh position={[0, STEM_LENGTH + HEAD_RADIUS * 0.72, 0]}>
+            <sphereGeometry args={[HEAD_RADIUS * 1.9, 32, 32]} />
+            <meshBasicMaterial color={headColor} transparent opacity={0.22} depthWrite={false} />
+          </mesh>
+        )}
         {/* Glossy ball head */}
         <mesh position={[0, STEM_LENGTH + HEAD_RADIUS * 0.72, 0]}>
           <sphereGeometry args={[HEAD_RADIUS, 32, 32]} />

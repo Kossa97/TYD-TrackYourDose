@@ -46,4 +46,13 @@ describe('InjektionsTracker fullscreen map layout', () => {
     expect(source).toContain('sheetOpen: trackerSheetOpen')
     expect(source).toContain('onSheetOpenChange={setTrackerSheetOpen}')
   })
+
+  it('shows a compact active pin chip with only substance and age', () => {
+    const source = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('activeLog')
+    expect(source).toContain('getInjectionPinSubstance(activeLog)')
+    expect(source).toContain('formatInjectionPinAge(activeLog.logged_at)')
+    expect(source).toContain('injection-active-pin-chip')
+  })
 })

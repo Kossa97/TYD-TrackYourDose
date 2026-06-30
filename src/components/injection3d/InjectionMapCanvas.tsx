@@ -5,6 +5,7 @@ import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, type CSSProperti
 import * as THREE from 'three'
 import { inferBodyRegion } from '../../lib/injectionGeometry'
 import { prepareInjectionTorsoModel } from '../../lib/injectionModelMaterial'
+import { getInjectionPinAgeColor } from '../../lib/injectionPinPresentation'
 import type { InjectionLog3D, InjectionPinDraft } from '../../lib/injectionLogTypes'
 import { InjectionPin } from './InjectionPin'
 
@@ -188,6 +189,7 @@ function Scene({
   logs,
   visibleLogIds,
   focusRequest,
+  activeLogId,
   onDraftPinChange,
   onLogFocus,
 }: {
@@ -195,6 +197,7 @@ function Scene({
   logs: InjectionLog3D[]
   visibleLogIds: Set<string>
   focusRequest: InjectionFocusRequest | null
+  activeLogId?: string | null
   onDraftPinChange: (pin: InjectionPinDraft) => void
   onLogFocus: (log: InjectionLog3D) => void
 }) {
@@ -244,7 +247,15 @@ function Scene({
         <Torso onLongPress={handleLongPress} />
       </Suspense>
       {logs.filter(log => visibleLogIds.has(log.id)).map(log => (
-        <InjectionPin key={log.id} position={log.position} normal={log.normal} reference onClick={() => onLogFocus(log)} />
+        <InjectionPin
+          key={log.id}
+          position={log.position}
+          normal={log.normal}
+          reference
+          active={log.id === activeLogId}
+          color={getInjectionPinAgeColor(log.logged_at)}
+          onClick={() => onLogFocus(log)}
+        />
       ))}
       {draftPin && <InjectionPin position={draftPin.position} normal={draftPin.normal} active />}
       <ContactShadows opacity={0.22} scale={4} blur={2.5} far={3} position={[0, -1.22, 0]} />
@@ -262,6 +273,7 @@ export function InjectionMapCanvas({
   logs: InjectionLog3D[]
   visibleLogIds: Set<string>
   focusRequest: InjectionFocusRequest | null
+  activeLogId?: string | null
   onDraftPinChange: (pin: InjectionPinDraft) => void
   onLogFocus: (log: InjectionLog3D) => void
   height?: CSSProperties['height']

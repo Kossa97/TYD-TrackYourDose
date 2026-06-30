@@ -25,4 +25,13 @@ describe('InjectionMapCanvas external assets', () => {
     expect(source).toContain('focusTargetForRequest')
     expect(source).toContain('focusRequest.sheetOpen')
   })
+
+  it('renders visible history pins with age colors and selected-pin emphasis', () => {
+    const source = readFileSync(new URL('./InjectionMapCanvas.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('activeLogId')
+    expect(source).toContain('getInjectionPinAgeColor(log.logged_at')
+    expect(source).toContain('active={log.id === activeLogId}')
+    expect(source).toContain('color={getInjectionPinAgeColor(log.logged_at)}')
+  })
 })

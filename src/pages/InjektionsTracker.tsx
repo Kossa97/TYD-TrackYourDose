@@ -21,6 +21,7 @@ import {
   type OpenInjectionIntake,
 } from '../lib/injectionPersistence'
 import { proximityWarning } from '../lib/injectionGeometry'
+import { formatInjectionPinAge, getInjectionPinAgeColor, getInjectionPinSubstance } from '../lib/injectionPinPresentation'
 import type { InjectionHistoryDays } from '../lib/injectionHistory'
 import type {
   InjectionLog3D,
@@ -121,6 +122,7 @@ export function InjektionsTracker() {
   const [trackerSheetOpen, setTrackerSheetOpen] = useState(false)
   const [focusRequest, setFocusRequest] = useState<InjectionFocusRequest | null>(null)
   const [visibleLogIds, setVisibleLogIds] = useState<Set<string>>(() => new Set())
+  const [activeLogId, setActiveLogId] = useState<string | null>(null)
   const [showIntro, setShowIntro] = useState(
     () => Number(localStorage.getItem(INTRO_STORAGE_KEY) ?? 0) < INJECTION_INTRO_VERSION,
   )
@@ -159,20 +161,28 @@ export function InjektionsTracker() {
   }, [trackerSheetOpen])
 
   const focusLog = (log: InjectionLog3D) => {
+    setActiveLogId(log.id)
     setVisibleLogIds(prev => new Set(prev).add(log.id))
     setFocusRequest(previous => ({ log, requestId: (previous?.requestId ?? 0) + 1, sheetOpen: trackerSheetOpen }))
     requestAnimationFrame(() => mapSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
   }
 
   const toggleLogVisibility = (id: string) => {
+    const log = logs.find(item => item.id === id)
     setVisibleLogIds(prev => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      if (next.has(id)) {
+        next.delete(id)
+        setActiveLogId(current => current === id ? null : current)
+      } else {
+        next.add(id)
+        if (log) setActiveLogId(log.id)
+      }
       return next
     })
   }
 
+  const activeLog = activeLogId ? logs.find(log => log.id === activeLogId) ?? null : null
   const warning = draftPin ? proximityWarning(draftPin, logs, new Date()) : NO_WARNING
 
   const saveDraftPin = async (input: InjectionSaveInput) => {
@@ -274,9 +284,30 @@ export function InjektionsTracker() {
             logs={logs}
             visibleLogIds={visibleLogIds}
             focusRequest={focusRequest}
+            activeLogId={activeLogId}
             onDraftPinChange={(pin) => { setDraftPin(pin); setShowLogSheet(false) }}
             onLogFocus={focusLog}
           />
+
+          {activeLog && visibleLogIds.has(activeLog.id) && (
+            <div
+              className="injection-active-pin-chip pointer-events-none absolute left-4 right-4 z-30 flex justify-center"
+              style={{ top: 'calc(78px + env(safe-area-inset-top))' }}
+            >
+              <div
+                className="flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-black text-white shadow-[0_10px_28px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+                style={{ background: 'rgba(7, 11, 24, 0.78)', borderColor: 'rgba(255,255,255,0.12)' }}
+              >
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ background: getInjectionPinAgeColor(activeLog.logged_at), boxShadow: '0 0 14px ' + getInjectionPinAgeColor(activeLog.logged_at) }}
+                />
+                <span className="truncate">
+                  {getInjectionPinSubstance(activeLog)} - {formatInjectionPinAge(activeLog.logged_at)}
+                </span>
+              </div>
+            </div>
+          )}
 
           {draftPin && !showLogSheet && (
             <div
