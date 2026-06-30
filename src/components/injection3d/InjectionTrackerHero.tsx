@@ -134,7 +134,7 @@ export function InjectionTrackerHero({
             <Rotate3D size={13} aria-hidden="true" /> {t('injection_hero_kicker', { defaultValue: 'Pro Feature' })}
           </div>
           <h2 className="text-xl font-black text-white">{t('injection_pro_title', { defaultValue: '3D-Injektionstracker Pro' })}</h2>
-          <p className="mt-1 text-sm font-semibold text-cyan-100/80">{t('injection_pro_subtitle', { defaultValue: 'Tracke präzise deine Injektionen auf einem 3D-Torso' })}</p>
+          <p className="mt-1 text-sm font-semibold text-cyan-100/80">{t('injection_pro_subtitle', { defaultValue: 'Tracke deine Injektionen präzise und einfach auf einem 3D-Torso' })}</p>
         </div>
       </div>
 

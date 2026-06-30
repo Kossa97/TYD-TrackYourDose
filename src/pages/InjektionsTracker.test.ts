@@ -106,7 +106,7 @@ describe('InjektionsTracker fullscreen map layout', () => {
       .join('\n')
     const combined = [deValues, hero, tabs, tracker, intro, logSheet].join('\n')
     expect(combined).toContain('3D-Injektionstracker Pro')
-    expect(combined).toContain('Tracke pr\u00e4zise deine Injektionen auf einem 3D-Torso')
+    expect(combined).toContain('Tracke deine Injektionen pr\u00e4zise und einfach auf einem 3D-Torso')
     expect(combined).toContain('3D Tracker \u00f6ffnen')
     expect(combined).toContain('ausw\u00e4hlen')
     expect(combined).toContain('Position \u00fcbernehmen')
