@@ -259,18 +259,18 @@ export function InjektionsTracker() {
         style={{
           ...panelStyle,
           padding: 0,
-          flex: '1 1 auto',
-          minHeight: 0,
+          height: 'calc(100dvh - 1.25rem - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+          minHeight: 640,
           borderRadius: 24,
           display: 'flex',
           flexDirection: 'column',
         }}
       >
-        <div style={{ position: 'relative', flex: '1 1 auto', minHeight: 0 }}>
+        <div style={{ position: 'relative', flex: '1 1 auto', minHeight: 380 }}>
           <PageHeader onBack={() => navigate(-1)} overlay />
           <InjectionMapCanvas
             height="100%"
-            minHeight={0}
+            minHeight={380}
             draftPin={draftPin}
             logs={logs}
             visibleLogIds={visibleLogIds}

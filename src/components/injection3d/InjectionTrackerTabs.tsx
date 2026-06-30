@@ -34,7 +34,7 @@ export function InjectionTrackerTabs({
   }
 
   return (
-    <section className="shrink-0 border-t border-white/10 p-3" style={{ background: 'linear-gradient(180deg, rgba(7, 11, 24, 0.96), var(--surface))' }}>
+    <section className="flex max-h-[34dvh] shrink-0 flex-col overflow-hidden border-t border-white/10 p-3" style={{ background: 'linear-gradient(180deg, rgba(7, 11, 24, 0.96), var(--surface))' }}>
       <div className="mx-auto mb-3 h-1 w-14 rounded-full bg-white/20" aria-hidden="true" />
       <div role="tablist" aria-label={String(t('injection_tabs_label', { defaultValue: 'Injektionstracker Bereiche' }))} className="mb-3 grid grid-cols-2 gap-1 rounded-2xl border border-white/10 p-1" style={{ background: 'var(--surface-input)' }}>
         {INJECTION_TRACKER_TABS.map(tab => {
@@ -93,7 +93,7 @@ function OpenIntakesTab({ openIntakes }: { openIntakes: OpenInjectionIntake[] })
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-xs leading-5 text-slate-400">
         {t('injection_open_hint', { defaultValue: 'Markiere zuerst eine Stelle auf der 3D-Karte. Im Speichern-Sheet kannst du dann eine dieser Einnahmen auswaehlen.' })}
       </div>
-      <div className="max-h-[34vh] space-y-2 overflow-y-auto pr-1">
+      <div className="max-h-[16dvh] space-y-2 overflow-y-auto pr-1">
         {sortedIntakes.map(intake => {
           const key = intake.doseLogId ?? String(intake.cycleId) + '|' + intake.scheduledAt
           return <OpenIntakeRow key={key} intake={intake} />
