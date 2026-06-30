@@ -39,6 +39,17 @@ describe('InjektionsTracker fullscreen map layout', () => {
     expect(source).toContain("embedded ? 'space-y-3' : 'max-h-[48vh] space-y-3 overflow-y-auto pr-1'")
   })
 
+  it('keeps the embedded history sheet header compact', () => {
+    const historySource = readFileSync(new URL('../components/injection3d/InjectionHistorySheet.tsx', import.meta.url), 'utf8')
+    const tabsSource = readFileSync(new URL('../components/injection3d/InjectionTrackerTabs.tsx', import.meta.url), 'utf8')
+
+    expect(historySource).toContain('{!embedded && (')
+    expect(historySource).toContain('export function HistoryDaysSelect')
+    expect(tabsSource).toContain("activeSheet === 'history'")
+    expect(tabsSource).toContain('<HistoryDaysSelect')
+    expect(tabsSource).toContain('className="mb-2 flex items-center gap-3"')
+  })
+
   it('passes tracker sheet state into focus requests for visible-area camera framing', () => {
     const source = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
 

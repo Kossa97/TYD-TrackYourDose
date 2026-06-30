@@ -6,7 +6,7 @@ import { type InjectionHistoryDays } from '../../lib/injectionHistory'
 import type { OpenInjectionIntake } from '../../lib/injectionPersistence'
 import type { InjectionTrackerTab } from '../../lib/injectionTrackerTabs'
 import type { InjectionLog3D } from '../../lib/injectionLogTypes'
-import { InjectionHistorySheet } from './InjectionHistorySheet'
+import { HistoryDaysSelect, InjectionHistorySheet } from './InjectionHistorySheet'
 
 export function InjectionTrackerTabs({
   logs,
@@ -73,7 +73,7 @@ export function InjectionTrackerTabs({
             boxShadow: '0 -18px 46px rgba(0,0,0,0.45)',
           }}
         >
-          <div className="mb-3 flex items-center gap-3">
+          <div className="mb-2 flex items-center gap-3">
             <button
               type="button"
               aria-label={String(t('close', { defaultValue: 'Schließen' }))}
@@ -82,10 +82,24 @@ export function InjectionTrackerTabs({
             >
               <X size={17} aria-hidden="true" />
             </button>
-            <div className="min-w-0 flex-1">
-              <p className="text-[0.66rem] font-black uppercase text-sky-300">3D Injektionskarte</p>
-              <h2 className="truncate text-lg font-black text-white">{activeLabel}</h2>
-            </div>
+            {activeSheet === 'history' ? (
+              <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2 text-white">
+                  <History size={18} className="shrink-0 text-sky-300" aria-hidden="true" />
+                  <h2 className="truncate text-lg font-black">{activeLabel}</h2>
+                </div>
+                <HistoryDaysSelect
+                  className="shrink-0"
+                  historyDays={historyDays}
+                  onHistoryDaysChange={onHistoryDaysChange}
+                />
+              </div>
+            ) : (
+              <div className="min-w-0 flex-1">
+                <p className="text-[0.66rem] font-black uppercase text-sky-300">3D Injektionskarte</p>
+                <h2 className="truncate text-lg font-black text-white">{activeLabel}</h2>
+              </div>
+            )}
           </div>
 
           <div className="max-h-[34dvh] overflow-y-auto pr-1">

@@ -46,28 +46,15 @@ export function InjectionHistorySheet({
   return (
     <section className={embedded ? 'space-y-3' : 'rounded-3xl border border-white/10 p-4'} style={embedded ? undefined : { background: 'var(--surface)' }}>
       {!embedded && <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" />}
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <History size={16} color="var(--accent)" aria-hidden="true" />
-          <h2 className="text-sm font-black text-white">{t('injection_history', { defaultValue: 'Historie' })}</h2>
+      {!embedded && (
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <History size={16} color="var(--accent)" aria-hidden="true" />
+            <h2 className="text-sm font-black text-white">{t('injection_history', { defaultValue: 'Historie' })}</h2>
+          </div>
+          <HistoryDaysSelect historyDays={historyDays} onHistoryDaysChange={onHistoryDaysChange} />
         </div>
-        <label>
-          <span className="sr-only">{t('injection_history_period', { defaultValue: 'Historienzeitraum' })}</span>
-          <select
-            className="rounded-xl border border-white/10 bg-transparent px-3 py-2 text-xs font-bold text-slate-300"
-            value={historyDays}
-            onChange={event => {
-              const value = event.target.value
-              onHistoryDaysChange(value === 'all' ? 'all' : Number(value) as InjectionHistoryDays)
-            }}
-          >
-            {[7, 14, 30, 60, 90].map(days => (
-              <option key={days} value={days}>{t('injection_history_days', { days, defaultValue: `${days} Tage` })}</option>
-            ))}
-            <option value="all">{t('injection_history_all', { defaultValue: 'Alle' })}</option>
-          </select>
-        </label>
-      </div>
+      )}
 
       <div className={embedded ? 'space-y-3' : 'max-h-[48vh] space-y-3 overflow-y-auto pr-1'}>
         {groups.length === 0 && (
@@ -139,5 +126,36 @@ export function InjectionHistorySheet({
         ))}
       </div>
     </section>
+  )
+}
+
+export function HistoryDaysSelect({
+  historyDays,
+  onHistoryDaysChange,
+  className = '',
+}: {
+  historyDays: InjectionHistoryDays
+  onHistoryDaysChange: (days: InjectionHistoryDays) => void
+  className?: string
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <label className={className}>
+      <span className="sr-only">{t('injection_history_period', { defaultValue: 'Historienzeitraum' })}</span>
+      <select
+        className="h-10 rounded-xl border border-white/10 bg-black/20 px-2.5 text-xs font-bold text-slate-300 outline-none"
+        value={historyDays}
+        onChange={event => {
+          const value = event.target.value
+          onHistoryDaysChange(value === 'all' ? 'all' : Number(value) as InjectionHistoryDays)
+        }}
+      >
+        {[7, 14, 30, 60, 90].map(days => (
+          <option key={days} value={days}>{t('injection_history_days', { days, defaultValue: String(days) + ' Tage' })}</option>
+        ))}
+        <option value="all">{t('injection_history_all', { defaultValue: 'Alle' })}</option>
+      </select>
+    </label>
   )
 }
