@@ -119,7 +119,7 @@ export function InjectionTrackerHero({
 
   return (
     <section
-      aria-label={String(t('injection_pro_title', { defaultValue: 'Injektionstracker Pro' }))}
+      aria-label={String(t('injection_pro_title', { defaultValue: '3D-Injektionstracker Pro' }))}
       className="relative overflow-hidden rounded-[24px] border border-cyan-300/20 p-4 shadow-[0_18px_54px_rgba(0,0,0,0.32)]"
       style={{ background: 'linear-gradient(145deg, rgba(5,18,30,0.98), rgba(7,14,25,0.97) 48%, rgba(6,27,26,0.96))' }}
     >
@@ -133,8 +133,8 @@ export function InjectionTrackerHero({
           <div className="mb-1 flex items-center gap-2 text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-cyan-300">
             <Rotate3D size={13} aria-hidden="true" /> {t('injection_hero_kicker', { defaultValue: 'Pro Feature' })}
           </div>
-          <h2 className="text-xl font-black text-white">{t('injection_pro_title', { defaultValue: 'Injektionstracker Pro' })}</h2>
-          <p className="mt-1 text-sm font-semibold text-cyan-100/80">{t('injection_pro_subtitle', { defaultValue: 'Präzises 3D-Injektionstracking' })}</p>
+          <h2 className="text-xl font-black text-white">{t('injection_pro_title', { defaultValue: '3D-Injektionstracker Pro' })}</h2>
+          <p className="mt-1 text-sm font-semibold text-cyan-100/80">{t('injection_pro_subtitle', { defaultValue: 'Tracke präzise deine Injektionen auf einem 3D-Torso' })}</p>
         </div>
       </div>
 
