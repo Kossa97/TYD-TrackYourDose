@@ -69,7 +69,7 @@ export function InjectionHistorySheet({
         </label>
       </div>
 
-      <div className="max-h-[48vh] space-y-3 overflow-y-auto pr-1">
+      <div className={embedded ? 'space-y-3' : 'max-h-[48vh] space-y-3 overflow-y-auto pr-1'}>
         {groups.length === 0 && (
           <p className="py-5 text-center text-sm text-slate-500">{t('injection_history_empty', { defaultValue: 'Keine Injektionen in diesem Zeitraum.' })}</p>
         )}

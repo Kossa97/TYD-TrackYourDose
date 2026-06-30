@@ -32,4 +32,10 @@ describe('InjektionsTracker fullscreen map layout', () => {
     expect(source).toContain('max-h-[48dvh]')
     expect(source).toContain('InjectionHistorySheet')
   })
+
+  it('uses one scroll container for the embedded history sheet', () => {
+    const source = readFileSync(new URL('../components/injection3d/InjectionHistorySheet.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain("embedded ? 'space-y-3' : 'max-h-[48vh] space-y-3 overflow-y-auto pr-1'")
+  })
 })
