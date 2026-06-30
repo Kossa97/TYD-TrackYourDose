@@ -55,4 +55,13 @@ describe('InjektionsTracker fullscreen map layout', () => {
     expect(source).toContain('formatInjectionPinAge(activeLog.logged_at)')
     expect(source).toContain('injection-active-pin-chip')
   })
+
+  it('hides floating tracker actions while confirming a new injection position', () => {
+    const source = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('const showPositionActions = draftPin && !showLogSheet')
+    expect(source).toContain('{showPositionActions && (')
+    expect(source).toContain('{!showPositionActions && (')
+    expect(source).toContain('setTrackerSheetOpen(false)')
+  })
 })

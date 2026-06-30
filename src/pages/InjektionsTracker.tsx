@@ -183,6 +183,7 @@ export function InjektionsTracker() {
   }
 
   const activeLog = activeLogId ? logs.find(log => log.id === activeLogId) ?? null : null
+  const showPositionActions = draftPin && !showLogSheet
   const warning = draftPin ? proximityWarning(draftPin, logs, new Date()) : NO_WARNING
 
   const saveDraftPin = async (input: InjectionSaveInput) => {
@@ -285,7 +286,7 @@ export function InjektionsTracker() {
             visibleLogIds={visibleLogIds}
             focusRequest={focusRequest}
             activeLogId={activeLogId}
-            onDraftPinChange={(pin) => { setDraftPin(pin); setShowLogSheet(false) }}
+            onDraftPinChange={(pin) => { setDraftPin(pin); setShowLogSheet(false); setTrackerSheetOpen(false) }}
             onLogFocus={focusLog}
           />
 
@@ -309,7 +310,7 @@ export function InjektionsTracker() {
             </div>
           )}
 
-          {draftPin && !showLogSheet && (
+          {showPositionActions && (
             <div
               className="absolute bottom-3 left-3 right-3 z-20 rounded-2xl border p-3"
               style={{
@@ -327,16 +328,18 @@ export function InjektionsTracker() {
         </div>
 
         {/* Tracker tabs */}
-        <InjectionTrackerTabs
-          logs={loading ? [] : logs}
-          openIntakes={loading ? [] : openIntakes}
-          historyDays={historyDays}
-          visibleLogIds={visibleLogIds}
-          onHistoryDaysChange={setHistoryDays}
-          onToggleLog={toggleLogVisibility}
-          onFocusLog={focusLog}
-          onSheetOpenChange={setTrackerSheetOpen}
-        />
+        {!showPositionActions && (
+          <InjectionTrackerTabs
+            logs={loading ? [] : logs}
+            openIntakes={loading ? [] : openIntakes}
+            historyDays={historyDays}
+            visibleLogIds={visibleLogIds}
+            onHistoryDaysChange={setHistoryDays}
+            onToggleLog={toggleLogVisibility}
+            onFocusLog={focusLog}
+            onSheetOpenChange={setTrackerSheetOpen}
+          />
+        )}
       </section>
 
       {showLogSheet && draftPin && (
