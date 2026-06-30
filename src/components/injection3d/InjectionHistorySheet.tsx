@@ -121,7 +121,7 @@ export function InjectionHistorySheet({
                         <p className="mt-1 text-[0.68rem] text-slate-500">{metadata}</p>
                         {confirmationOpen && (
                           <p className="mt-2 inline-flex items-center gap-1 rounded-lg border border-amber-400/25 bg-amber-400/10 px-2 py-1 text-[0.68rem] font-bold text-amber-300">
-                            <AlertCircle size={12} aria-hidden="true" /> {t('injection_confirmation_open', { defaultValue: 'Einnahmebestaetigung offen' })}
+                            <AlertCircle size={12} aria-hidden="true" /> {t('injection_confirmation_open', { defaultValue: 'Einnahmebestätigung offen' })}
                           </p>
                         )}
                       </div>

@@ -321,7 +321,7 @@ export function InjektionsTracker() {
             >
               <div className="flex gap-3">
                 <button type="button" className="btn-secondary min-h-11 flex-1" onClick={() => setDraftPin(null)}>{t('injection_position_cancel', { defaultValue: 'Abbrechen' })}</button>
-                <button type="button" className="btn-primary min-h-11 flex-1" onClick={() => setShowLogSheet(true)}>{t('injection_position_accept', { defaultValue: 'Position uebernehmen' })}</button>
+                <button type="button" className="btn-primary min-h-11 flex-1" onClick={() => setShowLogSheet(true)}>{t('injection_position_accept', { defaultValue: 'Position übernehmen' })}</button>
               </div>
             </div>
           )}
@@ -381,7 +381,7 @@ function PageHeader({ onBack, overlay = false }: { onBack: () => void; overlay?:
     }}>
       <button
         onClick={onBack}
-        aria-label={String(t('back', { defaultValue: 'Zurueck' }))}
+        aria-label={String(t('back', { defaultValue: 'Zurück' }))}
         style={{
           width: 44, height: 44, borderRadius: 14, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',

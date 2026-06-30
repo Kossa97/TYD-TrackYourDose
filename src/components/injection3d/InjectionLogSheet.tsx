@@ -65,9 +65,9 @@ export function InjectionLogSheet({
   const [saving, setSaving] = useState(false)
 
   const overdueLabel = (days: number): string => {
-    if (days <= 0) return String(t('injection_due_today', { defaultValue: 'heute faellig' }))
-    if (days === 1) return String(t('injection_due_yesterday', { defaultValue: 'gestern faellig' }))
-    return String(t('injection_due_days_ago', { days, defaultValue: `vor ${days} Tagen faellig` }))
+    if (days <= 0) return String(t('injection_due_today', { defaultValue: 'heute fällig' }))
+    if (days === 1) return String(t('injection_due_yesterday', { defaultValue: 'gestern fällig' }))
+    return String(t('injection_due_days_ago', { days, defaultValue: `vor ${days} Tagen fällig` }))
   }
 
   const cycleOptions = useMemo(() => Array.from(
@@ -117,8 +117,8 @@ export function InjectionLogSheet({
 
   const saveActionLabel = mode === 'intake' && selectedIntake
     ? selectedIntake.status === 'confirmed'
-      ? t('injection_add_site_action', { defaultValue: 'Injektionsstelle hinzufuegen' })
-      : t('injection_save_and_confirm', { defaultValue: 'Speichern & bestaetigen' })
+      ? t('injection_add_site_action', { defaultValue: 'Injektionsstelle hinzufügen' })
+      : t('injection_save_and_confirm', { defaultValue: 'Speichern & bestätigen' })
     : t('injection_save', { defaultValue: 'Speichern' })
 
   return (
@@ -160,7 +160,7 @@ export function InjectionLogSheet({
           <div className="mb-4 flex gap-2 rounded-2xl border border-amber-400/25 bg-amber-400/10 p-3 text-sm text-amber-200">
             <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
             <p>{warning.level === 'strong'
-              ? t('injection_warning_strong', { defaultValue: 'Sehr nahe an einer kuerzlichen Injektion.' })
+              ? t('injection_warning_strong', { defaultValue: 'Sehr nahe an einer kürzlichen Injektion.' })
               : t('injection_warning_caution', { defaultValue: 'Nahe an einer Injektion der letzten 7 Tage.' })}</p>
           </div>
         )}
@@ -187,7 +187,7 @@ export function InjectionLogSheet({
                     {([
                       ['all', t('injection_status_all', { defaultValue: 'Alle' })],
                       ['open', t('injection_status_open', { defaultValue: 'Offen' })],
-                      ['confirmed', t('injection_status_confirmed', { defaultValue: 'Bestaetigt' })],
+                      ['confirmed', t('injection_status_confirmed', { defaultValue: 'Bestätigt' })],
                     ] as const).map(([value, label]) => (
                       <button
                         key={value}
@@ -204,7 +204,7 @@ export function InjectionLogSheet({
                   </div>
                 </div>
                 <label>
-                  <span className="label">{t('injection_history_back', { defaultValue: 'Rueckwirkend' })}</span>
+                  <span className="label">{t('injection_history_back', { defaultValue: 'Rückwirkend' })}</span>
                   <select className="input" value={historyDays} onChange={event => {
                     const value = event.target.value
                     setHistoryDays(value === 'all' ? 'all' : Number(value) as IntakeHistoryDays)
@@ -223,7 +223,7 @@ export function InjectionLogSheet({
                     setSelectedKey('')
                   }}>
                     <option value="newest">{t('injection_sort_newest', { defaultValue: 'Neueste zuerst' })}</option>
-                    <option value="oldest">{t('injection_sort_oldest', { defaultValue: 'Aelteste zuerst' })}</option>
+                    <option value="oldest">{t('injection_sort_oldest', { defaultValue: 'Älteste zuerst' })}</option>
                   </select>
                 </label>
               </div>
@@ -235,7 +235,7 @@ export function InjectionLogSheet({
               </p>
             ) : filteredIntakes.length === 0 ? (
               <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-slate-400">
-                {t('injection_no_filtered_intakes', { defaultValue: 'Keine Einnahmen fuer diese Filter.' })}
+                {t('injection_no_filtered_intakes', { defaultValue: 'Keine Einnahmen für diese Filter.' })}
               </p>
             ) : (
               <div className="max-h-[34vh] space-y-2 overflow-y-auto pr-1">
@@ -256,7 +256,7 @@ export function InjectionLogSheet({
                         <p className="text-xs text-slate-400">
                           <span className={intake.status === 'confirmed' ? 'text-emerald-300' : 'text-amber-300'}>
                             {intake.status === 'confirmed'
-                              ? t('injection_already_confirmed', { defaultValue: 'Bereits bestaetigt' })
+                              ? t('injection_already_confirmed', { defaultValue: 'Bereits bestätigt' })
                               : t('injection_status_open', { defaultValue: 'Offen' })}
                           </span>
                           {' - '}{format(parseISO(intake.scheduledAt), 'dd.MM. HH:mm')}
@@ -308,7 +308,7 @@ export function InjectionLogSheet({
             </select>
           </label>
           <div className="block">
-            <span className="label">{t('injection_time_label', { defaultValue: 'Zeitpunkt (rueckwirkend moeglich)' })}</span>
+            <span className="label">{t('injection_time_label', { defaultValue: 'Zeitpunkt (rückwirkend möglich)' })}</span>
             {mode === 'intake' && selectedIntake ? (
               <div className="grid grid-cols-2 gap-3">
                 <label>

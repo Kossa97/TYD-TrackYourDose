@@ -247,7 +247,7 @@ function injectionSiteLabel(row: { body_side?: string | null; body_region?: stri
     abdomen: 'Bauch',
     thigh: 'Oberschenkel',
     deltoid: 'Schulter',
-    glute: 'Gesaess',
+    glute: 'Gesäß',
     chest: 'Brust',
     upper_arm: 'Oberarm',
     forearm: 'Unterarm',

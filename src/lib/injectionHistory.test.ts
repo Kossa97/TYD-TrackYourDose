@@ -46,7 +46,16 @@ describe('filterInjectionHistory', () => {
 
 describe('formatInjectionSite', () => {
   it('describes a precise right upper outer abdominal site in German', () => {
-    expect(formatInjectionSite(log())).toBe('Bauch rechts Â· oben auÃŸen Â· Vorderseite')
+    expect(formatInjectionSite(log())).toBe('Bauch rechts · oben außen · Vorderseite')
+  })
+
+  it('uses German umlauts for rear and glute labels', () => {
+    expect(formatInjectionSite(log({
+      body_region: 'glute',
+      body_side: 'center',
+      position: { x: 0.12, y: -0.2, z: -0.2 },
+      normal: { x: 0, y: 0, z: -0.95 },
+    }))).toBe('Gesäß mittig · oben innen · Rückseite')
   })
 
   it('does not invent a position for legacy entries', () => {
@@ -55,7 +64,7 @@ describe('formatInjectionSite', () => {
       body_region: 'outside_typical',
       body_side: 'center',
       position: { x: 0, y: 0, z: 0 },
-    }))).toBe('Alter Eintrag Â· keine genaue Position')
+    }))).toBe('Alter Eintrag · keine genaue Position')
   })
 })
 

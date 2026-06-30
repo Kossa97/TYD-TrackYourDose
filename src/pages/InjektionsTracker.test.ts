@@ -64,4 +64,26 @@ describe('InjektionsTracker fullscreen map layout', () => {
     expect(source).toContain('{!showPositionActions && (')
     expect(source).toContain('setTrackerSheetOpen(false)')
   })
+
+  it('uses German umlauts in injection tracker copy', () => {
+    const de = readFileSync(new URL('../i18n/locales/de.json', import.meta.url), 'utf8')
+    const hero = readFileSync(new URL('../components/injection3d/InjectionTrackerHero.tsx', import.meta.url), 'utf8')
+    const tabs = readFileSync(new URL('../components/injection3d/InjectionTrackerTabs.tsx', import.meta.url), 'utf8')
+    const tracker = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
+    const intro = readFileSync(new URL('../components/injection3d/InjectionIntroSheet.tsx', import.meta.url), 'utf8')
+    const logSheet = readFileSync(new URL('../components/injection3d/InjectionLogSheet.tsx', import.meta.url), 'utf8')
+
+    const deJson = JSON.parse(de) as Record<string, string>
+    const deValues = Object.entries(deJson)
+      .filter(([key]) => key.startsWith('injection_') || key.startsWith('inj_'))
+      .map(([, value]) => String(value))
+      .join('\n')
+    const combined = [deValues, hero, tabs, tracker, intro, logSheet].join('\n')
+    expect(combined).toContain('Pr\u00e4zises 3D-Injektionstracking')
+    expect(combined).toContain('3D Tracker \u00f6ffnen')
+    expect(combined).toContain('ausw\u00e4hlen')
+    expect(combined).toContain('Position \u00fcbernehmen')
+    expect(combined).not.toMatch(/Praezises|oeffnen|auswaehlen|uebernehmen|bestaetigt|faellig|Schliessen|schliessen|Zurueck|Rueckwirkend|Aelteste|hinzufuegen|spaeter|gedrueckt|kuerzlichen|fuer|moeglich/)
+    expect(combined).not.toMatch(/[\uFFFD\u00c3\u00c2]/)
+  })
 })

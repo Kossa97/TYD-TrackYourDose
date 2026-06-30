@@ -142,7 +142,7 @@ export function InjectionTrackerHero({
             <Rotate3D size={13} aria-hidden="true" /> {t('injection_hero_kicker', { defaultValue: 'Pro Feature' })}
           </div>
           <h2 className="text-xl font-black text-white">{t('injection_pro_title', { defaultValue: 'Injektionstracker Pro' })}</h2>
-          <p className="mt-1 text-sm font-semibold text-cyan-100/80">{t('injection_pro_subtitle', { defaultValue: 'Praezises 3D-Injektionstracking' })}</p>
+          <p className="mt-1 text-sm font-semibold text-cyan-100/80">{t('injection_pro_subtitle', { defaultValue: 'Präzises 3D-Injektionstracking' })}</p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-300">
             <span className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
               <MapPin size={12} className="shrink-0" aria-hidden="true" /> <span className="truncate">{lastLabel}</span>
@@ -158,10 +158,10 @@ export function InjectionTrackerHero({
         <button
           type="button"
           onClick={onOpen}
-          aria-label={String(t('injection_hero_open', { defaultValue: '3D Tracker oeffnen' }))}
+          aria-label={String(t('injection_hero_open', { defaultValue: '3D Tracker öffnen' }))}
           className="btn-primary flex min-h-11 items-center justify-center gap-2"
         >
-          {t('injection_hero_open', { defaultValue: '3D Tracker oeffnen' })} <ArrowUpRight size={14} aria-hidden="true" />
+          {t('injection_hero_open', { defaultValue: '3D Tracker öffnen' })} <ArrowUpRight size={14} aria-hidden="true" />
         </button>
         {hasDueInjectable && (
           <button

@@ -76,7 +76,7 @@ export function InjectionTrackerTabs({
           <div className="mb-3 flex items-center gap-3">
             <button
               type="button"
-              aria-label={String(t('close', { defaultValue: 'Schliessen' }))}
+              aria-label={String(t('close', { defaultValue: 'Schließen' }))}
               onClick={() => setActiveSheet(null)}
               className="grid min-h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-300 transition-colors hover:text-white"
             >
@@ -143,7 +143,7 @@ function OpenIntakesTab({ openIntakes }: { openIntakes: OpenInjectionIntake[] })
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
         <CheckCircle2 size={22} className="mx-auto mb-2 text-emerald-300" aria-hidden="true" />
         <p className="text-sm font-black text-white">{t('injection_open_empty_title', { defaultValue: 'Keine offenen Stellen' })}</p>
-        <p className="mt-1 text-xs leading-5 text-slate-400">{t('injection_open_empty_body', { defaultValue: 'Alle passenden Einnahmen haben bereits eine Injektionsstelle oder es ist nichts faellig.' })}</p>
+        <p className="mt-1 text-xs leading-5 text-slate-400">{t('injection_open_empty_body', { defaultValue: 'Alle passenden Einnahmen haben bereits eine Injektionsstelle oder es ist nichts fällig.' })}</p>
       </div>
     )
   }
@@ -151,7 +151,7 @@ function OpenIntakesTab({ openIntakes }: { openIntakes: OpenInjectionIntake[] })
   return (
     <div className="space-y-3">
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-xs leading-5 text-slate-400">
-        {t('injection_open_hint', { defaultValue: 'Markiere zuerst eine Stelle auf der 3D-Karte. Im Speichern-Sheet kannst du dann eine dieser Einnahmen auswaehlen.' })}
+        {t('injection_open_hint', { defaultValue: 'Markiere zuerst eine Stelle auf der 3D-Karte. Im Speichern-Sheet kannst du dann eine dieser Einnahmen auswählen.' })}
       </div>
       <div className="space-y-2">
         {sortedIntakes.map(intake => {
@@ -166,7 +166,7 @@ function OpenIntakesTab({ openIntakes }: { openIntakes: OpenInjectionIntake[] })
 function OpenIntakeRow({ intake }: { intake: OpenInjectionIntake }) {
   const { t } = useTranslation()
   const statusLabel = intake.status === 'confirmed'
-    ? t('injection_already_confirmed', { defaultValue: 'Bereits bestaetigt' })
+    ? t('injection_already_confirmed', { defaultValue: 'Bereits bestätigt' })
     : t('injection_status_open', { defaultValue: 'Offen' })
   const statusClass = intake.status === 'confirmed' ? 'text-emerald-300' : 'text-amber-300'
 

@@ -25,7 +25,7 @@ export function InjectionIntroSheet({
           </div>
           <button
             type="button"
-            aria-label={String(t('injection_close_hint', { defaultValue: 'Hinweis schliessen' }))}
+            aria-label={String(t('injection_close_hint', { defaultValue: 'Hinweis schließen' }))}
             onClick={onClose}
             className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 text-slate-400"
           >
@@ -33,7 +33,7 @@ export function InjectionIntroSheet({
           </button>
         </div>
         <p className="mb-5 text-sm leading-relaxed text-slate-400">
-          {t('injection_intro_body', { defaultValue: 'Halte eine Stelle auf dem 3D-Torso gedrueckt, um einen Pin zu setzen. Danach kannst du die Position feinjustieren.' })}
+          {t('injection_intro_body', { defaultValue: 'Halte eine Stelle auf dem 3D-Torso gedrückt, um einen Pin zu setzen. Danach kannst du die Position feinjustieren.' })}
         </p>
         <div className="flex gap-3">
           <button type="button" className="btn-secondary min-h-11 flex-1" onClick={onDontShowAgain}>
