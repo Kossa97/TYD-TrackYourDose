@@ -244,33 +244,25 @@ export function InjektionsTracker() {
   }
 
   return (
-    <div
-      className="min-h-dvh overflow-hidden px-3 pb-2"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        paddingTop: 'calc(0.75rem + env(safe-area-inset-top))',
-        paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))',
-      }}
-    >
+    <div className="min-h-dvh overflow-hidden">
       {/* 3D Injektionskarte */}
       <section
         ref={mapSectionRef}
         style={{
           ...panelStyle,
           padding: 0,
-          height: 'calc(100dvh - 1.25rem - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
-          minHeight: 640,
-          borderRadius: 24,
-          display: 'flex',
-          flexDirection: 'column',
+          height: '100dvh',
+          minHeight: '100dvh',
+          border: 'none',
+          borderRadius: 0,
+          boxShadow: 'none',
         }}
       >
-        <div style={{ position: 'relative', flex: '1 1 auto', minHeight: 380 }}>
+        <div style={{ position: 'relative', height: '100dvh', minHeight: '100dvh' }}>
           <PageHeader onBack={() => navigate(-1)} overlay />
           <InjectionMapCanvas
-            height="100%"
-            minHeight={380}
+            height="100dvh"
+            minHeight="100dvh"
             draftPin={draftPin}
             logs={logs}
             visibleLogIds={visibleLogIds}
@@ -338,7 +330,7 @@ function PageHeader({ onBack, overlay = false }: { onBack: () => void; overlay?:
       gap: 12,
       ...(overlay ? {
         position: 'absolute',
-        top: 14,
+        top: 'calc(14px + env(safe-area-inset-top))',
         left: 14,
         right: 14,
         zIndex: 25,

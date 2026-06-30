@@ -2,14 +2,23 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 describe('InjektionsTracker fullscreen map layout', () => {
-  it('keeps a stable 3D map area above the integrated tracker tabs', () => {
-    const pageSource = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
-    const tabsSource = readFileSync(new URL('../components/injection3d/InjectionTrackerTabs.tsx', import.meta.url), 'utf8')
+  it('lets the tracker window fill the app viewport without outer margins', () => {
+    const source = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
 
-    expect(pageSource).toContain("height: 'calc(100dvh - 1.25rem - env(safe-area-inset-top) - env(safe-area-inset-bottom))'")
-    expect(pageSource).toContain("minHeight: 380")
-    expect(pageSource).toContain('minHeight={380}')
-    expect(tabsSource).toContain('max-h-[34dvh]')
-    expect(tabsSource).toContain('max-h-[16dvh]')
+    expect(source).toContain('className="min-h-dvh overflow-hidden"')
+    expect(source).toContain("height: '100dvh'")
+    expect(source).toContain('borderRadius: 0')
+    expect(source).toContain('height="100dvh"')
+    expect(source).toContain('minHeight="100dvh"')
+  })
+
+  it('keeps the open/history tabs in a collapsible bottom sheet overlay', () => {
+    const source = readFileSync(new URL('../components/injection3d/InjectionTrackerTabs.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('absolute bottom-0 left-0 right-0')
+    expect(source).toContain('aria-expanded={expanded}')
+    expect(source).toContain("expanded ? 'max-h-[46dvh]' : 'max-h-[18dvh]'")
+    expect(source).toContain('onClick={() => setExpanded')
+    expect(source).toContain("expanded ? 'max-h-[30dvh]' : 'max-h-[0px]'")
   })
 })

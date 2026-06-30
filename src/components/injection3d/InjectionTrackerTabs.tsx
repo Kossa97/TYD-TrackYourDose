@@ -27,6 +27,7 @@ export function InjectionTrackerTabs({
 }) {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<InjectionTrackerTab>('open')
+  const [expanded, setExpanded] = useState(false)
 
   const tabLabels: Record<InjectionTrackerTab, string> = {
     open: String(t('injection_tab_open', { defaultValue: 'Offen' })),
@@ -34,8 +35,24 @@ export function InjectionTrackerTabs({
   }
 
   return (
-    <section className="flex max-h-[34dvh] shrink-0 flex-col overflow-hidden border-t border-white/10 p-3" style={{ background: 'linear-gradient(180deg, rgba(7, 11, 24, 0.96), var(--surface))' }}>
-      <div className="mx-auto mb-3 h-1 w-14 rounded-full bg-white/20" aria-hidden="true" />
+    <section
+      className={'absolute bottom-0 left-0 right-0 z-30 flex flex-col overflow-hidden border-t border-white/10 px-3 pt-2 transition-[max-height] duration-200 ease-out ' + (expanded ? 'max-h-[46dvh]' : 'max-h-[18dvh]')}
+      style={{
+        background: 'linear-gradient(180deg, rgba(7, 11, 24, 0.88), var(--surface))',
+        paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))',
+        backdropFilter: 'blur(18px)',
+        WebkitBackdropFilter: 'blur(18px)',
+      }}
+    >
+      <button
+        type="button"
+        aria-label={String(t('injection_sheet_toggle', { defaultValue: 'Liste ein- oder ausklappen' }))}
+        aria-expanded={expanded}
+        onClick={() => setExpanded(value => !value)}
+        className="mx-auto mb-3 flex min-h-8 w-20 cursor-pointer items-center justify-center rounded-full text-slate-400 transition-colors hover:text-slate-200"
+      >
+        <span className="h-1 w-14 rounded-full bg-white/25" aria-hidden="true" />
+      </button>
       <div role="tablist" aria-label={String(t('injection_tabs_label', { defaultValue: 'Injektionstracker Bereiche' }))} className="mb-3 grid grid-cols-2 gap-1 rounded-2xl border border-white/10 p-1" style={{ background: 'var(--surface-input)' }}>
         {INJECTION_TRACKER_TABS.map(tab => {
           const selected = activeTab === tab
@@ -46,7 +63,7 @@ export function InjectionTrackerTabs({
               type="button"
               role="tab"
               aria-selected={selected}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => { setActiveTab(tab); setExpanded(true) }}
               className={'flex min-h-11 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-black transition-colors ' + (selected ? 'bg-sky-400/15 text-sky-300 shadow-[0_0_18px_rgba(56,189,248,0.14)]' : 'text-slate-400 hover:text-slate-200')}
             >
               <Icon size={16} aria-hidden="true" />
@@ -56,18 +73,20 @@ export function InjectionTrackerTabs({
         })}
       </div>
 
-      {activeTab === 'open' && <OpenIntakesTab openIntakes={openIntakes} />}
-      {activeTab === 'history' && (
-        <InjectionHistorySheet
-          embedded
-          logs={logs}
-          historyDays={historyDays}
-          visibleLogIds={visibleLogIds}
-          onHistoryDaysChange={onHistoryDaysChange}
-          onToggleLog={onToggleLog}
-          onFocusLog={onFocusLog}
-        />
-      )}
+      <div className={(expanded ? 'max-h-[30dvh]' : 'max-h-[0px]') + ' overflow-hidden transition-[max-height,opacity] duration-200 ease-out ' + (expanded ? 'opacity-100' : 'opacity-0')}>
+        {activeTab === 'open' && <OpenIntakesTab openIntakes={openIntakes} />}
+        {activeTab === 'history' && (
+          <InjectionHistorySheet
+            embedded
+            logs={logs}
+            historyDays={historyDays}
+            visibleLogIds={visibleLogIds}
+            onHistoryDaysChange={onHistoryDaysChange}
+            onToggleLog={onToggleLog}
+            onFocusLog={onFocusLog}
+          />
+        )}
+      </div>
     </section>
   )
 }
@@ -93,7 +112,7 @@ function OpenIntakesTab({ openIntakes }: { openIntakes: OpenInjectionIntake[] })
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-xs leading-5 text-slate-400">
         {t('injection_open_hint', { defaultValue: 'Markiere zuerst eine Stelle auf der 3D-Karte. Im Speichern-Sheet kannst du dann eine dieser Einnahmen auswaehlen.' })}
       </div>
-      <div className="max-h-[16dvh] space-y-2 overflow-y-auto pr-1">
+      <div className="max-h-[22dvh] space-y-2 overflow-y-auto pr-1">
         {sortedIntakes.map(intake => {
           const key = intake.doseLogId ?? String(intake.cycleId) + '|' + intake.scheduledAt
           return <OpenIntakeRow key={key} intake={intake} />
