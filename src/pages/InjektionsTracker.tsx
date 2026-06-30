@@ -5,7 +5,7 @@ import { ArrowLeft, AlertTriangle, Copy, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import { InjectionMapCanvas } from '../components/injection3d/InjectionMapCanvas'
+import { InjectionMapCanvas, type InjectionFocusRequest } from '../components/injection3d/InjectionMapCanvas'
 import { InjectionIntroSheet, INJECTION_INTRO_VERSION } from '../components/injection3d/InjectionIntroSheet'
 import { InjectionLogSheet, type InjectionSaveInput } from '../components/injection3d/InjectionLogSheet'
 import { InjectionTrackerTabs } from '../components/injection3d/InjectionTrackerTabs'
@@ -118,7 +118,8 @@ export function InjektionsTracker() {
   const [draftPin, setDraftPin] = useState<InjectionPinDraft | null>(null)
   const [showLogSheet, setShowLogSheet] = useState(false)
   const [historyDays, setHistoryDays] = useState<InjectionHistoryDays>(7)
-  const [focusRequest, setFocusRequest] = useState<{ log: InjectionLog3D; requestId: number } | null>(null)
+  const [trackerSheetOpen, setTrackerSheetOpen] = useState(false)
+  const [focusRequest, setFocusRequest] = useState<InjectionFocusRequest | null>(null)
   const [visibleLogIds, setVisibleLogIds] = useState<Set<string>>(() => new Set())
   const [showIntro, setShowIntro] = useState(
     () => Number(localStorage.getItem(INTRO_STORAGE_KEY) ?? 0) < INJECTION_INTRO_VERSION,
@@ -151,9 +152,15 @@ export function InjektionsTracker() {
     setShowIntro(false)
   }
 
+  useEffect(() => {
+    setFocusRequest(previous => previous
+      ? { ...previous, requestId: previous.requestId + 1, sheetOpen: trackerSheetOpen }
+      : previous)
+  }, [trackerSheetOpen])
+
   const focusLog = (log: InjectionLog3D) => {
     setVisibleLogIds(prev => new Set(prev).add(log.id))
-    setFocusRequest(previous => ({ log, requestId: (previous?.requestId ?? 0) + 1 }))
+    setFocusRequest(previous => ({ log, requestId: (previous?.requestId ?? 0) + 1, sheetOpen: trackerSheetOpen }))
     requestAnimationFrame(() => mapSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
   }
 
@@ -297,6 +304,7 @@ export function InjektionsTracker() {
           onHistoryDaysChange={setHistoryDays}
           onToggleLog={toggleLogVisibility}
           onFocusLog={focusLog}
+          onSheetOpenChange={setTrackerSheetOpen}
         />
       </section>
 

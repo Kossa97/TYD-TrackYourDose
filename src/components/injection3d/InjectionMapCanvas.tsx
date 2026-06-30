@@ -22,6 +22,7 @@ const FIT_Y_OFFSET = 0.12
 // Camera framing so the body fills the (portrait) canvas. Lower distance = fuller.
 const CAMERA_DISTANCE = 3.25
 const CAMERA_FOV = 48
+const SHEET_AWARE_FOCUS_Y_OFFSET = -0.22
 
 type LightPosition = [number, number, number]
 
@@ -37,6 +38,7 @@ const INJECTION_MAP_LIGHTS = {
 export interface InjectionFocusRequest {
   log: InjectionLog3D
   requestId: number
+  sheetOpen?: boolean
 }
 
 type OrbitControlsApi = { target: THREE.Vector3; update: () => void }
@@ -111,6 +113,12 @@ function applyCameraFrame(
   }
 }
 
+function focusTargetForRequest(point: THREE.Vector3, sheetOpen = false) {
+  const target = point.clone()
+  if (sheetOpen) target.y += SHEET_AWARE_FOCUS_Y_OFFSET
+  return target
+}
+
 function CameraRig({ focusRequest }: { focusRequest: InjectionFocusRequest | null }) {
   const camera = useThree((s) => s.camera)
   const controls = useThree((s) => s.controls) as OrbitControlsApi | null
@@ -144,11 +152,13 @@ function CameraRig({ focusRequest }: { focusRequest: InjectionFocusRequest | nul
     if (normal.lengthSq() < 0.001) normal.set(0, 0, 1)
     normal.normalize()
 
+    const target = focusTargetForRequest(point, focusRequest.sheetOpen)
+
     animation.current = {
       fromPosition: camera.position.clone(),
-      toPosition: point.clone().addScaledVector(normal, 0.82),
+      toPosition: target.clone().addScaledVector(normal, 0.82),
       fromTarget: controls.target.clone(),
-      toTarget: point,
+      toTarget: target,
       progress: 0,
     }
   }, [camera, controls, focusRequest])

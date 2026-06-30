@@ -1,6 +1,6 @@
 import { format, parseISO } from 'date-fns'
 import { CalendarClock, CheckCircle2, ClipboardList, History, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type InjectionHistoryDays } from '../../lib/injectionHistory'
 import type { OpenInjectionIntake } from '../../lib/injectionPersistence'
@@ -16,6 +16,7 @@ export function InjectionTrackerTabs({
   onHistoryDaysChange,
   onToggleLog,
   onFocusLog,
+  onSheetOpenChange,
 }: {
   logs: InjectionLog3D[]
   openIntakes: OpenInjectionIntake[]
@@ -24,6 +25,7 @@ export function InjectionTrackerTabs({
   onHistoryDaysChange: (days: InjectionHistoryDays) => void
   onToggleLog: (id: string) => void
   onFocusLog: (log: InjectionLog3D) => void
+  onSheetOpenChange: (open: boolean) => void
 }) {
   const { t } = useTranslation()
   const [activeSheet, setActiveSheet] = useState<InjectionTrackerTab | null>(null)
@@ -35,6 +37,10 @@ export function InjectionTrackerTabs({
   const activeLabel = activeSheet ? labels[activeSheet] : ''
 
   const openSheet = (sheet: InjectionTrackerTab) => setActiveSheet(sheet)
+
+  useEffect(() => {
+    onSheetOpenChange(activeSheet !== null)
+  }, [activeSheet, onSheetOpenChange])
 
   return (
     <>

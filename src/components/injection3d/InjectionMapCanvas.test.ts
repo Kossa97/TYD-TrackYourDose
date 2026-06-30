@@ -16,4 +16,13 @@ describe('InjectionMapCanvas external assets', () => {
     expect(source).toContain('rearFill')
     expect(source).toContain('rim')
   })
+
+  it('offsets focused injections when a tracker sheet covers the lower map area', () => {
+    const source = readFileSync(new URL('./InjectionMapCanvas.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('sheetOpen?: boolean')
+    expect(source).toContain('SHEET_AWARE_FOCUS_Y_OFFSET')
+    expect(source).toContain('focusTargetForRequest')
+    expect(source).toContain('focusRequest.sheetOpen')
+  })
 })

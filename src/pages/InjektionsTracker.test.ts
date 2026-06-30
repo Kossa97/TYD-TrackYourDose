@@ -38,4 +38,12 @@ describe('InjektionsTracker fullscreen map layout', () => {
 
     expect(source).toContain("embedded ? 'space-y-3' : 'max-h-[48vh] space-y-3 overflow-y-auto pr-1'")
   })
+
+  it('passes tracker sheet state into focus requests for visible-area camera framing', () => {
+    const source = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('trackerSheetOpen')
+    expect(source).toContain('sheetOpen: trackerSheetOpen')
+    expect(source).toContain('onSheetOpenChange={setTrackerSheetOpen}')
+  })
 })
