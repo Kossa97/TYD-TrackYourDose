@@ -12,13 +12,24 @@ describe('InjektionsTracker fullscreen map layout', () => {
     expect(source).toContain('minHeight="100dvh"')
   })
 
-  it('keeps the open/history tabs in a collapsible bottom sheet overlay', () => {
+  it('uses two separate floating action buttons instead of a persistent bottom bar', () => {
     const source = readFileSync(new URL('../components/injection3d/InjectionTrackerTabs.tsx', import.meta.url), 'utf8')
 
-    expect(source).toContain('absolute bottom-0 left-0 right-0')
-    expect(source).toContain('aria-expanded={expanded}')
-    expect(source).toContain("expanded ? 'max-h-[46dvh]' : 'max-h-[18dvh]'")
-    expect(source).toContain('onClick={() => setExpanded')
-    expect(source).toContain("expanded ? 'max-h-[30dvh]' : 'max-h-[0px]'")
+    expect(source).toContain('injection-floating-actions')
+    expect(source).toContain('left-4')
+    expect(source).toContain('right-4')
+    expect(source).toContain("openSheet('open')")
+    expect(source).toContain("openSheet('history')")
+    expect(source).not.toContain('role="tablist"')
+    expect(source).not.toContain('aria-expanded={expanded}')
+  })
+
+  it('opens selected tracker content in a compact overlay sheet', () => {
+    const source = readFileSync(new URL('../components/injection3d/InjectionTrackerTabs.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('activeSheet')
+    expect(source).toContain('setActiveSheet(null)')
+    expect(source).toContain('max-h-[48dvh]')
+    expect(source).toContain('InjectionHistorySheet')
   })
 })

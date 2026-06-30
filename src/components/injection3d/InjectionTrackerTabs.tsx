@@ -1,10 +1,10 @@
 import { format, parseISO } from 'date-fns'
-import { CalendarClock, CheckCircle2, ClipboardList, History } from 'lucide-react'
+import { CalendarClock, CheckCircle2, ClipboardList, History, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type InjectionHistoryDays } from '../../lib/injectionHistory'
 import type { OpenInjectionIntake } from '../../lib/injectionPersistence'
-import { INJECTION_TRACKER_TABS, type InjectionTrackerTab } from '../../lib/injectionTrackerTabs'
+import type { InjectionTrackerTab } from '../../lib/injectionTrackerTabs'
 import type { InjectionLog3D } from '../../lib/injectionLogTypes'
 import { InjectionHistorySheet } from './InjectionHistorySheet'
 
@@ -26,68 +26,103 @@ export function InjectionTrackerTabs({
   onFocusLog: (log: InjectionLog3D) => void
 }) {
   const { t } = useTranslation()
-  const [activeTab, setActiveTab] = useState<InjectionTrackerTab>('open')
-  const [expanded, setExpanded] = useState(false)
+  const [activeSheet, setActiveSheet] = useState<InjectionTrackerTab | null>(null)
 
-  const tabLabels: Record<InjectionTrackerTab, string> = {
+  const labels: Record<InjectionTrackerTab, string> = {
     open: String(t('injection_tab_open', { defaultValue: 'Offen' })),
     history: String(t('injection_tab_history', { defaultValue: 'Historie' })),
   }
+  const activeLabel = activeSheet ? labels[activeSheet] : ''
+
+  const openSheet = (sheet: InjectionTrackerTab) => setActiveSheet(sheet)
 
   return (
-    <section
-      className={'absolute bottom-0 left-0 right-0 z-30 flex flex-col overflow-hidden border-t border-white/10 px-3 pt-2 transition-[max-height] duration-200 ease-out ' + (expanded ? 'max-h-[46dvh]' : 'max-h-[18dvh]')}
-      style={{
-        background: 'linear-gradient(180deg, rgba(7, 11, 24, 0.88), var(--surface))',
-        paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))',
-        backdropFilter: 'blur(18px)',
-        WebkitBackdropFilter: 'blur(18px)',
-      }}
-    >
-      <button
-        type="button"
-        aria-label={String(t('injection_sheet_toggle', { defaultValue: 'Liste ein- oder ausklappen' }))}
-        aria-expanded={expanded}
-        onClick={() => setExpanded(value => !value)}
-        className="mx-auto mb-3 flex min-h-8 w-20 cursor-pointer items-center justify-center rounded-full text-slate-400 transition-colors hover:text-slate-200"
+    <>
+      <div
+        className="injection-floating-actions pointer-events-none absolute bottom-4 left-4 right-4 z-30 flex items-center justify-between gap-3"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <span className="h-1 w-14 rounded-full bg-white/25" aria-hidden="true" />
-      </button>
-      <div role="tablist" aria-label={String(t('injection_tabs_label', { defaultValue: 'Injektionstracker Bereiche' }))} className="mb-3 grid grid-cols-2 gap-1 rounded-2xl border border-white/10 p-1" style={{ background: 'var(--surface-input)' }}>
-        {INJECTION_TRACKER_TABS.map(tab => {
-          const selected = activeTab === tab
-          const Icon = tab === 'open' ? ClipboardList : History
-          return (
-            <button
-              key={tab}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              onClick={() => { setActiveTab(tab); setExpanded(true) }}
-              className={'flex min-h-11 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-black transition-colors ' + (selected ? 'bg-sky-400/15 text-sky-300 shadow-[0_0_18px_rgba(56,189,248,0.14)]' : 'text-slate-400 hover:text-slate-200')}
-            >
-              <Icon size={16} aria-hidden="true" />
-              <span className="truncate">{tabLabels[tab]}</span>
-            </button>
-          )
-        })}
+        <FloatingActionButton
+          icon={<ClipboardList size={18} aria-hidden="true" />}
+          label={labels.open}
+          active={activeSheet === 'open'}
+          onClick={() => openSheet('open')}
+        />
+        <FloatingActionButton
+          icon={<History size={18} aria-hidden="true" />}
+          label={labels.history}
+          active={activeSheet === 'history'}
+          onClick={() => openSheet('history')}
+        />
       </div>
 
-      <div className={(expanded ? 'max-h-[30dvh]' : 'max-h-[0px]') + ' overflow-hidden transition-[max-height,opacity] duration-200 ease-out ' + (expanded ? 'opacity-100' : 'opacity-0')}>
-        {activeTab === 'open' && <OpenIntakesTab openIntakes={openIntakes} />}
-        {activeTab === 'history' && (
-          <InjectionHistorySheet
-            embedded
-            logs={logs}
-            historyDays={historyDays}
-            visibleLogIds={visibleLogIds}
-            onHistoryDaysChange={onHistoryDaysChange}
-            onToggleLog={onToggleLog}
-            onFocusLog={onFocusLog}
-          />
-        )}
-      </div>
-    </section>
+      {activeSheet && (
+        <section
+          className="absolute bottom-0 left-0 right-0 z-40 max-h-[48dvh] overflow-hidden border-t border-white/10 px-4 pt-3"
+          style={{
+            background: 'linear-gradient(180deg, rgba(7, 11, 24, 0.92), var(--surface))',
+            paddingBottom: 'calc(0.85rem + env(safe-area-inset-bottom))',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            boxShadow: '0 -18px 46px rgba(0,0,0,0.45)',
+          }}
+        >
+          <div className="mb-3 flex items-center gap-3">
+            <button
+              type="button"
+              aria-label={String(t('close', { defaultValue: 'Schliessen' }))}
+              onClick={() => setActiveSheet(null)}
+              className="grid min-h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-300 transition-colors hover:text-white"
+            >
+              <X size={17} aria-hidden="true" />
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="text-[0.66rem] font-black uppercase text-sky-300">3D Injektionskarte</p>
+              <h2 className="truncate text-lg font-black text-white">{activeLabel}</h2>
+            </div>
+          </div>
+
+          <div className="max-h-[34dvh] overflow-y-auto pr-1">
+            {activeSheet === 'open' && <OpenIntakesTab openIntakes={openIntakes} />}
+            {activeSheet === 'history' && (
+              <InjectionHistorySheet
+                embedded
+                logs={logs}
+                historyDays={historyDays}
+                visibleLogIds={visibleLogIds}
+                onHistoryDaysChange={onHistoryDaysChange}
+                onToggleLog={onToggleLog}
+                onFocusLog={onFocusLog}
+              />
+            )}
+          </div>
+        </section>
+      )}
+    </>
+  )
+}
+
+function FloatingActionButton({
+  icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: React.ReactNode
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={'pointer-events-auto flex min-h-12 min-w-[8.5rem] cursor-pointer items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-black shadow-[0_10px_26px_rgba(0,0,0,0.38)] backdrop-blur-xl transition-colors ' + (active ? 'border-sky-300/35 bg-sky-400/20 text-sky-200' : 'border-white/10 bg-black/50 text-slate-200 hover:text-white')}
+    >
+      {icon}
+      <span className="truncate">{label}</span>
+    </button>
   )
 }
 
@@ -112,7 +147,7 @@ function OpenIntakesTab({ openIntakes }: { openIntakes: OpenInjectionIntake[] })
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-xs leading-5 text-slate-400">
         {t('injection_open_hint', { defaultValue: 'Markiere zuerst eine Stelle auf der 3D-Karte. Im Speichern-Sheet kannst du dann eine dieser Einnahmen auswaehlen.' })}
       </div>
-      <div className="max-h-[22dvh] space-y-2 overflow-y-auto pr-1">
+      <div className="space-y-2">
         {sortedIntakes.map(intake => {
           const key = intake.doseLogId ?? String(intake.cycleId) + '|' + intake.scheduledAt
           return <OpenIntakeRow key={key} intake={intake} />
