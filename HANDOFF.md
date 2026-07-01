@@ -11,7 +11,16 @@
 
 **Peptipedia** (evidenzbasierte Peptid-Datenbank) + **Studies** (PubMed-Forschungsmodul) komplett umgesetzt und auf Home-Screen integriert.
 
-Neu in dieser Session (1. Juli 2026) — **Optimierungspaket 1**:
+Neu in dieser Session (1. Juli 2026) — **PK-Profile-Update (A+B+C)**:
+- **32 → 44 PK-Profile.** ⚠️ `supabase-pk-profiles-2026-update.sql` einmalig im Supabase SQL Editor ausführen (bypassed RLS; `npm run seed:pk` scheitert seit der RLS-Härtung am Anon-Key).
+- **3 Korrekturen** (Datenfehler laut reputabler Quellen): Melanotan II HWZ 24 h → ~1 h, Testosteron Enanthat 192 h → ~110 h, Tesamorelin 0,1 h → ~0,3 h.
+- **5 GLP-1/Metabolic** (Phase-2/3-PK): Retatrutide, Cagrilintide, Survodutide, Mazdutide, Orforglipron (oral, BV 35 %).
+- **7 Research-Peptide**: MOTS-c, AOD-9604, HGH-Fragment 176-191, Thymosin Alpha-1, Hexarelin, DSIP, Kisspeptin-10.
+- **Neu: `pk_profiles.notes`-Feld befüllt** mit Datenquelle + Belastbarkeit ("Schätzung" wenn aus Tier-/Einzelstudien extrapoliert). Wird in der manuellen Simulation (`BlutspiegelSimulation.tsx`, „Hinweis:"-Block) automatisch angezeigt.
+- SARMs (Gruppe D) bewusst ausgelassen — PK-Datenlage zu dünn; kann später mit Schätz-Flag ergänzt werden.
+- Kanonische Quellen aktualisiert: `scripts/seed-pk-profiles.ts` (Single Source of Truth, 44 Einträge) + `supabase-pk-profiles.sql` (Vollbestand mit `notes`/`bioavailability_sc` im Upsert).
+
+Neu in Session davor (1. Juli 2026) — **Optimierungspaket 1**:
 - **Push-Reminder repariert**: `api/send-reminders.js` prüft jetzt den echten Einnahme-Plan (Frequenz, Wochentage, Alle-X-Tage, start/end_date, schedule_history) statt nur die Uhrzeit — keine Pings mehr an Off-Tagen. Erinnerungs-Offsets (`on_time`, `2h`, `1day`) werden ausgewertet, Custom-Zeiten minutengenau im Cron-Fenster gematcht, Dosis im Text berücksichtigt Dosis-Anpassungen. Logik liegt testbar in `api/_lib/reminderSchedule.js` (28 Vitest-Tests). Cron in `vercel.json` von täglich 08:00 UTC auf **stündlich** gestellt — ⚠️ Vercel-Hobby-Plan erlaubt nur tägliche Crons; falls Deploy meckert: Schedule zurückstellen und `REMINDER_WINDOW_MIN` anpassen oder externen Cron-Dienst mit `CRON_SECRET` stündlich auf den Endpoint zeigen lassen.
 - **RLS-Härtung**: `supabase-rls-hardening.sql` — ⚠️ **einmalig im Supabase SQL Editor ausführen!** Vorher konnte JEDER (auch anonym) `pk_profiles` beschreiben und jeder eingeloggte User `peptide_library`. Jetzt schreiben nur Admins (`profiles.is_admin`, wie im Admin-Panel). Danach eigenen Account per UPDATE-Statement (unten im SQL-File) zum Admin machen.
 - **API-Key umbenannt**: `api/peptide-ai.js` liest jetzt `ANTHROPIC_API_KEY` (Fallback auf `VITE_ANTHROPIC_KEY`). ⚠️ In den Vercel Environment Variables umbenennen — `VITE_`-Variablen landen im Client-Bundle, sobald sie referenziert werden.
