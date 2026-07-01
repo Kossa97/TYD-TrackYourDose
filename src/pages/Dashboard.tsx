@@ -931,24 +931,26 @@ export function Dashboard() {
                               : t('dose_confirm_pending_badge', { defaultValue: 'Bestätigung offen' })}
                           </span>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={() => openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined)}
-                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
-                            <Check size={11} /> {isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}
-                          </button>
+                        <div className="grid gap-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              onClick={() => openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined)}
+                              className="flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-emerald-500/25 bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/25">
+                              <Check size={11} /> <span className="truncate">{isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}</span>
+                            </button>
+                            <button
+                              onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false, slotTimestamp(selectedDay, slot.minutes))}
+                              className="flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-red-500/25 bg-red-500/15 px-2 py-1 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/25">
+                              <XCircle size={11} /> <span className="truncate">{t('uebersprungen')}</span>
+                            </button>
+                          </div>
                           {isInjectableMethod(c.method) && (
                             <button
                               onClick={() => openInjectionTrackerForSlot(slot)}
-                              className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-sky-500/15 text-sky-300 border border-sky-500/25 hover:bg-sky-500/25 transition-colors">
-                              <Syringe size={11} /> Mit Injektion
+                              className="flex min-h-9 w-full min-w-0 items-center justify-center gap-1 rounded-lg border border-sky-500/25 bg-sky-500/15 px-2.5 py-1 text-xs font-semibold text-sky-300 transition-colors hover:bg-sky-500/25">
+                              <Syringe size={11} /> <span className="truncate">Mit Injektion bestätigen</span>
                             </button>
                           )}
-                          <button
-                            onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false, slotTimestamp(selectedDay, slot.minutes))}
-                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">
-                            <XCircle size={11} /> {t('uebersprungen')}
-                          </button>
                         </div>
                       </div>
                     </div>
