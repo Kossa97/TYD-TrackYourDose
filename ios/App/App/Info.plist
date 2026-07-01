@@ -24,6 +24,10 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>TYD liest Gesundheitsdaten, um Gewicht, Schritte, Schlaf und Herzfrequenz in deiner Dokumentation anzuzeigen.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>TYD kann ausgewaehlte Gesundheitsdaten speichern, wenn du diese Funktion aktiv nutzt.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -19,6 +19,7 @@ import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
 import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, type ScheduleSegment } from '../lib/intakeSchedule'
 import { computeNextVialStock } from '../lib/peptideStock'
+import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { GlassPanel, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
 
 const DATE_LOCALES: Record<string, Locale> = {
@@ -198,6 +199,7 @@ const SWIPE_THRESHOLD = 80
 export function Dashboard() {
   const { t, i18n } = useTranslation()
   const location = useLocation()
+  const navigate = useNavigate()
   const locale = DATE_LOCALES[i18n.language] ?? enUS
   const { user } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -521,6 +523,16 @@ export function Dashboard() {
     }
     setConfirmTime(defaultTime)
     setConfirmSheet({ cycle, log })
+  }
+
+  const openInjectionTrackerForSlot = (slot: DueSlot) => {
+    const returnTo = `/kalender?date=${format(selectedDay, 'yyyy-MM-dd')}#due-intakes`
+    navigate(buildInjectionTrackerUrl({
+      doseLogId: slot.pendingLog?.id ?? null,
+      cycleId: slot.cycle.id,
+      scheduledAt: slot.pendingLog?.logged_at ?? slotTimestamp(selectedDay, slot.minutes),
+      returnTo,
+    }))
   }
 
   const handleConfirmSheet = async () => {
@@ -919,12 +931,19 @@ export function Dashboard() {
                               : t('dose_confirm_pending_badge', { defaultValue: 'Bestätigung offen' })}
                           </span>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <button
                             onClick={() => openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined)}
                             className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
                             <Check size={11} /> {isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}
                           </button>
+                          {isInjectableMethod(c.method) && (
+                            <button
+                              onClick={() => openInjectionTrackerForSlot(slot)}
+                              className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-sky-500/15 text-sky-300 border border-sky-500/25 hover:bg-sky-500/25 transition-colors">
+                              <Syringe size={11} /> Mit Injektion
+                            </button>
+                          )}
                           <button
                             onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false, slotTimestamp(selectedDay, slot.minutes))}
                             className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">

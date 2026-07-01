@@ -19,6 +19,7 @@ import { collectMissedIntakes, cycleAppliesToDay, scheduleForDay, effectiveDose,
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
 import { InjectionTrackerHero, type InjectionHeroPin } from '../components/injection3d/InjectionTrackerHero'
+import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { format, parseISO, startOfDay } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
@@ -223,6 +224,9 @@ interface TodayIntake {
   substance: string | null
   dose: string | null
   peptideId: string
+  cycleId: string
+  method: string | null
+  scheduledAt: string
 }
 
 interface InjectionHeroState {
@@ -304,7 +308,7 @@ export function Home() {
           (peptideData ?? []).map((p) => [p.id as string, p.name as string])
         )
         const now = new Date()
-        const todaySlots: { min: number; time: string; substance: string | null; dose: string | null; peptideId: string }[] = []
+        const todaySlots: { min: number; time: string; substance: string | null; dose: string | null; peptideId: string; cycleId: string; method: string | null; scheduledAt: string }[] = []
         for (const c of cycleData ?? []) {
           // Nur Zyklen, die HEUTE gelten (Frequenz/Start/Ende), wie im Kalender.
           if (!cycleAppliesToDay(c, now)) continue
@@ -318,7 +322,18 @@ export function Home() {
             const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
             if (!tm) return
             const [h, m] = tm.split(':').map(Number)
-            todaySlots.push({ min: h * 60 + m, time: tm, substance: peptideNameById.get(c.peptide_id as string) ?? null, dose: doseLabel, peptideId: c.peptide_id as string })
+            const scheduledAt = new Date(now)
+            scheduledAt.setHours(h, m, 0, 0)
+            todaySlots.push({
+              min: h * 60 + m,
+              time: tm,
+              substance: peptideNameById.get(c.peptide_id as string) ?? null,
+              dose: doseLabel,
+              peptideId: c.peptide_id as string,
+              cycleId: c.id as string,
+              method: c.method as string | null,
+              scheduledAt: scheduledAt.toISOString(),
+            })
           })
         }
         todaySlots.sort((a, b) => a.min - b.min)
@@ -375,7 +390,7 @@ export function Home() {
           }))
 
         setPlannedToday(todaySlots.length)
-        setTodayIntakes(openSlots.map(s => ({ time: s.time, min: s.min, substance: s.substance, dose: s.dose, peptideId: s.peptideId })))
+        setTodayIntakes(openSlots.map(s => ({ time: s.time, min: s.min, substance: s.substance, dose: s.dose, peptideId: s.peptideId, cycleId: s.cycleId, method: s.method, scheduledAt: s.scheduledAt })))
         setTodayDone(todaySlots.length > 0 && openSlots.length === 0)
         setInjectionHero({ pins })
 
@@ -408,6 +423,18 @@ export function Home() {
   const completionLevel = plannedToday > 0
     ? Math.min(100, Math.round((overview.loggedToday / plannedToday) * 100))
     : 0
+
+  const openTodayIntake = (intake: TodayIntake) => {
+    if (isInjectableMethod(intake.method)) {
+      navigate(buildInjectionTrackerUrl({
+        cycleId: intake.cycleId,
+        scheduledAt: intake.scheduledAt,
+        returnTo: '/',
+      }))
+      return
+    }
+    navigate('/kalender#due-intakes')
+  }
 
   return (
     <div style={pageStyle} className="stagger-in">
@@ -490,7 +517,7 @@ export function Home() {
           </div>
           <TodayIntakeCarousel
             intakes={todayIntakes}
-            onItemClick={() => navigate('/kalender#due-intakes')}
+            onItemClick={openTodayIntake}
           />
         </section>
       )}
@@ -948,10 +975,10 @@ function IntakeRow({
 
 // Vertikales Einzeiler-Karussell: eine Einnahme im Fokus, Nachbarn oben/unten
 // lugen hervor und faden aus. Vertikal scroll-/wischbar mit Snap.
-function TodayIntakeCarousel({ intakes, onItemClick }: { intakes: TodayIntake[]; onItemClick: () => void }) {
+function TodayIntakeCarousel({ intakes, onItemClick }: { intakes: TodayIntake[]; onItemClick: (intake: TodayIntake) => void }) {
   if (intakes.length <= 1) {
     return intakes.length === 1
-      ? <IntakeRow time={intakes[0].time} substance={intakes[0].substance} dose={intakes[0].dose} onClick={onItemClick} />
+      ? <IntakeRow time={intakes[0].time} substance={intakes[0].substance} dose={intakes[0].dose} onClick={() => onItemClick(intakes[0])} />
       : null
   }
   const height = INTAKE_ROW_H * 2.5   // Fokus + Andeutung der Nachbarn
@@ -969,7 +996,7 @@ function TodayIntakeCarousel({ intakes, onItemClick }: { intakes: TodayIntake[];
     >
       {intakes.map((it, i) => (
         <div key={`${it.peptideId}-${it.min}-${i}`} style={{ scrollSnapAlign: 'center', flexShrink: 0 }}>
-          <IntakeRow time={it.time} substance={it.substance} dose={it.dose} onClick={onItemClick} />
+          <IntakeRow time={it.time} substance={it.substance} dose={it.dose} onClick={() => onItemClick(it)} />
         </div>
       ))}
     </div>

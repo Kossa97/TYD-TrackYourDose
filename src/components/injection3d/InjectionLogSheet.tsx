@@ -1,10 +1,11 @@
 // src/components/injection3d/InjectionLogSheet.tsx
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { AlertTriangle, Check, Clock, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { InjectionPinDraft, InjectionProximityWarning } from '../../lib/injectionLogTypes'
 import type { OpenInjectionIntake } from '../../lib/injectionPersistence'
+import { getOpenInjectionIntakeKey } from '../../lib/injectionDeepLink'
 import {
   filterOpenInjectionIntakes,
   type IntakeHistoryDays,
@@ -32,13 +33,14 @@ export interface InjectionSaveInput {
   loggedAt: string
 }
 
-const intakeKey = (i: OpenInjectionIntake) => i.doseLogId ?? `${i.cycleId}|${i.scheduledAt}`
+const intakeKey = getOpenInjectionIntakeKey
 const toLocalInput = (iso: string) => format(parseISO(iso), "yyyy-MM-dd'T'HH:mm")
 
 export function InjectionLogSheet({
   pin,
   openIntakes = [],
   warning,
+  targetIntakeKey = null,
   onCancel,
   onSave,
 }: {
@@ -46,16 +48,17 @@ export function InjectionLogSheet({
   openIntakes?: OpenInjectionIntake[]
   cycles?: readonly unknown[]
   warning: InjectionProximityWarning
+  targetIntakeKey?: string | null
   onCancel: () => void
   onSave: (input: InjectionSaveInput) => Promise<void>
 }) {
   const { t } = useTranslation()
-  const [mode, setMode] = useState<InjectionSaveMode>(openIntakes.length > 0 ? 'intake' : 'manual')
+  const [mode, setMode] = useState<InjectionSaveMode>(targetIntakeKey || openIntakes.length > 0 ? 'intake' : 'manual')
   const [cycleFilter, setCycleFilter] = useState('all')
-  const [historyDays, setHistoryDays] = useState<IntakeHistoryDays>(7)
+  const [historyDays, setHistoryDays] = useState<IntakeHistoryDays>(targetIntakeKey ? 'all' : 7)
   const [sortOrder, setSortOrder] = useState<IntakeSortOrder>('newest')
   const [statusFilter, setStatusFilter] = useState<IntakeStatusFilter>('all')
-  const [selectedKey, setSelectedKey] = useState('')
+  const [selectedKey, setSelectedKey] = useState(targetIntakeKey ?? '')
   const [substance, setSubstance] = useState('')
   const [dose, setDose] = useState('')
   const [unit, setUnit] = useState('mcg')
@@ -94,6 +97,14 @@ export function InjectionLogSheet({
     setMethod(i.method)
     setLoggedAt(toLocalInput(i.scheduledAt))
   }
+
+  useEffect(() => {
+    if (!targetIntakeKey) return
+    const target = filteredIntakes.find(i => intakeKey(i) === targetIntakeKey)
+    if (!target) return
+    if (mode !== 'intake') setMode('intake')
+    if (selectedKey !== targetIntakeKey || !dose || !unit || !method) selectIntake(target)
+  }, [dose, filteredIntakes, method, mode, selectedKey, targetIntakeKey, unit])
 
   const canSave = mode === 'intake'
     ? Boolean(selectedIntake && dose && unit && method)

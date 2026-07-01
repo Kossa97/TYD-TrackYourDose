@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, AlertTriangle, Copy, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -22,6 +22,7 @@ import {
 } from '../lib/injectionPersistence'
 import { proximityWarning } from '../lib/injectionGeometry'
 import { formatInjectionPinAge, getInjectionPinAgeColor, getInjectionPinSubstance } from '../lib/injectionPinPresentation'
+import { findTargetInjectionIntake, getOpenInjectionIntakeKey } from '../lib/injectionDeepLink'
 import type { InjectionHistoryDays } from '../lib/injectionHistory'
 import type {
   InjectionLog3D,
@@ -108,7 +109,11 @@ const NO_WARNING: InjectionProximityWarning = { level: 'none', nearestLogId: nul
 export function InjektionsTracker() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useTranslation()
+
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search])
+  const returnTo = searchParams.get('returnTo')
 
   const mapSectionRef = useRef<HTMLElement | null>(null)
   const [logs, setLogs] = useState<InjectionLog3D[]>([])
@@ -180,6 +185,13 @@ export function InjektionsTracker() {
       }
       return next
     })
+  }
+
+  const targetIntake = useMemo(() => findTargetInjectionIntake(openIntakes, searchParams), [openIntakes, searchParams])
+  const targetIntakeKey = targetIntake ? getOpenInjectionIntakeKey(targetIntake) : null
+  const goBack = () => {
+    if (returnTo) navigate(returnTo)
+    else navigate(-1)
   }
 
   const activeLog = activeLogId ? logs.find(log => log.id === activeLogId) ?? null : null
@@ -255,7 +267,7 @@ export function InjektionsTracker() {
   if (tableError) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 8 }}>
-        <PageHeader onBack={() => navigate(-1)} />
+        <PageHeader onBack={goBack} />
         <SetupRequired onRetry={() => { setTableError(false); loadData() }} />
       </div>
     )
@@ -277,7 +289,7 @@ export function InjektionsTracker() {
         }}
       >
         <div style={{ position: 'relative', height: '100dvh', minHeight: '100dvh' }}>
-          <PageHeader onBack={() => navigate(-1)} overlay />
+          <PageHeader onBack={goBack} overlay />
           <InjectionMapCanvas
             height="100dvh"
             minHeight="100dvh"
@@ -348,6 +360,7 @@ export function InjektionsTracker() {
           openIntakes={openIntakes}
           cycles={[]}
           warning={warning}
+          targetIntakeKey={targetIntakeKey}
           onCancel={() => setShowLogSheet(false)}
           onSave={saveDraftPin}
         />
