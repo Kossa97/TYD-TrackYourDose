@@ -507,7 +507,7 @@
   "injection_confirmation_open": "Intake confirmation open",
   "injection_note_prefix": "Note",
   "injection_log_title": "Save injection",
-  "injection_mode_intake": "Intake",
+  "injection_mode_intake": "Cycles",
   "injection_mode_manual": "Manual",
   "injection_warning_strong": "Very close to a recent injection.",
   "injection_warning_caution": "Close to an injection from the last 7 days.",

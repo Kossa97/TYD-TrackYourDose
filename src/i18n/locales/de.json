@@ -509,7 +509,7 @@
   "injection_confirmation_open": "Einnahmebestätigung offen",
   "injection_note_prefix": "Notiz",
   "injection_log_title": "Injektion speichern",
-  "injection_mode_intake": "Einnahme",
+  "injection_mode_intake": "Zyklen",
   "injection_mode_manual": "Manuell",
   "injection_warning_strong": "Diese Stelle liegt nahe an kürzlichen Injektionen.",
   "injection_warning_caution": "Nahe an einer Injektion der letzten 7 Tage.",

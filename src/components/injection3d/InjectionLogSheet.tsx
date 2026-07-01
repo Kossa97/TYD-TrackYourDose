@@ -136,19 +136,18 @@ export function InjectionLogSheet({
     <>
       <div className="fixed inset-0 z-50 bg-black/70" />
       <div
-        className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-hidden"
+        className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-hidden overscroll-y-contain"
         style={{
           background: 'linear-gradient(180deg, rgba(7,11,24,0.96), var(--surface))',
-          paddingTop: 'calc(0.75rem + env(safe-area-inset-top))',
+          overscrollBehaviorY: 'contain',
+          paddingTop: 'env(safe-area-inset-top)',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
-        <div className="shrink-0 border-b border-white/10 px-4 pb-3">
-          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" />
+        <div className="shrink-0 border-b border-white/10 px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[0.62rem] font-extrabold uppercase tracking-[0.14em] text-sky-400">{t('injection_map_title', { defaultValue: '3D Injektionskarte' })}</p>
-              <h2 className="truncate text-lg font-black text-white">{t('injection_log_title', { defaultValue: 'Injektion speichern' })}</h2>
+              <h2 className="truncate text-xl font-black text-white">{t('injection_log_title', { defaultValue: 'Injektion speichern' })}</h2>
             </div>
             <button
               type="button"
@@ -161,7 +160,7 @@ export function InjectionLogSheet({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-3">
+        <div className="flex-1 overflow-y-auto overscroll-y-contain px-4 py-3">
           <div className="grid grid-cols-2 gap-1 rounded-2xl border border-white/10 p-1" style={{ background: 'var(--surface-input)' }}>
             {(['intake', 'manual'] as InjectionSaveMode[]).map(m => (
               <button
@@ -171,7 +170,7 @@ export function InjectionLogSheet({
                 className={`min-h-11 rounded-xl px-3 py-2 text-sm font-bold transition-colors ${mode === m ? 'bg-sky-400/15 text-sky-300' : 'text-slate-400'}`}
               >
                 {m === 'intake'
-                  ? t('injection_mode_intake', { defaultValue: 'Einnahme' })
+                  ? t('injection_mode_intake', { defaultValue: 'Zyklen' })
                   : t('injection_mode_manual', { defaultValue: 'Manuell' })}
               </button>
             ))}
@@ -261,7 +260,7 @@ export function InjectionLogSheet({
                   </p>
                 ) : (
                   <div className="relative">
-                    <div className="max-h-[29dvh] space-y-2 overflow-y-auto pr-1 pb-4">
+                    <div className="max-h-[24dvh] space-y-2 overflow-y-auto overscroll-y-contain pr-1 pb-4">
                       {filteredIntakes.map(intake => {
                         const active = intakeKey(intake) === selectedKey
                         return (
