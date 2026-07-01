@@ -1,7 +1,7 @@
 // src/components/injection3d/InjectionLogSheet.tsx
 import { useEffect, useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
-import { AlertTriangle, Check, Clock, X } from 'lucide-react'
+import { AlertTriangle, Check, Clock, Info, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { InjectionPinDraft, InjectionProximityWarning } from '../../lib/injectionLogTypes'
 import type { OpenInjectionIntake } from '../../lib/injectionPersistence'
@@ -66,6 +66,7 @@ export function InjectionLogSheet({
   const [notes, setNotes] = useState('')
   const [loggedAt, setLoggedAt] = useState(() => format(new Date(), "yyyy-MM-dd'T'HH:mm"))
   const [saving, setSaving] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
 
   const overdueLabel = (days: number): string => {
     if (days <= 0) return String(t('injection_due_today', { defaultValue: 'heute fällig' }))
@@ -146,8 +147,17 @@ export function InjectionLogSheet({
       >
         <div className="shrink-0 border-b border-white/10 px-4 py-3">
           <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <h2 className="truncate text-xl font-black text-white">{t('injection_log_title', { defaultValue: 'Injektion speichern' })}</h2>
+              <button
+                type="button"
+                aria-label={String(t('injection_log_help_toggle', { defaultValue: 'Formular erklären' }))}
+                aria-expanded={showHelp}
+                onClick={() => setShowHelp(value => !value)}
+                className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border transition-colors ${showHelp ? 'border-sky-400/40 bg-sky-400/15 text-sky-300' : 'border-white/10 bg-white/[0.04] text-slate-400'}`}
+              >
+                <Info size={16} aria-hidden="true" />
+              </button>
             </div>
             <button
               type="button"
@@ -158,6 +168,16 @@ export function InjectionLogSheet({
               <X size={16} aria-hidden="true" />
             </button>
           </div>
+          {showHelp && (
+            <div className="mt-3 rounded-2xl border border-sky-400/20 bg-sky-400/10 p-3 text-sm leading-5 text-slate-200">
+              <p className="font-bold text-white">{t('injection_log_help_title', { defaultValue: 'So speicherst du eine Injektion' })}</p>
+              <ol className="mt-2 list-decimal space-y-1 pl-4 text-slate-300">
+                <li>{t('injection_log_help_step_select', { defaultValue: 'Wähle „Zyklen“, um eine geplante Einnahme zu bestätigen, oder „Manuell“ für einen freien Eintrag.' })}</li>
+                <li>{t('injection_log_help_step_details', { defaultValue: 'Wähle die passende Einnahme aus oder trage Substanz, Dosis, Methode und Zeitpunkt ein.' })}</li>
+                <li>{t('injection_log_help_step_save', { defaultValue: 'Prüfe die markierte Stelle und speichere die Injektion am Ende des Formulars.' })}</li>
+              </ol>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto overscroll-y-contain px-4 py-3">
