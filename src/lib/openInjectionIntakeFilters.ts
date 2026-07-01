@@ -1,6 +1,6 @@
 import type { InjectionIntakeStatus, OpenInjectionIntake } from './injectionPersistence'
 
-export type IntakeHistoryDays = 7 | 14 | 30 | 60 | 90 | 'all'
+export type IntakeHistoryDays = 0 | 1 | 7 | 14 | 30 | 60 | 90 | 'all'
 export type IntakeSortOrder = 'newest' | 'oldest'
 export type IntakeStatusFilter = InjectionIntakeStatus | 'all'
 
@@ -27,7 +27,11 @@ export function filterOpenInjectionIntakes(
   return intakes
     .filter(intake => filters.cycleId === 'all' || intake.cycleId === filters.cycleId)
     .filter(intake => filters.status === 'all' || intake.status === filters.status)
-    .filter(intake => filters.days === 'all' || intake.daysOverdue <= filters.days)
+    .filter(intake => {
+      if (filters.days === 'all') return true
+      if (filters.days === 0 || filters.days === 1) return intake.daysOverdue === filters.days
+      return intake.daysOverdue <= filters.days
+    })
     .sort((a, b) => {
       const difference = new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
       return filters.order === 'newest' ? difference : -difference

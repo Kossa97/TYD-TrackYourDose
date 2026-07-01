@@ -125,6 +125,7 @@ export function InjektionsTracker() {
   const [showLogSheet, setShowLogSheet] = useState(false)
   const [historyDays, setHistoryDays] = useState<InjectionHistoryDays>(7)
   const [trackerSheetOpen, setTrackerSheetOpen] = useState(false)
+  const [selectedTargetIntakeKey, setSelectedTargetIntakeKey] = useState<string | null>(null)
   const [focusRequest, setFocusRequest] = useState<InjectionFocusRequest | null>(null)
   const [visibleLogIds, setVisibleLogIds] = useState<Set<string>>(() => new Set())
   const [activeLogId, setActiveLogId] = useState<string | null>(null)
@@ -187,8 +188,15 @@ export function InjektionsTracker() {
     })
   }
 
+  const selectOpenIntakeForInjection = (intake: OpenInjectionIntake) => {
+    setSelectedTargetIntakeKey(getOpenInjectionIntakeKey(intake))
+    setTrackerSheetOpen(false)
+    toast.success('Einnahme ausgewählt. Markiere jetzt die Injektionsstelle.')
+  }
+
   const targetIntake = useMemo(() => findTargetInjectionIntake(openIntakes, searchParams), [openIntakes, searchParams])
-  const targetIntakeKey = targetIntake ? getOpenInjectionIntakeKey(targetIntake) : null
+  const urlTargetIntakeKey = targetIntake ? getOpenInjectionIntakeKey(targetIntake) : null
+  const targetIntakeKey = selectedTargetIntakeKey ?? urlTargetIntakeKey
   const goBack = () => {
     if (returnTo) navigate(returnTo)
     else navigate(-1)
@@ -245,12 +253,14 @@ export function InjektionsTracker() {
         : 'Injektion gespeichert')
       setDraftPin(null)
       setShowLogSheet(false)
+      setSelectedTargetIntakeKey(null)
       await loadData()
     } catch (error) {
       console.error('[InjektionsTracker] saveDraftPin error:', error)
       if (isDoseLogAlreadyLinkedError(error)) {
         toast.error('Für diese Einnahme wurde bereits eine Injektionsstelle gespeichert')
         setShowLogSheet(false)
+      setSelectedTargetIntakeKey(null)
         await loadData()
         return
       }
@@ -332,7 +342,7 @@ export function InjektionsTracker() {
               }}
             >
               <div className="flex gap-3">
-                <button type="button" className="btn-secondary min-h-11 flex-1" onClick={() => setDraftPin(null)}>{t('injection_position_cancel', { defaultValue: 'Abbrechen' })}</button>
+                <button type="button" className="btn-secondary min-h-11 flex-1" onClick={() => { setDraftPin(null); setSelectedTargetIntakeKey(null) }}>{t('injection_position_cancel', { defaultValue: 'Abbrechen' })}</button>
                 <button type="button" className="btn-primary min-h-11 flex-1" onClick={() => setShowLogSheet(true)}>{t('injection_position_accept', { defaultValue: 'Position übernehmen' })}</button>
               </div>
             </div>
@@ -349,6 +359,7 @@ export function InjektionsTracker() {
             onHistoryDaysChange={setHistoryDays}
             onToggleLog={toggleLogVisibility}
             onFocusLog={focusLog}
+            onSelectOpenIntake={selectOpenIntakeForInjection}
             onSheetOpenChange={setTrackerSheetOpen}
           />
         )}

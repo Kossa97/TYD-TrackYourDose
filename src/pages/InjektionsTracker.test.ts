@@ -32,6 +32,19 @@ describe('InjektionsTracker fullscreen map layout', () => {
     expect(source).toContain('max-h-[48dvh]')
     expect(source).toContain('InjectionHistorySheet')
   })
+  it('opens open intakes as a fullscreen workflow with filters and selection', () => {
+    const tabs = readFileSync(new URL('../components/injection3d/InjectionTrackerTabs.tsx', import.meta.url), 'utf8')
+    const tracker = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
+
+    expect(tabs).toContain("activeSheet === 'open'")
+    expect(tabs).toContain('className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-hidden overscroll-y-contain"')
+    expect(tabs).toContain('openCycleFilter')
+    expect(tabs).toContain('openDaysFilter')
+    expect(tabs).toContain('OPEN_DAYS_OPTIONS')
+    expect(tabs).toContain('onSelectOpenIntake(intake)')
+    expect(tracker).toContain('selectedTargetIntakeKey')
+    expect(tracker).toContain('onSelectOpenIntake={selectOpenIntakeForInjection}')
+  })
 
   it('uses one scroll container for the embedded history sheet', () => {
     const source = readFileSync(new URL('../components/injection3d/InjectionHistorySheet.tsx', import.meta.url), 'utf8')

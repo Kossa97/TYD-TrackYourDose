@@ -53,4 +53,10 @@ describe('filterOpenInjectionIntakes', () => {
       'confirmed',
     ])
   })
+  it('filters today and yesterday as exact day buckets', () => {
+    expect(filterOpenInjectionIntakes(intakes, { days: 0, status: 'open' }).map(item => item.daysOverdue)).toEqual([])
+    expect(filterOpenInjectionIntakes(intakes, { days: 1, status: 'open' }).map(item => item.scheduledAt)).toEqual([
+      '2026-06-23T20:00:00.000Z',
+    ])
+  })
 })
