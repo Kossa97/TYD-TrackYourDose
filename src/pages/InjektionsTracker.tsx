@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { format, parseISO } from 'date-fns'
 import { ArrowLeft, AlertTriangle, Copy, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -197,6 +198,10 @@ export function InjektionsTracker() {
   const targetIntake = useMemo(() => findTargetInjectionIntake(openIntakes, searchParams), [openIntakes, searchParams])
   const urlTargetIntakeKey = targetIntake ? getOpenInjectionIntakeKey(targetIntake) : null
   const targetIntakeKey = selectedTargetIntakeKey ?? urlTargetIntakeKey
+  const activeTargetIntake = useMemo(() => {
+    if (!targetIntakeKey) return null
+    return openIntakes.find(intake => getOpenInjectionIntakeKey(intake) === targetIntakeKey) ?? targetIntake
+  }, [openIntakes, targetIntake, targetIntakeKey])
   const goBack = () => {
     if (returnTo) navigate(returnTo)
     else navigate(-1)
@@ -332,6 +337,21 @@ export function InjektionsTracker() {
             </div>
           )}
 
+          {activeTargetIntake && !showLogSheet && (
+            <div
+              className="injection-selected-intake-chip pointer-events-none absolute left-4 right-4 z-30 flex justify-center"
+              style={{ top: 'calc(126px + env(safe-area-inset-top))' }}
+            >
+              <div
+                className="flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-bold text-white shadow-[0_10px_28px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+                style={{ background: 'rgba(7, 11, 24, 0.78)', borderColor: 'rgba(34,211,238,0.22)' }}
+              >
+                <span className="shrink-0 text-[0.62rem] font-black uppercase text-cyan-300">Ausgewählt</span>
+                <span className="min-w-0 flex-1 truncate">{activeTargetIntake.peptideName}</span>
+                <span className="shrink-0 text-cyan-100/80">{activeTargetIntake.dose} {activeTargetIntake.unit} - {format(parseISO(activeTargetIntake.scheduledAt), 'HH:mm')}</span>
+              </div>
+            </div>
+          )}
           {showPositionActions && (
             <div
               className="absolute bottom-3 left-3 right-3 z-20 rounded-2xl border p-3"

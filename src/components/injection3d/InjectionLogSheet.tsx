@@ -67,6 +67,7 @@ export function InjectionLogSheet({
   const [loggedAt, setLoggedAt] = useState(() => format(new Date(), "yyyy-MM-dd'T'HH:mm"))
   const [saving, setSaving] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const hasFixedTargetIntake = Boolean(targetIntakeKey)
 
   const overdueLabel = (days: number): string => {
     if (days <= 0) return String(t('injection_due_today', { defaultValue: 'heute fällig' }))
@@ -88,7 +89,10 @@ export function InjectionLogSheet({
     status: statusFilter,
   }), [cycleFilter, historyDays, openIntakes, sortOrder, statusFilter])
 
-  const selectedIntake = filteredIntakes.find(i => intakeKey(i) === selectedKey) ?? null
+  const targetIntake = targetIntakeKey
+    ? openIntakes.find(i => intakeKey(i) === targetIntakeKey) ?? null
+    : null
+  const selectedIntake = targetIntake ?? filteredIntakes.find(i => intakeKey(i) === selectedKey) ?? null
   const detailsLocked = areInjectionDetailsLocked(mode, selectedIntake !== null)
 
   const selectIntake = (i: OpenInjectionIntake) => {
@@ -101,11 +105,10 @@ export function InjectionLogSheet({
 
   useEffect(() => {
     if (!targetIntakeKey) return
-    const target = filteredIntakes.find(i => intakeKey(i) === targetIntakeKey)
-    if (!target) return
+    if (!targetIntake) return
     if (mode !== 'intake') setMode('intake')
-    if (selectedKey !== targetIntakeKey || !dose || !unit || !method) selectIntake(target)
-  }, [dose, filteredIntakes, method, mode, selectedKey, targetIntakeKey, unit])
+    if (selectedKey !== targetIntakeKey || !dose || !unit || !method) selectIntake(targetIntake)
+  }, [dose, method, mode, selectedKey, targetIntake, targetIntakeKey, unit])
 
   const canSave = mode === 'intake'
     ? Boolean(selectedIntake && dose && unit && method)
@@ -132,6 +135,29 @@ export function InjectionLogSheet({
       ? t('injection_add_site_action', { defaultValue: 'Injektionsstelle hinzufügen' })
       : t('injection_save_and_confirm', { defaultValue: 'Speichern & bestätigen' })
     : t('injection_save', { defaultValue: 'Speichern' })
+  const selectedIntakeCard = selectedIntake ? (
+    <div className="flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-2xl border border-sky-400/30 bg-sky-400/10 p-3 text-left">
+      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-400/20 text-sky-300">
+        {selectedIntake.status === 'confirmed' ? <Check size={16} aria-hidden="true" /> : <Clock size={16} aria-hidden="true" />}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-bold text-white">{selectedIntake.peptideName}</p>
+        <p className="text-xs text-slate-400">
+          <span className={selectedIntake.status === 'confirmed' ? 'text-emerald-300' : 'text-amber-300'}>
+            {selectedIntake.status === 'confirmed'
+              ? t('injection_already_confirmed', { defaultValue: 'Bereits best\u00e4tigt' })
+              : t('injection_status_open', { defaultValue: 'Offen' })}
+          </span>
+          {' - '}{format(parseISO(selectedIntake.scheduledAt), 'dd.MM. HH:mm')}
+          {selectedIntake.status === 'open' ? ` - ${overdueLabel(selectedIntake.daysOverdue)}` : ''}
+        </p>
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="text-sm font-bold text-sky-300">{selectedIntake.dose} {selectedIntake.unit}</p>
+        <p className="text-[0.62rem] text-slate-500">{selectedIntake.method}</p>
+      </div>
+    </div>
+  ) : null
 
   return (
     <>
@@ -181,6 +207,7 @@ export function InjectionLogSheet({
         </div>
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 py-3">
+          {!hasFixedTargetIntake && (
           <div className="grid min-w-0 grid-cols-2 gap-1 rounded-2xl border border-white/10 p-1" style={{ background: 'var(--surface-input)' }}>
             {(['intake', 'manual'] as InjectionSaveMode[]).map(m => (
               <button
@@ -195,6 +222,7 @@ export function InjectionLogSheet({
               </button>
             ))}
           </div>
+          )}
 
           {warning.level !== 'none' && (
             <div className="mt-3 flex gap-2 rounded-2xl border border-amber-400/25 bg-amber-400/10 p-3 text-sm text-amber-200">
@@ -206,7 +234,8 @@ export function InjectionLogSheet({
           )}
 
           <div className="mt-3 min-w-0 space-y-4">
-            {mode === 'intake' && (
+            {hasFixedTargetIntake && selectedIntakeCard}
+            {mode === 'intake' && !hasFixedTargetIntake && (
               <div className="space-y-2">
                 {openIntakes.length > 0 && (
                   <div className="grid min-w-0 grid-cols-2 gap-2">

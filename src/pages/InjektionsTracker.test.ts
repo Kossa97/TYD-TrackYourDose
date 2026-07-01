@@ -135,4 +135,21 @@ describe('InjektionsTracker fullscreen map layout', () => {
     expect(combined).not.toMatch(/Praezises|oeffnen|auswaehlen|uebernehmen|bestaetigt|faellig|Schliessen|schliessen|Zurueck|Rueckwirkend|Aelteste|hinzufuegen|spaeter|gedrueckt|kuerzlichen|fuer|moeglich/)
     expect(combined).not.toMatch(/[\uFFFD\u00c3\u00c2]/)
   })
+  it('shows the preselected intake on the map while placing a pin', () => {
+    const source = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('activeTargetIntake')
+    expect(source).toContain('injection-selected-intake-chip')
+    expect(source).toContain('Ausgew\u00e4hlt')
+    expect(source).toContain('activeTargetIntake.peptideName')
+  })
+
+  it('skips cycle/manual selection and the intake list for a fixed target intake', () => {
+    const logSheet = readFileSync(new URL('../components/injection3d/InjectionLogSheet.tsx', import.meta.url), 'utf8')
+
+    expect(logSheet).toContain('hasFixedTargetIntake')
+    expect(logSheet).toContain('{!hasFixedTargetIntake && (')
+    expect(logSheet).toContain("{mode === 'intake' && !hasFixedTargetIntake && (")
+    expect(logSheet).toContain('selectedIntakeCard')
+  })
 })
