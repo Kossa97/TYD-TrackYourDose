@@ -34,4 +34,14 @@ describe('InjectionMapCanvas external assets', () => {
     expect(source).toContain('active={log.id === activeLogId}')
     expect(source).toContain('color={getInjectionPinAgeColor(log.logged_at)}')
   })
+
+  it('frames the full torso by default and exposes a reset trigger', () => {
+    const source = readFileSync(new URL('./InjectionMapCanvas.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('const CAMERA_DISTANCE = 4.85')
+    expect(source).toContain('DEFAULT_CAMERA_TARGET_Y')
+    expect(source).toContain('resetRequestId')
+    expect(source).toContain('resetCameraFrame(camera, controls)')
+    expect(source).toContain('maxDistance={7}')
+  })
 })

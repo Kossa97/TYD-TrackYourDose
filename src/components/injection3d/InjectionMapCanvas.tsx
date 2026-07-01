@@ -21,8 +21,9 @@ const FIT_HEIGHT = 2.85
 const FIT_Y_OFFSET = 0.12
 
 // Camera framing so the body fills the (portrait) canvas. Lower distance = fuller.
-const CAMERA_DISTANCE = 3.25
+const CAMERA_DISTANCE = 4.85
 const CAMERA_FOV = 48
+const DEFAULT_CAMERA_TARGET_Y = FIT_Y_OFFSET
 const SHEET_AWARE_FOCUS_Y_OFFSET = -0.22
 
 type LightPosition = [number, number, number]
@@ -96,12 +97,12 @@ function Torso({ onLongPress }: { onLongPress: (event: ThreeEvent<PointerEvent>)
 
 // Frames the body to fill the canvas by driving the active camera + controls
 // imperatively (declarative camera props don't take effect in this setup).
-function applyCameraFrame(
+function resetCameraFrame(
   camera: THREE.Camera,
   controls: OrbitControlsApi | null,
 ) {
   const cam = camera as THREE.PerspectiveCamera
-  cam.position.set(0, FIT_Y_OFFSET, CAMERA_DISTANCE)
+  cam.position.set(0, DEFAULT_CAMERA_TARGET_Y, CAMERA_DISTANCE)
   cam.fov = CAMERA_FOV
   cam.zoom = 1
   cam.near = 0.05
@@ -109,7 +110,7 @@ function applyCameraFrame(
   cam.updateProjectionMatrix()
 
   if (controls) {
-    controls.target.set(0, FIT_Y_OFFSET, 0)
+    controls.target.set(0, DEFAULT_CAMERA_TARGET_Y, 0)
     controls.update()
   }
 }
@@ -120,7 +121,7 @@ function focusTargetForRequest(point: THREE.Vector3, sheetOpen = false) {
   return target
 }
 
-function CameraRig({ focusRequest }: { focusRequest: InjectionFocusRequest | null }) {
+function CameraRig({ focusRequest, resetRequestId }: { focusRequest: InjectionFocusRequest | null; resetRequestId: number }) {
   const camera = useThree((s) => s.camera)
   const controls = useThree((s) => s.controls) as OrbitControlsApi | null
   const warmupFrames = useRef(0)
@@ -133,9 +134,15 @@ function CameraRig({ focusRequest }: { focusRequest: InjectionFocusRequest | nul
   } | null>(null)
 
   useLayoutEffect(() => {
-    applyCameraFrame(camera, controls)
+    resetCameraFrame(camera, controls)
     warmupFrames.current = 0
   }, [camera, controls])
+
+  useEffect(() => {
+    animation.current = null
+    resetCameraFrame(camera, controls)
+    warmupFrames.current = 0
+  }, [camera, controls, resetRequestId])
 
   useEffect(() => {
     if (!focusRequest || !controls) return
@@ -177,7 +184,7 @@ function CameraRig({ focusRequest }: { focusRequest: InjectionFocusRequest | nul
     }
 
     if (warmupFrames.current >= 6) return
-    applyCameraFrame(camera, controls)
+    resetCameraFrame(camera, controls)
     warmupFrames.current += 1
   })
 
@@ -192,6 +199,7 @@ function Scene({
   activeLogId,
   onDraftPinChange,
   onLogFocus,
+  resetRequestId,
 }: {
   draftPin: InjectionPinDraft | null
   logs: InjectionLog3D[]
@@ -200,6 +208,7 @@ function Scene({
   activeLogId?: string | null
   onDraftPinChange: (pin: InjectionPinDraft) => void
   onLogFocus: (log: InjectionLog3D) => void
+  resetRequestId: number
 }) {
   const handleLongPress = (event: ThreeEvent<PointerEvent>) => {
     const point = event.point
@@ -221,7 +230,7 @@ function Scene({
 
   return (
     <>
-      <CameraRig focusRequest={focusRequest} />
+      <CameraRig focusRequest={focusRequest} resetRequestId={resetRequestId} />
       <ambientLight intensity={INJECTION_MAP_LIGHTS.ambient} />
       <directionalLight
         position={INJECTION_MAP_LIGHTS.key.position}
@@ -259,7 +268,7 @@ function Scene({
       ))}
       {draftPin && <InjectionPin position={draftPin.position} normal={draftPin.normal} active />}
       <ContactShadows opacity={0.22} scale={4} blur={2.5} far={3} position={[0, -1.22, 0]} />
-      <OrbitControls makeDefault enablePan enableZoom enableRotate minDistance={0.65} maxDistance={6} target={[0, FIT_Y_OFFSET, 0]} />
+      <OrbitControls makeDefault enablePan enableZoom enableRotate minDistance={0.65} maxDistance={7} target={[0, DEFAULT_CAMERA_TARGET_Y, 0]} />
     </>
   )
 }
@@ -267,6 +276,7 @@ function Scene({
 export function InjectionMapCanvas({
   height = 'min(62vh, 540px)',
   minHeight = 360,
+  resetRequestId = 0,
   ...props
 }: {
   draftPin: InjectionPinDraft | null
@@ -278,16 +288,17 @@ export function InjectionMapCanvas({
   onLogFocus: (log: InjectionLog3D) => void
   height?: CSSProperties['height']
   minHeight?: CSSProperties['minHeight']
+  resetRequestId?: number
 }) {
   return (
     <div style={{ position: 'relative', height, minHeight, borderRadius: 24, overflow: 'hidden', background: 'radial-gradient(circle at 50% 20%, rgba(0,204,245,0.16), transparent 42%), #07111d' }}>
       <Canvas
-        camera={{ position: [0, FIT_Y_OFFSET, CAMERA_DISTANCE], fov: CAMERA_FOV, near: 0.05, far: 50 }}
+        camera={{ position: [0, DEFAULT_CAMERA_TARGET_Y, CAMERA_DISTANCE], fov: CAMERA_FOV, near: 0.05, far: 50 }}
         dpr={[1, 1.7]}
-        onCreated={({ camera }) => applyCameraFrame(camera, null)}
+        onCreated={({ camera }) => resetCameraFrame(camera, null)}
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
       >
-        <Scene {...props} />
+        <Scene {...props} resetRequestId={resetRequestId} />
       </Canvas>
     </div>
   )

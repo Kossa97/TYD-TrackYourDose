@@ -128,6 +128,7 @@ export function InjektionsTracker() {
   const [trackerSheetOpen, setTrackerSheetOpen] = useState(false)
   const [selectedTargetIntakeKey, setSelectedTargetIntakeKey] = useState<string | null>(null)
   const [focusRequest, setFocusRequest] = useState<InjectionFocusRequest | null>(null)
+  const [cameraResetRequestId, setCameraResetRequestId] = useState(0)
   const [visibleLogIds, setVisibleLogIds] = useState<Set<string>>(() => new Set())
   const [activeLogId, setActiveLogId] = useState<string | null>(null)
   const [showIntro, setShowIntro] = useState(
@@ -312,10 +313,21 @@ export function InjektionsTracker() {
             logs={logs}
             visibleLogIds={visibleLogIds}
             focusRequest={focusRequest}
+            resetRequestId={cameraResetRequestId}
             activeLogId={activeLogId}
             onDraftPinChange={(pin) => { setDraftPin(pin); setShowLogSheet(false); setTrackerSheetOpen(false) }}
             onLogFocus={focusLog}
           />
+
+          <button
+            type="button"
+            aria-label={String(t('injection_camera_reset', { defaultValue: 'Torso zentrieren' }))}
+            onClick={() => setCameraResetRequestId(value => value + 1)}
+            className="absolute right-4 z-30 grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-black/55 text-slate-100 shadow-[0_10px_28px_rgba(0,0,0,0.42)] backdrop-blur-xl"
+            style={{ top: 'calc(88px + env(safe-area-inset-top))' }}
+          >
+            <RefreshCw size={17} aria-hidden="true" />
+          </button>
 
           {activeLog && visibleLogIds.has(activeLog.id) && (
             <div

@@ -152,4 +152,13 @@ describe('InjektionsTracker fullscreen map layout', () => {
     expect(logSheet).toContain("{mode === 'intake' && !hasFixedTargetIntake && (")
     expect(logSheet).toContain('selectedIntakeCard')
   })
+
+  it('adds a camera reset button for the default full-torso view', () => {
+    const source = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('cameraResetRequestId')
+    expect(source).toContain('setCameraResetRequestId')
+    expect(source).toContain("aria-label={String(t('injection_camera_reset'")
+    expect(source).toContain('resetRequestId={cameraResetRequestId}')
+  })
 })
