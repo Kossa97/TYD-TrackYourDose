@@ -360,16 +360,13 @@ export function InjectionLogSheet({
               <p className="text-xs text-slate-500">
                 {t('injection_site_label', { defaultValue: 'Stelle' })}: {pin.body_side} - {pin.body_region}
               </p>
+              <div className="flex gap-3 border-t border-white/10 pt-4 pb-5">
+                <button type="button" className="btn-secondary min-h-11 flex-1" onClick={onCancel}>{t('injection_position_cancel', { defaultValue: 'Abbrechen' })}</button>
+                <button type="button" className="btn-primary min-h-11 flex-1" onClick={save} disabled={saving || !canSave}>
+                  <Check size={14} aria-hidden="true" /> {saveActionLabel}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-
-        <div className="shrink-0 border-t border-white/10 px-4 py-3" style={{ background: 'rgba(7,11,24,0.96)' }}>
-          <div className="flex gap-3">
-            <button type="button" className="btn-secondary min-h-11 flex-1" onClick={onCancel}>{t('injection_position_cancel', { defaultValue: 'Abbrechen' })}</button>
-            <button type="button" className="btn-primary min-h-11 flex-1" onClick={save} disabled={saving || !canSave}>
-              <Check size={14} aria-hidden="true" /> {saveActionLabel}
-            </button>
           </div>
         </div>
       </div>
