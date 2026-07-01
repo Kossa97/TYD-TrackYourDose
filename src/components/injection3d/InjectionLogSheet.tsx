@@ -137,7 +137,7 @@ export function InjectionLogSheet({
     <>
       <div className="fixed inset-0 z-50 bg-black/70" />
       <div
-        className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-hidden overscroll-y-contain"
+        className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-hidden overflow-x-hidden overscroll-y-contain"
         style={{
           background: 'linear-gradient(180deg, rgba(7,11,24,0.96), var(--surface))',
           overscrollBehaviorY: 'contain',
@@ -145,7 +145,7 @@ export function InjectionLogSheet({
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
-        <div className="shrink-0 border-b border-white/10 px-4 py-3">
+        <div className="shrink-0 overflow-x-hidden border-b border-white/10 px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 flex-1 items-center gap-2">
               <h2 className="truncate text-xl font-black text-white">{t('injection_log_title', { defaultValue: 'Injektion speichern' })}</h2>
@@ -180,14 +180,14 @@ export function InjectionLogSheet({
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto overscroll-y-contain px-4 py-3">
-          <div className="grid grid-cols-2 gap-1 rounded-2xl border border-white/10 p-1" style={{ background: 'var(--surface-input)' }}>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 py-3">
+          <div className="grid min-w-0 grid-cols-2 gap-1 rounded-2xl border border-white/10 p-1" style={{ background: 'var(--surface-input)' }}>
             {(['intake', 'manual'] as InjectionSaveMode[]).map(m => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setMode(m)}
-                className={`min-h-11 rounded-xl px-3 py-2 text-sm font-bold transition-colors ${mode === m ? 'bg-sky-400/15 text-sky-300' : 'text-slate-400'}`}
+                className={`min-h-11 min-w-0 rounded-xl px-3 py-2 text-sm font-bold transition-colors ${mode === m ? 'bg-sky-400/15 text-sky-300' : 'text-slate-400'}`}
               >
                 {m === 'intake'
                   ? t('injection_mode_intake', { defaultValue: 'Zyklen' })
@@ -205,12 +205,12 @@ export function InjectionLogSheet({
             </div>
           )}
 
-          <div className="mt-3 space-y-4">
+          <div className="mt-3 min-w-0 space-y-4">
             {mode === 'intake' && (
               <div className="space-y-2">
                 {openIntakes.length > 0 && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="col-span-2">
+                  <div className="grid min-w-0 grid-cols-2 gap-2">
+                    <label className="col-span-2 min-w-0">
                       <span className="label">{t('injection_cycle_label', { defaultValue: 'Zyklus' })}</span>
                       <select className="input" value={cycleFilter} onChange={event => {
                         setCycleFilter(event.target.value)
@@ -222,9 +222,9 @@ export function InjectionLogSheet({
                         ))}
                       </select>
                     </label>
-                    <div className="col-span-2">
+                    <div className="col-span-2 min-w-0">
                       <span className="label">{t('injection_status_label', { defaultValue: 'Status' })}</span>
-                      <div className="grid grid-cols-3 gap-1 rounded-xl border border-white/10 p-1" style={{ background: 'var(--surface-input)' }}>
+                      <div className="grid min-w-0 grid-cols-3 gap-1 rounded-xl border border-white/10 p-1" style={{ background: 'var(--surface-input)' }}>
                         {([
                           ['all', t('injection_status_all', { defaultValue: 'Alle' })],
                           ['open', t('injection_status_open', { defaultValue: 'Offen' })],
@@ -244,7 +244,7 @@ export function InjectionLogSheet({
                         ))}
                       </div>
                     </div>
-                    <label>
+                    <label className="min-w-0">
                       <span className="label">{t('injection_history_back', { defaultValue: 'Rückwirkend' })}</span>
                       <select className="input" value={historyDays} onChange={event => {
                         const value = event.target.value
@@ -257,7 +257,7 @@ export function InjectionLogSheet({
                         <option value="all">{t('injection_history_all', { defaultValue: 'Alle' })}</option>
                       </select>
                     </label>
-                    <label>
+                    <label className="min-w-0">
                       <span className="label">{t('injection_sort_order', { defaultValue: 'Reihenfolge' })}</span>
                       <select className="input" value={sortOrder} onChange={event => {
                         setSortOrder(event.target.value as IntakeSortOrder)
@@ -280,7 +280,7 @@ export function InjectionLogSheet({
                   </p>
                 ) : (
                   <div className="relative">
-                    <div className="max-h-[24dvh] space-y-2 overflow-y-auto overscroll-y-contain pr-1 pb-4">
+                    <div className="max-h-[24dvh] space-y-2 overflow-y-auto overflow-x-hidden overscroll-y-contain pr-1 pb-4">
                       {filteredIntakes.map(intake => {
                         const active = intakeKey(intake) === selectedKey
                         return (
@@ -288,7 +288,7 @@ export function InjectionLogSheet({
                             key={intakeKey(intake)}
                             type="button"
                             onClick={() => selectIntake(intake)}
-                            className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left ${active ? 'border-sky-400/50 bg-sky-400/10' : 'border-white/10 bg-white/[0.03]'}`}
+                            className={`flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-2xl border p-3 text-left ${active ? 'border-sky-400/50 bg-sky-400/10' : 'border-white/10 bg-white/[0.03]'}`}
                           >
                             <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${active ? 'bg-sky-400/20 text-sky-300' : 'bg-white/5 text-slate-400'}`}>
                               {intake.status === 'confirmed' ? <Check size={16} aria-hidden="true" /> : <Clock size={16} aria-hidden="true" />}
@@ -320,7 +320,7 @@ export function InjectionLogSheet({
             )}
 
             {mode === 'manual' && (
-              <label className="block">
+              <label className="block min-w-0">
                 <span className="label">{t('injection_substance_label', { defaultValue: 'Substanz' })}</span>
                 <input
                   className="input"
@@ -332,34 +332,34 @@ export function InjectionLogSheet({
             )}
 
             <div className="space-y-4 pb-2">
-              <div className="grid grid-cols-2 gap-3">
-                <label>
+              <div className="grid min-w-0 grid-cols-2 gap-3">
+                <label className="min-w-0">
                   <span className="label">{t('injection_dose_label', { defaultValue: 'Dosis' })}</span>
                   <input className="input" value={dose} onChange={e => setDose(e.target.value)} inputMode="decimal" disabled={detailsLocked} />
                 </label>
-                <label>
+                <label className="min-w-0">
                   <span className="label">{t('injection_unit_label', { defaultValue: 'Einheit' })}</span>
                   <select className="input" value={unit} onChange={e => setUnit(e.target.value)} disabled={detailsLocked}>
                     {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
                   </select>
                 </label>
               </div>
-              <label className="block">
+              <label className="block min-w-0">
                 <span className="label">{t('injection_method_label', { defaultValue: 'Methode' })}</span>
                 <select className="input" value={method} onChange={e => setMethod(e.target.value)} disabled={detailsLocked}>
                   {METHOD_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
                   {!METHOD_OPTIONS.includes(method) && <option value={method}>{method}</option>}
                 </select>
               </label>
-              <div className="block">
+              <div className="block min-w-0">
                 <span className="label">{t('injection_time_label', { defaultValue: 'Zeitpunkt (rückwirkend möglich)' })}</span>
                 {mode === 'intake' && selectedIntake ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    <label>
+                  <div className="grid min-w-0 grid-cols-2 gap-3">
+                    <label className="min-w-0">
                       <span className="label">{t('injection_date_label', { defaultValue: 'Datum' })}</span>
                       <input className="input opacity-70" type="date" value={loggedAt.slice(0, 10)} readOnly aria-readonly="true" />
                     </label>
-                    <label>
+                    <label className="min-w-0">
                       <span className="label">{t('injection_clock_label', { defaultValue: 'Uhrzeit' })}</span>
                       <input
                         className="input"
@@ -373,16 +373,16 @@ export function InjectionLogSheet({
                   <input className="input" type="datetime-local" value={loggedAt} onChange={event => setLoggedAt(event.target.value)} />
                 )}
               </div>
-              <label className="block">
+              <label className="block min-w-0">
                 <span className="label">{t('injection_notes_label', { defaultValue: 'Notiz optional' })}</span>
                 <textarea className="input min-h-16 resize-none" value={notes} onChange={e => setNotes(e.target.value)} />
               </label>
               <p className="text-xs text-slate-500">
                 {t('injection_site_label', { defaultValue: 'Stelle' })}: {pin.body_side} - {pin.body_region}
               </p>
-              <div className="flex gap-3 border-t border-white/10 pt-4 pb-5">
-                <button type="button" className="btn-secondary min-h-11 flex-1" onClick={onCancel}>{t('injection_position_cancel', { defaultValue: 'Abbrechen' })}</button>
-                <button type="button" className="btn-primary min-h-11 flex-1" onClick={save} disabled={saving || !canSave}>
+              <div className="flex min-w-0 gap-3 border-t border-white/10 pt-4 pb-5">
+                <button type="button" className="btn-secondary min-h-11 min-w-0 flex-1" onClick={onCancel}>{t('injection_position_cancel', { defaultValue: 'Abbrechen' })}</button>
+                <button type="button" className="btn-primary min-h-11 min-w-0 flex-1" onClick={save} disabled={saving || !canSave}>
                   <Check size={14} aria-hidden="true" /> {saveActionLabel}
                 </button>
               </div>
