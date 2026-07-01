@@ -1,21 +1,7 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
-
-import de from './locales/de.json'
-import en from './locales/en.json'
-import es from './locales/es.json'
-import fr from './locales/fr.json'
-import ja from './locales/ja.json'
-import ko from './locales/ko.json'
-import zh from './locales/zh.json'
-import pt from './locales/pt.json'
-import ar from './locales/ar.json'
-import ru from './locales/ru.json'
-import id from './locales/id.json'
-import hi from './locales/hi.json'
-import tr from './locales/tr.json'
-import it from './locales/it.json'
+import { loadDateLocale } from './dateLocales'
 
 export const LANGUAGES = [
   { code: 'de', name: 'Deutsch',            flag: '🇩🇪' },
@@ -37,38 +23,55 @@ export const LANGUAGES = [
 // RTL-Sprachen
 export const RTL_LANGUAGES = ['ar']
 
-i18n
+// Locale-JSONs als Lazy-Chunks: Es werden nur aktive Sprache + Fallback (de)
+// geladen statt aller 14 Bundles (~600 kB) im Haupt-Bundle.
+const localeModules = import.meta.glob<{ default: Record<string, unknown> }>('./locales/*.json')
+
+const lazyJsonBackend = {
+  type: 'backend' as const,
+  init() {},
+  read(lng: string, _ns: string, callback: (err: unknown, data?: unknown) => void) {
+    const loader = localeModules[`./locales/${lng}.json`]
+    if (!loader) {
+      callback(new Error(`Kein Locale-Bundle für "${lng}"`))
+      return
+    }
+    loader().then(m => callback(null, m.default)).catch(err => callback(err))
+  },
+}
+
+/** Resolves, sobald aktive Sprache + Fallback + date-fns-Locale geladen sind. */
+export const i18nReady = i18n
+  .use(lazyJsonBackend)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources: {
-      de: { translation: de },
-      en: { translation: en },
-      es: { translation: es },
-      fr: { translation: fr },
-      ja: { translation: ja },
-      ko: { translation: ko },
-      zh: { translation: zh },
-      pt: { translation: pt },
-      ar: { translation: ar },
-      ru: { translation: ru },
-      id: { translation: id },
-      hi: { translation: hi },
-      tr: { translation: tr },
-      it: { translation: it },
-    },
     fallbackLng: 'de',
+    supportedLngs: LANGUAGES.map(l => l.code),
+    nonExplicitSupportedLngs: true,
+    load: 'languageOnly',            // 'de-DE' → Bundle 'de'
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
       lookupLocalStorage: 'tyd_lang',
     },
     interpolation: { escapeValue: false },
+    react: { useSuspense: false },   // Bundles laden asynchron; kein Suspense nötig
   })
+  .then(() => loadDateLocale(i18n.language))
+
+// Bei Sprachwechsel passende date-fns-Locale nachziehen. Das erneute Emit stößt
+// ein Re-Render der useTranslation-Komponenten an, sobald die Locale da ist;
+// beim zweiten Durchlauf ändert sich nichts mehr (loadDateLocale → false).
+i18n.on('languageChanged', lng => {
+  void loadDateLocale(lng).then(changed => {
+    if (changed) i18n.emit('languageChanged', lng)
+  })
+})
 
 // RTL-Richtung setzen
 export function applyDirection(lang: string) {
-  const dir = RTL_LANGUAGES.includes(lang) ? 'rtl' : 'ltr'
+  const dir = RTL_LANGUAGES.includes(lang.split('-')[0]) ? 'rtl' : 'ltr'
   document.documentElement.setAttribute('dir', dir)
   document.documentElement.setAttribute('lang', lang)
 }

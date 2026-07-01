@@ -8,8 +8,6 @@ import {
   isSameDay, isToday, startOfWeek, endOfWeek, isSameMonth, addDays,
   differenceInDays, parseISO,
 } from 'date-fns'
-import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
-import type { Locale } from 'date-fns'
 import {
   Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock,
   Moon, Pin, RotateCcw, Sun, Sunrise, Syringe, TrendingUp, X, XCircle,
@@ -17,14 +15,11 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
+import { getDateLocale } from '../i18n/dateLocales'
 import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, type ScheduleSegment } from '../lib/intakeSchedule'
 import { computeNextVialStock } from '../lib/peptideStock'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { GlassPanel, PageShell } from '../components/ui/DesignSystem'
-
-const DATE_LOCALES: Record<string, Locale> = {
-  de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
-}
 
 interface DoseLog {
   id: string
@@ -290,10 +285,10 @@ function IntakePeriodCarousel<T>({
 const SWIPE_THRESHOLD = 80
 
 export function Dashboard() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
-  const locale = DATE_LOCALES[i18n.language] ?? enUS
+  const locale = getDateLocale()
   const { user } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [logs, setLogs] = useState<DoseLog[]>([])

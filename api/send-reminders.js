@@ -1,24 +1,17 @@
-// api/send-reminders.js — Vercel Cron: every hour (0 * * * *)
+// api/send-reminders.js — Vercel Cron (stündlich, siehe vercel.json).
+// Fälligkeit = Feuerzeitpunkt liegt im Fenster (now - REMINDER_WINDOW_MIN, now];
+// das Fenster (Default 60) MUSS der Cron-Kadenz entsprechen — bei abweichender
+// Kadenz (z. B. Vercel Hobby: nur täglich) REMINDER_WINDOW_MIN anpassen oder
+// den Endpoint extern (Cron-Dienst + CRON_SECRET) im gewünschten Takt aufrufen.
 
 import { createRequire } from 'node:module'
+import {
+  dueReminders,
+  effectiveDoseForDay,
+  localParts,
+} from './_lib/reminderSchedule.js'
 
 const require = createRequire(import.meta.url)
-
-const SLOT_TIMES = { morgens: '08:00', mittags: '12:00', abends: '20:00' }
-
-function getLocalHHMM(date, timezone) {
-  try {
-    return date.toLocaleTimeString('en-US', {
-      timeZone: timezone, hour12: false, hour: '2-digit', minute: '2-digit',
-    }).slice(0, 5)
-  } catch {
-    return `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`
-  }
-}
-
-function isNow(slotTime, localHHMM) {
-  return slotTime.split(':')[0] === localHHMM.split(':')[0]
-}
 
 function sbHeaders(key) {
   return { 'Authorization': `Bearer ${key}`, 'apikey': key, 'Content-Type': 'application/json' }
@@ -29,6 +22,26 @@ async function sbGet(url, key) {
   const text = await r.text()
   if (!r.ok) throw new Error(`Supabase ${r.status}: ${text}`)
   return JSON.parse(text)
+}
+
+function fmtDose(dose, unit) {
+  const n = Math.round(dose * 100) / 100
+  return `${n} ${unit}`
+}
+
+function payloadFor(cycle, due, dose) {
+  const name = cycle.peptides?.name ?? cycle.name
+  const body =
+    due.offset === '1day' ? `${fmtDose(dose, cycle.unit)} · morgen um ${due.slotTime} Uhr` :
+    due.offset === '2h'   ? `${fmtDose(dose, cycle.unit)} · in 2 Stunden (${due.slotTime} Uhr)` :
+                            `${fmtDose(dose, cycle.unit)} · ${due.slotTime} Uhr – jetzt einnehmen`
+  return {
+    title: `💊 ${name}`,
+    body,
+    url: '/kalender',
+    // Datum + Slot + Offset im Tag → pro Erinnerung genau eine Notification
+    tag: `dose-${cycle.id}-${due.slotDateKey}-${due.slotTime.replace(':', '')}-${due.offset}`,
+  }
 }
 
 export default async function handler(req, res) {
@@ -55,39 +68,41 @@ export default async function handler(req, res) {
     )
 
     const base = SUPABASE_URL, key = SUPABASE_SERVICE_KEY, now = new Date()
+    const windowMin = Number(process.env.REMINDER_WINDOW_MIN ?? 60)
 
     const subs = await sbGet(`${base}/rest/v1/push_subscriptions?select=user_id,endpoint,subscription,timezone`, key)
     if (!subs?.length) return res.status(200).end(JSON.stringify({ sent: 0, info: 'no subscriptions' }))
 
     const userIds = [...new Set(subs.map(s => s.user_id))]
-    const localTimeMap = {}
+    const nowLocalMap = {}
     for (const sub of subs) {
-      if (!localTimeMap[sub.user_id]) localTimeMap[sub.user_id] = getLocalHHMM(now, sub.timezone ?? 'UTC')
+      if (!nowLocalMap[sub.user_id]) nowLocalMap[sub.user_id] = localParts(now, sub.timezone ?? 'UTC')
     }
 
     const userFilter = userIds.map(id => `"${id}"`).join(',')
     const cycles = await sbGet(
       `${base}/rest/v1/cycles?active=eq.true&user_id=in.(${userFilter})` +
-      `&select=id,user_id,name,dose,unit,intake_time,intake_time_custom,peptides(name)`,
+      `&select=id,user_id,name,dose,unit,frequency,x_days_interval,schedule_days,` +
+      `start_date,end_date,intake_time,intake_time_custom,reminder,schedule_history,peptides(name)`,
       key,
     )
     if (!cycles?.length) return res.status(200).end(JSON.stringify({ sent: 0, info: 'no active cycles' }))
 
+    const cycleFilter = cycles.map(c => `"${c.id}"`).join(',')
+    const escalations = await sbGet(
+      `${base}/rest/v1/dose_escalations?cycle_id=in.(${cycleFilter})` +
+      `&select=cycle_id,increase_amount,start_type,start_date,start_after_days`,
+      key,
+    ).catch(() => [])
+
     const dueMap = {}
     for (const cycle of cycles) {
-      const localHHMM = localTimeMap[cycle.user_id]
-      if (!localHHMM) continue
-      const slots = (cycle.intake_time ?? '').split(',').filter(Boolean)
-      const customs = (cycle.intake_time_custom ?? '').split(',')
-      for (let i = 0; i < slots.length; i++) {
-        const slotTime = slots[i] === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slots[i]] ?? '')
-        if (!slotTime || !isNow(slotTime, localHHMM)) continue
+      const nowLocal = nowLocalMap[cycle.user_id]
+      if (!nowLocal) continue
+      for (const due of dueReminders(cycle, nowLocal, windowMin)) {
+        const dose = effectiveDoseForDay(cycle, due.slotDateKey, escalations)
         if (!dueMap[cycle.user_id]) dueMap[cycle.user_id] = []
-        dueMap[cycle.user_id].push({
-          title: `💊 ${cycle.peptides?.name ?? cycle.name}`,
-          body:  `${cycle.dose} ${cycle.unit} · ${slotTime} Uhr – jetzt einnehmen`,
-          url: '/kalender', tag: `dose-${cycle.id}-${slotTime.replace(':', '')}`,
-        })
+        dueMap[cycle.user_id].push(payloadFor(cycle, due, dose))
       }
     }
 

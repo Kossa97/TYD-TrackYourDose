@@ -3,25 +3,25 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, AlertTriangle, ChevronDown, ChevronUp, FlaskConical } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   getPeptideBySlug,
-  CATEGORY_LABELS,
+  CATEGORY_LABEL_KEYS,
   CATEGORY_COLORS,
-  STATUS_LABELS,
+  STATUS_LABEL_KEYS,
   STATUS_STYLES,
   EVIDENCE_BAR_WIDTH,
-  EVIDENCE_LABELS,
-  getConfidenceLabel,
+  EVIDENCE_LABEL_KEYS,
+  getConfidenceLabelKey,
   getConfidenceStyle,
 } from '../services/peptideLibrary'
 import type { PeptideEntry, EvidenceLevel, ClinicalLevel } from '../services/peptideLibrary'
 
 // ─── Section Card ─────────────────────────────────────────────────────────────
 
-function SectionCard({ label, children, mono = false }: {
+function SectionCard({ label, children }: {
   label: string
   children: ReactNode
-  mono?: boolean
 }) {
   return (
     <div className="bg-[#0B1220] border border-white/[0.06] rounded-2xl p-5">
@@ -47,8 +47,9 @@ function EvidenceRow({
   value: EvidenceLevel | ClinicalLevel
   barColor: string
 }) {
+  const { t } = useTranslation()
   const width = EVIDENCE_BAR_WIDTH[value] ?? 'w-0'
-  const text  = EVIDENCE_LABELS[value]  ?? 'Keine'
+  const text  = t(EVIDENCE_LABEL_KEYS[value] ?? 'plib_ev_none')
 
   return (
     <div className="flex items-center gap-3">
@@ -95,6 +96,7 @@ function Skeleton() {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export function PeptideDetailPage() {
+  const { t }                     = useTranslation()
   const { slug }                  = useParams<{ slug: string }>()
   const navigate                  = useNavigate()
   const [peptide, setPeptide]     = useState<PeptideEntry | null>(null)
@@ -113,20 +115,20 @@ export function PeptideDetailPage() {
   if (!peptide) {
     return (
       <div className="text-center py-16">
-        <p className="text-slate-500 text-sm mb-4">Peptid nicht gefunden.</p>
+        <p className="text-slate-500 text-sm mb-4">{t('plib_not_found')}</p>
         <button
           type="button"
           onClick={() => navigate('/lab/library')}
           className="btn-secondary text-sm"
         >
-          ← Zurück zur Bibliothek
+          ← {t('plib_back_to_library')}
         </button>
       </div>
     )
   }
 
   const catColors  = CATEGORY_COLORS[peptide.category]
-  const confLabel  = getConfidenceLabel(peptide.evidence_score)
+  const confLabel  = t(getConfidenceLabelKey(peptide.evidence_score))
   const confStyle  = getConfidenceStyle(peptide.evidence_score)
   const pubmedUrl  = peptide.pubmed_query
     ? `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(peptide.pubmed_query)}`
@@ -142,7 +144,7 @@ export function PeptideDetailPage() {
         className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
       >
         <ArrowLeft size={12} />
-        <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Bibliothek</span>
+        <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{t('plib_breadcrumb_library')}</span>
       </button>
 
       {/* Header */}
@@ -152,13 +154,13 @@ export function PeptideDetailPage() {
             className={`text-[0.56rem] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#0B1220] border border-white/[0.08] ${catColors.text}`}
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
-            {CATEGORY_LABELS[peptide.category]}
+            {t(CATEGORY_LABEL_KEYS[peptide.category])}
           </span>
           <span
             className={`text-[0.56rem] font-black uppercase px-2 py-0.5 rounded-md ${STATUS_STYLES[peptide.research_status]}`}
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
-            {STATUS_LABELS[peptide.research_status]}
+            {t(STATUS_LABEL_KEYS[peptide.research_status])}
           </span>
           <span
             className={`text-[0.56rem] font-black uppercase px-2 py-0.5 rounded-md border ${confStyle}`}
@@ -189,18 +191,18 @@ export function PeptideDetailPage() {
       <div className="flex items-start gap-2.5 bg-amber-500/5 border border-amber-500/15 rounded-xl px-4 py-3">
         <AlertTriangle size={13} className="text-amber-400/60 shrink-0 mt-0.5" />
         <p className="text-xs text-amber-300/55 leading-relaxed">
-          Forschungsdaten. Keine Therapieempfehlung. Dosierungen stammen aus publizierten Studienprotokollen — nicht aus klinischen Leitlinien.
+          {t('plib_detail_disclaimer')}
         </p>
       </div>
 
       {/* Mechanism */}
-      <SectionCard label="Wirkmechanismus">
+      <SectionCard label={t('plib_mechanism')}>
         <p className="text-sm text-slate-300 leading-relaxed">{peptide.mechanism}</p>
       </SectionCard>
 
       {/* Research Areas (Benefits as pills) */}
       {peptide.benefits.length > 0 && (
-        <SectionCard label="Forschungsbereiche">
+        <SectionCard label={t('plib_research_areas')}>
           <div className="flex flex-wrap gap-2">
             {peptide.benefits.map((b, i) => (
               <span
@@ -215,20 +217,20 @@ export function PeptideDetailPage() {
       )}
 
       {/* Evidence Strength */}
-      <SectionCard label="Evidenzlage">
+      <SectionCard label={t('plib_evidence')}>
         <div className="space-y-3 mb-4">
           <EvidenceRow
-            label="Humane Daten"
+            label={t('plib_ev_human_long')}
             value={peptide.evidence_human}
             barColor="bg-emerald-500"
           />
           <EvidenceRow
-            label="Tierstudien"
+            label={t('plib_ev_animal_long')}
             value={peptide.evidence_animal}
             barColor="bg-amber-500"
           />
           <EvidenceRow
-            label="Klinische Daten"
+            label={t('plib_ev_clinical_long')}
             value={peptide.evidence_clinical}
             barColor="bg-violet-500"
           />
@@ -241,7 +243,7 @@ export function PeptideDetailPage() {
               className="text-[0.55rem] uppercase tracking-widest text-slate-600 mb-1"
               style={{ fontFamily: "'IBM Plex Mono', monospace" }}
             >
-              Gesamtscore
+              {t('plib_total_score')}
             </p>
             <div className="flex items-center gap-2">
               {Array.from({ length: 10 }).map((_, i) => (
@@ -265,14 +267,14 @@ export function PeptideDetailPage() {
 
       {/* Study Dosages */}
       {peptide.research_dosage && (
-        <SectionCard label="Dosierungen aus publizierten Studien">
+        <SectionCard label={t('plib_study_dosages')}>
           <div className="flex items-start gap-2 mb-3">
             <AlertTriangle size={11} className="text-slate-600 shrink-0 mt-0.5" />
             <p
               className="text-[0.58rem] text-slate-700"
               style={{ fontFamily: "'IBM Plex Mono', monospace" }}
             >
-              Nicht „empfohlene Dosierung" — Angaben aus Studienprotokollen
+              {t('plib_dosage_note')}
             </p>
           </div>
           <p className="text-sm text-slate-300 leading-relaxed">{peptide.research_dosage}</p>
@@ -281,7 +283,7 @@ export function PeptideDetailPage() {
 
       {/* Administration */}
       {peptide.administration.length > 0 && (
-        <SectionCard label="Verabreichungswege (in Studien)">
+        <SectionCard label={t('plib_administration')}>
           <div className="flex flex-wrap gap-2">
             {peptide.administration.map((route, i) => (
               <span
@@ -299,7 +301,7 @@ export function PeptideDetailPage() {
                 className="text-[0.55rem] uppercase tracking-widest text-slate-600"
                 style={{ fontFamily: "'IBM Plex Mono', monospace" }}
               >
-                Halbwertszeit
+                {t('plib_half_life')}
               </span>
               <span className="text-xs text-slate-400">{peptide.half_life}</span>
             </div>
@@ -309,7 +311,7 @@ export function PeptideDetailPage() {
 
       {/* Side Effects */}
       {peptide.side_effects.length > 0 && (
-        <SectionCard label="Berichtete Nebenwirkungen">
+        <SectionCard label={t('plib_side_effects')}>
           <ul className="space-y-2">
             {peptide.side_effects.map((s, i) => (
               <li key={i} className="flex gap-2.5 text-sm text-slate-400 leading-relaxed">
@@ -323,7 +325,7 @@ export function PeptideDetailPage() {
 
       {/* Contraindications */}
       {peptide.contraindications.length > 0 && (
-        <SectionCard label="Kontraindikationen & Hinweise">
+        <SectionCard label={t('plib_contraindications')}>
           <ul className="space-y-2">
             {peptide.contraindications.map((c, i) => (
               <li key={i} className="flex gap-2.5 text-sm text-slate-400 leading-relaxed">
@@ -337,7 +339,7 @@ export function PeptideDetailPage() {
 
       {/* Research Gaps */}
       {peptide.research_gaps.length > 0 && (
-        <SectionCard label="Wissenslücken & Limitierungen">
+        <SectionCard label={t('plib_research_gaps')}>
           <ul className="space-y-2">
             {peptide.research_gaps.map((gap, i) => (
               <li key={i} className="flex gap-2.5 text-sm text-slate-400 leading-relaxed">
@@ -360,7 +362,7 @@ export function PeptideDetailPage() {
             className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-slate-600"
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
-            Vollständiger Wirkmechanismus
+            {t('plib_full_mechanism')}
           </span>
           {abstractOpen
             ? <ChevronUp size={14} className="text-slate-600" />
@@ -382,7 +384,7 @@ export function PeptideDetailPage() {
         className="btn-primary w-full flex items-center justify-center gap-2"
       >
         <FlaskConical size={14} />
-        Studien auf PubMed suchen
+        {t('plib_pubmed_cta')}
         <ExternalLink size={13} className="opacity-60" />
       </a>
 
@@ -391,7 +393,7 @@ export function PeptideDetailPage() {
         className="text-[0.55rem] text-slate-700 text-center leading-relaxed pt-2"
         style={{ fontFamily: "'IBM Plex Mono', monospace" }}
       >
-        KEIN MEDIZINISCHER RAT · NUR FORSCHUNGSDATEN · CONSULT A PROFESSIONAL
+        {t('plib_bottom_disclaimer')}
       </p>
     </div>
   )

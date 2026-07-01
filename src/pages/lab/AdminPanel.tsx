@@ -3,13 +3,14 @@
 
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Sparkles, Plus, RefreshCw, Save, X, Loader2,
   CheckCircle, AlertTriangle, Activity, Trash2,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
-import { getAllPeptides, STATUS_LABELS, CATEGORY_LABELS } from '../../services/peptideLibrary'
+import { getAllPeptides, STATUS_LABEL_KEYS, CATEGORY_LABEL_KEYS } from '../../services/peptideLibrary'
 import type { PeptideEntry } from '../../services/peptideLibrary'
 
 type Tab   = 'update' | 'create' | 'pk'
@@ -162,6 +163,7 @@ const inp = "w-full bg-[#111827] border border-white/10 rounded-xl px-4 py-2.5 t
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function AdminPanel() {
+  const { t }      = useTranslation()
   const navigate   = useNavigate()
   const { user }   = useAuth()
 
@@ -391,8 +393,8 @@ export function AdminPanel() {
             </select>
             {selected && (
               <div className="text-xs text-slate-500 space-y-1 mb-4">
-                <p>Kategorie: <span className="text-slate-400">{CATEGORY_LABELS[selected.category]}</span></p>
-                <p>Status: <span className="text-slate-400">{STATUS_LABELS[selected.research_status]}</span></p>
+                <p>Kategorie: <span className="text-slate-400">{t(CATEGORY_LABEL_KEYS[selected.category])}</span></p>
+                <p>Status: <span className="text-slate-400">{t(STATUS_LABEL_KEYS[selected.research_status])}</span></p>
                 <p>Evidence Score: <span className="text-slate-400">{selected.evidence_score}/10</span></p>
               </div>
             )}

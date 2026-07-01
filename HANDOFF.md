@@ -11,7 +11,14 @@
 
 **Peptipedia** (evidenzbasierte Peptid-Datenbank) + **Studies** (PubMed-Forschungsmodul) komplett umgesetzt und auf Home-Screen integriert.
 
-Neu in dieser Session (23. Mai 2026):
+Neu in dieser Session (1. Juli 2026) — **Optimierungspaket 1**:
+- **Push-Reminder repariert**: `api/send-reminders.js` prüft jetzt den echten Einnahme-Plan (Frequenz, Wochentage, Alle-X-Tage, start/end_date, schedule_history) statt nur die Uhrzeit — keine Pings mehr an Off-Tagen. Erinnerungs-Offsets (`on_time`, `2h`, `1day`) werden ausgewertet, Custom-Zeiten minutengenau im Cron-Fenster gematcht, Dosis im Text berücksichtigt Dosis-Anpassungen. Logik liegt testbar in `api/_lib/reminderSchedule.js` (28 Vitest-Tests). Cron in `vercel.json` von täglich 08:00 UTC auf **stündlich** gestellt — ⚠️ Vercel-Hobby-Plan erlaubt nur tägliche Crons; falls Deploy meckert: Schedule zurückstellen und `REMINDER_WINDOW_MIN` anpassen oder externen Cron-Dienst mit `CRON_SECRET` stündlich auf den Endpoint zeigen lassen.
+- **RLS-Härtung**: `supabase-rls-hardening.sql` — ⚠️ **einmalig im Supabase SQL Editor ausführen!** Vorher konnte JEDER (auch anonym) `pk_profiles` beschreiben und jeder eingeloggte User `peptide_library`. Jetzt schreiben nur Admins (`profiles.is_admin`, wie im Admin-Panel). Danach eigenen Account per UPDATE-Statement (unten im SQL-File) zum Admin machen.
+- **API-Key umbenannt**: `api/peptide-ai.js` liest jetzt `ANTHROPIC_API_KEY` (Fallback auf `VITE_ANTHROPIC_KEY`). ⚠️ In den Vercel Environment Variables umbenennen — `VITE_`-Variablen landen im Client-Bundle, sobald sie referenziert werden.
+- **Bundle 60 % kleiner**: Haupt-Bundle 870 kB → 357 kB (gzip 277 → 114 kB), FAQ-Chunk 310 kB → 8 kB. Locale-JSONs, FAQ-Bundles und date-fns-Locales laden jetzt lazy pro Sprache (`src/i18n/index.ts` Lazy-Backend, `src/i18n/dateLocales.ts`, `main.tsx` wartet auf `i18nReady`). Ungenutzte Dependencies entfernt (three, @react-three/fiber, @react-three/drei, @types/three — 50 Pakete).
+- **Peptipedia i18n fertig**: Alle Labels in `PeptideLibrary.tsx`, `PeptideCard.tsx`, `PeptideDetailPage.tsx`, `AdminPanel.tsx` laufen über `t()`; `peptideLibrary.ts` exportiert Key-Maps (`CATEGORY_LABEL_KEYS` etc.). 70 neue `plib_*`-Keys in allen 14 Sprachen (`scripts/add-peptipedia-i18n.mjs`).
+
+Neu in Session davor (23. Mai 2026):
 - **Home-/Design-System-Update**: Home-Dashboard modernisiert; gemeinsame Dashboard-Komponenten eingeführt und auf Rechner + Blutwerte angewendet.
 - **Protokoll-Redesign** (/protokoll): Biohacking-Dashboard mit KPI-Streifen (Adherence, Gewicht Δ, IGF-1 Δ, CRP Δ), 6 Preset-Chips, freie Marker-Toggles, Chart 1 (% Veränderung ab Start, alle Marker normalisiert auf einer Achse, Glow-Linien + Gradient-Fills + Zyklusphasen-Hintergründe + Bluttest-Ereignislinien + Hover-Tooltip), Chart 2 (Small Multiples — ein Mini-Chart je aktivem Marker mit echter Einheit + Normalbereich-Band, synchronisierter Hover), Gradient-Adherence-Balken je Peptid
 - **Health-Seite** (/health): BMI, Körperfett-Schätzung (Deurenberg-Formel), Idealgewicht (Devine-Formel), Körperprofil aus Profil-Daten (Alter, Geschlecht, Größe)
@@ -484,14 +491,13 @@ Onboarding-CSS → #ob-callout, .ob-highlight-ring, .ob-scrim-pane,
 | Thema | Detail |
 |---|---|
 | **Injektionsstellen DB** | Aktuell Mock-Daten — Supabase-Tabelle `injection_sites` noch nicht erstellt |
-| **Push-Notifications** | Nur `setTimeout` (App muss offen sein) |
+| **Push-Notifications** | Web-Push via Vercel Cron (stündlich); zusätzlich lokale `setTimeout`-Notification beim Zyklus-Speichern |
 | **FAQ aktualisieren** | `en.categories.ts` → `npm run faq:export` → `npm run faq:generate` |
 | **Onboarding-Texte** | Via `scripts/update-ob-texts.cjs` oder direkt in `locales/*.json` |
 | **IU-Einheit** | IU = mcg (keine Umrechnung) |
 | **Offline** | Keine PWA-Offline-Unterstützung |
 | **Registrierung** | Offen für alle (in Supabase einschränkbar) |
 | **useEffect-Deps** | Lint-Warnungen in mehreren Dateien, kein Crash |
-| **⚠️ Peptipedia nicht i18n-fertig** | `PeptideLibrary.tsx`, `PeptideCard.tsx`, `PeptideDetailPage.tsx` und `peptideLibrary.ts` (CATEGORY_LABELS, STATUS_LABELS, EVIDENCE_LABELS, getConfidenceLabel) haben noch hardcoded deutsche Strings — Seite bleibt auf Deutsch bei anderen Sprachen. Nächste Aufgabe: alle durch `t()`-Calls ersetzen + Keys in alle 14 Locales eintragen |
 | **⚠️ Protokoll-Redesign nicht genehmigt** | Der neue Protokoll-Stand (Biohacking-Dashboard mit 2 Charts, KPI-Strip etc.) wurde technisch umgesetzt und deployed, aber dem User hat das Ergebnis nicht gefallen. Ggf. überarbeiten oder zurückrollen. |
 | **Injektionsstellen DB** | Aktuell Mock-Daten — Supabase-Tabelle `injection_sites` noch nicht erstellt |
 
@@ -524,7 +530,7 @@ peptide_library-Felder:
 
 ### Admin-Panel (/lab/admin)
 - Vercel Serverless Function: `api/peptide-ai.js` (plain JS, ES module)
-- Anthropic API Key als `VITE_ANTHROPIC_KEY` in Vercel Environment Variables
+- Anthropic API Key als `ANTHROPIC_API_KEY` in Vercel Environment Variables (Alt-Name `VITE_ANTHROPIC_KEY` wird noch als Fallback gelesen)
 - Modell: `claude-haiku-4-5` (stand 2026 — frühere Claude-3-Modelle deprecated)
 - Action `create`: Tippfehler korrigieren, vollständiges Profil generieren + tags
 - Action `update`: bestehendes Profil verbessern + tags aktualisieren

@@ -1,14 +1,15 @@
 // src/pages/lab/PeptideCard.tsx
 import { ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { PeptideEntry } from '../../services/peptideLibrary'
 import {
-  CATEGORY_LABELS,
+  CATEGORY_LABEL_KEYS,
   CATEGORY_COLORS,
-  STATUS_LABELS,
+  STATUS_LABEL_KEYS,
   STATUS_STYLES,
   EVIDENCE_BAR_WIDTH,
-  EVIDENCE_LABELS,
+  EVIDENCE_LABEL_KEYS,
   getConfidenceStyle,
 } from '../../services/peptideLibrary'
 
@@ -17,6 +18,7 @@ interface PeptideCardProps {
 }
 
 export function PeptideCard({ peptide }: PeptideCardProps) {
+  const { t }       = useTranslation()
   const navigate    = useNavigate()
   const catColors   = CATEGORY_COLORS[peptide.category]
   const confStyle   = getConfidenceStyle(peptide.evidence_score)
@@ -45,7 +47,7 @@ export function PeptideCard({ peptide }: PeptideCardProps) {
             className={`text-[0.55rem] font-black uppercase tracking-[0.18em] ${catColors.text}`}
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
-            {CATEGORY_LABELS[peptide.category]}
+            {t(CATEGORY_LABEL_KEYS[peptide.category])}
           </span>
           <div className="flex items-center gap-1.5">
             <span
@@ -83,17 +85,17 @@ export function PeptideCard({ peptide }: PeptideCardProps) {
         {/* Mini evidence bars */}
         <div className="space-y-1.5 mb-4">
           <MiniEvidenceBar
-            label="Human"
+            label={t('plib_ev_human_short')}
             value={peptide.evidence_human}
             color="bg-emerald-500"
           />
           <MiniEvidenceBar
-            label="Tier"
+            label={t('plib_ev_animal_short')}
             value={peptide.evidence_animal}
             color="bg-amber-500"
           />
           <MiniEvidenceBar
-            label="Klinisch"
+            label={t('plib_ev_clinical_short')}
             value={peptide.evidence_clinical}
             color="bg-violet-500"
           />
@@ -117,12 +119,12 @@ export function PeptideCard({ peptide }: PeptideCardProps) {
             className={`text-[0.56rem] font-black uppercase px-2 py-0.5 rounded-md ${STATUS_STYLES[peptide.research_status]}`}
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
-            {STATUS_LABELS[peptide.research_status]}
+            {t(STATUS_LABEL_KEYS[peptide.research_status])}
           </span>
           <span
             className="flex items-center gap-1 text-xs text-slate-500 group-hover:text-sky-400 transition-colors duration-200"
           >
-            Profil
+            {t('plib_profile')}
             <ArrowRight
               size={12}
               className="group-hover:translate-x-0.5 transition-transform duration-200"
@@ -145,8 +147,9 @@ function MiniEvidenceBar({
   value: string
   color: string
 }) {
+  const { t } = useTranslation()
   const width = EVIDENCE_BAR_WIDTH[value as keyof typeof EVIDENCE_BAR_WIDTH] ?? 'w-0'
-  const text  = EVIDENCE_LABELS[value as keyof typeof EVIDENCE_LABELS] ?? 'Keine'
+  const text  = t(EVIDENCE_LABEL_KEYS[value as keyof typeof EVIDENCE_LABEL_KEYS] ?? 'plib_ev_none')
 
   return (
     <div className="flex items-center gap-2">

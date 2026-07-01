@@ -4,13 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { Plus, Trash2, BookHeart, Zap, AlertTriangle, Clock, Search } from 'lucide-react'
 import { format } from 'date-fns'
-import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
-import type { Locale } from 'date-fns'
 import { useTranslation } from 'react-i18next'
-
-const DATE_LOCALES: Record<string, Locale> = {
-  de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
-}
+import { getDateLocale } from '../i18n/dateLocales'
 
 interface Effect {
   id: string
@@ -53,8 +48,8 @@ const DURATION_DE_TO_KEY: Record<string, string> = {
 
 export function Tagebuch() {
   const { user } = useAuth()
-  const { t, i18n } = useTranslation()
-  const locale = DATE_LOCALES[i18n.language] ?? enUS
+  const { t } = useTranslation()
+  const locale = getDateLocale()
 
   const severityLabel = (n: number) =>
     [t('sehr_leicht'), t('leicht'), t('mittel'), t('stark'), t('sehr_stark')][n - 1]

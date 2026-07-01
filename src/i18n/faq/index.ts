@@ -1,38 +1,14 @@
 import type { FaqBundle } from './types'
-import de from './locales/de'
-import en from './locales/en'
-import es from './locales/es'
-import fr from './locales/fr'
-import it from './locales/it'
-import pt from './locales/pt'
-import ru from './locales/ru'
-import tr from './locales/tr'
-import ar from './locales/ar'
-import hi from './locales/hi'
-import id from './locales/id'
-import zh from './locales/zh'
-import ja from './locales/ja'
-import ko from './locales/ko'
 
-const FAQ_BUNDLES: Record<string, FaqBundle> = {
-  de,
-  en,
-  es,
-  fr,
-  it,
-  pt,
-  ru,
-  tr,
-  ar,
-  hi,
-  id,
-  zh,
-  ja,
-  ko,
-}
+// FAQ-Bundles als Lazy-Chunks (Pattern '??' = genau die 2-Buchstaben-Codes,
+// schließt die *.categories.ts-Dateien aus). Vorher lagen alle 14 Bundles
+// (~300 kB) zusammen im FAQ-Chunk; jetzt lädt nur die aktive Sprache.
+const FAQ_LOADERS = import.meta.glob<{ default: FaqBundle }>('./locales/??.ts')
 
-/** Resolves FAQ copy for the active UI language (matches `src/i18n` LANGUAGES). */
-export function getFaqBundle(lang: string | undefined): FaqBundle {
+/** Lädt das FAQ-Bundle der aktiven UI-Sprache (Fallback: en). */
+export async function loadFaqBundle(lang: string | undefined): Promise<FaqBundle> {
   const code = (lang || 'de').split('-')[0].toLowerCase()
-  return FAQ_BUNDLES[code] ?? en
+  const loader = FAQ_LOADERS[`./locales/${code}.ts`] ?? FAQ_LOADERS['./locales/en.ts']
+  const mod = await loader()
+  return mod.default
 }

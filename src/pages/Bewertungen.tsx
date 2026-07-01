@@ -4,13 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { Plus, Trash2, Star, Pencil, Search, Smile, Meh, Frown, type LucideIcon } from 'lucide-react'
 import { format } from 'date-fns'
-import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
-import type { Locale } from 'date-fns'
 import { useTranslation } from 'react-i18next'
-
-const DATE_LOCALES: Record<string, Locale> = {
-  de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
-}
+import { getDateLocale } from '../i18n/dateLocales'
 
 interface Review {
   id: string
@@ -75,8 +70,8 @@ const emptyForm = (firstPeptideId = ''): Form => ({
 
 export function Bewertungen() {
   const { user } = useAuth()
-  const { t, i18n } = useTranslation()
-  const locale = DATE_LOCALES[i18n.language] ?? enUS
+  const { t } = useTranslation()
+  const locale = getDateLocale()
   const [reviews, setReviews]   = useState<Review[]>([])
   const [peptides, setPeptides] = useState<Peptide[]>([])
   const [search, setSearch]   = useState('')

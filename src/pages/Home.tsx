@@ -23,8 +23,7 @@ import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDe
 import { confirmIntakeDoseLog } from '../lib/injectionPersistence'
 import toast from 'react-hot-toast'
 import { format, parseISO, startOfDay } from 'date-fns'
-import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
-import type { Locale } from 'date-fns'
+import { getDateLocale } from '../i18n/dateLocales'
 
 const SLOT_TIMES: Record<string, string> = { morgens: '08:00', mittags: '12:00', abends: '20:00' }
 
@@ -45,10 +44,6 @@ const PEPTIDE_STUDIES = [
   { icon: Bone,         title: 'BPC-157 fördert Knochenregeneration nach Fraktur – Tierstudie', source: 'Bone · 2024' },
 ] as const
 const TODAY_STUDY = PEPTIDE_STUDIES[Math.floor(Date.now() / 86_400_000) % PEPTIDE_STUDIES.length]
-
-const DATE_LOCALES: Record<string, Locale> = {
-  de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
-}
 
 interface TileDef {
   icon: LucideIcon
@@ -424,8 +419,8 @@ export function Home() {
     load()
   }, [user, homeReloadKey])
 
-  const { t, i18n } = useTranslation()
-  const locale = DATE_LOCALES[i18n.language] ?? enUS
+  const { t } = useTranslation()
+  const locale = getDateLocale()
   const hour    = new Date().getHours()
   const greeting = hour < 12 ? t('greeting_morning') : hour < 18 ? t('greeting_day') : t('greeting_evening')
   const dateStr  = format(new Date(), "EEEE, d. MMMM", { locale })

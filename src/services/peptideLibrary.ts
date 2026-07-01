@@ -52,13 +52,14 @@ export interface PeptideEntry {
 
 // ─── Display helpers ──────────────────────────────────────────────────────────
 
-export const CATEGORY_LABELS: Record<PeptideCategory, string> = {
-  heilung:          'Heilung & Regeneration',
-  wachstumshormon:  'Wachstumshormon',
-  nootropikum:      'Nootropikum',
-  stoffwechsel:     'Stoffwechsel',
-  anti_aging:       'Anti-Aging',
-  sexualgesundheit: 'Sexualgesundheit',
+// i18n-Keys statt fester Strings — Komponenten übersetzen via t(CATEGORY_LABEL_KEYS[cat])
+export const CATEGORY_LABEL_KEYS: Record<PeptideCategory, string> = {
+  heilung:          'plib_cat_heilung',
+  wachstumshormon:  'plib_cat_wachstumshormon',
+  nootropikum:      'plib_cat_nootropikum',
+  stoffwechsel:     'plib_cat_stoffwechsel',
+  anti_aging:       'plib_cat_anti_aging',
+  sexualgesundheit: 'plib_cat_sexualgesundheit',
 }
 
 export const CATEGORY_COLORS: Record<PeptideCategory, { text: string; topBorder: string; scoreDot: string }> = {
@@ -70,11 +71,11 @@ export const CATEGORY_COLORS: Record<PeptideCategory, { text: string; topBorder:
   sexualgesundheit: { text: 'text-rose-300',    topBorder: 'border-t-rose-500',    scoreDot: 'bg-rose-400' },
 }
 
-export const STATUS_LABELS: Record<ResearchStatus, string> = {
-  preclinical: 'Präklinisch',
-  phase_1:     'Phase 1',
-  phase_2:     'Phase 2',
-  approved:    'Zugelassen',
+export const STATUS_LABEL_KEYS: Record<ResearchStatus, string> = {
+  preclinical: 'plib_status_preclinical',
+  phase_1:     'plib_status_phase_1',
+  phase_2:     'plib_status_phase_2',
+  approved:    'plib_status_approved',
 }
 
 export const STATUS_STYLES: Record<ResearchStatus, string> = {
@@ -94,22 +95,22 @@ export const EVIDENCE_BAR_WIDTH: Record<EvidenceLevel | ClinicalLevel, string> =
   extensive: 'w-full',
 }
 
-// Human-readable evidence labels
-export const EVIDENCE_LABELS: Record<EvidenceLevel | ClinicalLevel, string> = {
-  none:      'Keine',
-  limited:   'Begrenzt',
-  sparse:    'Gering',
-  moderate:  'Moderat',
-  strong:    'Stark',
-  extensive: 'Umfangreich',
+// Human-readable evidence labels (i18n keys)
+export const EVIDENCE_LABEL_KEYS: Record<EvidenceLevel | ClinicalLevel, string> = {
+  none:      'plib_ev_none',
+  limited:   'plib_ev_limited',
+  sparse:    'plib_ev_sparse',
+  moderate:  'plib_ev_moderate',
+  strong:    'plib_ev_strong',
+  extensive: 'plib_ev_extensive',
 }
 
-// Confidence label derived from evidence_score
-export function getConfidenceLabel(score: number): string {
-  if (score >= 8) return 'Hohe Konfidenz'
-  if (score >= 5) return 'Moderate Konfidenz'
-  if (score >= 3) return 'Niedrige Konfidenz'
-  return 'Sehr begrenzte Evidenz'
+// Confidence label key derived from evidence_score
+export function getConfidenceLabelKey(score: number): string {
+  if (score >= 8) return 'plib_conf_high'
+  if (score >= 5) return 'plib_conf_moderate'
+  if (score >= 3) return 'plib_conf_low'
+  return 'plib_conf_very_limited'
 }
 
 export function getConfidenceStyle(score: number): string {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ChevronDown, ChevronUp, Search,
@@ -6,8 +6,8 @@ import {
   TrendingUp, Bell, HelpCircle, Shield, Calculator, Package,
   Syringe, Archive, FileText,
 } from 'lucide-react'
-import { getFaqBundle } from '../i18n/faq'
-import type { FaqCategory, FaqItem } from '../i18n/faq/types'
+import { loadFaqBundle } from '../i18n/faq'
+import type { FaqBundle, FaqCategory, FaqItem } from '../i18n/faq/types'
 
 interface QA { q: string; a: string | string[] }
 interface Category extends FaqCategory {
@@ -89,8 +89,17 @@ export function FAQ() {
   const [search, setSearch] = useState('')
   const [openCats, setOpenCats] = useState<Set<string>>(new Set(['start']))
 
-  const bundle = useMemo(() => getFaqBundle(i18n.language), [i18n.language])
-  const CATEGORIES = useMemo(() => toDisplayCategories(bundle.categories), [bundle])
+  const [bundle, setBundle] = useState<FaqBundle | null>(null)
+  useEffect(() => {
+    let alive = true
+    loadFaqBundle(i18n.language).then(b => { if (alive) setBundle(b) })
+    return () => { alive = false }
+  }, [i18n.language])
+
+  const CATEGORIES = useMemo(
+    () => (bundle ? toDisplayCategories(bundle.categories) : []),
+    [bundle],
+  )
 
   const toggleCat = (id: string) =>
     setOpenCats(prev => {
@@ -110,6 +119,14 @@ export function FAQ() {
     : CATEGORIES
 
   const totalQ = CATEGORIES.reduce((s, c) => s + c.items.length, 0)
+
+  if (!bundle) {
+    return (
+      <div className="flex items-center justify-center py-24 text-sm text-slate-500">
+        …
+      </div>
+    )
+  }
   const { ui } = bundle
 
   return (

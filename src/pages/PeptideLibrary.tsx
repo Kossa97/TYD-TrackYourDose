@@ -2,11 +2,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, FlaskConical, Search, Settings, SlidersHorizontal, X } from 'lucide-react'
-import {
-  getAllPeptides,
-  CATEGORY_LABELS,
-  STATUS_LABELS,
-} from '../services/peptideLibrary'
+import { useTranslation } from 'react-i18next'
+import { getAllPeptides } from '../services/peptideLibrary'
 import type { PeptideEntry, PeptideCategory, ResearchStatus } from '../services/peptideLibrary'
 import { PeptideCard, PeptideCardSkeleton } from './lab/PeptideCard'
 
@@ -28,21 +25,21 @@ const DEFAULT_FILTERS: Filters = {
   tag:           '',
 }
 
-const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
-  { value: 'sort_order',  label: 'Standard' },
-  { value: 'score_desc',  label: 'Evidenz ↓' },
-  { value: 'score_asc',   label: 'Evidenz ↑' },
-  { value: 'name_asc',    label: 'Name A–Z' },
-  { value: 'name_desc',   label: 'Name Z–A' },
+const SORT_OPTIONS: Array<{ value: SortKey; labelKey: string }> = [
+  { value: 'sort_order',  labelKey: 'plib_sort_default' },
+  { value: 'score_desc',  labelKey: 'plib_sort_evidence_desc' },
+  { value: 'score_asc',   labelKey: 'plib_sort_evidence_asc' },
+  { value: 'name_asc',    labelKey: 'plib_sort_name_asc' },
+  { value: 'name_desc',   labelKey: 'plib_sort_name_desc' },
 ]
 
-const CATEGORIES: Array<{ value: PeptideCategory | 'all'; label: string }> = [
-  { value: 'all',              label: 'Alle' },
-  { value: 'heilung',          label: 'Heilung' },
-  { value: 'wachstumshormon',  label: 'Wachstumshormon' },
-  { value: 'stoffwechsel',     label: 'Stoffwechsel' },
-  { value: 'nootropikum',      label: 'Nootropikum' },
-  { value: 'anti_aging',       label: 'Anti-Aging' },
+const CATEGORIES: Array<{ value: PeptideCategory | 'all'; labelKey: string }> = [
+  { value: 'all',              labelKey: 'plib_all' },
+  { value: 'heilung',          labelKey: 'plib_cat_s_heilung' },
+  { value: 'wachstumshormon',  labelKey: 'plib_cat_wachstumshormon' },
+  { value: 'stoffwechsel',     labelKey: 'plib_cat_stoffwechsel' },
+  { value: 'nootropikum',      labelKey: 'plib_cat_nootropikum' },
+  { value: 'anti_aging',       labelKey: 'plib_cat_anti_aging' },
 ]
 
 // ─── Pill Button ─────────────────────────────────────────────────────────────
@@ -68,6 +65,7 @@ function Pill({
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 export function PeptideLibrary() {
+  const { t }                         = useTranslation()
   const navigate                      = useNavigate()
   const [peptides, setPeptides]       = useState<PeptideEntry[]>([])
   const [loading, setLoading]         = useState(true)
@@ -80,7 +78,7 @@ export function PeptideLibrary() {
   useEffect(() => {
     getAllPeptides()
       .then(setPeptides)
-      .catch(err => setError(err instanceof Error ? err.message : 'Ladefehler'))
+      .catch(err => setError(err instanceof Error && err.message ? err.message : ''))
       .finally(() => setLoading(false))
   }, [])
 
@@ -175,17 +173,17 @@ export function PeptideLibrary() {
           </div>
 
           <p className="text-[0.58rem] font-black uppercase tracking-[0.2em] text-sky-400/65 mb-2"
-            style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Forschungsdatenbank</p>
+            style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{t('plib_hero_kicker')}</p>
           <h1 className="text-3xl font-black text-white mb-1 leading-tight"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Peptipedia</h1>
-          <p className="text-sm text-slate-400 mb-5">Evidenzbasierte Forschungsprofile. Kein medizinischer Rat.</p>
+          <p className="text-sm text-slate-400 mb-5">{t('plib_hero_sub')}</p>
 
           {/* Search + Filter toggle */}
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
               <input value={query} onChange={e => setQuery(e.target.value)}
-                placeholder="Peptid oder Tag suchen…"
+                placeholder={t('plib_search_placeholder')}
                 className="w-full bg-[#0B1220] border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 focus:border-sky-500/50 focus:shadow-[0_0_20px_rgba(0,204,245,0.08)]" />
             </div>
             <button type="button" onClick={() => setShowFilters(f => !f)}
@@ -208,11 +206,11 @@ export function PeptideLibrary() {
           {/* Sort */}
           <div>
             <p className="text-[0.52rem] uppercase tracking-widest text-slate-600 mb-2"
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Sortieren</p>
+              style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{t('plib_sort_label')}</p>
             <div className="flex flex-wrap gap-2">
               {SORT_OPTIONS.map(o => (
                 <Pill key={o.value} active={sort === o.value} onClick={() => setSort(o.value)}>
-                  {o.label}
+                  {t(o.labelKey)}
                 </Pill>
               ))}
             </div>
@@ -221,12 +219,12 @@ export function PeptideLibrary() {
           {/* Category */}
           <div>
             <p className="text-[0.52rem] uppercase tracking-widest text-slate-600 mb-2"
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Kategorie</p>
+              style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{t('plib_category_label')}</p>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map(c => (
                 <Pill key={c.value} active={filters.category === c.value}
                   onClick={() => setFilters(f => ({ ...f, category: c.value }))}>
-                  {c.label}
+                  {t(c.labelKey)}
                 </Pill>
               ))}
             </div>
@@ -235,12 +233,12 @@ export function PeptideLibrary() {
           {/* Research Status */}
           <div>
             <p className="text-[0.52rem] uppercase tracking-widest text-slate-600 mb-2"
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Forschungsstatus</p>
+              style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{t('plib_status_label')}</p>
             <div className="flex flex-wrap gap-2">
-              {([['all', 'Alle'], ['preclinical', 'Präklinisch'], ['phase_1', 'Phase 1'], ['phase_2', 'Phase 2'], ['approved', 'Zugelassen']] as const).map(([val, label]) => (
+              {([['all', 'plib_all'], ['preclinical', 'plib_status_preclinical'], ['phase_1', 'plib_status_phase_1'], ['phase_2', 'plib_status_phase_2'], ['approved', 'plib_status_approved']] as const).map(([val, labelKey]) => (
                 <Pill key={val} active={filters.status === val}
                   onClick={() => setFilters(f => ({ ...f, status: val }))}>
-                  {label}
+                  {t(labelKey)}
                 </Pill>
               ))}
             </div>
@@ -249,12 +247,12 @@ export function PeptideLibrary() {
           {/* Human Evidence */}
           <div>
             <p className="text-[0.52rem] uppercase tracking-widest text-slate-600 mb-2"
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Humanstudien</p>
+              style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{t('plib_human_evidence_label')}</p>
             <div className="flex flex-wrap gap-2">
-              {([['all', 'Alle'], ['yes', 'Vorhanden'], ['strong', 'Moderat / Stark']] as const).map(([val, label]) => (
+              {([['all', 'plib_all'], ['yes', 'plib_human_yes'], ['strong', 'plib_human_strong']] as const).map(([val, labelKey]) => (
                 <Pill key={val} active={filters.humanEvidence === val}
                   onClick={() => setFilters(f => ({ ...f, humanEvidence: val }))}>
-                  {label}
+                  {t(labelKey)}
                 </Pill>
               ))}
             </div>
@@ -264,10 +262,10 @@ export function PeptideLibrary() {
           {allTags.length > 0 && (
             <div>
               <p className="text-[0.52rem] uppercase tracking-widest text-slate-600 mb-2"
-                style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Tags</p>
+                style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{t('plib_tags_label')}</p>
               <div className="flex flex-wrap gap-2">
                 <Pill active={filters.tag === ''} onClick={() => setFilters(f => ({ ...f, tag: '' }))}>
-                  Alle
+                  {t('plib_all')}
                 </Pill>
                 {allTags.map(tag => (
                   <Pill key={tag} active={filters.tag === tag}
@@ -284,7 +282,7 @@ export function PeptideLibrary() {
             <button type="button" onClick={resetFilters}
               className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-400 transition-colors">
               <X size={12} />
-              Alle Filter zurücksetzen
+              {t('plib_reset_filters')}
             </button>
           )}
         </div>
@@ -296,7 +294,7 @@ export function PeptideLibrary() {
           {CATEGORIES.map(cat => (
             <Pill key={cat.value} active={filters.category === cat.value}
               onClick={() => setFilters(f => ({ ...f, category: cat.value }))}>
-              {cat.label}
+              {t(cat.labelKey)}
             </Pill>
           ))}
         </div>
@@ -306,16 +304,16 @@ export function PeptideLibrary() {
       {!loading && (
         <p className="text-[0.6rem] text-slate-700 mb-4"
           style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
-          {filtered.length} {filtered.length === 1 ? 'Peptid' : 'Peptide'}
-          {activeFilterCount > 0 && ' · gefiltert'}
+          {t('plib_count', { count: filtered.length })}
+          {activeFilterCount > 0 && ` · ${t('plib_filtered')}`}
           {' · peptide_library'}
         </p>
       )}
 
       {/* Error */}
-      {error && (
+      {error !== null && (
         <div className="card border border-red-500/20 bg-red-950/20 text-center py-8">
-          <p className="text-sm text-red-300 mb-3">{error}</p>
+          <p className="text-sm text-red-300 mb-3">{error || t('plib_load_error')}</p>
         </div>
       )}
 
@@ -331,11 +329,11 @@ export function PeptideLibrary() {
       {!loading && !error && filtered.length === 0 && (
         <div className="text-center py-12 text-slate-600">
           <FlaskConical size={28} className="mx-auto mb-3 opacity-30" />
-          <p className="text-sm">Keine Peptide für diese Auswahl.</p>
+          <p className="text-sm">{t('plib_empty')}</p>
           {activeFilterCount > 0 && (
             <button type="button" onClick={resetFilters}
               className="mt-2 text-xs text-sky-400/60 hover:text-sky-400 transition-colors">
-              Filter zurücksetzen
+              {t('plib_reset_filters_short')}
             </button>
           )}
         </div>
@@ -344,7 +342,7 @@ export function PeptideLibrary() {
       <div className="mt-8 flex items-start gap-3 bg-amber-500/5 border border-amber-500/15 rounded-xl px-4 py-3">
         <FlaskConical size={14} className="text-amber-400/70 shrink-0 mt-0.5" />
         <p className="text-xs text-amber-300/60 leading-relaxed">
-          Alle Angaben basieren auf veröffentlichten Forschungsstudien. Keine Therapieempfehlung.
+          {t('plib_disclaimer_list')}
         </p>
       </div>
     </div>

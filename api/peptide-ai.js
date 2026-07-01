@@ -126,9 +126,12 @@ export default async function handler(req, res) {
       return
     }
 
-    const apiKey = process.env.VITE_ANTHROPIC_KEY
+    // ANTHROPIC_API_KEY statt VITE_-Prefix: VITE_-Variablen landen im Client-Bundle,
+    // sobald sie irgendwo per import.meta.env referenziert werden. Fallback auf den
+    // alten Namen, bis die Vercel-Env-Variable umbenannt ist.
+    const apiKey = process.env.ANTHROPIC_API_KEY ?? process.env.VITE_ANTHROPIC_KEY
     if (!apiKey) {
-      sendJSON(res, 500, { error: 'VITE_ANTHROPIC_KEY fehlt in Vercel Environment Variables' })
+      sendJSON(res, 500, { error: 'ANTHROPIC_API_KEY fehlt in Vercel Environment Variables' })
       return
     }
 
