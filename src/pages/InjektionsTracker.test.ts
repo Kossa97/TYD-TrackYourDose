@@ -159,6 +159,8 @@ describe('InjektionsTracker fullscreen map layout', () => {
     expect(source).toContain('cameraResetRequestId')
     expect(source).toContain('setCameraResetRequestId')
     expect(source).toContain("aria-label={String(t('injection_camera_reset'")
+    expect(source).toContain('Minimize2')
+    expect(source).not.toContain('<RefreshCw size={17}')
     expect(source).toContain('resetRequestId={cameraResetRequestId}')
   })
 })

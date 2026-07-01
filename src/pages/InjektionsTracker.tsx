@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { format, parseISO } from 'date-fns'
-import { ArrowLeft, AlertTriangle, Copy, RefreshCw } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, Copy, Minimize2, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
@@ -326,7 +326,7 @@ export function InjektionsTracker() {
             className="absolute right-4 z-30 grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-black/55 text-slate-100 shadow-[0_10px_28px_rgba(0,0,0,0.42)] backdrop-blur-xl"
             style={{ top: 'calc(88px + env(safe-area-inset-top))' }}
           >
-            <RefreshCw size={17} aria-hidden="true" />
+            <Minimize2 size={18} aria-hidden="true" />
           </button>
 
           {activeLog && visibleLogIds.has(activeLog.id) && (
