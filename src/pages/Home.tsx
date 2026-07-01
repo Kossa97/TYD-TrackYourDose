@@ -266,6 +266,8 @@ export function Home() {
   const [expiryAlerts, setExpiryAlerts] = useState<PeptideExpiryAlert[]>([])
   const [injectionHero, setInjectionHero] = useState<InjectionHeroState>(EMPTY_INJECTION_HERO)
   const [selectedHomeIntake, setSelectedHomeIntake] = useState<TodayIntake | null>(null)
+  const [homeConfirmStep, setHomeConfirmStep] = useState<'choice' | 'time'>('choice')
+  const [homeConfirmTime, setHomeConfirmTime] = useState('')
   const [homeReloadKey, setHomeReloadKey] = useState(0)
 
   // Rotate study daily
@@ -434,12 +436,33 @@ export function Home() {
     ? Math.min(100, Math.round((overview.loggedToday / plannedToday) * 100))
     : 0
 
+  const defaultHomeConfirmTime = (intake: TodayIntake) => format(new Date(intake.scheduledAt), 'HH:mm')
+
+  const buildHomeLoggedAt = (intake: TodayIntake, timeValue: string) => {
+    const [hours, minutes] = timeValue.split(':').map(Number)
+    const loggedAt = new Date(intake.scheduledAt)
+    if (Number.isFinite(hours) && Number.isFinite(minutes)) loggedAt.setHours(hours, minutes, 0, 0)
+    return loggedAt.toISOString()
+  }
+
+  const closeHomeIntakeSheets = () => {
+    setSelectedHomeIntake(null)
+    setHomeConfirmStep('choice')
+  }
+
   const openTodayIntake = (intake: TodayIntake) => {
     setSelectedHomeIntake(intake)
+    setHomeConfirmTime(defaultHomeConfirmTime(intake))
+    setHomeConfirmStep('choice')
+  }
+
+  const openHomeIntakeTimeForm = (intake: TodayIntake) => {
+    setHomeConfirmTime(defaultHomeConfirmTime(intake))
+    setHomeConfirmStep('time')
   }
 
   const openHomeIntakeInjection = (intake: TodayIntake) => {
-    setSelectedHomeIntake(null)
+    closeHomeIntakeSheets()
     navigate(buildInjectionTrackerUrl({
       cycleId: intake.cycleId,
       scheduledAt: intake.scheduledAt,
@@ -447,7 +470,7 @@ export function Home() {
     }))
   }
 
-  const confirmHomeIntake = async (intake: TodayIntake, taken: boolean) => {
+  const confirmHomeIntake = async (intake: TodayIntake, taken: boolean, timeValue?: string) => {
     if (!user) return
     try {
       if (taken) {
@@ -457,7 +480,7 @@ export function Home() {
           dose: intake.doseNumber,
           unit: intake.unit,
           method: intake.method ?? '',
-          loggedAt: intake.scheduledAt,
+          loggedAt: timeValue ? buildHomeLoggedAt(intake, timeValue) : intake.scheduledAt,
         })
       } else {
         const { error } = await supabase.from('dose_logs').insert({
@@ -471,7 +494,7 @@ export function Home() {
         })
         if (error) throw error
       }
-      setSelectedHomeIntake(null)
+      closeHomeIntakeSheets()
       setHomeReloadKey(value => value + 1)
       if (taken) toast.success(t('einnahme_bestaetigt', { defaultValue: 'Einnahme bestätigt' }))
       else toast(t('einnahme_uebersp_toast', { defaultValue: 'Einnahme übersprungen' }))
@@ -567,13 +590,25 @@ export function Home() {
         </section>
       )}
 
-      {selectedHomeIntake && (
+      {selectedHomeIntake && homeConfirmStep === 'choice' && (
         <HomeIntakeConfirmSheet
           intake={selectedHomeIntake}
-          onClose={() => setSelectedHomeIntake(null)}
-          onTaken={() => confirmHomeIntake(selectedHomeIntake, true)}
+          onClose={closeHomeIntakeSheets}
+          onTaken={() => openHomeIntakeTimeForm(selectedHomeIntake)}
           onSkipped={() => confirmHomeIntake(selectedHomeIntake, false)}
           onInjection={isInjectableMethod(selectedHomeIntake.method) ? () => openHomeIntakeInjection(selectedHomeIntake) : undefined}
+        />
+      )}
+
+      {selectedHomeIntake && homeConfirmStep === 'time' && (
+        <HomeIntakeTimeSheet
+          intake={selectedHomeIntake}
+          timeValue={homeConfirmTime}
+          onBack={() => setHomeConfirmStep('choice')}
+          onClose={closeHomeIntakeSheets}
+          onNow={() => setHomeConfirmTime(format(new Date(), 'HH:mm'))}
+          onTimeChange={setHomeConfirmTime}
+          onSave={() => confirmHomeIntake(selectedHomeIntake, true, homeConfirmTime)}
         />
       )}
 
@@ -1023,6 +1058,82 @@ function HomeIntakeConfirmSheet({
               <Syringe size={16} aria-hidden="true" /> Mit Injektion bestätigen
             </button>
           )}
+        </div>
+      </div>
+    </>
+  )
+}
+
+function HomeIntakeTimeSheet({
+  intake,
+  timeValue,
+  onBack,
+  onClose,
+  onNow,
+  onTimeChange,
+  onSave,
+}: {
+  intake: TodayIntake
+  timeValue: string
+  onBack: () => void
+  onClose: () => void
+  onNow: () => void
+  onTimeChange: (value: string) => void
+  onSave: () => void
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Zeitformular schließen"
+        onClick={onClose}
+        className="fixed inset-0 z-50 bg-black/70"
+      />
+      <div className="fixed inset-x-3 bottom-3 z-[60] rounded-3xl border border-white/10 bg-[var(--surface)] p-4 shadow-[0_-16px_48px_rgba(0,0,0,0.55)]">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[0.62rem] font-black uppercase tracking-[0.13em] text-emerald-300">Einnahme bestätigen</p>
+            <h2 className="mt-1 text-lg font-black text-white">Wann hast du tatsächlich eingenommen?</h2>
+            <p className="mt-1 truncate text-sm font-semibold text-slate-300">
+              {[intake.substance, intake.dose].filter(Boolean).join(' · ')} · geplant {intake.time}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-400"
+          >
+            <XCircle size={17} aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <label className="text-[0.62rem] font-black uppercase tracking-[0.13em] text-slate-500" htmlFor="home-intake-confirm-time">
+            Uhrzeit
+          </label>
+          <button
+            type="button"
+            onClick={onNow}
+            className="flex items-center gap-1.5 rounded-xl border border-sky-500/25 bg-sky-500/10 px-3 py-1.5 text-xs font-black text-sky-300"
+          >
+            <Clock3 size={13} aria-hidden="true" /> Jetzt
+          </button>
+        </div>
+        <input
+          id="home-intake-confirm-time"
+          type="time"
+          value={timeValue}
+          onChange={event => onTimeChange(event.target.value)}
+          className="mb-4 w-full rounded-2xl border border-white/10 px-4 py-3 text-base font-black text-white outline-none focus:border-sky-500/50"
+          style={{ background: 'var(--surface-input)', colorScheme: 'dark' }}
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={onBack} className="min-h-11 rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-sm font-black text-slate-300">
+            Zurück
+          </button>
+          <button type="button" onClick={onSave} className="flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-emerald-500/25 bg-emerald-500/15 px-3 text-sm font-black text-emerald-300">
+            <CheckCircle2 size={16} aria-hidden="true" /> Speichern
+          </button>
         </div>
       </div>
     </>
