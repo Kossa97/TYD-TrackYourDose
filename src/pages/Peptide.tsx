@@ -510,6 +510,8 @@ export function Peptide() {
   const [isVialCarouselDragging, setIsVialCarouselDragging] = useState(false)
   const [addTileActive, setAddTileActive] = useState(false)
   const [vialFocusByIndex, setVialFocusByIndex] = useState<Record<number, { focus: number; lightOffset: number }>>({})
+  const vialFocusSnapshotRef = useRef<Record<number, { focus: number; lightOffset: number }> | null>(null)
+  const vialFocusFrameRef = useRef<number | null>(null)
   const sloshEngine = useSloshEngine()
   const vialCarouselRef = useRef<HTMLDivElement | null>(null)
   const vialScrollFrameRef = useRef<number | null>(null)
@@ -1209,7 +1211,21 @@ export function Peptide() {
       }
     }
 
+    const previous = vialFocusSnapshotRef.current
+    if (previous && Object.keys(next).every(key => {
+      const index = Number(key)
+      return previous[index]?.focus === next[index].focus && previous[index]?.lightOffset === next[index].lightOffset
+    }) && Object.keys(previous).length === Object.keys(next).length) return
+
+    vialFocusSnapshotRef.current = next
     setVialFocusByIndex(next)
+  }
+  const scheduleVialFocusUpdate = () => {
+    if (vialFocusFrameRef.current !== null) return
+    vialFocusFrameRef.current = window.requestAnimationFrame(() => {
+      vialFocusFrameRef.current = null
+      updateVialFocus()
+    })
   }
   const scrollToPeptideIndex = (index: number) => {
     const carousel = vialCarouselRef.current
@@ -1267,7 +1283,7 @@ export function Peptide() {
     }
     vialLastScrollLeftRef.current = carousel.scrollLeft
     vialLastScrollTimeRef.current = now
-    updateVialFocus()
+    scheduleVialFocusUpdate()
 
     if (vialScrollFrameRef.current !== null) window.cancelAnimationFrame(vialScrollFrameRef.current)
 
@@ -1365,6 +1381,7 @@ export function Peptide() {
   useEffect(() => {
     return () => {
       if (vialScrollFrameRef.current !== null) window.cancelAnimationFrame(vialScrollFrameRef.current)
+      if (vialFocusFrameRef.current !== null) window.cancelAnimationFrame(vialFocusFrameRef.current)
       if (vialWheelCooldownRef.current !== null) window.clearTimeout(vialWheelCooldownRef.current)
     }
   }, [])

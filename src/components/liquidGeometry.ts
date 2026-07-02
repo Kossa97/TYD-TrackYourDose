@@ -15,7 +15,7 @@ const MARGIN_BOT = 3
 const USABLE = LIQUID_VB_H - MARGIN_TOP - MARGIN_BOT
 const CX = LIQUID_VB_W / 2
 const HALF_W = LIQUID_VB_W / 2
-const SAMPLES = 18
+const SAMPLES = 12
 
 // How far (in viewBox units) the liquid climbs one wall at full tilt.
 const TILT_RISE = 22

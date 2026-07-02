@@ -65,4 +65,11 @@ describe('liquidGeometry', () => {
     expect(Number.isFinite(g.leftWallY)).toBe(true)
     expect(g.rim).not.toContain('NaN')
   })
+
+  test('keeps animated path complexity low enough for smooth mobile frames', () => {
+    const g = buildLiquid({ fill: 0.6, tilt: 0.65, energy: 0.9, time: 1.25 })
+    const totalPathChars = g.body.length + g.surface.length + g.glow.length + g.rim.length
+
+    expect(totalPathChars).toBeLessThan(3600)
+  })
 })

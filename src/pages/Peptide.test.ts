@@ -98,6 +98,18 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('1 - Math.abs(normalized) * 0.78')
   })
 
+  test('batches carousel spotlight updates so liquid slosh frames stay smooth', () => {
+    const text = source()
+    const scrollHandler = text.slice(text.indexOf('const handleVialCarouselScroll'), text.indexOf('const scrollToClosestVial'))
+
+    expect(text).toContain('vialFocusFrameRef')
+    expect(text).toContain('scheduleVialFocusUpdate')
+    expect(text).toContain('vialFocusSnapshotRef')
+    expect(text).toContain('if (previous && Object.keys(next).every')
+    expect(scrollHandler).toContain('scheduleVialFocusUpdate()')
+    expect(scrollHandler).not.toContain('updateVialFocus()')
+  })
+
   test('uses a compact mobile cockpit for vial details and the active cycle', () => {
     const text = source()
 
