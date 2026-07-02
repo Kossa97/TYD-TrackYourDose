@@ -11,7 +11,7 @@ import {
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
 import {
-  Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Clock,
+  Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock,
   Moon, Pin, RotateCcw, Sun, Sunrise, Syringe, TrendingUp, X, XCircle,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -20,7 +20,7 @@ import { getPeptideColor } from '../lib/peptideColors'
 import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, type ScheduleSegment } from '../lib/intakeSchedule'
 import { computeNextVialStock } from '../lib/peptideStock'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
-import { GlassPanel, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
+import { GlassPanel, PageHero, PageShell } from '../components/ui/DesignSystem'
 
 const DATE_LOCALES: Record<string, Locale> = {
   de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
@@ -415,7 +415,7 @@ export function Dashboard() {
   // Vergangener Tag (vor heute): nicht bestätigte Slots gelten als „verpasst".
   const isPastSelected = format(selectedDay, 'yyyy-MM-dd') < format(new Date(), 'yyyy-MM-dd')
   const selectedDayTitle = isTodaySelected
-    ? t('heutiges_protokoll')
+    ? t('heutige_einnahmen')
     : format(selectedDay, 'EEEE, d. MMMM', { locale })
   const confirmedLogs = selLogs.filter(log => log.taken !== null)
   const confirmedLogsSorted = [...confirmedLogs].sort((a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime())
@@ -1090,20 +1090,25 @@ export function Dashboard() {
       {/* ── Tages-Panel ───────────────────────────────────────────────────── */}
       <div id="due-intakes">
       <GlassPanel accent="#00ccf5" padding="md">
-        <div className="mb-3">
-          <SectionHeader
-            kicker={format(selectedDay, 'dd.MM.yyyy')}
-            title={selectedDayTitle}
-            icon={CalendarDays}
-            accent="#00ccf5"
-            action={!isTodaySelected && (
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <ClipboardList size={17} color="#00ccf5" />
+            <h2 className="text-base font-extrabold text-white leading-tight truncate">
+              {selectedDayTitle}
+            </h2>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {!isTodaySelected && (
               <button
                 onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
                 className="text-xs text-sky-400 hover:text-sky-300 transition-colors">
                 {t('heute_link')}
               </button>
             )}
-          />
+            <span className="text-xs font-semibold text-slate-400 tabular-nums">
+              {format(selectedDay, 'dd.MM.yyyy')}
+            </span>
+          </div>
         </div>
 
         {/* Noch fällig */}
