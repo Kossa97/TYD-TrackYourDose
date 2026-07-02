@@ -20,7 +20,7 @@ import { getPeptideColor } from '../lib/peptideColors'
 import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, type ScheduleSegment } from '../lib/intakeSchedule'
 import { computeNextVialStock } from '../lib/peptideStock'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
-import { GlassPanel, PageHero, PageShell } from '../components/ui/DesignSystem'
+import { GlassPanel, PageShell } from '../components/ui/DesignSystem'
 
 const DATE_LOCALES: Record<string, Locale> = {
   de, en: enUS, es, fr, it, pt, ru, tr, ar, hi, id, zh: zhCN, ja, ko,
@@ -1018,11 +1018,10 @@ export function Dashboard() {
   return (
     <>
     <PageShell>
-      <PageHero
-        title={t('nav_kalender')}
-        icon={CalendarDays}
-        accent="#00ccf5"
-      />
+      <div className="flex items-center gap-2">
+        <CalendarDays size={18} className="shrink-0 text-sky-400" />
+        <h2 className="font-semibold text-white">{t('nav_kalender')}</h2>
+      </div>
 
       {/* ── Kalender ──────────────────────────────────────────────────────── */}
       <div data-ob="calendar-main" data-ob-self>
