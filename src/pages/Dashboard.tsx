@@ -439,7 +439,9 @@ export function Dashboard() {
     }
   }
   const dueSlots: DueSlot[] = []
+  let totalDaySlots = 0
   for (const [peptideId, slots] of slotsByPeptide) {
+    totalDaySlots += slots.length
     const ordered = [...slots].sort((a, b) => a.minutes - b.minutes)
     const decided = decidedByPeptide.get(peptideId) ?? 0
     const pendings = [...(pendingByPeptide.get(peptideId) ?? [])]
@@ -448,6 +450,7 @@ export function Dashboard() {
       dueSlots.push(slot)
     })
   }
+  const completedDaySlots = totalDaySlots - dueSlots.length
   const duePeriodCarousels = PERIOD_ORDER.map(key => ({
     key,
     ...intakeGroupMeta(key, t),
@@ -1115,32 +1118,26 @@ export function Dashboard() {
         {dueSlots.length > 0 && (
           <div className="mb-3 space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-amber-300/80">
-                  {t('due_intakes_title', { defaultValue: 'Noch fällig' })}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {t('due_intakes_hint', { defaultValue: 'Bitte Einnahme pro Peptid bestätigen oder überspringen.' })}
-                </p>
-              </div>
-              <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-xs font-bold text-amber-300">
-                {dueSlots.length}
-              </span>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-amber-300/80">
+                {t('due_intakes_title', { defaultValue: 'Noch fällig' })}
+              </p>
+              {totalDaySlots > 0 && (
+                <span className="text-xs font-bold text-amber-300 tabular-nums">
+                  {completedDaySlots}/{totalDaySlots}
+                </span>
+              )}
             </div>
 
             {duePeriodCarousels.map(period => {
               const PeriodIcon = period.icon
+              const periodOpen = period.slots.length
               return (
                 <div key={period.key} className="space-y-2">
-                  <div className="flex items-center justify-between gap-2 px-1">
-                    <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                      <PeriodIcon size={13} />
-                      <span>{period.label}</span>
-                    </div>
-                    {period.slots.length > 0 && (
-                      <span className="rounded-full border border-slate-700/80 bg-slate-800/60 px-2 py-0.5 text-[10px] font-bold text-slate-400">
-                        {period.slots.length}
-                      </span>
+                  <div className="flex items-center gap-2 px-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                    <PeriodIcon size={13} />
+                    <span>{period.label}</span>
+                    {periodOpen > 0 && (
+                      <span className="text-amber-300/90 tabular-nums">{periodOpen}</span>
                     )}
                   </div>
 
