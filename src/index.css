@@ -763,6 +763,31 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
   opacity: 0.28;
   pointer-events: none;
 }
+.carousel-nav-btn--overlay {
+  width: 1.75rem;
+  height: 1.75rem;
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.carousel-stage {
+  position: relative;
+}
+.carousel-stage-nav {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 4px;
+}
+.carousel-stage-nav > * {
+  pointer-events: auto;
+}
 .carousel-pagination {
   display: flex;
   justify-content: center;
@@ -784,6 +809,9 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
   width: 26px;
   background: var(--accent);
   box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.carousel-pagination--inline {
+  margin-top: 0;
 }
 .carousel-counter {
   font-size: 0.68rem;
