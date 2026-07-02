@@ -131,10 +131,12 @@ export function PageHero({
   action?: ReactNode
   children?: ReactNode
 }) {
+  const compact = !kicker && !subtitle
+
   return (
     <GlassPanel padding="lg" accent={accent}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', gap: 12, minWidth: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: compact ? 'center' : 'flex-start' }}>
+        <div style={{ display: 'flex', gap: 12, minWidth: 0, alignItems: compact ? 'center' : 'flex-start' }}>
           {icon && <IconBadge icon={icon} accent={accent} size={44} />}
           <div style={{ minWidth: 0 }}>
             {kicker && (
@@ -158,6 +160,7 @@ export function PageHero({
                 letterSpacing: '-0.045em',
                 color: 'var(--text)',
                 lineHeight: 1.05,
+                margin: 0,
               }}
             >
               {title}
