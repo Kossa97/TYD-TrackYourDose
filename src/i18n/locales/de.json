@@ -766,6 +766,7 @@
   "erfolgreich": "Erfolgreich",
   "due_intakes_title": "Noch fällig",
   "due_intakes_hint": "Bitte Einnahme pro Peptid bestätigen oder überspringen.",
+  "period_no_open_intakes": "Keine offenen Einnahmen",
   "dose_confirm_pending_badge": "Bestätigung offen",
   "completed_intakes_title": "Bereits protokolliert",
   "completed_intakes_hint": "Bestätigte und übersprungene Einnahmen.",

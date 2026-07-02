@@ -766,6 +766,7 @@
   "erfolgreich": "Completed",
   "due_intakes_title": "Still Due",
   "due_intakes_hint": "Please confirm or skip each intake per substance.",
+  "period_no_open_intakes": "No open intakes",
   "dose_confirm_pending_badge": "Confirmation pending",
   "completed_intakes_title": "Already logged",
   "completed_intakes_hint": "Confirmed and skipped intakes.",
