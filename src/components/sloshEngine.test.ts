@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
 import { createSloshEngine, stepSlosh, type SpringState } from './sloshEngine'
+
+const source = () => readFileSync(new URL('./sloshEngine.ts', import.meta.url), 'utf8')
 
 describe('stepSlosh spring', () => {
   test('an impulse velocity moves the tilt angle in that direction', () => {
@@ -56,5 +59,12 @@ describe('createSloshEngine', () => {
     engine.setEnabled(false)
     expect(states[states.length - 1]).toEqual({ tilt: 0, energy: 0, time: 0 })
     engine.destroy()
+  })
+  test('keeps scroll impulses responsive and fluid for carousel swipes', () => {
+    const text = source()
+
+    expect(text).toContain('const STIFFNESS = 135')
+    expect(text).toContain('const DAMPING = 6.2')
+    expect(text).toContain('const IMPULSE_GAIN = 6.2')
   })
 })
