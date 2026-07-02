@@ -79,12 +79,23 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('<SloshProvider engine={sloshEngine}>')
     // Interaction velocity is fed into the engine as a slosh impulse.
     expect(text).toContain('sloshEngine.pushImpulse(velocity)')
+    expect(text).toContain('fillPct={vialPct}')
     // The old per-render slosh state / keyframe epoch wiring is gone.
     expect(text).not.toContain('setVialSlosh')
     expect(text).not.toContain('vialSloshEpoch')
     expect(text).not.toContain('vialSloshSettleRef')
     expect(text).not.toContain('slosh={vialSlosh}')
     expect(text).not.toContain('sloshEpoch={vialSloshEpoch}')
+  })
+  test('drives the carousel spotlight and vial highlights from scroll focus', () => {
+    const text = source()
+
+    expect(text).toContain('vialFocusByIndex')
+    expect(text).toContain('updateVialFocus')
+    expect(text).toContain('data-vial-detail="carousel-spotlight"')
+    expect(text).toContain('focus={focusState.focus}')
+    expect(text).toContain('lightOffset={focusState.lightOffset}')
+    expect(text).toContain('1 - Math.abs(normalized) * 0.78')
   })
 
   test('uses a compact mobile cockpit for vial details and the active cycle', () => {

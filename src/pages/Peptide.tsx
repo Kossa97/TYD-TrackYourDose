@@ -16,6 +16,7 @@ import { useNew } from '../lib/useNew'
 import { NewDot } from '../components/NewDot'
 import { format, parseISO, addDays, differenceInDays } from 'date-fns'
 import { effectiveDose, type ScheduleSegment } from '../lib/intakeSchedule'
+import { buildDoseAdjustmentBackfillUpdates, type DoseAdjustmentBackfillLog } from '../lib/doseAdjustmentBackfill'
 import { PeptideFormModal } from '../components/PeptideFormModal'
 import { PeptideVialVisual } from '../components/PeptideVialVisual'
 import { SloshProvider, useSloshEngine } from '../components/SloshContext'
@@ -508,6 +509,7 @@ export function Peptide() {
   const [vialDetailsOpen, setVialDetailsOpen] = useState(false)
   const [isVialCarouselDragging, setIsVialCarouselDragging] = useState(false)
   const [addTileActive, setAddTileActive] = useState(false)
+  const [vialFocusByIndex, setVialFocusByIndex] = useState<Record<number, { focus: number; lightOffset: number }>>({})
   const sloshEngine = useSloshEngine()
   const vialCarouselRef = useRef<HTMLDivElement | null>(null)
   const vialScrollFrameRef = useRef<number | null>(null)
@@ -966,6 +968,38 @@ export function Peptide() {
     })
     setShowEscForm(true)
   }
+  const backfillDoseAdjustmentLogs = async (cycle: Cycle, nextEscalations: Escalation[], affectedEscalations: Escalation[]) => {
+    let query = supabase
+      .from('dose_logs')
+      .select('id, peptide_id, logged_at, taken')
+      .eq('user_id', user!.id)
+      .eq('peptide_id', cycle.peptide_id)
+      .gte('logged_at', `${cycle.start_date}T00:00:00.000`)
+      .or('taken.is.null,taken.eq.false')
+
+    if (cycle.end_date) query = query.lte('logged_at', `${cycle.end_date}T23:59:59.999`)
+
+    const { data, error } = await query
+    if (error) throw error
+
+    const updates = buildDoseAdjustmentBackfillUpdates(
+      cycle,
+      nextEscalations,
+      (data ?? []) as DoseAdjustmentBackfillLog[],
+      affectedEscalations,
+    )
+
+    for (const update of updates) {
+      const { error: updateError } = await supabase
+        .from('dose_logs')
+        .update({ dose: update.dose, unit: update.unit })
+        .eq('id', update.id)
+        .eq('user_id', user!.id)
+      if (updateError) throw updateError
+    }
+
+    return updates.length
+  }
   const saveEsc = async () => {
     if (!eForm || !escForCycle) return
     if (!eForm.increase_amount) return toast.error(t('erhoeht_erforderlich'))
@@ -997,11 +1031,44 @@ export function Peptide() {
       start_after_days: startAfterDays,
       notes: eForm.notes || null,
     }
+    const previousEscalation = editingEscId
+      ? escalations.find(e => e.id === editingEscId) ?? null
+      : null
+    const changedEscalation: Escalation = {
+      id: editingEscId ?? '__new_adjustment__',
+      cycle_id: escForCycle.id,
+      increase_amount: payload.increase_amount,
+      unit: payload.unit,
+      start_type: payload.start_type,
+      start_date: payload.start_date,
+      start_after_days: payload.start_after_days,
+      notes: payload.notes,
+    }
+    const nextEscalations = editingEscId
+      ? escalations.map(e => e.id === editingEscId ? changedEscalation : e)
+      : [...escalations, changedEscalation]
+    const affectedEscalations = previousEscalation
+      ? [previousEscalation, changedEscalation]
+      : [changedEscalation]
+
     const { error } = editingEscId
       ? await supabase.from('dose_escalations').update(payload).eq('id', editingEscId)
       : await supabase.from('dose_escalations').insert(payload)
     if (error) toast.error(t('error'))
-    else { toast.success(editingEscId ? t('inventar_aktualisiert') : t('esc_gespeichert')); setShowEscForm(false); loadEscalations() }
+    else {
+      let backfilled = 0
+      try {
+        backfilled = await backfillDoseAdjustmentLogs(escForCycle, nextEscalations, affectedEscalations)
+      } catch {
+        toast.error('Dosisanpassung gespeichert, aber offene/verpasste Einnahmen konnten nicht aktualisiert werden.')
+      }
+
+      toast.success(editingEscId ? t('inventar_aktualisiert') : t('esc_gespeichert'))
+      if (backfilled > 0) {
+        toast(`${backfilled} offene/verpasste Einnahme${backfilled === 1 ? '' : 'n'} aktualisiert. Bestaetigte Einnahmen bleiben unveraendert.`)
+      }
+      setShowEscForm(false); loadEscalations()
+    }
     setSavingEsc(false)
   }
   const removeEsc = async (id: string) => {
@@ -1111,6 +1178,7 @@ export function Peptide() {
     requestAnimationFrame(() => {
       const item = vialCarouselRef.current?.querySelector<HTMLElement>('[data-vial-index="0"]')
       item?.scrollIntoView({ block: 'nearest', inline: 'center' })
+      updateVialFocus()
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, loading])
@@ -1118,10 +1186,36 @@ export function Peptide() {
   const vialItemSnapClassName = isVialCarouselDragging ? '' : 'snap-center'
   // Feed carousel interaction velocity into the shared liquid physics engine.
   const pushVialSlosh = (velocity: number) => sloshEngine.pushImpulse(velocity)
+  const updateVialFocus = () => {
+    const carousel = vialCarouselRef.current
+    if (!carousel) return
+
+    const center = carousel.scrollLeft + carousel.clientWidth / 2
+    const maxDistance = Math.max(1, carousel.clientWidth * 0.48)
+    const next: Record<number, { focus: number; lightOffset: number }> = {}
+
+    for (const item of carousel.querySelectorAll<HTMLElement>('[data-vial-index]')) {
+      const index = Number(item.dataset.vialIndex)
+      if (!Number.isFinite(index)) continue
+
+      const itemCenter = item.offsetLeft + item.offsetWidth / 2
+      const distance = itemCenter - center
+      const normalized = Math.max(-1, Math.min(1, distance / maxDistance))
+      const focus = Math.max(0.22, 1 - Math.abs(normalized) * 0.78)
+
+      next[index] = {
+        focus: Number(focus.toFixed(2)),
+        lightOffset: Number((-normalized).toFixed(2)),
+      }
+    }
+
+    setVialFocusByIndex(next)
+  }
   const scrollToPeptideIndex = (index: number) => {
     const carousel = vialCarouselRef.current
     const item = carousel?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
     item?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    window.requestAnimationFrame(updateVialFocus)
   }
   const selectPeptideIndex = (index: number) => {
     const next = displayPeptides[index]
@@ -1173,6 +1267,7 @@ export function Peptide() {
     }
     vialLastScrollLeftRef.current = carousel.scrollLeft
     vialLastScrollTimeRef.current = now
+    updateVialFocus()
 
     if (vialScrollFrameRef.current !== null) window.cancelAnimationFrame(vialScrollFrameRef.current)
 
@@ -1459,6 +1554,12 @@ export function Peptide() {
                   </button>
                 </div>
 
+                <div className="relative">
+                  <div
+                    data-vial-detail="carousel-spotlight"
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-8 top-4 bottom-10 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.20),rgba(34,211,238,0.08)_38%,transparent_72%)] blur-xl"
+                  />
                 <SloshProvider engine={sloshEngine}>
                 <div
                   ref={vialCarouselRef}
@@ -1468,7 +1569,7 @@ export function Peptide() {
                   onPointerUp={handleVialCarouselPointerUp}
                   onPointerCancel={handleVialCarouselPointerUp}
                   onWheel={handleVialCarouselWheel}
-                  className={`flex ${vialSnapClassName} gap-4 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                  className={`relative z-10 flex ${vialSnapClassName} gap-4 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
                     isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
                   }`}
                   style={{
@@ -1493,6 +1594,10 @@ export function Peptide() {
                     const colorIdx = peptides.findIndex(pp => pp.id === p.id)
                     const peptideColor = peptideColors[p.id] ?? getPeptideColor(colorIdx)
                     const vialPct = Math.round(getVialFillPct(p) ?? 100)
+                    const focusState = vialFocusByIndex[index] ?? {
+                      focus: isActive ? 1 : 0.28,
+                      lightOffset: 0,
+                    }
 
                     return (
                       <div
@@ -1519,6 +1624,8 @@ export function Peptide() {
                           color={peptideColor}
                           animateOnMount={true}
                           isActive={isActive}
+                          focus={focusState.focus}
+                          lightOffset={focusState.lightOffset}
                         />
                         {isActive && (
                           <p className="mt-2 text-center text-sm font-semibold tabular-nums text-slate-400">
@@ -1530,6 +1637,7 @@ export function Peptide() {
                   })}
                 </div>
                 </SloshProvider>
+                </div>
 
                 <div className="mt-2 flex gap-2 px-1 text-xs font-semibold">
                   <button
