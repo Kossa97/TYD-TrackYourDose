@@ -1117,12 +1117,12 @@ export function Dashboard() {
         {/* Noch fällig */}
         {dueSlots.length > 0 && (
           <div className="mb-3 space-y-3">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
               <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-amber-300/80">
                 {t('due_intakes_title', { defaultValue: 'Noch fällig' })}
               </p>
               {totalDaySlots > 0 && (
-                <span className="text-xs font-bold text-amber-300 tabular-nums">
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-amber-300/80 tabular-nums">
                   {completedDaySlots}/{totalDaySlots}
                 </span>
               )}
