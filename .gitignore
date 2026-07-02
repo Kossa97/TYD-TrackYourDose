@@ -30,3 +30,6 @@ src/i18n/faq/data/translation-cache.json
 
 # Superpowers brainstorm mockups (visual companion)
 .superpowers/
+
+# Agent worktrees (ephemeral, not part of the project)
+.claude/worktrees/

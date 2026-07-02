@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -18,6 +18,8 @@ import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getPeptideColor } from '../lib/peptideColors'
 import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, type ScheduleSegment } from '../lib/intakeSchedule'
+import { computeNextVialStock } from '../lib/peptideStock'
+import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { GlassPanel, PageHero, PageShell, SectionHeader } from '../components/ui/DesignSystem'
 
 const DATE_LOCALES: Record<string, Locale> = {
@@ -155,26 +157,6 @@ function cycleLogTimestamp(cycle: Cycle, day: Date): string {
   return date.toISOString()
 }
 
-function doseToVialDelta(dose: number, unit: string, peptide: Peptide): number | null {
-  const normalizedUnit = unit.toLowerCase()
-  if (normalizedUnit === 'ml') {
-    if (!peptide.reconstitution_ml || peptide.reconstitution_ml <= 0) return null
-    return dose / peptide.reconstitution_ml
-  }
-  if (!peptide.vial_amount_mg || peptide.vial_amount_mg <= 0) return null
-  const doseMg = normalizedUnit === 'mcg'
-    ? dose / 1000
-    : normalizedUnit === 'mg'
-      ? dose
-      : null
-  if (doseMg == null) return null
-  return doseMg / peptide.vial_amount_mg
-}
-
-function roundStock(value: number) {
-  return Math.round(value * 10000) / 10000
-}
-
 const calendarLegendText: CSSProperties = {
   fontSize: '0.66rem',
   color: 'var(--text-dim)',
@@ -217,6 +199,7 @@ const SWIPE_THRESHOLD = 80
 export function Dashboard() {
   const { t, i18n } = useTranslation()
   const location = useLocation()
+  const navigate = useNavigate()
   const locale = DATE_LOCALES[i18n.language] ?? enUS
   const { user } = useAuth()
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -454,24 +437,10 @@ export function Dashboard() {
     if (!user) return false
     const peptide = peptides.find(p => p.id === peptideId)
     if (!peptide) return false
-    // Don't credit a dose that belongs to a PAST reconstitution back into the
-    // current vial (e.g. undoing an old intake after the vial was renewed/discarded).
-    if (mode === 'credit' && loggedAt && peptide.reconstitution_date) {
-      const logDay = format(parseISO(loggedAt), 'yyyy-MM-dd')
-      const reconDay = format(parseISO(peptide.reconstitution_date), 'yyyy-MM-dd')
-      if (logDay < reconDay) return false
-    }
-    const delta = doseToVialDelta(dose, unit, peptide)
-    if (!delta || delta <= 0) return false
-
-    const current = Number(peptide.vials_in_stock ?? 0)
-    const maxStock = Number(peptide.vials_initial ?? 0)
-    const next = mode === 'debit'
-      ? Math.max(0, current - delta)
-      : maxStock > 0
-        ? Math.min(maxStock, current + delta)
-        : current + delta
-    const rounded = roundStock(next)
+    // computeNextVialStock returns null when the delta is unknown or when a credit
+    // would belong to a past reconstitution (vial renewed/discarded since).
+    const rounded = computeNextVialStock(peptide, dose, unit, mode, loggedAt)
+    if (rounded == null) return false
 
     const { error } = await supabase
       .from('peptides')
@@ -554,6 +523,16 @@ export function Dashboard() {
     }
     setConfirmTime(defaultTime)
     setConfirmSheet({ cycle, log })
+  }
+
+  const openInjectionTrackerForSlot = (slot: DueSlot) => {
+    const returnTo = `/kalender?date=${format(selectedDay, 'yyyy-MM-dd')}#due-intakes`
+    navigate(buildInjectionTrackerUrl({
+      doseLogId: slot.pendingLog?.id ?? null,
+      cycleId: slot.cycle.id,
+      scheduledAt: slot.pendingLog?.logged_at ?? slotTimestamp(selectedDay, slot.minutes),
+      returnTo,
+    }))
   }
 
   const handleConfirmSheet = async () => {
@@ -952,17 +931,26 @@ export function Dashboard() {
                               : t('dose_confirm_pending_badge', { defaultValue: 'Bestätigung offen' })}
                           </span>
                         </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined)}
-                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
-                            <Check size={11} /> {isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}
-                          </button>
-                          <button
-                            onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false, slotTimestamp(selectedDay, slot.minutes))}
-                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors">
-                            <XCircle size={11} /> {t('uebersprungen')}
-                          </button>
+                        <div className="grid gap-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              onClick={() => openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined)}
+                              className="flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-emerald-500/25 bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/25">
+                              <Check size={11} /> <span className="truncate">{isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}</span>
+                            </button>
+                            <button
+                              onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false, slotTimestamp(selectedDay, slot.minutes))}
+                              className="flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-red-500/25 bg-red-500/15 px-2 py-1 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/25">
+                              <XCircle size={11} /> <span className="truncate">{t('uebersprungen')}</span>
+                            </button>
+                          </div>
+                          {isInjectableMethod(c.method) && (
+                            <button
+                              onClick={() => openInjectionTrackerForSlot(slot)}
+                              className="flex min-h-9 w-full min-w-0 items-center justify-center gap-1 rounded-lg border border-sky-500/25 bg-sky-500/15 px-2.5 py-1 text-xs font-semibold text-sky-300 transition-colors hover:bg-sky-500/25">
+                              <Syringe size={11} /> <span className="truncate">Mit Injektion bestätigen</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

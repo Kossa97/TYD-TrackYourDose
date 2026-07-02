@@ -4,6 +4,26 @@ import './index.css'
 import './i18n'
 import { applyDirection } from './i18n'
 import App from './App.tsx'
+const DEV_SW_RESET_KEY = 'tyd_dev_sw_reset'
+
+if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  const clearStalePwaState = async () => {
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    await Promise.all(registrations.map(registration => registration.unregister()))
+
+    if ('caches' in window) {
+      const cacheNames = await caches.keys()
+      await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)))
+    }
+
+    if (navigator.serviceWorker.controller && !sessionStorage.getItem(DEV_SW_RESET_KEY)) {
+      sessionStorage.setItem(DEV_SW_RESET_KEY, '1')
+      window.location.reload()
+    }
+  }
+
+  void clearStalePwaState()
+}
 
 // Sprach-Richtung beim Start setzen
 const savedLang = localStorage.getItem('tyd_lang') || navigator.language.split('-')[0]

@@ -8,7 +8,7 @@ import {
   Microscope, Library, Droplets, Heart, FileText, type LucideIcon,
   Activity, ArrowUpRight, CheckCircle2, ClipboardList,
   Clock3, Package, ShieldCheck, Sparkles,
-  Syringe, TrendingUp, Bell,
+  Syringe, TrendingUp, Bell, XCircle,
   Dumbbell, Dna, Zap, Moon, Brain, Bandage, HeartPulse, Lightbulb, Leaf, Bone,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -18,6 +18,10 @@ import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideE
 import { collectMissedIntakes, cycleAppliesToDay, scheduleForDay, effectiveDose, AUTO_MISSED_NOTE, type EscalationRow } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
+import { InjectionTrackerHero, type InjectionHeroPin } from '../components/injection3d/InjectionTrackerHero'
+import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
+import { confirmIntakeDoseLog } from '../lib/injectionPersistence'
+import toast from 'react-hot-toast'
 import { format, parseISO, startOfDay } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
@@ -221,7 +225,26 @@ interface TodayIntake {
   min: number           // Minuten seit Mitternacht (Sortierung)
   substance: string | null
   dose: string | null
+  doseNumber: number
+  unit: string
   peptideId: string
+  cycleId: string
+  method: string | null
+  scheduledAt: string
+}
+
+interface InjectionHeroState {
+  pins: InjectionHeroPin[]
+}
+
+const EMPTY_INJECTION_HERO: InjectionHeroState = {
+  pins: [],
+}
+
+function isHeroVector(value: unknown): value is InjectionHeroPin['position'] {
+  if (!value || typeof value !== 'object') return false
+  const vector = value as Record<string, unknown>
+  return typeof vector.x === 'number' && typeof vector.y === 'number' && typeof vector.z === 'number'
 }
 
 const sectionHeaderStyle: CSSProperties = {
@@ -241,6 +264,11 @@ export function Home() {
   const [todayDone,   setTodayDone]   = useState(false)
   const [overview, setOverview] = useState<OverviewStats>(EMPTY_OVERVIEW)
   const [expiryAlerts, setExpiryAlerts] = useState<PeptideExpiryAlert[]>([])
+  const [injectionHero, setInjectionHero] = useState<InjectionHeroState>(EMPTY_INJECTION_HERO)
+  const [selectedHomeIntake, setSelectedHomeIntake] = useState<TodayIntake | null>(null)
+  const [homeConfirmStep, setHomeConfirmStep] = useState<'choice' | 'time'>('choice')
+  const [homeConfirmTime, setHomeConfirmTime] = useState('')
+  const [homeReloadKey, setHomeReloadKey] = useState(0)
 
   // Rotate study daily
   const todayStudy = TODAY_STUDY
@@ -251,7 +279,7 @@ export function Home() {
       const todayKey = format(new Date(), 'yyyy-MM-dd')
 
       try {
-        const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }, { data: escalationData }] = await Promise.all([
+        const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }, { data: escalationData }, { data: injectionData }] = await Promise.all([
           supabase.from('cycles')
             .select('id, intake_time, intake_time_custom, peptide_id, dose, unit, method, start_date, end_date, frequency, x_days_interval, schedule_days, schedule_history')
             .eq('user_id', user!.id).eq('active', true),
@@ -269,6 +297,11 @@ export function Home() {
           supabase.from('dose_escalations')
             .select('cycle_id, increase_amount, start_type, start_date, start_after_days')
             .eq('user_id', user!.id),
+          supabase.from('injection_logs')
+            .select('id, logged_at, body_region, body_side, position, normal')
+            .eq('user_id', user!.id)
+            .order('logged_at', { ascending: false })
+            .limit(30),
         ])
         const escalations = (escalationData ?? []) as EscalationRow[]
         // How many of today's intakes are already decided (taken=true/false) per peptide.
@@ -283,21 +316,36 @@ export function Home() {
           (peptideData ?? []).map((p) => [p.id as string, p.name as string])
         )
         const now = new Date()
-        const todaySlots: { min: number; time: string; substance: string | null; dose: string | null; peptideId: string }[] = []
+        const todaySlots: { min: number; time: string; substance: string | null; dose: string | null; doseNumber: number; unit: string; peptideId: string; cycleId: string; method: string | null; scheduledAt: string }[] = []
         for (const c of cycleData ?? []) {
           // Nur Zyklen, die HEUTE gelten (Frequenz/Start/Ende), wie im Kalender.
           if (!cycleAppliesToDay(c, now)) continue
           const seg = scheduleForDay(c, now)   // segment-/historienaufgelöste Slots
           const slots   = (seg.intake_time ?? '').split(',').filter(Boolean)
           const customs = (seg.intake_time_custom ?? '').split(',')
+          const doseNumber = Number(effectiveDose(c, now, escalations))
+          const unit = c.unit ?? ''
           const doseLabel = c.dose != null
-            ? `${effectiveDose(c, now, escalations)} ${c.unit ?? ''}`.trim()
+            ? `${doseNumber} ${unit}`.trim()
             : null
           slots.forEach((slot: string, i: number) => {
             const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
             if (!tm) return
             const [h, m] = tm.split(':').map(Number)
-            todaySlots.push({ min: h * 60 + m, time: tm, substance: peptideNameById.get(c.peptide_id as string) ?? null, dose: doseLabel, peptideId: c.peptide_id as string })
+            const scheduledAt = new Date(now)
+            scheduledAt.setHours(h, m, 0, 0)
+            todaySlots.push({
+              min: h * 60 + m,
+              time: tm,
+              substance: peptideNameById.get(c.peptide_id as string) ?? null,
+              dose: doseLabel,
+              doseNumber,
+              unit,
+              peptideId: c.peptide_id as string,
+              cycleId: c.id as string,
+              method: c.method as string | null,
+              scheduledAt: scheduledAt.toISOString(),
+            })
           })
         }
         todaySlots.sort((a, b) => a.min - b.min)
@@ -339,9 +387,24 @@ export function Home() {
           await supabase.from('dose_logs').insert(rows)
         }
 
+        const injectionRows = injectionData ?? []
+        const recentInjectionRows = injectionRows.filter(row => {
+          const ageMs = Date.now() - parseISO(row.logged_at as string).getTime()
+          return ageMs >= 0 && ageMs <= 7 * 24 * 60 * 60 * 1000
+        })
+        const pins = recentInjectionRows
+          .filter(row => isHeroVector(row.position) && isHeroVector(row.normal))
+          .slice(0, 4)
+          .map(row => ({
+            id: row.id as string,
+            position: row.position,
+            normal: row.normal,
+          }))
+
         setPlannedToday(todaySlots.length)
-        setTodayIntakes(openSlots.map(s => ({ time: s.time, min: s.min, substance: s.substance, dose: s.dose, peptideId: s.peptideId })))
+        setTodayIntakes(openSlots.map(s => ({ time: s.time, min: s.min, substance: s.substance, dose: s.dose, doseNumber: s.doseNumber, unit: s.unit, peptideId: s.peptideId, cycleId: s.cycleId, method: s.method, scheduledAt: s.scheduledAt })))
         setTodayDone(todaySlots.length > 0 && openSlots.length === 0)
+        setInjectionHero({ pins })
 
         setExpiryAlerts(getPeptideExpiryAlerts(peptideData ?? []))
 
@@ -355,10 +418,11 @@ export function Home() {
       } catch {
         setOverview(EMPTY_OVERVIEW)
         setExpiryAlerts([])
+        setInjectionHero(EMPTY_INJECTION_HERO)
       }
     }
     load()
-  }, [user])
+  }, [user, homeReloadKey])
 
   const { t, i18n } = useTranslation()
   const locale = DATE_LOCALES[i18n.language] ?? enUS
@@ -371,6 +435,74 @@ export function Home() {
   const completionLevel = plannedToday > 0
     ? Math.min(100, Math.round((overview.loggedToday / plannedToday) * 100))
     : 0
+
+  const defaultHomeConfirmTime = (intake: TodayIntake) => format(new Date(intake.scheduledAt), 'HH:mm')
+
+  const buildHomeLoggedAt = (intake: TodayIntake, timeValue: string) => {
+    const [hours, minutes] = timeValue.split(':').map(Number)
+    const loggedAt = new Date(intake.scheduledAt)
+    if (Number.isFinite(hours) && Number.isFinite(minutes)) loggedAt.setHours(hours, minutes, 0, 0)
+    return loggedAt.toISOString()
+  }
+
+  const closeHomeIntakeSheets = () => {
+    setSelectedHomeIntake(null)
+    setHomeConfirmStep('choice')
+  }
+
+  const openTodayIntake = (intake: TodayIntake) => {
+    setSelectedHomeIntake(intake)
+    setHomeConfirmTime(defaultHomeConfirmTime(intake))
+    setHomeConfirmStep('choice')
+  }
+
+  const openHomeIntakeTimeForm = (intake: TodayIntake) => {
+    setHomeConfirmTime(defaultHomeConfirmTime(intake))
+    setHomeConfirmStep('time')
+  }
+
+  const openHomeIntakeInjection = (intake: TodayIntake) => {
+    closeHomeIntakeSheets()
+    navigate(buildInjectionTrackerUrl({
+      cycleId: intake.cycleId,
+      scheduledAt: intake.scheduledAt,
+      returnTo: '/',
+    }))
+  }
+
+  const confirmHomeIntake = async (intake: TodayIntake, taken: boolean, timeValue?: string) => {
+    if (!user) return
+    try {
+      if (taken) {
+        await confirmIntakeDoseLog(supabase, {
+          userId: user.id,
+          peptideId: intake.peptideId,
+          dose: intake.doseNumber,
+          unit: intake.unit,
+          method: intake.method ?? '',
+          loggedAt: timeValue ? buildHomeLoggedAt(intake, timeValue) : intake.scheduledAt,
+        })
+      } else {
+        const { error } = await supabase.from('dose_logs').insert({
+          user_id: user.id,
+          peptide_id: intake.peptideId,
+          dose: intake.doseNumber,
+          unit: intake.unit,
+          method: intake.method ?? '',
+          logged_at: intake.scheduledAt,
+          taken: false,
+        })
+        if (error) throw error
+      }
+      closeHomeIntakeSheets()
+      setHomeReloadKey(value => value + 1)
+      if (taken) toast.success(t('einnahme_bestaetigt', { defaultValue: 'Einnahme bestätigt' }))
+      else toast(t('einnahme_uebersp_toast', { defaultValue: 'Einnahme übersprungen' }))
+    } catch (error) {
+      console.error('[Home] confirmHomeIntake error:', error)
+      toast.error(t('fehler_speichern', { defaultValue: 'Fehler beim Speichern' }))
+    }
+  }
 
   return (
     <div style={pageStyle} className="stagger-in">
@@ -440,6 +572,11 @@ export function Home() {
         </div>
       </section>
 
+      <InjectionTrackerHero
+        pins={injectionHero.pins}
+        onOpen={() => navigate('/injektionen')}
+      />
+
       {todayIntakes.length > 0 && (
         <section style={{ ...panelStyle, padding: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
@@ -448,9 +585,31 @@ export function Home() {
           </div>
           <TodayIntakeCarousel
             intakes={todayIntakes}
-            onItemClick={() => navigate('/kalender#due-intakes')}
+            onItemClick={openTodayIntake}
           />
         </section>
+      )}
+
+      {selectedHomeIntake && homeConfirmStep === 'choice' && (
+        <HomeIntakeConfirmSheet
+          intake={selectedHomeIntake}
+          onClose={closeHomeIntakeSheets}
+          onTaken={() => openHomeIntakeTimeForm(selectedHomeIntake)}
+          onSkipped={() => confirmHomeIntake(selectedHomeIntake, false)}
+          onInjection={isInjectableMethod(selectedHomeIntake.method) ? () => openHomeIntakeInjection(selectedHomeIntake) : undefined}
+        />
+      )}
+
+      {selectedHomeIntake && homeConfirmStep === 'time' && (
+        <HomeIntakeTimeSheet
+          intake={selectedHomeIntake}
+          timeValue={homeConfirmTime}
+          onBack={() => setHomeConfirmStep('choice')}
+          onClose={closeHomeIntakeSheets}
+          onNow={() => setHomeConfirmTime(format(new Date(), 'HH:mm'))}
+          onTimeChange={setHomeConfirmTime}
+          onSave={() => confirmHomeIntake(selectedHomeIntake, true, homeConfirmTime)}
+        />
       )}
 
       <section>
@@ -847,6 +1006,140 @@ function MarqueeText({ children, style }: { children: ReactNode; style?: CSSProp
   )
 }
 
+function HomeIntakeConfirmSheet({
+  intake,
+  onClose,
+  onTaken,
+  onSkipped,
+  onInjection,
+}: {
+  intake: TodayIntake
+  onClose: () => void
+  onTaken: () => void
+  onSkipped: () => void
+  onInjection?: () => void
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Bestätigung schließen"
+        onClick={onClose}
+        className="fixed inset-0 z-50 bg-black/70"
+      />
+      <div className="fixed inset-x-3 bottom-3 z-[60] rounded-3xl border border-white/10 bg-[var(--surface)] p-4 shadow-[0_-16px_48px_rgba(0,0,0,0.55)]">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[0.62rem] font-black uppercase tracking-[0.13em] text-cyan-300">Anstehende Einnahme</p>
+            <h2 className="mt-1 text-lg font-black text-white">Wie möchtest du bestätigen?</h2>
+            <p className="mt-1 truncate text-sm font-semibold text-slate-300">
+              {[intake.substance, intake.dose].filter(Boolean).join(' · ')} · {intake.time}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-400"
+          >
+            <XCircle size={17} aria-hidden="true" />
+          </button>
+        </div>
+        <div className="grid gap-2">
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={onTaken} className="flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-emerald-500/25 bg-emerald-500/15 px-3 text-sm font-black text-emerald-300">
+              <CheckCircle2 size={16} aria-hidden="true" /> Eingenommen
+            </button>
+            <button type="button" onClick={onSkipped} className="flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-red-500/25 bg-red-500/15 px-3 text-sm font-black text-red-300">
+              <XCircle size={16} aria-hidden="true" /> Übersprungen
+            </button>
+          </div>
+          {onInjection && (
+            <button type="button" onClick={onInjection} className="flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-sky-500/25 bg-sky-500/15 px-3 text-sm font-black text-sky-300">
+              <Syringe size={16} aria-hidden="true" /> Mit Injektion bestätigen
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
+
+function HomeIntakeTimeSheet({
+  intake,
+  timeValue,
+  onBack,
+  onClose,
+  onNow,
+  onTimeChange,
+  onSave,
+}: {
+  intake: TodayIntake
+  timeValue: string
+  onBack: () => void
+  onClose: () => void
+  onNow: () => void
+  onTimeChange: (value: string) => void
+  onSave: () => void
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Zeitformular schließen"
+        onClick={onClose}
+        className="fixed inset-0 z-50 bg-black/70"
+      />
+      <div className="fixed inset-x-3 bottom-3 z-[60] rounded-3xl border border-white/10 bg-[var(--surface)] p-4 shadow-[0_-16px_48px_rgba(0,0,0,0.55)]">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[0.62rem] font-black uppercase tracking-[0.13em] text-emerald-300">Einnahme bestätigen</p>
+            <h2 className="mt-1 text-lg font-black text-white">Wann hast du tatsächlich eingenommen?</h2>
+            <p className="mt-1 truncate text-sm font-semibold text-slate-300">
+              {[intake.substance, intake.dose].filter(Boolean).join(' · ')} · geplant {intake.time}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-400"
+          >
+            <XCircle size={17} aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <label className="text-[0.62rem] font-black uppercase tracking-[0.13em] text-slate-500" htmlFor="home-intake-confirm-time">
+            Uhrzeit
+          </label>
+          <button
+            type="button"
+            onClick={onNow}
+            className="flex items-center gap-1.5 rounded-xl border border-sky-500/25 bg-sky-500/10 px-3 py-1.5 text-xs font-black text-sky-300"
+          >
+            <Clock3 size={13} aria-hidden="true" /> Jetzt
+          </button>
+        </div>
+        <input
+          id="home-intake-confirm-time"
+          type="time"
+          value={timeValue}
+          onChange={event => onTimeChange(event.target.value)}
+          className="mb-4 w-full rounded-2xl border border-white/10 px-4 py-3 text-base font-black text-white outline-none focus:border-sky-500/50"
+          style={{ background: 'var(--surface-input)', colorScheme: 'dark' }}
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={onBack} className="min-h-11 rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-sm font-black text-slate-300">
+            Zurück
+          </button>
+          <button type="button" onClick={onSave} className="flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-emerald-500/25 bg-emerald-500/15 px-3 text-sm font-black text-emerald-300">
+            <CheckCircle2 size={16} aria-hidden="true" /> Speichern
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
 // Eine kompakte, einzeilige Einnahmen-Zeile mit Live-Timer (Countdown bis zur
 // Einnahme, danach „Jetzt fällig").
 function IntakeRow({
@@ -906,10 +1199,10 @@ function IntakeRow({
 
 // Vertikales Einzeiler-Karussell: eine Einnahme im Fokus, Nachbarn oben/unten
 // lugen hervor und faden aus. Vertikal scroll-/wischbar mit Snap.
-function TodayIntakeCarousel({ intakes, onItemClick }: { intakes: TodayIntake[]; onItemClick: () => void }) {
+function TodayIntakeCarousel({ intakes, onItemClick }: { intakes: TodayIntake[]; onItemClick: (intake: TodayIntake) => void }) {
   if (intakes.length <= 1) {
     return intakes.length === 1
-      ? <IntakeRow time={intakes[0].time} substance={intakes[0].substance} dose={intakes[0].dose} onClick={onItemClick} />
+      ? <IntakeRow time={intakes[0].time} substance={intakes[0].substance} dose={intakes[0].dose} onClick={() => onItemClick(intakes[0])} />
       : null
   }
   const height = INTAKE_ROW_H * 2.5   // Fokus + Andeutung der Nachbarn
@@ -927,7 +1220,7 @@ function TodayIntakeCarousel({ intakes, onItemClick }: { intakes: TodayIntake[];
     >
       {intakes.map((it, i) => (
         <div key={`${it.peptideId}-${it.min}-${i}`} style={{ scrollSnapAlign: 'center', flexShrink: 0 }}>
-          <IntakeRow time={it.time} substance={it.substance} dose={it.dose} onClick={onItemClick} />
+          <IntakeRow time={it.time} substance={it.substance} dose={it.dose} onClick={() => onItemClick(it)} />
         </div>
       ))}
     </div>

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  findOldestOverdueIntake, collectMissedIntakes, scheduleForDay, effectiveDose,
+  findOldestOverdueIntake, collectMissedIntakes, collectOpenIntakes, scheduleForDay, effectiveDose,
   type ScheduleCycle, type IntakeLog, type ScheduleSegment, type EscalationRow,
 } from './intakeSchedule'
 
@@ -140,6 +140,13 @@ describe('collectMissedIntakes — Frist bis Tagesende', () => {
     expect(days).toContain('2026-06-11')
   })
 
+  it('zurueckgesetzte Logs werden nicht erneut automatisch als verpasst eingetragen', () => {
+    const logs: IntakeLog[] = [{ peptide_id: 'p3', logged_at: '2026-06-10T08:30:00', taken: null }]
+    const days = collectMissedIntakes([daily], logs, now).map(m => m.dateKey)
+    expect(days).not.toContain('2026-06-10')
+    expect(days).toContain('2026-06-09')
+    expect(days).toContain('2026-06-11')
+  })
   it('je nicht gedecktem Slot ein Eintrag (2x täglich)', () => {
     const twice: ScheduleCycle = { ...daily, frequency: '2x täglich', intake_time: 'morgens,abends' }
     // Am 11. nur eine Einnahme bestätigt → ein Slot bleibt offen.
@@ -168,5 +175,35 @@ describe('collectMissedIntakes — Frist bis Tagesende', () => {
   it('since == heute → gar kein Backfill', () => {
     const old: ScheduleCycle = { ...daily, id: 'c4', start_date: '2026-03-04' }
     expect(collectMissedIntakes([old], [], now, new Date(2026, 5, 12))).toHaveLength(0)
+  })
+})
+
+// ── collectOpenIntakes: fällige + überfällige Slots ─────────────────────────────
+describe('collectOpenIntakes', () => {
+  // 2x täglich (morgens 08:00, abends 20:00), Start 01.06., keine Historie.
+  const twice: ScheduleCycle = {
+    id: 'c5', peptide_id: 'p5', start_date: '2026-06-01', end_date: null,
+    frequency: '2x täglich', x_days_interval: null, schedule_days: null,
+    intake_time: 'morgens,abends', intake_time_custom: null, dose: 200, unit: 'mcg',
+    schedule_history: null,
+  }
+
+  it('liefert überfällige Slots; heutiger Slot bleibt aus, solange noch nicht fällig', () => {
+    const now = new Date(2026, 5, 2, 12, 0) // 02.06., 12:00 (vor dem 20:00-Slot)
+    const logs: IntakeLog[] = [{ peptide_id: 'p5', logged_at: '2026-06-02T08:30:00', taken: true }]
+    expect(collectOpenIntakes([twice], logs, now, 3)).toEqual([
+      { cycleId: 'c5', peptideId: 'p5', dateKey: '2026-06-01', minutes: 480 },
+      { cycleId: 'c5', peptideId: 'p5', dateKey: '2026-06-01', minutes: 1200 },
+    ])
+  })
+
+  it('heutiger Slot wird aufgenommen, sobald seine Zeit vorbei ist', () => {
+    const later = new Date(2026, 5, 2, 21, 0) // 21:00 → 20:00-Slot ist jetzt fällig
+    const logs: IntakeLog[] = [{ peptide_id: 'p5', logged_at: '2026-06-02T08:30:00', taken: true }]
+    expect(collectOpenIntakes([twice], logs, later, 1)).toEqual([
+      { cycleId: 'c5', peptideId: 'p5', dateKey: '2026-06-01', minutes: 480 },
+      { cycleId: 'c5', peptideId: 'p5', dateKey: '2026-06-01', minutes: 1200 },
+      { cycleId: 'c5', peptideId: 'p5', dateKey: '2026-06-02', minutes: 1200 },
+    ])
   })
 })
