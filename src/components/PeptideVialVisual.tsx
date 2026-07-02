@@ -276,8 +276,8 @@ export function PeptideVialVisual({
   const widthClass = isLarge ? 'w-28 sm:w-36' : 'w-16'
   const shellClass = isLarge ? 'h-44 sm:h-52' : 'h-24'
   const labelClass = isLarge
-    ? 'left-[3.5%] right-[3.5%] top-[53%] rounded-sm px-1 py-2'
-    : 'left-[3.5%] right-[3.5%] top-[50%] rounded-sm px-1 py-1'
+    ? 'left-[3.5%] right-[3.5%] top-1/2 -translate-y-1/2 rounded-sm px-1 py-2'
+    : 'left-[3.5%] right-[3.5%] top-1/2 -translate-y-1/2 rounded-sm px-1 py-1'
   const nameClass = isLarge
     ? 'text-lg sm:text-xl leading-tight'
     : 'text-[9px] leading-tight'

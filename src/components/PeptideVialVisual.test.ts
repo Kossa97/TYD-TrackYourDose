@@ -117,7 +117,10 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('data-vial-detail="label-glass-wrap"')
     expect(source()).toContain('VialTop({ focus: visualFocus, lightOffset: visualLightOffset })')
     expect(source()).toContain('left-[3.5%] right-[3.5%]')
-    expect(source()).toContain('top-[53%] rounded-sm px-1 py-2')
+    expect(source()).toContain('top-1/2 -translate-y-1/2 rounded-sm px-1 py-2')
+    expect(source()).toContain('top-1/2 -translate-y-1/2 rounded-sm px-1 py-1')
+    expect(source()).not.toContain('top-[53%] rounded-sm px-1 py-2')
+    expect(source()).not.toContain('top-[50%] rounded-sm px-1 py-1')
     expect(source()).toContain('text-lg sm:text-xl leading-tight')
   })
 
