@@ -20,6 +20,7 @@ import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, typ
 import { computeNextVialStock } from '../lib/peptideStock'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { GlassPanel, PageShell } from '../components/ui/DesignSystem'
+import { CarouselCounter, CarouselPagination } from '../components/CarouselChrome'
 
 interface DoseLog {
   id: string
@@ -211,23 +212,32 @@ function IntakePeriodCarousel<T>({
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(0)
   const hasMultiple = items.length > 1
 
   const updateScrollHints = useCallback(() => {
     const el = scrollRef.current
     if (!el) return
+    const pageWidth = Math.max(1, el.clientWidth)
+    const index = Math.round(el.scrollLeft / pageWidth)
+    setActiveIndex(Math.min(items.length - 1, Math.max(0, index)))
     setCanScrollLeft(el.scrollLeft > 6)
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 6)
-  }, [])
+  }, [items.length])
 
   useEffect(() => {
     updateScrollHints()
   }, [items.length, updateScrollHints])
 
-  const scrollByPage = (direction: -1 | 1) => {
+  const scrollToIndex = (index: number) => {
     const el = scrollRef.current
     if (!el) return
-    el.scrollBy({ left: direction * el.clientWidth, behavior: 'smooth' })
+    const next = Math.min(items.length - 1, Math.max(0, index))
+    el.scrollTo({ left: next * el.clientWidth, behavior: 'smooth' })
+  }
+
+  const scrollByPage = (direction: -1 | 1) => {
+    scrollToIndex(activeIndex + direction)
   }
 
   const arrowClass = (active: boolean) => [
@@ -236,7 +246,7 @@ function IntakePeriodCarousel<T>({
     active ? 'opacity-100' : 'opacity-35 pointer-events-none',
   ].join(' ')
 
-  return (
+  const trackRow = (
     <div className="flex items-stretch gap-0.5">
       {hasMultiple && (
         <button
@@ -277,6 +287,26 @@ function IntakePeriodCarousel<T>({
           <ChevronRight size={13} strokeWidth={1.5} />
         </button>
       )}
+    </div>
+  )
+
+  if (!hasMultiple) {
+    return trackRow
+  }
+
+  return (
+    <div className="space-y-2">
+      {trackRow}
+      <div className="flex items-center justify-between gap-2 px-0.5">
+        <CarouselCounter activeIndex={activeIndex} count={items.length} tone="amber" />
+        <CarouselPagination
+          count={items.length}
+          activeIndex={activeIndex}
+          onSelect={scrollToIndex}
+          accent="#fbbf24"
+          label="Einnahme"
+        />
+      </div>
     </div>
   )
 }

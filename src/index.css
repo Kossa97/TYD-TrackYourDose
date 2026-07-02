@@ -735,6 +735,40 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
   position: relative;
   overflow: hidden;
 }
+
+/* Kalender-Karussell: Zähler + Punkte */
+.carousel-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+}
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  border: none;
+  padding: 0;
+  background: var(--border-strong);
+  transition: width 0.25s ease, background 0.25s ease;
+  cursor: pointer;
+}
+.carousel-dot--active {
+  width: 26px;
+  background: var(--accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.carousel-counter {
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.carousel-counter--amber {
+  color: #fbbf24;
+}
 .live-cycle-card {
   border-radius: 18px;
   padding: 14px 14px 12px;
