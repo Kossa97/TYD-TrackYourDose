@@ -404,18 +404,34 @@ export function PeptideVialVisual({
               highlight all derive from one geometry so they move as one. */}
           <div
             data-vial-detail="liquid-motion-viewport"
-            className={`absolute left-[3.5%] right-[3.5%] top-[19%] bottom-[3%] ${animateOnMount ? 'vial-liquid-rise' : ''}`}
+            className={`pointer-events-none absolute inset-0 ${animateOnMount ? 'vial-liquid-rise' : ''}`}
           >
-            <div data-vial-detail="liquid-glass-window" className="absolute inset-0 overflow-hidden">
-              <svg
-                key={fillMotion.epoch}
-                data-vial-detail="liquid-graphic"
-                className={`absolute inset-0 h-full w-full ${fillMotion.epoch > 0 ? 'vial-liquid-level-motion' : ''}`}
-                viewBox={`0 0 ${LIQUID_VB_W} ${LIQUID_VB_H}`}
-                preserveAspectRatio="none"
-                aria-hidden="true"
-                style={liquidMotionStyle}
-              >
+            <svg
+              data-vial-detail="liquid-vial-chamber"
+              className="absolute inset-0 h-full w-full overflow-visible"
+              viewBox="0 0 120 294"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <defs>
+                <clipPath id={`${uid}-liquidChamberClip`}>
+                  <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 250 C116 277 101 292 74 292 L46 292 C19 292 4 277 4 250 L4 56 C4 41 28 35 28 24 Z" />
+                </clipPath>
+              </defs>
+              <g data-vial-detail="liquid-glass-window" clipPath={`url(#${uid}-liquidChamberClip)`}>
+                <svg
+                  key={fillMotion.epoch}
+                  data-vial-detail="liquid-graphic"
+                  x="4"
+                  y="36"
+                  width="112"
+                  height="247"
+                  className={`overflow-visible ${fillMotion.epoch > 0 ? 'vial-liquid-level-motion' : ''}`}
+                  viewBox={`0 0 ${LIQUID_VB_W} ${LIQUID_VB_H}`}
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                  style={liquidMotionStyle}
+                >
             <defs>
               {/* one template path drives the body fills and the clip together */}
               <path id={`${uid}-bodyPath`} ref={bodyRef} d={geom.body} />
@@ -495,8 +511,9 @@ export function PeptideVialVisual({
               strokeLinecap="round"
               vectorEffect="non-scaling-stroke"
             />
-              </svg>
-            </div>
+                </svg>
+              </g>
+            </svg>
           </div>
 
           <div className="vial-shimmer pointer-events-none absolute inset-y-[24%] left-[24%] w-[32%] rotate-6 rounded-full bg-white/10 blur-[6px]" />

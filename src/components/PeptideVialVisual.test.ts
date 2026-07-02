@@ -198,4 +198,24 @@ describe('PeptideVialVisual', () => {
     expect(text).toContain('--vial-fill-motion-shift')
     expect(text).toContain('data-vial-detail="liquid-motion-viewport"')
   })
+
+  test('clips the liquid to the new vial chamber instead of a rectangular window', () => {
+    const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
+      name: 'BPC-157',
+      amount: '5',
+      unit: 'mg',
+      fillPct: 45,
+      color: '#06b6d4',
+    }))
+    const text = source()
+
+    expect(html).toContain('data-vial-detail="liquid-vial-chamber"')
+    expect(html).toContain('data-vial-detail="liquid-glass-window"')
+    expect(text).toContain('liquidChamberClip')
+    expect(text).toContain('clipPath={`url(#${uid}-liquidChamberClip)`}')
+    expect(text).toContain('x="4"')
+    expect(text).toContain('y="36"')
+    expect(text).toContain('height="247"')
+    expect(text).not.toContain('className="absolute inset-0 overflow-hidden"')
+  })
 })
