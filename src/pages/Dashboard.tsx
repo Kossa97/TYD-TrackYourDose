@@ -20,7 +20,6 @@ import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, typ
 import { computeNextVialStock } from '../lib/peptideStock'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { GlassPanel, PageShell } from '../components/ui/DesignSystem'
-import { CarouselCounter, CarouselNavButton, CarouselPagination } from '../components/CarouselChrome'
 
 interface DoseLog {
   id: string
@@ -212,90 +211,72 @@ function IntakePeriodCarousel<T>({
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(0)
   const hasMultiple = items.length > 1
 
   const updateScrollHints = useCallback(() => {
     const el = scrollRef.current
     if (!el) return
-    const pageWidth = Math.max(1, el.clientWidth)
-    const index = Math.round(el.scrollLeft / pageWidth)
-    setActiveIndex(Math.min(items.length - 1, Math.max(0, index)))
     setCanScrollLeft(el.scrollLeft > 6)
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 6)
-  }, [items.length])
+  }, [])
 
   useEffect(() => {
     updateScrollHints()
   }, [items.length, updateScrollHints])
 
-  const scrollToIndex = (index: number) => {
+  const scrollByPage = (direction: -1 | 1) => {
     const el = scrollRef.current
     if (!el) return
-    const next = Math.min(items.length - 1, Math.max(0, index))
-    el.scrollTo({ left: next * el.clientWidth, behavior: 'smooth' })
+    el.scrollBy({ left: direction * el.clientWidth, behavior: 'smooth' })
   }
 
-  const scrollByPage = (direction: -1 | 1) => {
-    scrollToIndex(activeIndex + direction)
-  }
-
-  const track = (
-    <div
-      ref={scrollRef}
-      onScroll={updateScrollHints}
-      className={[
-        'flex overflow-x-auto snap-x snap-mandatory select-none',
-        '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-        hasMultiple ? 'min-w-0 flex-1' : 'w-full',
-      ].join(' ')}
-      style={{ touchAction: 'pan-x' }}
-    >
-      {items.map(item => (
-        <div
-          key={getKey(item)}
-          className="w-full shrink-0 snap-center snap-always"
-        >
-          {renderItem(item)}
-        </div>
-      ))}
-    </div>
-  )
-
-  if (!hasMultiple) {
-    return track
-  }
+  const arrowClass = (active: boolean) => [
+    'flex shrink-0 items-center justify-center transition-opacity duration-200',
+    'w-[14px] text-sky-300/25 hover:text-sky-300/55',
+    active ? 'opacity-100' : 'opacity-35 pointer-events-none',
+  ].join(' ')
 
   return (
-    <div className="space-y-2.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.05] p-2.5">
-      <div className="carousel-chrome-row items-stretch">
-        <CarouselNavButton
-          direction="horizontal"
-          nav="prev"
-          disabled={!canScrollLeft}
+    <div className="flex items-stretch gap-0.5">
+      {hasMultiple && (
+        <button
+          type="button"
+          aria-label="Vorherige Einnahme"
           onClick={() => scrollByPage(-1)}
-          label="Vorherige Einnahme"
-        />
-        <div className="carousel-track-shell carousel-track-shell--amber min-w-0 flex-1">{track}</div>
-        <CarouselNavButton
-          direction="horizontal"
-          nav="next"
-          disabled={!canScrollRight}
+          className={arrowClass(canScrollLeft)}
+        >
+          <ChevronLeft size={13} strokeWidth={1.5} />
+        </button>
+      )}
+      <div
+        ref={scrollRef}
+        onScroll={updateScrollHints}
+        className={[
+          'min-w-0 flex-1 flex overflow-x-auto snap-x snap-mandatory select-none',
+          '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          hasMultiple ? '' : 'w-full',
+        ].join(' ')}
+        style={{ touchAction: 'pan-x' }}
+      >
+        {items.map(item => (
+          <div
+            key={getKey(item)}
+            className="w-full shrink-0 snap-center snap-always"
+          >
+            {renderItem(item)}
+          </div>
+        ))}
+      </div>
+      {hasMultiple && (
+        <button
+          type="button"
+          aria-label="Nächste Einnahme"
           onClick={() => scrollByPage(1)}
-          label="Nächste Einnahme"
-        />
-      </div>
-
-      <div className="flex items-center justify-between gap-3 px-0.5">
-        <CarouselCounter activeIndex={activeIndex} count={items.length} tone="amber" />
-        <CarouselPagination
-          count={items.length}
-          activeIndex={activeIndex}
-          onSelect={scrollToIndex}
-          accent="#fbbf24"
-          label="Einnahme"
-        />
-      </div>
+          className={arrowClass(canScrollRight)}
+        >
+          <ChevronRight size={13} strokeWidth={1.5} />
+        </button>
+      )}
     </div>
   )
 }
