@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval,
-  isSameDay, isToday, startOfWeek, endOfWeek,
+  isSameDay, isToday, startOfWeek, endOfWeek, isSameMonth, addDays,
   differenceInDays, parseISO,
 } from 'date-fns'
 import { de, enUS, es, fr, it, pt, ru, tr, ar, hi, id, zhCN, ja, ko } from 'date-fns/locale'
@@ -226,6 +226,7 @@ export function Dashboard() {
   const [confirmSheet, setConfirmSheet] = useState<ConfirmSheet | null>(null)
   const [confirmTime, setConfirmTime]   = useState('')
   const [completedExpanded, setCompletedExpanded] = useState(false)
+  const [calendarExpanded, setCalendarExpanded] = useState(false)
 
   // Horizontal swipe state
   const calendarSwipeStart = useRef<{ x: number; y: number; pointerId: number } | null>(null)
@@ -235,6 +236,15 @@ export function Dashboard() {
 
   const changeMonth = useCallback((delta: number) => {
     setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + delta, 1))
+  }, [])
+
+  const changeWeek = useCallback((delta: number) => {
+    setSelectedDay(prev => {
+      const next = new Date(prev)
+      next.setDate(next.getDate() + delta * 7)
+      setCurrentDate(new Date(next.getFullYear(), next.getMonth(), 1))
+      return next
+    })
   }, [])
 
   const selectCalendarDay = useCallback((day: Date) => {
@@ -287,7 +297,8 @@ export function Dashboard() {
 
     // Swipe: require horizontal dominance + minimum distance
     if (Math.abs(deltaX) >= SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
-      changeMonth(deltaX < 0 ? 1 : -1)
+      if (calendarExpanded) changeMonth(deltaX < 0 ? 1 : -1)
+      else changeWeek(deltaX < 0 ? 1 : -1)
     }
   }
 
@@ -366,15 +377,33 @@ export function Dashboard() {
     end: endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 }),
   })
 
-  // Peek month (adjacent month shown while swiping)
+  const weekStart = startOfWeek(selectedDay, { weekStartsOn: 1 })
+  const weekEnd = endOfWeek(selectedDay, { weekStartsOn: 1 })
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
+  const visibleCalendarDays = calendarExpanded ? calendarDays : weekDays
+
+  const weekTitle = isSameMonth(weekStart, weekEnd)
+    ? `${format(weekStart, 'd.', { locale })}–${format(weekEnd, 'd. MMMM yyyy', { locale })}`
+    : `${format(weekStart, 'd. MMM', { locale })} – ${format(weekEnd, 'd. MMM yyyy', { locale })}`
+  const monthTitle = format(currentDate, 'MMMM yyyy', { locale })
+  const calendarTitle = calendarExpanded ? monthTitle : weekTitle
+
+  // Peek month/week (adjacent period shown while swiping)
   const peekDate = peekDir !== 0
-    ? new Date(currentDate.getFullYear(), currentDate.getMonth() + peekDir, 1)
+    ? calendarExpanded
+      ? new Date(currentDate.getFullYear(), currentDate.getMonth() + peekDir, 1)
+      : addDays(selectedDay, peekDir * 7)
     : null
   const peekCalendarDays = peekDate
-    ? eachDayOfInterval({
-        start: startOfWeek(startOfMonth(peekDate), { weekStartsOn: 1 }),
-        end: endOfWeek(endOfMonth(peekDate), { weekStartsOn: 1 }),
-      })
+    ? calendarExpanded
+      ? eachDayOfInterval({
+          start: startOfWeek(startOfMonth(peekDate), { weekStartsOn: 1 }),
+          end: endOfWeek(endOfMonth(peekDate), { weekStartsOn: 1 }),
+        })
+      : eachDayOfInterval({
+          start: startOfWeek(peekDate, { weekStartsOn: 1 }),
+          end: endOfWeek(peekDate, { weekStartsOn: 1 }),
+        })
     : []
 
   const logsForDay = (day: Date) => logs.filter(l => isSameDay(new Date(l.logged_at), day))
@@ -385,7 +414,6 @@ export function Dashboard() {
   const isTodaySelected = isToday(selectedDay)
   // Vergangener Tag (vor heute): nicht bestätigte Slots gelten als „verpasst".
   const isPastSelected = format(selectedDay, 'yyyy-MM-dd') < format(new Date(), 'yyyy-MM-dd')
-  const monthTitle = format(currentDate, 'MMMM yyyy', { locale })
   const selectedDayTitle = isTodaySelected
     ? t('heutiges_protokoll')
     : format(selectedDay, 'EEEE, d. MMMM', { locale })
@@ -575,8 +603,8 @@ export function Dashboard() {
 
   // ── Day cell renderer ─────────────────────────────────────────────────────
   const today = new Date()
-  const renderDayCell = (day: Date, monthDate: Date, key: number, isPeek: boolean) => {
-    const inMonth = day.getMonth() === monthDate.getMonth()
+  const renderDayCell = (day: Date, monthDate: Date, key: number, isPeek: boolean, weekMode = false) => {
+    const inMonth = weekMode || day.getMonth() === monthDate.getMonth()
     const isSelected = !isPeek && isSameDay(day, selectedDay)
     const isTodayDay = isToday(day)
     // Tag-genau vergleichen (nicht mit Uhrzeit) — sonst gilt „morgen" < 24h als heute/vergangen.
@@ -923,21 +951,25 @@ export function Dashboard() {
             {/* Month title with arrow buttons */}
             <div className="flex items-center gap-0.5">
               <button
-                onClick={() => changeMonth(-1)}
-                aria-label={t('prev_month', { defaultValue: 'Vorheriger Monat' })}
+                onClick={() => calendarExpanded ? changeMonth(-1) : changeWeek(-1)}
+                aria-label={calendarExpanded
+                  ? t('prev_month', { defaultValue: 'Vorheriger Monat' })
+                  : t('prev_week', { defaultValue: 'Vorherige Woche' })}
                 className="p-1.5 rounded-xl text-sky-400 hover:bg-sky-400/10 transition-colors"
               >
                 <ChevronLeft size={18} />
               </button>
               <h2
                 className="text-base font-black tracking-[-0.03em] text-white text-center"
-                style={{ minWidth: 140 }}
+                style={{ minWidth: calendarExpanded ? 140 : 168 }}
               >
-                {monthTitle}
+                {calendarTitle}
               </h2>
               <button
-                onClick={() => changeMonth(1)}
-                aria-label={t('next_month', { defaultValue: 'Nächster Monat' })}
+                onClick={() => calendarExpanded ? changeMonth(1) : changeWeek(1)}
+                aria-label={calendarExpanded
+                  ? t('next_month', { defaultValue: 'Nächster Monat' })
+                  : t('next_week', { defaultValue: 'Nächste Woche' })}
                 className="p-1.5 rounded-xl text-sky-400 hover:bg-sky-400/10 transition-colors"
               >
                 <ChevronRight size={18} />
@@ -978,10 +1010,16 @@ export function Dashboard() {
               willChange: 'transform',
             }}
           >
-            {calendarDays.map((day, i) => renderDayCell(day, currentDate, i, false))}
+            {visibleCalendarDays.map((day, i) => renderDayCell(
+              day,
+              calendarExpanded ? currentDate : selectedDay,
+              i,
+              false,
+              !calendarExpanded,
+            ))}
           </div>
 
-          {/* Peek month — slides in from the side while swiping */}
+          {/* Peek period — slides in from the side while swiping */}
           {peekDir !== 0 && (
             <div
               className="absolute inset-x-0 top-0 grid grid-cols-7 select-none pointer-events-none"
@@ -991,10 +1029,37 @@ export function Dashboard() {
                 willChange: 'transform',
               }}
             >
-              {peekCalendarDays.map((day, i) => renderDayCell(day, peekDate!, i, true))}
+              {peekCalendarDays.map((day, i) => renderDayCell(
+                day,
+                calendarExpanded ? peekDate! : peekDate!,
+                i,
+                true,
+                !calendarExpanded,
+              ))}
             </div>
           )}
         </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            setCalendarExpanded(expanded => {
+              if (!expanded) {
+                setCurrentDate(new Date(selectedDay.getFullYear(), selectedDay.getMonth(), 1))
+              }
+              return !expanded
+            })
+          }}
+          className="flex w-full items-center justify-center gap-1.5 border-t border-slate-800 px-4 py-2.5 text-xs font-bold text-sky-300/90 transition-colors hover:bg-sky-400/5"
+        >
+          {calendarExpanded
+            ? t('calendar_collapse_week', { defaultValue: 'Wochenansicht' })
+            : t('calendar_expand_month', { defaultValue: 'Monat anzeigen' })}
+          <ChevronDown
+            size={14}
+            className={`transition-transform duration-200 ${calendarExpanded ? 'rotate-180' : ''}`}
+          />
+        </button>
 
         {/* Legend */}
         <div className="flex flex-wrap gap-3 px-4 py-3" style={{

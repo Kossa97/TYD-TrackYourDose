@@ -20,4 +20,14 @@ describe('Dashboard intake confirmation actions', () => {
     expect(source).toContain('completedExpanded')
     expect(source).toContain('renderConfirmedLog')
   })
+
+  it('defaults to week view with expandable month calendar', () => {
+    const source = readFileSync(new URL('./Dashboard.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('calendarExpanded')
+    expect(source).toContain('const [calendarExpanded, setCalendarExpanded] = useState(false)')
+    expect(source).toContain('visibleCalendarDays')
+    expect(source).toContain('changeWeek')
+    expect(source).toContain('calendar_expand_month')
+  })
 })
