@@ -255,6 +255,7 @@ describe('PeptideVialVisual', () => {
     expect(text).toContain('data-vial-detail="cap-top"')
     expect(text).toContain('data-vial-detail="cap-collar"')
     expect(text).toContain('width="86"')
-    expect(text).toContain('className="-mb-4 block h-auto w-full"')
+    expect(text).toContain('className="pointer-events-none relative z-20 -mb-4 block h-auto w-full"')
+    expect(text).toContain('className={`relative z-0 w-full ${shellClass} overflow-visible`}')
   })
 })

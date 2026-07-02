@@ -137,7 +137,7 @@ function VialTop({ focus, lightOffset }: { focus: number; lightOffset: number })
   const uid = useId()
   const capSheenOpacity = 0.24 + focus * 0.4
   return (
-    <svg className="-mb-4 block h-auto w-full" viewBox="0 0 120 58" aria-hidden="true">
+    <svg className="pointer-events-none relative z-20 -mb-4 block h-auto w-full" viewBox="0 0 120 58" aria-hidden="true">
       <defs>
         <linearGradient id={`${uid}-capSilver`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#f6f9fc" />
@@ -321,7 +321,7 @@ export function PeptideVialVisual({
       <div className="relative flex flex-col items-center">
         {VialTop({ focus: visualFocus, lightOffset: visualLightOffset })}
 
-        <div className={`relative w-full ${shellClass} overflow-visible`}>
+        <div className={`relative z-0 w-full ${shellClass} overflow-visible`}>
           <svg
             data-vial-detail="unified-glass-shell"
             className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
