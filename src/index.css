@@ -763,6 +763,31 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
   opacity: 0.28;
   pointer-events: none;
 }
+.carousel-nav-btn--overlay {
+  width: 1.75rem;
+  height: 1.75rem;
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.carousel-stage {
+  position: relative;
+}
+.carousel-stage-nav {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 4px;
+}
+.carousel-stage-nav > * {
+  pointer-events: auto;
+}
 .carousel-pagination {
   display: flex;
   justify-content: center;
@@ -799,26 +824,59 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
 .carousel-counter--amber {
   color: #fbbf24;
 }
-.carousel-chevron-btn {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 1rem;
-  color: rgba(125, 211, 252, 0.35);
-  transition: color 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
+.carousel-track-shell {
+  position: relative;
+  min-width: 0;
+  flex: 1;
 }
-.carousel-chevron-btn--active {
-  color: rgba(125, 211, 252, 0.72);
-  filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.45));
-}
-.carousel-chevron-btn--active:hover {
-  color: rgba(186, 230, 253, 0.95);
-  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.65));
-}
-.carousel-chevron-btn--disabled {
-  opacity: 0.28;
+.carousel-track-shell::before,
+.carousel-track-shell::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  z-index: 2;
   pointer-events: none;
+}
+.carousel-track-shell::before {
+  left: 0;
+  background: linear-gradient(to right, var(--surface), transparent);
+}
+.carousel-track-shell::after {
+  right: 0;
+  background: linear-gradient(to left, var(--surface), transparent);
+}
+.carousel-track-shell--vertical::before,
+.carousel-track-shell--vertical::after {
+  left: 0;
+  right: 0;
+  width: auto;
+  height: 22px;
+}
+.carousel-track-shell--vertical::before {
+  top: 0;
+  bottom: auto;
+  background: linear-gradient(to bottom, var(--surface), transparent);
+}
+.carousel-track-shell--vertical::after {
+  top: auto;
+  bottom: 0;
+  background: linear-gradient(to top, var(--surface), transparent);
+}
+.carousel-chrome-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.carousel-chrome-row--vertical {
+  flex-direction: column;
+}
+.carousel-track-shell--amber::before {
+  background: linear-gradient(to right, rgba(245, 158, 11, 0.08), transparent);
+}
+.carousel-track-shell--amber::after {
+  background: linear-gradient(to left, rgba(245, 158, 11, 0.08), transparent);
 }
 .live-cycle-card {
   border-radius: 18px;

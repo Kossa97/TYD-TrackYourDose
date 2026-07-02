@@ -20,7 +20,7 @@ import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, typ
 import { computeNextVialStock } from '../lib/peptideStock'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { GlassPanel, PageShell } from '../components/ui/DesignSystem'
-import { CarouselCounter, CarouselPagination } from '../components/CarouselChrome'
+import { CarouselCounter, CarouselNavButton, CarouselPagination } from '../components/CarouselChrome'
 
 interface DoseLog {
   id: string
@@ -240,11 +240,6 @@ function IntakePeriodCarousel<T>({
     scrollToIndex(activeIndex + direction)
   }
 
-  const arrowClass = (active: boolean) => [
-    'carousel-chevron-btn',
-    active ? 'carousel-chevron-btn--active' : 'carousel-chevron-btn--disabled',
-  ].join(' ')
-
   const track = (
     <div
       ref={scrollRef}
@@ -269,24 +264,26 @@ function IntakePeriodCarousel<T>({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-stretch gap-1">
-        <button
-          type="button"
-          aria-label="Vorherige Einnahme"
-          onClick={() => scrollByPage(-1)}
-          className={arrowClass(canScrollLeft)}
-        >
-          <ChevronLeft size={14} strokeWidth={2} />
-        </button>
-        <div className="min-w-0 flex-1">{track}</div>
-        <button
-          type="button"
-          aria-label="Nächste Einnahme"
-          onClick={() => scrollByPage(1)}
-          className={arrowClass(canScrollRight)}
-        >
-          <ChevronRight size={14} strokeWidth={2} />
-        </button>
+      <div className="carousel-stage">
+        <div className="carousel-track-shell carousel-track-shell--amber w-full">{track}</div>
+        <div className="carousel-stage-nav">
+          <CarouselNavButton
+            direction="horizontal"
+            nav="prev"
+            variant="overlay"
+            disabled={!canScrollLeft}
+            onClick={() => scrollByPage(-1)}
+            label="Vorherige Einnahme"
+          />
+          <CarouselNavButton
+            direction="horizontal"
+            nav="next"
+            variant="overlay"
+            disabled={!canScrollRight}
+            onClick={() => scrollByPage(1)}
+            label="Nächste Einnahme"
+          />
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-2 px-0.5">
