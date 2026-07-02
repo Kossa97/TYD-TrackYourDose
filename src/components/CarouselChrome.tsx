@@ -8,14 +8,12 @@ export function CarouselNavButton({
   disabled,
   onClick,
   label,
-  variant = 'default',
 }: {
   direction: CarouselDirection
   nav: 'prev' | 'next'
   disabled?: boolean
   onClick: () => void
   label: string
-  variant?: 'default' | 'overlay'
 }) {
   const Icon = direction === 'horizontal'
     ? (nav === 'prev' ? ChevronLeft : ChevronRight)
@@ -29,11 +27,10 @@ export function CarouselNavButton({
       onClick={onClick}
       className={[
         'carousel-nav-btn',
-        variant === 'overlay' ? 'carousel-nav-btn--overlay' : '',
         disabled ? 'carousel-nav-btn--disabled' : '',
       ].filter(Boolean).join(' ')}
     >
-      <Icon size={variant === 'overlay' ? 16 : 18} strokeWidth={2.25} aria-hidden />
+      <Icon size={18} strokeWidth={2.25} aria-hidden />
     </button>
   )
 }
@@ -44,23 +41,17 @@ export function CarouselPagination({
   onSelect,
   accent = 'var(--accent)',
   label,
-  inline = false,
 }: {
   count: number
   activeIndex: number
   onSelect: (index: number) => void
   accent?: string
   label: string
-  inline?: boolean
 }) {
   if (count <= 1) return null
 
   return (
-    <div
-      className={inline ? 'carousel-pagination carousel-pagination--inline' : 'carousel-pagination'}
-      role="tablist"
-      aria-label={label}
-    >
+    <div className="carousel-pagination" role="tablist" aria-label={label}>
       {Array.from({ length: count }, (_, i) => {
         const active = i === activeIndex
         return (

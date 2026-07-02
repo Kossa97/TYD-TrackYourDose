@@ -244,7 +244,11 @@ function IntakePeriodCarousel<T>({
     <div
       ref={scrollRef}
       onScroll={updateScrollHints}
-      className="flex w-full overflow-x-auto snap-x snap-mandatory select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className={[
+        'flex overflow-x-auto snap-x snap-mandatory select-none',
+        '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+        hasMultiple ? 'min-w-0 flex-1' : 'w-full',
+      ].join(' ')}
       style={{ touchAction: 'pan-x' }}
     >
       {items.map(item => (
@@ -263,30 +267,26 @@ function IntakePeriodCarousel<T>({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="carousel-stage">
-        <div className="carousel-track-shell carousel-track-shell--amber w-full">{track}</div>
-        <div className="carousel-stage-nav">
-          <CarouselNavButton
-            direction="horizontal"
-            nav="prev"
-            variant="overlay"
-            disabled={!canScrollLeft}
-            onClick={() => scrollByPage(-1)}
-            label="Vorherige Einnahme"
-          />
-          <CarouselNavButton
-            direction="horizontal"
-            nav="next"
-            variant="overlay"
-            disabled={!canScrollRight}
-            onClick={() => scrollByPage(1)}
-            label="Nächste Einnahme"
-          />
-        </div>
+    <div className="space-y-2.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.05] p-2.5">
+      <div className="carousel-chrome-row items-stretch">
+        <CarouselNavButton
+          direction="horizontal"
+          nav="prev"
+          disabled={!canScrollLeft}
+          onClick={() => scrollByPage(-1)}
+          label="Vorherige Einnahme"
+        />
+        <div className="carousel-track-shell carousel-track-shell--amber min-w-0 flex-1">{track}</div>
+        <CarouselNavButton
+          direction="horizontal"
+          nav="next"
+          disabled={!canScrollRight}
+          onClick={() => scrollByPage(1)}
+          label="Nächste Einnahme"
+        />
       </div>
 
-      <div className="flex items-center justify-between gap-2 px-0.5">
+      <div className="flex items-center justify-between gap-3 px-0.5">
         <CarouselCounter activeIndex={activeIndex} count={items.length} tone="amber" />
         <CarouselPagination
           count={items.length}
@@ -294,7 +294,6 @@ function IntakePeriodCarousel<T>({
           onSelect={scrollToIndex}
           accent="#fbbf24"
           label="Einnahme"
-          inline
         />
       </div>
     </div>
