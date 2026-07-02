@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
@@ -200,6 +200,88 @@ function CalendarInfoPill({
       <p style={{ color: 'var(--text-dim)', fontSize: '0.6rem', fontWeight: 780, marginTop: 4 }}>
         {label}
       </p>
+    </div>
+  )
+}
+
+function IntakePeriodCarousel<T>({
+  items,
+  getKey,
+  renderItem,
+}: {
+  items: T[]
+  getKey: (item: T) => string
+  renderItem: (item: T) => ReactNode
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+  const hasMultiple = items.length > 1
+
+  const updateScrollHints = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 6)
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 6)
+  }, [])
+
+  useEffect(() => {
+    updateScrollHints()
+  }, [items.length, updateScrollHints])
+
+  const scrollByPage = (direction: -1 | 1) => {
+    const el = scrollRef.current
+    if (!el) return
+    el.scrollBy({ left: direction * el.clientWidth, behavior: 'smooth' })
+  }
+
+  const arrowClass = (active: boolean) => [
+    'flex shrink-0 items-center justify-center transition-opacity duration-200',
+    'w-[14px] text-sky-300/25 hover:text-sky-300/55',
+    active ? 'opacity-100' : 'opacity-35 pointer-events-none',
+  ].join(' ')
+
+  return (
+    <div className="flex items-stretch gap-0.5">
+      {hasMultiple && (
+        <button
+          type="button"
+          aria-label="Vorherige Einnahme"
+          onClick={() => scrollByPage(-1)}
+          className={arrowClass(canScrollLeft)}
+        >
+          <ChevronLeft size={13} strokeWidth={1.5} />
+        </button>
+      )}
+      <div
+        ref={scrollRef}
+        onScroll={updateScrollHints}
+        className={[
+          'min-w-0 flex-1 flex overflow-x-auto snap-x snap-mandatory select-none',
+          '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          hasMultiple ? '' : 'w-full',
+        ].join(' ')}
+        style={{ touchAction: 'pan-x' }}
+      >
+        {items.map(item => (
+          <div
+            key={getKey(item)}
+            className="w-full shrink-0 snap-center snap-always"
+          >
+            {renderItem(item)}
+          </div>
+        ))}
+      </div>
+      {hasMultiple && (
+        <button
+          type="button"
+          aria-label="Nächste Einnahme"
+          onClick={() => scrollByPage(1)}
+          className={arrowClass(canScrollRight)}
+        >
+          <ChevronRight size={13} strokeWidth={1.5} />
+        </button>
+      )}
     </div>
   )
 }
@@ -751,10 +833,8 @@ export function Dashboard() {
 
     return (
       <div
-        key={`${c.id}-${slot.minutes}`}
-        className="snap-center shrink-0 rounded-xl border px-3 py-2.5 transition-colors"
+        className="w-full rounded-xl border px-3 py-2.5 transition-colors"
         style={{
-          width: 'min(85vw, 300px)',
           background: 'var(--surface)',
           borderColor: 'var(--border)',
         }}
@@ -1142,12 +1222,11 @@ export function Dashboard() {
                   </div>
 
                   {period.slots.length > 0 ? (
-                    <div
-                      className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 -mx-1 px-1 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                      style={{ touchAction: 'pan-x' }}
-                    >
-                      {period.slots.map(slot => renderDueSlotCard(slot))}
-                    </div>
+                    <IntakePeriodCarousel
+                      items={period.slots}
+                      getKey={slot => `${slot.cycle.id}-${slot.minutes}`}
+                      renderItem={slot => renderDueSlotCard(slot)}
+                    />
                   ) : (
                     <p className="px-1 text-xs text-slate-600">
                       {t('period_no_open_intakes', { defaultValue: 'Keine offenen Einnahmen' })}
