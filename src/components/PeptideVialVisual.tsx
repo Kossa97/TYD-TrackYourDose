@@ -137,7 +137,7 @@ function VialTop({ focus, lightOffset }: { focus: number; lightOffset: number })
   const uid = useId()
   const capSheenOpacity = 0.24 + focus * 0.4
   return (
-    <svg className="-mb-2 block h-auto w-full" viewBox="0 0 120 64" aria-hidden="true">
+    <svg className="-mb-4 block h-auto w-full" viewBox="0 0 120 58" aria-hidden="true">
       <defs>
         <linearGradient id={`${uid}-capSilver`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#f6f9fc" />
@@ -155,9 +155,11 @@ function VialTop({ focus, lightOffset }: { focus: number; lightOffset: number })
         </filter>
       </defs>
 
-      <rect data-vial-detail="single-cap" x="13" y="30" width="94" height="32" rx="3" fill={`url(#${uid}-capCollar)`} stroke="#64748b" strokeOpacity="0.5" strokeWidth="1" />
-      <path d="M10 34 L10 20 C10 6 110 6 110 20 L110 34 Z" fill={`url(#${uid}-capSilver)`} stroke="#64748b" strokeOpacity="0.5" strokeWidth="1" />
-      <line x1="15" y1="35" x2="105" y2="35" stroke="#475569" strokeOpacity="0.4" strokeWidth="1.5" />
+            <g data-vial-detail="cap-collar">
+        <rect data-vial-detail="single-cap" x="17" y="30" width="86" height="27" rx="3" fill={`url(#${uid}-capCollar)`} stroke="#64748b" strokeOpacity="0.5" strokeWidth="1" />
+      </g>
+      <path data-vial-detail="cap-top" d="M14 32 L14 20 C14 7 106 7 106 20 L106 32 Z" fill={`url(#${uid}-capSilver)`} stroke="#64748b" strokeOpacity="0.5" strokeWidth="1" />
+      <line x1="21" y1="32" x2="99" y2="32" stroke="#475569" strokeOpacity="0.35" strokeWidth="1.3" />
       <ellipse
         data-vial-detail="cap-light-sheen"
         cx={60 + lightOffset * 18}
@@ -168,7 +170,7 @@ function VialTop({ focus, lightOffset }: { focus: number; lightOffset: number })
         opacity={capSheenOpacity}
         filter={`url(#${uid}-capSoft)`}
       />
-      <path d="M24 20 C42 12 78 12 96 20" fill="none" stroke="#ffffff" strokeOpacity={0.36 + focus * 0.28} strokeWidth="2" />
+      <path d="M27 20 C43 14 77 14 93 20" fill="none" stroke="#ffffff" strokeOpacity={0.36 + focus * 0.28} strokeWidth="1.8" />
     </svg>
   )
 }
@@ -517,9 +519,23 @@ export function PeptideVialVisual({
           </div>
 
           <div className="vial-shimmer pointer-events-none absolute inset-y-[24%] left-[24%] w-[32%] rotate-6 rounded-full bg-white/10 blur-[6px]" />
-
           {!isActive && (
-            <div data-vial-detail="inactive-overlay" className="absolute inset-0 bg-black/40 pointer-events-none" />
+            <svg
+              data-vial-detail="inactive-vial-overlay"
+              className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+              viewBox="0 0 120 294"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <defs>
+                <clipPath id={`${uid}-inactiveOverlayClip`}>
+                  <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 250 C116 277 101 292 74 292 L46 292 C19 292 4 277 4 250 L4 56 C4 41 28 35 28 24 Z" />
+                </clipPath>
+              </defs>
+              <g clipPath={`url(#${uid}-inactiveOverlayClip)`}>
+                <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 250 C116 277 101 292 74 292 L46 292 C19 292 4 277 4 250 L4 56 C4 41 28 35 28 24 Z" fill="rgba(0,0,0,0.34)" />
+              </g>
+            </svg>
           )}
 
           <div
@@ -527,10 +543,10 @@ export function PeptideVialVisual({
             className={`absolute ${labelClass} overflow-hidden border-y border-white/40 bg-white/28 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)] backdrop-blur-[2px]`}
           >
             <div data-vial-detail="full-width-label" className="relative overflow-hidden">
-              <VialLabelMarquee className={`${nameClass} font-black text-slate-900 tracking-normal`}>
+              <VialLabelMarquee className={`${nameClass} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
                 {labelName}
               </VialLabelMarquee>
-              <p className={`${amountClass} font-bold uppercase tracking-wide text-slate-700`}>
+              <p className={`${amountClass} font-bold uppercase tracking-wide text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]`}>
                 {vialAmountLabel(amount, unit)}
               </p>
             </div>

@@ -15,10 +15,10 @@ export interface SloshState {
 
 type Subscriber = (state: SloshState) => void
 
-// Tuned for a calm, realistic slosh: one soft overshoot, then settles.
-const STIFFNESS = 115 // spring constant (higher = snappier, faster wobble)
-const DAMPING = 7.0 // friction (lower = more overshoot / counter-swing)
-const IMPULSE_GAIN = 4.6 // how hard an impulse of magnitude 1 kicks the spring
+// Tuned for a lively, fluid swipe slosh: quick response, visible counter-swing, then settles.
+const STIFFNESS = 135 // spring constant (higher = snappier, faster wobble)
+const DAMPING = 6.2 // friction (lower = more overshoot / counter-swing)
+const IMPULSE_GAIN = 6.2 // how hard an impulse of magnitude 1 kicks the spring
 const MAX_TILT = 0.85 // clamp so even stacked drag impulses can't overturn it
 const MAX_VEL = 9 // ceiling on accumulated velocity (a fast continuous drag)
 const MAX_DT = 1 / 30 // clamp long frames so tab-switches don't explode the spring

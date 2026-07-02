@@ -218,4 +218,43 @@ describe('PeptideVialVisual', () => {
     expect(text).toContain('height="247"')
     expect(text).not.toContain('className="absolute inset-0 overflow-hidden"')
   })
+  test('renders vial label typography in white for contrast on colored liquid', () => {
+    const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
+      name: 'BPC-157',
+      amount: '5',
+      unit: 'mg',
+      fillPct: 45,
+      color: '#06b6d4',
+    }))
+
+    expect(html).toContain('text-white')
+    expect(html).toContain('text-white/90')
+    expect(source()).not.toContain('font-black text-slate-900')
+    expect(source()).not.toContain('text-slate-700')
+  })
+
+  test('dims inactive neighboring vials with a vial-shaped overlay instead of a rectangle', () => {
+    const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
+      name: 'CJC-1295',
+      amount: '2',
+      unit: 'mg',
+      fillPct: 45,
+      color: '#a855f7',
+      isActive: false,
+    }))
+    const text = source()
+
+    expect(html).toContain('data-vial-detail="inactive-vial-overlay"')
+    expect(text).toContain('inactiveOverlayClip')
+    expect(text).not.toContain('data-vial-detail="inactive-overlay" className="absolute inset-0 bg-black/40 pointer-events-none"')
+  })
+
+  test('uses a slightly smaller cap that overlaps and seats the glass neck', () => {
+    const text = source()
+
+    expect(text).toContain('data-vial-detail="cap-top"')
+    expect(text).toContain('data-vial-detail="cap-collar"')
+    expect(text).toContain('width="86"')
+    expect(text).toContain('className="-mb-4 block h-auto w-full"')
+  })
 })
