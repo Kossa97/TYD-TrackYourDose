@@ -1209,15 +1209,11 @@ export function Dashboard() {
 
             {duePeriodCarousels.map(period => {
               const PeriodIcon = period.icon
-              const periodOpen = period.slots.length
               return (
                 <div key={period.key} className="space-y-2">
                   <div className="flex items-center gap-2 px-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
                     <PeriodIcon size={13} />
                     <span>{period.label}</span>
-                    {periodOpen > 0 && (
-                      <span className="text-amber-300/90 tabular-nums">{periodOpen}</span>
-                    )}
                   </div>
 
                   {period.slots.length > 0 ? (
