@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { format, parseISO, subDays, differenceInCalendarDays } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
@@ -37,7 +37,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { jsPDF as JsPDFType } from 'jspdf'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -55,7 +54,7 @@ import {
   type DailyLogRow,
 } from '../lib/dailyLogs'
 import { ResearchDisclaimer } from '../components/ui/DesignSystem'
-import heroLogo from '../assets/hero.png'
+import { ProtocolPdfModal } from '../components/ProtocolPdfModal'
 
 interface DateRange {
   from: string
@@ -96,11 +95,6 @@ interface Cycle {
 
 type SupabaseCycleRow = Omit<Cycle, 'peptides'> & {
   peptides: { name: string } | { name: string }[] | null
-}
-
-interface Profile {
-  display_name: string | null
-  username: string | null
 }
 
 interface ProtocolCopy {
@@ -305,15 +299,7 @@ function gradId(marker: string): string {
   return `grad-${marker.replace(/[^a-zA-Z0-9]/g, '')}`
 }
 
-const FOOTER_TEXT = 'Track Your Dose · tyd-track-your-dose.vercel.app'
 const SHARE_URL = 'https://tyd-track-your-dose.vercel.app/protokoll?ref=share'
-
-type JsPdfWithGState = JsPDFType & {
-  GState?: new (options: { opacity: number }) => unknown
-  setGState?: (state: unknown) => JsPDFType
-  saveGraphicsState?: () => JsPDFType
-  restoreGraphicsState?: () => JsPDFType
-}
 
 function copyFor(language: string): ProtocolCopy {
   return language.toLowerCase().startsWith('en') ? COPY.en : COPY.de
@@ -420,75 +406,6 @@ function ChartCard({
       {children}
     </section>
   )
-}
-
-function loadImage(src: string) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image()
-    image.crossOrigin = 'anonymous'
-    image.onload = () => resolve(image)
-    image.onerror = () => reject(new Error('Image failed to load'))
-    image.src = src
-  })
-}
-
-function withOpacity(doc: JsPDFType, opacity: number, draw: () => void) {
-  const pdf = doc as JsPdfWithGState
-  if (pdf.GState && pdf.setGState) {
-    const state = new pdf.GState({ opacity })
-    pdf.saveGraphicsState?.()
-    pdf.setGState(state)
-    draw()
-    pdf.restoreGraphicsState?.()
-    return
-  }
-  draw()
-}
-
-function decoratePdf(doc: JsPDFType, logo: HTMLImageElement) {
-  const pageWidth = doc.internal.pageSize.getWidth()
-  const pageHeight = doc.internal.pageSize.getHeight()
-  const pageCount = doc.getNumberOfPages()
-
-  for (let page = 1; page <= pageCount; page += 1) {
-    doc.setPage(page)
-    withOpacity(doc, 0.07, () => {
-      doc.addImage(logo, 'PNG', pageWidth / 2 - 55, pageHeight / 2 - 55, 110, 110, undefined, 'FAST', -35)
-    })
-    doc.setFontSize(9)
-    doc.setTextColor(120, 134, 156)
-    doc.text(FOOTER_TEXT, pageWidth / 2, pageHeight - 8, { align: 'center' })
-  }
-}
-
-function addCoverPage(doc: JsPDFType, logo: HTMLImageElement, copy: ProtocolCopy, userName: string, range: DateRange, language: string) {
-  const pageWidth = doc.internal.pageSize.getWidth()
-  const pageHeight = doc.internal.pageSize.getHeight()
-
-  doc.setFillColor(7, 9, 26)
-  doc.rect(0, 0, pageWidth, pageHeight, 'F')
-  doc.addImage(logo, 'PNG', pageWidth / 2 - 24, 42, 48, 48)
-  doc.setTextColor(234, 238, 252)
-  doc.setFontSize(28)
-  doc.text(copy.coverTitle, pageWidth / 2, 108, { align: 'center' })
-  doc.setFontSize(12)
-  doc.setTextColor(0, 204, 245)
-  doc.text('Track Your Dose', pageWidth / 2, 118, { align: 'center' })
-
-  const rows = [
-    [copy.user, userName],
-    [copy.period, `${formatDate(range.from, language)} - ${formatDate(range.to, language)}`],
-    [copy.exportedAt, new Intl.DateTimeFormat(language, { dateStyle: 'medium' }).format(new Date())],
-  ]
-
-  doc.setFontSize(11)
-  rows.forEach(([label, value], index) => {
-    const y = 150 + index * 13
-    doc.setTextColor(120, 134, 156)
-    doc.text(label, 42, y)
-    doc.setTextColor(234, 238, 252)
-    doc.text(value, 88, y)
-  })
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -599,11 +516,10 @@ export function Protokoll() {
   const { i18n, t } = useTranslation()
   const language = i18n.language || 'de'
   const copy = useMemo(() => copyFor(language), [language])
-  const reportRef = useRef<HTMLDivElement>(null)
+  const [pdfModalOpen, setPdfModalOpen] = useState(false)
 
   const [selectorMode, setSelectorMode] = useState<'current' | 'custom'>('current')
   const [range, setRange] = useState<DateRange>(defaultRange)
-  const [profile, setProfile] = useState<Profile | null>(null)
   const [activeCycles, setActiveCycles] = useState<Cycle[]>([])
   const [completedCycles, setCompletedCycles] = useState<Cycle[]>([])
   const [cycleDoseLogs, setCycleDoseLogs] = useState<DoseLog[]>([])
@@ -615,18 +531,9 @@ export function Protokoll() {
   const [selectedPreset, setSelectedPreset] = useState<string>('weight-igf1')
   const [loadingBase, setLoadingBase] = useState(true)
   const [loadingCharts, setLoadingCharts] = useState(false)
-  const [exporting, setExporting] = useState(false)
   const [effects, setEffects] = useState<EffectRow[]>([])
   const [reviews, setReviews] = useState<ReviewRow[]>([])
   const [dailyLogs, setDailyLogs] = useState<DailyLogRow[]>([])
-
-  const userName = useMemo(() => (
-    profile?.display_name
-      || profile?.username
-      || user?.user_metadata?.full_name
-      || user?.email
-      || 'TYD User'
-  ), [profile, user])
 
   const currentCycleRange = useMemo<DateRange>(() => {
     return rangeFromActiveCycles(activeCycles)
@@ -812,7 +719,7 @@ export function Protokoll() {
     if (!user) return
     setLoadingBase(true)
 
-    const [{ data: activeData }, { data: completedData }, { data: profileData }] = await Promise.all([
+    const [{ data: activeData }, { data: completedData }] = await Promise.all([
       supabase
         .from('cycles')
         .select('id, peptide_id, name, start_date, end_date, active, peptides(name)')
@@ -825,18 +732,12 @@ export function Protokoll() {
         .eq('user_id', user.id)
         .eq('active', false)
         .order('start_date', { ascending: false }),
-      supabase
-        .from('profiles')
-        .select('display_name, username')
-        .eq('id', user.id)
-        .maybeSingle(),
     ])
 
     const active = normalizeCycles(activeData as unknown as SupabaseCycleRow[])
     const completed = normalizeCycles(completedData as unknown as SupabaseCycleRow[])
     setActiveCycles(active)
     setCompletedCycles(completed)
-    setProfile((profileData ?? null) as Profile | null)
     setRange(current => selectorMode === 'current' ? rangeFromActiveCycles(active) : current)
     setSelectedCycleId(current => selectorMode === 'current' ? null : current)
 
@@ -1008,55 +909,9 @@ export function Protokoll() {
     }
   }
 
-  const exportPdf = async () => {
-    if (!reportRef.current || !isValidRange(range)) return
-    setExporting(true)
-
-    try {
-      const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
-        import('jspdf'),
-        import('html2canvas'),
-      ])
-      const doc = new jsPDF('p', 'mm', 'a4')
-      const pageWidth = doc.internal.pageSize.getWidth()
-      const pageHeight = doc.internal.pageSize.getHeight()
-      const logo = await loadImage(heroLogo)
-
-      addCoverPage(doc, logo, copy, userName, range, language)
-      doc.addPage()
-      doc.setFillColor(7, 9, 26)
-      doc.rect(0, 0, pageWidth, pageHeight, 'F')
-
-      const canvas = await html2canvas(reportRef.current, {
-        backgroundColor: '#07091a',
-        scale: Math.min(2, window.devicePixelRatio || 2),
-        useCORS: true,
-      })
-      const imageData = canvas.toDataURL('image/png')
-      const imageWidth = pageWidth - 20
-      const imageHeight = (canvas.height * imageWidth) / canvas.width
-      const topMargin = 14
-      const contentHeight = pageHeight - 28
-
-      doc.addImage(imageData, 'PNG', 10, topMargin, imageWidth, imageHeight)
-      let heightLeft = imageHeight - contentHeight
-
-      while (heightLeft > 0) {
-        doc.addPage()
-        doc.setFillColor(7, 9, 26)
-        doc.rect(0, 0, pageWidth, pageHeight, 'F')
-        const y = topMargin - (imageHeight - heightLeft)
-        doc.addImage(imageData, 'PNG', 10, y, imageWidth, imageHeight)
-        heightLeft -= contentHeight
-      }
-
-      decoratePdf(doc, logo)
-      doc.save(`TYD-Protokoll-${todayIso()}.pdf`)
-    } catch {
-      toast.error(copy.exportError)
-    } finally {
-      setExporting(false)
-    }
+  const openPdfModal = () => {
+    if (!isValidRange(range)) return
+    setPdfModalOpen(true)
   }
 
   return (
@@ -1070,8 +925,8 @@ export function Protokoll() {
           <button className="btn-secondary flex-1 sm:flex-none" onClick={handleShare}>
             <Link2 size={16} /> {copy.share}
           </button>
-          <button className="btn-primary flex-1 sm:flex-none" onClick={exportPdf} disabled={exporting || loadingCharts}>
-            <Download size={16} /> {exporting ? copy.generatingPdf : copy.generatePdf}
+          <button className="btn-primary flex-1 sm:flex-none" onClick={openPdfModal} disabled={loadingBase}>
+            <Download size={16} /> {copy.generatePdf}
           </button>
         </div>
       </header>
@@ -1171,7 +1026,7 @@ export function Protokoll() {
         </div>
       )}
 
-      <div ref={reportRef} className="space-y-4 rounded-[1.5rem] bg-[var(--surface)]">
+      <div className="space-y-4 rounded-[1.5rem] bg-[var(--surface)]">
 
         {/* ── Schnell-Ansichten ── */}
         <div>
@@ -1413,6 +1268,15 @@ export function Protokoll() {
           </div>
         )}
       </section>
+
+      {pdfModalOpen && user && (
+        <ProtocolPdfModal
+          userId={user.id}
+          initialRange={range}
+          uiLang={language}
+          onClose={() => setPdfModalOpen(false)}
+        />
+      )}
     </div>
   )
 }

@@ -11,7 +11,15 @@
 
 **Peptipedia** (evidenzbasierte Peptid-Datenbank) + **Studies** (PubMed-Forschungsmodul) komplett umgesetzt und auf Home-Screen integriert.
 
-Neu in dieser Session (1. Juli 2026) — **PK-Profile-Update (A+B+C)**:
+Neu in dieser Session (2. Juli 2026) — **PDF-Generator komplett neu**:
+- **Weg vom Screenshot, hin zu nativem Text-PDF.** Alt: html2canvas-Screenshot des dunklen Dashboards (Rasterbild, nicht markierbar, mehrere MB). Neu: `src/lib/protocolPdf/` — helles, druckfertiges A4-Dokument mit markierbarem Text (jsPDF + `jspdf-autotable` + vektorgezeichnete Charts). Beispiel-Report: 4 Seiten, ~76 KB.
+- **Freie Section-Auswahl:** Neues Modal `src/components/ProtocolPdfModal.tsx` — Nutzer hakt ab, was ins PDF kommt (leere Sektionen ausgegraut). Sektionen: Persönliche Angaben · Zusammenfassung · Protokoll/Zyklen · Einnahmetreue · Blutwerte · Gewichtsverlauf · Wohlbefinden · Wirkungen & Nebenwirkungen · Bewertungen · Notizen/Fragen (+ Disclaimer immer).
+- **Anonymisierung ohne Extra-Feature:** „Persönliche Angaben" abwählen ⇒ Deckblatt + Kopfzeile zeigen „Anonym" (Forum-Use-Case). Verifiziert.
+- **Struktur:** `types.ts`, `sections.ts` (Registry + `visibleSections`/`defaultSelection`/`resolveSubject`), `loadProtocolData.ts` (eigener Loader, lädt Dosis/Methode/Frequenz der Zyklen), `renderProtocolPdf.ts` (Renderer). Nur DE + EN (Helvetica, keine Font-Einbettung). ⚠️ Weitere Sprachen später: brauchen eingebettete Unicode-Fonts (CJK/Arabisch/Hindi). ⚠️ Nur WinAnsi-Zeichen im PDF (kein Δ/✓/→) — für Deltas +/- schreiben.
+- **Presets** (Arzt/Coach, Forum, Freunde) bewusst später — aktuell nur freie Auswahl (Wunsch des Nutzers).
+- **Aufgeräumt:** alter Screenshot-Code (`addCoverPage`, `decoratePdf`, `withOpacity`, `loadImage`) entfernt, `html2canvas` deinstalliert (nirgends mehr genutzt). 14 neue Tests (`protocolPdf.test.ts`, inkl. Runtime-Smoke der PDF-Generierung).
+
+Neu in Session davor (1. Juli 2026) — **PK-Profile-Update (A+B+C)**:
 - **32 → 44 PK-Profile.** ⚠️ `supabase-pk-profiles-2026-update.sql` einmalig im Supabase SQL Editor ausführen (bypassed RLS; `npm run seed:pk` scheitert seit der RLS-Härtung am Anon-Key).
 - **3 Korrekturen** (Datenfehler laut reputabler Quellen): Melanotan II HWZ 24 h → ~1 h, Testosteron Enanthat 192 h → ~110 h, Tesamorelin 0,1 h → ~0,3 h.
 - **5 GLP-1/Metabolic** (Phase-2/3-PK): Retatrutide, Cagrilintide, Survodutide, Mazdutide, Orforglipron (oral, BV 35 %).
