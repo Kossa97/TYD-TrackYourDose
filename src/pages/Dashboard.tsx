@@ -297,15 +297,19 @@ function IntakePeriodCarousel<T>({
   return (
     <div className="space-y-2">
       {trackRow}
-      <div className="flex items-center justify-between gap-2 px-0.5">
+      <div className="relative flex min-h-5 items-center px-0.5">
         <CarouselCounter activeIndex={activeIndex} count={items.length} tone="amber" />
-        <CarouselPagination
-          count={items.length}
-          activeIndex={activeIndex}
-          onSelect={scrollToIndex}
-          accent="#fbbf24"
-          label="Einnahme"
-        />
+        <div className="pointer-events-none absolute inset-x-0 flex justify-center">
+          <div className="pointer-events-auto">
+            <CarouselPagination
+              count={items.length}
+              activeIndex={activeIndex}
+              onSelect={scrollToIndex}
+              accent="#fbbf24"
+              label="Einnahme"
+            />
+          </div>
+        </div>
       </div>
     </div>
   )
