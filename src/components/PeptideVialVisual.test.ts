@@ -80,6 +80,13 @@ describe('PeptideVialVisual', () => {
     expect(html).not.toContain('data-vial-detail="glass-body"')
   })
 
+  test('uses a slightly flatter vial base across shell and clips', () => {
+    const text = source()
+
+    expect(text).toContain('L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252')
+    expect(text).not.toContain('L116 250 C116 277 101 292 74 292 L46 292 C19 292 4 277 4 250')
+  })
+
   test('accepts focus and lightOffset as visual control props', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
       name: 'TB-500',

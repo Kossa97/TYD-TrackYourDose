@@ -332,7 +332,7 @@ export function PeptideVialVisual({
             <defs>
               <path
                 id={`${uid}-vialShellPath`}
-                d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 250 C116 277 101 292 74 292 L46 292 C19 292 4 277 4 250 L4 56 C4 41 28 35 28 24 Z"
+                d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 56 C4 41 28 35 28 24 Z"
               />
               <linearGradient id={`${uid}-glassDepth`} x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="rgba(2,6,23,0.72)" />
@@ -417,7 +417,7 @@ export function PeptideVialVisual({
             >
               <defs>
                 <clipPath id={`${uid}-liquidChamberClip`}>
-                  <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 250 C116 277 101 292 74 292 L46 292 C19 292 4 277 4 250 L4 56 C4 41 28 35 28 24 Z" />
+                  <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 56 C4 41 28 35 28 24 Z" />
                 </clipPath>
               </defs>
               <g data-vial-detail="liquid-glass-window" clipPath={`url(#${uid}-liquidChamberClip)`}>
@@ -529,11 +529,11 @@ export function PeptideVialVisual({
             >
               <defs>
                 <clipPath id={`${uid}-inactiveOverlayClip`}>
-                  <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 250 C116 277 101 292 74 292 L46 292 C19 292 4 277 4 250 L4 56 C4 41 28 35 28 24 Z" />
+                  <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 56 C4 41 28 35 28 24 Z" />
                 </clipPath>
               </defs>
               <g clipPath={`url(#${uid}-inactiveOverlayClip)`}>
-                <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 250 C116 277 101 292 74 292 L46 292 C19 292 4 277 4 250 L4 56 C4 41 28 35 28 24 Z" fill="rgba(0,0,0,0.34)" />
+                <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 56 C4 41 28 35 28 24 Z" fill="rgba(0,0,0,0.34)" />
               </g>
             </svg>
           )}
