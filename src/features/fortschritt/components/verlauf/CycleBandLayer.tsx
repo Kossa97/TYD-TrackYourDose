@@ -8,7 +8,7 @@ import {
   DefaultZIndexes,
 } from 'recharts'
 import { computeCycleBandLayout } from '../../lib/cycleLanes'
-import { cycleStartsAtHover, hoverDateIso } from '../../lib/chartTooltip'
+import { cycleStartsAtHover, cycleStartsNearCursor, hoverDateIso, TOOLTIP_CURSOR_PX_THRESHOLD } from '../../lib/chartTooltip'
 
 export interface CycleBandDraw {
   id: string
@@ -27,7 +27,7 @@ interface Props {
   lanes: number
 }
 
-const HOVER_PX_THRESHOLD = 14
+const HOVER_PX_THRESHOLD = TOOLTIP_CURSOR_PX_THRESHOLD
 
 function bandLayout(
   plotArea: NonNullable<ReturnType<typeof usePlotArea>>,
@@ -54,17 +54,18 @@ function bandLayout(
 
 function isStartHighlighted(
   band: CycleBandDraw,
-  startX: number,
   tooltipActive: boolean,
   cursorX: number | undefined,
   activeLabel: string | number | undefined,
+  xScale: NonNullable<ReturnType<typeof useXAxisScale>>,
+  plotArea: NonNullable<ReturnType<typeof usePlotArea>>,
 ): boolean {
   if (!tooltipActive) return false
   if (activeLabel != null && cycleStartsAtHover([band], hoverDateIso(activeLabel)).length > 0) {
     return true
   }
   if (cursorX == null) return false
-  return Math.abs(cursorX - startX) <= HOVER_PX_THRESHOLD
+  return cycleStartsNearCursor([band], cursorX, xScale, plotArea, HOVER_PX_THRESHOLD).length > 0
 }
 
 /**
@@ -110,7 +111,14 @@ export function CycleBandLayer({ bands, lanes }: Props) {
       <ZIndexLayer zIndex={0}>
         <g className="cycle-start-markers" aria-hidden>
           {items.map(({ band, y, startX, laneHeight }) => {
-            const highlighted = isStartHighlighted(band, startX, tooltipActive, cursor?.x, activeLabel)
+            const highlighted = isStartHighlighted(
+              band,
+              tooltipActive,
+              cursor?.x,
+              activeLabel,
+              xScale,
+              plotArea,
+            )
 
             return (
               <g key={`start-${band.id}`}>

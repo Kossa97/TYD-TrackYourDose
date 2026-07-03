@@ -1,7 +1,14 @@
+import { useMemo } from 'react'
 import { format, parseISO } from 'date-fns'
+import {
+  useActiveTooltipCoordinate,
+  useActiveTooltipLabel,
+  usePlotArea,
+  useXAxisScale,
+} from 'recharts'
 import type { CycleBandDraw } from './CycleBandLayer'
 import type { MetricDefinition } from '../../lib/metricDefinitions'
-import { cycleStartsAtHover, hoverDateIso } from '../../lib/chartTooltip'
+import { hoverDateIso, resolveTooltipCycleStarts } from '../../lib/chartTooltip'
 
 interface ChartPoint {
   date: string
@@ -28,14 +35,35 @@ function formatTooltipValue(value: number, unit: string): string {
 }
 
 export function MetricTooltip({ active, payload, label, bands, metric }: Props) {
-  if (!active) return null
+  const cursor = useActiveTooltipCoordinate()
+  const activeLabel = useActiveTooltipLabel()
+  const xScale = useXAxisScale()
+  const plotArea = usePlotArea()
 
-  const point = payload?.[0]?.payload
-  const dateIso = point?.date ?? (label != null ? hoverDateIso(label) : null)
+  const { dateIso, starts } = useMemo(() => {
+    const point = payload?.[0]?.payload as ChartPoint | undefined
+    const labelTs = activeLabel ?? label
+    const resolvedDate = point?.date
+      ?? (labelTs != null ? hoverDateIso(labelTs) : null)
+    const hoverTs = point?.ts
+      ?? (typeof labelTs === 'number' ? labelTs : Number(labelTs))
+
+    const cycleStarts = resolveTooltipCycleStarts({
+      bands,
+      dateIso: resolvedDate,
+      hoverTs: Number.isFinite(hoverTs) ? hoverTs : undefined,
+      cursorX: cursor?.x,
+      xScale: xScale ?? undefined,
+      plotArea: plotArea ?? undefined,
+    })
+
+    const displayDate = resolvedDate ?? cycleStarts[0]?.startDate ?? null
+    return { dateIso: displayDate, starts: cycleStarts }
+  }, [payload, label, activeLabel, cursor, xScale, plotArea, bands])
+
+  if (!active) return null
   if (!dateIso) return null
 
-  const hoverTs = point?.ts ?? (typeof label === 'number' ? label : Number(label))
-  const starts = cycleStartsAtHover(bands, dateIso, Number.isFinite(hoverTs) ? hoverTs : undefined)
   const rawValue = payload?.[0]?.value
   const metricValue = rawValue != null && rawValue !== '' ? Number(rawValue) : null
   const hasMetric = metricValue != null && Number.isFinite(metricValue)
