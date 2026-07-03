@@ -46,6 +46,18 @@ export function metricValueAtDate(
   return point.value
 }
 
+/** Alle Tage, an denen der Tooltip-Cursor einrasten soll (Messwerte + sichtbare Zyklus-Starts) */
+export function buildTooltipSnapDates(
+  metricDates: string[],
+  bands: ReadonlyArray<{ x1: number }>,
+): string[] {
+  const dates = new Set(metricDates.map(normalizeDateIso))
+  for (const band of bands) {
+    dates.add(isoFromTs(band.x1))
+  }
+  return [...dates].sort()
+}
+
 /** Zyklen, deren Start (echt oder sichtbarer Balkenanfang) auf den Hover-Tag fällt */
 export function cycleStartsAtHover<T extends BandWithStart>(
   bands: T[],

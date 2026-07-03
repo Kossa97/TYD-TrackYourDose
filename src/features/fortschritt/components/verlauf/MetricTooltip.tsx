@@ -44,12 +44,12 @@ export function MetricTooltip({ active, label, bands, metric, chartData }: Props
   const xInverseScale = useXAxisInverseScale()
 
   const { dateIso, metricValue, starts } = useMemo(() => {
-    const fromCursor = resolveCursorHoverDate(cursor?.x, xInverseScale ?? undefined)
     const labelTs = activeLabel ?? label
     const fromLabel = labelTs != null && Number.isFinite(Number(labelTs))
       ? { dateIso: hoverDateIso(labelTs), hoverTs: Number(labelTs) }
       : null
-    const hover = fromCursor ?? fromLabel
+    const fromCursor = resolveCursorHoverDate(cursor?.x, xInverseScale ?? undefined)
+    const hover = fromLabel ?? fromCursor
 
     if (!hover) {
       return { dateIso: null, metricValue: null, starts: [] as CycleBandDraw[] }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildTooltipSnapDates,
   cycleStartsAtHover,
   cycleStartsNearCursor,
   hoverDateIso,
@@ -42,10 +43,11 @@ describe('chartTooltip', () => {
     expect(starts.map(s => s.id)).toEqual(['c'])
   })
 
-  it('finds cycle starts near cursor x position for marker highlight', () => {
-    const xScale = (value: number) => (value === bands[0].x1 ? 40 : 200)
-    const plotArea = { x: 10 }
-    const starts = cycleStartsNearCursor(bands, 50, xScale, plotArea, 14)
-    expect(starts.map(s => s.id)).toEqual(['a', 'b'])
+  it('merges metric dates with visible cycle start dates', () => {
+    const dates = buildTooltipSnapDates(
+      ['2026-02-15', '2026-04-12'],
+      [{ x1: Date.parse('2026-01-23T12:00:00') }, { x1: Date.parse('2026-04-12T12:00:00') }],
+    )
+    expect(dates).toEqual(['2026-01-23', '2026-02-15', '2026-04-12'])
   })
 })
