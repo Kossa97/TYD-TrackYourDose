@@ -45,7 +45,7 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('vial-liquid-fill-reveal')
   })
 
-  test('fills the liquid from the vial floor instead of moving it in from below', () => {
+  test('grows the liquid from the vial floor to the current fill level on mount', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
       name: 'BPC-157',
       amount: '5',
@@ -59,7 +59,10 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('data-vial-detail="liquid-graphic"')
     expect(html).toContain('class="overflow-visible vial-liquid-fill-reveal"')
     expect(html).not.toContain('data-vial-detail="liquid-motion-viewport" class="pointer-events-none absolute inset-0 vial-liquid-rise"')
-    expect(source()).toContain('clip-path: inset(100% 0 0 0)')
+    expect(source()).toContain('from { transform: scaleY(0); opacity: 0; }')
+    expect(source()).toContain('to { transform: scaleY(1); opacity: 1; }')
+    expect(source()).toContain('will-change: transform')
+    expect(source()).not.toContain('clip-path: inset(100% 0 0 0)')
   })
 
   test('keeps the cap and label while removing split glass body seams', () => {

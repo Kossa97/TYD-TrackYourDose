@@ -312,8 +312,9 @@ export function PeptideVialVisual({
           50% { transform: translateX(14%); opacity: .7; }
         }
         @keyframes vial-liquid-fill-reveal {
-          from { clip-path: inset(100% 0 0 0); opacity: .96; }
-          to { clip-path: inset(0 0 0 0); opacity: 1; }
+          from { transform: scaleY(0); opacity: 0; }
+          12% { opacity: .82; }
+          to { transform: scaleY(1); opacity: 1; }
         }
         @keyframes vial-liquid-level-motion {
           from { transform: translateY(var(--vial-fill-motion-shift, 0%)); }
@@ -323,7 +324,7 @@ export function PeptideVialVisual({
           animation: vial-liquid-fill-reveal 900ms cubic-bezier(.22,1,.36,1) both;
           transform-box: fill-box;
           transform-origin: center bottom;
-          will-change: clip-path;
+          will-change: transform;
         }
         .vial-liquid-level-motion {
           animation: vial-liquid-level-motion 760ms cubic-bezier(.22,1,.36,1) both;
