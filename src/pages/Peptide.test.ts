@@ -40,6 +40,15 @@ describe('Peptide page vial view', () => {
     expect(text).toContain("isActive ? 'scale-100' : 'scale-90'")
   })
 
+  test('aligns the Neue Substanz tile with the vial carousel axis', () => {
+    const text = source()
+
+    expect(text).toContain('data-vial-add-slot')
+    expect(text).toContain('min-h-[calc(11rem+3.4rem)]')
+    expect(text).toContain('sm:min-h-[calc(13rem+3.4rem)]')
+    expect(text).toContain('flex items-center')
+  })
+
   test('shows the fill percentage directly under the active vial in My Stack', () => {
     const text = source()
 

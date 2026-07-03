@@ -1592,7 +1592,8 @@ export function Peptide() {
                 >
                   <div
                     data-vial-add
-                    className={`${vialItemSnapClassName} shrink-0 rounded-2xl px-2 py-2 ${
+                    data-vial-add-slot
+                    className={`${vialItemSnapClassName} flex items-center min-h-[calc(11rem+3.4rem)] shrink-0 rounded-2xl px-2 py-2 sm:min-h-[calc(13rem+3.4rem)] ${
                       isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
                     } ${addTileActive ? 'scale-100' : 'scale-90'}`}
                     style={{ width: 'min(9rem, 38vw)' }}
