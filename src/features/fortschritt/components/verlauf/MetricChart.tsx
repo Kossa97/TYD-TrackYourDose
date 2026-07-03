@@ -15,6 +15,7 @@ import type { MetricDefinition } from '../../lib/metricDefinitions'
 import { buildMetricSeries, computeDelta } from '../../lib/metrics'
 import type { BloodworkEntry, DailyLogEntry, WeightLogEntry } from '../../types'
 import { substanceBarEnd } from '../../lib/focusSummary'
+import { assignLanes, bandAxisDomain, laneCount, laneYBounds } from '../../lib/cycleLanes'
 import { panel } from '../../styles'
 
 interface Props {
@@ -39,12 +40,8 @@ interface CycleBand {
   x2: number
   y1: number
   y2: number
+  lane: number
 }
-
-/** Hintergrund-Achse: Zyklus-Balken unten im Chart, Metrik-Linie darüber */
-const BAND_AXIS_MAX = 10
-const LANE_HEIGHT = 0.55
-const LANE_GAP = 0.1
 
 function fmtDate(d: string) {
   return format(parseISO(`${d}T00:00:00`), 'dd.MM.')
@@ -136,18 +133,16 @@ export function MetricChart({
     }))
   }, [primarySeries, secondarySeries])
 
-  const bands = useMemo((): CycleBand[] => {
+  const { bands, lanes } = useMemo(() => {
     const substances = [
       ...cycles.map(c => ({ substance: c, filled: true })),
       ...ongoing.map(o => ({ substance: o, filled: false })),
     ]
 
-    return substances.map(({ substance, filled }, lane) => {
+    const raw = substances.map(({ substance, filled }) => {
       const end = substanceBarEnd(substance)
       const x1 = Math.max(dateToTs(substance.startDate), rangeStart)
       const x2 = Math.min(dateToTs(end), rangeEnd)
-      const y1 = lane * (LANE_HEIGHT + LANE_GAP)
-      const y2 = y1 + LANE_HEIGHT
       return {
         id: substance.id,
         name: substance.name,
@@ -156,11 +151,22 @@ export function MetricChart({
         faded: focusId != null && focusId !== substance.id,
         x1,
         x2,
-        y1,
-        y2,
       }
     }).filter(b => b.x2 > b.x1)
+
+    const packed = assignLanes(raw)
+    const lanes = laneCount(packed)
+
+    const bands: CycleBand[] = packed.map(band => {
+      const { y1, y2 } = laneYBounds(band.lane)
+      return { ...band, y1, y2 }
+    })
+
+    return { bands, lanes }
   }, [cycles, ongoing, focusId, rangeStart, rangeEnd])
+
+  const bandAxisMaxValue = bandAxisDomain(lanes)
+  const chartHeight = 248 + Math.max(0, lanes - 1) * 12
 
   const delta = computeDelta(primarySeries)
   const latest = primarySeries[primarySeries.length - 1]
@@ -207,9 +213,11 @@ export function MetricChart({
         )}
       </div>
 
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <LineChart data={chartData} margin={{ top: 8, right: secondary ? 36 : 12, bottom: 4, left: 0 }}>
-          <YAxis yAxisId="bands" domain={[0, BAND_AXIS_MAX]} hide />
+          {lanes > 0 && (
+            <YAxis yAxisId="bands" domain={[0, bandAxisMaxValue]} hide />
+          )}
 
           {bands.map(band => (
             <ReferenceArea
