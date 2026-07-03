@@ -65,6 +65,7 @@ export interface ProgressPhotoEntry {
   photo_url: string
   taken_at: string
   weight_kg: number | null
+  notes: string | null
 }
 
 export interface DoseLogEntry {

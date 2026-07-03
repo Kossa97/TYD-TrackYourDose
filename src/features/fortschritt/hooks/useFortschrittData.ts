@@ -14,6 +14,7 @@ import type {
   WeightLogEntry,
 } from '../types'
 import { normalizeCycles, rangeFromActiveSubstances } from '../lib/substances'
+import { extendedDataFrom } from '../lib/verlaufRange'
 import { numeric } from '../lib/metrics'
 
 function mapDailyLogs(rows: Record<string, unknown>[] | null): DailyLogEntry[] {
@@ -64,6 +65,7 @@ export function useFortschrittData() {
     setCycleSubstances(cycles)
 
     const activeRange = rangeFromActiveSubstances(cycles, ongoingSubstances)
+    const dataFrom = extendedDataFrom([...cycles, ...ongoingSubstances])
     const toBound = `${activeRange.to}T23:59:59`
 
     const [
@@ -77,35 +79,35 @@ export function useFortschrittData() {
         .from('daily_logs')
         .select('log_date, energie, schlaf, wohlbefinden, libido, body_fat_pct')
         .eq('user_id', user.id)
-        .gte('log_date', activeRange.from)
+        .gte('log_date', dataFrom)
         .lte('log_date', activeRange.to)
         .order('log_date', { ascending: true }),
       supabase
         .from('weight_logs')
         .select('logged_at, weight_kg')
         .eq('user_id', user.id)
-        .gte('logged_at', activeRange.from)
+        .gte('logged_at', dataFrom)
         .lte('logged_at', toBound)
         .order('logged_at', { ascending: true }),
       supabase
         .from('bloodwork')
         .select('id, marker, value, unit, tested_at')
         .eq('user_id', user.id)
-        .gte('tested_at', activeRange.from)
+        .gte('tested_at', dataFrom)
         .lte('tested_at', activeRange.to)
         .order('tested_at', { ascending: false }),
       supabase
         .from('progress_photos')
-        .select('id, photo_url, taken_at, weight_kg')
+        .select('id, photo_url, taken_at, weight_kg, notes')
         .eq('user_id', user.id)
-        .gte('taken_at', activeRange.from)
+        .gte('taken_at', dataFrom)
         .lte('taken_at', activeRange.to)
         .order('taken_at', { ascending: false }),
       supabase
         .from('dose_logs')
         .select('peptide_id, logged_at, taken')
         .eq('user_id', user.id)
-        .gte('logged_at', activeRange.from)
+        .gte('logged_at', dataFrom)
         .lte('logged_at', toBound),
     ])
 
@@ -130,11 +132,12 @@ export function useFortschrittData() {
         .filter(row => row.value != null),
     )
     setPhotos(
-      (photoData ?? []).map((row: { id: string; photo_url: string; taken_at: string; weight_kg: number | string | null }) => ({
+      (photoData ?? []).map((row: { id: string; photo_url: string; taken_at: string; weight_kg: number | string | null; notes: string | null }) => ({
         id: String(row.id),
         photo_url: String(row.photo_url),
         taken_at: String(row.taken_at),
         weight_kg: numeric(row.weight_kg),
+        notes: row.notes ?? null,
       })),
     )
     setDoseLogs((doseData ?? []) as DoseLogEntry[])

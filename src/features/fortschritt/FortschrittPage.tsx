@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { FortschrittTab, VerlaufNavigation } from './types'
 import { useFortschrittData } from './hooks/useFortschrittData'
 import { FortschrittHeader, formatRangeSubtitle } from './components/FortschrittHeader'
 import { FortschrittTabs } from './components/FortschrittTabs'
 import { OverviewTab } from './components/overview/OverviewTab'
+import { VerlaufTab } from './components/verlauf/VerlaufTab'
+import { FotosTab } from './components/fotos/FotosTab'
+import { LabsTab } from './components/labs/LabsTab'
 import { TodayLogSheet } from './components/TodayLogSheet'
-import { PlaceholderTab } from './components/PlaceholderTab'
 
 export function FortschrittPage() {
   const { state, reload } = useFortschrittData()
@@ -47,26 +49,17 @@ export function FortschrittPage() {
             />
           )}
           {tab === 'verlauf' && (
-            <PlaceholderTab
-              title="Verlauf"
-              description={
-                pendingVerlauf?.metric || pendingVerlauf?.focusSubstanceId
-                  ? 'Phase 2: Substanz-Schiene und Chart werden hier implementiert. Deine Auswahl wurde vorgemerkt.'
-                  : 'Phase 2: Timeline mit Substanz-Schiene, Metrik-Chart und Fokus-Modus.'
-              }
+            <VerlaufTab
+              state={state}
+              pendingNav={pendingVerlauf}
+              onPendingConsumed={() => setPendingVerlauf(null)}
             />
           )}
           {tab === 'fotos' && (
-            <PlaceholderTab
-              title="Fotos"
-              description="Phase 2: Foto-Timeline und Vorher/Nachher-Vergleich."
-            />
+            <FotosTab photos={state.photos} onChange={() => void reload()} />
           )}
           {tab === 'labs' && (
-            <PlaceholderTab
-              title="Labs"
-              description="Phase 2: Kompakte Lab-Übersicht. Bis dahin: Blutwerte unter /blutwerte."
-            />
+            <LabsTab bloodwork={state.bloodwork} />
           )}
         </>
       )}

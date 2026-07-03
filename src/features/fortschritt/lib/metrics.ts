@@ -218,4 +218,19 @@ export function sparklineValues(points: SeriesPoint[], maxPoints = 14): number[]
   return sorted.slice(-maxPoints).map(p => p.value)
 }
 
-export { numeric, weightSeries, dailyFieldSeries }
+export function buildMetricSeries(
+  key: MetricKey,
+  range: DateRange,
+  weights: WeightLogEntry[],
+  dailyLogs: DailyLogEntry[],
+  bloodwork: BloodworkEntry[],
+): SeriesPoint[] {
+  if (key === 'weight') return weightSeries(weights, range)
+  if (key === 'body_fat') return dailyFieldSeries(dailyLogs, range, 'body_fat_pct')
+  if (key === 'energie' || key === 'schlaf' || key === 'wohlbefinden' || key === 'libido') {
+    return dailyFieldSeries(dailyLogs, range, key)
+  }
+  return labSeries(bloodwork, key, range)
+}
+
+export { numeric, weightSeries, dailyFieldSeries, labSeries }

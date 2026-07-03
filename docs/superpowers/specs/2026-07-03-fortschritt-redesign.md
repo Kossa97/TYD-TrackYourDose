@@ -232,11 +232,11 @@ Home/Profil-Links: Protokoll → Fortschritt (folgt in späterer Phase).
 - `/protokoll` Redirect
 - Unit-Tests für `metrics.ts`
 
-### Phase 2
+### Phase 2 (aktuell)
 
 - Verlauf-Tab (Substanz-Schiene, Chart, Fokus)
 - Fotos-Tab
-- Labs-Tab
+- Labs-Tab (Kompakt + Link zu /blutwerte)
 - i18n
 
 ### Phase 3
