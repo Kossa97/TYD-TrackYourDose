@@ -45,6 +45,21 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('vial-liquid-rise')
   })
 
+  test('fills the liquid from empty to its current level on mount', () => {
+    const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
+      name: 'BPC-157',
+      amount: '5',
+      unit: 'mg',
+      fillPct: 72,
+      color: '#06b6d4',
+      animateOnMount: true,
+    }))
+
+    expect(html).toContain('vial-liquid-rise')
+    expect(html).toContain('vial-liquid-level-motion')
+    expect(html).toContain('--vial-fill-motion-shift:')
+    expect(html).not.toContain('--vial-fill-motion-shift:0%')
+  })
   test('keeps the cap and label while removing split glass body seams', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
       name: 'TB-500',

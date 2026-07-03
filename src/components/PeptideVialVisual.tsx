@@ -57,6 +57,12 @@ function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value))
 }
 
+function fillMotionShiftPct(previousFill: number, nextFill: number): number {
+  const previousY = liquidSurfaceY(previousFill)
+  const nextY = liquidSurfaceY(nextFill)
+  return Number((((previousY - nextY) / LIQUID_VB_H) * 100).toFixed(2))
+}
+
 function vialAmountLabel(amount?: string | number | null, unit?: string | null): string {
   if (amount === null || amount === undefined || amount === '') return 'Wirkstoff / Vial'
   return `${amount} ${unit || 'mg'} / Vial`
@@ -207,7 +213,11 @@ export function PeptideVialVisual({
   const liquidHaloBase = 0.12 + visualFocus * 0.12
   const liquidCoreBase = 0.08 + visualFocus * 0.16
   const previousFillRef = useRef(fillFrac)
-  const [fillMotion, setFillMotion] = useState({ epoch: 0, shiftPct: 0 })
+  const [fillMotion, setFillMotion] = useState(() => (
+    animateOnMount && fillFrac > 0.001
+      ? { epoch: 1, shiftPct: fillMotionShiftPct(0, fillFrac) }
+      : { epoch: 0, shiftPct: 0 }
+  ))
   // One graphic for the whole liquid. The air gap is baked into the geometry,
   // so a raised wall during slosh still stays clipped below the rim. This is the
   // resting first paint; once subscribed, the engine redraws it every frame.
@@ -255,14 +265,12 @@ export function PeptideVialVisual({
     const previousFill = previousFillRef.current
     if (Math.abs(previousFill - fillFrac) < 0.001) return
 
-    const previousY = liquidSurfaceY(previousFill)
-    const nextY = liquidSurfaceY(fillFrac)
-    const shiftPct = ((previousY - nextY) / LIQUID_VB_H) * 100
+    const shiftPct = fillMotionShiftPct(previousFill, fillFrac)
 
     previousFillRef.current = fillFrac
     setFillMotion(current => ({
       epoch: current.epoch + 1,
-      shiftPct: Number(shiftPct.toFixed(2)),
+      shiftPct,
     }))
   }, [fillFrac])
 
