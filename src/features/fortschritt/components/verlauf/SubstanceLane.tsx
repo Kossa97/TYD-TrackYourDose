@@ -1,22 +1,44 @@
-import { format, parseISO } from 'date-fns'
-import type { ActiveSubstance, CycleSubstance, DateRange, OngoingSubstance } from '../../types'
+import type { ActiveSubstance, CycleSubstance, DailyLogEntry, DateRange, DoseLogEntry, OngoingSubstance, WeightLogEntry, BloodworkEntry } from '../../types'
 import { barPosition, formatRangeLabel } from '../../lib/verlaufRange'
-import { substanceBarEnd } from '../../lib/focusSummary'
+import { substanceBarEnd, buildFocusSummary } from '../../lib/focusSummary'
 import { substanceDayCount } from '../../lib/substances'
 import { panel, sectionLabel } from '../../styles'
+import { FocusSummaryCard } from './FocusSummaryCard'
 
 interface Props {
   cycles: CycleSubstance[]
   ongoing: OngoingSubstance[]
   range: DateRange
   focusId: string | null
-  onSelect: (id: string) => void
-  onClearFocus: () => void
+  weightLogs: WeightLogEntry[]
+  dailyLogs: DailyLogEntry[]
+  bloodwork: BloodworkEntry[]
+  doseLogs: DoseLogEntry[]
+  peptideNames: Map<string, string>
+  onSelect: (id: string | null) => void
 }
 
-export function SubstanceLane({ cycles, ongoing, range, focusId, onSelect, onClearFocus }: Props) {
-  const all = [...cycles.map(c => ({ substance: c as ActiveSubstance, filled: true })), ...ongoing.map(o => ({ substance: o, filled: false }))]
+export function SubstanceLane({
+  cycles,
+  ongoing,
+  range,
+  focusId,
+  weightLogs,
+  dailyLogs,
+  bloodwork,
+  doseLogs,
+  peptideNames,
+  onSelect,
+}: Props) {
+  const all = [
+    ...cycles.map(c => ({ substance: c as ActiveSubstance, filled: true })),
+    ...ongoing.map(o => ({ substance: o, filled: false })),
+  ]
   const todayPos = barPosition(range.to, range.to, range).left
+
+  const handleTap = (id: string) => {
+    onSelect(focusId === id ? null : id)
+  }
 
   return (
     <section style={{ ...panel, padding: '14px 16px' }}>
@@ -28,52 +50,73 @@ export function SubstanceLane({ cycles, ongoing, range, focusId, onSelect, onCle
         {formatRangeLabel(range)}
       </p>
 
-      <div style={{ position: 'relative', maxHeight: 220, overflowY: 'auto' }}>
+      <div style={{ position: 'relative' }}>
         {all.map(({ substance, filled }) => {
           const end = substanceBarEnd(substance)
           const pos = barPosition(substance.startDate, end, range)
-          const focused = focusId === substance.id
-          const faded = focusId != null && !focused
+          const expanded = focusId === substance.id
+          const faded = focusId != null && !expanded
+          const summary = expanded
+            ? buildFocusSummary(substance, range, weightLogs, dailyLogs, bloodwork, doseLogs, peptideNames)
+            : null
+
           return (
-            <button
+            <div
               key={substance.id}
-              type="button"
-              onClick={() => onSelect(substance.id)}
               style={{
-                display: 'block',
-                width: '100%',
                 marginBottom: 10,
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer',
                 opacity: faded ? 0.35 : 1,
-                textAlign: 'left',
+                transition: 'opacity 0.18s',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, gap: 8 }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: substance.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {substance.name}
-                </span>
-                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', flexShrink: 0 }}>
-                  {filled ? `Tag ${substanceDayCount(substance)}` : `seit ${substanceDayCount(substance)}d`}
-                </span>
-              </div>
-              <div style={{ position: 'relative', height: 10, borderRadius: 6, background: 'rgba(255,255,255,0.04)' }}>
-                <div style={{
-                  position: 'absolute',
-                  left: `${pos.left}%`,
-                  width: `${pos.width}%`,
-                  top: 0,
-                  bottom: 0,
-                  borderRadius: 6,
-                  background: filled ? substance.color : 'transparent',
-                  border: filled ? 'none' : `2px solid ${substance.color}`,
-                  opacity: focused ? 1 : 0.75,
-                  boxShadow: focused ? `0 0 12px ${substance.color}55` : 'none',
-                }} />
-              </div>
-            </button>
+              <button
+                type="button"
+                onClick={() => handleTap(substance.id)}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, gap: 8 }}>
+                  <span style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    color: substance.color,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {substance.name}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', flexShrink: 0 }}>
+                    {filled ? `Tag ${substanceDayCount(substance)}` : `seit ${substanceDayCount(substance)}d`}
+                  </span>
+                </div>
+                <div style={{ position: 'relative', height: 10, borderRadius: 6, background: 'rgba(255,255,255,0.04)' }}>
+                  <div style={{
+                    position: 'absolute',
+                    left: `${pos.left}%`,
+                    width: `${pos.width}%`,
+                    top: 0,
+                    bottom: 0,
+                    borderRadius: 6,
+                    background: filled ? substance.color : 'transparent',
+                    border: filled ? 'none' : `2px solid ${substance.color}`,
+                    opacity: expanded ? 1 : 0.75,
+                    boxShadow: expanded ? `0 0 12px ${substance.color}55` : 'none',
+                  }} />
+                </div>
+              </button>
+
+              {expanded && summary && (
+                <FocusSummaryCard summary={summary} inline />
+              )}
+            </div>
           )
         })}
 
@@ -87,24 +130,6 @@ export function SubstanceLane({ cycles, ongoing, range, focusId, onSelect, onCle
           pointerEvents: 'none',
         }} />
       </div>
-
-      {focusId && (
-        <button
-          type="button"
-          onClick={onClearFocus}
-          style={{
-            marginTop: 8,
-            fontSize: '0.72rem',
-            fontWeight: 800,
-            color: 'var(--accent)',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          ✕ Fokus aufheben
-        </button>
-      )}
     </section>
   )
 }

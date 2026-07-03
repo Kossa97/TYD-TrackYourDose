@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import type { FortschrittOverviewState, MetricKey, VerlaufNavigation } from '../../types'
 import { buildMetricSeries } from '../../lib/metrics'
 import { buildAvailableMetrics, normalizeMetricKey, type MetricDefinition } from '../../lib/metricDefinitions'
-import { allSubstances, buildFocusSummary } from '../../lib/focusSummary'
+import { allSubstances } from '../../lib/focusSummary'
 import {
   RANGE_CHIPS,
   rangeFromChip,
@@ -13,7 +13,6 @@ import {
 import { SubstanceLane } from './SubstanceLane'
 import { MetricChart } from './MetricChart'
 import { EventStrip } from './EventStrip'
-import { FocusSummaryCard } from './FocusSummaryCard'
 
 interface Props {
   state: FortschrittOverviewState
@@ -100,18 +99,6 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
     setSecondaryKey(key)
   }
 
-  const focusSummary = focused
-    ? buildFocusSummary(
-      focused,
-      chartRange,
-      state.weightLogs,
-      state.dailyLogs,
-      state.bloodwork,
-      state.doseLogs,
-      state.peptideNames,
-    )
-    : null
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', gap: 6 }}>
@@ -142,16 +129,18 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
         })}
       </div>
 
-      {focusSummary && <FocusSummaryCard summary={focusSummary} />}
-
       {(state.cycleSubstances.length > 0 || state.ongoingSubstances.length > 0) && (
         <SubstanceLane
           cycles={state.cycleSubstances}
           ongoing={state.ongoingSubstances}
           range={chartRange}
           focusId={focusId}
+          weightLogs={state.weightLogs}
+          dailyLogs={state.dailyLogs}
+          bloodwork={state.bloodwork}
+          doseLogs={state.doseLogs}
+          peptideNames={state.peptideNames}
           onSelect={setFocusId}
-          onClearFocus={() => setFocusId(null)}
         />
       )}
 
