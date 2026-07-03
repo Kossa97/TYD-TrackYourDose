@@ -4,7 +4,6 @@ import {
   CartesianGrid,
   Line,
   LineChart,
-  ReferenceArea,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -15,7 +14,8 @@ import type { MetricDefinition } from '../../lib/metricDefinitions'
 import { buildMetricSeries, computeDelta } from '../../lib/metrics'
 import type { BloodworkEntry, DailyLogEntry, WeightLogEntry } from '../../types'
 import { substanceBarEnd } from '../../lib/focusSummary'
-import { assignLanes, bandAxisDomain, laneCount, laneYBounds } from '../../lib/cycleLanes'
+import { assignLanes, laneCount } from '../../lib/cycleLanes'
+import { CycleBandLayer, type CycleBandDraw } from './CycleBandLayer'
 import { panel } from '../../styles'
 
 interface Props {
@@ -28,19 +28,6 @@ interface Props {
   cycles: CycleSubstance[]
   ongoing: OngoingSubstance[]
   focusId: string | null
-}
-
-interface CycleBand {
-  id: string
-  name: string
-  color: string
-  filled: boolean
-  faded: boolean
-  x1: number
-  x2: number
-  y1: number
-  y2: number
-  lane: number
 }
 
 function fmtDate(d: string) {
@@ -59,7 +46,7 @@ function buildTimeTicks(from: string, to: string, count = 5): number[] {
   return Array.from({ length: count }, (_, i) => Math.round(start + step * i))
 }
 
-function CycleLegend({ bands }: { bands: CycleBand[] }) {
+function CycleLegend({ bands }: { bands: CycleBandDraw[] }) {
   if (bands.length === 0) return null
 
   return (
@@ -157,16 +144,21 @@ export function MetricChart({
     const packed = assignLanes(raw)
     const lanes = laneCount(packed)
 
-    const bands: CycleBand[] = packed.map(band => {
-      const { y1, y2 } = laneYBounds(band.lane)
-      return { ...band, y1, y2 }
-    })
+    const bands: CycleBandDraw[] = packed.map(band => ({
+      id: band.id,
+      name: band.name,
+      color: band.color,
+      filled: band.filled,
+      faded: band.faded,
+      x1: band.x1,
+      x2: band.x2,
+      lane: band.lane,
+    }))
 
     return { bands, lanes }
   }, [cycles, ongoing, focusId, rangeStart, rangeEnd])
 
-  const bandAxisMaxValue = bandAxisDomain(lanes)
-  const chartHeight = 248 + Math.max(0, lanes - 1) * 12
+  const chartHeight = 252 + Math.max(0, lanes - 1) * 14
 
   const delta = computeDelta(primarySeries)
   const latest = primarySeries[primarySeries.length - 1]
@@ -214,28 +206,7 @@ export function MetricChart({
       </div>
 
       <ResponsiveContainer width="100%" height={chartHeight}>
-        <LineChart data={chartData} margin={{ top: 8, right: secondary ? 36 : 12, bottom: 4, left: 0 }}>
-          {lanes > 0 && (
-            <YAxis yAxisId="bands" domain={[0, bandAxisMaxValue]} hide />
-          )}
-
-          {bands.map(band => (
-            <ReferenceArea
-              key={band.id}
-              x1={band.x1}
-              x2={band.x2}
-              y1={band.y1}
-              y2={band.y2}
-              yAxisId="bands"
-              fill={band.color}
-              fillOpacity={band.faded ? 0.05 : band.filled ? 0.2 : 0.08}
-              stroke={band.filled ? 'none' : band.color}
-              strokeOpacity={band.faded ? 0.15 : 0.35}
-              strokeWidth={band.filled ? 0 : 1}
-              strokeDasharray={band.filled ? undefined : '4 3'}
-            />
-          ))}
-
+        <LineChart data={chartData} margin={{ top: 8, right: secondary ? 36 : 12, bottom: 8, left: 0 }}>
           <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
           <XAxis
             dataKey="ts"
@@ -264,6 +235,9 @@ export function MetricChart({
               width={36}
             />
           )}
+
+          <CycleBandLayer bands={bands} lanes={lanes} />
+
           <Tooltip
             contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 11, fontWeight: 700 }}
             labelFormatter={ts => fmtDate(format(new Date(Number(ts)), 'yyyy-MM-dd'))}
