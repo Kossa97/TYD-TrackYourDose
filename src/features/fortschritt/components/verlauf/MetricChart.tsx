@@ -222,7 +222,7 @@ export function MetricChart({
           <CycleBandLayer bands={bands} lanes={lanes} />
 
           <Tooltip
-            cursor={{ stroke: 'rgba(0,204,245,0.4)', strokeWidth: 1, strokeDasharray: '4 4' }}
+            cursor={{ stroke: 'rgba(0,204,245,0.28)', strokeWidth: 0.75, strokeDasharray: '3 3' }}
             content={(props) => <MetricTooltip {...props} bands={bands} metric={metric} />}
           />
           <Line

@@ -1,22 +1,17 @@
 import { format, parseISO } from 'date-fns'
+import type { CycleBandDraw } from './CycleBandLayer'
 import type { MetricDefinition } from '../../lib/metricDefinitions'
-import { cycleStartsOnDate, hoverDateIso } from '../../lib/chartTooltip'
+import { cycleStartsAtHover, hoverDateIso } from '../../lib/chartTooltip'
 
-export interface CycleBandDraw {
-  id: string
-  name: string
-  color: string
-  filled: boolean
-  faded: boolean
-  startDate: string
-  x1: number
-  x2: number
-  lane: number
+interface ChartPoint {
+  date: string
+  ts: number
+  value: number | null
 }
 
 interface Props {
   active?: boolean
-  payload?: ReadonlyArray<{ value?: unknown }>
+  payload?: ReadonlyArray<{ payload?: ChartPoint; value?: unknown }>
   label?: number | string
   bands: CycleBandDraw[]
   metric: MetricDefinition
@@ -33,10 +28,14 @@ function formatTooltipValue(value: number, unit: string): string {
 }
 
 export function MetricTooltip({ active, payload, label, bands, metric }: Props) {
-  if (!active || label == null) return null
+  if (!active) return null
 
-  const dateIso = hoverDateIso(label)
-  const starts = cycleStartsOnDate(bands, dateIso)
+  const point = payload?.[0]?.payload
+  const dateIso = point?.date ?? (label != null ? hoverDateIso(label) : null)
+  if (!dateIso) return null
+
+  const hoverTs = point?.ts ?? (typeof label === 'number' ? label : Number(label))
+  const starts = cycleStartsAtHover(bands, dateIso, Number.isFinite(hoverTs) ? hoverTs : undefined)
   const rawValue = payload?.[0]?.value
   const metricValue = rawValue != null && rawValue !== '' ? Number(rawValue) : null
   const hasMetric = metricValue != null && Number.isFinite(metricValue)
@@ -52,14 +51,15 @@ export function MetricTooltip({ active, payload, label, bands, metric }: Props) 
       fontSize: 11,
       fontWeight: 700,
       boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+      minWidth: 140,
     }}>
       <p style={{ color: 'var(--text-muted)', marginBottom: 8 }}>{fmtDate(dateIso)}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {hasMetric && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{
-              width: 8,
-              height: 8,
+              width: 7,
+              height: 7,
               borderRadius: '50%',
               background: metric.color,
               flexShrink: 0,
@@ -72,8 +72,8 @@ export function MetricTooltip({ active, payload, label, bands, metric }: Props) 
         {starts.map(band => (
           <div key={band.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{
-              width: 8,
-              height: 8,
+              width: 7,
+              height: 7,
               borderRadius: '50%',
               background: band.color,
               flexShrink: 0,

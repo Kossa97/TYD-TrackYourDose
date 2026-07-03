@@ -8,7 +8,7 @@ import {
   DefaultZIndexes,
 } from 'recharts'
 import { computeCycleBandLayout } from '../../lib/cycleLanes'
-import { hoverDateIso } from '../../lib/chartTooltip'
+import { cycleStartsAtHover, hoverDateIso } from '../../lib/chartTooltip'
 
 export interface CycleBandDraw {
   id: string
@@ -60,7 +60,9 @@ function isStartHighlighted(
   activeLabel: string | number | undefined,
 ): boolean {
   if (!tooltipActive) return false
-  if (activeLabel != null && band.startDate === hoverDateIso(activeLabel)) return true
+  if (activeLabel != null && cycleStartsAtHover([band], hoverDateIso(activeLabel)).length > 0) {
+    return true
+  }
   if (cursorX == null) return false
   return Math.abs(cursorX - startX) <= HOVER_PX_THRESHOLD
 }
