@@ -219,6 +219,7 @@ export function MetricChart({
           <CycleBandLayer bands={bands} lanes={lanes} />
 
           <Tooltip
+            cursor={{ stroke: 'rgba(0,204,245,0.4)', strokeWidth: 1, strokeDasharray: '4 4' }}
             contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 11, fontWeight: 700 }}
             labelFormatter={ts => fmtDate(format(new Date(Number(ts)), 'yyyy-MM-dd'))}
             formatter={(value) => [value != null ? formatTooltipValue(Number(value), metric.unit) : '—', metric.label]}

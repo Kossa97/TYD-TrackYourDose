@@ -1,4 +1,11 @@
-import { useXAxisScale, usePlotArea, ZIndexLayer, DefaultZIndexes } from 'recharts'
+import {
+  useActiveTooltipCoordinate,
+  useIsTooltipActive,
+  usePlotArea,
+  useXAxisScale,
+  ZIndexLayer,
+  DefaultZIndexes,
+} from 'recharts'
 import { computeCycleBandLayout } from '../../lib/cycleLanes'
 
 export interface CycleBandDraw {
@@ -17,33 +24,60 @@ interface Props {
   lanes: number
 }
 
+const HOVER_PX_THRESHOLD = 14
+
+function bandLayout(
+  plotArea: NonNullable<ReturnType<typeof usePlotArea>>,
+  xScale: NonNullable<ReturnType<typeof useXAxisScale>>,
+  bands: CycleBandDraw[],
+  lanes: number,
+) {
+  const { blockHeight, laneHeight, laneGap } = computeCycleBandLayout(plotArea.height, lanes)
+  const baseY = plotArea.y + plotArea.height - blockHeight
+
+  return bands.flatMap(band => {
+    const px1 = xScale(band.x1, { position: 'start' })
+    const px2 = xScale(band.x2, { position: 'end' })
+    if (px1 == null || px2 == null) return []
+
+    const startX = plotArea.x + px1
+    const x = Math.min(startX, plotArea.x + px2)
+    const w = Math.max(Math.abs((plotArea.x + px2) - startX), 3)
+    const y = baseY + band.lane * (laneHeight + laneGap)
+
+    return [{ band, x, y, w, startX, laneHeight }]
+  })
+}
+
+function isStartHighlighted(
+  startX: number,
+  tooltipActive: boolean,
+  cursorX: number | undefined,
+): boolean {
+  if (!tooltipActive || cursorX == null) return false
+  return Math.abs(cursorX - startX) <= HOVER_PX_THRESHOLD
+}
+
 /**
- * Zyklus-Balken im Chart-Hintergrund — füllen die Y-Höhe je nach Zeilenanzahl.
+ * Zyklus-Balken + Start-Striche im Chart-Hintergrund.
  */
 export function CycleBandLayer({ bands, lanes }: Props) {
   const xScale = useXAxisScale()
   const plotArea = usePlotArea()
+  const tooltipActive = useIsTooltipActive()
+  const cursor = useActiveTooltipCoordinate()
 
   if (!xScale || !plotArea || bands.length === 0 || lanes === 0) {
     return null
   }
 
-  const { blockHeight, laneHeight, laneGap } = computeCycleBandLayout(plotArea.height, lanes)
-  const baseY = plotArea.y + plotArea.height - blockHeight
+  const items = bandLayout(plotArea, xScale, bands, lanes)
 
   return (
-    <ZIndexLayer zIndex={DefaultZIndexes.barBackground}>
-      <g className="cycle-band-layer" aria-hidden>
-        {bands.map(band => {
-          const px1 = xScale(band.x1, { position: 'start' })
-          const px2 = xScale(band.x2, { position: 'end' })
-          if (px1 == null || px2 == null) return null
-
-          const x = plotArea.x + Math.min(px1, px2)
-          const w = Math.max(Math.abs(px2 - px1), 3)
-          const y = baseY + band.lane * (laneHeight + laneGap)
-
-          return (
+    <>
+      <ZIndexLayer zIndex={DefaultZIndexes.barBackground}>
+        <g className="cycle-band-layer" aria-hidden>
+          {items.map(({ band, x, y, w, laneHeight }) => (
             <rect
               key={band.id}
               x={x}
@@ -59,9 +93,40 @@ export function CycleBandLayer({ bands, lanes }: Props) {
               rx={4}
               ry={4}
             />
-          )
-        })}
-      </g>
-    </ZIndexLayer>
+          ))}
+        </g>
+      </ZIndexLayer>
+
+      <ZIndexLayer zIndex={0}>
+        <g className="cycle-start-markers" aria-hidden>
+          {items.map(({ band, y, startX, laneHeight }) => {
+            const highlighted = isStartHighlighted(startX, tooltipActive, cursor?.x)
+
+            return (
+              <g key={`start-${band.id}`}>
+                <line
+                  x1={startX}
+                  x2={startX}
+                  y1={y}
+                  y2={y + laneHeight}
+                  stroke={band.color}
+                  strokeWidth={highlighted ? 2.5 : 1.5}
+                  strokeOpacity={highlighted ? 1 : band.faded ? 0.18 : 0.55}
+                />
+                <circle
+                  cx={startX}
+                  cy={y}
+                  r={highlighted ? 4.5 : 3}
+                  fill={highlighted ? band.color : '#07091a'}
+                  stroke={band.color}
+                  strokeWidth={highlighted ? 2 : 1.25}
+                  opacity={highlighted ? 1 : band.faded ? 0.35 : 0.8}
+                />
+              </g>
+            )
+          })}
+        </g>
+      </ZIndexLayer>
+    </>
   )
 }
