@@ -312,20 +312,9 @@ export function PeptideVialVisual({
           0%, 100% { transform: translateX(0); opacity: .35; }
           50% { transform: translateX(14%); opacity: .7; }
         }
-        @keyframes vial-liquid-fill-reveal {
-          from { transform: scaleY(0); opacity: 0; }
-          12% { opacity: .82; }
-          to { transform: scaleY(1); opacity: 1; }
-        }
         @keyframes vial-liquid-level-motion {
           from { transform: translateY(var(--vial-fill-motion-shift, 0%)); }
           to { transform: translateY(0); }
-        }
-        .vial-liquid-fill-reveal {
-          animation: vial-liquid-fill-reveal var(--vial-fill-intro-duration, 1200ms) cubic-bezier(.22,1,.36,1) both;
-          transform-box: fill-box;
-          transform-origin: center bottom;
-          will-change: transform;
         }
         .vial-liquid-level-motion {
           animation: vial-liquid-level-motion 760ms cubic-bezier(.22,1,.36,1) both;
@@ -333,7 +322,7 @@ export function PeptideVialVisual({
           transform-origin: center bottom;
         }
         @media (prefers-reduced-motion: reduce) {
-          .vial-liquid-fill-reveal, .vial-shimmer, .vial-liquid-level-motion { animation: none !important; }
+          .vial-shimmer, .vial-liquid-level-motion { animation: none !important; }
         }
       `}</style>
 
@@ -459,6 +448,18 @@ export function PeptideVialVisual({
               <clipPath id={`${uid}-clip`}>
                 <use href={`#${uid}-bodyPath`} />
               </clipPath>
+              {fillMotion.mode === 'reveal' && (
+                <clipPath id={`${uid}-introClip`} clipPathUnits="userSpaceOnUse">
+                  <rect data-vial-detail="liquid-intro-reveal-clip" x="0" y={reducedMotion ? 0 : LIQUID_VB_H} width={LIQUID_VB_W} height={reducedMotion ? LIQUID_VB_H : 0}>
+                    {!reducedMotion && (
+                      <>
+                        <animate attributeName="y" from={LIQUID_VB_H} to="0" dur={`${fillIntroDurationMs}ms`} begin="0s" fill="freeze" calcMode="spline" keySplines=".22 1 .36 1" />
+                        <animate attributeName="height" from="0" to={LIQUID_VB_H} dur={`${fillIntroDurationMs}ms`} begin="0s" fill="freeze" calcMode="spline" keySplines=".22 1 .36 1" />
+                      </>
+                    )}
+                  </rect>
+                </clipPath>
+              )}
               <linearGradient id={`${uid}-depth`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="rgba(255,255,255,0.26)" />
                 <stop offset="18%" stopColor="rgba(255,255,255,0.05)" />
@@ -501,7 +502,8 @@ export function PeptideVialVisual({
               </filter>
             </defs>
 
-            <use data-vial-detail="liquid-body" href={`#${uid}-bodyPath`} fill="currentColor" fillOpacity="0.8" />
+            <g clipPath={fillMotion.mode === 'reveal' ? `url(#${uid}-introClip)` : undefined}>
+              <use data-vial-detail="liquid-body" href={`#${uid}-bodyPath`} fill="currentColor" fillOpacity="0.8" />
             <g clipPath={`url(#${uid}-clip)`}>
               <use href={`#${uid}-bodyPath`} fill={`url(#${uid}-depth)`} />
               <use href={`#${uid}-bodyPath`} fill={`url(#${uid}-side)`} />
@@ -532,6 +534,7 @@ export function PeptideVialVisual({
               strokeLinecap="round"
               vectorEffect="non-scaling-stroke"
             />
+            </g>
                 </svg>
               </g>
             </svg>

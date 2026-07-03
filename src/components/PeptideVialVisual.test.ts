@@ -59,9 +59,17 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('data-vial-detail="liquid-graphic"')
     expect(html).toContain('class="overflow-visible vial-liquid-fill-reveal"')
     expect(html).not.toContain('data-vial-detail="liquid-motion-viewport" class="pointer-events-none absolute inset-0 vial-liquid-rise"')
-    expect(source()).toContain('from { transform: scaleY(0); opacity: 0; }')
-    expect(source()).toContain('to { transform: scaleY(1); opacity: 1; }')
-    expect(source()).toContain('will-change: transform')
+    expect(source()).toContain('data-vial-detail="liquid-intro-reveal-clip"')
+    expect(source()).toContain('y={reducedMotion ? 0 : LIQUID_VB_H}')
+    expect(source()).toContain('height={reducedMotion ? LIQUID_VB_H : 0}')
+    expect(source()).toContain('<animate attributeName="y"')
+    expect(source()).toContain('<animate attributeName="height"')
+    expect(source()).toContain('from={LIQUID_VB_H}')
+    expect(source()).toContain('to="0"')
+    expect(source()).toContain('from="0"')
+    expect(source()).toContain('to={LIQUID_VB_H}')
+    expect(source()).not.toContain('scaleY(0)')
+    expect(source()).not.toContain('scaleY(1)')
     expect(source()).not.toContain('clip-path: inset(100% 0 0 0)')
   })
 
@@ -85,7 +93,7 @@ describe('PeptideVialVisual', () => {
 
     expect(low).toContain('--vial-fill-intro-duration:1060ms')
     expect(high).toContain('--vial-fill-intro-duration:1620ms')
-    expect(source()).toContain('animation: vial-liquid-fill-reveal var(--vial-fill-intro-duration, 1200ms)')
+    expect(source()).toContain('dur={`${fillIntroDurationMs}ms`}')
   })
   test('keeps the cap and label while removing split glass body seams', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
