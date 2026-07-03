@@ -138,6 +138,17 @@ function slotPeriod(slot: { groupKey: IntakeGroupKey; minutes: number }): Period
 
 const PERIOD_ORDER: PeriodKey[] = ['morgens', 'mittags', 'abends']
 
+function defaultDuePeriod(
+  day: Date,
+  periods: { key: PeriodKey; slots: unknown[] }[],
+): PeriodKey {
+  if (isToday(day)) {
+    const now = new Date()
+    return intakePeriodFromMinutes(now.getHours() * 60 + now.getMinutes())
+  }
+  return periods.find(period => period.slots.length > 0)?.key ?? 'morgens'
+}
+
 function intakeGroupMeta(key: IntakeGroupKey, t: (key: string) => string): { icon: LucideIcon; label: string } {
   if (key === 'morgens') return { icon: Sunrise, label: t('morgens') }
   if (key === 'mittags') return { icon: Sun, label: t('mittags') }
@@ -338,6 +349,7 @@ export function Dashboard() {
   const [confirmTime, setConfirmTime]   = useState('')
   const [completedExpanded, setCompletedExpanded] = useState(false)
   const [calendarExpanded, setCalendarExpanded] = useState(false)
+  const [activeDuePeriod, setActiveDuePeriod] = useState<PeriodKey>('morgens')
 
   // Horizontal swipe state
   const calendarSwipeStart = useRef<{ x: number; y: number; pointerId: number } | null>(null)
@@ -567,6 +579,12 @@ export function Dashboard() {
     ...intakeGroupMeta(key, t),
     slots: dueSlots.filter(slot => slotPeriod(slot) === key).sort((a, b) => a.minutes - b.minutes),
   }))
+  const activeDuePeriodData = duePeriodCarousels.find(period => period.key === activeDuePeriod)
+    ?? duePeriodCarousels[0]
+
+  useEffect(() => {
+    setActiveDuePeriod(defaultDuePeriod(selectedDay, duePeriodCarousels))
+  }, [selectedDay])
 
   useEffect(() => {
     if (location.hash !== '#due-intakes') return
@@ -1236,29 +1254,57 @@ export function Dashboard() {
               )}
             </div>
 
-            {duePeriodCarousels.map(period => {
-              const PeriodIcon = period.icon
-              return (
-                <div key={period.key} className="space-y-2">
-                  <div className="flex items-center gap-2 px-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                    <PeriodIcon size={13} />
-                    <span>{period.label}</span>
-                  </div>
+            <div
+              role="tablist"
+              aria-label={t('due_intakes_title', { defaultValue: 'Noch fällig' })}
+              className="grid grid-cols-3 gap-1 rounded-xl border border-amber-500/15 bg-amber-500/[0.06] p-1"
+            >
+              {duePeriodCarousels.map(period => {
+                const PeriodIcon = period.icon
+                const active = activeDuePeriod === period.key
+                return (
+                  <button
+                    key={period.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setActiveDuePeriod(period.key)}
+                    className={[
+                      'flex min-w-0 flex-col items-center gap-1 rounded-lg px-2 py-2 text-[10px] font-extrabold uppercase tracking-[0.08em] transition-colors',
+                      active
+                        ? 'bg-amber-400/15 text-amber-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                        : 'text-slate-500 hover:text-slate-300',
+                    ].join(' ')}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <PeriodIcon size={13} />
+                      <span className="truncate">{period.label}</span>
+                    </span>
+                    {period.slots.length > 0 && (
+                      <span className={[
+                        'rounded-full px-1.5 py-0.5 text-[9px] tabular-nums leading-none',
+                        active ? 'bg-amber-400/20 text-amber-100' : 'bg-slate-800 text-slate-400',
+                      ].join(' ')}>
+                        {period.slots.length}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
 
-                  {period.slots.length > 0 ? (
-                    <IntakePeriodCarousel
-                      items={period.slots}
-                      getKey={slot => `${slot.cycle.id}-${slot.minutes}`}
-                      renderItem={slot => renderDueSlotCard(slot)}
-                    />
-                  ) : (
-                    <p className="px-1 text-xs text-slate-600">
-                      {t('period_no_open_intakes', { defaultValue: 'Keine offenen Einnahmen' })}
-                    </p>
-                  )}
-                </div>
-              )
-            })}
+            {activeDuePeriodData.slots.length > 0 ? (
+              <IntakePeriodCarousel
+                key={activeDuePeriod}
+                items={activeDuePeriodData.slots}
+                getKey={slot => `${slot.cycle.id}-${slot.minutes}`}
+                renderItem={slot => renderDueSlotCard(slot)}
+              />
+            ) : (
+              <p className="px-1 text-xs text-slate-600">
+                {t('period_no_open_intakes', { defaultValue: 'Keine offenen Einnahmen' })}
+              </p>
+            )}
           </div>
         )}
 
