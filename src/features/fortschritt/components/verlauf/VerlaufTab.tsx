@@ -116,53 +116,53 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ display: 'flex', gap: 6 }}>
-        {RANGE_CHIPS.map(chip => {
-          const on = rangeChip === chip.key
-          return (
-            <button
-              key={chip.key}
-              type="button"
-              disabled={!!focused}
-              onClick={() => setRangeChip(chip.key)}
-              style={{
-                flex: 1,
-                padding: '8px 0',
-                borderRadius: 12,
-                fontSize: '0.76rem',
-                fontWeight: 800,
-                cursor: focused ? 'not-allowed' : 'pointer',
-                opacity: focused ? 0.45 : 1,
-                background: on ? 'var(--accent-weak)' : 'transparent',
-                color: on ? 'var(--accent)' : 'var(--text-muted)',
-                border: on ? '1px solid var(--accent-border)' : '1px solid var(--border)',
-              }}
-            >
-              {chip.label}
-            </button>
-          )
-        })}
-      </div>
-
-      {(state.cycleSubstances.length > 0 || state.ongoingSubstances.length > 0) && (
-        <SubstanceLane
-          cycles={state.cycleSubstances}
-          ongoing={state.ongoingSubstances}
-          range={chartRange}
-          focusId={focusId}
-          weightLogs={state.weightLogs}
-          dailyLogs={state.dailyLogs}
-          bloodwork={state.bloodwork}
-          doseLogs={state.doseLogs}
-          peptideNames={state.peptideNames}
-          onSelect={setFocusId}
-        />
-      )}
-
       <div>
-        <p style={{ fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>
-          Metrik
-        </p>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 10,
+          marginBottom: 10,
+        }}>
+          <p style={{
+            fontSize: '0.62rem',
+            fontWeight: 800,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'var(--text-muted)',
+            flexShrink: 0,
+          }}>
+            Metrik
+          </p>
+          <div style={{ display: 'flex', gap: 4, flex: 1, justifyContent: 'flex-end', maxWidth: 220 }}>
+            {RANGE_CHIPS.map(chip => {
+              const on = rangeChip === chip.key
+              return (
+                <button
+                  key={chip.key}
+                  type="button"
+                  disabled={!!focused}
+                  onClick={() => setRangeChip(chip.key)}
+                  style={{
+                    flex: 1,
+                    padding: '6px 0',
+                    borderRadius: 10,
+                    fontSize: '0.68rem',
+                    fontWeight: 800,
+                    cursor: focused ? 'not-allowed' : 'pointer',
+                    opacity: focused ? 0.45 : 1,
+                    background: on ? 'var(--accent-weak)' : 'transparent',
+                    color: on ? 'var(--accent)' : 'var(--text-muted)',
+                    border: on ? '1px solid var(--accent-border)' : '1px solid var(--border)',
+                  }}
+                >
+                  {chip.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
           {availableMetrics.map(metric => {
             const count = pointCounts.get(metric.key) ?? 0
@@ -194,7 +194,9 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
           })}
         </div>
         <p style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', marginTop: 6 }}>
-          Gewicht, KFA & Labs im Chart · Wellness-Vergleich per Substanz antippen
+          {focused
+            ? 'Zeitraum folgt Fokus-Substanz · Chips deaktiviert'
+            : 'Gewicht, KFA & Labs im Chart · Wellness-Vergleich per Substanz antippen'}
         </p>
       </div>
 
@@ -213,6 +215,21 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
       )}
 
       <EventStrip range={chartRange} photos={state.photos} bloodwork={state.bloodwork} />
+
+      {(state.cycleSubstances.length > 0 || state.ongoingSubstances.length > 0) && (
+        <SubstanceLane
+          cycles={state.cycleSubstances}
+          ongoing={state.ongoingSubstances}
+          range={chartRange}
+          focusId={focusId}
+          weightLogs={state.weightLogs}
+          dailyLogs={state.dailyLogs}
+          bloodwork={state.bloodwork}
+          doseLogs={state.doseLogs}
+          peptideNames={state.peptideNames}
+          onSelect={setFocusId}
+        />
+      )}
     </div>
   )
 }
