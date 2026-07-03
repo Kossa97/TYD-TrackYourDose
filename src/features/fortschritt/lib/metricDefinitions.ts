@@ -1,4 +1,5 @@
 import type { MetricKey } from '../types'
+import { isWellnessMetricKey } from '../constants'
 import { METRIC_COLORS } from './colors'
 
 export interface MetricDefinition {
@@ -11,10 +12,6 @@ export interface MetricDefinition {
 
 const BASE_METRICS: MetricDefinition[] = [
   { key: 'weight', label: 'Gewicht', unit: 'kg', color: METRIC_COLORS.weight, isLab: false },
-  { key: 'energie', label: 'Energie', unit: '/10', color: METRIC_COLORS.energie, isLab: false },
-  { key: 'schlaf', label: 'Schlaf', unit: '/10', color: METRIC_COLORS.schlaf, isLab: false },
-  { key: 'wohlbefinden', label: 'Wohlbefinden', unit: '/10', color: METRIC_COLORS.wohlbefinden, isLab: false },
-  { key: 'libido', label: 'Libido', unit: '/10', color: METRIC_COLORS.libido, isLab: false },
   { key: 'body_fat', label: 'Körperfett', unit: '%', color: METRIC_COLORS.body_fat, isLab: false },
 ]
 
@@ -40,5 +37,6 @@ export function buildAvailableMetrics(
 export function normalizeMetricKey(key?: MetricKey): MetricKey {
   if (!key || key === 'Gewicht') return 'weight'
   if (key === 'Körperfett' || key === 'KFA') return 'body_fat'
+  if (isWellnessMetricKey(key)) return 'weight'
   return key
 }

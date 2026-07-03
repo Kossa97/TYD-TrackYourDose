@@ -136,3 +136,12 @@ export function allSubstances(
 ): ActiveSubstance[] {
   return [...cycles, ...ongoing]
 }
+
+/** Älteste aktive Substanz — Standard-Fokus für Wellness-Vergleich */
+export function defaultFocusSubstanceId(
+  cycles: CycleSubstance[],
+  ongoing: OngoingSubstance[],
+): string | null {
+  const sorted = [...allSubstances(cycles, ongoing)].sort((a, b) => a.startDate.localeCompare(b.startDate))
+  return sorted[0]?.id ?? null
+}

@@ -15,6 +15,9 @@ export function FocusSummaryCard({ summary, inline = false }: Props) {
         background: 'rgba(255,255,255,0.03)',
         border: '1px solid var(--border)',
       }}>
+        <p style={{ fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6 }}>
+          Start → heute
+        </p>
         <p style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 10 }}>
           {summary.subtitle}
         </p>

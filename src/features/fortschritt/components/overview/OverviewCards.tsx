@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { format, parseISO, differenceInCalendarDays } from 'date-fns'
 import { ChevronRight, Scale, Activity, CheckCircle2, Droplets, Camera, CircleDot } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { BloodworkEntry, DailyLogEntry, DateRange, ProgressPhotoEntry, WeightLogEntry } from '../../types'
+import type { BloodworkEntry, DailyLogEntry, DateRange, ProgressPhotoEntry, WeightLogEntry, CycleSubstance, OngoingSubstance } from '../../types'
 import {
   computeAdherence,
   computeDelta,
@@ -14,23 +14,28 @@ import {
   dailyFieldSeries,
 } from '../../lib/metrics'
 import { MIN_POINTS_FOR_DELTA, MIN_POINTS_FOR_SPARKLINE, WELLNESS_FIELDS } from '../../constants'
+import { defaultFocusSubstanceId } from '../../lib/focusSummary'
 import { panel, cardDelta, cardTitle } from '../../styles'
 import type { DoseLogEntry } from '../../types'
 
 interface Props {
   range: DateRange
+  cycleSubstances: CycleSubstance[]
+  ongoingSubstances: OngoingSubstance[]
   dailyLogs: DailyLogEntry[]
   weightLogs: WeightLogEntry[]
   bloodwork: BloodworkEntry[]
   photos: ProgressPhotoEntry[]
   doseLogs: DoseLogEntry[]
   peptideNames: Map<string, string>
-  onNavigateVerlauf: (metric?: string) => void
+  onNavigateVerlauf: (metric?: string, focusSubstanceId?: string) => void
   onNavigateTab: (tab: 'labs' | 'fotos') => void
 }
 
 export function OverviewCards({
   range,
+  cycleSubstances,
+  ongoingSubstances,
   dailyLogs,
   weightLogs,
   bloodwork,
@@ -87,8 +92,8 @@ export function OverviewCards({
         iconColor="#00ccf5"
         title={`Ø ${wellnessAvg} / 10`}
         delta={wellnessDelta != null ? `${wellnessDelta > 0 ? '+' : ''}${wellnessDelta} im Zeitraum` : undefined}
-        sub={hints || undefined}
-        onClick={() => onNavigateVerlauf(strongest ?? 'energie')}
+        sub={hints || 'Substanz im Verlauf antippen'}
+        onClick={() => onNavigateVerlauf(undefined, defaultFocusSubstanceId(cycleSubstances, ongoingSubstances) ?? undefined)}
       />,
     )
   }

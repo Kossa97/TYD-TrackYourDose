@@ -1,10 +1,11 @@
-import { MIN_POINTS_FOR_TREND } from '../../constants'
+import { MIN_POINTS_FOR_TREND, isWellnessMetricKey } from '../../constants'
 import {
   computeTopChanges,
   weightSeries,
   dailyFieldSeries,
 } from '../../lib/metrics'
 import { countLoggedDays } from '../../lib/substances'
+import { defaultFocusSubstanceId } from '../../lib/focusSummary'
 import type { FortschrittOverviewState, VerlaufNavigation } from '../../types'
 import { ActiveSubstancesSection } from './ActiveSubstancesSection'
 import { TopChangesSection } from './TopChangesSection'
@@ -73,7 +74,16 @@ export function OverviewTab({ state, onLogToday, onNavigate }: Props) {
         changes={topChanges}
         hasAnyData={hasAnyLogs}
         hasEnoughForTrend={hasEnoughForTrend}
-        onSelect={key => onNavigate({ tab: 'verlauf', metric: key })}
+        onSelect={key => {
+          if (isWellnessMetricKey(key)) {
+            onNavigate({
+              tab: 'verlauf',
+              focusSubstanceId: defaultFocusSubstanceId(cycleSubstances, ongoingSubstances) ?? undefined,
+            })
+            return
+          }
+          onNavigate({ tab: 'verlauf', metric: key })
+        }}
       />
 
       {loggedDays > 0 && loggedDays < 7 && (
@@ -84,13 +94,17 @@ export function OverviewTab({ state, onLogToday, onNavigate }: Props) {
 
       <OverviewCards
         range={range}
+        cycleSubstances={cycleSubstances}
+        ongoingSubstances={ongoingSubstances}
         dailyLogs={dailyLogs}
         weightLogs={weightLogs}
         bloodwork={bloodwork}
         photos={photos}
         doseLogs={doseLogs}
         peptideNames={peptideNames}
-        onNavigateVerlauf={metric => onNavigate({ tab: 'verlauf', metric })}
+        onNavigateVerlauf={(metric, focusSubstanceId) =>
+          onNavigate({ tab: 'verlauf', metric, focusSubstanceId })
+        }
         onNavigateTab={tab => onNavigate({ tab })}
       />
 

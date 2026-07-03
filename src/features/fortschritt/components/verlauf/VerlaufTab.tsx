@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import type { FortschrittOverviewState, MetricKey, VerlaufNavigation } from '../../types'
+import { CHART_METRIC_KEYS, isChartMetricKey, isWellnessMetricKey } from '../../constants'
 import { buildMetricSeries } from '../../lib/metrics'
 import { buildAvailableMetrics, normalizeMetricKey, type MetricDefinition } from '../../lib/metricDefinitions'
-import { allSubstances } from '../../lib/focusSummary'
+import { allSubstances, defaultFocusSubstanceId } from '../../lib/focusSummary'
 import {
   RANGE_CHIPS,
   rangeFromChip,
@@ -30,10 +31,17 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
 
   useEffect(() => {
     if (!pendingNav) return
-    if (pendingNav.metric) setPrimaryKey(normalizeMetricKey(pendingNav.metric))
-    if (pendingNav.focusSubstanceId) setFocusId(pendingNav.focusSubstanceId)
+    if (pendingNav.focusSubstanceId) {
+      setFocusId(pendingNav.focusSubstanceId)
+    } else if (pendingNav.metric && isWellnessMetricKey(pendingNav.metric)) {
+      const id = defaultFocusSubstanceId(state.cycleSubstances, state.ongoingSubstances)
+      if (id) setFocusId(id)
+    }
+    if (pendingNav.metric && isChartMetricKey(normalizeMetricKey(pendingNav.metric))) {
+      setPrimaryKey(normalizeMetricKey(pendingNav.metric))
+    }
     onPendingConsumed()
-  }, [pendingNav, onPendingConsumed])
+  }, [pendingNav, onPendingConsumed, state.cycleSubstances, state.ongoingSubstances])
 
   const baseRange = state.range
   const chipRange = useMemo(() => rangeFromChip(rangeChip, baseRange), [rangeChip, baseRange])
@@ -48,8 +56,7 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
 
   const pointCounts = useMemo(() => {
     const counts = new Map<string, number>()
-    const keys: MetricKey[] = ['weight', 'energie', 'schlaf', 'wohlbefinden', 'libido', 'body_fat']
-    for (const key of keys) {
+    for (const key of CHART_METRIC_KEYS) {
       counts.set(key, buildMetricSeries(key, baseRange, state.weightLogs, state.dailyLogs, state.bloodwork).length)
     }
     for (const marker of [...new Set(state.bloodwork.map(b => b.marker))]) {
@@ -71,6 +78,14 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
 
   const primary = availableMetrics.find(m => m.key === primaryKey) ?? availableMetrics.find(m => m.key === 'weight') ?? availableMetrics[0]
   const secondary = secondaryKey ? availableMetrics.find(m => m.key === secondaryKey) ?? null : null
+
+  useEffect(() => {
+    if (availableMetrics.length === 0) return
+    if (!availableMetrics.some(m => m.key === primaryKey)) {
+      setPrimaryKey(availableMetrics.find(m => m.key === 'weight')?.key ?? availableMetrics[0].key)
+      setSecondaryKey(null)
+    }
+  }, [availableMetrics, primaryKey])
 
   const toggleMetric = (key: MetricKey) => {
     const count = pointCounts.get(key) ?? 0
@@ -179,7 +194,7 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
           })}
         </div>
         <p style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', marginTop: 6 }}>
-          Max. 2 Metriken · Tap wechselt Auswahl
+          Gewicht, KFA & Labs im Chart · Wellness-Vergleich per Substanz antippen
         </p>
       </div>
 

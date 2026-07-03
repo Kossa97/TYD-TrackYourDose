@@ -21,3 +21,14 @@ export const MAX_TOP_CHANGES = 3
 export const MAX_VISIBLE_SUBSTANCES = 5
 
 export const WELLNESS_FIELDS = ['energie', 'schlaf', 'wohlbefinden', 'libido'] as const
+
+/** Nur objektive Metriken im Verlauf-Chart — Wellness-Vergleich läuft über Substanz-Fokus */
+export const CHART_METRIC_KEYS = ['weight', 'body_fat'] as const
+
+export function isWellnessMetricKey(key: string): boolean {
+  return (WELLNESS_FIELDS as readonly string[]).includes(key)
+}
+
+export function isChartMetricKey(key: string): boolean {
+  return !isWellnessMetricKey(key)
+}
