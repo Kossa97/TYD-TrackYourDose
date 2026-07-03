@@ -65,6 +65,28 @@ describe('PeptideVialVisual', () => {
     expect(source()).not.toContain('clip-path: inset(100% 0 0 0)')
   })
 
+  test('uses a visible but fill-dependent intro duration', () => {
+    const low = renderToStaticMarkup(createElement(PeptideVialVisual, {
+      name: 'Low Fill',
+      amount: '5',
+      unit: 'mg',
+      fillPct: 20,
+      color: '#06b6d4',
+      animateOnMount: true,
+    }))
+    const high = renderToStaticMarkup(createElement(PeptideVialVisual, {
+      name: 'High Fill',
+      amount: '5',
+      unit: 'mg',
+      fillPct: 90,
+      color: '#06b6d4',
+      animateOnMount: true,
+    }))
+
+    expect(low).toContain('--vial-fill-intro-duration:1060ms')
+    expect(high).toContain('--vial-fill-intro-duration:1620ms')
+    expect(source()).toContain('animation: vial-liquid-fill-reveal var(--vial-fill-intro-duration, 1200ms)')
+  })
   test('keeps the cap and label while removing split glass body seams', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
       name: 'TB-500',

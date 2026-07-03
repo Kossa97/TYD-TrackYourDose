@@ -280,11 +280,12 @@ export function PeptideVialVisual({
     : fillMotion.mode === 'shift'
       ? 'vial-liquid-level-motion'
       : ''
+  const fillIntroDurationMs = Math.round(900 + fillFrac * 800)
   const liquidMotionStyle = {
     color,
     '--vial-fill-motion-shift': `${fillMotion.shiftPct}%`,
+    '--vial-fill-intro-duration': `${fillIntroDurationMs}ms`,
   } as CSSProperties
-
   const labelName = name?.trim() || 'Peptidname'
   const isLarge = size === 'large'
   const widthClass = isLarge ? 'w-28 sm:w-36' : 'w-16'
@@ -321,7 +322,7 @@ export function PeptideVialVisual({
           to { transform: translateY(0); }
         }
         .vial-liquid-fill-reveal {
-          animation: vial-liquid-fill-reveal 900ms cubic-bezier(.22,1,.36,1) both;
+          animation: vial-liquid-fill-reveal var(--vial-fill-intro-duration, 1200ms) cubic-bezier(.22,1,.36,1) both;
           transform-box: fill-box;
           transform-origin: center bottom;
           will-change: transform;
