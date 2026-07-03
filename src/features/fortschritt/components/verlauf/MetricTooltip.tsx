@@ -3,12 +3,16 @@ import { format, parseISO } from 'date-fns'
 import {
   useActiveTooltipCoordinate,
   useActiveTooltipLabel,
-  usePlotArea,
-  useXAxisScale,
+  useXAxisInverseScale,
 } from 'recharts'
 import type { CycleBandDraw } from './CycleBandLayer'
 import type { MetricDefinition } from '../../lib/metricDefinitions'
-import { hoverDateIso, resolveTooltipCycleStarts } from '../../lib/chartTooltip'
+import {
+  hoverDateIso,
+  metricValueAtDate,
+  resolveCursorHoverDate,
+  resolveTooltipCycleStarts,
+} from '../../lib/chartTooltip'
 
 interface ChartPoint {
   date: string
@@ -18,10 +22,10 @@ interface ChartPoint {
 
 interface Props {
   active?: boolean
-  payload?: ReadonlyArray<{ payload?: ChartPoint; value?: unknown }>
   label?: number | string
   bands: CycleBandDraw[]
   metric: MetricDefinition
+  chartData: ChartPoint[]
 }
 
 function fmtDate(iso: string) {
@@ -34,39 +38,33 @@ function formatTooltipValue(value: number, unit: string): string {
   return unit ? `${value} ${unit}` : String(value)
 }
 
-export function MetricTooltip({ active, payload, label, bands, metric }: Props) {
+export function MetricTooltip({ active, label, bands, metric, chartData }: Props) {
   const cursor = useActiveTooltipCoordinate()
   const activeLabel = useActiveTooltipLabel()
-  const xScale = useXAxisScale()
-  const plotArea = usePlotArea()
+  const xInverseScale = useXAxisInverseScale()
 
-  const { dateIso, starts } = useMemo(() => {
-    const point = payload?.[0]?.payload as ChartPoint | undefined
+  const { dateIso, metricValue, starts } = useMemo(() => {
+    const fromCursor = resolveCursorHoverDate(cursor?.x, xInverseScale ?? undefined)
     const labelTs = activeLabel ?? label
-    const resolvedDate = point?.date
-      ?? (labelTs != null ? hoverDateIso(labelTs) : null)
-    const hoverTs = point?.ts
-      ?? (typeof labelTs === 'number' ? labelTs : Number(labelTs))
+    const fromLabel = labelTs != null && Number.isFinite(Number(labelTs))
+      ? { dateIso: hoverDateIso(labelTs), hoverTs: Number(labelTs) }
+      : null
+    const hover = fromCursor ?? fromLabel
 
-    const cycleStarts = resolveTooltipCycleStarts({
-      bands,
-      dateIso: resolvedDate,
-      hoverTs: Number.isFinite(hoverTs) ? hoverTs : undefined,
-      cursorX: cursor?.x,
-      xScale: xScale ?? undefined,
-      plotArea: plotArea ?? undefined,
-    })
+    if (!hover) {
+      return { dateIso: null, metricValue: null, starts: [] as CycleBandDraw[] }
+    }
 
-    const displayDate = resolvedDate ?? cycleStarts[0]?.startDate ?? null
-    return { dateIso: displayDate, starts: cycleStarts }
-  }, [payload, label, activeLabel, cursor, xScale, plotArea, bands])
+    return {
+      dateIso: hover.dateIso,
+      metricValue: metricValueAtDate(chartData, hover.dateIso),
+      starts: resolveTooltipCycleStarts(bands, hover.dateIso, hover.hoverTs),
+    }
+  }, [cursor, xInverseScale, activeLabel, label, bands, chartData])
 
-  if (!active) return null
-  if (!dateIso) return null
+  if (!active || !dateIso) return null
 
-  const rawValue = payload?.[0]?.value
-  const metricValue = rawValue != null && rawValue !== '' ? Number(rawValue) : null
-  const hasMetric = metricValue != null && Number.isFinite(metricValue)
+  const hasMetric = metricValue != null
 
   if (!hasMetric && starts.length === 0) return null
 

@@ -223,7 +223,9 @@ export function MetricChart({
 
           <Tooltip
             cursor={{ stroke: 'rgba(0,204,245,0.4)', strokeWidth: 1, strokeDasharray: '4 4' }}
-            content={(props) => <MetricTooltip {...props} bands={bands} metric={metric} />}
+            content={(props) => (
+              <MetricTooltip {...props} bands={bands} metric={metric} chartData={chartData} />
+            )}
           />
           <Line
             yAxisId="metric"

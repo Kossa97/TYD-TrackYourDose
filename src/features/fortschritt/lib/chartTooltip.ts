@@ -18,17 +18,32 @@ export function isoFromTs(ts: number): string {
 
 type BandWithStart = { id: string; startDate: string; x1: number }
 
-export function mergeCycleStarts<T extends BandWithStart>(...groups: T[][]): T[] {
-  const seen = new Set<string>()
-  const merged: T[] = []
-  for (const group of groups) {
-    for (const band of group) {
-      if (seen.has(band.id)) continue
-      seen.add(band.id)
-      merged.push(band)
-    }
-  }
-  return merged
+type XInverseScale = (pixelX: number) => unknown
+
+function toHoverTs(value: unknown): number | null {
+  const ts = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(ts) ? ts : null
+}
+
+/** Datum unter dem Tooltip-Cursor (X-Achse), nicht der gesnappte Linienpunkt */
+export function resolveCursorHoverDate(
+  cursorX: number | undefined,
+  xInverseScale: XInverseScale | undefined,
+): { dateIso: string; hoverTs: number } | null {
+  if (cursorX == null || !xInverseScale) return null
+  const hoverTs = toHoverTs(xInverseScale(cursorX))
+  if (hoverTs == null) return null
+  return { dateIso: hoverDateIso(hoverTs), hoverTs }
+}
+
+export function metricValueAtDate(
+  chartData: ReadonlyArray<{ date: string; value: number | null }>,
+  dateIso: string,
+): number | null {
+  const day = normalizeDateIso(dateIso)
+  const point = chartData.find(p => normalizeDateIso(p.date) === day)
+  if (!point || point.value == null || !Number.isFinite(point.value)) return null
+  return point.value
 }
 
 /** Zyklen, deren Start (echt oder sichtbarer Balkenanfang) auf den Hover-Tag fällt */
@@ -53,7 +68,7 @@ export function cycleStartsAtHover<T extends BandWithStart>(
 
 type XScale = (value: number, options?: { position?: 'start' | 'end' }) => number | undefined
 
-/** Zyklen, deren Start-Marker in Pixelnähe zum Tooltip-Cursor liegen */
+/** Zyklen, deren Start-Marker in Pixelnähe zum Tooltip-Cursor liegen (nur Marker-Hervorhebung) */
 export function cycleStartsNearCursor<T extends BandWithStart>(
   bands: T[],
   cursorX: number | undefined,
@@ -71,16 +86,11 @@ export function cycleStartsNearCursor<T extends BandWithStart>(
   })
 }
 
-export function resolveTooltipCycleStarts<T extends BandWithStart>(args: {
-  bands: T[]
-  dateIso: string | null
-  hoverTs?: number
-  cursorX?: number
-  xScale?: XScale
-  plotArea?: { x: number }
-}): T[] {
-  const { bands, dateIso, hoverTs, cursorX, xScale, plotArea } = args
-  const byDate = dateIso ? cycleStartsAtHover(bands, dateIso, hoverTs) : []
-  const byCursor = cycleStartsNearCursor(bands, cursorX, xScale, plotArea)
-  return mergeCycleStarts(byDate, byCursor)
+export function resolveTooltipCycleStarts<T extends BandWithStart>(
+  bands: T[],
+  dateIso: string | null,
+  hoverTs?: number,
+): T[] {
+  if (!dateIso) return []
+  return cycleStartsAtHover(bands, dateIso, hoverTs)
 }

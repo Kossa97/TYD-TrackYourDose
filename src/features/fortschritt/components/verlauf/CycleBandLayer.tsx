@@ -3,12 +3,19 @@ import {
   useActiveTooltipLabel,
   useIsTooltipActive,
   usePlotArea,
+  useXAxisInverseScale,
   useXAxisScale,
   ZIndexLayer,
   DefaultZIndexes,
 } from 'recharts'
 import { computeCycleBandLayout } from '../../lib/cycleLanes'
-import { cycleStartsAtHover, cycleStartsNearCursor, hoverDateIso, TOOLTIP_CURSOR_PX_THRESHOLD } from '../../lib/chartTooltip'
+import {
+  cycleStartsAtHover,
+  cycleStartsNearCursor,
+  hoverDateIso,
+  resolveCursorHoverDate,
+  TOOLTIP_CURSOR_PX_THRESHOLD,
+} from '../../lib/chartTooltip'
 
 export interface CycleBandDraw {
   id: string
@@ -59,8 +66,13 @@ function isStartHighlighted(
   activeLabel: string | number | undefined,
   xScale: NonNullable<ReturnType<typeof useXAxisScale>>,
   plotArea: NonNullable<ReturnType<typeof usePlotArea>>,
+  xInverseScale: ReturnType<typeof useXAxisInverseScale>,
 ): boolean {
   if (!tooltipActive) return false
+  const cursorHover = resolveCursorHoverDate(cursorX, xInverseScale ?? undefined)
+  if (cursorHover && cycleStartsAtHover([band], cursorHover.dateIso, cursorHover.hoverTs).length > 0) {
+    return true
+  }
   if (activeLabel != null && cycleStartsAtHover([band], hoverDateIso(activeLabel)).length > 0) {
     return true
   }
@@ -73,6 +85,7 @@ function isStartHighlighted(
  */
 export function CycleBandLayer({ bands, lanes }: Props) {
   const xScale = useXAxisScale()
+  const xInverseScale = useXAxisInverseScale()
   const plotArea = usePlotArea()
   const tooltipActive = useIsTooltipActive()
   const cursor = useActiveTooltipCoordinate()
@@ -118,6 +131,7 @@ export function CycleBandLayer({ bands, lanes }: Props) {
               activeLabel,
               xScale,
               plotArea,
+              xInverseScale,
             )
 
             return (
