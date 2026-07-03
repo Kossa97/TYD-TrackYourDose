@@ -16,6 +16,7 @@ import type { BloodworkEntry, DailyLogEntry, WeightLogEntry } from '../../types'
 import { substanceBarEnd } from '../../lib/focusSummary'
 import { assignLanes, laneCount } from '../../lib/cycleLanes'
 import { CycleBandLayer, type CycleBandDraw } from './CycleBandLayer'
+import { MetricTooltip } from './MetricTooltip'
 import { panel } from '../../styles'
 
 interface Props {
@@ -139,6 +140,7 @@ export function MetricChart({
         color: substance.color,
         filled,
         faded: focusId != null && focusId !== substance.id,
+        startDate: substance.startDate,
         x1,
         x2,
       }
@@ -153,6 +155,7 @@ export function MetricChart({
       color: band.color,
       filled: band.filled,
       faded: band.faded,
+      startDate: band.startDate,
       x1: band.x1,
       x2: band.x2,
       lane: band.lane,
@@ -220,9 +223,7 @@ export function MetricChart({
 
           <Tooltip
             cursor={{ stroke: 'rgba(0,204,245,0.4)', strokeWidth: 1, strokeDasharray: '4 4' }}
-            contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, fontSize: 11, fontWeight: 700 }}
-            labelFormatter={ts => fmtDate(format(new Date(Number(ts)), 'yyyy-MM-dd'))}
-            formatter={(value) => [value != null ? formatTooltipValue(Number(value), metric.unit) : '—', metric.label]}
+            content={(props) => <MetricTooltip {...props} bands={bands} metric={metric} />}
           />
           <Line
             yAxisId="metric"

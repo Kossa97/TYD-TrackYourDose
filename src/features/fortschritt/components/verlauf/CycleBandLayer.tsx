@@ -1,5 +1,6 @@
 import {
   useActiveTooltipCoordinate,
+  useActiveTooltipLabel,
   useIsTooltipActive,
   usePlotArea,
   useXAxisScale,
@@ -7,6 +8,7 @@ import {
   DefaultZIndexes,
 } from 'recharts'
 import { computeCycleBandLayout } from '../../lib/cycleLanes'
+import { hoverDateIso } from '../../lib/chartTooltip'
 
 export interface CycleBandDraw {
   id: string
@@ -14,6 +16,7 @@ export interface CycleBandDraw {
   color: string
   filled: boolean
   faded: boolean
+  startDate: string
   x1: number
   x2: number
   lane: number
@@ -50,11 +53,15 @@ function bandLayout(
 }
 
 function isStartHighlighted(
+  band: CycleBandDraw,
   startX: number,
   tooltipActive: boolean,
   cursorX: number | undefined,
+  activeLabel: string | number | undefined,
 ): boolean {
-  if (!tooltipActive || cursorX == null) return false
+  if (!tooltipActive) return false
+  if (activeLabel != null && band.startDate === hoverDateIso(activeLabel)) return true
+  if (cursorX == null) return false
   return Math.abs(cursorX - startX) <= HOVER_PX_THRESHOLD
 }
 
@@ -66,6 +73,7 @@ export function CycleBandLayer({ bands, lanes }: Props) {
   const plotArea = usePlotArea()
   const tooltipActive = useIsTooltipActive()
   const cursor = useActiveTooltipCoordinate()
+  const activeLabel = useActiveTooltipLabel()
 
   if (!xScale || !plotArea || bands.length === 0 || lanes === 0) {
     return null
@@ -100,7 +108,7 @@ export function CycleBandLayer({ bands, lanes }: Props) {
       <ZIndexLayer zIndex={0}>
         <g className="cycle-start-markers" aria-hidden>
           {items.map(({ band, y, startX, laneHeight }) => {
-            const highlighted = isStartHighlighted(startX, tooltipActive, cursor?.x)
+            const highlighted = isStartHighlighted(band, startX, tooltipActive, cursor?.x, activeLabel)
 
             return (
               <g key={`start-${band.id}`}>
