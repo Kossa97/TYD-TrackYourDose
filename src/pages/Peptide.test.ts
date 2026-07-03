@@ -90,12 +90,21 @@ describe('Peptide page vial view', () => {
   test('drives the carousel spotlight and vial highlights from scroll focus', () => {
     const text = source()
 
-    expect(text).toContain('vialFocusByIndex')
     expect(text).toContain('updateVialFocus')
     expect(text).toContain('data-vial-detail="carousel-spotlight"')
-    expect(text).toContain('focus={focusState.focus}')
-    expect(text).toContain('lightOffset={focusState.lightOffset}')
     expect(text).toContain('1 - Math.abs(normalized) * 0.78')
+  })
+
+  test('pushes scroll focus through imperative stage-light handles instead of React state', () => {
+    const text = source()
+
+    expect(text).toContain('vialStageLightHandlesRef')
+    expect(text).toContain('setStageLight')
+    expect(text).toContain('stageLightRef={handle =>')
+    // the old per-scroll-frame state update must stay gone — it re-rendered
+    // the whole page on every swipe frame
+    expect(text).not.toContain('vialFocusByIndex')
+    expect(text).not.toContain('setVialFocusByIndex')
   })
 
   test('batches carousel spotlight updates so liquid slosh frames stay smooth', () => {
@@ -104,8 +113,6 @@ describe('Peptide page vial view', () => {
 
     expect(text).toContain('vialFocusFrameRef')
     expect(text).toContain('scheduleVialFocusUpdate')
-    expect(text).toContain('vialFocusSnapshotRef')
-    expect(text).toContain('if (previous && Object.keys(next).every')
     expect(scrollHandler).toContain('scheduleVialFocusUpdate()')
     expect(scrollHandler).not.toContain('updateVialFocus()')
   })

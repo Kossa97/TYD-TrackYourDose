@@ -151,6 +151,25 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('data-vial-focus="0.42"')
     expect(html).toContain('data-vial-light-offset="-0.35"')
   })
+
+  test('drives the stage light imperatively and keeps blur filters off per-frame elements', () => {
+    const text = source()
+
+    // the carousel pushes scroll focus through an imperative handle, not props
+    expect(text).toContain('useImperativeHandle')
+    expect(text).toContain('setStageLight')
+    expect(text).toContain('stageLightRef')
+
+    // elements the slosh loop or the stage light touch every frame must not
+    // carry SVG blur filters — a changed attribute would re-raster the blur
+    expect(text).not.toContain('-soft)')
+    expect(text).not.toContain('-capSoft)')
+    // the remaining blurred shell highlights stay static inside one group that
+    // only changes its opacity
+    expect(text).toContain('data-vial-detail="shell-highlights"')
+    // the bloom gradient itself is static; only a transform moves the light
+    expect(text).not.toContain('cx={`${50 + visualLightOffset * 18}%`}')
+  })
   test('integrates cap label and liquid into the shared vial lighting', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
       name: 'Ipamorelin',
@@ -165,7 +184,7 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('data-vial-detail="cap-light-sheen"')
     expect(html).toContain('data-vial-detail="liquid-glass-window"')
     expect(html).toContain('data-vial-detail="label-glass-wrap"')
-    expect(source()).toContain('VialTop({ focus: visualFocus, lightOffset: visualLightOffset })')
+    expect(source()).toContain('VialTop({ focus: visualFocus, lightOffset: visualLightOffset, sheenRef: capSheenRef, arcRef: capArcRef })')
     expect(source()).toContain('left-[3.5%] right-[3.5%]')
     expect(source()).toContain('top-1/2 -translate-y-1/2 rounded-sm px-1 py-2')
     expect(source()).toContain('top-1/2 -translate-y-1/2 rounded-sm px-1 py-1')

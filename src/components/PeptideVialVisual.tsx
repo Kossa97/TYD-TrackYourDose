@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import type { CSSProperties, ReactNode } from 'react'
+import { useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
+import type { CSSProperties, ReactNode, Ref, RefObject } from 'react'
 import { buildLiquid, LIQUID_VB_H, LIQUID_VB_W, liquidSurfaceY } from './liquidGeometry'
 import { useSloshSubscribe } from './SloshContext'
 import type { SloshState } from './sloshEngine'
@@ -27,6 +27,12 @@ function usePrefersReducedMotion(): boolean {
   return reduced
 }
 
+// Imperative stage-light channel: the carousel pushes focus/lightOffset per
+// scroll frame through this handle so no React re-render happens while swiping.
+export interface VialStageLightHandle {
+  setStageLight: (focus: number, lightOffset: number) => void
+}
+
 interface PeptideVialVisualProps {
   name?: string | null
   amount?: string | number | null
@@ -40,6 +46,7 @@ interface PeptideVialVisualProps {
   slosh?: number
   focus?: number
   lightOffset?: number
+  stageLightRef?: Ref<VialStageLightHandle>
 }
 
 function clampFill(fillPct: number): number {
@@ -139,7 +146,19 @@ function VialLabelMarquee({
 
 // Metallic flip-off cap. The glass vial itself is drawn below as one unified
 // shell so the neck, shoulder and body share one continuous material.
-function VialTop({ focus, lightOffset }: { focus: number; lightOffset: number }) {
+// The sheen uses a pre-softened radial gradient instead of an SVG blur filter
+// so shifting it per scroll frame never forces a filter re-raster.
+function VialTop({
+  focus,
+  lightOffset,
+  sheenRef,
+  arcRef,
+}: {
+  focus: number
+  lightOffset: number
+  sheenRef: RefObject<SVGEllipseElement | null>
+  arcRef: RefObject<SVGPathElement | null>
+}) {
   const uid = useId()
   const capSheenOpacity = 0.24 + focus * 0.4
   return (
@@ -156,9 +175,11 @@ function VialTop({ focus, lightOffset }: { focus: number; lightOffset: number })
           <stop offset="0.75" stopColor="#ccd4de" />
           <stop offset="1" stopColor="#8f99a7" />
         </linearGradient>
-        <filter id={`${uid}-capSoft`} x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="1.6" />
-        </filter>
+        <radialGradient id={`${uid}-capSheen`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.85)" />
+          <stop offset="55%" stopColor="rgba(255,255,255,0.4)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+        </radialGradient>
       </defs>
 
             <g data-vial-detail="cap-collar">
@@ -167,16 +188,16 @@ function VialTop({ focus, lightOffset }: { focus: number; lightOffset: number })
       <path data-vial-detail="cap-top" d="M14 32 L14 20 C14 7 106 7 106 20 L106 32 Z" fill={`url(#${uid}-capSilver)`} stroke="#64748b" strokeOpacity="0.5" strokeWidth="1" />
       <line x1="21" y1="32" x2="99" y2="32" stroke="#475569" strokeOpacity="0.35" strokeWidth="1.3" />
       <ellipse
+        ref={sheenRef}
         data-vial-detail="cap-light-sheen"
         cx={60 + lightOffset * 18}
         cy="22"
         rx="28"
         ry="7"
-        fill="rgba(255,255,255,0.72)"
+        fill={`url(#${uid}-capSheen)`}
         opacity={capSheenOpacity}
-        filter={`url(#${uid}-capSoft)`}
       />
-      <path d="M27 20 C43 14 77 14 93 20" fill="none" stroke="#ffffff" strokeOpacity={0.36 + focus * 0.28} strokeWidth="1.8" />
+      <path ref={arcRef} d="M27 20 C43 14 77 14 93 20" fill="none" stroke="#ffffff" strokeOpacity={0.36 + focus * 0.28} strokeWidth="1.8" />
     </svg>
   )
 }
@@ -195,6 +216,7 @@ export function PeptideVialVisual({
   slosh = 0,
   focus,
   lightOffset = 0,
+  stageLightRef,
 }: PeptideVialVisualProps) {
   const clampedFill = clampFill(fillPct)
   const tilt = clampSlosh(slosh)
@@ -202,16 +224,19 @@ export function PeptideVialVisual({
   const reducedMotion = usePrefersReducedMotion()
   const subscribe = useSloshSubscribe()
   const fillFrac = Math.min(clampedFill / 100, 0.97)
+  // focus/lightOffset props only seed the paint; afterwards the carousel
+  // drives the stage light imperatively via setStageLight. A layout effect
+  // below re-applies the imperative values after every re-render so an
+  // active-vial change can't snap the light back to the prop defaults.
   const visualFocus = focus === undefined ? (isActive ? 1 : 0.28) : clamp01(focus)
   const visualLightOffset = clampSlosh(lightOffset)
+  const stageRef = useRef({ focus: visualFocus, lightOffset: visualLightOffset })
   const focusAttr = Number(visualFocus.toFixed(2))
   const lightOffsetAttr = Number(visualLightOffset.toFixed(2))
   const highlightShift = visualLightOffset * 10
   const shellGlowOpacity = 0.2 + visualFocus * 0.42
   const shellEdgeOpacity = 0.36 + visualFocus * 0.28
   const shadowOpacity = 0.2 + visualFocus * 0.28
-  const liquidHaloBase = 0.12 + visualFocus * 0.12
-  const liquidCoreBase = 0.08 + visualFocus * 0.16
   const previousFillRef = useRef(fillFrac)
   const [fillMotion, setFillMotion] = useState<{ epoch: number; shiftPct: number; mode: 'none' | 'reveal' | 'shift' }>(() => (
     animateOnMount && fillFrac > 0.001
@@ -223,6 +248,7 @@ export function PeptideVialVisual({
   // resting first paint; once subscribed, the engine redraws it every frame.
   const geom = buildLiquid({ fill: fillFrac, tilt })
 
+  const rootRef = useRef<HTMLDivElement | null>(null)
   const bodyRef = useRef<SVGPathElement | null>(null)
   const surfaceRef = useRef<SVGPathElement | null>(null)
   const glowRef = useRef<SVGPathElement | null>(null)
@@ -231,19 +257,31 @@ export function PeptideVialVisual({
   const specCoreRef = useRef<SVGEllipseElement | null>(null)
   const leftGlintRef = useRef<SVGEllipseElement | null>(null)
   const rightGlintRef = useRef<SVGEllipseElement | null>(null)
+  const capSheenRef = useRef<SVGEllipseElement | null>(null)
+  const capArcRef = useRef<SVGPathElement | null>(null)
+  const stageShadowRef = useRef<SVGEllipseElement | null>(null)
+  const shellOutlineRef = useRef<SVGUseElement | null>(null)
+  const shellBloomRef = useRef<SVGRectElement | null>(null)
+  const shellHighlightsRef = useRef<SVGGElement | null>(null)
+  const refractLeftRef = useRef<SVGRectElement | null>(null)
+  const refractRightRef = useRef<SVGRectElement | null>(null)
+  const labelSheenRef = useRef<HTMLDivElement | null>(null)
 
   const draw = useCallback(
     (s: SloshState) => {
+      const stage = stageRef.current
+      const stageFocus = stage?.focus ?? 1
+      const stageShift = (stage?.lightOffset ?? 0) * 10
       const g = buildLiquid({ fill: fillFrac, tilt: s.tilt, energy: s.energy, time: s.time })
       bodyRef.current?.setAttribute('d', g.body)
       surfaceRef.current?.setAttribute('d', g.surface)
       glowRef.current?.setAttribute('d', g.glow)
       rimRef.current?.setAttribute('d', g.rim)
-      const sx = (g.highlightX + highlightShift).toFixed(2)
+      const sx = (g.highlightX + stageShift).toFixed(2)
       const sy = g.highlightY.toFixed(2)
       // the sheen stays faint at rest and flares as the surface agitates
-      const halo = (liquidHaloBase + s.energy * 0.5).toFixed(2)
-      const core = (liquidCoreBase + s.energy * 0.6).toFixed(2)
+      const halo = (0.12 + stageFocus * 0.12 + s.energy * 0.5).toFixed(2)
+      const core = (0.08 + stageFocus * 0.16 + s.energy * 0.6).toFixed(2)
       specHaloRef.current?.setAttribute('cx', sx)
       specHaloRef.current?.setAttribute('cy', sy)
       specHaloRef.current?.setAttribute('opacity', halo)
@@ -253,13 +291,62 @@ export function PeptideVialVisual({
       leftGlintRef.current?.setAttribute('cy', g.leftWallY.toFixed(2))
       rightGlintRef.current?.setAttribute('cy', g.rightWallY.toFixed(2))
     },
-    [fillFrac, highlightShift, liquidHaloBase, liquidCoreBase],
+    [fillFrac],
   )
 
   useEffect(() => {
     if (!subscribe) return
     return subscribe(draw)
   }, [subscribe, draw])
+
+  // Applies the stage light straight to the DOM — the hot path while the
+  // carousel scrolls, so it must not schedule any React work.
+  const applyStageLight = useCallback((f: number, o: number) => {
+    rootRef.current?.setAttribute('data-vial-focus', f.toFixed(2))
+    rootRef.current?.setAttribute('data-vial-light-offset', o.toFixed(2))
+
+    capSheenRef.current?.setAttribute('cx', (60 + o * 18).toFixed(2))
+    capSheenRef.current?.setAttribute('opacity', (0.24 + f * 0.4).toFixed(3))
+    capArcRef.current?.setAttribute('stroke-opacity', (0.36 + f * 0.28).toFixed(3))
+
+    stageShadowRef.current?.setAttribute('cx', (60 - o * 8).toFixed(2))
+    stageShadowRef.current?.setAttribute('rx', (34 + f * 12).toFixed(2))
+    stageShadowRef.current?.setAttribute('ry', (5 + f * 4).toFixed(2))
+    stageShadowRef.current?.setAttribute('opacity', (0.2 + f * 0.28).toFixed(3))
+    shellOutlineRef.current?.setAttribute('stroke-opacity', (0.36 + f * 0.28).toFixed(3))
+    shellBloomRef.current?.setAttribute('transform', `translate(${(o * 21.6).toFixed(2)} 0)`)
+    shellBloomRef.current?.setAttribute('opacity', (0.2 + f * 0.42).toFixed(3))
+    shellHighlightsRef.current?.setAttribute('opacity', (0.42 + f * 0.58).toFixed(3))
+
+    refractLeftRef.current?.setAttribute('x', (5 + o * 8).toFixed(2))
+    refractLeftRef.current?.setAttribute('opacity', (0.46 + f * 0.22).toFixed(3))
+    refractRightRef.current?.setAttribute('x', (99 + o * 5).toFixed(2))
+    refractRightRef.current?.setAttribute('opacity', (0.14 + f * 0.16).toFixed(3))
+    surfaceRef.current?.setAttribute('opacity', (0.4 + f * 0.14).toFixed(3))
+
+    if (labelSheenRef.current) {
+      labelSheenRef.current.style.transform = `translateX(${(o * 10).toFixed(2)}%)`
+      labelSheenRef.current.style.opacity = (0.62 + f * 0.2).toFixed(3)
+    }
+  }, [])
+
+  const setStageLight = useCallback((nextFocus: number, nextLightOffset: number) => {
+    const f = clamp01(nextFocus)
+    const o = clampSlosh(nextLightOffset)
+    const stage = stageRef.current
+    if (Math.abs(stage.focus - f) < 0.005 && Math.abs(stage.lightOffset - o) < 0.005) return
+    stageRef.current = { focus: f, lightOffset: o }
+    applyStageLight(f, o)
+  }, [applyStageLight])
+
+  useImperativeHandle(stageLightRef, () => ({ setStageLight }), [setStageLight])
+
+  // React reconciliation may have just reset stage-lit attributes to the
+  // prop-derived render values; put the imperative state back before paint.
+  useLayoutEffect(() => {
+    const stage = stageRef.current
+    applyStageLight(stage.focus, stage.lightOffset)
+  })
 
   useEffect(() => {
     const previousFill = previousFillRef.current
@@ -301,6 +388,7 @@ export function PeptideVialVisual({
     : 'text-[7px] mt-0.5'
   return (
     <div
+      ref={rootRef}
       className={`relative mx-auto select-none ${widthClass} ${className}`}
       data-fill-pct={clampedFill}
       data-vial-focus={focusAttr}
@@ -327,7 +415,7 @@ export function PeptideVialVisual({
       `}</style>
 
       <div className="relative flex flex-col items-center">
-        {VialTop({ focus: visualFocus, lightOffset: visualLightOffset })}
+        {VialTop({ focus: visualFocus, lightOffset: visualLightOffset, sheenRef: capSheenRef, arcRef: capArcRef })}
 
         <div className={`relative z-0 w-full ${shellClass} overflow-visible`}>
           <svg
@@ -342,6 +430,9 @@ export function PeptideVialVisual({
                 id={`${uid}-vialShellPath`}
                 d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 56 C4 41 28 35 28 24 Z"
               />
+              <clipPath id={`${uid}-shellClip`}>
+                <use href={`#${uid}-vialShellPath`} />
+              </clipPath>
               <linearGradient id={`${uid}-glassDepth`} x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="rgba(2,6,23,0.72)" />
                 <stop offset="13%" stopColor="rgba(226,232,240,0.26)" />
@@ -349,10 +440,17 @@ export function PeptideVialVisual({
                 <stop offset="63%" stopColor="rgba(15,23,42,0.22)" />
                 <stop offset="100%" stopColor="rgba(2,6,23,0.78)" />
               </linearGradient>
-              <radialGradient id={`${uid}-glassBloom`} cx={`${50 + visualLightOffset * 18}%`} cy="34%" r="62%">
+              {/* static gradient — the light shift happens via a cheap transform
+                  on the clipped bloom rect, never by rewriting gradient geometry */}
+              <radialGradient id={`${uid}-glassBloom`} gradientUnits="userSpaceOnUse" cx="60" cy="98" r="76">
                 <stop offset="0%" stopColor="rgba(255,255,255,0.34)" />
                 <stop offset="48%" stopColor="rgba(255,255,255,0.08)" />
                 <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+              </radialGradient>
+              <radialGradient id={`${uid}-stageShadowSoft`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="rgba(0,0,0,0.78)" />
+                <stop offset="62%" stopColor="rgba(0,0,0,0.5)" />
+                <stop offset="100%" stopColor="rgba(0,0,0,0)" />
               </radialGradient>
               <filter id={`${uid}-shellSoft`} x="-25%" y="-25%" width="150%" height="150%">
                 <feGaussianBlur stdDeviation="2.2" />
@@ -360,16 +458,17 @@ export function PeptideVialVisual({
             </defs>
 
             <ellipse
+              ref={stageShadowRef}
               data-vial-detail="glass-stage-shadow"
               cx={60 - visualLightOffset * 8}
               cy="292"
               rx={34 + visualFocus * 12}
               ry={5 + visualFocus * 4}
-              fill="rgba(0,0,0,0.78)"
+              fill={`url(#${uid}-stageShadowSoft)`}
               opacity={shadowOpacity}
-              filter={`url(#${uid}-shellSoft)`}
             />
             <use
+              ref={shellOutlineRef}
               data-vial-detail="unified-glass-outline"
               href={`#${uid}-vialShellPath`}
               fill={`url(#${uid}-glassDepth)`}
@@ -378,35 +477,50 @@ export function PeptideVialVisual({
               strokeWidth="1.25"
               vectorEffect="non-scaling-stroke"
             />
-            <use href={`#${uid}-vialShellPath`} fill={`url(#${uid}-glassBloom)`} opacity={shellGlowOpacity} />
-            <path
-              d="M12 58 C12 44 36 38 36 23 L36 8"
-              fill="none"
-              stroke="rgba(255,255,255,0.58)"
-              strokeOpacity={0.2 + visualFocus * 0.34}
-              strokeWidth="4.4"
-              strokeLinecap="round"
-              filter={`url(#${uid}-shellSoft)`}
-            />
-            <path
-              d="M12 64 L12 242 C12 265 25 282 48 286"
-              fill="none"
-              stroke="rgba(255,255,255,0.52)"
-              strokeOpacity={0.2 + visualFocus * 0.4}
-              strokeWidth="5"
-              strokeLinecap="round"
-              filter={`url(#${uid}-shellSoft)`}
-            />
-            <path
-              d="M108 64 L108 246 C108 268 96 282 73 286"
-              fill="none"
-              stroke="rgba(255,255,255,0.26)"
-              strokeOpacity={0.16 + visualFocus * 0.22}
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              filter={`url(#${uid}-shellSoft)`}
-            />
-            <ellipse cx="60" cy="273" rx="42" ry="12" fill="rgba(255,255,255,0.16)" opacity={0.22 + visualFocus * 0.28} filter={`url(#${uid}-shellSoft)`} />
+            <g clipPath={`url(#${uid}-shellClip)`}>
+              <rect
+                ref={shellBloomRef}
+                x="-40"
+                y="-20"
+                width="200"
+                height="334"
+                fill={`url(#${uid}-glassBloom)`}
+                opacity={shellGlowOpacity}
+                transform={`translate(${visualLightOffset * 21.6} 0)`}
+              />
+            </g>
+            {/* blurred strokes stay static so the filter result can be cached;
+                the stage light only fades the whole group in and out */}
+            <g ref={shellHighlightsRef} data-vial-detail="shell-highlights" opacity={0.42 + visualFocus * 0.58}>
+              <path
+                d="M12 58 C12 44 36 38 36 23 L36 8"
+                fill="none"
+                stroke="rgba(255,255,255,0.58)"
+                strokeOpacity="0.54"
+                strokeWidth="4.4"
+                strokeLinecap="round"
+                filter={`url(#${uid}-shellSoft)`}
+              />
+              <path
+                d="M12 64 L12 242 C12 265 25 282 48 286"
+                fill="none"
+                stroke="rgba(255,255,255,0.52)"
+                strokeOpacity="0.6"
+                strokeWidth="5"
+                strokeLinecap="round"
+                filter={`url(#${uid}-shellSoft)`}
+              />
+              <path
+                d="M108 64 L108 246 C108 268 96 282 73 286"
+                fill="none"
+                stroke="rgba(255,255,255,0.26)"
+                strokeOpacity="0.38"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                filter={`url(#${uid}-shellSoft)`}
+              />
+              <ellipse cx="60" cy="273" rx="42" ry="12" fill="rgba(255,255,255,0.16)" opacity="0.5" filter={`url(#${uid}-shellSoft)`} />
+            </g>
             <ellipse cx="60" cy="278" rx="45" ry="9" fill="rgba(0,0,0,0.32)" opacity="0.55" />
           </svg>
 
@@ -495,11 +609,9 @@ export function PeptideVialVisual({
               </radialGradient>
               <radialGradient id={`${uid}-spec`} cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
+                <stop offset="55%" stopColor="rgba(255,255,255,0.35)" />
                 <stop offset="100%" stopColor="rgba(255,255,255,0)" />
               </radialGradient>
-              <filter id={`${uid}-soft`} x="-30%" y="-30%" width="160%" height="160%">
-                <feGaussianBlur stdDeviation="2.4" />
-              </filter>
             </defs>
 
             <g clipPath={fillMotion.mode === 'reveal' ? `url(#${uid}-introClip)` : undefined}>
@@ -509,9 +621,9 @@ export function PeptideVialVisual({
               <use href={`#${uid}-bodyPath`} fill={`url(#${uid}-side)`} />
               <rect x="0" y={LIQUID_VB_H - 34} width={LIQUID_VB_W} height="34" fill={`url(#${uid}-floor)`} />
               <ellipse cx={LIQUID_VB_W / 2} cy={LIQUID_VB_H - 13} rx="48" ry="15" fill={`url(#${uid}-caustic)`} />
-              <rect x={5 + visualLightOffset * 8} y="0" width="16" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity={0.46 + visualFocus * 0.22} filter={`url(#${uid}-soft)`} />
-              <rect x={99 + visualLightOffset * 5} y="0" width="10" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity={0.14 + visualFocus * 0.16} filter={`url(#${uid}-soft)`} />
-              <path ref={glowRef} data-vial-detail="liquid-glow" d={geom.glow} fill={`url(#${uid}-glow)`} filter={`url(#${uid}-soft)`} />
+              <rect ref={refractLeftRef} x={5 + visualLightOffset * 8} y="0" width="16" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity={0.46 + visualFocus * 0.22} />
+              <rect ref={refractRightRef} x={99 + visualLightOffset * 5} y="0" width="10" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity={0.14 + visualFocus * 0.16} />
+              <path ref={glowRef} data-vial-detail="liquid-glow" d={geom.glow} fill={`url(#${uid}-glow)`} />
               {!reducedMotion && LIQUID_BUBBLES.map((b, i) => (
                 <circle key={i} data-vial-detail="liquid-bubble" cx={b.cx} cy="0" r={b.r} fill="rgba(255,255,255,0.55)">
                   <animateTransform attributeName="transform" type="translate" from="0 192" to="0 30" dur={`${b.dur}s`} begin={`${b.delay}s`} repeatCount="indefinite" />
@@ -520,10 +632,10 @@ export function PeptideVialVisual({
               ))}
             </g>
             <path ref={surfaceRef} data-vial-detail="liquid-surface" d={geom.surface} fill={`url(#${uid}-surface)`} opacity={0.4 + visualFocus * 0.14} />
-            <ellipse ref={leftGlintRef} cx="4" cy={geom.leftWallY} rx="3" ry="5.5" fill="rgba(255,255,255,0.4)" filter={`url(#${uid}-soft)`} />
-            <ellipse ref={rightGlintRef} cx={LIQUID_VB_W - 4} cy={geom.rightWallY} rx="3" ry="5.5" fill="rgba(255,255,255,0.4)" filter={`url(#${uid}-soft)`} />
-            <ellipse ref={specHaloRef} cx={geom.highlightX + highlightShift} cy={geom.highlightY} rx="22" ry="3.6" fill={`url(#${uid}-spec)`} opacity={0.14 + visualFocus * 0.14} filter={`url(#${uid}-soft)`} />
-            <ellipse ref={specCoreRef} cx={geom.highlightX + highlightShift} cy={geom.highlightY} rx="7" ry="2.4" fill={`url(#${uid}-spec)`} opacity={0.1 + visualFocus * 0.16} filter={`url(#${uid}-soft)`} />
+            <ellipse ref={leftGlintRef} cx="4" cy={geom.leftWallY} rx="4.5" ry="8" fill={`url(#${uid}-spec)`} opacity="0.5" />
+            <ellipse ref={rightGlintRef} cx={LIQUID_VB_W - 4} cy={geom.rightWallY} rx="4.5" ry="8" fill={`url(#${uid}-spec)`} opacity="0.5" />
+            <ellipse ref={specHaloRef} cx={geom.highlightX + highlightShift} cy={geom.highlightY} rx="24" ry="4.2" fill={`url(#${uid}-spec)`} opacity={0.14 + visualFocus * 0.14} />
+            <ellipse ref={specCoreRef} cx={geom.highlightX + highlightShift} cy={geom.highlightY} rx="8" ry="2.8" fill={`url(#${uid}-spec)`} opacity={0.1 + visualFocus * 0.16} />
             <path
               ref={rimRef}
               data-vial-detail="liquid-rim"
@@ -573,6 +685,7 @@ export function PeptideVialVisual({
               </p>
             </div>
             <div
+              ref={labelSheenRef}
               className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/10 via-white/10 to-black/10"
               style={{ transform: `translateX(${visualLightOffset * 10}%)`, opacity: 0.62 + visualFocus * 0.2 }}
             />

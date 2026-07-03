@@ -19,6 +19,7 @@ import { effectiveDose, type ScheduleSegment } from '../lib/intakeSchedule'
 import { buildDoseAdjustmentBackfillUpdates, type DoseAdjustmentBackfillLog } from '../lib/doseAdjustmentBackfill'
 import { PeptideFormModal } from '../components/PeptideFormModal'
 import { PeptideVialVisual } from '../components/PeptideVialVisual'
+import type { VialStageLightHandle } from '../components/PeptideVialVisual'
 import { SloshProvider, useSloshEngine } from '../components/SloshContext'
 import { LabLoader } from '../components/LabLoader'
 import { emptyPeptideForm, type PeptideForm, type PkProfileOption } from '../lib/peptideFormTypes'
@@ -509,8 +510,9 @@ export function Peptide() {
   const [vialDetailsOpen, setVialDetailsOpen] = useState(false)
   const [isVialCarouselDragging, setIsVialCarouselDragging] = useState(false)
   const [addTileActive, setAddTileActive] = useState(false)
-  const [vialFocusByIndex, setVialFocusByIndex] = useState<Record<number, { focus: number; lightOffset: number }>>({})
-  const vialFocusSnapshotRef = useRef<Record<number, { focus: number; lightOffset: number }> | null>(null)
+  // Stage light bypasses React entirely: each vial registers an imperative
+  // handle and the scroll rAF pushes focus/lightOffset straight into the DOM.
+  const vialStageLightHandlesRef = useRef(new Map<number, VialStageLightHandle>())
   const vialFocusFrameRef = useRef<number | null>(null)
   const sloshEngine = useSloshEngine()
   const vialCarouselRef = useRef<HTMLDivElement | null>(null)
@@ -1194,31 +1196,25 @@ export function Peptide() {
 
     const center = carousel.scrollLeft + carousel.clientWidth / 2
     const maxDistance = Math.max(1, carousel.clientWidth * 0.48)
-    const next: Record<number, { focus: number; lightOffset: number }> = {}
 
+    // measure every item first, then write, so layout reads never interleave
+    // with the imperative attribute writes below
+    const measured: Array<{ handle: VialStageLightHandle; normalized: number }> = []
     for (const item of carousel.querySelectorAll<HTMLElement>('[data-vial-index]')) {
       const index = Number(item.dataset.vialIndex)
       if (!Number.isFinite(index)) continue
+      const handle = vialStageLightHandlesRef.current.get(index)
+      if (!handle) continue
 
       const itemCenter = item.offsetLeft + item.offsetWidth / 2
       const distance = itemCenter - center
-      const normalized = Math.max(-1, Math.min(1, distance / maxDistance))
-      const focus = Math.max(0.22, 1 - Math.abs(normalized) * 0.78)
-
-      next[index] = {
-        focus: Number(focus.toFixed(2)),
-        lightOffset: Number((-normalized).toFixed(2)),
-      }
+      measured.push({ handle, normalized: Math.max(-1, Math.min(1, distance / maxDistance)) })
     }
 
-    const previous = vialFocusSnapshotRef.current
-    if (previous && Object.keys(next).every(key => {
-      const index = Number(key)
-      return previous[index]?.focus === next[index].focus && previous[index]?.lightOffset === next[index].lightOffset
-    }) && Object.keys(previous).length === Object.keys(next).length) return
-
-    vialFocusSnapshotRef.current = next
-    setVialFocusByIndex(next)
+    for (const { handle, normalized } of measured) {
+      const focus = Math.max(0.22, 1 - Math.abs(normalized) * 0.78)
+      handle.setStageLight(focus, -normalized)
+    }
   }
   const scheduleVialFocusUpdate = () => {
     if (vialFocusFrameRef.current !== null) return
@@ -1611,10 +1607,6 @@ export function Peptide() {
                     const colorIdx = peptides.findIndex(pp => pp.id === p.id)
                     const peptideColor = peptideColors[p.id] ?? getPeptideColor(colorIdx)
                     const vialPct = Math.round(getVialFillPct(p) ?? 100)
-                    const focusState = vialFocusByIndex[index] ?? {
-                      focus: isActive ? 1 : 0.28,
-                      lightOffset: 0,
-                    }
 
                     return (
                       <div
@@ -1641,8 +1633,11 @@ export function Peptide() {
                           color={peptideColor}
                           animateOnMount={true}
                           isActive={isActive}
-                          focus={focusState.focus}
-                          lightOffset={focusState.lightOffset}
+                          stageLightRef={handle => {
+                            const handles = vialStageLightHandlesRef.current
+                            if (handle) handles.set(index, handle)
+                            else handles.delete(index)
+                          }}
                         />
                         {isActive && (
                           <p className="mt-2 text-center text-sm font-semibold tabular-nums text-slate-400">
