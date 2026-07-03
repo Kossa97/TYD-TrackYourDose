@@ -146,7 +146,7 @@ export function OverviewCards({
         title="Letztes Foto"
         delta={daysAgo === 0 ? 'heute' : `vor ${daysAgo} Tagen`}
         sub={`${photos.length} ${photos.length === 1 ? 'Foto' : 'Fotos'} im Zeitraum`}
-        thumbnail={latest.photo_url}
+        thumbnail={latest.display_url}
         onClick={() => onNavigateTab('fotos')}
       />,
     )

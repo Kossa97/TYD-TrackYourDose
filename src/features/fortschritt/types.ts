@@ -48,6 +48,7 @@ export interface DailyLogEntry {
 }
 
 export interface WeightLogEntry {
+  id?: string
   logged_at: string
   weight_kg: number
 }
@@ -62,7 +63,10 @@ export interface BloodworkEntry {
 
 export interface ProgressPhotoEntry {
   id: string
+  /** Storage-Pfad (neue Fotos) oder Legacy-Public-URL (alte Fotos) */
   photo_url: string
+  /** Anzeigbare URL — signiert für Storage-Pfade, sonst die Legacy-URL */
+  display_url: string
   taken_at: string
   weight_kg: number | null
   notes: string | null
@@ -100,7 +104,10 @@ export interface OverviewCardData {
 
 export interface FortschrittOverviewState {
   loading: boolean
+  /** Zeitraum der aktiven Substanzen — Basis für Übersicht/Top-Veränderungen */
   range: DateRange
+  /** Volle Historie (älteste Substanz oder ältester Datenpunkt → heute) — Basis für Verlauf „Alles" */
+  fullRange: DateRange
   cycleSubstances: CycleSubstance[]
   ongoingSubstances: OngoingSubstance[]
   dailyLogs: DailyLogEntry[]

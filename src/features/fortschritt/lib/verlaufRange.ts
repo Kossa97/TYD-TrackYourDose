@@ -28,14 +28,6 @@ export function focusRangeForSubstance(substance: ActiveSubstance, bufferDays = 
   return { from, to }
 }
 
-export function extendedDataFrom(substances: ActiveSubstance[], bufferDays = 7): string {
-  if (substances.length === 0) {
-    return format(subDays(new Date(), 30), 'yyyy-MM-dd')
-  }
-  const oldest = substances.map(s => s.startDate).sort()[0]
-  return format(subDays(parseISO(`${oldest}T00:00:00`), bufferDays), 'yyyy-MM-dd')
-}
-
 export function substancesOnDate(
   cycles: CycleSubstance[],
   ongoing: ActiveSubstance[],

@@ -5,6 +5,8 @@ import toast from 'react-hot-toast'
 import { supabase } from '../../../../lib/supabase'
 import { useAuth } from '../../../../context/AuthContext'
 import type { ProgressPhotoEntry } from '../../types'
+import { PHOTO_BUCKET } from '../../constants'
+import { isLegacyPhotoUrl } from '../../hooks/useFortschrittData'
 import { fieldLabel, inputStyle, panel } from '../../styles'
 
 const todayStr = () => format(new Date(), 'yyyy-MM-dd')
@@ -58,15 +60,16 @@ export function FotosTab({ photos, onChange }: Props) {
     setUploading(true)
     try {
       const ext = selectedFile.name.split('.').pop() ?? 'jpg'
-      const path = `progress/${user.id}/${Date.now()}.${ext}`
+      // Privater Bucket: erster Pfad-Teil = user.id, darauf prüfen die Storage-Policies.
+      // In der DB liegt nur der Pfad; Anzeige läuft über signierte URLs.
+      const path = `${user.id}/${Date.now()}.${ext}`
       const { error: upErr } = await supabase.storage
-        .from('batch-files')
+        .from(PHOTO_BUCKET)
         .upload(path, selectedFile, { contentType: selectedFile.type, upsert: false })
       if (upErr) throw upErr
-      const { data: { publicUrl } } = supabase.storage.from('batch-files').getPublicUrl(path)
       const { error: dbErr } = await supabase.from('progress_photos').insert({
         user_id: user.id,
-        photo_url: publicUrl,
+        photo_url: path,
         taken_at: date,
         weight_kg: weight ? Number(weight) : null,
         notes: notes || null,
@@ -84,9 +87,13 @@ export function FotosTab({ photos, onChange }: Props) {
 
   const deletePhoto = async (photo: ProgressPhotoEntry) => {
     if (!confirm('Foto wirklich löschen?')) return
-    const parts = photo.photo_url.split('/batch-files/')
-    if (parts.length > 1) {
-      await supabase.storage.from('batch-files').remove([parts[1]])
+    if (isLegacyPhotoUrl(photo.photo_url)) {
+      const parts = photo.photo_url.split('/batch-files/')
+      if (parts.length > 1) {
+        await supabase.storage.from('batch-files').remove([parts[1]])
+      }
+    } else {
+      await supabase.storage.from(PHOTO_BUCKET).remove([photo.photo_url])
     }
     const { error } = await supabase.from('progress_photos').delete().eq('id', photo.id)
     if (error) {
@@ -148,7 +155,7 @@ export function FotosTab({ photos, onChange }: Props) {
               }}
             >
               <div style={{ aspectRatio: '3/4', overflow: 'hidden' }}>
-                <img src={photo.photo_url} alt={photo.taken_at} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <img src={photo.display_url} alt={photo.taken_at} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </div>
               <div style={{ padding: '9px 11px' }}>
                 <p style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-dim)' }}>{fmtDate(photo.taken_at)}</p>
@@ -182,7 +189,7 @@ export function FotosTab({ photos, onChange }: Props) {
             </div>
           </div>
           <div style={{ flex: 1, overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
-            <img src={activePhoto.photo_url} alt={activePhoto.taken_at} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+            <img src={activePhoto.display_url} alt={activePhoto.taken_at} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
           </div>
           {activePhoto.notes && (
             <div onClick={e => e.stopPropagation()} style={{ padding: '14px 18px', borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
@@ -223,7 +230,7 @@ export function FotosTab({ photos, onChange }: Props) {
 
         <div style={{ marginBottom: 12 }}>
           <label style={fieldLabel}>Datum</label>
-          <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inputStyle} />
+          <input type="date" value={date} max={todayStr()} onChange={e => setDate(e.target.value)} style={inputStyle} />
         </div>
         <div style={{ marginBottom: 12 }}>
           <label style={fieldLabel}>Gewicht in kg (optional)</label>

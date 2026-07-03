@@ -41,7 +41,8 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
     onPendingConsumed()
   }, [pendingNav, onPendingConsumed, state.cycleSubstances, state.ongoingSubstances])
 
-  const baseRange = state.range
+  // Volle Historie als Basis: „Alles" zeigt auch beendete Zyklen und ältere Daten
+  const baseRange = state.fullRange
   const chipRange = useMemo(() => rangeFromChip(rangeChip, baseRange), [rangeChip, baseRange])
 
   const substances = allSubstances(state.cycleSubstances, state.ongoingSubstances)

@@ -24,6 +24,9 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
   const [wohlbefinden, setWohlbefinden] = useState<number | null>(null)
   const [libido, setLibido] = useState<number | null>(null)
   const [weight, setWeight] = useState('')
+  // id des bestehenden Tageseintrags — beim Speichern wird er aktualisiert
+  // statt einen zweiten Punkt für denselben Tag anzulegen
+  const [weightRowId, setWeightRowId] = useState<string | null>(null)
   const [bodyFat, setBodyFat] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -36,13 +39,14 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
     setLibido(existing?.libido ?? null)
     setBodyFat(existing?.body_fat_pct != null ? String(existing.body_fat_pct) : '')
     setWeight('')
+    setWeightRowId(null)
   }, [date, logs, open])
 
   useEffect(() => {
     if (!open || !user) return
     void supabase
       .from('weight_logs')
-      .select('weight_kg')
+      .select('id, weight_kg')
       .eq('user_id', user.id)
       .gte('logged_at', `${date}T00:00:00`)
       .lte('logged_at', `${date}T23:59:59`)
@@ -51,6 +55,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
       .maybeSingle()
       .then(({ data }) => {
         if (data?.weight_kg != null) setWeight(String(data.weight_kg))
+        setWeightRowId(data?.id != null ? String(data.id) : null)
       })
   }, [date, open, user])
 
@@ -97,11 +102,13 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
         toast.error('Ungültiges Gewicht')
         return
       }
-      const { error } = await supabase.from('weight_logs').insert({
-        user_id: user.id,
-        logged_at: `${date}T12:00:00`,
-        weight_kg: kg,
-      })
+      const { error } = weightRowId
+        ? await supabase.from('weight_logs').update({ weight_kg: kg }).eq('id', weightRowId)
+        : await supabase.from('weight_logs').insert({
+            user_id: user.id,
+            logged_at: `${date}T12:00:00`,
+            weight_kg: kg,
+          })
       if (error) {
         setSaving(false)
         toast.error(`Gewicht speichern fehlgeschlagen: ${error.message}`)
@@ -142,7 +149,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
 
         <div style={{ marginBottom: 14 }}>
           <label style={fieldLabel}>Datum</label>
-          <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inputStyle} />
+          <input type="date" value={date} max={todayStr()} onChange={e => setDate(e.target.value)} style={inputStyle} />
         </div>
 
         {sliders.map(s => (
@@ -151,8 +158,25 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
               <label style={{ ...fieldLabel, marginBottom: 0 }}>
                 {s.label} <span style={{ fontWeight: 600, opacity: 0.65 }}>(optional)</span>
               </label>
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: s.value != null ? 'var(--accent)' : 'var(--text-muted)' }}>
-                {s.value != null ? `${s.value}/10` : '–'}
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: s.value != null ? 'var(--accent)' : 'var(--text-muted)' }}>
+                  {s.value != null ? `${s.value}/10` : '–'}
+                </span>
+                {s.value != null && (
+                  <button
+                    type="button"
+                    aria-label={`${s.label} zurücksetzen`}
+                    onClick={() => s.set(null)}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      width: 20, height: 20, borderRadius: 7, padding: 0,
+                      background: 'var(--surface-input)', border: '1px solid var(--border)',
+                      color: 'var(--text-muted)', cursor: 'pointer',
+                    }}
+                  >
+                    <X size={11} />
+                  </button>
+                )}
               </span>
             </div>
             <input
@@ -163,6 +187,11 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
               step={1}
               value={s.value ?? 5}
               onChange={e => s.set(Number(e.target.value))}
+              // ein Tap ohne Bewegung feuert kein change-Event, wenn der Thumb
+              // schon dort steht — der Wert soll trotzdem als gesetzt gelten
+              onPointerUp={e => {
+                if (s.value == null) s.set(Number(e.currentTarget.value))
+              }}
             />
           </div>
         ))}

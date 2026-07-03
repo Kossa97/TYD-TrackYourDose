@@ -32,6 +32,10 @@ export function OverviewTab({ state, onLogToday, onNavigate }: Props) {
   } = state
 
   const hasSubstances = cycleSubstances.length + ongoingSubstances.length > 0
+  // Die Übersicht-Sektion zeigt nur laufende Substanzen; beendete Zyklen
+  // bleiben für Verlauf/Historie im State erhalten.
+  const activeCycles = cycleSubstances.filter(c => c.active)
+  const hasActiveSubstances = activeCycles.length + ongoingSubstances.length > 0
   const hasAnyLogs =
     dailyLogs.length > 0 ||
     weightLogs.length > 0 ||
@@ -60,11 +64,11 @@ export function OverviewTab({ state, onLogToday, onNavigate }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {!hasSubstances && <NoSubstancesBanner />}
+      {!hasActiveSubstances && <NoSubstancesBanner />}
 
-      {hasSubstances && (
+      {hasActiveSubstances && (
         <ActiveSubstancesSection
-          cycles={cycleSubstances}
+          cycles={activeCycles}
           ongoing={ongoingSubstances}
           onSelect={id => onNavigate({ tab: 'verlauf', focusSubstanceId: id })}
         />
