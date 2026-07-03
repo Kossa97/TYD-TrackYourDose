@@ -213,10 +213,10 @@ export function PeptideVialVisual({
   const liquidHaloBase = 0.12 + visualFocus * 0.12
   const liquidCoreBase = 0.08 + visualFocus * 0.16
   const previousFillRef = useRef(fillFrac)
-  const [fillMotion, setFillMotion] = useState(() => (
+  const [fillMotion, setFillMotion] = useState<{ epoch: number; shiftPct: number; mode: 'none' | 'reveal' | 'shift' }>(() => (
     animateOnMount && fillFrac > 0.001
-      ? { epoch: 1, shiftPct: fillMotionShiftPct(0, fillFrac) }
-      : { epoch: 0, shiftPct: 0 }
+      ? { epoch: 1, shiftPct: 0, mode: 'reveal' }
+      : { epoch: 0, shiftPct: 0, mode: 'none' }
   ))
   // One graphic for the whole liquid. The air gap is baked into the geometry,
   // so a raised wall during slosh still stays clipped below the rim. This is the
@@ -271,9 +271,15 @@ export function PeptideVialVisual({
     setFillMotion(current => ({
       epoch: current.epoch + 1,
       shiftPct,
+      mode: 'shift',
     }))
   }, [fillFrac])
 
+  const liquidMotionClass = fillMotion.mode === 'reveal'
+    ? 'vial-liquid-fill-reveal'
+    : fillMotion.mode === 'shift'
+      ? 'vial-liquid-level-motion'
+      : ''
   const liquidMotionStyle = {
     color,
     '--vial-fill-motion-shift': `${fillMotion.shiftPct}%`,
@@ -301,20 +307,23 @@ export function PeptideVialVisual({
       aria-label={`${labelName}, ${vialAmountLabel(amount, unit)}, ${clampedFill}%`}
     >
       <style>{`
-        @keyframes vial-liquid-rise {
-          from { transform: translateY(38%); opacity: .25; }
-          to { transform: translateY(0); opacity: 1; }
-        }
         @keyframes vial-shimmer {
           0%, 100% { transform: translateX(0); opacity: .35; }
           50% { transform: translateX(14%); opacity: .7; }
+        }
+        @keyframes vial-liquid-fill-reveal {
+          from { clip-path: inset(100% 0 0 0); opacity: .96; }
+          to { clip-path: inset(0 0 0 0); opacity: 1; }
         }
         @keyframes vial-liquid-level-motion {
           from { transform: translateY(var(--vial-fill-motion-shift, 0%)); }
           to { transform: translateY(0); }
         }
-        .vial-liquid-rise {
-          animation: vial-liquid-rise 820ms cubic-bezier(.22,1,.36,1) both;
+        .vial-liquid-fill-reveal {
+          animation: vial-liquid-fill-reveal 900ms cubic-bezier(.22,1,.36,1) both;
+          transform-box: fill-box;
+          transform-origin: center bottom;
+          will-change: clip-path;
         }
         .vial-liquid-level-motion {
           animation: vial-liquid-level-motion 760ms cubic-bezier(.22,1,.36,1) both;
@@ -322,7 +331,7 @@ export function PeptideVialVisual({
           transform-origin: center bottom;
         }
         @media (prefers-reduced-motion: reduce) {
-          .vial-liquid-rise, .vial-shimmer, .vial-liquid-level-motion { animation: none !important; }
+          .vial-liquid-fill-reveal, .vial-shimmer, .vial-liquid-level-motion { animation: none !important; }
         }
       `}</style>
 
@@ -414,7 +423,7 @@ export function PeptideVialVisual({
               highlight all derive from one geometry so they move as one. */}
           <div
             data-vial-detail="liquid-motion-viewport"
-            className={`pointer-events-none absolute inset-0 ${animateOnMount ? 'vial-liquid-rise' : ''}`}
+            className="pointer-events-none absolute inset-0"
           >
             <svg
               data-vial-detail="liquid-vial-chamber"
@@ -436,7 +445,7 @@ export function PeptideVialVisual({
                   y="36"
                   width="112"
                   height="247"
-                  className={`overflow-visible ${fillMotion.epoch > 0 ? 'vial-liquid-level-motion' : ''}`}
+                  className={`overflow-visible ${liquidMotionClass}`}
                   viewBox={`0 0 ${LIQUID_VB_W} ${LIQUID_VB_H}`}
                   preserveAspectRatio="none"
                   aria-hidden="true"
