@@ -1,0 +1,117 @@
+export type FortschrittTab = 'uebersicht' | 'verlauf' | 'fotos' | 'labs'
+
+export type SubstanceMode = 'cycle' | 'ongoing'
+
+export interface DateRange {
+  from: string
+  to: string
+}
+
+export interface CycleRow {
+  id: string
+  peptide_id: string
+  name: string
+  start_date: string
+  end_date: string | null
+  active: boolean
+  peptides: { name: string } | { name: string }[] | null
+}
+
+export interface CycleSubstance {
+  id: string
+  name: string
+  mode: 'cycle'
+  startDate: string
+  endDate: string | null
+  active: boolean
+  color: string
+  peptideId: string
+}
+
+export interface OngoingSubstance {
+  id: string
+  name: string
+  mode: 'ongoing'
+  startDate: string
+  color: string
+}
+
+export type ActiveSubstance = CycleSubstance | OngoingSubstance
+
+export interface DailyLogEntry {
+  log_date: string
+  energie: number | null
+  schlaf: number | null
+  wohlbefinden: number | null
+  libido: number | null
+  body_fat_pct: number | null
+}
+
+export interface WeightLogEntry {
+  logged_at: string
+  weight_kg: number
+}
+
+export interface BloodworkEntry {
+  id: string
+  marker: string
+  value: number
+  unit: string
+  tested_at: string
+}
+
+export interface ProgressPhotoEntry {
+  id: string
+  photo_url: string
+  taken_at: string
+  weight_kg: number | null
+}
+
+export interface DoseLogEntry {
+  peptide_id: string | null
+  logged_at: string
+  taken: boolean | null
+}
+
+export type MetricKey =
+  | 'weight'
+  | 'energie'
+  | 'schlaf'
+  | 'wohlbefinden'
+  | 'libido'
+  | 'body_fat'
+  | string
+
+export interface MetricChange {
+  key: MetricKey
+  label: string
+  unit: string
+  from: number
+  to: number
+  delta: number
+  rank: number
+}
+
+export interface OverviewCardData {
+  key: 'weight' | 'wellness' | 'adherence' | 'labs' | 'photos' | 'body_fat'
+  visible: boolean
+}
+
+export interface FortschrittOverviewState {
+  loading: boolean
+  range: DateRange
+  cycleSubstances: CycleSubstance[]
+  ongoingSubstances: OngoingSubstance[]
+  dailyLogs: DailyLogEntry[]
+  weightLogs: WeightLogEntry[]
+  bloodwork: BloodworkEntry[]
+  photos: ProgressPhotoEntry[]
+  doseLogs: DoseLogEntry[]
+  peptideNames: Map<string, string>
+}
+
+export interface VerlaufNavigation {
+  tab: 'verlauf'
+  metric?: MetricKey
+  focusSubstanceId?: string
+}

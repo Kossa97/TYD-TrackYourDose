@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
 import { OnboardingProvider } from './context/OnboardingContext'
@@ -19,7 +19,6 @@ const FAQ = lazy(() => import('./pages/FAQ').then(m => ({ default: m.FAQ })))
 const Rechner = lazy(() => import('./pages/Rechner').then(m => ({ default: m.Rechner })))
 const Blutwerte = lazy(() => import('./pages/Blutwerte').then(m => ({ default: m.Blutwerte })))
 const Health = lazy(() => import('./pages/Health').then(m => ({ default: m.Health })))
-const Protokoll = lazy(() => import('./pages/Protokoll').then(m => ({ default: m.Protokoll })))
 const TheLab = lazy(() => import('./pages/TheLab').then(m => ({ default: m.TheLab })))
 const StudyDetail = lazy(() => import('./pages/StudyDetail').then(m => ({ default: m.StudyDetail })))
 const PeptideLibrary = lazy(() => import('./pages/PeptideLibrary').then(m => ({ default: m.PeptideLibrary })))
@@ -68,7 +67,7 @@ export default function App() {
             <Route path="rechner" element={<LazyPage><Rechner /></LazyPage>} />
             <Route path="blutwerte" element={<LazyPage><Blutwerte /></LazyPage>} />
             <Route path="health" element={<LazyPage><Health /></LazyPage>} />
-            <Route path="protokoll" element={<LazyPage><Protokoll /></LazyPage>} />
+            <Route path="protokoll" element={<Navigate to="/progress" replace />} />
             <Route path="the-lab" element={<LazyPage><TheLab /></LazyPage>} />
             <Route path="tagebuch" element={<LazyPage><Tagebuch /></LazyPage>} />
             <Route path="bewertungen" element={<LazyPage><Bewertungen /></LazyPage>} />
