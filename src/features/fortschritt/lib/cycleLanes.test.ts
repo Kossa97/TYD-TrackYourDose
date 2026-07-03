@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assignLanes, intervalsOverlap, laneCount } from './cycleLanes'
+import { assignLanes, computeCycleBandLayout, FULL_HEIGHT_LANE_COUNT, intervalsOverlap, laneCount } from './cycleLanes'
 
 describe('intervalsOverlap', () => {
   it('detects overlap', () => {
@@ -49,5 +49,21 @@ describe('assignLanes', () => {
     const b = placed.find(p => p.id === 'b')
     expect(c?.lane).toBe(a?.lane)
     expect(b?.lane).not.toBe(a?.lane)
+  })
+})
+
+describe('computeCycleBandLayout', () => {
+  const plotHeight = 200
+
+  it('uses less total height with fewer lanes', () => {
+    const one = computeCycleBandLayout(plotHeight, 1)
+    const five = computeCycleBandLayout(plotHeight, 5)
+    expect(one.blockHeight).toBeLessThan(five.blockHeight)
+    expect(five.blockHeight).toBeCloseTo(plotHeight, -1)
+  })
+
+  it('scales linearly up to FULL_HEIGHT_LANE_COUNT', () => {
+    const three = computeCycleBandLayout(plotHeight, 3)
+    expect(three.blockHeight).toBeCloseTo(plotHeight * (3 / FULL_HEIGHT_LANE_COUNT), -1)
   })
 })

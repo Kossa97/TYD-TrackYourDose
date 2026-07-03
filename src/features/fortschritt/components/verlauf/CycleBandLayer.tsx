@@ -1,4 +1,5 @@
 import { useXAxisScale, usePlotArea, ZIndexLayer, DefaultZIndexes } from 'recharts'
+import { computeCycleBandLayout } from '../../lib/cycleLanes'
 
 export interface CycleBandDraw {
   id: string
@@ -17,7 +18,7 @@ interface Props {
 }
 
 /**
- * Zyklus-Balken im Chart-Hintergrund (Recharts 3 Hooks).
+ * Zyklus-Balken im Chart-Hintergrund — füllen die Y-Höhe je nach Zeilenanzahl.
  */
 export function CycleBandLayer({ bands, lanes }: Props) {
   const xScale = useXAxisScale()
@@ -27,9 +28,7 @@ export function CycleBandLayer({ bands, lanes }: Props) {
     return null
   }
 
-  const laneHeight = Math.min(14, Math.max(9, plotArea.height / Math.max(lanes * 1.35, 3.5)))
-  const laneGap = 4
-  const blockHeight = lanes * (laneHeight + laneGap) - laneGap
+  const { blockHeight, laneHeight, laneGap } = computeCycleBandLayout(plotArea.height, lanes)
   const baseY = plotArea.y + plotArea.height - blockHeight
 
   return (
@@ -52,13 +51,13 @@ export function CycleBandLayer({ bands, lanes }: Props) {
               width={w}
               height={laneHeight}
               fill={band.color}
-              fillOpacity={band.faded ? 0.12 : band.filled ? 0.38 : 0.2}
+              fillOpacity={band.faded ? 0.1 : band.filled ? 0.32 : 0.18}
               stroke={band.filled ? 'none' : band.color}
-              strokeOpacity={band.faded ? 0.25 : 0.55}
+              strokeOpacity={band.faded ? 0.2 : 0.5}
               strokeWidth={band.filled ? 0 : 1.5}
               strokeDasharray={band.filled ? undefined : '5 4'}
-              rx={5}
-              ry={5}
+              rx={4}
+              ry={4}
             />
           )
         })}

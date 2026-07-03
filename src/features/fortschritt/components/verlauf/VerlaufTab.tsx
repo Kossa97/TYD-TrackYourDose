@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import type { FortschrittOverviewState, MetricKey, VerlaufNavigation } from '../../types'
 import { CHART_METRIC_KEYS, isChartMetricKey, isWellnessMetricKey } from '../../constants'
 import { buildMetricSeries } from '../../lib/metrics'
-import { buildAvailableMetrics, normalizeMetricKey, type MetricDefinition } from '../../lib/metricDefinitions'
+import { buildAvailableMetrics, normalizeMetricKey } from '../../lib/metricDefinitions'
 import { allSubstances, defaultFocusSubstanceId } from '../../lib/focusSummary'
 import {
   RANGE_CHIPS,
@@ -21,12 +21,10 @@ interface Props {
   onPendingConsumed: () => void
 }
 
-const MAX_METRICS = 2
 
 export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
   const [rangeChip, setRangeChip] = useState<RangeChipKey>('alles')
-  const [primaryKey, setPrimaryKey] = useState<MetricKey>('weight')
-  const [secondaryKey, setSecondaryKey] = useState<MetricKey | null>(null)
+  const [metricKey, setMetricKey] = useState<MetricKey>('weight')
   const [focusId, setFocusId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -38,7 +36,7 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
       if (id) setFocusId(id)
     }
     if (pendingNav.metric && isChartMetricKey(normalizeMetricKey(pendingNav.metric))) {
-      setPrimaryKey(normalizeMetricKey(pendingNav.metric))
+      setMetricKey(normalizeMetricKey(pendingNav.metric))
     }
     onPendingConsumed()
   }, [pendingNav, onPendingConsumed, state.cycleSubstances, state.ongoingSubstances])
@@ -76,18 +74,18 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
     [pointCounts, state.bloodwork, labUnits],
   )
 
-  const primary = availableMetrics.find(m => m.key === primaryKey) ?? availableMetrics.find(m => m.key === 'weight') ?? availableMetrics[0]
-  const secondary = secondaryKey ? availableMetrics.find(m => m.key === secondaryKey) ?? null : null
+  const selectedMetric = availableMetrics.find(m => m.key === metricKey)
+    ?? availableMetrics.find(m => m.key === 'weight')
+    ?? availableMetrics[0]
 
   useEffect(() => {
     if (availableMetrics.length === 0) return
-    if (!availableMetrics.some(m => m.key === primaryKey)) {
-      setPrimaryKey(availableMetrics.find(m => m.key === 'weight')?.key ?? availableMetrics[0].key)
-      setSecondaryKey(null)
+    if (!availableMetrics.some(m => m.key === metricKey)) {
+      setMetricKey(availableMetrics.find(m => m.key === 'weight')?.key ?? availableMetrics[0].key)
     }
-  }, [availableMetrics, primaryKey])
+  }, [availableMetrics, metricKey])
 
-  const toggleMetric = (key: MetricKey) => {
+  const selectMetric = (key: MetricKey) => {
     const count = pointCounts.get(key) ?? 0
     const metric = availableMetrics.find(m => m.key === key)
     if (!metric || count === 0) return
@@ -95,23 +93,7 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
       toast.error('Mindestens 2 Messungen für den Verlauf nötig')
       return
     }
-
-    if (primaryKey === key) {
-      if (secondaryKey) {
-        setPrimaryKey(secondaryKey)
-        setSecondaryKey(null)
-      }
-      return
-    }
-    if (secondaryKey === key) {
-      setSecondaryKey(null)
-      return
-    }
-    if (!secondaryKey) {
-      setSecondaryKey(key)
-      return
-    }
-    setSecondaryKey(key)
+    setMetricKey(key)
   }
 
   return (
@@ -167,13 +149,13 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
           {availableMetrics.map(metric => {
             const count = pointCounts.get(metric.key) ?? 0
             const disabled = metric.isLab ? count < 2 : count === 0
-            const active = primaryKey === metric.key || secondaryKey === metric.key
+            const active = metricKey === metric.key
             return (
               <button
                 key={metric.key}
                 type="button"
                 disabled={disabled}
-                onClick={() => toggleMetric(metric.key)}
+                onClick={() => selectMetric(metric.key)}
                 style={{
                   flexShrink: 0,
                   padding: '7px 13px',
@@ -196,15 +178,14 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
         <p style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', marginTop: 6 }}>
           {focused
             ? 'Zeitraum folgt Fokus-Substanz · Chips deaktiviert'
-            : 'Gewicht, KFA & Labs im Chart · Wellness-Vergleich per Substanz antippen'}
+            : 'Eine Metrik · eigene Y-Achse · Wellness per Substanz antippen'}
         </p>
       </div>
 
-      {primary && (
+      {selectedMetric && (
         <MetricChart
           range={chartRange}
-          primary={primary}
-          secondary={secondary}
+          metric={selectedMetric}
           weights={state.weightLogs}
           dailyLogs={state.dailyLogs}
           bloodwork={state.bloodwork}

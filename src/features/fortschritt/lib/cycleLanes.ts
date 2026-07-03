@@ -37,25 +37,32 @@ export function assignLanes<T extends TimeInterval>(items: T[]): (T & { lane: nu
   return placed
 }
 
-export const LANE_HEIGHT = 0.55
-export const LANE_GAP = 0.1
-
 export function laneCount(bands: { lane: number }[]): number {
   if (bands.length === 0) return 0
   return Math.max(...bands.map(b => b.lane)) + 1
 }
 
-export function bandAxisMax(lanes: number): number {
-  if (lanes === 0) return 0
-  return lanes * (LANE_HEIGHT + LANE_GAP) + LANE_GAP
-}
+/** Ab dieser Zeilenanzahl nutzen die Balken die volle Plot-Höhe */
+export const FULL_HEIGHT_LANE_COUNT = 5
 
-export function bandAxisDomain(lanes: number, metricClearance = 6): number {
-  if (lanes === 0) return 1
-  return metricClearance + bandAxisMax(lanes)
-}
+/**
+ * Vertikale Aufteilung der Zyklus-Balken:
+ * Weniger parallele Zyklen → geringere Gesamthöhe, mehr Zyklen → volle Y-Höhe.
+ */
+export function computeCycleBandLayout(plotHeight: number, lanes: number): {
+  blockHeight: number
+  laneHeight: number
+  laneGap: number
+} {
+  if (lanes <= 0 || plotHeight <= 0) {
+    return { blockHeight: 0, laneHeight: 0, laneGap: 0 }
+  }
 
-export function laneYBounds(lane: number): { y1: number; y2: number } {
-  const y1 = lane * (LANE_HEIGHT + LANE_GAP)
-  return { y1, y2: y1 + LANE_HEIGHT }
+  const laneGap = Math.max(3, Math.round(plotHeight * 0.012))
+  const fillRatio = Math.min(1, lanes / FULL_HEIGHT_LANE_COUNT)
+  const blockHeight = plotHeight * fillRatio
+  const laneHeight = Math.max(4, (blockHeight - (lanes - 1) * laneGap) / lanes)
+  const actualBlock = lanes * laneHeight + (lanes - 1) * laneGap
+
+  return { blockHeight: actualBlock, laneHeight, laneGap }
 }
