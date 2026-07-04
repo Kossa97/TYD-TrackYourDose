@@ -137,15 +137,6 @@ describe('PeptideVialVisual', () => {
     expect(text).not.toContain('L116 250 C116 277 101 292 74 292 L46 292 C19 292 4 277 4 250')
   })
 
-  test('draws a longer glass neck so it stays visible below the cap overlap', () => {
-    const text = source()
-
-    // the neck (constant-width section under the cap) now runs to y=64 instead
-    // of the old, much shorter y=24 — matching a real vial's proportions
-    expect(text).toContain('d="M28 0 L92 0 L92 64 C92 75 116 81 116 96 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 96 C4 81 28 75 28 64 Z"')
-    expect(text).not.toContain('M28 0 L92 0 L92 24 C92 35 116 41 116 56')
-  })
-
   test('accepts focus and lightOffset as visual control props', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
       name: 'TB-500',

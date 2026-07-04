@@ -439,7 +439,7 @@ export function PeptideVialVisual({
             <defs>
               <path
                 id={`${uid}-vialShellPath`}
-                d="M28 0 L92 0 L92 64 C92 75 116 81 116 96 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 96 C4 81 28 75 28 64 Z"
+                d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 56 C4 41 28 35 28 24 Z"
               />
               <clipPath id={`${uid}-shellClip`}>
                 <use href={`#${uid}-vialShellPath`} />
@@ -504,7 +504,7 @@ export function PeptideVialVisual({
                 the stage light only fades the whole group in and out */}
             <g ref={shellHighlightsRef} data-vial-detail="shell-highlights" opacity={0.42 + visualFocus * 0.58}>
               <path
-                d="M12 98 C12 84 36 78 36 63 L36 48"
+                d="M12 58 C12 44 36 38 36 23 L36 8"
                 fill="none"
                 stroke="rgba(255,255,255,0.58)"
                 strokeOpacity="0.54"
@@ -513,7 +513,7 @@ export function PeptideVialVisual({
                 filter={`url(#${uid}-shellSoft)`}
               />
               <path
-                d="M12 104 L12 242 C12 265 25 282 48 286"
+                d="M12 64 L12 242 C12 265 25 282 48 286"
                 fill="none"
                 stroke="rgba(255,255,255,0.52)"
                 strokeOpacity="0.6"
@@ -522,7 +522,7 @@ export function PeptideVialVisual({
                 filter={`url(#${uid}-shellSoft)`}
               />
               <path
-                d="M108 104 L108 246 C108 268 96 282 73 286"
+                d="M108 64 L108 246 C108 268 96 282 73 286"
                 fill="none"
                 stroke="rgba(255,255,255,0.26)"
                 strokeOpacity="0.38"
@@ -550,7 +550,7 @@ export function PeptideVialVisual({
             >
               <defs>
                 <clipPath id={`${uid}-liquidChamberClip`}>
-                  <path d="M28 0 L92 0 L92 64 C92 75 116 81 116 96 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 96 C4 81 28 75 28 64 Z" />
+                  <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 56 C4 41 28 35 28 24 Z" />
                 </clipPath>
               </defs>
               <g data-vial-detail="liquid-glass-window" clipPath={`url(#${uid}-liquidChamberClip)`}>
@@ -674,11 +674,11 @@ export function PeptideVialVisual({
             >
               <defs>
                 <clipPath id={`${uid}-inactiveOverlayClip`}>
-                  <path d="M28 0 L92 0 L92 64 C92 75 116 81 116 96 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 96 C4 81 28 75 28 64 Z" />
+                  <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 56 C4 41 28 35 28 24 Z" />
                 </clipPath>
               </defs>
               <g clipPath={`url(#${uid}-inactiveOverlayClip)`}>
-                <path d="M28 0 L92 0 L92 64 C92 75 116 81 116 96 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 96 C4 81 28 75 28 64 Z" fill="rgba(0,0,0,0.34)" />
+                <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 56 C4 41 28 35 28 24 Z" fill="rgba(0,0,0,0.34)" />
               </g>
             </svg>
           )}
