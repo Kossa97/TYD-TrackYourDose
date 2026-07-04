@@ -8,7 +8,7 @@ import {
   Plus, Minus, Trash2, Pencil, FlaskConical, Activity,
   CalendarDays, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, List,
   TrendingUp, TrendingDown, Search, Bell, Check, SlidersHorizontal,
-  Package, FileUp, Droplets, X, FileText, ExternalLink,
+  Package, FileUp, Droplets, X, FileText, ExternalLink, Repeat,
   Archive, RefreshCw, Sunrise, Sun, Moon, Clock, type LucideIcon,
 } from 'lucide-react'
 import { getPeptideColor, getRandomPeptideColor } from '../lib/peptideColors'
@@ -445,13 +445,13 @@ function AddVialTile({ onClick, label, obKey }: { onClick: () => void; label: st
       onClick={onClick}
       aria-label={label}
       {...(obKey ? { 'data-ob': obKey } : {})}
-      className="group mx-auto flex w-28 flex-col items-center sm:w-36"
+      className="group mx-auto flex w-20 flex-col items-center sm:w-24"
     >
-      <div className="flex h-44 w-full flex-col items-center justify-center gap-3 rounded-[1.4rem] border border-dashed border-slate-600/55 bg-slate-900/25 text-slate-500 transition-colors group-hover:border-cyan-400/45 group-hover:text-cyan-200 group-focus-visible:border-cyan-300/60 sm:h-52">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full border border-cyan-300/15 bg-cyan-300/[0.03] text-cyan-200 shadow-[0_0_22px_rgba(34,211,238,0.08)] transition-all duration-500 group-hover:border-cyan-300/35 group-hover:bg-cyan-300/10 group-hover:shadow-[0_0_30px_rgba(34,211,238,0.18)] group-focus-visible:border-cyan-300/45 group-focus-visible:bg-cyan-300/10 group-focus-visible:shadow-[0_0_30px_rgba(34,211,238,0.22)]">
-          <Plus size={30} strokeWidth={1.45} />
+      <div className="flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-slate-600/55 bg-slate-900/25 text-slate-500 transition-colors group-hover:border-cyan-400/45 group-hover:text-cyan-200 group-focus-visible:border-cyan-300/60 sm:h-36">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full border border-cyan-300/15 bg-cyan-300/[0.03] text-cyan-200 shadow-[0_0_22px_rgba(34,211,238,0.08)] transition-all duration-500 group-hover:border-cyan-300/35 group-hover:bg-cyan-300/10 group-hover:shadow-[0_0_30px_rgba(34,211,238,0.18)] group-focus-visible:border-cyan-300/45 group-focus-visible:bg-cyan-300/10 group-focus-visible:shadow-[0_0_30px_rgba(34,211,238,0.22)]">
+          <Plus size={18} strokeWidth={1.45} />
         </span>
-        <span className="px-3 text-center text-sm font-semibold leading-tight">{label}</span>
+        <span className="px-2 text-center text-[10px] font-semibold leading-tight">{label}</span>
       </div>
     </button>
   )
@@ -508,6 +508,7 @@ export function Peptide() {
   )
   const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
   const [vialDetailsOpen, setVialDetailsOpen] = useState(false)
+  const [vialCyclesOpen, setVialCyclesOpen] = useState(false)
   const [isVialCarouselDragging, setIsVialCarouselDragging] = useState(false)
   const [addTileActive, setAddTileActive] = useState(false)
   // Stage light bypasses React entirely: each vial registers an imperative
@@ -1525,8 +1526,8 @@ export function Peptide() {
 
           {!loading && viewMode === 'vials' && activePeptide && (
             <div className="space-y-4">
-              <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/40 px-2 py-5 sm:px-5">
-                <div className="mb-2 flex items-center justify-between px-2">
+              <div className="py-5">
+                <div className="mb-2 flex items-center justify-between px-3">
                   <button
                     type="button"
                     onClick={() => selectPeptideOffset(-1)}
@@ -1567,7 +1568,7 @@ export function Peptide() {
                   </button>
                 </div>
 
-                <div className="relative">
+                <div className="relative -mx-3">
                   <div
                     data-vial-detail="carousel-spotlight"
                     aria-hidden="true"
@@ -1582,21 +1583,21 @@ export function Peptide() {
                   onPointerUp={handleVialCarouselPointerUp}
                   onPointerCancel={handleVialCarouselPointerUp}
                   onWheel={handleVialCarouselWheel}
-                  className={`relative z-10 flex ${vialSnapClassName} gap-4 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                  className={`relative z-10 flex ${vialSnapClassName} gap-2 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
                     isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
                   }`}
                   style={{
-                    paddingInline: 'calc((100% - min(9rem, 38vw)) / 2)',
-                    scrollPaddingInline: 'calc((100% - min(9rem, 38vw)) / 2)',
+                    paddingInline: 'calc((100% - min(6rem, 25vw)) / 2)',
+                    scrollPaddingInline: 'calc((100% - min(6rem, 25vw)) / 2)',
                   }}
                 >
                   <div
                     data-vial-add
                     data-vial-add-slot
-                    className={`${vialItemSnapClassName} flex items-center min-h-[calc(11rem+3.4rem)] shrink-0 rounded-2xl px-2 py-2 sm:min-h-[calc(13rem+3.4rem)] ${
+                    className={`${vialItemSnapClassName} flex items-center min-h-[calc(7rem+3rem)] shrink-0 rounded-2xl px-2 py-2 sm:min-h-[calc(9rem+3rem)] ${
                       isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
                     } ${addTileActive ? 'scale-100' : 'scale-90'}`}
-                    style={{ width: 'min(9rem, 38vw)' }}
+                    style={{ width: 'min(6rem, 25vw)' }}
                   >
                     <AddVialTile
                       onClick={() => { if (!vialSuppressClickRef.current) handleNewPeptide() }}
@@ -1618,7 +1619,7 @@ export function Peptide() {
                         } ${
                           isActive ? 'scale-100' : 'scale-90'
                         }`}
-                        style={{ width: 'min(9rem, 38vw)' }}
+                        style={{ width: 'min(6rem, 25vw)' }}
                         aria-label={p.name}
                         role="button"
                         tabIndex={0}
@@ -1634,6 +1635,7 @@ export function Peptide() {
                           color={peptideColor}
                           animateOnMount={true}
                           isActive={isActive}
+                          size="carousel"
                           stageLightRef={handle => {
                             const handles = vialStageLightHandlesRef.current
                             if (handle) handles.set(index, handle)
@@ -1641,7 +1643,7 @@ export function Peptide() {
                           }}
                         />
                         {isActive && (
-                          <p className="mt-2 text-center text-sm font-semibold tabular-nums text-slate-400">
+                          <p className="mt-1 text-center text-xs font-semibold tabular-nums text-slate-400">
                             {Math.round(vialPct)}%
                           </p>
                         )}
@@ -1681,6 +1683,7 @@ export function Peptide() {
 
                 {(() => {
                   const invItem = activePeptide.inventory_item_id ? inventory.find(i => i.id === activePeptide.inventory_item_id) : null
+                  const pCycles = cyclesOf(activePeptide.id)
                   const notSet = 'Nicht gesetzt'
                   const compactInfoRows: InfoRow[] = [
                     { label: 'Peptidname', value: activePeptide.name || notSet, wide: true },
@@ -1731,7 +1734,8 @@ export function Peptide() {
                   ]
 
                   return (
-                    <div className="mt-2 overflow-hidden rounded-lg border border-slate-800 bg-slate-950/50">
+                    <>
+                    <div className="mx-1 mt-2 overflow-hidden rounded-lg border border-slate-800 bg-slate-950/50">
                       <button
                         type="button"
                         onClick={() => setVialDetailsOpen(open => !open)}
@@ -1800,6 +1804,67 @@ export function Peptide() {
                         </div>
                       )}
                     </div>
+
+                    <div className="mx-1 mt-2 overflow-hidden rounded-lg border border-slate-800 bg-slate-950/50">
+                      <button
+                        type="button"
+                        onClick={() => setVialCyclesOpen(open => !open)}
+                        aria-expanded={vialCyclesOpen}
+                        className="flex w-full items-center justify-center gap-2 px-3 py-3 text-center text-sm font-semibold text-white"
+                      >
+                        <Repeat size={15} className="text-violet-300" />
+                        <span>Zyklen</span>
+                        {pCycles.length > 0 && (
+                          <span className="rounded-full bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-slate-400">{pCycles.length}</span>
+                        )}
+                        {vialCyclesOpen ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
+                      </button>
+                      {vialCyclesOpen && (
+                        <div className="space-y-2 border-t border-slate-800 p-2 text-xs">
+                          {pCycles.length === 0 && (
+                            <p className="px-1 py-2 text-center text-slate-500">{t('noch_kein_zyklus')}</p>
+                          )}
+                          {pCycles.map(c => {
+                            const isEnded = c.end_date ? parseISO(c.end_date).getTime() < Date.now() : false
+                            const statusLabel = c.active ? t('aktiv_badge') : isEnded ? 'Beendet' : t('inaktiv_badge')
+                            return (
+                              <div key={c.id} className={`rounded-lg border px-2.5 py-2 ${c.active ? 'border-violet-500/35 bg-violet-500/5' : 'border-slate-800 bg-slate-900/55'}`}>
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="truncate text-sm font-semibold text-slate-200">{c.name}</p>
+                                  <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${c.active ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-300' : 'border-slate-700 bg-slate-900 text-slate-400'}`}>
+                                    {statusLabel}
+                                  </span>
+                                </div>
+                                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
+                                  <span className="font-semibold text-slate-300">{c.dose} {c.unit}</span>
+                                  <span>{freqLabel(c)}</span>
+                                  <span>{format(parseISO(c.start_date), 'dd.MM.yyyy')}{c.end_date ? ` – ${format(parseISO(c.end_date), 'dd.MM.yyyy')}` : ' – offen'}</span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                          <div className="flex gap-2 pt-1">
+                            <button
+                              type="button"
+                              data-ob="btn-zyklus-add"
+                              onClick={() => { openNewCycle(activePeptide); dismissZyklusBtn() }}
+                              className="flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/15 px-3 text-xs font-semibold text-violet-300 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
+                            >
+                              <Plus size={13} /> {t('zyklus_hinzufuegen')}
+                              {zyklusBtnNew && <NewDot />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCycleManagerPeptide(activePeptide)}
+                              className="flex min-h-9 flex-1 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/70 px-3 text-xs font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
+                            >
+                              Verwalten
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    </>
                   )
                 })()}
               </div>

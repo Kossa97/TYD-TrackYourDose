@@ -35,7 +35,7 @@ describe('Peptide page vial view', () => {
   test('keeps neighboring vials partially visible around the centered active vial', () => {
     const text = source()
 
-    expect(text).toContain('min(9rem, 38vw)')
+    expect(text).toContain('min(6rem, 25vw)')
     expect(text).toContain('snap-center')
     expect(text).toContain("isActive ? 'scale-100' : 'scale-90'")
   })
@@ -44,8 +44,8 @@ describe('Peptide page vial view', () => {
     const text = source()
 
     expect(text).toContain('data-vial-add-slot')
-    expect(text).toContain('min-h-[calc(11rem+3.4rem)]')
-    expect(text).toContain('sm:min-h-[calc(13rem+3.4rem)]')
+    expect(text).toContain('min-h-[calc(7rem+3rem)]')
+    expect(text).toContain('sm:min-h-[calc(9rem+3rem)]')
     expect(text).toContain('flex items-center')
   })
 
@@ -53,8 +53,29 @@ describe('Peptide page vial view', () => {
     const text = source()
 
     expect(text).toContain("{isActive && (")
-    expect(text).toContain('mt-2 text-center')
+    expect(text).toContain('mt-1 text-center')
     expect(text).toContain('{Math.round(vialPct)}%')
+  })
+
+  test('shrinks the vial carousel and removes its surrounding frame so it can bleed edge-to-edge', () => {
+    const text = source()
+
+    expect(text).toContain('size="carousel"')
+    // the outer wrapper no longer draws a bordered/tinted card around the carousel
+    expect(text).not.toContain('overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/40 px-2 py-5 sm:px-5')
+    // the carousel row cancels the page's own horizontal padding to reach full viewport width
+    expect(text).toContain('className="relative -mx-3"')
+  })
+
+  test('offers an expandable Zyklen panel under the Info panel in the vial cockpit', () => {
+    const text = source()
+
+    expect(text).toContain('vialCyclesOpen')
+    expect(text).toContain('const [vialCyclesOpen, setVialCyclesOpen] = useState(false)')
+    expect(text).toContain('<span>Zyklen</span>')
+    expect(text).toContain('aria-expanded={vialCyclesOpen}')
+    expect(text).toContain('<Repeat size={15} className="text-violet-300" />')
+    expect(text.indexOf('<span>Info</span>')).toBeLessThan(text.indexOf('<span>Zyklen</span>'))
   })
 
   test('supports desktop drag, wheel navigation, and vial clicks in the carousel', () => {

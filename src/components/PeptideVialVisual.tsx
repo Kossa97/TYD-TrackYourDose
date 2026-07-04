@@ -40,7 +40,7 @@ interface PeptideVialVisualProps {
   fillPct: number
   color: string
   animateOnMount?: boolean
-  size?: 'large' | 'compact'
+  size?: 'large' | 'compact' | 'carousel'
   className?: string
   isActive?: boolean
   slosh?: number
@@ -374,18 +374,24 @@ export function PeptideVialVisual({
     '--vial-fill-intro-duration': `${fillIntroDurationMs}ms`,
   } as CSSProperties
   const labelName = name?.trim() || 'Peptidname'
-  const isLarge = size === 'large'
-  const widthClass = isLarge ? 'w-28 sm:w-36' : 'w-16'
-  const shellClass = isLarge ? 'h-44 sm:h-52' : 'h-24'
-  const labelClass = isLarge
+  // 'large' = detail views (edit form, previews); 'carousel' = the My Stack
+  // carousel, sized so several vials can peek in side by side; 'compact' =
+  // tiny inline previews.
+  const widthClass = size === 'large' ? 'w-28 sm:w-36' : size === 'carousel' ? 'w-20 sm:w-24' : 'w-16'
+  const shellClass = size === 'large' ? 'h-44 sm:h-52' : size === 'carousel' ? 'h-28 sm:h-36' : 'h-24'
+  const labelClass = size === 'large'
     ? 'left-[3.5%] right-[3.5%] top-1/2 -translate-y-1/2 rounded-sm px-1 py-2'
     : 'left-[3.5%] right-[3.5%] top-1/2 -translate-y-1/2 rounded-sm px-1 py-1'
-  const nameClass = isLarge
+  const nameClass = size === 'large'
     ? 'text-lg sm:text-xl leading-tight'
-    : 'text-[9px] leading-tight'
-  const amountClass = isLarge
+    : size === 'carousel'
+      ? 'text-sm sm:text-base leading-tight'
+      : 'text-[9px] leading-tight'
+  const amountClass = size === 'large'
     ? 'text-xs sm:text-sm mt-1'
-    : 'text-[7px] mt-0.5'
+    : size === 'carousel'
+      ? 'text-[10px] sm:text-xs mt-0.5'
+      : 'text-[7px] mt-0.5'
   return (
     <div
       ref={rootRef}
