@@ -265,6 +265,9 @@ export function PeptideVialVisual({
   const shellOutlineRef = useRef<SVGUseElement | null>(null)
   const shellBloomRef = useRef<SVGRectElement | null>(null)
   const shellHighlightsRef = useRef<SVGGElement | null>(null)
+  const shellHiLeftRef = useRef<SVGGElement | null>(null)
+  const shellHiRightRef = useRef<SVGGElement | null>(null)
+  const glassSweepRef = useRef<SVGRectElement | null>(null)
   const refractLeftRef = useRef<SVGRectElement | null>(null)
   const refractRightRef = useRef<SVGRectElement | null>(null)
   const labelSheenRef = useRef<HTMLDivElement | null>(null)
@@ -318,7 +321,12 @@ export function PeptideVialVisual({
     shellOutlineRef.current?.setAttribute('stroke-opacity', (0.36 + f * 0.28).toFixed(3))
     shellBloomRef.current?.setAttribute('transform', `translate(${(o * 21.6).toFixed(2)} 0)`)
     shellBloomRef.current?.setAttribute('opacity', (0.2 + f * 0.42).toFixed(3))
+    glassSweepRef.current?.setAttribute('transform', `translate(${(o * 34).toFixed(2)} 0)`)
+    glassSweepRef.current?.setAttribute('opacity', (0.14 + f * 0.34).toFixed(3))
     shellHighlightsRef.current?.setAttribute('opacity', (0.42 + f * 0.58).toFixed(3))
+    // the edge facing the fixed light brightens, the far edge dims
+    shellHiLeftRef.current?.setAttribute('opacity', Math.max(0.08, Math.min(1, 0.6 - o * 0.6)).toFixed(3))
+    shellHiRightRef.current?.setAttribute('opacity', Math.max(0.08, Math.min(1, 0.5 + o * 0.6)).toFixed(3))
 
     refractLeftRef.current?.setAttribute('x', (5 + o * 8).toFixed(2))
     refractLeftRef.current?.setAttribute('opacity', (0.46 + f * 0.22).toFixed(3))
@@ -445,18 +453,21 @@ export function PeptideVialVisual({
               <clipPath id={`${uid}-shellClip`}>
                 <use href={`#${uid}-vialShellPath`} />
               </clipPath>
+              {/* clear glass: only the edges carry glass-thickness tint, the
+                  centre stays transparent so the dark background shows through */}
               <linearGradient id={`${uid}-glassDepth`} x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="rgba(2,6,23,0.72)" />
-                <stop offset="13%" stopColor="rgba(226,232,240,0.26)" />
-                <stop offset="34%" stopColor="rgba(255,255,255,0.10)" />
-                <stop offset="63%" stopColor="rgba(15,23,42,0.22)" />
-                <stop offset="100%" stopColor="rgba(2,6,23,0.78)" />
+                <stop offset="0%" stopColor="rgba(2,6,23,0.62)" />
+                <stop offset="10%" stopColor="rgba(226,232,240,0.10)" />
+                <stop offset="34%" stopColor="rgba(255,255,255,0.02)" />
+                <stop offset="50%" stopColor="rgba(255,255,255,0)" />
+                <stop offset="70%" stopColor="rgba(15,23,42,0.10)" />
+                <stop offset="100%" stopColor="rgba(2,6,23,0.7)" />
               </linearGradient>
               {/* static gradient — the light shift happens via a cheap transform
                   on the clipped bloom rect, never by rewriting gradient geometry */}
               <radialGradient id={`${uid}-glassBloom`} gradientUnits="userSpaceOnUse" cx="60" cy="98" r="76">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.34)" />
-                <stop offset="48%" stopColor="rgba(255,255,255,0.08)" />
+                <stop offset="0%" stopColor="rgba(255,255,255,0.12)" />
+                <stop offset="48%" stopColor="rgba(255,255,255,0.03)" />
                 <stop offset="100%" stopColor="rgba(255,255,255,0)" />
               </radialGradient>
               <radialGradient id={`${uid}-stageShadowSoft`} cx="50%" cy="50%" r="50%">
@@ -464,6 +475,13 @@ export function PeptideVialVisual({
                 <stop offset="62%" stopColor="rgba(0,0,0,0.5)" />
                 <stop offset="100%" stopColor="rgba(0,0,0,0)" />
               </radialGradient>
+              {/* soft vertical specular band; slides across the glass with the
+                  vial's position so the fixed stage light reads as sweeping */}
+              <linearGradient id={`${uid}-glassSweep`} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="rgba(255,255,255,0)" />
+                <stop offset="50%" stopColor="rgba(255,255,255,0.6)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+              </linearGradient>
               <filter id={`${uid}-shellSoft`} x="-25%" y="-25%" width="150%" height="150%">
                 <feGaussianBlur stdDeviation="2.2" />
               </filter>
@@ -500,37 +518,55 @@ export function PeptideVialVisual({
                 opacity={shellGlowOpacity}
                 transform={`translate(${visualLightOffset * 21.6} 0)`}
               />
+              {/* the sweeping specular — softly clipped to the glass, glides
+                  sideways as the vial travels through the fixed stage light */}
+              <rect
+                ref={glassSweepRef}
+                data-vial-detail="glass-sweep"
+                x="40"
+                y="0"
+                width="40"
+                height="294"
+                fill={`url(#${uid}-glassSweep)`}
+                opacity={0.14 + visualFocus * 0.34}
+                transform={`translate(${visualLightOffset * 34} 0)`}
+              />
             </g>
             {/* blurred strokes stay static so the filter result can be cached;
-                the stage light only fades the whole group in and out */}
+                the whole group fades with focus, and the two side edges fade
+                against each other so the lit edge follows the light source */}
             <g ref={shellHighlightsRef} data-vial-detail="shell-highlights" opacity={0.42 + visualFocus * 0.58}>
-              <path
-                d="M12 58 C12 44 36 38 36 23 L36 8"
-                fill="none"
-                stroke="rgba(255,255,255,0.58)"
-                strokeOpacity="0.54"
-                strokeWidth="4.4"
-                strokeLinecap="round"
-                filter={`url(#${uid}-shellSoft)`}
-              />
-              <path
-                d="M12 64 L12 242 C12 265 25 282 48 286"
-                fill="none"
-                stroke="rgba(255,255,255,0.52)"
-                strokeOpacity="0.6"
-                strokeWidth="5"
-                strokeLinecap="round"
-                filter={`url(#${uid}-shellSoft)`}
-              />
-              <path
-                d="M108 64 L108 246 C108 268 96 282 73 286"
-                fill="none"
-                stroke="rgba(255,255,255,0.26)"
-                strokeOpacity="0.38"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                filter={`url(#${uid}-shellSoft)`}
-              />
+              <g ref={shellHiLeftRef} opacity={Math.max(0.08, Math.min(1, 0.6 - visualLightOffset * 0.6))}>
+                <path
+                  d="M12 58 C12 44 36 38 36 23 L36 8"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.58)"
+                  strokeOpacity="0.54"
+                  strokeWidth="4.4"
+                  strokeLinecap="round"
+                  filter={`url(#${uid}-shellSoft)`}
+                />
+                <path
+                  d="M12 64 L12 242 C12 265 25 282 48 286"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.52)"
+                  strokeOpacity="0.6"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  filter={`url(#${uid}-shellSoft)`}
+                />
+              </g>
+              <g ref={shellHiRightRef} opacity={Math.max(0.08, Math.min(1, 0.5 + visualLightOffset * 0.6))}>
+                <path
+                  d="M108 64 L108 246 C108 268 96 282 73 286"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.5)"
+                  strokeOpacity="0.5"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  filter={`url(#${uid}-shellSoft)`}
+                />
+              </g>
               <ellipse cx="60" cy="273" rx="42" ry="12" fill="rgba(255,255,255,0.16)" opacity="0.5" filter={`url(#${uid}-shellSoft)`} />
             </g>
             <ellipse cx="60" cy="278" rx="45" ry="9" fill="rgba(0,0,0,0.32)" opacity="0.55" />

@@ -170,6 +170,31 @@ describe('PeptideVialVisual', () => {
     // the bloom gradient itself is static; only a transform moves the light
     expect(text).not.toContain('cx={`${50 + visualLightOffset * 18}%`}')
   })
+
+  test('sweeps a specular reflection across the glass and swaps edge brightness with the light position', () => {
+    const text = source()
+
+    // one fixed light, vials swipe through it: a specular band slides sideways
+    // with lightOffset, and the two glass edges fade against each other so the
+    // lit edge follows the light source
+    expect(text).toContain('data-vial-detail="glass-sweep"')
+    expect(text).toContain("glassSweepRef.current?.setAttribute('transform', `translate(${(o * 34).toFixed(2)} 0)`)")
+    expect(text).toContain('shellHiLeftRef.current?.setAttribute')
+    expect(text).toContain('shellHiRightRef.current?.setAttribute')
+    expect(text).toContain('0.6 - o * 0.6')
+    expect(text).toContain('0.5 + o * 0.6')
+  })
+
+  test('renders the empty glass as clear rather than milky (only the label stays frosted)', () => {
+    const text = source()
+
+    // the label band keeps its frosted look
+    expect(text).toContain('bg-white/28')
+    // the glass body is transparent in the centre — the old milky white
+    // mid-stops are gone
+    expect(text).not.toContain('<stop offset="34%" stopColor="rgba(255,255,255,0.10)" />')
+    expect(text).toContain('<stop offset="50%" stopColor="rgba(255,255,255,0)" />')
+  })
   test('integrates cap label and liquid into the shared vial lighting', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
       name: 'Ipamorelin',
