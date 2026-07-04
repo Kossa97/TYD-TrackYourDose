@@ -78,6 +78,19 @@ describe('Peptide page vial view', () => {
     expect(text.indexOf('<span>Info</span>')).toBeLessThan(text.indexOf('<span>Zyklen</span>'))
   })
 
+  test('collapses the Aktiver Zyklus cockpit into the Zyklen toggle instead of showing it unconditionally', () => {
+    const text = source()
+
+    // the active-cycle cockpit is now the Zyklen panel's body, not a standalone card below it
+    const zyklenToggleIndex = text.indexOf('{vialCyclesOpen && (')
+    const cockpitIndex = text.indexOf('Aktiver Zyklus')
+    expect(zyklenToggleIndex).toBeGreaterThan(-1)
+    expect(cockpitIndex).toBeGreaterThan(zyklenToggleIndex)
+    // only one cockpit block remains — the old always-visible second copy is gone
+    expect(text.split('Aktiver Zyklus').length - 1).toBe(1)
+    expect(text).not.toContain('setCycleManagerPeptide(p)')
+  })
+
   test('supports desktop drag, wheel navigation, and vial clicks in the carousel', () => {
     const text = source()
 
@@ -198,7 +211,7 @@ describe('Peptide page vial view', () => {
     const text = source()
 
     expect(text).toContain('cycleManagerPeptide')
-    expect(text).toContain('setCycleManagerPeptide(p)')
+    expect(text).toContain('setCycleManagerPeptide(activePeptide)')
     expect(text).toContain('Zyklen verwalten')
     expect(text).toContain('Alle erstellten Zyklen')
     expect(text).toContain('cyclesOf(cycleManagerPeptide.id)')

@@ -1684,6 +1684,23 @@ export function Peptide() {
                 {(() => {
                   const invItem = activePeptide.inventory_item_id ? inventory.find(i => i.id === activePeptide.inventory_item_id) : null
                   const pCycles = cyclesOf(activePeptide.id)
+                  const activeCycle = pCycles.find(c => c.active) ?? null
+                  const activeEscs = activeCycle ? sortedEscalationsOf(activeCycle.id) : []
+                  const currentEscalationId = activeCycle
+                    ? activeEscs.filter(e => escalationIsActive(activeCycle, e)).at(-1)?.id ?? null
+                    : null
+                  const activeDose = activeCycle ? effectiveDose(activeCycle, new Date(), activeEscs) : null
+                  const cycleStart = activeCycle ? parseISO(activeCycle.start_date) : null
+                  const cycleEnd = activeCycle?.end_date ? parseISO(activeCycle.end_date) : null
+                  const cycleDay = cycleStart ? Math.max(1, differenceInDays(new Date(), cycleStart) + 1) : null
+                  const cycleTotalDays = cycleStart && cycleEnd ? Math.max(1, differenceInDays(cycleEnd, cycleStart) + 1) : null
+                  const cycleDayLabel = cycleDay ? `${cycleDay} / ${cycleTotalDays ?? 'Ende offen'}` : '-'
+                  const cycleProgressPct = cycleDay && cycleTotalDays ? Math.max(0, Math.min(100, (cycleDay / cycleTotalDays) * 100)) : null
+                  const activeReminder = activeCycle ? reminderLabel(activeCycle) : null
+                  const activeIntake = activeCycle ? intakeLabel(activeCycle) : null
+                  const activeFrequency = activeCycle
+                    ? [freqLabel(activeCycle), activeIntake].filter(Boolean).join(' · ')
+                    : null
                   const notSet = 'Nicht gesetzt'
                   const compactInfoRows: InfoRow[] = [
                     { label: 'Peptidname', value: activePeptide.name || notSet, wide: true },
@@ -1820,46 +1837,147 @@ export function Peptide() {
                         {vialCyclesOpen ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
                       </button>
                       {vialCyclesOpen && (
-                        <div className="space-y-2 border-t border-slate-800 p-2 text-xs">
-                          {pCycles.length === 0 && (
-                            <p className="px-1 py-2 text-center text-slate-500">{t('noch_kein_zyklus')}</p>
-                          )}
-                          {pCycles.map(c => {
-                            const isEnded = c.end_date ? parseISO(c.end_date).getTime() < Date.now() : false
-                            const statusLabel = c.active ? t('aktiv_badge') : isEnded ? 'Beendet' : t('inaktiv_badge')
-                            return (
-                              <div key={c.id} className={`rounded-lg border px-2.5 py-2 ${c.active ? 'border-violet-500/35 bg-violet-500/5' : 'border-slate-800 bg-slate-900/55'}`}>
-                                <div className="flex items-center justify-between gap-2">
-                                  <p className="truncate text-sm font-semibold text-slate-200">{c.name}</p>
-                                  <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${c.active ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-300' : 'border-slate-700 bg-slate-900 text-slate-400'}`}>
-                                    {statusLabel}
-                                  </span>
-                                </div>
-                                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
-                                  <span className="font-semibold text-slate-300">{c.dose} {c.unit}</span>
-                                  <span>{freqLabel(c)}</span>
-                                  <span>{format(parseISO(c.start_date), 'dd.MM.yyyy')}{c.end_date ? ` – ${format(parseISO(c.end_date), 'dd.MM.yyyy')}` : ' – offen'}</span>
-                                </div>
+                        <div className="border-t border-slate-800 p-2 text-xs">
+                          <div className="rounded-xl border border-violet-500/20 bg-slate-950/55 p-3">
+                            <div className="mb-3 flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-violet-300">
+                                  <Activity size={14} /> Aktiver Zyklus
+                                </p>
+                                <p className="mt-1 truncate text-base font-bold text-white">{activeCycle?.name ?? t('noch_kein_zyklus')}</p>
                               </div>
-                            )
-                          })}
-                          <div className="flex gap-2 pt-1">
-                            <button
-                              type="button"
-                              data-ob="btn-zyklus-add"
-                              onClick={() => { openNewCycle(activePeptide); dismissZyklusBtn() }}
-                              className="flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/15 px-3 text-xs font-semibold text-violet-300 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
-                            >
-                              <Plus size={13} /> {t('zyklus_hinzufuegen')}
-                              {zyklusBtnNew && <NewDot />}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setCycleManagerPeptide(activePeptide)}
-                              className="flex min-h-9 flex-1 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/70 px-3 text-xs font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
-                            >
-                              Verwalten
-                            </button>
+                              <div className="flex shrink-0 items-center gap-2">
+                                <button
+                                  data-ob="btn-zyklus-add"
+                                  onClick={() => { openNewCycle(activePeptide); dismissZyklusBtn() }}
+                                  className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/15 px-3 text-xs font-semibold text-violet-300 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
+                                >
+                                  {activeCycle && <Plus size={14} />} {activeCycle ? 'Neu' : t('zyklus_hinzufuegen')}
+                                  {zyklusBtnNew && <NewDot />}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setCycleManagerPeptide(activePeptide)}
+                                  className="flex min-h-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/70 px-3 text-xs font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
+                                >
+                                  Verwalten
+                                </button>
+                              </div>
+                            </div>
+
+                            {activeCycle ? (
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                  <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
+                                    <p className="text-slate-500">Tag</p>
+                                    <p className="font-semibold text-white">
+                                      {cycleDayLabel}
+                                    </p>
+                                  </div>
+                                  <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
+                                    <p className="text-slate-500">Aktuelle Dosis</p>
+                                    <p className="font-semibold text-white">{activeDose} {activeCycle.unit}</p>
+                                  </div>
+                                  <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
+                                    <p className="text-slate-500">Frequenz</p>
+                                    <p className="font-semibold text-white">{activeFrequency}</p>
+                                  </div>
+                                  <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
+                                    <p className="text-slate-500">Methode</p>
+                                    <p className="font-semibold text-white">{t(METHOD_KEYS[activeCycle.method] ?? activeCycle.method)}</p>
+                                  </div>
+                                  <div className="col-span-2 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
+                                    <p className="text-slate-500">Reminder</p>
+                                    <p className="font-semibold text-white">{activeReminder ?? '-'}</p>
+                                  </div>
+                                </div>
+
+                                {cycleProgressPct !== null && (
+                                  <div>
+                                    <div className="mb-1 flex justify-between text-[11px] text-slate-500">
+                                      <span>{format(parseISO(activeCycle.start_date), 'dd.MM')}</span>
+                                      <span>{activeCycle.end_date ? format(parseISO(activeCycle.end_date), 'dd.MM') : 'Open End'}</span>
+                                    </div>
+                                    <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                                      <div className="h-full rounded-full bg-violet-400" style={{ width: `${cycleProgressPct}%` }} />
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-2">
+                                  <div className="mb-2 flex items-center justify-between gap-2">
+                                    <p className="flex items-center gap-1.5 text-xs font-semibold text-orange-300">
+                                      <SlidersHorizontal size={13} /> {t('dosiserhoehungen')}
+                                    </p>
+                                  </div>
+                                  <div className="relative space-y-1.5 pl-8">
+                                    <div className="absolute bottom-5 left-3 top-5 w-px bg-slate-700/70" />
+                                    <div className={`relative flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${currentEscalationId ? 'border-slate-800 bg-slate-950/70 text-slate-300' : 'border-orange-500/50 bg-orange-500/15 text-orange-100 shadow-[0_0_0_1px_rgba(249,115,22,0.14)]'}`}>
+                                      <span className={`absolute -left-8 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border-2 ${currentEscalationId ? 'border-slate-500 bg-slate-900 text-slate-300' : 'border-orange-400 bg-orange-500/20 text-orange-200 ring-4 ring-orange-500/15'}`}>
+                                        {currentEscalationId ? <Check size={13} /> : <span className="h-2.5 w-2.5 rounded-full bg-orange-300" />}
+                                      </span>
+                                      <span className="min-w-0 truncate">Basis</span>
+                                      <span className="shrink-0 font-semibold text-white">{activeCycle.dose} {activeCycle.unit}</span>
+                                      {!currentEscalationId && (
+                                        <span className="shrink-0 rounded-md border border-orange-400/40 bg-orange-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-200">
+                                          Aktuell
+                                        </span>
+                                      )}
+                                    </div>
+                                    {activeEscs.length === 0 && (
+                                      <p className="px-1 py-1 text-xs italic text-slate-500">{t('keine_dosiserhoehungen')}</p>
+                                    )}
+                                    {activeEscs.map(e => {
+                                      const isCurrent = e.id === currentEscalationId
+                                      const isPast = escalationIsActive(activeCycle, e) && !isCurrent
+                                      const targetDose = escalationTargetDose(activeCycle, e)
+                                      const AdjustmentIcon = doseAdjustmentIcon(activeCycle, e)
+                                      return (
+                                        <div key={e.id} className={`relative flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${isCurrent ? 'border-orange-500/50 bg-orange-500/15 text-orange-100 shadow-[0_0_0_1px_rgba(249,115,22,0.16)]' : 'border-slate-800 bg-slate-950/70 text-slate-300'}`}>
+                                          <span className={`absolute -left-8 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border-2 ${isCurrent ? 'border-orange-400 bg-orange-500/25 text-orange-100 ring-4 ring-orange-500/15' : isPast ? 'border-slate-500 bg-slate-900 text-slate-300' : 'border-slate-600 bg-slate-950 text-slate-500'}`}>
+                                            {isCurrent ? <span className="h-2.5 w-2.5 rounded-full bg-orange-300" /> : isPast ? <Check size={13} /> : <span className="h-2.5 w-2.5 rounded-full border border-slate-500" />}
+                                          </span>
+                                          <span className="min-w-0 truncate">{escLabel(e)}</span>
+                                          <span className="flex shrink-0 items-center gap-1 font-semibold">
+                                            <AdjustmentIcon size={13} /> {targetDose} {e.unit}
+                                          </span>
+                                          {isCurrent ? (
+                                            <span className="shrink-0 rounded-md border border-orange-400/40 bg-orange-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-200">
+                                              Aktuell
+                                            </span>
+                                          ) : (
+                                            <span className="shrink-0 text-slate-500">
+                                              {isPast ? <Check size={15} /> : <Clock size={15} />}
+                                            </span>
+                                          )}
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                  <div className="mt-2 flex justify-center">
+                                    <button
+                                      data-ob="btn-esc-add"
+                                      className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 text-xs font-semibold text-orange-300 transition-colors hover:border-orange-400/50 hover:bg-orange-500/15 hover:text-orange-200"
+                                      onClick={() => openNewEsc(activeCycle)}
+                                    >
+                                      <Plus size={12} /> {t('esc_hinzufuegen')}
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => navigate('/kalender')}
+                                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-500 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-violet-400"
+                                >
+                                  <Check size={15} /> Dosis loggen
+                                </button>
+                              </div>
+                            ) : (
+                              <p className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center text-sm text-slate-500">
+                                {t('noch_kein_zyklus')}
+                              </p>
+                            )}
                           </div>
                         </div>
                       )}
@@ -1868,283 +1986,6 @@ export function Peptide() {
                   )
                 })()}
               </div>
-
-              {(() => {
-                const p = activePeptide
-                const pCycles = cyclesOf(p.id)
-                const hasActive = pCycles.some(c => c.active)
-                const invItem = p.inventory_item_id ? inventory.find(i => i.id === p.inventory_item_id) : null
-                const vialPct = Math.round(getVialFillPct(p) ?? 100)
-                const days = expiryDaysLeft(p)
-                const daysClass = days === null ? 'text-slate-300' : days > 7 ? 'text-emerald-400' : days > 0 ? 'text-amber-400' : 'text-red-400'
-                const expiryLabel = days === null
-                  ? t('peptide_form_not_set', { defaultValue: 'Nicht gesetzt' })
-                  : days > 0
-                    ? (days === 1 ? t('haltbar_noch_1') : t('haltbar_noch_n', { n: days }))
-                    : t('abgelaufen_warn')
-                const activeCycle = pCycles.find(c => c.active) ?? null
-                const activeEscs = activeCycle ? sortedEscalationsOf(activeCycle.id) : []
-                const currentEscalationId = activeCycle
-                  ? activeEscs.filter(e => escalationIsActive(activeCycle, e)).at(-1)?.id ?? null
-                  : null
-                const activeDose = activeCycle ? effectiveDose(activeCycle, new Date(), activeEscs) : null
-                const cycleStart = activeCycle ? parseISO(activeCycle.start_date) : null
-                const cycleEnd = activeCycle?.end_date ? parseISO(activeCycle.end_date) : null
-                const cycleDay = cycleStart ? Math.max(1, differenceInDays(new Date(), cycleStart) + 1) : null
-                const cycleTotalDays = cycleStart && cycleEnd ? Math.max(1, differenceInDays(cycleEnd, cycleStart) + 1) : null
-                const cycleDayLabel = cycleDay ? `${cycleDay} / ${cycleTotalDays ?? 'Ende offen'}` : '-'
-                const cycleProgressPct = cycleDay && cycleTotalDays ? Math.max(0, Math.min(100, (cycleDay / cycleTotalDays) * 100)) : null
-                const activeReminder = activeCycle ? reminderLabel(activeCycle) : null
-                const activeIntake = activeCycle ? intakeLabel(activeCycle) : null
-                const activeFrequency = activeCycle
-                  ? [freqLabel(activeCycle), activeIntake].filter(Boolean).join(' · ')
-                  : null
-
-                return (
-                  <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
-                    <div className="hidden">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Peptid-Cockpit</h3>
-                          <span className={`badge ${hasActive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}>
-                            {hasActive ? t('aktiv_badge') : t('inaktiv_badge')}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-sm text-slate-400">
-                          {t(METHOD_KEYS[p.default_method] ?? p.default_method)}
-                          {p.vial_amount_mg ? ` · Vial: ${p.vial_amount_mg} ${p.vial_amount_unit ?? 'mg'}` : ''}
-                        </p>
-                      </div>
-                      <div className="hidden">
-                        <button className="p-2 text-slate-400 transition-colors hover:text-sky-400"
-                          title="Infos" onClick={() => { setInfoPeptide(p); dismissInfoBtn() }}>
-                          <FileText size={16} />
-                        </button>
-                        <button className="p-2 text-slate-400 transition-colors hover:text-sky-400"
-                          onClick={() => openEditPeptide(p)}><Pencil size={16} /></button>
-                        {p.inventory_item_id && (
-                          <button
-                            className="p-2 text-slate-400 transition-colors hover:text-sky-400"
-                            title={t('rekonstitution_wdh')}
-                            onClick={() => handleRekonstitution(p)}
-                          >
-                            <RefreshCw size={16} />
-                          </button>
-                        )}
-                        <button className="p-2 text-slate-400 transition-colors hover:text-red-400"
-                          onClick={() => removePeptide(p.id)}><Trash2 size={16} /></button>
-                      </div>
-                    </div>
-
-                    <div className="hidden">
-                      <button
-                        type="button"
-                        onClick={() => setVialDetailsOpen(open => !open)}
-                        aria-expanded={vialDetailsOpen}
-                        className="flex w-full items-center justify-center gap-2 px-3 py-3 text-center text-sm font-semibold text-white"
-                      >
-                        <FileText size={15} className="text-cyan-300" />
-                        <span>Info</span>
-                        {vialDetailsOpen ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
-                      </button>
-                      {vialDetailsOpen && (
-                        <div className="grid grid-cols-2 gap-px border-t border-slate-800 bg-slate-800 text-xs">
-                          <div className="bg-slate-950/80 px-3 py-2">
-                            <p className="text-slate-500">Wirkstoff</p>
-                            <p className="font-semibold text-white">{p.vial_amount_mg ? `${p.vial_amount_mg} ${p.vial_amount_unit ?? 'mg'}/Vial` : '-'}</p>
-                          </div>
-                          <div className="bg-slate-950/80 px-3 py-2">
-                            <p className="text-slate-500">Flüssigkeit</p>
-                            <p className="font-semibold text-white">{p.reconstitution_ml ? `${p.reconstitution_ml} ml` : '-'}</p>
-                          </div>
-                          <div className="bg-slate-950/80 px-3 py-2">
-                            <p className="text-slate-500">Methode</p>
-                            <p className="font-semibold text-white">{t(METHOD_KEYS[p.default_method] ?? p.default_method)}</p>
-                          </div>
-                          <div className="bg-slate-950/80 px-3 py-2">
-                            <p className="text-slate-500">Füllstand</p>
-                            <p className="font-semibold text-white">{vialPct}%</p>
-                          </div>
-                          <div className="bg-slate-950/80 px-3 py-2">
-                            <p className="text-slate-500">Vorrat</p>
-                            <p className="font-semibold text-white">{invItem ? t('vials_vorratig', { n: invItem.vials_count }) : '-'}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="hidden">
-                      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Haltbarkeit</p>
-                        <p className={`mt-1 font-semibold ${daysClass}`}>{expiryLabel}</p>
-                      </div>
-                      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Vorrat</p>
-                        <p className="mt-1 font-semibold text-white">{invItem ? t('vials_vorratig', { n: invItem.vials_count }) : '-'}</p>
-                      </div>
-                      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Füllstand</p>
-                        <p className="mt-1 font-semibold text-white">{vialPct}%</p>
-                      </div>
-                      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Zyklen</p>
-                        <p className="mt-1 font-semibold text-white">{pCycles.length}</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 rounded-xl border border-violet-500/20 bg-slate-950/55 p-3">
-                      <div className="mb-3 flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-violet-300">
-                            <Activity size={14} /> Aktiver Zyklus
-                          </p>
-                          <p className="mt-1 truncate text-base font-bold text-white">{activeCycle?.name ?? t('noch_kein_zyklus')}</p>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                          <button
-                            data-ob="btn-zyklus-add"
-                            onClick={() => { openNewCycle(p); dismissZyklusBtn() }}
-                            className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/15 px-3 text-xs font-semibold text-violet-300 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
-                          >
-                            {activeCycle && <Plus size={14} />} {activeCycle ? 'Neu' : t('zyklus_hinzufuegen')}
-                            {zyklusBtnNew && <NewDot />}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCycleManagerPeptide(p)}
-                            className="flex min-h-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/70 px-3 text-xs font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
-                          >
-                            Verwalten
-                          </button>
-                        </div>
-                      </div>
-
-                      {activeCycle ? (
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                              <p className="text-slate-500">Tag</p>
-                              <p className="font-semibold text-white">
-                                {cycleDayLabel}
-                              </p>
-                            </div>
-                            <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                              <p className="text-slate-500">Aktuelle Dosis</p>
-                              <p className="font-semibold text-white">{activeDose} {activeCycle.unit}</p>
-                            </div>
-                            <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                              <p className="text-slate-500">Frequenz</p>
-                              <p className="font-semibold text-white">{activeFrequency}</p>
-                            </div>
-                            <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                              <p className="text-slate-500">Methode</p>
-                              <p className="font-semibold text-white">{t(METHOD_KEYS[activeCycle.method] ?? activeCycle.method)}</p>
-                            </div>
-                            <div className="col-span-2 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                              <p className="text-slate-500">Reminder</p>
-                              <p className="font-semibold text-white">{activeReminder ?? '-'}</p>
-                            </div>
-                          </div>
-
-                          {cycleProgressPct !== null && (
-                            <div>
-                              <div className="mb-1 flex justify-between text-[11px] text-slate-500">
-                                <span>{format(parseISO(activeCycle.start_date), 'dd.MM')}</span>
-                                <span>{activeCycle.end_date ? format(parseISO(activeCycle.end_date), 'dd.MM') : 'Open End'}</span>
-                              </div>
-                              <div className="h-2 overflow-hidden rounded-full bg-slate-800">
-                                <div className="h-full rounded-full bg-violet-400" style={{ width: `${cycleProgressPct}%` }} />
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-2">
-                            <div className="mb-2 flex items-center justify-between gap-2">
-                              <p className="flex items-center gap-1.5 text-xs font-semibold text-orange-300">
-                                <SlidersHorizontal size={13} /> {t('dosiserhoehungen')}
-                              </p>
-                            </div>
-                            <div className="relative space-y-1.5 pl-8">
-                              <div className="absolute bottom-5 left-3 top-5 w-px bg-slate-700/70" />
-                              <div className={`relative flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${currentEscalationId ? 'border-slate-800 bg-slate-950/70 text-slate-300' : 'border-orange-500/50 bg-orange-500/15 text-orange-100 shadow-[0_0_0_1px_rgba(249,115,22,0.14)]'}`}>
-                                <span className={`absolute -left-8 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border-2 ${currentEscalationId ? 'border-slate-500 bg-slate-900 text-slate-300' : 'border-orange-400 bg-orange-500/20 text-orange-200 ring-4 ring-orange-500/15'}`}>
-                                  {currentEscalationId ? <Check size={13} /> : <span className="h-2.5 w-2.5 rounded-full bg-orange-300" />}
-                                </span>
-                                <span className="min-w-0 truncate">Basis</span>
-                                <span className="shrink-0 font-semibold text-white">{activeCycle.dose} {activeCycle.unit}</span>
-                                {!currentEscalationId && (
-                                  <span className="shrink-0 rounded-md border border-orange-400/40 bg-orange-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-200">
-                                    Aktuell
-                                  </span>
-                                )}
-                              </div>
-                              {activeEscs.length === 0 && (
-                                <p className="px-1 py-1 text-xs italic text-slate-500">{t('keine_dosiserhoehungen')}</p>
-                              )}
-                              {activeEscs.map(e => {
-                                const isCurrent = e.id === currentEscalationId
-                                const isPast = escalationIsActive(activeCycle, e) && !isCurrent
-                                const targetDose = escalationTargetDose(activeCycle, e)
-                                const AdjustmentIcon = doseAdjustmentIcon(activeCycle, e)
-                                return (
-                                  <div key={e.id} className={`relative flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${isCurrent ? 'border-orange-500/50 bg-orange-500/15 text-orange-100 shadow-[0_0_0_1px_rgba(249,115,22,0.16)]' : 'border-slate-800 bg-slate-950/70 text-slate-300'}`}>
-                                    <span className={`absolute -left-8 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border-2 ${isCurrent ? 'border-orange-400 bg-orange-500/25 text-orange-100 ring-4 ring-orange-500/15' : isPast ? 'border-slate-500 bg-slate-900 text-slate-300' : 'border-slate-600 bg-slate-950 text-slate-500'}`}>
-                                      {isCurrent ? <span className="h-2.5 w-2.5 rounded-full bg-orange-300" /> : isPast ? <Check size={13} /> : <span className="h-2.5 w-2.5 rounded-full border border-slate-500" />}
-                                    </span>
-                                    <span className="min-w-0 truncate">{escLabel(e)}</span>
-                                    <span className="flex shrink-0 items-center gap-1 font-semibold">
-                                      <AdjustmentIcon size={13} /> {targetDose} {e.unit}
-                                    </span>
-                                    {isCurrent ? (
-                                      <span className="shrink-0 rounded-md border border-orange-400/40 bg-orange-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-200">
-                                        Aktuell
-                                      </span>
-                                    ) : (
-                                      <span className="shrink-0 text-slate-500">
-                                        {isPast ? <Check size={15} /> : <Clock size={15} />}
-                                      </span>
-                                    )}
-                                  </div>
-                                )
-                              })}
-                            </div>
-                            <div className="mt-2 flex justify-center">
-                              <button
-                                data-ob="btn-esc-add"
-                                className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 text-xs font-semibold text-orange-300 transition-colors hover:border-orange-400/50 hover:bg-orange-500/15 hover:text-orange-200"
-                                onClick={() => openNewEsc(activeCycle)}
-                              >
-                                <Plus size={12} /> {t('esc_hinzufuegen')}
-                              </button>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => navigate('/kalender')}
-                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-500 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-violet-400"
-                          >
-                            <Check size={15} /> Dosis loggen
-                          </button>
-                        </div>
-                      ) : (
-                        <p className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center text-sm text-slate-500">
-                          {t('noch_kein_zyklus')}
-                        </p>
-                      )}
-                    </div>
-
-                    <button
-                      data-ob="btn-zyklus-add"
-                      onClick={() => { openNewCycle(p); dismissZyklusBtn() }}
-                      className="hidden"
-                    >
-                      {t('zyklus_hinzufuegen')}
-                      {zyklusBtnNew && <NewDot />}
-                    </button>
-                  </div>
-                )
-              })()}
             </div>
           )}
 
