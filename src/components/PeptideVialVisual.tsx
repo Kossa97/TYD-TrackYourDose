@@ -153,16 +153,18 @@ function VialTop({
   lightOffset,
   sheenRef,
   arcRef,
+  marginClass,
 }: {
   focus: number
   lightOffset: number
   sheenRef: RefObject<SVGEllipseElement | null>
   arcRef: RefObject<SVGPathElement | null>
+  marginClass: string
 }) {
   const uid = useId()
   const capSheenOpacity = 0.24 + focus * 0.4
   return (
-    <svg className="pointer-events-none relative z-20 -mb-4 block h-auto w-full" viewBox="0 0 120 58" aria-hidden="true">
+    <svg className={`pointer-events-none relative z-20 ${marginClass} block h-auto w-full`} viewBox="0 0 120 58" aria-hidden="true">
       <defs>
         <linearGradient id={`${uid}-capSilver`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#f6f9fc" />
@@ -379,6 +381,9 @@ export function PeptideVialVisual({
   // tiny inline previews.
   const widthClass = size === 'large' ? 'w-28 sm:w-36' : size === 'carousel' ? 'w-20 sm:w-24' : 'w-16'
   const shellClass = size === 'large' ? 'h-44 sm:h-52' : size === 'carousel' ? 'h-28 sm:h-36' : 'h-24'
+  // the cap overlaps the glass neck by a fixed amount; scaled down with the
+  // vial's own width so smaller sizes keep the same cap-to-body proportions
+  const capMarginClass = size === 'carousel' ? '-mb-3' : '-mb-4'
   const labelClass = size === 'large'
     ? 'left-[3.5%] right-[3.5%] top-1/2 -translate-y-1/2 rounded-sm px-1 py-2'
     : 'left-[3.5%] right-[3.5%] top-1/2 -translate-y-1/2 rounded-sm px-1 py-1'
@@ -421,7 +426,7 @@ export function PeptideVialVisual({
       `}</style>
 
       <div className="relative flex flex-col items-center">
-        {VialTop({ focus: visualFocus, lightOffset: visualLightOffset, sheenRef: capSheenRef, arcRef: capArcRef })}
+        {VialTop({ focus: visualFocus, lightOffset: visualLightOffset, sheenRef: capSheenRef, arcRef: capArcRef, marginClass: capMarginClass })}
 
         <div className={`relative z-0 w-full ${shellClass} overflow-visible`}>
           <svg

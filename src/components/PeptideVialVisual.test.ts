@@ -184,7 +184,7 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('data-vial-detail="cap-light-sheen"')
     expect(html).toContain('data-vial-detail="liquid-glass-window"')
     expect(html).toContain('data-vial-detail="label-glass-wrap"')
-    expect(source()).toContain('VialTop({ focus: visualFocus, lightOffset: visualLightOffset, sheenRef: capSheenRef, arcRef: capArcRef })')
+    expect(source()).toContain('VialTop({ focus: visualFocus, lightOffset: visualLightOffset, sheenRef: capSheenRef, arcRef: capArcRef, marginClass: capMarginClass })')
     expect(source()).toContain('left-[3.5%] right-[3.5%]')
     expect(source()).toContain('top-1/2 -translate-y-1/2 rounded-sm px-1 py-2')
     expect(source()).toContain('top-1/2 -translate-y-1/2 rounded-sm px-1 py-1')
@@ -334,7 +334,16 @@ describe('PeptideVialVisual', () => {
     expect(text).toContain('data-vial-detail="cap-top"')
     expect(text).toContain('data-vial-detail="cap-collar"')
     expect(text).toContain('width="86"')
-    expect(text).toContain('className="pointer-events-none relative z-20 -mb-4 block h-auto w-full"')
+    expect(text).toContain('className={`pointer-events-none relative z-20 ${marginClass} block h-auto w-full`}')
     expect(text).toContain('className={`relative z-0 w-full ${shellClass} overflow-visible`}')
+  })
+
+  test('scales the cap overlap down with the vial size so the cap stays proportional when shrunk', () => {
+    const text = source()
+
+    // the carousel size uses a smaller fixed overlap than the large/compact default,
+    // matching the smaller cap render size so the cap-to-body proportions hold up
+    expect(text).toContain("const capMarginClass = size === 'carousel' ? '-mb-3' : '-mb-4'")
+    expect(text).toContain('marginClass: capMarginClass')
   })
 })
