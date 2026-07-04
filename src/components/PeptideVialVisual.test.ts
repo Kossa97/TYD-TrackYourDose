@@ -338,12 +338,12 @@ describe('PeptideVialVisual', () => {
     expect(text).toContain('className={`relative z-0 w-full ${shellClass} overflow-visible`}')
   })
 
-  test('scales the cap overlap down with the vial size so the cap stays proportional when shrunk', () => {
+  test('raises the cap slightly so a sliver of neck stays visible below it', () => {
     const text = source()
 
-    // the carousel size uses a smaller fixed overlap than the large/compact default,
-    // matching the smaller cap render size so the cap-to-body proportions hold up
-    expect(text).toContain("const capMarginClass = size === 'carousel' ? '-mb-3' : '-mb-4'")
+    // the overlap is smaller than before so a bit of neck peeks out under the
+    // cap, and still scales down with vial size to keep proportions
+    expect(text).toContain("const capMarginClass = size === 'large' ? '-mb-2' : '-mb-1'")
     expect(text).toContain('marginClass: capMarginClass')
   })
 })

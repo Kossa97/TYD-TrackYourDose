@@ -381,9 +381,10 @@ export function PeptideVialVisual({
   // tiny inline previews.
   const widthClass = size === 'large' ? 'w-28 sm:w-36' : size === 'carousel' ? 'w-20 sm:w-24' : 'w-16'
   const shellClass = size === 'large' ? 'h-44 sm:h-52' : size === 'carousel' ? 'h-28 sm:h-36' : 'h-24'
-  // the cap overlaps the glass neck by a fixed amount; scaled down with the
-  // vial's own width so smaller sizes keep the same cap-to-body proportions
-  const capMarginClass = size === 'carousel' ? '-mb-3' : '-mb-4'
+  // the cap sits over the glass neck with a slight overlap; raised a bit from
+  // the original so a sliver of neck stays visible below the cap, scaled down
+  // with the vial's own width so smaller sizes keep the same proportions
+  const capMarginClass = size === 'large' ? '-mb-2' : '-mb-1'
   const labelClass = size === 'large'
     ? 'left-[3.5%] right-[3.5%] top-1/2 -translate-y-1/2 rounded-sm px-1 py-2'
     : 'left-[3.5%] right-[3.5%] top-1/2 -translate-y-1/2 rounded-sm px-1 py-1'
