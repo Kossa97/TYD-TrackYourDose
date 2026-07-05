@@ -3,18 +3,20 @@ export interface DailyLogRow {
   log_date: string
   energie: number | null
   schlaf: number | null
+  wohlbefinden: number | null
   libido: number | null
   notes: string | null
 }
 
-export type DailyLogField = 'energie' | 'schlaf' | 'libido'
+export type DailyLogField = 'energie' | 'schlaf' | 'wohlbefinden' | 'libido'
 
-export const WELLNESS_MARKERS = ['Energie', 'Schlaf', 'Libido'] as const
+export const WELLNESS_MARKERS = ['Energie', 'Schlaf', 'Wohlbefinden', 'Libido'] as const
 export type WellnessMarker = (typeof WELLNESS_MARKERS)[number]
 
 export const WELLNESS_MARKER_FIELD: Record<WellnessMarker, DailyLogField> = {
   Energie: 'energie',
   Schlaf: 'schlaf',
+  Wohlbefinden: 'wohlbefinden',
   Libido: 'libido',
 }
 
