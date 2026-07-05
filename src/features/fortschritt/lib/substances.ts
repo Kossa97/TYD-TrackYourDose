@@ -10,16 +10,25 @@ function embedName(peptides: CycleRow['peptides']): string | null {
 }
 
 export function normalizeCycles(rows: CycleRow[] | null | undefined): CycleSubstance[] {
-  return (rows ?? []).map((row, index) => ({
-    id: row.id,
-    name: embedName(row.peptides) ?? row.name,
-    mode: 'cycle' as const,
-    startDate: row.start_date,
-    endDate: row.end_date,
-    active: row.active,
-    color: substanceColor(index),
-    peptideId: row.peptide_id,
-  }))
+  // Farbe pro Substanz, nicht pro Zyklus: alle Zyklen derselben Substanz teilen
+  // sich eine Farbe (und damit einen Legenden-Eintrag). Der Farb-Index wird in
+  // Reihenfolge des ersten Auftretens vergeben, damit er stabil bleibt.
+  const colorIndex = new Map<string, number>()
+  return (rows ?? []).map((row) => {
+    const name = embedName(row.peptides) ?? row.name
+    const key = row.peptide_id ?? name
+    if (!colorIndex.has(key)) colorIndex.set(key, colorIndex.size)
+    return {
+      id: row.id,
+      name,
+      mode: 'cycle' as const,
+      startDate: row.start_date,
+      endDate: row.end_date,
+      active: row.active,
+      color: substanceColor(colorIndex.get(key)!),
+      peptideId: row.peptide_id,
+    }
+  })
 }
 
 export function cycleEndDate(cycle: Pick<CycleSubstance, 'endDate'>): string {

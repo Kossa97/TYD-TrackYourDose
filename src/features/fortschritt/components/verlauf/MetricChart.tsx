@@ -62,6 +62,22 @@ function formatTooltipValue(value: number, unit: string): string {
 function CycleLegend({ bands }: { bands: CycleBandDraw[] }) {
   if (bands.length === 0) return null
 
+  // Ein Eintrag pro Substanz statt pro Zyklus: mehrere Zyklen derselben Substanz
+  // teilen sich Farbe und Namen, also auch nur einen Legenden-Punkt. Eine Substanz
+  // gilt als gefüllt/hervorgehoben, wenn irgendeiner ihrer Balken es ist.
+  const legend = new Map<string, { name: string; color: string; filled: boolean; faded: boolean }>()
+  for (const band of bands) {
+    const key = `${band.name}|${band.color}`
+    const prev = legend.get(key)
+    if (!prev) {
+      legend.set(key, { name: band.name, color: band.color, filled: band.filled, faded: band.faded })
+    } else {
+      prev.filled = prev.filled || band.filled
+      prev.faded = prev.faded && band.faded
+    }
+  }
+  const items = [...legend.values()]
+
   return (
     <div style={{
       display: 'flex',
@@ -72,14 +88,14 @@ function CycleLegend({ bands }: { bands: CycleBandDraw[] }) {
       paddingTop: 12,
       borderTop: '1px solid var(--border)',
     }}>
-      {bands.map(band => (
+      {items.map(item => (
         <div
-          key={band.id}
+          key={`${item.name}|${item.color}`}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 7,
-            opacity: band.faded ? 0.38 : 1,
+            opacity: item.faded ? 0.38 : 1,
             transition: 'opacity 0.18s',
           }}
         >
@@ -87,13 +103,13 @@ function CycleLegend({ bands }: { bands: CycleBandDraw[] }) {
             width: 8,
             height: 8,
             borderRadius: '50%',
-            background: band.filled ? band.color : 'transparent',
-            border: band.filled ? 'none' : `2px solid ${band.color}`,
+            background: item.filled ? item.color : 'transparent',
+            border: item.filled ? 'none' : `2px solid ${item.color}`,
             flexShrink: 0,
-            boxShadow: band.filled ? `0 0 6px ${band.color}44` : 'none',
+            boxShadow: item.filled ? `0 0 6px ${item.color}44` : 'none',
           }} />
           <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-            {band.name}
+            {item.name}
           </span>
         </div>
       ))}
