@@ -17,6 +17,7 @@ import { substanceBarEnd } from '../../lib/focusSummary'
 import { assignLanes, laneCount } from '../../lib/cycleLanes'
 import { CycleBandLayer, type CycleBandDraw } from './CycleBandLayer'
 import { MetricTooltip } from './MetricTooltip'
+import { SnapCursor } from './SnapCursor'
 import { buildTooltipSnapDates } from '../../lib/chartTooltip'
 import { panel } from '../../styles'
 
@@ -172,26 +173,24 @@ export function MetricChart({
     return { bands, lanes }
   }, [cycles, ongoing, focusId, rangeStart, rangeEnd])
 
-  const chartData = useMemo(() => {
-    const snapDates = buildTooltipSnapDates(
-      series.map(point => point.date),
-      bands,
-    )
-    const valueByDate = new Map(series.map(point => [point.date, point.value]))
-
-    return snapDates.map(date => ({
-      ts: dateToTs(date),
-      date,
-      label: fmtDate(date),
-      value: valueByDate.get(date) ?? null,
+  const lineData = useMemo(() => (
+    series.map(point => ({
+      ts: dateToTs(point.date),
+      date: point.date,
+      label: fmtDate(point.date),
+      value: point.value,
     }))
-  }, [series, bands])
+  ), [series])
+
+  const snapDates = useMemo(() => (
+    buildTooltipSnapDates(series.map(point => point.date), bands)
+  ), [series, bands])
 
   const delta = computeDelta(series)
   const latest = series[series.length - 1]
   const xTicks = useMemo(() => buildTimeTicks(range.from, range.to), [range.from, range.to])
 
-  if (chartData.length === 0) {
+  if (lineData.length === 0) {
     return (
       <section style={{ ...panel, padding: '28px 18px', textAlign: 'center' }}>
         <p style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-dim)', marginBottom: 8 }}>
@@ -221,7 +220,7 @@ export function MetricChart({
       </div>
 
       <ResponsiveContainer width="100%" height={280}>
-        <LineChart data={chartData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
+        <LineChart data={lineData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
           <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
           <XAxis
             dataKey="ts"
@@ -245,10 +244,22 @@ export function MetricChart({
           <CycleBandLayer bands={bands} lanes={lanes} />
 
           <Tooltip
-            filterNull={false}
-            cursor={{ stroke: 'rgba(0,204,245,0.4)', strokeWidth: 1, strokeDasharray: '4 4' }}
+            cursor={(
+              <SnapCursor
+                snapDates={snapDates}
+                stroke="rgba(0,204,245,0.4)"
+                strokeWidth={1}
+                strokeDasharray="4 4"
+              />
+            )}
             content={(props) => (
-              <MetricTooltip {...props} bands={bands} metric={metric} chartData={chartData} />
+              <MetricTooltip
+                {...props}
+                bands={bands}
+                metric={metric}
+                metricData={lineData}
+                snapDates={snapDates}
+              />
             )}
           />
           <Line
