@@ -16,7 +16,10 @@ import {
   focusRangeForSubstance,
   type RangeChipKey,
 } from '../../lib/verlaufRange'
+import { panel } from '../../styles'
 import { VerlaufSetup } from './VerlaufSetup'
+import { VerlaufSetupSheet } from './VerlaufSetupSheet'
+import { ChartSettingsButton } from './ChartSettingsButton'
 import { SubstanceLane } from './SubstanceLane'
 import { MetricChart } from './MetricChart'
 import { EventStrip } from './EventStrip'
@@ -32,6 +35,7 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
   const [rangeChip, setRangeChip] = useState<RangeChipKey>('alles')
   const [metricKey, setMetricKey] = useState<MetricKey>('weight')
   const [focusId, setFocusId] = useState<string | null>(null)
+  const [setupOpen, setSetupOpen] = useState(false)
 
   const {
     groups: visibilityGroups,
@@ -127,21 +131,11 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
   }
 
   const hasChartData = visibleCycles.length > 0 || visibleOngoing.length > 0
+  const openSetup = () => setSetupOpen(true)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <VerlaufSetup
-        groups={visibilityGroups}
-        visibleIds={visibleIds}
-        onToggleGroup={toggleGroup}
-        onToggleCycle={toggleCycle}
-        availableMetrics={availableMetrics}
-        metricKey={metricKey}
-        pointCounts={pointCounts}
-        onSelectMetric={selectMetric}
-      />
-
-      {hasChartData && (
+      {(hasChartData || visibilityGroups.length > 0) && (
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -165,7 +159,7 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
                 <button
                   key={chip.key}
                   type="button"
-                  disabled={!!focused}
+                  disabled={!!focused || !hasChartData}
                   onClick={() => setRangeChip(chip.key)}
                   style={{
                     flex: 1,
@@ -173,8 +167,8 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
                     borderRadius: 10,
                     fontSize: '0.68rem',
                     fontWeight: 800,
-                    cursor: focused ? 'not-allowed' : 'pointer',
-                    opacity: focused ? 0.45 : 1,
+                    cursor: focused || !hasChartData ? 'not-allowed' : 'pointer',
+                    opacity: focused || !hasChartData ? 0.45 : 1,
                     background: on ? 'var(--accent-weak)' : 'transparent',
                     color: on ? 'var(--accent)' : 'var(--text-muted)',
                     border: on ? '1px solid var(--accent-border)' : '1px solid var(--border)',
@@ -198,30 +192,26 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
           cycles={visibleCycles}
           ongoing={visibleOngoing}
           focusId={focusId}
+          onOpenSettings={openSetup}
         />
-      )}
-
-      {hasChartData && !selectedMetric && (
-        <section style={{
-          textAlign: 'center',
-          padding: '24px 16px',
-          color: 'var(--text-muted)',
-          fontSize: '0.85rem',
-          fontWeight: 600,
-        }}>
-          Wähle mindestens einen Zyklus und eine Metrik.
-        </section>
       )}
 
       {!hasChartData && (
         <section style={{
+          ...panel,
+          padding: '32px 18px',
           textAlign: 'center',
-          padding: '24px 16px',
-          color: 'var(--text-muted)',
-          fontSize: '0.85rem',
-          fontWeight: 600,
+          position: 'relative',
         }}>
-          Wähle oben mindestens einen Zyklus für den Chart.
+          <div style={{ position: 'absolute', top: 14, right: 12 }}>
+            <ChartSettingsButton onClick={openSetup} />
+          </div>
+          <p style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-dim)', marginBottom: 8 }}>
+            Chart noch leer
+          </p>
+          <p style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', maxWidth: 260, margin: '0 auto' }}>
+            Tippe oben rechts auf Einstellen, um Substanzen und Zyklen für den Verlauf zu wählen.
+          </p>
         </section>
       )}
 
@@ -249,6 +239,20 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
           Zeitraum folgt Fokus-Substanz · Wellness unten antippen
         </p>
       )}
+
+      <VerlaufSetupSheet open={setupOpen} onClose={() => setSetupOpen(false)}>
+        <VerlaufSetup
+          embedded
+          groups={visibilityGroups}
+          visibleIds={visibleIds}
+          onToggleGroup={toggleGroup}
+          onToggleCycle={toggleCycle}
+          availableMetrics={availableMetrics}
+          metricKey={metricKey}
+          pointCounts={pointCounts}
+          onSelectMetric={selectMetric}
+        />
+      </VerlaufSetupSheet>
     </div>
   )
 }

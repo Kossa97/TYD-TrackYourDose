@@ -22,6 +22,8 @@ interface Props {
   metricKey: MetricKey
   pointCounts: Map<string, number>
   onSelectMetric: (key: MetricKey) => void
+  /** Im Vollbild-Sheet ohne zusätzliche Panel-Umrandung */
+  embedded?: boolean
 }
 
 function formatCycleLabel(cycle: CycleSubstance): string {
@@ -237,6 +239,7 @@ export function VerlaufSetup({
   metricKey,
   pointCounts,
   onSelectMetric,
+  embedded = false,
 }: Props) {
   const [substancesPanelOpen, setSubstancesPanelOpen] = useState(false)
   const [openSubstances, setOpenSubstances] = useState<Set<string>>(() => new Set())
@@ -263,8 +266,12 @@ export function VerlaufSetup({
   const hasCycles = groups.some(g => g.cycles.length > 0 || g.ongoing)
   const summary = buildSubstancesSummary(groups, visibleIds)
 
+  const wrapperStyle = embedded
+    ? { display: 'flex', flexDirection: 'column' as const, gap: 18 }
+    : { ...panel, padding: '16px 16px 14px' }
+
   return (
-    <section style={{ ...panel, padding: '16px 16px 14px' }}>
+    <section style={wrapperStyle}>
       {hasCycles && (
         <div style={{ marginBottom: 18 }}>
           <button

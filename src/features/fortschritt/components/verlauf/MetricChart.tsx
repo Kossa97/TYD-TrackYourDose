@@ -21,6 +21,7 @@ import { MetricTooltip } from './MetricTooltip'
 import { SnapCursor } from './SnapCursor'
 import { buildTooltipSnapDates } from '../../lib/chartTooltip'
 import { panel } from '../../styles'
+import { ChartSettingsButton } from './ChartSettingsButton'
 
 interface Props {
   range: DateRange
@@ -31,6 +32,7 @@ interface Props {
   cycles: CycleSubstance[]
   ongoing: OngoingSubstance[]
   focusId: string | null
+  onOpenSettings?: () => void
 }
 
 function fmtDate(d: string) {
@@ -128,6 +130,7 @@ export function MetricChart({
   cycles,
   ongoing,
   focusId,
+  onOpenSettings,
 }: Props) {
   const rangeStart = dateToTs(range.from)
   const rangeEnd = dateToTs(range.to)
@@ -193,7 +196,12 @@ export function MetricChart({
 
   if (lineData.length === 0) {
     return (
-      <section style={{ ...panel, padding: '28px 18px', textAlign: 'center' }}>
+      <section style={{ ...panel, padding: '28px 18px', textAlign: 'center', position: 'relative' }}>
+        {onOpenSettings && (
+          <div style={{ position: 'absolute', top: 14, right: 12 }}>
+            <ChartSettingsButton onClick={onOpenSettings} />
+          </div>
+        )}
         <p style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-dim)', marginBottom: 8 }}>
           Noch keine {metric.label}-Daten
         </p>
@@ -205,8 +213,13 @@ export function MetricChart({
   }
 
   return (
-    <section style={{ ...panel, padding: '16px 12px 14px 4px' }}>
-      <div style={{ paddingLeft: 12, marginBottom: 12 }}>
+    <section style={{ ...panel, padding: '16px 12px 14px 4px', position: 'relative' }}>
+      {onOpenSettings && (
+        <div style={{ position: 'absolute', top: 14, right: 12, zIndex: 2 }}>
+          <ChartSettingsButton onClick={onOpenSettings} />
+        </div>
+      )}
+      <div style={{ paddingLeft: 12, marginBottom: 12, paddingRight: onOpenSettings ? 88 : 0 }}>
         <p style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-dim)' }}>{metric.label}</p>
         {latest && (
           <p style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text)', marginTop: 2 }}>

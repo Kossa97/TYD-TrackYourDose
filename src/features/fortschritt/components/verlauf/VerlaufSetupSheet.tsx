@@ -1,0 +1,97 @@
+import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { X } from 'lucide-react'
+import type { ReactNode } from 'react'
+
+const SHEET_Z = 10050
+
+interface Props {
+  open: boolean
+  onClose: () => void
+  children: ReactNode
+}
+
+export function VerlaufSetupSheet({ open, onClose, children }: Props) {
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [open])
+
+  if (!open) return null
+
+  return createPortal(
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: SHEET_Z,
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--surface)',
+      }}
+    >
+      <header style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        padding: 'max(12px, env(safe-area-inset-top)) 16px 12px',
+        borderBottom: '1px solid var(--border)',
+        flexShrink: 0,
+      }}>
+        <h2 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text)' }}>
+          Verlauf einstellen
+        </h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Schließen"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            border: '1px solid var(--border)',
+            background: 'var(--surface-input)',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+          }}
+        >
+          <X size={18} />
+        </button>
+      </header>
+
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        padding: '14px 16px max(20px, env(safe-area-inset-bottom))',
+      }}>
+        {children}
+      </div>
+
+      <footer style={{
+        flexShrink: 0,
+        padding: '12px 16px max(16px, env(safe-area-inset-bottom))',
+        borderTop: '1px solid var(--border)',
+        background: 'var(--surface)',
+      }}>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={onClose}
+          style={{ width: '100%' }}
+        >
+          Fertig
+        </button>
+      </footer>
+    </div>,
+    document.body,
+  )
+}
