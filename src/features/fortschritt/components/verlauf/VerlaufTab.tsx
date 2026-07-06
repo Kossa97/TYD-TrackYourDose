@@ -6,11 +6,17 @@ import { buildMetricSeries } from '../../lib/metrics'
 import { buildAvailableMetrics, normalizeMetricKey } from '../../lib/metricDefinitions'
 import { allSubstances, defaultFocusSubstanceId } from '../../lib/focusSummary'
 import {
+  filterCyclesByVisibility,
+  filterOngoingByVisibility,
+} from '../../lib/chartVisibility'
+import { useChartVisibility } from '../../hooks/useChartVisibility'
+import {
   RANGE_CHIPS,
   rangeFromChip,
   focusRangeForSubstance,
   type RangeChipKey,
 } from '../../lib/verlaufRange'
+import { ChartVisibilityPicker } from './ChartVisibilityPicker'
 import { SubstanceLane } from './SubstanceLane'
 import { MetricChart } from './MetricChart'
 import { EventStrip } from './EventStrip'
@@ -27,25 +33,49 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
   const [metricKey, setMetricKey] = useState<MetricKey>('weight')
   const [focusId, setFocusId] = useState<string | null>(null)
 
+  const {
+    groups: visibilityGroups,
+    visibleIds,
+    toggleGroup,
+    toggleCycle,
+    showIds,
+  } = useChartVisibility(state.cycleSubstances, state.ongoingSubstances)
+
+  const visibleCycles = useMemo(
+    () => filterCyclesByVisibility(state.cycleSubstances, visibleIds),
+    [state.cycleSubstances, visibleIds],
+  )
+  const visibleOngoing = useMemo(
+    () => filterOngoingByVisibility(state.ongoingSubstances, visibleIds),
+    [state.ongoingSubstances, visibleIds],
+  )
+
   useEffect(() => {
     if (!pendingNav) return
     if (pendingNav.focusSubstanceId) {
+      showIds([pendingNav.focusSubstanceId])
       setFocusId(pendingNav.focusSubstanceId)
     } else if (pendingNav.metric && isWellnessMetricKey(pendingNav.metric)) {
-      const id = defaultFocusSubstanceId(state.cycleSubstances, state.ongoingSubstances)
+      const id = defaultFocusSubstanceId(visibleCycles, visibleOngoing)
       if (id) setFocusId(id)
     }
     if (pendingNav.metric && isChartMetricKey(normalizeMetricKey(pendingNav.metric))) {
       setMetricKey(normalizeMetricKey(pendingNav.metric))
     }
     onPendingConsumed()
-  }, [pendingNav, onPendingConsumed, state.cycleSubstances, state.ongoingSubstances])
+  }, [pendingNav, onPendingConsumed, visibleCycles, visibleOngoing, showIds])
+
+  useEffect(() => {
+    if (focusId && !visibleIds.has(focusId)) {
+      setFocusId(null)
+    }
+  }, [focusId, visibleIds])
 
   // Volle Historie als Basis: „Alles" zeigt auch beendete Zyklen und ältere Daten
   const baseRange = state.fullRange
   const chipRange = useMemo(() => rangeFromChip(rangeChip, baseRange), [rangeChip, baseRange])
 
-  const substances = allSubstances(state.cycleSubstances, state.ongoingSubstances)
+  const substances = allSubstances(visibleCycles, visibleOngoing)
   const focused = substances.find(s => s.id === focusId) ?? null
 
   const chartRange = useMemo(() => {
@@ -183,6 +213,15 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
         </p>
       </div>
 
+      {visibilityGroups.length > 0 && (
+        <ChartVisibilityPicker
+          groups={visibilityGroups}
+          visibleIds={visibleIds}
+          onToggleGroup={toggleGroup}
+          onToggleCycle={toggleCycle}
+        />
+      )}
+
       {selectedMetric && (
         <MetricChart
           range={chartRange}
@@ -190,18 +229,18 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
           weights={state.weightLogs}
           dailyLogs={state.dailyLogs}
           bloodwork={state.bloodwork}
-          cycles={state.cycleSubstances}
-          ongoing={state.ongoingSubstances}
+          cycles={visibleCycles}
+          ongoing={visibleOngoing}
           focusId={focusId}
         />
       )}
 
       <EventStrip range={chartRange} photos={state.photos} bloodwork={state.bloodwork} />
 
-      {(state.cycleSubstances.length > 0 || state.ongoingSubstances.length > 0) && (
+      {(visibleCycles.length > 0 || visibleOngoing.length > 0) && (
         <SubstanceLane
-          cycles={state.cycleSubstances}
-          ongoing={state.ongoingSubstances}
+          cycles={visibleCycles}
+          ongoing={visibleOngoing}
           range={chartRange}
           focusId={focusId}
           weightLogs={state.weightLogs}
