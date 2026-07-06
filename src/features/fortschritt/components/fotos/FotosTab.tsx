@@ -1,13 +1,15 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { format, parseISO } from 'date-fns'
-import { Camera, ImageOff, Plus, Trash2, X } from 'lucide-react'
+import { Camera, Columns2, ImageOff, Plus, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../../../../lib/supabase'
 import { useAuth } from '../../../../context/AuthContext'
 import type { ProgressPhotoEntry } from '../../types'
 import { PHOTO_BUCKET } from '../../constants'
 import { isLegacyPhotoUrl } from '../../hooks/useFortschrittData'
+import { findPhotosByIds } from '../../lib/photoCompare'
 import { fieldLabel, inputStyle, panel } from '../../styles'
+import { PhotoCompareOverlay } from './PhotoCompareOverlay'
 
 const todayStr = () => format(new Date(), 'yyyy-MM-dd')
 const fmtDate = (d: string) => format(parseISO(`${d}T00:00:00`), 'dd.MM.yyyy')
@@ -27,7 +29,49 @@ export function FotosTab({ photos, onChange }: Props) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [activePhoto, setActivePhoto] = useState<ProgressPhotoEntry | null>(null)
+  const [compareMode, setCompareMode] = useState(false)
+  const [compareSelection, setCompareSelection] = useState<string[]>([])
+  const [compareOpen, setCompareOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const exitCompareMode = () => {
+    setCompareMode(false)
+    setCompareSelection([])
+    setCompareOpen(false)
+  }
+
+  const toggleCompareMode = () => {
+    if (compareMode) {
+      exitCompareMode()
+      return
+    }
+    setActivePhoto(null)
+    setCompareMode(true)
+    setCompareSelection([])
+    setCompareOpen(false)
+  }
+
+  const handleComparePhotoTap = (photo: ProgressPhotoEntry) => {
+    setCompareSelection(prev => {
+      let next: string[]
+      if (prev.includes(photo.id)) {
+        next = prev.filter(id => id !== photo.id)
+      } else if (prev.length < 2) {
+        next = [...prev, photo.id]
+      } else {
+        next = [prev[0], photo.id]
+      }
+      if (next.length === 2) setCompareOpen(true)
+      else setCompareOpen(false)
+      return next
+    })
+  }
+
+  const comparePair = useMemo(() => {
+    if (!compareOpen || compareSelection.length !== 2) return null
+    const pair = findPhotosByIds(photos, compareSelection)
+    return pair.length === 2 ? [pair[0], pair[1]] as [ProgressPhotoEntry, ProgressPhotoEntry] : null
+  }, [compareOpen, compareSelection, photos])
 
   const openSheet = () => {
     setDate(todayStr())
@@ -114,18 +158,66 @@ export function FotosTab({ photos, onChange }: Props) {
             {photos.length} {photos.length === 1 ? 'Foto' : 'Fotos'} gespeichert
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openSheet}
-          style={{
-            width: 44, height: 44, borderRadius: 16, flexShrink: 0,
-            background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
-            color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <Plus size={20} />
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          {photos.length >= 2 && (
+            <button
+              type="button"
+              onClick={toggleCompareMode}
+              aria-pressed={compareMode}
+              style={{
+                height: 44,
+                padding: '0 14px',
+                borderRadius: 16,
+                background: compareMode ? 'var(--accent-weak)' : 'var(--surface)',
+                border: compareMode ? '1px solid var(--accent-border)' : '1px solid var(--border)',
+                color: compareMode ? 'var(--accent)' : 'var(--text-dim)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 7,
+                fontSize: '0.78rem',
+                fontWeight: 800,
+              }}
+            >
+              <Columns2 size={17} />
+              {compareMode ? 'Fertig' : 'Vergleichen'}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={openSheet}
+            style={{
+              width: 44, height: 44, borderRadius: 16, flexShrink: 0,
+              background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
+              color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <Plus size={20} />
+          </button>
+        </div>
       </div>
+
+      {compareMode && photos.length >= 2 && (
+        <div style={{
+          ...panel,
+          padding: '12px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 10,
+        }}>
+          <p style={{ fontSize: '0.76rem', color: 'var(--text-dim)', fontWeight: 700, lineHeight: 1.45 }}>
+            Wähle 2 Fotos — links das frühere, rechts das spätere.
+          </p>
+          <span style={{
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            color: 'var(--accent)',
+            flexShrink: 0,
+          }}>
+            {compareSelection.length}/2
+          </span>
+        </div>
+      )}
 
       {photos.length === 0 ? (
         <div style={{ ...panel, padding: '52px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
@@ -144,16 +236,51 @@ export function FotosTab({ photos, onChange }: Props) {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {photos.map(photo => (
+          {photos.map(photo => {
+            const selectionIndex = compareSelection.indexOf(photo.id)
+            const isSelected = selectionIndex >= 0
+            return (
             <button
               key={photo.id}
               type="button"
-              onClick={() => setActivePhoto(photo)}
+              onClick={() => {
+                if (compareMode) {
+                  handleComparePhotoTap(photo)
+                  return
+                }
+                setActivePhoto(photo)
+              }}
               style={{
-                background: 'var(--surface)', border: '1px solid var(--border)',
-                borderRadius: 18, overflow: 'hidden', padding: 0, textAlign: 'left', cursor: 'pointer',
+                background: 'var(--surface)',
+                border: isSelected ? '2px solid var(--accent)' : '1px solid var(--border)',
+                borderRadius: 18,
+                overflow: 'hidden',
+                padding: 0,
+                textAlign: 'left',
+                cursor: 'pointer',
+                position: 'relative',
               }}
             >
+              {isSelected && (
+                <span style={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  zIndex: 1,
+                  width: 24,
+                  height: 24,
+                  borderRadius: 99,
+                  background: 'var(--accent)',
+                  color: '#000',
+                  fontSize: '0.72rem',
+                  fontWeight: 900,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {selectionIndex + 1}
+                </span>
+              )}
               <div style={{ aspectRatio: '3/4', overflow: 'hidden' }}>
                 <img src={photo.display_url} alt={photo.taken_at} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </div>
@@ -164,8 +291,16 @@ export function FotosTab({ photos, onChange }: Props) {
                 )}
               </div>
             </button>
-          ))}
+            )
+          })}
         </div>
+      )}
+
+      {comparePair && (
+        <PhotoCompareOverlay
+          photos={comparePair}
+          onClose={() => setCompareOpen(false)}
+        />
       )}
 
       {activePhoto && (
