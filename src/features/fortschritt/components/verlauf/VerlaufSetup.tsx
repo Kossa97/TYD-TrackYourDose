@@ -107,6 +107,7 @@ function CycleRow({
 function CollapseHeader({
   label,
   count,
+  selectedCount,
   open,
   onToggle,
   indent = 0,
@@ -114,6 +115,7 @@ function CollapseHeader({
 }: {
   label: string
   count?: number
+  selectedCount?: number
   open: boolean
   onToggle: () => void
   indent?: number
@@ -142,13 +144,64 @@ function CollapseHeader({
         fontSize: muted ? '0.68rem' : '0.74rem',
         fontWeight: muted ? 700 : 800,
         color: muted ? 'var(--text-muted)' : 'var(--text-dim)',
+        flex: 1,
+        textAlign: 'left',
       }}>
         {label}
         {count != null && count > 0 && (
           <span style={{ marginLeft: 6, opacity: 0.65 }}>({count})</span>
         )}
+        {!open && selectedCount != null && selectedCount > 0 && (
+          <span style={{ marginLeft: 6, color: 'var(--accent)', fontWeight: 800 }}>
+            · {selectedCount} angezeigt
+          </span>
+        )}
       </span>
     </button>
+  )
+}
+
+function CycleSection({
+  label,
+  cycles,
+  color,
+  open,
+  onToggle,
+  visibleIds,
+  onToggleCycle,
+}: {
+  label: string
+  cycles: CycleSubstance[]
+  color: string
+  open: boolean
+  onToggle: () => void
+  visibleIds: VisibleChartIds
+  onToggleCycle: (id: string) => void
+}) {
+  const selected = cycles.filter(c => visibleIds.has(c.id))
+  const list = open ? cycles : selected
+
+  return (
+    <div>
+      <CollapseHeader
+        label={label}
+        count={cycles.length}
+        selectedCount={selected.length}
+        open={open}
+        onToggle={onToggle}
+        indent={4}
+        muted
+      />
+      {list.map(cycle => (
+        <CycleRow
+          key={cycle.id}
+          cycle={cycle}
+          color={color}
+          checked={visibleIds.has(cycle.id)}
+          onToggle={() => onToggleCycle(cycle.id)}
+        />
+      ))}
+    </div>
   )
 }
 
@@ -344,47 +397,27 @@ export function VerlaufSetup({
                       )}
 
                       {active.length > 0 && (
-                        <div>
-                          <CollapseHeader
-                            label="Aktive Zyklen"
-                            count={active.length}
-                            open={activeOpen}
-                            onToggle={() => toggleSection(activeKey)}
-                            indent={4}
-                            muted
-                          />
-                          {activeOpen && active.map(cycle => (
-                            <CycleRow
-                              key={cycle.id}
-                              cycle={cycle}
-                              color={group.color}
-                              checked={visibleIds.has(cycle.id)}
-                              onToggle={() => onToggleCycle(cycle.id)}
-                            />
-                          ))}
-                        </div>
+                        <CycleSection
+                          label="Aktive Zyklen"
+                          cycles={active}
+                          color={group.color}
+                          open={activeOpen}
+                          onToggle={() => toggleSection(activeKey)}
+                          visibleIds={visibleIds}
+                          onToggleCycle={onToggleCycle}
+                        />
                       )}
 
                       {inactive.length > 0 && (
-                        <div>
-                          <CollapseHeader
-                            label="Beendete Zyklen"
-                            count={inactive.length}
-                            open={inactiveOpen}
-                            onToggle={() => toggleSection(inactiveKey)}
-                            indent={4}
-                            muted
-                          />
-                          {inactiveOpen && inactive.map(cycle => (
-                            <CycleRow
-                              key={cycle.id}
-                              cycle={cycle}
-                              color={group.color}
-                              checked={visibleIds.has(cycle.id)}
-                              onToggle={() => onToggleCycle(cycle.id)}
-                            />
-                          ))}
-                        </div>
+                        <CycleSection
+                          label="Beendete Zyklen"
+                          cycles={inactive}
+                          color={group.color}
+                          open={inactiveOpen}
+                          onToggle={() => toggleSection(inactiveKey)}
+                          visibleIds={visibleIds}
+                          onToggleCycle={onToggleCycle}
+                        />
                       )}
                     </div>
                   )}
