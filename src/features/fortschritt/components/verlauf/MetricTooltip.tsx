@@ -3,14 +3,15 @@ import { format, parseISO } from 'date-fns'
 import {
   useActiveTooltipCoordinate,
   useActiveTooltipLabel,
-  useXAxisInverseScale,
+  usePlotArea,
+  useXAxisScale,
 } from 'recharts'
 import type { CycleBandDraw } from './CycleBandLayer'
 import type { MetricDefinition } from '../../lib/metricDefinitions'
 import {
   hoverDateIso,
   metricValueAtDate,
-  resolveCursorHoverDate,
+  nearestSnapHoverDate,
   resolveTooltipCycleStarts,
 } from '../../lib/chartTooltip'
 
@@ -25,7 +26,8 @@ interface Props {
   label?: number | string
   bands: CycleBandDraw[]
   metric: MetricDefinition
-  chartData: ChartPoint[]
+  metricData: ChartPoint[]
+  snapDates: string[]
 }
 
 function fmtDate(iso: string) {
@@ -38,18 +40,24 @@ function formatTooltipValue(value: number, unit: string): string {
   return unit ? `${value} ${unit}` : String(value)
 }
 
-export function MetricTooltip({ active, label, bands, metric, chartData }: Props) {
+export function MetricTooltip({ active, label, bands, metric, metricData, snapDates }: Props) {
   const cursor = useActiveTooltipCoordinate()
   const activeLabel = useActiveTooltipLabel()
-  const xInverseScale = useXAxisInverseScale()
+  const xScale = useXAxisScale()
+  const plotArea = usePlotArea()
 
   const { dateIso, metricValue, starts } = useMemo(() => {
+    const fromSnap = nearestSnapHoverDate(
+      cursor?.x,
+      snapDates,
+      xScale ?? undefined,
+      plotArea ?? undefined,
+    )
     const labelTs = activeLabel ?? label
     const fromLabel = labelTs != null && Number.isFinite(Number(labelTs))
       ? { dateIso: hoverDateIso(labelTs), hoverTs: Number(labelTs) }
       : null
-    const fromCursor = resolveCursorHoverDate(cursor?.x, xInverseScale ?? undefined)
-    const hover = fromLabel ?? fromCursor
+    const hover = fromSnap ?? fromLabel
 
     if (!hover) {
       return { dateIso: null, metricValue: null, starts: [] as CycleBandDraw[] }
@@ -57,10 +65,10 @@ export function MetricTooltip({ active, label, bands, metric, chartData }: Props
 
     return {
       dateIso: hover.dateIso,
-      metricValue: metricValueAtDate(chartData, hover.dateIso),
+      metricValue: metricValueAtDate(metricData, hover.dateIso),
       starts: resolveTooltipCycleStarts(bands, hover.dateIso, hover.hoverTs),
     }
-  }, [cursor, xInverseScale, activeLabel, label, bands, chartData])
+  }, [cursor, xScale, plotArea, activeLabel, label, bands, metricData, snapDates])
 
   if (!active || !dateIso) return null
 

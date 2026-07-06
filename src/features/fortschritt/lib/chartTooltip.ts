@@ -80,6 +80,34 @@ export function cycleStartsAtHover<T extends BandWithStart>(
 
 type XScale = (value: number, options?: { position?: 'start' | 'end' }) => number | undefined
 
+function dateToTs(date: string): number {
+  return parseISO(`${normalizeDateIso(date)}T12:00:00`).getTime()
+}
+
+/** Nächster Snap-Tag (Messwert oder Zyklus-Start) zur Cursor-X-Position */
+export function nearestSnapHoverDate(
+  cursorX: number | undefined,
+  snapDates: readonly string[],
+  xScale: XScale | undefined,
+  plotArea: { x: number } | undefined,
+): { dateIso: string; hoverTs: number } | null {
+  if (cursorX == null || !xScale || !plotArea || snapDates.length === 0) return null
+
+  let best: { dateIso: string; hoverTs: number; dist: number } | null = null
+  for (const raw of snapDates) {
+    const dateIso = normalizeDateIso(raw)
+    const hoverTs = dateToTs(dateIso)
+    const px = xScale(hoverTs, { position: 'start' })
+    if (px == null) continue
+    const dist = Math.abs(cursorX - (plotArea.x + px))
+    if (!best || dist < best.dist) {
+      best = { dateIso, hoverTs, dist }
+    }
+  }
+
+  return best
+}
+
 /** Zyklen, deren Start-Marker in Pixelnähe zum Tooltip-Cursor liegen (nur Marker-Hervorhebung) */
 export function cycleStartsNearCursor<T extends BandWithStart>(
   bands: T[],

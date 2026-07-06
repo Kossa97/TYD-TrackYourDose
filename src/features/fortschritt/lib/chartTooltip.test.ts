@@ -2,10 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   buildTooltipSnapDates,
   cycleStartsAtHover,
-  cycleStartsNearCursor,
   hoverDateIso,
   metricValueAtDate,
-  resolveCursorHoverDate,
+  nearestSnapHoverDate,
   resolveTooltipCycleStarts,
 } from './chartTooltip'
 
@@ -28,9 +27,13 @@ describe('chartTooltip', () => {
 
   it('resolves cursor date from inverse scale', () => {
     const aprilTs = Date.parse('2026-04-12T12:00:00')
-    const xInverse = (x: number) => (x === 120 ? aprilTs : 0)
-    const hover = resolveCursorHoverDate(120, xInverse)
-    expect(hover?.dateIso).toBe('2026-04-12')
+    const xScale = (value: number) => {
+      if (value === aprilTs) return 120
+      return 0
+    }
+    const plotArea = { x: 10 }
+    const snap = nearestSnapHoverDate(130, ['2026-04-12'], xScale, plotArea)
+    expect(snap?.dateIso).toBe('2026-04-12')
   })
 
   it('reads metric value for cursor date, not another day', () => {
@@ -49,5 +52,18 @@ describe('chartTooltip', () => {
       [{ x1: Date.parse('2026-01-23T12:00:00') }, { x1: Date.parse('2026-04-12T12:00:00') }],
     )
     expect(dates).toEqual(['2026-01-23', '2026-02-15', '2026-04-12'])
+  })
+
+  it('snaps hover to nearest cycle or metric date by pixel distance', () => {
+    const aprilTs = Date.parse('2026-04-12T12:00:00')
+    const febTs = Date.parse('2026-02-15T12:00:00')
+    const xScale = (value: number) => {
+      if (value === aprilTs) return 120
+      if (value === febTs) return 40
+      return 0
+    }
+    const plotArea = { x: 10 }
+    const snap = nearestSnapHoverDate(55, ['2026-02-15', '2026-04-12'], xScale, plotArea)
+    expect(snap?.dateIso).toBe('2026-02-15')
   })
 })
