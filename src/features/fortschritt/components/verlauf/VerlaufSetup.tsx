@@ -4,6 +4,7 @@ import type { CycleSubstance } from '../../types'
 import type { MetricDefinition } from '../../lib/metricDefinitions'
 import { formatDaySafe } from '../../lib/dates'
 import {
+  groupVisibilityState,
   partitionCyclesForDisplay,
   type SubstanceCycleGroup,
   type VisibleChartIds,
@@ -14,6 +15,7 @@ import { panel } from '../../styles'
 interface Props {
   groups: SubstanceCycleGroup[]
   visibleIds: VisibleChartIds
+  onToggleGroup: (group: SubstanceCycleGroup) => void
   onToggleCycle: (id: string) => void
   availableMetrics: MetricDefinition[]
   metricKey: MetricKey
@@ -149,9 +151,33 @@ function CollapseHeader({
   )
 }
 
+function SubstanceCheckbox({
+  state,
+  color,
+  onToggle,
+}: {
+  state: 'all' | 'none' | 'partial'
+  color: string
+  onToggle: () => void
+}) {
+  return (
+    <input
+      type="checkbox"
+      checked={state === 'all'}
+      ref={el => {
+        if (el) el.indeterminate = state === 'partial'
+      }}
+      onChange={onToggle}
+      aria-label={state === 'all' ? 'Substanz ausblenden' : 'Substanz einblenden'}
+      style={{ accentColor: color, width: 18, height: 18, flexShrink: 0, cursor: 'pointer' }}
+    />
+  )
+}
+
 export function VerlaufSetup({
   groups,
   visibleIds,
+  onToggleGroup,
   onToggleCycle,
   availableMetrics,
   metricKey,
@@ -208,7 +234,7 @@ export function VerlaufSetup({
             color: 'var(--text-muted)',
             marginBottom: 10,
           }}>
-            Wähle die Zyklen, die im Chart erscheinen sollen.
+            Substanz an- oder abwählen · Pfeil zum Aufklappen der Zyklen.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -219,54 +245,77 @@ export function VerlaufSetup({
               const inactiveKey = `${group.key}:inactive`
               const activeOpen = openSections.has(activeKey)
               const inactiveOpen = openSections.has(inactiveKey)
+              const visibility = groupVisibilityState(group, visibleIds)
 
               return (
                 <div
                   key={group.key}
                   style={{
                     borderRadius: 14,
-                    border: '1px solid var(--border)',
+                    border: `1px solid ${visibility === 'none' ? 'var(--border)' : `${group.color}33`}`,
                     overflow: 'hidden',
-                    background: 'rgba(255,255,255,0.02)',
+                    background: visibility === 'none' ? 'transparent' : `${group.color}06`,
+                    opacity: visibility === 'none' ? 0.72 : 1,
+                    transition: 'opacity 0.15s',
                   }}
                 >
-                  <button
-                    type="button"
-                    onClick={() => toggleSubstance(group.key)}
+                  <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: 8,
-                      width: '100%',
                       padding: '10px 12px',
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      textAlign: 'left',
                     }}
                   >
-                    {substanceOpen
-                      ? <ChevronDown size={16} color={group.color} />
-                      : <ChevronRight size={16} color={group.color} />}
-                    <span style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: group.color,
-                      flexShrink: 0,
-                    }} />
-                    <span style={{
-                      fontSize: '0.82rem',
-                      fontWeight: 800,
-                      color: group.color,
-                      flex: 1,
-                    }}>
-                      {group.name}
-                    </span>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                    <SubstanceCheckbox
+                      state={visibility}
+                      color={group.color}
+                      onToggle={() => onToggleGroup(group)}
+                    />
+                    <button
+                      type="button"
+                      aria-label={substanceOpen ? 'Zyklen zuklappen' : 'Zyklen aufklappen'}
+                      aria-expanded={substanceOpen}
+                      onClick={() => toggleSubstance(group.key)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        flex: 1,
+                        minWidth: 0,
+                        padding: 0,
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                    >
+                      {substanceOpen
+                        ? <ChevronDown size={16} color={group.color} />
+                        : <ChevronRight size={16} color={group.color} />}
+                      <span style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: group.color,
+                        flexShrink: 0,
+                      }} />
+                      <span style={{
+                        fontSize: '0.82rem',
+                        fontWeight: 800,
+                        color: group.color,
+                        flex: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {group.name}
+                      </span>
+                    </button>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', flexShrink: 0 }}>
                       {groupMemberVisibleCount(group, visibleIds)}/{groupMemberIdsCount(group)}
                     </span>
-                  </button>
+                  </div>
 
                   {substanceOpen && (
                     <div style={{ paddingBottom: 6 }}>

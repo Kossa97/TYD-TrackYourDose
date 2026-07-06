@@ -36,6 +36,7 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
   const {
     groups: visibilityGroups,
     visibleIds,
+    toggleGroup,
     toggleCycle,
     showIds,
   } = useChartVisibility(state.cycleSubstances, state.ongoingSubstances)
@@ -132,6 +133,7 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
       <VerlaufSetup
         groups={visibilityGroups}
         visibleIds={visibleIds}
+        onToggleGroup={toggleGroup}
         onToggleCycle={toggleCycle}
         availableMetrics={availableMetrics}
         metricKey={metricKey}
