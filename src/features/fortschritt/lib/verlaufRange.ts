@@ -4,6 +4,8 @@ import { todayIso, cycleEndDate } from './substances'
 
 export type RangeChipKey = '30t' | '90t' | '1j' | 'alles'
 
+export const DEFAULT_RANGE_CHIP: RangeChipKey = '90t'
+
 export const RANGE_CHIPS: { key: RangeChipKey; label: string; days: number | null }[] = [
   { key: '30t', label: '30T', days: 30 },
   { key: '90t', label: '90T', days: 90 },

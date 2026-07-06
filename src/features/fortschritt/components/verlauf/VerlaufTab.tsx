@@ -11,6 +11,7 @@ import {
 } from '../../lib/chartVisibility'
 import { useChartVisibility } from '../../hooks/useChartVisibility'
 import {
+  DEFAULT_RANGE_CHIP,
   RANGE_CHIPS,
   rangeFromChip,
   focusRangeForSubstance,
@@ -32,7 +33,7 @@ interface Props {
 
 
 export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
-  const [rangeChip, setRangeChip] = useState<RangeChipKey>('alles')
+  const [rangeChip, setRangeChip] = useState<RangeChipKey>(DEFAULT_RANGE_CHIP)
   const [metricKey, setMetricKey] = useState<MetricKey>('weight')
   const [focusId, setFocusId] = useState<string | null>(null)
   const [setupOpen, setSetupOpen] = useState(false)
