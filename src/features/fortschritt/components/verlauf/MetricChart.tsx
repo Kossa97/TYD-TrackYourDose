@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
+import { dayToTsSafe, formatDaySafe } from '../../lib/dates'
 import {
   CartesianGrid,
   Line,
@@ -33,11 +34,11 @@ interface Props {
 }
 
 function fmtDate(d: string) {
-  return format(parseISO(`${d}T00:00:00`), 'dd.MM.')
+  return formatDaySafe(d)
 }
 
 function dateToTs(date: string): number {
-  return parseISO(`${date}T12:00:00`).getTime()
+  return dayToTsSafe(date, 12) ?? Date.now()
 }
 
 function buildTimeTicks(from: string, to: string, count = 5): number[] {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { format, parseISO } from 'date-fns'
 import type { CycleSubstance } from '../../types'
+import { formatDaySafe } from '../../lib/dates'
 import {
   groupMemberIds,
   groupVisibilityState,
@@ -17,10 +17,8 @@ interface Props {
 }
 
 function formatCycleLabel(cycle: CycleSubstance): string {
-  const start = format(parseISO(`${cycle.startDate}T00:00:00`), 'dd.MM.')
-  const end = cycle.endDate
-    ? format(parseISO(`${cycle.endDate}T00:00:00`), 'dd.MM.')
-    : 'offen'
+  const start = formatDaySafe(cycle.startDate)
+  const end = cycle.endDate ? formatDaySafe(cycle.endDate) : 'offen'
   const status = cycle.active ? 'aktiv' : 'beendet'
   return `${start} – ${end} · ${status}`
 }

@@ -63,7 +63,7 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
       setMetricKey(normalizeMetricKey(pendingNav.metric))
     }
     onPendingConsumed()
-  }, [pendingNav, onPendingConsumed, visibleCycles, visibleOngoing, showIds])
+  }, [pendingNav, onPendingConsumed, showIds, visibleCycles, visibleOngoing])
 
   useEffect(() => {
     if (focusId && !visibleIds.has(focusId)) {

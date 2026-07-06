@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { FortschrittTab, VerlaufNavigation } from './types'
 import { FORTSCHRITT_TABS } from './constants'
@@ -27,6 +27,8 @@ export function FortschrittPage() {
   const setTab = (next: FortschrittTab) => {
     setSearchParams(next === 'uebersicht' ? {} : { tab: next }, { replace: true })
   }
+
+  const handlePendingConsumed = useCallback(() => setPendingVerlauf(null), [])
 
   const subtitle = formatRangeSubtitle(
     state.range.from,
@@ -65,7 +67,7 @@ export function FortschrittPage() {
             <VerlaufTab
               state={state}
               pendingNav={pendingVerlauf}
-              onPendingConsumed={() => setPendingVerlauf(null)}
+              onPendingConsumed={handlePendingConsumed}
             />
           )}
           {tab === 'fotos' && (

@@ -116,14 +116,17 @@ export function reconcileVisibleChartIds(
 
   const defaults = defaultVisibleChartIds(cycles, ongoing)
 
-  if (!stored || stored.length === 0) {
+  if (stored == null) {
     return new Set([...defaults].filter(id => allIds.has(id)))
   }
 
   const visible = new Set(stored.filter(id => allIds.has(id)))
-  for (const id of allIds) {
-    if (!stored.includes(id) && defaults.has(id)) {
-      visible.add(id)
+  // Explizit leere Auswahl ([]) bleibt leer; nur bei gespeicherter Teilauswahl neue Defaults ergänzen.
+  if (stored.length > 0) {
+    for (const id of allIds) {
+      if (!stored.includes(id) && defaults.has(id)) {
+        visible.add(id)
+      }
     }
   }
   return visible
@@ -207,4 +210,10 @@ export function ensureVisible(
   const next = new Set(current)
   for (const id of ids) next.add(id)
   return next
+}
+
+export function visibleIdsEqual(a: VisibleChartIds, b: VisibleChartIds): boolean {
+  if (a.size !== b.size) return false
+  for (const id of a) if (!b.has(id)) return false
+  return true
 }

@@ -99,6 +99,15 @@ describe('reconcileVisibleChartIds', () => {
     expect(visible.has('c2')).toBe(true)
   })
 
+  it('keeps an explicit empty selection without falling back to defaults', () => {
+    const visible = reconcileVisibleChartIds(
+      [],
+      [cycle('c1', 'pep-a', 'A', '2026-01-01', { active: true })],
+      [],
+    )
+    expect(visible.size).toBe(0)
+  })
+
   it('drops ids that no longer exist', () => {
     const visible = reconcileVisibleChartIds(
       ['c1', 'gone'],
