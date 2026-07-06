@@ -57,41 +57,38 @@ export function groupSubstancesByPeptide(
   })
 }
 
+/** Aktive zuerst (neueste oben), darunter beendete (neueste oben). */
+export function partitionCyclesForDisplay(cycles: CycleSubstance[]): {
+  active: CycleSubstance[]
+  inactive: CycleSubstance[]
+} {
+  const active = cycles
+    .filter(c => c.active)
+    .sort((a, b) => b.startDate.localeCompare(a.startDate))
+  const inactive = cycles
+    .filter(c => !c.active)
+    .sort((a, b) => {
+      const endA = a.endDate ?? a.startDate
+      const endB = b.endDate ?? b.startDate
+      return endB.localeCompare(endA)
+    })
+  return { active, inactive }
+}
+
 export function groupMemberIds(group: SubstanceCycleGroup): string[] {
   const ids = group.cycles.map(c => c.id)
   if (group.ongoing) ids.push(group.ongoing.id)
   return ids
 }
 
-/** Standard: alle aktiven Zyklen + alle Ongoing; sonst letzter beendeter Zyklus pro Substanz. */
+/** Standard: nur aktive Zyklen + dauerhafte Substanzen. */
 export function defaultVisibleChartIds(
   cycles: CycleSubstance[],
   ongoing: OngoingSubstance[],
 ): VisibleChartIds {
   const visible = new Set<string>()
   for (const o of ongoing) visible.add(o.id)
-
-  const active = cycles.filter(c => c.active)
-  if (active.length > 0) {
-    for (const c of active) visible.add(c.id)
-    return visible
-  }
-
-  const byPeptide = new Map<string, CycleSubstance[]>()
-  for (const c of cycles) {
-    const key = c.peptideId || c.name
-    const arr = byPeptide.get(key) ?? []
-    arr.push(c)
-    byPeptide.set(key, arr)
-  }
-
-  for (const group of byPeptide.values()) {
-    const ended = group.filter(c => !c.active && c.endDate)
-    if (ended.length === 0) continue
-    const last = [...ended].sort((a, b) => (b.endDate ?? '').localeCompare(a.endDate ?? ''))[0]
-    visible.add(last.id)
-  }
-
+  for (const c of cycles.filter(c => c.active)) visible.add(c.id)
   return visible
 }
 

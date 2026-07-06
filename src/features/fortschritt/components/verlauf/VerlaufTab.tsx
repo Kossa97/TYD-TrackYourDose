@@ -16,7 +16,7 @@ import {
   focusRangeForSubstance,
   type RangeChipKey,
 } from '../../lib/verlaufRange'
-import { ChartVisibilityPicker } from './ChartVisibilityPicker'
+import { VerlaufSetup } from './VerlaufSetup'
 import { SubstanceLane } from './SubstanceLane'
 import { MetricChart } from './MetricChart'
 import { EventStrip } from './EventStrip'
@@ -36,7 +36,6 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
   const {
     groups: visibilityGroups,
     visibleIds,
-    toggleGroup,
     toggleCycle,
     showIds,
   } = useChartVisibility(state.cycleSubstances, state.ongoingSubstances)
@@ -71,7 +70,6 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
     }
   }, [focusId, visibleIds])
 
-  // Volle Historie als Basis: „Alles" zeigt auch beendete Zyklen und ältere Daten
   const baseRange = state.fullRange
   const chipRange = useMemo(() => rangeFromChip(rangeChip, baseRange), [rangeChip, baseRange])
 
@@ -127,15 +125,27 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
     setMetricKey(key)
   }
 
+  const hasChartData = visibleCycles.length > 0 || visibleOngoing.length > 0
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div>
+      <VerlaufSetup
+        groups={visibilityGroups}
+        visibleIds={visibleIds}
+        onToggleCycle={toggleCycle}
+        availableMetrics={availableMetrics}
+        metricKey={metricKey}
+        pointCounts={pointCounts}
+        onSelectMetric={selectMetric}
+      />
+
+      {hasChartData && (
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 10,
-          marginBottom: 10,
+          padding: '0 4px',
         }}>
           <p style={{
             fontSize: '0.62rem',
@@ -143,11 +153,10 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             color: 'var(--text-muted)',
-            flexShrink: 0,
           }}>
-            Metrik
+            Zeitraum
           </p>
-          <div style={{ display: 'flex', gap: 4, flex: 1, justifyContent: 'flex-end', maxWidth: 220 }}>
+          <div style={{ display: 'flex', gap: 4, flex: 1, justifyContent: 'flex-end', maxWidth: 240 }}>
             {RANGE_CHIPS.map(chip => {
               const on = rangeChip === chip.key
               return (
@@ -175,54 +184,9 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
             })}
           </div>
         </div>
-
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
-          {availableMetrics.map(metric => {
-            const count = pointCounts.get(metric.key) ?? 0
-            const disabled = metric.isLab ? count < 2 : count === 0
-            const active = metricKey === metric.key
-            return (
-              <button
-                key={metric.key}
-                type="button"
-                disabled={disabled}
-                onClick={() => selectMetric(metric.key)}
-                style={{
-                  flexShrink: 0,
-                  padding: '7px 13px',
-                  borderRadius: 99,
-                  fontSize: '0.76rem',
-                  fontWeight: 800,
-                  whiteSpace: 'nowrap',
-                  cursor: disabled ? 'not-allowed' : 'pointer',
-                  opacity: disabled ? 0.35 : 1,
-                  background: active ? `${metric.color}22` : 'transparent',
-                  color: active ? metric.color : 'var(--text-muted)',
-                  border: `1px solid ${active ? `${metric.color}55` : 'var(--border)'}`,
-                }}
-              >
-                {metric.label}
-              </button>
-            )
-          })}
-        </div>
-        <p style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', marginTop: 6 }}>
-          {focused
-            ? 'Zeitraum folgt Fokus-Substanz · Chips deaktiviert'
-            : 'Eine Metrik · eigene Y-Achse · Wellness per Substanz antippen'}
-        </p>
-      </div>
-
-      {visibilityGroups.length > 0 && (
-        <ChartVisibilityPicker
-          groups={visibilityGroups}
-          visibleIds={visibleIds}
-          onToggleGroup={toggleGroup}
-          onToggleCycle={toggleCycle}
-        />
       )}
 
-      {selectedMetric && (
+      {selectedMetric && hasChartData && (
         <MetricChart
           range={chartRange}
           metric={selectedMetric}
@@ -235,9 +199,35 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
         />
       )}
 
-      <EventStrip range={chartRange} photos={state.photos} bloodwork={state.bloodwork} />
+      {hasChartData && !selectedMetric && (
+        <section style={{
+          textAlign: 'center',
+          padding: '24px 16px',
+          color: 'var(--text-muted)',
+          fontSize: '0.85rem',
+          fontWeight: 600,
+        }}>
+          Wähle mindestens einen Zyklus und eine Metrik.
+        </section>
+      )}
 
-      {(visibleCycles.length > 0 || visibleOngoing.length > 0) && (
+      {!hasChartData && (
+        <section style={{
+          textAlign: 'center',
+          padding: '24px 16px',
+          color: 'var(--text-muted)',
+          fontSize: '0.85rem',
+          fontWeight: 600,
+        }}>
+          Wähle oben mindestens einen Zyklus für den Chart.
+        </section>
+      )}
+
+      {hasChartData && (
+        <EventStrip range={chartRange} photos={state.photos} bloodwork={state.bloodwork} />
+      )}
+
+      {hasChartData && (
         <SubstanceLane
           cycles={visibleCycles}
           ongoing={visibleOngoing}
@@ -250,6 +240,12 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
           peptideNames={state.peptideNames}
           onSelect={setFocusId}
         />
+      )}
+
+      {focused && (
+        <p style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', textAlign: 'center' }}>
+          Zeitraum folgt Fokus-Substanz · Wellness unten antippen
+        </p>
       )}
     </div>
   )

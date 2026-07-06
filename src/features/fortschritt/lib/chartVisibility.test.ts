@@ -5,6 +5,7 @@ import {
   groupMemberIds,
   groupSubstancesByPeptide,
   groupVisibilityState,
+  partitionCyclesForDisplay,
   reconcileVisibleChartIds,
   setGroupVisibility,
   toggleMemberVisibility,
@@ -57,7 +58,7 @@ describe('groupSubstancesByPeptide', () => {
 })
 
 describe('defaultVisibleChartIds', () => {
-  it('shows all active cycles and ongoing by default', () => {
+  it('preselects only active cycles and ongoing', () => {
     const visible = defaultVisibleChartIds(
       [
         cycle('c1', 'pep-a', 'A', '2026-01-01', { active: true }),
@@ -70,18 +71,15 @@ describe('defaultVisibleChartIds', () => {
     expect(visible.has('o1')).toBe(true)
   })
 
-  it('falls back to last ended cycle per substance when nothing active', () => {
+  it('selects nothing when no active cycles exist', () => {
     const visible = defaultVisibleChartIds(
       [
         cycle('c1', 'pep-a', 'A', '2026-01-01', { active: false, endDate: '2026-02-01' }),
         cycle('c2', 'pep-a', 'A', '2026-03-01', { active: false, endDate: '2026-05-01' }),
-        cycle('c3', 'pep-b', 'B', '2026-01-01', { active: false, endDate: '2026-06-01' }),
       ],
       [],
     )
-    expect(visible.has('c1')).toBe(false)
-    expect(visible.has('c2')).toBe(true)
-    expect(visible.has('c3')).toBe(true)
+    expect(visible.size).toBe(0)
   })
 })
 
@@ -116,6 +114,19 @@ describe('reconcileVisibleChartIds', () => {
     )
     expect(visible.has('gone')).toBe(false)
     expect(visible.has('c1')).toBe(true)
+  })
+})
+
+describe('partitionCyclesForDisplay', () => {
+  it('lists active first and inactive newest first', () => {
+    const { active, inactive } = partitionCyclesForDisplay([
+      cycle('old-ended', 'pep-a', 'A', '2025-01-01', { active: false, endDate: '2025-03-01' }),
+      cycle('active-new', 'pep-a', 'A', '2026-06-01', { active: true }),
+      cycle('active-old', 'pep-a', 'A', '2026-01-01', { active: true }),
+      cycle('recent-ended', 'pep-a', 'A', '2026-02-01', { active: false, endDate: '2026-04-01' }),
+    ])
+    expect(active.map(c => c.id)).toEqual(['active-new', 'active-old'])
+    expect(inactive.map(c => c.id)).toEqual(['recent-ended', 'old-ended'])
   })
 })
 
