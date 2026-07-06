@@ -177,6 +177,44 @@ export function groupVisibilityState(
   return 'partial'
 }
 
+export function substanceDefaultMemberIds(group: SubstanceCycleGroup): string[] {
+  const { active } = partitionCyclesForDisplay(group.cycles)
+  const ids = active.map(c => c.id)
+  if (group.ongoing) ids.push(group.ongoing.id)
+  return ids
+}
+
+/** Checkbox-Zustand: aktive Zyklen + dauerhaft (ohne beendete). */
+export function substanceCheckboxState(
+  group: SubstanceCycleGroup,
+  visibleIds: VisibleChartIds,
+): GroupVisibilityState {
+  const ids = substanceDefaultMemberIds(group)
+  const members = ids.length > 0 ? ids : groupMemberIds(group)
+  if (members.length === 0) return 'none'
+  const visibleCount = members.filter(id => visibleIds.has(id)).length
+  if (visibleCount === 0) return 'none'
+  if (visibleCount === members.length) return 'all'
+  return 'partial'
+}
+
+/** Ein: aktive + dauerhaft. Aus: alle Zyklen der Substanz. */
+export function setSubstanceVisibility(
+  group: SubstanceCycleGroup,
+  visible: boolean,
+  current: VisibleChartIds,
+): VisibleChartIds {
+  const next = new Set(current)
+  if (visible) {
+    const ids = substanceDefaultMemberIds(group)
+    const target = ids.length > 0 ? ids : groupMemberIds(group)
+    for (const id of target) next.add(id)
+  } else {
+    for (const id of groupMemberIds(group)) next.delete(id)
+  }
+  return next
+}
+
 export function setGroupVisibility(
   group: SubstanceCycleGroup,
   visible: boolean,

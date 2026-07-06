@@ -3,10 +3,10 @@ import type { CycleSubstance, OngoingSubstance } from '../types'
 import {
   ensureVisible,
   groupSubstancesByPeptide,
-  groupVisibilityState,
   readStoredVisibleIds,
   reconcileVisibleChartIds,
-  setGroupVisibility,
+  setSubstanceVisibility,
+  substanceCheckboxState,
   toggleMemberVisibility,
   visibleIdsEqual,
   writeStoredVisibleIds,
@@ -45,8 +45,8 @@ export function useChartVisibility(
   }, [])
 
   const toggleGroup = useCallback((group: SubstanceCycleGroup) => {
-    const state = groupVisibilityState(group, visibleIds)
-    const next = setGroupVisibility(group, state !== 'all', visibleIds)
+    const state = substanceCheckboxState(group, visibleIds)
+    const next = setSubstanceVisibility(group, state !== 'all', visibleIds)
     if (!visibleIdsEqual(visibleIds, next)) persist(next)
   }, [persist, visibleIds])
 

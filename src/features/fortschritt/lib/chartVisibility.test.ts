@@ -8,6 +8,9 @@ import {
   partitionCyclesForDisplay,
   reconcileVisibleChartIds,
   setGroupVisibility,
+  setSubstanceVisibility,
+  substanceCheckboxState,
+  substanceDefaultMemberIds,
   toggleMemberVisibility,
 } from './chartVisibility'
 
@@ -127,6 +130,41 @@ describe('partitionCyclesForDisplay', () => {
     ])
     expect(active.map(c => c.id)).toEqual(['active-new', 'active-old'])
     expect(inactive.map(c => c.id)).toEqual(['recent-ended', 'old-ended'])
+  })
+})
+
+describe('substance checkbox helpers', () => {
+  const groups = groupSubstancesByPeptide(
+    [
+      cycle('active', 'pep-a', 'BPC', '2026-06-01', { active: true }),
+      cycle('ended', 'pep-a', 'BPC', '2026-01-01', { active: false, endDate: '2026-03-01' }),
+    ],
+    [],
+  )
+  const group = groups[0]
+
+  it('treats active-only selection as fully checked', () => {
+    expect(substanceCheckboxState(group, new Set(['active']))).toBe('all')
+  })
+
+  it('turns on only active cycles when enabling substance', () => {
+    const next = setSubstanceVisibility(group, true, new Set())
+    expect(next.has('active')).toBe(true)
+    expect(next.has('ended')).toBe(false)
+  })
+
+  it('turns off all cycles when disabling substance', () => {
+    const next = setSubstanceVisibility(group, false, new Set(['active', 'ended']))
+    expect(next.size).toBe(0)
+  })
+
+  it('lists only active cycles as default members', () => {
+    expect(substanceDefaultMemberIds(group).sort()).toEqual(['active'])
+  })
+
+  it('includes ongoing id for dauerhafte substanzen', () => {
+    const ongoingOnly = groupSubstancesByPeptide([], [ongoing('o1', 'Kreatin')])[0]
+    expect(substanceDefaultMemberIds(ongoingOnly)).toEqual(['o1'])
   })
 })
 

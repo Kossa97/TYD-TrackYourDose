@@ -4,8 +4,9 @@ import type { CycleSubstance } from '../../types'
 import type { MetricDefinition } from '../../lib/metricDefinitions'
 import { formatDaySafe } from '../../lib/dates'
 import {
-  groupVisibilityState,
   partitionCyclesForDisplay,
+  substanceCheckboxState,
+  substanceDefaultMemberIds,
   type SubstanceCycleGroup,
   type VisibleChartIds,
 } from '../../lib/chartVisibility'
@@ -184,16 +185,9 @@ export function VerlaufSetup({
   pointCounts,
   onSelectMetric,
 }: Props) {
-  const [openSubstances, setOpenSubstances] = useState<Set<string>>(() => (
-    new Set(groups.map(g => g.key))
-  ))
-  const [openSections, setOpenSections] = useState<Set<string>>(() => {
-    const keys = new Set<string>()
-    for (const g of groups) {
-      keys.add(`${g.key}:active`)
-    }
-    return keys
-  })
+  const [substancesPanelOpen, setSubstancesPanelOpen] = useState(false)
+  const [openSubstances, setOpenSubstances] = useState<Set<string>>(() => new Set())
+  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set())
 
   const toggleSubstance = (key: string) => {
     setOpenSubstances(prev => {
@@ -214,29 +208,48 @@ export function VerlaufSetup({
   }
 
   const hasCycles = groups.some(g => g.cycles.length > 0 || g.ongoing)
+  const summary = buildSubstancesSummary(groups, visibleIds)
 
   return (
     <section style={{ ...panel, padding: '16px 16px 14px' }}>
       {hasCycles && (
         <div style={{ marginBottom: 18 }}>
-          <p style={{
-            fontSize: '0.92rem',
-            fontWeight: 800,
-            color: 'var(--text-dim)',
-            lineHeight: 1.35,
-            marginBottom: 12,
-          }}>
-            Was soll in deinem Verlauf dargestellt werden?
-          </p>
-          <p style={{
-            fontSize: '0.72rem',
-            fontWeight: 600,
-            color: 'var(--text-muted)',
-            marginBottom: 10,
-          }}>
-            Substanz an- oder abwählen · Pfeil zum Aufklappen der Zyklen.
-          </p>
+          <button
+            type="button"
+            onClick={() => setSubstancesPanelOpen(v => !v)}
+            aria-expanded={substancesPanelOpen}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              width: '100%',
+              padding: 0,
+              marginBottom: substancesPanelOpen ? 12 : 0,
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            {substancesPanelOpen
+              ? <ChevronDown size={18} color="var(--text-dim)" />
+              : <ChevronRight size={18} color="var(--text-dim)" />}
+            <span style={{
+              fontSize: '0.92rem',
+              fontWeight: 800,
+              color: 'var(--text-dim)',
+              flex: 1,
+            }}>
+              Substanzen hinzufügen
+            </span>
+            {!substancesPanelOpen && (
+              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                {summary}
+              </span>
+            )}
+          </button>
 
+          {substancesPanelOpen && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {groups.map(group => {
               const substanceOpen = openSubstances.has(group.key)
@@ -245,7 +258,8 @@ export function VerlaufSetup({
               const inactiveKey = `${group.key}:inactive`
               const activeOpen = openSections.has(activeKey)
               const inactiveOpen = openSections.has(inactiveKey)
-              const visibility = groupVisibilityState(group, visibleIds)
+              const visibility = substanceCheckboxState(group, visibleIds)
+              const counts = groupDefaultCounts(group, visibleIds)
 
               return (
                 <div
@@ -313,7 +327,7 @@ export function VerlaufSetup({
                       </span>
                     </button>
                     <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', flexShrink: 0 }}>
-                      {groupMemberVisibleCount(group, visibleIds)}/{groupMemberIdsCount(group)}
+                      {counts.visible}/{counts.total}
                     </span>
                   </div>
 
@@ -378,6 +392,7 @@ export function VerlaufSetup({
               )
             })}
           </div>
+          )}
         </div>
       )}
 
@@ -427,13 +442,26 @@ export function VerlaufSetup({
   )
 }
 
-function groupMemberIdsCount(group: SubstanceCycleGroup): number {
-  return group.cycles.length + (group.ongoing ? 1 : 0)
+function groupDefaultCounts(
+  group: SubstanceCycleGroup,
+  visibleIds: VisibleChartIds,
+): { visible: number; total: number } {
+  const ids = substanceDefaultMemberIds(group)
+  const members = ids.length > 0 ? ids : [...group.cycles.map(c => c.id), ...(group.ongoing ? [group.ongoing.id] : [])]
+  return {
+    visible: members.filter(id => visibleIds.has(id)).length,
+    total: members.length,
+  }
 }
 
-function groupMemberVisibleCount(group: SubstanceCycleGroup, visibleIds: VisibleChartIds): number {
-  let n = 0
-  for (const c of group.cycles) if (visibleIds.has(c.id)) n++
-  if (group.ongoing && visibleIds.has(group.ongoing.id)) n++
-  return n
+function buildSubstancesSummary(groups: SubstanceCycleGroup[], visibleIds: VisibleChartIds): string {
+  const selected = groups.filter(g => substanceCheckboxState(g, visibleIds) !== 'none').length
+  const activeCycles = groups.reduce((sum, g) => {
+    const { active } = partitionCyclesForDisplay(g.cycles)
+    return sum + active.filter(c => visibleIds.has(c.id)).length
+  }, 0)
+  const parts: string[] = []
+  if (selected > 0) parts.push(`${selected} ${selected === 1 ? 'Substanz' : 'Substanzen'}`)
+  if (activeCycles > 0) parts.push(`${activeCycles} ${activeCycles === 1 ? 'aktiver Zyklus' : 'aktive Zyklen'}`)
+  return parts.length > 0 ? parts.join(' · ') : 'Nichts ausgewählt'
 }
