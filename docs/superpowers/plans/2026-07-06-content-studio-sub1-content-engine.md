@@ -368,7 +368,7 @@ export type TemplateParams = z.infer<typeof templateParamsSchema>
 export const channelVariantSchema = z.object({
   hook: z.string().min(1).max(300),
   body_text: z.string().min(1),
-  hashtags: z.array(z.string().regex(/^#?[\p{L}\p{N}_]+$/u)).max(10).default([]),
+  hashtags: z.array(z.string().regex(/^#?[\p{L}\p{N}_-]+$/u)).max(10).default([]),
   template_params: templateParamsSchema,
 })
 export type ChannelVariant = z.infer<typeof channelVariantSchema>
@@ -455,7 +455,7 @@ Erwartet: FAIL — Modul nicht gefunden
 const PATTERNS: { id: string; re: RegExp }[] = [
   {
     id: 'dosage_advice',
-    re: /(\bnimm\b|\bnehmen sie\b|du solltest .{0,30}(mg|mcg|iu)\b|\btake \d+ ?(mg|mcg|iu)\b|\byou should take\b|recommended dos(e|age)|empfohlene dosis|dosierungsempfehlung)/iu,
+    re: /(\bnimm\b|\bnehmen sie\b|du solltest [\s\S]{0,30}(mg|mcg|iu)\b|\btake \d+ ?(mg|mcg|iu)\b|\byou should take\b|recommended dos(e|age)|empfohlene dosis|dosierungsempfehlung)/iu,
   },
   {
     id: 'healing_claim',
