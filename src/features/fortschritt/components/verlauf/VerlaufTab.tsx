@@ -23,7 +23,6 @@ import { VerlaufSetupSheet } from './VerlaufSetupSheet'
 import { ChartSettingsButton } from './ChartSettingsButton'
 import { SubstanceLane } from './SubstanceLane'
 import { MetricChart } from './MetricChart'
-import { EventStrip } from './EventStrip'
 
 interface Props {
   state: FortschrittOverviewState
@@ -214,10 +213,6 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
             Tippe oben rechts auf Einstellen, um Substanzen und Zyklen für den Verlauf zu wählen.
           </p>
         </section>
-      )}
-
-      {hasChartData && (
-        <EventStrip range={chartRange} photos={state.photos} bloodwork={state.bloodwork} />
       )}
 
       {hasChartData && (
