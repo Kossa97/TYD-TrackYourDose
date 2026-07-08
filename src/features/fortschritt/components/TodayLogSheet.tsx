@@ -10,7 +10,48 @@ import { fieldLabel, inputStyle, SLIDER_CSS } from '../styles'
 
 const SHEET_Z = 10070
 
+/** Volldeckend — var(--surface) ist im Dark-Theme halbtransparent. */
+const SHEET_BG = 'var(--app-bg)'
+
 const todayStr = () => format(new Date(), 'yyyy-MM-dd')
+
+function useScrollLock(active: boolean) {
+  useEffect(() => {
+    if (!active) return
+
+    const scrollY = window.scrollY
+    const { documentElement: html, body } = document
+
+    const prev = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyLeft: body.style.left,
+      bodyRight: body.style.right,
+      bodyWidth: body.style.width,
+    }
+
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.left = '0'
+    body.style.right = '0'
+    body.style.width = '100%'
+
+    return () => {
+      html.style.overflow = prev.htmlOverflow
+      body.style.overflow = prev.bodyOverflow
+      body.style.position = prev.bodyPosition
+      body.style.top = prev.bodyTop
+      body.style.left = prev.bodyLeft
+      body.style.right = prev.bodyRight
+      body.style.width = prev.bodyWidth
+      window.scrollTo(0, scrollY)
+    }
+  }, [active])
+}
 
 interface Props {
   logs: DailyLogEntry[]
@@ -31,14 +72,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
   const [bodyFat, setBodyFat] = useState('')
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    if (!open) return
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prevOverflow
-    }
-  }, [open])
+  useScrollLock(open)
 
   useEffect(() => {
     if (!open) return
@@ -146,18 +180,14 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="today-log-title"
+        className="fixed inset-0 flex min-h-dvh flex-col overflow-hidden overflow-x-hidden overscroll-y-contain"
         style={{
-          position: 'fixed',
-          inset: 0,
           zIndex: SHEET_Z,
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'var(--surface)',
-          overflow: 'hidden',
+          background: SHEET_BG,
           width: '100%',
           maxWidth: '100vw',
           overscrollBehavior: 'none',
-          touchAction: 'pan-y',
+          touchAction: 'manipulation',
         }}
       >
         <header style={{
@@ -168,7 +198,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
           padding: 'max(12px, env(safe-area-inset-top)) 16px 12px',
           borderBottom: '1px solid var(--border)',
           flexShrink: 0,
-          background: 'var(--surface)',
+          background: SHEET_BG,
         }}>
           <h2
             id="today-log-title"
@@ -188,7 +218,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
               height: 36,
               borderRadius: 10,
               border: '1px solid var(--border)',
-              background: 'var(--surface-input)',
+              background: 'var(--surface-raised)',
               color: 'var(--text-muted)',
               cursor: 'pointer',
               flexShrink: 0,
@@ -205,6 +235,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
           WebkitOverflowScrolling: 'touch',
           overscrollBehavior: 'contain',
           padding: '16px 18px 12px',
+          background: SHEET_BG,
         }}>
           <div style={{ marginBottom: 14 }}>
             <label style={fieldLabel}>Datum</label>
@@ -282,7 +313,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
           flexShrink: 0,
           padding: '12px 18px max(16px, env(safe-area-inset-bottom))',
           borderTop: '1px solid var(--border)',
-          background: 'var(--surface)',
+          background: SHEET_BG,
         }}>
           <button
             type="button"
