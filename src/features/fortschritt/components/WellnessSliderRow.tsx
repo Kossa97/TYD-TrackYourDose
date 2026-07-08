@@ -16,15 +16,18 @@ export const WELLNESS_SLIDER_CSS = `
   input.tyd-wellness-slider::-webkit-slider-runnable-track {
     height: 6px;
     border-radius: 99px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+  }
+  input.tyd-wellness-slider.is-set::-webkit-slider-runnable-track {
     background: linear-gradient(
       to right,
       var(--accent) 0%,
-      var(--accent) var(--fill-pct, 44%),
-      rgba(255,255,255,0.1) var(--fill-pct, 44%),
+      var(--accent) var(--fill-pct, 0%),
+      rgba(255,255,255,0.1) var(--fill-pct, 0%),
       rgba(255,255,255,0.1) 100%
     );
-    border: 1px solid rgba(255,255,255,0.06);
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
   }
   input.tyd-wellness-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
@@ -33,13 +36,19 @@ export const WELLNESS_SLIDER_CSS = `
     height: 22px;
     margin-top: -9px;
     border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, #ffffff 0%, #ececec 45%, #c8c8c8 100%);
+    border: 2.5px solid rgba(255,255,255,0.95);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    cursor: grab;
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  input.tyd-wellness-slider.is-set::-webkit-slider-thumb {
     background: radial-gradient(circle at 32% 28%, #7ef0ff 0%, #00ccf5 42%, #008fbd 100%);
     border: 2.5px solid rgba(255,255,255,0.92);
     box-shadow:
       0 0 0 3px rgba(0,204,245,0.16),
       0 3px 10px rgba(0,0,0,0.4),
       0 0 14px rgba(0,204,245,0.3);
-    cursor: grab;
   }
   input.tyd-wellness-slider:active::-webkit-slider-thumb {
     cursor: grabbing;
@@ -51,7 +60,7 @@ export const WELLNESS_SLIDER_CSS = `
     background: rgba(255,255,255,0.1);
     border: 1px solid rgba(255,255,255,0.06);
   }
-  input.tyd-wellness-slider::-moz-range-progress {
+  input.tyd-wellness-slider.is-set::-moz-range-progress {
     height: 6px;
     border-radius: 99px;
     background: var(--accent);
@@ -60,20 +69,26 @@ export const WELLNESS_SLIDER_CSS = `
     width: 22px;
     height: 22px;
     border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, #ffffff 0%, #ececec 45%, #c8c8c8 100%);
+    border: 2.5px solid rgba(255,255,255,0.95);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    cursor: grab;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+  }
+  input.tyd-wellness-slider.is-set::-moz-range-thumb {
     background: radial-gradient(circle at 32% 28%, #7ef0ff 0%, #00ccf5 42%, #008fbd 100%);
     border: 2.5px solid rgba(255,255,255,0.92);
     box-shadow:
       0 0 0 3px rgba(0,204,245,0.16),
       0 3px 10px rgba(0,0,0,0.4),
       0 0 14px rgba(0,204,245,0.3);
-    cursor: grab;
   }
 `
 
-export const DEFAULT_WELLNESS = 5
+export const DEFAULT_WELLNESS = 0
 
 export function wellnessFillPercent(value: number): string {
-  return `${((value - 1) / 9) * 100}%`
+  return `${(value / 10) * 100}%`
 }
 
 export const dateFieldStyle: CSSProperties = {
@@ -106,11 +121,13 @@ export const compactInputStyle: CSSProperties = {
 interface Props {
   label: string
   value: number | null
-  onChange: (value: number) => void
+  onChange: (value: number | null) => void
 }
 
 export function WellnessSliderRow({ label, value, onChange }: Props) {
-  const display = value ?? DEFAULT_WELLNESS
+  const isSet = value != null
+  const position = value ?? DEFAULT_WELLNESS
+  const display = position
 
   return (
     <div style={{
@@ -133,7 +150,7 @@ export function WellnessSliderRow({ label, value, onChange }: Props) {
         <span style={{
           fontSize: '0.82rem',
           fontWeight: 900,
-          color: 'var(--accent)',
+          color: isSet ? 'var(--accent)' : 'var(--text-muted)',
           fontVariantNumeric: 'tabular-nums',
         }}>
           {display}<span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)' }}>/10</span>
@@ -141,18 +158,21 @@ export function WellnessSliderRow({ label, value, onChange }: Props) {
       </div>
 
       <input
-        className="tyd-wellness-slider"
+        className={`tyd-wellness-slider${isSet ? ' is-set' : ''}`}
         type="range"
-        min={1}
+        min={0}
         max={10}
         step={1}
-        value={display}
-        onChange={e => onChange(Number(e.target.value))}
-        aria-valuemin={1}
+        value={position}
+        onChange={e => {
+          const next = Number(e.target.value)
+          onChange(next === 0 ? null : next)
+        }}
+        aria-valuemin={0}
         aria-valuemax={10}
-        aria-valuenow={display}
+        aria-valuenow={position}
         aria-label={label}
-        style={{ '--fill-pct': wellnessFillPercent(display) } as CSSProperties}
+        style={{ '--fill-pct': wellnessFillPercent(position) } as CSSProperties}
       />
     </div>
   )

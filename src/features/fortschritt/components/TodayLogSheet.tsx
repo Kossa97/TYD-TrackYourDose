@@ -91,10 +91,10 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
   useEffect(() => {
     if (!open) return
     const existing = logs.find(l => l.log_date === date)
-    setEnergie(existing?.energie ?? null)
-    setSchlaf(existing?.schlaf ?? null)
-    setWohlbefinden(existing?.wohlbefinden ?? null)
-    setLibido(existing?.libido ?? null)
+    setEnergie(existing?.energie != null && existing.energie > 0 ? existing.energie : null)
+    setSchlaf(existing?.schlaf != null && existing.schlaf > 0 ? existing.schlaf : null)
+    setWohlbefinden(existing?.wohlbefinden != null && existing.wohlbefinden > 0 ? existing.wohlbefinden : null)
+    setLibido(existing?.libido != null && existing.libido > 0 ? existing.libido : null)
 
     const dayBodyFat = bodyFatForDate(logs, date)
     setBodyFat(dayBodyFat ?? lastBodyFatBefore(logs, date))
