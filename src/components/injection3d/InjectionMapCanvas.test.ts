@@ -48,8 +48,10 @@ describe('InjectionMapCanvas external assets', () => {
     const source = readFileSync(new URL('./InjectionMapCanvas.tsx', import.meta.url), 'utf8')
 
     expect(source).toContain('enablePan enableZoom enableRotate')
-    expect(source).toContain('touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.PAN }}')
+    expect(source).toContain('touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }}')
     expect(source).toContain('screenSpacePanning')
+    expect(source).toContain('frames={1}')
+    expect(source).toContain('dpr={[1, 1.35]}')
     expect(source).not.toContain('enablePan={false}')
     expect(source).toContain("touchAction: 'none'")
     expect(source).toContain("overscrollBehavior: 'none'")

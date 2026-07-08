@@ -340,13 +340,13 @@
     "semantic_hash": "df0478aec2fae047a779e5292bf1a99d"
   },
   "src/components/injection3d/InjectionMapCanvas.test.ts": {
-    "mtime": 1783498113.7794216,
-    "ast_hash": "e30e9d0e74a468eafeaaea6e64bf73f6",
+    "mtime": 1783498671.6178875,
+    "ast_hash": "b25a6d0f4e022b7ac7b8c351888d1f80",
     "semantic_hash": ""
   },
   "src/components/injection3d/InjectionMapCanvas.tsx": {
-    "mtime": 1783498129.1759953,
-    "ast_hash": "3ff3fae1a72d614701d55952c8deb446",
+    "mtime": 1783498691.2349365,
+    "ast_hash": "32c4c9e153ce675a576bb1b91b514228",
     "semantic_hash": ""
   },
   "src/components/injection3d/InjectionPin.tsx": {
