@@ -42,7 +42,7 @@ export function FortschrittHeader({ subtitle, onLogToday }: Props) {
           }}
         >
           <Plus size={17} />
-          deinen heutigen Stand eintragen
+          DEINEN HEUTIGEN STAND EINTRAGEN
         </button>
       </div>
     </header>
