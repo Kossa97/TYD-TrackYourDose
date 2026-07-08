@@ -268,7 +268,7 @@ function Scene({
       ))}
       {draftPin && <InjectionPin position={draftPin.position} normal={draftPin.normal} active />}
       <ContactShadows opacity={0.22} scale={4} blur={2.5} far={3} position={[0, -1.22, 0]} />
-      <OrbitControls makeDefault enablePan={false} enableZoom enableRotate minDistance={0.65} maxDistance={7} target={[0, DEFAULT_CAMERA_TARGET_Y, 0]} />
+      <OrbitControls makeDefault enablePan enableZoom enableRotate screenSpacePanning touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.PAN }} minDistance={0.65} maxDistance={7} target={[0, DEFAULT_CAMERA_TARGET_Y, 0]} />
     </>
   )
 }
