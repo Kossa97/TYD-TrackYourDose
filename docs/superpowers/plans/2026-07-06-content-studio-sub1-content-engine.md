@@ -368,7 +368,7 @@ export type TemplateParams = z.infer<typeof templateParamsSchema>
 export const channelVariantSchema = z.object({
   hook: z.string().min(1).max(300),
   body_text: z.string().min(1),
-  hashtags: z.array(z.string().regex(/^#?[\p{L}\p{N}_-]+$/u)).max(10).default([]),
+  hashtags: z.preprocess((v) => v ?? [], z.array(z.string().regex(/^#?[\p{L}\p{N}_-]+$/u)).max(10)),
   template_params: templateParamsSchema,
 })
 export type ChannelVariant = z.infer<typeof channelVariantSchema>
@@ -455,7 +455,7 @@ Erwartet: FAIL — Modul nicht gefunden
 const PATTERNS: { id: string; re: RegExp }[] = [
   {
     id: 'dosage_advice',
-    re: /(\bnimm\b|\bnehmen sie\b|du solltest [\s\S]{0,30}(mg|mcg|iu)\b|\btake \d+ ?(mg|mcg|iu)\b|\byou should take\b|recommended dos(e|age)|empfohlene dosis|dosierungsempfehlung)/iu,
+    re: /(\bnimm\b|\bnehmen sie\b|du solltest\s[\s\S]{0,30}(mg|mcg|iu)\b|\btake \d+ ?(mg|mcg|iu)\b|\byou should take\b|recommended dos(e|age)|empfohlene dosis|dosierungsempfehlung)/iu,
   },
   {
     id: 'healing_claim',
@@ -556,6 +556,7 @@ const STATUS_RANK: Record<string, number> = { queued: 0, idea: 1 }
 
 /** Auswahl fuer den Auto-Batch: queued vor idea, dann Prioritaet absteigend, dann nie/laengst benutzt zuerst. */
 export function selectTopics<T extends RotatableTopic>(topics: T[], n: number): T[] {
+  if (n <= 0) return []
   return topics
     .filter((t) => t.status in STATUS_RANK)
     .sort((a, b) => {
@@ -639,8 +640,19 @@ export interface Schedule {
 export function isBatchDue(schedule: Schedule, now: Date, lastScheduledAt: Date | null): boolean {
   if (now.getUTCDay() !== schedule.weekday) return false
   if (now.getUTCHours() !== schedule.hour) return false
-  if (lastScheduledAt && now.getTime() - lastScheduledAt.getTime() < 2 * 60 * 60 * 1000) return false
+  // Doppelzuendungs-Schutz: pro Kalenderstunde nur ein geplanter Batch.
+  // (Kein flaches Zeitfenster — sonst verschluckt eine Zeitplan-Aenderung am selben Tag den Batch.)
+  if (lastScheduledAt && isSameUtcHour(lastScheduledAt, now)) return false
   return true
+}
+
+function isSameUtcHour(a: Date, b: Date): boolean {
+  return (
+    a.getUTCFullYear() === b.getUTCFullYear() &&
+    a.getUTCMonth() === b.getUTCMonth() &&
+    a.getUTCDate() === b.getUTCDate() &&
+    a.getUTCHours() === b.getUTCHours()
+  )
 }
 ```
 
@@ -691,7 +703,7 @@ describe('pickRelevantKnowledge', () => {
     expect(kinds).toContain('guardrail')
   })
   it('prefers topical matches by word overlap with the topic', () => {
-    const picked = pickRelevantKnowledge(pool, 'The dose calculator explained', 4)
+    const picked = pickRelevantKnowledge(pool, 'The dose calculator explained', 5)
     const titles = picked.map((e) => e.title)
     expect(titles).toContain('What is the calculator?')
     expect(titles).toContain('Calculator')
@@ -773,7 +785,9 @@ export function pickRelevantKnowledge(all: KnowledgeEntry[], topicText: string, 
       for (const w of words) if (hay.includes(w)) return true
       return false
     })
-  return [...core, ...topical].slice(0, max)
+  // Kern-Eintraege werden nie zugunsten topischer Treffer verdraengt (max ist ein Soft-Cap).
+  const room = Math.max(0, max - core.length)
+  return [...core, ...topical.slice(0, room)]
 }
 
 const LANGUAGE_NAMES: Record<Language, string> = { de: 'German (informal "du")', en: 'English' }
@@ -812,6 +826,7 @@ For every channel also fill template_params: headline (max 80 chars, punchy, for
 
 Respond ONLY with a single JSON object, no markdown fences, no commentary:
 {"variants": {"<channel>": {"hook": string, "body_text": string, "hashtags": string[], "template_params": {"headline": string, "subline": string}}}}
+hashtags must always be a JSON array — use [] when a channel's styleguide forbids hashtags, never null.
 Include exactly these channels as keys: ${input.channels.map((c) => `"${c}"`).join(', ')}.`
 }
 ```

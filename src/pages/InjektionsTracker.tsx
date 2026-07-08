@@ -32,6 +32,7 @@ import type {
 } from '../lib/injectionLogTypes'
 
 const INTRO_STORAGE_KEY = 'tyd_injection_intro_version'
+const TRACKER_FULLSCREEN_HEIGHT = 'calc(100dvh + env(safe-area-inset-top))'
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
@@ -290,25 +291,25 @@ export function InjektionsTracker() {
   }
 
   return (
-    <div className="min-h-dvh overflow-hidden">
+    <div className="min-h-dvh overflow-hidden" style={{ marginTop: 'calc(-1 * env(safe-area-inset-top))', height: TRACKER_FULLSCREEN_HEIGHT, minHeight: TRACKER_FULLSCREEN_HEIGHT }}>
       {/* 3D Injektionskarte */}
       <section
         ref={mapSectionRef}
         style={{
           ...panelStyle,
           padding: 0,
-          height: '100dvh',
-          minHeight: '100dvh',
+          height: TRACKER_FULLSCREEN_HEIGHT,
+          minHeight: TRACKER_FULLSCREEN_HEIGHT,
           border: 'none',
           borderRadius: 0,
           boxShadow: 'none',
         }}
       >
-        <div style={{ position: 'relative', height: '100dvh', minHeight: '100dvh' }}>
+        <div style={{ position: 'relative', height: TRACKER_FULLSCREEN_HEIGHT, minHeight: TRACKER_FULLSCREEN_HEIGHT }}>
           <PageHeader onBack={goBack} overlay />
           <InjectionMapCanvas
-            height="100dvh"
-            minHeight="100dvh"
+            height={TRACKER_FULLSCREEN_HEIGHT}
+            minHeight={TRACKER_FULLSCREEN_HEIGHT}
             draftPin={draftPin}
             logs={logs}
             visibleLogIds={visibleLogIds}
@@ -428,7 +429,7 @@ function PageHeader({ onBack, overlay = false }: { onBack: () => void; overlay?:
       gap: 12,
       ...(overlay ? {
         position: 'absolute',
-        top: 'calc(14px + env(safe-area-inset-top))',
+        top: 'calc(8px + env(safe-area-inset-top))',
         left: 14,
         right: 14,
         zIndex: 25,
