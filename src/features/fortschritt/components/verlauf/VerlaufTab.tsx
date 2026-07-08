@@ -13,7 +13,6 @@ import {
 } from '../../lib/verlaufRange'
 import { SubstanceLane } from './SubstanceLane'
 import { MetricChart } from './MetricChart'
-import { EventStrip } from './EventStrip'
 
 interface Props {
   state: FortschrittOverviewState
@@ -195,8 +194,6 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
           focusId={focusId}
         />
       )}
-
-      <EventStrip range={chartRange} photos={state.photos} bloodwork={state.bloodwork} />
 
       {(state.cycleSubstances.length > 0 || state.ongoingSubstances.length > 0) && (
         <SubstanceLane
