@@ -191,111 +191,118 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
           touchAction: 'manipulation',
         }}
       >
-        <header style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 12,
-          padding: 'max(10px, env(safe-area-inset-top)) 14px 10px',
-          borderBottom: '1px solid var(--border)',
-          flexShrink: 0,
-          background: SHEET_BG,
-        }}>
-          <h2
-            id="today-log-title"
-            style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text)' }}
-          >
-            Fortschritt eintragen
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Schließen"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              border: '1px solid var(--border)',
-              background: 'var(--surface-raised)',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
-          >
-            <X size={18} />
-          </button>
-        </header>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Schließen"
+          style={{
+            position: 'absolute',
+            top: 'max(10px, env(safe-area-inset-top))',
+            right: 14,
+            zIndex: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            border: '1px solid var(--border)',
+            background: 'var(--surface-raised)',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+          }}
+        >
+          <X size={18} />
+        </button>
 
         <div style={{
           flex: 1,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain',
-          padding: '10px 14px 6px',
-          background: SHEET_BG,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
         }}>
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            marginBottom: 10,
-            padding: '10px 12px',
-            borderRadius: 14,
-            background: 'var(--surface-input)',
-            border: '1px solid var(--border)',
+            flexShrink: 0,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            padding: 'max(48px, calc(env(safe-area-inset-top) + 36px)) 14px 8px',
+            background: SHEET_BG,
           }}>
-            <label style={{ ...fieldLabel, marginBottom: 0, flexShrink: 0 }}>Datum</label>
-            <input
-              type="date"
-              value={date}
-              max={todayStr()}
-              onChange={e => setDate(e.target.value)}
-              style={dateFieldStyle}
-            />
-          </div>
+            <h2
+              id="today-log-title"
+              style={{
+                fontSize: '1.05rem',
+                fontWeight: 900,
+                color: 'var(--text)',
+                marginBottom: 12,
+                paddingRight: 44,
+              }}
+            >
+              Fortschritt eintragen
+            </h2>
 
-          {sliders.map(s => (
-            <WellnessSliderRow
-              key={s.label}
-              label={s.label}
-              value={s.value}
-              onChange={s.set}
-            />
-          ))}
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 2 }}>
-            <div>
-              <label style={{ ...fieldLabel, fontSize: '0.56rem', marginBottom: 5 }}>Gewicht kg</label>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              marginBottom: 10,
+              padding: '10px 12px',
+              borderRadius: 14,
+              background: 'var(--surface-input)',
+              border: '1px solid var(--border)',
+            }}>
+              <label style={{ ...fieldLabel, marginBottom: 0, flexShrink: 0 }}>Datum</label>
               <input
-                type="number"
-                inputMode="decimal"
-                placeholder="82.5"
-                value={weight}
-                onChange={e => setWeight(e.target.value)}
-                style={compactInputStyle}
+                type="date"
+                value={date}
+                max={todayStr()}
+                onChange={e => setDate(e.target.value)}
+                style={dateFieldStyle}
               />
             </div>
-            <div>
-              <label style={{ ...fieldLabel, fontSize: '0.56rem', marginBottom: 5 }}>KFA %</label>
-              <input
-                type="number"
-                inputMode="decimal"
-                placeholder="18.5"
-                value={bodyFat}
-                onChange={e => setBodyFat(e.target.value)}
-                style={compactInputStyle}
+
+            {sliders.map(s => (
+              <WellnessSliderRow
+                key={s.label}
+                label={s.label}
+                value={s.value}
+                onChange={s.set}
               />
+            ))}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 2 }}>
+              <div>
+                <label style={{ ...fieldLabel, fontSize: '0.56rem', marginBottom: 5 }}>Gewicht kg</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="82.5"
+                  value={weight}
+                  onChange={e => setWeight(e.target.value)}
+                  style={compactInputStyle}
+                />
+              </div>
+              <div>
+                <label style={{ ...fieldLabel, fontSize: '0.56rem', marginBottom: 5 }}>KFA %</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="18.5"
+                  value={bodyFat}
+                  onChange={e => setBodyFat(e.target.value)}
+                  style={compactInputStyle}
+                />
+              </div>
             </div>
           </div>
         </div>
 
         <footer style={{
           flexShrink: 0,
-          padding: '10px 14px max(12px, env(safe-area-inset-bottom))',
+          padding: '8px 14px max(10px, env(safe-area-inset-bottom))',
           borderTop: '1px solid var(--border)',
           background: SHEET_BG,
         }}>
