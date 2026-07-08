@@ -903,12 +903,12 @@ export interface ClaudeConfig {
   mock: boolean
 }
 
+/** Extrahiert das erste JSON-Objekt aus der Antwort (tolerant gegen Prosa/Fences drumherum). */
 export function parseJsonText(text: string): unknown {
-  const cleaned = text
-    .trim()
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/\s*```$/, '')
-  return JSON.parse(cleaned)
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  if (start === -1 || end <= start) throw new Error('no JSON object found in response')
+  return JSON.parse(text.slice(start, end + 1))
 }
 
 /** Deterministische, schema-valide Mock-Antwort fuer Tests ohne API-Kosten (MOCK_CLAUDE=1). */
@@ -925,6 +925,14 @@ export function buildMockVariants(channels: Channel[]): { variants: Record<strin
   return { variants }
 }
 
+class ApiError extends Error {
+  status: number | null
+  constructor(message: string, status: number | null) {
+    super(message)
+    this.status = status
+  }
+}
+
 async function callApi(cfg: ClaudeConfig, prompt: string): Promise<string> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -935,22 +943,31 @@ async function callApi(cfg: ClaudeConfig, prompt: string): Promise<string> {
     },
     body: JSON.stringify({
       model: cfg.model,
-      max_tokens: 4000,
+      max_tokens: 8000,
       messages: [{ role: 'user', content: prompt }],
     }),
+    // Haengende Verbindung darf nicht das Wall-Clock-Budget der Edge Function fressen
+    signal: AbortSignal.timeout(90_000),
   })
-  if (!res.ok) throw new Error(`Claude API ${res.status}: ${await res.text()}`)
+  if (!res.ok) throw new ApiError(`Claude API ${res.status}: ${await res.text()}`, res.status)
   const json = await res.json()
+  if (json?.stop_reason === 'max_tokens') throw new ApiError('Claude API: response truncated (max_tokens)', null)
   const text = json?.content?.[0]?.text
-  if (typeof text !== 'string') throw new Error('Claude API: unexpected response shape')
+  if (typeof text !== 'string') throw new ApiError('Claude API: unexpected response shape', null)
   return text
+}
+
+/** 4xx (ausser 429) ist mit gleichem Request nicht heilbar — kein Retry. */
+function isRetryable(e: unknown): boolean {
+  if (e instanceof ApiError && e.status !== null) return e.status === 429 || e.status >= 500
+  return true
 }
 
 export type GenerationResult =
   | { ok: true; variants: Record<string, ChannelVariant> }
   | { ok: false; error: string }
 
-/** Ruft Claude (oder Mock), parst + validiert; bei ungueltiger Antwort genau EIN Retry (Spec §6.3). */
+/** Ruft Claude (oder Mock), parst + validiert; bei heilbaren Fehlern genau EIN Retry (Spec §6.3). */
 export async function generateVariants(
   cfg: ClaudeConfig,
   prompt: string,
@@ -963,10 +980,14 @@ export async function generateVariants(
     try {
       const text = await callApi(cfg, prompt)
       const parsed = schema.safeParse(parseJsonText(text))
-      if (parsed.success) return { ok: true, variants: parsed.data.variants as Record<string, ChannelVariant> }
+      if (parsed.success) return { ok: true, variants: parsed.data.variants }
       lastError = `schema validation failed: ${parsed.error.issues.map((i) => i.path.join('.') + ' ' + i.message).join('; ')}`
     } catch (e) {
       lastError = e instanceof Error ? e.message : String(e)
+      if (!isRetryable(e)) break
+      if (e instanceof ApiError && (e.status === 429 || e.status === 529)) {
+        await new Promise((r) => setTimeout(r, 1500))
+      }
     }
   }
   return { ok: false, error: lastError }
@@ -1000,7 +1021,7 @@ git commit -m "feat: Claude-Client mit Mock-Modus, JSON-Parsing und 1x-Retry"
 ```json
 {
   "imports": {
-    "zod": "npm:zod@^3.23.8",
+    "zod": "npm:zod@^4.4.3",
     "@supabase/supabase-js": "npm:@supabase/supabase-js@^2.45.0"
   }
 }
@@ -1055,6 +1076,13 @@ Deno.serve(async (req) => {
   if (body.trigger !== 'scheduled' && body.trigger !== 'manual') return json({ error: 'invalid trigger' }, 400)
 
   const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+
+  // Verwaiste running-Batches (Worker-Timeout) aufraeumen, damit die UI sie nicht ewig als laufend zeigt
+  await db
+    .from('batches')
+    .update({ status: 'failed', error_message: 'stale: worker timeout', finished_at: new Date().toISOString() })
+    .eq('status', 'running')
+    .lt('created_at', new Date(Date.now() - 30 * 60 * 1000).toISOString())
 
   const { data: settings, error: settingsErr } = await db.from('settings').select('*').eq('id', 1).single()
   if (settingsErr || !settings) return json({ error: `settings load failed: ${settingsErr?.message}` }, 500)
@@ -1122,61 +1150,81 @@ Deno.serve(async (req) => {
   let okCount = 0
   let failCount = 0
 
-  // Pro Thema x Sprache isoliert generieren (Spec §8: ein Fehler killt nie den Batch)
-  for (const topic of topics) {
-    for (const language of languages) {
-      try {
-        const relevantKnowledge = pickRelevantKnowledge(knowledge, `${topic.title} ${topic.description}`, 12)
-        const prompt = buildPrompt({
-          topicTitle: topic.title,
-          topicDescription: topic.description,
-          instruction: body.instruction,
-          language,
-          channels,
-          knowledge: relevantKnowledge,
-        })
-        const result = await generateVariants(cfg, prompt, channels)
-        if (!result.ok) throw new Error(result.error)
+  interface Pair {
+    topic: { id: string; title: string; description: string }
+    language: Language
+  }
+  const pairs: Pair[] = topics.flatMap((topic) => languages.map((language) => ({ topic, language })))
 
-        const rows = channels.map((channel) => {
-          const v = result.variants[channel]
-          const flags = [
-            ...checkGuardrails(`${v.hook} ${v.body_text}`),
-            ...(checkCharLimit(channel, v.body_text) ? ['char_limit_exceeded'] : []),
-          ]
-          return {
-            batch_id: batch.id,
-            topic_id: topic.id,
-            channel,
-            language,
-            status: 'draft',
-            hook: v.hook,
-            body_text: v.body_text,
-            hashtags: v.hashtags.map((h) => (h.startsWith('#') ? h : `#${h}`)),
-            template_id: 'announcement',
-            template_params: v.template_params,
-            guardrail_flags: flags,
-          }
-        })
-        const { error: insertErr } = await db.from('drafts').insert(rows)
-        if (insertErr) throw new Error(`drafts insert failed: ${insertErr.message}`)
-        okCount++
-      } catch (e) {
-        failCount++
-        const message = e instanceof Error ? e.message : String(e)
-        // Fehler-Entwuerfe pro Kanal, damit sie in der Queue sichtbar sind (Spec §8)
-        await db.from('drafts').insert(
-          channels.map((channel) => ({
-            batch_id: batch.id,
-            topic_id: topic.id,
-            channel,
-            language,
-            status: 'error',
-            error_message: message,
-          })),
-        )
-      }
+  // Pro Thema x Sprache isoliert generieren (Spec §8: ein Fehler killt nie den Batch)
+  async function processPair({ topic, language }: Pair) {
+    try {
+      const relevantKnowledge = pickRelevantKnowledge(knowledge, `${topic.title} ${topic.description}`, 12)
+      const prompt = buildPrompt({
+        topicTitle: topic.title,
+        topicDescription: topic.description,
+        instruction: body.instruction,
+        language,
+        channels,
+        knowledge: relevantKnowledge,
+      })
+      const result = await generateVariants(cfg, prompt, channels)
+      if (!result.ok) throw new Error(result.error)
+
+      const rows = channels.map((channel) => {
+        const v = result.variants[channel]
+        const flags = [
+          ...checkGuardrails(`${v.hook} ${v.body_text}`),
+          ...(checkCharLimit(channel, v.body_text) ? ['char_limit_exceeded'] : []),
+        ]
+        return {
+          batch_id: batch.id,
+          topic_id: topic.id,
+          channel,
+          language,
+          status: 'draft',
+          hook: v.hook,
+          body_text: v.body_text,
+          hashtags: v.hashtags.map((h) => (h.startsWith('#') ? h : `#${h}`)),
+          template_id: 'announcement',
+          template_params: v.template_params,
+          guardrail_flags: flags,
+        }
+      })
+      const { error: insertErr } = await db.from('drafts').insert(rows)
+      if (insertErr) throw new Error(`drafts insert failed: ${insertErr.message}`)
+      okCount++
+    } catch (e) {
+      failCount++
+      const message = e instanceof Error ? e.message : String(e)
+      // Fehler-Entwuerfe pro Kanal, damit sie in der Queue sichtbar sind (Spec §8)
+      await db.from('drafts').insert(
+        channels.map((channel) => ({
+          batch_id: batch.id,
+          topic_id: topic.id,
+          channel,
+          language,
+          status: 'error',
+          error_message: message,
+        })),
+      )
     }
+  }
+
+  // Begrenzte Parallelitaet: Wall-Clock-Budget der Edge Function einhalten.
+  // Worst Case pro Paar ~2x90s (Timeout x Retry) — sequentiell wuerden 10 Paare das Limit sprengen.
+  const CONCURRENCY = 3
+  let cursor = 0
+  const workers = Array.from({ length: Math.min(CONCURRENCY, pairs.length) }, async () => {
+    while (cursor < pairs.length) {
+      const pair = pairs[cursor]
+      cursor += 1
+      await processPair(pair)
+    }
+  })
+  await Promise.all(workers)
+
+  for (const topic of topics) {
     await db.from('topics').update({ last_used_at: new Date().toISOString(), status: 'used' }).eq('id', topic.id)
   }
 
