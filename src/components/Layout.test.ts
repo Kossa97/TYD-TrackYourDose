@@ -10,4 +10,10 @@ describe('Layout injection tracker fullscreen route', () => {
     expect(source).toContain('{!hideBottomNav && (')
     expect(source).toContain('{!hideFloatingFaq && (')
   })
+  it('does not add extra vertical padding on the fullscreen injection route', () => {
+    const source = readFileSync(new URL('./Layout.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain("hideBottomNav ? 'h-dvh px-0 pt-0 overflow-hidden overscroll-none'")
+    expect(source).toContain('paddingBottom: hideBottomNav ? 0')
+  })
 })

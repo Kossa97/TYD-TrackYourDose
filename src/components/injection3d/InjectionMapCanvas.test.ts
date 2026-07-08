@@ -44,4 +44,12 @@ describe('InjectionMapCanvas external assets', () => {
     expect(source).toContain('resetCameraFrame(camera, controls)')
     expect(source).toContain('maxDistance={7}')
   })
+  it('prevents accidental map shifting on touch screens', () => {
+    const source = readFileSync(new URL('./InjectionMapCanvas.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('enablePan={false}')
+    expect(source).toContain("touchAction: 'none'")
+    expect(source).toContain("overscrollBehavior: 'none'")
+    expect(source).toContain("userSelect: 'none'")
+  })
 })

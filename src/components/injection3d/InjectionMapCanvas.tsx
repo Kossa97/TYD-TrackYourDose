@@ -268,7 +268,7 @@ function Scene({
       ))}
       {draftPin && <InjectionPin position={draftPin.position} normal={draftPin.normal} active />}
       <ContactShadows opacity={0.22} scale={4} blur={2.5} far={3} position={[0, -1.22, 0]} />
-      <OrbitControls makeDefault enablePan enableZoom enableRotate minDistance={0.65} maxDistance={7} target={[0, DEFAULT_CAMERA_TARGET_Y, 0]} />
+      <OrbitControls makeDefault enablePan={false} enableZoom enableRotate minDistance={0.65} maxDistance={7} target={[0, DEFAULT_CAMERA_TARGET_Y, 0]} />
     </>
   )
 }
@@ -291,7 +291,7 @@ export function InjectionMapCanvas({
   resetRequestId?: number
 }) {
   return (
-    <div style={{ position: 'relative', height, minHeight, borderRadius: 24, overflow: 'hidden', background: 'radial-gradient(circle at 50% 20%, rgba(0,204,245,0.16), transparent 42%), #07111d' }}>
+    <div style={{ position: 'relative', height, minHeight, borderRadius: 24, overflow: 'hidden', touchAction: 'none', overscrollBehavior: 'none', userSelect: 'none', background: 'radial-gradient(circle at 50% 20%, rgba(0,204,245,0.16), transparent 42%), #07111d' }}>
       <Canvas
         camera={{ position: [0, DEFAULT_CAMERA_TARGET_Y, CAMERA_DISTANCE], fov: CAMERA_FOV, near: 0.05, far: 50 }}
         dpr={[1, 1.7]}

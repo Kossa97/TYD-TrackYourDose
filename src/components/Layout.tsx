@@ -121,10 +121,10 @@ export function Layout() {
       )}
 
       <main
-        className={`flex-1 w-full overflow-x-hidden ${hideBottomNav ? 'px-0 pt-0' : 'px-3 pt-4'}`}
+        className={`flex-1 w-full overflow-x-hidden ${hideBottomNav ? 'h-dvh px-0 pt-0 overflow-hidden overscroll-none' : 'px-3 pt-4'}`}
         style={{
-          paddingBottom: hideBottomNav ? 'env(safe-area-inset-bottom)' : 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))',
-          paddingTop: (showPushBanner || showIOSBanner)
+          paddingBottom: hideBottomNav ? 0 : 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))',
+          paddingTop: hideBottomNav ? 0 : (showPushBanner || showIOSBanner)
             ? 'calc(1rem + 72px + env(safe-area-inset-top))'
             : undefined,
         }}
