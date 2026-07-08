@@ -6,8 +6,8 @@ import toast from 'react-hot-toast'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
 import type { DailyLogEntry } from '../types'
-import { fieldLabel, inputStyle } from '../styles'
-import { dateFieldStyle, WELLNESS_SLIDER_CSS, WellnessSliderRow } from './WellnessSliderRow'
+import { fieldLabel } from '../styles'
+import { compactInputStyle, dateFieldStyle, WELLNESS_SLIDER_CSS, WellnessSliderRow } from './WellnessSliderRow'
 
 const SHEET_Z = 10070
 
@@ -196,7 +196,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 12,
-          padding: 'max(12px, env(safe-area-inset-top)) 16px 12px',
+          padding: 'max(10px, env(safe-area-inset-top)) 14px 10px',
           borderBottom: '1px solid var(--border)',
           flexShrink: 0,
           background: SHEET_BG,
@@ -235,18 +235,20 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
           overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
           overscrollBehavior: 'contain',
-          padding: '16px 18px 12px',
+          padding: '10px 14px 6px',
           background: SHEET_BG,
         }}>
           <div style={{
-            marginBottom: 18,
-            padding: '14px 14px 12px',
-            borderRadius: 18,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            marginBottom: 10,
+            padding: '10px 12px',
+            borderRadius: 14,
             background: 'var(--surface-input)',
             border: '1px solid var(--border)',
-            textAlign: 'center',
           }}>
-            <label style={{ ...fieldLabel, textAlign: 'center', marginBottom: 10 }}>Datum</label>
+            <label style={{ ...fieldLabel, marginBottom: 0, flexShrink: 0 }}>Datum</label>
             <input
               type="date"
               value={date}
@@ -265,34 +267,35 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
             />
           ))}
 
-          <div style={{ marginBottom: 12 }}>
-            <label style={fieldLabel}>Gewicht in kg (optional)</label>
-            <input
-              type="number"
-              inputMode="decimal"
-              placeholder="z.B. 82.5"
-              value={weight}
-              onChange={e => setWeight(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div style={{ marginBottom: 8 }}>
-            <label style={fieldLabel}>Körperfett % (optional)</label>
-            <input
-              type="number"
-              inputMode="decimal"
-              placeholder="z.B. 18.5"
-              value={bodyFat}
-              onChange={e => setBodyFat(e.target.value)}
-              style={inputStyle}
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 2 }}>
+            <div>
+              <label style={{ ...fieldLabel, fontSize: '0.56rem', marginBottom: 5 }}>Gewicht kg</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="82.5"
+                value={weight}
+                onChange={e => setWeight(e.target.value)}
+                style={compactInputStyle}
+              />
+            </div>
+            <div>
+              <label style={{ ...fieldLabel, fontSize: '0.56rem', marginBottom: 5 }}>KFA %</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="18.5"
+                value={bodyFat}
+                onChange={e => setBodyFat(e.target.value)}
+                style={compactInputStyle}
+              />
+            </div>
           </div>
         </div>
 
         <footer style={{
           flexShrink: 0,
-          padding: '12px 18px max(16px, env(safe-area-inset-bottom))',
+          padding: '10px 14px max(12px, env(safe-area-inset-bottom))',
           borderTop: '1px solid var(--border)',
           background: SHEET_BG,
         }}>

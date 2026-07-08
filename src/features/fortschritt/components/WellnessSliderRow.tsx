@@ -6,7 +6,7 @@ export const WELLNESS_SLIDER_CSS = `
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 8px;
+    height: 6px;
     border-radius: 99px;
     outline: none;
     cursor: pointer;
@@ -14,7 +14,7 @@ export const WELLNESS_SLIDER_CSS = `
     background: transparent;
   }
   input.tyd-wellness-slider::-webkit-slider-runnable-track {
-    height: 8px;
+    height: 6px;
     border-radius: 99px;
     background: linear-gradient(
       to right,
@@ -24,53 +24,48 @@ export const WELLNESS_SLIDER_CSS = `
       rgba(255,255,255,0.1) 100%
     );
     border: 1px solid rgba(255,255,255,0.06);
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.35);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
   }
   input.tyd-wellness-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 26px;
-    height: 26px;
-    margin-top: -10px;
+    width: 22px;
+    height: 22px;
+    margin-top: -9px;
     border-radius: 50%;
     background: radial-gradient(circle at 32% 28%, #7ef0ff 0%, #00ccf5 42%, #008fbd 100%);
-    border: 3px solid rgba(255,255,255,0.92);
+    border: 2.5px solid rgba(255,255,255,0.92);
     box-shadow:
-      0 0 0 4px rgba(0,204,245,0.18),
-      0 4px 14px rgba(0,0,0,0.45),
-      0 0 18px rgba(0,204,245,0.35);
+      0 0 0 3px rgba(0,204,245,0.16),
+      0 3px 10px rgba(0,0,0,0.4),
+      0 0 14px rgba(0,204,245,0.3);
     cursor: grab;
-    transition: box-shadow 0.15s ease, transform 0.15s ease;
   }
   input.tyd-wellness-slider:active::-webkit-slider-thumb {
     cursor: grabbing;
-    transform: scale(1.06);
-    box-shadow:
-      0 0 0 6px rgba(0,204,245,0.22),
-      0 6px 18px rgba(0,0,0,0.5),
-      0 0 24px rgba(0,204,245,0.45);
+    transform: scale(1.05);
   }
   input.tyd-wellness-slider::-moz-range-track {
-    height: 8px;
+    height: 6px;
     border-radius: 99px;
     background: rgba(255,255,255,0.1);
     border: 1px solid rgba(255,255,255,0.06);
   }
   input.tyd-wellness-slider::-moz-range-progress {
-    height: 8px;
+    height: 6px;
     border-radius: 99px;
     background: var(--accent);
   }
   input.tyd-wellness-slider::-moz-range-thumb {
-    width: 26px;
-    height: 26px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     background: radial-gradient(circle at 32% 28%, #7ef0ff 0%, #00ccf5 42%, #008fbd 100%);
-    border: 3px solid rgba(255,255,255,0.92);
+    border: 2.5px solid rgba(255,255,255,0.92);
     box-shadow:
-      0 0 0 4px rgba(0,204,245,0.18),
-      0 4px 14px rgba(0,0,0,0.45),
-      0 0 18px rgba(0,204,245,0.35);
+      0 0 0 3px rgba(0,204,245,0.16),
+      0 3px 10px rgba(0,0,0,0.4),
+      0 0 14px rgba(0,204,245,0.3);
     cursor: grab;
   }
 `
@@ -82,18 +77,30 @@ export function wellnessFillPercent(value: number): string {
 }
 
 export const dateFieldStyle: CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+  padding: 0,
+  border: 'none',
+  background: 'transparent',
+  color: 'var(--text)',
+  fontSize: '0.92rem',
+  fontWeight: 800,
+  fontFamily: 'inherit',
+  textAlign: 'right',
+  colorScheme: 'dark',
+}
+
+export const compactInputStyle: CSSProperties = {
   width: '100%',
-  padding: '14px 16px',
-  borderRadius: 16,
+  padding: '9px 11px',
+  borderRadius: 12,
   background: 'var(--surface-input)',
   border: '1px solid var(--border)',
-  color: 'var(--text)',
-  fontSize: '1rem',
-  fontWeight: 800,
+  color: 'var(--text-dim)',
+  fontSize: '0.84rem',
+  fontWeight: 700,
   boxSizing: 'border-box',
   fontFamily: 'inherit',
-  textAlign: 'center',
-  colorScheme: 'dark',
 }
 
 interface Props {
@@ -107,9 +114,9 @@ export function WellnessSliderRow({ label, value, onChange }: Props) {
 
   return (
     <div style={{
-      marginBottom: 12,
-      padding: '14px 14px 12px',
-      borderRadius: 18,
+      marginBottom: 8,
+      padding: '9px 11px 8px',
+      borderRadius: 14,
       background: 'var(--surface-input)',
       border: '1px solid var(--border)',
     }}>
@@ -117,20 +124,19 @@ export function WellnessSliderRow({ label, value, onChange }: Props) {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
-        gap: 10,
+        marginBottom: 7,
+        gap: 8,
       }}>
-        <label style={{ ...fieldLabel, marginBottom: 0 }}>
+        <label style={{ ...fieldLabel, marginBottom: 0, fontSize: '0.56rem' }}>
           {label}
         </label>
         <span style={{
-          fontSize: '0.95rem',
+          fontSize: '0.82rem',
           fontWeight: 900,
           color: 'var(--accent)',
           fontVariantNumeric: 'tabular-nums',
-          letterSpacing: '-0.02em',
         }}>
-          {display}<span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)' }}>/10</span>
+          {display}<span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)' }}>/10</span>
         </span>
       </div>
 
@@ -148,30 +154,6 @@ export function WellnessSliderRow({ label, value, onChange }: Props) {
         aria-label={label}
         style={{ '--fill-pct': wellnessFillPercent(display) } as CSSProperties}
       />
-
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        marginTop: 8,
-        padding: '0 4px',
-      }}>
-        {Array.from({ length: 10 }, (_, i) => i + 1).map(tick => (
-          <span
-            key={tick}
-            aria-hidden
-            style={{
-              width: tick === display ? 7 : 4,
-              height: tick === display ? 7 : 4,
-              borderRadius: 99,
-              background: tick <= display
-                ? (tick === display ? 'var(--accent)' : 'rgba(0,204,245,0.35)')
-                : 'rgba(255,255,255,0.12)',
-              flexShrink: 0,
-              transition: 'all 0.12s ease',
-            }}
-          />
-        ))}
-      </div>
     </div>
   )
 }
