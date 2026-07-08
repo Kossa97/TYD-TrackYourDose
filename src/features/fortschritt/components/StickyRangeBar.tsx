@@ -1,7 +1,11 @@
 import { RANGE_CHIPS, type RangeChipKey } from '../lib/verlaufRange'
 
-/** Innere Höhe der Chip-Zeile (ohne Safe-Area). */
-export const RANGE_BAR_INNER_HEIGHT = 28
+const CHIPS_HEIGHT = 28
+const HINT_HEIGHT = 14
+const BAR_PADDING_BOTTOM = 6
+
+/** Gesamthöhe unterhalb der Safe-Area (Chips + Hinweis + Padding). */
+export const RANGE_BAR_CONTENT_HEIGHT = CHIPS_HEIGHT + 6 + HINT_HEIGHT + BAR_PADDING_BOTTOM
 
 interface Props {
   value: RangeChipKey
@@ -21,47 +25,63 @@ export function StickyRangeBar({ value, onChange, disabled }: Props) {
         paddingTop: 'env(safe-area-inset-top)',
         paddingLeft: 12,
         paddingRight: 12,
-        paddingBottom: 4,
+        paddingBottom: BAR_PADDING_BOTTOM,
         background: 'var(--surface)',
         borderBottom: '1px solid var(--border)',
       }}>
         <div style={{
-          display: 'flex',
-          gap: 4,
-          height: RANGE_BAR_INNER_HEIGHT,
-          alignItems: 'stretch',
           opacity: disabled ? 0.45 : 1,
           pointerEvents: disabled ? 'none' : 'auto',
         }}>
-          {RANGE_CHIPS.map(chip => {
-            const on = value === chip.key
-            return (
-              <button
-                key={chip.key}
-                type="button"
-                disabled={disabled}
-                onClick={() => onChange(chip.key)}
-                style={{
-                  flex: 1,
-                  padding: 0,
-                  borderRadius: 8,
-                  fontSize: '0.65rem',
-                  fontWeight: 800,
-                  cursor: disabled ? 'not-allowed' : 'pointer',
-                  background: on ? 'var(--accent-weak)' : 'transparent',
-                  color: on ? 'var(--accent)' : 'var(--text-muted)',
-                  border: on ? '1px solid var(--accent-border)' : '1px solid var(--border)',
-                }}
-              >
-                {chip.label}
-              </button>
-            )
-          })}
+          <div style={{
+            display: 'flex',
+            gap: 4,
+            height: CHIPS_HEIGHT,
+            alignItems: 'stretch',
+          }}>
+            {RANGE_CHIPS.map(chip => {
+              const on = value === chip.key
+              return (
+                <button
+                  key={chip.key}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onChange(chip.key)}
+                  style={{
+                    flex: 1,
+                    padding: 0,
+                    borderRadius: 8,
+                    fontSize: '0.65rem',
+                    fontWeight: 800,
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    background: on ? 'var(--accent-weak)' : 'transparent',
+                    color: on ? 'var(--accent)' : 'var(--text-muted)',
+                    border: on ? '1px solid var(--accent-border)' : '1px solid var(--border)',
+                  }}
+                >
+                  {chip.label}
+                </button>
+              )
+            })}
+          </div>
+          <p style={{
+            margin: '6px 0 0',
+            fontSize: '0.5rem',
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: 'var(--text-muted)',
+            textAlign: 'center',
+            lineHeight: 1.3,
+            opacity: 0.75,
+          }}>
+            Passe hier den Zeitraum für deinen gesamten Fortschritt an
+          </p>
         </div>
       </div>
       <div
         aria-hidden
-        style={{ height: `calc(${RANGE_BAR_INNER_HEIGHT}px + 4px + env(safe-area-inset-top))` }}
+        style={{ height: `calc(${RANGE_BAR_CONTENT_HEIGHT}px + env(safe-area-inset-top))` }}
       />
     </>
   )
