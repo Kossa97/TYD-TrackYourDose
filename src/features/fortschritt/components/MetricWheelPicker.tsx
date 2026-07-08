@@ -64,6 +64,8 @@ interface Props {
   placeholder: string
   defaultWhole: number
   defaultDec: number
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
 export function MetricWheelPicker({
@@ -76,6 +78,8 @@ export function MetricWheelPicker({
   placeholder,
   defaultWhole,
   defaultDec,
+  open,
+  onOpenChange,
 }: Props) {
   const wholeRef = useRef<HTMLDivElement>(null)
   const decRef = useRef<HTMLDivElement>(null)
@@ -103,11 +107,12 @@ export function MetricWheelPicker({
   }, [value])
 
   useLayoutEffect(() => {
+    if (!open) return
     const wholeIdx = intOptions.indexOf(activeWhole)
     const decIdx = DEC_OPTIONS.indexOf(activeDec)
     scrollToIndex(wholeRef.current, wholeIdx >= 0 ? wholeIdx : 0)
     scrollToIndex(decRef.current, decIdx >= 0 ? decIdx : 0)
-  }, [activeWhole, activeDec, intOptions, scrollToIndex])
+  }, [open, activeWhole, activeDec, intOptions, scrollToIndex])
 
   const emitValue = useCallback(() => {
     if (suppressEmitRef.current) return
@@ -125,6 +130,7 @@ export function MetricWheelPicker({
   }, [intOptions, onChange, value])
 
   useEffect(() => {
+    if (!open) return
     const wholeEl = wholeRef.current
     const decEl = decRef.current
     if (!wholeEl || !decEl) return
@@ -136,26 +142,37 @@ export function MetricWheelPicker({
       wholeEl.removeEventListener('scroll', onScroll)
       decEl.removeEventListener('scroll', onScroll)
     }
-  }, [emitValue])
+  }, [open, emitValue])
 
   const display = value != null
     ? `${value.toFixed(1).replace('.', ',')} ${unit}`
     : placeholder
 
-  const displayStyle: CSSProperties = {
-    fontSize: '0.72rem',
-    fontWeight: 900,
+  const triggerStyle: CSSProperties = {
+    width: '100%',
+    padding: '9px 11px',
+    borderRadius: 12,
+    background: 'var(--surface-input)',
+    border: `1px solid ${open ? 'var(--accent)' : 'var(--border)'}`,
+    color: value != null ? 'var(--text)' : 'var(--text-dim)',
+    fontSize: '0.84rem',
+    fontWeight: 700,
+    boxSizing: 'border-box',
+    fontFamily: 'inherit',
+    textAlign: 'center',
     fontVariantNumeric: 'tabular-nums',
-    color: value != null ? 'var(--accent)' : 'var(--text-dim)',
+    cursor: 'pointer',
+    touchAction: 'manipulation',
+    boxShadow: open ? '0 0 0 1px rgba(0,204,245,0.2)' : undefined,
   }
 
   const wheelFrame: CSSProperties = {
     position: 'relative',
+    marginTop: 6,
     borderRadius: 12,
     background: 'var(--surface-input)',
     border: '1px solid var(--border)',
     overflow: 'hidden',
-    opacity: value != null ? 1 : 0.72,
   }
 
   const highlight: CSSProperties = {
@@ -212,25 +229,30 @@ export function MetricWheelPicker({
 
   return (
     <div>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 5,
-        gap: 6,
-      }}>
-        <label style={{ ...fieldLabel, fontSize: '0.56rem', marginBottom: 0 }}>{label}</label>
-        <span style={displayStyle}>{display}</span>
-      </div>
+      <label style={{ ...fieldLabel, fontSize: '0.56rem', marginBottom: 5, display: 'block' }}>
+        {label}
+      </label>
 
-      <div style={wheelFrame}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 28px', gap: 0 }}>
-          {renderColumn(wholeRef, intOptions, activeWhole, n => String(n))}
-          {renderColumn(decRef, DEC_OPTIONS, activeDec, n => `.${n}`)}
+      <button
+        type="button"
+        onClick={() => onOpenChange(!open)}
+        style={triggerStyle}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      >
+        {display}
+      </button>
+
+      {open && (
+        <div style={wheelFrame}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 28px', gap: 0 }}>
+            {renderColumn(wholeRef, intOptions, activeWhole, n => String(n))}
+            {renderColumn(decRef, DEC_OPTIONS, activeDec, n => `.${n}`)}
+          </div>
+          <div style={highlight} aria-hidden />
+          <div style={fade} aria-hidden />
         </div>
-        <div style={highlight} aria-hidden />
-        <div style={fade} aria-hidden />
-      </div>
+      )}
     </div>
   )
 }

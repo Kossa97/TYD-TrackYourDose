@@ -80,8 +80,13 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
   const [weightRowId, setWeightRowId] = useState<string | null>(null)
   const [bodyFat, setBodyFat] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
+  const [openMetric, setOpenMetric] = useState<'weight' | 'bodyFat' | null>(null)
 
   useScrollLock(open)
+
+  useEffect(() => {
+    if (!open) setOpenMetric(null)
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -286,6 +291,8 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
                 placeholder="82,5"
                 defaultWhole={82}
                 defaultDec={5}
+                open={openMetric === 'weight'}
+                onOpenChange={next => setOpenMetric(next ? 'weight' : null)}
               />
               <MetricWheelPicker
                 label="KFA"
@@ -297,6 +304,8 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
                 placeholder="18,5"
                 defaultWhole={18}
                 defaultDec={5}
+                open={openMetric === 'bodyFat'}
+                onOpenChange={next => setOpenMetric(next ? 'bodyFat' : null)}
               />
             </div>
           </div>
