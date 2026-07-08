@@ -56,7 +56,8 @@ export function FilterSheet({
     <>
       {/* Backdrop — backdrop-filter is safe here (not a scrollable container) */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+        className="fixed inset-0 z-40"
+        data-app-modal
         onClick={onClose}
       />
 

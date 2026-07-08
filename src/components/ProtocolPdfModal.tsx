@@ -127,7 +127,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
   const showNoteField = selected.has('notes')
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center" data-app-modal onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" data-app-modal onClick={onClose}>
       <div
         className="bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg flex flex-col max-h-[92dvh] pt-[env(safe-area-inset-top)] sm:pt-0"
         onClick={e => e.stopPropagation()}

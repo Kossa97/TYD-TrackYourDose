@@ -237,7 +237,8 @@ export function Blutwerte() {
     const locked = !!form.marker && selectedMarker === form.marker
     return (
       <div
-        className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center"
+        className="fixed inset-0 z-50 flex items-end justify-center"
+        data-app-modal
         onClick={() => setShowForm(false)}
       >
         <div

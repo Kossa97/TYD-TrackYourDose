@@ -469,7 +469,7 @@ export function PeptideFormModal({
 
     return (
       <>
-        <div className="fixed inset-0 bg-black/50 z-[60]" onClick={closeField} />
+        <div className="fixed inset-0 z-[60]" data-app-modal onClick={closeField} />
         <div className="fixed inset-0 sm:bottom-0 sm:left-0 sm:right-0 sm:top-auto z-[70] flex justify-center pointer-events-none">
           <div
             className="w-full sm:max-w-lg bg-slate-900 border-0 sm:border sm:border-slate-700/60 sm:border-b-0 rounded-none sm:rounded-t-2xl pointer-events-auto shadow-card h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[85vh] flex flex-col pt-[env(safe-area-inset-top)] sm:pt-0"
@@ -501,7 +501,7 @@ export function PeptideFormModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center" data-app-modal onClick={onClose}>
       <div
         className="bg-slate-900 rounded-none sm:rounded-t-2xl w-full sm:max-w-lg flex flex-col h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[95vh] pt-[env(safe-area-inset-top)] sm:pt-0"
         onClick={e => e.stopPropagation()}

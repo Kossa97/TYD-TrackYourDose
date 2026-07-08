@@ -227,7 +227,7 @@ describe('Peptide page vial view', () => {
   test('uses the full mobile screen for the cycle form', () => {
     const text = source()
 
-    expect(text).toContain('fixed inset-0 z-50 flex items-stretch justify-center bg-slate-950 sm:items-end sm:bg-black/80')
+    expect(text).toContain('fixed inset-0 z-50 flex items-stretch justify-center sm:items-end')
     expect(text).toContain('flex h-full w-full flex-col overflow-hidden bg-slate-900 sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-t-2xl')
     expect(text).toContain('flex-1 space-y-4 overflow-y-auto px-6 py-4')
     expect(text).toContain('pb-[calc(1rem+env(safe-area-inset-bottom))]')

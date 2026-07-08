@@ -1357,7 +1357,7 @@ export function Dashboard() {
       {/* ── Einnahme-Zeitpunkt-Sheet ──────────────────────────────────────── */}
       {confirmSheet && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/60" onClick={() => setConfirmSheet(null)} />
+          <div className="fixed inset-0 z-40" data-app-modal onClick={() => setConfirmSheet(null)} />
           <div
             className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border border-white/10 pb-10"
             style={{ background: 'var(--surface)' }}

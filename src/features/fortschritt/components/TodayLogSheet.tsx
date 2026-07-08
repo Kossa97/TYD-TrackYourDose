@@ -132,7 +132,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
   return (
     <>
       <style>{SLIDER_CSS}</style>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 49 }} />
+      <div onClick={onClose} data-app-modal style={{ position: 'fixed', inset: 0, zIndex: 49 }} />
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
         background: 'var(--surface)',

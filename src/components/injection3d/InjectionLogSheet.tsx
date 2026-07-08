@@ -161,7 +161,7 @@ export function InjectionLogSheet({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-black/70" />
+      <div className="fixed inset-0 z-50" data-app-modal />
       <div
         className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-hidden overflow-x-hidden overscroll-y-contain"
         style={{

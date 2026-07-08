@@ -264,7 +264,7 @@ export function Bewertungen() {
 
       {/* ══ FORMULAR ══════════════════════════════════════════════════════════ */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center"
+        <div className="fixed inset-0 z-50 flex items-end justify-center" data-app-modal
           onClick={() => setShowForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4
             overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>

@@ -445,7 +445,7 @@ export function Health() {
 
       {/* ── Gewicht-Modal ────────────────────────────────────────────────── */}
       {showWeightForm && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center" onClick={() => setShowWeightForm(false)}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center" data-app-modal onClick={() => setShowWeightForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-bold">Neues Gewicht</h2>
             <div>
@@ -470,7 +470,7 @@ export function Health() {
 
       {/* ── Körperprofil-Modal ───────────────────────────────────────────── */}
       {showProfileForm && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center" onClick={() => setShowProfileForm(false)}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center" data-app-modal onClick={() => setShowProfileForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-bold">Körperprofil bearbeiten</h2>
             <div className="grid grid-cols-2 gap-3">

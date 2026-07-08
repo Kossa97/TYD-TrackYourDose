@@ -169,7 +169,7 @@ export function FotosTab({ photos, onChange }: Props) {
       )}
 
       {activePhoto && (
-        <div onClick={() => setActivePhoto(null)} style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.93)', display: 'flex', flexDirection: 'column' }}>
+        <div onClick={() => setActivePhoto(null)} data-app-modal style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', flexDirection: 'column' }}>
           <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
             <div>
               <p style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text)' }}>{fmtDate(activePhoto.taken_at)}</p>
@@ -199,7 +199,7 @@ export function FotosTab({ photos, onChange }: Props) {
         </div>
       )}
 
-      {sheetOpen && <div onClick={closeSheet} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 40 }} />}
+      {sheetOpen && <div onClick={closeSheet} data-app-modal style={{ position: 'fixed', inset: 0, zIndex: 40 }} />}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
         background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '24px 24px 0 0',

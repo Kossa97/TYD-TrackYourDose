@@ -1020,7 +1020,8 @@ function HomeIntakeConfirmSheet({
         type="button"
         aria-label="Bestätigung schließen"
         onClick={onClose}
-        className="fixed inset-0 z-50 bg-black/70"
+        className="fixed inset-0 z-50"
+        data-app-modal
       />
       <div className="fixed inset-x-3 bottom-3 z-[60] rounded-3xl border border-white/10 bg-[var(--surface)] p-4 shadow-[0_-16px_48px_rgba(0,0,0,0.55)]">
         <div className="mb-4 flex items-start justify-between gap-3">
@@ -1082,7 +1083,8 @@ function HomeIntakeTimeSheet({
         type="button"
         aria-label="Zeitformular schließen"
         onClick={onClose}
-        className="fixed inset-0 z-50 bg-black/70"
+        className="fixed inset-0 z-50"
+        data-app-modal
       />
       <div className="fixed inset-x-3 bottom-3 z-[60] rounded-3xl border border-white/10 bg-[var(--surface)] p-4 shadow-[0_-16px_48px_rgba(0,0,0,0.55)]">
         <div className="mb-4 flex items-start justify-between gap-3">

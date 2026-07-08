@@ -571,10 +571,11 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
 :root {
   /* ── Semantic theme tokens (dark defaults) ── */
   --app-bg:          #020308;
-  --surface:         rgba(6,7,20,0.92);
-  --surface-raised:  rgba(18,22,48,0.92);
-  --surface-input:   rgba(2,3,12,0.82);
-  --glass-bg:        rgba(6,7,20,0.78);
+  --surface:         #060714;
+  --surface-raised:  #121630;
+  --surface-input:   #02030c;
+  --glass-bg:        #060714;
+  --modal-scrim:     rgba(0, 0, 0, 0.92);
   --text:            #eaeefc;
   --text-dim:        #9aaabf;
   --text-muted:      #465265;
@@ -642,6 +643,7 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
   --surface-raised:  #ffffff;
   --surface-input:   #ffffff;
   --glass-bg:        rgba(255,255,255,0.80);
+  --modal-scrim:     rgba(0, 0, 0, 0.50);
   --text:            #0a1220;
   --text-dim:        #3d4655;
   --text-muted:      #69727f;
@@ -1280,6 +1282,12 @@ div.w-9.h-5.rounded-full > span.bg-white.rounded-full {
 }
 
 /* ── Bottom Sheet Modals ─────────────────────────────────────────────────── */
+[data-app-modal] {
+  background: var(--modal-scrim) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
 .rounded-t-2xl {
   background: var(--surface) !important;
   border-top: 1px solid var(--border) !important;
@@ -1298,14 +1306,12 @@ div.w-9.h-5.rounded-full > span.bg-white.rounded-full {
 
 /* ── Dropdown / Popover ──────────────────────────────────────────────────── */
 .shadow-xl {
-  background: var(--surface) !important;
+  background: var(--surface-raised) !important;
   border: 1px solid var(--border) !important;
   box-shadow:
     0 20px 60px rgba(0,0,0,0.88),
     0 0 0 0 transparent,
     inset 0 1px 0 rgba(255,255,255,0.05) !important;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
 }
 
 /* ── Dividers ────────────────────────────────────────────────────────────── */

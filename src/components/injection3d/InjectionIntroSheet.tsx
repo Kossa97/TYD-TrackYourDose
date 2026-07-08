@@ -15,7 +15,7 @@ export function InjectionIntroSheet({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-black/60" onClick={onClose} />
+      <div className="fixed inset-0 z-50" data-app-modal onClick={onClose} />
       <div className="fixed bottom-0 left-0 right-0 z-[60] rounded-t-3xl border border-white/10 p-5 pb-8" style={{ background: 'var(--surface)' }}>
         <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
         <div className="mb-3 flex items-center justify-between gap-3">

@@ -123,7 +123,7 @@ function LiveCycleChartCanvas({
     const style = getComputedStyle(document.documentElement)
     const border = style.getPropertyValue('--border').trim() || 'rgba(255,255,255,0.06)'
     const muted = style.getPropertyValue('--text-muted').trim() || 'rgba(154,170,191,0.55)'
-    const surface = style.getPropertyValue('--surface').trim() || 'rgba(6,10,24,0.92)'
+    const surface = style.getPropertyValue('--surface').trim() || '#060714'
     const accentToken = style.getPropertyValue('--accent').trim() || accentRef.current
     const readLine = style.getPropertyValue('--border-strong').trim() || border
 
@@ -343,7 +343,7 @@ function LiveCycleChartCanvas({
       let cx = x + 8
       if (cx + chipW > dX + dW) cx = x - 8 - chipW
       const cy = dY + 2
-      ctx.fillStyle = 'rgba(7,9,26,0.95)'
+      ctx.fillStyle = surface
       ctx.strokeStyle = accentRef.current + '66'
       ctx.lineWidth = 1
       roundRect(ctx, cx, cy, chipW, chipH, 8)

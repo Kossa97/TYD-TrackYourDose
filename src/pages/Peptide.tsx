@@ -2220,7 +2220,7 @@ export function Peptide() {
 
         return (
           <div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/80"
+            className="fixed inset-0 z-50 flex items-end justify-center"
             data-app-modal
             onClick={() => setCycleManagerPeptide(null)}
           >
@@ -2431,7 +2431,7 @@ export function Peptide() {
 
       {cyclePromptPeptide && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-10"
+          className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-10"
           data-app-modal
           onClick={() => setCyclePromptPeptide(null)}
         >
@@ -2476,7 +2476,7 @@ export function Peptide() {
 
       {/* ══ ZYKLUS-FORMULAR ══════════════════════════════════════════════════ */}
       {showCycleForm && cForm && (
-        <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-slate-950 sm:items-end sm:bg-black/80" data-app-modal
+        <div className="fixed inset-0 z-50 flex items-stretch justify-center sm:items-end" data-app-modal
           onClick={() => setShowCycleForm(false)}>
           <div className="flex h-full w-full flex-col overflow-hidden bg-slate-900 sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-t-2xl"
             onClick={e => e.stopPropagation()}>
@@ -2702,7 +2702,7 @@ export function Peptide() {
 
       {/* DOSISANPASSUNG-FORMULAR */}
       {showEscForm && eForm && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
+        <div className="fixed inset-0 z-50 flex items-end justify-center" data-app-modal
           onClick={() => setShowEscForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4 overflow-y-auto max-h-[90vh]"
             onClick={e => e.stopPropagation()}>
@@ -2804,7 +2804,7 @@ export function Peptide() {
 
       {/* ══ REKONSTITUTION DIALOG ═════════════════════════════════════════════ */}
       {rekonstitutionTarget && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4" data-app-modal>
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" data-app-modal>
           <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-sm w-full space-y-4">
             <h3 className="font-bold text-white text-lg">{t('rekonstitution_wdh_title')}</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
@@ -2829,7 +2829,7 @@ export function Peptide() {
 
       {/* ══ PLANÄNDERUNG: RÜCKWIRKEND ODER AB HEUTE ═══════════════════════════ */}
       {scheduleChoiceOpen && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4" data-app-modal>
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" data-app-modal>
           <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-sm w-full space-y-4">
             <h3 className="font-bold text-white text-lg">
               {t('schedule_change_title', { defaultValue: 'Änderung übernehmen' })}
@@ -2878,7 +2878,7 @@ export function Peptide() {
         }
 
         return (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
+          <div className="fixed inset-0 z-50 flex items-end justify-center" data-app-modal
             onClick={() => setInfoPeptide(null)}>
             <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg overflow-y-auto max-h-[90vh] motion-fade-up"
               onClick={e => e.stopPropagation()}>
