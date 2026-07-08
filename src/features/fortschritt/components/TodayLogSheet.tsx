@@ -286,11 +286,10 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
                 unit="kg"
                 value={weight}
                 onChange={setWeight}
-                intMin={40}
-                intMax={200}
+                min={40}
+                max={200}
                 placeholder="82,5"
-                defaultWhole={82}
-                defaultDec={5}
+                defaultValue={82.5}
                 open={openMetric === 'weight'}
                 onOpenChange={next => setOpenMetric(next ? 'weight' : null)}
               />
@@ -299,11 +298,11 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
                 unit="%"
                 value={bodyFat}
                 onChange={setBodyFat}
-                intMin={3}
-                intMax={60}
-                placeholder="18,5"
-                defaultWhole={18}
-                defaultDec={5}
+                min={3}
+                max={60}
+                placeholder="18,5 %"
+                defaultValue={18.5}
+                wheelSuffix="%"
                 open={openMetric === 'bodyFat'}
                 onOpenChange={next => setOpenMetric(next ? 'bodyFat' : null)}
               />

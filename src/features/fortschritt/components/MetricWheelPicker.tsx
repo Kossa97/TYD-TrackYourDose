@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import type { CSSProperties, RefObject } from 'react'
 import { fieldLabel } from '../styles'
 
@@ -39,31 +39,35 @@ export const METRIC_WHEEL_CSS = `
   }
 `
 
-function splitValue(value: number) {
-  const rounded = Math.round(value * 10) / 10
-  const whole = Math.floor(rounded + 1e-9)
-  const dec = Math.round((rounded - whole) * 10)
-  return { whole, dec }
-}
-
-function buildRange(min: number, max: number) {
+function buildDecimalRange(min: number, max: number, step = 0.1) {
   const out: number[] = []
-  for (let i = min; i <= max; i++) out.push(i)
+  for (let v = min; v <= max + step / 2; v += step) {
+    out.push(Math.round(v * 10) / 10)
+  }
   return out
 }
 
-const DEC_OPTIONS = buildRange(0, 9)
+function indexForValue(options: number[], value: number) {
+  const rounded = Math.round(value * 10) / 10
+  const idx = options.findIndex(v => Math.abs(v - rounded) < 0.01)
+  return idx >= 0 ? idx : 0
+}
+
+function formatDecimal(value: number, wheelSuffix?: string) {
+  const base = value.toFixed(1).replace('.', ',')
+  return wheelSuffix ? `${base} ${wheelSuffix}` : base
+}
 
 interface Props {
   label: string
   unit: string
   value: number | null
   onChange: (value: number) => void
-  intMin: number
-  intMax: number
+  min: number
+  max: number
   placeholder: string
-  defaultWhole: number
-  defaultDec: number
+  defaultValue: number
+  wheelSuffix?: string
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -73,23 +77,20 @@ export function MetricWheelPicker({
   unit,
   value,
   onChange,
-  intMin,
-  intMax,
+  min,
+  max,
   placeholder,
-  defaultWhole,
-  defaultDec,
+  defaultValue,
+  wheelSuffix,
   open,
   onOpenChange,
 }: Props) {
-  const wholeRef = useRef<HTMLDivElement>(null)
-  const decRef = useRef<HTMLDivElement>(null)
-  const intOptions = useRef(buildRange(intMin, intMax)).current
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const options = useMemo(() => buildDecimalRange(min, max), [min, max])
   const suppressEmitRef = useRef(false)
   const touchedRef = useRef(value != null)
 
-  const { whole: activeWhole, dec: activeDec } = value != null
-    ? splitValue(value)
-    : { whole: defaultWhole, dec: defaultDec }
+  const activeValue = value ?? defaultValue
 
   const scrollToIndex = useCallback((el: HTMLDivElement | null, index: number) => {
     if (!el) return
@@ -108,44 +109,35 @@ export function MetricWheelPicker({
 
   useLayoutEffect(() => {
     if (!open) return
-    const wholeIdx = intOptions.indexOf(activeWhole)
-    const decIdx = DEC_OPTIONS.indexOf(activeDec)
-    scrollToIndex(wholeRef.current, wholeIdx >= 0 ? wholeIdx : 0)
-    scrollToIndex(decRef.current, decIdx >= 0 ? decIdx : 0)
-  }, [open, activeWhole, activeDec, intOptions, scrollToIndex])
+    scrollToIndex(scrollRef.current, indexForValue(options, activeValue))
+  }, [open, activeValue, options, scrollToIndex])
 
   const emitValue = useCallback(() => {
     if (suppressEmitRef.current) return
-    const wholeEl = wholeRef.current
-    const decEl = decRef.current
-    if (!wholeEl || !decEl) return
+    const el = scrollRef.current
+    if (!el) return
 
-    const wholeIdx = Math.round(wholeEl.scrollTop / ITEM_H)
-    const decIdx = Math.round(decEl.scrollTop / ITEM_H)
-    const whole = intOptions[Math.min(Math.max(wholeIdx, 0), intOptions.length - 1)]
-    const dec = DEC_OPTIONS[Math.min(Math.max(decIdx, 0), DEC_OPTIONS.length - 1)]
+    const idx = Math.round(el.scrollTop / ITEM_H)
+    const next = options[Math.min(Math.max(idx, 0), options.length - 1)]
     if (value != null || touchedRef.current) {
-      onChange(Math.round((whole + dec / 10) * 10) / 10)
+      onChange(next)
     }
-  }, [intOptions, onChange, value])
+  }, [onChange, options, value])
 
   useEffect(() => {
     if (!open) return
-    const wholeEl = wholeRef.current
-    const decEl = decRef.current
-    if (!wholeEl || !decEl) return
+    const el = scrollRef.current
+    if (!el) return
 
     const onScroll = () => emitValue()
-    wholeEl.addEventListener('scroll', onScroll, { passive: true })
-    decEl.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      wholeEl.removeEventListener('scroll', onScroll)
-      decEl.removeEventListener('scroll', onScroll)
-    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
   }, [open, emitValue])
 
   const display = value != null
-    ? `${value.toFixed(1).replace('.', ',')} ${unit}`
+    ? unit === '%'
+      ? formatDecimal(value, '%')
+      : `${formatDecimal(value)} ${unit}`
     : placeholder
 
   const triggerStyle: CSSProperties = {
@@ -198,12 +190,7 @@ export function MetricWheelPicker({
     zIndex: 2,
   }
 
-  const renderColumn = (
-    ref: RefObject<HTMLDivElement | null>,
-    options: number[],
-    active: number,
-    format: (n: number) => string,
-  ) => (
+  const renderWheel = (ref: RefObject<HTMLDivElement | null>) => (
     <div
       className="tyd-metric-wheel-scroll"
       ref={ref}
@@ -216,9 +203,9 @@ export function MetricWheelPicker({
       {options.map(n => (
         <div
           key={n}
-          className={`tyd-metric-wheel-item${n === active ? ' is-active' : ''}`}
+          className={`tyd-metric-wheel-item${Math.abs(n - activeValue) < 0.01 ? ' is-active' : ''}`}
         >
-          {format(n)}
+          {formatDecimal(n, wheelSuffix)}
         </div>
       ))}
       {Array.from({ length: PAD }, (_, i) => (
@@ -245,10 +232,7 @@ export function MetricWheelPicker({
 
       {open && (
         <div style={wheelFrame}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 28px', gap: 0 }}>
-            {renderColumn(wholeRef, intOptions, activeWhole, n => String(n))}
-            {renderColumn(decRef, DEC_OPTIONS, activeDec, n => `.${n}`)}
-          </div>
+          {renderWheel(scrollRef)}
           <div style={highlight} aria-hidden />
           <div style={fade} aria-hidden />
         </div>
