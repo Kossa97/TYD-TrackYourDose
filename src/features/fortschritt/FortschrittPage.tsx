@@ -29,7 +29,7 @@ export function FortschrittPage() {
   )
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" style={{ marginTop: '-1rem' }}>
       <StickyRangeBar
         value={rangeChip}
         onChange={setRangeChip}
