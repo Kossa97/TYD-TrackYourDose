@@ -32,7 +32,7 @@ import type {
 } from '../lib/injectionLogTypes'
 
 const INTRO_STORAGE_KEY = 'tyd_injection_intro_version'
-const TRACKER_FULLSCREEN_HEIGHT = 'calc(100dvh + env(safe-area-inset-top))'
+const TRACKER_FULLSCREEN_HEIGHT = '100dvh'
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
@@ -291,7 +291,7 @@ export function InjektionsTracker() {
   }
 
   return (
-    <div className="min-h-dvh overflow-hidden" style={{ marginTop: 'calc(-1 * env(safe-area-inset-top))', height: TRACKER_FULLSCREEN_HEIGHT, minHeight: TRACKER_FULLSCREEN_HEIGHT }}>
+    <div className="min-h-dvh overflow-hidden" style={{ height: TRACKER_FULLSCREEN_HEIGHT, minHeight: TRACKER_FULLSCREEN_HEIGHT }}>
       {/* 3D Injektionskarte */}
       <section
         ref={mapSectionRef}
@@ -429,7 +429,7 @@ function PageHeader({ onBack, overlay = false }: { onBack: () => void; overlay?:
       gap: 12,
       ...(overlay ? {
         position: 'absolute',
-        top: 'calc(8px + env(safe-area-inset-top))',
+        top: 'calc(14px + env(safe-area-inset-top))',
         left: 14,
         right: 14,
         zIndex: 25,

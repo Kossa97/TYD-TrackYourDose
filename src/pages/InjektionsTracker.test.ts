@@ -6,18 +6,18 @@ describe('InjektionsTracker fullscreen map layout', () => {
     const source = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
 
     expect(source).toContain('className="min-h-dvh overflow-hidden"')
-    expect(source).toContain("const TRACKER_FULLSCREEN_HEIGHT = 'calc(100dvh + env(safe-area-inset-top))'")
+    expect(source).toContain("const TRACKER_FULLSCREEN_HEIGHT = '100dvh'")
     expect(source).toContain('borderRadius: 0')
     expect(source).toContain('height={TRACKER_FULLSCREEN_HEIGHT}')
     expect(source).toContain('minHeight={TRACKER_FULLSCREEN_HEIGHT}')
   })
 
-  it('extends the fullscreen map behind the top safe area without double-offsetting the header', () => {
+  it('keeps the fullscreen map inside the viewport while spacing the overlay header below the status area', () => {
     const source = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
 
-    expect(source).toContain("marginTop: 'calc(-1 * env(safe-area-inset-top))'")
-    expect(source).toContain("top: 'calc(8px + env(safe-area-inset-top))'")
-    expect(source).not.toContain("top: 'calc(14px + env(safe-area-inset-top))'")
+    expect(source).not.toContain("marginTop: 'calc(-1 * env(safe-area-inset-top))'")
+    expect(source).toContain("top: 'calc(14px + env(safe-area-inset-top))'")
+    expect(source).not.toContain("top: 'calc(8px + env(safe-area-inset-top))'")
   })
   it('uses two separate floating action buttons instead of a persistent bottom bar', () => {
     const source = readFileSync(new URL('../components/injection3d/InjectionTrackerTabs.tsx', import.meta.url), 'utf8')
