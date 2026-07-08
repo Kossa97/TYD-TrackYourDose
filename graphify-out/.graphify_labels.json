@@ -222,6 +222,5 @@
   "225": "Supabase DB schema (profiles, peptides, cycles, dose_logs...)",
   "226": "TYD — Track Your Dose (peptide tracking app)",
   "227": "Trunk-based development (push to main)",
-  "228": "React + TypeScript + Vite template README",
-  "230": "peptideColors.ts"
+  "228": "React + TypeScript + Vite template README"
 }

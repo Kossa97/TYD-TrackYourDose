@@ -5,18 +5,18 @@ describe('InjektionsTracker fullscreen map layout', () => {
   it('lets the tracker window fill the app viewport without outer margins', () => {
     const source = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
 
-    expect(source).toContain('className="min-h-dvh overflow-hidden"')
+    expect(source).toContain('className="fixed inset-0 z-30 overflow-hidden"')
     expect(source).toContain("const TRACKER_FULLSCREEN_HEIGHT = '100dvh'")
     expect(source).toContain('borderRadius: 0')
     expect(source).toContain('height={TRACKER_FULLSCREEN_HEIGHT}')
     expect(source).toContain('minHeight={TRACKER_FULLSCREEN_HEIGHT}')
   })
 
-  it('keeps the fullscreen map inside the viewport while spacing the overlay header below the status area', () => {
+  it('keeps the fullscreen map fixed to the viewport with safe-area overlay spacing', () => {
     const source = readFileSync(new URL('./InjektionsTracker.tsx', import.meta.url), 'utf8')
 
     expect(source).not.toContain("marginTop: 'calc(-1 * env(safe-area-inset-top))'")
-    expect(source).toContain("top: 'calc(14px + env(safe-area-inset-top))'")
+    expect(source).toContain("top: 'calc(16px + env(safe-area-inset-top))'")
     expect(source).not.toContain("top: 'calc(8px + env(safe-area-inset-top))'")
   })
   it('uses two separate floating action buttons instead of a persistent bottom bar', () => {
@@ -25,6 +25,9 @@ describe('InjektionsTracker fullscreen map layout', () => {
     expect(source).toContain('injection-floating-actions')
     expect(source).toContain('left-4')
     expect(source).toContain('right-4')
+    expect(source).toContain("bottom: 'calc(14px + env(safe-area-inset-bottom))'")
+    expect(source).not.toContain('absolute bottom-4 left-4 right-4')
+    expect(source).not.toContain("style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}")
     expect(source).toContain("openSheet('open')")
     expect(source).toContain("openSheet('history')")
     expect(source).not.toContain('role="tablist"')

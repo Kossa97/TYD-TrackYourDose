@@ -291,7 +291,7 @@ export function InjektionsTracker() {
   }
 
   return (
-    <div className="min-h-dvh overflow-hidden" style={{ height: TRACKER_FULLSCREEN_HEIGHT, minHeight: TRACKER_FULLSCREEN_HEIGHT }}>
+    <div className="fixed inset-0 z-30 overflow-hidden" style={{ height: TRACKER_FULLSCREEN_HEIGHT, minHeight: TRACKER_FULLSCREEN_HEIGHT }}>
       {/* 3D Injektionskarte */}
       <section
         ref={mapSectionRef}
@@ -367,11 +367,12 @@ export function InjektionsTracker() {
           )}
           {showPositionActions && (
             <div
-              className="absolute bottom-3 left-3 right-3 z-20 rounded-2xl border p-3"
+              className="absolute left-3 right-3 z-20 rounded-2xl border p-3"
               style={{
                 background: 'var(--surface)',
                 borderColor: 'var(--border)',
                 boxShadow: '0 -6px 32px rgba(0,0,0,0.5)',
+                bottom: 'calc(14px + env(safe-area-inset-bottom))',
               }}
             >
               <div className="flex gap-3">
@@ -429,7 +430,7 @@ function PageHeader({ onBack, overlay = false }: { onBack: () => void; overlay?:
       gap: 12,
       ...(overlay ? {
         position: 'absolute',
-        top: 'calc(14px + env(safe-area-inset-top))',
+        top: 'calc(16px + env(safe-area-inset-top))',
         left: 14,
         right: 14,
         zIndex: 25,

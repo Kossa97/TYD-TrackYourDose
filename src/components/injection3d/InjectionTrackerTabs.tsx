@@ -74,8 +74,8 @@ export function InjectionTrackerTabs({
   return (
     <>
       <div
-        className="injection-floating-actions pointer-events-none absolute bottom-4 left-4 right-4 z-30 flex items-center justify-between gap-3"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="injection-floating-actions pointer-events-none absolute left-4 right-4 z-30 flex items-center justify-between gap-3"
+        style={{ bottom: 'calc(14px + env(safe-area-inset-bottom))' }}
       >
         <FloatingActionButton
           icon={<ClipboardList size={18} aria-hidden="true" />}
