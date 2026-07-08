@@ -6,7 +6,8 @@ import toast from 'react-hot-toast'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
 import type { DailyLogEntry } from '../types'
-import { fieldLabel, inputStyle, SLIDER_CSS } from '../styles'
+import { fieldLabel, inputStyle } from '../styles'
+import { dateFieldStyle, WELLNESS_SLIDER_CSS, WellnessSliderRow } from './WellnessSliderRow'
 
 const SHEET_Z = 10070
 
@@ -175,7 +176,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
 
   return createPortal(
     <>
-      <style>{SLIDER_CSS}</style>
+      <style>{WELLNESS_SLIDER_CSS}</style>
       <div
         role="dialog"
         aria-modal="true"
@@ -237,51 +238,31 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
           padding: '16px 18px 12px',
           background: SHEET_BG,
         }}>
-          <div style={{ marginBottom: 14 }}>
-            <label style={fieldLabel}>Datum</label>
-            <input type="date" value={date} max={todayStr()} onChange={e => setDate(e.target.value)} style={inputStyle} />
+          <div style={{
+            marginBottom: 18,
+            padding: '14px 14px 12px',
+            borderRadius: 18,
+            background: 'var(--surface-input)',
+            border: '1px solid var(--border)',
+            textAlign: 'center',
+          }}>
+            <label style={{ ...fieldLabel, textAlign: 'center', marginBottom: 10 }}>Datum</label>
+            <input
+              type="date"
+              value={date}
+              max={todayStr()}
+              onChange={e => setDate(e.target.value)}
+              style={dateFieldStyle}
+            />
           </div>
 
           {sliders.map(s => (
-            <div key={s.label} style={{ marginBottom: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <label style={{ ...fieldLabel, marginBottom: 0 }}>
-                  {s.label} <span style={{ fontWeight: 600, opacity: 0.65 }}>(optional)</span>
-                </label>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: s.value != null ? 'var(--accent)' : 'var(--text-muted)' }}>
-                    {s.value != null ? `${s.value}/10` : '–'}
-                  </span>
-                  {s.value != null && (
-                    <button
-                      type="button"
-                      aria-label={`${s.label} zurücksetzen`}
-                      onClick={() => s.set(null)}
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        width: 20, height: 20, borderRadius: 7, padding: 0,
-                        background: 'var(--surface-input)', border: '1px solid var(--border)',
-                        color: 'var(--text-muted)', cursor: 'pointer',
-                      }}
-                    >
-                      <X size={11} />
-                    </button>
-                  )}
-                </span>
-              </div>
-              <input
-                className="tyd-slider"
-                type="range"
-                min={1}
-                max={10}
-                step={1}
-                value={s.value ?? 5}
-                onChange={e => s.set(Number(e.target.value))}
-                onPointerUp={e => {
-                  if (s.value == null) s.set(Number(e.currentTarget.value))
-                }}
-              />
-            </div>
+            <WellnessSliderRow
+              key={s.label}
+              label={s.label}
+              value={s.value}
+              onChange={s.set}
+            />
           ))}
 
           <div style={{ marginBottom: 12 }}>
