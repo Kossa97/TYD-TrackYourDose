@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { format } from 'date-fns'
 import { X } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -6,6 +7,8 @@ import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
 import type { DailyLogEntry } from '../types'
 import { fieldLabel, inputStyle, SLIDER_CSS } from '../styles'
+
+const SHEET_Z = 10070
 
 const todayStr = () => format(new Date(), 'yyyy-MM-dd')
 
@@ -24,11 +27,18 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
   const [wohlbefinden, setWohlbefinden] = useState<number | null>(null)
   const [libido, setLibido] = useState<number | null>(null)
   const [weight, setWeight] = useState('')
-  // id des bestehenden Tageseintrags — beim Speichern wird er aktualisiert
-  // statt einen zweiten Punkt für denselben Tag anzulegen
   const [weightRowId, setWeightRowId] = useState<string | null>(null)
   const [bodyFat, setBodyFat] = useState('')
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -129,107 +139,163 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
     { label: 'Libido', value: libido, set: setLibido },
   ]
 
-  return (
+  return createPortal(
     <>
       <style>{SLIDER_CSS}</style>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 49 }} />
-      <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-        background: 'var(--surface)',
-        border: '1px solid var(--border)', borderRadius: '24px 24px 0 0',
-        padding: '0 18px 40px', maxHeight: '92vh', overflowY: 'auto',
-      }}>
-        <div style={{ position: 'sticky', top: 0, paddingTop: 16, paddingBottom: 14, background: 'inherit', zIndex: 1 }}>
-          <div style={{ width: 40, height: 4, borderRadius: 99, background: 'var(--border)', margin: '0 auto 18px' }} />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text)' }}>Fortschritt eintragen</h2>
-            <button type="button" onClick={onClose} style={{ color: 'var(--text-muted)', display: 'flex' }}><X size={20} /></button>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="today-log-title"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: SHEET_Z,
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'var(--surface)',
+          overflow: 'hidden',
+          width: '100%',
+          maxWidth: '100vw',
+          overscrollBehavior: 'none',
+          touchAction: 'pan-y',
+        }}
+      >
+        <header style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          padding: 'max(12px, env(safe-area-inset-top)) 16px 12px',
+          borderBottom: '1px solid var(--border)',
+          flexShrink: 0,
+          background: 'var(--surface)',
+        }}>
+          <h2
+            id="today-log-title"
+            style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text)' }}
+          >
+            Fortschritt eintragen
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Schließen"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              border: '1px solid var(--border)',
+              background: 'var(--surface-input)',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            <X size={18} />
+          </button>
+        </header>
+
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          padding: '16px 18px 12px',
+        }}>
+          <div style={{ marginBottom: 14 }}>
+            <label style={fieldLabel}>Datum</label>
+            <input type="date" value={date} max={todayStr()} onChange={e => setDate(e.target.value)} style={inputStyle} />
           </div>
-        </div>
 
-        <div style={{ marginBottom: 14 }}>
-          <label style={fieldLabel}>Datum</label>
-          <input type="date" value={date} max={todayStr()} onChange={e => setDate(e.target.value)} style={inputStyle} />
-        </div>
-
-        {sliders.map(s => (
-          <div key={s.label} style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <label style={{ ...fieldLabel, marginBottom: 0 }}>
-                {s.label} <span style={{ fontWeight: 600, opacity: 0.65 }}>(optional)</span>
-              </label>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: s.value != null ? 'var(--accent)' : 'var(--text-muted)' }}>
-                  {s.value != null ? `${s.value}/10` : '–'}
+          {sliders.map(s => (
+            <div key={s.label} style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <label style={{ ...fieldLabel, marginBottom: 0 }}>
+                  {s.label} <span style={{ fontWeight: 600, opacity: 0.65 }}>(optional)</span>
+                </label>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: s.value != null ? 'var(--accent)' : 'var(--text-muted)' }}>
+                    {s.value != null ? `${s.value}/10` : '–'}
+                  </span>
+                  {s.value != null && (
+                    <button
+                      type="button"
+                      aria-label={`${s.label} zurücksetzen`}
+                      onClick={() => s.set(null)}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: 20, height: 20, borderRadius: 7, padding: 0,
+                        background: 'var(--surface-input)', border: '1px solid var(--border)',
+                        color: 'var(--text-muted)', cursor: 'pointer',
+                      }}
+                    >
+                      <X size={11} />
+                    </button>
+                  )}
                 </span>
-                {s.value != null && (
-                  <button
-                    type="button"
-                    aria-label={`${s.label} zurücksetzen`}
-                    onClick={() => s.set(null)}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      width: 20, height: 20, borderRadius: 7, padding: 0,
-                      background: 'var(--surface-input)', border: '1px solid var(--border)',
-                      color: 'var(--text-muted)', cursor: 'pointer',
-                    }}
-                  >
-                    <X size={11} />
-                  </button>
-                )}
-              </span>
+              </div>
+              <input
+                className="tyd-slider"
+                type="range"
+                min={1}
+                max={10}
+                step={1}
+                value={s.value ?? 5}
+                onChange={e => s.set(Number(e.target.value))}
+                onPointerUp={e => {
+                  if (s.value == null) s.set(Number(e.currentTarget.value))
+                }}
+              />
             </div>
+          ))}
+
+          <div style={{ marginBottom: 12 }}>
+            <label style={fieldLabel}>Gewicht in kg (optional)</label>
             <input
-              className="tyd-slider"
-              type="range"
-              min={1}
-              max={10}
-              step={1}
-              value={s.value ?? 5}
-              onChange={e => s.set(Number(e.target.value))}
-              // ein Tap ohne Bewegung feuert kein change-Event, wenn der Thumb
-              // schon dort steht — der Wert soll trotzdem als gesetzt gelten
-              onPointerUp={e => {
-                if (s.value == null) s.set(Number(e.currentTarget.value))
-              }}
+              type="number"
+              inputMode="decimal"
+              placeholder="z.B. 82.5"
+              value={weight}
+              onChange={e => setWeight(e.target.value)}
+              style={inputStyle}
             />
           </div>
-        ))}
 
-        <div style={{ marginBottom: 12 }}>
-          <label style={fieldLabel}>Gewicht in kg (optional)</label>
-          <input
-            type="number"
-            inputMode="decimal"
-            placeholder="z.B. 82.5"
-            value={weight}
-            onChange={e => setWeight(e.target.value)}
-            style={inputStyle}
-          />
+          <div style={{ marginBottom: 8 }}>
+            <label style={fieldLabel}>Körperfett % (optional)</label>
+            <input
+              type="number"
+              inputMode="decimal"
+              placeholder="z.B. 18.5"
+              value={bodyFat}
+              onChange={e => setBodyFat(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={fieldLabel}>Körperfett % (optional)</label>
-          <input
-            type="number"
-            inputMode="decimal"
-            placeholder="z.B. 18.5"
-            value={bodyFat}
-            onChange={e => setBodyFat(e.target.value)}
-            style={inputStyle}
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={() => void save()}
-          disabled={saving}
-          className="btn-primary"
-          style={{ width: '100%' }}
-        >
-          {saving ? 'Speichern…' : 'Speichern'}
-        </button>
+        <footer style={{
+          flexShrink: 0,
+          padding: '12px 18px max(16px, env(safe-area-inset-bottom))',
+          borderTop: '1px solid var(--border)',
+          background: 'var(--surface)',
+        }}>
+          <button
+            type="button"
+            onClick={() => void save()}
+            disabled={saving}
+            className="btn-primary"
+            style={{ width: '100%' }}
+          >
+            {saving ? 'Speichern…' : 'Speichern'}
+          </button>
+        </footer>
       </div>
-    </>
+    </>,
+    document.body,
   )
 }
