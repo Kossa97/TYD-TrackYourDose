@@ -54,6 +54,7 @@ export function FortschrittPage() {
 
       <TodayLogSheet
         logs={state.dailyLogs}
+        weightLogs={state.weightLogs}
         open={logOpen}
         onClose={() => setLogOpen(false)}
         onSaved={() => void reload()}

@@ -5,9 +5,16 @@ import { X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../context/AuthContext'
-import type { DailyLogEntry } from '../types'
+import type { DailyLogEntry, WeightLogEntry } from '../types'
 import { fieldLabel } from '../styles'
-import { compactInputStyle, dateFieldStyle, WELLNESS_SLIDER_CSS, WellnessSliderRow } from './WellnessSliderRow'
+import { dateFieldStyle, WELLNESS_SLIDER_CSS, WellnessSliderRow } from './WellnessSliderRow'
+import { METRIC_WHEEL_CSS, MetricWheelPicker } from './MetricWheelPicker'
+import {
+  bodyFatForDate,
+  lastBodyFatBefore,
+  lastWeightBefore,
+  weightForDate,
+} from '../lib/metricDefaults'
 
 const SHEET_Z = 10070
 
@@ -56,21 +63,22 @@ function useScrollLock(active: boolean) {
 
 interface Props {
   logs: DailyLogEntry[]
+  weightLogs: WeightLogEntry[]
   open: boolean
   onClose: () => void
   onSaved: () => void
 }
 
-export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
+export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Props) {
   const { user } = useAuth()
   const [date, setDate] = useState(todayStr())
   const [energie, setEnergie] = useState<number | null>(null)
   const [schlaf, setSchlaf] = useState<number | null>(null)
   const [wohlbefinden, setWohlbefinden] = useState<number | null>(null)
   const [libido, setLibido] = useState<number | null>(null)
-  const [weight, setWeight] = useState('')
+  const [weight, setWeight] = useState<number | null>(null)
   const [weightRowId, setWeightRowId] = useState<string | null>(null)
-  const [bodyFat, setBodyFat] = useState('')
+  const [bodyFat, setBodyFat] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
 
   useScrollLock(open)
@@ -82,27 +90,19 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
     setSchlaf(existing?.schlaf ?? null)
     setWohlbefinden(existing?.wohlbefinden ?? null)
     setLibido(existing?.libido ?? null)
-    setBodyFat(existing?.body_fat_pct != null ? String(existing.body_fat_pct) : '')
-    setWeight('')
-    setWeightRowId(null)
-  }, [date, logs, open])
 
-  useEffect(() => {
-    if (!open || !user) return
-    void supabase
-      .from('weight_logs')
-      .select('id, weight_kg')
-      .eq('user_id', user.id)
-      .gte('logged_at', `${date}T00:00:00`)
-      .lte('logged_at', `${date}T23:59:59`)
-      .order('logged_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.weight_kg != null) setWeight(String(data.weight_kg))
-        setWeightRowId(data?.id != null ? String(data.id) : null)
-      })
-  }, [date, open, user])
+    const dayBodyFat = bodyFatForDate(logs, date)
+    setBodyFat(dayBodyFat ?? lastBodyFatBefore(logs, date))
+
+    const dayWeight = weightForDate(weightLogs, date)
+    if (dayWeight) {
+      setWeight(dayWeight.kg)
+      setWeightRowId(dayWeight.id)
+    } else {
+      setWeight(lastWeightBefore(weightLogs, date))
+      setWeightRowId(null)
+    }
+  }, [date, logs, weightLogs, open])
 
   if (!open) return null
 
@@ -110,8 +110,8 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
     if (!user) return
 
     const hasWellness =
-      energie != null || schlaf != null || wohlbefinden != null || libido != null || bodyFat.trim() !== ''
-    const hasWeight = weight.trim() !== ''
+      energie != null || schlaf != null || wohlbefinden != null || libido != null || bodyFat != null
+    const hasWeight = weight != null
 
     if (!hasWellness && !hasWeight) {
       toast.error('Bitte mindestens einen Wert eintragen')
@@ -128,7 +128,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
         schlaf,
         wohlbefinden,
         libido,
-        body_fat_pct: bodyFat.trim() ? Number(bodyFat) : null,
+        body_fat_pct: bodyFat,
       }
       const { error } = await supabase
         .from('daily_logs')
@@ -141,7 +141,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
     }
 
     if (hasWeight) {
-      const kg = Number(weight)
+      const kg = weight
       if (!Number.isFinite(kg)) {
         setSaving(false)
         toast.error('Ungültiges Gewicht')
@@ -177,7 +177,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
 
   return createPortal(
     <>
-      <style>{WELLNESS_SLIDER_CSS}</style>
+      <style>{WELLNESS_SLIDER_CSS}{METRIC_WHEEL_CSS}</style>
       <div
         role="dialog"
         aria-modal="true"
@@ -276,28 +276,28 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
             ))}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
-              <div>
-                <label style={{ ...fieldLabel, fontSize: '0.56rem', marginBottom: 5 }}>Gewicht kg</label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="82.5"
-                  value={weight}
-                  onChange={e => setWeight(e.target.value)}
-                  style={compactInputStyle}
-                />
-              </div>
-              <div>
-                <label style={{ ...fieldLabel, fontSize: '0.56rem', marginBottom: 5 }}>KFA %</label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="18.5"
-                  value={bodyFat}
-                  onChange={e => setBodyFat(e.target.value)}
-                  style={compactInputStyle}
-                />
-              </div>
+              <MetricWheelPicker
+                label="Gewicht"
+                unit="kg"
+                value={weight}
+                onChange={setWeight}
+                intMin={40}
+                intMax={200}
+                placeholder="82,5"
+                defaultWhole={82}
+                defaultDec={5}
+              />
+              <MetricWheelPicker
+                label="KFA"
+                unit="%"
+                value={bodyFat}
+                onChange={setBodyFat}
+                intMin={3}
+                intMax={60}
+                placeholder="18,5"
+                defaultWhole={18}
+                defaultDec={5}
+              />
             </div>
           </div>
         </div>
