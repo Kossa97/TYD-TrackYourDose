@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { DailyLogEntry, WeightLogEntry } from '../types'
 import {
   bodyFatForDate,
+  hasLogForDate,
   lastBodyFatBefore,
   lastWeightBefore,
   weightForDate,
@@ -16,6 +17,7 @@ describe('metricDefaults', () => {
 
   const logs: DailyLogEntry[] = [
     { log_date: '2026-07-03', energie: null, schlaf: null, wohlbefinden: null, libido: null, body_fat_pct: 17.5 },
+    { log_date: '2026-07-06', energie: 7, schlaf: null, wohlbefinden: null, libido: null, body_fat_pct: null },
     { log_date: '2026-07-08', energie: null, schlaf: null, wohlbefinden: null, libido: null, body_fat_pct: null },
   ]
 
@@ -36,5 +38,13 @@ describe('metricDefaults', () => {
   it('returns last body fat before date', () => {
     expect(lastBodyFatBefore(logs, '2026-07-08')).toBe(17.5)
     expect(lastBodyFatBefore(logs, '2026-07-03')).toBeNull()
+  })
+
+  it('detects whether a date has any logged entry', () => {
+    expect(hasLogForDate(logs, weightLogs, '2026-07-08')).toBe(true)
+    expect(hasLogForDate(logs, weightLogs, '2026-07-03')).toBe(true)
+    expect(hasLogForDate(logs, weightLogs, '2026-07-06')).toBe(true)
+    expect(hasLogForDate(logs, weightLogs, '2026-07-07')).toBe(false)
+    expect(hasLogForDate([], [], '2026-07-08')).toBe(false)
   })
 })

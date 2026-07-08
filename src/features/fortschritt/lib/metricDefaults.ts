@@ -28,3 +28,22 @@ export function lastBodyFatBefore(logs: DailyLogEntry[], date: string): number |
     .sort((a, b) => b.log_date.localeCompare(a.log_date))[0]
   return hit?.body_fat_pct ?? null
 }
+
+export function hasLogForDate(
+  logs: DailyLogEntry[],
+  weightLogs: WeightLogEntry[],
+  date: string,
+): boolean {
+  if (weightForDate(weightLogs, date)) return true
+
+  const log = logs.find(l => l.log_date === date)
+  if (!log) return false
+
+  return (
+    (log.energie != null && log.energie > 0)
+    || (log.schlaf != null && log.schlaf > 0)
+    || (log.wohlbefinden != null && log.wohlbefinden > 0)
+    || (log.libido != null && log.libido > 0)
+    || log.body_fat_pct != null
+  )
+}

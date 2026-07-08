@@ -1,12 +1,13 @@
-import { Plus } from 'lucide-react'
+import { Pencil, Plus } from 'lucide-react'
 import { formatRangeSubtitle } from './overview/ActiveSubstancesSection'
 
 interface Props {
   subtitle: string
   onLogToday: () => void
+  hasTodayEntry?: boolean
 }
 
-export function FortschrittHeader({ subtitle, onLogToday }: Props) {
+export function FortschrittHeader({ subtitle, onLogToday, hasTodayEntry = false }: Props) {
   return (
     <header style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div>
@@ -41,8 +42,8 @@ export function FortschrittHeader({ subtitle, onLogToday }: Props) {
             fontSize: '0.82rem',
           }}
         >
-          <Plus size={17} />
-          DEINEN HEUTIGEN STAND EINTRAGEN
+          {hasTodayEntry ? <Pencil size={17} /> : <Plus size={17} />}
+          {hasTodayEntry ? 'HEUTIGEN EINTRAG BEARBEITEN' : 'DEINEN HEUTIGEN STAND EINTRAGEN'}
         </button>
       </div>
     </header>
