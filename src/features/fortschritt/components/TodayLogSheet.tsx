@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { format } from 'date-fns'
 import { X } from 'lucide-react'
@@ -10,10 +10,7 @@ import { fieldLabel } from '../styles'
 import { dateFieldStyle, WELLNESS_SLIDER_CSS, WellnessSliderRow } from './WellnessSliderRow'
 import { METRIC_WHEEL_CSS, MetricWheelPicker } from './MetricWheelPicker'
 import {
-  bodyFatForDate,
-  lastBodyFatBefore,
-  lastWeightBefore,
-  weightForDate,
+  loadLogFormValues,
 } from '../lib/metricDefaults'
 
 const SHEET_Z = 10070
@@ -66,7 +63,7 @@ interface Props {
   weightLogs: WeightLogEntry[]
   open: boolean
   onClose: () => void
-  onSaved: () => void
+  onSaved: () => void | Promise<void>
 }
 
 export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Props) {
@@ -88,25 +85,20 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
     if (!open) setOpenMetric(null)
   }, [open])
 
+  useLayoutEffect(() => {
+    if (open) setDate(todayStr())
+  }, [open])
+
   useEffect(() => {
     if (!open) return
-    const existing = logs.find(l => l.log_date === date)
-    setEnergie(existing?.energie != null && existing.energie > 0 ? existing.energie : null)
-    setSchlaf(existing?.schlaf != null && existing.schlaf > 0 ? existing.schlaf : null)
-    setWohlbefinden(existing?.wohlbefinden != null && existing.wohlbefinden > 0 ? existing.wohlbefinden : null)
-    setLibido(existing?.libido != null && existing.libido > 0 ? existing.libido : null)
-
-    const dayBodyFat = bodyFatForDate(logs, date)
-    setBodyFat(dayBodyFat ?? lastBodyFatBefore(logs, date))
-
-    const dayWeight = weightForDate(weightLogs, date)
-    if (dayWeight) {
-      setWeight(dayWeight.kg)
-      setWeightRowId(dayWeight.id)
-    } else {
-      setWeight(lastWeightBefore(weightLogs, date))
-      setWeightRowId(null)
-    }
+    const values = loadLogFormValues(logs, weightLogs, date)
+    setEnergie(values.energie)
+    setSchlaf(values.schlaf)
+    setWohlbefinden(values.wohlbefinden)
+    setLibido(values.libido)
+    setBodyFat(values.bodyFat)
+    setWeight(values.weight)
+    setWeightRowId(values.weightRowId)
   }, [date, logs, weightLogs, open])
 
   if (!open) return null
@@ -168,7 +160,7 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
 
     setSaving(false)
     toast.success('Fortschritt gespeichert')
-    onSaved()
+    await onSaved()
     onClose()
   }
 

@@ -68,7 +68,7 @@ export function FortschrittPage() {
         weightLogs={state.weightLogs}
         open={logOpen}
         onClose={() => setLogOpen(false)}
-        onSaved={() => void reload()}
+        onSaved={() => reload()}
       />
     </div>
   )

@@ -5,6 +5,7 @@ import {
   hasLogForDate,
   lastBodyFatBefore,
   lastWeightBefore,
+  loadLogFormValues,
   weightForDate,
 } from './metricDefaults'
 
@@ -46,5 +47,37 @@ describe('metricDefaults', () => {
     expect(hasLogForDate(logs, weightLogs, '2026-07-06')).toBe(true)
     expect(hasLogForDate(logs, weightLogs, '2026-07-07')).toBe(false)
     expect(hasLogForDate([], [], '2026-07-08')).toBe(false)
+  })
+
+  it('loads saved day values when editing, otherwise last known defaults', () => {
+    expect(loadLogFormValues(logs, weightLogs, '2026-07-08')).toEqual({
+      energie: null,
+      schlaf: null,
+      wohlbefinden: null,
+      libido: null,
+      bodyFat: null,
+      weight: 82,
+      weightRowId: 'w3',
+    })
+
+    expect(loadLogFormValues(logs, weightLogs, '2026-07-06')).toEqual({
+      energie: 7,
+      schlaf: null,
+      wohlbefinden: null,
+      libido: null,
+      bodyFat: null,
+      weight: null,
+      weightRowId: null,
+    })
+
+    expect(loadLogFormValues(logs, weightLogs, '2026-07-07')).toEqual({
+      energie: null,
+      schlaf: null,
+      wohlbefinden: null,
+      libido: null,
+      bodyFat: 17.5,
+      weight: 81.2,
+      weightRowId: null,
+    })
   })
 })

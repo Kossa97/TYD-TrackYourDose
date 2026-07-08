@@ -47,3 +47,39 @@ export function hasLogForDate(
     || log.body_fat_pct != null
   )
 }
+
+export interface LogFormValues {
+  energie: number | null
+  schlaf: number | null
+  wohlbefinden: number | null
+  libido: number | null
+  bodyFat: number | null
+  weight: number | null
+  weightRowId: string | null
+}
+
+function wellnessValue(value: number | null | undefined): number | null {
+  return value != null && value > 0 ? value : null
+}
+
+/** Lädt Tageswerte; „letzte Werte“ nur wenn für das Datum noch kein Eintrag existiert. */
+export function loadLogFormValues(
+  logs: DailyLogEntry[],
+  weightLogs: WeightLogEntry[],
+  date: string,
+): LogFormValues {
+  const existing = logs.find(l => l.log_date === date)
+  const hasEntry = hasLogForDate(logs, weightLogs, date)
+  const dayWeight = weightForDate(weightLogs, date)
+  const dayBodyFat = bodyFatForDate(logs, date)
+
+  return {
+    energie: wellnessValue(existing?.energie),
+    schlaf: wellnessValue(existing?.schlaf),
+    wohlbefinden: wellnessValue(existing?.wohlbefinden),
+    libido: wellnessValue(existing?.libido),
+    bodyFat: hasEntry ? dayBodyFat : (dayBodyFat ?? lastBodyFatBefore(logs, date)),
+    weight: hasEntry ? (dayWeight?.kg ?? null) : (dayWeight?.kg ?? lastWeightBefore(weightLogs, date)),
+    weightRowId: dayWeight?.id ?? null,
+  }
+}
