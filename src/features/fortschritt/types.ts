@@ -96,7 +96,7 @@ export interface MetricChange {
 }
 
 export interface OverviewCardData {
-  key: 'weight' | 'wellness' | 'adherence' | 'labs' | 'photos' | 'body_fat'
+  key: 'weight' | 'wellness' | 'adherence' | 'blutwerte' | 'photos' | 'body_fat'
   visible: boolean
 }
 

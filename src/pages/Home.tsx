@@ -177,7 +177,7 @@ const FEATURE_CARDS: FeatureDef[] = [
     desc: 'Laborwerte strukturiert erfassen und vergleichen.',
     path: '/blutwerte',
     accent: '#f43f5e',
-    metric: 'Labs',
+    metric: 'Blutwerte',
   },
   {
     icon: Microscope,

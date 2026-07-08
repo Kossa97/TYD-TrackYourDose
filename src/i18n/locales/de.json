@@ -725,7 +725,7 @@
   "safety_banner_title": "Nur für Forschungszwecke",
   "safety_banner_body": "Track Your Dose ersetzt keine ärztliche Beratung. Alle Angaben sind persönliche Forschungsnotizen.",
   "profil_safety_title": "Sicherheit & Datenschutz",
-  "profil_safety_export": "Forschungs-Protokoll (PDF) unter Protokoll exportieren — enthält Adherence, Labor und Zyklen.",
+  "profil_safety_export": "Forschungs-Protokoll (PDF) unter Protokoll exportieren — enthält Adherence, Blutwerte und Zyklen.",
   "profil_safety_data": "Deine Daten liegen in deinem Supabase-Konto. Öffentliches Profil teilt nur die Bereiche, die du aktiv einschaltest.",
   "profil_safety_medical": "Keine medizinischen Empfehlungen. Dosierungen immer selbst verantworten.",
   "protokoll_insights_title": "Persönliche Insights",

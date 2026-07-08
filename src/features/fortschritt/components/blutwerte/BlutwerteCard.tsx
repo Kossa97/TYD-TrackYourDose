@@ -10,7 +10,7 @@ interface Props {
   range: DateRange
 }
 
-export function LabsCard({ bloodwork, range }: Props) {
+export function BlutwerteCard({ bloodwork, range }: Props) {
   const inRange = filterByDateRange(bloodwork, range, b => b.tested_at)
 
   const latestByMarker = new Map<string, BloodworkEntry>()
@@ -28,7 +28,7 @@ export function LabsCard({ bloodwork, range }: Props) {
   return (
     <section style={{ ...panel, padding: '14px 14px 12px', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <p style={sectionLabel}>Labs</p>
+        <p style={sectionLabel}>Blutwerte</p>
         <Link to="/blutwerte" style={{ color: 'var(--accent)', display: 'flex' }} aria-label="Alle Blutwerte">
           <Droplets size={16} />
         </Link>

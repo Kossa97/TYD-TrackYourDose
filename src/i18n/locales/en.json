@@ -682,7 +682,7 @@
   "safety_banner_title": "Research use only",
   "safety_banner_body": "Track Your Dose does not replace medical care. All entries are personal research notes.",
   "profil_safety_title": "Safety & privacy",
-  "profil_safety_export": "Export your research protocol (PDF) under Protocol — includes adherence, labs, and cycles.",
+  "profil_safety_export": "Export your research protocol (PDF) under Protocol — includes adherence, bloodwork, and cycles.",
   "profil_safety_data": "Your data lives in your Supabase account. Public profile only shares sections you enable.",
   "profil_safety_medical": "No medical recommendations. You are responsible for any dosing decisions.",
   "protokoll_insights_title": "Personal insights",

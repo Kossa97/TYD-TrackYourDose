@@ -13,7 +13,7 @@ import { TopChangesSection } from './overview/TopChangesSection'
 import { EmptyOverview, NoSubstancesBanner } from './overview/EmptyOverview'
 import { VerlaufSection } from './verlauf/VerlaufSection'
 import { FotosCard } from './fotos/FotosCard'
-import { LabsCard } from './labs/LabsCard'
+import { BlutwerteCard } from './blutwerte/BlutwerteCard'
 
 interface Props {
   state: FortschrittOverviewState
@@ -107,7 +107,7 @@ export function FortschrittDashboard({ state, rangeChip, onLogToday, onReload, o
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, alignItems: 'stretch' }}>
         <FotosCard photos={photos} range={pageRange} onChange={onReload} />
-        <LabsCard bloodwork={bloodwork} range={pageRange} />
+        <BlutwerteCard bloodwork={bloodwork} range={pageRange} />
       </div>
     </div>
   )
