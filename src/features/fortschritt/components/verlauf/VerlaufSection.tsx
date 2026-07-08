@@ -15,7 +15,6 @@ import { panel } from '../../styles'
 import { VerlaufSetup } from './VerlaufSetup'
 import { VerlaufSetupSheet } from './VerlaufSetupSheet'
 import { ChartSettingsButton } from './ChartSettingsButton'
-import { SubstanceLane } from './SubstanceLane'
 import { MetricChart } from './MetricChart'
 
 interface Props {
@@ -168,21 +167,6 @@ export function VerlaufSection({
             Tippe auf Einstellen, um Substanzen und Zyklen für den Verlauf zu wählen.
           </p>
         </section>
-      )}
-
-      {hasChartData && (
-        <SubstanceLane
-          cycles={visibleCycles}
-          ongoing={visibleOngoing}
-          range={chartRange}
-          focusId={focusId}
-          weightLogs={state.weightLogs}
-          dailyLogs={state.dailyLogs}
-          bloodwork={state.bloodwork}
-          doseLogs={state.doseLogs}
-          peptideNames={state.peptideNames}
-          onSelect={setFocusId}
-        />
       )}
 
       {focused && (
