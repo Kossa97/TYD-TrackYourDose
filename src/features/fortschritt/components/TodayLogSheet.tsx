@@ -167,11 +167,12 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
     onClose()
   }
 
+  /** Unten → oben: häufigste Eingaben stehen zuletzt (Daumen-Zone). */
   const sliders = [
-    { label: 'Energie', value: energie, set: setEnergie },
-    { label: 'Schlafqualität', value: schlaf, set: setSchlaf },
-    { label: 'Wohlbefinden', value: wohlbefinden, set: setWohlbefinden },
     { label: 'Libido', value: libido, set: setLibido },
+    { label: 'Wohlbefinden', value: wohlbefinden, set: setWohlbefinden },
+    { label: 'Schlafqualität', value: schlaf, set: setSchlaf },
+    { label: 'Energie', value: energie, set: setEnergie },
   ]
 
   return createPortal(
@@ -220,15 +221,16 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
           minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'flex-end',
         }}>
+          <div aria-hidden style={{ flex: 1, minHeight: 24 }} />
+
           <div style={{
             flexShrink: 0,
             overflowY: 'auto',
             overflowX: 'hidden',
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
-            padding: 'max(48px, calc(env(safe-area-inset-top) + 36px)) 14px 8px',
+            padding: 'max(48px, calc(env(safe-area-inset-top) + 36px)) 14px 4px',
             background: SHEET_BG,
           }}>
             <h2
@@ -237,7 +239,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
                 fontSize: '1.05rem',
                 fontWeight: 900,
                 color: 'var(--text)',
-                marginBottom: 12,
+                marginBottom: 10,
                 paddingRight: 44,
               }}
             >
@@ -248,7 +250,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
               display: 'flex',
               alignItems: 'center',
               gap: 12,
-              marginBottom: 10,
+              marginBottom: 12,
               padding: '10px 12px',
               borderRadius: 14,
               background: 'var(--surface-input)',
@@ -273,7 +275,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
               />
             ))}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 2 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
               <div>
                 <label style={{ ...fieldLabel, fontSize: '0.56rem', marginBottom: 5 }}>Gewicht kg</label>
                 <input
@@ -302,7 +304,7 @@ export function TodayLogSheet({ logs, open, onClose, onSaved }: Props) {
 
         <footer style={{
           flexShrink: 0,
-          padding: '8px 14px max(10px, env(safe-area-inset-bottom))',
+          padding: '6px 14px max(8px, env(safe-area-inset-bottom))',
           borderTop: '1px solid var(--border)',
           background: SHEET_BG,
         }}>
