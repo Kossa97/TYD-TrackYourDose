@@ -2,13 +2,14 @@ import { format, parseISO, subDays } from 'date-fns'
 import type { ActiveSubstance, CycleSubstance, DateRange } from '../types'
 import { todayIso, cycleEndDate } from './substances'
 
-export type RangeChipKey = '30t' | '90t' | '1j' | 'alles'
+export type RangeChipKey = '30t' | '90t' | '6m' | '1j' | 'alles'
 
 export const DEFAULT_RANGE_CHIP: RangeChipKey = '90t'
 
 export const RANGE_CHIPS: { key: RangeChipKey; label: string; days: number | null }[] = [
   { key: '30t', label: '30T', days: 30 },
   { key: '90t', label: '90T', days: 90 },
+  { key: '6m', label: '6M', days: 180 },
   { key: '1j', label: '1J', days: 365 },
   { key: 'alles', label: 'Alles', days: null },
 ]

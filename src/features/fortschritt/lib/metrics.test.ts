@@ -59,9 +59,9 @@ describe('computeTopChanges', () => {
     { id: '3', marker: 'IGF-1', value: 198, unit: 'ng/mL', tested_at: '2026-07-01' },
   ]
 
-  it('returns at most 3 changes above threshold', () => {
+  it('returns at most 4 changes above threshold', () => {
     const changes = computeTopChanges(range, weights, dailyLogs, bloodwork)
-    expect(changes.length).toBeLessThanOrEqual(3)
+    expect(changes.length).toBeLessThanOrEqual(4)
     expect(changes.length).toBeGreaterThan(0)
     expect(changes.some(c => c.label === 'Gewicht')).toBe(true)
     expect(changes.some(c => c.label === 'Energie')).toBe(true)

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import type { FortschrittOverviewState, MetricKey, VerlaufNavigation } from '../../types'
+import type { ChartNavigation, DateRange, FortschrittOverviewState, MetricKey } from '../../types'
 import { CHART_METRIC_KEYS, isChartMetricKey, isWellnessMetricKey } from '../../constants'
 import { buildMetricSeries } from '../../lib/metrics'
 import { buildAvailableMetrics, normalizeMetricKey } from '../../lib/metricDefinitions'
@@ -10,13 +10,7 @@ import {
   filterOngoingByVisibility,
 } from '../../lib/chartVisibility'
 import { useChartVisibility } from '../../hooks/useChartVisibility'
-import {
-  DEFAULT_RANGE_CHIP,
-  RANGE_CHIPS,
-  rangeFromChip,
-  focusRangeForSubstance,
-  type RangeChipKey,
-} from '../../lib/verlaufRange'
+import { focusRangeForSubstance } from '../../lib/verlaufRange'
 import { panel } from '../../styles'
 import { VerlaufSetup } from './VerlaufSetup'
 import { VerlaufSetupSheet } from './VerlaufSetupSheet'
@@ -26,13 +20,19 @@ import { MetricChart } from './MetricChart'
 
 interface Props {
   state: FortschrittOverviewState
-  pendingNav: VerlaufNavigation | null
-  onPendingConsumed: () => void
+  pageRange: DateRange
+  chartNav: ChartNavigation | null
+  onChartNavConsumed: () => void
+  onRangeLockedChange: (locked: boolean) => void
 }
 
-
-export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
-  const [rangeChip, setRangeChip] = useState<RangeChipKey>(DEFAULT_RANGE_CHIP)
+export function VerlaufSection({
+  state,
+  pageRange,
+  chartNav,
+  onChartNavConsumed,
+  onRangeLockedChange,
+}: Props) {
   const [metricKey, setMetricKey] = useState<MetricKey>('weight')
   const [focusId, setFocusId] = useState<string | null>(null)
   const [setupOpen, setSetupOpen] = useState(false)
@@ -55,19 +55,19 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
   )
 
   useEffect(() => {
-    if (!pendingNav) return
-    if (pendingNav.focusSubstanceId) {
-      showIds([pendingNav.focusSubstanceId])
-      setFocusId(pendingNav.focusSubstanceId)
-    } else if (pendingNav.metric && isWellnessMetricKey(pendingNav.metric)) {
+    if (!chartNav) return
+    if (chartNav.focusSubstanceId) {
+      showIds([chartNav.focusSubstanceId])
+      setFocusId(chartNav.focusSubstanceId)
+    } else if (chartNav.metric && isWellnessMetricKey(chartNav.metric)) {
       const id = defaultFocusSubstanceId(visibleCycles, visibleOngoing)
       if (id) setFocusId(id)
     }
-    if (pendingNav.metric && isChartMetricKey(normalizeMetricKey(pendingNav.metric))) {
-      setMetricKey(normalizeMetricKey(pendingNav.metric))
+    if (chartNav.metric && isChartMetricKey(normalizeMetricKey(chartNav.metric))) {
+      setMetricKey(normalizeMetricKey(chartNav.metric))
     }
-    onPendingConsumed()
-  }, [pendingNav, onPendingConsumed, showIds, visibleCycles, visibleOngoing])
+    onChartNavConsumed()
+  }, [chartNav, onChartNavConsumed, showIds, visibleCycles, visibleOngoing])
 
   useEffect(() => {
     if (focusId && !visibleIds.has(focusId)) {
@@ -75,17 +75,19 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
     }
   }, [focusId, visibleIds])
 
-  const baseRange = state.fullRange
-  const chipRange = useMemo(() => rangeFromChip(rangeChip, baseRange), [rangeChip, baseRange])
-
   const substances = allSubstances(visibleCycles, visibleOngoing)
   const focused = substances.find(s => s.id === focusId) ?? null
 
   const chartRange = useMemo(() => {
     if (focused) return focusRangeForSubstance(focused)
-    return chipRange
-  }, [focused, chipRange])
+    return pageRange
+  }, [focused, pageRange])
 
+  useEffect(() => {
+    onRangeLockedChange(!!focused)
+  }, [focused, onRangeLockedChange])
+
+  const baseRange = state.fullRange
   const pointCounts = useMemo(() => {
     const counts = new Map<string, number>()
     for (const key of CHART_METRIC_KEYS) {
@@ -134,54 +136,7 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
   const openSetup = () => setSetupOpen(true)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {(hasChartData || visibilityGroups.length > 0) && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 10,
-          padding: '0 4px',
-        }}>
-          <p style={{
-            fontSize: '0.62rem',
-            fontWeight: 800,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: 'var(--text-muted)',
-          }}>
-            Zeitraum
-          </p>
-          <div style={{ display: 'flex', gap: 4, flex: 1, justifyContent: 'flex-end', maxWidth: 240 }}>
-            {RANGE_CHIPS.map(chip => {
-              const on = rangeChip === chip.key
-              return (
-                <button
-                  key={chip.key}
-                  type="button"
-                  disabled={!!focused || !hasChartData}
-                  onClick={() => setRangeChip(chip.key)}
-                  style={{
-                    flex: 1,
-                    padding: '6px 0',
-                    borderRadius: 10,
-                    fontSize: '0.68rem',
-                    fontWeight: 800,
-                    cursor: focused || !hasChartData ? 'not-allowed' : 'pointer',
-                    opacity: focused || !hasChartData ? 0.45 : 1,
-                    background: on ? 'var(--accent-weak)' : 'transparent',
-                    color: on ? 'var(--accent)' : 'var(--text-muted)',
-                    border: on ? '1px solid var(--accent-border)' : '1px solid var(--border)',
-                  }}
-                >
-                  {chip.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {selectedMetric && hasChartData && (
         <MetricChart
           range={chartRange}
@@ -210,7 +165,7 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
             Chart noch leer
           </p>
           <p style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', maxWidth: 260, margin: '0 auto' }}>
-            Tippe oben rechts auf Einstellen, um Substanzen und Zyklen für den Verlauf zu wählen.
+            Tippe auf Einstellen, um Substanzen und Zyklen für den Verlauf zu wählen.
           </p>
         </section>
       )}
@@ -232,7 +187,7 @@ export function VerlaufTab({ state, pendingNav, onPendingConsumed }: Props) {
 
       {focused && (
         <p style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', textAlign: 'center' }}>
-          Zeitraum folgt Fokus-Substanz · Wellness unten antippen
+          Zeitraum folgt Fokus-Substanz · Chips oben deaktiviert
         </p>
       )}
 

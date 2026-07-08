@@ -1,5 +1,3 @@
-export type FortschrittTab = 'uebersicht' | 'verlauf' | 'fotos' | 'labs'
-
 export type SubstanceMode = 'cycle' | 'ongoing'
 
 export interface DateRange {
@@ -118,8 +116,7 @@ export interface FortschrittOverviewState {
   peptideNames: Map<string, string>
 }
 
-export interface VerlaufNavigation {
-  tab: 'verlauf'
+export interface ChartNavigation {
   metric?: MetricKey
   focusSubstanceId?: string
 }

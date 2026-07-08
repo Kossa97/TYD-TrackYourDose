@@ -1,0 +1,114 @@
+import { useCallback, useMemo, useState } from 'react'
+import { MIN_POINTS_FOR_TREND, isWellnessMetricKey } from '../constants'
+import {
+  computeTopChanges,
+  weightSeries,
+  dailyFieldSeries,
+} from '../lib/metrics'
+import { defaultFocusSubstanceId } from '../lib/focusSummary'
+import { rangeFromChip, type RangeChipKey } from '../lib/verlaufRange'
+import type { ChartNavigation, FortschrittOverviewState } from '../types'
+import { ActiveSubstancesSection } from './overview/ActiveSubstancesSection'
+import { TopChangesSection } from './overview/TopChangesSection'
+import { EmptyOverview, NoSubstancesBanner } from './overview/EmptyOverview'
+import { VerlaufSection } from './verlauf/VerlaufSection'
+import { FotosCard } from './fotos/FotosCard'
+import { LabsCard } from './labs/LabsCard'
+
+interface Props {
+  state: FortschrittOverviewState
+  rangeChip: RangeChipKey
+  onLogToday: () => void
+  onReload: () => void
+  onRangeLockedChange: (locked: boolean) => void
+}
+
+export function FortschrittDashboard({ state, rangeChip, onLogToday, onReload, onRangeLockedChange }: Props) {
+  const [chartNav, setChartNav] = useState<ChartNavigation | null>(null)
+
+  const pageRange = useMemo(
+    () => rangeFromChip(rangeChip, state.fullRange),
+    [rangeChip, state.fullRange],
+  )
+
+  const handleChartNavConsumed = useCallback(() => setChartNav(null), [])
+
+  const {
+    cycleSubstances,
+    ongoingSubstances,
+    dailyLogs,
+    weightLogs,
+    bloodwork,
+    photos,
+  } = state
+
+  const hasSubstances = cycleSubstances.length + ongoingSubstances.length > 0
+  const activeCycles = cycleSubstances.filter(c => c.active)
+  const hasActiveSubstances = activeCycles.length + ongoingSubstances.length > 0
+  const hasAnyLogs =
+    dailyLogs.length > 0 ||
+    weightLogs.length > 0 ||
+    bloodwork.length > 0 ||
+    photos.length > 0
+
+  const completelyEmpty = !hasSubstances && !hasAnyLogs
+
+  if (completelyEmpty) {
+    return <EmptyOverview onLogToday={onLogToday} />
+  }
+
+  const topChanges = computeTopChanges(pageRange, weightLogs, dailyLogs, bloodwork)
+
+  const trendCandidates = [
+    weightSeries(weightLogs, pageRange),
+    ...(['energie', 'schlaf', 'wohlbefinden', 'libido'] as const).map(f => dailyFieldSeries(dailyLogs, pageRange, f)),
+    ...[...new Set(bloodwork.map(b => b.marker))].map(m =>
+      bloodwork.filter(b => b.marker === m).map(b => ({ date: b.tested_at, value: b.value })),
+    ),
+  ]
+  const hasEnoughForTrend = trendCandidates.some(series => series.length >= MIN_POINTS_FOR_TREND)
+
+  const navigateChart = (nav: ChartNavigation) => setChartNav(nav)
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <TopChangesSection
+        changes={topChanges}
+        hasAnyData={hasAnyLogs}
+        hasEnoughForTrend={hasEnoughForTrend}
+        onSelect={key => {
+          if (isWellnessMetricKey(key)) {
+            navigateChart({
+              focusSubstanceId: defaultFocusSubstanceId(cycleSubstances, ongoingSubstances) ?? undefined,
+            })
+            return
+          }
+          navigateChart({ metric: key })
+        }}
+      />
+
+      <VerlaufSection
+        state={state}
+        pageRange={pageRange}
+        chartNav={chartNav}
+        onChartNavConsumed={handleChartNavConsumed}
+        onRangeLockedChange={onRangeLockedChange}
+      />
+
+      {!hasActiveSubstances && <NoSubstancesBanner />}
+
+      {hasActiveSubstances && (
+        <ActiveSubstancesSection
+          cycles={activeCycles}
+          ongoing={ongoingSubstances}
+          onSelect={id => navigateChart({ focusSubstanceId: id })}
+        />
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, alignItems: 'stretch' }}>
+        <FotosCard photos={photos} range={pageRange} onChange={onReload} />
+        <LabsCard bloodwork={bloodwork} range={pageRange} />
+      </div>
+    </div>
+  )
+}
