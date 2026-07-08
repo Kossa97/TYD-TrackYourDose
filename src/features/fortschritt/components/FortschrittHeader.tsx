@@ -8,7 +8,7 @@ interface Props {
 
 export function FortschrittHeader({ subtitle, onLogToday }: Props) {
   return (
-    <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+    <header style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div>
         <h1 style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.02em' }}>
           Fortschritt
@@ -17,14 +17,34 @@ export function FortschrittHeader({ subtitle, onLogToday }: Props) {
           {subtitle}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={onLogToday}
-        className="btn-primary"
-        style={{ flexShrink: 0, padding: '10px 14px', fontSize: '0.78rem' }}
-      >
-        <Plus size={16} /> Heute
-      </button>
+
+      <div>
+        <p style={{
+          fontSize: '0.88rem',
+          fontWeight: 800,
+          color: 'var(--text-dim)',
+          marginBottom: 8,
+        }}>
+          Wie läuft&apos;s?
+        </p>
+        <button
+          type="button"
+          onClick={onLogToday}
+          className="btn-primary"
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            padding: '12px 16px',
+            fontSize: '0.82rem',
+          }}
+        >
+          <Plus size={17} />
+          deinen heutigen Stand eintragen
+        </button>
+      </div>
     </header>
   )
 }
