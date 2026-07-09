@@ -1,19 +1,67 @@
 import { Pencil, Plus } from 'lucide-react'
 
+const ENTRY_GLOW_CSS = `
+  @keyframes fortschritt-entry-pulse {
+    0%, 100% {
+      opacity: 0.5;
+      box-shadow: 0 0 14px rgba(0, 204, 245, 0.4);
+    }
+    50% {
+      opacity: 1;
+      box-shadow:
+        0 0 28px rgba(0, 204, 245, 0.85),
+        0 0 0 4px rgba(0, 204, 245, 0.3);
+    }
+  }
+  .fortschritt-entry-glow-wrap {
+    position: relative;
+    border-radius: 14px;
+    overflow: visible;
+  }
+  .fortschritt-entry-glow-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 18px;
+    border: 2px solid rgba(0, 204, 245, 0.75);
+    animation: fortschritt-entry-pulse 1.4s ease-in-out infinite !important;
+    animation-duration: 1.4s !important;
+    animation-iteration-count: infinite !important;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .fortschritt-entry-glow-wrap .btn-primary {
+    position: relative;
+    z-index: 1;
+    box-shadow:
+      0 0 22px rgba(0, 204, 245, 0.55),
+      var(--shadow-btn-primary) !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fortschritt-entry-glow-wrap::before {
+      animation: fortschritt-entry-pulse 2s ease-in-out infinite !important;
+      animation-duration: 2s !important;
+      animation-iteration-count: infinite !important;
+    }
+  }
+`
+
 interface Props {
   rangeLabel: string
   onLogToday: () => void
   hasTodayEntry?: boolean
-  highlightEntry?: boolean
+  /** Daten geladen — Glow erst dann, kein Flackern */
+  dataReady?: boolean
 }
 
 export function FortschrittHeader({
   rangeLabel,
   onLogToday,
   hasTodayEntry = false,
-  highlightEntry = false,
+  dataReady = false,
 }: Props) {
-  const showGlow = highlightEntry
+  // Glow genau wenn der Button „Fortschritt eintragen“ zeigt (noch kein heutiger Eintrag)
+  const showGlow = dataReady && !hasTodayEntry
 
   const button = (
     <button
@@ -37,6 +85,7 @@ export function FortschrittHeader({
 
   return (
     <header style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {showGlow && <style>{ENTRY_GLOW_CSS}</style>}
       <div style={{
         display: 'flex',
         alignItems: 'baseline',

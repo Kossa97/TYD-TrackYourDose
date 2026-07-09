@@ -1414,45 +1414,6 @@ main.flex-1 {
 /* ═══════════════════════════════════════════════════════════════════════════
    MOTION SYSTEM
    ═══════════════════════════════════════════════════════════════════════════ */
-@keyframes fortschritt-entry-pulse {
-  0%, 100% {
-    opacity: 0.45;
-    transform: scale(1);
-    box-shadow: 0 0 10px rgba(0, 204, 245, 0.35);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.015);
-    box-shadow:
-      0 0 24px rgba(0, 204, 245, 0.8),
-      0 0 0 3px rgba(0, 204, 245, 0.28);
-  }
-}
-.fortschritt-entry-glow-wrap {
-  position: relative;
-  border-radius: 14px;
-  isolation: isolate;
-}
-.fortschritt-entry-glow-wrap::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: 18px;
-  border: 2px solid rgba(0, 204, 245, 0.65);
-  animation: fortschritt-entry-pulse 1.5s ease-in-out infinite !important;
-  pointer-events: none;
-  z-index: 0;
-}
-.fortschritt-entry-glow-wrap .btn-primary {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  transition: transform var(--t-std), background var(--t-std), color var(--t-std);
-  box-shadow:
-    0 0 20px rgba(0, 204, 245, 0.45),
-    var(--shadow-btn-primary) !important;
-}
-
 @keyframes tydFadeUp {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -1487,12 +1448,6 @@ main.flex-1 {
   .injection-map-pulse {
     animation: none !important;
     transition: none !important;
-  }
-
-  .fortschritt-entry-glow-wrap::before {
-    animation: fortschritt-entry-pulse 2s ease-in-out infinite !important;
-    animation-duration: 2s !important;
-    animation-iteration-count: infinite !important;
   }
 }
 
