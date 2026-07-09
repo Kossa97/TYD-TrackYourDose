@@ -1,8 +1,10 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
+import type { MouseEvent, TouchEvent } from 'react'
 import { format } from 'date-fns'
 import { dayToTsSafe, formatDaySafe } from '../../lib/dates'
 import {
   CartesianGrid,
+  getRelativeCoordinate,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -17,8 +19,9 @@ import type { BloodworkEntry, DailyLogEntry, WeightLogEntry } from '../../types'
 import { substanceBarEnd } from '../../lib/focusSummary'
 import { assignLanes, laneCount } from '../../lib/cycleLanes'
 import { CycleBandLayer, type CycleBandDraw } from './CycleBandLayer'
+import { ChartPointerProvider, useChartPointerSetter } from './ChartPointerContext'
+import { FluidCursorLayer } from './FluidCursorLayer'
 import { MetricTooltip } from './MetricTooltip'
-import { SnapCursor } from './SnapCursor'
 import { buildTooltipSnapDates } from '../../lib/chartTooltip'
 import { panel } from '../../styles'
 import { ChartSettingsButton } from './ChartSettingsButton'
@@ -61,6 +64,113 @@ function formatTooltipValue(value: number, unit: string): string {
   if (unit === 'kg') return `${value} kg`
   if (unit === '%') return `${value}%`
   return unit ? `${value} ${unit}` : String(value)
+}
+
+function readMousePointerX(event: MouseEvent<SVGGraphicsElement>): number | null {
+  const { relativeX } = getRelativeCoordinate(event)
+  return Number.isFinite(relativeX) ? relativeX : null
+}
+
+function readTouchPointerX(event: TouchEvent<SVGGraphicsElement>): number | null {
+  const coords = getRelativeCoordinate(event)
+  const x = coords[0]?.relativeX
+  return x != null && Number.isFinite(x) ? x : null
+}
+
+interface ChartBodyProps {
+  lineData: Array<{ ts: number; date: string; label: string; value: number }>
+  snapDates: string[]
+  bands: CycleBandDraw[]
+  lanes: number
+  metric: MetricDefinition
+  rangeStart: number
+  rangeEnd: number
+  xTicks: number[]
+}
+
+function MetricChartBody({
+  lineData,
+  snapDates,
+  bands,
+  lanes,
+  metric,
+  rangeStart,
+  rangeEnd,
+  xTicks,
+}: ChartBodyProps) {
+  const setPointerX = useChartPointerSetter()
+
+  const trackMouse = useCallback((event: MouseEvent<SVGGraphicsElement>) => {
+    setPointerX(readMousePointerX(event))
+  }, [setPointerX])
+
+  const trackTouch = useCallback((event: TouchEvent<SVGGraphicsElement>) => {
+    setPointerX(readTouchPointerX(event))
+  }, [setPointerX])
+
+  const clearPointer = useCallback(() => {
+    setPointerX(null)
+  }, [setPointerX])
+
+  return (
+    <LineChart
+      data={lineData}
+      margin={{ top: 8, right: 12, bottom: 8, left: 0 }}
+      onMouseMove={(_state, event) => trackMouse(event)}
+      onTouchMove={(_state, event) => trackTouch(event)}
+      onMouseLeave={clearPointer}
+      onTouchEnd={clearPointer}
+    >
+      <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
+      <XAxis
+        dataKey="ts"
+        type="number"
+        domain={[rangeStart, rangeEnd]}
+        ticks={xTicks}
+        tickFormatter={ts => fmtDate(format(new Date(ts), 'yyyy-MM-dd'))}
+        tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}
+        tickLine={false}
+        axisLine={false}
+      />
+      <YAxis
+        yAxisId="metric"
+        tickFormatter={v => formatAxisValue(Number(v), metric.unit)}
+        tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}
+        tickLine={false}
+        axisLine={false}
+        width={40}
+      />
+
+      <CycleBandLayer bands={bands} lanes={lanes} snapDates={snapDates} />
+      <FluidCursorLayer snapDates={snapDates} />
+
+      <Tooltip
+        shared
+        cursor={false}
+        isAnimationActive={false}
+        content={(props) => (
+          <MetricTooltip
+            {...props}
+            bands={bands}
+            metric={metric}
+            metricData={lineData}
+            snapDates={snapDates}
+          />
+        )}
+      />
+      <Line
+        yAxisId="metric"
+        type="monotone"
+        dataKey="value"
+        name="value"
+        stroke={metric.color}
+        strokeWidth={2.5}
+        dot={{ r: 3, fill: '#07091a', stroke: metric.color, strokeWidth: 2 }}
+        connectNulls={!metric.isLab}
+        isAnimationActive={false}
+      />
+    </LineChart>
+  )
 }
 
 function CycleLegend({ bands }: { bands: CycleBandDraw[] }) {
@@ -234,60 +344,18 @@ export function MetricChart({
       </div>
 
       <ResponsiveContainer width="100%" height={280}>
-        <LineChart data={lineData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
-          <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
-          <XAxis
-            dataKey="ts"
-            type="number"
-            domain={[rangeStart, rangeEnd]}
-            ticks={xTicks}
-            tickFormatter={ts => fmtDate(format(new Date(ts), 'yyyy-MM-dd'))}
-            tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}
-            tickLine={false}
-            axisLine={false}
+        <ChartPointerProvider>
+          <MetricChartBody
+            lineData={lineData}
+            snapDates={snapDates}
+            bands={bands}
+            lanes={lanes}
+            metric={metric}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            xTicks={xTicks}
           />
-          <YAxis
-            yAxisId="metric"
-            tickFormatter={v => formatAxisValue(Number(v), metric.unit)}
-            tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}
-            tickLine={false}
-            axisLine={false}
-            width={40}
-          />
-
-          <CycleBandLayer bands={bands} lanes={lanes} />
-
-          <Tooltip
-            cursor={(
-              <SnapCursor
-                snapDates={snapDates}
-                stroke="rgba(0,204,245,0.4)"
-                strokeWidth={1}
-                strokeDasharray="4 4"
-              />
-            )}
-            content={(props) => (
-              <MetricTooltip
-                {...props}
-                bands={bands}
-                metric={metric}
-                metricData={lineData}
-                snapDates={snapDates}
-              />
-            )}
-          />
-          <Line
-            yAxisId="metric"
-            type="monotone"
-            dataKey="value"
-            name="value"
-            stroke={metric.color}
-            strokeWidth={2.5}
-            dot={{ r: 3, fill: '#07091a', stroke: metric.color, strokeWidth: 2 }}
-            connectNulls={!metric.isLab}
-            isAnimationActive={false}
-          />
-        </LineChart>
+        </ChartPointerProvider>
       </ResponsiveContainer>
 
       <CycleLegend bands={bands} />

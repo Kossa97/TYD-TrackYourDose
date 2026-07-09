@@ -7,6 +7,7 @@ import {
   resolveTooltipCycleStarts,
 } from '../../lib/chartTooltip'
 import { useFluidChartHover } from './useFluidChartHover'
+import { useChartPointerX } from './ChartPointerContext'
 
 interface ChartPoint {
   date: string
@@ -33,7 +34,8 @@ function formatTooltipValue(value: number, unit: string): string {
   return unit ? `${value} ${unit}` : String(value)
 }
 
-export function MetricTooltip({ active, bands, metric, metricData, snapDates }: Props) {
+export function MetricTooltip({ bands, metric, metricData, snapDates }: Props) {
+  const pointerX = useChartPointerX()
   const hover = useFluidChartHover(snapDates)
 
   const { dateIso, metricValue, starts } = useMemo(() => {
@@ -48,7 +50,7 @@ export function MetricTooltip({ active, bands, metric, metricData, snapDates }: 
     }
   }, [hover, bands, metricData])
 
-  if (!active || !dateIso) return null
+  if (pointerX == null || !dateIso) return null
 
   const hasMetric = metricValue != null
 

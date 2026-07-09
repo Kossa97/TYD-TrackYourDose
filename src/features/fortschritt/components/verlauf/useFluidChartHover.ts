@@ -1,26 +1,26 @@
 import { useMemo } from 'react'
 import {
-  useActiveTooltipCoordinate,
   usePlotArea,
   useXAxisInverseScale,
   useXAxisScale,
 } from 'recharts'
 import { resolveFluidChartHover } from '../../lib/chartTooltip'
+import { useChartPointerX } from './ChartPointerContext'
 
 export function useFluidChartHover(snapDates: string[]) {
-  const cursor = useActiveTooltipCoordinate()
+  const pointerX = useChartPointerX()
   const xScale = useXAxisScale()
   const xInverseScale = useXAxisInverseScale()
   const plotArea = usePlotArea()
 
   return useMemo(
     () => resolveFluidChartHover(
-      cursor?.x,
+      pointerX ?? undefined,
       snapDates,
       xScale ?? undefined,
       xInverseScale ?? undefined,
       plotArea ?? undefined,
     ),
-    [cursor?.x, snapDates, xScale, xInverseScale, plotArea],
+    [pointerX, snapDates, xScale, xInverseScale, plotArea],
   )
 }

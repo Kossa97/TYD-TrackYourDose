@@ -4,7 +4,7 @@ export const TOOLTIP_CURSOR_PX_THRESHOLD = 14
 /** Pixel-Radius, in dem der Cursor leicht zu Mess- und Zyklus-Startpunkten einrastet */
 export const CURSOR_SOFT_SNAP_RADIUS_PX = 34
 /** Maximale Einrast-Stärke (0 = frei, 1 = voll am Anker) */
-export const CURSOR_MAX_SNAP_PULL = 0.78
+export const CURSOR_MAX_SNAP_PULL = 0.55
 /** Innerhalb dieses Abstands sitzt der Cursor voll auf dem Anker */
 export const CURSOR_HARD_SNAP_PX = 7
 

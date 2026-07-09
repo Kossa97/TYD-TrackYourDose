@@ -1,9 +1,5 @@
 import {
-  useActiveTooltipCoordinate,
-  useActiveTooltipLabel,
-  useIsTooltipActive,
   usePlotArea,
-  useXAxisInverseScale,
   useXAxisScale,
   ZIndexLayer,
   DefaultZIndexes,
@@ -12,10 +8,10 @@ import { computeCycleBandLayout } from '../../lib/cycleLanes'
 import {
   cycleStartsAtHover,
   cycleStartsNearCursor,
-  hoverDateIso,
-  resolveCursorHoverDate,
   TOOLTIP_CURSOR_PX_THRESHOLD,
 } from '../../lib/chartTooltip'
+import { useChartPointerX } from './ChartPointerContext'
+import { useFluidChartHover } from './useFluidChartHover'
 
 export interface CycleBandDraw {
   id: string
@@ -32,6 +28,7 @@ export interface CycleBandDraw {
 interface Props {
   bands: CycleBandDraw[]
   lanes: number
+  snapDates: string[]
 }
 
 const HOVER_PX_THRESHOLD = TOOLTIP_CURSOR_PX_THRESHOLD
@@ -61,35 +58,28 @@ function bandLayout(
 
 function isStartHighlighted(
   band: CycleBandDraw,
-  tooltipActive: boolean,
+  pointerActive: boolean,
   cursorX: number | undefined,
-  activeLabel: string | number | undefined,
+  hoverDateIso: string | null,
+  hoverTs: number | undefined,
   xScale: NonNullable<ReturnType<typeof useXAxisScale>>,
   plotArea: NonNullable<ReturnType<typeof usePlotArea>>,
-  xInverseScale: ReturnType<typeof useXAxisInverseScale>,
 ): boolean {
-  if (!tooltipActive) return false
-  const cursorHover = resolveCursorHoverDate(cursorX, xInverseScale ?? undefined)
-  if (cursorHover && cycleStartsAtHover([band], cursorHover.dateIso, cursorHover.hoverTs).length > 0) {
+  if (!pointerActive || cursorX == null) return false
+  if (hoverDateIso && cycleStartsAtHover([band], hoverDateIso, hoverTs).length > 0) {
     return true
   }
-  if (activeLabel != null && cycleStartsAtHover([band], hoverDateIso(activeLabel)).length > 0) {
-    return true
-  }
-  if (cursorX == null) return false
   return cycleStartsNearCursor([band], cursorX, xScale, plotArea, HOVER_PX_THRESHOLD).length > 0
 }
 
 /**
  * Zyklus-Balken + Start-Striche im Chart-Hintergrund.
  */
-export function CycleBandLayer({ bands, lanes }: Props) {
+export function CycleBandLayer({ bands, lanes, snapDates }: Props) {
   const xScale = useXAxisScale()
-  const xInverseScale = useXAxisInverseScale()
   const plotArea = usePlotArea()
-  const tooltipActive = useIsTooltipActive()
-  const cursor = useActiveTooltipCoordinate()
-  const activeLabel = useActiveTooltipLabel()
+  const pointerX = useChartPointerX()
+  const hover = useFluidChartHover(snapDates)
 
   if (!xScale || !plotArea || bands.length === 0 || lanes === 0) {
     return null
@@ -126,12 +116,12 @@ export function CycleBandLayer({ bands, lanes }: Props) {
           {items.map(({ band, y, startX, laneHeight }) => {
             const highlighted = isStartHighlighted(
               band,
-              tooltipActive,
-              cursor?.x,
-              activeLabel,
+              pointerX != null,
+              hover?.fluidX ?? pointerX ?? undefined,
+              hover?.dateIso ?? null,
+              hover?.hoverTs,
               xScale,
               plotArea,
-              xInverseScale,
             )
 
             return (
