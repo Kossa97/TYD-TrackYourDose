@@ -1,5 +1,4 @@
 import { Pencil, Plus } from 'lucide-react'
-import { PROGRESS_ENTRY_GLOW_CSS } from '../styles'
 
 interface Props {
   rangeLabel: string
@@ -16,9 +15,28 @@ export function FortschrittHeader({
 }: Props) {
   const showGlow = highlightEntry && !hasTodayEntry
 
+  const button = (
+    <button
+      type="button"
+      onClick={onLogToday}
+      className="btn-primary"
+      style={{
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        padding: '12px 16px',
+        fontSize: '0.82rem',
+      }}
+    >
+      {hasTodayEntry ? <Pencil size={17} /> : <Plus size={17} />}
+      {hasTodayEntry ? 'HEUTIGEN EINTRAG BEARBEITEN' : 'FORTSCHRITT EINTRAGEN'}
+    </button>
+  )
+
   return (
     <header style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {showGlow && <style>{PROGRESS_ENTRY_GLOW_CSS}</style>}
       <div style={{
         display: 'flex',
         alignItems: 'baseline',
@@ -38,23 +56,9 @@ export function FortschrittHeader({
       </div>
 
       <div>
-        <button
-          type="button"
-          onClick={onLogToday}
-          className={`btn-primary${showGlow ? ' fortschritt-entry-glow' : ''}`}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            padding: '12px 16px',
-            fontSize: '0.82rem',
-          }}
-        >
-          {hasTodayEntry ? <Pencil size={17} /> : <Plus size={17} />}
-          {hasTodayEntry ? 'HEUTIGEN EINTRAG BEARBEITEN' : 'FORTSCHRITT EINTRAGEN'}
-        </button>
+        {showGlow
+          ? <div className="fortschritt-entry-glow-wrap">{button}</div>
+          : button}
       </div>
     </header>
   )

@@ -28,24 +28,6 @@ export const cardDelta: CSSProperties = {
   marginTop: 4,
 }
 
-export const PROGRESS_ENTRY_GLOW_CSS = `
-  @keyframes fortschritt-entry-glow {
-    0%, 100% {
-      box-shadow:
-        0 0 12px rgba(0,204,245,0.28),
-        0 0 0 0 rgba(0,204,245,0.18);
-    }
-    50% {
-      box-shadow:
-        0 0 24px rgba(0,204,245,0.5),
-        0 0 0 4px rgba(0,204,245,0.14);
-    }
-  }
-  .fortschritt-entry-glow {
-    animation: fortschritt-entry-glow 2s ease-in-out infinite;
-  }
-`
-
 export const SLIDER_CSS = `
   input.tyd-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 6px;
     border-radius: 99px; background: var(--border); outline: none; }
