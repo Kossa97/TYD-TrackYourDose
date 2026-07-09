@@ -1,47 +1,29 @@
 import { Pencil, Plus } from 'lucide-react'
 
 const ENTRY_GLOW_CSS = `
-  @keyframes fortschritt-entry-pulse {
+  @keyframes fortschritt-entry-glow {
     0%, 100% {
-      opacity: 0.5;
-      box-shadow: 0 0 14px rgba(0, 204, 245, 0.4);
+      box-shadow:
+        0 0 10px rgba(0, 204, 245, 0.22),
+        var(--shadow-btn-primary);
     }
     50% {
-      opacity: 1;
       box-shadow:
-        0 0 28px rgba(0, 204, 245, 0.85),
-        0 0 0 4px rgba(0, 204, 245, 0.3);
+        0 0 18px rgba(0, 204, 245, 0.38),
+        var(--shadow-btn-primary);
     }
   }
-  .fortschritt-entry-glow-wrap {
-    position: relative;
-    border-radius: 14px;
-    overflow: visible;
-  }
-  .fortschritt-entry-glow-wrap::before {
-    content: '';
-    position: absolute;
-    inset: -5px;
-    border-radius: 18px;
-    border: 2px solid rgba(0, 204, 245, 0.75);
-    animation: fortschritt-entry-pulse 1.4s ease-in-out infinite !important;
-    animation-duration: 1.4s !important;
-    animation-iteration-count: infinite !important;
-    pointer-events: none;
-    z-index: 0;
-  }
   .fortschritt-entry-glow-wrap .btn-primary {
-    position: relative;
-    z-index: 1;
-    box-shadow:
-      0 0 22px rgba(0, 204, 245, 0.55),
-      var(--shadow-btn-primary) !important;
+    animation: fortschritt-entry-glow 2.2s ease-in-out infinite !important;
+    animation-duration: 2.2s !important;
+    animation-iteration-count: infinite !important;
   }
   @media (prefers-reduced-motion: reduce) {
-    .fortschritt-entry-glow-wrap::before {
-      animation: fortschritt-entry-pulse 2s ease-in-out infinite !important;
-      animation-duration: 2s !important;
-      animation-iteration-count: infinite !important;
+    .fortschritt-entry-glow-wrap .btn-primary {
+      animation: none !important;
+      box-shadow:
+        0 0 12px rgba(0, 204, 245, 0.28),
+        var(--shadow-btn-primary) !important;
     }
   }
 `
