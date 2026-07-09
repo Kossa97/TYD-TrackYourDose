@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useScrollLock } from '../../hooks/useScrollLock'
 
 const SHEET_Z = 10050
 
@@ -15,14 +15,7 @@ interface Props {
 }
 
 export function VerlaufSetupSheet({ open, onClose, children }: Props) {
-  useEffect(() => {
-    if (!open) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [open])
+  useScrollLock(open)
 
   if (!open) return null
 
@@ -35,6 +28,12 @@ export function VerlaufSetupSheet({ open, onClose, children }: Props) {
         display: 'flex',
         flexDirection: 'column',
         background: SHEET_BG,
+        width: '100%',
+        maxWidth: '100vw',
+        minHeight: '100dvh',
+        overflow: 'hidden',
+        overscrollBehavior: 'none',
+        touchAction: 'manipulation',
       }}
     >
       <header style={{
@@ -72,8 +71,11 @@ export function VerlaufSetupSheet({ open, onClose, children }: Props) {
 
       <div style={{
         flex: 1,
+        minHeight: 0,
         overflowY: 'auto',
+        overflowX: 'hidden',
         WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain',
         padding: '14px 16px max(20px, env(safe-area-inset-bottom))',
       }}>
         {children}
