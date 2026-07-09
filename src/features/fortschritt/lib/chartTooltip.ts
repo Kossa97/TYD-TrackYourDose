@@ -140,12 +140,15 @@ export function resolveFluidChartHover(
   const anchors = buildSnapAnchors(snapDates, xScale, plotArea)
   const { x: fluidX, snapStrength, anchor } = resolveFluidCursorX(cursorX, anchors)
 
-  if (anchor && snapStrength >= 0.5) {
-    return {
-      fluidX,
-      dateIso: anchor.dateIso,
-      hoverTs: anchor.hoverTs,
-      snapStrength,
+  if (anchor) {
+    const anchorDist = Math.abs(cursorX - anchor.x)
+    if (anchorDist <= CURSOR_SOFT_SNAP_RADIUS_PX) {
+      return {
+        fluidX,
+        dateIso: anchor.dateIso,
+        hoverTs: anchor.hoverTs,
+        snapStrength,
+      }
     }
   }
 

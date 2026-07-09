@@ -9,6 +9,7 @@ import {
   LineChart,
   ResponsiveContainer,
   Tooltip,
+  usePlotArea,
   XAxis,
   YAxis,
 } from 'recharts'
@@ -19,7 +20,7 @@ import type { BloodworkEntry, DailyLogEntry, WeightLogEntry } from '../../types'
 import { substanceBarEnd } from '../../lib/focusSummary'
 import { assignLanes, laneCount } from '../../lib/cycleLanes'
 import { CycleBandLayer, type CycleBandDraw } from './CycleBandLayer'
-import { ChartPointerProvider, useChartPointerSetter } from './ChartPointerContext'
+import { ChartPointerProvider, useChartPointerSetter, useChartPointerX } from './ChartPointerContext'
 import { FluidCursorLayer } from './FluidCursorLayer'
 import { MetricTooltip } from './MetricTooltip'
 import { buildTooltipSnapDates } from '../../lib/chartTooltip'
@@ -72,9 +73,19 @@ function readMousePointerX(event: MouseEvent<SVGGraphicsElement>): number | null
 }
 
 function readTouchPointerX(event: TouchEvent<SVGGraphicsElement>): number | null {
-  const coords = getRelativeCoordinate(event)
-  const x = coords[0]?.relativeX
-  return x != null && Number.isFinite(x) ? x : null
+  try {
+    const coords = getRelativeCoordinate(event)
+    const x = coords[0]?.relativeX
+    if (x != null && Number.isFinite(x)) return x
+  } catch {
+    // touchend: changedTouches statt touches
+  }
+
+  const target = event.currentTarget as SVGGraphicsElement
+  const rect = target.getBoundingClientRect()
+  const touch = event.changedTouches[0] ?? event.touches[0]
+  if (!touch) return null
+  return touch.clientX - rect.left
 }
 
 interface ChartBodyProps {
@@ -98,7 +109,9 @@ function MetricChartBody({
   rangeEnd,
   xTicks,
 }: ChartBodyProps) {
+  const pointerX = useChartPointerX()
   const setPointerX = useChartPointerSetter()
+  const plotArea = usePlotArea()
 
   const trackMouse = useCallback((event: MouseEvent<SVGGraphicsElement>) => {
     setPointerX(readMousePointerX(event))
@@ -108,18 +121,15 @@ function MetricChartBody({
     setPointerX(readTouchPointerX(event))
   }, [setPointerX])
 
-  const clearPointer = useCallback(() => {
-    setPointerX(null)
-  }, [setPointerX])
-
   return (
     <LineChart
       data={lineData}
       margin={{ top: 8, right: 12, bottom: 8, left: 0 }}
       onMouseMove={(_state, event) => trackMouse(event)}
+      onClick={(_state, event) => trackMouse(event)}
+      onTouchStart={(_state, event) => trackTouch(event)}
       onTouchMove={(_state, event) => trackTouch(event)}
-      onMouseLeave={clearPointer}
-      onTouchEnd={clearPointer}
+      onTouchEnd={(_state, event) => trackTouch(event)}
     >
       <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
       <XAxis
@@ -145,6 +155,10 @@ function MetricChartBody({
       <FluidCursorLayer snapDates={snapDates} />
 
       <Tooltip
+        active={pointerX != null}
+        position={pointerX != null && plotArea
+          ? { x: pointerX, y: plotArea.y + 8 }
+          : undefined}
         shared
         cursor={false}
         isAnimationActive={false}
