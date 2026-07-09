@@ -7,6 +7,10 @@ import { FortschrittDashboard } from './components/FortschrittDashboard'
 import { StickyRangeBar } from './components/StickyRangeBar'
 import { TodayLogSheet } from './components/TodayLogSheet'
 import { hasAnyProgressLog, hasLogForDate } from './lib/metricDefaults'
+import {
+  dismissProgressEntryHighlight,
+  isProgressEntryHighlightDismissed,
+} from './lib/progressEntryHighlight'
 import { DEFAULT_RANGE_CHIP, rangeFromChip, type RangeChipKey } from './lib/verlaufRange'
 import { formatDaySafe } from './lib/dates'
 
@@ -16,6 +20,9 @@ export function FortschrittPage() {
   const [logOpen, setLogOpen] = useState(false)
   const [rangeChip, setRangeChip] = useState<RangeChipKey>(DEFAULT_RANGE_CHIP)
   const [rangeLocked, setRangeLocked] = useState(false)
+  const [entryHighlightDismissed, setEntryHighlightDismissed] = useState(
+    isProgressEntryHighlightDismissed,
+  )
 
   const handleRangeLockedChange = useCallback((locked: boolean) => setRangeLocked(locked), [])
 
@@ -37,6 +44,22 @@ export function FortschrittPage() {
     [state.dailyLogs, state.weightLogs],
   )
 
+  useEffect(() => {
+    if (!state.dataReady || !hasSavedProgress) return
+    dismissProgressEntryHighlight()
+    setEntryHighlightDismissed(true)
+  }, [state.dataReady, hasSavedProgress])
+
+  const highlightEntry = state.dataReady
+    && !hasSavedProgress
+    && !entryHighlightDismissed
+
+  const handleProgressSaved = useCallback(async () => {
+    dismissProgressEntryHighlight()
+    setEntryHighlightDismissed(true)
+    await reload()
+  }, [reload])
+
   const hasTodayEntry = useMemo(
     () => hasLogForDate(state.dailyLogs, state.weightLogs, format(new Date(), 'yyyy-MM-dd')),
     [state.dailyLogs, state.weightLogs],
@@ -54,7 +77,7 @@ export function FortschrittPage() {
         rangeLabel={rangeLabel}
         onLogToday={() => setLogOpen(true)}
         hasTodayEntry={hasTodayEntry}
-        highlightEntry={!state.loading && !hasSavedProgress}
+        highlightEntry={highlightEntry}
       />
 
       {state.loading ? (
@@ -76,7 +99,7 @@ export function FortschrittPage() {
         weightLogs={state.weightLogs}
         open={logOpen}
         onClose={() => setLogOpen(false)}
-        onSaved={() => reload()}
+        onSaved={() => void handleProgressSaved()}
       />
     </div>
   )

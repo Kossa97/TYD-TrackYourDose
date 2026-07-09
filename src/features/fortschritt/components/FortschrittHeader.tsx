@@ -13,7 +13,7 @@ export function FortschrittHeader({
   hasTodayEntry = false,
   highlightEntry = false,
 }: Props) {
-  const showGlow = highlightEntry && !hasTodayEntry
+  const showGlow = highlightEntry
 
   const button = (
     <button

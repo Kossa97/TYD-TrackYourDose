@@ -56,6 +56,7 @@ async function resolvePhotoDisplayUrls(
 export function useFortschrittData() {
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
+  const [dataReady, setDataReady] = useState(false)
   const initialLoadedRef = useRef(false)
   const [cycleSubstances, setCycleSubstances] = useState<CycleSubstance[]>([])
   const [ongoingSubstances] = useState<OngoingSubstance[]>([])
@@ -188,6 +189,7 @@ export function useFortschrittData() {
     }
     setPeptideNames(names)
     initialLoadedRef.current = true
+    setDataReady(true)
     setLoading(false)
   }, [ongoingSubstances, user])
 
@@ -197,6 +199,7 @@ export function useFortschrittData() {
 
   const state: FortschrittOverviewState = {
     loading,
+    dataReady,
     range,
     fullRange,
     cycleSubstances,

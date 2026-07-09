@@ -102,6 +102,8 @@ export interface OverviewCardData {
 
 export interface FortschrittOverviewState {
   loading: boolean
+  /** Erster Datenfetch abgeschlossen — verhindert UI-Flackern beim Laden */
+  dataReady: boolean
   /** Zeitraum der aktiven Substanzen — Basis für Übersicht/Top-Veränderungen */
   range: DateRange
   /** Volle Historie (älteste Substanz oder ältester Datenpunkt → heute) — Basis für Verlauf „Alles" */
