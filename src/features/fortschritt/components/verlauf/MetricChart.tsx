@@ -370,12 +370,12 @@ export function MetricChart({
           <div style={{
             display: 'flex',
             alignItems: 'baseline',
-            justifyContent: 'space-between',
-            gap: 10,
+            flexWrap: 'wrap',
+            gap: '2px 6px',
             marginTop: 2,
           }}>
             {latest && (
-              <p style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text)', minWidth: 0 }}>
+              <p style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text)', margin: 0 }}>
                 {formatTooltipValue(latest.value, metric.unit)}
               </p>
             )}
@@ -384,8 +384,7 @@ export function MetricChart({
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 color: 'var(--text-muted)',
-                flexShrink: 0,
-                textAlign: 'right',
+                margin: 0,
               }}>
                 {delta.delta > 0 ? '+' : ''}{formatTooltipValue(delta.delta, metric.unit)} im Zeitraum
               </p>
