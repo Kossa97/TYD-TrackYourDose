@@ -1,6 +1,23 @@
 import { format, parseISO } from 'date-fns'
 
 export const TOOLTIP_CURSOR_PX_THRESHOLD = 14
+/** Pixel-Radius, in dem der Cursor leicht zu Mess- und Zyklus-Startpunkten einrastet */
+export const CURSOR_SOFT_SNAP_RADIUS_PX = 34
+/** Maximale Einrast-Stärke (0 = frei, 1 = voll am Anker) */
+export const CURSOR_MAX_SNAP_PULL = 0.78
+/** Innerhalb dieses Abstands sitzt der Cursor voll auf dem Anker */
+export const CURSOR_HARD_SNAP_PX = 7
+
+export interface SnapAnchor {
+  dateIso: string
+  hoverTs: number
+  x: number
+}
+
+export function smoothstep(t: number): number {
+  const clamped = Math.min(1, Math.max(0, t))
+  return clamped * clamped * (3 - 2 * clamped)
+}
 
 export function normalizeDateIso(value: string): string {
   return value.slice(0, 10)
@@ -49,13 +66,98 @@ export function metricValueAtDate(
 /** Alle Tage, an denen der Tooltip-Cursor einrasten soll (Messwerte + sichtbare Zyklus-Starts) */
 export function buildTooltipSnapDates(
   metricDates: string[],
-  bands: ReadonlyArray<{ x1: number }>,
+  bands: ReadonlyArray<{ x1: number; startDate?: string }>,
 ): string[] {
   const dates = new Set(metricDates.map(normalizeDateIso))
   for (const band of bands) {
     dates.add(isoFromTs(band.x1))
+    if (band.startDate) dates.add(normalizeDateIso(band.startDate))
   }
   return [...dates].sort()
+}
+
+export function buildSnapAnchors(
+  snapDates: readonly string[],
+  xScale: XScale,
+  plotArea: { x: number },
+): SnapAnchor[] {
+  const anchors: SnapAnchor[] = []
+  for (const raw of snapDates) {
+    const dateIso = normalizeDateIso(raw)
+    const hoverTs = dateToTs(dateIso)
+    const px = xScale(hoverTs, { position: 'start' })
+    if (px == null) continue
+    anchors.push({ dateIso, hoverTs, x: plotArea.x + px })
+  }
+  return anchors
+}
+
+export function resolveFluidCursorX(
+  cursorX: number,
+  anchors: readonly SnapAnchor[],
+): { x: number; snapStrength: number; anchor: SnapAnchor | null } {
+  if (anchors.length === 0) {
+    return { x: cursorX, snapStrength: 0, anchor: null }
+  }
+
+  let nearest: { anchor: SnapAnchor; dist: number } | null = null
+  for (const anchor of anchors) {
+    const dist = Math.abs(cursorX - anchor.x)
+    if (!nearest || dist < nearest.dist) nearest = { anchor, dist }
+  }
+
+  if (!nearest || nearest.dist >= CURSOR_SOFT_SNAP_RADIUS_PX) {
+    return { x: cursorX, snapStrength: 0, anchor: null }
+  }
+
+  const t = 1 - nearest.dist / CURSOR_SOFT_SNAP_RADIUS_PX
+  const ease = smoothstep(t)
+  const snapStrength = nearest.dist <= CURSOR_HARD_SNAP_PX
+    ? 1
+    : ease * CURSOR_MAX_SNAP_PULL
+
+  return {
+    x: cursorX + (nearest.anchor.x - cursorX) * snapStrength,
+    snapStrength,
+    anchor: nearest.anchor,
+  }
+}
+
+export function resolveFluidChartHover(
+  cursorX: number | undefined,
+  snapDates: readonly string[],
+  xScale: XScale | undefined,
+  xInverseScale: XInverseScale | undefined,
+  plotArea: { x: number } | undefined,
+): {
+  fluidX: number
+  dateIso: string
+  hoverTs: number
+  snapStrength: number
+} | null {
+  if (cursorX == null || !xScale || !plotArea) return null
+
+  const anchors = buildSnapAnchors(snapDates, xScale, plotArea)
+  const { x: fluidX, snapStrength, anchor } = resolveFluidCursorX(cursorX, anchors)
+
+  if (anchor && snapStrength >= 0.5) {
+    return {
+      fluidX,
+      dateIso: anchor.dateIso,
+      hoverTs: anchor.hoverTs,
+      snapStrength,
+    }
+  }
+
+  const free = resolveCursorHoverDate(fluidX, xInverseScale)
+  if (!free) return null
+
+  return {
+    fluidX,
+    dateIso: free.dateIso,
+    hoverTs: free.hoverTs,
+    snapStrength,
+  }
 }
 
 /** Zyklen, deren Start (echt oder sichtbarer Balkenanfang) auf den Hover-Tag fällt */
