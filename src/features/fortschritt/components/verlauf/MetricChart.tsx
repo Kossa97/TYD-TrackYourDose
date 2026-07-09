@@ -344,7 +344,7 @@ export function MetricChart({
             <ChartSettingsButton onClick={onOpenSettings} />
           </div>
         )}
-        <div style={{ paddingRight: onOpenSettings ? 72 : 0, textAlign: 'left' }}>
+        <div style={{ paddingLeft: 12, paddingRight: 12, width: '100%', boxSizing: 'border-box', textAlign: 'left' }}>
           {metricBar}
         </div>
         <p style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-dim)', marginBottom: 8 }}>
@@ -366,16 +366,34 @@ export function MetricChart({
       )}
       <div style={{ paddingLeft: 12, marginBottom: 4, paddingRight: onOpenSettings ? 88 : 12 }}>
         <p style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-dim)' }}>{metric.label}</p>
-        {latest && (
-          <p style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text)', marginTop: 2 }}>
-            {formatTooltipValue(latest.value, metric.unit)}
-          </p>
+        {(latest || delta) && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            gap: 10,
+            marginTop: 2,
+          }}>
+            {latest && (
+              <p style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text)', minWidth: 0 }}>
+                {formatTooltipValue(latest.value, metric.unit)}
+              </p>
+            )}
+            {delta && (
+              <p style={{
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                color: 'var(--text-muted)',
+                flexShrink: 0,
+                textAlign: 'right',
+              }}>
+                {delta.delta > 0 ? '+' : ''}{formatTooltipValue(delta.delta, metric.unit)} im Zeitraum
+              </p>
+            )}
+          </div>
         )}
-        {delta && (
-          <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginTop: 4 }}>
-            {delta.delta > 0 ? '+' : ''}{formatTooltipValue(delta.delta, metric.unit)} im Zeitraum
-          </p>
-        )}
+      </div>
+      <div style={{ width: '100%', paddingLeft: 12, paddingRight: 12, boxSizing: 'border-box' }}>
         {metricBar}
       </div>
 
