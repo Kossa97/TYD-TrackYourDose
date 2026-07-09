@@ -5,6 +5,9 @@ import type { ReactNode } from 'react'
 
 const SHEET_Z = 10050
 
+/** Volldeckend — var(--surface) ist im Dark-Theme halbtransparent. */
+const SHEET_BG = 'var(--app-bg)'
+
 interface Props {
   open: boolean
   onClose: () => void
@@ -31,7 +34,7 @@ export function VerlaufSetupSheet({ open, onClose, children }: Props) {
         zIndex: SHEET_Z,
         display: 'flex',
         flexDirection: 'column',
-        background: 'var(--surface)',
+        background: SHEET_BG,
       }}
     >
       <header style={{
@@ -80,7 +83,7 @@ export function VerlaufSetupSheet({ open, onClose, children }: Props) {
         flexShrink: 0,
         padding: '12px 16px max(16px, env(safe-area-inset-bottom))',
         borderTop: '1px solid var(--border)',
-        background: 'var(--surface)',
+        background: SHEET_BG,
       }}>
         <button
           type="button"
