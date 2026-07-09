@@ -152,30 +152,6 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
           touchAction: 'manipulation',
         }}
       >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Schließen"
-          style={{
-            position: 'absolute',
-            top: 'max(10px, env(safe-area-inset-top))',
-            right: 14,
-            zIndex: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            border: '1px solid var(--border)',
-            background: 'var(--surface-raised)',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-          }}
-        >
-          <X size={18} />
-        </button>
-
         <div style={{
           flex: 1,
           minHeight: 0,
@@ -190,7 +166,7 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
             overflowX: 'hidden',
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
-            padding: 'max(48px, calc(env(safe-area-inset-top) + 36px)) 14px 4px',
+            padding: 'max(20px, calc(env(safe-area-inset-top) + 12px)) 14px 4px',
             background: SHEET_BG,
           }}>
             <h2
@@ -200,7 +176,6 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
                 fontWeight: 900,
                 color: 'var(--text)',
                 marginBottom: 10,
-                paddingRight: 44,
               }}
             >
               Fortschritt eintragen
@@ -267,6 +242,9 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
 
         <footer style={{
           flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
           padding: '6px 14px max(8px, env(safe-area-inset-bottom))',
           borderTop: '1px solid var(--border)',
           background: SHEET_BG,
@@ -276,9 +254,29 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
             onClick={() => void save()}
             disabled={saving}
             className="btn-primary"
-            style={{ width: '100%' }}
+            style={{ flex: 1, minWidth: 0 }}
           >
             {saving ? 'Speichern…' : 'Speichern'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Schließen"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 40,
+              height: 40,
+              flexShrink: 0,
+              borderRadius: 10,
+              border: '1px solid var(--border)',
+              background: 'var(--surface-input)',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+            }}
+          >
+            <X size={16} />
           </button>
         </footer>
       </div>
