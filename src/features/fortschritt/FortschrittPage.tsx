@@ -54,7 +54,7 @@ export function FortschrittPage() {
         rangeLabel={rangeLabel}
         onLogToday={() => setLogOpen(true)}
         hasTodayEntry={hasTodayEntry}
-        highlightEntry={!hasSavedProgress}
+        highlightEntry={!state.loading && !hasSavedProgress}
       />
 
       {state.loading ? (

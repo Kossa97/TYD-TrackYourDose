@@ -55,10 +55,8 @@ export function FortschrittHeader({
         </span>
       </div>
 
-      <div>
-        {showGlow
-          ? <div className="fortschritt-entry-glow-wrap">{button}</div>
-          : button}
+      <div className={showGlow ? 'fortschritt-entry-glow-wrap' : undefined}>
+        {button}
       </div>
     </header>
   )

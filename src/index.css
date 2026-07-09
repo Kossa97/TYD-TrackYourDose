@@ -1429,9 +1429,12 @@ main.flex-1 {
 .fortschritt-entry-glow-wrap {
   border-radius: 14px;
   animation: fortschritt-entry-ring 1.4s ease-in-out infinite;
+  animation-play-state: running;
+  will-change: box-shadow;
 }
 .fortschritt-entry-glow-wrap .btn-primary {
   width: 100%;
+  transition: transform var(--t-std), background var(--t-std), color var(--t-std);
   box-shadow:
     0 0 22px rgba(0, 204, 245, 0.5),
     var(--shadow-btn-primary) !important;
