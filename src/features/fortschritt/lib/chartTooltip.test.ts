@@ -45,31 +45,43 @@ describe('chartTooltip', () => {
   })
 
   it('tooltip cycle starts use only the cursor date', () => {
-    const starts = resolveTooltipCycleStarts(bands, '2026-04-12', Date.parse('2026-04-12T12:00:00'))
+    const starts = resolveTooltipCycleStarts(bands, '2026-04-12')
     expect(starts.map(s => s.id)).toEqual(['c'])
   })
 
-  it('shows metric and cycle start together on the same cursor line', () => {
-    const aprilTs = Date.parse('2026-04-12T12:00:00')
-    const xScale = (value: number) => (value === aprilTs ? 120 : 0)
-    const plotArea = { x: 10 }
-    const anchors = buildSnapAnchors(['2026-04-12'], xScale, plotArea)
-    const cursorX = plotArea.x + 120
-
+  it('shows metric and cycle start together only on the same date', () => {
     const content = resolveChartTooltipContent({
-      fluidX: cursorX,
-      cursorX,
       hoverDateIso: '2026-04-12',
-      hoverTs: aprilTs,
-      anchors,
       bands,
       metricData: chartData,
-      xScale,
-      plotArea,
     })
 
+    expect(content?.dateIso).toBe('2026-04-12')
     expect(content?.metricValue).toBe(84)
     expect(content?.starts.map(s => s.id)).toEqual(['c'])
+  })
+
+  it('does not mix metric from another day with cycle starts', () => {
+    const content = resolveChartTooltipContent({
+      hoverDateIso: '2026-01-23',
+      bands,
+      metricData: chartData,
+    })
+
+    expect(content?.dateIso).toBe('2026-01-23')
+    expect(content?.metricValue).toBeNull()
+    expect(content?.starts.map(s => s.id)).toEqual(['a', 'b'])
+  })
+
+  it('shows only the metric when no cycles start on that day', () => {
+    const content = resolveChartTooltipContent({
+      hoverDateIso: '2026-02-15',
+      bands,
+      metricData: chartData,
+    })
+
+    expect(content?.metricValue).toBe(87)
+    expect(content?.starts).toEqual([])
   })
 
   it('merges metric dates with visible cycle start dates', () => {

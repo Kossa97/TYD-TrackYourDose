@@ -92,15 +92,6 @@ export function buildSnapAnchors(
   return anchors
 }
 
-/** Alle Anker, die auf derselben Cursor-X-Linie liegen (Messpunkt + Zyklus-Start). */
-export function anchorsInSnapRange(
-  x: number,
-  anchors: readonly SnapAnchor[],
-  threshold = CURSOR_SOFT_SNAP_RADIUS_PX,
-): SnapAnchor[] {
-  return anchors.filter(anchor => Math.abs(anchor.x - x) <= threshold)
-}
-
 export function resolveFluidCursorX(
   cursorX: number,
   anchors: readonly SnapAnchor[],
@@ -240,92 +231,47 @@ export function cycleStartsNearCursor<T extends BandWithStart>(
   })
 }
 
+/** Zyklen, deren Start exakt auf den angegebenen Kalendertag fällt */
+export function cycleStartsOnDate<T extends BandWithStart>(
+  bands: T[],
+  dateIso: string,
+): T[] {
+  const day = normalizeDateIso(dateIso)
+  return bands.filter(b => {
+    const startDay = normalizeDateIso(b.startDate)
+    return startDay === day || isoFromTs(b.x1) === day
+  })
+}
+
 export function resolveTooltipCycleStarts<T extends BandWithStart>(
   bands: T[],
   dateIso: string | null,
-  hoverTs?: number,
-  cursorX?: number,
-  xScale?: XScale,
-  plotArea?: { x: number },
 ): T[] {
-  const byId = new Map<string, T>()
-
-  if (dateIso) {
-    for (const band of cycleStartsAtHover(bands, dateIso, hoverTs)) {
-      byId.set(band.id, band)
-    }
-  }
-
-  if (cursorX != null && xScale && plotArea) {
-    for (const band of cycleStartsNearCursor(
-      bands,
-      cursorX,
-      xScale,
-      plotArea,
-      CURSOR_SOFT_SNAP_RADIUS_PX,
-    )) {
-      byId.set(band.id, band)
-    }
-  }
-
-  return [...byId.values()]
+  if (!dateIso) return []
+  return cycleStartsOnDate(bands, dateIso)
 }
 
+/** Tooltip-Inhalt strikt nach dem Cursor-Datum — kein Mischen benachbarter Tage. */
 export function resolveChartTooltipContent<T extends BandWithStart>({
-  fluidX,
-  cursorX,
   hoverDateIso,
-  hoverTs,
-  anchors,
   bands,
   metricData,
-  xScale,
-  plotArea,
 }: {
-  fluidX: number
-  cursorX: number
   hoverDateIso: string | null
-  hoverTs?: number
-  anchors: readonly SnapAnchor[]
   bands: T[]
   metricData: ReadonlyArray<{ date: string; value: number | null }>
-  xScale: XScale
-  plotArea: { x: number }
 }): {
   dateIso: string
   metricValue: number | null
   starts: T[]
 } | null {
-  const nearAnchors = anchorsInSnapRange(fluidX, anchors)
-  const dates = new Set<string>()
-  if (hoverDateIso) dates.add(normalizeDateIso(hoverDateIso))
-  for (const anchor of nearAnchors) dates.add(anchor.dateIso)
+  if (!hoverDateIso) return null
 
-  const dateIso = hoverDateIso
-    ? normalizeDateIso(hoverDateIso)
-    : nearAnchors[0]?.dateIso ?? [...dates][0]
-
-  if (!dateIso) return null
-
-  let metricValue: number | null = null
-  for (const day of dates) {
-    const value = metricValueAtDate(metricData, day)
-    if (value != null) {
-      metricValue = value
-      break
-    }
-  }
-
-  const startsById = new Map<string, T>()
-  for (const day of dates) {
-    for (const band of resolveTooltipCycleStarts(bands, day, hoverTs, fluidX, xScale, plotArea)) {
-      startsById.set(band.id, band)
-    }
-  }
+  const dateIso = normalizeDateIso(hoverDateIso)
 
   return {
     dateIso,
-    metricValue,
-    starts: [...startsById.values()],
+    metricValue: metricValueAtDate(metricData, dateIso),
+    starts: cycleStartsOnDate(bands, dateIso),
   }
 }
