@@ -1,33 +1,33 @@
 import { Pencil, Plus } from 'lucide-react'
-import { formatRangeSubtitle } from './overview/ActiveSubstancesSection'
 
 interface Props {
-  subtitle: string
+  rangeLabel: string
   onLogToday: () => void
   hasTodayEntry?: boolean
 }
 
-export function FortschrittHeader({ subtitle, onLogToday, hasTodayEntry = false }: Props) {
+export function FortschrittHeader({ rangeLabel, onLogToday, hasTodayEntry = false }: Props) {
   return (
     <header style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div>
-        <h1 style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.02em' }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'baseline',
+        flexWrap: 'wrap',
+        gap: '4px 10px',
+      }}>
+        <h1 style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.02em', margin: 0 }}>
           Fortschritt
         </h1>
-        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginTop: 4 }}>
-          {subtitle}
-        </p>
+        <span style={{
+          fontSize: '0.62rem',
+          fontWeight: 700,
+          color: 'var(--text-muted)',
+        }}>
+          {rangeLabel}
+        </span>
       </div>
 
       <div>
-        <p style={{
-          fontSize: '0.88rem',
-          fontWeight: 800,
-          color: 'var(--text-dim)',
-          marginBottom: 8,
-        }}>
-          Wie läuft&apos;s?
-        </p>
         <button
           type="button"
           onClick={onLogToday}
@@ -49,5 +49,3 @@ export function FortschrittHeader({ subtitle, onLogToday, hasTodayEntry = false 
     </header>
   )
 }
-
-export { formatRangeSubtitle }

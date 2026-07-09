@@ -2,12 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { format } from 'date-fns'
 import { useFortschrittData } from './hooks/useFortschrittData'
-import { FortschrittHeader, formatRangeSubtitle } from './components/FortschrittHeader'
+import { FortschrittHeader } from './components/FortschrittHeader'
 import { FortschrittDashboard } from './components/FortschrittDashboard'
 import { StickyRangeBar } from './components/StickyRangeBar'
 import { TodayLogSheet } from './components/TodayLogSheet'
 import { hasLogForDate } from './lib/metricDefaults'
-import { DEFAULT_RANGE_CHIP, type RangeChipKey } from './lib/verlaufRange'
+import { DEFAULT_RANGE_CHIP, rangeFromChip, type RangeChipKey } from './lib/verlaufRange'
+import { formatDaySafe } from './lib/dates'
 
 export function FortschrittPage() {
   const { state, reload } = useFortschrittData()
@@ -24,11 +25,12 @@ export function FortschrittPage() {
     }
   }, [searchParams, setSearchParams])
 
-  const subtitle = formatRangeSubtitle(
-    state.range.from,
-    state.cycleSubstances.filter(c => c.active).length,
-    state.ongoingSubstances.length,
+  const pageRange = useMemo(
+    () => rangeFromChip(rangeChip, state.fullRange),
+    [rangeChip, state.fullRange],
   )
+
+  const rangeLabel = `${formatDaySafe(pageRange.from, 'dd.MM.yyyy')} – ${formatDaySafe(pageRange.to, 'dd.MM.yyyy')}`
 
   const hasTodayEntry = useMemo(
     () => hasLogForDate(state.dailyLogs, state.weightLogs, format(new Date(), 'yyyy-MM-dd')),
@@ -44,7 +46,7 @@ export function FortschrittPage() {
       />
 
       <FortschrittHeader
-        subtitle={subtitle}
+        rangeLabel={rangeLabel}
         onLogToday={() => setLogOpen(true)}
         hasTodayEntry={hasTodayEntry}
       />
