@@ -43,7 +43,7 @@ export function FortschrittHeader({ rangeLabel, onLogToday, hasTodayEntry = fals
           }}
         >
           {hasTodayEntry ? <Pencil size={17} /> : <Plus size={17} />}
-          {hasTodayEntry ? 'HEUTIGEN EINTRAG BEARBEITEN' : 'DEINEN HEUTIGEN STAND EINTRAGEN'}
+          {hasTodayEntry ? 'HEUTIGEN EINTRAG BEARBEITEN' : 'FORTSCHRITT EINTRAGEN'}
         </button>
       </div>
     </header>
