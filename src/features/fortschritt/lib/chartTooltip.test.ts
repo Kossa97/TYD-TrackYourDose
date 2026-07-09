@@ -3,9 +3,9 @@ import {
   buildSnapAnchors,
   buildTooltipSnapDates,
   cycleStartsAtHover,
-  hoverDateIso,
   metricValueAtDate,
   nearestSnapHoverDate,
+  resolveChartTooltipContent,
   resolveFluidChartHover,
   resolveFluidCursorX,
   resolveTooltipCycleStarts,
@@ -47,6 +47,29 @@ describe('chartTooltip', () => {
   it('tooltip cycle starts use only the cursor date', () => {
     const starts = resolveTooltipCycleStarts(bands, '2026-04-12', Date.parse('2026-04-12T12:00:00'))
     expect(starts.map(s => s.id)).toEqual(['c'])
+  })
+
+  it('shows metric and cycle start together on the same cursor line', () => {
+    const aprilTs = Date.parse('2026-04-12T12:00:00')
+    const xScale = (value: number) => (value === aprilTs ? 120 : 0)
+    const plotArea = { x: 10 }
+    const anchors = buildSnapAnchors(['2026-04-12'], xScale, plotArea)
+    const cursorX = plotArea.x + 120
+
+    const content = resolveChartTooltipContent({
+      fluidX: cursorX,
+      cursorX,
+      hoverDateIso: '2026-04-12',
+      hoverTs: aprilTs,
+      anchors,
+      bands,
+      metricData: chartData,
+      xScale,
+      plotArea,
+    })
+
+    expect(content?.metricValue).toBe(84)
+    expect(content?.starts.map(s => s.id)).toEqual(['c'])
   })
 
   it('merges metric dates with visible cycle start dates', () => {

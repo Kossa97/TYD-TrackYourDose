@@ -1,13 +1,8 @@
-import { useMemo } from 'react'
 import { format, parseISO } from 'date-fns'
 import type { CycleBandDraw } from './CycleBandLayer'
 import type { MetricDefinition } from '../../lib/metricDefinitions'
-import {
-  metricValueAtDate,
-  resolveTooltipCycleStarts,
-} from '../../lib/chartTooltip'
-import { useFluidChartHover } from './useFluidChartHover'
 import { useChartPointerX } from './ChartPointerContext'
+import { useChartTooltipContent } from './useChartTooltipContent'
 
 interface ChartPoint {
   date: string
@@ -36,22 +31,11 @@ function formatTooltipValue(value: number, unit: string): string {
 
 export function MetricTooltip({ bands, metric, metricData, snapDates }: Props) {
   const pointerX = useChartPointerX()
-  const hover = useFluidChartHover(snapDates)
+  const content = useChartTooltipContent(snapDates, bands, metricData)
 
-  const { dateIso, metricValue, starts } = useMemo(() => {
-    if (!hover) {
-      return { dateIso: null, metricValue: null, starts: [] as CycleBandDraw[] }
-    }
+  if (pointerX == null || !content) return null
 
-    return {
-      dateIso: hover.dateIso,
-      metricValue: metricValueAtDate(metricData, hover.dateIso),
-      starts: resolveTooltipCycleStarts(bands, hover.dateIso, hover.hoverTs),
-    }
-  }, [hover, bands, metricData])
-
-  if (pointerX == null || !dateIso) return null
-
+  const { dateIso, metricValue, starts } = content
   const hasMetric = metricValue != null
 
   if (!hasMetric && starts.length === 0) return null
