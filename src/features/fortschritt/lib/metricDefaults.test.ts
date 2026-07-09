@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { DailyLogEntry, WeightLogEntry } from '../types'
 import {
   bodyFatForDate,
+  hasAnyProgressLog,
   hasLogForDate,
   lastBodyFatBefore,
   lastWeightBefore,
@@ -47,6 +48,17 @@ describe('metricDefaults', () => {
     expect(hasLogForDate(logs, weightLogs, '2026-07-06')).toBe(true)
     expect(hasLogForDate(logs, weightLogs, '2026-07-07')).toBe(false)
     expect(hasLogForDate([], [], '2026-07-08')).toBe(false)
+  })
+
+  it('detects whether any progress was ever saved', () => {
+    expect(hasAnyProgressLog(logs, weightLogs)).toBe(true)
+    expect(hasAnyProgressLog(logs, [])).toBe(true)
+    expect(hasAnyProgressLog([], weightLogs)).toBe(true)
+    expect(hasAnyProgressLog([], [])).toBe(false)
+    expect(hasAnyProgressLog(
+      [{ log_date: '2026-07-01', energie: null, schlaf: null, wohlbefinden: null, libido: null, body_fat_pct: null }],
+      [],
+    )).toBe(false)
   })
 
   it('loads saved day values when editing, otherwise last known defaults', () => {

@@ -1,14 +1,24 @@
 import { Pencil, Plus } from 'lucide-react'
+import { PROGRESS_ENTRY_GLOW_CSS } from '../styles'
 
 interface Props {
   rangeLabel: string
   onLogToday: () => void
   hasTodayEntry?: boolean
+  highlightEntry?: boolean
 }
 
-export function FortschrittHeader({ rangeLabel, onLogToday, hasTodayEntry = false }: Props) {
+export function FortschrittHeader({
+  rangeLabel,
+  onLogToday,
+  hasTodayEntry = false,
+  highlightEntry = false,
+}: Props) {
+  const showGlow = highlightEntry && !hasTodayEntry
+
   return (
     <header style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {showGlow && <style>{PROGRESS_ENTRY_GLOW_CSS}</style>}
       <div style={{
         display: 'flex',
         alignItems: 'baseline',
@@ -31,7 +41,7 @@ export function FortschrittHeader({ rangeLabel, onLogToday, hasTodayEntry = fals
         <button
           type="button"
           onClick={onLogToday}
-          className="btn-primary"
+          className={`btn-primary${showGlow ? ' fortschritt-entry-glow' : ''}`}
           style={{
             width: '100%',
             display: 'flex',

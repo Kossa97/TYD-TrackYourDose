@@ -6,7 +6,7 @@ import { FortschrittHeader } from './components/FortschrittHeader'
 import { FortschrittDashboard } from './components/FortschrittDashboard'
 import { StickyRangeBar } from './components/StickyRangeBar'
 import { TodayLogSheet } from './components/TodayLogSheet'
-import { hasLogForDate } from './lib/metricDefaults'
+import { hasAnyProgressLog, hasLogForDate } from './lib/metricDefaults'
 import { DEFAULT_RANGE_CHIP, rangeFromChip, type RangeChipKey } from './lib/verlaufRange'
 import { formatDaySafe } from './lib/dates'
 
@@ -32,6 +32,11 @@ export function FortschrittPage() {
 
   const rangeLabel = `${formatDaySafe(pageRange.from, 'dd.MM.yyyy')} – ${formatDaySafe(pageRange.to, 'dd.MM.yyyy')}`
 
+  const hasSavedProgress = useMemo(
+    () => hasAnyProgressLog(state.dailyLogs, state.weightLogs),
+    [state.dailyLogs, state.weightLogs],
+  )
+
   const hasTodayEntry = useMemo(
     () => hasLogForDate(state.dailyLogs, state.weightLogs, format(new Date(), 'yyyy-MM-dd')),
     [state.dailyLogs, state.weightLogs],
@@ -49,6 +54,7 @@ export function FortschrittPage() {
         rangeLabel={rangeLabel}
         onLogToday={() => setLogOpen(true)}
         hasTodayEntry={hasTodayEntry}
+        highlightEntry={!hasSavedProgress}
       />
 
       {state.loading ? (

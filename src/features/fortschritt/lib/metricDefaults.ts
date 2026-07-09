@@ -39,6 +39,10 @@ export function hasLogForDate(
   const log = logs.find(l => l.log_date === date)
   if (!log) return false
 
+  return logHasProgressData(log)
+}
+
+function logHasProgressData(log: DailyLogEntry): boolean {
   return (
     (log.energie != null && log.energie > 0)
     || (log.schlaf != null && log.schlaf > 0)
@@ -46,6 +50,15 @@ export function hasLogForDate(
     || (log.libido != null && log.libido > 0)
     || log.body_fat_pct != null
   )
+}
+
+/** Mindestens ein gespeicherter Fortschrittseintrag (Gewicht, KFA oder Wellness). */
+export function hasAnyProgressLog(
+  logs: DailyLogEntry[],
+  weightLogs: WeightLogEntry[],
+): boolean {
+  if (weightLogs.length > 0) return true
+  return logs.some(logHasProgressData)
 }
 
 export interface LogFormValues {
