@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { CycleSubstance } from '../../types'
-import type { MetricDefinition } from '../../lib/metricDefinitions'
 import { formatDaySafe } from '../../lib/dates'
 import {
   partitionCyclesForDisplay,
@@ -10,7 +9,6 @@ import {
   type SubstanceCycleGroup,
   type VisibleChartIds,
 } from '../../lib/chartVisibility'
-import type { MetricKey } from '../../types'
 import { panel } from '../../styles'
 
 interface Props {
@@ -18,10 +16,6 @@ interface Props {
   visibleIds: VisibleChartIds
   onToggleGroup: (group: SubstanceCycleGroup) => void
   onToggleCycle: (id: string) => void
-  availableMetrics: MetricDefinition[]
-  metricKey: MetricKey
-  pointCounts: Map<string, number>
-  onSelectMetric: (key: MetricKey) => void
   /** Im Vollbild-Sheet ohne zusätzliche Panel-Umrandung */
   embedded?: boolean
 }
@@ -235,10 +229,6 @@ export function VerlaufSetup({
   visibleIds,
   onToggleGroup,
   onToggleCycle,
-  availableMetrics,
-  metricKey,
-  pointCounts,
-  onSelectMetric,
   embedded = false,
 }: Props) {
   const [substancesPanelOpen, setSubstancesPanelOpen] = useState(false)
@@ -435,49 +425,6 @@ export function VerlaufSetup({
           )}
         </div>
       )}
-
-      <div>
-        <p style={{
-          fontSize: '0.92rem',
-          fontWeight: 800,
-          color: 'var(--text-dim)',
-          lineHeight: 1.35,
-          marginBottom: 12,
-        }}>
-          Wähle einen Wert, um die Entwicklung zu sehen.
-        </p>
-
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
-          {availableMetrics.map(metric => {
-            const count = pointCounts.get(metric.key) ?? 0
-            const disabled = metric.isLab ? count < 2 : count === 0
-            const active = metricKey === metric.key
-            return (
-              <button
-                key={metric.key}
-                type="button"
-                disabled={disabled}
-                onClick={() => onSelectMetric(metric.key)}
-                style={{
-                  flexShrink: 0,
-                  padding: '8px 14px',
-                  borderRadius: 99,
-                  fontSize: '0.78rem',
-                  fontWeight: 800,
-                  whiteSpace: 'nowrap',
-                  cursor: disabled ? 'not-allowed' : 'pointer',
-                  opacity: disabled ? 0.35 : 1,
-                  background: active ? `${metric.color}22` : 'transparent',
-                  color: active ? metric.color : 'var(--text-muted)',
-                  border: `1px solid ${active ? `${metric.color}55` : 'var(--border)'}`,
-                }}
-              >
-                {metric.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
     </section>
   )
 }

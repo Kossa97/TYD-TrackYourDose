@@ -13,7 +13,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { CycleSubstance, DateRange, OngoingSubstance } from '../../types'
+import type { CycleSubstance, DateRange, MetricKey, OngoingSubstance } from '../../types'
 import type { MetricDefinition } from '../../lib/metricDefinitions'
 import { buildMetricSeries, computeDelta } from '../../lib/metrics'
 import type { BloodworkEntry, DailyLogEntry, WeightLogEntry } from '../../types'
@@ -26,10 +26,15 @@ import { MetricTooltip } from './MetricTooltip'
 import { buildTooltipSnapDates } from '../../lib/chartTooltip'
 import { panel } from '../../styles'
 import { ChartSettingsButton } from './ChartSettingsButton'
+import { MetricChipBar } from './MetricChipBar'
 
 interface Props {
   range: DateRange
   metric: MetricDefinition
+  availableMetrics: MetricDefinition[]
+  metricKey: MetricKey
+  pointCounts: Map<string, number>
+  onSelectMetric: (key: MetricKey) => void
   weights: WeightLogEntry[]
   dailyLogs: DailyLogEntry[]
   bloodwork: BloodworkEntry[]
@@ -248,6 +253,10 @@ function CycleLegend({ bands }: { bands: CycleBandDraw[] }) {
 export function MetricChart({
   range,
   metric,
+  availableMetrics,
+  metricKey,
+  pointCounts,
+  onSelectMetric,
   weights,
   dailyLogs,
   bloodwork,
@@ -318,6 +327,15 @@ export function MetricChart({
   const latest = series[series.length - 1]
   const xTicks = useMemo(() => buildTimeTicks(range.from, range.to), [range.from, range.to])
 
+  const metricBar = (
+    <MetricChipBar
+      availableMetrics={availableMetrics}
+      metricKey={metricKey}
+      pointCounts={pointCounts}
+      onSelectMetric={onSelectMetric}
+    />
+  )
+
   if (lineData.length === 0) {
     return (
       <section style={{ ...panel, padding: '28px 18px', textAlign: 'center', position: 'relative' }}>
@@ -326,6 +344,9 @@ export function MetricChart({
             <ChartSettingsButton onClick={onOpenSettings} />
           </div>
         )}
+        <div style={{ paddingRight: onOpenSettings ? 72 : 0, textAlign: 'left' }}>
+          {metricBar}
+        </div>
         <p style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-dim)', marginBottom: 8 }}>
           Noch keine {metric.label}-Daten
         </p>
@@ -343,7 +364,7 @@ export function MetricChart({
           <ChartSettingsButton onClick={onOpenSettings} />
         </div>
       )}
-      <div style={{ paddingLeft: 12, marginBottom: 12, paddingRight: onOpenSettings ? 88 : 0 }}>
+      <div style={{ paddingLeft: 12, marginBottom: 4, paddingRight: onOpenSettings ? 88 : 12 }}>
         <p style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-dim)' }}>{metric.label}</p>
         {latest && (
           <p style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text)', marginTop: 2 }}>
@@ -355,6 +376,7 @@ export function MetricChart({
             {delta.delta > 0 ? '+' : ''}{formatTooltipValue(delta.delta, metric.unit)} im Zeitraum
           </p>
         )}
+        {metricBar}
       </div>
 
       <ResponsiveContainer width="100%" height={280}>

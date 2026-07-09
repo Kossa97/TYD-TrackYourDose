@@ -140,6 +140,10 @@ export function VerlaufSection({
         <MetricChart
           range={chartRange}
           metric={selectedMetric}
+          availableMetrics={availableMetrics}
+          metricKey={metricKey}
+          pointCounts={pointCounts}
+          onSelectMetric={selectMetric}
           weights={state.weightLogs}
           dailyLogs={state.dailyLogs}
           bloodwork={state.bloodwork}
@@ -182,10 +186,6 @@ export function VerlaufSection({
           visibleIds={visibleIds}
           onToggleGroup={toggleGroup}
           onToggleCycle={toggleCycle}
-          availableMetrics={availableMetrics}
-          metricKey={metricKey}
-          pointCounts={pointCounts}
-          onSelectMetric={selectMetric}
         />
       </VerlaufSetupSheet>
     </div>
