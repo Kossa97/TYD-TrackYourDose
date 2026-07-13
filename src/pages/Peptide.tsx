@@ -518,6 +518,7 @@ export function Peptide() {
   const sloshEngine = useSloshEngine()
   const vialCarouselRef = useRef<HTMLDivElement | null>(null)
   const vialScrollFrameRef = useRef<number | null>(null)
+  const vialTargetIndexRef = useRef<number | null>(null)
   const vialDraggingRef = useRef(false)
   const vialDragStartXRef = useRef(0)
   const vialDragLastXRef = useRef(0)
@@ -1231,11 +1232,10 @@ export function Peptide() {
     window.requestAnimationFrame(updateVialFocus)
   }
   const selectPeptideIndex = (index: number) => {
-    const next = displayPeptides[index]
-    if (!next) return
+    if (!displayPeptides[index]) return
+    vialTargetIndexRef.current = index
     setAddTileActive(false)
     scrollToPeptideIndex(index)
-    setActivePeptideId(next.id)
   }
   const getClosestVialIndex = (carousel: HTMLDivElement) => {
     const items = Array.from(carousel.querySelectorAll<HTMLElement>('[data-vial-index]'))
@@ -1288,6 +1288,9 @@ export function Peptide() {
       const closestIndex = getClosestVialIndex(carousel)
       const next = displayPeptides[closestIndex]
       if (next && next.id !== activePeptideId) setActivePeptideId(next.id)
+      if (vialTargetIndexRef.current === closestIndex) {
+        vialTargetIndexRef.current = null
+      }
       setAddTileActive(isAddTileClosest(carousel))
       vialScrollFrameRef.current = null
     })
@@ -1300,11 +1303,13 @@ export function Peptide() {
   }
   const selectPeptideOffset = (offset: number) => {
     if (displayPeptides.length === 0) return
-    const nextIndex = (activeIndex + offset + displayPeptides.length) % displayPeptides.length
+    const baseIndex = vialTargetIndexRef.current ?? activeIndex
+    const nextIndex = (baseIndex + offset + displayPeptides.length) % displayPeptides.length
     pushVialSlosh(offset > 0 ? 1 : -1)
     selectPeptideIndex(nextIndex)
   }
   const handleVialCarouselPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    vialTargetIndexRef.current = null
     if (e.pointerType !== 'mouse' || e.button !== 0) return
     const carousel = vialCarouselRef.current
     if (!carousel) return
