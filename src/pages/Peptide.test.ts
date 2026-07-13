@@ -222,6 +222,7 @@ describe('Peptide page vial view', () => {
 
     expect(text).toContain('cycleManagerPeptide')
     expect(text).toContain('setCycleManagerPeptide(activePeptide)')
+    expect(text).not.toContain("t('neu')")
     expect(text).toContain("t('zyklen_verwalten')")
     expect(text).toContain('toggleManagerCard(c.id)')
     expect(text).toContain('cyclesOf(cycleManagerPeptide.id)')

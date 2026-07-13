@@ -1908,14 +1908,6 @@ export function Peptide() {
                               </div>
                               <div className="flex shrink-0 items-center gap-2">
                                 <button
-                                  data-ob="btn-zyklus-add"
-                                  onClick={() => { openNewCycle(activePeptide); dismissZyklusBtn() }}
-                                  className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/15 px-3 text-xs font-semibold text-violet-300 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
-                                >
-                                  <Plus size={14} /> {t('neu')}
-                                  {zyklusBtnNew && <NewDot />}
-                                </button>
-                                <button
                                   type="button"
                                   onClick={() => setCycleManagerPeptide(activePeptide)}
                                   className="flex min-h-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/70 px-3 text-xs font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
