@@ -49,6 +49,14 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('flex items-center')
   })
 
+  test('keeps Neue Substanz illuminated while its carousel tile is active', () => {
+    const text = source()
+
+    expect(text).toContain('active={addTileActive}')
+    expect(text).toContain("active ? 'border-cyan-400/45 bg-slate-900/40 text-cyan-200'")
+    expect(text).toContain("active ? 'border-cyan-300/35 bg-cyan-300/10 shadow-[0_0_30px_rgba(34,211,238,0.18)]'")
+  })
+
   test('shows the fill percentage directly under the active vial in My Stack', () => {
     const text = source()
 

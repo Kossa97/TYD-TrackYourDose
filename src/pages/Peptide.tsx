@@ -440,7 +440,7 @@ function nextScheduleHistory(
 }
 
 // Empty "ghost" vial that adds a new substance when clicked.
-function AddVialTile({ onClick, label, obKey }: { onClick: () => void; label: string; obKey?: string }) {
+function AddVialTile({ onClick, label, active = false, obKey }: { onClick: () => void; label: string; active?: boolean; obKey?: string }) {
   return (
     <button
       type="button"
@@ -449,8 +449,12 @@ function AddVialTile({ onClick, label, obKey }: { onClick: () => void; label: st
       {...(obKey ? { 'data-ob': obKey } : {})}
       className="group mx-auto flex w-20 flex-col items-center sm:w-24"
     >
-      <div className="flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-slate-600/55 bg-slate-900/25 text-slate-500 transition-colors group-hover:border-cyan-400/45 group-hover:text-cyan-200 group-focus-visible:border-cyan-300/60 sm:h-36">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full border border-cyan-300/15 bg-cyan-300/[0.03] text-cyan-200 shadow-[0_0_22px_rgba(34,211,238,0.08)] transition-all duration-500 group-hover:border-cyan-300/35 group-hover:bg-cyan-300/10 group-hover:shadow-[0_0_30px_rgba(34,211,238,0.18)] group-focus-visible:border-cyan-300/45 group-focus-visible:bg-cyan-300/10 group-focus-visible:shadow-[0_0_30px_rgba(34,211,238,0.22)]">
+      <div className={`flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed ${
+        active ? 'border-cyan-400/45 bg-slate-900/40 text-cyan-200' : 'border-slate-600/55 bg-slate-900/25 text-slate-500'
+      } transition-colors group-hover:border-cyan-400/45 group-hover:text-cyan-200 group-focus-visible:border-cyan-300/60 sm:h-36`}>
+        <span className={`flex h-9 w-9 items-center justify-center rounded-full border text-cyan-200 ${
+          active ? 'border-cyan-300/35 bg-cyan-300/10 shadow-[0_0_30px_rgba(34,211,238,0.18)]' : 'border-cyan-300/15 bg-cyan-300/[0.03] shadow-[0_0_22px_rgba(34,211,238,0.08)]'
+        } transition-all duration-500 group-hover:border-cyan-300/35 group-hover:bg-cyan-300/10 group-hover:shadow-[0_0_30px_rgba(34,211,238,0.18)] group-focus-visible:border-cyan-300/45 group-focus-visible:bg-cyan-300/10 group-focus-visible:shadow-[0_0_30px_rgba(34,211,238,0.22)]`}>
           <Plus size={18} strokeWidth={1.45} />
         </span>
         <span className="px-2 text-center text-[10px] font-semibold leading-tight">{label}</span>
@@ -1687,6 +1691,7 @@ export function Peptide() {
                     style={{ width: 'min(6rem, 25vw)' }}
                   >
                     <AddVialTile
+                      active={addTileActive}
                       onClick={() => { if (!vialSuppressClickRef.current) handleNewPeptide() }}
                       label={t('neues_peptid_title')}
                     />
