@@ -463,7 +463,7 @@ export function Dashboard() {
 
   const loadPeptides = useCallback(async () => {
     if (!user) return
-    const { data } = await supabase.from('peptides').select('*').eq('user_id', user.id).order('name')
+    const { data } = await supabase.from('peptides').select('*').eq('user_id', user.id).eq('archived', false).order('name')
     if (data) setPeptides(data)
   }, [user])
 
@@ -979,7 +979,7 @@ export function Dashboard() {
         }`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-white text-sm">{log.peptides?.name}</span>
+            <span className="font-medium text-white text-sm">{log.peptides?.name ?? t('geloeschte_substanz')}</span>
             <span className={`text-xs font-semibold ${
               log.taken === true ? 'text-emerald-400' :
               log.taken === false ? 'text-red-400' : 'text-sky-400'

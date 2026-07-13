@@ -67,27 +67,25 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('className="relative -mx-3"')
   })
 
-  test('offers an expandable Zyklen panel under the Info panel in the vial cockpit', () => {
+  test('shows the cycle panel directly under the Info panel, without a collapse toggle', () => {
     const text = source()
 
-    expect(text).toContain('vialCyclesOpen')
-    expect(text).toContain('const [vialCyclesOpen, setVialCyclesOpen] = useState(false)')
-    expect(text).toContain('<span>Zyklen</span>')
-    expect(text).toContain('aria-expanded={vialCyclesOpen}')
-    expect(text).toContain('<Repeat size={15} className="text-violet-300" />')
-    expect(text.indexOf('<span>Info</span>')).toBeLessThan(text.indexOf('<span>Zyklen</span>'))
+    // the cycle section is no longer hidden behind an expandable toggle
+    expect(text).not.toContain('vialCyclesOpen')
+    // it renders directly under the Info panel
+    expect(text).toContain('<span>Info</span>')
+    expect(text).toContain("t('aktiver_zyklus')")
+    expect(text.indexOf('<span>Info</span>')).toBeLessThan(text.indexOf("t('aktiver_zyklus')"))
   })
 
-  test('collapses the Aktiver Zyklus cockpit into the Zyklen toggle instead of showing it unconditionally', () => {
+  test('renders a single active-cycle cockpit with empty states for no active / no cycle', () => {
     const text = source()
 
-    // the active-cycle cockpit is now the Zyklen panel's body, not a standalone card below it
-    const zyklenToggleIndex = text.indexOf('{vialCyclesOpen && (')
-    const cockpitIndex = text.indexOf('Aktiver Zyklus')
-    expect(zyklenToggleIndex).toBeGreaterThan(-1)
-    expect(cockpitIndex).toBeGreaterThan(zyklenToggleIndex)
-    // only one cockpit block remains — the old always-visible second copy is gone
-    expect(text.split('Aktiver Zyklus').length - 1).toBe(1)
+    // only one cockpit block exists (no old always-visible second copy)
+    expect(text.split("t('aktiver_zyklus')").length - 1).toBe(1)
+    // empty states branch on whether cycles exist
+    expect(text).toContain("t('kein_aktiver_zyklus')")
+    expect(text).toContain("t('noch_kein_zyklus_desc')")
     expect(text).not.toContain('setCycleManagerPeptide(p)')
   })
 
@@ -182,7 +180,7 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('<FileText size={15} className="text-cyan-300" />')
     expect(text).toContain('<span>Info</span>')
     expect(text).toContain('justify-center gap-2')
-    expect(text).toContain('Aktiver Zyklus')
+    expect(text).toContain("t('aktiver_zyklus')")
     expect(text).toContain('Dosisanpassungen')
     expect(text).toContain('effectiveDose(activeCycle')
     expect(text).toContain('escalationTargetDose(activeCycle, e)')
@@ -194,8 +192,7 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('ring-orange-500/15')
     expect(text).toContain('<Clock size={15} />')
     expect(text).toContain('mt-2 flex justify-center')
-    expect(text).toContain('cycleProgressPct')
-    expect(text).toContain("cycleDay ? `${cycleDay} / ${cycleTotalDays ?? 'Ende offen'}` : '-'")
+    expect(text).toContain("cycleDay ? `${cycleDay} / ${cycleTotalDays ?? t('ende_offen')}` : '-'")
     expect(text).toContain('{cycleDayLabel}')
     expect(text).toContain('Haltbar')
     expect(text).toContain('Rekonst.')
@@ -225,8 +222,8 @@ describe('Peptide page vial view', () => {
 
     expect(text).toContain('cycleManagerPeptide')
     expect(text).toContain('setCycleManagerPeptide(activePeptide)')
-    expect(text).toContain('Zyklen verwalten')
-    expect(text).toContain('Alle erstellten Zyklen')
+    expect(text).toContain("t('zyklen_verwalten')")
+    expect(text).toContain('toggleManagerCard(c.id)')
     expect(text).toContain('cyclesOf(cycleManagerPeptide.id)')
     expect(text).toContain('openEditCycle(cycleManagerPeptide, c)')
     expect(text).toContain('toggleCycleActive(c)')

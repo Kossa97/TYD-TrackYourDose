@@ -8,8 +8,9 @@ import {
   Plus, Minus, Trash2, Pencil, FlaskConical, Activity,
   CalendarDays, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, List,
   TrendingUp, TrendingDown, Search, Bell, Check, SlidersHorizontal,
-  Package, FileUp, Droplets, X, FileText, ExternalLink, Repeat,
-  Archive, RefreshCw, Sunrise, Sun, Moon, Clock, type LucideIcon,
+  Package, FileUp, Droplets, X, FileText, ExternalLink,
+  Archive, RefreshCw, Sunrise, Sun, Moon, Clock, AlertTriangle,
+  RotateCcw, Flag, Pause, Play, CalendarPlus, type LucideIcon,
 } from 'lucide-react'
 import { getPeptideColor, getRandomPeptideColor } from '../lib/peptideColors'
 import { useNew } from '../lib/useNew'
@@ -50,6 +51,7 @@ interface Peptide {
   batch_number: string | null; batch_source: string | null; batch_file_url: string | null
   inventory_item_id: string | null
   pk_profile_id: string | null
+  archived: boolean
 }
 interface Cycle {
   id: string; peptide_id: string; name: string
@@ -508,7 +510,6 @@ export function Peptide() {
   )
   const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
   const [vialDetailsOpen, setVialDetailsOpen] = useState(false)
-  const [vialCyclesOpen, setVialCyclesOpen] = useState(false)
   const [isVialCarouselDragging, setIsVialCarouselDragging] = useState(false)
   const [addTileActive, setAddTileActive] = useState(false)
   // Stage light bypasses React entirely: each vial registers an imperative
@@ -536,6 +537,14 @@ export function Peptide() {
   const [cycleForPeptide, setCycleForPeptide]     = useState<Peptide | null>(null)
   const [cyclePromptPeptide, setCyclePromptPeptide] = useState<Peptide | null>(null)
   const [cycleManagerPeptide, setCycleManagerPeptide] = useState<Peptide | null>(null)
+  // Zyklus-Manager: welche inaktiven Karten / Dosisanpassungs-Sektionen sind aufgeklappt
+  const [managerCardOpen, setManagerCardOpen] = useState<Set<string>>(() => new Set())
+  const [managerEscOpen, setManagerEscOpen]   = useState<Set<string>>(() => new Set())
+  // Substanz entfernen: Archivieren vs. endgültig löschen
+  const [deletePromptPeptide, setDeletePromptPeptide] = useState<Peptide | null>(null)
+  const [deletingPeptide, setDeletingPeptide]     = useState(false)
+  const [archiveViewOpen, setArchiveViewOpen]     = useState(false)
+  const [archivedPeptides, setArchivedPeptides]   = useState<Peptide[]>([])
   const [editingCycleId, setEditingCycleId]       = useState<string | null>(null)
   const [cForm, setCForm]                         = useState<CycleForm | null>(null)
   const [savingCycle, setSavingCycle]             = useState(false)
@@ -556,8 +565,12 @@ export function Peptide() {
     if (data) setInventory(data as InventoryItem[])
   }
   const loadPeptides = async () => {
-    const { data } = await supabase.from('peptides').select('*').eq('user_id', user!.id).order('name')
+    const { data } = await supabase.from('peptides').select('*').eq('user_id', user!.id).eq('archived', false).order('name')
     if (data) setPeptides(data as Peptide[])
+  }
+  const loadArchived = async () => {
+    const { data } = await supabase.from('peptides').select('*').eq('user_id', user!.id).eq('archived', true).order('name')
+    if (data) setArchivedPeptides(data as Peptide[])
   }
   const loadCycles = async () => {
     const { data } = await supabase.from('cycles').select('*').eq('user_id', user!.id)
@@ -818,10 +831,41 @@ export function Peptide() {
     setBatchFile(null); setPkSuggestOpen(false); setShowPeptideForm(true)
   }
 
-  const removePeptide = async (id: string) => {
-    if (!confirm(t('peptid_loeschen_confirm'))) return
-    await supabase.from('peptides').delete().eq('id', id)
-    toast.success(t('geloescht')); loadPeptides(); loadCycles()
+  const removePeptide = (id: string) => {
+    const p = peptides.find(pp => pp.id === id)
+    if (p) setDeletePromptPeptide(p)
+  }
+
+  // „Behalten": Substanz aus My Stack ausblenden, alle Daten bleiben verknüpft.
+  // Aktive Zyklen werden deaktiviert, damit keine Erinnerungen mehr entstehen.
+  const archivePeptide = async (p: Peptide) => {
+    setDeletingPeptide(true)
+    await supabase.from('peptides').update({ archived: true }).eq('id', p.id)
+    await supabase.from('cycles').update({ active: false }).eq('peptide_id', p.id).eq('active', true)
+    toast.success(t('substanz_archiviert'))
+    setDeletePromptPeptide(null); setDeletingPeptide(false)
+    loadPeptides(); loadCycles()
+  }
+
+  // „Endgültig löschen": Substanz + ALLE zugehörigen Daten entfernen.
+  // dose_logs / injection_logs / effects stehen auf ON DELETE SET NULL und müssen
+  // explizit gelöscht werden, sonst bleiben namenlose Geister-Einträge zurück.
+  // cycles, dose_escalations, vials, reviews werden per CASCADE mit entfernt.
+  const hardDeletePeptide = async (p: Peptide) => {
+    setDeletingPeptide(true)
+    await supabase.from('dose_logs').delete().eq('peptide_id', p.id)
+    await supabase.from('injection_logs').delete().eq('peptide_id', p.id)
+    await supabase.from('effects').delete().eq('peptide_id', p.id)
+    await supabase.from('peptides').delete().eq('id', p.id)
+    toast.success(t('geloescht'))
+    setDeletePromptPeptide(null); setDeletingPeptide(false)
+    loadPeptides(); loadCycles(); loadArchived()
+  }
+
+  const restorePeptide = async (p: Peptide) => {
+    await supabase.from('peptides').update({ archived: false }).eq('id', p.id)
+    toast.success(t('substanz_wiederhergestellt'))
+    loadArchived(); loadPeptides()
   }
 
   // ── Zyklus-Aktionen ───────────────────────────────────────────────────────
@@ -949,6 +993,25 @@ export function Peptide() {
     toast.success(c.active ? t('zyklus_deaktiviert') : t('zyklus_aktiviert'))
     loadCycles()
   }
+  // Zyklus sauber beenden: Enddatum = heute + deaktiviert. Historie bleibt erhalten.
+  const endCycle = async (c: Cycle) => {
+    if (!confirm(t('zyklus_beenden_confirm'))) return
+    await supabase.from('cycles')
+      .update({ active: false, end_date: format(new Date(), 'yyyy-MM-dd') })
+      .eq('id', c.id)
+    toast.success(t('zyklus_beendet'))
+    loadCycles()
+  }
+  const toggleManagerCard = (id: string) => setManagerCardOpen(prev => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
+  const toggleManagerEsc = (id: string) => setManagerEscOpen(prev => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
   const removeCycle = async (id: string) => {
     if (!confirm(t('zyklus_loeschen'))) return
     await supabase.from('cycles').delete().eq('id', id)
@@ -1492,6 +1555,13 @@ export function Peptide() {
                           ))}
                         </select>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => { setFilterOpen(false); setArchiveViewOpen(true); loadArchived() }}
+                        className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+                      >
+                        <Archive size={14} /> {t('archiv')}
+                      </button>
                     </div>
                   </>
                 )}
@@ -1699,8 +1769,7 @@ export function Peptide() {
                   const cycleEnd = activeCycle?.end_date ? parseISO(activeCycle.end_date) : null
                   const cycleDay = cycleStart ? Math.max(1, differenceInDays(new Date(), cycleStart) + 1) : null
                   const cycleTotalDays = cycleStart && cycleEnd ? Math.max(1, differenceInDays(cycleEnd, cycleStart) + 1) : null
-                  const cycleDayLabel = cycleDay ? `${cycleDay} / ${cycleTotalDays ?? 'Ende offen'}` : '-'
-                  const cycleProgressPct = cycleDay && cycleTotalDays ? Math.max(0, Math.min(100, (cycleDay / cycleTotalDays) * 100)) : null
+                  const cycleDayLabel = cycleDay ? `${cycleDay} / ${cycleTotalDays ?? t('ende_offen')}` : '-'
                   const activeReminder = activeCycle ? reminderLabel(activeCycle) : null
                   const activeIntake = activeCycle ? intakeLabel(activeCycle) : null
                   const activeFrequency = activeCycle
@@ -1827,29 +1896,15 @@ export function Peptide() {
                       )}
                     </div>
 
-                    <div className="mx-1 mt-2 overflow-hidden rounded-lg border border-slate-800 bg-slate-950/50">
-                      <button
-                        type="button"
-                        onClick={() => setVialCyclesOpen(open => !open)}
-                        aria-expanded={vialCyclesOpen}
-                        className="flex w-full items-center justify-center gap-2 px-3 py-3 text-center text-sm font-semibold text-white"
-                      >
-                        <Repeat size={15} className="text-violet-300" />
-                        <span>Zyklen</span>
-                        {pCycles.length > 0 && (
-                          <span className="rounded-full bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-slate-400">{pCycles.length}</span>
-                        )}
-                        {vialCyclesOpen ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
-                      </button>
-                      {vialCyclesOpen && (
-                        <div className="border-t border-slate-800 p-2 text-xs">
-                          <div className="rounded-xl border border-violet-500/20 bg-slate-950/55 p-3">
+                    <div className="mx-1 mt-2 rounded-xl border border-violet-500/20 bg-slate-950/55 p-3 text-xs">
+                            {activeCycle ? (
+                            <>
                             <div className="mb-3 flex items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-violet-300">
-                                  <Activity size={14} /> Aktiver Zyklus
+                                  <Activity size={14} /> {t('aktiver_zyklus')}
                                 </p>
-                                <p className="mt-1 truncate text-base font-bold text-white">{activeCycle?.name ?? t('noch_kein_zyklus')}</p>
+                                <p className="mt-1 truncate text-base font-bold text-white">{activeCycle.name}</p>
                               </div>
                               <div className="flex shrink-0 items-center gap-2">
                                 <button
@@ -1857,7 +1912,7 @@ export function Peptide() {
                                   onClick={() => { openNewCycle(activePeptide); dismissZyklusBtn() }}
                                   className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/15 px-3 text-xs font-semibold text-violet-300 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
                                 >
-                                  {activeCycle && <Plus size={14} />} {activeCycle ? 'Neu' : t('zyklus_hinzufuegen')}
+                                  <Plus size={14} /> {t('neu')}
                                   {zyklusBtnNew && <NewDot />}
                                 </button>
                                 <button
@@ -1865,49 +1920,36 @@ export function Peptide() {
                                   onClick={() => setCycleManagerPeptide(activePeptide)}
                                   className="flex min-h-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/70 px-3 text-xs font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
                                 >
-                                  Verwalten
+                                  {t('verwalten')}
                                 </button>
                               </div>
                             </div>
 
-                            {activeCycle ? (
                               <div className="space-y-3">
                                 <div className="grid grid-cols-2 gap-2 text-xs">
                                   <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                                    <p className="text-slate-500">Tag</p>
+                                    <p className="text-slate-500">{t('tag')}</p>
                                     <p className="font-semibold text-white">
                                       {cycleDayLabel}
                                     </p>
                                   </div>
                                   <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                                    <p className="text-slate-500">Aktuelle Dosis</p>
+                                    <p className="text-slate-500">{t('aktuelle_dosis')}</p>
                                     <p className="font-semibold text-white">{activeDose} {activeCycle.unit}</p>
                                   </div>
                                   <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                                    <p className="text-slate-500">Frequenz</p>
+                                    <p className="text-slate-500">{t('frequenz')}</p>
                                     <p className="font-semibold text-white">{activeFrequency}</p>
                                   </div>
                                   <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                                    <p className="text-slate-500">Methode</p>
+                                    <p className="text-slate-500">{t('methode')}</p>
                                     <p className="font-semibold text-white">{t(METHOD_KEYS[activeCycle.method] ?? activeCycle.method)}</p>
                                   </div>
                                   <div className="col-span-2 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                                    <p className="text-slate-500">Reminder</p>
+                                    <p className="text-slate-500">{t('reminder')}</p>
                                     <p className="font-semibold text-white">{activeReminder ?? '-'}</p>
                                   </div>
                                 </div>
-
-                                {cycleProgressPct !== null && (
-                                  <div>
-                                    <div className="mb-1 flex justify-between text-[11px] text-slate-500">
-                                      <span>{format(parseISO(activeCycle.start_date), 'dd.MM')}</span>
-                                      <span>{activeCycle.end_date ? format(parseISO(activeCycle.end_date), 'dd.MM') : 'Open End'}</span>
-                                    </div>
-                                    <div className="h-2 overflow-hidden rounded-full bg-slate-800">
-                                      <div className="h-full rounded-full bg-violet-400" style={{ width: `${cycleProgressPct}%` }} />
-                                    </div>
-                                  </div>
-                                )}
 
                                 <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-2">
                                   <div className="mb-2 flex items-center justify-between gap-2">
@@ -1921,11 +1963,11 @@ export function Peptide() {
                                       <span className={`absolute -left-8 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border-2 ${currentEscalationId ? 'border-slate-500 bg-slate-900 text-slate-300' : 'border-orange-400 bg-orange-500/20 text-orange-200 ring-4 ring-orange-500/15'}`}>
                                         {currentEscalationId ? <Check size={13} /> : <span className="h-2.5 w-2.5 rounded-full bg-orange-300" />}
                                       </span>
-                                      <span className="min-w-0 truncate">Basis</span>
+                                      <span className="min-w-0 truncate">{t('basis')}</span>
                                       <span className="shrink-0 font-semibold text-white">{activeCycle.dose} {activeCycle.unit}</span>
                                       {!currentEscalationId && (
                                         <span className="shrink-0 rounded-md border border-orange-400/40 bg-orange-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-200">
-                                          Aktuell
+                                          {t('aktuell')}
                                         </span>
                                       )}
                                     </div>
@@ -1975,17 +2017,56 @@ export function Peptide() {
                                   onClick={() => navigate('/kalender')}
                                   className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-500 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-violet-400"
                                 >
-                                  <Check size={15} /> Dosis loggen
+                                  <CalendarDays size={15} /> {t('dosis_im_kalender_loggen')}
                                 </button>
                               </div>
+                            </>
+                            ) : pCycles.length > 0 ? (
+                              <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/25 p-5 text-center">
+                                <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-500/12 text-slate-300">
+                                  <Pause size={20} />
+                                </div>
+                                <p className="text-sm font-semibold text-white">{t('kein_aktiver_zyklus')}</p>
+                                <p className="mt-1 text-xs text-slate-400">
+                                  {pCycles.length === 1 ? t('zyklus_count_one') : t('zyklus_count_many', { n: pCycles.length })} · {t('keiner_aktiv')}
+                                </p>
+                                <div className="mt-3.5 flex flex-wrap justify-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setCycleManagerPeptide(activePeptide)}
+                                    className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/15 px-3.5 text-xs font-semibold text-violet-300 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
+                                  >
+                                    <SlidersHorizontal size={14} /> {t('verwalten')}
+                                  </button>
+                                  <button
+                                    data-ob="btn-zyklus-add"
+                                    type="button"
+                                    onClick={() => { openNewCycle(activePeptide); dismissZyklusBtn() }}
+                                    className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/70 px-3.5 text-xs font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
+                                  >
+                                    <Plus size={14} /> {t('neuer_zyklus')}
+                                    {zyklusBtnNew && <NewDot />}
+                                  </button>
+                                </div>
+                              </div>
                             ) : (
-                              <p className="rounded-lg border border-slate-800 bg-slate-900/60 p-3 text-center text-sm text-slate-500">
-                                {t('noch_kein_zyklus')}
-                              </p>
+                              <div className="rounded-xl border border-dashed border-violet-500/25 bg-violet-500/[0.04] p-5 text-center">
+                                <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-violet-500/15 text-violet-300">
+                                  <CalendarPlus size={20} />
+                                </div>
+                                <p className="text-sm font-semibold text-white">{t('noch_kein_zyklus')}</p>
+                                <p className="mt-1 text-xs text-slate-400">{t('noch_kein_zyklus_desc')}</p>
+                                <button
+                                  data-ob="btn-zyklus-add"
+                                  type="button"
+                                  onClick={() => { openNewCycle(activePeptide); dismissZyklusBtn() }}
+                                  className="mt-3.5 inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-500 px-4 text-xs font-bold text-white transition-colors hover:bg-violet-400"
+                                >
+                                  <Plus size={14} /> {t('zyklus_hinzufuegen')}
+                                  {zyklusBtnNew && <NewDot />}
+                                </button>
+                              </div>
                             )}
-                          </div>
-                        </div>
-                      )}
                     </div>
                     </>
                   )
@@ -2222,36 +2303,228 @@ export function Peptide() {
       {/* ZYKLUS-MANAGER */}
       {cycleManagerPeptide && (() => {
         const managerCycles = cyclesOf(cycleManagerPeptide.id)
+        const activeCycles = managerCycles.filter(c => c.active)
+        const inactiveCycles = managerCycles.filter(c => !c.active)
+
+        const cycleIcons = (c: Cycle) => (
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => { openEditCycle(cycleManagerPeptide, c); setCycleManagerPeptide(null) }}
+              aria-label={t('bearbeiten')}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-800 bg-slate-950 text-slate-400 transition-colors hover:border-sky-500/40 hover:text-sky-300"
+            >
+              <Pencil size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => removeCycle(c.id)}
+              aria-label={t('loeschen')}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/25 bg-red-500/5 text-red-300 transition-colors hover:border-red-400/45 hover:bg-red-500/10"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        )
+
+        const cycleMeta = (c: Cycle) => (
+          <>
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
+              <span className="font-semibold text-slate-200">{c.dose} {c.unit}</span>
+              <span>{freqLabel(c)}</span>
+              <span>{t(METHOD_KEYS[c.method] ?? c.method)}</span>
+              <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
+              {c.end_date ? (
+                <span>{t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}</span>
+              ) : (
+                <span>{t('ende_offen')}</span>
+              )}
+            </div>
+            {(() => {
+              const intake = intakeLabel(c)
+              const reminder = reminderLabel(c)
+              return intake || reminder ? (
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                  {intake && <span className="text-amber-300">{intake}</span>}
+                  {reminder && <span className="text-sky-300">{reminder}</span>}
+                </div>
+              ) : null
+            })()}
+          </>
+        )
+
+        const cycleActions = (c: Cycle, isEnded: boolean) => (
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={() => toggleCycleActive(c)}
+              className={`flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 text-xs font-semibold transition-colors ${c.active ? 'border-red-500/30 bg-red-500/10 text-red-300 hover:border-red-400/50 hover:bg-red-500/15' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:border-emerald-400/50 hover:bg-emerald-500/15'}`}
+            >
+              {c.active ? <><Pause size={13} /> {t('deaktivieren')}</> : <><Play size={13} /> {t('aktivieren')}</>}
+            </button>
+            {!isEnded && (
+              <button
+                type="button"
+                onClick={() => endCycle(c)}
+                className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-2 text-xs font-semibold text-violet-200 transition-colors hover:border-violet-400/50 hover:bg-violet-500/20"
+              >
+                <Flag size={13} /> {t('beenden')}
+              </button>
+            )}
+          </div>
+        )
+
+        const cycleEsc = (c: Cycle) => {
+          const pEscs = escalationsOf(c.id)
+          const open = managerEscOpen.has(c.id)
+          return (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => toggleManagerEsc(c.id)}
+                className="flex w-full items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5 text-xs text-slate-300 transition-colors hover:border-slate-700"
+              >
+                <SlidersHorizontal size={13} className="text-orange-300" /> {t('dosiserhoehungen')}
+                <span className={`ml-auto font-semibold ${pEscs.length > 0 ? 'text-orange-300' : 'text-slate-500'}`}>
+                  {pEscs.length > 0 ? (pEscs.length === 1 ? t('stufe_count_one') : t('stufe_count_many', { n: pEscs.length })) : t('keine')}
+                </span>
+                {open ? <ChevronUp size={15} className="text-slate-500" /> : <ChevronDown size={15} className="text-slate-500" />}
+              </button>
+              {open && (
+                <div className="mt-2 space-y-1.5">
+                  <div className="flex min-h-10 items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs">
+                    <span className="min-w-0 truncate text-orange-100">{t('basis')}</span>
+                    <span className="shrink-0 font-semibold text-white">{c.dose} {c.unit}</span>
+                  </div>
+                  {pEscs.map((e, idx) => {
+                    const AdjustmentIcon = doseAdjustmentIcon(c, e)
+                    return (
+                      <div key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2">
+                        <div className="min-w-0 text-xs">
+                          <p className="flex items-center gap-1 truncate font-semibold text-white">
+                            <AdjustmentIcon size={12} /> #{idx + 1} {escalationTargetDose(c, e)} {e.unit}
+                          </p>
+                          <p className="truncate text-slate-400">{escLabel(e)}</p>
+                          {e.notes && <p className="truncate text-slate-500">{e.notes}</p>}
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => { openEditEsc(c, e); setCycleManagerPeptide(null) }}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-800 hover:text-sky-300"
+                            aria-label={t('dosisanpassung_bearbeiten')}
+                          >
+                            <Pencil size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeEsc(e.id)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-500/10 hover:text-red-300"
+                            aria-label={t('dosisanpassung_loeschen')}
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <button
+                    type="button"
+                    data-ob="btn-esc-add"
+                    onClick={() => { openNewEsc(c); setCycleManagerPeptide(null) }}
+                    className="flex min-h-9 w-full items-center justify-center gap-1 rounded-lg border border-orange-500/25 bg-orange-500/10 px-2.5 text-xs font-semibold text-orange-300 transition-colors hover:border-orange-400/45 hover:bg-orange-500/15"
+                  >
+                    <Plus size={11} /> {t('esc_hinzufuegen')}
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        }
+
+        const renderActiveCard = (c: Cycle) => {
+          const isEnded = c.end_date ? parseISO(c.end_date).getTime() < Date.now() : false
+          return (
+            <div key={c.id} className="rounded-xl border border-emerald-500/35 bg-emerald-500/5 p-3">
+              <div className="flex items-start gap-2.5">
+                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-bold text-white">{c.name}</p>
+                    <span className="shrink-0 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-300">{t('aktiv_badge')}</span>
+                  </div>
+                  {cycleMeta(c)}
+                </div>
+                {cycleIcons(c)}
+              </div>
+              {cycleActions(c, isEnded)}
+              {cycleEsc(c)}
+            </div>
+          )
+        }
+
+        const renderInactiveCard = (c: Cycle) => {
+          const isEnded = c.end_date ? parseISO(c.end_date).getTime() < Date.now() : false
+          const open = managerCardOpen.has(c.id)
+          const statusLabel = isEnded ? t('beendet') : t('inaktiv_badge')
+          return (
+            <div key={c.id} className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/35">
+              <button
+                type="button"
+                onClick={() => toggleManagerCard(c.id)}
+                aria-expanded={open}
+                className="flex w-full items-center gap-2.5 p-3 text-left"
+              >
+                <span className="h-2 w-2 shrink-0 rounded-full bg-slate-500" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-bold text-white">{c.name}</p>
+                    <span className="shrink-0 rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">{statusLabel}</span>
+                  </div>
+                  <p className="mt-0.5 truncate text-xs text-slate-500">
+                    {c.dose} {c.unit}{c.end_date ? ` · ${t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}` : ''}
+                  </p>
+                </div>
+                {open ? <ChevronUp size={16} className="shrink-0 text-slate-500" /> : <ChevronDown size={16} className="shrink-0 text-slate-500" />}
+              </button>
+              {open && (
+                <div className="border-t border-slate-800/70 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">{cycleMeta(c)}</div>
+                    {cycleIcons(c)}
+                  </div>
+                  {cycleActions(c, isEnded)}
+                  {cycleEsc(c)}
+                </div>
+              )}
+            </div>
+          )
+        }
 
         return (
-          <div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/80"
-            data-app-modal
-            onClick={() => setCycleManagerPeptide(null)}
-          >
-            <div
-              className="flex h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-slate-800 bg-slate-950 shadow-2xl"
-              onClick={e => e.stopPropagation()}
-            >
+          <div className="fixed inset-0 z-50 flex justify-center bg-slate-950" data-app-modal>
+            <div className="flex h-full w-full max-w-lg flex-col overflow-hidden bg-slate-950">
               <div className="shrink-0 border-b border-slate-800 px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-violet-300">Alle erstellten Zyklen</p>
-                    <h2 className="mt-1 text-lg font-bold text-white">Zyklen verwalten</h2>
-                    <p className="mt-0.5 truncate text-sm text-slate-500">{cycleManagerPeptide.name}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-violet-300">{t('zyklen_verwalten')}</p>
+                    <h2 className="mt-1 truncate text-lg font-bold text-white">{cycleManagerPeptide.name}</h2>
+                    <p className="mt-0.5 text-sm text-slate-500">
+                      {managerCycles.length === 1 ? t('zyklus_count_one') : t('zyklus_count_many', { n: managerCycles.length })}
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setCycleManagerPeptide(null)}
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 transition-colors hover:border-slate-600 hover:text-white"
-                    aria-label="Schließen"
+                    aria-label={t('close')}
                   >
                     <X size={18} />
                   </button>
                 </div>
               </div>
 
-              <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+              <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                 <button
                   type="button"
                   data-ob="btn-zyklus-add"
@@ -2262,150 +2535,33 @@ export function Peptide() {
                   }}
                   className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/15 px-4 text-sm font-bold text-violet-200 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
                 >
-                  <Plus size={16} /> Neuer Zyklus
+                  <Plus size={16} /> {t('neuer_zyklus')}
                 </button>
 
                 {managerCycles.length === 0 && (
                   <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
                     <p className="text-sm font-semibold text-white">{t('noch_kein_zyklus')}</p>
-                    <p className="mt-1 text-xs text-slate-500">Erstelle einen Zyklus, um Dosis, Frequenz und Reminder zu planen.</p>
+                    <p className="mt-1 text-xs text-slate-500">{t('noch_kein_zyklus_desc')}</p>
                   </div>
                 )}
 
-                {managerCycles.map(c => {
-                  const pEscs = escalationsOf(c.id)
-                  const isEnded = c.end_date ? parseISO(c.end_date).getTime() < Date.now() : false
-                  const statusLabel = c.active ? t('aktiv_badge') : isEnded ? 'Beendet' : t('inaktiv_badge')
+                {activeCycles.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="flex items-center gap-1.5 px-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
+                      <Play size={12} /> {t('aktiv_badge')}
+                    </p>
+                    {activeCycles.map(renderActiveCard)}
+                  </div>
+                )}
 
-                  return (
-                    <div key={c.id} className={`rounded-xl border ${c.active ? 'border-violet-500/35 bg-violet-500/5' : 'border-slate-800 bg-slate-900/35'}`}>
-                      <div className="space-y-3 p-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="truncate text-sm font-bold text-white">{c.name}</p>
-                              <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${c.active ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-300' : 'border-slate-700 bg-slate-900 text-slate-400'}`}>
-                                {statusLabel}
-                              </span>
-                            </div>
-                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
-                              <span className="font-semibold text-slate-200">{c.dose} {c.unit}</span>
-                              <span>{freqLabel(c)}</span>
-                              <span>{t(METHOD_KEYS[c.method] ?? c.method)}</span>
-                              <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
-                              {c.end_date ? (
-                                <span>{t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}</span>
-                              ) : (
-                                <span>Ende offen</span>
-                              )}
-                            </div>
-                            {(() => {
-                              const intake = intakeLabel(c)
-                              const reminder = reminderLabel(c)
-                              return intake || reminder ? (
-                                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
-                                  {intake && <span className="text-amber-300">{intake}</span>}
-                                  {reminder && <span className="text-sky-300">{reminder}</span>}
-                                </div>
-                              ) : null
-                            })()}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => toggleCycleActive(c)}
-                            className={`min-h-10 rounded-lg border px-2 text-xs font-semibold transition-colors ${c.active ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/15' : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300'}`}
-                          >
-                            {c.active ? 'Deaktivieren' : 'Aktivieren'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              openEditCycle(cycleManagerPeptide, c)
-                              setCycleManagerPeptide(null)
-                            }}
-                            className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs font-semibold text-slate-300 transition-colors hover:border-sky-500/40 hover:text-sky-300"
-                          >
-                            <Pencil size={13} /> Bearbeiten
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeCycle(c.id)}
-                            className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-red-500/25 bg-red-500/10 px-2 text-xs font-semibold text-red-300 transition-colors hover:border-red-400/45 hover:bg-red-500/15"
-                          >
-                            <Trash2 size={13} /> Löschen
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-slate-800/70 px-3 pb-3 pt-2">
-                        <div className="mb-2 flex items-center justify-between gap-2">
-                          <p className="flex items-center gap-1.5 text-xs font-semibold text-orange-300">
-                            <SlidersHorizontal size={12} /> {t('dosiserhoehungen')}
-                          </p>
-                          <button
-                            type="button"
-                            data-ob="btn-esc-add"
-                            onClick={() => {
-                              openNewEsc(c)
-                              setCycleManagerPeptide(null)
-                            }}
-                            className="flex min-h-8 items-center justify-center gap-1 rounded-lg border border-orange-500/25 bg-orange-500/10 px-2.5 text-xs font-semibold text-orange-300 transition-colors hover:border-orange-400/45 hover:bg-orange-500/15"
-                          >
-                            <Plus size={11} /> {t('esc_hinzufuegen')}
-                          </button>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <div className="flex min-h-10 items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs">
-                            <span className="min-w-0 truncate text-orange-100">Basis</span>
-                            <span className="shrink-0 font-semibold text-white">{c.dose} {c.unit}</span>
-                          </div>
-                          {pEscs.length === 0 && (
-                            <p className="px-1 py-1 text-xs italic text-slate-500">{t('keine_dosiserhoehungen')}</p>
-                          )}
-                          {pEscs.map((e, idx) => {
-                            const AdjustmentIcon = doseAdjustmentIcon(c, e)
-                            return (
-                              <div key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2">
-                                <div className="min-w-0 text-xs">
-                                  <p className="flex items-center gap-1 truncate font-semibold text-white">
-                                    <AdjustmentIcon size={12} /> #{idx + 1} {escalationTargetDose(c, e)} {e.unit}
-                                  </p>
-                                  <p className="truncate text-slate-400">{escLabel(e)}</p>
-                                  {e.notes && <p className="truncate text-slate-500">{e.notes}</p>}
-                                </div>
-                                <div className="flex shrink-0 items-center gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      openEditEsc(c, e)
-                                      setCycleManagerPeptide(null)
-                                    }}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-800 hover:text-sky-300"
-                                    aria-label="Dosisanpassung bearbeiten"
-                                  >
-                                    <Pencil size={12} />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeEsc(e.id)}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-500/10 hover:text-red-300"
-                                    aria-label="Dosisanpassung löschen"
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+                {inactiveCycles.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="flex items-center gap-1.5 px-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      <Flag size={12} /> {t('beendet_inaktiv')}
+                    </p>
+                    {inactiveCycles.map(renderInactiveCard)}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -2432,6 +2588,148 @@ export function Peptide() {
           showDropdown={showDropdown}
           setShowDropdown={setShowDropdown}
         />
+      )}
+
+      {/* ══ SUBSTANZ ENTFERNEN: ARCHIVIEREN vs. ENDGÜLTIG LÖSCHEN ═══════════════ */}
+      {deletePromptPeptide && (
+        <div
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-10"
+          data-app-modal
+          onClick={() => { if (!deletingPeptide) setDeletePromptPeptide(null) }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-5 shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-300">
+                <AlertTriangle size={20} />
+              </span>
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold text-white">{t('substanz_entfernen_title')}</h2>
+                <p className="mt-0.5 truncate text-sm text-slate-400">{deletePromptPeptide.name}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-cyan-300">
+                  <Archive size={15} /> {t('archivieren_behalten')}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">{t('archivieren_behalten_desc')}</p>
+              </div>
+              <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-3">
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-red-300">
+                  <Trash2 size={15} /> {t('endgueltig_loeschen')}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">{t('endgueltig_loeschen_desc')}</p>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              <button
+                type="button"
+                onClick={() => archivePeptide(deletePromptPeptide)}
+                disabled={deletingPeptide}
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/40 bg-cyan-500/15 px-4 text-sm font-bold text-cyan-200 transition-colors hover:border-cyan-400/60 hover:bg-cyan-500/25 disabled:opacity-50"
+              >
+                <Archive size={16} /> {t('archivieren_behalten')}
+              </button>
+              <button
+                type="button"
+                onClick={() => hardDeletePeptide(deletePromptPeptide)}
+                disabled={deletingPeptide}
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-500/40 bg-red-500/15 px-4 text-sm font-bold text-red-200 transition-colors hover:border-red-400/60 hover:bg-red-500/25 disabled:opacity-50"
+              >
+                <Trash2 size={16} /> {t('endgueltig_loeschen')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeletePromptPeptide(null)}
+                disabled={deletingPeptide}
+                className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 text-sm font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white disabled:opacity-50"
+              >
+                {t('cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ ARCHIV ══════════════════════════════════════════════════════════════ */}
+      {archiveViewOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80"
+          data-app-modal
+          onClick={() => setArchiveViewOpen(false)}
+        >
+          <div
+            className="flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-slate-800 bg-slate-950 shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="shrink-0 border-b border-slate-800 px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    <Archive size={13} /> {t('archiv')}
+                  </p>
+                  <h2 className="mt-1 text-lg font-bold text-white">{t('archiv_title')}</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setArchiveViewOpen(false)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 transition-colors hover:border-slate-600 hover:text-white"
+                  aria-label={t('close')}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
+              {archivedPeptides.length === 0 && (
+                <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-center">
+                  <Archive size={22} className="mx-auto mb-2 text-slate-600" />
+                  <p className="text-sm font-semibold text-white">{t('archiv_leer')}</p>
+                  <p className="mt-1 text-xs text-slate-500">{t('archiv_leer_desc')}</p>
+                </div>
+              )}
+              {archivedPeptides.map(p => {
+                const nCycles = cyclesOf(p.id).length
+                return (
+                  <div key={p.id} className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-white">{p.name}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {nCycles > 0
+                            ? (nCycles === 1 ? t('zyklus_count_one') : t('zyklus_count_many', { n: nCycles }))
+                            : t('keine_zyklen')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => restorePeptide(p)}
+                        className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2 text-xs font-semibold text-emerald-300 transition-colors hover:border-emerald-400/50 hover:bg-emerald-500/20"
+                      >
+                        <RotateCcw size={13} /> {t('wiederherstellen')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeletePromptPeptide(p)}
+                        className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-red-500/25 bg-red-500/10 px-2 text-xs font-semibold text-red-300 transition-colors hover:border-red-400/45 hover:bg-red-500/15"
+                      >
+                        <Trash2 size={13} /> {t('endgueltig_loeschen')}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
       )}
 
       {cyclePromptPeptide && (
