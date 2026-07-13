@@ -217,19 +217,24 @@ describe('Peptide page vial view', () => {
     expect(text).not.toContain('<h3 className="truncate text-xl font-bold text-white">{p.name}</h3>')
   })
 
-  test('places an archive icon button between edit and delete below the carousel', () => {
+  test('places the archive icon between search and view controls', () => {
     const text = source()
+    const searchIndex = text.indexOf('aria-label={searchOpen ?')
+    const archiveIndex = text.indexOf("aria-label={t('archiv')}", searchIndex)
+    const filterIndex = text.indexOf("aria-label={t('sort_aria_label')}", searchIndex)
     const editIndex = text.indexOf('onClick={() => openEditPeptide(activePeptide)}')
-    const archiveIndex = text.indexOf("aria-label={t('archiv')}", editIndex)
     const deleteIndex = text.indexOf('onClick={() => removePeptide(activePeptide.id)}', editIndex)
 
+    expect(searchIndex).toBeGreaterThan(-1)
+    expect(archiveIndex).toBeGreaterThan(searchIndex)
+    expect(archiveIndex).toBeLessThan(filterIndex)
+    expect(text.slice(searchIndex, filterIndex)).toContain('setArchiveViewOpen(true)')
+    expect(text.slice(searchIndex, filterIndex)).toContain('loadArchived()')
+    expect(text.slice(searchIndex, filterIndex)).toContain('<Archive size={18} />')
+    expect(text.slice(searchIndex, filterIndex)).toContain('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70')
     expect(editIndex).toBeGreaterThan(-1)
-    expect(archiveIndex).toBeGreaterThan(editIndex)
-    expect(archiveIndex).toBeLessThan(deleteIndex)
-    expect(text.slice(editIndex, deleteIndex)).toContain('setArchiveViewOpen(true)')
-    expect(text.slice(editIndex, deleteIndex)).toContain('loadArchived()')
-    expect(text.slice(editIndex, deleteIndex)).toContain('<Archive size={14} />')
-    expect(text.slice(editIndex, deleteIndex)).not.toContain("<Archive size={14} /> {t('archiv')}")
+    expect(deleteIndex).toBeGreaterThan(editIndex)
+    expect(text.slice(editIndex, deleteIndex)).not.toContain("aria-label={t('archiv')}")
   })
 
   test('offers a mobile cycle manager from the vial cockpit', () => {

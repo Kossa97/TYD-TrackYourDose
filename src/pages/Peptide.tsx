@@ -1493,6 +1493,18 @@ export function Peptide() {
               {searchOpen ? <X size={18} /> : <Search size={18} />}
             </button>
 
+            {!searchOpen && (
+              <button
+                type="button"
+                onClick={() => { setFilterOpen(false); setArchiveViewOpen(true); loadArchived() }}
+                aria-label={t('archiv')}
+                title={t('archiv')}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+              >
+                <Archive size={18} />
+              </button>
+            )}
+
             {/* Ansicht + Sortierung (Popover) */}
             {!searchOpen && (
               <div className="relative shrink-0">
@@ -1744,15 +1756,6 @@ export function Peptide() {
                     className="flex min-h-10 w-20 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/70 px-2 text-slate-200 transition-colors hover:border-sky-400/40 hover:text-sky-300"
                   >
                     <Pencil size={14} /> Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setArchiveViewOpen(true); loadArchived() }}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/70 text-slate-300 transition-colors hover:border-cyan-400/40 hover:text-cyan-300"
-                    aria-label={t('archiv')}
-                    title={t('archiv')}
-                  >
-                    <Archive size={14} />
                   </button>
                   <button
                     type="button"
