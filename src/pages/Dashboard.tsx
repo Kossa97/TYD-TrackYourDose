@@ -254,28 +254,28 @@ function IntakePeriodCarousel<T>({
   const arrowClass = (active: boolean) => [
     'flex shrink-0 items-center justify-center transition-opacity duration-200',
     'w-[14px] text-sky-300/25 hover:text-sky-300/55',
+    hasMultiple ? '' : 'invisible pointer-events-none',
     active ? 'opacity-100' : 'opacity-35 pointer-events-none',
   ].join(' ')
 
   const trackRow = (
-    <div className="flex items-stretch gap-0.5">
-      {hasMultiple && (
-        <button
-          type="button"
-          aria-label="Vorherige Einnahme"
-          onClick={() => scrollByPage(-1)}
-          className={arrowClass(canScrollLeft)}
-        >
-          <ChevronLeft size={13} strokeWidth={1.5} />
-        </button>
-      )}
+    <div className="grid grid-cols-[14px_minmax(0,1fr)_14px] items-stretch gap-0.5">
+      <button
+        type="button"
+        aria-label="Vorherige Einnahme"
+        aria-hidden={!hasMultiple}
+        disabled={!hasMultiple || !canScrollLeft}
+        onClick={() => scrollByPage(-1)}
+        className={arrowClass(canScrollLeft)}
+      >
+        <ChevronLeft size={13} strokeWidth={1.5} />
+      </button>
       <div
         ref={scrollRef}
         onScroll={updateScrollHints}
         className={[
           'min-w-0 flex-1 flex overflow-x-auto snap-x snap-mandatory select-none',
           '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-          hasMultiple ? '' : 'w-full',
         ].join(' ')}
         style={{ touchAction: 'pan-x' }}
       >
@@ -288,39 +288,39 @@ function IntakePeriodCarousel<T>({
           </div>
         ))}
       </div>
-      {hasMultiple && (
-        <button
-          type="button"
+      <button
+        type="button"
+        aria-hidden={!hasMultiple}
+        disabled={!hasMultiple || !canScrollRight}
           aria-label="Nächste Einnahme"
           onClick={() => scrollByPage(1)}
-          className={arrowClass(canScrollRight)}
-        >
-          <ChevronRight size={13} strokeWidth={1.5} />
-        </button>
-      )}
+        className={arrowClass(canScrollRight)}
+      >
+        <ChevronRight size={13} strokeWidth={1.5} />
+      </button>
     </div>
   )
-
-  if (!hasMultiple) {
-    return trackRow
-  }
 
   return (
     <div className="space-y-2">
       {trackRow}
-      <div className="relative flex min-h-5 items-center px-0.5">
-        <CarouselCounter activeIndex={activeIndex} count={items.length} tone="amber" />
-        <div className="pointer-events-none absolute inset-x-0 flex justify-center">
-          <div className="pointer-events-auto">
-            <CarouselPagination
-              count={items.length}
-              activeIndex={activeIndex}
-              onSelect={scrollToIndex}
-              accent="#fbbf24"
-              label="Einnahme"
-            />
-          </div>
-        </div>
+      <div className="relative flex h-5 items-center px-0.5">
+        {hasMultiple && (
+          <>
+            <CarouselCounter activeIndex={activeIndex} count={items.length} tone="amber" />
+            <div className="pointer-events-none absolute inset-x-0 flex justify-center">
+              <div className="pointer-events-auto">
+                <CarouselPagination
+                  count={items.length}
+                  activeIndex={activeIndex}
+                  onSelect={scrollToIndex}
+                  accent="#fbbf24"
+                  label="Einnahme"
+                />
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -880,7 +880,7 @@ export function Dashboard() {
 
     return (
       <div
-        className="w-full rounded-xl border px-3 py-2.5 transition-colors"
+        className="h-[188px] w-full rounded-xl border px-3 py-2.5 transition-colors"
         style={{
           background: 'var(--surface)',
           borderColor: 'var(--border)',
@@ -951,13 +951,15 @@ export function Dashboard() {
                 <XCircle size={11} /> <span className="truncate">{t('uebersprungen')}</span>
               </button>
             </div>
-            {isInjectableMethod(c.method) && (
+            <div className="h-9">
+              {isInjectableMethod(c.method) && (
               <button
                 onClick={() => openInjectionTrackerForSlot(slot)}
-                className="flex min-h-9 w-full min-w-0 items-center justify-center gap-1 rounded-lg border border-sky-500/25 bg-sky-500/15 px-2.5 py-1 text-xs font-semibold text-sky-300 transition-colors hover:bg-sky-500/25">
+                className="flex h-full w-full min-w-0 items-center justify-center gap-1 rounded-lg border border-sky-500/25 bg-sky-500/15 px-2.5 py-1 text-xs font-semibold text-sky-300 transition-colors hover:bg-sky-500/25">
                 <Syringe size={11} /> <span className="truncate">Mit Injektion bestätigen</span>
               </button>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>

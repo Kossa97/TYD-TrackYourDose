@@ -21,6 +21,16 @@ describe('Dashboard intake confirmation actions', () => {
     expect(source).toContain('renderConfirmedLog')
   })
 
+  it('keeps intake cards and carousel chrome at stable dimensions', () => {
+    const source = readFileSync(new URL('./Dashboard.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('grid grid-cols-[14px_minmax(0,1fr)_14px] items-stretch gap-0.5')
+    expect(source).toContain("hasMultiple ? '' : 'invisible pointer-events-none'")
+    expect(source).toContain('className="h-[188px] w-full rounded-xl border px-3 py-2.5 transition-colors"')
+    expect(source).toContain('<div className="h-9">')
+    expect(source).toContain('className="relative flex h-5 items-center px-0.5"')
+  })
+
   it('defaults to week view with expandable month calendar', () => {
     const source = readFileSync(new URL('./Dashboard.tsx', import.meta.url), 'utf8')
 
