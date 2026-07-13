@@ -114,6 +114,19 @@ describe('Peptide page vial view', () => {
     expect(text).not.toContain('setPointerCapture(e.pointerId)\n    e.preventDefault()')
   })
 
+  test('keeps programmatic vial selection stable while smooth-scrolling to the target', () => {
+    const text = source()
+    const selectHandler = text.slice(text.indexOf('const selectPeptideIndex'), text.indexOf('const getClosestVialIndex'))
+    const scrollHandler = text.slice(text.indexOf('const handleVialCarouselScroll'), text.indexOf('const scrollToClosestVial'))
+    const offsetHandler = text.slice(text.indexOf('const selectPeptideOffset'), text.indexOf('const handleVialCarouselPointerDown'))
+
+    expect(text).toContain('vialTargetIndexRef')
+    expect(selectHandler).toContain('vialTargetIndexRef.current = index')
+    expect(selectHandler).not.toContain('setActivePeptideId(next.id)')
+    expect(scrollHandler).toContain('if (vialTargetIndexRef.current === closestIndex)')
+    expect(offsetHandler).toContain('vialTargetIndexRef.current ?? activeIndex')
+  })
+
   test('drives the carousel liquid with the shared spring physics engine', () => {
     const text = source()
 
