@@ -1747,6 +1747,15 @@ export function Peptide() {
                   </button>
                   <button
                     type="button"
+                    onClick={() => { setArchiveViewOpen(true); loadArchived() }}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/70 text-slate-300 transition-colors hover:border-cyan-400/40 hover:text-cyan-300"
+                    aria-label={t('archiv')}
+                    title={t('archiv')}
+                  >
+                    <Archive size={14} />
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => removePeptide(activePeptide.id)}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/5 text-red-300 transition-colors hover:border-red-400/40 hover:bg-red-500/10"
                     aria-label="Substanz löschen"

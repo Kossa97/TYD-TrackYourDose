@@ -217,6 +217,21 @@ describe('Peptide page vial view', () => {
     expect(text).not.toContain('<h3 className="truncate text-xl font-bold text-white">{p.name}</h3>')
   })
 
+  test('places an archive icon button between edit and delete below the carousel', () => {
+    const text = source()
+    const editIndex = text.indexOf('onClick={() => openEditPeptide(activePeptide)}')
+    const archiveIndex = text.indexOf("aria-label={t('archiv')}", editIndex)
+    const deleteIndex = text.indexOf('onClick={() => removePeptide(activePeptide.id)}', editIndex)
+
+    expect(editIndex).toBeGreaterThan(-1)
+    expect(archiveIndex).toBeGreaterThan(editIndex)
+    expect(archiveIndex).toBeLessThan(deleteIndex)
+    expect(text.slice(editIndex, deleteIndex)).toContain('setArchiveViewOpen(true)')
+    expect(text.slice(editIndex, deleteIndex)).toContain('loadArchived()')
+    expect(text.slice(editIndex, deleteIndex)).toContain('<Archive size={14} />')
+    expect(text.slice(editIndex, deleteIndex)).not.toContain("<Archive size={14} /> {t('archiv')}")
+  })
+
   test('offers a mobile cycle manager from the vial cockpit', () => {
     const text = source()
 
