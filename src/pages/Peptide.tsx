@@ -2074,6 +2074,10 @@ export function Peptide() {
 
           {/* ── Peptid-Liste ────────────────────────────────────────────── */}
           <div className={`space-y-3 ${!loading && viewMode === 'list' ? '' : 'hidden'}`}>
+            {/* Share the page slosh engine so list vials get the ambient living
+                surface ripple. No impulses are pushed here, so the liquid never
+                tilts/sloshes — only the surface breathes at rest. */}
+            <SloshProvider engine={sloshEngine}>
             {displayPeptides.map(p => {
               const pCycles   = cyclesOf(p.id)
               const isOpen    = expandedId === p.id
@@ -2305,6 +2309,7 @@ export function Peptide() {
                 </div>
               )
             })}
+            </SloshProvider>
           </div>
       </div>
 
