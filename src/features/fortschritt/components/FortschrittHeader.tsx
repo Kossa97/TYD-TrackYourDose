@@ -86,7 +86,22 @@ export function FortschrittHeader({
         </span>
       </div>
 
-      <div className={showGlow ? 'fortschritt-entry-glow-wrap' : undefined}>
+      <div
+        className={showGlow ? 'fortschritt-entry-glow-wrap' : undefined}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}
+      >
+        {hasTodayEntry && (
+          <span style={{
+            fontSize: '0.62rem',
+            fontWeight: 900,
+            letterSpacing: '0.08em',
+            color: '#22c55e',
+            textAlign: 'center',
+            lineHeight: 1,
+          }}>
+            ERLEDIGT
+          </span>
+        )}
         {button}
       </div>
     </header>
