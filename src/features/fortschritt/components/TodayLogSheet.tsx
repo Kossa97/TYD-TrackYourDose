@@ -22,6 +22,43 @@ const SHEET_BG = 'var(--app-bg)'
 
 const todayStr = () => format(new Date(), 'yyyy-MM-dd')
 
+const SAVED_VALUES_STORAGE_PREFIX = 'tyd:fortschritt:saved-values:'
+
+function nullableNumber(value: unknown): number | null {
+  if (typeof value !== 'number') return null
+  return Number.isFinite(value) ? value : null
+}
+
+function readStoredSavedValues(userId: string | undefined): SavedLogFormValues | null {
+  if (!userId) return null
+  try {
+    const raw = localStorage.getItem(`${SAVED_VALUES_STORAGE_PREFIX}${userId}`)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Partial<SavedLogFormValues>
+    if (typeof parsed.date !== 'string') return null
+    return {
+      date: parsed.date,
+      energie: nullableNumber(parsed.energie),
+      schlaf: nullableNumber(parsed.schlaf),
+      wohlbefinden: nullableNumber(parsed.wohlbefinden),
+      libido: nullableNumber(parsed.libido),
+      bodyFat: nullableNumber(parsed.bodyFat),
+      weight: nullableNumber(parsed.weight),
+      weightRowId: typeof parsed.weightRowId === 'string' ? parsed.weightRowId : null,
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeStoredSavedValues(userId: string, values: SavedLogFormValues) {
+  try {
+    localStorage.setItem(`${SAVED_VALUES_STORAGE_PREFIX}${userId}`, JSON.stringify(values))
+  } catch {
+    // Storage can be unavailable in private/restricted browser contexts.
+  }
+}
+
 interface Props {
   logs: DailyLogEntry[]
   weightLogs: WeightLogEntry[]
@@ -50,6 +87,10 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
     if (!open) setOpenMetric(null)
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+    setSavedValues(readStoredSavedValues(user?.id))
+  }, [open, user?.id])
   useLayoutEffect(() => {
     if (open) setDate(todayStr())
   }, [open])
@@ -133,7 +174,7 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
       }
     }
 
-    setSavedValues({
+    const nextSavedValues: SavedLogFormValues = {
       date,
       energie,
       schlaf,
@@ -142,7 +183,9 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
       bodyFat,
       weight,
       weightRowId: savedWeightRowId,
-    })
+    }
+    setSavedValues(nextSavedValues)
+    writeStoredSavedValues(user.id, nextSavedValues)
     toast.success('Fortschritt gespeichert')
     await onSaved()
     setSaving(false)
