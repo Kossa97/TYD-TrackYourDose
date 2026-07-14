@@ -260,10 +260,11 @@ function MetricChartInner({
       ...ongoing.map(o => ({ substance: o, filled: false })),
     ]
 
-    const raw = substances.map(({ substance, filled }) => {
-      const end = substanceBarEnd(substance)
-      const x1 = Math.max(dateToTs(substance.startDate), viewStart)
-      const x2 = Math.min(dateToTs(end), viewEnd)
+    // Zeilen über die gesamte Historie packen, nicht über das Sichtfenster: Die
+    // Balkenhöhe hängt an der Zeilenzahl, also würde jeder aus dem Fenster
+    // gewanderte Zyklus die Geometrie der übrigen verschieben.
+    const all = substances.map(({ substance, filled }) => {
+      const startTs = dateToTs(substance.startDate)
       return {
         id: substance.id,
         name: substance.name,
@@ -271,14 +272,16 @@ function MetricChartInner({
         filled,
         faded: focusId != null && focusId !== substance.id,
         startDate: substance.startDate,
-        x1,
-        x2,
+        startTs,
+        x1: startTs,
+        x2: dateToTs(substanceBarEnd(substance)),
       }
-    }).filter(b => b.x2 > b.x1)
+    })
 
-    const packed = assignLanes(raw)
+    const packed = assignLanes(all)
     const lanes = laneCount(packed)
 
+    // Erst fürs Zeichnen aufs Fenster klemmen — Zeile und Zeilenzahl bleiben global.
     const bands: CycleBandDraw[] = packed.map(band => ({
       id: band.id,
       name: band.name,
@@ -286,10 +289,11 @@ function MetricChartInner({
       filled: band.filled,
       faded: band.faded,
       startDate: band.startDate,
-      x1: band.x1,
-      x2: band.x2,
+      startVisible: band.startTs >= viewStart && band.startTs <= viewEnd,
+      x1: Math.max(band.x1, viewStart),
+      x2: Math.min(band.x2, viewEnd),
       lane: band.lane,
-    }))
+    })).filter(b => b.x2 > b.x1)
 
     return { bands, lanes }
   }, [cycles, ongoing, focusId, viewStart, viewEnd])

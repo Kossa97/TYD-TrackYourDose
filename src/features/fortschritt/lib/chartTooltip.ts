@@ -29,11 +29,12 @@ export function hoverDateIso(label: number | string): string {
   return format(new Date(ts), 'yyyy-MM-dd')
 }
 
-export function isoFromTs(ts: number): string {
-  return format(new Date(ts), 'yyyy-MM-dd')
-}
-
-type BandWithStart = { id: string; startDate: string; x1: number }
+/**
+ * `startVisible` unterscheidet den echten Zyklus-Start vom Balkenanfang: Läuft ein
+ * Zyklus schon vor dem Sichtfenster, wird sein x1 auf den Fensterrand geklemmt —
+ * dort beginnt aber nichts, und beim Wischen wäre an jedem Rand ein Start.
+ */
+type BandWithStart = { id: string; startDate: string; x1: number; startVisible: boolean }
 
 type XInverseScale = (pixelX: number) => unknown
 
@@ -66,12 +67,11 @@ export function metricValueAtDate(
 /** Alle Tage, an denen der Tooltip-Cursor einrasten soll (Messwerte + sichtbare Zyklus-Starts) */
 export function buildTooltipSnapDates(
   metricDates: string[],
-  bands: ReadonlyArray<{ x1: number; startDate?: string }>,
+  bands: ReadonlyArray<{ startDate?: string; startVisible: boolean }>,
 ): string[] {
   const dates = new Set(metricDates.map(normalizeDateIso))
   for (const band of bands) {
-    dates.add(isoFromTs(band.x1))
-    if (band.startDate) dates.add(normalizeDateIso(band.startDate))
+    if (band.startVisible && band.startDate) dates.add(normalizeDateIso(band.startDate))
   }
   return [...dates].sort()
 }
@@ -163,7 +163,7 @@ export function resolveFluidChartHover(
   }
 }
 
-/** Zyklen, deren Start (echt oder sichtbarer Balkenanfang) auf den Hover-Tag fällt */
+/** Zyklen, deren echter Start auf den Hover-Tag fällt */
 export function cycleStartsAtHover<T extends BandWithStart>(
   bands: T[],
   hoverIso: string,
@@ -171,13 +171,12 @@ export function cycleStartsAtHover<T extends BandWithStart>(
 ): T[] {
   const hoverDay = normalizeDateIso(hoverIso)
   return bands.filter(b => {
+    if (!b.startVisible) return false
     const startDay = normalizeDateIso(b.startDate)
     if (startDay === hoverDay) return true
-    if (isoFromTs(b.x1) === hoverDay) return true
     if (hoverTs != null && Number.isFinite(hoverTs)) {
       const startTs = parseISO(`${startDay}T12:00:00`).getTime()
       if (Math.abs(hoverTs - startTs) < 12 * 60 * 60 * 1000) return true
-      if (Math.abs(hoverTs - b.x1) < 12 * 60 * 60 * 1000) return true
     }
     return false
   })
@@ -237,10 +236,7 @@ export function cycleStartsOnDate<T extends BandWithStart>(
   dateIso: string,
 ): T[] {
   const day = normalizeDateIso(dateIso)
-  return bands.filter(b => {
-    const startDay = normalizeDateIso(b.startDate)
-    return startDay === day || isoFromTs(b.x1) === day
-  })
+  return bands.filter(b => b.startVisible && normalizeDateIso(b.startDate) === day)
 }
 
 export function resolveTooltipCycleStarts<T extends BandWithStart>(

@@ -20,6 +20,8 @@ export interface CycleBandDraw {
   filled: boolean
   faded: boolean
   startDate: string
+  /** Liegt der echte Zyklus-Start im Sichtfenster? Sonst ist x1 nur der Fensterrand. */
+  startVisible: boolean
   x1: number
   x2: number
   lane: number
@@ -114,6 +116,10 @@ export function CycleBandLayer({ bands, lanes, snapDates }: Props) {
       <ZIndexLayer zIndex={0}>
         <g className="cycle-start-markers" aria-hidden>
           {items.map(({ band, y, startX, laneHeight }) => {
+            // Läuft der Zyklus schon vor dem Fenster, ist startX nur der geklemmte
+            // Balkenanfang — dort einen Start-Marker zu zeichnen wäre gelogen.
+            if (!band.startVisible) return null
+
             const highlighted = isStartHighlighted(
               band,
               pointerX != null,
