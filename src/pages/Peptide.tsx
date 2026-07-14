@@ -2084,7 +2084,7 @@ export function Peptide() {
               const invItem = p.inventory_item_id ? inventory.find(i => i.id === p.inventory_item_id) : null
 
               return (
-                <div key={p.id} className="card">
+                <div key={p.id} className="card bg-slate-950">
                   {/* Kopfzeile */}
                   <div className="flex items-start gap-3">
                     <div className="flex w-16 shrink-0 flex-col items-center gap-0.5">
@@ -2097,7 +2097,8 @@ export function Peptide() {
                         color={peptideColor}
                         animateOnMount={true}
                         isActive={false}
-                        size="compact"
+                        size="mini"
+                        showLabel={false}
                       />
                       {vialPct !== null && (
                         <span className="text-[10px] font-bold tabular-nums leading-none text-slate-500">

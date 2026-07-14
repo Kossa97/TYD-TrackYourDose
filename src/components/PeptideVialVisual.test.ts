@@ -366,9 +366,9 @@ describe('PeptideVialVisual', () => {
   test('raises the cap slightly so a sliver of neck stays visible below it', () => {
     const text = source()
 
-    // the overlap is smaller than before so a bit of neck peeks out under the
-    // cap, and still scales down with vial size to keep proportions
-    expect(text).toContain("const capMarginClass = size === 'large' ? '-mb-2' : '-mb-1'")
+    // a bit of neck peeks out under the cap, and the overlap is proportional
+    // (percent of width) for non-carousel sizes so it scales with the vial
+    expect(text).toContain("const capMarginClass = size === 'carousel' ? '-mb-1' : '-mb-[5%]'")
     expect(text).toContain('marginClass: capMarginClass')
   })
 })

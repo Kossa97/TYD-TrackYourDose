@@ -40,8 +40,9 @@ interface PeptideVialVisualProps {
   fillPct: number
   color: string
   animateOnMount?: boolean
-  size?: 'large' | 'compact' | 'carousel'
+  size?: 'large' | 'compact' | 'carousel' | 'mini'
   className?: string
+  showLabel?: boolean
   isActive?: boolean
   slosh?: number
   focus?: number
@@ -214,6 +215,7 @@ export function PeptideVialVisual({
   animateOnMount = false,
   size = 'large',
   className = '',
+  showLabel = true,
   isActive = true,
   slosh = 0,
   focus,
@@ -387,12 +389,14 @@ export function PeptideVialVisual({
   // 'large' = detail views (edit form, previews); 'carousel' = the My Stack
   // carousel, sized so several vials can peek in side by side; 'compact' =
   // tiny inline previews.
-  const widthClass = size === 'large' ? 'w-28 sm:w-36' : size === 'carousel' ? 'w-20 sm:w-24' : 'w-16'
-  const shellClass = size === 'large' ? 'h-44 sm:h-52' : size === 'carousel' ? 'h-28 sm:h-36' : 'h-24'
-  // the cap sits over the glass neck with a slight overlap; raised a bit from
-  // the original so a sliver of neck stays visible below the cap, scaled down
-  // with the vial's own width so smaller sizes keep the same proportions
-  const capMarginClass = size === 'large' ? '-mb-2' : '-mb-1'
+  const widthClass = size === 'large' ? 'w-28 sm:w-36' : size === 'carousel' ? 'w-20 sm:w-24' : size === 'mini' ? 'w-12' : 'w-16'
+  // Every non-carousel size is a pure scale of the My Stack carousel vial: the
+  // glass body keeps the carousel's 5:7 aspect (mobile 80×112) so width alone
+  // drives height, and the cap (w-full) scales with it automatically.
+  const shellClass = size === 'carousel' ? 'h-28 sm:h-36' : 'aspect-[5/7]'
+  // Cap overlap is proportional (5% of width = the carousel's 4px on 80px) so
+  // the cap shrinks in lockstep with the vial at every size.
+  const capMarginClass = size === 'carousel' ? '-mb-1' : '-mb-[5%]'
   const labelClass = size === 'large'
     ? 'left-[3.5%] right-[3.5%] top-1/2 -translate-y-1/2 rounded-sm px-1 py-2'
     : 'left-[3.5%] right-[3.5%] top-1/2 -translate-y-1/2 rounded-sm px-1 py-1'
@@ -720,24 +724,26 @@ export function PeptideVialVisual({
             </svg>
           )}
 
-          <div
-            data-vial-detail="label-glass-wrap"
-            className={`absolute ${labelClass} overflow-hidden border-y border-white/40 bg-white/28 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)] backdrop-blur-[2px]`}
-          >
-            <div data-vial-detail="full-width-label" className="relative overflow-hidden">
-              <VialLabelMarquee className={`${nameClass} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
-                {labelName}
-              </VialLabelMarquee>
-              <p className={`${amountClass} font-bold uppercase tracking-wide text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]`}>
-                {vialAmountLabel(amount, unit)}
-              </p>
-            </div>
+          {showLabel && (
             <div
-              ref={labelSheenRef}
-              className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/10 via-white/10 to-black/10"
-              style={{ transform: `translateX(${visualLightOffset * 10}%)`, opacity: 0.62 + visualFocus * 0.2 }}
-            />
-          </div>
+              data-vial-detail="label-glass-wrap"
+              className={`absolute ${labelClass} overflow-hidden border-y border-white/40 bg-white/28 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)] backdrop-blur-[2px]`}
+            >
+              <div data-vial-detail="full-width-label" className="relative overflow-hidden">
+                <VialLabelMarquee className={`${nameClass} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
+                  {labelName}
+                </VialLabelMarquee>
+                <p className={`${amountClass} font-bold uppercase tracking-wide text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]`}>
+                  {vialAmountLabel(amount, unit)}
+                </p>
+              </div>
+              <div
+                ref={labelSheenRef}
+                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/10 via-white/10 to-black/10"
+                style={{ transform: `translateX(${visualLightOffset * 10}%)`, opacity: 0.62 + visualFocus * 0.2 }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
