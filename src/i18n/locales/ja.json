@@ -1,5 +1,6 @@
 {
   "nav_lager": "在庫",
+  "archiviert_am": "{{date}}\u306b\u30a2\u30fc\u30ab\u30a4\u30d6",
   "nav_peptide": "ペプチド",
   "nav_home": "ホーム",
   "nav_lab": "The Lab",

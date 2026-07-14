@@ -1,5 +1,6 @@
 {
   "nav_lager": "Depo",
+  "archiviert_am": "{{date}} tarihinde ar\u015fivlendi",
   "nav_peptide": "Peptitler",
   "nav_home": "Ana Sayfa",
   "nav_lab": "The Lab",

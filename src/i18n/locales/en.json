@@ -1,5 +1,6 @@
 {
   "nav_lager": "Stock",
+  "archiviert_am": "Archived on {{date}}",
   "nav_peptide": "Peptides",
   "nav_home": "Home",
   "nav_lab": "The Lab",

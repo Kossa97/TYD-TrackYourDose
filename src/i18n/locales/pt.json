@@ -1,5 +1,6 @@
 {
   "nav_lager": "Estoque",
+  "archiviert_am": "Arquivado em {{date}}",
   "nav_peptide": "Peptídeos",
   "nav_home": "Início",
   "nav_lab": "The Lab",

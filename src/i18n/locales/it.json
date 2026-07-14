@@ -1,5 +1,6 @@
 {
   "nav_lager": "Magazzino",
+  "archiviert_am": "Archiviato il {{date}}",
   "nav_peptide": "Peptidi",
   "nav_home": "Home",
   "nav_lab": "The Lab",

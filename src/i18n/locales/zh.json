@@ -1,5 +1,6 @@
 {
   "nav_lager": "库存",
+  "archiviert_am": "\u5f52\u6863\u4e8e {{date}}",
   "nav_peptide": "肽类",
   "nav_home": "首页",
   "nav_lab": "The Lab",

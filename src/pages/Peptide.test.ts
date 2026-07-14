@@ -245,6 +245,82 @@ describe('Peptide page vial view', () => {
     expect(text.slice(editIndex, deleteIndex)).not.toContain("aria-label={t('archiv')}")
   })
 
+  test('persists and localizes the archive timestamp', () => {
+    const text = source()
+    const sql = readFileSync(new URL('../../supabase-archive.sql', import.meta.url), 'utf8')
+    const localeNames = [
+      'ar', 'de', 'en', 'es', 'fr', 'hi', 'id',
+      'it', 'ja', 'ko', 'pt', 'ru', 'tr', 'zh',
+    ]
+
+    expect(text).toContain('archived_at: string | null')
+    expect(text).toContain("update({ archived: true, archived_at: archivedAt })")
+    expect(text).toContain("update({ archived: false, archived_at: null })")
+    expect(text).toContain("order('archived_at', { ascending: false, nullsFirst: false })")
+    expect(sql).toContain('archived_at timestamptz')
+
+    for (const localeName of localeNames) {
+      const locale = JSON.parse(readFileSync(
+        new URL(`../i18n/locales/${localeName}.json`, import.meta.url),
+        'utf8',
+      )) as Record<string, string>
+
+      expect(locale.archiviert_am).toContain('{{date}}')
+    }
+  })
+
+  test('renders the archive as a full-screen vial list', () => {
+    const text = source()
+
+    expect(text).toContain('data-archive-fullscreen')
+    expect(text).toContain('data-archive-row')
+    expect(text).toContain('className="fixed inset-0 z-50 flex min-h-dvh flex-col bg-slate-950"')
+    expect(text).toContain('fillPct={0}')
+    expect(text).toContain('color="#64748b"')
+    expect(text).toContain('animateOnMount={false}')
+    expect(text).toContain('isActive={false}')
+    expect(text).toContain('size="compact"')
+    expect(text).toContain("t('archiviert_am'")
+    expect(text).toContain('h-11 w-11')
+    expect(text).toContain("Intl.DateTimeFormat(i18n.resolvedLanguage ?? i18n.language)")
+  })
+
+  test('stops the archive flow when the peptide write fails', () => {
+    const text = source()
+    const archiveHandler = text.slice(text.indexOf('const archivePeptide'), text.indexOf('const hardDeletePeptide'))
+
+    expect(archiveHandler).toContain('const { error: archiveError }')
+    expect(archiveHandler).toContain('if (archiveError)')
+    expect(archiveHandler.indexOf('if (archiveError)')).toBeLessThan(archiveHandler.indexOf("from('cycles').update"))
+  })
+
+  test('keeps archive-origin deletion separate from archiving again', () => {
+    const text = source()
+
+    expect(text).toContain('deletePromptFromArchive')
+    expect(text).toContain('!deletePromptFromArchive && (')
+    expect(text).toContain('setDeletePromptFromArchive(true); setDeletePromptPeptide(p)')
+    expect(text).toContain('p.archived_at ?? new Date().toISOString()')
+  })
+
+  test('exposes and contains the full-screen archive as an accessible dialog', () => {
+    const text = source()
+
+    expect(text).toContain('ref={archiveDialogRef}')
+    expect(text).toContain('role="dialog"')
+    expect(text).toContain('aria-modal="true"')
+    expect(text).toContain('aria-labelledby="archive-title"')
+    expect(text).toContain('id="archive-title"')
+    expect(text).toContain('ref={archiveCloseButtonRef}')
+    expect(text).toContain("if (e.key === 'Escape')")
+    expect(text).toContain("if (e.key !== 'Tab') return")
+    expect(text).toContain("document.querySelector<HTMLElement>('[data-archive-delete-confirmation]')")
+    expect(text).toContain('const focusScope = nestedDialog ?? dialog')
+    expect(text).toContain('if (!focusScope?.contains(document.activeElement))')
+    expect(text).toContain('setDeletePromptPeptide(null); window.requestAnimationFrame(() => archiveCloseButtonRef.current?.focus())')
+    expect(text).toContain('previouslyFocused?.focus()')
+  })
+
   test('offers a mobile cycle manager from the vial cockpit', () => {
     const text = source()
 

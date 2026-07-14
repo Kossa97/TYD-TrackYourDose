@@ -3,7 +3,8 @@
 -- werden aber aus "My Stack" ausgeblendet.
 
 alter table peptides
-  add column if not exists archived boolean not null default false;
+  add column if not exists archived boolean not null default false,
+  add column if not exists archived_at timestamptz;
 
 create index if not exists peptides_user_archived_idx
   on peptides (user_id, archived);

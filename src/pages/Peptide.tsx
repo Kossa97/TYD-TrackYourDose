@@ -52,6 +52,7 @@ interface Peptide {
   inventory_item_id: string | null
   pk_profile_id: string | null
   archived: boolean
+  archived_at: string | null
 }
 interface Cycle {
   id: string; peptide_id: string; name: string
@@ -465,7 +466,7 @@ function AddVialTile({ onClick, label, active = false, obKey }: { onClick: () =>
 
 // ─── Hauptkomponente ──────────────────────────────────────────────────────────
 export function Peptide() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -546,9 +547,12 @@ export function Peptide() {
   const [managerEscOpen, setManagerEscOpen]   = useState<Set<string>>(() => new Set())
   // Substanz entfernen: Archivieren vs. endgültig löschen
   const [deletePromptPeptide, setDeletePromptPeptide] = useState<Peptide | null>(null)
+  const [deletePromptFromArchive, setDeletePromptFromArchive] = useState(false)
   const [deletingPeptide, setDeletingPeptide]     = useState(false)
   const [archiveViewOpen, setArchiveViewOpen]     = useState(false)
   const [archivedPeptides, setArchivedPeptides]   = useState<Peptide[]>([])
+  const archiveDialogRef = useRef<HTMLDivElement | null>(null)
+  const archiveCloseButtonRef = useRef<HTMLButtonElement | null>(null)
   const [editingCycleId, setEditingCycleId]       = useState<string | null>(null)
   const [cForm, setCForm]                         = useState<CycleForm | null>(null)
   const [savingCycle, setSavingCycle]             = useState(false)
@@ -563,6 +567,58 @@ export function Peptide() {
   const [eForm, setEForm]                         = useState<EscalationForm | null>(null)
   const [savingEsc, setSavingEsc]                 = useState(false)
 
+  useEffect(() => {
+    if (!archiveViewOpen) return
+
+    const dialog = archiveDialogRef.current
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    archiveCloseButtonRef.current?.focus()
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const nestedDialog = document.querySelector<HTMLElement>('[data-archive-delete-confirmation]')
+      const focusScope = nestedDialog ?? dialog
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        if (nestedDialog) {
+          setDeletePromptFromArchive(false)
+          setDeletePromptPeptide(null)
+          window.requestAnimationFrame(() => archiveCloseButtonRef.current?.focus())
+        } else {
+          setArchiveViewOpen(false)
+        }
+        return
+      }
+      if (e.key !== 'Tab') return
+
+      const focusable = Array.from(focusScope?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ) ?? [])
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (!focusScope?.contains(document.activeElement)) {
+        e.preventDefault()
+        const target = e.shiftKey ? last : first
+        target.focus()
+        return
+      }
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      previouslyFocused?.focus()
+    }
+  }, [archiveViewOpen])
+
   // ── Laden ─────────────────────────────────────────────────────────────────
   const loadInventory = async () => {
     const { data } = await supabase.from('inventory_items').select('*').eq('user_id', user!.id).order('name')
@@ -573,8 +629,15 @@ export function Peptide() {
     if (data) setPeptides(data as Peptide[])
   }
   const loadArchived = async () => {
-    const { data } = await supabase.from('peptides').select('*').eq('user_id', user!.id).eq('archived', true).order('name')
-    if (data) setArchivedPeptides(data as Peptide[])
+    const { data, error } = await supabase.from('peptides')
+      .select('*').eq('user_id', user!.id).eq('archived', true)
+      .order('archived_at', { ascending: false, nullsFirst: false })
+      .order('name')
+    if (error) {
+      toast.error(t('error'))
+      return
+    }
+    setArchivedPeptides((data as Peptide[]) ?? [])
   }
   const loadCycles = async () => {
     const { data } = await supabase.from('cycles').select('*').eq('user_id', user!.id)
@@ -837,16 +900,27 @@ export function Peptide() {
 
   const removePeptide = (id: string) => {
     const p = peptides.find(pp => pp.id === id)
-    if (p) setDeletePromptPeptide(p)
+    if (p) {
+      setDeletePromptFromArchive(false)
+      setDeletePromptPeptide(p)
+    }
   }
 
   // „Behalten": Substanz aus My Stack ausblenden, alle Daten bleiben verknüpft.
   // Aktive Zyklen werden deaktiviert, damit keine Erinnerungen mehr entstehen.
   const archivePeptide = async (p: Peptide) => {
     setDeletingPeptide(true)
-    await supabase.from('peptides').update({ archived: true }).eq('id', p.id)
+    const archivedAt = p.archived_at ?? new Date().toISOString()
+    const { error: archiveError } = await supabase.from('peptides')
+      .update({ archived: true, archived_at: archivedAt }).eq('id', p.id)
+    if (archiveError) {
+      toast.error(t('error'))
+      setDeletingPeptide(false)
+      return
+    }
     await supabase.from('cycles').update({ active: false }).eq('peptide_id', p.id).eq('active', true)
     toast.success(t('substanz_archiviert'))
+    setDeletePromptFromArchive(false)
     setDeletePromptPeptide(null); setDeletingPeptide(false)
     loadPeptides(); loadCycles()
   }
@@ -862,12 +936,14 @@ export function Peptide() {
     await supabase.from('effects').delete().eq('peptide_id', p.id)
     await supabase.from('peptides').delete().eq('id', p.id)
     toast.success(t('geloescht'))
+    setDeletePromptFromArchive(false)
     setDeletePromptPeptide(null); setDeletingPeptide(false)
+    window.requestAnimationFrame(() => archiveCloseButtonRef.current?.focus())
     loadPeptides(); loadCycles(); loadArchived()
   }
 
   const restorePeptide = async (p: Peptide) => {
-    await supabase.from('peptides').update({ archived: false }).eq('id', p.id)
+    await supabase.from('peptides').update({ archived: false, archived_at: null }).eq('id', p.id)
     toast.success(t('substanz_wiederhergestellt'))
     loadArchived(); loadPeptides()
   }
@@ -2604,10 +2680,19 @@ export function Peptide() {
         <div
           className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-10"
           data-app-modal
-          onClick={() => { if (!deletingPeptide) setDeletePromptPeptide(null) }}
+          data-archive-delete-confirmation={deletePromptFromArchive ? '' : undefined}
+          onClick={() => {
+            if (deletingPeptide) return
+            setDeletePromptFromArchive(false)
+            setDeletePromptPeptide(null)
+            window.requestAnimationFrame(() => archiveCloseButtonRef.current?.focus())
+          }}
         >
           <div
             className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-5 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-peptide-title"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-start gap-3">
@@ -2615,18 +2700,20 @@ export function Peptide() {
                 <AlertTriangle size={20} />
               </span>
               <div className="min-w-0">
-                <h2 className="text-lg font-bold text-white">{t('substanz_entfernen_title')}</h2>
+                <h2 id="delete-peptide-title" className="text-lg font-bold text-white">{t('substanz_entfernen_title')}</h2>
                 <p className="mt-0.5 truncate text-sm text-slate-400">{deletePromptPeptide.name}</p>
               </div>
             </div>
 
             <div className="mt-4 space-y-2">
-              <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
-                <p className="flex items-center gap-1.5 text-sm font-semibold text-cyan-300">
-                  <Archive size={15} /> {t('archivieren_behalten')}
-                </p>
-                <p className="mt-1 text-xs text-slate-400">{t('archivieren_behalten_desc')}</p>
-              </div>
+              {!deletePromptFromArchive && (
+                <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
+                  <p className="flex items-center gap-1.5 text-sm font-semibold text-cyan-300">
+                    <Archive size={15} /> {t('archivieren_behalten')}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">{t('archivieren_behalten_desc')}</p>
+                </div>
+              )}
               <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-3">
                 <p className="flex items-center gap-1.5 text-sm font-semibold text-red-300">
                   <Trash2 size={15} /> {t('endgueltig_loeschen')}
@@ -2636,16 +2723,19 @@ export function Peptide() {
             </div>
 
             <div className="mt-5 space-y-2">
+              {!deletePromptFromArchive && (
+                <button
+                  type="button"
+                  onClick={() => archivePeptide(deletePromptPeptide)}
+                  disabled={deletingPeptide}
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/40 bg-cyan-500/15 px-4 text-sm font-bold text-cyan-200 transition-colors hover:border-cyan-400/60 hover:bg-cyan-500/25 disabled:opacity-50"
+                >
+                  <Archive size={16} /> {t('archivieren_behalten')}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => archivePeptide(deletePromptPeptide)}
-                disabled={deletingPeptide}
-                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/40 bg-cyan-500/15 px-4 text-sm font-bold text-cyan-200 transition-colors hover:border-cyan-400/60 hover:bg-cyan-500/25 disabled:opacity-50"
-              >
-                <Archive size={16} /> {t('archivieren_behalten')}
-              </button>
-              <button
-                type="button"
+                autoFocus={deletePromptFromArchive}
                 onClick={() => hardDeletePeptide(deletePromptPeptide)}
                 disabled={deletingPeptide}
                 className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-red-500/40 bg-red-500/15 px-4 text-sm font-bold text-red-200 transition-colors hover:border-red-400/60 hover:bg-red-500/25 disabled:opacity-50"
@@ -2654,7 +2744,7 @@ export function Peptide() {
               </button>
               <button
                 type="button"
-                onClick={() => setDeletePromptPeptide(null)}
+                onClick={() => { setDeletePromptFromArchive(false); setDeletePromptPeptide(null); window.requestAnimationFrame(() => archiveCloseButtonRef.current?.focus()) }}
                 disabled={deletingPeptide}
                 className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 text-sm font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white disabled:opacity-50"
               >
@@ -2668,76 +2758,103 @@ export function Peptide() {
       {/* ══ ARCHIV ══════════════════════════════════════════════════════════════ */}
       {archiveViewOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80"
+          ref={archiveDialogRef}
+          data-archive-fullscreen
+          className="fixed inset-0 z-50 flex min-h-dvh flex-col bg-slate-950"
           data-app-modal
-          onClick={() => setArchiveViewOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="archive-title"
         >
-          <div
-            className="flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-slate-800 bg-slate-950 shadow-2xl"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="shrink-0 border-b border-slate-800 px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))]">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    <Archive size={13} /> {t('archiv')}
-                  </p>
-                  <h2 className="mt-1 text-lg font-bold text-white">{t('archiv_title')}</h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setArchiveViewOpen(false)}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 transition-colors hover:border-slate-600 hover:text-white"
-                  aria-label={t('close')}
-                >
-                  <X size={18} />
-                </button>
+          <header className="shrink-0 border-b border-slate-800 bg-slate-950/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+            <div className="mx-auto flex min-h-16 w-full max-w-3xl items-center justify-between gap-3 px-4">
+              <div className="min-w-0">
+                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <Archive size={13} /> {t('archiv')}
+                </p>
+                <h2 id="archive-title" className="mt-1 truncate text-lg font-bold text-white">{t('archiv_title')}</h2>
               </div>
+              <button
+                type="button"
+                ref={archiveCloseButtonRef}
+                onClick={() => setArchiveViewOpen(false)}
+                className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-400 transition-colors hover:border-slate-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
+                aria-label={t('close')}
+                title={t('close')}
+              >
+                <X size={18} />
+              </button>
             </div>
+          </header>
 
-            <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
+          <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <div className="mx-auto w-full max-w-3xl px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-3">
               {archivedPeptides.length === 0 && (
-                <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-center">
+                <div className="mt-3 rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-center">
                   <Archive size={22} className="mx-auto mb-2 text-slate-600" />
                   <p className="text-sm font-semibold text-white">{t('archiv_leer')}</p>
                   <p className="mt-1 text-xs text-slate-500">{t('archiv_leer_desc')}</p>
                 </div>
               )}
-              {archivedPeptides.map(p => {
-                const nCycles = cyclesOf(p.id).length
-                return (
-                  <div key={p.id} className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-white">{p.name}</p>
-                        <p className="mt-0.5 text-xs text-slate-500">
-                          {nCycles > 0
-                            ? (nCycles === 1 ? t('zyklus_count_one') : t('zyklus_count_many', { n: nCycles }))
-                            : t('keine_zyklen')}
-                        </p>
+
+              {archivedPeptides.length > 0 && (
+                <div className="divide-y divide-slate-800/80 border-y border-slate-800/80">
+                  {archivedPeptides.map(p => {
+                    const archivedDate = p.archived_at
+                      ? new Intl.DateTimeFormat(i18n.resolvedLanguage ?? i18n.language).format(new Date(p.archived_at))
+                      : ''
+
+                    return (
+                      <div key={p.id} data-archive-row className="flex min-h-28 items-center gap-3 py-3">
+                        <div className="flex w-16 shrink-0 justify-center opacity-75" aria-hidden="true">
+                          <PeptideVialVisual
+                            name={p.name}
+                            amount={p.vial_amount_mg}
+                            unit={p.vial_amount_unit ?? 'mg'}
+                            fillPct={0}
+                            color="#64748b"
+                            animateOnMount={false}
+                            isActive={false}
+                            size="compact"
+                          />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-bold text-white">{p.name}</p>
+                          {p.archived_at && (
+                            <p className="mt-1 text-xs text-slate-500">
+                              {t('archiviert_am', { date: archivedDate })}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex shrink-0 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => restorePeptide(p)}
+                            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 transition-colors hover:border-emerald-400/50 hover:bg-emerald-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
+                            aria-label={t('wiederherstellen')}
+                            title={t('wiederherstellen')}
+                          >
+                            <RotateCcw size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setDeletePromptFromArchive(true); setDeletePromptPeptide(p) }}
+                            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-red-500/25 bg-red-500/10 text-red-300 transition-colors hover:border-red-400/45 hover:bg-red-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/70"
+                            aria-label={t('endgueltig_loeschen')}
+                            title={t('endgueltig_loeschen')}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => restorePeptide(p)}
-                        className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2 text-xs font-semibold text-emerald-300 transition-colors hover:border-emerald-400/50 hover:bg-emerald-500/20"
-                      >
-                        <RotateCcw size={13} /> {t('wiederherstellen')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeletePromptPeptide(p)}
-                        className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-red-500/25 bg-red-500/10 px-2 text-xs font-semibold text-red-300 transition-colors hover:border-red-400/45 hover:bg-red-500/15"
-                      >
-                        <Trash2 size={13} /> {t('endgueltig_loeschen')}
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
+                    )
+                  })}
+                </div>
+              )}
             </div>
-          </div>
+          </main>
         </div>
       )}
 

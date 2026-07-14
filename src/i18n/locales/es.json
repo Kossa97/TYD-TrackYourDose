@@ -1,5 +1,6 @@
 {
   "nav_lager": "Almacén",
+  "archiviert_am": "Archivado el {{date}}",
   "nav_peptide": "Péptidos",
   "nav_home": "Inicio",
   "nav_lab": "The Lab",
