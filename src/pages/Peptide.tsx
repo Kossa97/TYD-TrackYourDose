@@ -1955,7 +1955,7 @@ export function Peptide() {
                                     </p>
                                   </div>
                                   <div className="relative space-y-1.5 pl-8">
-                                    <div className="absolute bottom-5 left-3 top-5 w-px bg-slate-700/70" />
+                                    <div className="absolute bottom-5 left-[13px] top-5 w-px -translate-x-1/2 bg-slate-700/70" />
                                     <div className={`relative flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${currentEscalationId ? 'border-slate-800 bg-slate-950/70 text-slate-300' : 'border-orange-500/50 bg-orange-500/15 text-orange-100 shadow-[0_0_0_1px_rgba(249,115,22,0.14)]'}`}>
                                       <span className={`absolute -left-8 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border-2 ${currentEscalationId ? 'border-slate-500 bg-slate-900 text-slate-300' : 'border-orange-400 bg-orange-500/20 text-orange-200 ring-4 ring-orange-500/15'}`}>
                                         {currentEscalationId ? <Check size={13} /> : <span className="h-2.5 w-2.5 rounded-full bg-orange-300" />}

@@ -196,7 +196,7 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('activeFrequency')
     expect(text).toContain("[freqLabel(activeCycle), activeIntake].filter(Boolean).join(' · ')")
     expect(text).toContain('currentEscalationId')
-    expect(text).toContain('absolute bottom-5 left-3 top-5 w-px')
+    expect(text).toContain('absolute bottom-5 left-[13px] top-5 w-px -translate-x-1/2')
     expect(text).toContain('ring-orange-500/15')
     expect(text).toContain('<Clock size={15} />')
     expect(text).toContain('mt-2 flex justify-center')
