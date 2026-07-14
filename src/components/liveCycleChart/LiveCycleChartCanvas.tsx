@@ -457,7 +457,7 @@ function LiveCycleChartCanvas({
 
     const viewStart = ve - windowMsRef.current
     const stepMs = panHapticStepMs(viewStart, ve, dW, MIN_PX_PER_TICK)
-    const tickIdx = Math.floor((ve - viewStart) / stepMs)
+    const tickIdx = Math.floor(ve / stepMs)
     if (lastHapticTick.current !== null && lastHapticTick.current !== tickIdx) {
       void hapticTick()
     }
