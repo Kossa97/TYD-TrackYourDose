@@ -310,110 +310,6 @@ function VialStockDisplay({ current, initial, inUse = 0 }: {
     </div>
   )
 }
-// ─── Vial-Visualisierung ─────────────────────────────────────────────────────
-// Pure CSS animations — no device-orientation or mouse tracking.
-// Two animations create a "living liquid" feel:
-//   waveId    → wave scrolls horizontally (2 s linear loop)
-//   breatheId → wave surface gently rises/falls (3 s ease-in-out loop)
-function VialDisplay({ pct, uid, color, animateOnMount = false }: { pct: number; uid: string; color: string; animateOnMount?: boolean }) {
-  const OX = 4, OY = 13
-  const W  = 32, H = 70
-  // Scale into [0, H-4 px]: every single % changes the level proportionally,
-  // and at 100 % a tiny 4 px air gap keeps the wave surface visible.
-  const fillH   = pct <= 0 ? 4 : Math.max(4, (pct / 100) * (H - 4))
-  const surfaceY = OY + (H - fillH)   // top of liquid in absolute SVG coords
-
-  const wW = W * 2, wH = 3.5
-  const wp = `M0,${wH/2} C${wW*.25},0 ${wW*.25},${wH} ${wW*.5},${wH/2} C${wW*.75},0 ${wW*.75},${wH} ${wW},${wH/2} L${wW},${wH} L0,${wH} Z`
-
-  const clipId     = `vc${uid}`
-  const waveId     = `wv${uid}`
-  const breatheId  = `br${uid}`
-  const gradId     = `lg${uid}`
-  const fillRiseId = `fr${uid}`
-
-  return (
-    <div className="shrink-0 select-none">
-      <svg width={W + 8} height={H + 22} viewBox={`0 0 ${W + 8} ${H + 22}`}
-        shapeRendering="geometricPrecision">
-        <defs>
-          <clipPath id={clipId}>
-            <rect x={OX} y={OY} width={W} height={H} rx="5"/>
-          </clipPath>
-          <linearGradient id={gradId} x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0%"   stopColor={color} stopOpacity="0.85"/>
-            <stop offset="100%" stopColor={color} stopOpacity="0.35"/>
-          </linearGradient>
-          <style>{`
-            @keyframes ${waveId} {
-              from { transform: translateX(0) }
-              to   { transform: translateX(-${W}px) }
-            }
-            @keyframes ${breatheId} {
-              0%, 100% { transform: translateY(0px) }
-              50%       { transform: translateY(-1px) }
-            }
-            @keyframes ${fillRiseId} {
-              from { transform: scaleY(0); }
-              to   { transform: scaleY(1); }
-            }
-            .vd-fill-group-${uid} {
-              transform-box: fill-box;
-              transform-origin: center bottom;
-              animation: ${fillRiseId} 850ms cubic-bezier(.22,1,.36,1) both;
-            }
-            @media (prefers-reduced-motion: reduce) {
-              .vd-wave-${uid}, .vd-breathe-${uid}, .vd-fill-group-${uid} { animation: none !important; }
-            }
-          `}</style>
-        </defs>
-
-        {/* Cap */}
-        <rect x="12" y="1"  width={W - 16} height="8" rx="2.5" fill="#64748b"/>
-        <rect x="7"  y="7"  width={W - 6}  height="7" rx="2"   fill="#475569"/>
-        <rect x="8"  y="2"  width={W - 20} height="3" rx="1.5" fill="rgba(255,255,255,0.18)"/>
-
-        {/* Glass body */}
-        <rect x={OX} y={OY} width={W} height={H} rx="5"
-          style={{ fill: 'var(--surface-input)', stroke: 'var(--border-strong)' }} strokeWidth="2"/>
-
-        {/* Liquid (clipped to glass) */}
-        <g clipPath={`url(#${clipId})`}>
-          <g className={animateOnMount ? `vd-fill-group-${uid}` : ''}>
-
-            {/* Bulk fill */}
-            <rect x={OX} y={surfaceY} width={W} height={fillH}
-              fill={`url(#${gradId})`}/>
-
-            {/* Surface highlight band */}
-            <rect x={OX} y={surfaceY} width={W} height={5}
-              fill={color} fillOpacity="0.55"/>
-
-            {/* Wave: positioned at surface, breathing vertically */}
-            <g style={{ transform: `translate(${OX}px, ${Math.max(OY, surfaceY - wH + 1)}px)` }}>
-              <g className={`vd-breathe-${uid}`}
-                style={{ animation: `${breatheId} 3s ease-in-out infinite` }}>
-                <path className={`vd-wave-${uid}`} d={wp}
-                  fill={color} fillOpacity="0.65"
-                  style={{ animation: `${waveId} 2s linear infinite` }}/>
-              </g>
-            </g>
-
-            {/* Inner shine */}
-            <rect x={OX+1} y={surfaceY} width="5" height={fillH} rx="2.5"
-              fill="rgba(255,255,255,0.12)"/>
-          </g>
-        </g>
-
-        {/* Glass rim */}
-        <rect x={OX} y={OY} width={W} height={H} rx="5"
-          fill="none" style={{ stroke: 'var(--border-strong)' }} strokeWidth="1.5"/>
-        <rect x={OX+1} y={OY+3} width="3" height={H - 8} rx="1.5"
-          fill="rgba(255,255,255,0.07)"/>
-      </svg>
-    </div>
-  )
-}
 
 // Schedule-relevante Felder eines Standes (für Vergleich + Segmentaufbau).
 type SchedFields = Pick<ScheduleSegment, 'frequency' | 'x_days_interval' | 'schedule_days' | 'intake_time' | 'intake_time_custom' | 'dose' | 'unit'>
@@ -2191,14 +2087,24 @@ export function Peptide() {
                 <div key={p.id} className="card">
                   {/* Kopfzeile */}
                   <div className="flex items-start gap-3">
-                    {vialPct !== null && (
-                      <div className="flex flex-col items-center gap-0.5 shrink-0">
-                        <VialDisplay key={animationEpoch} pct={Math.round(vialPct)} uid={p.id.replace(/-/g, '')} color={peptideColor} animateOnMount={true} />
-                        <span className="text-[10px] font-bold tabular-nums text-slate-500 leading-none">
+                    <div className="flex w-16 shrink-0 flex-col items-center gap-0.5">
+                      <PeptideVialVisual
+                        key={animationEpoch}
+                        name={p.name}
+                        amount={p.vial_amount_mg}
+                        unit={p.vial_amount_unit ?? 'mg'}
+                        fillPct={vialPct ?? 100}
+                        color={peptideColor}
+                        animateOnMount={true}
+                        isActive={false}
+                        size="compact"
+                      />
+                      {vialPct !== null && (
+                        <span className="text-[10px] font-bold tabular-nums leading-none text-slate-500">
                           {Math.round(vialPct)}%
                         </span>
-                      </div>
-                    )}
+                      )}
+                    </div>
                     <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
                       <div
                         role="button"
