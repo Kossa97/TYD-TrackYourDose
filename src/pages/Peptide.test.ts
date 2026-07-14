@@ -292,7 +292,6 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('setArchiveInfoPeptide(p)')
     expect(text).toContain('data-archive-info-detail={p.id}')
     expect(text).toContain('className="fixed inset-0 z-[60] flex min-h-dvh flex-col bg-slate-950"')
-    expect(text).toContain('cyclesOf(p.id)')
     expect(text).toContain('p.vial_amount_mg')
     expect(text).toContain('p.reconstitution_ml')
     expect(text).toContain('p.syringe_type')
@@ -309,6 +308,21 @@ describe('Peptide page vial view', () => {
     expect(text).toContain('c.dose')
     expect(text).toContain('c.frequency')
     expect(text).toContain('c.method')
+  })
+
+  test('keeps archived cycles collapsed by default and sorts newest first', () => {
+    const text = source()
+    const archiveDetail = text.slice(text.indexOf('{archiveInfoPeptide'), text.indexOf('{cyclePromptPeptide'))
+
+    expect(text).toContain('archiveCyclesOpen')
+    expect(text).toContain('setArchiveCyclesOpen(false)')
+    expect(archiveDetail).toContain('.filter(c => c.peptide_id === p.id)')
+    expect(archiveDetail).toContain('.sort((a, b) => b.created_at.localeCompare(a.created_at))')
+    expect(archiveDetail).toContain('aria-expanded={archiveCyclesOpen}')
+    expect(archiveDetail).toContain('aria-controls="archive-cycle-list"')
+    expect(archiveDetail).toContain('onClick={() => setArchiveCyclesOpen(open => !open)}')
+    expect(archiveDetail).toContain('{archiveCyclesOpen && (')
+    expect(archiveDetail).toContain('id="archive-cycle-list"')
   })
 
   test('contains archive detail focus and restores it to the originating info button', () => {

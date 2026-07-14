@@ -552,6 +552,7 @@ export function Peptide() {
   const [archiveViewOpen, setArchiveViewOpen]     = useState(false)
   const [archivedPeptides, setArchivedPeptides]   = useState<Peptide[]>([])
   const [archiveInfoPeptide, setArchiveInfoPeptide] = useState<Peptide | null>(null)
+  const [archiveCyclesOpen, setArchiveCyclesOpen] = useState(false)
   const archiveInfoBackButtonRef = useRef<HTMLButtonElement | null>(null)
   const archiveDialogRef = useRef<HTMLDivElement | null>(null)
   const archiveCloseButtonRef = useRef<HTMLButtonElement | null>(null)
@@ -570,6 +571,7 @@ export function Peptide() {
   const [savingEsc, setSavingEsc]                 = useState(false)
 
   const openArchiveInfo = (p: Peptide) => {
+    setArchiveCyclesOpen(false)
     setArchiveInfoPeptide(p)
     window.requestAnimationFrame(() => archiveInfoBackButtonRef.current?.focus())
   }
@@ -2881,7 +2883,9 @@ export function Peptide() {
           </main>
           {archiveInfoPeptide && (() => {
             const p = archiveInfoPeptide
-            const archivedCycles = cyclesOf(p.id)
+            const archivedCycles = cycles
+              .filter(c => c.peptide_id === p.id)
+              .sort((a, b) => b.created_at.localeCompare(a.created_at))
             const invItem = inventory.find(item => item.id === p.inventory_item_id)
             const syringeMl = p.syringe_type?.split(':')[0]
             const syringeUnits = p.syringe_type?.split(':')[1]
@@ -3042,15 +3046,28 @@ export function Peptide() {
                     </section>
 
                     <section className="border-t border-slate-800 py-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <h3 className="text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                      <button
+                        type="button"
+                        onClick={() => setArchiveCyclesOpen(open => !open)}
+                        aria-expanded={archiveCyclesOpen}
+                        aria-controls="archive-cycle-list"
+                        className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
+                      >
+                        <span className="text-xs font-semibold uppercase tracking-wide text-cyan-300">
                           {t('zyklen_header')}
-                        </h3>
-                        <span className="text-xs font-medium text-slate-500">
-                          {t(archivedCycles.length === 1 ? 'zyklus_count_one' : 'zyklus_count_many', { n: archivedCycles.length })}
                         </span>
-                      </div>
+                        <span className="flex shrink-0 items-center gap-2">
+                          <span className="text-xs font-medium text-slate-500">
+                            {t(archivedCycles.length === 1 ? 'zyklus_count_one' : 'zyklus_count_many', { n: archivedCycles.length })}
+                          </span>
+                          {archiveCyclesOpen
+                            ? <ChevronUp size={16} className="text-slate-400" />
+                            : <ChevronDown size={16} className="text-slate-400" />}
+                        </span>
+                      </button>
 
+                      {archiveCyclesOpen && (
+                        <div id="archive-cycle-list">
                       {archivedCycles.length === 0 ? (
                         <p className="py-6 text-center text-sm text-slate-500">{t('keine_zyklen')}</p>
                       ) : (
@@ -3087,6 +3104,8 @@ export function Peptide() {
                               </dl>
                             </article>
                           ))}
+                        </div>
+                      )}
                         </div>
                       )}
                     </section>
