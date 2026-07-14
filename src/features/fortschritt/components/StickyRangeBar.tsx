@@ -10,10 +10,9 @@ export const RANGE_BAR_CONTENT_HEIGHT = CHIPS_HEIGHT + 6 + HINT_HEIGHT + BAR_PAD
 interface Props {
   value: RangeChipKey
   onChange: (chip: RangeChipKey) => void
-  disabled?: boolean
 }
 
-export function StickyRangeBar({ value, onChange, disabled }: Props) {
+export function StickyRangeBar({ value, onChange }: Props) {
   return (
     <>
       <div style={{
@@ -29,10 +28,7 @@ export function StickyRangeBar({ value, onChange, disabled }: Props) {
         background: 'var(--surface)',
         borderBottom: '1px solid var(--border)',
       }}>
-        <div style={{
-          opacity: disabled ? 0.45 : 1,
-          pointerEvents: disabled ? 'none' : 'auto',
-        }}>
+        <div>
           <div style={{
             display: 'flex',
             gap: 4,
@@ -45,7 +41,6 @@ export function StickyRangeBar({ value, onChange, disabled }: Props) {
                 <button
                   key={chip.key}
                   type="button"
-                  disabled={disabled}
                   onClick={() => onChange(chip.key)}
                   style={{
                     flex: 1,
@@ -53,7 +48,7 @@ export function StickyRangeBar({ value, onChange, disabled }: Props) {
                     borderRadius: 8,
                     fontSize: '0.65rem',
                     fontWeight: 800,
-                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    cursor: 'pointer',
                     background: on ? 'var(--accent-weak)' : 'transparent',
                     color: on ? 'var(--accent)' : 'var(--text-muted)',
                     border: on ? '1px solid var(--accent-border)' : '1px solid var(--border)',

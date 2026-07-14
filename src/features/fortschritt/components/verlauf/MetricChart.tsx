@@ -1,10 +1,8 @@
-import { useCallback, useMemo } from 'react'
-import type { MouseEvent, TouchEvent } from 'react'
+import { forwardRef, useImperativeHandle, useMemo } from 'react'
 import { format } from 'date-fns'
 import { dayToTsSafe, formatDaySafe } from '../../lib/dates'
 import {
   CartesianGrid,
-  getRelativeCoordinate,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -20,16 +18,30 @@ import type { BloodworkEntry, DailyLogEntry, WeightLogEntry } from '../../types'
 import { substanceBarEnd } from '../../lib/focusSummary'
 import { assignLanes, laneCount } from '../../lib/cycleLanes'
 import { CycleBandLayer, type CycleBandDraw } from './CycleBandLayer'
-import { ChartPointerProvider, useChartPointerSetter, useChartPointerX } from './ChartPointerContext'
+import {
+  ChartPointerProvider,
+  useChartPointerSetter,
+  useChartPointerX,
+} from './ChartPointerContext'
 import { FluidCursorLayer } from './FluidCursorLayer'
 import { MetricTooltip } from './MetricTooltip'
 import { buildTooltipSnapDates } from '../../lib/chartTooltip'
 import { panel } from '../../styles'
 import { ChartSettingsButton } from './ChartSettingsButton'
+import { ChartWindowToggle } from './ChartWindowToggle'
+import { JumpToNowButton } from './JumpToNowButton'
 import { MetricChipBar } from './MetricChipBar'
+import { rangeBounds, windowMsFor, type ChartWindowKey } from '../../lib/chartWindow'
+import { useChartPan, type ChartPanHandle } from '../../hooks/useChartPan'
+import { pickChartTimeTicks } from '../../../../components/liveCycleChart/chartMath'
+
+const MIN_PX_PER_TICK = 52
 
 interface Props {
-  range: DateRange
+  /** Voller Datenbereich — das Fenster schneidet daraus zu. */
+  dataRange: DateRange
+  windowKey: ChartWindowKey
+  onWindowChange: (key: ChartWindowKey) => void
   metric: MetricDefinition
   availableMetrics: MetricDefinition[]
   metricKey: MetricKey
@@ -44,20 +56,14 @@ interface Props {
   onOpenSettings?: () => void
 }
 
+export type { ChartPanHandle }
+
 function fmtDate(d: string) {
   return formatDaySafe(d)
 }
 
 function dateToTs(date: string): number {
   return dayToTsSafe(date, 12) ?? Date.now()
-}
-
-function buildTimeTicks(from: string, to: string, count = 5): number[] {
-  const start = dateToTs(from)
-  const end = dateToTs(to)
-  if (end <= start) return [start]
-  const step = (end - start) / Math.max(count - 1, 1)
-  return Array.from({ length: count }, (_, i) => Math.round(start + step * i))
 }
 
 function formatAxisValue(value: number, unit: string): string {
@@ -72,36 +78,14 @@ function formatTooltipValue(value: number, unit: string): string {
   return unit ? `${value} ${unit}` : String(value)
 }
 
-function readMousePointerX(event: MouseEvent<SVGGraphicsElement>): number | null {
-  const { relativeX } = getRelativeCoordinate(event)
-  return Number.isFinite(relativeX) ? relativeX : null
-}
-
-function readTouchPointerX(event: TouchEvent<SVGGraphicsElement>): number | null {
-  try {
-    const coords = getRelativeCoordinate(event)
-    const x = coords[0]?.relativeX
-    if (x != null && Number.isFinite(x)) return x
-  } catch {
-    // touchend: changedTouches statt touches
-  }
-
-  const target = event.currentTarget as SVGGraphicsElement
-  const rect = target.getBoundingClientRect()
-  const touch = event.changedTouches[0] ?? event.touches[0]
-  if (!touch) return null
-  return touch.clientX - rect.left
-}
-
 interface ChartBodyProps {
   lineData: Array<{ ts: number; date: string; label: string; value: number }>
   snapDates: string[]
   bands: CycleBandDraw[]
   lanes: number
   metric: MetricDefinition
-  rangeStart: number
-  rangeEnd: number
-  xTicks: number[]
+  viewStart: number
+  viewEnd: number
 }
 
 function MetricChartBody({
@@ -110,37 +94,26 @@ function MetricChartBody({
   bands,
   lanes,
   metric,
-  rangeStart,
-  rangeEnd,
-  xTicks,
+  viewStart,
+  viewEnd,
 }: ChartBodyProps) {
   const pointerX = useChartPointerX()
-  const setPointerX = useChartPointerSetter()
   const plotArea = usePlotArea()
 
-  const trackMouse = useCallback((event: MouseEvent<SVGGraphicsElement>) => {
-    setPointerX(readMousePointerX(event))
-  }, [setPointerX])
-
-  const trackTouch = useCallback((event: TouchEvent<SVGGraphicsElement>) => {
-    setPointerX(readTouchPointerX(event))
-  }, [setPointerX])
+  // Kalendertage im Raster — wandern beim Wischen mit der Kurve.
+  const xTicks = useMemo(
+    () => pickChartTimeTicks(viewStart, viewEnd, plotArea?.width ?? 300, MIN_PX_PER_TICK),
+    [viewStart, viewEnd, plotArea?.width],
+  )
 
   return (
-    <LineChart
-      data={lineData}
-      margin={{ top: 8, right: 12, bottom: 8, left: 0 }}
-      onMouseMove={(_state, event) => trackMouse(event)}
-      onClick={(_state, event) => trackMouse(event)}
-      onTouchStart={(_state, event) => trackTouch(event)}
-      onTouchMove={(_state, event) => trackTouch(event)}
-      onTouchEnd={(_state, event) => trackTouch(event)}
-    >
+    <LineChart data={lineData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
       <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
       <XAxis
         dataKey="ts"
         type="number"
-        domain={[rangeStart, rangeEnd]}
+        domain={[viewStart, viewEnd]}
+        allowDataOverflow
         ticks={xTicks}
         tickFormatter={ts => fmtDate(format(new Date(ts), 'yyyy-MM-dd'))}
         tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}
@@ -250,8 +223,11 @@ function CycleLegend({ bands }: { bands: CycleBandDraw[] }) {
   )
 }
 
-export function MetricChart({
-  range,
+const MetricChartInner = forwardRef<ChartPanHandle, Props>(
+function MetricChartInner({
+  dataRange,
+  windowKey,
+  onWindowChange,
   metric,
   availableMetrics,
   metricKey,
@@ -264,11 +240,19 @@ export function MetricChart({
   ongoing,
   focusId,
   onOpenSettings,
-}: Props) {
-  const rangeStart = dateToTs(range.from)
-  const rangeEnd = dateToTs(range.to)
+}, ref) {
+  const setPointerX = useChartPointerSetter()
+  const { start: dataStart, now } = useMemo(() => rangeBounds(dataRange), [dataRange])
+  const windowMs = windowMsFor(windowKey)
 
-  const series = buildMetricSeries(metric.key, range, weights, dailyLogs, bloodwork)
+  const {
+    wrapRef, viewStart, viewEnd, showJetzt, handlers, jumpToNow, jumpToTs,
+  } = useChartPan({ dataStart, now, windowMs, onPointerX: setPointerX })
+
+  useImperativeHandle(ref, () => ({ jumpToNow, jumpToTs }), [jumpToNow, jumpToTs])
+
+  // Serie über den vollen Bereich — die Domain schneidet die Anzeige zu.
+  const series = buildMetricSeries(metric.key, dataRange, weights, dailyLogs, bloodwork)
 
   const { bands, lanes } = useMemo(() => {
     const substances = [
@@ -278,8 +262,8 @@ export function MetricChart({
 
     const raw = substances.map(({ substance, filled }) => {
       const end = substanceBarEnd(substance)
-      const x1 = Math.max(dateToTs(substance.startDate), rangeStart)
-      const x2 = Math.min(dateToTs(end), rangeEnd)
+      const x1 = Math.max(dateToTs(substance.startDate), viewStart)
+      const x2 = Math.min(dateToTs(end), viewEnd)
       return {
         id: substance.id,
         name: substance.name,
@@ -308,7 +292,7 @@ export function MetricChart({
     }))
 
     return { bands, lanes }
-  }, [cycles, ongoing, focusId, rangeStart, rangeEnd])
+  }, [cycles, ongoing, focusId, viewStart, viewEnd])
 
   const lineData = useMemo(() => (
     series.map(point => ({
@@ -325,7 +309,6 @@ export function MetricChart({
 
   const delta = computeDelta(series)
   const latest = series[series.length - 1]
-  const xTicks = useMemo(() => buildTimeTicks(range.from, range.to), [range.from, range.to])
 
   const metricBar = (
     <MetricChipBar
@@ -359,12 +342,15 @@ export function MetricChart({
 
   return (
     <section style={{ ...panel, padding: '16px 12px 14px 4px', position: 'relative' }}>
-      {onOpenSettings && (
-        <div style={{ position: 'absolute', top: 14, right: 12, zIndex: 2 }}>
-          <ChartSettingsButton onClick={onOpenSettings} />
-        </div>
-      )}
-      <div style={{ paddingLeft: 12, marginBottom: 4, paddingRight: onOpenSettings ? 88 : 12 }}>
+      <div style={{
+        position: 'absolute', top: 14, right: 12, zIndex: 2,
+        display: 'flex', alignItems: 'center', gap: 6,
+      }}>
+        <ChartWindowToggle value={windowKey} onChange={onWindowChange} />
+        {onOpenSettings && <ChartSettingsButton onClick={onOpenSettings} />}
+      </div>
+
+      <div style={{ paddingLeft: 12, marginBottom: 4, paddingRight: 150 }}>
         <p style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-dim)' }}>{metric.label}</p>
         {(latest || delta) && (
           <div style={{
@@ -396,22 +382,36 @@ export function MetricChart({
         {metricBar}
       </div>
 
-      <ResponsiveContainer width="100%" height={280}>
-        <ChartPointerProvider>
+      <div
+        ref={wrapRef}
+        style={{ position: 'relative', touchAction: 'pan-y', userSelect: 'none', cursor: 'crosshair' }}
+        {...handlers}
+      >
+        <ResponsiveContainer width="100%" height={280}>
           <MetricChartBody
             lineData={lineData}
             snapDates={snapDates}
             bands={bands}
             lanes={lanes}
             metric={metric}
-            rangeStart={rangeStart}
-            rangeEnd={rangeEnd}
-            xTicks={xTicks}
+            viewStart={viewStart}
+            viewEnd={viewEnd}
           />
-        </ChartPointerProvider>
-      </ResponsiveContainer>
+        </ResponsiveContainer>
+        {showJetzt && <JumpToNowButton onClick={jumpToNow} />}
+      </div>
 
       <CycleLegend bands={bands} />
     </section>
   )
-}
+})
+
+export const MetricChart = forwardRef<ChartPanHandle, Props>(
+function MetricChart(props, ref) {
+  // Der Gesten-Wrapper muss den Pointer-Setter erreichen → Provider liegt außen.
+  return (
+    <ChartPointerProvider>
+      <MetricChartInner {...props} ref={ref} />
+    </ChartPointerProvider>
+  )
+})

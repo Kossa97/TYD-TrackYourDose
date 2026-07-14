@@ -1,6 +1,6 @@
 import { format, parseISO, subDays } from 'date-fns'
 import type { ActiveSubstance, CycleSubstance, DateRange } from '../types'
-import { todayIso, cycleEndDate } from './substances'
+import { cycleEndDate } from './substances'
 
 export type RangeChipKey = '30t' | '90t' | '6m' | '1j' | 'alles'
 
@@ -21,14 +21,6 @@ export function rangeFromChip(chip: RangeChipKey, baseRange: DateRange): DateRan
   const from = format(subDays(parseISO(`${to}T00:00:00`), chipDef.days), 'yyyy-MM-dd')
   const clampedFrom = from < baseRange.from ? baseRange.from : from
   return { from: clampedFrom, to }
-}
-
-export function focusRangeForSubstance(substance: ActiveSubstance, bufferDays = 7): DateRange {
-  const from = format(subDays(parseISO(`${substance.startDate}T00:00:00`), bufferDays), 'yyyy-MM-dd')
-  const to = substance.mode === 'cycle' && substance.endDate
-    ? substance.endDate
-    : todayIso()
-  return { from, to }
 }
 
 export function substancesOnDate(

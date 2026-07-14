@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import type { ChartNavigation, DateRange, FortschrittOverviewState, MetricKey } from '../../types'
+import type { ChartNavigation, FortschrittOverviewState, MetricKey } from '../../types'
 import { CHART_METRIC_KEYS, isChartMetricKey, isWellnessMetricKey } from '../../constants'
 import { buildMetricSeries } from '../../lib/metrics'
 import { buildAvailableMetrics, normalizeMetricKey } from '../../lib/metricDefinitions'
@@ -10,31 +10,30 @@ import {
   filterOngoingByVisibility,
 } from '../../lib/chartVisibility'
 import { useChartVisibility } from '../../hooks/useChartVisibility'
-import { focusRangeForSubstance } from '../../lib/verlaufRange'
+import { DEFAULT_CHART_WINDOW, type ChartWindowKey } from '../../lib/chartWindow'
+import { dayToTsSafe } from '../../lib/dates'
 import { panel } from '../../styles'
 import { VerlaufSetup } from './VerlaufSetup'
 import { VerlaufSetupSheet } from './VerlaufSetupSheet'
 import { ChartSettingsButton } from './ChartSettingsButton'
-import { MetricChart } from './MetricChart'
+import { MetricChart, type ChartPanHandle } from './MetricChart'
 
 interface Props {
   state: FortschrittOverviewState
-  pageRange: DateRange
   chartNav: ChartNavigation | null
   onChartNavConsumed: () => void
-  onRangeLockedChange: (locked: boolean) => void
 }
 
 export function VerlaufSection({
   state,
-  pageRange,
   chartNav,
   onChartNavConsumed,
-  onRangeLockedChange,
 }: Props) {
   const [metricKey, setMetricKey] = useState<MetricKey>('weight')
   const [focusId, setFocusId] = useState<string | null>(null)
   const [setupOpen, setSetupOpen] = useState(false)
+  const [windowKey, setWindowKey] = useState<ChartWindowKey>(DEFAULT_CHART_WINDOW)
+  const chartRef = useRef<ChartPanHandle>(null)
 
   const {
     groups: visibilityGroups,
@@ -77,14 +76,12 @@ export function VerlaufSection({
   const substances = allSubstances(visibleCycles, visibleOngoing)
   const focused = substances.find(s => s.id === focusId) ?? null
 
-  const chartRange = useMemo(() => {
-    if (focused) return focusRangeForSubstance(focused)
-    return pageRange
-  }, [focused, pageRange])
-
+  // Fokus verschiebt nur die Ansicht an den Zyklus-Start; das Fenster bleibt.
   useEffect(() => {
-    onRangeLockedChange(!!focused)
-  }, [focused, onRangeLockedChange])
+    if (!focused) return
+    const ts = dayToTsSafe(focused.startDate, 12)
+    if (ts != null) chartRef.current?.jumpToTs(ts)
+  }, [focused])
 
   const baseRange = state.fullRange
   const pointCounts = useMemo(() => {
@@ -138,7 +135,10 @@ export function VerlaufSection({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {selectedMetric && hasChartData && (
         <MetricChart
-          range={chartRange}
+          ref={chartRef}
+          dataRange={state.fullRange}
+          windowKey={windowKey}
+          onWindowChange={setWindowKey}
           metric={selectedMetric}
           availableMetrics={availableMetrics}
           metricKey={metricKey}
@@ -171,12 +171,6 @@ export function VerlaufSection({
             Tippe auf Einstellen, um Substanzen und Zyklen für den Verlauf zu wählen.
           </p>
         </section>
-      )}
-
-      {focused && (
-        <p style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-muted)', textAlign: 'center' }}>
-          Zeitraum folgt Fokus-Substanz · Chips oben deaktiviert
-        </p>
       )}
 
       <VerlaufSetupSheet open={setupOpen} onClose={() => setSetupOpen(false)}>

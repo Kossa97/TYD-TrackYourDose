@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { format } from 'date-fns'
 import { useFortschrittData } from './hooks/useFortschrittData'
@@ -15,9 +15,6 @@ export function FortschrittPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [logOpen, setLogOpen] = useState(false)
   const [rangeChip, setRangeChip] = useState<RangeChipKey>(DEFAULT_RANGE_CHIP)
-  const [rangeLocked, setRangeLocked] = useState(false)
-
-  const handleRangeLockedChange = useCallback((locked: boolean) => setRangeLocked(locked), [])
 
   useEffect(() => {
     if (searchParams.get('tab')) {
@@ -42,7 +39,6 @@ export function FortschrittPage() {
       <StickyRangeBar
         value={rangeChip}
         onChange={setRangeChip}
-        disabled={rangeLocked}
       />
 
       <FortschrittHeader
@@ -62,7 +58,6 @@ export function FortschrittPage() {
           rangeChip={rangeChip}
           onLogToday={() => setLogOpen(true)}
           onReload={() => void reload()}
-          onRangeLockedChange={handleRangeLockedChange}
         />
       )}
 
