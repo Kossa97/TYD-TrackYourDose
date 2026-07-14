@@ -71,6 +71,8 @@ export interface LogFormValues {
   weightRowId: string | null
 }
 
+export type SavedLogFormValues = LogFormValues & { date: string }
+
 function wellnessValue(value: number | null | undefined): number | null {
   return value != null && value > 0 ? value : null
 }
@@ -80,7 +82,20 @@ export function loadLogFormValues(
   logs: DailyLogEntry[],
   weightLogs: WeightLogEntry[],
   date: string,
+  savedValues?: SavedLogFormValues | null,
 ): LogFormValues {
+  if (savedValues?.date === date) {
+    return {
+      energie: savedValues.energie,
+      schlaf: savedValues.schlaf,
+      wohlbefinden: savedValues.wohlbefinden,
+      libido: savedValues.libido,
+      bodyFat: savedValues.bodyFat,
+      weight: savedValues.weight,
+      weightRowId: savedValues.weightRowId,
+    }
+  }
+
   const existing = logs.find(l => l.log_date === date)
   const hasEntry = hasLogForDate(logs, weightLogs, date)
   const dayWeight = weightForDate(weightLogs, date)

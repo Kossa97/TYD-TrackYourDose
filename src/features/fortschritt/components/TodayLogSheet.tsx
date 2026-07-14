@@ -11,6 +11,7 @@ import { dateFieldStyle, WELLNESS_SLIDER_CSS, WellnessSliderRow } from './Wellne
 import { METRIC_WHEEL_CSS, MetricWheelPicker } from './MetricWheelPicker'
 import {
   loadLogFormValues,
+  type SavedLogFormValues,
 } from '../lib/metricDefaults'
 import { useScrollLock } from '../hooks/useScrollLock'
 
@@ -41,6 +42,7 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
   const [bodyFat, setBodyFat] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [openMetric, setOpenMetric] = useState<'weight' | 'bodyFat' | null>(null)
+  const [savedValues, setSavedValues] = useState<SavedLogFormValues | null>(null)
 
   useScrollLock(open)
 
@@ -54,7 +56,7 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
 
   useEffect(() => {
     if (!open) return
-    const values = loadLogFormValues(logs, weightLogs, date)
+    const values = loadLogFormValues(logs, weightLogs, date, savedValues)
     setEnergie(values.energie)
     setSchlaf(values.schlaf)
     setWohlbefinden(values.wohlbefinden)
@@ -62,7 +64,7 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
     setBodyFat(values.bodyFat)
     setWeight(values.weight)
     setWeightRowId(values.weightRowId)
-  }, [date, logs, weightLogs, open])
+  }, [date, logs, weightLogs, open, savedValues])
 
   if (!open) return null
 
@@ -100,6 +102,8 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
       }
     }
 
+    let savedWeightRowId = weightRowId
+
     if (hasWeight) {
       const kg = weight
       if (!Number.isFinite(kg)) {
@@ -107,23 +111,41 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
         toast.error('Ungültiges Gewicht')
         return
       }
-      const { error } = weightRowId
-        ? await supabase.from('weight_logs').update({ weight_kg: kg }).eq('id', weightRowId)
-        : await supabase.from('weight_logs').insert({
-            user_id: user.id,
-            logged_at: `${date}T12:00:00`,
-            weight_kg: kg,
-          })
-      if (error) {
-        setSaving(false)
-        toast.error(`Gewicht speichern fehlgeschlagen: ${error.message}`)
-        return
+      if (weightRowId) {
+        const { error } = await supabase.from('weight_logs').update({ weight_kg: kg }).eq('id', weightRowId)
+        if (error) {
+          setSaving(false)
+          toast.error(`Gewicht speichern fehlgeschlagen: ${error.message}`)
+          return
+        }
+      } else {
+        const { data, error } = await supabase.from('weight_logs').insert({
+          user_id: user.id,
+          logged_at: `${date}T12:00:00`,
+          weight_kg: kg,
+        }).select('id').single()
+        if (error) {
+          setSaving(false)
+          toast.error(`Gewicht speichern fehlgeschlagen: ${error.message}`)
+          return
+        }
+        savedWeightRowId = data?.id != null ? String(data.id) : null
       }
     }
 
-    setSaving(false)
+    setSavedValues({
+      date,
+      energie,
+      schlaf,
+      wohlbefinden,
+      libido,
+      bodyFat,
+      weight,
+      weightRowId: savedWeightRowId,
+    })
     toast.success('Fortschritt gespeichert')
     await onSaved()
+    setSaving(false)
     onClose()
   }
 

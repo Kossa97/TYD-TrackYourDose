@@ -92,4 +92,24 @@ describe('metricDefaults', () => {
       weightRowId: null,
     })
   })
+  it('prefers the locally saved values for the same date while parent data catches up', () => {
+    expect(loadLogFormValues(logs, weightLogs, '2026-07-08', {
+      date: '2026-07-08',
+      energie: 9,
+      schlaf: 8,
+      wohlbefinden: 7,
+      libido: 6,
+      bodyFat: 16.4,
+      weight: 83.5,
+      weightRowId: 'w3',
+    })).toEqual({
+      energie: 9,
+      schlaf: 8,
+      wohlbefinden: 7,
+      libido: 6,
+      bodyFat: 16.4,
+      weight: 83.5,
+      weightRowId: 'w3',
+    })
+  })
 })
