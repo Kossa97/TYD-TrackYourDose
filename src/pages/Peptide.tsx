@@ -9,7 +9,7 @@ import {
   CalendarDays, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, List,
   TrendingUp, TrendingDown, Search, Bell, Check, SlidersHorizontal,
   Package, FileUp, Droplets, X, FileText, ExternalLink,
-  Archive, RefreshCw, Sunrise, Sun, Moon, Clock, AlertTriangle,
+  Archive, Info, RefreshCw, Sunrise, Sun, Moon, Clock, AlertTriangle,
   RotateCcw, Flag, Pause, Play, CalendarPlus, type LucideIcon,
 } from 'lucide-react'
 import { getPeptideColor, getRandomPeptideColor } from '../lib/peptideColors'
@@ -551,6 +551,8 @@ export function Peptide() {
   const [deletingPeptide, setDeletingPeptide]     = useState(false)
   const [archiveViewOpen, setArchiveViewOpen]     = useState(false)
   const [archivedPeptides, setArchivedPeptides]   = useState<Peptide[]>([])
+  const [archiveInfoPeptide, setArchiveInfoPeptide] = useState<Peptide | null>(null)
+  const archiveInfoBackButtonRef = useRef<HTMLButtonElement | null>(null)
   const archiveDialogRef = useRef<HTMLDivElement | null>(null)
   const archiveCloseButtonRef = useRef<HTMLButtonElement | null>(null)
   const [editingCycleId, setEditingCycleId]       = useState<string | null>(null)
@@ -567,6 +569,11 @@ export function Peptide() {
   const [eForm, setEForm]                         = useState<EscalationForm | null>(null)
   const [savingEsc, setSavingEsc]                 = useState(false)
 
+  const openArchiveInfo = (p: Peptide) => {
+    setArchiveInfoPeptide(p)
+    window.requestAnimationFrame(() => archiveInfoBackButtonRef.current?.focus())
+  }
+
   useEffect(() => {
     if (!archiveViewOpen) return
 
@@ -576,13 +583,20 @@ export function Peptide() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const nestedDialog = document.querySelector<HTMLElement>('[data-archive-delete-confirmation]')
-      const focusScope = nestedDialog ?? dialog
+      const archiveInfoDialog = document.querySelector<HTMLElement>('[data-archive-info-detail]')
+      const focusScope = nestedDialog ?? archiveInfoDialog ?? dialog
       if (e.key === 'Escape') {
         e.preventDefault()
         if (nestedDialog) {
           setDeletePromptFromArchive(false)
           setDeletePromptPeptide(null)
           window.requestAnimationFrame(() => archiveCloseButtonRef.current?.focus())
+        } else if (archiveInfoDialog) {
+          const peptideId = archiveInfoDialog.dataset.archiveInfoDetail
+          setArchiveInfoPeptide(null)
+          window.requestAnimationFrame(() => {
+            if (peptideId) document.querySelector<HTMLButtonElement>(`[data-archive-info-button="${peptideId}"]`)?.focus()
+          })
         } else {
           setArchiveViewOpen(false)
         }
@@ -2831,6 +2845,16 @@ export function Peptide() {
                         <div className="flex shrink-0 gap-1.5">
                           <button
                             type="button"
+                            data-archive-info-button={p.id}
+                            onClick={() => openArchiveInfo(p)}
+                            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-cyan-500/25 bg-cyan-500/10 text-cyan-300 transition-colors hover:border-cyan-400/45 hover:bg-cyan-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
+                            aria-label={t('infos')}
+                            title={t('infos')}
+                          >
+                            <Info size={16} />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => restorePeptide(p)}
                             className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 transition-colors hover:border-emerald-400/50 hover:bg-emerald-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
                             aria-label={t('wiederherstellen')}
@@ -2855,6 +2879,222 @@ export function Peptide() {
               )}
             </div>
           </main>
+          {archiveInfoPeptide && (() => {
+            const p = archiveInfoPeptide
+            const archivedCycles = cyclesOf(p.id)
+            const invItem = inventory.find(item => item.id === p.inventory_item_id)
+            const syringeMl = p.syringe_type?.split(':')[0]
+            const syringeUnits = p.syringe_type?.split(':')[1]
+            const dateFormatter = new Intl.DateTimeFormat(i18n.resolvedLanguage ?? i18n.language)
+            const formatStoredDate = (value: string | null) => value ? dateFormatter.format(parseISO(value)) : '-'
+            const expiryDate = p.reconstitution_date && p.expiry_days
+              ? dateFormatter.format(addDays(parseISO(p.reconstitution_date), p.expiry_days))
+              : '-'
+            const archivedDate = formatStoredDate(p.archived_at)
+            const applicationRows: InfoRow[] = [
+              {
+                label: t('wirkstoff_pro_vial'),
+                value: p.vial_amount_mg !== null ? `${p.vial_amount_mg} ${p.vial_amount_unit ?? 'mg'}` : '-',
+              },
+              {
+                label: t('zugefuegte_fluessigkeit'),
+                value: p.reconstitution_ml !== null ? `${p.reconstitution_ml} mL` : '-',
+              },
+              {
+                label: t('applikation_info'),
+                value: p.default_method ? t(METHOD_KEYS[p.default_method] ?? p.default_method) : '-',
+              },
+              {
+                label: t('spritzen_typ'),
+                value: syringeMl && syringeUnits ? `${syringeMl} mL ? ${syringeUnits} ${t('einh_kurz')}` : '-',
+              },
+            ]
+            const stockRows: InfoRow[] = [
+              { label: t('datum_rekonstitution'), value: formatStoredDate(p.reconstitution_date) },
+              { label: t('haltbarkeit_tage'), value: p.expiry_days !== null ? `${p.expiry_days}` : '-' },
+              { label: t('ablauf_label'), value: expiryDate },
+              {
+                label: t('bestand_section'),
+                value: p.vials_in_stock !== null
+                  ? `${p.vials_in_stock} / ${p.vials_initial ?? '-'} ${t('vials')}`
+                  : '-',
+              },
+              {
+                label: t('vorraetige_vials'),
+                value: invItem ? t('vials_vorratig', { n: invItem.vials_count }) : '-',
+                wide: true,
+              },
+            ]
+            const documentationRows: InfoRow[] = [
+              { label: t('batch'), value: p.batch_number || '-' },
+              { label: t('quelle'), value: p.batch_source || '-' },
+              {
+                label: t('analyse_dokument_section'),
+                wide: true,
+                valueNode: p.batch_file_url
+                  ? (
+                    <a
+                      href={p.batch_file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex max-w-full items-center gap-2 text-cyan-300 hover:text-cyan-200"
+                    >
+                      <span className="truncate">{p.batch_file_url.split('/').pop() || t('dokument_oeffnen')}</span>
+                      <ExternalLink size={14} className="shrink-0" />
+                    </a>
+                  )
+                  : <span>-</span>,
+              },
+              { label: t('notizen_section'), value: p.notes || '-', wide: true },
+            ]
+            const renderInfoRows = (rows: InfoRow[]) => (
+              <dl className="grid grid-cols-1 gap-x-5 sm:grid-cols-2">
+                {rows.map(row => (
+                  <div
+                    key={row.label}
+                    className={`min-w-0 border-b border-slate-800/70 py-3 ${row.wide ? 'sm:col-span-2' : ''}`}
+                  >
+                    <dt className="text-xs font-medium text-slate-500">{row.label}</dt>
+                    <dd className="mt-1 break-words text-sm font-semibold text-slate-200">
+                      {row.valueNode ?? row.value ?? '-'}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            )
+
+            return (
+              <div
+                data-archive-info-detail={p.id}
+                className="fixed inset-0 z-[60] flex min-h-dvh flex-col bg-slate-950"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="archive-info-title"
+              >
+                <header className="shrink-0 border-b border-slate-800 bg-slate-950/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+                  <div className="mx-auto flex min-h-16 w-full max-w-3xl items-center gap-3 px-4">
+                    <button
+                      type="button"
+                      ref={archiveInfoBackButtonRef}
+                      onClick={() => {
+                        setArchiveInfoPeptide(null)
+                        window.requestAnimationFrame(() => {
+                          document.querySelector<HTMLButtonElement>(`[data-archive-info-button="${p.id}"]`)?.focus()
+                        })
+                      }}
+                      className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-300 transition-colors hover:border-slate-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
+                      aria-label={t('back')}
+                      title={t('back')}
+                    >
+                      <ChevronLeft size={19} />
+                    </button>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('archiv')}</p>
+                      <h2 id="archive-info-title" className="truncate text-lg font-bold text-white">{p.name}</h2>
+                    </div>
+                  </div>
+                </header>
+
+                <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                  <div className="mx-auto w-full max-w-3xl px-4 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+                    <div className="flex items-center gap-5 py-5">
+                      <div className="flex w-20 shrink-0 justify-center opacity-80" aria-hidden="true">
+                        <PeptideVialVisual
+                          name={p.name}
+                          amount={p.vial_amount_mg}
+                          unit={p.vial_amount_unit ?? 'mg'}
+                          fillPct={0}
+                          color="#64748b"
+                          animateOnMount={false}
+                          isActive={false}
+                          size="compact"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="break-words text-xl font-bold text-white">{p.name}</p>
+                        {p.archived_at && (
+                          <p className="mt-1 text-sm text-slate-500">
+                            {t('archiviert_am', { date: archivedDate })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <section className="border-t border-slate-800 py-4">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                        {t('wirkstoff_rekonstitution')}
+                      </h3>
+                      {renderInfoRows(applicationRows)}
+                    </section>
+
+                    <section className="border-t border-slate-800 py-4">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                        {t('haltbarkeit_section_info')} &amp; {t('bestand_section')}
+                      </h3>
+                      {renderInfoRows(stockRows)}
+                    </section>
+
+                    <section className="border-t border-slate-800 py-4">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                        {t('batch_herkunft_section')}
+                      </h3>
+                      {renderInfoRows(documentationRows)}
+                    </section>
+
+                    <section className="border-t border-slate-800 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                          {t('zyklen_header')}
+                        </h3>
+                        <span className="text-xs font-medium text-slate-500">
+                          {t(archivedCycles.length === 1 ? 'zyklus_count_one' : 'zyklus_count_many', { n: archivedCycles.length })}
+                        </span>
+                      </div>
+
+                      {archivedCycles.length === 0 ? (
+                        <p className="py-6 text-center text-sm text-slate-500">{t('keine_zyklen')}</p>
+                      ) : (
+                        <div className="mt-2 divide-y divide-slate-800/80">
+                          {archivedCycles.map(c => (
+                            <article key={c.id} data-archive-cycle className="py-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <p className="min-w-0 break-words text-sm font-bold text-white">{c.name}</p>
+                                <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${c.active ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
+                                  {t(c.active ? 'aktiv_badge' : 'inaktiv_badge')}
+                                </span>
+                              </div>
+                              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+                                <div className="col-span-2 sm:col-span-3">
+                                  <dt className="text-xs text-slate-500">{t('obx_cycdates_title')}</dt>
+                                  <dd className="mt-0.5 text-sm font-medium text-slate-200">
+                                    {formatStoredDate(c.start_date)} - {c.end_date ? formatStoredDate(c.end_date) : t('ende_offen')}
+                                  </dd>
+                                </div>
+                                <div>
+                                  <dt className="text-xs text-slate-500">{t('dosis_label')}</dt>
+                                  <dd className="mt-0.5 text-sm font-medium text-slate-200">{c.dose} {c.unit}</dd>
+                                </div>
+                                <div>
+                                  <dt className="text-xs text-slate-500">{t('frequenz')}</dt>
+                                  <dd className="mt-0.5 text-sm font-medium text-slate-200">{freqLabel(c)}</dd>
+                                </div>
+                                <div>
+                                  <dt className="text-xs text-slate-500">{t('methode')}</dt>
+                                  <dd className="mt-0.5 text-sm font-medium text-slate-200">
+                                    {t(METHOD_KEYS[c.method] ?? c.method)}
+                                  </dd>
+                                </div>
+                              </dl>
+                            </article>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+                  </div>
+                </main>
+              </div>
+            )
+          })()}
         </div>
       )}
 
