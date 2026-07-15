@@ -66,12 +66,6 @@ function dateToTs(date: string): number {
   return dayToTsSafe(date, 12) ?? Date.now()
 }
 
-function formatAxisValue(value: number, unit: string): string {
-  if (unit === 'kg') return `${value}`
-  if (unit === '%') return `${value}%`
-  return unit ? `${value} ${unit}` : String(value)
-}
-
 function formatTooltipValue(value: number, unit: string): string {
   if (unit === 'kg') return `${value} kg`
   if (unit === '%') return `${value}%`
@@ -120,13 +114,14 @@ function MetricChartBody({
         tickLine={false}
         axisLine={false}
       />
+      {/* Einheit steht in der Kopfzeile und im Tooltip — auf der Achse nur Zahlen.
+          width="auto", damit lange Lab-Werte nicht abgeschnitten werden. */}
       <YAxis
         yAxisId="metric"
-        tickFormatter={v => formatAxisValue(Number(v), metric.unit)}
         tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}
         tickLine={false}
         axisLine={false}
-        width={40}
+        width="auto"
       />
 
       <CycleBandLayer bands={bands} lanes={lanes} snapDates={snapDates} />
