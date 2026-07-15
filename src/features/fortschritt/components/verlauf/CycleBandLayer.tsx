@@ -101,9 +101,10 @@ export function CycleBandLayer({ bands, lanes, snapDates }: Props) {
               width={w}
               height={laneHeight}
               fill={band.color}
-              fillOpacity={band.faded ? 0.1 : band.filled ? 0.32 : 0.18}
+              // Zurückhaltend: die Bänder liegen hinter der Kurve, nicht vor ihr.
+              fillOpacity={band.faded ? 0.06 : band.filled ? 0.16 : 0.1}
               stroke={band.filled ? 'none' : band.color}
-              strokeOpacity={band.faded ? 0.2 : 0.5}
+              strokeOpacity={band.faded ? 0.16 : 0.4}
               strokeWidth={band.filled ? 0 : 1.5}
               strokeDasharray={band.filled ? undefined : '5 4'}
               rx={4}
