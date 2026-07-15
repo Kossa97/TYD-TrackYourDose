@@ -3983,7 +3983,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas",
-      "community": 9,
+      "community": 42,
       "norm_label": "injectionmapcanvas.tsx"
     },
     {
@@ -3993,7 +3993,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_lightposition",
-      "community": 9,
+      "community": 42,
       "norm_label": "lightposition"
     },
     {
@@ -4003,7 +4003,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_injection_map_lights",
-      "community": 9,
+      "community": 42,
       "norm_label": "injection_map_lights"
     },
     {
@@ -4013,7 +4013,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_injectionfocusrequest",
-      "community": 9,
+      "community": 42,
       "norm_label": "injectionfocusrequest"
     },
     {
@@ -4023,7 +4023,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_orbitcontrolsapi",
-      "community": 9,
+      "community": 42,
       "norm_label": "orbitcontrolsapi"
     },
     {
@@ -4033,7 +4033,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_tojson",
-      "community": 9,
+      "community": 42,
       "norm_label": "tojson()"
     },
     {
@@ -4053,7 +4053,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_resetcameraframe",
-      "community": 9,
+      "community": 42,
       "norm_label": "resetcameraframe()"
     },
     {
@@ -4063,7 +4063,7 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_focustargetforrequest",
-      "community": 9,
+      "community": 42,
       "norm_label": "focustargetforrequest()"
     },
     {
@@ -4073,7 +4073,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_camerarig",
-      "community": 9,
+      "community": 42,
       "norm_label": "camerarig()"
     },
     {
@@ -4083,7 +4083,7 @@
       "source_location": "L194",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_scene",
-      "community": 9,
+      "community": 42,
       "norm_label": "scene()"
     },
     {
@@ -4093,7 +4093,7 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_injectionmapcanvas",
-      "community": 9,
+      "community": 42,
       "norm_label": "injectionmapcanvas()"
     },
     {
@@ -4103,7 +4103,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionpin",
-      "community": 9,
+      "community": 42,
       "norm_label": "injectionpin.tsx"
     },
     {
@@ -4113,7 +4113,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionpin_pin_axis",
-      "community": 9,
+      "community": 42,
       "norm_label": "pin_axis"
     },
     {
@@ -4123,7 +4123,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionpin_injectionpin",
-      "community": 9,
+      "community": 42,
       "norm_label": "injectionpin()"
     },
     {
@@ -7400,7 +7400,7 @@
       "label": "computeCycleBandLayout()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/cycleLanes.ts",
-      "source_location": "L52",
+      "source_location": "L59",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelanes_computecyclebandlayout",
       "community": 95,
@@ -9983,7 +9983,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_injectionlogtypes_injectionpindraft",
-      "community": 9,
+      "community": 42,
       "norm_label": "injectionpindraft"
     },
     {
@@ -9993,7 +9993,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_lib_injectionlogtypes_injectionlog3d",
-      "community": 9,
+      "community": 42,
       "norm_label": "injectionlog3d"
     },
     {
@@ -10103,7 +10103,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_saveinjectioninput",
-      "community": 9,
+      "community": 42,
       "norm_label": "saveinjectioninput"
     },
     {
@@ -22687,7 +22687,7 @@
       "contributor": null,
       "community": 169,
       "norm_label": "graphify skill trigger (/graphify)",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
     },
     {
       "label": "graphify pipeline (SKILL.md)",
@@ -37500,7 +37500,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/components/verlauf/CycleBandLayer.tsx",
-      "source_location": "L123",
+      "source_location": "L124",
       "weight": 1.0,
       "source": "src_features_fortschritt_components_verlauf_cyclebandlayer_cyclebandlayer",
       "target": "src_features_fortschritt_components_verlauf_cyclebandlayer_isstarthighlighted",
@@ -41927,7 +41927,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/cycleLanes.ts",
-      "source_location": "L52",
+      "source_location": "L59",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_cyclelanes",
       "target": "src_features_fortschritt_lib_cyclelanes_computecyclebandlayout",
@@ -66231,5 +66231,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "3f009f26e735a0c6be100dcc57f3d34f0689dc7b"
+  "built_at_commit": "3a1c544949af85f809fcb631d460b15da36319ef"
 }

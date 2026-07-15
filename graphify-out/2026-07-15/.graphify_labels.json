@@ -95,10 +95,10 @@
   "93": "Vite Config",
   "94": "Vitest Config",
   "95": "TodayLogSheet.tsx",
+  "96": "TheLab.tsx",
   "97": "DesignSystem.tsx",
   "98": "DesignSystem.tsx",
   "99": "Injektionstracker Pro - 3D Injektionskarte (Design)",
-  "101": "focusSummary.ts",
   "102": "VerlaufTab.tsx",
   "103": "The Lab — Redesign Spec",
   "104": "pubmed.ts",
@@ -225,9 +225,7 @@
   "227": "Trunk-based development (push to main)",
   "228": "React + TypeScript + Vite template README",
   "229": "Fullscreen Substance Archive",
-  "230": "ExpiryWarningBanners.tsx",
   "231": "peptideColors.ts",
-  "232": "metricDefaults.ts",
   "235": "Global Constraints",
   "236": "Global Constraints",
   "237": "Active Add-Vial Glow",
@@ -238,7 +236,5 @@
   "242": "metrics.ts",
   "243": "doseAdjustmentBackfill.ts",
   "246": "injectionDeepLink.ts",
-  "247": "TopChangesSection.tsx",
-  "248": "peptideStock.ts",
-  "249": "IntakeRow"
+  "248": "peptideStock.ts"
 }

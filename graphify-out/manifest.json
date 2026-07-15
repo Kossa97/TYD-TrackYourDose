@@ -375,7 +375,7 @@
     "semantic_hash": "5473988ddfff66d41ea2c81dcf9058ef"
   },
   "src/components/liveCycleChart/LiveCycleChartCanvas.tsx": {
-    "mtime": 1784072431.0803795,
+    "mtime": 1784077794.6535552,
     "ast_hash": "2eeec2357892ffca06f9a60cf6969017",
     "semantic_hash": ""
   },
@@ -1455,7 +1455,7 @@
     "semantic_hash": "d05eae83ad19253644db04632667bf9a"
   },
   "src/features/fortschritt/FortschrittPage.tsx": {
-    "mtime": 1784072431.0803795,
+    "mtime": 1784077794.6535552,
     "ast_hash": "dbad422c5c5fd69d4c9efc43d94f3c11",
     "semantic_hash": ""
   },
@@ -1495,12 +1495,12 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/CycleBandLayer.tsx": {
-    "mtime": 1784073163.6086924,
-    "ast_hash": "45a90e62645dd5518f77313aae8562a4",
+    "mtime": 1784078284.984014,
+    "ast_hash": "d6817a73ef1be66f41da0a5e2b96c7e3",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/MetricChart.tsx": {
-    "mtime": 1784075574.243025,
+    "mtime": 1784077794.6565554,
     "ast_hash": "051dfefecd028dcdbb235b4e501e178d",
     "semantic_hash": ""
   },
@@ -1520,12 +1520,12 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/chartTooltip.test.ts": {
-    "mtime": 1784073120.9907248,
+    "mtime": 1784077794.6585553,
     "ast_hash": "db4f5e760674941a08ea0b2d08530d52",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/chartTooltip.ts": {
-    "mtime": 1784073317.2404888,
+    "mtime": 1784077794.6585553,
     "ast_hash": "d593d056d161f419ac7c52396ca4c6db",
     "semantic_hash": ""
   },
@@ -1535,13 +1535,13 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/cycleLanes.test.ts": {
-    "mtime": 1783215233.0335603,
-    "ast_hash": "6ff2c4846bd4d35524bc9c52ec8ffc36",
+    "mtime": 1784078413.537866,
+    "ast_hash": "ade0e4858e3d76f9f79d0f6ffeeefae3",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/cycleLanes.ts": {
-    "mtime": 1783215233.0335603,
-    "ast_hash": "38baf48296fa0d4b8760476852b60a2c",
+    "mtime": 1784078279.3772078,
+    "ast_hash": "e7968c53bc326f57969cc7d04558278b",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/focusSummary.test.ts": {
@@ -1585,7 +1585,7 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/verlaufRange.ts": {
-    "mtime": 1784072431.0834117,
+    "mtime": 1784077794.6605556,
     "ast_hash": "0e332be272d51082223563a8ef680228",
     "semantic_hash": ""
   },
@@ -1810,12 +1810,12 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/FortschrittDashboard.tsx": {
-    "mtime": 1784072431.0803795,
+    "mtime": 1784077794.654556,
     "ast_hash": "6b86fe752ba94aaed8cf9ecd3a6294df",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/StickyRangeBar.tsx": {
-    "mtime": 1784072431.0818946,
+    "mtime": 1784077794.654556,
     "ast_hash": "fdfe224bc390645d19e4956acdb4e6db",
     "semantic_hash": ""
   },
@@ -1835,7 +1835,7 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/VerlaufSection.tsx": {
-    "mtime": 1784072431.0834117,
+    "mtime": 1784077794.657555,
     "ast_hash": "7d8a4beb52646be9c2946a5e8fa94cfe",
     "semantic_hash": ""
   },
@@ -1970,38 +1970,38 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/ChartWindowToggle.tsx": {
-    "mtime": 1784071756.9318256,
-    "ast_hash": "460af861e31abd7c8eb2090d80fbf0ae",
+    "mtime": 1784077794.655555,
+    "ast_hash": "5b72275e081620329e76dd368a1c260c",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/JumpToNowButton.tsx": {
-    "mtime": 1784071761.2430825,
-    "ast_hash": "110b5dba694b79950905987c734cb85b",
+    "mtime": 1784077794.6565554,
+    "ast_hash": "ce8f2840166d82991fe030653b15d5e4",
     "semantic_hash": ""
   },
   "src/features/fortschritt/hooks/useChartPan.ts": {
-    "mtime": 1784071785.4633987,
-    "ast_hash": "067cfe98d8d69b78210ecc42f0babb90",
+    "mtime": 1784077794.657555,
+    "ast_hash": "8df4046a5b3ce43e6faeb82f6e33513b",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/chartWindow.test.ts": {
-    "mtime": 1784071729.0548747,
-    "ast_hash": "1e2190064badc8365ee6f6436318091e",
+    "mtime": 1784077794.6595552,
+    "ast_hash": "1aead7933f027a71ef66eb325a00dfd4",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/chartWindow.ts": {
-    "mtime": 1784071740.8569539,
-    "ast_hash": "06cf3793d3411515733b0fafb867ef54",
+    "mtime": 1784077794.6595552,
+    "ast_hash": "68d28135b070b76b2a17daf09f27adad",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-15-fortschritt-chart-pan.md": {
-    "mtime": 1784071608.5764563,
-    "ast_hash": "3f0e457c0f30938ad7a29c495d829260",
+    "mtime": 1784077794.598423,
+    "ast_hash": "f25ab310924e2aff4956d3476d440565",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-07-15-fortschritt-chart-pan-design.md": {
-    "mtime": 1784070640.758124,
-    "ast_hash": "9a77d4fb91ece948ab940016dd1f6b63",
+    "mtime": 1784077794.599423,
+    "ast_hash": "141cefdf543f3ec6f1d6cf97d36b5a9f",
     "semantic_hash": ""
   }
 }

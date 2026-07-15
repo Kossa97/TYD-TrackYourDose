@@ -42,12 +42,19 @@ export function laneCount(bands: { lane: number }[]): number {
   return Math.max(...bands.map(b => b.lane)) + 1
 }
 
-/** Ab dieser Zeilenanzahl nutzen die Balken die volle Plot-Höhe */
-export const FULL_HEIGHT_LANE_COUNT = 5
+/** Ab dieser Zeilenanzahl erreichen die Balken ihre maximale Blockhöhe */
+export const MAX_BLOCK_LANE_COUNT = 5
+
+/**
+ * Anteil der Plot-Höhe, den der Balken-Block höchstens einnimmt. Über den ganzen
+ * Plot gezogen überdecken die Bänder Kurve, Punkte und Werte — der Rest bleibt frei.
+ */
+export const BAND_BLOCK_MAX_RATIO = 0.55
 
 /**
  * Vertikale Aufteilung der Zyklus-Balken:
- * Weniger parallele Zyklen → geringere Gesamthöhe, mehr Zyklen → volle Y-Höhe.
+ * Weniger parallele Zyklen → geringere Gesamthöhe, mehr Zyklen → höherer Block,
+ * gedeckelt auf BAND_BLOCK_MAX_RATIO der Plot-Höhe.
  */
 export function computeCycleBandLayout(plotHeight: number, lanes: number): {
   blockHeight: number
@@ -59,7 +66,7 @@ export function computeCycleBandLayout(plotHeight: number, lanes: number): {
   }
 
   const laneGap = Math.max(3, Math.round(plotHeight * 0.012))
-  const fillRatio = Math.min(1, lanes / FULL_HEIGHT_LANE_COUNT)
+  const fillRatio = Math.min(1, lanes / MAX_BLOCK_LANE_COUNT) * BAND_BLOCK_MAX_RATIO
   const blockHeight = plotHeight * fillRatio
   const laneHeight = Math.max(4, (blockHeight - (lanes - 1) * laneGap) / lanes)
   const actualBlock = lanes * laneHeight + (lanes - 1) * laneGap

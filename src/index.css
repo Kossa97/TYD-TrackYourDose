@@ -571,7 +571,7 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
 :root {
   /* ── Semantic theme tokens (dark defaults) ── */
   --app-bg:          #020308;
-  --surface:         rgba(6,7,20,0.92);
+  --surface:         rgba(3,4,12,0.96);
   --surface-raised:  rgba(18,22,48,0.92);
   --surface-input:   rgba(2,3,12,0.82);
   --glass-bg:        rgba(6,7,20,0.78);
