@@ -36,6 +36,12 @@ import { useChartPan, type ChartPanHandle } from '../../hooks/useChartPan'
 import { pickChartTimeTicks } from '../../../../components/liveCycleChart/chartMath'
 
 const MIN_PX_PER_TICK = 52
+/** Feste Spalte links für die senkrechte Einheit — gedrehter Text braucht nur eine Zeilenhöhe. */
+const AXIS_UNIT_GUTTER = 14
+/** Höhe der X-Achsen-Beschriftung, damit die Einheit auf den Plot zentriert wird statt aufs Panel. */
+const AXIS_UNIT_BOTTOM_INSET = 24
+/** Wert + Delta zweizeilig — feste Höhe, damit die Kopfzeile den Chart nicht verschiebt. */
+const HEADER_VALUE_HEIGHT = 42
 
 interface Props {
   /** Voller Datenbereich — das Fenster schneidet daraus zu. */
@@ -67,28 +73,37 @@ function dateToTs(date: string): number {
 }
 
 /**
- * Y-Tick zweizeilig: Zahl oben, Einheit darunter. Nebeneinander sprengten lange
- * Lab-Einheiten wie "mIU/L" die Achsenbreite — und eine mitwachsende Achse
- * (width="auto") verschiebt bei jedem Metrik-Wechsel die ganze Plot-Fläche.
+ * Senkrechte Einheit links neben der Y-Achse. Gedrehter Text ist nur eine
+ * Zeilenhöhe breit — die Länge der Einheit kann die Achse also weder sprengen
+ * noch ihre Breite verändern. Beides ist bei "mIU/mL" & Co. sonst passiert.
  */
-function MetricAxisTick({ x = 0, y = 0, payload, unit }: {
-  x?: number
-  y?: number
-  payload?: { value: number | string }
-  unit: string
-}) {
+function AxisUnitLabel({ unit }: { unit: string }) {
+  if (!unit) return null
   return (
-    <text
-      x={x}
-      y={y}
-      textAnchor="end"
-      fill="var(--text-muted)"
-      fontSize={10}
-      fontWeight={700}
+    <div
+      aria-hidden
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: AXIS_UNIT_BOTTOM_INSET,
+        width: AXIS_UNIT_GUTTER,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        pointerEvents: 'none',
+      }}
     >
-      <tspan x={x} dy={unit ? '-0.1em' : '0.32em'}>{payload?.value}</tspan>
-      {unit && <tspan x={x} dy="1.05em" fillOpacity={0.72}>{unit}</tspan>}
-    </text>
+      <span style={{
+        transform: 'rotate(-90deg)',
+        whiteSpace: 'nowrap',
+        fontSize: '0.6rem',
+        fontWeight: 700,
+        color: 'var(--text-muted)',
+      }}>
+        {unit}
+      </span>
+    </div>
   )
 }
 
@@ -127,7 +142,7 @@ function MetricChartBody({
   )
 
   return (
-    <LineChart data={lineData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
+    <LineChart data={lineData} margin={{ top: 8, right: 12, bottom: 8, left: AXIS_UNIT_GUTTER }}>
       <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
       <XAxis
         dataKey="ts"
@@ -140,10 +155,11 @@ function MetricChartBody({
         tickLine={false}
         axisLine={false}
       />
-      {/* Feste Breite: eine mitwachsende Achse verschiebt die Plot-Fläche. */}
+      {/* Nur Zahlen, feste Breite: die Einheit steht senkrecht daneben, sonst
+          bestimmt ihre Länge die Achsenbreite und verschiebt die Plot-Fläche. */}
       <YAxis
         yAxisId="metric"
-        tick={<MetricAxisTick unit={metric.unit} />}
+        tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}
         tickLine={false}
         axisLine={false}
         width={40}
@@ -376,31 +392,34 @@ function MetricChartInner({
 
       <div style={{ paddingLeft: 12, marginBottom: 4, paddingRight: 150 }}>
         <p style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-dim)' }}>{metric.label}</p>
-        {(latest || delta) && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'baseline',
-            flexWrap: 'wrap',
-            gap: '2px 6px',
-            marginTop: 2,
-          }}>
-            {latest && (
-              <p style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text)', margin: 0 }}>
-                {formatTooltipValue(latest.value, metric.unit)}
-              </p>
-            )}
-            {delta && (
-              <p style={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: 'var(--text-muted)',
-                margin: 0,
-              }}>
-                {delta.delta > 0 ? '+' : ''}{formatTooltipValue(delta.delta, metric.unit)} im Zeitraum
-              </p>
-            )}
-          </div>
-        )}
+        {/* Feste Höhe, Wert und Delta immer untereinander: nebeneinander brachen
+            lange Einheiten wie "1.9 mIU/mL" um und schoben den Chart nach unten. */}
+        <div style={{ height: HEADER_VALUE_HEIGHT, marginTop: 2 }}>
+          {latest && (
+            <p style={{
+              fontSize: '1.25rem',
+              fontWeight: 900,
+              color: 'var(--text)',
+              margin: 0,
+              lineHeight: 1.15,
+              whiteSpace: 'nowrap',
+            }}>
+              {formatTooltipValue(latest.value, metric.unit)}
+            </p>
+          )}
+          {delta && (
+            <p style={{
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              color: 'var(--text-muted)',
+              margin: 0,
+              lineHeight: 1.3,
+              whiteSpace: 'nowrap',
+            }}>
+              {delta.delta > 0 ? '+' : ''}{formatTooltipValue(delta.delta, metric.unit)} im Zeitraum
+            </p>
+          )}
+        </div>
       </div>
       <div style={{ width: '100%', paddingLeft: 12, paddingRight: 12, boxSizing: 'border-box' }}>
         {metricBar}
@@ -411,6 +430,7 @@ function MetricChartInner({
         style={{ position: 'relative', touchAction: 'pan-y', userSelect: 'none', cursor: 'crosshair' }}
         {...handlers}
       >
+        <AxisUnitLabel unit={metric.unit} />
         <ResponsiveContainer width="100%" height={280}>
           <MetricChartBody
             lineData={lineData}
