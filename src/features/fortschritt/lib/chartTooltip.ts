@@ -79,7 +79,6 @@ export function buildTooltipSnapDates(
 export function buildSnapAnchors(
   snapDates: readonly string[],
   xScale: XScale,
-  plotArea: { x: number },
 ): SnapAnchor[] {
   const anchors: SnapAnchor[] = []
   for (const raw of snapDates) {
@@ -87,7 +86,7 @@ export function buildSnapAnchors(
     const hoverTs = dateToTs(dateIso)
     const px = xScale(hoverTs, { position: 'start' })
     if (px == null) continue
-    anchors.push({ dateIso, hoverTs, x: plotArea.x + px })
+    anchors.push({ dateIso, hoverTs, x: px })
   }
   return anchors
 }
@@ -128,16 +127,15 @@ export function resolveFluidChartHover(
   snapDates: readonly string[],
   xScale: XScale | undefined,
   xInverseScale: XInverseScale | undefined,
-  plotArea: { x: number } | undefined,
 ): {
   fluidX: number
   dateIso: string
   hoverTs: number
   snapStrength: number
 } | null {
-  if (cursorX == null || !xScale || !plotArea) return null
+  if (cursorX == null || !xScale) return null
 
-  const anchors = buildSnapAnchors(snapDates, xScale, plotArea)
+  const anchors = buildSnapAnchors(snapDates, xScale)
   const { x: fluidX, snapStrength, anchor } = resolveFluidCursorX(cursorX, anchors)
 
   if (anchor) {
@@ -193,9 +191,8 @@ export function nearestSnapHoverDate(
   cursorX: number | undefined,
   snapDates: readonly string[],
   xScale: XScale | undefined,
-  plotArea: { x: number } | undefined,
 ): { dateIso: string; hoverTs: number } | null {
-  if (cursorX == null || !xScale || !plotArea || snapDates.length === 0) return null
+  if (cursorX == null || !xScale || snapDates.length === 0) return null
 
   let best: { dateIso: string; hoverTs: number; dist: number } | null = null
   for (const raw of snapDates) {
@@ -203,7 +200,7 @@ export function nearestSnapHoverDate(
     const hoverTs = dateToTs(dateIso)
     const px = xScale(hoverTs, { position: 'start' })
     if (px == null) continue
-    const dist = Math.abs(cursorX - (plotArea.x + px))
+    const dist = Math.abs(cursorX - px)
     if (!best || dist < best.dist) {
       best = { dateIso, hoverTs, dist }
     }
@@ -217,16 +214,14 @@ export function cycleStartsNearCursor<T extends BandWithStart>(
   bands: T[],
   cursorX: number | undefined,
   xScale: XScale | undefined,
-  plotArea: { x: number } | undefined,
   threshold = TOOLTIP_CURSOR_PX_THRESHOLD,
 ): T[] {
-  if (cursorX == null || !xScale || !plotArea) return []
+  if (cursorX == null || !xScale) return []
 
   return bands.filter(band => {
     const px1 = xScale(band.x1, { position: 'start' })
     if (px1 == null) return false
-    const startX = plotArea.x + px1
-    return Math.abs(cursorX - startX) <= threshold
+    return Math.abs(cursorX - px1) <= threshold
   })
 }
 

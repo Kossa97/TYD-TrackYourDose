@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import {
-  usePlotArea,
   useXAxisInverseScale,
   useXAxisScale,
 } from 'recharts'
@@ -11,7 +10,6 @@ export function useFluidChartHover(snapDates: string[]) {
   const pointerX = useChartPointerX()
   const xScale = useXAxisScale()
   const xInverseScale = useXAxisInverseScale()
-  const plotArea = usePlotArea()
 
   return useMemo(
     () => resolveFluidChartHover(
@@ -19,8 +17,7 @@ export function useFluidChartHover(snapDates: string[]) {
       snapDates,
       xScale ?? undefined,
       xInverseScale ?? undefined,
-      plotArea ?? undefined,
     ),
-    [pointerX, snapDates, xScale, xInverseScale, plotArea],
+    [pointerX, snapDates, xScale, xInverseScale],
   )
 }

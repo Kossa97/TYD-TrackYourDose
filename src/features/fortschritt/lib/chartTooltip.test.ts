@@ -31,11 +31,10 @@ describe('chartTooltip', () => {
   it('resolves cursor date from inverse scale', () => {
     const aprilTs = Date.parse('2026-04-12T12:00:00')
     const xScale = (value: number) => {
-      if (value === aprilTs) return 120
+      if (value === aprilTs) return 130
       return 0
     }
-    const plotArea = { x: 10 }
-    const snap = nearestSnapHoverDate(130, ['2026-04-12'], xScale, plotArea)
+    const snap = nearestSnapHoverDate(130, ['2026-04-12'], xScale)
     expect(snap?.dateIso).toBe('2026-04-12')
   })
 
@@ -120,14 +119,23 @@ describe('chartTooltip', () => {
     expect(resolveTooltipCycleStarts(clamped, '2026-03-01')).toEqual([])
   })
 
+  it('uebernimmt die Skala-Pixel unveraendert als Anker', () => {
+    // Die Recharts-Achsenskala hat die Range [offset.left, offset.left + width],
+    // liefert also bereits absolute Pixel. Wer plotArea.x addiert, zaehlt den
+    // Plot-Offset doppelt und schiebt alle Anker nach rechts.
+    const febTs = Date.parse('2026-02-15T12:00:00')
+    const xScale = (value: number) => (value === febTs ? 54 : 0)
+    const anchors = buildSnapAnchors(['2026-02-15'], xScale)
+    expect(anchors[0].x).toBe(54)
+  })
+
   it('keeps cursor free far from anchors and blends near snap points', () => {
     const xScale = (value: number) => {
-      if (value === Date.parse('2026-02-15T12:00:00')) return 40
-      if (value === Date.parse('2026-04-12T12:00:00')) return 120
+      if (value === Date.parse('2026-02-15T12:00:00')) return 50
+      if (value === Date.parse('2026-04-12T12:00:00')) return 130
       return 0
     }
-    const plotArea = { x: 10 }
-    const anchors = buildSnapAnchors(['2026-02-15', '2026-04-12'], xScale, plotArea)
+    const anchors = buildSnapAnchors(['2026-02-15', '2026-04-12'], xScale)
 
     const free = resolveFluidCursorX(95, anchors)
     expect(free.x).toBe(95)
@@ -143,18 +151,16 @@ describe('chartTooltip', () => {
     const febTs = Date.parse('2026-02-15T12:00:00')
     const aprilTs = Date.parse('2026-04-12T12:00:00')
     const xScale = (value: number) => {
-      if (value === febTs) return 40
-      if (value === aprilTs) return 120
+      if (value === febTs) return 50
+      if (value === aprilTs) return 130
       return 0
     }
-    const xInverseScale = (pixelX: number) => febTs + ((pixelX - 50) / 70) * (aprilTs - febTs)
-    const plotArea = { x: 10 }
+    const xInverseScale = (pixelX: number) => febTs + ((pixelX - 50) / 80) * (aprilTs - febTs)
     const hover = resolveFluidChartHover(
       95,
       ['2026-02-15', '2026-04-12'],
       xScale,
       xInverseScale,
-      plotArea,
     )
 
     expect(hover?.fluidX).toBe(95)
@@ -166,12 +172,11 @@ describe('chartTooltip', () => {
     const aprilTs = Date.parse('2026-04-12T12:00:00')
     const febTs = Date.parse('2026-02-15T12:00:00')
     const xScale = (value: number) => {
-      if (value === aprilTs) return 120
-      if (value === febTs) return 40
+      if (value === aprilTs) return 130
+      if (value === febTs) return 50
       return 0
     }
-    const plotArea = { x: 10 }
-    const snap = nearestSnapHoverDate(55, ['2026-02-15', '2026-04-12'], xScale, plotArea)
+    const snap = nearestSnapHoverDate(55, ['2026-02-15', '2026-04-12'], xScale)
     expect(snap?.dateIso).toBe('2026-02-15')
   })
 })

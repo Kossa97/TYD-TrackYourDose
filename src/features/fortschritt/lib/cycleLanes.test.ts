@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assignLanes, BAND_BLOCK_MAX_RATIO, computeCycleBandLayout, intervalsOverlap, laneCount, MAX_BLOCK_LANE_COUNT } from './cycleLanes'
+import { assignLanes, computeCycleBandLayout, FULL_HEIGHT_LANE_COUNT, intervalsOverlap, laneCount } from './cycleLanes'
 
 describe('intervalsOverlap', () => {
   it('detects overlap', () => {
@@ -59,24 +59,19 @@ describe('computeCycleBandLayout', () => {
     const one = computeCycleBandLayout(plotHeight, 1)
     const five = computeCycleBandLayout(plotHeight, 5)
     expect(one.blockHeight).toBeLessThan(five.blockHeight)
-    expect(five.blockHeight).toBeCloseTo(plotHeight * BAND_BLOCK_MAX_RATIO, -1)
+    expect(five.blockHeight).toBeCloseTo(plotHeight, -1)
   })
 
-  it('scales linearly up to MAX_BLOCK_LANE_COUNT', () => {
+  it('scales linearly up to FULL_HEIGHT_LANE_COUNT', () => {
     const three = computeCycleBandLayout(plotHeight, 3)
-    expect(three.blockHeight).toBeCloseTo(
-      plotHeight * (3 / MAX_BLOCK_LANE_COUNT) * BAND_BLOCK_MAX_RATIO,
-      -1,
-    )
+    expect(three.blockHeight).toBeCloseTo(plotHeight * (3 / FULL_HEIGHT_LANE_COUNT), -1)
   })
 
-  it('laesst der Kurve Platz, solange die Mindest-Zeilenhoehe nicht greift', () => {
-    // Volle Plot-Hoehe machte die Baender so dominant, dass Kurve und Werte untergingen.
-    // Jenseits von ~8 Zeilen gewinnt die Mindesthoehe von 4px pro Zeile gegen den
-    // Deckel — das ist gewollt, sonst waeren die Balken nicht mehr erkennbar.
-    for (const lanes of [1, 3, 5, 8]) {
-      const layout = computeCycleBandLayout(plotHeight, lanes)
-      expect(layout.blockHeight).toBeLessThanOrEqual(plotHeight * BAND_BLOCK_MAX_RATIO + 1)
-    }
+  it('teilt die volle Plot-Hoehe unter den Zeilen auf', () => {
+    // Ab FULL_HEIGHT_LANE_COUNT nutzen die Baender die ganze Hoehe und teilen sie
+    // gleichmaessig untereinander auf.
+    const five = computeCycleBandLayout(plotHeight, 5)
+    expect(five.blockHeight).toBeCloseTo(plotHeight, -1)
+    expect(five.laneHeight * 5 + five.laneGap * 4).toBeCloseTo(five.blockHeight, 5)
   })
 })

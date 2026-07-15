@@ -45,13 +45,15 @@ function bandLayout(
   const baseY = plotArea.y + plotArea.height - blockHeight
 
   return bands.flatMap(band => {
+    // xScale liefert bereits absolute Pixel (Range = [plotArea.x, plotArea.x + width]).
+    // plotArea.x zu addieren zaehlt den Offset doppelt und schiebt die Balken nach rechts.
     const px1 = xScale(band.x1, { position: 'start' })
     const px2 = xScale(band.x2, { position: 'end' })
     if (px1 == null || px2 == null) return []
 
-    const startX = plotArea.x + px1
-    const x = Math.min(startX, plotArea.x + px2)
-    const w = Math.max(Math.abs((plotArea.x + px2) - startX), 3)
+    const startX = px1
+    const x = Math.min(px1, px2)
+    const w = Math.max(Math.abs(px2 - px1), 3)
     const y = baseY + band.lane * (laneHeight + laneGap)
 
     return [{ band, x, y, w, startX, laneHeight }]
@@ -65,13 +67,12 @@ function isStartHighlighted(
   hoverDateIso: string | null,
   hoverTs: number | undefined,
   xScale: NonNullable<ReturnType<typeof useXAxisScale>>,
-  plotArea: NonNullable<ReturnType<typeof usePlotArea>>,
 ): boolean {
   if (!pointerActive || cursorX == null) return false
   if (hoverDateIso && cycleStartsAtHover([band], hoverDateIso, hoverTs).length > 0) {
     return true
   }
-  return cycleStartsNearCursor([band], cursorX, xScale, plotArea, HOVER_PX_THRESHOLD).length > 0
+  return cycleStartsNearCursor([band], cursorX, xScale, HOVER_PX_THRESHOLD).length > 0
 }
 
 /**
@@ -128,7 +129,6 @@ export function CycleBandLayer({ bands, lanes, snapDates }: Props) {
               hover?.dateIso ?? null,
               hover?.hoverTs,
               xScale,
-              plotArea,
             )
 
             return (
