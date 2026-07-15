@@ -20,10 +20,9 @@ interface Props {
   rangeChip: RangeChipKey
   onLogToday: () => void
   onReload: () => void
-  onRangeLockedChange: (locked: boolean) => void
 }
 
-export function FortschrittDashboard({ state, rangeChip, onLogToday, onReload, onRangeLockedChange }: Props) {
+export function FortschrittDashboard({ state, rangeChip, onLogToday, onReload }: Props) {
   const [chartNav, setChartNav] = useState<ChartNavigation | null>(null)
 
   const pageRange = useMemo(
@@ -89,10 +88,8 @@ export function FortschrittDashboard({ state, rangeChip, onLogToday, onReload, o
 
       <VerlaufSection
         state={state}
-        pageRange={pageRange}
         chartNav={chartNav}
         onChartNavConsumed={handleChartNavConsumed}
-        onRangeLockedChange={onRangeLockedChange}
       />
 
       {!hasActiveSubstances && <NoSubstancesBanner />}

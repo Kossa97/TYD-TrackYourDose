@@ -1500,8 +1500,8 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/MetricChart.tsx": {
-    "mtime": 1784075574.243025,
-    "ast_hash": "051dfefecd028dcdbb235b4e501e178d",
+    "mtime": 1784074422.272042,
+    "ast_hash": "1d4da4fd88c1e63bdc0c72a60de9152b",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/MetricTooltip.tsx": {

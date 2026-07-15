@@ -375,9 +375,9 @@
     "semantic_hash": "5473988ddfff66d41ea2c81dcf9058ef"
   },
   "src/components/liveCycleChart/LiveCycleChartCanvas.tsx": {
-    "mtime": 1784072431.0803795,
-    "ast_hash": "2eeec2357892ffca06f9a60cf6969017",
-    "semantic_hash": ""
+    "mtime": 1780510239.389196,
+    "ast_hash": "fbb6fadacf9cc9b5955937de00ad2bf3",
+    "semantic_hash": "fbb6fadacf9cc9b5955937de00ad2bf3"
   },
   "src/components/liveCycleChart/SimulationChartCanvas.tsx": {
     "mtime": 1780357387.3367755,
@@ -970,13 +970,13 @@
     "semantic_hash": ""
   },
   "src/pages/Peptide.test.ts": {
-    "mtime": 1784067813.0943954,
-    "ast_hash": "59d0eabcbc09e410baa5b1700c5f0387",
+    "mtime": 1783995314.263687,
+    "ast_hash": "4a738b4ec9b061d93560c3b9fc79748d",
     "semantic_hash": ""
   },
   "src/pages/Peptide.tsx": {
-    "mtime": 1784067779.4633126,
-    "ast_hash": "bb8b884e9efa388d32e601cec24c1d1d",
+    "mtime": 1783997457.6815374,
+    "ast_hash": "4835dea52d63226a2079c3f7d9f4a9c5",
     "semantic_hash": ""
   },
   "src/pages/PeptideDetailPage.tsx": {
@@ -1455,13 +1455,13 @@
     "semantic_hash": "d05eae83ad19253644db04632667bf9a"
   },
   "src/features/fortschritt/FortschrittPage.tsx": {
-    "mtime": 1784072431.0803795,
-    "ast_hash": "dbad422c5c5fd69d4c9efc43d94f3c11",
+    "mtime": 1783995314.242414,
+    "ast_hash": "9203d726c01bc1a2b9eec812daefc2c6",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/FortschrittHeader.tsx": {
-    "mtime": 1783997867.6998305,
-    "ast_hash": "97f96dd5fc16fc7e75c32bca3710ce5f",
+    "mtime": 1783995314.242414,
+    "ast_hash": "cb68b874c203a650ac9995e06b060b0d",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/PlaceholderTab.tsx": {
@@ -1495,13 +1495,13 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/CycleBandLayer.tsx": {
-    "mtime": 1784073163.6086924,
-    "ast_hash": "45a90e62645dd5518f77313aae8562a4",
+    "mtime": 1783995314.245434,
+    "ast_hash": "b88af1d9fd6a137f49a95b7d6ee2dfe2",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/MetricChart.tsx": {
-    "mtime": 1784075574.243025,
-    "ast_hash": "051dfefecd028dcdbb235b4e501e178d",
+    "mtime": 1783995314.2469428,
+    "ast_hash": "596ce0e1387520c4575d4e2eadf657f6",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/MetricTooltip.tsx": {
@@ -1520,13 +1520,13 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/chartTooltip.test.ts": {
-    "mtime": 1784073120.9907248,
-    "ast_hash": "db4f5e760674941a08ea0b2d08530d52",
+    "mtime": 1783995314.2514935,
+    "ast_hash": "c945b0179aa6f7a1ac6a38b98b097f85",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/chartTooltip.ts": {
-    "mtime": 1784073317.2404888,
-    "ast_hash": "d593d056d161f419ac7c52396ca4c6db",
+    "mtime": 1783995314.2514935,
+    "ast_hash": "24b66267a7afac9d0dcba26a27d81924",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/colors.ts": {
@@ -1585,8 +1585,8 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/verlaufRange.ts": {
-    "mtime": 1784072431.0834117,
-    "ast_hash": "0e332be272d51082223563a8ef680228",
+    "mtime": 1783495404.0602117,
+    "ast_hash": "43af0e9a1f231973fce5a43b226fbbb4",
     "semantic_hash": ""
   },
   "src/features/fortschritt/styles.ts": {
@@ -1810,13 +1810,13 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/FortschrittDashboard.tsx": {
-    "mtime": 1784072431.0803795,
-    "ast_hash": "6b86fe752ba94aaed8cf9ecd3a6294df",
+    "mtime": 1783495404.053212,
+    "ast_hash": "1f7a6241954940dd6860abfd12454ab8",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/StickyRangeBar.tsx": {
-    "mtime": 1784072431.0818946,
-    "ast_hash": "fdfe224bc390645d19e4956acdb4e6db",
+    "mtime": 1783495404.0542128,
+    "ast_hash": "06919fcbc4ecd9e59a45ef5e70609793",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/blutwerte/BlutwerteCard.tsx": {
@@ -1835,8 +1835,8 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/VerlaufSection.tsx": {
-    "mtime": 1784072431.0834117,
-    "ast_hash": "7d8a4beb52646be9c2946a5e8fa94cfe",
+    "mtime": 1783995314.2469428,
+    "ast_hash": "7fdee688f4faf247c5e3b4712b25f692",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/VerlaufSetup.tsx": {
@@ -1962,46 +1962,6 @@
   "docs/superpowers/specs/2026-07-14-fullscreen-substance-archive-design.md": {
     "mtime": 1783987554.5842426,
     "ast_hash": "c5c778a59d26e446437a6eefe59e8787",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/components/FortschrittHeader.test.ts": {
-    "mtime": 1783998278.906504,
-    "ast_hash": "7efd98b75f09425abd9ce821f28a319d",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/components/verlauf/ChartWindowToggle.tsx": {
-    "mtime": 1784071756.9318256,
-    "ast_hash": "460af861e31abd7c8eb2090d80fbf0ae",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/components/verlauf/JumpToNowButton.tsx": {
-    "mtime": 1784071761.2430825,
-    "ast_hash": "110b5dba694b79950905987c734cb85b",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/hooks/useChartPan.ts": {
-    "mtime": 1784071785.4633987,
-    "ast_hash": "067cfe98d8d69b78210ecc42f0babb90",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/lib/chartWindow.test.ts": {
-    "mtime": 1784071729.0548747,
-    "ast_hash": "1e2190064badc8365ee6f6436318091e",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/lib/chartWindow.ts": {
-    "mtime": 1784071740.8569539,
-    "ast_hash": "06cf3793d3411515733b0fafb867ef54",
-    "semantic_hash": ""
-  },
-  "docs/superpowers/plans/2026-07-15-fortschritt-chart-pan.md": {
-    "mtime": 1784071608.5764563,
-    "ast_hash": "3f0e457c0f30938ad7a29c495d829260",
-    "semantic_hash": ""
-  },
-  "docs/superpowers/specs/2026-07-15-fortschritt-chart-pan-design.md": {
-    "mtime": 1784070640.758124,
-    "ast_hash": "9a77d4fb91ece948ab940016dd1f6b63",
     "semantic_hash": ""
   }
 }

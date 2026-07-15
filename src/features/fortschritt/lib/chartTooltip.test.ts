@@ -13,9 +13,9 @@ import {
 
 describe('chartTooltip', () => {
   const bands = [
-    { id: 'a', startDate: '2026-01-23', x1: Date.parse('2026-01-23T12:00:00') },
-    { id: 'b', startDate: '2026-01-23', x1: Date.parse('2026-01-23T12:00:00') },
-    { id: 'c', startDate: '2026-04-12', x1: Date.parse('2026-04-12T12:00:00') },
+    { id: 'a', startDate: '2026-01-23', x1: Date.parse('2026-01-23T12:00:00'), startVisible: true },
+    { id: 'b', startDate: '2026-01-23', x1: Date.parse('2026-01-23T12:00:00'), startVisible: true },
+    { id: 'c', startDate: '2026-04-12', x1: Date.parse('2026-04-12T12:00:00'), startVisible: true },
   ]
 
   const chartData = [
@@ -88,11 +88,36 @@ describe('chartTooltip', () => {
     const dates = buildTooltipSnapDates(
       ['2026-02-15', '2026-04-12'],
       [
-        { x1: Date.parse('2026-01-23T12:00:00'), startDate: '2026-01-23' },
-        { x1: Date.parse('2026-04-12T12:00:00'), startDate: '2026-04-12' },
+        { startDate: '2026-01-23', startVisible: true },
+        { startDate: '2026-04-12', startVisible: true },
       ],
     )
     expect(dates).toEqual(['2026-01-23', '2026-02-15', '2026-04-12'])
+  })
+
+  it('nimmt Zyklus-Starts ausserhalb des Fensters nicht als Einrast-Punkt', () => {
+    const dates = buildTooltipSnapDates(
+      ['2026-03-05'],
+      [
+        // Zyklus begann im Januar, das Fenster startet erst im Maerz.
+        { startDate: '2026-01-01', startVisible: false },
+        { startDate: '2026-03-10', startVisible: true },
+      ],
+    )
+    expect(dates).toEqual(['2026-03-05', '2026-03-10'])
+  })
+
+  it('zaehlt einen aufs Fenster geklemmten Balkenanfang nicht als Zyklus-Start', () => {
+    // Zyklus lief seit Januar; beim Wischen liegt sein Balkenanfang auf dem
+    // linken Fensterrand (01.03.) — dort beginnt aber kein Zyklus.
+    const clamped = [{
+      id: 'alt',
+      startDate: '2026-01-01',
+      x1: Date.parse('2026-03-01T12:00:00'),
+      startVisible: false,
+    }]
+    expect(cycleStartsAtHover(clamped, '2026-03-01')).toEqual([])
+    expect(resolveTooltipCycleStarts(clamped, '2026-03-01')).toEqual([])
   })
 
   it('keeps cursor free far from anchors and blends near snap points', () => {

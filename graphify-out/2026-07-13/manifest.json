@@ -290,14 +290,14 @@
     "semantic_hash": "a16e168156009861605afce4b5a2cc81"
   },
   "src/components/PeptideVialVisual.test.ts": {
-    "mtime": 1783997203.0231824,
-    "ast_hash": "80a9ed37cea80f260a4f90819332b7d7",
-    "semantic_hash": ""
+    "mtime": 1783569470.6787329,
+    "ast_hash": "6c3bbe5653d79726886864eb395f248a",
+    "semantic_hash": "6c3bbe5653d79726886864eb395f248a"
   },
   "src/components/PeptideVialVisual.tsx": {
-    "mtime": 1783997157.8303823,
-    "ast_hash": "6035071b2f966f13786e95057d1fff7a",
-    "semantic_hash": ""
+    "mtime": 1783569470.679732,
+    "ast_hash": "159d4cd17b255513a8f17f7fd24c851b",
+    "semantic_hash": "159d4cd17b255513a8f17f7fd24c851b"
   },
   "src/components/ProtectedRoute.tsx": {
     "mtime": 1778601639.918923,
@@ -375,9 +375,9 @@
     "semantic_hash": "5473988ddfff66d41ea2c81dcf9058ef"
   },
   "src/components/liveCycleChart/LiveCycleChartCanvas.tsx": {
-    "mtime": 1784072431.0803795,
-    "ast_hash": "2eeec2357892ffca06f9a60cf6969017",
-    "semantic_hash": ""
+    "mtime": 1780510239.389196,
+    "ast_hash": "fbb6fadacf9cc9b5955937de00ad2bf3",
+    "semantic_hash": "fbb6fadacf9cc9b5955937de00ad2bf3"
   },
   "src/components/liveCycleChart/SimulationChartCanvas.tsx": {
     "mtime": 1780357387.3367755,
@@ -615,74 +615,74 @@
     "semantic_hash": "2d1e8bb72c0189b31289b65af1c2f1af"
   },
   "src/i18n/locales/ar.json": {
-    "mtime": 1783995314.2530096,
-    "ast_hash": "5a9d08dbae63522d6e9f443f10abcaff",
-    "semantic_hash": ""
+    "mtime": 1783030559.5411751,
+    "ast_hash": "5db79311249b0a5b1cb42eee194e504a",
+    "semantic_hash": "5db79311249b0a5b1cb42eee194e504a"
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1783995314.2530096,
-    "ast_hash": "6c470450c1c714abf9a7830b65fd868b",
+    "mtime": 1783959568.1288779,
+    "ast_hash": "96e341a39aab505307f0133b08ab2c52",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1783995314.2550354,
-    "ast_hash": "9ce058fd3565029d839b1dcf52e0a4b3",
+    "mtime": 1783959576.468187,
+    "ast_hash": "0f4ce12823110e1633c7ca2a92cbe4a0",
     "semantic_hash": ""
   },
   "src/i18n/locales/es.json": {
-    "mtime": 1783995314.255546,
-    "ast_hash": "6c73fadf7aeb5c0a40ffaaa187fd98d5",
-    "semantic_hash": ""
+    "mtime": 1783030559.5431757,
+    "ast_hash": "5c84fea0cf15ca2ca039184ccc39751f",
+    "semantic_hash": "5c84fea0cf15ca2ca039184ccc39751f"
   },
   "src/i18n/locales/fr.json": {
-    "mtime": 1783995314.2560587,
-    "ast_hash": "92dd8dfef40b110f2670dde4ae2b8c40",
-    "semantic_hash": ""
+    "mtime": 1783030559.5441763,
+    "ast_hash": "fb09eadf8730f0929ffba6278934cd83",
+    "semantic_hash": "fb09eadf8730f0929ffba6278934cd83"
   },
   "src/i18n/locales/hi.json": {
-    "mtime": 1783995314.2566056,
-    "ast_hash": "f512306165af40b2e6342e606c5c2f24",
-    "semantic_hash": ""
+    "mtime": 1783030559.5451758,
+    "ast_hash": "32e07ab70e24d1666099d8cb6510e41e",
+    "semantic_hash": "32e07ab70e24d1666099d8cb6510e41e"
   },
   "src/i18n/locales/id.json": {
-    "mtime": 1783995314.2566056,
-    "ast_hash": "d9329e0a7a1b295de3e37010a4fa3dad",
-    "semantic_hash": ""
+    "mtime": 1783030559.5451758,
+    "ast_hash": "0bcf9ac28810b8ad77a51b3cbee0842e",
+    "semantic_hash": "0bcf9ac28810b8ad77a51b3cbee0842e"
   },
   "src/i18n/locales/it.json": {
-    "mtime": 1783995314.2586317,
-    "ast_hash": "19c844c3234c113ce52808a4fb4c5297",
-    "semantic_hash": ""
+    "mtime": 1783030559.5461755,
+    "ast_hash": "d8598a1b0563cdbd303b68e8a8fef447",
+    "semantic_hash": "d8598a1b0563cdbd303b68e8a8fef447"
   },
   "src/i18n/locales/ja.json": {
-    "mtime": 1783995314.2591405,
-    "ast_hash": "6f99f7f8b1b52bc6938cc920b3ac79d8",
-    "semantic_hash": ""
+    "mtime": 1783030559.5461755,
+    "ast_hash": "b45559180e40d09ec1401b626ae5722c",
+    "semantic_hash": "b45559180e40d09ec1401b626ae5722c"
   },
   "src/i18n/locales/ko.json": {
-    "mtime": 1783995314.2591405,
-    "ast_hash": "a8813fdba3763c21dfddad7192f72fc8",
-    "semantic_hash": ""
+    "mtime": 1783030559.5471756,
+    "ast_hash": "29004dbc18de101e8f4d96d24f9e6afa",
+    "semantic_hash": "29004dbc18de101e8f4d96d24f9e6afa"
   },
   "src/i18n/locales/pt.json": {
-    "mtime": 1783995314.2606554,
-    "ast_hash": "3fcdaf567a547cba51d61c67f05b3eaf",
-    "semantic_hash": ""
+    "mtime": 1783030559.5481756,
+    "ast_hash": "ab241ce60c76f285e604fd21d26c2c3e",
+    "semantic_hash": "ab241ce60c76f285e604fd21d26c2c3e"
   },
   "src/i18n/locales/ru.json": {
-    "mtime": 1783995314.2606554,
-    "ast_hash": "5f35833e4f798d10714d4d2227ce796b",
-    "semantic_hash": ""
+    "mtime": 1783030559.5481756,
+    "ast_hash": "814a1d9b99fea4b5dedd90bfdb0a4331",
+    "semantic_hash": "814a1d9b99fea4b5dedd90bfdb0a4331"
   },
   "src/i18n/locales/tr.json": {
-    "mtime": 1783995314.262172,
-    "ast_hash": "0556ff76533288ee34456463aec61e3c",
-    "semantic_hash": ""
+    "mtime": 1783030559.5491765,
+    "ast_hash": "376a06ca67335f951ba75d00385b3f5b",
+    "semantic_hash": "376a06ca67335f951ba75d00385b3f5b"
   },
   "src/i18n/locales/zh.json": {
-    "mtime": 1783995314.262172,
-    "ast_hash": "aaf162e15ba44142fb10e99d7f3fd493",
-    "semantic_hash": ""
+    "mtime": 1783030559.5491765,
+    "ast_hash": "5a1f86a5871ce2c364d91afd1c298b42",
+    "semantic_hash": "5a1f86a5871ce2c364d91afd1c298b42"
   },
   "src/lib/dailyLogs.ts": {
     "mtime": 1783215233.037562,
@@ -930,13 +930,13 @@
     "semantic_hash": "f0d57e27df487d020d94158896ea8f8b"
   },
   "src/pages/Dashboard.test.ts": {
-    "mtime": 1783968463.1036406,
-    "ast_hash": "fcd67f334ac2dee1b0c3db2a3e7f9acd",
-    "semantic_hash": ""
+    "mtime": 1783030559.554176,
+    "ast_hash": "c019248e559326da56d5b816d59c738a",
+    "semantic_hash": "c019248e559326da56d5b816d59c738a"
   },
   "src/pages/Dashboard.tsx": {
-    "mtime": 1783968772.0195153,
-    "ast_hash": "2d3c8896c9e302c7b96dffd09f3f713f",
+    "mtime": 1783952701.0395746,
+    "ast_hash": "fc77413eb11b8e3fb4ec3a430b6dbff9",
     "semantic_hash": ""
   },
   "src/pages/FAQ.tsx": {
@@ -970,13 +970,13 @@
     "semantic_hash": ""
   },
   "src/pages/Peptide.test.ts": {
-    "mtime": 1784067813.0943954,
-    "ast_hash": "59d0eabcbc09e410baa5b1700c5f0387",
+    "mtime": 1783959661.58199,
+    "ast_hash": "eeb50d3b951180d2cc42c507b39bc978",
     "semantic_hash": ""
   },
   "src/pages/Peptide.tsx": {
-    "mtime": 1784067779.4633126,
-    "ast_hash": "bb8b884e9efa388d32e601cec24c1d1d",
+    "mtime": 1783959647.0034144,
+    "ast_hash": "022fc0281424a2264f1071e509cc7830",
     "semantic_hash": ""
   },
   "src/pages/PeptideDetailPage.tsx": {
@@ -1455,13 +1455,13 @@
     "semantic_hash": "d05eae83ad19253644db04632667bf9a"
   },
   "src/features/fortschritt/FortschrittPage.tsx": {
-    "mtime": 1784072431.0803795,
-    "ast_hash": "dbad422c5c5fd69d4c9efc43d94f3c11",
+    "mtime": 1783495404.053212,
+    "ast_hash": "946b8ac0d0189877b8d1a2889609655f",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/FortschrittHeader.tsx": {
-    "mtime": 1783997867.6998305,
-    "ast_hash": "97f96dd5fc16fc7e75c32bca3710ce5f",
+    "mtime": 1783495404.0542128,
+    "ast_hash": "980fd5da88d271f6a69a7dbdf317ce21",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/PlaceholderTab.tsx": {
@@ -1470,8 +1470,8 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/TodayLogSheet.tsx": {
-    "mtime": 1783996651.6190426,
-    "ast_hash": "b3deffd3e97ee139e852fad7edc1da10",
+    "mtime": 1783215233.0255601,
+    "ast_hash": "5a58df7404201d34fe62da11f8370707",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/fotos/FotosTab.tsx": {
@@ -1495,18 +1495,18 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/CycleBandLayer.tsx": {
-    "mtime": 1784073163.6086924,
-    "ast_hash": "45a90e62645dd5518f77313aae8562a4",
+    "mtime": 1783215233.0285606,
+    "ast_hash": "bb603e74f507f7e4fdeba9a986e19ecb",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/MetricChart.tsx": {
-    "mtime": 1784075574.243025,
-    "ast_hash": "051dfefecd028dcdbb235b4e501e178d",
+    "mtime": 1783495404.0552127,
+    "ast_hash": "94d6456d38278c0d7d06c681e969c8b0",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/MetricTooltip.tsx": {
-    "mtime": 1783995314.2469428,
-    "ast_hash": "cd85c6e1f45e59544b3e87b02ba5e4c5",
+    "mtime": 1783495404.0562127,
+    "ast_hash": "6907cd7d4629e580d403bd0b37e74228",
     "semantic_hash": ""
   },
   "src/features/fortschritt/constants.ts": {
@@ -1515,18 +1515,18 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/hooks/useFortschrittData.ts": {
-    "mtime": 1783995314.2499738,
-    "ast_hash": "5cab31ae2b63881f666fd223268864e4",
+    "mtime": 1783215233.0325618,
+    "ast_hash": "efb7f612836a8e274c8d7ee79c82b6cd",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/chartTooltip.test.ts": {
-    "mtime": 1784073120.9907248,
-    "ast_hash": "db4f5e760674941a08ea0b2d08530d52",
+    "mtime": 1783495404.0582125,
+    "ast_hash": "edf741a9e8fb1dc6a07e1edbf83f39c4",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/chartTooltip.ts": {
-    "mtime": 1784073317.2404888,
-    "ast_hash": "d593d056d161f419ac7c52396ca4c6db",
+    "mtime": 1783495404.0582125,
+    "ast_hash": "a785d06d975b755c2ff31da0d948af0b",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/colors.ts": {
@@ -1585,8 +1585,8 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/verlaufRange.ts": {
-    "mtime": 1784072431.0834117,
-    "ast_hash": "0e332be272d51082223563a8ef680228",
+    "mtime": 1783495404.0602117,
+    "ast_hash": "43af0e9a1f231973fce5a43b226fbbb4",
     "semantic_hash": ""
   },
   "src/features/fortschritt/styles.ts": {
@@ -1595,8 +1595,8 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/types.ts": {
-    "mtime": 1783995314.2514935,
-    "ast_hash": "daeb47232511c561d162da1b1268b991",
+    "mtime": 1783495404.0602117,
+    "ast_hash": "df762e6dba9bacbfe6fba5cb9b12b1c9",
     "semantic_hash": ""
   },
   "supabase-fortschritt-redesign.sql": {
@@ -1805,18 +1805,18 @@
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-06-content-studio-sub1-content-engine.md": {
-    "mtime": 1783995314.2408786,
-    "ast_hash": "fe89b959206537214b8ee48c47f8197c",
+    "mtime": 1783629565.592299,
+    "ast_hash": "fab8cf98a216c05ffcb1ddd3265a220b",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/FortschrittDashboard.tsx": {
-    "mtime": 1784072431.0803795,
-    "ast_hash": "6b86fe752ba94aaed8cf9ecd3a6294df",
+    "mtime": 1783495404.053212,
+    "ast_hash": "1f7a6241954940dd6860abfd12454ab8",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/StickyRangeBar.tsx": {
-    "mtime": 1784072431.0818946,
-    "ast_hash": "fdfe224bc390645d19e4956acdb4e6db",
+    "mtime": 1783495404.0542128,
+    "ast_hash": "06919fcbc4ecd9e59a45ef5e70609793",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/blutwerte/BlutwerteCard.tsx": {
@@ -1834,19 +1834,24 @@
     "ast_hash": "717955448c163852ef6bbf03f8f598fa",
     "semantic_hash": ""
   },
+  "src/features/fortschritt/components/verlauf/SnapCursor.tsx": {
+    "mtime": 1783495404.0562127,
+    "ast_hash": "209ed45e6dc80594db0f02c4f90b60fb",
+    "semantic_hash": ""
+  },
   "src/features/fortschritt/components/verlauf/VerlaufSection.tsx": {
-    "mtime": 1784072431.0834117,
-    "ast_hash": "7d8a4beb52646be9c2946a5e8fa94cfe",
+    "mtime": 1783495404.0562127,
+    "ast_hash": "7db8fa9457426ea707d6e36fd2b13abe",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/VerlaufSetup.tsx": {
-    "mtime": 1783995314.2484593,
-    "ast_hash": "c54c5d24139d34ad1e9dcc53f1194e04",
+    "mtime": 1783495404.0572124,
+    "ast_hash": "026cfeddbb83939e22502cb40abc79c8",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/VerlaufSetupSheet.tsx": {
-    "mtime": 1783995314.2484593,
-    "ast_hash": "5d3be05a1eeea2c8b7fd6b8578fe4936",
+    "mtime": 1783495404.0572124,
+    "ast_hash": "3940a72cfdc7614a670f0cc748b58337",
     "semantic_hash": ""
   },
   "src/features/fortschritt/hooks/useChartVisibility.ts": {
@@ -1869,139 +1874,14 @@
     "ast_hash": "6c7fd65304f6a5e68fd1d4bf5529993f",
     "semantic_hash": ""
   },
-  "src/features/fortschritt/components/MetricWheelPicker.tsx": {
-    "mtime": 1783995314.2439246,
-    "ast_hash": "ea2ebfc0c1d18dec42d2465952d19227",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/components/TodayLogSheet.test.ts": {
-    "mtime": 1783996697.360574,
-    "ast_hash": "9be1a631f2044eecdce1b14f09a3e3f4",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/components/WellnessSliderRow.tsx": {
-    "mtime": 1783995314.2449296,
-    "ast_hash": "b9942ab96f74a25322e30836816cf3c8",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/components/verlauf/ChartPointerContext.tsx": {
-    "mtime": 1783995314.245434,
-    "ast_hash": "6467c578a07d297c823625b5e4e5f728",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/components/verlauf/FluidCursorLayer.tsx": {
-    "mtime": 1783995314.245434,
-    "ast_hash": "67f1023488501e8c4e7b0d8fcdbae7d8",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/components/verlauf/MetricChipBar.tsx": {
-    "mtime": 1783995314.2469428,
-    "ast_hash": "61b4a06d05c3077f8a688ab782069cd1",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/components/verlauf/useChartTooltipContent.ts": {
-    "mtime": 1783995314.2484593,
-    "ast_hash": "24efa9bfeeca3662a9a10b393db15484",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/components/verlauf/useFluidChartHover.ts": {
-    "mtime": 1783995314.2499738,
-    "ast_hash": "ad560babba77ddfac5cc55ff67eac6f4",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/hooks/useScrollLock.ts": {
-    "mtime": 1783995314.2499738,
-    "ast_hash": "639a045808292097846f521591161945",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/lib/metricDefaults.test.ts": {
-    "mtime": 1783995425.2003267,
-    "ast_hash": "dbbf8a5d6d8a46bc8811d8c8110f9619",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/lib/metricDefaults.ts": {
-    "mtime": 1783995454.3954418,
-    "ast_hash": "5c26963d7c1a125fd27cf871200a1249",
-    "semantic_hash": ""
-  },
   "supabase-archive.sql": {
-    "mtime": 1783995314.2651997,
-    "ast_hash": "473bf14e7d312077c2f461842202d346",
-    "semantic_hash": ""
-  },
-  "docs/superpowers/plans/2026-07-14-active-add-vial-glow.md": {
-    "mtime": 1783984300.9614441,
-    "ast_hash": "2af32d4acac110f3e38e6e54fb9eff43",
-    "semantic_hash": ""
-  },
-  "docs/superpowers/plans/2026-07-14-archive-substance-info.md": {
-    "mtime": 1783995314.2408786,
-    "ast_hash": "55cf3dc338a6f272eb98e5f04338cb78",
-    "semantic_hash": ""
-  },
-  "docs/superpowers/plans/2026-07-14-fullscreen-substance-archive.md": {
-    "mtime": 1783988017.9222622,
-    "ast_hash": "c37690df56a7b523701c8bb36378a092",
+    "mtime": 1783952535.3064003,
+    "ast_hash": "70284de376a4e7fe5de9525929fae86d",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-07-13-substanz-archivieren-loeschen-zyklus-beenden-design.md": {
     "mtime": 1783952407.3308918,
     "ast_hash": "5e4998871790e739b12bb6669f6be968",
-    "semantic_hash": ""
-  },
-  "docs/superpowers/specs/2026-07-14-active-add-vial-glow-design.md": {
-    "mtime": 1783984124.8286698,
-    "ast_hash": "0cf5dfdd486fbcef3dfa9120145b4db3",
-    "semantic_hash": ""
-  },
-  "docs/superpowers/specs/2026-07-14-archive-substance-info-design.md": {
-    "mtime": 1783995314.242414,
-    "ast_hash": "5b2d2e1de760d37cc53b4407963dccbe",
-    "semantic_hash": ""
-  },
-  "docs/superpowers/specs/2026-07-14-fullscreen-substance-archive-design.md": {
-    "mtime": 1783987554.5842426,
-    "ast_hash": "c5c778a59d26e446437a6eefe59e8787",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/components/FortschrittHeader.test.ts": {
-    "mtime": 1783998278.906504,
-    "ast_hash": "7efd98b75f09425abd9ce821f28a319d",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/components/verlauf/ChartWindowToggle.tsx": {
-    "mtime": 1784071756.9318256,
-    "ast_hash": "460af861e31abd7c8eb2090d80fbf0ae",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/components/verlauf/JumpToNowButton.tsx": {
-    "mtime": 1784071761.2430825,
-    "ast_hash": "110b5dba694b79950905987c734cb85b",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/hooks/useChartPan.ts": {
-    "mtime": 1784071785.4633987,
-    "ast_hash": "067cfe98d8d69b78210ecc42f0babb90",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/lib/chartWindow.test.ts": {
-    "mtime": 1784071729.0548747,
-    "ast_hash": "1e2190064badc8365ee6f6436318091e",
-    "semantic_hash": ""
-  },
-  "src/features/fortschritt/lib/chartWindow.ts": {
-    "mtime": 1784071740.8569539,
-    "ast_hash": "06cf3793d3411515733b0fafb867ef54",
-    "semantic_hash": ""
-  },
-  "docs/superpowers/plans/2026-07-15-fortschritt-chart-pan.md": {
-    "mtime": 1784071608.5764563,
-    "ast_hash": "3f0e457c0f30938ad7a29c495d829260",
-    "semantic_hash": ""
-  },
-  "docs/superpowers/specs/2026-07-15-fortschritt-chart-pan-design.md": {
-    "mtime": 1784070640.758124,
-    "ast_hash": "9a77d4fb91ece948ab940016dd1f6b63",
     "semantic_hash": ""
   }
 }
