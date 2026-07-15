@@ -66,6 +66,13 @@ function dateToTs(date: string): number {
   return dayToTsSafe(date, 12) ?? Date.now()
 }
 
+/** Achsen-Tick mit Einheit. Die Achse ist auto-breit, hier wird nichts gekürzt. */
+function formatAxisValue(value: number, unit: string): string {
+  if (!unit) return String(value)
+  if (unit === '%') return `${value}%`
+  return `${value} ${unit}`
+}
+
 function formatTooltipValue(value: number, unit: string): string {
   if (unit === 'kg') return `${value} kg`
   if (unit === '%') return `${value}%`
@@ -114,10 +121,10 @@ function MetricChartBody({
         tickLine={false}
         axisLine={false}
       />
-      {/* Einheit steht in der Kopfzeile und im Tooltip — auf der Achse nur Zahlen.
-          width="auto", damit lange Lab-Werte nicht abgeschnitten werden. */}
+      {/* width="auto": lange Lab-Einheiten wie "mIU/L" sprengten die feste Breite. */}
       <YAxis
         yAxisId="metric"
+        tickFormatter={v => formatAxisValue(Number(v), metric.unit)}
         tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}
         tickLine={false}
         axisLine={false}
