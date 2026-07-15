@@ -66,11 +66,30 @@ function dateToTs(date: string): number {
   return dayToTsSafe(date, 12) ?? Date.now()
 }
 
-/** Achsen-Tick mit Einheit. Die Achse ist auto-breit, hier wird nichts gekürzt. */
-function formatAxisValue(value: number, unit: string): string {
-  if (!unit) return String(value)
-  if (unit === '%') return `${value}%`
-  return `${value} ${unit}`
+/**
+ * Y-Tick zweizeilig: Zahl oben, Einheit darunter. Nebeneinander sprengten lange
+ * Lab-Einheiten wie "mIU/L" die Achsenbreite — und eine mitwachsende Achse
+ * (width="auto") verschiebt bei jedem Metrik-Wechsel die ganze Plot-Fläche.
+ */
+function MetricAxisTick({ x = 0, y = 0, payload, unit }: {
+  x?: number
+  y?: number
+  payload?: { value: number | string }
+  unit: string
+}) {
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor="end"
+      fill="var(--text-muted)"
+      fontSize={10}
+      fontWeight={700}
+    >
+      <tspan x={x} dy={unit ? '-0.1em' : '0.32em'}>{payload?.value}</tspan>
+      {unit && <tspan x={x} dy="1.05em" fillOpacity={0.72}>{unit}</tspan>}
+    </text>
+  )
 }
 
 function formatTooltipValue(value: number, unit: string): string {
@@ -121,14 +140,13 @@ function MetricChartBody({
         tickLine={false}
         axisLine={false}
       />
-      {/* width="auto": lange Lab-Einheiten wie "mIU/L" sprengten die feste Breite. */}
+      {/* Feste Breite: eine mitwachsende Achse verschiebt die Plot-Fläche. */}
       <YAxis
         yAxisId="metric"
-        tickFormatter={v => formatAxisValue(Number(v), metric.unit)}
-        tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}
+        tick={<MetricAxisTick unit={metric.unit} />}
         tickLine={false}
         axisLine={false}
-        width="auto"
+        width={40}
       />
 
       <CycleBandLayer bands={bands} lanes={lanes} snapDates={snapDates} />
