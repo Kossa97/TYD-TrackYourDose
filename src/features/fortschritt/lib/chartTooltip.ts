@@ -1,4 +1,6 @@
 import { format, parseISO } from 'date-fns'
+import type { MetricKey } from '../types'
+import type { ChartWindowKey } from './chartWindow'
 
 export const TOOLTIP_CURSOR_PX_THRESHOLD = 14
 /** Pixel-Radius, in dem der Cursor leicht zu Mess- und Zyklus-Startpunkten einrastet */
@@ -14,6 +16,51 @@ export interface SnapAnchor {
   x: number
 }
 
+export interface MetricChartPoint {
+  date: string
+  ts: number
+  value: number | null
+}
+
+export function usesReducedMetricPoints(
+  metricKey: MetricKey,
+  windowKey: ChartWindowKey,
+): boolean {
+  return windowKey === '3m'
+    && (metricKey === 'weight' || metricKey === 'body_fat')
+}
+
+export function nearestVisibleMetricPoint(
+  metricData: ReadonlyArray<MetricChartPoint>,
+  hoverTs: number,
+  viewStart: number,
+  viewEnd: number,
+): MetricChartPoint | null {
+  if (!Number.isFinite(hoverTs)) return null
+
+  let best: MetricChartPoint | null = null
+  let bestDistance = Number.POSITIVE_INFINITY
+
+  for (const point of metricData) {
+    if (
+      point.ts < viewStart
+      || point.ts > viewEnd
+      || point.value == null
+      || !Number.isFinite(point.value)
+    ) continue
+
+    const distance = Math.abs(point.ts - hoverTs)
+    if (
+      distance < bestDistance
+      || (distance === bestDistance && best != null && point.ts < best.ts)
+    ) {
+      best = point
+      bestDistance = distance
+    }
+  }
+
+  return best
+}
 export function smoothstep(t: number): number {
   const clamped = Math.min(1, Math.max(0, t))
   return clamped * clamped * (3 - 2 * clamped)

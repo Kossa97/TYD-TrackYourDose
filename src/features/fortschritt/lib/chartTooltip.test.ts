@@ -4,11 +4,13 @@ import {
   buildTooltipSnapDates,
   cycleStartsAtHover,
   metricValueAtDate,
+  nearestVisibleMetricPoint,
   nearestSnapHoverDate,
   resolveChartTooltipContent,
   resolveFluidChartHover,
   resolveFluidCursorX,
   resolveTooltipCycleStarts,
+  usesReducedMetricPoints,
 } from './chartTooltip'
 
 describe('chartTooltip', () => {
@@ -179,4 +181,58 @@ describe('chartTooltip', () => {
     const snap = nearestSnapHoverDate(55, ['2026-02-15', '2026-04-12'], xScale)
     expect(snap?.dateIso).toBe('2026-02-15')
   })
-})
+
+  it('uses reduced points only for weight and body fat in 3m', () => {
+    expect(usesReducedMetricPoints('weight', '3m')).toBe(true)
+    expect(usesReducedMetricPoints('body_fat', '3m')).toBe(true)
+    expect(usesReducedMetricPoints('weight', '30t')).toBe(false)
+    expect(usesReducedMetricPoints('body_fat', '30t')).toBe(false)
+    expect(usesReducedMetricPoints('Vitamin D', '3m')).toBe(false)
+  })
+
+  describe('nearest visible metric point', () => {
+    const points = [
+      { date: '2026-04-01', ts: Date.parse('2026-04-01T12:00:00'), value: 90 },
+      { date: '2026-04-10', ts: Date.parse('2026-04-10T12:00:00'), value: 88 },
+      { date: '2026-04-20', ts: Date.parse('2026-04-20T12:00:00'), value: 86 },
+    ]
+
+    it('selects the nearest real point without interpolation', () => {
+      const result = nearestVisibleMetricPoint(
+        points,
+        Date.parse('2026-04-17T12:00:00'),
+        Date.parse('2026-04-01T12:00:00'),
+        Date.parse('2026-04-30T12:00:00'),
+      )
+      expect(result).toEqual(points[2])
+    })
+
+    it('selects the older point when distances are equal', () => {
+      const result = nearestVisibleMetricPoint(
+        points.slice(0, 2),
+        Date.parse('2026-04-06T00:00:00'),
+        Date.parse('2026-04-01T12:00:00'),
+        Date.parse('2026-04-10T12:00:00'),
+      )
+      expect(result).toEqual(points[0])
+    })
+
+    it('ignores points outside the visible window', () => {
+      const result = nearestVisibleMetricPoint(
+        points,
+        Date.parse('2026-04-11T12:00:00'),
+        Date.parse('2026-04-15T12:00:00'),
+        Date.parse('2026-04-30T12:00:00'),
+      )
+      expect(result).toEqual(points[2])
+    })
+
+    it('returns null when the visible window has no valid points', () => {
+      expect(nearestVisibleMetricPoint(
+        points,
+        Date.parse('2026-05-10T12:00:00'),
+        Date.parse('2026-05-01T12:00:00'),
+        Date.parse('2026-05-31T12:00:00'),
+      )).toBeNull()
+    })
+  })})
