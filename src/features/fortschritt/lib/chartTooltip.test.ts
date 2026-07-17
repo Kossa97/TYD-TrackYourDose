@@ -21,8 +21,8 @@ describe('chartTooltip', () => {
   ]
 
   const chartData = [
-    { date: '2026-02-15', value: 87 },
-    { date: '2026-04-12', value: 84 },
+    { date: '2026-02-15', ts: Date.parse('2026-02-15T12:00:00'), value: 87 },
+    { date: '2026-04-12', ts: Date.parse('2026-04-12T12:00:00'), value: 84 },
   ]
 
   it('finds overlapping cycle starts on the same day', () => {
@@ -235,4 +235,50 @@ describe('chartTooltip', () => {
         Date.parse('2026-05-31T12:00:00'),
       )).toBeNull()
     })
-  })})
+  })
+  it('returns the nearest visible real metric point in reduced mode', () => {
+    const metricData = [
+      { date: '2026-04-10', ts: Date.parse('2026-04-10T12:00:00'), value: 88 },
+      { date: '2026-04-20', ts: Date.parse('2026-04-20T12:00:00'), value: 86 },
+    ]
+    const content = resolveChartTooltipContent({
+      hoverDateIso: '2026-04-18',
+      hoverTs: Date.parse('2026-04-18T12:00:00'),
+      bands: [],
+      metricData,
+      nearestMetric: true,
+      viewStart: Date.parse('2026-04-01T12:00:00'),
+      viewEnd: Date.parse('2026-04-30T12:00:00'),
+    })
+
+    expect(content?.dateIso).toBe('2026-04-18')
+    expect(content?.metricDateIso).toBe('2026-04-20')
+    expect(content?.metricTs).toBe(metricData[1].ts)
+    expect(content?.metricValue).toBe(86)
+  })
+
+  it('keeps cycle hover date while exposing a different real metric date', () => {
+    const content = resolveChartTooltipContent({
+      hoverDateIso: '2026-04-12',
+      hoverTs: Date.parse('2026-04-12T12:00:00'),
+      bands: [{
+        id: 'cycle',
+        startDate: '2026-04-12',
+        x1: Date.parse('2026-04-12T12:00:00'),
+        startVisible: true,
+      }],
+      metricData: [{
+        date: '2026-04-10',
+        ts: Date.parse('2026-04-10T12:00:00'),
+        value: 88,
+      }],
+      nearestMetric: true,
+      viewStart: Date.parse('2026-04-01T12:00:00'),
+      viewEnd: Date.parse('2026-04-30T12:00:00'),
+    })
+
+    expect(content?.dateIso).toBe('2026-04-12')
+    expect(content?.metricDateIso).toBe('2026-04-10')
+    expect(content?.starts.map(start => start.id)).toEqual(['cycle'])
+  })
+})

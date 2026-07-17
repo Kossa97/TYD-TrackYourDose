@@ -289,27 +289,43 @@ export function resolveTooltipCycleStarts<T extends BandWithStart>(
   return cycleStartsOnDate(bands, dateIso)
 }
 
-/** Tooltip-Inhalt strikt nach dem Cursor-Datum — kein Mischen benachbarter Tage. */
+/** Tooltip-Inhalt am Cursor; im reduzierten Modus mit naechstem echten Messpunkt. */
 export function resolveChartTooltipContent<T extends BandWithStart>({
   hoverDateIso,
+  hoverTs,
   bands,
   metricData,
+  nearestMetric = false,
+  viewStart = Number.NEGATIVE_INFINITY,
+  viewEnd = Number.POSITIVE_INFINITY,
 }: {
   hoverDateIso: string | null
+  hoverTs?: number
   bands: T[]
-  metricData: ReadonlyArray<{ date: string; value: number | null }>
+  metricData: ReadonlyArray<MetricChartPoint>
+  nearestMetric?: boolean
+  viewStart?: number
+  viewEnd?: number
 }): {
   dateIso: string
+  metricDateIso: string | null
+  metricTs: number | null
   metricValue: number | null
   starts: T[]
 } | null {
   if (!hoverDateIso) return null
 
   const dateIso = normalizeDateIso(hoverDateIso)
+  const selected = nearestMetric && hoverTs != null
+    ? nearestVisibleMetricPoint(metricData, hoverTs, viewStart, viewEnd)
+    : metricData.find(point => normalizeDateIso(point.date) === dateIso) ?? null
+  const hasMetric = selected?.value != null && Number.isFinite(selected.value)
 
   return {
     dateIso,
-    metricValue: metricValueAtDate(metricData, dateIso),
+    metricDateIso: hasMetric ? normalizeDateIso(selected!.date) : null,
+    metricTs: hasMetric ? selected!.ts : null,
+    metricValue: hasMetric ? selected!.value : null,
     starts: cycleStartsOnDate(bands, dateIso),
   }
 }
