@@ -6,7 +6,10 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // .claude/worktrees enthaelt vollstaendige Repo-Kopien inkl. eigener tsconfig.json.
+  // Ohne diese Ignores findet typescript-eslint mehrere tsconfigRootDir-Kandidaten
+  // und bricht repoweit ab.
+  globalIgnores(['dist', '**/.claude/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -17,6 +20,9 @@ export default defineConfig([
     ],
     languageOptions: {
       globals: globals.browser,
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
   },
 ])
