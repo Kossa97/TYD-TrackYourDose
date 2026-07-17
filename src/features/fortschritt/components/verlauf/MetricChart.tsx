@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useMemo } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { format } from 'date-fns'
 import { dayToTsSafe, formatDaySafe } from '../../lib/dates'
 import {
@@ -16,6 +16,7 @@ import type { MetricDefinition } from '../../lib/metricDefinitions'
 import { buildMetricSeries, computeDelta } from '../../lib/metrics'
 import type { BloodworkEntry, DailyLogEntry, WeightLogEntry } from '../../types'
 import { substanceBarEnd } from '../../lib/focusSummary'
+import { buildCycleLegendItems, type CycleLegendItem } from '../../lib/cycleLegend'
 import { assignLanes, laneCount } from '../../lib/cycleLanes'
 import { CycleBandLayer, type CycleBandDraw } from './CycleBandLayer'
 import {
@@ -25,7 +26,11 @@ import {
 } from './ChartPointerContext'
 import { FluidCursorLayer } from './FluidCursorLayer'
 import { MetricTooltip } from './MetricTooltip'
-import { buildTooltipSnapDates } from '../../lib/chartTooltip'
+import { ActiveMetricPointLayer } from './ActiveMetricPointLayer'
+import {
+  buildTooltipSnapDates,
+  usesReducedMetricPoints,
+} from '../../lib/chartTooltip'
 import { panel } from '../../styles'
 import { ChartSettingsButton } from './ChartSettingsButton'
 import { ChartWindowToggle } from './ChartWindowToggle'
@@ -42,6 +47,9 @@ const AXIS_UNIT_GUTTER = 14
 const AXIS_UNIT_BOTTOM_INSET = 24
 /** Wert + Delta zweizeilig — feste Höhe, damit die Kopfzeile den Chart nicht verschiebt. */
 const HEADER_VALUE_HEIGHT = 42
+const LINE_ANIMATION_MS = 900
+const POINT_ANIMATION_STEP_MS = 110
+const POINT_ANIMATION_MS = 360
 
 interface Props {
   /** Voller Datenbereich — das Fenster schneidet daraus zu. */
@@ -58,7 +66,6 @@ interface Props {
   bloodwork: BloodworkEntry[]
   cycles: CycleSubstance[]
   ongoing: OngoingSubstance[]
-  focusId: string | null
   onOpenSettings?: () => void
 }
 
@@ -113,27 +120,122 @@ function formatTooltipValue(value: number, unit: string): string {
   return unit ? `${value} ${unit}` : String(value)
 }
 
+type MetricLinePoint = { ts: number; date: string; label: string; value: number }
+
+function interpolateLinePoint(
+  ts: number,
+  left: MetricLinePoint,
+  right: MetricLinePoint,
+): MetricLinePoint {
+  const span = right.ts - left.ts
+  const ratio = span === 0 ? 0 : (ts - left.ts) / span
+  const date = format(new Date(ts), 'yyyy-MM-dd')
+
+  return {
+    ts,
+    date,
+    label: fmtDate(date),
+    value: left.value + (right.value - left.value) * ratio,
+  }
+}
+
+function clipLineDataToWindow(
+  data: MetricLinePoint[],
+  viewStart: number,
+  viewEnd: number,
+): MetricLinePoint[] {
+  const visible = data.filter(point => point.ts >= viewStart && point.ts <= viewEnd)
+  const beforeStart = [...data].reverse().find(point => point.ts < viewStart)
+  const afterStart = data.find(point => point.ts >= viewStart)
+
+  if (beforeStart && afterStart && afterStart.ts > viewStart) {
+    visible.unshift(interpolateLinePoint(viewStart, beforeStart, afterStart))
+  }
+
+  const beforeEnd = [...data].reverse().find(point => point.ts <= viewEnd)
+  const afterEnd = data.find(point => point.ts > viewEnd)
+
+  if (beforeEnd && afterEnd && visible.at(-1)?.ts !== viewEnd) {
+    visible.push(interpolateLinePoint(viewEnd, beforeEnd, afterEnd))
+  }
+
+  return visible
+}
+
 interface ChartBodyProps {
   lineData: Array<{ ts: number; date: string; label: string; value: number }>
+  visibleLineData: Array<{ ts: number; date: string; label: string; value: number }>
+  animationPointData: Array<{ ts: number; date: string; label: string; value: number }>
   snapDates: string[]
   bands: CycleBandDraw[]
   lanes: number
   metric: MetricDefinition
   viewStart: number
   viewEnd: number
+  animationKey: string
+  animateMetric: boolean
+  animateCycles: boolean
+  showPersistentDots: boolean
+  reducedMetricPoints: boolean
 }
 
+function AnimatedMetricDot({
+  cx,
+  cy,
+  animationIndex = 0,
+  fill,
+  stroke,
+  strokeWidth = 2,
+  animate = false,
+}: {
+  cx?: number
+  cy?: number
+  animationIndex?: number
+  fill?: string
+  stroke?: string
+  strokeWidth?: number
+  animate?: boolean
+}) {
+  if (cx == null || cy == null) return null
+
+  const animationDelay = animate
+    ? `${LINE_ANIMATION_MS + animationIndex * POINT_ANIMATION_STEP_MS}ms`
+    : undefined
+  return (
+    <circle
+      className={animate ? 'fortschritt-chart-point' : undefined}
+      style={animate ? { animationDelay } : undefined}
+      cx={cx}
+      cy={cy}
+      r={3}
+      fill={fill}
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+    />
+  )
+}
 function MetricChartBody({
   lineData,
+  visibleLineData,
+  animationPointData,
   snapDates,
   bands,
   lanes,
   metric,
   viewStart,
   viewEnd,
+  animationKey,
+  animateMetric,
+  animateCycles,
+  showPersistentDots,
+  reducedMetricPoints,
 }: ChartBodyProps) {
   const pointerX = useChartPointerX()
   const plotArea = usePlotArea()
+  const visiblePointIndex = useMemo(
+    () => new Map(animationPointData.map((point, index) => [point.ts, index])),
+    [animationPointData],
+  )
 
   // Kalendertage im Raster — wandern beim Wischen mit der Kurve.
   const xTicks = useMemo(
@@ -142,7 +244,7 @@ function MetricChartBody({
   )
 
   return (
-    <LineChart data={lineData} margin={{ top: 8, right: 12, bottom: 8, left: AXIS_UNIT_GUTTER }}>
+    <LineChart data={visibleLineData} margin={{ top: 8, right: 12, bottom: 8, left: AXIS_UNIT_GUTTER }}>
       <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
       <XAxis
         dataKey="ts"
@@ -165,7 +267,7 @@ function MetricChartBody({
         width={40}
       />
 
-      <CycleBandLayer bands={bands} lanes={lanes} snapDates={snapDates} />
+      <CycleBandLayer bands={bands} lanes={lanes} snapDates={snapDates} animate={animateCycles} />
       <FluidCursorLayer snapDates={snapDates} />
 
       <Tooltip
@@ -183,42 +285,57 @@ function MetricChartBody({
             metric={metric}
             metricData={lineData}
             snapDates={snapDates}
+            nearestMetric={reducedMetricPoints}
+            viewStart={viewStart}
+            viewEnd={viewEnd}
           />
         )}
       />
       <Line
+        key={`metric-line-${animationKey}`}
         yAxisId="metric"
         type="monotone"
         dataKey="value"
         name="value"
         stroke={metric.color}
         strokeWidth={2.5}
-        dot={{ r: 3, fill: '#07091a', stroke: metric.color, strokeWidth: 2 }}
+        dot={showPersistentDots ? (dotProps: any) => {
+          const animationIndex = dotProps.payload?.ts != null
+            ? visiblePointIndex.get(dotProps.payload.ts)
+            : undefined
+          if (animationIndex == null) return null
+          return (
+            <AnimatedMetricDot
+              {...dotProps}
+              fill="#07091a"
+              stroke={metric.color}
+              animationIndex={animationIndex}
+              strokeWidth={2}
+              animate={animateMetric}
+            />
+          )
+        } : false}
         connectNulls={!metric.isLab}
+        className={animateMetric ? 'fortschritt-chart-line-animated' : undefined}
         isAnimationActive={false}
+      />
+      <ActiveMetricPointLayer
+        enabled={reducedMetricPoints}
+        snapDates={snapDates}
+        bands={bands}
+        metricData={lineData}
+        viewStart={viewStart}
+        viewEnd={viewEnd}
+        color={metric.color}
       />
     </LineChart>
   )
 }
 
-function CycleLegend({ bands }: { bands: CycleBandDraw[] }) {
-  if (bands.length === 0) return null
-
+function CycleLegend({ items }: { items: CycleLegendItem[] }) {
   // Ein Eintrag pro Substanz statt pro Zyklus: mehrere Zyklen derselben Substanz
   // teilen sich Farbe und Namen, also auch nur einen Legenden-Punkt. Eine Substanz
   // gilt als gefüllt/hervorgehoben, wenn irgendeiner ihrer Balken es ist.
-  const legend = new Map<string, { name: string; color: string; filled: boolean; faded: boolean }>()
-  for (const band of bands) {
-    const key = `${band.name}|${band.color}`
-    const prev = legend.get(key)
-    if (!prev) {
-      legend.set(key, { name: band.name, color: band.color, filled: band.filled, faded: band.faded })
-    } else {
-      prev.filled = prev.filled || band.filled
-      prev.faded = prev.faded && band.faded
-    }
-  }
-  const items = [...legend.values()]
 
   return (
     <div style={{
@@ -237,8 +354,6 @@ function CycleLegend({ bands }: { bands: CycleBandDraw[] }) {
             display: 'flex',
             alignItems: 'center',
             gap: 7,
-            opacity: item.faded ? 0.38 : 1,
-            transition: 'opacity 0.18s',
           }}
         >
           <span style={{
@@ -274,7 +389,6 @@ function MetricChartInner({
   bloodwork,
   cycles,
   ongoing,
-  focusId,
   onOpenSettings,
 }, ref) {
   const setPointerX = useChartPointerSetter()
@@ -306,7 +420,6 @@ function MetricChartInner({
         name: substance.name,
         color: substance.color,
         filled,
-        faded: focusId != null && focusId !== substance.id,
         startDate: substance.startDate,
         startTs,
         x1: startTs,
@@ -323,7 +436,6 @@ function MetricChartInner({
       name: band.name,
       color: band.color,
       filled: band.filled,
-      faded: band.faded,
       startDate: band.startDate,
       startVisible: band.startTs >= viewStart && band.startTs <= viewEnd,
       x1: Math.max(band.x1, viewStart),
@@ -332,7 +444,9 @@ function MetricChartInner({
     })).filter(b => b.x2 > b.x1)
 
     return { bands, lanes }
-  }, [cycles, ongoing, focusId, viewStart, viewEnd])
+  }, [cycles, ongoing, viewStart, viewEnd])
+
+  const legendItems = useMemo(() => buildCycleLegendItems(cycles, ongoing), [cycles, ongoing])
 
   const lineData = useMemo(() => (
     series.map(point => ({
@@ -343,9 +457,64 @@ function MetricChartInner({
     }))
   ), [series])
 
-  const snapDates = useMemo(() => (
-    buildTooltipSnapDates(series.map(point => point.date), bands)
-  ), [series, bands])
+  // Randwerte werden interpoliert, damit die Reveal-Linie exakt im Sichtfenster bleibt.
+  const visibleLineData = useMemo(
+    () => clipLineDataToWindow(lineData, viewStart, viewEnd),
+    [lineData, viewStart, viewEnd],
+  )
+
+  // Nur echte Punkte innerhalb des Sichtfensters erhalten Reveal-Delays.
+  const animationPointData = useMemo(
+    () => lineData.filter(point => point.ts >= viewStart && point.ts <= viewEnd),
+    [lineData, viewStart, viewEnd],
+  )
+
+  const reducedMetricPoints = usesReducedMetricPoints(metricKey, windowKey)
+  const showPersistentDots = !reducedMetricPoints
+
+  const [animateMetric, setAnimateMetric] = useState(true)
+  const [animateCycles, setAnimateCycles] = useState(true)
+  const previousViewEndRef = useRef(viewEnd)
+
+  // Ein gemeinsamer Zustand haelt Linie und gestaffelte Punkte in derselben Sequenz.
+  // useLayoutEffect startet sie beim Metrikwechsel noch vor dem naechsten Paint.
+  useLayoutEffect(() => {
+    previousViewEndRef.current = viewEnd
+    setAnimateMetric(true)
+    const visiblePointTotal = animationPointData.length
+    if (typeof window === 'undefined') return undefined
+    const pointDuration = showPersistentDots
+      ? Math.max(0, visiblePointTotal - 1) * POINT_ANIMATION_STEP_MS + POINT_ANIMATION_MS
+      : 0
+    const duration = LINE_ANIMATION_MS + pointDuration + 100
+    const timeout = window.setTimeout(() => {
+      setAnimateMetric(false)
+    }, duration)
+    return () => {
+      window.clearTimeout(timeout)
+    }
+  }, [metricKey, lineData.length, showPersistentDots])
+
+  // Ein neuer Sichtfensterwert kommt vom Wischen oder einem Sprung. In beiden
+  // Faellen muessen neu erzeugte Punkte sofort sichtbar bleiben.
+  useEffect(() => {
+    if (previousViewEndRef.current !== viewEnd) {
+      previousViewEndRef.current = viewEnd
+      setAnimateMetric(false)
+      setAnimateCycles(false)
+    }
+  }, [viewEnd])
+
+  const chartAnimationsActive = animateMetric && previousViewEndRef.current === viewEnd
+
+  const metricSnapDates = useMemo(
+    () => reducedMetricPoints ? [] : series.map(point => point.date),
+    [reducedMetricPoints, series],
+  )
+  const snapDates = useMemo(
+    () => buildTooltipSnapDates(metricSnapDates, bands),
+    [metricSnapDates, bands],
+  )
 
   const delta = computeDelta(series)
   const latest = series[series.length - 1]
@@ -382,6 +551,42 @@ function MetricChartInner({
 
   return (
     <section style={{ ...panel, padding: '16px 12px 14px 4px', position: 'relative' }}>
+      <style>{`
+        @keyframes fortschritt-chart-line-reveal {
+          from { clip-path: inset(0 100% 0 0); }
+          to { clip-path: inset(0 0 0 0); }
+        }
+        .fortschritt-chart-line-animated .recharts-line-curve,
+        .recharts-line-curve.fortschritt-chart-line-animated {
+          animation: fortschritt-chart-line-reveal ${LINE_ANIMATION_MS}ms cubic-bezier(.22,1,.36,1) both;
+        }
+        .fortschritt-metric-chart .recharts-line-dots {
+          clip-path: none;
+        }
+        @keyframes fortschritt-chart-point-reveal {
+          from { opacity: 0; transform: scale(.55); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes fortschritt-cycle-reveal {
+          from { opacity: 0; transform: scaleX(0); }
+          to { opacity: 1; transform: scaleX(1); }
+        }
+        .fortschritt-cycle-reveal {
+          animation: fortschritt-cycle-reveal 760ms cubic-bezier(.22,1,.36,1) both;
+        }
+        .fortschritt-chart-point {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: fortschritt-chart-point-reveal ${POINT_ANIMATION_MS}ms cubic-bezier(.22,1,.36,1);
+          animation-fill-mode: both;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .fortschritt-chart-point { animation: none !important; opacity: 1 !important; transform: none !important; }
+          .fortschritt-chart-line-animated .recharts-line-curve,
+          .recharts-line-curve.fortschritt-chart-line-animated { animation: none !important; }
+          .fortschritt-cycle-reveal { animation: none !important; opacity: 1 !important; transform: none !important; }
+        }
+      `}</style>
       <div style={{
         position: 'absolute', top: 14, right: 12, zIndex: 2,
         display: 'flex', alignItems: 'center', gap: 6,
@@ -426,6 +631,7 @@ function MetricChartInner({
       </div>
 
       <div
+        className="fortschritt-metric-chart"
         ref={wrapRef}
         style={{ position: 'relative', touchAction: 'pan-y', userSelect: 'none', cursor: 'crosshair' }}
         {...handlers}
@@ -433,19 +639,26 @@ function MetricChartInner({
         <AxisUnitLabel unit={metric.unit} />
         <ResponsiveContainer width="100%" height={280}>
           <MetricChartBody
+            visibleLineData={visibleLineData}
+            animationPointData={animationPointData}
             lineData={lineData}
             snapDates={snapDates}
             bands={bands}
             lanes={lanes}
             metric={metric}
+            animateMetric={chartAnimationsActive}
+            animateCycles={animateCycles && previousViewEndRef.current === viewEnd}
             viewStart={viewStart}
             viewEnd={viewEnd}
+            animationKey={metricKey}
+            showPersistentDots={showPersistentDots}
+            reducedMetricPoints={reducedMetricPoints}
           />
         </ResponsiveContainer>
         {showJetzt && <JumpToNowButton onClick={jumpToNow} />}
       </div>
 
-      <CycleLegend bands={bands} />
+      <CycleLegend items={legendItems} />
     </section>
   )
 })
