@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Info, Plus, Trash2 } from 'lucide-react'
 import {
   CartesianGrid,
   Line,
@@ -14,9 +14,10 @@ import {
 import type { MarkerSummary } from '../lib/bloodwork'
 import { toNumber } from '../lib/bloodwork'
 import type { BloodworkEntry } from '../types'
-import { formatChartDate, formatDisplayDate, formatNumber, formatRange } from '../lib/format'
-import { CYAN, GREEN, MUTED, PANEL_STYLE, RED, TEXT } from '../styles'
+import { formatChartDate, formatDisplayDate, formatNumber } from '../lib/format'
+import { CYAN, DISCLAIMER, GREEN, MUTED, PANEL_STYLE, RED, TEXT } from '../styles'
 import { TrendIcon, trendColor } from './MarkerGrid'
+import { ReferenceBar } from './ReferenceBar'
 
 export type RangeFilter = '3M' | '6M' | '1J' | 'ALL'
 
@@ -85,12 +86,18 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
                 </div>
               )}
             </div>
-            <p className="text-xs mt-2" style={{ color: MUTED }}>
-              {(() => {
-                const referenz = formatRange(range.min, range.max, latest.unit)
-                return referenz ? `Referenz: ${referenz}` : 'Kein Referenzbereich'
-              })()}
-            </p>
+            {range.source !== 'none' ? (
+              <div className="mt-4">
+                <ReferenceBar
+                  value={toNumber(latest.value)}
+                  unit={latest.unit}
+                  range={range}
+                  inRange={inRange}
+                />
+              </div>
+            ) : (
+              <p className="text-xs mt-2" style={{ color: MUTED }}>Kein Referenzbereich hinterlegt</p>
+            )}
             <div className="mt-3">
               {inRange === true && (
                 <span className="badge" style={{ background: 'rgba(16,185,129,0.12)', color: GREEN }}>Im Normalbereich</span>
@@ -106,6 +113,22 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
         ) : (
           <p style={{ color: MUTED }}>Noch kein Test für {name}.</p>
         )}
+      </div>
+
+      {/* Was ist das? */}
+      <div className="p-5 mb-4" style={PANEL_STYLE}>
+        <div className="flex items-center gap-2 mb-2">
+          <Info size={15} style={{ color: CYAN }} />
+          <p className="text-sm font-bold" style={{ color: TEXT }}>Was ist das?</p>
+        </div>
+        {summary.def ? (
+          <p className="text-sm leading-relaxed" style={{ color: MUTED }}>{summary.def.erklaerung}</p>
+        ) : (
+          <p className="text-sm leading-relaxed" style={{ color: MUTED }}>
+            Für diesen Marker ist keine Erklärung hinterlegt. Er wurde aus einem importierten Befund übernommen.
+          </p>
+        )}
+        <p className="text-xs mt-3" style={{ color: MUTED, opacity: 0.8 }}>{DISCLAIMER}</p>
       </div>
 
       {/* Range filter */}
