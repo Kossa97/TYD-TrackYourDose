@@ -16,6 +16,7 @@ import type {
 } from '../types'
 import { normalizeCycles, rangeFromActiveSubstances } from '../lib/substances'
 import { numeric } from '../lib/metrics'
+import { collectPagedRows } from '../lib/pagination'
 import { PHOTO_BUCKET, SIGNED_URL_TTL_SECONDS } from '../constants'
 
 function mapDailyLogs(rows: Record<string, unknown>[] | null): DailyLogEntry[] {
@@ -111,12 +112,15 @@ export function useFortschrittData() {
     const toBound = `${activeRange.to}T23:59:59`
 
     const [dailyRes, weightRes, bloodRes, photoRes, doseRes] = await Promise.all([
-      supabase
-        .from('daily_logs')
-        .select('log_date, energie, schlaf, wohlbefinden, libido, body_fat_pct')
-        .eq('user_id', user.id)
-        .lte('log_date', activeRange.to)
-        .order('log_date', { ascending: true }),
+      collectPagedRows((from, to) =>
+        supabase
+          .from('daily_logs')
+          .select('log_date, energie, schlaf, wohlbefinden, libido, body_fat_pct')
+          .eq('user_id', user.id)
+          .lte('log_date', activeRange.to)
+          .order('log_date', { ascending: true })
+          .range(from, to),
+      ),
       supabase
         .from('weight_logs')
         .select('id, logged_at, weight_kg')
