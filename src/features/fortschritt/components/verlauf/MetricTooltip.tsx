@@ -1,22 +1,20 @@
 import { format, parseISO } from 'date-fns'
-import type { CycleBandDraw } from './CycleBandLayer'
+import type { MetricChartPoint } from '../../lib/chartTooltip'
 import type { MetricDefinition } from '../../lib/metricDefinitions'
+import type { CycleBandDraw } from './CycleBandLayer'
 import { useChartPointerX } from './ChartPointerContext'
 import { useChartTooltipContent } from './useChartTooltipContent'
-
-interface ChartPoint {
-  date: string
-  ts: number
-  value: number | null
-}
 
 interface Props {
   active?: boolean
   label?: number | string
   bands: CycleBandDraw[]
   metric: MetricDefinition
-  metricData: ChartPoint[]
+  metricData: MetricChartPoint[]
   snapDates: string[]
+  nearestMetric?: boolean
+  viewStart?: number
+  viewEnd?: number
 }
 
 function fmtDate(iso: string) {
@@ -29,13 +27,25 @@ function formatTooltipValue(value: number, unit: string): string {
   return unit ? `${value} ${unit}` : String(value)
 }
 
-export function MetricTooltip({ bands, metric, metricData, snapDates }: Props) {
+export function MetricTooltip({
+  bands,
+  metric,
+  metricData,
+  snapDates,
+  nearestMetric = false,
+  viewStart = Number.NEGATIVE_INFINITY,
+  viewEnd = Number.POSITIVE_INFINITY,
+}: Props) {
   const pointerX = useChartPointerX()
-  const content = useChartTooltipContent(snapDates, bands, metricData)
+  const content = useChartTooltipContent(snapDates, bands, metricData, {
+    nearestMetric,
+    viewStart,
+    viewEnd,
+  })
 
   if (pointerX == null || !content) return null
 
-  const { dateIso, metricValue, starts } = content
+  const { dateIso, metricDateIso, metricValue, starts } = content
   const hasMetric = metricValue != null
 
   if (!hasMetric && starts.length === 0) return null
@@ -54,17 +64,25 @@ export function MetricTooltip({ bands, metric, metricData, snapDates }: Props) {
       <p style={{ color: 'var(--text-muted)', marginBottom: 8 }}>{fmtDate(dateIso)}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {hasMetric && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
             <span style={{
               width: 7,
               height: 7,
+              marginTop: 3,
               borderRadius: '50%',
               background: metric.color,
               flexShrink: 0,
             }} />
-            <span style={{ color: 'var(--text-dim)' }}>
-              {metric.label}: {formatTooltipValue(metricValue!, metric.unit)}
-            </span>
+            <div>
+              {nearestMetric && metricDateIso && (
+                <p style={{ color: 'var(--text-muted)', margin: '0 0 2px' }}>
+                  Messwert vom {fmtDate(metricDateIso)}
+                </p>
+              )}
+              <span style={{ color: 'var(--text-dim)' }}>
+                {metric.label}: {formatTooltipValue(metricValue, metric.unit)}
+              </span>
+            </div>
           </div>
         )}
         {starts.map(band => (
