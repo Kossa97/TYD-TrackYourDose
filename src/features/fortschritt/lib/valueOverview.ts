@@ -60,13 +60,33 @@ function valuesFor(
 ): number[] {
   if (!range) return []
   return filterByDateRange(logs, range, entry => entry.log_date)
-    .map(entry => entry[key])
-    .filter((value): value is number => value != null && Number.isFinite(value))
+    .map(entry => ({ date: entry.log_date, value: entry[key] }))
+    .filter((entry): entry is { date: string; value: number } =>
+      entry.value != null && Number.isFinite(entry.value),
+    )
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(entry => entry.value)
 }
 
 function average(values: number[]): number | null {
   if (values.length === 0) return null
   return values.reduce((sum, value) => sum + value, 0) / values.length
+}
+function comparisonGroups(
+  all: number[],
+  calendarFirst: number[],
+  calendarSecond: number[],
+): { first: number[]; second: number[] } {
+  if (calendarFirst.length >= 2 && calendarSecond.length >= 2) {
+    return { first: calendarFirst, second: calendarSecond }
+  }
+  if (all.length < 4) return { first: [], second: all }
+
+  const firstSize = Math.floor(all.length / 2)
+  return {
+    first: all.slice(0, firstSize),
+    second: all.slice(firstSize),
+  }
 }
 
 function classifyChange(
@@ -93,8 +113,10 @@ export function buildValueOverview(
   const halves = splitValueOverviewRange(range)
 
   return METRICS.map(metric => {
-    const first = valuesFor(logs, halves.first, metric.key)
-    const second = valuesFor(logs, halves.second, metric.key)
+    const all = valuesFor(logs, range, metric.key)
+    const calendarFirst = valuesFor(logs, halves.first, metric.key)
+    const calendarSecond = valuesFor(logs, halves.second, metric.key)
+    const { first, second } = comparisonGroups(all, calendarFirst, calendarSecond)
     const firstAverage = average(first)
     const secondAverage = average(second)
     const rawDelta = first.length >= 2 && second.length >= 2

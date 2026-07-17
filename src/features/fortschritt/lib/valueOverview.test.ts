@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { addDays, format, parseISO } from 'date-fns'
 import type { DailyLogEntry } from '../types'
 import {
   buildValueOverview,
@@ -17,6 +18,9 @@ const log = (
   body_fat_pct: null,
   ...values,
 })
+
+const dayFrom = (start: string, offset: number) =>
+  format(addDays(parseISO(start), offset), 'yyyy-MM-dd')
 
 describe('splitValueOverviewRange', () => {
   it('legt bei einer ungeraden Tageszahl den zusätzlichen Tag in die zweite Hälfte', () => {
@@ -49,7 +53,7 @@ describe('buildValueOverview', () => {
     })
   })
 
-  it('berechnet nur Metriken mit mindestens zwei Werten pro Hälfte', () => {
+  it('berechnet Vergleiche erst ab vier Werten', () => {
     const rows = buildValueOverview([
       log('2026-07-01', { energie: 5, schlaf: 6 }),
       log('2026-07-02', { energie: 7 }),
@@ -58,7 +62,7 @@ describe('buildValueOverview', () => {
     ], { from: '2026-07-01', to: '2026-07-04' })
 
     expect(rows.find(row => row.key === 'energie')).toMatchObject({ average: 9, delta: 3 })
-    expect(rows.find(row => row.key === 'schlaf')).toMatchObject({ average: 8, delta: null })
+    expect(rows.find(row => row.key === 'schlaf')).toMatchObject({ average: 7, delta: null })
   })
 
   it('liefert alle fünf Zeilen in der freigegebenen Reihenfolge', () => {
@@ -80,6 +84,63 @@ describe('buildValueOverview', () => {
     expect(rows.find(row => row.key === 'energie')).toMatchObject({
       average: 6.3,
       delta: 1.1,
+    })
+  })
+  it('behält bei mindestens zwei Werten pro Kalenderhälfte den Kalendervergleich', () => {
+    const older = Array.from({ length: 15 }, (_, index) =>
+      log(dayFrom('2026-07-01', index), { energie: 4 }),
+    )
+    const newer = [
+      log('2026-07-16', { energie: 8 }),
+      log('2026-07-17', { energie: 8 }),
+    ]
+    const row = buildValueOverview(
+      [...older, ...newer],
+      { from: '2026-07-01', to: '2026-07-30' },
+    ).find(item => item.key === 'energie')
+    expect(row).toMatchObject({ average: 8, delta: 4 })
+  })
+
+  it('teilt 15 ältere und einen neueren Wert per Fallback in 8 gegen 8', () => {
+    const older = Array.from({ length: 15 }, (_, index) =>
+      log(dayFrom('2026-07-01', index), { energie: 4 }),
+    )
+    const newer = log('2026-07-16', { energie: 8 })
+    const row = buildValueOverview(
+      [newer, ...older],
+      { from: '2026-07-01', to: '2026-07-30' },
+    ).find(item => item.key === 'energie')
+    expect(row).toMatchObject({ average: 4.5, delta: 0.5 })
+  })
+
+  it('teilt 101 ungleich verteilte Werte in 50 ältere und 51 neuere Messwerte', () => {
+    const firstFifty = Array.from({ length: 50 }, (_, index) =>
+      log(dayFrom('2026-01-01', index), { energie: 4 }),
+    )
+    const nextFifty = Array.from({ length: 50 }, (_, index) =>
+      log(dayFrom('2026-02-20', index), { energie: 6 }),
+    )
+    const finalValue = log('2026-12-31', { energie: 8 })
+    const row = buildValueOverview(
+      [finalValue, ...nextFifty.reverse(), ...firstFifty.reverse()],
+      { from: '2026-01-01', to: '2026-12-31' },
+    ).find(item => item.key === 'energie')
+    expect(row).toMatchObject({ average: 6, delta: 2 })
+  })
+
+  it('zeigt bei ein bis drei Werten deren Durchschnitt ohne Vergleich', () => {
+    const row = buildValueOverview([
+      log('2026-07-01', { schlaf: 4 }),
+      log('2026-07-02', { schlaf: 6 }),
+      log('2026-07-03', { schlaf: 8 }),
+      log('2026-06-30', { schlaf: 10 }),
+    ], { from: '2026-07-01', to: '2026-07-30' })
+      .find(item => item.key === 'schlaf')
+    expect(row).toMatchObject({
+      average: 6,
+      delta: null,
+      tone: 'neutral',
+      direction: null,
     })
   })
 })
