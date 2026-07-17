@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import {
   usePlotArea,
   useXAxisScale,
@@ -18,7 +19,6 @@ export interface CycleBandDraw {
   name: string
   color: string
   filled: boolean
-  faded: boolean
   startDate: string
   /** Liegt der echte Zyklus-Start im Sichtfenster? Sonst ist x1 nur der Fensterrand. */
   startVisible: boolean
@@ -31,6 +31,7 @@ interface Props {
   bands: CycleBandDraw[]
   lanes: number
   snapDates: string[]
+  animate?: boolean
 }
 
 const HOVER_PX_THRESHOLD = TOOLTIP_CURSOR_PX_THRESHOLD
@@ -78,7 +79,7 @@ function isStartHighlighted(
 /**
  * Zyklus-Balken + Start-Striche im Chart-Hintergrund.
  */
-export function CycleBandLayer({ bands, lanes, snapDates }: Props) {
+export const CycleBandLayer = memo(function CycleBandLayer({ bands, lanes, snapDates, animate = true }: Props) {
   const xScale = useXAxisScale()
   const plotArea = usePlotArea()
   const pointerX = useChartPointerX()
@@ -89,6 +90,9 @@ export function CycleBandLayer({ bands, lanes, snapDates }: Props) {
   }
 
   const items = bandLayout(plotArea, xScale, bands, lanes)
+  const revealOrder = new Map(
+    [...items].sort((a, b) => b.x - a.x).map((item, index) => [item.band.id, index]),
+  )
 
   return (
     <>
@@ -97,17 +101,23 @@ export function CycleBandLayer({ bands, lanes, snapDates }: Props) {
           {items.map(({ band, x, y, w, laneHeight }) => (
             <rect
               key={band.id}
+              className={animate ? 'fortschritt-cycle-reveal' : undefined}
               x={x}
               y={y}
               width={w}
               height={laneHeight}
               fill={band.color}
               // Zurückhaltend: die Bänder liegen hinter der Kurve, nicht vor ihr.
-              fillOpacity={band.faded ? 0.06 : band.filled ? 0.16 : 0.1}
+              fillOpacity={band.filled ? 0.16 : 0.1}
               stroke={band.filled ? 'none' : band.color}
-              strokeOpacity={band.faded ? 0.16 : 0.4}
+              strokeOpacity={0.4}
               strokeWidth={band.filled ? 0 : 1.5}
               strokeDasharray={band.filled ? undefined : '5 4'}
+              style={animate ? {
+                transformBox: 'fill-box',
+                transformOrigin: '100% 50%',
+                animationDelay: `${(revealOrder.get(band.id) ?? 0) * 90}ms`,
+              } : undefined}
               rx={4}
               ry={4}
             />
@@ -132,7 +142,7 @@ export function CycleBandLayer({ bands, lanes, snapDates }: Props) {
             )
 
             return (
-              <g key={`start-${band.id}`}>
+              <g key={`start-${band.id}`} className={animate ? 'fortschritt-cycle-reveal' : undefined} style={animate ? { transformBox: 'fill-box', transformOrigin: '100% 50%', animationDelay: `${(revealOrder.get(band.id) ?? 0) * 90}ms` } : undefined}>
                 <line
                   x1={startX}
                   x2={startX}
@@ -140,7 +150,7 @@ export function CycleBandLayer({ bands, lanes, snapDates }: Props) {
                   y2={y + laneHeight}
                   stroke={band.color}
                   strokeWidth={highlighted ? 2.5 : 1.5}
-                  strokeOpacity={highlighted ? 1 : band.faded ? 0.18 : 0.55}
+                  strokeOpacity={highlighted ? 1 : 0.55}
                 />
                 <circle
                   cx={startX}
@@ -149,7 +159,7 @@ export function CycleBandLayer({ bands, lanes, snapDates }: Props) {
                   fill={highlighted ? band.color : '#07091a'}
                   stroke={band.color}
                   strokeWidth={highlighted ? 2 : 1.25}
-                  opacity={highlighted ? 1 : band.faded ? 0.35 : 0.8}
+                  opacity={highlighted ? 1 : 0.8}
                 />
               </g>
             )
@@ -158,4 +168,4 @@ export function CycleBandLayer({ bands, lanes, snapDates }: Props) {
       </ZIndexLayer>
     </>
   )
-}
+})

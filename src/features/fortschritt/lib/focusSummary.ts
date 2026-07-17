@@ -2,12 +2,10 @@ import { format, parseISO } from 'date-fns'
 import type {
   ActiveSubstance,
   BloodworkEntry,
-  CycleSubstance,
   DailyLogEntry,
   DateRange,
   DoseLogEntry,
   MetricKey,
-  OngoingSubstance,
   WeightLogEntry,
 } from '../types'
 import { buildMetricSeries, computeAdherence, computeDelta, type SeriesPoint } from './metrics'
@@ -128,24 +126,4 @@ export function buildFocusSummary(
 export function substanceBarEnd(substance: ActiveSubstance): string {
   if (substance.mode === 'cycle') return cycleEndDate(substance)
   return todayIso()
-}
-
-export function allSubstances(
-  cycles: CycleSubstance[],
-  ongoing: OngoingSubstance[],
-): ActiveSubstance[] {
-  return [...cycles, ...ongoing]
-}
-
-/** Älteste aktive Substanz — Standard-Fokus für Wellness-Vergleich.
- *  Beendete Zyklen nur als Fallback, wenn nichts Aktives läuft. */
-export function defaultFocusSubstanceId(
-  cycles: CycleSubstance[],
-  ongoing: OngoingSubstance[],
-): string | null {
-  const active = [...allSubstances(cycles.filter(c => c.active), ongoing)]
-    .sort((a, b) => a.startDate.localeCompare(b.startDate))
-  if (active[0]) return active[0].id
-  const all = [...allSubstances(cycles, ongoing)].sort((a, b) => a.startDate.localeCompare(b.startDate))
-  return all[0]?.id ?? null
 }

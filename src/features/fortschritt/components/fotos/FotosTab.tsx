@@ -6,6 +6,7 @@ import { supabase } from '../../../../lib/supabase'
 import { useAuth } from '../../../../context/AuthContext'
 import type { ProgressPhotoEntry } from '../../types'
 import { PHOTO_BUCKET } from '../../constants'
+import { PHOTO_GRID_OPTIONS, photoGridColumns, readPhotoGridSize, writePhotoGridSize, type PhotoGridSize } from '../../lib/photoGrid'
 import { isLegacyPhotoUrl } from '../../hooks/useFortschrittData'
 import { fieldLabel, inputStyle, panel } from '../../styles'
 
@@ -28,6 +29,12 @@ export function FotosTab({ photos, onChange }: Props) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [activePhoto, setActivePhoto] = useState<ProgressPhotoEntry | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [gridSize, setGridSize] = useState<PhotoGridSize>(() => readPhotoGridSize())
+
+  const handleGridSizeChange = (size: PhotoGridSize) => {
+    setGridSize(size)
+    writePhotoGridSize(size)
+  }
 
   const openSheet = () => {
     setDate(todayStr())
@@ -114,17 +121,38 @@ export function FotosTab({ photos, onChange }: Props) {
             {photos.length} {photos.length === 1 ? 'Foto' : 'Fotos'} gespeichert
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openSheet}
-          style={{
-            width: 44, height: 44, borderRadius: 16, flexShrink: 0,
-            background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
-            color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <Plus size={20} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <div role="group" aria-label="Rastergröße" style={{ display: 'flex', alignItems: 'center', gap: 3, padding: 3, borderRadius: 12, background: 'var(--surface-input)', border: '1px solid var(--border)' }}>
+            {PHOTO_GRID_OPTIONS.map(option => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={gridSize === option.value}
+                onClick={() => handleGridSizeChange(option.value)}
+                style={{
+                  border: 'none', borderRadius: 9, padding: '6px 8px',
+                  background: gridSize === option.value ? 'var(--accent-weak)' : 'transparent',
+                  color: gridSize === option.value ? 'var(--accent)' : 'var(--text-muted)',
+                  fontSize: '0.58rem', fontWeight: 800, cursor: 'pointer',
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={openSheet}
+            aria-label="Foto hinzufügen"
+            style={{
+              width: 44, height: 44, borderRadius: 16, flexShrink: 0,
+              background: 'var(--accent-weak)', border: '1px solid var(--accent-border)',
+              color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <Plus size={20} />
+          </button>
+        </div>
       </div>
 
       {photos.length === 0 ? (
@@ -143,7 +171,7 @@ export function FotosTab({ photos, onChange }: Props) {
           </button>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${photoGridColumns(gridSize)}, 1fr)`, gap: 10 }}>
           {photos.map(photo => (
             <button
               key={photo.id}

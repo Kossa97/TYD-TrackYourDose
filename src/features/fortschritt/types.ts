@@ -120,5 +120,4 @@ export interface FortschrittOverviewState {
 
 export interface ChartNavigation {
   metric?: MetricKey
-  focusSubstanceId?: string
 }

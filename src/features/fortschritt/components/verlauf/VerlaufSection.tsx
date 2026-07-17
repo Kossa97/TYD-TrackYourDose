@@ -1,17 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import type { ChartNavigation, FortschrittOverviewState, MetricKey } from '../../types'
-import { CHART_METRIC_KEYS, isChartMetricKey, isWellnessMetricKey } from '../../constants'
+import { CHART_METRIC_KEYS, isChartMetricKey } from '../../constants'
 import { buildMetricSeries } from '../../lib/metrics'
 import { buildAvailableMetrics, normalizeMetricKey } from '../../lib/metricDefinitions'
-import { allSubstances, defaultFocusSubstanceId } from '../../lib/focusSummary'
 import {
   filterCyclesByVisibility,
   filterOngoingByVisibility,
 } from '../../lib/chartVisibility'
 import { useChartVisibility } from '../../hooks/useChartVisibility'
 import { DEFAULT_CHART_WINDOW, type ChartWindowKey } from '../../lib/chartWindow'
-import { dayToTsSafe } from '../../lib/dates'
 import { panel } from '../../styles'
 import { VerlaufSetup } from './VerlaufSetup'
 import { VerlaufSetupSheet } from './VerlaufSetupSheet'
@@ -30,7 +28,6 @@ export function VerlaufSection({
   onChartNavConsumed,
 }: Props) {
   const [metricKey, setMetricKey] = useState<MetricKey>('weight')
-  const [focusId, setFocusId] = useState<string | null>(null)
   const [setupOpen, setSetupOpen] = useState(false)
   const [windowKey, setWindowKey] = useState<ChartWindowKey>(DEFAULT_CHART_WINDOW)
   const chartRef = useRef<ChartPanHandle>(null)
@@ -40,7 +37,6 @@ export function VerlaufSection({
     visibleIds,
     toggleGroup,
     toggleCycle,
-    showIds,
   } = useChartVisibility(state.cycleSubstances, state.ongoingSubstances)
 
   const visibleCycles = useMemo(
@@ -54,34 +50,12 @@ export function VerlaufSection({
 
   useEffect(() => {
     if (!chartNav) return
-    if (chartNav.focusSubstanceId) {
-      showIds([chartNav.focusSubstanceId])
-      setFocusId(chartNav.focusSubstanceId)
-    } else if (chartNav.metric && isWellnessMetricKey(chartNav.metric)) {
-      const id = defaultFocusSubstanceId(visibleCycles, visibleOngoing)
-      if (id) setFocusId(id)
-    }
     if (chartNav.metric && isChartMetricKey(normalizeMetricKey(chartNav.metric))) {
       setMetricKey(normalizeMetricKey(chartNav.metric))
     }
     onChartNavConsumed()
-  }, [chartNav, onChartNavConsumed, showIds, visibleCycles, visibleOngoing])
+  }, [chartNav, onChartNavConsumed])
 
-  useEffect(() => {
-    if (focusId && !visibleIds.has(focusId)) {
-      setFocusId(null)
-    }
-  }, [focusId, visibleIds])
-
-  const substances = allSubstances(visibleCycles, visibleOngoing)
-  const focused = substances.find(s => s.id === focusId) ?? null
-
-  // Fokus verschiebt nur die Ansicht an den Zyklus-Start; das Fenster bleibt.
-  useEffect(() => {
-    if (!focused) return
-    const ts = dayToTsSafe(focused.startDate, 12)
-    if (ts != null) chartRef.current?.jumpToTs(ts)
-  }, [focused])
 
   const baseRange = state.fullRange
   const pointCounts = useMemo(() => {
@@ -149,7 +123,6 @@ export function VerlaufSection({
           bloodwork={state.bloodwork}
           cycles={visibleCycles}
           ongoing={visibleOngoing}
-          focusId={focusId}
           onOpenSettings={openSetup}
         />
       )}

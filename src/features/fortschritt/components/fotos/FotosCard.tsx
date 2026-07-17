@@ -1,10 +1,65 @@
-import { useMemo, useState } from 'react'
-import { Camera, ImageOff, Plus, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Camera, Plus, X } from 'lucide-react'
 import type { DateRange, ProgressPhotoEntry } from '../../types'
+import { buildPhotoSlots, photoPreviewColumns } from '../../lib/photoPreview'
 import { filterByDateRange } from '../../lib/range'
 import { panel, sectionLabel } from '../../styles'
 import { FotosTab } from './FotosTab'
 
+function PhotoPeriodMarquee({ children }: { children: ReactNode }) {
+  const wrapRef = useRef<HTMLSpanElement | null>(null)
+  const innerRef = useRef<HTMLSpanElement | null>(null)
+
+  useEffect(() => {
+    const wrap = wrapRef.current
+    const inner = innerRef.current
+    if (!wrap || !inner || typeof window === 'undefined') return
+
+    let animation: Animation | null = null
+    const setup = () => {
+      animation?.cancel()
+      inner.style.transform = 'translateX(0)'
+      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+
+      const overflow = inner.scrollWidth - wrap.clientWidth
+      if (overflow <= 4) return
+      const holdStart = 1400
+      const holdEnd = 900
+      const moveOut = Math.max(1800, overflow * 32)
+      const moveBack = Math.max(700, overflow * 14)
+      const total = holdStart + moveOut + holdEnd + moveBack
+
+      animation = inner.animate(
+        [
+          { transform: 'translateX(0)', offset: 0 },
+          { transform: 'translateX(0)', offset: holdStart / total },
+          { transform: `translateX(-${overflow}px)`, offset: (holdStart + moveOut) / total },
+          { transform: `translateX(-${overflow}px)`, offset: (holdStart + moveOut + holdEnd) / total },
+          { transform: 'translateX(0)', offset: 1 },
+        ],
+        { duration: total, iterations: Infinity, easing: 'linear' },
+      )
+    }
+
+    setup()
+    if (typeof ResizeObserver === 'undefined') return () => animation?.cancel()
+    const observer = new ResizeObserver(setup)
+    observer.observe(wrap)
+    observer.observe(inner)
+    return () => {
+      animation?.cancel()
+      observer.disconnect()
+    }
+  }, [children])
+
+  return (
+    <span ref={wrapRef} style={{ display: 'block', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+      <span ref={innerRef} style={{ display: 'inline-block', willChange: 'transform' }}>
+        {children}
+      </span>
+    </span>
+  )
+}
 interface Props {
   photos: ProgressPhotoEntry[]
   range: DateRange
@@ -19,16 +74,20 @@ export function FotosCard({ photos, range, onChange }: Props) {
     [photos, range],
   )
 
-  const preview = useMemo(
-    () => [...inRange].sort((a, b) => b.taken_at.localeCompare(a.taken_at)).slice(0, 4),
-    [inRange],
-  )
+  const photoSlots = useMemo(() => buildPhotoSlots(inRange, photos), [inRange, photos])
+  const previewColumns = photoPreviewColumns(photoSlots.length)
+  const previewRows = photoSlots.length > 0 ? Math.ceil(photoSlots.length / previewColumns) : 0
 
   return (
     <>
       <section style={{ ...panel, padding: '14px 14px 12px', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <p style={sectionLabel}>Fotos</p>
+          <div>
+            <p style={{ ...sectionLabel, margin: 0 }}>Fotos</p>
+            <p style={{ margin: '3px 0 0', fontSize: '0.58rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+              Fotos im ausgewählten Zeitraum
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => setSheetOpen(true)}
@@ -49,59 +108,72 @@ export function FotosCard({ photos, range, onChange }: Props) {
           </button>
         </div>
 
-        {preview.length === 0 ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '8px 0', gap: 10 }}>
-            <ImageOff size={22} color="var(--text-muted)" />
-            <p style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-muted)', lineHeight: 1.45 }}>
-              {photos.length === 0 ? 'Noch keine Fotos' : 'Keine Fotos im Zeitraum'}
-            </p>
-            <button type="button" onClick={() => setSheetOpen(true)} className="btn-secondary" style={{ fontSize: '0.72rem', padding: '8px 10px' }}>
-              <Camera size={14} /> Foto hinzufügen
-            </button>
+        {photoSlots.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${previewColumns}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${previewRows}, minmax(0, 1fr))`, gap: 6, flex: 1, minHeight: 0 }}>
+            {photoSlots.map(slot => (
+              <button
+                key={slot.photo.id}
+                type="button"
+                onClick={() => setSheetOpen(true)}
+                aria-label={slot.inRange ? 'Foto anzeigen' : 'Foto außerhalb des Zeitraums'}
+                style={{
+                  position: 'relative',
+                  minHeight: 0,
+                  borderRadius: 10,
+                  overflow: 'hidden',
+                  padding: 0,
+                  border: '1px solid var(--border)',
+                  cursor: 'pointer',
+                  background: 'var(--surface-input)',
+                }}
+              >
+                <img
+                  src={slot.photo.display_url}
+                  alt={slot.inRange ? slot.photo.taken_at : 'Foto nicht im ausgewählten Zeitraum'}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: slot.inRange ? undefined : 'blur(8px)', transform: slot.inRange ? undefined : 'scale(1.08)' }}
+                />
+                {!slot.inRange && (
+                  <span lang="de" style={{ position: 'absolute', left: 0, right: 0, top: '50%', transform: 'translateY(-50%)', padding: '5px 7px', background: 'rgba(2, 6, 23, 0.42)', color: 'var(--text)', fontSize: '0.6rem', fontWeight: 800, lineHeight: 1.2, textAlign: 'center' }}>
+                    <PhotoPeriodMarquee>Nicht im ausgewählten Zeitraum</PhotoPeriodMarquee>
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
         ) : (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              {preview.map(photo => (
-                <button
-                  key={photo.id}
-                  type="button"
-                  onClick={() => setSheetOpen(true)}
-                  style={{
-                    borderRadius: 10,
-                    overflow: 'hidden',
-                    padding: 0,
-                    border: '1px solid var(--border)',
-                    aspectRatio: '1',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <img
-                    src={photo.display_url}
-                    alt={photo.taken_at}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                  />
-                </button>
-              ))}
-            </div>
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <button
               type="button"
               onClick={() => setSheetOpen(true)}
-              style={{
-                marginTop: 10,
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--accent)',
-                fontSize: '0.68rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                textAlign: 'left',
-                padding: 0,
-              }}
+              aria-label="Foto hinzufügen"
+              style={{ width: 64, height: 64, borderRadius: 16, border: '1px dashed var(--accent-border)', background: 'var(--accent-weak)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
             >
-              Alle anzeigen ({inRange.length})
+              <Plus size={22} />
             </button>
-          </>
+          </div>
+        )}
+        {photos.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setSheetOpen(true)}
+            style={{
+              marginTop: 10,
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--accent)',
+              fontSize: '0.68rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              textAlign: 'left',
+              padding: 0,
+            }}
+          >
+            Alle anzeigen ({photos.length})
+          </button>
+        ) : (
+          <button type="button" onClick={() => setSheetOpen(true)} className="btn-secondary" style={{ marginTop: 10, fontSize: '0.72rem', padding: '8px 10px' }}>
+            <Camera size={14} /> Foto hinzufügen
+          </button>
         )}
       </section>
 
