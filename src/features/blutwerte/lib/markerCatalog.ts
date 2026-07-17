@@ -56,7 +56,7 @@ export const MARKER_CATALOG: MarkerDef[] = [
   },
   {
     name: 'Freies Testosteron',
-    synonyme: ['Testosteron frei', 'Freies Testo', 'fT'],
+    synonyme: ['Testosteron frei', 'Freies Testo'],
     kategorie: 'Hormone',
     einheit: 'pg/mL',
     refMin: 50,
@@ -124,6 +124,8 @@ export const MARKER_CATALOG: MarkerDef[] = [
     erklaerung:
       'Ein Wachstumsfaktor, der überwiegend als Antwort auf Wachstumshormon in der Leber gebildet wird. Er gilt als stabiler Indikator für die Wachstumshormon-Aktivität, da er über den Tag kaum schwankt.',
   },
+  // Kein lowerIsBetter: Für Nutzer von GH-Peptiden ist ein steigender Wert das Ziel,
+  // ein fallender kein Erfolg. Der Trendpfeil folgt deshalb der Standard-Richtung.
   {
     name: 'GH',
     synonyme: ['Wachstumshormon', 'Somatotropin', 'HGH', 'STH'],
@@ -159,6 +161,7 @@ export const MARKER_CATALOG: MarkerDef[] = [
     kategorie: 'Hormone',
     einheit: 'ng/mL',
     refMax: 0.5,
+    lowerIsBetter: true,
     erklaerung:
       'Ein Sexualhormon, das bei Frauen den Zyklus steuert. Bei Männern liegt es normalerweise sehr niedrig.',
   },
@@ -359,14 +362,16 @@ export const MARKER_CATALOG: MarkerDef[] = [
     name: 'eGFR',
     synonyme: ['GFR', 'Glomeruläre Filtrationsrate'],
     kategorie: 'Niere',
-    einheit: 'mL/min',
+    einheit: 'mL/min/1.73m²',
     refMin: 90,
     erklaerung:
       'Ein aus dem Kreatinin berechneter Schätzwert für die Filterleistung der Nieren. Je höher, desto besser.',
   },
+  // BUN ist bewusst kein Synonym: Es misst nur den Stickstoffanteil (~Faktor 2,14)
+  // und würde gegen den Harnstoff-Referenzbereich falsch bewertet.
   {
     name: 'Harnstoff',
-    synonyme: ['Urea', 'BUN'],
+    synonyme: ['Urea'],
     kategorie: 'Niere',
     einheit: 'mg/dL',
     refMin: 17,
@@ -427,7 +432,7 @@ export const MARKER_CATALOG: MarkerDef[] = [
   },
   {
     name: 'Triglyceride',
-    synonyme: ['Triglyzeride', 'TG'],
+    synonyme: ['Triglyzeride'],
     kategorie: 'Lipide',
     einheit: 'mg/dL',
     refMax: 150,
