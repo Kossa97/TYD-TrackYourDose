@@ -20,7 +20,11 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 const toFiniteNumber = (raw: unknown): number | null => {
   if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null
   if (typeof raw === 'string') {
-    const parsed = Number(raw.replace(',', '.'))
+    // Number('') und Number('   ') ergeben 0. Ein leerer String bedeutet aber
+    // "nicht lesbar" und darf nie als Messwert 0 durchgehen.
+    const trimmed = raw.trim()
+    if (!trimmed) return null
+    const parsed = Number(trimmed.replace(',', '.'))
     return Number.isFinite(parsed) ? parsed : null
   }
   return null

@@ -89,6 +89,36 @@ describe('parseExtractResult', () => {
     expect(result?.values).toEqual([])
   })
 
+  it('verwirft leere Werte, statt sie zu 0 zu machen', () => {
+    const result = parseExtractResult({
+      ...gueltig,
+      values: [
+        ...gueltig.values,
+        { marker: 'CRP', matched: true, value: '', unit: 'mg/L' },
+        { marker: 'Ferritin', matched: true, value: '   ', unit: 'ng/mL' },
+        { marker: 'TSH', matched: true, value: null, unit: 'mIU/L' },
+      ],
+    })
+    expect(result?.values.map(v => v.marker)).toEqual(['Testosteron'])
+  })
+
+  it('behält eine echte Null als Messwert', () => {
+    const result = parseExtractResult({
+      ...gueltig,
+      values: [{ marker: 'CRP', matched: true, value: 0, unit: 'mg/L' }],
+    })
+    expect(result?.values[0].value).toBe(0)
+  })
+
+  it('unterscheidet leere Referenzgrenzen von der Grenze 0', () => {
+    const result = parseExtractResult({
+      ...gueltig,
+      values: [{ marker: 'CRP', matched: true, value: 1, unit: 'mg/L', ref_min: '', ref_max: 0 }],
+    })
+    expect(result?.values[0].ref_min).toBeNull()
+    expect(result?.values[0].ref_max).toBe(0)
+  })
+
   it('trimmt Marker und Einheit', () => {
     const result = parseExtractResult({
       ...gueltig,
