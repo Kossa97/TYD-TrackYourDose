@@ -1,0 +1,239 @@
+import { describe, expect, it } from 'vitest'
+import type { BloodworkEntry } from '../types'
+import { normalizeMarker } from './markerCatalog'
+import {
+  auffaelligeWerte,
+  buildMarkerSummaries,
+  computeTrend,
+  effectiveRange,
+  filterByKategorie,
+  isInRange,
+  sortSummaries,
+  toNumber,
+} from './bloodwork'
+
+const entry = (over: Partial<BloodworkEntry> = {}): BloodworkEntry => ({
+  id: 'e1',
+  user_id: 'u1',
+  tested_at: '2026-07-01',
+  marker: 'Testosteron',
+  value: 600,
+  unit: 'ng/dL',
+  notes: null,
+  created_at: null,
+  report_id: null,
+  ref_min: null,
+  ref_max: null,
+  ...over,
+})
+
+describe('toNumber', () => {
+  it('wandelt Strings in Zahlen um', () => {
+    expect(toNumber('12.5')).toBe(12.5)
+  })
+
+  it('gibt Zahlen unverändert zurück', () => {
+    expect(toNumber(7)).toBe(7)
+  })
+})
+
+describe('effectiveRange', () => {
+  it('bevorzugt die Labor-Referenz am Eintrag', () => {
+    const def = normalizeMarker('Testosteron')
+    const range = effectiveRange(entry({ ref_min: 300, ref_max: 1000 }), def)
+    expect(range).toEqual({ min: 300, max: 1000, source: 'lab' })
+  })
+
+  it('nutzt den Katalog, wenn keine Labor-Referenz vorliegt', () => {
+    const def = normalizeMarker('Testosteron')
+    const range = effectiveRange(entry(), def)
+    expect(range).toEqual({ min: 400, max: 900, source: 'catalog' })
+  })
+
+  it('akzeptiert eine einseitige Labor-Referenz', () => {
+    const def = normalizeMarker('Testosteron')
+    const range = effectiveRange(entry({ ref_max: 1000 }), def)
+    expect(range).toEqual({ min: null, max: 1000, source: 'lab' })
+  })
+
+  it('meldet "none" für Custom-Marker ohne Labor-Referenz', () => {
+    const range = effectiveRange(entry({ marker: 'Phantasiewert' }), null)
+    expect(range).toEqual({ min: null, max: null, source: 'none' })
+  })
+
+  it('nutzt die Labor-Referenz auch für Custom-Marker', () => {
+    const range = effectiveRange(entry({ marker: 'Phantasiewert', ref_min: 1, ref_max: 9 }), null)
+    expect(range).toEqual({ min: 1, max: 9, source: 'lab' })
+  })
+
+  it('übernimmt einen einseitigen Katalog-Bereich', () => {
+    const range = effectiveRange(entry({ marker: 'CRP' }), normalizeMarker('CRP'))
+    expect(range).toEqual({ min: null, max: 1.0, source: 'catalog' })
+  })
+
+  it('meldet "none" ohne Eintrag und ohne Katalog-Definition', () => {
+    expect(effectiveRange(null, null)).toEqual({ min: null, max: null, source: 'none' })
+  })
+})
+
+describe('isInRange', () => {
+  it('erkennt einen Wert im Bereich', () => {
+    expect(isInRange(500, { min: 400, max: 900, source: 'catalog' })).toBe(true)
+  })
+
+  it('erkennt einen zu niedrigen Wert', () => {
+    expect(isInRange(300, { min: 400, max: 900, source: 'catalog' })).toBe(false)
+  })
+
+  it('erkennt einen zu hohen Wert', () => {
+    expect(isInRange(1000, { min: 400, max: 900, source: 'catalog' })).toBe(false)
+  })
+
+  it('prüft nur die Obergrenze, wenn keine Untergrenze existiert', () => {
+    expect(isInRange(0.5, { min: null, max: 1, source: 'catalog' })).toBe(true)
+    expect(isInRange(2, { min: null, max: 1, source: 'catalog' })).toBe(false)
+  })
+
+  it('gibt null zurück, wenn kein Referenzbereich existiert', () => {
+    expect(isInRange(500, { min: null, max: null, source: 'none' })).toBeNull()
+  })
+})
+
+describe('computeTrend', () => {
+  it('gibt null bei weniger als zwei Werten zurück', () => {
+    expect(computeTrend([entry()])).toEqual({ trend: null, diff: 0 })
+  })
+
+  it('erkennt einen steigenden Trend (neuester Eintrag zuerst)', () => {
+    const result = computeTrend([
+      entry({ id: 'neu', tested_at: '2026-07-01', value: 700 }),
+      entry({ id: 'alt', tested_at: '2026-01-01', value: 500 }),
+    ])
+    expect(result).toEqual({ trend: 'up', diff: 200 })
+  })
+
+  it('erkennt einen fallenden Trend', () => {
+    const result = computeTrend([
+      entry({ id: 'neu', value: 400 }),
+      entry({ id: 'alt', value: 600 }),
+    ])
+    expect(result).toEqual({ trend: 'down', diff: -200 })
+  })
+
+  it('erkennt einen gleichbleibenden Wert', () => {
+    expect(computeTrend([entry({ value: 500 }), entry({ id: 'alt', value: 500 })]).trend).toBe('same')
+  })
+})
+
+describe('buildMarkerSummaries', () => {
+  it('legt für jeden Katalog-Marker eine Zusammenfassung an', () => {
+    const summaries = buildMarkerSummaries([])
+    expect(summaries.length).toBeGreaterThan(50)
+    expect(summaries.every(s => s.latest === null)).toBe(true)
+  })
+
+  it('sortiert die Einträge eines Markers absteigend nach Datum', () => {
+    const summaries = buildMarkerSummaries([
+      entry({ id: 'alt', tested_at: '2026-01-01', value: 500 }),
+      entry({ id: 'neu', tested_at: '2026-07-01', value: 700 }),
+    ])
+    const testo = summaries.find(s => s.name === 'Testosteron')!
+    expect(testo.latest?.id).toBe('neu')
+    expect(testo.entries.map(e => e.id)).toEqual(['neu', 'alt'])
+  })
+
+  it('führt unbekannte Marker als Custom-Marker unter "Sonstige"', () => {
+    const summaries = buildMarkerSummaries([entry({ marker: 'Phantasiewert', ref_max: 10 })])
+    const custom = summaries.find(s => s.name === 'Phantasiewert')!
+    expect(custom.def).toBeNull()
+    expect(custom.kategorie).toBe('Sonstige')
+    expect(custom.range).toEqual({ min: null, max: 10, source: 'lab' })
+  })
+
+  it('bewertet den letzten Wert gegen die effektive Referenz', () => {
+    const summaries = buildMarkerSummaries([entry({ value: 1200 })])
+    const testo = summaries.find(s => s.name === 'Testosteron')!
+    expect(testo.inRange).toBe(false)
+  })
+
+  it('ordnet einen Synonym-Eintrag dem kanonischen Marker zu', () => {
+    const summaries = buildMarkerSummaries([entry({ marker: 'Gesamttestosteron', value: 700 })])
+    const testo = summaries.find(s => s.name === 'Testosteron')!
+    expect(testo.latest?.value).toBe(700)
+    expect(summaries.find(s => s.name === 'Gesamttestosteron')).toBeUndefined()
+  })
+})
+
+describe('filterByKategorie', () => {
+  it('gibt bei null alle Marker zurück', () => {
+    const summaries = buildMarkerSummaries([])
+    expect(filterByKategorie(summaries, null)).toHaveLength(summaries.length)
+  })
+
+  it('filtert auf eine Kategorie', () => {
+    const summaries = filterByKategorie(buildMarkerSummaries([]), 'Schilddrüse')
+    expect(summaries.map(s => s.name).sort()).toEqual(['TSH', 'fT3', 'fT4'].sort())
+  })
+
+  it('filtert Custom-Marker unter "Sonstige"', () => {
+    const summaries = buildMarkerSummaries([entry({ marker: 'Phantasiewert' })])
+    expect(filterByKategorie(summaries, 'Sonstige').map(s => s.name)).toEqual(['Phantasiewert'])
+  })
+})
+
+describe('sortSummaries', () => {
+  const summaries = buildMarkerSummaries([
+    entry({ id: 'a', marker: 'Testosteron', tested_at: '2026-01-01', value: 1200 }),
+    entry({ id: 'b', marker: 'Ferritin', tested_at: '2026-07-01', value: 100 }),
+  ])
+
+  it('sortiert nach Name', () => {
+    const names = sortSummaries(summaries, 'name').map(s => s.name)
+    expect(names.indexOf('Albumin')).toBeLessThan(names.indexOf('Zink'))
+  })
+
+  it('sortiert nach zuletzt getestet, ungetestete zuletzt', () => {
+    const sorted = sortSummaries(summaries, 'zuletzt')
+    expect(sorted[0].name).toBe('Ferritin')
+    expect(sorted[1].name).toBe('Testosteron')
+    expect(sorted[2].latest).toBeNull()
+  })
+
+  it('sortiert auffällige Werte nach vorn', () => {
+    const sorted = sortSummaries(summaries, 'status')
+    expect(sorted[0].name).toBe('Testosteron')
+  })
+
+  it('sortiert nach Kategorie in Katalog-Reihenfolge, Sonstige zuletzt', () => {
+    const withCustom = buildMarkerSummaries([entry({ marker: 'Phantasiewert' })])
+    const sorted = sortSummaries(withCustom, 'kategorie')
+    expect(sorted[0].kategorie).toBe('Hormone')
+    expect(sorted[sorted.length - 1].kategorie).toBe('Sonstige')
+  })
+
+  it('verändert das Eingabe-Array nicht', () => {
+    const original = buildMarkerSummaries([])
+    const namesBefore = original.map(s => s.name)
+    sortSummaries(original, 'name')
+    expect(original.map(s => s.name)).toEqual(namesBefore)
+  })
+})
+
+describe('auffaelligeWerte', () => {
+  it('liefert nur Marker, deren letzter Wert außerhalb der Referenz liegt', () => {
+    const summaries = buildMarkerSummaries([
+      entry({ id: 'hoch', marker: 'Testosteron', value: 1200 }),
+      entry({ id: 'ok', marker: 'Ferritin', value: 100 }),
+    ])
+    expect(auffaelligeWerte(summaries).map(s => s.name)).toEqual(['Testosteron'])
+  })
+
+  it('ignoriert Marker ohne Referenzbereich', () => {
+    const summaries = buildMarkerSummaries([entry({ marker: 'Phantasiewert', value: 999 })])
+    expect(auffaelligeWerte(summaries)).toEqual([])
+  })
+
+  it('ignoriert ungetestete Marker', () => {
+    expect(auffaelligeWerte(buildMarkerSummaries([]))).toEqual([])
+  })
+})
