@@ -1,43 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
-import { defaultFocusSubstanceId } from './focusSummary'
 import { isLegacyPhotoUrl } from '../hooks/useFortschrittData'
-import type { CycleSubstance } from '../types'
 
 const hookSource = () => readFileSync(new URL('../hooks/useFortschrittData.ts', import.meta.url), 'utf8')
-
-function cycle(overrides: Partial<CycleSubstance>): CycleSubstance {
-  return {
-    id: 'c1',
-    name: 'BPC-157',
-    mode: 'cycle',
-    startDate: '2026-01-01',
-    endDate: null,
-    active: true,
-    color: '#06b6d4',
-    peptideId: 'p1',
-    ...overrides,
-  }
-}
-
-describe('defaultFocusSubstanceId', () => {
-  test('prefers the oldest active substance over older ended cycles', () => {
-    const ended = cycle({ id: 'ended', startDate: '2025-01-01', endDate: '2025-03-01', active: false })
-    const active = cycle({ id: 'active', startDate: '2026-02-01' })
-
-    expect(defaultFocusSubstanceId([ended, active], [])).toBe('active')
-  })
-
-  test('falls back to ended cycles when nothing is active', () => {
-    const ended = cycle({ id: 'ended', startDate: '2025-01-01', endDate: '2025-03-01', active: false })
-
-    expect(defaultFocusSubstanceId([ended], [])).toBe('ended')
-  })
-
-  test('returns null without any substances', () => {
-    expect(defaultFocusSubstanceId([], [])).toBeNull()
-  })
-})
 
 describe('fortschritt data loading', () => {
   test('loads ended cycles too so Verlauf can show the full history', () => {

@@ -5,15 +5,13 @@ import {
   weightSeries,
   dailyFieldSeries,
 } from '../lib/metrics'
-import { defaultFocusSubstanceId } from '../lib/focusSummary'
 import { rangeFromChip, type RangeChipKey } from '../lib/verlaufRange'
 import type { ChartNavigation, FortschrittOverviewState } from '../types'
-import { ActiveSubstancesSection } from './overview/ActiveSubstancesSection'
 import { TopChangesSection } from './overview/TopChangesSection'
 import { EmptyOverview, NoSubstancesBanner } from './overview/EmptyOverview'
 import { VerlaufSection } from './verlauf/VerlaufSection'
 import { FotosCard } from './fotos/FotosCard'
-import { BlutwerteCard } from './blutwerte/BlutwerteCard'
+import { WerteCard } from './werte/WerteCard'
 
 interface Props {
   state: FortschrittOverviewState
@@ -75,13 +73,9 @@ export function FortschrittDashboard({ state, rangeChip, onLogToday, onReload }:
         changes={topChanges}
         hasAnyData={hasAnyLogs}
         hasEnoughForTrend={hasEnoughForTrend}
+        animationKey={rangeChip}
         onSelect={key => {
-          if (isWellnessMetricKey(key)) {
-            navigateChart({
-              focusSubstanceId: defaultFocusSubstanceId(cycleSubstances, ongoingSubstances) ?? undefined,
-            })
-            return
-          }
+          if (isWellnessMetricKey(key)) return
           navigateChart({ metric: key })
         }}
       />
@@ -94,17 +88,9 @@ export function FortschrittDashboard({ state, rangeChip, onLogToday, onReload }:
 
       {!hasActiveSubstances && <NoSubstancesBanner />}
 
-      {hasActiveSubstances && (
-        <ActiveSubstancesSection
-          cycles={activeCycles}
-          ongoing={ongoingSubstances}
-          onSelect={id => navigateChart({ focusSubstanceId: id })}
-        />
-      )}
-
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, alignItems: 'stretch' }}>
         <FotosCard photos={photos} range={pageRange} onChange={onReload} />
-        <BlutwerteCard bloodwork={bloodwork} range={pageRange} />
+        <WerteCard dailyLogs={dailyLogs} range={pageRange} />
       </div>
     </div>
   )

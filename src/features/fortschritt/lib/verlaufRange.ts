@@ -4,7 +4,7 @@ import { cycleEndDate } from './substances'
 
 export type RangeChipKey = '30t' | '90t' | '6m' | '1j' | 'alles'
 
-export const DEFAULT_RANGE_CHIP: RangeChipKey = '90t'
+export const DEFAULT_RANGE_CHIP: RangeChipKey = 'alles'
 
 export const RANGE_CHIPS: { key: RangeChipKey; label: string; days: number | null }[] = [
   { key: '30t', label: '30T', days: 30 },
