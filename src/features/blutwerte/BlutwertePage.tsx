@@ -4,11 +4,15 @@ import { Plus } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import type { BloodworkEntry } from './types'
-import { buildMarkerSummaries } from './lib/bloodwork'
+import { auffaelligeWerte, buildMarkerSummaries, filterByKategorie, sortSummaries, type SortMode } from './lib/bloodwork'
 import { formatDisplayDate } from './lib/format'
-import { PANEL_STYLE, TEXT, MUTED } from './styles'
+import type { KategorieFilter } from './lib/markerCatalog'
+import { SONSTIGE } from './lib/markerCatalog'
+import { DISCLAIMER, PANEL_STYLE, TEXT, MUTED } from './styles'
 import { MarkerGrid } from './components/MarkerGrid'
 import { MarkerDetail } from './components/MarkerDetail'
+import { GridControls } from './components/GridControls'
+import { AuffaelligeWerte } from './components/AuffaelligeWerte'
 import { EntryModal, emptyDraft, type EntryDraft } from './components/EntryModal'
 
 export function BlutwertePage() {
@@ -19,6 +23,8 @@ export function BlutwertePage() {
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [draft, setDraft] = useState<EntryDraft>(emptyDraft())
+  const [kategorie, setKategorie] = useState<KategorieFilter | null>(null)
+  const [sortMode, setSortMode] = useState<SortMode>('kategorie')
 
   const load = useCallback(async () => {
     if (!user) return
@@ -44,6 +50,15 @@ export function BlutwertePage() {
   }, [load])
 
   const summaries = useMemo(() => buildMarkerSummaries(entries), [entries])
+
+  const showSonstige = useMemo(() => summaries.some(s => s.kategorie === SONSTIGE), [summaries])
+
+  const visibleSummaries = useMemo(
+    () => sortSummaries(filterByKategorie(summaries, kategorie), sortMode),
+    [summaries, kategorie, sortMode],
+  )
+
+  const auffaellig = useMemo(() => auffaelligeWerte(summaries), [summaries])
 
   const markersTested = useMemo(
     () => summaries.filter(s => s.latest !== null).length,
@@ -159,7 +174,25 @@ export function BlutwertePage() {
       )}
 
       {!loading && (
-        <MarkerGrid summaries={summaries} onSelect={setSelectedMarker} />
+        <>
+          <AuffaelligeWerte summaries={auffaellig} onSelect={setSelectedMarker} />
+
+          <GridControls
+            kategorie={kategorie}
+            sortMode={sortMode}
+            showSonstige={showSonstige}
+            onKategorie={setKategorie}
+            onSortMode={setSortMode}
+          />
+
+          <MarkerGrid
+            summaries={visibleSummaries}
+            grouped={sortMode === 'kategorie' && kategorie === null}
+            onSelect={setSelectedMarker}
+          />
+
+          <p className="text-xs text-center mt-5" style={{ color: MUTED }}>{DISCLAIMER}</p>
+        </>
       )}
 
       {modal}
