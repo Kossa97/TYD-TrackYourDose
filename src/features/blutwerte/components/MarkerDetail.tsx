@@ -86,7 +86,10 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
               )}
             </div>
             <p className="text-xs mt-2" style={{ color: MUTED }}>
-              {formatRange(range.min, range.max, latest.unit) ?? 'Kein Referenzbereich'}
+              {(() => {
+                const referenz = formatRange(range.min, range.max, latest.unit)
+                return referenz ? `Referenz: ${referenz}` : 'Kein Referenzbereich'
+              })()}
             </p>
             <div className="mt-3">
               {inRange === true && (
