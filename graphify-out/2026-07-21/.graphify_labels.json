@@ -256,19 +256,5 @@
   "254": "TopChangesSection.test.ts",
   "255": "chartAnimation.test.ts",
   "256": "WerteCard.test.ts",
-  "257": "WerteCardIntegration.test.ts",
-  "258": "liquidGeometry.ts",
-  "259": "metricDefaults.ts",
-  "260": "Wertevergleich: metrikspezifischer Fallback",
-  "261": "index.ts",
-  "262": "Fortschritt-Chart: Ruhige 3M-Ansicht für Gewicht und KFA",
-  "263": "peptideColors.ts",
-  "264": "File Map",
-  "265": "handler",
-  "266": "Testaccount-Jahresverlauf: Design",
-  "267": "Global Constraints",
-  "268": "Global Constraints",
-  "269": "IntakeRow",
-  "270": "metricInteraction.test.ts",
-  "271": "useFortschrittData.pagination.test.ts"
+  "257": "WerteCardIntegration.test.ts"
 }

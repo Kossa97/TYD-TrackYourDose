@@ -3971,8 +3971,11 @@ Expected: Graph aktualisiert (AST-only, keine API-Kosten)
 
 - [ ] **Step 5: Commit**
 
+NIEMALS `git add -A` verwenden: Im Working Tree liegt parallele, unfertige Arbeit an
+`src/features/fortschritt/` aus einer anderen Session. Nur die eigenen Pfade stagen.
+
 ```bash
-git add -A
+git add graphify-out .claude/launch.json
 git commit -m "chore(blutwerte): verify feature and update knowledge graph"
 ```
 
