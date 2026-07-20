@@ -1,27 +1,32 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Plus } from 'lucide-react'
+import { Camera, Plus } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
-import type { BloodworkEntry } from './types'
+import type { BloodworkEntry, BloodworkReport } from './types'
 import { auffaelligeWerte, buildMarkerSummaries, filterByKategorie, sortSummaries, type SortMode } from './lib/bloodwork'
 import { formatDisplayDate } from './lib/format'
 import type { KategorieFilter } from './lib/markerCatalog'
 import { SONSTIGE } from './lib/markerCatalog'
-import { DISCLAIMER, PANEL_STYLE, TEXT, MUTED } from './styles'
+import { CYAN, DISCLAIMER, PANEL_STYLE, TEXT, MUTED } from './styles'
 import { MarkerGrid } from './components/MarkerGrid'
 import { MarkerDetail } from './components/MarkerDetail'
 import { GridControls } from './components/GridControls'
 import { AuffaelligeWerte } from './components/AuffaelligeWerte'
+import { BefundListe } from './components/BefundListe'
 import { EntryModal, emptyDraft, type EntryDraft } from './components/EntryModal'
+import { ImportFlow } from './components/import/ImportFlow'
 
 export function BlutwertePage() {
   const { user } = useAuth()
   const [entries, setEntries] = useState<BloodworkEntry[]>([])
+  const [reports, setReports] = useState<BloodworkReport[]>([])
+  const [view, setView] = useState<'marker' | 'befunde'>('marker')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [draft, setDraft] = useState<EntryDraft>(emptyDraft())
   const [kategorie, setKategorie] = useState<KategorieFilter | null>(null)
   const [sortMode, setSortMode] = useState<SortMode>('kategorie')
@@ -29,15 +34,27 @@ export function BlutwertePage() {
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    const { data, error } = await supabase
-      .from('bloodwork')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('tested_at', { ascending: false })
-      .order('marker', { ascending: true })
+    const [entriesResult, reportsResult] = await Promise.all([
+      supabase
+        .from('bloodwork')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('tested_at', { ascending: false })
+        .order('marker', { ascending: true }),
+      supabase
+        .from('bloodwork_reports')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('tested_at', { ascending: false }),
+    ])
 
-    if (error) toast.error('Blutwerte konnten nicht geladen werden')
-    else setEntries((data ?? []) as BloodworkEntry[])
+    if (entriesResult.error) toast.error('Blutwerte konnten nicht geladen werden')
+    else setEntries((entriesResult.data ?? []) as BloodworkEntry[])
+
+    // Die Tabelle existiert erst nach der separat auszuführenden Migration —
+    // bis dahin bleibt die Befunde-Ansicht einfach leer, kein Fehler-Toast.
+    if (!reportsResult.error) setReports((reportsResult.data ?? []) as BloodworkReport[])
+
     setLoading(false)
   }, [user])
 
@@ -144,9 +161,14 @@ export function BlutwertePage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold" style={{ color: TEXT }}>Blutwerte</h1>
-        <button className="btn-primary flex items-center gap-1.5 text-sm" onClick={() => openNew()}>
-          <Plus size={15} /> Neu
-        </button>
+        <div className="flex gap-2">
+          <button className="btn-secondary flex items-center gap-1.5 text-sm" onClick={() => setShowImport(true)}>
+            <Camera size={15} /> Import
+          </button>
+          <button className="btn-primary flex items-center gap-1.5 text-sm" onClick={() => openNew()}>
+            <Plus size={15} /> Neu
+          </button>
+        </div>
       </div>
 
       {/* Mini stats */}
@@ -167,13 +189,35 @@ export function BlutwertePage() {
         </div>
       </div>
 
+      {/* Ansicht: Marker / Befunde */}
+      <div className="flex gap-2 mb-4">
+        {([['marker', 'Marker'], ['befunde', 'Befunde']] as [typeof view, string][]).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setView(key)}
+            className="flex-1 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors"
+            style={
+              view === key
+                ? { background: 'var(--accent-weak)', color: CYAN, border: '1px solid var(--accent-border)' }
+                : { color: MUTED, border: '1px solid var(--border)' }
+            }
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {loading && (
         <div className="p-10 text-center" style={{ ...PANEL_STYLE, color: MUTED }}>
           Blutwerte werden geladen...
         </div>
       )}
 
-      {!loading && (
+      {!loading && view === 'befunde' && (
+        <BefundListe reports={reports} entries={entries} />
+      )}
+
+      {!loading && view === 'marker' && (
         <>
           <AuffaelligeWerte summaries={auffaellig} onSelect={setSelectedMarker} />
 
@@ -196,6 +240,7 @@ export function BlutwertePage() {
       )}
 
       {modal}
+      {showImport && <ImportFlow onClose={() => setShowImport(false)} onSaved={load} />}
     </div>
   )
 }
