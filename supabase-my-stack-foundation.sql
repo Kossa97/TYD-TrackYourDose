@@ -99,6 +99,7 @@ set
   dosage_form = case
     when lower(btrim(default_method)) ~ '(nasal|intranasal)' then 'nasal_spray'
     when vial_amount_mg > 0
+      and vial_amount_mg < 'Infinity'::numeric
       and (
         reconstitution_ml > 0
         or lower(btrim(default_method)) ~ '(subkutan|subcutaneous|intramusk|intraven|injek|inject|^sc$|^s\\.c\\.$|^im$|^iv$)'
@@ -108,6 +109,7 @@ set
   end,
   configuration_status = case
     when vial_amount_mg > 0
+      and vial_amount_mg < 'Infinity'::numeric
       and nullif(btrim(vial_amount_unit), '') is not null
       and lower(btrim(default_method)) !~ '(nasal|intranasal)'
       and (
@@ -129,7 +131,9 @@ create table public.stack_item_ingredients (
   custom_name text,
   amount_value numeric,
   amount_unit text,
-  basis_value numeric not null default 1 check (basis_value > 0),
+  basis_value numeric not null default 1
+    check (basis_value > 0
+      and basis_value < 'Infinity'::numeric),
   basis_unit text not null
     check (nullif(btrim(basis_unit), '') is not null),
   position integer not null default 0 check (position >= 0),
@@ -141,7 +145,11 @@ create table public.stack_item_ingredients (
   ),
   constraint stack_item_ingredients_amount_check check (
     (amount_value is null and amount_unit is null)
-    or (amount_value > 0 and nullif(btrim(amount_unit), '') is not null)
+    or (
+      amount_value > 0
+        and amount_value < 'Infinity'::numeric
+        and nullif(btrim(amount_unit), '') is not null
+    )
   ),
   constraint stack_item_ingredients_position_key unique (stack_item_id, position)
 );
@@ -162,11 +170,13 @@ select
   case when catalog.id is null then item.display_name end,
   case
     when item.vial_amount_mg > 0
+      and item.vial_amount_mg < 'Infinity'::numeric
       and nullif(btrim(item.vial_amount_unit), '') is not null
       then item.vial_amount_mg
   end,
   case
     when item.vial_amount_mg > 0
+      and item.vial_amount_mg < 'Infinity'::numeric
       and nullif(btrim(item.vial_amount_unit), '') is not null
       then btrim(item.vial_amount_unit)
   end,
@@ -319,6 +329,17 @@ begin
     item_ids_to_check := array[new.stack_item_id];
   end if;
 
+  select array_agg(distinct affected_item_id order by affected_item_id)
+  into item_ids_to_check
+  from unnest(item_ids_to_check) affected_item_id
+  where affected_item_id is not null;
+
+  perform 1
+  from public.stack_items item
+  where item.id = any(item_ids_to_check)
+  order by item.id
+  for update;
+
   foreach item_id_to_check in array item_ids_to_check
   loop
     if exists (
@@ -340,11 +361,15 @@ begin
         from public.stack_item_ingredients ingredient
         where ingredient.stack_item_id = item_id_to_check
           and (
-            ingredient.amount_value is null
-            or ingredient.amount_value <= 0
+            ingredient.amount_value is null or not (
+              ingredient.amount_value > 0
+              and ingredient.amount_value < 'Infinity'::numeric
+            )
             or nullif(btrim(ingredient.amount_unit), '') is null
-            or ingredient.basis_value is null
-            or ingredient.basis_value <= 0
+            or ingredient.basis_value is null or not (
+              ingredient.basis_value > 0
+              and ingredient.basis_value < 'Infinity'::numeric
+            )
             or nullif(btrim(ingredient.basis_unit), '') is null
           )
       ) then
@@ -434,7 +459,10 @@ begin
         = (nullif(btrim(row_value ->> 'custom_name'), '') is null)
       )
       or row_value ->> 'basis_value' is null
-      or (row_value ->> 'basis_value')::numeric <= 0
+      or not (
+        (row_value ->> 'basis_value')::numeric > 0
+        and (row_value ->> 'basis_value')::numeric < 'Infinity'::numeric
+      )
       or nullif(btrim(row_value ->> 'basis_unit'), '') is null
   ) then
     raise exception 'Invalid ingredient';
@@ -451,7 +479,10 @@ begin
     select 1
     from jsonb_array_elements(p_ingredients) row_value
     where row_value ->> 'amount_value' is null
-      or (row_value ->> 'amount_value')::numeric <= 0
+      or not (
+        (row_value ->> 'amount_value')::numeric > 0
+        and (row_value ->> 'amount_value')::numeric < 'Infinity'::numeric
+      )
       or nullif(btrim(row_value ->> 'amount_unit'), '') is null
   )
   into ingredients_incomplete;

@@ -25,9 +25,11 @@ select json_build_object(
       and (
         ingredient.amount_value is null
         or ingredient.amount_value <= 0
+        or ingredient.amount_value >= 'Infinity'::numeric
         or nullif(btrim(ingredient.amount_unit), '') is null
         or ingredient.basis_value is null
         or ingredient.basis_value <= 0
+        or ingredient.basis_value >= 'Infinity'::numeric
         or nullif(btrim(ingredient.basis_unit), '') is null
       )
   )

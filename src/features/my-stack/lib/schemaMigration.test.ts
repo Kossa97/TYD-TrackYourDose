@@ -2,7 +2,9 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const sql = readFileSync(resolve('supabase-my-stack-foundation.sql'), 'utf8').toLowerCase()
+const sql = readFileSync(resolve('supabase-my-stack-foundation.sql'), 'utf8')
+  .replace(/\r\n/g, '\n')
+  .toLowerCase()
 
 describe('my stack migration contract', () => {
   it('läuft in einer Transaktion und benennt die zentrale Tabelle um', () => {
@@ -56,8 +58,8 @@ describe('my stack migration contract', () => {
   })
 
   it('clears both legacy strength fields when the unit is missing', () => {
-    expect(sql).toContain("item.vial_amount_mg > 0\n      and nullif(btrim(item.vial_amount_unit), '') is not null\n      then item.vial_amount_mg")
-    expect(sql).toContain("item.vial_amount_mg > 0\n      and nullif(btrim(item.vial_amount_unit), '') is not null\n      then btrim(item.vial_amount_unit)")
+    expect(sql).toContain("item.vial_amount_mg > 0\n      and item.vial_amount_mg < 'infinity'::numeric\n      and nullif(btrim(item.vial_amount_unit), '') is not null\n      then item.vial_amount_mg")
+    expect(sql).toContain("item.vial_amount_mg > 0\n      and item.vial_amount_mg < 'infinity'::numeric\n      and nullif(btrim(item.vial_amount_unit), '') is not null\n      then btrim(item.vial_amount_unit)")
   })
 
   it('keeps rollback re-runnable after a successful run', () => {
@@ -84,5 +86,32 @@ describe('my stack migration contract', () => {
 
   it('makes stack ownership checks explicit for writes', () => {
     expect(sql).toContain('alter policy "own stack items" on public.stack_items\n  using (auth.uid() = user_id)\n  with check (auth.uid() = user_id)')
+  })
+
+  it('rejects non-finite amount and basis numerics at every migration boundary', () => {
+    const verifySql = readFileSync(resolve('supabase-my-stack-verify.sql'), 'utf8').toLowerCase()
+
+    expect(sql).toContain("basis_value > 0\n      and basis_value < 'infinity'::numeric")
+    expect(sql).toContain("amount_value > 0\n        and amount_value < 'infinity'::numeric")
+    expect(sql.match(/vial_amount_mg < 'infinity'::numeric/g)).toHaveLength(4)
+    expect(sql).toContain("ingredient.amount_value < 'infinity'::numeric")
+    expect(sql).toContain("ingredient.basis_value < 'infinity'::numeric")
+    expect(sql).toContain("(row_value ->> 'basis_value')::numeric < 'infinity'::numeric")
+    expect(sql).toContain("(row_value ->> 'amount_value')::numeric < 'infinity'::numeric")
+    expect(verifySql).toContain("ingredient.amount_value >= 'infinity'::numeric")
+    expect(verifySql).toContain("ingredient.basis_value >= 'infinity'::numeric")
+  })
+
+  it('serializes completeness checks on every affected parent in deterministic order', () => {
+    expect(sql).toContain('select array_agg(distinct affected_item_id order by affected_item_id)')
+    expect(sql).toContain('from unnest(item_ids_to_check) affected_item_id')
+    expect(sql).toContain('order by item.id\n  for update')
+    expect(sql).toContain('foreach item_id_to_check in array item_ids_to_check')
+    expect(sql).toContain('array[old.stack_item_id, new.stack_item_id]')
+
+    const lockPosition = sql.indexOf('order by item.id\n  for update')
+    const validationPosition = sql.indexOf('foreach item_id_to_check in array item_ids_to_check')
+    expect(lockPosition).toBeGreaterThan(-1)
+    expect(lockPosition).toBeLessThan(validationPosition)
   })
 })
