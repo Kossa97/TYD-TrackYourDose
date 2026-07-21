@@ -51,4 +51,19 @@ describe('MARKER_CATALOG', () => {
     expect(CATALOG_MARKER_NAMES).toContain('Testosteron')
     expect(CATALOG_MARKER_NAMES.length).toBe(MARKER_CATALOG.length)
   })
+
+  it('führt Differentialblutbild-Zellen getrennt als % und absolut', () => {
+    const prozent = normalizeMarker('Basophile %')
+    const absolut = normalizeMarker('Basophile absolut')
+    expect(prozent?.name).toBe('Basophile %')
+    expect(absolut?.name).toBe('Basophile absolut')
+    expect(prozent?.einheit).toBe('%')
+    expect(absolut?.einheit).toBe('/nl')
+    expect(prozent?.name).not.toBe(absolut?.name)
+  })
+
+  it('kennt die Kategorie Enzyme', () => {
+    expect(KATEGORIEN).toContain('Enzyme')
+    expect(normalizeMarker('Kreatinkinase')?.kategorie).toBe('Enzyme')
+  })
 })

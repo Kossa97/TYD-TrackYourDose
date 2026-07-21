@@ -3,6 +3,7 @@ export type Kategorie =
   | 'Schilddrüse'
   | 'Blutbild'
   | 'Leber'
+  | 'Enzyme'
   | 'Niere'
   | 'Lipide'
   | 'Entzündung'
@@ -14,6 +15,7 @@ export const KATEGORIEN: Kategorie[] = [
   'Schilddrüse',
   'Blutbild',
   'Leber',
+  'Enzyme',
   'Niere',
   'Lipide',
   'Entzündung',
@@ -649,6 +651,180 @@ export const MARKER_CATALOG: MarkerDef[] = [
     lowerIsBetter: true,
     erklaerung:
       'Ein aus Nüchternzucker und Insulin berechneter Wert für die Insulinempfindlichkeit. Niedriger ist besser.',
+  },
+
+  // ---------- Differentialblutbild ----------
+  // Diese Zellarten erscheinen im Befund doppelt: als Prozentanteil und als
+  // Absolutzahl. Sie werden bewusst als getrennte Marker geführt.
+  {
+    name: 'Neutrophile %',
+    synonyme: ['Neutrophile relativ', 'Neutrophile Granulozyten %', 'Segmentkernige %', 'Neutro %'],
+    kategorie: 'Blutbild',
+    einheit: '%',
+    refMin: 40,
+    refMax: 75,
+    erklaerung:
+      'Der prozentuale Anteil der neutrophilen Granulozyten an den weißen Blutkörperchen. Sie sind die vorderste Abwehr gegen bakterielle Infektionen.',
+  },
+  {
+    name: 'Neutrophile absolut',
+    synonyme: ['Neutrophile Granulozyten absolut', 'Neutrophile abs', 'Segmentkernige absolut', 'Neutro abs'],
+    kategorie: 'Blutbild',
+    einheit: '/nl',
+    refMin: 1.8,
+    refMax: 7.7,
+    erklaerung:
+      'Die absolute Anzahl neutrophiler Granulozyten. Sehr niedrige Werte schwächen die Abwehr gegen bakterielle Infektionen.',
+  },
+  {
+    name: 'Lymphozyten %',
+    synonyme: ['Lymphozyten relativ', 'Lympho %'],
+    kategorie: 'Blutbild',
+    einheit: '%',
+    refMin: 20,
+    refMax: 45,
+    erklaerung:
+      'Der prozentuale Anteil der Lymphozyten an den weißen Blutkörperchen. Sie steuern die gezielte Immunabwehr gegen Viren und die Bildung von Antikörpern.',
+  },
+  {
+    name: 'Lymphozyten absolut',
+    synonyme: ['Lymphozyten abs', 'Lympho abs'],
+    kategorie: 'Blutbild',
+    einheit: '/nl',
+    refMin: 1.0,
+    refMax: 4.0,
+    erklaerung: 'Die absolute Anzahl der Lymphozyten, der Träger der gezielten Immunabwehr.',
+  },
+  {
+    name: 'Monozyten %',
+    synonyme: ['Monozyten relativ', 'Mono %'],
+    kategorie: 'Blutbild',
+    einheit: '%',
+    refMin: 2,
+    refMax: 10,
+    erklaerung:
+      'Der prozentuale Anteil der Monozyten. Sie beseitigen Krankheitserreger und Zelltrümmer und sind Teil der Immunabwehr.',
+  },
+  {
+    name: 'Monozyten absolut',
+    synonyme: ['Monozyten abs', 'Mono abs'],
+    kategorie: 'Blutbild',
+    einheit: '/nl',
+    refMin: 0.2,
+    refMax: 0.8,
+    erklaerung: 'Die absolute Anzahl der Monozyten, die Krankheitserreger und Zelltrümmer aufnehmen.',
+  },
+  {
+    name: 'Eosinophile %',
+    synonyme: ['Eosinophile relativ', 'Eosinophile Granulozyten %', 'Eos %'],
+    kategorie: 'Blutbild',
+    einheit: '%',
+    refMin: 1,
+    refMax: 6,
+    erklaerung:
+      'Der prozentuale Anteil der eosinophilen Granulozyten. Erhöhte Werte treten häufig bei Allergien und Parasitenbefall auf.',
+  },
+  {
+    name: 'Eosinophile absolut',
+    synonyme: ['Eosinophile Granulozyten absolut', 'Eosinophile abs', 'Eos abs'],
+    kategorie: 'Blutbild',
+    einheit: '/nl',
+    refMax: 0.5,
+    lowerIsBetter: true,
+    erklaerung:
+      'Die absolute Anzahl eosinophiler Granulozyten. Erhöhte Werte weisen oft auf Allergien oder Parasiten hin.',
+  },
+  {
+    name: 'Basophile %',
+    synonyme: ['Basophile relativ', 'Basophile Granulozyten %', 'Baso %'],
+    kategorie: 'Blutbild',
+    einheit: '%',
+    refMax: 2,
+    lowerIsBetter: true,
+    erklaerung:
+      'Der prozentuale Anteil der basophilen Granulozyten, der seltensten weißen Blutkörperchen. Sie sind an allergischen Reaktionen beteiligt.',
+  },
+  {
+    name: 'Basophile absolut',
+    synonyme: ['Basophile Granulozyten absolut', 'Basophile abs', 'Baso abs'],
+    kategorie: 'Blutbild',
+    einheit: '/nl',
+    refMax: 0.2,
+    lowerIsBetter: true,
+    erklaerung: 'Die absolute Anzahl der basophilen Granulozyten, die an allergischen Reaktionen beteiligt sind.',
+  },
+
+  // ---------- Enzyme ----------
+  {
+    name: 'LDH',
+    synonyme: ['Laktatdehydrogenase', 'Lactatdehydrogenase'],
+    kategorie: 'Enzyme',
+    einheit: 'U/L',
+    refMax: 250,
+    lowerIsBetter: true,
+    erklaerung:
+      'Ein Enzym, das in fast allen Körperzellen vorkommt. Erhöhte Werte sind ein unspezifischer Hinweis auf Zellschäden, etwa in Muskel, Leber oder Blut.',
+  },
+  {
+    name: 'Kreatinkinase',
+    synonyme: ['CK', 'CK gesamt', 'Creatinkinase', 'CPK'],
+    kategorie: 'Enzyme',
+    einheit: 'U/L',
+    refMax: 190,
+    lowerIsBetter: true,
+    erklaerung:
+      'Ein Muskelenzym. Nach intensivem Training ist es oft deutlich erhöht, ohne dass eine Erkrankung vorliegt — der Zeitpunkt der Messung ist wichtig.',
+  },
+  {
+    name: 'Amylase',
+    synonyme: ['Alpha-Amylase', 'α-Amylase', 'Pankreas-Amylase'],
+    kategorie: 'Enzyme',
+    einheit: 'U/L',
+    refMax: 100,
+    lowerIsBetter: true,
+    erklaerung:
+      'Ein Verdauungsenzym aus Bauchspeicheldrüse und Speicheldrüsen. Stark erhöhte Werte können auf eine Entzündung der Bauchspeicheldrüse hindeuten.',
+  },
+  {
+    name: 'Lipase',
+    synonyme: [],
+    kategorie: 'Enzyme',
+    einheit: 'U/L',
+    refMax: 60,
+    lowerIsBetter: true,
+    erklaerung:
+      'Ein fettspaltendes Enzym der Bauchspeicheldrüse. Es ist der spezifischste Wert für eine Entzündung der Bauchspeicheldrüse.',
+  },
+
+  // ---------- Weitere Elektrolyte & Eiweiß ----------
+  {
+    name: 'Chlorid',
+    synonyme: ['Chlor'],
+    kategorie: 'Vitamine & Mineralstoffe',
+    einheit: 'mmol/L',
+    refMin: 98,
+    refMax: 107,
+    erklaerung: 'Ein Elektrolyt, das gemeinsam mit Natrium den Wasser- und Säure-Basen-Haushalt reguliert.',
+  },
+  {
+    name: 'Phosphat',
+    synonyme: ['Anorganisches Phosphat', 'Phosphat anorganisch', 'Phosphor'],
+    kategorie: 'Vitamine & Mineralstoffe',
+    einheit: 'mmol/L',
+    refMin: 0.81,
+    refMax: 1.45,
+    erklaerung:
+      'Wichtig für Knochen, Energiestoffwechsel und Zellfunktion. Der Wert wird eng mit Kalzium und der Nierenfunktion reguliert.',
+  },
+  {
+    name: 'Gesamteiweiß',
+    synonyme: ['Gesamtprotein', 'Eiweiß gesamt', 'Serumeiweiß', 'Protein gesamt'],
+    kategorie: 'Leber',
+    einheit: 'g/dL',
+    refMin: 6.4,
+    refMax: 8.3,
+    erklaerung:
+      'Die Gesamtmenge an Eiweiß im Blut, überwiegend Albumin und Antikörper. Sie spiegelt Ernährungszustand, Leber- und Nierenfunktion wider.',
   },
 ]
 
