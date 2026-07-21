@@ -301,4 +301,22 @@ describe('buildMarkerSummaries – Einheiten-Umrechnung', () => {
     expect(t.range.max).toBeCloseTo(900, 2)
     expect(t.range.source).toBe('lab')
   })
+
+  it('meldet inRange als unbekannt, wenn ein molarer Wert nicht zum Katalog-Bereich passt', () => {
+    // Testosteron in nmol/L (molar) ist nicht in ng/dL umrechenbar -> kein falscher Alarm.
+    const summaries = buildMarkerSummaries([entry({ value: 20, unit: 'nmol/L' })])
+    const t = summaries.find(s => s.name === 'Testosteron')!
+    expect(t.displayValue).toBeNull()
+    expect(t.inRange).toBeNull()
+  })
+
+  it('prüft einen nicht umrechenbaren Wert gegen eine gleich-einheitige Labor-Referenz', () => {
+    // Wert und Labor-Referenz in derselben (molaren) Einheit -> Vergleich bleibt gültig.
+    const summaries = buildMarkerSummaries([
+      entry({ value: 35, unit: 'nmol/L', ref_min: 12, ref_max: 30 }),
+    ])
+    const t = summaries.find(s => s.name === 'Testosteron')!
+    expect(t.displayValue).toBeNull()
+    expect(t.inRange).toBe(false)
+  })
 })

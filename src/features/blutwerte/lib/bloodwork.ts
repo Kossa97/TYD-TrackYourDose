@@ -128,12 +128,15 @@ export function buildMarkerSummaries(entries: BloodworkEntry[]): MarkerSummary[]
 
     const { trend, diff } = computeTrend(sorted, displayUnit)
 
-    // inRange bevorzugt den umgerechneten Wert; ist er nicht umrechenbar,
-    // wird der Roh-Wert gegen den Roh-Bereich geprüft (beide in Eintrags-Einheit).
+    // inRange bevorzugt den umgerechneten Wert. Ist er nicht umrechenbar, ist ein
+    // Vergleich nur bei einer Labor-Referenz sicher (Wert und Bereich in derselben
+    // Eintrags-Einheit). Bei einem Katalog-Bereich in abweichender Einheit — etwa
+    // ein molarer Wert (nmol/L) gegen einen ng/dL-Bereich — bleibt es unbekannt,
+    // statt einen falschen Alarm auszulösen.
     const inRange =
       displayValue != null
         ? isInRange(displayValue, range)
-        : latest
+        : latest && rawRange.source === 'lab'
           ? isInRange(toNumber(latest.value), rawRange)
           : null
 
