@@ -76,6 +76,21 @@ describe('computeTopChanges', () => {
     const changes = computeTopChanges(range, [], flatLogs, [])
     expect(changes).toHaveLength(0)
   })
+
+  it('rechnet Blutwerte in eine Einheit um, statt gemischte Einheiten roh zu vergleichen', () => {
+    const testo: BloodworkEntry[] = [
+      { id: 't1', marker: 'Testosteron', value: 600, unit: 'ng/dL', tested_at: '2026-06-01' },
+      { id: 't2', marker: 'Testosteron', value: 6.5, unit: 'µg/l', tested_at: '2026-06-15' }, // 650 ng/dL
+      { id: 't3', marker: 'Testosteron', value: 7.5, unit: 'µg/l', tested_at: '2026-07-01' }, // 750 ng/dL
+    ]
+    const changes = computeTopChanges(range, [], [], testo)
+    const testoChange = changes.find(c => c.label === 'Testosteron')
+    expect(testoChange).toBeDefined()
+    expect(testoChange!.unit).toBe('ng/dL')
+    expect(testoChange!.from).toBeCloseTo(600, 1)
+    expect(testoChange!.to).toBeCloseTo(750, 1)
+    expect(testoChange!.delta).toBeGreaterThan(0) // Anstieg, kein Scheinabsturz
+  })
 })
 
 describe('wellnessAverage', () => {

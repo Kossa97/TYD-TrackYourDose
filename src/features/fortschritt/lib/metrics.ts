@@ -2,6 +2,8 @@ import { METRIC_THRESHOLDS, MAX_TOP_CHANGES, MIN_POINTS_FOR_TREND, WELLNESS_FIEL
 import type { BloodworkEntry, DailyLogEntry, DateRange, DoseLogEntry, MetricChange, MetricKey, WeightLogEntry } from '../types'
 import { dateKeyFromTimestamp } from './substances'
 import { filterByDateRange } from './range'
+import { normalizeMarker } from '../../blutwerte/lib/markerCatalog'
+import { convert } from '../../blutwerte/lib/unitConversion'
 
 export interface SeriesPoint {
   date: string
@@ -50,11 +52,32 @@ function dailyFieldSeries(
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 
-function labSeries(bloodwork: BloodworkEntry[], marker: string, range: DateRange): SeriesPoint[] {
-  return filterByDateRange(bloodwork, range, b => b.tested_at)
+/**
+ * Baut die Zeitreihe eines Markers in EINER Einheit auf: alle Werte werden in die
+ * Katalog-Einheit (bzw. die Einheit des neuesten Eintrags) umgerechnet. Nicht sicher
+ * umrechenbare Werte (z.B. molare Einheiten) werden übersprungen, damit die
+ * Veränderung nicht durch gemischte Einheiten verfälscht wird.
+ */
+function labSeries(
+  bloodwork: BloodworkEntry[],
+  marker: string,
+  range: DateRange,
+): { points: SeriesPoint[]; unit: string } {
+  const inRange = filterByDateRange(bloodwork, range, b => b.tested_at)
     .filter(b => b.marker === marker)
-    .map(b => ({ date: b.tested_at, value: b.value }))
-    .sort((a, b) => a.date.localeCompare(b.date))
+    .sort((a, b) => a.tested_at.localeCompare(b.tested_at))
+  if (inRange.length === 0) return { points: [], unit: '' }
+
+  const displayUnit = normalizeMarker(marker)?.einheit || inRange[inRange.length - 1].unit
+  const points: SeriesPoint[] = []
+  for (const b of inRange) {
+    const raw = numeric(b.value)
+    if (raw == null) continue
+    const converted = convert(raw, b.unit, displayUnit)
+    if (converted == null) continue
+    points.push({ date: b.tested_at, value: converted })
+  }
+  return { points, unit: displayUnit }
 }
 
 const WELLNESS_LABELS: Record<string, string> = {
@@ -112,10 +135,9 @@ export function computeTopChanges(
 
   const markers = [...new Set(bloodwork.map(b => b.marker))]
   for (const marker of markers) {
-    const pts = labSeries(bloodwork, marker, range)
-    const d = computeDelta(pts)
+    const { points, unit } = labSeries(bloodwork, marker, range)
+    const d = computeDelta(points)
     if (d && passesThreshold(marker, d.delta, d.from)) {
-      const unit = bloodwork.find(b => b.marker === marker)?.unit ?? ''
       candidates.push({
         key: marker,
         label: marker,
@@ -230,7 +252,7 @@ export function buildMetricSeries(
   if (key === 'energie' || key === 'schlaf' || key === 'wohlbefinden' || key === 'libido') {
     return dailyFieldSeries(dailyLogs, range, key)
   }
-  return labSeries(bloodwork, key, range)
+  return labSeries(bloodwork, key, range).points
 }
 
 export { numeric, weightSeries, dailyFieldSeries, labSeries }
