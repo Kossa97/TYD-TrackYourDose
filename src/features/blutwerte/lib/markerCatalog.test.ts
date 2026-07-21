@@ -58,7 +58,7 @@ describe('MARKER_CATALOG', () => {
     expect(prozent?.name).toBe('Basophile %')
     expect(absolut?.name).toBe('Basophile absolut')
     expect(prozent?.einheit).toBe('%')
-    expect(absolut?.einheit).toBe('/nl')
+    expect(absolut?.einheit).toBe('/nL')
     expect(prozent?.name).not.toBe(absolut?.name)
   })
 
