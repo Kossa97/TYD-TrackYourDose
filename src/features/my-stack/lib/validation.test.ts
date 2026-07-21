@@ -65,6 +65,15 @@ describe('validateStackItemDraft', () => {
     })).toEqual({})
   })
 
+  it('behandelt eine reine Leerraum-Katalog-ID als fehlend', () => {
+    const errors = validateStackItemDraft({
+      ...validVitaminD,
+      ingredients: [{ ...ingredient, catalog_substance_id: '   ', custom_name: ' ' }],
+    })
+
+    expect(errors.ingredients?.[0].name).toBeTruthy()
+  })
+
   it('markiert bei Mehrfachwirkstoffen nur fehlerhafte Zeilen', () => {
     const errors = validateStackItemDraft({
       ...validVitaminD,

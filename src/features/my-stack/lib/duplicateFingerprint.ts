@@ -9,8 +9,9 @@ function normalizeNumber(value: number | null): string {
 }
 
 function ingredientFingerprint(ingredient: StackItemIngredient): string {
-  const identity = ingredient.catalog_substance_id
-    ? `catalog:${normalizeText(ingredient.catalog_substance_id)}`
+  const catalogSubstanceId = normalizeText(ingredient.catalog_substance_id ?? '')
+  const identity = catalogSubstanceId
+    ? `catalog:${catalogSubstanceId}`
     : `custom:${normalizeText(ingredient.custom_name)}`
 
   return JSON.stringify([

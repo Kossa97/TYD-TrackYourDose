@@ -86,4 +86,19 @@ describe('buildDuplicateFingerprint', () => {
 
     expect(buildDuplicateFingerprint(a)).toBe(buildDuplicateFingerprint(b))
   })
+
+  it('behandelt eine reine Leerraum-Katalog-ID als freie Substanz', () => {
+    const whitespaceId = draft('capsule', [{
+      ...ingredient('Vitamin D3', 1000, 'IU', 1, 'capsule'),
+      catalog_substance_id: '   ',
+    }])
+    const absentId = draft('capsule', [ingredient('vitamin d3', 1000, 'iu', 1, 'CAPSULE')])
+    const otherCustomName = draft('capsule', [{
+      ...ingredient('Vitamin K2', 1000, 'IU', 1, 'capsule'),
+      catalog_substance_id: '   ',
+    }])
+
+    expect(buildDuplicateFingerprint(whitespaceId)).toBe(buildDuplicateFingerprint(absentId))
+    expect(buildDuplicateFingerprint(whitespaceId)).not.toBe(buildDuplicateFingerprint(otherCustomName))
+  })
 })

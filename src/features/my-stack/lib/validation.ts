@@ -15,8 +15,9 @@ export interface StackItemDraftValidationErrors {
 
 function validateIngredient(ingredient: StackItemIngredient): IngredientValidationErrors {
   const errors: IngredientValidationErrors = {}
+  const catalogSubstanceId = ingredient.catalog_substance_id?.trim()
 
-  if (!ingredient.catalog_substance_id && !ingredient.custom_name.trim()) errors.name = 'required'
+  if (!catalogSubstanceId && !ingredient.custom_name.trim()) errors.name = 'required'
   if (ingredient.amount_value === null) errors.amountValue = 'required'
   if (!ingredient.amount_unit?.trim()) errors.amountUnit = 'required'
   if (ingredient.basis_value === null) errors.basisValue = 'required'
