@@ -184,7 +184,7 @@ describe('filterByKategorie', () => {
 describe('sortSummaries', () => {
   const summaries = buildMarkerSummaries([
     entry({ id: 'a', marker: 'Testosteron', tested_at: '2026-01-01', value: 1200 }),
-    entry({ id: 'b', marker: 'Ferritin', tested_at: '2026-07-01', value: 100 }),
+    entry({ id: 'b', marker: 'Ferritin', tested_at: '2026-07-01', value: 100, unit: 'ng/mL' }),
   ])
 
   it('sortiert nach Name', () => {
@@ -223,7 +223,7 @@ describe('auffaelligeWerte', () => {
   it('liefert nur Marker, deren letzter Wert außerhalb der Referenz liegt', () => {
     const summaries = buildMarkerSummaries([
       entry({ id: 'hoch', marker: 'Testosteron', value: 1200 }),
-      entry({ id: 'ok', marker: 'Ferritin', value: 100 }),
+      entry({ id: 'ok', marker: 'Ferritin', value: 100, unit: 'ng/mL' }),
     ])
     expect(auffaelligeWerte(summaries).map(s => s.name)).toEqual(['Testosteron'])
   })
@@ -235,5 +235,70 @@ describe('auffaelligeWerte', () => {
 
   it('ignoriert ungetestete Marker', () => {
     expect(auffaelligeWerte(buildMarkerSummaries([]))).toEqual([])
+  })
+})
+
+describe('buildMarkerSummaries – Einheiten-Umrechnung', () => {
+  it('rechnet den aktuellen Wert in die Katalog-Einheit um', () => {
+    const summaries = buildMarkerSummaries([entry({ value: 13.1, unit: 'µg/l' })])
+    const t = summaries.find(s => s.name === 'Testosteron')!
+    expect(t.displayUnit).toBe('ng/dL')
+    expect(t.displayValue).toBeCloseTo(1310, 3)
+  })
+
+  it('bewertet inRange anhand des umgerechneten Werts (1310 ng/dL ist zu hoch, nicht zu niedrig)', () => {
+    const summaries = buildMarkerSummaries([entry({ value: 13.1, unit: 'µg/l' })])
+    const t = summaries.find(s => s.name === 'Testosteron')!
+    expect(t.inRange).toBe(false)
+    expect(t.displayValue!).toBeGreaterThan(900)
+  })
+
+  it('berechnet den Trend über gemischte Einheiten korrekt', () => {
+    const summaries = buildMarkerSummaries([
+      entry({ id: 'neu', tested_at: '2026-07-15', value: 13.1, unit: 'µg/l' }),
+      entry({ id: 'alt', tested_at: '2026-02-22', value: 738, unit: 'ng/dL' }),
+    ])
+    const t = summaries.find(s => s.name === 'Testosteron')!
+    expect(t.trend).toBe('up')
+    expect(t.diff).toBeCloseTo(1310 - 738, 2)
+  })
+
+  it('liefert points in Katalog-Einheit, neueste zuerst', () => {
+    const summaries = buildMarkerSummaries([
+      entry({ id: 'a', tested_at: '2026-07-15', value: 13.1, unit: 'µg/l' }),
+      entry({ id: 'b', tested_at: '2026-02-22', value: 738, unit: 'ng/dL' }),
+    ])
+    const t = summaries.find(s => s.name === 'Testosteron')!
+    expect(t.points.map(p => (p.value != null ? Math.round(p.value) : null))).toEqual([1310, 738])
+  })
+
+  it('markiert nicht umrechenbare (molare) Einheiten als null-Punkt', () => {
+    const summaries = buildMarkerSummaries([
+      entry({ id: 'a', tested_at: '2026-07-15', value: 20, unit: 'nmol/L' }),
+      entry({ id: 'b', tested_at: '2026-02-22', value: 738, unit: 'ng/dL' }),
+    ])
+    const t = summaries.find(s => s.name === 'Testosteron')!
+    expect(t.points.find(p => p.entry.id === 'a')!.value).toBeNull()
+    expect(t.points.find(p => p.entry.id === 'b')!.value).toBeCloseTo(738, 3)
+  })
+
+  it('nutzt für Custom-Marker die Einheit des neuesten Eintrags', () => {
+    const summaries = buildMarkerSummaries([entry({ marker: 'Phantasiewert', value: 5, unit: 'xyz/L' })])
+    const c = summaries.find(s => s.name === 'Phantasiewert')!
+    expect(c.displayUnit).toBe('xyz/L')
+    expect(c.displayValue).toBe(5)
+  })
+
+  it('konvertiert einen Labor-Referenzbereich in die Anzeige-Einheit', () => {
+    // Custom-freier Fall: Katalog-Marker mit Labor-Referenz in abweichender Einheit.
+    const summaries = buildMarkerSummaries([
+      entry({ value: 6.0, unit: 'µg/l', ref_min: 3, ref_max: 9 }), // Labor-Bereich in µg/l
+    ])
+    const t = summaries.find(s => s.name === 'Testosteron')!
+    // displayUnit = ng/dL; 3 µg/l = 300 ng/dL, 9 µg/l = 900 ng/dL
+    expect(t.displayUnit).toBe('ng/dL')
+    expect(t.range.min).toBeCloseTo(300, 2)
+    expect(t.range.max).toBeCloseTo(900, 2)
+    expect(t.range.source).toBe('lab')
   })
 })

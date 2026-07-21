@@ -1,6 +1,7 @@
 import type { BloodworkEntry } from '../types'
 import type { Kategorie, KategorieFilter, MarkerDef } from './markerCatalog'
 import { KATEGORIEN, MARKER_CATALOG, SONSTIGE, normalizeMarker } from './markerCatalog'
+import { convert } from './unitConversion'
 
 export interface EffectiveRange {
   min: number | null
@@ -13,6 +14,12 @@ export type Trend = 'up' | 'down' | 'same' | null
 
 export type SortMode = 'kategorie' | 'name' | 'zuletzt' | 'status'
 
+export interface MarkerPoint {
+  entry: BloodworkEntry
+  /** Wert in displayUnit; null, wenn die Einheit nicht sicher umrechenbar ist. */
+  value: number | null
+}
+
 export interface MarkerSummary {
   /** Kanonischer Name (Katalog) oder Rohname (Custom-Marker). */
   name: string
@@ -21,6 +28,12 @@ export interface MarkerSummary {
   /** Alle Einträge, absteigend nach Datum. */
   entries: BloodworkEntry[]
   latest: BloodworkEntry | null
+  /** Einheit, in der Chart, Trend und aktueller Wert dargestellt werden. */
+  displayUnit: string
+  /** Neuester Wert in displayUnit. null, wenn nicht umrechenbar. */
+  displayValue: number | null
+  /** Einträge (neueste zuerst) mit Wert in displayUnit. */
+  points: MarkerPoint[]
   range: EffectiveRange
   inRange: boolean | null
   trend: Trend
@@ -50,16 +63,35 @@ export function isInRange(value: number, range: EffectiveRange): boolean | null 
   return true
 }
 
-/** Erwartet Einträge absteigend nach Datum (neuester zuerst). */
-export function computeTrend(entries: BloodworkEntry[]): { trend: Trend; diff: number } {
-  if (entries.length < 2) return { trend: null, diff: 0 }
-  const last = toNumber(entries[0].value)
-  const prev = toNumber(entries[1].value)
-  if (!Number.isFinite(last) || !Number.isFinite(prev)) return { trend: null, diff: 0 }
-  const diff = last - prev
+/**
+ * Erwartet Einträge absteigend nach Datum. Vergleicht die zwei jüngsten Werte,
+ * die sich in displayUnit umrechnen lassen (nicht umrechenbare werden übersprungen).
+ * Ohne displayUnit wird die Einheit des neuesten Eintrags verwendet.
+ */
+export function computeTrend(entries: BloodworkEntry[], displayUnit?: string): { trend: Trend; diff: number } {
+  const unit = displayUnit ?? entries[0]?.unit ?? ''
+  const values: number[] = []
+  for (const e of entries) {
+    const v = convert(toNumber(e.value), e.unit, unit)
+    if (v != null) values.push(v)
+    if (values.length === 2) break
+  }
+  if (values.length < 2) return { trend: null, diff: 0 }
+  const diff = values[0] - values[1]
   if (diff > 0) return { trend: 'up', diff }
   if (diff < 0) return { trend: 'down', diff }
   return { trend: 'same', diff: 0 }
+}
+
+/** Drückt einen Referenzbereich in displayUnit aus. Katalog-Bereiche sind bereits
+ *  in displayUnit; Labor-Bereiche werden aus der Eintrags-Einheit umgerechnet. */
+function rangeInDisplayUnit(range: EffectiveRange, fromUnit: string | undefined, toUnit: string): EffectiveRange {
+  if (range.source !== 'lab' || !fromUnit) return range
+  const min = range.min != null ? convert(range.min, fromUnit, toUnit) : null
+  const max = range.max != null ? convert(range.max, fromUnit, toUnit) : null
+  // Wenn eine vorhandene Grenze nicht umrechenbar ist, bleibt der Roh-Bereich stehen.
+  if ((range.min != null && min == null) || (range.max != null && max == null)) return range
+  return { min, max, source: 'lab' }
 }
 
 /**
@@ -83,16 +115,39 @@ export function buildMarkerSummaries(entries: BloodworkEntry[]): MarkerSummary[]
   return Array.from(byName.entries()).map(([name, bucket]) => {
     const sorted = bucket.entries.slice().sort((a, b) => b.tested_at.localeCompare(a.tested_at))
     const latest = sorted[0] ?? null
-    const range = effectiveRange(latest, bucket.def)
-    const { trend, diff } = computeTrend(sorted)
+    const displayUnit = bucket.def?.einheit || latest?.unit || ''
+
+    const points: MarkerPoint[] = sorted.map(e => ({
+      entry: e,
+      value: convert(toNumber(e.value), e.unit, displayUnit),
+    }))
+    const displayValue = latest ? convert(toNumber(latest.value), latest.unit, displayUnit) : null
+
+    const rawRange = effectiveRange(latest, bucket.def)
+    const range = rangeInDisplayUnit(rawRange, latest?.unit, displayUnit)
+
+    const { trend, diff } = computeTrend(sorted, displayUnit)
+
+    // inRange bevorzugt den umgerechneten Wert; ist er nicht umrechenbar,
+    // wird der Roh-Wert gegen den Roh-Bereich geprüft (beide in Eintrags-Einheit).
+    const inRange =
+      displayValue != null
+        ? isInRange(displayValue, range)
+        : latest
+          ? isInRange(toNumber(latest.value), rawRange)
+          : null
+
     return {
       name,
       def: bucket.def,
       kategorie: bucket.def ? bucket.def.kategorie : SONSTIGE,
       entries: sorted,
       latest,
+      displayUnit,
+      displayValue,
+      points,
       range,
-      inRange: latest ? isInRange(toNumber(latest.value), range) : null,
+      inRange,
       trend,
       diff,
     }
