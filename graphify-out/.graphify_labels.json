@@ -249,8 +249,6 @@
   "247": "Sichtfenstergebundene Chart-Animation",
   "248": "peptideStock.ts",
   "249": "Global Constraints",
-  "250": "features.ts",
-  "251": "InjectionHeroPin",
   "252": "fortschrittRemoval.test.ts",
   "253": "FotosCard.test.ts",
   "254": "TopChangesSection.test.ts",
@@ -258,7 +256,6 @@
   "256": "WerteCard.test.ts",
   "257": "WerteCardIntegration.test.ts",
   "258": "liquidGeometry.ts",
-  "259": "metricDefaults.ts",
   "260": "Wertevergleich: metrikspezifischer Fallback",
   "261": "index.ts",
   "262": "Fortschritt-Chart: Ruhige 3M-Ansicht für Gewicht und KFA",
@@ -268,7 +265,6 @@
   "266": "Testaccount-Jahresverlauf: Design",
   "267": "Global Constraints",
   "268": "Global Constraints",
-  "269": "IntakeRow",
   "270": "metricInteraction.test.ts",
   "271": "useFortschrittData.pagination.test.ts"
 }

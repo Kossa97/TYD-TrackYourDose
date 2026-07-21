@@ -3143,7 +3143,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_expirywarningbanners",
-      "community": 109,
+      "community": 15,
       "norm_label": "expirywarningbanners.tsx"
     },
     {
@@ -3153,7 +3153,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_components_expirywarningbanners_alertmessage",
-      "community": 109,
+      "community": 15,
       "norm_label": "alertmessage()"
     },
     {
@@ -3163,7 +3163,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_components_expirywarningbanners_alerticon",
-      "community": 109,
+      "community": 15,
       "norm_label": "alerticon()"
     },
     {
@@ -3173,7 +3173,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_components_expirywarningbanners_expirywarningbanners",
-      "community": 109,
+      "community": 15,
       "norm_label": "expirywarningbanners()"
     },
     {
@@ -3183,7 +3183,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_labloader",
-      "community": 251,
+      "community": 7,
       "norm_label": "labloader.tsx"
     },
     {
@@ -3193,7 +3193,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_components_labloader_labloaderprops",
-      "community": 251,
+      "community": 7,
       "norm_label": "labloaderprops"
     },
     {
@@ -3203,7 +3203,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_components_labloader_labloader",
-      "community": 251,
+      "community": 7,
       "norm_label": "labloader()"
     },
     {
@@ -4103,7 +4103,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas",
-      "community": 241,
+      "community": 109,
       "norm_label": "injectionmapcanvas.tsx"
     },
     {
@@ -4113,7 +4113,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_lightposition",
-      "community": 241,
+      "community": 109,
       "norm_label": "lightposition"
     },
     {
@@ -4123,7 +4123,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_injection_map_lights",
-      "community": 241,
+      "community": 109,
       "norm_label": "injection_map_lights"
     },
     {
@@ -4133,7 +4133,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_injectionfocusrequest",
-      "community": 241,
+      "community": 109,
       "norm_label": "injectionfocusrequest"
     },
     {
@@ -4143,7 +4143,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_orbitcontrolsapi",
-      "community": 241,
+      "community": 109,
       "norm_label": "orbitcontrolsapi"
     },
     {
@@ -4153,7 +4153,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_tojson",
-      "community": 241,
+      "community": 109,
       "norm_label": "tojson()"
     },
     {
@@ -4173,7 +4173,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_resetcameraframe",
-      "community": 241,
+      "community": 109,
       "norm_label": "resetcameraframe()"
     },
     {
@@ -4183,7 +4183,7 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_focustargetforrequest",
-      "community": 241,
+      "community": 109,
       "norm_label": "focustargetforrequest()"
     },
     {
@@ -4193,7 +4193,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_camerarig",
-      "community": 241,
+      "community": 109,
       "norm_label": "camerarig()"
     },
     {
@@ -4203,7 +4203,7 @@
       "source_location": "L194",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_scene",
-      "community": 241,
+      "community": 109,
       "norm_label": "scene()"
     },
     {
@@ -4213,7 +4213,7 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_injectionmapcanvas",
-      "community": 241,
+      "community": 109,
       "norm_label": "injectionmapcanvas()"
     },
     {
@@ -4223,7 +4223,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionpin",
-      "community": 241,
+      "community": 109,
       "norm_label": "injectionpin.tsx"
     },
     {
@@ -4233,7 +4233,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionpin_pin_axis",
-      "community": 241,
+      "community": 109,
       "norm_label": "pin_axis"
     },
     {
@@ -4243,7 +4243,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionpin_injectionpin",
-      "community": 241,
+      "community": 109,
       "norm_label": "injectionpin()"
     },
     {
@@ -5273,7 +5273,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_config_features",
-      "community": 250,
+      "community": 21,
       "norm_label": "features.ts"
     },
     {
@@ -5283,7 +5283,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_config_features_features",
-      "community": 250,
+      "community": 21,
       "norm_label": "features"
     },
     {
@@ -5293,7 +5293,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_config_features_featureflag",
-      "community": 250,
+      "community": 21,
       "norm_label": "featureflag"
     },
     {
@@ -5457,6 +5457,76 @@
       "norm_label": "auffaelligewerte()"
     },
     {
+      "label": "BefundEditor.tsx",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_befundeditor",
+      "community": 32,
+      "norm_label": "befundeditor.tsx"
+    },
+    {
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L16",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_befundeditor_props",
+      "community": 32,
+      "norm_label": "props"
+    },
+    {
+      "label": "toMergeItem()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L24",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_befundeditor_tomergeitem",
+      "community": 32,
+      "norm_label": "tomergeitem()"
+    },
+    {
+      "label": "entryToMergeItem()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L32",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_befundeditor_entrytomergeitem",
+      "community": 32,
+      "norm_label": "entrytomergeitem()"
+    },
+    {
+      "label": "toReviewRow()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L40",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_befundeditor_toreviewrow",
+      "community": 32,
+      "norm_label": "toreviewrow()"
+    },
+    {
+      "label": "describeExtractError()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L47",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_befundeditor_describeextracterror",
+      "community": 32,
+      "norm_label": "describeextracterror()"
+    },
+    {
+      "label": "BefundEditor()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L78",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "community": 32,
+      "norm_label": "befundeditor()"
+    },
+    {
       "label": "BefundListe.tsx",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
@@ -5470,7 +5540,7 @@
       "label": "Props",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L9",
+      "source_location": "L10",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundliste_props",
       "community": 32,
@@ -5480,7 +5550,7 @@
       "label": "werteLabel()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L14",
+      "source_location": "L16",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundliste_wertelabel",
       "community": 32,
@@ -5490,7 +5560,7 @@
       "label": "isAuffaellig()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L16",
+      "source_location": "L18",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundliste_isauffaellig",
       "community": 32,
@@ -5500,7 +5570,7 @@
       "label": "BefundListe()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L19",
+      "source_location": "L21",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundliste_befundliste",
       "community": 32,
@@ -5520,7 +5590,7 @@
       "label": "EntryDraft",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/EntryModal.tsx",
-      "source_location": "L6",
+      "source_location": "L7",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal_entrydraft",
       "community": 32,
@@ -5530,7 +5600,7 @@
       "label": "emptyDraft()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/EntryModal.tsx",
-      "source_location": "L14",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal_emptydraft",
       "community": 32,
@@ -5540,7 +5610,7 @@
       "label": "Props",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/EntryModal.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal_props",
       "community": 32,
@@ -5550,7 +5620,7 @@
       "label": "EntryModal()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/EntryModal.tsx",
-      "source_location": "L31",
+      "source_location": "L32",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal_entrymodal",
       "community": 32,
@@ -5717,6 +5787,36 @@
       "norm_label": "referencebar()"
     },
     {
+      "label": "ConflictResolver.tsx",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/import/ConflictResolver.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_import_conflictresolver",
+      "community": 32,
+      "norm_label": "conflictresolver.tsx"
+    },
+    {
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/import/ConflictResolver.tsx",
+      "source_location": "L6",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_import_conflictresolver_props",
+      "community": 32,
+      "norm_label": "props"
+    },
+    {
+      "label": "ConflictResolver()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/import/ConflictResolver.tsx",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_import_conflictresolver_conflictresolver",
+      "community": 32,
+      "norm_label": "conflictresolver()"
+    },
+    {
       "label": "ImportFlow.tsx",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
@@ -5730,7 +5830,7 @@
       "label": "Phase",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L12",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_import_importflow_phase",
       "community": 32,
@@ -5740,17 +5840,37 @@
       "label": "Props",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L14",
+      "source_location": "L16",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_import_importflow_props",
       "community": 32,
       "norm_label": "props"
     },
     {
+      "label": "toMergeItem()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L21",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_import_importflow_tomergeitem",
+      "community": 32,
+      "norm_label": "tomergeitem()"
+    },
+    {
+      "label": "toReviewRow()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L29",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_import_importflow_toreviewrow",
+      "community": 32,
+      "norm_label": "toreviewrow()"
+    },
+    {
       "label": "describeExtractError()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L20",
+      "source_location": "L36",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_import_importflow_describeextracterror",
       "community": 32,
@@ -5760,7 +5880,7 @@
       "label": "ImportFlow()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L45",
+      "source_location": "L67",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_import_importflow_importflow",
       "community": 32,
@@ -5780,7 +5900,7 @@
       "label": "ReviewRow",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/import/ReviewTable.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_import_reviewtable_reviewrow",
       "community": 32,
@@ -5790,7 +5910,7 @@
       "label": "Props",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/import/ReviewTable.tsx",
-      "source_location": "L9",
+      "source_location": "L10",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_import_reviewtable_props",
       "community": 32,
@@ -5800,7 +5920,7 @@
       "label": "ReviewTable()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/import/ReviewTable.tsx",
-      "source_location": "L14",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_import_reviewtable_reviewtable",
       "community": 32,
@@ -5840,7 +5960,7 @@
       "label": "effectiveRange",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L35",
+      "source_location": "L48",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_effectiverange",
       "community": 32,
@@ -5850,7 +5970,7 @@
       "label": "Trend",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L12",
+      "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_trend",
       "community": 32,
@@ -5860,17 +5980,27 @@
       "label": "SortMode",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L14",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_sortmode",
       "community": 32,
       "norm_label": "sortmode"
     },
     {
+      "label": "MarkerPoint",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L17",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_bloodwork_markerpoint",
+      "community": 32,
+      "norm_label": "markerpoint"
+    },
+    {
       "label": "MarkerSummary",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L16",
+      "source_location": "L23",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_markersummary",
       "community": 32,
@@ -5880,7 +6010,7 @@
       "label": "toNumber()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L30",
+      "source_location": "L43",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_tonumber",
       "community": 32,
@@ -5890,7 +6020,7 @@
       "label": "isInRange()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L45",
+      "source_location": "L58",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_isinrange",
       "community": 32,
@@ -5900,17 +6030,27 @@
       "label": "computeTrend()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L54",
+      "source_location": "L71",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_computetrend",
       "community": 32,
       "norm_label": "computetrend()"
     },
     {
+      "label": "rangeInDisplayUnit()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L88",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_bloodwork_rangeindisplayunit",
+      "community": 32,
+      "norm_label": "rangeindisplayunit()"
+    },
+    {
       "label": "buildMarkerSummaries()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L69",
+      "source_location": "L101",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "community": 32,
@@ -5920,7 +6060,7 @@
       "label": "filterByKategorie()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L102",
+      "source_location": "L160",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_filterbykategorie",
       "community": 32,
@@ -5930,7 +6070,7 @@
       "label": "kategorieRang()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L111",
+      "source_location": "L169",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_kategorierang",
       "community": 32,
@@ -5940,7 +6080,7 @@
       "label": "sortSummaries()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L116",
+      "source_location": "L174",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_sortsummaries",
       "community": 32,
@@ -5950,11 +6090,41 @@
       "label": "auffaelligeWerte()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L144",
+      "source_location": "L202",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_auffaelligewerte",
       "community": 32,
       "norm_label": "auffaelligewerte()"
+    },
+    {
+      "label": "conversionHint.test.ts",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/conversionHint.test.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_conversionhint_test",
+      "community": 32,
+      "norm_label": "conversionhint.test.ts"
+    },
+    {
+      "label": "conversionHint.ts",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_conversionhint",
+      "community": 32,
+      "norm_label": "conversionhint.ts"
+    },
+    {
+      "label": "conversionHint()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L10",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_conversionhint_conversionhint",
+      "community": 32,
+      "norm_label": "conversionhint()"
     },
     {
       "label": "extractResult.test.ts",
@@ -6110,7 +6280,7 @@
       "label": "Size",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L4",
+      "source_location": "L8",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_size",
       "community": 32,
@@ -6120,7 +6290,7 @@
       "label": "targetSize()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L10",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_targetsize",
       "community": 32,
@@ -6130,7 +6300,7 @@
       "label": "PreparedFile",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L17",
+      "source_location": "L21",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_preparedfile",
       "community": 32,
@@ -6140,7 +6310,7 @@
       "label": "readAsDataUrl()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L23",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_readasdataurl",
       "community": 32,
@@ -6150,7 +6320,7 @@
       "label": "stripPrefix()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L31",
+      "source_location": "L35",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_stripprefix",
       "community": 32,
@@ -6160,7 +6330,7 @@
       "label": "loadImage()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L33",
+      "source_location": "L37",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_loadimage",
       "community": 32,
@@ -6170,7 +6340,7 @@
       "label": "prepareFile()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L45",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_preparefile",
       "community": 32,
@@ -6287,6 +6457,106 @@
       "norm_label": "normalizemarker()"
     },
     {
+      "label": "mergeRows.test.ts",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/mergeRows.test.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_mergerows_test",
+      "community": 32,
+      "norm_label": "mergerows.test.ts"
+    },
+    {
+      "label": "item()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/mergeRows.test.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_mergerows_test_item",
+      "community": 32,
+      "norm_label": "item()"
+    },
+    {
+      "label": "mergeRows.ts",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_mergerows",
+      "community": 32,
+      "norm_label": "mergerows.ts"
+    },
+    {
+      "label": "MergeItem",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_mergerows_mergeitem",
+      "community": 32,
+      "norm_label": "mergeitem"
+    },
+    {
+      "label": "MergeConflict",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_mergerows_mergeconflict",
+      "community": 32,
+      "norm_label": "mergeconflict"
+    },
+    {
+      "label": "MergeResult",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L18",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_mergerows_mergeresult",
+      "community": 32,
+      "norm_label": "mergeresult"
+    },
+    {
+      "label": "markerKey()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L28",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_mergerows_markerkey",
+      "community": 32,
+      "norm_label": "markerkey()"
+    },
+    {
+      "label": "approxEqual()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L33",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_mergerows_approxequal",
+      "community": 32,
+      "norm_label": "approxequal()"
+    },
+    {
+      "label": "sameValue()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L38",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_mergerows_samevalue",
+      "community": 32,
+      "norm_label": "samevalue()"
+    },
+    {
+      "label": "mergeIncoming()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L54",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_mergerows_mergeincoming",
+      "community": 32,
+      "norm_label": "mergeincoming()"
+    },
+    {
       "label": "referenceBar.test.ts",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/referenceBar.test.ts",
@@ -6325,6 +6595,66 @@
       "id": "src_features_blutwerte_lib_referencebar_clamp",
       "community": 32,
       "norm_label": "clamp()"
+    },
+    {
+      "label": "unitConversion.test.ts",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/unitConversion.test.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_unitconversion_test",
+      "community": 32,
+      "norm_label": "unitconversion.test.ts"
+    },
+    {
+      "label": "unitConversion.ts",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/unitConversion.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_unitconversion",
+      "community": 32,
+      "norm_label": "unitconversion.ts"
+    },
+    {
+      "label": "MASS_FACTORS",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/unitConversion.ts",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_unitconversion_mass_factors",
+      "community": 32,
+      "norm_label": "mass_factors"
+    },
+    {
+      "label": "normalizeUnitString()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/unitConversion.ts",
+      "source_location": "L25",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_unitconversion_normalizeunitstring",
+      "community": 32,
+      "norm_label": "normalizeunitstring()"
+    },
+    {
+      "label": "canConvert()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/unitConversion.ts",
+      "source_location": "L34",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_unitconversion_canconvert",
+      "community": 32,
+      "norm_label": "canconvert()"
+    },
+    {
+      "label": "convert()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/unitConversion.ts",
+      "source_location": "L46",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_unitconversion_convert",
+      "community": 32,
+      "norm_label": "convert()"
     },
     {
       "label": "styles.ts",
@@ -6403,7 +6733,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittdashboard",
-      "community": 242,
+      "community": 102,
       "norm_label": "fortschrittdashboard.tsx"
     },
     {
@@ -6413,7 +6743,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittdashboard_props",
-      "community": 102,
+      "community": 55,
       "norm_label": "props"
     },
     {
@@ -6763,7 +7093,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fotos_fotoscard",
-      "community": 54,
+      "community": 105,
       "norm_label": "fotoscard.tsx"
     },
     {
@@ -6773,7 +7103,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fotos_fotoscard_photoperiodmarquee",
-      "community": 54,
+      "community": 105,
       "norm_label": "photoperiodmarquee()"
     },
     {
@@ -6783,7 +7113,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fotos_fotoscard_props",
-      "community": 54,
+      "community": 105,
       "norm_label": "props"
     },
     {
@@ -6793,7 +7123,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fotos_fotoscard_fotoscard",
-      "community": 54,
+      "community": 105,
       "norm_label": "fotoscard()"
     },
     {
@@ -6853,7 +7183,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_activesubstancessection",
-      "community": 105,
+      "community": 48,
       "norm_label": "activesubstancessection.tsx"
     },
     {
@@ -6873,7 +7203,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_activesubstancessection_activesubstancessection",
-      "community": 105,
+      "community": 48,
       "norm_label": "activesubstancessection()"
     },
     {
@@ -6883,7 +7213,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_activesubstancessection_substancerow",
-      "community": 105,
+      "community": 48,
       "norm_label": "substancerow()"
     },
     {
@@ -6893,7 +7223,7 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_activesubstancessection_formatrangesubtitle",
-      "community": 105,
+      "community": 48,
       "norm_label": "formatrangesubtitle()"
     },
     {
@@ -6903,7 +7233,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview",
-      "community": 48,
+      "community": 102,
       "norm_label": "emptyoverview.tsx"
     },
     {
@@ -6913,7 +7243,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview_props",
-      "community": 48,
+      "community": 102,
       "norm_label": "props"
     },
     {
@@ -6923,7 +7253,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview_emptyoverview",
-      "community": 48,
+      "community": 102,
       "norm_label": "emptyoverview()"
     },
     {
@@ -6933,7 +7263,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview_step",
-      "community": 48,
+      "community": 102,
       "norm_label": "step()"
     },
     {
@@ -6943,7 +7273,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview_nosubstancesbanner",
-      "community": 48,
+      "community": 102,
       "norm_label": "nosubstancesbanner()"
     },
     {
@@ -6993,7 +7323,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_topchangessection_topchangessection",
-      "community": 48,
+      "community": 102,
       "norm_label": "topchangessection()"
     },
     {
@@ -7133,7 +7463,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartsettingsbutton",
-      "community": 95,
+      "community": 102,
       "norm_label": "chartsettingsbutton.tsx"
     },
     {
@@ -7143,7 +7473,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartsettingsbutton_props",
-      "community": 95,
+      "community": 102,
       "norm_label": "props"
     },
     {
@@ -7153,7 +7483,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartsettingsbutton_chartsettingsbutton",
-      "community": 95,
+      "community": 102,
       "norm_label": "chartsettingsbutton()"
     },
     {
@@ -7163,7 +7493,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartwindowtoggle",
-      "community": 95,
+      "community": 19,
       "norm_label": "chartwindowtoggle.tsx"
     },
     {
@@ -7173,7 +7503,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartwindowtoggle_props",
-      "community": 95,
+      "community": 19,
       "norm_label": "props"
     },
     {
@@ -7183,7 +7513,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartwindowtoggle_chartwindowtoggle",
-      "community": 95,
+      "community": 19,
       "norm_label": "chartwindowtoggle()"
     },
     {
@@ -7283,7 +7613,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_jumptonowbutton",
-      "community": 95,
+      "community": 19,
       "norm_label": "jumptonowbutton.tsx"
     },
     {
@@ -7293,7 +7623,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_jumptonowbutton_props",
-      "community": 95,
+      "community": 19,
       "norm_label": "props"
     },
     {
@@ -7303,7 +7633,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_jumptonowbutton_jumptonowbutton",
-      "community": 95,
+      "community": 19,
       "norm_label": "jumptonowbutton()"
     },
     {
@@ -7313,7 +7643,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart",
-      "community": 95,
+      "community": 19,
       "norm_label": "metricchart.tsx"
     },
     {
@@ -7323,7 +7653,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_props",
-      "community": 95,
+      "community": 19,
       "norm_label": "props"
     },
     {
@@ -7333,7 +7663,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_fmtdate",
-      "community": 95,
+      "community": 19,
       "norm_label": "fmtdate()"
     },
     {
@@ -7343,7 +7673,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_datetots",
-      "community": 95,
+      "community": 19,
       "norm_label": "datetots()"
     },
     {
@@ -7353,7 +7683,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_axisunitlabel",
-      "community": 95,
+      "community": 19,
       "norm_label": "axisunitlabel()"
     },
     {
@@ -7363,7 +7693,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_formattooltipvalue",
-      "community": 95,
+      "community": 19,
       "norm_label": "formattooltipvalue()"
     },
     {
@@ -7373,7 +7703,7 @@
       "source_location": "L123",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_metriclinepoint",
-      "community": 95,
+      "community": 19,
       "norm_label": "metriclinepoint"
     },
     {
@@ -7383,7 +7713,7 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_interpolatelinepoint",
-      "community": 95,
+      "community": 19,
       "norm_label": "interpolatelinepoint()"
     },
     {
@@ -7393,7 +7723,7 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_cliplinedatatowindow",
-      "community": 95,
+      "community": 19,
       "norm_label": "cliplinedatatowindow()"
     },
     {
@@ -7403,7 +7733,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_chartbodyprops",
-      "community": 95,
+      "community": 19,
       "norm_label": "chartbodyprops"
     },
     {
@@ -7413,7 +7743,7 @@
       "source_location": "L182",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_animatedmetricdot",
-      "community": 95,
+      "community": 19,
       "norm_label": "animatedmetricdot()"
     },
     {
@@ -7423,7 +7753,7 @@
       "source_location": "L217",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_metricchartbody",
-      "community": 95,
+      "community": 19,
       "norm_label": "metricchartbody()"
     },
     {
@@ -7433,7 +7763,7 @@
       "source_location": "L335",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_cyclelegend",
-      "community": 95,
+      "community": 19,
       "norm_label": "cyclelegend()"
     },
     {
@@ -7443,7 +7773,7 @@
       "source_location": "L377",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_metricchartinner",
-      "community": 95,
+      "community": 19,
       "norm_label": "metricchartinner"
     },
     {
@@ -7463,7 +7793,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchipbar",
-      "community": 95,
+      "community": 19,
       "norm_label": "metricchipbar.tsx"
     },
     {
@@ -7473,7 +7803,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchipbar_props",
-      "community": 95,
+      "community": 19,
       "norm_label": "props"
     },
     {
@@ -7483,7 +7813,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchipbar_metricchipbar",
-      "community": 95,
+      "community": 19,
       "norm_label": "metricchipbar()"
     },
     {
@@ -8063,7 +8393,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_hooks_usefortschrittdata",
-      "community": 19,
+      "community": 55,
       "norm_label": "usefortschrittdata.ts"
     },
     {
@@ -8073,7 +8403,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_features_fortschritt_hooks_usefortschrittdata_mapdailylogs",
-      "community": 19,
+      "community": 55,
       "norm_label": "mapdailylogs()"
     },
     {
@@ -8083,7 +8413,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_features_fortschritt_hooks_usefortschrittdata_islegacyphotourl",
-      "community": 19,
+      "community": 55,
       "norm_label": "islegacyphotourl()"
     },
     {
@@ -8093,7 +8423,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_features_fortschritt_hooks_usefortschrittdata_resolvephotodisplayurls",
-      "community": 19,
+      "community": 55,
       "norm_label": "resolvephotodisplayurls()"
     },
     {
@@ -8103,7 +8433,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_features_fortschritt_hooks_usefortschrittdata_usefortschrittdata",
-      "community": 19,
+      "community": 55,
       "norm_label": "usefortschrittdata()"
     },
     {
@@ -8633,7 +8963,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartwindow_test",
-      "community": 95,
+      "community": 19,
       "norm_label": "chartwindow.test.ts"
     },
     {
@@ -8643,7 +8973,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartwindow",
-      "community": 95,
+      "community": 19,
       "norm_label": "chartwindow.ts"
     },
     {
@@ -8653,7 +8983,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartwindow_chartwindowkey",
-      "community": 95,
+      "community": 19,
       "norm_label": "chartwindowkey"
     },
     {
@@ -8663,7 +8993,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartwindow_chart_windows",
-      "community": 95,
+      "community": 19,
       "norm_label": "chart_windows"
     },
     {
@@ -8673,7 +9003,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartwindow_windowmsfor",
-      "community": 95,
+      "community": 19,
       "norm_label": "windowmsfor()"
     },
     {
@@ -8683,7 +9013,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartwindow_rangebounds",
-      "community": 95,
+      "community": 19,
       "norm_label": "rangebounds()"
     },
     {
@@ -8693,7 +9023,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_colors",
-      "community": 102,
+      "community": 55,
       "norm_label": "colors.ts"
     },
     {
@@ -8703,7 +9033,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_colors_substance_colors",
-      "community": 102,
+      "community": 55,
       "norm_label": "substance_colors"
     },
     {
@@ -8713,7 +9043,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_colors_substancecolor",
-      "community": 105,
+      "community": 55,
       "norm_label": "substancecolor()"
     },
     {
@@ -8723,7 +9053,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_colors_metric_colors",
-      "community": 102,
+      "community": 55,
       "norm_label": "metric_colors"
     },
     {
@@ -8803,7 +9133,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_test",
-      "community": 51,
+      "community": 19,
       "norm_label": "cyclelegend.test.ts"
     },
     {
@@ -8813,7 +9143,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_test_cycle",
-      "community": 51,
+      "community": 19,
       "norm_label": "cycle()"
     },
     {
@@ -8823,7 +9153,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_test_ongoing",
-      "community": 51,
+      "community": 19,
       "norm_label": "ongoing()"
     },
     {
@@ -8833,7 +9163,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend",
-      "community": 51,
+      "community": 19,
       "norm_label": "cyclelegend.ts"
     },
     {
@@ -8843,7 +9173,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_cyclelegenditem",
-      "community": 51,
+      "community": 19,
       "norm_label": "cyclelegenditem"
     },
     {
@@ -8853,7 +9183,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_buildcyclelegenditems",
-      "community": 51,
+      "community": 19,
       "norm_label": "buildcyclelegenditems()"
     },
     {
@@ -8863,7 +9193,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_dates",
-      "community": 95,
+      "community": 19,
       "norm_label": "dates.ts"
     },
     {
@@ -8873,7 +9203,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_dates_formatdaysafe",
-      "community": 51,
+      "community": 19,
       "norm_label": "formatdaysafe()"
     },
     {
@@ -8883,7 +9213,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_dates_parsedaysafe",
-      "community": 95,
+      "community": 19,
       "norm_label": "parsedaysafe()"
     },
     {
@@ -8893,7 +9223,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_dates_daytotssafe",
-      "community": 95,
+      "community": 19,
       "norm_label": "daytotssafe()"
     },
     {
@@ -8903,7 +9233,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_focussummary_test",
-      "community": 19,
+      "community": 55,
       "norm_label": "focussummary.test.ts"
     },
     {
@@ -8913,7 +9243,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_focussummary_test_hooksource",
-      "community": 19,
+      "community": 55,
       "norm_label": "hooksource()"
     },
     {
@@ -9003,7 +9333,7 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_focussummary_substancebarend",
-      "community": 242,
+      "community": 55,
       "norm_label": "substancebarend()"
     },
     {
@@ -9013,7 +9343,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefaults_test",
-      "community": 259,
+      "community": 128,
       "norm_label": "metricdefaults.test.ts"
     },
     {
@@ -9023,7 +9353,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefaults",
-      "community": 259,
+      "community": 128,
       "norm_label": "metricdefaults.ts"
     },
     {
@@ -9033,7 +9363,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefaults_weightfordate",
-      "community": 259,
+      "community": 128,
       "norm_label": "weightfordate()"
     },
     {
@@ -9043,7 +9373,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefaults_lastweightbefore",
-      "community": 259,
+      "community": 128,
       "norm_label": "lastweightbefore()"
     },
     {
@@ -9053,7 +9383,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefaults_bodyfatfordate",
-      "community": 259,
+      "community": 128,
       "norm_label": "bodyfatfordate()"
     },
     {
@@ -9063,7 +9393,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefaults_lastbodyfatbefore",
-      "community": 259,
+      "community": 128,
       "norm_label": "lastbodyfatbefore()"
     },
     {
@@ -9073,7 +9403,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefaults_haslogfordate",
-      "community": 259,
+      "community": 128,
       "norm_label": "haslogfordate()"
     },
     {
@@ -9083,7 +9413,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefaults_loghasprogressdata",
-      "community": 259,
+      "community": 128,
       "norm_label": "loghasprogressdata()"
     },
     {
@@ -9093,7 +9423,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefaults_hasanyprogresslog",
-      "community": 259,
+      "community": 128,
       "norm_label": "hasanyprogresslog()"
     },
     {
@@ -9103,7 +9433,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefaults_logformvalues",
-      "community": 259,
+      "community": 128,
       "norm_label": "logformvalues"
     },
     {
@@ -9123,7 +9453,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefaults_wellnessvalue",
-      "community": 259,
+      "community": 128,
       "norm_label": "wellnessvalue()"
     },
     {
@@ -9133,7 +9463,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefaults_loadlogformvalues",
-      "community": 259,
+      "community": 128,
       "norm_label": "loadlogformvalues()"
     },
     {
@@ -9143,7 +9473,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefinitions",
-      "community": 102,
+      "community": 19,
       "norm_label": "metricdefinitions.ts"
     },
     {
@@ -9153,7 +9483,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefinitions_metricdefinition",
-      "community": 95,
+      "community": 19,
       "norm_label": "metricdefinition"
     },
     {
@@ -9163,7 +9493,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefinitions_base_metrics",
-      "community": 102,
+      "community": 19,
       "norm_label": "base_metrics"
     },
     {
@@ -9233,7 +9563,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_numeric",
-      "community": 19,
+      "community": 55,
       "norm_label": "numeric()"
     },
     {
@@ -9373,7 +9703,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_pagination_test",
-      "community": 19,
+      "community": 55,
       "norm_label": "pagination.test.ts"
     },
     {
@@ -9383,7 +9713,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_pagination",
-      "community": 19,
+      "community": 55,
       "norm_label": "pagination.ts"
     },
     {
@@ -9393,7 +9723,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_pagination_pageresult",
-      "community": 19,
+      "community": 55,
       "norm_label": "pageresult"
     },
     {
@@ -9403,7 +9733,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_pagination_collectpagedrows",
-      "community": 19,
+      "community": 55,
       "norm_label": "collectpagedrows()"
     },
     {
@@ -9493,7 +9823,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview_test",
-      "community": 54,
+      "community": 105,
       "norm_label": "photopreview.test.ts"
     },
     {
@@ -9503,7 +9833,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview_test_photo",
-      "community": 54,
+      "community": 105,
       "norm_label": "photo()"
     },
     {
@@ -9513,7 +9843,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview",
-      "community": 54,
+      "community": 105,
       "norm_label": "photopreview.ts"
     },
     {
@@ -9523,7 +9853,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview_photopreviewslot",
-      "community": 54,
+      "community": 105,
       "norm_label": "photopreviewslot"
     },
     {
@@ -9533,7 +9863,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview_sortnewestfirst",
-      "community": 54,
+      "community": 105,
       "norm_label": "sortnewestfirst()"
     },
     {
@@ -9543,7 +9873,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview_buildphotoslots",
-      "community": 54,
+      "community": 105,
       "norm_label": "buildphotoslots()"
     },
     {
@@ -9553,7 +9883,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview_photopreviewcolumns",
-      "community": 54,
+      "community": 105,
       "norm_label": "photopreviewcolumns()"
     },
     {
@@ -9583,7 +9913,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_range_filterbydaterange",
-      "community": 54,
+      "community": 242,
       "norm_label": "filterbydaterange()"
     },
     {
@@ -9593,7 +9923,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_substances_test",
-      "community": 105,
+      "community": 55,
       "norm_label": "substances.test.ts"
     },
     {
@@ -9613,7 +9943,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_substances",
-      "community": 105,
+      "community": 55,
       "norm_label": "substances.ts"
     },
     {
@@ -9623,7 +9953,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_substances_todayiso",
-      "community": 242,
+      "community": 55,
       "norm_label": "todayiso()"
     },
     {
@@ -9633,7 +9963,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_substances_embedname",
-      "community": 105,
+      "community": 55,
       "norm_label": "embedname()"
     },
     {
@@ -9643,7 +9973,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_substances_normalizecycles",
-      "community": 105,
+      "community": 55,
       "norm_label": "normalizecycles()"
     },
     {
@@ -9653,7 +9983,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_substances_cycleenddate",
-      "community": 242,
+      "community": 55,
       "norm_label": "cycleenddate()"
     },
     {
@@ -9663,7 +9993,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_substances_substancedaycount",
-      "community": 105,
+      "community": 242,
       "norm_label": "substancedaycount()"
     },
     {
@@ -9673,7 +10003,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_substances_rangefromactivesubstances",
-      "community": 19,
+      "community": 55,
       "norm_label": "rangefromactivesubstances()"
     },
     {
@@ -9683,7 +10013,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_substances_formatsubstanceend",
-      "community": 105,
+      "community": 48,
       "norm_label": "formatsubstanceend()"
     },
     {
@@ -9693,7 +10023,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_substances_countloggeddays",
-      "community": 105,
+      "community": 55,
       "norm_label": "countloggeddays()"
     },
     {
@@ -9943,7 +10273,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_substancesondate",
-      "community": 242,
+      "community": 55,
       "norm_label": "substancesondate()"
     },
     {
@@ -9993,7 +10323,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_styles_sectionlabel",
-      "community": 105,
+      "community": 48,
       "norm_label": "sectionlabel"
     },
     {
@@ -10023,7 +10353,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_features_fortschritt_styles_inputstyle",
-      "community": 48,
+      "community": 54,
       "norm_label": "inputstyle"
     },
     {
@@ -10073,7 +10403,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_cyclerow",
-      "community": 105,
+      "community": 55,
       "norm_label": "cyclerow"
     },
     {
@@ -10103,7 +10433,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_activesubstance",
-      "community": 105,
+      "community": 55,
       "norm_label": "activesubstance"
     },
     {
@@ -10123,7 +10453,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_weightlogentry",
-      "community": 259,
+      "community": 242,
       "norm_label": "weightlogentry"
     },
     {
@@ -10143,7 +10473,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_progressphotoentry",
-      "community": 54,
+      "community": 105,
       "norm_label": "progressphotoentry"
     },
     {
@@ -10163,7 +10493,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_metrickey",
-      "community": 95,
+      "community": 19,
       "norm_label": "metrickey"
     },
     {
@@ -11333,7 +11663,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_test",
-      "community": 42,
+      "community": 11,
       "norm_label": "injectiondeeplink.test.ts"
     },
     {
@@ -11343,7 +11673,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_test_intake",
-      "community": 42,
+      "community": 11,
       "norm_label": "intake()"
     },
     {
@@ -11353,7 +11683,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink",
-      "community": 42,
+      "community": 11,
       "norm_label": "injectiondeeplink.ts"
     },
     {
@@ -11363,7 +11693,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_injectable_methods",
-      "community": 42,
+      "community": 11,
       "norm_label": "injectable_methods"
     },
     {
@@ -11373,7 +11703,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_isinjectablemethod",
-      "community": 42,
+      "community": 11,
       "norm_label": "isinjectablemethod()"
     },
     {
@@ -11383,7 +11713,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_getopeninjectionintakekey",
-      "community": 42,
+      "community": 11,
       "norm_label": "getopeninjectionintakekey()"
     },
     {
@@ -11393,7 +11723,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_buildinjectiontrackerurl",
-      "community": 42,
+      "community": 11,
       "norm_label": "buildinjectiontrackerurl()"
     },
     {
@@ -11403,7 +11733,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_findtargetinjectionintake",
-      "community": 42,
+      "community": 11,
       "norm_label": "findtargetinjectionintake()"
     },
     {
@@ -11873,7 +12203,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence",
-      "community": 12,
+      "community": 42,
       "norm_label": "injectionpersistence.ts"
     },
     {
@@ -11883,7 +12213,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_injectable_methods",
-      "community": 12,
+      "community": 42,
       "norm_label": "injectable_methods"
     },
     {
@@ -11953,7 +12283,7 @@
       "source_location": "L161",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_loadselectableinjectioncycles",
-      "community": 12,
+      "community": 42,
       "norm_label": "loadselectableinjectioncycles()"
     },
     {
@@ -11993,7 +12323,7 @@
       "source_location": "L208",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_injectioncyclerow",
-      "community": 12,
+      "community": 243,
       "norm_label": "injectioncyclerow"
     },
     {
@@ -12003,7 +12333,7 @@
       "source_location": "L215",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_peptidename",
-      "community": 12,
+      "community": 42,
       "norm_label": "peptidename()"
     },
     {
@@ -12013,7 +12343,7 @@
       "source_location": "L220",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_cyclename",
-      "community": 12,
+      "community": 42,
       "norm_label": "cyclename()"
     },
     {
@@ -12023,7 +12353,7 @@
       "source_location": "L224",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_isautomisseddoselog",
-      "community": 12,
+      "community": 42,
       "norm_label": "isautomisseddoselog()"
     },
     {
@@ -12033,7 +12363,7 @@
       "source_location": "L228",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_isopendoselog",
-      "community": 12,
+      "community": 42,
       "norm_label": "isopendoselog()"
     },
     {
@@ -12043,7 +12373,7 @@
       "source_location": "L232",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_doselogslotkey",
-      "community": 12,
+      "community": 42,
       "norm_label": "doselogslotkey()"
     },
     {
@@ -12053,7 +12383,7 @@
       "source_location": "L238",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_openintakeslotkey",
-      "community": 12,
+      "community": 42,
       "norm_label": "openintakeslotkey()"
     },
     {
@@ -12063,7 +12393,7 @@
       "source_location": "L242",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_injectionintakelookbackstart",
-      "community": 12,
+      "community": 42,
       "norm_label": "injectionintakelookbackstart()"
     },
     {
@@ -12073,7 +12403,7 @@
       "source_location": "L245",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_buildselectableinjectionintakes",
-      "community": 12,
+      "community": 42,
       "norm_label": "buildselectableinjectionintakes()"
     },
     {
@@ -12083,7 +12413,7 @@
       "source_location": "L327",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_loadselectableinjectionintakes",
-      "community": 12,
+      "community": 42,
       "norm_label": "loadselectableinjectionintakes()"
     },
     {
@@ -12123,7 +12453,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_test",
-      "community": 42,
+      "community": 109,
       "norm_label": "injectionpinpresentation.test.ts"
     },
     {
@@ -12133,7 +12463,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_test_now",
-      "community": 42,
+      "community": 109,
       "norm_label": "now"
     },
     {
@@ -12143,7 +12473,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_test_log",
-      "community": 42,
+      "community": 109,
       "norm_label": "log()"
     },
     {
@@ -12153,7 +12483,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation",
-      "community": 42,
+      "community": 109,
       "norm_label": "injectionpinpresentation.ts"
     },
     {
@@ -12163,7 +12493,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_getinjectionpinagedays",
-      "community": 42,
+      "community": 109,
       "norm_label": "getinjectionpinagedays()"
     },
     {
@@ -12173,7 +12503,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_formatinjectionpinage",
-      "community": 42,
+      "community": 109,
       "norm_label": "formatinjectionpinage()"
     },
     {
@@ -12183,7 +12513,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_getinjectionpinagecolor",
-      "community": 42,
+      "community": 109,
       "norm_label": "getinjectionpinagecolor()"
     },
     {
@@ -12193,7 +12523,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_getinjectionpinsubstance",
-      "community": 42,
+      "community": 109,
       "norm_label": "getinjectionpinsubstance()"
     },
     {
@@ -12443,7 +12773,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_lib_intakeschedule_schedulesegment",
-      "community": 4,
+      "community": 12,
       "norm_label": "schedulesegment"
     },
     {
@@ -12453,7 +12783,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_intakeschedule_schedulecycle",
-      "community": 12,
+      "community": 243,
       "norm_label": "schedulecycle"
     },
     {
@@ -12483,7 +12813,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_lib_intakeschedule_scheduleforday",
-      "community": 4,
+      "community": 12,
       "norm_label": "scheduleforday()"
     },
     {
@@ -12663,7 +12993,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_lib_openinjectionintakefilters_filteropeninjectionintakes",
-      "community": 11,
+      "community": 16,
       "norm_label": "filteropeninjectionintakes()"
     },
     {
@@ -12703,7 +13033,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_peptidecolors_getpeptidecolor",
-      "community": 263,
+      "community": 4,
       "norm_label": "getpeptidecolor()"
     },
     {
@@ -12723,7 +13053,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_peptideexpiry",
-      "community": 109,
+      "community": 15,
       "norm_label": "peptideexpiry.ts"
     },
     {
@@ -12733,7 +13063,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_peptideexpiry_expirystatus",
-      "community": 109,
+      "community": 15,
       "norm_label": "expirystatus"
     },
     {
@@ -12743,7 +13073,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_peptideexpiry_peptideexpiryalert",
-      "community": 109,
+      "community": 15,
       "norm_label": "peptideexpiryalert"
     },
     {
@@ -12753,7 +13083,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_peptideexpiry_peptideexpirysource",
-      "community": 109,
+      "community": 15,
       "norm_label": "peptideexpirysource"
     },
     {
@@ -12763,7 +13093,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_lib_peptideexpiry_getpeptideexpiryalerts",
-      "community": 109,
+      "community": 15,
       "norm_label": "getpeptideexpiryalerts()"
     },
     {
@@ -12823,7 +13153,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_peptidestock_test_peptide",
-      "community": 7,
+      "community": 4,
       "norm_label": "peptide()"
     },
     {
@@ -14373,7 +14703,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_pages_dashboard_cycle",
-      "community": 4,
+      "community": 12,
       "norm_label": "cycle"
     },
     {
@@ -14573,7 +14903,7 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "src_pages_dashboard_intakeperiodcarousel",
-      "community": 4,
+      "community": 32,
       "norm_label": "intakeperiodcarousel()"
     },
     {
@@ -15063,7 +15393,7 @@
       "source_location": "L253",
       "_origin": "ast",
       "id": "src_pages_home_home",
-      "community": 42,
+      "community": 11,
       "norm_label": "home()"
     },
     {
@@ -15103,7 +15433,7 @@
       "source_location": "L939",
       "_origin": "ast",
       "id": "src_pages_home_fmtcountdown",
-      "community": 269,
+      "community": 15,
       "norm_label": "fmtcountdown()"
     },
     {
@@ -15113,7 +15443,7 @@
       "source_location": "L950",
       "_origin": "ast",
       "id": "src_pages_home_msuntiltime",
-      "community": 269,
+      "community": 15,
       "norm_label": "msuntiltime()"
     },
     {
@@ -15153,7 +15483,7 @@
       "source_location": "L1140",
       "_origin": "ast",
       "id": "src_pages_home_intakerow",
-      "community": 269,
+      "community": 15,
       "norm_label": "intakerow()"
     },
     {
@@ -15333,7 +15663,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_pages_peptide_cycle",
-      "community": 4,
+      "community": 12,
       "norm_label": "cycle"
     },
     {
@@ -16583,7 +16913,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_pages_thelab",
-      "community": 251,
+      "community": 1,
       "norm_label": "thelab.tsx"
     },
     {
@@ -16593,7 +16923,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_pages_thelab_thelab",
-      "community": 251,
+      "community": 104,
       "norm_label": "thelab()"
     },
     {
@@ -16953,7 +17283,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_pages_lab_labhero",
-      "community": 251,
+      "community": 1,
       "norm_label": "labhero.tsx"
     },
     {
@@ -16963,7 +17293,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_pages_lab_labhero_quick_tags",
-      "community": 251,
+      "community": 1,
       "norm_label": "quick_tags"
     },
     {
@@ -16973,7 +17303,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_pages_lab_labhero_labheroprops",
-      "community": 251,
+      "community": 1,
       "norm_label": "labheroprops"
     },
     {
@@ -16983,7 +17313,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_pages_lab_labhero_labhero",
-      "community": 251,
+      "community": 1,
       "norm_label": "labhero()"
     },
     {
@@ -17303,7 +17633,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_pages_lab_studyfeed_studyfeedprops",
-      "community": 123,
+      "community": 1,
       "norm_label": "studyfeedprops"
     },
     {
@@ -17563,7 +17893,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_pages_lab_pubmed_countactivefilters",
-      "community": 251,
+      "community": 104,
       "norm_label": "countactivefilters()"
     },
     {
@@ -17593,7 +17923,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_pages_lab_pubmed_buildquery",
-      "community": 251,
+      "community": 1,
       "norm_label": "buildquery()"
     },
     {
@@ -17723,7 +18053,7 @@
       "source_location": "L215",
       "_origin": "ast",
       "id": "src_pages_lab_pubmed_fetchchartcounts",
-      "community": 251,
+      "community": 104,
       "norm_label": "fetchchartcounts()"
     },
     {
@@ -17733,7 +18063,7 @@
       "source_location": "L233",
       "_origin": "ast",
       "id": "src_pages_lab_pubmed_geterrormessage",
-      "community": 251,
+      "community": 104,
       "norm_label": "geterrormessage()"
     },
     {
@@ -18310,7 +18640,7 @@
       "label": "corsHeaders",
       "file_type": "code",
       "source_file": "supabase/functions/bloodwork-extract/index.ts",
-      "source_location": "L12",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "supabase_functions_bloodwork_extract_index_corsheaders",
       "community": 261,
@@ -18320,7 +18650,7 @@
       "label": "json()",
       "file_type": "code",
       "source_file": "supabase/functions/bloodwork-extract/index.ts",
-      "source_location": "L18",
+      "source_location": "L20",
       "_origin": "ast",
       "id": "supabase_functions_bloodwork_extract_index_json",
       "community": 261,
@@ -18330,7 +18660,7 @@
       "label": "ExtractRequest",
       "file_type": "code",
       "source_file": "supabase/functions/bloodwork-extract/index.ts",
-      "source_location": "L26",
+      "source_location": "L28",
       "_origin": "ast",
       "id": "supabase_functions_bloodwork_extract_index_extractrequest",
       "community": 261,
@@ -18367,10 +18697,20 @@
       "norm_label": "allowed_mime_types"
     },
     {
+      "label": "base64Bytes()",
+      "file_type": "code",
+      "source_file": "supabase/functions/bloodwork-extract/prompt.ts",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "supabase_functions_bloodwork_extract_prompt_base64bytes",
+      "community": 261,
+      "norm_label": "base64bytes()"
+    },
+    {
       "label": "buildPrompt()",
       "file_type": "code",
       "source_file": "supabase/functions/bloodwork-extract/prompt.ts",
-      "source_location": "L8",
+      "source_location": "L20",
       "_origin": "ast",
       "id": "supabase_functions_bloodwork_extract_prompt_buildprompt",
       "community": 261,
@@ -18380,7 +18720,7 @@
       "label": "extractJson()",
       "file_type": "code",
       "source_file": "supabase/functions/bloodwork-extract/prompt.ts",
-      "source_location": "L35",
+      "source_location": "L52",
       "_origin": "ast",
       "id": "supabase_functions_bloodwork_extract_prompt_extractjson",
       "community": 261,
@@ -18390,7 +18730,7 @@
       "label": "resetsAt()",
       "file_type": "code",
       "source_file": "supabase/functions/bloodwork-extract/prompt.ts",
-      "source_location": "L53",
+      "source_location": "L70",
       "_origin": "ast",
       "id": "supabase_functions_bloodwork_extract_prompt_resetsat",
       "community": 261,
@@ -25747,7 +26087,7 @@
       "contributor": null,
       "community": 169,
       "norm_label": "graphify skill trigger (/graphify)",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
     },
     {
       "label": "graphify pipeline (SKILL.md)",
@@ -37270,6 +37610,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_context_authcontext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
       "source_location": "L4",
       "weight": 1.0,
@@ -37501,6 +37852,28 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_context_authcontext_useauth",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L79",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "target": "src_context_authcontext_useauth"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
       "source_location": "L4",
       "weight": 1.0,
@@ -37514,7 +37887,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L46",
+      "source_location": "L68",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow_importflow",
       "target": "src_context_authcontext_useauth"
@@ -38562,7 +38935,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/AuffaelligeWerte.tsx",
-      "source_location": "L39",
+      "source_location": "L41",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_auffaelligewerte_auffaelligewerte",
       "target": "src_features_blutwerte_lib_format_formatnumber"
@@ -38573,7 +38946,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/AuffaelligeWerte.tsx",
-      "source_location": "L24",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_auffaelligewerte_auffaelligewerte",
       "target": "src_features_blutwerte_lib_format_formatrange"
@@ -38581,8 +38954,574 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L47",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_components_befundeditor_describeextracterror",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_components_befundeditor_entrytomergeitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_components_befundeditor_props",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_components_befundeditor_tomergeitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L40",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_components_befundeditor_toreviewrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_components_import_conflictresolver",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_components_import_conflictresolver_conflictresolver",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_components_import_reviewtable",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_components_import_reviewtable_reviewrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_components_import_reviewtable_reviewtable",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_bloodwork",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_bloodwork_tonumber",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_extractresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_extractresult_extractresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_extractresult_parseextractresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_format",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_format_formatdisplaydate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_format_formatnumber",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_imageresize",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_imageresize_preparefile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_markercatalog",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_markercatalog_catalog_marker_names",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_markercatalog_normalizemarker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_mergerows",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_mergerows_markerkey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_mergerows_mergeconflict",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_mergerows_mergeincoming",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_lib_mergerows_mergeitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_styles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_types",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_types_bloodworkentry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_features_blutwerte_types_bloodworkreport",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_lib_supabase",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor",
+      "target": "src_lib_supabase_supabase",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundliste",
+      "target": "src_features_blutwerte_components_befundeditor",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
       "source_location": "L19",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_props",
+      "target": "src_features_blutwerte_types_bloodworkentry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_props",
+      "target": "src_features_blutwerte_types_bloodworkreport",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L137",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "target": "src_features_blutwerte_components_befundeditor_tomergeitem",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L137",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "target": "src_features_blutwerte_components_befundeditor_entrytomergeitem",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_entrytomergeitem",
+      "target": "src_features_blutwerte_lib_bloodwork_tonumber",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L140",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "target": "src_features_blutwerte_components_befundeditor_toreviewrow",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_toreviewrow",
+      "target": "src_features_blutwerte_lib_markercatalog_normalizemarker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L103",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "target": "src_features_blutwerte_components_befundeditor_describeextracterror",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L89",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "target": "src_features_blutwerte_lib_bloodwork_test_entry"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L107",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "target": "src_features_blutwerte_lib_extractresult_parseextractresult"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L255",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "target": "src_features_blutwerte_lib_format_formatdisplaydate"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L267",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "target": "src_features_blutwerte_lib_format_formatnumber"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L97",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "target": "src_features_blutwerte_lib_imageresize_preparefile"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L89",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "target": "src_features_blutwerte_lib_mergerows_markerkey"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/components/BefundEditor.tsx",
+      "source_location": "L138",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "target": "src_features_blutwerte_lib_mergerows_mergeincoming"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundliste",
+      "target": "src_features_blutwerte_components_befundeditor_befundeditor",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
+      "source_location": "L21",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste",
       "target": "src_features_blutwerte_components_befundliste_befundliste",
@@ -38592,7 +39531,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L16",
+      "source_location": "L18",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste",
       "target": "src_features_blutwerte_components_befundliste_isauffaellig",
@@ -38602,7 +39541,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L9",
+      "source_location": "L10",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste",
       "target": "src_features_blutwerte_components_befundliste_props",
@@ -38612,7 +39551,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L14",
+      "source_location": "L16",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste",
       "target": "src_features_blutwerte_components_befundliste_wertelabel",
@@ -38788,7 +39727,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L11",
+      "source_location": "L12",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_props",
       "target": "src_features_blutwerte_types_bloodworkentry",
@@ -38799,7 +39738,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L10",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_props",
       "target": "src_features_blutwerte_types_bloodworkreport",
@@ -38810,7 +39749,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L109",
+      "source_location": "L122",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_components_befundliste_wertelabel",
@@ -38821,7 +39760,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L69",
+      "source_location": "L73",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_components_befundliste_isauffaellig",
@@ -38832,7 +39771,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L17",
+      "source_location": "L19",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_isauffaellig",
       "target": "src_features_blutwerte_lib_bloodwork_effectiverange",
@@ -38843,7 +39782,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L17",
+      "source_location": "L19",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_isauffaellig",
       "target": "src_features_blutwerte_lib_bloodwork_isinrange",
@@ -38854,7 +39793,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L17",
+      "source_location": "L19",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_isauffaellig",
       "target": "src_features_blutwerte_lib_bloodwork_tonumber",
@@ -38865,7 +39804,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L17",
+      "source_location": "L19",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_isauffaellig",
       "target": "src_features_blutwerte_lib_markercatalog_normalizemarker",
@@ -38877,7 +39816,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L67",
+      "source_location": "L71",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_lib_bloodwork_effectiverange"
@@ -38888,7 +39827,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L26",
+      "source_location": "L29",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_lib_bloodwork_test_entry"
@@ -38899,7 +39838,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L57",
+      "source_location": "L60",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_lib_format_formatdisplaydate"
@@ -38910,7 +39849,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L81",
+      "source_location": "L85",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_lib_format_formatnumber"
@@ -38921,7 +39860,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L68",
+      "source_location": "L72",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_lib_format_formatrange"
@@ -38932,7 +39871,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L67",
+      "source_location": "L71",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_lib_markercatalog_normalizemarker"
@@ -38941,7 +39880,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/EntryModal.tsx",
-      "source_location": "L14",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_entrymodal",
       "target": "src_features_blutwerte_components_entrymodal_emptydraft",
@@ -38951,7 +39890,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/EntryModal.tsx",
-      "source_location": "L6",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_entrymodal",
       "target": "src_features_blutwerte_components_entrymodal_entrydraft",
@@ -38961,7 +39900,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/EntryModal.tsx",
-      "source_location": "L31",
+      "source_location": "L32",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_entrymodal",
       "target": "src_features_blutwerte_components_entrymodal_entrymodal",
@@ -38971,10 +39910,32 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/EntryModal.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_entrymodal",
       "target": "src_features_blutwerte_components_entrymodal_props",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/EntryModal.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_entrymodal",
+      "target": "src_features_blutwerte_lib_conversionhint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/EntryModal.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_entrymodal",
+      "target": "src_features_blutwerte_lib_conversionhint_conversionhint",
       "confidence_score": 1.0
     },
     {
@@ -39015,7 +39976,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/EntryModal.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_entrymodal",
       "target": "src_features_blutwerte_styles",
@@ -39027,7 +39988,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/EntryModal.tsx",
-      "source_location": "L18",
+      "source_location": "L19",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_entrymodal_emptydraft",
       "target": "src_features_blutwerte_lib_markercatalog_normalizemarker"
@@ -39038,7 +39999,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/EntryModal.tsx",
-      "source_location": "L36",
+      "source_location": "L122",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_entrymodal_entrymodal",
+      "target": "src_features_blutwerte_lib_conversionhint_conversionhint"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/components/EntryModal.tsx",
+      "source_location": "L37",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_entrymodal_entrymodal",
       "target": "src_features_blutwerte_lib_markercatalog_normalizemarker"
@@ -39406,21 +40378,10 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L83",
+      "source_location": "L88",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_markerdetail_markerdetail",
       "target": "src_features_blutwerte_components_markergrid_trendcolor"
-    },
-    {
-      "relation": "indirect_call",
-      "context": "argument",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L192",
-      "weight": 1.0,
-      "source": "src_features_blutwerte_components_markerdetail_markerdetail",
-      "target": "src_features_blutwerte_lib_bloodwork_test_entry"
     },
     {
       "relation": "calls",
@@ -39428,7 +40389,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L53",
+      "source_location": "L97",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_markerdetail_markerdetail",
       "target": "src_features_blutwerte_lib_bloodwork_tonumber"
@@ -39439,7 +40400,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L52",
+      "source_location": "L55",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_markerdetail_markerdetail",
       "target": "src_features_blutwerte_lib_format_formatchartdate"
@@ -39450,7 +40411,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L185",
+      "source_location": "L200",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_markerdetail_markerdetail",
       "target": "src_features_blutwerte_lib_format_formatdisplaydate"
@@ -39461,7 +40422,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerDetail.tsx",
-      "source_location": "L79",
+      "source_location": "L84",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_markerdetail_markerdetail",
       "target": "src_features_blutwerte_lib_format_formatnumber"
@@ -39599,7 +40560,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/MarkerGrid.tsx",
-      "source_location": "L55",
+      "source_location": "L57",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_markergrid_markergrid",
       "target": "src_features_blutwerte_components_markergrid_trendcolor",
@@ -39622,7 +40583,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerGrid.tsx",
-      "source_location": "L59",
+      "source_location": "L61",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_markergrid_markergrid",
       "target": "src_features_blutwerte_lib_format_formatdisplaydate"
@@ -39633,7 +40594,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/MarkerGrid.tsx",
-      "source_location": "L53",
+      "source_location": "L55",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_markergrid_markergrid",
       "target": "src_features_blutwerte_lib_format_formatnumber"
@@ -39793,8 +40754,127 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ConflictResolver.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_conflictresolver",
+      "target": "src_features_blutwerte_components_import_conflictresolver_conflictresolver",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ConflictResolver.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_conflictresolver",
+      "target": "src_features_blutwerte_components_import_conflictresolver_props",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ConflictResolver.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_conflictresolver",
+      "target": "src_features_blutwerte_lib_format",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ConflictResolver.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_conflictresolver",
+      "target": "src_features_blutwerte_lib_format_formatnumber",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ConflictResolver.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_conflictresolver",
+      "target": "src_features_blutwerte_lib_mergerows",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ConflictResolver.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_conflictresolver",
+      "target": "src_features_blutwerte_lib_mergerows_mergeconflict",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ConflictResolver.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_conflictresolver",
+      "target": "src_features_blutwerte_styles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L20",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow",
+      "target": "src_features_blutwerte_components_import_conflictresolver",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ConflictResolver.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_conflictresolver_props",
+      "target": "src_features_blutwerte_lib_mergerows_mergeconflict",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/components/import/ConflictResolver.tsx",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_conflictresolver_conflictresolver",
+      "target": "src_features_blutwerte_lib_format_formatnumber"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow",
+      "target": "src_features_blutwerte_components_import_conflictresolver_conflictresolver",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L36",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow",
       "target": "src_features_blutwerte_components_import_importflow_describeextracterror",
@@ -39804,7 +40884,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L45",
+      "source_location": "L67",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow",
       "target": "src_features_blutwerte_components_import_importflow_importflow",
@@ -39814,7 +40894,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L12",
+      "source_location": "L14",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow",
       "target": "src_features_blutwerte_components_import_importflow_phase",
@@ -39824,10 +40904,30 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L14",
+      "source_location": "L16",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow",
       "target": "src_features_blutwerte_components_import_importflow_props",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow",
+      "target": "src_features_blutwerte_components_import_importflow_tomergeitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow",
+      "target": "src_features_blutwerte_components_import_importflow_toreviewrow",
       "confidence_score": 1.0
     },
     {
@@ -39835,7 +40935,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L10",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow",
       "target": "src_features_blutwerte_components_import_reviewtable",
@@ -39846,7 +40946,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L10",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow",
       "target": "src_features_blutwerte_components_import_reviewtable_reviewrow",
@@ -39857,7 +40957,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L10",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow",
       "target": "src_features_blutwerte_components_import_reviewtable_reviewtable",
@@ -39882,6 +40982,17 @@
       "source_location": "L6",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow",
+      "target": "src_features_blutwerte_lib_extractresult_extractresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow",
       "target": "src_features_blutwerte_lib_extractresult_parseextractresult",
       "confidence_score": 1.0
     },
@@ -39890,7 +41001,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L8",
+      "source_location": "L9",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow",
       "target": "src_features_blutwerte_lib_format",
@@ -39901,7 +41012,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L8",
+      "source_location": "L9",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow",
       "target": "src_features_blutwerte_lib_format_formatdisplaydate",
@@ -39952,11 +41063,77 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow",
+      "target": "src_features_blutwerte_lib_markercatalog_normalizemarker",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L9",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow",
+      "target": "src_features_blutwerte_lib_mergerows",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow",
+      "target": "src_features_blutwerte_lib_mergerows_markerkey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow",
+      "target": "src_features_blutwerte_lib_mergerows_mergeconflict",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow",
+      "target": "src_features_blutwerte_lib_mergerows_mergeincoming",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow",
+      "target": "src_features_blutwerte_lib_mergerows_mergeitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L10",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow",
       "target": "src_features_blutwerte_styles",
@@ -39985,11 +41162,44 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L138",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow_importflow",
+      "target": "src_features_blutwerte_components_import_importflow_tomergeitem",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L140",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow_importflow",
+      "target": "src_features_blutwerte_components_import_importflow_toreviewrow",
+      "confidence_score": 0.5
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L66",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow_toreviewrow",
+      "target": "src_features_blutwerte_lib_markercatalog_normalizemarker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L92",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow_importflow",
       "target": "src_features_blutwerte_components_import_importflow_describeextracterror",
@@ -40001,7 +41211,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L71",
+      "source_location": "L96",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow_importflow",
       "target": "src_features_blutwerte_lib_extractresult_parseextractresult"
@@ -40012,7 +41222,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L224",
+      "source_location": "L332",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow_importflow",
       "target": "src_features_blutwerte_lib_format_formatdisplaydate"
@@ -40023,16 +41233,38 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
-      "source_location": "L60",
+      "source_location": "L86",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_importflow_importflow",
       "target": "src_features_blutwerte_lib_imageresize_preparefile"
     },
     {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L158",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow_importflow",
+      "target": "src_features_blutwerte_lib_mergerows_markerkey"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/components/import/ImportFlow.tsx",
+      "source_location": "L138",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_importflow_importflow",
+      "target": "src_features_blutwerte_lib_mergerows_mergeincoming"
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ReviewTable.tsx",
-      "source_location": "L9",
+      "source_location": "L10",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_reviewtable",
       "target": "src_features_blutwerte_components_import_reviewtable_props",
@@ -40042,7 +41274,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ReviewTable.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_reviewtable",
       "target": "src_features_blutwerte_components_import_reviewtable_reviewrow",
@@ -40052,10 +41284,32 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ReviewTable.tsx",
-      "source_location": "L14",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_reviewtable",
       "target": "src_features_blutwerte_components_import_reviewtable_reviewtable",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ReviewTable.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_reviewtable",
+      "target": "src_features_blutwerte_lib_conversionhint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/import/ReviewTable.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_reviewtable",
+      "target": "src_features_blutwerte_lib_conversionhint_conversionhint",
       "confidence_score": 1.0
     },
     {
@@ -40085,7 +41339,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ReviewTable.tsx",
-      "source_location": "L2",
+      "source_location": "L3",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_reviewtable",
       "target": "src_features_blutwerte_styles",
@@ -40096,11 +41350,22 @@
       "context": "type",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/import/ReviewTable.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_import_reviewtable_reviewrow",
       "target": "src_features_blutwerte_lib_extractresult_extractedvalue",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/components/import/ReviewTable.tsx",
+      "source_location": "L106",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_import_reviewtable_reviewtable",
+      "target": "src_features_blutwerte_lib_conversionhint_conversionhint"
     },
     {
       "relation": "imports_from",
@@ -40261,7 +41526,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L79",
+      "source_location": "L111",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_bloodwork_test_entry"
@@ -40270,7 +41535,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L144",
+      "source_location": "L202",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_auffaelligewerte",
@@ -40280,7 +41545,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L69",
+      "source_location": "L101",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
@@ -40290,7 +41555,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L54",
+      "source_location": "L71",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_computetrend",
@@ -40300,7 +41565,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L35",
+      "source_location": "L48",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_effectiverange",
@@ -40310,7 +41575,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L102",
+      "source_location": "L160",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_filterbykategorie",
@@ -40320,7 +41585,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L45",
+      "source_location": "L58",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_isinrange",
@@ -40330,7 +41595,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L111",
+      "source_location": "L169",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_kategorierang",
@@ -40340,7 +41605,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L16",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork",
+      "target": "src_features_blutwerte_lib_bloodwork_markerpoint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L23",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_markersummary",
@@ -40350,7 +41625,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L14",
+      "source_location": "L88",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork",
+      "target": "src_features_blutwerte_lib_bloodwork_rangeindisplayunit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_sortmode",
@@ -40360,7 +41645,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L116",
+      "source_location": "L174",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_sortsummaries",
@@ -40370,7 +41655,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L30",
+      "source_location": "L43",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_tonumber",
@@ -40380,7 +41665,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L12",
+      "source_location": "L13",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_trend",
@@ -40479,6 +41764,28 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork",
+      "target": "src_features_blutwerte_lib_unitconversion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork",
+      "target": "src_features_blutwerte_lib_unitconversion_convert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
       "source_location": "L1",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
@@ -40524,7 +41831,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L86",
+      "source_location": "L126",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_bloodwork_effectiverange"
@@ -40545,7 +41852,18 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L20",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork_markerpoint",
+      "target": "src_features_blutwerte_types_bloodworkentry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L27",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_markersummary",
       "target": "src_features_blutwerte_lib_markercatalog_kategoriefilter",
@@ -40556,7 +41874,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L19",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_markersummary",
       "target": "src_features_blutwerte_lib_markercatalog_markerdef",
@@ -40567,7 +41885,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L22",
+      "source_location": "L29",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_markersummary",
       "target": "src_features_blutwerte_types_bloodworkentry",
@@ -40578,7 +41896,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L95",
+      "source_location": "L122",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_bloodwork_tonumber",
@@ -40589,7 +41907,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L56",
+      "source_location": "L75",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_computetrend",
       "target": "src_features_blutwerte_lib_bloodwork_tonumber",
@@ -40622,7 +41940,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L95",
+      "source_location": "L138",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_bloodwork_isinrange",
@@ -40633,10 +41951,43 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L87",
+      "source_location": "L129",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_bloodwork_computetrend",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L75",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork_computetrend",
+      "target": "src_features_blutwerte_lib_unitconversion_convert"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L127",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
+      "target": "src_features_blutwerte_lib_bloodwork_rangeindisplayunit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L90",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork_rangeindisplayunit",
+      "target": "src_features_blutwerte_lib_unitconversion_convert",
       "confidence_score": 1.0
     },
     {
@@ -40645,7 +41996,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L72",
+      "source_location": "L104",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_markercatalog_marker_catalog"
@@ -40656,10 +42007,21 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L75",
+      "source_location": "L107",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_markercatalog_normalizemarker"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L122",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
+      "target": "src_features_blutwerte_lib_unitconversion_convert"
     },
     {
       "relation": "references",
@@ -40667,7 +42029,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L112",
+      "source_location": "L170",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_kategorierang",
       "target": "src_features_blutwerte_lib_markercatalog_kategorien"
@@ -40677,11 +42039,164 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L137",
+      "source_location": "L195",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_sortsummaries",
       "target": "src_features_blutwerte_lib_bloodwork_kategorierang",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/conversionHint.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint_test",
+      "target": "src_features_blutwerte_lib_conversionhint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/conversionHint.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint_test",
+      "target": "src_features_blutwerte_lib_conversionhint_conversionhint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint",
+      "target": "src_features_blutwerte_lib_conversionhint_conversionhint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint",
+      "target": "src_features_blutwerte_lib_format",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint",
+      "target": "src_features_blutwerte_lib_format_formatnumber",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint",
+      "target": "src_features_blutwerte_lib_markercatalog",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint",
+      "target": "src_features_blutwerte_lib_markercatalog_normalizemarker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint",
+      "target": "src_features_blutwerte_lib_unitconversion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint",
+      "target": "src_features_blutwerte_lib_unitconversion_convert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint",
+      "target": "src_features_blutwerte_lib_unitconversion_normalizeunitstring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint_conversionhint",
+      "target": "src_features_blutwerte_lib_format_formatnumber"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint_conversionhint",
+      "target": "src_features_blutwerte_lib_markercatalog_normalizemarker"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint_conversionhint",
+      "target": "src_features_blutwerte_lib_unitconversion_convert"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/lib/conversionHint.ts",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_conversionhint_conversionhint",
+      "target": "src_features_blutwerte_lib_unitconversion_normalizeunitstring"
     },
     {
       "relation": "imports_from",
@@ -40864,7 +42379,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L33",
+      "source_location": "L37",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_imageresize",
       "target": "src_features_blutwerte_lib_imageresize_loadimage",
@@ -40874,7 +42389,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L17",
+      "source_location": "L21",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_imageresize",
       "target": "src_features_blutwerte_lib_imageresize_preparedfile",
@@ -40884,7 +42399,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L45",
+      "source_location": "L49",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_imageresize",
       "target": "src_features_blutwerte_lib_imageresize_preparefile",
@@ -40894,7 +42409,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L23",
+      "source_location": "L27",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_imageresize",
       "target": "src_features_blutwerte_lib_imageresize_readasdataurl",
@@ -40904,7 +42419,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L4",
+      "source_location": "L8",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_imageresize",
       "target": "src_features_blutwerte_lib_imageresize_size",
@@ -40914,7 +42429,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L31",
+      "source_location": "L35",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_imageresize",
       "target": "src_features_blutwerte_lib_imageresize_stripprefix",
@@ -40924,10 +42439,32 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L10",
+      "source_location": "L14",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_imageresize",
       "target": "src_features_blutwerte_lib_imageresize_targetsize",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/imageResize.ts",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_imageresize_preparefile",
+      "target": "src_features_blutwerte_lib_imageresize_targetsize",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/imageResize.ts",
+      "source_location": "L50",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_imageresize_preparefile",
+      "target": "src_features_blutwerte_lib_imageresize_readasdataurl",
       "confidence_score": 1.0
     },
     {
@@ -40938,28 +42475,6 @@
       "source_location": "L53",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_imageresize_preparefile",
-      "target": "src_features_blutwerte_lib_imageresize_targetsize",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L46",
-      "weight": 1.0,
-      "source": "src_features_blutwerte_lib_imageresize_preparefile",
-      "target": "src_features_blutwerte_lib_imageresize_readasdataurl",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L49",
-      "weight": 1.0,
-      "source": "src_features_blutwerte_lib_imageresize_preparefile",
       "target": "src_features_blutwerte_lib_imageresize_stripprefix",
       "confidence_score": 1.0
     },
@@ -40968,7 +42483,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/imageResize.ts",
-      "source_location": "L52",
+      "source_location": "L56",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_imageresize_preparefile",
       "target": "src_features_blutwerte_lib_imageresize_loadimage",
@@ -41120,6 +42635,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows",
+      "target": "src_features_blutwerte_lib_markercatalog",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "references",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -41129,6 +42655,328 @@
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_markercatalog_normalizemarker",
       "target": "src_features_blutwerte_lib_markercatalog_lookup"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows",
+      "target": "src_features_blutwerte_lib_markercatalog_normalizemarker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows_markerkey",
+      "target": "src_features_blutwerte_lib_markercatalog_normalizemarker"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows_test",
+      "target": "src_features_blutwerte_lib_mergerows",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows_test",
+      "target": "src_features_blutwerte_lib_mergerows_markerkey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows_test",
+      "target": "src_features_blutwerte_lib_mergerows_mergeincoming",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows_test",
+      "target": "src_features_blutwerte_lib_mergerows_mergeitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.test.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows_test",
+      "target": "src_features_blutwerte_lib_mergerows_test_item",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows_mergeincoming",
+      "target": "src_features_blutwerte_lib_mergerows_test_item"
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/features/fortschritt/components/overview/ActiveSubstancesSection.tsx",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "src_features_fortschritt_components_overview_activesubstancessection_activesubstancessection",
+      "target": "src_features_blutwerte_lib_mergerows_test_item"
+    },
+    {
+      "relation": "indirect_call",
+      "context": "collection",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/features/fortschritt/lib/chartVisibility.ts",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "src_features_fortschritt_lib_chartvisibility_groupsubstancesbypeptide",
+      "target": "src_features_blutwerte_lib_mergerows_test_item"
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/features/fortschritt/lib/cycleLanes.ts",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "src_features_fortschritt_lib_cyclelanes_assignlanes",
+      "target": "src_features_blutwerte_lib_mergerows_test_item"
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/features/fortschritt/lib/range.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_features_fortschritt_lib_range_filterbydaterange",
+      "target": "src_features_blutwerte_lib_mergerows_test_item"
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/pages/Dashboard.tsx",
+      "source_location": "L284",
+      "weight": 1.0,
+      "source": "src_pages_dashboard_intakeperiodcarousel",
+      "target": "src_features_blutwerte_lib_mergerows_test_item"
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/pages/FAQ.tsx",
+      "source_location": "L117",
+      "weight": 1.0,
+      "source": "src_pages_faq_faq",
+      "target": "src_features_blutwerte_lib_mergerows_test_item"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows",
+      "target": "src_features_blutwerte_lib_mergerows_approxequal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows",
+      "target": "src_features_blutwerte_lib_mergerows_markerkey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows",
+      "target": "src_features_blutwerte_lib_mergerows_mergeconflict",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L54",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows",
+      "target": "src_features_blutwerte_lib_mergerows_mergeincoming",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows",
+      "target": "src_features_blutwerte_lib_mergerows_mergeitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows",
+      "target": "src_features_blutwerte_lib_mergerows_mergeresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L38",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows",
+      "target": "src_features_blutwerte_lib_mergerows_samevalue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows",
+      "target": "src_features_blutwerte_lib_unitconversion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows",
+      "target": "src_features_blutwerte_lib_unitconversion_convert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows",
+      "target": "src_features_blutwerte_lib_unitconversion_normalizeunitstring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows_mergeincoming",
+      "target": "src_features_blutwerte_lib_mergerows_mergeitem"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows_mergeincoming",
+      "target": "src_features_blutwerte_lib_mergerows_markerkey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows_samevalue",
+      "target": "src_features_blutwerte_lib_mergerows_approxequal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L71",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows_mergeincoming",
+      "target": "src_features_blutwerte_lib_mergerows_samevalue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows_samevalue",
+      "target": "src_features_blutwerte_lib_unitconversion_convert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/mergeRows.ts",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_mergerows_samevalue",
+      "target": "src_features_blutwerte_lib_unitconversion_normalizeunitstring",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -41181,6 +43029,112 @@
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_referencebar_referencebargeometry",
       "target": "src_features_blutwerte_lib_referencebar_clamp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/unitConversion.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_unitconversion_test",
+      "target": "src_features_blutwerte_lib_unitconversion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/unitConversion.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_unitconversion_test",
+      "target": "src_features_blutwerte_lib_unitconversion_canconvert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/unitConversion.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_unitconversion_test",
+      "target": "src_features_blutwerte_lib_unitconversion_convert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/unitConversion.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_unitconversion_test",
+      "target": "src_features_blutwerte_lib_unitconversion_normalizeunitstring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/unitConversion.ts",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_unitconversion",
+      "target": "src_features_blutwerte_lib_unitconversion_canconvert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/unitConversion.ts",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_unitconversion",
+      "target": "src_features_blutwerte_lib_unitconversion_convert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/unitConversion.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_unitconversion",
+      "target": "src_features_blutwerte_lib_unitconversion_mass_factors",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/unitConversion.ts",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_unitconversion",
+      "target": "src_features_blutwerte_lib_unitconversion_normalizeunitstring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/unitConversion.ts",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_unitconversion_canconvert",
+      "target": "src_features_blutwerte_lib_unitconversion_normalizeunitstring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/unitConversion.ts",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_unitconversion_convert",
+      "target": "src_features_blutwerte_lib_unitconversion_normalizeunitstring",
       "confidence_score": 1.0
     },
     {
@@ -68185,7 +70139,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "supabase/functions/bloodwork-extract/index.ts",
-      "source_location": "L12",
+      "source_location": "L14",
       "weight": 1.0,
       "source": "supabase_functions_bloodwork_extract_index",
       "target": "supabase_functions_bloodwork_extract_index_corsheaders",
@@ -68195,7 +70149,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "supabase/functions/bloodwork-extract/index.ts",
-      "source_location": "L26",
+      "source_location": "L28",
       "weight": 1.0,
       "source": "supabase_functions_bloodwork_extract_index",
       "target": "supabase_functions_bloodwork_extract_index_extractrequest",
@@ -68205,7 +70159,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "supabase/functions/bloodwork-extract/index.ts",
-      "source_location": "L18",
+      "source_location": "L20",
       "weight": 1.0,
       "source": "supabase_functions_bloodwork_extract_index",
       "target": "supabase_functions_bloodwork_extract_index_json",
@@ -68231,6 +70185,17 @@
       "weight": 1.0,
       "source": "supabase_functions_bloodwork_extract_index",
       "target": "supabase_functions_bloodwork_extract_prompt_allowed_mime_types",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/functions/bloodwork-extract/index.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "supabase_functions_bloodwork_extract_index",
+      "target": "supabase_functions_bloodwork_extract_prompt_base64bytes",
       "confidence_score": 1.0
     },
     {
@@ -68286,6 +70251,17 @@
       "weight": 1.0,
       "source": "supabase_functions_bloodwork_extract_prompt_test",
       "target": "supabase_functions_bloodwork_extract_prompt_allowed_mime_types",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/functions/bloodwork-extract/prompt.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "supabase_functions_bloodwork_extract_prompt_test",
+      "target": "supabase_functions_bloodwork_extract_prompt_base64bytes",
       "confidence_score": 1.0
     },
     {
@@ -68335,7 +70311,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "supabase/functions/bloodwork-extract/prompt.ts",
-      "source_location": "L8",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "supabase_functions_bloodwork_extract_prompt",
+      "target": "supabase_functions_bloodwork_extract_prompt_base64bytes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "supabase/functions/bloodwork-extract/prompt.ts",
+      "source_location": "L20",
       "weight": 1.0,
       "source": "supabase_functions_bloodwork_extract_prompt",
       "target": "supabase_functions_bloodwork_extract_prompt_buildprompt",
@@ -68345,7 +70331,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "supabase/functions/bloodwork-extract/prompt.ts",
-      "source_location": "L35",
+      "source_location": "L52",
       "weight": 1.0,
       "source": "supabase_functions_bloodwork_extract_prompt",
       "target": "supabase_functions_bloodwork_extract_prompt_extractjson",
@@ -68355,7 +70341,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "supabase/functions/bloodwork-extract/prompt.ts",
-      "source_location": "L53",
+      "source_location": "L70",
       "weight": 1.0,
       "source": "supabase_functions_bloodwork_extract_prompt",
       "target": "supabase_functions_bloodwork_extract_prompt_resetsat",
@@ -75056,5 +77042,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "6d6de399104f028a2ab0ea0d2e3b310d2f6ffe3d"
+  "built_at_commit": "32e7f17626943511dd91440ffb21982f15c6fa87"
 }
