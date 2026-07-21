@@ -1,4 +1,5 @@
 import type { ExtractedValue } from '../../lib/extractResult'
+import { conversionHint } from '../../lib/conversionHint'
 import { CYAN, MUTED, TEXT } from '../../styles'
 
 export interface ReviewRow extends ExtractedValue {
@@ -100,6 +101,15 @@ export function ReviewTable({ rows, onChange }: Props) {
                 />
               </div>
             </div>
+
+            {(() => {
+              const hint = conversionHint(row.marker, row.unit, row.value)
+              return hint ? (
+                <p className="text-xs mt-2" style={{ color: CYAN }}>
+                  {hint} <span style={{ color: MUTED }}>· wird so im Verlauf angezeigt</span>
+                </p>
+              ) : null
+            })()}
           </div>
         )
       })}

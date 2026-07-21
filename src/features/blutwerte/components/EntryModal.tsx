@@ -1,7 +1,8 @@
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import { CATALOG_MARKER_NAMES, normalizeMarker } from '../lib/markerCatalog'
-import { CYAN, TEXT } from '../styles'
+import { conversionHint } from '../lib/conversionHint'
+import { CYAN, MUTED, TEXT } from '../styles'
 
 export interface EntryDraft {
   tested_at: string
@@ -116,6 +117,15 @@ export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, on
             />
           </div>
         </div>
+
+        {(() => {
+          const hint = conversionHint(draft.marker, draft.unit, Number(draft.value.replace(',', '.')))
+          return hint ? (
+            <p className="text-xs" style={{ color: CYAN }}>
+              {hint} <span style={{ color: MUTED }}>· wird so im Verlauf angezeigt</span>
+            </p>
+          ) : null
+        })()}
 
         <div className="flex gap-3 pt-2">
           <button className="btn-secondary flex-1" onClick={onCancel}>Abbrechen</button>
