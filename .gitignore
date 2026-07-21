@@ -33,3 +33,4 @@ src/i18n/faq/data/translation-cache.json
 
 # Agent worktrees (ephemeral, not part of the project)
 .claude/worktrees/
+.worktrees/
