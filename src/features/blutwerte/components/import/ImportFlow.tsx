@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '../../../../lib/supabase'
 import { useAuth } from '../../../../context/AuthContext'
-import { prepareFile } from '../../lib/imageResize'
+import { MAX_UPLOAD_BYTES, prepareFile } from '../../lib/imageResize'
 import { parseExtractResult } from '../../lib/extractResult'
 import { CATALOG_MARKER_NAMES } from '../../lib/markerCatalog'
 import { formatDisplayDate } from '../../lib/format'
@@ -54,6 +54,10 @@ export function ImportFlow({ onClose, onSaved }: Props) {
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error('Datei ist zu groß (max. 10 MB). Bitte kleiner fotografieren oder komprimieren.')
+      return
+    }
     setPhase('extracting')
 
     try {

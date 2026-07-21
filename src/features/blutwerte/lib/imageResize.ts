@@ -1,6 +1,10 @@
 /** Längste Kante für die Vision-API — darüber bringt mehr Auflösung keinen Erkennungsgewinn. */
 export const MAX_EDGE = 1568
 
+/** Maximale Upload-Größe. Muss mit MAX_UPLOAD_BYTES in der Edge Function
+ *  (supabase/functions/bloodwork-extract/prompt.ts) übereinstimmen. */
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
 export interface Size {
   width: number
   height: number

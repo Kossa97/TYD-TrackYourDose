@@ -5,6 +5,18 @@ export const IMPORT_LIMIT = 10
 
 export const RATE_WINDOW_DAYS = 30
 
+/** Maximale Upload-Größe (dekodiert) — schützt vor teuren Riesendateien. Muss mit
+ *  dem Client-Limit in src/features/blutwerte/lib/imageResize.ts übereinstimmen. */
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
+/** Ungefähre dekodierte Größe eines base64-Strings in Bytes. */
+export function base64Bytes(base64: string): number {
+  const len = base64.length
+  if (len === 0) return 0
+  const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0
+  return Math.floor((len * 3) / 4) - padding
+}
+
 export function buildPrompt(markerNames: string[]): string {
   return [
     'Du extrahierst Laborwerte aus einem deutschen oder englischen Laborbefund.',

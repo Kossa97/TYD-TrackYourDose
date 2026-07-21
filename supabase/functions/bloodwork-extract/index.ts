@@ -3,7 +3,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import {
   ALLOWED_MIME_TYPES,
   IMPORT_LIMIT,
+  MAX_UPLOAD_BYTES,
   RATE_WINDOW_DAYS,
+  base64Bytes,
   buildPrompt,
   extractJson,
   resetsAt,
@@ -57,6 +59,7 @@ Deno.serve(async (request: Request) => {
   if (!file || !mimeType) return json({ error: 'invalid_body' }, 400)
   if (!ALLOWED_MIME_TYPES.includes(mimeType)) return json({ error: 'unsupported_type' }, 400)
   if (!Array.isArray(markerNames) || markerNames.length === 0) return json({ error: 'invalid_body' }, 400)
+  if (base64Bytes(file) > MAX_UPLOAD_BYTES) return json({ error: 'file_too_large' }, 413)
 
   const windowStart = new Date()
   windowStart.setDate(windowStart.getDate() - RATE_WINDOW_DAYS)

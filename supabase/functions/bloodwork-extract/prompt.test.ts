@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { ALLOWED_MIME_TYPES, IMPORT_LIMIT, buildPrompt, extractJson, resetsAt } from './prompt'
+import {
+  ALLOWED_MIME_TYPES,
+  IMPORT_LIMIT,
+  MAX_UPLOAD_BYTES,
+  base64Bytes,
+  buildPrompt,
+  extractJson,
+  resetsAt,
+} from './prompt'
 
 describe('buildPrompt', () => {
   it('enthält die Katalog-Marker', () => {
@@ -68,5 +76,32 @@ describe('Konstanten', () => {
 
   it('begrenzt Importe pro Monat', () => {
     expect(IMPORT_LIMIT).toBe(10)
+  })
+
+  it('begrenzt die Upload-Größe auf 10 MB', () => {
+    expect(MAX_UPLOAD_BYTES).toBe(10 * 1024 * 1024)
+  })
+})
+
+describe('base64Bytes', () => {
+  it('gibt 0 für einen leeren String zurück', () => {
+    expect(base64Bytes('')).toBe(0)
+  })
+
+  it('schätzt die dekodierte Größe ohne Padding', () => {
+    // "AAAA" (4 Zeichen, kein Padding) -> 3 Bytes
+    expect(base64Bytes('AAAA')).toBe(3)
+  })
+
+  it('berücksichtigt Padding', () => {
+    // "AA==" -> 1 Byte, "AAA=" -> 2 Bytes
+    expect(base64Bytes('AA==')).toBe(1)
+    expect(base64Bytes('AAA=')).toBe(2)
+  })
+
+  it('erkennt eine Datei über dem Limit', () => {
+    // base64 ist ~4/3 der Rohgröße; ein String über MAX*4/3 überschreitet das Limit
+    const tooBig = 'A'.repeat(Math.ceil((MAX_UPLOAD_BYTES + 1) * 4 / 3))
+    expect(base64Bytes(tooBig)).toBeGreaterThan(MAX_UPLOAD_BYTES)
   })
 })
