@@ -21,7 +21,9 @@ export function AuffaelligeWerte({ summaries, onSelect }: Props) {
       </div>
       {summaries.map((summary, i) => {
         const latest = summary.latest!
-        const referenz = formatRange(summary.range.min, summary.range.max, latest.unit)
+        const shownValue = summary.displayValue ?? latest.value
+        const shownUnit = summary.displayValue != null ? summary.displayUnit : latest.unit
+        const referenz = formatRange(summary.range.min, summary.range.max, shownUnit)
         return (
           <button
             key={summary.name}
@@ -36,8 +38,8 @@ export function AuffaelligeWerte({ summaries, onSelect }: Props) {
               )}
             </div>
             <span className="text-sm font-bold" style={{ color: RED }}>
-              {formatNumber(latest.value)}{' '}
-              <span className="text-xs font-semibold" style={{ color: MUTED }}>{latest.unit}</span>
+              {formatNumber(shownValue)}{' '}
+              <span className="text-xs font-semibold" style={{ color: MUTED }}>{shownUnit}</span>
             </span>
           </button>
         )

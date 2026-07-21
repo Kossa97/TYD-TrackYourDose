@@ -32,6 +32,8 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('1J')
 
   const { name, entries, latest, range, inRange, trend, diff } = summary
+  const shownValue = summary.displayValue ?? (latest ? latest.value : null)
+  const shownUnit = summary.displayValue != null ? summary.displayUnit : (latest?.unit ?? '')
 
   const now = new Date()
   const cutoff = (() => {
@@ -44,14 +46,17 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
   })()
 
   // oldest -> newest for the chart
-  const chartData = entries
-    .filter(e => (cutoff ? e.tested_at >= cutoff : true))
+  const windowPoints = summary.points.filter(p => (cutoff ? p.entry.tested_at >= cutoff : true))
+  const chartData = windowPoints
+    .filter(p => p.value != null)
     .slice()
-    .sort((a, b) => a.tested_at.localeCompare(b.tested_at))
-    .map(e => ({
-      date_label: formatChartDate(e.tested_at),
-      value: toNumber(e.value),
+    .sort((a, b) => a.entry.tested_at.localeCompare(b.entry.tested_at))
+    .map(p => ({
+      date_label: formatChartDate(p.entry.tested_at),
+      value: p.value as number,
     }))
+
+  const excludedCount = windowPoints.filter(p => p.value == null).length
 
   return (
     <div>
@@ -76,8 +81,8 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
           <>
             <div className="flex items-end justify-between">
               <p className="text-3xl font-bold" style={{ color: inRange === false ? RED : CYAN }}>
-                {formatNumber(latest.value)}
-                <span className="text-base font-semibold ml-1.5" style={{ color: MUTED }}>{latest.unit}</span>
+                {formatNumber(shownValue!)}
+                <span className="text-base font-semibold ml-1.5" style={{ color: MUTED }}>{shownUnit}</span>
               </p>
               {trend && (
                 <div className="flex items-center gap-1 text-sm font-semibold" style={{ color: trendColor(summary) }}>
@@ -89,8 +94,8 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
             {range.source !== 'none' ? (
               <div className="mt-4">
                 <ReferenceBar
-                  value={toNumber(latest.value)}
-                  unit={latest.unit}
+                  value={summary.displayValue ?? toNumber(latest.value)}
+                  unit={shownUnit}
                   range={range}
                   inRange={inRange}
                 />
@@ -171,31 +176,42 @@ export function MarkerDetail({ summary, onBack, onAdd, onDelete }: Props) {
         </div>
       )}
 
+      {excludedCount > 0 && (
+        <p className="text-xs mb-4 -mt-2" style={{ color: MUTED }}>
+          {excludedCount === 1 ? '1 Wert mit abweichender Einheit ist nicht im Diagramm.' : `${excludedCount} Werte mit abweichender Einheit sind nicht im Diagramm.`}
+        </p>
+      )}
+
       {/* Entry list */}
       <div style={PANEL_STYLE}>
         {entries.length === 0 && (
           <p className="p-5 text-sm text-center" style={{ color: MUTED }}>Noch keine Einträge.</p>
         )}
-        {entries.map((entry, i) => (
-          <div
-            key={entry.id}
-            className="flex items-center justify-between px-5 py-3.5"
-            style={i > 0 ? { borderTop: '1px solid var(--border)' } : undefined}
-          >
-            <span className="text-sm" style={{ color: MUTED }}>{formatDisplayDate(entry.tested_at)}</span>
-            <span className="text-sm font-semibold flex-1 text-right mr-3" style={{ color: TEXT }}>
-              {formatNumber(entry.value)} {entry.unit}
-            </span>
-            <button
-              className="p-1.5 transition-colors hover:text-red-400"
-              style={{ color: MUTED }}
-              onClick={() => onDelete(entry)}
-              aria-label="Löschen"
+        {summary.points.map((p, i) => {
+          const e = p.entry
+          const v = p.value != null ? p.value : e.value
+          const u = p.value != null ? summary.displayUnit : e.unit
+          return (
+            <div
+              key={e.id}
+              className="flex items-center justify-between px-5 py-3.5"
+              style={i > 0 ? { borderTop: '1px solid var(--border)' } : undefined}
             >
-              <Trash2 size={15} />
-            </button>
-          </div>
-        ))}
+              <span className="text-sm" style={{ color: MUTED }}>{formatDisplayDate(e.tested_at)}</span>
+              <span className="text-sm font-semibold flex-1 text-right mr-3" style={{ color: TEXT }}>
+                {formatNumber(v)} {u}
+              </span>
+              <button
+                className="p-1.5 transition-colors hover:text-red-400"
+                style={{ color: MUTED }}
+                onClick={() => onDelete(e)}
+                aria-label="Löschen"
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

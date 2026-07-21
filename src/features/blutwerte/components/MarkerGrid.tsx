@@ -30,6 +30,8 @@ export function MarkerGrid({ summaries, grouped, onSelect }: Props) {
   const renderCard = (summary: MarkerSummary) => {
     const { latest, inRange, trend, name } = summary
     const hasData = !!latest
+    const shownValue = summary.displayValue ?? latest?.value
+    const shownUnit = summary.displayValue != null ? summary.displayUnit : latest?.unit
 
     return (
       <button
@@ -50,7 +52,7 @@ export function MarkerGrid({ summaries, grouped, onSelect }: Props) {
           <>
             <div className="flex items-center justify-between mt-2">
               <span className="text-base font-bold" style={{ color: inRange === false ? RED : CYAN }}>
-                {formatNumber(latest.value)} <span className="text-xs font-semibold" style={{ color: MUTED }}>{latest.unit}</span>
+                {formatNumber(shownValue!)} <span className="text-xs font-semibold" style={{ color: MUTED }}>{shownUnit}</span>
               </span>
               <span style={{ color: trendColor(summary) }}>
                 <TrendIcon trend={trend} size={15} />
