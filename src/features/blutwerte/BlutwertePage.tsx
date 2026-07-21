@@ -214,7 +214,7 @@ export function BlutwertePage() {
       )}
 
       {!loading && view === 'befunde' && (
-        <BefundListe reports={reports} entries={entries} />
+        <BefundListe reports={reports} entries={entries} onChanged={load} />
       )}
 
       {!loading && view === 'marker' && (

@@ -5,10 +5,12 @@ import { effectiveRange, isInRange, toNumber } from '../lib/bloodwork'
 import { normalizeMarker } from '../lib/markerCatalog'
 import { formatDisplayDate, formatNumber, formatRange } from '../lib/format'
 import { MUTED, PANEL_STYLE, RED, TEXT } from '../styles'
+import { BefundEditor } from './BefundEditor'
 
 interface Props {
   reports: BloodworkReport[]
   entries: BloodworkEntry[]
+  onChanged: () => void
 }
 
 const werteLabel = (n: number) => (n === 1 ? '1 Wert' : `${n} Werte`)
@@ -16,8 +18,9 @@ const werteLabel = (n: number) => (n === 1 ? '1 Wert' : `${n} Werte`)
 const isAuffaellig = (entry: BloodworkEntry): boolean =>
   isInRange(toNumber(entry.value), effectiveRange(entry, normalizeMarker(entry.marker))) === false
 
-export function BefundListe({ reports, entries }: Props) {
+export function BefundListe({ reports, entries, onChanged }: Props) {
   const [openId, setOpenId] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
 
   const byReport = new Map<string, BloodworkEntry[]>()
   entries.forEach(entry => {
@@ -53,10 +56,11 @@ export function BefundListe({ reports, entries }: Props) {
             >
               <ArrowLeft size={20} />
             </button>
-            <div>
+            <div className="flex-1">
               <p className="text-lg font-bold" style={{ color: TEXT }}>{formatDisplayDate(report.tested_at)}</p>
               {report.lab_name && <p className="text-xs" style={{ color: MUTED }}>{report.lab_name}</p>}
             </div>
+            <button className="btn-secondary text-sm" onClick={() => setEditing(true)}>Ergänzen</button>
           </div>
 
           <div style={PANEL_STYLE}>
@@ -85,6 +89,15 @@ export function BefundListe({ reports, entries }: Props) {
               )
             })}
           </div>
+
+          {editing && (
+            <BefundEditor
+              report={report}
+              entries={values}
+              onClose={() => setEditing(false)}
+              onSaved={() => { setEditing(false); onChanged() }}
+            />
+          )}
         </div>
       )
     }
