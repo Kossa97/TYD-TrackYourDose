@@ -22,7 +22,14 @@ select json_build_object(
     from public.stack_items item
     join public.stack_item_ingredients ingredient on ingredient.stack_item_id = item.id
     where item.configuration_status = 'complete'
-      and (ingredient.amount_value is null or ingredient.amount_unit is null)
+      and (
+        ingredient.amount_value is null
+        or ingredient.amount_value <= 0
+        or nullif(btrim(ingredient.amount_unit), '') is null
+        or ingredient.basis_value is null
+        or ingredient.basis_value <= 0
+        or nullif(btrim(ingredient.basis_unit), '') is null
+      )
   )
 ) as migration_counts;
 
@@ -70,7 +77,9 @@ select
   class.relrowsecurity as rls_enabled,
   policy.policyname,
   policy.roles,
-  policy.cmd
+  policy.cmd,
+  policy.qual,
+  policy.with_check
 from pg_class class
 join pg_namespace namespace on namespace.oid = class.relnamespace
 left join pg_policies policy
@@ -79,6 +88,17 @@ left join pg_policies policy
 where namespace.nspname = 'public'
   and class.relname in ('stack_items', 'stack_item_ingredients', 'substance_catalog')
 order by class.relname, policy.policyname;
+
+select
+  grantee,
+  table_name,
+  privilege_type,
+  is_grantable
+from information_schema.role_table_grants
+where table_schema = 'public'
+  and table_name in ('stack_items', 'stack_item_ingredients', 'substance_catalog')
+  and grantee in ('anon', 'authenticated', 'service_role')
+order by table_name, grantee, privilege_type;
 
 select
   has_function_privilege(

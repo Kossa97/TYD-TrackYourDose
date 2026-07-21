@@ -130,7 +130,8 @@ create table public.stack_item_ingredients (
   amount_value numeric,
   amount_unit text,
   basis_value numeric not null default 1 check (basis_value > 0),
-  basis_unit text not null,
+  basis_unit text not null
+    check (nullif(btrim(basis_unit), '') is not null),
   position integer not null default 0 check (position >= 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -159,9 +160,15 @@ select
   item.id,
   catalog.id,
   case when catalog.id is null then item.display_name end,
-  case when item.vial_amount_mg > 0 then item.vial_amount_mg end,
   case
-    when item.vial_amount_mg > 0 then nullif(btrim(item.vial_amount_unit), '')
+    when item.vial_amount_mg > 0
+      and nullif(btrim(item.vial_amount_unit), '') is not null
+      then item.vial_amount_mg
+  end,
+  case
+    when item.vial_amount_mg > 0
+      and nullif(btrim(item.vial_amount_unit), '') is not null
+      then btrim(item.vial_amount_unit)
   end,
   1,
   case item.dosage_form
@@ -222,6 +229,10 @@ alter table public.stack_items
 alter index public.peptides_pk_profile_idx rename to stack_items_pk_profile_idx;
 alter index public.peptides_user_archived_idx rename to stack_items_user_archived_idx;
 alter policy "Own peptides" on public.stack_items rename to "Own stack items";
+alter policy "Own stack items" on public.stack_items
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
 
 alter table public.stack_item_ingredients enable row level security;
 
@@ -263,6 +274,98 @@ for each row execute function public.set_stack_item_updated_at();
 create trigger stack_item_ingredients_set_updated_at
 before update on public.stack_item_ingredients
 for each row execute function public.set_stack_item_updated_at();
+
+
+create or replace function public.enforce_stack_item_review_status()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' and new.configuration_status = 'needs_review' then
+    raise exception 'New stack items cannot start as needs_review';
+  end if;
+
+  if tg_op = 'UPDATE'
+    and old.configuration_status = 'complete'
+    and new.configuration_status = 'needs_review' then
+    raise exception 'Complete stack items cannot return to needs_review';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger stack_items_review_status_check
+before insert or update of configuration_status on public.stack_items
+for each row execute function public.enforce_stack_item_review_status();
+
+create or replace function public.enforce_stack_item_completeness()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  item_id_to_check uuid;
+  item_ids_to_check uuid[];
+begin
+  if tg_table_name = 'stack_items' then
+    item_ids_to_check := array[new.id];
+  elsif tg_op = 'DELETE' then
+    item_ids_to_check := array[old.stack_item_id];
+  elsif tg_op = 'UPDATE' and old.stack_item_id is distinct from new.stack_item_id then
+    item_ids_to_check := array[old.stack_item_id, new.stack_item_id];
+  else
+    item_ids_to_check := array[new.stack_item_id];
+  end if;
+
+  foreach item_id_to_check in array item_ids_to_check
+  loop
+    if exists (
+      select 1
+      from public.stack_items item
+      where item.id = item_id_to_check
+        and item.configuration_status = 'complete'
+    ) then
+      if not exists (
+        select 1
+        from public.stack_item_ingredients ingredient
+        where ingredient.stack_item_id = item_id_to_check
+      ) then
+        raise exception 'Complete stack item requires at least one ingredient';
+      end if;
+
+      if exists (
+        select 1
+        from public.stack_item_ingredients ingredient
+        where ingredient.stack_item_id = item_id_to_check
+          and (
+            ingredient.amount_value is null
+            or ingredient.amount_value <= 0
+            or nullif(btrim(ingredient.amount_unit), '') is null
+            or ingredient.basis_value is null
+            or ingredient.basis_value <= 0
+            or nullif(btrim(ingredient.basis_unit), '') is null
+          )
+      ) then
+        raise exception 'Complete stack item requires complete ingredients';
+      end if;
+    end if;
+  end loop;
+
+  return null;
+end;
+$$;
+
+create constraint trigger stack_items_completeness_check
+after insert or update of configuration_status on public.stack_items
+deferrable initially deferred
+for each row execute function public.enforce_stack_item_completeness();
+
+create constraint trigger stack_item_ingredients_completeness_check
+after insert or update or delete on public.stack_item_ingredients
+deferrable initially deferred
+for each row execute function public.enforce_stack_item_completeness();
 
 create or replace function public.save_stack_item(p_item jsonb, p_ingredients jsonb)
 returns public.stack_items
