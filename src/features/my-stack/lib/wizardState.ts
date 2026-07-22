@@ -120,18 +120,29 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         },
       }
     case 'custom_started': {
-      const name = action.name.trim()
+      const firstIngredient = state.draft.ingredients[0]
+      const wasCatalogSelection = state.draft.ingredients.length === 1
+        && Boolean(firstIngredient?.catalog_substance_id)
+      const isSingleCustomIdentity = state.draft.ingredients.length === 1
+        && !firstIngredient?.catalog_substance_id
+        && firstIngredient?.custom_name === state.draft.displayName
+      const ingredients = state.draft.ingredients.length === 0 || wasCatalogSelection
+        ? [{
+            ...emptyIngredient(0),
+            custom_name: action.name,
+            basis_unit: suggestedBasisUnit(state.draft.dosageForm),
+          }]
+        : isSingleCustomIdentity
+          ? [{ ...firstIngredient, custom_name: action.name }]
+          : state.draft.ingredients
+
       return {
         ...state,
         draft: {
           ...state.draft,
-          displayName: name,
-          category: null,
-          ingredients: [{
-            ...emptyIngredient(0),
-            custom_name: name,
-            basis_unit: suggestedBasisUnit(state.draft.dosageForm),
-          }],
+          displayName: action.name,
+          category: wasCatalogSelection ? null : state.draft.category,
+          ingredients,
         },
       }
     }
@@ -218,6 +229,7 @@ export function firstInvalidField(state: WizardState): string | null {
     if (!state.draft.displayName.trim()) return 'displayName'
     if (!state.draft.category) return 'category'
   }
+  if (state.step === 'ingredients' && !state.draft.displayName.trim()) return 'displayName'
 
   if (state.step === 'substance' || state.step === 'ingredients' || state.step === 'review') {
     const nameError = firstIngredientError(state, ['name'])

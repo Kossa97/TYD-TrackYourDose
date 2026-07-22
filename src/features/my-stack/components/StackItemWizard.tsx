@@ -88,6 +88,7 @@ export function StackItemWizard({
   const [saveError, setSaveError] = useState<string | null>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
+  const duplicateActionRef = useRef<HTMLButtonElement>(null)
 
   const currentStepIndex = RENDERED_WIZARD_STEPS.indexOf(state.step)
   const validationErrors = showErrors ? validateStackItemDraft(state.draft) : {}
@@ -114,6 +115,13 @@ export function StackItemWizard({
     return () => returnFocusRef.current?.focus()
   }, [])
 
+  useEffect(() => {
+    if (!duplicateCandidate) return
+    requestAnimationFrame(() => {
+      duplicateActionRef.current?.focus()
+    })
+  }, [duplicateCandidate])
+
   function focusField(field: string): void {
     requestAnimationFrame(() => {
       dialogRef.current?.querySelector<HTMLElement>(`[data-field="${field}"]`)?.focus()
@@ -133,14 +141,15 @@ export function StackItemWizard({
   function handleDialogKeyDown(event: ReactKeyboardEvent<HTMLDivElement>): void {
     if (event.key === 'Escape') {
       event.preventDefault()
-      onClose()
+      if (saving) event.stopPropagation()
+      else onClose()
       return
     }
 
     if (event.key === 'Tab') {
       const focusable = Array.from(
         dialogRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [],
-      ).filter(element => element.offsetParent !== null)
+      )
       if (focusable.length === 0) return
 
       const first = focusable[0]
@@ -168,6 +177,7 @@ export function StackItemWizard({
   }
 
   function handleBack(): void {
+    if (saving) return
     const previousStep = RENDERED_WIZARD_STEPS[currentStepIndex - 1]
     if (previousStep) selectStep(previousStep)
     else onClose()
@@ -180,6 +190,7 @@ export function StackItemWizard({
   }
 
   async function handleSave(allowDuplicate = false): Promise<void> {
+    if (saving) return
     const invalidField = firstInvalidField(state)
     if (invalidField) {
       const invalidStep = stepForInvalidField(invalidField)
@@ -254,6 +265,7 @@ export function StackItemWizard({
           <IngredientEditor
             displayName={state.draft.displayName}
             ingredients={state.draft.ingredients}
+            displayNameError={showErrors && !state.draft.displayName.trim()}
             catalogNames={catalogNames}
             errors={validationErrors.ingredients}
             onDisplayNameChange={displayName => dispatch({ type: 'display_name_changed', displayName })}
@@ -407,12 +419,15 @@ export function StackItemWizard({
                 </div>
                 <div className="mt-4 grid gap-3">
                   <button
+                    ref={duplicateActionRef}
                     type="button"
                     onClick={() => {
+                      if (saving) return
                       onOpenExisting(duplicateCandidate)
                       onClose()
                     }}
-                    className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 font-semibold text-slate-950 transition-colors duration-200 hover:bg-sky-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 motion-reduce:transition-none"
+                    disabled={saving}
+                    className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 font-semibold text-slate-950 transition-colors duration-200 hover:bg-sky-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
                   >
                     <ExternalLink aria-hidden="true" size={18} />
                     {t('my_stack_open_existing', { defaultValue: 'Bestehenden Eintrag öffnen' })}
@@ -427,8 +442,9 @@ export function StackItemWizard({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setDuplicateCandidate(null)}
-                    className="min-h-11 cursor-pointer rounded-xl px-4 py-3 font-semibold text-slate-400 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
+                    onClick={() => { if (!saving) setDuplicateCandidate(null) }}
+                    disabled={saving}
+                    className="min-h-11 cursor-pointer rounded-xl px-4 py-3 font-semibold text-slate-400 transition-colors duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
                   >
                     {t('cancel', { defaultValue: 'Abbrechen' })}
                   </button>
@@ -470,7 +486,7 @@ export function StackItemWizard({
             </div>
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => { if (!saving) onClose() }}
               disabled={saving}
               aria-label={String(t('close', { defaultValue: 'Schließen' }))}
               className="grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-xl text-slate-400 transition-colors duration-200 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"

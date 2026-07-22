@@ -1,5 +1,5 @@
 import { AlertCircle, Plus, Search } from 'lucide-react'
-import { useState, type KeyboardEvent } from 'react'
+import { useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { STACK_CATEGORIES } from '../lib/categories'
 import type { StackCategory, SubstanceCatalogEntry } from '../types'
@@ -31,10 +31,21 @@ export function SubstanceSearch({
 }: SubstanceSearchProps) {
   const { t } = useTranslation()
   const hasQuery = query.trim().length > 0
+  const inputRef = useRef<HTMLInputElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [resultsDismissed, setResultsDismissed] = useState(false)
   const selectedIndex = entries.length === 0 ? -1 : Math.min(activeIndex, entries.length - 1)
+  const showResults = hasQuery && entries.length > 0 && !resultsDismissed
 
   function handleResultsKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      event.stopPropagation()
+      setResultsDismissed(true)
+      inputRef.current?.focus()
+      return
+    }
+
     if (entries.length === 0) return
 
     if (event.key === 'ArrowDown') {
@@ -64,10 +75,14 @@ export function SubstanceSearch({
         <div className="relative">
           <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input
+            ref={inputRef}
             id="stack-substance-search"
             type="search"
             value={query}
-            onChange={event => onQueryChange(event.target.value)}
+            onChange={event => {
+              setResultsDismissed(false)
+              onQueryChange(event.target.value)
+            }}
             data-field="displayName"
             aria-invalid={nameError || undefined}
             aria-describedby={nameError ? 'stack-substance-name-error' : undefined}
@@ -84,7 +99,7 @@ export function SubstanceSearch({
         )}
       </div>
 
-      {hasQuery && entries.length > 0 && (
+      {showResults && (
         <div
           role="listbox"
           tabIndex={0}

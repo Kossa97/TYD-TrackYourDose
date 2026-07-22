@@ -8,6 +8,7 @@ type IngredientChanges = Partial<Omit<StackItemIngredient, 'position'>>
 export interface IngredientEditorProps {
   displayName: string
   ingredients: StackItemIngredient[]
+  displayNameError?: boolean
   catalogNames?: Readonly<Record<string, string>>
   errors?: IngredientValidationErrors[]
   onDisplayNameChange: (displayName: string) => void
@@ -19,6 +20,7 @@ export interface IngredientEditorProps {
 export function IngredientEditor({
   displayName,
   ingredients,
+  displayNameError = false,
   catalogNames = {},
   errors = [],
   onDisplayNameChange,
@@ -38,9 +40,17 @@ export function IngredientEditor({
           id="stack-product-name"
           value={displayName}
           onChange={event => onDisplayNameChange(event.target.value)}
+          aria-invalid={displayNameError || undefined}
+          aria-describedby={displayNameError ? 'stack-product-name-error' : undefined}
           data-field="displayName"
           className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
         />
+        {displayNameError && (
+          <p id="stack-product-name-error" role="alert" className="mt-2 flex items-center gap-2 text-sm text-rose-300">
+            <AlertCircle aria-hidden="true" size={16} />
+            {t('my_stack_name_required', { defaultValue: 'Bitte gib einen Produktnamen ein.' })}
+          </p>
+        )}
       </div>
 
       <div className="space-y-3">
