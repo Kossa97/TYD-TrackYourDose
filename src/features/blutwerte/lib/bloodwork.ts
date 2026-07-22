@@ -1,7 +1,7 @@
 import type { BloodworkEntry } from '../types'
 import type { Kategorie, KategorieFilter, MarkerDef } from './markerCatalog'
 import { KATEGORIEN, MARKER_CATALOG, SONSTIGE, normalizeMarker } from './markerCatalog'
-import { convert } from './unitConversion'
+import { convert, normalizeUnitString } from './unitConversion'
 
 export interface EffectiveRange {
   min: number | null
@@ -83,15 +83,38 @@ export function computeTrend(entries: BloodworkEntry[], displayUnit?: string): {
   return { trend: 'same', diff: 0 }
 }
 
-/** Drückt einen Referenzbereich in displayUnit aus. Katalog-Bereiche sind bereits
- *  in displayUnit; Labor-Bereiche werden aus der Eintrags-Einheit umgerechnet. */
-function rangeInDisplayUnit(range: EffectiveRange, fromUnit: string | undefined, toUnit: string): EffectiveRange {
-  if (range.source !== 'lab' || !fromUnit) return range
-  const min = range.min != null ? convert(range.min, fromUnit, toUnit) : null
-  const max = range.max != null ? convert(range.max, fromUnit, toUnit) : null
-  // Wenn eine vorhandene Grenze nicht umrechenbar ist, bleibt der Roh-Bereich stehen.
-  if ((range.min != null && min == null) || (range.max != null && max == null)) return range
-  return { min, max, source: 'lab' }
+/**
+ * Zieleinheit für die Anzeige eines Markers: die Katalog-Einheit, wenn der neueste
+ * Wert dorthin umrechenbar ist — sonst die Einheit der Daten selbst. So läuft eine
+ * konsistent in einer Nicht-Katalog-Einheit erfasste Historie (z.B. mmol/L, G/l)
+ * nicht leer, während umrechenbare Werte weiterhin in der Standard-Einheit erscheinen.
+ */
+export function pickDisplayUnit(
+  def: MarkerDef | null,
+  latestValue: number | string | null,
+  latestUnit: string,
+): string {
+  if (!latestUnit) return def?.einheit ?? ''
+  const catalog = def?.einheit
+  if (!catalog) return latestUnit
+  if (latestValue == null) return catalog
+  return convert(toNumber(latestValue), latestUnit, catalog) != null ? catalog : latestUnit
+}
+
+/**
+ * Drückt einen Referenzbereich in displayUnit aus. sourceUnit ist die Einheit, in
+ * der die Grenzen vorliegen (Eintrags-Einheit bei Labor, Katalog-Einheit bei Katalog).
+ * Lässt sich der Bereich nicht sicher umrechnen, gibt es keinen anzeigbaren Bereich.
+ */
+function rangeInDisplayUnit(range: EffectiveRange, sourceUnit: string, toUnit: string): EffectiveRange {
+  if (range.source === 'none') return range
+  if (normalizeUnitString(sourceUnit) === normalizeUnitString(toUnit)) return range
+  const min = range.min != null ? convert(range.min, sourceUnit, toUnit) : null
+  const max = range.max != null ? convert(range.max, sourceUnit, toUnit) : null
+  if ((range.min != null && min == null) || (range.max != null && max == null)) {
+    return { min: null, max: null, source: 'none' }
+  }
+  return { min, max, source: range.source }
 }
 
 /**
@@ -115,30 +138,24 @@ export function buildMarkerSummaries(entries: BloodworkEntry[]): MarkerSummary[]
   return Array.from(byName.entries()).map(([name, bucket]) => {
     const sorted = bucket.entries.slice().sort((a, b) => b.tested_at.localeCompare(a.tested_at))
     const latest = sorted[0] ?? null
-    const displayUnit = bucket.def?.einheit || latest?.unit || ''
+    const displayUnit = pickDisplayUnit(bucket.def, latest ? latest.value : null, latest?.unit ?? '')
 
     const points: MarkerPoint[] = sorted.map(e => ({
       entry: e,
       value: convert(toNumber(e.value), e.unit, displayUnit),
     }))
+    // Der neueste Wert ist per Konstruktion von pickDisplayUnit immer umrechenbar.
     const displayValue = latest ? convert(toNumber(latest.value), latest.unit, displayUnit) : null
 
     const rawRange = effectiveRange(latest, bucket.def)
-    const range = rangeInDisplayUnit(rawRange, latest?.unit, displayUnit)
+    const rangeSourceUnit = rawRange.source === 'lab' ? (latest?.unit ?? '') : (bucket.def?.einheit ?? '')
+    const range = rangeInDisplayUnit(rawRange, rangeSourceUnit, displayUnit)
 
     const { trend, diff } = computeTrend(sorted, displayUnit)
 
-    // inRange bevorzugt den umgerechneten Wert. Ist er nicht umrechenbar, ist ein
-    // Vergleich nur bei einer Labor-Referenz sicher (Wert und Bereich in derselben
-    // Eintrags-Einheit). Bei einem Katalog-Bereich in abweichender Einheit — etwa
-    // ein molarer Wert (nmol/L) gegen einen ng/dL-Bereich — bleibt es unbekannt,
-    // statt einen falschen Alarm auszulösen.
-    const inRange =
-      displayValue != null
-        ? isInRange(displayValue, range)
-        : latest && rawRange.source === 'lab'
-          ? isInRange(toNumber(latest.value), rawRange)
-          : null
+    // Wert und Bereich liegen nun beide in displayUnit; ein nicht umrechenbarer
+    // Bereich wurde zu "none" und liefert daher kein (falsches) Urteil.
+    const inRange = displayValue != null ? isInRange(displayValue, range) : null
 
     return {
       name,

@@ -272,14 +272,17 @@ describe('buildMarkerSummaries – Einheiten-Umrechnung', () => {
     expect(t.points.map(p => (p.value != null ? Math.round(p.value) : null))).toEqual([1310, 738])
   })
 
-  it('markiert nicht umrechenbare (molare) Einheiten als null-Punkt', () => {
+  it('lässt einen Punkt weg, der nicht in die Anzeige-Einheit passt', () => {
+    // Neuester Wert in ng/dL -> displayUnit ng/dL; der ältere molare Wert (nmol/L)
+    // ist nicht umrechenbar und wird als null-Punkt markiert.
     const summaries = buildMarkerSummaries([
-      entry({ id: 'a', tested_at: '2026-07-15', value: 20, unit: 'nmol/L' }),
-      entry({ id: 'b', tested_at: '2026-02-22', value: 738, unit: 'ng/dL' }),
+      entry({ id: 'a', tested_at: '2026-07-15', value: 738, unit: 'ng/dL' }),
+      entry({ id: 'b', tested_at: '2026-02-22', value: 20, unit: 'nmol/L' }),
     ])
     const t = summaries.find(s => s.name === 'Testosteron')!
-    expect(t.points.find(p => p.entry.id === 'a')!.value).toBeNull()
-    expect(t.points.find(p => p.entry.id === 'b')!.value).toBeCloseTo(738, 3)
+    expect(t.displayUnit).toBe('ng/dL')
+    expect(t.points.find(p => p.entry.id === 'a')!.value).toBeCloseTo(738, 3)
+    expect(t.points.find(p => p.entry.id === 'b')!.value).toBeNull()
   })
 
   it('nutzt für Custom-Marker die Einheit des neuesten Eintrags', () => {
@@ -302,21 +305,24 @@ describe('buildMarkerSummaries – Einheiten-Umrechnung', () => {
     expect(t.range.source).toBe('lab')
   })
 
-  it('meldet inRange als unbekannt, wenn ein molarer Wert nicht zum Katalog-Bereich passt', () => {
-    // Testosteron in nmol/L (molar) ist nicht in ng/dL umrechenbar -> kein falscher Alarm.
+  it('zeigt einen molaren Wert in seiner Einheit, meldet inRange aber als unbekannt', () => {
+    // Testosteron in nmol/L: nicht in die ng/dL-Katalog-Einheit umrechenbar, daher
+    // wird der Wert in nmol/L angezeigt und gegen den ng/dL-Katalogbereich nicht beurteilt.
     const summaries = buildMarkerSummaries([entry({ value: 20, unit: 'nmol/L' })])
     const t = summaries.find(s => s.name === 'Testosteron')!
-    expect(t.displayValue).toBeNull()
+    expect(t.displayUnit).toBe('nmol/L')
+    expect(t.displayValue).toBe(20)
     expect(t.inRange).toBeNull()
   })
 
-  it('prüft einen nicht umrechenbaren Wert gegen eine gleich-einheitige Labor-Referenz', () => {
+  it('prüft einen molaren Wert gegen eine gleich-einheitige Labor-Referenz', () => {
     // Wert und Labor-Referenz in derselben (molaren) Einheit -> Vergleich bleibt gültig.
     const summaries = buildMarkerSummaries([
       entry({ value: 35, unit: 'nmol/L', ref_min: 12, ref_max: 30 }),
     ])
     const t = summaries.find(s => s.name === 'Testosteron')!
-    expect(t.displayValue).toBeNull()
+    expect(t.displayUnit).toBe('nmol/L')
+    expect(t.displayValue).toBe(35)
     expect(t.inRange).toBe(false)
   })
 })

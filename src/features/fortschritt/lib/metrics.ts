@@ -4,6 +4,7 @@ import { dateKeyFromTimestamp } from './substances'
 import { filterByDateRange } from './range'
 import { normalizeMarker } from '../../blutwerte/lib/markerCatalog'
 import { convert } from '../../blutwerte/lib/unitConversion'
+import { pickDisplayUnit } from '../../blutwerte/lib/bloodwork'
 
 export interface SeriesPoint {
   date: string
@@ -68,7 +69,8 @@ function labSeries(
     .sort((a, b) => a.tested_at.localeCompare(b.tested_at))
   if (inRange.length === 0) return { points: [], unit: '' }
 
-  const displayUnit = normalizeMarker(marker)?.einheit || inRange[inRange.length - 1].unit
+  const newest = inRange[inRange.length - 1]
+  const displayUnit = pickDisplayUnit(normalizeMarker(marker), newest.value, newest.unit)
   const points: SeriesPoint[] = []
   for (const b of inRange) {
     const raw = numeric(b.value)
