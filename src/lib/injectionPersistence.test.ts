@@ -500,7 +500,7 @@ describe('confirmIntakeDoseLog', () => {
             },
           }
         }
-        if (table === 'peptides') {
+        if (table === 'stack_items') {
           return {
             select: () => peptideSelectQuery,
             update: (payload: Record<string, unknown>) => {

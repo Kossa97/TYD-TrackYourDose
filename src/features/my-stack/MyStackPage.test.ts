@@ -194,7 +194,7 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('justify-center gap-2')
     expect(text).toContain("t('aktiver_zyklus')")
     expect(text).toContain('Dosisanpassungen')
-    expect(text).toContain('effectiveDose(asScheduleCycle(activeCycle)')
+    expect(text).toContain('effectiveDose(activeCycle')
     expect(text).toContain('escalationTargetDose(activeCycle, e)')
     expect(text).toContain('doseAdjustmentIcon(activeCycle, e)')
     expect(text).toContain('activeFrequency')
@@ -465,7 +465,27 @@ describe('My Stack modular integration', () => {
     expect(text).not.toContain("from('peptides')")
     expect(text).not.toContain(".eq('peptide_id'")
     expect(text).not.toContain('peptide_id: cycleForPeptide.id')
-    expect(text).toContain('peptide_id: cycle.stack_item_id')
+    expect(text).not.toContain('peptide_id: cycle.stack_item_id')
+    expect(text).not.toContain('function asScheduleCycle')
+    expect(text).not.toContain('peptide_id: row.stack_item_id')
+  })
+
+  test('uses the neutral scheduling contract across home, calendar, insights, and vial stock', () => {
+    const task10Sources = [
+      readFileSync(new URL('../../pages/Home.tsx', import.meta.url), 'utf8'),
+      readFileSync(new URL('../../pages/Dashboard.tsx', import.meta.url), 'utf8'),
+      readFileSync(new URL('../../lib/insights.ts', import.meta.url), 'utf8'),
+      readFileSync(new URL('./extensions/peptide/vialStock.ts', import.meta.url), 'utf8'),
+    ].join('\n')
+
+    expect(task10Sources).not.toContain("from('peptides')")
+    expect(task10Sources).not.toContain('peptides(name)')
+    expect(task10Sources).not.toContain('peptide_id')
+    expect(task10Sources).toContain("from('stack_items')")
+    expect(task10Sources).toContain('stack_items(display_name)')
+    expect(task10Sources).toContain('stack_item_id')
+    expect(task10Sources).not.toContain('stack_item_id?:')
+    expect(task10Sources).not.toContain('stack_items?:')
   })
   test('uses the feature components as real JSX boundaries', () => {
     const text = source()

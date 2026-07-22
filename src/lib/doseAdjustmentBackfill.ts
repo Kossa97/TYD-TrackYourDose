@@ -3,7 +3,7 @@ import { effectiveDose, type EscalationRow, type ScheduleCycle } from './intakeS
 
 export interface DoseAdjustmentBackfillLog {
   id: string
-  peptide_id: string
+  stack_item_id: string
   logged_at: string
   taken: boolean | null
 }
@@ -43,7 +43,7 @@ export function buildDoseAdjustmentBackfillUpdates(
   if (!fromDay) return []
 
   return logs.flatMap(log => {
-    if (log.peptide_id !== cycle.peptide_id) return []
+    if (log.stack_item_id !== cycle.stack_item_id) return []
     if (log.taken === true) return []
 
     const dayKey = logDay(log)

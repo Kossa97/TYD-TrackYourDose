@@ -1,6 +1,6 @@
 // src/lib/peptideStock.test.ts
 import { describe, expect, it } from 'vitest'
-import { computeNextVialStock, doseToVialDelta, type StockPeptide } from './peptideStock'
+import { computeNextVialStock, doseToVialDelta, type StockPeptide } from '../features/my-stack/extensions/peptide/vialStock'
 
 const peptide = (overrides: Partial<StockPeptide> = {}): StockPeptide => ({
   vial_amount_mg: 10,

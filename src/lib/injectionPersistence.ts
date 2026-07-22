@@ -10,7 +10,7 @@ import {
   type IntakeLog,
   type ScheduleCycle,
 } from './intakeSchedule'
-import { debitPeptideStockForDoseById } from './peptideStock'
+import { debitPeptideStockForDoseById } from '../features/my-stack/extensions/peptide/vialStock'
 import type { InjectionLog3D, InjectionPinDraft, SelectableInjectionCycle } from './injectionLogTypes'
 
 const INJECTABLE_METHODS = ['Subkutan', 'IntramuskulÃ¤r', 'Intramuskulaer']
@@ -196,7 +196,8 @@ export interface OpenInjectionIntake {
   doseLogId: string | null
 }
 
-interface InjectionDoseLog extends IntakeLog {
+interface InjectionDoseLog extends Omit<IntakeLog, 'stack_item_id'> {
+  peptide_id: string
   id: string
   dose: number
   unit: string
@@ -205,7 +206,8 @@ interface InjectionDoseLog extends IntakeLog {
   peptides?: { name?: string; default_method?: string } | Array<{ name?: string; default_method?: string }> | null
 }
 
-interface InjectionCycleRow extends ScheduleCycle {
+interface InjectionCycleRow extends Omit<ScheduleCycle, 'stack_item_id'> {
+  peptide_id: string
   active?: boolean
   name?: string
   method?: string
@@ -235,8 +237,8 @@ function doseLogSlotKey(log: InjectionDoseLog): string {
   return `${log.peptide_id}|${format(loggedAt, 'yyyy-MM-dd')}|${minutes}`
 }
 
-function openIntakeSlotKey(open: { peptideId: string; dateKey: string; minutes: number }): string {
-  return `${open.peptideId}|${open.dateKey}|${open.minutes}`
+function openIntakeSlotKey(open: { stackItemId: string; dateKey: string; minutes: number }): string {
+  return `${open.stackItemId}|${open.dateKey}|${open.minutes}`
 }
 
 export function injectionIntakeLookbackStart(now: Date, lookbackDays = 90): Date {
@@ -269,7 +271,10 @@ export function buildSelectableInjectionIntakes({
       .map(doseLogSlotKey),
   )
   const logsForOpenSlots = logs.filter(log => !isAutoMissedDoseLog(log))
-  const openIntakes = collectOpenIntakes(activeCycles, logsForOpenSlots, now, lookbackDays).flatMap(open => {
+  const scheduleCycleById = new Map(cycles.map(cycle => [cycle.id, { ...cycle, stack_item_id: cycle.peptide_id }]))
+  const scheduleCycles = activeCycles.map(cycle => scheduleCycleById.get(cycle.id)!)
+  const scheduleLogs = logsForOpenSlots.map(log => ({ ...log, stack_item_id: log.peptide_id }))
+  const openIntakes = collectOpenIntakes(scheduleCycles, scheduleLogs, now, lookbackDays).flatMap(open => {
     const slotKey = openIntakeSlotKey(open)
     if (linkedOpenSlotKeys.has(slotKey)) return []
 
@@ -279,10 +284,10 @@ export function buildSelectableInjectionIntakes({
     const scheduledAt = new Date(day.getTime() + open.minutes * 60000)
     return [{
       cycleId: open.cycleId,
-      peptideId: open.peptideId,
+      peptideId: open.stackItemId,
       peptideName: peptideName(cycle),
       cycleName: cycleName(cycle),
-      dose: openDoseLog ? Number(openDoseLog.dose) : cycle ? effectiveDose(cycle, day, escalations) : 0,
+      dose: openDoseLog ? Number(openDoseLog.dose) : cycle ? effectiveDose(scheduleCycleById.get(cycle.id)!, day, escalations) : 0,
       unit: openDoseLog?.unit ?? cycle?.unit ?? '',
       method: openDoseLog?.method ?? cycle?.method ?? 'Subkutan',
       scheduledAt: openDoseLog?.logged_at ?? scheduledAt.toISOString(),
@@ -299,7 +304,7 @@ export function buildSelectableInjectionIntakes({
     if (day < earliestDay || day > startOfDay(now)) return []
 
     const peptideCycles = cycles.filter(cycle => cycle.peptide_id === log.peptide_id)
-    const cycle = peptideCycles.find(candidate => cycleAppliesToDay(candidate, day)) ?? peptideCycles[0]
+    const cycle = peptideCycles.find(candidate => cycleAppliesToDay(scheduleCycleById.get(candidate.id)!, day)) ?? peptideCycles[0]
     const logPeptide = Array.isArray(log.peptides) ? log.peptides[0] : log.peptides
     const resolvedMethod = INJECTABLE_METHODS.includes(log.method)
       ? log.method

@@ -17,7 +17,7 @@ export interface ScheduleSegment {
 
 export interface ScheduleCycle {
   id: string
-  peptide_id: string
+  stack_item_id: string
   start_date: string
   end_date: string | null
   frequency: string
@@ -39,7 +39,7 @@ export interface EscalationRow {
 }
 
 export interface IntakeLog {
-  peptide_id: string
+  stack_item_id: string
   logged_at: string
   /** true = taken, false = skipped, null = reset. Decided (non-null) logs cover a slot. */
   taken: boolean | null
@@ -145,7 +145,7 @@ function cycleDaySlots(c: ScheduleCycle, day: Date): { min: number; time: string
 export function findOldestOverdueIntake(
   cycles: ScheduleCycle[],
   logs: IntakeLog[],
-  peptideNameById: Map<string, string>,
+  stackItemNameById: Map<string, string>,
   now: Date = new Date(),
   lookbackDays = 90,
 ): OverdueIntake | null {
@@ -153,7 +153,7 @@ export function findOldestOverdueIntake(
   const decidedByDay = new Map<string, number>()
   for (const l of logs) {
     if (l.taken == null) continue
-    const key = `${l.peptide_id}|${format(parseISO(l.logged_at), 'yyyy-MM-dd')}`
+    const key = `${l.stack_item_id}|${format(parseISO(l.logged_at), 'yyyy-MM-dd')}`
     decidedByDay.set(key, (decidedByDay.get(key) ?? 0) + 1)
   }
 
@@ -166,24 +166,24 @@ export function findOldestOverdueIntake(
     const isToday = dayKey === todayKey
 
     // Collect each peptide's scheduled slots for this day across all applicable cycles.
-    const slotsByPeptide = new Map<string, { min: number; time: string; cycleId: string }[]>()
+    const slotsByStackItem = new Map<string, { min: number; time: string; cycleId: string }[]>()
     for (const c of cycles) {
       if (!cycleAppliesToDay(c, day)) continue
       for (const s of cycleDaySlots(c, day)) {
-        const arr = slotsByPeptide.get(c.peptide_id) ?? []
+        const arr = slotsByStackItem.get(c.stack_item_id) ?? []
         arr.push({ min: s.min, time: s.time, cycleId: c.id })
-        slotsByPeptide.set(c.peptide_id, arr)
+        slotsByStackItem.set(c.stack_item_id, arr)
       }
     }
 
     let candidate: { min: number; time: string; substance: string | null; cycleId: string } | null = null
-    for (const [peptideId, slots] of slotsByPeptide) {
+    for (const [stackItemId, slots] of slotsByStackItem) {
       const ordered = [...slots].sort((a, b) => a.min - b.min)
-      const covered = decidedByDay.get(`${peptideId}|${dayKey}`) ?? 0
+      const covered = decidedByDay.get(`${stackItemId}|${dayKey}`) ?? 0
       for (const slot of ordered.slice(covered)) {
         if (isToday && slot.min > nowMin) break // earliest uncovered slot still upcoming → none overdue
         if (!candidate || slot.min < candidate.min) {
-          candidate = { min: slot.min, time: slot.time, substance: peptideNameById.get(peptideId) ?? null, cycleId: slot.cycleId }
+          candidate = { min: slot.min, time: slot.time, substance: stackItemNameById.get(stackItemId) ?? null, cycleId: slot.cycleId }
         }
         break // only the earliest uncovered slot per peptide matters
       }
@@ -200,7 +200,7 @@ export const AUTO_MISSED_NOTE = 'auto-missed'
 
 export interface MissedIntake {
   cycleId: string
-  peptideId: string
+  stackItemId: string
   /** yyyy-MM-dd des geplanten Tages. */
   dateKey: string
   /** Minuten seit Mitternacht (Slot-Zeit). */
@@ -224,7 +224,7 @@ export function collectMissedIntakes(
 ): MissedIntake[] {
   const loggedByDay = new Map<string, number>()
   for (const l of logs) {
-    const key = `${l.peptide_id}|${format(parseISO(l.logged_at), 'yyyy-MM-dd')}`
+    const key = `${l.stack_item_id}|${format(parseISO(l.logged_at), 'yyyy-MM-dd')}`
     loggedByDay.set(key, (loggedByDay.get(key) ?? 0) + 1)
   }
 
@@ -246,21 +246,21 @@ export function collectMissedIntakes(
     const day = startOfDay(subDays(now, back))
     const dayKey = format(day, 'yyyy-MM-dd')
 
-    const slotsByPeptide = new Map<string, { min: number; cycleId: string }[]>()
+    const slotsByStackItem = new Map<string, { min: number; cycleId: string }[]>()
     for (const c of cycles) {
       if (!cycleAppliesToDay(c, day)) continue
       for (const s of cycleDaySlots(c, day)) {
-        const arr = slotsByPeptide.get(c.peptide_id) ?? []
+        const arr = slotsByStackItem.get(c.stack_item_id) ?? []
         arr.push({ min: s.min, cycleId: c.id })
-        slotsByPeptide.set(c.peptide_id, arr)
+        slotsByStackItem.set(c.stack_item_id, arr)
       }
     }
 
-    for (const [peptideId, slots] of slotsByPeptide) {
+    for (const [stackItemId, slots] of slotsByStackItem) {
       const ordered = [...slots].sort((a, b) => a.min - b.min)
-      const covered = loggedByDay.get(`${peptideId}|${dayKey}`) ?? 0
+      const covered = loggedByDay.get(`${stackItemId}|${dayKey}`) ?? 0
       for (const slot of ordered.slice(covered)) {
-        out.push({ cycleId: slot.cycleId, peptideId, dateKey: dayKey, minutes: slot.min })
+        out.push({ cycleId: slot.cycleId, stackItemId, dateKey: dayKey, minutes: slot.min })
       }
     }
   }
@@ -269,7 +269,7 @@ export function collectMissedIntakes(
 
 export interface OpenIntake {
   cycleId: string
-  peptideId: string
+  stackItemId: string
   /** yyyy-MM-dd des geplanten Tages. */
   dateKey: string
   /** Minuten seit Mitternacht (Slot-Zeit). */
@@ -291,7 +291,7 @@ export function collectOpenIntakes(
   const decidedByDay = new Map<string, number>()
   for (const l of logs) {
     if (l.taken == null) continue
-    const key = `${l.peptide_id}|${format(parseISO(l.logged_at), 'yyyy-MM-dd')}`
+    const key = `${l.stack_item_id}|${format(parseISO(l.logged_at), 'yyyy-MM-dd')}`
     decidedByDay.set(key, (decidedByDay.get(key) ?? 0) + 1)
   }
 
@@ -304,22 +304,22 @@ export function collectOpenIntakes(
     const dayKey = format(day, 'yyyy-MM-dd')
     const isToday = dayKey === todayKey
 
-    const slotsByPeptide = new Map<string, { min: number; cycleId: string }[]>()
+    const slotsByStackItem = new Map<string, { min: number; cycleId: string }[]>()
     for (const c of cycles) {
       if (!cycleAppliesToDay(c, day)) continue
       for (const s of cycleDaySlots(c, day)) {
-        const arr = slotsByPeptide.get(c.peptide_id) ?? []
+        const arr = slotsByStackItem.get(c.stack_item_id) ?? []
         arr.push({ min: s.min, cycleId: c.id })
-        slotsByPeptide.set(c.peptide_id, arr)
+        slotsByStackItem.set(c.stack_item_id, arr)
       }
     }
 
-    for (const [peptideId, slots] of slotsByPeptide) {
+    for (const [stackItemId, slots] of slotsByStackItem) {
       const ordered = [...slots].sort((a, b) => a.min - b.min)
-      const covered = decidedByDay.get(`${peptideId}|${dayKey}`) ?? 0
+      const covered = decidedByDay.get(`${stackItemId}|${dayKey}`) ?? 0
       for (const slot of ordered.slice(covered)) {
         if (isToday && slot.min > nowMin) continue // heute noch nicht fällig
-        out.push({ cycleId: slot.cycleId, peptideId, dateKey: dayKey, minutes: slot.min })
+        out.push({ cycleId: slot.cycleId, stackItemId, dateKey: dayKey, minutes: slot.min })
       }
     }
   }

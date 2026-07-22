@@ -17,27 +17,27 @@ import toast from 'react-hot-toast'
 import { getStackItemColor } from '../features/my-stack/lib/colors'
 import { getDateLocale } from '../i18n/dateLocales'
 import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, type ScheduleSegment } from '../lib/intakeSchedule'
-import { computeNextVialStock } from '../lib/peptideStock'
+import { computeNextVialStock } from '../features/my-stack/extensions/peptide/vialStock'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { GlassPanel, PageShell } from '../components/ui/DesignSystem'
 import { CarouselCounter, CarouselPagination } from '../components/CarouselChrome'
 
 interface DoseLog {
   id: string
-  peptide_id: string
+  stack_item_id: string
   dose: number
   unit: string
   method: string
   logged_at: string
   notes: string | null
   taken: boolean | null
-  peptides: { name: string }
+  stack_items: { display_name: string }
 }
 
 interface Cycle {
   id: string
   name: string
-  peptide_id: string
+  stack_item_id: string
   dose: number
   unit: string
   method: string
@@ -50,11 +50,11 @@ interface Cycle {
   intake_time: string | null
   intake_time_custom: string | null
   schedule_history: ScheduleSegment[] | null
-  peptides: { name: string }
+  stack_items: { display_name: string }
 }
 
-interface Peptide {
-  id: string; name: string; default_method: string
+interface StackItem {
+  id: string; display_name: string; default_method: string
   vial_amount_mg: number | null; reconstitution_ml: number | null
   vials_in_stock: number | null; vials_initial: number | null
   reconstitution_date: string | null; expiry_days: number | null
@@ -338,7 +338,7 @@ export function Dashboard() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [logs, setLogs] = useState<DoseLog[]>([])
   const [cycles, setCycles] = useState<Cycle[]>([])
-  const [peptides, setPeptides] = useState<Peptide[]>([])
+  const [stackItems, setStackItems] = useState<StackItem[]>([])
   const [escalations, setEscalations] = useState<Escalation[]>([])
 
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
@@ -443,7 +443,7 @@ export function Dashboard() {
     const end = format(rangeEnd, 'yyyy-MM-dd')
     const { data } = await supabase
       .from('dose_logs')
-      .select('*, peptides(name)')
+      .select('*, stack_items(display_name)')
       .eq('user_id', user.id)
       .gte('logged_at', start)
       .lte('logged_at', end + 'T23:59:59')
@@ -455,16 +455,16 @@ export function Dashboard() {
     if (!user) return
     const { data } = await supabase
       .from('cycles')
-      .select('*, peptides(name)')
+      .select('*, stack_items(display_name)')
       .eq('user_id', user.id)
       .eq('active', true)
     if (data) setCycles(data as Cycle[])
   }, [user])
 
-  const loadPeptides = useCallback(async () => {
+  const loadStackItems = useCallback(async () => {
     if (!user) return
-    const { data } = await supabase.from('peptides').select('*').eq('user_id', user.id).eq('archived', false).order('name')
-    if (data) setPeptides(data)
+    const { data } = await supabase.from('stack_items').select('*').eq('user_id', user.id).eq('archived', false).order('display_name')
+    if (data) setStackItems(data)
   }, [user])
 
   const loadEscalations = useCallback(async () => {
@@ -488,12 +488,12 @@ export function Dashboard() {
     let cancelled = false
     queueMicrotask(() => {
       if (!cancelled) {
-        void loadPeptides()
+        void loadStackItems()
         void loadEscalations()
       }
     })
     return () => { cancelled = true }
-  }, [loadEscalations, loadPeptides])
+  }, [loadEscalations, loadStackItems])
 
   const calendarDays = eachDayOfInterval({
     start: startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 }),
@@ -544,30 +544,30 @@ export function Dashboard() {
   const confirmedLogsSorted = [...confirmedLogs].sort((a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime())
 
   // Per-slot due list: expand each cycle into its individual intake slots, then drop the
-  // slots already covered (in time order) by decided logs (taken !== null) for that peptide.
+  // slots already covered (in time order) by decided logs (taken !== null) for that stack item.
   // Reset logs (taken === null) keep a slot "due" and are reused on confirm to avoid duplicates.
   interface DueSlot { cycle: Cycle; minutes: number; time: string; groupKey: IntakeGroupKey; pendingLog?: DoseLog }
-  const decidedByPeptide = new Map<string, number>()
-  const pendingByPeptide = new Map<string, DoseLog[]>()
+  const decidedByStackItem = new Map<string, number>()
+  const pendingByStackItem = new Map<string, DoseLog[]>()
   for (const log of selLogs) {
-    if (log.taken !== null) decidedByPeptide.set(log.peptide_id, (decidedByPeptide.get(log.peptide_id) ?? 0) + 1)
-    else { const arr = pendingByPeptide.get(log.peptide_id) ?? []; arr.push(log); pendingByPeptide.set(log.peptide_id, arr) }
+    if (log.taken !== null) decidedByStackItem.set(log.stack_item_id, (decidedByStackItem.get(log.stack_item_id) ?? 0) + 1)
+    else { const arr = pendingByStackItem.get(log.stack_item_id) ?? []; arr.push(log); pendingByStackItem.set(log.stack_item_id, arr) }
   }
-  const slotsByPeptide = new Map<string, DueSlot[]>()
+  const slotsByStackItem = new Map<string, DueSlot[]>()
   for (const cycle of selCycles) {
     for (const s of cycleSlots(cycle, selectedDay)) {
-      const arr = slotsByPeptide.get(cycle.peptide_id) ?? []
+      const arr = slotsByStackItem.get(cycle.stack_item_id) ?? []
       arr.push({ cycle, minutes: s.minutes, time: s.time, groupKey: s.groupKey })
-      slotsByPeptide.set(cycle.peptide_id, arr)
+      slotsByStackItem.set(cycle.stack_item_id, arr)
     }
   }
   const dueSlots: DueSlot[] = []
   let totalDaySlots = 0
-  for (const [peptideId, slots] of slotsByPeptide) {
+  for (const [stackItemId, slots] of slotsByStackItem) {
     totalDaySlots += slots.length
     const ordered = [...slots].sort((a, b) => a.minutes - b.minutes)
-    const decided = decidedByPeptide.get(peptideId) ?? 0
-    const pendings = [...(pendingByPeptide.get(peptideId) ?? [])]
+    const decided = decidedByStackItem.get(stackItemId) ?? 0
+    const pendings = [...(pendingByStackItem.get(stackItemId) ?? [])]
     ordered.slice(decided).forEach(slot => {
       slot.pendingLog = pendings.shift()
       dueSlots.push(slot)
@@ -604,26 +604,26 @@ export function Dashboard() {
     return () => window.clearTimeout(timer)
   }, [location.hash, location.search, dueSlots.length, selCycles.length, logs.length])
 
-  const adjustPeptideStockForDose = async (peptideId: string, dose: number, unit: string, mode: 'debit' | 'credit', loggedAt?: string) => {
+  const adjustVialStockForDose = async (stackItemId: string, dose: number, unit: string, mode: 'debit' | 'credit', loggedAt?: string) => {
     if (!user) return false
-    const peptide = peptides.find(p => p.id === peptideId)
-    if (!peptide) return false
+    const stackItem = stackItems.find(item => item.id === stackItemId)
+    if (!stackItem) return false
     // computeNextVialStock returns null when the delta is unknown or when a credit
     // would belong to a past reconstitution (vial renewed/discarded since).
-    const rounded = computeNextVialStock(peptide, dose, unit, mode, loggedAt)
+    const rounded = computeNextVialStock(stackItem, dose, unit, mode, loggedAt)
     if (rounded == null) return false
 
     const { error } = await supabase
-      .from('peptides')
+      .from('stack_items')
       .update({ vials_in_stock: rounded })
-      .eq('id', peptideId)
+      .eq('id', stackItemId)
       .eq('user_id', user.id)
     if (error) {
       toast.error(t('stock_update_failed', { defaultValue: 'Bestand konnte nicht aktualisiert werden' }))
       return false
     }
-    setPeptides(currentPeptides => currentPeptides.map(p =>
-      p.id === peptideId ? { ...p, vials_in_stock: rounded } : p
+    setStackItems(currentItems => currentItems.map(item =>
+      item.id === stackItemId ? { ...item, vials_in_stock: rounded } : item
     ))
     return true
   }
@@ -632,8 +632,8 @@ export function Dashboard() {
     if (!confirm(t('eintrag_loeschen'))) return
     const { error } = await supabase.from('dose_logs').delete().eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit', log.logged_at)
-    toast.success(t('deleted')); loadLogs(); loadPeptides()
+    if (log.taken === true) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
+    toast.success(t('deleted')); loadLogs(); loadStackItems()
   }
 
   const confirmDose = async (log: DoseLog, taken: boolean, loggedAt?: string) => {
@@ -642,9 +642,9 @@ export function Dashboard() {
     if (taken && loggedAt) update.logged_at = loggedAt
     const { error } = await supabase.from('dose_logs').update(update).eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (previousTaken !== true && taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'debit')
-    if (previousTaken === true && taken !== true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit', log.logged_at)
-    loadLogs(); loadPeptides()
+    if (previousTaken !== true && taken === true) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'debit')
+    if (previousTaken === true && taken !== true) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
+    loadLogs(); loadStackItems()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
   }
@@ -652,8 +652,8 @@ export function Dashboard() {
   const undoDose = async (log: DoseLog) => {
     const { error } = await supabase.from('dose_logs').update({ taken: null }).eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit', log.logged_at)
-    loadLogs(); loadPeptides()
+    if (log.taken === true) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
+    loadLogs(); loadStackItems()
     toast.success(t('dose_undo_success', { defaultValue: 'Einnahme zurückgesetzt' }))
   }
 
@@ -662,7 +662,7 @@ export function Dashboard() {
     const dose = effectiveDose(cycle, selectedDay, escalations)
     const { error } = await supabase.from('dose_logs').insert({
       user_id: user.id,
-      peptide_id: cycle.peptide_id,
+      stack_item_id: cycle.stack_item_id,
       dose,
       unit: cycle.unit,
       method: cycle.method,
@@ -670,8 +670,8 @@ export function Dashboard() {
       taken,
     })
     if (error) return toast.error(t('fehler_speichern'))
-    if (taken) await adjustPeptideStockForDose(cycle.peptide_id, dose, cycle.unit, 'debit')
-    loadLogs(); loadPeptides()
+    if (taken) await adjustVialStockForDose(cycle.stack_item_id, dose, cycle.unit, 'debit')
+    loadLogs(); loadStackItems()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
   }
@@ -727,7 +727,7 @@ export function Dashboard() {
     toast(t('erinnerung_toast', { time }), { icon: '⏰' })
     setTimeout(() => {
       toast(
-        t('dose_nicht_best', { name: log.peptides?.name, dose: log.dose, unit: log.unit }),
+        t('dose_nicht_best', { name: log.stack_items?.display_name, dose: log.dose, unit: log.unit }),
         { icon: <Syringe size={18} />, duration: 10000 }
       )
     }, minutes * 60 * 1000)
@@ -754,7 +754,7 @@ export function Dashboard() {
 
     // All planned cycles for this day have been taken
     const fullyTracked = !isFuture && hasCycle
-      && dayCycles.every(c => dayLogsList.some(l => l.peptide_id === c.peptide_id && l.taken === true))
+      && dayCycles.every(c => dayLogsList.some(l => l.stack_item_id === c.stack_item_id && l.taken === true))
 
     // At least one escalation is active on this day
     const hasEscalation = hasCycle && dayCycles.some(c => {
@@ -876,7 +876,7 @@ export function Dashboard() {
       return false
     }).length
     const slotMeta = intakeGroupMeta(slot.groupKey, t)
-    const peptideColor = getStackItemColor(peptides.findIndex(peptide => peptide.id === c.peptide_id))
+    const stackItemColor = getStackItemColor(stackItems.findIndex(item => item.id === c.stack_item_id))
 
     return (
       <div
@@ -889,11 +889,11 @@ export function Dashboard() {
         <div className="flex items-center gap-2.5">
           <span
             className="w-2 h-2 rounded-full shrink-0"
-            style={{ background: peptideColor, boxShadow: `0 0 10px ${peptideColor}80` }}
+            style={{ background: stackItemColor, boxShadow: `0 0 10px ${stackItemColor}80` }}
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium text-white">{c.peptides?.name}</span>
+              <span className="text-sm font-medium text-white">{c.stack_items?.display_name}</span>
               <span className={`text-xs font-semibold ${isEscalated ? 'text-orange-400' : 'text-slate-300'}`}>
                 {dose} {c.unit}
               </span>
@@ -981,7 +981,7 @@ export function Dashboard() {
         }`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-white text-sm">{log.peptides?.name ?? t('geloeschte_substanz')}</span>
+            <span className="font-medium text-white text-sm">{log.stack_items?.display_name ?? t('geloeschte_substanz')}</span>
             <span className={`text-xs font-semibold ${
               log.taken === true ? 'text-emerald-400' :
               log.taken === false ? 'text-red-400' : 'text-sky-400'

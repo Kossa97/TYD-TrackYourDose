@@ -4,7 +4,7 @@ import type { EscalationRow, ScheduleCycle } from './intakeSchedule'
 
 const cycle: ScheduleCycle = {
   id: 'c1',
-  peptide_id: 'p1',
+  stack_item_id: 'p1',
   start_date: '2026-06-01',
   end_date: '2026-06-30',
   frequency: 'Taeglich',
@@ -29,10 +29,10 @@ const log = (
   id: string,
   logged_at: string,
   taken: boolean | null,
-  peptide_id = 'p1',
+  stack_item_id = 'p1',
 ): DoseAdjustmentBackfillLog => ({
   id,
-  peptide_id,
+  stack_item_id,
   logged_at,
   taken,
 })

@@ -222,7 +222,7 @@ interface TodayIntake {
   dose: string | null
   doseNumber: number
   unit: string
-  peptideId: string
+  stackItemId: string
   cycleId: string
   method: string | null
   scheduledAt: string
@@ -274,17 +274,17 @@ export function Home() {
       const todayKey = format(new Date(), 'yyyy-MM-dd')
 
       try {
-        const [{ data: cycleData }, { data: logData }, { data: peptideData }, { data: inventoryData }, { data: escalationData }, { data: injectionData }] = await Promise.all([
+        const [{ data: cycleData }, { data: logData }, { data: stackItemData }, { data: inventoryData }, { data: escalationData }, { data: injectionData }] = await Promise.all([
           supabase.from('cycles')
-            .select('id, intake_time, intake_time_custom, peptide_id, dose, unit, method, start_date, end_date, frequency, x_days_interval, schedule_days, schedule_history')
+            .select('id, intake_time, intake_time_custom, stack_item_id, dose, unit, method, start_date, end_date, frequency, x_days_interval, schedule_days, schedule_history')
             .eq('user_id', user!.id).eq('active', true),
           // All decided/reset logs — taken filtered per use site (overdue/timer).
           supabase.from('dose_logs')
-            .select('logged_at, peptide_id, taken')
+            .select('logged_at, stack_item_id, taken')
             .eq('user_id', user!.id)
             .order('logged_at', { ascending: false }),
-          supabase.from('peptides')
-            .select('id, name, vials_in_stock, reconstitution_date, expiry_days')
+          supabase.from('stack_items')
+            .select('id, display_name, vials_in_stock, reconstitution_date, expiry_days')
             .eq('user_id', user!.id),
           supabase.from('inventory_items')
             .select('id, vials_count')
@@ -299,19 +299,19 @@ export function Home() {
             .limit(30),
         ])
         const escalations = (escalationData ?? []) as EscalationRow[]
-        // How many of today's intakes are already decided (taken=true/false) per peptide.
-        const decidedCountByPeptide = new Map<string, number>()
+        // How many of today's intakes are already decided (taken=true/false) per stack item.
+        const decidedCountByStackItem = new Map<string, number>()
         for (const l of logData ?? []) {
           if (l.taken !== null && format(parseISO(l.logged_at), 'yyyy-MM-dd') === todayKey)
-            decidedCountByPeptide.set(l.peptide_id, (decidedCountByPeptide.get(l.peptide_id) ?? 0) + 1)
+            decidedCountByStackItem.set(l.stack_item_id, (decidedCountByStackItem.get(l.stack_item_id) ?? 0) + 1)
         }
 
         // ── Next intake time ─────────────────────────────────────────
-        const peptideNameById = new Map<string, string>(
-          (peptideData ?? []).map((p) => [p.id as string, p.name as string])
+        const stackItemNameById = new Map<string, string>(
+          (stackItemData ?? []).map((item) => [item.id as string, item.display_name as string])
         )
         const now = new Date()
-        const todaySlots: { min: number; time: string; substance: string | null; dose: string | null; doseNumber: number; unit: string; peptideId: string; cycleId: string; method: string | null; scheduledAt: string }[] = []
+        const todaySlots: { min: number; time: string; substance: string | null; dose: string | null; doseNumber: number; unit: string; stackItemId: string; cycleId: string; method: string | null; scheduledAt: string }[] = []
         for (const c of cycleData ?? []) {
           // Nur Zyklen, die HEUTE gelten (Frequenz/Start/Ende), wie im Kalender.
           if (!cycleAppliesToDay(c, now)) continue
@@ -332,11 +332,11 @@ export function Home() {
             todaySlots.push({
               min: h * 60 + m,
               time: tm,
-              substance: peptideNameById.get(c.peptide_id as string) ?? null,
+              substance: stackItemNameById.get(c.stack_item_id as string) ?? null,
               dose: doseLabel,
               doseNumber,
               unit,
-              peptideId: c.peptide_id as string,
+              stackItemId: c.stack_item_id as string,
               cycleId: c.id as string,
               method: c.method as string | null,
               scheduledAt: scheduledAt.toISOString(),
@@ -346,12 +346,12 @@ export function Home() {
         todaySlots.sort((a, b) => a.min - b.min)
         // Alle heute noch offenen Slots sammeln (pro Peptid die bereits entschiedenen in
         // Zeitreihenfolge abziehen). Übrig bleiben fällige + anstehende Einnahmen für heute.
-        const consumedByPeptide = new Map<string, number>()
+        const consumedByStackItem = new Map<string, number>()
         const openSlots: typeof todaySlots = []
         for (const s of todaySlots) {
-          const used = consumedByPeptide.get(s.peptideId) ?? 0
-          if (used < (decidedCountByPeptide.get(s.peptideId) ?? 0)) {
-            consumedByPeptide.set(s.peptideId, used + 1)
+          const used = consumedByStackItem.get(s.stackItemId) ?? 0
+          if (used < (decidedCountByStackItem.get(s.stackItemId) ?? 0)) {
+            consumedByStackItem.set(s.stackItemId, used + 1)
             continue
           }
           openSlots.push(s)
@@ -370,7 +370,7 @@ export function Home() {
             at.setHours(Math.floor(m.minutes / 60), m.minutes % 60, 0, 0)
             return {
               user_id: user!.id,
-              peptide_id: c.peptide_id,
+              stack_item_id: c.stack_item_id,
               dose: effectiveDose(c, parseISO(m.dateKey), escalations),
               unit: c.unit ?? '',
               method: c.method ?? '',
@@ -397,18 +397,18 @@ export function Home() {
           }))
 
         setPlannedToday(todaySlots.length)
-        setTodayIntakes(openSlots.map(s => ({ time: s.time, min: s.min, substance: s.substance, dose: s.dose, doseNumber: s.doseNumber, unit: s.unit, peptideId: s.peptideId, cycleId: s.cycleId, method: s.method, scheduledAt: s.scheduledAt })))
+        setTodayIntakes(openSlots.map(s => ({ time: s.time, min: s.min, substance: s.substance, dose: s.dose, doseNumber: s.doseNumber, unit: s.unit, stackItemId: s.stackItemId, cycleId: s.cycleId, method: s.method, scheduledAt: s.scheduledAt })))
         setTodayDone(todaySlots.length > 0 && openSlots.length === 0)
         setInjectionHero({ pins })
 
-        setExpiryAlerts(getPeptideExpiryAlerts(peptideData ?? []))
+        setExpiryAlerts(getPeptideExpiryAlerts((stackItemData ?? []).map(item => ({ ...item, name: item.display_name }))))
 
         setOverview({
           activeCycles: (cycleData ?? []).length,
-          peptides: (peptideData ?? []).length,
+          peptides: (stackItemData ?? []).length,
           inventoryVials: (inventoryData ?? []).reduce((sum, item) => sum + Number(item.vials_count ?? 0), 0),
           loggedToday: (logData ?? []).filter((log) => log.taken === true && format(parseISO(log.logged_at), 'yyyy-MM-dd') === todayKey).length,
-          lowStock: (peptideData ?? []).filter((p) => p.vials_in_stock != null && Number(p.vials_in_stock) <= 1).length,
+          lowStock: (stackItemData ?? []).filter((item) => item.vials_in_stock != null && Number(item.vials_in_stock) <= 1).length,
         })
       } catch {
         setOverview(EMPTY_OVERVIEW)
@@ -471,7 +471,7 @@ export function Home() {
       if (taken) {
         await confirmIntakeDoseLog(supabase, {
           userId: user.id,
-          peptideId: intake.peptideId,
+          peptideId: intake.stackItemId,
           dose: intake.doseNumber,
           unit: intake.unit,
           method: intake.method ?? '',
@@ -480,7 +480,7 @@ export function Home() {
       } else {
         const { error } = await supabase.from('dose_logs').insert({
           user_id: user.id,
-          peptide_id: intake.peptideId,
+          stack_item_id: intake.stackItemId,
           dose: intake.doseNumber,
           unit: intake.unit,
           method: intake.method ?? '',
@@ -1214,7 +1214,7 @@ function TodayIntakeCarousel({ intakes, onItemClick }: { intakes: TodayIntake[];
       }}
     >
       {intakes.map((it, i) => (
-        <div key={`${it.peptideId}-${it.min}-${i}`} style={{ scrollSnapAlign: 'center', flexShrink: 0 }}>
+        <div key={`${it.stackItemId}-${it.min}-${i}`} style={{ scrollSnapAlign: 'center', flexShrink: 0 }}>
           <IntakeRow time={it.time} substance={it.substance} dose={it.dose} onClick={() => onItemClick(it)} />
         </div>
       ))}

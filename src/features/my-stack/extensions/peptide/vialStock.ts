@@ -1,4 +1,4 @@
-// src/lib/peptideStock.ts
+// src/features/my-stack/extensions/peptide/vialStock.ts
 // Shared peptide vial-stock math, extracted from Dashboard so the injection
 // tracker can debit stock on confirmation with identical behaviour.
 import { format, parseISO } from 'date-fns'
@@ -65,22 +65,22 @@ export function computeNextVialStock(
 export async function debitPeptideStockForDoseById(
   supabase: SupabaseClient,
   userId: string,
-  peptideId: string,
+  stackItemId: string,
   dose: number,
   unit: string,
 ): Promise<void> {
   const { data, error } = await supabase
-    .from('peptides')
+    .from('stack_items')
     .select('id, vial_amount_mg, reconstitution_ml, reconstitution_date, vials_in_stock, vials_initial')
-    .eq('id', peptideId)
+    .eq('id', stackItemId)
     .eq('user_id', userId)
     .single()
   if (error || !data) return
   const next = computeNextVialStock(data as StockPeptide, dose, unit, 'debit')
   if (next == null) return
   await supabase
-    .from('peptides')
+    .from('stack_items')
     .update({ vials_in_stock: next })
-    .eq('id', peptideId)
+    .eq('id', stackItemId)
     .eq('user_id', userId)
 }

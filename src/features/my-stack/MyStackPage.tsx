@@ -163,7 +163,6 @@ function asPeptide(item: LoadedStackItem): Peptide {
     pk_profile_id: legacy.pk_profile_id ?? null,
   }
 }
-function asScheduleCycle(cycle: Cycle) { return { ...cycle, peptide_id: cycle.stack_item_id } }
 
 function expiryDaysLeft(p: Peptide): number | null {
   if (!p.reconstitution_date || !p.expiry_days) return null
@@ -1086,9 +1085,9 @@ export function MyStackPage() {
     if (error) throw error
 
     const updates = buildDoseAdjustmentBackfillUpdates(
-      asScheduleCycle(cycle),
+      cycle,
       nextEscalations,
-      (data ?? []).map(row => ({ ...row, peptide_id: row.stack_item_id })) as unknown as DoseAdjustmentBackfillLog[],
+      (data ?? []) as DoseAdjustmentBackfillLog[],
       affectedEscalations,
     )
 
@@ -1230,12 +1229,12 @@ export function MyStackPage() {
   }
   const escalationTargetDose = (c: Cycle, e: Escalation) => {
     const start = escalationStartDate(c, e)
-    return start ? effectiveDose(asScheduleCycle(c), start, sortedEscalationsOf(c.id)) : c.dose + e.increase_amount
+    return start ? effectiveDose(c, start, sortedEscalationsOf(c.id)) : c.dose + e.increase_amount
   }
   const doseBeforeAdjustment = (c: Cycle, e: Escalation) => {
     const start = escalationStartDate(c, e)
     if (!start) return c.dose
-    return effectiveDose(asScheduleCycle(c), start, sortedEscalationsOf(c.id).filter(row => row.id !== e.id))
+    return effectiveDose(c, start, sortedEscalationsOf(c.id).filter(row => row.id !== e.id))
   }
   const doseAdjustmentIcon = (c: Cycle, e: Escalation) => {
     const target = escalationTargetDose(c, e)
@@ -1816,7 +1815,7 @@ export function MyStackPage() {
                   const currentEscalationId = activeCycle
                     ? activeEscs.filter(e => escalationIsActive(activeCycle, e)).at(-1)?.id ?? null
                     : null
-                  const activeDose = activeCycle ? effectiveDose(asScheduleCycle(activeCycle), new Date(), activeEscs) : null
+                  const activeDose = activeCycle ? effectiveDose(activeCycle, new Date(), activeEscs) : null
                   const cycleStart = activeCycle ? parseISO(activeCycle.start_date) : null
                   const cycleEnd = activeCycle?.end_date ? parseISO(activeCycle.end_date) : null
                   const cycleDay = cycleStart ? Math.max(1, differenceInDays(new Date(), cycleStart) + 1) : null

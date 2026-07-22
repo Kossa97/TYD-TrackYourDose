@@ -3,17 +3,17 @@ export interface EffectRow {
   type: 'effect' | 'side_effect'
   description: string
   severity: number
-  peptide_id: string | null
+  stack_item_id: string | null
   occurred_at: string
-  peptides: { name: string } | null
+  stack_items: { display_name: string } | null
 }
 
 export interface ReviewRow {
   id: string
-  peptide_id: string
+  stack_item_id: string
   rating: number
   experience: 'gut' | 'mittel' | 'schlecht'
-  peptides: { name: string }
+  stack_items: { display_name: string }
 }
 
 export interface SideEffectStat {
@@ -59,7 +59,7 @@ export function topSideEffects(effects: EffectRow[], limit = 5): SideEffectStat[
 export function effectsByPeptide(effects: EffectRow[]): PeptideEffectStat[] {
   const grouped = new Map<string, { name: string; effects: number; sideEffects: number; severities: number[] }>()
   for (const row of effects) {
-    const name = row.peptides?.name?.trim() || '—'
+    const name = row.stack_items?.display_name?.trim() || '—'
     const entry = grouped.get(name) ?? { name, effects: 0, sideEffects: 0, severities: [] }
     if (row.type === 'effect') entry.effects += 1
     else entry.sideEffects += 1
@@ -81,7 +81,7 @@ export function effectsByPeptide(effects: EffectRow[]): PeptideEffectStat[] {
 export function reviewsByPeptide(reviews: ReviewRow[]): PeptideReviewStat[] {
   const grouped = new Map<string, { name: string; ratings: number[]; good: number; bad: number }>()
   for (const row of reviews) {
-    const name = row.peptides?.name?.trim() || '—'
+    const name = row.stack_items?.display_name?.trim() || '—'
     const entry = grouped.get(name) ?? { name, ratings: [], good: 0, bad: 0 }
     entry.ratings.push(row.rating)
     if (row.experience === 'gut') entry.good += 1

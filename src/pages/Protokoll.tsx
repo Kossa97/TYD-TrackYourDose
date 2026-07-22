@@ -823,11 +823,11 @@ export function Protokoll() {
     setEffects((effectRows ?? []).map(row => ({
       ...row,
       peptides: Array.isArray(row.peptides) ? row.peptides[0] ?? null : row.peptides,
-    })) as EffectRow[])
+    })) as unknown as EffectRow[])
     setReviews((reviewRows ?? []).map(row => ({
       ...row,
       peptides: Array.isArray(row.peptides) ? row.peptides[0] ?? { name: '—' } : row.peptides,
-    })) as ReviewRow[])
+    })) as unknown as ReviewRow[])
     const dailyEntries = (daily ?? []) as DailyLogRow[]
     setDailyLogs(dailyEntries)
     const wellnessAvailable = wellnessMarkersWithData(dailyEntries)
