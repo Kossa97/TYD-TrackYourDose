@@ -1,0 +1,190 @@
+import { describe, expect, it, vi } from 'vitest'
+import type { StackItem, StackItemDraft, StackItemIngredient } from '../types'
+import {
+  archiveStackItem,
+  deleteStackItem,
+  findDuplicate,
+  loadStackItems,
+  restoreStackItem,
+  saveStackItem,
+  type SaveStackItemRpcParams,
+  type StackItemMutationClient,
+  type StackItemQueryClient,
+  type StackItemRpcClient,
+} from './stackItems'
+
+const ingredient: StackItemIngredient = {
+  catalog_substance_id: 'vitamin-d3',
+  custom_name: '',
+  amount_value: 5000,
+  amount_unit: 'IU',
+  basis_value: 1,
+  basis_unit: 'capsule',
+  position: 0,
+}
+
+const validDraft: StackItemDraft = {
+  displayName: 'Vitamin D3',
+  category: 'vitamin',
+  dosageForm: 'capsule',
+  brand: '',
+  colorHex: '#abcdef',
+  notes: '',
+  ingredients: [ingredient],
+}
+
+const savedItem: StackItem = {
+  id: 'stack-item-1',
+  user_id: 'user-1',
+  display_name: 'Vitamin D3',
+  category: 'vitamin',
+  dosage_form: 'capsule',
+  brand: null,
+  color_hex: '#abcdef',
+  notes: null,
+  configuration_status: 'complete',
+  archived: false,
+  archived_at: null,
+  created_at: '2026-07-21T00:00:00.000Z',
+  updated_at: '2026-07-21T00:00:00.000Z',
+  ingredients: [ingredient],
+}
+
+function rpcClient() {
+  const rpc = vi.fn(async (_name: 'save_stack_item', _params: SaveStackItemRpcParams) => ({
+    data: savedItem,
+    error: null,
+  }))
+  const client: StackItemRpcClient = { rpc }
+  return { client, rpc }
+}
+
+describe('stack item service', () => {
+  it('sendet Hauptobjekt und Inhaltsstoffe in genau einem RPC-Aufruf', async () => {
+    const mockClient = rpcClient()
+
+    await saveStackItem(mockClient.client, validDraft)
+
+    expect(mockClient.rpc).toHaveBeenCalledTimes(1)
+    expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item', expect.objectContaining({
+      p_item: expect.objectContaining({ display_name: 'Vitamin D3' }),
+      p_ingredients: expect.any(Array),
+    }))
+  })
+
+  it('behält den Draft außerhalb des Services unverändert', async () => {
+    const mockClient = rpcClient()
+    const before = structuredClone(validDraft)
+
+    await saveStackItem(mockClient.client, validDraft)
+
+    expect(validDraft).toEqual(before)
+  })
+
+  it('validiert den Draft vor dem RPC-Aufruf', async () => {
+    const mockClient = rpcClient()
+
+    await expect(saveStackItem(mockClient.client, {
+      ...validDraft,
+      ingredients: [{ ...ingredient, amount_value: null }],
+    })).rejects.toThrow('Invalid stack item draft')
+    expect(mockClient.rpc).not.toHaveBeenCalled()
+  })
+
+  it('lädt aktive oder archivierte Einträge samt Inhaltsstoffbeziehungen', async () => {
+    const calls: Array<unknown> = []
+    const client: StackItemQueryClient = {
+      from: table => {
+        calls.push(['from', table])
+        return {
+          select: columns => {
+            calls.push(['select', columns])
+            return {
+              eq: (column, value) => {
+                calls.push(['eq', column, value])
+                return {
+                  order: async (orderColumn, options) => {
+                    calls.push(['order', orderColumn, options])
+                    return { data: [savedItem], error: null }
+                  },
+                }
+              },
+            }
+          },
+        }
+      },
+    }
+
+    await expect(loadStackItems(client, true)).resolves.toEqual([savedItem])
+    expect(calls[0]).toEqual(['from', 'stack_items'])
+    expect(calls).toContainEqual(['eq', 'archived', true])
+    expect(String((calls[1] as unknown[])[1])).toContain('stack_item_ingredients')
+    expect(String((calls[1] as unknown[])[1])).toContain('substance_catalog')
+  })
+
+  it.each([
+    ['archiveStackItem', archiveStackItem, true],
+    ['restoreStackItem', restoreStackItem, false],
+  ] as const)('%s aktualisiert nur stack_items', async (_name, mutate, archived) => {
+    const calls: Array<unknown> = []
+    const client: StackItemMutationClient = {
+      from: table => {
+        calls.push(['from', table])
+        return {
+          update: values => {
+            calls.push(['update', values])
+            return {
+              eq: async (column, value) => {
+                calls.push(['eq', column, value])
+                return { error: null }
+              },
+            }
+          },
+          delete: () => ({
+            eq: async () => ({ error: null }),
+          }),
+        }
+      },
+    }
+
+    await mutate(client, 'stack-item-1')
+
+    expect(calls).toContainEqual(['from', 'stack_items'])
+    const update = calls.find(call => (call as unknown[])[0] === 'update') as [string, Record<string, unknown>]
+    expect(update[1].archived).toBe(archived)
+    expect(update[1].archived_at).toEqual(archived ? expect.any(String) : null)
+    expect(calls).toContainEqual(['eq', 'id', 'stack-item-1'])
+  })
+
+  it('löscht ausschließlich aus stack_items', async () => {
+    const calls: Array<unknown> = []
+    const client: StackItemMutationClient = {
+      from: table => {
+        calls.push(['from', table])
+        return {
+          update: () => ({
+            eq: async () => ({ error: null }),
+          }),
+          delete: () => ({
+            eq: async (column, value) => {
+              calls.push(['delete-eq', column, value])
+              return { error: null }
+            },
+          }),
+        }
+      },
+    }
+
+    await deleteStackItem(client, 'stack-item-1')
+
+    expect(calls).toEqual([
+      ['from', 'stack_items'],
+      ['delete-eq', 'id', 'stack-item-1'],
+    ])
+  })
+
+  it('findet gleiche Form und Stärke über den Duplicate-Fingerprint', () => {
+    expect(findDuplicate([savedItem], validDraft)).toEqual(savedItem)
+    expect(findDuplicate([savedItem], { ...validDraft, dosageForm: 'drops' })).toBeUndefined()
+  })
+})
