@@ -8,8 +8,8 @@ const intake = (
   daysOverdue: number,
 ): OpenInjectionIntake => ({
   cycleId,
-  peptideId: `peptide-${cycleId}`,
-  peptideName: cycleId,
+  stackItemId: `stack-item-${cycleId}`,
+  stackItemName: cycleId,
   cycleName: cycleId,
   dose: 100,
   unit: 'mcg',

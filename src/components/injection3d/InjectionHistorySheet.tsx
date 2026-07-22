@@ -67,7 +67,7 @@ export function InjectionHistorySheet({
               {group.logs.map(log => {
                 const visible = visibleLogIds.has(log.id)
                 const exactPosition = hasExactInjectionPosition(log)
-                const substance = log.peptide_name ?? log.substance_label ?? t('injection_default_label', { defaultValue: 'Injektion' })
+                const substance = log.stack_item_name ?? log.substance_label ?? t('injection_default_label', { defaultValue: 'Injektion' })
                 const dose = [log.dose, log.unit].filter(value => value != null && value !== '').join(' ')
                 const metadata = [format(parseISO(log.logged_at), 'HH:mm'), dose, log.method].filter(Boolean).join(' - ')
                 const confirmationOpen = isDoseConfirmationOpen(log)

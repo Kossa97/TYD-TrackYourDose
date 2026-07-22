@@ -48,7 +48,7 @@ export function InjectionTrackerTabs({
   const openCycleOptions = useMemo(() => Array.from(
     new Map(openIntakes.flatMap(intake => intake.cycleId ? [[
       intake.cycleId,
-      { id: intake.cycleId, label: intake.cycleName || intake.peptideName },
+      { id: intake.cycleId, label: intake.cycleName || intake.stackItemName },
     ] as const] : [])).values(),
   ).sort((a, b) => a.label.localeCompare(b.label, 'de')), [openIntakes])
 
@@ -273,7 +273,7 @@ function OpenIntakeRow({ intake, onSelect }: { intake: OpenInjectionIntake; onSe
           <CalendarClock size={16} aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-black text-white">{intake.peptideName}</p>
+          <p className="truncate text-sm font-black text-white">{intake.stackItemName}</p>
           <p className="mt-0.5 text-xs text-slate-400">
             <span className="text-amber-300">{t('injection_status_open', { defaultValue: 'Offen' })}</span>
             {' - '}{format(parseISO(intake.scheduledAt), 'dd.MM. HH:mm')}

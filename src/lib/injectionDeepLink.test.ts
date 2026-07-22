@@ -9,8 +9,8 @@ import type { OpenInjectionIntake } from './injectionPersistence'
 
 const intake = (overrides: Partial<OpenInjectionIntake> = {}): OpenInjectionIntake => ({
   cycleId: 'cycle-1',
-  peptideId: 'pep-1',
-  peptideName: 'Ipamorelin',
+  stackItemId: 'stack-item-1',
+  stackItemName: 'Ipamorelin',
   cycleName: 'Ipamorelin Cycle',
   dose: 100,
   unit: 'mcg',

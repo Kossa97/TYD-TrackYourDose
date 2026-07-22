@@ -18,7 +18,7 @@ describe('buildInjectionInsertPayload', () => {
     const payload = buildInjectionInsertPayload({
       userId: 'user-1',
       doseLogId: 'dose-1',
-      peptideId: 'pep-1',
+      stackItemId: 'stack-item-1',
       cycleId: 'cycle-1',
       dose: 250,
       unit: 'mcg',
@@ -40,7 +40,7 @@ describe('buildInjectionInsertPayload', () => {
     expect(payload).toMatchObject({
       user_id: 'user-1',
       dose_log_id: 'dose-1',
-      peptide_id: 'pep-1',
+      stack_item_id: 'stack-item-1',
       cycle_id: 'cycle-1',
       dose: 250,
       unit: 'mcg',
@@ -57,7 +57,7 @@ describe('buildInjectionInsertPayload', () => {
     const payload = buildInjectionInsertPayload({
       userId: 'user-1',
       doseLogId: null,
-      peptideId: null,
+      stackItemId: null,
       cycleId: null,
       dose: 10,
       unit: 'mg',
@@ -92,7 +92,7 @@ describe('loadInjectionLogs', () => {
           id: 'log-1',
           user_id: 'user-1',
           logged_at: '2026-06-17T08:00:00.000Z',
-          peptide_id: 'pep-1',
+          stack_item_id: 'stack-item-1',
           cycle_id: 'cycle-1',
           substance_label: 'Testosteron',
         }],
@@ -118,13 +118,13 @@ describe('loadInjectionLogs', () => {
 
     const logs = await loadInjectionLogs(supabase, 'user-1')
 
-    expect(selects).toEqual(['*, peptides(name), cycles(name)', '*'])
+    expect(selects).toEqual(['*, stack_items(display_name), cycles(name)', '*'])
     expect(logs).toHaveLength(1)
     expect(logs[0]).toMatchObject({
       id: 'log-1',
-      peptide_id: 'pep-1',
+      stack_item_id: 'stack-item-1',
       cycle_id: 'cycle-1',
-      peptide_name: null,
+      stack_item_name: null,
       cycle_name: null,
       substance_label: 'Testosteron',
     })
@@ -143,9 +143,9 @@ describe('loadInjectionLogs', () => {
             user_id: 'user-1',
             dose_log_id: 'dose-1',
             logged_at: '2026-06-17T08:00:00.000Z',
-            peptide_id: 'pep-1',
+            stack_item_id: 'stack-item-1',
             cycle_id: 'cycle-1',
-            peptides: { name: 'BPC-157' },
+            stack_items: { display_name: 'BPC-157' },
             cycles: { name: 'Cycle' },
           }],
           error: null,
@@ -170,7 +170,7 @@ describe('loadInjectionLogs', () => {
 
     const logs = await loadInjectionLogs(supabase, 'user-1')
 
-    expect(selects).toEqual(['*, peptides(name), cycles(name)', 'id, taken'])
+    expect(selects).toEqual(['*, stack_items(display_name), cycles(name)', 'id, taken'])
     expect(doseIn).toEqual([['dose-1']])
     expect(logs[0]).toMatchObject({
       id: 'log-1',
@@ -208,7 +208,7 @@ describe('injectionIntakeLookbackStart', () => {
 describe('buildSelectableInjectionIntakes', () => {
   const cycle = {
     id: 'cycle-1',
-    peptide_id: 'peptide-1',
+    stack_item_id: 'stack-item-1',
     name: 'Abendzyklus',
     method: 'Subkutan',
     start_date: '2026-06-20',
@@ -221,7 +221,7 @@ describe('buildSelectableInjectionIntakes', () => {
     dose: 100,
     unit: 'mcg',
     schedule_history: null,
-    peptides: { name: 'Ipamorelin' },
+    stack_items: { display_name: 'Ipamorelin' },
   }
 
   it('includes confirmed dose logs without a pin and keeps open slots', () => {
@@ -229,7 +229,7 @@ describe('buildSelectableInjectionIntakes', () => {
       cycles: [cycle],
       logs: [{
         id: 'dose-1',
-        peptide_id: 'peptide-1',
+        stack_item_id: 'stack-item-1',
         dose: 100,
         unit: 'mcg',
         method: 'Subkutan',
@@ -247,6 +247,8 @@ describe('buildSelectableInjectionIntakes', () => {
         status: 'confirmed',
         doseLogId: 'dose-1',
         cycleId: 'cycle-1',
+        stackItemId: 'stack-item-1',
+        stackItemName: 'Ipamorelin',
         scheduledAt: '2026-06-23T20:15:00.000Z',
       }),
       expect.objectContaining({
@@ -262,7 +264,7 @@ describe('buildSelectableInjectionIntakes', () => {
       cycles: [cycle],
       logs: [{
         id: 'dose-legacy',
-        peptide_id: 'peptide-1',
+        stack_item_id: 'stack-item-1',
         dose: 100,
         unit: 'mcg',
         method: 'Andere',
@@ -288,7 +290,7 @@ describe('buildSelectableInjectionIntakes', () => {
       cycles: [],
       logs: [{
         id: 'dose-orphan',
-        peptide_id: 'peptide-1',
+        stack_item_id: 'stack-item-1',
         dose: 100,
         unit: 'mcg',
         method: 'Subkutan',
@@ -315,7 +317,7 @@ describe('buildSelectableInjectionIntakes', () => {
       cycles: [cycle],
       logs: [{
         id: 'dose-1',
-        peptide_id: 'peptide-1',
+        stack_item_id: 'stack-item-1',
         dose: 100,
         unit: 'mcg',
         method: 'Subkutan',
@@ -335,7 +337,7 @@ describe('buildSelectableInjectionIntakes', () => {
       cycles: [cycle],
       logs: [{
         id: 'missed-1',
-        peptide_id: 'peptide-1',
+        stack_item_id: 'stack-item-1',
         dose: 100,
         unit: 'mcg',
         method: 'Subkutan',
@@ -363,7 +365,7 @@ describe('buildSelectableInjectionIntakes', () => {
       cycles: [cycle],
       logs: [{
         id: 'reset-1',
-        peptide_id: 'peptide-1',
+        stack_item_id: 'stack-item-1',
         dose: 100,
         unit: 'mcg',
         method: 'Subkutan',
@@ -391,7 +393,7 @@ describe('buildSelectableInjectionIntakes', () => {
       cycles: [cycle],
       logs: [{
         id: 'reset-linked',
-        peptide_id: 'peptide-1',
+        stack_item_id: 'stack-item-1',
         dose: 100,
         unit: 'mcg',
         method: 'Subkutan',
@@ -412,8 +414,8 @@ describe('resolveInjectionDoseLogId', () => {
     let confirmationCalls = 0
     const doseLogId = await resolveInjectionDoseLogId({
       cycleId: 'cycle-1',
-      peptideId: 'peptide-1',
-      peptideName: 'Ipamorelin',
+      stackItemId: 'stack-item-1',
+      stackItemName: 'Ipamorelin',
       cycleName: 'Cycle',
       dose: 100,
       unit: 'mcg',
@@ -435,8 +437,8 @@ describe('resolveInjectionDoseLogId', () => {
     let confirmationCalls = 0
     const doseLogId = await resolveInjectionDoseLogId({
       cycleId: 'cycle-1',
-      peptideId: 'peptide-1',
-      peptideName: 'Ipamorelin',
+      stackItemId: 'stack-item-1',
+      stackItemName: 'Ipamorelin',
       cycleName: 'Cycle',
       dose: 100,
       unit: 'mcg',
@@ -459,7 +461,7 @@ describe('confirmIntakeDoseLog', () => {
   it('updates an auto-missed dose log instead of inserting a duplicate', async () => {
     const doseUpdates: Array<Record<string, unknown>> = []
     const doseEq: Array<[string, unknown]> = []
-    const peptideUpdates: Array<Record<string, unknown>> = []
+    const stackItemUpdates: Array<Record<string, unknown>> = []
     let inserts = 0
 
     const doseUpdateQuery = {
@@ -469,11 +471,11 @@ describe('confirmIntakeDoseLog', () => {
         return doseUpdateQuery
       },
     }
-    const peptideSelectQuery = {
-      eq: () => peptideSelectQuery,
+    const stackItemSelectQuery = {
+      eq: () => stackItemSelectQuery,
       single: async () => ({
         data: {
-          id: 'peptide-1',
+          id: 'stack-item-1',
           vial_amount_mg: 10,
           reconstitution_ml: null,
           reconstitution_date: null,
@@ -483,8 +485,8 @@ describe('confirmIntakeDoseLog', () => {
         error: null,
       }),
     }
-    const peptideUpdateQuery = {
-      eq: () => peptideUpdateQuery,
+    const stackItemUpdateQuery = {
+      eq: () => stackItemUpdateQuery,
     }
     const supabase = {
       from: (table: string) => {
@@ -502,10 +504,10 @@ describe('confirmIntakeDoseLog', () => {
         }
         if (table === 'stack_items') {
           return {
-            select: () => peptideSelectQuery,
+            select: () => stackItemSelectQuery,
             update: (payload: Record<string, unknown>) => {
-              peptideUpdates.push(payload)
-              return peptideUpdateQuery
+              stackItemUpdates.push(payload)
+              return stackItemUpdateQuery
             },
           }
         }
@@ -515,7 +517,7 @@ describe('confirmIntakeDoseLog', () => {
 
     const id = await confirmIntakeDoseLog(supabase, {
       userId: 'user-1',
-      peptideId: 'peptide-1',
+      stackItemId: 'stack-item-1',
       dose: 100,
       unit: 'mcg',
       method: 'Subkutan',
@@ -527,7 +529,7 @@ describe('confirmIntakeDoseLog', () => {
     expect(inserts).toBe(0)
     expect(doseUpdates).toEqual([{ dose: 100, unit: 'mcg', method: 'Subkutan', logged_at: '2026-06-23T18:05:00.000Z', taken: true }])
     expect(doseEq).toEqual([['id', 'missed-1'], ['user_id', 'user-1']])
-    expect(peptideUpdates).toEqual([{ vials_in_stock: 0.99 }])
+    expect(stackItemUpdates).toEqual([{ vials_in_stock: 0.99 }])
   })
 })
 describe('isDoseLogAlreadyLinkedError', () => {

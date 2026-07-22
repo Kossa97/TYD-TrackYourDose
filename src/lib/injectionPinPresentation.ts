@@ -21,5 +21,5 @@ export function getInjectionPinAgeColor(loggedAt: string, now = new Date()) {
 }
 
 export function getInjectionPinSubstance(log: InjectionLog3D) {
-  return log.peptide_name?.trim() || log.substance_label?.trim() || 'Injektion'
+  return log.stack_item_name?.trim() || log.substance_label?.trim() || 'Injektion'
 }

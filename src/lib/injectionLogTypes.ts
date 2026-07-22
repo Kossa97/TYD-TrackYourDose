@@ -45,9 +45,9 @@ export interface InjectionLog3D extends InjectionPinDraft {
   user_id: string
   dose_log_id: string | null
   dose_taken?: boolean | null
-  peptide_id: string | null
+  stack_item_id: string | null
   cycle_id: string | null
-  peptide_name: string | null
+  stack_item_name: string | null
   cycle_name: string | null
   dose: number | null
   unit: string | null
@@ -61,8 +61,8 @@ export interface InjectionLog3D extends InjectionPinDraft {
 
 export interface SelectableInjectionCycle {
   id: string
-  peptide_id: string
-  peptide_name: string
+  stack_item_id: string
+  stack_item_name: string
   cycle_name: string
   dose: number
   unit: string

@@ -56,7 +56,7 @@ const SETUP_SQL = `create table if not exists injection_logs (
 );
 
 alter table injection_logs
-  add column if not exists peptide_id uuid references peptides on delete set null,
+  add column if not exists stack_item_id uuid references stack_items on delete set null,
   add column if not exists cycle_id uuid references cycles on delete set null,
   add column if not exists dose numeric(10,3),
   add column if not exists unit text,
@@ -219,17 +219,17 @@ export function InjektionsTracker() {
       await assertInjectionProSchema(supabase)
 
       let doseLogId: string | null = null
-      let peptideId: string | null = null
+      let stackItemId: string | null = null
       let cycleId: string | null = null
 
       // From an open intake: confirm the dose (writes the dose_log + debits stock)
       // and link the injection to it.
       if (input.mode === 'intake' && input.intake) {
-        peptideId = input.intake.peptideId
+        stackItemId = input.intake.stackItemId
         cycleId = input.intake.cycleId
         doseLogId = await resolveInjectionDoseLogId(input.intake, () => confirmIntakeDoseLog(supabase, {
           userId: user.id,
-          peptideId: input.intake!.peptideId,
+          stackItemId: input.intake!.stackItemId,
           dose: input.dose ?? input.intake!.dose,
           unit: input.unit ?? input.intake!.unit,
           method: input.method ?? input.intake!.method,
@@ -241,7 +241,7 @@ export function InjektionsTracker() {
       await saveInjectionLog(supabase, {
         userId: user.id,
         doseLogId,
-        peptideId,
+        stackItemId,
         cycleId,
         dose: input.dose,
         unit: input.unit,
@@ -360,7 +360,7 @@ export function InjektionsTracker() {
                 style={{ background: 'rgba(7, 11, 24, 0.78)', borderColor: 'rgba(34,211,238,0.22)' }}
               >
                 <span className="shrink-0 text-[0.62rem] font-black uppercase text-cyan-300">Ausgewählt</span>
-                <span className="min-w-0 flex-1 truncate">{activeTargetIntake.peptideName}</span>
+                <span className="min-w-0 flex-1 truncate">{activeTargetIntake.stackItemName}</span>
                 <span className="shrink-0 text-cyan-100/80">{activeTargetIntake.dose} {activeTargetIntake.unit} - {format(parseISO(activeTargetIntake.scheduledAt), 'HH:mm')}</span>
               </div>
             </div>

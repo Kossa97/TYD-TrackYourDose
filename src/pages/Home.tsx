@@ -471,7 +471,7 @@ export function Home() {
       if (taken) {
         await confirmIntakeDoseLog(supabase, {
           userId: user.id,
-          peptideId: intake.stackItemId,
+          stackItemId: intake.stackItemId,
           dose: intake.doseNumber,
           unit: intake.unit,
           method: intake.method ?? '',
