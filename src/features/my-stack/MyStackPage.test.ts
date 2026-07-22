@@ -440,8 +440,8 @@ describe('My Stack page vial view', () => {
   test('assigns a random palette color when creating a peptide', () => {
     const text = source()
 
-    expect(text).toContain('getRandomPeptideColor')
-    expect(text).toContain('setWizardInitialColor(getRandomPeptideColor())')
+    expect(text).toContain('getRandomStackItemColor')
+    expect(text).toContain('setWizardInitialColor(getRandomStackItemColor())')
     expect(text).toContain('initialColorHex={wizardInitialColor}')
   })
 })
@@ -504,7 +504,8 @@ describe('My Stack modular integration', () => {
 
   test('preserves the vial-specific tracking editor alongside the generic wizard', () => {
     const text = source()
-    expect(text).toContain('<PeptideFormModal')
+    expect(text).toContain('<VialTrackingEditor')
+    expect(text).toContain("from './extensions/peptide/VialTrackingEditor'")
     expect(text).toContain('showTrackingForm')
     expect(text).toContain('openTrackingDetails')
     expect(text).toContain('if (!isStageRenderable(p.dosage_form)) return')
@@ -513,7 +514,17 @@ describe('My Stack modular integration', () => {
 
   test('uses persisted item colors before the stable palette fallback', () => {
     const text = source()
-    expect(text.match(/peptideColors\[p\.id\] \?\? p\.color_hex \?\? getPeptideColor\(colorIdx\)/g)).toHaveLength(2)
+    expect(text.match(/p\.color_hex \?\? getStableStackItemColor\(p\.id\)/g)).toHaveLength(3)
+  })
+
+  test('migrates active and archived local colors once, then reloads persisted active rows', () => {
+    const text = source()
+    const loader = text.slice(text.indexOf('const loadPeptides'), text.indexOf('const loadArchived'))
+
+    expect(loader).toContain('if (!isLocalColorMigrationComplete(localStorage))')
+    expect(loader).toContain('loadStackItems(supabase as never, true)')
+    expect(loader).toContain('migrateLocalColors(supabase as never, [...data, ...archived], localStorage)')
+    expect(loader.match(/loadStackItems\(supabase as never, false\)/g)).toHaveLength(2)
   })
 
   test('opens duplicate matches reliably in the textual list', () => {

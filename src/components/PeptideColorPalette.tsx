@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react'
-import { PEPTIDE_COLORS } from '../lib/peptideColors'
+import { STACK_ITEM_COLORS } from '../features/my-stack/lib/colors'
 
 interface PeptideColorPaletteProps {
   value: string
@@ -9,7 +9,7 @@ interface PeptideColorPaletteProps {
 export function PeptideColorPalette({ value, onChange }: PeptideColorPaletteProps) {
   return (
     <div className="grid grid-cols-6 gap-3">
-      {PEPTIDE_COLORS.map(color => {
+      {STACK_ITEM_COLORS.map(color => {
         const selected = value === color
         return (
           <button

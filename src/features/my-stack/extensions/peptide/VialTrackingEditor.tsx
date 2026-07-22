@@ -4,10 +4,56 @@ import {
   ChevronDown, ChevronRight, ChevronUp, Check, FileUp, FlaskConical, X,
 } from 'lucide-react'
 import { addDays, differenceInDays, format, parseISO } from 'date-fns'
-import type { PeptideForm, PkProfileOption } from '../lib/peptideFormTypes'
-import { PEPTIDE_COLORS } from '../lib/peptideColors'
-import { PeptideColorPalette } from './PeptideColorPalette'
-import { PeptideVialVisual } from './PeptideVialVisual'
+import { STACK_ITEM_COLORS } from '../../lib/colors'
+import { PeptideColorPalette } from '../../../../components/PeptideColorPalette'
+import { PeptideVialVisual } from '../../../../components/PeptideVialVisual'
+
+export interface PkProfileOption {
+  id: string
+  name: string
+  aliases: string[]
+}
+
+export interface VialTrackingDraft {
+  inventory_item_id: string
+  pk_profile_id: string
+  name: string
+  default_method: string
+  vial_amount_mg: string
+  vial_amount_unit: string
+  reconstitution_ml: string
+  syringe_ml: string
+  syringe_units: string
+  notes: string
+  vials_in_stock: string
+  reconstitution_date: string
+  expiry_days: string
+  batch_number: string
+  batch_source: string
+  batch_file_url: string
+  color_hex: string
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const emptyVialTrackingDraft = (): VialTrackingDraft => ({
+  inventory_item_id: '',
+  pk_profile_id: '',
+  name: '',
+  default_method: '',
+  vial_amount_mg: '',
+  vial_amount_unit: 'mg',
+  reconstitution_ml: '',
+  syringe_ml: '1',
+  syringe_units: '100',
+  notes: '',
+  vials_in_stock: '',
+  reconstitution_date: '',
+  expiry_days: '',
+  batch_number: '',
+  batch_source: '',
+  batch_file_url: '',
+  color_hex: '',
+})
 
 const EXPIRY_PRESETS = [10, 14, 21, 28, 42, 90]
 const POPULAR_PEPTIDES = [
@@ -28,10 +74,10 @@ type FieldId =
   | 'batch_number' | 'batch_source' | 'batch_doc'
   | 'default_method' | 'notes'
 
-interface PeptideFormModalProps {
+interface VialTrackingEditorProps {
   editingPeptideId: string | null
-  pForm: PeptideForm
-  setPForm: Dispatch<SetStateAction<PeptideForm>>
+  pForm: VialTrackingDraft
+  setPForm: Dispatch<SetStateAction<VialTrackingDraft>>
   batchFile: File | null
   setBatchFile: (file: File | null) => void
   savingPeptide: boolean
@@ -137,7 +183,7 @@ function FormListRow({
   )
 }
 
-export function PeptideFormModal({
+export function VialTrackingEditor({
   editingPeptideId,
   pForm,
   setPForm,
@@ -154,7 +200,7 @@ export function PeptideFormModal({
   handlePepNameChange,
   showDropdown,
   setShowDropdown,
-}: PeptideFormModalProps) {
+}: VialTrackingEditorProps) {
   const { t } = useTranslation()
   const [activeField, setActiveField] = useState<FieldId | null>(null)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -286,7 +332,7 @@ export function PeptideFormModal({
       case 'color':
         body = (
           <PeptideColorPalette
-            value={pForm.color_hex || PEPTIDE_COLORS[0]}
+            value={pForm.color_hex || STACK_ITEM_COLORS[0]}
             onChange={color => setPForm(f => ({ ...f, color_hex: color }))}
           />
         )
@@ -525,7 +571,7 @@ export function PeptideFormModal({
               amount={pForm.vial_amount_mg}
               unit={pForm.vial_amount_unit}
               fillPct={100}
-              color={pForm.color_hex || PEPTIDE_COLORS[0]}
+              color={pForm.color_hex || STACK_ITEM_COLORS[0]}
               animateOnMount
             />
           </div>

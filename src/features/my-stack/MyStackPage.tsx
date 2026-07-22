@@ -12,15 +12,12 @@ import {
   Archive, Info, RefreshCw, Sunrise, Sun, Moon, Clock, AlertTriangle,
   RotateCcw, Flag, Pause, Play, CalendarPlus, type LucideIcon,
 } from 'lucide-react'
-import { getPeptideColor, getRandomPeptideColor } from '../../lib/peptideColors'
 import { useNew } from '../../lib/useNew'
 import { NewDot } from '../../components/NewDot'
 import { format, parseISO, addDays, differenceInDays } from 'date-fns'
 import { effectiveDose, type ScheduleSegment } from '../../lib/intakeSchedule'
 import { buildDoseAdjustmentBackfillUpdates, type DoseAdjustmentBackfillLog } from '../../lib/doseAdjustmentBackfill'
 import type { VialStageLightHandle } from '../../components/PeptideVialVisual'
-import { PeptideFormModal } from '../../components/PeptideFormModal'
-import { emptyPeptideForm, type PeptideForm, type PkProfileOption } from '../../lib/peptideFormTypes'
 import { SloshProvider, useSloshEngine } from '../../components/SloshContext'
 import { LabLoader } from '../../components/LabLoader'
 import { StackItemWizard } from './components/StackItemWizard'
@@ -31,6 +28,9 @@ import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackIte
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { StackItem, StackItemDraft, SubstanceCatalogEntry } from './types'
 import { isStageRenderable } from './lib/dosageForms'
+import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
+import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
+import { VialTrackingEditor, emptyVialTrackingDraft, type PkProfileOption, type VialTrackingDraft } from './extensions/peptide/VialTrackingEditor'
 
 interface InventoryItem {
   id: string; user_id: string; name: string
@@ -412,11 +412,6 @@ export function MyStackPage() {
   const [pkProfileCatalog, setPkProfileCatalog] = useState<PkProfileOption[]>([])
   const [pkSuggestOpen, setPkSuggestOpen] = useState(false)
 
-  // ── Flüssigkeits-Farben (localStorage) ───────────────────────────────────
-  const [peptideColors] = useState<Record<string, string>>(() => {
-    try { return JSON.parse(localStorage.getItem('tyd_peptide_colors') ?? '{}') } catch { return {} }
-  })
-
   // ── Peptide ───────────────────────────────────────────────────────────────
   const [peptides, setPeptides]               = useState<Peptide[]>([])
   const [loading, setLoading]                 = useState(true)
@@ -432,7 +427,7 @@ export function MyStackPage() {
   const [infoPeptide, setInfoPeptide]         = useState<Peptide | null>(null)
   const [search, setSearch]                   = useState('')
   const [showTrackingForm, setShowTrackingForm] = useState(false)
-  const [pForm, setPForm] = useState<PeptideForm>(emptyPeptideForm())
+  const [pForm, setPForm] = useState<VialTrackingDraft>(emptyVialTrackingDraft())
   const [showDropdown, setShowDropdown] = useState(false)
   const [savingPeptide, setSavingPeptide] = useState(false)
   const [batchFile, setBatchFile] = useState<File | null>(null)
@@ -572,7 +567,12 @@ export function MyStackPage() {
     if (data) setInventory(data as InventoryItem[])
   }
   const loadPeptides = async () => {
-    const data = await loadStackItems(supabase as never, false)
+    let data = await loadStackItems(supabase as never, false)
+    if (!isLocalColorMigrationComplete(localStorage)) {
+      const archived = await loadStackItems(supabase as never, true)
+      const migrated = await migrateLocalColors(supabase as never, [...data, ...archived], localStorage)
+      if (migrated) data = await loadStackItems(supabase as never, false)
+    }
     setPeptides(data.map(asPeptide))
   }
   const loadArchived = async () => {
@@ -611,7 +611,7 @@ export function MyStackPage() {
   useEffect(() => {
     if (location.hash !== '#new-substance') return
     setEditingPeptideId(null)
-    setWizardInitialColor(getRandomPeptideColor())
+    setWizardInitialColor(getRandomStackItemColor())
     setCyclePromptPeptide(null)
     setShowPeptideForm(true)
     navigate(location.pathname, { replace: true })
@@ -725,7 +725,7 @@ export function MyStackPage() {
   // ── Peptid CRUD ───────────────────────────────────────────────────────────
   const handleNewPeptide = () => {
     setEditingPeptideId(null)
-    setWizardInitialColor(getRandomPeptideColor())
+    setWizardInitialColor(getRandomStackItemColor())
     setCyclePromptPeptide(null)
     setShowPeptideForm(true)
   }
@@ -756,7 +756,7 @@ export function MyStackPage() {
       batch_number: p.batch_number ?? '',
       batch_source: p.batch_source ?? '',
       batch_file_url: p.batch_file_url ?? '',
-      color_hex: p.color_hex ?? peptideColors[p.id] ?? '',
+      color_hex: p.color_hex ?? getStableStackItemColor(p.id),
     })
     setBatchFile(null)
     setPkSuggestOpen(false)
@@ -1728,8 +1728,7 @@ export function MyStackPage() {
                   </div>
                   {stagePeptides.map((p, index) => {
                     const isActive = p.id === activePeptide.id
-                    const colorIdx = peptides.findIndex(pp => pp.id === p.id)
-                    const peptideColor = peptideColors[p.id] ?? p.color_hex ?? getPeptideColor(colorIdx)
+                    const peptideColor = p.color_hex ?? getStableStackItemColor(p.id)
                     const vialPct = Math.round(getVialFillPct(p) ?? 100)
 
                     return (
@@ -2134,8 +2133,7 @@ export function MyStackPage() {
               const isOpen    = expandedId === p.id
               const hasActive = pCycles.some(c => c.active)
               const vialPct = getVialFillPct(p)
-              const colorIdx   = peptides.findIndex(pp => pp.id === p.id)
-              const peptideColor = peptideColors[p.id] ?? p.color_hex ?? getPeptideColor(colorIdx)
+              const peptideColor = p.color_hex ?? getStableStackItemColor(p.id)
               const invItem = p.inventory_item_id ? inventory.find(i => i.id === p.inventory_item_id) : null
 
               return (
@@ -2644,7 +2642,7 @@ export function MyStackPage() {
       )}
 
       {showTrackingForm && (
-        <PeptideFormModal
+        <VialTrackingEditor
           editingPeptideId={editingPeptideId}
           pForm={pForm}
           setPForm={setPForm}

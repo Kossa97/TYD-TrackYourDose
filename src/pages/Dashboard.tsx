@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { getPeptideColor } from '../lib/peptideColors'
+import { getStackItemColor } from '../features/my-stack/lib/colors'
 import { getDateLocale } from '../i18n/dateLocales'
 import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, type ScheduleSegment } from '../lib/intakeSchedule'
 import { computeNextVialStock } from '../lib/peptideStock'
@@ -876,7 +876,7 @@ export function Dashboard() {
       return false
     }).length
     const slotMeta = intakeGroupMeta(slot.groupKey, t)
-    const peptideColor = getPeptideColor(peptides.findIndex(peptide => peptide.id === c.peptide_id))
+    const peptideColor = getStackItemColor(peptides.findIndex(peptide => peptide.id === c.peptide_id))
 
     return (
       <div
