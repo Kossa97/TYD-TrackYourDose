@@ -64,6 +64,10 @@ function emptyIngredient(position: number): StackItemIngredient {
   }
 }
 
+function suggestedBasisUnit(dosageForm: DosageFormKey | null): string | null {
+  return dosageForm ? getDosageForm(dosageForm).basisUnits[0] ?? null : null
+}
+
 function draftFromStackItem(existing: StackItem): StackItemDraft {
   return {
     id: existing.id,
@@ -111,6 +115,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
             ...emptyIngredient(0),
             catalog_substance_id: action.entry.id,
             amount_unit: action.entry.suggested_units[0] ?? null,
+            basis_unit: suggestedBasisUnit(state.draft.dosageForm),
           }],
         },
       }
@@ -121,7 +126,12 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         draft: {
           ...state.draft,
           displayName: name,
-          ingredients: [{ ...emptyIngredient(0), custom_name: name }],
+          category: null,
+          ingredients: [{
+            ...emptyIngredient(0),
+            custom_name: name,
+            basis_unit: suggestedBasisUnit(state.draft.dosageForm),
+          }],
         },
       }
     }
@@ -138,9 +148,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
             ...state.draft.ingredients,
             {
               ...emptyIngredient(state.draft.ingredients.length),
-              basis_unit: state.draft.dosageForm
-                ? getDosageForm(state.draft.dosageForm).basisUnits[0] ?? null
-                : null,
+              basis_unit: suggestedBasisUnit(state.draft.dosageForm),
             },
           ],
         },
@@ -166,7 +174,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         },
       }
     case 'dosage_form_selected': {
-      const basisUnit = getDosageForm(action.dosageForm).basisUnits[0] ?? null
+      const basisUnit = suggestedBasisUnit(action.dosageForm)
       return {
         ...state,
         draft: {

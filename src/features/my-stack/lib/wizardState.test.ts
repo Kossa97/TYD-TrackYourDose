@@ -79,6 +79,43 @@ describe('wizard state', () => {
     expect(next.draft.ingredients[0].custom_name).toBe('Eigene Mischung')
   })
 
+  it('resets the catalog category when switching to custom input', () => {
+    const catalogState = wizardReducer(initialWizardState(), {
+      type: 'catalog_selected',
+      entry: vitaminD3,
+    })
+    const next = wizardReducer(catalogState, { type: 'custom_started', name: 'Eigene Mischung' })
+
+    expect(next.draft.category).toBeNull()
+    expect(canContinue(next)).toBe(false)
+    expect(firstInvalidField(next)).toBe('category')
+  })
+
+  it('keeps selected form suggestion when catalog selection replaces ingredients', () => {
+    const stateWithDosageForm = wizardReducer(
+      wizardReducer(initialWizardState(), { type: 'catalog_selected', entry: vitaminD3 }),
+      { type: 'dosage_form_selected', dosageForm: 'capsule' },
+    )
+    const next = wizardReducer(stateWithDosageForm, { type: 'catalog_selected', entry: vitaminD3 })
+
+    expect(next.draft.dosageForm).toBe('capsule')
+    expect(next.draft.ingredients[0].basis_unit).toBe('capsule')
+  })
+
+  it('keeps selected form suggestion when custom input replaces ingredients', () => {
+    const stateWithDosageForm = wizardReducer(
+      wizardReducer(initialWizardState(), { type: 'catalog_selected', entry: vitaminD3 }),
+      { type: 'dosage_form_selected', dosageForm: 'capsule' },
+    )
+    const next = wizardReducer(stateWithDosageForm, {
+      type: 'custom_started',
+      name: 'Eigene Mischung',
+    })
+
+    expect(next.draft.dosageForm).toBe('capsule')
+    expect(next.draft.ingredients[0].basis_unit).toBe('capsule')
+  })
+
   it('fügt Mehrfachwirkstoffe hinzu und hält Positionen stabil', () => {
     const stateWithOneIngredient = wizardReducer(initialWizardState(), {
       type: 'catalog_selected',
