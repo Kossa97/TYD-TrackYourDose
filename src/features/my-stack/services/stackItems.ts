@@ -37,6 +37,33 @@ interface StackItemArchiveUpdate {
   archived_at: string | null
 }
 
+interface StackItemReconstitutionUpdate {
+  reconstitution_date: string
+  vials_in_stock: number
+  vials_initial: number
+}
+
+export interface VialTrackingUpdate {
+  display_name: string
+  name: string
+  default_method: string
+  vial_amount_mg: number | null
+  vial_amount_unit: string | null
+  reconstitution_ml: number | null
+  syringe_type: string | null
+  notes: string | null
+  vials_in_stock: number
+  vials_initial: number
+  reconstitution_date: string | null
+  expiry_days: number | null
+  batch_number: string | null
+  batch_source: string | null
+  batch_file_url: string | null
+  inventory_item_id: string | null
+  pk_profile_id: string | null
+  color_hex: string | null
+}
+
 interface SaveStackItemIngredient {
   catalog_substance_id: string | null
   custom_name: string
@@ -82,7 +109,7 @@ export interface StackItemQueryClient {
 
 export interface StackItemMutationClient {
   from(table: 'stack_items'): {
-    update(values: StackItemArchiveUpdate): {
+    update(values: StackItemArchiveUpdate | StackItemReconstitutionUpdate | VialTrackingUpdate): {
       eq(column: 'id', value: string): PromiseLike<StackItemMutationResult>
     }
     delete(): {
@@ -216,6 +243,32 @@ export async function restoreStackItem(
   const { error } = await client
     .from('stack_items')
     .update({ archived: false, archived_at: null })
+    .eq('id', id)
+
+  throwIfError(error)
+}
+
+export async function saveVialTracking(
+  client: StackItemMutationClient,
+  id: string,
+  values: VialTrackingUpdate,
+): Promise<void> {
+  const { error } = await client
+    .from('stack_items')
+    .update(values)
+    .eq('id', id)
+
+  throwIfError(error)
+}
+
+export async function reconstituteStackItem(
+  client: StackItemMutationClient,
+  id: string,
+  reconstitutionDate: string,
+): Promise<void> {
+  const { error } = await client
+    .from('stack_items')
+    .update({ reconstitution_date: reconstitutionDate, vials_in_stock: 1, vials_initial: 1 })
     .eq('id', id)
 
   throwIfError(error)

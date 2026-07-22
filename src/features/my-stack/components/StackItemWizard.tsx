@@ -38,6 +38,7 @@ export interface StackItemWizardProps {
   catalogEntries: SubstanceCatalogEntry[]
   existingItems: StackItem[]
   existingItem?: StackItem
+  initialColorHex?: string
   catalogUnavailable?: boolean
   onClose: () => void
   onSave: (draft: StackItemDraft, mode: WizardSaveMode) => Promise<void>
@@ -74,12 +75,13 @@ export function StackItemWizard({
   existingItems,
   existingItem,
   catalogUnavailable = false,
+  initialColorHex = '',
   onClose,
   onSave,
   onOpenExisting,
 }: StackItemWizardProps) {
   const { t } = useTranslation()
-  const [state, dispatch] = useReducer(wizardReducer, existingItem, initialWizardState)
+  const [state, dispatch] = useReducer(wizardReducer, undefined, () => initialWizardState(existingItem, initialColorHex))
   const [showErrors, setShowErrors] = useState(false)
   const [identityChoiceMade, setIdentityChoiceMade] = useState(false)
   const [identityChoiceError, setIdentityChoiceError] = useState(false)

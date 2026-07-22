@@ -10,7 +10,9 @@ import {
   findDuplicate,
   loadStackItems,
   restoreStackItem,
+  reconstituteStackItem,
   saveStackItem,
+  saveVialTracking,
   type LoadedStackItem,
   type SaveStackItemRpcParams,
   type SavedStackItemRow,
@@ -189,6 +191,63 @@ describe('stack item service', () => {
     expect(calls).toContainEqual(['eq', 'id', 'stack-item-1'])
   })
 
+  it('aktualisiert die Rekonstitution über den Stack-Item-Service', async () => {
+    const update = vi.fn(() => ({ eq: async () => ({ error: null }) }))
+    const client: StackItemMutationClient = {
+      from: () => ({
+        update,
+        delete: () => ({ eq: async () => ({ error: null }) }),
+      }),
+    }
+
+    await reconstituteStackItem(client, 'stack-item-1', '2026-07-22')
+
+    expect(update).toHaveBeenCalledWith({
+      reconstitution_date: '2026-07-22',
+      vials_in_stock: 1,
+      vials_initial: 1,
+    })
+  })
+
+  it('begrenzt Rekonstitution auf die gewählte ID und propagiert Fehler', async () => {
+    const eq = vi.fn(async () => ({ error: null }))
+    const from = vi.fn(() => ({
+      update: () => ({ eq }),
+      delete: () => ({ eq: async () => ({ error: null }) }),
+    }))
+    await reconstituteStackItem({ from }, 'stack-item-1', '2026-07-22')
+    expect(from).toHaveBeenCalledWith('stack_items')
+    expect(eq).toHaveBeenCalledWith('id', 'stack-item-1')
+
+    const failing: StackItemMutationClient = {
+      from: () => ({
+        update: () => ({ eq: async () => ({ error: { message: 'failed' } }) }),
+        delete: () => ({ eq: async () => ({ error: null }) }),
+      }),
+    }
+    await expect(reconstituteStackItem(failing, 'stack-item-1', '2026-07-22')).rejects.toThrow('failed')
+  })
+
+
+  it('speichert Vial-Tracking nur für das gewählte Stack-Item', async () => {
+    const eq = vi.fn(async () => ({ error: null }))
+    const update = vi.fn(() => ({ eq }))
+    const client: StackItemMutationClient = {
+      from: () => ({ update, delete: () => ({ eq: async () => ({ error: null }) }) }),
+    }
+    const values = {
+      display_name: 'BPC-157', name: 'BPC-157', default_method: 'Subkutan',
+      vial_amount_mg: 5, vial_amount_unit: 'mg', reconstitution_ml: 2,
+      syringe_type: '1:100', notes: null, vials_in_stock: 1, vials_initial: 1,
+      reconstitution_date: '2026-07-22', expiry_days: 28, batch_number: null,
+      batch_source: null, batch_file_url: null, inventory_item_id: 'inventory-1',
+      pk_profile_id: null, color_hex: '#123456',
+    }
+
+    await saveVialTracking(client, 'stack-item-1', values)
+    expect(update).toHaveBeenCalledWith(values)
+    expect(eq).toHaveBeenCalledWith('id', 'stack-item-1')
+  })
   it('löscht ausschließlich aus stack_items', async () => {
     const calls: Array<unknown> = []
     const client: StackItemMutationClient = {

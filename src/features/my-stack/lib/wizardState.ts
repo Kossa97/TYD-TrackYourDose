@@ -81,7 +81,7 @@ function draftFromStackItem(existing: StackItem): StackItemDraft {
   }
 }
 
-export function initialWizardState(existing?: StackItem): WizardState {
+export function initialWizardState(existing?: StackItem, initialColorHex = ''): WizardState {
   return {
     step: 'substance',
     draft: existing
@@ -91,7 +91,7 @@ export function initialWizardState(existing?: StackItem): WizardState {
           category: null,
           dosageForm: null,
           brand: '',
-          colorHex: '',
+          colorHex: initialColorHex,
           notes: '',
           ingredients: [],
         },

@@ -53,6 +53,11 @@ describe('wizard state', () => {
       'substance', 'ingredients', 'dosage_form', 'strength', 'details', 'review',
     ])
   })
+  it('übernimmt die bisherige Zufallsfarbe nur für neue Einträge', () => {
+    expect(initialWizardState(undefined, '#123456').draft.colorHex).toBe('#123456')
+    expect(initialWizardState(existingVitaminD, '#123456').draft.colorHex).toBe('#abcdef')
+  })
+
 
   it('übernimmt beim Katalogtreffer Name, Kategorie und einen Inhaltsstoff', () => {
     const next = wizardReducer(initialWizardState(), { type: 'catalog_selected', entry: vitaminD3 })

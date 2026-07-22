@@ -10,7 +10,7 @@ import { VialPreview } from './pages/__VialPreview'
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })))
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })))
-const Peptide = lazy(() => import('./pages/Peptide').then(m => ({ default: m.Peptide })))
+const MyStackPage = lazy(() => import('./features/my-stack/MyStackPage').then(m => ({ default: m.MyStackPage })))
 const Tagebuch = lazy(() => import('./pages/Tagebuch').then(m => ({ default: m.Tagebuch })))
 const Bewertungen = lazy(() => import('./pages/Bewertungen').then(m => ({ default: m.Bewertungen })))
 const Profil = lazy(() => import('./pages/Profil').then(m => ({ default: m.Profil })))
@@ -58,7 +58,7 @@ export default function App() {
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<LazyPage><Home /></LazyPage>} />
             <Route path="kalender" element={<LazyPage><Dashboard /></LazyPage>} />
-            <Route path="peptide" element={<LazyPage><Peptide /></LazyPage>} />
+            <Route path="peptide" element={<LazyPage><MyStackPage /></LazyPage>} />
             <Route path="lab" element={<LazyPage><TheLab /></LazyPage>} />
             <Route path="lab/study/:id" element={<LazyPage><StudyDetail /></LazyPage>} />
             <Route path="lab/library" element={<LazyPage><PeptideLibrary /></LazyPage>} />
