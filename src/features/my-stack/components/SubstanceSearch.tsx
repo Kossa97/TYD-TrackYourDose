@@ -1,4 +1,5 @@
 import { AlertCircle, Plus, Search } from 'lucide-react'
+import { useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { STACK_CATEGORIES } from '../lib/categories'
 import type { StackCategory, SubstanceCatalogEntry } from '../types'
@@ -30,6 +31,29 @@ export function SubstanceSearch({
 }: SubstanceSearchProps) {
   const { t } = useTranslation()
   const hasQuery = query.trim().length > 0
+  const [activeIndex, setActiveIndex] = useState(0)
+  const selectedIndex = entries.length === 0 ? -1 : Math.min(activeIndex, entries.length - 1)
+
+  function handleResultsKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
+    if (entries.length === 0) return
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setActiveIndex(Math.min(selectedIndex + 1, entries.length - 1))
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setActiveIndex(Math.max(selectedIndex - 1, 0))
+    } else if (event.key === 'Home') {
+      event.preventDefault()
+      setActiveIndex(0)
+    } else if (event.key === 'End') {
+      event.preventDefault()
+      setActiveIndex(entries.length - 1)
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onSelect(entries[selectedIndex])
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -61,15 +85,28 @@ export function SubstanceSearch({
       </div>
 
       {hasQuery && entries.length > 0 && (
-        <div role="listbox" aria-label={String(t('my_stack_catalog_results', { defaultValue: 'Katalogtreffer' }))} className="space-y-2">
-          {entries.map(entry => (
+        <div
+          role="listbox"
+          tabIndex={0}
+          aria-activedescendant={`stack-substance-option-${selectedIndex}`}
+          aria-label={String(t('my_stack_catalog_results', { defaultValue: 'Katalogtreffer' }))}
+          onKeyDown={handleResultsKeyDown}
+          className="space-y-2 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+        >
+          {entries.map((entry, index) => (
             <button
               key={entry.id}
+              id={`stack-substance-option-${index}`}
               type="button"
               role="option"
-              aria-selected="false"
+              tabIndex={-1}
+              aria-selected={index === selectedIndex}
+              onMouseMove={() => setActiveIndex(index)}
               onClick={() => onSelect(entry)}
-              className="min-h-11 w-full cursor-pointer rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left transition-colors duration-200 hover:border-sky-400/30 hover:bg-sky-400/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
+              className={`min-h-11 w-full cursor-pointer rounded-2xl border px-4 py-3 text-left transition-colors duration-200 focus-visible:outline-none motion-reduce:transition-none ${index === selectedIndex
+                ? 'border-sky-400/40 bg-sky-400/[0.08]'
+                : 'border-white/10 bg-white/[0.04] hover:border-sky-400/30 hover:bg-sky-400/[0.06]'
+              }`}
             >
               <span className="block font-semibold text-white">{entry.canonical_name}</span>
               {entry.aliases.length > 0 && (

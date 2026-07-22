@@ -49,6 +49,7 @@ function renderWizard(): string {
     catalogEntries: [],
     existingItems: [],
     onClose: () => undefined,
+    onOpenExisting: () => undefined,
     onSave: () => Promise.resolve(),
   }))
 }
@@ -138,9 +139,10 @@ describe('StackItemWizard', () => {
 
   it('verankert Tastatur-, Fehlerfokus- und Touch-VertrÃ¤ge im Quelltext', () => {
     const wizardSource = readFileSync(new URL('./StackItemWizard.tsx', import.meta.url), 'utf8')
+    const searchSource = readFileSync(new URL('./SubstanceSearch.tsx', import.meta.url), 'utf8')
     const componentSources = [
       wizardSource,
-      readFileSync(new URL('./SubstanceSearch.tsx', import.meta.url), 'utf8'),
+      searchSource,
       readFileSync(new URL('./IngredientEditor.tsx', import.meta.url), 'utf8'),
       readFileSync(new URL('./DosageFormPicker.tsx', import.meta.url), 'utf8'),
       readFileSync(new URL('./StrengthEditor.tsx', import.meta.url), 'utf8'),
@@ -150,7 +152,14 @@ describe('StackItemWizard', () => {
     expect(wizardSource).toContain("event.key === 'Tab'")
     expect(wizardSource).toContain('.focus()')
     expect(wizardSource).toContain('returnFocusRef')
-    expect(wizardSource).toMatch(/onQueryChange=\{value => \{\s*setQuery\(value\)\s*dispatch\(\{ type: 'custom_started', name: value \}\)/)
+    expect(wizardSource).not.toContain('const [query, setQuery]')
+    expect(wizardSource).toContain('query={state.draft.displayName}')
+    expect(wizardSource).toContain('onOpenExisting: (item: StackItem) => void')
+    expect(searchSource).toContain("event.key === 'ArrowDown'")
+    expect(searchSource).toContain("event.key === 'ArrowUp'")
+    expect(searchSource).toContain("event.key === 'Home'")
+    expect(searchSource).toContain("event.key === 'End'")
+    expect(searchSource).toContain("event.key === 'Enter'")
     expect(wizardSource).toContain("state.original ? 'update' : 'create'")
     for (const source of componentSources) expect(source).toContain('min-h-11')
   })

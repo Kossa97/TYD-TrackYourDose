@@ -41,7 +41,7 @@ export interface StackItemWizardProps {
   catalogUnavailable?: boolean
   onClose: () => void
   onSave: (draft: StackItemDraft, mode: WizardSaveMode) => Promise<void>
-  onOpenExisting?: (item: StackItem) => void
+  onOpenExisting: (item: StackItem) => void
 }
 
 const FOCUSABLE_SELECTOR = [
@@ -80,7 +80,6 @@ export function StackItemWizard({
 }: StackItemWizardProps) {
   const { t } = useTranslation()
   const [state, dispatch] = useReducer(wizardReducer, existingItem, initialWizardState)
-  const [query, setQuery] = useState(existingItem?.display_name ?? '')
   const [showErrors, setShowErrors] = useState(false)
   const [identityChoiceMade, setIdentityChoiceMade] = useState(false)
   const [identityChoiceError, setIdentityChoiceError] = useState(false)
@@ -96,14 +95,14 @@ export function StackItemWizard({
     catalogEntries.map(entry => [entry.id, entry.canonical_name]),
   ), [catalogEntries])
   const matchingEntries = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase()
+    const normalizedQuery = state.draft.displayName.trim().toLocaleLowerCase()
     if (!normalizedQuery) return []
 
     return catalogEntries.filter(entry => (
       entry.canonical_name.toLocaleLowerCase().includes(normalizedQuery)
       || entry.aliases.some(alias => alias.toLocaleLowerCase().includes(normalizedQuery))
     ))
-  }, [catalogEntries, query])
+  }, [catalogEntries, state.draft.displayName])
   const identityChanged = Boolean(state.original && didIdentityChange(state.original, state.draft))
 
   useEffect(() => {
@@ -229,25 +228,22 @@ export function StackItemWizard({
       case 'substance':
         return (
           <SubstanceSearch
-            query={query}
+            query={state.draft.displayName}
             entries={matchingEntries}
             category={state.draft.category}
             catalogUnavailable={catalogUnavailable}
             nameError={showErrors && !state.draft.displayName.trim()}
             categoryError={showErrors && !state.draft.category}
             onQueryChange={value => {
-              setQuery(value)
               dispatch({ type: 'custom_started', name: value })
               setShowErrors(false)
             }}
             onSelect={entry => {
               dispatch({ type: 'catalog_selected', entry })
-              setQuery(entry.canonical_name)
               setShowErrors(false)
             }}
             onAddCustom={name => {
               dispatch({ type: 'custom_started', name })
-              setQuery(name.trim())
               setShowErrors(false)
             }}
             onCategoryChange={category => dispatch({ type: 'category_selected', category })}
@@ -413,7 +409,7 @@ export function StackItemWizard({
                   <button
                     type="button"
                     onClick={() => {
-                      onOpenExisting?.(duplicateCandidate)
+                      onOpenExisting(duplicateCandidate)
                       onClose()
                     }}
                     className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 font-semibold text-slate-950 transition-colors duration-200 hover:bg-sky-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 motion-reduce:transition-none"
