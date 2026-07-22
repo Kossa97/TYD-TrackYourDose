@@ -4,9 +4,9 @@ import { substanceColor } from './colors'
 
 export const todayIso = () => format(new Date(), 'yyyy-MM-dd')
 
-function embedName(peptides: CycleRow['peptides']): string | null {
-  if (!peptides) return null
-  return Array.isArray(peptides) ? (peptides[0]?.name ?? null) : peptides.name
+function embedName(stackItems: CycleRow['stack_items']): string | null {
+  if (!stackItems) return null
+  return Array.isArray(stackItems) ? (stackItems[0]?.display_name ?? null) : stackItems.display_name
 }
 
 export function normalizeCycles(rows: CycleRow[] | null | undefined): CycleSubstance[] {
@@ -15,8 +15,8 @@ export function normalizeCycles(rows: CycleRow[] | null | undefined): CycleSubst
   // Reihenfolge des ersten Auftretens vergeben, damit er stabil bleibt.
   const colorIndex = new Map<string, number>()
   return (rows ?? []).map((row) => {
-    const name = embedName(row.peptides) ?? row.name
-    const key = row.peptide_id ?? name
+    const name = embedName(row.stack_items) ?? row.name
+    const key = row.stack_item_id ?? name
     if (!colorIndex.has(key)) colorIndex.set(key, colorIndex.size)
     return {
       id: row.id,
@@ -26,7 +26,7 @@ export function normalizeCycles(rows: CycleRow[] | null | undefined): CycleSubst
       endDate: row.end_date,
       active: row.active,
       color: substanceColor(colorIndex.get(key)!),
-      peptideId: row.peptide_id,
+      stackItemId: row.stack_item_id,
     }
   })
 }

@@ -15,11 +15,11 @@ interface Effect {
   duration: string | null
   occurred_at: string
   notes: string | null
-  peptide_id: string | null
-  peptides: { name: string } | null
+  stack_item_id: string | null
+  stack_items: { display_name: string } | null
 }
 
-interface Peptide { id: string; name: string }
+interface StackItem { id: string; display_name: string }
 
 const SEVERITY_COLORS: Record<number, string> = {
   1: 'text-emerald-400', 2: 'text-lime-400', 3: 'text-amber-400',
@@ -54,7 +54,7 @@ export function Tagebuch() {
   const severityLabel = (n: number) =>
     [t('sehr_leicht'), t('leicht'), t('mittel'), t('stark'), t('sehr_stark')][n - 1]
   const [effects, setEffects]   = useState<Effect[]>([])
-  const [peptides, setPeptides] = useState<Peptide[]>([])
+  const [stackItems, setStackItems] = useState<StackItem[]>([])
   const [filter, setFilter]     = useState<'all' | 'effect' | 'side_effect'>('all')
   const [search, setSearch]     = useState('')
   const [sortBy, setSortBy]     = useState<'date_new' | 'date_old' | 'sev_high' | 'sev_low'>('date_new')
@@ -66,7 +66,7 @@ export function Tagebuch() {
     severity: 3,
     duration: '',
     occurred_at: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-    peptide_id: '',
+    stack_item_id: '',
     notes: '',
   })
   const [saving, setSaving] = useState(false)
@@ -74,24 +74,24 @@ export function Tagebuch() {
   const load = async () => {
     const { data } = await supabase
       .from('effects')
-      .select('*, peptides(name)')
+      .select('*, stack_items(display_name)')
       .eq('user_id', user!.id)
       .order('occurred_at', { ascending: false })
     if (data) setEffects(data as Effect[])
   }
 
-  const loadPeptides = async () => {
-    const { data } = await supabase.from('peptides').select('id, name').eq('user_id', user!.id).order('name')
-    if (data) setPeptides(data)
+  const loadStackItems = async () => {
+    const { data } = await supabase.from('stack_items').select('id, display_name').eq('user_id', user!.id).order('display_name')
+    if (data) setStackItems(data)
   }
 
-  useEffect(() => { load(); loadPeptides() }, [])
+  useEffect(() => { load(); loadStackItems() }, [])
 
   const resetForm = () => {
     setForm({
       type: 'effect', description: '', severity: 3,
       duration: '', occurred_at: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-      peptide_id: '', notes: '',
+      stack_item_id: '', notes: '',
     })
     setCustomDuration(false)
   }
@@ -107,7 +107,7 @@ export function Tagebuch() {
       status:      'eingetreten',
       duration:    form.duration || null,
       occurred_at: new Date(form.occurred_at).toISOString(),
-      peptide_id:  form.peptide_id || null,
+      stack_item_id: form.stack_item_id || null,
       notes:       form.notes || null,
     })
     if (error) toast.error(t('fehler_speichern'))
@@ -124,7 +124,7 @@ export function Tagebuch() {
   const filtered = effects
     .filter(e => filter === 'all' || e.type === filter)
     .filter(e => !search || e.description.toLowerCase().includes(search.toLowerCase())
-      || (e.peptides?.name ?? '').toLowerCase().includes(search.toLowerCase()))
+      || (e.stack_items?.display_name ?? '').toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       if (sortBy === 'date_new') return new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime()
       if (sortBy === 'date_old') return new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime()
@@ -204,7 +204,7 @@ export function Tagebuch() {
                 {/* Meta */}
                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-slate-500 text-xs">
                   <span>{format(new Date(e.occurred_at), 'dd.MM.yyyy HH:mm', { locale })}</span>
-                  {e.peptides && <span className="text-sky-400">{e.peptides.name}</span>}
+                  {e.stack_items && <span className="text-sky-400">{e.stack_items.display_name}</span>}
                   {e.duration && (
                     <span className="flex items-center gap-1">
                       <Clock size={11} />
@@ -260,13 +260,13 @@ export function Tagebuch() {
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
             </div>
 
-            {/* 3. Peptid */}
+            {/* 3. Substanz */}
             <div>
-              <label className="label">{t('peptid_optional')}</label>
-              <select className="select" value={form.peptide_id}
-                onChange={e => setForm(f => ({ ...f, peptide_id: e.target.value }))}>
+              <label className="label">{t('peptide_form_group_substance')}</label>
+              <select className="select" value={form.stack_item_id}
+                onChange={e => setForm(f => ({ ...f, stack_item_id: e.target.value }))}>
                 <option value="">{t('kein_peptid')}</option>
-                {peptides.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                {stackItems.map(item => <option key={item.id} value={item.id}>{item.display_name}</option>)}
               </select>
             </div>
 

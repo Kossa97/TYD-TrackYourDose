@@ -20,7 +20,7 @@ export function groupSubstancesByPeptide(
   const groups = new Map<string, SubstanceCycleGroup>()
 
   for (const cycle of cycles) {
-    const key = cycle.peptideId || cycle.name
+    const key = cycle.stackItemId || cycle.name
     const existing = groups.get(key)
     if (existing) {
       existing.cycles.push(cycle)

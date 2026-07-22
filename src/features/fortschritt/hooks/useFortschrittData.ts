@@ -66,7 +66,7 @@ export function useFortschrittData() {
   const [bloodwork, setBloodwork] = useState<BloodworkEntry[]>([])
   const [photos, setPhotos] = useState<ProgressPhotoEntry[]>([])
   const [doseLogs, setDoseLogs] = useState<DoseLogEntry[]>([])
-  const [peptideNames, setPeptideNames] = useState<Map<string, string>>(new Map())
+  const [stackItemNames, setStackItemNames] = useState<Map<string, string>>(new Map())
 
   const range = useMemo<DateRange>(
     () => rangeFromActiveSubstances(cycleSubstances, ongoingSubstances),
@@ -96,13 +96,13 @@ export function useFortschrittData() {
     if (!user) return
     if (!initialLoadedRef.current) setLoading(true)
 
-    const [cyclesRes, peptidesRes] = await Promise.all([
+    const [cyclesRes, stackItemsRes] = await Promise.all([
       supabase
         .from('cycles')
-        .select('id, peptide_id, name, start_date, end_date, active, peptides(name)')
+        .select('id, stack_item_id, name, start_date, end_date, active, stack_items(display_name)')
         .eq('user_id', user.id)
         .order('start_date', { ascending: true }),
-      supabase.from('peptides').select('id, name').eq('user_id', user.id),
+      supabase.from('stack_items').select('id, display_name').eq('user_id', user.id),
     ])
 
     const cycles = normalizeCycles(cyclesRes.data as unknown as CycleRow[])
@@ -141,12 +141,12 @@ export function useFortschrittData() {
         .order('taken_at', { ascending: false }),
       supabase
         .from('dose_logs')
-        .select('peptide_id, logged_at, taken')
+        .select('stack_item_id, logged_at, taken')
         .eq('user_id', user.id)
         .lte('logged_at', toBound),
     ])
 
-    const errors = [cyclesRes, peptidesRes, dailyRes, weightRes, bloodRes, photoRes, doseRes]
+    const errors = [cyclesRes, stackItemsRes, dailyRes, weightRes, bloodRes, photoRes, doseRes]
       .map(res => res.error)
       .filter(Boolean)
     if (errors.length > 0) {
@@ -188,10 +188,10 @@ export function useFortschrittData() {
     setDoseLogs((doseRes.data ?? []) as DoseLogEntry[])
 
     const names = new Map<string, string>()
-    for (const p of peptidesRes.data ?? []) {
-      names.set(String(p.id), String(p.name))
+    for (const item of stackItemsRes.data ?? []) {
+      names.set(String(item.id), String(item.display_name))
     }
-    setPeptideNames(names)
+    setStackItemNames(names)
     initialLoadedRef.current = true
     setDataReady(true)
     setLoading(false)
@@ -213,7 +213,7 @@ export function useFortschrittData() {
     bloodwork,
     photos,
     doseLogs,
-    peptideNames,
+    stackItemNames,
   }
 
   return { state, reload: load }

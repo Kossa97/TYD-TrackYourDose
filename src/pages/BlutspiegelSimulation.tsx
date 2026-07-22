@@ -54,12 +54,12 @@ interface PkProfileEmbed {
 
 interface ProtocolCycle {
   id: string
-  peptide_id: string
+  stack_item_id: string
   dose: number
   unit: string
   method: string
-  peptides: {
-    name: string
+  stack_items: {
+    display_name: string
     pk_profile_id: string | null
     pk_profiles: PkProfileEmbed | null
   } | null
@@ -313,7 +313,7 @@ function LiveCycleCarousel({
   const pointerActive = useRef(false)
 
   const eligible = useMemo(
-    () => cycles.filter(c => c.peptides?.pk_profiles),
+    () => cycles.filter(c => c.stack_items?.pk_profiles),
     [cycles],
   )
 
@@ -394,13 +394,13 @@ function LiveCycleCarousel({
           }}
         >
           {eligible.map(c => {
-            const pk = c.peptides!.pk_profiles!
+            const pk = c.stack_items!.pk_profiles!
             const accent = CATEGORY_ACCENT[normCat(pk.category)]
             return (
               <div key={c.id} style={{ flex: '0 0 100%', width: '100%' }}>
                 <LiveCycleCard
                   cycleId={c.id}
-                  peptideName={c.peptides!.name}
+                  peptideName={c.stack_items!.display_name}
                   pk={pk}
                   level={liveData.get(c.id)}
                   accent={accent}
@@ -424,7 +424,7 @@ function LiveCycleCarousel({
           aria-label="Zyklus-Auswahl"
         >
           {eligible.map((c, i) => {
-            const pk = c.peptides!.pk_profiles!
+            const pk = c.stack_items!.pk_profiles!
             const accent = CATEGORY_ACCENT[normCat(pk.category)]
             const active = i === activeIndex
             return (
@@ -433,7 +433,7 @@ function LiveCycleCarousel({
                 type="button"
                 role="tab"
                 aria-selected={active}
-                aria-label={`${c.peptides!.name}, Karte ${i + 1}`}
+                aria-label={`${c.stack_items!.display_name}, Karte ${i + 1}`}
                 onClick={() => setActiveIndex(i)}
                 style={{
                   height: 6,
@@ -764,8 +764,8 @@ export function BlutspiegelSimulation() {
     if (!user) return
     supabase
       .from('cycles')
-      .select(`id, peptide_id, dose, unit, method,
-        peptides ( name, pk_profile_id,
+      .select(`id, stack_item_id, dose, unit, method,
+        stack_items ( display_name, pk_profile_id,
           pk_profiles ( name, half_life_hours, tmax_hours, bioavailability_sc, vd_l_kg, category )
         )`)
       .eq('user_id', user.id)
@@ -782,14 +782,14 @@ export function BlutspiegelSimulation() {
 
   // ── Live-Übersicht: alle Zyklen mit PK-Profil laden ───────────────────
   const loadLiveLevels = useCallback(async (isRefresh = false) => {
-    const cyclesWithPk = protocolCycles.filter(c => c.peptides?.pk_profiles)
+    const cyclesWithPk = protocolCycles.filter(c => c.stack_items?.pk_profiles)
     if (!cyclesWithPk.length) return
     if (isRefresh) setLiveRefreshing(true)
     else setLiveLoading(true)
 
     const results = await Promise.all(
       cyclesWithPk.map(async c => {
-        const pk = c.peptides!.pk_profiles!
+        const pk = c.stack_items!.pk_profiles!
         const level = await getCurrentBlutspiegelLevel(
           c.id,
           pk.half_life_hours,
@@ -812,7 +812,7 @@ export function BlutspiegelSimulation() {
   // Auto-Refresh alle 5 Sekunden
   useEffect(() => {
     if (liveIntervalRef.current) window.clearInterval(liveIntervalRef.current)
-    const cyclesWithPk = protocolCycles.filter(c => c.peptides?.pk_profiles)
+    const cyclesWithPk = protocolCycles.filter(c => c.stack_items?.pk_profiles)
     if (!cyclesWithPk.length) return
     liveIntervalRef.current = window.setInterval(() => void loadLiveLevels(true), 5000)
     return () => { if (liveIntervalRef.current) window.clearInterval(liveIntervalRef.current) }
@@ -836,7 +836,7 @@ export function BlutspiegelSimulation() {
     if (!selectedProfile) return
     const profileNames = [selectedProfile.name, ...selectedProfile.aliases].map(n => n.toLowerCase())
     const match = protocolCycles.find(c =>
-      profileNames.includes(c.peptides?.name?.toLowerCase() ?? '')
+      profileNames.includes(c.stack_items?.display_name?.toLowerCase() ?? '')
     )
     if (match) { setDose(String(match.dose)); setUnit(normalizeUnit(match.unit)) }
   }, [selectedProfile, protocolCycles])
@@ -899,7 +899,7 @@ export function BlutspiegelSimulation() {
       </div>
 
       {/* ── Live-Übersicht aller aktiven Zyklen ─────────────────────────── */}
-      {(liveLoading || protocolCycles.filter(c => c.peptides?.pk_profiles).length > 0) && (
+      {(liveLoading || protocolCycles.filter(c => c.stack_items?.pk_profiles).length > 0) && (
         <div style={PANEL}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: liveLoading ? 0 : 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

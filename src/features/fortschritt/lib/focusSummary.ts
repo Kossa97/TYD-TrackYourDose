@@ -64,7 +64,7 @@ export function buildFocusSummary(
   dailyLogs: DailyLogEntry[],
   bloodwork: BloodworkEntry[],
   doseLogs: DoseLogEntry[],
-  peptideNames: Map<string, string>,
+  stackItemNames: Map<string, string>,
 ): FocusSummary {
   const duringFrom = substance.startDate
   const duringTo = substance.mode === 'cycle' && substance.endDate && !substance.active
@@ -95,9 +95,9 @@ export function buildFocusSummary(
   let doseDetail: string | null = null
   if (substance.mode === 'cycle') {
     const adh = computeAdherence(
-      doseLogs.filter(d => d.peptide_id === substance.peptideId),
+      doseLogs.filter(d => d.stack_item_id === substance.stackItemId),
       { from: duringFrom, to: duringTo },
-      peptideNames,
+      stackItemNames,
     )
     if (adh.overall != null) {
       adherence = `${adh.overall}%`

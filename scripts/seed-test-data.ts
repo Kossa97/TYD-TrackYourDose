@@ -85,7 +85,7 @@ const WDAY: Record<number, string> = {
 
 interface CycleRow {
   user_id: string
-  peptide_id: string
+  stack_item_id: string
   name: string
   dose: number
   unit: string
@@ -100,7 +100,7 @@ interface CycleRow {
   reminder: string
 }
 
-interface PeptideDef {
+interface StackItemDef {
   name: string
   pkNames: string[]
   inventory: {
@@ -110,7 +110,7 @@ interface PeptideDef {
     vials_count: number
     mg_per_vial: number
   }
-  peptide: {
+  stackItem: {
     default_dose: number
     default_unit: string
     default_method: string
@@ -132,12 +132,12 @@ interface PeptideDef {
   pauseWeeksRange: [number, number]
 }
 
-const PEPTIDE_DEFS: PeptideDef[] = [
+const STACK_ITEM_DEFS: StackItemDef[] = [
   {
     name: 'BPC-157',
     pkNames: ['BPC-157'],
     inventory: { batch_number: 'BPC-2020-01', batch_source: 'Swiss Chems', vials_initial: 12, vials_count: 3, mg_per_vial: 5 },
-    peptide: {
+    stackItem: {
       default_dose: 250, default_unit: 'mcg', default_method: 'Subkutan',
       vial_amount_mg: 5, reconstitution_ml: 2, expiry_days: 28,
       notes: 'Heilungspeptid — Gelenke, Darm, Sehnen.',
@@ -153,7 +153,7 @@ const PEPTIDE_DEFS: PeptideDef[] = [
     name: 'TB-500',
     pkNames: ['TB-500'],
     inventory: { batch_number: 'TB-2020-02', batch_source: 'Peptide Sciences', vials_initial: 10, vials_count: 2, mg_per_vial: 5 },
-    peptide: {
+    stackItem: {
       default_dose: 2500, default_unit: 'mcg', default_method: 'Subkutan',
       vial_amount_mg: 5, reconstitution_ml: 1, expiry_days: 28,
       notes: 'Regeneration & Reparatur.',
@@ -169,7 +169,7 @@ const PEPTIDE_DEFS: PeptideDef[] = [
     name: 'Ipamorelin',
     pkNames: ['Ipamorelin'],
     inventory: { batch_number: 'IPA-2021-01', batch_source: 'Core Peptides', vials_initial: 10, vials_count: 4, mg_per_vial: 2 },
-    peptide: {
+    stackItem: {
       default_dose: 200, default_unit: 'mcg', default_method: 'Subkutan',
       vial_amount_mg: 2, reconstitution_ml: 2, expiry_days: 28,
       notes: 'GH-Sekretagog — abends.',
@@ -185,7 +185,7 @@ const PEPTIDE_DEFS: PeptideDef[] = [
     name: 'CJC-1295 DAC',
     pkNames: ['CJC-1295 DAC', 'CJC-1295 with DAC'],
     inventory: { batch_number: 'CJC-2021-02', batch_source: 'Core Peptides', vials_initial: 8, vials_count: 3, mg_per_vial: 2 },
-    peptide: {
+    stackItem: {
       default_dose: 200, default_unit: 'mcg', default_method: 'Subkutan',
       vial_amount_mg: 2, reconstitution_ml: 2, expiry_days: 28,
       notes: 'Lang wirksames GH-Peptid — kombiniert mit Ipamorelin.',
@@ -201,7 +201,7 @@ const PEPTIDE_DEFS: PeptideDef[] = [
     name: 'Semaglutide',
     pkNames: ['Semaglutide', 'Semaglutid'],
     inventory: { batch_number: 'SEMA-2022-01', batch_source: 'Swiss Chems', vials_initial: 6, vials_count: 2, mg_per_vial: 3 },
-    peptide: {
+    stackItem: {
       default_dose: 250, default_unit: 'mcg', default_method: 'Subkutan',
       vial_amount_mg: 3, reconstitution_ml: 1.5, expiry_days: 28,
       notes: 'GLP-1 — Gewichtsmanagement, wöchentlich.',
@@ -251,8 +251,8 @@ function cycleAppliesToDay(cycle: Pick<CycleRow, 'start_date' | 'end_date' | 'fr
 
 function buildPlannedCycles(
   uid: string,
-  peptideId: string,
-  def: PeptideDef,
+  stackItemId: string,
+  def: StackItemDef,
   seedBase: number,
 ): CycleRow[] {
   const cycles: CycleRow[] = []
@@ -278,7 +278,7 @@ function buildPlannedCycles(
 
     cycles.push({
       user_id: uid,
-      peptide_id: peptideId,
+      stack_item_id: stackItemId,
       name: `${def.name} · Zyklus ${idx + 1}`,
       dose: def.cycleTemplate.dose,
       unit: def.cycleTemplate.unit,
@@ -304,20 +304,20 @@ function buildPlannedCycles(
 function buildDoseLogsForCycle(
   uid: string,
   cycle: CycleRow,
-  peptideId: string,
+  stackItemId: string,
   existingKeys: Set<string>,
 ): Array<Record<string, unknown>> {
   const logs: Array<Record<string, unknown>> = []
   const endStr = cycle.end_date ?? END_STR
   const timeKey = cycle.intake_time.split(',')[0]
   const hour = timeKey === 'abends' ? 20 : timeKey === 'mittags' ? 12 : 8
-  let seed = peptideId.charCodeAt(0) * 31 + cycle.start_date.replace(/-/g, '').length
+  let seed = stackItemId.charCodeAt(0) * 31 + cycle.start_date.replace(/-/g, '').length
 
   for (const dateStr of eachDay(cycle.start_date, endStr)) {
     seed++
     if (!cycleAppliesToDay(cycle, dateStr)) continue
 
-    const key = `${peptideId}|${dateStr}`
+    const key = `${stackItemId}|${dateStr}`
     if (existingKeys.has(key)) continue
 
     const r = pseudo(seed + 500)
@@ -329,7 +329,7 @@ function buildDoseLogsForCycle(
     const min = Math.floor(pseudo(seed + 900) * 45)
     logs.push({
       user_id: uid,
-      peptide_id: peptideId,
+      stack_item_id: stackItemId,
       dose: cycle.dose,
       unit: cycle.unit,
       method: cycle.method,
@@ -368,24 +368,24 @@ async function main() {
 
   const pkProfiles = (pkRows ?? []) as Array<{ id: string; name: string; aliases: string[] }>
 
-  // ── Inventar & Peptide (nur wenn noch nicht vorhanden) ─────────────────────
+  // ── Inventar & Stack-Objekte (nur wenn noch nicht vorhanden) ─────────────────────
   const { data: existingInv } = await supabase
     .from('inventory_items')
     .select('id, name')
     .eq('user_id', uid)
 
-  const { data: existingPeps } = await supabase
-    .from('peptides')
-    .select('id, name, inventory_item_id')
+  const { data: existingStackItems } = await supabase
+    .from('stack_items')
+    .select('id, display_name, inventory_item_id')
     .eq('user_id', uid)
 
   const invByName = new Map((existingInv ?? []).map(i => [i.name, i.id]))
-  const pepByName = new Map((existingPeps ?? []).map(p => [p.name, p.id]))
+  const stackItemByName = new Map((existingStackItems ?? []).map(item => [item.display_name, item.id]))
 
   let invCreated = 0
-  let pepCreated = 0
+  let stackItemCreated = 0
 
-  for (const def of PEPTIDE_DEFS) {
+  for (const def of STACK_ITEM_DEFS) {
     const pkId = findPkId(pkProfiles, def.pkNames)
 
     if (!invByName.has(def.name)) {
@@ -408,62 +408,86 @@ async function main() {
       invCreated++
     }
 
-    if (!pepByName.has(def.name)) {
+    if (!stackItemByName.has(def.name)) {
       const invId = invByName.get(def.name)!
-      const reconstDate = dStr(addDays(TODAY, -14 - pepCreated * 3))
-      const { data: pepRow, error: pepInsErr } = await supabase
-        .from('peptides')
-        .insert({
-          user_id: uid,
-          name: def.name,
-          default_unit: def.peptide.default_unit,
-          default_dose: def.peptide.default_dose,
-          default_method: def.peptide.default_method,
-          vial_amount_mg: def.peptide.vial_amount_mg,
-          reconstitution_ml: def.peptide.reconstitution_ml,
+      const reconstDate = dStr(addDays(TODAY, -14 - stackItemCreated * 3))
+      const { data: stackItemRow, error: stackItemSaveErr } = await supabase
+        .rpc('save_stack_item', {
+          p_item: {
+            id: null,
+            display_name: def.name,
+            category: 'peptide',
+            dosage_form: 'vial',
+            brand: null,
+            color_hex: null,
+            notes: def.stackItem.notes,
+          },
+          p_ingredients: [{
+            catalog_substance_id: null,
+            custom_name: def.name,
+            amount_value: def.stackItem.vial_amount_mg,
+            amount_unit: 'mg',
+            basis_value: 1,
+            basis_unit: 'vial',
+            position: 0,
+          }],
+        })
+      if (stackItemSaveErr || !stackItemRow) {
+        fail(`Stack-Objekt ${def.name}: ${stackItemSaveErr?.message ?? 'No data returned'}`)
+      }
+
+      const stackItemId = (stackItemRow as { id: string }).id
+      const { error: stackItemUpdateErr } = await supabase
+        .from('stack_items')
+        .update({
+          display_name: def.name,
+          default_unit: def.stackItem.default_unit,
+          default_dose: def.stackItem.default_dose,
+          default_method: def.stackItem.default_method,
+          vial_amount_mg: def.stackItem.vial_amount_mg,
+          reconstitution_ml: def.stackItem.reconstitution_ml,
           syringe_type: '1:100',
           vials_in_stock: def.inventory.vials_count,
           vials_initial: def.inventory.vials_initial,
           reconstitution_date: reconstDate,
-          expiry_days: def.peptide.expiry_days,
+          expiry_days: def.stackItem.expiry_days,
           batch_number: def.inventory.batch_number,
           batch_source: def.inventory.batch_source,
           inventory_item_id: invId,
           pk_profile_id: pkId,
-          notes: def.peptide.notes,
         })
-        .select('id')
-        .single()
-      if (pepInsErr) fail(`Peptid ${def.name}: ${pepInsErr.message}`)
-      pepByName.set(def.name, pepRow!.id)
-      pepCreated++
+        .eq('id', stackItemId)
+      if (stackItemUpdateErr) fail(`Stack-Objekt ${def.name}: ${stackItemUpdateErr.message}`)
+
+      stackItemByName.set(def.name, stackItemId)
+      stackItemCreated++
     }
   }
 
   if (invCreated > 0) console.log(`✅ Inventar angelegt (${invCreated} neue Posten)`)
   else console.log('✓ Inventar bereits vorhanden — übersprungen')
 
-  if (pepCreated > 0) console.log(`✅ Peptide angelegt (${pepCreated} neue)`)
-  else console.log('✓ Peptide bereits vorhanden — übersprungen')
+  if (stackItemCreated > 0) console.log(`✅ Substanzen angelegt (${stackItemCreated} neue)`)
+  else console.log('✓ Substanzen bereits vorhanden — übersprungen')
 
   // ── Zyklen ───────────────────────────────────────────────────────────────
   const { data: existingCycles } = await supabase
     .from('cycles')
-    .select('id, peptide_id, start_date')
+    .select('id, stack_item_id, start_date')
     .eq('user_id', uid)
 
   const existingCycleKeys = new Set(
-    (existingCycles ?? []).map(c => `${c.peptide_id}|${c.start_date}`),
+    (existingCycles ?? []).map(c => `${c.stack_item_id}|${c.start_date}`),
   )
 
   const cyclesToInsert: CycleRow[] = []
-  for (let i = 0; i < PEPTIDE_DEFS.length; i++) {
-    const def = PEPTIDE_DEFS[i]
-    const peptideId = pepByName.get(def.name)
-    if (!peptideId) continue
-    const planned = buildPlannedCycles(uid, peptideId, def, 1000 + i * 137)
+  for (let i = 0; i < STACK_ITEM_DEFS.length; i++) {
+    const def = STACK_ITEM_DEFS[i]
+    const stackItemId = stackItemByName.get(def.name)
+    if (!stackItemId) continue
+    const planned = buildPlannedCycles(uid, stackItemId, def, 1000 + i * 137)
     for (const c of planned) {
-      const key = `${c.peptide_id}|${c.start_date}`
+      const key = `${c.stack_item_id}|${c.start_date}`
       if (!existingCycleKeys.has(key)) {
         cyclesToInsert.push(c)
         existingCycleKeys.add(key)
@@ -488,18 +512,18 @@ async function main() {
   // ── dose_logs ────────────────────────────────────────────────────────────
   const { data: existingLogs } = await supabase
     .from('dose_logs')
-    .select('peptide_id, logged_at')
+    .select('stack_item_id, logged_at')
     .eq('user_id', uid)
     .gte('logged_at', `${START_STR}T00:00:00Z`)
     .lte('logged_at', `${END_STR}T23:59:59Z`)
 
   const doseLogKeys = new Set(
-    (existingLogs ?? []).map(l => `${l.peptide_id}|${String(l.logged_at).slice(0, 10)}`),
+    (existingLogs ?? []).map(l => `${l.stack_item_id}|${String(l.logged_at).slice(0, 10)}`),
   )
 
   const allDoseLogs: Array<Record<string, unknown>> = []
   for (const cycle of cycleRows) {
-    allDoseLogs.push(...buildDoseLogsForCycle(uid, cycle, cycle.peptide_id, doseLogKeys))
+    allDoseLogs.push(...buildDoseLogsForCycle(uid, cycle, cycle.stack_item_id, doseLogKeys))
   }
 
   const doseCount = await batchInsert('dose_logs', allDoseLogs, 'dose_logs')
@@ -619,7 +643,7 @@ async function main() {
   else console.log('✓ Gewichts-Logs bereits vorhanden')
 
   console.log('\n🎉 6-Jahres-Testdatensatz abgeschlossen')
-  console.log(`   → ${PEPTIDE_DEFS.length} Peptide (Inventar + PK-Verknüpfung)`)
+  console.log(`   → ${STACK_ITEM_DEFS.length} Substanzen (Inventar + PK-Verknüpfung)`)
   console.log(`   → ${cycleRows.length} Zyklen im Zeitraum`)
   console.log(`   → ${doseCount} Dosis-Logs`)
   console.log(`   → daily_logs, Blutwerte & Gewicht ergänzt`)

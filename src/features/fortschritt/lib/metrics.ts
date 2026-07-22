@@ -200,29 +200,29 @@ export function strongestWellnessField(
 export function computeAdherence(
   doseLogs: DoseLogEntry[],
   range: DateRange,
-  peptideNames: Map<string, string>,
-): { overall: number | null; taken: number; total: number; byPeptide: { name: string; pct: number }[] } {
+  stackItemNames: Map<string, string>,
+): { overall: number | null; taken: number; total: number; bySubstance: { name: string; pct: number }[] } {
   const inRange = filterByDateRange(doseLogs, range, d => dateKeyFromTimestamp(d.logged_at))
-    .filter(d => d.taken != null && d.peptide_id)
+    .filter(d => d.taken != null && d.stack_item_id)
 
   if (inRange.length === 0) {
-    return { overall: null, taken: 0, total: 0, byPeptide: [] }
+    return { overall: null, taken: 0, total: 0, bySubstance: [] }
   }
 
   const taken = inRange.filter(d => d.taken).length
   const grouped = new Map<string, { taken: number; total: number }>()
 
   for (const log of inRange) {
-    const id = log.peptide_id!
+    const id = log.stack_item_id!
     const entry = grouped.get(id) ?? { taken: 0, total: 0 }
     entry.total++
     if (log.taken) entry.taken++
     grouped.set(id, entry)
   }
 
-  const byPeptide = Array.from(grouped.entries())
+  const bySubstance = Array.from(grouped.entries())
     .map(([id, stats]) => ({
-      name: peptideNames.get(id) ?? id,
+      name: stackItemNames.get(id) ?? id,
       pct: Math.round((stats.taken / stats.total) * 100),
     }))
     .sort((a, b) => b.pct - a.pct)
@@ -231,7 +231,7 @@ export function computeAdherence(
     overall: Math.round((taken / inRange.length) * 100),
     taken,
     total: inRange.length,
-    byPeptide,
+    bySubstance,
   }
 }
 

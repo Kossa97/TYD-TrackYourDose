@@ -46,7 +46,7 @@ interface Copy {
   weightStart: string; weightEnd: string; weightChange: string; kg: string
   wellnessEnergy: string; wellnessSleep: string; wellnessLibido: string; scale: string
   effectType: string; effectDesc: string; effectSeverity: string; effectDate: string; effect: string; sideEffect: string
-  reviewPeptide: string; reviewRating: string; reviewExperience: string
+  reviewSubstance: string; reviewRating: string; reviewExperience: string
   expGood: string; expMedium: string; expBad: string
   notesEmpty: string
   disclaimerTitle: string; disclaimer: string
@@ -56,7 +56,7 @@ interface Copy {
 
 const COPY: Record<PdfLang, Copy> = {
   de: {
-    docTitle: 'Peptid-Protokoll',
+    docTitle: 'Substanz-Protokoll',
     brand: 'TRACK YOUR DOSE',
     subject: 'Betreff',
     period: 'Zeitraum',
@@ -70,9 +70,9 @@ const COPY: Record<PdfLang, Copy> = {
     },
     age: 'Alter', gender: 'Geschlecht', height: 'Größe', weight: 'Gewicht', years: 'Jahre',
     kpiAdherence: 'Einnahmetreue', kpiWeight: 'Gewicht (Veränd.)', kpiCycles: 'Aktive Zyklen', kpiDays: 'Zeitraum',
-    cyclesHead: ['Peptid', 'Dosis', 'Methode', 'Frequenz', 'Zeitraum'],
+    cyclesHead: ['Substanz', 'Dosis', 'Methode', 'Frequenz', 'Zeitraum'],
     statusActive: 'aktiv', statusDone: 'beendet',
-    adherenceIntro: 'Anteil bestätigter Einnahmen im Zeitraum, je Peptid.',
+    adherenceIntro: 'Anteil bestätigter Einnahmen im Zeitraum, je Substanz.',
     taken: 'genommen', skipped: 'ausgelassen',
     bloodMarker: 'Marker', bloodUnit: 'Einheit', bloodRange: 'Normbereich',
     bloodFirst: 'Erst', bloodLast: 'Letzt', bloodChange: 'Veränd.',
@@ -80,7 +80,7 @@ const COPY: Record<PdfLang, Copy> = {
     wellnessEnergy: 'Energie', wellnessSleep: 'Schlaf', wellnessLibido: 'Libido', scale: 'Skala 1–10',
     effectType: 'Typ', effectDesc: 'Beschreibung', effectSeverity: 'Stärke', effectDate: 'Datum',
     effect: 'Wirkung', sideEffect: 'Nebenwirkung',
-    reviewPeptide: 'Peptid', reviewRating: 'Bewertung', reviewExperience: 'Erfahrung',
+    reviewSubstance: 'Substanz', reviewRating: 'Bewertung', reviewExperience: 'Erfahrung',
     expGood: 'Gut', expMedium: 'Mittel', expBad: 'Schlecht',
     notesEmpty: '(keine Notiz eingetragen)',
     disclaimerTitle: 'Hinweis',
@@ -89,7 +89,7 @@ const COPY: Record<PdfLang, Copy> = {
     footer: 'Erstellt mit TYD – Track Your Dose',
   },
   en: {
-    docTitle: 'Peptide Protocol',
+    docTitle: 'Substance Protocol',
     brand: 'TRACK YOUR DOSE',
     subject: 'Subject',
     period: 'Period',
@@ -103,9 +103,9 @@ const COPY: Record<PdfLang, Copy> = {
     },
     age: 'Age', gender: 'Gender', height: 'Height', weight: 'Weight', years: 'years',
     kpiAdherence: 'Adherence', kpiWeight: 'Weight (change)', kpiCycles: 'Active cycles', kpiDays: 'Period',
-    cyclesHead: ['Peptide', 'Dose', 'Route', 'Frequency', 'Period'],
+    cyclesHead: ['Substance', 'Dose', 'Route', 'Frequency', 'Period'],
     statusActive: 'active', statusDone: 'completed',
-    adherenceIntro: 'Share of confirmed doses in the period, per peptide.',
+    adherenceIntro: 'Share of confirmed doses in the period, per substance.',
     taken: 'taken', skipped: 'skipped',
     bloodMarker: 'Marker', bloodUnit: 'Unit', bloodRange: 'Normal range',
     bloodFirst: 'First', bloodLast: 'Last', bloodChange: 'Change',
@@ -113,7 +113,7 @@ const COPY: Record<PdfLang, Copy> = {
     wellnessEnergy: 'Energy', wellnessSleep: 'Sleep', wellnessLibido: 'Libido', scale: 'Scale 1–10',
     effectType: 'Type', effectDesc: 'Description', effectSeverity: 'Severity', effectDate: 'Date',
     effect: 'Effect', sideEffect: 'Side effect',
-    reviewPeptide: 'Peptide', reviewRating: 'Rating', reviewExperience: 'Experience',
+    reviewSubstance: 'Substance', reviewRating: 'Rating', reviewExperience: 'Experience',
     expGood: 'Good', expMedium: 'Medium', expBad: 'Poor',
     notesEmpty: '(no note entered)',
     disclaimerTitle: 'Note',
@@ -446,7 +446,7 @@ function renderSummary(ctx: Ctx, data: ProtocolData, opts: PdfBuildOptions) {
 function renderCycles(ctx: Ctx, data: ProtocolData) {
   const { c, lang } = ctx
   const body = data.cycles.map(cy => {
-    const name = cy.peptide_name || cy.name
+    const name = cy.stack_item_name || cy.name
     const status = cy.active ? c.statusActive : c.statusDone
     const dose = cy.dose != null ? `${fmtNum(cy.dose, 2)} ${cy.unit ?? ''}`.trim() : '–'
     return [
@@ -475,14 +475,14 @@ function renderAdherence(ctx: Ctx, data: ProtocolData) {
   const byPep = new Map<string, { taken: number; total: number }>()
   for (const l of data.doseLogs) {
     if (l.taken == null) continue
-    const key = l.peptide_id ?? '—'
+    const key = l.stack_item_id ?? '—'
     const e = byPep.get(key) ?? { taken: 0, total: 0 }
     e.total += 1; if (l.taken) e.taken += 1
     byPep.set(key, e)
   }
   const rows = [...byPep.entries()]
     .map(([pid, e]) => ({
-      label: data.peptideNames.get(pid) ?? (ctx.lang === 'de' ? 'Unbekannt' : 'Unknown'),
+      label: data.stackItemNames.get(pid) ?? (ctx.lang === 'de' ? 'Unbekannt' : 'Unknown'),
       pct: Math.round((e.taken / e.total) * 100),
       detail: `${e.taken}/${e.total} ${c.taken}`,
     }))
@@ -563,7 +563,7 @@ function renderEffects(ctx: Ctx, data: ProtocolData) {
   const { c, lang } = ctx
   const body = data.effects.map(e => [
     e.type === 'effect' ? c.effect : c.sideEffect,
-    e.peptide_name ? `${e.description}\n(${e.peptide_name})` : e.description,
+    e.stack_item_name ? `${e.description}\n(${e.stack_item_name})` : e.description,
     `${e.severity}/5`,
     fmtDate(e.occurred_at, lang),
   ])
@@ -583,12 +583,12 @@ function renderReviews(ctx: Ctx, data: ProtocolData) {
   const expLabel = (e: string | null) =>
     e === 'gut' ? c.expGood : e === 'mittel' ? c.expMedium : e === 'schlecht' ? c.expBad : '–'
   const body = data.reviews.map(r => [
-    r.peptide_name ?? '–',
+    r.stack_item_name ?? '–',
     `${'*'.repeat(Math.max(0, Math.min(5, r.rating)))}${'.'.repeat(5 - Math.max(0, Math.min(5, r.rating)))}  (${r.rating}/5)`,
     expLabel(r.experience),
   ])
   autoTableSafe(ctx, {
-    head: [[c.reviewPeptide, c.reviewRating, c.reviewExperience]],
+    head: [[c.reviewSubstance, c.reviewRating, c.reviewExperience]],
     body,
     columnStyles: { 0: { fontStyle: 'bold' }, 1: { cellWidth: 46 } },
   })

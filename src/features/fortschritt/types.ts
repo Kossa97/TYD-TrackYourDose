@@ -7,12 +7,12 @@ export interface DateRange {
 
 export interface CycleRow {
   id: string
-  peptide_id: string
+  stack_item_id: string
   name: string
   start_date: string
   end_date: string | null
   active: boolean
-  peptides: { name: string } | { name: string }[] | null
+  stack_items: { display_name: string } | { display_name: string }[] | null
 }
 
 export interface CycleSubstance {
@@ -23,7 +23,7 @@ export interface CycleSubstance {
   endDate: string | null
   active: boolean
   color: string
-  peptideId: string
+  stackItemId: string
 }
 
 export interface OngoingSubstance {
@@ -71,7 +71,7 @@ export interface ProgressPhotoEntry {
 }
 
 export interface DoseLogEntry {
-  peptide_id: string | null
+  stack_item_id: string | null
   logged_at: string
   taken: boolean | null
 }
@@ -115,7 +115,7 @@ export interface FortschrittOverviewState {
   bloodwork: BloodworkEntry[]
   photos: ProgressPhotoEntry[]
   doseLogs: DoseLogEntry[]
-  peptideNames: Map<string, string>
+  stackItemNames: Map<string, string>
 }
 
 export interface ChartNavigation {

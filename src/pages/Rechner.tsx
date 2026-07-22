@@ -15,9 +15,9 @@ const SYRINGE_PRESETS = [
 ]
 const DOSE_UNITS = ['mcg', 'mg', 'IU']
 
-interface Peptide {
+interface StackItem {
   id: string
-  name: string
+  display_name: string
   vial_amount_mg: number | null
   reconstitution_ml: number | null
 }
@@ -177,31 +177,31 @@ export function Rechner() {
   const [sUnits,    setSUnits]    = useState('100')
   const [syringeOpen, setSyringeOpen] = useState(false)
 
-  // Peptid-Auswahl
-  const [peptides,        setPeptides]        = useState<Peptide[]>([])
-  const [selectedPeptide, setSelectedPeptide] = useState<Peptide | null>(null)
-  const [peptideOpen,     setPeptideOpen]     = useState(false)
+  // Substanz-Auswahl
+  const [stackItems,        setStackItems]        = useState<StackItem[]>([])
+  const [selectedStackItem, setSelectedStackItem] = useState<StackItem | null>(null)
+  const [stackItemOpen,     setStackItemOpen]     = useState(false)
 
   useEffect(() => {
     if (!user) return
     supabase
-      .from('peptides')
-      .select('id, name, vial_amount_mg, reconstitution_ml')
+      .from('stack_items')
+      .select('id, display_name, vial_amount_mg, reconstitution_ml')
       .eq('user_id', user.id)
       .not('vial_amount_mg', 'is', null)
-      .order('name')
-      .then(({ data }) => { if (data) setPeptides(data as Peptide[]) })
+      .order('display_name')
+      .then(({ data }) => { if (data) setStackItems(data as StackItem[]) })
   }, [user])
 
-  const selectPeptide = (p: Peptide) => {
-    setSelectedPeptide(p)
-    if (p.vial_amount_mg)    setVialMg(p.vial_amount_mg.toString())
-    if (p.reconstitution_ml) setReconMl(p.reconstitution_ml.toString())
-    setPeptideOpen(false)
+  const selectStackItem = (item: StackItem) => {
+    setSelectedStackItem(item)
+    if (item.vial_amount_mg)    setVialMg(item.vial_amount_mg.toString())
+    if (item.reconstitution_ml) setReconMl(item.reconstitution_ml.toString())
+    setStackItemOpen(false)
   }
 
-  const clearPeptide = () => {
-    setSelectedPeptide(null)
+  const clearStackItem = () => {
+    setSelectedStackItem(null)
     setVialMg('')
   }
 
@@ -285,23 +285,23 @@ export function Rechner() {
         />
         <div className="mt-3 space-y-0 divide-y divide-slate-800">
 
-        {/* Peptid aus Meine Peptide */}
-        {peptides.length > 0 && (
+        {/* Substanz aus My Stack */}
+        {stackItems.length > 0 && (
           <div className="relative">
             <button
-              onClick={() => setPeptideOpen(o => !o)}
+              onClick={() => setStackItemOpen(o => !o)}
               className="w-full flex items-center justify-between py-3.5 px-1 text-left"
             >
               <span className="text-slate-300 text-sm font-medium flex items-center gap-1.5">
                 <FlaskConical size={13} className="text-sky-400" />
-                {t('peptid_uebernehmen')}
+                {t('peptide_form_group_substance')}
               </span>
               <div className="flex items-center gap-1.5">
-                {selectedPeptide ? (
+                {selectedStackItem ? (
                   <>
-                    <span className="text-sky-400 text-sm font-medium">{selectedPeptide.name}</span>
+                    <span className="text-sky-400 text-sm font-medium">{selectedStackItem.display_name}</span>
                     <button
-                      onClick={e => { e.stopPropagation(); clearPeptide() }}
+                      onClick={e => { e.stopPropagation(); clearStackItem() }}
                       className="p-0.5 text-slate-500 hover:text-slate-300 transition-colors">
                       <X size={13} />
                     </button>
@@ -309,32 +309,32 @@ export function Rechner() {
                 ) : (
                   <>
                     <span className="text-slate-500 text-sm">{t('auswaehlen')}</span>
-                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${peptideOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${stackItemOpen ? 'rotate-180' : ''}`} />
                   </>
                 )}
               </div>
             </button>
-            {peptideOpen && (
+            {stackItemOpen && (
               <div className="absolute left-0 right-0 top-full bg-slate-800 border border-slate-700 rounded-xl z-10 overflow-hidden shadow-xl max-h-52 overflow-y-auto">
-                {peptides.map(p => (
+                {stackItems.map(item => (
                   <button
-                    key={p.id}
-                    onClick={() => selectPeptide(p)}
+                    key={item.id}
+                    onClick={() => selectStackItem(item)}
                     className={`w-full text-left px-4 py-3 text-sm transition-colors flex items-center justify-between
-                      ${selectedPeptide?.id === p.id
+                      ${selectedStackItem?.id === item.id
                         ? 'bg-sky-500/20 text-sky-300'
                         : 'hover:bg-slate-700 text-slate-300'}`}
                   >
-                    <span>{p.name}</span>
+                    <span>{item.display_name}</span>
                     <span className="text-slate-500 text-xs ml-2 shrink-0">
-                      {p.vial_amount_mg} mg
-                      {p.reconstitution_ml ? ` · ${p.reconstitution_ml} mL` : ''}
+                      {item.vial_amount_mg} mg
+                      {item.reconstitution_ml ? ` · ${item.reconstitution_ml} mL` : ''}
                     </span>
                   </button>
                 ))}
               </div>
             )}
-            {selectedPeptide && (
+            {selectedStackItem && (
               <p className="text-xs text-slate-600 px-1 pb-2 -mt-1">
                 {t('wirkstoff_uebernommen')}
               </p>
@@ -394,7 +394,7 @@ export function Rechner() {
             <input
               className="input py-1.5 text-sm text-right pr-8"
               type="number" placeholder={t('eg_10')}
-              value={vialMg} onChange={e => { setVialMg(e.target.value); setSelectedPeptide(null) }}
+              value={vialMg} onChange={e => { setVialMg(e.target.value); setSelectedStackItem(null) }}
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">mg</span>
           </div>

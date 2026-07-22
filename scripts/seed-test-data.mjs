@@ -62,10 +62,10 @@ function effectiveDose(baseDose, escalations, dateStr, cycleStart) {
   return dose
 }
 
-function buildLogs(cycle, cycleEscalations, peptideId, takenRate = 0.88) {
+function buildLogs(cycle, cycleEscalations, stackItemId, takenRate = 0.88) {
   const endStr = cycle.end_date ?? TODAY
   const logs = []
-  let seed = peptideId.charCodeAt(0) * 31 + cycle.start_date.replace(/-/g,'') * 1
+  let seed = stackItemId.charCodeAt(0) * 31 + cycle.start_date.replace(/-/g,'') * 1
   const timeKey = (cycle.intake_time ?? 'morgens').split(',')[0]
   const hour = timeKey === 'abends' ? 19 : timeKey === 'mittags' ? 12 : 8
   for (const dateStr of eachDay(cycle.start_date, endStr)) {
@@ -78,7 +78,7 @@ function buildLogs(cycle, cycleEscalations, peptideId, takenRate = 0.88) {
     const min = Math.floor(pseudo(seed + 2000) * 45)
     const dose = effectiveDose(cycle.dose, cycleEscalations, dateStr, cycle.start_date)
     logs.push({
-      user_id: uid, peptide_id: peptideId,
+      user_id: uid, stack_item_id: stackItemId,
       dose, unit: cycle.unit, method: cycle.method,
       logged_at: `${dateStr}T${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')}:00Z`,
       taken,
@@ -94,8 +94,8 @@ await sb.from('dose_logs').delete().eq('user_id', uid)
 await sb.from('effects').delete().eq('user_id', uid)
 await sb.from('reviews').delete().eq('user_id', uid)
 await sb.from('cycles').delete().eq('user_id', uid)
-await sb.from('peptides').delete().eq('user_id', uid)
-// inventory_items könnte FK-Fehler geben wenn peptides noch referenzieren → deshalb danach
+await sb.from('stack_items').delete().eq('user_id', uid)
+// inventory_items könnte FK-Fehler geben wenn Stack-Objekte noch referenzieren → deshalb danach
 const { error: invDelErr } = await sb.from('inventory_items').delete().eq('user_id', uid)
 if (invDelErr) console.warn('  inventory_items löschen:', invDelErr.message)
 console.log('✓ Bereinigt')
@@ -125,10 +125,12 @@ if (invErr) { console.error('❌ Inventar:', invErr.message); process.exit(1) }
 const INV = Object.fromEntries(inv.map(i => [i.name, i.id]))
 console.log('✓ Inventar (6 Posten)')
 
-// ─── Peptide ──────────────────────────────────────────────────────────────────
-const { data: peps, error: pepErr } = await sb.from('peptides').insert([
+// ─── Stack-Objekte ──────────────────────────────────────────────────────────────────
+const stackItemSeeds = [
   {
-    user_id: uid, name: 'BPC-157', default_unit: 'mcg', default_dose: 250, default_method: 'Subkutan',
+    display_name: 'BPC-157', category: 'peptide', dosage_form: 'vial',
+    amount_value: 5, amount_unit: 'mg', basis_value: 1, basis_unit: 'vial',
+    default_unit: 'mcg', default_dose: 250, default_method: 'Subkutan',
     vial_amount_mg: 5, reconstitution_ml: 2, syringe_type: '1:100',
     vials_in_stock: 2, vials_initial: 8,
     reconstitution_date: '2026-05-10', expiry_days: 28,
@@ -137,7 +139,9 @@ const { data: peps, error: pepErr } = await sb.from('peptides').insert([
     notes: 'Heilungspeptid — Gelenke, Darm, Sehnen.',
   },
   {
-    user_id: uid, name: 'TB-500', default_unit: 'mcg', default_dose: 2500, default_method: 'Subkutan',
+    display_name: 'TB-500', category: 'peptide', dosage_form: 'vial',
+    amount_value: 5, amount_unit: 'mg', basis_value: 1, basis_unit: 'vial',
+    default_unit: 'mcg', default_dose: 2500, default_method: 'Subkutan',
     vial_amount_mg: 5, reconstitution_ml: 1, syringe_type: '1:100',
     vials_in_stock: 2, vials_initial: 6,
     reconstitution_date: '2026-05-01', expiry_days: 28,
@@ -146,7 +150,9 @@ const { data: peps, error: pepErr } = await sb.from('peptides').insert([
     notes: 'Muscle Repair & Ausdauer.',
   },
   {
-    user_id: uid, name: 'Ipamorelin', default_unit: 'mcg', default_dose: 100, default_method: 'Subkutan',
+    display_name: 'Ipamorelin', category: 'peptide', dosage_form: 'vial',
+    amount_value: 2, amount_unit: 'mg', basis_value: 1, basis_unit: 'vial',
+    default_unit: 'mcg', default_dose: 100, default_method: 'Subkutan',
     vial_amount_mg: 2, reconstitution_ml: 2, syringe_type: '1:100',
     vials_in_stock: 4, vials_initial: 8,
     reconstitution_date: '2026-05-15', expiry_days: 28,
@@ -155,7 +161,9 @@ const { data: peps, error: pepErr } = await sb.from('peptides').insert([
     notes: 'GH-Sekretagog — abends vor dem Schlafen.',
   },
   {
-    user_id: uid, name: 'CJC-1295', default_unit: 'mcg', default_dose: 100, default_method: 'Subkutan',
+    display_name: 'CJC-1295', category: 'peptide', dosage_form: 'vial',
+    amount_value: 2, amount_unit: 'mg', basis_value: 1, basis_unit: 'vial',
+    default_unit: 'mcg', default_dose: 100, default_method: 'Subkutan',
     vial_amount_mg: 2, reconstitution_ml: 2, syringe_type: '1:100',
     vials_in_stock: 5, vials_initial: 7,
     reconstitution_date: '2026-05-15', expiry_days: 28,
@@ -164,7 +172,9 @@ const { data: peps, error: pepErr } = await sb.from('peptides').insert([
     notes: 'Immer mit Ipamorelin kombiniert.',
   },
   {
-    user_id: uid, name: 'Semaglutid', default_unit: 'mcg', default_dose: 750, default_method: 'Subkutan',
+    display_name: 'Semaglutid', category: 'peptide', dosage_form: 'vial',
+    amount_value: 3, amount_unit: 'mg', basis_value: 1, basis_unit: 'vial',
+    default_unit: 'mcg', default_dose: 750, default_method: 'Subkutan',
     vial_amount_mg: 3, reconstitution_ml: 1.5, syringe_type: '1:100',
     vials_in_stock: 2, vials_initial: 4,
     reconstitution_date: '2026-04-20', expiry_days: 28,
@@ -173,7 +183,9 @@ const { data: peps, error: pepErr } = await sb.from('peptides').insert([
     notes: 'GLP-1 — wöchentlich montags, Dosis eskaliert.',
   },
   {
-    user_id: uid, name: 'Selank', default_unit: 'mcg', default_dose: 250, default_method: 'Nasal',
+    display_name: 'Selank', category: 'peptide', dosage_form: 'nasal_spray',
+    amount_value: 250, amount_unit: 'mcg', basis_value: 1, basis_unit: 'spray',
+    default_unit: 'mcg', default_dose: 250, default_method: 'Nasal',
     vial_amount_mg: 5, reconstitution_ml: 5, syringe_type: '1:100',
     vials_in_stock: 5, vials_initial: 6,
     reconstitution_date: '2026-03-20', expiry_days: 90,
@@ -181,53 +193,93 @@ const { data: peps, error: pepErr } = await sb.from('peptides').insert([
     inventory_item_id: INV['Selank'],
     notes: 'Nootropikum — nasal, morgens.',
   },
-]).select()
-if (pepErr) { console.error('❌ Peptide:', pepErr.message); process.exit(1) }
-const PEP = Object.fromEntries(peps.map(p => [p.name, p.id]))
-console.log('✓ Peptide (6 Stück)')
+ ]
+
+const stackItems = []
+for (const seed of stackItemSeeds) {
+  const {
+    display_name, category, dosage_form, notes,
+    amount_value, amount_unit, basis_value, basis_unit,
+    ...trackingFields
+  } = seed
+  const { data: stackItem, error: stackItemSaveErr } = await sb.rpc('save_stack_item', {
+    p_item: {
+      id: null,
+      display_name,
+      category,
+      dosage_form,
+      brand: null,
+      color_hex: null,
+      notes,
+    },
+    p_ingredients: [{
+      catalog_substance_id: null,
+      custom_name: display_name,
+      amount_value,
+      amount_unit,
+      basis_value,
+      basis_unit,
+      position: 0,
+    }],
+  })
+  if (stackItemSaveErr || !stackItem) {
+    console.error('❌ Stack-Objekt:', stackItemSaveErr?.message ?? 'No data returned')
+    process.exit(1)
+  }
+
+  const { error: stackItemUpdateErr } = await sb
+    .from('stack_items')
+    .update(trackingFields)
+    .eq('id', stackItem.id)
+  if (stackItemUpdateErr) { console.error('❌ Stack-Objekt:', stackItemUpdateErr.message); process.exit(1) }
+  stackItems.push(stackItem)
+}
+
+const STACK_ITEM_IDS = Object.fromEntries(stackItems.map(item => [item.display_name, item.id]))
+console.log('✓ Substanzen (6 Stück)')
 
 // ─── Zyklen ───────────────────────────────────────────────────────────────────
 const cyclesData = [
   // Abgeschlossene Zyklen (6 Monate Heilungsphase)
   {
-    user_id: uid, peptide_id: PEP['BPC-157'],
+    user_id: uid, stack_item_id: STACK_ITEM_IDS['BPC-157'],
     name: 'Heilungszyklus', dose: 250, unit: 'mcg', method: 'Subkutan',
     frequency: 'Täglich', schedule_days: [], start_date: '2025-11-23', end_date: '2026-02-20', active: false,
     intake_time: 'morgens', reminder: 'on_time',
   },
   {
-    user_id: uid, peptide_id: PEP['TB-500'],
+    user_id: uid, stack_item_id: STACK_ITEM_IDS['TB-500'],
     name: 'Reparatur-Protokoll', dose: 2500, unit: 'mcg', method: 'Subkutan',
     frequency: 'Wochentage wählen', schedule_days: ['Mo','Do'], start_date: '2025-11-23', end_date: '2026-02-20', active: false,
     intake_time: 'abends', reminder: '2h',
   },
   // Aktive Zyklen
   {
-    user_id: uid, peptide_id: PEP['BPC-157'],
+    user_id: uid, stack_item_id: STACK_ITEM_IDS['BPC-157'],
     name: 'Maintenance', dose: 250, unit: 'mcg', method: 'Subkutan',
     frequency: 'Täglich', schedule_days: [], start_date: '2026-02-21', end_date: null, active: true,
     intake_time: 'morgens', reminder: 'on_time',
   },
   {
-    user_id: uid, peptide_id: PEP['Ipamorelin'],
+    user_id: uid, stack_item_id: STACK_ITEM_IDS['Ipamorelin'],
     name: 'Nacht-Stack', dose: 100, unit: 'mcg', method: 'Subkutan',
     frequency: 'Täglich', schedule_days: [], start_date: '2026-01-23', end_date: null, active: true,
     intake_time: 'abends', reminder: '2h',
   },
   {
-    user_id: uid, peptide_id: PEP['CJC-1295'],
+    user_id: uid, stack_item_id: STACK_ITEM_IDS['CJC-1295'],
     name: 'GH-Stack', dose: 100, unit: 'mcg', method: 'Subkutan',
     frequency: 'Täglich', schedule_days: [], start_date: '2026-01-23', end_date: null, active: true,
     intake_time: 'abends', reminder: '2h',
   },
   {
-    user_id: uid, peptide_id: PEP['Semaglutid'],
+    user_id: uid, stack_item_id: STACK_ITEM_IDS['Semaglutid'],
     name: 'Gewichtsprotokoll', dose: 250, unit: 'mcg', method: 'Subkutan',
     frequency: 'Wöchentlich', schedule_days: [], start_date: '2025-12-01', end_date: null, active: true,
     intake_time: 'morgens', reminder: '1day',
   },
   {
-    user_id: uid, peptide_id: PEP['Selank'],
+    user_id: uid, stack_item_id: STACK_ITEM_IDS['Selank'],
     name: 'Fokus-Protokoll', dose: 250, unit: 'mcg', method: 'Nasal',
     frequency: 'Täglich', schedule_days: [], start_date: '2026-03-23', end_date: null, active: true,
     intake_time: 'morgens', reminder: 'none',
@@ -255,13 +307,13 @@ const semaEsc = [
 ]
 
 const allLogs = [
-  ...buildLogs(CYC['Heilungszyklus'],      [],      PEP['BPC-157']),
-  ...buildLogs(CYC['Reparatur-Protokoll'], [],      PEP['TB-500']),
-  ...buildLogs(CYC['Maintenance'],         [],      PEP['BPC-157']),
-  ...buildLogs(CYC['Nacht-Stack'],         [],      PEP['Ipamorelin']),
-  ...buildLogs(CYC['GH-Stack'],            [],      PEP['CJC-1295']),
-  ...buildLogs(CYC['Gewichtsprotokoll'],   semaEsc, PEP['Semaglutid'], 0.92),
-  ...buildLogs(CYC['Fokus-Protokoll'],     [],      PEP['Selank'], 0.85),
+  ...buildLogs(CYC['Heilungszyklus'],      [],      STACK_ITEM_IDS['BPC-157']),
+  ...buildLogs(CYC['Reparatur-Protokoll'], [],      STACK_ITEM_IDS['TB-500']),
+  ...buildLogs(CYC['Maintenance'],         [],      STACK_ITEM_IDS['BPC-157']),
+  ...buildLogs(CYC['Nacht-Stack'],         [],      STACK_ITEM_IDS['Ipamorelin']),
+  ...buildLogs(CYC['GH-Stack'],            [],      STACK_ITEM_IDS['CJC-1295']),
+  ...buildLogs(CYC['Gewichtsprotokoll'],   semaEsc, STACK_ITEM_IDS['Semaglutid'], 0.92),
+  ...buildLogs(CYC['Fokus-Protokoll'],     [],      STACK_ITEM_IDS['Selank'], 0.85),
 ]
 
 // Supabase in Chunks à 200 einfügen
@@ -275,44 +327,44 @@ console.log(`✓ Dosis-Logs (${allLogs.length} Einträge)`)
 // ─── Tagebuch-Einträge (Effects) ──────────────────────────────────────────────
 const effectsData = [
   // BPC-157 Heilungsphase
-  { occurred_at: '2025-11-28T09:15:00Z', peptide_id: PEP['BPC-157'], type: 'side_effect', description: 'Leichte Rötung an der Einstichstelle', severity: 2, status: 'abgeklungen', duration: '2 Stunden', notes: 'Normal bei Neustart.' },
-  { occurred_at: '2025-12-05T08:30:00Z', peptide_id: PEP['BPC-157'], type: 'effect',      description: 'Knieschmerzen deutlich reduziert', severity: 4, status: 'anhaltend', duration: 'dauerhaft', notes: 'Bereits nach 2 Wochen merkbar.' },
-  { occurred_at: '2025-12-15T08:00:00Z', peptide_id: PEP['BPC-157'], type: 'effect',      description: 'Verbesserte Gelenkbeweglichkeit', severity: 4, status: 'anhaltend', notes: 'Schulter deutlich besser.' },
-  { occurred_at: '2026-01-04T08:20:00Z', peptide_id: PEP['BPC-157'], type: 'effect',      description: 'Schnellere Wundheilung', severity: 5, status: 'eingetreten', duration: 'dauerhaft', notes: 'Kleine Schnittwunde in 3 Tagen verheilt.' },
-  { occurred_at: '2026-01-20T08:00:00Z', peptide_id: PEP['BPC-157'], type: 'effect',      description: 'Verbesserter Darm — kein Blähungsgefühl mehr', severity: 3, status: 'anhaltend' },
+  { occurred_at: '2025-11-28T09:15:00Z', stack_item_id: STACK_ITEM_IDS['BPC-157'], type: 'side_effect', description: 'Leichte Rötung an der Einstichstelle', severity: 2, status: 'abgeklungen', duration: '2 Stunden', notes: 'Normal bei Neustart.' },
+  { occurred_at: '2025-12-05T08:30:00Z', stack_item_id: STACK_ITEM_IDS['BPC-157'], type: 'effect',      description: 'Knieschmerzen deutlich reduziert', severity: 4, status: 'anhaltend', duration: 'dauerhaft', notes: 'Bereits nach 2 Wochen merkbar.' },
+  { occurred_at: '2025-12-15T08:00:00Z', stack_item_id: STACK_ITEM_IDS['BPC-157'], type: 'effect',      description: 'Verbesserte Gelenkbeweglichkeit', severity: 4, status: 'anhaltend', notes: 'Schulter deutlich besser.' },
+  { occurred_at: '2026-01-04T08:20:00Z', stack_item_id: STACK_ITEM_IDS['BPC-157'], type: 'effect',      description: 'Schnellere Wundheilung', severity: 5, status: 'eingetreten', duration: 'dauerhaft', notes: 'Kleine Schnittwunde in 3 Tagen verheilt.' },
+  { occurred_at: '2026-01-20T08:00:00Z', stack_item_id: STACK_ITEM_IDS['BPC-157'], type: 'effect',      description: 'Verbesserter Darm — kein Blähungsgefühl mehr', severity: 3, status: 'anhaltend' },
 
   // TB-500
-  { occurred_at: '2025-11-27T20:30:00Z', peptide_id: PEP['TB-500'], type: 'side_effect', description: 'Müdigkeit ca. 1 Stunde nach Injektion', severity: 2, status: 'abgeklungen', duration: '1 Stunde' },
-  { occurred_at: '2025-12-08T08:00:00Z', peptide_id: PEP['TB-500'], type: 'effect',      description: 'Muskelkater nach Training stark reduziert', severity: 4, status: 'anhaltend', notes: 'DOMs fast verschwunden.' },
-  { occurred_at: '2025-12-22T08:00:00Z', peptide_id: PEP['TB-500'], type: 'effect',      description: 'Verbesserte Ausdauer beim Laufen', severity: 3, status: 'anhaltend' },
-  { occurred_at: '2026-01-10T08:00:00Z', peptide_id: PEP['TB-500'], type: 'effect',      description: 'Schultersehne deutlich weniger schmerzhaft', severity: 5, status: 'anhaltend', duration: 'dauerhaft' },
+  { occurred_at: '2025-11-27T20:30:00Z', stack_item_id: STACK_ITEM_IDS['TB-500'], type: 'side_effect', description: 'Müdigkeit ca. 1 Stunde nach Injektion', severity: 2, status: 'abgeklungen', duration: '1 Stunde' },
+  { occurred_at: '2025-12-08T08:00:00Z', stack_item_id: STACK_ITEM_IDS['TB-500'], type: 'effect',      description: 'Muskelkater nach Training stark reduziert', severity: 4, status: 'anhaltend', notes: 'DOMs fast verschwunden.' },
+  { occurred_at: '2025-12-22T08:00:00Z', stack_item_id: STACK_ITEM_IDS['TB-500'], type: 'effect',      description: 'Verbesserte Ausdauer beim Laufen', severity: 3, status: 'anhaltend' },
+  { occurred_at: '2026-01-10T08:00:00Z', stack_item_id: STACK_ITEM_IDS['TB-500'], type: 'effect',      description: 'Schultersehne deutlich weniger schmerzhaft', severity: 5, status: 'anhaltend', duration: 'dauerhaft' },
 
   // Ipamorelin + CJC-1295
-  { occurred_at: '2026-01-25T21:00:00Z', peptide_id: PEP['Ipamorelin'], type: 'side_effect', description: 'Kribbeln/Flush kurz nach Injektion', severity: 1, status: 'abgeklungen', duration: '10 Minuten', notes: 'GH-Release typisch.' },
-  { occurred_at: '2026-01-30T08:00:00Z', peptide_id: PEP['Ipamorelin'], type: 'effect',      description: 'Tiefer, erholsamer Schlaf', severity: 5, status: 'anhaltend', duration: 'dauerhaft', notes: 'Beste Schlafqualität seit Jahren.' },
-  { occurred_at: '2026-02-05T08:30:00Z', peptide_id: PEP['Ipamorelin'], type: 'effect',      description: 'Lebhafte Träume', severity: 2, status: 'anhaltend' },
-  { occurred_at: '2026-02-10T08:00:00Z', peptide_id: PEP['CJC-1295'],   type: 'side_effect', description: 'Leichte Wassereinlagerungen an Händen', severity: 2, status: 'abgeklungen', duration: '3 Wochen', notes: 'Verschwand nach 3 Wochen.' },
-  { occurred_at: '2026-02-18T08:00:00Z', peptide_id: PEP['CJC-1295'],   type: 'effect',      description: 'Verbesserte Muskelregeneration', severity: 4, status: 'anhaltend' },
-  { occurred_at: '2026-03-01T08:00:00Z', peptide_id: PEP['CJC-1295'],   type: 'effect',      description: 'Muscle Fullness — Muskeln fühlen sich voller an', severity: 3, status: 'anhaltend' },
-  { occurred_at: '2026-03-15T08:00:00Z', peptide_id: PEP['Ipamorelin'], type: 'effect',      description: 'Hautqualität deutlich verbessert', severity: 3, status: 'anhaltend', notes: 'Haut wirkt straffer.' },
-  { occurred_at: '2026-04-10T20:30:00Z', peptide_id: PEP['Ipamorelin'], type: 'effect',      description: 'Weniger Körperfett bei gleichem Gewicht', severity: 4, status: 'anhaltend' },
+  { occurred_at: '2026-01-25T21:00:00Z', stack_item_id: STACK_ITEM_IDS['Ipamorelin'], type: 'side_effect', description: 'Kribbeln/Flush kurz nach Injektion', severity: 1, status: 'abgeklungen', duration: '10 Minuten', notes: 'GH-Release typisch.' },
+  { occurred_at: '2026-01-30T08:00:00Z', stack_item_id: STACK_ITEM_IDS['Ipamorelin'], type: 'effect',      description: 'Tiefer, erholsamer Schlaf', severity: 5, status: 'anhaltend', duration: 'dauerhaft', notes: 'Beste Schlafqualität seit Jahren.' },
+  { occurred_at: '2026-02-05T08:30:00Z', stack_item_id: STACK_ITEM_IDS['Ipamorelin'], type: 'effect',      description: 'Lebhafte Träume', severity: 2, status: 'anhaltend' },
+  { occurred_at: '2026-02-10T08:00:00Z', stack_item_id: STACK_ITEM_IDS['CJC-1295'],   type: 'side_effect', description: 'Leichte Wassereinlagerungen an Händen', severity: 2, status: 'abgeklungen', duration: '3 Wochen', notes: 'Verschwand nach 3 Wochen.' },
+  { occurred_at: '2026-02-18T08:00:00Z', stack_item_id: STACK_ITEM_IDS['CJC-1295'],   type: 'effect',      description: 'Verbesserte Muskelregeneration', severity: 4, status: 'anhaltend' },
+  { occurred_at: '2026-03-01T08:00:00Z', stack_item_id: STACK_ITEM_IDS['CJC-1295'],   type: 'effect',      description: 'Muscle Fullness — Muskeln fühlen sich voller an', severity: 3, status: 'anhaltend' },
+  { occurred_at: '2026-03-15T08:00:00Z', stack_item_id: STACK_ITEM_IDS['Ipamorelin'], type: 'effect',      description: 'Hautqualität deutlich verbessert', severity: 3, status: 'anhaltend', notes: 'Haut wirkt straffer.' },
+  { occurred_at: '2026-04-10T20:30:00Z', stack_item_id: STACK_ITEM_IDS['Ipamorelin'], type: 'effect',      description: 'Weniger Körperfett bei gleichem Gewicht', severity: 4, status: 'anhaltend' },
 
   // Semaglutid
-  { occurred_at: '2025-12-08T09:00:00Z', peptide_id: PEP['Semaglutid'], type: 'side_effect', description: 'Übelkeit in den ersten 2 Wochen', severity: 3, status: 'abgeklungen', duration: '2 Wochen', notes: 'Nach Dosisanpassung verschwunden.' },
-  { occurred_at: '2025-12-08T08:00:00Z', peptide_id: PEP['Semaglutid'], type: 'side_effect', description: 'Appetitlosigkeit — fast kein Hunger', severity: 2, status: 'anhaltend', duration: 'dauerhaft' },
-  { occurred_at: '2025-12-22T08:00:00Z', peptide_id: PEP['Semaglutid'], type: 'effect',      description: 'Gewichtsverlust −2 kg in 3 Wochen', severity: 5, status: 'eingetreten' },
-  { occurred_at: '2026-01-15T08:00:00Z', peptide_id: PEP['Semaglutid'], type: 'effect',      description: 'Deutlich weniger Heißhungerattacken', severity: 4, status: 'anhaltend', notes: 'Besonders auf Süßes.' },
-  { occurred_at: '2026-02-10T08:00:00Z', peptide_id: PEP['Semaglutid'], type: 'effect',      description: 'Gewichtsverlust −5 kg gesamt', severity: 5, status: 'eingetreten' },
-  { occurred_at: '2026-02-15T08:00:00Z', peptide_id: PEP['Semaglutid'], type: 'side_effect', description: 'Leichter Haarausfall', severity: 2, status: 'abgeklungen', duration: '4 Wochen', notes: 'Temporär durch Kaloriendefizit.' },
-  { occurred_at: '2026-03-10T08:00:00Z', peptide_id: PEP['Semaglutid'], type: 'effect',      description: 'Blutdruck normalisiert', severity: 4, status: 'anhaltend' },
-  { occurred_at: '2026-04-20T08:00:00Z', peptide_id: PEP['Semaglutid'], type: 'effect',      description: 'Gewichtsverlust −8 kg gesamt seit Start', severity: 5, status: 'eingetreten' },
+  { occurred_at: '2025-12-08T09:00:00Z', stack_item_id: STACK_ITEM_IDS['Semaglutid'], type: 'side_effect', description: 'Übelkeit in den ersten 2 Wochen', severity: 3, status: 'abgeklungen', duration: '2 Wochen', notes: 'Nach Dosisanpassung verschwunden.' },
+  { occurred_at: '2025-12-08T08:00:00Z', stack_item_id: STACK_ITEM_IDS['Semaglutid'], type: 'side_effect', description: 'Appetitlosigkeit — fast kein Hunger', severity: 2, status: 'anhaltend', duration: 'dauerhaft' },
+  { occurred_at: '2025-12-22T08:00:00Z', stack_item_id: STACK_ITEM_IDS['Semaglutid'], type: 'effect',      description: 'Gewichtsverlust −2 kg in 3 Wochen', severity: 5, status: 'eingetreten' },
+  { occurred_at: '2026-01-15T08:00:00Z', stack_item_id: STACK_ITEM_IDS['Semaglutid'], type: 'effect',      description: 'Deutlich weniger Heißhungerattacken', severity: 4, status: 'anhaltend', notes: 'Besonders auf Süßes.' },
+  { occurred_at: '2026-02-10T08:00:00Z', stack_item_id: STACK_ITEM_IDS['Semaglutid'], type: 'effect',      description: 'Gewichtsverlust −5 kg gesamt', severity: 5, status: 'eingetreten' },
+  { occurred_at: '2026-02-15T08:00:00Z', stack_item_id: STACK_ITEM_IDS['Semaglutid'], type: 'side_effect', description: 'Leichter Haarausfall', severity: 2, status: 'abgeklungen', duration: '4 Wochen', notes: 'Temporär durch Kaloriendefizit.' },
+  { occurred_at: '2026-03-10T08:00:00Z', stack_item_id: STACK_ITEM_IDS['Semaglutid'], type: 'effect',      description: 'Blutdruck normalisiert', severity: 4, status: 'anhaltend' },
+  { occurred_at: '2026-04-20T08:00:00Z', stack_item_id: STACK_ITEM_IDS['Semaglutid'], type: 'effect',      description: 'Gewichtsverlust −8 kg gesamt seit Start', severity: 5, status: 'eingetreten' },
 
   // Selank
-  { occurred_at: '2026-03-25T09:00:00Z', peptide_id: PEP['Selank'], type: 'effect', description: 'Angstreduktion — ruhigeres Gemüt', severity: 4, status: 'anhaltend', duration: 'dauerhaft' },
-  { occurred_at: '2026-04-01T08:30:00Z', peptide_id: PEP['Selank'], type: 'effect', description: 'Verbesserte Konzentrationsfähigkeit', severity: 4, status: 'anhaltend' },
-  { occurred_at: '2026-04-08T08:00:00Z', peptide_id: PEP['Selank'], type: 'effect', description: 'Bessere Stimmungslage', severity: 3, status: 'anhaltend', notes: 'Subtil aber merkbar.' },
-  { occurred_at: '2026-04-20T08:00:00Z', peptide_id: PEP['Selank'], type: 'effect', description: 'Produktivität am Arbeitsplatz gestiegen', severity: 3, status: 'anhaltend' },
-  { occurred_at: '2026-05-05T08:00:00Z', peptide_id: PEP['Selank'], type: 'side_effect', description: 'Leichte Trockenheit der Nasenschleimhaut', severity: 1, status: 'anhaltend', notes: 'Durch Salzwasser-Spray behandelt.' },
+  { occurred_at: '2026-03-25T09:00:00Z', stack_item_id: STACK_ITEM_IDS['Selank'], type: 'effect', description: 'Angstreduktion — ruhigeres Gemüt', severity: 4, status: 'anhaltend', duration: 'dauerhaft' },
+  { occurred_at: '2026-04-01T08:30:00Z', stack_item_id: STACK_ITEM_IDS['Selank'], type: 'effect', description: 'Verbesserte Konzentrationsfähigkeit', severity: 4, status: 'anhaltend' },
+  { occurred_at: '2026-04-08T08:00:00Z', stack_item_id: STACK_ITEM_IDS['Selank'], type: 'effect', description: 'Bessere Stimmungslage', severity: 3, status: 'anhaltend', notes: 'Subtil aber merkbar.' },
+  { occurred_at: '2026-04-20T08:00:00Z', stack_item_id: STACK_ITEM_IDS['Selank'], type: 'effect', description: 'Produktivität am Arbeitsplatz gestiegen', severity: 3, status: 'anhaltend' },
+  { occurred_at: '2026-05-05T08:00:00Z', stack_item_id: STACK_ITEM_IDS['Selank'], type: 'side_effect', description: 'Leichte Trockenheit der Nasenschleimhaut', severity: 1, status: 'anhaltend', notes: 'Durch Salzwasser-Spray behandelt.' },
 ]
 
 const { error: effErr } = await sb.from('effects').insert(
@@ -324,7 +376,7 @@ else console.log(`✓ Tagebuch (${effectsData.length} Einträge)`)
 // ─── Bewertungen ──────────────────────────────────────────────────────────────
 const reviewsData = [
   {
-    peptide_id: PEP['BPC-157'], rating: 5,
+    stack_item_id: STACK_ITEM_IDS['BPC-157'], rating: 5,
     title: 'Außergewöhnliche Heilungswirkung',
     body: 'Nach 6 Monaten kann ich sagen: BPC-157 ist für mich das effektivste Heilungspeptid. Knieschmerzen, die mich jahrelang beim Training behindert haben, sind verschwunden. Schultersehne ist komplett genesen. Empfehle ich jedem mit chronischen Gelenkbeschwerden.',
     pros: 'Schnelle Wirkung, vielseitig, gut verträglich, günstig',
@@ -332,7 +384,7 @@ const reviewsData = [
     would_recommend: true,
   },
   {
-    peptide_id: PEP['TB-500'], rating: 4,
+    stack_item_id: STACK_ITEM_IDS['TB-500'], rating: 4,
     title: 'Solides Regenerationspeptid',
     body: 'TB-500 ergänzt BPC-157 sehr gut. Muskelkater nach intensivem Training ist erheblich reduziert. Die Sehne, die ich mir letztes Jahr gezogen hatte, ist komplett verheilt. Nur zweimal wöchentlich — sehr angenehmes Protokoll.',
     pros: 'Nur 2x/Woche, starke Regenerationswirkung',
@@ -340,7 +392,7 @@ const reviewsData = [
     would_recommend: true,
   },
   {
-    peptide_id: PEP['Ipamorelin'], rating: 5,
+    stack_item_id: STACK_ITEM_IDS['Ipamorelin'], rating: 5,
     title: 'Bester Schlaf meines Lebens',
     body: 'Ipamorelin hat meinen Schlaf revolutioniert. Tiefer, erholsamer Schlaf, mehr Träume, morgens ausgeruhter aufwachen. In Kombination mit CJC-1295 sehr synergetisch. Kein Cortisol-Anstieg wie bei GHRP-6.',
     pros: 'Bester Schlaf, kein Hunger-Stimulus, Cortisol-neutral',
@@ -348,7 +400,7 @@ const reviewsData = [
     would_recommend: true,
   },
   {
-    peptide_id: PEP['Semaglutid'], rating: 4,
+    stack_item_id: STACK_ITEM_IDS['Semaglutid'], rating: 4,
     title: 'Sehr effektiv für Gewichtsmanagement',
     body: '8 kg in 5 Monaten ohne große Diät — einfach durch massiv reduzierten Appetit. Übelkeit in den ersten 2 Wochen war unangenehm, aber verschwand dann komplett. Bin beeindruckt. Wichtig: sicher auftitrieren.',
     pros: 'Starke Appetitreduktion, wenig Heißhunger, wöchentliche Gabe',
@@ -356,7 +408,7 @@ const reviewsData = [
     would_recommend: true,
   },
   {
-    peptide_id: PEP['Selank'], rating: 4,
+    stack_item_id: STACK_ITEM_IDS['Selank'], rating: 4,
     title: 'Subtil aber effektiv gegen Stress',
     body: 'Selank ist kein Wundermittel, aber es hat meine Grundanspannung messbar reduziert. Konzentrierter bei der Arbeit, weniger Grübeln. Nasal sehr einfach in den Alltag zu integrieren.',
     pros: 'Keine Sedierung, nasal einfach anzuwenden, gute Verträglichkeit',
@@ -373,7 +425,7 @@ else console.log(`✓ Bewertungen (${reviewsData.length} Stück)`)
 
 // ─── Fertig ───────────────────────────────────────────────────────────────────
 console.log('\n🎉 Test-Datensatz vollständig!')
-console.log('   → 6 Peptide mit Inventar')
+console.log('   → 6 Substanzen mit Inventar')
 console.log('   → 7 Zyklen (2 abgeschlossen, 5 aktiv)')
 console.log('   → 2 Dosis-Eskalationen (Semaglutid)')
 console.log(`   → ${allLogs.length} Dosis-Logs (6 Monate)`)

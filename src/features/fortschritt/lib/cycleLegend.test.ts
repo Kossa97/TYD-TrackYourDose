@@ -11,7 +11,7 @@ function cycle(overrides: Partial<CycleSubstance>): CycleSubstance {
     endDate: '2026-01-14',
     active: false,
     color: '#06b6d4',
-    peptideId: 'p1',
+    stackItemId: 'p1',
     ...overrides,
   }
 }
