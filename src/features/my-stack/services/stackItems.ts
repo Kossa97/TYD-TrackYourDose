@@ -6,14 +6,25 @@ import type {
   StackItem,
   StackItemDraft,
   StackItemIngredient,
+  SubstanceCatalogEntry,
 } from '../types'
 
 interface ServiceError {
   message: string
 }
 
+export type SavedStackItemRow = Omit<StackItem, 'ingredients'>
+
+export interface LoadedStackItemIngredient extends StackItemIngredient {
+  substance_catalog: SubstanceCatalogEntry | null
+}
+
+export type LoadedStackItem = SavedStackItemRow & {
+  ingredients: LoadedStackItemIngredient[]
+}
+
 interface StackItemQueryResult {
-  data: StackItem[] | null
+  data: LoadedStackItem[] | null
   error: ServiceError | null
 }
 
@@ -53,7 +64,7 @@ export interface StackItemRpcClient {
   rpc(
     name: 'save_stack_item',
     params: SaveStackItemRpcParams,
-  ): PromiseLike<{ data: StackItem | null; error: ServiceError | null }>
+  ): PromiseLike<{ data: SavedStackItemRow | null; error: ServiceError | null }>
 }
 
 export interface StackItemQueryClient {
@@ -142,7 +153,7 @@ function stackItemAsDraft(item: StackItem): StackItemDraft {
 export async function loadStackItems(
   client: StackItemQueryClient,
   archived: boolean,
-): Promise<StackItem[]> {
+): Promise<LoadedStackItem[]> {
   const { data, error } = await client
     .from('stack_items')
     .select(STACK_ITEM_COLUMNS)
@@ -156,7 +167,7 @@ export async function loadStackItems(
 export async function saveStackItem(
   client: StackItemRpcClient,
   draft: StackItemDraft,
-): Promise<StackItem> {
+): Promise<SavedStackItemRow> {
   const validationErrors = validateStackItemDraft(draft)
   if (
     !draft.displayName.trim()

@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { StackItem, StackItemDraft, StackItemIngredient } from '../types'
+import type {
+  StackItemDraft,
+  StackItemIngredient,
+  SubstanceCatalogEntry,
+} from '../types'
 import {
   archiveStackItem,
   deleteStackItem,
@@ -7,7 +11,9 @@ import {
   loadStackItems,
   restoreStackItem,
   saveStackItem,
+  type LoadedStackItem,
   type SaveStackItemRpcParams,
+  type SavedStackItemRow,
   type StackItemMutationClient,
   type StackItemQueryClient,
   type StackItemRpcClient,
@@ -33,7 +39,7 @@ const validDraft: StackItemDraft = {
   ingredients: [ingredient],
 }
 
-const savedItem: StackItem = {
+const savedItem: SavedStackItemRow = {
   id: 'stack-item-1',
   user_id: 'user-1',
   display_name: 'Vitamin D3',
@@ -47,7 +53,25 @@ const savedItem: StackItem = {
   archived_at: null,
   created_at: '2026-07-21T00:00:00.000Z',
   updated_at: '2026-07-21T00:00:00.000Z',
-  ingredients: [ingredient],
+}
+
+const catalogEntry: SubstanceCatalogEntry = {
+  id: 'vitamin-d3',
+  canonical_name: 'Vitamin D3',
+  aliases: ['Cholecalciferol'],
+  default_category: 'vitamin',
+  suggested_units: ['IU'],
+  suggested_dosage_forms: ['capsule'],
+  pk_profile_id: null,
+  active: true,
+}
+
+const loadedItem: LoadedStackItem = {
+  ...savedItem,
+  ingredients: [{
+    ...ingredient,
+    substance_catalog: catalogEntry,
+  }],
 }
 
 function rpcClient() {
@@ -81,6 +105,12 @@ describe('stack item service', () => {
     expect(validDraft).toEqual(before)
   })
 
+  it('returns the RPC table row without invented ingredients', async () => {
+    const mockClient = rpcClient()
+
+    await expect(saveStackItem(mockClient.client, validDraft)).resolves.toEqual(savedItem)
+  })
+
   it('validiert den Draft vor dem RPC-Aufruf', async () => {
     const mockClient = rpcClient()
 
@@ -105,7 +135,7 @@ describe('stack item service', () => {
                 return {
                   order: async (orderColumn, options) => {
                     calls.push(['order', orderColumn, options])
-                    return { data: [savedItem], error: null }
+                    return { data: [loadedItem], error: null }
                   },
                 }
               },
@@ -115,7 +145,10 @@ describe('stack item service', () => {
       },
     }
 
-    await expect(loadStackItems(client, true)).resolves.toEqual([savedItem])
+    const result = await loadStackItems(client, true)
+
+    expect(result).toEqual([loadedItem])
+    expect(result[0]?.ingredients[0]?.substance_catalog).toEqual(catalogEntry)
     expect(calls[0]).toEqual(['from', 'stack_items'])
     expect(calls).toContainEqual(['eq', 'archived', true])
     expect(String((calls[1] as unknown[])[1])).toContain('stack_item_ingredients')
@@ -184,7 +217,7 @@ describe('stack item service', () => {
   })
 
   it('findet gleiche Form und Stärke über den Duplicate-Fingerprint', () => {
-    expect(findDuplicate([savedItem], validDraft)).toEqual(savedItem)
-    expect(findDuplicate([savedItem], { ...validDraft, dosageForm: 'drops' })).toBeUndefined()
+    expect(findDuplicate([loadedItem], validDraft)).toEqual(loadedItem)
+    expect(findDuplicate([loadedItem], { ...validDraft, dosageForm: 'drops' })).toBeUndefined()
   })
 })
