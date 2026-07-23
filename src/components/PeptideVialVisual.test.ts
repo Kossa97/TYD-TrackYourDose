@@ -59,15 +59,16 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('data-vial-detail="liquid-graphic"')
     expect(html).toContain('class="overflow-visible vial-liquid-fill-reveal"')
     expect(html).not.toContain('data-vial-detail="liquid-motion-viewport" class="pointer-events-none absolute inset-0 vial-liquid-rise"')
-    expect(source()).toContain('data-vial-detail="liquid-intro-reveal-clip"')
-    expect(source()).toContain('y={reducedMotion ? 0 : LIQUID_VB_H}')
-    expect(source()).toContain('height={reducedMotion ? LIQUID_VB_H : 0}')
-    expect(source()).toContain('<animate attributeName="y"')
-    expect(source()).toContain('<animate attributeName="height"')
-    expect(source()).toContain('from={LIQUID_VB_H}')
-    expect(source()).toContain('to="0"')
-    expect(source()).toContain('from="0"')
-    expect(source()).toContain('to={LIQUID_VB_H}')
+    // Der Einlauf läuft GPU-beschleunigt über eine CSS-translateY-Transform (von
+    // unten herein), nicht mehr über eine ruckelnde SMIL-Clip-Animation.
+    expect(source()).toContain('@keyframes vial-liquid-fill-reveal')
+    expect(source()).toContain('from { transform: translateY(100%); }')
+    expect(source()).toContain('to { transform: translateY(0); }')
+    expect(source()).toContain('transform-box: fill-box')
+    // die alte SMIL-Clip-Reveal ist entfernt
+    expect(source()).not.toContain('data-vial-detail="liquid-intro-reveal-clip"')
+    expect(source()).not.toContain('<animate attributeName="y"')
+    expect(source()).not.toContain('<animate attributeName="height"')
     expect(source()).not.toContain('scaleY(0)')
     expect(source()).not.toContain('scaleY(1)')
     expect(source()).not.toContain('clip-path: inset(100% 0 0 0)')
@@ -93,7 +94,8 @@ describe('PeptideVialVisual', () => {
 
     expect(low).toContain('--vial-fill-intro-duration:1060ms')
     expect(high).toContain('--vial-fill-intro-duration:1620ms')
-    expect(source()).toContain('dur={`${fillIntroDurationMs}ms`}')
+    // die Dauer steuert jetzt die CSS-Reveal-Animation statt einer SMIL-dur
+    expect(source()).toContain('var(--vial-fill-intro-duration')
   })
   test('keeps the cap and label while removing split glass body seams', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
@@ -188,8 +190,11 @@ describe('PeptideVialVisual', () => {
   test('renders the empty glass as clear rather than milky (only the label stays frosted)', () => {
     const text = source()
 
-    // the label band keeps its frosted look
-    expect(text).toContain('bg-white/28')
+    // Das Label hat einen echten halbtransparenten Hintergrund (die frühere
+    // bg-white/28-Klasse kompilierte nicht und hing allein am backdrop-filter,
+    // der auf dem Handy schwarz rendert).
+    expect(text).toContain("background: 'rgba(255,255,255,0.22)'")
+    expect(text).not.toContain('backdrop-blur-[')
     // the glass body is transparent in the centre — the old milky white
     // mid-stops are gone
     expect(text).not.toContain('<stop offset="34%" stopColor="rgba(255,255,255,0.10)" />')

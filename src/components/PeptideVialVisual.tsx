@@ -432,9 +432,23 @@ export function PeptideVialVisual({
           animation: vial-liquid-level-motion 760ms cubic-bezier(.22,1,.36,1) both;
           transform-box: fill-box;
           transform-origin: center bottom;
+          will-change: transform;
+        }
+        /* Einlauf beim Mounten: die Flüssigkeit steigt von unten herein. Eine reine
+           translateY-Transform ist GPU-beschleunigt und läuft auf dem Handy flüssig —
+           anders als die frühere SMIL-Clip-Animation, die jeden Frame neu rasterte. */
+        @keyframes vial-liquid-fill-reveal {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        .vial-liquid-fill-reveal {
+          animation: vial-liquid-fill-reveal var(--vial-fill-intro-duration, 1200ms) cubic-bezier(.22,1,.36,1) both;
+          transform-box: fill-box;
+          transform-origin: center bottom;
+          will-change: transform;
         }
         @media (prefers-reduced-motion: reduce) {
-          .vial-shimmer, .vial-liquid-level-motion { animation: none !important; }
+          .vial-shimmer, .vial-liquid-level-motion, .vial-liquid-fill-reveal { animation: none !important; }
         }
       `}</style>
 
@@ -614,18 +628,6 @@ export function PeptideVialVisual({
               <clipPath id={`${uid}-clip`}>
                 <use href={`#${uid}-bodyPath`} />
               </clipPath>
-              {fillMotion.mode === 'reveal' && (
-                <clipPath id={`${uid}-introClip`} clipPathUnits="userSpaceOnUse">
-                  <rect data-vial-detail="liquid-intro-reveal-clip" x="0" y={reducedMotion ? 0 : LIQUID_VB_H} width={LIQUID_VB_W} height={reducedMotion ? LIQUID_VB_H : 0}>
-                    {!reducedMotion && (
-                      <>
-                        <animate attributeName="y" from={LIQUID_VB_H} to="0" dur={`${fillIntroDurationMs}ms`} begin="0s" fill="freeze" calcMode="spline" keySplines=".22 1 .36 1" />
-                        <animate attributeName="height" from="0" to={LIQUID_VB_H} dur={`${fillIntroDurationMs}ms`} begin="0s" fill="freeze" calcMode="spline" keySplines=".22 1 .36 1" />
-                      </>
-                    )}
-                  </rect>
-                </clipPath>
-              )}
               <linearGradient id={`${uid}-depth`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="rgba(255,255,255,0.26)" />
                 <stop offset="18%" stopColor="rgba(255,255,255,0.05)" />
@@ -666,7 +668,7 @@ export function PeptideVialVisual({
               </radialGradient>
             </defs>
 
-            <g clipPath={fillMotion.mode === 'reveal' ? `url(#${uid}-introClip)` : undefined}>
+            <g>
               <use data-vial-detail="liquid-body" href={`#${uid}-bodyPath`} fill="currentColor" fillOpacity="0.8" />
             <g clipPath={`url(#${uid}-clip)`}>
               <use href={`#${uid}-bodyPath`} fill={`url(#${uid}-depth)`} />
@@ -724,10 +726,15 @@ export function PeptideVialVisual({
             </svg>
           )}
 
+          {/* Label mit echtem halbtransparenten Hintergrund statt backdrop-filter: die
+              frühere bg-white/28-Klasse kompilierte nicht, sodass das Label nur vom
+              backdrop-blur lebte — das auf dem Handy während der Animation schwarz rendert.
+              So bleibt es echt durchscheinend und die aufsteigende Flüssigkeit sichtbar. */}
           {showLabel && (
             <div
               data-vial-detail="label-glass-wrap"
-              className={`absolute ${labelClass} overflow-hidden border-y border-white/40 bg-white/28 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)] backdrop-blur-[2px]`}
+              className={`absolute ${labelClass} overflow-hidden border-y border-white/40 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)]`}
+              style={{ background: 'rgba(255,255,255,0.22)' }}
             >
               <div data-vial-detail="full-width-label" className="relative overflow-hidden">
                 <VialLabelMarquee className={`${nameClass} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
