@@ -35,7 +35,7 @@ export function EmptyOverview({ onLogToday }: Props) {
       </div>
 
       <Link
-        to="/peptide"
+        to="/my-stack"
         className="btn-primary"
         style={{ display: 'block', width: '100%', marginBottom: 10, textAlign: 'center' }}
       >
@@ -90,7 +90,7 @@ export function NoSubstancesBanner() {
       <p style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dim)', lineHeight: 1.45, marginBottom: 10 }}>
         Ohne aktive Substanz siehst du nur deine Werte — ohne Kontext. Lege einen Zyklus an, um Zusammenhänge zu sehen.
       </p>
-      <Link to="/peptide" style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--accent)' }}>
+      <Link to="/my-stack" style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--accent)' }}>
         Zyklus anlegen →
       </Link>
     </section>

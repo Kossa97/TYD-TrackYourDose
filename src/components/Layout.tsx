@@ -13,7 +13,7 @@ import { PushNotificationListener } from './PushNotificationListener'
 
 const QUICK_ACTIONS = [
   { icon: CheckCircle2, label: 'Einnahme bestätigen', path: '/kalender#due-intakes', color: '#10b981' },
-  { icon: FlaskConical, label: 'Substanz hinzufügen', path: '/peptide#new-substance', color: '#00ccf5' },
+  { icon: FlaskConical, label: 'Substanz hinzufügen', path: '/my-stack#new-substance', color: '#00ccf5' },
   { icon: Syringe,      label: 'Injektion loggen',  path: '/injektionen',  color: '#10b981' },
   { icon: CalendarDays, label: 'Kalender / Zyklus', path: '/kalender',     color: '#8b5cf6' },
   { icon: Activity,     label: 'Blutspiegel',       path: '/simulation',   color: '#06b6d4' },
@@ -80,7 +80,7 @@ export function Layout() {
     navigate(path)
   }
 
-  const isPeptide  = pathname === '/peptide'
+  const isMyStack = pathname === '/my-stack'
   const isHome     = pathname === '/'
   const isKalender = pathname === '/kalender'
   const isProfil   = pathname === '/profil'
@@ -268,10 +268,10 @@ export function Layout() {
 
           {/* My Stack */}
           <NavItem
-            to="/peptide"
+            to="/my-stack"
             icon={<FlaskConical size={20} />}
             label="My Stack"
-            active={isPeptide}
+            active={isMyStack}
             obKey="nav-peptide"
           />
 

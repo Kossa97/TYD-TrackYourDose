@@ -1,4 +1,6 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { extname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
 describe('My Stack page vial view', () => {
@@ -510,10 +512,52 @@ describe('My Stack modular integration', () => {
     expect(text).toContain('onOpenExisting={openExistingStackItem}')
   })
 
-  test('routes /peptide to MyStackPage directly', () => {
+  test('uses /my-stack as the primary route and redirects /peptide with replacement', () => {
     const app = readFileSync(new URL('../../App.tsx', import.meta.url), 'utf8')
     expect(app).toContain("import('./features/my-stack/MyStackPage')")
-    expect(app).toContain('<LazyPage><MyStackPage /></LazyPage>')
+    expect(app).toContain('<Route path="my-stack" element={<LazyPage><MyStackPage /></LazyPage>} />')
+    expect(app).toContain('<Route path="peptide" element={<Navigate to="/my-stack" replace />} />')
+  })
+
+  test('uses only neutral My Stack links and active-route naming in navigation', () => {
+    const layout = readFileSync(new URL('../../components/Layout.tsx', import.meta.url), 'utf8')
+    const home = readFileSync(new URL('../../pages/Home.tsx', import.meta.url), 'utf8')
+
+    expect(layout).toContain("path: '/my-stack#new-substance'")
+    expect(layout).toContain('to="/my-stack"')
+    expect(layout).toContain("const isMyStack = pathname === '/my-stack'")
+    expect(layout).toContain('active={isMyStack}')
+    expect(layout).not.toContain('/peptide')
+    expect(layout).not.toContain('isPeptide')
+    expect(home).toContain("path: '/my-stack'")
+    expect(home).not.toContain("path: '/peptide'")
+  })
+
+  test('removes the temporary Peptide compatibility files and source references', () => {
+    expect(existsSync(new URL('../../pages/Peptide.tsx', import.meta.url))).toBe(false)
+    expect(existsSync(new URL('../../pages/Peptide.test.ts', import.meta.url))).toBe(false)
+
+    const sourceRoot = fileURLToPath(new URL('../../', import.meta.url))
+    const sourceFiles: string[] = []
+    const visit = (directory: string) => {
+      for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        const path = join(directory, entry.name)
+        if (entry.isDirectory()) visit(path)
+        else if (['.ts', '.tsx'].includes(extname(entry.name)) && entry.name !== 'MyStackPage.test.ts') sourceFiles.push(path)
+      }
+    }
+    visit(sourceRoot)
+
+    const references = sourceFiles.filter(path =>
+      /(?:from|import\()\s*\(?['"][^'"]*pages\/Peptide(?:\.tsx)?['"]/.test(readFileSync(path, 'utf8')),
+    )
+    expect(references).toEqual([])
+
+    const legacyRouteReferences = sourceFiles.flatMap(path => {
+      const matches = [...readFileSync(path, 'utf8').matchAll(/['"]\/peptide(?:[^'"]*)['"]/g)]
+      return matches.map(match => `${path}:${match[0]}`)
+    })
+    expect(legacyRouteReferences).toEqual([])
   })
   test('keeps non-renderable dosage forms out of the graphical vial carousel', () => {
     const text = source()

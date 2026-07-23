@@ -49,7 +49,7 @@ export function ExpiryWarningBanners({ alerts }: { alerts: PeptideExpiryAlert[] 
           <button
             type="button"
             className="expiry-banner__message"
-            onClick={() => navigate('/peptide')}
+            onClick={() => navigate('/my-stack')}
           >
             {alertMessage(alert, t)}
           </button>

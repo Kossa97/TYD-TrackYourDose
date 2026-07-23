@@ -42,7 +42,7 @@ export interface OnboardingStepMeta {
  */
 export const ONBOARDING_STEPS: OnboardingStepMeta[] = [
   { id:'welcome', emoji:'👋', titleKey:'obx_welcome_title', subtitleKey:'obx_welcome_sub', descriptionKey:'obx_welcome_desc', targetSelector:null, placement:'center', advance:'next' },
-  { id:'nav-mystack', emoji:'🧬', titleKey:'obx_navmystack_title', subtitleKey:'obx_navmystack_sub', descriptionKey:'obx_navmystack_desc', targetSelector:'[data-ob="nav-peptide"]', placement:'top', advance:'click', navTarget:true, route:'/peptide', tapHintKey:'obx_navmystack_tap' },
+  { id:'nav-mystack', emoji:'🧬', titleKey:'obx_navmystack_title', subtitleKey:'obx_navmystack_sub', descriptionKey:'obx_navmystack_desc', targetSelector:'[data-ob="nav-peptide"]', placement:'top', advance:'click', navTarget:true, route:'/my-stack', tapHintKey:'obx_navmystack_tap' },
   { id:'open-peptide', emoji:'➕', titleKey:'obx_openpep_title', subtitleKey:'obx_openpep_sub', descriptionKey:'obx_openpep_desc', targetSelector:'[data-ob="btn-peptid-anlegen"]', placement:'bottom', advance:'click', tapHintKey:'obx_openpep_tap', precondition:'modal' },
   { id:'pep-name', emoji:'🏷️', titleKey:'obx_pepname_title', subtitleKey:'obx_pepname_sub', descriptionKey:'obx_pepname_desc', targetSelector:'[data-ob="pep-name"]', placement:'auto', advance:'next', precondition:'filled' },
   { id:'pep-pk', emoji:'🧬', titleKey:'obx_peppk_title', subtitleKey:'obx_peppk_sub', descriptionKey:'obx_peppk_desc', targetSelector:'[data-ob="pep-pk-badge"]', placement:'auto', advance:'next', optionalTarget:true },

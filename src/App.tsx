@@ -58,7 +58,8 @@ export default function App() {
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<LazyPage><Home /></LazyPage>} />
             <Route path="kalender" element={<LazyPage><Dashboard /></LazyPage>} />
-            <Route path="peptide" element={<LazyPage><MyStackPage /></LazyPage>} />
+            <Route path="my-stack" element={<LazyPage><MyStackPage /></LazyPage>} />
+            <Route path="peptide" element={<Navigate to="/my-stack" replace />} />
             <Route path="lab" element={<LazyPage><TheLab /></LazyPage>} />
             <Route path="lab/study/:id" element={<LazyPage><StudyDetail /></LazyPage>} />
             <Route path="lab/library" element={<LazyPage><PeptideLibrary /></LazyPage>} />

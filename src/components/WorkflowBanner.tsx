@@ -154,7 +154,7 @@ export function WorkflowBanner({ userId }: { userId: string | undefined }) {
                     {isStockStep ? (
                       <button
                         type="button"
-                        onClick={() => navigate('/peptide?tab=inventar')}
+                        onClick={() => navigate('/my-stack?tab=inventar')}
                         aria-label={String(t('home_flow_stock', { defaultValue: 'Einlagern' }))}
                         style={{
                           ...iconBoxBase,
