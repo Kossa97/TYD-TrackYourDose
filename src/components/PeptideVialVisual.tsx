@@ -374,16 +374,20 @@ export function PeptideVialVisual({
     }))
   }, [fillFrac])
 
-  const liquidMotionClass = fillMotion.mode === 'reveal'
-    ? 'vial-liquid-fill-reveal'
-    : fillMotion.mode === 'shift'
-      ? 'vial-liquid-level-motion'
-      : ''
+  // Der Einlauf beim Mounten läuft über clip-path auf dem HTML-Viewport (unten →
+  // oben), das Füllstands-Nachrücken über eine transform auf dem Flüssigkeits-SVG.
+  // clip-path auf einem HTML-Element ist zuverlässig plattformübergreifend, während
+  // eine transform-box:fill-box-Transform auf verschachteltem <svg> auf mobilem
+  // Safari/WebView oft nicht malt (die Animation lief dann "leer" → direkt gefüllt).
   const fillIntroDurationMs = Math.round(900 + fillFrac * 800)
+  const viewportRevealClass = fillMotion.mode === 'reveal' ? 'vial-liquid-fill-reveal' : ''
+  const viewportRevealStyle = fillMotion.mode === 'reveal'
+    ? ({ '--vial-fill-intro-duration': `${fillIntroDurationMs}ms` } as CSSProperties)
+    : undefined
+  const liquidMotionClass = fillMotion.mode === 'shift' ? 'vial-liquid-level-motion' : ''
   const liquidMotionStyle = {
     color,
     '--vial-fill-motion-shift': `${fillMotion.shiftPct}%`,
-    '--vial-fill-intro-duration': `${fillIntroDurationMs}ms`,
   } as CSSProperties
   const labelName = name?.trim() || 'Peptidname'
   // 'large' = detail views (edit form, previews); 'carousel' = the My Stack
@@ -434,18 +438,18 @@ export function PeptideVialVisual({
           transform-origin: center bottom;
           will-change: transform;
         }
-        /* Einlauf beim Mounten: die Flüssigkeit steigt von unten herein. Eine reine
-           translateY-Transform ist GPU-beschleunigt und läuft auf dem Handy flüssig —
-           anders als die frühere SMIL-Clip-Animation, die jeden Frame neu rasterte. */
+        /* Einlauf beim Mounten: die Flüssigkeit wird von unten nach oben freigegeben.
+           clip-path auf dem HTML-Viewport ist plattformübergreifend zuverlässig und
+           weit leichter als die frühere SMIL-Clip-Animation, die jeden Frame neu
+           rasterte. (Eine SVG-transform mit transform-box:fill-box malt auf mobilem
+           Safari/WebView oft nicht.) */
         @keyframes vial-liquid-fill-reveal {
-          from { transform: translateY(100%); }
-          to { transform: translateY(0); }
+          from { clip-path: inset(100% 0 0 0); }
+          to { clip-path: inset(0 0 0 0); }
         }
         .vial-liquid-fill-reveal {
           animation: vial-liquid-fill-reveal var(--vial-fill-intro-duration, 1200ms) cubic-bezier(.22,1,.36,1) both;
-          transform-box: fill-box;
-          transform-origin: center bottom;
-          will-change: transform;
+          will-change: clip-path;
         }
         @media (prefers-reduced-motion: reduce) {
           .vial-shimmer, .vial-liquid-level-motion, .vial-liquid-fill-reveal { animation: none !important; }
@@ -594,7 +598,8 @@ export function PeptideVialVisual({
               highlight all derive from one geometry so they move as one. */}
           <div
             data-vial-detail="liquid-motion-viewport"
-            className="pointer-events-none absolute inset-0"
+            className={`pointer-events-none absolute inset-0 ${viewportRevealClass}`}
+            style={viewportRevealStyle}
           >
             <svg
               data-vial-detail="liquid-vial-chamber"

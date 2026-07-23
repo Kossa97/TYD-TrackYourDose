@@ -55,23 +55,21 @@ describe('PeptideVialVisual', () => {
       animateOnMount: true,
     }))
 
-    expect(html).toContain('data-vial-detail="liquid-motion-viewport" class="pointer-events-none absolute inset-0"')
+    // Die Reveal-Klasse sitzt auf dem HTML-Viewport (clip-path), nicht auf dem SVG.
+    expect(html).toContain('data-vial-detail="liquid-motion-viewport" class="pointer-events-none absolute inset-0 vial-liquid-fill-reveal"')
     expect(html).toContain('data-vial-detail="liquid-graphic"')
-    expect(html).toContain('class="overflow-visible vial-liquid-fill-reveal"')
     expect(html).not.toContain('data-vial-detail="liquid-motion-viewport" class="pointer-events-none absolute inset-0 vial-liquid-rise"')
-    // Der Einlauf läuft GPU-beschleunigt über eine CSS-translateY-Transform (von
-    // unten herein), nicht mehr über eine ruckelnde SMIL-Clip-Animation.
+    // Der Einlauf gibt die Flüssigkeit per clip-path von unten nach oben frei —
+    // plattformübergreifend zuverlässig (eine transform-box:fill-box-Transform auf
+    // verschachteltem <svg> malt auf mobilem Safari/WebView oft nicht).
     expect(source()).toContain('@keyframes vial-liquid-fill-reveal')
-    expect(source()).toContain('from { transform: translateY(100%); }')
-    expect(source()).toContain('to { transform: translateY(0); }')
-    expect(source()).toContain('transform-box: fill-box')
+    expect(source()).toContain('clip-path: inset(100% 0 0 0)')
+    expect(source()).toContain('clip-path: inset(0 0 0 0)')
+    expect(source()).not.toContain('transform: translateY(100%)')
     // die alte SMIL-Clip-Reveal ist entfernt
     expect(source()).not.toContain('data-vial-detail="liquid-intro-reveal-clip"')
     expect(source()).not.toContain('<animate attributeName="y"')
     expect(source()).not.toContain('<animate attributeName="height"')
-    expect(source()).not.toContain('scaleY(0)')
-    expect(source()).not.toContain('scaleY(1)')
-    expect(source()).not.toContain('clip-path: inset(100% 0 0 0)')
   })
 
   test('uses a visible but fill-dependent intro duration', () => {
