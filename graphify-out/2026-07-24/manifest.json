@@ -100,8 +100,8 @@
     "semantic_hash": "d8c4f8cbb47594e0af2c65b46900a486"
   },
   "eslint.config.js": {
-    "mtime": 1784247824.2777064,
-    "ast_hash": "e06af49c2b8a64cfd872e7440760563e",
+    "mtime": 1784845751.6205566,
+    "ast_hash": "e13dd85f734d593dda109f1046f606a4",
     "semantic_hash": ""
   },
   "ios/App/App/AppDelegate.swift": {
@@ -290,13 +290,13 @@
     "semantic_hash": "a16e168156009861605afce4b5a2cc81"
   },
   "src/components/PeptideVialVisual.test.ts": {
-    "mtime": 1783997203.0231824,
-    "ast_hash": "80a9ed37cea80f260a4f90819332b7d7",
+    "mtime": 1784849193.775388,
+    "ast_hash": "34c8a17f9173fb6f0f9649e2b7fa99a4",
     "semantic_hash": ""
   },
   "src/components/PeptideVialVisual.tsx": {
-    "mtime": 1783997157.8303823,
-    "ast_hash": "6035071b2f966f13786e95057d1fff7a",
+    "mtime": 1784849151.9233377,
+    "ast_hash": "2a21e9f5d0c4c83f2618a4a47925c83a",
     "semantic_hash": ""
   },
   "src/components/ProtectedRoute.tsx": {
@@ -925,8 +925,8 @@
     "semantic_hash": "79e58ed245896fbc0967e6b054eaa0f7"
   },
   "src/pages/Blutwerte.tsx": {
-    "mtime": 1784248349.0817423,
-    "ast_hash": "92c79c8cff92ebea0233c67d3148d339",
+    "mtime": 1784845751.6588714,
+    "ast_hash": "a388f55c689dcfdad93b3511d3454f7e",
     "semantic_hash": ""
   },
   "src/pages/Dashboard.test.ts": {
@@ -1270,7 +1270,7 @@
     "semantic_hash": "c5a0140fcec4fceb7769368dd9f01348"
   },
   "vitest.config.ts": {
-    "mtime": 1784251735.7817712,
+    "mtime": 1784845751.661546,
     "ast_hash": "8a3cc53b762df0fddda0cdad5cf01a25",
     "semantic_hash": ""
   },
@@ -1560,13 +1560,13 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/metrics.test.ts": {
-    "mtime": 1783495404.0592117,
-    "ast_hash": "2923bfa40d19f2ff0eef7b9b4e183773",
+    "mtime": 1784845751.6588714,
+    "ast_hash": "24707029ec1d260f75b0043cfa59b98e",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/metrics.ts": {
-    "mtime": 1783215233.0355608,
-    "ast_hash": "1ff4d81e151a831be2ff7651ec3d6a41",
+    "mtime": 1784845751.6588714,
+    "ast_hash": "ad892447e9b6e672e45416275318aa61",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/range.ts": {
@@ -2000,83 +2000,83 @@
     "semantic_hash": ""
   },
   "src/features/blutwerte/BlutwertePage.tsx": {
-    "mtime": 1784639161.1504002,
-    "ast_hash": "ba9704aa005f1c2fe933f33d7c9730b6",
+    "mtime": 1784845751.6492443,
+    "ast_hash": "c249c04443bd3fd847dd694a32f65be2",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/AuffaelligeWerte.tsx": {
-    "mtime": 1784592237.956725,
-    "ast_hash": "82e95ad7edeb200e4c15f23979c909de",
+    "mtime": 1784845751.6497557,
+    "ast_hash": "db8e56e2930e01e9a6bcc957fc3c4e72",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/EntryModal.tsx": {
-    "mtime": 1784592588.2945502,
-    "ast_hash": "cee8dd1324322eac303b5b7f54b889a7",
+    "mtime": 1784845751.650266,
+    "ast_hash": "a9235f47bbf743c2bf41638d65171303",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/GridControls.tsx": {
-    "mtime": 1784250227.2149796,
-    "ast_hash": "0b564775171ccc3f7715fb1e346d291d",
+    "mtime": 1784845751.650266,
+    "ast_hash": "1fe495727747d8b00c8011ea2d41aa45",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/MarkerDetail.tsx": {
-    "mtime": 1784592262.6459467,
-    "ast_hash": "02f3381ba68f413e52ea2ede21644399",
+    "mtime": 1784845751.650266,
+    "ast_hash": "1fb3a867337b8d99286ddbb09266bf80",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/MarkerGrid.tsx": {
-    "mtime": 1784592224.8952718,
-    "ast_hash": "20714094446e64375a4947f380f9e8be",
+    "mtime": 1784845751.650266,
+    "ast_hash": "846120a294d19cc6e87808aa2688a5c2",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/ReferenceBar.tsx": {
-    "mtime": 1784250545.2220943,
-    "ast_hash": "8e76aba00091f51b3f3f91295fec4063",
+    "mtime": 1784845751.6517782,
+    "ast_hash": "127d32bdabc611a2277afbef6f75bb37",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/bloodwork.test.ts": {
-    "mtime": 1784592147.4665902,
-    "ast_hash": "21d01e81ac1e7120372209a66461ebca",
+    "mtime": 1784845751.653293,
+    "ast_hash": "1f3d26c3bd0aad7571d4f47bdfcd2b12",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/bloodwork.ts": {
-    "mtime": 1784592123.5235283,
-    "ast_hash": "cc4af6257fc48de9e72fc4fbb7778977",
+    "mtime": 1784845751.653293,
+    "ast_hash": "a36de2346ba7c5f5bf8ac5fad1f51c7b",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/format.ts": {
-    "mtime": 1784248229.9831064,
-    "ast_hash": "bde1d4584b15bfce9734a4921b153283",
+    "mtime": 1784845751.6553142,
+    "ast_hash": "9e742f5a0c8d68e7bc56287e9f293f9d",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/markerCatalog.test.ts": {
-    "mtime": 1784246578.5073683,
-    "ast_hash": "590ee04894fb3ad88a46ce9252c60189",
+    "mtime": 1784845751.6558502,
+    "ast_hash": "3d48fccf4fca6785898da9b8ca55b5e5",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/markerCatalog.ts": {
-    "mtime": 1784247367.1887636,
-    "ast_hash": "6b0c62c92f41ca7ce0505f20723300a1",
+    "mtime": 1784845751.6558502,
+    "ast_hash": "3d48382bccc1e372b47aaa74f53dc5c4",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/referenceBar.test.ts": {
-    "mtime": 1784250522.3323276,
-    "ast_hash": "a5575da6899ba104d1e90115d8432b5e",
+    "mtime": 1784845751.6558502,
+    "ast_hash": "657077ea87f9077e47e4dd6a8e20e14c",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/referenceBar.ts": {
-    "mtime": 1784250532.792303,
-    "ast_hash": "510bec7bd3b43fdb35675375f401f202",
+    "mtime": 1784845751.657358,
+    "ast_hash": "7b9c94f6a73210da625fbc67945fa76d",
     "semantic_hash": ""
   },
   "src/features/blutwerte/styles.ts": {
-    "mtime": 1784248227.078818,
-    "ast_hash": "5b9b950f11fe8971a7e1926158413eac",
+    "mtime": 1784845751.657358,
+    "ast_hash": "6a03111be6407e22fe5b86f371f1b89e",
     "semantic_hash": ""
   },
   "src/features/blutwerte/types.ts": {
-    "mtime": 1784247593.2540643,
-    "ast_hash": "00e7a2848cb8ef37594c6ffca00700e7",
+    "mtime": 1784845751.657358,
+    "ast_hash": "0f4caeabda7430785ae2b07a6bcdc968",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/fortschrittRemoval.test.ts": {
@@ -2160,8 +2160,8 @@
     "semantic_hash": ""
   },
   "supabase-bloodwork-import.sql": {
-    "mtime": 1784248145.194804,
-    "ast_hash": "e8ec4518ef90d8bdd857b52fd652b737",
+    "mtime": 1784845751.6603856,
+    "ast_hash": "8908fce7cab0abeaea78b266a5e6aec0",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-16-fotos-raster-einstellung.md": {
@@ -2175,8 +2175,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-17-blutwerte-feinschliff.md": {
-    "mtime": 1784251398.5444133,
-    "ast_hash": "ece6bfbe5db7cf4e1ac6c2419d7725f8",
+    "mtime": 1784845751.618026,
+    "ast_hash": "3b0708b4dc017466d4a9189a804a69e6",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-17-fortschritt-werteuebersicht.md": {
@@ -2225,38 +2225,38 @@
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/BefundListe.tsx": {
-    "mtime": 1784639152.4538743,
-    "ast_hash": "30ffc47320f6aaa2575db53c65bb1cd9",
+    "mtime": 1784845751.650266,
+    "ast_hash": "e56cd0b1031c050e727547e91894856f",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/import/ImportFlow.tsx": {
-    "mtime": 1784638823.3096583,
-    "ast_hash": "ece1c0d4a3058be00a28dde9695d6cc1",
+    "mtime": 1784845751.6517782,
+    "ast_hash": "13c0367bde6f2540d6c2287afa7e53ff",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/import/ReviewTable.tsx": {
-    "mtime": 1784592578.8765447,
-    "ast_hash": "b528e4826921354e6a7d025c1671bcd3",
+    "mtime": 1784845751.6517782,
+    "ast_hash": "3b7c87559e2654ffd5320d064b551cd2",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/extractResult.test.ts": {
-    "mtime": 1784251575.284273,
-    "ast_hash": "c91355b01a323fdc862b7318f065e664",
+    "mtime": 1784845751.6548042,
+    "ast_hash": "0770ffb3f90386b717ec1ab3dea00a19",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/extractResult.ts": {
-    "mtime": 1784251594.555611,
-    "ast_hash": "7d978e7d6e6cb5d6f5e0f7a69ab089ec",
+    "mtime": 1784845751.6548042,
+    "ast_hash": "5ea1dcc3b5e18af48fbfe41ce867c5f5",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/imageResize.test.ts": {
-    "mtime": 1784251501.965964,
-    "ast_hash": "dde524e42ca2b54c293677d8fcd0232f",
+    "mtime": 1784845751.6553142,
+    "ast_hash": "ed82ede88bed6bed1beeb5d0fdbf510e",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/imageResize.ts": {
-    "mtime": 1784593898.3579924,
-    "ast_hash": "13f6434fe07c54263a651ddf5768ab61",
+    "mtime": 1784845751.6558502,
+    "ast_hash": "9c96aa196ae4a32df36e36be8460ba59",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/verlauf/ActiveMetricPointLayer.tsx": {
@@ -2290,18 +2290,18 @@
     "semantic_hash": ""
   },
   "supabase/functions/bloodwork-extract/index.ts": {
-    "mtime": 1784593891.420925,
-    "ast_hash": "18e1e16ed8ef9a4ade3f6909163a9993",
+    "mtime": 1784845751.6603856,
+    "ast_hash": "79d233bb8c8b52083f2fa9d915223b64",
     "semantic_hash": ""
   },
   "supabase/functions/bloodwork-extract/prompt.test.ts": {
-    "mtime": 1784593930.9081774,
-    "ast_hash": "1ebc0b5508f206a60132c16ecd955710",
+    "mtime": 1784845751.6603856,
+    "ast_hash": "d6e533793a4242bdff106a4a56a6d56d",
     "semantic_hash": ""
   },
   "supabase/functions/bloodwork-extract/prompt.ts": {
-    "mtime": 1784593879.8916132,
-    "ast_hash": "508b4f3635736a431500d7fe5c6a2484",
+    "mtime": 1784845751.6603856,
+    "ast_hash": "b730bddb9f959794230a95d446a91f14",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-17-fortschritt-dichte-messreihen.md": {
@@ -2335,43 +2335,53 @@
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/BefundEditor.tsx": {
-    "mtime": 1784639124.33549,
-    "ast_hash": "ef29406c86dbc879eec2af307d6e0762",
+    "mtime": 1784845751.6497557,
+    "ast_hash": "02d5243dffd834a47ab1a7499a8af02d",
     "semantic_hash": ""
   },
   "src/features/blutwerte/components/import/ConflictResolver.tsx": {
-    "mtime": 1784638775.8134685,
-    "ast_hash": "7b7964dea3e03003416982133b39b1e5",
+    "mtime": 1784845751.6517782,
+    "ast_hash": "f3891b078eada5f66595cf0bc150ea48",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/conversionHint.test.ts": {
-    "mtime": 1784592564.82068,
-    "ast_hash": "5f48d1bc8823cf99dc812fbd96333e34",
+    "mtime": 1784845751.653293,
+    "ast_hash": "3288f4c455deb022375c99ca1e78387c",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/conversionHint.ts": {
-    "mtime": 1784592561.5824068,
-    "ast_hash": "a629aacac16991d052f99089974984f9",
+    "mtime": 1784845751.653293,
+    "ast_hash": "3860a286b0a1339a9a306d3604c43551",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/mergeRows.test.ts": {
-    "mtime": 1784594062.761543,
-    "ast_hash": "429c1380b8815f579dcbd9351923ff55",
+    "mtime": 1784845751.6558502,
+    "ast_hash": "88443ddc1ac5bef2b188500166b7d198",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/mergeRows.ts": {
-    "mtime": 1784594077.273126,
-    "ast_hash": "4a0a852b0a8a5d4c2822e00b5de7ff79",
+    "mtime": 1784845751.6558502,
+    "ast_hash": "48c531f37ce1fe5482eda72b427b12eb",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/unitConversion.test.ts": {
-    "mtime": 1784591417.850252,
-    "ast_hash": "b3f0375f46f510f0fc5085db123589bc",
+    "mtime": 1784845751.657358,
+    "ast_hash": "31546ad6c97fa297ebc246376ceef295",
     "semantic_hash": ""
   },
   "src/features/blutwerte/lib/unitConversion.ts": {
-    "mtime": 1784591562.3769436,
-    "ast_hash": "4cf9d99d02ad6700e9211cadb2142110",
+    "mtime": 1784845751.657358,
+    "ast_hash": "15eef93afa74a17f990e212f17fadb50",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-07-21-my-stack-foundation.md": {
+    "mtime": 1784845751.619535,
+    "ast_hash": "4752a00ebab9def158a353f29596ca27",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md": {
+    "mtime": 1784845751.6200492,
+    "ast_hash": "9d5fa84946b7e7275155944be7a229b2",
     "semantic_hash": ""
   }
 }

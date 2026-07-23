@@ -2273,7 +2273,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_seed_pk_profiles",
-      "community": 50,
+      "community": 10,
       "norm_label": "seed-pk-profiles.ts"
     },
     {
@@ -2283,7 +2283,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_seed_pk_profiles_pkseed",
-      "community": 50,
+      "community": 10,
       "norm_label": "pkseed"
     },
     {
@@ -2293,7 +2293,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "scripts_seed_pk_profiles_pk_profiles",
-      "community": 50,
+      "community": 10,
       "norm_label": "pk_profiles"
     },
     {
@@ -2303,7 +2303,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "scripts_seed_pk_profiles_main",
-      "community": 50,
+      "community": 10,
       "norm_label": "main()"
     },
     {
@@ -3143,7 +3143,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_expirywarningbanners",
-      "community": 15,
+      "community": 279,
       "norm_label": "expirywarningbanners.tsx"
     },
     {
@@ -3153,7 +3153,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_components_expirywarningbanners_alertmessage",
-      "community": 15,
+      "community": 279,
       "norm_label": "alertmessage()"
     },
     {
@@ -3163,7 +3163,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_components_expirywarningbanners_alerticon",
-      "community": 15,
+      "community": 279,
       "norm_label": "alerticon()"
     },
     {
@@ -3173,7 +3173,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_components_expirywarningbanners_expirywarningbanners",
-      "community": 15,
+      "community": 279,
       "norm_label": "expirywarningbanners()"
     },
     {
@@ -3183,7 +3183,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_labloader",
-      "community": 7,
+      "community": 277,
       "norm_label": "labloader.tsx"
     },
     {
@@ -3193,7 +3193,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_components_labloader_labloaderprops",
-      "community": 7,
+      "community": 277,
       "norm_label": "labloaderprops"
     },
     {
@@ -3203,7 +3203,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_components_labloader_labloader",
-      "community": 7,
+      "community": 277,
       "norm_label": "labloader()"
     },
     {
@@ -3423,7 +3423,7 @@
       "source_location": "L662",
       "_origin": "ast",
       "id": "src_components_onboarding_onboardingrestartbutton",
-      "community": 31,
+      "community": 37,
       "norm_label": "onboardingrestartbutton()"
     },
     {
@@ -3743,7 +3743,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_protectedroute",
-      "community": 20,
+      "community": 10,
       "norm_label": "protectedroute.tsx"
     },
     {
@@ -3753,7 +3753,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_components_protectedroute_protectedroute",
-      "community": 20,
+      "community": 10,
       "norm_label": "protectedroute()"
     },
     {
@@ -3993,7 +3993,7 @@
       "source_location": "L132",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionhistorysheet_historydaysselect",
-      "community": 16,
+      "community": 276,
       "norm_label": "historydaysselect()"
     },
     {
@@ -4003,7 +4003,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionintrosheet",
-      "community": 42,
+      "community": 273,
       "norm_label": "injectionintrosheet.tsx"
     },
     {
@@ -4013,7 +4013,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionintrosheet_injectionintrosheet",
-      "community": 42,
+      "community": 273,
       "norm_label": "injectionintrosheet()"
     },
     {
@@ -4063,7 +4063,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionlogsheet_injectionsaveinput",
-      "community": 11,
+      "community": 273,
       "norm_label": "injectionsaveinput"
     },
     {
@@ -4133,7 +4133,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_injectionfocusrequest",
-      "community": 109,
+      "community": 9,
       "norm_label": "injectionfocusrequest"
     },
     {
@@ -4163,7 +4163,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_torso",
-      "community": 241,
+      "community": 109,
       "norm_label": "torso()"
     },
     {
@@ -4253,7 +4253,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackerhero",
-      "community": 241,
+      "community": 109,
       "norm_label": "injectiontrackerhero.tsx"
     },
     {
@@ -4263,7 +4263,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackerhero_hero_pin_colors",
-      "community": 241,
+      "community": 109,
       "norm_label": "hero_pin_colors"
     },
     {
@@ -4273,7 +4273,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackerhero_injectionheropin",
-      "community": 241,
+      "community": 15,
       "norm_label": "injectionheropin"
     },
     {
@@ -4283,7 +4283,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackerhero_herotorsomodel",
-      "community": 241,
+      "community": 109,
       "norm_label": "herotorsomodel()"
     },
     {
@@ -4293,7 +4293,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackerhero_heropin",
-      "community": 241,
+      "community": 109,
       "norm_label": "heropin()"
     },
     {
@@ -4303,7 +4303,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackerhero_torsopreview",
-      "community": 241,
+      "community": 109,
       "norm_label": "torsopreview()"
     },
     {
@@ -4313,7 +4313,7 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackerhero_injectiontrackerhero",
-      "community": 241,
+      "community": 109,
       "norm_label": "injectiontrackerhero()"
     },
     {
@@ -4323,7 +4323,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackertabs",
-      "community": 16,
+      "community": 276,
       "norm_label": "injectiontrackertabs.tsx"
     },
     {
@@ -4333,7 +4333,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackertabs_open_days_options",
-      "community": 16,
+      "community": 276,
       "norm_label": "open_days_options"
     },
     {
@@ -4343,7 +4343,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackertabs_injectiontrackertabs",
-      "community": 16,
+      "community": 276,
       "norm_label": "injectiontrackertabs()"
     },
     {
@@ -4353,7 +4353,7 @@
       "source_location": "L209",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackertabs_floatingactionbutton",
-      "community": 16,
+      "community": 276,
       "norm_label": "floatingactionbutton()"
     },
     {
@@ -4363,7 +4363,7 @@
       "source_location": "L233",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackertabs_openintakestab",
-      "community": 16,
+      "community": 276,
       "norm_label": "openintakestab()"
     },
     {
@@ -4373,7 +4373,7 @@
       "source_location": "L262",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackertabs_openintakerow",
-      "community": 16,
+      "community": 276,
       "norm_label": "openintakerow()"
     },
     {
@@ -4383,7 +4383,7 @@
       "source_location": "L296",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackertabs_opendayslabel",
-      "community": 16,
+      "community": 276,
       "norm_label": "opendayslabel()"
     },
     {
@@ -4393,7 +4393,7 @@
       "source_location": "L302",
       "_origin": "ast",
       "id": "src_components_injection3d_injectiontrackertabs_openagelabel",
-      "community": 16,
+      "community": 276,
       "norm_label": "openagelabel()"
     },
     {
@@ -5273,7 +5273,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_config_features",
-      "community": 21,
+      "community": 15,
       "norm_label": "features.ts"
     },
     {
@@ -5283,7 +5283,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_config_features_features",
-      "community": 21,
+      "community": 15,
       "norm_label": "features"
     },
     {
@@ -5293,7 +5293,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_config_features_featureflag",
-      "community": 21,
+      "community": 15,
       "norm_label": "featureflag"
     },
     {
@@ -5303,7 +5303,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_context_authcontext",
-      "community": 20,
+      "community": 10,
       "norm_label": "authcontext.tsx"
     },
     {
@@ -5313,7 +5313,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_context_authcontext_authcontexttype",
-      "community": 20,
+      "community": 10,
       "norm_label": "authcontexttype"
     },
     {
@@ -5323,7 +5323,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_context_authcontext_authcontext",
-      "community": 20,
+      "community": 10,
       "norm_label": "authcontext"
     },
     {
@@ -5333,7 +5333,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_context_authcontext_authprovider",
-      "community": 20,
+      "community": 10,
       "norm_label": "authprovider()"
     },
     {
@@ -5343,7 +5343,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_context_authcontext_useauth",
-      "community": 20,
+      "community": 10,
       "norm_label": "useauth()"
     },
     {
@@ -5413,7 +5413,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_blutwertepage",
-      "community": 32,
+      "community": 250,
       "norm_label": "blutwertepage.tsx"
     },
     {
@@ -5423,7 +5423,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_features_blutwerte_blutwertepage_blutwertepage",
-      "community": 32,
+      "community": 250,
       "norm_label": "blutwertepage()"
     },
     {
@@ -5433,7 +5433,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_auffaelligewerte",
-      "community": 32,
+      "community": 241,
       "norm_label": "auffaelligewerte.tsx"
     },
     {
@@ -5443,7 +5443,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_auffaelligewerte_props",
-      "community": 32,
+      "community": 241,
       "norm_label": "props"
     },
     {
@@ -5453,7 +5453,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_auffaelligewerte_auffaelligewerte",
-      "community": 32,
+      "community": 241,
       "norm_label": "auffaelligewerte()"
     },
     {
@@ -5473,7 +5473,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundeditor_props",
-      "community": 32,
+      "community": 274,
       "norm_label": "props"
     },
     {
@@ -5533,47 +5533,67 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundliste",
-      "community": 32,
+      "community": 274,
       "norm_label": "befundliste.tsx"
+    },
+    {
+      "label": "Layout",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
+      "source_location": "L10",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_befundliste_layout",
+      "community": 274,
+      "norm_label": "layout"
+    },
+    {
+      "label": "loadLayout()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_components_befundliste_loadlayout",
+      "community": 274,
+      "norm_label": "loadlayout()"
     },
     {
       "label": "Props",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L10",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundliste_props",
-      "community": 32,
+      "community": 274,
       "norm_label": "props"
     },
     {
       "label": "werteLabel()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L16",
+      "source_location": "L28",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundliste_wertelabel",
-      "community": 32,
+      "community": 274,
       "norm_label": "wertelabel()"
     },
     {
       "label": "isAuffaellig()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L18",
+      "source_location": "L30",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundliste_isauffaellig",
-      "community": 32,
+      "community": 274,
       "norm_label": "isauffaellig()"
     },
     {
       "label": "BefundListe()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L21",
+      "source_location": "L33",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundliste_befundliste",
-      "community": 32,
+      "community": 274,
       "norm_label": "befundliste()"
     },
     {
@@ -5583,7 +5603,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal",
-      "community": 32,
+      "community": 269,
       "norm_label": "entrymodal.tsx"
     },
     {
@@ -5593,7 +5613,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal_entrydraft",
-      "community": 32,
+      "community": 269,
       "norm_label": "entrydraft"
     },
     {
@@ -5603,7 +5623,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal_emptydraft",
-      "community": 32,
+      "community": 269,
       "norm_label": "emptydraft()"
     },
     {
@@ -5613,7 +5633,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal_props",
-      "community": 32,
+      "community": 269,
       "norm_label": "props"
     },
     {
@@ -5623,7 +5643,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal_entrymodal",
-      "community": 32,
+      "community": 269,
       "norm_label": "entrymodal()"
     },
     {
@@ -5633,7 +5653,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_gridcontrols",
-      "community": 32,
+      "community": 250,
       "norm_label": "gridcontrols.tsx"
     },
     {
@@ -5643,7 +5663,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_gridcontrols_sort_labels",
-      "community": 32,
+      "community": 250,
       "norm_label": "sort_labels"
     },
     {
@@ -5653,7 +5673,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_gridcontrols_props",
-      "community": 32,
+      "community": 250,
       "norm_label": "props"
     },
     {
@@ -5663,7 +5683,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_gridcontrols_gridcontrols",
-      "community": 32,
+      "community": 250,
       "norm_label": "gridcontrols()"
     },
     {
@@ -5673,7 +5693,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_markerdetail",
-      "community": 32,
+      "community": 241,
       "norm_label": "markerdetail.tsx"
     },
     {
@@ -5683,7 +5703,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_markerdetail_rangefilter",
-      "community": 32,
+      "community": 241,
       "norm_label": "rangefilter"
     },
     {
@@ -5693,7 +5713,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_markerdetail_props",
-      "community": 32,
+      "community": 241,
       "norm_label": "props"
     },
     {
@@ -5703,7 +5723,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_markerdetail_markerdetail",
-      "community": 32,
+      "community": 241,
       "norm_label": "markerdetail()"
     },
     {
@@ -5713,7 +5733,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_markergrid",
-      "community": 32,
+      "community": 241,
       "norm_label": "markergrid.tsx"
     },
     {
@@ -5723,7 +5743,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_markergrid_trendicon",
-      "community": 32,
+      "community": 241,
       "norm_label": "trendicon()"
     },
     {
@@ -5733,7 +5753,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_markergrid_trendcolor",
-      "community": 32,
+      "community": 241,
       "norm_label": "trendcolor()"
     },
     {
@@ -5743,7 +5763,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_markergrid_props",
-      "community": 32,
+      "community": 241,
       "norm_label": "props"
     },
     {
@@ -5753,7 +5773,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_markergrid_markergrid",
-      "community": 32,
+      "community": 241,
       "norm_label": "markergrid()"
     },
     {
@@ -5763,7 +5783,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_referencebar",
-      "community": 32,
+      "community": 241,
       "norm_label": "referencebar.tsx"
     },
     {
@@ -5773,7 +5793,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_referencebar_props",
-      "community": 32,
+      "community": 274,
       "norm_label": "props"
     },
     {
@@ -5783,7 +5803,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_referencebar_referencebar",
-      "community": 32,
+      "community": 241,
       "norm_label": "referencebar()"
     },
     {
@@ -5933,7 +5953,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_test",
-      "community": 32,
+      "community": 250,
       "norm_label": "bloodwork.test.ts"
     },
     {
@@ -5943,7 +5963,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_test_entry",
-      "community": 32,
+      "community": 250,
       "norm_label": "entry()"
     },
     {
@@ -5953,7 +5973,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork",
-      "community": 32,
+      "community": 250,
       "norm_label": "bloodwork.ts"
     },
     {
@@ -5963,7 +5983,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_effectiverange",
-      "community": 32,
+      "community": 274,
       "norm_label": "effectiverange"
     },
     {
@@ -5973,7 +5993,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_trend",
-      "community": 32,
+      "community": 250,
       "norm_label": "trend"
     },
     {
@@ -5983,7 +6003,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_sortmode",
-      "community": 32,
+      "community": 250,
       "norm_label": "sortmode"
     },
     {
@@ -5993,7 +6013,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_markerpoint",
-      "community": 32,
+      "community": 274,
       "norm_label": "markerpoint"
     },
     {
@@ -6003,7 +6023,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_markersummary",
-      "community": 32,
+      "community": 241,
       "norm_label": "markersummary"
     },
     {
@@ -6013,7 +6033,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_tonumber",
-      "community": 32,
+      "community": 241,
       "norm_label": "tonumber()"
     },
     {
@@ -6023,7 +6043,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_isinrange",
-      "community": 32,
+      "community": 274,
       "norm_label": "isinrange()"
     },
     {
@@ -6033,67 +6053,77 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_computetrend",
-      "community": 32,
+      "community": 250,
       "norm_label": "computetrend()"
+    },
+    {
+      "label": "pickDisplayUnit()",
+      "file_type": "code",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L92",
+      "_origin": "ast",
+      "id": "src_features_blutwerte_lib_bloodwork_pickdisplayunit",
+      "community": 250,
+      "norm_label": "pickdisplayunit()"
     },
     {
       "label": "rangeInDisplayUnit()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L88",
+      "source_location": "L109",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_rangeindisplayunit",
-      "community": 32,
+      "community": 250,
       "norm_label": "rangeindisplayunit()"
     },
     {
       "label": "buildMarkerSummaries()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L101",
+      "source_location": "L124",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
-      "community": 32,
+      "community": 250,
       "norm_label": "buildmarkersummaries()"
     },
     {
       "label": "filterByKategorie()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L160",
+      "source_location": "L177",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_filterbykategorie",
-      "community": 32,
+      "community": 250,
       "norm_label": "filterbykategorie()"
     },
     {
       "label": "kategorieRang()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L169",
+      "source_location": "L186",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_kategorierang",
-      "community": 32,
+      "community": 269,
       "norm_label": "kategorierang()"
     },
     {
       "label": "sortSummaries()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L174",
+      "source_location": "L191",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_sortsummaries",
-      "community": 32,
+      "community": 250,
       "norm_label": "sortsummaries()"
     },
     {
       "label": "auffaelligeWerte()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L202",
+      "source_location": "L219",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_auffaelligewerte",
-      "community": 32,
+      "community": 250,
       "norm_label": "auffaelligewerte()"
     },
     {
@@ -6103,7 +6133,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_conversionhint_test",
-      "community": 32,
+      "community": 269,
       "norm_label": "conversionhint.test.ts"
     },
     {
@@ -6113,7 +6143,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_conversionhint",
-      "community": 32,
+      "community": 269,
       "norm_label": "conversionhint.ts"
     },
     {
@@ -6123,7 +6153,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_conversionhint_conversionhint",
-      "community": 32,
+      "community": 269,
       "norm_label": "conversionhint()"
     },
     {
@@ -6213,7 +6243,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_format",
-      "community": 32,
+      "community": 241,
       "norm_label": "format.ts"
     },
     {
@@ -6223,7 +6253,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_format_formatdisplaydate",
-      "community": 32,
+      "community": 241,
       "norm_label": "formatdisplaydate()"
     },
     {
@@ -6233,7 +6263,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_format_formatchartdate",
-      "community": 32,
+      "community": 241,
       "norm_label": "formatchartdate()"
     },
     {
@@ -6243,7 +6273,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_format_formatnumber",
-      "community": 32,
+      "community": 241,
       "norm_label": "formatnumber()"
     },
     {
@@ -6253,7 +6283,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_format_formatrange",
-      "community": 32,
+      "community": 241,
       "norm_label": "formatrange()"
     },
     {
@@ -6263,7 +6293,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_test",
-      "community": 32,
+      "community": 280,
       "norm_label": "imageresize.test.ts"
     },
     {
@@ -6273,7 +6303,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize",
-      "community": 32,
+      "community": 280,
       "norm_label": "imageresize.ts"
     },
     {
@@ -6283,7 +6313,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_size",
-      "community": 32,
+      "community": 280,
       "norm_label": "size"
     },
     {
@@ -6293,7 +6323,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_targetsize",
-      "community": 32,
+      "community": 280,
       "norm_label": "targetsize()"
     },
     {
@@ -6303,7 +6333,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_preparedfile",
-      "community": 32,
+      "community": 280,
       "norm_label": "preparedfile"
     },
     {
@@ -6313,7 +6343,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_readasdataurl",
-      "community": 32,
+      "community": 280,
       "norm_label": "readasdataurl()"
     },
     {
@@ -6323,7 +6353,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_stripprefix",
-      "community": 32,
+      "community": 280,
       "norm_label": "stripprefix()"
     },
     {
@@ -6333,7 +6363,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_loadimage",
-      "community": 32,
+      "community": 280,
       "norm_label": "loadimage()"
     },
     {
@@ -6343,7 +6373,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_preparefile",
-      "community": 32,
+      "community": 280,
       "norm_label": "preparefile()"
     },
     {
@@ -6353,7 +6383,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_markercatalog_test",
-      "community": 32,
+      "community": 269,
       "norm_label": "markercatalog.test.ts"
     },
     {
@@ -6363,7 +6393,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_markercatalog",
-      "community": 32,
+      "community": 269,
       "norm_label": "markercatalog.ts"
     },
     {
@@ -6373,87 +6403,87 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_markercatalog_kategorie",
-      "community": 32,
+      "community": 269,
       "norm_label": "kategorie"
     },
     {
       "label": "KATEGORIEN",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L12",
+      "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_markercatalog_kategorien",
-      "community": 32,
+      "community": 269,
       "norm_label": "kategorien"
     },
     {
       "label": "SONSTIGE",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L25",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_markercatalog_sonstige",
-      "community": 32,
+      "community": 250,
       "norm_label": "sonstige"
     },
     {
       "label": "KategorieFilter",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L27",
+      "source_location": "L29",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_markercatalog_kategoriefilter",
-      "community": 32,
+      "community": 250,
       "norm_label": "kategoriefilter"
     },
     {
       "label": "MarkerDef",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L29",
+      "source_location": "L31",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_markercatalog_markerdef",
-      "community": 32,
+      "community": 241,
       "norm_label": "markerdef"
     },
     {
       "label": "MARKER_CATALOG",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L45",
+      "source_location": "L47",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_markercatalog_marker_catalog",
-      "community": 32,
+      "community": 269,
       "norm_label": "marker_catalog"
     },
     {
       "label": "LOOKUP",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L655",
+      "source_location": "L831",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_markercatalog_lookup",
-      "community": 32,
+      "community": 269,
       "norm_label": "lookup"
     },
     {
       "label": "CATALOG_MARKER_NAMES",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L662",
+      "source_location": "L838",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_markercatalog_catalog_marker_names",
-      "community": 32,
+      "community": 269,
       "norm_label": "catalog_marker_names"
     },
     {
       "label": "normalizeMarker()",
       "file_type": "code",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L668",
+      "source_location": "L844",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_markercatalog_normalizemarker",
-      "community": 32,
+      "community": 269,
       "norm_label": "normalizemarker()"
     },
     {
@@ -6563,7 +6593,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_referencebar_test",
-      "community": 32,
+      "community": 241,
       "norm_label": "referencebar.test.ts"
     },
     {
@@ -6573,7 +6603,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_referencebar",
-      "community": 32,
+      "community": 241,
       "norm_label": "referencebar.ts"
     },
     {
@@ -6583,7 +6613,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_referencebar_referencebargeometry",
-      "community": 32,
+      "community": 241,
       "norm_label": "referencebargeometry"
     },
     {
@@ -6593,7 +6623,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_referencebar_clamp",
-      "community": 32,
+      "community": 241,
       "norm_label": "clamp()"
     },
     {
@@ -6603,7 +6633,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_unitconversion_test",
-      "community": 32,
+      "community": 250,
       "norm_label": "unitconversion.test.ts"
     },
     {
@@ -6613,7 +6643,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_unitconversion",
-      "community": 32,
+      "community": 250,
       "norm_label": "unitconversion.ts"
     },
     {
@@ -6623,7 +6653,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_unitconversion_mass_factors",
-      "community": 32,
+      "community": 250,
       "norm_label": "mass_factors"
     },
     {
@@ -6633,7 +6663,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_unitconversion_normalizeunitstring",
-      "community": 32,
+      "community": 250,
       "norm_label": "normalizeunitstring()"
     },
     {
@@ -6643,7 +6673,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_unitconversion_canconvert",
-      "community": 32,
+      "community": 250,
       "norm_label": "canconvert()"
     },
     {
@@ -6653,7 +6683,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_unitconversion_convert",
-      "community": 32,
+      "community": 250,
       "norm_label": "convert()"
     },
     {
@@ -6663,7 +6693,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_styles",
-      "community": 32,
+      "community": 241,
       "norm_label": "styles.ts"
     },
     {
@@ -6673,7 +6703,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_blutwerte_styles_panel_style",
-      "community": 32,
+      "community": 241,
       "norm_label": "panel_style"
     },
     {
@@ -6683,7 +6713,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_types",
-      "community": 32,
+      "community": 274,
       "norm_label": "types.ts"
     },
     {
@@ -6693,7 +6723,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_types_bloodworkentry",
-      "community": 32,
+      "community": 274,
       "norm_label": "bloodworkentry"
     },
     {
@@ -6703,7 +6733,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_features_blutwerte_types_bloodworkreport",
-      "community": 32,
+      "community": 274,
       "norm_label": "bloodworkreport"
     },
     {
@@ -6713,7 +6743,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_fortschrittpage",
-      "community": 55,
+      "community": 272,
       "norm_label": "fortschrittpage.tsx"
     },
     {
@@ -6723,7 +6753,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_fortschritt_fortschrittpage_fortschrittpage",
-      "community": 55,
+      "community": 272,
       "norm_label": "fortschrittpage()"
     },
     {
@@ -6743,7 +6773,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittdashboard_props",
-      "community": 55,
+      "community": 102,
       "norm_label": "props"
     },
     {
@@ -6753,7 +6783,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittdashboard_fortschrittdashboard",
-      "community": 242,
+      "community": 272,
       "norm_label": "fortschrittdashboard()"
     },
     {
@@ -6773,7 +6803,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittheader",
-      "community": 55,
+      "community": 272,
       "norm_label": "fortschrittheader.tsx"
     },
     {
@@ -6783,7 +6813,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittheader_props",
-      "community": 55,
+      "community": 272,
       "norm_label": "props"
     },
     {
@@ -6793,7 +6823,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittheader_fortschrittheader",
-      "community": 55,
+      "community": 272,
       "norm_label": "fortschrittheader()"
     },
     {
@@ -6883,7 +6913,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_stickyrangebar",
-      "community": 55,
+      "community": 272,
       "norm_label": "stickyrangebar.tsx"
     },
     {
@@ -6893,7 +6923,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_stickyrangebar_props",
-      "community": 55,
+      "community": 272,
       "norm_label": "props"
     },
     {
@@ -6903,7 +6933,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_stickyrangebar_stickyrangebar",
-      "community": 55,
+      "community": 272,
       "norm_label": "stickyrangebar()"
     },
     {
@@ -6973,7 +7003,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_todaylogsheet_props",
-      "community": 62,
+      "community": 128,
       "norm_label": "props"
     },
     {
@@ -7093,7 +7123,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fotos_fotoscard",
-      "community": 105,
+      "community": 54,
       "norm_label": "fotoscard.tsx"
     },
     {
@@ -7103,7 +7133,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fotos_fotoscard_photoperiodmarquee",
-      "community": 105,
+      "community": 54,
       "norm_label": "photoperiodmarquee()"
     },
     {
@@ -7113,7 +7143,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fotos_fotoscard_props",
-      "community": 105,
+      "community": 54,
       "norm_label": "props"
     },
     {
@@ -7123,7 +7153,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fotos_fotoscard_fotoscard",
-      "community": 105,
+      "community": 54,
       "norm_label": "fotoscard()"
     },
     {
@@ -7323,7 +7353,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_topchangessection_topchangessection",
-      "community": 102,
+      "community": 48,
       "norm_label": "topchangessection()"
     },
     {
@@ -7463,7 +7493,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartsettingsbutton",
-      "community": 102,
+      "community": 19,
       "norm_label": "chartsettingsbutton.tsx"
     },
     {
@@ -7473,7 +7503,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartsettingsbutton_props",
-      "community": 102,
+      "community": 19,
       "norm_label": "props"
     },
     {
@@ -7483,7 +7513,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartsettingsbutton_chartsettingsbutton",
-      "community": 102,
+      "community": 19,
       "norm_label": "chartsettingsbutton()"
     },
     {
@@ -7493,7 +7523,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartwindowtoggle",
-      "community": 19,
+      "community": 278,
       "norm_label": "chartwindowtoggle.tsx"
     },
     {
@@ -7503,7 +7533,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartwindowtoggle_props",
-      "community": 19,
+      "community": 278,
       "norm_label": "props"
     },
     {
@@ -7513,7 +7543,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartwindowtoggle_chartwindowtoggle",
-      "community": 19,
+      "community": 278,
       "norm_label": "chartwindowtoggle()"
     },
     {
@@ -7523,7 +7553,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_cyclebandlayer",
-      "community": 95,
+      "community": 275,
       "norm_label": "cyclebandlayer.tsx"
     },
     {
@@ -7543,7 +7573,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_cyclebandlayer_props",
-      "community": 95,
+      "community": 275,
       "norm_label": "props"
     },
     {
@@ -7553,7 +7583,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_cyclebandlayer_bandlayout",
-      "community": 95,
+      "community": 275,
       "norm_label": "bandlayout()"
     },
     {
@@ -7563,7 +7593,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_cyclebandlayer_isstarthighlighted",
-      "community": 95,
+      "community": 275,
       "norm_label": "isstarthighlighted()"
     },
     {
@@ -7573,7 +7603,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_cyclebandlayer_cyclebandlayer",
-      "community": 95,
+      "community": 275,
       "norm_label": "cyclebandlayer"
     },
     {
@@ -7673,7 +7703,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_datetots",
-      "community": 19,
+      "community": 278,
       "norm_label": "datetots()"
     },
     {
@@ -7783,7 +7813,7 @@
       "source_location": "L666",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_metricchart",
-      "community": 102,
+      "community": 19,
       "norm_label": "metricchart"
     },
     {
@@ -8163,7 +8193,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_werte_wertecard_props",
-      "community": 62,
+      "community": 242,
       "norm_label": "props"
     },
     {
@@ -8323,7 +8353,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_features_fortschritt_hooks_usechartpan_chartpanhandle",
-      "community": 102,
+      "community": 19,
       "norm_label": "chartpanhandle"
     },
     {
@@ -8463,7 +8493,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_test",
-      "community": 95,
+      "community": 259,
       "norm_label": "charttooltip.test.ts"
     },
     {
@@ -8473,7 +8503,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip",
-      "community": 95,
+      "community": 259,
       "norm_label": "charttooltip.ts"
     },
     {
@@ -8483,7 +8513,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_snapanchor",
-      "community": 95,
+      "community": 259,
       "norm_label": "snapanchor"
     },
     {
@@ -8503,7 +8533,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_usesreducedmetricpoints",
-      "community": 95,
+      "community": 19,
       "norm_label": "usesreducedmetricpoints()"
     },
     {
@@ -8513,7 +8543,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_nearestvisiblemetricpoint",
-      "community": 95,
+      "community": 259,
       "norm_label": "nearestvisiblemetricpoint()"
     },
     {
@@ -8523,7 +8553,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_smoothstep",
-      "community": 95,
+      "community": 259,
       "norm_label": "smoothstep()"
     },
     {
@@ -8533,7 +8563,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_normalizedateiso",
-      "community": 95,
+      "community": 259,
       "norm_label": "normalizedateiso()"
     },
     {
@@ -8543,7 +8573,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_hoverdateiso",
-      "community": 95,
+      "community": 259,
       "norm_label": "hoverdateiso()"
     },
     {
@@ -8553,7 +8583,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_bandwithstart",
-      "community": 95,
+      "community": 259,
       "norm_label": "bandwithstart"
     },
     {
@@ -8563,7 +8593,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_xinversescale",
-      "community": 95,
+      "community": 259,
       "norm_label": "xinversescale"
     },
     {
@@ -8573,7 +8603,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_tohoverts",
-      "community": 95,
+      "community": 259,
       "norm_label": "tohoverts()"
     },
     {
@@ -8583,7 +8613,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_resolvecursorhoverdate",
-      "community": 95,
+      "community": 259,
       "norm_label": "resolvecursorhoverdate()"
     },
     {
@@ -8593,7 +8623,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_metricvalueatdate",
-      "community": 95,
+      "community": 259,
       "norm_label": "metricvalueatdate()"
     },
     {
@@ -8603,7 +8633,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_buildtooltipsnapdates",
-      "community": 95,
+      "community": 259,
       "norm_label": "buildtooltipsnapdates()"
     },
     {
@@ -8613,7 +8643,7 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_buildsnapanchors",
-      "community": 95,
+      "community": 259,
       "norm_label": "buildsnapanchors()"
     },
     {
@@ -8623,7 +8653,7 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_resolvefluidcursorx",
-      "community": 95,
+      "community": 259,
       "norm_label": "resolvefluidcursorx()"
     },
     {
@@ -8633,7 +8663,7 @@
       "source_location": "L172",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_resolvefluidcharthover",
-      "community": 95,
+      "community": 259,
       "norm_label": "resolvefluidcharthover()"
     },
     {
@@ -8643,7 +8673,7 @@
       "source_location": "L212",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_cyclestartsathover",
-      "community": 95,
+      "community": 275,
       "norm_label": "cyclestartsathover()"
     },
     {
@@ -8653,7 +8683,7 @@
       "source_location": "L230",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_xscale",
-      "community": 95,
+      "community": 259,
       "norm_label": "xscale"
     },
     {
@@ -8663,7 +8693,7 @@
       "source_location": "L232",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_datetots",
-      "community": 95,
+      "community": 259,
       "norm_label": "datetots()"
     },
     {
@@ -8673,7 +8703,7 @@
       "source_location": "L237",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_nearestsnaphoverdate",
-      "community": 95,
+      "community": 259,
       "norm_label": "nearestsnaphoverdate()"
     },
     {
@@ -8683,7 +8713,7 @@
       "source_location": "L260",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_cyclestartsnearcursor",
-      "community": 95,
+      "community": 275,
       "norm_label": "cyclestartsnearcursor()"
     },
     {
@@ -8693,7 +8723,7 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_cyclestartsondate",
-      "community": 95,
+      "community": 259,
       "norm_label": "cyclestartsondate()"
     },
     {
@@ -8703,7 +8733,7 @@
       "source_location": "L284",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_resolvetooltipcyclestarts",
-      "community": 95,
+      "community": 259,
       "norm_label": "resolvetooltipcyclestarts()"
     },
     {
@@ -8713,7 +8743,7 @@
       "source_location": "L293",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_resolvecharttooltipcontent",
-      "community": 95,
+      "community": 259,
       "norm_label": "resolvecharttooltipcontent()"
     },
     {
@@ -8963,7 +8993,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartwindow_test",
-      "community": 19,
+      "community": 278,
       "norm_label": "chartwindow.test.ts"
     },
     {
@@ -8973,7 +9003,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartwindow",
-      "community": 19,
+      "community": 278,
       "norm_label": "chartwindow.ts"
     },
     {
@@ -8983,7 +9013,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartwindow_chartwindowkey",
-      "community": 19,
+      "community": 278,
       "norm_label": "chartwindowkey"
     },
     {
@@ -8993,7 +9023,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartwindow_chart_windows",
-      "community": 19,
+      "community": 278,
       "norm_label": "chart_windows"
     },
     {
@@ -9003,7 +9033,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartwindow_windowmsfor",
-      "community": 19,
+      "community": 278,
       "norm_label": "windowmsfor()"
     },
     {
@@ -9013,7 +9043,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartwindow_rangebounds",
-      "community": 19,
+      "community": 278,
       "norm_label": "rangebounds()"
     },
     {
@@ -9063,7 +9093,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelanes_test",
-      "community": 95,
+      "community": 275,
       "norm_label": "cyclelanes.test.ts"
     },
     {
@@ -9073,7 +9103,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelanes",
-      "community": 95,
+      "community": 275,
       "norm_label": "cyclelanes.ts"
     },
     {
@@ -9083,7 +9113,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelanes_timeinterval",
-      "community": 95,
+      "community": 275,
       "norm_label": "timeinterval"
     },
     {
@@ -9093,7 +9123,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelanes_intervalsoverlap",
-      "community": 95,
+      "community": 275,
       "norm_label": "intervalsoverlap()"
     },
     {
@@ -9103,7 +9133,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelanes_assignlanes",
-      "community": 95,
+      "community": 275,
       "norm_label": "assignlanes()"
     },
     {
@@ -9113,7 +9143,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelanes_lanecount",
-      "community": 95,
+      "community": 275,
       "norm_label": "lanecount()"
     },
     {
@@ -9123,7 +9153,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelanes_computecyclebandlayout",
-      "community": 95,
+      "community": 275,
       "norm_label": "computecyclebandlayout()"
     },
     {
@@ -9133,7 +9163,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_test",
-      "community": 19,
+      "community": 51,
       "norm_label": "cyclelegend.test.ts"
     },
     {
@@ -9143,7 +9173,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_test_cycle",
-      "community": 19,
+      "community": 51,
       "norm_label": "cycle()"
     },
     {
@@ -9153,7 +9183,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_test_ongoing",
-      "community": 19,
+      "community": 51,
       "norm_label": "ongoing()"
     },
     {
@@ -9163,7 +9193,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend",
-      "community": 19,
+      "community": 51,
       "norm_label": "cyclelegend.ts"
     },
     {
@@ -9173,7 +9203,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_cyclelegenditem",
-      "community": 19,
+      "community": 51,
       "norm_label": "cyclelegenditem"
     },
     {
@@ -9183,7 +9213,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_buildcyclelegenditems",
-      "community": 19,
+      "community": 51,
       "norm_label": "buildcyclelegenditems()"
     },
     {
@@ -9193,7 +9223,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_dates",
-      "community": 19,
+      "community": 278,
       "norm_label": "dates.ts"
     },
     {
@@ -9203,7 +9233,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_dates_formatdaysafe",
-      "community": 19,
+      "community": 51,
       "norm_label": "formatdaysafe()"
     },
     {
@@ -9213,7 +9243,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_dates_parsedaysafe",
-      "community": 19,
+      "community": 278,
       "norm_label": "parsedaysafe()"
     },
     {
@@ -9223,7 +9253,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_dates_daytotssafe",
-      "community": 19,
+      "community": 278,
       "norm_label": "daytotssafe()"
     },
     {
@@ -9473,7 +9503,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefinitions",
-      "community": 19,
+      "community": 102,
       "norm_label": "metricdefinitions.ts"
     },
     {
@@ -9493,7 +9523,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefinitions_base_metrics",
-      "community": 19,
+      "community": 102,
       "norm_label": "base_metrics"
     },
     {
@@ -9550,7 +9580,7 @@
       "label": "SeriesPoint",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L6",
+      "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_seriespoint",
       "community": 242,
@@ -9560,7 +9590,7 @@
       "label": "numeric()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L11",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_numeric",
       "community": 55,
@@ -9570,7 +9600,7 @@
       "label": "computeDelta()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L17",
+      "source_location": "L20",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_computedelta",
       "community": 242,
@@ -9580,7 +9610,7 @@
       "label": "passesThreshold()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L26",
+      "source_location": "L29",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_passesthreshold",
       "community": 242,
@@ -9590,7 +9620,7 @@
       "label": "weightSeries()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L36",
+      "source_location": "L39",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_weightseries",
       "community": 242,
@@ -9600,7 +9630,7 @@
       "label": "dailyFieldSeries()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L42",
+      "source_location": "L45",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_dailyfieldseries",
       "community": 242,
@@ -9610,7 +9640,7 @@
       "label": "labSeries()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L53",
+      "source_location": "L62",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_labseries",
       "community": 242,
@@ -9620,7 +9650,7 @@
       "label": "WELLNESS_LABELS",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L60",
+      "source_location": "L85",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_wellness_labels",
       "community": 242,
@@ -9630,7 +9660,7 @@
       "label": "computeTopChanges()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L67",
+      "source_location": "L92",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_computetopchanges",
       "community": 242,
@@ -9640,7 +9670,7 @@
       "label": "wellnessAverage()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L139",
+      "source_location": "L163",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_wellnessaverage",
       "community": 242,
@@ -9650,7 +9680,7 @@
       "label": "wellnessFieldDelta()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L154",
+      "source_location": "L178",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_wellnessfielddelta",
       "community": 242,
@@ -9660,7 +9690,7 @@
       "label": "strongestWellnessField()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L164",
+      "source_location": "L188",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_strongestwellnessfield",
       "community": 242,
@@ -9670,7 +9700,7 @@
       "label": "computeAdherence()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L178",
+      "source_location": "L202",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_computeadherence",
       "community": 242,
@@ -9680,7 +9710,7 @@
       "label": "sparklineValues()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L216",
+      "source_location": "L240",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_sparklinevalues",
       "community": 242,
@@ -9690,7 +9720,7 @@
       "label": "buildMetricSeries()",
       "file_type": "code",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L221",
+      "source_location": "L245",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_buildmetricseries",
       "community": 242,
@@ -9823,7 +9853,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview_test",
-      "community": 105,
+      "community": 54,
       "norm_label": "photopreview.test.ts"
     },
     {
@@ -9833,7 +9863,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview_test_photo",
-      "community": 105,
+      "community": 54,
       "norm_label": "photo()"
     },
     {
@@ -9843,7 +9873,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview",
-      "community": 105,
+      "community": 54,
       "norm_label": "photopreview.ts"
     },
     {
@@ -9853,7 +9883,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview_photopreviewslot",
-      "community": 105,
+      "community": 54,
       "norm_label": "photopreviewslot"
     },
     {
@@ -9863,7 +9893,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview_sortnewestfirst",
-      "community": 105,
+      "community": 54,
       "norm_label": "sortnewestfirst()"
     },
     {
@@ -9873,7 +9903,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview_buildphotoslots",
-      "community": 105,
+      "community": 54,
       "norm_label": "buildphotoslots()"
     },
     {
@@ -9883,7 +9913,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_photopreview_photopreviewcolumns",
-      "community": 105,
+      "community": 54,
       "norm_label": "photopreviewcolumns()"
     },
     {
@@ -9893,7 +9923,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_range",
-      "community": 105,
+      "community": 242,
       "norm_label": "range.ts"
     },
     {
@@ -9903,7 +9933,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_range_filterdatesinrange",
-      "community": 105,
+      "community": 242,
       "norm_label": "filterdatesinrange()"
     },
     {
@@ -9993,7 +10023,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_substances_substancedaycount",
-      "community": 242,
+      "community": 48,
       "norm_label": "substancedaycount()"
     },
     {
@@ -10033,7 +10063,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_substances_isinrange",
-      "community": 105,
+      "community": 242,
       "norm_label": "isinrange()"
     },
     {
@@ -10223,7 +10253,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_test",
-      "community": 55,
+      "community": 272,
       "norm_label": "verlaufrange.test.ts"
     },
     {
@@ -10233,7 +10263,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange",
-      "community": 55,
+      "community": 272,
       "norm_label": "verlaufrange.ts"
     },
     {
@@ -10243,7 +10273,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_rangechipkey",
-      "community": 55,
+      "community": 272,
       "norm_label": "rangechipkey"
     },
     {
@@ -10253,7 +10283,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_range_chips",
-      "community": 55,
+      "community": 272,
       "norm_label": "range_chips"
     },
     {
@@ -10263,7 +10293,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_rangefromchip",
-      "community": 55,
+      "community": 272,
       "norm_label": "rangefromchip()"
     },
     {
@@ -10283,7 +10313,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_barposition",
-      "community": 55,
+      "community": 272,
       "norm_label": "barposition()"
     },
     {
@@ -10293,7 +10323,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_formatrangelabel",
-      "community": 55,
+      "community": 272,
       "norm_label": "formatrangelabel()"
     },
     {
@@ -10353,7 +10383,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_features_fortschritt_styles_inputstyle",
-      "community": 54,
+      "community": 48,
       "norm_label": "inputstyle"
     },
     {
@@ -10373,7 +10403,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_types",
-      "community": 105,
+      "community": 242,
       "norm_label": "types.ts"
     },
     {
@@ -10383,7 +10413,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_substancemode",
-      "community": 105,
+      "community": 242,
       "norm_label": "substancemode"
     },
     {
@@ -10393,7 +10423,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_daterange",
-      "community": 105,
+      "community": 242,
       "norm_label": "daterange"
     },
     {
@@ -10433,7 +10463,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_activesubstance",
-      "community": 55,
+      "community": 242,
       "norm_label": "activesubstance"
     },
     {
@@ -10443,7 +10473,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_dailylogentry",
-      "community": 62,
+      "community": 242,
       "norm_label": "dailylogentry"
     },
     {
@@ -10453,7 +10483,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_weightlogentry",
-      "community": 242,
+      "community": 128,
       "norm_label": "weightlogentry"
     },
     {
@@ -10473,7 +10503,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_progressphotoentry",
-      "community": 105,
+      "community": 54,
       "norm_label": "progressphotoentry"
     },
     {
@@ -10513,7 +10543,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_overviewcarddata",
-      "community": 105,
+      "community": 242,
       "norm_label": "overviewcarddata"
     },
     {
@@ -10543,7 +10573,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_i18n_datelocales",
-      "community": 10,
+      "community": 31,
       "norm_label": "datelocales.ts"
     },
     {
@@ -10553,7 +10583,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_i18n_datelocales_loaders",
-      "community": 10,
+      "community": 31,
       "norm_label": "loaders"
     },
     {
@@ -10563,7 +10593,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_i18n_datelocales_getdatelocale",
-      "community": 10,
+      "community": 4,
       "norm_label": "getdatelocale()"
     },
     {
@@ -10573,7 +10603,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_i18n_datelocales_loaddatelocale",
-      "community": 10,
+      "community": 31,
       "norm_label": "loaddatelocale()"
     },
     {
@@ -11663,7 +11693,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_test",
-      "community": 11,
+      "community": 273,
       "norm_label": "injectiondeeplink.test.ts"
     },
     {
@@ -11673,7 +11703,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_test_intake",
-      "community": 11,
+      "community": 273,
       "norm_label": "intake()"
     },
     {
@@ -11683,7 +11713,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink",
-      "community": 11,
+      "community": 273,
       "norm_label": "injectiondeeplink.ts"
     },
     {
@@ -11693,7 +11723,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_injectable_methods",
-      "community": 11,
+      "community": 273,
       "norm_label": "injectable_methods"
     },
     {
@@ -11703,7 +11733,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_isinjectablemethod",
-      "community": 11,
+      "community": 4,
       "norm_label": "isinjectablemethod()"
     },
     {
@@ -11713,7 +11743,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_getopeninjectionintakekey",
-      "community": 11,
+      "community": 273,
       "norm_label": "getopeninjectionintakekey()"
     },
     {
@@ -11723,7 +11753,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_buildinjectiontrackerurl",
-      "community": 11,
+      "community": 4,
       "norm_label": "buildinjectiontrackerurl()"
     },
     {
@@ -11733,7 +11763,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_findtargetinjectionintake",
-      "community": 11,
+      "community": 273,
       "norm_label": "findtargetinjectionintake()"
     },
     {
@@ -12073,7 +12103,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_injectionlogtypes_vector3json",
-      "community": 241,
+      "community": 109,
       "norm_label": "vector3json"
     },
     {
@@ -12113,7 +12143,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_lib_injectionlogtypes_injectionlog3d",
-      "community": 16,
+      "community": 9,
       "norm_label": "injectionlog3d"
     },
     {
@@ -12143,7 +12173,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectionmodelmaterial_test",
-      "community": 241,
+      "community": 109,
       "norm_label": "injectionmodelmaterial.test.ts"
     },
     {
@@ -12153,7 +12183,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectionmodelmaterial",
-      "community": 241,
+      "community": 109,
       "norm_label": "injectionmodelmaterial.ts"
     },
     {
@@ -12163,7 +12193,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_injectionmodelmaterial_fallback_torso_color",
-      "community": 241,
+      "community": 109,
       "norm_label": "fallback_torso_color"
     },
     {
@@ -12173,7 +12203,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_injectionmodelmaterial_preparematerial",
-      "community": 241,
+      "community": 109,
       "norm_label": "preparematerial()"
     },
     {
@@ -12183,7 +12213,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_lib_injectionmodelmaterial_prepareinjectiontorsomodel",
-      "community": 241,
+      "community": 109,
       "norm_label": "prepareinjectiontorsomodel()"
     },
     {
@@ -12303,7 +12333,7 @@
       "source_location": "L185",
       "_origin": "ast",
       "id": "src_lib_injectionpersistence_openinjectionintake",
-      "community": 11,
+      "community": 273,
       "norm_label": "openinjectionintake"
     },
     {
@@ -12453,7 +12483,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_test",
-      "community": 109,
+      "community": 281,
       "norm_label": "injectionpinpresentation.test.ts"
     },
     {
@@ -12463,7 +12493,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_test_now",
-      "community": 109,
+      "community": 281,
       "norm_label": "now"
     },
     {
@@ -12473,7 +12503,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_test_log",
-      "community": 109,
+      "community": 281,
       "norm_label": "log()"
     },
     {
@@ -12483,7 +12513,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation",
-      "community": 109,
+      "community": 281,
       "norm_label": "injectionpinpresentation.ts"
     },
     {
@@ -12493,7 +12523,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_getinjectionpinagedays",
-      "community": 109,
+      "community": 281,
       "norm_label": "getinjectionpinagedays()"
     },
     {
@@ -12503,7 +12533,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_formatinjectionpinage",
-      "community": 109,
+      "community": 281,
       "norm_label": "formatinjectionpinage()"
     },
     {
@@ -12513,7 +12543,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_getinjectionpinagecolor",
-      "community": 109,
+      "community": 281,
       "norm_label": "getinjectionpinagecolor()"
     },
     {
@@ -12523,7 +12553,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_lib_injectionpinpresentation_getinjectionpinsubstance",
-      "community": 109,
+      "community": 281,
       "norm_label": "getinjectionpinsubstance()"
     },
     {
@@ -12533,7 +12563,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectiontrackertabs_test",
-      "community": 16,
+      "community": 276,
       "norm_label": "injectiontrackertabs.test.ts"
     },
     {
@@ -12543,7 +12573,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectiontrackertabs",
-      "community": 16,
+      "community": 276,
       "norm_label": "injectiontrackertabs.ts"
     },
     {
@@ -12553,7 +12583,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_injectiontrackertabs_injectiontrackertab",
-      "community": 16,
+      "community": 276,
       "norm_label": "injectiontrackertab"
     },
     {
@@ -12563,7 +12593,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_injectiontrackertabs_injection_tracker_tabs",
-      "community": 16,
+      "community": 276,
       "norm_label": "injection_tracker_tabs"
     },
     {
@@ -12813,7 +12843,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_lib_intakeschedule_scheduleforday",
-      "community": 12,
+      "community": 4,
       "norm_label": "scheduleforday()"
     },
     {
@@ -12843,7 +12873,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "src_lib_intakeschedule_cycleappliestoday",
-      "community": 12,
+      "community": 42,
       "norm_label": "cycleappliestoday()"
     },
     {
@@ -12903,7 +12933,7 @@
       "source_location": "L285",
       "_origin": "ast",
       "id": "src_lib_intakeschedule_collectopenintakes",
-      "community": 12,
+      "community": 42,
       "norm_label": "collectopenintakes()"
     },
     {
@@ -12993,7 +13023,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_lib_openinjectionintakefilters_filteropeninjectionintakes",
-      "community": 16,
+      "community": 11,
       "norm_label": "filteropeninjectionintakes()"
     },
     {
@@ -13053,7 +13083,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_peptideexpiry",
-      "community": 15,
+      "community": 279,
       "norm_label": "peptideexpiry.ts"
     },
     {
@@ -13063,7 +13093,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_peptideexpiry_expirystatus",
-      "community": 15,
+      "community": 279,
       "norm_label": "expirystatus"
     },
     {
@@ -13073,7 +13103,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_peptideexpiry_peptideexpiryalert",
-      "community": 15,
+      "community": 279,
       "norm_label": "peptideexpiryalert"
     },
     {
@@ -13083,7 +13113,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_peptideexpiry_peptideexpirysource",
-      "community": 15,
+      "community": 279,
       "norm_label": "peptideexpirysource"
     },
     {
@@ -13093,7 +13123,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_lib_peptideexpiry_getpeptideexpiryalerts",
-      "community": 15,
+      "community": 279,
       "norm_label": "getpeptideexpiryalerts()"
     },
     {
@@ -13153,7 +13183,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_peptidestock_test_peptide",
-      "community": 4,
+      "community": 7,
       "norm_label": "peptide()"
     },
     {
@@ -14083,7 +14113,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_supabase",
-      "community": 50,
+      "community": 10,
       "norm_label": "supabase.ts"
     },
     {
@@ -14093,7 +14123,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_lib_supabase_supabase",
-      "community": 50,
+      "community": 10,
       "norm_label": "supabase"
     },
     {
@@ -14323,7 +14353,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_pages_auth",
-      "community": 50,
+      "community": 10,
       "norm_label": "auth.tsx"
     },
     {
@@ -14333,7 +14363,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_pages_auth_auth",
-      "community": 20,
+      "community": 10,
       "norm_label": "auth()"
     },
     {
@@ -14663,7 +14693,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_pages_blutwerte",
-      "community": 32,
+      "community": 250,
       "norm_label": "blutwerte.tsx"
     },
     {
@@ -14903,7 +14933,7 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "src_pages_dashboard_intakeperiodcarousel",
-      "community": 32,
+      "community": 4,
       "norm_label": "intakeperiodcarousel()"
     },
     {
@@ -15353,7 +15383,7 @@
       "source_location": "L231",
       "_origin": "ast",
       "id": "src_pages_home_injectionherostate",
-      "community": 241,
+      "community": 15,
       "norm_label": "injectionherostate"
     },
     {
@@ -15393,7 +15423,7 @@
       "source_location": "L253",
       "_origin": "ast",
       "id": "src_pages_home_home",
-      "community": 11,
+      "community": 4,
       "norm_label": "home()"
     },
     {
@@ -15533,7 +15563,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_pages_injektionstracker",
-      "community": 42,
+      "community": 273,
       "norm_label": "injektionstracker.tsx"
     },
     {
@@ -15543,7 +15573,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_pages_injektionstracker_panelstyle",
-      "community": 42,
+      "community": 273,
       "norm_label": "panelstyle"
     },
     {
@@ -15553,7 +15583,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "src_pages_injektionstracker_istablemissingerror",
-      "community": 42,
+      "community": 273,
       "norm_label": "istablemissingerror()"
     },
     {
@@ -15563,7 +15593,7 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "src_pages_injektionstracker_no_warning",
-      "community": 42,
+      "community": 273,
       "norm_label": "no_warning"
     },
     {
@@ -15583,7 +15613,7 @@
       "source_location": "L424",
       "_origin": "ast",
       "id": "src_pages_injektionstracker_pageheader",
-      "community": 42,
+      "community": 273,
       "norm_label": "pageheader()"
     },
     {
@@ -15593,7 +15623,7 @@
       "source_location": "L474",
       "_origin": "ast",
       "id": "src_pages_injektionstracker_setuprequired",
-      "community": 42,
+      "community": 273,
       "norm_label": "setuprequired()"
     },
     {
@@ -16173,7 +16203,7 @@
       "source_location": "L360",
       "_origin": "ast",
       "id": "src_pages_profil_pushsettings",
-      "community": 20,
+      "community": 43,
       "norm_label": "pushsettings()"
     },
     {
@@ -16183,7 +16213,7 @@
       "source_location": "L562",
       "_origin": "ast",
       "id": "src_pages_profil_languageswitcher",
-      "community": 31,
+      "community": 37,
       "norm_label": "languageswitcher()"
     },
     {
@@ -16193,7 +16223,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_pages_progress",
-      "community": 55,
+      "community": 272,
       "norm_label": "progress.tsx"
     },
     {
@@ -16913,7 +16943,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_pages_thelab",
-      "community": 1,
+      "community": 277,
       "norm_label": "thelab.tsx"
     },
     {
@@ -16923,7 +16953,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_pages_thelab_thelab",
-      "community": 104,
+      "community": 277,
       "norm_label": "thelab()"
     },
     {
@@ -17283,7 +17313,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_pages_lab_labhero",
-      "community": 1,
+      "community": 277,
       "norm_label": "labhero.tsx"
     },
     {
@@ -17293,7 +17323,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_pages_lab_labhero_quick_tags",
-      "community": 1,
+      "community": 277,
       "norm_label": "quick_tags"
     },
     {
@@ -17303,7 +17333,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_pages_lab_labhero_labheroprops",
-      "community": 1,
+      "community": 277,
       "norm_label": "labheroprops"
     },
     {
@@ -17313,7 +17343,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_pages_lab_labhero_labhero",
-      "community": 1,
+      "community": 277,
       "norm_label": "labhero()"
     },
     {
@@ -17633,7 +17663,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_pages_lab_studyfeed_studyfeedprops",
-      "community": 1,
+      "community": 123,
       "norm_label": "studyfeedprops"
     },
     {
@@ -17893,7 +17923,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_pages_lab_pubmed_countactivefilters",
-      "community": 104,
+      "community": 277,
       "norm_label": "countactivefilters()"
     },
     {
@@ -17923,7 +17953,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_pages_lab_pubmed_buildquery",
-      "community": 1,
+      "community": 277,
       "norm_label": "buildquery()"
     },
     {
@@ -18053,7 +18083,7 @@
       "source_location": "L215",
       "_origin": "ast",
       "id": "src_pages_lab_pubmed_fetchchartcounts",
-      "community": 104,
+      "community": 277,
       "norm_label": "fetchchartcounts()"
     },
     {
@@ -18063,7 +18093,7 @@
       "source_location": "L233",
       "_origin": "ast",
       "id": "src_pages_lab_pubmed_geterrormessage",
-      "community": 104,
+      "community": 277,
       "norm_label": "geterrormessage()"
     },
     {
@@ -18720,7 +18750,7 @@
       "label": "extractJson()",
       "file_type": "code",
       "source_file": "supabase/functions/bloodwork-extract/prompt.ts",
-      "source_location": "L52",
+      "source_location": "L58",
       "_origin": "ast",
       "id": "supabase_functions_bloodwork_extract_prompt_extractjson",
       "community": 261,
@@ -18730,7 +18760,7 @@
       "label": "resetsAt()",
       "file_type": "code",
       "source_file": "supabase/functions/bloodwork-extract/prompt.ts",
-      "source_location": "L70",
+      "source_location": "L76",
       "_origin": "ast",
       "id": "supabase_functions_bloodwork_extract_prompt_resetsat",
       "community": 261,
@@ -22727,6 +22757,256 @@
       "norm_label": "task 1: metrikspezifischen vergleichs-fallback implementieren"
     },
     {
+      "label": "2026-07-21-my-stack-foundation.md",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation",
+      "community": 251,
+      "norm_label": "2026-07-21-my-stack-foundation.md"
+    },
+    {
+      "label": "My Stack Foundation Implementation Plan",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_my_stack_foundation_implementation_plan",
+      "community": 251,
+      "norm_label": "my stack foundation implementation plan"
+    },
+    {
+      "label": "Global Constraints",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_global_constraints",
+      "community": 251,
+      "norm_label": "global constraints"
+    },
+    {
+      "label": "File Structure",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L28",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "community": 251,
+      "norm_label": "file structure"
+    },
+    {
+      "label": "Neu",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L30",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_neu",
+      "community": 251,
+      "norm_label": "neu"
+    },
+    {
+      "label": "Verschoben oder ersetzt",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L62",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_verschoben_oder_ersetzt",
+      "community": 251,
+      "norm_label": "verschoben oder ersetzt"
+    },
+    {
+      "label": "Bestehende Consumer mit neutraler DB-Benennung",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L74",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_bestehende_consumer_mit_neutraler_db_benennung",
+      "community": 251,
+      "norm_label": "bestehende consumer mit neutraler db-benennung"
+    },
+    {
+      "label": "Datenbank-Matrix",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L87",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_datenbank_matrix",
+      "community": 251,
+      "norm_label": "datenbank-matrix"
+    },
+    {
+      "label": "Task 0: Backup- und Restore-Gate abschlie\u00dfen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L104",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_0_backup_und_restore_gate_abschliessen",
+      "community": 251,
+      "norm_label": "task 0: backup- und restore-gate abschlie\u00dfen"
+    },
+    {
+      "label": "Task 1: Neutrale Fachtypen, Kategorien und Darreichungsformen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L210",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_1_neutrale_fachtypen_kategorien_und_darreichungsformen",
+      "community": 251,
+      "norm_label": "task 1: neutrale fachtypen, kategorien und darreichungsformen"
+    },
+    {
+      "label": "Task 2: Validierung und Duplikat-Fingerprint",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L370",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_2_validierung_und_duplikat_fingerprint",
+      "community": 251,
+      "norm_label": "task 2: validierung und duplikat-fingerprint"
+    },
+    {
+      "label": "Task 3: Datenbankmigration als noch nicht ausgef\u00fchrten Cutover vorbereiten",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L435",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_3_datenbankmigration_als_noch_nicht_ausgef\u00fchrten_cutover_vorbereiten",
+      "community": 251,
+      "norm_label": "task 3: datenbankmigration als noch nicht ausgefuhrten cutover vorbereiten"
+    },
+    {
+      "label": "Task 4: Atomaren Save-Vertrag und Datenservices implementieren",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L575",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_4_atomaren_save_vertrag_und_datenservices_implementieren",
+      "community": 251,
+      "norm_label": "task 4: atomaren save-vertrag und datenservices implementieren"
+    },
+    {
+      "label": "Task 5: Testbaren Wizard-Zustand implementieren",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L666",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_5_testbaren_wizard_zustand_implementieren",
+      "community": 251,
+      "norm_label": "task 5: testbaren wizard-zustand implementieren"
+    },
+    {
+      "label": "Task 6: Wizard-Komponenten und barrierefreien Flow bauen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L737",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_6_wizard_komponenten_und_barrierefreien_flow_bauen",
+      "community": 251,
+      "norm_label": "task 6: wizard-komponenten und barrierefreien flow bauen"
+    },
+    {
+      "label": "Task 7: Vial-Renderer hinter eine neutrale B\u00fchne stellen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L828",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_7_vial_renderer_hinter_eine_neutrale_b\u00fchne_stellen",
+      "community": 251,
+      "norm_label": "task 7: vial-renderer hinter eine neutrale buhne stellen"
+    },
+    {
+      "label": "Task 8: Bestehende My-Stack-Seite modularisieren und Wizard integrieren",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L883",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_8_bestehende_my_stack_seite_modularisieren_und_wizard_integrieren",
+      "community": 251,
+      "norm_label": "task 8: bestehende my-stack-seite modularisieren und wizard integrieren"
+    },
+    {
+      "label": "Task 9: Farben persistieren und alte Formulargrenze entfernen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L955",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_9_farben_persistieren_und_alte_formulargrenze_entfernen",
+      "community": 251,
+      "norm_label": "task 9: farben persistieren und alte formulargrenze entfernen"
+    },
+    {
+      "label": "Task 10: Planungs- und Kalenderkern auf neutrale IDs umstellen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1038",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_10_planungs_und_kalenderkern_auf_neutrale_ids_umstellen",
+      "community": 251,
+      "norm_label": "task 10: planungs- und kalenderkern auf neutrale ids umstellen"
+    },
+    {
+      "label": "Task 11: Injektionstracker auf `stack_item_id` umstellen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1115",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_11_injektionstracker_auf_stack_item_id_umstellen",
+      "community": 251,
+      "norm_label": "task 11: injektionstracker auf `stack_item_id` umstellen"
+    },
+    {
+      "label": "Task 12: Fortschritt, Protokoll und \u00fcbrige Stack-Consumer neutralisieren",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1160",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_12_fortschritt_protokoll_und_\u00fcbrige_stack_consumer_neutralisieren",
+      "community": 251,
+      "norm_label": "task 12: fortschritt, protokoll und ubrige stack-consumer neutralisieren"
+    },
+    {
+      "label": "Task 13: \u00dcbersetzungen, Navigation und alte Peptidpfade bereinigen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1238",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_13_\u00fcbersetzungen_navigation_und_alte_peptidpfade_bereinigen",
+      "community": 251,
+      "norm_label": "task 13: ubersetzungen, navigation und alte peptidpfade bereinigen"
+    },
+    {
+      "label": "Task 14: Vollst\u00e4ndige statische Verifikation und Graphify-Architekturpr\u00fcfung",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1362",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_14_vollst\u00e4ndige_statische_verifikation_und_graphify_architekturpr\u00fcfung",
+      "community": 251,
+      "norm_label": "task 14: vollstandige statische verifikation und graphify-architekturprufung"
+    },
+    {
+      "label": "Task 15: Verkn\u00fcpfte Supabase-Datenbank cutovern und End-to-End pr\u00fcfen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1427",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_15_verkn\u00fcpfte_supabase_datenbank_cutovern_und_end_to_end_pr\u00fcfen",
+      "community": 251,
+      "norm_label": "task 15: verknupfte supabase-datenbank cutovern und end-to-end prufen"
+    },
+    {
+      "label": "Definition of Done",
+      "file_type": "document",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1557",
+      "_origin": "ast",
+      "id": "docs_superpowers_plans_2026_07_21_my_stack_foundation_definition_of_done",
+      "community": 251,
+      "norm_label": "definition of done"
+    },
+    {
       "label": "2026-05-21-the-lab-premium-redesign.md",
       "file_type": "document",
       "source_file": "docs/superpowers/specs/2026-05-21-the-lab-premium-redesign.md",
@@ -26047,6 +26327,356 @@
       "norm_label": "tests"
     },
     {
+      "label": "2026-07-21-my-stack-foundation-design.md",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design",
+      "community": 105,
+      "norm_label": "2026-07-21-my-stack-foundation-design.md"
+    },
+    {
+      "label": "My Stack Generalisierung \u2013 Teilprojekt 1: Grundlage",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "community": 105,
+      "norm_label": "my stack generalisierung \u2013 teilprojekt 1: grundlage"
+    },
+    {
+      "label": "Ziel",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L7",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_ziel",
+      "community": 105,
+      "norm_label": "ziel"
+    },
+    {
+      "label": "Ausgangslage",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L22",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_ausgangslage",
+      "community": 105,
+      "norm_label": "ausgangslage"
+    },
+    {
+      "label": "Abgenommene Produktentscheidungen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L34",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_abgenommene_produktentscheidungen",
+      "community": 105,
+      "norm_label": "abgenommene produktentscheidungen"
+    },
+    {
+      "label": "Begriffe und Ebenen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L54",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_begriffe_und_ebenen",
+      "community": 105,
+      "norm_label": "begriffe und ebenen"
+    },
+    {
+      "label": "Substanzkatalog",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L56",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_substanzkatalog",
+      "community": 105,
+      "norm_label": "substanzkatalog"
+    },
+    {
+      "label": "Stack-Objekt",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L69",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_stack_objekt",
+      "community": 105,
+      "norm_label": "stack-objekt"
+    },
+    {
+      "label": "Produktdetails",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L80",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_produktdetails",
+      "community": 105,
+      "norm_label": "produktdetails"
+    },
+    {
+      "label": "Datenmodell",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L84",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_datenmodell",
+      "community": 105,
+      "norm_label": "datenmodell"
+    },
+    {
+      "label": "`substance_catalog`",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L86",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_substance_catalog",
+      "community": 105,
+      "norm_label": "`substance_catalog`"
+    },
+    {
+      "label": "`stack_items`",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L103",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_stack_items",
+      "community": 105,
+      "norm_label": "`stack_items`"
+    },
+    {
+      "label": "`stack_item_ingredients`",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L122",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_stack_item_ingredients",
+      "community": 105,
+      "norm_label": "`stack_item_ingredients`"
+    },
+    {
+      "label": "Bestehende abh\u00e4ngige Daten",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L139",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_bestehende_abh\u00e4ngige_daten",
+      "community": 105,
+      "norm_label": "bestehende abhangige daten"
+    },
+    {
+      "label": "Darreichungsform-Definitionen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L145",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_darreichungsform_definitionen",
+      "community": 105,
+      "norm_label": "darreichungsform-definitionen"
+    },
+    {
+      "label": "Hinzuf\u00fcgen-Flow",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L170",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_hinzuf\u00fcgen_flow",
+      "community": 105,
+      "norm_label": "hinzufugen-flow"
+    },
+    {
+      "label": "1. Substanz suchen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L174",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_1_substanz_suchen",
+      "community": 105,
+      "norm_label": "1. substanz suchen"
+    },
+    {
+      "label": "2. Eigene Substanz oder Produkt definieren",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L181",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_2_eigene_substanz_oder_produkt_definieren",
+      "community": 105,
+      "norm_label": "2. eigene substanz oder produkt definieren"
+    },
+    {
+      "label": "3. Darreichungsform w\u00e4hlen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L187",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_3_darreichungsform_w\u00e4hlen",
+      "community": 105,
+      "norm_label": "3. darreichungsform wahlen"
+    },
+    {
+      "label": "4. St\u00e4rke erfassen",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L193",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_4_st\u00e4rke_erfassen",
+      "community": 105,
+      "norm_label": "4. starke erfassen"
+    },
+    {
+      "label": "5. Optionale Produktdetails",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L206",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_5_optionale_produktdetails",
+      "community": 105,
+      "norm_label": "5. optionale produktdetails"
+    },
+    {
+      "label": "6. Einnahme und Tracking",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L214",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_6_einnahme_und_tracking",
+      "community": 105,
+      "norm_label": "6. einnahme und tracking"
+    },
+    {
+      "label": "7. Zusammenfassung und Speichern",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L225",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_7_zusammenfassung_und_speichern",
+      "community": 105,
+      "norm_label": "7. zusammenfassung und speichern"
+    },
+    {
+      "label": "Bearbeiten und Varianten",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L232",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_bearbeiten_und_varianten",
+      "community": 105,
+      "norm_label": "bearbeiten und varianten"
+    },
+    {
+      "label": "Duplikaterkennung",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L244",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_duplikaterkennung",
+      "community": 105,
+      "norm_label": "duplikaterkennung"
+    },
+    {
+      "label": "Modulare Frontend-Struktur",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L256",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_modulare_frontend_struktur",
+      "community": 105,
+      "norm_label": "modulare frontend-struktur"
+    },
+    {
+      "label": "Backup- und Migrations-Gate",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L298",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_backup_und_migrations_gate",
+      "community": 105,
+      "norm_label": "backup- und migrations-gate"
+    },
+    {
+      "label": "Fehlerverhalten",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L323",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_fehlerverhalten",
+      "community": 105,
+      "norm_label": "fehlerverhalten"
+    },
+    {
+      "label": "Barrierefreiheit und Internationalisierung",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L333",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_barrierefreiheit_und_internationalisierung",
+      "community": 105,
+      "norm_label": "barrierefreiheit und internationalisierung"
+    },
+    {
+      "label": "Verifikation",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L342",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_verifikation",
+      "community": 105,
+      "norm_label": "verifikation"
+    },
+    {
+      "label": "Datenmodell und Migration",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L344",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_datenmodell_und_migration",
+      "community": 105,
+      "norm_label": "datenmodell und migration"
+    },
+    {
+      "label": "Reine Logik",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L353",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_reine_logik",
+      "community": 105,
+      "norm_label": "reine logik"
+    },
+    {
+      "label": "UI und Regression",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L362",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_ui_und_regression",
+      "community": 105,
+      "norm_label": "ui und regression"
+    },
+    {
+      "label": "Folgeprojekte",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L372",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_folgeprojekte",
+      "community": 105,
+      "norm_label": "folgeprojekte"
+    },
+    {
+      "label": "Nicht in Teilprojekt 1",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L380",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_nicht_in_teilprojekt_1",
+      "community": 105,
+      "norm_label": "nicht in teilprojekt 1"
+    },
+    {
       "label": "README.md",
       "file_type": "document",
       "source_file": "ios/App/CapApp-SPM/README.md",
@@ -26087,7 +26717,7 @@
       "contributor": null,
       "community": 169,
       "norm_label": "graphify skill trigger (/graphify)",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
     },
     {
       "label": "graphify pipeline (SKILL.md)",
@@ -33454,7 +34084,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/components/PeptideVialVisual.tsx",
-      "source_location": "L442",
+      "source_location": "L456",
       "weight": 1.0,
       "source": "src_components_peptidevialvisual_peptidevialvisual",
       "target": "src_components_peptidevialvisual_vialtop",
@@ -39521,7 +40151,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L21",
+      "source_location": "L33",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste",
       "target": "src_features_blutwerte_components_befundliste_befundliste",
@@ -39531,7 +40161,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L18",
+      "source_location": "L30",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste",
       "target": "src_features_blutwerte_components_befundliste_isauffaellig",
@@ -39544,6 +40174,26 @@
       "source_location": "L10",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste",
+      "target": "src_features_blutwerte_components_befundliste_layout",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundliste",
+      "target": "src_features_blutwerte_components_befundliste_loadlayout",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundliste",
       "target": "src_features_blutwerte_components_befundliste_props",
       "confidence_score": 1.0
     },
@@ -39551,7 +40201,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L16",
+      "source_location": "L28",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste",
       "target": "src_features_blutwerte_components_befundliste_wertelabel",
@@ -39723,11 +40373,22 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "src/features/blutwerte/components/BefundListe.tsx",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_components_befundliste_befundliste",
+      "target": "src_features_blutwerte_components_befundliste_loadlayout",
+      "confidence_score": 0.5
+    },
+    {
       "relation": "references",
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L12",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_props",
       "target": "src_features_blutwerte_types_bloodworkentry",
@@ -39738,7 +40399,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L11",
+      "source_location": "L23",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_props",
       "target": "src_features_blutwerte_types_bloodworkreport",
@@ -39749,7 +40410,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L122",
+      "source_location": "L191",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_components_befundliste_wertelabel",
@@ -39760,7 +40421,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L73",
+      "source_location": "L120",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_components_befundliste_isauffaellig",
@@ -39771,7 +40432,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L19",
+      "source_location": "L31",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_isauffaellig",
       "target": "src_features_blutwerte_lib_bloodwork_effectiverange",
@@ -39782,7 +40443,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L19",
+      "source_location": "L31",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_isauffaellig",
       "target": "src_features_blutwerte_lib_bloodwork_isinrange",
@@ -39793,7 +40454,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L19",
+      "source_location": "L31",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_isauffaellig",
       "target": "src_features_blutwerte_lib_bloodwork_tonumber",
@@ -39804,7 +40465,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L19",
+      "source_location": "L31",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_isauffaellig",
       "target": "src_features_blutwerte_lib_markercatalog_normalizemarker",
@@ -39816,7 +40477,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L71",
+      "source_location": "L118",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_lib_bloodwork_effectiverange"
@@ -39827,7 +40488,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L29",
+      "source_location": "L51",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_lib_bloodwork_test_entry"
@@ -39838,7 +40499,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L60",
+      "source_location": "L82",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_lib_format_formatdisplaydate"
@@ -39849,7 +40510,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L85",
+      "source_location": "L128",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_lib_format_formatnumber"
@@ -39860,7 +40521,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L72",
+      "source_location": "L119",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_lib_format_formatrange"
@@ -39871,7 +40532,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/components/BefundListe.tsx",
-      "source_location": "L71",
+      "source_location": "L118",
       "weight": 1.0,
       "source": "src_features_blutwerte_components_befundliste_befundliste",
       "target": "src_features_blutwerte_lib_markercatalog_normalizemarker"
@@ -41526,7 +42187,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L111",
+      "source_location": "L134",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_bloodwork_test_entry"
@@ -41535,7 +42196,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L202",
+      "source_location": "L219",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_auffaelligewerte",
@@ -41545,7 +42206,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L101",
+      "source_location": "L124",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
@@ -41575,7 +42236,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L160",
+      "source_location": "L177",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_filterbykategorie",
@@ -41595,7 +42256,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L169",
+      "source_location": "L186",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_kategorierang",
@@ -41625,7 +42286,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L88",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork",
+      "target": "src_features_blutwerte_lib_bloodwork_pickdisplayunit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L109",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_rangeindisplayunit",
@@ -41645,7 +42316,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L174",
+      "source_location": "L191",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork",
       "target": "src_features_blutwerte_lib_bloodwork_sortsummaries",
@@ -41782,6 +42453,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork",
+      "target": "src_features_blutwerte_lib_unitconversion_normalizeunitstring",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -41826,12 +42508,23 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/fortschritt/lib/metrics.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_features_fortschritt_lib_metrics",
+      "target": "src_features_blutwerte_lib_bloodwork",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L126",
+      "source_location": "L150",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_bloodwork_effectiverange"
@@ -41896,7 +42589,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L122",
+      "source_location": "L145",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_bloodwork_tonumber",
@@ -41910,6 +42603,17 @@
       "source_location": "L75",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_computetrend",
+      "target": "src_features_blutwerte_lib_bloodwork_tonumber",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L101",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork_pickdisplayunit",
       "target": "src_features_blutwerte_lib_bloodwork_tonumber",
       "confidence_score": 1.0
     },
@@ -41940,7 +42644,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L138",
+      "source_location": "L158",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_bloodwork_isinrange",
@@ -41951,7 +42655,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L129",
+      "source_location": "L154",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_bloodwork_computetrend",
@@ -41973,7 +42677,51 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L127",
+      "source_location": "L141",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
+      "target": "src_features_blutwerte_lib_bloodwork_pickdisplayunit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L101",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork_pickdisplayunit",
+      "target": "src_features_blutwerte_lib_unitconversion_convert"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/fortschritt/lib/metrics.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "src_features_fortschritt_lib_metrics",
+      "target": "src_features_blutwerte_lib_bloodwork_pickdisplayunit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/fortschritt/lib/metrics.ts",
+      "source_location": "L73",
+      "weight": 1.0,
+      "source": "src_features_fortschritt_lib_metrics_labseries",
+      "target": "src_features_blutwerte_lib_bloodwork_pickdisplayunit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L152",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_bloodwork_rangeindisplayunit",
@@ -41984,10 +42732,21 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L90",
+      "source_location": "L112",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_rangeindisplayunit",
       "target": "src_features_blutwerte_lib_unitconversion_convert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/blutwerte/lib/bloodwork.ts",
+      "source_location": "L111",
+      "weight": 1.0,
+      "source": "src_features_blutwerte_lib_bloodwork_rangeindisplayunit",
+      "target": "src_features_blutwerte_lib_unitconversion_normalizeunitstring",
       "confidence_score": 1.0
     },
     {
@@ -41996,7 +42755,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L104",
+      "source_location": "L127",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_markercatalog_marker_catalog"
@@ -42007,7 +42766,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L107",
+      "source_location": "L130",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_markercatalog_normalizemarker"
@@ -42018,7 +42777,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L122",
+      "source_location": "L145",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_buildmarkersummaries",
       "target": "src_features_blutwerte_lib_unitconversion_convert"
@@ -42029,7 +42788,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L170",
+      "source_location": "L187",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_kategorierang",
       "target": "src_features_blutwerte_lib_markercatalog_kategorien"
@@ -42039,7 +42798,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/bloodwork.ts",
-      "source_location": "L195",
+      "source_location": "L212",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_bloodwork_sortsummaries",
       "target": "src_features_blutwerte_lib_bloodwork_kategorierang",
@@ -42548,7 +43307,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L662",
+      "source_location": "L838",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_markercatalog",
       "target": "src_features_blutwerte_lib_markercatalog_catalog_marker_names",
@@ -42568,7 +43327,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L27",
+      "source_location": "L29",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_markercatalog",
       "target": "src_features_blutwerte_lib_markercatalog_kategoriefilter",
@@ -42578,7 +43337,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L12",
+      "source_location": "L13",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_markercatalog",
       "target": "src_features_blutwerte_lib_markercatalog_kategorien",
@@ -42588,7 +43347,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L655",
+      "source_location": "L831",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_markercatalog",
       "target": "src_features_blutwerte_lib_markercatalog_lookup",
@@ -42598,7 +43357,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L45",
+      "source_location": "L47",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_markercatalog",
       "target": "src_features_blutwerte_lib_markercatalog_marker_catalog",
@@ -42608,7 +43367,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L29",
+      "source_location": "L31",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_markercatalog",
       "target": "src_features_blutwerte_lib_markercatalog_markerdef",
@@ -42618,7 +43377,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L668",
+      "source_location": "L844",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_markercatalog",
       "target": "src_features_blutwerte_lib_markercatalog_normalizemarker",
@@ -42628,7 +43387,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L25",
+      "source_location": "L27",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_markercatalog",
       "target": "src_features_blutwerte_lib_markercatalog_sonstige",
@@ -42646,12 +43405,23 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/fortschritt/lib/metrics.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_features_fortschritt_lib_metrics",
+      "target": "src_features_blutwerte_lib_markercatalog",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "references",
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/blutwerte/lib/markerCatalog.ts",
-      "source_location": "L671",
+      "source_location": "L847",
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_markercatalog_normalizemarker",
       "target": "src_features_blutwerte_lib_markercatalog_lookup"
@@ -42677,6 +43447,28 @@
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_mergerows_markerkey",
       "target": "src_features_blutwerte_lib_markercatalog_normalizemarker"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/fortschritt/lib/metrics.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_features_fortschritt_lib_metrics",
+      "target": "src_features_blutwerte_lib_markercatalog_normalizemarker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/fortschritt/lib/metrics.ts",
+      "source_location": "L73",
+      "weight": 1.0,
+      "source": "src_features_fortschritt_lib_metrics_labseries",
+      "target": "src_features_blutwerte_lib_markercatalog_normalizemarker",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -43116,6 +43908,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/fortschritt/lib/metrics.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_features_fortschritt_lib_metrics",
+      "target": "src_features_blutwerte_lib_unitconversion",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -43135,6 +43938,28 @@
       "weight": 1.0,
       "source": "src_features_blutwerte_lib_unitconversion_convert",
       "target": "src_features_blutwerte_lib_unitconversion_normalizeunitstring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/fortschritt/lib/metrics.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_features_fortschritt_lib_metrics",
+      "target": "src_features_blutwerte_lib_unitconversion_convert",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/fortschritt/lib/metrics.ts",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "src_features_fortschritt_lib_metrics_labseries",
+      "target": "src_features_blutwerte_lib_unitconversion_convert",
       "confidence_score": 1.0
     },
     {
@@ -52146,7 +52971,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L221",
+      "source_location": "L245",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_buildmetricseries",
@@ -52156,7 +52981,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L178",
+      "source_location": "L202",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_computeadherence",
@@ -52166,7 +52991,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L17",
+      "source_location": "L20",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_computedelta",
@@ -52176,7 +53001,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L67",
+      "source_location": "L92",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_computetopchanges",
@@ -52186,7 +53011,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L42",
+      "source_location": "L45",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_dailyfieldseries",
@@ -52196,7 +53021,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L53",
+      "source_location": "L62",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_labseries",
@@ -52206,7 +53031,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L11",
+      "source_location": "L14",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_numeric",
@@ -52216,7 +53041,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L26",
+      "source_location": "L29",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_passesthreshold",
@@ -52226,7 +53051,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L6",
+      "source_location": "L9",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_seriespoint",
@@ -52236,7 +53061,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L216",
+      "source_location": "L240",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_sparklinevalues",
@@ -52246,7 +53071,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L164",
+      "source_location": "L188",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_strongestwellnessfield",
@@ -52256,7 +53081,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L36",
+      "source_location": "L39",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_weightseries",
@@ -52266,7 +53091,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L60",
+      "source_location": "L85",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_wellness_labels",
@@ -52276,7 +53101,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L139",
+      "source_location": "L163",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_wellnessaverage",
@@ -52286,7 +53111,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L154",
+      "source_location": "L178",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics",
       "target": "src_features_fortschritt_lib_metrics_wellnessfielddelta",
@@ -52431,6 +53256,17 @@
       "source_file": "src/features/fortschritt/lib/metrics.ts",
       "source_location": "L76",
       "weight": 1.0,
+      "source": "src_features_fortschritt_lib_metrics_labseries",
+      "target": "src_features_fortschritt_lib_metrics_numeric",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/fortschritt/lib/metrics.ts",
+      "source_location": "L101",
+      "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_computetopchanges",
       "target": "src_features_fortschritt_lib_metrics_computedelta",
       "confidence_score": 1.0
@@ -52440,7 +53276,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L160",
+      "source_location": "L184",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_wellnessfielddelta",
       "target": "src_features_fortschritt_lib_metrics_computedelta",
@@ -52451,7 +53287,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L77",
+      "source_location": "L102",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_computetopchanges",
       "target": "src_features_fortschritt_lib_metrics_passesthreshold",
@@ -52462,7 +53298,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L228",
+      "source_location": "L252",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_buildmetricseries",
       "target": "src_features_fortschritt_lib_metrics_weightseries",
@@ -52473,7 +53309,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L75",
+      "source_location": "L100",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_computetopchanges",
       "target": "src_features_fortschritt_lib_metrics_weightseries",
@@ -52484,7 +53320,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L37",
+      "source_location": "L40",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_weightseries",
       "target": "src_features_fortschritt_lib_range_filterbydaterange",
@@ -52495,7 +53331,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L37",
+      "source_location": "L40",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_weightseries",
       "target": "src_features_fortschritt_lib_substances_datekeyfromtimestamp",
@@ -52506,7 +53342,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L229",
+      "source_location": "L253",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_buildmetricseries",
       "target": "src_features_fortschritt_lib_metrics_dailyfieldseries",
@@ -52517,7 +53353,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L88",
+      "source_location": "L113",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_computetopchanges",
       "target": "src_features_fortschritt_lib_metrics_dailyfieldseries",
@@ -52528,7 +53364,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L47",
+      "source_location": "L50",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_dailyfieldseries",
       "target": "src_features_fortschritt_lib_range_filterbydaterange",
@@ -52539,7 +53375,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L159",
+      "source_location": "L183",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_wellnessfielddelta",
       "target": "src_features_fortschritt_lib_metrics_dailyfieldseries",
@@ -52550,7 +53386,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L233",
+      "source_location": "L257",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_buildmetricseries",
       "target": "src_features_fortschritt_lib_metrics_labseries",
@@ -52561,7 +53397,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L115",
+      "source_location": "L140",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_computetopchanges",
       "target": "src_features_fortschritt_lib_metrics_labseries",
@@ -52572,7 +53408,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L54",
+      "source_location": "L67",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_labseries",
       "target": "src_features_fortschritt_lib_range_filterbydaterange",
@@ -52584,7 +53420,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L140",
+      "source_location": "L164",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_wellnessaverage",
       "target": "src_features_fortschritt_lib_range_filterbydaterange"
@@ -52594,7 +53430,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L170",
+      "source_location": "L194",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_strongestwellnessfield",
       "target": "src_features_fortschritt_lib_metrics_wellnessfielddelta",
@@ -52606,7 +53442,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L183",
+      "source_location": "L207",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_computeadherence",
       "target": "src_features_fortschritt_lib_range_filterbydaterange"
@@ -52617,7 +53453,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/fortschritt/lib/metrics.ts",
-      "source_location": "L183",
+      "source_location": "L207",
       "weight": 1.0,
       "source": "src_features_fortschritt_lib_metrics_computeadherence",
       "target": "src_features_fortschritt_lib_substances_datekeyfromtimestamp"
@@ -70331,7 +71167,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "supabase/functions/bloodwork-extract/prompt.ts",
-      "source_location": "L52",
+      "source_location": "L58",
       "weight": 1.0,
       "source": "supabase_functions_bloodwork_extract_prompt",
       "target": "supabase_functions_bloodwork_extract_prompt_extractjson",
@@ -70341,7 +71177,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "supabase/functions/bloodwork-extract/prompt.ts",
-      "source_location": "L70",
+      "source_location": "L76",
       "weight": 1.0,
       "source": "supabase_functions_bloodwork_extract_prompt",
       "target": "supabase_functions_bloodwork_extract_prompt_resetsat",
@@ -73933,6 +74769,246 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_my_stack_foundation_implementation_plan",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1557",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_my_stack_foundation_implementation_plan",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_definition_of_done",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_my_stack_foundation_implementation_plan",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_my_stack_foundation_implementation_plan",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_global_constraints",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L74",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_bestehende_consumer_mit_neutraler_db_benennung",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_datenbank_matrix",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_neu",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L104",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_0_backup_und_restore_gate_abschliessen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1038",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_10_planungs_und_kalenderkern_auf_neutrale_ids_umstellen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1115",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_11_injektionstracker_auf_stack_item_id_umstellen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1160",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_12_fortschritt_protokoll_und_\u00fcbrige_stack_consumer_neutralisieren",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1238",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_13_\u00fcbersetzungen_navigation_und_alte_peptidpfade_bereinigen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1362",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_14_vollst\u00e4ndige_statische_verifikation_und_graphify_architekturpr\u00fcfung",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L1427",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_15_verkn\u00fcpfte_supabase_datenbank_cutovern_und_end_to_end_pr\u00fcfen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L210",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_1_neutrale_fachtypen_kategorien_und_darreichungsformen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L370",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_2_validierung_und_duplikat_fingerprint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L435",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_3_datenbankmigration_als_noch_nicht_ausgef\u00fchrten_cutover_vorbereiten",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L575",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_4_atomaren_save_vertrag_und_datenservices_implementieren",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L666",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_5_testbaren_wizard_zustand_implementieren",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L737",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_6_wizard_komponenten_und_barrierefreien_flow_bauen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L828",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_7_vial_renderer_hinter_eine_neutrale_b\u00fchne_stellen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L883",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_8_bestehende_my_stack_seite_modularisieren_und_wizard_integrieren",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L955",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_task_9_farben_persistieren_und_alte_formulargrenze_entfernen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/plans/2026-07-21-my-stack-foundation.md",
+      "source_location": "L62",
+      "weight": 1.0,
+      "source": "docs_superpowers_plans_2026_07_21_my_stack_foundation_file_structure",
+      "target": "docs_superpowers_plans_2026_07_21_my_stack_foundation_verschoben_oder_ersetzt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "docs/superpowers/specs/2026-05-21-the-lab-premium-redesign.md",
       "source_location": "L1",
       "weight": 1.0,
@@ -77003,6 +78079,346 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_abgenommene_produktentscheidungen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_ausgangslage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L298",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_backup_und_migrations_gate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L333",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_barrierefreiheit_und_internationalisierung",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L232",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_bearbeiten_und_varianten",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L54",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_begriffe_und_ebenen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L145",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_darreichungsform_definitionen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_datenmodell",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L244",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_duplikaterkennung",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L323",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_fehlerverhalten",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L372",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_folgeprojekte",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L170",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_hinzuf\u00fcgen_flow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L256",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_modulare_frontend_struktur",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L380",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_nicht_in_teilprojekt_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L342",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_verifikation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_my_stack_generalisierung_teilprojekt_1_grundlage",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_ziel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L80",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_begriffe_und_ebenen",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_produktdetails",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L69",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_begriffe_und_ebenen",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_stack_objekt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_begriffe_und_ebenen",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_substanzkatalog",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L139",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_datenmodell",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_bestehende_abh\u00e4ngige_daten",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L122",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_datenmodell",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_stack_item_ingredients",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L103",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_datenmodell",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_stack_items",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_datenmodell",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_substance_catalog",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L174",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_hinzuf\u00fcgen_flow",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_1_substanz_suchen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L181",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_hinzuf\u00fcgen_flow",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_2_eigene_substanz_oder_produkt_definieren",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L187",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_hinzuf\u00fcgen_flow",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_3_darreichungsform_w\u00e4hlen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L193",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_hinzuf\u00fcgen_flow",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_4_st\u00e4rke_erfassen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L206",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_hinzuf\u00fcgen_flow",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_5_optionale_produktdetails",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L214",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_hinzuf\u00fcgen_flow",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_6_einnahme_und_tracking",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L225",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_hinzuf\u00fcgen_flow",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_7_zusammenfassung_und_speichern",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L344",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_verifikation",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_datenmodell_und_migration",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L353",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_verifikation",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_reine_logik",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md",
+      "source_location": "L362",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_verifikation",
+      "target": "docs_superpowers_specs_2026_07_21_my_stack_foundation_design_ui_und_regression",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "ios/App/CapApp-SPM/README.md",
       "source_location": "L1",
       "weight": 1.0,
@@ -77042,5 +78458,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "32e7f17626943511dd91440ffb21982f15c6fa87"
+  "built_at_commit": "89427dca95c65779c5820a4ea50748d6260a9333"
 }

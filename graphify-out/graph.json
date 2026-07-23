@@ -6763,7 +6763,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittdashboard",
-      "community": 102,
+      "community": 272,
       "norm_label": "fortschrittdashboard.tsx"
     },
     {
@@ -6773,7 +6773,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittdashboard_props",
-      "community": 102,
+      "community": 272,
       "norm_label": "props"
     },
     {
@@ -7263,7 +7263,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview",
-      "community": 102,
+      "community": 272,
       "norm_label": "emptyoverview.tsx"
     },
     {
@@ -7273,7 +7273,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview_props",
-      "community": 102,
+      "community": 272,
       "norm_label": "props"
     },
     {
@@ -7283,7 +7283,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview_emptyoverview",
-      "community": 102,
+      "community": 272,
       "norm_label": "emptyoverview()"
     },
     {
@@ -7293,7 +7293,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview_step",
-      "community": 102,
+      "community": 272,
       "norm_label": "step()"
     },
     {
@@ -7303,7 +7303,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview_nosubstancesbanner",
-      "community": 102,
+      "community": 272,
       "norm_label": "nosubstancesbanner()"
     },
     {
@@ -9053,7 +9053,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_colors",
-      "community": 55,
+      "community": 102,
       "norm_label": "colors.ts"
     },
     {
@@ -9063,7 +9063,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_colors_substance_colors",
-      "community": 55,
+      "community": 102,
       "norm_label": "substance_colors"
     },
     {
@@ -9083,7 +9083,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_colors_metric_colors",
-      "community": 55,
+      "community": 102,
       "norm_label": "metric_colors"
     },
     {
@@ -10553,7 +10553,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_fortschrittoverviewstate",
-      "community": 102,
+      "community": 272,
       "norm_label": "fortschrittoverviewstate"
     },
     {
@@ -26717,7 +26717,7 @@
       "contributor": null,
       "community": 169,
       "norm_label": "graphify skill trigger (/graphify)",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
     },
     {
       "label": "graphify pipeline (SKILL.md)",
@@ -34073,7 +34073,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/components/PeptideVialVisual.tsx",
-      "source_location": "L420",
+      "source_location": "L424",
       "weight": 1.0,
       "source": "src_components_peptidevialvisual_peptidevialvisual",
       "target": "src_components_peptidevialvisual_vialamountlabel",
@@ -34084,7 +34084,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/components/PeptideVialVisual.tsx",
-      "source_location": "L456",
+      "source_location": "L460",
       "weight": 1.0,
       "source": "src_components_peptidevialvisual_peptidevialvisual",
       "target": "src_components_peptidevialvisual_vialtop",
@@ -78458,5 +78458,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "89427dca95c65779c5820a4ea50748d6260a9333"
+  "built_at_commit": "cd59b819642c9c13085cf3838df09529c1d3091c"
 }
