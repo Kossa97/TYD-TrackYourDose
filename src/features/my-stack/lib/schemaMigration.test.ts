@@ -36,7 +36,7 @@ describe('my stack migration contract', () => {
     expect(sql).not.toContain('alter table public.peptide_library')
   })
 
-  it('hält Verifier lesend und Rollback vollständig', () => {
+  it('hält den Verifier-Schreibpfad rollback-gebunden und Rollback vollständig', () => {
     const verifySql = readFileSync(resolve('supabase-my-stack-verify.sql'), 'utf8').toLowerCase()
     const rollbackSql = readFileSync(resolve('supabase-my-stack-rollback.sql'), 'utf8').toLowerCase()
 
@@ -76,6 +76,63 @@ describe('my stack migration contract', () => {
     expect(verifySql).toContain('policy.qual')
     expect(verifySql).toContain('policy.with_check')
     expect(verifySql).toContain('information_schema.role_table_grants')
+  })
+
+  it('grants authenticated users the ingredient access required by the invoker RPC', () => {
+    expect(sql).toContain('revoke all on table public.stack_item_ingredients from public, anon')
+    expect(sql).toContain(
+      'grant select, insert, update, delete on table public.stack_item_ingredients to authenticated',
+    )
+    expect(sql).not.toContain(
+      'grant select, insert, update, delete on table public.stack_item_ingredients to anon',
+    )
+  })
+
+  it('runs a real authenticated save path in a rolled-back verifier transaction', () => {
+    const verifySql = readFileSync(resolve('supabase-my-stack-verify.sql'), 'utf8').toLowerCase()
+
+    expect(verifySql).toContain('begin;')
+    expect(verifySql).toContain("'request.jwt.claim.sub'")
+    expect(verifySql).toContain('set local role authenticated')
+    expect(verifySql).toContain('public.save_stack_item(')
+    expect(verifySql).toContain('set constraints all immediate')
+    expect(verifySql).toContain('__my_stack_verifier_rollback__')
+    expect(verifySql).toContain('rollback;')
+    expect(verifySql).toContain('qa_records_after_rollback')
+    expect(verifySql).not.toContain('commit;')
+
+    const beginPosition = verifySql.indexOf('begin;')
+    const claimPosition = verifySql.indexOf("'request.jwt.claim.sub'")
+    const rolePosition = verifySql.indexOf('set local role authenticated')
+    const rpcPosition = verifySql.indexOf('select (public.save_stack_item(', rolePosition)
+    const constraintsPosition = verifySql.indexOf('set constraints all immediate')
+    const resetRolePosition = verifySql.indexOf('reset role;')
+    const rollbackPosition = verifySql.indexOf('rollback;')
+    const cleanupPosition = verifySql.indexOf('qa_records_after_rollback')
+
+    expect(beginPosition).toBeLessThan(claimPosition)
+    expect(claimPosition).toBeLessThan(rolePosition)
+    expect(rolePosition).toBeLessThan(rpcPosition)
+    expect(rpcPosition).toBeLessThan(constraintsPosition)
+    expect(constraintsPosition).toBeLessThan(resetRolePosition)
+    expect(resetRolePosition).toBeLessThan(rollbackPosition)
+    expect(rollbackPosition).toBeLessThan(cleanupPosition)
+  })
+
+  it('documents the compatible backup evidence without claiming linked cutover success', () => {
+    const manifest = readFileSync(
+      resolve('docs/superpowers/checklists/my-stack-backup-manifest.md'),
+      'utf8',
+    ).toLowerCase()
+
+    expect(manifest).toContain('pre-my-stack-foundation-2026-07-24-compatible-v2')
+    expect(manifest).toContain(
+      '2e8f3b0bb12f7da5b3fcbedb55857ba915a39f80d0ac2c0211f7ae81e09e833e',
+    )
+    expect(manifest).toContain(
+      '98167808b5cd236e94fc18d6c692bd4d6faa1ba517d8e8c326ced86a80837c4c',
+    )
+    expect(manifest).not.toContain('linked cutover: passed')
   })
 
   it('reserves needs_review for migrated legacy rows', () => {

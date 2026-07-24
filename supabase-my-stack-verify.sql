@@ -113,3 +113,78 @@ select
     'public.save_stack_item(jsonb,jsonb)',
     'EXECUTE'
   ) as anon_can_execute;
+
+select json_build_object(
+  'stack_items', (
+    select count(*) from public.stack_items
+    where display_name = '__my_stack_verifier_rollback__'
+  ),
+  'ingredients', (
+    select count(*) from public.stack_item_ingredients
+    where custom_name = '__my_stack_verifier_rollback__'
+  )
+) as qa_records_before;
+
+begin;
+
+select set_config(
+  'request.jwt.claim.sub',
+  (
+    select user_row.id::text
+    from auth.users user_row
+    order by user_row.id
+    limit 1
+  ),
+  true
+) as qa_user_context_set;
+
+set local role authenticated;
+
+select (public.save_stack_item(
+  jsonb_build_object(
+    'display_name', '__my_stack_verifier_rollback__',
+    'category', 'supplement',
+    'dosage_form', 'capsule',
+    'brand', 'Verifier rollback',
+    'color_hex', '#123456',
+    'notes', 'Rolled back by supabase-my-stack-verify.sql'
+  ),
+  jsonb_build_array(
+    jsonb_build_object(
+      'catalog_substance_id', null,
+      'custom_name', '__my_stack_verifier_rollback__',
+      'amount_value', 1,
+      'amount_unit', 'mg',
+      'basis_value', 1,
+      'basis_unit', 'capsule',
+      'position', 0
+    )
+  )
+)).id as qa_stack_item_id;
+
+set constraints all immediate;
+reset role;
+
+select json_build_object(
+  'stack_items', (
+    select count(*) from public.stack_items
+    where display_name = '__my_stack_verifier_rollback__'
+  ),
+  'ingredients', (
+    select count(*) from public.stack_item_ingredients
+    where custom_name = '__my_stack_verifier_rollback__'
+  )
+) as qa_records_inside_transaction;
+
+rollback;
+
+select json_build_object(
+  'stack_items', (
+    select count(*) from public.stack_items
+    where display_name = '__my_stack_verifier_rollback__'
+  ),
+  'ingredients', (
+    select count(*) from public.stack_item_ingredients
+    where custom_name = '__my_stack_verifier_rollback__'
+  )
+) as qa_records_after_rollback;

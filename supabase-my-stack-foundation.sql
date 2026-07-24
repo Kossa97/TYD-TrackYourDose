@@ -266,6 +266,9 @@ create policy "Own stack item ingredients"
     )
   );
 
+revoke all on table public.stack_item_ingredients from public, anon;
+grant select, insert, update, delete on table public.stack_item_ingredients to authenticated;
+
 create or replace function public.set_stack_item_updated_at()
 returns trigger
 language plpgsql
