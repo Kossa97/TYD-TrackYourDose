@@ -1,7 +1,7 @@
 # Graph Report - peptid-tracker  (2026-07-24)
 
 ## Corpus Check
-- 437 files · ~509,959 words
+- 437 files · ~510,056 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `89427dca`
+- Built from commit: `cd59b819`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -503,8 +503,8 @@ Cohesion: 0.18
 Nodes (18): FotosCard(), Props, fmtDate(), FotosTab(), Props, todayStr(), isPhotoGridSize(), PHOTO_GRID_OPTIONS (+10 more)
 
 ### Community 55 - "Workflow Banner"
-Cohesion: 0.13
-Nodes (18): isLegacyPhotoUrl(), mapDailyLogs(), resolvePhotoDisplayUrls(), useFortschrittData(), METRIC_COLORS, SUBSTANCE_COLORS, substanceColor(), substanceBarEnd() (+10 more)
+Cohesion: 0.16
+Nodes (16): isLegacyPhotoUrl(), mapDailyLogs(), resolvePhotoDisplayUrls(), useFortschrittData(), substanceColor(), substanceBarEnd(), numeric(), collectPagedRows() (+8 more)
 
 ### Community 56 - "Package Manifest"
 Cohesion: 0.29
@@ -567,8 +567,8 @@ Cohesion: 0.17
 Nodes (11): Abgenommene Darstellung, Energie, Schlaf, Wohlbefinden und Libido, KFA, Mindestdaten und Leerzustände, Nicht in diesem Umfang, Statusfarben, Technischer Zuschnitt, Tests und Verifikation (+3 more)
 
 ### Community 102 - "VerlaufTab.tsx"
-Cohesion: 0.17
-Nodes (18): Props, EmptyOverview(), NoSubstancesBanner(), Props, Props, VerlaufSection(), CHART_METRIC_KEYS, isChartMetricKey() (+10 more)
+Cohesion: 0.19
+Nodes (15): Props, VerlaufSection(), CHART_METRIC_KEYS, isChartMetricKey(), isWellnessMetricKey(), METRIC_THRESHOLDS, WELLNESS_FIELDS, filterCyclesByVisibility() (+7 more)
 
 ### Community 103 - "The Lab — Redesign Spec"
 Cohesion: 0.11
@@ -863,8 +863,8 @@ Cohesion: 0.23
 Nodes (12): emptyDraft(), EntryDraft, EntryModal(), Props, kategorieRang(), conversionHint(), CATALOG_MARKER_NAMES, Kategorie (+4 more)
 
 ### Community 272 - "FortschrittPage.tsx"
-Cohesion: 0.21
-Nodes (9): FortschrittDashboard(), FortschrittHeader(), Props, Props, StickyRangeBar(), FortschrittPage(), RANGE_CHIPS, RangeChipKey (+1 more)
+Cohesion: 0.15
+Nodes (14): FortschrittDashboard(), Props, FortschrittHeader(), Props, EmptyOverview(), NoSubstancesBanner(), Props, Props (+6 more)
 
 ### Community 273 - "InjektionsTracker.tsx"
 Cohesion: 0.19
