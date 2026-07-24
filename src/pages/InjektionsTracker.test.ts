@@ -151,7 +151,7 @@ describe('InjektionsTracker fullscreen map layout', () => {
     expect(source).toContain('activeTargetIntake')
     expect(source).toContain('injection-selected-intake-chip')
     expect(source).toContain('Ausgew\u00e4hlt')
-    expect(source).toContain('activeTargetIntake.peptideName')
+    expect(source).toContain('activeTargetIntake.stackItemName')
   })
 
   it('skips cycle/manual selection and the intake list for a fixed target intake', () => {

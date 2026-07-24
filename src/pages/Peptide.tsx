@@ -24,6 +24,7 @@ import type { VialStageLightHandle } from '../components/PeptideVialVisual'
 import { SloshProvider, useSloshEngine } from '../components/SloshContext'
 import { LabLoader } from '../components/LabLoader'
 import { emptyPeptideForm, type PeptideForm, type PkProfileOption } from '../lib/peptideFormTypes'
+import { buildLegacyStackItemSave, toLegacyPeptideRow } from '../lib/legacyMyStackPersistence'
 
 interface InventoryItem {
   id: string; user_id: string; name: string
@@ -55,7 +56,7 @@ interface Peptide {
   archived_at: string | null
 }
 interface Cycle {
-  id: string; peptide_id: string; name: string
+  id: string; stack_item_id: string; name: string
   dose: number; unit: string; method: string
   frequency: string; x_days_interval: number | null
   schedule_days: string[] | null
@@ -537,14 +538,14 @@ export function Peptide() {
     if (data) setInventory(data as InventoryItem[])
   }
   const loadPeptides = async () => {
-    const { data } = await supabase.from('peptides').select('*').eq('user_id', user!.id).eq('archived', false).order('name')
+    const { data } = await supabase.from('stack_items').select('*, name:display_name').eq('user_id', user!.id).eq('archived', false).eq('category', 'peptide').order('display_name')
     if (data) setPeptides(data as Peptide[])
   }
   const loadArchived = async () => {
-    const { data, error } = await supabase.from('peptides')
-      .select('*').eq('user_id', user!.id).eq('archived', true)
+    const { data, error } = await supabase.from('stack_items')
+      .select('*, name:display_name').eq('user_id', user!.id).eq('archived', true).eq('category', 'peptide')
       .order('archived_at', { ascending: false, nullsFirst: false })
-      .order('name')
+      .order('display_name')
     if (error) {
       toast.error(t('error'))
       return
@@ -552,7 +553,7 @@ export function Peptide() {
     setArchivedPeptides((data as Peptide[]) ?? [])
   }
   const loadCycles = async () => {
-    const { data } = await supabase.from('cycles').select('*').eq('user_id', user!.id)
+    const { data } = await supabase.from('cycles').select('*, stack_item_id').eq('user_id', user!.id)
     if (data) setCycles(data as Cycle[])
   }
   const loadEscalations = async () => {
@@ -619,7 +620,7 @@ export function Peptide() {
   }
 
   const activePeptideIds = useMemo(
-    () => new Set(cycles.filter(c => c.active).map(c => c.peptide_id)),
+    () => new Set(cycles.filter(c => c.active).map(c => c.stack_item_id)),
     [cycles],
   )
   const displayPeptides = sortPeptides(
@@ -644,7 +645,7 @@ export function Peptide() {
   }, [activePeptideId, displayPeptides])
 
   const cyclesOf      = (pid: string) => cycles
-    .filter(c => c.peptide_id === pid)
+    .filter(c => c.stack_item_id === pid)
     .sort((a, b) =>
       (a.active === b.active)
         ? b.created_at.localeCompare(a.created_at)
@@ -666,7 +667,7 @@ export function Peptide() {
   }
   const doRekonstitution = async (p: Peptide) => {
     const today = format(new Date(), 'yyyy-MM-dd')
-    await supabase.from('peptides')
+    await supabase.from('stack_items')
       .update({ reconstitution_date: today, vials_in_stock: 1, vials_initial: 1 })
       .eq('id', p.id)
     setPeptides(prev => prev.map(pp =>
@@ -746,7 +747,7 @@ export function Peptide() {
 
 
     const payload = {
-      user_id:        user!.id, name: pForm.name.trim(),
+      name:            pForm.name.trim(),
       default_unit:   'mcg',
       default_dose:   null,
       default_method: pForm.default_method || 'Subkutan',
@@ -764,10 +765,17 @@ export function Peptide() {
       inventory_item_id: invItemId,
       pk_profile_id:     pForm.pk_profile_id || null,
     }
+    const stackSave = buildLegacyStackItemSave(
+      payload,
+      editingPeptideId,
+      pForm.color_hex,
+    )
     const isNewPeptide = !editingPeptideId
-    const { error, data: savedRow } = editingPeptideId
-      ? await supabase.from('peptides').update(payload).eq('id', editingPeptideId).select('*').single()
-      : await supabase.from('peptides').insert(payload).select('*').single()
+    const { error, data: savedBase } = await supabase.rpc('save_legacy_peptide', {
+      ...stackSave.rpc,
+      p_tracking: stackSave.tracking,
+    })
+    const savedRow = savedBase ? toLegacyPeptideRow(savedBase) : null
     if (error) toast.error(t('fehler_speichern'))
     else {
       toast.success(editingPeptideId ? t('peptid_aktualisiert') : t('peptid_hinzugefuegt'))
@@ -823,14 +831,14 @@ export function Peptide() {
   const archivePeptide = async (p: Peptide) => {
     setDeletingPeptide(true)
     const archivedAt = p.archived_at ?? new Date().toISOString()
-    const { error: archiveError } = await supabase.from('peptides')
+    const { error: archiveError } = await supabase.from('stack_items')
       .update({ archived: true, archived_at: archivedAt }).eq('id', p.id)
     if (archiveError) {
       toast.error(t('error'))
       setDeletingPeptide(false)
       return
     }
-    await supabase.from('cycles').update({ active: false }).eq('peptide_id', p.id).eq('active', true)
+    await supabase.from('cycles').update({ active: false }).eq('stack_item_id', p.id).eq('active', true)
     toast.success(t('substanz_archiviert'))
     setDeletePromptFromArchive(false)
     setDeletePromptPeptide(null); setDeletingPeptide(false)
@@ -843,10 +851,10 @@ export function Peptide() {
   // cycles, dose_escalations, vials, reviews werden per CASCADE mit entfernt.
   const hardDeletePeptide = async (p: Peptide) => {
     setDeletingPeptide(true)
-    await supabase.from('dose_logs').delete().eq('peptide_id', p.id)
-    await supabase.from('injection_logs').delete().eq('peptide_id', p.id)
-    await supabase.from('effects').delete().eq('peptide_id', p.id)
-    await supabase.from('peptides').delete().eq('id', p.id)
+    await supabase.from('dose_logs').delete().eq('stack_item_id', p.id)
+    await supabase.from('injection_logs').delete().eq('stack_item_id', p.id)
+    await supabase.from('effects').delete().eq('stack_item_id', p.id)
+    await supabase.from('stack_items').delete().eq('id', p.id)
     toast.success(t('geloescht'))
     setDeletePromptFromArchive(false)
     setDeletePromptPeptide(null); setDeletingPeptide(false)
@@ -855,7 +863,7 @@ export function Peptide() {
   }
 
   const restorePeptide = async (p: Peptide) => {
-    await supabase.from('peptides').update({ archived: false, archived_at: null }).eq('id', p.id)
+    await supabase.from('stack_items').update({ archived: false, archived_at: null }).eq('id', p.id)
     toast.success(t('substanz_wiederhergestellt'))
     loadArchived(); loadPeptides()
   }
@@ -913,7 +921,7 @@ export function Peptide() {
     if (!cForm || !cycleForPeptide) return
     setSavingCycle(true)
     const payload = {
-      user_id: user!.id, peptide_id: cycleForPeptide.id,
+      user_id: user!.id, stack_item_id: cycleForPeptide.id,
       name: cForm.name, dose: parseFloat(cForm.dose),
       unit: cForm.unit, method: cForm.method, frequency: cForm.frequency,
       x_days_interval: cForm.frequency === 'Alle X Tage' ? parseInt(cForm.x_days_interval) : null,
@@ -1032,9 +1040,9 @@ export function Peptide() {
   const backfillDoseAdjustmentLogs = async (cycle: Cycle, nextEscalations: Escalation[], affectedEscalations: Escalation[]) => {
     let query = supabase
       .from('dose_logs')
-      .select('id, peptide_id, logged_at, taken')
+      .select('id, stack_item_id, logged_at, taken')
       .eq('user_id', user!.id)
-      .eq('peptide_id', cycle.peptide_id)
+      .eq('stack_item_id', cycle.stack_item_id)
       .gte('logged_at', `${cycle.start_date}T00:00:00.000`)
       .or('taken.is.null,taken.eq.false')
 
@@ -2796,7 +2804,7 @@ export function Peptide() {
           {archiveInfoPeptide && (() => {
             const p = archiveInfoPeptide
             const archivedCycles = cycles
-              .filter(c => c.peptide_id === p.id)
+              .filter(c => c.stack_item_id === p.id)
               .sort((a, b) => b.created_at.localeCompare(a.created_at))
             const invItem = inventory.find(item => item.id === p.inventory_item_id)
             const syringeMl = p.syringe_type?.split(':')[0]

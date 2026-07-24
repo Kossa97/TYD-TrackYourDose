@@ -40,8 +40,8 @@ import {
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
-  effectsByPeptide,
-  reviewsByPeptide,
+  effectsByPeptide as effectsBySubstance,
+  reviewsByPeptide as reviewsBySubstance,
   topSideEffects,
   type EffectRow,
   type ReviewRow,
@@ -78,23 +78,31 @@ interface BloodworkEntry {
 
 interface DoseLog {
   id: string
-  peptide_id: string | null
+  stack_item_id: string | null
   logged_at: string
   taken: boolean | null
 }
 
 interface Cycle {
   id: string
-  peptide_id: string
+  stack_item_id: string
   name: string
   start_date: string
   end_date: string | null
   active: boolean
-  peptides: { name: string } | null
+  stack_items: { display_name: string } | null
 }
 
-type SupabaseCycleRow = Omit<Cycle, 'peptides'> & {
-  peptides: { name: string } | { name: string }[] | null
+type SupabaseCycleRow = Omit<Cycle, 'stack_items'> & {
+  stack_items: { display_name: string } | { display_name: string }[] | null
+}
+
+type SupabaseEffectRow = Omit<EffectRow, 'stack_items'> & {
+  stack_items: { display_name: string } | { display_name: string }[] | null
+}
+
+type SupabaseReviewRow = Omit<ReviewRow, 'stack_items'> & {
+  stack_items: { display_name: string } | { display_name: string }[] | null
 }
 
 interface ProtocolCopy {
@@ -353,7 +361,23 @@ function cycleEnd(cycle: Cycle) {
 function normalizeCycles(rows: SupabaseCycleRow[] | null | undefined): Cycle[] {
   return (rows ?? []).map(row => ({
     ...row,
-    peptides: Array.isArray(row.peptides) ? row.peptides[0] ?? null : row.peptides,
+    stack_items: Array.isArray(row.stack_items) ? row.stack_items[0] ?? null : row.stack_items,
+  }))
+}
+
+function normalizeEffects(rows: SupabaseEffectRow[] | null | undefined): EffectRow[] {
+  return (rows ?? []).map(row => ({
+    ...row,
+    stack_items: Array.isArray(row.stack_items) ? row.stack_items[0] ?? null : row.stack_items,
+  }))
+}
+
+function normalizeReviews(rows: SupabaseReviewRow[] | null | undefined): ReviewRow[] {
+  return (rows ?? []).map(row => ({
+    ...row,
+    stack_items: Array.isArray(row.stack_items)
+      ? row.stack_items[0] ?? { display_name: '—' }
+      : row.stack_items ?? { display_name: '—' },
   }))
 }
 
@@ -556,7 +580,7 @@ export function Protokoll() {
     [...activeCycles, ...completedCycles].map((c, i) => ({
       x1: c.start_date,
       x2: cycleEnd(c),
-      name: c.peptides?.name ?? c.name,
+      name: c.stack_items?.display_name ?? c.name,
       color: CYCLE_COLORS[i % CYCLE_COLORS.length],
     }))
   ), [activeCycles, completedCycles])
@@ -692,15 +716,15 @@ export function Protokoll() {
     })
   ), [activeMarkers, weightLogs, bloodwork, dailyLogs, language])
 
-  const adherencePerPeptide = useMemo(() => {
+  const adherencePerSubstance = useMemo(() => {
     const nameMap = new Map<string, string>()
     ;[...activeCycles, ...completedCycles].forEach(c => {
-      if (c.peptide_id && c.peptides?.name) nameMap.set(c.peptide_id, c.peptides.name)
+      if (c.stack_item_id && c.stack_items?.display_name) nameMap.set(c.stack_item_id, c.stack_items.display_name)
     })
     const grouped = new Map<string, { taken: number; total: number }>()
     doseLogs.forEach(log => {
-      if (log.taken == null || !log.peptide_id) return
-      const name = nameMap.get(log.peptide_id) ?? log.peptide_id
+      if (log.taken == null || !log.stack_item_id) return
+      const name = nameMap.get(log.stack_item_id) ?? log.stack_item_id
       const existing = grouped.get(name) ?? { taken: 0, total: 0 }
       existing.total++
       if (log.taken) existing.taken++
@@ -712,8 +736,8 @@ export function Protokoll() {
   }, [doseLogs, activeCycles, completedCycles])
 
   const sideEffectStats = useMemo(() => topSideEffects(effects), [effects])
-  const peptideEffectStats = useMemo(() => effectsByPeptide(effects), [effects])
-  const peptideReviewStats = useMemo(() => reviewsByPeptide(reviews), [reviews])
+  const substanceEffectStats = useMemo(() => effectsBySubstance(effects), [effects])
+  const substanceReviewStats = useMemo(() => reviewsBySubstance(reviews), [reviews])
 
   const loadBaseData = useCallback(async () => {
     if (!user) return
@@ -722,13 +746,13 @@ export function Protokoll() {
     const [{ data: activeData }, { data: completedData }] = await Promise.all([
       supabase
         .from('cycles')
-        .select('id, peptide_id, name, start_date, end_date, active, peptides(name)')
+        .select('id, stack_item_id, name, start_date, end_date, active, stack_items(display_name)')
         .eq('user_id', user.id)
         .eq('active', true)
         .order('start_date', { ascending: false }),
       supabase
         .from('cycles')
-        .select('id, peptide_id, name, start_date, end_date, active, peptides(name)')
+        .select('id, stack_item_id, name, start_date, end_date, active, stack_items(display_name)')
         .eq('user_id', user.id)
         .eq('active', false)
         .order('start_date', { ascending: false }),
@@ -746,7 +770,7 @@ export function Protokoll() {
       const to = completed.map(cycle => cycleEnd(cycle)).sort().at(-1) ?? todayIso()
       const { data } = await supabase
         .from('dose_logs')
-        .select('id, peptide_id, logged_at, taken')
+        .select('id, stack_item_id, logged_at, taken')
         .eq('user_id', user.id)
         .gte('logged_at', from)
         .lte('logged_at', `${to}T23:59:59`)
@@ -787,21 +811,21 @@ export function Protokoll() {
         .order('marker', { ascending: true }),
       supabase
         .from('dose_logs')
-        .select('id, peptide_id, logged_at, taken')
+        .select('id, stack_item_id, logged_at, taken')
         .eq('user_id', user.id)
         .gte('logged_at', range.from)
         .lte('logged_at', `${range.to}T23:59:59`)
         .order('logged_at', { ascending: true }),
       supabase
         .from('effects')
-        .select('id, type, description, severity, peptide_id, occurred_at, peptides(name)')
+        .select('id, type, description, severity, stack_item_id, occurred_at, stack_items(display_name)')
         .eq('user_id', user.id)
         .gte('occurred_at', `${range.from}T00:00:00`)
         .lte('occurred_at', `${range.to}T23:59:59`)
         .order('occurred_at', { ascending: false }),
       supabase
         .from('reviews')
-        .select('id, peptide_id, rating, experience, peptides(name)')
+        .select('id, stack_item_id, rating, experience, stack_items(display_name)')
         .eq('user_id', user.id)
         .gte('created_at', `${range.from}T00:00:00`)
         .lte('created_at', `${range.to}T23:59:59`),
@@ -820,14 +844,8 @@ export function Protokoll() {
     setWeightLogs((weights ?? []) as WeightLog[])
     setBloodwork(bloodEntries)
     setDoseLogs((doses ?? []) as DoseLog[])
-    setEffects((effectRows ?? []).map(row => ({
-      ...row,
-      peptides: Array.isArray(row.peptides) ? row.peptides[0] ?? null : row.peptides,
-    })) as EffectRow[])
-    setReviews((reviewRows ?? []).map(row => ({
-      ...row,
-      peptides: Array.isArray(row.peptides) ? row.peptides[0] ?? { name: '—' } : row.peptides,
-    })) as ReviewRow[])
+    setEffects(normalizeEffects(effectRows))
+    setReviews(normalizeReviews(reviewRows))
     const dailyEntries = (daily ?? []) as DailyLogRow[]
     setDailyLogs(dailyEntries)
     const wellnessAvailable = wellnessMarkersWithData(dailyEntries)
@@ -859,7 +877,7 @@ export function Protokoll() {
   const adherenceForCycle = useCallback((cycle: Cycle) => {
     const cycleRange = { from: cycle.start_date, to: cycleEnd(cycle) }
     const logs = cycleDoseLogs.filter(log => (
-      log.peptide_id === cycle.peptide_id
+      log.stack_item_id === cycle.stack_item_id
       && log.taken != null
       && isLogWithinRange(log, cycleRange)
     ))
@@ -999,7 +1017,7 @@ export function Protokoll() {
               <div className="space-y-2">
                 {activeCycles.map(cycle => (
                   <div key={cycle.id} className="flex items-center justify-between gap-3 text-sm">
-                    <span className="text-white font-semibold">{cycle.peptides?.name ?? cycle.name}</span>
+                    <span className="text-white font-semibold">{cycle.stack_items?.display_name ?? cycle.name}</span>
                     <span className="text-slate-500 text-xs">
                       {formatDate(cycle.start_date, language)} - {formatDate(cycleEnd(cycle), language)}
                     </span>
@@ -1139,7 +1157,7 @@ export function Protokoll() {
         )}
 
         {/* ── Persönliche Insights ── */}
-        {(sideEffectStats.length > 0 || peptideEffectStats.length > 0 || peptideReviewStats.length > 0) && (
+        {(sideEffectStats.length > 0 || substanceEffectStats.length > 0 || substanceReviewStats.length > 0) && (
           <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, padding: 18 }}>
             <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-dim)', marginBottom: 4 }}>{t('protokoll_insights_title')}</p>
             <p style={{ fontSize: 9, color: '#334155', fontWeight: 600, letterSpacing: '0.04em', marginBottom: 16 }}>{t('protokoll_insights_sub')}</p>
@@ -1164,13 +1182,13 @@ export function Protokoll() {
               <p style={{ fontSize: 10, color: '#475569', marginBottom: 14 }}>{t('protokoll_side_effects_empty')}</p>
             )}
 
-            {peptideEffectStats.length > 0 && (
-              <div style={{ marginBottom: peptideReviewStats.length > 0 ? 18 : 0 }}>
+            {substanceEffectStats.length > 0 && (
+              <div style={{ marginBottom: substanceReviewStats.length > 0 ? 18 : 0 }}>
                 <p style={{ fontSize: 10, fontWeight: 800, color: '#8b5cf6', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>
                   {t('protokoll_effects_by_peptide')}
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {peptideEffectStats.map(row => (
+                  {substanceEffectStats.map(row => (
                     <div key={row.name}>
                       <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', marginBottom: 4 }}>{row.name}</p>
                       <p style={{ fontSize: 10, color: '#64748b' }}>
@@ -1182,13 +1200,13 @@ export function Protokoll() {
               </div>
             )}
 
-            {peptideReviewStats.length > 0 && (
+            {substanceReviewStats.length > 0 && (
               <div>
                 <p style={{ fontSize: 10, fontWeight: 800, color: '#10b981', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>
                   {t('protokoll_reviews_by_peptide')}
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {peptideReviewStats.map(row => (
+                  {substanceReviewStats.map(row => (
                     <div key={row.name} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline' }}>
                       <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)' }}>{row.name}</span>
                       <span style={{ fontSize: 10, color: '#64748b', textAlign: 'right' }}>
@@ -1203,12 +1221,12 @@ export function Protokoll() {
         )}
 
         {/* ── Adherence je Peptid ── */}
-        {adherencePerPeptide.length > 0 && (
+        {adherencePerSubstance.length > 0 && (
           <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, padding: 18 }}>
             <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-dim)', marginBottom: 4 }}>{copy.adherenceTitle}</p>
             <p style={{ fontSize: 9, color: '#334155', fontWeight: 600, letterSpacing: '0.04em', marginBottom: 14 }}>Anteil eingenommener Dosen im Zeitraum je Peptid</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {adherencePerPeptide.map(({ name, pct, color }) => (
+              {adherencePerSubstance.map(({ name, pct, color }) => (
                 <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', width: 96, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
                   <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 6, overflow: 'hidden' }}>
@@ -1242,7 +1260,7 @@ export function Protokoll() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-white font-bold truncate">{cycle.peptides?.name ?? cycle.name}</p>
+                      <p className="text-white font-bold truncate">{cycle.stack_items?.display_name ?? cycle.name}</p>
                       <p className="text-xs text-slate-500 mt-1">
                         {formatDate(cycle.start_date, language)} - {formatDate(cycleEnd(cycle), language)}
                       </p>

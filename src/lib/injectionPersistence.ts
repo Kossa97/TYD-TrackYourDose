@@ -10,7 +10,7 @@ import {
   type IntakeLog,
   type ScheduleCycle,
 } from './intakeSchedule'
-import { debitPeptideStockForDoseById } from './peptideStock'
+import { debitPeptideStockForDoseById as debitVialStockForDoseById } from './peptideStock'
 import type { InjectionLog3D, InjectionPinDraft, SelectableInjectionCycle } from './injectionLogTypes'
 
 const INJECTABLE_METHODS = ['Subkutan', 'IntramuskulÃ¤r', 'Intramuskulaer']
@@ -18,7 +18,7 @@ const INJECTABLE_METHODS = ['Subkutan', 'IntramuskulÃ¤r', 'Intramuskulaer']
 interface SaveInjectionInput {
   userId: string
   doseLogId: string | null
-  peptideId: string | null
+  stackItemId: string | null
   cycleId: string | null
   dose: number | null
   unit: string | null
@@ -34,7 +34,7 @@ export function buildInjectionInsertPayload(input: SaveInjectionInput) {
   return {
     user_id: input.userId,
     dose_log_id: input.doseLogId,
-    peptide_id: input.peptideId,
+    stack_item_id: input.stackItemId,
     cycle_id: input.cycleId,
     dose: input.dose,
     unit: input.unit,
@@ -68,7 +68,7 @@ export function isInjectionProSchemaError(error: unknown): boolean {
 export async function assertInjectionProSchema(supabase: SupabaseClient): Promise<void> {
   const { error } = await supabase
     .from('injection_logs')
-    .select('peptide_id, cycle_id, dose, unit, method, body_region, body_side, model_version, position, normal, uv, camera_state, warning_state, substance_label')
+    .select('stack_item_id, cycle_id, dose, unit, method, body_region, body_side, model_version, position, normal, uv, camera_state, warning_state, substance_label')
     .limit(0)
   if (error) throw error
 }
@@ -79,7 +79,7 @@ export async function loadInjectionLogs(
 ): Promise<InjectionLog3D[]> {
   const enrichedResult = await supabase
     .from('injection_logs')
-    .select('*, peptides(name), cycles(name)')
+    .select('*, stack_items(display_name), cycles(name)')
     .eq('user_id', userId)
     .order('logged_at', { ascending: false })
     .limit(300)
@@ -123,9 +123,9 @@ export async function loadInjectionLogs(
     user_id: row.user_id,
     dose_log_id: row.dose_log_id ?? null,
     dose_taken: row.dose_log_id ? doseTakenById.get(row.dose_log_id) : undefined,
-    peptide_id: row.peptide_id ?? null,
+    stack_item_id: row.stack_item_id ?? null,
     cycle_id: row.cycle_id ?? null,
-    peptide_name: Array.isArray(row.peptides) ? row.peptides[0]?.name ?? null : row.peptides?.name ?? null,
+    stack_item_name: Array.isArray(row.stack_items) ? row.stack_items[0]?.display_name ?? null : row.stack_items?.display_name ?? null,
     cycle_name: Array.isArray(row.cycles) ? row.cycles[0]?.name ?? null : row.cycles?.name ?? null,
     dose: row.dose == null ? null : Number(row.dose),
     unit: row.unit ?? null,
@@ -164,15 +164,15 @@ export async function loadSelectableInjectionCycles(
 ): Promise<SelectableInjectionCycle[]> {
   const { data, error } = await supabase
     .from('cycles')
-    .select('id, peptide_id, name, dose, unit, method, active, peptides(name)')
+    .select('id, stack_item_id, name, dose, unit, method, active, stack_items(display_name)')
     .eq('user_id', userId)
     .eq('active', true)
     .in('method', INJECTABLE_METHODS)
   if (error) throw error
   return (data ?? []).map((row: any) => ({
     id: row.id,
-    peptide_id: row.peptide_id,
-    peptide_name: Array.isArray(row.peptides) ? row.peptides[0]?.name ?? row.name : row.peptides?.name ?? row.name,
+    stack_item_id: row.stack_item_id,
+    stack_item_name: Array.isArray(row.stack_items) ? row.stack_items[0]?.display_name ?? row.name : row.stack_items?.display_name ?? row.name,
     cycle_name: row.name,
     dose: Number(row.dose),
     unit: row.unit,
@@ -184,8 +184,8 @@ export type InjectionIntakeStatus = 'open' | 'confirmed'
 
 export interface OpenInjectionIntake {
   cycleId: string | null
-  peptideId: string
-  peptideName: string
+  stackItemId: string
+  stackItemName: string
   cycleName: string
   dose: number
   unit: string
@@ -202,19 +202,19 @@ interface InjectionDoseLog extends IntakeLog {
   unit: string
   method: string
   notes?: string | null
-  peptides?: { name?: string; default_method?: string } | Array<{ name?: string; default_method?: string }> | null
+  stack_items?: { display_name?: string; default_method?: string } | Array<{ display_name?: string; default_method?: string }> | null
 }
 
 interface InjectionCycleRow extends ScheduleCycle {
   active?: boolean
   name?: string
   method?: string
-  peptides?: { name?: string } | Array<{ name?: string }> | null
+  stack_items?: { display_name?: string } | Array<{ display_name?: string }> | null
 }
 
-function peptideName(cycle: InjectionCycleRow | undefined): string {
-  if (Array.isArray(cycle?.peptides)) return cycle.peptides[0]?.name ?? cycle.name ?? 'Substanz'
-  return cycle?.peptides?.name ?? cycle?.name ?? 'Substanz'
+function stackItemName(cycle: InjectionCycleRow | undefined): string {
+  if (Array.isArray(cycle?.stack_items)) return cycle.stack_items[0]?.display_name ?? cycle.name ?? 'Substanz'
+  return cycle?.stack_items?.display_name ?? cycle?.name ?? 'Substanz'
 }
 
 function cycleName(cycle: InjectionCycleRow | undefined): string {
@@ -232,11 +232,11 @@ function isOpenDoseLog(log: InjectionDoseLog): boolean {
 function doseLogSlotKey(log: InjectionDoseLog): string {
   const loggedAt = parseISO(log.logged_at)
   const minutes = loggedAt.getHours() * 60 + loggedAt.getMinutes()
-  return `${log.peptide_id}|${format(loggedAt, 'yyyy-MM-dd')}|${minutes}`
+  return `${log.stack_item_id}|${format(loggedAt, 'yyyy-MM-dd')}|${minutes}`
 }
 
-function openIntakeSlotKey(open: { peptideId: string; dateKey: string; minutes: number }): string {
-  return `${open.peptideId}|${open.dateKey}|${open.minutes}`
+function openIntakeSlotKey(open: { stackItemId: string; dateKey: string; minutes: number }): string {
+  return `${open.stackItemId}|${open.dateKey}|${open.minutes}`
 }
 
 export function injectionIntakeLookbackStart(now: Date, lookbackDays = 90): Date {
@@ -279,8 +279,8 @@ export function buildSelectableInjectionIntakes({
     const scheduledAt = new Date(day.getTime() + open.minutes * 60000)
     return [{
       cycleId: open.cycleId,
-      peptideId: open.peptideId,
-      peptideName: peptideName(cycle),
+      stackItemId: open.stackItemId,
+      stackItemName: stackItemName(cycle),
       cycleName: cycleName(cycle),
       dose: openDoseLog ? Number(openDoseLog.dose) : cycle ? effectiveDose(cycle, day, escalations) : 0,
       unit: openDoseLog?.unit ?? cycle?.unit ?? '',
@@ -298,18 +298,18 @@ export function buildSelectableInjectionIntakes({
     const day = startOfDay(parseISO(log.logged_at))
     if (day < earliestDay || day > startOfDay(now)) return []
 
-    const peptideCycles = cycles.filter(cycle => cycle.peptide_id === log.peptide_id)
-    const cycle = peptideCycles.find(candidate => cycleAppliesToDay(candidate, day)) ?? peptideCycles[0]
-    const logPeptide = Array.isArray(log.peptides) ? log.peptides[0] : log.peptides
+    const stackItemCycles = cycles.filter(cycle => cycle.stack_item_id === log.stack_item_id)
+    const cycle = stackItemCycles.find(candidate => cycleAppliesToDay(candidate, day)) ?? stackItemCycles[0]
+    const logStackItem = Array.isArray(log.stack_items) ? log.stack_items[0] : log.stack_items
     const resolvedMethod = INJECTABLE_METHODS.includes(log.method)
       ? log.method
-      : cycle?.method || logPeptide?.default_method || ''
+      : cycle?.method || logStackItem?.default_method || ''
     if (!INJECTABLE_METHODS.includes(resolvedMethod)) return []
 
     return [{
       cycleId: cycle?.id ?? null,
-      peptideId: log.peptide_id,
-      peptideName: logPeptide?.name ?? peptideName(cycle),
+      stackItemId: log.stack_item_id,
+      stackItemName: logStackItem?.display_name ?? stackItemName(cycle),
       cycleName: cycleName(cycle),
       dose: Number(log.dose),
       unit: log.unit,
@@ -330,10 +330,10 @@ export async function loadSelectableInjectionIntakes(
   now: Date = new Date(),
 ): Promise<OpenInjectionIntake[]> {
   const [cyclesRes, logsRes, escRes, linkedRes] = await Promise.all([
-    supabase.from('cycles').select('*, peptides(name, default_method)').eq('user_id', userId).in('method', INJECTABLE_METHODS),
+    supabase.from('cycles').select('*, stack_items(display_name, default_method)').eq('user_id', userId).in('method', INJECTABLE_METHODS),
     supabase
       .from('dose_logs')
-      .select('id, peptide_id, dose, unit, method, logged_at, taken, notes, peptides(name, default_method)')
+      .select('id, stack_item_id, dose, unit, method, logged_at, taken, notes, stack_items(display_name, default_method)')
       .eq('user_id', userId)
       .gte('logged_at', injectionIntakeLookbackStart(now).toISOString())
       .order('logged_at', { ascending: false }),
@@ -398,11 +398,11 @@ export function isDoseLogAlreadyLinkedError(error: unknown): boolean {
   const candidate = error as { code?: string; message?: string }
   return candidate.code === '23505' && (candidate.message ?? '').includes('injection_logs_dose_log_id_unique_idx')
 }
-// Insert a confirmed dose_log for an intake and debit the peptide vial stock,
+// Insert a confirmed dose_log for an intake and debit the linked vial stock,
 // matching the Dashboard confirmation. Returns the new dose_log id to link.
 export async function confirmIntakeDoseLog(
   supabase: SupabaseClient,
-  input: { userId: string; peptideId: string; dose: number; unit: string; method: string; loggedAt: string; doseLogId?: string | null },
+  input: { userId: string; stackItemId: string; dose: number; unit: string; method: string; loggedAt: string; doseLogId?: string | null },
 ): Promise<string> {
   if (input.doseLogId) {
     const { error } = await supabase
@@ -417,7 +417,7 @@ export async function confirmIntakeDoseLog(
       .eq('id', input.doseLogId)
       .eq('user_id', input.userId)
     if (error) throw error
-    await debitPeptideStockForDoseById(supabase, input.userId, input.peptideId, input.dose, input.unit)
+    await debitVialStockForDoseById(supabase, input.userId, input.stackItemId, input.dose, input.unit)
     return input.doseLogId
   }
 
@@ -425,7 +425,7 @@ export async function confirmIntakeDoseLog(
     .from('dose_logs')
     .insert({
       user_id: input.userId,
-      peptide_id: input.peptideId,
+      stack_item_id: input.stackItemId,
       dose: input.dose,
       unit: input.unit,
       method: input.method,
@@ -435,6 +435,6 @@ export async function confirmIntakeDoseLog(
     .select('id')
     .single()
   if (error) throw error
-  await debitPeptideStockForDoseById(supabase, input.userId, input.peptideId, input.dose, input.unit)
+  await debitVialStockForDoseById(supabase, input.userId, input.stackItemId, input.dose, input.unit)
   return data.id as string
 }

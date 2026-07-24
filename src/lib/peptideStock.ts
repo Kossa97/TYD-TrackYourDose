@@ -70,7 +70,7 @@ export async function debitPeptideStockForDoseById(
   unit: string,
 ): Promise<void> {
   const { data, error } = await supabase
-    .from('peptides')
+    .from('stack_items')
     .select('id, vial_amount_mg, reconstitution_ml, reconstitution_date, vials_in_stock, vials_initial')
     .eq('id', peptideId)
     .eq('user_id', userId)
@@ -79,7 +79,7 @@ export async function debitPeptideStockForDoseById(
   const next = computeNextVialStock(data as StockPeptide, dose, unit, 'debit')
   if (next == null) return
   await supabase
-    .from('peptides')
+    .from('stack_items')
     .update({ vials_in_stock: next })
     .eq('id', peptideId)
     .eq('user_id', userId)

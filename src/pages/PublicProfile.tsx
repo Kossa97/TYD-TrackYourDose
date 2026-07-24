@@ -11,10 +11,10 @@ interface Profile {
   public_bio: string | null; share_peptide: boolean
   share_kalender: boolean; share_tagebuch: boolean; share_bewertungen: boolean
 }
-interface Peptide { id: string; name: string; default_method: string }
-interface Review { id: string; rating: number; title: string; body: string | null; created_at: string; peptides: { name: string } | null }
+interface StackItem { id: string; display_name: string; default_method: string }
+interface Review { id: string; rating: number; title: string; body: string | null; created_at: string; stack_items: { display_name: string } | null }
 interface Effect { id: string; type: string; description: string; severity: number; status: string; duration: string | null; occurred_at: string }
-interface DoseLog { id: string; dose: number; unit: string; method: string; logged_at: string; peptides: { name: string } | null }
+interface DoseLog { id: string; dose: number; unit: string; method: string; logged_at: string; stack_items: { display_name: string } | null }
 
 const SEVERITY_COLORS: Record<number, string> = {
   1: 'text-emerald-400', 2: 'text-lime-400', 3: 'text-amber-400', 4: 'text-orange-400', 5: 'text-red-400',
@@ -44,7 +44,7 @@ function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }
 export function PublicProfile() {
   const { username } = useParams<{ username: string }>()
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [peptides, setPeptides] = useState<Peptide[]>([])
+  const [stackItems, setStackItems] = useState<StackItem[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [effects, setEffects] = useState<Effect[]>([])
   const [logs, setLogs] = useState<DoseLog[]>([])
@@ -67,20 +67,20 @@ export function PublicProfile() {
 
       const fetches = await Promise.all([
         prof.share_peptide
-          ? supabase.from('peptides').select('id, name, default_method').eq('user_id', uid).order('name')
+          ? supabase.from('stack_items').select('id, display_name, default_method').eq('user_id', uid).order('display_name')
           : Promise.resolve({ data: [] }),
         prof.share_bewertungen
-          ? supabase.from('reviews').select('id, rating, title, body, created_at, peptides(name)').eq('user_id', uid).order('created_at', { ascending: false })
+          ? supabase.from('reviews').select('id, rating, title, body, created_at, stack_items(display_name)').eq('user_id', uid).order('created_at', { ascending: false })
           : Promise.resolve({ data: [] }),
         prof.share_tagebuch
           ? supabase.from('effects').select('id, type, description, severity, status, duration, occurred_at').eq('user_id', uid).order('occurred_at', { ascending: false }).limit(20)
           : Promise.resolve({ data: [] }),
         prof.share_kalender
-          ? supabase.from('dose_logs').select('id, dose, unit, method, logged_at, peptides(name)').eq('user_id', uid).order('logged_at', { ascending: false }).limit(30)
+          ? supabase.from('dose_logs').select('id, dose, unit, method, logged_at, stack_items(display_name)').eq('user_id', uid).order('logged_at', { ascending: false }).limit(30)
           : Promise.resolve({ data: [] }),
       ])
 
-      if (fetches[0].data) setPeptides(fetches[0].data as Peptide[])
+      if (fetches[0].data) setStackItems(fetches[0].data as StackItem[])
       if (fetches[1].data) setReviews(fetches[1].data as Review[])
       if (fetches[2].data) setEffects(fetches[2].data as Effect[])
       if (fetches[3].data) setLogs(fetches[3].data as DoseLog[])
@@ -113,7 +113,7 @@ export function PublicProfile() {
     </div>
   )
 
-  const hasContent = peptides.length > 0 || reviews.length > 0 || effects.length > 0 || logs.length > 0
+  const hasContent = stackItems.length > 0 || reviews.length > 0 || effects.length > 0 || logs.length > 0
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -145,16 +145,16 @@ export function PublicProfile() {
           </div>
         )}
 
-        {/* Peptide */}
-        {peptides.length > 0 && (
+        {/* Substanzen */}
+        {stackItems.length > 0 && (
           <section className="mb-6">
             <SectionHeader icon={<FlaskConical size={13} />} title="Verwendete Peptide" />
             <div className="space-y-2">
-              {peptides.map(p => (
-                <div key={p.id} className="card flex items-center justify-between">
-                  <p className="font-medium text-white">{p.name}</p>
+              {stackItems.map(item => (
+                <div key={item.id} className="card flex items-center justify-between">
+                  <p className="font-medium text-white">{item.display_name}</p>
                   <div className="text-slate-400 text-xs text-right">
-                    <span>{p.default_method}</span>
+                    <span>{item.default_method}</span>
                   </div>
                 </div>
               ))}
@@ -170,7 +170,7 @@ export function PublicProfile() {
               {logs.map(l => (
                 <div key={l.id} className="card flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-white text-sm">{l.peptides?.name ?? '—'}</p>
+                    <p className="font-medium text-white text-sm">{l.stack_items?.display_name ?? '—'}</p>
                     <p className="text-slate-400 text-xs">{l.dose} {l.unit} · {l.method}</p>
                   </div>
                   <p className="text-slate-500 text-xs shrink-0">
@@ -218,7 +218,7 @@ export function PublicProfile() {
             <div className="space-y-3">
               {reviews.map(r => (
                 <div key={r.id} className="card">
-                  <p className="text-sky-400 text-xs font-medium mb-1">{r.peptides?.name}</p>
+                  <p className="text-sky-400 text-xs font-medium mb-1">{r.stack_items?.display_name}</p>
                   <div className="flex items-center gap-2 mb-1">
                     <StarRow rating={r.rating} />
                     <p className="font-semibold text-white text-sm">{r.title}</p>

@@ -22,7 +22,7 @@ Peptid-Modelle. An der Supabase-Grenze werden die neuen Namen verwendet:
 Die bestehenden Vial-, Bestands-, Zyklus- und Peptidfelder auf `stack_items`
 bleiben erhalten. Für neu angelegte Einträge werden zusätzlich die festen
 Grundwerte `category = peptide` und `dosage_form = vial` gesetzt. Der primäre
-Inhaltsstoff wird über die bestehende atomare `save_stack_item`-Funktion
+Inhaltsstoff wird über die getrennte atomare `save_legacy_peptide`-Kompatibilitätsfunktion
 gespeichert, damit `stack_item_ingredients` vollständig bleibt.
 
 ## Umfang

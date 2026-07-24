@@ -316,7 +316,7 @@ describe('Peptide page vial view', () => {
 
     expect(text).toContain('archiveCyclesOpen')
     expect(text).toContain('setArchiveCyclesOpen(false)')
-    expect(archiveDetail).toContain('.filter(c => c.peptide_id === p.id)')
+    expect(archiveDetail).toContain('.filter(c => c.stack_item_id === p.id)')
     expect(archiveDetail).toContain('.sort((a, b) => b.created_at.localeCompare(a.created_at))')
     expect(archiveDetail).toContain('aria-expanded={archiveCyclesOpen}')
     expect(archiveDetail).toContain('aria-controls="archive-cycle-list"')

@@ -408,8 +408,8 @@ export function BlutspiegelCarousel() {
         unit,
         active,
         end_date,
-        peptides (
-          name,
+        peptides:stack_items (
+          name:display_name,
           pk_profile_id,
           pk_profiles (
             name,

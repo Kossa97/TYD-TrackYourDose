@@ -11,7 +11,7 @@
 - Create: `src/lib/legacyMyStackPersistence.test.ts`
 - Create: `src/lib/legacyStackSchemaContract.test.ts`
 
-1. Test that a legacy peptide draft is saved through `save_stack_item`.
+1. Test that a legacy peptide draft is saved through `save_legacy_peptide`.
 2. Test that the saved row receives the existing vial/tracking fields afterward.
 3. Test that the returned `display_name` is exposed as the old `name` property.
 4. Scan the affected runtime files and reject old `peptides` table queries,

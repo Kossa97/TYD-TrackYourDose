@@ -22,7 +22,7 @@ export interface PdfProfile {
 export interface PdfCycle {
   id: string
   name: string
-  peptide_name: string | null
+  stack_item_name: string | null
   dose: number | null
   unit: string | null
   method: string | null
@@ -33,7 +33,7 @@ export interface PdfCycle {
 }
 
 export interface PdfDoseLog {
-  peptide_id: string | null
+  stack_item_id: string | null
   logged_at: string
   taken: boolean | null
 }
@@ -54,12 +54,12 @@ export interface PdfEffect {
   type: 'effect' | 'side_effect'
   description: string
   severity: number
-  peptide_name: string | null
+  stack_item_name: string | null
   occurred_at: string
 }
 
 export interface PdfReview {
-  peptide_name: string | null
+  stack_item_name: string | null
   rating: number
   experience: 'gut' | 'mittel' | 'schlecht' | null
 }
@@ -81,7 +81,7 @@ export interface ProtocolData {
   effects: PdfEffect[]
   reviews: PdfReview[]
   dailyLogs: PdfDailyLog[]
-  peptideNames: Map<string, string> // peptide_id -> name (für Adherence pro Peptid)
+  stackItemNames: Map<string, string> // stack_item_id -> display_name (für Adherence pro Substanz)
 }
 
 export type SectionId =

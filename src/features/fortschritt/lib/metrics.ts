@@ -205,7 +205,7 @@ export function computeAdherence(
   peptideNames: Map<string, string>,
 ): { overall: number | null; taken: number; total: number; byPeptide: { name: string; pct: number }[] } {
   const inRange = filterByDateRange(doseLogs, range, d => dateKeyFromTimestamp(d.logged_at))
-    .filter(d => d.taken != null && d.peptide_id)
+    .filter(d => d.taken != null && d.stack_item_id)
 
   if (inRange.length === 0) {
     return { overall: null, taken: 0, total: 0, byPeptide: [] }
@@ -215,7 +215,7 @@ export function computeAdherence(
   const grouped = new Map<string, { taken: number; total: number }>()
 
   for (const log of inRange) {
-    const id = log.peptide_id!
+    const id = log.stack_item_id!
     const entry = grouped.get(id) ?? { taken: 0, total: 0 }
     entry.total++
     if (log.taken) entry.taken++

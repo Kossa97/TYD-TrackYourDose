@@ -24,7 +24,7 @@ import { CarouselCounter, CarouselPagination } from '../components/CarouselChrom
 
 interface DoseLog {
   id: string
-  peptide_id: string
+  stack_item_id: string
   dose: number
   unit: string
   method: string
@@ -37,7 +37,7 @@ interface DoseLog {
 interface Cycle {
   id: string
   name: string
-  peptide_id: string
+  stack_item_id: string
   dose: number
   unit: string
   method: string
@@ -443,7 +443,7 @@ export function Dashboard() {
     const end = format(rangeEnd, 'yyyy-MM-dd')
     const { data } = await supabase
       .from('dose_logs')
-      .select('*, peptides(name)')
+      .select('*, peptides:stack_items(name:display_name)')
       .eq('user_id', user.id)
       .gte('logged_at', start)
       .lte('logged_at', end + 'T23:59:59')
@@ -455,7 +455,7 @@ export function Dashboard() {
     if (!user) return
     const { data } = await supabase
       .from('cycles')
-      .select('*, peptides(name)')
+      .select('*, peptides:stack_items(name:display_name)')
       .eq('user_id', user.id)
       .eq('active', true)
     if (data) setCycles(data as Cycle[])
@@ -463,7 +463,7 @@ export function Dashboard() {
 
   const loadPeptides = useCallback(async () => {
     if (!user) return
-    const { data } = await supabase.from('peptides').select('*').eq('user_id', user.id).eq('archived', false).order('name')
+    const { data } = await supabase.from('stack_items').select('*, name:display_name').eq('user_id', user.id).eq('archived', false).order('display_name')
     if (data) setPeptides(data)
   }, [user])
 
@@ -550,15 +550,15 @@ export function Dashboard() {
   const decidedByPeptide = new Map<string, number>()
   const pendingByPeptide = new Map<string, DoseLog[]>()
   for (const log of selLogs) {
-    if (log.taken !== null) decidedByPeptide.set(log.peptide_id, (decidedByPeptide.get(log.peptide_id) ?? 0) + 1)
-    else { const arr = pendingByPeptide.get(log.peptide_id) ?? []; arr.push(log); pendingByPeptide.set(log.peptide_id, arr) }
+    if (log.taken !== null) decidedByPeptide.set(log.stack_item_id, (decidedByPeptide.get(log.stack_item_id) ?? 0) + 1)
+    else { const arr = pendingByPeptide.get(log.stack_item_id) ?? []; arr.push(log); pendingByPeptide.set(log.stack_item_id, arr) }
   }
   const slotsByPeptide = new Map<string, DueSlot[]>()
   for (const cycle of selCycles) {
     for (const s of cycleSlots(cycle, selectedDay)) {
-      const arr = slotsByPeptide.get(cycle.peptide_id) ?? []
+      const arr = slotsByPeptide.get(cycle.stack_item_id) ?? []
       arr.push({ cycle, minutes: s.minutes, time: s.time, groupKey: s.groupKey })
-      slotsByPeptide.set(cycle.peptide_id, arr)
+      slotsByPeptide.set(cycle.stack_item_id, arr)
     }
   }
   const dueSlots: DueSlot[] = []
@@ -614,7 +614,7 @@ export function Dashboard() {
     if (rounded == null) return false
 
     const { error } = await supabase
-      .from('peptides')
+      .from('stack_items')
       .update({ vials_in_stock: rounded })
       .eq('id', peptideId)
       .eq('user_id', user.id)
@@ -632,7 +632,7 @@ export function Dashboard() {
     if (!confirm(t('eintrag_loeschen'))) return
     const { error } = await supabase.from('dose_logs').delete().eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit', log.logged_at)
+    if (log.taken === true) await adjustPeptideStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
     toast.success(t('deleted')); loadLogs(); loadPeptides()
   }
 
@@ -642,8 +642,8 @@ export function Dashboard() {
     if (taken && loggedAt) update.logged_at = loggedAt
     const { error } = await supabase.from('dose_logs').update(update).eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (previousTaken !== true && taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'debit')
-    if (previousTaken === true && taken !== true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit', log.logged_at)
+    if (previousTaken !== true && taken === true) await adjustPeptideStockForDose(log.stack_item_id, log.dose, log.unit, 'debit')
+    if (previousTaken === true && taken !== true) await adjustPeptideStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
     loadLogs(); loadPeptides()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
@@ -652,7 +652,7 @@ export function Dashboard() {
   const undoDose = async (log: DoseLog) => {
     const { error } = await supabase.from('dose_logs').update({ taken: null }).eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (log.taken === true) await adjustPeptideStockForDose(log.peptide_id, log.dose, log.unit, 'credit', log.logged_at)
+    if (log.taken === true) await adjustPeptideStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
     loadLogs(); loadPeptides()
     toast.success(t('dose_undo_success', { defaultValue: 'Einnahme zurückgesetzt' }))
   }
@@ -662,7 +662,7 @@ export function Dashboard() {
     const dose = effectiveDose(cycle, selectedDay, escalations)
     const { error } = await supabase.from('dose_logs').insert({
       user_id: user.id,
-      peptide_id: cycle.peptide_id,
+      stack_item_id: cycle.stack_item_id,
       dose,
       unit: cycle.unit,
       method: cycle.method,
@@ -670,7 +670,7 @@ export function Dashboard() {
       taken,
     })
     if (error) return toast.error(t('fehler_speichern'))
-    if (taken) await adjustPeptideStockForDose(cycle.peptide_id, dose, cycle.unit, 'debit')
+    if (taken) await adjustPeptideStockForDose(cycle.stack_item_id, dose, cycle.unit, 'debit')
     loadLogs(); loadPeptides()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
@@ -754,7 +754,7 @@ export function Dashboard() {
 
     // All planned cycles for this day have been taken
     const fullyTracked = !isFuture && hasCycle
-      && dayCycles.every(c => dayLogsList.some(l => l.peptide_id === c.peptide_id && l.taken === true))
+      && dayCycles.every(c => dayLogsList.some(l => l.stack_item_id === c.stack_item_id && l.taken === true))
 
     // At least one escalation is active on this day
     const hasEscalation = hasCycle && dayCycles.some(c => {
@@ -876,7 +876,7 @@ export function Dashboard() {
       return false
     }).length
     const slotMeta = intakeGroupMeta(slot.groupKey, t)
-    const peptideColor = getPeptideColor(peptides.findIndex(peptide => peptide.id === c.peptide_id))
+    const peptideColor = getPeptideColor(peptides.findIndex(peptide => peptide.id === c.stack_item_id))
 
     return (
       <div

@@ -13,9 +13,9 @@ function log(overrides: Partial<InjectionLog3D>): InjectionLog3D {
     id: 'log-1',
     user_id: 'user-1',
     dose_log_id: null,
-    peptide_id: null,
+    stack_item_id: null,
     cycle_id: null,
-    peptide_name: null,
+    stack_item_name: null,
     cycle_name: null,
     dose: null,
     unit: null,
@@ -47,8 +47,8 @@ describe('injection pin presentation', () => {
     expect(getInjectionPinAgeColor('2026-06-20T20:00:00.000Z', now)).toBe('#22c55e')
   })
 
-  it('uses the peptide name for the pin label and falls back to the saved substance label', () => {
-    expect(getInjectionPinSubstance(log({ peptide_name: 'Ipamorelin', substance_label: 'Backup' }))).toBe('Ipamorelin')
+  it('uses the stack item display name for the pin label and falls back to the saved substance label', () => {
+    expect(getInjectionPinSubstance(log({ stack_item_name: 'Ipamorelin', substance_label: 'Backup' }))).toBe('Ipamorelin')
     expect(getInjectionPinSubstance(log({ substance_label: 'CJC-1295 DAC' }))).toBe('CJC-1295 DAC')
     expect(getInjectionPinSubstance(log({}))).toBe('Injektion')
   })

@@ -81,7 +81,7 @@ export async function loadAllCycleChartData(userId: string): Promise<CycleChartD
   const { data: cycles } = await supabase
     .from('cycles')
     .select(`id, unit,
-      peptides ( name,
+      peptides:stack_items ( name:display_name,
         pk_profiles ( half_life_hours, tmax_hours, bioavailability_sc, category )
       )`)
     .eq('user_id', userId)

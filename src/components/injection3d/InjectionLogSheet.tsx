@@ -78,7 +78,7 @@ export function InjectionLogSheet({
   const cycleOptions = useMemo(() => Array.from(
     new Map(openIntakes.flatMap(intake => intake.cycleId ? [[
       intake.cycleId,
-      { id: intake.cycleId, label: intake.cycleName || intake.peptideName },
+      { id: intake.cycleId, label: intake.cycleName || intake.stackItemName },
     ] as const] : [])).values(),
   ).sort((a, b) => a.label.localeCompare(b.label, 'de')), [openIntakes])
 
@@ -141,7 +141,7 @@ export function InjectionLogSheet({
         {selectedIntake.status === 'confirmed' ? <Check size={16} aria-hidden="true" /> : <Clock size={16} aria-hidden="true" />}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-bold text-white">{selectedIntake.peptideName}</p>
+        <p className="truncate text-sm font-bold text-white">{selectedIntake.stackItemName}</p>
         <p className="text-xs text-slate-400">
           <span className={selectedIntake.status === 'confirmed' ? 'text-emerald-300' : 'text-amber-300'}>
             {selectedIntake.status === 'confirmed'
@@ -323,7 +323,7 @@ export function InjectionLogSheet({
                               {intake.status === 'confirmed' ? <Check size={16} aria-hidden="true" /> : <Clock size={16} aria-hidden="true" />}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-bold text-white">{intake.peptideName}</p>
+                              <p className="truncate text-sm font-bold text-white">{intake.stackItemName}</p>
                               <p className="text-xs text-slate-400">
                                 <span className={intake.status === 'confirmed' ? 'text-emerald-300' : 'text-amber-300'}>
                                   {intake.status === 'confirmed'

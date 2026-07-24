@@ -16,7 +16,7 @@ import {
 
 function cycle(
   id: string,
-  peptideId: string,
+  stackItemId: string,
   name: string,
   start: string,
   opts: { active?: boolean; endDate?: string | null } = {},
@@ -29,7 +29,7 @@ function cycle(
     endDate: opts.endDate ?? null,
     active: opts.active ?? true,
     color: '#f00',
-    peptideId,
+    stackItemId,
   }
 }
 

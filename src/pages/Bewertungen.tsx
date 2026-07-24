@@ -9,7 +9,7 @@ import { getDateLocale } from '../i18n/dateLocales'
 
 interface Review {
   id: string
-  peptide_id: string
+  stack_item_id: string
   rating: number
   title: string
   body: string | null
@@ -17,10 +17,10 @@ interface Review {
   cons: string | null
   experience: 'gut' | 'mittel' | 'schlecht'
   created_at: string
-  peptides: { name: string }
+  stack_items: { display_name: string }
 }
 
-interface Peptide { id: string; name: string }
+interface StackItem { id: string; display_name: string }
 
 type ExperienceCfg = { icon: LucideIcon; color: string; inactive: string }
 const EXPERIENCE_CONFIG: { gut: ExperienceCfg; mittel: ExperienceCfg; schlecht: ExperienceCfg } = {
@@ -58,13 +58,13 @@ const StarRating = ({ value, onChange }: { value: number; onChange?: (v: number)
 )
 
 interface Form {
-  peptide_id: string; rating: number; title: string
+  stack_item_id: string; rating: number; title: string
   body: string; pros: string; cons: string
   experience: 'gut' | 'mittel' | 'schlecht'
 }
 
-const emptyForm = (firstPeptideId = ''): Form => ({
-  peptide_id: firstPeptideId, rating: 4, title: '',
+const emptyForm = (firstStackItemId = ''): Form => ({
+  stack_item_id: firstStackItemId, rating: 4, title: '',
   body: '', pros: '', cons: '', experience: 'gut',
 })
 
@@ -73,7 +73,7 @@ export function Bewertungen() {
   const { t } = useTranslation()
   const locale = getDateLocale()
   const [reviews, setReviews]   = useState<Review[]>([])
-  const [peptides, setPeptides] = useState<Peptide[]>([])
+  const [stackItems, setStackItems] = useState<StackItem[]>([])
   const [search, setSearch]   = useState('')
   const [sortBy, setSortBy]   = useState<'date_new' | 'date_old' | 'rating_high' | 'rating_low'>('date_new')
   const [showForm, setShowForm] = useState(false)
@@ -83,30 +83,30 @@ export function Bewertungen() {
 
   const load = async () => {
     const { data } = await supabase
-      .from('reviews').select('*, peptides(name)')
+      .from('reviews').select('*, stack_items(display_name)')
       .eq('user_id', user!.id).order('created_at', { ascending: false })
     if (data) setReviews(data as Review[])
   }
 
-  const loadPeptides = async () => {
-    const { data } = await supabase.from('peptides').select('id, name')
-      .eq('user_id', user!.id).order('name')
-    if (data) setPeptides(data)
+  const loadStackItems = async () => {
+    const { data } = await supabase.from('stack_items').select('id, display_name')
+      .eq('user_id', user!.id).order('display_name')
+    if (data) setStackItems(data)
   }
 
-  useEffect(() => { load(); loadPeptides() }, [])
+  useEffect(() => { load(); loadStackItems() }, [])
 
   const openNew = () => {
-    if (peptides.length === 0) return toast.error(t('zuerst_peptid'))
+    if (stackItems.length === 0) return toast.error(t('zuerst_peptid'))
     setEditingId(null)
-    setForm(emptyForm(peptides[0].id))
+    setForm(emptyForm(stackItems[0].id))
     setShowForm(true)
   }
 
   const openEdit = (r: Review) => {
     setEditingId(r.id)
     setForm({
-      peptide_id: r.peptide_id, rating: r.rating, title: r.title,
+      stack_item_id: r.stack_item_id, rating: r.rating, title: r.title,
       body: r.body ?? '', pros: r.pros ?? '', cons: r.cons ?? '',
       experience: r.experience ?? 'gut',
     })
@@ -118,7 +118,7 @@ export function Bewertungen() {
     setSaving(true)
     const payload = {
       user_id: user!.id,
-      peptide_id: form.peptide_id,
+      stack_item_id: form.stack_item_id,
       rating: form.rating,
       title: form.title,
       body: form.body || null,
@@ -178,7 +178,7 @@ export function Bewertungen() {
         const displayed = reviews
           .filter(r => !search
             || r.title.toLowerCase().includes(search.toLowerCase())
-            || (r.peptides?.name ?? '').toLowerCase().includes(search.toLowerCase()))
+            || (r.stack_items?.display_name ?? '').toLowerCase().includes(search.toLowerCase()))
           .sort((a, b) => {
             if (sortBy === 'date_new')    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             if (sortBy === 'date_old')    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -199,7 +199,7 @@ export function Bewertungen() {
             <div key={r.id} className="card">
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sky-400 text-sm font-medium">{r.peptides?.name}</p>
+                  <p className="text-sky-400 text-sm font-medium">{r.stack_items?.display_name}</p>
                   <p className="font-semibold text-white">{r.title}</p>
                   <StarRating value={r.rating} />
                 </div>
@@ -275,9 +275,9 @@ export function Bewertungen() {
 
             <div>
               <label className="label">{t('peptid_label')}</label>
-              <select className="select" value={form.peptide_id}
-                onChange={e => setForm(f => ({ ...f, peptide_id: e.target.value }))}>
-                {peptides.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              <select className="select" value={form.stack_item_id}
+                onChange={e => setForm(f => ({ ...f, stack_item_id: e.target.value }))}>
+                {stackItems.map(item => <option key={item.id} value={item.id}>{item.display_name}</option>)}
               </select>
             </div>
 

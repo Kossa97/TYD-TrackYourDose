@@ -7,12 +7,12 @@ function makeData(overrides: Partial<ProtocolData> = {}): ProtocolData {
   return {
     profile: { display_name: 'Max Muster', username: 'max', age: 32, gender: 'männlich', height_cm: 182, weight_kg: 84 },
     cycles: [
-      { id: 'c1', name: 'Zyklus', peptide_name: 'BPC-157', dose: 250, unit: 'mcg', method: 'SC', frequency: 'Täglich', start_date: '2026-01-01', end_date: null, active: true },
+      { id: 'c1', name: 'Zyklus', stack_item_name: 'BPC-157', dose: 250, unit: 'mcg', method: 'SC', frequency: 'Täglich', start_date: '2026-01-01', end_date: null, active: true },
     ],
     doseLogs: [
-      { peptide_id: 'p1', logged_at: '2026-06-01T08:00:00Z', taken: true },
-      { peptide_id: 'p1', logged_at: '2026-06-02T08:00:00Z', taken: false },
-      { peptide_id: 'p1', logged_at: '2026-06-03T08:00:00Z', taken: true },
+      { stack_item_id: 'p1', logged_at: '2026-06-01T08:00:00Z', taken: true },
+      { stack_item_id: 'p1', logged_at: '2026-06-02T08:00:00Z', taken: false },
+      { stack_item_id: 'p1', logged_at: '2026-06-03T08:00:00Z', taken: true },
     ],
     weightLogs: [
       { logged_at: '2026-06-01T08:00:00Z', weight_kg: 84 },
@@ -24,16 +24,16 @@ function makeData(overrides: Partial<ProtocolData> = {}): ProtocolData {
       { tested_at: '2026-06-28', marker: 'IGF-1', value: 240, unit: 'ng/ml' },
     ],
     effects: [
-      { type: 'effect', description: 'Bessere Regeneration', severity: 4, peptide_name: 'BPC-157', occurred_at: '2026-06-10T08:00:00Z' },
+      { type: 'effect', description: 'Bessere Regeneration', severity: 4, stack_item_name: 'BPC-157', occurred_at: '2026-06-10T08:00:00Z' },
     ],
     reviews: [
-      { peptide_name: 'BPC-157', rating: 5, experience: 'gut' },
+      { stack_item_name: 'BPC-157', rating: 5, experience: 'gut' },
     ],
     dailyLogs: [
       { log_date: '2026-06-01', energie: 6, schlaf: 7, libido: 5 },
       { log_date: '2026-06-15', energie: 8, schlaf: 8, libido: 7 },
     ],
-    peptideNames: new Map([['p1', 'BPC-157']]),
+    stackItemNames: new Map([['p1', 'BPC-157']]),
     ...overrides,
   }
 }
@@ -58,7 +58,7 @@ describe('visibleSections', () => {
   it('filtert leere Sektionen heraus, behält Notizen immer', () => {
     const empty: ProtocolData = {
       profile: null, cycles: [], doseLogs: [], weightLogs: [], bloodwork: [],
-      effects: [], reviews: [], dailyLogs: [], peptideNames: new Map(),
+      effects: [], reviews: [], dailyLogs: [], stackItemNames: new Map(),
     }
     const vis = visibleSections([...ALL_SECTIONS], empty)
     expect(vis).toEqual(['notes'])
@@ -100,7 +100,7 @@ describe('buildProtocolPdf (Runtime-Smoke)', () => {
   it('rendert auch bei komplett leeren Daten (nur Deckblatt + Notizen + Disclaimer)', async () => {
     const empty: ProtocolData = {
       profile: null, cycles: [], doseLogs: [], weightLogs: [], bloodwork: [],
-      effects: [], reviews: [], dailyLogs: [], peptideNames: new Map(),
+      effects: [], reviews: [], dailyLogs: [], stackItemNames: new Map(),
     }
     const doc = await buildProtocolPdf(empty, { ...opts, note: '' })
     expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2)
