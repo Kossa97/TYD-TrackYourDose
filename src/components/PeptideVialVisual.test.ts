@@ -90,9 +90,10 @@ describe('PeptideVialVisual', () => {
       animateOnMount: true,
     }))
 
-    expect(low).toContain('--vial-fill-intro-duration:1060ms')
-    expect(high).toContain('--vial-fill-intro-duration:1620ms')
-    // die Dauer steuert jetzt die CSS-Reveal-Animation statt einer SMIL-dur
+    // langsamer und deutlich füllstandsabhängig (1000 + fillFrac * 1500)
+    expect(low).toContain('--vial-fill-intro-duration:1300ms')
+    expect(high).toContain('--vial-fill-intro-duration:2350ms')
+    // die Dauer steuert die CSS-Reveal-Animation
     expect(source()).toContain('var(--vial-fill-intro-duration')
   })
   test('keeps the cap and label while removing split glass body seams', () => {
@@ -296,14 +297,19 @@ describe('PeptideVialVisual', () => {
   })
 
 
-  test('animates fill-level changes inside the integrated glass window', () => {
+  test('animates fill-level changes by tweening the fill value so the floor stays anchored', () => {
     const text = source()
 
-    expect(text).toContain('liquidSurfaceY')
     expect(text).toContain('previousFillRef')
-    expect(text).toContain('vial-liquid-level-motion')
-    expect(text).toContain('--vial-fill-motion-shift')
     expect(text).toContain('data-vial-detail="liquid-motion-viewport"')
+    // Der Füllwert selbst wird interpoliert (Boden verankert), nicht die Grafik
+    // per Transform verschoben — Letzteres hob den Boden ab und malte mobil nicht.
+    expect(text).toContain('fillTweenRef')
+    expect(text).toContain('levelChangeDurationMs')
+    expect(text).toContain('easeOutCubic')
+    expect(text).toContain('buildLiquid({ fill: animFill')
+    expect(text).not.toContain('vial-liquid-level-motion')
+    expect(text).not.toContain('--vial-fill-motion-shift')
   })
 
   test('clips the liquid to the new vial chamber instead of a rectangular window', () => {

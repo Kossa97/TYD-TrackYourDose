@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode, Ref, RefObject } from 'react'
-import { buildLiquid, LIQUID_VB_H, LIQUID_VB_W, liquidSurfaceY } from './liquidGeometry'
+import { buildLiquid, LIQUID_VB_H, LIQUID_VB_W } from './liquidGeometry'
 import { useSloshSubscribe } from './SloshContext'
 import type { SloshState } from './sloshEngine'
 
@@ -65,10 +65,15 @@ function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value))
 }
 
-function fillMotionShiftPct(previousFill: number, nextFill: number): number {
-  const previousY = liquidSurfaceY(previousFill)
-  const nextY = liquidSurfaceY(nextFill)
-  return Number((((previousY - nextY) / LIQUID_VB_H) * 100).toFixed(2))
+// easeOut für das weiche Einpendeln des animierten Füllwerts.
+function easeOutCubic(t: number): number {
+  return 1 - Math.pow(1 - t, 3)
+}
+
+// Dauer eines Füllstand-Wechsels: größere Änderungen brauchen etwas länger, damit
+// das Steigen/Sinken der Oberfläche sichtbar bleibt.
+function levelChangeDurationMs(from: number, to: number): number {
+  return Math.round(600 + Math.abs(to - from) * 2200)
 }
 
 function vialAmountLabel(amount?: string | number | null, unit?: string | null): string {
@@ -242,10 +247,15 @@ export function PeptideVialVisual({
   const shellEdgeOpacity = 0.36 + visualFocus * 0.28
   const shadowOpacity = 0.2 + visualFocus * 0.28
   const previousFillRef = useRef(fillFrac)
-  const [fillMotion, setFillMotion] = useState<{ epoch: number; shiftPct: number; mode: 'none' | 'reveal' | 'shift' }>(() => (
+  // Füllstand-Wechsel animieren den Füllwert selbst (nicht die gezeichnete Grafik):
+  // der Körper reicht in der Geometrie immer bis zum Boden, sodass nur die Oberfläche
+  // steigt/sinkt und der Boden verankert bleibt. Wird im kontinuierlichen
+  // Zeichen-Loop der Slosh-Engine ausgewertet — kein Transform, mobil zuverlässig.
+  const fillTweenRef = useRef<{ from: number; to: number; start: number; dur: number } | null>(null)
+  const [fillMotion, setFillMotion] = useState<{ epoch: number; mode: 'none' | 'reveal' }>(() => (
     animateOnMount && fillFrac > 0.001
-      ? { epoch: 1, shiftPct: 0, mode: 'reveal' }
-      : { epoch: 0, shiftPct: 0, mode: 'none' }
+      ? { epoch: 1, mode: 'reveal' }
+      : { epoch: 0, mode: 'none' }
   ))
   // One graphic for the whole liquid. The air gap is baked into the geometry,
   // so a raised wall during slosh still stays clipped below the rim. This is the
@@ -279,7 +289,16 @@ export function PeptideVialVisual({
       const stage = stageRef.current
       const stageFocus = stage?.focus ?? 1
       const stageShift = (stage?.lightOffset ?? 0) * 10
-      const g = buildLiquid({ fill: fillFrac, tilt: s.tilt, energy: s.energy, time: s.time })
+      // Läuft ein Füllstand-Wechsel, interpolieren wir den Füllwert weich von alt
+      // nach neu; sonst der Ruhewert. Nur die Oberfläche bewegt sich, der Boden bleibt.
+      let animFill = fillFrac
+      const tween = fillTweenRef.current
+      if (tween) {
+        const p = (performance.now() - tween.start) / tween.dur
+        if (p >= 1) fillTweenRef.current = null
+        else animFill = tween.from + (tween.to - tween.from) * easeOutCubic(Math.max(0, p))
+      }
+      const g = buildLiquid({ fill: animFill, tilt: s.tilt, energy: s.energy, time: s.time })
       bodyRef.current?.setAttribute('d', g.body)
       surfaceRef.current?.setAttribute('d', g.surface)
       glowRef.current?.setAttribute('d', g.glow)
@@ -364,31 +383,27 @@ export function PeptideVialVisual({
     const previousFill = previousFillRef.current
     if (Math.abs(previousFill - fillFrac) < 0.001) return
 
-    const shiftPct = fillMotionShiftPct(previousFill, fillFrac)
-
+    // Weichen Füllwert-Tween starten (Boden verankert). Der Zeichen-Loop rendert ihn.
+    fillTweenRef.current = {
+      from: previousFill,
+      to: fillFrac,
+      start: performance.now(),
+      dur: levelChangeDurationMs(previousFill, fillFrac),
+    }
     previousFillRef.current = fillFrac
-    setFillMotion(current => ({
-      epoch: current.epoch + 1,
-      shiftPct,
-      mode: 'shift',
-    }))
+    // Nach dem ersten Wechsel ist die Einlauf-Reveal vorbei.
+    setFillMotion(current => (current.mode === 'none' ? current : { epoch: current.epoch, mode: 'none' }))
   }, [fillFrac])
 
-  // Der Einlauf beim Mounten läuft über clip-path auf dem HTML-Viewport (unten →
-  // oben), das Füllstands-Nachrücken über eine transform auf dem Flüssigkeits-SVG.
-  // clip-path auf einem HTML-Element ist zuverlässig plattformübergreifend, während
-  // eine transform-box:fill-box-Transform auf verschachteltem <svg> auf mobilem
-  // Safari/WebView oft nicht malt (die Animation lief dann "leer" → direkt gefüllt).
-  const fillIntroDurationMs = Math.round(900 + fillFrac * 800)
+  // Einlauf beim Mounten über clip-path auf dem HTML-Viewport (unten → oben) —
+  // plattformübergreifend zuverlässig. Refinement: langsamer und deutlich
+  // füllstandsabhängig, damit ein voller Vial spürbar länger braucht als ein leerer.
+  const fillIntroDurationMs = Math.round(1000 + fillFrac * 1500)
   const viewportRevealClass = fillMotion.mode === 'reveal' ? 'vial-liquid-fill-reveal' : ''
   const viewportRevealStyle = fillMotion.mode === 'reveal'
     ? ({ '--vial-fill-intro-duration': `${fillIntroDurationMs}ms` } as CSSProperties)
     : undefined
-  const liquidMotionClass = fillMotion.mode === 'shift' ? 'vial-liquid-level-motion' : ''
-  const liquidMotionStyle = {
-    color,
-    '--vial-fill-motion-shift': `${fillMotion.shiftPct}%`,
-  } as CSSProperties
+  const liquidGraphicStyle = { color } as CSSProperties
   const labelName = name?.trim() || 'Peptidname'
   // 'large' = detail views (edit form, previews); 'carousel' = the My Stack
   // carousel, sized so several vials can peek in side by side; 'compact' =
@@ -428,16 +443,6 @@ export function PeptideVialVisual({
           0%, 100% { transform: translateX(0); opacity: .35; }
           50% { transform: translateX(14%); opacity: .7; }
         }
-        @keyframes vial-liquid-level-motion {
-          from { transform: translateY(var(--vial-fill-motion-shift, 0%)); }
-          to { transform: translateY(0); }
-        }
-        .vial-liquid-level-motion {
-          animation: vial-liquid-level-motion 760ms cubic-bezier(.22,1,.36,1) both;
-          transform-box: fill-box;
-          transform-origin: center bottom;
-          will-change: transform;
-        }
         /* Einlauf beim Mounten: die Flüssigkeit wird von unten nach oben freigegeben.
            clip-path auf dem HTML-Viewport ist plattformübergreifend zuverlässig und
            weit leichter als die frühere SMIL-Clip-Animation, die jeden Frame neu
@@ -452,7 +457,7 @@ export function PeptideVialVisual({
           will-change: clip-path;
         }
         @media (prefers-reduced-motion: reduce) {
-          .vial-shimmer, .vial-liquid-level-motion, .vial-liquid-fill-reveal { animation: none !important; }
+          .vial-shimmer, .vial-liquid-fill-reveal { animation: none !important; }
         }
       `}</style>
 
@@ -621,11 +626,11 @@ export function PeptideVialVisual({
                   y="36"
                   width="112"
                   height="247"
-                  className={`overflow-visible ${liquidMotionClass}`}
+                  className="overflow-visible"
                   viewBox={`0 0 ${LIQUID_VB_W} ${LIQUID_VB_H}`}
                   preserveAspectRatio="none"
                   aria-hidden="true"
-                  style={liquidMotionStyle}
+                  style={liquidGraphicStyle}
                 >
             <defs>
               {/* one template path drives the body fills and the clip together */}
