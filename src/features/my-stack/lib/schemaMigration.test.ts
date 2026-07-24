@@ -119,7 +119,7 @@ describe('my stack migration contract', () => {
     expect(rollbackPosition).toBeLessThan(cleanupPosition)
   })
 
-  it('documents the compatible backup evidence without claiming linked cutover success', () => {
+  it('documents the compatible backup and completed linked cutover evidence', () => {
     const manifest = readFileSync(
       resolve('docs/superpowers/checklists/my-stack-backup-manifest.md'),
       'utf8',
@@ -132,7 +132,14 @@ describe('my stack migration contract', () => {
     expect(manifest).toContain(
       '98167808b5cd236e94fc18d6c692bd4d6faa1ba517d8e8c326ced86a80837c4c',
     )
-    expect(manifest).not.toContain('linked cutover: passed')
+    expect(manifest).toContain('linked cutover: passed with explicit user approval')
+    expect(manifest).toContain(
+      'pre/post linked row counts: matched (`stack_items`: 14; `stack_item_ingredients`: 14)',
+    )
+    expect(manifest).toContain('linked foreign-key orphan check: zero')
+    expect(manifest).toContain(
+      'linked qa records removed: yes (`qa_items`: 0; `qa_ingredients`: 0)',
+    )
   })
 
   it('reserves needs_review for migrated legacy rows', () => {

@@ -22,4 +22,11 @@
 - Storage objects: 8 `batch-files`; `progress-photos` empty
 - Native local restore: passed
 - Local My Stack migration and verifier: passed before linked cutover
-- Linked cutover: not executed; fresh user approval required
+- Linked cutover: passed with explicit user approval
+- Pre/post linked row counts: matched (`stack_items`: 14; `stack_item_ingredients`: 14)
+- Linked foreign-key orphan check: zero across stack ingredients, vials, dose logs, cycles, effects, reviews, and injection logs
+- Linked RLS/RPC verification: passed
+- Existing Vial visual regression: passed on desktop and mobile
+- Wizard smoke coverage: passed for catalog, custom, compound, edit, duplicate handling, and archive/restore; compound persistence and rendering are covered by automated tests without an additional linked QA write
+- Local color migration: passed for the signed-in user's RLS-visible rows (7/7 deterministic colors persisted); the authorized Task 0 source export was `{}` with SHA-256 `CA3D163BAB055381827226140568F3BEF7EAAC187CEBD76878E0B63E9E442356`
+- Linked QA records removed: yes (`qa_items`: 0; `qa_ingredients`: 0)
