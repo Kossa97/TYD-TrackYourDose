@@ -24,7 +24,7 @@ import { StackItemWizard } from './components/StackItemWizard'
 import { StackStage } from './components/StackStage'
 import { StackItemDetails } from './components/StackItemDetails'
 import { StackArchive } from './components/StackArchive'
-import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, restoreStackItem, saveStackItem, saveVialTracking, type LoadedStackItem } from './services/stackItems'
+import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, restoreStackItem, saveStackItem, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { StackItem, StackItemDraft, SubstanceCatalogEntry } from './types'
 import { isStageRenderable } from './lib/dosageForms'
@@ -660,6 +660,9 @@ export function MyStackPage() {
     activePeptideIds,
   )
   const stagePeptides = displayPeptides.filter(p => isStageRenderable(p.dosage_form))
+  const listPeptides = viewMode === 'list'
+    ? displayPeptides
+    : displayPeptides.filter(p => !isStageRenderable(p.dosage_form))
 
   const setViewMode = (mode: 'vials' | 'list') => {
     setViewModeState(mode)
@@ -2122,15 +2125,16 @@ export function MyStackPage() {
           )}
 
           {/* ── Peptid-Liste ────────────────────────────────────────────── */}
-          <div className={`space-y-3 ${!loading && viewMode === 'list' ? '' : 'hidden'}`}>
+          <div className={`space-y-3 ${!loading && listPeptides.length > 0 ? '' : 'hidden'}`}>
             {/* Share the page slosh engine so list vials get the ambient living
                 surface ripple. No impulses are pushed here, so the liquid never
                 tilts/sloshes — only the surface breathes at rest. */}
             <SloshProvider engine={sloshEngine}>
-            {displayPeptides.map(p => {
+            {listPeptides.map(p => {
               const pCycles   = cyclesOf(p.id)
               const isOpen    = expandedId === p.id
               const hasActive = pCycles.some(c => c.active)
+              const stageRenderable = isStageRenderable(p.dosage_form)
               const vialPct = getVialFillPct(p)
               const peptideColor = p.color_hex ?? getStableStackItemColor(p.id)
               const invItem = p.inventory_item_id ? inventory.find(i => i.id === p.inventory_item_id) : null
@@ -2139,22 +2143,24 @@ export function MyStackPage() {
                 <div key={p.id} className="card bg-slate-950">
                   {/* Kopfzeile */}
                   <div className="flex items-start gap-3">
-                    <div className="flex w-16 shrink-0 flex-col items-center gap-0.5">
-                      <StackStage
-                        key={animationEpoch}
-                        item={{ ...p, color_hex: peptideColor }}
-                        fillPct={vialPct ?? 100}
-                        animateOnMount={true}
-                        isActive={false}
-                        size="mini"
-                        showLabel={false}
-                      />
-                      {vialPct !== null && (
-                        <span className="text-[10px] font-bold tabular-nums leading-none text-slate-500">
-                          {Math.round(vialPct)}%
-                        </span>
-                      )}
-                    </div>
+                    {stageRenderable && (
+                      <div className="flex w-16 shrink-0 flex-col items-center gap-0.5">
+                        <StackStage
+                          key={animationEpoch}
+                          item={{ ...p, color_hex: peptideColor }}
+                          fillPct={vialPct ?? 100}
+                          animateOnMount={true}
+                          isActive={false}
+                          size="mini"
+                          showLabel={false}
+                        />
+                        {vialPct !== null && (
+                          <span className="text-[10px] font-bold tabular-nums leading-none text-slate-500">
+                            {Math.round(vialPct)}%
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div className="flex-1 flex items-start justify-between gap-2 min-w-0">
                       <div
                         role="button"
@@ -2168,8 +2174,25 @@ export function MyStackPage() {
                           {hasActive && <span className="badge bg-emerald-500/10 text-emerald-400">{t('aktiv_badge')}</span>}
                         </div>
                         <div className="flex flex-wrap gap-x-3 text-slate-400 text-xs mt-1">
-                          <span>{t(METHOD_KEYS[p.default_method] ?? p.default_method)}</span>
-                          {p.vial_amount_mg && <span>Vial: {p.vial_amount_mg} {p.vial_amount_unit ?? 'mg'}</span>}
+                          {stageRenderable ? (
+                            <>
+                              <span>{t(METHOD_KEYS[p.default_method] ?? p.default_method)}</span>
+                              {p.vial_amount_mg && <span>Vial: {p.vial_amount_mg} {p.vial_amount_unit ?? 'mg'}</span>}
+                            </>
+                          ) : (
+                            <>
+                              <span>{t(`dosage_form_${p.dosage_form}`)}</span>
+                              {p.ingredients.map(ingredient => {
+                                const loadedIngredient = ingredient as LoadedStackItemIngredient
+                                const ingredientName = ingredient.custom_name || loadedIngredient.substance_catalog?.canonical_name || p.name
+                                return (
+                                  <span key={ingredient.id ?? ingredient.position}>
+                                    {ingredientName}: {ingredient.amount_value ?? '-'} {ingredient.amount_unit ?? ''} / {ingredient.basis_value ?? '-'} {ingredient.basis_unit ?? ''}
+                                  </span>
+                                )
+                              })}
+                            </>
+                          )}
                         </div>
 
 
@@ -2218,6 +2241,7 @@ export function MyStackPage() {
                           {infoBtnNew && <NewDot className="absolute -top-0.5 -right-0.5" />}
                         </button>
                         <button className="p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
+                          aria-label={t('bearbeiten')}
                           onClick={() => openEditPeptide(p)}><Pencil size={15} /></button>
                         {p.inventory_item_id && (
                           <button
@@ -2229,6 +2253,7 @@ export function MyStackPage() {
                           </button>
                         )}
                         <button className="p-1.5 text-slate-400 hover:text-red-400 transition-colors"
+                          aria-label={t('loeschen')}
                           onClick={() => removePeptide(p.id)}><Trash2 size={15} /></button>
                       </div>
                     </div>

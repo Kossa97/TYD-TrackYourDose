@@ -563,7 +563,9 @@ describe('My Stack modular integration', () => {
     const text = source()
     expect(text).toContain('const stagePeptides = displayPeptides.filter(p => isStageRenderable(p.dosage_form))')
     expect(text).toContain('stagePeptides.map((p, index) =>')
-    expect(text).toContain('displayPeptides.map(p =>')
+    expect(text).toContain("const listPeptides = viewMode === 'list'")
+    expect(text).toContain('listPeptides.map(p =>')
+    expect(text).toContain('const stageRenderable = isStageRenderable(p.dosage_form)')
   })
 
   test('preserves the vial-specific tracking editor alongside the generic wizard', () => {
