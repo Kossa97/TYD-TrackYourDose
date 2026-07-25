@@ -16,7 +16,7 @@ describe('My Stack tracking depth schema', () => {
   it('allows unknown planned and logged quantities without inventing zero', () => {
     expect(migration).toContain('alter column dose drop not null')
     expect(migration).toContain('alter column unit drop not null')
-    expect(migration).not.toMatch(/coalesce\\([^)]*dose[^)]*,\\s*0\\)/i)
+    expect(migration).not.toMatch(/coalesce\([^)]*dose[^)]*,\s*0\)/i)
   })
 
   it('keeps fresh installs and incremental installs aligned', () => {
