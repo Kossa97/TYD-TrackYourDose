@@ -92,6 +92,9 @@ alter table public.stack_items
     check (color_hex is null or color_hex ~ '^#[0-9A-Fa-f]{6}$'),
   add column configuration_status text not null default 'complete'
     check (configuration_status in ('complete', 'needs_review')),
+  add column tracking_level text not null default 'complete'
+    check (tracking_level in ('intake_only', 'with_amount', 'complete')),
+  add column pk_profile_method text,
   add column updated_at timestamptz not null default now();
 
 update public.stack_items
@@ -123,6 +126,11 @@ set
 update public.stack_items
 set configuration_status = 'needs_review'
 where vial_amount_mg is null;
+
+update public.stack_items
+set pk_profile_method = nullif(btrim(default_method), '')
+where pk_profile_id is not null
+  and pk_profile_method is null;
 
 create table public.stack_item_ingredients (
   id uuid primary key default gen_random_uuid(),
@@ -221,6 +229,14 @@ alter table public.dose_logs
 alter table public.cycles rename column peptide_id to stack_item_id;
 alter table public.cycles
   rename constraint cycles_peptide_id_fkey to cycles_stack_item_id_fkey;
+
+alter table public.cycles
+  alter column dose drop not null,
+  alter column unit drop not null;
+
+alter table public.dose_logs
+  alter column dose drop not null,
+  alter column unit drop not null;
 
 alter table public.effects rename column peptide_id to stack_item_id;
 alter table public.effects
