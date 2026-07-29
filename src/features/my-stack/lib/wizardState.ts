@@ -72,6 +72,7 @@ function draftFromStackItem(existing: StackItem): StackItemDraft {
   return {
     id: existing.id,
     displayName: existing.display_name,
+    trackingLevel: existing.tracking_level,
     category: existing.category,
     dosageForm: existing.dosage_form,
     brand: existing.brand ?? '',
@@ -88,6 +89,7 @@ export function initialWizardState(existing?: StackItem, initialColorHex = ''): 
       ? draftFromStackItem(existing)
       : {
           displayName: '',
+          trackingLevel: 'complete',
           category: null,
           dosageForm: null,
           brand: '',

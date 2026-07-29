@@ -1,5 +1,8 @@
 export type StackCategory = 'peptide' | 'medication' | 'hormone' | 'supplement' | 'vitamin'
 export type ConfigurationStatus = 'complete' | 'needs_review'
+export type TrackingLevel = 'intake_only' | 'with_amount' | 'complete'
+export type RoutineGroup = 'morning' | 'midday' | 'evening'
+
 export type DosageFormKey =
   | 'vial' | 'ampoule' | 'pen' | 'tablet' | 'capsule' | 'drops' | 'liquid'
   | 'powder' | 'nasal_spray' | 'spray' | 'gel' | 'patch' | 'tube' | 'other'
@@ -41,6 +44,8 @@ export interface StackItem {
   notes: string | null
   configuration_status: ConfigurationStatus
   archived: boolean
+  tracking_level: TrackingLevel
+  pk_profile_method: string | null
   archived_at: string | null
   created_at: string
   updated_at: string
@@ -51,9 +56,42 @@ export interface StackItemDraft {
   id?: string
   displayName: string
   category: StackCategory | null
+  trackingLevel: TrackingLevel
   dosageForm: DosageFormKey | null
   brand: string
   colorHex: string
   notes: string
   ingredients: StackItemIngredient[]
+}
+
+export interface IntakePlanDraft {
+  id?: string
+  name: string
+  dose: number | null
+  unit: string | null
+  method: string
+  frequency: string
+  xDaysInterval: number | null
+  scheduleDays: string[]
+  startDate: string
+  endDate: string | null
+  routineGroup: RoutineGroup
+  time: string | null
+  reminders: string[]
+}
+
+export interface InventoryDraft {
+  enabled: boolean
+  packageQuantity: number | null
+  packageUnit: string | null
+  remainingQuantity: number | null
+  brand: string
+  batchNumber: string
+  expiresAt: string | null
+}
+
+export interface StackItemSetupDraft extends StackItemDraft {
+  plan: IntakePlanDraft
+  inventory: InventoryDraft
+  pkProfileMethod: string | null
 }

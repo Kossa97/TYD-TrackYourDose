@@ -168,6 +168,7 @@ function stackItemAsDraft(item: StackItem): StackItemDraft {
   return {
     id: item.id,
     displayName: item.display_name,
+    trackingLevel: item.tracking_level,
     category: item.category,
     dosageForm: item.dosage_form,
     brand: item.brand ?? '',

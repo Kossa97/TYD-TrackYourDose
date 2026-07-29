@@ -19,6 +19,8 @@ const vialItem: StackItem = {
   color_hex: '#06b6d4',
   notes: null,
   configuration_status: 'complete',
+  tracking_level: 'complete',
+  pk_profile_method: null,
   archived: false,
   archived_at: null,
   created_at: '2026-07-21T00:00:00.000Z',

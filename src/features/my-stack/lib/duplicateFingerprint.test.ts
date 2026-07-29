@@ -23,6 +23,7 @@ function ingredient(
 function draft(dosageForm: DosageFormKey, ingredients: StackItemIngredient[]): StackItemDraft {
   return {
     displayName: 'Produktname',
+    trackingLevel: 'complete',
     category: 'vitamin',
     dosageForm,
     brand: '',

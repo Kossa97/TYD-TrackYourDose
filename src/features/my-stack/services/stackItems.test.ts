@@ -34,6 +34,7 @@ const ingredient: StackItemIngredient = {
 const validDraft: StackItemDraft = {
   displayName: 'Vitamin D3',
   category: 'vitamin',
+  trackingLevel: 'complete',
   dosageForm: 'capsule',
   brand: '',
   colorHex: '#abcdef',
@@ -51,6 +52,8 @@ const savedItem: SavedStackItemRow = {
   color_hex: '#abcdef',
   notes: null,
   configuration_status: 'complete',
+  tracking_level: 'complete',
+  pk_profile_method: null,
   archived: false,
   archived_at: null,
   created_at: '2026-07-21T00:00:00.000Z',
