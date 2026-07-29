@@ -11,8 +11,8 @@ export interface ScheduleSegment {
   schedule_days: string[] | null
   intake_time: string | null
   intake_time_custom: string | null
-  dose: number
-  unit: string
+  dose: number | null
+  unit: string | null
 }
 
 export interface ScheduleCycle {
@@ -25,8 +25,8 @@ export interface ScheduleCycle {
   schedule_days: string[] | null
   intake_time: string | null
   intake_time_custom: string | null
-  dose: number
-  unit: string
+  dose: number | null
+  unit: string | null
   schedule_history: ScheduleSegment[] | null
 }
 
@@ -70,15 +70,20 @@ export function scheduleForDay(cycle: ScheduleCycle, day: Date): ScheduleSegment
 }
 
 // Effective dose for a cycle on a given day: segment base dose + active dose adjustments.
-export function effectiveDose(cycle: ScheduleCycle, day: Date, escalations: EscalationRow[]): number {
+export function effectiveDose(cycle: ScheduleCycle, day: Date, escalations: EscalationRow[]): number | null {
+  const baseDose = scheduleForDay(cycle, day).dose
+  if (baseDose == null) return null
+
   const daysFromStart = differenceInDays(day, parseISO(cycle.start_date))
-  let total = scheduleForDay(cycle, day).dose
-  for (const esc of escalations.filter(e => e.cycle_id === cycle.id)) {
-    if (esc.start_type === 'date' && esc.start_date) {
-      if (day >= parseISO(esc.start_date)) total += esc.increase_amount
-    } else if (esc.start_after_days != null) {
-      if (daysFromStart >= esc.start_after_days) total += esc.increase_amount
-    }
+  let total = baseDose
+  for (const escalation of escalations.filter(row => row.cycle_id === cycle.id)) {
+    const activeByDate = escalation.start_type === 'date'
+      && escalation.start_date != null
+      && day >= parseISO(escalation.start_date)
+    const activeByOffset = escalation.start_type !== 'date'
+      && escalation.start_after_days != null
+      && daysFromStart >= escalation.start_after_days
+    if (activeByDate || activeByOffset) total += escalation.increase_amount
   }
   return total
 }

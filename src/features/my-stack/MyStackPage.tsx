@@ -1065,7 +1065,7 @@ export function MyStackPage() {
       ? (e.start_type === 'after_weeks' ? e.start_after_days / 7 : e.start_after_days).toString()
       : '2'
     setEForm({
-      increase_amount: escalationTargetDose(c, e).toString(), unit: e.unit,
+      increase_amount: escalationTargetDose(c, e)?.toString() ?? '', unit: e.unit,
       start_type: e.start_type,
       start_date: e.start_date ?? format(new Date(), 'yyyy-MM-dd'),
       start_after_days: startAfterValue,
@@ -1128,6 +1128,10 @@ export function MyStackPage() {
       notes: eForm.notes || null,
     }
     const baseDoseAtStart = doseBeforeAdjustment(escForCycle, draftEsc)
+    if (baseDoseAtStart == null) {
+      setSavingEsc(false)
+      return toast.error(t('erhoeht_erforderlich'))
+    }
     const payload = {
       user_id: user!.id, cycle_id: escForCycle.id,
       increase_amount: targetDose - baseDoseAtStart,
@@ -1242,6 +1246,7 @@ export function MyStackPage() {
   const doseAdjustmentIcon = (c: Cycle, e: Escalation) => {
     const target = escalationTargetDose(c, e)
     const previous = doseBeforeAdjustment(c, e)
+    if (target == null || previous == null) return Minus
     return target > previous ? TrendingUp : target < previous ? TrendingDown : Minus
   }
   const reminderLabel = (c: Cycle) => {

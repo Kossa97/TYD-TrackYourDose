@@ -6,6 +6,7 @@ import {
   collectOpenIntakes,
   cycleAppliesToDay,
   effectiveDose,
+  scheduleForDay,
   type EscalationRow,
   type IntakeLog,
   type ScheduleCycle,
@@ -277,13 +278,16 @@ export function buildSelectableInjectionIntakes({
     const openDoseLog = openDoseLogBySlot.get(slotKey)
     const day = startOfDay(parseISO(open.dateKey))
     const scheduledAt = new Date(day.getTime() + open.minutes * 60000)
+    const dose = openDoseLog?.dose != null ? Number(openDoseLog.dose) : cycle ? effectiveDose(cycle, day, escalations) : null
+    const unit = openDoseLog?.unit ?? (cycle ? scheduleForDay(cycle, day).unit : null)
+    if (dose == null || unit == null) return []
     return [{
       cycleId: open.cycleId,
       stackItemId: open.stackItemId,
       stackItemName: stackItemName(cycle),
       cycleName: cycleName(cycle),
-      dose: openDoseLog ? Number(openDoseLog.dose) : cycle ? effectiveDose(cycle, day, escalations) : 0,
-      unit: openDoseLog?.unit ?? cycle?.unit ?? '',
+      dose,
+      unit,
       method: openDoseLog?.method ?? cycle?.method ?? 'Subkutan',
       scheduledAt: openDoseLog?.logged_at ?? scheduledAt.toISOString(),
       daysOverdue: Math.max(0, differenceInCalendarDays(startOfDay(now), day)),

@@ -107,3 +107,51 @@ describe('buildDoseAdjustmentBackfillUpdates', () => {
     ])
   })
 })
+
+describe('buildDoseAdjustmentBackfillUpdates with unknown quantity', () => {
+  it('does not write an update when the effective quantity is unknown', () => {
+    const updates = buildDoseAdjustmentBackfillUpdates({
+      ...cycle,
+      dose: null,
+      unit: null,
+    }, [adjustment], [log('unknown-quantity', '2026-06-10T08:00:00.000Z', false)])
+
+    expect(updates).toEqual([])
+  })
+
+  it('does not write an update when the active segment unit is unknown', () => {
+    const updates = buildDoseAdjustmentBackfillUpdates({
+      ...cycle,
+      schedule_history: [{
+        effective_from: '2026-06-01',
+        frequency: 'Taeglich',
+        x_days_interval: null,
+        schedule_days: null,
+        intake_time: 'morgens',
+        intake_time_custom: null,
+        dose: 200,
+        unit: null,
+      }],
+    }, [adjustment], [log('unknown-unit', '2026-06-10T08:00:00.000Z', false)])
+
+    expect(updates).toEqual([])
+  })
+
+  it('does not write an update when the active segment unit is blank', () => {
+    const updates = buildDoseAdjustmentBackfillUpdates({
+      ...cycle,
+      schedule_history: [{
+        effective_from: '2026-06-01',
+        frequency: 'Taeglich',
+        x_days_interval: null,
+        schedule_days: null,
+        intake_time: 'morgens',
+        intake_time_custom: null,
+        dose: 200,
+        unit: ' ',
+      }],
+    }, [adjustment], [log('blank-unit', '2026-06-10T08:00:00.000Z', false)])
+
+    expect(updates).toEqual([])
+  })
+})

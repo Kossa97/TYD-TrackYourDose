@@ -1,5 +1,5 @@
 import { addDays, format, parseISO } from 'date-fns'
-import { effectiveDose, type EscalationRow, type ScheduleCycle } from './intakeSchedule'
+import { effectiveDose, scheduleForDay, type EscalationRow, type ScheduleCycle } from './intakeSchedule'
 
 export interface DoseAdjustmentBackfillLog {
   id: string
@@ -11,7 +11,7 @@ export interface DoseAdjustmentBackfillLog {
 export interface DoseAdjustmentBackfillUpdate {
   id: string
   dose: number
-  unit: string
+  unit: string | null
 }
 
 function adjustmentStartDay(cycle: ScheduleCycle, adjustment: EscalationRow): string | null {
@@ -51,10 +51,15 @@ export function buildDoseAdjustmentBackfillUpdates(
     if (cycle.end_date && dayKey > cycle.end_date) return []
     if (dayKey < fromDay) return []
 
+    const day = parseISO(dayKey)
+    const dose = effectiveDose(cycle, day, adjustments)
+    const unit = scheduleForDay(cycle, day).unit
+    if (dose == null || !unit?.trim()) return []
+
     return [{
       id: log.id,
-      dose: effectiveDose(cycle, parseISO(dayKey), adjustments),
-      unit: cycle.unit,
+      dose,
+      unit,
     }]
   })
 }

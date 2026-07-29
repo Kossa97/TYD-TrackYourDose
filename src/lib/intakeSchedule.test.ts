@@ -207,3 +207,28 @@ describe('collectOpenIntakes', () => {
     ])
   })
 })
+
+describe('effectiveDose with unknown quantity', () => {
+  it('returns null when the active segment does not track quantity', () => {
+    expect(effectiveDose({
+      ...cycle,
+      dose: null,
+      unit: null,
+      schedule_history: null,
+    }, new Date('2026-07-25'), [])).toBeNull()
+  })
+
+  it('does not apply escalations to an unknown base dose', () => {
+    expect(effectiveDose({
+      ...cycle,
+      dose: null,
+      unit: null,
+    }, new Date('2026-07-25'), [{
+      cycle_id: cycle.id,
+      increase_amount: 5,
+      start_type: 'date',
+      start_date: '2026-07-20',
+      start_after_days: null,
+    }])).toBeNull()
+  })
+})

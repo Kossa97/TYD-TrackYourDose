@@ -659,18 +659,19 @@ export function Dashboard() {
 
   const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string) => {
     if (!user) return
+    const segment = scheduleForDay(cycle, selectedDay)
     const dose = effectiveDose(cycle, selectedDay, escalations)
     const { error } = await supabase.from('dose_logs').insert({
       user_id: user.id,
       stack_item_id: cycle.stack_item_id,
       dose,
-      unit: cycle.unit,
+      unit: segment.unit,
       method: cycle.method,
       logged_at: loggedAt ?? cycleLogTimestamp(cycle, selectedDay),
       taken,
     })
     if (error) return toast.error(t('fehler_speichern'))
-    if (taken) await adjustVialStockForDose(cycle.stack_item_id, dose, cycle.unit, 'debit')
+    if (taken && dose != null && segment.unit != null) await adjustVialStockForDose(cycle.stack_item_id, dose, segment.unit, 'debit')
     loadLogs(); loadStackItems()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
@@ -909,7 +910,7 @@ export function Dashboard() {
                 {(() => { const Ic = slotMeta.icon; return <Ic size={12} /> })()}
                 {slot.time || slotMeta.label}
               </span>
-              {isEscalated && (
+              {isEscalated && dose != null && baseDose != null && (
                 <span className="text-slate-600 text-xs">
                   {t('basis_label')} {baseDose} {c.unit} · +{dose - baseDose} {c.unit}
                 </span>

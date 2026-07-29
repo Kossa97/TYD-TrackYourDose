@@ -220,8 +220,8 @@ interface TodayIntake {
   min: number           // Minuten seit Mitternacht (Sortierung)
   substance: string | null
   dose: string | null
-  doseNumber: number
-  unit: string
+  doseNumber: number | null
+  unit: string | null
   stackItemId: string
   cycleId: string
   method: string | null
@@ -372,7 +372,7 @@ export function Home() {
               user_id: user!.id,
               stack_item_id: c.stack_item_id,
               dose: effectiveDose(c, parseISO(m.dateKey), escalations),
-              unit: c.unit ?? '',
+              unit: scheduleForDay(c, parseISO(m.dateKey)).unit,
               method: c.method ?? '',
               logged_at: at.toISOString(),
               taken: false,
@@ -468,7 +468,7 @@ export function Home() {
   const confirmHomeIntake = async (intake: TodayIntake, taken: boolean, timeValue?: string) => {
     if (!user) return
     try {
-      if (taken) {
+      if (taken && intake.doseNumber != null && intake.unit != null) {
         await confirmIntakeDoseLog(supabase, {
           userId: user.id,
           stackItemId: intake.stackItemId,
