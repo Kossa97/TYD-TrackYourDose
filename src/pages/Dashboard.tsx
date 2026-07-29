@@ -18,6 +18,7 @@ import { getStackItemColor } from '../features/my-stack/lib/colors'
 import { getDateLocale } from '../i18n/dateLocales'
 import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, type ScheduleSegment } from '../lib/intakeSchedule'
 import { computeNextVialStock } from '../features/my-stack/extensions/peptide/vialStock'
+import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/quantityPresentation'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { GlassPanel, PageShell } from '../components/ui/DesignSystem'
 import { CarouselCounter, CarouselPagination } from '../components/CarouselChrome'
@@ -25,8 +26,8 @@ import { CarouselCounter, CarouselPagination } from '../components/CarouselChrom
 interface DoseLog {
   id: string
   stack_item_id: string
-  dose: number
-  unit: string
+  dose: number | null
+  unit: string | null
   method: string
   logged_at: string
   notes: string | null
@@ -632,7 +633,7 @@ export function Dashboard() {
     if (!confirm(t('eintrag_loeschen'))) return
     const { error } = await supabase.from('dose_logs').delete().eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (log.taken === true) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
+    if (log.taken === true && hasTrackedQuantity(log)) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
     toast.success(t('deleted')); loadLogs(); loadStackItems()
   }
 
@@ -642,8 +643,8 @@ export function Dashboard() {
     if (taken && loggedAt) update.logged_at = loggedAt
     const { error } = await supabase.from('dose_logs').update(update).eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (previousTaken !== true && taken === true) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'debit')
-    if (previousTaken === true && taken !== true) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
+    if (previousTaken !== true && taken === true && hasTrackedQuantity(log)) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'debit')
+    if (previousTaken === true && taken !== true && hasTrackedQuantity(log)) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
     loadLogs(); loadStackItems()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
@@ -652,7 +653,7 @@ export function Dashboard() {
   const undoDose = async (log: DoseLog) => {
     const { error } = await supabase.from('dose_logs').update({ taken: null }).eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (log.taken === true) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
+    if (log.taken === true && hasTrackedQuantity(log)) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
     loadLogs(); loadStackItems()
     toast.success(t('dose_undo_success', { defaultValue: 'Einnahme zurückgesetzt' }))
   }
@@ -660,18 +661,21 @@ export function Dashboard() {
   const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string) => {
     if (!user) return
     const segment = scheduleForDay(cycle, selectedDay)
-    const dose = effectiveDose(cycle, selectedDay, escalations)
+    const quantity = {
+      dose: effectiveDose(cycle, selectedDay, escalations),
+      unit: segment.unit,
+    }
     const { error } = await supabase.from('dose_logs').insert({
       user_id: user.id,
       stack_item_id: cycle.stack_item_id,
-      dose,
-      unit: segment.unit,
+      dose: quantity.dose,
+      unit: quantity.unit,
       method: cycle.method,
       logged_at: loggedAt ?? cycleLogTimestamp(cycle, selectedDay),
       taken,
     })
     if (error) return toast.error(t('fehler_speichern'))
-    if (taken && dose != null && segment.unit != null) await adjustVialStockForDose(cycle.stack_item_id, dose, segment.unit, 'debit')
+    if (taken && hasTrackedQuantity(quantity)) await adjustVialStockForDose(cycle.stack_item_id, quantity.dose, quantity.unit, 'debit')
     loadLogs(); loadStackItems()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
@@ -864,9 +868,12 @@ export function Dashboard() {
 
   const renderDueSlotCard = (slot: DueSlot) => {
     const c = slot.cycle
+    const segment = scheduleForDay(c, selectedDay)
     const dose = effectiveDose(c, selectedDay, escalations)
-    const baseDose = scheduleForDay(c, selectedDay).dose
-    const isEscalated = dose !== baseDose
+    const baseDose = segment.dose
+    const unit = segment.unit
+    const isEscalated = dose != null && baseDose != null && dose !== baseDose
+    const doseLabel = formatTrackedQuantity(dose, unit, 'Menge nicht getrackt')
     const pendingLog = slot.pendingLog
     const cycleEscs = escalations.filter(e => e.cycle_id === c.id)
     const activeEscCount = cycleEscs.filter(e => {
@@ -896,7 +903,7 @@ export function Dashboard() {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-medium text-white">{c.stack_items?.display_name}</span>
               <span className={`text-xs font-semibold ${isEscalated ? 'text-orange-400' : 'text-slate-300'}`}>
-                {dose} {c.unit}
+                {doseLabel}
               </span>
               {isEscalated && (
                 <span className="flex items-center gap-0.5 text-orange-400 text-xs">
@@ -910,9 +917,9 @@ export function Dashboard() {
                 {(() => { const Ic = slotMeta.icon; return <Ic size={12} /> })()}
                 {slot.time || slotMeta.label}
               </span>
-              {isEscalated && dose != null && baseDose != null && (
+              {isEscalated && unit?.trim() && (
                 <span className="text-slate-600 text-xs">
-                  {t('basis_label')} {baseDose} {c.unit} · +{dose - baseDose} {c.unit}
+                  {t('basis_label')} {baseDose} {unit} · +{dose - baseDose} {unit}
                 </span>
               )}
             </div>
@@ -986,7 +993,7 @@ export function Dashboard() {
             <span className={`text-xs font-semibold ${
               log.taken === true ? 'text-emerald-400' :
               log.taken === false ? 'text-red-400' : 'text-sky-400'
-            }`}>{log.dose} {log.unit}</span>
+            }`}>{formatTrackedQuantity(log.dose, log.unit, 'Menge nicht getrackt')}</span>
             <span className="text-slate-500 text-xs">{log.method}</span>
             {log.taken === true && (
               <span className="flex items-center gap-0.5 text-emerald-400 text-xs font-medium">

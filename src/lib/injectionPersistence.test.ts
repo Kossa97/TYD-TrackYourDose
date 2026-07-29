@@ -388,6 +388,58 @@ describe('buildSelectableInjectionIntakes', () => {
     ]))
   })
 
+  it.each([
+    ['null dose', null, 'mcg'],
+    ['blank dose', '' as unknown as number, 'mcg'],
+    ['null unit', 100, null],
+    ['blank unit', 100, ' '],
+  ])('does not replace an existing open log with %s from the schedule', (_case, dose, unit) => {
+    const result = buildSelectableInjectionIntakes({
+      cycles: [cycle],
+      logs: [{
+        id: 'reset-unknown',
+        stack_item_id: 'stack-item-1',
+        dose,
+        unit,
+        method: 'Subkutan',
+        logged_at: '2026-06-23T18:00:00.000Z',
+        taken: null,
+      }],
+      linkedDoseLogIds: new Set(),
+      escalations: [],
+      now: new Date('2026-06-24T21:00:00.000Z'),
+      lookbackDays: 2,
+    })
+
+    expect(result.some(item => item.doseLogId === 'reset-unknown')).toBe(false)
+  })
+
+  it.each([
+    ['null dose', null, 'mcg'],
+    ['blank dose', '' as unknown as number, 'mcg'],
+    ['null unit', 100, null],
+    ['blank unit', 100, ' '],
+  ])('excludes a confirmed log with %s instead of coercing it into a candidate', (_case, dose, unit) => {
+    const result = buildSelectableInjectionIntakes({
+      cycles: [cycle],
+      logs: [{
+        id: 'confirmed-unknown',
+        stack_item_id: 'stack-item-1',
+        dose,
+        unit,
+        method: 'Subkutan',
+        logged_at: '2026-06-23T18:00:00.000Z',
+        taken: true,
+      }],
+      linkedDoseLogIds: new Set(),
+      escalations: [],
+      now: new Date('2026-06-24T21:00:00.000Z'),
+      lookbackDays: 2,
+    })
+
+    expect(result.some(item => item.doseLogId === 'confirmed-unknown')).toBe(false)
+  })
+
   it('does not show reset dose logs with an existing injection pin as selectable again', () => {
     const result = buildSelectableInjectionIntakes({
       cycles: [cycle],

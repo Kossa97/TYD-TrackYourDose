@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatTrackedQuantity } from './quantityPresentation'
+import { formatTrackedQuantity, hasTrackedQuantity } from './quantityPresentation'
 
 describe('formatTrackedQuantity', () => {
   it('returns the supplied fallback when quantity is unknown', () => {
@@ -23,5 +23,17 @@ describe('formatTrackedQuantity', () => {
   it('keeps up to three decimal places without trailing zeroes', () => {
     expect(formatTrackedQuantity(1.2, 'mg', 'Menge nicht getrackt')).toBe('1.2 mg')
     expect(formatTrackedQuantity(1.23456, 'mg', 'Menge nicht getrackt')).toBe('1.235 mg')
+  })
+})
+
+describe('hasTrackedQuantity', () => {
+  it.each([
+    [{ dose: null, unit: 'mcg' }, false],
+    [{ dose: 100, unit: null }, false],
+    [{ dose: 100, unit: '' }, false],
+    [{ dose: 100, unit: ' ' }, false],
+    [{ dose: 0, unit: 'mcg' }, true],
+  ])('identifies whether a quantity can be used for stock tracking', (quantity, expected) => {
+    expect(hasTrackedQuantity(quantity)).toBe(expected)
   })
 })

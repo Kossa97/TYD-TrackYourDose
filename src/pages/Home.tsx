@@ -15,12 +15,13 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
-import { collectMissedIntakes, cycleAppliesToDay, scheduleForDay, effectiveDose, AUTO_MISSED_NOTE, type EscalationRow } from '../lib/intakeSchedule'
+import { collectMissedIntakes, cycleAppliesToDay, scheduleForDay, effectiveDose, AUTO_MISSED_NOTE, type EscalationRow, type ScheduleCycle } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
 import { InjectionTrackerHero, type InjectionHeroPin } from '../components/injection3d/InjectionTrackerHero'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { confirmIntakeDoseLog } from '../lib/injectionPersistence'
+import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/quantityPresentation'
 import toast from 'react-hot-toast'
 import { format, parseISO, startOfDay } from 'date-fns'
 import { getDateLocale } from '../i18n/dateLocales'
@@ -215,6 +216,57 @@ const labelStyle: CSSProperties = {
   color: 'var(--text-muted)',
 }
 
+interface HomeDoseLogPayloadInput {
+  userId: string
+  stackItemId: string
+  doseNumber: number | null
+  unit: string | null
+  method: string | null
+  scheduledAt: string
+  taken: boolean
+  timeValue?: string
+}
+
+function buildHomeLoggedAt(scheduledAt: string, timeValue?: string): string {
+  if (!timeValue) return scheduledAt
+  const [hours, minutes] = timeValue.split(':').map(Number)
+  const loggedAt = new Date(scheduledAt)
+  if (Number.isFinite(hours) && Number.isFinite(minutes)) loggedAt.setHours(hours, minutes, 0, 0)
+  return loggedAt.toISOString()
+}
+
+export function resolveHomeIntakeQuantity(
+  cycle: ScheduleCycle,
+  day: Date,
+  escalations: EscalationRow[],
+): { doseNumber: number | null; unit: string | null; dose: string | null } {
+  const quantity = {
+    dose: effectiveDose(cycle, day, escalations),
+    unit: scheduleForDay(cycle, day).unit,
+  }
+  return {
+    doseNumber: quantity.dose,
+    unit: quantity.unit,
+    dose: hasTrackedQuantity(quantity)
+      ? formatTrackedQuantity(quantity.dose, quantity.unit, '')
+      : null,
+  }
+}
+
+export function buildHomeDoseLogPayload(input: HomeDoseLogPayloadInput) {
+  const quantity = { dose: input.doseNumber, unit: input.unit }
+  const tracked = hasTrackedQuantity(quantity)
+  return {
+    user_id: input.userId,
+    stack_item_id: input.stackItemId,
+    dose: tracked ? quantity.dose : null,
+    unit: tracked ? quantity.unit : null,
+    method: input.method ?? '',
+    logged_at: buildHomeLoggedAt(input.scheduledAt, input.timeValue),
+    taken: input.taken,
+  }
+}
+
 interface TodayIntake {
   time: string          // 'HH:MM'
   min: number           // Minuten seit Mitternacht (Sortierung)
@@ -311,18 +363,14 @@ export function Home() {
           (stackItemData ?? []).map((item) => [item.id as string, item.display_name as string])
         )
         const now = new Date()
-        const todaySlots: { min: number; time: string; substance: string | null; dose: string | null; doseNumber: number; unit: string; stackItemId: string; cycleId: string; method: string | null; scheduledAt: string }[] = []
+        const todaySlots: TodayIntake[] = []
         for (const c of cycleData ?? []) {
           // Nur Zyklen, die HEUTE gelten (Frequenz/Start/Ende), wie im Kalender.
           if (!cycleAppliesToDay(c, now)) continue
           const seg = scheduleForDay(c, now)   // segment-/historienaufgelöste Slots
           const slots   = (seg.intake_time ?? '').split(',').filter(Boolean)
           const customs = (seg.intake_time_custom ?? '').split(',')
-          const doseNumber = Number(effectiveDose(c, now, escalations))
-          const unit = c.unit ?? ''
-          const doseLabel = c.dose != null
-            ? `${doseNumber} ${unit}`.trim()
-            : null
+          const { doseNumber, unit, dose: doseLabel } = resolveHomeIntakeQuantity(c, now, escalations)
           slots.forEach((slot: string, i: number) => {
             const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
             if (!tm) return
@@ -433,13 +481,6 @@ export function Home() {
 
   const defaultHomeConfirmTime = (intake: TodayIntake) => format(new Date(intake.scheduledAt), 'HH:mm')
 
-  const buildHomeLoggedAt = (intake: TodayIntake, timeValue: string) => {
-    const [hours, minutes] = timeValue.split(':').map(Number)
-    const loggedAt = new Date(intake.scheduledAt)
-    if (Number.isFinite(hours) && Number.isFinite(minutes)) loggedAt.setHours(hours, minutes, 0, 0)
-    return loggedAt.toISOString()
-  }
-
   const closeHomeIntakeSheets = () => {
     setSelectedHomeIntake(null)
     setHomeConfirmStep('choice')
@@ -468,25 +509,27 @@ export function Home() {
   const confirmHomeIntake = async (intake: TodayIntake, taken: boolean, timeValue?: string) => {
     if (!user) return
     try {
-      if (taken && intake.doseNumber != null && intake.unit != null) {
+      const quantity = { dose: intake.doseNumber, unit: intake.unit }
+      if (taken && hasTrackedQuantity(quantity)) {
         await confirmIntakeDoseLog(supabase, {
           userId: user.id,
           stackItemId: intake.stackItemId,
-          dose: intake.doseNumber,
-          unit: intake.unit,
+          dose: quantity.dose,
+          unit: quantity.unit,
           method: intake.method ?? '',
-          loggedAt: timeValue ? buildHomeLoggedAt(intake, timeValue) : intake.scheduledAt,
+          loggedAt: buildHomeLoggedAt(intake.scheduledAt, timeValue),
         })
       } else {
-        const { error } = await supabase.from('dose_logs').insert({
-          user_id: user.id,
-          stack_item_id: intake.stackItemId,
-          dose: intake.doseNumber,
+        const { error } = await supabase.from('dose_logs').insert(buildHomeDoseLogPayload({
+          userId: user.id,
+          stackItemId: intake.stackItemId,
+          doseNumber: intake.doseNumber,
           unit: intake.unit,
-          method: intake.method ?? '',
-          logged_at: intake.scheduledAt,
-          taken: false,
-        })
+          method: intake.method,
+          scheduledAt: intake.scheduledAt,
+          taken,
+          timeValue,
+        }))
         if (error) throw error
       }
       closeHomeIntakeSheets()

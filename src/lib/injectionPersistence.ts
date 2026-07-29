@@ -199,8 +199,8 @@ export interface OpenInjectionIntake {
 
 interface InjectionDoseLog extends IntakeLog {
   id: string
-  dose: number
-  unit: string
+  dose: number | null
+  unit: string | null
   method: string
   notes?: string | null
   stack_items?: { display_name?: string; default_method?: string } | Array<{ display_name?: string; default_method?: string }> | null
@@ -220,6 +220,12 @@ function stackItemName(cycle: InjectionCycleRow | undefined): string {
 
 function cycleName(cycle: InjectionCycleRow | undefined): string {
   return cycle?.name ?? ''
+}
+
+function injectionDoseValue(value: number | null): number | null {
+  if (value == null || !String(value).trim()) return null
+  const dose = Number(value)
+  return Number.isFinite(dose) ? dose : null
 }
 
 function isAutoMissedDoseLog(log: InjectionDoseLog): boolean {
@@ -278,9 +284,13 @@ export function buildSelectableInjectionIntakes({
     const openDoseLog = openDoseLogBySlot.get(slotKey)
     const day = startOfDay(parseISO(open.dateKey))
     const scheduledAt = new Date(day.getTime() + open.minutes * 60000)
-    const dose = openDoseLog?.dose != null ? Number(openDoseLog.dose) : cycle ? effectiveDose(cycle, day, escalations) : null
-    const unit = openDoseLog?.unit ?? (cycle ? scheduleForDay(cycle, day).unit : null)
-    if (dose == null || unit == null) return []
+    const dose = openDoseLog
+      ? injectionDoseValue(openDoseLog.dose)
+      : cycle ? effectiveDose(cycle, day, escalations) : null
+    const unit = openDoseLog
+      ? openDoseLog.unit
+      : cycle ? scheduleForDay(cycle, day).unit : null
+    if (dose == null || !unit?.trim()) return []
     return [{
       cycleId: open.cycleId,
       stackItemId: open.stackItemId,
@@ -310,12 +320,15 @@ export function buildSelectableInjectionIntakes({
       : cycle?.method || logStackItem?.default_method || ''
     if (!INJECTABLE_METHODS.includes(resolvedMethod)) return []
 
+    const dose = injectionDoseValue(log.dose)
+    if (dose == null || !log.unit?.trim()) return []
+
     return [{
       cycleId: cycle?.id ?? null,
       stackItemId: log.stack_item_id,
       stackItemName: logStackItem?.display_name ?? stackItemName(cycle),
       cycleName: cycleName(cycle),
-      dose: Number(log.dose),
+      dose,
       unit: log.unit,
       method: resolvedMethod,
       scheduledAt: log.logged_at,
