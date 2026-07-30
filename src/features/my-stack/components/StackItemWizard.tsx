@@ -18,20 +18,22 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 import { findDuplicate } from '../services/stackItems'
-import type { StackItem, StackItemDraft, SubstanceCatalogEntry } from '../types'
+import type { StackItem, StackItemSetupDraft, SubstanceCatalogEntry } from '../types'
 import {
-  RENDERED_WIZARD_STEPS,
   didIdentityChange,
   firstInvalidField,
   initialWizardState,
   wizardReducer,
+  wizardSteps,
   type WizardSaveMode,
   type WizardStep,
 } from '../lib/wizardState'
-import { validateStackItemDraft } from '../lib/validation'
+import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
 import { DosageFormPicker } from './DosageFormPicker'
 import { IngredientEditor } from './IngredientEditor'
+import { IntakePlanEditor } from './IntakePlanEditor'
 import { StrengthEditor } from './StrengthEditor'
+import { TrackingLevelPicker } from './TrackingLevelPicker'
 import { SubstanceSearch } from './SubstanceSearch'
 
 export interface StackItemWizardProps {
@@ -41,7 +43,7 @@ export interface StackItemWizardProps {
   initialColorHex?: string
   catalogUnavailable?: boolean
   onClose: () => void
-  onSave: (draft: StackItemDraft, mode: WizardSaveMode) => Promise<void>
+  onSave: (draft: StackItemSetupDraft, mode: WizardSaveMode) => Promise<void>
   onOpenExisting: (item: StackItem) => void
 }
 
@@ -54,18 +56,21 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',')
 
-const STEP_LABEL_KEYS: Record<Exclude<WizardStep, 'tracking'>, string> = {
-  substance: 'my_stack_step_substance',
-  ingredients: 'my_stack_step_ingredients',
-  dosage_form: 'my_stack_step_dosage_form',
-  strength: 'my_stack_step_strength',
-  details: 'my_stack_step_details',
-  review: 'my_stack_step_review',
+const STEP_LABELS: Record<WizardStep, { key: string; defaultValue: string }> = {
+  substance: { key: 'my_stack_step_substance', defaultValue: 'Substanz' },
+  ingredients: { key: 'my_stack_step_ingredients', defaultValue: 'Inhaltsstoffe' },
+  dosage_form: { key: 'my_stack_step_dosage_form', defaultValue: 'Darreichungsform' },
+  tracking_level: { key: 'my_stack_step_tracking_level', defaultValue: 'Tracking-Tiefe' },
+  strength: { key: 'my_stack_step_strength', defaultValue: 'Stärke' },
+  details: { key: 'my_stack_step_details', defaultValue: 'Details' },
+  plan: { key: 'my_stack_step_plan', defaultValue: 'Einnahmeplan' },
+  review: { key: 'my_stack_step_review', defaultValue: 'Zusammenfassung' },
 }
 
 function stepForInvalidField(field: string): WizardStep {
   if (field === 'displayName' || field === 'category') return 'substance'
   if (field === 'dosageForm') return 'dosage_form'
+  if (field.startsWith('plan.')) return 'plan'
   if (field.endsWith('.name')) return 'ingredients'
   return 'strength'
 }
@@ -92,8 +97,12 @@ export function StackItemWizard({
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const duplicateActionRef = useRef<HTMLButtonElement>(null)
 
-  const currentStepIndex = RENDERED_WIZARD_STEPS.indexOf(state.step)
+  const steps = wizardSteps(state)
+  const currentStepIndex = steps.indexOf(state.step)
   const validationErrors = showErrors ? validateStackItemDraft(state.draft) : {}
+  const planValidationErrors = showErrors
+    ? validateIntakePlan(state.draft.plan, state.draft.trackingLevel)
+    : {}
   const catalogNames = useMemo(() => Object.fromEntries(
     catalogEntries.map(entry => [entry.id, entry.canonical_name]),
   ), [catalogEntries])
@@ -106,6 +115,10 @@ export function StackItemWizard({
       || entry.aliases.some(alias => alias.toLocaleLowerCase().includes(normalizedQuery))
     ))
   }, [catalogEntries, state.draft.displayName])
+  const selectedCatalogEntry = useMemo(() => {
+    const catalogId = state.draft.ingredients[0]?.catalog_substance_id
+    return catalogId ? catalogEntries.find(entry => entry.id === catalogId) : undefined
+  }, [catalogEntries, state.draft.ingredients])
   const identityChanged = Boolean(state.original && didIdentityChange(state.original, state.draft))
 
   useEffect(() => {
@@ -174,13 +187,13 @@ export function StackItemWizard({
       return
     }
 
-    const nextStep = RENDERED_WIZARD_STEPS[currentStepIndex + 1]
+    const nextStep = steps[currentStepIndex + 1]
     if (nextStep) selectStep(nextStep)
   }
 
   function handleBack(): void {
     if (saving) return
-    const previousStep = RENDERED_WIZARD_STEPS[currentStepIndex - 1]
+    const previousStep = steps[currentStepIndex - 1]
     if (previousStep) selectStep(previousStep)
     else onClose()
   }
@@ -284,6 +297,18 @@ export function StackItemWizard({
             onSelect={dosageForm => dispatch({ type: 'dosage_form_selected', dosageForm })}
           />
         )
+      case 'tracking_level':
+        return (
+          <TrackingLevelPicker
+            value={state.draft.trackingLevel}
+            substanceName={state.draft.displayName}
+            pkProfileAvailable={Boolean(selectedCatalogEntry?.pk_profile_id)}
+            onChange={trackingLevel => {
+              dispatch({ type: 'tracking_level_selected', trackingLevel })
+              setShowErrors(false)
+            }}
+          />
+        )
       case 'strength':
         return state.draft.dosageForm ? (
           <div className="space-y-4">
@@ -342,6 +367,17 @@ export function StackItemWizard({
             </div>
           </div>
         )
+      case 'plan':
+        return state.draft.dosageForm ? (
+          <IntakePlanEditor
+            trackingLevel={state.draft.trackingLevel}
+            plan={state.draft.plan}
+            dosageForm={state.draft.dosageForm}
+            catalogEntry={selectedCatalogEntry}
+            errors={planValidationErrors}
+            onChange={changes => dispatch({ type: 'plan_changed', changes })}
+          />
+        ) : null
       case 'review':
         return (
           <div className="space-y-5">
@@ -390,10 +426,74 @@ export function StackItemWizard({
                   <dd className="font-medium text-slate-200">{state.draft.category && t(`stack_category_${state.draft.category}`)}</dd>
                 </div>
                 <div className="flex flex-wrap justify-between gap-2">
+                  <dt className="text-slate-400">{t('my_stack_tracking_level', { defaultValue: 'Tracking-Tiefe' })}</dt>
+                  <dd className="font-medium text-slate-200">
+                    {state.draft.trackingLevel === 'intake_only'
+                      ? t('my_stack_tracking_intake_only_title', { defaultValue: 'Nur Einnahme' })
+                      : state.draft.trackingLevel === 'with_amount'
+                        ? t('my_stack_tracking_with_amount_title', { defaultValue: 'Mit Menge' })
+                        : t('my_stack_tracking_complete_title', { defaultValue: 'Vollständig' })}
+                  </dd>
+                </div>
+                <div className="flex flex-wrap justify-between gap-2">
+                  <dt className="text-slate-400">{t('my_stack_daily_behavior', { defaultValue: 'Im Alltag' })}</dt>
+                  <dd className="text-right font-medium text-slate-200">
+                    {state.draft.trackingLevel === 'intake_only'
+                      ? t('my_stack_daily_intake_only', { defaultValue: 'Einnahme abhaken' })
+                      : state.draft.trackingLevel === 'with_amount'
+                        ? t('my_stack_daily_with_amount', { defaultValue: 'Einnahme und Menge festhalten' })
+                        : t('my_stack_daily_complete', { defaultValue: 'Einnahme und Menge mit Produktkontext festhalten' })}
+                  </dd>
+                </div>
+                <div className="flex flex-wrap justify-between gap-2">
                   <dt className="text-slate-400">{t('my_stack_dosage_form', { defaultValue: 'Darreichungsform' })}</dt>
                   <dd className="font-medium text-slate-200">{state.draft.dosageForm && t(`dosage_form_${state.draft.dosageForm}`)}</dd>
                 </div>
-                {state.draft.ingredients.map((ingredient, index) => (
+                <div className="flex flex-wrap justify-between gap-2">
+                  <dt className="text-slate-400">{t('my_stack_plan_frequency', { defaultValue: 'Frequenz' })}</dt>
+                  <dd className="font-medium text-slate-200">{state.draft.plan.frequency}</dd>
+                </div>
+                <div className="flex flex-wrap justify-between gap-2">
+                  <dt className="text-slate-400">{t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}</dt>
+                  <dd className="font-medium text-slate-200">
+                    {state.draft.plan.routineGroup === 'morning'
+                      ? t('my_stack_routine_morning', { defaultValue: 'Morgens' })
+                      : state.draft.plan.routineGroup === 'midday'
+                        ? t('my_stack_routine_midday', { defaultValue: 'Mittags' })
+                        : t('my_stack_routine_evening', { defaultValue: 'Abends' })}
+                  </dd>
+                </div>
+                <div className="flex flex-wrap justify-between gap-2">
+                  <dt className="text-slate-400">{t('my_stack_plan_exact_time', { defaultValue: 'Genaue Uhrzeit' })}</dt>
+                  <dd className="font-medium text-slate-200">
+                    {state.draft.plan.time || t('my_stack_no_exact_time', { defaultValue: 'Nicht festgelegt' })}
+                  </dd>
+                </div>
+                <div className="flex flex-wrap justify-between gap-2">
+                  <dt className="text-slate-400">{t('my_stack_plan_quantity_summary', { defaultValue: 'Menge' })}</dt>
+                  <dd className="font-medium text-slate-200">
+                    {state.draft.trackingLevel === 'intake_only'
+                      ? t('my_stack_quantity_not_tracked', { defaultValue: 'Menge wird nicht getrackt' })
+                      : `${state.draft.plan.dose} ${state.draft.plan.unit}`}
+                  </dd>
+                </div>
+                {state.draft.trackingLevel === 'complete' && (
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <dt className="text-slate-400">{t('my_stack_pk_status', { defaultValue: 'PK-Status' })}</dt>
+                    <dd className="text-right font-medium text-slate-200">
+                      {selectedCatalogEntry?.pk_profile_id
+                        ? t('my_stack_pk_available', { defaultValue: 'PK-Profil verfügbar; Kurve abhängig von vollständigen Angaben' })
+                        : t('my_stack_pk_unavailable', { defaultValue: 'Kein PK-Profil hinterlegt' })}
+                    </dd>
+                  </div>
+                )}
+                {state.draft.brand.trim() && (
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <dt className="text-slate-400">{t('my_stack_brand', { defaultValue: 'Marke' })}</dt>
+                    <dd className="break-words font-medium text-slate-200">{state.draft.brand}</dd>
+                  </div>
+                )}
+                {state.draft.trackingLevel === 'complete' && state.draft.ingredients.map((ingredient, index) => (
                   <div key={ingredient.position} className="border-t border-white/10 pt-3">
                     <dt className="text-slate-400">
                       {ingredient.catalog_substance_id
@@ -455,8 +555,6 @@ export function StackItemWizard({
             )}
           </div>
         )
-      case 'tracking':
-        return null
     }
   }
 
@@ -483,7 +581,7 @@ export function StackItemWizard({
                   : t('my_stack_add_item', { defaultValue: 'Substanz hinzufügen' })}
               </h2>
               <p id="stack-item-wizard-description" className="mt-1 text-sm leading-relaxed text-slate-400">
-                {t(STEP_LABEL_KEYS[state.step as Exclude<WizardStep, 'tracking'>])}
+                {t(STEP_LABELS[state.step].key, { defaultValue: STEP_LABELS[state.step].defaultValue })}
               </p>
             </div>
             <button
@@ -497,8 +595,8 @@ export function StackItemWizard({
             </button>
           </div>
 
-          <div className="mt-4 flex items-center gap-2" role="progressbar" aria-valuemin={1} aria-valuemax={RENDERED_WIZARD_STEPS.length} aria-valuenow={currentStepIndex + 1}>
-            {RENDERED_WIZARD_STEPS.map((step, index) => (
+          <div className="mt-4 flex items-center gap-2" role="progressbar" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={currentStepIndex + 1}>
+            {steps.map((step, index) => (
               <span
                 key={step}
                 className={`h-1.5 flex-1 rounded-full ${index <= currentStepIndex ? 'bg-sky-400' : 'bg-white/10'}`}
@@ -551,7 +649,7 @@ export function StackItemWizard({
               disabled={saving}
               className="flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 font-bold text-slate-950 transition-colors duration-200 hover:bg-sky-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
             >
-              {currentStepIndex === RENDERED_WIZARD_STEPS.length - 2 ? <Check aria-hidden="true" size={18} /> : <ArrowRight aria-hidden="true" size={18} />}
+              {currentStepIndex === steps.length - 2 ? <Check aria-hidden="true" size={18} /> : <ArrowRight aria-hidden="true" size={18} />}
               {t('continue', { defaultValue: 'Weiter' })}
             </button>
           )}

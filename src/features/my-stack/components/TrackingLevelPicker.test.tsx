@@ -1,0 +1,92 @@
+// @vitest-environment jsdom
+
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { TrackingLevel } from '../types'
+import { TrackingLevelPicker } from './TrackingLevelPicker'
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: { defaultValue?: string; substanceName?: string }) => (
+      options?.defaultValue?.replace('{{substanceName}}', options.substanceName ?? '') ?? key
+    ),
+  }),
+}))
+
+afterEach(cleanup)
+
+describe('TrackingLevelPicker', () => {
+  it('explains the full consequence and next step on every semantic radio card', () => {
+    render(
+      <TrackingLevelPicker
+        value="intake_only"
+        substanceName="Vitamin D3"
+        pkProfileAvailable={false}
+        onChange={() => undefined}
+      />,
+    )
+
+    const cards = screen.getAllByRole('radio')
+    expect(cards).toHaveLength(3)
+    expect((cards[0] as HTMLInputElement).checked).toBe(true)
+
+    for (const radio of cards) {
+      const card = radio.closest('label')!
+      expect(within(card).getByText(/^Erfasst:/)).toBeTruthy()
+      expect(within(card).getByText(/^Nicht erforderlich:/)).toBeTruthy()
+      expect(within(card).getByText(/^Beispiel:/)).toBeTruthy()
+      expect(within(card).getByText(/^Als Nächstes:/)).toBeTruthy()
+      expect(within(card).getByText(/später jederzeit ändern/i)).toBeTruthy()
+    }
+  })
+
+  it('reports PK availability from the selected catalog entry without promising a curve', () => {
+    const { rerender } = render(
+      <TrackingLevelPicker
+        value="complete"
+        substanceName="Vitamin D3"
+        pkProfileAvailable={false}
+        onChange={() => undefined}
+      />,
+    )
+
+    expect(screen.getByText(/Für Vitamin D3 ist derzeit kein PK-Profil hinterlegt/)).toBeTruthy()
+    expect(screen.queryByText(/garantiert.*Kurve/i)).toBeNull()
+
+    rerender(
+      <TrackingLevelPicker
+        value="complete"
+        substanceName="Vitamin D3"
+        pkProfileAvailable
+        onChange={() => undefined}
+      />,
+    )
+
+    expect(screen.getByText(/Für Vitamin D3 ist ein PK-Profil verfügbar/)).toBeTruthy()
+    expect(screen.getByText(/Eine Kurve erscheint nur, wenn die nötigen Angaben vorliegen/)).toBeTruthy()
+  })
+
+  it('changes selection through the radio control', () => {
+    let selected: TrackingLevel = 'intake_only'
+    const { rerender } = render(
+      <TrackingLevelPicker
+        value={selected}
+        substanceName="Vitamin D3"
+        pkProfileAvailable={false}
+        onChange={value => { selected = value }}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('radio', { name: /^Mit Menge/ }))
+    rerender(
+      <TrackingLevelPicker
+        value={selected}
+        substanceName="Vitamin D3"
+        pkProfileAvailable={false}
+        onChange={value => { selected = value }}
+      />,
+    )
+
+    expect((screen.getByRole('radio', { name: /^Mit Menge/ }) as HTMLInputElement).checked).toBe(true)
+  })
+})

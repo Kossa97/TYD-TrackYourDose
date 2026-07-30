@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { StackItem, SubstanceCatalogEntry } from '../types'
 import {
-  RENDERED_WIZARD_STEPS,
   canContinue,
   didIdentityChange,
   firstInvalidField,
   initialWizardState,
+  wizardSteps,
   wizardReducer,
 } from './wizardState'
 
@@ -50,9 +50,42 @@ const existingVitaminD: StackItem = {
 }
 
 describe('wizard state', () => {
-  it('enthält tracking nur als nicht gerenderten Erweiterungspunkt', () => {
-    expect(RENDERED_WIZARD_STEPS).toEqual([
-      'substance', 'ingredients', 'dosage_form', 'strength', 'details', 'review',
+  it.each([
+    ['intake_only', ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']],
+    ['with_amount', ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']],
+    ['complete', ['substance', 'ingredients', 'dosage_form', 'tracking_level', 'strength', 'details', 'plan', 'review']],
+  ] as const)('builds the %s path', (trackingLevel, expected) => {
+    const initial = initialWizardState()
+    const state = { ...initial, draft: { ...initial.draft, trackingLevel } }
+
+    expect(wizardSteps(state)).toEqual(expected)
+  })
+
+  it('keeps complete-only details when a lower tracking level hides their steps', () => {
+    const initial = initialWizardState(existingVitaminD)
+    const completeDraft = {
+      ...initial.draft,
+      inventory: {
+        ...initial.draft.inventory,
+        enabled: true,
+        packageQuantity: 60,
+        packageUnit: 'capsule',
+        remainingQuantity: 42,
+      },
+      pkProfileMethod: 'oral',
+    }
+    const next = wizardReducer(
+      { ...initial, draft: completeDraft },
+      { type: 'tracking_level_selected', trackingLevel: 'intake_only' },
+    )
+
+    expect(next.draft.trackingLevel).toBe('intake_only')
+    expect(next.draft.ingredients).toEqual(completeDraft.ingredients)
+    expect(next.draft.brand).toBe('Example Brand')
+    expect(next.draft.inventory).toEqual(completeDraft.inventory)
+    expect(next.draft.pkProfileMethod).toBe('oral')
+    expect(wizardSteps(next)).toEqual([
+      'substance', 'dosage_form', 'tracking_level', 'plan', 'review',
     ])
   })
   it('übernimmt die bisherige Zufallsfarbe nur für neue Einträge', () => {
@@ -196,6 +229,30 @@ describe('wizard state', () => {
       colorHex: '#abcdef',
       notes: 'With breakfast',
       ingredients: existingVitaminD.ingredients,
+      plan: {
+        name: 'Vitamin D3',
+        dose: null,
+        unit: null,
+        method: '',
+        frequency: 'Täglich',
+        xDaysInterval: null,
+        scheduleDays: [],
+        startDate: '',
+        endDate: null,
+        routineGroup: 'morning',
+        time: null,
+        reminders: [],
+      },
+      inventory: {
+        enabled: false,
+        packageQuantity: null,
+        packageUnit: null,
+        remainingQuantity: null,
+        brand: '',
+        batchNumber: '',
+        expiresAt: null,
+      },
+      pkProfileMethod: null,
     })
     expect(editState.draft.ingredients).not.toBe(existingVitaminD.ingredients)
     expect(editState.draft.ingredients[0]).not.toBe(existingVitaminD.ingredients[0])
@@ -251,6 +308,39 @@ describe('wizard state', () => {
     expect(firstInvalidField(strengthStep)).toBe('ingredients.0.amountValue')
     expect(canContinue(complete)).toBe(true)
     expect(firstInvalidField(complete)).toBeNull()
+  })
+
+  it('validates the rendered plan according to tracking depth', () => {
+    const initial = initialWizardState()
+    const base = {
+      ...initial,
+      step: 'plan' as const,
+      draft: {
+        ...initial.draft,
+        displayName: 'Vitamin D3',
+        category: 'vitamin' as const,
+        dosageForm: 'capsule' as const,
+        plan: { ...initial.draft.plan, name: 'Vitamin D3' },
+        ingredients: [{
+          catalog_substance_id: 'vitamin-d3',
+          custom_name: '',
+          amount_value: null,
+          amount_unit: 'IU',
+          basis_value: null,
+          basis_unit: 'capsule',
+          position: 0,
+        }],
+      },
+    }
+
+    expect(firstInvalidField({
+      ...base,
+      draft: { ...base.draft, trackingLevel: 'intake_only' },
+    })).toBeNull()
+    expect(firstInvalidField({
+      ...base,
+      draft: { ...base.draft, trackingLevel: 'with_amount' },
+    })).toBe('plan.dose')
   })
 })
 

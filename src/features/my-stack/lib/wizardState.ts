@@ -1,14 +1,18 @@
 import type {
   DosageFormKey,
+  IntakePlanDraft,
+  InventoryDraft,
   StackCategory,
   StackItem,
   StackItemDraft,
   StackItemIngredient,
+  StackItemSetupDraft,
   SubstanceCatalogEntry,
+  TrackingLevel,
 } from '../types'
 import { buildDuplicateFingerprint } from './duplicateFingerprint'
 import { getDosageForm } from './dosageForms'
-import { validateStackItemDraft } from './validation'
+import { validateIntakePlan, validateStackItemDraft } from './validation'
 
 export type WizardStep =
   | 'substance'
@@ -16,25 +20,34 @@ export type WizardStep =
   | 'dosage_form'
   | 'strength'
   | 'details'
-  | 'tracking'
+  | 'tracking_level'
+  | 'plan'
   | 'review'
-
-export const RENDERED_WIZARD_STEPS: readonly WizardStep[] = [
-  'substance',
-  'ingredients',
-  'dosage_form',
-  'strength',
-  'details',
-  'review',
-] as const
 
 export type WizardSaveMode = 'create' | 'update' | 'duplicate'
 
 export interface WizardState {
   step: WizardStep
-  draft: StackItemDraft
+  draft: StackItemSetupDraft
   original: StackItem | null
   saveMode: WizardSaveMode
+}
+
+export function wizardSteps(state: WizardState): WizardStep[] {
+  if (state.draft.trackingLevel === 'complete') {
+    return [
+      'substance',
+      'ingredients',
+      'dosage_form',
+      'tracking_level',
+      'strength',
+      'details',
+      'plan',
+      'review',
+    ]
+  }
+
+  return ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']
 }
 
 type IngredientChanges = Partial<Omit<StackItemIngredient, 'position'>>
@@ -49,7 +62,9 @@ export type WizardAction =
   | { type: 'ingredient_changed'; index: number; changes: IngredientChanges }
   | { type: 'ingredient_removed'; index: number }
   | { type: 'dosage_form_selected'; dosageForm: DosageFormKey }
+  | { type: 'tracking_level_selected'; trackingLevel: TrackingLevel }
   | { type: 'details_changed'; changes: Partial<Pick<StackItemDraft, 'brand' | 'colorHex' | 'notes'>> }
+  | { type: 'plan_changed'; changes: Partial<IntakePlanDraft> }
   | { type: 'save_mode_selected'; mode: Extract<WizardSaveMode, 'update' | 'duplicate'> }
 
 function emptyIngredient(position: number): StackItemIngredient {
@@ -68,7 +83,36 @@ function suggestedBasisUnit(dosageForm: DosageFormKey | null): string | null {
   return dosageForm ? getDosageForm(dosageForm).basisUnits[0] ?? null : null
 }
 
-function draftFromStackItem(existing: StackItem): StackItemDraft {
+function emptyPlan(name: string): IntakePlanDraft {
+  return {
+    name,
+    dose: null,
+    unit: null,
+    method: '',
+    frequency: 'Täglich',
+    xDaysInterval: null,
+    scheduleDays: [],
+    startDate: '',
+    endDate: null,
+    routineGroup: 'morning',
+    time: null,
+    reminders: [],
+  }
+}
+
+function emptyInventory(): InventoryDraft {
+  return {
+    enabled: false,
+    packageQuantity: null,
+    packageUnit: null,
+    remainingQuantity: null,
+    brand: '',
+    batchNumber: '',
+    expiresAt: null,
+  }
+}
+
+function draftFromStackItem(existing: StackItem): StackItemSetupDraft {
   return {
     id: existing.id,
     displayName: existing.display_name,
@@ -79,6 +123,9 @@ function draftFromStackItem(existing: StackItem): StackItemDraft {
     colorHex: existing.color_hex ?? '',
     notes: existing.notes ?? '',
     ingredients: existing.ingredients.map(ingredient => ({ ...ingredient })),
+    plan: emptyPlan(existing.display_name),
+    inventory: emptyInventory(),
+    pkProfileMethod: existing.pk_profile_method,
   }
 }
 
@@ -96,6 +143,9 @@ export function initialWizardState(existing?: StackItem, initialColorHex = ''): 
           colorHex: initialColorHex,
           notes: '',
           ingredients: [],
+          plan: emptyPlan(''),
+          inventory: emptyInventory(),
+          pkProfileMethod: null,
         },
     original: existing ?? null,
     saveMode: existing ? 'update' : 'create',
@@ -113,6 +163,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
           ...state.draft,
           displayName: action.entry.canonical_name,
           category: action.entry.default_category,
+          plan: { ...state.draft.plan, name: action.entry.canonical_name },
           ingredients: [{
             ...emptyIngredient(0),
             catalog_substance_id: action.entry.id,
@@ -144,12 +195,20 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
           ...state.draft,
           displayName: action.name,
           category: wasCatalogSelection ? null : state.draft.category,
+          plan: { ...state.draft.plan, name: action.name },
           ingredients,
         },
       }
     }
     case 'display_name_changed':
-      return { ...state, draft: { ...state.draft, displayName: action.displayName } }
+      return {
+        ...state,
+        draft: {
+          ...state.draft,
+          displayName: action.displayName,
+          plan: { ...state.draft.plan, name: action.displayName },
+        },
+      }
     case 'category_selected':
       return { ...state, draft: { ...state.draft, category: action.category } }
     case 'ingredient_added':
@@ -200,8 +259,15 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         },
       }
     }
+    case 'tracking_level_selected':
+      return { ...state, draft: { ...state.draft, trackingLevel: action.trackingLevel } }
     case 'details_changed':
       return { ...state, draft: { ...state.draft, ...action.changes } }
+    case 'plan_changed':
+      return {
+        ...state,
+        draft: { ...state.draft, plan: { ...state.draft.plan, ...action.changes } },
+      }
     case 'save_mode_selected':
       return { ...state, saveMode: action.mode }
   }
@@ -243,7 +309,20 @@ export function firstInvalidField(state: WizardState): string | null {
   }
 
   if (state.step === 'strength' || state.step === 'review') {
-    return firstIngredientError(state, ['name', 'amountValue', 'amountUnit', 'basisValue', 'basisUnit'])
+    const strengthError = firstIngredientError(
+      state,
+      ['name', 'amountValue', 'amountUnit', 'basisValue', 'basisUnit'],
+    )
+    if (strengthError) return strengthError
+  }
+
+  if (state.step === 'plan' || state.step === 'review') {
+    const planErrors = validateIntakePlan(state.draft.plan, state.draft.trackingLevel)
+    if (planErrors.name) return 'displayName'
+    if (planErrors.frequency) return 'plan.frequency'
+    if (planErrors.routineGroup) return 'plan.routineGroup'
+    if (planErrors.dose) return 'plan.dose'
+    if (planErrors.unit) return 'plan.unit'
   }
 
   return null

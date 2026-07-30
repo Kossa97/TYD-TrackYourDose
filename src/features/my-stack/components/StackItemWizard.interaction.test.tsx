@@ -2,7 +2,7 @@
 
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { StackItem, StackItemDraft, SubstanceCatalogEntry } from '../types'
+import type { StackItem, StackItemSetupDraft, SubstanceCatalogEntry } from '../types'
 import type { WizardSaveMode } from '../lib/wizardState'
 import { StackItemWizard, type StackItemWizardProps } from './StackItemWizard'
 import { SubstanceSearch } from './SubstanceSearch'
@@ -71,7 +71,7 @@ function deferred<T>() {
 function renderWizard(overrides: Partial<StackItemWizardProps> = {}) {
   const onClose = vi.fn()
   const onOpenExisting = vi.fn()
-  const onSave = vi.fn<(draft: StackItemDraft, mode: WizardSaveMode) => Promise<void>>(
+  const onSave = vi.fn<(draft: StackItemSetupDraft, mode: WizardSaveMode) => Promise<void>>(
     async () => undefined,
   )
   const result = render(
@@ -103,10 +103,14 @@ function completeCustomFlow(name = 'Custom Product'): void {
   continueWizard()
   fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
   continueWizard()
+  continueWizard()
   fireEvent.change(screen.getByLabelText('my_stack_strength_value'), { target: { value: '100' } })
   fireEvent.change(screen.getByLabelText('my_stack_strength_unit'), { target: { value: 'mg' } })
   fireEvent.change(screen.getByLabelText('my_stack_basis_value'), { target: { value: '1' } })
   continueWizard()
+  continueWizard()
+  fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
+  fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: 'capsule' } })
   continueWizard()
 }
 
@@ -117,9 +121,13 @@ function completeCatalogFlow(): void {
   continueWizard()
   fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
   continueWizard()
+  continueWizard()
   fireEvent.change(screen.getByLabelText('my_stack_strength_value'), { target: { value: '5000' } })
   fireEvent.change(screen.getByLabelText('my_stack_basis_value'), { target: { value: '1' } })
   continueWizard()
+  continueWizard()
+  fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
+  fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: 'capsule' } })
   continueWizard()
 }
 
@@ -129,6 +137,10 @@ function reachExistingReview(changeForm = false): void {
   if (changeForm) fireEvent.click(screen.getByRole('button', { name: 'dosage_form_drops' }))
   continueWizard()
   continueWizard()
+  continueWizard()
+  continueWizard()
+  fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
+  fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: changeForm ? 'ml' : 'capsule' } })
   continueWizard()
 }
 
@@ -252,12 +264,43 @@ describe('StackItemWizard interactions', () => {
     opener.remove()
   })
 
+  it('follows the lower-depth path and reviews an intake without quantity', () => {
+    renderWizard()
+    startCustom('Simple Product')
+    continueWizard()
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
+    continueWizard()
+    fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_intake_only_title/ }))
+    continueWizard()
+
+    expect(screen.queryByLabelText('my_stack_plan_quantity')).toBeNull()
+    continueWizard()
+
+    expect(screen.getByText('my_stack_tracking_intake_only_title')).toBeTruthy()
+    expect(screen.getByText('my_stack_quantity_not_tracked')).toBeTruthy()
+    expect(screen.getByText('dosage_form_capsule')).toBeTruthy()
+    expect(screen.getByText('Täglich')).toBeTruthy()
+  })
+  it('reviews complete tracking, routine, quantity, PK status, and product details', () => {
+    renderWizard({ existingItem: existingVitaminD })
+    reachExistingReview()
+
+    expect(screen.getByText('my_stack_tracking_complete_title')).toBeTruthy()
+    expect(screen.getByText('Täglich')).toBeTruthy()
+    expect(screen.getByText('my_stack_routine_morning')).toBeTruthy()
+    expect(screen.getByText('my_stack_no_exact_time')).toBeTruthy()
+    expect(screen.getByText('1 capsule')).toBeTruthy()
+    expect(screen.getByText('my_stack_pk_unavailable')).toBeTruthy()
+    expect(screen.getByText('Example Brand')).toBeTruthy()
+  })
   it('emits create, update, and duplicate payload modes', async () => {
     const createRun = renderWizard()
     completeCustomFlow('Create Product')
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
     await waitFor(() => expect(createRun.onSave).toHaveBeenCalledTimes(1))
     expect(createRun.onSave.mock.calls[0][0].displayName).toBe('Create Product')
+    expect(createRun.onSave.mock.calls[0][0].plan).toMatchObject({ dose: 1, unit: 'capsule' })
+    expect(createRun.onSave.mock.calls[0][0].inventory.enabled).toBe(false)
     expect(createRun.onSave.mock.calls[0][1]).toBe('create')
     cleanup()
 
@@ -322,7 +365,7 @@ describe('StackItemWizard interactions', () => {
     expect(onClose).not.toHaveBeenCalled()
     expect(screen.getByRole('heading', { name: 'Multi Word Product' })).toBeTruthy()
 
-    for (let index = 0; index < 4; index += 1) {
+    for (let index = 0; index < 6; index += 1) {
       fireEvent.click(screen.getByRole('button', { name: 'back' }))
     }
     expect((screen.getByLabelText('my_stack_product_name') as HTMLInputElement).value)
