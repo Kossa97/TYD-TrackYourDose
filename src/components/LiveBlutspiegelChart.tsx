@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { format } from 'date-fns'
 import { de as deLocale } from 'date-fns/locale'
 import type { CycleChartData } from '../services/liveBlutspiegelChart'
+import { splitLiveCurveSegments } from './liveCycleChart/chartMath'
 
 const WINDOW_MS = 7 * 24 * 3_600_000     // 7 days
 const DAY_MS    = 24 * 3_600_000
@@ -176,7 +177,9 @@ export function LiveBlutspiegelChart({
       for (const cycle of activeCyclesRef.current) {
         if (cycle.points.length < 2) continue
         const pts = cycle.points.filter(
-          p => p.timestamp >= viewStart - buf && p.timestamp <= viewEnd + buf,
+          p => p.timestamp >= viewStart - buf
+            && p.timestamp <= viewEnd + buf
+            && (cycle.interruptedAt == null || p.timestamp < cycle.interruptedAt),
         )
         if (pts.length < 2) continue
 
@@ -196,16 +199,24 @@ export function LiveBlutspiegelChart({
         ctx.fillStyle = grad
         ctx.fill()
 
-        // Curve stroke
-        ctx.beginPath()
-        ctx.moveTo(tsToX(pts[0].timestamp), lvToY(pts[0].level))
-        for (let i = 1; i < pts.length; i++) {
-          ctx.lineTo(tsToX(pts[i].timestamp), lvToY(pts[i].level))
+        // Curve strokes
+        const segments = splitLiveCurveSegments(
+          pts.map(point => ({ ts: point.timestamp, level: point.level, status: point.status })),
+          cycle.interruptedAt,
+        )
+        for (const segment of segments) {
+          if (segment.points.length < 2) continue
+          ctx.beginPath()
+          ctx.moveTo(tsToX(segment.points[0].ts), lvToY(segment.points[0].level))
+          for (let i = 1; i < segment.points.length; i++) {
+            ctx.lineTo(tsToX(segment.points[i].ts), lvToY(segment.points[i].level))
+          }
+          ctx.strokeStyle = cycle.accent
+          ctx.lineWidth   = 2
+          ctx.setLineDash(segment.kind === 'planned' ? [6, 5] : [])
+          ctx.stroke()
         }
-        ctx.strokeStyle = cycle.accent
-        ctx.lineWidth   = 2
         ctx.setLineDash([])
-        ctx.stroke()
 
         // Dose markers
         for (const m of cycle.doseMarkers) {

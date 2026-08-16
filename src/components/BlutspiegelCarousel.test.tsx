@@ -6,12 +6,32 @@ import { MemoryRouter } from 'react-router-dom'
 import { BlutspiegelCarousel } from './BlutspiegelCarousel'
 import { getCurrentBlutspiegelLevel } from '../services/blutspiegelHistory'
 
+const carouselMocks = vi.hoisted(() => ({
+  escalations: [] as Array<Record<string, unknown>>,
+}))
+
 const cycles = [{
   id: 'cycle-1',
-  dose: 5,
-  unit: 'mg',
+  stack_item_id: 'stack-1',
+  start_date: '2026-08-01',
+  dose: null as number | null,
+  unit: null as string | null,
   method: 'Subkutan',
-  intake_time_custom: '08:00',
+  frequency: 'Täglich',
+  x_days_interval: null,
+  schedule_days: [],
+  intake_time: 'custom',
+  intake_time_custom: null as string | null,
+  schedule_history: [{
+    effective_from: '2026-08-01',
+    frequency: 'Täglich',
+    x_days_interval: null,
+    schedule_days: [],
+    intake_time: 'custom',
+    intake_time_custom: '08:00',
+    dose: 5,
+    unit: 'mg',
+  }],
   active: true,
   end_date: null,
   stack_items: {
@@ -42,10 +62,13 @@ vi.mock('../context/AuthContext', () => {
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
-    from: () => {
+    from: (table: string) => {
       const builder: Record<string, unknown> = {}
       builder.select = () => builder
-      builder.eq = () => Promise.resolve({ data: cycles, error: null })
+      builder.eq = () => Promise.resolve({
+        data: table === 'cycles' ? cycles : carouselMocks.escalations,
+        error: null,
+      })
       return builder
     },
   },
@@ -62,6 +85,11 @@ vi.mock('../services/blutspiegelHistory', async importOriginal => {
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  carouselMocks.escalations = []
+  cycles[0].dose = null
+  cycles[0].unit = null
+  cycles[0].intake_time_custom = null
+  cycles[0].stack_items.tracking_level = 'with_amount'
 })
 
 describe('BlutspiegelCarousel PK readiness', () => {
@@ -75,6 +103,53 @@ describe('BlutspiegelCarousel PK readiness', () => {
     await waitFor(() => expect(screen.getByText(/PK-Daten unvollständig/)).toBeTruthy())
     expect(screen.getByRole('link', { name: /Angaben vervollständigen/ }).getAttribute('href'))
       .toBe('/my-stack?edit=stack-1&intent=pk')
+    expect(getCurrentBlutspiegelLevel).not.toHaveBeenCalled()
+  })
+
+  it('uses the active schedule segment instead of incomplete flat fields', async () => {
+    cycles[0].stack_items.tracking_level = 'complete'
+    vi.mocked(getCurrentBlutspiegelLevel).mockResolvedValue({
+      currentLevel: 50,
+      trend: 'stable',
+      sparkData: Array(20).fill(50),
+      nextDoseIn: '1h',
+      levelAfterNextDose: 75,
+      peakLabel: 'in 1h',
+      unit: 'mg',
+      interruptedAt: null,
+    })
+
+    render(
+      <MemoryRouter>
+        <BlutspiegelCarousel />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText(/Geschätzter Wirkstoff/)).toBeTruthy()
+    expect(screen.queryByText(/PK-Daten unvollständig/)).toBeNull()
+  })
+
+  it('does not calculate when an active escalation unit mismatches the segment', async () => {
+    cycles[0].stack_items.tracking_level = 'complete'
+    cycles[0].dose = 5
+    cycles[0].unit = 'mg'
+    cycles[0].intake_time_custom = '08:00'
+    carouselMocks.escalations = [{
+      cycle_id: 'cycle-1',
+      increase_amount: 500,
+      unit: 'mcg',
+      start_type: 'date',
+      start_date: '2026-08-01',
+      start_after_days: null,
+    }]
+
+    render(
+      <MemoryRouter>
+        <BlutspiegelCarousel />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(screen.getByText(/PK-Daten unvollständig/)).toBeTruthy())
     expect(getCurrentBlutspiegelLevel).not.toHaveBeenCalled()
   })
 })

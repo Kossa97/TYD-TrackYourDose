@@ -30,10 +30,13 @@ import {
 import { useMediaQuery } from '../lib/useMediaQuery'
 import {
   evaluatePkReadiness,
+  resolvePkScheduleForDay,
   type PkReadiness,
   type PkRequirement,
+  type PkScheduleCycle,
 } from '../features/my-stack/lib/pkReadiness'
 import type { TrackingLevel } from '../features/my-stack/types'
+import type { EscalationRow } from '../lib/intakeSchedule'
 
 // ── Typen ─────────────────────────────────────────────────────────────────
 
@@ -58,13 +61,7 @@ interface PkProfileEmbed {
   category: string
 }
 
-interface ProtocolCycle {
-  id: string
-  stack_item_id: string
-  dose: number | null
-  unit: string | null
-  method: string | null
-  intake_time_custom: string | null
+interface ProtocolCycle extends PkScheduleCycle {
   stack_items: {
     id: string
     display_name: string
@@ -91,15 +88,16 @@ function linkedProfile(cycle: ProtocolCycle): { id: string; profile: PkProfileEm
   return null
 }
 
-function readinessForCycle(cycle: ProtocolCycle): PkReadiness {
+function readinessForCycle(cycle: ProtocolCycle, escalations: EscalationRow[]): PkReadiness {
+  const schedule = resolvePkScheduleForDay(cycle, escalations, new Date())
   return evaluatePkReadiness({
     trackingLevel: cycle.stack_items?.tracking_level ?? 'intake_only',
     pkProfileId: linkedProfile(cycle)?.id ?? null,
     pkProfileMethod: cycle.stack_items?.pk_profile_method ?? null,
-    method: cycle.method,
-    dose: cycle.dose,
-    unit: cycle.unit,
-    scheduledAt: cycle.intake_time_custom,
+    method: schedule.method,
+    dose: schedule.dose,
+    unit: schedule.unit,
+    scheduledAt: schedule.scheduledAt,
   })
 }
 
@@ -407,7 +405,7 @@ function LiveCycleCarousel({
   const pointerActive = useRef(false)
 
   const eligible = useMemo(
-    () => cycles.filter(c => readinessForCycle(c).status === 'ready' && linkedProfile(c)),
+    () => cycles.filter(c => linkedProfile(c)),
     [cycles],
   )
 
@@ -833,6 +831,7 @@ export function BlutspiegelSimulation() {
 
   const [pkProfiles, setPkProfiles]       = useState<PkProfile[]>([])
   const [protocolCycles, setProtocolCycles] = useState<ProtocolCycle[]>([])
+  const [protocolEscalations, setProtocolEscalations] = useState<EscalationRow[]>([])
   const [selectedPkId, setSelectedPkId]   = useState('')
   const [dose, setDose]                   = useState('')
   const [unit, setUnit]                   = useState<'mg' | 'mcg' | 'IU'>('mcg')
@@ -869,20 +868,27 @@ export function BlutspiegelSimulation() {
 
   useEffect(() => {
     if (!user) return
-    supabase
-      .from('cycles')
-      .select(`id, stack_item_id, dose, unit, method, intake_time_custom,
-        stack_items ( id, display_name, tracking_level, pk_profile_method,
-          ingredients:stack_item_ingredients ( position,
-            substance_catalog ( pk_profile_id,
-              pk_profiles ( name, half_life_hours, tmax_hours, bioavailability_sc, vd_l_kg, category )
+    void Promise.all([
+      supabase
+        .from('cycles')
+        .select(`id, stack_item_id, start_date, end_date, dose, unit, method,
+          frequency, x_days_interval, schedule_days, intake_time, intake_time_custom, schedule_history,
+          stack_items ( id, display_name, tracking_level, pk_profile_method,
+            ingredients:stack_item_ingredients ( position,
+              substance_catalog ( pk_profile_id,
+                pk_profiles ( name, half_life_hours, tmax_hours, bioavailability_sc, vd_l_kg, category )
+              )
             )
-          )
-        )`)
-      .eq('user_id', user.id)
-      .eq('active', true)
-      .then(({ data }) => {
-        setProtocolCycles((data as unknown as ProtocolCycle[]) ?? [])
+          )`)
+        .eq('user_id', user.id)
+        .eq('active', true),
+      supabase
+        .from('dose_escalations')
+        .select('cycle_id, increase_amount, unit, start_type, start_date, start_after_days')
+        .eq('user_id', user.id),
+    ]).then(([{ data: cycles }, { data: escalations }]) => {
+        setProtocolCycles((cycles as unknown as ProtocolCycle[]) ?? [])
+        setProtocolEscalations((escalations as EscalationRow[]) ?? [])
       })
   }, [user])
 
@@ -892,12 +898,18 @@ export function BlutspiegelSimulation() {
   )
 
   const readyProtocolCycles = useMemo(
-    () => protocolCycles.filter(cycle => readinessForCycle(cycle).status === 'ready'),
-    [protocolCycles],
+    () => protocolCycles.filter(cycle => readinessForCycle(
+      cycle,
+      protocolEscalations.filter(row => row.cycle_id === cycle.id),
+    ).status === 'ready'),
+    [protocolCycles, protocolEscalations],
   )
   const incompleteProtocolCycles = useMemo(
-    () => protocolCycles.filter(cycle => readinessForCycle(cycle).status !== 'ready'),
-    [protocolCycles],
+    () => protocolCycles.filter(cycle => readinessForCycle(
+      cycle,
+      protocolEscalations.filter(row => row.cycle_id === cycle.id),
+    ).status !== 'ready'),
+    [protocolCycles, protocolEscalations],
   )
 
   // ── Live-Übersicht: alle Zyklen mit PK-Profil laden ───────────────────
@@ -909,8 +921,10 @@ export function BlutspiegelSimulation() {
     const results = await Promise.all(
       readyProtocolCycles.map(async c => {
         const pk = linkedProfile(c)!.profile
+        const cycleEscalations = protocolEscalations.filter(row => row.cycle_id === c.id)
         const level = await getCurrentBlutspiegelLevel(
-          c.id,
+          c,
+          cycleEscalations,
           pk.half_life_hours,
           pk.tmax_hours,
           pk.bioavailability_sc,
@@ -921,7 +935,7 @@ export function BlutspiegelSimulation() {
     setLiveData(new Map(results))
     if (isRefresh) setLiveRefreshing(false)
     else setLiveLoading(false)
-  }, [readyProtocolCycles])
+  }, [readyProtocolCycles, protocolEscalations])
 
   // Initial laden sobald Zyklen da sind
   useEffect(() => {
@@ -956,11 +970,18 @@ export function BlutspiegelSimulation() {
     const match = readyProtocolCycles.find(c =>
       profileNames.includes(c.stack_items?.display_name?.toLowerCase() ?? '')
     )
-    if (match?.dose != null && match.unit) {
-      setDose(String(match.dose))
-      setUnit(normalizeUnit(match.unit))
+    if (match) {
+      const schedule = resolvePkScheduleForDay(
+        match,
+        protocolEscalations.filter(row => row.cycle_id === match.id),
+        new Date(),
+      )
+      if (schedule.dose != null && schedule.unit) {
+        setDose(String(schedule.dose))
+        setUnit(normalizeUnit(schedule.unit))
+      }
     }
-  }, [selectedProfile, readyProtocolCycles])
+  }, [selectedProfile, readyProtocolCycles, protocolEscalations])
 
   const startSimulation = useCallback(() => {
     if (!selectedProfile) return
@@ -1020,7 +1041,10 @@ export function BlutspiegelSimulation() {
       </div>
 
       {incompleteProtocolCycles.map(cycle => {
-        const readiness = readinessForCycle(cycle)
+        const readiness = readinessForCycle(
+          cycle,
+          protocolEscalations.filter(row => row.cycle_id === cycle.id),
+        )
         if (readiness.status === 'ready' || !cycle.stack_items) return null
         return (
           <PkReadinessPanel

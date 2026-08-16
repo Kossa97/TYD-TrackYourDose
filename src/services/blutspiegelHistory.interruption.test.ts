@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { calculateHistoryBlutspiegelCurve, splitQuantifiedDoseHistory } from './blutspiegelHistory'
+import {
+  calculateHistoryBlutspiegelCurve,
+  findNextPkDose,
+  splitQuantifiedDoseHistory,
+} from './blutspiegelHistory'
+import type { EscalationRow, ScheduleCycle } from '../lib/intakeSchedule'
 
 function log(timestamp: string, taken: boolean, dose: number | null, unit: string | null) {
   return { timestamp, taken, dose, unit }
@@ -75,5 +80,66 @@ describe('calculateHistoryBlutspiegelCurve interruption', () => {
       '2026-07-20T01:00:00.000Z',
       '2026-07-20T02:00:00.000Z',
     ])
+  })
+})
+
+describe('findNextPkDose', () => {
+  const cycle: ScheduleCycle & { method: string } = {
+    id: 'cycle-1',
+    stack_item_id: 'stack-1',
+    start_date: '2026-08-01',
+    end_date: null,
+    frequency: 'Täglich',
+    x_days_interval: null,
+    schedule_days: [],
+    intake_time: 'custom',
+    intake_time_custom: '08:00',
+    dose: 1,
+    unit: 'mg',
+    method: 'Subkutan',
+    schedule_history: [{
+      effective_from: '2026-08-01',
+      frequency: 'Täglich',
+      x_days_interval: null,
+      schedule_days: [],
+      intake_time: 'custom',
+      intake_time_custom: '08:00',
+      dose: 1,
+      unit: 'mg',
+    }, {
+      effective_from: '2026-08-02',
+      frequency: 'Täglich',
+      x_days_interval: null,
+      schedule_days: [],
+      intake_time: 'custom',
+      intake_time_custom: '09:30',
+      dose: 2,
+      unit: 'mg',
+    }],
+  }
+
+  it('projects the next dose with the segment effective on that dose date', () => {
+    expect(findNextPkDose(cycle, [], new Date(2026, 7, 1, 10))).toEqual({
+      timestamp: new Date(2026, 7, 2, 9, 30),
+      dose: 2,
+      unit: 'mg',
+    })
+  })
+
+  it('keeps the projected quantity unusable for a mismatched active escalation unit', () => {
+    const escalations: EscalationRow[] = [{
+      cycle_id: cycle.id,
+      increase_amount: 500,
+      unit: 'mcg',
+      start_type: 'date',
+      start_date: '2026-08-02',
+      start_after_days: null,
+    }]
+
+    expect(findNextPkDose(cycle, escalations, new Date(2026, 7, 1, 10))).toEqual({
+      timestamp: new Date(2026, 7, 2, 9, 30),
+      dose: null,
+      unit: null,
+    })
   })
 })

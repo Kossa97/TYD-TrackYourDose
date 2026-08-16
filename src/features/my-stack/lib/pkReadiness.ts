@@ -1,4 +1,11 @@
 import type { TrackingLevel } from '../types'
+import {
+  effectiveQuantity,
+  scheduleForDay,
+  type EscalationRow,
+  type ScheduleCycle,
+  type ScheduleSegment,
+} from '../../../lib/intakeSchedule'
 
 export type PkRequirement = 'complete_tracking' | 'method' | 'dose' | 'unit' | 'time'
 
@@ -17,6 +24,13 @@ export interface PkReadinessInput {
   scheduledAt: string | null
 }
 
+export type PkScheduleCycle = ScheduleCycle & { method: string | null }
+
+export type ResolvedPkSchedule = ScheduleSegment & {
+  method: string | null
+  scheduledAt: string | null
+}
+
 function normalizedText(value: string | null): string {
   return value?.trim().toLocaleLowerCase() ?? ''
 }
@@ -27,6 +41,22 @@ export function toPkMilligrams(value: number, unit: string): number | null {
   if (normalizedUnit === 'mg') return value
   if (normalizedUnit === 'mcg') return value / 1000
   return null
+}
+
+export function resolvePkScheduleForDay(
+  cycle: PkScheduleCycle,
+  escalations: EscalationRow[],
+  day: Date,
+): ResolvedPkSchedule {
+  const segment = scheduleForDay(cycle, day)
+  const quantity = effectiveQuantity(cycle, day, escalations)
+  return {
+    ...segment,
+    method: cycle.method,
+    dose: quantity?.dose ?? null,
+    unit: quantity?.unit ?? null,
+    scheduledAt: segment.intake_time_custom,
+  }
 }
 
 export function evaluatePkReadiness(input: PkReadinessInput): PkReadiness {

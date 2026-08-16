@@ -2,7 +2,7 @@
 
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { addDays, format } from 'date-fns'
 import { loadStackItems, type LoadedStackItem } from './services/stackItems'
 import type { StackItemWizardProps } from './components/StackItemWizard'
@@ -60,7 +60,7 @@ const loadedItems: LoadedLegacyStackItem[] = [
         default_category: 'vitamin',
         suggested_units: ['IU'],
         suggested_dosage_forms: ['capsule'],
-        pk_profile_id: null,
+        pk_profile_id: 'pk-vitamin-d3',
         active: true,
       },
     }],
@@ -159,8 +159,9 @@ vi.mock('./components/StackStage', () => ({
 }))
 
 vi.mock('./components/StackItemWizard', () => ({
-  StackItemWizard: ({ existingItem, existingPlan, intent, onClose, onSave }: StackItemWizardProps) => (
+  StackItemWizard: ({ catalogEntries, existingItem, existingPlan, intent, onClose, onSave }: StackItemWizardProps) => (
     <div role="dialog" aria-label="stack-item-wizard">
+      <span data-testid="wizard-catalog-ids">{catalogEntries.map(entry => entry.id).join(',')}</span>
       <span data-testid="wizard-intent">{intent ?? ''}</span>
       <span data-testid="wizard-item-id">{existingItem?.id ?? ''}</span>
       <span data-testid="wizard-plan-id">{existingPlan?.id ?? ''}</span>
@@ -289,6 +290,11 @@ async function renderPage(): Promise<void> {
   await waitFor(() => expect(screen.getAllByText('Existing Premium Vial').length).toBeGreaterThan(0))
 }
 
+function LocationProbe() {
+  const location = useLocation()
+  return <span data-testid="location-search">{location.search}</span>
+}
+
 function versionedCycle(effectiveFrom: string) {
   const segment = {
     frequency: activeCycle.frequency,
@@ -363,6 +369,7 @@ describe('MyStackPage non-vial visibility', () => {
 
     render(
       <MemoryRouter initialEntries={['/my-stack?edit=capsule-1&intent=pk']}>
+        <LocationProbe />
         <MyStackPage stackDataClient={stackDataClient as never} />
       </MemoryRouter>,
     )
@@ -374,6 +381,8 @@ describe('MyStackPage non-vial visibility', () => {
     expect(screen.getByTestId('wizard-plan-method').textContent).toBe('Oral')
     expect(screen.getByTestId('wizard-plan-dose').textContent).toBe('100')
     expect(screen.getByTestId('wizard-plan-unit').textContent).toBe('mg')
+    expect(screen.getByTestId('wizard-catalog-ids').textContent).toContain('vitamin-d3')
+    await waitFor(() => expect(screen.getByTestId('location-search').textContent).toBe(''))
   })
 
   it.each([

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { evaluatePkReadiness, toPkMilligrams } from './pkReadiness'
+import { evaluatePkReadiness, resolvePkScheduleForDay, toPkMilligrams } from './pkReadiness'
+import type { EscalationRow, ScheduleCycle } from '../../../lib/intakeSchedule'
 
 const readyInput = {
   trackingLevel: 'complete' as const,
@@ -77,5 +78,73 @@ describe('toPkMilligrams', () => {
     expect(toPkMilligrams(1, 'mg')).toBe(1)
     expect(toPkMilligrams(1000, 'mcg')).toBe(1)
     expect(toPkMilligrams(5000, 'IU')).toBeNull()
+  })
+})
+
+describe('resolvePkScheduleForDay', () => {
+  const cycle: ScheduleCycle & { method: string } = {
+    id: 'cycle-1',
+    stack_item_id: 'stack-1',
+    start_date: '2026-08-01',
+    end_date: null,
+    frequency: 'Täglich',
+    x_days_interval: null,
+    schedule_days: [],
+    intake_time: 'custom',
+    intake_time_custom: '08:00',
+    dose: 1,
+    unit: 'mg',
+    method: 'Subkutan',
+    schedule_history: [{
+      effective_from: '2026-08-01',
+      frequency: 'Täglich',
+      x_days_interval: null,
+      schedule_days: [],
+      intake_time: 'custom',
+      intake_time_custom: '08:00',
+      dose: 1,
+      unit: 'mg',
+    }, {
+      effective_from: '2026-08-20',
+      frequency: 'Wöchentlich',
+      x_days_interval: null,
+      schedule_days: [],
+      intake_time: 'custom',
+      intake_time_custom: '09:30',
+      dose: 2,
+      unit: 'mg',
+    }],
+  }
+
+  it.each([
+    {
+      label: 'before a future effective date',
+      day: new Date(2026, 7, 19, 12),
+      expected: { dose: 1, unit: 'mg', scheduledAt: '08:00', frequency: 'Täglich' },
+    },
+    {
+      label: 'on the future effective date',
+      day: new Date(2026, 7, 20, 12),
+      expected: { dose: 2, unit: 'mg', scheduledAt: '09:30', frequency: 'Wöchentlich' },
+    },
+  ])('uses the date-effective segment $label', ({ day, expected }) => {
+    expect(resolvePkScheduleForDay(cycle, [], day)).toMatchObject({
+      ...expected,
+      method: 'Subkutan',
+    })
+  })
+
+  it('rejects an active escalation whose unit differs from the effective segment', () => {
+    const escalations: EscalationRow[] = [{
+      cycle_id: cycle.id,
+      increase_amount: 500,
+      unit: 'mcg',
+      start_type: 'date',
+      start_date: '2026-08-20',
+      start_after_days: null,
+    }]
+
+    expect(resolvePkScheduleForDay(cycle, escalations, new Date(2026, 7, 20, 12)))
+      .toMatchObject({ dose: null, unit: null, scheduledAt: '09:30', frequency: 'Wöchentlich' })
   })
 })

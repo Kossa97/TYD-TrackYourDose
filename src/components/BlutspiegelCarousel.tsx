@@ -9,8 +9,14 @@ import {
   type BlutspiegelTrend,
   type CurrentBlutspiegelLevel,
 } from '../services/blutspiegelHistory'
-import { evaluatePkReadiness, type PkRequirement } from '../features/my-stack/lib/pkReadiness'
+import {
+  evaluatePkReadiness,
+  resolvePkScheduleForDay,
+  type PkRequirement,
+  type PkScheduleCycle,
+} from '../features/my-stack/lib/pkReadiness'
 import type { TrackingLevel } from '../features/my-stack/types'
+import type { EscalationRow } from '../lib/intakeSchedule'
 
 // ── Typen & Kategorie-Farben ────────────────────────────────────────────────
 
@@ -24,14 +30,8 @@ interface PkProfileEmbed {
   category: string
 }
 
-interface CycleWithPk {
-  id: string
-  dose: number | null
-  unit: string | null
-  method: string | null
-  intake_time_custom: string | null
+interface CycleWithPk extends PkScheduleCycle {
   active: boolean
-  end_date: string | null
   stack_items: {
     id: string
     display_name: string
@@ -467,37 +467,50 @@ export function BlutspiegelCarousel() {
 
     const todayKey = format(new Date(), 'yyyy-MM-dd')
 
-    const { data, error } = await supabase
-      .from('cycles')
-      .select(`
-        id,
-        dose,
-        unit,
-        method,
-        intake_time_custom,
-        active,
-        end_date,
-        stack_items (
+    const [{ data, error }, { data: escalationRows }] = await Promise.all([
+      supabase
+        .from('cycles')
+        .select(`
           id,
-          display_name,
-          tracking_level,
-          pk_profile_method,
-          ingredients:stack_item_ingredients (
-            position,
-            substance_catalog (
-              pk_profile_id,
-              pk_profiles (
-                name,
-                half_life_hours,
-                tmax_hours,
-                bioavailability_sc,
-                category
+          stack_item_id,
+          start_date,
+          end_date,
+          dose,
+          unit,
+          method,
+          frequency,
+          x_days_interval,
+          schedule_days,
+          intake_time,
+          intake_time_custom,
+          schedule_history,
+          active,
+          stack_items (
+            id,
+            display_name,
+            tracking_level,
+            pk_profile_method,
+            ingredients:stack_item_ingredients (
+              position,
+              substance_catalog (
+                pk_profile_id,
+                pk_profiles (
+                  name,
+                  half_life_hours,
+                  tmax_hours,
+                  bioavailability_sc,
+                  category
+                )
               )
             )
           )
-        )
-      `)
-      .eq('user_id', user.id)
+        `)
+        .eq('user_id', user.id),
+      supabase
+        .from('dose_escalations')
+        .select('cycle_id, increase_amount, unit, start_type, start_date, start_after_days')
+        .eq('user_id', user.id),
+    ])
 
     if (error || !data) {
       setCards([])
@@ -517,14 +530,17 @@ export function BlutspiegelCarousel() {
     const levels = await Promise.all(
       eligible.map(async (cycle) => {
         const linked = linkedProfile(cycle)
+        const cycleEscalations = ((escalationRows ?? []) as EscalationRow[])
+          .filter(row => row.cycle_id === cycle.id)
+        const schedule = resolvePkScheduleForDay(cycle, cycleEscalations, new Date())
         const readiness = evaluatePkReadiness({
           trackingLevel: cycle.stack_items?.tracking_level ?? 'intake_only',
           pkProfileId: linked?.id ?? null,
           pkProfileMethod: cycle.stack_items?.pk_profile_method ?? null,
-          method: cycle.method,
-          dose: cycle.dose,
-          unit: cycle.unit,
-          scheduledAt: cycle.intake_time_custom,
+          method: schedule.method,
+          dose: schedule.dose,
+          unit: schedule.unit,
+          scheduledAt: schedule.scheduledAt,
         })
         if (readiness.status === 'unsupported' || !cycle.stack_items) return null
         if (readiness.status === 'missing') {
@@ -540,7 +556,8 @@ export function BlutspiegelCarousel() {
         const pk = linked.profile
         const category = normalizeCategory(pk.category)
         const level = await getCurrentBlutspiegelLevel(
-          cycle.id,
+          cycle,
+          cycleEscalations,
           pk.half_life_hours,
           pk.tmax_hours,
           pk.bioavailability_sc,

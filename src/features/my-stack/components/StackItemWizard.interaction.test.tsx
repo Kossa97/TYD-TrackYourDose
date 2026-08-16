@@ -185,6 +185,43 @@ afterEach(() => {
 })
 
 describe('StackItemWizard interactions', () => {
+  it('uses the first profile-bearing ingredient by position for PK confirmation and save', async () => {
+    const pkItem: StackItem = {
+      ...existingVitaminD,
+      pk_profile_method: null,
+      ingredients: [{
+        ...existingVitaminD.ingredients[0],
+        id: 'ingredient-k2',
+        catalog_substance_id: vitaminK2.id,
+        position: 0,
+      }, {
+        ...existingVitaminD.ingredients[0],
+        id: 'ingredient-d3',
+        catalog_substance_id: pkVitaminD3.id,
+        position: 1,
+      }],
+    }
+    const pkPlan: IntakePlanDraft = {
+      ...existingPlan,
+      dose: 1,
+      unit: 'mg',
+      time: '08:30',
+    }
+    const { onSave } = renderWizard({
+      catalogEntries: [vitaminK2, pkVitaminD3],
+      existingItem: pkItem,
+      existingPlan: pkPlan,
+      intent: 'pk',
+    })
+
+    const confirmation = screen.getByRole('checkbox', { name: 'my_stack_pk_method_confirm' })
+    fireEvent.click(confirmation)
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
+    expect(onSave.mock.calls[0][0].pkProfileMethod).toBe('Oral')
+  })
+
   it('includes missing complete-strength fields in a PK upgrade flow', () => {
     const pkItem: StackItem = {
       ...existingVitaminD,

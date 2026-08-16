@@ -169,10 +169,22 @@ export function StackItemWizard({
     ))
   }, [catalogEntries, state.draft.displayName])
   const selectedCatalogEntry = useMemo(() => {
-    const catalogIds = state.draft.ingredients
-      .map(ingredient => ingredient.catalog_substance_id)
-      .filter((id): id is string => Boolean(id))
-    return catalogEntries.find(entry => catalogIds.includes(entry.id))
+    const catalogById = new Map(catalogEntries.map(entry => [entry.id, entry]))
+    return [...state.draft.ingredients]
+      .sort((a, b) => a.position - b.position)
+      .map(ingredient => ingredient.catalog_substance_id
+        ? catalogById.get(ingredient.catalog_substance_id)
+        : undefined)
+      .find((entry): entry is SubstanceCatalogEntry => Boolean(entry))
+  }, [catalogEntries, state.draft.ingredients])
+  const selectedPkCatalogEntry = useMemo(() => {
+    const catalogById = new Map(catalogEntries.map(entry => [entry.id, entry]))
+    return [...state.draft.ingredients]
+      .sort((a, b) => a.position - b.position)
+      .map(ingredient => ingredient.catalog_substance_id
+        ? catalogById.get(ingredient.catalog_substance_id)
+        : undefined)
+      .find((entry): entry is SubstanceCatalogEntry => Boolean(entry?.pk_profile_id))
   }, [catalogEntries, state.draft.ingredients])
   const identityChanged = Boolean(state.original && didIdentityChange(state.original, state.draft))
 
@@ -273,7 +285,7 @@ export function StackItemWizard({
     }
 
     if (intent === 'pk') {
-      const linkedProfileId = selectedCatalogEntry?.pk_profile_id ?? null
+      const linkedProfileId = selectedPkCatalogEntry?.pk_profile_id ?? null
       const readiness = evaluatePkReadiness({
         trackingLevel: state.draft.trackingLevel,
         pkProfileId: linkedProfileId,
@@ -391,7 +403,7 @@ export function StackItemWizard({
           <TrackingLevelPicker
             value={state.trackingLevelSelected ? state.draft.trackingLevel : null}
             substanceName={state.draft.displayName}
-            pkProfileAvailable={Boolean(selectedCatalogEntry?.pk_profile_id)}
+            pkProfileAvailable={Boolean(selectedPkCatalogEntry?.pk_profile_id)}
             error={showErrors && !state.trackingLevelSelected}
             onChange={trackingLevel => {
               dispatch({ type: 'tracking_level_selected', trackingLevel })
@@ -471,7 +483,7 @@ export function StackItemWizard({
                 setPkIntentError(null)
               }}
             />
-            {state.draft.trackingLevel === 'complete' && selectedCatalogEntry?.pk_profile_id && (
+            {state.draft.trackingLevel === 'complete' && selectedPkCatalogEntry?.pk_profile_id && (
               <fieldset
                 data-field="pkProfileMethod"
                 tabIndex={-1}
@@ -617,7 +629,7 @@ export function StackItemWizard({
                   <div className="flex flex-wrap justify-between gap-2">
                     <dt className="text-slate-400">{t('my_stack_pk_status', { defaultValue: 'PK-Status' })}</dt>
                     <dd className="text-right font-medium text-slate-200">
-                      {selectedCatalogEntry?.pk_profile_id
+                      {selectedPkCatalogEntry?.pk_profile_id
                         ? t('my_stack_pk_available', { defaultValue: 'PK-Profil verfügbar; Kurve abhängig von vollständigen Angaben' })
                         : t('my_stack_pk_unavailable', { defaultValue: 'Kein PK-Profil hinterlegt' })}
                     </dd>

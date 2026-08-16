@@ -3,7 +3,13 @@
 
 import { addDays, format, parseISO } from 'date-fns'
 import { supabase } from '../lib/supabase'
-import { toPkMilligrams } from '../features/my-stack/lib/pkReadiness'
+import {
+  resolvePkScheduleForDay,
+  toPkMilligrams,
+  type PkScheduleCycle,
+  type ResolvedPkSchedule,
+} from '../features/my-stack/lib/pkReadiness'
+import { cycleAppliesToDay, type EscalationRow } from '../lib/intakeSchedule'
 
 export type BlutspiegelTrend = 'rising' | 'falling' | 'stable'
 
@@ -212,22 +218,6 @@ export function calculateHistoryBlutspiegelCurve(
 
 // ─── Aktueller Spiegel (Live) ────────────────────────────────────────────────
 
-interface CycleScheduleRow {
-  dose: number
-  unit: string
-  intake_time: string | null
-  intake_time_custom: string | null
-  frequency: string
-  schedule_days: string[] | null
-  x_days_interval: number | null
-  start_date: string
-  end_date: string | null
-}
-
-const WEEKDAY: Record<number, string> = {
-  0: 'So', 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 6: 'Sa',
-}
-
 const INTAKE_MINUTES: Record<string, number> = {
   morgens: 8 * 60,
   mittags: 12 * 60,
@@ -245,33 +235,7 @@ const EMPTY_CURRENT_LEVEL: CurrentBlutspiegelLevel = {
   interruptedAt: null,
 }
 
-function cycleAppliesToDay(cycle: CycleScheduleRow, day: Date): boolean {
-  const start = parseISO(cycle.start_date)
-  const end = cycle.end_date ? parseISO(cycle.end_date) : null
-  if (day < start) return false
-  if (end && day > end) return false
-
-  const diff = Math.round((day.getTime() - start.getTime()) / 86_400_000)
-  const wd = WEEKDAY[day.getDay()]
-  const sd = cycle.schedule_days ?? []
-  const f = cycle.frequency
-
-  if (f === 'Täglich' || f === '2x täglich' || f === '3x täglich') {
-    return sd.length ? sd.includes(wd) : true
-  }
-  if (f === 'Jeden 2. Tag') return diff % 2 === 0
-  if (f === '5 Tage an / 2 aus') return diff % 7 < 5
-  if (f === 'Mo-Fr') return day.getDay() >= 1 && day.getDay() <= 5
-  if (f === 'Wöchentlich') return diff % 7 === 0
-  if (f === 'Wochentage wählen') return sd.includes(wd)
-  if (f === 'Alle X Tage') {
-    const interval = cycle.x_days_interval ?? 2
-    return diff % interval === 0 && (sd.length ? sd.includes(wd) : true)
-  }
-  return false
-}
-
-function cycleIntakeMinutes(cycle: CycleScheduleRow): number {
+function cycleIntakeMinutes(cycle: ResolvedPkSchedule): number {
   const firstKey = (cycle.intake_time ?? '').split(',')[0] ?? ''
   if (INTAKE_MINUTES[firstKey]) return INTAKE_MINUTES[firstKey]
   if (firstKey === 'custom' && cycle.intake_time_custom) {
@@ -282,7 +246,17 @@ function cycleIntakeMinutes(cycle: CycleScheduleRow): number {
   return 8 * 60
 }
 
-function findNextDoseTime(cycle: CycleScheduleRow, now: Date): Date {
+export interface NextPkDose {
+  timestamp: Date
+  dose: number | null
+  unit: string | null
+}
+
+export function findNextPkDose(
+  cycle: PkScheduleCycle,
+  escalations: EscalationRow[],
+  now: Date,
+): NextPkDose {
   const todayStart = new Date(now)
   todayStart.setHours(0, 0, 0, 0)
 
@@ -290,19 +264,24 @@ function findNextDoseTime(cycle: CycleScheduleRow, now: Date): Date {
     const day = addDays(todayStart, dayOffset)
     if (!cycleAppliesToDay(cycle, day)) continue
 
+    const schedule = resolvePkScheduleForDay(cycle, escalations, day)
+
     const doseTime = new Date(day)
     doseTime.setHours(0, 0, 0, 0)
-    const mins = cycleIntakeMinutes(cycle)
+    const mins = cycleIntakeMinutes(schedule)
     doseTime.setMinutes(mins % 60)
     doseTime.setHours(Math.floor(mins / 60))
 
-    if (doseTime.getTime() > now.getTime()) return doseTime
+    if (doseTime.getTime() > now.getTime()) {
+      return { timestamp: doseTime, dose: schedule.dose, unit: schedule.unit }
+    }
   }
 
   const fallback = new Date(now)
   fallback.setDate(fallback.getDate() + 1)
   fallback.setHours(8, 0, 0, 0)
-  return fallback
+  const schedule = resolvePkScheduleForDay(cycle, escalations, fallback)
+  return { timestamp: fallback, dose: schedule.dose, unit: schedule.unit }
 }
 
 function formatDurationShort(ms: number): string {
@@ -417,28 +396,20 @@ function computeTrend(current: number, previous: number): BlutspiegelTrend {
 
 /** Berechnet den aktuellen Blutspiegel-Wert für JETZT basierend auf den letzten Einnahmen eines Zyklus. */
 export async function getCurrentBlutspiegelLevel(
-  cycleId: string,
+  cycle: PkScheduleCycle,
+  escalations: EscalationRow[],
   halfLifeHours: number,
   tmaxHours: number,
   bioavailability: number = 1.0,
 ): Promise<CurrentBlutspiegelLevel> {
-  const history = await loadDoseHistory(cycleId)
+  const history = await loadDoseHistory(cycle.id)
   const { events, interruptedAt } = history
   const takenEvents = events.filter(e => e.status === 'taken')
-
-  const { data: cycle, error: cycleErr } = await supabase
-    .from('cycles')
-    .select('dose, unit, intake_time, intake_time_custom, frequency, schedule_days, x_days_interval, start_date, end_date')
-    .eq('id', cycleId)
-    .maybeSingle()
-
-  if (cycleErr || !cycle) return { ...EMPTY_CURRENT_LEVEL }
-
-  const schedule = cycle as CycleScheduleRow
-  const cycleUnit = schedule.unit ?? 'mcg'
   const now = new Date()
-  const nextDose = findNextDoseTime(schedule, now)
-  const nextDoseIn = formatDurationShort(nextDose.getTime() - now.getTime())
+  const schedule = resolvePkScheduleForDay(cycle, escalations, now)
+  const cycleUnit = schedule.unit ?? 'mcg'
+  const nextDose = findNextPkDose(cycle, escalations, now)
+  const nextDoseIn = formatDurationShort(nextDose.timestamp.getTime() - now.getTime())
 
   if (!takenEvents.length) {
     return {
@@ -487,17 +458,22 @@ export async function getCurrentBlutspiegelLevel(
     20,
   )
 
-  const futureDose: DoseEvent = {
-    timestamp: nextDose,
-    dose: schedule.dose,
-    unit: schedule.unit,
-    status: 'planned',
-  }
-  const simEnd = new Date(nextDose.getTime() + tmaxHours * 3_600_000 * 2)
-  const futureCurve = interruptedAt ? [] : calculateCurveTo(
-    [...takenEvents, futureDose], simEnd, halfLifeHours, tmaxHours, bioavailability, 30,
-  )
-  const afterNext = futureCurve.filter(p => p.time.getTime() >= nextDose.getTime())
+  const futureCurve = interruptedAt || nextDose.dose == null || nextDose.unit == null
+    ? []
+    : calculateCurveTo(
+        [...takenEvents, {
+          timestamp: nextDose.timestamp,
+          dose: nextDose.dose,
+          unit: nextDose.unit,
+          status: 'planned',
+        }],
+        new Date(nextDose.timestamp.getTime() + tmaxHours * 3_600_000 * 2),
+        halfLifeHours,
+        tmaxHours,
+        bioavailability,
+        30,
+      )
+  const afterNext = futureCurve.filter(p => p.time.getTime() >= nextDose.timestamp.getTime())
   const levelAfterNextDose = afterNext.length
     ? Math.max(...afterNext.map(p => p.level))
     : currentLevel

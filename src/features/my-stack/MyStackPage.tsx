@@ -283,6 +283,15 @@ function parseStoredDay(value: string): Date | null {
   return isValid(parsed) && format(parsed, 'yyyy-MM-dd') === value ? parsed : null
 }
 
+function mergeCatalogEntries(
+  current: SubstanceCatalogEntry[],
+  additions: SubstanceCatalogEntry[],
+): SubstanceCatalogEntry[] {
+  const entriesById = new Map(current.map(entry => [entry.id, entry]))
+  additions.forEach(entry => entriesById.set(entry.id, entry))
+  return [...entriesById.values()]
+}
+
 function escalationFormStartDate(cycle: Cycle, form: EscalationForm): Date | null {
   if (form.start_type === 'date') return parseStoredDay(form.start_date)
   const offset = Number(form.start_after_days)
@@ -660,6 +669,12 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       const migrated = await migrateLocalColors(stackDataClient as never, [...data, ...archived], localStorage)
       if (migrated) data = await loadStackItems(stackDataClient as never, false)
     }
+    setCatalogEntries(current => mergeCatalogEntries(
+      current,
+      data.flatMap(item => item.ingredients.map(ingredient => ingredient.substance_catalog).filter(
+        (entry): entry is SubstanceCatalogEntry => entry !== null,
+      )),
+    ))
     setPeptides(data.map(asPeptide))
   }
   const loadArchived = async () => {
@@ -681,7 +696,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     if (data) setEscalations(data as Escalation[])
   }
   useEffect(() => {
-    Promise.all([loadInventory(), loadPeptides(), loadCycles(), loadEscalations(), searchSubstanceCatalog(supabase as never, '').then(result => { setCatalogEntries(result.entries); setCatalogUnavailable(result.unavailable) })])
+    Promise.all([loadInventory(), loadPeptides(), loadCycles(), loadEscalations(), searchSubstanceCatalog(supabase as never, '').then(result => { setCatalogEntries(current => mergeCatalogEntries(current, result.entries)); setCatalogUnavailable(result.unavailable) })])
       .finally(() => {
         setLoading(false)
         // Fade out the full-screen loader, then unmount it (same as The Lab).

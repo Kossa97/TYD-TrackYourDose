@@ -3,8 +3,13 @@ import {
   loadDoseHistory,
   calculateHistoryBlutspiegelCurve,
 } from './blutspiegelHistory'
-import { evaluatePkReadiness } from '../features/my-stack/lib/pkReadiness'
+import {
+  evaluatePkReadiness,
+  resolvePkScheduleForDay,
+  type PkScheduleCycle,
+} from '../features/my-stack/lib/pkReadiness'
 import type { TrackingLevel } from '../features/my-stack/types'
+import type { EscalationRow } from '../lib/intakeSchedule'
 
 // ── Public types ────────────────────────────────────────────────────────────
 
@@ -55,12 +60,7 @@ interface PkRow {
   category: string
 }
 
-interface CycleRow {
-  id: string
-  dose: number | null
-  unit: string | null
-  method: string | null
-  intake_time_custom: string | null
+interface CycleRow extends PkScheduleCycle {
   stack_items: {
     id: string
     display_name: string
@@ -106,34 +106,45 @@ function detectPeaks(pts: ChartPoint[]): PeakMarker[] {
 // ── Public loader ────────────────────────────────────────────────────────────
 
 export async function loadAllCycleChartData(userId: string): Promise<CycleChartData[]> {
-  const { data: cycles } = await supabase
-    .from('cycles')
-    .select(`id, dose, unit, method, intake_time_custom,
-      stack_items ( id, display_name, tracking_level, pk_profile_method,
-        ingredients:stack_item_ingredients ( position,
-          substance_catalog ( pk_profile_id,
-            pk_profiles ( half_life_hours, tmax_hours, bioavailability_sc, category )
+  const [{ data: cycles }, { data: escalationRows }] = await Promise.all([
+    supabase
+      .from('cycles')
+      .select(`id, stack_item_id, start_date, end_date, dose, unit, method,
+        frequency, x_days_interval, schedule_days, intake_time, intake_time_custom, schedule_history,
+        stack_items ( id, display_name, tracking_level, pk_profile_method,
+          ingredients:stack_item_ingredients ( position,
+            substance_catalog ( pk_profile_id,
+              pk_profiles ( half_life_hours, tmax_hours, bioavailability_sc, category )
+            )
           )
-        )
-      )`)
-    .eq('user_id', userId)
-    .eq('active', true)
+        )`)
+      .eq('user_id', userId)
+      .eq('active', true),
+    supabase
+      .from('dose_escalations')
+      .select('cycle_id, increase_amount, unit, start_type, start_date, start_after_days')
+      .eq('user_id', userId),
+  ])
 
   if (!cycles?.length) return []
 
   const results: CycleChartData[] = []
+  const escalations = (escalationRows ?? []) as EscalationRow[]
+  const now = new Date()
 
   await Promise.all(
     (cycles as unknown as CycleRow[]).map(async cycle => {
       const linked = linkedProfile(cycle)
+      const cycleEscalations = escalations.filter(row => row.cycle_id === cycle.id)
+      const schedule = resolvePkScheduleForDay(cycle, cycleEscalations, now)
       const readiness = evaluatePkReadiness({
         trackingLevel: cycle.stack_items?.tracking_level ?? 'intake_only',
         pkProfileId: linked?.id ?? null,
         pkProfileMethod: cycle.stack_items?.pk_profile_method ?? null,
-        method: cycle.method,
-        dose: cycle.dose,
-        unit: cycle.unit,
-        scheduledAt: cycle.intake_time_custom,
+        method: schedule.method,
+        dose: schedule.dose,
+        unit: schedule.unit,
+        scheduledAt: schedule.scheduledAt,
       })
       if (readiness.status !== 'ready' || !linked) return
       const pk = linked.profile
@@ -170,7 +181,7 @@ export async function loadAllCycleChartData(userId: string): Promise<CycleChartD
         points,
         doseMarkers,
         peakMarkers:  detectPeaks(points),
-        unit:         cycle.unit!,
+        unit:         schedule.unit!,
         halfLifeHours: pk.half_life_hours,
         interruptedAt: interruptedAt ? new Date(interruptedAt).getTime() : null,
       })
