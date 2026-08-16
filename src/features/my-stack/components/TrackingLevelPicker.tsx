@@ -46,7 +46,7 @@ export function TrackingLevelPicker({
         substanceName: name,
       }),
       omitted: t('my_stack_tracking_with_amount_omitted', {
-        defaultValue: 'Nicht erforderlich: Produktstärke, Bestand oder PK-Profil.',
+        defaultValue: 'Nicht erforderlich: Produktstärke oder Bestand. PK-Kurven sind erst mit „Vollständig“ verfügbar.',
       }),
       example: t('my_stack_tracking_with_amount_example', {
         defaultValue: 'Beispiel: „1 Kapsel morgens“ oder „0,5 Tablette abends“.',

@@ -159,8 +159,10 @@ vi.mock('./components/StackStage', () => ({
 }))
 
 vi.mock('./components/StackItemWizard', () => ({
-  StackItemWizard: ({ existingItem, existingPlan, onClose, onSave }: StackItemWizardProps) => (
+  StackItemWizard: ({ existingItem, existingPlan, intent, onClose, onSave }: StackItemWizardProps) => (
     <div role="dialog" aria-label="stack-item-wizard">
+      <span data-testid="wizard-intent">{intent ?? ''}</span>
+      <span data-testid="wizard-item-id">{existingItem?.id ?? ''}</span>
       <span data-testid="wizard-plan-id">{existingPlan?.id ?? ''}</span>
       <span data-testid="wizard-plan-method">{existingPlan?.method ?? ''}</span>
       <span data-testid="wizard-plan-dose">{existingPlan?.dose ?? ''}</span>
@@ -309,6 +311,10 @@ describe('MyStackPage non-vial visibility', () => {
     localStorage.clear()
     localStorage.setItem('tyd_peptide_view', 'vials')
     visibilityMocks.escalations = []
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: vi.fn(),
+    })
   })
 
   afterEach(() => {
@@ -347,6 +353,27 @@ describe('MyStackPage non-vial visibility', () => {
 
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
     expect(screen.queryByText('kein_peptid_gefunden_msg')).toBeNull()
+  })
+
+  it('opens a PK deep link with the existing item and its active plan', async () => {
+    const cyclesEq = vi.fn(async () => ({ data: [activeCycle], error: null }))
+    const stackDataClient = {
+      from: vi.fn(() => ({ select: vi.fn(() => ({ eq: cyclesEq })) })),
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack?edit=capsule-1&intent=pk']}>
+        <MyStackPage stackDataClient={stackDataClient as never} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(screen.getByRole('dialog', { name: 'stack-item-wizard' })).toBeTruthy())
+    expect(screen.getByTestId('wizard-intent').textContent).toBe('pk')
+    expect(screen.getByTestId('wizard-item-id').textContent).toBe('capsule-1')
+    expect(screen.getByTestId('wizard-plan-id').textContent).toBe('cycle-active-1')
+    expect(screen.getByTestId('wizard-plan-method').textContent).toBe('Oral')
+    expect(screen.getByTestId('wizard-plan-dose').textContent).toBe('100')
+    expect(screen.getByTestId('wizard-plan-unit').textContent).toBe('mg')
   })
 
   it.each([

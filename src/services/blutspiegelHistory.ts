@@ -3,6 +3,7 @@
 
 import { addDays, format, parseISO } from 'date-fns'
 import { supabase } from '../lib/supabase'
+import { toPkMilligrams } from '../features/my-stack/lib/pkReadiness'
 
 export type BlutspiegelTrend = 'rising' | 'falling' | 'stable'
 
@@ -14,25 +15,66 @@ export interface CurrentBlutspiegelLevel {
   levelAfterNextDose: number
   peakLabel: string
   unit: string
+  interruptedAt: string | null
 }
 
 export interface DoseEvent {
   timestamp: Date   // Zeitpunkt der Einnahme
-  dose: number      // Dosis in der Einheit des Zyklus
-  status: 'taken' | 'skipped'
+  dose: number
+  unit: string
+  status: 'taken' | 'skipped' | 'planned'
+}
+
+export interface DoseHistory {
+  events: DoseEvent[]
+  interruptedAt: string | null
+}
+
+export interface QuantifiedDoseLog<TTimestamp = string> {
+  timestamp: TTimestamp
+  dose: number | null
+  unit: string | null
+  taken: boolean
+}
+
+export interface QuantifiedDoseEvent<TTimestamp = string> {
+  timestamp: TTimestamp
+  dose: number
+  unit: string
+  status: 'taken'
+}
+
+export function splitQuantifiedDoseHistory<TTimestamp>(
+  logs: QuantifiedDoseLog<TTimestamp>[],
+): { events: QuantifiedDoseEvent<TTimestamp>[]; interruptedAt: TTimestamp | null } {
+  const events: QuantifiedDoseEvent<TTimestamp>[] = []
+
+  for (const log of logs) {
+    if (!log.taken) continue
+    if (log.dose == null || !Number.isFinite(log.dose) || !log.unit?.trim()) {
+      return { events, interruptedAt: log.timestamp }
+    }
+    events.push({
+      timestamp: log.timestamp,
+      dose: log.dose,
+      unit: log.unit,
+      status: 'taken',
+    })
+  }
+
+  return { events, interruptedAt: null }
 }
 
 interface CycleRow {
   stack_item_id: string
   start_date: string
   end_date: string | null
-  dose: number
-  unit: string
 }
 
 interface DoseLogRow {
   logged_at: string
   dose: number | null
+  unit: string | null
   taken: boolean
 }
 
@@ -41,17 +83,17 @@ interface DoseLogRow {
  * `true` = eingenommen, `false` = übersprungen, `null` = noch offen).
  * Verknüpfung zum Zyklus über `stack_item_id` + Datumsbereich des Zyklus.
  */
-export async function loadDoseHistory(cycleId: string): Promise<DoseEvent[]> {
+export async function loadDoseHistory(cycleId: string): Promise<DoseHistory> {
   // 1. Zyklus laden
   const { data: cycle, error: cycleError } = await supabase
     .from('cycles')
-    .select('stack_item_id, start_date, end_date, dose, unit')
+    .select('stack_item_id, start_date, end_date')
     .eq('id', cycleId)
     .maybeSingle()
 
-  if (cycleError || !cycle) return []
+  if (cycleError || !cycle) return { events: [], interruptedAt: null }
 
-  const { stack_item_id, start_date, end_date, dose: cycleDose } = cycle as CycleRow
+  const { stack_item_id, start_date, end_date } = cycle as CycleRow
 
   // Oberes Datum: end_date, aber höchstens heute wenn end_date fehlt oder in der Zukunft liegt
   const todayIso = format(new Date(), 'yyyy-MM-dd')
@@ -61,26 +103,35 @@ export async function loadDoseHistory(cycleId: string): Promise<DoseEvent[]> {
   // 2. dose_logs laden
   const { data, error } = await supabase
     .from('dose_logs')
-    .select('logged_at, dose, taken')
+    .select('logged_at, dose, unit, taken')
     .eq('stack_item_id', stack_item_id)
     .gte('logged_at', start_date)
     .lte('logged_at', `${upperDate}T23:59:59.999`)
     .not('taken', 'is', null)
     .order('logged_at', { ascending: true })
 
-  if (error || !data) return []
+  if (error || !data) return { events: [], interruptedAt: null }
 
-  // 3. Mapping + 4. Rückgabe
-  return (data as DoseLogRow[]).map((log) => ({
-    timestamp: new Date(log.logged_at),
-    dose: log.dose != null ? Number(log.dose) : Number(cycleDose),
-    status: log.taken === true ? 'taken' as const : 'skipped' as const,
-  }))
+  const split = splitQuantifiedDoseHistory((data as DoseLogRow[]).map(log => ({
+    timestamp: log.logged_at,
+    dose: log.dose == null ? null : Number(log.dose),
+    unit: log.unit,
+    taken: log.taken,
+  })))
+
+  return {
+    events: split.events.map(event => ({
+      ...event,
+      timestamp: new Date(event.timestamp),
+    })),
+    interruptedAt: split.interruptedAt,
+  }
 }
 
 export interface BlutspiegelCurvePoint {
   time: Date
   level: number
+  status: 'actual' | 'planned'
 }
 
 function doseContributionAt(
@@ -106,6 +157,7 @@ export function calculateHistoryBlutspiegelCurve(
   tmaxHours: number,
   bioavailability: number = 1.0,
   resolutionMinutes: number = 30,
+  interruptedAt: Date | null = null,
 ): BlutspiegelCurvePoint[] {
   if (events.length === 0 || halfLifeHours <= 0 || tmaxHours <= 0 || resolutionMinutes <= 0) {
     return []
@@ -114,33 +166,47 @@ export function calculateHistoryBlutspiegelCurve(
   const ke = Math.LN2 / halfLifeHours
   const ka = Math.LN2 / tmaxHours
   const start = events[0].timestamp
-  const end = new Date()
+  const end = interruptedAt ?? new Date()
 
   if (start.getTime() > end.getTime()) return []
 
   const stepMs = resolutionMinutes * 60_000
   const raw: BlutspiegelCurvePoint[] = []
 
-  for (let tMs = start.getTime(); tMs <= end.getTime(); tMs += stepMs) {
+  const latestActualTimestamp = Math.max(...events
+    .filter(event => event.status === 'taken')
+    .map(event => event.timestamp.getTime()))
+  const withinEnd = interruptedAt
+    ? (timestamp: number) => timestamp < end.getTime()
+    : (timestamp: number) => timestamp <= end.getTime()
+
+  for (let tMs = start.getTime(); withinEnd(tMs); tMs += stepMs) {
     let total = 0
 
     for (const event of events) {
-      if (event.status !== 'taken') continue
+      if (event.status === 'skipped') continue
+      const doseMg = toPkMilligrams(event.dose, event.unit)
+      if (doseMg == null) continue
       const deltaTHours = (tMs - event.timestamp.getTime()) / 3_600_000
-      total += doseContributionAt(event.dose, bioavailability, deltaTHours, ke, ka)
+      total += doseContributionAt(doseMg, bioavailability, deltaTHours, ke, ka)
     }
 
-    raw.push({ time: new Date(tMs), level: Math.max(0, total) })
+    raw.push({
+      time: new Date(tMs),
+      level: Math.max(0, total),
+      status: tMs <= latestActualTimestamp ? 'actual' : 'planned',
+    })
   }
 
   const peak = Math.max(...raw.map(p => p.level), 0)
   if (peak <= 0) {
-    return raw.map(p => ({ time: p.time, level: 0 }))
+    return raw.map(p => ({ ...p, level: 0 }))
   }
 
   return raw.map(p => ({
     time: p.time,
     level: (p.level / peak) * 100,
+    status: p.status,
   }))
 }
 
@@ -176,6 +242,7 @@ const EMPTY_CURRENT_LEVEL: CurrentBlutspiegelLevel = {
   levelAfterNextDose: 0,
   peakLabel: '—',
   unit: 'mcg',
+  interruptedAt: null,
 }
 
 function cycleAppliesToDay(cycle: CycleScheduleRow, day: Date): boolean {
@@ -265,23 +332,33 @@ function calculateCurveTo(
 
   const stepMs = resolutionMinutes * 60_000
   const raw: BlutspiegelCurvePoint[] = []
+  const latestActualTimestamp = Math.max(...events
+    .filter(event => event.status === 'taken')
+    .map(event => event.timestamp.getTime()))
 
   for (let tMs = start.getTime(); tMs <= end.getTime(); tMs += stepMs) {
     let total = 0
     for (const event of events) {
-      if (event.status !== 'taken') continue
+      if (event.status === 'skipped') continue
+      const doseMg = toPkMilligrams(event.dose, event.unit)
+      if (doseMg == null) continue
       const deltaTHours = (tMs - event.timestamp.getTime()) / 3_600_000
-      total += doseContributionAt(event.dose, bioavailability, deltaTHours, ke, ka)
+      total += doseContributionAt(doseMg, bioavailability, deltaTHours, ke, ka)
     }
-    raw.push({ time: new Date(tMs), level: Math.max(0, total) })
+    raw.push({
+      time: new Date(tMs),
+      level: Math.max(0, total),
+      status: tMs <= latestActualTimestamp ? 'actual' : 'planned',
+    })
   }
 
   const peak = Math.max(...raw.map(p => p.level), 0)
-  if (peak <= 0) return raw.map(p => ({ time: p.time, level: 0 }))
+  if (peak <= 0) return raw.map(p => ({ ...p, level: 0 }))
 
   return raw.map(p => ({
     time: p.time,
     level: (p.level / peak) * 100,
+    status: p.status,
   }))
 }
 
@@ -345,7 +422,8 @@ export async function getCurrentBlutspiegelLevel(
   tmaxHours: number,
   bioavailability: number = 1.0,
 ): Promise<CurrentBlutspiegelLevel> {
-  const events = await loadDoseHistory(cycleId)
+  const history = await loadDoseHistory(cycleId)
+  const { events, interruptedAt } = history
   const takenEvents = events.filter(e => e.status === 'taken')
 
   const { data: cycle, error: cycleErr } = await supabase
@@ -368,6 +446,7 @@ export async function getCurrentBlutspiegelLevel(
       nextDoseIn,
       levelAfterNextDose: 0,
       unit: cycleUnit,
+      interruptedAt,
     }
   }
 
@@ -377,6 +456,7 @@ export async function getCurrentBlutspiegelLevel(
     tmaxHours,
     bioavailability,
     30,
+    interruptedAt ? new Date(interruptedAt) : null,
   )
 
   if (!curve.length) {
@@ -384,6 +464,7 @@ export async function getCurrentBlutspiegelLevel(
       ...EMPTY_CURRENT_LEVEL,
       nextDoseIn,
       unit: cycleUnit,
+      interruptedAt,
     }
   }
 
@@ -397,6 +478,7 @@ export async function getCurrentBlutspiegelLevel(
     tmaxHours,
     bioavailability,
     30,
+    interruptedAt ? new Date(interruptedAt) : null,
   )
   const tenHoursAgo = new Date(now.getTime() - 10 * 3_600_000)
   const recentSpark = sparkCurve.filter(p => p.time.getTime() >= tenHoursAgo.getTime())
@@ -408,16 +490,12 @@ export async function getCurrentBlutspiegelLevel(
   const futureDose: DoseEvent = {
     timestamp: nextDose,
     dose: schedule.dose,
-    status: 'taken',
+    unit: schedule.unit,
+    status: 'planned',
   }
   const simEnd = new Date(nextDose.getTime() + tmaxHours * 3_600_000 * 2)
-  const futureCurve = calculateCurveTo(
-    [...takenEvents, futureDose],
-    simEnd,
-    halfLifeHours,
-    tmaxHours,
-    bioavailability,
-    30,
+  const futureCurve = interruptedAt ? [] : calculateCurveTo(
+    [...takenEvents, futureDose], simEnd, halfLifeHours, tmaxHours, bioavailability, 30,
   )
   const afterNext = futureCurve.filter(p => p.time.getTime() >= nextDose.getTime())
   const levelAfterNextDose = afterNext.length
@@ -432,5 +510,6 @@ export async function getCurrentBlutspiegelLevel(
     levelAfterNextDose,
     peakLabel: peakLabelFromCurve(curve, now),
     unit: cycleUnit,
+    interruptedAt,
   }
 }

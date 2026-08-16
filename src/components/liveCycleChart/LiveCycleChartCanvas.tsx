@@ -9,6 +9,7 @@ import { format } from 'date-fns'
 import { de as deLocale } from 'date-fns/locale'
 import {
   lerpLevel, panViewEnd, clampViewEnd, pickChartTimeTicks, panHapticStepMs,
+  splitLiveCurveSegments,
   LIVE_CHART_WINDOW_MS_MOBILE,
   LIVE_CHART_WINDOW_MS_DESKTOP,
   type ChartPoint, type MarkerPoint, type NamedMarker,
@@ -44,6 +45,7 @@ interface LiveCycleChartProps {
   windowMs: number
   height?: number
   onNavState?: (showJetzt: boolean, hasHistory: boolean) => void
+  interruptedAt?: number | null
 }
 
 export const LiveCycleChartCanvas = forwardRef<LiveCycleChartHandle, LiveCycleChartProps>(
@@ -56,6 +58,7 @@ function LiveCycleChartCanvas({
   windowMs,
   height = 180,
   onNavState,
+  interruptedAt = null,
 }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -67,6 +70,7 @@ function LiveCycleChartCanvas({
   const namedRef = useRef(namedMarkers)
   const accentRef = useRef(accent)
   const windowMsRef = useRef(windowMs)
+  const interruptedAtRef = useRef(interruptedAt)
 
   // Pan-/Lese-Zustand
   const viewEndRef = useRef(0)
@@ -159,7 +163,11 @@ function LiveCycleChartCanvas({
     ctx.save()
     ctx.beginPath(); ctx.rect(dX, dY, dW, dH); ctx.clip()
     const buf = win * 0.05
-    const vis = pts.filter(p => p.ts >= viewStart - buf && p.ts <= viewEnd + buf)
+    const vis = pts.filter(p => (
+      p.ts >= viewStart - buf
+      && p.ts <= viewEnd + buf
+      && (interruptedAtRef.current == null || p.ts < interruptedAtRef.current)
+    ))
     if (vis.length >= 2) {
       const grad = ctx.createLinearGradient(0, dY, 0, dY + dH)
       grad.addColorStop(0, accentRef.current + '38')
@@ -170,10 +178,19 @@ function LiveCycleChartCanvas({
       ctx.lineTo(tsToX(vis[vis.length - 1].ts), dY + dH)
       ctx.lineTo(tsToX(vis[0].ts), dY + dH)
       ctx.closePath(); ctx.fillStyle = grad; ctx.fill()
-      ctx.beginPath()
-      ctx.moveTo(tsToX(vis[0].ts), lvToY(vis[0].level))
-      for (let i = 1; i < vis.length; i++) ctx.lineTo(tsToX(vis[i].ts), lvToY(vis[i].level))
-      ctx.strokeStyle = accentRef.current; ctx.lineWidth = 1.8; ctx.stroke()
+      for (const segment of splitLiveCurveSegments(vis, interruptedAtRef.current)) {
+        if (segment.points.length < 2) continue
+        ctx.beginPath()
+        ctx.moveTo(tsToX(segment.points[0].ts), lvToY(segment.points[0].level))
+        for (let i = 1; i < segment.points.length; i++) {
+          ctx.lineTo(tsToX(segment.points[i].ts), lvToY(segment.points[i].level))
+        }
+        ctx.strokeStyle = accentRef.current
+        ctx.lineWidth = 1.8
+        ctx.setLineDash(segment.kind === 'planned' ? [6, 5] : [])
+        ctx.stroke()
+      }
+      ctx.setLineDash([])
     }
     const readingX = isReadingRef.current
       ? tsToX(Math.max(viewStart, Math.min(viewEnd, readTsRef.current)))
@@ -369,6 +386,7 @@ function LiveCycleChartCanvas({
     namedRef.current = namedMarkers
     accentRef.current = accent
     windowMsRef.current = windowMs
+    interruptedAtRef.current = interruptedAt
     if (points.length) {
       const now = points[points.length - 1].ts
       const start = points[0].ts
@@ -377,7 +395,7 @@ function LiveCycleChartCanvas({
       notifyNav(!followLiveRef.current, now - start > windowMs)
     }
     scheduleRedraw()
-  }, [points, doseMarkers, peakMarkers, namedMarkers, accent, windowMs, scheduleRedraw])
+  }, [points, doseMarkers, peakMarkers, namedMarkers, accent, windowMs, interruptedAt, scheduleRedraw])
 
   // ResizeObserver
   useEffect(() => {

@@ -9,6 +9,8 @@ import {
   type BlutspiegelTrend,
   type CurrentBlutspiegelLevel,
 } from '../services/blutspiegelHistory'
+import { evaluatePkReadiness, type PkRequirement } from '../features/my-stack/lib/pkReadiness'
+import type { TrackingLevel } from '../features/my-stack/types'
 
 // ── Typen & Kategorie-Farben ────────────────────────────────────────────────
 
@@ -24,18 +26,29 @@ interface PkProfileEmbed {
 
 interface CycleWithPk {
   id: string
-  dose: number
-  unit: string
+  dose: number | null
+  unit: string | null
+  method: string | null
+  intake_time_custom: string | null
   active: boolean
   end_date: string | null
-  peptides: {
-    name: string
-    pk_profile_id: string | null
-    pk_profiles: PkProfileEmbed | null
+  stack_items: {
+    id: string
+    display_name: string
+    tracking_level: TrackingLevel
+    pk_profile_method: string | null
+    ingredients: Array<{
+      position: number
+      substance_catalog: {
+        pk_profile_id: string | null
+        pk_profiles: PkProfileEmbed | null
+      } | null
+    }>
   } | null
 }
 
-interface CarouselCard {
+interface ReadyCarouselCard {
+  kind: 'ready'
   cycleId: string
   pkProfileId: string
   peptideName: string
@@ -46,6 +59,16 @@ interface CarouselCard {
   halfLifeHours: number
   level: CurrentBlutspiegelLevel
 }
+
+interface IncompleteCarouselCard {
+  kind: 'missing'
+  cycleId: string
+  stackItemId: string
+  peptideName: string
+  missing: PkRequirement[]
+}
+
+type CarouselCard = ReadyCarouselCard | IncompleteCarouselCard
 
 const CATEGORY_ACCENT: Record<PkCategory, string> = {
   peptide: '#00ccf5',
@@ -69,6 +92,17 @@ function isCycleActiveForCarousel(cycle: CycleWithPk, todayKey: string): boolean
   if (cycle.active) return true
   if (cycle.end_date && cycle.end_date >= todayKey) return true
   return false
+}
+
+function linkedProfile(cycle: CycleWithPk): { id: string; profile: PkProfileEmbed } | null {
+  const ingredients = cycle.stack_items?.ingredients.slice().sort((a, b) => a.position - b.position) ?? []
+  for (const ingredient of ingredients) {
+    const catalog = ingredient.substance_catalog
+    if (catalog?.pk_profile_id && catalog.pk_profiles) {
+      return { id: catalog.pk_profile_id, profile: catalog.pk_profiles }
+    }
+  }
+  return null
 }
 
 const REFRESH_INTERVAL_MS = 5000
@@ -282,7 +316,7 @@ function BlutspiegelCard({
   remainingMs,
   refreshFlashing,
 }: {
-  card: CarouselCard
+  card: ReadyCarouselCard
   remainingMs: number
   refreshFlashing: boolean
 }) {
@@ -321,6 +355,11 @@ function BlutspiegelCard({
       />
 
       <div style={{ position: 'relative', zIndex: 2 }}>
+        {level.interruptedAt && (
+          <p role="status" style={{ marginBottom: 8, fontSize: 11, fontWeight: 750, color: '#fbbf24' }}>
+            Simulation unterbrochen: Menge nicht getrackt
+          </p>
+        )}
         {/* Name (left) + LIVE status (right) in one row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
           <p style={{ fontSize: '0.9rem', fontWeight: 850, color: 'var(--text)', lineHeight: 1.2, margin: 0, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -370,6 +409,34 @@ function BlutspiegelCard({
   )
 }
 
+function IncompletePkCard({ card }: { card: IncompleteCarouselCard }) {
+  const labels: Record<PkRequirement, string> = {
+    complete_tracking: 'vollständiges Tracking',
+    method: 'bestätigte Route',
+    dose: 'Dosis',
+    unit: 'Einheit',
+    time: 'genaue Uhrzeit',
+  }
+
+  return (
+    <div className={`w-full sm:mx-auto sm:max-w-[800px] ${shellClassName}`} style={{ padding: 20 }}>
+      <p style={{ fontSize: '0.9rem', fontWeight: 850, color: 'var(--text)' }}>{card.peptideName}</p>
+      <p style={{ marginTop: 7, fontSize: '0.78rem', fontWeight: 750, color: 'var(--text-dim)' }}>
+        PK-Daten unvollständig
+      </p>
+      <p style={{ marginTop: 5, fontSize: '0.7rem', lineHeight: 1.55, color: 'var(--text-muted)' }}>
+        Fehlend: {card.missing.map(requirement => labels[requirement]).join(', ')}. Bis dahin wird keine Kurve berechnet.
+      </p>
+      <Link
+        to={`/my-stack?edit=${encodeURIComponent(card.stackItemId)}&intent=pk`}
+        className="mt-3 inline-flex min-h-11 cursor-pointer items-center rounded-xl border border-sky-400/30 bg-sky-400/[0.08] px-4 text-sm font-semibold text-sky-200 transition-colors hover:bg-sky-400/[0.13] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 motion-reduce:transition-none"
+      >
+        Angaben vervollständigen
+      </Link>
+    </div>
+  )
+}
+
 // ── Karussell ─────────────────────────────────────────────────────────────────
 
 export function BlutspiegelCarousel() {
@@ -406,17 +473,27 @@ export function BlutspiegelCarousel() {
         id,
         dose,
         unit,
+        method,
+        intake_time_custom,
         active,
         end_date,
-        peptides (
-          name,
-          pk_profile_id,
-          pk_profiles (
-            name,
-            half_life_hours,
-            tmax_hours,
-            bioavailability_sc,
-            category
+        stack_items (
+          id,
+          display_name,
+          tracking_level,
+          pk_profile_method,
+          ingredients:stack_item_ingredients (
+            position,
+            substance_catalog (
+              pk_profile_id,
+              pk_profiles (
+                name,
+                half_life_hours,
+                tmax_hours,
+                bioavailability_sc,
+                category
+              )
+            )
           )
         )
       `)
@@ -428,12 +505,8 @@ export function BlutspiegelCarousel() {
       return
     }
 
-    const eligible = (data as unknown as CycleWithPk[]).filter((cycle) => {
-      const pkId = cycle.peptides?.pk_profile_id
-      const pk = cycle.peptides?.pk_profiles
-      if (!pkId || !pk) return false
-      return isCycleActiveForCarousel(cycle, todayKey)
-    })
+    const eligible = (data as unknown as CycleWithPk[])
+      .filter(cycle => isCycleActiveForCarousel(cycle, todayKey))
 
     if (!eligible.length) {
       setCards([])
@@ -443,7 +516,28 @@ export function BlutspiegelCarousel() {
 
     const levels = await Promise.all(
       eligible.map(async (cycle) => {
-        const pk = cycle.peptides!.pk_profiles!
+        const linked = linkedProfile(cycle)
+        const readiness = evaluatePkReadiness({
+          trackingLevel: cycle.stack_items?.tracking_level ?? 'intake_only',
+          pkProfileId: linked?.id ?? null,
+          pkProfileMethod: cycle.stack_items?.pk_profile_method ?? null,
+          method: cycle.method,
+          dose: cycle.dose,
+          unit: cycle.unit,
+          scheduledAt: cycle.intake_time_custom,
+        })
+        if (readiness.status === 'unsupported' || !cycle.stack_items) return null
+        if (readiness.status === 'missing') {
+          return {
+            kind: 'missing',
+            cycleId: cycle.id,
+            stackItemId: cycle.stack_items.id,
+            peptideName: cycle.stack_items.display_name,
+            missing: readiness.missing,
+          } satisfies IncompleteCarouselCard
+        }
+        if (!linked) return null
+        const pk = linked.profile
         const category = normalizeCategory(pk.category)
         const level = await getCurrentBlutspiegelLevel(
           cycle.id,
@@ -452,9 +546,10 @@ export function BlutspiegelCarousel() {
           pk.bioavailability_sc,
         )
         return {
+          kind: 'ready',
           cycleId: cycle.id,
-          pkProfileId: cycle.peptides!.pk_profile_id!,
-          peptideName: cycle.peptides!.name,
+          pkProfileId: linked.id,
+          peptideName: cycle.stack_items.display_name,
           profileName: pk.name,
           category,
           accent: CATEGORY_ACCENT[category],
@@ -465,8 +560,9 @@ export function BlutspiegelCarousel() {
       }),
     )
 
-    setCards(levels)
-    setActiveIndex((prev) => (levels.length ? Math.min(prev, levels.length - 1) : 0))
+    const visibleLevels = levels.filter((card): card is CarouselCard => card !== null)
+    setCards(visibleLevels)
+    setActiveIndex((prev) => (visibleLevels.length ? Math.min(prev, visibleLevels.length - 1) : 0))
     nextRefreshAt.current = Date.now() + REFRESH_INTERVAL_MS
     flashTriggeredRef.current = false
     setLoading(false)
@@ -563,7 +659,7 @@ export function BlutspiegelCarousel() {
       <div className={shellClassName} style={{ padding: 20, textAlign: 'center' }}>
         <Activity size={28} color="var(--accent)" style={{ margin: '0 auto 12px' }} />
         <p style={{ fontSize: '0.82rem', fontWeight: 750, color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: 14 }}>
-          Verknüpfe Peptide mit PK-Profilen um den Live-Spiegel zu sehen
+          Keine PK-bereiten Einträge für den Live-Spiegel
         </p>
         <Link
           to="/simulation"
@@ -613,11 +709,15 @@ export function BlutspiegelCarousel() {
         >
           {cards.map((card) => (
             <div key={card.cycleId} style={{ flex: '0 0 100%', width: '100%', paddingRight: 0 }}>
-              <BlutspiegelCard
-                card={card}
-                remainingMs={remainingMs}
-                refreshFlashing={refreshFlashing}
-              />
+              {card.kind === 'missing' ? (
+                <IncompletePkCard card={card} />
+              ) : (
+                <BlutspiegelCard
+                  card={card}
+                  remainingMs={remainingMs}
+                  refreshFlashing={refreshFlashing}
+                />
+              )}
             </div>
           ))}
         </div>
@@ -651,7 +751,7 @@ export function BlutspiegelCarousel() {
                   borderRadius: 999,
                   border: 'none',
                   padding: 0,
-                  background: active ? card.accent : 'var(--border)',
+                  background: active && card.kind === 'ready' ? card.accent : 'var(--border)',
                   transition: 'width 0.25s ease, background 0.25s ease',
                   cursor: 'pointer',
                 }}

@@ -1,6 +1,34 @@
-export interface ChartPoint { ts: number; level: number }
+export interface ChartPoint { ts: number; level: number; status?: 'actual' | 'planned' }
 export interface MarkerPoint { ts: number; level: number }
 export interface NamedMarker { ts: number; label: string; color: string }
+
+export interface LiveCurveSegment {
+  kind: 'actual' | 'planned'
+  points: ChartPoint[]
+}
+
+export function splitLiveCurveSegments(
+  points: ChartPoint[],
+  interruptedAt: number | null = null,
+): LiveCurveSegment[] {
+  const usablePoints = interruptedAt == null
+    ? points
+    : points.filter(point => point.ts < interruptedAt)
+  const segments: LiveCurveSegment[] = []
+
+  for (const point of usablePoints) {
+    const kind = point.status ?? 'actual'
+    const current = segments[segments.length - 1]
+    if (!current || current.kind !== kind) {
+      const boundary = current?.points[current.points.length - 1]
+      segments.push({ kind, points: boundary ? [boundary, point] : [point] })
+    } else {
+      current.points.push(point)
+    }
+  }
+
+  return segments
+}
 
 /** Lineare Interpolation des Levels am Zeitpunkt ts über aufsteigend sortierte Punkte. */
 export function lerpLevel(points: ChartPoint[], ts: number): number {

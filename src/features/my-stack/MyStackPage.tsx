@@ -509,6 +509,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [catalogEntries, setCatalogEntries] = useState<SubstanceCatalogEntry[]>([])
   const [catalogUnavailable, setCatalogUnavailable] = useState(false)
   const [wizardInitialColor, setWizardInitialColor] = useState('')
+  const [wizardIntent, setWizardIntent] = useState<'pk' | undefined>()
   const [infoPeptide, setInfoPeptide]         = useState<Peptide | null>(null)
   const [search, setSearch]                   = useState('')
   const [showTrackingForm, setShowTrackingForm] = useState(false)
@@ -697,10 +698,25 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   useEffect(() => {
     if (location.hash !== '#new-substance') return
     setEditingPeptideId(null)
+    setWizardIntent(undefined)
     setWizardInitialColor(getRandomStackItemColor())
     setShowPeptideForm(true)
     navigate(location.pathname, { replace: true })
   }, [location.hash, location.pathname, navigate])
+
+  useEffect(() => {
+    if (loading) return
+    const params = new URLSearchParams(location.search)
+    if (params.get('intent') !== 'pk') return
+    const stackItemId = params.get('edit')
+    if (!stackItemId || !peptides.some(item => item.id === stackItemId)) return
+
+    setEditingPeptideId(stackItemId)
+    setWizardInitialColor('')
+    setWizardIntent('pk')
+    setShowPeptideForm(true)
+    navigate(location.pathname, { replace: true })
+  }, [loading, location.pathname, location.search, navigate, peptides])
 
   useEffect(() => {
     if (!showTrackingForm) return
@@ -819,12 +835,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // ── Peptid CRUD ───────────────────────────────────────────────────────────
   const handleNewPeptide = () => {
     setEditingPeptideId(null)
+    setWizardIntent(undefined)
     setWizardInitialColor(getRandomStackItemColor())
     setShowPeptideForm(true)
   }
 
   const openEditPeptide = (p: Peptide) => {
     setEditingPeptideId(p.id)
+    setWizardIntent(undefined)
     setWizardInitialColor('')
     setShowPeptideForm(true)
   }
@@ -2891,7 +2909,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           existingItem={editingPeptideId ? peptides.find(item => item.id === editingPeptideId) : undefined}
           existingPlan={editingPeptideId ? activePlanFor(editingPeptideId) : undefined}
           initialColorHex={wizardInitialColor}
-          onClose={() => setShowPeptideForm(false)}
+          intent={wizardIntent}
+          onClose={() => {
+            setShowPeptideForm(false)
+            setWizardIntent(undefined)
+          }}
           onSave={handleSaveStackItem}
           onOpenExisting={openExistingStackItem}
         />

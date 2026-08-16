@@ -3,12 +3,15 @@ import {
   loadDoseHistory,
   calculateHistoryBlutspiegelCurve,
 } from './blutspiegelHistory'
+import { evaluatePkReadiness } from '../features/my-stack/lib/pkReadiness'
+import type { TrackingLevel } from '../features/my-stack/types'
 
 // ── Public types ────────────────────────────────────────────────────────────
 
 export interface ChartPoint {
   timestamp: number   // Unix ms
   level: number       // 0–100 (normalised)
+  status: 'actual' | 'planned'
 }
 
 export interface DoseMarker {
@@ -32,6 +35,7 @@ export interface CycleChartData {
   peakMarkers: PeakMarker[]
   unit: string
   halfLifeHours: number
+  interruptedAt: number | null
 }
 
 // ── Internals ───────────────────────────────────────────────────────────────
@@ -53,11 +57,35 @@ interface PkRow {
 
 interface CycleRow {
   id: string
-  unit: string
-  peptides: {
-    name: string
-    pk_profiles: PkRow | null
+  dose: number | null
+  unit: string | null
+  method: string | null
+  intake_time_custom: string | null
+  stack_items: {
+    id: string
+    display_name: string
+    tracking_level: TrackingLevel
+    pk_profile_method: string | null
+    ingredients: Array<{
+      position: number
+      substance_catalog: {
+        pk_profile_id: string | null
+        pk_profiles: PkRow | null
+      } | null
+    }>
   } | null
+}
+
+function linkedProfile(cycle: CycleRow): { id: string; profile: PkRow } | null {
+  const links = cycle.stack_items?.ingredients
+    .slice()
+    .sort((a, b) => a.position - b.position)
+    .map(ingredient => ingredient.substance_catalog)
+    .filter((catalog): catalog is NonNullable<typeof catalog> => Boolean(catalog)) ?? []
+  const link = links.find(catalog => catalog.pk_profile_id && catalog.pk_profiles)
+  return link?.pk_profile_id && link.pk_profiles
+    ? { id: link.pk_profile_id, profile: link.pk_profiles }
+    : null
 }
 
 /** Local maxima with level > 20, de-duplicated within 1 h. */
@@ -80,9 +108,13 @@ function detectPeaks(pts: ChartPoint[]): PeakMarker[] {
 export async function loadAllCycleChartData(userId: string): Promise<CycleChartData[]> {
   const { data: cycles } = await supabase
     .from('cycles')
-    .select(`id, unit,
-      peptides ( name,
-        pk_profiles ( half_life_hours, tmax_hours, bioavailability_sc, category )
+    .select(`id, dose, unit, method, intake_time_custom,
+      stack_items ( id, display_name, tracking_level, pk_profile_method,
+        ingredients:stack_item_ingredients ( position,
+          substance_catalog ( pk_profile_id,
+            pk_profiles ( half_life_hours, tmax_hours, bioavailability_sc, category )
+          )
+        )
       )`)
     .eq('user_id', userId)
     .eq('active', true)
@@ -93,37 +125,54 @@ export async function loadAllCycleChartData(userId: string): Promise<CycleChartD
 
   await Promise.all(
     (cycles as unknown as CycleRow[]).map(async cycle => {
-      const pk = cycle.peptides?.pk_profiles
-      if (!pk) return
+      const linked = linkedProfile(cycle)
+      const readiness = evaluatePkReadiness({
+        trackingLevel: cycle.stack_items?.tracking_level ?? 'intake_only',
+        pkProfileId: linked?.id ?? null,
+        pkProfileMethod: cycle.stack_items?.pk_profile_method ?? null,
+        method: cycle.method,
+        dose: cycle.dose,
+        unit: cycle.unit,
+        scheduledAt: cycle.intake_time_custom,
+      })
+      if (readiness.status !== 'ready' || !linked) return
+      const pk = linked.profile
 
-      const events = await loadDoseHistory(cycle.id)
+      const { events, interruptedAt } = await loadDoseHistory(cycle.id)
       if (!events.some(e => e.status === 'taken')) return
 
       // 15-min resolution for smooth canvas rendering
       const curveRaw = calculateHistoryBlutspiegelCurve(
-        events, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc, 15,
+        events,
+        pk.half_life_hours,
+        pk.tmax_hours,
+        pk.bioavailability_sc,
+        15,
+        interruptedAt ? new Date(interruptedAt) : null,
       )
       const points: ChartPoint[] = curveRaw.map(p => ({
         timestamp: p.time.getTime(),
         level:     p.level,
+        status:    p.status,
       }))
 
       const doseMarkers: DoseMarker[] = events.map(ev => ({
         timestamp: ev.timestamp.getTime(),
         dose:      ev.dose,
-        unit:      cycle.unit,
-        status:    ev.status,
+        unit:      ev.unit,
+        status:    ev.status === 'skipped' ? 'skipped' : 'taken',
       }))
 
       results.push({
         cycleId:      cycle.id,
-        peptideName:  cycle.peptides?.name ?? '?',
+        peptideName:  cycle.stack_items?.display_name ?? '?',
         accent:       CATEGORY_ACCENT[pk.category] ?? '#94a3b8',
         points,
         doseMarkers,
         peakMarkers:  detectPeaks(points),
-        unit:         cycle.unit,
+        unit:         cycle.unit!,
         halfLifeHours: pk.half_life_hours,
+        interruptedAt: interruptedAt ? new Date(interruptedAt).getTime() : null,
       })
     }),
   )

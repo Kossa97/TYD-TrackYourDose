@@ -58,6 +58,12 @@ const existingVitaminD: StackItem = {
   }],
 }
 
+const pkVitaminD3: SubstanceCatalogEntry = {
+  ...vitaminD3,
+  suggested_units: ['mg'],
+  pk_profile_id: 'pk-vitamin-d3',
+}
+
 const existingPlan: IntakePlanDraft = {
   id: 'cycle-1',
   name: 'Vitamin D breakfast',
@@ -179,6 +185,104 @@ afterEach(() => {
 })
 
 describe('StackItemWizard interactions', () => {
+  it('includes missing complete-strength fields in a PK upgrade flow', () => {
+    const pkItem: StackItem = {
+      ...existingVitaminD,
+      tracking_level: 'with_amount',
+      pk_profile_method: null,
+      ingredients: existingVitaminD.ingredients.map(ingredient => ({
+        ...ingredient,
+        amount_value: null,
+        amount_unit: null,
+        basis_value: null,
+        basis_unit: null,
+      })),
+    }
+    const pkPlan: IntakePlanDraft = {
+      ...existingPlan,
+      dose: 1,
+      unit: 'mg',
+      time: null,
+    }
+    renderWizard({
+      catalogEntries: [pkVitaminD3],
+      existingItem: pkItem,
+      existingPlan: pkPlan,
+      intent: 'pk',
+    })
+
+    fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_complete_title/ }))
+    continueWizard()
+
+    expect(screen.getByLabelText('my_stack_strength_value')).toBeTruthy()
+    expect(screen.queryByLabelText('my_stack_question')).toBeNull()
+  })
+
+  it('shows only the missing complete-tracking step for a PK edit intent', async () => {
+    const pkItem: StackItem = {
+      ...existingVitaminD,
+      tracking_level: 'with_amount',
+      pk_profile_method: 'Oral',
+    }
+    const pkPlan: IntakePlanDraft = {
+      ...existingPlan,
+      dose: 1,
+      unit: 'mg',
+      time: '08:30',
+    }
+    const { onSave } = renderWizard({
+      catalogEntries: [pkVitaminD3],
+      existingItem: pkItem,
+      existingPlan: pkPlan,
+      intent: 'pk',
+    })
+
+    expect(screen.getByRole('group', { name: 'my_stack_tracking_question' })).toBeTruthy()
+    expect(screen.queryByLabelText('my_stack_question')).toBeNull()
+    expect(screen.queryByLabelText('my_stack_plan_frequency')).toBeNull()
+
+    fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_complete_title/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
+    expect(onSave.mock.calls[0][0]).toMatchObject({
+      trackingLevel: 'complete',
+      pkProfileMethod: 'Oral',
+      plan: { dose: 1, unit: 'mg', time: '08:30' },
+    })
+  })
+
+  it('opens on the missing PK plan fields and requires explicit method confirmation', async () => {
+    const pkItem: StackItem = {
+      ...existingVitaminD,
+      pk_profile_method: null,
+    }
+    const pkPlan: IntakePlanDraft = {
+      ...existingPlan,
+      dose: 1,
+      unit: 'mg',
+      time: null,
+    }
+    const { onSave } = renderWizard({
+      catalogEntries: [pkVitaminD3],
+      existingItem: pkItem,
+      existingPlan: pkPlan,
+      intent: 'pk',
+    })
+
+    expect(screen.getByLabelText('my_stack_plan_frequency')).toBeTruthy()
+    expect(screen.queryByRole('group', { name: 'my_stack_tracking_question' })).toBeNull()
+    fireEvent.change(screen.getByLabelText('my_stack_plan_time'), { target: { value: '08:30' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'my_stack_pk_method_confirm' }))
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
+    expect(onSave.mock.calls[0][0]).toMatchObject({
+      pkProfileMethod: 'Oral',
+      plan: { method: 'Oral', dose: 1, unit: 'mg', time: '08:30' },
+    })
+  })
+
   it('preserves raw multi-word typing and a chosen custom category', () => {
     renderWizard()
     const input = screen.getByLabelText('my_stack_question') as HTMLInputElement

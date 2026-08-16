@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { lerpLevel, type ChartPoint } from './chartMath'
+import { lerpLevel, splitLiveCurveSegments, type ChartPoint } from './chartMath'
 
 const pts: ChartPoint[] = [
   { ts: 0, level: 0 },
@@ -21,6 +21,27 @@ describe('lerpLevel', () => {
   })
   it('gibt 0 bei leerer Liste', () => {
     expect(lerpLevel([], 5)).toBe(0)
+  })
+})
+
+describe('splitLiveCurveSegments', () => {
+  it('splits actual and planned segments without bridging an interruption', () => {
+    const interruptedAt = 30
+    const curvePoints: ChartPoint[] = [
+      { ts: 0, level: 0, status: 'actual' },
+      { ts: 10, level: 50, status: 'actual' },
+      { ts: 20, level: 35, status: 'planned' },
+      { ts: 30, level: 25, status: 'planned' },
+      { ts: 40, level: 15, status: 'planned' },
+    ]
+
+    const segments = splitLiveCurveSegments(curvePoints, interruptedAt)
+
+    expect(segments.map(segment => segment.kind)).toEqual(['actual', 'planned'])
+    expect(segments[1].points[0].ts).toBe(10)
+    expect(segments.every(segment => (
+      segment.points.every(point => point.ts < interruptedAt)
+    ))).toBe(true)
   })
 })
 

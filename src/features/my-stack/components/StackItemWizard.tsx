@@ -29,6 +29,7 @@ import {
   type WizardStep,
 } from '../lib/wizardState'
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
+import { evaluatePkReadiness, toPkMilligrams } from '../lib/pkReadiness'
 import { DosageFormPicker } from './DosageFormPicker'
 import { IngredientEditor } from './IngredientEditor'
 import { IntakePlanEditor } from './IntakePlanEditor'
@@ -46,6 +47,37 @@ export interface StackItemWizardProps {
   onClose: () => void
   onSave: (draft: StackItemSetupDraft, mode: WizardSaveMode) => Promise<void>
   onOpenExisting: (item: StackItem) => void
+  intent?: 'pk'
+}
+
+function pkIntentSteps(
+  item: StackItem,
+  plan: StackItemSetupDraft['plan'] | undefined,
+): WizardStep[] {
+  const steps: WizardStep[] = []
+  if (item.tracking_level !== 'complete') steps.push('tracking_level')
+  const strengthMissing = item.ingredients.some(ingredient => (
+    ingredient.amount_value == null
+    || !Number.isFinite(ingredient.amount_value)
+    || ingredient.amount_value <= 0
+    || !ingredient.amount_unit?.trim()
+    || ingredient.basis_value == null
+    || !Number.isFinite(ingredient.basis_value)
+    || ingredient.basis_value <= 0
+    || !ingredient.basis_unit?.trim()
+  ))
+  if (strengthMissing) steps.push('strength')
+  const methodMatches = Boolean(
+    plan?.method.trim()
+    && item.pk_profile_method?.trim().toLocaleLowerCase() === plan.method.trim().toLocaleLowerCase(),
+  )
+  const planNeedsAttention = !methodMatches
+    || plan?.dose == null
+    || !plan.unit?.trim()
+    || !plan.time?.trim()
+    || (plan.dose != null && plan.unit != null && toPkMilligrams(plan.dose, plan.unit) == null)
+  if (planNeedsAttention) steps.push('plan')
+  return steps.length ? steps : ['plan']
 }
 
 const FOCUSABLE_SELECTOR = [
@@ -87,13 +119,25 @@ export function StackItemWizard({
   onClose,
   onSave,
   onOpenExisting,
+  intent,
 }: StackItemWizardProps) {
   const { t } = useTranslation()
+  const pkIntentStepsRef = useRef<WizardStep[] | null>(null)
   const [state, dispatch] = useReducer(
     wizardReducer,
     undefined,
-    () => initialWizardState(existingItem, initialColorHex, existingPlan),
+    () => {
+      const initial = initialWizardState(existingItem, initialColorHex, existingPlan)
+      if (intent === 'pk' && existingItem) {
+        const intentSteps = pkIntentSteps(existingItem, existingPlan)
+        pkIntentStepsRef.current = intentSteps
+        initial.step = intentSteps[0]
+      }
+      return initial
+    },
   )
+  const [pkProfileMethod, setPkProfileMethod] = useState(existingItem?.pk_profile_method ?? null)
+  const [pkIntentError, setPkIntentError] = useState<string | null>(null)
   const [showErrors, setShowErrors] = useState(false)
   const [identityChoiceMade, setIdentityChoiceMade] = useState(false)
   const [identityChoiceError, setIdentityChoiceError] = useState(false)
@@ -104,7 +148,9 @@ export function StackItemWizard({
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const duplicateActionRef = useRef<HTMLButtonElement>(null)
 
-  const steps = wizardSteps(state)
+  const steps = intent === 'pk' && pkIntentStepsRef.current
+    ? pkIntentStepsRef.current
+    : wizardSteps(state)
   const currentStepIndex = steps.indexOf(state.step)
   const validationErrors = showErrors ? validateStackItemDraft(state.draft) : {}
   const planValidationErrors = showErrors
@@ -123,8 +169,10 @@ export function StackItemWizard({
     ))
   }, [catalogEntries, state.draft.displayName])
   const selectedCatalogEntry = useMemo(() => {
-    const catalogId = state.draft.ingredients[0]?.catalog_substance_id
-    return catalogId ? catalogEntries.find(entry => entry.id === catalogId) : undefined
+    const catalogIds = state.draft.ingredients
+      .map(ingredient => ingredient.catalog_substance_id)
+      .filter((id): id is string => Boolean(id))
+    return catalogEntries.find(entry => catalogIds.includes(entry.id))
   }, [catalogEntries, state.draft.ingredients])
   const identityChanged = Boolean(state.original && didIdentityChange(state.original, state.draft))
 
@@ -155,6 +203,7 @@ export function StackItemWizard({
     setShowErrors(false)
     setSaveError(null)
     setDuplicateCandidate(null)
+    setPkIntentError(null)
     requestAnimationFrame(() => {
       dialogRef.current?.querySelector<HTMLElement>('[data-step-autofocus]')?.focus()
     })
@@ -196,6 +245,7 @@ export function StackItemWizard({
 
     const nextStep = steps[currentStepIndex + 1]
     if (nextStep) selectStep(nextStep)
+    else if (intent === 'pk') void handleSave()
   }
 
   function handleBack(): void {
@@ -222,13 +272,41 @@ export function StackItemWizard({
       return
     }
 
+    if (intent === 'pk') {
+      const linkedProfileId = selectedCatalogEntry?.pk_profile_id ?? null
+      const readiness = evaluatePkReadiness({
+        trackingLevel: state.draft.trackingLevel,
+        pkProfileId: linkedProfileId,
+        pkProfileMethod,
+        method: state.draft.plan.method,
+        dose: state.draft.plan.dose,
+        unit: state.draft.plan.unit,
+        scheduledAt: state.draft.plan.time,
+      })
+      if (readiness.status !== 'ready') {
+        const field = readiness.status === 'unsupported'
+          ? readiness.reason === 'unit_conversion' ? 'plan.unit' : 'pkProfileMethod'
+          : readiness.missing[0] === 'complete_tracking' ? 'trackingLevel'
+            : readiness.missing[0] === 'dose' ? 'plan.dose'
+              : readiness.missing[0] === 'unit' ? 'plan.unit'
+                : readiness.missing[0] === 'time' ? 'plan.time'
+                  : state.draft.plan.method.trim() ? 'pkProfileMethod' : 'plan.method'
+        setPkIntentError(String(t('my_stack_pk_requirements_missing', {
+          defaultValue: 'Vervollständige und bestätige alle PK-Angaben, bevor du speicherst.',
+        })))
+        focusField(field)
+        return
+      }
+    }
+
     if (identityChanged && !identityChoiceMade) {
       setIdentityChoiceError(true)
       focusField('saveMode')
       return
     }
 
-    const duplicate = findDuplicate(existingItems, state.draft)
+    const draftWithPkMethod = { ...state.draft, pkProfileMethod }
+    const duplicate = findDuplicate(existingItems, draftWithPkMethod)
     if (duplicate && !allowDuplicate) {
       setDuplicateCandidate(duplicate)
       setSaveError(null)
@@ -239,8 +317,8 @@ export function StackItemWizard({
       ? 'duplicate'
       : identityChanged ? state.saveMode : state.original ? 'update' : 'create'
     const draftForSave = mode === 'duplicate'
-      ? { ...state.draft, id: undefined, plan: { ...state.draft.plan, id: undefined } }
-      : state.draft
+      ? { ...draftWithPkMethod, id: undefined, plan: { ...state.draft.plan, id: undefined } }
+      : draftWithPkMethod
 
     setSaving(true)
     setSaveError(null)
@@ -381,14 +459,60 @@ export function StackItemWizard({
         )
       case 'plan':
         return state.draft.dosageForm ? (
-          <IntakePlanEditor
-            trackingLevel={state.draft.trackingLevel}
-            plan={state.draft.plan}
-            dosageForm={state.draft.dosageForm}
-            catalogEntry={selectedCatalogEntry}
-            errors={planValidationErrors}
-            onChange={changes => dispatch({ type: 'plan_changed', changes })}
-          />
+          <div className="space-y-5">
+            <IntakePlanEditor
+              trackingLevel={state.draft.trackingLevel}
+              plan={state.draft.plan}
+              dosageForm={state.draft.dosageForm}
+              catalogEntry={selectedCatalogEntry}
+              errors={planValidationErrors}
+              onChange={changes => {
+                dispatch({ type: 'plan_changed', changes })
+                setPkIntentError(null)
+              }}
+            />
+            {state.draft.trackingLevel === 'complete' && selectedCatalogEntry?.pk_profile_id && (
+              <fieldset
+                data-field="pkProfileMethod"
+                tabIndex={-1}
+                className="rounded-2xl border border-sky-400/25 bg-sky-400/[0.06] p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              >
+                <legend className="px-1 text-sm font-semibold text-sky-100">
+                  {t('my_stack_pk_method_title', { defaultValue: 'PK-Route bestätigen' })}
+                </legend>
+                <label className="mt-2 flex min-h-11 cursor-pointer items-start gap-3 text-sm leading-relaxed text-slate-200">
+                  <input
+                    type="checkbox"
+                    aria-label={String(t('my_stack_pk_method_confirm', { defaultValue: 'PK-Route bestätigen' }))}
+                    checked={Boolean(
+                      state.draft.plan.method.trim()
+                      && pkProfileMethod?.trim().toLocaleLowerCase()
+                        === state.draft.plan.method.trim().toLocaleLowerCase(),
+                    )}
+                    disabled={!state.draft.plan.method.trim()}
+                    onChange={event => {
+                      setPkProfileMethod(event.target.checked ? state.draft.plan.method.trim() : null)
+                      setPkIntentError(null)
+                    }}
+                    className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                  <span>
+                    {state.draft.plan.method.trim()
+                      ? t('my_stack_pk_method_confirm_copy', {
+                          defaultValue: 'Ich bestätige {{method}} als Route für das verknüpfte PK-Profil.',
+                          method: state.draft.plan.method,
+                        })
+                      : t('my_stack_pk_method_choose_first', {
+                          defaultValue: 'Wähle zuerst eine Route im Einnahmeplan.',
+                        })}
+                  </span>
+                </label>
+                {pkIntentError && (
+                  <p role="alert" className="mt-2 text-sm text-rose-300">{pkIntentError}</p>
+                )}
+              </fieldset>
+            )}
+          </div>
         ) : null
       case 'review':
         return (
@@ -640,7 +764,7 @@ export function StackItemWizard({
             </span>
           </button>
 
-          {state.step === 'review' ? (
+          {state.step === 'review' || (intent === 'pk' && currentStepIndex === steps.length - 1) ? (
             <button
               type="button"
               onClick={() => void handleSave()}

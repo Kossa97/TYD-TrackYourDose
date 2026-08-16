@@ -4,7 +4,7 @@ import { FEATURES } from '../config/features'
 import { format } from 'date-fns'
 import { de as deLocale } from 'date-fns/locale'
 import { Activity, ChevronDown, ChevronUp, Info, Loader2 } from 'lucide-react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -28,6 +28,12 @@ import {
   LIVE_CHART_WINDOW_MS_MOBILE,
 } from '../components/liveCycleChart/chartMath'
 import { useMediaQuery } from '../lib/useMediaQuery'
+import {
+  evaluatePkReadiness,
+  type PkReadiness,
+  type PkRequirement,
+} from '../features/my-stack/lib/pkReadiness'
+import type { TrackingLevel } from '../features/my-stack/types'
 
 // ── Typen ─────────────────────────────────────────────────────────────────
 
@@ -55,14 +61,46 @@ interface PkProfileEmbed {
 interface ProtocolCycle {
   id: string
   stack_item_id: string
-  dose: number
-  unit: string
-  method: string
+  dose: number | null
+  unit: string | null
+  method: string | null
+  intake_time_custom: string | null
   stack_items: {
+    id: string
     display_name: string
-    pk_profile_id: string | null
-    pk_profiles: PkProfileEmbed | null
+    tracking_level: TrackingLevel
+    pk_profile_method: string | null
+    ingredients: Array<{
+      position: number
+      substance_catalog: {
+        pk_profile_id: string | null
+        pk_profiles: PkProfileEmbed | null
+      } | null
+    }>
   } | null
+}
+
+function linkedProfile(cycle: ProtocolCycle): { id: string; profile: PkProfileEmbed } | null {
+  const ingredients = cycle.stack_items?.ingredients.slice().sort((a, b) => a.position - b.position) ?? []
+  for (const ingredient of ingredients) {
+    const catalog = ingredient.substance_catalog
+    if (catalog?.pk_profile_id && catalog.pk_profiles) {
+      return { id: catalog.pk_profile_id, profile: catalog.pk_profiles }
+    }
+  }
+  return null
+}
+
+function readinessForCycle(cycle: ProtocolCycle): PkReadiness {
+  return evaluatePkReadiness({
+    trackingLevel: cycle.stack_items?.tracking_level ?? 'intake_only',
+    pkProfileId: linkedProfile(cycle)?.id ?? null,
+    pkProfileMethod: cycle.stack_items?.pk_profile_method ?? null,
+    method: cycle.method,
+    dose: cycle.dose,
+    unit: cycle.unit,
+    scheduledAt: cycle.intake_time_custom,
+  })
 }
 
 type PkCategory = 'peptide' | 'glp1' | 'hormone' | 'sarm' | 'other'
@@ -79,6 +117,62 @@ const TREND_META: Record<BlutspiegelTrend, { label: string; icon: string; color:
   rising:  { label: 'Steigend', icon: '↑', color: '#10b981' },
   falling: { label: 'Fallend',  icon: '↓', color: '#f43f5e' },
   stable:  { label: 'Stabil',   icon: '→', color: '#94a3b8' },
+}
+
+const REQUIREMENT_LABELS: Record<PkRequirement, string> = {
+  complete_tracking: 'Vollständiges Tracking',
+  method: 'Bestätigte Route',
+  dose: 'Dosis',
+  unit: 'Einheit',
+  time: 'Genaue Uhrzeit',
+}
+
+export function PkReadinessPanel({
+  stackItemId,
+  itemName,
+  readiness,
+}: {
+  stackItemId: string
+  itemName: string
+  readiness: Exclude<PkReadiness, { status: 'ready' }>
+}) {
+  const unsupportedCopy = readiness.status === 'unsupported'
+    ? readiness.reason === 'unit_conversion'
+      ? 'Für diese Einheit ist keine sichere PK-Umrechnung hinterlegt.'
+      : 'Kein verknüpftes PK-Profil. Deshalb wird keine Kurve berechnet.'
+    : null
+
+  return (
+    <section
+      aria-label={`PK-Status ${itemName}`}
+      style={{
+        ...PANEL,
+        borderColor: readiness.status === 'missing' ? 'rgba(56,189,248,0.26)' : 'rgba(148,163,184,0.2)',
+      }}
+    >
+      <p style={{ fontSize: '0.82rem', fontWeight: 850, color: 'var(--text)' }}>
+        {itemName}: {readiness.status === 'missing' ? 'PK-Daten unvollständig' : 'PK-Simulation nicht verfügbar'}
+      </p>
+      {readiness.status === 'missing' ? (
+        <>
+          <p style={{ marginTop: 6, fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
+            Fehlend: {readiness.missing.map(requirement => REQUIREMENT_LABELS[requirement]).join(', ')}.
+            Erst danach wird eine Kurve berechnet.
+          </p>
+          <Link
+            to={`/my-stack?edit=${encodeURIComponent(stackItemId)}&intent=pk`}
+            className="mt-3 inline-flex min-h-11 cursor-pointer items-center rounded-xl border border-sky-400/30 bg-sky-400/[0.08] px-4 text-sm font-semibold text-sky-200 transition-colors hover:bg-sky-400/[0.13] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 motion-reduce:transition-none"
+          >
+            Angaben vervollständigen
+          </Link>
+        </>
+      ) : (
+        <p style={{ marginTop: 6, fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
+          {unsupportedCopy}
+        </p>
+      )}
+    </section>
+  )
 }
 
 function normCat(raw: string | undefined): PkCategory {
@@ -313,7 +407,7 @@ function LiveCycleCarousel({
   const pointerActive = useRef(false)
 
   const eligible = useMemo(
-    () => cycles.filter(c => c.stack_items?.pk_profiles),
+    () => cycles.filter(c => readinessForCycle(c).status === 'ready' && linkedProfile(c)),
     [cycles],
   )
 
@@ -394,7 +488,7 @@ function LiveCycleCarousel({
           }}
         >
           {eligible.map(c => {
-            const pk = c.stack_items!.pk_profiles!
+            const pk = linkedProfile(c)!.profile
             const accent = CATEGORY_ACCENT[normCat(pk.category)]
             return (
               <div key={c.id} style={{ flex: '0 0 100%', width: '100%' }}>
@@ -424,7 +518,7 @@ function LiveCycleCarousel({
           aria-label="Zyklus-Auswahl"
         >
           {eligible.map((c, i) => {
-            const pk = c.stack_items!.pk_profiles!
+            const pk = linkedProfile(c)!.profile
             const accent = CATEGORY_ACCENT[normCat(pk.category)]
             const active = i === activeIndex
             return (
@@ -471,6 +565,7 @@ function LiveCycleCard({
 }) {
   const [curve, setCurve]               = useState<BlutspiegelCurvePoint[]>([])
   const [events, setEvents]             = useState<DoseEvent[]>([])
+  const [interruptedAt, setInterruptedAt] = useState<string | null>(null)
   const [curveLoading, setCurveLoading] = useState(true)
   const chartRef                        = useRef<LiveCycleChartHandle>(null)
   const [showJetzt, setShowJetzt]       = useState(false)
@@ -481,11 +576,17 @@ function LiveCycleCard({
   // Einmaliges Laden der Einnahmen + Kurvenberechnung
   useEffect(() => {
     setCurveLoading(true)
-    void loadDoseHistory(cycleId).then(evts => {
-      setEvents(evts)
-      if (evts.some(e => e.status === 'taken')) {
+    void loadDoseHistory(cycleId).then(history => {
+      setEvents(history.events)
+      setInterruptedAt(history.interruptedAt)
+      if (history.events.some(e => e.status === 'taken')) {
         setCurve(calculateHistoryBlutspiegelCurve(
-          evts, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc,
+          history.events,
+          pk.half_life_hours,
+          pk.tmax_hours,
+          pk.bioavailability_sc,
+          30,
+          history.interruptedAt ? new Date(history.interruptedAt) : null,
         ))
       }
       setCurveLoading(false)
@@ -494,18 +595,18 @@ function LiveCycleCard({
 
   // Live-Wachstum: Kurve jede Minute bis "jetzt" erweitern (kein DB-Call)
   useEffect(() => {
-    if (!events.some(e => e.status === 'taken')) return
+    if (interruptedAt || !events.some(e => e.status === 'taken')) return
     const id = window.setInterval(() => {
       setCurve(calculateHistoryBlutspiegelCurve(
         events, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc,
       ))
     }, 10_000)
     return () => window.clearInterval(id)
-  }, [events, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc])
+  }, [events, interruptedAt, pk.half_life_hours, pk.tmax_hours, pk.bioavailability_sc])
 
   // Volle Kurve als Chart-Daten
   const chartData = useMemo(
-    () => curve.map(p => ({ ts: p.time.getTime(), level: p.level })),
+    () => curve.map(p => ({ ts: p.time.getTime(), level: p.level, status: p.status })),
     [curve],
   )
 
@@ -588,6 +689,11 @@ function LiveCycleCard({
         onTouchMove={e => e.stopPropagation()}
         onTouchEnd={e => e.stopPropagation()}
       >
+        {interruptedAt && (
+          <p role="status" style={{ marginBottom: 8, fontSize: '0.68rem', fontWeight: 750, color: '#fbbf24' }}>
+            Simulation unterbrochen: Menge nicht getrackt
+          </p>
+        )}
         {curveLoading ? (
           <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Loader2 size={16} color={accent} className="animate-spin" />
@@ -640,6 +746,7 @@ function LiveCycleCard({
               namedMarkers={onsetMarkers}
               accent={accent}
               windowMs={chartWindowMs}
+              interruptedAt={interruptedAt ? new Date(interruptedAt).getTime() : null}
               height={180}
               onNavState={(sj, hh) => { setShowJetzt(sj); setHasHistory(hh) }}
             />
@@ -764,9 +871,13 @@ export function BlutspiegelSimulation() {
     if (!user) return
     supabase
       .from('cycles')
-      .select(`id, stack_item_id, dose, unit, method,
-        stack_items ( display_name, pk_profile_id,
-          pk_profiles ( name, half_life_hours, tmax_hours, bioavailability_sc, vd_l_kg, category )
+      .select(`id, stack_item_id, dose, unit, method, intake_time_custom,
+        stack_items ( id, display_name, tracking_level, pk_profile_method,
+          ingredients:stack_item_ingredients ( position,
+            substance_catalog ( pk_profile_id,
+              pk_profiles ( name, half_life_hours, tmax_hours, bioavailability_sc, vd_l_kg, category )
+            )
+          )
         )`)
       .eq('user_id', user.id)
       .eq('active', true)
@@ -780,16 +891,24 @@ export function BlutspiegelSimulation() {
     [pkProfiles, selectedPkId],
   )
 
+  const readyProtocolCycles = useMemo(
+    () => protocolCycles.filter(cycle => readinessForCycle(cycle).status === 'ready'),
+    [protocolCycles],
+  )
+  const incompleteProtocolCycles = useMemo(
+    () => protocolCycles.filter(cycle => readinessForCycle(cycle).status !== 'ready'),
+    [protocolCycles],
+  )
+
   // ── Live-Übersicht: alle Zyklen mit PK-Profil laden ───────────────────
   const loadLiveLevels = useCallback(async (isRefresh = false) => {
-    const cyclesWithPk = protocolCycles.filter(c => c.stack_items?.pk_profiles)
-    if (!cyclesWithPk.length) return
+    if (!readyProtocolCycles.length) return
     if (isRefresh) setLiveRefreshing(true)
     else setLiveLoading(true)
 
     const results = await Promise.all(
-      cyclesWithPk.map(async c => {
-        const pk = c.stack_items!.pk_profiles!
+      readyProtocolCycles.map(async c => {
+        const pk = linkedProfile(c)!.profile
         const level = await getCurrentBlutspiegelLevel(
           c.id,
           pk.half_life_hours,
@@ -802,21 +921,20 @@ export function BlutspiegelSimulation() {
     setLiveData(new Map(results))
     if (isRefresh) setLiveRefreshing(false)
     else setLiveLoading(false)
-  }, [protocolCycles])
+  }, [readyProtocolCycles])
 
   // Initial laden sobald Zyklen da sind
   useEffect(() => {
-    if (protocolCycles.length > 0) void loadLiveLevels()
-  }, [protocolCycles, loadLiveLevels])
+    if (readyProtocolCycles.length > 0) void loadLiveLevels()
+  }, [readyProtocolCycles.length, loadLiveLevels])
 
   // Auto-Refresh alle 5 Sekunden
   useEffect(() => {
     if (liveIntervalRef.current) window.clearInterval(liveIntervalRef.current)
-    const cyclesWithPk = protocolCycles.filter(c => c.stack_items?.pk_profiles)
-    if (!cyclesWithPk.length) return
+    if (!readyProtocolCycles.length) return
     liveIntervalRef.current = window.setInterval(() => void loadLiveLevels(true), 5000)
     return () => { if (liveIntervalRef.current) window.clearInterval(liveIntervalRef.current) }
-  }, [protocolCycles, loadLiveLevels])
+  }, [readyProtocolCycles, loadLiveLevels])
 
   // Verlaufs-Chart: laden + alle 10s neu laden
   useEffect(() => {
@@ -835,11 +953,14 @@ export function BlutspiegelSimulation() {
   useEffect(() => {
     if (!selectedProfile) return
     const profileNames = [selectedProfile.name, ...selectedProfile.aliases].map(n => n.toLowerCase())
-    const match = protocolCycles.find(c =>
+    const match = readyProtocolCycles.find(c =>
       profileNames.includes(c.stack_items?.display_name?.toLowerCase() ?? '')
     )
-    if (match) { setDose(String(match.dose)); setUnit(normalizeUnit(match.unit)) }
-  }, [selectedProfile, protocolCycles])
+    if (match?.dose != null && match.unit) {
+      setDose(String(match.dose))
+      setUnit(normalizeUnit(match.unit))
+    }
+  }, [selectedProfile, readyProtocolCycles])
 
   const startSimulation = useCallback(() => {
     if (!selectedProfile) return
@@ -898,8 +1019,21 @@ export function BlutspiegelSimulation() {
         </div>
       </div>
 
+      {incompleteProtocolCycles.map(cycle => {
+        const readiness = readinessForCycle(cycle)
+        if (readiness.status === 'ready' || !cycle.stack_items) return null
+        return (
+          <PkReadinessPanel
+            key={cycle.id}
+            stackItemId={cycle.stack_item_id}
+            itemName={cycle.stack_items.display_name}
+            readiness={readiness}
+          />
+        )
+      })}
+
       {/* ── Live-Übersicht aller aktiven Zyklen ─────────────────────────── */}
-      {(liveLoading || protocolCycles.filter(c => c.stack_items?.pk_profiles).length > 0) && (
+      {(liveLoading || readyProtocolCycles.length > 0) && (
         <div style={PANEL}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: liveLoading ? 0 : 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -925,7 +1059,7 @@ export function BlutspiegelSimulation() {
               </p>
             </div>
           ) : (
-            <LiveCycleCarousel cycles={protocolCycles} liveData={liveData} />
+            <LiveCycleCarousel cycles={readyProtocolCycles} liveData={liveData} />
           )}
         </div>
       )}
