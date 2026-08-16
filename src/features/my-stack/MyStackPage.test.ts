@@ -319,7 +319,7 @@ describe('My Stack page vial view', () => {
 
   test('keeps archived cycles collapsed by default and sorts newest first', () => {
     const text = source()
-    const archiveDetail = text.slice(text.indexOf('{archiveInfoPeptide'), text.indexOf('{cyclePromptPeptide'))
+    const archiveDetail = text.slice(text.indexOf('{archiveInfoPeptide'), text.indexOf('{/* ══ ZYKLUS-FORMULAR'))
 
     expect(text).toContain('archiveCyclesOpen')
     expect(text).toContain('setArchiveCyclesOpen(false)')
@@ -421,14 +421,12 @@ describe('My Stack page vial view', () => {
     expect(openNewCycleSource).not.toContain('activeExists')
   })
 
-  test('offers creating a cycle after adding a new peptide', () => {
+  test('saves the initial cycle atomically without a second cycle prompt', () => {
     const text = source()
 
-    expect(text).toContain('cyclePromptPeptide')
-    expect(text).toContain('Substanz gespeichert')
-    expect(text).toContain('Zyklus anlegen')
-    expect(text).toContain('openNewCycle(peptide)')
-    expect(text).toContain('Später')
+    expect(text).toContain('saveStackItemSetup(supabase as never, draft)')
+    expect(text).toContain('await Promise.all([loadPeptides(), loadCycles()])')
+    expect(text).not.toContain('cyclePromptPeptide')
   })
 
   test('centers Neue Substanz field editors for mobile thumb reach', () => {
@@ -508,8 +506,19 @@ describe('My Stack modular integration', () => {
     const text = source()
     expect(text).toContain('loadStackItems(supabase as never, false)')
     expect(text).toContain('loadStackItems(supabase as never, true)')
-    expect(text).toContain('saveStackItem(supabase as never, draft)')
+    expect(text).toContain('saveStackItemSetup(supabase as never, draft)')
     expect(text).toContain('onOpenExisting={openExistingStackItem}')
+  })
+
+  test('hydrates the wizard from the current active plan when editing', () => {
+    const text = source()
+
+    expect(text).toContain('const activePlanFor = (stackItemId: string)')
+    expect(text).toContain('cycleAsIntakePlanDraft')
+    expect(text).toContain('existingPlan={editingPeptideId ? activePlanFor(editingPeptideId) : undefined}')
+    expect(text).toContain("morning: 'morgens'")
+    expect(text).toContain("midday: 'mittags'")
+    expect(text).toContain("evening: 'abends'")
   })
 
   test('uses /my-stack as the primary route and redirects /peptide with replacement', () => {

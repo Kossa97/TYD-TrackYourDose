@@ -24,9 +24,9 @@ import { StackItemWizard } from './components/StackItemWizard'
 import { StackStage } from './components/StackStage'
 import { StackItemDetails } from './components/StackItemDetails'
 import { StackArchive } from './components/StackArchive'
-import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, restoreStackItem, saveStackItem, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
+import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, restoreStackItem, saveStackItemSetup, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
 import { searchSubstanceCatalog } from './services/substanceCatalog'
-import type { StackItem, StackItemDraft, SubstanceCatalogEntry } from './types'
+import type { IntakePlanDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry } from './types'
 import { isStageRenderable } from './lib/dosageForms'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
 import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
@@ -244,6 +244,14 @@ const INTAKE_TIME_CONFIG = {
   abends:  { labelKey: 'abends',  icon: Moon, time: '20:00' },
   custom:  { labelKey: 'uhrzeit_label', icon: Clock, time: '' },
 } as const
+const ROUTINE_GROUP_TO_INTAKE_TIME = {
+  morning: 'morgens',
+  midday: 'mittags',
+  evening: 'abends',
+} as const
+const INTAKE_TIME_TO_ROUTINE_GROUP: Record<string, RoutineGroup> = Object.fromEntries(
+  Object.entries(ROUTINE_GROUP_TO_INTAKE_TIME).map(([group, intakeTime]) => [intakeTime, group]),
+) as Record<string, RoutineGroup>
 const REMINDER_OPTIONS = [
   { value: '1day',    labelKey: 'reminder_1day' },
   { value: '2h',      labelKey: 'reminder_2h' },
@@ -365,6 +373,27 @@ function nextScheduleHistory(
   return history
 }
 
+function cycleAsIntakePlanDraft(cycle: Cycle): IntakePlanDraft {
+  const primarySlot = (cycle.intake_time ?? '').split(',').find(Boolean) ?? ''
+  return {
+    id: cycle.id,
+    name: cycle.name,
+    dose: cycle.dose,
+    unit: cycle.unit,
+    method: cycle.method,
+    frequency: cycle.frequency,
+    xDaysInterval: cycle.x_days_interval,
+    scheduleDays: cycle.schedule_days ?? [],
+    startDate: format(new Date(), 'yyyy-MM-dd'),
+    endDate: cycle.end_date,
+    routineGroup: INTAKE_TIME_TO_ROUTINE_GROUP[primarySlot] ?? 'morning',
+    time: cycle.intake_time_custom?.split(',').find(Boolean) ?? null,
+    reminders: cycle.reminder && cycle.reminder !== 'none'
+      ? cycle.reminder.split(',').filter(Boolean)
+      : [],
+  }
+}
+
 // Empty "ghost" vial that adds a new substance when clicked.
 function AddVialTile({ onClick, label, active = false, obKey }: { onClick: () => void; label: string; active?: boolean; obKey?: string }) {
   return (
@@ -465,7 +494,6 @@ export function MyStackPage() {
   // ── Zyklen ────────────────────────────────────────────────────────────────
   const [showCycleForm, setShowCycleForm]         = useState(false)
   const [cycleForPeptide, setCycleForPeptide]     = useState<Peptide | null>(null)
-  const [cyclePromptPeptide, setCyclePromptPeptide] = useState<Peptide | null>(null)
   const [cycleManagerPeptide, setCycleManagerPeptide] = useState<Peptide | null>(null)
   // Zyklus-Manager: welche inaktiven Karten / Dosisanpassungs-Sektionen sind aufgeklappt
   const [managerCardOpen, setManagerCardOpen] = useState<Set<string>>(() => new Set())
@@ -611,7 +639,6 @@ export function MyStackPage() {
     if (location.hash !== '#new-substance') return
     setEditingPeptideId(null)
     setWizardInitialColor(getRandomStackItemColor())
-    setCyclePromptPeptide(null)
     setShowPeptideForm(true)
     navigate(location.pathname, { replace: true })
   }, [location.hash, location.pathname, navigate])
@@ -685,6 +712,12 @@ export function MyStackPage() {
       (a.active === b.active)
         ? b.created_at.localeCompare(a.created_at)
         : (a.active ? -1 : 1))
+  const activePlanFor = (stackItemId: string): IntakePlanDraft | undefined => {
+    const activeCycle = cycles
+      .filter(cycle => cycle.stack_item_id === stackItemId && cycle.active)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
+    return activeCycle ? cycleAsIntakePlanDraft(activeCycle) : undefined
+  }
   const escalationsOf = (cid: string) => escalations.filter(e => e.cycle_id === cid)
 
   // ── Inventar Bestand anpassen ─────────────────────────────────────────────
@@ -728,7 +761,6 @@ export function MyStackPage() {
   const handleNewPeptide = () => {
     setEditingPeptideId(null)
     setWizardInitialColor(getRandomStackItemColor())
-    setCyclePromptPeptide(null)
     setShowPeptideForm(true)
   }
 
@@ -837,15 +869,10 @@ export function MyStackPage() {
     }
   }
 
-  const handleSaveStackItem = async (draft: StackItemDraft) => {
-    const savedRow = await saveStackItem(supabase as never, draft)
-    const data = await loadStackItems(supabase as never, false)
-    const nextPeptides = data.map(asPeptide)
-    setPeptides(nextPeptides)
+  const handleSaveStackItem = async (draft: StackItemSetupDraft) => {
+    const savedRow = await saveStackItemSetup(supabase as never, draft)
+    await Promise.all([loadPeptides(), loadCycles()])
     setExpandedId(savedRow.id)
-    if (!draft.id) {
-      setCyclePromptPeptide(nextPeptides.find(item => item.id === savedRow.id) ?? null)
-    }
     toast.success(draft.id ? t('peptid_aktualisiert') : t('peptid_hinzugefuegt'))
   }
 
@@ -2663,6 +2690,7 @@ export function MyStackPage() {
           catalogUnavailable={catalogUnavailable}
           existingItems={peptides}
           existingItem={editingPeptideId ? peptides.find(item => item.id === editingPeptideId) : undefined}
+          existingPlan={editingPeptideId ? activePlanFor(editingPeptideId) : undefined}
           initialColorHex={wizardInitialColor}
           onClose={() => setShowPeptideForm(false)}
           onSave={handleSaveStackItem}
@@ -3104,51 +3132,6 @@ export function MyStackPage() {
             )
           })()}
         </StackArchive>
-      )}
-
-      {cyclePromptPeptide && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-10"
-          data-app-modal
-          onClick={() => setCyclePromptPeptide(null)}
-        >
-          <div
-            className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-2xl"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-300">
-                <Check size={18} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-base font-bold text-white">Substanz gespeichert</p>
-                <p className="mt-1 text-sm leading-5 text-slate-400">
-                  Möchtest du direkt einen Zyklus für <span className="font-semibold text-slate-200">{cyclePromptPeptide.name}</span> anlegen?
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                className="min-h-11 rounded-xl border border-slate-700 px-3 text-sm font-semibold text-slate-300 transition-colors hover:bg-slate-800"
-                onClick={() => setCyclePromptPeptide(null)}
-              >
-                Später
-              </button>
-              <button
-                type="button"
-                className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-violet-500 px-3 text-sm font-bold text-white transition-colors hover:bg-violet-400"
-                onClick={() => {
-                  const peptide = cyclePromptPeptide
-                  setCyclePromptPeptide(null)
-                  openNewCycle(peptide)
-                }}
-              >
-                <CalendarDays size={16} /> Zyklus anlegen
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* ══ ZYKLUS-FORMULAR ══════════════════════════════════════════════════ */}

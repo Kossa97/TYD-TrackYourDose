@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type {
   StackItemDraft,
   StackItemIngredient,
+  StackItemSetupDraft,
   SubstanceCatalogEntry,
 } from '../types'
 import {
@@ -12,13 +13,16 @@ import {
   restoreStackItem,
   reconstituteStackItem,
   saveStackItem,
+  saveStackItemSetup,
   saveVialTracking,
   type LoadedStackItem,
   type SaveStackItemRpcParams,
+  type SaveStackItemSetupRpcParams,
   type SavedStackItemRow,
   type StackItemMutationClient,
   type StackItemQueryClient,
   type StackItemRpcClient,
+  type StackItemSetupRpcClient,
 } from './stackItems'
 
 const ingredient: StackItemIngredient = {
@@ -40,6 +44,44 @@ const validDraft: StackItemDraft = {
   colorHex: '#abcdef',
   notes: '',
   ingredients: [ingredient],
+}
+
+const completeSetupDraft: StackItemSetupDraft = {
+  ...validDraft,
+  plan: {
+    name: 'Vitamin D3 morgens',
+    dose: 5000,
+    unit: 'IU',
+    method: 'Oral',
+    frequency: 'Täglich',
+    xDaysInterval: null,
+    scheduleDays: [],
+    startDate: '2026-08-17',
+    endDate: null,
+    routineGroup: 'morning',
+    time: '08:30',
+    reminders: ['on_time'],
+  },
+  inventory: {
+    enabled: false,
+    packageQuantity: null,
+    packageUnit: null,
+    remainingQuantity: null,
+    brand: '',
+    batchNumber: '',
+    expiresAt: null,
+  },
+  pkProfileMethod: 'Oral',
+}
+
+const intakeOnlySetupDraft: StackItemSetupDraft = {
+  ...completeSetupDraft,
+  trackingLevel: 'intake_only',
+  plan: {
+    ...completeSetupDraft.plan,
+    dose: null,
+    unit: null,
+  },
 }
 
 const savedItem: SavedStackItemRow = {
@@ -88,7 +130,82 @@ function rpcClient() {
   return { client, rpc }
 }
 
+function setupRpcClient() {
+  const rpc = vi.fn(async (
+    _name: 'save_stack_item_with_plan',
+    _params: SaveStackItemSetupRpcParams,
+  ) => ({ data: savedItem, error: null }))
+  const client: StackItemSetupRpcClient = { rpc }
+  return { client, rpc }
+}
+
 describe('stack item service', () => {
+  it('sends item, ingredients, and the initial plan to one RPC', async () => {
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, completeSetupDraft)
+
+    expect(mockClient.rpc).toHaveBeenCalledTimes(1)
+    expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', {
+      p_item: expect.objectContaining({
+        tracking_level: 'complete',
+        pk_profile_method: 'Oral',
+      }),
+      p_ingredients: expect.any(Array),
+      p_plan: expect.objectContaining({
+        id: null,
+        dose: 5000,
+        unit: 'IU',
+        method: 'Oral',
+        start_date: '2026-08-17',
+        intake_time: 'morgens',
+        intake_time_custom: '08:30',
+        reminder: 'on_time',
+      }),
+    })
+  })
+
+  it('sends null dose and unit for intake_only', async () => {
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, intakeOnlySetupDraft)
+
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      'save_stack_item_with_plan',
+      expect.objectContaining({
+        p_plan: expect.objectContaining({ dose: null, unit: null }),
+      }),
+    )
+  })
+
+  it('preserves the active plan id when saving an edit', async () => {
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, {
+      ...completeSetupDraft,
+      id: 'stack-item-1',
+      plan: { ...completeSetupDraft.plan, id: 'cycle-1' },
+    })
+
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      'save_stack_item_with_plan',
+      expect.objectContaining({ p_plan: expect.objectContaining({ id: 'cycle-1' }) }),
+    )
+  })
+
+  it.each([
+    ['method', { method: ' ' }],
+    ['start date', { startDate: '' }],
+  ])('rejects a setup with no %s before the RPC', async (_label, changes) => {
+    const mockClient = setupRpcClient()
+
+    await expect(saveStackItemSetup(mockClient.client, {
+      ...completeSetupDraft,
+      plan: { ...completeSetupDraft.plan, ...changes },
+    })).rejects.toThrow('Invalid stack item setup draft')
+    expect(mockClient.rpc).not.toHaveBeenCalled()
+  })
+
   it('sendet Hauptobjekt und Inhaltsstoffe in genau einem RPC-Aufruf', async () => {
     const mockClient = rpcClient()
 

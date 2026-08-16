@@ -40,6 +40,7 @@ export interface StackItemWizardProps {
   catalogEntries: SubstanceCatalogEntry[]
   existingItems: StackItem[]
   existingItem?: StackItem
+  existingPlan?: StackItemSetupDraft['plan']
   initialColorHex?: string
   catalogUnavailable?: boolean
   onClose: () => void
@@ -80,6 +81,7 @@ export function StackItemWizard({
   catalogEntries,
   existingItems,
   existingItem,
+  existingPlan,
   catalogUnavailable = false,
   initialColorHex = '',
   onClose,
@@ -87,7 +89,11 @@ export function StackItemWizard({
   onOpenExisting,
 }: StackItemWizardProps) {
   const { t } = useTranslation()
-  const [state, dispatch] = useReducer(wizardReducer, undefined, () => initialWizardState(existingItem, initialColorHex))
+  const [state, dispatch] = useReducer(
+    wizardReducer,
+    undefined,
+    () => initialWizardState(existingItem, initialColorHex, existingPlan),
+  )
   const [showErrors, setShowErrors] = useState(false)
   const [identityChoiceMade, setIdentityChoiceMade] = useState(false)
   const [identityChoiceError, setIdentityChoiceError] = useState(false)
@@ -233,7 +239,7 @@ export function StackItemWizard({
       ? 'duplicate'
       : identityChanged ? state.saveMode : state.original ? 'update' : 'create'
     const draftForSave = mode === 'duplicate'
-      ? { ...state.draft, id: undefined }
+      ? { ...state.draft, id: undefined, plan: { ...state.draft.plan, id: undefined } }
       : state.draft
 
     setSaving(true)

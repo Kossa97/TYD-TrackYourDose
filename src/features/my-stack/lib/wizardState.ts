@@ -10,6 +10,7 @@ import type {
   SubstanceCatalogEntry,
   TrackingLevel,
 } from '../types'
+import { format } from 'date-fns'
 import { buildDuplicateFingerprint } from './duplicateFingerprint'
 import { getDosageForm, getIntakePlanUnitSuggestions } from './dosageForms'
 import { validateIntakePlan, validateStackItemDraft } from './validation'
@@ -99,7 +100,7 @@ function emptyPlan(name: string): IntakePlanDraft {
     frequency: 'Täglich',
     xDaysInterval: null,
     scheduleDays: [],
-    startDate: '',
+    startDate: format(new Date(), 'yyyy-MM-dd'),
     endDate: null,
     routineGroup: 'morning',
     time: null,
@@ -119,7 +120,10 @@ function emptyInventory(): InventoryDraft {
   }
 }
 
-function draftFromStackItem(existing: StackItem): StackItemSetupDraft {
+function draftFromStackItem(
+  existing: StackItem,
+  existingPlan?: IntakePlanDraft,
+): StackItemSetupDraft {
   return {
     id: existing.id,
     displayName: existing.display_name,
@@ -130,17 +134,28 @@ function draftFromStackItem(existing: StackItem): StackItemSetupDraft {
     colorHex: existing.color_hex ?? '',
     notes: existing.notes ?? '',
     ingredients: existing.ingredients.map(ingredient => ({ ...ingredient })),
-    plan: emptyPlan(existing.display_name),
+    plan: existingPlan
+      ? {
+          ...existingPlan,
+          scheduleDays: [...existingPlan.scheduleDays],
+          reminders: [...existingPlan.reminders],
+          startDate: format(new Date(), 'yyyy-MM-dd'),
+        }
+      : emptyPlan(existing.display_name),
     inventory: emptyInventory(),
     pkProfileMethod: existing.pk_profile_method,
   }
 }
 
-export function initialWizardState(existing?: StackItem, initialColorHex = ''): WizardState {
+export function initialWizardState(
+  existing?: StackItem,
+  initialColorHex = '',
+  existingPlan?: IntakePlanDraft,
+): WizardState {
   return {
     step: 'substance',
     draft: existing
-      ? draftFromStackItem(existing)
+      ? draftFromStackItem(existing, existingPlan)
       : {
           displayName: '',
           trackingLevel: 'complete',
@@ -346,7 +361,9 @@ export function firstInvalidField(state: WizardState): string | null {
   if (state.step === 'plan' || state.step === 'review') {
     const planErrors = validateIntakePlan(state.draft.plan, state.draft.trackingLevel)
     if (planErrors.name) return 'displayName'
+    if (planErrors.method) return 'plan.method'
     if (planErrors.frequency) return 'plan.frequency'
+    if (planErrors.startDate) return 'plan.startDate'
     if (planErrors.routineGroup) return 'plan.routineGroup'
     if (planErrors.dose) return 'plan.dose'
     if (planErrors.unit) return 'plan.unit'

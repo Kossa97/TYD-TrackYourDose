@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import type { StackItem, SubstanceCatalogEntry } from '../types'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { IntakePlanDraft, StackItem, SubstanceCatalogEntry } from '../types'
 import {
   canContinue,
   didIdentityChange,
@@ -49,7 +49,43 @@ const existingVitaminD: StackItem = {
   }],
 }
 
+const activePlan: IntakePlanDraft = {
+  id: 'cycle-1',
+  name: 'Vitamin D breakfast',
+  dose: 5000,
+  unit: 'IU',
+  method: 'Oral',
+  frequency: 'Mo-Fr',
+  xDaysInterval: null,
+  scheduleDays: ['Mo', 'Di', 'Mi', 'Do', 'Fr'],
+  startDate: '2025-01-01',
+  endDate: '2026-12-31',
+  routineGroup: 'morning',
+  time: '08:30',
+  reminders: ['on_time'],
+}
+
+afterEach(() => vi.useRealTimers())
+
 describe('wizard state', () => {
+  it('defaults a new plan start/effective date to the local current date', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 7, 16, 12, 0, 0))
+
+    expect(initialWizardState().draft.plan.startDate).toBe('2026-08-16')
+    expect(initialWizardState().draft.plan.method).toBe('')
+  })
+
+  it('hydrates an active plan for edits but makes its effective date local today', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 7, 16, 12, 0, 0))
+
+    const state = initialWizardState(existingVitaminD, '', activePlan)
+
+    expect(state.draft.plan).toEqual({ ...activePlan, startDate: '2026-08-16' })
+    expect(state.draft.plan).not.toBe(activePlan)
+  })
+
   it.each([
     ['intake_only', ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']],
     ['with_amount', ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']],
@@ -297,7 +333,7 @@ describe('wizard state', () => {
         frequency: 'Täglich',
         xDaysInterval: null,
         scheduleDays: [],
-        startDate: '',
+        startDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         endDate: null,
         routineGroup: 'morning',
         time: null,
@@ -380,7 +416,7 @@ describe('wizard state', () => {
         displayName: 'Vitamin D3',
         category: 'vitamin' as const,
         dosageForm: 'capsule' as const,
-        plan: { ...initial.draft.plan, name: 'Vitamin D3' },
+        plan: { ...initial.draft.plan, name: 'Vitamin D3', method: 'Oral' },
         ingredients: [{
           catalog_substance_id: 'vitamin-d3',
           custom_name: '',

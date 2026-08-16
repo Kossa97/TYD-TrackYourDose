@@ -29,6 +29,15 @@ const FREQUENCIES = [
   'Alle X Tage',
   'Wochentage wählen',
 ] as const
+const METHODS = [
+  'Subkutan',
+  'Intramuskulär',
+  'Nasal',
+  'Oral',
+  'Transdermal',
+  'Intravenös',
+  'Andere',
+] as const
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'] as const
 const ROUTINE_GROUPS: readonly {
   value: RoutineGroup
@@ -93,6 +102,30 @@ export function IntakePlanEditor({
   return (
     <div className="min-w-0 space-y-5">
       <div>
+        <label htmlFor="stack-plan-method" className="mb-2 block text-sm font-semibold text-slate-200">
+          {t('my_stack_plan_method', { defaultValue: 'Methode' })}
+        </label>
+        <select
+          id="stack-plan-method"
+          value={plan.method}
+          onChange={event => onChange({ method: event.target.value })}
+          data-field="plan.method"
+          aria-invalid={Boolean(errors.method) || undefined}
+          aria-describedby={errors.method ? 'stack-plan-method-error' : undefined}
+          required
+          className="select min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+        >
+          <option value="">{t('my_stack_plan_method_placeholder', { defaultValue: 'Methode wählen' })}</option>
+          {METHODS.map(method => <option key={method} value={method}>{method}</option>)}
+        </select>
+        {errors.method && (
+          <p id="stack-plan-method-error" role="alert" className="mt-2 text-sm text-rose-300">
+            {t('my_stack_plan_method_required', { defaultValue: 'Bitte wähle eine Methode.' })}
+          </p>
+        )}
+      </div>
+
+      <div>
         <label htmlFor="stack-plan-frequency" className="mb-2 block text-sm font-semibold text-slate-200">
           {t('my_stack_plan_frequency', { defaultValue: 'Frequenz' })}
         </label>
@@ -111,6 +144,28 @@ export function IntakePlanEditor({
         {errors.frequency && (
           <p id="stack-plan-frequency-error" role="alert" className="mt-2 text-sm text-rose-300">
             {t('my_stack_plan_frequency_required', { defaultValue: 'Bitte wähle eine Frequenz.' })}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="stack-plan-start-date" className="mb-2 block text-sm font-semibold text-slate-200">
+          {t('my_stack_plan_start_date', { defaultValue: 'Start / gültig ab' })}
+        </label>
+        <input
+          id="stack-plan-start-date"
+          type="date"
+          value={plan.startDate}
+          onChange={event => onChange({ startDate: event.target.value })}
+          data-field="plan.startDate"
+          aria-invalid={Boolean(errors.startDate) || undefined}
+          aria-describedby={errors.startDate ? 'stack-plan-start-date-error' : undefined}
+          required
+          className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+        />
+        {errors.startDate && (
+          <p id="stack-plan-start-date-error" role="alert" className="mt-2 text-sm text-rose-300">
+            {t('my_stack_plan_start_date_required', { defaultValue: 'Bitte wähle ein Startdatum.' })}
           </p>
         )}
       </div>

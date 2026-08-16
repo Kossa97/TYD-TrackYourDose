@@ -27,7 +27,7 @@ const validPlan: IntakePlanDraft = {
   name: 'Vitamin D3',
   dose: 1,
   unit: 'capsule',
-  method: '',
+  method: 'Oral',
   frequency: 'daily',
   xDaysInterval: null,
   scheduleDays: [],
@@ -54,6 +54,13 @@ describe('validateStackItemDraft', () => {
     })
   })
 
+  it('requires a method and a start/effective date for every tracking level', () => {
+    for (const trackingLevel of ['intake_only', 'with_amount', 'complete'] as const) {
+      expect(validateIntakePlan({ ...validPlan, method: ' ', startDate: '' }, trackingLevel))
+        .toMatchObject({ method: 'required', startDate: 'required' })
+    }
+  })
+
   it('allows missing strength for intake_only and with_amount', () => {
     for (const trackingLevel of ['intake_only', 'with_amount'] as const) {
       const errors = validateStackItemDraft({
@@ -72,6 +79,27 @@ describe('validateStackItemDraft', () => {
       ingredients: [{ ...ingredient, amount_value: null, amount_unit: null }],
     })
     expect(errors.ingredients?.[0]?.amountValue).toBe('required_for_complete')
+  })
+
+  it('rejects non-positive complete strength and basis values before SQL', () => {
+    const errors = validateStackItemDraft({
+      ...validVitaminD,
+      ingredients: [{ ...ingredient, amount_value: 0, basis_value: 0 }],
+    })
+
+    expect(errors.ingredients?.[0]).toMatchObject({
+      amountValue: 'required_for_complete',
+      basisValue: 'required_for_complete',
+    })
+  })
+
+  it('rejects non-finite tracked quantities and complete strength before SQL', () => {
+    expect(validateIntakePlan({ ...validPlan, dose: Number.POSITIVE_INFINITY }, 'with_amount').dose)
+      .toBe('required')
+    expect(validateStackItemDraft({
+      ...validVitaminD,
+      ingredients: [{ ...ingredient, amount_value: Number.POSITIVE_INFINITY }],
+    }).ingredients?.[0]?.amountValue).toBe('required_for_complete')
   })
 
   it('akzeptiert einen vollständigen Entwurf', () => {

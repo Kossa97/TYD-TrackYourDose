@@ -2,7 +2,7 @@
 
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { StackItem, StackItemSetupDraft, SubstanceCatalogEntry } from '../types'
+import type { IntakePlanDraft, StackItem, StackItemSetupDraft, SubstanceCatalogEntry } from '../types'
 import type { WizardSaveMode } from '../lib/wizardState'
 import { StackItemWizard, type StackItemWizardProps } from './StackItemWizard'
 import { SubstanceSearch } from './SubstanceSearch'
@@ -58,6 +58,22 @@ const existingVitaminD: StackItem = {
   }],
 }
 
+const existingPlan: IntakePlanDraft = {
+  id: 'cycle-1',
+  name: 'Vitamin D breakfast',
+  dose: 5000,
+  unit: 'IU',
+  method: 'Oral',
+  frequency: 'Täglich',
+  xDaysInterval: null,
+  scheduleDays: [],
+  startDate: '2025-01-01',
+  endDate: null,
+  routineGroup: 'morning',
+  time: '08:30',
+  reminders: ['on_time'],
+}
+
 function deferred<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void
   let reject!: (reason?: unknown) => void
@@ -110,6 +126,7 @@ function completeCustomFlow(name = 'Custom Product'): void {
   fireEvent.change(screen.getByLabelText('my_stack_basis_value'), { target: { value: '1' } })
   continueWizard()
   continueWizard()
+  fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
   fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: 'capsule' } })
   continueWizard()
@@ -128,6 +145,7 @@ function completeCatalogFlow(): void {
   fireEvent.change(screen.getByLabelText('my_stack_basis_value'), { target: { value: '1' } })
   continueWizard()
   continueWizard()
+  fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
   fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: 'capsule' } })
   continueWizard()
@@ -141,6 +159,9 @@ function reachExistingReview(changeForm = false): void {
   continueWizard()
   continueWizard()
   continueWizard()
+  if (!(screen.getByLabelText('my_stack_plan_method') as HTMLSelectElement).value) {
+    fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
+  }
   fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: changeForm ? 'ml' : 'capsule' } })
   continueWizard()
@@ -296,11 +317,12 @@ describe('StackItemWizard interactions', () => {
     startCustom('Simple Product')
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
     continueWizard()
-    fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_intake_only_title/ }))
-    continueWizard()
+  fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_intake_only_title/ }))
+  continueWizard()
 
-    expect(screen.queryByLabelText('my_stack_plan_quantity')).toBeNull()
-    continueWizard()
+  expect(screen.queryByLabelText('my_stack_plan_quantity')).toBeNull()
+  fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
+  continueWizard()
 
     expect(screen.getByText('my_stack_tracking_intake_only_title')).toBeTruthy()
     expect(screen.getByText('my_stack_quantity_not_tracked')).toBeTruthy()
@@ -315,6 +337,7 @@ describe('StackItemWizard interactions', () => {
     continueWizard()
     fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_intake_only_title/ }))
     continueWizard()
+    fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
     continueWizard()
 
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
@@ -324,6 +347,27 @@ describe('StackItemWizard interactions', () => {
     expect(onSave.mock.calls[0][0].plan).toMatchObject({ dose: null, unit: null })
     expect(onSave.mock.calls[0][1]).toBe('create')
     expect(screen.queryByLabelText('my_stack_strength_value')).toBeNull()
+  })
+  it('hydrates the active plan and clears its id only when creating a duplicate', async () => {
+    const updateRun = renderWizard({ existingItem: existingVitaminD, existingPlan })
+    reachExistingReview()
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    await waitFor(() => expect(updateRun.onSave).toHaveBeenCalledTimes(1))
+    expect(updateRun.onSave.mock.calls[0][0].plan).toMatchObject({
+      id: 'cycle-1',
+      name: 'Vitamin D breakfast',
+      method: 'Oral',
+      routineGroup: 'morning',
+      time: '08:30',
+    })
+    cleanup()
+
+    const duplicateRun = renderWizard({ existingItem: existingVitaminD, existingPlan })
+    reachExistingReview(true)
+    fireEvent.click(screen.getByRole('button', { name: 'my_stack_create_variant' }))
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    await waitFor(() => expect(duplicateRun.onSave).toHaveBeenCalledTimes(1))
+    expect(duplicateRun.onSave.mock.calls[0][0].plan.id).toBeUndefined()
   })
   it('reviews complete tracking, routine, quantity, PK status, and product details', () => {
     renderWizard({ existingItem: existingVitaminD })

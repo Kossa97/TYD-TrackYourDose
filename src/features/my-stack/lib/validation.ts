@@ -18,7 +18,9 @@ export interface IntakePlanValidationErrors {
   name?: string
   dose?: string
   unit?: string
+  method?: string
   frequency?: string
+  startDate?: string
   routineGroup?: string
 }
 
@@ -31,9 +33,17 @@ function validateIngredient(
 
   if (!catalogSubstanceId && !ingredient.custom_name.trim()) errors.name = 'required'
   if (trackingCapabilities(level).productStrength) {
-    if (ingredient.amount_value === null) errors.amountValue = 'required_for_complete'
+    if (
+      ingredient.amount_value === null
+      || !Number.isFinite(ingredient.amount_value)
+      || ingredient.amount_value <= 0
+    ) errors.amountValue = 'required_for_complete'
     if (!ingredient.amount_unit?.trim()) errors.amountUnit = 'required_for_complete'
-    if (ingredient.basis_value === null) errors.basisValue = 'required_for_complete'
+    if (
+      ingredient.basis_value === null
+      || !Number.isFinite(ingredient.basis_value)
+      || ingredient.basis_value <= 0
+    ) errors.basisValue = 'required_for_complete'
     if (!ingredient.basis_unit?.trim()) errors.basisUnit = 'required_for_complete'
   }
 
@@ -61,10 +71,12 @@ export function validateIntakePlan(
 ): IntakePlanValidationErrors {
   const errors: IntakePlanValidationErrors = {}
   if (!plan.name.trim()) errors.name = 'required'
+  if (!plan.method.trim()) errors.method = 'required'
   if (!plan.frequency.trim()) errors.frequency = 'required'
+  if (!plan.startDate.trim()) errors.startDate = 'required'
   if (!plan.routineGroup) errors.routineGroup = 'required'
   if (trackingCapabilities(level).quantity) {
-    if (plan.dose == null || plan.dose <= 0) errors.dose = 'required'
+    if (plan.dose == null || !Number.isFinite(plan.dose) || plan.dose <= 0) errors.dose = 'required'
     if (!plan.unit?.trim()) errors.unit = 'required'
   }
   return errors

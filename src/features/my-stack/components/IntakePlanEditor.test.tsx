@@ -36,7 +36,7 @@ const plan: IntakePlanDraft = {
   frequency: 'Täglich',
   xDaysInterval: null,
   scheduleDays: [],
-  startDate: '',
+  startDate: '2026-08-16',
   endDate: null,
   routineGroup: 'morning',
   time: null,
@@ -67,6 +67,20 @@ function PlanHarness({
 afterEach(cleanup)
 
 describe('IntakePlanEditor', () => {
+  it('shows a required method and editable start/effective date without inferring a route', () => {
+    render(<PlanHarness trackingLevel="intake_only" dosageForm="capsule" />)
+
+    const method = screen.getByLabelText('Methode') as HTMLSelectElement
+    const startDate = screen.getByLabelText('Start / gültig ab') as HTMLInputElement
+    expect(method.required).toBe(true)
+    expect(method.value).toBe('')
+    expect(Array.from(method.options).map(option => option.value)).toEqual(expect.arrayContaining([
+      'Subkutan', 'Intramuskulär', 'Nasal', 'Oral', 'Transdermal', 'Intravenös', 'Andere',
+    ]))
+    expect(startDate.required).toBe(true)
+    expect(startDate.value).toBe('2026-08-16')
+  })
+
   it('omits planned quantity for intake-only tracking', () => {
     render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
 

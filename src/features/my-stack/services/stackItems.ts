@@ -1,12 +1,15 @@
 import { buildDuplicateFingerprint } from '../lib/duplicateFingerprint'
-import { validateStackItemDraft } from '../lib/validation'
+import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
 import type {
   DosageFormKey,
+  IntakePlanDraft,
   StackCategory,
   StackItem,
   StackItemDraft,
   StackItemIngredient,
+  StackItemSetupDraft,
   SubstanceCatalogEntry,
+  TrackingLevel,
 } from '../types'
 
 interface ServiceError {
@@ -79,18 +82,47 @@ export interface SaveStackItemRpcParams {
     id: string | null
     display_name: string
     category: StackCategory
+    tracking_level: TrackingLevel
     dosage_form: DosageFormKey
     brand: string | null
     color_hex: string | null
     notes: string | null
+    pk_profile_method: string | null
   }
   p_ingredients: SaveStackItemIngredient[]
+}
+
+interface SaveIntakePlanParams {
+  id: string | null
+  name: string
+  dose: number | null
+  unit: string | null
+  method: string
+  frequency: string
+  x_days_interval: number | null
+  schedule_days: string[]
+  start_date: string
+  end_date: string | null
+  intake_time: 'morgens' | 'mittags' | 'abends'
+  intake_time_custom: string | null
+  reminder: string
+}
+
+export interface SaveStackItemSetupRpcParams extends SaveStackItemRpcParams {
+  p_plan: SaveIntakePlanParams
 }
 
 export interface StackItemRpcClient {
   rpc(
     name: 'save_stack_item',
     params: SaveStackItemRpcParams,
+  ): PromiseLike<{ data: SavedStackItemRow | null; error: ServiceError | null }>
+}
+
+export interface StackItemSetupRpcClient {
+  rpc(
+    name: 'save_stack_item_with_plan',
+    params: SaveStackItemSetupRpcParams,
   ): PromiseLike<{ data: SavedStackItemRow | null; error: ServiceError | null }>
 }
 
@@ -164,6 +196,50 @@ function ingredientForSave(ingredient: StackItemIngredient): SaveStackItemIngred
   }
 }
 
+function itemParams(
+  draft: StackItemDraft,
+  pkProfileMethod: string | null = null,
+): SaveStackItemRpcParams['p_item'] {
+  return {
+    id: draft.id ?? null,
+    display_name: draft.displayName.trim(),
+    category: draft.category as StackCategory,
+    tracking_level: draft.trackingLevel,
+    dosage_form: draft.dosageForm as DosageFormKey,
+    brand: nullableText(draft.brand),
+    color_hex: nullableText(draft.colorHex),
+    notes: nullableText(draft.notes),
+    pk_profile_method: nullableText(pkProfileMethod ?? ''),
+  }
+}
+
+const ROUTINE_INTAKE_TIME = {
+  morning: 'morgens',
+  midday: 'mittags',
+  evening: 'abends',
+} as const
+
+function planParams(
+  plan: IntakePlanDraft,
+  trackingLevel: TrackingLevel,
+): SaveIntakePlanParams {
+  return {
+    id: plan.id ?? null,
+    name: plan.name.trim(),
+    dose: trackingLevel === 'intake_only' ? null : plan.dose,
+    unit: trackingLevel === 'intake_only' ? null : nullableText(plan.unit ?? ''),
+    method: plan.method.trim(),
+    frequency: plan.frequency.trim(),
+    x_days_interval: plan.xDaysInterval,
+    schedule_days: [...plan.scheduleDays],
+    start_date: plan.startDate.trim(),
+    end_date: nullableText(plan.endDate ?? ''),
+    intake_time: ROUTINE_INTAKE_TIME[plan.routineGroup],
+    intake_time_custom: nullableText(plan.time ?? ''),
+    reminder: plan.reminders.map(value => value.trim()).filter(Boolean).join(',') || 'none',
+  }
+}
+
 function stackItemAsDraft(item: StackItem): StackItemDraft {
   return {
     id: item.id,
@@ -207,21 +283,40 @@ export async function saveStackItem(
   }
 
   const params: SaveStackItemRpcParams = {
-    p_item: {
-      id: draft.id ?? null,
-      display_name: draft.displayName.trim(),
-      category: draft.category,
-      dosage_form: draft.dosageForm,
-      brand: nullableText(draft.brand),
-      color_hex: nullableText(draft.colorHex),
-      notes: nullableText(draft.notes),
-    },
+    p_item: itemParams(draft),
     p_ingredients: draft.ingredients.map(ingredientForSave),
   }
 
   const { data, error } = await client.rpc('save_stack_item', params)
   throwIfError(error)
   if (!data) throw new Error('save_stack_item returned no data')
+  return data
+}
+
+export async function saveStackItemSetup(
+  client: StackItemSetupRpcClient,
+  draft: StackItemSetupDraft,
+): Promise<SavedStackItemRow> {
+  const itemErrors = validateStackItemDraft(draft)
+  const planErrors = validateIntakePlan(draft.plan, draft.trackingLevel)
+  if (
+    !draft.displayName.trim()
+    || !draft.category
+    || !draft.dosageForm
+    || Object.keys(itemErrors).length > 0
+    || Object.keys(planErrors).length > 0
+  ) {
+    throw new Error('Invalid stack item setup draft')
+  }
+
+  const params: SaveStackItemSetupRpcParams = {
+    p_item: itemParams(draft, draft.pkProfileMethod),
+    p_ingredients: draft.ingredients.map(ingredientForSave),
+    p_plan: planParams(draft.plan, draft.trackingLevel),
+  }
+  const { data, error } = await client.rpc('save_stack_item_with_plan', params)
+  throwIfError(error)
+  if (!data) throw new Error('save_stack_item_with_plan returned no data')
   return data
 }
 
