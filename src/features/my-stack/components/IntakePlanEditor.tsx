@@ -1,6 +1,6 @@
 import { BellRing, Clock, Moon, Sun, Sunrise } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { getDosageForm } from '../lib/dosageForms'
+import { getDosageForm, getIntakePlanUnitSuggestions } from '../lib/dosageForms'
 import { trackingCapabilities } from '../lib/trackingDepth'
 import type { IntakePlanValidationErrors } from '../lib/validation'
 import type {
@@ -68,14 +68,10 @@ export function IntakePlanEditor({
   const { t } = useTranslation()
   const form = getDosageForm(dosageForm)
   const tracksQuantity = trackingCapabilities(trackingLevel).quantity
-  const catalogUnits = (catalogEntry?.suggested_units ?? [])
-    .filter(unit => form.suggestedUnits.includes(unit))
-  const unitSuggestions = Array.from(new Set([
-    ...catalogUnits,
-    ...form.suggestedUnits,
-    ...form.basisUnits,
-    ...(plan.unit ? [plan.unit] : []),
-  ]))
+  const unitSuggestions = getIntakePlanUnitSuggestions(
+    dosageForm,
+    catalogEntry?.suggested_units,
+  )
   const canSuggestFractions = dosageForm === 'tablet' && form.capabilities.includes('divisible')
 
   function selectFrequency(frequency: string): void {

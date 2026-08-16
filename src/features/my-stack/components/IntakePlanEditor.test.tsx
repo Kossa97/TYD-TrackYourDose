@@ -122,6 +122,22 @@ describe('IntakePlanEditor', () => {
       .toEqual(expect.arrayContaining(['IU', 'mcg', 'capsule']))
   })
 
+  it('does not reinsert an incompatible stale capsule unit for a liquid plan', () => {
+    const staleCapsulePlan = { ...plan, unit: 'capsule' }
+    const { container } = render(
+      <PlanHarness
+        trackingLevel="with_amount"
+        dosageForm="liquid"
+        initialPlan={staleCapsulePlan}
+      />,
+    )
+
+    const suggestions = Array.from(container.querySelectorAll('datalist option'))
+      .map(option => option.getAttribute('value'))
+    expect(suggestions).toContain('ml')
+    expect(suggestions).not.toContain('capsule')
+  })
+
   it('adapts quantity labels and controls to liquids and injectables', () => {
     const { rerender } = render(<PlanHarness trackingLevel="with_amount" dosageForm="liquid" />)
 

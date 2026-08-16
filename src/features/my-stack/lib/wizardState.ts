@@ -11,7 +11,7 @@ import type {
   TrackingLevel,
 } from '../types'
 import { buildDuplicateFingerprint } from './duplicateFingerprint'
-import { getDosageForm } from './dosageForms'
+import { getDosageForm, getIntakePlanUnitSuggestions } from './dosageForms'
 import { validateIntakePlan, validateStackItemDraft } from './validation'
 
 export type WizardStep =
@@ -31,15 +31,18 @@ export interface WizardState {
   draft: StackItemSetupDraft
   original: StackItem | null
   saveMode: WizardSaveMode
+  trackingLevelSelected: boolean
 }
 
 export function wizardSteps(state: WizardState): WizardStep[] {
+  const commonSteps: WizardStep[] = ['substance', 'dosage_form', 'tracking_level']
+
+  if (!state.trackingLevelSelected) return commonSteps
+
   if (state.draft.trackingLevel === 'complete') {
     return [
-      'substance',
+      ...commonSteps,
       'ingredients',
-      'dosage_form',
-      'tracking_level',
       'strength',
       'details',
       'plan',
@@ -47,7 +50,7 @@ export function wizardSteps(state: WizardState): WizardStep[] {
     ]
   }
 
-  return ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']
+  return [...commonSteps, 'plan', 'review']
 }
 
 type IngredientChanges = Partial<Omit<StackItemIngredient, 'position'>>
@@ -61,7 +64,11 @@ export type WizardAction =
   | { type: 'ingredient_added' }
   | { type: 'ingredient_changed'; index: number; changes: IngredientChanges }
   | { type: 'ingredient_removed'; index: number }
-  | { type: 'dosage_form_selected'; dosageForm: DosageFormKey }
+  | {
+      type: 'dosage_form_selected'
+      dosageForm: DosageFormKey
+      catalogSuggestedUnits?: readonly string[]
+    }
   | { type: 'tracking_level_selected'; trackingLevel: TrackingLevel }
   | { type: 'details_changed'; changes: Partial<Pick<StackItemDraft, 'brand' | 'colorHex' | 'notes'>> }
   | { type: 'plan_changed'; changes: Partial<IntakePlanDraft> }
@@ -149,6 +156,7 @@ export function initialWizardState(existing?: StackItem, initialColorHex = ''): 
         },
     original: existing ?? null,
     saveMode: existing ? 'update' : 'create',
+    trackingLevelSelected: Boolean(existing),
   }
 }
 
@@ -247,11 +255,22 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       }
     case 'dosage_form_selected': {
       const basisUnit = suggestedBasisUnit(action.dosageForm)
+      const compatiblePlanUnits = getIntakePlanUnitSuggestions(
+        action.dosageForm,
+        action.catalogSuggestedUnits,
+      )
+      const currentPlanUnit = state.draft.plan.unit
       return {
         ...state,
         draft: {
           ...state.draft,
           dosageForm: action.dosageForm,
+          plan: {
+            ...state.draft.plan,
+            unit: currentPlanUnit && compatiblePlanUnits.includes(currentPlanUnit)
+              ? currentPlanUnit
+              : null,
+          },
           ingredients: state.draft.ingredients.map(ingredient => ({
             ...ingredient,
             basis_unit: basisUnit,
@@ -260,7 +279,11 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       }
     }
     case 'tracking_level_selected':
-      return { ...state, draft: { ...state.draft, trackingLevel: action.trackingLevel } }
+      return {
+        ...state,
+        trackingLevelSelected: true,
+        draft: { ...state.draft, trackingLevel: action.trackingLevel },
+      }
     case 'details_changed':
       return { ...state, draft: { ...state.draft, ...action.changes } }
     case 'plan_changed':
@@ -298,6 +321,7 @@ export function firstInvalidField(state: WizardState): string | null {
     if (!state.draft.category) return 'category'
   }
   if (state.step === 'ingredients' && !state.draft.displayName.trim()) return 'displayName'
+  if (state.step === 'tracking_level' && !state.trackingLevelSelected) return 'trackingLevel'
 
   if (state.step === 'substance' || state.step === 'ingredients' || state.step === 'review') {
     const nameError = firstIngredientError(state, ['name'])
@@ -308,7 +332,10 @@ export function firstInvalidField(state: WizardState): string | null {
     if (errors.dosageForm) return 'dosageForm'
   }
 
-  if (state.step === 'strength' || state.step === 'review') {
+  if (
+    state.step === 'strength'
+    || (state.step === 'review' && state.draft.trackingLevel === 'complete')
+  ) {
     const strengthError = firstIngredientError(
       state,
       ['name', 'amountValue', 'amountUnit', 'basisValue', 'basisUnit'],

@@ -30,6 +30,21 @@ export function getDosageForm(key: DosageFormKey): DosageFormDefinition {
   return DOSAGE_FORMS.find(form => form.key === key)!
 }
 
+export function getIntakePlanUnitSuggestions(
+  key: DosageFormKey,
+  catalogSuggestedUnits: readonly string[] = [],
+): string[] {
+  const form = getDosageForm(key)
+  const catalogUnits = catalogSuggestedUnits
+    .filter(unit => form.suggestedUnits.includes(unit))
+
+  return Array.from(new Set([
+    ...catalogUnits,
+    ...form.suggestedUnits,
+    ...form.basisUnits,
+  ]))
+}
+
 export function isStageRenderable(key: DosageFormKey): boolean {
   return getDosageForm(key).stageRenderer !== undefined
 }

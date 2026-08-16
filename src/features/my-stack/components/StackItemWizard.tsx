@@ -70,6 +70,7 @@ const STEP_LABELS: Record<WizardStep, { key: string; defaultValue: string }> = {
 function stepForInvalidField(field: string): WizardStep {
   if (field === 'displayName' || field === 'category') return 'substance'
   if (field === 'dosageForm') return 'dosage_form'
+  if (field === 'trackingLevel') return 'tracking_level'
   if (field.startsWith('plan.')) return 'plan'
   if (field.endsWith('.name')) return 'ingredients'
   return 'strength'
@@ -294,15 +295,20 @@ export function StackItemWizard({
           <DosageFormPicker
             value={state.draft.dosageForm}
             error={showErrors && Boolean(validationErrors.dosageForm)}
-            onSelect={dosageForm => dispatch({ type: 'dosage_form_selected', dosageForm })}
+            onSelect={dosageForm => dispatch({
+              type: 'dosage_form_selected',
+              dosageForm,
+              catalogSuggestedUnits: selectedCatalogEntry?.suggested_units,
+            })}
           />
         )
       case 'tracking_level':
         return (
           <TrackingLevelPicker
-            value={state.draft.trackingLevel}
+            value={state.trackingLevelSelected ? state.draft.trackingLevel : null}
             substanceName={state.draft.displayName}
             pkProfileAvailable={Boolean(selectedCatalogEntry?.pk_profile_id)}
+            error={showErrors && !state.trackingLevelSelected}
             onChange={trackingLevel => {
               dispatch({ type: 'tracking_level_selected', trackingLevel })
               setShowErrors(false)

@@ -53,12 +53,34 @@ describe('wizard state', () => {
   it.each([
     ['intake_only', ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']],
     ['with_amount', ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']],
-    ['complete', ['substance', 'ingredients', 'dosage_form', 'tracking_level', 'strength', 'details', 'plan', 'review']],
+    ['complete', ['substance', 'dosage_form', 'tracking_level', 'ingredients', 'strength', 'details', 'plan', 'review']],
   ] as const)('builds the %s path', (trackingLevel, expected) => {
-    const initial = initialWizardState()
-    const state = { ...initial, draft: { ...initial.draft, trackingLevel } }
+    const state = wizardReducer(
+      initialWizardState(),
+      { type: 'tracking_level_selected', trackingLevel },
+    )
 
     expect(wizardSteps(state)).toEqual(expected)
+  })
+
+  it('requires an explicit tracking choice for new drafts but accepts an existing persisted level', () => {
+    const initial = initialWizardState()
+    const trackingStep = { ...initial, step: 'tracking_level' as const }
+
+    expect(initial.trackingLevelSelected).toBe(false)
+    expect(wizardSteps(initial)).toEqual(['substance', 'dosage_form', 'tracking_level'])
+    expect(firstInvalidField(trackingStep)).toBe('trackingLevel')
+
+    const selected = wizardReducer(
+      trackingStep,
+      { type: 'tracking_level_selected', trackingLevel: 'complete' },
+    )
+    expect(selected.trackingLevelSelected).toBe(true)
+    expect(firstInvalidField(selected)).toBeNull()
+    expect(wizardSteps(selected)).toEqual([
+      'substance', 'dosage_form', 'tracking_level', 'ingredients', 'strength', 'details', 'plan', 'review',
+    ])
+    expect(initialWizardState(existingVitaminD).trackingLevelSelected).toBe(true)
   })
 
   it('keeps complete-only details when a lower tracking level hides their steps', () => {
@@ -87,6 +109,44 @@ describe('wizard state', () => {
     expect(wizardSteps(next)).toEqual([
       'substance', 'dosage_form', 'tracking_level', 'plan', 'review',
     ])
+  })
+
+  it('clears an incompatible capsule plan unit when the dosage form changes to liquid', () => {
+    const initial = initialWizardState()
+    const capsuleState = {
+      ...initial,
+      draft: {
+        ...initial.draft,
+        dosageForm: 'capsule' as const,
+        plan: { ...initial.draft.plan, unit: 'capsule' },
+      },
+    }
+
+    const next = wizardReducer(capsuleState, {
+      type: 'dosage_form_selected',
+      dosageForm: 'liquid',
+    })
+
+    expect(next.draft.plan.unit).toBeNull()
+  })
+
+  it('preserves a plan unit that remains compatible with the new dosage form', () => {
+    const initial = initialWizardState()
+    const capsuleState = {
+      ...initial,
+      draft: {
+        ...initial.draft,
+        dosageForm: 'capsule' as const,
+        plan: { ...initial.draft.plan, unit: 'IU' },
+      },
+    }
+
+    const next = wizardReducer(capsuleState, {
+      type: 'dosage_form_selected',
+      dosageForm: 'liquid',
+    })
+
+    expect(next.draft.plan.unit).toBe('IU')
   })
   it('übernimmt die bisherige Zufallsfarbe nur für neue Einträge', () => {
     expect(initialWizardState(undefined, '#123456').draft.colorHex).toBe('#123456')

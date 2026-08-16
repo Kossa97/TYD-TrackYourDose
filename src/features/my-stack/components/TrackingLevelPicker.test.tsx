@@ -16,6 +16,23 @@ vi.mock('react-i18next', () => ({
 afterEach(cleanup)
 
 describe('TrackingLevelPicker', () => {
+  it('renders a required new-item choice with no radio silently preselected', () => {
+    render(
+      <TrackingLevelPicker
+        value={null}
+        substanceName="Vitamin D3"
+        pkProfileAvailable={false}
+        error
+        onChange={() => undefined}
+      />,
+    )
+
+    expect(screen.getAllByRole('radio').every(radio => !(radio as HTMLInputElement).checked))
+      .toBe(true)
+    expect(screen.getByRole('group').getAttribute('aria-invalid')).toBe('true')
+    expect(screen.getByRole('alert').textContent).toBe('Bitte wähle eine Tracking-Tiefe.')
+  })
+
   it('explains the full consequence and next step on every semantic radio card', () => {
     render(
       <TrackingLevelPicker

@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next'
 import type { TrackingLevel } from '../types'
 
 export interface TrackingLevelPickerProps {
-  value: TrackingLevel
+  value: TrackingLevel | null
   substanceName: string
   pkProfileAvailable: boolean
+  error?: boolean
   onChange: (value: TrackingLevel) => void
 }
 
@@ -15,6 +16,7 @@ export function TrackingLevelPicker({
   value,
   substanceName,
   pkProfileAvailable,
+  error = false,
   onChange,
 }: TrackingLevelPickerProps) {
   const { t } = useTranslation()
@@ -73,7 +75,13 @@ export function TrackingLevelPicker({
   } as const
 
   return (
-    <fieldset data-field="trackingLevel" tabIndex={-1} className="min-w-0">
+    <fieldset
+      data-field="trackingLevel"
+      tabIndex={-1}
+      aria-invalid={error || undefined}
+      aria-describedby={error ? 'stack-tracking-level-error' : undefined}
+      className="min-w-0"
+    >
       <legend className="text-base font-semibold text-white">
         {t('my_stack_tracking_question', { defaultValue: 'Wie genau möchtest du tracken?' })}
       </legend>
@@ -102,6 +110,7 @@ export function TrackingLevelPicker({
                 value={level}
                 checked={selected}
                 onChange={() => onChange(level)}
+                required
                 className="mt-1 h-5 w-5 shrink-0 cursor-pointer accent-sky-400 focus-visible:outline-none"
               />
               <span className="min-w-0 flex-1">
@@ -138,6 +147,13 @@ export function TrackingLevelPicker({
           )
         })}
       </div>
+      {error && (
+        <p id="stack-tracking-level-error" role="alert" className="mt-3 text-sm text-rose-300">
+          {t('my_stack_tracking_level_required', {
+            defaultValue: 'Bitte wähle eine Tracking-Tiefe.',
+          })}
+        </p>
+      )}
     </fieldset>
   )
 }
