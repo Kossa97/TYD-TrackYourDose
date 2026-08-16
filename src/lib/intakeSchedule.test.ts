@@ -51,16 +51,27 @@ describe('scheduleForDay', () => {
 
 // ── effectiveDose ──────────────────────────────────────────────────────────────
 describe('effectiveDose mit versionierter Basis-Dosis + Dosisanpassung', () => {
-  const esc: EscalationRow = { cycle_id: 'c1', increase_amount: 50, start_type: 'after_days', start_date: null, start_after_days: 14 }
+  const esc: EscalationRow = { cycle_id: 'c1', increase_amount: 50, unit: 'mcg', start_type: 'after_days', start_date: null, start_after_days: 14 }
   it('Basis aus Segment + aktive Eskalation', () => {
     expect(effectiveDose(versioned, new Date(2026, 0, 5), [esc])).toBe(200)   // Tag 4, keine Eskalation
     expect(effectiveDose(versioned, new Date(2026, 0, 20), [esc])).toBe(250)  // Tag 19, +50
     expect(effectiveDose(versioned, new Date(2026, 5, 1), [esc])).toBe(350)   // Segment 300 + 50
   })
   it('unterstuetzt Reduktionen als negative Anpassung', () => {
-    const reduction: EscalationRow = { cycle_id: 'c1', increase_amount: -75, start_type: 'after_days', start_date: null, start_after_days: 21 }
+    const reduction: EscalationRow = { cycle_id: 'c1', increase_amount: -75, unit: 'mcg', start_type: 'after_days', start_date: null, start_after_days: 21 }
     expect(effectiveDose(versioned, new Date(2026, 0, 25), [esc, reduction])).toBe(175)
   })
+
+  it('rejects arithmetic when an active adjustment unit differs from the effective base unit', () => {
+    expect(effectiveDose(versioned, new Date(2026, 0, 20), [{ ...esc, unit: 'mg' }])).toBeNull()
+  })
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY])(
+    'rejects arithmetic with an invalid active adjustment (%s)',
+    increase_amount => {
+      expect(effectiveDose(versioned, new Date(2026, 0, 20), [{ ...esc, increase_amount }])).toBeNull()
+    },
+  )
 })
 
 // ── findOldestOverdueIntake: mehrere Einnahmen pro Tag ──────────────────────────
@@ -226,6 +237,7 @@ describe('effectiveDose with unknown quantity', () => {
     }, new Date('2026-07-25'), [{
       cycle_id: cycle.id,
       increase_amount: 5,
+      unit: 'mg',
       start_type: 'date',
       start_date: '2026-07-20',
       start_after_days: null,

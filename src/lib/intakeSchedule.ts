@@ -33,9 +33,15 @@ export interface ScheduleCycle {
 export interface EscalationRow {
   cycle_id: string
   increase_amount: number
+  unit: string
   start_type: 'date' | 'after_days' | 'after_weeks'
   start_date: string | null
   start_after_days: number | null
+}
+
+export interface EffectiveQuantity {
+  dose: number
+  unit: string
 }
 
 export interface IntakeLog {
@@ -69,10 +75,12 @@ export function scheduleForDay(cycle: ScheduleCycle, day: Date): ScheduleSegment
   return seg
 }
 
-// Effective dose for a cycle on a given day: segment base dose + active dose adjustments.
-export function effectiveDose(cycle: ScheduleCycle, day: Date, escalations: EscalationRow[]): number | null {
-  const baseDose = scheduleForDay(cycle, day).dose
-  if (baseDose == null) return null
+// Effective quantity for a cycle on a given day: segment base + same-unit active adjustments.
+export function effectiveQuantity(cycle: ScheduleCycle, day: Date, escalations: EscalationRow[]): EffectiveQuantity | null {
+  const segment = scheduleForDay(cycle, day)
+  const baseDose = segment.dose
+  const baseUnit = segment.unit
+  if (baseDose == null || !Number.isFinite(baseDose) || baseDose <= 0 || !baseUnit?.trim()) return null
 
   const daysFromStart = differenceInDays(day, parseISO(cycle.start_date))
   let total = baseDose
@@ -83,9 +91,20 @@ export function effectiveDose(cycle: ScheduleCycle, day: Date, escalations: Esca
     const activeByOffset = escalation.start_type !== 'date'
       && escalation.start_after_days != null
       && daysFromStart >= escalation.start_after_days
-    if (activeByDate || activeByOffset) total += escalation.increase_amount
+    if (activeByDate || activeByOffset) {
+      if (
+        !Number.isFinite(escalation.increase_amount)
+        || !escalation.unit?.trim()
+        || escalation.unit !== baseUnit
+      ) return null
+      total += escalation.increase_amount
+    }
   }
-  return total
+  return Number.isFinite(total) && total > 0 ? { dose: total, unit: baseUnit } : null
+}
+
+export function effectiveDose(cycle: ScheduleCycle, day: Date, escalations: EscalationRow[]): number | null {
+  return effectiveQuantity(cycle, day, escalations)?.dose ?? null
 }
 
 export interface OverdueIntake {

@@ -232,6 +232,32 @@ describe('Home upcoming intake confirmation flow', () => {
     expect(quantity).toEqual({ doseNumber: null, unit: null, dose: null })
   })
 
+  it('does not pair a schedule unit with a rejected mixed-unit adjustment', () => {
+    const quantity = resolveHomeIntakeQuantity({
+      id: 'cycle-1',
+      stack_item_id: 'stack-1',
+      start_date: '2026-07-01',
+      end_date: null,
+      frequency: 'Taeglich',
+      x_days_interval: null,
+      schedule_days: null,
+      intake_time: 'morgens',
+      intake_time_custom: null,
+      dose: 10,
+      unit: 'mg',
+      schedule_history: null,
+    }, new Date('2026-07-29T08:00:00'), [{
+      cycle_id: 'cycle-1',
+      increase_amount: 5,
+      unit: 'mcg',
+      start_type: 'date',
+      start_date: '2026-07-20',
+      start_after_days: null,
+    }])
+
+    expect(quantity).toEqual({ doseNumber: null, unit: null, dose: null })
+  })
+
   it('builds an unknown taken log with null quantity and the chosen timestamp', () => {
     const payload = buildHomeDoseLogPayload({
       userId: 'user-1',

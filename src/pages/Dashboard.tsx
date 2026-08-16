@@ -16,7 +16,7 @@ import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getStackItemColor } from '../features/my-stack/lib/colors'
 import { getDateLocale } from '../i18n/dateLocales'
-import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, type ScheduleSegment } from '../lib/intakeSchedule'
+import { cycleAppliesToDay, effectiveQuantity, scheduleForDay, AUTO_MISSED_NOTE, type ScheduleSegment } from '../lib/intakeSchedule'
 import { computeNextVialStock, debitPeptideStockForDoseById } from '../features/my-stack/extensions/peptide/vialStock'
 import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/quantityPresentation'
 import {
@@ -124,10 +124,7 @@ function resolveDashboardCycleQuantity(
   escalations: Escalation[],
 ): DashboardQuantity {
   if (cycle.stack_items?.tracking_level === 'intake_only') return { dose: null, unit: null }
-  return {
-    dose: effectiveDose(cycle, day, escalations),
-    unit: scheduleForDay(cycle, day).unit,
-  }
+  return effectiveQuantity(cycle, day, escalations) ?? { dose: null, unit: null }
 }
 
 const INTAKE_MINUTES: Record<string, number> = {

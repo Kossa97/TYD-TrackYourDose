@@ -14,8 +14,8 @@ import {
 } from 'lucide-react'
 import { useNew } from '../../lib/useNew'
 import { NewDot } from '../../components/NewDot'
-import { format, parseISO, addDays, differenceInDays } from 'date-fns'
-import { effectiveDose, type ScheduleSegment } from '../../lib/intakeSchedule'
+import { format, isValid, parseISO, addDays, differenceInDays } from 'date-fns'
+import { effectiveQuantity, scheduleForDay, type ScheduleSegment } from '../../lib/intakeSchedule'
 import { buildDoseAdjustmentBackfillUpdates, type DoseAdjustmentBackfillLog } from '../../lib/doseAdjustmentBackfill'
 import type { VialStageLightHandle } from '../../components/PeptideVialVisual'
 import { SloshProvider, useSloshEngine } from '../../components/SloshContext'
@@ -30,7 +30,8 @@ import type { IntakePlanDraft, RoutineGroup, StackItem, StackItemSetupDraft, Sub
 import { isStageRenderable } from './lib/dosageForms'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
 import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
-import { buildPermanentScheduleChange, buildTitrationStep, dosePlanCapabilities } from './lib/dosePlan'
+import { buildPermanentScheduleChange, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
+import { DoseUnitControl } from './components/DoseUnitControl'
 import { VialTrackingEditor, emptyVialTrackingDraft, type PkProfileOption, type VialTrackingDraft } from './extensions/peptide/VialTrackingEditor'
 
 interface InventoryItem {
@@ -64,7 +65,7 @@ interface Peptide extends StackItem {
 }
 interface Cycle {
   id: string; stack_item_id: string; name: string
-  dose: number; unit: string; method: string
+  dose: number | null; unit: string | null; method: string
   frequency: string; x_days_interval: number | null
   schedule_days: string[] | null
   start_date: string; end_date: string | null; active: boolean
@@ -275,6 +276,24 @@ const emptyCycleForm = (p: Peptide, tFn: (k:string)=>string): CycleForm => ({
   start_date: format(new Date(), 'yyyy-MM-dd'), end_date: '',
   daily_freq: '1', intake_times: [], intake_time_customs: [], reminder: [],
 })
+
+function parseStoredDay(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
+  const parsed = parseISO(value)
+  return isValid(parsed) && format(parsed, 'yyyy-MM-dd') === value ? parsed : null
+}
+
+function escalationFormStartDate(cycle: Cycle, form: EscalationForm): Date | null {
+  if (form.start_type === 'date') return parseStoredDay(form.start_date)
+  const offset = Number(form.start_after_days)
+  if (!Number.isFinite(offset) || !Number.isInteger(offset) || offset <= 0) return null
+  return addDays(parseISO(cycle.start_date), offset * (form.start_type === 'after_weeks' ? 7 : 1))
+}
+
+function withEffectiveEscalationUnit(cycle: Cycle, form: EscalationForm): EscalationForm {
+  const start = escalationFormStartDate(cycle, form)
+  return { ...form, unit: start ? scheduleForDay(cycle, start).unit ?? '' : '' }
+}
 
 export function DosePlanActions({
   trackingLevel,
@@ -976,16 +995,17 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     setCForm(emptyCycleForm(p, t)); setShowCycleForm(true)
   }
   const openEditCycle = (p: Peptide, c: Cycle) => {
+    const currentSegment = scheduleForDay(c, new Date())
     setCycleForPeptide(p); setEditingCycleId(c.id)
     setCForm({
-      name: c.name, dose: c.dose?.toString() ?? '', unit: c.unit ?? 'mcg',
-      method: c.method, frequency: c.frequency,
-      x_days_interval: c.x_days_interval?.toString() ?? '3',
-      schedule_days: c.schedule_days ?? [],
+      name: c.name, dose: currentSegment.dose?.toString() ?? '', unit: currentSegment.unit ?? '',
+      method: c.method, frequency: currentSegment.frequency,
+      x_days_interval: currentSegment.x_days_interval?.toString() ?? '3',
+      schedule_days: currentSegment.schedule_days ?? [],
       start_date: c.start_date, end_date: c.end_date ?? '',
-      intake_times: (c.intake_time ?? '').split(',').filter(Boolean),
-      intake_time_customs: (c.intake_time_custom ?? '').split(',').filter(Boolean),
-      daily_freq: String(Math.max(1, Math.min(3, (c.intake_time ?? '').split(',').filter(Boolean).length || 1))),
+      intake_times: (currentSegment.intake_time ?? '').split(',').filter(Boolean),
+      intake_time_customs: (currentSegment.intake_time_custom ?? '').split(',').filter(Boolean),
+      daily_freq: String(Math.max(1, Math.min(3, (currentSegment.intake_time ?? '').split(',').filter(Boolean).length || 1))),
       reminder: (c.reminder && c.reminder !== 'none') ? c.reminder.split(',').filter(Boolean) : [],
     })
     setShowCycleForm(true)
@@ -1003,7 +1023,12 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
   const saveCycle = async () => {
     if (!cForm || !cycleForPeptide) return
-    if (!cForm.name || (dosePlanCapabilities(cycleForPeptide.tracking_level).permanent && !cForm.dose)) {
+    const formDose = Number(cForm.dose)
+    if (
+      !cForm.name
+      || (dosePlanCapabilities(cycleForPeptide.tracking_level).permanent
+        && (!Number.isFinite(formDose) || formDose <= 0 || !cForm.unit.trim()))
+    ) {
       return toast.error(t('name_dosis_erforderlich'))
     }
     if (cForm.frequency === 'Wochentage wählen' && cForm.schedule_days.length === 0)
@@ -1012,7 +1037,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     if (editingCycleId) {
       const prev = cycles.find(c => c.id === editingCycleId)
       if (prev) {
-        const prevFields: SchedFields = { frequency: prev.frequency, x_days_interval: prev.x_days_interval, schedule_days: prev.schedule_days, intake_time: prev.intake_time, intake_time_custom: prev.intake_time_custom, dose: prev.dose, unit: prev.unit }
+        const currentSegment = scheduleForDay(prev, new Date())
+        const prevFields: SchedFields = { frequency: currentSegment.frequency, x_days_interval: currentSegment.x_days_interval, schedule_days: currentSegment.schedule_days, intake_time: currentSegment.intake_time, intake_time_custom: currentSegment.intake_time_custom, dose: currentSegment.dose, unit: currentSegment.unit }
         if (schedKey(prevFields) !== schedKey(formSchedFields())) {
           const nextFields = formSchedFields()
           setQuantityScheduleChange(prevFields.dose !== nextFields.dose || prevFields.unit !== nextFields.unit)
@@ -1029,6 +1055,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // null = keine Planänderung (oder neuer Zyklus) → bestehende Historie bleibt unverändert.
   const finalizeSave = async (mode: 'retroactive' | 'fromDate' | null) => {
     if (!cForm || !cycleForPeptide) return
+    if (mode === 'fromDate' && !parseStoredDay(scheduleEffectiveFrom)) {
+      toast.error(t('error'))
+      return
+    }
     setSavingCycle(true)
     const payload = {
       user_id: user!.id, stack_item_id: cycleForPeptide.id,
@@ -1050,7 +1080,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     if (editingCycleId) {
       const prev = cycles.find(c => c.id === editingCycleId)
       if (prev) {
-        const prevFields: SchedFields = { frequency: prev.frequency, x_days_interval: prev.x_days_interval, schedule_days: prev.schedule_days, intake_time: prev.intake_time, intake_time_custom: prev.intake_time_custom, dose: prev.dose, unit: prev.unit }
+        const currentSegment = scheduleForDay(prev, new Date())
+        const prevFields: SchedFields = { frequency: currentSegment.frequency, x_days_interval: currentSegment.x_days_interval, schedule_days: currentSegment.schedule_days, intake_time: currentSegment.intake_time, intake_time_custom: currentSegment.intake_time_custom, dose: currentSegment.dose, unit: currentSegment.unit }
         if (schedKey(prevFields) === schedKey(nextFields)) {
           scheduleHistory = prev.schedule_history ?? null            // unverändert: Historie behalten
         } else if (mode === 'retroactive') {
@@ -1058,12 +1089,21 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         } else {
           const effectiveFrom = scheduleEffectiveFrom
           if (quantityScheduleChange && dosePlanCapabilities(cycleForPeptide.tracking_level).permanent && nextFields.dose != null && nextFields.unit) {
-            const quantityChange = buildPermanentScheduleChange(prev, {
-              trackingLevel: cycleForPeptide.tracking_level,
-              effectiveFrom,
-              dose: nextFields.dose,
-              unit: nextFields.unit,
-            })
+            let quantityChange
+            try {
+              quantityChange = buildPermanentScheduleChange(prev, {
+                trackingLevel: cycleForPeptide.tracking_level,
+                effectiveFrom,
+                dose: nextFields.dose,
+                unit: nextFields.unit,
+              })
+            } catch {
+              toast.error(t('error'))
+              setSavingCycle(false)
+              return
+            }
+            payload.dose = quantityChange.dose
+            payload.unit = quantityChange.unit
             scheduleHistory = quantityChange.schedule_history?.map(segment => segment.effective_from === effectiveFrom
               ? { effective_from: effectiveFrom, ...nextFields }
               : segment) ?? null
@@ -1089,8 +1129,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         const changedCycle: Cycle = {
           ...previousCycle,
           ...payload,
-          dose: nextFields.dose ?? previousCycle.dose,
-          unit: nextFields.unit ?? previousCycle.unit,
           schedule_history: scheduleHistory,
         }
         try {
@@ -1163,19 +1201,21 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // ── Dosisanpassungs-Aktionen ──────────────────────────────────────────────
   const openNewEsc = (c: Cycle) => {
     const stackItem = peptides.find(item => item.id === c.stack_item_id)
-    if (!stackItem || !dosePlanCapabilities(stackItem.tracking_level).titration || c.dose == null) return
+    const currentQuantity = dosePlanQuantitiesForDay(c, new Date(), escalationsOf(c.id)).current
+    if (!stackItem || !dosePlanCapabilities(stackItem.tracking_level).titration || !currentQuantity) return
     setEscForCycle(c); setEditingEscId(null)
-    setEForm(emptyEscalationForm(c.unit)); setShowEscForm(true)
+    setEForm(withEffectiveEscalationUnit(c, emptyEscalationForm(currentQuantity.unit))); setShowEscForm(true)
   }
   const openEditEsc = (c: Cycle, e: Escalation) => {
     const stackItem = peptides.find(item => item.id === c.stack_item_id)
-    if (!stackItem || !dosePlanCapabilities(stackItem.tracking_level).titration || c.dose == null) return
+    if (!stackItem || !dosePlanCapabilities(stackItem.tracking_level).titration) return
     setEscForCycle(c); setEditingEscId(e.id)
     const startAfterValue = e.start_after_days !== null && e.start_after_days !== undefined
       ? (e.start_type === 'after_weeks' ? e.start_after_days / 7 : e.start_after_days).toString()
       : '2'
     setEForm({
-      increase_amount: escalationTargetDose(c, e)?.toString() ?? '', unit: e.unit,
+      increase_amount: escalationTargetQuantity(c, e)?.dose.toString() ?? '',
+      unit: doseBeforeAdjustment(c, e)?.unit ?? '',
       start_type: e.start_type,
       start_date: e.start_date ?? format(new Date(), 'yyyy-MM-dd'),
       start_after_days: startAfterValue,
@@ -1224,16 +1264,17 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const saveEsc = async () => {
     if (!eForm || !escForCycle) return
     const stackItem = peptides.find(item => item.id === escForCycle.stack_item_id)
-    if (!stackItem || !dosePlanCapabilities(stackItem.tracking_level).titration || escForCycle.dose == null) return
+    if (!stackItem || !dosePlanCapabilities(stackItem.tracking_level).titration) return
     if (!eForm.increase_amount) return toast.error(t('erhoeht_erforderlich'))
     setSavingEsc(true)
-    const targetDose = parseFloat(eForm.increase_amount)
-    if (!Number.isFinite(targetDose)) {
+    const targetDose = Number(eForm.increase_amount)
+    if (!Number.isFinite(targetDose) || targetDose <= 0) {
       setSavingEsc(false)
       return toast.error(t('erhoeht_erforderlich'))
     }
+    const enteredOffset = Number(eForm.start_after_days)
     const startAfterDays = eForm.start_type !== 'date'
-      ? parseInt(eForm.start_after_days) * (eForm.start_type === 'after_weeks' ? 7 : 1)
+      ? enteredOffset * (eForm.start_type === 'after_weeks' ? 7 : 1)
       : null
     const draftEsc: Escalation = {
       id: editingEscId ?? '__new_adjustment__',
@@ -1245,21 +1286,28 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       start_after_days: startAfterDays,
       notes: eForm.notes || null,
     }
-    const baseDoseAtStart = doseBeforeAdjustment(escForCycle, draftEsc)
-    if (baseDoseAtStart == null) {
+    const baseQuantityAtStart = doseBeforeAdjustment(escForCycle, draftEsc)
+    if (!baseQuantityAtStart) {
       setSavingEsc(false)
       return toast.error(t('erhoeht_erforderlich'))
     }
-    const step = buildTitrationStep({
-      trackingLevel: stackItem.tracking_level,
-      cycleId: escForCycle.id,
-      targetDose,
-      effectiveDose: baseDoseAtStart,
-      unit: eForm.unit,
-      startType: eForm.start_type,
-      startDate: eForm.start_type === 'date' ? eForm.start_date : null,
-      startAfterDays,
-    })
+    let step
+    try {
+      step = buildTitrationStep({
+        trackingLevel: stackItem.tracking_level,
+        cycleId: escForCycle.id,
+        targetDose,
+        effectiveDose: baseQuantityAtStart.dose,
+        effectiveUnit: baseQuantityAtStart.unit,
+        unit: eForm.unit,
+        startType: eForm.start_type,
+        startDate: eForm.start_type === 'date' ? eForm.start_date : null,
+        startAfterDays,
+      })
+    } catch {
+      setSavingEsc(false)
+      return toast.error(t('erhoeht_erforderlich'))
+    }
     const payload = {
       user_id: user!.id, cycle_id: escForCycle.id,
       increase_amount: step.increase_amount,
@@ -1345,8 +1393,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     return t(FREQ_KEYS[c.frequency] ?? c.frequency)
   }
   const escalationStartDate = (c: Cycle, e: Escalation) => {
-    if (e.start_type === 'date' && e.start_date) return parseISO(e.start_date)
-    if (e.start_after_days !== null) return addDays(parseISO(c.start_date), e.start_after_days)
+    if (e.start_type === 'date' && e.start_date) return parseStoredDay(e.start_date)
+    if (e.start_after_days !== null && Number.isInteger(e.start_after_days) && e.start_after_days > 0) {
+      return addDays(parseISO(c.start_date), e.start_after_days)
+    }
     return null
   }
   const escalationIsActive = (c: Cycle, e: Escalation) => {
@@ -1362,20 +1412,51 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       return aStart - bStart
     })
   }
-  const escalationTargetDose = (c: Cycle, e: Escalation) => {
+  const dosePlanViewFor = (c: Cycle, day: Date = new Date()) => (
+    dosePlanQuantitiesForDay(c, day, sortedEscalationsOf(c.id))
+  )
+  const currentQuantityLabel = (c: Cycle, day: Date = new Date()) => {
+    const quantity = dosePlanViewFor(c, day).current
+    return quantity ? `${quantity.dose} ${quantity.unit}` : '-'
+  }
+  const scheduledQuantityLabel = (c: Cycle, day: Date) => {
+    const segment = scheduleForDay(c, day)
+    return segment.dose != null && Number.isFinite(segment.dose) && segment.dose > 0 && segment.unit?.trim()
+      ? `${segment.dose} ${segment.unit}`
+      : '-'
+  }
+  const plannedQuantityRows = (c: Cycle) => {
+    const planned = dosePlanViewFor(c).planned
+    if (planned.length === 0) return null
+    return (
+      <div className="mt-1 space-y-1 text-xs text-slate-500">
+        {planned.map(segment => (
+          <p key={segment.effectiveFrom}>
+            <span className="font-bold uppercase tracking-wide">{segment.status}</span>
+            {' · '}{format(parseISO(segment.effectiveFrom), 'dd.MM.yyyy')}: {segment.dose} {segment.unit}
+          </p>
+        ))}
+      </div>
+    )
+  }
+  const escalationTargetQuantity = (c: Cycle, e: Escalation) => {
     const start = escalationStartDate(c, e)
-    return start ? effectiveDose(c, start, sortedEscalationsOf(c.id)) : c.dose + e.increase_amount
+    return start ? effectiveQuantity(c, start, sortedEscalationsOf(c.id)) : null
+  }
+  const escalationQuantityLabel = (c: Cycle, e: Escalation) => {
+    const quantity = escalationTargetQuantity(c, e)
+    return quantity ? `${quantity.dose} ${quantity.unit}` : '-'
   }
   const doseBeforeAdjustment = (c: Cycle, e: Escalation) => {
     const start = escalationStartDate(c, e)
-    if (!start) return c.dose
-    return effectiveDose(c, start, sortedEscalationsOf(c.id).filter(row => row.id !== e.id))
+    if (!start) return null
+    return effectiveQuantity(c, start, sortedEscalationsOf(c.id).filter(row => row.id !== e.id))
   }
   const doseAdjustmentIcon = (c: Cycle, e: Escalation) => {
-    const target = escalationTargetDose(c, e)
+    const target = escalationTargetQuantity(c, e)
     const previous = doseBeforeAdjustment(c, e)
     if (target == null || previous == null) return Minus
-    return target > previous ? TrendingUp : target < previous ? TrendingDown : Minus
+    return target.dose > previous.dose ? TrendingUp : target.dose < previous.dose ? TrendingDown : Minus
   }
   const reminderLabel = (c: Cycle) => {
     if (!c.reminder || c.reminder === 'none') return null
@@ -1952,7 +2033,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   const currentEscalationId = activeCycle
                     ? activeEscs.filter(e => escalationIsActive(activeCycle, e)).at(-1)?.id ?? null
                     : null
-                  const activeDose = activeCycle ? effectiveDose(activeCycle, new Date(), activeEscs) : null
+                  const activeQuantity = activeCycle ? dosePlanViewFor(activeCycle).current : null
                   const cycleStart = activeCycle ? parseISO(activeCycle.start_date) : null
                   const cycleEnd = activeCycle?.end_date ? parseISO(activeCycle.end_date) : null
                   const cycleDay = cycleStart ? Math.max(1, differenceInDays(new Date(), cycleStart) + 1) : null
@@ -2119,7 +2200,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                   {doseCapabilities.permanent && (
                                     <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
                                       <p className="text-slate-500">{t('aktuelle_dosis')}</p>
-                                      <p className="font-semibold text-white">{activeDose} {activeCycle.unit}</p>
+                                      <p className="font-semibold text-white">{activeQuantity ? `${activeQuantity.dose} ${activeQuantity.unit}` : '-'}</p>
                                     </div>
                                   )}
                                   <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
@@ -2135,6 +2216,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                     <p className="font-semibold text-white">{activeReminder ?? '-'}</p>
                                   </div>
                                 </div>
+                                {doseCapabilities.permanent && plannedQuantityRows(activeCycle)}
 
                                 {doseCapabilities.titration && (
                                 <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-2">
@@ -2150,7 +2232,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                         {currentEscalationId ? <Check size={13} /> : <span className="h-2.5 w-2.5 rounded-full bg-orange-300" />}
                                       </span>
                                       <span className="min-w-0 truncate">{t('basis')}</span>
-                                      <span className="shrink-0 font-semibold text-white">{activeCycle.dose} {activeCycle.unit}</span>
+                                      <span className="shrink-0 font-semibold text-white">{scheduledQuantityLabel(activeCycle, parseISO(activeCycle.start_date))}</span>
                                       {!currentEscalationId && (
                                         <span className="shrink-0 rounded-md border border-orange-400/40 bg-orange-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-200">
                                           {t('aktuell')}
@@ -2163,7 +2245,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                     {activeEscs.map(e => {
                                       const isCurrent = e.id === currentEscalationId
                                       const isPast = escalationIsActive(activeCycle, e) && !isCurrent
-                                      const targetDose = escalationTargetDose(activeCycle, e)
+                                      const targetQuantity = escalationTargetQuantity(activeCycle, e)
                                       const AdjustmentIcon = doseAdjustmentIcon(activeCycle, e)
                                       return (
                                         <div key={e.id} className={`relative flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${isCurrent ? 'border-orange-500/50 bg-orange-500/15 text-orange-100 shadow-[0_0_0_1px_rgba(249,115,22,0.16)]' : 'border-slate-800 bg-slate-950/70 text-slate-300'}`}>
@@ -2172,7 +2254,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                           </span>
                                           <span className="min-w-0 truncate">{escLabel(e)}</span>
                                           <span className="flex shrink-0 items-center gap-1 font-semibold">
-                                            <AdjustmentIcon size={13} /> {targetDose} {e.unit}
+                                            <AdjustmentIcon size={13} /> {targetQuantity ? `${targetQuantity.dose} ${targetQuantity.unit}` : '-'}
                                           </span>
                                           {isCurrent ? (
                                             <span className="shrink-0 rounded-md border border-orange-400/40 bg-orange-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-200">
@@ -2434,7 +2516,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                 <p className="text-sm font-medium text-white truncate">{c.name}</p>
                                 <div className="flex flex-wrap gap-x-3 text-slate-400 text-xs mt-0.5">
                                   {dosePlanCapabilities(p.tracking_level).permanent && (
-                                    <span className="font-medium text-slate-300">{c.dose} {c.unit}</span>
+                                    <span className="font-medium text-slate-300">{currentQuantityLabel(c)}</span>
                                   )}
                                   <span>{t(METHOD_KEYS[c.method] ?? c.method)}</span>
                                   <span>{freqLabel(c)}</span>
@@ -2451,6 +2533,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                     }).filter(Boolean).join(' · ')}
                                   </p>
                                 )}
+                                {dosePlanCapabilities(p.tracking_level).permanent && plannedQuantityRows(c)}
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 <button onClick={() => toggleCycleActive(c)} title={c.active ? t('deaktivieren_title') : t('aktivieren_title')}
@@ -2489,7 +2572,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                         <span className="text-orange-400 text-xs font-bold shrink-0">#{idx + 1}</span>
                                         <div className="min-w-0">
                                           <span className="inline-flex items-center gap-1 text-white text-xs font-medium">
-                                            <AdjustmentIcon size={11} /> {escalationTargetDose(c, e)} {e.unit}
+                                            <AdjustmentIcon size={11} /> {escalationQuantityLabel(c, e)}
                                           </span>
                                           {!escalationIsActive(c, e) && <span className="ml-2 text-[10px] font-bold uppercase tracking-wide text-slate-500">Geplant</span>}
                                           <span className="text-slate-400 text-xs ml-2">{escLabel(e)}</span>
@@ -2558,7 +2641,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           <>
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
               {dosePlanCapabilities(cycleManagerPeptide.tracking_level).permanent && (
-                <span className="font-semibold text-slate-200">{c.dose} {c.unit}</span>
+                <span className="font-semibold text-slate-200">{currentQuantityLabel(c)}</span>
               )}
               <span>{freqLabel(c)}</span>
               <span>{t(METHOD_KEYS[c.method] ?? c.method)}</span>
@@ -2579,6 +2662,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 </div>
               ) : null
             })()}
+            {dosePlanCapabilities(cycleManagerPeptide.tracking_level).permanent && plannedQuantityRows(c)}
           </>
         )
 
@@ -2624,7 +2708,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 <div className="mt-2 space-y-1.5">
                   <div className="flex min-h-10 items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs">
                     <span className="min-w-0 truncate text-orange-100">{t('basis')}</span>
-                    <span className="shrink-0 font-semibold text-white">{c.dose} {c.unit}</span>
+                    <span className="shrink-0 font-semibold text-white">{scheduledQuantityLabel(c, parseISO(c.start_date))}</span>
                   </div>
                   {pEscs.map((e, idx) => {
                     const AdjustmentIcon = doseAdjustmentIcon(c, e)
@@ -2632,7 +2716,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                       <div key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2">
                         <div className="min-w-0 text-xs">
                           <p className="flex items-center gap-1 truncate font-semibold text-white">
-                            <AdjustmentIcon size={12} /> #{idx + 1} {escalationTargetDose(c, e)} {e.unit}
+                            <AdjustmentIcon size={12} /> #{idx + 1} {escalationQuantityLabel(c, e)}
                           </p>
                           {!escalationIsActive(c, e) && <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Geplant</p>}
                           <p className="truncate text-slate-400">{escLabel(e)}</p>
@@ -2710,7 +2794,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     <span className="shrink-0 rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">{statusLabel}</span>
                   </div>
                   <p className="mt-0.5 truncate text-xs text-slate-500">
-                    {dosePlanCapabilities(cycleManagerPeptide.tracking_level).permanent ? `${c.dose} ${c.unit}` : ''}
+                    {dosePlanCapabilities(cycleManagerPeptide.tracking_level).permanent ? currentQuantityLabel(c) : ''}
                     {c.end_date ? ` · ${t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}` : ''}
                   </p>
                 </div>
@@ -3221,7 +3305,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                 {dosePlanCapabilities(p.tracking_level).permanent && (
                                   <div>
                                     <dt className="text-xs text-slate-500">{t('dosis_label')}</dt>
-                                    <dd className="mt-0.5 text-sm font-medium text-slate-200">{c.dose} {c.unit}</dd>
+                                    <dd className="mt-0.5 text-sm font-medium text-slate-200">{currentQuantityLabel(c)}</dd>
                                   </div>
                                 )}
                                 <div>
@@ -3281,10 +3365,13 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               </div>
               <div data-ob="cyc-unit">
                 <label className="label">{t('einheit_label')}</label>
-                <select className="select" value={cForm.unit}
-                  onChange={e => setCForm(f => f ? { ...f, unit: e.target.value } : f)}>
-                  {UNITS.map(u => <option key={u}>{u}</option>)}
-                </select>
+                <DoseUnitControl
+                  label={t('einheit_label')}
+                  unit={cForm.unit}
+                  units={UNITS}
+                  locked={editingCycleId != null}
+                  onChange={unit => setCForm(f => f ? { ...f, unit } : f)}
+                />
               </div>
             </div>
             )}
@@ -3502,10 +3589,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 <input className="input flex-1" type="number"
                   value={eForm.increase_amount}
                   onChange={e => setEForm(f => f ? { ...f, increase_amount: e.target.value } : f)} />
-                <select className="select w-28" value={eForm.unit}
-                  onChange={e => setEForm(f => f ? { ...f, unit: e.target.value } : f)}>
-                  {UNITS.map(u => <option key={u}>{u}</option>)}
-                </select>
+                <DoseUnitControl
+                  label={t('einheit_label')}
+                  unit={eForm.unit}
+                  units={UNITS}
+                  locked
+                  className="w-28"
+                  onChange={() => undefined}
+                />
               </div>
             </div>
 
@@ -3518,7 +3609,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   { value: 'after_weeks', labelKey: 'nach_x_wochen' },
                 ] as const).map(opt => (
                   <button key={opt.value} type="button"
-                    onClick={() => setEForm(f => f ? { ...f, start_type: opt.value } : f)}
+                    onClick={() => setEForm(f => {
+                      if (!f || !escForCycle) return f
+                      return withEffectiveEscalationUnit(escForCycle, { ...f, start_type: opt.value })
+                    })}
                     className={`py-2.5 rounded-xl text-xs font-medium transition-colors ${
                       eForm.start_type === opt.value ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                     }`}>
@@ -3532,7 +3626,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               <div data-ob="esc-when-detail">
                 <label className="label">{t('datum_label')}</label>
                 <input className="input" type="date" value={eForm.start_date}
-                  onChange={e => setEForm(f => f ? { ...f, start_date: e.target.value } : f)} />
+                  onChange={e => setEForm(f => {
+                    if (!f || !escForCycle) return f
+                    return withEffectiveEscalationUnit(escForCycle, { ...f, start_date: e.target.value })
+                  })} />
               </div>
             )}
             {eForm.start_type === 'after_days' && (
@@ -3542,7 +3639,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   <span className="text-slate-400 text-sm shrink-0">{t('nach_prefix')}</span>
                   <input className="input w-24" type="number" min="1"
                     value={eForm.start_after_days}
-                    onChange={e => setEForm(f => f ? { ...f, start_after_days: e.target.value } : f)} />
+                    onChange={e => setEForm(f => {
+                      if (!f || !escForCycle) return f
+                      return withEffectiveEscalationUnit(escForCycle, { ...f, start_after_days: e.target.value })
+                    })} />
                   <span className="text-slate-400 text-sm shrink-0">{t('tagen_suffix')}</span>
                 </div>
               </div>
@@ -3554,7 +3654,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   <span className="text-slate-400 text-sm shrink-0">{t('nach_prefix')}</span>
                   <input className="input w-24" type="number" min="1"
                     value={eForm.start_after_days}
-                    onChange={e => setEForm(f => f ? { ...f, start_after_days: e.target.value } : f)} />
+                    onChange={e => setEForm(f => {
+                      if (!f || !escForCycle) return f
+                      return withEffectiveEscalationUnit(escForCycle, { ...f, start_after_days: e.target.value })
+                    })} />
                   <span className="text-slate-400 text-sm shrink-0">{t('wochen_suffix')}</span>
                 </div>
               </div>
@@ -3625,7 +3728,16 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 type="date"
                 min={format(new Date(), 'yyyy-MM-dd')}
                 value={scheduleEffectiveFrom}
-                onChange={event => setScheduleEffectiveFrom(event.target.value)}
+                onChange={event => {
+                  const nextDate = event.target.value
+                  setScheduleEffectiveFrom(nextDate)
+                  if (!quantityScheduleChange || !editingCycleId) return
+                  const previousCycle = cycles.find(cycle => cycle.id === editingCycleId)
+                  const parsed = parseStoredDay(nextDate)
+                  setCForm(form => form
+                    ? { ...form, unit: previousCycle && parsed ? scheduleForDay(previousCycle, parsed).unit ?? '' : '' }
+                    : form)
+                }}
               />
               <button onClick={() => { setScheduleChoiceOpen(false); finalizeSave('fromDate') }}
                 className="min-h-11 w-full cursor-pointer rounded-xl bg-sky-500 px-4 py-2.5 text-left text-sm font-semibold text-white transition-colors hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">

@@ -52,7 +52,13 @@ export function RoutineConfirmationSheet({
   const selectedEntries = entries.filter(entry => entry.selected)
   const hasInvalidQuantity = selectedEntries.some(entry => (
     entry.trackingLevel !== 'intake_only'
-    && (entry.actualDose == null || entry.actualDose <= 0 || !entry.actualUnit?.trim())
+    && (
+      entry.actualDose == null
+      || !Number.isFinite(entry.actualDose)
+      || entry.actualDose <= 0
+      || !entry.actualUnit?.trim()
+      || entry.actualUnit !== entry.unit
+    )
   ))
   const canConfirm = selectedEntries.length > 0 && !hasInvalidQuantity && !saving
 
@@ -171,11 +177,14 @@ export function RoutineConfirmationSheet({
                           type="button"
                           aria-label="Einmalige Abweichung"
                           aria-expanded={editing}
-                          onClick={() => setEditingKeys(current => (
-                            current.includes(entry.key)
-                              ? current.filter(key => key !== entry.key)
-                              : [...current, entry.key]
-                          ))}
+                          onClick={() => {
+                            if (editing) {
+                              updateEntry(entry.key, { actualDose: entry.dose, actualUnit: entry.unit })
+                              setEditingKeys(current => current.filter(key => key !== entry.key))
+                            } else {
+                              setEditingKeys(current => [...current, entry.key])
+                            }
+                          }}
                           className="flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 text-xs font-black text-cyan-300 transition-colors hover:bg-cyan-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
                         >
                           <Pencil size={13} aria-hidden="true" /> Einmalige Abweichung
@@ -198,9 +207,14 @@ export function RoutineConfirmationSheet({
                               updateEntry(entry.key, { actualDose: null })
                               return
                             }
+                            const dose = Number(event.target.value)
+                            if (!Number.isFinite(dose) || dose <= 0) {
+                              updateEntry(entry.key, { actualDose: dose })
+                              return
+                            }
                             setEntries(current => current.map(currentEntry => currentEntry.key === entry.key
                               ? buildOneOffActualDose(currentEntry, {
-                                  dose: Number(event.target.value),
+                                  dose,
                                   unit: currentEntry.actualUnit ?? currentEntry.unit ?? '',
                                 })
                               : currentEntry))

@@ -20,6 +20,7 @@ const cycle: ScheduleCycle = {
 const adjustment: EscalationRow = {
   cycle_id: 'c1',
   increase_amount: 100,
+  unit: 'mcg',
   start_type: 'date',
   start_date: '2026-06-10',
   start_after_days: null,
@@ -104,6 +105,7 @@ describe('buildDoseAdjustmentBackfillUpdates', () => {
     const earlierAdjustment: EscalationRow = {
       cycle_id: 'c1',
       increase_amount: 50,
+      unit: 'mcg',
       start_type: 'date',
       start_date: '2026-06-05',
       start_after_days: null,
@@ -111,6 +113,7 @@ describe('buildDoseAdjustmentBackfillUpdates', () => {
     const changedAdjustment: EscalationRow = {
       cycle_id: 'c1',
       increase_amount: 100,
+      unit: 'mcg',
       start_type: 'date',
       start_date: '2026-06-10',
       start_after_days: null,
@@ -130,6 +133,7 @@ describe('buildDoseAdjustmentBackfillUpdates', () => {
     const oldAdjustment: EscalationRow = {
       cycle_id: 'c1',
       increase_amount: 100,
+      unit: 'mcg',
       start_type: 'date',
       start_date: '2026-06-05',
       start_after_days: null,
@@ -137,6 +141,7 @@ describe('buildDoseAdjustmentBackfillUpdates', () => {
     const movedAdjustment: EscalationRow = {
       cycle_id: 'c1',
       increase_amount: 100,
+      unit: 'mcg',
       start_type: 'date',
       start_date: '2026-06-10',
       start_after_days: null,

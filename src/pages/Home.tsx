@@ -15,7 +15,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
-import { collectMissedIntakes, cycleAppliesToDay, scheduleForDay, effectiveDose, AUTO_MISSED_NOTE, type EscalationRow, type ScheduleCycle } from '../lib/intakeSchedule'
+import { collectMissedIntakes, cycleAppliesToDay, effectiveQuantity, scheduleForDay, AUTO_MISSED_NOTE, type EscalationRow, type ScheduleCycle } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
 import { InjectionTrackerHero, type InjectionHeroPin } from '../components/injection3d/InjectionTrackerHero'
@@ -255,10 +255,7 @@ export function resolveHomeIntakeQuantity(
   day: Date,
   escalations: EscalationRow[],
 ): { doseNumber: number | null; unit: string | null; dose: string | null } {
-  const quantity = {
-    dose: effectiveDose(cycle, day, escalations),
-    unit: scheduleForDay(cycle, day).unit,
-  }
+  const quantity = effectiveQuantity(cycle, day, escalations) ?? { dose: null, unit: null }
   return {
     doseNumber: quantity.dose,
     unit: quantity.unit,
@@ -393,7 +390,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
             .select('id, vials_count')
             .eq('user_id', user!.id),
           homeDataClient.from('dose_escalations')
-            .select('cycle_id, increase_amount, start_type, start_date, start_after_days')
+            .select('cycle_id, increase_amount, unit, start_type, start_date, start_after_days')
             .eq('user_id', user!.id),
           homeDataClient.from('injection_logs')
             .select('id, logged_at, body_region, body_side, position, normal')
@@ -482,11 +479,12 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
             const at = startOfDay(parseISO(m.dateKey))
             at.setHours(Math.floor(m.minutes / 60), m.minutes % 60, 0, 0)
             const intakeOnly = c.stack_items.tracking_level === 'intake_only'
+            const quantity = intakeOnly ? null : effectiveQuantity(c, parseISO(m.dateKey), escalations)
             return {
               user_id: user!.id,
               stack_item_id: c.stack_item_id,
-              dose: intakeOnly ? null : effectiveDose(c, parseISO(m.dateKey), escalations),
-              unit: intakeOnly ? null : scheduleForDay(c, parseISO(m.dateKey)).unit,
+              dose: quantity?.dose ?? null,
+              unit: quantity?.unit ?? null,
               method: c.method ?? '',
               logged_at: at.toISOString(),
               taken: false,

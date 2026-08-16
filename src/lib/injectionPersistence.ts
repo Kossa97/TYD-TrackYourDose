@@ -5,8 +5,7 @@ import {
   AUTO_MISSED_NOTE,
   collectOpenIntakes,
   cycleAppliesToDay,
-  effectiveDose,
-  scheduleForDay,
+  effectiveQuantity,
   type EscalationRow,
   type IntakeLog,
   type ScheduleCycle,
@@ -284,12 +283,13 @@ export function buildSelectableInjectionIntakes({
     const openDoseLog = openDoseLogBySlot.get(slotKey)
     const day = startOfDay(parseISO(open.dateKey))
     const scheduledAt = new Date(day.getTime() + open.minutes * 60000)
+    const plannedQuantity = cycle ? effectiveQuantity(cycle, day, escalations) : null
     const dose = openDoseLog
       ? injectionDoseValue(openDoseLog.dose)
-      : cycle ? effectiveDose(cycle, day, escalations) : null
+      : plannedQuantity?.dose ?? null
     const unit = openDoseLog
       ? openDoseLog.unit
-      : cycle ? scheduleForDay(cycle, day).unit : null
+      : plannedQuantity?.unit ?? null
     if (dose == null || !unit?.trim()) return []
     return [{
       cycleId: open.cycleId,
@@ -354,7 +354,7 @@ export async function loadSelectableInjectionIntakes(
       .eq('user_id', userId)
       .gte('logged_at', injectionIntakeLookbackStart(now).toISOString())
       .order('logged_at', { ascending: false }),
-    supabase.from('dose_escalations').select('cycle_id, increase_amount, start_type, start_date, start_after_days').eq('user_id', userId),
+    supabase.from('dose_escalations').select('cycle_id, increase_amount, unit, start_type, start_date, start_after_days').eq('user_id', userId),
     supabase.from('injection_logs').select('dose_log_id').eq('user_id', userId).not('dose_log_id', 'is', null),
   ])
   if (cyclesRes.error) throw cyclesRes.error

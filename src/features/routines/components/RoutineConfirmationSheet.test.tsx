@@ -97,6 +97,25 @@ describe('RoutineConfirmationSheet', () => {
     expect(plannedGroup.items.find(item => item.key === 'zinc')?.dose).toBe(25)
   })
 
+  it('restores the planned quantity when the one-off editor is collapsed', async () => {
+    const onConfirm = vi.fn(async (_entries: RoutineConfirmationEntry[]) => ['log-d3', 'log-zinc', 'log-testosterone'])
+    render(<RoutineConfirmationSheet group={group()} onClose={() => undefined} onConfirm={onConfirm} />)
+
+    const deviationButton = screen.getAllByRole('button', { name: 'Einmalige Abweichung' })[0]
+    fireEvent.click(deviationButton)
+    fireEvent.change(screen.getByLabelText('Menge für Zink'), { target: { value: '30' } })
+    fireEvent.click(deviationButton)
+    fireEvent.click(screen.getByRole('button', { name: 'Alles eingenommen' }))
+
+    await waitFor(() => expect(onConfirm).toHaveBeenCalledTimes(1))
+    expect(onConfirm.mock.calls[0][0].find(item => item.key === 'zinc')).toMatchObject({
+      dose: 25,
+      unit: 'mg',
+      actualDose: 25,
+      actualUnit: 'mg',
+    })
+  })
+
   it('confirms without requiring an injection site and exposes site tracking afterward', async () => {
     const onConfirm = vi.fn(async (_entries: RoutineConfirmationEntry[]) => ['log-d3', 'log-zinc', 'log-testosterone'])
     const onAddInjection = vi.fn()
