@@ -3,11 +3,15 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
+import { addDays, format } from 'date-fns'
 import { loadStackItems, type LoadedStackItem } from './services/stackItems'
 import type { StackItemWizardProps } from './components/StackItemWizard'
 import { MyStackPage } from './MyStackPage'
 
 const qaName = 'Codex QA Stack Lifecycle 2026-07-24'
+const visibilityMocks = vi.hoisted(() => ({
+  escalations: [] as Array<Record<string, unknown>>,
+}))
 
 type LoadedLegacyStackItem = LoadedStackItem & { default_method?: string }
 const loadedItems: LoadedLegacyStackItem[] = [
@@ -122,13 +126,17 @@ vi.mock('../../context/AuthContext', () => ({
 }))
 
 vi.mock('../../lib/supabase', () => {
-  const result = { data: [], error: null }
-  const builder: Record<string, unknown> = {}
-  builder.select = () => builder
-  builder.eq = () => builder
-  builder.order = () => builder
-  builder.then = (resolve: (value: typeof result) => unknown) => Promise.resolve(result).then(resolve)
-  return { supabase: { from: () => builder } }
+  return { supabase: { from: (table: string) => {
+    const builder: Record<string, unknown> = {}
+    builder.select = () => builder
+    builder.eq = () => builder
+    builder.order = () => builder
+    builder.then = (resolve: (value: { data: unknown[]; error: null }) => unknown) => Promise.resolve({
+      data: table === 'dose_escalations' ? visibilityMocks.escalations : [],
+      error: null,
+    }).then(resolve)
+    return builder
+  } } }
 })
 
 vi.mock('../../lib/useNew', () => ({
@@ -155,6 +163,8 @@ vi.mock('./components/StackItemWizard', () => ({
     <div role="dialog" aria-label="stack-item-wizard">
       <span data-testid="wizard-plan-id">{existingPlan?.id ?? ''}</span>
       <span data-testid="wizard-plan-method">{existingPlan?.method ?? ''}</span>
+      <span data-testid="wizard-plan-dose">{existingPlan?.dose ?? ''}</span>
+      <span data-testid="wizard-plan-unit">{existingPlan?.unit ?? ''}</span>
       <button
         type="button"
         onClick={() => {
@@ -277,10 +287,28 @@ async function renderPage(): Promise<void> {
   await waitFor(() => expect(screen.getAllByText('Existing Premium Vial').length).toBeGreaterThan(0))
 }
 
+function versionedCycle(effectiveFrom: string) {
+  const segment = {
+    frequency: activeCycle.frequency,
+    x_days_interval: activeCycle.x_days_interval,
+    schedule_days: activeCycle.schedule_days,
+    intake_time: activeCycle.intake_time,
+    intake_time_custom: activeCycle.intake_time_custom,
+  }
+  return {
+    ...activeCycle,
+    schedule_history: [
+      { ...segment, effective_from: activeCycle.start_date, dose: 100, unit: 'mg' },
+      { ...segment, effective_from: effectiveFrom, dose: 150, unit: 'mg' },
+    ],
+  }
+}
+
 describe('MyStackPage non-vial visibility', () => {
   beforeEach(() => {
     localStorage.clear()
     localStorage.setItem('tyd_peptide_view', 'vials')
+    visibilityMocks.escalations = []
   })
 
   afterEach(() => {
@@ -321,9 +349,13 @@ describe('MyStackPage non-vial visibility', () => {
     expect(screen.queryByText('kein_peptid_gefunden_msg')).toBeNull()
   })
 
-  it('hydrates and atomically saves an edited item before reloading items and cycles', async () => {
+  it.each([
+    { label: 'before the future boundary', offsetDays: 1, dose: 100 },
+    { label: 'on the effective-date boundary', offsetDays: 0, dose: 150 },
+  ])('hydrates and saves the active schedule quantity $label', async ({ offsetDays, dose }) => {
     localStorage.setItem('tyd_peptide_view', 'list')
-    const cyclesEq = vi.fn(async () => ({ data: [activeCycle], error: null }))
+    const cycle = versionedCycle(format(addDays(new Date(), offsetDays), 'yyyy-MM-dd'))
+    const cyclesEq = vi.fn(async () => ({ data: [cycle], error: null }))
     const cyclesSelect = vi.fn(() => ({ eq: cyclesEq }))
     const rpc = vi.fn(async () => ({ data: loadedItems[0], error: null }))
     const stackDataClient = {
@@ -343,13 +375,15 @@ describe('MyStackPage non-vial visibility', () => {
 
     fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'bearbeiten' }))
 
-    expect(screen.getByTestId('wizard-plan-id').textContent).toBe(activeCycle.id)
-    expect(screen.getByTestId('wizard-plan-method').textContent).toBe(activeCycle.method)
+    expect(screen.getByTestId('wizard-plan-id').textContent).toBe(cycle.id)
+    expect(screen.getByTestId('wizard-plan-method').textContent).toBe(cycle.method)
+    expect(screen.getByTestId('wizard-plan-dose').textContent).toBe(String(dose))
+    expect(screen.getByTestId('wizard-plan-unit').textContent).toBe('mg')
     fireEvent.click(screen.getByRole('button', { name: 'save hydrated plan' }))
 
     await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1))
     expect(rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
-      p_plan: expect.objectContaining({ id: activeCycle.id }),
+      p_plan: expect.objectContaining({ id: cycle.id, dose, unit: 'mg' }),
     }))
     await waitFor(() => {
       const activeItemLoads = vi.mocked(loadStackItems).mock.calls.filter(
@@ -360,6 +394,40 @@ describe('MyStackPage non-vial visibility', () => {
     })
     expect(screen.queryByText('Substanz gespeichert')).toBeNull()
     expect(screen.queryByText('Zyklus anlegen')).toBeNull()
+  })
+
+  it('hydrates no wizard quantity when active escalation units invalidate the pair', async () => {
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const cycle = versionedCycle(format(new Date(), 'yyyy-MM-dd'))
+    visibilityMocks.escalations = [{
+      id: 'mixed-unit-step',
+      cycle_id: cycle.id,
+      increase_amount: 5,
+      unit: 'mcg',
+      start_type: 'date',
+      start_date: activeCycle.start_date,
+      start_after_days: null,
+      notes: null,
+    }]
+    const cyclesEq = vi.fn(async () => ({ data: [cycle], error: null }))
+    const rpc = vi.fn(async () => ({ data: loadedItems[0], error: null }))
+    const stackDataClient = {
+      from: vi.fn(() => ({ select: vi.fn(() => ({ eq: cyclesEq })) })),
+      rpc,
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={stackDataClient as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+
+    fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'bearbeiten' }))
+
+    expect(screen.getByTestId('wizard-plan-dose').textContent).toBe('')
+    expect(screen.getByTestId('wizard-plan-unit').textContent).toBe('')
+    expect(rpc).not.toHaveBeenCalled()
   })
 
   it('does not show the retired cycle prompt after atomically saving a new setup', async () => {

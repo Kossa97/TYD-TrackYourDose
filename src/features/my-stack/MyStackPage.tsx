@@ -425,13 +425,14 @@ function nextScheduleHistory(
   return history
 }
 
-function cycleAsIntakePlanDraft(cycle: Cycle): IntakePlanDraft {
+function cycleAsIntakePlanDraft(cycle: Cycle, day: Date, cycleEscalations: Escalation[]): IntakePlanDraft {
   const primarySlot = (cycle.intake_time ?? '').split(',').find(Boolean) ?? ''
+  const quantity = effectiveQuantity(cycle, day, cycleEscalations)
   return {
     id: cycle.id,
     name: cycle.name,
-    dose: cycle.dose,
-    unit: cycle.unit,
+    dose: quantity?.dose ?? null,
+    unit: quantity?.unit ?? null,
     method: cycle.method,
     frequency: cycle.frequency,
     xDaysInterval: cycle.x_days_interval,
@@ -770,13 +771,13 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       (a.active === b.active)
         ? b.created_at.localeCompare(a.created_at)
         : (a.active ? -1 : 1))
+  const escalationsOf = (cid: string) => escalations.filter(e => e.cycle_id === cid)
   const activePlanFor = (stackItemId: string): IntakePlanDraft | undefined => {
     const activeCycle = cycles
       .filter(cycle => cycle.stack_item_id === stackItemId && cycle.active)
       .sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
-    return activeCycle ? cycleAsIntakePlanDraft(activeCycle) : undefined
+    return activeCycle ? cycleAsIntakePlanDraft(activeCycle, new Date(), escalationsOf(activeCycle.id)) : undefined
   }
-  const escalationsOf = (cid: string) => escalations.filter(e => e.cycle_id === cid)
 
   // ── Inventar Bestand anpassen ─────────────────────────────────────────────
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
