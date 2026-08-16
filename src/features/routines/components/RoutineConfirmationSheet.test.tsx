@@ -125,4 +125,35 @@ describe('RoutineConfirmationSheet', () => {
     expect(retriedEntries.find((item: { key: string }) => item.key === 'testosterone')).toMatchObject({ selected: false })
     expect(within(screen.getByRole('dialog')).queryByRole('alert')).toBeNull()
   })
+
+  it('never offers an RPC retry after commit when post-confirm work rejects', async () => {
+    const onConfirm = vi.fn(async (_entries: RoutineConfirmationEntry[]) => [
+      'log-d3',
+      'log-zinc',
+      'log-testosterone',
+    ])
+    const onAfterConfirm = vi.fn(async () => {
+      throw new Error('reload failed')
+    })
+    render(
+      <RoutineConfirmationSheet
+        group={group()}
+        onClose={() => undefined}
+        onConfirm={onConfirm}
+        onAfterConfirm={onAfterConfirm}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Alles eingenommen' }))
+
+    expect(await screen.findByText('Routine gespeichert')).toBeTruthy()
+    await waitFor(() => expect(onAfterConfirm).toHaveBeenCalledTimes(1))
+    expect(onAfterConfirm).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ key: 'd3' })]),
+      ['log-d3', 'log-zinc', 'log-testosterone'],
+    )
+    expect(onConfirm).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: 'Erneut versuchen' })).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
 })

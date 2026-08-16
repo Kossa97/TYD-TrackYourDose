@@ -1,6 +1,114 @@
+// @vitest-environment jsdom
+
 import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
-import { buildDashboardRoutineIntake } from './Dashboard'
+import { createElement, type ComponentType } from 'react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { Dashboard, buildDashboardRoutineIntake } from './Dashboard'
+
+const pageMocks = vi.hoisted(() => {
+  const emptyQuery = () => {
+    const query: Record<string, unknown> = {}
+    for (const method of ['eq', 'gte', 'lte', 'order', 'limit', 'single']) {
+      query[method] = vi.fn(() => query)
+    }
+    query.then = (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => (
+      Promise.resolve({ data: [], error: null }).then(resolve, reject)
+    )
+    return query
+  }
+  return {
+    user: { id: 'user-1' },
+    supabase: {
+      from: vi.fn(() => ({
+        select: vi.fn(emptyQuery),
+        insert: vi.fn(emptyQuery),
+        update: vi.fn(emptyQuery),
+        delete: vi.fn(emptyQuery),
+      })),
+      rpc: vi.fn(async () => ({ data: [], error: null })),
+    },
+    toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
+  }
+})
+
+vi.mock('../lib/supabase', () => ({ supabase: pageMocks.supabase }))
+vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: pageMocks.user }) }))
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? key }),
+}))
+vi.mock('react-hot-toast', () => ({ default: pageMocks.toast }))
+
+interface RecordedMutation {
+  table: string
+  kind: 'insert' | 'update'
+  values: unknown
+}
+
+function resolvedQuery(data: unknown) {
+  const query: Record<string, unknown> = {}
+  for (const method of ['eq', 'gte', 'lte', 'order', 'limit', 'single']) {
+    query[method] = vi.fn(() => query)
+  }
+  query.then = (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => (
+    Promise.resolve({ data, error: null }).then(resolve, reject)
+  )
+  return query
+}
+
+function createDashboardClient(fixtures: Record<string, unknown[]>) {
+  const selectCounts = new Map<string, number>()
+  const mutations: RecordedMutation[] = []
+  const rpc = vi.fn(async () => ({ data: [{ id: 'saved-log-1' }], error: null }))
+  const from = vi.fn((table: string) => ({
+    select: vi.fn(() => {
+      selectCounts.set(table, (selectCounts.get(table) ?? 0) + 1)
+      return resolvedQuery(fixtures[table] ?? [])
+    }),
+    insert: vi.fn((values: unknown) => {
+      mutations.push({ table, kind: 'insert', values })
+      return resolvedQuery(null)
+    }),
+    update: vi.fn((values: unknown) => {
+      mutations.push({ table, kind: 'update', values })
+      return resolvedQuery(null)
+    }),
+    delete: vi.fn(() => resolvedQuery(null)),
+  }))
+  return { from, rpc, selectCounts, mutations }
+}
+
+function intakeOnlyCycle() {
+  return {
+    id: 'cycle-1',
+    name: 'Vitamin D3',
+    stack_item_id: 'stack-1',
+    dose: 100,
+    unit: 'mcg',
+    method: 'Oral',
+    frequency: 'Täglich',
+    x_days_interval: null,
+    schedule_days: null,
+    start_date: '2020-01-01',
+    end_date: null,
+    active: true,
+    intake_time: 'morgens',
+    intake_time_custom: null,
+    schedule_history: null,
+    stack_items: { display_name: 'Vitamin D3', tracking_level: 'intake_only' },
+  }
+}
+
+function renderDashboard(client: ReturnType<typeof createDashboardClient>) {
+  const TestDashboard = Dashboard as ComponentType<{ dashboardDataClient: unknown }>
+  return render(createElement(MemoryRouter, null, createElement(TestDashboard, { dashboardDataClient: client })))
+}
+
+afterEach(() => {
+  cleanup()
+  vi.clearAllMocks()
+})
 
 describe('Dashboard intake confirmation actions', () => {
   it('adapts a dashboard slot to the shared group model without a fake intake-only quantity', () => {
@@ -27,17 +135,128 @@ describe('Dashboard intake confirmation actions', () => {
     })
   })
 
-  it('keeps taken and skipped in the first row and injection confirmation in the second row', () => {
-    const source = readFileSync(new URL('./Dashboard.tsx', import.meta.url), 'utf8')
+  it('confirms an intake-only group with one RPC and one post-success log reload', async () => {
+    const client = createDashboardClient({
+      cycles: [intakeOnlyCycle()],
+      dose_logs: [],
+      stack_items: [{ id: 'stack-1', display_name: 'Vitamin D3', dosage_form: 'capsule' }],
+      dose_escalations: [],
+    })
+    renderDashboard(client)
 
-    expect(source).toContain('grid grid-cols-2 gap-2')
-    expect(source).toContain("<XCircle size={11} /> <span className=\"truncate\">{t('uebersprungen')}</span>")
-    expect(source).toContain('Mit Injektion best\u00e4tigen')
-    expect(source.indexOf('grid grid-cols-2 gap-2')).toBeLessThan(source.indexOf('Mit Injektion best\u00e4tigen'))
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Alles eingenommen' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Alles eingenommen' }))
+
+    expect(await within(dialog).findByText('Routine gespeichert')).toBeTruthy()
+    expect(client.rpc).toHaveBeenCalledTimes(1)
+    expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: [expect.objectContaining({ dose: null, unit: null })],
+    })
+    await waitFor(() => expect(client.selectCounts.get('dose_logs')).toBe(2))
+  })
+
+  it('shows and persists no quantity when confirming one pending intake-only slot', async () => {
+    const now = new Date()
+    now.setHours(8, 0, 0, 0)
+    const client = createDashboardClient({
+      cycles: [intakeOnlyCycle()],
+      dose_logs: [{
+        id: 'pending-1',
+        stack_item_id: 'stack-1',
+        dose: 100,
+        unit: 'mcg',
+        method: 'Oral',
+        logged_at: now.toISOString(),
+        notes: null,
+        taken: null,
+        stack_items: { display_name: 'Vitamin D3' },
+      }],
+      stack_items: [{ id: 'stack-1', display_name: 'Vitamin D3', dosage_form: 'capsule' }],
+      dose_escalations: [],
+    })
+    renderDashboard(client)
+
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    expect(await screen.findByText('Menge nicht getrackt')).toBeTruthy()
+    expect(screen.queryByText('100 mcg')).toBeNull()
+    expect(screen.getByRole('button', { name: 'uebersprungen' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'eingenommen' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Eingenommen' }))
+
+    await waitFor(() => expect(client.mutations).toContainEqual({
+      table: 'dose_logs',
+      kind: 'update',
+      values: expect.objectContaining({ taken: true, dose: null, unit: null }),
+    }))
+    expect(client.mutations.some(mutation => mutation.table === 'stack_items')).toBe(false)
+  })
+
+  it('keeps the existing single skip action and sanitizes its intake-only quantity', async () => {
+    const now = new Date()
+    now.setHours(8, 0, 0, 0)
+    const client = createDashboardClient({
+      cycles: [intakeOnlyCycle()],
+      dose_logs: [{
+        id: 'pending-1',
+        stack_item_id: 'stack-1',
+        dose: 100,
+        unit: 'mcg',
+        method: 'Oral',
+        logged_at: now.toISOString(),
+        notes: null,
+        taken: null,
+        stack_items: { display_name: 'Vitamin D3' },
+      }],
+      stack_items: [{ id: 'stack-1', display_name: 'Vitamin D3', dosage_form: 'capsule' }],
+      dose_escalations: [],
+    })
+    renderDashboard(client)
+
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'uebersprungen' }))
+
+    await waitFor(() => expect(client.mutations).toContainEqual({
+      table: 'dose_logs',
+      kind: 'update',
+      values: { taken: false, dose: null, unit: null },
+    }))
+  })
+
+  it('keeps the existing single-log undo action wired', async () => {
+    const now = new Date()
+    now.setHours(8, 0, 0, 0)
+    const client = createDashboardClient({
+      cycles: [intakeOnlyCycle()],
+      dose_logs: [{
+        id: 'completed-1',
+        stack_item_id: 'stack-1',
+        dose: null,
+        unit: null,
+        method: 'Oral',
+        logged_at: now.toISOString(),
+        notes: null,
+        taken: true,
+        stack_items: { display_name: 'Vitamin D3' },
+      }],
+      stack_items: [{ id: 'stack-1', display_name: 'Vitamin D3', dosage_form: 'capsule' }],
+      dose_escalations: [],
+    })
+    renderDashboard(client)
+
+    fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Rückgängig' }))
+
+    await waitFor(() => expect(client.mutations).toContainEqual({
+      table: 'dose_logs',
+      kind: 'update',
+      values: { taken: null },
+    }))
   })
 
   it('groups open intakes into horizontal period carousels and collapsible completed list', () => {
-    const source = readFileSync(new URL('./Dashboard.tsx', import.meta.url), 'utf8')
+    const source = readFileSync('src/pages/Dashboard.tsx', 'utf8')
 
     expect(source).toContain('duePeriodCarousels')
     expect(source).toContain('snap-x snap-mandatory')
@@ -47,7 +266,7 @@ describe('Dashboard intake confirmation actions', () => {
   })
 
   it('keeps intake cards and carousel chrome at stable dimensions', () => {
-    const source = readFileSync(new URL('./Dashboard.tsx', import.meta.url), 'utf8')
+    const source = readFileSync('src/pages/Dashboard.tsx', 'utf8')
 
     expect(source).toContain('grid grid-cols-[14px_minmax(0,1fr)_14px] items-stretch gap-0.5')
     expect(source).toContain("hasMultiple ? '' : 'invisible pointer-events-none'")
@@ -57,7 +276,7 @@ describe('Dashboard intake confirmation actions', () => {
   })
 
   it('defaults to week view with expandable month calendar', () => {
-    const source = readFileSync(new URL('./Dashboard.tsx', import.meta.url), 'utf8')
+    const source = readFileSync('src/pages/Dashboard.tsx', 'utf8')
 
     expect(source).toContain('calendarExpanded')
     expect(source).toContain('const [calendarExpanded, setCalendarExpanded] = useState(false)')

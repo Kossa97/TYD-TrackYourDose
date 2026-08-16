@@ -17,6 +17,7 @@ interface RoutineConfirmationSheetProps {
   group: RoutineGroupModel
   onClose: () => void
   onConfirm: (entries: RoutineConfirmationEntry[]) => Promise<string[]>
+  onAfterConfirm?: (entries: RoutineConfirmationEntry[], savedLogIds: string[]) => void | Promise<void>
   onAddInjection?: (entry: RoutineIntake, doseLogId: string) => void
 }
 
@@ -30,6 +31,7 @@ export function RoutineConfirmationSheet({
   group,
   onClose,
   onConfirm,
+  onAfterConfirm,
   onAddInjection,
 }: RoutineConfirmationSheetProps) {
   const titleId = useId()
@@ -57,17 +59,22 @@ export function RoutineConfirmationSheet({
     if (!canConfirm) return
     setSaving(true)
     setError(false)
+    let savedLogIds: string[]
     try {
-      const savedLogIds = await onConfirm(entries)
-      setConfirmed(selectedEntries.map((entry, index) => ({
-        entry,
-        doseLogId: savedLogIds[index],
-      })).filter(item => Boolean(item.doseLogId)))
+      savedLogIds = await onConfirm(entries)
     } catch {
       setError(true)
-    } finally {
       setSaving(false)
+      return
     }
+    setConfirmed(selectedEntries.map((entry, index) => ({
+      entry,
+      doseLogId: savedLogIds[index],
+    })).filter(item => Boolean(item.doseLogId)))
+    setSaving(false)
+    void Promise.resolve()
+      .then(() => onAfterConfirm?.(entries, savedLogIds))
+      .catch(() => undefined)
   }
 
   return (

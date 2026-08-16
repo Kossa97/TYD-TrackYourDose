@@ -1,6 +1,117 @@
-import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
-import { buildHomeDoseLogPayload, buildHomeRoutineIntake, resolveHomeIntakeQuantity } from './Home'
+// @vitest-environment jsdom
+
+import { createElement, type ComponentType } from 'react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { Home, buildHomeDoseLogPayload, buildHomeRoutineIntake, resolveHomeIntakeQuantity } from './Home'
+
+const pageMocks = vi.hoisted(() => {
+  const emptyQuery = () => {
+    const query: Record<string, unknown> = {}
+    for (const method of ['eq', 'gte', 'lte', 'order', 'limit', 'single']) {
+      query[method] = vi.fn(() => query)
+    }
+    query.then = (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => (
+      Promise.resolve({ data: [], error: null }).then(resolve, reject)
+    )
+    return query
+  }
+  return {
+    user: { id: 'user-1' },
+    supabase: {
+      from: vi.fn(() => ({
+        select: vi.fn(emptyQuery),
+        insert: vi.fn(emptyQuery),
+        update: vi.fn(emptyQuery),
+        delete: vi.fn(emptyQuery),
+      })),
+      rpc: vi.fn(async () => ({ data: [], error: null })),
+    },
+    toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
+  }
+})
+
+vi.mock('../lib/supabase', () => ({ supabase: pageMocks.supabase }))
+vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: pageMocks.user }) }))
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? key }),
+}))
+vi.mock('react-hot-toast', () => ({ default: pageMocks.toast }))
+vi.mock('../components/BlutspiegelCarousel', () => ({ BlutspiegelCarousel: () => null }))
+vi.mock('../components/ExpiryWarningBanners', () => ({ ExpiryWarningBanners: () => null }))
+vi.mock('../components/WorkflowBanner', () => ({ WorkflowBanner: () => null }))
+vi.mock('../components/injection3d/InjectionTrackerHero', () => ({ InjectionTrackerHero: () => null }))
+
+vi.stubGlobal('ResizeObserver', class {
+  observe() {}
+  disconnect() {}
+})
+
+function resolvedQuery(data: unknown) {
+  const query: Record<string, unknown> = {}
+  for (const method of ['eq', 'gte', 'lte', 'order', 'limit', 'single']) {
+    query[method] = vi.fn(() => query)
+  }
+  query.then = (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => (
+    Promise.resolve({ data, error: null }).then(resolve, reject)
+  )
+  return query
+}
+
+function createHomeClient(fixtures: Record<string, unknown[]>) {
+  const selectCounts = new Map<string, number>()
+  const rpc = vi.fn(async (_name: string, _params: { p_entries: unknown[] }) => ({
+    data: [{ id: 'saved-log-1' }, { id: 'saved-log-2' }],
+    error: null,
+  }))
+  const from = vi.fn((table: string) => ({
+    select: vi.fn(() => {
+      selectCounts.set(table, (selectCounts.get(table) ?? 0) + 1)
+      return resolvedQuery(fixtures[table] ?? [])
+    }),
+    insert: vi.fn(() => resolvedQuery(null)),
+    update: vi.fn(() => resolvedQuery(null)),
+    delete: vi.fn(() => resolvedQuery(null)),
+  }))
+  return { from, rpc, selectCounts }
+}
+
+function intakeOnlyHomeCycle() {
+  return {
+    id: 'cycle-1',
+    stack_item_id: 'stack-1',
+    dose: 100,
+    unit: 'mcg',
+    method: 'Oral',
+    frequency: 'Täglich',
+    x_days_interval: null,
+    schedule_days: null,
+    start_date: '2020-01-01',
+    end_date: null,
+    intake_time: 'morgens',
+    intake_time_custom: null,
+    schedule_history: null,
+    stack_items: { display_name: 'Vitamin D3', tracking_level: 'intake_only', dosage_form: 'capsule' },
+  }
+}
+
+function quantifiedHomeCycle() {
+  return {
+    ...intakeOnlyHomeCycle(),
+    id: 'cycle-2',
+    stack_item_id: 'stack-2',
+    dose: 25,
+    unit: 'mg',
+    stack_items: { display_name: 'Zink', tracking_level: 'complete', dosage_form: 'capsule' },
+  }
+}
+
+afterEach(() => {
+  cleanup()
+  localStorage.clear()
+  vi.clearAllMocks()
+})
 
 describe('Home upcoming intake confirmation flow', () => {
   it('adapts a home slot to the shared group model with its pending log', () => {
@@ -30,20 +141,35 @@ describe('Home upcoming intake confirmation flow', () => {
     })
   })
 
-  it('asks how to confirm an upcoming intake before opening linked flows', () => {
-    const source = readFileSync(new URL('./Home.tsx', import.meta.url), 'utf8')
+  it('wires a mixed routine group to one RPC and one post-success log reload', async () => {
+    const client = createHomeClient({
+      cycles: [intakeOnlyHomeCycle(), quantifiedHomeCycle()],
+      dose_logs: [],
+      stack_items: [
+        { id: 'stack-1', display_name: 'Vitamin D3', dosage_form: 'capsule' },
+        { id: 'stack-2', display_name: 'Zink', dosage_form: 'capsule' },
+      ],
+      inventory_items: [],
+      dose_escalations: [],
+      injection_logs: [],
+    })
+    const TestHome = Home as ComponentType<{ homeDataClient: unknown }>
+    render(createElement(MemoryRouter, null, createElement(TestHome, { homeDataClient: client })))
 
-    expect(source).toContain('selectedHomeIntake')
-    expect(source).toContain('HomeIntakeConfirmSheet')
-    expect(source).toContain('Wie möchtest du bestätigen?')
-    expect(source).toContain('HomeIntakeTimeSheet')
-    expect(source).toContain('Wann hast du tatsächlich eingenommen?')
-    expect(source).toContain('openHomeIntakeTimeForm(selectedHomeIntake)')
-    expect(source).toContain('confirmHomeIntake(selectedHomeIntake, true, homeConfirmTime)')
-    expect(source).toContain('confirmHomeIntake(selectedHomeIntake, false)')
-    expect(source).toContain('openHomeIntakeInjection(selectedHomeIntake)')
-    expect(source).not.toContain('onTaken={() => confirmHomeIntake(selectedHomeIntake, true)}')
-    expect(source).not.toContain('const openTodayIntake = (intake: TodayIntake) => {\n    if (isInjectableMethod(intake.method))')
+    fireEvent.click(await screen.findByRole('button', { name: 'Alles eingenommen – Morgens' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Alles eingenommen' }))
+
+    expect(await within(dialog).findByText('Routine gespeichert')).toBeTruthy()
+    expect(client.rpc).toHaveBeenCalledTimes(1)
+    expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: expect.arrayContaining([
+        expect.objectContaining({ stack_item_id: 'stack-1', dose: null, unit: null }),
+        expect.objectContaining({ stack_item_id: 'stack-2', dose: 25, unit: 'mg' }),
+      ]),
+    })
+    expect(client.rpc.mock.calls[0][1].p_entries).toHaveLength(2)
+    await waitFor(() => expect(client.selectCounts.get('dose_logs')).toBe(2))
   })
 
   it('uses the active schedule segment quantity and supplied unit label for today', () => {

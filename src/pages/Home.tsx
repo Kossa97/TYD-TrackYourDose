@@ -348,7 +348,11 @@ const sectionHeaderStyle: CSSProperties = {
   marginBottom: 10,
 }
 
-export function Home() {
+interface HomeProps {
+  homeDataClient?: typeof supabase
+}
+
+export function Home({ homeDataClient = supabase }: HomeProps = {}) {
   const { user } = useAuth()
   const navigate = useNavigate()
   // Alle heute noch offenen (nicht bestätigten) Einnahmen, je mit eigenem Timer.
@@ -374,24 +378,24 @@ export function Home() {
 
       try {
         const [{ data: cycleData }, { data: logData }, { data: stackItemData }, { data: inventoryData }, { data: escalationData }, { data: injectionData }] = await Promise.all([
-          supabase.from('cycles')
+          homeDataClient.from('cycles')
             .select('id, intake_time, intake_time_custom, stack_item_id, dose, unit, method, start_date, end_date, frequency, x_days_interval, schedule_days, schedule_history, stack_items(display_name, tracking_level, dosage_form)')
             .eq('user_id', user!.id).eq('active', true),
           // All decided/reset logs — taken filtered per use site (overdue/timer).
-          supabase.from('dose_logs')
+          homeDataClient.from('dose_logs')
             .select('id, logged_at, stack_item_id, taken')
             .eq('user_id', user!.id)
             .order('logged_at', { ascending: false }),
-          supabase.from('stack_items')
+          homeDataClient.from('stack_items')
             .select('id, display_name, tracking_level, dosage_form, vials_in_stock, reconstitution_date, expiry_days')
             .eq('user_id', user!.id),
-          supabase.from('inventory_items')
+          homeDataClient.from('inventory_items')
             .select('id, vials_count')
             .eq('user_id', user!.id),
-          supabase.from('dose_escalations')
+          homeDataClient.from('dose_escalations')
             .select('cycle_id, increase_amount, start_type, start_date, start_after_days')
             .eq('user_id', user!.id),
-          supabase.from('injection_logs')
+          homeDataClient.from('injection_logs')
             .select('id, logged_at, body_region, body_side, position, normal')
             .eq('user_id', user!.id)
             .order('logged_at', { ascending: false })
@@ -489,7 +493,7 @@ export function Home() {
               notes: AUTO_MISSED_NOTE,
             }
           })
-          await supabase.from('dose_logs').insert(rows)
+          await homeDataClient.from('dose_logs').insert(rows)
         }
 
         const injectionRows = injectionData ?? []
@@ -527,7 +531,7 @@ export function Home() {
       }
     }
     load()
-  }, [user, homeReloadKey])
+  }, [homeDataClient, user, homeReloadKey])
 
   const { t } = useTranslation()
   const locale = getDateLocale()
@@ -575,7 +579,7 @@ export function Home() {
     try {
       const quantity = { dose: intake.doseNumber, unit: intake.unit }
       if (taken && hasTrackedQuantity(quantity)) {
-        await confirmIntakeDoseLog(supabase, {
+        await confirmIntakeDoseLog(homeDataClient, {
           userId: user.id,
           stackItemId: intake.stackItemId,
           dose: quantity.dose,
@@ -584,7 +588,7 @@ export function Home() {
           loggedAt: buildHomeLoggedAt(intake.scheduledAt, timeValue),
         })
       } else {
-        const { error } = await supabase.from('dose_logs').insert(buildHomeDoseLogPayload({
+        const { error } = await homeDataClient.from('dose_logs').insert(buildHomeDoseLogPayload({
           userId: user.id,
           stackItemId: intake.stackItemId,
           doseNumber: intake.doseNumber,
@@ -608,25 +612,29 @@ export function Home() {
 
   const confirmHomeRoutine = async (entries: RoutineConfirmationEntry[]): Promise<string[]> => {
     if (!user) return []
-    const savedLogIds = await confirmIntakeGroup(
-      supabase as unknown as IntakeConfirmationClient,
+    return confirmIntakeGroup(
+      homeDataClient as unknown as IntakeConfirmationClient,
       entries,
     )
+  }
+
+  const afterHomeRoutineConfirmed = async (entries: RoutineConfirmationEntry[]) => {
+    if (!user) return
     const vialStackItemIds = new Set(
       todayIntakes.filter(intake => intake.dosageForm === 'vial').map(intake => intake.stackItemId),
     )
-    for (const entry of quantifiedVialEntries(entries, vialStackItemIds)) {
-      await debitPeptideStockForDoseById(
-        supabase,
+    const stockUpdates = quantifiedVialEntries(entries, vialStackItemIds).map(entry => (
+      debitPeptideStockForDoseById(
+        homeDataClient,
         user.id,
         entry.stackItemId,
         entry.actualDose,
         entry.actualUnit,
       )
-    }
+    ))
+    await Promise.allSettled(stockUpdates)
     setHomeReloadKey(value => value + 1)
     toast.success(t('einnahme_bestaetigt', { defaultValue: 'Einnahme bestätigt' }))
-    return savedLogIds
   }
 
   const openHomeRoutineInjection = (entry: RoutineIntake, doseLogId: string) => {
@@ -753,6 +761,7 @@ export function Home() {
           group={selectedHomeRoutine}
           onClose={() => setSelectedHomeRoutine(null)}
           onConfirm={confirmHomeRoutine}
+          onAfterConfirm={afterHomeRoutineConfirmed}
           onAddInjection={openHomeRoutineInjection}
         />
       )}

@@ -636,6 +636,36 @@ begin
     end if;
 
     if entry_dose_log_id is not null then
+      perform 1
+      from public.dose_logs
+      where id = entry_dose_log_id
+        and user_id = owner_id
+        and stack_item_id = entry_stack_item_id
+        and taken is null
+        and logged_at = entry_logged_at;
+
+      if not found then
+        raise exception 'Pending dose log not found';
+      end if;
+    end if;
+  end loop;
+
+  for entry in
+    select value
+    from jsonb_array_elements(p_entries)
+  loop
+    entry_dose_log_id := nullif(btrim(entry ->> 'dose_log_id'), '')::uuid;
+    entry_stack_item_id := nullif(btrim(entry ->> 'stack_item_id'), '')::uuid;
+    entry_unit := nullif(btrim(entry ->> 'unit'), '');
+    entry_method := coalesce(entry ->> 'method', '');
+    entry_logged_at := nullif(btrim(entry ->> 'logged_at'), '')::timestamptz;
+    if entry -> 'dose' is null or entry -> 'dose' = 'null'::jsonb then
+      entry_dose := null;
+    else
+      entry_dose := (entry ->> 'dose')::numeric;
+    end if;
+
+    if entry_dose_log_id is not null then
       update public.dose_logs
       set
         dose = entry_dose,
@@ -646,6 +676,8 @@ begin
       where id = entry_dose_log_id
         and user_id = owner_id
         and stack_item_id = entry_stack_item_id
+        and taken is null
+        and logged_at = entry_logged_at
       returning * into saved_log;
 
       if not found then

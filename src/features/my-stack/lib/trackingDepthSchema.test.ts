@@ -68,4 +68,21 @@ describe('My Stack tracking depth schema', () => {
     expect(foundation).toMatch(/basis_unit text\s+check \(basis_unit is null or nullif\(btrim\(basis_unit\), ''\) is not null\)/)
     expect(foundation).toContain("item_tracking_level = 'complete'")
   })
+
+  it('prevalidates a supplied pending log against ownership, state, stack item, and exact slot before writes', () => {
+    const rpcStart = migration.indexOf('create or replace function public.confirm_intake_group')
+    const rpcEnd = migration.indexOf('revoke execute on function public.confirm_intake_group', rpcStart)
+    const rpc = migration.slice(rpcStart, rpcEnd)
+    const pendingValidation = rpc.indexOf('perform 1\n      from public.dose_logs')
+    const firstWrite = rpc.indexOf('update public.dose_logs')
+
+    expect(rpcStart).toBeGreaterThan(-1)
+    expect(pendingValidation).toBeGreaterThan(-1)
+    expect(pendingValidation).toBeLessThan(firstWrite)
+    expect(rpc.slice(pendingValidation, firstWrite)).toContain('user_id = owner_id')
+    expect(rpc.slice(pendingValidation, firstWrite)).toContain('stack_item_id = entry_stack_item_id')
+    expect(rpc.slice(pendingValidation, firstWrite)).toContain('taken is null')
+    expect(rpc.slice(pendingValidation, firstWrite)).toContain('logged_at = entry_logged_at')
+    expect(rpc.slice(firstWrite)).toMatch(/where id = entry_dose_log_id[\s\S]*taken is null[\s\S]*logged_at = entry_logged_at/)
+  })
 })

@@ -113,6 +113,23 @@ export function buildDashboardRoutineIntake(input: DashboardRoutineIntakeInput):
   }
 }
 
+interface DashboardQuantity {
+  dose: number | null
+  unit: string | null
+}
+
+function resolveDashboardCycleQuantity(
+  cycle: Cycle,
+  day: Date,
+  escalations: Escalation[],
+): DashboardQuantity {
+  if (cycle.stack_items?.tracking_level === 'intake_only') return { dose: null, unit: null }
+  return {
+    dose: effectiveDose(cycle, day, escalations),
+    unit: scheduleForDay(cycle, day).unit,
+  }
+}
+
 const INTAKE_MINUTES: Record<string, number> = {
   morgens: 8 * 60, mittags: 12 * 60, abends: 20 * 60,
 }
@@ -377,7 +394,11 @@ function IntakePeriodCarousel<T>({
 // Minimum horizontal swipe distance to trigger month change
 const SWIPE_THRESHOLD = 80
 
-export function Dashboard() {
+interface DashboardProps {
+  dashboardDataClient?: typeof supabase
+}
+
+export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {}) {
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
@@ -490,7 +511,7 @@ export function Dashboard() {
     const rangeEnd = monthEnd > today ? monthEnd : today
     const start = format(rangeStart, 'yyyy-MM-dd')
     const end = format(rangeEnd, 'yyyy-MM-dd')
-    const { data } = await supabase
+    const { data } = await dashboardDataClient
       .from('dose_logs')
       .select('*, stack_items(display_name)')
       .eq('user_id', user.id)
@@ -498,29 +519,29 @@ export function Dashboard() {
       .lte('logged_at', end + 'T23:59:59')
       .order('logged_at', { ascending: true })
     if (data) setLogs(data as DoseLog[])
-  }, [currentDate, user])
+  }, [currentDate, dashboardDataClient, user])
 
   const loadCycles = useCallback(async () => {
     if (!user) return
-    const { data } = await supabase
+    const { data } = await dashboardDataClient
       .from('cycles')
       .select('*, stack_items(display_name, tracking_level)')
       .eq('user_id', user.id)
       .eq('active', true)
     if (data) setCycles(data as Cycle[])
-  }, [user])
+  }, [dashboardDataClient, user])
 
   const loadStackItems = useCallback(async () => {
     if (!user) return
-    const { data } = await supabase.from('stack_items').select('*').eq('user_id', user.id).eq('archived', false).order('display_name')
+    const { data } = await dashboardDataClient.from('stack_items').select('*').eq('user_id', user.id).eq('archived', false).order('display_name')
     if (data) setStackItems(data)
-  }, [user])
+  }, [dashboardDataClient, user])
 
   const loadEscalations = useCallback(async () => {
     if (!user) return
-    const { data } = await supabase.from('dose_escalations').select('*').eq('user_id', user.id)
+    const { data } = await dashboardDataClient.from('dose_escalations').select('*').eq('user_id', user.id)
     if (data) setEscalations(data as Escalation[])
-  }, [user])
+  }, [dashboardDataClient, user])
 
   useEffect(() => {
     let cancelled = false
@@ -625,7 +646,6 @@ export function Dashboard() {
   const completedDaySlots = totalDaySlots - dueSlots.length
   const dueSlotByKey = new Map(dueSlots.map(slot => [slot.key, slot]))
   const dueRoutineGroups = groupRoutineIntakes(dueSlots.map(slot => {
-    const segment = scheduleForDay(slot.cycle, selectedDay)
     const trackingLevel = slot.cycle.stack_items?.tracking_level ?? 'complete'
     return buildDashboardRoutineIntake({
       key: slot.key,
@@ -636,8 +656,7 @@ export function Dashboard() {
       trackingLevel,
       minutes: slot.minutes,
       scheduledAt: slot.pendingLog?.logged_at ?? slotTimestamp(selectedDay, slot.minutes),
-      dose: effectiveDose(slot.cycle, selectedDay, escalations),
-      unit: segment.unit,
+      ...resolveDashboardCycleQuantity(slot.cycle, selectedDay, escalations),
       method: slot.cycle.method,
     })
   }))
@@ -685,7 +704,7 @@ export function Dashboard() {
     const rounded = computeNextVialStock(stackItem, dose, unit, mode, loggedAt)
     if (rounded == null) return false
 
-    const { error } = await supabase
+    const { error } = await dashboardDataClient
       .from('stack_items')
       .update({ vials_in_stock: rounded })
       .eq('id', stackItemId)
@@ -702,27 +721,32 @@ export function Dashboard() {
 
   const deleteLog = async (log: DoseLog) => {
     if (!confirm(t('eintrag_loeschen'))) return
-    const { error } = await supabase.from('dose_logs').delete().eq('id', log.id)
+    const { error } = await dashboardDataClient.from('dose_logs').delete().eq('id', log.id)
     if (error) return toast.error(t('error'))
     if (log.taken === true && hasTrackedQuantity(log)) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
     toast.success(t('deleted')); loadLogs(); loadStackItems()
   }
 
-  const confirmDose = async (log: DoseLog, taken: boolean, loggedAt?: string) => {
+  const confirmDose = async (log: DoseLog, taken: boolean, loggedAt?: string, quantity?: DashboardQuantity) => {
     const previousTaken = log.taken
     const update: Record<string, unknown> = { taken }
     if (taken && loggedAt) update.logged_at = loggedAt
-    const { error } = await supabase.from('dose_logs').update(update).eq('id', log.id)
+    if (quantity) {
+      update.dose = quantity.dose
+      update.unit = quantity.unit
+    }
+    const { error } = await dashboardDataClient.from('dose_logs').update(update).eq('id', log.id)
     if (error) return toast.error(t('error'))
-    if (previousTaken !== true && taken === true && hasTrackedQuantity(log)) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'debit')
-    if (previousTaken === true && taken !== true && hasTrackedQuantity(log)) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
+    const confirmedQuantity = quantity ?? log
+    if (previousTaken !== true && taken === true && hasTrackedQuantity(confirmedQuantity)) await adjustVialStockForDose(log.stack_item_id, confirmedQuantity.dose, confirmedQuantity.unit, 'debit')
+    if (previousTaken === true && taken !== true && hasTrackedQuantity(confirmedQuantity)) await adjustVialStockForDose(log.stack_item_id, confirmedQuantity.dose, confirmedQuantity.unit, 'credit', log.logged_at)
     loadLogs(); loadStackItems()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
   }
 
   const undoDose = async (log: DoseLog) => {
-    const { error } = await supabase.from('dose_logs').update({ taken: null }).eq('id', log.id)
+    const { error } = await dashboardDataClient.from('dose_logs').update({ taken: null }).eq('id', log.id)
     if (error) return toast.error(t('error'))
     if (log.taken === true && hasTrackedQuantity(log)) await adjustVialStockForDose(log.stack_item_id, log.dose, log.unit, 'credit', log.logged_at)
     loadLogs(); loadStackItems()
@@ -731,12 +755,8 @@ export function Dashboard() {
 
   const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string) => {
     if (!user) return
-    const segment = scheduleForDay(cycle, selectedDay)
-    const quantity = {
-      dose: effectiveDose(cycle, selectedDay, escalations),
-      unit: segment.unit,
-    }
-    const { error } = await supabase.from('dose_logs').insert({
+    const quantity = resolveDashboardCycleQuantity(cycle, selectedDay, escalations)
+    const { error } = await dashboardDataClient.from('dose_logs').insert({
       user_id: user.id,
       stack_item_id: cycle.stack_item_id,
       dose: quantity.dose,
@@ -788,7 +808,12 @@ export function Dashboard() {
     if (confirmSheet.cycle) {
       const day = new Date(selectedDay)
       day.setHours(h, m, 0, 0)
-      if (confirmSheet.log) await confirmDose(confirmSheet.log, true, day.toISOString())
+      if (confirmSheet.log) await confirmDose(
+        confirmSheet.log,
+        true,
+        day.toISOString(),
+        resolveDashboardCycleQuantity(confirmSheet.cycle, selectedDay, escalations),
+      )
       else                  await confirmCycleDose(confirmSheet.cycle, true, day.toISOString())
     } else if (confirmSheet.log) {
       const logDate = new Date(confirmSheet.log.logged_at)
@@ -799,27 +824,29 @@ export function Dashboard() {
   }
 
   const confirmRoutineGroup = async (entries: RoutineConfirmationEntry[]): Promise<string[]> => {
-    const savedLogIds = await confirmIntakeGroup(
-      supabase as unknown as IntakeConfirmationClient,
+    return confirmIntakeGroup(
+      dashboardDataClient as unknown as IntakeConfirmationClient,
       entries,
     )
+  }
+
+  const afterRoutineGroupConfirmed = async (entries: RoutineConfirmationEntry[]) => {
     const vialStackItemIds = new Set(
       stackItems.filter(item => item.dosage_form === 'vial').map(item => item.id),
     )
-    for (const entry of quantifiedVialEntries(entries, vialStackItemIds)) {
-      if (!user) continue
-      await debitPeptideStockForDoseById(
-        supabase,
+    const stockUpdates = user
+      ? quantifiedVialEntries(entries, vialStackItemIds).map(entry => debitPeptideStockForDoseById(
+        dashboardDataClient,
         user.id,
         entry.stackItemId,
         entry.actualDose,
         entry.actualUnit,
-      )
-    }
+      ))
+      : []
+    await Promise.allSettled(stockUpdates)
     await loadLogs()
     await loadStackItems()
     toast.success(t('einnahme_bestaetigt', { defaultValue: 'Einnahme bestätigt' }))
-    return savedLogIds
   }
 
   const openRoutineInjection = (entry: RoutineIntake, doseLogId: string) => {
@@ -974,9 +1001,8 @@ export function Dashboard() {
   const renderDueSlotCard = (slot: DueSlot) => {
     const c = slot.cycle
     const segment = scheduleForDay(c, selectedDay)
-    const dose = effectiveDose(c, selectedDay, escalations)
-    const baseDose = segment.dose
-    const unit = segment.unit
+    const { dose, unit } = resolveDashboardCycleQuantity(c, selectedDay, escalations)
+    const baseDose = c.stack_items?.tracking_level === 'intake_only' ? null : segment.dose
     const isEscalated = dose != null && baseDose != null && dose !== baseDose
     const doseLabel = formatTrackedQuantity(dose, unit, 'Menge nicht getrackt')
     const pendingLog = slot.pendingLog
@@ -1059,7 +1085,9 @@ export function Dashboard() {
                 <Check size={11} /> <span className="truncate">{isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}</span>
               </button>
               <button
-                onClick={() => pendingLog ? confirmDose(pendingLog, false) : confirmCycleDose(c, false, slotTimestamp(selectedDay, slot.minutes))}
+                onClick={() => pendingLog
+                  ? confirmDose(pendingLog, false, undefined, resolveDashboardCycleQuantity(c, selectedDay, escalations))
+                  : confirmCycleDose(c, false, slotTimestamp(selectedDay, slot.minutes))}
                 className="flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-red-500/25 bg-red-500/15 px-2 py-1 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/25">
                 <XCircle size={11} /> <span className="truncate">{t('uebersprungen')}</span>
               </button>
@@ -1483,6 +1511,7 @@ export function Dashboard() {
           group={routineGroupSheet}
           onClose={() => setRoutineGroupSheet(null)}
           onConfirm={confirmRoutineGroup}
+          onAfterConfirm={afterRoutineGroupConfirmed}
           onAddInjection={openRoutineInjection}
         />
       )}
