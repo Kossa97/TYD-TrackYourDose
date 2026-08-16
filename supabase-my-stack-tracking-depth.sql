@@ -544,4 +544,140 @@ $$;
 revoke execute on function public.save_stack_item_with_plan(jsonb, jsonb, jsonb) from public, anon;
 grant execute on function public.save_stack_item_with_plan(jsonb, jsonb, jsonb) to authenticated;
 
+create or replace function public.confirm_intake_group(p_entries jsonb)
+returns setof public.dose_logs
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  owner_id uuid := auth.uid();
+  entry jsonb;
+  saved_log public.dose_logs;
+  entry_cycle_id uuid;
+  entry_dose_log_id uuid;
+  entry_stack_item_id uuid;
+  entry_dose numeric;
+  entry_unit text;
+  entry_method text;
+  entry_logged_at timestamptz;
+  item_tracking_level text;
+begin
+  if owner_id is null then
+    raise exception 'Authentication required';
+  end if;
+
+  if p_entries is null
+    or jsonb_typeof(p_entries) <> 'array'
+    or jsonb_array_length(p_entries) = 0 then
+    raise exception 'At least one intake entry is required';
+  end if;
+
+  if exists (
+    select 1
+    from (
+      select
+        (value ->> 'cycle_id')::uuid as cycle_id,
+        (value ->> 'logged_at')::timestamptz as logged_at
+      from jsonb_array_elements(p_entries)
+      group by 1, 2
+      having count(*) > 1
+    ) duplicates
+  ) then
+    raise exception 'Duplicate cycle and logged_at in intake group';
+  end if;
+
+  for entry in
+    select value
+    from jsonb_array_elements(p_entries)
+  loop
+    entry_cycle_id := nullif(btrim(entry ->> 'cycle_id'), '')::uuid;
+    entry_dose_log_id := nullif(btrim(entry ->> 'dose_log_id'), '')::uuid;
+    entry_stack_item_id := nullif(btrim(entry ->> 'stack_item_id'), '')::uuid;
+    entry_unit := nullif(btrim(entry ->> 'unit'), '');
+    entry_method := coalesce(entry ->> 'method', '');
+    entry_logged_at := nullif(btrim(entry ->> 'logged_at'), '')::timestamptz;
+
+    if entry -> 'dose' is null or entry -> 'dose' = 'null'::jsonb then
+      entry_dose := null;
+    elsif jsonb_typeof(entry -> 'dose') = 'number' then
+      entry_dose := (entry ->> 'dose')::numeric;
+    else
+      raise exception 'Dose must be a number or null';
+    end if;
+
+    if entry_cycle_id is null
+      or entry_stack_item_id is null
+      or entry_logged_at is null then
+      raise exception 'Cycle, stack item, and logged_at are required';
+    end if;
+    if (entry_dose is null) <> (entry_unit is null) then
+      raise exception 'Dose and unit must both be supplied or both be null';
+    end if;
+    if entry_dose is not null
+      and not (entry_dose > 0 and entry_dose < 'Infinity'::numeric) then
+      raise exception 'Dose must be positive';
+    end if;
+
+    select item.tracking_level
+    into item_tracking_level
+    from public.cycles cycle
+    join public.stack_items item on item.id = cycle.stack_item_id
+    where cycle.id = entry_cycle_id
+      and cycle.stack_item_id = entry_stack_item_id
+      and cycle.user_id = owner_id
+      and item.user_id = owner_id;
+
+    if not found then
+      raise exception 'Intake cycle not found';
+    end if;
+    if item_tracking_level = 'intake_only' and entry_dose is not null then
+      raise exception 'Intake-only entries cannot store a quantity';
+    end if;
+
+    if entry_dose_log_id is not null then
+      update public.dose_logs
+      set
+        dose = entry_dose,
+        unit = entry_unit,
+        method = entry_method,
+        logged_at = entry_logged_at,
+        taken = true
+      where id = entry_dose_log_id
+        and user_id = owner_id
+        and stack_item_id = entry_stack_item_id
+      returning * into saved_log;
+
+      if not found then
+        raise exception 'Pending dose log not found';
+      end if;
+    else
+      insert into public.dose_logs (
+        user_id,
+        stack_item_id,
+        dose,
+        unit,
+        method,
+        logged_at,
+        taken
+      ) values (
+        owner_id,
+        entry_stack_item_id,
+        entry_dose,
+        entry_unit,
+        entry_method,
+        entry_logged_at,
+        true
+      )
+      returning * into saved_log;
+    end if;
+
+    return next saved_log;
+  end loop;
+end;
+$$;
+
+revoke execute on function public.confirm_intake_group(jsonb) from public, anon;
+grant execute on function public.confirm_intake_group(jsonb) to authenticated;
+
 commit;

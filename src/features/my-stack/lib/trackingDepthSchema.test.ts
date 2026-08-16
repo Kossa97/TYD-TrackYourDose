@@ -30,9 +30,11 @@ describe('My Stack tracking depth schema', () => {
     ['foundation', foundation],
   ])('saves an item and its plan atomically in the %s SQL', (_name, sql) => {
     const rpcStart = sql.indexOf('create or replace function public.save_stack_item_with_plan')
-    const rpc = sql.slice(rpcStart)
+    const rpcEnd = sql.indexOf('revoke execute on function public.save_stack_item_with_plan', rpcStart)
+    const rpc = sql.slice(rpcStart, rpcEnd)
 
     expect(rpcStart).toBeGreaterThan(-1)
+    expect(rpcEnd).toBeGreaterThan(rpcStart)
     expect(rpc).toContain('saved_item := public.save_stack_item(p_item, p_ingredients)')
     expect(rpc).toContain("saved_item.tracking_level = 'intake_only'")
     expect(rpc).toContain("saved_item.tracking_level in ('with_amount', 'complete')")

@@ -1,8 +1,35 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { buildHomeDoseLogPayload, resolveHomeIntakeQuantity } from './Home'
+import { buildHomeDoseLogPayload, buildHomeRoutineIntake, resolveHomeIntakeQuantity } from './Home'
 
 describe('Home upcoming intake confirmation flow', () => {
+  it('adapts a home slot to the shared group model with its pending log', () => {
+    const intake = buildHomeRoutineIntake({
+      key: 'cycle-1-1080',
+      time: '18:00',
+      min: 1080,
+      substance: 'Vitamin D3',
+      dose: null,
+      doseNumber: null,
+      unit: null,
+      stackItemId: 'stack-1',
+      cycleId: 'cycle-1',
+      pendingLogId: 'pending-1',
+      trackingLevel: 'intake_only',
+      dosageForm: 'capsule',
+      method: 'Oral',
+      scheduledAt: '2026-07-29T18:00:00.000Z',
+    })
+
+    expect(intake).toMatchObject({
+      pendingLogId: 'pending-1',
+      group: 'evening',
+      dose: null,
+      unit: null,
+      injectable: false,
+    })
+  })
+
   it('asks how to confirm an upcoming intake before opening linked flows', () => {
     const source = readFileSync(new URL('./Home.tsx', import.meta.url), 'utf8')
 

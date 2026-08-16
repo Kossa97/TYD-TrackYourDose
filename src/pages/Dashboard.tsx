@@ -17,8 +17,17 @@ import toast from 'react-hot-toast'
 import { getStackItemColor } from '../features/my-stack/lib/colors'
 import { getDateLocale } from '../i18n/dateLocales'
 import { cycleAppliesToDay, effectiveDose, scheduleForDay, AUTO_MISSED_NOTE, type ScheduleSegment } from '../lib/intakeSchedule'
-import { computeNextVialStock } from '../features/my-stack/extensions/peptide/vialStock'
+import { computeNextVialStock, debitPeptideStockForDoseById } from '../features/my-stack/extensions/peptide/vialStock'
 import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/quantityPresentation'
+import {
+  groupRoutineIntakes,
+  routineGroupFromMinutes,
+  type RoutineConfirmationEntry,
+  type RoutineGroupModel,
+  type RoutineIntake,
+} from '../features/routines/intakeGroups'
+import { confirmIntakeGroup, quantifiedVialEntries, type IntakeConfirmationClient } from '../features/routines/services/intakeConfirmation'
+import { RoutineConfirmationSheet } from '../features/routines/components/RoutineConfirmationSheet'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { GlassPanel, PageShell } from '../components/ui/DesignSystem'
 import { CarouselCounter, CarouselPagination } from '../components/CarouselChrome'
@@ -39,8 +48,8 @@ interface Cycle {
   id: string
   name: string
   stack_item_id: string
-  dose: number
-  unit: string
+  dose: number | null
+  unit: string | null
   method: string
   frequency: string
   x_days_interval: number | null
@@ -51,11 +60,12 @@ interface Cycle {
   intake_time: string | null
   intake_time_custom: string | null
   schedule_history: ScheduleSegment[] | null
-  stack_items: { display_name: string }
+  stack_items: { display_name: string; tracking_level: 'intake_only' | 'with_amount' | 'complete' }
 }
 
 interface StackItem {
   id: string; display_name: string; default_method: string
+  dosage_form: string | null
   vial_amount_mg: number | null; reconstitution_ml: number | null
   vials_in_stock: number | null; vials_initial: number | null
   reconstitution_date: string | null; expiry_days: number | null
@@ -69,6 +79,38 @@ interface Escalation {
   start_type: 'date' | 'after_days' | 'after_weeks'
   start_date: string | null
   start_after_days: number | null
+}
+
+interface DashboardRoutineIntakeInput {
+  key: string
+  cycleId: string
+  pendingLogId: string | null
+  stackItemId: string
+  stackItemName: string
+  trackingLevel: Cycle['stack_items']['tracking_level']
+  minutes: number
+  scheduledAt: string
+  dose: number | null
+  unit: string | null
+  method: string
+}
+
+export function buildDashboardRoutineIntake(input: DashboardRoutineIntakeInput): RoutineIntake {
+  const intakeOnly = input.trackingLevel === 'intake_only'
+  return {
+    key: input.key,
+    cycleId: input.cycleId,
+    pendingLogId: input.pendingLogId,
+    stackItemId: input.stackItemId,
+    stackItemName: input.stackItemName,
+    trackingLevel: input.trackingLevel,
+    group: routineGroupFromMinutes(input.minutes),
+    scheduledAt: input.scheduledAt,
+    dose: intakeOnly ? null : input.dose,
+    unit: intakeOnly ? null : input.unit,
+    method: input.method,
+    injectable: isInjectableMethod(input.method),
+  }
 }
 
 const INTAKE_MINUTES: Record<string, number> = {
@@ -122,9 +164,9 @@ function slotTimestamp(day: Date, minutes: number): string {
 type IntakeGroupKey = 'morgens' | 'mittags' | 'abends' | 'custom' | 'later'
 
 function intakePeriodFromMinutes(minutes: number): 'morgens' | 'mittags' | 'abends' {
-  const h = Math.floor(minutes / 60) % 24
-  if (h < 12) return 'morgens'
-  if (h < 18) return 'mittags'
+  const group = routineGroupFromMinutes(minutes)
+  if (group === 'morning') return 'morgens'
+  if (group === 'midday') return 'mittags'
   return 'abends'
 }
 
@@ -138,6 +180,11 @@ function slotPeriod(slot: { groupKey: IntakeGroupKey; minutes: number }): Period
 }
 
 const PERIOD_ORDER: PeriodKey[] = ['morgens', 'mittags', 'abends']
+const PERIOD_TO_ROUTINE_GROUP = {
+  morgens: 'morning',
+  mittags: 'midday',
+  abends: 'evening',
+} as const
 
 function defaultDuePeriod(
   day: Date,
@@ -347,6 +394,7 @@ export function Dashboard() {
   // Einnahme-Bestätigungs-Sheet
   interface ConfirmSheet { cycle?: Cycle; log?: DoseLog }
   const [confirmSheet, setConfirmSheet] = useState<ConfirmSheet | null>(null)
+  const [routineGroupSheet, setRoutineGroupSheet] = useState<RoutineGroupModel | null>(null)
   const [confirmTime, setConfirmTime]   = useState('')
   const [completedExpanded, setCompletedExpanded] = useState(false)
   const [calendarExpanded, setCalendarExpanded] = useState(false)
@@ -456,7 +504,7 @@ export function Dashboard() {
     if (!user) return
     const { data } = await supabase
       .from('cycles')
-      .select('*, stack_items(display_name)')
+      .select('*, stack_items(display_name, tracking_level)')
       .eq('user_id', user.id)
       .eq('active', true)
     if (data) setCycles(data as Cycle[])
@@ -547,7 +595,7 @@ export function Dashboard() {
   // Per-slot due list: expand each cycle into its individual intake slots, then drop the
   // slots already covered (in time order) by decided logs (taken !== null) for that stack item.
   // Reset logs (taken === null) keep a slot "due" and are reused on confirm to avoid duplicates.
-  interface DueSlot { cycle: Cycle; minutes: number; time: string; groupKey: IntakeGroupKey; pendingLog?: DoseLog }
+  interface DueSlot { key: string; cycle: Cycle; minutes: number; time: string; groupKey: IntakeGroupKey; pendingLog?: DoseLog }
   const decidedByStackItem = new Map<string, number>()
   const pendingByStackItem = new Map<string, DoseLog[]>()
   for (const log of selLogs) {
@@ -558,7 +606,7 @@ export function Dashboard() {
   for (const cycle of selCycles) {
     for (const s of cycleSlots(cycle, selectedDay)) {
       const arr = slotsByStackItem.get(cycle.stack_item_id) ?? []
-      arr.push({ cycle, minutes: s.minutes, time: s.time, groupKey: s.groupKey })
+      arr.push({ key: `${cycle.id}-${s.minutes}`, cycle, minutes: s.minutes, time: s.time, groupKey: s.groupKey })
       slotsByStackItem.set(cycle.stack_item_id, arr)
     }
   }
@@ -575,11 +623,34 @@ export function Dashboard() {
     })
   }
   const completedDaySlots = totalDaySlots - dueSlots.length
-  const duePeriodCarousels = PERIOD_ORDER.map(key => ({
-    key,
-    ...intakeGroupMeta(key, t),
-    slots: dueSlots.filter(slot => slotPeriod(slot) === key).sort((a, b) => a.minutes - b.minutes),
+  const dueSlotByKey = new Map(dueSlots.map(slot => [slot.key, slot]))
+  const dueRoutineGroups = groupRoutineIntakes(dueSlots.map(slot => {
+    const segment = scheduleForDay(slot.cycle, selectedDay)
+    const trackingLevel = slot.cycle.stack_items?.tracking_level ?? 'complete'
+    return buildDashboardRoutineIntake({
+      key: slot.key,
+      cycleId: slot.cycle.id,
+      pendingLogId: slot.pendingLog?.id ?? null,
+      stackItemId: slot.cycle.stack_item_id,
+      stackItemName: slot.cycle.stack_items?.display_name ?? '',
+      trackingLevel,
+      minutes: slot.minutes,
+      scheduledAt: slot.pendingLog?.logged_at ?? slotTimestamp(selectedDay, slot.minutes),
+      dose: effectiveDose(slot.cycle, selectedDay, escalations),
+      unit: segment.unit,
+      method: slot.cycle.method,
+    })
   }))
+  const dueRoutineGroupByKey = new Map(dueRoutineGroups.map(group => [group.key, group]))
+  const duePeriodCarousels = PERIOD_ORDER.map(key => {
+    const routineGroup = dueRoutineGroupByKey.get(PERIOD_TO_ROUTINE_GROUP[key]) ?? null
+    return {
+      key,
+      ...intakeGroupMeta(key, t),
+      routineGroup,
+      slots: routineGroup?.items.map(item => dueSlotByKey.get(item.key)).filter((slot): slot is DueSlot => Boolean(slot)) ?? [],
+    }
+  })
   const activeDuePeriodData = duePeriodCarousels.find(period => period.key === activeDuePeriod)
     ?? duePeriodCarousels[0]
 
@@ -725,6 +796,40 @@ export function Dashboard() {
       await confirmDose(confirmSheet.log, true, logDate.toISOString())
     }
     setConfirmSheet(null)
+  }
+
+  const confirmRoutineGroup = async (entries: RoutineConfirmationEntry[]): Promise<string[]> => {
+    const savedLogIds = await confirmIntakeGroup(
+      supabase as unknown as IntakeConfirmationClient,
+      entries,
+    )
+    const vialStackItemIds = new Set(
+      stackItems.filter(item => item.dosage_form === 'vial').map(item => item.id),
+    )
+    for (const entry of quantifiedVialEntries(entries, vialStackItemIds)) {
+      if (!user) continue
+      await debitPeptideStockForDoseById(
+        supabase,
+        user.id,
+        entry.stackItemId,
+        entry.actualDose,
+        entry.actualUnit,
+      )
+    }
+    await loadLogs()
+    await loadStackItems()
+    toast.success(t('einnahme_bestaetigt', { defaultValue: 'Einnahme bestätigt' }))
+    return savedLogIds
+  }
+
+  const openRoutineInjection = (entry: RoutineIntake, doseLogId: string) => {
+    const returnTo = `/kalender?date=${format(selectedDay, 'yyyy-MM-dd')}#due-intakes`
+    navigate(buildInjectionTrackerUrl({
+      doseLogId,
+      cycleId: entry.cycleId,
+      scheduledAt: entry.scheduledAt,
+      returnTo,
+    }))
   }
 
   const snoozeDose = (log: DoseLog, minutes: number) => {
@@ -1304,12 +1409,21 @@ export function Dashboard() {
             </div>
 
             {activeDuePeriodData.slots.length > 0 ? (
-              <IntakePeriodCarousel
-                key={activeDuePeriod}
-                items={activeDuePeriodData.slots}
-                getKey={slot => `${slot.cycle.id}-${slot.minutes}`}
-                renderItem={slot => renderDueSlotCard(slot)}
-              />
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => activeDuePeriodData.routineGroup && setRoutineGroupSheet(activeDuePeriodData.routineGroup)}
+                  className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/15 px-3 text-sm font-black text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                >
+                  <Check size={15} aria-hidden="true" /> Alles eingenommen
+                </button>
+                <IntakePeriodCarousel
+                  key={activeDuePeriod}
+                  items={activeDuePeriodData.slots}
+                  getKey={slot => slot.key}
+                  renderItem={slot => renderDueSlotCard(slot)}
+                />
+              </div>
             ) : (
               <p className="px-1 text-xs text-slate-600">
                 {t('period_no_open_intakes', { defaultValue: 'Keine offenen Einnahmen' })}
@@ -1363,6 +1477,15 @@ export function Dashboard() {
       </div>
 
     </PageShell>
+
+      {routineGroupSheet && (
+        <RoutineConfirmationSheet
+          group={routineGroupSheet}
+          onClose={() => setRoutineGroupSheet(null)}
+          onConfirm={confirmRoutineGroup}
+          onAddInjection={openRoutineInjection}
+        />
+      )}
 
       {/* ── Einnahme-Zeitpunkt-Sheet ──────────────────────────────────────── */}
       {confirmSheet && (

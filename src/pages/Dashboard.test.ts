@@ -1,7 +1,32 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { buildDashboardRoutineIntake } from './Dashboard'
 
 describe('Dashboard intake confirmation actions', () => {
+  it('adapts a dashboard slot to the shared group model without a fake intake-only quantity', () => {
+    const intake = buildDashboardRoutineIntake({
+      key: 'cycle-1-720',
+      cycleId: 'cycle-1',
+      pendingLogId: 'pending-1',
+      stackItemId: 'stack-1',
+      stackItemName: 'Vitamin D3',
+      trackingLevel: 'intake_only',
+      minutes: 720,
+      scheduledAt: '2026-07-29T12:00:00.000Z',
+      dose: 100,
+      unit: 'mcg',
+      method: 'Subkutan',
+    })
+
+    expect(intake).toMatchObject({
+      pendingLogId: 'pending-1',
+      group: 'midday',
+      dose: null,
+      unit: null,
+      injectable: true,
+    })
+  })
+
   it('keeps taken and skipped in the first row and injection confirmation in the second row', () => {
     const source = readFileSync(new URL('./Dashboard.tsx', import.meta.url), 'utf8')
 

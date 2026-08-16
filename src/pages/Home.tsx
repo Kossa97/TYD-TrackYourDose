@@ -21,12 +21,27 @@ import { WorkflowBanner } from '../components/WorkflowBanner'
 import { InjectionTrackerHero, type InjectionHeroPin } from '../components/injection3d/InjectionTrackerHero'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { confirmIntakeDoseLog } from '../lib/injectionPersistence'
+import { debitPeptideStockForDoseById } from '../features/my-stack/extensions/peptide/vialStock'
 import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/quantityPresentation'
+import {
+  groupRoutineIntakes,
+  routineGroupFromMinutes,
+  type RoutineConfirmationEntry,
+  type RoutineGroupModel,
+  type RoutineIntake,
+} from '../features/routines/intakeGroups'
+import { confirmIntakeGroup, quantifiedVialEntries, type IntakeConfirmationClient } from '../features/routines/services/intakeConfirmation'
+import { RoutineConfirmationSheet } from '../features/routines/components/RoutineConfirmationSheet'
 import toast from 'react-hot-toast'
 import { format, parseISO, startOfDay } from 'date-fns'
 import { getDateLocale } from '../i18n/dateLocales'
 
 const SLOT_TIMES: Record<string, string> = { morgens: '08:00', mittags: '12:00', abends: '20:00' }
+const ROUTINE_GROUP_LABELS: Record<RoutineGroupModel['key'], string> = {
+  morning: 'Morgens',
+  midday: 'Mittags',
+  evening: 'Abends',
+}
 
 const PEPTIDE_STUDIES = [
   { icon: FlaskConical, title: 'BPC-157 beschleunigt Sehnen- & Muskelheilung signifikant', source: 'J. Physiol. · 2024' },
@@ -267,7 +282,17 @@ export function buildHomeDoseLogPayload(input: HomeDoseLogPayloadInput) {
   }
 }
 
-interface TodayIntake {
+interface HomeCycle extends ScheduleCycle {
+  method: string | null
+  stack_items: {
+    display_name: string
+    tracking_level: 'intake_only' | 'with_amount' | 'complete'
+    dosage_form: string | null
+  }
+}
+
+export interface TodayIntake {
+  key: string
   time: string          // 'HH:MM'
   min: number           // Minuten seit Mitternacht (Sortierung)
   substance: string | null
@@ -276,8 +301,29 @@ interface TodayIntake {
   unit: string | null
   stackItemId: string
   cycleId: string
+  pendingLogId: string | null
+  trackingLevel: 'intake_only' | 'with_amount' | 'complete'
+  dosageForm: string | null
   method: string | null
   scheduledAt: string
+}
+
+export function buildHomeRoutineIntake(intake: TodayIntake): RoutineIntake {
+  const intakeOnly = intake.trackingLevel === 'intake_only'
+  return {
+    key: intake.key,
+    cycleId: intake.cycleId,
+    pendingLogId: intake.pendingLogId,
+    stackItemId: intake.stackItemId,
+    stackItemName: intake.substance ?? '',
+    trackingLevel: intake.trackingLevel,
+    group: routineGroupFromMinutes(intake.min),
+    scheduledAt: intake.scheduledAt,
+    dose: intakeOnly ? null : intake.doseNumber,
+    unit: intakeOnly ? null : intake.unit,
+    method: intake.method ?? '',
+    injectable: isInjectableMethod(intake.method),
+  }
 }
 
 interface InjectionHeroState {
@@ -313,6 +359,7 @@ export function Home() {
   const [expiryAlerts, setExpiryAlerts] = useState<PeptideExpiryAlert[]>([])
   const [injectionHero, setInjectionHero] = useState<InjectionHeroState>(EMPTY_INJECTION_HERO)
   const [selectedHomeIntake, setSelectedHomeIntake] = useState<TodayIntake | null>(null)
+  const [selectedHomeRoutine, setSelectedHomeRoutine] = useState<RoutineGroupModel | null>(null)
   const [homeConfirmStep, setHomeConfirmStep] = useState<'choice' | 'time'>('choice')
   const [homeConfirmTime, setHomeConfirmTime] = useState('')
   const [homeReloadKey, setHomeReloadKey] = useState(0)
@@ -328,15 +375,15 @@ export function Home() {
       try {
         const [{ data: cycleData }, { data: logData }, { data: stackItemData }, { data: inventoryData }, { data: escalationData }, { data: injectionData }] = await Promise.all([
           supabase.from('cycles')
-            .select('id, intake_time, intake_time_custom, stack_item_id, dose, unit, method, start_date, end_date, frequency, x_days_interval, schedule_days, schedule_history')
+            .select('id, intake_time, intake_time_custom, stack_item_id, dose, unit, method, start_date, end_date, frequency, x_days_interval, schedule_days, schedule_history, stack_items(display_name, tracking_level, dosage_form)')
             .eq('user_id', user!.id).eq('active', true),
           // All decided/reset logs — taken filtered per use site (overdue/timer).
           supabase.from('dose_logs')
-            .select('logged_at, stack_item_id, taken')
+            .select('id, logged_at, stack_item_id, taken')
             .eq('user_id', user!.id)
             .order('logged_at', { ascending: false }),
           supabase.from('stack_items')
-            .select('id, display_name, vials_in_stock, reconstitution_date, expiry_days')
+            .select('id, display_name, tracking_level, dosage_form, vials_in_stock, reconstitution_date, expiry_days')
             .eq('user_id', user!.id),
           supabase.from('inventory_items')
             .select('id, vials_count')
@@ -350,27 +397,36 @@ export function Home() {
             .order('logged_at', { ascending: false })
             .limit(30),
         ])
+        const cycles = (cycleData ?? []) as unknown as HomeCycle[]
         const escalations = (escalationData ?? []) as EscalationRow[]
         // How many of today's intakes are already decided (taken=true/false) per stack item.
         const decidedCountByStackItem = new Map<string, number>()
+        const pendingLogIdsByStackItem = new Map<string, string[]>()
         for (const l of logData ?? []) {
-          if (l.taken !== null && format(parseISO(l.logged_at), 'yyyy-MM-dd') === todayKey)
+          if (format(parseISO(l.logged_at), 'yyyy-MM-dd') !== todayKey) continue
+          if (l.taken !== null) {
             decidedCountByStackItem.set(l.stack_item_id, (decidedCountByStackItem.get(l.stack_item_id) ?? 0) + 1)
+          } else {
+            const pendingIds = pendingLogIdsByStackItem.get(l.stack_item_id) ?? []
+            pendingIds.unshift(l.id as string)
+            pendingLogIdsByStackItem.set(l.stack_item_id, pendingIds)
+          }
         }
 
         // ── Next intake time ─────────────────────────────────────────
-        const stackItemNameById = new Map<string, string>(
-          (stackItemData ?? []).map((item) => [item.id as string, item.display_name as string])
-        )
         const now = new Date()
         const todaySlots: TodayIntake[] = []
-        for (const c of cycleData ?? []) {
+        for (const c of cycles) {
           // Nur Zyklen, die HEUTE gelten (Frequenz/Start/Ende), wie im Kalender.
           if (!cycleAppliesToDay(c, now)) continue
           const seg = scheduleForDay(c, now)   // segment-/historienaufgelöste Slots
           const slots   = (seg.intake_time ?? '').split(',').filter(Boolean)
           const customs = (seg.intake_time_custom ?? '').split(',')
-          const { doseNumber, unit, dose: doseLabel } = resolveHomeIntakeQuantity(c, now, escalations)
+          const resolvedQuantity = resolveHomeIntakeQuantity(c, now, escalations)
+          const intakeOnly = c.stack_items.tracking_level === 'intake_only'
+          const doseNumber = intakeOnly ? null : resolvedQuantity.doseNumber
+          const unit = intakeOnly ? null : resolvedQuantity.unit
+          const doseLabel = intakeOnly ? null : resolvedQuantity.dose
           slots.forEach((slot: string, i: number) => {
             const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
             if (!tm) return
@@ -378,15 +434,19 @@ export function Home() {
             const scheduledAt = new Date(now)
             scheduledAt.setHours(h, m, 0, 0)
             todaySlots.push({
+              key: `${c.id}-${h * 60 + m}`,
               min: h * 60 + m,
               time: tm,
-              substance: stackItemNameById.get(c.stack_item_id as string) ?? null,
+              substance: c.stack_items.display_name,
               dose: doseLabel,
               doseNumber,
               unit,
-              stackItemId: c.stack_item_id as string,
-              cycleId: c.id as string,
-              method: c.method as string | null,
+              stackItemId: c.stack_item_id,
+              cycleId: c.id,
+              pendingLogId: null,
+              trackingLevel: c.stack_items.tracking_level,
+              dosageForm: c.stack_items.dosage_form,
+              method: c.method,
               scheduledAt: scheduledAt.toISOString(),
             })
           })
@@ -402,6 +462,7 @@ export function Home() {
             consumedByStackItem.set(s.stackItemId, used + 1)
             continue
           }
+          s.pendingLogId = pendingLogIdsByStackItem.get(s.stackItemId)?.shift() ?? null
           openSlots.push(s)
         }
         // Frist = Tagesende: nicht bestätigte Slots vergangener Tage automatisch als
@@ -409,18 +470,19 @@ export function Home() {
         // Nur ab Aktivierung (localStorage) — kein rückwirkendes Backfill der Historie.
         let autoMissSince = localStorage.getItem('tyd_automiss_since')
         if (!autoMissSince) { autoMissSince = todayKey; localStorage.setItem('tyd_automiss_since', autoMissSince) }
-        const missed = collectMissedIntakes(cycleData ?? [], logData ?? [], now, parseISO(autoMissSince))
+        const missed = collectMissedIntakes(cycles, logData ?? [], now, parseISO(autoMissSince))
         if (missed.length > 0) {
-          const cycleById = new Map((cycleData ?? []).map(c => [c.id, c]))
+          const cycleById = new Map(cycles.map(c => [c.id, c]))
           const rows = missed.map(m => {
             const c = cycleById.get(m.cycleId)!
             const at = startOfDay(parseISO(m.dateKey))
             at.setHours(Math.floor(m.minutes / 60), m.minutes % 60, 0, 0)
+            const intakeOnly = c.stack_items.tracking_level === 'intake_only'
             return {
               user_id: user!.id,
               stack_item_id: c.stack_item_id,
-              dose: effectiveDose(c, parseISO(m.dateKey), escalations),
-              unit: scheduleForDay(c, parseISO(m.dateKey)).unit,
+              dose: intakeOnly ? null : effectiveDose(c, parseISO(m.dateKey), escalations),
+              unit: intakeOnly ? null : scheduleForDay(c, parseISO(m.dateKey)).unit,
               method: c.method ?? '',
               logged_at: at.toISOString(),
               taken: false,
@@ -445,14 +507,14 @@ export function Home() {
           }))
 
         setPlannedToday(todaySlots.length)
-        setTodayIntakes(openSlots.map(s => ({ time: s.time, min: s.min, substance: s.substance, dose: s.dose, doseNumber: s.doseNumber, unit: s.unit, stackItemId: s.stackItemId, cycleId: s.cycleId, method: s.method, scheduledAt: s.scheduledAt })))
+        setTodayIntakes(openSlots)
         setTodayDone(todaySlots.length > 0 && openSlots.length === 0)
         setInjectionHero({ pins })
 
         setExpiryAlerts(getPeptideExpiryAlerts((stackItemData ?? []).map(item => ({ ...item, name: item.display_name }))))
 
         setOverview({
-          activeCycles: (cycleData ?? []).length,
+          activeCycles: cycles.length,
           peptides: (stackItemData ?? []).length,
           inventoryVials: (inventoryData ?? []).reduce((sum, item) => sum + Number(item.vials_count ?? 0), 0),
           loggedToday: (logData ?? []).filter((log) => log.taken === true && format(parseISO(log.logged_at), 'yyyy-MM-dd') === todayKey).length,
@@ -478,6 +540,8 @@ export function Home() {
   const completionLevel = plannedToday > 0
     ? Math.min(100, Math.round((overview.loggedToday / plannedToday) * 100))
     : 0
+  const todayIntakeByKey = new Map(todayIntakes.map(intake => [intake.key, intake]))
+  const homeRoutineGroups = groupRoutineIntakes(todayIntakes.map(buildHomeRoutineIntake))
 
   const defaultHomeConfirmTime = (intake: TodayIntake) => format(new Date(intake.scheduledAt), 'HH:mm')
 
@@ -540,6 +604,38 @@ export function Home() {
       console.error('[Home] confirmHomeIntake error:', error)
       toast.error(t('fehler_speichern', { defaultValue: 'Fehler beim Speichern' }))
     }
+  }
+
+  const confirmHomeRoutine = async (entries: RoutineConfirmationEntry[]): Promise<string[]> => {
+    if (!user) return []
+    const savedLogIds = await confirmIntakeGroup(
+      supabase as unknown as IntakeConfirmationClient,
+      entries,
+    )
+    const vialStackItemIds = new Set(
+      todayIntakes.filter(intake => intake.dosageForm === 'vial').map(intake => intake.stackItemId),
+    )
+    for (const entry of quantifiedVialEntries(entries, vialStackItemIds)) {
+      await debitPeptideStockForDoseById(
+        supabase,
+        user.id,
+        entry.stackItemId,
+        entry.actualDose,
+        entry.actualUnit,
+      )
+    }
+    setHomeReloadKey(value => value + 1)
+    toast.success(t('einnahme_bestaetigt', { defaultValue: 'Einnahme bestätigt' }))
+    return savedLogIds
+  }
+
+  const openHomeRoutineInjection = (entry: RoutineIntake, doseLogId: string) => {
+    navigate(buildInjectionTrackerUrl({
+      doseLogId,
+      cycleId: entry.cycleId,
+      scheduledAt: entry.scheduledAt,
+      returnTo: '/',
+    }))
   }
 
   return (
@@ -615,17 +711,50 @@ export function Home() {
         onOpen={() => navigate('/injektionen')}
       />
 
-      {todayIntakes.length > 0 && (
+      {homeRoutineGroups.length > 0 && (
         <section style={{ ...panelStyle, padding: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
             <p style={labelStyle}>{t('home_upcoming_intakes', { defaultValue: 'Anstehende Einnahmen' })}</p>
             <p style={{ ...labelStyle, fontSize: '0.55rem' }}>{t('home_due_in', { defaultValue: 'fällig in:' })}</p>
           </div>
-          <TodayIntakeCarousel
-            intakes={todayIntakes}
-            onItemClick={openTodayIntake}
-          />
+          <div className="space-y-4">
+            {homeRoutineGroups.map(group => {
+              const groupIntakes = group.items
+                .map(item => todayIntakeByKey.get(item.key))
+                .filter((intake): intake is TodayIntake => Boolean(intake))
+              return (
+                <div key={group.key} className="space-y-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[0.62rem] font-black uppercase tracking-[0.13em] text-cyan-300">
+                      {ROUTINE_GROUP_LABELS[group.key]}
+                    </p>
+                    <button
+                      type="button"
+                      aria-label={`Alles eingenommen – ${ROUTINE_GROUP_LABELS[group.key]}`}
+                      onClick={() => setSelectedHomeRoutine(group)}
+                      className="flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-emerald-500/25 bg-emerald-500/15 px-3 text-xs font-black text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                    >
+                      <CheckCircle2 size={14} aria-hidden="true" /> Alles eingenommen
+                    </button>
+                  </div>
+                  <TodayIntakeCarousel
+                    intakes={groupIntakes}
+                    onItemClick={openTodayIntake}
+                  />
+                </div>
+              )
+            })}
+          </div>
         </section>
+      )}
+
+      {selectedHomeRoutine && (
+        <RoutineConfirmationSheet
+          group={selectedHomeRoutine}
+          onClose={() => setSelectedHomeRoutine(null)}
+          onConfirm={confirmHomeRoutine}
+          onAddInjection={openHomeRoutineInjection}
+        />
       )}
 
       {selectedHomeIntake && homeConfirmStep === 'choice' && (
