@@ -150,6 +150,14 @@ describe('stack item service', () => {
       p_item: expect.objectContaining({
         tracking_level: 'complete',
         pk_profile_method: 'Oral',
+        inventory: {
+          enabled: false,
+          package_quantity: null,
+          package_unit: null,
+          remaining_quantity: null,
+          batch_number: null,
+          expires_at: null,
+        },
       }),
       p_ingredients: expect.any(Array),
       p_plan: expect.objectContaining({
@@ -174,6 +182,41 @@ describe('stack item service', () => {
       'save_stack_item_with_plan',
       expect.objectContaining({
         p_plan: expect.objectContaining({ dose: null, unit: null }),
+        p_item: expect.objectContaining({
+          inventory: expect.objectContaining({ enabled: false }),
+        }),
+      }),
+    )
+  })
+
+  it('includes enabled generic inventory only for complete tracking', async () => {
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, {
+      ...completeSetupDraft,
+      inventory: {
+        ...completeSetupDraft.inventory,
+        enabled: true,
+        packageQuantity: 60,
+        packageUnit: 'capsule',
+        remainingQuantity: 42,
+        batchNumber: ' A-42 ',
+      },
+    })
+
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      'save_stack_item_with_plan',
+      expect.objectContaining({
+        p_item: expect.objectContaining({
+          inventory: {
+            enabled: true,
+            package_quantity: 60,
+            package_unit: 'capsule',
+            remaining_quantity: 42,
+            batch_number: 'A-42',
+            expires_at: null,
+          },
+        }),
       }),
     )
   })
@@ -275,6 +318,7 @@ describe('stack item service', () => {
     expect(calls).toContainEqual(['eq', 'archived', true])
     expect(String((calls[1] as unknown[])[1])).toContain('stack_item_ingredients')
     expect(String((calls[1] as unknown[])[1])).toContain('substance_catalog')
+    expect(String((calls[1] as unknown[])[1])).toContain('inventory:stack_item_inventory')
   })
 
   it.each([

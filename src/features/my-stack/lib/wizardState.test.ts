@@ -86,6 +86,30 @@ describe('wizard state', () => {
     expect(state.draft.plan).not.toBe(activePlan)
   })
 
+  it('hydrates optional generic inventory for an existing stack item', () => {
+    const existingWithInventory = {
+      ...existingVitaminD,
+      inventory: {
+        enabled: true,
+        package_quantity: 60,
+        package_unit: 'capsule',
+        remaining_quantity: 42,
+        batch_number: 'A-42',
+        expires_at: '2027-08-01',
+      },
+    }
+
+    expect(initialWizardState(existingWithInventory).draft.inventory).toEqual({
+      enabled: true,
+      packageQuantity: 60,
+      packageUnit: 'capsule',
+      remainingQuantity: 42,
+      brand: '',
+      batchNumber: 'A-42',
+      expiresAt: '2027-08-01',
+    })
+  })
+
   it.each([
     ['intake_only', ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']],
     ['with_amount', ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']],

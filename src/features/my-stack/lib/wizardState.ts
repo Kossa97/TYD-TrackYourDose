@@ -72,6 +72,7 @@ export type WizardAction =
     }
   | { type: 'tracking_level_selected'; trackingLevel: TrackingLevel }
   | { type: 'details_changed'; changes: Partial<Pick<StackItemDraft, 'brand' | 'colorHex' | 'notes'>> }
+  | { type: 'inventory_changed'; changes: Partial<InventoryDraft> }
   | { type: 'plan_changed'; changes: Partial<IntakePlanDraft> }
   | { type: 'save_mode_selected'; mode: Extract<WizardSaveMode, 'update' | 'duplicate'> }
 
@@ -142,7 +143,17 @@ function draftFromStackItem(
           startDate: format(new Date(), 'yyyy-MM-dd'),
         }
       : emptyPlan(existing.display_name),
-    inventory: emptyInventory(),
+    inventory: existing.inventory
+      ? {
+          enabled: existing.inventory.enabled,
+          packageQuantity: existing.inventory.package_quantity,
+          packageUnit: existing.inventory.package_unit,
+          remainingQuantity: existing.inventory.remaining_quantity,
+          brand: '',
+          batchNumber: existing.inventory.batch_number ?? '',
+          expiresAt: existing.inventory.expires_at,
+        }
+      : emptyInventory(),
     pkProfileMethod: existing.pk_profile_method,
   }
 }
@@ -301,6 +312,14 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       }
     case 'details_changed':
       return { ...state, draft: { ...state.draft, ...action.changes } }
+    case 'inventory_changed':
+      return {
+        ...state,
+        draft: {
+          ...state.draft,
+          inventory: { ...state.draft.inventory, ...action.changes },
+        },
+      }
     case 'plan_changed':
       return {
         ...state,

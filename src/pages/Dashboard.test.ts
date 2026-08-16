@@ -57,10 +57,16 @@ function resolvedQuery(data: unknown) {
   return query
 }
 
-function createDashboardClient(fixtures: Record<string, unknown[]>) {
+function createDashboardClient(
+  fixtures: Record<string, unknown[]>,
+  rpcImplementation: (name: string, params: unknown) => Promise<{
+    data: unknown
+    error: { message: string } | null
+  }> = async () => ({ data: [{ id: 'saved-log-1' }], error: null }),
+) {
   const selectCounts = new Map<string, number>()
   const mutations: RecordedMutation[] = []
-  const rpc = vi.fn(async () => ({ data: [{ id: 'saved-log-1' }], error: null }))
+  const rpc = vi.fn(rpcImplementation)
   const from = vi.fn((table: string) => ({
     select: vi.fn(() => {
       selectCounts.set(table, (selectCounts.get(table) ?? 0) + 1)
@@ -253,6 +259,153 @@ describe('Dashboard intake confirmation actions', () => {
       kind: 'update',
       values: { taken: null },
     }))
+  })
+
+  it('retries generic inventory without confirming an existing dose log twice', async () => {
+    const now = new Date()
+    now.setHours(8, 0, 0, 0)
+    let inventoryAttempts = 0
+    const client = createDashboardClient({
+      cycles: [{
+        ...intakeOnlyCycle(),
+        dose: 1,
+        unit: 'capsule',
+        stack_items: { display_name: 'Vitamin D3', tracking_level: 'complete' },
+      }],
+      dose_logs: [{
+        id: 'pending-1',
+        stack_item_id: 'stack-1',
+        dose: 1,
+        unit: 'capsule',
+        method: 'Oral',
+        logged_at: now.toISOString(),
+        notes: null,
+        taken: null,
+        stack_items: { display_name: 'Vitamin D3' },
+      }],
+      stack_items: [{
+        id: 'stack-1',
+        display_name: 'Vitamin D3',
+        dosage_form: 'capsule',
+        tracking_level: 'complete',
+      }],
+      dose_escalations: [],
+    }, async name => {
+      if (name === 'apply_inventory_confirmation') {
+        inventoryAttempts += 1
+        return inventoryAttempts === 1
+          ? { data: null, error: { message: 'inventory offline' } }
+          : { data: 41, error: null }
+      }
+      return { data: [{ id: 'saved-log-1' }], error: null }
+    })
+    renderDashboard(client)
+
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'eingenommen' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Eingenommen' }))
+
+    const retry = await screen.findByRole('button', { name: 'Bestand erneut versuchen' })
+    expect(client.mutations.filter(mutation => mutation.table === 'dose_logs')).toHaveLength(1)
+    expect(client.rpc).toHaveBeenCalledWith('apply_inventory_confirmation', {
+      p_dose_log_id: 'pending-1',
+    })
+
+    fireEvent.click(retry)
+    await waitFor(() => expect(inventoryAttempts).toBe(2))
+    expect(client.mutations.filter(mutation => mutation.table === 'dose_logs')).toHaveLength(1)
+  })
+
+  it('keeps vial debit exclusive from generic inventory confirmation', async () => {
+    const now = new Date()
+    now.setHours(8, 0, 0, 0)
+    const client = createDashboardClient({
+      cycles: [{
+        ...intakeOnlyCycle(),
+        dose: 1,
+        unit: 'mg',
+        stack_items: { display_name: 'Peptide', tracking_level: 'complete' },
+      }],
+      dose_logs: [{
+        id: 'pending-1',
+        stack_item_id: 'stack-1',
+        dose: 1,
+        unit: 'mg',
+        method: 'Oral',
+        logged_at: now.toISOString(),
+        notes: null,
+        taken: null,
+        stack_items: { display_name: 'Peptide' },
+      }],
+      stack_items: [{
+        id: 'stack-1',
+        display_name: 'Peptide',
+        dosage_form: 'vial',
+        tracking_level: 'complete',
+        vial_amount_mg: 10,
+        reconstitution_ml: 1,
+        vials_in_stock: 2,
+        vials_initial: 2,
+        reconstitution_date: null,
+      }],
+      dose_escalations: [],
+    })
+    renderDashboard(client)
+
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'eingenommen' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Eingenommen' }))
+
+    await waitFor(() => expect(client.mutations).toContainEqual({
+      table: 'stack_items',
+      kind: 'update',
+      values: { vials_in_stock: 1.9 },
+    }))
+    expect(client.rpc).not.toHaveBeenCalledWith(
+      'apply_inventory_confirmation',
+      expect.anything(),
+    )
+  })
+
+  it('retries only generic inventory after a committed group confirmation', async () => {
+    let inventoryAttempts = 0
+    const client = createDashboardClient({
+      cycles: [{
+        ...intakeOnlyCycle(),
+        dose: 1,
+        unit: 'capsule',
+        stack_items: { display_name: 'Vitamin D3', tracking_level: 'complete' },
+      }],
+      dose_logs: [],
+      stack_items: [{
+        id: 'stack-1',
+        display_name: 'Vitamin D3',
+        dosage_form: 'capsule',
+        tracking_level: 'complete',
+      }],
+      dose_escalations: [],
+    }, async name => {
+      if (name === 'confirm_intake_group') {
+        return { data: [{ id: 'saved-log-1' }], error: null }
+      }
+      inventoryAttempts += 1
+      return inventoryAttempts === 1
+        ? { data: null, error: { message: 'inventory offline' } }
+        : { data: 41, error: null }
+    })
+    renderDashboard(client)
+
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Alles eingenommen' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Alles eingenommen' }))
+
+    const retry = await within(dialog).findByRole('button', { name: 'Bestand erneut versuchen' })
+    expect(client.rpc.mock.calls.filter(([name]) => name === 'confirm_intake_group')).toHaveLength(1)
+
+    fireEvent.click(retry)
+    await waitFor(() => expect(inventoryAttempts).toBe(2))
+    expect(client.rpc.mock.calls.filter(([name]) => name === 'confirm_intake_group')).toHaveLength(1)
   })
 
   it('groups open intakes into horizontal period carousels and collapsible completed list', () => {

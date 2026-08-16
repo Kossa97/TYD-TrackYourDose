@@ -32,6 +32,10 @@ import {
 } from '../features/routines/intakeGroups'
 import { confirmIntakeGroup, quantifiedVialEntries, type IntakeConfirmationClient } from '../features/routines/services/intakeConfirmation'
 import { RoutineConfirmationSheet } from '../features/routines/components/RoutineConfirmationSheet'
+import {
+  applyInventoryConfirmation,
+  InventoryConfirmationError,
+} from '../features/my-stack/services/stackInventory'
 import toast from 'react-hot-toast'
 import { format, parseISO, startOfDay } from 'date-fns'
 import { getDateLocale } from '../i18n/dateLocales'
@@ -364,6 +368,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
   const [homeConfirmStep, setHomeConfirmStep] = useState<'choice' | 'time'>('choice')
   const [homeConfirmTime, setHomeConfirmTime] = useState('')
   const [homeReloadKey, setHomeReloadKey] = useState(0)
+  const processedHomeVialDoseLogIds = useRef(new Set<string>())
 
   // Rotate study daily
   const todayStudy = TODAY_STUDY
@@ -616,23 +621,49 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
     )
   }
 
-  const afterHomeRoutineConfirmed = async (entries: RoutineConfirmationEntry[]) => {
+  const afterHomeRoutineConfirmed = async (
+    entries: RoutineConfirmationEntry[],
+    savedLogIds: string[],
+  ) => {
     if (!user) return
     const vialStackItemIds = new Set(
       todayIntakes.filter(intake => intake.dosageForm === 'vial').map(intake => intake.stackItemId),
     )
-    const stockUpdates = quantifiedVialEntries(entries, vialStackItemIds).map(entry => (
-      debitPeptideStockForDoseById(
+    const selectedEntries = entries.filter(entry => entry.selected)
+    const confirmedEntries = selectedEntries.map((entry, index) => ({
+      entry,
+      doseLogId: savedLogIds[index],
+    })).filter(item => Boolean(item.doseLogId))
+    const stockUpdates = quantifiedVialEntries(entries, vialStackItemIds).map(async entry => {
+      const doseLogId = confirmedEntries.find(item => item.entry.key === entry.key)?.doseLogId
+      if (!doseLogId || processedHomeVialDoseLogIds.current.has(doseLogId)) return
+      await debitPeptideStockForDoseById(
         homeDataClient,
         user.id,
         entry.stackItemId,
         entry.actualDose,
         entry.actualUnit,
       )
+      processedHomeVialDoseLogIds.current.add(doseLogId)
+    })
+    const genericEntries = confirmedEntries.filter(({ entry }) => (
+      entry.trackingLevel === 'complete'
+      && !vialStackItemIds.has(entry.stackItemId)
     ))
-    await Promise.allSettled(stockUpdates)
+    const [, inventoryResults] = await Promise.all([
+      Promise.allSettled(stockUpdates),
+      Promise.allSettled(genericEntries.map(({ doseLogId }) => (
+        applyInventoryConfirmation(homeDataClient, doseLogId)
+      ))),
+    ])
     setHomeReloadKey(value => value + 1)
     toast.success(t('einnahme_bestaetigt', { defaultValue: 'Einnahme bestätigt' }))
+    const failedInventoryIds = genericEntries
+      .filter((_, index) => inventoryResults[index].status === 'rejected')
+      .map(item => item.doseLogId)
+    if (failedInventoryIds.length > 0) {
+      throw new InventoryConfirmationError(failedInventoryIds)
+    }
   }
 
   const openHomeRoutineInjection = (entry: RoutineIntake, doseLogId: string) => {

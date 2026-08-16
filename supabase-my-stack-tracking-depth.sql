@@ -48,6 +48,93 @@ alter table public.stack_item_ingredients
     or nullif(btrim(custom_name), '') is not null
   );
 
+create table if not exists public.stack_item_inventory (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  stack_item_id uuid not null unique references public.stack_items(id) on delete cascade,
+  enabled boolean not null default false,
+  package_quantity numeric,
+  package_unit text,
+  remaining_quantity numeric,
+  batch_number text,
+  expires_at date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (
+    not enabled
+    or (
+      package_quantity > 0
+      and nullif(btrim(package_unit), '') is not null
+      and remaining_quantity >= 0
+    )
+  )
+);
+
+create table if not exists public.stack_item_inventory_movements (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  inventory_id uuid not null references public.stack_item_inventory(id) on delete cascade,
+  dose_log_id uuid not null unique references public.dose_logs(id) on delete cascade,
+  delta_quantity numeric not null check (delta_quantity > 0),
+  created_at timestamptz not null default now()
+);
+
+alter table public.stack_item_inventory enable row level security;
+alter table public.stack_item_inventory_movements enable row level security;
+
+drop policy if exists "own stack item inventory select" on public.stack_item_inventory;
+create policy "own stack item inventory select" on public.stack_item_inventory
+  for select using (auth.uid() = user_id);
+drop policy if exists "own stack item inventory insert" on public.stack_item_inventory;
+create policy "own stack item inventory insert" on public.stack_item_inventory
+  for insert with check (
+    auth.uid() = user_id
+    and exists (
+      select 1
+      from public.stack_items owned_item
+      where owned_item.id = stack_item_id
+        and owned_item.user_id = auth.uid()
+    )
+  );
+drop policy if exists "own stack item inventory update" on public.stack_item_inventory;
+create policy "own stack item inventory update" on public.stack_item_inventory
+  for update using (auth.uid() = user_id) with check (
+    auth.uid() = user_id
+    and exists (
+      select 1
+      from public.stack_items owned_item
+      where owned_item.id = stack_item_id
+        and owned_item.user_id = auth.uid()
+    )
+  );
+drop policy if exists "own stack item inventory delete" on public.stack_item_inventory;
+create policy "own stack item inventory delete" on public.stack_item_inventory
+  for delete using (auth.uid() = user_id);
+
+drop policy if exists "own stack item inventory movements select" on public.stack_item_inventory_movements;
+create policy "own stack item inventory movements select" on public.stack_item_inventory_movements
+  for select using (auth.uid() = user_id);
+drop policy if exists "own stack item inventory movements insert" on public.stack_item_inventory_movements;
+create policy "own stack item inventory movements insert" on public.stack_item_inventory_movements
+  for insert with check (
+    auth.uid() = user_id
+    and exists (
+      select 1 from public.stack_item_inventory owned_inventory
+      where owned_inventory.id = inventory_id
+        and owned_inventory.user_id = auth.uid()
+    )
+    and exists (
+      select 1 from public.dose_logs owned_log
+      where owned_log.id = dose_log_id
+        and owned_log.user_id = auth.uid()
+    )
+  );
+
+revoke all on table public.stack_item_inventory from public, anon;
+revoke all on table public.stack_item_inventory_movements from public, anon;
+grant select, insert, update, delete on table public.stack_item_inventory to authenticated;
+grant select, insert on table public.stack_item_inventory_movements to authenticated;
+
 create or replace function public.enforce_stack_item_completeness()
 returns trigger
 language plpgsql
@@ -144,6 +231,7 @@ declare
     nullif(btrim(p_item ->> 'tracking_level'), ''),
     'complete'
   );
+  inventory_payload jsonb := coalesce(p_item -> 'inventory', '{}'::jsonb);
 begin
   if owner_id is null then
     raise exception 'Authentication required';
@@ -333,6 +421,54 @@ begin
       (ingredient ->> 'position')::integer
     );
   end loop;
+
+  if item_tracking_level = 'complete'
+    and coalesce((inventory_payload ->> 'enabled')::boolean, false) then
+    if nullif(inventory_payload ->> 'package_quantity', '')::numeric is null
+      or nullif(inventory_payload ->> 'package_quantity', '')::numeric <= 0
+      or nullif(btrim(inventory_payload ->> 'package_unit'), '') is null
+      or nullif(inventory_payload ->> 'remaining_quantity', '')::numeric is null
+      or nullif(inventory_payload ->> 'remaining_quantity', '')::numeric < 0 then
+      raise exception 'Enabled inventory requires package quantity, unit, and remaining quantity';
+    end if;
+
+    insert into public.stack_item_inventory (
+      user_id,
+      stack_item_id,
+      enabled,
+      package_quantity,
+      package_unit,
+      remaining_quantity,
+      batch_number,
+      expires_at,
+      updated_at
+    ) values (
+      owner_id,
+      item_id,
+      true,
+      (inventory_payload ->> 'package_quantity')::numeric,
+      btrim(inventory_payload ->> 'package_unit'),
+      (inventory_payload ->> 'remaining_quantity')::numeric,
+      nullif(btrim(inventory_payload ->> 'batch_number'), ''),
+      nullif(inventory_payload ->> 'expires_at', '')::date,
+      now()
+    )
+    on conflict (stack_item_id) do update set
+      enabled = excluded.enabled,
+      package_quantity = excluded.package_quantity,
+      package_unit = excluded.package_unit,
+      remaining_quantity = excluded.remaining_quantity,
+      batch_number = excluded.batch_number,
+      expires_at = excluded.expires_at,
+      updated_at = now()
+    where public.stack_item_inventory.user_id = owner_id;
+  else
+    update public.stack_item_inventory
+    set enabled = false,
+      updated_at = now()
+    where stack_item_id = item_id
+      and user_id = owner_id;
+  end if;
 
   return saved_item;
 end;
@@ -711,5 +847,136 @@ $$;
 
 revoke execute on function public.confirm_intake_group(jsonb) from public, anon;
 grant execute on function public.confirm_intake_group(jsonb) to authenticated;
+
+create or replace function public.apply_inventory_confirmation(p_dose_log_id uuid)
+returns numeric
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  owner_id uuid := auth.uid();
+  log public.dose_logs;
+  item public.stack_items;
+  inventory_row public.stack_item_inventory;
+  ingredient_count integer;
+  convertible_count integer;
+  minimum_delta numeric;
+  maximum_delta numeric;
+begin
+  if owner_id is null then
+    raise exception 'Authentication required';
+  end if;
+
+  select *
+  into log
+  from public.dose_logs
+  where id = p_dose_log_id
+    and user_id = owner_id
+    and taken is true;
+
+  if not found then
+    raise exception 'Confirmed dose log not found';
+  end if;
+
+  select *
+  into item
+  from public.stack_items
+  where id = log.stack_item_id
+    and user_id = owner_id;
+
+  if not found then
+    raise exception 'Stack item not found';
+  end if;
+
+  if item.tracking_level <> 'complete' or item.dosage_form = 'vial' then
+    return null;
+  end if;
+
+  select *
+  into inventory_row
+  from public.stack_item_inventory
+  where stack_item_id = item.id
+    and user_id = owner_id
+  for update;
+
+  if not found then
+    return null;
+  end if;
+  if not inventory_row.enabled then
+    return inventory_row.remaining_quantity;
+  end if;
+
+  if exists (
+    select 1
+    from public.stack_item_inventory_movements movement
+    where movement.dose_log_id = p_dose_log_id
+      and movement.user_id = owner_id
+  ) then
+    return inventory_row.remaining_quantity;
+  end if;
+
+  if log.dose is null
+    or log.unit is null
+    or log.dose <= 0 then
+    raise exception 'Inventory conversion is ambiguous or unsupported';
+  end if;
+
+  with ingredient_deltas as (
+    select case
+      when ingredient.basis_unit = inventory_row.package_unit
+        and log.unit = ingredient.basis_unit
+        then log.dose
+      when ingredient.basis_unit = inventory_row.package_unit
+        and log.unit = ingredient.amount_unit
+        then log.dose / ingredient.amount_value * ingredient.basis_value
+      when ingredient.basis_unit = inventory_row.package_unit
+        and log.unit = 'mg' and ingredient.amount_unit = 'mcg'
+        then log.dose * 1000 / ingredient.amount_value * ingredient.basis_value
+      when ingredient.basis_unit = inventory_row.package_unit
+        and log.unit = 'mcg' and ingredient.amount_unit = 'mg'
+        then log.dose / 1000 / ingredient.amount_value * ingredient.basis_value
+    end as delta
+    from public.stack_item_ingredients ingredient
+    where ingredient.stack_item_id = item.id
+  )
+  select count(*), count(delta), min(delta), max(delta)
+  into ingredient_count, convertible_count, minimum_delta, maximum_delta
+  from ingredient_deltas;
+
+  if ingredient_count = 0
+    or convertible_count <> ingredient_count
+    or minimum_delta is null
+    or minimum_delta <= 0
+    or minimum_delta is distinct from maximum_delta then
+    raise exception 'Inventory conversion is ambiguous or unsupported';
+  end if;
+
+  insert into public.stack_item_inventory_movements (
+    user_id,
+    inventory_id,
+    dose_log_id,
+    delta_quantity
+  ) values (
+    owner_id,
+    inventory_row.id,
+    p_dose_log_id,
+    minimum_delta
+  );
+
+  update public.stack_item_inventory
+  set
+    remaining_quantity = greatest(0, remaining_quantity - minimum_delta),
+    updated_at = now()
+  where id = inventory_row.id
+    and user_id = owner_id
+  returning remaining_quantity into inventory_row.remaining_quantity;
+
+  return inventory_row.remaining_quantity;
+end;
+$$;
+
+revoke execute on function public.apply_inventory_confirmation(uuid) from public, anon;
+grant execute on function public.apply_inventory_confirmation(uuid) to authenticated;
 
 commit;

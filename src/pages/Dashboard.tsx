@@ -28,6 +28,10 @@ import {
 } from '../features/routines/intakeGroups'
 import { confirmIntakeGroup, quantifiedVialEntries, type IntakeConfirmationClient } from '../features/routines/services/intakeConfirmation'
 import { RoutineConfirmationSheet } from '../features/routines/components/RoutineConfirmationSheet'
+import {
+  applyInventoryConfirmation,
+  InventoryConfirmationError,
+} from '../features/my-stack/services/stackInventory'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { GlassPanel, PageShell } from '../components/ui/DesignSystem'
 import { CarouselCounter, CarouselPagination } from '../components/CarouselChrome'
@@ -66,6 +70,7 @@ interface Cycle {
 interface StackItem {
   id: string; display_name: string; default_method: string
   dosage_form: string | null
+  tracking_level: 'intake_only' | 'with_amount' | 'complete'
   vial_amount_mg: number | null; reconstitution_ml: number | null
   vials_in_stock: number | null; vials_initial: number | null
   reconstitution_date: string | null; expiry_days: number | null
@@ -415,6 +420,8 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const [routineGroupSheet, setRoutineGroupSheet] = useState<RoutineGroupModel | null>(null)
   const [confirmTime, setConfirmTime]   = useState('')
   const [completedExpanded, setCompletedExpanded] = useState(false)
+  const [inventoryRetryIds, setInventoryRetryIds] = useState<string[]>([])
+  const processedVialDoseLogIds = useRef(new Set<string>())
   const [calendarExpanded, setCalendarExpanded] = useState(false)
   const [activeDuePeriod, setActiveDuePeriod] = useState<PeriodKey>('morgens')
 
@@ -716,6 +723,22 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     return true
   }
 
+  const applyGenericInventory = async (doseLogId: string, showPageRetry = true) => {
+    try {
+      await applyInventoryConfirmation(dashboardDataClient, doseLogId)
+      if (showPageRetry) {
+        setInventoryRetryIds(current => current.filter(id => id !== doseLogId))
+      }
+      return true
+    } catch {
+      if (showPageRetry) {
+        setInventoryRetryIds(current => current.includes(doseLogId) ? current : [...current, doseLogId])
+        toast.error(t('inventory_update_failed', { defaultValue: 'Bestand konnte nicht aktualisiert werden' }))
+      }
+      return false
+    }
+  }
+
   const deleteLog = async (log: DoseLog) => {
     if (!confirm(t('eintrag_loeschen'))) return
     const { error } = await dashboardDataClient.from('dose_logs').delete().eq('id', log.id)
@@ -735,7 +758,14 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     const { error } = await dashboardDataClient.from('dose_logs').update(update).eq('id', log.id)
     if (error) return toast.error(t('error'))
     const confirmedQuantity = quantity ?? log
-    if (previousTaken !== true && taken === true && hasTrackedQuantity(confirmedQuantity)) await adjustVialStockForDose(log.stack_item_id, confirmedQuantity.dose, confirmedQuantity.unit, 'debit')
+    const stackItem = stackItems.find(item => item.id === log.stack_item_id)
+    if (previousTaken !== true && taken === true && hasTrackedQuantity(confirmedQuantity)) {
+      if (stackItem?.dosage_form === 'vial') {
+        await adjustVialStockForDose(log.stack_item_id, confirmedQuantity.dose, confirmedQuantity.unit, 'debit')
+      } else if (stackItem?.tracking_level === 'complete') {
+        await applyGenericInventory(log.id)
+      }
+    }
     if (previousTaken === true && taken !== true && hasTrackedQuantity(confirmedQuantity)) await adjustVialStockForDose(log.stack_item_id, confirmedQuantity.dose, confirmedQuantity.unit, 'credit', log.logged_at)
     loadLogs(); loadStackItems()
     if (taken) toast.success(t('einnahme_bestaetigt'))
@@ -753,7 +783,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string) => {
     if (!user) return
     const quantity = resolveDashboardCycleQuantity(cycle, selectedDay, escalations)
-    const { error } = await dashboardDataClient.from('dose_logs').insert({
+    const { data: savedLog, error } = await dashboardDataClient.from('dose_logs').insert({
       user_id: user.id,
       stack_item_id: cycle.stack_item_id,
       dose: quantity.dose,
@@ -761,9 +791,19 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       method: cycle.method,
       logged_at: loggedAt ?? cycleLogTimestamp(cycle, selectedDay),
       taken,
-    })
+    }).select('id').single()
     if (error) return toast.error(t('fehler_speichern'))
-    if (taken && hasTrackedQuantity(quantity)) await adjustVialStockForDose(cycle.stack_item_id, quantity.dose, quantity.unit, 'debit')
+    const stackItem = stackItems.find(item => item.id === cycle.stack_item_id)
+    if (taken && hasTrackedQuantity(quantity)) {
+      if (stackItem?.dosage_form === 'vial') {
+        await adjustVialStockForDose(cycle.stack_item_id, quantity.dose, quantity.unit, 'debit')
+      } else if (
+        cycle.stack_items?.tracking_level === 'complete'
+        && savedLog?.id
+      ) {
+        await applyGenericInventory(savedLog.id)
+      }
+    }
     loadLogs(); loadStackItems()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
@@ -827,23 +867,54 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     )
   }
 
-  const afterRoutineGroupConfirmed = async (entries: RoutineConfirmationEntry[]) => {
+  const afterRoutineGroupConfirmed = async (
+    entries: RoutineConfirmationEntry[],
+    savedLogIds: string[],
+  ) => {
     const vialStackItemIds = new Set(
       stackItems.filter(item => item.dosage_form === 'vial').map(item => item.id),
     )
+    const selectedEntries = entries.filter(entry => entry.selected)
+    const confirmedEntries = selectedEntries.map((entry, index) => ({
+      entry,
+      doseLogId: savedLogIds[index],
+    })).filter(item => Boolean(item.doseLogId))
     const stockUpdates = user
-      ? quantifiedVialEntries(entries, vialStackItemIds).map(entry => debitPeptideStockForDoseById(
-        dashboardDataClient,
-        user.id,
-        entry.stackItemId,
-        entry.actualDose,
-        entry.actualUnit,
-      ))
+      ? quantifiedVialEntries(entries, vialStackItemIds).map(async entry => {
+          const doseLogId = confirmedEntries.find(item => item.entry.key === entry.key)?.doseLogId
+          if (!doseLogId || processedVialDoseLogIds.current.has(doseLogId)) return
+          await debitPeptideStockForDoseById(
+            dashboardDataClient,
+            user.id,
+            entry.stackItemId,
+            entry.actualDose,
+            entry.actualUnit,
+          )
+          processedVialDoseLogIds.current.add(doseLogId)
+        })
       : []
-    await Promise.allSettled(stockUpdates)
+    const genericEntries = confirmedEntries.filter(({ entry }) => (
+      entry.trackingLevel === 'complete'
+      && !vialStackItemIds.has(entry.stackItemId)
+    ))
+    const [, inventoryResults] = await Promise.all([
+      Promise.allSettled(stockUpdates),
+      Promise.allSettled(genericEntries.map(({ doseLogId }) => (
+        applyGenericInventory(doseLogId, false)
+      ))),
+    ])
     await loadLogs()
     await loadStackItems()
     toast.success(t('einnahme_bestaetigt', { defaultValue: 'Einnahme bestätigt' }))
+    const failedInventoryIds = genericEntries
+      .filter((_, index) => (
+        inventoryResults[index].status === 'rejected'
+        || inventoryResults[index].value === false
+      ))
+      .map(item => item.doseLogId)
+    if (failedInventoryIds.length > 0) {
+      throw new InventoryConfirmationError(failedInventoryIds)
+    }
   }
 
   const openRoutineInjection = (entry: RoutineIntake, doseLogId: string) => {
@@ -1209,6 +1280,19 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         <CalendarDays size={18} className="shrink-0 text-sky-400" />
         <h2 className="font-semibold text-white">{t('nav_kalender')}</h2>
       </div>
+
+      {inventoryRetryIds.length > 0 && (
+        <div role="alert" className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-3 text-sm font-bold text-amber-200">
+          <p>{t('inventory_committed_retry', { defaultValue: 'Die Einnahme ist gespeichert, aber der Bestand wurde nicht aktualisiert.' })}</p>
+          <button
+            type="button"
+            onClick={() => void Promise.all(inventoryRetryIds.map(id => applyGenericInventory(id)))}
+            className="mt-2 flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-amber-400/25 bg-amber-500/15 px-3 text-sm font-black text-amber-100 transition-colors hover:bg-amber-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+          >
+            <RotateCcw size={15} aria-hidden="true" /> Bestand erneut versuchen
+          </button>
+        </div>
+      )}
 
       {/* ── Kalender ──────────────────────────────────────────────────────── */}
       <div data-ob="calendar-main" data-ob-self>

@@ -33,6 +33,7 @@ import { evaluatePkReadiness, toPkMilligrams } from '../lib/pkReadiness'
 import { DosageFormPicker } from './DosageFormPicker'
 import { IngredientEditor } from './IngredientEditor'
 import { IntakePlanEditor } from './IntakePlanEditor'
+import { ProductInventorySection } from './ProductInventorySection'
 import { StrengthEditor } from './StrengthEditor'
 import { TrackingLevelPicker } from './TrackingLevelPicker'
 import { SubstanceSearch } from './SubstanceSearch'
@@ -317,7 +318,13 @@ export function StackItemWizard({
       return
     }
 
-    const draftWithPkMethod = { ...state.draft, pkProfileMethod }
+    const draftWithPkMethod = {
+      ...state.draft,
+      inventory: state.draft.trackingLevel === 'complete'
+        ? state.draft.inventory
+        : { ...state.draft.inventory, enabled: false },
+      pkProfileMethod,
+    }
     const duplicate = findDuplicate(existingItems, draftWithPkMethod)
     if (duplicate && !allowDuplicate) {
       setDuplicateCandidate(duplicate)
@@ -432,17 +439,12 @@ export function StackItemWizard({
       case 'details':
         return (
           <div className="space-y-5">
-            <div>
-              <label htmlFor="stack-brand" className="mb-2 block text-sm font-semibold text-slate-200">
-                {t('my_stack_brand_optional', { defaultValue: 'Marke (optional)' })}
-              </label>
-              <input
-                id="stack-brand"
-                value={state.draft.brand}
-                onChange={event => dispatch({ type: 'details_changed', changes: { brand: event.target.value } })}
-                className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-              />
-            </div>
+            <ProductInventorySection
+              brand={state.draft.brand}
+              inventory={state.draft.inventory}
+              onBrandChange={brand => dispatch({ type: 'details_changed', changes: { brand } })}
+              onInventoryChange={changes => dispatch({ type: 'inventory_changed', changes })}
+            />
             <div>
               <label htmlFor="stack-color" className="mb-2 block text-sm font-semibold text-slate-200">
                 {t('my_stack_color_optional', { defaultValue: 'Farbe (optional)' })}
@@ -639,6 +641,16 @@ export function StackItemWizard({
                   <div className="flex flex-wrap justify-between gap-2">
                     <dt className="text-slate-400">{t('my_stack_brand', { defaultValue: 'Marke' })}</dt>
                     <dd className="break-words font-medium text-slate-200">{state.draft.brand}</dd>
+                  </div>
+                )}
+                {state.draft.trackingLevel === 'complete' && state.draft.inventory.enabled && (
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <dt className="text-slate-400">
+                      {t('my_stack_inventory_summary', { defaultValue: 'Bestand' })}
+                    </dt>
+                    <dd className="font-medium text-slate-200">
+                      {state.draft.inventory.remainingQuantity} {state.draft.inventory.packageUnit}
+                    </dd>
                   </div>
                 )}
                 {state.draft.trackingLevel === 'complete' && state.draft.ingredients.map((ingredient, index) => (

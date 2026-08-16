@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RoutineConfirmationEntry, RoutineGroupModel, RoutineIntake } from '../intakeGroups'
 import { RoutineConfirmationSheet } from './RoutineConfirmationSheet'
+import { InventoryConfirmationError } from '../../my-stack/services/stackInventory'
 
 function intake(overrides: Partial<RoutineIntake> = {}): RoutineIntake {
   return {
@@ -194,5 +195,34 @@ describe('RoutineConfirmationSheet', () => {
     expect(onConfirm).toHaveBeenCalledTimes(1)
     expect(screen.queryByRole('button', { name: 'Erneut versuchen' })).toBeNull()
     expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('retries only inventory after a committed group when inventory application fails', async () => {
+    const onConfirm = vi.fn(async (_entries: RoutineConfirmationEntry[]) => [
+      'log-d3',
+      'log-zinc',
+      'log-testosterone',
+    ])
+    const onAfterConfirm = vi.fn(async () => undefined)
+      .mockRejectedValueOnce(new InventoryConfirmationError(['log-zinc']))
+    render(
+      <RoutineConfirmationSheet
+        group={group()}
+        onClose={() => undefined}
+        onConfirm={onConfirm}
+        onAfterConfirm={onAfterConfirm}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Alles eingenommen' }))
+
+    expect(await screen.findByText('Routine gespeichert')).toBeTruthy()
+    const retry = await screen.findByRole('button', { name: 'Bestand erneut versuchen' })
+    expect(onConfirm).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(retry)
+    await waitFor(() => expect(onAfterConfirm).toHaveBeenCalledTimes(2))
+    expect(onConfirm).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Bestand erneut versuchen' })).toBeNull())
   })
 })

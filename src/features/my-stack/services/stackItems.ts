@@ -88,6 +88,14 @@ export interface SaveStackItemRpcParams {
     color_hex: string | null
     notes: string | null
     pk_profile_method: string | null
+    inventory?: {
+      enabled: boolean
+      package_quantity: number | null
+      package_unit: string | null
+      remaining_quantity: number | null
+      batch_number: string | null
+      expires_at: string | null
+    }
   }
   p_ingredients: SaveStackItemIngredient[]
 }
@@ -152,6 +160,14 @@ export interface StackItemMutationClient {
 
 const STACK_ITEM_COLUMNS = `
   *,
+  inventory:stack_item_inventory(
+    enabled,
+    package_quantity,
+    package_unit,
+    remaining_quantity,
+    batch_number,
+    expires_at
+  ),
   ingredients:stack_item_ingredients(
     id,
     stack_item_id,
@@ -199,6 +215,7 @@ function ingredientForSave(ingredient: StackItemIngredient): SaveStackItemIngred
 function itemParams(
   draft: StackItemDraft,
   pkProfileMethod: string | null = null,
+  inventory?: StackItemSetupDraft['inventory'],
 ): SaveStackItemRpcParams['p_item'] {
   return {
     id: draft.id ?? null,
@@ -210,6 +227,26 @@ function itemParams(
     color_hex: nullableText(draft.colorHex),
     notes: nullableText(draft.notes),
     pk_profile_method: nullableText(pkProfileMethod ?? ''),
+    ...(inventory ? {
+      inventory: {
+        enabled: draft.trackingLevel === 'complete' && inventory.enabled,
+        package_quantity: draft.trackingLevel === 'complete' && inventory.enabled
+          ? inventory.packageQuantity
+          : null,
+        package_unit: draft.trackingLevel === 'complete' && inventory.enabled
+          ? nullableText(inventory.packageUnit ?? '')
+          : null,
+        remaining_quantity: draft.trackingLevel === 'complete' && inventory.enabled
+          ? inventory.remainingQuantity
+          : null,
+        batch_number: draft.trackingLevel === 'complete' && inventory.enabled
+          ? nullableText(inventory.batchNumber)
+          : null,
+        expires_at: draft.trackingLevel === 'complete' && inventory.enabled
+          ? inventory.expiresAt
+          : null,
+      },
+    } : {}),
   }
 }
 
@@ -299,18 +336,30 @@ export async function saveStackItemSetup(
 ): Promise<SavedStackItemRow> {
   const itemErrors = validateStackItemDraft(draft)
   const planErrors = validateIntakePlan(draft.plan, draft.trackingLevel)
+  const invalidInventory = draft.trackingLevel === 'complete'
+    && draft.inventory.enabled
+    && (
+      draft.inventory.packageQuantity == null
+      || !Number.isFinite(draft.inventory.packageQuantity)
+      || draft.inventory.packageQuantity <= 0
+      || !draft.inventory.packageUnit?.trim()
+      || draft.inventory.remainingQuantity == null
+      || !Number.isFinite(draft.inventory.remainingQuantity)
+      || draft.inventory.remainingQuantity < 0
+    )
   if (
     !draft.displayName.trim()
     || !draft.category
     || !draft.dosageForm
     || Object.keys(itemErrors).length > 0
     || Object.keys(planErrors).length > 0
+    || invalidInventory
   ) {
     throw new Error('Invalid stack item setup draft')
   }
 
   const params: SaveStackItemSetupRpcParams = {
-    p_item: itemParams(draft, draft.pkProfileMethod),
+    p_item: itemParams(draft, draft.pkProfileMethod, draft.inventory),
     p_ingredients: draft.ingredients.map(ingredientForSave),
     p_plan: planParams(draft.plan, draft.trackingLevel),
   }

@@ -33,6 +33,15 @@ export interface StackItemIngredient {
   position: number
 }
 
+export interface StackItemInventory {
+  enabled: boolean
+  package_quantity: number | null
+  package_unit: string | null
+  remaining_quantity: number | null
+  batch_number: string | null
+  expires_at: string | null
+}
+
 export interface StackItem {
   id: string
   user_id: string
@@ -50,6 +59,7 @@ export interface StackItem {
   created_at: string
   updated_at: string
   ingredients: StackItemIngredient[]
+  inventory?: StackItemInventory | null
 }
 
 export interface StackItemDraft {

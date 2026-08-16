@@ -59,12 +59,15 @@ function resolvedQuery(data: unknown) {
   return query
 }
 
-function createHomeClient(fixtures: Record<string, unknown[]>) {
+function createHomeClient(
+  fixtures: Record<string, unknown[]>,
+  rpcImplementation: (name: string, params: { p_entries?: unknown[]; p_dose_log_id?: string }) => Promise<{
+    data: unknown
+    error: { message: string } | null
+  }> = async () => ({ data: [{ id: 'saved-log-1' }, { id: 'saved-log-2' }], error: null }),
+) {
   const selectCounts = new Map<string, number>()
-  const rpc = vi.fn(async (_name: string, _params: { p_entries: unknown[] }) => ({
-    data: [{ id: 'saved-log-1' }, { id: 'saved-log-2' }],
-    error: null,
-  }))
+  const rpc = vi.fn(rpcImplementation)
   const from = vi.fn((table: string) => ({
     select: vi.fn(() => {
       selectCounts.set(table, (selectCounts.get(table) ?? 0) + 1)
@@ -161,7 +164,7 @@ describe('Home upcoming intake confirmation flow', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Alles eingenommen' }))
 
     expect(await within(dialog).findByText('Routine gespeichert')).toBeTruthy()
-    expect(client.rpc).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledTimes(2))
     expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
       p_entries: expect.arrayContaining([
         expect.objectContaining({ stack_item_id: 'stack-1', dose: null, unit: null }),
@@ -169,7 +172,43 @@ describe('Home upcoming intake confirmation flow', () => {
       ]),
     })
     expect(client.rpc.mock.calls[0][1].p_entries).toHaveLength(2)
+    expect(client.rpc).toHaveBeenCalledWith('apply_inventory_confirmation', {
+      p_dose_log_id: 'saved-log-2',
+    })
     await waitFor(() => expect(client.selectCounts.get('dose_logs')).toBe(2))
+  })
+
+  it('retries only generic inventory after a committed home routine', async () => {
+    let inventoryAttempts = 0
+    const client = createHomeClient({
+      cycles: [quantifiedHomeCycle()],
+      dose_logs: [],
+      stack_items: [{ id: 'stack-2', display_name: 'Zink', dosage_form: 'capsule' }],
+      inventory_items: [],
+      dose_escalations: [],
+      injection_logs: [],
+    }, async name => {
+      if (name === 'confirm_intake_group') {
+        return { data: [{ id: 'saved-log-2' }], error: null }
+      }
+      inventoryAttempts += 1
+      return inventoryAttempts === 1
+        ? { data: null, error: { message: 'inventory offline' } }
+        : { data: 41, error: null }
+    })
+    const TestHome = Home as ComponentType<{ homeDataClient: unknown }>
+    render(createElement(MemoryRouter, null, createElement(TestHome, { homeDataClient: client })))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Alles eingenommen – Morgens' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Alles eingenommen' }))
+
+    const retry = await within(dialog).findByRole('button', { name: 'Bestand erneut versuchen' })
+    expect(client.rpc.mock.calls.filter(([name]) => name === 'confirm_intake_group')).toHaveLength(1)
+
+    fireEvent.click(retry)
+    await waitFor(() => expect(inventoryAttempts).toBe(2))
+    expect(client.rpc.mock.calls.filter(([name]) => name === 'confirm_intake_group')).toHaveLength(1)
   })
 
   it('uses the active schedule segment quantity and supplied unit label for today', () => {

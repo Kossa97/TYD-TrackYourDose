@@ -8,6 +8,7 @@ import {
   type RoutineIntake,
 } from '../intakeGroups'
 import { buildOneOffActualDose, dosePlanCapabilities } from '../../my-stack/lib/dosePlan'
+import { InventoryConfirmationError } from '../../my-stack/services/stackInventory'
 
 interface ConfirmedIntake {
   entry: RoutineConfirmationEntry
@@ -44,6 +45,11 @@ export function RoutineConfirmationSheet({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(false)
   const [confirmed, setConfirmed] = useState<ConfirmedIntake[] | null>(null)
+  const [inventoryRetry, setInventoryRetry] = useState<{
+    entries: RoutineConfirmationEntry[]
+    savedLogIds: string[]
+  } | null>(null)
+  const [retryingInventory, setRetryingInventory] = useState(false)
 
   const updateEntry = (key: string, update: Partial<RoutineConfirmationEntry>) => {
     setEntries(current => current.map(entry => entry.key === key ? { ...entry, ...update } : entry))
@@ -62,6 +68,20 @@ export function RoutineConfirmationSheet({
   ))
   const canConfirm = selectedEntries.length > 0 && !hasInvalidQuantity && !saving
 
+  const runAfterConfirm = async (
+    confirmedEntries: RoutineConfirmationEntry[],
+    savedLogIds: string[],
+  ) => {
+    try {
+      await onAfterConfirm?.(confirmedEntries, savedLogIds)
+      setInventoryRetry(null)
+    } catch (afterError) {
+      if (afterError instanceof InventoryConfirmationError) {
+        setInventoryRetry({ entries: confirmedEntries, savedLogIds })
+      }
+    }
+  }
+
   const save = async () => {
     if (!canConfirm) return
     setSaving(true)
@@ -79,9 +99,7 @@ export function RoutineConfirmationSheet({
       doseLogId: savedLogIds[index],
     })).filter(item => Boolean(item.doseLogId)))
     setSaving(false)
-    void Promise.resolve()
-      .then(() => onAfterConfirm?.(entries, savedLogIds))
-      .catch(() => undefined)
+    void runAfterConfirm(entries, savedLogIds)
   }
 
   return (
@@ -126,6 +144,23 @@ export function RoutineConfirmationSheet({
             <div className="flex min-h-11 items-center gap-2 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-3 text-sm font-bold text-emerald-300">
               <Check size={17} aria-hidden="true" /> Routine gespeichert
             </div>
+            {inventoryRetry && (
+              <div role="alert" className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-3 text-sm font-bold text-amber-200">
+                <p>Die Routine ist gespeichert, aber der Bestand wurde nicht aktualisiert.</p>
+                <button
+                  type="button"
+                  disabled={retryingInventory}
+                  onClick={() => {
+                    setRetryingInventory(true)
+                    void runAfterConfirm(inventoryRetry.entries, inventoryRetry.savedLogIds)
+                      .finally(() => setRetryingInventory(false))
+                  }}
+                  className="mt-2 flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-amber-400/25 bg-amber-500/15 px-3 text-sm font-black text-amber-100 transition-colors hover:bg-amber-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <RotateCcw size={15} aria-hidden="true" /> Bestand erneut versuchen
+                </button>
+              </div>
+            )}
             {confirmed.filter(item => item.entry.injectable).map(item => (
               <button
                 key={item.entry.key}

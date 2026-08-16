@@ -85,4 +85,44 @@ describe('My Stack tracking depth schema', () => {
     expect(rpc.slice(pendingValidation, firstWrite)).toContain('logged_at = entry_logged_at')
     expect(rpc.slice(firstWrite)).toMatch(/where id = entry_dose_log_id[\s\S]*taken is null[\s\S]*logged_at = entry_logged_at/)
   })
+
+  it('adds owner-only optional inventory and an idempotent movement ledger', () => {
+    expect(migration).toContain('create table if not exists public.stack_item_inventory')
+    expect(migration).toContain('not enabled')
+    expect(migration).toContain('package_quantity > 0')
+    expect(migration).toContain("nullif(btrim(package_unit), '') is not null")
+    expect(migration).toContain('remaining_quantity >= 0')
+    expect(migration).toContain('set enabled = false')
+    expect(migration).toContain('alter table public.stack_item_inventory enable row level security')
+    expect(migration).toContain('auth.uid() = user_id')
+    const inventoryInsertPolicy = migration.slice(
+      migration.indexOf('create policy "own stack item inventory insert"'),
+      migration.indexOf('drop policy if exists "own stack item inventory update"'),
+    )
+    expect(inventoryInsertPolicy).toContain('owned_item.id = stack_item_id')
+    expect(inventoryInsertPolicy).toContain('owned_item.user_id = auth.uid()')
+    expect(migration).toMatch(/dose_log_id uuid not null unique references public\.dose_logs/)
+    expect(verify).toContain('stack_item_inventory')
+    expect(verify).toContain('apply_inventory_confirmation')
+  })
+
+  it('applies generic inventory once and refuses ambiguous conversion', () => {
+    const rpcStart = migration.indexOf('create or replace function public.apply_inventory_confirmation')
+    const rpcEnd = migration.indexOf('revoke execute on function public.apply_inventory_confirmation', rpcStart)
+    const rpc = migration.slice(rpcStart, rpcEnd)
+
+    expect(rpcStart).toBeGreaterThan(-1)
+    expect(rpc).toContain("item.tracking_level <> 'complete'")
+    expect(rpc).toContain("item.dosage_form = 'vial'")
+    expect(rpc).toContain('movement.dose_log_id = p_dose_log_id')
+    expect(rpc.indexOf('movement.dose_log_id = p_dose_log_id'))
+      .toBeLessThan(rpc.indexOf('update public.stack_item_inventory'))
+    expect(rpc).toContain('log.unit = ingredient.basis_unit')
+    expect(rpc).toMatch(/log\.unit = ingredient\.basis_unit\s+then log\.dose\s*\n/)
+    expect(rpc).toContain('ingredient.basis_unit = inventory_row.package_unit')
+    expect(rpc).toContain("log.unit = 'mg' and ingredient.amount_unit = 'mcg'")
+    expect(rpc).toContain("log.unit = 'mcg' and ingredient.amount_unit = 'mg'")
+    expect(rpc).toContain('Inventory conversion is ambiguous or unsupported')
+    expect(rpc).not.toMatch(/iu[^\n]*(mg|mcg)|(mg|mcg)[^\n]*iu/i)
+  })
 })
