@@ -33,6 +33,13 @@ alter table public.stack_item_ingredients
   alter column basis_unit drop not null;
 
 alter table public.stack_item_ingredients
+  drop constraint if exists stack_item_ingredients_basis_unit_check;
+
+alter table public.stack_item_ingredients
+  add constraint stack_item_ingredients_basis_unit_check
+  check (basis_unit is null or nullif(btrim(basis_unit), '') is not null);
+
+alter table public.stack_item_ingredients
   drop constraint if exists stack_item_ingredients_name_check;
 
 alter table public.stack_item_ingredients

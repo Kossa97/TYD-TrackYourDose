@@ -421,14 +421,6 @@ describe('My Stack page vial view', () => {
     expect(openNewCycleSource).not.toContain('activeExists')
   })
 
-  test('saves the initial cycle atomically without a second cycle prompt', () => {
-    const text = source()
-
-    expect(text).toContain('saveStackItemSetup(supabase as never, draft)')
-    expect(text).toContain('await Promise.all([loadPeptides(), loadCycles()])')
-    expect(text).not.toContain('cyclePromptPeptide')
-  })
-
   test('centers Neue Substanz field editors for mobile thumb reach', () => {
     const text = readFileSync(new URL('./components/StackItemWizard.tsx', import.meta.url), 'utf8')
 
@@ -502,23 +494,11 @@ describe('My Stack modular integration', () => {
     }
   })
 
-  test('loads and saves through the stack item contracts', () => {
+  test('loads through the stack item contracts', () => {
     const text = source()
-    expect(text).toContain('loadStackItems(supabase as never, false)')
+    expect(text).toContain('loadStackItems(stackDataClient as never, false)')
     expect(text).toContain('loadStackItems(supabase as never, true)')
-    expect(text).toContain('saveStackItemSetup(supabase as never, draft)')
     expect(text).toContain('onOpenExisting={openExistingStackItem}')
-  })
-
-  test('hydrates the wizard from the current active plan when editing', () => {
-    const text = source()
-
-    expect(text).toContain('const activePlanFor = (stackItemId: string)')
-    expect(text).toContain('cycleAsIntakePlanDraft')
-    expect(text).toContain('existingPlan={editingPeptideId ? activePlanFor(editingPeptideId) : undefined}')
-    expect(text).toContain("morning: 'morgens'")
-    expect(text).toContain("midday: 'mittags'")
-    expect(text).toContain("evening: 'abends'")
   })
 
   test('uses /my-stack as the primary route and redirects /peptide with replacement', () => {
@@ -597,9 +577,9 @@ describe('My Stack modular integration', () => {
     const loader = text.slice(text.indexOf('const loadPeptides'), text.indexOf('const loadArchived'))
 
     expect(loader).toContain('if (!isLocalColorMigrationComplete(localStorage))')
-    expect(loader).toContain('loadStackItems(supabase as never, true)')
-    expect(loader).toContain('migrateLocalColors(supabase as never, [...data, ...archived], localStorage)')
-    expect(loader.match(/loadStackItems\(supabase as never, false\)/g)).toHaveLength(2)
+    expect(loader).toContain('loadStackItems(stackDataClient as never, true)')
+    expect(loader).toContain('migrateLocalColors(stackDataClient as never, [...data, ...archived], localStorage)')
+    expect(loader.match(/loadStackItems\(stackDataClient as never, false\)/g)).toHaveLength(2)
   })
 
   test('opens duplicate matches reliably in the textual list', () => {

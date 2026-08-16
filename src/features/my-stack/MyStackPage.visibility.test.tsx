@@ -3,7 +3,8 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
-import type { LoadedStackItem } from './services/stackItems'
+import { loadStackItems, type LoadedStackItem } from './services/stackItems'
+import type { StackItemWizardProps } from './components/StackItemWizard'
 import { MyStackPage } from './MyStackPage'
 
 const qaName = 'Codex QA Stack Lifecycle 2026-07-24'
@@ -91,6 +92,27 @@ const loadedItems: LoadedLegacyStackItem[] = [
   },
 ]
 
+const activeCycle = {
+  id: 'cycle-active-1',
+  user_id: 'user-1',
+  stack_item_id: 'capsule-1',
+  name: 'Abendplan',
+  dose: 100,
+  unit: 'mg',
+  method: 'Oral',
+  frequency: 'daily',
+  x_days_interval: null,
+  schedule_days: [],
+  start_date: '2026-07-24',
+  end_date: null,
+  active: true,
+  intake_time: 'abends',
+  intake_time_custom: '20:30',
+  schedule_history: null,
+  reminder: '10m',
+  created_at: '2026-07-24T00:30:00.000Z',
+}
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }))
@@ -129,7 +151,79 @@ vi.mock('./components/StackStage', () => ({
 }))
 
 vi.mock('./components/StackItemWizard', () => ({
-  StackItemWizard: () => null,
+  StackItemWizard: ({ existingItem, existingPlan, onClose, onSave }: StackItemWizardProps) => (
+    <div role="dialog" aria-label="stack-item-wizard">
+      <span data-testid="wizard-plan-id">{existingPlan?.id ?? ''}</span>
+      <span data-testid="wizard-plan-method">{existingPlan?.method ?? ''}</span>
+      <button
+        type="button"
+        onClick={() => {
+          const inventory = {
+            enabled: false,
+            packageQuantity: null,
+            packageUnit: null,
+            remainingQuantity: null,
+            brand: '',
+            batchNumber: '',
+            expiresAt: null,
+          }
+          if (existingItem && existingPlan) {
+            void onSave({
+              id: existingItem.id,
+              displayName: existingItem.display_name,
+              trackingLevel: existingItem.tracking_level,
+              category: existingItem.category,
+              dosageForm: existingItem.dosage_form,
+              brand: existingItem.brand ?? '',
+              colorHex: existingItem.color_hex ?? '',
+              notes: existingItem.notes ?? '',
+              ingredients: existingItem.ingredients,
+              pkProfileMethod: existingItem.pk_profile_method,
+              plan: existingPlan,
+              inventory,
+            }, 'update').then(onClose)
+            return
+          }
+          void onSave({
+            displayName: 'New setup',
+            trackingLevel: 'intake_only',
+            category: 'supplement',
+            dosageForm: 'capsule',
+            brand: '',
+            colorHex: '#f97316',
+            notes: '',
+            ingredients: [{
+              catalog_substance_id: null,
+              custom_name: 'New setup',
+              amount_value: null,
+              amount_unit: null,
+              basis_value: null,
+              basis_unit: null,
+              position: 0,
+            }],
+            pkProfileMethod: null,
+            plan: {
+              name: 'Start plan',
+              dose: null,
+              unit: null,
+              method: 'Oral',
+              frequency: 'daily',
+              xDaysInterval: null,
+              scheduleDays: [],
+              startDate: '2026-08-16',
+              endDate: null,
+              routineGroup: 'morning',
+              time: null,
+              reminders: [],
+            },
+            inventory,
+          }, 'create').then(onClose)
+        }}
+      >
+        save hydrated plan
+      </button>
+    </div>
+  ),
 }))
 
 vi.mock('./components/StackArchive', () => ({
@@ -225,5 +319,75 @@ describe('MyStackPage non-vial visibility', () => {
 
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
     expect(screen.queryByText('kein_peptid_gefunden_msg')).toBeNull()
+  })
+
+  it('hydrates and atomically saves an edited item before reloading items and cycles', async () => {
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const cyclesEq = vi.fn(async () => ({ data: [activeCycle], error: null }))
+    const cyclesSelect = vi.fn(() => ({ eq: cyclesEq }))
+    const rpc = vi.fn(async () => ({ data: loadedItems[0], error: null }))
+    const stackDataClient = {
+      from: vi.fn((table: string) => {
+        if (table !== 'cycles') throw new Error(`Unexpected table: ${table}`)
+        return { select: cyclesSelect }
+      }),
+      rpc,
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={stackDataClient as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+
+    fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'bearbeiten' }))
+
+    expect(screen.getByTestId('wizard-plan-id').textContent).toBe(activeCycle.id)
+    expect(screen.getByTestId('wizard-plan-method').textContent).toBe(activeCycle.method)
+    fireEvent.click(screen.getByRole('button', { name: 'save hydrated plan' }))
+
+    await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1))
+    expect(rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
+      p_plan: expect.objectContaining({ id: activeCycle.id }),
+    }))
+    await waitFor(() => {
+      const activeItemLoads = vi.mocked(loadStackItems).mock.calls.filter(
+        ([client, archived]) => (client as unknown) === stackDataClient && archived === false,
+      )
+      expect(activeItemLoads).toHaveLength(2)
+      expect(stackDataClient.from).toHaveBeenCalledTimes(2)
+    })
+    expect(screen.queryByText('Substanz gespeichert')).toBeNull()
+    expect(screen.queryByText('Zyklus anlegen')).toBeNull()
+  })
+
+  it('does not show the retired cycle prompt after atomically saving a new setup', async () => {
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const cyclesEq = vi.fn(async () => ({ data: [], error: null }))
+    const cyclesSelect = vi.fn(() => ({ eq: cyclesEq }))
+    const rpc = vi.fn(async () => ({ data: loadedItems[0], error: null }))
+    const stackDataClient = {
+      from: vi.fn(() => ({ select: cyclesSelect })),
+      rpc,
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={stackDataClient as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(screen.getByRole('button', { name: 'neues_peptid_title' })).not.toBeNull())
+
+    fireEvent.click(screen.getByRole('button', { name: 'neues_peptid_title' }))
+    fireEvent.click(screen.getByRole('button', { name: 'save hydrated plan' }))
+
+    await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1))
+    expect(rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
+      p_item: expect.objectContaining({ id: null }),
+      p_plan: expect.objectContaining({ id: null }),
+    }))
+    expect(screen.queryByText('Substanz gespeichert')).toBeNull()
+    expect(screen.queryByText('Zyklus anlegen')).toBeNull()
   })
 })

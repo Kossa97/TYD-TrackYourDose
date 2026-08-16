@@ -143,7 +143,7 @@ create table public.stack_item_ingredients (
     check (basis_value > 0
       and basis_value < 'Infinity'::numeric),
   basis_unit text
-    check (nullif(btrim(basis_unit), '') is not null),
+    check (basis_unit is null or nullif(btrim(basis_unit), '') is not null),
   position integer not null default 0 check (position >= 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

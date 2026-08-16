@@ -420,7 +420,11 @@ function AddVialTile({ onClick, label, active = false, obKey }: { onClick: () =>
 
 // ─── Hauptkomponente ──────────────────────────────────────────────────────────
 
-export function MyStackPage() {
+interface MyStackPageProps {
+  stackDataClient?: typeof supabase
+}
+
+export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {}) {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -594,11 +598,11 @@ export function MyStackPage() {
     if (data) setInventory(data as InventoryItem[])
   }
   const loadPeptides = async () => {
-    let data = await loadStackItems(supabase as never, false)
+    let data = await loadStackItems(stackDataClient as never, false)
     if (!isLocalColorMigrationComplete(localStorage)) {
-      const archived = await loadStackItems(supabase as never, true)
-      const migrated = await migrateLocalColors(supabase as never, [...data, ...archived], localStorage)
-      if (migrated) data = await loadStackItems(supabase as never, false)
+      const archived = await loadStackItems(stackDataClient as never, true)
+      const migrated = await migrateLocalColors(stackDataClient as never, [...data, ...archived], localStorage)
+      if (migrated) data = await loadStackItems(stackDataClient as never, false)
     }
     setPeptides(data.map(asPeptide))
   }
@@ -613,7 +617,7 @@ export function MyStackPage() {
     }
   }
   const loadCycles = async () => {
-    const { data } = await supabase.from('cycles').select('*').eq('user_id', user!.id)
+    const { data } = await stackDataClient.from('cycles').select('*').eq('user_id', user!.id)
     if (data) setCycles(data as Cycle[])
   }
   const loadEscalations = async () => {
@@ -870,7 +874,7 @@ export function MyStackPage() {
   }
 
   const handleSaveStackItem = async (draft: StackItemSetupDraft) => {
-    const savedRow = await saveStackItemSetup(supabase as never, draft)
+    const savedRow = await saveStackItemSetup(stackDataClient as never, draft)
     await Promise.all([loadPeptides(), loadCycles()])
     setExpandedId(savedRow.id)
     toast.success(draft.id ? t('peptid_aktualisiert') : t('peptid_hinzugefuegt'))

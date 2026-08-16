@@ -57,11 +57,13 @@ describe('My Stack tracking depth schema', () => {
     expect(sql).toContain("item_tracking_level = 'complete'")
     expect(sql).toContain('alter column basis_value drop not null')
     expect(sql).toContain('alter column basis_unit drop not null')
+    expect(sql).toContain('drop constraint if exists stack_item_ingredients_basis_unit_check')
+    expect(sql).toMatch(/add constraint stack_item_ingredients_basis_unit_check\s+check \(basis_unit is null or nullif\(btrim\(basis_unit\), ''\) is not null\)/)
   })
 
   it('creates nullable ingredient basis columns for fresh installs', () => {
     expect(foundation).toMatch(/basis_value numeric default 1/)
-    expect(foundation).toMatch(/basis_unit text\s+check/)
+    expect(foundation).toMatch(/basis_unit text\s+check \(basis_unit is null or nullif\(btrim\(basis_unit\), ''\) is not null\)/)
     expect(foundation).toContain("item_tracking_level = 'complete'")
   })
 })
