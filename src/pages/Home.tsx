@@ -8,7 +8,7 @@ import {
   Microscope, Library, Droplets, Heart, FileText, type LucideIcon,
   Activity, ArrowUpRight, CheckCircle2, ClipboardList,
   Clock3, Package, ShieldCheck, Sparkles,
-  Syringe, TrendingUp, Bell, XCircle,
+  Syringe, TrendingUp, Bell, XCircle, RotateCcw,
   Dumbbell, Dna, Zap, Moon, Brain, Bandage, HeartPulse, Lightbulb, Leaf, Bone,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -368,6 +368,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
   const [homeConfirmStep, setHomeConfirmStep] = useState<'choice' | 'time'>('choice')
   const [homeConfirmTime, setHomeConfirmTime] = useState('')
   const [homeReloadKey, setHomeReloadKey] = useState(0)
+  const [homeInventoryRetryIds, setHomeInventoryRetryIds] = useState<string[]>([])
   const processedHomeVialDoseLogIds = useRef(new Set<string>())
 
   // Rotate study daily
@@ -577,19 +578,34 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
     }))
   }
 
+  const applyHomeSingleInventory = async (doseLogId: string) => {
+    try {
+      await applyInventoryConfirmation(homeDataClient, doseLogId)
+      setHomeInventoryRetryIds(current => current.filter(id => id !== doseLogId))
+    } catch {
+      setHomeInventoryRetryIds(current => current.includes(doseLogId) ? current : [...current, doseLogId])
+      toast.error(t('inventory_update_failed', { defaultValue: 'Bestand konnte nicht aktualisiert werden' }))
+    }
+  }
+
   const confirmHomeIntake = async (intake: TodayIntake, taken: boolean, timeValue?: string) => {
     if (!user) return
     try {
       const quantity = { dose: intake.doseNumber, unit: intake.unit }
       if (taken && hasTrackedQuantity(quantity)) {
-        await confirmIntakeDoseLog(homeDataClient, {
+        const doseLogId = await confirmIntakeDoseLog(homeDataClient, {
           userId: user.id,
           stackItemId: intake.stackItemId,
           dose: quantity.dose,
           unit: quantity.unit,
           method: intake.method ?? '',
           loggedAt: buildHomeLoggedAt(intake.scheduledAt, timeValue),
+          doseLogId: intake.pendingLogId,
+          debitVialStock: intake.dosageForm === 'vial',
         })
+        if (intake.trackingLevel === 'complete' && intake.dosageForm !== 'vial') {
+          await applyHomeSingleInventory(doseLogId)
+        }
       } else {
         const { error } = await homeDataClient.from('dose_logs').insert(buildHomeDoseLogPayload({
           userId: user.id,
@@ -747,6 +763,19 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
         pins={injectionHero.pins}
         onOpen={() => navigate('/injektionen')}
       />
+
+      {homeInventoryRetryIds.length > 0 && (
+        <div role="alert" className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-3 text-sm font-bold text-amber-200">
+          <p>{t('inventory_committed_retry', { defaultValue: 'Die Einnahme ist gespeichert, aber der Bestand wurde nicht aktualisiert.' })}</p>
+          <button
+            type="button"
+            onClick={() => void Promise.all(homeInventoryRetryIds.map(applyHomeSingleInventory))}
+            className="mt-2 flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-amber-400/25 bg-amber-500/15 px-3 text-sm font-black text-amber-100 transition-colors hover:bg-amber-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+          >
+            <RotateCcw size={15} aria-hidden="true" /> Bestand erneut versuchen
+          </button>
+        </div>
+      )}
 
       {homeRoutineGroups.length > 0 && (
         <section style={{ ...panelStyle, padding: 18 }}>

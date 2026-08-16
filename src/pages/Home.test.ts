@@ -50,7 +50,7 @@ vi.stubGlobal('ResizeObserver', class {
 
 function resolvedQuery(data: unknown) {
   const query: Record<string, unknown> = {}
-  for (const method of ['eq', 'gte', 'lte', 'order', 'limit', 'single']) {
+  for (const method of ['select', 'eq', 'gte', 'lte', 'order', 'limit', 'single']) {
     query[method] = vi.fn(() => query)
   }
   query.then = (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => (
@@ -67,17 +67,26 @@ function createHomeClient(
   }> = async () => ({ data: [{ id: 'saved-log-1' }, { id: 'saved-log-2' }], error: null }),
 ) {
   const selectCounts = new Map<string, number>()
+  const selectCalls: Array<{ table: string; columns: string }> = []
+  const mutationCalls: Array<{ table: string; operation: 'insert' | 'update'; values: unknown }> = []
   const rpc = vi.fn(rpcImplementation)
   const from = vi.fn((table: string) => ({
-    select: vi.fn(() => {
+    select: vi.fn((columns: string) => {
       selectCounts.set(table, (selectCounts.get(table) ?? 0) + 1)
+      selectCalls.push({ table, columns })
       return resolvedQuery(fixtures[table] ?? [])
     }),
-    insert: vi.fn(() => resolvedQuery(null)),
-    update: vi.fn(() => resolvedQuery(null)),
+    insert: vi.fn((values: unknown) => {
+      mutationCalls.push({ table, operation: 'insert', values })
+      return resolvedQuery(table === 'dose_logs' ? { id: 'saved-single-log' } : null)
+    }),
+    update: vi.fn((values: unknown) => {
+      mutationCalls.push({ table, operation: 'update', values })
+      return resolvedQuery(null)
+    }),
     delete: vi.fn(() => resolvedQuery(null)),
   }))
-  return { from, rpc, selectCounts }
+  return { from, rpc, selectCounts, selectCalls, mutationCalls }
 }
 
 function intakeOnlyHomeCycle() {
@@ -108,6 +117,12 @@ function quantifiedHomeCycle() {
     unit: 'mg',
     stack_items: { display_name: 'Zink', tracking_level: 'complete', dosage_form: 'capsule' },
   }
+}
+
+async function confirmSingleHomeIntake(name: string): Promise<void> {
+  fireEvent.click(await screen.findByRole('button', { name: new RegExp(name) }))
+  fireEvent.click(screen.getByRole('button', { name: 'Eingenommen' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
 }
 
 afterEach(() => {
@@ -209,6 +224,109 @@ describe('Home upcoming intake confirmation flow', () => {
     fireEvent.click(retry)
     await waitFor(() => expect(inventoryAttempts).toBe(2))
     expect(client.rpc.mock.calls.filter(([name]) => name === 'confirm_intake_group')).toHaveLength(1)
+  })
+
+  it('reuses a pending single log and applies only generic inventory with its committed id', async () => {
+    const pendingAt = new Date()
+    pendingAt.setHours(8, 0, 0, 0)
+    const client = createHomeClient({
+      cycles: [quantifiedHomeCycle()],
+      dose_logs: [{
+        id: 'pending-single-log',
+        stack_item_id: 'stack-2',
+        taken: null,
+        logged_at: pendingAt.toISOString(),
+      }],
+      stack_items: [{ id: 'stack-2', display_name: 'Zink', dosage_form: 'capsule' }],
+      inventory_items: [],
+      dose_escalations: [],
+      injection_logs: [],
+    }, async name => name === 'apply_inventory_confirmation'
+      ? { data: 41, error: null }
+      : { data: [], error: null })
+    const TestHome = Home as ComponentType<{ homeDataClient: unknown }>
+    render(createElement(MemoryRouter, null, createElement(TestHome, { homeDataClient: client })))
+
+    await confirmSingleHomeIntake('Zink')
+
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('apply_inventory_confirmation', {
+      p_dose_log_id: 'pending-single-log',
+    }))
+    expect(client.mutationCalls.filter(call => call.table === 'dose_logs' && call.operation === 'insert'))
+      .toHaveLength(0)
+    expect(client.mutationCalls).toContainEqual(expect.objectContaining({
+      table: 'dose_logs',
+      operation: 'update',
+      values: expect.objectContaining({ taken: true }),
+    }))
+    expect(client.selectCalls.some(call => (
+      call.table === 'stack_items' && call.columns.includes('vial_amount_mg')
+    ))).toBe(false)
+  })
+
+  it('retries only generic inventory after a committed single intake', async () => {
+    let inventoryAttempts = 0
+    const client = createHomeClient({
+      cycles: [quantifiedHomeCycle()],
+      dose_logs: [],
+      stack_items: [{ id: 'stack-2', display_name: 'Zink', dosage_form: 'capsule' }],
+      inventory_items: [],
+      dose_escalations: [],
+      injection_logs: [],
+    }, async name => {
+      if (name !== 'apply_inventory_confirmation') return { data: [], error: null }
+      inventoryAttempts += 1
+      return inventoryAttempts === 1
+        ? { data: null, error: { message: 'inventory offline' } }
+        : { data: 41, error: null }
+    })
+    const TestHome = Home as ComponentType<{ homeDataClient: unknown }>
+    render(createElement(MemoryRouter, null, createElement(TestHome, { homeDataClient: client })))
+
+    await confirmSingleHomeIntake('Zink')
+
+    const retry = await screen.findByRole('button', { name: 'Bestand erneut versuchen' })
+    expect(client.mutationCalls.filter(call => call.table === 'dose_logs' && call.operation === 'insert'))
+      .toHaveLength(1)
+    expect(client.rpc).toHaveBeenCalledWith('apply_inventory_confirmation', {
+      p_dose_log_id: 'saved-single-log',
+    })
+
+    fireEvent.click(retry)
+    await waitFor(() => expect(inventoryAttempts).toBe(2))
+    expect(client.mutationCalls.filter(call => call.table === 'dose_logs' && call.operation === 'insert'))
+      .toHaveLength(1)
+  })
+
+  it('keeps a single vial confirmation on the legacy stock path only', async () => {
+    const pendingAt = new Date()
+    pendingAt.setHours(8, 0, 0, 0)
+    const vialCycle = {
+      ...quantifiedHomeCycle(),
+      stack_items: { display_name: 'Zink', tracking_level: 'complete' as const, dosage_form: 'vial' },
+    }
+    const client = createHomeClient({
+      cycles: [vialCycle],
+      dose_logs: [{
+        id: 'pending-vial-log',
+        stack_item_id: 'stack-2',
+        taken: null,
+        logged_at: pendingAt.toISOString(),
+      }],
+      stack_items: [{ id: 'stack-2', display_name: 'Zink', dosage_form: 'vial' }],
+      inventory_items: [],
+      dose_escalations: [],
+      injection_logs: [],
+    })
+    const TestHome = Home as ComponentType<{ homeDataClient: unknown }>
+    render(createElement(MemoryRouter, null, createElement(TestHome, { homeDataClient: client })))
+
+    await confirmSingleHomeIntake('Zink')
+
+    await waitFor(() => expect(client.selectCalls.some(call => (
+      call.table === 'stack_items' && call.columns.includes('vial_amount_mg')
+    ))).toBe(true))
+    expect(client.rpc.mock.calls.some(([name]) => name === 'apply_inventory_confirmation')).toBe(false)
   })
 
   it('uses the active schedule segment quantity and supplied unit label for today', () => {

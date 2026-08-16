@@ -419,7 +419,16 @@ export function isDoseLogAlreadyLinkedError(error: unknown): boolean {
 // matching the Dashboard confirmation. Returns the new dose_log id to link.
 export async function confirmIntakeDoseLog(
   supabase: SupabaseClient,
-  input: { userId: string; stackItemId: string; dose: number; unit: string; method: string; loggedAt: string; doseLogId?: string | null },
+  input: {
+    userId: string
+    stackItemId: string
+    dose: number
+    unit: string
+    method: string
+    loggedAt: string
+    doseLogId?: string | null
+    debitVialStock?: boolean
+  },
 ): Promise<string> {
   if (input.doseLogId) {
     const { error } = await supabase
@@ -434,7 +443,9 @@ export async function confirmIntakeDoseLog(
       .eq('id', input.doseLogId)
       .eq('user_id', input.userId)
     if (error) throw error
-    await debitVialStockForDoseById(supabase, input.userId, input.stackItemId, input.dose, input.unit)
+    if (input.debitVialStock !== false) {
+      await debitVialStockForDoseById(supabase, input.userId, input.stackItemId, input.dose, input.unit)
+    }
     return input.doseLogId
   }
 
@@ -452,6 +463,8 @@ export async function confirmIntakeDoseLog(
     .select('id')
     .single()
   if (error) throw error
-  await debitVialStockForDoseById(supabase, input.userId, input.stackItemId, input.dose, input.unit)
+  if (input.debitVialStock !== false) {
+    await debitVialStockForDoseById(supabase, input.userId, input.stackItemId, input.dose, input.unit)
+  }
   return data.id as string
 }
