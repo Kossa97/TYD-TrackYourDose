@@ -1,7 +1,33 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { extname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import { DosePlanActions } from './MyStackPage'
+
+describe('My Stack dose-plan actions', () => {
+  test.each(['with_amount', 'complete'] as const)('renders permanent and titration actions for %s', trackingLevel => {
+    const markup = renderToStaticMarkup(createElement(DosePlanActions, {
+      trackingLevel,
+      onPermanent: () => undefined,
+      onTitration: () => undefined,
+    }))
+
+    expect(markup).toContain('Neue Standarddosis ab …')
+    expect(markup).toContain('Titrationsschritt hinzufügen')
+  })
+
+  test('renders no quantity-planning actions for intake-only tracking', () => {
+    const markup = renderToStaticMarkup(createElement(DosePlanActions, {
+      trackingLevel: 'intake_only',
+      onPermanent: () => undefined,
+      onTitration: () => undefined,
+    }))
+
+    expect(markup).toBe('')
+  })
+})
 
 describe('My Stack page vial view', () => {
   const source = () => [
@@ -226,7 +252,6 @@ describe('My Stack page vial view', () => {
     expect(text).not.toContain('Mehr Optionen')
     expect(text).toContain('aria-expanded={vialDetailsOpen}')
     expect(text).toContain('sortedEscalationsOf(activeCycle.id)')
-    expect(text).toContain('targetDose - baseDoseAtStart')
     expect(text.indexOf('Rekonst.')).toBeLessThan(text.indexOf('<span>Info</span>'))
     expect(text).not.toContain('<h3 className="truncate text-xl font-bold text-white">{p.name}</h3>')
   })

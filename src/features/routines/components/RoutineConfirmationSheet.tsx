@@ -7,6 +7,7 @@ import {
   type RoutineGroupModel,
   type RoutineIntake,
 } from '../intakeGroups'
+import { buildOneOffActualDose, dosePlanCapabilities } from '../../my-stack/lib/dosePlan'
 
 interface ConfirmedIntake {
   entry: RoutineConfirmationEntry
@@ -143,11 +144,10 @@ export function RoutineConfirmationSheet({
             <ul className="space-y-2">
               {entries.map(entry => {
                 const editing = editingKeys.includes(entry.key)
-                const quantity = formatTrackedQuantity(
-                  entry.actualDose,
-                  entry.actualUnit,
-                  'Menge nicht getrackt',
-                )
+                const capabilities = dosePlanCapabilities(entry.trackingLevel)
+                const plannedQuantity = capabilities.oneOff
+                  ? formatTrackedQuantity(entry.dose, entry.unit, '')
+                  : null
                 return (
                   <li key={entry.key} className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
                     <div className="flex min-h-11 items-center gap-3">
@@ -161,13 +161,15 @@ export function RoutineConfirmationSheet({
                         />
                         <span className="min-w-0">
                           <span className="block truncate text-sm font-black text-white">{entry.stackItemName}</span>
-                          <span className="block text-xs font-semibold text-slate-400">{quantity}</span>
+                          {plannedQuantity && (
+                            <span className="block text-xs font-semibold text-slate-400">Geplant: {plannedQuantity}</span>
+                          )}
                         </span>
                       </label>
-                      {entry.trackingLevel !== 'intake_only' && (
+                      {capabilities.oneOff && (
                         <button
                           type="button"
-                          aria-label="Menge ändern"
+                          aria-label="Einmalige Abweichung"
                           aria-expanded={editing}
                           onClick={() => setEditingKeys(current => (
                             current.includes(entry.key)
@@ -176,11 +178,11 @@ export function RoutineConfirmationSheet({
                           ))}
                           className="flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 text-xs font-black text-cyan-300 transition-colors hover:bg-cyan-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
                         >
-                          <Pencil size={13} aria-hidden="true" /> Menge ändern
+                          <Pencil size={13} aria-hidden="true" /> Einmalige Abweichung
                         </button>
                       )}
                     </div>
-                    {editing && entry.trackingLevel !== 'intake_only' && (
+                    {editing && capabilities.oneOff && (
                       <div className="mt-2 flex items-center gap-2">
                         <label className="sr-only" htmlFor={`routine-amount-${entry.key}`}>
                           Menge für {entry.stackItemName}
@@ -191,9 +193,18 @@ export function RoutineConfirmationSheet({
                           min="0"
                           step="any"
                           value={entry.actualDose ?? ''}
-                          onChange={event => updateEntry(entry.key, {
-                            actualDose: event.target.value === '' ? null : Number(event.target.value),
-                          })}
+                          onChange={event => {
+                            if (event.target.value === '') {
+                              updateEntry(entry.key, { actualDose: null })
+                              return
+                            }
+                            setEntries(current => current.map(currentEntry => currentEntry.key === entry.key
+                              ? buildOneOffActualDose(currentEntry, {
+                                  dose: Number(event.target.value),
+                                  unit: currentEntry.actualUnit ?? currentEntry.unit ?? '',
+                                })
+                              : currentEntry))
+                          }}
                           className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-[var(--surface-input)] px-3 text-base font-black text-white outline-none focus-visible:border-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-300"
                         />
                         <span className="text-sm font-bold text-slate-300">{entry.actualUnit}</span>

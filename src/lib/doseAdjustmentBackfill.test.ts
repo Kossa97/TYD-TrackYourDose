@@ -30,11 +30,15 @@ const log = (
   logged_at: string,
   taken: boolean | null,
   stack_item_id = 'p1',
+  dose: number | null = 200,
+  unit: string | null = 'mcg',
 ): DoseAdjustmentBackfillLog => ({
   id,
   stack_item_id,
   logged_at,
   taken,
+  dose,
+  unit,
 })
 
 describe('buildDoseAdjustmentBackfillUpdates', () => {
@@ -44,6 +48,7 @@ describe('buildDoseAdjustmentBackfillUpdates', () => {
       log('missed', '2026-06-10T08:00:00.000Z', false),
       log('open', '2026-06-11T08:00:00.000Z', null),
       log('confirmed', '2026-06-12T08:00:00.000Z', true),
+      log('unquantified', '2026-06-12T09:00:00.000Z', false, 'p1', null, null),
       log('other-peptide', '2026-06-13T08:00:00.000Z', false, 'p2'),
       log('after-cycle', '2026-07-01T08:00:00.000Z', false),
     ])
@@ -51,6 +56,47 @@ describe('buildDoseAdjustmentBackfillUpdates', () => {
     expect(updates).toEqual([
       { id: 'missed', dose: 300, unit: 'mcg' },
       { id: 'open', dose: 300, unit: 'mcg' },
+    ])
+  })
+
+  it('backfills open and skipped quantified logs after a permanent schedule change only', () => {
+    const changedCycle: ScheduleCycle = {
+      ...cycle,
+      schedule_history: [
+        {
+          effective_from: '2026-06-01',
+          frequency: cycle.frequency,
+          x_days_interval: cycle.x_days_interval,
+          schedule_days: cycle.schedule_days,
+          intake_time: cycle.intake_time,
+          intake_time_custom: cycle.intake_time_custom,
+          dose: 200,
+          unit: 'mcg',
+        },
+        {
+          effective_from: '2026-06-10',
+          frequency: cycle.frequency,
+          x_days_interval: cycle.x_days_interval,
+          schedule_days: cycle.schedule_days,
+          intake_time: cycle.intake_time,
+          intake_time_custom: cycle.intake_time_custom,
+          dose: 250,
+          unit: 'mcg',
+        },
+      ],
+    }
+
+    const updates = buildDoseAdjustmentBackfillUpdates(changedCycle, [], [
+      log('before-change', '2026-06-09T08:00:00.000Z', false),
+      log('skipped', '2026-06-10T08:00:00.000Z', false),
+      log('open', '2026-06-11T08:00:00.000Z', null),
+      log('taken', '2026-06-12T08:00:00.000Z', true),
+      log('unquantified', '2026-06-13T08:00:00.000Z', null, 'p1', null, null),
+    ], [], '2026-06-10')
+
+    expect(updates).toEqual([
+      { id: 'skipped', dose: 250, unit: 'mcg' },
+      { id: 'open', dose: 250, unit: 'mcg' },
     ])
   })
 

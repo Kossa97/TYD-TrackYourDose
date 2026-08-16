@@ -6,6 +6,8 @@ export interface DoseAdjustmentBackfillLog {
   stack_item_id: string
   logged_at: string
   taken: boolean | null
+  dose: number | null
+  unit: string | null
 }
 
 export interface DoseAdjustmentBackfillUpdate {
@@ -38,13 +40,17 @@ export function buildDoseAdjustmentBackfillUpdates(
   adjustments: EscalationRow[],
   logs: DoseAdjustmentBackfillLog[],
   affectedAdjustments: EscalationRow[] = adjustments,
+  affectedFromDay?: string,
 ): DoseAdjustmentBackfillUpdate[] {
-  const fromDay = earliestAdjustmentStartDay(cycle, affectedAdjustments)
+  const fromDay = [earliestAdjustmentStartDay(cycle, affectedAdjustments), affectedFromDay]
+    .filter((day): day is string => !!day)
+    .sort()[0] ?? null
   if (!fromDay) return []
 
   return logs.flatMap(log => {
     if (log.stack_item_id !== cycle.stack_item_id) return []
     if (log.taken === true) return []
+    if (log.dose == null || !log.unit?.trim()) return []
 
     const dayKey = logDay(log)
     if (dayKey < cycle.start_date) return []
