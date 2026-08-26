@@ -3,8 +3,14 @@ import { extname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { DosePlanActions } from './MyStackPage'
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? key,
+  }),
+}))
 
 describe('My Stack dose-plan actions', () => {
   test.each(['with_amount', 'complete'] as const)('renders permanent and titration actions for %s', trackingLevel => {

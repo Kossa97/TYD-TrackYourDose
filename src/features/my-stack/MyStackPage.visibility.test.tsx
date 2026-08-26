@@ -168,6 +168,9 @@ vi.mock('./components/StackItemWizard', () => ({
       <span data-testid="wizard-plan-method">{existingPlan?.method ?? ''}</span>
       <span data-testid="wizard-plan-dose">{existingPlan?.dose ?? ''}</span>
       <span data-testid="wizard-plan-unit">{existingPlan?.unit ?? ''}</span>
+      <span data-testid="wizard-plan-frequency">{existingPlan?.frequency ?? ''}</span>
+      <span data-testid="wizard-plan-routine-group">{existingPlan?.routineGroup ?? ''}</span>
+      <span data-testid="wizard-plan-time">{existingPlan?.time ?? ''}</span>
       <button
         type="button"
         onClick={() => {
@@ -432,14 +435,18 @@ describe('MyStackPage non-vial visibility', () => {
     expect(screen.queryByText('Zyklus anlegen')).toBeNull()
   })
 
-  it('hydrates no wizard quantity when active escalation units invalidate the pair', async () => {
+  it('hydrates the base segment without folding an active escalation into the editable dose', async () => {
     localStorage.setItem('tyd_peptide_view', 'list')
-    const cycle = versionedCycle(format(new Date(), 'yyyy-MM-dd'))
+    const cycle = {
+      ...activeCycle,
+      dose: 5,
+      unit: 'mg',
+    }
     visibilityMocks.escalations = [{
-      id: 'mixed-unit-step',
+      id: 'same-unit-step',
       cycle_id: cycle.id,
       increase_amount: 5,
-      unit: 'mcg',
+      unit: 'mg',
       start_type: 'date',
       start_date: activeCycle.start_date,
       start_after_days: null,
@@ -461,9 +468,67 @@ describe('MyStackPage non-vial visibility', () => {
 
     fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'bearbeiten' }))
 
-    expect(screen.getByTestId('wizard-plan-dose').textContent).toBe('')
-    expect(screen.getByTestId('wizard-plan-unit').textContent).toBe('')
-    expect(rpc).not.toHaveBeenCalled()
+    expect(screen.getByTestId('wizard-plan-dose').textContent).toBe('5')
+    expect(screen.getByTestId('wizard-plan-unit').textContent).toBe('mg')
+    fireEvent.click(screen.getByRole('button', { name: 'save hydrated plan' }))
+
+    await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1))
+    expect(rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
+      p_plan: expect.objectContaining({ id: cycle.id, dose: 5, unit: 'mg' }),
+    }))
+    expect(visibilityMocks.escalations).toHaveLength(1)
+  })
+
+  it('hydrates every editable schedule field from the segment active before a future change', async () => {
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const futureDate = format(addDays(new Date(), 1), 'yyyy-MM-dd')
+    const cycle = {
+      ...activeCycle,
+      dose: 150,
+      frequency: 'Wochentage wählen',
+      schedule_days: ['Mo'],
+      intake_time: 'morgens',
+      intake_time_custom: '09:30',
+      schedule_history: [{
+        effective_from: activeCycle.start_date,
+        frequency: 'Täglich',
+        x_days_interval: null,
+        schedule_days: [],
+        intake_time: 'abends',
+        intake_time_custom: '20:30',
+        dose: 100,
+        unit: 'mg',
+      }, {
+        effective_from: futureDate,
+        frequency: 'Wochentage wählen',
+        x_days_interval: null,
+        schedule_days: ['Mo'],
+        intake_time: 'morgens',
+        intake_time_custom: '09:30',
+        dose: 150,
+        unit: 'mg',
+      }],
+    }
+    const cyclesEq = vi.fn(async () => ({ data: [cycle], error: null }))
+    const rpc = vi.fn(async () => ({ data: loadedItems[0], error: null }))
+    const stackDataClient = {
+      from: vi.fn(() => ({ select: vi.fn(() => ({ eq: cyclesEq })) })),
+      rpc,
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={stackDataClient as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+
+    fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'bearbeiten' }))
+
+    expect(screen.getByTestId('wizard-plan-dose').textContent).toBe('100')
+    expect(screen.getByTestId('wizard-plan-frequency').textContent).toBe('Täglich')
+    expect(screen.getByTestId('wizard-plan-routine-group').textContent).toBe('evening')
+    expect(screen.getByTestId('wizard-plan-time').textContent).toBe('20:30')
   })
 
   it('does not show the retired cycle prompt after atomically saving a new setup', async () => {

@@ -30,3 +30,36 @@
 - Wizard smoke coverage: passed for catalog, custom, compound, edit, duplicate handling, and archive/restore; compound persistence and rendering are covered by automated tests without an additional linked QA write
 - Local color migration: passed for the signed-in user's RLS-visible rows (7/7 deterministic colors persisted); the authorized Task 0 source export was `{}` with SHA-256 `CA3D163BAB055381827226140568F3BEF7EAAC187CEBD76878E0B63E9E442356`
 - Linked QA records removed: yes (`qa_items`: 0; `qa_ingredients`: 0)
+
+## Tracking-depth cutover checkpoint - 2026-08-17
+
+No tracking-depth SQL has been executed against the linked database. The
+repository has no local Supabase `config.toml` or migrations directory, so the
+source-contract tests are the only completed pre-deployment database gate.
+
+| Check | Pre-migration | Post-migration | Status |
+| --- | --- | --- | --- |
+| `stack_items` row count | Pending authorized linked query | Pending authorized linked query | Pending explicit user approval |
+| `cycles` row count | Pending authorized linked query | Pending authorized linked query | Pending explicit user approval |
+| `dose_logs` row count | Pending authorized linked query | Pending authorized linked query | Pending explicit user approval |
+| `stack_item_inventory` row count | Table not yet deployed | Pending authorized linked query | Pending explicit user approval |
+| `stack_item_inventory_movements` row count | Table not yet deployed | Pending authorized linked query | Pending explicit user approval |
+| Orphaned foreign keys | Pending authorized linked verification | Expected: zero | Pending explicit user approval |
+| Existing peptide and Vial rendering | Existing automated regression coverage retained | Authenticated desktop/mobile smoke pending | Partially verified locally |
+| Nullable quantity semantics | N/A | Local automated tests require `null` dose/unit for intake-only and unknown taken amounts | Verified locally; linked smoke pending |
+| Conservative rollback guard | Rollback SQL present | Runtime rollback drill not run | Pending explicit user approval |
+
+Pre-deployment requirements:
+
+- [x] Tracking-depth SQL contract tests cover Tasks 1, 5, 6, and 9.
+- [x] Existing peptide/Vial automated rendering regressions remain in the local suite.
+- [x] Nullable quantity and PK-interruption semantics are covered by local tests.
+- [ ] Capture the five exact pre-migration row counts above.
+- [ ] Apply `supabase-my-stack-tracking-depth.sql` to the linked database only after explicit user approval.
+- [ ] Run `supabase-my-stack-tracking-depth-verify.sql`; require every `tracking_depth_contract` boolean to be `true`.
+- [ ] Capture matching post-migration row counts and verify zero orphaned foreign keys.
+- [ ] Perform the seven authenticated browser smoke scenarios without reusing production records.
+- [ ] Confirm existing peptide and Vial rendering on desktop and mobile after migration.
+- [ ] Exercise the conservative rollback only in an approved drill or if verification fails.
+
+Linked-production migration and all data-mutating authenticated smoke tests remain pending explicit user approval.

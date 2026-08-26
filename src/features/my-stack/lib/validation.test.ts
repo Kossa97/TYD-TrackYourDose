@@ -61,6 +61,32 @@ describe('validateStackItemDraft', () => {
     }
   })
 
+  it.each([null, 0, 1, 2.5, 31, Number.POSITIVE_INFINITY])(
+    'rejects an invalid every-x-days interval (%s)',
+    xDaysInterval => {
+      expect(validateIntakePlan({
+        ...validPlan,
+        frequency: 'Alle X Tage',
+        xDaysInterval,
+      }, 'complete').xDaysInterval).toBe('invalid_interval')
+    },
+  )
+
+  it('requires at least one valid unique selected weekday', () => {
+    for (const scheduleDays of [[], ['XX'], ['Mo', 'Mo']]) {
+      expect(validateIntakePlan({
+        ...validPlan,
+        frequency: 'Wochentage wählen',
+        scheduleDays,
+      }, 'complete').scheduleDays).toBe('invalid_weekdays')
+    }
+    expect(validateIntakePlan({
+      ...validPlan,
+      frequency: 'Wochentage wählen',
+      scheduleDays: ['Mo', 'Fr'],
+    }, 'complete').scheduleDays).toBeUndefined()
+  })
+
   it('allows missing strength for intake_only and with_amount', () => {
     for (const trackingLevel of ['intake_only', 'with_amount'] as const) {
       const errors = validateStackItemDraft({

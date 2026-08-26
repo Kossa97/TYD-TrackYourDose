@@ -382,6 +382,8 @@ export function firstInvalidField(state: WizardState): string | null {
     if (planErrors.name) return 'displayName'
     if (planErrors.method) return 'plan.method'
     if (planErrors.frequency) return 'plan.frequency'
+    if (planErrors.xDaysInterval) return 'plan.xDaysInterval'
+    if (planErrors.scheduleDays) return 'plan.scheduleDays'
     if (planErrors.startDate) return 'plan.startDate'
     if (planErrors.routineGroup) return 'plan.routineGroup'
     if (planErrors.dose) return 'plan.dose'

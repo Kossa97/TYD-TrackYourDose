@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import { Link, useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { Activity, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -321,6 +322,7 @@ function BlutspiegelCard({
   refreshFlashing: boolean
 }) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { accent, level, peptideName, pkProfileId } = card
 
   return (
@@ -357,7 +359,7 @@ function BlutspiegelCard({
       <div style={{ position: 'relative', zIndex: 2 }}>
         {level.interruptedAt && (
           <p role="status" style={{ marginBottom: 8, fontSize: 11, fontWeight: 750, color: '#fbbf24' }}>
-            Simulation unterbrochen: Menge nicht getrackt
+            {t('pk_interrupted', { defaultValue: 'Simulation unterbrochen: Menge nicht getrackt' })}
           </p>
         )}
         {/* Name (left) + LIVE status (right) in one row */}
@@ -410,28 +412,33 @@ function BlutspiegelCard({
 }
 
 function IncompletePkCard({ card }: { card: IncompleteCarouselCard }) {
+  const { t } = useTranslation()
   const labels: Record<PkRequirement, string> = {
-    complete_tracking: 'vollständiges Tracking',
-    method: 'bestätigte Route',
-    dose: 'Dosis',
-    unit: 'Einheit',
-    time: 'genaue Uhrzeit',
+    complete_tracking: String(t('pk_requirement_complete_tracking', { defaultValue: 'vollständiges Tracking' })),
+    method: String(t('pk_requirement_method', { defaultValue: 'bestätigte Route' })),
+    dose: String(t('pk_requirement_dose', { defaultValue: 'Dosis' })),
+    unit: String(t('pk_requirement_unit', { defaultValue: 'Einheit' })),
+    time: String(t('pk_requirement_time', { defaultValue: 'genaue Uhrzeit' })),
   }
+  const requirements = card.missing.map(requirement => labels[requirement]).join(', ')
 
   return (
     <div className={`w-full sm:mx-auto sm:max-w-[800px] ${shellClassName}`} style={{ padding: 20 }}>
       <p style={{ fontSize: '0.9rem', fontWeight: 850, color: 'var(--text)' }}>{card.peptideName}</p>
       <p style={{ marginTop: 7, fontSize: '0.78rem', fontWeight: 750, color: 'var(--text-dim)' }}>
-        PK-Daten unvollständig
+        {t('pk_missing_title', { defaultValue: 'PK-Daten unvollständig' })}
       </p>
       <p style={{ marginTop: 5, fontSize: '0.7rem', lineHeight: 1.55, color: 'var(--text-muted)' }}>
-        Fehlend: {card.missing.map(requirement => labels[requirement]).join(', ')}. Bis dahin wird keine Kurve berechnet.
+        {t('pk_missing_copy', {
+          defaultValue: 'Fehlend: {{requirements}}. Erst bei vollständigen Pflichtangaben wird eine Kurve berechnet.',
+          requirements,
+        })}
       </p>
       <Link
         to={`/my-stack?edit=${encodeURIComponent(card.stackItemId)}&intent=pk`}
         className="mt-3 inline-flex min-h-11 cursor-pointer items-center rounded-xl border border-sky-400/30 bg-sky-400/[0.08] px-4 text-sm font-semibold text-sky-200 transition-colors hover:bg-sky-400/[0.13] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 motion-reduce:transition-none"
       >
-        Angaben vervollständigen
+        {t('pk_complete_action', { defaultValue: 'Angaben vervollständigen' })}
       </Link>
     </div>
   )
@@ -441,6 +448,7 @@ function IncompletePkCard({ card }: { card: IncompleteCarouselCard }) {
 
 export function BlutspiegelCarousel() {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const [cards, setCards] = useState<CarouselCard[]>([])
   const [loading, setLoading] = useState(true)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -676,7 +684,7 @@ export function BlutspiegelCarousel() {
       <div className={shellClassName} style={{ padding: 20, textAlign: 'center' }}>
         <Activity size={28} color="var(--accent)" style={{ margin: '0 auto 12px' }} />
         <p style={{ fontSize: '0.82rem', fontWeight: 750, color: 'var(--text-dim)', lineHeight: 1.5, marginBottom: 14 }}>
-          Keine PK-bereiten Einträge für den Live-Spiegel
+          {t('pk_no_ready_items', { defaultValue: 'Keine PK-bereiten Einträge für den Live-Spiegel' })}
         </p>
         <Link
           to="/simulation"
@@ -689,7 +697,7 @@ export function BlutspiegelCarousel() {
             color: 'var(--accent)',
           }}
         >
-          Zur Simulation
+          {t('pk_open_simulation', { defaultValue: 'Zur Simulation' })}
         </Link>
       </div>
     )

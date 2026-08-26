@@ -3,6 +3,16 @@ import { differenceInDays, format, parseISO, startOfDay, subDays } from 'date-fn
 // Maps JS getDay() (0 = Sunday) to the German weekday codes stored on cycles.
 const WEEKDAYS_DE: Record<number, string> = { 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 6: 'Sa', 0: 'So' }
 const SLOT_TIMES: Record<string, string> = { morgens: '08:00', mittags: '12:00', abends: '20:00' }
+const SLOT_GROUPS = { morgens: 'morning', mittags: 'midday', abends: 'evening' } as const
+
+export type ResolvedRoutineGroup = 'morning' | 'midday' | 'evening'
+
+export interface ResolvedScheduleSlot {
+  key: string
+  routineGroup: ResolvedRoutineGroup
+  time: string
+  minutes: number
+}
 
 export interface ScheduleSegment {
   effective_from: string            // 'yyyy-MM-dd'
@@ -103,6 +113,40 @@ export function effectiveQuantity(cycle: ScheduleCycle, day: Date, escalations: 
   return Number.isFinite(total) && total > 0 ? { dose: total, unit: baseUnit } : null
 }
 
+function parsedClock(value: string | undefined): { time: string; minutes: number } | null {
+  const match = /^(\d{2}):(\d{2})$/.exec(value?.trim() ?? '')
+  if (!match) return null
+  const hours = Number(match[1])
+  const minutes = Number(match[2])
+  if (hours > 23 || minutes > 59) return null
+  return { time: `${match[1]}:${match[2]}`, minutes: hours * 60 + minutes }
+}
+
+function routineGroupForMinutes(minutes: number): ResolvedRoutineGroup {
+  const hour = Math.floor(minutes / 60) % 24
+  if (hour < 12) return 'morning'
+  if (hour < 18) return 'midday'
+  return 'evening'
+}
+
+export function resolveScheduleSlots(
+  schedule: Pick<ScheduleSegment, 'intake_time' | 'intake_time_custom'>,
+): ResolvedScheduleSlot[] {
+  const keys = (schedule.intake_time ?? '').split(',').filter(Boolean)
+  const exactTimes = (schedule.intake_time_custom ?? '').split(',')
+
+  return keys.flatMap((key, index) => {
+    const fixedGroup = SLOT_GROUPS[key as keyof typeof SLOT_GROUPS]
+    const clock = parsedClock(exactTimes[index]) ?? parsedClock(SLOT_TIMES[key])
+    if (!clock) return []
+    return [{
+      key,
+      routineGroup: fixedGroup ?? routineGroupForMinutes(clock.minutes),
+      ...clock,
+    }]
+  }).sort((left, right) => left.minutes - right.minutes)
+}
+
 export function effectiveDose(cycle: ScheduleCycle, day: Date, escalations: EscalationRow[]): number | null {
   return effectiveQuantity(cycle, day, escalations)?.dose ?? null
 }
@@ -134,29 +178,33 @@ export function cycleAppliesToDay(cycle: ScheduleCycle, day: Date): boolean {
     return hasDayFilter ? (seg.schedule_days ?? []).includes(dayOfWeek) : true
   if (freq === 'Jeden 2. Tag') return diff % 2 === 0
   if (freq === 'Alle X Tage') {
-    const intervalOk = diff % (seg.x_days_interval ?? 2) === 0
+    if (
+      seg.x_days_interval == null
+      || !Number.isFinite(seg.x_days_interval)
+      || !Number.isInteger(seg.x_days_interval)
+      || seg.x_days_interval < 2
+      || seg.x_days_interval > 30
+    ) return false
+    const intervalOk = diff % seg.x_days_interval === 0
     return intervalOk && (hasDayFilter ? (seg.schedule_days ?? []).includes(dayOfWeek) : true)
   }
   if (freq === '5 Tage an / 2 aus') return diff % 7 < 5
   if (freq === 'Mo-Fr') return day.getDay() >= 1 && day.getDay() <= 5
   if (freq === 'Wöchentlich') return diff % 7 === 0
-  if (freq === 'Wochentage wählen') return (seg.schedule_days ?? []).includes(dayOfWeek)
+  if (freq === 'Wochentage wählen') {
+    const days = seg.schedule_days ?? []
+    if (days.length === 0 || new Set(days).size !== days.length || days.some(day => !Object.values(WEEKDAYS_DE).includes(day))) {
+      return false
+    }
+    return days.includes(dayOfWeek)
+  }
   return false
 }
 
 // All scheduled slots of a cycle ON a given day, sorted by time (segment-resolved).
 function cycleDaySlots(c: ScheduleCycle, day: Date): { min: number; time: string }[] {
   const seg = scheduleForDay(c, day)
-  const slots = (seg.intake_time ?? '').split(',').filter(Boolean)
-  const customs = (seg.intake_time_custom ?? '').split(',')
-  const out: { min: number; time: string }[] = []
-  slots.forEach((slot, i) => {
-    const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
-    if (!tm) return
-    const [h, m] = tm.split(':').map(Number)
-    out.push({ min: h * 60 + m, time: tm })
-  })
-  return out.sort((a, b) => a.min - b.min)
+  return resolveScheduleSlots(seg).map(slot => ({ min: slot.minutes, time: slot.time }))
 }
 
 /**

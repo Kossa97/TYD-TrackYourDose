@@ -58,6 +58,7 @@ describe('confirmIntakeGroup', () => {
           {
             cycle_id: 'cycle-d3',
             dose_log_id: null,
+            slot_key: 'cycle-d3@2026-07-29T08:00:00.000Z',
             stack_item_id: 'stack-d3',
             dose: null,
             unit: null,
@@ -67,6 +68,7 @@ describe('confirmIntakeGroup', () => {
           {
             cycle_id: 'cycle-zinc',
             dose_log_id: 'pending-zinc',
+            slot_key: 'cycle-zinc@2026-07-29T08:00:00.000Z',
             stack_item_id: 'stack-zinc',
             dose: 30,
             unit: 'mg',
@@ -84,6 +86,27 @@ describe('confirmIntakeGroup', () => {
     }
 
     await expect(confirmIntakeGroup(client, [entry()])).rejects.toThrow('group rejected')
+  })
+
+  it('reuses the same deterministic slot key after an ambiguous retry', async () => {
+    const slotKeys: string[] = []
+    let attempt = 0
+    const client: IntakeConfirmationClient = {
+      rpc: async (_name, params) => {
+        slotKeys.push(params.p_entries[0].slot_key)
+        attempt += 1
+        return attempt === 1
+          ? { data: null, error: { message: 'response lost' } }
+          : { data: [{ id: 'committed-log' }], error: null }
+      },
+    }
+
+    await expect(confirmIntakeGroup(client, [entry()])).rejects.toThrow('response lost')
+    await expect(confirmIntakeGroup(client, [entry()])).resolves.toEqual(['committed-log'])
+    expect(slotKeys).toEqual([
+      'cycle-d3@2026-07-29T08:00:00.000Z',
+      'cycle-d3@2026-07-29T08:00:00.000Z',
+    ])
   })
 
   it('limits post-confirm stock debits to selected quantified vial entries', () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
-  findOldestOverdueIntake, collectMissedIntakes, collectOpenIntakes, scheduleForDay, effectiveDose,
+  findOldestOverdueIntake, collectMissedIntakes, collectOpenIntakes, cycleAppliesToDay, scheduleForDay, effectiveDose,
+  resolveScheduleSlots,
   type ScheduleCycle, type IntakeLog, type ScheduleSegment, type EscalationRow,
 } from './intakeSchedule'
 
@@ -46,6 +47,30 @@ describe('scheduleForDay', () => {
   })
   it('nach zweitem Segment => zweites Segment', () => {
     expect(scheduleForDay(versioned, new Date(2026, 5, 1)).dose).toBe(300)
+  })
+})
+
+describe('resolveScheduleSlots', () => {
+  it.each(['09:30', '14:00'])(
+    'keeps a persisted morning routine in the morning group while using exact time %s',
+    time => {
+      expect(resolveScheduleSlots({ intake_time: 'morgens', intake_time_custom: time })).toEqual([{
+        key: 'morgens',
+        routineGroup: 'morning',
+        time,
+        minutes: Number(time.slice(0, 2)) * 60 + Number(time.slice(3)),
+      }])
+    },
+  )
+})
+
+describe('recurrence validation at schedule evaluation', () => {
+  it('does not silently default an invalid every-x-days interval to two', () => {
+    expect(cycleAppliesToDay({
+      ...cycle,
+      frequency: 'Alle X Tage',
+      x_days_interval: null,
+    }, new Date(2026, 5, 5))).toBe(false)
   })
 })
 

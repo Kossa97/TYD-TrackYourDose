@@ -6,6 +6,18 @@ import type { RoutineConfirmationEntry, RoutineGroupModel, RoutineIntake } from 
 import { RoutineConfirmationSheet } from './RoutineConfirmationSheet'
 import { InventoryConfirmationError } from '../../my-stack/services/stackInventory'
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) => {
+      let value = typeof options?.defaultValue === 'string' ? options.defaultValue : key
+      for (const [name, replacement] of Object.entries(options ?? {})) {
+        if (name !== 'defaultValue') value = value.replace(`{{${name}}}`, String(replacement))
+      }
+      return value
+    },
+  }),
+}))
+
 function intake(overrides: Partial<RoutineIntake> = {}): RoutineIntake {
   return {
     key: 'd3',
@@ -88,7 +100,7 @@ describe('RoutineConfirmationSheet', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Einmalige Abweichung' })[0])
     fireEvent.change(screen.getByLabelText('Menge für Zink'), { target: { value: '30' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Alles eingenommen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Alle als eingenommen markieren' }))
 
     await waitFor(() => expect(onConfirm).toHaveBeenCalledTimes(1))
     expect(onConfirm.mock.calls[0][0].find(item => item.key === 'zinc')).toMatchObject({
@@ -106,7 +118,7 @@ describe('RoutineConfirmationSheet', () => {
     fireEvent.click(deviationButton)
     fireEvent.change(screen.getByLabelText('Menge für Zink'), { target: { value: '30' } })
     fireEvent.click(deviationButton)
-    fireEvent.click(screen.getByRole('button', { name: 'Alles eingenommen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Alle als eingenommen markieren' }))
 
     await waitFor(() => expect(onConfirm).toHaveBeenCalledTimes(1))
     expect(onConfirm.mock.calls[0][0].find(item => item.key === 'zinc')).toMatchObject({
@@ -129,7 +141,7 @@ describe('RoutineConfirmationSheet', () => {
       />,
     )
 
-    const confirmButton = screen.getByRole('button', { name: 'Alles eingenommen' }) as HTMLButtonElement
+    const confirmButton = screen.getByRole('button', { name: 'Alle als eingenommen markieren' }) as HTMLButtonElement
     expect(confirmButton.disabled).toBe(false)
     expect(screen.queryByRole('button', { name: /Injektionsstelle ergänzen/ })).toBeNull()
 
@@ -152,7 +164,7 @@ describe('RoutineConfirmationSheet', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Einmalige Abweichung' })[0])
     const amount = screen.getByLabelText('Menge für Zink') as HTMLInputElement
     fireEvent.change(amount, { target: { value: '30' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Alles eingenommen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Alle als eingenommen markieren' }))
 
     expect((await screen.findByRole('alert')).textContent).toContain('Gruppe konnte nicht gespeichert werden.')
     expect((screen.getByRole('checkbox', { name: 'Testosteron auswählen' }) as HTMLInputElement).checked).toBe(false)
@@ -184,7 +196,7 @@ describe('RoutineConfirmationSheet', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Alles eingenommen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Alle als eingenommen markieren' }))
 
     expect(await screen.findByText('Routine gespeichert')).toBeTruthy()
     await waitFor(() => expect(onAfterConfirm).toHaveBeenCalledTimes(1))
@@ -214,7 +226,7 @@ describe('RoutineConfirmationSheet', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Alles eingenommen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Alle als eingenommen markieren' }))
 
     expect(await screen.findByText('Routine gespeichert')).toBeTruthy()
     const retry = await screen.findByRole('button', { name: 'Bestand erneut versuchen' })

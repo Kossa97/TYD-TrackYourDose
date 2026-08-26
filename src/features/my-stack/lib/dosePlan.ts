@@ -19,6 +19,10 @@ export interface PlannedDose extends TrackedDose {
   status: 'Geplant'
 }
 
+export function backfillMessageKey(count: number): 'dose_plan_backfilled_one' | 'dose_plan_backfilled_other' {
+  return count === 1 ? 'dose_plan_backfilled_one' : 'dose_plan_backfilled_other'
+}
+
 interface PermanentScheduleChange extends TrackedDose {
   trackingLevel: TrackingLevel
   effectiveFrom: string

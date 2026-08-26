@@ -30,7 +30,8 @@ import type { IntakePlanDraft, RoutineGroup, StackItem, StackItemSetupDraft, Sub
 import { isStageRenderable } from './lib/dosageForms'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
 import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
-import { buildPermanentScheduleChange, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
+import { backfillMessageKey, buildPermanentScheduleChange, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
+import { validateRecurrence } from './lib/validation'
 import { DoseUnitControl } from './components/DoseUnitControl'
 import { VialTrackingEditor, emptyVialTrackingDraft, type PkProfileOption, type VialTrackingDraft } from './extensions/peptide/VialTrackingEditor'
 
@@ -313,6 +314,7 @@ export function DosePlanActions({
   onPermanent: () => void
   onTitration: () => void
 }) {
+  const { t } = useTranslation()
   const capabilities = dosePlanCapabilities(trackingLevel)
   if (!capabilities.permanent) return null
 
@@ -323,14 +325,14 @@ export function DosePlanActions({
         onClick={onPermanent}
         className="flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 text-xs font-semibold text-cyan-200 transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
       >
-        <CalendarPlus size={13} aria-hidden="true" /> Neue Standarddosis ab …
+        <CalendarPlus size={13} aria-hidden="true" /> {t('dose_plan_new_standard', { defaultValue: 'Neue Standarddosis ab …' })}
       </button>
       <button
         type="button"
         onClick={onTitration}
         className="flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 text-xs font-semibold text-orange-300 transition-colors hover:border-orange-400/50 hover:bg-orange-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
       >
-        <Plus size={13} aria-hidden="true" /> Titrationsschritt hinzufügen
+        <Plus size={13} aria-hidden="true" /> {t('dose_plan_add_titration', { defaultValue: 'Titrationsschritt hinzufügen' })}
       </button>
     </div>
   )
@@ -434,22 +436,22 @@ function nextScheduleHistory(
   return history
 }
 
-function cycleAsIntakePlanDraft(cycle: Cycle, day: Date, cycleEscalations: Escalation[]): IntakePlanDraft {
-  const primarySlot = (cycle.intake_time ?? '').split(',').find(Boolean) ?? ''
-  const quantity = effectiveQuantity(cycle, day, cycleEscalations)
+function cycleAsIntakePlanDraft(cycle: Cycle, day: Date): IntakePlanDraft {
+  const segment = scheduleForDay(cycle, day)
+  const primarySlot = (segment.intake_time ?? '').split(',').find(Boolean) ?? ''
   return {
     id: cycle.id,
     name: cycle.name,
-    dose: quantity?.dose ?? null,
-    unit: quantity?.unit ?? null,
+    dose: segment.dose,
+    unit: segment.unit,
     method: cycle.method,
-    frequency: cycle.frequency,
-    xDaysInterval: cycle.x_days_interval,
-    scheduleDays: cycle.schedule_days ?? [],
+    frequency: segment.frequency,
+    xDaysInterval: segment.x_days_interval,
+    scheduleDays: segment.schedule_days ?? [],
     startDate: format(new Date(), 'yyyy-MM-dd'),
     endDate: cycle.end_date,
     routineGroup: INTAKE_TIME_TO_ROUTINE_GROUP[primarySlot] ?? 'morning',
-    time: cycle.intake_time_custom?.split(',').find(Boolean) ?? null,
+    time: segment.intake_time_custom?.split(',').find(Boolean) ?? null,
     reminders: cycle.reminder && cycle.reminder !== 'none'
       ? cycle.reminder.split(',').filter(Boolean)
       : [],
@@ -807,7 +809,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const activeCycle = cycles
       .filter(cycle => cycle.stack_item_id === stackItemId && cycle.active)
       .sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
-    return activeCycle ? cycleAsIntakePlanDraft(activeCycle, new Date(), escalationsOf(activeCycle.id)) : undefined
+    return activeCycle ? cycleAsIntakePlanDraft(activeCycle, new Date()) : undefined
   }
 
   // ── Inventar Bestand anpassen ─────────────────────────────────────────────
@@ -1065,7 +1067,13 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     ) {
       return toast.error(t('name_dosis_erforderlich'))
     }
-    if (cForm.frequency === 'Wochentage wählen' && cForm.schedule_days.length === 0)
+    const recurrenceErrors = validateRecurrence(
+      cForm.frequency,
+      cForm.frequency === 'Alle X Tage' ? Number(cForm.x_days_interval) : null,
+      cForm.schedule_days,
+    )
+    if (recurrenceErrors.xDaysInterval) return toast.error(t('alle_x_tage_frage'))
+    if (recurrenceErrors.scheduleDays)
       return toast.error(t('wochentag_auswaehlen_hint'))
     // Bei einer Planungsänderung an einem bestehenden Zyklus erst fragen: rückwirkend oder ab heute?
     if (editingCycleId) {
@@ -1168,7 +1176,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         try {
           await backfillDoseAdjustmentLogs(changedCycle, escalationsOf(changedCycle.id), [], scheduleEffectiveFrom)
         } catch {
-          toast.error('Standarddosis gespeichert, aber offene/verpasste Einnahmen konnten nicht aktualisiert werden.')
+          toast.error(t('dose_plan_permanent_backfill_failed', { defaultValue: 'Die Standarddosis wurde gespeichert, aber offene oder verpasste Einnahmen konnten nicht aktualisiert werden.' }))
         }
       }
     }
@@ -1379,12 +1387,17 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       try {
         backfilled = await backfillDoseAdjustmentLogs(escForCycle, nextEscalations, affectedEscalations)
       } catch {
-        toast.error('Dosisanpassung gespeichert, aber offene/verpasste Einnahmen konnten nicht aktualisiert werden.')
+        toast.error(t('dose_plan_titration_backfill_failed', { defaultValue: 'Die Dosisanpassung wurde gespeichert, aber offene oder verpasste Einnahmen konnten nicht aktualisiert werden.' }))
       }
 
       toast.success(editingEscId ? t('inventar_aktualisiert') : t('esc_gespeichert'))
       if (backfilled > 0) {
-        toast(`${backfilled} offene/verpasste Einnahme${backfilled === 1 ? '' : 'n'} aktualisiert. Bestaetigte Einnahmen bleiben unveraendert.`)
+        toast(t(backfillMessageKey(backfilled), {
+          count: backfilled,
+          defaultValue: backfilled === 1
+            ? '{{count}} offene oder verpasste Einnahme aktualisiert. Bestätigte Einnahmen bleiben unverändert.'
+            : '{{count}} offene oder verpasste Einnahmen aktualisiert. Bestätigte Einnahmen bleiben unverändert.',
+        }))
       }
       setShowEscForm(false); loadEscalations()
     }
@@ -2296,7 +2309,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                             </span>
                                           ) : (
                                             <span className="flex shrink-0 items-center gap-1 text-slate-500">
-                                              {isPast ? <Check size={15} /> : <><Clock size={15} /> Geplant</>}
+                                              {isPast ? <Check size={15} /> : <><Clock size={15} /> {t('dose_plan_planned', { defaultValue: 'Geplant' })}</>}
                                             </span>
                                           )}
                                         </div>
@@ -2318,7 +2331,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                   onClick={() => navigate('/kalender')}
                                   className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-500 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-violet-400"
                                 >
-                                  <CalendarDays size={15} /> {doseCapabilities.oneOff ? t('dosis_im_kalender_loggen') : 'Einnahme im Kalender loggen'}
+                                  <CalendarDays size={15} /> {doseCapabilities.oneOff
+                                    ? t('dosis_im_kalender_loggen')
+                                    : t('dose_plan_intake_log', { defaultValue: 'Einnahme im Kalender loggen' })}
                                 </button>
                               </div>
                             </>
@@ -2608,7 +2623,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                           <span className="inline-flex items-center gap-1 text-white text-xs font-medium">
                                             <AdjustmentIcon size={11} /> {escalationQuantityLabel(c, e)}
                                           </span>
-                                          {!escalationIsActive(c, e) && <span className="ml-2 text-[10px] font-bold uppercase tracking-wide text-slate-500">Geplant</span>}
+                                          {!escalationIsActive(c, e) && <span className="ml-2 text-[10px] font-bold uppercase tracking-wide text-slate-500">{t('dose_plan_planned', { defaultValue: 'Geplant' })}</span>}
                                           <span className="text-slate-400 text-xs ml-2">{escLabel(e)}</span>
                                           {e.notes && <p className="text-slate-500 text-xs truncate">{e.notes}</p>}
                                         </div>
@@ -2752,7 +2767,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                           <p className="flex items-center gap-1 truncate font-semibold text-white">
                             <AdjustmentIcon size={12} /> #{idx + 1} {escalationQuantityLabel(c, e)}
                           </p>
-                          {!escalationIsActive(c, e) && <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Geplant</p>}
+                          {!escalationIsActive(c, e) && <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{t('dose_plan_planned', { defaultValue: 'Geplant' })}</p>}
                           <p className="truncate text-slate-400">{escLabel(e)}</p>
                           {e.notes && <p className="truncate text-slate-500">{e.notes}</p>}
                         </div>
@@ -3614,10 +3629,15 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               <div className="flex items-center gap-2">
                 <SlidersHorizontal size={18} className="text-orange-400" />
                 <h2 className="text-lg font-bold">
-                  {editingEscId ? t('esc_bearbeiten') : 'Titrationsschritt hinzufügen'}
+                  {editingEscId ? t('esc_bearbeiten') : t('dose_plan_add_titration', { defaultValue: 'Titrationsschritt hinzufügen' })}
                 </h2>
               </div>
               {escForCycle && <p className="text-slate-400 text-sm mt-0.5 ml-6">{escForCycle.name}</p>}
+              <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                {t('dose_plan_titration_disclaimer', {
+                  defaultValue: 'Die App dokumentiert deinen Titrationsplan; sie empfiehlt weder eine Dosis noch eine Titration.',
+                })}
+              </p>
             </div>
 
             <div data-ob="esc-core" className="space-y-4">
@@ -3779,7 +3799,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               />
               <button onClick={() => { setScheduleChoiceOpen(false); finalizeSave('fromDate') }}
                 className="min-h-11 w-full cursor-pointer rounded-xl bg-sky-500 px-4 py-2.5 text-left text-sm font-semibold text-white transition-colors hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
-                {quantityScheduleChange ? 'Neue Standarddosis ab …' : t('schedule_change_from_today', { defaultValue: 'Ab diesem Datum' })}
+                {quantityScheduleChange
+                  ? t('dose_plan_new_standard', { defaultValue: 'Neue Standarddosis ab …' })
+                  : t('schedule_change_from_today', { defaultValue: 'Ab diesem Datum' })}
                 <span className="block text-xs font-normal text-sky-100/80 mt-0.5">
                   {t('schedule_change_from_today_hint', { defaultValue: 'Vergangene Tage behalten den bisherigen Plan.' })}
                 </span>

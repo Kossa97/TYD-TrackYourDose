@@ -3,6 +3,7 @@ import type { InventoryDraft } from '../types'
 import {
   applyInventoryConfirmation,
   loadStackItemInventory,
+  reverseInventoryConfirmation,
   saveStackItemInventory,
 } from './stackInventory'
 
@@ -104,5 +105,26 @@ describe('stack inventory service', () => {
 
     await expect(applyInventoryConfirmation({ rpc }, 'dose-log-1'))
       .rejects.toThrow('conversion failed')
+  })
+
+  it.each(['undo', 'skip', 'delete'] as const)(
+    'persists the canonical %s reversal action in one RPC',
+    async action => {
+      const rpc = vi.fn(async () => ({ data: 42, error: null }))
+
+      await reverseInventoryConfirmation({ rpc }, 'dose-log-1', action)
+
+      expect(rpc).toHaveBeenCalledWith('reverse_inventory_confirmation', {
+        p_dose_log_id: 'dose-log-1',
+        p_action: action,
+      })
+    },
+  )
+
+  it('surfaces a reversal failure before the caller mutates the log separately', async () => {
+    const rpc = vi.fn(async () => ({ data: null, error: { message: 'reversal failed' } }))
+
+    await expect(reverseInventoryConfirmation({ rpc }, 'dose-log-1', 'delete'))
+      .rejects.toThrow('reversal failed')
   })
 })

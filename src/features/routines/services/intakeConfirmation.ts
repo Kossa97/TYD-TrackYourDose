@@ -12,6 +12,7 @@ interface SavedDoseLog {
 interface ConfirmIntakeGroupRpcEntry {
   cycle_id: string
   dose_log_id: string | null
+  slot_key: string
   stack_item_id: string
   dose: number | null
   unit: string | null
@@ -55,6 +56,7 @@ export async function confirmIntakeGroup(
     .map(entry => ({
       cycle_id: entry.cycleId,
       dose_log_id: entry.pendingLogId,
+      slot_key: `${entry.cycleId}@${new Date(entry.scheduledAt).toISOString()}`,
       stack_item_id: entry.stackItemId,
       dose: entry.trackingLevel === 'intake_only' ? null : entry.actualDose,
       unit: entry.trackingLevel === 'intake_only' ? null : entry.actualUnit,

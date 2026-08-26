@@ -100,3 +100,26 @@ export async function applyInventoryConfirmation(
   throwIfError(error)
   return data
 }
+
+export type InventoryReversalAction = 'undo' | 'skip' | 'delete'
+
+export async function reverseInventoryConfirmation(
+  client: {
+    rpc(
+      name: 'reverse_inventory_confirmation',
+      params: {
+        p_dose_log_id: string
+        p_action: InventoryReversalAction
+      },
+    ): PromiseLike<{ data: number | null; error: ServiceError | null }>
+  },
+  doseLogId: string,
+  action: InventoryReversalAction,
+): Promise<number | null> {
+  const { data, error } = await client.rpc('reverse_inventory_confirmation', {
+    p_dose_log_id: doseLogId,
+    p_action: action,
+  })
+  throwIfError(error)
+  return data
+}

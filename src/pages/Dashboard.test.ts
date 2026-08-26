@@ -42,7 +42,7 @@ vi.mock('react-hot-toast', () => ({ default: pageMocks.toast }))
 
 interface RecordedMutation {
   table: string
-  kind: 'insert' | 'update'
+  kind: 'insert' | 'update' | 'delete'
   values: unknown
 }
 
@@ -80,7 +80,10 @@ function createDashboardClient(
       mutations.push({ table, kind: 'update', values })
       return resolvedQuery(null)
     }),
-    delete: vi.fn(() => resolvedQuery(null)),
+    delete: vi.fn(() => {
+      mutations.push({ table, kind: 'delete', values: null })
+      return resolvedQuery(null)
+    }),
   }))
   return { from, rpc, selectCounts, mutations }
 }
@@ -114,6 +117,7 @@ function renderDashboard(client: ReturnType<typeof createDashboardClient>) {
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  vi.unstubAllGlobals()
 })
 
 describe('Dashboard intake confirmation actions', () => {
@@ -125,6 +129,7 @@ describe('Dashboard intake confirmation actions', () => {
       stackItemId: 'stack-1',
       stackItemName: 'Vitamin D3',
       trackingLevel: 'intake_only',
+      routineGroup: 'midday',
       minutes: 720,
       scheduledAt: '2026-07-29T12:00:00.000Z',
       dose: 100,
@@ -151,9 +156,9 @@ describe('Dashboard intake confirmation actions', () => {
     renderDashboard(client)
 
     fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Alles eingenommen' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Alle als eingenommen markieren' }))
     const dialog = await screen.findByRole('dialog')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Alles eingenommen' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Alle als eingenommen markieren' }))
 
     expect(await within(dialog).findByText('Routine gespeichert')).toBeTruthy()
     expect(client.rpc).toHaveBeenCalledTimes(1)
@@ -261,6 +266,132 @@ describe('Dashboard intake confirmation actions', () => {
     }))
   })
 
+  it('atomically reverses generic inventory when undoing a completed log', async () => {
+    const now = new Date()
+    now.setHours(8, 0, 0, 0)
+    const client = createDashboardClient({
+      cycles: [{
+        ...intakeOnlyCycle(),
+        dose: 1,
+        unit: 'capsule',
+        stack_items: { display_name: 'Vitamin D3', tracking_level: 'complete' },
+      }],
+      dose_logs: [{
+        id: 'completed-generic',
+        stack_item_id: 'stack-1',
+        dose: 1,
+        unit: 'capsule',
+        method: 'Oral',
+        logged_at: now.toISOString(),
+        notes: null,
+        taken: true,
+        stack_items: { display_name: 'Vitamin D3' },
+      }],
+      stack_items: [{
+        id: 'stack-1',
+        display_name: 'Vitamin D3',
+        dosage_form: 'capsule',
+        tracking_level: 'complete',
+      }],
+      dose_escalations: [],
+    }, async () => ({ data: 42, error: null }))
+    renderDashboard(client)
+
+    fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Rückgängig' }))
+
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('reverse_inventory_confirmation', {
+      p_dose_log_id: 'completed-generic',
+      p_action: 'undo',
+    }))
+    expect(client.mutations.filter(mutation => mutation.table === 'dose_logs')).toHaveLength(0)
+  })
+
+  it('atomically reverses generic inventory before deleting a completed log', async () => {
+    vi.stubGlobal('confirm', () => true)
+    const now = new Date()
+    now.setHours(8, 0, 0, 0)
+    const client = createDashboardClient({
+      cycles: [intakeOnlyCycle()],
+      dose_logs: [{
+        id: 'completed-generic',
+        stack_item_id: 'stack-1',
+        dose: 1,
+        unit: 'capsule',
+        method: 'Oral',
+        logged_at: now.toISOString(),
+        notes: null,
+        taken: true,
+        stack_items: { display_name: 'Vitamin D3' },
+      }],
+      stack_items: [{
+        id: 'stack-1',
+        display_name: 'Vitamin D3',
+        dosage_form: 'capsule',
+        tracking_level: 'complete',
+      }],
+      dose_escalations: [],
+    }, async () => ({ data: 42, error: null }))
+    renderDashboard(client)
+
+    fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'eintrag_loeschen' }))
+
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('reverse_inventory_confirmation', {
+      p_dose_log_id: 'completed-generic',
+      p_action: 'delete',
+    }))
+    expect(client.mutations.filter(mutation => mutation.table === 'dose_logs')).toHaveLength(0)
+  })
+
+  it('atomically reverses a vial ledger movement without a manual stock credit', async () => {
+    const now = new Date()
+    now.setHours(8, 0, 0, 0)
+    const client = createDashboardClient({
+      cycles: [{
+        ...intakeOnlyCycle(),
+        dose: 5,
+        unit: 'mg',
+        stack_items: { display_name: 'Peptide', tracking_level: 'complete' },
+      }],
+      dose_logs: [{
+        id: 'completed-vial',
+        stack_item_id: 'stack-1',
+        dose: 5,
+        unit: 'mg',
+        method: 'Subkutan',
+        logged_at: now.toISOString(),
+        notes: null,
+        taken: true,
+        stack_items: { display_name: 'Peptide' },
+      }],
+      stack_items: [{
+        id: 'stack-1',
+        display_name: 'Peptide',
+        dosage_form: 'vial',
+        tracking_level: 'complete',
+        vial_amount_mg: 10,
+        reconstitution_ml: 1,
+        vials_in_stock: 0,
+        vials_initial: 1,
+        reconstitution_date: null,
+      }],
+      dose_escalations: [],
+    }, async () => ({ data: 0.1, error: null }))
+    renderDashboard(client)
+
+    fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Rückgängig' }))
+
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('reverse_inventory_confirmation', {
+      p_dose_log_id: 'completed-vial',
+      p_action: 'undo',
+    }))
+    expect(client.mutations.filter(mutation => (
+      mutation.table === 'dose_logs' || mutation.table === 'stack_items'
+    ))).toHaveLength(0)
+  })
+
   it('retries generic inventory without confirming an existing dose log twice', async () => {
     const now = new Date()
     now.setHours(8, 0, 0, 0)
@@ -316,7 +447,7 @@ describe('Dashboard intake confirmation actions', () => {
     expect(client.mutations.filter(mutation => mutation.table === 'dose_logs')).toHaveLength(1)
   })
 
-  it('keeps vial debit exclusive from generic inventory confirmation', async () => {
+  it('applies vial debit through the dose-log inventory RPC without a client stock write', async () => {
     const now = new Date()
     now.setHours(8, 0, 0, 0)
     const client = createDashboardClient({
@@ -356,15 +487,48 @@ describe('Dashboard intake confirmation actions', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'eingenommen' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Eingenommen' }))
 
-    await waitFor(() => expect(client.mutations).toContainEqual({
-      table: 'stack_items',
-      kind: 'update',
-      values: { vials_in_stock: 1.9 },
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('apply_inventory_confirmation', {
+      p_dose_log_id: 'pending-1',
     }))
-    expect(client.rpc).not.toHaveBeenCalledWith(
-      'apply_inventory_confirmation',
-      expect.anything(),
-    )
+    expect(client.mutations.some(mutation => mutation.table === 'stack_items')).toBe(false)
+  })
+
+  it('retries only vial stock after a committed dashboard group', async () => {
+    let stockAttempts = 0
+    const client = createDashboardClient({
+      cycles: [{
+        ...intakeOnlyCycle(),
+        dose: 1,
+        unit: 'mg',
+        stack_items: { display_name: 'Peptide', tracking_level: 'complete' },
+      }],
+      dose_logs: [],
+      stack_items: [{
+        id: 'stack-1',
+        display_name: 'Peptide',
+        dosage_form: 'vial',
+        tracking_level: 'complete',
+      }],
+      dose_escalations: [],
+    }, async name => {
+      if (name === 'confirm_intake_group') return { data: [{ id: 'saved-vial-log' }], error: null }
+      stockAttempts += 1
+      return stockAttempts === 1
+        ? { data: null, error: { message: 'vial stock offline' } }
+        : { data: 0.9, error: null }
+    })
+    renderDashboard(client)
+
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Alle als eingenommen markieren' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Alle als eingenommen markieren' }))
+
+    const retry = await within(dialog).findByRole('button', { name: 'Bestand erneut versuchen' })
+    expect(client.rpc.mock.calls.filter(([name]) => name === 'confirm_intake_group')).toHaveLength(1)
+    fireEvent.click(retry)
+    await waitFor(() => expect(stockAttempts).toBe(2))
+    expect(client.rpc.mock.calls.filter(([name]) => name === 'confirm_intake_group')).toHaveLength(1)
   })
 
   it('retries only generic inventory after a committed group confirmation', async () => {
@@ -396,9 +560,9 @@ describe('Dashboard intake confirmation actions', () => {
     renderDashboard(client)
 
     fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Alles eingenommen' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Alle als eingenommen markieren' }))
     const dialog = await screen.findByRole('dialog')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Alles eingenommen' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Alle als eingenommen markieren' }))
 
     const retry = await within(dialog).findByRole('button', { name: 'Bestand erneut versuchen' })
     expect(client.rpc.mock.calls.filter(([name]) => name === 'confirm_intake_group')).toHaveLength(1)

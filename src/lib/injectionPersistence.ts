@@ -444,7 +444,7 @@ export async function confirmIntakeDoseLog(
       .eq('user_id', input.userId)
     if (error) throw error
     if (input.debitVialStock !== false) {
-      await debitVialStockForDoseById(supabase, input.userId, input.stackItemId, input.dose, input.unit)
+      await debitVialStockForDoseById(supabase, input.doseLogId)
     }
     return input.doseLogId
   }
@@ -464,7 +464,7 @@ export async function confirmIntakeDoseLog(
     .single()
   if (error) throw error
   if (input.debitVialStock !== false) {
-    await debitVialStockForDoseById(supabase, input.userId, input.stackItemId, input.dose, input.unit)
+    await debitVialStockForDoseById(supabase, data.id as string)
   }
   return data.id as string
 }

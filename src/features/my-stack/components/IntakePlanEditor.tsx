@@ -41,12 +41,13 @@ const METHODS = [
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'] as const
 const ROUTINE_GROUPS: readonly {
   value: RoutineGroup
-  label: string
+  labelKey: string
+  defaultValue: string
   Icon: typeof Sunrise
 }[] = [
-  { value: 'morning', label: 'Morgens', Icon: Sunrise },
-  { value: 'midday', label: 'Mittags', Icon: Sun },
-  { value: 'evening', label: 'Abends', Icon: Moon },
+  { value: 'morning', labelKey: 'my_stack_routine_morning', defaultValue: 'Morgens', Icon: Sunrise },
+  { value: 'midday', labelKey: 'my_stack_routine_midday', defaultValue: 'Mittags', Icon: Sun },
+  { value: 'evening', labelKey: 'my_stack_routine_evening', defaultValue: 'Abends', Icon: Moon },
 ]
 const TABLET_FRACTIONS = [
   { label: '1/2 Tablette', value: 0.5 },
@@ -183,13 +184,28 @@ export function IntakePlanEditor({
             max="30"
             value={plan.xDaysInterval ?? ''}
             onChange={event => onChange({ xDaysInterval: numericValue(event.target.value) })}
+            data-field="plan.xDaysInterval"
+            aria-invalid={Boolean(errors.xDaysInterval) || undefined}
+            aria-describedby={errors.xDaysInterval ? 'stack-plan-interval-error' : undefined}
             className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
           />
+          {errors.xDaysInterval && (
+            <p id="stack-plan-interval-error" role="alert" className="mt-2 text-sm text-rose-300">
+              {t('alle_x_tage_frage', { defaultValue: 'Alle wie viele Tage?' })}
+            </p>
+          )}
         </div>
       )}
 
       {plan.frequency === 'Wochentage wählen' && (
-        <fieldset className="min-w-0" aria-label={String(t('my_stack_plan_weekdays', { defaultValue: 'Wochentage' }))}>
+        <fieldset
+          data-field="plan.scheduleDays"
+          tabIndex={-1}
+          className="min-w-0"
+          aria-label={String(t('my_stack_plan_weekdays', { defaultValue: 'Wochentage' }))}
+          aria-invalid={Boolean(errors.scheduleDays) || undefined}
+          aria-describedby={errors.scheduleDays ? 'stack-plan-weekdays-error' : undefined}
+        >
           <div className="grid min-w-0 grid-cols-4 gap-2 sm:grid-cols-7">
             {WEEKDAYS.map(day => {
               const selected = plan.scheduleDays.includes(day)
@@ -209,6 +225,11 @@ export function IntakePlanEditor({
               )
             })}
           </div>
+          {errors.scheduleDays && (
+            <p id="stack-plan-weekdays-error" role="alert" className="mt-2 text-sm text-rose-300">
+              {t('wochentag_auswaehlen_hint', { defaultValue: 'Mindestens einen Wochentag auswählen' })}
+            </p>
+          )}
         </fieldset>
       )}
 
@@ -223,7 +244,7 @@ export function IntakePlanEditor({
           {t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}
         </legend>
         <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-3">
-          {ROUTINE_GROUPS.map(({ value, label, Icon }) => (
+          {ROUTINE_GROUPS.map(({ value, labelKey, defaultValue, Icon }) => (
             <label
               key={value}
               className={`flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${plan.routineGroup === value
@@ -241,7 +262,7 @@ export function IntakePlanEditor({
                 className="h-5 w-5 shrink-0 cursor-pointer accent-sky-400"
               />
               <Icon aria-hidden="true" size={18} className="shrink-0" />
-              <span className="min-w-0 break-words">{label}</span>
+              <span className="min-w-0 break-words">{t(labelKey, { defaultValue })}</span>
             </label>
           ))}
         </div>

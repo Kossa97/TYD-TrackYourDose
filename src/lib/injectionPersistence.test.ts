@@ -513,7 +513,7 @@ describe('confirmIntakeDoseLog', () => {
   it('updates an auto-missed dose log instead of inserting a duplicate', async () => {
     const doseUpdates: Array<Record<string, unknown>> = []
     const doseEq: Array<[string, unknown]> = []
-    const stackItemUpdates: Array<Record<string, unknown>> = []
+    const rpcCalls: Array<[string, Record<string, unknown>]> = []
     let inserts = 0
 
     const doseUpdateQuery = {
@@ -523,24 +523,11 @@ describe('confirmIntakeDoseLog', () => {
         return doseUpdateQuery
       },
     }
-    const stackItemSelectQuery = {
-      eq: () => stackItemSelectQuery,
-      single: async () => ({
-        data: {
-          id: 'stack-item-1',
-          vial_amount_mg: 10,
-          reconstitution_ml: null,
-          reconstitution_date: null,
-          vials_in_stock: 1,
-          vials_initial: 1,
-        },
-        error: null,
-      }),
-    }
-    const stackItemUpdateQuery = {
-      eq: () => stackItemUpdateQuery,
-    }
     const supabase = {
+      rpc: async (name: string, params: Record<string, unknown>) => {
+        rpcCalls.push([name, params])
+        return { data: 0.99, error: null }
+      },
       from: (table: string) => {
         if (table === 'dose_logs') {
           return {
@@ -551,15 +538,6 @@ describe('confirmIntakeDoseLog', () => {
             insert: () => {
               inserts += 1
               return { select: () => ({ single: async () => ({ data: { id: 'new-dose' }, error: null }) }) }
-            },
-          }
-        }
-        if (table === 'stack_items') {
-          return {
-            select: () => stackItemSelectQuery,
-            update: (payload: Record<string, unknown>) => {
-              stackItemUpdates.push(payload)
-              return stackItemUpdateQuery
             },
           }
         }
@@ -581,7 +559,7 @@ describe('confirmIntakeDoseLog', () => {
     expect(inserts).toBe(0)
     expect(doseUpdates).toEqual([{ dose: 100, unit: 'mcg', method: 'Subkutan', logged_at: '2026-06-23T18:05:00.000Z', taken: true }])
     expect(doseEq).toEqual([['id', 'missed-1'], ['user_id', 'user-1']])
-    expect(stackItemUpdates).toEqual([{ vials_in_stock: 0.99 }])
+    expect(rpcCalls).toEqual([['apply_inventory_confirmation', { p_dose_log_id: 'missed-1' }]])
   })
 })
 describe('isDoseLogAlreadyLinkedError', () => {

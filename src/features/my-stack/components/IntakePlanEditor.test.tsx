@@ -2,7 +2,7 @@
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type {
   DosageFormKey,
   IntakePlanDraft,
@@ -11,9 +11,11 @@ import type {
 } from '../types'
 import { IntakePlanEditor } from './IntakePlanEditor'
 
+const i18nTestState = vi.hoisted(() => ({ translations: {} as Record<string, string> }))
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? key,
+    t: (key: string, options?: { defaultValue?: string }) => i18nTestState.translations[key] ?? options?.defaultValue ?? key,
   }),
 }))
 
@@ -65,6 +67,9 @@ function PlanHarness({
 }
 
 afterEach(cleanup)
+beforeEach(() => {
+  i18nTestState.translations = {}
+})
 
 describe('IntakePlanEditor', () => {
   it('shows a required method and editable start/effective date without inferring a route', () => {
@@ -103,6 +108,22 @@ describe('IntakePlanEditor', () => {
     expect((screen.getByRole('radio', { name: 'Morgens' }) as HTMLInputElement).required).toBe(true)
     expect((screen.getByLabelText('Genaue Uhrzeit (optional)') as HTMLInputElement).required).toBe(false)
     expect(screen.getByText(/Erinnerungen sind optional/)).toBeTruthy()
+  })
+
+  it('renders translated routine labels without changing their stored ids', () => {
+    i18nTestState.translations = {
+      my_stack_routine_morning: 'Morning',
+      my_stack_routine_midday: 'Midday',
+      my_stack_routine_evening: 'Evening',
+    }
+    render(<PlanHarness trackingLevel="intake_only" dosageForm="capsule" />)
+
+    expect((screen.getByRole('radio', { name: 'Morning' }) as HTMLInputElement).value).toBe('morning')
+    expect((screen.getByRole('radio', { name: 'Midday' }) as HTMLInputElement).value).toBe('midday')
+    const evening = screen.getByRole('radio', { name: 'Evening' }) as HTMLInputElement
+    expect(evening.value).toBe('evening')
+    fireEvent.click(evening)
+    expect(evening.checked).toBe(true)
   })
 
   it('sets tablet fractions and never suggests splitting capsules', () => {
@@ -173,5 +194,31 @@ describe('IntakePlanEditor', () => {
     fireEvent.change(frequency, { target: { value: 'Alle X Tage' } })
     expect(screen.getByLabelText('Intervall in Tagen')).toBeTruthy()
     expect(screen.queryByRole('group', { name: 'Wochentage' })).toBeNull()
+  })
+
+  it('renders recurrence validation errors beside the active control', () => {
+    const common = {
+      trackingLevel: 'complete' as const,
+      dosageForm: 'capsule' as const,
+      catalogEntry: vitaminD3,
+      onChange: vi.fn(),
+    }
+    const { rerender } = render(
+      <IntakePlanEditor
+        {...common}
+        plan={{ ...plan, frequency: 'Alle X Tage', xDaysInterval: null }}
+        errors={{ xDaysInterval: 'invalid_interval' }}
+      />,
+    )
+
+    expect(screen.getByRole('alert').textContent).toContain('Tage')
+    rerender(
+      <IntakePlanEditor
+        {...common}
+        plan={{ ...plan, frequency: 'Wochentage wählen', scheduleDays: [] }}
+        errors={{ scheduleDays: 'invalid_weekdays' }}
+      />,
+    )
+    expect(screen.getByRole('alert').textContent).toContain('Wochentag')
   })
 })

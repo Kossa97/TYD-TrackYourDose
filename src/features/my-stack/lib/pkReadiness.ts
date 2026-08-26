@@ -1,6 +1,7 @@
 import type { TrackingLevel } from '../types'
 import {
   effectiveQuantity,
+  resolveScheduleSlots,
   scheduleForDay,
   type EscalationRow,
   type ScheduleCycle,
@@ -55,7 +56,7 @@ export function resolvePkScheduleForDay(
     method: cycle.method,
     dose: quantity?.dose ?? null,
     unit: quantity?.unit ?? null,
-    scheduledAt: segment.intake_time_custom,
+    scheduledAt: resolveScheduleSlots(segment)[0]?.time ?? null,
   }
 }
 

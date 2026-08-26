@@ -144,6 +144,7 @@ describe('Home upcoming intake confirmation flow', () => {
       stackItemId: 'stack-1',
       cycleId: 'cycle-1',
       pendingLogId: 'pending-1',
+      routineGroup: 'evening',
       trackingLevel: 'intake_only',
       dosageForm: 'capsule',
       method: 'Oral',
@@ -174,9 +175,9 @@ describe('Home upcoming intake confirmation flow', () => {
     const TestHome = Home as ComponentType<{ homeDataClient: unknown }>
     render(createElement(MemoryRouter, null, createElement(TestHome, { homeDataClient: client })))
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Alles eingenommen – Morgens' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Alle als eingenommen markieren – Morgens' }))
     const dialog = await screen.findByRole('dialog')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Alles eingenommen' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Alle als eingenommen markieren' }))
 
     expect(await within(dialog).findByText('Routine gespeichert')).toBeTruthy()
     await waitFor(() => expect(client.rpc).toHaveBeenCalledTimes(2))
@@ -214,9 +215,9 @@ describe('Home upcoming intake confirmation flow', () => {
     const TestHome = Home as ComponentType<{ homeDataClient: unknown }>
     render(createElement(MemoryRouter, null, createElement(TestHome, { homeDataClient: client })))
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Alles eingenommen – Morgens' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Alle als eingenommen markieren – Morgens' }))
     const dialog = await screen.findByRole('dialog')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Alles eingenommen' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Alle als eingenommen markieren' }))
 
     const retry = await within(dialog).findByRole('button', { name: 'Bestand erneut versuchen' })
     expect(client.rpc.mock.calls.filter(([name]) => name === 'confirm_intake_group')).toHaveLength(1)
@@ -298,7 +299,7 @@ describe('Home upcoming intake confirmation flow', () => {
       .toHaveLength(1)
   })
 
-  it('keeps a single vial confirmation on the legacy stock path only', async () => {
+  it('applies a single vial confirmation through the dose-log inventory RPC only', async () => {
     const pendingAt = new Date()
     pendingAt.setHours(8, 0, 0, 0)
     const vialCycle = {
@@ -323,10 +324,46 @@ describe('Home upcoming intake confirmation flow', () => {
 
     await confirmSingleHomeIntake('Zink')
 
-    await waitFor(() => expect(client.selectCalls.some(call => (
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('apply_inventory_confirmation', {
+      p_dose_log_id: 'pending-vial-log',
+    }))
+    expect(client.selectCalls.some(call => (
       call.table === 'stack_items' && call.columns.includes('vial_amount_mg')
-    ))).toBe(true))
-    expect(client.rpc.mock.calls.some(([name]) => name === 'apply_inventory_confirmation')).toBe(false)
+    ))).toBe(false)
+  })
+
+  it('retries only vial stock after a committed home routine', async () => {
+    let stockAttempts = 0
+    const vialCycle = {
+      ...quantifiedHomeCycle(),
+      stack_items: { display_name: 'Zink', tracking_level: 'complete' as const, dosage_form: 'vial' },
+    }
+    const client = createHomeClient({
+      cycles: [vialCycle],
+      dose_logs: [],
+      stack_items: [{ id: 'stack-2', display_name: 'Zink', dosage_form: 'vial' }],
+      inventory_items: [],
+      dose_escalations: [],
+      injection_logs: [],
+    }, async name => {
+      if (name === 'confirm_intake_group') return { data: [{ id: 'saved-vial-log' }], error: null }
+      stockAttempts += 1
+      return stockAttempts === 1
+        ? { data: null, error: { message: 'vial stock offline' } }
+        : { data: 0.9, error: null }
+    })
+    const TestHome = Home as ComponentType<{ homeDataClient: unknown }>
+    render(createElement(MemoryRouter, null, createElement(TestHome, { homeDataClient: client })))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Alle als eingenommen markieren – Morgens' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Alle als eingenommen markieren' }))
+
+    const retry = await within(dialog).findByRole('button', { name: 'Bestand erneut versuchen' })
+    expect(client.rpc.mock.calls.filter(([name]) => name === 'confirm_intake_group')).toHaveLength(1)
+    fireEvent.click(retry)
+    await waitFor(() => expect(stockAttempts).toBe(2))
+    expect(client.rpc.mock.calls.filter(([name]) => name === 'confirm_intake_group')).toHaveLength(1)
   })
 
   it('uses the active schedule segment quantity and supplied unit label for today', () => {

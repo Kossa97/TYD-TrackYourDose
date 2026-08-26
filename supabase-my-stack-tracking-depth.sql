@@ -26,7 +26,12 @@ alter table public.cycles
 
 alter table public.dose_logs
   alter column dose drop not null,
-  alter column unit drop not null;
+  alter column unit drop not null,
+  add column if not exists routine_slot_key text;
+
+create unique index if not exists dose_logs_routine_slot_unique
+  on public.dose_logs (user_id, routine_slot_key)
+  where routine_slot_key is not null;
 
 alter table public.stack_item_ingredients
   alter column basis_value drop not null,
@@ -64,8 +69,10 @@ create table if not exists public.stack_item_inventory (
     not enabled
     or (
       package_quantity > 0
+      and package_quantity <= '1000000000'::numeric
       and nullif(btrim(package_unit), '') is not null
       and remaining_quantity >= 0
+      and remaining_quantity <= '1000000000'::numeric
     )
   )
 );
@@ -75,19 +82,70 @@ create table if not exists public.stack_item_inventory_movements (
   user_id uuid not null references auth.users(id) on delete cascade,
   inventory_id uuid not null references public.stack_item_inventory(id) on delete cascade,
   dose_log_id uuid not null unique references public.dose_logs(id) on delete cascade,
-  delta_quantity numeric not null check (delta_quantity > 0),
+  delta_quantity numeric not null check (
+    delta_quantity > 0 and delta_quantity <= '1000000000'::numeric
+  ),
   created_at timestamptz not null default now()
 );
 
+alter table public.stack_item_inventory_movements
+  add column if not exists source_dose_log_id uuid,
+  add column if not exists applied boolean not null default true,
+  add column if not exists reversal_count integer not null default 0,
+  add column if not exists last_reversed_at timestamptz,
+  add column if not exists last_reversal_action text;
+
+update public.stack_item_inventory_movements
+set source_dose_log_id = dose_log_id
+where source_dose_log_id is null;
+
+alter table public.stack_item_inventory_movements
+  alter column source_dose_log_id set not null,
+  alter column dose_log_id drop not null,
+  drop constraint if exists stack_item_inventory_movements_dose_log_id_fkey;
+
+alter table public.stack_item_inventory_movements
+  add constraint stack_item_inventory_movements_dose_log_id_fkey
+  foreign key (dose_log_id) references public.dose_logs(id) on delete set null;
+
+create unique index if not exists stack_item_inventory_movements_source_unique
+  on public.stack_item_inventory_movements (user_id, source_dose_log_id);
+
+create table if not exists public.vial_stock_movements (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  stack_item_id uuid not null references public.stack_items(id) on delete cascade,
+  dose_log_id uuid unique references public.dose_logs(id) on delete set null,
+  source_dose_log_id uuid not null,
+  delta_vials numeric not null check (
+    delta_vials >= 0 and delta_vials <= '1000000000'::numeric
+  ),
+  applied boolean not null default true,
+  reversal_count integer not null default 0,
+  last_reversed_at timestamptz,
+  last_reversal_action text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.vial_stock_movements
+  add column if not exists applied boolean not null default true,
+  add column if not exists reversal_count integer not null default 0,
+  add column if not exists last_reversed_at timestamptz,
+  add column if not exists last_reversal_action text;
+
+create unique index if not exists vial_stock_movements_source_unique
+  on public.vial_stock_movements (user_id, source_dose_log_id);
+
 alter table public.stack_item_inventory enable row level security;
 alter table public.stack_item_inventory_movements enable row level security;
+alter table public.vial_stock_movements enable row level security;
 
 drop policy if exists "own stack item inventory select" on public.stack_item_inventory;
 create policy "own stack item inventory select" on public.stack_item_inventory
-  for select using (auth.uid() = user_id);
+  for select to authenticated using (auth.uid() = user_id);
 drop policy if exists "own stack item inventory insert" on public.stack_item_inventory;
 create policy "own stack item inventory insert" on public.stack_item_inventory
-  for insert with check (
+  for insert to authenticated with check (
     auth.uid() = user_id
     and exists (
       select 1
@@ -98,7 +156,7 @@ create policy "own stack item inventory insert" on public.stack_item_inventory
   );
 drop policy if exists "own stack item inventory update" on public.stack_item_inventory;
 create policy "own stack item inventory update" on public.stack_item_inventory
-  for update using (auth.uid() = user_id) with check (
+  for update to authenticated using (auth.uid() = user_id) with check (
     auth.uid() = user_id
     and exists (
       select 1
@@ -109,15 +167,16 @@ create policy "own stack item inventory update" on public.stack_item_inventory
   );
 drop policy if exists "own stack item inventory delete" on public.stack_item_inventory;
 create policy "own stack item inventory delete" on public.stack_item_inventory
-  for delete using (auth.uid() = user_id);
+  for delete to authenticated using (auth.uid() = user_id);
 
 drop policy if exists "own stack item inventory movements select" on public.stack_item_inventory_movements;
 create policy "own stack item inventory movements select" on public.stack_item_inventory_movements
-  for select using (auth.uid() = user_id);
+  for select to authenticated using (auth.uid() = user_id);
 drop policy if exists "own stack item inventory movements insert" on public.stack_item_inventory_movements;
 create policy "own stack item inventory movements insert" on public.stack_item_inventory_movements
-  for insert with check (
+  for insert to authenticated with check (
     auth.uid() = user_id
+    and source_dose_log_id = dose_log_id
     and exists (
       select 1 from public.stack_item_inventory owned_inventory
       where owned_inventory.id = inventory_id
@@ -129,11 +188,39 @@ create policy "own stack item inventory movements insert" on public.stack_item_i
         and owned_log.user_id = auth.uid()
     )
   );
+drop policy if exists "own stack item inventory movements update" on public.stack_item_inventory_movements;
+create policy "own stack item inventory movements update" on public.stack_item_inventory_movements
+  for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "own vial stock movements select" on public.vial_stock_movements;
+create policy "own vial stock movements select" on public.vial_stock_movements
+  for select to authenticated using (auth.uid() = user_id);
+drop policy if exists "own vial stock movements insert" on public.vial_stock_movements;
+create policy "own vial stock movements insert" on public.vial_stock_movements
+  for insert to authenticated with check (
+    auth.uid() = user_id
+    and source_dose_log_id = dose_log_id
+    and exists (
+      select 1 from public.stack_items owned_item
+      where owned_item.id = stack_item_id
+        and owned_item.user_id = auth.uid()
+    )
+    and exists (
+      select 1 from public.dose_logs owned_log
+      where owned_log.id = dose_log_id
+        and owned_log.user_id = auth.uid()
+    )
+  );
+drop policy if exists "own vial stock movements update" on public.vial_stock_movements;
+create policy "own vial stock movements update" on public.vial_stock_movements
+  for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 revoke all on table public.stack_item_inventory from public, anon;
 revoke all on table public.stack_item_inventory_movements from public, anon;
+revoke all on table public.vial_stock_movements from public, anon;
 grant select, insert, update, delete on table public.stack_item_inventory to authenticated;
-grant select, insert on table public.stack_item_inventory_movements to authenticated;
+grant select, insert, update on table public.stack_item_inventory_movements to authenticated;
+grant select, insert, update on table public.vial_stock_movements to authenticated;
 
 create or replace function public.enforce_stack_item_completeness()
 returns trigger
@@ -211,6 +298,13 @@ drop trigger if exists stack_items_completeness_check on public.stack_items;
 
 create constraint trigger stack_items_completeness_check
 after insert or update of configuration_status, tracking_level on public.stack_items
+deferrable initially deferred
+for each row execute function public.enforce_stack_item_completeness();
+
+drop trigger if exists stack_item_ingredients_completeness_check on public.stack_item_ingredients;
+
+create constraint trigger stack_item_ingredients_completeness_check
+after insert or update or delete on public.stack_item_ingredients
 deferrable initially deferred
 for each row execute function public.enforce_stack_item_completeness();
 
@@ -305,13 +399,13 @@ begin
     where row_value ->> 'amount_value' is null
       or not (
         (row_value ->> 'amount_value')::numeric > 0
-        and (row_value ->> 'amount_value')::numeric < 'Infinity'::numeric
+        and (row_value ->> 'amount_value')::numeric <= '1000000000'::numeric
       )
       or nullif(btrim(row_value ->> 'amount_unit'), '') is null
       or row_value ->> 'basis_value' is null
       or not (
         (row_value ->> 'basis_value')::numeric > 0
-        and (row_value ->> 'basis_value')::numeric < 'Infinity'::numeric
+        and (row_value ->> 'basis_value')::numeric <= '1000000000'::numeric
       )
       or nullif(btrim(row_value ->> 'basis_unit'), '') is null
   ) then
@@ -386,7 +480,7 @@ begin
         when item_tracking_level = 'complete'
           or (
             nullif(ingredient ->> 'amount_value', '')::numeric > 0
-            and nullif(ingredient ->> 'amount_value', '')::numeric < 'Infinity'::numeric
+            and nullif(ingredient ->> 'amount_value', '')::numeric <= '1000000000'::numeric
             and nullif(btrim(ingredient ->> 'amount_unit'), '') is not null
           )
           then nullif(ingredient ->> 'amount_value', '')::numeric
@@ -395,7 +489,7 @@ begin
         when item_tracking_level = 'complete'
           or (
             nullif(ingredient ->> 'amount_value', '')::numeric > 0
-            and nullif(ingredient ->> 'amount_value', '')::numeric < 'Infinity'::numeric
+            and nullif(ingredient ->> 'amount_value', '')::numeric <= '1000000000'::numeric
             and nullif(btrim(ingredient ->> 'amount_unit'), '') is not null
           )
           then nullif(btrim(ingredient ->> 'amount_unit'), '')
@@ -404,7 +498,7 @@ begin
         when item_tracking_level = 'complete'
           or (
             nullif(ingredient ->> 'basis_value', '')::numeric > 0
-            and nullif(ingredient ->> 'basis_value', '')::numeric < 'Infinity'::numeric
+            and nullif(ingredient ->> 'basis_value', '')::numeric <= '1000000000'::numeric
             and nullif(btrim(ingredient ->> 'basis_unit'), '') is not null
           )
           then nullif(ingredient ->> 'basis_value', '')::numeric
@@ -413,7 +507,7 @@ begin
         when item_tracking_level = 'complete'
           or (
             nullif(ingredient ->> 'basis_value', '')::numeric > 0
-            and nullif(ingredient ->> 'basis_value', '')::numeric < 'Infinity'::numeric
+            and nullif(ingredient ->> 'basis_value', '')::numeric <= '1000000000'::numeric
             and nullif(btrim(ingredient ->> 'basis_unit'), '') is not null
           )
           then nullif(btrim(ingredient ->> 'basis_unit'), '')
@@ -426,9 +520,11 @@ begin
     and coalesce((inventory_payload ->> 'enabled')::boolean, false) then
     if nullif(inventory_payload ->> 'package_quantity', '')::numeric is null
       or nullif(inventory_payload ->> 'package_quantity', '')::numeric <= 0
+      or nullif(inventory_payload ->> 'package_quantity', '')::numeric > '1000000000'::numeric
       or nullif(btrim(inventory_payload ->> 'package_unit'), '') is null
       or nullif(inventory_payload ->> 'remaining_quantity', '')::numeric is null
-      or nullif(inventory_payload ->> 'remaining_quantity', '')::numeric < 0 then
+      or nullif(inventory_payload ->> 'remaining_quantity', '')::numeric < 0
+      or nullif(inventory_payload ->> 'remaining_quantity', '')::numeric > '1000000000'::numeric then
       raise exception 'Enabled inventory requires package quantity, unit, and remaining quantity';
     end if;
 
@@ -497,8 +593,12 @@ declare
   plan_unit text;
   plan_method text := nullif(btrim(p_plan ->> 'method'), '');
   plan_frequency text := nullif(btrim(p_plan ->> 'frequency'), '');
-  plan_interval integer := nullif(p_plan ->> 'x_days_interval', '')::integer;
+  plan_interval integer;
+  plan_interval_value numeric;
   plan_schedule_days text[];
+  schedule_day_count integer;
+  schedule_day_unique_count integer;
+  schedule_days_valid boolean;
   plan_effective_date date;
   plan_end_date date := nullif(p_plan ->> 'end_date', '')::date;
   plan_intake_time text := nullif(btrim(p_plan ->> 'intake_time'), '');
@@ -544,6 +644,31 @@ begin
     plan_schedule_days := '{}'::text[];
   end if;
 
+  if plan_frequency = 'Alle X Tage' then
+    if coalesce(p_plan ->> 'x_days_interval', '') !~ '^[0-9]+$' then
+      raise exception 'Every-X-days frequency requires a whole-day interval';
+    end if;
+    plan_interval_value := (p_plan ->> 'x_days_interval')::numeric;
+    if not (plan_interval_value between 2 and 30) then
+      raise exception 'Every-X-days interval must be between 2 and 30';
+    end if;
+    plan_interval := plan_interval_value::integer;
+  else
+    plan_interval := null;
+  end if;
+
+  if plan_frequency = 'Wochentage wählen' then
+    select count(*), count(distinct weekday),
+      coalesce(bool_and(weekday = any(array['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']::text[])), false)
+    into schedule_day_count, schedule_day_unique_count, schedule_days_valid
+    from unnest(plan_schedule_days) weekday;
+    if schedule_day_count = 0
+      or schedule_day_count <> schedule_day_unique_count
+      or not schedule_days_valid then
+      raise exception 'Weekday frequency requires valid unique weekdays';
+    end if;
+  end if;
+
   if saved_item.tracking_level = 'intake_only' then
     plan_dose := null;
     plan_unit := null;
@@ -551,7 +676,7 @@ begin
     plan_dose := nullif(p_plan ->> 'dose', '')::numeric;
     plan_unit := nullif(btrim(p_plan ->> 'unit'), '');
     if plan_dose is null
-      or not (plan_dose > 0 and plan_dose < 'Infinity'::numeric)
+      or not (plan_dose > 0 and plan_dose <= '1000000000'::numeric)
       or plan_unit is null then
       raise exception 'Tracked quantity requires a positive dose and unit';
     end if;
@@ -692,6 +817,7 @@ declare
   saved_log public.dose_logs;
   entry_cycle_id uuid;
   entry_dose_log_id uuid;
+  entry_slot_key text;
   entry_stack_item_id uuid;
   entry_dose numeric;
   entry_unit text;
@@ -707,6 +833,18 @@ begin
     or jsonb_typeof(p_entries) <> 'array'
     or jsonb_array_length(p_entries) = 0 then
     raise exception 'At least one intake entry is required';
+  end if;
+
+  if exists (
+    select 1
+    from (
+      select value ->> 'slot_key' as slot_key
+      from jsonb_array_elements(p_entries)
+      group by 1
+      having count(*) > 1
+    ) duplicates
+  ) then
+    raise exception 'Duplicate routine slot key in intake group';
   end if;
 
   if exists (
@@ -729,6 +867,7 @@ begin
   loop
     entry_cycle_id := nullif(btrim(entry ->> 'cycle_id'), '')::uuid;
     entry_dose_log_id := nullif(btrim(entry ->> 'dose_log_id'), '')::uuid;
+    entry_slot_key := nullif(btrim(entry ->> 'slot_key'), '');
     entry_stack_item_id := nullif(btrim(entry ->> 'stack_item_id'), '')::uuid;
     entry_unit := nullif(btrim(entry ->> 'unit'), '');
     entry_method := coalesce(entry ->> 'method', '');
@@ -743,15 +882,16 @@ begin
     end if;
 
     if entry_cycle_id is null
+      or entry_slot_key is null
       or entry_stack_item_id is null
       or entry_logged_at is null then
-      raise exception 'Cycle, stack item, and logged_at are required';
+      raise exception 'Cycle, slot key, stack item, and logged_at are required';
     end if;
     if (entry_dose is null) <> (entry_unit is null) then
       raise exception 'Dose and unit must both be supplied or both be null';
     end if;
     if entry_dose is not null
-      and not (entry_dose > 0 and entry_dose < 'Infinity'::numeric) then
+      and not (entry_dose > 0 and entry_dose <= '1000000000'::numeric) then
       raise exception 'Dose must be positive';
     end if;
 
@@ -767,11 +907,28 @@ begin
     if not found then
       raise exception 'Intake cycle not found';
     end if;
-    if item_tracking_level = 'intake_only' and entry_dose is not null then
-      raise exception 'Intake-only entries cannot store a quantity';
+    if item_tracking_level = 'intake_only' then
+      if entry_dose is not null then
+        raise exception 'Intake-only entries cannot store a quantity';
+      end if;
+    elsif entry_dose is null then
+      raise exception 'Tracked entries require dose and unit';
     end if;
 
-    if entry_dose_log_id is not null then
+    select *
+    into saved_log
+    from public.dose_logs
+    where routine_slot_key = entry_slot_key
+      and user_id = owner_id;
+
+    if found then
+      if saved_log.stack_item_id <> entry_stack_item_id
+        or saved_log.logged_at <> entry_logged_at
+        or saved_log.taken is false
+        or (entry_dose_log_id is not null and saved_log.id <> entry_dose_log_id) then
+        raise exception 'Routine slot key belongs to another intake';
+      end if;
+    elsif entry_dose_log_id is not null then
       perform 1
       from public.dose_logs
       where id = entry_dose_log_id
@@ -790,7 +947,9 @@ begin
     select value
     from jsonb_array_elements(p_entries)
   loop
+    entry_cycle_id := nullif(btrim(entry ->> 'cycle_id'), '')::uuid;
     entry_dose_log_id := nullif(btrim(entry ->> 'dose_log_id'), '')::uuid;
+    entry_slot_key := nullif(btrim(entry ->> 'slot_key'), '');
     entry_stack_item_id := nullif(btrim(entry ->> 'stack_item_id'), '')::uuid;
     entry_unit := nullif(btrim(entry ->> 'unit'), '');
     entry_method := coalesce(entry ->> 'method', '');
@@ -801,13 +960,21 @@ begin
       entry_dose := (entry ->> 'dose')::numeric;
     end if;
 
-    if entry_dose_log_id is not null then
+    select *
+    into saved_log
+    from public.dose_logs
+    where routine_slot_key = entry_slot_key
+      and user_id = owner_id
+    for update;
+
+    if not found and entry_dose_log_id is not null then
       update public.dose_logs
       set
         dose = entry_dose,
         unit = entry_unit,
         method = entry_method,
         logged_at = entry_logged_at,
+        routine_slot_key = entry_slot_key,
         taken = true
       where id = entry_dose_log_id
         and user_id = owner_id
@@ -815,11 +982,7 @@ begin
         and taken is null
         and logged_at = entry_logged_at
       returning * into saved_log;
-
-      if not found then
-        raise exception 'Pending dose log not found';
-      end if;
-    else
+    elsif not found then
       insert into public.dose_logs (
         user_id,
         stack_item_id,
@@ -827,6 +990,7 @@ begin
         unit,
         method,
         logged_at,
+        routine_slot_key,
         taken
       ) values (
         owner_id,
@@ -835,10 +999,46 @@ begin
         entry_unit,
         entry_method,
         entry_logged_at,
+        entry_slot_key,
         true
       )
+      on conflict (user_id, routine_slot_key)
+        where routine_slot_key is not null
+        do nothing
       returning * into saved_log;
     end if;
+
+    if not found then
+      select *
+      into saved_log
+      from public.dose_logs
+      where routine_slot_key = entry_slot_key
+        and user_id = owner_id
+      for update;
+
+      if not found then
+        raise exception 'Routine intake could not be saved';
+      end if;
+    end if;
+
+    if saved_log.stack_item_id <> entry_stack_item_id
+      or saved_log.logged_at <> entry_logged_at
+      or saved_log.taken is false
+      or (entry_dose_log_id is not null and saved_log.id <> entry_dose_log_id) then
+      raise exception 'Routine slot key belongs to another intake';
+    end if;
+
+    update public.dose_logs
+    set
+      dose = entry_dose,
+      unit = entry_unit,
+      method = entry_method,
+      logged_at = entry_logged_at,
+      routine_slot_key = entry_slot_key,
+      taken = true
+    where id = saved_log.id
+      and user_id = owner_id
+    returning * into saved_log;
 
     return next saved_log;
   end loop;
@@ -859,10 +1059,15 @@ declare
   log public.dose_logs;
   item public.stack_items;
   inventory_row public.stack_item_inventory;
+  movement public.stack_item_inventory_movements;
+  vial_movement public.vial_stock_movements;
   ingredient_count integer;
   convertible_count integer;
   minimum_delta numeric;
   maximum_delta numeric;
+  actual_delta numeric;
+  vial_delta numeric;
+  actual_vial_delta numeric;
 begin
   if owner_id is null then
     raise exception 'Authentication required';
@@ -873,7 +1078,8 @@ begin
   from public.dose_logs
   where id = p_dose_log_id
     and user_id = owner_id
-    and taken is true;
+    and taken is true
+  for update;
 
   if not found then
     raise exception 'Confirmed dose log not found';
@@ -883,13 +1089,98 @@ begin
   into item
   from public.stack_items
   where id = log.stack_item_id
-    and user_id = owner_id;
+    and user_id = owner_id
+  for update;
 
   if not found then
     raise exception 'Stack item not found';
   end if;
 
-  if item.tracking_level <> 'complete' or item.dosage_form = 'vial' then
+  if item.dosage_form = 'vial' then
+    select *
+    into vial_movement
+    from public.vial_stock_movements
+    where source_dose_log_id = p_dose_log_id
+      and user_id = owner_id
+    for update;
+
+    if found then
+      if vial_movement.applied then
+        return item.vials_in_stock;
+      end if;
+
+      actual_vial_delta := least(coalesce(item.vials_in_stock, 0), vial_movement.delta_vials);
+
+      update public.stack_items
+      set vials_in_stock = round(greatest(0, coalesce(vials_in_stock, 0) - actual_vial_delta), 4)
+      where id = item.id
+        and user_id = owner_id
+      returning vials_in_stock into item.vials_in_stock;
+
+      update public.vial_stock_movements
+      set
+        dose_log_id = p_dose_log_id,
+        delta_vials = actual_vial_delta,
+        applied = true
+      where id = vial_movement.id
+        and user_id = owner_id;
+
+      return item.vials_in_stock;
+    end if;
+
+    if log.dose is null or log.unit is null or log.dose <= 0 then
+      raise exception 'Vial stock conversion is ambiguous or unsupported';
+    end if;
+
+    if lower(log.unit) = 'ml' then
+      if item.reconstitution_ml is null or item.reconstitution_ml <= 0 then
+        raise exception 'Vial stock conversion is ambiguous or unsupported';
+      end if;
+      vial_delta := log.dose / item.reconstitution_ml;
+    elsif lower(log.unit) in ('mg', 'mcg') then
+      if item.vial_amount_mg is null or item.vial_amount_mg <= 0 then
+        raise exception 'Vial stock conversion is ambiguous or unsupported';
+      end if;
+      vial_delta := case
+        when lower(log.unit) = 'mcg' then log.dose / 1000
+        else log.dose
+      end / item.vial_amount_mg;
+    else
+      raise exception 'Vial stock conversion is ambiguous or unsupported';
+    end if;
+
+    if not (vial_delta > 0 and vial_delta <= '1000000000'::numeric) then
+      raise exception 'Vial stock conversion is ambiguous or unsupported';
+    end if;
+
+    actual_vial_delta := least(coalesce(item.vials_in_stock, 0), vial_delta);
+
+    insert into public.vial_stock_movements (
+      user_id,
+      stack_item_id,
+      dose_log_id,
+      source_dose_log_id,
+      delta_vials,
+      applied
+    ) values (
+      owner_id,
+      item.id,
+      p_dose_log_id,
+      p_dose_log_id,
+      actual_vial_delta,
+      true
+    );
+
+    update public.stack_items
+    set vials_in_stock = round(greatest(0, coalesce(vials_in_stock, 0) - actual_vial_delta), 4)
+    where id = item.id
+      and user_id = owner_id
+    returning vials_in_stock into item.vials_in_stock;
+
+    return item.vials_in_stock;
+  end if;
+
+  if item.tracking_level <> 'complete' then
     return null;
   end if;
 
@@ -907,18 +1198,43 @@ begin
     return inventory_row.remaining_quantity;
   end if;
 
-  if exists (
-    select 1
-    from public.stack_item_inventory_movements movement
-    where movement.dose_log_id = p_dose_log_id
-      and movement.user_id = owner_id
-  ) then
+  select *
+  into movement
+  from public.stack_item_inventory_movements
+  where source_dose_log_id = p_dose_log_id
+    and user_id = owner_id
+  for update;
+
+  if found then
+    if movement.applied then
+      return inventory_row.remaining_quantity;
+    end if;
+    if inventory_row.remaining_quantity < movement.delta_quantity then
+      raise exception 'Insufficient inventory for confirmation';
+    end if;
+
+    update public.stack_item_inventory
+    set
+      remaining_quantity = remaining_quantity - movement.delta_quantity,
+      updated_at = now()
+    where id = inventory_row.id
+      and user_id = owner_id
+    returning remaining_quantity into inventory_row.remaining_quantity;
+
+    update public.stack_item_inventory_movements
+    set
+      dose_log_id = p_dose_log_id,
+      applied = true
+    where id = movement.id
+      and user_id = owner_id;
+
     return inventory_row.remaining_quantity;
   end if;
 
   if log.dose is null
     or log.unit is null
-    or log.dose <= 0 then
+    or log.dose <= 0
+    or log.dose > '1000000000'::numeric then
     raise exception 'Inventory conversion is ambiguous or unsupported';
   end if;
 
@@ -948,25 +1264,35 @@ begin
     or convertible_count <> ingredient_count
     or minimum_delta is null
     or minimum_delta <= 0
+    or maximum_delta > '1000000000'::numeric
     or minimum_delta is distinct from maximum_delta then
     raise exception 'Inventory conversion is ambiguous or unsupported';
+  end if;
+
+  actual_delta := least(inventory_row.remaining_quantity, minimum_delta);
+  if actual_delta <= 0 then
+    raise exception 'Insufficient inventory for confirmation';
   end if;
 
   insert into public.stack_item_inventory_movements (
     user_id,
     inventory_id,
     dose_log_id,
-    delta_quantity
+    source_dose_log_id,
+    delta_quantity,
+    applied
   ) values (
     owner_id,
     inventory_row.id,
     p_dose_log_id,
-    minimum_delta
+    p_dose_log_id,
+    actual_delta,
+    true
   );
 
   update public.stack_item_inventory
   set
-    remaining_quantity = greatest(0, remaining_quantity - minimum_delta),
+    remaining_quantity = remaining_quantity - actual_delta,
     updated_at = now()
   where id = inventory_row.id
     and user_id = owner_id
@@ -978,5 +1304,147 @@ $$;
 
 revoke execute on function public.apply_inventory_confirmation(uuid) from public, anon;
 grant execute on function public.apply_inventory_confirmation(uuid) to authenticated;
+
+drop function if exists public.reverse_inventory_confirmation(uuid, boolean, boolean);
+
+create or replace function public.reverse_inventory_confirmation(
+  p_dose_log_id uuid,
+  p_action text
+)
+returns numeric
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  owner_id uuid := auth.uid();
+  log public.dose_logs;
+  movement public.stack_item_inventory_movements;
+  inventory_row public.stack_item_inventory;
+  vial_movement public.vial_stock_movements;
+  vial_item public.stack_items;
+  remaining numeric;
+begin
+  if owner_id is null then
+    raise exception 'Authentication required';
+  end if;
+  if p_action is null or p_action not in ('undo', 'skip', 'delete') then
+    raise exception 'Invalid inventory reversal action';
+  end if;
+
+  select *
+  into log
+  from public.dose_logs
+  where id = p_dose_log_id
+    and user_id = owner_id
+  for update;
+
+  select *
+  into movement
+  from public.stack_item_inventory_movements
+  where source_dose_log_id = p_dose_log_id
+    and user_id = owner_id
+  for update;
+
+  select *
+  into vial_movement
+  from public.vial_stock_movements
+  where source_dose_log_id = p_dose_log_id
+    and user_id = owner_id
+  for update;
+
+  if movement.id is not null and vial_movement.id is not null then
+    raise exception 'Dose log has multiple inventory ledgers';
+  end if;
+  if log.id is null and movement.id is null and vial_movement.id is null then
+    raise exception 'Dose log not found';
+  end if;
+  if log.id is null and p_action <> 'delete' then
+    raise exception 'Dose log not found';
+  end if;
+
+  if vial_movement.id is not null then
+    select *
+    into vial_item
+    from public.stack_items
+    where id = vial_movement.stack_item_id
+      and user_id = owner_id
+    for update;
+
+    if not found then
+      raise exception 'Stack item not found';
+    end if;
+
+    if vial_movement.applied then
+      update public.stack_items
+      set vials_in_stock = round(coalesce(vials_in_stock, 0) + vial_movement.delta_vials, 4)
+      where id = vial_item.id
+        and user_id = owner_id
+      returning vials_in_stock into remaining;
+
+      update public.vial_stock_movements
+      set
+        applied = false,
+        reversal_count = reversal_count + 1,
+        last_reversed_at = now(),
+        last_reversal_action = p_action
+      where id = vial_movement.id
+        and user_id = owner_id;
+    else
+      remaining := vial_item.vials_in_stock;
+    end if;
+  elsif movement.id is not null then
+    select *
+    into inventory_row
+    from public.stack_item_inventory
+    where id = movement.inventory_id
+      and user_id = owner_id
+    for update;
+
+    if not found then
+      raise exception 'Inventory not found';
+    end if;
+
+    if movement.applied then
+      update public.stack_item_inventory
+      set
+        remaining_quantity = remaining_quantity + movement.delta_quantity,
+        updated_at = now()
+      where id = inventory_row.id
+        and user_id = owner_id
+      returning remaining_quantity into remaining;
+
+      update public.stack_item_inventory_movements
+      set
+        applied = false,
+        reversal_count = reversal_count + 1,
+        last_reversed_at = now(),
+        last_reversal_action = p_action
+      where id = movement.id
+        and user_id = owner_id;
+    else
+      remaining := inventory_row.remaining_quantity;
+    end if;
+  end if;
+
+  if log.id is not null then
+    if p_action = 'delete' then
+      delete from public.dose_logs
+      where id = p_dose_log_id
+        and user_id = owner_id;
+    else
+      update public.dose_logs
+      set taken = case p_action when 'skip' then false else null end
+      where id = p_dose_log_id
+        and user_id = owner_id;
+    end if;
+  end if;
+
+  return remaining;
+end;
+$$;
+
+revoke execute on function public.reverse_inventory_confirmation(uuid, text) from public, anon;
+grant execute on function public.reverse_inventory_confirmation(uuid, text) to authenticated;
 
 commit;

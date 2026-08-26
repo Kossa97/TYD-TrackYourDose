@@ -2,9 +2,11 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { createInstance } from 'i18next'
 import { describe, expect, it } from 'vitest'
 
 const sourcePath = resolve('scripts/my-stack-i18n-source.mjs')
+const localeCodes = ['de', 'en', 'ar', 'es', 'fr', 'hi', 'id', 'it', 'ja', 'ko', 'pt', 'ru', 'tr', 'zh'] as const
 const manualLocaleCodes = ['de', 'en'] as const
 const EXPECTED_MY_STACK_KEYS = [
   'my_stack_title',
@@ -61,6 +63,124 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_needs_review',
   'my_stack_visual_pending',
   'my_stack_save_error',
+  'my_stack_step_tracking_level',
+  'my_stack_step_plan',
+  'my_stack_this_substance',
+  'my_stack_tracking_question',
+  'my_stack_tracking_intro',
+  'my_stack_tracking_level',
+  'my_stack_tracking_level_required',
+  'my_stack_tracking_intake_only_title',
+  'my_stack_tracking_intake_only_recorded',
+  'my_stack_tracking_intake_only_omitted',
+  'my_stack_tracking_intake_only_example',
+  'my_stack_tracking_intake_only_next',
+  'my_stack_tracking_with_amount_title',
+  'my_stack_tracking_with_amount_recorded',
+  'my_stack_tracking_with_amount_omitted',
+  'my_stack_tracking_with_amount_example',
+  'my_stack_tracking_with_amount_next',
+  'my_stack_tracking_complete_title',
+  'my_stack_tracking_complete_recorded',
+  'my_stack_tracking_complete_omitted',
+  'my_stack_tracking_complete_example',
+  'my_stack_tracking_complete_next',
+  'my_stack_tracking_pk_available',
+  'my_stack_tracking_pk_unavailable',
+  'my_stack_tracking_change_later',
+  'my_stack_plan_method',
+  'my_stack_plan_method_placeholder',
+  'my_stack_plan_method_required',
+  'my_stack_plan_frequency',
+  'my_stack_plan_frequency_required',
+  'my_stack_plan_start_date',
+  'my_stack_plan_start_date_required',
+  'my_stack_plan_interval',
+  'my_stack_plan_weekdays',
+  'my_stack_plan_routine_group',
+  'my_stack_plan_routine_required',
+  'my_stack_plan_time',
+  'my_stack_plan_quantity',
+  'my_stack_plan_quantity_required',
+  'my_stack_plan_unit',
+  'my_stack_plan_unit_required',
+  'my_stack_plan_reminders_optional',
+  'my_stack_routine_morning',
+  'my_stack_routine_midday',
+  'my_stack_routine_evening',
+  'my_stack_daily_behavior',
+  'my_stack_daily_intake_only',
+  'my_stack_daily_with_amount',
+  'my_stack_daily_complete',
+  'my_stack_plan_exact_time',
+  'my_stack_no_exact_time',
+  'my_stack_plan_quantity_summary',
+  'my_stack_quantity_not_tracked',
+  'my_stack_pk_method_title',
+  'my_stack_pk_method_confirm',
+  'my_stack_pk_method_confirm_copy',
+  'my_stack_pk_method_choose_first',
+  'my_stack_pk_requirements_missing',
+  'my_stack_pk_status',
+  'my_stack_pk_available',
+  'my_stack_pk_unavailable',
+  'my_stack_brand',
+  'my_stack_inventory_summary',
+  'my_stack_product_inventory',
+  'my_stack_inventory_enabled',
+  'my_stack_package_quantity',
+  'my_stack_package_unit',
+  'my_stack_remaining_quantity',
+  'my_stack_batch_number_optional',
+  'my_stack_expires_at_optional',
+  'routine_confirmation_close',
+  'routine_group_label',
+  'routine_confirmation_title',
+  'routine_confirmation_hint',
+  'routine_confirmation_saved',
+  'routine_inventory_committed_retry',
+  'routine_inventory_retry',
+  'routine_add_injection_label',
+  'routine_add_injection',
+  'routine_confirmation_done',
+  'routine_select_item',
+  'routine_planned_quantity',
+  'routine_actual_override',
+  'routine_amount_for',
+  'routine_confirmation_save_error',
+  'routine_confirmation_retry',
+  'routine_confirmation_cancel',
+  'routine_confirmation_saving',
+  'routine_confirmation_confirm_all',
+  'quantity_not_tracked',
+  'dose_plan_new_standard',
+  'dose_plan_add_titration',
+  'dose_plan_titration_disclaimer',
+  'dose_plan_intake_log',
+  'dose_plan_planned',
+  'dose_plan_permanent_backfill_failed',
+  'dose_plan_titration_backfill_failed',
+  'dose_plan_backfilled_one',
+  'dose_plan_backfilled_other',
+  'pk_status_label',
+  'pk_missing_title',
+  'pk_unavailable_title',
+  'pk_missing_copy',
+  'pk_complete_action',
+  'pk_unsupported_unit',
+  'pk_unsupported_profile',
+  'pk_interrupted',
+  'pk_planned',
+  'pk_requirement_complete_tracking',
+  'pk_requirement_method',
+  'pk_requirement_dose',
+  'pk_requirement_unit',
+  'pk_requirement_time',
+  'pk_no_ready_items',
+  'pk_open_simulation',
+  'inventory_update_failed',
+  'inventory_committed_retry',
+  'inventory_retry',
   'stack_category_peptide',
   'stack_category_medication',
   'stack_category_hormone',
@@ -106,21 +226,20 @@ const MANUAL_OUTSIDE_OVERLAY_HASHES = {
   de: '258cc643a3bb558ee9a16f20d7a0bd6295e38def2ad9d9d926134eb7c751829d',
   en: '0f202b9ea6b8691b2a132c343d4370cce6ae30353b1c99a0bbd8c3e9d13aeba2',
 } as const
-const DEFERRED_LOCALE_HASHES = {
-  ar: 'afd4aa71634ac834d2b185a3b837f6176fd88b68df6409141c9a15d60561c438',
-  es: '39c03cb7a7cdf71c8d1189a0b6fb06518cc652ee9afcd9cd45b73fc7b885bf30',
-  fr: '1b30fe05934dee975dce693b911fbc5cbcc25289c75cd3a6dab48f42462dea8b',
-  hi: 'cf86b1259f69d34d77f57258fceb2ad4fae555c05c19f5a8fc7dc706cd526c9f',
-  id: '0d519fc5353b955b5190528046d84b56e0a8d60651f33352e8bf5d9e812b7fe8',
-  it: 'c0e8fd19cc69c16990f29ba1b85e744ab32e87dada9bf4a74cfe4051ae93ee84',
-  ja: '5c747ce03319e3e75745281ef7f0d225577f20d829318922d5ffd6ac82852254',
-  ko: '9f330ed6e0aa3f06db5f0e9cedda7ac05f415c508050b8a386f53357b5ba4b5f',
-  pt: '05cf92a8ff84c346c9a699bd24823e939a3dc8a972df81387204165e5cd3c738',
-  ru: '199f6fcfd749a7d0023745eb624a330ecd672641168b937b33182dcc3983c5f9',
-  tr: '9cb9d14020b2a3d015fcf5880936cfc115e5d8cbf39d7b9055489a05002ab7f8',
-  zh: 'ac72e3e0be5e3d4807559670cd51e44feb8fc08dc006fe0dadf2a069cd3717e3',
+const TRANSLATED_OUTSIDE_OVERLAY_HASHES = {
+  ar: '47d5344e6b2132e3f01b5f34676ef2ed038f2d3fa075b4fc737caf3f60955af7',
+  es: '91640876a543c84520c876db1e39e1927cb12822011223627cbb76a9384f602c',
+  fr: '50c0c189ec48eab0cc972539715e47d9f342f5dd797d6a8c32622a827bac5732',
+  hi: '0b18ee80cf3bdab20895e31418df4b9106a3668cba05b4300b8b012c71fb9c44',
+  id: 'b809bfe4d2a3eaf32237947bdc3ed5b40fea252fe39c494eeeeefacd305356e8',
+  it: 'f125dd3b1a9192fc7b862ace19e63637118d648f13e9afc6ee4a1c25171e3c8f',
+  ja: '27cc7be0583af500e96e85ace97b0e7d90ab8d23ae94237e33e48667c91a90b4',
+  ko: '3369b42b59420f70e780f4004c70e3a83d3edfbbe116d05d3b2ab2fcb6a4acc0',
+  pt: '9b72cfc750c43c71e02962f324d14c6e2c8c831fc656f5a0976c2f35b4d2146e',
+  ru: '6502048e718de1669b14a1b9a1a34d94e53ad19885e4b147800bda7b46c44f75',
+  tr: '14b492940010acc2b4a6da47e72cc8da982a2c9819772443ea70cc3b2cde2a42',
+  zh: 'eb50fbd256c08d05fa789078635b5e9398d471c8316bfeba958f3ca76110794f',
 } as const
-const deferredLocaleCodes = Object.keys(DEFERRED_LOCALE_HASHES) as Array<keyof typeof DEFERRED_LOCALE_HASHES>
 const expectedKeySet = new Set<string>(EXPECTED_MY_STACK_KEYS)
 
 async function loadSource() {
@@ -151,6 +270,10 @@ function withoutMyStackOverlay(locale: Record<string, unknown>) {
   )
 }
 
+function interpolationTokens(value: string) {
+  return [...value.matchAll(/{{\s*[^{}]+\s*}}/g)].map(match => match[0]).sort()
+}
+
 describe('My Stack DE/EN locale contract', () => {
   it('pins the exact approved matching and protected manual source keys', async () => {
     expect(existsSync(sourcePath)).toBe(true)
@@ -161,15 +284,16 @@ describe('My Stack DE/EN locale contract', () => {
     expect(MY_STACK_KEYS).toEqual([...EXPECTED_MY_STACK_KEYS])
     expect(Object.keys(MY_STACK_DE)).toEqual([...EXPECTED_MY_STACK_KEYS])
     expect(Object.keys(MY_STACK_EN)).toEqual([...EXPECTED_MY_STACK_KEYS])
-    expect(EXPECTED_MY_STACK_KEYS).toHaveLength(94)
+    expect(new Set(EXPECTED_MY_STACK_KEYS).size).toBe(EXPECTED_MY_STACK_KEYS.length)
     expect(MY_STACK_KEYS.filter(key =>
       key.startsWith('plib_') ||
       key.startsWith('lab_') ||
-      key.startsWith('research_') ||
-      key.startsWith('pk_'),
+      key.startsWith('research_'),
     )).toEqual([])
     expect(MY_STACK_EN.stack_category_peptide).toBe('Peptide')
     expect(MY_STACK_DE.stack_category_peptide).toBe('Peptid')
+    expect(MY_STACK_EN.routine_confirmation_confirm_all).toBe('Mark all as taken')
+    expect(MY_STACK_DE.routine_confirmation_confirm_all).toBe('Alle als eingenommen markieren')
   })
 
   it.each(manualLocaleCodes)('keeps %s complete and changes nothing outside its overlay', async (code) => {
@@ -206,15 +330,47 @@ describe('My Stack DE/EN locale contract', () => {
     expect(MY_STACK_DE.kein_peptid).toBe('Keine Substanz zugeordnet')
   })
 
-  it.each(deferredLocaleCodes)('keeps deferred locale %s byte-independent and namespace-free', async (code) => {
+  it.each(localeCodes)('keeps locale %s complete, token-safe, and unchanged outside the overlay', async (code) => {
+    const { MY_STACK_EN } = await loadSource()
     const locale = loadLocale(code)
-    const newNamespaceKeys = EXPECTED_MY_STACK_KEYS.filter(key =>
-      key.startsWith('my_stack_') ||
-      key.startsWith('stack_category_') ||
-      key.startsWith('dosage_form_'),
-    )
 
-    expect(canonicalHash(locale)).toBe(DEFERRED_LOCALE_HASHES[code])
-    expect(newNamespaceKeys.filter(key => Object.hasOwn(locale, key))).toEqual([])
+    for (const key of EXPECTED_MY_STACK_KEYS) {
+      expect(locale[key], `${code}.${key}`).toEqual(expect.any(String))
+      expect((locale[key] as string).trim(), `${code}.${key}`).not.toBe('')
+      expect(locale[key], `${code}.${key}`).not.toBe(key)
+      expect(interpolationTokens(locale[key] as string), `${code}.${key} tokens`)
+        .toEqual(interpolationTokens(MY_STACK_EN[key]))
+    }
+
+    const expectedHash = code === 'de' || code === 'en'
+      ? MANUAL_OUTSIDE_OVERLAY_HASHES[code]
+      : TRANSLATED_OUTSIDE_OVERLAY_HASHES[code]
+    expect(canonicalHash(withoutMyStackOverlay(locale))).toBe(expectedHash)
+  })
+
+  it.each(localeCodes)('resolves explicit backfill copy with the real %s i18next rules', async (code) => {
+    const dosePlan = await import('./dosePlan') as typeof import('./dosePlan') & {
+      backfillMessageKey?: (count: number) => 'dose_plan_backfilled_one' | 'dose_plan_backfilled_other'
+    }
+    expect(dosePlan.backfillMessageKey, 'MyStackPage needs an explicit one/other key boundary').toBeTypeOf('function')
+    if (!dosePlan.backfillMessageKey) return
+
+    const locale = loadLocale(code)
+    const runtime = createInstance()
+    await runtime.init({
+      lng: code,
+      fallbackLng: false,
+      resources: { [code]: { translation: locale } },
+      interpolation: { escapeValue: false },
+    })
+
+    const counts = code === 'ar' || code === 'ru' ? [1, 2, 3, 5] : [1, 2]
+    for (const count of counts) {
+      const key = dosePlan.backfillMessageKey(count)
+      const message = runtime.t(key, { count })
+      expect(key, `${code}/${count} key`).toBe(count === 1 ? 'dose_plan_backfilled_one' : 'dose_plan_backfilled_other')
+      expect(message, `${code}/${count} message`).not.toBe(key)
+      expect(message, `${code}/${count} count`).toContain(String(count))
+    }
   })
 })

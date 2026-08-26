@@ -22,6 +22,7 @@ import {
   type OpenInjectionIntake,
 } from '../lib/injectionPersistence'
 import { proximityWarning } from '../lib/injectionGeometry'
+import { debitPeptideStockForDoseById } from '../features/my-stack/extensions/peptide/vialStock'
 import { formatInjectionPinAge, getInjectionPinAgeColor, getInjectionPinSubstance } from '../lib/injectionPinPresentation'
 import { findTargetInjectionIntake, getOpenInjectionIntakeKey } from '../lib/injectionDeepLink'
 import type { InjectionHistoryDays } from '../lib/injectionHistory'
@@ -132,6 +133,7 @@ export function InjektionsTracker() {
   const [cameraResetRequestId, setCameraResetRequestId] = useState(0)
   const [visibleLogIds, setVisibleLogIds] = useState<Set<string>>(() => new Set())
   const [activeLogId, setActiveLogId] = useState<string | null>(null)
+  const [inventoryRetryIds, setInventoryRetryIds] = useState<string[]>([])
   const [showIntro, setShowIntro] = useState(
     () => Number(localStorage.getItem(INTRO_STORAGE_KEY) ?? 0) < INJECTION_INTRO_VERSION,
   )
@@ -213,6 +215,15 @@ export function InjektionsTracker() {
   const showPositionActions = draftPin && !showLogSheet
   const warning = draftPin ? proximityWarning(draftPin, logs, new Date()) : NO_WARNING
 
+  const retryCommittedStock = async (doseLogId: string) => {
+    try {
+      await debitPeptideStockForDoseById(supabase, doseLogId)
+      setInventoryRetryIds(current => current.filter(id => id !== doseLogId))
+    } catch {
+      toast.error(t('inventory_update_failed', { defaultValue: 'Bestand konnte nicht aktualisiert werden' }))
+    }
+  }
+
   const saveDraftPin = async (input: InjectionSaveInput) => {
     if (!user || !draftPin) return
     try {
@@ -222,8 +233,8 @@ export function InjektionsTracker() {
       let stackItemId: string | null = null
       let cycleId: string | null = null
 
-      // From an open intake: confirm the dose (writes the dose_log + debits stock)
-      // and link the injection to it.
+      // From an open intake: confirm the dose, then link the injection to it.
+      // Stock is a separately retryable follow-up keyed by the committed log.
       if (input.mode === 'intake' && input.intake) {
         stackItemId = input.intake.stackItemId
         cycleId = input.intake.cycleId
@@ -235,7 +246,16 @@ export function InjektionsTracker() {
           method: input.method ?? input.intake!.method,
           loggedAt: input.loggedAt,
           doseLogId: input.intake!.doseLogId,
+          debitVialStock: false,
         }))
+        try {
+          await debitPeptideStockForDoseById(supabase, doseLogId)
+        } catch {
+          setInventoryRetryIds(current => current.includes(doseLogId as string)
+            ? current
+            : [...current, doseLogId as string])
+          toast.error(t('inventory_update_failed', { defaultValue: 'Bestand konnte nicht aktualisiert werden' }))
+        }
       }
 
       await saveInjectionLog(supabase, {
@@ -277,6 +297,7 @@ export function InjektionsTracker() {
         toast.error('Datenbank-Update erforderlich')
         return
       }
+      await loadData()
       toast.error('Fehler beim Speichern')
     }
   }
@@ -398,6 +419,19 @@ export function InjektionsTracker() {
           />
         )}
       </section>
+
+      {inventoryRetryIds.length > 0 && (
+        <div role="alert" className="fixed left-4 right-4 top-24 z-50 rounded-2xl border border-amber-500/25 bg-slate-950/95 p-3 text-sm font-bold text-amber-200 shadow-2xl backdrop-blur-xl">
+          <p>{t('inventory_committed_retry', { defaultValue: 'Die Einnahme ist gespeichert, aber der Bestand wurde nicht aktualisiert.' })}</p>
+          <button
+            type="button"
+            onClick={() => void Promise.all(inventoryRetryIds.map(retryCommittedStock))}
+            className="mt-2 flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-amber-400/25 bg-amber-500/15 px-3 text-sm font-black text-amber-100 transition-colors hover:bg-amber-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+          >
+            <RefreshCw size={15} aria-hidden="true" /> {t('inventory_retry', { defaultValue: 'Bestand erneut versuchen' })}
+          </button>
+        </div>
+      )}
 
       {showLogSheet && draftPin && (
         <InjectionLogSheet

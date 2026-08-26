@@ -15,7 +15,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
-import { collectMissedIntakes, cycleAppliesToDay, effectiveQuantity, scheduleForDay, AUTO_MISSED_NOTE, type EscalationRow, type ScheduleCycle } from '../lib/intakeSchedule'
+import { collectMissedIntakes, cycleAppliesToDay, effectiveQuantity, resolveScheduleSlots, scheduleForDay, AUTO_MISSED_NOTE, type EscalationRow, type ResolvedRoutineGroup, type ScheduleCycle } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
 import { InjectionTrackerHero, type InjectionHeroPin } from '../components/injection3d/InjectionTrackerHero'
@@ -25,7 +25,6 @@ import { debitPeptideStockForDoseById } from '../features/my-stack/extensions/pe
 import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/quantityPresentation'
 import {
   groupRoutineIntakes,
-  routineGroupFromMinutes,
   type RoutineConfirmationEntry,
   type RoutineGroupModel,
   type RoutineIntake,
@@ -40,11 +39,10 @@ import toast from 'react-hot-toast'
 import { format, parseISO, startOfDay } from 'date-fns'
 import { getDateLocale } from '../i18n/dateLocales'
 
-const SLOT_TIMES: Record<string, string> = { morgens: '08:00', mittags: '12:00', abends: '20:00' }
-const ROUTINE_GROUP_LABELS: Record<RoutineGroupModel['key'], string> = {
-  morning: 'Morgens',
-  midday: 'Mittags',
-  evening: 'Abends',
+const ROUTINE_GROUP_LABELS: Record<RoutineGroupModel['key'], { key: string; defaultValue: string }> = {
+  morning: { key: 'my_stack_routine_morning', defaultValue: 'Morgens' },
+  midday: { key: 'my_stack_routine_midday', defaultValue: 'Mittags' },
+  evening: { key: 'my_stack_routine_evening', defaultValue: 'Abends' },
 }
 
 const PEPTIDE_STUDIES = [
@@ -303,6 +301,7 @@ export interface TodayIntake {
   stackItemId: string
   cycleId: string
   pendingLogId: string | null
+  routineGroup: ResolvedRoutineGroup
   trackingLevel: 'intake_only' | 'with_amount' | 'complete'
   dosageForm: string | null
   method: string | null
@@ -318,7 +317,7 @@ export function buildHomeRoutineIntake(intake: TodayIntake): RoutineIntake {
     stackItemId: intake.stackItemId,
     stackItemName: intake.substance ?? '',
     trackingLevel: intake.trackingLevel,
-    group: routineGroupFromMinutes(intake.min),
+    group: intake.routineGroup,
     scheduledAt: intake.scheduledAt,
     dose: intakeOnly ? null : intake.doseNumber,
     unit: intakeOnly ? null : intake.unit,
@@ -369,7 +368,6 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
   const [homeConfirmTime, setHomeConfirmTime] = useState('')
   const [homeReloadKey, setHomeReloadKey] = useState(0)
   const [homeInventoryRetryIds, setHomeInventoryRetryIds] = useState<string[]>([])
-  const processedHomeVialDoseLogIds = useRef(new Set<string>())
 
   // Rotate study daily
   const todayStudy = TODAY_STUDY
@@ -427,23 +425,19 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
           // Nur Zyklen, die HEUTE gelten (Frequenz/Start/Ende), wie im Kalender.
           if (!cycleAppliesToDay(c, now)) continue
           const seg = scheduleForDay(c, now)   // segment-/historienaufgelöste Slots
-          const slots   = (seg.intake_time ?? '').split(',').filter(Boolean)
-          const customs = (seg.intake_time_custom ?? '').split(',')
+          const slots = resolveScheduleSlots(seg)
           const resolvedQuantity = resolveHomeIntakeQuantity(c, now, escalations)
           const intakeOnly = c.stack_items.tracking_level === 'intake_only'
           const doseNumber = intakeOnly ? null : resolvedQuantity.doseNumber
           const unit = intakeOnly ? null : resolvedQuantity.unit
           const doseLabel = intakeOnly ? null : resolvedQuantity.dose
-          slots.forEach((slot: string, i: number) => {
-            const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
-            if (!tm) return
-            const [h, m] = tm.split(':').map(Number)
+          slots.forEach(slot => {
             const scheduledAt = new Date(now)
-            scheduledAt.setHours(h, m, 0, 0)
+            scheduledAt.setHours(Math.floor(slot.minutes / 60), slot.minutes % 60, 0, 0)
             todaySlots.push({
-              key: `${c.id}-${h * 60 + m}`,
-              min: h * 60 + m,
-              time: tm,
+              key: `${c.id}-${slot.minutes}`,
+              min: slot.minutes,
+              time: slot.time,
               substance: c.stack_items.display_name,
               dose: doseLabel,
               doseNumber,
@@ -451,6 +445,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
               stackItemId: c.stack_item_id,
               cycleId: c.id,
               pendingLogId: null,
+              routineGroup: slot.routineGroup,
               trackingLevel: c.stack_items.tracking_level,
               dosageForm: c.stack_items.dosage_form,
               method: c.method,
@@ -601,9 +596,9 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
           method: intake.method ?? '',
           loggedAt: buildHomeLoggedAt(intake.scheduledAt, timeValue),
           doseLogId: intake.pendingLogId,
-          debitVialStock: intake.dosageForm === 'vial',
+          debitVialStock: false,
         })
-        if (intake.trackingLevel === 'complete' && intake.dosageForm !== 'vial') {
+        if (intake.dosageForm === 'vial' || intake.trackingLevel === 'complete') {
           await applyHomeSingleInventory(doseLogId)
         }
       } else {
@@ -652,21 +647,14 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
     })).filter(item => Boolean(item.doseLogId))
     const stockUpdates = quantifiedVialEntries(entries, vialStackItemIds).map(async entry => {
       const doseLogId = confirmedEntries.find(item => item.entry.key === entry.key)?.doseLogId
-      if (!doseLogId || processedHomeVialDoseLogIds.current.has(doseLogId)) return
-      await debitPeptideStockForDoseById(
-        homeDataClient,
-        user.id,
-        entry.stackItemId,
-        entry.actualDose,
-        entry.actualUnit,
-      )
-      processedHomeVialDoseLogIds.current.add(doseLogId)
+      if (!doseLogId) return
+      await debitPeptideStockForDoseById(homeDataClient, doseLogId)
     })
     const genericEntries = confirmedEntries.filter(({ entry }) => (
       entry.trackingLevel === 'complete'
       && !vialStackItemIds.has(entry.stackItemId)
     ))
-    const [, inventoryResults] = await Promise.all([
+    const [stockResults, inventoryResults] = await Promise.all([
       Promise.allSettled(stockUpdates),
       Promise.allSettled(genericEntries.map(({ doseLogId }) => (
         applyInventoryConfirmation(homeDataClient, doseLogId)
@@ -674,11 +662,17 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
     ])
     setHomeReloadKey(value => value + 1)
     toast.success(t('einnahme_bestaetigt', { defaultValue: 'Einnahme bestätigt' }))
+    const failedVialIds = quantifiedVialEntries(entries, vialStackItemIds)
+      .map(entry => confirmedEntries.find(item => item.entry.key === entry.key)?.doseLogId)
+      .filter((doseLogId, index): doseLogId is string => (
+        Boolean(doseLogId) && stockResults[index].status === 'rejected'
+      ))
     const failedInventoryIds = genericEntries
       .filter((_, index) => inventoryResults[index].status === 'rejected')
       .map(item => item.doseLogId)
-    if (failedInventoryIds.length > 0) {
-      throw new InventoryConfirmationError(failedInventoryIds)
+    const failedDoseLogIds = [...failedVialIds, ...failedInventoryIds]
+    if (failedDoseLogIds.length > 0) {
+      throw new InventoryConfirmationError(failedDoseLogIds)
     }
   }
 
@@ -772,7 +766,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
             onClick={() => void Promise.all(homeInventoryRetryIds.map(applyHomeSingleInventory))}
             className="mt-2 flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-amber-400/25 bg-amber-500/15 px-3 text-sm font-black text-amber-100 transition-colors hover:bg-amber-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
           >
-            <RotateCcw size={15} aria-hidden="true" /> Bestand erneut versuchen
+            <RotateCcw size={15} aria-hidden="true" /> {t('inventory_retry', { defaultValue: 'Bestand erneut versuchen' })}
           </button>
         </div>
       )}
@@ -785,6 +779,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
           </div>
           <div className="space-y-4">
             {homeRoutineGroups.map(group => {
+              const groupLabel = t(ROUTINE_GROUP_LABELS[group.key].key, ROUTINE_GROUP_LABELS[group.key])
               const groupIntakes = group.items
                 .map(item => todayIntakeByKey.get(item.key))
                 .filter((intake): intake is TodayIntake => Boolean(intake))
@@ -792,15 +787,15 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
                 <div key={group.key} className="space-y-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-[0.62rem] font-black uppercase tracking-[0.13em] text-cyan-300">
-                      {ROUTINE_GROUP_LABELS[group.key]}
+                      {groupLabel}
                     </p>
                     <button
                       type="button"
-                      aria-label={`Alles eingenommen – ${ROUTINE_GROUP_LABELS[group.key]}`}
+                      aria-label={`${t('routine_confirmation_confirm_all', { defaultValue: 'Alle als eingenommen markieren' })} – ${groupLabel}`}
                       onClick={() => setSelectedHomeRoutine(group)}
                       className="flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-emerald-500/25 bg-emerald-500/15 px-3 text-xs font-black text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
                     >
-                      <CheckCircle2 size={14} aria-hidden="true" /> Alles eingenommen
+                      <CheckCircle2 size={14} aria-hidden="true" /> {t('routine_confirmation_confirm_all', { defaultValue: 'Alle als eingenommen markieren' })}
                     </button>
                   </div>
                   <TodayIntakeCarousel

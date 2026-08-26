@@ -1,11 +1,30 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { createElement, type ComponentType } from 'react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { PkReadinessPanel } from './BlutspiegelSimulation'
 
+const i18nTestState = vi.hoisted(() => ({ translations: {} as Record<string, string> }))
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) => {
+      let value = i18nTestState.translations[key]
+        ?? (typeof options?.defaultValue === 'string' ? options.defaultValue : key)
+      for (const [name, replacement] of Object.entries(options ?? {})) {
+        if (name !== 'defaultValue') value = value.replace(`{{${name}}}`, String(replacement))
+      }
+      return value
+    },
+  }),
+}))
+
 afterEach(cleanup)
+beforeEach(() => {
+  i18nTestState.translations = {}
+})
 
 describe('PkReadinessPanel', () => {
   it('explains missing PK data and links directly to the existing stack item', () => {
@@ -40,5 +59,20 @@ describe('PkReadinessPanel', () => {
     expect(screen.getByText(/Kein verknüpftes PK-Profil/)).toBeTruthy()
     expect(screen.queryByRole('link', { name: /Angaben vervollständigen/ })).toBeNull()
     expect(screen.queryByRole('img', { name: /Kurve/ })).toBeNull()
+  })
+
+  it('labels the dashed planned curve through the pk_planned translation', async () => {
+    const simulation = await import('./BlutspiegelSimulation') as typeof import('./BlutspiegelSimulation') & {
+      PkCurveLegend?: ComponentType
+    }
+    expect(simulation.PkCurveLegend, 'the live curve needs a rendered planned legend entry').toBeTypeOf('function')
+    if (!simulation.PkCurveLegend) return
+
+    i18nTestState.translations = { pk_planned: 'Planned translation' }
+    render(createElement(simulation.PkCurveLegend))
+
+    const label = screen.getByText('Planned translation')
+    const line = label.parentElement?.querySelector('span')
+    expect(line?.style.borderTopStyle).toBe('dashed')
   })
 })

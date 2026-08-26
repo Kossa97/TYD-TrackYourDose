@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { de as deLocale } from 'date-fns/locale'
 import { Activity, ChevronDown, ChevronUp, Info, Loader2 } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -117,14 +118,6 @@ const TREND_META: Record<BlutspiegelTrend, { label: string; icon: string; color:
   stable:  { label: 'Stabil',   icon: '→', color: '#94a3b8' },
 }
 
-const REQUIREMENT_LABELS: Record<PkRequirement, string> = {
-  complete_tracking: 'Vollständiges Tracking',
-  method: 'Bestätigte Route',
-  dose: 'Dosis',
-  unit: 'Einheit',
-  time: 'Genaue Uhrzeit',
-}
-
 export function PkReadinessPanel({
   stackItemId,
   itemName,
@@ -134,34 +127,49 @@ export function PkReadinessPanel({
   itemName: string
   readiness: Exclude<PkReadiness, { status: 'ready' }>
 }) {
+  const { t } = useTranslation()
+  const requirementLabels: Record<PkRequirement, string> = {
+    complete_tracking: String(t('pk_requirement_complete_tracking', { defaultValue: 'Vollständiges Tracking' })),
+    method: String(t('pk_requirement_method', { defaultValue: 'Bestätigte Route' })),
+    dose: String(t('pk_requirement_dose', { defaultValue: 'Dosis' })),
+    unit: String(t('pk_requirement_unit', { defaultValue: 'Einheit' })),
+    time: String(t('pk_requirement_time', { defaultValue: 'Genaue Uhrzeit' })),
+  }
   const unsupportedCopy = readiness.status === 'unsupported'
     ? readiness.reason === 'unit_conversion'
-      ? 'Für diese Einheit ist keine sichere PK-Umrechnung hinterlegt.'
-      : 'Kein verknüpftes PK-Profil. Deshalb wird keine Kurve berechnet.'
+      ? t('pk_unsupported_unit', { defaultValue: 'Für diese Einheit ist keine sichere PK-Umrechnung hinterlegt.' })
+      : t('pk_unsupported_profile', { defaultValue: 'Kein verknüpftes PK-Profil. Deshalb wird keine Kurve berechnet.' })
     : null
+  const requirements = readiness.status === 'missing'
+    ? readiness.missing.map(requirement => requirementLabels[requirement]).join(', ')
+    : ''
 
   return (
     <section
-      aria-label={`PK-Status ${itemName}`}
+      aria-label={String(t('pk_status_label', { defaultValue: 'PK-Status für {{itemName}}', itemName }))}
       style={{
         ...PANEL,
         borderColor: readiness.status === 'missing' ? 'rgba(56,189,248,0.26)' : 'rgba(148,163,184,0.2)',
       }}
     >
       <p style={{ fontSize: '0.82rem', fontWeight: 850, color: 'var(--text)' }}>
-        {itemName}: {readiness.status === 'missing' ? 'PK-Daten unvollständig' : 'PK-Simulation nicht verfügbar'}
+        {itemName}: {readiness.status === 'missing'
+          ? t('pk_missing_title', { defaultValue: 'PK-Daten unvollständig' })
+          : t('pk_unavailable_title', { defaultValue: 'PK-Simulation nicht verfügbar' })}
       </p>
       {readiness.status === 'missing' ? (
         <>
           <p style={{ marginTop: 6, fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
-            Fehlend: {readiness.missing.map(requirement => REQUIREMENT_LABELS[requirement]).join(', ')}.
-            Erst danach wird eine Kurve berechnet.
+            {t('pk_missing_copy', {
+              defaultValue: 'Fehlend: {{requirements}}. Erst bei vollständigen Pflichtangaben wird eine Kurve berechnet.',
+              requirements,
+            })}
           </p>
           <Link
             to={`/my-stack?edit=${encodeURIComponent(stackItemId)}&intent=pk`}
             className="mt-3 inline-flex min-h-11 cursor-pointer items-center rounded-xl border border-sky-400/30 bg-sky-400/[0.08] px-4 text-sm font-semibold text-sky-200 transition-colors hover:bg-sky-400/[0.13] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 motion-reduce:transition-none"
           >
-            Angaben vervollständigen
+            {t('pk_complete_action', { defaultValue: 'Angaben vervollständigen' })}
           </Link>
         </>
       ) : (
@@ -170,6 +178,31 @@ export function PkReadinessPanel({
         </p>
       )}
     </section>
+  )
+}
+
+export function PkCurveLegend() {
+  const { t } = useTranslation()
+
+  return (
+    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      {[
+        { bg: '#06b6d4', label: 'Wirkungsbeginn' },
+        { bg: '#10b981', label: 'Einnahme' },
+        { bg: '#f59e0b', label: 'Peak' },
+      ].map(({ bg, label }) => (
+        <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: bg, display: 'inline-block', flexShrink: 0 }} />
+          <span style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>{label}</span>
+        </div>
+      ))}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <span style={{ width: 14, height: 0, borderTop: '2px dashed #94a3b8', display: 'inline-block', flexShrink: 0 }} />
+        <span style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>
+          {t('pk_planned', { defaultValue: 'Geplant' })}
+        </span>
+      </div>
+    </div>
   )
 }
 
@@ -561,6 +594,7 @@ function LiveCycleCard({
   level: CurrentBlutspiegelLevel | undefined
   accent: string
 }) {
+  const { t } = useTranslation()
   const [curve, setCurve]               = useState<BlutspiegelCurvePoint[]>([])
   const [events, setEvents]             = useState<DoseEvent[]>([])
   const [interruptedAt, setInterruptedAt] = useState<string | null>(null)
@@ -689,7 +723,7 @@ function LiveCycleCard({
       >
         {interruptedAt && (
           <p role="status" style={{ marginBottom: 8, fontSize: '0.68rem', fontWeight: 750, color: '#fbbf24' }}>
-            Simulation unterbrochen: Menge nicht getrackt
+            {t('pk_interrupted', { defaultValue: 'Simulation unterbrochen: Menge nicht getrackt' })}
           </p>
         )}
         {curveLoading ? (
@@ -705,18 +739,7 @@ function LiveCycleCard({
                   {isMobileChart ? '24h-Fenster' : '7-Tage-Fenster'} · wischen für Verlauf · halten zum Ablesen
                 </p>
                 {/* Legende */}
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  {[
-                    { bg: '#06b6d4', label: 'Wirkungsbeginn' },
-                    { bg: '#10b981', label: 'Einnahme' },
-                    { bg: '#f59e0b', label: 'Peak' },
-                  ].map(({ bg, label }) => (
-                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: bg, display: 'inline-block', flexShrink: 0 }} />
-                      <span style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>{label}</span>
-                    </div>
-                  ))}
-                </div>
+                <PkCurveLegend />
               </div>
 
               {/* Navigationsbuttons rechts — nebeneinander, gleicher Stil */}

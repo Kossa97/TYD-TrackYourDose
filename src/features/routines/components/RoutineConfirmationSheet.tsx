@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react'
 import { Check, Pencil, RotateCcw, Syringe, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { formatTrackedQuantity } from '../quantityPresentation'
 import {
   buildConfirmationEntry,
@@ -23,10 +24,10 @@ interface RoutineConfirmationSheetProps {
   onAddInjection?: (entry: RoutineIntake, doseLogId: string) => void
 }
 
-const GROUP_LABELS: Record<RoutineGroupModel['key'], string> = {
-  morning: 'Morgens',
-  midday: 'Mittags',
-  evening: 'Abends',
+const GROUP_LABEL_KEYS: Record<RoutineGroupModel['key'], string> = {
+  morning: 'my_stack_routine_morning',
+  midday: 'my_stack_routine_midday',
+  evening: 'my_stack_routine_evening',
 }
 
 export function RoutineConfirmationSheet({
@@ -36,6 +37,7 @@ export function RoutineConfirmationSheet({
   onAfterConfirm,
   onAddInjection,
 }: RoutineConfirmationSheetProps) {
+  const { t } = useTranslation()
   const titleId = useId()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const [entries, setEntries] = useState<RoutineConfirmationEntry[]>(() => (
@@ -106,7 +108,7 @@ export function RoutineConfirmationSheet({
     <>
       <button
         type="button"
-        aria-label="Routine-Bestätigung schließen"
+        aria-label={String(t('routine_confirmation_close', { defaultValue: 'Routine-Bestätigung schließen' }))}
         onClick={onClose}
         className="fixed inset-0 z-50 cursor-pointer bg-black/70"
       />
@@ -119,19 +121,22 @@ export function RoutineConfirmationSheet({
         <header className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[0.62rem] font-black uppercase tracking-[0.13em] text-cyan-300">
-              {GROUP_LABELS[group.key]}-Routine
+              {t('routine_group_label', {
+                defaultValue: '{{group}}-Routine',
+                group: t(GROUP_LABEL_KEYS[group.key]),
+              })}
             </p>
             <h2 id={titleId} className="mt-1 text-lg font-black text-white">
-              Gemeinsam bestätigen
+              {t('routine_confirmation_title', { defaultValue: 'Gemeinsam bestätigen' })}
             </h2>
             <p className="mt-1 text-sm font-semibold text-slate-400">
-              Auswahl und Mengen vor dem Speichern prüfen.
+              {t('routine_confirmation_hint', { defaultValue: 'Auswahl und Mengen vor dem Speichern prüfen.' })}
             </p>
           </div>
           <button
             ref={closeButtonRef}
             type="button"
-            aria-label="Schließen"
+            aria-label={String(t('close', { defaultValue: 'Schließen' }))}
             onClick={onClose}
             className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-300 transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
           >
@@ -142,11 +147,11 @@ export function RoutineConfirmationSheet({
         {confirmed ? (
           <div className="space-y-3">
             <div className="flex min-h-11 items-center gap-2 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-3 text-sm font-bold text-emerald-300">
-              <Check size={17} aria-hidden="true" /> Routine gespeichert
+              <Check size={17} aria-hidden="true" /> {t('routine_confirmation_saved', { defaultValue: 'Routine gespeichert' })}
             </div>
             {inventoryRetry && (
               <div role="alert" className="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-3 text-sm font-bold text-amber-200">
-                <p>Die Routine ist gespeichert, aber der Bestand wurde nicht aktualisiert.</p>
+                <p>{t('routine_inventory_committed_retry', { defaultValue: 'Die Routine ist gespeichert, aber der Bestand wurde nicht aktualisiert.' })}</p>
                 <button
                   type="button"
                   disabled={retryingInventory}
@@ -157,7 +162,7 @@ export function RoutineConfirmationSheet({
                   }}
                   className="mt-2 flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-amber-400/25 bg-amber-500/15 px-3 text-sm font-black text-amber-100 transition-colors hover:bg-amber-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <RotateCcw size={15} aria-hidden="true" /> Bestand erneut versuchen
+                  <RotateCcw size={15} aria-hidden="true" /> {t('routine_inventory_retry', { defaultValue: 'Bestand erneut versuchen' })}
                 </button>
               </div>
             )}
@@ -165,11 +170,14 @@ export function RoutineConfirmationSheet({
               <button
                 key={item.entry.key}
                 type="button"
-                aria-label={`Injektionsstelle ergänzen für ${item.entry.stackItemName}`}
+                aria-label={String(t('routine_add_injection_label', {
+                  defaultValue: 'Injektionsstelle ergänzen für {{substanceName}}',
+                  substanceName: item.entry.stackItemName,
+                }))}
                 onClick={() => onAddInjection?.(item.entry, item.doseLogId)}
                 className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-sky-500/25 bg-sky-500/15 px-3 text-sm font-black text-sky-300 transition-colors hover:bg-sky-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
               >
-                <Syringe size={16} aria-hidden="true" /> Injektionsstelle ergänzen
+                <Syringe size={16} aria-hidden="true" /> {t('routine_add_injection', { defaultValue: 'Injektionsstelle ergänzen' })}
               </button>
             ))}
             <button
@@ -177,7 +185,7 @@ export function RoutineConfirmationSheet({
               onClick={onClose}
               className="min-h-11 w-full cursor-pointer rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-sm font-black text-slate-200 transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
             >
-              Fertig
+              {t('routine_confirmation_done', { defaultValue: 'Fertig' })}
             </button>
           </div>
         ) : (
@@ -195,7 +203,10 @@ export function RoutineConfirmationSheet({
                       <label className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3">
                         <input
                           type="checkbox"
-                          aria-label={`${entry.stackItemName} auswählen`}
+                          aria-label={String(t('routine_select_item', {
+                            defaultValue: '{{substanceName}} auswählen',
+                            substanceName: entry.stackItemName,
+                          }))}
                           checked={entry.selected}
                           onChange={event => updateEntry(entry.key, { selected: event.target.checked })}
                           className="h-5 w-5 shrink-0 cursor-pointer accent-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
@@ -203,14 +214,16 @@ export function RoutineConfirmationSheet({
                         <span className="min-w-0">
                           <span className="block truncate text-sm font-black text-white">{entry.stackItemName}</span>
                           {plannedQuantity && (
-                            <span className="block text-xs font-semibold text-slate-400">Geplant: {plannedQuantity}</span>
+                            <span className="block text-xs font-semibold text-slate-400">
+                              {t('routine_planned_quantity', { defaultValue: 'Geplant: {{quantity}}', quantity: plannedQuantity })}
+                            </span>
                           )}
                         </span>
                       </label>
                       {capabilities.oneOff && (
                         <button
                           type="button"
-                          aria-label="Einmalige Abweichung"
+                          aria-label={String(t('routine_actual_override', { defaultValue: 'Einmalige Abweichung' }))}
                           aria-expanded={editing}
                           onClick={() => {
                             if (editing) {
@@ -222,14 +235,17 @@ export function RoutineConfirmationSheet({
                           }}
                           className="flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 text-xs font-black text-cyan-300 transition-colors hover:bg-cyan-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
                         >
-                          <Pencil size={13} aria-hidden="true" /> Einmalige Abweichung
+                          <Pencil size={13} aria-hidden="true" /> {t('routine_actual_override', { defaultValue: 'Einmalige Abweichung' })}
                         </button>
                       )}
                     </div>
                     {editing && capabilities.oneOff && (
                       <div className="mt-2 flex items-center gap-2">
                         <label className="sr-only" htmlFor={`routine-amount-${entry.key}`}>
-                          Menge für {entry.stackItemName}
+                          {t('routine_amount_for', {
+                            defaultValue: 'Menge für {{substanceName}}',
+                            substanceName: entry.stackItemName,
+                          })}
                         </label>
                         <input
                           id={`routine-amount-${entry.key}`}
@@ -266,13 +282,13 @@ export function RoutineConfirmationSheet({
 
             {error && (
               <div role="alert" className="mt-3 rounded-2xl border border-red-500/25 bg-red-500/10 p-3 text-sm font-bold text-red-300">
-                <p>Gruppe konnte nicht gespeichert werden. Deine Auswahl bleibt erhalten.</p>
+                <p>{t('routine_confirmation_save_error', { defaultValue: 'Gruppe konnte nicht gespeichert werden. Deine Auswahl bleibt erhalten.' })}</p>
                 <button
                   type="button"
                   onClick={() => void save()}
                   className="mt-2 flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-red-400/25 bg-red-500/15 px-3 text-sm font-black text-red-200 transition-colors hover:bg-red-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
                 >
-                  <RotateCcw size={15} aria-hidden="true" /> Erneut versuchen
+                  <RotateCcw size={15} aria-hidden="true" /> {t('routine_confirmation_retry', { defaultValue: 'Erneut versuchen' })}
                 </button>
               </div>
             )}
@@ -283,7 +299,7 @@ export function RoutineConfirmationSheet({
                 onClick={onClose}
                 className="min-h-11 cursor-pointer rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-sm font-black text-slate-300 transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
               >
-                Abbrechen
+                {t('routine_confirmation_cancel', { defaultValue: 'Abbrechen' })}
               </button>
               <button
                 type="button"
@@ -291,7 +307,9 @@ export function RoutineConfirmationSheet({
                 onClick={() => void save()}
                 className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-emerald-500/25 bg-emerald-500/15 px-3 text-sm font-black text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Check size={16} aria-hidden="true" /> {saving ? 'Speichert …' : 'Alles eingenommen'}
+                <Check size={16} aria-hidden="true" /> {saving
+                  ? t('routine_confirmation_saving', { defaultValue: 'Speichert …' })
+                  : t('routine_confirmation_confirm_all', { defaultValue: 'Alle als eingenommen markieren' })}
               </button>
             </div>
           </>

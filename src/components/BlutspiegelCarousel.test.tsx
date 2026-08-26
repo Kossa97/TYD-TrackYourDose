@@ -6,6 +6,18 @@ import { MemoryRouter } from 'react-router-dom'
 import { BlutspiegelCarousel } from './BlutspiegelCarousel'
 import { getCurrentBlutspiegelLevel } from '../services/blutspiegelHistory'
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) => {
+      let value = typeof options?.defaultValue === 'string' ? options.defaultValue : key
+      for (const [name, replacement] of Object.entries(options ?? {})) {
+        if (name !== 'defaultValue') value = value.replace(`{{${name}}}`, String(replacement))
+      }
+      return value
+    },
+  }),
+}))
+
 const carouselMocks = vi.hoisted(() => ({
   escalations: [] as Array<Record<string, unknown>>,
 }))

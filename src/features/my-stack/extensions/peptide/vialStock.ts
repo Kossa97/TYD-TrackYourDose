@@ -59,28 +59,15 @@ export function computeNextVialStock(
   return roundStock(next)
 }
 
-// Debit stock for a freshly-confirmed dose when the caller does not already hold
-// the peptide in memory (e.g. the injection tracker). Best-effort: silently skips
-// if the peptide can't be read or has no computable delta.
+// Debit stock for a committed dose log. The server owns conversion, locking, and
+// idempotency so a stock-only retry cannot apply the same log twice.
 export async function debitPeptideStockForDoseById(
   supabase: SupabaseClient,
-  userId: string,
-  stackItemId: string,
-  dose: number,
-  unit: string,
-): Promise<void> {
-  const { data, error } = await supabase
-    .from('stack_items')
-    .select('id, vial_amount_mg, reconstitution_ml, reconstitution_date, vials_in_stock, vials_initial')
-    .eq('id', stackItemId)
-    .eq('user_id', userId)
-    .single()
-  if (error || !data) return
-  const next = computeNextVialStock(data as StockPeptide, dose, unit, 'debit')
-  if (next == null) return
-  await supabase
-    .from('stack_items')
-    .update({ vials_in_stock: next })
-    .eq('id', stackItemId)
-    .eq('user_id', userId)
+  doseLogId: string,
+): Promise<number | null> {
+  const { data, error } = await supabase.rpc('apply_inventory_confirmation', {
+    p_dose_log_id: doseLogId,
+  })
+  if (error) throw new Error(error.message)
+  return data as number | null
 }

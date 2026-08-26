@@ -20,8 +20,42 @@ export interface IntakePlanValidationErrors {
   unit?: string
   method?: string
   frequency?: string
+  xDaysInterval?: string
+  scheduleDays?: string
   startDate?: string
   routineGroup?: string
+}
+
+export const MIN_EVERY_X_DAYS = 2
+export const MAX_EVERY_X_DAYS = 30
+export const VALID_SCHEDULE_DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'] as const
+
+export function validateRecurrence(
+  frequency: string,
+  xDaysInterval: number | null,
+  scheduleDays: string[],
+): Pick<IntakePlanValidationErrors, 'xDaysInterval' | 'scheduleDays'> {
+  if (
+    frequency === 'Alle X Tage'
+    && (
+      xDaysInterval == null
+      || !Number.isFinite(xDaysInterval)
+      || !Number.isInteger(xDaysInterval)
+      || xDaysInterval < MIN_EVERY_X_DAYS
+      || xDaysInterval > MAX_EVERY_X_DAYS
+    )
+  ) return { xDaysInterval: 'invalid_interval' }
+
+  if (frequency === 'Wochentage wählen') {
+    const validDays = new Set<string>(VALID_SCHEDULE_DAYS)
+    if (
+      scheduleDays.length === 0
+      || scheduleDays.some(day => !validDays.has(day))
+      || new Set(scheduleDays).size !== scheduleDays.length
+    ) return { scheduleDays: 'invalid_weekdays' }
+  }
+
+  return {}
 }
 
 function validateIngredient(
@@ -73,6 +107,7 @@ export function validateIntakePlan(
   if (!plan.name.trim()) errors.name = 'required'
   if (!plan.method.trim()) errors.method = 'required'
   if (!plan.frequency.trim()) errors.frequency = 'required'
+  Object.assign(errors, validateRecurrence(plan.frequency, plan.xDaysInterval, plan.scheduleDays))
   if (!plan.startDate.trim()) errors.startDate = 'required'
   if (!plan.routineGroup) errors.routineGroup = 'required'
   if (trackingCapabilities(level).quantity) {

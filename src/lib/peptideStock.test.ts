@@ -1,6 +1,11 @@
 // src/lib/peptideStock.test.ts
-import { describe, expect, it } from 'vitest'
-import { computeNextVialStock, doseToVialDelta, type StockPeptide } from '../features/my-stack/extensions/peptide/vialStock'
+import { describe, expect, it, vi } from 'vitest'
+import {
+  computeNextVialStock,
+  debitPeptideStockForDoseById,
+  doseToVialDelta,
+  type StockPeptide,
+} from '../features/my-stack/extensions/peptide/vialStock'
 
 const peptide = (overrides: Partial<StockPeptide> = {}): StockPeptide => ({
   vial_amount_mg: 10,
@@ -51,5 +56,37 @@ describe('computeNextVialStock', () => {
 
   it('returns null when the delta is unknown', () => {
     expect(computeNextVialStock(peptide(), 1, 'IU', 'debit')).toBeNull()
+  })
+})
+
+describe('vial stock persistence', () => {
+  it('uses only the committed dose-log identity for a stock-only retry', async () => {
+    const applied = new Set<string>()
+    let stock = 1
+    const rpc = vi.fn(async (_name: string, params: { p_dose_log_id: string }) => {
+      if (!applied.has(params.p_dose_log_id)) {
+        applied.add(params.p_dose_log_id)
+        stock -= 0.1
+      }
+      return { data: stock, error: null }
+    })
+
+    await debitPeptideStockForDoseById({ rpc } as never, 'log-1')
+    await debitPeptideStockForDoseById({ rpc } as never, 'log-1')
+    await debitPeptideStockForDoseById({ rpc } as never, 'log-2')
+
+    expect(stock).toBeCloseTo(0.8)
+    expect(rpc.mock.calls).toEqual([
+      ['apply_inventory_confirmation', { p_dose_log_id: 'log-1' }],
+      ['apply_inventory_confirmation', { p_dose_log_id: 'log-1' }],
+      ['apply_inventory_confirmation', { p_dose_log_id: 'log-2' }],
+    ])
+  })
+
+  it('surfaces server read or update failures instead of treating them as a successful debit', async () => {
+    const rpc = vi.fn(async () => ({ data: null, error: { message: 'vial update failed' } }))
+
+    await expect(debitPeptideStockForDoseById({ rpc } as never, 'log-1'))
+      .rejects.toThrow('vial update failed')
   })
 })
