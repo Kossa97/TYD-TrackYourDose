@@ -34,18 +34,16 @@ function readSql(path: string): string {
   return existsSync(path) ? readFileSync(path, 'utf8').replace(/\r\n/g, '\n') : ''
 }
 
-function extractMappings(sql: string): Record<string, string[]> {
+function extractRows(sql: string): Array<[string, string[]]> {
   const match = sql.match(
     /with catalog_dosage_forms \(canonical_name, suggested_dosage_forms\) as \(\s*values([\s\S]*?)\n\)\s*update public\.substance_catalog/i,
   )
   const values = match?.[1] ?? ''
 
-  return Object.fromEntries(
-    [...values.matchAll(/\('([^']+)', array\[([^\]]*)\]::text\[\]\)/g)].map(([, name, forms]) => [
-      name,
-      [...forms.matchAll(/'([^']+)'/g)].map(([, form]) => form),
-    ]),
-  )
+  return [...values.matchAll(/\('([^']+)', array\[([^\]]*)\]::text\[\]\)/g)].map(([, name, forms]) => [
+    name,
+    [...forms.matchAll(/'([^']+)'/g)].map(([, form]) => form),
+  ])
 }
 
 describe('catalog dosage form SQL contract', () => {
@@ -56,9 +54,11 @@ describe('catalog dosage form SQL contract', () => {
     ['foundation migration', foundationSql],
     ['incremental migration', incrementalSql],
   ])('stores the approved ordered dosage forms in the %s', (_source, sql) => {
-    const mappings = extractMappings(sql)
+    const rows = extractRows(sql)
+    const mappings = Object.fromEntries(rows)
 
-    expect(Object.keys(mappings)).toHaveLength(20)
+    expect(rows).toHaveLength(20)
+    expect(new Set(rows.map(([canonicalName]) => canonicalName))).toHaveLength(20)
     expect(mappings).toEqual(approvedDosageForms)
     expect(Object.values(mappings).flat().every(form => allowedDosageForms.has(form))).toBe(true)
     expect(mappings['GHK-Cu']?.[0]).toBe('vial')
