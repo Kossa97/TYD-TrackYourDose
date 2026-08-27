@@ -58,8 +58,8 @@ export function DosageFormIcon({ form, size = 22 }: DosageFormIconProps) {
     case 'tablet':
       return (
         <IconFrame form={form} size={size}>
-          <circle cx="12" cy="12" r="8.5" />
-          <path d="m6 18 12-12" />
+          <rect x="3.5" y="7" width="17" height="10" rx="5" />
+          <path d="M12 7v10" />
         </IconFrame>
       )
     case 'capsule':
@@ -72,9 +72,9 @@ export function DosageFormIcon({ form, size = 22 }: DosageFormIconProps) {
     case 'drops':
       return (
         <IconFrame form={form} size={size}>
-          <path d="m14.2 3.2 6.6 6.6-2.7 2.7-6.6-6.6 2.7-2.7Z" />
-          <path d="m13.3 7.7-8.6 8.6v3h3l8.6-8.6" />
-          <path d="M19.2 16.2s2 2.2 2 3.5a2 2 0 0 1-4 0c0-1.3 2-3.5 2-3.5Z" />
+          <path d="M12 3s4.5 5 4.5 8a4.5 4.5 0 0 1-9 0C7.5 8 12 3 12 3Z" />
+          <path d="M5.5 15.5s2.5 2.8 2.5 4.2a2.5 2.5 0 0 1-5 0c0-1.4 2.5-4.2 2.5-4.2Z" />
+          <path d="M18.5 15.5s2.5 2.8 2.5 4.2a2.5 2.5 0 0 1-5 0c0-1.4 2.5-4.2 2.5-4.2Z" />
         </IconFrame>
       )
     case 'liquid':
@@ -121,9 +121,9 @@ export function DosageFormIcon({ form, size = 22 }: DosageFormIconProps) {
     case 'patch':
       return (
         <IconFrame form={form} size={size}>
-          <rect x="4" y="4" width="16" height="16" rx="3" />
-          <circle cx="12" cy="12" r="3.3" />
-          <path d="M7 7h.01M17 7h.01M7 17h.01M17 17h.01" />
+          <rect x="3.5" y="6" width="17" height="12" rx="4" />
+          <rect x="8.5" y="9" width="7" height="6" rx="2" />
+          <path d="M6 9h.01M18 9h.01M6 15h.01M18 15h.01" />
         </IconFrame>
       )
     case 'tube':
