@@ -1,20 +1,12 @@
-import { Droplets, Package, Pill, SprayCan, Syringe } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { DOSAGE_FORMS, type DosageFormDefinition } from '../lib/dosageForms'
+import { DOSAGE_FORMS } from '../lib/dosageForms'
 import type { DosageFormKey } from '../types'
+import { DosageFormIcon } from './DosageFormIcon'
 
 export interface DosageFormPickerProps {
   value: DosageFormKey | null
   error?: boolean
   onSelect: (dosageForm: DosageFormKey) => void
-}
-
-function FormIcon({ form }: { form: DosageFormDefinition }) {
-  if (form.capabilities.includes('injectable')) return <Syringe aria-hidden="true" size={20} />
-  if (form.capabilities.includes('liquid')) return <Droplets aria-hidden="true" size={20} />
-  if (form.key.includes('spray')) return <SprayCan aria-hidden="true" size={20} />
-  if (form.capabilities.includes('countable')) return <Pill aria-hidden="true" size={20} />
-  return <Package aria-hidden="true" size={20} />
 }
 
 export function DosageFormPicker({ value, error = false, onSelect }: DosageFormPickerProps) {
@@ -39,7 +31,9 @@ export function DosageFormPicker({ value, error = false, onSelect }: DosageFormP
                 : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25 hover:bg-white/[0.06]'
               }`}
             >
-              <span className={selected ? 'text-sky-300' : 'text-slate-500'}><FormIcon form={form} /></span>
+              <span className={`shrink-0 ${selected ? 'text-sky-300' : 'text-slate-500'}`}>
+                <DosageFormIcon form={form.key} />
+              </span>
               <span className="min-w-0 break-words">{t(form.labelKey)}</span>
             </button>
           )
