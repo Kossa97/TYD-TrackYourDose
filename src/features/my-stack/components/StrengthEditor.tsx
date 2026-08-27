@@ -42,17 +42,31 @@ export function StrengthEditor({
   const amountUnitErrorId = `stack-strength-${ingredientIndex}-amount-unit-error`
   const basisValueErrorId = `stack-strength-${ingredientIndex}-basis-value-error`
   const basisUnitErrorId = `stack-strength-${ingredientIndex}-basis-unit-error`
+  const displayedIngredientName = ingredientName || t(
+    `my_stack_ingredient_${ingredientIndex + 1}`,
+    { defaultValue: `Inhaltsstoff ${ingredientIndex + 1}` },
+  )
+  const hasPreview = (
+    ingredient.amount_value !== null
+    && Boolean(ingredient.amount_unit?.trim())
+    && ingredient.basis_value !== null
+    && Boolean(ingredient.basis_unit?.trim())
+  )
 
   return (
     <fieldset className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
       <legend className="px-1 text-sm font-semibold text-slate-200">
-        {ingredientName || t(`my_stack_ingredient_${ingredientIndex + 1}`, { defaultValue: `Inhaltsstoff ${ingredientIndex + 1}` })}
+        {displayedIngredientName}
       </legend>
 
-      <div className="mt-3 grid min-w-0 gap-3 sm:grid-cols-2">
-        <div>
+      <p className="mt-3 rounded-xl border border-white/[0.07] bg-black/20 px-3 py-2.5 text-xs leading-relaxed text-slate-400">
+        {t('my_stack_no_dosage_advice', { defaultValue: 'Wie viel Wirkstoff ist in welcher Produktmenge enthalten? Trage ein, was auf der Verpackung steht. Beispiel: 250 mg/ml = 250 mg pro 1 ml. Keine Dosierungsempfehlung.' })}
+      </p>
+
+      <div className="mt-4 grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_minmax(0,1fr)_minmax(0,1fr)] sm:items-start">
+        <div className="min-w-0">
           <label htmlFor={`stack-strength-${ingredientIndex}-amount-value`} className="mb-2 block text-sm font-medium text-slate-300">
-            {t('my_stack_strength_value', { defaultValue: 'Stärke' })}
+            {t('my_stack_strength_value', { defaultValue: 'Wirkstoffmenge' })}
           </label>
           <input
             id={`stack-strength-${ingredientIndex}-amount-value`}
@@ -70,14 +84,14 @@ export function StrengthEditor({
           {errors.amountValue && (
             <p id={amountValueErrorId} role="alert" className="mt-2 flex items-center gap-2 text-sm text-rose-300">
               <AlertCircle aria-hidden="true" size={16} />
-              {t('my_stack_strength_value_required', { defaultValue: 'Bitte gib die Stärke an.' })}
+              {t('my_stack_strength_value_required', { defaultValue: 'Bitte gib die Wirkstoffmenge an.' })}
             </p>
           )}
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label htmlFor={`stack-strength-${ingredientIndex}-amount-unit`} className="mb-2 block text-sm font-medium text-slate-300">
-            {t('my_stack_strength_unit', { defaultValue: 'Einheit' })}
+            {t('my_stack_strength_unit', { defaultValue: 'Wirkstoffeinheit' })}
           </label>
           <input
             id={`stack-strength-${ingredientIndex}-amount-unit`}
@@ -96,14 +110,21 @@ export function StrengthEditor({
           {errors.amountUnit && (
             <p id={amountUnitErrorId} role="alert" className="mt-2 flex items-center gap-2 text-sm text-rose-300">
               <AlertCircle aria-hidden="true" size={16} />
-              {t('my_stack_strength_unit_required', { defaultValue: 'Bitte wähle oder benenne eine Einheit.' })}
+              {t('my_stack_strength_unit_required', { defaultValue: 'Bitte wähle eine Wirkstoffeinheit.' })}
             </p>
           )}
         </div>
 
-        <div>
+        <div className="col-span-2 min-w-0 sm:col-span-1">
+          <span aria-hidden="true" className="mb-2 hidden h-5 sm:block">&nbsp;</span>
+          <span className="flex min-h-6 items-center justify-center text-sm font-semibold text-cyan-300 sm:min-h-11">
+            {t('my_stack_per', { defaultValue: 'pro' })}
+          </span>
+        </div>
+
+        <div className="min-w-0">
           <label htmlFor={`stack-strength-${ingredientIndex}-basis-value`} className="mb-2 block text-sm font-medium text-slate-300">
-            {t('my_stack_basis_value', { defaultValue: 'Bezugsmenge' })}
+            {t('my_stack_basis_value', { defaultValue: 'Produktmenge' })}
           </label>
           <input
             id={`stack-strength-${ingredientIndex}-basis-value`}
@@ -121,14 +142,14 @@ export function StrengthEditor({
           {errors.basisValue && (
             <p id={basisValueErrorId} role="alert" className="mt-2 flex items-center gap-2 text-sm text-rose-300">
               <AlertCircle aria-hidden="true" size={16} />
-              {t('my_stack_basis_value_required', { defaultValue: 'Bitte gib die Bezugsmenge an.' })}
+              {t('my_stack_basis_value_required', { defaultValue: 'Bitte gib die Produktmenge an.' })}
             </p>
           )}
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label htmlFor={`stack-strength-${ingredientIndex}-basis-unit`} className="mb-2 block text-sm font-medium text-slate-300">
-            {t('my_stack_basis_unit', { defaultValue: 'Bezugsgröße' })}
+            {t('my_stack_basis_unit', { defaultValue: 'Produkteinheit' })}
           </label>
           <input
             id={`stack-strength-${ingredientIndex}-basis-unit`}
@@ -147,15 +168,22 @@ export function StrengthEditor({
           {errors.basisUnit && (
             <p id={basisUnitErrorId} role="alert" className="mt-2 flex items-center gap-2 text-sm text-rose-300">
               <AlertCircle aria-hidden="true" size={16} />
-              {t('my_stack_basis_unit_required', { defaultValue: 'Bitte wähle oder benenne eine Bezugsgröße.' })}
+              {t('my_stack_basis_unit_required', { defaultValue: 'Bitte wähle eine Produkteinheit.' })}
             </p>
           )}
         </div>
       </div>
 
-      <p className="mt-3 text-xs leading-relaxed text-slate-500">
-        {t('my_stack_no_dosage_advice', { defaultValue: 'Die Stärke beschreibt das Produkt und ist keine Dosierungsempfehlung.' })}
-      </p>
+      {hasPreview && (
+        <p
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="mt-4 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.05] px-3 py-2 text-sm text-cyan-100"
+        >
+          {displayedIngredientName}: {ingredient.amount_value} {ingredient.amount_unit} {t('my_stack_per', { defaultValue: 'pro' })} {ingredient.basis_value} {ingredient.basis_unit}
+        </p>
+      )}
     </fieldset>
   )
 }

@@ -280,6 +280,8 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         },
       }
     case 'dosage_form_selected': {
+      if (state.draft.dosageForm === action.dosageForm) return state
+
       const basisUnit = suggestedBasisUnit(action.dosageForm)
       const compatiblePlanUnits = getIntakePlanUnitSuggestions(
         action.dosageForm,

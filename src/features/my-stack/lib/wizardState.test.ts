@@ -328,6 +328,39 @@ describe('wizard state', () => {
     expect(next.draft.ingredients[0].basis_unit).toBe('portion')
   })
 
+  it.each([
+    ['ampoule', 'ampoule'],
+    ['vial', 'ml'],
+  ] as const)('preserves an existing %s product unit when its already-selected form is clicked again', (dosageForm, basisUnit) => {
+    const existing = {
+      ...existingVitaminD,
+      dosage_form: dosageForm,
+      ingredients: [{ ...existingVitaminD.ingredients[0], basis_unit: basisUnit }],
+    }
+
+    const next = wizardReducer(initialWizardState(existing), {
+      type: 'dosage_form_selected',
+      dosageForm,
+    })
+
+    expect(next.draft.ingredients[0].basis_unit).toBe(basisUnit)
+  })
+
+  it('continues to reset the product unit when the dosage form actually changes', () => {
+    const existingAmpoule = {
+      ...existingVitaminD,
+      dosage_form: 'ampoule' as const,
+      ingredients: [{ ...existingVitaminD.ingredients[0], basis_unit: 'ampoule' }],
+    }
+
+    const next = wizardReducer(initialWizardState(existingAmpoule), {
+      type: 'dosage_form_selected',
+      dosageForm: 'vial',
+    })
+
+    expect(next.draft.ingredients[0].basis_unit).toBe('vial')
+  })
+
   it('unterscheidet Update und neue Variante beim Editieren', () => {
     const editState = initialWizardState(existingVitaminD)
 
