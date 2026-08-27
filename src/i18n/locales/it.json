@@ -1087,5 +1087,11 @@
   "dosage_form_gel": "Gel",
   "dosage_form_patch": "Patch",
   "dosage_form_tube": "Tubo",
-  "dosage_form_other": "Altro"
+  "dosage_form_other": "Altro",
+  "my_stack_recommended_dosage_forms": "Consigliato per {{substanceName}}",
+  "my_stack_common_dosage_forms": "Forme di dosaggio comuni",
+  "my_stack_current_dosage_form": "Attualmente selezionato",
+  "my_stack_show_more_dosage_forms": "Mostra più forme di dosaggio",
+  "my_stack_hide_more_dosage_forms": "Nascondi più forme di dosaggio",
+  "my_stack_more_dosage_forms": "Altre forme di dosaggio"
 }

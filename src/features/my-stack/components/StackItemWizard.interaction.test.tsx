@@ -159,7 +159,10 @@ function completeCatalogFlow(): void {
 
 function reachExistingReview(changeForm = false): void {
   continueWizard()
-  if (changeForm) fireEvent.click(screen.getByRole('button', { name: 'dosage_form_drops' }))
+  if (changeForm) {
+    fireEvent.click(screen.getByRole('button', { name: 'my_stack_show_more_dosage_forms' }))
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_drops' }))
+  }
   continueWizard()
   continueWizard()
   continueWizard()

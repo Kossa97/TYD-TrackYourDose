@@ -1087,5 +1087,11 @@
   "dosage_form_gel": "ジェル",
   "dosage_form_patch": "パッチ",
   "dosage_form_tube": "チューブ",
-  "dosage_form_other": "その他"
+  "dosage_form_other": "その他",
+  "my_stack_recommended_dosage_forms": "{{substanceName}} に推奨",
+  "my_stack_common_dosage_forms": "一般的な剤形",
+  "my_stack_current_dosage_form": "現在選択されています",
+  "my_stack_show_more_dosage_forms": "他の剤形を表示",
+  "my_stack_hide_more_dosage_forms": "他の剤形を非表示にする",
+  "my_stack_more_dosage_forms": "その他の剤形"
 }

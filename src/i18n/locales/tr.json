@@ -1087,5 +1087,11 @@
   "dosage_form_gel": "Jel",
   "dosage_form_patch": "Yama",
   "dosage_form_tube": "Tüp",
-  "dosage_form_other": "Diğer"
+  "dosage_form_other": "Diğer",
+  "my_stack_recommended_dosage_forms": "{{substanceName}} için önerilir",
+  "my_stack_common_dosage_forms": "Yaygın dozaj formları",
+  "my_stack_current_dosage_form": "Şu anda seçili",
+  "my_stack_show_more_dosage_forms": "Daha fazla dozaj formu göster",
+  "my_stack_hide_more_dosage_forms": "Daha fazla dozaj formunu gizleyin",
+  "my_stack_more_dosage_forms": "Daha fazla dozaj formu"
 }

@@ -1089,5 +1089,11 @@
   "dosage_form_gel": "Гель",
   "dosage_form_patch": "Патч",
   "dosage_form_tube": "Трубка",
-  "dosage_form_other": "Другое"
+  "dosage_form_other": "Другое",
+  "my_stack_recommended_dosage_forms": "Рекомендуется для {{substanceName}}",
+  "my_stack_common_dosage_forms": "Распространенные лекарственные формы",
+  "my_stack_current_dosage_form": "Выбрано в данный момент",
+  "my_stack_show_more_dosage_forms": "Показать больше лекарственных форм",
+  "my_stack_hide_more_dosage_forms": "Скрыть больше лекарственных форм",
+  "my_stack_more_dosage_forms": "Еще лекарственные формы"
 }
