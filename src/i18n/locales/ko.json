@@ -1087,7 +1087,6 @@
   "dosage_form_patch": "패치",
   "dosage_form_tube": "튜브",
   "dosage_form_other": "기타",
-  "my_stack_recommended_dosage_forms": "{{substanceName}}에 권장됨",
   "my_stack_common_dosage_forms": "일반적인 투여 형태",
   "my_stack_current_dosage_form": "현재 선택됨",
   "my_stack_show_more_dosage_forms": "더 많은 제형 보기",

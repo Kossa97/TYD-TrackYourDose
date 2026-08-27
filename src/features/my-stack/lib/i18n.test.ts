@@ -28,7 +28,6 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_ingredient_required',
   'my_stack_dosage_form',
   'my_stack_dosage_form_required',
-  'my_stack_recommended_dosage_forms',
   'my_stack_common_dosage_forms',
   'my_stack_current_dosage_form',
   'my_stack_show_more_dosage_forms',

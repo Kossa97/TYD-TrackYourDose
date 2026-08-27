@@ -16,7 +16,6 @@ const COMMON_DOSAGE_FORMS: readonly DosageFormKey[] = [
 
 export interface DosageFormPickerProps {
   value: DosageFormKey | null
-  substanceName: string
   suggestedForms: readonly DosageFormKey[]
   error?: boolean
   onSelect: (dosageForm: DosageFormKey) => void
@@ -24,7 +23,6 @@ export interface DosageFormPickerProps {
 
 export function DosageFormPicker({
   value,
-  substanceName,
   suggestedForms,
   error = false,
   onSelect,
@@ -83,12 +81,7 @@ export function DosageFormPicker({
 
       <div role="group" aria-labelledby="stack-dosage-primary-label">
         <p id="stack-dosage-primary-label" className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-          {suggestedKeys.length > 0
-            ? t('my_stack_recommended_dosage_forms', {
-              substanceName,
-              defaultValue: 'Empfohlen für {{substanceName}}',
-            })
-            : t('my_stack_common_dosage_forms', { defaultValue: 'Häufige Darreichungsformen' })}
+          {t('my_stack_common_dosage_forms', { defaultValue: 'Häufige Darreichungsformen' })}
         </p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {primaryForms.map(renderForm)}

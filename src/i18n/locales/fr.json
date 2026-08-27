@@ -1088,7 +1088,6 @@
   "dosage_form_patch": "Patch",
   "dosage_form_tube": "Tube",
   "dosage_form_other": "Autre",
-  "my_stack_recommended_dosage_forms": "Recommandé pour {{substanceName}}",
   "my_stack_common_dosage_forms": "Formes galéniques courantes",
   "my_stack_current_dosage_form": "Actuellement sélectionné",
   "my_stack_show_more_dosage_forms": "Afficher plus de formes posologiques",

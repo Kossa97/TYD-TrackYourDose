@@ -1088,7 +1088,6 @@
   "dosage_form_patch": "पैच",
   "dosage_form_tube": "ट्यूब",
   "dosage_form_other": "अन्य",
-  "my_stack_recommended_dosage_forms": "{{substanceName}} के लिए अनुशंसित",
   "my_stack_common_dosage_forms": "सामान्य खुराक स्वरूप",
   "my_stack_current_dosage_form": "वर्तमान में चयनित",
   "my_stack_show_more_dosage_forms": "अधिक खुराक प्रपत्र दिखाएँ",

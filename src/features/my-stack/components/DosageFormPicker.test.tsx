@@ -7,9 +7,7 @@ import { DosageFormPicker } from './DosageFormPicker'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, options?: { defaultValue?: string; substanceName?: string }) => (
-      (options?.defaultValue ?? key).replace('{{substanceName}}', options?.substanceName ?? '')
-    ),
+    t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? key,
   }),
 }))
 
@@ -20,7 +18,6 @@ describe('DosageFormPicker', () => {
     render(
       <DosageFormPicker
         value={null}
-        substanceName="Testsubstanz"
         suggestedForms={DOSAGE_FORMS.map(form => form.key)}
         onSelect={() => undefined}
       />,
@@ -32,7 +29,6 @@ describe('DosageFormPicker', () => {
     render(
       <DosageFormPicker
         value={null}
-        substanceName="Testsubstanz"
         suggestedForms={DOSAGE_FORMS.map(form => form.key)}
         onSelect={() => undefined}
       />,
@@ -70,18 +66,17 @@ describe('DosageFormPicker', () => {
     expect(icon.querySelector('circle')).toBeNull()
   })
 
-  it('shows catalog suggestions first in catalog order and hides remaining forms initially', () => {
+  it('shows only the substance-specific common forms first and hides remaining forms initially', () => {
     render(
       <DosageFormPicker
         value={null}
-        substanceName="Testosteron"
         suggestedForms={['ampoule', 'vial', 'gel']}
         onSelect={() => undefined}
       />,
     )
 
-    const recommended = screen.getByRole('group', { name: 'Empfohlen für Testosteron' })
-    expect(within(recommended).getAllByRole('button').map(button => button.textContent)).toEqual([
+    const common = screen.getByRole('group', { name: 'Häufige Darreichungsformen' })
+    expect(within(common).getAllByRole('button').map(button => button.textContent)).toEqual([
       'dosage_form_ampoule',
       'dosage_form_vial',
       'dosage_form_gel',
@@ -90,11 +85,10 @@ describe('DosageFormPicker', () => {
     expect(screen.getByRole('button', { name: 'Weitere Darreichungsformen anzeigen' }).getAttribute('aria-expanded')).toBe('false')
   })
 
-  it('reveals every remaining form without duplicating recommendations', () => {
+  it('reveals every remaining form without duplicating common forms', () => {
     render(
       <DosageFormPicker
         value={null}
-        substanceName="Testosteron"
         suggestedForms={['ampoule', 'vial', 'gel']}
         onSelect={() => undefined}
       />,
@@ -112,7 +106,6 @@ describe('DosageFormPicker', () => {
     render(
       <DosageFormPicker
         value={null}
-        substanceName="Eigene Substanz"
         suggestedForms={[]}
         onSelect={() => undefined}
       />,
@@ -129,11 +122,10 @@ describe('DosageFormPicker', () => {
     ])
   })
 
-  it('keeps a selected non-recommended form visible while editing', () => {
+  it('keeps a selected form outside the common forms visible while editing', () => {
     render(
       <DosageFormPicker
         value="patch"
-        substanceName="Testosteron"
         suggestedForms={['ampoule', 'vial', 'gel']}
         onSelect={() => undefined}
       />,

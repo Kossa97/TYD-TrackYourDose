@@ -1088,7 +1088,6 @@
   "dosage_form_patch": "Tambalan",
   "dosage_form_tube": "Tabung",
   "dosage_form_other": "Lainnya",
-  "my_stack_recommended_dosage_forms": "Direkomendasikan untuk {{substanceName}}",
   "my_stack_common_dosage_forms": "Bentuk sediaan umum",
   "my_stack_current_dosage_form": "Saat ini dipilih",
   "my_stack_show_more_dosage_forms": "Tampilkan lebih banyak bentuk sediaan",

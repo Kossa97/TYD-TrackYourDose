@@ -1063,7 +1063,6 @@
   "my_stack_ingredient_required": "Please name the ingredient.",
   "my_stack_dosage_form": "Dosage form",
   "my_stack_dosage_form_required": "Please select a dosage form.",
-  "my_stack_recommended_dosage_forms": "Recommended for {{substanceName}}",
   "my_stack_common_dosage_forms": "Common dosage forms",
   "my_stack_current_dosage_form": "Currently selected",
   "my_stack_show_more_dosage_forms": "Show more dosage forms",

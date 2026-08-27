@@ -397,7 +397,6 @@ export function StackItemWizard({
         return (
           <DosageFormPicker
             value={state.draft.dosageForm}
-            substanceName={state.draft.displayName}
             suggestedForms={selectedCatalogEntry?.suggested_dosage_forms ?? []}
             error={showErrors && Boolean(validationErrors.dosageForm)}
             onSelect={dosageForm => dispatch({

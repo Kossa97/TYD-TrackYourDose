@@ -1092,7 +1092,6 @@
   "dosage_form_patch": "التصحيح",
   "dosage_form_tube": "تيوب",
   "dosage_form_other": "أخرى",
-  "my_stack_recommended_dosage_forms": "موصى به لـ {{substanceName}}",
   "my_stack_common_dosage_forms": "أشكال الجرعات الشائعة",
   "my_stack_current_dosage_form": "المحدد حاليا",
   "my_stack_show_more_dosage_forms": "عرض المزيد من أشكال الجرعات",
