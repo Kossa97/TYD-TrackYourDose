@@ -4,7 +4,7 @@
 
 **Goal:** Die Ampulle als zweite vollwertige Bühnenform in My Stack rendern und dabei die Bausteine herauslösen, die sie sich mit dem Vial teilt.
 
-**Architecture:** Architektur C aus dem Spec. Material — Flüssigkeitsgeometrie, Flüssigkeits-Malstapel, Stage-Light-Kanal, Etikett — wandert nach `src/features/my-stack/stage/` und wird von beiden Formen benutzt. Form — Shell-Kontur, Kappe, Kammerlage, Seitenverhältnis — bleibt pro Darreichungsform. Das Vial behält Aussehen und Pfad; seine 25 bestehenden Tests sind das Regressionsnetz für jede Extraktion.
+**Architecture:** Architektur C aus dem Spec. Material — Flüssigkeitsgeometrie, Flüssigkeits-Malstapel, Stage-Light-Kanal, Etikett — wandert nach `src/features/my-stack/stage/` und wird von beiden Formen benutzt. Form — Shell-Kontur, Kappe, Kammerlage, Seitenverhältnis — bleibt pro Darreichungsform. Das Vial behält Aussehen und Pfad; seine 24 bestehenden Tests sind das Regressionsnetz für jede Extraktion.
 
 **Tech Stack:** React 19, TypeScript, Vite, Vitest, Tailwind, Inline-SVG.
 
@@ -14,7 +14,7 @@
 
 ## Global Constraints
 
-1. **Die bestehende Vial-Suite darf nicht angefasst werden.** `src/components/PeptideVialVisual.test.ts` (25 Tests) und `src/features/my-stack/components/StackStage.test.ts` bleiben inhaltlich unverändert und müssen nach jeder Task grün sein. Wenn eine Extraktion sie rot macht, ist die Extraktion falsch — nicht der Test.
+1. **Die bestehende Vial-Suite darf nicht angefasst werden.** `src/components/PeptideVialVisual.test.ts` (24 Tests) und `src/features/my-stack/components/StackStage.test.ts` bleiben inhaltlich unverändert und müssen nach jeder Task grün sein. Wenn eine Extraktion sie rot macht, ist die Extraktion falsch — nicht der Test.
 2. **`StackStage.test.ts` prüft Quelltext-Strings.** Es verlangt, dass `VialRenderer.tsx` die Bezeichner `PeptideVialVisual`, `VialStageLightHandle`, `SloshProvider` und `sloshEngine?: SloshEngine` enthält und **kein** `<svg`. Der Name `VialStageLightHandle` muss deshalb erhalten bleiben, auch wenn der Typ umzieht.
 3. **`StackStage.tsx` darf kein `<svg`, `<img` oder `lucide-react` enthalten.** Auch das wird per Quelltext geprüft.
 4. **Keine neuen i18n-Schlüssel.** Der Vertrag in `src/features/my-stack/lib/i18n.test.ts` listet Schlüssel explizit über 14 Locales; die Ampulle braucht keinen.
@@ -251,7 +251,7 @@ Expected: keine Ausgabe.
 - [ ] **Step 5: Volle Suite laufen lassen**
 
 Run: `npm test`
-Expected: PASS, unveränderte Testanzahl gegenüber dem Stand vor Task 1 plus die zwei neuen Geometrietests.
+Expected: PASS, unveränderte Testanzahl gegenüber dem Stand nach Task 1.
 
 - [ ] **Step 6: Commit**
 
@@ -1361,7 +1361,7 @@ git commit -m "feat: bind the fill percentage to forms that have one"
 - [ ] **Step 1: Volle Suite**
 
 Run: `npm test`
-Expected: PASS. Die Testanzahl liegt über dem Ausgangsstand von 957; keiner der 25 Vial-Tests darf fehlschlagen.
+Expected: PASS. Die Testanzahl liegt über dem Stand unmittelbar vor Task 1; keiner der 24 Vial-Tests darf fehlschlagen.
 
 - [ ] **Step 2: Typen und Build**
 
@@ -1407,6 +1407,6 @@ git commit -m "chore: refresh the knowledge graph"
 - Formen ohne Flüssigkeitskammer bekommen kein Etikett.
 - Die Prozentzeile erscheint beim Vial und entfällt bei der Ampulle.
 - Kein Bühnen-Code verzweigt auf `dosage_form`, um über Etikett oder Füllstand zu entscheiden.
-- Die 25 bestehenden Vial-Tests und die drei bestehenden `StackStage`-Tests sind unverändert und grün.
+- Die 24 bestehenden Vial-Tests und die drei bestehenden `StackStage`-Tests sind unverändert und grün.
 - Keine neuen i18n-Schlüssel; der i18n-Vertrag bleibt grün.
 - `npm test`, `npm run build` und `npm run lint` laufen ohne neue Fehler.

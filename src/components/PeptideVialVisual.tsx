@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode, Ref, RefObject } from 'react'
-import { buildLiquid, LIQUID_VB_H, LIQUID_VB_W, liquidSurfaceY } from './liquidGeometry'
+import { buildLiquid, LIQUID_VB_H, LIQUID_VB_W, liquidSurfaceY } from '../features/my-stack/stage/liquidGeometry'
+import { usePrefersReducedMotion } from '../features/my-stack/stage/usePrefersReducedMotion'
 import { useSloshSubscribe } from './SloshContext'
 import type { SloshState } from './sloshEngine'
 
@@ -13,19 +14,6 @@ const LIQUID_BUBBLES = [
   { cx: 82, r: 1.1, dur: 7.2, delay: 0.7 },
   { cx: 98, r: 1.4, dur: 5.9, delay: 3.2 },
 ]
-
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false)
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const update = () => setReduced(mq.matches)
-    update()
-    mq.addEventListener?.('change', update)
-    return () => mq.removeEventListener?.('change', update)
-  }, [])
-  return reduced
-}
 
 // Imperative stage-light channel: the carousel pushes focus/lightOffset per
 // scroll frame through this handle so no React re-render happens while swiping.
