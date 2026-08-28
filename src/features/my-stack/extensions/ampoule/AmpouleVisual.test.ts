@@ -37,6 +37,16 @@ describe('AmpouleVisual', () => {
     expect(render()).toContain('data-ampoule-detail="punt"')
   })
 
+  it('keeps every edge light inside the glass', () => {
+    // At the constriction the body is only 24 units wide. An unclipped
+    // highlight paints a bright streak in mid-air beside the neck.
+    const html = render()
+    const outerClip = html.match(/id="([^"]*-outerClip)"/)?.[1]
+
+    expect(outerClip).toBeTruthy()
+    expect(html).toContain(`data-ampoule-detail="edge-lights" clip-path="url(#${outerClip})"`)
+  })
+
   it('scales uniformly so the proportions survive every size', () => {
     const html = render()
 

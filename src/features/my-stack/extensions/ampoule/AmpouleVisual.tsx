@@ -254,8 +254,11 @@ export function AmpouleVisual({
           vectorEffect="non-scaling-stroke"
         />
 
-        {/* Edge lights follow the contour and bend into the base radius */}
-        <g data-ampoule-detail="edge-lights">
+        {/* Edge lights follow the contour and bend into the base radius. The
+            whole group is clipped to the glass: at the constriction the body is
+            only 24 units wide, so an unclipped highlight paints a bright streak
+            in mid-air beside the neck. */}
+        <g data-ampoule-detail="edge-lights" clipPath={`url(#${uid}-outerClip)`}>
           <g ref={hiLeftRef} opacity={Math.max(0.08, Math.min(1, 0.6 - visualLightOffset * 0.6))}>
             <path
               d="M32.5 158 L32.5 250 C32.5 262 36.5 268.5 45 272"
@@ -266,12 +269,14 @@ export function AmpouleVisual({
               strokeLinecap="round"
               filter={`url(#${uid}-soft)`}
             />
+            {/* Traces the left wall through the pinch: out at y=107, in to the
+                constriction at y=95, back out into the head at y=82. */}
             <path
-              d="M46.5 104 C 44.2 94, 45.4 76, 48.6 60 C 50.8 48, 53.6 33, 54.8 21"
+              d="M47.5 106 C 49.3 101, 49.9 98, 49.6 95 C 48.4 90.5, 44.6 87.5, 43.2 82.5 C 42.3 76, 42.8 69, 44.9 59 C 47.5 45, 51.3 31, 52.8 20"
               fill="none"
               stroke="rgba(255,255,255,0.55)"
-              strokeOpacity="0.55"
-              strokeWidth="3.4"
+              strokeOpacity="0.5"
+              strokeWidth="2.6"
               strokeLinecap="round"
               filter={`url(#${uid}-soft)`}
             />
@@ -286,12 +291,13 @@ export function AmpouleVisual({
               strokeLinecap="round"
               filter={`url(#${uid}-soft)`}
             />
+            {/* mirror of the left trace, dimmer: the far wall through the pinch */}
             <path
-              d="M73.5 108 C 76 100, 75.5 88, 74.2 78"
+              d="M72.5 106 C 71.2 101, 70.6 98, 70.6 95 C 72 90.5, 75.6 87.5, 76.8 83"
               fill="none"
               stroke="rgba(255,255,255,0.4)"
-              strokeOpacity="0.3"
-              strokeWidth="2"
+              strokeOpacity="0.28"
+              strokeWidth="1.8"
               strokeLinecap="round"
               filter={`url(#${uid}-soft)`}
             />
