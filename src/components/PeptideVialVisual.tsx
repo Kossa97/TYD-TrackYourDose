@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode, Ref, RefObject } from 'react'
 import { buildLiquid, LIQUID_VB_H, LIQUID_VB_W, liquidSurfaceY } from '../features/my-stack/stage/liquidGeometry'
 import { usePrefersReducedMotion } from '../features/my-stack/stage/usePrefersReducedMotion'
 import { useStageLight, type StageLightHandle } from '../features/my-stack/stage/useStageLight'
+import { StageLabel } from '../features/my-stack/stage/StageLabel'
 import { useSloshSubscribe } from './SloshContext'
 import type { SloshState } from './sloshEngine'
 
@@ -63,75 +64,6 @@ function fillMotionShiftPct(previousFill: number, nextFill: number): number {
 function vialAmountLabel(amount?: string | number | null, unit?: string | null): string {
   if (amount === null || amount === undefined || amount === '') return 'Wirkstoff / Vial'
   return `${amount} ${unit || 'mg'} / Vial`
-}
-
-function VialLabelMarquee({
-  children,
-  className,
-}: {
-  children: ReactNode
-  className: string
-}) {
-  const wrapRef = useRef<HTMLSpanElement | null>(null)
-  const innerRef = useRef<HTMLSpanElement | null>(null)
-
-  useEffect(() => {
-    const wrap = wrapRef.current
-    const inner = innerRef.current
-    if (!wrap || !inner || typeof window === 'undefined') return
-
-    let anim: Animation | null = null
-
-    const setup = () => {
-      anim?.cancel()
-      inner.style.transform = 'translateX(0)'
-
-      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
-
-      const overflow = inner.scrollWidth - wrap.clientWidth
-      if (overflow <= 4) return
-
-      const holdStart = 2200
-      const holdEnd = 1200
-      const moveOut = Math.max(1800, overflow * 35)
-      const moveBack = Math.max(700, overflow * 14)
-      const total = holdStart + moveOut + holdEnd + moveBack
-
-      anim = inner.animate(
-        [
-          { transform: 'translateX(0)', offset: 0 },
-          { transform: 'translateX(0)', offset: holdStart / total },
-          { transform: `translateX(-${overflow}px)`, offset: (holdStart + moveOut) / total },
-          { transform: `translateX(-${overflow}px)`, offset: (holdStart + moveOut + holdEnd) / total },
-          { transform: 'translateX(0)', offset: 1 },
-        ],
-        { duration: total, iterations: Infinity, easing: 'linear' },
-      )
-    }
-
-    setup()
-
-    if (typeof ResizeObserver === 'undefined') {
-      return () => anim?.cancel()
-    }
-
-    const ro = new ResizeObserver(setup)
-    ro.observe(wrap)
-    ro.observe(inner)
-
-    return () => {
-      anim?.cancel()
-      ro.disconnect()
-    }
-  }, [children])
-
-  return (
-    <span ref={wrapRef} className={`block overflow-hidden whitespace-nowrap ${className}`}>
-      <span ref={innerRef} className="vial-label-marquee inline-block will-change-transform">
-        {children}
-      </span>
-    </span>
-  )
 }
 
 // Metallic flip-off cap. The glass vial itself is drawn below as one unified
@@ -700,24 +632,17 @@ export function PeptideVialVisual({
           )}
 
           {showLabel && (
-            <div
-              data-vial-detail="label-glass-wrap"
-              className={`absolute ${labelClass} overflow-hidden border-y border-white/40 bg-white/28 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)] backdrop-blur-[2px]`}
-            >
-              <div data-vial-detail="full-width-label" className="relative overflow-hidden">
-                <VialLabelMarquee className={`${nameClass} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
-                  {labelName}
-                </VialLabelMarquee>
-                <p className={`${amountClass} font-bold uppercase tracking-wide text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]`}>
-                  {vialAmountLabel(amount, unit)}
-                </p>
-              </div>
-              <div
-                ref={labelSheenRef}
-                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/10 via-white/10 to-black/10"
-                style={{ transform: `translateX(${visualLightOffset * 10}%)`, opacity: 0.62 + visualFocus * 0.2 }}
-              />
-            </div>
+            <StageLabel
+              name={labelName}
+              detail={vialAmountLabel(amount, unit)}
+              className={labelClass}
+              nameClassName={`${nameClass} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}
+              detailClassName={`${amountClass} font-bold uppercase tracking-wide text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]`}
+              wrapperProps={{ 'data-vial-detail': 'label-glass-wrap' }}
+              innerProps={{ 'data-vial-detail': 'full-width-label' }}
+              sheenRef={labelSheenRef}
+              sheenStyle={{ transform: `translateX(${visualLightOffset * 10}%)`, opacity: 0.62 + visualFocus * 0.2 }}
+            />
           )}
         </div>
       </div>

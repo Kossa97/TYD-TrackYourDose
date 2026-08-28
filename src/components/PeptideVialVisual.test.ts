@@ -9,6 +9,8 @@ const source = () => readFileSync(new URL('./PeptideVialVisual.tsx', import.meta
 // therefore lives in the stage module; the vial wires itself to it.
 const stageLightSource = () =>
   readFileSync(new URL('../features/my-stack/stage/useStageLight.ts', import.meta.url), 'utf8')
+const stageLabelSource = () =>
+  readFileSync(new URL('../features/my-stack/stage/StageLabel.tsx', import.meta.url), 'utf8')
 
 describe('PeptideVialVisual', () => {
   test('renders readable vial label content', () => {
@@ -193,8 +195,8 @@ describe('PeptideVialVisual', () => {
   test('renders the empty glass as clear rather than milky (only the label stays frosted)', () => {
     const text = source()
 
-    // the label band keeps its frosted look
-    expect(text).toContain('bg-white/28')
+    // the label band keeps its frosted look (the band itself is shared)
+    expect(stageLabelSource()).toContain('bg-white/28')
     // the glass body is transparent in the centre — the old milky white
     // mid-stops are gone
     expect(text).not.toContain('<stop offset="34%" stopColor="rgba(255,255,255,0.10)" />')
@@ -239,12 +241,15 @@ describe('PeptideVialVisual', () => {
   })
 
   test('measures real overflow for vial label marquee instead of using a name-length heuristic', () => {
-    const text = source()
+    // The band is shared with the other stage forms, so the marquee itself
+    // lives in the stage module; the vial hands it the name.
+    const text = stageLabelSource()
 
     expect(text).toContain('ResizeObserver')
     expect(text).toContain('inner.scrollWidth - wrap.clientWidth')
     expect(text).toContain('inner.animate(')
     expect(text).not.toContain('labelName.length >')
+    expect(source()).toContain('StageLabel')
   })
 
   test('does not add fixed extra width that would trigger marquee without real overflow', () => {
