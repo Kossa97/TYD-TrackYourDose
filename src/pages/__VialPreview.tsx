@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { UIEvent } from 'react'
 import { PeptideVialVisual } from '../components/PeptideVialVisual'
+import { AmpouleVisual } from '../features/my-stack/extensions/ampoule/AmpouleVisual'
 import { SloshProvider, useSloshEngine } from '../components/SloshContext'
 
 const PREVIEW_VIALS = [
@@ -9,6 +10,13 @@ const PREVIEW_VIALS = [
   { name: 'Ipamorelin', amount: '2', unit: 'mg', fillPct: 95, color: '#ec4899', size: 'large' as const },
   { name: 'Semax', amount: '10', unit: 'mg', fillPct: 60, color: '#f59e0b', size: 'compact' as const },
   { name: 'GHK-Cu', amount: '50', unit: 'mg', fillPct: 20, color: '#22c55e', size: 'compact' as const },
+]
+
+const PREVIEW_AMPOULES = [
+  { name: 'Testosteron Enantat', amount: 250, unit: 'mg / ml', color: '#e0a23f', size: 'large' as const },
+  { name: 'Nandrolon D', amount: 200, unit: 'mg / ml', color: '#38bdf8', size: 'large' as const },
+  { name: 'Vitamin B12', amount: 1000, unit: 'mcg / ml', color: '#f43f5e', size: 'large' as const },
+  { name: 'Ohne Menge', amount: null, unit: null, color: '#a3e635', size: 'large' as const },
 ]
 
 export function VialPreview() {
@@ -66,6 +74,48 @@ export function VialPreview() {
               </div>
             )
           })}
+        </div>
+      </SloshProvider>
+
+      {/* Ampoule next to the vial: same stage, same ground line, same slosh
+          engine — the comparison the shape has to survive. */}
+      <SloshProvider engine={sloshEngine}>
+        <div
+          className="mx-auto flex max-w-4xl snap-x snap-mandatory items-end gap-10 overflow-x-auto border-t border-slate-800 pt-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          onScroll={handleScroll}
+        >
+          {PREVIEW_AMPOULES.map((ampoule, index) => (
+            <div key={ampoule.name} className="snap-center shrink-0 px-4">
+              <AmpouleVisual
+                name={ampoule.name}
+                amount={ampoule.amount}
+                unit={ampoule.unit}
+                color={ampoule.color}
+                size={ampoule.size}
+                focus={index === 1 ? 0.72 : 1}
+                lightOffset={index === 1 ? -0.35 : 0}
+              />
+            </div>
+          ))}
+          <div className="snap-center shrink-0 px-4">
+            <PeptideVialVisual
+              name="Vial zum Vergleich"
+              amount="5"
+              unit="mg"
+              fillPct={72}
+              color="#06b6d4"
+              size="carousel"
+            />
+          </div>
+          <div className="snap-center shrink-0 px-4">
+            <AmpouleVisual
+              name="Testosteron E"
+              amount={250}
+              unit="mg / ml"
+              color="#e0a23f"
+              size="carousel"
+            />
+          </div>
         </div>
       </SloshProvider>
     </div>
