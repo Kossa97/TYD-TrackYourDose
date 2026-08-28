@@ -11,6 +11,10 @@ const stageLightSource = () =>
   readFileSync(new URL('../features/my-stack/stage/useStageLight.ts', import.meta.url), 'utf8')
 const stageLabelSource = () =>
   readFileSync(new URL('../features/my-stack/stage/StageLabel.tsx', import.meta.url), 'utf8')
+// The liquid paint stack is shared with the other stage forms; the vial hands
+// it the chamber it should fill.
+const liquidGraphicSource = () =>
+  readFileSync(new URL('../features/my-stack/stage/LiquidGraphic.tsx', import.meta.url), 'utf8')
 
 describe('PeptideVialVisual', () => {
   test('renders readable vial label content', () => {
@@ -65,18 +69,18 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('data-vial-detail="liquid-graphic"')
     expect(html).toContain('class="overflow-visible vial-liquid-fill-reveal"')
     expect(html).not.toContain('data-vial-detail="liquid-motion-viewport" class="pointer-events-none absolute inset-0 vial-liquid-rise"')
-    expect(source()).toContain('data-vial-detail="liquid-intro-reveal-clip"')
-    expect(source()).toContain('y={reducedMotion ? 0 : LIQUID_VB_H}')
-    expect(source()).toContain('height={reducedMotion ? LIQUID_VB_H : 0}')
-    expect(source()).toContain('<animate attributeName="y"')
-    expect(source()).toContain('<animate attributeName="height"')
-    expect(source()).toContain('from={LIQUID_VB_H}')
-    expect(source()).toContain('to="0"')
-    expect(source()).toContain('from="0"')
-    expect(source()).toContain('to={LIQUID_VB_H}')
-    expect(source()).not.toContain('scaleY(0)')
-    expect(source()).not.toContain('scaleY(1)')
-    expect(source()).not.toContain('clip-path: inset(100% 0 0 0)')
+    expect(liquidGraphicSource()).toContain('data-vial-detail="liquid-intro-reveal-clip"')
+    expect(liquidGraphicSource()).toContain('y={reducedMotion ? 0 : LIQUID_VB_H}')
+    expect(liquidGraphicSource()).toContain('height={reducedMotion ? LIQUID_VB_H : 0}')
+    expect(liquidGraphicSource()).toContain('<animate attributeName="y"')
+    expect(liquidGraphicSource()).toContain('<animate attributeName="height"')
+    expect(liquidGraphicSource()).toContain('from={LIQUID_VB_H}')
+    expect(liquidGraphicSource()).toContain('to="0"')
+    expect(liquidGraphicSource()).toContain('from="0"')
+    expect(liquidGraphicSource()).toContain('to={LIQUID_VB_H}')
+    expect(liquidGraphicSource()).not.toContain('scaleY(0)')
+    expect(liquidGraphicSource()).not.toContain('scaleY(1)')
+    expect(liquidGraphicSource()).not.toContain('clip-path: inset(100% 0 0 0)')
   })
 
   test('uses a visible but fill-dependent intro duration', () => {
@@ -99,7 +103,7 @@ describe('PeptideVialVisual', () => {
 
     expect(low).toContain('--vial-fill-intro-duration:1060ms')
     expect(high).toContain('--vial-fill-intro-duration:1620ms')
-    expect(source()).toContain('dur={`${fillIntroDurationMs}ms`}')
+    expect(liquidGraphicSource()).toContain('dur={`${introDurationMs}ms`}')
   })
   test('keeps the cap and label while removing split glass body seams', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
@@ -296,9 +300,9 @@ describe('PeptideVialVisual', () => {
 
     const text = source()
     // Surface is redrawn imperatively from the shared slosh engine each frame.
-    expect(text).toContain('useSloshSubscribe')
-    expect(text).toContain('buildLiquid')
-    expect(text).toContain("setAttribute('d'")
+    expect(liquidGraphicSource()).toContain('useSloshSubscribe')
+    expect(liquidGraphicSource()).toContain('buildLiquid')
+    expect(liquidGraphicSource()).toContain("setAttribute('d'")
     expect(text).toContain('(prefers-reduced-motion: reduce)')
   })
 
@@ -327,9 +331,9 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('data-vial-detail="liquid-glass-window"')
     expect(text).toContain('liquidChamberClip')
     expect(text).toContain('clipPath={`url(#${uid}-liquidChamberClip)`}')
-    expect(text).toContain('x="4"')
-    expect(text).toContain('y="36"')
-    expect(text).toContain('height="247"')
+    expect(text).toContain('x={4}')
+    expect(text).toContain('y={36}')
+    expect(text).toContain('height={247}')
     expect(text).not.toContain('className="absolute inset-0 overflow-hidden"')
   })
   test('renders vial label typography in white for contrast on colored liquid', () => {

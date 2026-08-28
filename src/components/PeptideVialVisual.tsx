@@ -1,21 +1,10 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import type { CSSProperties, ReactNode, Ref, RefObject } from 'react'
-import { buildLiquid, LIQUID_VB_H, LIQUID_VB_W, liquidSurfaceY } from '../features/my-stack/stage/liquidGeometry'
+import type { CSSProperties, Ref, RefObject } from 'react'
+import { LIQUID_VB_H, liquidSurfaceY } from '../features/my-stack/stage/liquidGeometry'
 import { usePrefersReducedMotion } from '../features/my-stack/stage/usePrefersReducedMotion'
 import { useStageLight, type StageLightHandle } from '../features/my-stack/stage/useStageLight'
+import { LiquidGraphic, type LiquidGraphicHandle } from '../features/my-stack/stage/LiquidGraphic'
 import { StageLabel } from '../features/my-stack/stage/StageLabel'
-import { useSloshSubscribe } from './SloshContext'
-import type { SloshState } from './sloshEngine'
-
-// A few rising bubbles give the liquid life. Positions are in viewBox units and
-// the body clip-path makes them pop out of existence at the waterline.
-const LIQUID_BUBBLES = [
-  { cx: 24, r: 1.5, dur: 5.4, delay: 0 },
-  { cx: 46, r: 1.0, dur: 6.6, delay: 1.4 },
-  { cx: 63, r: 1.9, dur: 5.0, delay: 2.6 },
-  { cx: 82, r: 1.1, dur: 7.2, delay: 0.7 },
-  { cx: 98, r: 1.4, dur: 5.9, delay: 3.2 },
-]
 
 // Imperative stage-light channel: the carousel pushes focus/lightOffset per
 // scroll frame through this handle so no React re-render happens while swiping.
@@ -147,7 +136,6 @@ export function PeptideVialVisual({
   const tilt = clampSlosh(slosh)
   const uid = useId()
   const reducedMotion = usePrefersReducedMotion()
-  const subscribe = useSloshSubscribe()
   const fillFrac = Math.min(clampedFill / 100, 0.97)
   // focus/lightOffset props only seed the paint; afterwards the carousel
   // drives the stage light imperatively via setStageLight. A layout effect
@@ -157,7 +145,6 @@ export function PeptideVialVisual({
   const visualLightOffset = clampSlosh(lightOffset)
   const focusAttr = Number(visualFocus.toFixed(2))
   const lightOffsetAttr = Number(visualLightOffset.toFixed(2))
-  const highlightShift = visualLightOffset * 10
   const shellGlowOpacity = 0.2 + visualFocus * 0.42
   const shellEdgeOpacity = 0.36 + visualFocus * 0.28
   const shadowOpacity = 0.2 + visualFocus * 0.28
@@ -167,20 +154,9 @@ export function PeptideVialVisual({
       ? { epoch: 1, shiftPct: 0, mode: 'reveal' }
       : { epoch: 0, shiftPct: 0, mode: 'none' }
   ))
-  // One graphic for the whole liquid. The air gap is baked into the geometry,
-  // so a raised wall during slosh still stays clipped below the rim. This is the
-  // resting first paint; once subscribed, the engine redraws it every frame.
-  const geom = buildLiquid({ fill: fillFrac, tilt })
 
   const rootRef = useRef<HTMLDivElement | null>(null)
-  const bodyRef = useRef<SVGPathElement | null>(null)
-  const surfaceRef = useRef<SVGPathElement | null>(null)
-  const glowRef = useRef<SVGPathElement | null>(null)
-  const rimRef = useRef<SVGPathElement | null>(null)
-  const specHaloRef = useRef<SVGEllipseElement | null>(null)
-  const specCoreRef = useRef<SVGEllipseElement | null>(null)
-  const leftGlintRef = useRef<SVGEllipseElement | null>(null)
-  const rightGlintRef = useRef<SVGEllipseElement | null>(null)
+  const liquidRef = useRef<LiquidGraphicHandle | null>(null)
   const capSheenRef = useRef<SVGEllipseElement | null>(null)
   const capArcRef = useRef<SVGPathElement | null>(null)
   const stageShadowRef = useRef<SVGEllipseElement | null>(null)
@@ -190,47 +166,8 @@ export function PeptideVialVisual({
   const shellHiLeftRef = useRef<SVGGElement | null>(null)
   const shellHiRightRef = useRef<SVGGElement | null>(null)
   const glassSweepRef = useRef<SVGRectElement | null>(null)
-  const refractLeftRef = useRef<SVGRectElement | null>(null)
-  const refractRightRef = useRef<SVGRectElement | null>(null)
   const labelSheenRef = useRef<HTMLDivElement | null>(null)
 
-  const draw = useCallback(
-    (s: SloshState) => {
-      // The stage light lives on the root attributes that applyStageLight
-      // writes, so the draw loop reads the current value without a second
-      // source of truth.
-      const root = rootRef.current
-      const stageFocus = Number(root?.getAttribute('data-vial-focus') ?? 1)
-      const stageShift = Number(root?.getAttribute('data-vial-light-offset') ?? 0) * 10
-      const g = buildLiquid({ fill: fillFrac, tilt: s.tilt, energy: s.energy, time: s.time })
-      bodyRef.current?.setAttribute('d', g.body)
-      surfaceRef.current?.setAttribute('d', g.surface)
-      glowRef.current?.setAttribute('d', g.glow)
-      rimRef.current?.setAttribute('d', g.rim)
-      const sx = (g.highlightX + stageShift).toFixed(2)
-      const sy = g.highlightY.toFixed(2)
-      // the sheen stays faint at rest and flares as the surface agitates
-      const halo = (0.12 + stageFocus * 0.12 + s.energy * 0.5).toFixed(2)
-      const core = (0.08 + stageFocus * 0.16 + s.energy * 0.6).toFixed(2)
-      specHaloRef.current?.setAttribute('cx', sx)
-      specHaloRef.current?.setAttribute('cy', sy)
-      specHaloRef.current?.setAttribute('opacity', halo)
-      specCoreRef.current?.setAttribute('cx', sx)
-      specCoreRef.current?.setAttribute('cy', sy)
-      specCoreRef.current?.setAttribute('opacity', core)
-      leftGlintRef.current?.setAttribute('cy', g.leftWallY.toFixed(2))
-      rightGlintRef.current?.setAttribute('cy', g.rightWallY.toFixed(2))
-    },
-    [fillFrac],
-  )
-
-  useEffect(() => {
-    if (!subscribe) return
-    return subscribe(draw)
-  }, [subscribe, draw])
-
-  // Applies the stage light straight to the DOM — the hot path while the
-  // carousel scrolls, so it must not schedule any React work.
   const applyStageLight = useCallback((f: number, o: number) => {
     rootRef.current?.setAttribute('data-vial-focus', f.toFixed(2))
     rootRef.current?.setAttribute('data-vial-light-offset', o.toFixed(2))
@@ -253,11 +190,7 @@ export function PeptideVialVisual({
     shellHiLeftRef.current?.setAttribute('opacity', Math.max(0.08, Math.min(1, 0.6 - o * 0.6)).toFixed(3))
     shellHiRightRef.current?.setAttribute('opacity', Math.max(0.08, Math.min(1, 0.5 + o * 0.6)).toFixed(3))
 
-    refractLeftRef.current?.setAttribute('x', (5 + o * 8).toFixed(2))
-    refractLeftRef.current?.setAttribute('opacity', (0.46 + f * 0.22).toFixed(3))
-    refractRightRef.current?.setAttribute('x', (99 + o * 5).toFixed(2))
-    refractRightRef.current?.setAttribute('opacity', (0.14 + f * 0.16).toFixed(3))
-    surfaceRef.current?.setAttribute('opacity', (0.4 + f * 0.14).toFixed(3))
+    liquidRef.current?.applyStageLight(f, o)
 
     if (labelSheenRef.current) {
       labelSheenRef.current.style.transform = `translateX(${(o * 10).toFixed(2)}%)`
@@ -502,111 +435,25 @@ export function PeptideVialVisual({
                 </clipPath>
               </defs>
               <g data-vial-detail="liquid-glass-window" clipPath={`url(#${uid}-liquidChamberClip)`}>
-                <svg
-                  key={fillMotion.epoch}
-                  data-vial-detail="liquid-graphic"
-                  x="4"
-                  y="36"
-                  width="112"
-                  height="247"
-                  className={`overflow-visible ${liquidMotionClass}`}
-                  viewBox={`0 0 ${LIQUID_VB_W} ${LIQUID_VB_H}`}
-                  preserveAspectRatio="none"
-                  aria-hidden="true"
-                  style={liquidMotionStyle}
-                >
-            <defs>
-              {/* one template path drives the body fills and the clip together */}
-              <path id={`${uid}-bodyPath`} ref={bodyRef} d={geom.body} />
-              <clipPath id={`${uid}-clip`}>
-                <use href={`#${uid}-bodyPath`} />
-              </clipPath>
-              {fillMotion.mode === 'reveal' && (
-                <clipPath id={`${uid}-introClip`} clipPathUnits="userSpaceOnUse">
-                  <rect data-vial-detail="liquid-intro-reveal-clip" x="0" y={reducedMotion ? 0 : LIQUID_VB_H} width={LIQUID_VB_W} height={reducedMotion ? LIQUID_VB_H : 0}>
-                    {!reducedMotion && (
-                      <>
-                        <animate attributeName="y" from={LIQUID_VB_H} to="0" dur={`${fillIntroDurationMs}ms`} begin="0s" fill="freeze" calcMode="spline" keySplines=".22 1 .36 1" />
-                        <animate attributeName="height" from="0" to={LIQUID_VB_H} dur={`${fillIntroDurationMs}ms`} begin="0s" fill="freeze" calcMode="spline" keySplines=".22 1 .36 1" />
-                      </>
-                    )}
-                  </rect>
-                </clipPath>
-              )}
-              <linearGradient id={`${uid}-depth`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.26)" />
-                <stop offset="18%" stopColor="rgba(255,255,255,0.05)" />
-                <stop offset="100%" stopColor="rgba(0,0,0,0.58)" />
-              </linearGradient>
-              <linearGradient id={`${uid}-side`} x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
-                <stop offset="30%" stopColor="rgba(255,255,255,0)" />
-                <stop offset="72%" stopColor="rgba(0,0,0,0.05)" />
-                <stop offset="100%" stopColor="rgba(0,0,0,0.3)" />
-              </linearGradient>
-              <linearGradient id={`${uid}-glow`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.58)" />
-                <stop offset="55%" stopColor="rgba(255,255,255,0.14)" />
-                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-              </linearGradient>
-              <linearGradient id={`${uid}-refract`} x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="rgba(255,255,255,0)" />
-                <stop offset="50%" stopColor="rgba(255,255,255,0.5)" />
-                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-              </linearGradient>
-              <linearGradient id={`${uid}-surface`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.58)" />
-                <stop offset="100%" stopColor="rgba(255,255,255,0.05)" />
-              </linearGradient>
-              <radialGradient id={`${uid}-caustic`} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.58)" />
-                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-              </radialGradient>
-              <radialGradient id={`${uid}-floor`} cx="50%" cy="100%" r="70%">
-                <stop offset="0%" stopColor="rgba(0,0,0,0.4)" />
-                <stop offset="100%" stopColor="rgba(0,0,0,0)" />
-              </radialGradient>
-              <radialGradient id={`${uid}-spec`} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
-                <stop offset="55%" stopColor="rgba(255,255,255,0.35)" />
-                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-              </radialGradient>
-            </defs>
-
-            <g clipPath={fillMotion.mode === 'reveal' ? `url(#${uid}-introClip)` : undefined}>
-              <use data-vial-detail="liquid-body" href={`#${uid}-bodyPath`} fill="currentColor" fillOpacity="0.8" />
-            <g clipPath={`url(#${uid}-clip)`}>
-              <use href={`#${uid}-bodyPath`} fill={`url(#${uid}-depth)`} />
-              <use href={`#${uid}-bodyPath`} fill={`url(#${uid}-side)`} />
-              <rect x="0" y={LIQUID_VB_H - 34} width={LIQUID_VB_W} height="34" fill={`url(#${uid}-floor)`} />
-              <ellipse cx={LIQUID_VB_W / 2} cy={LIQUID_VB_H - 13} rx="48" ry="15" fill={`url(#${uid}-caustic)`} />
-              <rect ref={refractLeftRef} x={5 + visualLightOffset * 8} y="0" width="16" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity={0.46 + visualFocus * 0.22} />
-              <rect ref={refractRightRef} x={99 + visualLightOffset * 5} y="0" width="10" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity={0.14 + visualFocus * 0.16} />
-              <path ref={glowRef} data-vial-detail="liquid-glow" d={geom.glow} fill={`url(#${uid}-glow)`} />
-              {!reducedMotion && LIQUID_BUBBLES.map((b, i) => (
-                <circle key={i} data-vial-detail="liquid-bubble" cx={b.cx} cy="0" r={b.r} fill="rgba(255,255,255,0.55)">
-                  <animateTransform attributeName="transform" type="translate" from="0 192" to="0 30" dur={`${b.dur}s`} begin={`${b.delay}s`} repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0;0.5;0.5;0" keyTimes="0;0.18;0.72;1" dur={`${b.dur}s`} begin={`${b.delay}s`} repeatCount="indefinite" />
-                </circle>
-              ))}
-            </g>
-            <path ref={surfaceRef} data-vial-detail="liquid-surface" d={geom.surface} fill={`url(#${uid}-surface)`} opacity={0.4 + visualFocus * 0.14} />
-            <ellipse ref={leftGlintRef} cx="4" cy={geom.leftWallY} rx="4.5" ry="8" fill={`url(#${uid}-spec)`} opacity="0.5" />
-            <ellipse ref={rightGlintRef} cx={LIQUID_VB_W - 4} cy={geom.rightWallY} rx="4.5" ry="8" fill={`url(#${uid}-spec)`} opacity="0.5" />
-            <ellipse ref={specHaloRef} cx={geom.highlightX + highlightShift} cy={geom.highlightY} rx="24" ry="4.2" fill={`url(#${uid}-spec)`} opacity={0.14 + visualFocus * 0.14} />
-            <ellipse ref={specCoreRef} cx={geom.highlightX + highlightShift} cy={geom.highlightY} rx="8" ry="2.8" fill={`url(#${uid}-spec)`} opacity={0.1 + visualFocus * 0.16} />
-            <path
-              ref={rimRef}
-              data-vial-detail="liquid-rim"
-              d={geom.rim}
-              fill="none"
-              stroke="rgba(255,255,255,0.66)"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
-            />
-            </g>
-                </svg>
+                <LiquidGraphic
+                  uid={uid}
+                  fill={fillFrac}
+                  tilt={tilt}
+                  x={4}
+                  y={36}
+                  width={112}
+                  height={247}
+                  color={color}
+                  reducedMotion={reducedMotion}
+                  seedFocus={visualFocus}
+                  seedLightOffset={visualLightOffset}
+                  motionKey={fillMotion.epoch}
+                  motionClass={liquidMotionClass}
+                  motionStyle={liquidMotionStyle}
+                  introReveal={fillMotion.mode === 'reveal'}
+                  introDurationMs={fillIntroDurationMs}
+                  handleRef={liquidRef}
+                />
               </g>
             </svg>
           </div>
