@@ -44,7 +44,7 @@ optionales Feld `stageRenderer`. Aktuell ist dort nur `'vial'` gesetzt; die
 | Thema | Entscheidung |
 |---|---|
 | Füllstand | Konstant. Die Grafik ist das Objekt, kein Messgerät. |
-| Luftraum | ~88 % Füllung, entsprechend dem realen Kopfraum einer versiegelten Ampulle. |
+| Luftraum | Kammer zu 94 % gefüllt; mit dem leeren Hals ergibt das den realen Kopfraum einer versiegelten Ampulle. |
 | Bauform | Klassische Brechampulle: runde Spitze, breiter Kopf, sanfte Einschnürung, konische Schulter, gerader Zylinder, Punt im Boden. |
 | Zustand | Versiegelt, nicht aufgebrochen. |
 | Bruchring | Kein Farbring. `color_hex` färbt die Flüssigkeit, wie beim Vial. |
@@ -60,7 +60,7 @@ einer Schachtel abbildet, wäre eine erfundene Menge in Bildform. Die
 Tracking-Tiefe-Spec vom 2026-07-25 schließt genau das aus: „Unbekannte Mengen
 werden nie geschätzt.“ Dieses Prinzip gilt auch für die Grafik.
 
-Der Luftraum von ~88 % ist keine Umgehung dieser Regel, sondern Realismus: es
+Der Luftraum ist keine Umgehung dieser Regel, sondern Realismus: es
 gibt keine randvolle Ampulle. Er liefert nebenbei die freie Oberfläche, ohne die
 `fillSloshResponse()` bei voller Füllung auf ihren Minimalwert fiele und die
 Ampulle die trägste Grafik im Karussell wäre.
@@ -151,6 +151,10 @@ gesehen.
 Die Wasserlinie sitzt am Schulteransatz, also am oberen Ende des geraden Teils.
 Dadurch bleibt die Kammer rechteckig und `buildLiquid()` läuft ohne
 Breitenprofil — derselbe Kunstgriff, den das Vial bereits nutzt.
+
+Der Füllstand ist konstant: die Kammer wird zu 94 % gefüllt. Zusammen mit dem
+leeren Hals und Kopf ergibt das den sichtbaren Luftraum. `fillPct` wird für die
+Ampulle nicht angebunden, `color_hex` färbt die Flüssigkeit.
 
 Diese Clip-Regel gilt ab jetzt für jede Glasform.
 
@@ -266,7 +270,9 @@ neue Form an zwei Stellen eingetragen werden.
   darüber zu entscheiden.
 - **Die bestehende Vial-Testsuite bleibt unverändert grün.** Sie ist das Netz für
   den Umbau, kein neuer Test. Die `data-vial-detail`-Attribute bleiben erhalten.
-- i18n-Schlüssel für die Ampullen-Texte in allen Locales.
+- Keine neuen i18n-Schlüssel. Die Ampulle zeigt ausschließlich Daten — Name und
+  Wirkstoffmenge — und nutzt für den Formnamen den vorhandenen Schlüssel
+  `dosage_form_ampoule`. Der bestehende i18n-Vertrag bleibt unverändert grün.
 
 ## Nicht Bestandteil dieses Teilprojekts
 
