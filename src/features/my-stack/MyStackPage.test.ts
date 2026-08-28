@@ -98,7 +98,9 @@ describe('My Stack page vial view', () => {
   test('shows the fill percentage directly under the active vial in My Stack', () => {
     const text = source()
 
-    expect(text).toContain("{isActive && (")
+    // still under the active item — but only for forms whose fill level says
+    // something, so a sealed ampoule does not read "100 %" forever
+    expect(text).toContain('{isActive && showsFillPct && (')
     expect(text).toContain('mt-1 text-center')
     expect(text).toContain('{Math.round(vialPct)}%')
   })

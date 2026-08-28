@@ -7,6 +7,9 @@ import { addDays, format } from 'date-fns'
 import { loadStackItems, type LoadedStackItem } from './services/stackItems'
 import type { StackItemWizardProps } from './components/StackItemWizard'
 import { MyStackPage } from './MyStackPage'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { getDosageForm } from './lib/dosageForms'
 
 const qaName = 'Codex QA Stack Lifecycle 2026-07-24'
 const visibilityMocks = vi.hoisted(() => ({
@@ -558,5 +561,22 @@ describe('MyStackPage non-vial visibility', () => {
     }))
     expect(screen.queryByText('Substanz gespeichert')).toBeNull()
     expect(screen.queryByText('Zyklus anlegen')).toBeNull()
+  })
+})
+
+describe('Füllstandsanzeige im Karussell', () => {
+  it('bindet die Prozentzeile an die Form statt an die Darreichungsform', () => {
+    const source = readFileSync(resolve('src/features/my-stack/MyStackPage.tsx'), 'utf8')
+
+    expect(source).toContain('hasMeaningfulFill')
+    expect(source).toContain('isActive && showsFillPct')
+    // no branching on the dosage form itself — a new form must only have to
+    // declare its capabilities, not be added here as well
+    expect(source).not.toMatch(/dosage_form === '/)
+  })
+
+  it('kennt genau eine Glasform mit aussagekräftigem Füllstand', () => {
+    expect(getDosageForm('vial').stageForm?.hasMeaningfulFill).toBe(true)
+    expect(getDosageForm('ampoule').stageForm?.hasMeaningfulFill).toBe(false)
   })
 })

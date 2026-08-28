@@ -1,18 +1,39 @@
 import { useTranslation } from 'react-i18next'
+import type { Ref } from 'react'
+import type { SloshEngine } from '../../../components/sloshEngine'
 import type { StackItem } from '../types'
-import { isStageRenderable } from '../lib/dosageForms'
+import { getDosageForm } from '../lib/dosageForms'
+import type { StageLightHandle } from '../stage/useStageLight'
+import { AmpouleRenderer } from '../extensions/ampoule/AmpouleRenderer'
 import { VialRenderer } from '../extensions/peptide/VialRenderer'
-import type { VialRendererProps } from '../extensions/peptide/VialRenderer'
 
-export interface StackStageProps extends Omit<VialRendererProps, 'item'> {
+// What every stage form understands. Anything beyond this — a fill level, a
+// cap — belongs to the one form that has it.
+export interface StackStageProps {
   item: StackItem
+  size?: 'large' | 'compact' | 'carousel' | 'mini'
+  className?: string
+  showLabel?: boolean
+  isActive?: boolean
+  focus?: number
+  lightOffset?: number
+  stageLightRef?: Ref<StageLightHandle>
+  sloshEngine?: SloshEngine
+  animateOnMount?: boolean
+  // Vial only: an ampoule is full or gone, so it never receives one.
+  fillPct?: number
 }
 
-export function StackStage({ item, ...visualProps }: StackStageProps) {
+export function StackStage({ item, fillPct, animateOnMount, ...visualProps }: StackStageProps) {
   const { t } = useTranslation()
+  const renderer = getDosageForm(item.dosage_form).stageRenderer
 
-  if (isStageRenderable(item.dosage_form)) {
-    return <VialRenderer item={item} {...visualProps} />
+  if (renderer === 'vial') {
+    return <VialRenderer item={item} fillPct={fillPct} animateOnMount={animateOnMount} {...visualProps} />
+  }
+
+  if (renderer === 'ampoule') {
+    return <AmpouleRenderer item={item} {...visualProps} />
   }
 
   return (

@@ -27,7 +27,7 @@ import { StackArchive } from './components/StackArchive'
 import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, restoreStackItem, saveStackItemSetup, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
-import { isStageRenderable } from './lib/dosageForms'
+import { getDosageForm, isStageRenderable } from './lib/dosageForms'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
 import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
 import { backfillMessageKey, buildPermanentScheduleChange, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
@@ -1993,6 +1993,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     const isActive = p.id === activePeptide.id
                     const peptideColor = p.color_hex ?? getStableStackItemColor(p.id)
                     const vialPct = Math.round(getVialFillPct(p) ?? 100)
+                    // Only forms whose fill level says something show it. A
+                    // sealed ampoule would otherwise read "100 %" forever.
+                    const showsFillPct = getDosageForm(p.dosage_form).stageForm?.hasMeaningfulFill ?? false
 
                     return (
                       <div
@@ -2023,7 +2026,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                             else handles.delete(index)
                           }}
                         />
-                        {isActive && (
+                        {isActive && showsFillPct && (
                           <p className="mt-1 text-center text-xs font-semibold tabular-nums text-slate-400">
                             {Math.round(vialPct)}%
                           </p>

@@ -16,8 +16,24 @@ describe('DOSAGE_FORMS', () => {
     ]))
   })
 
-  it('aktiviert in Teilprojekt 1 nur den hochwertigen Vial-Renderer', () => {
-    expect(DOSAGE_FORMS.filter(form => form.stageRenderer).map(form => form.key)).toEqual(['vial'])
+  it('aktiviert genau die Formen mit fertiger Bühnengrafik', () => {
+    expect(DOSAGE_FORMS.filter(form => form.stageRenderer).map(form => form.key)).toEqual(['vial', 'ampoule'])
+  })
+
+  it('gibt jeder freigeschalteten Form ihre Bühnenbeschreibung mit', () => {
+    for (const form of DOSAGE_FORMS.filter(f => f.stageRenderer)) {
+      expect(form.stageForm, form.key).toBeDefined()
+    }
+    for (const form of DOSAGE_FORMS.filter(f => !f.stageRenderer)) {
+      expect(form.stageForm, form.key).toBeUndefined()
+    }
+  })
+
+  it('trennt Etikett und Füllstand: beide Glasformen tragen eines, nur das Vial hat einen Pegel', () => {
+    expect(getDosageForm('vial').stageForm?.chamber).not.toBeNull()
+    expect(getDosageForm('ampoule').stageForm?.chamber).not.toBeNull()
+    expect(getDosageForm('vial').stageForm?.hasMeaningfulFill).toBe(true)
+    expect(getDosageForm('ampoule').stageForm?.hasMeaningfulFill).toBe(false)
   })
 
   it('liefert formgerechte Bezugsgrößen', () => {
@@ -26,8 +42,11 @@ describe('DOSAGE_FORMS', () => {
     expect(getDosageForm('liquid').basisUnits).toContain('ml')
   })
 
-  it('erkennt nur Vials als auf der Stage darstellbar', () => {
+  it('erkennt Vial und Ampulle als darstellbar, den Rest noch nicht', () => {
     expect(isStageRenderable('vial')).toBe(true)
-    expect(isStageRenderable('ampoule')).toBe(false)
+    expect(isStageRenderable('ampoule')).toBe(true)
+    expect(isStageRenderable('tablet')).toBe(false)
+    expect(isStageRenderable('capsule')).toBe(false)
+    expect(isStageRenderable('patch')).toBe(false)
   })
 })

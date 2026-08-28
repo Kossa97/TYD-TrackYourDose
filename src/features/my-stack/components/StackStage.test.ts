@@ -86,3 +86,51 @@ describe('StackStage', () => {
     expect(source).not.toContain('lucide-react')
   })
 })
+
+const ampouleItem: StackItem = {
+  ...vialItem,
+  id: 'testosteron-ampoule',
+  display_name: 'Testosteron Enantat',
+  category: 'hormone',
+  dosage_form: 'ampoule',
+  color_hex: '#e0a23f',
+  ingredients: [{
+    ...vialItem.ingredients[0],
+    custom_name: 'Testosteron Enantat',
+    amount_value: 250,
+    amount_unit: 'mg',
+    basis_unit: 'ml',
+  }],
+}
+
+describe('StackStage — Ampulle', () => {
+  it('rendert die Ampulle für Ampullen-Einträge', () => {
+    expect(renderStage(ampouleItem)).toContain('data-stack-renderer="ampoule"')
+  })
+
+  it('zeigt Name und Wirkstoffmenge auf dem Etikett', () => {
+    const html = renderStage(ampouleItem)
+
+    expect(html).toContain('Testosteron Enantat')
+    expect(html).toContain('250 mg / ml')
+  })
+
+  it('lässt Formen ohne eigene Grafik weiterhin im Textzustand', () => {
+    expect(renderStage(capsuleItem)).toContain('data-stack-renderer="unsupported"')
+  })
+
+  it('hält den Ampullen-Adapter frei von eigener Grafik', () => {
+    const source = readFileSync(new URL('../extensions/ampoule/AmpouleRenderer.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('AmpouleVisual')
+    expect(source).toContain('SloshProvider')
+    expect(source).not.toContain('<svg')
+    expect(source).not.toContain('lucide-react')
+  })
+
+  it('reicht keinen Füllstand an die Ampulle durch', () => {
+    const source = readFileSync(new URL('../extensions/ampoule/AmpouleRenderer.tsx', import.meta.url), 'utf8')
+
+    expect(source).not.toContain('fillPct')
+  })
+})
