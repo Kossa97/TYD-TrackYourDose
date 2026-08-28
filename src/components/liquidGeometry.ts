@@ -19,6 +19,12 @@ const SAMPLES = 12
 
 // How far (in viewBox units) the liquid climbs one wall at full tilt.
 const TILT_RISE = 22
+// The rendered chamber's width / height in px. The reference is today's vial
+// chamber at 74.7 x 94.1. The tilt rise is measured in viewBox units of the
+// HEIGHT while the surface half-width is measured in units of the WIDTH, so a
+// narrower chamber would tilt far more steeply for the same rise. Scaling the
+// rise by this ratio keeps the surface ANGLE comparable across every form.
+export const REFERENCE_CHAMBER_ASPECT = 0.794
 // Resting downward bow at the surface center (kept small — real water is flat).
 const NEAR_BOW = 1.8
 // Capillary rise: the liquid climbs slightly up both glass walls (meniscus).
@@ -33,6 +39,7 @@ export interface LiquidParams {
   tilt?: number // -1..1 slosh tilt (right wall higher when > 0)
   energy?: number // 0..1 slosh energy — scales the traveling wave + highlight
   time?: number // seconds, advances continuously to animate the surface
+  chamberAspect?: number // rendered chamber width / height in px
 }
 
 export interface LiquidGeometry {
@@ -72,9 +79,10 @@ function nearEdgeY(
   energy: number,
   time: number,
   scale: number,
+  motion: number,
 ): number {
   const n = norm(x)
-  const tiltY = -tilt * TILT_RISE * scale * n // right wall rises when tilt > 0
+  const tiltY = -tilt * TILT_RISE * scale * motion * n // right wall rises when tilt > 0
   const bow = NEAR_BOW * (1 - n * n) // gentle downward bow at the center
   const capillary = CAP_RISE * n * n // liquid climbs the glass walls
   // Ambient ripples: two slow, low waves that keep the surface alive at rest.
@@ -83,7 +91,8 @@ function nearEdgeY(
   // Slosh wave: a gentle traveling wave that grows with slosh energy and rides
   // toward the rising wall, so a swipe ripples the surface as well as tilting it.
   const dir = tilt >= 0 ? 1 : -1
-  const slosh = energy * scale * 3 * Math.sin(n * 3.2 - dir * time * 6) * (0.5 + 0.5 * Math.abs(n))
+  const slosh =
+    energy * scale * motion * 3 * Math.sin(n * 3.2 - dir * time * 6) * (0.5 + 0.5 * Math.abs(n))
   return surfaceY + tiltY + bow - capillary + ambient + slosh
 }
 
@@ -114,17 +123,24 @@ function moveTo(p: [number, number]): string {
 
 const finite = (v: number, fallback = 0) => (Number.isFinite(v) ? v : fallback)
 
-export function buildLiquid({ fill, tilt = 0, energy = 0, time = 0 }: LiquidParams): LiquidGeometry {
+export function buildLiquid({
+  fill,
+  tilt = 0,
+  energy = 0,
+  time = 0,
+  chamberAspect = REFERENCE_CHAMBER_ASPECT,
+}: LiquidParams): LiquidGeometry {
   const t = clamp(tilt, -1, 1)
   const e = clamp(energy, 0, 1)
   const tm = finite(time)
   const scale = fillSloshResponse(fill)
+  const motion = clamp(finite(chamberAspect, REFERENCE_CHAMBER_ASPECT) / REFERENCE_CHAMBER_ASPECT, 0.2, 2)
   const surfaceY = liquidSurfaceY(fill)
 
   const near: Array<[number, number]> = []
   for (let i = 0; i <= SAMPLES; i++) {
     const x = (i / SAMPLES) * LIQUID_VB_W
-    near.push([x, nearEdgeY(x, surfaceY, t, e, tm, scale)])
+    near.push([x, nearEdgeY(x, surfaceY, t, e, tm, scale, motion)])
   }
   const thickness = (x: number) => SURFACE_THICKNESS * (1 - 0.55 * norm(x) * norm(x)) + 1.5
   const back = near.map(([x, y]) => [x, y - thickness(x)] as [number, number])
@@ -144,8 +160,9 @@ export function buildLiquid({ fill, tilt = 0, energy = 0, time = 0 }: LiquidPara
   // Sub-surface scattering band: hugs just under the front rim and fades down.
   const glow = `${rim} L ${glowRev[0][0].toFixed(2)} ${glowRev[0][1].toFixed(2)}${smoothCont(glowRev)} Z`
 
-  const highlightX = clamp(CX + t * scale * 30, 16, LIQUID_VB_W - 16)
-  const highlightY = nearEdgeY(highlightX, surfaceY, t, e, tm, scale) - thickness(highlightX) * 0.5
+  const highlightX = clamp(CX + t * scale * motion * 30, 16, LIQUID_VB_W - 16)
+  const highlightY =
+    nearEdgeY(highlightX, surfaceY, t, e, tm, scale, motion) - thickness(highlightX) * 0.5
 
   return {
     body,

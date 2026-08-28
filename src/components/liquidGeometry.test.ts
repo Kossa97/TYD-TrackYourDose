@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildLiquid, fillSloshResponse, liquidSurfaceY, LIQUID_VB_H } from './liquidGeometry'
+import { buildLiquid, fillSloshResponse, liquidSurfaceY, LIQUID_VB_H, REFERENCE_CHAMBER_ASPECT } from './liquidGeometry'
 
 describe('liquidGeometry', () => {
   test('builds one coherent set of paths for body, surface, glow and rim', () => {
@@ -71,5 +71,22 @@ describe('liquidGeometry', () => {
     const totalPathChars = g.body.length + g.surface.length + g.glow.length + g.rim.length
 
     expect(totalPathChars).toBeLessThan(3600)
+  })
+
+  test('scales the tilt with the chamber aspect so narrow chambers keep a comparable surface angle', () => {
+    const wide = buildLiquid({ fill: 0.5, tilt: 1, chamberAspect: 0.794 })
+    const narrow = buildLiquid({ fill: 0.5, tilt: 1, chamberAspect: 0.483 })
+
+    const wideRise = Math.abs(wide.leftWallY - wide.rightWallY)
+    const narrowRise = Math.abs(narrow.leftWallY - narrow.rightWallY)
+
+    expect(narrowRise).toBeLessThan(wideRise)
+    expect(narrowRise / wideRise).toBeCloseTo(0.483 / 0.794, 1)
+  })
+
+  test('defaults to the vial chamber so existing callers stay unchanged', () => {
+    const implicit = buildLiquid({ fill: 0.5, tilt: 1, time: 0.3 })
+    const explicit = buildLiquid({ fill: 0.5, tilt: 1, time: 0.3, chamberAspect: REFERENCE_CHAMBER_ASPECT })
+    expect(implicit).toEqual(explicit)
   })
 })
