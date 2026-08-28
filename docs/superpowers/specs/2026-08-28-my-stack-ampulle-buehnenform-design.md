@@ -49,7 +49,7 @@ optionales Feld `stageRenderer`. Aktuell ist dort nur `'vial'` gesetzt; die
 | Zustand | Versiegelt, nicht aufgebrochen. |
 | Bruchring | Kein Farbring. `color_hex` färbt die Flüssigkeit, wie beim Vial. |
 | Größe | Gleiche Gesamthöhe wie das Vial, uniform skaliert, Breite ergibt sich. |
-| Etikett | Unser Glasband auf jeder Substanz. Waagerecht, zentriert auf dem Glaskörper. |
+| Etikett | Formeigenschaft, nicht Aufrufersache. Jede Form, die ein Etikett tragen kann, trägt unseres. Vial und Ampulle tragen es. |
 | Architektur | Nur Material wird geteilt. Shell und Kappe bleiben formspezifisch. |
 
 ### Warum kein Füllstand
@@ -156,6 +156,20 @@ Diese Clip-Regel gilt ab jetzt für jede Glasform.
 
 ### Etikett
 
+Das Etikett ist eine Eigenschaft der Darreichungsform, kein Prop des Aufrufers.
+`StageFormSpec` trägt dafür ein Feld. Formen, die eine Etikettfläche haben,
+setzen es und bekommen unser Glasband in identischer Materialsprache — das ist
+das Wiedererkennungszeichen von My Stack und soll überall gleich aussehen, wo es
+überhaupt hingehört.
+
+Formen ohne Etikettfläche — eine Tablette, eine Kapsel, ein Pflaster — setzen es
+nicht. Ein aufgeklebtes Band wäre dort keine Wiedererkennung, sondern ein
+Fremdkörper auf einem Objekt, das so etwas im echten Leben nicht trägt. Wie
+solche Formen stattdessen beschriftet werden, entscheidet das Teilprojekt, das
+die erste davon einführt; hier wird nur die Weiche gebaut.
+
+Vial und Ampulle setzen das Feld beide.
+
 Waagerechtes Glasband in derselben Materialsprache wie beim Vial: Milchglas,
 Randlinien oben und unten, Schattenwurf, Licht-Sheen beim Durchwischen.
 
@@ -239,6 +253,9 @@ neue Form an zwei Stellen eingetragen werden.
 - Die Ampulle behält bei jeder Größe ihr Seitenverhältnis.
 - `StackStage` verzweigt korrekt auf `stageRenderer`.
 - Die Prozentzeile erscheint beim Vial und entfällt bei der Ampulle.
+- Das Etikett wird aus `StageFormSpec` gesteuert: eine Form ohne dieses Feld
+  rendert kein Band, und keine Bühnenform liest die Darreichungsform direkt aus,
+  um darüber zu entscheiden.
 - **Die bestehende Vial-Testsuite bleibt unverändert grün.** Sie ist das Netz für
   den Umbau, kein neuer Test. Die `data-vial-detail`-Attribute bleiben erhalten.
 - i18n-Schlüssel für die Ampullen-Texte in allen Locales.
@@ -248,7 +265,6 @@ neue Form an zwei Stellen eingetragen werden.
 - weitere Darreichungsformen,
 - Änderungen am Aussehen des Vials,
 - eine Formabstraktion für Shell und Kappe,
-- ein Etikettenkonzept für Nicht-Glas-Formen,
-- die Entscheidung, ob das Vial-Etikettenband langfristig bleibt,
+- die Beschriftung von Formen, die kein Etikett tragen können,
 - Änderungen an Datenbank, Bestand oder Tracking-Logik,
 - Nachbildung konkreter Herstellerverpackungen.
