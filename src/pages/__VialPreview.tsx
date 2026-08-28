@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import type { UIEvent } from 'react'
+import type { PointerEvent as ReactPointerEvent, UIEvent, WheelEvent as ReactWheelEvent } from 'react'
 import { PeptideVialVisual } from '../components/PeptideVialVisual'
 import { AmpouleVisual } from '../features/my-stack/extensions/ampoule/AmpouleVisual'
 import { SloshProvider, useSloshEngine } from '../components/SloshContext'
@@ -47,6 +47,64 @@ export function VialPreview() {
   const lastScrollTimeRef = useRef(0)
   const [fillOffset, setFillOffset] = useState(0)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+
+  // Drag-to-scroll, mirroring the real My Stack carousel: with the scrollbar
+  // hidden there is otherwise no way to swipe this row using a mouse.
+  const railRef = useRef<HTMLDivElement | null>(null)
+  const dragStartXRef = useRef(0)
+  const dragLastXRef = useRef(0)
+  const dragLastTimeRef = useRef(0)
+  const dragStartScrollRef = useRef(0)
+  const draggingRef = useRef(false)
+
+  const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return
+    const rail = railRef.current
+    if (!rail) return
+    dragStartXRef.current = e.clientX
+    dragLastXRef.current = e.clientX
+    dragLastTimeRef.current = e.timeStamp
+    dragStartScrollRef.current = rail.scrollLeft
+    draggingRef.current = true
+    setIsDragging(true)
+  }
+
+  const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return
+    const rail = railRef.current
+    if (!rail) return
+    const delta = e.clientX - dragStartXRef.current
+    const stepDelta = e.clientX - dragLastXRef.current
+    const dt = Math.max(16, e.timeStamp - dragLastTimeRef.current)
+    if (Math.abs(delta) > 4 && !e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    }
+    if (Math.abs(stepDelta) > 0.5) sloshEngine.pushImpulse((-stepDelta / dt) * 2.4)
+    dragLastXRef.current = e.clientX
+    dragLastTimeRef.current = e.timeStamp
+    rail.scrollLeft = dragStartScrollRef.current - delta
+    e.preventDefault()
+  }
+
+  const handlePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return
+    draggingRef.current = false
+    setIsDragging(false)
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+  }
+
+  // A mouse wheel scrolls vertically; map it onto the rail so the row can be
+  // moved without dragging at all.
+  const handleWheel = (e: ReactWheelEvent<HTMLDivElement>) => {
+    const rail = railRef.current
+    if (!rail || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return
+    e.preventDefault()
+    rail.scrollLeft += e.deltaY
+    sloshEngine.pushImpulse((e.deltaY / 120) * 0.5)
+  }
 
   const handleScroll = (event: UIEvent<HTMLDivElement>) => {
     const scroller = event.currentTarget
@@ -130,11 +188,19 @@ export function VialPreview() {
       </p>
       <SloshProvider engine={sloshEngine}>
         <div
-          className="mx-auto flex max-w-sm snap-x snap-mandatory items-end gap-6 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/40 px-4 py-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          ref={railRef}
+          className={`mx-auto flex max-w-sm items-end gap-6 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/40 px-4 py-6 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+            isDragging ? 'cursor-grabbing snap-none' : 'cursor-grab snap-x snap-mandatory'
+          }`}
           onScroll={handleScroll}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          onWheel={handleWheel}
         >
           {MIXED_CAROUSEL.map((entry, index) => (
-            <div key={`${entry.kind}-${entry.name}`} className="snap-center shrink-0">
+            <div key={`${entry.kind}-${entry.name}`} className={`shrink-0 ${isDragging ? '' : 'snap-center'}`}>
               {entry.kind === 'ampoule' ? (
                 <AmpouleVisual
                   name={entry.name}
