@@ -19,11 +19,34 @@ const PREVIEW_AMPOULES = [
   { name: 'Ohne Menge', amount: null, unit: null, color: '#a3e635', size: 'large' as const },
 ]
 
+// Mixed forms in one row, the way My Stack will show them.
+type MixedEntry = {
+  kind: 'ampoule' | 'vial'
+  name: string
+  amount: number | null
+  unit: string | null
+  color: string
+  fillPct?: number
+}
+
+const MIXED_CAROUSEL: MixedEntry[] = [
+  { kind: 'ampoule', name: 'Testosteron E', amount: 250, unit: 'mg / ml', color: '#e0a23f' },
+  { kind: 'vial', name: 'BPC-157', amount: 5, unit: 'mg', color: '#06b6d4', fillPct: 72 },
+  { kind: 'ampoule', name: 'Nandrolon D', amount: 200, unit: 'mg / ml', color: '#38bdf8' },
+  { kind: 'ampoule', name: 'Vitamin B12', amount: 1000, unit: 'mcg / ml', color: '#f43f5e' },
+  { kind: 'vial', name: 'TB-500', amount: 10, unit: 'mg', color: '#a855f7', fillPct: 40 },
+  { kind: 'ampoule', name: 'Testosteron P', amount: 100, unit: 'mg / ml', color: '#fbbf24' },
+  { kind: 'ampoule', name: 'Ohne Menge', amount: null, unit: null, color: '#a3e635' },
+  { kind: 'vial', name: 'Ipamorelin', amount: 2, unit: 'mg', color: '#ec4899', fillPct: 95 },
+  { kind: 'ampoule', name: 'Boldenon U', amount: 300, unit: 'mg / ml', color: '#34d399' },
+]
+
 export function VialPreview() {
   const sloshEngine = useSloshEngine()
   const lastScrollLeftRef = useRef(0)
   const lastScrollTimeRef = useRef(0)
   const [fillOffset, setFillOffset] = useState(0)
+  const [activeIndex, setActiveIndex] = useState(0)
 
   const handleScroll = (event: UIEvent<HTMLDivElement>) => {
     const scroller = event.currentTarget
@@ -97,27 +120,60 @@ export function VialPreview() {
               />
             </div>
           ))}
-          <div className="snap-center shrink-0 px-4">
-            <PeptideVialVisual
-              name="Vial zum Vergleich"
-              amount="5"
-              unit="mg"
-              fillPct={72}
-              color="#06b6d4"
-              size="carousel"
-            />
-          </div>
-          <div className="snap-center shrink-0 px-4">
-            <AmpouleVisual
-              name="Testosteron E"
-              amount={250}
-              unit="mg / ml"
-              color="#e0a23f"
-              size="carousel"
-            />
-          </div>
         </div>
       </SloshProvider>
+
+      {/* The real thing: a mixed carousel narrow enough to actually swipe.
+          Ampoules and vials share one ground line and one slosh engine. */}
+      <p className="mx-auto max-w-sm pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
+        Karussell — hier durchwischen
+      </p>
+      <SloshProvider engine={sloshEngine}>
+        <div
+          className="mx-auto flex max-w-sm snap-x snap-mandatory items-end gap-6 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/40 px-4 py-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          onScroll={handleScroll}
+        >
+          {MIXED_CAROUSEL.map((entry, index) => (
+            <div key={`${entry.kind}-${entry.name}`} className="snap-center shrink-0">
+              {entry.kind === 'ampoule' ? (
+                <AmpouleVisual
+                  name={entry.name}
+                  amount={entry.amount}
+                  unit={entry.unit}
+                  color={entry.color}
+                  size="carousel"
+                  isActive={index === activeIndex}
+                />
+              ) : (
+                <PeptideVialVisual
+                  name={entry.name}
+                  amount={String(entry.amount)}
+                  unit={entry.unit ?? 'mg'}
+                  fillPct={entry.fillPct ?? 70}
+                  color={entry.color}
+                  size="carousel"
+                  isActive={index === activeIndex}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </SloshProvider>
+      <div className="mx-auto flex max-w-sm items-center justify-center gap-2 pt-3 text-xs text-slate-500">
+        <button
+          className="rounded-md border border-slate-700 px-3 py-1.5 hover:border-cyan-400 hover:text-cyan-200"
+          onClick={() => setActiveIndex(i => Math.max(0, i - 1))}
+        >
+          ← aktiv
+        </button>
+        <span className="tabular-nums">{activeIndex + 1} / {MIXED_CAROUSEL.length}</span>
+        <button
+          className="rounded-md border border-slate-700 px-3 py-1.5 hover:border-cyan-400 hover:text-cyan-200"
+          onClick={() => setActiveIndex(i => Math.min(MIXED_CAROUSEL.length - 1, i + 1))}
+        >
+          aktiv →
+        </button>
+      </div>
     </div>
   )
 }
