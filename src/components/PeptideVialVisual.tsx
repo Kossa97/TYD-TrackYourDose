@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode, Ref, RefObject } from 'react'
 import { buildLiquid, LIQUID_VB_H, LIQUID_VB_W, liquidSurfaceY } from '../features/my-stack/stage/liquidGeometry'
 import { usePrefersReducedMotion } from '../features/my-stack/stage/usePrefersReducedMotion'
+import { useStageLight, type StageLightHandle } from '../features/my-stack/stage/useStageLight'
 import { useSloshSubscribe } from './SloshContext'
 import type { SloshState } from './sloshEngine'
 
@@ -17,9 +18,9 @@ const LIQUID_BUBBLES = [
 
 // Imperative stage-light channel: the carousel pushes focus/lightOffset per
 // scroll frame through this handle so no React re-render happens while swiping.
-export interface VialStageLightHandle {
-  setStageLight: (focus: number, lightOffset: number) => void
-}
+// The channel itself is shared by every stage form; the name stays for the
+// carousel and the vial's existing consumers.
+export type VialStageLightHandle = StageLightHandle
 
 interface PeptideVialVisualProps {
   name?: string | null
@@ -222,7 +223,6 @@ export function PeptideVialVisual({
   // active-vial change can't snap the light back to the prop defaults.
   const visualFocus = focus === undefined ? (isActive ? 1 : 0.28) : clamp01(focus)
   const visualLightOffset = clampSlosh(lightOffset)
-  const stageRef = useRef({ focus: visualFocus, lightOffset: visualLightOffset })
   const focusAttr = Number(visualFocus.toFixed(2))
   const lightOffsetAttr = Number(visualLightOffset.toFixed(2))
   const highlightShift = visualLightOffset * 10
@@ -264,9 +264,12 @@ export function PeptideVialVisual({
 
   const draw = useCallback(
     (s: SloshState) => {
-      const stage = stageRef.current
-      const stageFocus = stage?.focus ?? 1
-      const stageShift = (stage?.lightOffset ?? 0) * 10
+      // The stage light lives on the root attributes that applyStageLight
+      // writes, so the draw loop reads the current value without a second
+      // source of truth.
+      const root = rootRef.current
+      const stageFocus = Number(root?.getAttribute('data-vial-focus') ?? 1)
+      const stageShift = Number(root?.getAttribute('data-vial-light-offset') ?? 0) * 10
       const g = buildLiquid({ fill: fillFrac, tilt: s.tilt, energy: s.energy, time: s.time })
       bodyRef.current?.setAttribute('d', g.body)
       surfaceRef.current?.setAttribute('d', g.surface)
@@ -330,23 +333,7 @@ export function PeptideVialVisual({
     }
   }, [])
 
-  const setStageLight = useCallback((nextFocus: number, nextLightOffset: number) => {
-    const f = clamp01(nextFocus)
-    const o = clampSlosh(nextLightOffset)
-    const stage = stageRef.current
-    if (Math.abs(stage.focus - f) < 0.005 && Math.abs(stage.lightOffset - o) < 0.005) return
-    stageRef.current = { focus: f, lightOffset: o }
-    applyStageLight(f, o)
-  }, [applyStageLight])
-
-  useImperativeHandle(stageLightRef, () => ({ setStageLight }), [setStageLight])
-
-  // React reconciliation may have just reset stage-lit attributes to the
-  // prop-derived render values; put the imperative state back before paint.
-  useLayoutEffect(() => {
-    const stage = stageRef.current
-    applyStageLight(stage.focus, stage.lightOffset)
-  })
+  useStageLight(applyStageLight, { focus: visualFocus, lightOffset: visualLightOffset }, stageLightRef)
 
   useEffect(() => {
     const previousFill = previousFillRef.current

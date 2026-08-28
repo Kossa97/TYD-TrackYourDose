@@ -5,6 +5,10 @@ import { describe, expect, test } from 'vitest'
 import { PeptideVialVisual } from './PeptideVialVisual'
 
 const source = () => readFileSync(new URL('./PeptideVialVisual.tsx', import.meta.url), 'utf8')
+// The imperative stage-light channel is shared with the other stage forms and
+// therefore lives in the stage module; the vial wires itself to it.
+const stageLightSource = () =>
+  readFileSync(new URL('../features/my-stack/stage/useStageLight.ts', import.meta.url), 'utf8')
 
 describe('PeptideVialVisual', () => {
   test('renders readable vial label content', () => {
@@ -156,8 +160,9 @@ describe('PeptideVialVisual', () => {
     const text = source()
 
     // the carousel pushes scroll focus through an imperative handle, not props
-    expect(text).toContain('useImperativeHandle')
-    expect(text).toContain('setStageLight')
+    expect(stageLightSource()).toContain('useImperativeHandle')
+    expect(stageLightSource()).toContain('setStageLight')
+    expect(text).toContain('useStageLight')
     expect(text).toContain('stageLightRef')
 
     // elements the slosh loop or the stage light touch every frame must not
