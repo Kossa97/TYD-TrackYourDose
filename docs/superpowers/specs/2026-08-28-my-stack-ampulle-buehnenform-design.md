@@ -49,7 +49,7 @@ optionales Feld `stageRenderer`. Aktuell ist dort nur `'vial'` gesetzt; die
 | Zustand | Versiegelt, nicht aufgebrochen. |
 | Bruchring | Kein Farbring. `color_hex` färbt die Flüssigkeit, wie beim Vial. |
 | Größe | Gleiche Gesamthöhe wie das Vial, uniform skaliert, Breite ergibt sich. |
-| Etikett | Formeigenschaft, nicht Aufrufersache. Jede Form, die ein Etikett tragen kann, trägt unseres. Vial und Ampulle tragen es. |
+| Etikett | Behälter mit Flüssigkeit tragen unser Etikett, alle anderen Formen keins. Wird aus der Flüssigkeitskammer abgeleitet, ist kein eigenes Feld. |
 | Architektur | Nur Material wird geteilt. Shell und Kappe bleiben formspezifisch. |
 
 ### Warum kein Füllstand
@@ -156,19 +156,27 @@ Diese Clip-Regel gilt ab jetzt für jede Glasform.
 
 ### Etikett
 
-Das Etikett ist eine Eigenschaft der Darreichungsform, kein Prop des Aufrufers.
-`StageFormSpec` trägt dafür ein Feld. Formen, die eine Etikettfläche haben,
-setzen es und bekommen unser Glasband in identischer Materialsprache — das ist
-das Wiedererkennungszeichen von My Stack und soll überall gleich aussehen, wo es
-überhaupt hingehört.
+Die Regel lautet: **ein Behälter mit Flüssigkeit trägt unser Etikett.** Alles
+andere trägt keins.
 
-Formen ohne Etikettfläche — eine Tablette, eine Kapsel, ein Pflaster — setzen es
-nicht. Ein aufgeklebtes Band wäre dort keine Wiedererkennung, sondern ein
-Fremdkörper auf einem Objekt, das so etwas im echten Leben nicht trägt. Wie
-solche Formen stattdessen beschriftet werden, entscheidet das Teilprojekt, das
-die erste davon einführt; hier wird nur die Weiche gebaut.
+Das ist kein eigenes Feld, sondern wird aus der Flüssigkeitskammer abgeleitet,
+die eine Form in ihren Bühnendaten ohnehin definieren muss, damit der Clip
+funktioniert. Eine Form mit Kammer bekommt das Band, eine ohne nicht. Dadurch
+können die beiden Angaben nicht auseinanderlaufen: es gibt kein Etikett ohne
+Flüssigkeit und keine Flüssigkeit ohne Etikett.
 
-Vial und Ampulle setzen das Feld beide.
+Damit tragen Vial, Ampulle, Pen, Tropfen, Nasenspray, Spray und Flüssigkeit ein
+Etikett; Tablette, Kapsel, Pulver, Gel, Pflaster und Tube nicht. Wie die Formen
+ohne Etikett beschriftet werden, entscheidet das Teilprojekt, das die erste
+davon einführt. Hier wird nur die Weiche gebaut.
+
+Nicht zu verwechseln mit dem Füllstand: Vial und Ampulle haben beide eine
+Flüssigkeitskammer und damit beide ein Etikett, aber nur das Vial hat einen
+Pegel, der etwas aussagt. Das bleibt ein getrenntes Feld in `StageFormSpec`.
+
+Eine bekannte Folge dieser Regel: eine Pulverdose hat im echten Leben ein
+Etikett, unter dieser Regel aber keins, weil keine Flüssigkeit darin ist. Das
+wird entschieden, wenn die Form Pulver drankommt.
 
 Waagerechtes Glasband in derselben Materialsprache wie beim Vial: Milchglas,
 Randlinien oben und unten, Schattenwurf, Licht-Sheen beim Durchwischen.
@@ -253,9 +261,9 @@ neue Form an zwei Stellen eingetragen werden.
 - Die Ampulle behält bei jeder Größe ihr Seitenverhältnis.
 - `StackStage` verzweigt korrekt auf `stageRenderer`.
 - Die Prozentzeile erscheint beim Vial und entfällt bei der Ampulle.
-- Das Etikett wird aus `StageFormSpec` gesteuert: eine Form ohne dieses Feld
-  rendert kein Band, und keine Bühnenform liest die Darreichungsform direkt aus,
-  um darüber zu entscheiden.
+- Das Etikett folgt der Flüssigkeitskammer: eine Bühnenform ohne Kammer rendert
+  kein Band, und keine Bühnenform liest die Darreichungsform direkt aus, um
+  darüber zu entscheiden.
 - **Die bestehende Vial-Testsuite bleibt unverändert grün.** Sie ist das Netz für
   den Umbau, kein neuer Test. Die `data-vial-detail`-Attribute bleiben erhalten.
 - i18n-Schlüssel für die Ampullen-Texte in allen Locales.
