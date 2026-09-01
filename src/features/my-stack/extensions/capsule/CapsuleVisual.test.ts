@@ -31,12 +31,21 @@ describe('CapsuleVisual', () => {
     expect(render()).toContain('gradientUnits="userSpaceOnUse"')
   })
 
-  it('setzt die Schrift erhaben auf die Huelle: Schattenkante unten, Lichtkante oben', () => {
+  it('setzt die Schrift erhaben auf die Huelle: Wurfschatten hinten, Kanten innen', () => {
     const html = render()
     expect(html).toContain('data-capsule-detail="engraving"')
-    // lichtabgewandte Seite nach unten rechts, beleuchtete Oberkante nach oben links
-    expect(html).toContain('transform="translate(0.5 0.7)"')
-    expect(html).toContain('transform="translate(-0.25 -0.4)"')
+    // weicher Wurf nach unten rechts statt eines zentrierten Strichs
+    expect(html).toContain('transform="translate(0.9 1.2)"')
+    expect(html).toContain('castShadow')
+  })
+
+  it('legt Licht- und Schattenkante in die Buchstaben, damit keine Kontur entsteht', () => {
+    const html = render()
+    const mask = html.match(/id="([^"]*-letterMask)"/)?.[1]
+    expect(mask).toBeTruthy()
+    const beveled = html.slice(html.indexOf(`clip-path="url(#${mask})"`))
+    expect(beveled).toContain('translate(-0.55 -0.75)')
+    expect(beveled).toContain('translate(0.6 0.85)')
   })
 
   it('laesst den Glanz der Schrift mit dem Licht wandern', () => {

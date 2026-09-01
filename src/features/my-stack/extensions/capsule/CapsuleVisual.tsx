@@ -168,6 +168,10 @@ export function CapsuleVisual({
           <filter id={`${uid}-soft`} x="-30%" y="-40%" width="180%" height="180%">
             <feGaussianBlur stdDeviation="2" />
           </filter>
+          {/* Weicher Wurfschatten der erhabenen Schrift — kein Umriss. */}
+          <filter id={`${uid}-castShadow`} x="-25%" y="-40%" width="150%" height="200%">
+            <feGaussianBlur stdDeviation="0.7" />
+          </filter>
         </defs>
 
         <ellipse
@@ -259,13 +263,41 @@ export function CapsuleVisual({
             den Schriftzug; alles darüber läuft durch. */}
         <g clipPath={`url(#${uid}-engravingWindow)`}>
           <g ref={engravingRef} data-capsule-detail="engraving">
-            {/* Schattenkante unten rechts: der Buchstabe steht auf der Huelle
-                und wirft nach der lichtabgewandten Seite. */}
-            <text {...engravingProps} fill="none" stroke="rgba(20,12,2,0.55)" strokeWidth="1.1" transform="translate(0.5 0.7)">
+            {/* Wurfschatten hinter der Schrift: weich und nur nach unten
+                rechts. Ein zentrierter Strich waere ein Umriss ringsum. */}
+            <text
+              {...engravingProps}
+              fill="rgba(16,10,2,0.5)"
+              filter={`url(#${uid}-castShadow)`}
+              transform="translate(0.9 1.2)"
+            >
               {engravedName}
             </text>
-            <text {...engravingProps} fill={`url(#${uid}-letterFace)`}>{engravedName}</text>
+
+            {/* Alles Weitere liegt INNERHALB der Buchstaben — so entsteht eine
+                angeschraegte Kante statt einer Kontur. */}
             <g clipPath={`url(#${uid}-letterMask)`}>
+              <rect x="0" y="0" width="240" height="84" fill={`url(#${uid}-letterFace)`} />
+              {/* beleuchtete Oberkante */}
+              <text
+                {...engravingProps}
+                fill="none"
+                stroke="rgba(255,255,255,0.95)"
+                strokeWidth="1.8"
+                transform="translate(-0.55 -0.75)"
+              >
+                {engravedName}
+              </text>
+              {/* abfallende Unterkante zur lichtabgewandten Seite */}
+              <text
+                {...engravingProps}
+                fill="none"
+                stroke="rgba(90,60,18,0.5)"
+                strokeWidth="1.5"
+                transform="translate(0.6 0.85)"
+              >
+                {engravedName}
+              </text>
               <rect
                 ref={textSweepRef}
                 data-capsule-detail="text-gloss"
@@ -278,10 +310,6 @@ export function CapsuleVisual({
                 transform={`translate(${visualLightOffset * 58} 0)`}
               />
             </g>
-            {/* Lichtkante oben links: die Oberkante der erhabenen Flaeche. */}
-            <text {...engravingProps} fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="0.45" transform="translate(-0.25 -0.4)">
-              {engravedName}
-            </text>
           </g>
         </g>
       </svg>
