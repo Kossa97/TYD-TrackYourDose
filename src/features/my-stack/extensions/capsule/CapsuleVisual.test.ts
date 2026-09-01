@@ -31,41 +31,10 @@ describe('CapsuleVisual', () => {
     expect(render()).toContain('gradientUnits="userSpaceOnUse"')
   })
 
-  it('setzt die Schrift erhaben auf die Huelle: Wurfschatten hinten, Kanten innen', () => {
-    const html = render()
-    expect(html).toContain('data-capsule-detail="engraving"')
-    // weicher Wurf nach unten rechts statt eines zentrierten Strichs
-    expect(html).toContain('transform="translate(0.9 1.2)"')
-    expect(html).toContain('castShadow')
-  })
 
-  it('legt Licht- und Schattenkante in die Buchstaben, damit keine Kontur entsteht', () => {
-    const html = render()
-    const mask = html.match(/id="([^"]*-letterMask)"/)?.[1]
-    expect(mask).toBeTruthy()
-    const beveled = html.slice(html.indexOf(`clip-path="url(#${mask})"`))
-    expect(beveled).toContain('translate(-0.55 -0.75)')
-    expect(beveled).toContain('translate(0.6 0.85)')
-  })
 
-  it('laesst den Glanz der Schrift mit dem Licht wandern', () => {
-    const html = render({ lightOffset: 0.5 })
-    expect(html).toContain('data-capsule-detail="text-gloss"')
-    expect(html).toContain('translate(29 0)')
-  })
 
-  it('beschneidet den Schriftzug mit der Innenkontur, damit die Rundung mitschneidet', () => {
-    const html = render()
-    const window = html.match(/id="([^"]*-engravingWindow)"/)?.[1]
-    expect(window).toBeTruthy()
-    const clipDef = html.slice(html.indexOf(`id="${window}"`), html.indexOf(`id="${window}"`) + 260)
-    expect(clipDef).toContain('<path')
-    expect(clipDef).not.toContain('<rect')
-  })
 
-  it('zentriert die Gravur auf der Kapselmitte', () => {
-    expect(render()).toContain('x="120"')
-  })
 
   it('behaelt liegend das Seitenverhaeltnis bei jeder Groesse', () => {
     for (const size of ['large', 'carousel', 'compact', 'mini'] as const) {
@@ -98,27 +67,35 @@ describe('CapsuleVisual', () => {
     expect(html).toContain('data-capsule-light-offset="-0.35"')
   })
 
-  it('graviert in der Etikettschrift statt in einer eigenen', () => {
-    const html = render()
-    expect(html).toContain('Inter')
-    expect(html).toContain('font-weight="900"')
-    expect(html).toContain('Vitamin D3')
-  })
 
-  it('kuerzt lange Namen nicht, sondern laesst sie wie beim Etikett durchlaufen', () => {
-    const long = render({ name: 'Acetyl-L-Carnitin Hydrochlorid Komplex' })
-    // vollstaendig im Markup, nur optisch vom Sichtfenster beschnitten
-    expect(long).toContain('Acetyl-L-Carnitin Hydrochlorid Komplex')
-    expect(long).not.toContain('…')
-    expect(long).toContain('engravingWindow')
-  })
 
   it('faellt bei leerem Namen auf eine Bezeichnung zurueck', () => {
     expect(render({ name: '   ' })).toContain('Kapsel')
   })
 
-  it('teilt die Marquee-Bewegung mit dem Etikett', () => {
-    const source = readFileSync(new URL('./CapsuleVisual.tsx', import.meta.url), 'utf8')
-    expect(source).toContain('buildMarqueeMotion')
+  it('beschriftet sich wie Vial und Ampulle: HTML-Text mit denselben Klassen', () => {
+    const html = render()
+    expect(html).toContain('data-capsule-detail="name"')
+    // exakt die Klassen des Etikettnamens
+    expect(html).toContain('font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]')
+    expect(html).toContain('Vitamin D3')
   })
+
+  it('nutzt denselben Durchlauf wie das Etikett statt eines eigenen', () => {
+    const source = readFileSync(new URL('./CapsuleVisual.tsx', import.meta.url), 'utf8')
+    expect(source).toContain('StageMarquee')
+    expect(source).not.toContain('buildMarqueeMotion')
+  })
+
+  it('traegt denselben Licht-Sheen ueber der Schrift wie das Etikettband', () => {
+    const html = render({ lightOffset: 0.5, focus: 1 })
+    expect(html).toContain('from-black/10 via-white/10 to-black/10')
+    expect(html).toContain('translateX(5%)')
+  })
+
+  it('zeichnet keinen SVG-Text mehr, damit die Glaettung stimmt', () => {
+    const source = readFileSync(new URL('./CapsuleVisual.tsx', import.meta.url), 'utf8')
+    expect(source).not.toContain('<text')
+  })
+
 })

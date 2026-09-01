@@ -2,9 +2,10 @@ import { useEffect, useRef } from 'react'
 import type { CSSProperties, HTMLAttributes, ReactNode, RefObject } from 'react'
 import { buildMarqueeMotion, MARQUEE_MIN_OVERFLOW } from './marquee'
 
-// The scrolling name band. It only animates when the text really overflows —
+// The scrolling name. It only animates when the text really overflows —
 // measured, never guessed from the name length — so short names stay still.
-function StageLabelMarquee({
+// Exported because a capsule carries the same name without a band around it.
+export function StageMarquee({
   children,
   className,
 }: {
@@ -94,7 +95,7 @@ export function StageLabel({
       className={`absolute ${className} overflow-hidden border-y border-white/40 bg-white/28 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)] backdrop-blur-[2px]`}
     >
       <div {...innerProps} className="relative overflow-hidden">
-        <StageLabelMarquee className={nameClassName}>{name}</StageLabelMarquee>
+        <StageMarquee className={nameClassName}>{name}</StageMarquee>
         {detail !== null && detail !== '' && <p className={detailClassName}>{detail}</p>}
       </div>
       {sheenRef && (

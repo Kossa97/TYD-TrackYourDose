@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { carriesLabel } from '../../stage/types'
 import {
-  CAPSULE_ASPECT, CAPSULE_CAP_PATH, CAPSULE_CAP_INNER_PATH, CAPSULE_ENGRAVING,
+  CAPSULE_ASPECT, CAPSULE_CAP_PATH, CAPSULE_CAP_INNER_PATH,
   CAPSULE_SEAM_X, CAPSULE_SHELL_PATH, CAPSULE_SHELL_INNER_PATH, CAPSULE_SPEC,
 } from './capsuleShape'
 
@@ -37,15 +37,5 @@ describe('capsuleShape', () => {
     expect(carriesLabel(CAPSULE_SPEC)).toBe(false)
   })
 
-  it('zentriert die Gravur auf der Kapselmitte', () => {
-    expect(CAPSULE_ENGRAVING.centerX).toBe(120)
-    expect(CAPSULE_ENGRAVING.baselineY).toBeGreaterThan(42)
-    expect(CAPSULE_ENGRAVING.baselineY).toBeLessThan(56)
-  })
 
-  it('graviert in der Etikettschrift, damit alle Formen gleich beschriftet sind', () => {
-    expect(CAPSULE_ENGRAVING.fontFamily).toContain('Inter')
-    expect(CAPSULE_ENGRAVING.fontWeight).toBe(900)
-    expect(CAPSULE_ENGRAVING.windowWidth).toBeLessThan(240)
-  })
 })

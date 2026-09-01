@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useId, useRef } from 'react'
+import { useCallback, useId, useRef } from 'react'
 import type { Ref } from 'react'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
-  CAPSULE_CAP_INNER_PATH, CAPSULE_CAP_PATH, CAPSULE_ENGRAVING,
+  CAPSULE_CAP_INNER_PATH, CAPSULE_CAP_PATH,
   CAPSULE_SHELL_INNER_PATH, CAPSULE_SHELL_PATH,
 } from './capsuleShape'
-import { buildMarqueeMotion, MARQUEE_MIN_OVERFLOW } from '../../stage/marquee'
+import { StageMarquee } from '../../stage/StageLabel'
 
 export interface CapsuleVisualProps {
   name?: string | null
@@ -33,6 +33,14 @@ const SIZE_CLASS: Record<NonNullable<CapsuleVisualProps['size']>, string> = {
   mini: 'w-[60px] aspect-[240/84]',
 }
 
+// Eine Stufe kleiner als beim Vial, weil die Kapsel flach liegt.
+const NAME_CLASS: Record<NonNullable<CapsuleVisualProps['size']>, string> = {
+  large: 'text-lg leading-tight',
+  carousel: 'text-[9px] leading-tight',
+  compact: 'text-[11px] leading-tight',
+  mini: 'text-[6px] leading-tight',
+}
+
 export function CapsuleVisual({
   name,
   color,
@@ -53,8 +61,7 @@ export function CapsuleVisual({
   const sweepRef = useRef<SVGRectElement | null>(null)
   const glossRef = useRef<SVGPathElement | null>(null)
   const shellRef = useRef<SVGUseElement | null>(null)
-  const engravingRef = useRef<SVGGElement | null>(null)
-  const textSweepRef = useRef<SVGRectElement | null>(null)
+  const nameSheenRef = useRef<HTMLDivElement | null>(null)
 
   const applyStageLight = useCallback((f: number, o: number) => {
     rootRef.current?.setAttribute('data-capsule-focus', f.toFixed(2))
@@ -65,39 +72,16 @@ export function CapsuleVisual({
     sweepRef.current?.setAttribute('opacity', (0.12 + f * 0.32).toFixed(3))
     glossRef.current?.setAttribute('stroke-opacity', (0.3 + f * 0.3).toFixed(3))
     shellRef.current?.setAttribute('stroke-opacity', (0.3 + f * 0.26).toFixed(3))
-    // Die Schrift steht auf der Huelle, also wandert ihr Glanz mit demselben
-    // Licht — nur enger gefuehrt, weil die Buchstaben kleiner sind.
-    textSweepRef.current?.setAttribute('transform', `translate(${(o * 58).toFixed(2)} 0)`)
-    textSweepRef.current?.setAttribute('opacity', (0.3 + f * 0.45).toFixed(3))
+
+    if (nameSheenRef.current) {
+      nameSheenRef.current.style.transform = `translateX(${(o * 10).toFixed(2)}%)`
+      nameSheenRef.current.style.opacity = (0.62 + f * 0.2).toFixed(3)
+    }
   }, [])
 
   useStageLight(applyStageLight, { focus: visualFocus, lightOffset: visualLightOffset }, stageLightRef)
 
-  // Zu lange Namen laufen durch statt zu schrumpfen — derselbe Durchlauf wie
-  // auf dem Etikett von Vial und Ampulle. Gemessen wird die Glyphenbreite,
-  // nicht ein Layout, deshalb getBBox statt scrollWidth.
-  useEffect(() => {
-    const group = engravingRef.current
-    if (!group || typeof window === 'undefined') return
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
 
-    group.style.transform = 'translateX(0)'
-    const overflow = group.getBBox().width - CAPSULE_ENGRAVING.windowWidth
-    if (overflow <= MARQUEE_MIN_OVERFLOW) return
-
-    const motion = buildMarqueeMotion(overflow)
-    const anim = group.animate(motion.keyframes, motion.options)
-    return () => anim.cancel()
-  }, [engravedName])
-
-  const engravingProps = {
-    x: CAPSULE_ENGRAVING.centerX,
-    y: CAPSULE_ENGRAVING.baselineY,
-    textAnchor: 'middle' as const,
-    fontFamily: CAPSULE_ENGRAVING.fontFamily,
-    fontSize: CAPSULE_ENGRAVING.fontSize,
-    fontWeight: CAPSULE_ENGRAVING.fontWeight,
-  }
 
   return (
     <div
@@ -120,26 +104,6 @@ export function CapsuleVisual({
           <clipPath id={`${uid}-shellClip`}>
             <use href={`#${uid}-shell`} />
           </clipPath>
-          {/* Die Innenkontur beschneidet den Schriftzug, damit die Rundung an
-              den Enden mitschneidet statt einer geraden Kante. */}
-          <clipPath id={`${uid}-engravingWindow`}>
-            <path d={CAPSULE_SHELL_INNER_PATH} />
-          </clipPath>
-          {/* Erhabene Schrift: helle Deckflaeche oben, zur Standflaeche hin
-              dunkler — dieselbe Lichtrichtung wie auf der Huelle. */}
-          <linearGradient id={`${uid}-letterFace`} gradientUnits="userSpaceOnUse" x1="0" y1="34" x2="0" y2="56">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.92)" />
-            <stop offset="55%" stopColor="rgba(255,255,255,0.66)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0.34)" />
-          </linearGradient>
-          <clipPath id={`${uid}-letterMask`}>
-            <text {...engravingProps}>{engravedName}</text>
-          </clipPath>
-          <linearGradient id={`${uid}-letterGloss`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="rgba(255,255,255,0)" />
-            <stop offset="50%" stopColor="rgba(255,255,255,0.95)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-          </linearGradient>
           {/* Kappe und Körper sind unterschiedlich hoch. Ein objektbezogener
               Verlauf würde dieselben Stopps auf verschiedene absolute Höhen
               legen und an der Naht sichtbar springen. */}
@@ -167,10 +131,6 @@ export function CapsuleVisual({
           </radialGradient>
           <filter id={`${uid}-soft`} x="-30%" y="-40%" width="180%" height="180%">
             <feGaussianBlur stdDeviation="2" />
-          </filter>
-          {/* Weicher Wurfschatten der erhabenen Schrift — kein Umriss. */}
-          <filter id={`${uid}-castShadow`} x="-25%" y="-40%" width="150%" height="200%">
-            <feGaussianBlur stdDeviation="0.7" />
           </filter>
         </defs>
 
@@ -261,58 +221,24 @@ export function CapsuleVisual({
         {/* Konturgravur: nur die beiden Rillenkanten, kein Füllton. Das
             Buchstabeninnere zeigt die Hülle selbst. Das Sichtfenster begrenzt
             den Schriftzug; alles darüber läuft durch. */}
-        <g clipPath={`url(#${uid}-engravingWindow)`}>
-          <g ref={engravingRef} data-capsule-detail="engraving">
-            {/* Wurfschatten hinter der Schrift: weich und nur nach unten
-                rechts. Ein zentrierter Strich waere ein Umriss ringsum. */}
-            <text
-              {...engravingProps}
-              fill="rgba(16,10,2,0.5)"
-              filter={`url(#${uid}-castShadow)`}
-              transform="translate(0.9 1.2)"
-            >
-              {engravedName}
-            </text>
-
-            {/* Alles Weitere liegt INNERHALB der Buchstaben — so entsteht eine
-                angeschraegte Kante statt einer Kontur. */}
-            <g clipPath={`url(#${uid}-letterMask)`}>
-              <rect x="0" y="0" width="240" height="84" fill={`url(#${uid}-letterFace)`} />
-              {/* beleuchtete Oberkante */}
-              <text
-                {...engravingProps}
-                fill="none"
-                stroke="rgba(255,255,255,0.95)"
-                strokeWidth="1.8"
-                transform="translate(-0.55 -0.75)"
-              >
-                {engravedName}
-              </text>
-              {/* abfallende Unterkante zur lichtabgewandten Seite */}
-              <text
-                {...engravingProps}
-                fill="none"
-                stroke="rgba(90,60,18,0.5)"
-                strokeWidth="1.5"
-                transform="translate(0.6 0.85)"
-              >
-                {engravedName}
-              </text>
-              <rect
-                ref={textSweepRef}
-                data-capsule-detail="text-gloss"
-                x="86"
-                y="20"
-                width="68"
-                height="44"
-                fill={`url(#${uid}-letterGloss)`}
-                opacity={0.3 + visualFocus * 0.45}
-                transform={`translate(${visualLightOffset * 58} 0)`}
-              />
-            </g>
-          </g>
-        </g>
       </svg>
+
+      {/* Beschriftet wie Vial und Ampulle: HTML statt SVG-Text, damit Hinting
+          und Subpixel-Glättung greifen, dieselben Klassen, derselbe Durchlauf.
+          Nur das Band fehlt — eine Kapsel ist kein Behälter. */}
+      <div
+        data-capsule-detail="name"
+        className="pointer-events-none absolute inset-x-[6%] top-1/2 -translate-y-1/2 overflow-hidden text-center"
+      >
+        <StageMarquee className={`${NAME_CLASS[size]} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
+          {engravedName}
+        </StageMarquee>
+        <div
+          ref={nameSheenRef}
+          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/10 via-white/10 to-black/10"
+          style={{ transform: `translateX(${visualLightOffset * 10}%)`, opacity: 0.62 + visualFocus * 0.2 }}
+        />
+      </div>
     </div>
   )
 }

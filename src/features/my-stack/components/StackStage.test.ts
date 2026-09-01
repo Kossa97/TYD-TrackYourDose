@@ -156,12 +156,13 @@ describe('StackStage — Kapsel', () => {
     expect(renderStage(capsuleItem)).toContain('data-stack-renderer="capsule"')
   })
 
-  it('graviert den Namen auf die Hülle statt ein Etikett zu tragen', () => {
+  it('trägt den Namen auf der Hülle, aber ohne Etikettband', () => {
     const html = renderStage(capsuleItem)
 
-    // wie auf dem Etikett von Vial und Ampulle: der Name steht unveraendert da
+    // dieselbe Typografie wie auf dem Etikett, nur ohne Band darum
     expect(html).toContain('Vitamin D3')
-    expect(html).toContain('data-capsule-detail="engraving"')
+    expect(html).toContain('data-capsule-detail="name"')
+    expect(html).toContain('font-black text-white tracking-normal')
     expect(html).not.toContain('data-vial-detail="label-glass-wrap"')
   })
 
