@@ -54,6 +54,7 @@ export function CapsuleVisual({
   const glossRef = useRef<SVGPathElement | null>(null)
   const shellRef = useRef<SVGUseElement | null>(null)
   const engravingRef = useRef<SVGGElement | null>(null)
+  const textSweepRef = useRef<SVGRectElement | null>(null)
 
   const applyStageLight = useCallback((f: number, o: number) => {
     rootRef.current?.setAttribute('data-capsule-focus', f.toFixed(2))
@@ -64,6 +65,10 @@ export function CapsuleVisual({
     sweepRef.current?.setAttribute('opacity', (0.12 + f * 0.32).toFixed(3))
     glossRef.current?.setAttribute('stroke-opacity', (0.3 + f * 0.3).toFixed(3))
     shellRef.current?.setAttribute('stroke-opacity', (0.3 + f * 0.26).toFixed(3))
+    // Die Schrift steht auf der Huelle, also wandert ihr Glanz mit demselben
+    // Licht — nur enger gefuehrt, weil die Buchstaben kleiner sind.
+    textSweepRef.current?.setAttribute('transform', `translate(${(o * 58).toFixed(2)} 0)`)
+    textSweepRef.current?.setAttribute('opacity', (0.3 + f * 0.45).toFixed(3))
   }, [])
 
   useStageLight(applyStageLight, { focus: visualFocus, lightOffset: visualLightOffset }, stageLightRef)
@@ -115,14 +120,26 @@ export function CapsuleVisual({
           <clipPath id={`${uid}-shellClip`}>
             <use href={`#${uid}-shell`} />
           </clipPath>
+          {/* Die Innenkontur beschneidet den Schriftzug, damit die Rundung an
+              den Enden mitschneidet statt einer geraden Kante. */}
           <clipPath id={`${uid}-engravingWindow`}>
-            <rect
-              x={CAPSULE_ENGRAVING.centerX - CAPSULE_ENGRAVING.windowWidth / 2}
-              y="20"
-              width={CAPSULE_ENGRAVING.windowWidth}
-              height="44"
-            />
+            <path d={CAPSULE_SHELL_INNER_PATH} />
           </clipPath>
+          {/* Erhabene Schrift: helle Deckflaeche oben, zur Standflaeche hin
+              dunkler — dieselbe Lichtrichtung wie auf der Huelle. */}
+          <linearGradient id={`${uid}-letterFace`} gradientUnits="userSpaceOnUse" x1="0" y1="34" x2="0" y2="56">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.92)" />
+            <stop offset="55%" stopColor="rgba(255,255,255,0.66)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.34)" />
+          </linearGradient>
+          <clipPath id={`${uid}-letterMask`}>
+            <text {...engravingProps}>{engravedName}</text>
+          </clipPath>
+          <linearGradient id={`${uid}-letterGloss`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="rgba(255,255,255,0)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,0.95)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </linearGradient>
           {/* Kappe und Körper sind unterschiedlich hoch. Ein objektbezogener
               Verlauf würde dieselben Stopps auf verschiedene absolute Höhen
               legen und an der Naht sichtbar springen. */}
@@ -241,11 +258,28 @@ export function CapsuleVisual({
             Buchstabeninnere zeigt die Hülle selbst. Das Sichtfenster begrenzt
             den Schriftzug; alles darüber läuft durch. */}
         <g clipPath={`url(#${uid}-engravingWindow)`}>
-          <g ref={engravingRef} data-capsule-detail="engraving" fill="none">
-            <text {...engravingProps} stroke="rgba(0,0,0,0.55)" strokeWidth="0.55" transform="translate(0.35 0.45)">
+          <g ref={engravingRef} data-capsule-detail="engraving">
+            {/* Schattenkante unten rechts: der Buchstabe steht auf der Huelle
+                und wirft nach der lichtabgewandten Seite. */}
+            <text {...engravingProps} fill="none" stroke="rgba(20,12,2,0.55)" strokeWidth="1.1" transform="translate(0.5 0.7)">
               {engravedName}
             </text>
-            <text {...engravingProps} stroke="rgba(255,255,255,0.42)" strokeWidth="0.5" transform="translate(-0.3 -0.4)">
+            <text {...engravingProps} fill={`url(#${uid}-letterFace)`}>{engravedName}</text>
+            <g clipPath={`url(#${uid}-letterMask)`}>
+              <rect
+                ref={textSweepRef}
+                data-capsule-detail="text-gloss"
+                x="86"
+                y="20"
+                width="68"
+                height="44"
+                fill={`url(#${uid}-letterGloss)`}
+                opacity={0.3 + visualFocus * 0.45}
+                transform={`translate(${visualLightOffset * 58} 0)`}
+              />
+            </g>
+            {/* Lichtkante oben links: die Oberkante der erhabenen Flaeche. */}
+            <text {...engravingProps} fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="0.45" transform="translate(-0.25 -0.4)">
               {engravedName}
             </text>
           </g>

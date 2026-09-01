@@ -31,11 +31,27 @@ describe('CapsuleVisual', () => {
     expect(render()).toContain('gradientUnits="userSpaceOnUse"')
   })
 
-  it('graviert ohne Fuellton im Buchstabeninneren', () => {
+  it('setzt die Schrift erhaben auf die Huelle: Schattenkante unten, Lichtkante oben', () => {
     const html = render()
     expect(html).toContain('data-capsule-detail="engraving"')
-    const group = html.slice(html.indexOf('data-capsule-detail="engraving"'))
-    expect(group.slice(0, 200)).toContain('fill="none"')
+    // lichtabgewandte Seite nach unten rechts, beleuchtete Oberkante nach oben links
+    expect(html).toContain('transform="translate(0.5 0.7)"')
+    expect(html).toContain('transform="translate(-0.25 -0.4)"')
+  })
+
+  it('laesst den Glanz der Schrift mit dem Licht wandern', () => {
+    const html = render({ lightOffset: 0.5 })
+    expect(html).toContain('data-capsule-detail="text-gloss"')
+    expect(html).toContain('translate(29 0)')
+  })
+
+  it('beschneidet den Schriftzug mit der Innenkontur, damit die Rundung mitschneidet', () => {
+    const html = render()
+    const window = html.match(/id="([^"]*-engravingWindow)"/)?.[1]
+    expect(window).toBeTruthy()
+    const clipDef = html.slice(html.indexOf(`id="${window}"`), html.indexOf(`id="${window}"`) + 260)
+    expect(clipDef).toContain('<path')
+    expect(clipDef).not.toContain('<rect')
   })
 
   it('zentriert die Gravur auf der Kapselmitte', () => {
