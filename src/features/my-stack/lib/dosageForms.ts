@@ -1,5 +1,6 @@
 import { AMPOULE_SPEC } from '../extensions/ampoule/ampouleShape'
 import { CAPSULE_SPEC } from '../extensions/capsule/capsuleShape'
+import { TABLET_SPEC } from '../extensions/tablet/tabletShape'
 import { VIAL_SPEC } from '../extensions/peptide/vialShape'
 import type { StageFormSpec } from '../stage/types'
 import type { DosageFormCapability, DosageFormKey } from '../types'
@@ -10,7 +11,7 @@ export interface DosageFormDefinition {
   readonly suggestedUnits: readonly string[]
   readonly basisUnits: readonly string[]
   readonly capabilities: readonly DosageFormCapability[]
-  readonly stageRenderer?: 'vial' | 'ampoule' | 'capsule'
+  readonly stageRenderer?: 'vial' | 'ampoule' | 'capsule' | 'tablet'
   // What the stage needs to know: where the liquid sits, whether the fill level
   // says anything, and — derived from the chamber — whether it wears our label.
   readonly stageForm?: StageFormSpec
@@ -20,7 +21,7 @@ export const DOSAGE_FORMS: readonly DosageFormDefinition[] = [
   { key: 'vial', labelKey: 'dosage_form_vial', suggestedUnits: ['mcg', 'mg', 'IU'], basisUnits: ['vial', 'ml'], capabilities: ['injectable', 'reconstitutable', 'concentration_based', 'inventory_capable'], stageRenderer: 'vial', stageForm: VIAL_SPEC },
   { key: 'ampoule', labelKey: 'dosage_form_ampoule', suggestedUnits: ['mg', 'ml', 'IU'], basisUnits: ['ml', 'ampoule'], capabilities: ['injectable', 'liquid', 'concentration_based', 'inventory_capable'], stageRenderer: 'ampoule', stageForm: AMPOULE_SPEC },
   { key: 'pen', labelKey: 'dosage_form_pen', suggestedUnits: ['mg', 'mcg', 'IU'], basisUnits: ['dose', 'ml'], capabilities: ['injectable', 'liquid', 'concentration_based', 'inventory_capable'] },
-  { key: 'tablet', labelKey: 'dosage_form_tablet', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['tablet'], capabilities: ['countable', 'divisible', 'inventory_capable'] },
+  { key: 'tablet', labelKey: 'dosage_form_tablet', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['tablet'], capabilities: ['countable', 'divisible', 'inventory_capable'], stageRenderer: 'tablet', stageForm: TABLET_SPEC },
   { key: 'capsule', labelKey: 'dosage_form_capsule', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['capsule'], capabilities: ['countable', 'inventory_capable'], stageRenderer: 'capsule', stageForm: CAPSULE_SPEC },
   { key: 'drops', labelKey: 'dosage_form_drops', suggestedUnits: ['mcg', 'mg', 'IU', 'ml'], basisUnits: ['drop', 'ml'], capabilities: ['liquid', 'concentration_based', 'inventory_capable'] },
   { key: 'liquid', labelKey: 'dosage_form_liquid', suggestedUnits: ['mcg', 'mg', 'g', 'IU', 'ml'], basisUnits: ['ml', 'portion'], capabilities: ['liquid', 'concentration_based', 'inventory_capable'] },

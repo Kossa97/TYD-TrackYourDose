@@ -6,6 +6,7 @@ import { getDosageForm } from '../lib/dosageForms'
 import type { StageLightHandle } from '../stage/useStageLight'
 import { AmpouleRenderer } from '../extensions/ampoule/AmpouleRenderer'
 import { CapsuleRenderer } from '../extensions/capsule/CapsuleRenderer'
+import { TabletRenderer } from '../extensions/tablet/TabletRenderer'
 import { VialRenderer } from '../extensions/peptide/VialRenderer'
 
 // What every stage form understands. Anything beyond this — a fill level, a
@@ -36,6 +37,10 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
   // Weder Etikett noch Physik: beides ist fuer eine Kapsel bedeutungslos.
   if (renderer === 'capsule') {
     return <CapsuleRenderer item={item} {...visualProps} />
+  }
+
+  if (renderer === 'tablet') {
+    return <TabletRenderer item={item} {...visualProps} />
   }
 
   if (renderer === 'ampoule') {

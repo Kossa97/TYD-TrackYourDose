@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import type { StackItem } from '../types'
 import { StackStage } from './StackStage'
+import { getDosageForm } from '../lib/dosageForms'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -36,18 +37,18 @@ const vialItem: StackItem = {
   }],
 }
 
-const tabletItem: StackItem = {
+const patchItem: StackItem = {
   ...vialItem,
-  id: 'vitamin-d3-tablet',
-  display_name: 'Vitamin D3',
-  category: 'vitamin',
-  dosage_form: 'tablet',
+  id: 'nikotin-patch',
+  display_name: 'Nikotinpflaster',
+  category: 'medication',
+  dosage_form: 'patch',
   ingredients: [{
     ...vialItem.ingredients[0],
-    custom_name: 'Vitamin D3',
-    amount_value: 5_000,
-    amount_unit: 'IU',
-    basis_unit: 'tablet',
+    custom_name: 'Nikotin',
+    amount_value: 21,
+    amount_unit: 'mg',
+    basis_unit: 'patch',
   }],
 }
 
@@ -58,14 +59,14 @@ function renderStage(item: StackItem): string {
 describe('StackStage', () => {
   it('rendert das bestehende Vial nur für freigeschaltete Vial-Einträge', () => {
     expect(renderStage(vialItem)).toContain('data-stack-renderer="vial"')
-    expect(renderStage(tabletItem)).toContain('data-stack-renderer="unsupported"')
+    expect(renderStage(patchItem)).toContain('data-stack-renderer="unsupported"')
   })
 
   it('behält nicht freigeschaltete Formen in einer textuellen Darstellung', () => {
-    const html = renderStage(tabletItem)
+    const html = renderStage(patchItem)
     const source = readFileSync(new URL('./StackStage.tsx', import.meta.url), 'utf8')
 
-    expect(html).toContain('Vitamin D3')
+    expect(html).toContain('Nikotinpflaster')
     expect(html).toContain('my_stack_visual_pending')
     expect(html).not.toContain('PeptideVialVisual')
     expect(source).not.toContain('<svg')
@@ -116,7 +117,7 @@ describe('StackStage — Ampulle', () => {
   })
 
   it('lässt Formen ohne eigene Grafik weiterhin im Textzustand', () => {
-    expect(renderStage(tabletItem)).toContain('data-stack-renderer="unsupported"')
+    expect(renderStage(patchItem)).toContain('data-stack-renderer="unsupported"')
   })
 
   it('hält den Ampullen-Adapter frei von eigener Grafik', () => {
@@ -173,5 +174,54 @@ describe('StackStage — Kapsel', () => {
     expect(source).not.toContain('<svg')
     expect(source).not.toContain('SloshProvider')
     expect(source).not.toContain('fillPct')
+  })
+})
+
+const tabletItem: StackItem = {
+  ...vialItem,
+  id: 'ibuprofen-tablet',
+  display_name: 'Ibuprofen',
+  category: 'medication',
+  dosage_form: 'tablet',
+  color_hex: '#d9c39a',
+  ingredients: [{
+    ...vialItem.ingredients[0],
+    custom_name: 'Ibuprofen',
+    amount_value: 400,
+    amount_unit: 'mg',
+    basis_unit: 'tablet',
+  }],
+}
+
+describe('StackStage — Tablette', () => {
+  it('rendert die Tablette für Tabletten-Einträge', () => {
+    expect(renderStage(tabletItem)).toContain('data-stack-renderer="tablet"')
+  })
+
+  it('zeigt Bruchrille und Namen, aber kein Etikettband', () => {
+    const html = renderStage(tabletItem)
+
+    expect(html).toContain('data-tablet-detail="score"')
+    expect(html).toContain('Ibuprofen')
+    expect(html).not.toContain('data-vial-detail="label-glass-wrap"')
+  })
+
+  it('hält den Tabletten-Adapter frei von eigener Grafik und von Physik', () => {
+    const source = readFileSync(new URL('../extensions/tablet/TabletRenderer.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('TabletVisual')
+    expect(source).not.toContain('<svg')
+    expect(source).not.toContain('SloshProvider')
+    expect(source).not.toContain('fillPct')
+  })
+
+  it('benutzt als Negativbeispiel eine Form, die wirklich keinen Renderer hat', () => {
+    // Diese Datei prueft mit patchItem, dass Formen ohne Buehnengrafik im
+    // Textzustand bleiben. Bekommt patch selbst einen Renderer, muss das
+    // Beispiel auf eine andere Form ohne Renderer wechseln.
+    expect(
+      getDosageForm(patchItem.dosage_form).stageRenderer,
+      'patch hat jetzt einen Renderer — Negativbeispiel auf eine andere Form ohne stageRenderer umstellen',
+    ).toBeUndefined()
   })
 })

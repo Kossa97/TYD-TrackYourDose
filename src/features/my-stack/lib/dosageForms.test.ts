@@ -17,7 +17,7 @@ describe('DOSAGE_FORMS', () => {
   })
 
   it('aktiviert genau die Formen mit fertiger Bühnengrafik', () => {
-    expect(DOSAGE_FORMS.filter(form => form.stageRenderer).map(form => form.key)).toEqual(['vial', 'ampoule', 'capsule'])
+    expect(DOSAGE_FORMS.filter(form => form.stageRenderer).map(form => form.key)).toEqual(['vial', 'ampoule', 'tablet', 'capsule'])
   })
 
   it('gibt jeder freigeschalteten Form ihre Bühnenbeschreibung mit', () => {
@@ -42,11 +42,12 @@ describe('DOSAGE_FORMS', () => {
     expect(getDosageForm('liquid').basisUnits).toContain('ml')
   })
 
-  it('erkennt Vial, Ampulle und Kapsel als darstellbar, den Rest noch nicht', () => {
+  it('erkennt die vier fertigen Formen als darstellbar, den Rest noch nicht', () => {
     expect(isStageRenderable('vial')).toBe(true)
     expect(isStageRenderable('ampoule')).toBe(true)
+    expect(isStageRenderable('tablet')).toBe(true)
     expect(isStageRenderable('capsule')).toBe(true)
-    expect(isStageRenderable('tablet')).toBe(false)
     expect(isStageRenderable('patch')).toBe(false)
+    expect(isStageRenderable('powder')).toBe(false)
   })
 })
