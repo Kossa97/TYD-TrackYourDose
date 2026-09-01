@@ -4463,7 +4463,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas",
-      "community": 109,
+      "community": 241,
       "norm_label": "injectionmapcanvas.tsx"
     },
     {
@@ -4473,7 +4473,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_lightposition",
-      "community": 109,
+      "community": 241,
       "norm_label": "lightposition"
     },
     {
@@ -4483,7 +4483,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_injection_map_lights",
-      "community": 109,
+      "community": 241,
       "norm_label": "injection_map_lights"
     },
     {
@@ -4493,7 +4493,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_injectionfocusrequest",
-      "community": 109,
+      "community": 241,
       "norm_label": "injectionfocusrequest"
     },
     {
@@ -4503,7 +4503,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_orbitcontrolsapi",
-      "community": 109,
+      "community": 241,
       "norm_label": "orbitcontrolsapi"
     },
     {
@@ -4513,7 +4513,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_tojson",
-      "community": 109,
+      "community": 241,
       "norm_label": "tojson()"
     },
     {
@@ -4533,7 +4533,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_resetcameraframe",
-      "community": 109,
+      "community": 241,
       "norm_label": "resetcameraframe()"
     },
     {
@@ -4543,7 +4543,7 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_focustargetforrequest",
-      "community": 109,
+      "community": 241,
       "norm_label": "focustargetforrequest()"
     },
     {
@@ -4553,7 +4553,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_camerarig",
-      "community": 109,
+      "community": 241,
       "norm_label": "camerarig()"
     },
     {
@@ -4563,7 +4563,7 @@
       "source_location": "L194",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_scene",
-      "community": 109,
+      "community": 241,
       "norm_label": "scene()"
     },
     {
@@ -4573,7 +4573,7 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionmapcanvas_injectionmapcanvas",
-      "community": 109,
+      "community": 241,
       "norm_label": "injectionmapcanvas()"
     },
     {
@@ -4583,7 +4583,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionpin",
-      "community": 109,
+      "community": 241,
       "norm_label": "injectionpin.tsx"
     },
     {
@@ -4593,7 +4593,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionpin_pin_axis",
-      "community": 109,
+      "community": 241,
       "norm_label": "pin_axis"
     },
     {
@@ -4603,7 +4603,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_components_injection3d_injectionpin_injectionpin",
-      "community": 109,
+      "community": 241,
       "norm_label": "injectionpin()"
     },
     {
@@ -5663,7 +5663,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_blutwertepage",
-      "community": 54,
+      "community": 60,
       "norm_label": "blutwertepage.tsx"
     },
     {
@@ -5713,7 +5713,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundeditor",
-      "community": 95,
+      "community": 42,
       "norm_label": "befundeditor.tsx"
     },
     {
@@ -5723,7 +5723,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundeditor_props",
-      "community": 54,
+      "community": 42,
       "norm_label": "props"
     },
     {
@@ -5733,7 +5733,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundeditor_tomergeitem",
-      "community": 95,
+      "community": 42,
       "norm_label": "tomergeitem()"
     },
     {
@@ -5743,7 +5743,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundeditor_entrytomergeitem",
-      "community": 95,
+      "community": 42,
       "norm_label": "entrytomergeitem()"
     },
     {
@@ -5753,7 +5753,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundeditor_toreviewrow",
-      "community": 95,
+      "community": 42,
       "norm_label": "toreviewrow()"
     },
     {
@@ -5763,7 +5763,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundeditor_describeextracterror",
-      "community": 95,
+      "community": 42,
       "norm_label": "describeextracterror()"
     },
     {
@@ -5773,7 +5773,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundeditor_befundeditor",
-      "community": 95,
+      "community": 42,
       "norm_label": "befundeditor()"
     },
     {
@@ -5783,7 +5783,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundliste",
-      "community": 54,
+      "community": 42,
       "norm_label": "befundliste.tsx"
     },
     {
@@ -5793,7 +5793,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundliste_layout",
-      "community": 54,
+      "community": 42,
       "norm_label": "layout"
     },
     {
@@ -5813,7 +5813,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundliste_props",
-      "community": 54,
+      "community": 42,
       "norm_label": "props"
     },
     {
@@ -5833,7 +5833,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_befundliste_isauffaellig",
-      "community": 54,
+      "community": 60,
       "norm_label": "isauffaellig()"
     },
     {
@@ -5853,7 +5853,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal",
-      "community": 115,
+      "community": 60,
       "norm_label": "entrymodal.tsx"
     },
     {
@@ -5863,7 +5863,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal_entrydraft",
-      "community": 115,
+      "community": 60,
       "norm_label": "entrydraft"
     },
     {
@@ -5873,7 +5873,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal_emptydraft",
-      "community": 115,
+      "community": 60,
       "norm_label": "emptydraft()"
     },
     {
@@ -5883,7 +5883,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal_props",
-      "community": 115,
+      "community": 60,
       "norm_label": "props"
     },
     {
@@ -5893,7 +5893,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_features_blutwerte_components_entrymodal_entrymodal",
-      "community": 115,
+      "community": 60,
       "norm_label": "entrymodal()"
     },
     {
@@ -6233,7 +6233,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_effectiverange",
-      "community": 54,
+      "community": 60,
       "norm_label": "effectiverange"
     },
     {
@@ -6243,7 +6243,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_trend",
-      "community": 60,
+      "community": 54,
       "norm_label": "trend"
     },
     {
@@ -6263,7 +6263,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_bloodwork_markerpoint",
-      "community": 54,
+      "community": 60,
       "norm_label": "markerpoint"
     },
     {
@@ -6403,7 +6403,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_extractresult_test",
-      "community": 95,
+      "community": 42,
       "norm_label": "extractresult.test.ts"
     },
     {
@@ -6413,7 +6413,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_extractresult_test_gueltig",
-      "community": 95,
+      "community": 42,
       "norm_label": "gueltig"
     },
     {
@@ -6423,7 +6423,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_extractresult",
-      "community": 95,
+      "community": 42,
       "norm_label": "extractresult.ts"
     },
     {
@@ -6443,7 +6443,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_extractresult_extractresult",
-      "community": 95,
+      "community": 42,
       "norm_label": "extractresult"
     },
     {
@@ -6453,7 +6453,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_extractresult_tofinitenumber",
-      "community": 95,
+      "community": 42,
       "norm_label": "tofinitenumber()"
     },
     {
@@ -6463,7 +6463,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_extractresult_parsevalue",
-      "community": 95,
+      "community": 42,
       "norm_label": "parsevalue()"
     },
     {
@@ -6473,7 +6473,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_extractresult_parseextractresult",
-      "community": 95,
+      "community": 42,
       "norm_label": "parseextractresult()"
     },
     {
@@ -6533,7 +6533,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_test",
-      "community": 95,
+      "community": 89,
       "norm_label": "imageresize.test.ts"
     },
     {
@@ -6543,7 +6543,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize",
-      "community": 95,
+      "community": 89,
       "norm_label": "imageresize.ts"
     },
     {
@@ -6553,7 +6553,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_size",
-      "community": 95,
+      "community": 89,
       "norm_label": "size"
     },
     {
@@ -6563,7 +6563,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_targetsize",
-      "community": 95,
+      "community": 89,
       "norm_label": "targetsize()"
     },
     {
@@ -6573,7 +6573,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_preparedfile",
-      "community": 95,
+      "community": 89,
       "norm_label": "preparedfile"
     },
     {
@@ -6583,7 +6583,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_readasdataurl",
-      "community": 95,
+      "community": 89,
       "norm_label": "readasdataurl()"
     },
     {
@@ -6593,7 +6593,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_stripprefix",
-      "community": 95,
+      "community": 89,
       "norm_label": "stripprefix()"
     },
     {
@@ -6603,7 +6603,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_loadimage",
-      "community": 95,
+      "community": 89,
       "norm_label": "loadimage()"
     },
     {
@@ -6613,7 +6613,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_imageresize_preparefile",
-      "community": 95,
+      "community": 89,
       "norm_label": "preparefile()"
     },
     {
@@ -6723,7 +6723,7 @@
       "source_location": "L844",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_markercatalog_normalizemarker",
-      "community": 115,
+      "community": 60,
       "norm_label": "normalizemarker()"
     },
     {
@@ -6833,7 +6833,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_referencebar_test",
-      "community": 55,
+      "community": 54,
       "norm_label": "referencebar.test.ts"
     },
     {
@@ -6843,7 +6843,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_referencebar",
-      "community": 55,
+      "community": 54,
       "norm_label": "referencebar.ts"
     },
     {
@@ -6853,7 +6853,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_referencebar_referencebargeometry",
-      "community": 55,
+      "community": 54,
       "norm_label": "referencebargeometry"
     },
     {
@@ -6863,7 +6863,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_referencebar_clamp",
-      "community": 55,
+      "community": 54,
       "norm_label": "clamp()"
     },
     {
@@ -6923,7 +6923,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_features_blutwerte_lib_unitconversion_convert",
-      "community": 115,
+      "community": 60,
       "norm_label": "convert()"
     },
     {
@@ -6953,7 +6953,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_types",
-      "community": 54,
+      "community": 42,
       "norm_label": "types.ts"
     },
     {
@@ -6963,7 +6963,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_blutwerte_types_bloodworkentry",
-      "community": 54,
+      "community": 42,
       "norm_label": "bloodworkentry"
     },
     {
@@ -6973,7 +6973,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_features_blutwerte_types_bloodworkreport",
-      "community": 54,
+      "community": 42,
       "norm_label": "bloodworkreport"
     },
     {
@@ -12660,7 +12660,7 @@
       "label": "CAPSULE_VIEWBOX",
       "file_type": "code",
       "source_file": "src/features/my-stack/extensions/capsule/capsuleShape.ts",
-      "source_location": "L16",
+      "source_location": "L21",
       "_origin": "ast",
       "id": "src_features_my_stack_extensions_capsule_capsuleshape_capsule_viewbox",
       "community": 88,
@@ -12670,7 +12670,7 @@
       "label": "CAPSULE_SPEC",
       "file_type": "code",
       "source_file": "src/features/my-stack/extensions/capsule/capsuleShape.ts",
-      "source_location": "L20",
+      "source_location": "L25",
       "_origin": "ast",
       "id": "src_features_my_stack_extensions_capsule_capsuleshape_capsule_spec",
       "community": 88,
@@ -17353,7 +17353,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_injectiondeeplink_isinjectablemethod",
-      "community": 4,
+      "community": 55,
       "norm_label": "isinjectablemethod()"
     },
     {
@@ -17723,7 +17723,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_injectionlogtypes_vector3json",
-      "community": 109,
+      "community": 241,
       "norm_label": "vector3json"
     },
     {
@@ -17773,7 +17773,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_lib_injectionlogtypes_selectableinjectioncycle",
-      "community": 295,
+      "community": 109,
       "norm_label": "selectableinjectioncycle"
     },
     {
@@ -20313,7 +20313,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_pages_dashboard_test",
-      "community": 4,
+      "community": 118,
       "norm_label": "dashboard.test.ts"
     },
     {
@@ -20323,7 +20323,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_pages_dashboard_test_pagemocks",
-      "community": 4,
+      "community": 118,
       "norm_label": "pagemocks"
     },
     {
@@ -20333,7 +20333,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_pages_dashboard_test_recordedmutation",
-      "community": 4,
+      "community": 118,
       "norm_label": "recordedmutation"
     },
     {
@@ -20343,7 +20343,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_pages_dashboard_test_resolvedquery",
-      "community": 4,
+      "community": 118,
       "norm_label": "resolvedquery()"
     },
     {
@@ -20353,7 +20353,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_pages_dashboard_test_createdashboardclient",
-      "community": 4,
+      "community": 118,
       "norm_label": "createdashboardclient()"
     },
     {
@@ -20363,7 +20363,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "src_pages_dashboard_test_intakeonlycycle",
-      "community": 4,
+      "community": 118,
       "norm_label": "intakeonlycycle()"
     },
     {
@@ -20373,7 +20373,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "src_pages_dashboard_test_renderdashboard",
-      "community": 4,
+      "community": 118,
       "norm_label": "renderdashboard()"
     },
     {
@@ -20443,7 +20443,7 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "src_pages_dashboard_builddashboardroutineintake",
-      "community": 4,
+      "community": 55,
       "norm_label": "builddashboardroutineintake()"
     },
     {
@@ -20933,7 +20933,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_pages_home_test",
-      "community": 312,
+      "community": 55,
       "norm_label": "home.test.ts"
     },
     {
@@ -20943,7 +20943,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_pages_home_test_pagemocks",
-      "community": 312,
+      "community": 55,
       "norm_label": "pagemocks"
     },
     {
@@ -20953,7 +20953,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_pages_home_test_observe",
-      "community": 312,
+      "community": 55,
       "norm_label": "observe()"
     },
     {
@@ -20963,7 +20963,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_pages_home_test_disconnect",
-      "community": 312,
+      "community": 55,
       "norm_label": "disconnect()"
     },
     {
@@ -20973,7 +20973,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_pages_home_test_resolvedquery",
-      "community": 312,
+      "community": 55,
       "norm_label": "resolvedquery()"
     },
     {
@@ -20983,7 +20983,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_pages_home_test_createhomeclient",
-      "community": 312,
+      "community": 55,
       "norm_label": "createhomeclient()"
     },
     {
@@ -20993,7 +20993,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "src_pages_home_test_intakeonlyhomecycle",
-      "community": 312,
+      "community": 55,
       "norm_label": "intakeonlyhomecycle()"
     },
     {
@@ -21003,7 +21003,7 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "src_pages_home_test_quantifiedhomecycle",
-      "community": 312,
+      "community": 55,
       "norm_label": "quantifiedhomecycle()"
     },
     {
@@ -21013,7 +21013,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "src_pages_home_test_confirmsinglehomeintake",
-      "community": 312,
+      "community": 55,
       "norm_label": "confirmsinglehomeintake()"
     },
     {
@@ -21173,7 +21173,7 @@
       "source_location": "L247",
       "_origin": "ast",
       "id": "src_pages_home_buildhomeloggedat",
-      "community": 312,
+      "community": 55,
       "norm_label": "buildhomeloggedat()"
     },
     {
@@ -21193,7 +21193,7 @@
       "source_location": "L270",
       "_origin": "ast",
       "id": "src_pages_home_buildhomedoselogpayload",
-      "community": 312,
+      "community": 55,
       "norm_label": "buildhomedoselogpayload()"
     },
     {
@@ -21223,7 +21223,7 @@
       "source_location": "L311",
       "_origin": "ast",
       "id": "src_pages_home_buildhomeroutineintake",
-      "community": 4,
+      "community": 55,
       "norm_label": "buildhomeroutineintake()"
     },
     {
@@ -21283,7 +21283,7 @@
       "source_location": "L355",
       "_origin": "ast",
       "id": "src_pages_home_home",
-      "community": 312,
+      "community": 55,
       "norm_label": "home()"
     },
     {
@@ -23253,7 +23253,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_pages_lab_studyfeed_studyfeedprops",
-      "community": 123,
+      "community": 1,
       "norm_label": "studyfeedprops"
     },
     {
@@ -33417,7 +33417,7 @@
       "contributor": null,
       "community": 169,
       "norm_label": "graphify skill trigger (/graphify)",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
     },
     {
       "label": "graphify pipeline (SKILL.md)",
@@ -68017,7 +68017,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/capsule/capsuleShape.ts",
-      "source_location": "L20",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_capsule_capsuleshape",
       "target": "src_features_my_stack_extensions_capsule_capsuleshape_capsule_spec",
@@ -68027,7 +68027,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/capsule/capsuleShape.ts",
-      "source_location": "L16",
+      "source_location": "L21",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_capsule_capsuleshape",
       "target": "src_features_my_stack_extensions_capsule_capsuleshape_capsule_viewbox",
@@ -101210,5 +101210,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "a120882979df67394a69fb24b30978a8c7a36bf8"
+  "built_at_commit": "628fab5b62b5da2da425c1d71d311836c7405e2c"
 }

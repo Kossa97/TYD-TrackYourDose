@@ -975,8 +975,8 @@
     "semantic_hash": "45a38b51cd13eca6ff8eea4e19b5ef7e"
   },
   "src/pages/__VialPreview.tsx": {
-    "mtime": 1788278310.6422682,
-    "ast_hash": "5ff7aa26ba5ff542963e2b08b42b6b13",
+    "mtime": 1788304047.2150762,
+    "ast_hash": "720cc2cc37ec103f3799d66c3cc1cb76",
     "semantic_hash": ""
   },
   "src/pages/lab/AdminPanel.tsx": {
@@ -2370,13 +2370,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
-    "mtime": 1788292547.8198328,
-    "ast_hash": "20a531f42bb7f3a30c3ad4db62168c38",
+    "mtime": 1788303972.2397747,
+    "ast_hash": "bb94006b05746b94a5434ff889449111",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.tsx": {
-    "mtime": 1788278282.4177816,
-    "ast_hash": "f18541d00542fe7fa0e0a51763fde9be",
+    "mtime": 1788304016.911871,
+    "ast_hash": "f271025cb2517bb59aa84279ba75c33a",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.tsx": {
@@ -2435,13 +2435,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.test.ts": {
-    "mtime": 1788278282.418287,
-    "ast_hash": "38c601ef5946dc6b2689eaa3a9286ae3",
+    "mtime": 1788303991.1838937,
+    "ast_hash": "a38433773f0f5fbe42af6d04359750da",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.ts": {
-    "mtime": 1788278282.418287,
-    "ast_hash": "1116bca6b51259b37a18e67588bf4a13",
+    "mtime": 1788304016.9108708,
+    "ast_hash": "b4783245684406bce0e1cc8ab74e96b6",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/duplicateFingerprint.test.ts": {
@@ -2565,8 +2565,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
-    "mtime": 1788278282.416778,
-    "ast_hash": "4301988a7b6e36687808e0159734bcee",
+    "mtime": 1788303991.1848924,
+    "ast_hash": "fa56d17409a2d8c838524f9a7e9cb106",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DoseUnitControl.test.tsx": {
@@ -2922,6 +2922,41 @@
   "src/features/my-stack/stage/marquee.ts": {
     "mtime": 1788280137.395599,
     "ast_hash": "17af1dfa602f2ae820380c6339f34378",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/tablet/TabletRenderer.tsx": {
+    "mtime": 1788304003.0398064,
+    "ast_hash": "a3820361dcf0b7b91d8453508220890d",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/tablet/TabletVisual.test.ts": {
+    "mtime": 1788303844.025851,
+    "ast_hash": "c704fb97d82b1a80410446943524e801",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/tablet/TabletVisual.tsx": {
+    "mtime": 1788303917.935444,
+    "ast_hash": "07cf9d9ac506c4b65bdf40799c0da91a",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/tablet/tabletShape.test.ts": {
+    "mtime": 1788303811.5243194,
+    "ast_hash": "e98f101e4b4815d7fdd598bd6211c9e9",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/tablet/tabletShape.ts": {
+    "mtime": 1788303824.198403,
+    "ast_hash": "4f0e5ce0de84854992c24d99f6a50e7c",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-09-02-my-stack-tablette-buehnenform.md": {
+    "mtime": 1788303380.9313266,
+    "ast_hash": "613e4941e8097225679fb1c721ff8712",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-02-my-stack-tablette-buehnenform-design.md": {
+    "mtime": 1788303135.7424963,
+    "ast_hash": "5e552b5008e08383ba36d31000eb31db",
     "semantic_hash": ""
   }
 }

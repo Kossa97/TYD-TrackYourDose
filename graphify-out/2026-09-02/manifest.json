@@ -2890,23 +2890,23 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.test.ts": {
-    "mtime": 1788293860.584504,
-    "ast_hash": "9ecfcaab630a61944934e864dc3a6a13",
+    "mtime": 1788302015.8892357,
+    "ast_hash": "77fc38cf37715eb62b5e347dc5e91520",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.tsx": {
-    "mtime": 1788293838.9308274,
-    "ast_hash": "59b6f36e90aedc1d9913833ec0cecbaa",
+    "mtime": 1788301994.3758848,
+    "ast_hash": "c89640cea14cfada5f361512c59d33cc",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/capsuleShape.test.ts": {
-    "mtime": 1788292464.1605625,
-    "ast_hash": "937aaaf83ecfa6d26ce0f1c2770e982b",
+    "mtime": 1788301968.30076,
+    "ast_hash": "28a1138879a97a12f19e3c53a0bb80e1",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/capsuleShape.ts": {
-    "mtime": 1788292464.1595614,
-    "ast_hash": "fcd2cc2fa98dfa792bc6d72ab42aebd8",
+    "mtime": 1788301951.5526147,
+    "ast_hash": "bd4e67bccd23bd2fe3dc2dcea82f3aca",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-09-01-my-stack-kapsel-buehnenform.md": {
