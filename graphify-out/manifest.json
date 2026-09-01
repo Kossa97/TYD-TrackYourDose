@@ -2890,13 +2890,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.test.ts": {
-    "mtime": 1788292507.7366848,
-    "ast_hash": "d78f628168ee6937f0d4c9f88c83e7b4",
+    "mtime": 1788293860.584504,
+    "ast_hash": "9ecfcaab630a61944934e864dc3a6a13",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.tsx": {
-    "mtime": 1788292464.1595614,
-    "ast_hash": "6e2a3462e92dfe709391d9439f9fb271",
+    "mtime": 1788293838.9308274,
+    "ast_hash": "59b6f36e90aedc1d9913833ec0cecbaa",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/capsuleShape.test.ts": {
@@ -2915,8 +2915,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-01-my-stack-kapsel-buehnenform-design.md": {
-    "mtime": 1788275312.2757719,
-    "ast_hash": "d8972cf226062f280947317541f95718",
+    "mtime": 1788293176.145631,
+    "ast_hash": "50c8a8849370f110542c5025d117aa7d",
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/marquee.ts": {

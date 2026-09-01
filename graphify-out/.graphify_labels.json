@@ -41,7 +41,6 @@
   "39": "Live Blood-Level Chart",
   "40": "Peptide Vial Visual",
   "41": "PubMed API Module",
-  "42": "3D Injection Hero",
   "43": "Push Notifications",
   "44": "Peptide Form Modal",
   "45": "Injection Intake Selection",
@@ -88,7 +87,6 @@
   "86": "Layout Test",
   "87": "Peptide Form Test",
   "88": "Dashboard Test",
-  "89": "Home Test",
   "90": "Injection Tracker Test",
   "91": "Peptide Page Test",
   "92": "Tailwind Config",
@@ -306,6 +304,5 @@
   "311": "File Structure",
   "312": "intakeConfirmation.ts",
   "314": "LiquidGraphic.tsx",
-  "315": "i18nMerge.test.ts",
-  "316": "Dashboard.test.ts"
+  "315": "i18nMerge.test.ts"
 }
