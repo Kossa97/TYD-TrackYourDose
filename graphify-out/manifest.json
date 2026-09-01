@@ -975,8 +975,8 @@
     "semantic_hash": "45a38b51cd13eca6ff8eea4e19b5ef7e"
   },
   "src/pages/__VialPreview.tsx": {
-    "mtime": 1787881283.6175902,
-    "ast_hash": "e888485afd177edabc9e2ad667f55375",
+    "mtime": 1788278310.6422682,
+    "ast_hash": "5ff7aa26ba5ff542963e2b08b42b6b13",
     "semantic_hash": ""
   },
   "src/pages/lab/AdminPanel.tsx": {
@@ -2370,13 +2370,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
-    "mtime": 1787880532.449381,
-    "ast_hash": "5a8017bbd8217e037dba9667544e86b0",
+    "mtime": 1788278282.416778,
+    "ast_hash": "d4262a1d808deba28d424f9f335b88a8",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.tsx": {
-    "mtime": 1787880568.949437,
-    "ast_hash": "28b7a94abe0e23f1f246a2c2340b51f8",
+    "mtime": 1788278282.4177816,
+    "ast_hash": "f18541d00542fe7fa0e0a51763fde9be",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.tsx": {
@@ -2435,13 +2435,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.test.ts": {
-    "mtime": 1787880612.0619192,
-    "ast_hash": "0e4d68ea25b8836fbdf319960cd03810",
+    "mtime": 1788278282.418287,
+    "ast_hash": "38c601ef5946dc6b2689eaa3a9286ae3",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.ts": {
-    "mtime": 1787880559.214847,
-    "ast_hash": "9d61a5db2201f838aa1aa05fb00ffa58",
+    "mtime": 1788278282.418287,
+    "ast_hash": "1116bca6b51259b37a18e67588bf4a13",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/duplicateFingerprint.test.ts": {
@@ -2530,8 +2530,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/checklists/my-stack-backup-manifest.md": {
-    "mtime": 1786922962.793774,
-    "ast_hash": "b611ab57f7c6952f94c599f233c511b4",
+    "mtime": 1788265254.4004717,
+    "ast_hash": "ae75a0dc999f7d3344cd5c6c661700d0",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-21-my-stack-foundation.md": {
@@ -2565,8 +2565,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
-    "mtime": 1787880666.1748688,
-    "ast_hash": "ea393aa493f179565d5136f1e85324b9",
+    "mtime": 1788278282.416778,
+    "ast_hash": "4301988a7b6e36687808e0159734bcee",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DoseUnitControl.test.tsx": {
@@ -2882,6 +2882,51 @@
   "docs/superpowers/specs/2026-08-28-my-stack-ampulle-buehnenform-design.md": {
     "mtime": 1787878194.2389796,
     "ast_hash": "561d8520028854dc80c48facb3a57c6d",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/capsule/CapsuleRenderer.tsx": {
+    "mtime": 1788278094.8040147,
+    "ast_hash": "3048198b81c58ae7f1bb5ac99ff458df",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/capsule/CapsuleVisual.test.ts": {
+    "mtime": 1788278416.915749,
+    "ast_hash": "e73c74aafdbf63f08c4394c7ab468cde",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/capsule/CapsuleVisual.tsx": {
+    "mtime": 1788278416.915749,
+    "ast_hash": "106b2471f499c89e6be7813b2b58afd7",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/capsule/capsuleShape.test.ts": {
+    "mtime": 1788277868.867313,
+    "ast_hash": "408ed1a375364294374594da10f988ee",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/capsule/capsuleShape.ts": {
+    "mtime": 1788277898.2039504,
+    "ast_hash": "b947a85d3f3663511c4f84433465d8b5",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/capsule/engraving.test.ts": {
+    "mtime": 1788277921.4810462,
+    "ast_hash": "ec5d49579ea577b1c3016f3750e10633",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/capsule/engraving.ts": {
+    "mtime": 1788277938.7728715,
+    "ast_hash": "b9a65085d433eee588f0c47d9a486245",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-09-01-my-stack-kapsel-buehnenform.md": {
+    "mtime": 1788277045.3474329,
+    "ast_hash": "4419289a372d7fd68f2a0dbf034cecdf",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-01-my-stack-kapsel-buehnenform-design.md": {
+    "mtime": 1788275312.2757719,
+    "ast_hash": "d8972cf226062f280947317541f95718",
     "semantic_hash": ""
   }
 }

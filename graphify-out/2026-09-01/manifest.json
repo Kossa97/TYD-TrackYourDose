@@ -2330,8 +2330,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1787880637.6467712,
-    "ast_hash": "8ea13c774ed845a9b389823c000a83be",
+    "mtime": 1788222178.2213943,
+    "ast_hash": "68f9dfc43e699ec7896172d805289eff",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {

@@ -1,16 +1,16 @@
-# Graph Report - my-stack-foundation  (2026-08-28)
+# Graph Report - my-stack-foundation  (2026-09-01)
 
 ## Corpus Check
-- 537 files · ~619,586 words
+- 537 files · ~619,647 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3380 nodes · 6233 edges · 300 communities (190 shown, 110 thin omitted)
+- 3380 nodes · 6233 edges · 301 communities (191 shown, 110 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 54 edges (avg confidence: 0.69)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ebf6666b`
+- Built from commit: `a49df0f0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -283,6 +283,7 @@
 - [[_COMMUNITY_EscalationRow|EscalationRow]]
 - [[_COMMUNITY_LiveBlutspiegelChart.test.tsx|LiveBlutspiegelChart.test.tsx]]
 - [[_COMMUNITY_CycleBandLayer.tsx|CycleBandLayer.tsx]]
+- [[_COMMUNITY_FotosTab.tsx|FotosTab.tsx]]
 - [[_COMMUNITY_InjectionTrackerTabs.tsx|InjectionTrackerTabs.tsx]]
 - [[_COMMUNITY_stackInventory.ts|stackInventory.ts]]
 - [[_COMMUNITY_vialStock.ts|vialStock.ts]]
@@ -317,7 +318,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (300 total, 110 thin omitted)
+## Communities (301 total, 110 thin omitted)
 
 ### Community 0 - "PDF Protocol Export"
 Cohesion: 0.06
@@ -492,8 +493,8 @@ Cohesion: 0.14
 Nodes (16): Layout(), QUICK_ACTIONS, QUICK_TILES, PushNotificationListener(), PushPayloadMessage, PushPayloadMessage, showPageNotification(), waitForServiceWorkerPush() (+8 more)
 
 ### Community 44 - "Peptide Form Modal"
-Cohesion: 0.12
-Nodes (21): fmtDate(), FotosTab(), Props, todayStr(), ChangeCard(), formatDelta(), formatValue(), Props (+13 more)
+Cohesion: 0.17
+Nodes (11): ChangeCard(), formatDelta(), formatValue(), Props, TopChangesSection(), cardDelta, cardTitle, inputStyle (+3 more)
 
 ### Community 45 - "Injection Intake Selection"
 Cohesion: 0.08
@@ -955,6 +956,10 @@ Nodes (5): formatInjectionPinAge(), getInjectionPinAgeColor(), getInjectionPinAg
 Cohesion: 0.18
 Nodes (10): lerp(), LiveBlutspiegelChart(), PAD, context, currentDash, currentPoints, StrokeRecord, strokes (+2 more)
 
+### Community 294 - "FotosTab.tsx"
+Cohesion: 0.33
+Nodes (10): fmtDate(), FotosTab(), Props, todayStr(), isPhotoGridSize(), PHOTO_GRID_OPTIONS, photoGridColumns(), PhotoGridSize (+2 more)
+
 ### Community 295 - "InjectionTrackerTabs.tsx"
 Cohesion: 0.16
 Nodes (11): InjectionIntroSheet(), InjectionSaveInput, buildInjectionTrackerUrl(), findTargetInjectionIntake(), getOpenInjectionIntakeKey(), INJECTABLE_METHODS, OpenInjectionIntake, isTableMissingError() (+3 more)
@@ -983,9 +988,9 @@ Nodes (4): foundation, migration, rollback, verify
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `useAuth()` connect `Auth & Supabase Client` to `MetricChart.tsx`, `7. Onboarding (24 Schritte)`, `Design System Components`, `Admin Library Panel`, `Health Data Integration`, `Cycle Form & Vials`, `Daily Logs & Effects`, `Home Dashboard`, `Blood-Level Simulation`, `Blood-Level Carousel`, `Theme & Profile Settings`, `InjectionTrackerTabs.tsx`, `3D Injection Hero`, `Push Notifications`, `Peptide Form Modal`, `Onboarding Callout Layout`, `Gradle Build (app)`, `Home Test`, `TodayLogSheet.tsx`, `DesignSystem.tsx`, `Zyklus-Planung versionieren — „gilt ab Änderung" (Design)`?**
+- **Why does `useAuth()` connect `Auth & Supabase Client` to `MetricChart.tsx`, `7. Onboarding (24 Schritte)`, `Design System Components`, `Admin Library Panel`, `Health Data Integration`, `Cycle Form & Vials`, `Daily Logs & Effects`, `Home Dashboard`, `Blood-Level Simulation`, `Blood-Level Carousel`, `Theme & Profile Settings`, `FotosTab.tsx`, `InjectionTrackerTabs.tsx`, `3D Injection Hero`, `Push Notifications`, `Onboarding Callout Layout`, `Gradle Build (app)`, `Home Test`, `TodayLogSheet.tsx`, `DesignSystem.tsx`, `Zyklus-Planung versionieren — „gilt ab Änderung" (Design)`?**
   _High betweenness centrality (0.066) - this node is a cross-community bridge._
-- **Why does `supabase` connect `Auth & Supabase Client` to `MetricChart.tsx`, `PDF Protocol Export`, `7. Onboarding (24 Schritte)`, `Design System Components`, `Admin Library Panel`, `Health Data Integration`, `Cycle Form & Vials`, `Daily Logs & Effects`, `Home Dashboard`, `Blood-Level Simulation`, `Cycle Seed Builder`, `Blood-Level History Curve`, `Blood-Level Carousel`, `Theme & Profile Settings`, `InjectionTrackerTabs.tsx`, `Live Blood-Level Chart`, `Push Notifications`, `Peptide Form Modal`, `Public Profile Page`, `Onboarding Callout Layout`, `Gradle Build (app)`, `TodayLogSheet.tsx`, `DesignSystem.tsx`, `injectionDeepLink.ts`?**
+- **Why does `supabase` connect `Auth & Supabase Client` to `MetricChart.tsx`, `PDF Protocol Export`, `7. Onboarding (24 Schritte)`, `Design System Components`, `Admin Library Panel`, `Health Data Integration`, `Cycle Form & Vials`, `Daily Logs & Effects`, `Home Dashboard`, `Blood-Level Simulation`, `Cycle Seed Builder`, `Blood-Level History Curve`, `Blood-Level Carousel`, `Theme & Profile Settings`, `FotosTab.tsx`, `InjectionTrackerTabs.tsx`, `Live Blood-Level Chart`, `Push Notifications`, `Public Profile Page`, `Onboarding Callout Layout`, `Gradle Build (app)`, `TodayLogSheet.tsx`, `DesignSystem.tsx`, `injectionDeepLink.ts`?**
   _High betweenness centrality (0.063) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `Runtime Dependencies` to `Package Manifest`, `PDF Protocol Export`?**
   _High betweenness centrality (0.038) - this node is a cross-community bridge._
