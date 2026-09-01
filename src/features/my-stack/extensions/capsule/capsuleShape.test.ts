@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { carriesLabel } from '../../stage/types'
 import {
-  CAPSULE_ASPECT, CAPSULE_CAP_PATH, CAPSULE_CAP_INNER_PATH,
-  CAPSULE_SEAM_X, CAPSULE_SHELL_PATH, CAPSULE_SHELL_INNER_PATH, CAPSULE_SPEC,
+  CAPSULE_ASPECT, CAPSULE_CAP_PATH, CAPSULE_CAP_INNER_PATH, CAPSULE_SEAM_X,
+  CAPSULE_SHELL_PATH, CAPSULE_SHELL_INNER_PATH, CAPSULE_SHELL_INNER_PATH_NORMALIZED, CAPSULE_SPEC,
 } from './capsuleShape'
 
 describe('capsuleShape', () => {
@@ -29,6 +29,19 @@ describe('capsuleShape', () => {
     expect(CAPSULE_ASPECT).toBeCloseTo(84 / 240, 3)
     expect(1 / CAPSULE_ASPECT).toBeGreaterThan(2.5)
     expect(1 / CAPSULE_ASPECT).toBeLessThan(3.2)
+  })
+
+  it('beschreibt dieselbe Innenkontur in objektbezogenen Einheiten', () => {
+    // Die HTML-Beschriftung kann nur so beschnitten werden; beide Fassungen
+    // muessen zwingend dieselbe Form meinen.
+    const abs = CAPSULE_SHELL_INNER_PATH.match(/-?\d+(?:\.\d+)?/g)!.map(Number)
+    const rel = CAPSULE_SHELL_INNER_PATH_NORMALIZED.match(/-?\d+(?:\.\d+)?/g)!.map(Number)
+
+    expect(rel).toHaveLength(abs.length)
+    abs.forEach((value, i) => {
+      const expected = i % 2 === 0 ? value / 240 : value / 84
+      expect(rel[i], `Koordinate ${i}`).toBeCloseTo(expected, 4)
+    })
   })
 
   it('hat keine Fluessigkeitskammer und deshalb weder Etikett noch Fuellstand', () => {

@@ -25,6 +25,16 @@ describe('CapsuleVisual', () => {
     expect(render({ size: 'carousel' })).toContain('vector-effect="non-scaling-stroke"')
   })
 
+  it('beschneidet die Beschriftung entlang der Woelbung, nicht an einer geraden Kante', () => {
+    const html = render()
+    const nameClip = html.match(/id="([^"]*-nameClip)"/)?.[1]
+
+    expect(nameClip).toBeTruthy()
+    // objektbezogene Einheiten, damit der Clip mit dem Element skaliert
+    expect(html).toContain('clipPathUnits="objectBoundingBox"')
+    expect(html).toContain(`clip-path:url(#${nameClip})`)
+  })
+
   it('faerbt das Wandband nicht mit ein', () => {
     // Wie bei der Ampulle endet die Farbe an der Innenkontur; der Rahmen bleibt
     // neutrales Material. Ungeclippt faerbt sich die Wand mit.

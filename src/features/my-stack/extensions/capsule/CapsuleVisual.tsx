@@ -3,7 +3,7 @@ import type { Ref } from 'react'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
   CAPSULE_CAP_INNER_PATH, CAPSULE_CAP_PATH,
-  CAPSULE_SHELL_INNER_PATH, CAPSULE_SHELL_PATH,
+  CAPSULE_SHELL_INNER_PATH, CAPSULE_SHELL_INNER_PATH_NORMALIZED, CAPSULE_SHELL_PATH,
 } from './capsuleShape'
 import { StageMarquee } from '../../stage/StageLabel'
 
@@ -112,6 +112,13 @@ export function CapsuleVisual({
           </clipPath>
           <clipPath id={`${uid}-capInnerClip`}>
             <path d={CAPSULE_CAP_INNER_PATH} />
+          </clipPath>
+          {/* Derselbe Innenraum, aber in objektbezogenen Einheiten: nur so kann
+              die HTML-Beschriftung ihn als CSS-Clip benutzen. Ohne ihn schneidet
+              ein Rechteck den Text an einer geraden Kante ab, statt ihn unter
+              der Wölbung verschwinden zu lassen. */}
+          <clipPath id={`${uid}-nameClip`} clipPathUnits="objectBoundingBox">
+            <path d={CAPSULE_SHELL_INNER_PATH_NORMALIZED} />
           </clipPath>
           {/* Kappe und Körper sind unterschiedlich hoch. Ein objektbezogener
               Verlauf würde dieselben Stopps auf verschiedene absolute Höhen
@@ -241,11 +248,18 @@ export function CapsuleVisual({
           Nur das Band fehlt — eine Kapsel ist kein Behälter. */}
       <div
         data-capsule-detail="name"
-        className="pointer-events-none absolute inset-x-[6%] top-1/2 -translate-y-1/2 overflow-hidden text-center"
+        className="pointer-events-none absolute inset-0"
+        style={{ clipPath: `url(#${uid}-nameClip)` }}
       >
-        <StageMarquee className={`${NAME_CLASS[size]} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
-          {engravedName}
-        </StageMarquee>
+        {/* Der Messrahmen fuer den Durchlauf bleibt rechteckig und etwas enger
+            als die Huelle — sonst liefe der Text erst los, wenn er laengst
+            unter der Woelbung steckt. Beschnitten wird trotzdem entlang der
+            Kontur. */}
+        <div className="absolute inset-x-[5%] top-1/2 -translate-y-1/2 overflow-hidden text-center">
+          <StageMarquee className={`${NAME_CLASS[size]} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
+            {engravedName}
+          </StageMarquee>
+        </div>
         <div
           ref={nameSheenRef}
           className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/10 via-white/10 to-black/10"

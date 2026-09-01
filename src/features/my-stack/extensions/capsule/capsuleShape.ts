@@ -13,6 +13,11 @@ export const CAPSULE_SEAM_X = 130
 export const CAPSULE_CAP_PATH = 'M130 4 L42 4 C21 4 4 21 4 42 C4 63 21 80 42 80 L130 80 Z'
 export const CAPSULE_CAP_INNER_PATH = 'M127 7.5 L42 7.5 C23 7.5 7.5 23 7.5 42 C7.5 61 23 76.5 42 76.5 L127 76.5 Z'
 
+// Dieselbe Innenkontur in objektbezogenen Einheiten (0…1 der viewBox). Nur so
+// kann sie auch die HTML-Beschriftung beschneiden — CSS clip-path kennt die
+// viewBox nicht, aber objectBoundingBox skaliert mit dem Element.
+export const CAPSULE_SHELL_INNER_PATH_NORMALIZED = 'M0.18333 0.13690 L0.82500 0.13690 C0.89583 0.13690 0.95208 0.29762 0.95208 0.50000 C0.95208 0.70238 0.89583 0.86310 0.82500 0.86310 L0.18333 0.86310 C0.11250 0.86310 0.04792 0.70238 0.04792 0.50000 C0.04792 0.29762 0.11250 0.13690 0.18333 0.13690 Z'
+
 export const CAPSULE_VIEWBOX = { x: 0, y: 0, width: 240, height: 84 } as const
 // Höhe geteilt durch Breite. Die Kapsel skaliert uniform, nie gestaucht.
 export const CAPSULE_ASPECT = 84 / 240
