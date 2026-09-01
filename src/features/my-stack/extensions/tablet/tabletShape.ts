@@ -20,6 +20,14 @@ export const TABLET_NAME_TOP_PCT = 0.62
 // HTML-Beschriftung beschneiden — CSS clip-path kennt die viewBox nicht.
 export const TABLET_BODY_NORMALIZED = { cx: 0.5, cy: 0.5, r: 0.48 } as const
 
+// Halbe Sehne auf Namenshoehe: so weit reicht der Kreis dort nach aussen.
+// Der Name laeuft bis dorthin, statt an einem pauschalen Rand zu enden — die
+// Kontur schneidet die Enden und formt den Durchlauf.
+const TABLET_NAME_HALF_CHORD = Math.sqrt(
+  TABLET_BODY_NORMALIZED.r ** 2 - (TABLET_NAME_TOP_PCT - TABLET_BODY_NORMALIZED.cy) ** 2,
+)
+export const TABLET_NAME_INSET_PCT = TABLET_BODY_NORMALIZED.cx - TABLET_NAME_HALF_CHORD
+
 export const TABLET_SPEC: StageFormSpec = {
   viewBox: TABLET_VIEWBOX,
   // Kein Innenraum, keine Flüssigkeit: damit kein Etikett und kein Füllstand.

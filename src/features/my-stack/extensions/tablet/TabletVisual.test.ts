@@ -48,6 +48,15 @@ describe('TabletVisual', () => {
     expect(html).toContain('clipPathUnits="objectBoundingBox"')
   })
 
+  it('laesst den Durchlauf bis an die Kreiswand reichen', () => {
+    const html = render()
+    // Sehne auf Namenshoehe statt pauschalem Rand — die Kontur schneidet die
+    // Enden, statt dass der Text an einer geraden Kante ausläuft.
+    expect(html).toContain('left:3.52%')
+    expect(html).toContain('right:3.52%')
+    expect(html).not.toContain('inset-x-[12%]')
+  })
+
   it('beschriftet wie alle anderen Formen', () => {
     const html = render()
     expect(html).toContain('font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]')

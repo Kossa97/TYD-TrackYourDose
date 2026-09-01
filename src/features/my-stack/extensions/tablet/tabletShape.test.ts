@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { carriesLabel } from '../../stage/types'
 import {
-  TABLET_BODY, TABLET_BODY_NORMALIZED, TABLET_NAME_TOP_PCT,
+  TABLET_BODY, TABLET_BODY_NORMALIZED, TABLET_NAME_INSET_PCT, TABLET_NAME_TOP_PCT,
   TABLET_SCORE, TABLET_SPEC, TABLET_VIEWBOX,
 } from './tabletShape'
 
@@ -39,6 +39,19 @@ describe('tabletShape', () => {
     expect(TABLET_BODY_NORMALIZED.cx).toBeCloseTo(TABLET_BODY.cx / TABLET_VIEWBOX.width, 4)
     expect(TABLET_BODY_NORMALIZED.cy).toBeCloseTo(TABLET_BODY.cy / TABLET_VIEWBOX.height, 4)
     expect(TABLET_BODY_NORMALIZED.r).toBeCloseTo(TABLET_BODY.r / TABLET_VIEWBOX.width, 4)
+  })
+
+  it('laesst den Namen bis an die Kreiswand laufen', () => {
+    // Der Einzug ist die Sehne auf Namenshoehe, nicht geraten: der Rand des
+    // Textfensters muss exakt auf dem Kreis liegen.
+    const dx = TABLET_NAME_INSET_PCT - TABLET_BODY_NORMALIZED.cx
+    const dy = TABLET_NAME_TOP_PCT - TABLET_BODY_NORMALIZED.cy
+    expect(Math.hypot(dx, dy)).toBeCloseTo(TABLET_BODY_NORMALIZED.r, 6)
+  })
+
+  it('reicht damit deutlich weiter nach aussen als ein pauschaler Rand', () => {
+    expect(TABLET_NAME_INSET_PCT).toBeLessThan(0.05)
+    expect(TABLET_NAME_INSET_PCT).toBeGreaterThan(0)
   })
 
   it('hat keine Fluessigkeitskammer und deshalb weder Etikett noch Fuellstand', () => {

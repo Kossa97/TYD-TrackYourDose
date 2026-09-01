@@ -3,7 +3,8 @@ import type { Ref } from 'react'
 import { StageMarquee } from '../../stage/StageLabel'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
-  TABLET_BODY, TABLET_BODY_NORMALIZED, TABLET_NAME_TOP_PCT, TABLET_SCORE,
+  TABLET_BODY, TABLET_BODY_NORMALIZED, TABLET_NAME_INSET_PCT, TABLET_NAME_TOP_PCT,
+  TABLET_SCORE,
 } from './tabletShape'
 
 export interface TabletVisualProps {
@@ -194,8 +195,12 @@ export function TabletVisual({
         style={{ clipPath: `url(#${uid}-nameClip)` }}
       >
         <div
-          className="absolute inset-x-[12%] -translate-y-1/2 overflow-hidden text-center"
-          style={{ top: `${TABLET_NAME_TOP_PCT * 100}%` }}
+          className="absolute -translate-y-1/2 overflow-hidden text-center"
+          style={{
+            top: `${TABLET_NAME_TOP_PCT * 100}%`,
+            left: `${(TABLET_NAME_INSET_PCT * 100).toFixed(2)}%`,
+            right: `${(TABLET_NAME_INSET_PCT * 100).toFixed(2)}%`,
+          }}
         >
           <StageMarquee className={`${NAME_CLASS[size]} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
             {tabletName}
