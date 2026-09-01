@@ -73,10 +73,27 @@ describe('CapsuleVisual', () => {
     expect(html).toContain('data-capsule-light-offset="-0.35"')
   })
 
-  it('graviert den Namen in Versalien und kuerzt lange Namen ohne Punkte', () => {
-    expect(render()).toContain('VITAMIN D3')
+  it('graviert in der Etikettschrift statt in einer eigenen', () => {
+    const html = render()
+    expect(html).toContain('Inter')
+    expect(html).toContain('font-weight="900"')
+    expect(html).toContain('Vitamin D3')
+  })
+
+  it('kuerzt lange Namen nicht, sondern laesst sie wie beim Etikett durchlaufen', () => {
     const long = render({ name: 'Acetyl-L-Carnitin Hydrochlorid Komplex' })
-    expect(long).toContain('ACETYL-L-CARNITIN')
+    // vollstaendig im Markup, nur optisch vom Sichtfenster beschnitten
+    expect(long).toContain('Acetyl-L-Carnitin Hydrochlorid Komplex')
     expect(long).not.toContain('…')
+    expect(long).toContain('engravingWindow')
+  })
+
+  it('faellt bei leerem Namen auf eine Bezeichnung zurueck', () => {
+    expect(render({ name: '   ' })).toContain('Kapsel')
+  })
+
+  it('teilt die Marquee-Bewegung mit dem Etikett', () => {
+    const source = readFileSync(new URL('./CapsuleVisual.tsx', import.meta.url), 'utf8')
+    expect(source).toContain('buildMarqueeMotion')
   })
 })

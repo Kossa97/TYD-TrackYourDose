@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { CSSProperties, HTMLAttributes, ReactNode, RefObject } from 'react'
+import { buildMarqueeMotion, MARQUEE_MIN_OVERFLOW } from './marquee'
 
 // The scrolling name band. It only animates when the text really overflows —
 // measured, never guessed from the name length — so short names stay still.
@@ -27,24 +28,10 @@ function StageLabelMarquee({
       if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
 
       const overflow = inner.scrollWidth - wrap.clientWidth
-      if (overflow <= 4) return
+      if (overflow <= MARQUEE_MIN_OVERFLOW) return
 
-      const holdStart = 2200
-      const holdEnd = 1200
-      const moveOut = Math.max(1800, overflow * 35)
-      const moveBack = Math.max(700, overflow * 14)
-      const total = holdStart + moveOut + holdEnd + moveBack
-
-      anim = inner.animate(
-        [
-          { transform: 'translateX(0)', offset: 0 },
-          { transform: 'translateX(0)', offset: holdStart / total },
-          { transform: `translateX(-${overflow}px)`, offset: (holdStart + moveOut) / total },
-          { transform: `translateX(-${overflow}px)`, offset: (holdStart + moveOut + holdEnd) / total },
-          { transform: 'translateX(0)', offset: 1 },
-        ],
-        { duration: total, iterations: Infinity, easing: 'linear' },
-      )
+      const motion = buildMarqueeMotion(overflow)
+      anim = inner.animate(motion.keyframes, motion.options)
     }
 
     setup()

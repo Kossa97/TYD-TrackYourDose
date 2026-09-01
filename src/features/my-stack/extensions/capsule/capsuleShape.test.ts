@@ -42,4 +42,10 @@ describe('capsuleShape', () => {
     expect(CAPSULE_ENGRAVING.baselineY).toBeGreaterThan(42)
     expect(CAPSULE_ENGRAVING.baselineY).toBeLessThan(56)
   })
+
+  it('graviert in der Etikettschrift, damit alle Formen gleich beschriftet sind', () => {
+    expect(CAPSULE_ENGRAVING.fontFamily).toContain('Inter')
+    expect(CAPSULE_ENGRAVING.fontWeight).toBe(900)
+    expect(CAPSULE_ENGRAVING.windowWidth).toBeLessThan(240)
+  })
 })

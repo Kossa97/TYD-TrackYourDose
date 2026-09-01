@@ -1,11 +1,11 @@
-import { useCallback, useId, useRef } from 'react'
+import { useCallback, useEffect, useId, useRef } from 'react'
 import type { Ref } from 'react'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
   CAPSULE_CAP_INNER_PATH, CAPSULE_CAP_PATH, CAPSULE_ENGRAVING,
   CAPSULE_SHELL_INNER_PATH, CAPSULE_SHELL_PATH,
 } from './capsuleShape'
-import { fitEngraving } from './engraving'
+import { buildMarqueeMotion, MARQUEE_MIN_OVERFLOW } from '../../stage/marquee'
 
 export interface CapsuleVisualProps {
   name?: string | null
@@ -46,13 +46,14 @@ export function CapsuleVisual({
   const uid = useId()
   const visualFocus = focus === undefined ? (isActive ? 1 : 0.28) : clamp01(focus)
   const visualLightOffset = clampOffset(lightOffset)
-  const engraving = fitEngraving(name ?? '')
+  const engravedName = name?.trim() || 'Kapsel'
 
   const rootRef = useRef<HTMLDivElement | null>(null)
   const shadowRef = useRef<SVGEllipseElement | null>(null)
   const sweepRef = useRef<SVGRectElement | null>(null)
   const glossRef = useRef<SVGPathElement | null>(null)
   const shellRef = useRef<SVGUseElement | null>(null)
+  const engravingRef = useRef<SVGGElement | null>(null)
 
   const applyStageLight = useCallback((f: number, o: number) => {
     rootRef.current?.setAttribute('data-capsule-focus', f.toFixed(2))
@@ -67,14 +68,30 @@ export function CapsuleVisual({
 
   useStageLight(applyStageLight, { focus: visualFocus, lightOffset: visualLightOffset }, stageLightRef)
 
+  // Zu lange Namen laufen durch statt zu schrumpfen — derselbe Durchlauf wie
+  // auf dem Etikett von Vial und Ampulle. Gemessen wird die Glyphenbreite,
+  // nicht ein Layout, deshalb getBBox statt scrollWidth.
+  useEffect(() => {
+    const group = engravingRef.current
+    if (!group || typeof window === 'undefined') return
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+
+    group.style.transform = 'translateX(0)'
+    const overflow = group.getBBox().width - CAPSULE_ENGRAVING.windowWidth
+    if (overflow <= MARQUEE_MIN_OVERFLOW) return
+
+    const motion = buildMarqueeMotion(overflow)
+    const anim = group.animate(motion.keyframes, motion.options)
+    return () => anim.cancel()
+  }, [engravedName])
+
   const engravingProps = {
     x: CAPSULE_ENGRAVING.centerX,
     y: CAPSULE_ENGRAVING.baselineY,
     textAnchor: 'middle' as const,
-    fontFamily: "'Arial Narrow','Helvetica Neue',system-ui,sans-serif",
-    fontSize: engraving.fontSize,
-    fontWeight: 500,
-    letterSpacing: CAPSULE_ENGRAVING.letterSpacing,
+    fontFamily: CAPSULE_ENGRAVING.fontFamily,
+    fontSize: CAPSULE_ENGRAVING.fontSize,
+    fontWeight: CAPSULE_ENGRAVING.fontWeight,
   }
 
   return (
@@ -84,7 +101,7 @@ export function CapsuleVisual({
       className={`relative mx-auto select-none ${SIZE_CLASS[size]} ${className}`}
       data-capsule-focus={Number(visualFocus.toFixed(2))}
       data-capsule-light-offset={Number(visualLightOffset.toFixed(2))}
-      aria-label={engraving.text}
+      aria-label={engravedName}
     >
       <svg
         className="absolute inset-0 h-full w-full overflow-visible"
@@ -97,6 +114,14 @@ export function CapsuleVisual({
           <path id={`${uid}-cap`} d={CAPSULE_CAP_PATH} />
           <clipPath id={`${uid}-shellClip`}>
             <use href={`#${uid}-shell`} />
+          </clipPath>
+          <clipPath id={`${uid}-engravingWindow`}>
+            <rect
+              x={CAPSULE_ENGRAVING.centerX - CAPSULE_ENGRAVING.windowWidth / 2}
+              y="20"
+              width={CAPSULE_ENGRAVING.windowWidth}
+              height="44"
+            />
           </clipPath>
           {/* Kappe und Körper sind unterschiedlich hoch. Ein objektbezogener
               Verlauf würde dieselben Stopps auf verschiedene absolute Höhen
@@ -213,14 +238,17 @@ export function CapsuleVisual({
         />
 
         {/* Konturgravur: nur die beiden Rillenkanten, kein Füllton. Das
-            Buchstabeninnere zeigt die Hülle selbst. */}
-        <g data-capsule-detail="engraving" fill="none">
-          <text {...engravingProps} stroke="rgba(0,0,0,0.55)" strokeWidth="0.55" transform="translate(0.35 0.45)">
-            {engraving.text}
-          </text>
-          <text {...engravingProps} stroke="rgba(255,255,255,0.42)" strokeWidth="0.5" transform="translate(-0.3 -0.4)">
-            {engraving.text}
-          </text>
+            Buchstabeninnere zeigt die Hülle selbst. Das Sichtfenster begrenzt
+            den Schriftzug; alles darüber läuft durch. */}
+        <g clipPath={`url(#${uid}-engravingWindow)`}>
+          <g ref={engravingRef} data-capsule-detail="engraving" fill="none">
+            <text {...engravingProps} stroke="rgba(0,0,0,0.55)" strokeWidth="0.55" transform="translate(0.35 0.45)">
+              {engravedName}
+            </text>
+            <text {...engravingProps} stroke="rgba(255,255,255,0.42)" strokeWidth="0.5" transform="translate(-0.3 -0.4)">
+              {engravedName}
+            </text>
+          </g>
         </g>
       </svg>
     </div>

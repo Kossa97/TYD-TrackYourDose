@@ -17,14 +17,17 @@ export const CAPSULE_VIEWBOX = { x: 0, y: 0, width: 240, height: 84 } as const
 // Höhe geteilt durch Breite. Die Kapsel skaliert uniform, nie gestaucht.
 export const CAPSULE_ASPECT = 84 / 240
 
+// Die Gravur trägt dieselbe Schrift wie die Etiketten auf Vial und Ampulle —
+// Inter in 900, normaler Buchstabenabstand. Zu lange Namen laufen durch, statt
+// zu schrumpfen oder abgeschnitten zu werden: derselbe Durchlauf wie dort.
 export const CAPSULE_ENGRAVING = {
   centerX: 120,
   baselineY: 48.5,
-  // Nutzbare Breite für den Schriftzug in viewBox-Einheiten.
-  maxWidth: 150,
-  maxFontSize: 15,
-  minFontSize: 11,
-  letterSpacing: 2.6,
+  // Sichtfenster für den Schriftzug in viewBox-Einheiten.
+  windowWidth: 150,
+  fontSize: 16,
+  fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif",
+  fontWeight: 900,
 } as const
 
 export const CAPSULE_SPEC: StageFormSpec = {
