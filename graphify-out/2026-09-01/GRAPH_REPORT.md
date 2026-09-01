@@ -1,7 +1,7 @@
 # Graph Report - my-stack-foundation  (2026-09-01)
 
 ## Corpus Check
-- 545 files · ~626,665 words
+- 545 files · ~626,919 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5a183bc7`
+- Built from commit: `a02a2c67`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -349,7 +349,7 @@ Nodes (77): jspdf, Props, ProtocolPdfModal(), T, UILang, CycleRow, embedName(), 
 
 ### Community 1 - "Peptipedia Article Cards"
 Cohesion: 0.17
-Nodes (11): ALL_PEPTIDES, FilterSheet(), FilterSheetProps, DEFAULT_FILTER_STATE, FilterState, SortMode, StudyTypeFilter, YearFilter (+3 more)
+Nodes (12): ALL_PEPTIDES, FilterSheet(), FilterSheetProps, DEFAULT_FILTER_STATE, FilterState, SortMode, StudyTypeFilter, YearFilter (+4 more)
 
 ### Community 2 - "FAQ i18n Content"
 Cohesion: 0.13
@@ -468,8 +468,8 @@ Cohesion: 0.10
 Nodes (24): FREQUENCIES, IntakePlanEditor(), IntakePlanEditorProps, METHODS, numericValue(), quantityLabel(), ROUTINE_GROUPS, TABLET_FRACTIONS (+16 more)
 
 ### Community 32 - "Bloodwork Form"
-Cohesion: 0.11
-Nodes (19): ChartSettingsButton(), Props, JumpToNowButton(), Props, ChartBodyProps, clipLineDataToWindow(), fmtDate(), interpolateLinePoint() (+11 more)
+Cohesion: 0.12
+Nodes (18): ChartSettingsButton(), Props, JumpToNowButton(), Props, ChartBodyProps, clipLineDataToWindow(), fmtDate(), interpolateLinePoint() (+10 more)
 
 ### Community 33 - "TS Node Config"
 Cohesion: 0.11
@@ -548,8 +548,8 @@ Cohesion: 0.17
 Nodes (23): AuffaelligeWerte(), Props, BefundListe(), isAuffaellig(), Layout, loadLayout(), werteLabel(), MarkerDetail() (+15 more)
 
 ### Community 55 - "Workflow Banner"
-Cohesion: 0.21
-Nodes (20): BandWithStart, buildSnapAnchors(), buildTooltipSnapDates(), cycleStartsOnDate(), dateToTs(), hoverDateIso(), metricValueAtDate(), nearestSnapHoverDate() (+12 more)
+Cohesion: 0.20
+Nodes (22): BandWithStart, buildSnapAnchors(), buildTooltipSnapDates(), cycleStartsAtHover(), cycleStartsOnDate(), dateToTs(), hoverDateIso(), metricValueAtDate() (+14 more)
 
 ### Community 56 - "Package Manifest"
 Cohesion: 0.29
@@ -744,8 +744,8 @@ Cohesion: 0.20
 Nodes (9): Bekannter Fremd-Bug (nicht Teil dieses Plans), File Structure, Fortschritt-Chart: 30T/3M-Fenster mit Pan — Implementation Plan, Task 1: Fenster-Definitionen (`chartWindow.ts`), Task 2: UI-Bausteine (Umschalter + Jetzt-Button), Task 3: Die Geste (`useChartPan`), Task 4: `MetricChart` auf Pan umbauen, Task 5: `VerlaufSection` verdrahten und Waisen entfernen (+1 more)
 
 ### Community 123 - "PubMedArticle"
-Cohesion: 0.24
-Nodes (7): LabStatsProps, ChartEntry, PubMedArticle, ResearchSnapshot(), ResearchSnapshotProps, SnapshotCardProps, StudyFeedProps
+Cohesion: 0.27
+Nodes (6): LabStatsProps, ChartEntry, PubMedArticle, ResearchSnapshot(), ResearchSnapshotProps, SnapshotCardProps
 
 ### Community 124 - "graphify reference: extra exports and benchmark"
 Cohesion: 0.22
@@ -964,8 +964,8 @@ Cohesion: 0.12
 Nodes (16): Anlegeablauf, Begriffe, Datenmodell und Persistenz, Dosisänderungen und Titration, Fehler- und Leerzustände, Mit Menge, My Stack: Tracking-Tiefe, Routinen und Dosierungsverlauf, Nicht Bestandteil dieses Teilprojekts (+8 more)
 
 ### Community 288 - "BloodworkEntry"
-Cohesion: 0.24
-Nodes (11): bandLayout(), CycleBandLayer, isStartHighlighted(), Props, cycleStartsAtHover(), cycleStartsNearCursor(), assignLanes(), computeCycleBandLayout() (+3 more)
+Cohesion: 0.26
+Nodes (10): bandLayout(), CycleBandLayer, isStartHighlighted(), Props, cycleStartsNearCursor(), assignLanes(), computeCycleBandLayout(), intervalsOverlap() (+2 more)
 
 ### Community 290 - "File and Responsibility Map"
 Cohesion: 0.13

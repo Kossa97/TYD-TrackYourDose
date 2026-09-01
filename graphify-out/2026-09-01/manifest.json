@@ -2890,13 +2890,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.test.ts": {
-    "mtime": 1788280216.3170395,
-    "ast_hash": "f0aec373879ba9012046b0b632a133d1",
+    "mtime": 1788290788.5983913,
+    "ast_hash": "b213e0f67b7d3cdaea2d56b47b4fea08",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.tsx": {
-    "mtime": 1788280194.0429265,
-    "ast_hash": "15142158305e075467d6adc29952ee58",
+    "mtime": 1788290788.5380397,
+    "ast_hash": "3e552a7bb31cc10108ad64a701ba584a",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/capsuleShape.test.ts": {
@@ -2905,8 +2905,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/capsuleShape.ts": {
-    "mtime": 1788280169.0443826,
-    "ast_hash": "5bf5e04e893e600466e35c5901866591",
+    "mtime": 1788280648.9016652,
+    "ast_hash": "ec3cdadb6c1208f534a2651bc2913ef9",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-09-01-my-stack-kapsel-buehnenform.md": {

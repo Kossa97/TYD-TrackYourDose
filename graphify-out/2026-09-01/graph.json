@@ -8773,7 +8773,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_usesreducedmetricpoints",
-      "community": 32,
+      "community": 55,
       "norm_label": "usesreducedmetricpoints()"
     },
     {
@@ -8913,7 +8913,7 @@
       "source_location": "L212",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_charttooltip_cyclestartsathover",
-      "community": 288,
+      "community": 55,
       "norm_label": "cyclestartsathover()"
     },
     {
@@ -12670,7 +12670,7 @@
       "label": "CAPSULE_SPEC",
       "file_type": "code",
       "source_file": "src/features/my-stack/extensions/capsule/capsuleShape.ts",
-      "source_location": "L33",
+      "source_location": "L34",
       "_origin": "ast",
       "id": "src_features_my_stack_extensions_capsule_capsuleshape_capsule_spec",
       "community": 88,
@@ -23253,7 +23253,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_pages_lab_studyfeed_studyfeedprops",
-      "community": 123,
+      "community": 1,
       "norm_label": "studyfeedprops"
     },
     {
@@ -33417,7 +33417,7 @@
       "contributor": null,
       "community": 169,
       "norm_label": "graphify skill trigger (/graphify)",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
     },
     {
       "label": "graphify pipeline (SKILL.md)",
@@ -67954,7 +67954,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/extensions/capsule/CapsuleVisual.tsx",
-      "source_location": "L83",
+      "source_location": "L88",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_capsule_capsulevisual_capsulevisual",
       "target": "src_features_my_stack_stage_marquee_buildmarqueemotion"
@@ -67965,7 +67965,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/extensions/capsule/CapsuleVisual.tsx",
-      "source_location": "L69",
+      "source_location": "L74",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_capsule_capsulevisual_capsulevisual",
       "target": "src_features_my_stack_stage_usestagelight_usestagelight"
@@ -68050,7 +68050,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/capsule/capsuleShape.ts",
-      "source_location": "L33",
+      "source_location": "L34",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_capsule_capsuleshape",
       "target": "src_features_my_stack_extensions_capsule_capsuleshape_capsule_spec",
@@ -101243,5 +101243,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "5a183bc789272c1af4f76c095db9e8e09d20f0a4"
+  "built_at_commit": "a02a2c671126a5be28196643800e8234cdf264c9"
 }

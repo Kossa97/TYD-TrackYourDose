@@ -2370,8 +2370,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
-    "mtime": 1788280265.2477853,
-    "ast_hash": "a563d692e691df6f5b7cac5e8f46b7bf",
+    "mtime": 1788292547.8198328,
+    "ast_hash": "20a531f42bb7f3a30c3ad4db62168c38",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.tsx": {
@@ -2830,8 +2830,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/StageLabel.tsx": {
-    "mtime": 1788280149.2556758,
-    "ast_hash": "27a97c058744af1db01ac8fba38e5bea",
+    "mtime": 1788292411.3984513,
+    "ast_hash": "4c95bef86b20868e8b22200417ad174b",
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/liquidGeometry.test.ts": {
@@ -2890,23 +2890,23 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.test.ts": {
-    "mtime": 1788290788.5983913,
-    "ast_hash": "b213e0f67b7d3cdaea2d56b47b4fea08",
+    "mtime": 1788292507.7366848,
+    "ast_hash": "d78f628168ee6937f0d4c9f88c83e7b4",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.tsx": {
-    "mtime": 1788290788.5380397,
-    "ast_hash": "3e552a7bb31cc10108ad64a701ba584a",
+    "mtime": 1788292464.1595614,
+    "ast_hash": "6e2a3462e92dfe709391d9439f9fb271",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/capsuleShape.test.ts": {
-    "mtime": 1788280169.0968945,
-    "ast_hash": "29ebd2e27085733b2a7b5af884156163",
+    "mtime": 1788292464.1605625,
+    "ast_hash": "937aaaf83ecfa6d26ce0f1c2770e982b",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/capsuleShape.ts": {
-    "mtime": 1788280648.9016652,
-    "ast_hash": "ec3cdadb6c1208f534a2651bc2913ef9",
+    "mtime": 1788292464.1595614,
+    "ast_hash": "fcd2cc2fa98dfa792bc6d72ab42aebd8",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-09-01-my-stack-kapsel-buehnenform.md": {
