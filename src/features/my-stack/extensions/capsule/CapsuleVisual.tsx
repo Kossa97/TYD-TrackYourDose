@@ -104,6 +104,15 @@ export function CapsuleVisual({
           <clipPath id={`${uid}-shellClip`}>
             <use href={`#${uid}-shell`} />
           </clipPath>
+          {/* Die Toenung endet an der Innenkontur, damit das Wandband neutrales
+              Material bleibt — wie bei der Ampulle, wo die Fluessigkeit ebenso
+              innen geclippt ist. Sonst faerbt sich der Rahmen mit ein. */}
+          <clipPath id={`${uid}-shellInnerClip`}>
+            <path d={CAPSULE_SHELL_INNER_PATH} />
+          </clipPath>
+          <clipPath id={`${uid}-capInnerClip`}>
+            <path d={CAPSULE_CAP_INNER_PATH} />
+          </clipPath>
           {/* Kappe und Körper sind unterschiedlich hoch. Ein objektbezogener
               Verlauf würde dieselben Stopps auf verschiedene absolute Höhen
               legen und an der Naht sichtbar springen. */}
@@ -145,7 +154,9 @@ export function CapsuleVisual({
           opacity={0.28 + visualFocus * 0.3}
         />
 
-        <use href={`#${uid}-shell`} fill={`url(#${uid}-tint)`} />
+        <g clipPath={`url(#${uid}-shellInnerClip)`}>
+          <use href={`#${uid}-shell`} fill={`url(#${uid}-tint)`} />
+        </g>
         <use
           ref={shellRef}
           data-capsule-detail="shell"
@@ -157,7 +168,9 @@ export function CapsuleVisual({
           vectorEffect="non-scaling-stroke"
         />
 
-        <use href={`#${uid}-cap`} fill={`url(#${uid}-tint)`} opacity="0.55" />
+        <g clipPath={`url(#${uid}-capInnerClip)`}>
+          <use href={`#${uid}-cap`} fill={`url(#${uid}-tint)`} opacity="0.55" />
+        </g>
         <use
           data-capsule-detail="cap"
           href={`#${uid}-cap`}

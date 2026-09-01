@@ -25,6 +25,19 @@ describe('CapsuleVisual', () => {
     expect(render({ size: 'carousel' })).toContain('vector-effect="non-scaling-stroke"')
   })
 
+  it('faerbt das Wandband nicht mit ein', () => {
+    // Wie bei der Ampulle endet die Farbe an der Innenkontur; der Rahmen bleibt
+    // neutrales Material. Ungeclippt faerbt sich die Wand mit.
+    const html = render()
+    const innerClip = html.match(/id="([^"]*-shellInnerClip)"/)?.[1]
+    const capClip = html.match(/id="([^"]*-capInnerClip)"/)?.[1]
+
+    expect(innerClip).toBeTruthy()
+    expect(capClip).toBeTruthy()
+    expect(html).toContain(`clip-path="url(#${innerClip})"`)
+    expect(html).toContain(`clip-path="url(#${capClip})"`)
+  })
+
   it('zieht die doppelte Wand so kraeftig wie die Ampulle', () => {
     // dieselben Werte wie in AmpouleVisual, damit die Wandstaerke ueberall
     // gleich stark liest — neutral, nie in der Eintragsfarbe
