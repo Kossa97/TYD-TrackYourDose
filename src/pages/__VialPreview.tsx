@@ -3,6 +3,7 @@ import type { PointerEvent as ReactPointerEvent, UIEvent, WheelEvent as ReactWhe
 import { PeptideVialVisual } from '../components/PeptideVialVisual'
 import { AmpouleVisual } from '../features/my-stack/extensions/ampoule/AmpouleVisual'
 import { CapsuleVisual } from '../features/my-stack/extensions/capsule/CapsuleVisual'
+import { TabletVisual } from '../features/my-stack/extensions/tablet/TabletVisual'
 import { SloshProvider, useSloshEngine } from '../components/SloshContext'
 
 const PREVIEW_VIALS = [
@@ -27,9 +28,16 @@ const PREVIEW_CAPSULES = [
   { name: 'Omega 3 Fischoel Konzentrat hochdosiert', color: '#38bdf8' },
 ]
 
+const PREVIEW_TABLETS = [
+  { name: 'Ibuprofen', color: '#d9c39a' },
+  { name: 'Aspirin', color: '#e2e8f0' },
+  // bewusst zu lang: zeigt den Durchlauf auf engem Raum
+  { name: 'Acetylsalicylsäure 500', color: '#fca5a5' },
+]
+
 // Mixed forms in one row, the way My Stack will show them.
 type MixedEntry = {
-  kind: 'ampoule' | 'vial' | 'capsule'
+  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet'
   name: string
   amount: number | null
   unit: string | null
@@ -50,6 +58,9 @@ const MIXED_CAROUSEL: MixedEntry[] = [
   { kind: 'capsule', name: 'Vitamin D3', amount: 5000, unit: 'IU', color: '#f0b357' },
   { kind: 'capsule', name: 'Magnesiumcitrat', amount: 400, unit: 'mg', color: '#a3e635' },
   { kind: 'capsule', name: 'Omega 3 Fischoel Konzentrat', amount: 1000, unit: 'mg', color: '#38bdf8' },
+  { kind: 'tablet', name: 'Ibuprofen', amount: 400, unit: 'mg', color: '#d9c39a' },
+  { kind: 'tablet', name: 'Aspirin', amount: 500, unit: 'mg', color: '#e2e8f0' },
+  { kind: 'tablet', name: 'Acetylsalicylsäure 500', amount: 500, unit: 'mg', color: '#fca5a5' },
 ]
 
 export function VialPreview() {
@@ -201,6 +212,15 @@ export function VialPreview() {
         ))}
       </div>
 
+      <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
+        Tabletten — Bruchrille in Detailgröße
+      </p>
+      <div className="mx-auto flex max-w-4xl flex-wrap items-end justify-center gap-10 pb-2">
+        {PREVIEW_TABLETS.map(t => (
+          <TabletVisual key={t.name} name={t.name} color={t.color} size="large" />
+        ))}
+      </div>
+
       {/* The real thing: a mixed carousel narrow enough to actually swipe.
           Ampoules and vials share one ground line and one slosh engine. */}
       <p className="mx-auto max-w-sm pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
@@ -221,7 +241,14 @@ export function VialPreview() {
         >
           {MIXED_CAROUSEL.map((entry, index) => (
             <div key={`${entry.kind}-${entry.name}`} className={`shrink-0 ${isDragging ? '' : 'snap-center'}`}>
-              {entry.kind === 'capsule' ? (
+              {entry.kind === 'tablet' ? (
+                <TabletVisual
+                  name={entry.name}
+                  color={entry.color}
+                  size="carousel"
+                  isActive={index === activeIndex}
+                />
+              ) : entry.kind === 'capsule' ? (
                 <CapsuleVisual
                   name={entry.name}
                   color={entry.color}
