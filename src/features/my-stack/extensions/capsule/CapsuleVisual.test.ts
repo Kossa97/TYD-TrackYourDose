@@ -50,7 +50,7 @@ describe('CapsuleVisual', () => {
 
   it('waechst am sm-Breakpoint nicht mit, schrumpft aber mit einem engen Slot', () => {
     const html = render({ size: 'carousel' })
-    expect(html).toContain('w-full max-w-[92px]')
+    expect(html).toContain('w-[92px] max-w-full')
     expect(html).not.toContain('sm:')
   })
 

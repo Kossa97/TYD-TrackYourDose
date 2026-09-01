@@ -26,7 +26,9 @@ const clampOffset = (v: number) => (Number.isFinite(v) ? Math.max(-1, Math.min(1
 // immer dem Seitenverhältnis, nie einer festen Zahl.
 const SIZE_CLASS: Record<NonNullable<CapsuleVisualProps['size']>, string> = {
   large: 'w-[240px] aspect-[240/84]',
-  carousel: 'w-full max-w-[92px] aspect-[240/84]',
+  // Feste Breite, aber nie breiter als der Slot: w-full allein waere in
+  // einem inhaltsbestimmten Flex-Container null Pixel breit.
+  carousel: 'w-[92px] max-w-full aspect-[240/84]',
   compact: 'w-[140px] aspect-[240/84]',
   mini: 'w-[60px] aspect-[240/84]',
 }
