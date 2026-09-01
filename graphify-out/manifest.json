@@ -2890,13 +2890,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.test.ts": {
-    "mtime": 1788280699.3862777,
-    "ast_hash": "9659d8ac083e4f54aad4d0628b8fb330",
+    "mtime": 1788290788.5983913,
+    "ast_hash": "b213e0f67b7d3cdaea2d56b47b4fea08",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.tsx": {
-    "mtime": 1788280675.058475,
-    "ast_hash": "dfc20c33d1206232d0371f959a251d4a",
+    "mtime": 1788290788.5380397,
+    "ast_hash": "3e552a7bb31cc10108ad64a701ba584a",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/capsuleShape.test.ts": {
