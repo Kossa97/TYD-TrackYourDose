@@ -698,13 +698,25 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     if (data) setEscalations(data as Escalation[])
   }
   useEffect(() => {
+    // Leaving the page before the queries settle, or within the loader's fade,
+    // must not write state into an unmounted component: the fade timer would
+    // otherwise still fire half a second later.
+    let cancelled = false
+    let fadeTimer: number | undefined
+
     Promise.all([loadInventory(), loadPeptides(), loadCycles(), loadEscalations(), searchSubstanceCatalog(supabase as never, '').then(result => { setCatalogEntries(current => mergeCatalogEntries(current, result.entries)); setCatalogUnavailable(result.unavailable) })])
       .finally(() => {
+        if (cancelled) return
         setLoading(false)
         // Fade out the full-screen loader, then unmount it (same as The Lab).
         setLoaderFading(true)
-        setTimeout(() => setInitialLoad(false), 500)
+        fadeTimer = window.setTimeout(() => setInitialLoad(false), 500)
       })
+
+    return () => {
+      cancelled = true
+      if (fadeTimer !== undefined) window.clearTimeout(fadeTimer)
+    }
   }, [])
 
 
