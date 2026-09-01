@@ -36,18 +36,18 @@ const vialItem: StackItem = {
   }],
 }
 
-const capsuleItem: StackItem = {
+const tabletItem: StackItem = {
   ...vialItem,
-  id: 'vitamin-d3-capsule',
+  id: 'vitamin-d3-tablet',
   display_name: 'Vitamin D3',
   category: 'vitamin',
-  dosage_form: 'capsule',
+  dosage_form: 'tablet',
   ingredients: [{
     ...vialItem.ingredients[0],
     custom_name: 'Vitamin D3',
     amount_value: 5_000,
     amount_unit: 'IU',
-    basis_unit: 'capsule',
+    basis_unit: 'tablet',
   }],
 }
 
@@ -58,11 +58,11 @@ function renderStage(item: StackItem): string {
 describe('StackStage', () => {
   it('rendert das bestehende Vial nur für freigeschaltete Vial-Einträge', () => {
     expect(renderStage(vialItem)).toContain('data-stack-renderer="vial"')
-    expect(renderStage(capsuleItem)).toContain('data-stack-renderer="unsupported"')
+    expect(renderStage(tabletItem)).toContain('data-stack-renderer="unsupported"')
   })
 
   it('behält nicht freigeschaltete Formen in einer textuellen Darstellung', () => {
-    const html = renderStage(capsuleItem)
+    const html = renderStage(tabletItem)
     const source = readFileSync(new URL('./StackStage.tsx', import.meta.url), 'utf8')
 
     expect(html).toContain('Vitamin D3')
@@ -116,7 +116,7 @@ describe('StackStage — Ampulle', () => {
   })
 
   it('lässt Formen ohne eigene Grafik weiterhin im Textzustand', () => {
-    expect(renderStage(capsuleItem)).toContain('data-stack-renderer="unsupported"')
+    expect(renderStage(tabletItem)).toContain('data-stack-renderer="unsupported"')
   })
 
   it('hält den Ampullen-Adapter frei von eigener Grafik', () => {
@@ -131,6 +131,45 @@ describe('StackStage — Ampulle', () => {
   it('reicht keinen Füllstand an die Ampulle durch', () => {
     const source = readFileSync(new URL('../extensions/ampoule/AmpouleRenderer.tsx', import.meta.url), 'utf8')
 
+    expect(source).not.toContain('fillPct')
+  })
+})
+
+const capsuleItem: StackItem = {
+  ...vialItem,
+  id: 'vitamin-d3-capsule',
+  display_name: 'Vitamin D3',
+  category: 'vitamin',
+  dosage_form: 'capsule',
+  color_hex: '#f0b357',
+  ingredients: [{
+    ...vialItem.ingredients[0],
+    custom_name: 'Vitamin D3',
+    amount_value: 5_000,
+    amount_unit: 'IU',
+    basis_unit: 'capsule',
+  }],
+}
+
+describe('StackStage — Kapsel', () => {
+  it('rendert die Kapsel für Kapsel-Einträge', () => {
+    expect(renderStage(capsuleItem)).toContain('data-stack-renderer="capsule"')
+  })
+
+  it('graviert den Namen auf die Hülle statt ein Etikett zu tragen', () => {
+    const html = renderStage(capsuleItem)
+
+    expect(html).toContain('VITAMIN D3')
+    expect(html).toContain('data-capsule-detail="engraving"')
+    expect(html).not.toContain('data-vial-detail="label-glass-wrap"')
+  })
+
+  it('hält den Kapsel-Adapter frei von eigener Grafik und von Physik', () => {
+    const source = readFileSync(new URL('../extensions/capsule/CapsuleRenderer.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('CapsuleVisual')
+    expect(source).not.toContain('<svg')
+    expect(source).not.toContain('SloshProvider')
     expect(source).not.toContain('fillPct')
   })
 })

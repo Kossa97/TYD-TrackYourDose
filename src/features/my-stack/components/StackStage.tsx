@@ -5,6 +5,7 @@ import type { StackItem } from '../types'
 import { getDosageForm } from '../lib/dosageForms'
 import type { StageLightHandle } from '../stage/useStageLight'
 import { AmpouleRenderer } from '../extensions/ampoule/AmpouleRenderer'
+import { CapsuleRenderer } from '../extensions/capsule/CapsuleRenderer'
 import { VialRenderer } from '../extensions/peptide/VialRenderer'
 
 // What every stage form understands. Anything beyond this — a fill level, a
@@ -24,16 +25,21 @@ export interface StackStageProps {
   fillPct?: number
 }
 
-export function StackStage({ item, fillPct, animateOnMount, ...visualProps }: StackStageProps) {
+export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngine, ...visualProps }: StackStageProps) {
   const { t } = useTranslation()
   const renderer = getDosageForm(item.dosage_form).stageRenderer
 
   if (renderer === 'vial') {
-    return <VialRenderer item={item} fillPct={fillPct} animateOnMount={animateOnMount} {...visualProps} />
+    return <VialRenderer item={item} fillPct={fillPct} animateOnMount={animateOnMount} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
+  }
+
+  // Weder Etikett noch Physik: beides ist fuer eine Kapsel bedeutungslos.
+  if (renderer === 'capsule') {
+    return <CapsuleRenderer item={item} {...visualProps} />
   }
 
   if (renderer === 'ampoule') {
-    return <AmpouleRenderer item={item} {...visualProps} />
+    return <AmpouleRenderer item={item} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
   }
 
   return (

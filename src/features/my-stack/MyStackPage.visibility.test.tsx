@@ -19,11 +19,11 @@ const visibilityMocks = vi.hoisted(() => ({
 type LoadedLegacyStackItem = LoadedStackItem & { default_method?: string }
 const loadedItems: LoadedLegacyStackItem[] = [
   {
-    id: 'capsule-1',
+    id: 'tablet-1',
     user_id: 'user-1',
     display_name: qaName,
     category: 'supplement',
-    dosage_form: 'capsule',
+    dosage_form: 'tablet',
     brand: 'Codex QA Brand A',
     color_hex: '#f97316',
     notes: null,
@@ -37,24 +37,24 @@ const loadedItems: LoadedLegacyStackItem[] = [
     default_method: 'Subkutan',
     ingredients: [{
       id: 'ingredient-1',
-      stack_item_id: 'capsule-1',
+      stack_item_id: 'tablet-1',
       catalog_substance_id: null,
       custom_name: 'Magnesium',
       amount_value: 100,
       amount_unit: 'mg',
       basis_value: 1,
-      basis_unit: 'capsule',
+      basis_unit: 'tablet',
       position: 0,
       substance_catalog: null,
     }, {
       id: 'ingredient-1b',
-      stack_item_id: 'capsule-1',
+      stack_item_id: 'tablet-1',
       catalog_substance_id: 'vitamin-d3',
       custom_name: '',
       amount_value: 5_000,
       amount_unit: 'IU',
       basis_value: 1,
-      basis_unit: 'capsule',
+      basis_unit: 'tablet',
       position: 1,
       substance_catalog: {
         id: 'vitamin-d3',
@@ -62,7 +62,7 @@ const loadedItems: LoadedLegacyStackItem[] = [
         aliases: [],
         default_category: 'vitamin',
         suggested_units: ['IU'],
-        suggested_dosage_forms: ['capsule'],
+        suggested_dosage_forms: ['tablet'],
         pk_profile_id: 'pk-vitamin-d3',
         active: true,
       },
@@ -102,7 +102,7 @@ const loadedItems: LoadedLegacyStackItem[] = [
 const activeCycle = {
   id: 'cycle-active-1',
   user_id: 'user-1',
-  stack_item_id: 'capsule-1',
+  stack_item_id: 'tablet-1',
   name: 'Abendplan',
   dose: 100,
   unit: 'mg',
@@ -207,7 +207,7 @@ vi.mock('./components/StackItemWizard', () => ({
             displayName: 'New setup',
             trackingLevel: 'intake_only',
             category: 'supplement',
-            dosageForm: 'capsule',
+            dosageForm: 'tablet',
             brand: '',
             colorHex: '#f97316',
             notes: '',
@@ -340,7 +340,7 @@ describe('MyStackPage non-vial visibility', () => {
     const card = visibleCardFor(qaName)
     expect(card).not.toBeNull()
     expect(screen.getByTestId('stack-stage-vial-1')).not.toBeNull()
-    expect(screen.queryByTestId('stack-stage-capsule-1')).toBeNull()
+    expect(screen.queryByTestId('stack-stage-tablet-1')).toBeNull()
     const actions = within(card!)
     expect(actions.getByRole('button', { name: 'bearbeiten' })).not.toBeNull()
     expect(actions.getByRole('button', { name: 'loeschen' })).not.toBeNull()
@@ -352,9 +352,9 @@ describe('MyStackPage non-vial visibility', () => {
 
     const card = visibleCardFor(qaName)
     expect(card).not.toBeNull()
-    expect(card?.textContent).toContain('dosage_form_capsule')
-    expect(card?.textContent).toContain('Magnesium: 100 mg / 1 capsule')
-    expect(card?.textContent).toContain('Vitamin D3: 5000 IU / 1 capsule')
+    expect(card?.textContent).toContain('dosage_form_tablet')
+    expect(card?.textContent).toContain('Magnesium: 100 mg / 1 tablet')
+    expect(card?.textContent).toContain('Vitamin D3: 5000 IU / 1 tablet')
     expect(card?.textContent).not.toContain('method_subkutan')
   })
   it('shows an exact-name non-vial search result instead of a blank vial view', async () => {
@@ -374,7 +374,7 @@ describe('MyStackPage non-vial visibility', () => {
     }
 
     render(
-      <MemoryRouter initialEntries={['/my-stack?edit=capsule-1&intent=pk']}>
+      <MemoryRouter initialEntries={['/my-stack?edit=tablet-1&intent=pk']}>
         <LocationProbe />
         <MyStackPage stackDataClient={stackDataClient as never} />
       </MemoryRouter>,
@@ -382,7 +382,7 @@ describe('MyStackPage non-vial visibility', () => {
 
     await waitFor(() => expect(screen.getByRole('dialog', { name: 'stack-item-wizard' })).toBeTruthy())
     expect(screen.getByTestId('wizard-intent').textContent).toBe('pk')
-    expect(screen.getByTestId('wizard-item-id').textContent).toBe('capsule-1')
+    expect(screen.getByTestId('wizard-item-id').textContent).toBe('tablet-1')
     expect(screen.getByTestId('wizard-plan-id').textContent).toBe('cycle-active-1')
     expect(screen.getByTestId('wizard-plan-method').textContent).toBe('Oral')
     expect(screen.getByTestId('wizard-plan-dose').textContent).toBe('100')
