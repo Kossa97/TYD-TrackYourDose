@@ -35,8 +35,9 @@ falsche Abstraktion begründet.
 | Lage | Liegend, flach auf der Bodenlinie. |
 | Größe | Echtes Verhältnis 2,9:1, im Karussell 92 × 32 px. |
 | Hülle | Durchsichtig, durchgehend aus `color_hex` getönt. |
-| Beschriftung | Gravur direkt auf der Hülle, kein Etikett, kein Name darunter. |
-| Gravurart | Konturgravur, haarfein, ohne jeden Füllton. |
+| Beschriftung | Name direkt auf der Hülle, kein Etikettband, kein Name darunter. |
+| Schrift | Exakt die des Etiketts auf Vial und Ampulle, mitsamt Durchlauf und Licht-Sheen. |
+| Kontur | Neutral und durchscheinend, nie in der Eintragsfarbe — wie bei allen Formen. |
 | Bewegung | Keine. Nur Glanz und Reflexe aus dem Stage-Light. |
 | Kapselinhalt | Wird nicht dargestellt. |
 
@@ -86,27 +87,19 @@ Die Tönung aus `color_hex` liegt über der ganzen Hülle. Kappe und Körper tei
 würden die unterschiedlich hohen Pfade dieselben Farbstopps auf verschiedene
 absolute Höhen abbilden und an der Naht sichtbar springen.
 
-### Gravur
+### Beschriftung
 
-Konturgravur: zwei Linien, eine dunkle minimal nach unten versetzt, eine helle
-minimal nach oben. **Kein Füllton im Buchstabeninneren** — dort ist die Hülle
-selbst zu sehen.
+Der Name steht in **HTML** über der Hülle, nicht als SVG-Text, und trägt exakt
+die Klassen des Etikettnamens von Vial und Ampulle. Überlänge löst denselben
+Durchlauf aus — die Kapsel benutzt dieselbe Komponente, nicht nur dieselbe
+Bewegung. Darüber liegt derselbe Licht-Sheen wie auf dem Etikettband.
 
-Das ist der Unterschied zwischen geätzt und ausgemalt. Verschattet man den
-Rillengrund, liest sich die Schrift als gefüllte Fläche. Sichtbar sein dürfen
-nur die beiden Rillenkanten.
+Der Umweg über SVG-Text mit Fase, Maske und Verläufen wurde verworfen: HTML-Text
+bekommt Hinting und Subpixel-Glättung, SVG-Text nicht. Der Unterschied liegt in
+der Rendering-Technik, nicht in den Parametern — kein Nachjustieren holt ihn auf.
 
-Schmale Versalien mit weitem Buchstabenabstand, zentriert auf der Kapselmitte.
-Der Text ist der Anzeigename in Großbuchstaben.
-
-Länge wird in zwei Stufen behandelt, damit die Gravur nie unlesbar klein wird:
-Zuerst schrumpft die Schrift von 15 auf minimal 11 viewBox-Einheiten, um in die
-nutzbare Breite von 150 Einheiten zu passen. Reicht auch das nicht, wird nach
-dem letzten vollständig passenden Zeichen **hart abgeschnitten**, ohne
-Auslassungspunkte — wie ein echter Aufdruck, der schlicht endet.
-
-Zentriert läuft die Schrift über die Kappennaht. Das ist bewusst so
-entschieden; echte Kapseln werden meist pro Hälfte bedruckt.
+Ein Band bekommt die Kapsel trotzdem nicht: Sie ist kein Behälter mit
+Flüssigkeit, und die Etikettregel bleibt unangetastet.
 
 ## Bühne
 
@@ -127,8 +120,8 @@ mit.
 
 `StageFormSpec` bekommt **kein neues Feld**. `chamber: null` liefert bereits
 beides: kein Etikett über `carriesLabel()` und keine Prozentzeile über
-`hasMeaningfulFill: false`. Die Gravur ist Sache des Renderers — das Karussell
-muss von ihr nichts wissen.
+`hasMeaningfulFill: false`. Die Beschriftung ist Sache des Renderers — das
+Karussell muss von ihr nichts wissen.
 
 ## Architektur
 
@@ -136,15 +129,14 @@ Neu, ausschließlich in `extensions/capsule/`:
 
 | Datei | Verantwortung |
 |---|---|
-| `capsuleShape.ts` | Konturen, Nahtlage, Gravurposition, `StageFormSpec`. Reine Daten. |
-| `CapsuleVisual.tsx` | Hülle, Tönung, Reflexe, Gravur. |
+| `capsuleShape.ts` | Konturen, Nahtlage, Maße, `StageFormSpec`. Reine Daten. |
+| `CapsuleVisual.tsx` | Hülle, Tönung, Reflexe, Beschriftung. |
 | `CapsuleRenderer.tsx` | Adapter von `StackItem` auf `CapsuleVisual`. |
 
-Die Gravur wird **nicht** als geteilter Baustein gebaut. Sie hätte bisher genau
-einen Konsumenten, und eine Abstraktion aus einem einzigen Beispiel ist geraten
-— dieselbe Begründung, mit der im Ampullen-Spec Shell und Kappe formspezifisch
-geblieben sind. Sobald eine zweite Form eine Prägung trägt, wird sie mit zwei
-echten Fällen als Grundlage nach `stage/` gezogen.
+Ein geteilter Baustein kommt trotzdem hinzu: `StageLabelMarquee` wird als
+`StageMarquee` exportiert. Genau der Fall, auf den das Ampullen-Spec gewartet
+hat — jetzt gibt es zwei echte Konsumenten, und die Kapsel nutzt dieselbe
+Komponente statt einer nachgebauten Bewegung.
 
 Geändert: `dosageForms.ts` erhält `stageRenderer: 'capsule'` und `stageForm`
 beim Eintrag `capsule`; `StackStage.tsx` verzweigt zusätzlich darauf.
@@ -152,8 +144,8 @@ beim Eintrag `capsule`; `StackStage.tsx` verzweigt zusätzlich darauf.
 ## Fehler- und Grenzfälle
 
 - Fehlende `color_hex`: derselbe neutrale Rückfallwert wie bei den anderen Formen.
-- Sehr langer Anzeigename: Gravur skaliert, dann hartes Abschneiden ohne Auslassungspunkte.
-- Leerer Anzeigename: dieselbe Rückfallbezeichnung wie bei den anderen Formen, keine leere Gravur.
+- Sehr langer Anzeigename: läuft durch wie auf dem Etikett, wird nie gekürzt.
+- Leerer Anzeigename: Rückfall auf „Kapsel", nie eine leere Beschriftung.
 - `prefers-reduced-motion`: ohne Wirkung, da nichts animiert ist.
 - Kein `sloshEngine` im Kontext: unerheblich, die Kapsel abonniert ihn ohnehin nicht.
 
@@ -161,7 +153,8 @@ beim Eintrag `capsule`; `StackStage.tsx` verzweigt zusätzlich darauf.
 
 - Kontur: durchgehender Grundkörper plus Kappenschicht, genau eine sichtbare Naht.
 - Tönung: ein gemeinsamer Verlauf in `userSpaceOnUse` über Kappe und Körper.
-- Gravur: zentriert, ohne Füllton im Buchstabeninneren, Versalien.
+- Beschriftung: HTML mit den Klassen des Etikettnamens, kein SVG-Text.
+- Kontur: dieselben neutralen Werte wie bei der Ampulle, nicht eingefärbt.
 - Die Kapsel abonniert die Slosh-Engine nicht.
 - Kein Etikett, keine Prozentzeile.
 - Seitenverhältnis 2,9:1 bei jeder Größe.
@@ -173,6 +166,6 @@ beim Eintrag `capsule`; `StackStage.tsx` verzweigt zusätzlich darauf.
 
 - weitere feste Darreichungsformen,
 - die Darstellung des Kapselinhalts,
-- ein geteilter Gravur-Baustein,
+- eine eingefärbte Kontur — sie bliebe eine Entscheidung für alle Formen,
 - Bewegung oder Physik für feste Formen,
 - Änderungen an Vial, Ampulle, Datenbank oder Tracking-Logik.
