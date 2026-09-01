@@ -2370,8 +2370,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
-    "mtime": 1788278282.416778,
-    "ast_hash": "d4262a1d808deba28d424f9f335b88a8",
+    "mtime": 1788280265.2477853,
+    "ast_hash": "a563d692e691df6f5b7cac5e8f46b7bf",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.tsx": {
@@ -2830,8 +2830,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/StageLabel.tsx": {
-    "mtime": 1787879027.6846235,
-    "ast_hash": "c114c49e3fb027f2a83be59e03fe1468",
+    "mtime": 1788280149.2556758,
+    "ast_hash": "27a97c058744af1db01ac8fba38e5bea",
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/liquidGeometry.test.ts": {
@@ -2890,33 +2890,23 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.test.ts": {
-    "mtime": 1788278416.915749,
-    "ast_hash": "e73c74aafdbf63f08c4394c7ab468cde",
+    "mtime": 1788280216.3170395,
+    "ast_hash": "f0aec373879ba9012046b0b632a133d1",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.tsx": {
-    "mtime": 1788278416.915749,
-    "ast_hash": "106b2471f499c89e6be7813b2b58afd7",
+    "mtime": 1788280194.0429265,
+    "ast_hash": "15142158305e075467d6adc29952ee58",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/capsuleShape.test.ts": {
-    "mtime": 1788277868.867313,
-    "ast_hash": "408ed1a375364294374594da10f988ee",
+    "mtime": 1788280169.0968945,
+    "ast_hash": "29ebd2e27085733b2a7b5af884156163",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/capsuleShape.ts": {
-    "mtime": 1788277898.2039504,
-    "ast_hash": "b947a85d3f3663511c4f84433465d8b5",
-    "semantic_hash": ""
-  },
-  "src/features/my-stack/extensions/capsule/engraving.test.ts": {
-    "mtime": 1788277921.4810462,
-    "ast_hash": "ec5d49579ea577b1c3016f3750e10633",
-    "semantic_hash": ""
-  },
-  "src/features/my-stack/extensions/capsule/engraving.ts": {
-    "mtime": 1788277938.7728715,
-    "ast_hash": "b9a65085d433eee588f0c47d9a486245",
+    "mtime": 1788280169.0443826,
+    "ast_hash": "5bf5e04e893e600466e35c5901866591",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-09-01-my-stack-kapsel-buehnenform.md": {
@@ -2927,6 +2917,11 @@
   "docs/superpowers/specs/2026-09-01-my-stack-kapsel-buehnenform-design.md": {
     "mtime": 1788275312.2757719,
     "ast_hash": "d8972cf226062f280947317541f95718",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/stage/marquee.ts": {
+    "mtime": 1788280137.395599,
+    "ast_hash": "17af1dfa602f2ae820380c6339f34378",
     "semantic_hash": ""
   }
 }
