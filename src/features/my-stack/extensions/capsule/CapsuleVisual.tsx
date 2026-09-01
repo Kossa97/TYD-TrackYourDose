@@ -71,7 +71,7 @@ export function CapsuleVisual({
     sweepRef.current?.setAttribute('transform', `translate(${(o * 46).toFixed(2)} 0)`)
     sweepRef.current?.setAttribute('opacity', (0.12 + f * 0.32).toFixed(3))
     glossRef.current?.setAttribute('stroke-opacity', (0.3 + f * 0.3).toFixed(3))
-    shellRef.current?.setAttribute('stroke-opacity', (0.3 + f * 0.26).toFixed(3))
+    shellRef.current?.setAttribute('stroke-opacity', (0.36 + f * 0.28).toFixed(3))
 
     if (nameSheenRef.current) {
       nameSheenRef.current.style.transform = `translateX(${(o * 10).toFixed(2)}%)`
@@ -151,9 +151,9 @@ export function CapsuleVisual({
           data-capsule-detail="shell"
           href={`#${uid}-shell`}
           fill={`url(#${uid}-depth)`}
-          stroke="rgba(203,213,225,0.5)"
-          strokeOpacity={0.3 + visualFocus * 0.26}
-          strokeWidth="1.1"
+          stroke="rgba(203,213,225,0.56)"
+          strokeOpacity={0.36 + visualFocus * 0.28}
+          strokeWidth="1.25"
           vectorEffect="non-scaling-stroke"
         />
 
@@ -162,8 +162,8 @@ export function CapsuleVisual({
           data-capsule-detail="cap"
           href={`#${uid}-cap`}
           fill={`url(#${uid}-depth)`}
-          stroke="rgba(203,213,225,0.5)"
-          strokeWidth="1.1"
+          stroke="rgba(203,213,225,0.56)"
+          strokeWidth="1.25"
           vectorEffect="non-scaling-stroke"
         />
 
@@ -185,7 +185,7 @@ export function CapsuleVisual({
           data-capsule-detail="shell-inner"
           d={CAPSULE_SHELL_INNER_PATH}
           fill="none"
-          stroke="rgba(226,232,240,0.26)"
+          stroke="rgba(226,232,240,0.34)"
           strokeWidth="0.9"
           vectorEffect="non-scaling-stroke"
         />
@@ -193,7 +193,7 @@ export function CapsuleVisual({
           data-capsule-detail="cap-inner"
           d={CAPSULE_CAP_INNER_PATH}
           fill="none"
-          stroke="rgba(226,232,240,0.28)"
+          stroke="rgba(226,232,240,0.34)"
           strokeWidth="0.9"
           vectorEffect="non-scaling-stroke"
         />

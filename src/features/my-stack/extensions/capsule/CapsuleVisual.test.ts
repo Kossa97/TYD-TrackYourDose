@@ -25,6 +25,15 @@ describe('CapsuleVisual', () => {
     expect(render({ size: 'carousel' })).toContain('vector-effect="non-scaling-stroke"')
   })
 
+  it('zieht die doppelte Wand so kraeftig wie die Ampulle', () => {
+    // dieselben Werte wie in AmpouleVisual, damit die Wandstaerke ueberall
+    // gleich stark liest — neutral, nie in der Eintragsfarbe
+    const html = render()
+    expect(html).toContain('stroke="rgba(203,213,225,0.56)"')
+    expect(html).toContain('stroke="rgba(226,232,240,0.34)"')
+    expect(html).toContain('stroke-width="1.25"')
+  })
+
   it('teilt einen absoluten Verlauf zwischen Kappe und Koerper', () => {
     // Bei objektbezogenen Einheiten springt die Toenung an der Naht, weil die
     // beiden Pfade unterschiedlich hoch sind.
