@@ -237,12 +237,23 @@ export function AmpouleVisual({
           />
         </g>
 
-        {/* Punt and base sheen sit in the glass floor, seen through the liquid */}
+        {/* Boden wie beim Vial: ein weicher heller Schein im Glas und ein
+            dunkler Schatten darunter. Kein Punt und kein Bogen — die dunkle
+            glasfarbene Ellipse las sich als Fremdkoerper statt als Boden.
+            Masse aus dem Vial umgerechnet: dessen Koerper ist 112 Einheiten
+            breit, dieser 68, Faktor 0,607. */}
         <g clipPath={`url(#${uid}-outerClip)`}>
-          <ellipse cx="60" cy="274.5" rx="26" ry="4" fill="rgba(255,255,255,0.13)" filter={`url(#${uid}-glint)`} />
-          <ellipse data-ampoule-detail="punt" cx="60" cy="272.5" rx="15" ry="3.6" fill="rgba(2,6,23,0.4)" />
-          <path d="M45 272.6 C 49 268.8, 71 268.8, 75 272.6" fill="none" stroke="rgba(255,255,255,0.26)" strokeWidth="0.9" />
+          <ellipse
+            data-ampoule-detail="base-sheen"
+            cx="60" cy="269.1" rx="25.5" ry="7.3"
+            fill="rgba(255,255,255,0.16)" opacity="0.5" filter={`url(#${uid}-soft)`}
+          />
         </g>
+        <ellipse
+          data-ampoule-detail="base-shadow"
+          cx="60" cy="272.1" rx="27.3" ry="5.5"
+          fill="rgba(0,0,0,0.32)" opacity="0.55"
+        />
 
         {/* The wall thickness. Non-scaling so it survives the carousel width. */}
         <use

@@ -33,8 +33,14 @@ describe('AmpouleVisual', () => {
     expect(html).toContain(`data-ampoule-detail="liquid-window" clip-path="url(#${innerClip})"`)
   })
 
-  it('leaves a glass floor with a punt under the liquid', () => {
-    expect(render()).toContain('data-ampoule-detail="punt"')
+  it('leaves a glass floor under the liquid, shaped like the vial base', () => {
+    // Frueher lag hier ein Punt: eine dunkle, glasfarbene Ellipse. Sie las
+    // sich als Fremdkoerper statt als Boden und ist durch dasselbe Paar aus
+    // hellem Schein und dunklem Schatten ersetzt, das das Vial benutzt.
+    const html = render()
+    expect(html).not.toContain('data-ampoule-detail="punt"')
+    expect(html).toContain('data-ampoule-detail="base-sheen"')
+    expect(html).toContain('data-ampoule-detail="base-shadow"')
   })
 
   it('keeps every edge light inside the glass', () => {

@@ -2785,13 +2785,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/ampoule/AmpouleVisual.test.ts": {
-    "mtime": 1787880371.1918573,
-    "ast_hash": "028c1c399371797e46b4e3a39072d7f3",
+    "mtime": 1788361483.6386173,
+    "ast_hash": "163790a03f47139d732b2ee2f1be0677",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/ampoule/AmpouleVisual.tsx": {
-    "mtime": 1787880367.805142,
-    "ast_hash": "650cf18c30afa5b8bcc0988b5a31620e",
+    "mtime": 1788361483.6371017,
+    "ast_hash": "a57d8990a747f7b36d488b182e557f9d",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/ampoule/ampouleShape.test.ts": {
