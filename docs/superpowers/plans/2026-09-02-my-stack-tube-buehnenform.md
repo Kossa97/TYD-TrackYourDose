@@ -339,7 +339,9 @@ describe('TubeVisual', () => {
     expect(html).not.toContain('data-fill-pct')
     const source = readFileSync(new URL('./TubeVisual.tsx', import.meta.url), 'utf8')
     expect(source).not.toContain('SloshContext')
-    expect(source).not.toContain('StageLabel')
+    // Der Bauteilaufruf, nicht der Importpfad: StageMarquee liegt in
+    // StageLabel.tsx, der Dateiname steht also zwangslaeufig im Quelltext.
+    expect(source).not.toContain('<StageLabel')
   })
 
   it('nimmt Focus und Lichtversatz vom Karussell entgegen', () => {
