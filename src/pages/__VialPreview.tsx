@@ -5,6 +5,7 @@ import { AmpouleVisual } from '../features/my-stack/extensions/ampoule/AmpouleVi
 import { CapsuleVisual } from '../features/my-stack/extensions/capsule/CapsuleVisual'
 import { NasalSprayVisual } from '../features/my-stack/extensions/nasal-spray/NasalSprayVisual'
 import { TabletVisual } from '../features/my-stack/extensions/tablet/TabletVisual'
+import { TubeVisual } from '../features/my-stack/extensions/tube/TubeVisual'
 import { SloshProvider, useSloshEngine } from '../components/SloshContext'
 
 const PREVIEW_VIALS = [
@@ -43,9 +44,16 @@ const PREVIEW_SPRAYS = [
   { name: 'Selank', amount: null as number | null, unit: null as string | null, color: '#a3e635' },
 ]
 
+const PREVIEW_TUBES = [
+  { name: 'Diclofenac' },
+  { name: 'Testogel' },
+  // bewusst zu lang: zeigt den Durchlauf auf dem verjuengten Koerper
+  { name: 'Hydrocortison Acetat 1%' },
+]
+
 // Mixed forms in one row, the way My Stack will show them.
 type MixedEntry = {
-  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet' | 'nasal_spray'
+  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube'
   name: string
   amount: number | null
   unit: string | null
@@ -72,6 +80,9 @@ const MIXED_CAROUSEL: MixedEntry[] = [
   { kind: 'nasal_spray', name: 'Oxytocin', amount: 24, unit: 'IU / spray', color: '#7dd3fc' },
   { kind: 'nasal_spray', name: 'Melanotan II', amount: 300, unit: 'mcg / spray', color: '#f0b357' },
   { kind: 'nasal_spray', name: 'Selank', amount: null, unit: null, color: '#a3e635' },
+  { kind: 'tube', name: 'Diclofenac', amount: null, unit: null, color: '#f97316' },
+  { kind: 'tube', name: 'Testogel', amount: null, unit: null, color: '#a3e635' },
+  { kind: 'tube', name: 'Hydrocortison Acetat 1%', amount: null, unit: null, color: '#38bdf8' },
 ]
 
 export function VialPreview() {
@@ -245,6 +256,15 @@ export function VialPreview() {
         </div>
       </SloshProvider>
 
+      <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
+        Tuben — Oberlicht in Detailgröße
+      </p>
+      <div className="mx-auto flex max-w-4xl flex-wrap items-end justify-center gap-10 pb-2">
+        {PREVIEW_TUBES.map((t, i) => (
+          <TubeVisual key={t.name} name={t.name} size="large" lightOffset={i - 1} />
+        ))}
+      </div>
+
       {/* The real thing: a mixed carousel narrow enough to actually swipe.
           Ampoules and vials share one ground line and one slosh engine. */}
       <p className="mx-auto max-w-sm pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
@@ -265,7 +285,13 @@ export function VialPreview() {
         >
           {MIXED_CAROUSEL.map((entry, index) => (
             <div key={`${entry.kind}-${entry.name}`} className={`shrink-0 ${isDragging ? '' : 'snap-center'}`}>
-              {entry.kind === 'nasal_spray' ? (
+              {entry.kind === 'tube' ? (
+                <TubeVisual
+                  name={entry.name}
+                  size="carousel"
+                  isActive={index === activeIndex}
+                />
+              ) : entry.kind === 'nasal_spray' ? (
                 <NasalSprayVisual
                   name={entry.name}
                   amount={entry.amount}
