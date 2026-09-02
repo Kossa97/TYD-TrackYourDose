@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { carriesLabel } from '../../stage/types'
 import {
   TABLET_BODY, TABLET_BODY_NORMALIZED, TABLET_NAME_INSET_PCT, TABLET_NAME_TOP_PCT,
-  TABLET_SCORE, TABLET_SPEC, TABLET_VIEWBOX,
+  TABLET_ROLL_MAX_DEG, TABLET_ROLL_SHIFT, TABLET_SCORE, TABLET_SPEC, TABLET_VIEWBOX,
 } from './tabletShape'
 
 describe('tabletShape', () => {
@@ -52,6 +52,18 @@ describe('tabletShape', () => {
   it('reicht damit deutlich weiter nach aussen als ein pauschaler Rand', () => {
     expect(TABLET_NAME_INSET_PCT).toBeLessThan(0.05)
     expect(TABLET_NAME_INSET_PCT).toBeGreaterThan(0)
+  })
+
+  it('koppelt Drehung und Versatz ueber die Rollbedingung', () => {
+    // s = r * theta. Waeren beide getrennt gewaehlt, wuerde die Tablette
+    // rutschen statt zu rollen.
+    const theta = (TABLET_ROLL_MAX_DEG * Math.PI) / 180
+    expect(TABLET_ROLL_SHIFT).toBeCloseTo(TABLET_BODY.r * theta, 6)
+  })
+
+  it('haelt den Rollwinkel klein genug, dass der Name lesbar bleibt', () => {
+    expect(TABLET_ROLL_MAX_DEG).toBeGreaterThan(0)
+    expect(TABLET_ROLL_MAX_DEG).toBeLessThanOrEqual(12)
   })
 
   it('hat keine Fluessigkeitskammer und deshalb weder Etikett noch Fuellstand', () => {

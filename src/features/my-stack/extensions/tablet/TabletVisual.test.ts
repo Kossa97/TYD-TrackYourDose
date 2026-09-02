@@ -73,11 +73,21 @@ describe('TabletVisual', () => {
     expect(html).not.toContain('data-fill-pct')
   })
 
-  it('haengt nicht an der Slosh-Physik und zeichnet keinen SVG-Text', () => {
+  it('zeichnet keinen SVG-Text', () => {
     const source = readFileSync(new URL('./TabletVisual.tsx', import.meta.url), 'utf8')
-    expect(source).not.toContain('SloshContext')
-    expect(source).not.toContain('sloshEngine')
     expect(source).not.toContain('<text')
+  })
+
+  it('rollt an: alles wandert, aber nur die Materialspuren drehen sich mit', () => {
+    const html = render()
+    expect(html).toContain('data-tablet-detail="roll"')
+
+    // Ein Kreis zeigt keine Drehung — die Rille ist der einzige Drehanzeiger,
+    // den eine Tablette von oben hat. Der Lichtfleck gehoert nicht dazu: eine
+    // Reflexion kommt von der feststehenden Lampe, nicht vom Koerper.
+    const spin = html.match(/<g data-tablet-detail="spin">(.*?)<\/g>/s)?.[1] ?? ''
+    expect(spin).toContain('data-tablet-detail="score"')
+    expect(spin).not.toContain('data-tablet-detail="glint"')
   })
 
   it('nimmt Focus und Lichtversatz vom Karussell entgegen', () => {

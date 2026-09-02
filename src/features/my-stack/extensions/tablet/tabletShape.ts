@@ -28,6 +28,14 @@ const TABLET_NAME_HALF_CHORD = Math.sqrt(
 )
 export const TABLET_NAME_INSET_PCT = TABLET_BODY_NORMALIZED.cx - TABLET_NAME_HALF_CHORD
 
+// Rollbedingung: eine Scheibe, die sich um den Winkel theta dreht, wandert
+// dabei um r * theta weiter. Drehung und Versatz sind deshalb aneinander
+// gekoppelt statt getrennt gewaehlt — sonst rutscht die Tablette, statt zu
+// rollen. Der Winkel ist klein gehalten, damit der aufgedruckte Name lesbar
+// bleibt.
+export const TABLET_ROLL_MAX_DEG = 8
+export const TABLET_ROLL_SHIFT = TABLET_BODY.r * ((TABLET_ROLL_MAX_DEG * Math.PI) / 180)
+
 export const TABLET_SPEC: StageFormSpec = {
   viewBox: TABLET_VIEWBOX,
   // Kein Innenraum, keine Flüssigkeit: damit kein Etikett und kein Füllstand.

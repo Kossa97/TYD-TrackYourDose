@@ -1,5 +1,7 @@
 import type { Ref } from 'react'
 import { TabletVisual } from './TabletVisual'
+import { SloshProvider } from '../../../../components/SloshContext'
+import type { SloshEngine } from '../../../../components/sloshEngine'
 import type { StageLightHandle } from '../../stage/useStageLight'
 import type { StackItem } from '../../types'
 
@@ -11,17 +13,23 @@ export interface TabletRendererProps {
   focus?: number
   lightOffset?: number
   stageLightRef?: Ref<StageLightHandle>
+  sloshEngine?: SloshEngine
 }
 
-// Kein Slosh-Provider: eine flach liegende Tablette wackelt nicht, sie liegt.
-export function TabletRenderer({ item, ...visualProps }: TabletRendererProps) {
+// Die Tablette liegt lose auf der Buehne und rollt beim Wischen an, statt zu
+// schwappen: dieselbe Feder, andere Auswertung.
+export function TabletRenderer({ item, sloshEngine, ...visualProps }: TabletRendererProps) {
+  const tablet = (
+    <TabletVisual
+      name={item.display_name}
+      color={item.color_hex ?? '#64748b'}
+      {...visualProps}
+    />
+  )
+
   return (
     <div data-stack-renderer="tablet">
-      <TabletVisual
-        name={item.display_name}
-        color={item.color_hex ?? '#64748b'}
-        {...visualProps}
-      />
+      {sloshEngine ? <SloshProvider engine={sloshEngine}>{tablet}</SloshProvider> : tablet}
     </div>
   )
 }

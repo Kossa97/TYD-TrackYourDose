@@ -206,12 +206,13 @@ describe('StackStage — Tablette', () => {
     expect(html).not.toContain('data-vial-detail="label-glass-wrap"')
   })
 
-  it('hält den Tabletten-Adapter frei von eigener Grafik und von Physik', () => {
+  it('hält den Tabletten-Adapter frei von eigener Grafik und von Füllstand', () => {
     const source = readFileSync(new URL('../extensions/tablet/TabletRenderer.tsx', import.meta.url), 'utf8')
 
     expect(source).toContain('TabletVisual')
     expect(source).not.toContain('<svg')
-    expect(source).not.toContain('SloshProvider')
+    // Physik ja, Fuellstand nein: die Tablette rollt, aber sie hat keinen Pegel.
+    expect(source).toContain('SloshProvider')
     expect(source).not.toContain('fillPct')
   })
 

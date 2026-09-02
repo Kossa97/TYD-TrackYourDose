@@ -38,7 +38,7 @@ Material.** Das Glas von Vial, Ampulle und Kapsel trägt hier gar nichts bei.
 | Größe | 62 px im Karussell — bewusst größer als maßstäblich. |
 | Bruchmenge | Wird nicht dargestellt; die Tablette ist immer ganz. |
 | Material | Mattes Presspulver, undurchsichtig, in `color_hex`. |
-| Bewegung | Keine. Nur Stage-Light. |
+| Bewegung | Anrollen beim Wischen, gedämpft einpendelnd. Dazu Stage-Light. |
 
 ### Warum die Größe nicht maßstäblich ist
 
@@ -72,10 +72,29 @@ Bühnenformen gereicht werden, für ein Detail, das nur eine davon betrifft.
 Die Teilbarkeit bleibt sichtbar — über die Rille. Das Objekt sagt „ich lasse
 mich teilen", nicht „ich bin geteilt".
 
-### Warum keine Bewegung
+### Warum sie rollt, statt zu wackeln
 
-Eine flach liegende Tablette wackelt nicht, sie liegt. Wie die Kapsel abonniert
-sie die Slosh-Engine nicht. Ihr einziger Effekt ist das Stage-Light.
+Ursprünglich war beschlossen: keine Bewegung, eine liegende Tablette wackelt
+nicht. Das ist für das *Wackeln* richtig geblieben — nur liegt eine Tablette
+lose auf der Bühne, und ein Wisch stößt sie an.
+
+Sie abonniert daher dieselbe Feder wie die Flüssigkeiten (`sloshEngine`), wertet
+sie aber anders aus: statt eines Pegels ergeben sich Versatz und Drehung. Beide
+sind über die **Rollbedingung** gekoppelt — eine Scheibe, die sich um den Winkel
+theta dreht, wandert um `r * theta` weiter. Wären sie getrennt gewählt, würde die
+Tablette rutschen statt zu rollen.
+
+Der Winkel ist auf 8 Grad begrenzt, damit der aufgedruckte Name lesbar bleibt.
+Die Feder schwingt über und läuft auf null zurück: sobald die Tablette zur Ruhe
+kommt, liegt sie mittig und gerade.
+
+**Von oben zeigt nur die Bruchrille die Drehung.** Ein Kreis sieht gedreht
+identisch aus; Rille und Name sind die einzigen Drehanzeiger, die eine
+Draufsicht hat. Der Lichtfleck dreht sich ausdrücklich *nicht* mit — eine
+Reflexion kommt von der feststehenden Lampe, nicht vom Körper.
+
+Echtes Rollen auf der Kante bliebe der Seitenansicht vorbehalten und ist hier
+nicht gemeint; die Silhouette bleibt die Draufsicht.
 
 ## Grafik
 
@@ -164,7 +183,7 @@ in `stage/` und werden unverändert benutzt.
 - Sehr langer Name: läuft durch, wird nie gekürzt.
 - Leerer Name: Rückfall auf „Tablette", nie eine leere Beschriftung.
 - `prefers-reduced-motion`: wirkt auf den Durchlauf, wie bei allen Formen.
-- Kein `sloshEngine` im Kontext: unerheblich, die Tablette abonniert ihn nicht.
+- Kein `sloshEngine` im Kontext: die Tablette bleibt schlicht ruhig liegen.
 
 ## Verifikation
 
@@ -173,7 +192,7 @@ in `stage/` und werden unverändert benutzt.
 - Name unterhalb der Rille, entlang der Kreiskontur beschnitten.
 - Keine SVG-Textelemente in `TabletVisual.tsx`.
 - Kein Glas-Malstapel: keine zweite Kontur, kein Sweep, kein Innenclip.
-- Die Tablette abonniert die Slosh-Engine nicht.
+- Die Tablette rollt beim Wischen an und pendelt auf null ein; Versatz und Drehung erfüllen `s = r * theta`.
 - Kein Etikett, keine Prozentzeile.
 - `StackStage` verzweigt korrekt; Formen ohne Renderer bleiben im Textzustand.
 - **Die Suiten von Vial, Ampulle und Kapsel bleiben unverändert grün.**

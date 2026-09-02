@@ -1,10 +1,11 @@
-import { useCallback, useId, useRef } from 'react'
+import { useCallback, useEffect, useId, useRef } from 'react'
 import type { Ref } from 'react'
+import { useSloshSubscribe } from '../../../../components/SloshContext'
 import { StageMarquee } from '../../stage/StageLabel'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
   TABLET_BODY, TABLET_BODY_NORMALIZED, TABLET_NAME_INSET_PCT, TABLET_NAME_TOP_PCT,
-  TABLET_SCORE,
+  TABLET_ROLL_MAX_DEG, TABLET_ROLL_SHIFT, TABLET_SCORE,
 } from './tabletShape'
 
 export interface TabletVisualProps {
@@ -56,6 +57,9 @@ export function TabletVisual({
   const shadowRef = useRef<SVGEllipseElement | null>(null)
   const glintRef = useRef<SVGEllipseElement | null>(null)
   const nameSheenRef = useRef<HTMLDivElement | null>(null)
+  const rollRef = useRef<SVGGElement | null>(null)
+  const spinRef = useRef<SVGGElement | null>(null)
+  const nameRollRef = useRef<HTMLDivElement | null>(null)
 
   const applyStageLight = useCallback((f: number, o: number) => {
     rootRef.current?.setAttribute('data-tablet-focus', f.toFixed(2))
@@ -75,6 +79,28 @@ export function TabletVisual({
   }, [])
 
   useStageLight(applyStageLight, { focus: visualFocus, lightOffset: visualLightOffset }, stageLightRef)
+
+  // Die Tablette liegt lose auf der Buehne: ein Wisch stoesst sie an, sie rollt
+  // ueber und pendelt gedämpft wieder auf null ein — mittig und gerade, sobald
+  // sie zur Ruhe kommt. Dieselbe Feder, die die Fluessigkeiten schwappen laesst.
+  const subscribe = useSloshSubscribe()
+  useEffect(() => {
+    if (!subscribe) return
+    return subscribe(({ tilt }) => {
+      const shift = tilt * TABLET_ROLL_SHIFT
+      const deg = tilt * TABLET_ROLL_MAX_DEG
+      rollRef.current?.setAttribute('transform', `translate(${shift.toFixed(3)} 0)`)
+      spinRef.current?.setAttribute(
+        'transform',
+        `rotate(${deg.toFixed(3)} ${TABLET_BODY.cx} ${TABLET_BODY.cy})`,
+      )
+      if (nameRollRef.current) {
+        // Der Name ist HTML: dieselbe Bewegung, in Prozent der Kastenbreite,
+        // weil die viewBox 100 Einheiten breit ist.
+        nameRollRef.current.style.transform = `translateX(${shift.toFixed(3)}%) rotate(${deg.toFixed(3)}deg)`
+      }
+    })
+  }, [subscribe])
 
   return (
     <div
@@ -119,6 +145,9 @@ export function TabletVisual({
           </clipPath>
         </defs>
 
+        {/* Alles, was zur Tablette gehoert, wandert mit ihr — Schatten
+            eingeschlossen, denn er liegt direkt unter ihr. */}
+        <g ref={rollRef} data-tablet-detail="roll">
         <ellipse
           ref={shadowRef}
           data-tablet-detail="shadow"
@@ -153,6 +182,10 @@ export function TabletVisual({
           vectorEffect="non-scaling-stroke"
         />
 
+        {/* Nur die Materialspuren drehen sich mit. Koerper und Kontur sind
+            kreisrund, an ihnen waere eine Drehung ohnehin nicht zu sehen — die
+            Rille ist der einzige Drehanzeiger, den eine Tablette von oben hat. */}
+        <g ref={spinRef} data-tablet-detail="spin">
         {/* Bruchrille als Vertiefung: dunkle Linie mit heller Oberkante. */}
         <line
           data-tablet-detail="score"
@@ -173,7 +206,10 @@ export function TabletVisual({
           strokeWidth="0.9"
           strokeLinecap="round"
         />
+        </g>
 
+        {/* Der Lichtfleck bleibt ausserhalb der Drehung: eine Reflexion dreht
+            sich nicht mit dem Koerper, sie kommt von der feststehenden Lampe. */}
         <ellipse
           ref={glintRef}
           data-tablet-detail="glint"
@@ -185,11 +221,13 @@ export function TabletVisual({
           opacity={0.16 + visualFocus * 0.24}
           filter={`url(#${uid}-soft)`}
         />
+        </g>
       </svg>
 
       {/* Beschriftet wie alle anderen Formen: HTML, dieselben Klassen, derselbe
           Durchlauf. Kein Band — die Tablette ist kein Behälter. */}
       <div
+        ref={nameRollRef}
         data-tablet-detail="name"
         className="pointer-events-none absolute inset-0"
         style={{ clipPath: `url(#${uid}-nameClip)` }}

@@ -2370,13 +2370,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
-    "mtime": 1788303972.2397747,
-    "ast_hash": "bb94006b05746b94a5434ff889449111",
+    "mtime": 1788338019.71141,
+    "ast_hash": "0da62fb89d7a8930f5d373c4622dc15f",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.tsx": {
-    "mtime": 1788304016.911871,
-    "ast_hash": "f271025cb2517bb59aa84279ba75c33a",
+    "mtime": 1788338019.7099063,
+    "ast_hash": "9d9731372ddf4f82f9bfe5498c4ea888",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.tsx": {
@@ -2925,28 +2925,28 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/tablet/TabletRenderer.tsx": {
-    "mtime": 1788304003.0398064,
-    "ast_hash": "a3820361dcf0b7b91d8453508220890d",
+    "mtime": 1788338019.7099063,
+    "ast_hash": "8a9485a93720b31144294280acd7fb20",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/tablet/TabletVisual.test.ts": {
-    "mtime": 1788303844.025851,
-    "ast_hash": "c704fb97d82b1a80410446943524e801",
+    "mtime": 1788338019.71141,
+    "ast_hash": "b3d4392ca14eff7e1c343da53a8ee6c7",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/tablet/TabletVisual.tsx": {
-    "mtime": 1788303917.935444,
-    "ast_hash": "07cf9d9ac506c4b65bdf40799c0da91a",
+    "mtime": 1788337978.8369892,
+    "ast_hash": "e99442e53cf72edc86c1bb1f4b94f352",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/tablet/tabletShape.test.ts": {
-    "mtime": 1788303811.5243194,
-    "ast_hash": "e98f101e4b4815d7fdd598bd6211c9e9",
+    "mtime": 1788337952.1582706,
+    "ast_hash": "b6e43abd7c0ca9c02c179e03a2f75317",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/tablet/tabletShape.ts": {
-    "mtime": 1788303824.198403,
-    "ast_hash": "4f0e5ce0de84854992c24d99f6a50e7c",
+    "mtime": 1788337952.1582706,
+    "ast_hash": "9c3d691db62827ffe9f5775496162787",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-09-02-my-stack-tablette-buehnenform.md": {
@@ -2955,8 +2955,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-02-my-stack-tablette-buehnenform-design.md": {
-    "mtime": 1788303135.7424963,
-    "ast_hash": "5e552b5008e08383ba36d31000eb31db",
+    "mtime": 1788338167.6870627,
+    "ast_hash": "21a66bc142ecebf573a9a73808e20955",
     "semantic_hash": ""
   }
 }

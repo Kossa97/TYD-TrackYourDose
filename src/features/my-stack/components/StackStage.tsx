@@ -40,7 +40,7 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
   }
 
   if (renderer === 'tablet') {
-    return <TabletRenderer item={item} {...visualProps} />
+    return <TabletRenderer item={item} sloshEngine={sloshEngine} {...visualProps} />
   }
 
   if (renderer === 'ampoule') {
