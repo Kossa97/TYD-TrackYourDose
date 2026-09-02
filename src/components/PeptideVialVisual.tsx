@@ -4,6 +4,7 @@ import { LIQUID_VB_H, liquidSurfaceY } from '../features/my-stack/stage/liquidGe
 import { usePrefersReducedMotion } from '../features/my-stack/stage/usePrefersReducedMotion'
 import { useStageLight, type StageLightHandle } from '../features/my-stack/stage/useStageLight'
 import { LiquidGraphic, type LiquidGraphicHandle } from '../features/my-stack/stage/LiquidGraphic'
+import { VIAL_INNER_PATH, VIAL_OUTER_PATH, VIAL_SPEC } from '../features/my-stack/extensions/peptide/vialShape'
 import { StageLabel } from '../features/my-stack/stage/StageLabel'
 
 // Imperative stage-light channel: the carousel pushes focus/lightOffset per
@@ -115,6 +116,10 @@ function VialTop({
   )
 }
 
+
+// Die Kammer liegt jetzt in den Formdaten, damit Innenkontur und
+// Fluessigkeitsfenster nicht auseinanderlaufen koennen.
+const VIAL_CHAMBER = VIAL_SPEC.chamber!
 
 export function PeptideVialVisual({
   name,
@@ -292,7 +297,7 @@ export function PeptideVialVisual({
             <defs>
               <path
                 id={`${uid}-vialShellPath`}
-                d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 56 C4 41 28 35 28 24 Z"
+                d={VIAL_OUTER_PATH}
               />
               <clipPath id={`${uid}-shellClip`}>
                 <use href={`#${uid}-vialShellPath`} />
@@ -430,8 +435,11 @@ export function PeptideVialVisual({
               aria-hidden="true"
             >
               <defs>
+                {/* Die Fluessigkeit wird von der INNEN-Kontur beschnitten, nie
+                    von der aeusseren: sonst fehlt der Glasboden und sie klebt
+                    an der Aussenwand. */}
                 <clipPath id={`${uid}-liquidChamberClip`}>
-                  <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 56 C4 41 28 35 28 24 Z" />
+                  <path d={VIAL_INNER_PATH} />
                 </clipPath>
               </defs>
               <g data-vial-detail="liquid-glass-window" clipPath={`url(#${uid}-liquidChamberClip)`}>
@@ -439,10 +447,11 @@ export function PeptideVialVisual({
                   uid={uid}
                   fill={fillFrac}
                   tilt={tilt}
-                  x={4}
-                  y={36}
-                  width={112}
-                  height={247}
+                  x={VIAL_CHAMBER.x}
+                  y={VIAL_CHAMBER.y}
+                  width={VIAL_CHAMBER.width}
+                  height={VIAL_CHAMBER.height}
+                  chamberAspect={VIAL_CHAMBER.aspect}
                   color={color}
                   reducedMotion={reducedMotion}
                   seedFocus={visualFocus}
@@ -455,6 +464,18 @@ export function PeptideVialVisual({
                   handleRef={liquidRef}
                 />
               </g>
+
+              {/* Die Wandstaerke. Sie liegt in diesem SVG und damit ueber der
+                  Fluessigkeit — im Glas-SVG darunter waere sie verdeckt.
+                  Non-scaling, damit sie die Karussellbreite ueberlebt. */}
+              <path
+                data-vial-detail="inner-contour"
+                d={VIAL_INNER_PATH}
+                fill="none"
+                stroke="rgba(226,232,240,0.34)"
+                strokeWidth="0.9"
+                vectorEffect="non-scaling-stroke"
+              />
             </svg>
           </div>
 
@@ -469,11 +490,11 @@ export function PeptideVialVisual({
             >
               <defs>
                 <clipPath id={`${uid}-inactiveOverlayClip`}>
-                  <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 56 C4 41 28 35 28 24 Z" />
+                  <path d={VIAL_OUTER_PATH} />
                 </clipPath>
               </defs>
               <g clipPath={`url(#${uid}-inactiveOverlayClip)`}>
-                <path d="M28 0 L92 0 L92 24 C92 35 116 41 116 56 L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252 L4 56 C4 41 28 35 28 24 Z" fill="rgba(0,0,0,0.34)" />
+                <path d={VIAL_OUTER_PATH} fill="rgba(0,0,0,0.34)" />
               </g>
             </svg>
           )}

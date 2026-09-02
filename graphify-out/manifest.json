@@ -275,13 +275,13 @@
     "semantic_hash": ""
   },
   "src/components/PeptideVialVisual.test.ts": {
-    "mtime": 1787879813.3078244,
-    "ast_hash": "72587580f89baae118edfdf6b1098b6a",
+    "mtime": 1788360988.3818386,
+    "ast_hash": "bb3565a0eea1e48d3dc65ab5adcc07aa",
     "semantic_hash": ""
   },
   "src/components/PeptideVialVisual.tsx": {
-    "mtime": 1787879759.8037,
-    "ast_hash": "0994326b331a6c5bbdcd5b6b352a2948",
+    "mtime": 1788360938.586093,
+    "ast_hash": "e838f35cab8291fef249378fed1c977c",
     "semantic_hash": ""
   },
   "src/components/ProtectedRoute.tsx": {
@@ -2805,8 +2805,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/peptide/vialShape.ts": {
-    "mtime": 1787880548.1521723,
-    "ast_hash": "ff7e829a7a1400d4225628e02365d988",
+    "mtime": 1788360870.7475393,
+    "ast_hash": "a536c4bb600724e750d4a5d7db85e3e0",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/catalogDosageForms.test.ts": {
@@ -3027,6 +3027,11 @@
   "docs/superpowers/specs/2026-09-02-my-stack-tube-buehnenform-design.md": {
     "mtime": 1788358737.1384459,
     "ast_hash": "6edadc9c129aab3efda5ce79ab86d38a",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/peptide/vialShape.test.ts": {
+    "mtime": 1788360857.1257784,
+    "ast_hash": "dc17cc440200f9ab2126bd33fb61848c",
     "semantic_hash": ""
   }
 }

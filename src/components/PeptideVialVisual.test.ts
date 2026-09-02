@@ -15,6 +15,10 @@ const stageLabelSource = () =>
 // it the chamber it should fill.
 const liquidGraphicSource = () =>
   readFileSync(new URL('../features/my-stack/stage/LiquidGraphic.tsx', import.meta.url), 'utf8')
+// Aussen- und Innenkontur liegen als Daten in der Formbeschreibung, damit sie
+// nicht mehrfach woertlich in der Komponente stehen.
+const shapeSource = () =>
+  readFileSync(new URL('../features/my-stack/extensions/peptide/vialShape.ts', import.meta.url), 'utf8')
 
 describe('PeptideVialVisual', () => {
   test('renders readable vial label content', () => {
@@ -141,10 +145,13 @@ describe('PeptideVialVisual', () => {
   })
 
   test('uses a slightly flatter vial base across shell and clips', () => {
-    const text = source()
+    // Der Pfad steht seit der Innenkontur in vialShape.ts statt viermal
+    // woertlich in der Komponente. Die Form selbst ist unveraendert.
+    const text = shapeSource()
 
     expect(text).toContain('L116 252 C116 274 102 286 76 286 L44 286 C18 286 4 274 4 252')
     expect(text).not.toContain('L116 250 C116 277 101 292 74 292 L46 292 C19 292 4 277 4 250')
+    expect(source()).toContain('VIAL_OUTER_PATH')
   })
 
   test('accepts focus and lightOffset as visual control props', () => {
@@ -331,11 +338,29 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('data-vial-detail="liquid-glass-window"')
     expect(text).toContain('liquidChamberClip')
     expect(text).toContain('clipPath={`url(#${uid}-liquidChamberClip)`}')
-    expect(text).toContain('x={4}')
-    expect(text).toContain('y={36}')
-    expect(text).toContain('height={247}')
+    // Die Kammer kommt aus den Formdaten und sitzt in der Innenkontur, damit
+    // ein Glasboden unter der Fluessigkeit stehen bleibt.
+    expect(text).toContain('x={VIAL_CHAMBER.x}')
+    expect(text).toContain('height={VIAL_CHAMBER.height}')
+    expect(text).toContain('chamberAspect={VIAL_CHAMBER.aspect}')
+    expect(text).toMatch(/liquidChamberClip`}>[\s\S]{0,80}VIAL_INNER_PATH/)
     expect(text).not.toContain('className="absolute inset-0 overflow-hidden"')
   })
+  test('draws the inner contour that gives the glass its wall thickness', () => {
+    const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
+      name: 'BPC-157',
+      amount: '5',
+      unit: 'mg',
+      fillPct: 45,
+      color: '#06b6d4',
+    }))
+
+    // Die doppelte Linie, die einen hohlen Koerper von einer Silhouette
+    // unterscheidet — wie bei Ampulle und Nasenspray.
+    expect(html).toContain('data-vial-detail="inner-contour"')
+    expect(html).toMatch(/data-vial-detail="inner-contour"[^>]*vector-effect="non-scaling-stroke"/)
+  })
+
   test('renders vial label typography in white for contrast on colored liquid', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
       name: 'BPC-157',
