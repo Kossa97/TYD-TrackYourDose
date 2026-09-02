@@ -3,6 +3,7 @@ import type { PointerEvent as ReactPointerEvent, UIEvent, WheelEvent as ReactWhe
 import { PeptideVialVisual } from '../components/PeptideVialVisual'
 import { AmpouleVisual } from '../features/my-stack/extensions/ampoule/AmpouleVisual'
 import { CapsuleVisual } from '../features/my-stack/extensions/capsule/CapsuleVisual'
+import { NasalSprayVisual } from '../features/my-stack/extensions/nasal-spray/NasalSprayVisual'
 import { TabletVisual } from '../features/my-stack/extensions/tablet/TabletVisual'
 import { SloshProvider, useSloshEngine } from '../components/SloshContext'
 
@@ -35,9 +36,16 @@ const PREVIEW_TABLETS = [
   { name: 'Acetylsalicylsäure 500', color: '#fca5a5' },
 ]
 
+const PREVIEW_SPRAYS = [
+  { name: 'Oxytocin', amount: 24 as number | null, unit: 'IU / spray' as string | null, color: '#7dd3fc' },
+  { name: 'Melanotan II', amount: 300 as number | null, unit: 'mcg / spray' as string | null, color: '#f0b357' },
+  // bewusst ohne Menge: zeigt das Etikett ohne Detailzeile
+  { name: 'Selank', amount: null as number | null, unit: null as string | null, color: '#a3e635' },
+]
+
 // Mixed forms in one row, the way My Stack will show them.
 type MixedEntry = {
-  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet'
+  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet' | 'nasal_spray'
   name: string
   amount: number | null
   unit: string | null
@@ -61,6 +69,9 @@ const MIXED_CAROUSEL: MixedEntry[] = [
   { kind: 'tablet', name: 'Ibuprofen', amount: 400, unit: 'mg', color: '#d9c39a' },
   { kind: 'tablet', name: 'Aspirin', amount: 500, unit: 'mg', color: '#e2e8f0' },
   { kind: 'tablet', name: 'Acetylsalicylsäure 500', amount: 500, unit: 'mg', color: '#fca5a5' },
+  { kind: 'nasal_spray', name: 'Oxytocin', amount: 24, unit: 'IU / spray', color: '#7dd3fc' },
+  { kind: 'nasal_spray', name: 'Melanotan II', amount: 300, unit: 'mcg / spray', color: '#f0b357' },
+  { kind: 'nasal_spray', name: 'Selank', amount: null, unit: null, color: '#a3e635' },
 ]
 
 export function VialPreview() {
@@ -221,6 +232,15 @@ export function VialPreview() {
         ))}
       </div>
 
+      <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
+        Nasensprays — Kopf in Detailgröße
+      </p>
+      <div className="mx-auto flex max-w-4xl flex-wrap items-end justify-center gap-10 pb-2">
+        {PREVIEW_SPRAYS.map(s => (
+          <NasalSprayVisual key={s.name} name={s.name} amount={s.amount} unit={s.unit} color={s.color} size="large" />
+        ))}
+      </div>
+
       {/* The real thing: a mixed carousel narrow enough to actually swipe.
           Ampoules and vials share one ground line and one slosh engine. */}
       <p className="mx-auto max-w-sm pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
@@ -241,7 +261,16 @@ export function VialPreview() {
         >
           {MIXED_CAROUSEL.map((entry, index) => (
             <div key={`${entry.kind}-${entry.name}`} className={`shrink-0 ${isDragging ? '' : 'snap-center'}`}>
-              {entry.kind === 'tablet' ? (
+              {entry.kind === 'nasal_spray' ? (
+                <NasalSprayVisual
+                  name={entry.name}
+                  amount={entry.amount}
+                  unit={entry.unit}
+                  color={entry.color}
+                  size="carousel"
+                  isActive={index === activeIndex}
+                />
+              ) : entry.kind === 'tablet' ? (
                 <TabletVisual
                   name={entry.name}
                   color={entry.color}
