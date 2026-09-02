@@ -353,7 +353,7 @@ export function NasalSprayVisual({
         <StageLabel
           name={labelName}
           detail={detail}
-          className="left-[4%] right-[4%] rounded-sm"
+          className="left-0 right-0 rounded-sm"
           nameClassName={nameClass}
           detailClassName={detailClass}
           wrapperProps={{

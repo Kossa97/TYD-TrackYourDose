@@ -57,12 +57,15 @@ describe('NasalSprayVisual', () => {
     expect(render({ size: 'mini' })).toContain('w-[20.6px]')
   })
 
-  it('spannt das Etikett ueber die volle Breite, wie bei der Ampulle', () => {
-    // Dieselben Randwerte wie AmpouleVisual: left-[4%] right-[4%] rounded-sm.
+  it('spannt das Etikett bis an die aeussere Glaskante', () => {
+    // Vial (3,5 %) und Ampulle (4 %) ziehen das Band prozentual ein, weil ihre
+    // viewBox Rand um den Koerper hat: die Ampulle ist 72 Einheiten breit, ihr
+    // Koerper nur 68. Hier ist die viewBox auf den Umriss beschnitten — die
+    // Aussenkontur liegt exakt auf den Raendern. Derselbe Prozentwert laege
+    // deshalb auf der INNEN-Kontur, nicht auf der aeusseren.
     const html = render()
-    expect(html).toContain('left-[4%]')
-    expect(html).toContain('right-[4%]')
-    expect(html).not.toContain('inset-x-[6%]')
+    expect(html).toContain('left-0 right-0')
+    expect(html).not.toContain('left-[4%]')
   })
 
   it('traegt Name und Wirkstoffmenge auf dem Etikett', () => {
