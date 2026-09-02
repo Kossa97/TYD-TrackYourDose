@@ -975,8 +975,8 @@
     "semantic_hash": "45a38b51cd13eca6ff8eea4e19b5ef7e"
   },
   "src/pages/__VialPreview.tsx": {
-    "mtime": 1788304047.2150762,
-    "ast_hash": "720cc2cc37ec103f3799d66c3cc1cb76",
+    "mtime": 1788342514.1365397,
+    "ast_hash": "cf9b578bcd5643d2b636623c1a8443ed",
     "semantic_hash": ""
   },
   "src/pages/lab/AdminPanel.tsx": {
@@ -2370,13 +2370,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
-    "mtime": 1788338019.71141,
-    "ast_hash": "0da62fb89d7a8930f5d373c4622dc15f",
+    "mtime": 1788341943.5225139,
+    "ast_hash": "b6ffeae1e6567b2f3fcdc32ce95f4c53",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.tsx": {
-    "mtime": 1788338019.7099063,
-    "ast_hash": "9d9731372ddf4f82f9bfe5498c4ea888",
+    "mtime": 1788341965.0901523,
+    "ast_hash": "968d966ed187c65e90ccad506facd5f8",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.tsx": {
@@ -2435,13 +2435,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.test.ts": {
-    "mtime": 1788303991.1838937,
-    "ast_hash": "a38433773f0f5fbe42af6d04359750da",
+    "mtime": 1788341943.5225139,
+    "ast_hash": "f52b6a388c6b00b25c7e8b5f72f2d519",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.ts": {
-    "mtime": 1788304016.9108708,
-    "ast_hash": "b4783245684406bce0e1cc8ab74e96b6",
+    "mtime": 1788341965.0891519,
+    "ast_hash": "d3c44fed9988823f7a5fc90a5a2e72e8",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/duplicateFingerprint.test.ts": {
@@ -2957,6 +2957,41 @@
   "docs/superpowers/specs/2026-09-02-my-stack-tablette-buehnenform-design.md": {
     "mtime": 1788338167.6870627,
     "ast_hash": "21a66bc142ecebf573a9a73808e20955",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/nasal-spray/NasalSprayRenderer.tsx": {
+    "mtime": 1788341954.1725726,
+    "ast_hash": "28d8436095905fd0cd50b72d19a2b299",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/nasal-spray/NasalSprayVisual.test.ts": {
+    "mtime": 1788342800.6178343,
+    "ast_hash": "6a072abee655fb115165670aee1d4516",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/nasal-spray/NasalSprayVisual.tsx": {
+    "mtime": 1788342800.6178343,
+    "ast_hash": "4f3a1fb4bc860731bb86b3649713d218",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/nasal-spray/nasalSprayShape.test.ts": {
+    "mtime": 1788341789.3507233,
+    "ast_hash": "0b1321bd1b6dadbe098437dbd3a61ef9",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/nasal-spray/nasalSprayShape.ts": {
+    "mtime": 1788341814.7057993,
+    "ast_hash": "bf90b4b717994c9febc98960733686ab",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-09-02-my-stack-nasenspray-buehnenform.md": {
+    "mtime": 1788341623.406093,
+    "ast_hash": "f8ff7955ada1c3c4ac42fd1030e3f6bc",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-02-my-stack-nasenspray-buehnenform-design.md": {
+    "mtime": 1788341221.0571432,
+    "ast_hash": "9db0f432dff2e1260030e270d086dc65",
     "semantic_hash": ""
   }
 }
