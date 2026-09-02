@@ -6,6 +6,7 @@ import { getDosageForm } from '../lib/dosageForms'
 import type { StageLightHandle } from '../stage/useStageLight'
 import { AmpouleRenderer } from '../extensions/ampoule/AmpouleRenderer'
 import { CapsuleRenderer } from '../extensions/capsule/CapsuleRenderer'
+import { NasalSprayRenderer } from '../extensions/nasal-spray/NasalSprayRenderer'
 import { TabletRenderer } from '../extensions/tablet/TabletRenderer'
 import { VialRenderer } from '../extensions/peptide/VialRenderer'
 
@@ -45,6 +46,10 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
 
   if (renderer === 'ampoule') {
     return <AmpouleRenderer item={item} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
+  }
+
+  if (renderer === 'nasal_spray') {
+    return <NasalSprayRenderer item={item} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
   }
 
   return (

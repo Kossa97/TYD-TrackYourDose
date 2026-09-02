@@ -226,3 +226,47 @@ describe('StackStage — Tablette', () => {
     ).toBeUndefined()
   })
 })
+
+const nasalSprayItem: StackItem = {
+  ...vialItem,
+  id: 'oxytocin-spray',
+  display_name: 'Oxytocin',
+  category: 'peptide',
+  dosage_form: 'nasal_spray',
+  color_hex: '#7dd3fc',
+  ingredients: [{
+    ...vialItem.ingredients[0],
+    custom_name: 'Oxytocin',
+    amount_value: 24,
+    amount_unit: 'IU',
+    basis_unit: 'spray',
+  }],
+}
+
+describe('StackStage — Nasenspray', () => {
+  it('rendert das Nasenspray für Nasenspray-Einträge', () => {
+    expect(renderStage(nasalSprayItem)).toContain('data-stack-renderer="nasal_spray"')
+  })
+
+  it('zeigt den Kopf und ein Etikett mit Name und Wirkstoffmenge', () => {
+    const html = renderStage(nasalSprayItem)
+
+    expect(html).toContain('data-nasal-spray-detail="nozzle"')
+    expect(html).toContain('Oxytocin')
+    expect(html).toContain('24 IU / spray')
+  })
+
+  it('reicht keinen Füllstand an das Nasenspray durch', () => {
+    const source = readFileSync(new URL('../extensions/nasal-spray/NasalSprayRenderer.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('NasalSprayVisual')
+    expect(source).toContain('SloshProvider')
+    expect(source).not.toContain('<svg')
+    expect(source).not.toContain('fillPct')
+  })
+
+  it('lässt den generischen spray-Schlüssel im Textzustand', () => {
+    const sprayItem: StackItem = { ...nasalSprayItem, id: 'rachenspray', dosage_form: 'spray' }
+    expect(renderStage(sprayItem)).toContain('data-stack-renderer="unsupported"')
+  })
+})

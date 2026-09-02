@@ -1,5 +1,6 @@
 import { AMPOULE_SPEC } from '../extensions/ampoule/ampouleShape'
 import { CAPSULE_SPEC } from '../extensions/capsule/capsuleShape'
+import { NASAL_SPRAY_SPEC } from '../extensions/nasal-spray/nasalSprayShape'
 import { TABLET_SPEC } from '../extensions/tablet/tabletShape'
 import { VIAL_SPEC } from '../extensions/peptide/vialShape'
 import type { StageFormSpec } from '../stage/types'
@@ -11,7 +12,7 @@ export interface DosageFormDefinition {
   readonly suggestedUnits: readonly string[]
   readonly basisUnits: readonly string[]
   readonly capabilities: readonly DosageFormCapability[]
-  readonly stageRenderer?: 'vial' | 'ampoule' | 'capsule' | 'tablet'
+  readonly stageRenderer?: 'vial' | 'ampoule' | 'capsule' | 'tablet' | 'nasal_spray'
   // What the stage needs to know: where the liquid sits, whether the fill level
   // says anything, and — derived from the chamber — whether it wears our label.
   readonly stageForm?: StageFormSpec
@@ -26,7 +27,7 @@ export const DOSAGE_FORMS: readonly DosageFormDefinition[] = [
   { key: 'drops', labelKey: 'dosage_form_drops', suggestedUnits: ['mcg', 'mg', 'IU', 'ml'], basisUnits: ['drop', 'ml'], capabilities: ['liquid', 'concentration_based', 'inventory_capable'] },
   { key: 'liquid', labelKey: 'dosage_form_liquid', suggestedUnits: ['mcg', 'mg', 'g', 'IU', 'ml'], basisUnits: ['ml', 'portion'], capabilities: ['liquid', 'concentration_based', 'inventory_capable'] },
   { key: 'powder', labelKey: 'dosage_form_powder', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'portion'], capabilities: ['inventory_capable'] },
-  { key: 'nasal_spray', labelKey: 'dosage_form_nasal_spray', suggestedUnits: ['mcg', 'mg'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'] },
+  { key: 'nasal_spray', labelKey: 'dosage_form_nasal_spray', suggestedUnits: ['mcg', 'mg'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'], stageRenderer: 'nasal_spray', stageForm: NASAL_SPRAY_SPEC },
   { key: 'spray', labelKey: 'dosage_form_spray', suggestedUnits: ['mcg', 'mg', 'ml'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'] },
   { key: 'gel', labelKey: 'dosage_form_gel', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'application'], capabilities: ['inventory_capable'] },
   { key: 'patch', labelKey: 'dosage_form_patch', suggestedUnits: ['mcg', 'mg'], basisUnits: ['patch', 'hour'], capabilities: ['countable', 'inventory_capable'] },
