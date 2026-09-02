@@ -975,8 +975,8 @@
     "semantic_hash": "45a38b51cd13eca6ff8eea4e19b5ef7e"
   },
   "src/pages/__VialPreview.tsx": {
-    "mtime": 1788342514.1365397,
-    "ast_hash": "cf9b578bcd5643d2b636623c1a8443ed",
+    "mtime": 1788359770.9859583,
+    "ast_hash": "fcc9147d22c88f54f4ed09e57cd1ff29",
     "semantic_hash": ""
   },
   "src/pages/lab/AdminPanel.tsx": {
@@ -2370,13 +2370,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
-    "mtime": 1788341943.5225139,
-    "ast_hash": "b6ffeae1e6567b2f3fcdc32ce95f4c53",
+    "mtime": 1788359713.9876914,
+    "ast_hash": "9eeda4cf469a3426cf0937a36ee62d5d",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.tsx": {
-    "mtime": 1788341965.0901523,
-    "ast_hash": "968d966ed187c65e90ccad506facd5f8",
+    "mtime": 1788359734.4322164,
+    "ast_hash": "875061dfa807726ed3a48a4873864ce7",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.tsx": {
@@ -2435,13 +2435,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.test.ts": {
-    "mtime": 1788341943.5225139,
-    "ast_hash": "f52b6a388c6b00b25c7e8b5f72f2d519",
+    "mtime": 1788359713.9791234,
+    "ast_hash": "6d51d0edfc7575b620c20b25f78aa877",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.ts": {
-    "mtime": 1788341965.0891519,
-    "ast_hash": "d3c44fed9988823f7a5fc90a5a2e72e8",
+    "mtime": 1788359734.4201126,
+    "ast_hash": "e1869cfe24a8de89d959cd30025b0e33",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/duplicateFingerprint.test.ts": {
@@ -2992,6 +2992,41 @@
   "docs/superpowers/specs/2026-09-02-my-stack-nasenspray-buehnenform-design.md": {
     "mtime": 1788341221.0571432,
     "ast_hash": "9db0f432dff2e1260030e270d086dc65",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/tube/TubeRenderer.tsx": {
+    "mtime": 1788359723.166018,
+    "ast_hash": "3fdf5da8dc947430b3350a1c3bbd2812",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/tube/TubeVisual.test.ts": {
+    "mtime": 1788359602.1458275,
+    "ast_hash": "932cb586fc5567d32b62d9ba94c4ebdf",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/tube/TubeVisual.tsx": {
+    "mtime": 1788359658.6238303,
+    "ast_hash": "345f4903e8ce2597fbb464892db0bbf5",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/tube/tubeShape.test.ts": {
+    "mtime": 1788359515.244087,
+    "ast_hash": "2f03238a6fd052bc74f205395a4bde92",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/tube/tubeShape.ts": {
+    "mtime": 1788359558.5841954,
+    "ast_hash": "248f2791eee34ea0872db044f30f99ab",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-09-02-my-stack-tube-buehnenform.md": {
+    "mtime": 1788359602.1463337,
+    "ast_hash": "2f66ae7ffa05e22997331d66221ea05f",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-02-my-stack-tube-buehnenform-design.md": {
+    "mtime": 1788358737.1384459,
+    "ast_hash": "6edadc9c129aab3efda5ce79ab86d38a",
     "semantic_hash": ""
   }
 }

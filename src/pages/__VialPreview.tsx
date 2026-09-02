@@ -7,6 +7,7 @@ import { NasalSprayVisual } from '../features/my-stack/extensions/nasal-spray/Na
 import { TabletVisual } from '../features/my-stack/extensions/tablet/TabletVisual'
 import { TubeVisual } from '../features/my-stack/extensions/tube/TubeVisual'
 import { SloshProvider, useSloshEngine } from '../components/SloshContext'
+import type { StageLightHandle } from '../features/my-stack/stage/useStageLight'
 
 const PREVIEW_VIALS = [
   { name: 'BPC-157', amount: '5', unit: 'mg', fillPct: 72, color: '#06b6d4', size: 'large' as const },
@@ -150,6 +151,60 @@ export function VialPreview() {
     sloshEngine.pushImpulse((e.deltaY / 120) * 0.5)
   }
 
+  // Buehnenlicht wie in MyStackPage: das Karussell misst jede Kachel und
+  // schiebt Focus und Lichtversatz imperativ durch, damit beim Wischen kein
+  // React-Rendering laeuft. Ohne das bliebe die Vorschau die einzige Stelle,
+  // an der die Formen ihr wanderndes Licht nie zeigen.
+  const stageLightHandlesRef = useRef(new Map<number, StageLightHandle>())
+  const stageLightFrameRef = useRef<number | null>(null)
+
+  const updateStageLight = () => {
+    const rail = railRef.current
+    if (!rail) return
+
+    // Gemessen wird ueber Rechtecke, nicht ueber offsetLeft: das bezieht sich
+    // auf den naechsten positionierten Vorfahren, und diese Leiste ist keiner.
+    // MyStackPage darf offsetLeft benutzen, weil sein Karussell positioniert
+    // ist — hier laege jede Kachel sonst um einen festen Betrag daneben und
+    // die Normierung klemmte dauerhaft am Anschlag.
+    const railRect = rail.getBoundingClientRect()
+    const center = railRect.left + railRect.width / 2
+    const maxDistance = Math.max(1, railRect.width * 0.48)
+
+    // erst alles messen, dann schreiben — sonst verzahnen sich Layout-Lesungen
+    // mit den imperativen Attributschreibungen
+    const measured: Array<{ handle: StageLightHandle; normalized: number }> = []
+    for (const item of rail.querySelectorAll<HTMLElement>('[data-stage-index]')) {
+      const index = Number(item.dataset.stageIndex)
+      if (!Number.isFinite(index)) continue
+      const handle = stageLightHandlesRef.current.get(index)
+      if (!handle) continue
+
+      const itemRect = item.getBoundingClientRect()
+      const distance = itemRect.left + itemRect.width / 2 - center
+      measured.push({ handle, normalized: Math.max(-1, Math.min(1, distance / maxDistance)) })
+    }
+
+    for (const { handle, normalized } of measured) {
+      const focus = Math.max(0.22, 1 - Math.abs(normalized) * 0.78)
+      handle.setStageLight(focus, -normalized)
+    }
+  }
+
+  const scheduleStageLightUpdate = () => {
+    if (stageLightFrameRef.current !== null) return
+    stageLightFrameRef.current = window.requestAnimationFrame(() => {
+      stageLightFrameRef.current = null
+      updateStageLight()
+    })
+  }
+
+  const registerStageLight = (index: number) => (handle: StageLightHandle | null) => {
+    const handles = stageLightHandlesRef.current
+    if (handle) handles.set(index, handle)
+    else handles.delete(index)
+  }
+
   const handleScroll = (event: UIEvent<HTMLDivElement>) => {
     const scroller = event.currentTarget
     const now = event.timeStamp
@@ -162,6 +217,7 @@ export function VialPreview() {
 
     lastScrollLeftRef.current = scroller.scrollLeft
     lastScrollTimeRef.current = now
+    scheduleStageLightUpdate()
   }
 
   const previewFill = (fillPct: number, index: number) => {
@@ -284,12 +340,17 @@ export function VialPreview() {
           onWheel={handleWheel}
         >
           {MIXED_CAROUSEL.map((entry, index) => (
-            <div key={`${entry.kind}-${entry.name}`} className={`shrink-0 ${isDragging ? '' : 'snap-center'}`}>
+            <div
+              key={`${entry.kind}-${entry.name}`}
+              data-stage-index={index}
+              className={`shrink-0 ${isDragging ? '' : 'snap-center'}`}
+            >
               {entry.kind === 'tube' ? (
                 <TubeVisual
                   name={entry.name}
                   size="carousel"
                   isActive={index === activeIndex}
+                  stageLightRef={registerStageLight(index)}
                 />
               ) : entry.kind === 'nasal_spray' ? (
                 <NasalSprayVisual
@@ -299,6 +360,7 @@ export function VialPreview() {
                   color={entry.color}
                   size="carousel"
                   isActive={index === activeIndex}
+                  stageLightRef={registerStageLight(index)}
                 />
               ) : entry.kind === 'tablet' ? (
                 <TabletVisual
@@ -306,6 +368,7 @@ export function VialPreview() {
                   color={entry.color}
                   size="carousel"
                   isActive={index === activeIndex}
+                  stageLightRef={registerStageLight(index)}
                 />
               ) : entry.kind === 'capsule' ? (
                 <CapsuleVisual
@@ -313,6 +376,7 @@ export function VialPreview() {
                   color={entry.color}
                   size="carousel"
                   isActive={index === activeIndex}
+                  stageLightRef={registerStageLight(index)}
                 />
               ) : entry.kind === 'ampoule' ? (
                 <AmpouleVisual
@@ -322,6 +386,7 @@ export function VialPreview() {
                   color={entry.color}
                   size="carousel"
                   isActive={index === activeIndex}
+                  stageLightRef={registerStageLight(index)}
                 />
               ) : (
                 <PeptideVialVisual
@@ -332,6 +397,7 @@ export function VialPreview() {
                   color={entry.color}
                   size="carousel"
                   isActive={index === activeIndex}
+                  stageLightRef={registerStageLight(index)}
                 />
               )}
             </div>

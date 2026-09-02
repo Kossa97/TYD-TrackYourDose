@@ -315,5 +315,20 @@
   "313": "DoseUnitControl.tsx",
   "314": "StackStage.test.ts",
   "315": "i18nMerge.test.ts",
-  "316": "Dashboard.test.ts"
+  "316": "Dashboard.test.ts",
+  "317": "BlutwertePage.tsx",
+  "318": "My Stack: Tube als sechste Bühnenform",
+  "319": "TubeVisual.tsx",
+  "320": "MetricTooltip.tsx",
+  "321": "CycleBandLayer.tsx",
+  "322": "AdminPanel.tsx",
+  "323": "InjectionTrackerTabs.tsx",
+  "324": "chartWindow.ts",
+  "325": "PeptideLibrary.tsx",
+  "326": "Tagebuch.tsx",
+  "327": "File Structure",
+  "328": "Bewertungen.tsx",
+  "329": "imageResize.ts",
+  "330": "useFluidChartHover.ts",
+  "331": "ChartPointerContext.tsx"
 }
