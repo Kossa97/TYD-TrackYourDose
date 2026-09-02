@@ -305,10 +305,13 @@
   "303": "trackingDepthSchema.test.ts",
   "304": "metricDefaults.ts",
   "305": "SubstanceCatalogEntry",
+  "306": "Home",
+  "307": "hasTrackedQuantity",
   "308": "EscalationRow",
   "309": "liquidGeometry.ts",
   "310": "metricDefinitions.ts",
   "311": "File Structure",
   "312": "intakeConfirmation.ts",
+  "313": "DoseUnitControl.tsx",
   "315": "i18nMerge.test.ts"
 }
