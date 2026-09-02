@@ -57,6 +57,14 @@ describe('NasalSprayVisual', () => {
     expect(render({ size: 'mini' })).toContain('w-[20.6px]')
   })
 
+  it('spannt das Etikett ueber die volle Breite, wie bei der Ampulle', () => {
+    // Dieselben Randwerte wie AmpouleVisual: left-[4%] right-[4%] rounded-sm.
+    const html = render()
+    expect(html).toContain('left-[4%]')
+    expect(html).toContain('right-[4%]')
+    expect(html).not.toContain('inset-x-[6%]')
+  })
+
   it('traegt Name und Wirkstoffmenge auf dem Etikett', () => {
     const html = render()
     expect(html).toContain('Oxytocin')

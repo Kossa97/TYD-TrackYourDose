@@ -235,11 +235,15 @@ export function VialPreview() {
       <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
         Nasensprays — Kopf in Detailgröße
       </p>
-      <div className="mx-auto flex max-w-4xl flex-wrap items-end justify-center gap-10 pb-2">
-        {PREVIEW_SPRAYS.map(s => (
-          <NasalSprayVisual key={s.name} name={s.name} amount={s.amount} unit={s.unit} color={s.color} size="large" />
-        ))}
-      </div>
+      {/* Anders als Kapsel und Tablette hält das Nasenspray Flüssigkeit: ohne
+          Provider stünde sie in der Detailreihe still. */}
+      <SloshProvider engine={sloshEngine}>
+        <div className="mx-auto flex max-w-4xl flex-wrap items-end justify-center gap-10 pb-2">
+          {PREVIEW_SPRAYS.map(s => (
+            <NasalSprayVisual key={s.name} name={s.name} amount={s.amount} unit={s.unit} color={s.color} size="large" />
+          ))}
+        </div>
+      </SloshProvider>
 
       {/* The real thing: a mixed carousel narrow enough to actually swipe.
           Ampoules and vials share one ground line and one slosh engine. */}
