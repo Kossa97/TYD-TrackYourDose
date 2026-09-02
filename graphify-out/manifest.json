@@ -2930,13 +2930,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/tablet/TabletVisual.test.ts": {
-    "mtime": 1788338019.71141,
-    "ast_hash": "b3d4392ca14eff7e1c343da53a8ee6c7",
+    "mtime": 1788361758.8100162,
+    "ast_hash": "0ee1b1ca52e5e6ab6fcb4aa3626c6634",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/tablet/TabletVisual.tsx": {
-    "mtime": 1788337978.8369892,
-    "ast_hash": "e99442e53cf72edc86c1bb1f4b94f352",
+    "mtime": 1788361758.8100162,
+    "ast_hash": "7ca8a8cbcee4a52dfc5f50ea08c52b27",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/tablet/tabletShape.test.ts": {

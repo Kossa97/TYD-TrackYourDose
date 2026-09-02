@@ -134,6 +134,12 @@ export function TabletVisual({
           <filter id={`${uid}-soft`} x="-40%" y="-40%" width="180%" height="180%">
             <feGaussianBlur stdDeviation="3" />
           </filter>
+          {/* Der Lichtfleck wandert mit dem Licht bis cx 12 und ist 20 breit,
+              der Kreis auf seiner Hoehe aber nur von 6,4 bis 93,6 — ohne
+              diesen Clip malt er bis zu 14 Einheiten neben die Tablette. */}
+          <clipPath id={`${uid}-bodyClip`}>
+            <circle cx={TABLET_BODY.cx} cy={TABLET_BODY.cy} r={TABLET_BODY.r} />
+          </clipPath>
           {/* Der Kreis in objektbezogenen Einheiten beschneidet die
               HTML-Beschriftung, damit sie an der Rundung endet. */}
           <clipPath id={`${uid}-nameClip`} clipPathUnits="objectBoundingBox">
@@ -210,17 +216,19 @@ export function TabletVisual({
 
         {/* Der Lichtfleck bleibt ausserhalb der Drehung: eine Reflexion dreht
             sich nicht mit dem Koerper, sie kommt von der feststehenden Lampe. */}
-        <ellipse
-          ref={glintRef}
-          data-tablet-detail="glint"
-          cx={34 + visualLightOffset * 22}
-          cy="30"
-          rx="20"
-          ry="12"
-          fill="rgba(255,255,255,0.9)"
-          opacity={0.16 + visualFocus * 0.24}
-          filter={`url(#${uid}-soft)`}
-        />
+        <g clipPath={`url(#${uid}-bodyClip)`}>
+          <ellipse
+            ref={glintRef}
+            data-tablet-detail="glint"
+            cx={34 + visualLightOffset * 22}
+            cy="30"
+            rx="20"
+            ry="12"
+            fill="rgba(255,255,255,0.9)"
+            opacity={0.16 + visualFocus * 0.24}
+            filter={`url(#${uid}-soft)`}
+          />
+        </g>
         </g>
       </svg>
 

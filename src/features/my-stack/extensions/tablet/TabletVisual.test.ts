@@ -78,6 +78,15 @@ describe('TabletVisual', () => {
     expect(source).not.toContain('<text')
   })
 
+  it('beschneidet den Lichtfleck auf die Tablette', () => {
+    // Er wandert bis cx 12 bei einer Breite von 20; der Kreis ist auf seiner
+    // Hoehe nur von 6,4 bis 93,6 breit. Unbeschnitten malte er beim Wischen
+    // nach links bis zu 14 Einheiten neben die Tablette.
+    const source = readFileSync(new URL('./TabletVisual.tsx', import.meta.url), 'utf8')
+    const glanz = source.match(/bodyClip[\s\S]{0,300}?data-tablet-detail="glint"/)?.[0] ?? ''
+    expect(glanz).not.toBe('')
+  })
+
   it('rollt an: alles wandert, aber nur die Materialspuren drehen sich mit', () => {
     const html = render()
     expect(html).toContain('data-tablet-detail="roll"')
