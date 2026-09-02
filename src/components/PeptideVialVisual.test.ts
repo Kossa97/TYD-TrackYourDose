@@ -346,6 +346,13 @@ describe('PeptideVialVisual', () => {
     expect(text).toMatch(/liquidChamberClip`}>[\s\S]{0,80}VIAL_INNER_PATH/)
     expect(text).not.toContain('className="absolute inset-0 overflow-hidden"')
   })
+  test('clips the travelling sweep to the glass', () => {
+    // Das wandernde Licht muss auf die Form beschnitten sein. Bei der Tablette
+    // fehlte genau das: ihr Glanz malte beim Wischen bis zu 14 Einheiten
+    // daneben. Diese Zusicherung haelt den Clip hier fest.
+    expect(source()).toMatch(/shellClip[\s\S]{0,1200}?data-vial-detail="glass-sweep"/)
+  })
+
   test('draws the inner contour that gives the glass its wall thickness', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
       name: 'BPC-157',

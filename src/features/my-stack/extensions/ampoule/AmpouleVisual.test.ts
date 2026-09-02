@@ -33,6 +33,15 @@ describe('AmpouleVisual', () => {
     expect(html).toContain(`data-ampoule-detail="liquid-window" clip-path="url(#${innerClip})"`)
   })
 
+  it('beschneidet den wandernden Sweep auf das Glas', () => {
+    // Das wandernde Licht muss auf die Form beschnitten sein. Bei der Tablette
+    // fehlte genau das: ihr Glanz malte beim Wischen bis zu 14 Einheiten
+    // daneben. Diese Zusicherung haelt den Clip hier fest.
+    // Gegen das gerenderte HTML geprueft, wie alles andere in dieser Datei.
+    const html = render()
+    expect(html).toMatch(/clip-path="url\(#[^"]*outerClip\)"[\s\S]{0,500}?data-ampoule-detail="glass-sweep"/)
+  })
+
   it('leaves a glass floor under the liquid, shaped like the vial base', () => {
     // Frueher lag hier ein Punt: eine dunkle, glasfarbene Ellipse. Sie las
     // sich als Fremdkoerper statt als Boden und ist durch dasselbe Paar aus

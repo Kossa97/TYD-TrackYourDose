@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "src/components/PeptideVialVisual.test.ts": {
-    "mtime": 1788360988.3818386,
-    "ast_hash": "bb3565a0eea1e48d3dc65ab5adcc07aa",
+    "mtime": 1788362255.673759,
+    "ast_hash": "9961a74d3785dc3c9f4d046907193898",
     "semantic_hash": ""
   },
   "src/components/PeptideVialVisual.tsx": {
@@ -2785,8 +2785,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/ampoule/AmpouleVisual.test.ts": {
-    "mtime": 1788361483.6386173,
-    "ast_hash": "163790a03f47139d732b2ee2f1be0677",
+    "mtime": 1788362316.8910377,
+    "ast_hash": "81e09fdb16911738dcb56ee7e5787f2d",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/ampoule/AmpouleVisual.tsx": {
@@ -2890,7 +2890,7 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.test.ts": {
-    "mtime": 1788302015.8892357,
+    "mtime": 1788362255.6722476,
     "ast_hash": "77fc38cf37715eb62b5e347dc5e91520",
     "semantic_hash": ""
   },
