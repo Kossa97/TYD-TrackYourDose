@@ -2,6 +2,7 @@ import { AMPOULE_SPEC } from '../extensions/ampoule/ampouleShape'
 import { CAPSULE_SPEC } from '../extensions/capsule/capsuleShape'
 import { NASAL_SPRAY_SPEC } from '../extensions/nasal-spray/nasalSprayShape'
 import { TABLET_SPEC } from '../extensions/tablet/tabletShape'
+import { TUBE_SPEC } from '../extensions/tube/tubeShape'
 import { VIAL_SPEC } from '../extensions/peptide/vialShape'
 import type { StageFormSpec } from '../stage/types'
 import type { DosageFormCapability, DosageFormKey } from '../types'
@@ -12,7 +13,7 @@ export interface DosageFormDefinition {
   readonly suggestedUnits: readonly string[]
   readonly basisUnits: readonly string[]
   readonly capabilities: readonly DosageFormCapability[]
-  readonly stageRenderer?: 'vial' | 'ampoule' | 'capsule' | 'tablet' | 'nasal_spray'
+  readonly stageRenderer?: 'vial' | 'ampoule' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube'
   // What the stage needs to know: where the liquid sits, whether the fill level
   // says anything, and — derived from the chamber — whether it wears our label.
   readonly stageForm?: StageFormSpec
@@ -31,7 +32,7 @@ export const DOSAGE_FORMS: readonly DosageFormDefinition[] = [
   { key: 'spray', labelKey: 'dosage_form_spray', suggestedUnits: ['mcg', 'mg', 'ml'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'] },
   { key: 'gel', labelKey: 'dosage_form_gel', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'application'], capabilities: ['inventory_capable'] },
   { key: 'patch', labelKey: 'dosage_form_patch', suggestedUnits: ['mcg', 'mg'], basisUnits: ['patch', 'hour'], capabilities: ['countable', 'inventory_capable'] },
-  { key: 'tube', labelKey: 'dosage_form_tube', suggestedUnits: ['mg', 'g', 'ml'], basisUnits: ['g', 'ml', 'application'], capabilities: ['inventory_capable'] },
+  { key: 'tube', labelKey: 'dosage_form_tube', suggestedUnits: ['mg', 'g', 'ml'], basisUnits: ['g', 'ml', 'application'], capabilities: ['inventory_capable'], stageRenderer: 'tube', stageForm: TUBE_SPEC },
   { key: 'other', labelKey: 'dosage_form_other', suggestedUnits: ['mcg', 'mg', 'g', 'IU', 'ml'], basisUnits: ['unit', 'portion'], capabilities: [] },
 ] as const
 

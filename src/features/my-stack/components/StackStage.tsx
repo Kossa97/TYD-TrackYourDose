@@ -8,6 +8,7 @@ import { AmpouleRenderer } from '../extensions/ampoule/AmpouleRenderer'
 import { CapsuleRenderer } from '../extensions/capsule/CapsuleRenderer'
 import { NasalSprayRenderer } from '../extensions/nasal-spray/NasalSprayRenderer'
 import { TabletRenderer } from '../extensions/tablet/TabletRenderer'
+import { TubeRenderer } from '../extensions/tube/TubeRenderer'
 import { VialRenderer } from '../extensions/peptide/VialRenderer'
 
 // What every stage form understands. Anything beyond this — a fill level, a
@@ -50,6 +51,10 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
 
   if (renderer === 'nasal_spray') {
     return <NasalSprayRenderer item={item} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
+  }
+
+  if (renderer === 'tube') {
+    return <TubeRenderer item={item} {...visualProps} />
   }
 
   return (

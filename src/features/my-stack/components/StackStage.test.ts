@@ -270,3 +270,51 @@ describe('StackStage — Nasenspray', () => {
     expect(renderStage(sprayItem)).toContain('data-stack-renderer="unsupported"')
   })
 })
+
+const tubeItem: StackItem = {
+  ...vialItem,
+  id: 'diclofenac-tube',
+  display_name: 'Diclofenac',
+  category: 'medication',
+  dosage_form: 'tube',
+  color_hex: '#f97316',
+  ingredients: [{
+    ...vialItem.ingredients[0],
+    custom_name: 'Diclofenac',
+    amount_value: 10,
+    amount_unit: 'mg',
+    basis_unit: 'g',
+  }],
+}
+
+describe('StackStage — Tube', () => {
+  it('rendert die Tube für Tuben-Einträge', () => {
+    expect(renderStage(tubeItem)).toContain('data-stack-renderer="tube"')
+  })
+
+  it('zeigt Naht, Deckel und Namen, aber kein Etikettband', () => {
+    const html = renderStage(tubeItem)
+
+    expect(html).toContain('data-tube-detail="crimp"')
+    expect(html).toContain('data-tube-detail="cap"')
+    expect(html).toContain('Diclofenac')
+    expect(html).not.toContain('data-vial-detail="label-glass-wrap"')
+  })
+
+  it('reicht dem Adapter weder Farbe noch Füllstand noch Physik durch', () => {
+    const source = readFileSync(new URL('../extensions/tube/TubeRenderer.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('TubeVisual')
+    expect(source).not.toContain('<svg')
+    expect(source).not.toContain('SloshProvider')
+    expect(source).not.toContain('fillPct')
+    expect(source).not.toContain('color_hex')
+  })
+
+  it('lässt den gel-Schlüssel im Textzustand', () => {
+    // gel benennt einen Stoff, tube einen Behälter — ein Gel als Alutube zu
+    // zeichnen behauptet eine Verpackung, die die Daten nicht hergeben.
+    const gelItem: StackItem = { ...tubeItem, id: 'voltaren-gel', dosage_form: 'gel' }
+    expect(renderStage(gelItem)).toContain('data-stack-renderer="unsupported"')
+  })
+})
