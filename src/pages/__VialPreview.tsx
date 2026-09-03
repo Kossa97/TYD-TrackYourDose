@@ -62,11 +62,12 @@ const PREVIEW_PENS = [
   { name: 'Insulin glargin 300 Einheiten pro Milliliter', color: '#f0b357' },
 ]
 
+// Ohne Farbe: das Pflaster ist die einzige Form ohne color_hex.
 const PREVIEW_PATCHES = [
-  { name: 'Nikotinpflaster', color: '#7dd3fc' },
-  { name: 'Testosteron', color: '#f0b357' },
-  // bewusst zu lang: zeigt den waagerechten Durchlauf auf der Klebeflaeche
-  { name: 'Rivastigmin transdermal 9,5 mg pro 24 Stunden', color: '#a3e635' },
+  { name: 'Nikotinpflaster' },
+  { name: 'Testosteron' },
+  // bewusst zu lang: zeigt den waagerechten Durchlauf auf dem Wundkissen
+  { name: 'Rivastigmin transdermal 9,5 mg pro 24 Stunden' },
 ]
 
 // Mixed forms in one row, the way My Stack will show them.
@@ -351,11 +352,11 @@ export function VialPreview() {
       </div>
 
       <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
-        Pflaster — abgehobene Ecke in Detailgröße
+        Pflaster — Lochung und Wundkissen in Detailgröße
       </p>
       <div className="mx-auto flex max-w-4xl flex-wrap items-end justify-center gap-12 pb-2">
         {PREVIEW_PATCHES.map((p, i) => (
-          <PatchVisual key={p.name} name={p.name} color={p.color} size="large" lightOffset={i - 1} />
+          <PatchVisual key={p.name} name={p.name} size="large" lightOffset={i - 1} />
         ))}
       </div>
 

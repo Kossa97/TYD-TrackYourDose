@@ -5,46 +5,46 @@ import { describe, expect, it } from 'vitest'
 import { PatchVisual } from './PatchVisual'
 
 const render = (props: Partial<Parameters<typeof PatchVisual>[0]> = {}) =>
-  renderToStaticMarkup(createElement(PatchVisual, { name: 'Nikotinpflaster', color: '#7dd3fc', ...props }))
+  renderToStaticMarkup(createElement(PatchVisual, { name: 'Nikotinpflaster', ...props }))
 
 describe('PatchVisual', () => {
   it('meldet sich als Pflaster-Renderer', () => {
     expect(render()).toContain('data-patch-detail="root"')
   })
 
-  it('zeichnet Koerper, abgehobene Ecke und Farbstreifen', () => {
+  it('zeichnet Streifen, Lochung und Wundkissen', () => {
     const html = render()
     expect(html).toContain('data-patch-detail="body"')
-    expect(html).toContain('data-patch-detail="flap"')
-    expect(html).toContain('data-patch-detail="flap-shadow"')
-    expect(html).toContain('data-patch-detail="stripe"')
+    expect(html).toContain('data-patch-detail="dots"')
+    expect(html).toContain('data-patch-detail="pad"')
   })
 
-  it('faerbt nur den Streifen mit der Eintragsfarbe', () => {
-    const html = render({ color: '#a3e635' })
-    expect(html).toMatch(/data-patch-detail="stripe"[^>]*fill="#a3e635"/)
-    expect(html).not.toMatch(/data-patch-detail="body"[^>]*fill="#a3e635"/)
+  it('zeigt kein Farbfeld', () => {
+    // Ein Pflaster ist hautfarben; ein farbiges Feld darauf war der eine
+    // Fremdkoerper im Bild. Diese Form nimmt color_hex deshalb gar nicht an.
+    const html = render()
+    expect(html).not.toContain('data-patch-detail="stripe"')
+    const source = readFileSync(new URL('./PatchVisual.tsx', import.meta.url), 'utf8')
+    expect(source).not.toContain('color: string')
   })
 
-  it('beschneidet Schimmer und Laschenschatten auf den Koerper', () => {
-    // Beide wandern mit dem Licht; unbeschnitten malen sie neben das
+  it('beschneidet Lochung und Schimmer auf den Streifen', () => {
+    // Der Schimmer wandert mit dem Licht; unbeschnitten malt er neben das
     // Pflaster. Derselbe Fehler wie beim Tabletten-Glanz.
     const source = readFileSync(new URL('./PatchVisual.tsx', import.meta.url), 'utf8')
-    const gruppe = source.match(/bodyClip\)`\}>[\s\S]*?<\/g>/)?.[0] ?? ''
-    expect(gruppe).toContain('data-patch-detail="sheen"')
-    expect(gruppe).toContain('data-patch-detail="flap-shadow"')
+    const gruppe = source.match(/bodyClip\)`\}>[\s\S]*?data-patch-detail="sheen"/)?.[0] ?? ''
+    expect(gruppe).not.toBe('')
+    expect(gruppe).toContain('data-patch-detail="dots"')
   })
 
-  it('laesst Schimmer und Schatten mit dem Licht wandern', () => {
+  it('laesst den Schimmer mit dem Licht wandern', () => {
     expect(render({ lightOffset: 0 })).toMatch(/data-patch-detail="sheen"[^>]*translate\(0/)
-    expect(render({ lightOffset: 1 })).toMatch(/data-patch-detail="sheen"[^>]*translate\(26/)
-    expect(render({ lightOffset: -1 })).toMatch(/data-patch-detail="sheen"[^>]*translate\(-26/)
-    // Der Schatten wandert gegenlaeufig: er faellt von der Lichtquelle weg.
-    expect(render({ lightOffset: 1 })).toMatch(/data-patch-detail="flap-shadow"[^>]*translate\(-3/)
+    expect(render({ lightOffset: 1 })).toMatch(/data-patch-detail="sheen"[^>]*translate\(34/)
+    expect(render({ lightOffset: -1 })).toMatch(/data-patch-detail="sheen"[^>]*translate\(-34/)
   })
 
-  it('setzt den Namen waagerecht, nicht gedreht wie beim Pen', () => {
-    // Das Querformat gibt ihm die Breite, und ungedrehter Text bekommt die
+  it('setzt den Namen waagerecht auf das Kissen, nicht gedreht wie beim Pen', () => {
+    // Die Streifenform gibt ihm die Breite, und ungedrehter Text bekommt die
     // schaerfere Subpixel-Glaettung.
     const html = render()
     expect(html).toContain('data-patch-detail="name"')
@@ -62,11 +62,11 @@ describe('PatchVisual', () => {
   })
 
   it('haelt die im Spec festgelegten Groessen ein', () => {
-    expect(render({ size: 'large' })).toContain('h-[236.9px]')
-    expect(render({ size: 'carousel' })).toContain('h-[95.2px]')
-    expect(render({ size: 'carousel' })).toContain('sm:h-[121px]')
-    expect(render({ size: 'compact' })).toContain('h-[71.4px]')
-    expect(render({ size: 'mini' })).toContain('h-[38.9px]')
+    expect(render({ size: 'large' })).toContain('h-[109.5px]')
+    expect(render({ size: 'carousel' })).toContain('h-[44px]')
+    expect(render({ size: 'carousel' })).toContain('sm:h-[55.9px]')
+    expect(render({ size: 'compact' })).toContain('h-[33px]')
+    expect(render({ size: 'mini' })).toContain('h-[18px]')
   })
 
   it('bekommt weder Etikettband noch Fuellstand noch Schwappen', () => {

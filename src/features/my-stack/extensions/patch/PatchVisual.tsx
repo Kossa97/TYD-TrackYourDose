@@ -4,17 +4,15 @@ import { StageMarquee } from '../../stage/StageLabel'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
   PATCH_BODY,
-  PATCH_BODY_PATH,
-  PATCH_FLAP_PATH,
-  PATCH_FLAP_SHADOW_SHIFT,
+  PATCH_DOTS,
+  PATCH_DOT_R,
   PATCH_NAME_PCT,
+  PATCH_PAD,
   PATCH_SHEEN_SHIFT,
-  PATCH_STRIPE,
 } from './patchShape'
 
 export interface PatchVisualProps {
   name?: string | null
-  color: string
   size?: 'large' | 'compact' | 'carousel' | 'mini'
   className?: string
   isActive?: boolean
@@ -26,26 +24,25 @@ export interface PatchVisualProps {
 const clamp01 = (v: number) => (Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0)
 const clampOffset = (v: number) => (Number.isFinite(v) ? Math.max(-1, Math.min(1, v)) : 0)
 
-// Das Pflaster liegt quer und bekommt deshalb eine eigene Sprosse: die Hoehe
-// ist klein, die Breite folgt dem Verhaeltnis 208/132 = 1,576. Die Abstaende
+// Der Streifen liegt quer und bekommt eine eigene Sprosse: die Hoehe ist
+// klein, die Breite folgt dem Verhaeltnis 300/88 = 3,41. Die Abstaende
 // zwischen den Groessen sind dieselben wie bei den stehenden Formen.
 const SIZE_CLASS: Record<NonNullable<PatchVisualProps['size']>, string> = {
-  large: 'h-[236.9px] w-[373.3px]',
-  carousel: 'h-[95.2px] w-[150px] sm:h-[121px] sm:w-[190.6px]',
-  compact: 'h-[71.4px] w-[112.5px]',
-  mini: 'h-[38.9px] w-[61.3px]',
+  large: 'h-[109.5px] w-[373.3px]',
+  carousel: 'h-[44px] w-[150px] sm:h-[55.9px] sm:w-[190.6px]',
+  compact: 'h-[33px] w-[112.5px]',
+  mini: 'h-[18px] w-[61.3px]',
 }
 
 const NAME_CLASS: Record<NonNullable<PatchVisualProps['size']>, string> = {
-  large: 'text-lg leading-tight',
-  carousel: 'text-[8px] sm:text-[10px] leading-tight',
-  compact: 'text-[6px] leading-tight',
-  mini: 'text-[3.5px] leading-tight',
+  large: 'text-base leading-tight',
+  carousel: 'text-[6.5px] sm:text-[8px] leading-tight',
+  compact: 'text-[5px] leading-tight',
+  mini: 'text-[3px] leading-tight',
 }
 
 export function PatchVisual({
   name,
-  color,
   size = 'large',
   className = '',
   isActive = true,
@@ -60,18 +57,13 @@ export function PatchVisual({
 
   const rootRef = useRef<HTMLDivElement | null>(null)
   const sheenRef = useRef<SVGRectElement | null>(null)
-  const flapShadowRef = useRef<SVGPathElement | null>(null)
-  const bodyRef = useRef<SVGPathElement | null>(null)
+  const bodyRef = useRef<SVGRectElement | null>(null)
 
   const applyStageLight = useCallback((f: number, o: number) => {
     rootRef.current?.setAttribute('data-patch-focus', f.toFixed(2))
     rootRef.current?.setAttribute('data-patch-light-offset', o.toFixed(2))
     sheenRef.current?.setAttribute('transform', `translate(${(o * PATCH_SHEEN_SHIFT).toFixed(2)} 0)`)
-    sheenRef.current?.setAttribute('opacity', (0.06 + f * 0.2).toFixed(3))
-    flapShadowRef.current?.setAttribute(
-      'transform',
-      `translate(${(-o * PATCH_FLAP_SHADOW_SHIFT).toFixed(2)} 2)`,
-    )
+    sheenRef.current?.setAttribute('opacity', (0.05 + f * 0.16).toFixed(3))
     bodyRef.current?.setAttribute('opacity', (0.74 + f * 0.26).toFixed(3))
   }, [])
 
@@ -88,89 +80,95 @@ export function PatchVisual({
     >
       <svg
         className="absolute inset-0 h-full w-full overflow-visible"
-        viewBox="6 6 208 132"
+        viewBox="0 0 300 88"
         preserveAspectRatio="xMidYMid meet"
         aria-hidden="true"
       >
         <defs>
           <clipPath id={`${uid}-bodyClip`}>
-            <path d={PATCH_BODY_PATH} />
+            <rect
+              x={PATCH_BODY.x}
+              y={PATCH_BODY.y}
+              width={PATCH_BODY.width}
+              height={PATCH_BODY.height}
+              rx={PATCH_BODY.rx}
+            />
           </clipPath>
-          {/* Matte Klebeflaeche, kein Glas: ein weicher Verlauf statt Glanz. */}
-          <linearGradient id={`${uid}-face`} x1="0" y1="0" x2="0.3" y2="1">
-            <stop offset="0%" stopColor="#d8d1c2" />
-            <stop offset="52%" stopColor="#c6bfaf" />
-            <stop offset="100%" stopColor="#ada695" />
+          {/* Hautfarbenes Gewebe, matt: ein weicher Verlauf statt Glanz. */}
+          <linearGradient id={`${uid}-fabric`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f2c9a3" />
+            <stop offset="46%" stopColor="#e5b48a" />
+            <stop offset="100%" stopColor="#c9955f" />
           </linearGradient>
-          {/* Die Traegerfolie auf der Rueckseite der Lasche glaenzt dagegen. */}
-          <linearGradient id={`${uid}-liner`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#f2f5f8" />
-            <stop offset="46%" stopColor="#b9c2cc" />
-            <stop offset="100%" stopColor="#8d97a3" />
+          {/* Das Wundkissen ist heller und leicht kuehler als das Gewebe. */}
+          <linearGradient id={`${uid}-pad`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#fbfaf6" />
+            <stop offset="100%" stopColor="#e6e3da" />
           </linearGradient>
           <linearGradient id={`${uid}-sheen`} x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="rgba(255,255,255,0)" />
-            <stop offset="50%" stopColor="rgba(255,255,255,0.75)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,0.7)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
           </linearGradient>
-          <filter id={`${uid}-soft`} x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="3" />
-          </filter>
         </defs>
 
-        <path
+        <rect
           ref={bodyRef}
           data-patch-detail="body"
-          d={PATCH_BODY_PATH}
-          fill={`url(#${uid}-face)`}
+          x={PATCH_BODY.x}
+          y={PATCH_BODY.y}
+          width={PATCH_BODY.width}
+          height={PATCH_BODY.height}
+          rx={PATCH_BODY.rx}
+          fill={`url(#${uid}-fabric)`}
           opacity={0.74 + visualFocus * 0.26}
         />
 
         <g clipPath={`url(#${uid}-bodyClip)`}>
-          {/* Der Farbstreifen ist die einzige Stelle mit color_hex. */}
-          <rect
-            data-patch-detail="stripe"
-            x={PATCH_BODY.x}
-            y={PATCH_STRIPE.y}
-            width={PATCH_BODY.width}
-            height={PATCH_STRIPE.height}
-            fill={color}
-          />
+          {/* Die Lochung sitzt nur auf den Klebefluegeln. */}
+          <g data-patch-detail="dots" fill="rgba(255,255,255,0.82)">
+            {PATCH_DOTS.map(punkt => (
+              <circle key={`${punkt.x}-${punkt.y}`} cx={punkt.x} cy={punkt.y} r={PATCH_DOT_R} />
+            ))}
+          </g>
+
           {/* Der Schimmer wandert mit dem Licht und ist deshalb beschnitten. */}
           <rect
             ref={sheenRef}
             data-patch-detail="sheen"
-            x={PATCH_BODY.x + 30}
+            x={PATCH_BODY.x + 40}
             y={PATCH_BODY.y}
-            width="46"
+            width="54"
             height={PATCH_BODY.height}
             fill={`url(#${uid}-sheen)`}
-            opacity={0.06 + visualFocus * 0.2}
+            opacity={0.05 + visualFocus * 0.16}
             transform={`translate(${(visualLightOffset * PATCH_SHEEN_SHIFT).toFixed(2)} 0)`}
-          />
-          {/* Der Schatten, den die abgehobene Ecke auf das Pflaster wirft. */}
-          <path
-            ref={flapShadowRef}
-            data-patch-detail="flap-shadow"
-            d={PATCH_FLAP_PATH}
-            fill="rgba(0,0,0,0.42)"
-            filter={`url(#${uid}-soft)`}
-            transform={`translate(${(-visualLightOffset * PATCH_FLAP_SHADOW_SHIFT).toFixed(2)} 2)`}
           />
         </g>
 
-        <path data-patch-detail="flap" d={PATCH_FLAP_PATH} fill={`url(#${uid}-liner)`} />
-        <path
-          data-patch-detail="fold"
-          d={PATCH_FLAP_PATH}
-          fill="none"
-          stroke="rgba(0,0,0,0.28)"
-          strokeWidth="0.8"
+        {/* Schatten unter dem Kissen, damit es aufliegt statt aufgemalt zu sein. */}
+        <rect
+          x={PATCH_PAD.x}
+          y={PATCH_PAD.y + 1.5}
+          width={PATCH_PAD.width}
+          height={PATCH_PAD.height}
+          rx={PATCH_PAD.rx}
+          fill="rgba(120,80,40,0.35)"
         />
+        <rect
+          data-patch-detail="pad"
+          x={PATCH_PAD.x}
+          y={PATCH_PAD.y}
+          width={PATCH_PAD.width}
+          height={PATCH_PAD.height}
+          rx={PATCH_PAD.rx}
+          fill={`url(#${uid}-pad)`}
+        />
+
       </svg>
 
-      {/* Der Name steht waagerecht: das Querformat gibt ihm die Breite, und
-          ungedrehter Text bekommt vom Browser die schaerfere
+      {/* Der Name steht waagerecht auf dem Kissen: die Streifenform gibt ihm
+          die Breite, und ungedrehter Text bekommt vom Browser die schaerfere
           Subpixel-Glaettung. */}
       <div
         data-patch-detail="name"
@@ -182,7 +180,7 @@ export function PatchVisual({
           height: `${(PATCH_NAME_PCT.height * 100).toFixed(2)}%`,
         }}
       >
-        <StageMarquee className={`w-full ${NAME_CLASS[size]} font-bold text-[#2c313a] tracking-normal`}>
+        <StageMarquee className={`w-full ${NAME_CLASS[size]} font-bold text-[#3a3a34] tracking-normal`}>
           {patchName}
         </StageMarquee>
       </div>

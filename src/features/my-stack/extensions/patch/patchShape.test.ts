@@ -3,47 +3,70 @@ import { carriesLabel } from '../../stage/types'
 import {
   PATCH_ASPECT,
   PATCH_BODY,
-  PATCH_BODY_PATH,
-  PATCH_FLAP_PATH,
-  PATCH_FLAP_TIP,
-  PATCH_FOLD_A,
-  PATCH_FOLD_B,
+  PATCH_DOTS,
+  PATCH_DOT_R,
   PATCH_NAME_PCT,
   PATCH_NAME_ZONE,
+  PATCH_PAD,
   PATCH_SPEC,
-  PATCH_STRIPE,
   PATCH_VIEWBOX,
 } from './patchShape'
 
 describe('patchShape', () => {
-  it('liegt quer und bricht damit mit der Leiter der stehenden Formen', () => {
-    expect(PATCH_ASPECT).toBeGreaterThan(1)
+  it('ist ein Streifen mit echten Halbkreisen an den Enden', () => {
+    // Radius gleich halbe Hoehe: sonst waeren es nur abgerundete Ecken.
+    expect(PATCH_BODY.rx).toBe(PATCH_BODY.height / 2)
+    expect(PATCH_ASPECT).toBeGreaterThan(3)
     expect(PATCH_VIEWBOX.width).toBeGreaterThan(PATCH_VIEWBOX.height)
   })
 
-  it('spiegelt die abgehobene Ecke korrekt an der Falzlinie', () => {
-    // Die Lasche ist das Spiegelbild der weggeklappten Ecke. Fuer ein
-    // rechtwinklig-gleichschenkliges Dreieck ist das A + B - C.
-    const ecke = { x: PATCH_BODY.x + PATCH_BODY.width, y: PATCH_BODY.y }
-    expect(PATCH_FLAP_TIP.x).toBe(PATCH_FOLD_A.x + PATCH_FOLD_B.x - ecke.x)
-    expect(PATCH_FLAP_TIP.y).toBe(PATCH_FOLD_A.y + PATCH_FOLD_B.y - ecke.y)
-    // Und sie liegt auf dem Pflaster, nicht daneben.
-    expect(PATCH_FLAP_TIP.x).toBeGreaterThan(PATCH_BODY.x)
-    expect(PATCH_FLAP_TIP.y).toBeLessThan(PATCH_BODY.y + PATCH_BODY.height)
+  it('setzt das Wundkissen mittig auf den Streifen', () => {
+    expect(PATCH_PAD.x + PATCH_PAD.width / 2).toBe(PATCH_BODY.x + PATCH_BODY.width / 2)
+    expect(PATCH_PAD.y + PATCH_PAD.height / 2).toBe(PATCH_BODY.y + PATCH_BODY.height / 2)
+    // Und es bleibt zwischen den runden Enden.
+    expect(PATCH_PAD.x).toBeGreaterThan(PATCH_BODY.rx)
+    expect(PATCH_PAD.x + PATCH_PAD.width).toBeLessThan(PATCH_BODY.width - PATCH_BODY.rx)
   })
 
-  it('faehrt der Koerperumriss die Falzlinie statt der Ecke ab', () => {
-    // Die Ecke fehlt dem Koerper — sonst laege die Lasche auf vollem Material.
-    expect(PATCH_BODY_PATH).toContain(`L${PATCH_FOLD_A.x} ${PATCH_FOLD_A.y}`)
-    expect(PATCH_BODY_PATH).toContain(`L${PATCH_FOLD_B.x} ${PATCH_FOLD_B.y}`)
-    expect(PATCH_FLAP_PATH).toContain(`M${PATCH_FOLD_A.x} ${PATCH_FOLD_A.y}`)
+  it('haelt jedes Loch innerhalb des Umrisses und neben dem Kissen', () => {
+    expect(PATCH_DOTS.length).toBeGreaterThan(20)
+    const mitte = PATCH_BODY.height / 2
+    for (const punkt of PATCH_DOTS) {
+      const aufDemKissen =
+        punkt.x > PATCH_PAD.x &&
+        punkt.x < PATCH_PAD.x + PATCH_PAD.width &&
+        punkt.y > PATCH_PAD.y &&
+        punkt.y < PATCH_PAD.y + PATCH_PAD.height
+      expect(aufDemKissen, `Loch ${punkt.x}/${punkt.y} liegt auf dem Kissen`).toBe(false)
+
+      // In den Halbkreisen an den Enden zaehlt der Abstand zur Kappenmitte.
+      if (punkt.x < PATCH_BODY.rx) {
+        const abstand = Math.hypot(punkt.x - PATCH_BODY.rx, punkt.y - mitte)
+        expect(abstand + PATCH_DOT_R, `Loch ${punkt.x}/${punkt.y} ragt links heraus`)
+          .toBeLessThan(PATCH_BODY.rx)
+      }
+      if (punkt.x > PATCH_BODY.width - PATCH_BODY.rx) {
+        const abstand = Math.hypot(punkt.x - (PATCH_BODY.width - PATCH_BODY.rx), punkt.y - mitte)
+        expect(abstand + PATCH_DOT_R, `Loch ${punkt.x}/${punkt.y} ragt rechts heraus`)
+          .toBeLessThan(PATCH_BODY.rx)
+      }
+    }
   })
 
-  it('haelt den Namen frei von Falz und Farbstreifen', () => {
-    expect(PATCH_NAME_ZONE.top).toBeGreaterThan(PATCH_FOLD_B.y)
-    expect(PATCH_NAME_ZONE.bottom).toBeLessThan(PATCH_STRIPE.y)
-    expect(PATCH_NAME_ZONE.left).toBeGreaterThan(PATCH_BODY.x)
-    expect(PATCH_NAME_ZONE.right).toBeLessThan(PATCH_BODY.x + PATCH_BODY.width)
+  it('versetzt die Reihen gegeneinander', () => {
+    // Genau untereinander saehe nach Raster aus, nicht nach Lochung.
+    const reihen = [...new Set(PATCH_DOTS.map(p => p.y))].sort((a, b) => a - b)
+    expect(reihen.length).toBeGreaterThan(2)
+    const erste = PATCH_DOTS.filter(p => p.y === reihen[0]).map(p => p.x)
+    const zweite = PATCH_DOTS.filter(p => p.y === reihen[1]).map(p => p.x)
+    expect(erste[0]).not.toBe(zweite[0])
+  })
+
+  it('legt den Namen auf das Kissen', () => {
+    expect(PATCH_NAME_ZONE.left).toBeGreaterThanOrEqual(PATCH_PAD.x)
+    expect(PATCH_NAME_ZONE.right).toBeLessThanOrEqual(PATCH_PAD.x + PATCH_PAD.width)
+    expect(PATCH_NAME_ZONE.top).toBeGreaterThanOrEqual(PATCH_PAD.y)
+    expect(PATCH_NAME_ZONE.bottom).toBeLessThanOrEqual(PATCH_PAD.y + PATCH_PAD.height)
   })
 
   it('rechnet die Namenszone in Prozent der viewBox um', () => {
@@ -51,17 +74,8 @@ describe('patchShape', () => {
       (PATCH_NAME_ZONE.left - PATCH_VIEWBOX.x) / PATCH_VIEWBOX.width,
       6,
     )
-    expect(PATCH_NAME_PCT.width).toBeCloseTo(
-      (PATCH_NAME_ZONE.right - PATCH_NAME_ZONE.left) / PATCH_VIEWBOX.width,
-      6,
-    )
-    // Alle vier Werte bleiben innerhalb der Zeichenflaeche.
     expect(PATCH_NAME_PCT.left + PATCH_NAME_PCT.width).toBeLessThanOrEqual(1)
     expect(PATCH_NAME_PCT.top + PATCH_NAME_PCT.height).toBeLessThanOrEqual(1)
-  })
-
-  it('legt den Farbstreifen an den unteren Rand', () => {
-    expect(PATCH_STRIPE.y + PATCH_STRIPE.height).toBe(PATCH_BODY.y + PATCH_BODY.height)
   })
 
   it('hat keine Kammer und deshalb weder Etikett noch Fuellstand', () => {

@@ -14,15 +14,12 @@ export interface PatchRendererProps {
 }
 
 // Kein Slosh-Provider: ein Pflaster enthält keine sichtbare Flüssigkeit.
-// Die Eintragsfarbe geht an den Streifen am unteren Rand.
+// Und keine Eintragsfarbe: ein Pflaster ist hautfarben, ein Farbfeld darauf
+// wäre der einzige Fremdkörper im Bild. Diese Form zeigt color_hex nicht.
 export function PatchRenderer({ item, ...visualProps }: PatchRendererProps) {
   return (
     <div data-stack-renderer="patch">
-      <PatchVisual
-        name={item.display_name}
-        color={item.color_hex ?? '#64748b'}
-        {...visualProps}
-      />
+      <PatchVisual name={item.display_name} {...visualProps} />
     </div>
   )
 }

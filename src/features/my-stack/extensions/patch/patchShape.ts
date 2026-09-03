@@ -1,56 +1,39 @@
 import type { StageFormSpec } from '../../stage/types'
 
-// Querformat: das Pflaster ist breit statt hoch und bricht damit bewusst mit
-// der Größenleiter der stehenden Formen. Die viewBox ist auf die
-// Objektgrenzen beschnitten.
-export const PATCH_VIEWBOX = { x: 6, y: 6, width: 208, height: 132 } as const
+// Streifen mit ganz runden Enden — der Radius ist die halbe Höhe, damit die
+// Enden echte Halbkreise sind und keine abgerundeten Ecken. Die viewBox ist
+// auf die Objektgrenzen beschnitten.
+export const PATCH_VIEWBOX = { x: 0, y: 0, width: 300, height: 88 } as const
 export const PATCH_ASPECT = PATCH_VIEWBOX.width / PATCH_VIEWBOX.height
 
-export const PATCH_BODY = { x: 6, y: 6, width: 208, height: 132, rx: 16 } as const
-
-const RIGHT = PATCH_BODY.x + PATCH_BODY.width
-const BOTTOM = PATCH_BODY.y + PATCH_BODY.height
-
-// Die abgehobene Ecke sitzt oben rechts: erst sie macht das Pflaster auf einen
-// Blick als solches erkennbar. Die Falzlinie läuft unter 45 Grad von A nach B,
-// die Ecke dahinter fehlt dem Körper und liegt als Lasche gespiegelt auf ihm.
-// Für ein rechtwinklig-gleichschenkliges Dreieck ist das Spiegelbild der
-// rechtwinkligen Ecke an der Hypotenuse genau A + B - C.
-export const PATCH_FOLD = 56
-export const PATCH_FOLD_A = { x: RIGHT - PATCH_FOLD, y: PATCH_BODY.y } as const
-export const PATCH_FOLD_B = { x: RIGHT, y: PATCH_BODY.y + PATCH_FOLD } as const
-export const PATCH_FLAP_TIP = {
-  x: PATCH_FOLD_A.x + PATCH_FOLD_B.x - RIGHT,
-  y: PATCH_FOLD_A.y + PATCH_FOLD_B.y - PATCH_BODY.y,
+export const PATCH_BODY = {
+  x: 0,
+  y: 0,
+  width: 300,
+  height: 88,
+  rx: 44,
 } as const
 
-export const PATCH_BODY_PATH =
-  `M${PATCH_BODY.x + PATCH_BODY.rx} ${PATCH_BODY.y} ` +
-  `L${PATCH_FOLD_A.x} ${PATCH_FOLD_A.y} ` +
-  `L${PATCH_FOLD_B.x} ${PATCH_FOLD_B.y} ` +
-  `L${RIGHT} ${BOTTOM - PATCH_BODY.rx} ` +
-  `Q${RIGHT} ${BOTTOM} ${RIGHT - PATCH_BODY.rx} ${BOTTOM} ` +
-  `L${PATCH_BODY.x + PATCH_BODY.rx} ${BOTTOM} ` +
-  `Q${PATCH_BODY.x} ${BOTTOM} ${PATCH_BODY.x} ${BOTTOM - PATCH_BODY.rx} ` +
-  `L${PATCH_BODY.x} ${PATCH_BODY.y + PATCH_BODY.rx} ` +
-  `Q${PATCH_BODY.x} ${PATCH_BODY.y} ${PATCH_BODY.x + PATCH_BODY.rx} ${PATCH_BODY.y} Z`
+// Das Wundkissen sitzt mittig und ist die Fläche, auf der der Name steht —
+// dieselbe Rolle wie der Bildschirm beim Pen.
+const PAD_WIDTH = 104
+const PAD_HEIGHT = 54
+export const PATCH_PAD = {
+  x: (PATCH_BODY.width - PAD_WIDTH) / 2,
+  y: (PATCH_BODY.height - PAD_HEIGHT) / 2,
+  width: PAD_WIDTH,
+  height: PAD_HEIGHT,
+  rx: 5,
+} as const
 
-export const PATCH_FLAP_PATH =
-  `M${PATCH_FOLD_A.x} ${PATCH_FOLD_A.y} ` +
-  `L${PATCH_FOLD_B.x} ${PATCH_FOLD_B.y} ` +
-  `L${PATCH_FLAP_TIP.x} ${PATCH_FLAP_TIP.y} Z`
-
-// Der Farbstreifen am unteren Rand ist die einzige Stelle, an der color_hex
-// sichtbar wird — wie der Farbring beim Pen.
-export const PATCH_STRIPE = { y: BOTTOM - 14, height: 14 } as const
-
-// Der Name steht waagerecht unterhalb des Falzes. Anders als beim Pen muss er
-// nicht gedreht werden, das Querformat gibt ihm die Breite dafür.
+// Bewusst ohne Farbfeld: ein Pflaster ist hautfarben, und ein farbiger Balken
+// darauf war der eine Fremdkoerper im Bild. Damit hat color_hex auf dieser
+// Form keinen Platz — sie ist die einzige, die ohne auskommt.
 export const PATCH_NAME_ZONE = {
-  top: PATCH_FOLD_B.y + 4,
-  bottom: PATCH_STRIPE.y - 6,
-  left: PATCH_BODY.x + 14,
-  right: RIGHT - 14,
+  left: PATCH_PAD.x + 6,
+  right: PATCH_PAD.x + PATCH_PAD.width - 6,
+  top: PATCH_PAD.y + 5,
+  bottom: PATCH_PAD.y + PATCH_PAD.height - 5,
 } as const
 
 export const PATCH_NAME_PCT = {
@@ -60,9 +43,43 @@ export const PATCH_NAME_PCT = {
   height: (PATCH_NAME_ZONE.bottom - PATCH_NAME_ZONE.top) / PATCH_VIEWBOX.height,
 } as const
 
-// Wie weit der matte Schimmer und der Laschenschatten beim Wischen wandern.
-export const PATCH_SHEEN_SHIFT = 26
-export const PATCH_FLAP_SHADOW_SHIFT = 3
+// Die Lochung. Sie wird gerechnet statt gezeichnet: versetzte Reihen, und
+// jedes Loch, das auf dem Kissen oder jenseits der runden Enden läge, fällt
+// heraus. Ohne die zweite Prüfung säßen Löcher außerhalb des Umrisses.
+export const PATCH_DOT_R = 2.2
+const DOT_MARGIN = 6
+const DOT_ROWS = [18, 35, 53, 70]
+const DOT_STEP = 16
+
+export const PATCH_DOTS: readonly { x: number; y: number }[] = DOT_ROWS.flatMap((y, reihe) => {
+  const punkte: { x: number; y: number }[] = []
+  for (let x = 12 + (reihe % 2) * (DOT_STEP / 2); x <= PATCH_BODY.width - 12; x += DOT_STEP) {
+    const aufDemKissen =
+      x > PATCH_PAD.x - DOT_MARGIN &&
+      x < PATCH_PAD.x + PATCH_PAD.width + DOT_MARGIN &&
+      y > PATCH_PAD.y - DOT_MARGIN &&
+      y < PATCH_PAD.y + PATCH_PAD.height + DOT_MARGIN
+    if (aufDemKissen) continue
+
+    // In den Halbkreisen an den Enden zählt der Abstand zur Kappenmitte.
+    const kappe =
+      x < PATCH_BODY.rx
+        ? PATCH_BODY.rx
+        : x > PATCH_BODY.width - PATCH_BODY.rx
+          ? PATCH_BODY.width - PATCH_BODY.rx
+          : null
+    if (kappe !== null) {
+      const abstand = Math.hypot(x - kappe, y - PATCH_BODY.height / 2)
+      if (abstand > PATCH_BODY.rx - DOT_MARGIN) continue
+    }
+
+    punkte.push({ x, y })
+  }
+  return punkte
+})
+
+// Wie weit der Schimmer beim Wischen wandert.
+export const PATCH_SHEEN_SHIFT = 34
 
 export const PATCH_SPEC: StageFormSpec = {
   viewBox: PATCH_VIEWBOX,

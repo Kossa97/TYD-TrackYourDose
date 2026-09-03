@@ -975,8 +975,8 @@
     "semantic_hash": "45a38b51cd13eca6ff8eea4e19b5ef7e"
   },
   "src/pages/__VialPreview.tsx": {
-    "mtime": 1788476508.0463123,
-    "ast_hash": "92a76ded4bec3c553920318a422a9032",
+    "mtime": 1788477151.546275,
+    "ast_hash": "b771693d140b14ce973eacad2e51242b",
     "semantic_hash": ""
   },
   "src/pages/lab/AdminPanel.tsx": {
@@ -3070,28 +3070,28 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/patch/PatchRenderer.tsx": {
-    "mtime": 1788476300.5963297,
-    "ast_hash": "91f9b0b64bc77203635444def6c47e36",
+    "mtime": 1788477084.1045883,
+    "ast_hash": "1c1d1e0fa769f77e4dabf739cbf70f27",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/patch/PatchVisual.test.ts": {
-    "mtime": 1788476585.4701502,
-    "ast_hash": "502396bd814ca3d25a86a0049870a07c",
+    "mtime": 1788477141.1469772,
+    "ast_hash": "4ac4f89b22d451a46421712cc8636628",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/patch/PatchVisual.tsx": {
-    "mtime": 1788476295.4342537,
-    "ast_hash": "498e5c3e596cddd38f73e32dca984348",
+    "mtime": 1788477084.1045883,
+    "ast_hash": "f4d03ab1760e548bdd7bb9b8ef5b53a8",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/patch/patchShape.test.ts": {
-    "mtime": 1788476564.6409864,
-    "ast_hash": "67d50ee696f9fe211e52f30fd425738e",
+    "mtime": 1788477121.9831161,
+    "ast_hash": "ef00dc06046d30084157272540133018",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/patch/patchShape.ts": {
-    "mtime": 1788476265.3759525,
-    "ast_hash": "9102be2b93cb5c4d98ed1bc93088cd59",
+    "mtime": 1788477071.792894,
+    "ast_hash": "0b8227aa0d4dd94b85862ada8f01ebb0",
     "semantic_hash": ""
   }
 }
