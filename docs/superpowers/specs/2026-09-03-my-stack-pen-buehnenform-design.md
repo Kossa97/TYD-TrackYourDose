@@ -79,8 +79,8 @@ nicht** — es kann nichts schwappen.
 ### Warum die Schrift längs läuft
 
 Quer stünden dem Pen rund 28 px Laufweite zur Verfügung, weniger als jeder
-anderen Form. Längs sind es 121,6 px, mehr als doppelt so viel wie bei der
-bisher großzügigsten. Ein gedrehter
+anderen Form. Längs über dem Dosisfenster sind es 71,0 px — immer noch mehr als
+bei jeder anderen Form quer, aber kein Vielfaches mehr. Ein gedrehter
 Name nutzt genau die Achse, an der diese Form reich ist — und echte Pens sind so
 bedruckt.
 
@@ -139,7 +139,14 @@ damit die Umrissbreite und das Seitenverhältnis.
 ### Beschriftung
 
 Der Name steht längs auf dem Gehäusekörper, um 90 Grad gegen den Uhrzeigersinn
-gedreht, mittig zwischen Kappe und Knopf. Weiß, mit Schattenwurf, in denselben
+gedreht, **mittig über dem Dosisfenster** — die Zone reicht von der Unterkante
+des Farbrings bis zur Oberkante des Fensters, 90 von 300 Einheiten.
+
+Das kostet Laufweite: **71,0 px** bei Karussellgröße statt 121,6 über den ganzen
+Körper. Es bleibt weiterhin mehr als bei jeder anderen Form quer (bestes
+Nasenspray: 50,5 px), aber der Vorsprung ist deutlich kleiner. Am
+Mobilbreakpoint gemessen passt der längste Testname mit **exakt 0 px Reserve**
+gerade noch ohne Durchlauf. Weiß, mit Schattenwurf, in denselben
 Klassen wie bei allen anderen Formen.
 
 **Als HTML, nicht als SVG-Text** — dieselbe Lehre wie bei der Kapsel, deren
@@ -220,7 +227,7 @@ nimmt die Form auf.
 - Aufrecht, Kappe oben, stehend auf dem Dosierknopf.
 - Kein Kartuschenfenster, keine Flüssigkeit, kein Etikettband, keine Prozentzeile.
 - Dosisfenster zeigt eine 0.
-- Name längs, um 90 Grad gedreht, läuft bei Überlänge senkrecht durch.
+- Name längs, um 90 Grad gedreht, **über** dem Dosisfenster; läuft bei Überlänge senkrecht durch.
 - Farbring unter der Kappe in `color_hex`; Gehäuse neutral grau.
 - Der Dosierknopf ist die breiteste Stelle und bestimmt den Umriss.
 - Seitenverhältnis 0,130 auf jeder Stufe; Karussellhöhe 236,8 px, ab `sm` 300,9 px.
