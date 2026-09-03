@@ -1,0 +1,83 @@
+import { describe, expect, it } from 'vitest'
+import { carriesLabel } from '../../stage/types'
+import {
+  PEN_ASPECT,
+  PEN_BODY,
+  PEN_DOSE_TEXT,
+  PEN_DOSE_WINDOW,
+  PEN_DOSE_WINDOW_PCT,
+  PEN_KNOB,
+  PEN_NAME_BAND_PCT,
+  PEN_NAME_RUN_PCT,
+  PEN_NAME_TOP_PCT,
+  PEN_RING,
+  PEN_SPEC,
+  PEN_VIEWBOX,
+} from './penShape'
+
+describe('penShape', () => {
+  it('beschneidet die viewBox auf die Objektgrenzen', () => {
+    expect(PEN_SPEC.viewBox).toEqual({ x: 0.5, y: 6, width: 39, height: 300 })
+  })
+
+  it('trifft die echten Proportionen eines Pens', () => {
+    // 20 x 155 mm ergibt 0,129; die gezeichnete Form 39 : 300 = 0,130.
+    expect(PEN_ASPECT).toBeCloseTo(PEN_VIEWBOX.width / PEN_VIEWBOX.height, 6)
+    expect(PEN_ASPECT).toBeCloseTo(20 / 155, 2)
+  })
+
+  it('macht den Dosierknopf zur breitesten Stelle', () => {
+    // Nicht der Koerper: der Knopf bestimmt Umriss und Seitenverhaeltnis.
+    expect(PEN_KNOB.width).toBe(PEN_VIEWBOX.width)
+    expect(PEN_KNOB.width).toBeGreaterThan(PEN_BODY.width)
+  })
+
+  it('setzt den Farbring an den oberen Rand des Koerpers', () => {
+    expect(PEN_RING.y).toBe(PEN_BODY.y)
+    expect(PEN_RING.width).toBe(PEN_BODY.width)
+    expect(PEN_RING.height).toBeLessThan(PEN_BODY.height / 8)
+  })
+
+  it('legt das Dosisfenster in den Koerper, nicht in den Knopf', () => {
+    expect(PEN_DOSE_WINDOW.y).toBeGreaterThan(PEN_BODY.y)
+    expect(PEN_DOSE_WINDOW.y + PEN_DOSE_WINDOW.height).toBeLessThan(PEN_KNOB.y)
+    expect(PEN_DOSE_WINDOW.x).toBeGreaterThan(PEN_BODY.x)
+    expect(PEN_DOSE_WINDOW.x + PEN_DOSE_WINDOW.width).toBeLessThan(PEN_BODY.x + PEN_BODY.width)
+  })
+
+  it('zeigt im Dosisfenster den Ruhezustand, keine erfundene Dosis', () => {
+    expect(PEN_DOSE_TEXT).toBe('0')
+  })
+
+  it('rechnet das Dosisfenster in Prozent der viewBox um', () => {
+    expect(PEN_DOSE_WINDOW_PCT.left).toBeCloseTo((PEN_DOSE_WINDOW.x - PEN_VIEWBOX.x) / PEN_VIEWBOX.width, 6)
+    expect(PEN_DOSE_WINDOW_PCT.top).toBeCloseTo((PEN_DOSE_WINDOW.y - PEN_VIEWBOX.y) / PEN_VIEWBOX.height, 6)
+  })
+
+  it('setzt den Namen mittig zwischen Kappe und Knopf', () => {
+    const mitte = PEN_BODY.y + PEN_BODY.height / 2
+    expect(PEN_NAME_TOP_PCT).toBeCloseTo((mitte - PEN_VIEWBOX.y) / PEN_VIEWBOX.height, 6)
+  })
+
+  it('rechnet die gedrehte Huelle auf die jeweils passende Achse um', () => {
+    // Die Huelle wird um 90 Grad gedreht: ihre Breite ist die Laufstrecke am
+    // Koerper (eine Hoehe), ihre Hoehe die Koerperbreite (eine Breite). In CSS
+    // loesen Prozente aber immer gegen die eigene Achse auf. Weil das
+    // Seitenverhaeltnis fest ist, laesst sich das ineinander umrechnen — genau
+    // das prueft dieser Test, indem er zurueckrechnet.
+    expect(PEN_NAME_RUN_PCT * PEN_ASPECT).toBeCloseTo(PEN_BODY.height / PEN_VIEWBOX.height, 6)
+    expect(PEN_NAME_BAND_PCT / PEN_ASPECT).toBeCloseTo(PEN_BODY.width / PEN_VIEWBOX.width, 6)
+  })
+
+  it('gibt dem Namen laengs mehr Platz als jeder anderen Form quer', () => {
+    // Laengs rund 121,6 px bei Karussellgroesse, quer waeren es 28.
+    const laufstreckePx = (PEN_BODY.height / PEN_VIEWBOX.height) * 236.8
+    expect(laufstreckePx).toBeGreaterThan(100)
+  })
+
+  it('hat keine Kammer und deshalb weder Etikett noch Fuellstand', () => {
+    expect(PEN_SPEC.chamber).toBeNull()
+    expect(carriesLabel(PEN_SPEC)).toBe(false)
+    expect(PEN_SPEC.hasMeaningfulFill).toBe(false)
+  })
+})
