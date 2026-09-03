@@ -108,6 +108,15 @@ describe('PenVisual', () => {
     expect(render({ lightOffset: -1 })).toMatch(/data-pen-detail="screen-glint"[^>]*translate\(-9/)
   })
 
+  it('verzichtet auf Weichzeichner und fetteste Schnitte im Bildschirm', () => {
+    // Gedrehter Text bekommt nur graue Kantenglaettung; ein Schein-Filter und
+    // Staerke 900 lassen ihn bei dieser Groesse zulaufen.
+    const html = render()
+    expect(html).toMatch(/data-pen-detail="name"[\s\S]{0,400}?font-bold/)
+    expect(html).not.toMatch(/data-pen-detail="name"[\s\S]{0,400}?drop-shadow/)
+    expect(html).not.toMatch(/data-pen-detail="name"[\s\S]{0,400}?font-black/)
+  })
+
   it('schreibt Name und Ziffer als HTML, nicht als SVG-Text', () => {
     const source = readFileSync(new URL('./PenVisual.tsx', import.meta.url), 'utf8')
     expect(source).not.toContain('<text')

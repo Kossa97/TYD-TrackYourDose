@@ -343,6 +343,10 @@ export function PenVisual({
           arbeitet der bestehende waagerechte StageMarquee unveraendert weiter —
           so bleibt der geteilte Baustein fuer die sechs anderen Formen
           unangetastet. */}
+      {/* Kein Weichzeichner und Staerke 700 statt 900: die Huelle ist um 90
+          Grad gedreht, und gedrehter Text bekommt vom Browser nur graue
+          Kantenglaettung statt Subpixel-Glaettung. Ein Schein-Filter und
+          fette Schnitte lassen ihn dann zulaufen. */}
       <div
         data-pen-detail="name"
         className="pointer-events-none absolute flex items-center overflow-hidden text-center"
@@ -354,7 +358,7 @@ export function PenVisual({
           transform: 'translate(-50%, -50%) rotate(-90deg)',
         }}
       >
-        <StageMarquee className={`w-full ${NAME_CLASS[size]} font-black text-[#bfe6ff] tracking-normal drop-shadow-[0_0_2px_rgba(140,205,255,0.45)]`}>
+        <StageMarquee className={`w-full ${NAME_CLASS[size]} font-bold text-[#bfe6ff] tracking-normal`}>
           {penName}
         </StageMarquee>
       </div>
