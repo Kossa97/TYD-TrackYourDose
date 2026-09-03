@@ -7,6 +7,10 @@ import { PatchVisual } from './PatchVisual'
 const render = (props: Partial<Parameters<typeof PatchVisual>[0]> = {}) =>
   renderToStaticMarkup(createElement(PatchVisual, { name: 'Nikotinpflaster', ...props }))
 
+// useId erzeugt bei jedem Rendern eine andere Kennung; fuer die Clip-Namen
+// zaehlt nur der Teil dahinter.
+const uidFrei = (html: string) => html.match(/id="([^"]*?)bodyClip"/)?.[1] ?? ''
+
 describe('PatchVisual', () => {
   it('meldet sich als Pflaster-Renderer', () => {
     expect(render()).toContain('data-patch-detail="root"')
@@ -28,13 +32,21 @@ describe('PatchVisual', () => {
     expect(source).not.toContain('color: string')
   })
 
-  it('beschneidet Lochung und Schimmer auf den Streifen', () => {
+  it('beschneidet den Schimmer auf den Streifen', () => {
     // Der Schimmer wandert mit dem Licht; unbeschnitten malt er neben das
     // Pflaster. Derselbe Fehler wie beim Tabletten-Glanz.
     const source = readFileSync(new URL('./PatchVisual.tsx', import.meta.url), 'utf8')
     const gruppe = source.match(/bodyClip\)`\}>[\s\S]*?data-patch-detail="sheen"/)?.[0] ?? ''
     expect(gruppe).not.toBe('')
-    expect(gruppe).toContain('data-patch-detail="dots"')
+  })
+
+  it('haengt die Lochung an die Abschnitte, nicht an den ganzen Streifen', () => {
+    // Sonst blieben die Loecher stehen, waehrend sich die Enden biegen.
+    const source = readFileSync(new URL('./PatchVisual.tsx', import.meta.url), 'utf8')
+    const links = source.match(/leftClip\)`\}>[\s\S]*?<\/g>\s*<\/g>/)?.[0] ?? ''
+    expect(links).toContain('PATCH_DOTS_LEFT')
+    const rechts = source.match(/rightClip\)`\}>[\s\S]*?<\/g>\s*<\/g>/)?.[0] ?? ''
+    expect(rechts).toContain('PATCH_DOTS_RIGHT')
   })
 
   it('laesst den Schimmer mit dem Licht wandern', () => {
@@ -69,13 +81,25 @@ describe('PatchVisual', () => {
     expect(render({ size: 'mini' })).toContain('h-[18px]')
   })
 
-  it('bekommt weder Etikettband noch Fuellstand noch Schwappen', () => {
+  it('biegt beim Wischen die Enden, nicht die Mitte', () => {
+    // Ein Pflaster ist biegsam, sein Wundkissen nicht. Die beiden Enden
+    // drehen gegenlaeufig um Angelpunkte, die unter dem Mittelstueck liegen,
+    // damit die Schnittkante nie sichtbar wird.
+    const source = readFileSync(new URL('./PatchVisual.tsx', import.meta.url), 'utf8')
+    expect(source).toContain('useSloshSubscribe')
+    expect(source).toMatch(/rotate\(\$\{\(-grad\)/)
+    expect(source).toMatch(/rotate\(\$\{grad/)
+    const html = render()
+    expect(html).toContain(`${uidFrei(html)}leftClip`)
+    expect(html).toContain(`${uidFrei(html)}midClip`)
+  })
+
+  it('bekommt weder Etikettband noch Fuellstand', () => {
     const html = render()
     expect(html).not.toContain('data-vial-detail="label-glass-wrap"')
     expect(html).not.toContain('data-fill-pct')
     const source = readFileSync(new URL('./PatchVisual.tsx', import.meta.url), 'utf8')
     expect(source).not.toContain('LiquidGraphic')
-    expect(source).not.toContain('SloshContext')
   })
 
   it('faellt bei leerem Namen auf eine Bezeichnung zurueck', () => {

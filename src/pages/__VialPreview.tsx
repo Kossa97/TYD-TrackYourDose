@@ -354,11 +354,14 @@ export function VialPreview() {
       <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
         Pflaster — Lochung und Wundkissen in Detailgröße
       </p>
-      <div className="mx-auto flex max-w-4xl flex-wrap items-end justify-center gap-12 pb-2">
-        {PREVIEW_PATCHES.map((p, i) => (
-          <PatchVisual key={p.name} name={p.name} size="large" lightOffset={i - 1} />
-        ))}
-      </div>
+      {/* Mit Provider, sonst biegen sich die Enden beim Wischen nicht. */}
+      <SloshProvider engine={sloshEngine}>
+        <div className="mx-auto flex max-w-4xl flex-wrap items-end justify-center gap-12 pb-2">
+          {PREVIEW_PATCHES.map((p, i) => (
+            <PatchVisual key={p.name} name={p.name} size="large" lightOffset={i - 1} />
+          ))}
+        </div>
+      </SloshProvider>
 
       {/* The real thing: a mixed carousel narrow enough to actually swipe.
           Ampoules and vials share one ground line and one slosh engine. */}

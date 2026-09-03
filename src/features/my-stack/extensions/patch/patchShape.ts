@@ -81,6 +81,26 @@ export const PATCH_DOTS: readonly { x: number; y: number }[] = DOT_ROWS.flatMap(
 // Wie weit der Schimmer beim Wischen wandert.
 export const PATCH_SHEEN_SHIFT = 34
 
+// Beim Wischen biegen sich die beiden Enden gegenläufig, die Mitte mit dem
+// Kissen bleibt ruhig — ein Pflaster ist biegsam, sein Kissen nicht. Dafür
+// wird der Streifen in drei Abschnitte geschnitten; die Enden drehen um einen
+// Angelpunkt, der unter dem Mittelstück liegt, damit die Schnittkante nie
+// sichtbar wird.
+export const PATCH_FLEX_MAX_DEG = 3.5
+export const PATCH_PIVOT_Y = PATCH_BODY.height / 2
+export const PATCH_FLEX_CUT = { left: 95, right: 205 } as const
+
+// Das Mittelstück überlappt beide Schnitte und wird zuletzt gezeichnet.
+export const PATCH_FLEX_CLIPS = {
+  left: { x: -30, width: PATCH_FLEX_CUT.left + 30 },
+  right: { x: PATCH_FLEX_CUT.right, width: PATCH_BODY.width - PATCH_FLEX_CUT.right + 30 },
+  middle: { x: PATCH_FLEX_CUT.left - 4, width: PATCH_FLEX_CUT.right - PATCH_FLEX_CUT.left + 8 },
+} as const
+
+// Jedes Loch gehört zu genau einem Abschnitt und wird mit ihm bewegt.
+export const PATCH_DOTS_LEFT = PATCH_DOTS.filter(p => p.x <= PATCH_FLEX_CUT.left)
+export const PATCH_DOTS_RIGHT = PATCH_DOTS.filter(p => p.x >= PATCH_FLEX_CUT.right)
+
 export const PATCH_SPEC: StageFormSpec = {
   viewBox: PATCH_VIEWBOX,
   // Kein Behälter, keine Flüssigkeit: weder Etikettband noch Füllstand.

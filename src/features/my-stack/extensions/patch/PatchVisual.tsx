@@ -1,11 +1,17 @@
-import { useCallback, useId, useRef } from 'react'
+import { useCallback, useEffect, useId, useRef } from 'react'
 import type { Ref } from 'react'
+import { useSloshSubscribe } from '../../../../components/SloshContext'
 import { StageMarquee } from '../../stage/StageLabel'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
   PATCH_BODY,
-  PATCH_DOTS,
+  PATCH_DOTS_LEFT,
+  PATCH_DOTS_RIGHT,
   PATCH_DOT_R,
+  PATCH_FLEX_CLIPS,
+  PATCH_FLEX_CUT,
+  PATCH_FLEX_MAX_DEG,
+  PATCH_PIVOT_Y,
   PATCH_NAME_PCT,
   PATCH_PAD,
   PATCH_SHEEN_SHIFT,
@@ -58,6 +64,25 @@ export function PatchVisual({
   const rootRef = useRef<HTMLDivElement | null>(null)
   const sheenRef = useRef<SVGRectElement | null>(null)
   const bodyRef = useRef<SVGRectElement | null>(null)
+  const leftRef = useRef<SVGGElement | null>(null)
+  const rightRef = useRef<SVGGElement | null>(null)
+
+  // Dieselbe Quelle, aus der die Tablette ihr Rollen bezieht.
+  const subscribe = useSloshSubscribe()
+  useEffect(() => {
+    if (!subscribe) return
+    return subscribe(({ tilt }: { tilt: number }) => {
+      const grad = tilt * PATCH_FLEX_MAX_DEG
+      leftRef.current?.setAttribute(
+        'transform',
+        `rotate(${(-grad).toFixed(3)} ${PATCH_FLEX_CUT.left} ${PATCH_PIVOT_Y})`,
+      )
+      rightRef.current?.setAttribute(
+        'transform',
+        `rotate(${grad.toFixed(3)} ${PATCH_FLEX_CUT.right} ${PATCH_PIVOT_Y})`,
+      )
+    })
+  }, [subscribe])
 
   const applyStageLight = useCallback((f: number, o: number) => {
     rootRef.current?.setAttribute('data-patch-focus', f.toFixed(2))
@@ -94,6 +119,15 @@ export function PatchVisual({
               rx={PATCH_BODY.rx}
             />
           </clipPath>
+          <clipPath id={`${uid}-leftClip`}>
+            <rect x={PATCH_FLEX_CLIPS.left.x} y="-30" width={PATCH_FLEX_CLIPS.left.width} height="148" />
+          </clipPath>
+          <clipPath id={`${uid}-rightClip`}>
+            <rect x={PATCH_FLEX_CLIPS.right.x} y="-30" width={PATCH_FLEX_CLIPS.right.width} height="148" />
+          </clipPath>
+          <clipPath id={`${uid}-midClip`}>
+            <rect x={PATCH_FLEX_CLIPS.middle.x} y="-30" width={PATCH_FLEX_CLIPS.middle.width} height="148" />
+          </clipPath>
           {/* Hautfarbenes Gewebe, matt: ein weicher Verlauf statt Glanz. */}
           <linearGradient id={`${uid}-fabric`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#f2c9a3" />
@@ -112,26 +146,57 @@ export function PatchVisual({
           </linearGradient>
         </defs>
 
-        <rect
-          ref={bodyRef}
-          data-patch-detail="body"
-          x={PATCH_BODY.x}
-          y={PATCH_BODY.y}
-          width={PATCH_BODY.width}
-          height={PATCH_BODY.height}
-          rx={PATCH_BODY.rx}
-          fill={`url(#${uid}-fabric)`}
-          opacity={0.74 + visualFocus * 0.26}
-        />
-
-        <g clipPath={`url(#${uid}-bodyClip)`}>
-          {/* Die Lochung sitzt nur auf den Klebefluegeln. */}
+        {/* Die beiden Enden biegen sich, das Mittelstueck deckt zuletzt
+            die Schnittkanten ab. */}
+        <g ref={leftRef} clipPath={`url(#${uid}-leftClip)`}>
+          <rect
+            ref={bodyRef}
+            data-patch-detail="body"
+            x={PATCH_BODY.x}
+            y={PATCH_BODY.y}
+            width={PATCH_BODY.width}
+            height={PATCH_BODY.height}
+            rx={PATCH_BODY.rx}
+            fill={`url(#${uid}-fabric)`}
+            opacity={0.74 + visualFocus * 0.26}
+          />
           <g data-patch-detail="dots" fill="rgba(255,255,255,0.82)">
-            {PATCH_DOTS.map(punkt => (
+            {PATCH_DOTS_LEFT.map(punkt => (
               <circle key={`${punkt.x}-${punkt.y}`} cx={punkt.x} cy={punkt.y} r={PATCH_DOT_R} />
             ))}
           </g>
+        </g>
 
+        <g ref={rightRef} clipPath={`url(#${uid}-rightClip)`}>
+          <rect
+            x={PATCH_BODY.x}
+            y={PATCH_BODY.y}
+            width={PATCH_BODY.width}
+            height={PATCH_BODY.height}
+            rx={PATCH_BODY.rx}
+            fill={`url(#${uid}-fabric)`}
+            opacity={0.74 + visualFocus * 0.26}
+          />
+          <g fill="rgba(255,255,255,0.82)">
+            {PATCH_DOTS_RIGHT.map(punkt => (
+              <circle key={`${punkt.x}-${punkt.y}`} cx={punkt.x} cy={punkt.y} r={PATCH_DOT_R} />
+            ))}
+          </g>
+        </g>
+
+        <g clipPath={`url(#${uid}-midClip)`}>
+          <rect
+            x={PATCH_BODY.x}
+            y={PATCH_BODY.y}
+            width={PATCH_BODY.width}
+            height={PATCH_BODY.height}
+            rx={PATCH_BODY.rx}
+            fill={`url(#${uid}-fabric)`}
+            opacity={0.74 + visualFocus * 0.26}
+          />
+        </g>
+
+        <g clipPath={`url(#${uid}-bodyClip)`}>
           {/* Der Schimmer wandert mit dem Licht und ist deshalb beschnitten. */}
           <rect
             ref={sheenRef}
