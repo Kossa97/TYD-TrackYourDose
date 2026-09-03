@@ -8,6 +8,7 @@ import { AmpouleRenderer } from '../extensions/ampoule/AmpouleRenderer'
 import { CapsuleRenderer } from '../extensions/capsule/CapsuleRenderer'
 import { NasalSprayRenderer } from '../extensions/nasal-spray/NasalSprayRenderer'
 import { TabletRenderer } from '../extensions/tablet/TabletRenderer'
+import { PatchRenderer } from '../extensions/patch/PatchRenderer'
 import { PenRenderer } from '../extensions/pen/PenRenderer'
 import { TubeRenderer } from '../extensions/tube/TubeRenderer'
 import { VialRenderer } from '../extensions/peptide/VialRenderer'
@@ -56,6 +57,10 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
 
   if (renderer === 'tube') {
     return <TubeRenderer item={item} {...visualProps} />
+  }
+
+  if (renderer === 'patch') {
+    return <PatchRenderer item={item} {...visualProps} />
   }
 
   if (renderer === 'pen') {

@@ -37,18 +37,18 @@ const vialItem: StackItem = {
   }],
 }
 
-const patchItem: StackItem = {
+const powderItem: StackItem = {
   ...vialItem,
-  id: 'nikotin-patch',
-  display_name: 'Nikotinpflaster',
+  id: 'kreatin-pulver',
+  display_name: 'Kreatin Monohydrat',
   category: 'medication',
-  dosage_form: 'patch',
+  dosage_form: 'powder',
   ingredients: [{
     ...vialItem.ingredients[0],
-    custom_name: 'Nikotin',
-    amount_value: 21,
-    amount_unit: 'mg',
-    basis_unit: 'patch',
+    custom_name: 'Kreatin',
+    amount_value: 5,
+    amount_unit: 'g',
+    basis_unit: 'g',
   }],
 }
 
@@ -59,14 +59,14 @@ function renderStage(item: StackItem): string {
 describe('StackStage', () => {
   it('rendert das bestehende Vial nur für freigeschaltete Vial-Einträge', () => {
     expect(renderStage(vialItem)).toContain('data-stack-renderer="vial"')
-    expect(renderStage(patchItem)).toContain('data-stack-renderer="unsupported"')
+    expect(renderStage(powderItem)).toContain('data-stack-renderer="unsupported"')
   })
 
   it('behält nicht freigeschaltete Formen in einer textuellen Darstellung', () => {
-    const html = renderStage(patchItem)
+    const html = renderStage(powderItem)
     const source = readFileSync(new URL('./StackStage.tsx', import.meta.url), 'utf8')
 
-    expect(html).toContain('Nikotinpflaster')
+    expect(html).toContain('Kreatin Monohydrat')
     expect(html).toContain('my_stack_visual_pending')
     expect(html).not.toContain('PeptideVialVisual')
     expect(source).not.toContain('<svg')
@@ -117,7 +117,7 @@ describe('StackStage — Ampulle', () => {
   })
 
   it('lässt Formen ohne eigene Grafik weiterhin im Textzustand', () => {
-    expect(renderStage(patchItem)).toContain('data-stack-renderer="unsupported"')
+    expect(renderStage(powderItem)).toContain('data-stack-renderer="unsupported"')
   })
 
   it('hält den Ampullen-Adapter frei von eigener Grafik', () => {
@@ -217,12 +217,12 @@ describe('StackStage — Tablette', () => {
   })
 
   it('benutzt als Negativbeispiel eine Form, die wirklich keinen Renderer hat', () => {
-    // Diese Datei prueft mit patchItem, dass Formen ohne Buehnengrafik im
-    // Textzustand bleiben. Bekommt patch selbst einen Renderer, muss das
+    // Diese Datei prueft mit powderItem, dass Formen ohne Buehnengrafik im
+    // Textzustand bleiben. Bekommt powder selbst einen Renderer, muss das
     // Beispiel auf eine andere Form ohne Renderer wechseln.
     expect(
-      getDosageForm(patchItem.dosage_form).stageRenderer,
-      'patch hat jetzt einen Renderer — Negativbeispiel auf eine andere Form ohne stageRenderer umstellen',
+      getDosageForm(powderItem.dosage_form).stageRenderer,
+      'powder hat jetzt einen Renderer — Negativbeispiel auf eine andere Form ohne stageRenderer umstellen',
     ).toBeUndefined()
   })
 })

@@ -17,7 +17,7 @@ describe('DOSAGE_FORMS', () => {
   })
 
   it('aktiviert genau die Formen mit fertiger Bühnengrafik', () => {
-    expect(DOSAGE_FORMS.filter(form => form.stageRenderer).map(form => form.key)).toEqual(['vial', 'ampoule', 'pen', 'tablet', 'capsule', 'nasal_spray', 'tube'])
+    expect(DOSAGE_FORMS.filter(form => form.stageRenderer).map(form => form.key)).toEqual(['vial', 'ampoule', 'pen', 'tablet', 'capsule', 'nasal_spray', 'patch', 'tube'])
   })
 
   it('gibt jeder freigeschalteten Form ihre Bühnenbeschreibung mit', () => {
@@ -53,7 +53,7 @@ describe('DOSAGE_FORMS', () => {
     expect(isStageRenderable('drops')).toBe(false)
     expect(isStageRenderable('gel')).toBe(false)
     expect(isStageRenderable('spray')).toBe(false)
-    expect(isStageRenderable('patch')).toBe(false)
+    expect(isStageRenderable('patch')).toBe(true)
     expect(isStageRenderable('powder')).toBe(false)
   })
 })

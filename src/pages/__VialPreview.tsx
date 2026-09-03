@@ -4,6 +4,7 @@ import { PeptideVialVisual } from '../components/PeptideVialVisual'
 import { AmpouleVisual } from '../features/my-stack/extensions/ampoule/AmpouleVisual'
 import { CapsuleVisual } from '../features/my-stack/extensions/capsule/CapsuleVisual'
 import { NasalSprayVisual } from '../features/my-stack/extensions/nasal-spray/NasalSprayVisual'
+import { PatchVisual } from '../features/my-stack/extensions/patch/PatchVisual'
 import { PenVisual } from '../features/my-stack/extensions/pen/PenVisual'
 import { TabletVisual } from '../features/my-stack/extensions/tablet/TabletVisual'
 import { TubeVisual } from '../features/my-stack/extensions/tube/TubeVisual'
@@ -59,6 +60,13 @@ const PREVIEW_PENS = [
   // bewusst zu lang: der vorige Name passte mit 0 px Reserve noch hinein und
   // hat den senkrechten Durchlauf nie ausgeloest.
   { name: 'Insulin glargin 300 Einheiten pro Milliliter', color: '#f0b357' },
+]
+
+const PREVIEW_PATCHES = [
+  { name: 'Nikotinpflaster', color: '#7dd3fc' },
+  { name: 'Testosteron', color: '#f0b357' },
+  // bewusst zu lang: zeigt den waagerechten Durchlauf auf der Klebeflaeche
+  { name: 'Rivastigmin transdermal 9,5 mg pro 24 Stunden', color: '#a3e635' },
 ]
 
 // Mixed forms in one row, the way My Stack will show them.
@@ -339,6 +347,15 @@ export function VialPreview() {
       <div className="mx-auto flex max-w-4xl flex-wrap items-end justify-center gap-12 pb-2">
         {PREVIEW_PENS.map(p => (
           <PenVisual key={p.name} name={p.name} color={p.color} size="large" />
+        ))}
+      </div>
+
+      <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
+        Pflaster — abgehobene Ecke in Detailgröße
+      </p>
+      <div className="mx-auto flex max-w-4xl flex-wrap items-end justify-center gap-12 pb-2">
+        {PREVIEW_PATCHES.map((p, i) => (
+          <PatchVisual key={p.name} name={p.name} color={p.color} size="large" lightOffset={i - 1} />
         ))}
       </div>
 
