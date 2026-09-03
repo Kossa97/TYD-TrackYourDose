@@ -28,10 +28,11 @@ describe('PenVisual', () => {
     expect(render()).not.toContain('data-pen-detail="cartridge"')
   })
 
-  it('verbindet den Knopf mit Bund und Fuge statt stumpf zu stossen', () => {
+  it('verbindet den Knopf ueber eine konische Schulter statt stumpf zu stossen', () => {
     const html = render()
-    expect(html).toContain('data-pen-detail="knob-collar"')
-    expect(html).toContain('data-pen-detail="knob-seam"')
+    expect(html).toContain('data-pen-detail="knob-shoulder"')
+    // Der Knopf ist keine Stufe mehr, sondern ein Umriss mit Schraege.
+    expect(html).toMatch(/data-pen-detail="knob" d="M4 246/)
   })
 
   it('zeichnet die Rippen als Paare aus Schatten und Licht', () => {

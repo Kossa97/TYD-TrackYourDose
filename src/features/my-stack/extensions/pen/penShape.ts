@@ -29,22 +29,35 @@ export const PEN_KNOB = { x: 0.5, y: 250, width: 39, height: 56, rx: 7 } as cons
 export const PEN_KNOB_RIB_XS = [8, 15, 22, 29] as const
 
 // Der Knopf ist 39 Einheiten breit, der Körper 32. Ohne Vermittlung stoßen
-// beide stumpf aneinander. Die Fuge setzt den Körper sichtbar in den Knopf
-// hinein, der Zwischenbund lässt die Breite zweimal springen statt einmal.
-export const PEN_KNOB_SEAM = {
-  x: PEN_BODY.x,
-  y: 247.5,
-  width: PEN_BODY.width,
-  height: 4,
+// beide stumpf aneinander. Statt eines Absatzes weitet sich der Knopf konisch
+// von der Körperbreite auf seine volle Breite — eine Schulter statt einer
+// Stufe. Der Umriss bleibt dabei unverändert: unterhalb von FLARE_Y ist es
+// exakt derselbe abgerundete Knopf wie zuvor.
+export const PEN_KNOB_SHOULDER = { y: 246, flareY: 259 } as const
+
+const KNOB_LEFT = PEN_KNOB.x
+const KNOB_RIGHT = PEN_KNOB.x + PEN_KNOB.width
+const KNOB_BOTTOM = PEN_KNOB.y + PEN_KNOB.height
+const R = PEN_KNOB.rx
+
+export const PEN_KNOB_PATH =
+  `M${PEN_BODY.x} ${PEN_KNOB_SHOULDER.y} ` +
+  `L${PEN_BODY.x + PEN_BODY.width} ${PEN_KNOB_SHOULDER.y} ` +
+  `L${KNOB_RIGHT} ${PEN_KNOB_SHOULDER.flareY} ` +
+  `L${KNOB_RIGHT} ${KNOB_BOTTOM - R} ` +
+  `Q${KNOB_RIGHT} ${KNOB_BOTTOM} ${KNOB_RIGHT - R} ${KNOB_BOTTOM} ` +
+  `L${KNOB_LEFT + R} ${KNOB_BOTTOM} ` +
+  `Q${KNOB_LEFT} ${KNOB_BOTTOM} ${KNOB_LEFT} ${KNOB_BOTTOM - R} ` +
+  `L${KNOB_LEFT} ${PEN_KNOB_SHOULDER.flareY} Z`
+
+// Die Kante, an der der Koerper in die Schulter uebergeht, liegt auf
+// Koerperbreite.
+export const PEN_BODY_SHOULDER_X = {
+  left: PEN_BODY.x,
+  right: PEN_BODY.x + PEN_BODY.width,
 } as const
-export const PEN_KNOB_COLLAR = { x: 2.2, y: 245, width: 35.6, height: 9, rx: 2.4 } as const
 
-// Der Bund liegt in der Breite zwischen Körper und Knopf — das ist seine
-// ganze Aufgabe.
-export const PEN_KNOB_COLLAR_FITS =
-  PEN_KNOB_COLLAR.width > PEN_BODY.width && PEN_KNOB_COLLAR.width < PEN_KNOB.width
-
-export const PEN_KNOB_RIB_YS = { top: 261, bottom: 297 } as const
+export const PEN_KNOB_RIB_YS = { top: 264, bottom: 297 } as const
 
 // Jede Rippe bekommt eine Schatten- und eine Lichtseite; vorher waren es
 // gleich helle Striche ohne Tiefe. Die Helligkeit folgt der Zylinderkrümmung

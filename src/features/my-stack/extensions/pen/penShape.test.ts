@@ -7,10 +7,10 @@ import {
   PEN_DOSE_WINDOW,
   PEN_DOSE_WINDOW_PCT,
   PEN_KNOB,
-  PEN_KNOB_COLLAR,
   PEN_KNOB_HIGHLIGHT_X,
+  PEN_KNOB_PATH,
   PEN_KNOB_RIBS,
-  PEN_KNOB_SEAM,
+  PEN_KNOB_SHOULDER,
   PEN_NAME_BAND_PCT,
   PEN_NAME_RUN_PCT,
   PEN_NAME_TOP_PCT,
@@ -37,24 +37,22 @@ describe('penShape', () => {
     expect(PEN_KNOB.width).toBeGreaterThan(PEN_BODY.width)
   })
 
-  it('laesst die Breite ueber den Bund zweimal springen', () => {
-    // Ohne ihn stossen 32 Einheiten Koerper stumpf auf 39 Einheiten Knopf.
-    expect(PEN_KNOB_COLLAR.width).toBeGreaterThan(PEN_BODY.width)
-    expect(PEN_KNOB_COLLAR.width).toBeLessThan(PEN_KNOB.width)
-    // Und er ueberlappt beide, sonst verbindet er nichts.
-    expect(PEN_KNOB_COLLAR.y).toBeLessThan(PEN_KNOB.y)
-    expect(PEN_KNOB_COLLAR.y + PEN_KNOB_COLLAR.height).toBeGreaterThan(PEN_KNOB.y)
+  it('weitet den Knopf konisch von der Koerperbreite auf', () => {
+    // Die Schulter beginnt oben auf Koerperbreite und endet unten auf voller
+    // Knopfbreite — eine Schraege statt einer Stufe.
+    expect(PEN_KNOB_PATH).toContain(`M${PEN_BODY.x} ${PEN_KNOB_SHOULDER.y}`)
+    expect(PEN_KNOB_PATH).toContain(`L${PEN_BODY.x + PEN_BODY.width} ${PEN_KNOB_SHOULDER.y}`)
+    expect(PEN_KNOB_PATH).toContain(`L${PEN_KNOB.x + PEN_KNOB.width} ${PEN_KNOB_SHOULDER.flareY}`)
+    expect(PEN_KNOB_SHOULDER.flareY).toBeGreaterThan(PEN_KNOB_SHOULDER.y)
   })
 
-  it('legt die Fuge auf Koerperbreite in den Bund', () => {
-    // Die Fuge zeigt, dass der Koerper im Knopf steckt — also genau so breit
-    // wie er, und innerhalb des Bundes.
-    expect(PEN_KNOB_SEAM.width).toBe(PEN_BODY.width)
-    expect(PEN_KNOB_SEAM.x).toBe(PEN_BODY.x)
-    expect(PEN_KNOB_SEAM.y).toBeGreaterThan(PEN_KNOB_COLLAR.y)
-    expect(PEN_KNOB_SEAM.y + PEN_KNOB_SEAM.height).toBeLessThan(
-      PEN_KNOB_COLLAR.y + PEN_KNOB_COLLAR.height,
-    )
+  it('laesst den Umriss unterhalb der Schulter unveraendert', () => {
+    // Nur der Anschluss nach oben aendert sich; der abgerundete Knopf selbst
+    // behaelt Breite, Fuss und Radius.
+    const unten = PEN_KNOB.y + PEN_KNOB.height
+    expect(PEN_KNOB_PATH).toContain(`L${PEN_KNOB.x + PEN_KNOB.width} ${unten - PEN_KNOB.rx}`)
+    expect(PEN_KNOB_PATH).toContain(`L${PEN_KNOB.x + PEN_KNOB.rx} ${unten}`)
+    expect(PEN_KNOB_PATH).toContain(`L${PEN_KNOB.x} ${PEN_KNOB_SHOULDER.flareY} Z`)
   })
 
   it('gibt jeder Rippe eine Licht- und eine Schattenseite', () => {

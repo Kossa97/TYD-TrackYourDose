@@ -322,7 +322,14 @@
   "320": "MetricTooltip.tsx",
   "321": "CycleBandLayer.tsx",
   "322": "DoseUnitControl.tsx",
+  "323": "MyStackPage.visibility.test.tsx",
+  "324": "en.categories.ts",
+  "325": "hi.ts",
   "326": "Tagebuch.tsx",
   "327": "File Structure",
-  "329": "imageResize.ts"
+  "328": "id.ts",
+  "329": "imageResize.ts",
+  "330": "pt.ts",
+  "331": "ru.ts",
+  "332": "tr.ts"
 }

@@ -1,16 +1,16 @@
 # Graph Report - my-stack-foundation  (2026-09-03)
 
 ## Corpus Check
-- 574 files · ~660,774 words
+- 574 files · ~660,840 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3651 nodes · 6708 edges · 333 communities (216 shown, 117 thin omitted)
+- 3651 nodes · 6706 edges · 332 communities (215 shown, 117 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 59 edges (avg confidence: 0.7)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ac0d5e5a`
+- Built from commit: `56864c22`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -286,7 +286,6 @@
 - [[_COMMUNITY_FotosTab.tsx|FotosTab.tsx]]
 - [[_COMMUNITY_InjectionTrackerTabs.tsx|InjectionTrackerTabs.tsx]]
 - [[_COMMUNITY_My Stack Pen als siebte Bühnenform|My Stack: Pen als siebte Bühnenform]]
-- [[_COMMUNITY_AmpouleVisual.tsx|AmpouleVisual.tsx]]
 - [[_COMMUNITY_stackInventory.ts|stackInventory.ts]]
 - [[_COMMUNITY_My Stack Kapsel als dritte Bühnenform|My Stack: Kapsel als dritte Bühnenform]]
 - [[_COMMUNITY_vialStock.ts|vialStock.ts]]
@@ -350,7 +349,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (333 total, 117 thin omitted)
+## Communities (332 total, 117 thin omitted)
 
 ### Community 0 - "PDF Protocol Export"
 Cohesion: 0.06
@@ -425,8 +424,8 @@ Cohesion: 0.08
 Nodes (26): dependencies, @capacitor/android, @capacitor/cli, @capacitor/core, @capacitor/haptics, capacitor-health-connect, @capacitor/ios, date-fns (+18 more)
 
 ### Community 18 - "Injection Persistence"
-Cohesion: 0.10
-Nodes (22): buildDecimalRange(), formatDecimal(), indexForValue(), MetricWheelPicker(), Props, ChangeCard(), formatDelta(), formatValue() (+14 more)
+Cohesion: 0.24
+Nodes (10): CycleWithPk, LEVELS, TrackingLevelPicker(), TrackingLevelPickerProps, TitrationStep, PkReadinessInput, PkScheduleCycle, TrackingLevel (+2 more)
 
 ### Community 19 - "Progress & Bloodwork Tabs"
 Cohesion: 0.08
@@ -462,7 +461,7 @@ Nodes (21): isPanelNode(), Onboarding(), OnboardingRestartButton(), OB_Z, Callou
 
 ### Community 28 - "Blood-Level History Curve"
 Cohesion: 0.11
-Nodes (27): ResolvedPkSchedule, toPkMilligrams(), useMediaQuery(), LiveCycleCard(), BlutspiegelCurvePoint, calculateCurveTo(), calculateHistoryBlutspiegelCurve(), computeTrend() (+19 more)
+Nodes (26): ResolvedPkSchedule, useMediaQuery(), LiveCycleCard(), BlutspiegelCurvePoint, calculateCurveTo(), calculateHistoryBlutspiegelCurve(), computeTrend(), cycleIntakeMinutes() (+18 more)
 
 ### Community 29 - "iOS App Delegate"
 Cohesion: 0.13
@@ -505,8 +504,8 @@ Cohesion: 0.14
 Nodes (17): allLogs, buildLogs(), CYC, cyclesData, effectiveDose(), effectsData, INV, cycleAppliesToDay() (+9 more)
 
 ### Community 39 - "Live Blood-Level Chart"
-Cohesion: 0.11
-Nodes (25): CycleWithPk, LEVELS, TrackingLevelPicker(), TrackingLevelPickerProps, TitrationStep, evaluatePkReadiness(), normalizedText(), PkReadiness (+17 more)
+Cohesion: 0.16
+Nodes (16): evaluatePkReadiness(), normalizedText(), PkReadiness, readyInput, toPkMilligrams(), EscalationRow, CATEGORY_ACCENT, ChartPoint (+8 more)
 
 ### Community 40 - "Peptide Vial Visual"
 Cohesion: 0.06
@@ -525,8 +524,8 @@ Cohesion: 0.14
 Nodes (16): Layout(), QUICK_ACTIONS, QUICK_TILES, PushNotificationListener(), PushPayloadMessage, PushPayloadMessage, showPageNotification(), waitForServiceWorkerPush() (+8 more)
 
 ### Community 44 - "Peptide Form Modal"
-Cohesion: 0.18
-Nodes (18): FotosCard(), Props, fmtDate(), FotosTab(), Props, todayStr(), isPhotoGridSize(), PHOTO_GRID_OPTIONS (+10 more)
+Cohesion: 0.10
+Nodes (29): FotosCard(), Props, fmtDate(), FotosTab(), Props, todayStr(), ChangeCard(), formatDelta() (+21 more)
 
 ### Community 45 - "Injection Intake Selection"
 Cohesion: 0.08
@@ -597,8 +596,8 @@ Cohesion: 0.11
 Nodes (18): compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, jsx, lib, module, moduleDetection, moduleResolution (+10 more)
 
 ### Community 76 - "Gradle Build (app)"
-Cohesion: 0.12
-Nodes (17): ActiveSubstancesSection(), isLegacyPhotoUrl(), mapDailyLogs(), resolvePhotoDisplayUrls(), useFortschrittData(), METRIC_COLORS, SUBSTANCE_COLORS, substanceColor() (+9 more)
+Cohesion: 0.11
+Nodes (21): ActiveSubstancesSection(), isLegacyPhotoUrl(), mapDailyLogs(), resolvePhotoDisplayUrls(), useFortschrittData(), METRIC_COLORS, SUBSTANCE_COLORS, substanceColor() (+13 more)
 
 ### Community 77 - "Capacitor Gradle Build"
 Cohesion: 0.19
@@ -633,8 +632,8 @@ Cohesion: 0.13
 Nodes (19): DosageFormPicker(), StackItemDetails(), StackItemDetailsProps, AMPOULE_LABEL, AMPOULE_SPEC, CAPSULE_SPEC, CAPSULE_VIEWBOX, VIAL_SPEC (+11 more)
 
 ### Community 89 - "imageResize.ts"
-Cohesion: 0.08
-Nodes (40): ChartSettingsButton(), Props, ChartWindowToggle(), Props, JumpToNowButton(), Props, ChartBodyProps, clipLineDataToWindow() (+32 more)
+Cohesion: 0.09
+Nodes (26): ChartWindowToggle(), Props, JumpToNowButton(), Props, ChartBodyProps, clipLineDataToWindow(), dateToTs(), fmtDate() (+18 more)
 
 ### Community 91 - "Peptide Page Test"
 Cohesion: 0.15
@@ -773,8 +772,8 @@ Cohesion: 0.22
 Nodes (8): File Map, Global Constraints, Task 1: Lock the Unified Glass Shell Contract, Task 2: Replace Split Glass Layers With One Continuous Shell, Task 3: Add Scroll-Aware Carousel Focus, Task 4: Add Carousel Spotlight Layer, Task 5: Visual Verification and Final Checks, Unified Vial Glass + Stage Light Implementation Plan
 
 ### Community 128 - "MetricChart.tsx"
-Cohesion: 0.17
-Nodes (22): nullableNumber(), Props, readStoredSavedValues(), TodayLogSheet(), todayStr(), writeStoredSavedValues(), Props, VerlaufSetupSheet() (+14 more)
+Cohesion: 0.08
+Nodes (39): FortschrittHeader(), Props, buildDecimalRange(), formatDecimal(), indexForValue(), MetricWheelPicker(), Props, Props (+31 more)
 
 ### Community 129 - "Global Constraints"
 Cohesion: 0.22
@@ -785,8 +784,8 @@ Cohesion: 0.22
 Nodes (8): 0. Projektstatus, 11. Häufige Fehler & Fixes, 12. Entwicklungs-Workflow, 1. Tech-Stack, 3. Dateistruktur, 9. Bekannte Limitierungen, TYD — Track Your Dose · Handoff-Dokument, Zugang
 
 ### Community 131 - "Bewertungen.tsx"
-Cohesion: 0.16
-Nodes (21): PEN_BODY, PEN_DOSE_WINDOW, PEN_DOSE_WINDOW_PCT, PEN_KNOB, PEN_KNOB_COLLAR, PEN_KNOB_RIB_XS, PEN_KNOB_RIB_YS, PEN_KNOB_RIBS (+13 more)
+Cohesion: 0.15
+Nodes (21): PEN_BODY, PEN_BODY_SHOULDER_X, PEN_DOSE_WINDOW, PEN_DOSE_WINDOW_PCT, PEN_KNOB, PEN_KNOB_RIB_XS, PEN_KNOB_RIB_YS, PEN_KNOB_RIBS (+13 more)
 
 ### Community 132 - "Archive Substance Info"
 Cohesion: 0.25
@@ -889,8 +888,8 @@ Cohesion: 0.21
 Nodes (10): AdminPanel(), PeptideCardSkeleton(), DEFAULT_FILTERS, Filters, PeptideLibrary(), SORT_OPTIONS, SortKey, getAllPeptides() (+2 more)
 
 ### Community 242 - "metrics.ts"
-Cohesion: 0.12
-Nodes (31): buildFocusSummary(), FocusSummary, FocusSummaryRow, formatDelta(), formatMetricValue(), pointsInWindow(), substanceBarEnd(), summaryRow() (+23 more)
+Cohesion: 0.13
+Nodes (30): FortschrittDashboard(), buildFocusSummary(), FocusSummary, FocusSummaryRow, formatDelta(), formatMetricValue(), pointsInWindow(), substanceBarEnd() (+22 more)
 
 ### Community 244 - "Global Constraints"
 Cohesion: 0.40
@@ -1000,10 +999,6 @@ Nodes (20): assertInjectionProSchema(), buildInjectionInsertPayload(), buildSele
 Cohesion: 0.11
 Nodes (18): Abgenommene Produktentscheidungen, Architektur, Aufbau, Auswirkungen auf bestehende Tests, Beleuchtung, Beschriftung, Bühne, Fehler- und Grenzfälle (+10 more)
 
-### Community 297 - "AmpouleVisual.tsx"
-Cohesion: 0.28
-Nodes (4): buildCycleLegendItems(), CycleLegendItem, OverviewCardData, SubstanceMode
-
 ### Community 298 - "stackInventory.ts"
 Cohesion: 0.16
 Nodes (15): numberValue(), ProductInventorySection(), ProductInventorySectionProps, emptyInventory, applyInventoryConfirmation(), InventoryReversalAction, InventorySaveInput, loadStackItemInventory() (+7 more)
@@ -1053,8 +1048,8 @@ Cohesion: 0.10
 Nodes (25): clamp01(), clampFill(), clampSlosh(), fillMotionShiftPct(), PeptideVialVisual(), PeptideVialVisualProps, vialAmountLabel(), VialTop() (+17 more)
 
 ### Community 310 - "metricDefinitions.ts"
-Cohesion: 0.14
-Nodes (15): FortschrittDashboard(), Props, FortschrittHeader(), Props, EmptyOverview(), NoSubstancesBanner(), Props, Props (+7 more)
+Cohesion: 0.11
+Nodes (24): Props, EmptyOverview(), NoSubstancesBanner(), Props, ChartSettingsButton(), Props, MetricChart, Props (+16 more)
 
 ### Community 311 - "File Structure"
 Cohesion: 0.18

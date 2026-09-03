@@ -9,11 +9,11 @@ import {
   PEN_DOSE_TEXT,
   PEN_DOSE_WINDOW,
   PEN_DOSE_WINDOW_PCT,
-  PEN_KNOB,
-  PEN_KNOB_COLLAR,
+  PEN_BODY_SHOULDER_X,
+  PEN_KNOB_PATH,
   PEN_KNOB_RIBS,
   PEN_KNOB_RIB_YS,
-  PEN_KNOB_SEAM,
+  PEN_KNOB_SHOULDER,
   PEN_NAME_BAND_PCT,
   PEN_NAME_RUN_PCT,
   PEN_NAME_TOP_PCT,
@@ -222,63 +222,23 @@ export function PenVisual({
           vectorEffect="non-scaling-stroke"
         />
 
-        <rect
-          data-pen-detail="knob"
-          x={PEN_KNOB.x}
-          y={PEN_KNOB.y}
-          width={PEN_KNOB.width}
-          height={PEN_KNOB.height}
-          rx={PEN_KNOB.rx}
-          fill={`url(#${uid}-knob)`}
-        />
-        <rect
-          x={PEN_KNOB.x}
-          y={PEN_KNOB.y}
-          width={PEN_KNOB.width}
-          height={PEN_KNOB.height}
-          rx={PEN_KNOB.rx}
-          fill={`url(#${uid}-knobAo)`}
-        />
+        {/* Der Knopf weitet sich konisch von der Koerperbreite auf seine
+            volle Breite: eine Schulter statt einer Stufe. */}
+        <path data-pen-detail="knob" d={PEN_KNOB_PATH} fill={`url(#${uid}-knob)`} />
+        <path d={PEN_KNOB_PATH} fill={`url(#${uid}-knobAo)`} />
 
-        {/* Der Bund vermittelt zwischen Koerperbreite und Knopfbreite. */}
-        <g data-pen-detail="knob-collar">
-          <rect
-            x={PEN_KNOB_COLLAR.x}
-            y={PEN_KNOB_COLLAR.y}
-            width={PEN_KNOB_COLLAR.width}
-            height={PEN_KNOB_COLLAR.height}
-            rx={PEN_KNOB_COLLAR.rx}
-            fill={`url(#${uid}-knob)`}
-          />
-          <rect
-            x={PEN_KNOB_COLLAR.x}
-            y={PEN_KNOB_COLLAR.y}
-            width={PEN_KNOB_COLLAR.width}
-            height={PEN_KNOB_COLLAR.height}
-            rx={PEN_KNOB_COLLAR.rx}
-            fill="rgba(255,255,255,0.07)"
-          />
-        </g>
-
-        {/* Die Fuge: der Koerper steckt im Bund, statt stumpf aufzusitzen. */}
-        <rect
-          data-pen-detail="knob-seam"
-          x={PEN_KNOB_SEAM.x}
-          y={PEN_KNOB_SEAM.y}
-          width={PEN_KNOB_SEAM.width}
-          height={PEN_KNOB_SEAM.height}
-          fill="rgba(0,0,0,0.5)"
-        />
-        <g fill="none" strokeLinecap="round">
+        {/* Die Schulter faengt das Licht von oben; darueber sitzt die dunkle
+            Kante, an der der Koerper in sie uebergeht. */}
+        <g data-pen-detail="knob-shoulder" fill="none" strokeLinecap="round">
           <path
-            d={`M${PEN_KNOB_COLLAR.x} ${PEN_KNOB_COLLAR.y + 1} L${PEN_KNOB_COLLAR.x + PEN_KNOB_COLLAR.width} ${PEN_KNOB_COLLAR.y + 1}`}
-            stroke="rgba(255,255,255,0.28)"
-            strokeWidth="0.8"
+            d={`M${PEN_BODY_SHOULDER_X.left} ${PEN_KNOB_SHOULDER.y + 0.8} L${PEN_BODY_SHOULDER_X.right} ${PEN_KNOB_SHOULDER.y + 0.8}`}
+            stroke="rgba(255,255,255,0.30)"
+            strokeWidth="0.9"
           />
           <path
-            d={`M${PEN_KNOB.x} ${PEN_KNOB.y + 1.4} L${PEN_KNOB.x + PEN_KNOB.width} ${PEN_KNOB.y + 1.4}`}
-            stroke="rgba(255,255,255,0.20)"
-            strokeWidth="0.8"
+            d={`M${PEN_BODY_SHOULDER_X.left} ${PEN_KNOB_SHOULDER.y} L${PEN_BODY_SHOULDER_X.right} ${PEN_KNOB_SHOULDER.y}`}
+            stroke="rgba(0,0,0,0.45)"
+            strokeWidth="1.6"
           />
         </g>
 
