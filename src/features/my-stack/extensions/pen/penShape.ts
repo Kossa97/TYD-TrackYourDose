@@ -72,16 +72,33 @@ export const PEN_NAME_ZONE = {
   bottom: PEN_DOSE_WINDOW.y,
 } as const
 
+// Der Name steht nicht als Aufdruck auf dem Gehäuse, sondern auf einem
+// Bildschirm. Er sitzt mittig auf dem Körper und mittig in der Namenszone,
+// damit die Schrift, die ihrerseits auf beide Mitten ausgerichtet ist, im
+// Feld zentriert steht statt daneben.
+const PEN_SCREEN_WIDTH = 25
+const PEN_SCREEN_PAD_Y = 4
+export const PEN_SCREEN = {
+  x: PEN_BODY.x + (PEN_BODY.width - PEN_SCREEN_WIDTH) / 2,
+  y: PEN_NAME_ZONE.top + PEN_SCREEN_PAD_Y,
+  width: PEN_SCREEN_WIDTH,
+  height: PEN_NAME_ZONE.bottom - PEN_NAME_ZONE.top - PEN_SCREEN_PAD_Y * 2,
+  rx: 3,
+} as const
+
+// Wie weit der Glanz auf dem Glas beim Wischen wandert.
+export const PEN_SCREEN_GLINT_SHIFT = 9
+
 export const PEN_NAME_TOP_PCT =
-  ((PEN_NAME_ZONE.top + PEN_NAME_ZONE.bottom) / 2 - PEN_VIEWBOX.y) / PEN_VIEWBOX.height
+  (PEN_SCREEN.y + PEN_SCREEN.height / 2 - PEN_VIEWBOX.y) / PEN_VIEWBOX.height
 
 // Die um 90 Grad gedrehte Hülle: vor der Drehung ist ihre Breite die
-// Laufstrecke am Körper (also eine Höhe) und ihre Höhe die Körperbreite (also
-// eine Breite). CSS löst Prozente immer gegen die eigene Achse auf, deshalb
-// wird hier über das feste Seitenverhältnis umgerechnet.
-export const PEN_NAME_RUN_PCT =
-  ((PEN_NAME_ZONE.bottom - PEN_NAME_ZONE.top) / PEN_VIEWBOX.height) / PEN_ASPECT
-export const PEN_NAME_BAND_PCT = (PEN_BODY.width / PEN_VIEWBOX.width) * PEN_ASPECT
+// Laufstrecke (also eine Höhe) und ihre Höhe die Bandbreite (also eine
+// Breite). CSS löst Prozente immer gegen die eigene Achse auf, deshalb wird
+// hier über das feste Seitenverhältnis umgerechnet. Beide Maße kommen vom
+// Bildschirm, nicht vom Körper — so kann die Schrift ihn nicht verlassen.
+export const PEN_NAME_RUN_PCT = (PEN_SCREEN.height / PEN_VIEWBOX.height) / PEN_ASPECT
+export const PEN_NAME_BAND_PCT = (PEN_SCREEN.width / PEN_VIEWBOX.width) * PEN_ASPECT
 
 // Das Dosisfenster wird von HTML überlagert, deshalb auch in Prozent.
 export const PEN_DOSE_WINDOW_PCT = {

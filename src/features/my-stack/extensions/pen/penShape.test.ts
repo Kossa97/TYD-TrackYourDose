@@ -16,6 +16,7 @@ import {
   PEN_NAME_TOP_PCT,
   PEN_NAME_ZONE,
   PEN_RING,
+  PEN_SCREEN,
   PEN_SPEC,
   PEN_VIEWBOX,
 } from './penShape'
@@ -97,14 +98,33 @@ describe('penShape', () => {
     expect(mitte + halbeLaufweite).toBeLessThanOrEqual(PEN_DOSE_WINDOW.y)
   })
 
+  it('zentriert den Bildschirm auf dem Koerper und in der Namenszone', () => {
+    // Die Schrift ist auf beide Mitten ausgerichtet; nur wenn der Bildschirm
+    // dieselben Mitten hat, steht sie darin zentriert.
+    expect(PEN_SCREEN.x + PEN_SCREEN.width / 2).toBe(PEN_BODY.x + PEN_BODY.width / 2)
+    expect(PEN_SCREEN.y + PEN_SCREEN.height / 2).toBe(
+      (PEN_NAME_ZONE.top + PEN_NAME_ZONE.bottom) / 2,
+    )
+    // Und er bleibt innerhalb von Koerper und Zone.
+    expect(PEN_SCREEN.x).toBeGreaterThan(PEN_BODY.x)
+    expect(PEN_SCREEN.y).toBeGreaterThan(PEN_NAME_ZONE.top)
+    expect(PEN_SCREEN.y + PEN_SCREEN.height).toBeLessThan(PEN_NAME_ZONE.bottom)
+  })
+
+  it('leitet die Laufstrecke der Schrift aus dem Bildschirm ab', () => {
+    // Kaeme sie weiter vom Koerper, liefe langer Text ueber den Rahmen hinaus.
+    expect(PEN_NAME_RUN_PCT * PEN_ASPECT).toBeCloseTo(PEN_SCREEN.height / PEN_VIEWBOX.height, 6)
+    expect(PEN_NAME_BAND_PCT / PEN_ASPECT).toBeCloseTo(PEN_SCREEN.width / PEN_VIEWBOX.width, 6)
+  })
+
   it('rechnet die gedrehte Huelle auf die jeweils passende Achse um', () => {
     // Die Huelle wird um 90 Grad gedreht: ihre Breite ist die Laufstrecke am
     // Koerper (eine Hoehe), ihre Hoehe die Koerperbreite (eine Breite). In CSS
     // loesen Prozente aber immer gegen die eigene Achse auf. Weil das
     // Seitenverhaeltnis fest ist, laesst sich das ineinander umrechnen — genau
     // das prueft dieser Test, indem er zurueckrechnet.
-    expect(PEN_NAME_RUN_PCT * PEN_ASPECT).toBeCloseTo((PEN_NAME_ZONE.bottom - PEN_NAME_ZONE.top) / PEN_VIEWBOX.height, 6)
-    expect(PEN_NAME_BAND_PCT / PEN_ASPECT).toBeCloseTo(PEN_BODY.width / PEN_VIEWBOX.width, 6)
+    expect(PEN_NAME_RUN_PCT * PEN_ASPECT).toBeCloseTo(PEN_SCREEN.height / PEN_VIEWBOX.height, 6)
+    expect(PEN_NAME_BAND_PCT / PEN_ASPECT).toBeCloseTo(PEN_SCREEN.width / PEN_VIEWBOX.width, 6)
   })
 
   it('gibt dem Namen laengs mehr Platz als jeder anderen Form quer', () => {

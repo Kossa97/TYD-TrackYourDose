@@ -18,6 +18,8 @@ import {
   PEN_NAME_RUN_PCT,
   PEN_NAME_TOP_PCT,
   PEN_RING,
+  PEN_SCREEN,
+  PEN_SCREEN_GLINT_SHIFT,
   PEN_SWEEP_SHIFT,
 } from './penShape'
 
@@ -78,6 +80,7 @@ export function PenVisual({
   const sweepRef = useRef<SVGRectElement | null>(null)
   const shadowRef = useRef<SVGEllipseElement | null>(null)
   const bodyRef = useRef<SVGRectElement | null>(null)
+  const screenGlintRef = useRef<SVGRectElement | null>(null)
 
   const applyStageLight = useCallback((f: number, o: number) => {
     rootRef.current?.setAttribute('data-pen-focus', f.toFixed(2))
@@ -87,6 +90,11 @@ export function PenVisual({
     shadowRef.current?.setAttribute('cx', (20 - o * 4).toFixed(2))
     shadowRef.current?.setAttribute('opacity', (0.2 + f * 0.3).toFixed(3))
     bodyRef.current?.setAttribute('opacity', (0.72 + f * 0.28).toFixed(3))
+    screenGlintRef.current?.setAttribute(
+      'transform',
+      `translate(${(o * PEN_SCREEN_GLINT_SHIFT).toFixed(2)} 0)`,
+    )
+    screenGlintRef.current?.setAttribute('opacity', (0.05 + f * 0.16).toFixed(3))
   }, [])
 
   useStageLight(applyStageLight, { focus: visualFocus, lightOffset: visualLightOffset }, stageLightRef)
@@ -139,6 +147,21 @@ export function PenVisual({
           </linearGradient>
           {/* Oben faellt der Schatten des Koerpers auf den Knopf, unten setzt
               ihn die Standflaeche ab. */}
+          <clipPath id={`${uid}-screenClip`}>
+            <rect
+              x={PEN_SCREEN.x}
+              y={PEN_SCREEN.y}
+              width={PEN_SCREEN.width}
+              height={PEN_SCREEN.height}
+              rx={PEN_SCREEN.rx}
+            />
+          </clipPath>
+          {/* Ruhender Glasschimmer auf dem Bildschirm. */}
+          <linearGradient id={`${uid}-screenGlass`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.20)" />
+            <stop offset="42%" stopColor="rgba(255,255,255,0.04)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </linearGradient>
           <linearGradient id={`${uid}-knobAo`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="rgba(0,0,0,0.5)" />
             <stop offset="26%" stopColor="rgba(0,0,0,0)" />
@@ -209,6 +232,28 @@ export function PenVisual({
           />
         </g>
 
+        {/* Der Name steht auf einem Bildschirm, nicht als Aufdruck auf dem
+            Gehaeuse. Er kommt nach dem Glanzband, damit das Band ihn nicht
+            ueberstrahlt — Glas faengt sein eigenes Licht. */}
+        <rect
+          data-pen-detail="screen-bezel"
+          x={PEN_SCREEN.x - 1}
+          y={PEN_SCREEN.y - 1}
+          width={PEN_SCREEN.width + 2}
+          height={PEN_SCREEN.height + 2}
+          rx={PEN_SCREEN.rx + 1}
+          fill="rgba(0,0,0,0.45)"
+        />
+        <rect
+          data-pen-detail="screen"
+          x={PEN_SCREEN.x}
+          y={PEN_SCREEN.y}
+          width={PEN_SCREEN.width}
+          height={PEN_SCREEN.height}
+          rx={PEN_SCREEN.rx}
+          fill="#0b1017"
+        />
+
         <rect
           data-pen-detail="dose-window"
           x={PEN_DOSE_WINDOW.x}
@@ -252,6 +297,28 @@ export function PenVisual({
             <path key={x} d={`M${x} ${PEN_KNOB_RIB_YS.top} L${x} ${PEN_KNOB_RIB_YS.bottom}`} />
           ))}
         </g>
+        {/* Der wandernde Glanz liegt auf dem Glas und ist deshalb auf den
+            Bildschirm beschnitten. */}
+        <g clipPath={`url(#${uid}-screenClip)`}>
+          <rect
+            x={PEN_SCREEN.x}
+            y={PEN_SCREEN.y}
+            width={PEN_SCREEN.width}
+            height={PEN_SCREEN.height}
+            fill={`url(#${uid}-screenGlass)`}
+          />
+          <rect
+            ref={screenGlintRef}
+            data-pen-detail="screen-glint"
+            x={PEN_SCREEN.x + 2}
+            y={PEN_SCREEN.y}
+            width="8"
+            height={PEN_SCREEN.height}
+            fill={`url(#${uid}-sweep)`}
+            opacity={0.05 + visualFocus * 0.16}
+            transform={`translate(${(visualLightOffset * PEN_SCREEN_GLINT_SHIFT).toFixed(2)} 0)`}
+          />
+        </g>
       </svg>
 
       {/* Die 0 als HTML: bei Karussellgroesse misst sie rund 8 px, und
@@ -287,7 +354,7 @@ export function PenVisual({
           transform: 'translate(-50%, -50%) rotate(-90deg)',
         }}
       >
-        <StageMarquee className={`w-full ${NAME_CLASS[size]} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]`}>
+        <StageMarquee className={`w-full ${NAME_CLASS[size]} font-black text-[#bfe6ff] tracking-normal drop-shadow-[0_0_2px_rgba(140,205,255,0.45)]`}>
           {penName}
         </StageMarquee>
       </div>

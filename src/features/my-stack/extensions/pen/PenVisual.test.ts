@@ -71,10 +71,10 @@ describe('PenVisual', () => {
     const html = render()
     expect(html).toContain('data-pen-detail="name"')
     expect(html).toContain('rotate(-90deg)')
-    // 230,77 % der Breite entsprechen der Laufstrecke ueber dem Fenster,
-    // 10,67 % der Hoehe der Bandbreite.
-    expect(html).toContain('width:230.77%')
-    expect(html).toContain('height:10.67%')
+    // 210,26 % der Breite entsprechen der Laufstrecke auf dem Bildschirm,
+    // 8,33 % der Hoehe seiner Breite — beide Masse kommen vom Bildschirm.
+    expect(html).toContain('width:210.26%')
+    expect(html).toContain('height:8.33%')
   })
 
   it('laesst zu lange Namen laengs durchlaufen statt sie abzuschneiden', () => {
@@ -90,6 +90,22 @@ describe('PenVisual', () => {
     expect(html).toMatch(
       /<span class="block overflow-hidden whitespace-nowrap w-full[^"]*"><span class="vial-label-marquee[^"]*">Insulin glargin/,
     )
+  })
+
+  it('setzt den Namen auf einen Bildschirm statt ihn aufzudrucken', () => {
+    const html = render()
+    expect(html).toContain('data-pen-detail="screen"')
+    expect(html).toContain('data-pen-detail="screen-bezel"')
+  })
+
+  it('beschneidet den wandernden Glasglanz auf den Bildschirm', () => {
+    // Derselbe Fehler wie beim Tabletten-Glanz: unbeschnitten malt er neben
+    // das Feld.
+    const source = readFileSync(new URL('./PenVisual.tsx', import.meta.url), 'utf8')
+    const glanz = source.match(/screenClip[\s\S]{0,600}?data-pen-detail="screen-glint"/)?.[0] ?? ''
+    expect(glanz).not.toBe('')
+    expect(render({ lightOffset: 1 })).toMatch(/data-pen-detail="screen-glint"[^>]*translate\(9/)
+    expect(render({ lightOffset: -1 })).toMatch(/data-pen-detail="screen-glint"[^>]*translate\(-9/)
   })
 
   it('schreibt Name und Ziffer als HTML, nicht als SVG-Text', () => {
