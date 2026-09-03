@@ -4,6 +4,7 @@ import { PeptideVialVisual } from '../components/PeptideVialVisual'
 import { AmpouleVisual } from '../features/my-stack/extensions/ampoule/AmpouleVisual'
 import { CapsuleVisual } from '../features/my-stack/extensions/capsule/CapsuleVisual'
 import { NasalSprayVisual } from '../features/my-stack/extensions/nasal-spray/NasalSprayVisual'
+import { PenVisual } from '../features/my-stack/extensions/pen/PenVisual'
 import { TabletVisual } from '../features/my-stack/extensions/tablet/TabletVisual'
 import { TubeVisual } from '../features/my-stack/extensions/tube/TubeVisual'
 import { SloshProvider, useSloshEngine } from '../components/SloshContext'
@@ -52,9 +53,16 @@ const PREVIEW_TUBES = [
   { name: 'Hydrocortison Acetat 1%' },
 ]
 
+const PREVIEW_PENS = [
+  { name: 'Semaglutid', color: '#3f7fbf' },
+  { name: 'Tirzepatid', color: '#a3e635' },
+  // bewusst zu lang: zeigt den senkrechten Durchlauf
+  { name: 'Insulin glargin 300 E/ml', color: '#f0b357' },
+]
+
 // Mixed forms in one row, the way My Stack will show them.
 type MixedEntry = {
-  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube'
+  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen'
   name: string
   amount: number | null
   unit: string | null
@@ -84,6 +92,9 @@ const MIXED_CAROUSEL: MixedEntry[] = [
   { kind: 'tube', name: 'Diclofenac', amount: null, unit: null, color: '#f97316' },
   { kind: 'tube', name: 'Testogel', amount: null, unit: null, color: '#a3e635' },
   { kind: 'tube', name: 'Hydrocortison Acetat 1%', amount: null, unit: null, color: '#38bdf8' },
+  { kind: 'pen', name: 'Semaglutid', amount: null, unit: null, color: '#3f7fbf' },
+  { kind: 'pen', name: 'Tirzepatid', amount: null, unit: null, color: '#a3e635' },
+  { kind: 'pen', name: 'Insulin glargin 300 E/ml', amount: null, unit: null, color: '#f0b357' },
 ]
 
 export function VialPreview() {
@@ -321,6 +332,15 @@ export function VialPreview() {
         ))}
       </div>
 
+      <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
+        Pens — Dosisfenster in Detailgröße
+      </p>
+      <div className="mx-auto flex max-w-4xl flex-wrap items-end justify-center gap-12 pb-2">
+        {PREVIEW_PENS.map(p => (
+          <PenVisual key={p.name} name={p.name} color={p.color} size="large" />
+        ))}
+      </div>
+
       {/* The real thing: a mixed carousel narrow enough to actually swipe.
           Ampoules and vials share one ground line and one slosh engine. */}
       <p className="mx-auto max-w-sm pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
@@ -345,7 +365,15 @@ export function VialPreview() {
               data-stage-index={index}
               className={`shrink-0 ${isDragging ? '' : 'snap-center'}`}
             >
-              {entry.kind === 'tube' ? (
+              {entry.kind === 'pen' ? (
+                <PenVisual
+                  name={entry.name}
+                  color={entry.color}
+                  size="carousel"
+                  isActive={index === activeIndex}
+                  stageLightRef={registerStageLight(index)}
+                />
+              ) : entry.kind === 'tube' ? (
                 <TubeVisual
                   name={entry.name}
                   size="carousel"
