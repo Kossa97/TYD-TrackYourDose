@@ -10,6 +10,7 @@ import {
   PEN_NAME_BAND_PCT,
   PEN_NAME_RUN_PCT,
   PEN_NAME_TOP_PCT,
+  PEN_NAME_ZONE,
   PEN_RING,
   PEN_SPEC,
   PEN_VIEWBOX,
@@ -54,9 +55,16 @@ describe('penShape', () => {
     expect(PEN_DOSE_WINDOW_PCT.top).toBeCloseTo((PEN_DOSE_WINDOW.y - PEN_VIEWBOX.y) / PEN_VIEWBOX.height, 6)
   })
 
-  it('setzt den Namen mittig zwischen Kappe und Knopf', () => {
-    const mitte = PEN_BODY.y + PEN_BODY.height / 2
+  it('setzt den Namen mittig ueber das Dosisfenster', () => {
+    // Die Zone reicht von der Ringunterkante bis zur Fensteroberkante; der
+    // Name sitzt in ihrer Mitte, das Fenster mit der 0 liegt darunter.
+    expect(PEN_NAME_ZONE.top).toBe(PEN_RING.y + PEN_RING.height)
+    expect(PEN_NAME_ZONE.bottom).toBe(PEN_DOSE_WINDOW.y)
+    const mitte = (PEN_NAME_ZONE.top + PEN_NAME_ZONE.bottom) / 2
     expect(PEN_NAME_TOP_PCT).toBeCloseTo((mitte - PEN_VIEWBOX.y) / PEN_VIEWBOX.height, 6)
+    // Und er reicht nicht bis ins Fenster hinein.
+    const halbeLaufweite = (PEN_NAME_ZONE.bottom - PEN_NAME_ZONE.top) / 2
+    expect(mitte + halbeLaufweite).toBeLessThanOrEqual(PEN_DOSE_WINDOW.y)
   })
 
   it('rechnet die gedrehte Huelle auf die jeweils passende Achse um', () => {
@@ -65,14 +73,15 @@ describe('penShape', () => {
     // loesen Prozente aber immer gegen die eigene Achse auf. Weil das
     // Seitenverhaeltnis fest ist, laesst sich das ineinander umrechnen — genau
     // das prueft dieser Test, indem er zurueckrechnet.
-    expect(PEN_NAME_RUN_PCT * PEN_ASPECT).toBeCloseTo(PEN_BODY.height / PEN_VIEWBOX.height, 6)
+    expect(PEN_NAME_RUN_PCT * PEN_ASPECT).toBeCloseTo((PEN_NAME_ZONE.bottom - PEN_NAME_ZONE.top) / PEN_VIEWBOX.height, 6)
     expect(PEN_NAME_BAND_PCT / PEN_ASPECT).toBeCloseTo(PEN_BODY.width / PEN_VIEWBOX.width, 6)
   })
 
   it('gibt dem Namen laengs mehr Platz als jeder anderen Form quer', () => {
-    // Laengs rund 121,6 px bei Karussellgroesse, quer waeren es 28.
-    const laufstreckePx = (PEN_BODY.height / PEN_VIEWBOX.height) * 236.8
-    expect(laufstreckePx).toBeGreaterThan(100)
+    // Ueber dem Fenster rund 71 px bei Karussellgroesse. Quer waeren es 28,
+    // und die bisher grosszuegigste Form ist das Nasenspray mit 50,5 px.
+    const laufstreckePx = ((PEN_NAME_ZONE.bottom - PEN_NAME_ZONE.top) / PEN_VIEWBOX.height) * 236.8
+    expect(laufstreckePx).toBeGreaterThan(60)
   })
 
   it('hat keine Kammer und deshalb weder Etikett noch Fuellstand', () => {

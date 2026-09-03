@@ -975,8 +975,8 @@
     "semantic_hash": "45a38b51cd13eca6ff8eea4e19b5ef7e"
   },
   "src/pages/__VialPreview.tsx": {
-    "mtime": 1788360361.2262871,
-    "ast_hash": "16b9fd7078fd07d396003b211fef5484",
+    "mtime": 1788468849.7357574,
+    "ast_hash": "6879218c799513dda19ebc5f74ff86bc",
     "semantic_hash": ""
   },
   "src/pages/lab/AdminPanel.tsx": {
@@ -2370,13 +2370,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
-    "mtime": 1788359713.9876914,
-    "ast_hash": "9eeda4cf469a3426cf0937a36ee62d5d",
+    "mtime": 1788468793.324855,
+    "ast_hash": "6bdafe29a06a616be128722b80506052",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.tsx": {
-    "mtime": 1788359734.4322164,
-    "ast_hash": "875061dfa807726ed3a48a4873864ce7",
+    "mtime": 1788468813.266536,
+    "ast_hash": "bcf1e186bcd436f3015eb6d59d7be3cb",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.tsx": {
@@ -2435,13 +2435,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.test.ts": {
-    "mtime": 1788359713.9791234,
-    "ast_hash": "6d51d0edfc7575b620c20b25f78aa877",
+    "mtime": 1788468793.318779,
+    "ast_hash": "2ff2a78e33ac85820140f0957b7bddfc",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.ts": {
-    "mtime": 1788359734.4201126,
-    "ast_hash": "e1869cfe24a8de89d959cd30025b0e33",
+    "mtime": 1788468813.2604938,
+    "ast_hash": "438159fb5dc6ca3b5645145463619552",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/duplicateFingerprint.test.ts": {
@@ -3032,6 +3032,41 @@
   "src/features/my-stack/extensions/peptide/vialShape.test.ts": {
     "mtime": 1788360857.1257784,
     "ast_hash": "dc17cc440200f9ab2126bd33fb61848c",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/pen/PenRenderer.tsx": {
+    "mtime": 1788468801.6246016,
+    "ast_hash": "4e9914b50b77032f73be8371a32e10ea",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/pen/PenVisual.test.ts": {
+    "mtime": 1788468692.3000667,
+    "ast_hash": "4d8546d7699c0b5e04c48aed86f62813",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/pen/PenVisual.tsx": {
+    "mtime": 1788468734.8032591,
+    "ast_hash": "a2b78b06059b5a182ba5149e476a3e89",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/pen/penShape.test.ts": {
+    "mtime": 1788468625.983979,
+    "ast_hash": "80c5347cb54911212b681880519776a2",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/pen/penShape.ts": {
+    "mtime": 1788468662.338722,
+    "ast_hash": "3e2087640e75fee425150acc576c956f",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-09-03-my-stack-pen-buehnenform.md": {
+    "mtime": 1788468584.5100546,
+    "ast_hash": "7258ca9afc6793146b778486dd2c91de",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-03-my-stack-pen-buehnenform-design.md": {
+    "mtime": 1788468584.5085409,
+    "ast_hash": "1c64efeecaeb02ef0c8d05e9cf38a763",
     "semantic_hash": ""
   }
 }

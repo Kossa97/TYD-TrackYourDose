@@ -64,8 +64,9 @@ describe('PenVisual', () => {
     const html = render()
     expect(html).toContain('data-pen-detail="name"')
     expect(html).toContain('rotate(-90deg)')
-    // 394,87 % der Breite entsprechen der Laufstrecke, 10,67 % der Hoehe der Bandbreite.
-    expect(html).toContain('width:394.87%')
+    // 230,77 % der Breite entsprechen der Laufstrecke ueber dem Fenster,
+    // 10,67 % der Hoehe der Bandbreite.
+    expect(html).toContain('width:230.77%')
     expect(html).toContain('height:10.67%')
   })
 

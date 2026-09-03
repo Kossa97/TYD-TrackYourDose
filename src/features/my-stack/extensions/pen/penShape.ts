@@ -28,14 +28,23 @@ export const PEN_DOSE_TEXT = '0'
 export const PEN_KNOB = { x: 0.5, y: 250, width: 39, height: 56, rx: 7 } as const
 export const PEN_KNOB_RIB_XS = [8, 15, 22, 29] as const
 
-// Mitte des Namens zwischen Kappenunterkante und Knopfoberkante.
-export const PEN_NAME_TOP_PCT = (PEN_BODY.y + PEN_BODY.height / 2 - PEN_VIEWBOX.y) / PEN_VIEWBOX.height
+// Der Name steht ueber dem Dosisfenster: zwischen der Unterkante des Farbrings
+// und der Oberkante des Fensters. Das ist kuerzer als der ganze Koerper, aber
+// die Anordnung "Anzeige unter dem Namen" war ausdruecklich gewuenscht.
+export const PEN_NAME_ZONE = {
+  top: PEN_RING.y + PEN_RING.height,
+  bottom: PEN_DOSE_WINDOW.y,
+} as const
+
+export const PEN_NAME_TOP_PCT =
+  ((PEN_NAME_ZONE.top + PEN_NAME_ZONE.bottom) / 2 - PEN_VIEWBOX.y) / PEN_VIEWBOX.height
 
 // Die um 90 Grad gedrehte Hülle: vor der Drehung ist ihre Breite die
 // Laufstrecke am Körper (also eine Höhe) und ihre Höhe die Körperbreite (also
 // eine Breite). CSS löst Prozente immer gegen die eigene Achse auf, deshalb
 // wird hier über das feste Seitenverhältnis umgerechnet.
-export const PEN_NAME_RUN_PCT = (PEN_BODY.height / PEN_VIEWBOX.height) / PEN_ASPECT
+export const PEN_NAME_RUN_PCT =
+  ((PEN_NAME_ZONE.bottom - PEN_NAME_ZONE.top) / PEN_VIEWBOX.height) / PEN_ASPECT
 export const PEN_NAME_BAND_PCT = (PEN_BODY.width / PEN_VIEWBOX.width) * PEN_ASPECT
 
 // Das Dosisfenster wird von HTML überlagert, deshalb auch in Prozent.
