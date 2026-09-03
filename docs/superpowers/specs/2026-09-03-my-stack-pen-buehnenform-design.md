@@ -60,9 +60,13 @@ Es war zunächst vorgesehen und wurde bewusst gestrichen. Der Grund ist der Plat
 für den Namen.
 
 Mit Fenster stünde für die Beschriftung nur der Körperabschnitt darunter zur
-Verfügung: 84 von 310 Einheiten, also **64,2 px** Laufweite bei Karussellgröße.
+Verfügung: 84 von 300 Einheiten, also **66,3 px** Laufweite bei Karussellgröße.
 Ohne Fenster läuft der Körper von der Kappe bis zum Knopf durch — 154 Einheiten
-und **117,7 px**. Zum Vergleich: Ampulle 61 px, Nasenspray 74 px.
+und **121,6 px**.
+
+Zum Vergleich, alles in Pixeln bei Karussellgröße: Ampulle 35,5 px, Tube 44,2 px,
+Nasenspray 50,5 px. Der Pen bekommt längs also **mehr als das Doppelte** der
+bisher großzügigsten Form.
 
 **Aus dem schmalsten Objekt im Stack wird damit für die Beschriftung das
 großzügigste**, einfach weil die Schrift der langen Achse folgt.
@@ -75,7 +79,8 @@ nicht** — es kann nichts schwappen.
 ### Warum die Schrift längs läuft
 
 Quer stünden dem Pen rund 28 px Laufweite zur Verfügung, weniger als jeder
-anderen Form. Längs sind es 117,7 px, mehr als jeder anderen Form. Ein gedrehter
+anderen Form. Längs sind es 121,6 px, mehr als doppelt so viel wie bei der
+bisher großzügigsten. Ein gedrehter
 Name nutzt genau die Achse, an der diese Form reich ist — und echte Pens sind so
 bedruckt.
 
