@@ -318,3 +318,50 @@ describe('StackStage — Tube', () => {
     expect(renderStage(gelItem)).toContain('data-stack-renderer="unsupported"')
   })
 })
+
+const penItem: StackItem = {
+  ...vialItem,
+  id: 'semaglutid-pen',
+  display_name: 'Semaglutid',
+  category: 'medication',
+  dosage_form: 'pen',
+  color_hex: '#3f7fbf',
+  ingredients: [{
+    ...vialItem.ingredients[0],
+    custom_name: 'Semaglutid',
+    amount_value: 0.25,
+    amount_unit: 'mg',
+    basis_unit: 'dose',
+  }],
+}
+
+describe('StackStage — Pen', () => {
+  it('rendert den Pen für Pen-Einträge', () => {
+    expect(renderStage(penItem)).toContain('data-stack-renderer="pen"')
+  })
+
+  it('zeigt Dosisfenster und Namen, aber kein Etikettband', () => {
+    const html = renderStage(penItem)
+
+    expect(html).toContain('data-pen-detail="dose-window"')
+    expect(html).toContain('Semaglutid')
+    expect(html).not.toContain('data-vial-detail="label-glass-wrap"')
+  })
+
+  it('zeigt im Dosisfenster eine 0 statt der geplanten Dosis', () => {
+    // Die Bühne zeigt den Stack-Eintrag, nicht eine einzelne Einnahme —
+    // dieselbe Grenze wie bei der Bruchmenge der Tablette.
+    const html = renderStage(penItem)
+    expect(html).toMatch(/data-pen-detail="dose-value"[^>]*>0</)
+    expect(html).not.toContain('0.25')
+  })
+
+  it('hält den Pen-Adapter frei von eigener Grafik und von Physik', () => {
+    const source = readFileSync(new URL('../extensions/pen/PenRenderer.tsx', import.meta.url), 'utf8')
+
+    expect(source).toContain('PenVisual')
+    expect(source).not.toContain('<svg')
+    expect(source).not.toContain('SloshProvider')
+    expect(source).not.toContain('fillPct')
+  })
+})
