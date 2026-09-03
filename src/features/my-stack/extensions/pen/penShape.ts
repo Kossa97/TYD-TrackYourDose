@@ -28,6 +28,37 @@ export const PEN_DOSE_TEXT = '0'
 export const PEN_KNOB = { x: 0.5, y: 250, width: 39, height: 56, rx: 7 } as const
 export const PEN_KNOB_RIB_XS = [8, 15, 22, 29] as const
 
+// Der Knopf ist 39 Einheiten breit, der Körper 32. Ohne Vermittlung stoßen
+// beide stumpf aneinander. Die Fuge setzt den Körper sichtbar in den Knopf
+// hinein, der Zwischenbund lässt die Breite zweimal springen statt einmal.
+export const PEN_KNOB_SEAM = {
+  x: PEN_BODY.x,
+  y: 247.5,
+  width: PEN_BODY.width,
+  height: 4,
+} as const
+export const PEN_KNOB_COLLAR = { x: 2.2, y: 245, width: 35.6, height: 9, rx: 2.4 } as const
+
+// Der Bund liegt in der Breite zwischen Körper und Knopf — das ist seine
+// ganze Aufgabe.
+export const PEN_KNOB_COLLAR_FITS =
+  PEN_KNOB_COLLAR.width > PEN_BODY.width && PEN_KNOB_COLLAR.width < PEN_KNOB.width
+
+export const PEN_KNOB_RIB_YS = { top: 261, bottom: 297 } as const
+
+// Jede Rippe bekommt eine Schatten- und eine Lichtseite; vorher waren es
+// gleich helle Striche ohne Tiefe. Die Helligkeit folgt der Zylinderkrümmung
+// um die Glanzkante des Körpers — Körper und Knopf stehen unter demselben
+// Licht, also muss die Glanzlinie durchlaufen. Der Abfall ist nach Augenmaß
+// gewählt: bei der äußersten Rippe bleibt rund ein Drittel übrig.
+export const PEN_KNOB_HIGHLIGHT_X = PEN_BODY.x + PEN_BODY.width * 0.2
+const PEN_KNOB_RIB_FALLOFF = 17
+export const PEN_KNOB_RIBS = PEN_KNOB_RIB_XS.map(x => {
+  const t = (x - PEN_KNOB_HIGHLIGHT_X) / PEN_KNOB_RIB_FALLOFF
+  const f = Math.max(0, Math.cos(Math.max(-1.4, Math.min(1.4, t)) * 1.15))
+  return { x, licht: 0.07 + 0.2 * f, schatten: 0.16 + 0.2 * f }
+})
+
 // Der Name steht ueber dem Dosisfenster: zwischen der Unterkante des Farbrings
 // und der Oberkante des Fensters. Das ist kuerzer als der ganze Koerper, aber
 // die Anordnung "Anzeige unter dem Namen" war ausdruecklich gewuenscht.

@@ -1,4 +1,4 @@
-import { useCallback, useId, useRef } from 'react'
+import { Fragment, useCallback, useId, useRef } from 'react'
 import type { Ref } from 'react'
 import { StageMarquee } from '../../stage/StageLabel'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
@@ -10,7 +10,10 @@ import {
   PEN_DOSE_WINDOW,
   PEN_DOSE_WINDOW_PCT,
   PEN_KNOB,
-  PEN_KNOB_RIB_XS,
+  PEN_KNOB_COLLAR,
+  PEN_KNOB_RIBS,
+  PEN_KNOB_RIB_YS,
+  PEN_KNOB_SEAM,
   PEN_NAME_BAND_PCT,
   PEN_NAME_RUN_PCT,
   PEN_NAME_TOP_PCT,
@@ -134,6 +137,14 @@ export function PenVisual({
             <stop offset="50%" stopColor="rgba(255,255,255,0.65)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
           </linearGradient>
+          {/* Oben faellt der Schatten des Koerpers auf den Knopf, unten setzt
+              ihn die Standflaeche ab. */}
+          <linearGradient id={`${uid}-knobAo`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(0,0,0,0.5)" />
+            <stop offset="26%" stopColor="rgba(0,0,0,0)" />
+            <stop offset="86%" stopColor="rgba(0,0,0,0)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.32)" />
+          </linearGradient>
           <radialGradient id={`${uid}-groundShadow`} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="rgba(0,0,0,0.7)" />
             <stop offset="62%" stopColor="rgba(0,0,0,0.4)" />
@@ -220,14 +231,69 @@ export function PenVisual({
           rx={PEN_KNOB.rx}
           fill={`url(#${uid}-knob)`}
         />
-        <g
-          data-pen-detail="knob-ribs"
-          fill="none"
-          stroke="rgba(255,255,255,0.16)"
-          strokeWidth="0.9"
-        >
-          {PEN_KNOB_RIB_XS.map(x => (
-            <path key={x} d={`M${x} ${PEN_KNOB.y + 9} L${x} ${PEN_KNOB.y + PEN_KNOB.height - 9}`} />
+        <rect
+          x={PEN_KNOB.x}
+          y={PEN_KNOB.y}
+          width={PEN_KNOB.width}
+          height={PEN_KNOB.height}
+          rx={PEN_KNOB.rx}
+          fill={`url(#${uid}-knobAo)`}
+        />
+
+        {/* Der Bund vermittelt zwischen Koerperbreite und Knopfbreite. */}
+        <g data-pen-detail="knob-collar">
+          <rect
+            x={PEN_KNOB_COLLAR.x}
+            y={PEN_KNOB_COLLAR.y}
+            width={PEN_KNOB_COLLAR.width}
+            height={PEN_KNOB_COLLAR.height}
+            rx={PEN_KNOB_COLLAR.rx}
+            fill={`url(#${uid}-knob)`}
+          />
+          <rect
+            x={PEN_KNOB_COLLAR.x}
+            y={PEN_KNOB_COLLAR.y}
+            width={PEN_KNOB_COLLAR.width}
+            height={PEN_KNOB_COLLAR.height}
+            rx={PEN_KNOB_COLLAR.rx}
+            fill="rgba(255,255,255,0.07)"
+          />
+        </g>
+
+        {/* Die Fuge: der Koerper steckt im Bund, statt stumpf aufzusitzen. */}
+        <rect
+          data-pen-detail="knob-seam"
+          x={PEN_KNOB_SEAM.x}
+          y={PEN_KNOB_SEAM.y}
+          width={PEN_KNOB_SEAM.width}
+          height={PEN_KNOB_SEAM.height}
+          fill="rgba(0,0,0,0.5)"
+        />
+        <g fill="none" strokeLinecap="round">
+          <path
+            d={`M${PEN_KNOB_COLLAR.x} ${PEN_KNOB_COLLAR.y + 1} L${PEN_KNOB_COLLAR.x + PEN_KNOB_COLLAR.width} ${PEN_KNOB_COLLAR.y + 1}`}
+            stroke="rgba(255,255,255,0.28)"
+            strokeWidth="0.8"
+          />
+          <path
+            d={`M${PEN_KNOB.x} ${PEN_KNOB.y + 1.4} L${PEN_KNOB.x + PEN_KNOB.width} ${PEN_KNOB.y + 1.4}`}
+            stroke="rgba(255,255,255,0.20)"
+            strokeWidth="0.8"
+          />
+        </g>
+
+        <g data-pen-detail="knob-ribs" fill="none" strokeLinecap="round" strokeWidth="1">
+          {PEN_KNOB_RIBS.map(rippe => (
+            <Fragment key={rippe.x}>
+              <path
+                d={`M${rippe.x - 1} ${PEN_KNOB_RIB_YS.top} L${rippe.x - 1} ${PEN_KNOB_RIB_YS.bottom}`}
+                stroke={`rgba(0,0,0,${rippe.schatten.toFixed(2)})`}
+              />
+              <path
+                d={`M${rippe.x} ${PEN_KNOB_RIB_YS.top} L${rippe.x} ${PEN_KNOB_RIB_YS.bottom}`}
+                stroke={`rgba(255,255,255,${rippe.licht.toFixed(2)})`}
+              />
+            </Fragment>
           ))}
         </g>
       </svg>

@@ -28,6 +28,22 @@ describe('PenVisual', () => {
     expect(render()).not.toContain('data-pen-detail="cartridge"')
   })
 
+  it('verbindet den Knopf mit Bund und Fuge statt stumpf zu stossen', () => {
+    const html = render()
+    expect(html).toContain('data-pen-detail="knob-collar"')
+    expect(html).toContain('data-pen-detail="knob-seam"')
+  })
+
+  it('zeichnet die Rippen als Paare aus Schatten und Licht', () => {
+    // Vier Rippen ergeben acht Striche; vorher waren es vier gleich helle.
+    const ribs = render().match(/data-pen-detail="knob-ribs"[\s\S]*?<\/g>/)?.[0] ?? ''
+    expect(ribs.match(/rgba\(0,0,0,/g) ?? []).toHaveLength(4)
+    expect(ribs.match(/rgba\(255,255,255,/g) ?? []).toHaveLength(4)
+    // Und sie sind nicht alle gleich hell.
+    const hell = new Set(ribs.match(/rgba\(255,255,255,[\d.]+\)/g) ?? [])
+    expect(hell.size).toBeGreaterThan(1)
+  })
+
   it('faerbt nur den Ring mit der Eintragsfarbe', () => {
     // Das Gehaeuse bleibt neutral; die Farbe erscheint ausschliesslich im Ring.
     const html = render({ color: '#a3e635' })

@@ -7,6 +7,10 @@ import {
   PEN_DOSE_WINDOW,
   PEN_DOSE_WINDOW_PCT,
   PEN_KNOB,
+  PEN_KNOB_COLLAR,
+  PEN_KNOB_HIGHLIGHT_X,
+  PEN_KNOB_RIBS,
+  PEN_KNOB_SEAM,
   PEN_NAME_BAND_PCT,
   PEN_NAME_RUN_PCT,
   PEN_NAME_TOP_PCT,
@@ -31,6 +35,49 @@ describe('penShape', () => {
     // Nicht der Koerper: der Knopf bestimmt Umriss und Seitenverhaeltnis.
     expect(PEN_KNOB.width).toBe(PEN_VIEWBOX.width)
     expect(PEN_KNOB.width).toBeGreaterThan(PEN_BODY.width)
+  })
+
+  it('laesst die Breite ueber den Bund zweimal springen', () => {
+    // Ohne ihn stossen 32 Einheiten Koerper stumpf auf 39 Einheiten Knopf.
+    expect(PEN_KNOB_COLLAR.width).toBeGreaterThan(PEN_BODY.width)
+    expect(PEN_KNOB_COLLAR.width).toBeLessThan(PEN_KNOB.width)
+    // Und er ueberlappt beide, sonst verbindet er nichts.
+    expect(PEN_KNOB_COLLAR.y).toBeLessThan(PEN_KNOB.y)
+    expect(PEN_KNOB_COLLAR.y + PEN_KNOB_COLLAR.height).toBeGreaterThan(PEN_KNOB.y)
+  })
+
+  it('legt die Fuge auf Koerperbreite in den Bund', () => {
+    // Die Fuge zeigt, dass der Koerper im Knopf steckt — also genau so breit
+    // wie er, und innerhalb des Bundes.
+    expect(PEN_KNOB_SEAM.width).toBe(PEN_BODY.width)
+    expect(PEN_KNOB_SEAM.x).toBe(PEN_BODY.x)
+    expect(PEN_KNOB_SEAM.y).toBeGreaterThan(PEN_KNOB_COLLAR.y)
+    expect(PEN_KNOB_SEAM.y + PEN_KNOB_SEAM.height).toBeLessThan(
+      PEN_KNOB_COLLAR.y + PEN_KNOB_COLLAR.height,
+    )
+  })
+
+  it('gibt jeder Rippe eine Licht- und eine Schattenseite', () => {
+    // Vorher waren es vier gleich helle Striche ohne Tiefe.
+    expect(PEN_KNOB_RIBS).toHaveLength(4)
+    for (const rippe of PEN_KNOB_RIBS) {
+      expect(rippe.licht).toBeGreaterThan(0)
+      expect(rippe.schatten).toBeGreaterThan(rippe.licht)
+    }
+  })
+
+  it('nimmt die Glanzlinie des Koerpers auf und laesst sie nach aussen abfallen', () => {
+    // Koerper und Knopf stehen unter demselben Licht, also laeuft die
+    // Glanzlinie durch. Die naechste Rippe ist die hellste, danach nimmt es ab.
+    const naechste = PEN_KNOB_RIBS.reduce((a, b) =>
+      Math.abs(a.x - PEN_KNOB_HIGHLIGHT_X) < Math.abs(b.x - PEN_KNOB_HIGHLIGHT_X) ? a : b,
+    )
+    expect(naechste.licht).toBe(Math.max(...PEN_KNOB_RIBS.map(r => r.licht)))
+    const sortiert = [...PEN_KNOB_RIBS].sort((a, b) => a.x - b.x)
+    const rechts = sortiert.filter(r => r.x > PEN_KNOB_HIGHLIGHT_X)
+    for (let i = 1; i < rechts.length; i += 1) {
+      expect(rechts[i].licht).toBeLessThan(rechts[i - 1].licht)
+    }
   })
 
   it('setzt den Farbring an den oberen Rand des Koerpers', () => {

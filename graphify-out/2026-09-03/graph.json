@@ -23530,7 +23530,7 @@
       "label": "MixedEntry",
       "file_type": "code",
       "source_file": "src/pages/__VialPreview.tsx",
-      "source_location": "L64",
+      "source_location": "L65",
       "_origin": "ast",
       "id": "src_pages_vialpreview_mixedentry",
       "community": 284,
@@ -23540,7 +23540,7 @@
       "label": "MIXED_CAROUSEL",
       "file_type": "code",
       "source_file": "src/pages/__VialPreview.tsx",
-      "source_location": "L73",
+      "source_location": "L74",
       "_origin": "ast",
       "id": "src_pages_vialpreview_mixed_carousel",
       "community": 284,
@@ -23550,7 +23550,7 @@
       "label": "VialPreview()",
       "file_type": "code",
       "source_file": "src/pages/__VialPreview.tsx",
-      "source_location": "L100",
+      "source_location": "L101",
       "_origin": "ast",
       "id": "src_pages_vialpreview_vialpreview",
       "community": 284,
@@ -35567,7 +35567,7 @@
       "contributor": null,
       "community": 169,
       "norm_label": "graphify skill trigger (/graphify)",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
     },
     {
       "label": "graphify pipeline (SKILL.md)",
@@ -44299,7 +44299,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/__VialPreview.tsx",
-      "source_location": "L101",
+      "source_location": "L102",
       "weight": 1.0,
       "source": "src_pages_vialpreview_vialpreview",
       "target": "src_components_sloshcontext_usesloshengine"
@@ -94974,7 +94974,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/pages/__VialPreview.tsx",
-      "source_location": "L73",
+      "source_location": "L74",
       "weight": 1.0,
       "source": "src_pages_vialpreview",
       "target": "src_pages_vialpreview_mixed_carousel",
@@ -94984,7 +94984,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/pages/__VialPreview.tsx",
-      "source_location": "L64",
+      "source_location": "L65",
       "weight": 1.0,
       "source": "src_pages_vialpreview",
       "target": "src_pages_vialpreview_mixedentry",
@@ -95064,7 +95064,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/pages/__VialPreview.tsx",
-      "source_location": "L100",
+      "source_location": "L101",
       "weight": 1.0,
       "source": "src_pages_vialpreview",
       "target": "src_pages_vialpreview_vialpreview",
@@ -107409,5 +107409,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "c667678d5d3fb573dad89217dda30238eaff846b"
+  "built_at_commit": "3bf177d9e66d2811f9737bbfcd863b395fe958c1"
 }
