@@ -3040,23 +3040,23 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/pen/PenVisual.test.ts": {
-    "mtime": 1788472075.7216716,
-    "ast_hash": "84637ecc4a0a27e633845c5f2fb9e55c",
+    "mtime": 1788472274.323382,
+    "ast_hash": "bf3b527d1a2ca7e5bb8606e8b83d4ed4",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/pen/PenVisual.tsx": {
-    "mtime": 1788472003.8474472,
-    "ast_hash": "3f344f1cc20a99f5282deba80d473589",
+    "mtime": 1788472242.83556,
+    "ast_hash": "361aad152aa0cc600da1ae72182d2cef",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/pen/penShape.test.ts": {
-    "mtime": 1788472075.7216716,
-    "ast_hash": "505f100de37ea698e7204529aed15f36",
+    "mtime": 1788472274.323382,
+    "ast_hash": "096e2886c33a9a82d48091bfd5dee92e",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/pen/penShape.ts": {
-    "mtime": 1788471970.8949287,
-    "ast_hash": "583a35fe21255bddf0aeaa1ed3629d48",
+    "mtime": 1788472242.8962054,
+    "ast_hash": "fd0cdcadd99e472152aa96e0dc6ee4a5",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-09-03-my-stack-pen-buehnenform.md": {

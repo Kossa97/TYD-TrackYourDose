@@ -3353,7 +3353,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_components_blutspiegelcarousel_cyclewithpk",
-      "community": 39,
+      "community": 18,
       "norm_label": "cyclewithpk"
     },
     {
@@ -6993,7 +6993,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_fortschrittpage",
-      "community": 310,
+      "community": 128,
       "norm_label": "fortschrittpage.tsx"
     },
     {
@@ -7003,7 +7003,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_fortschritt_fortschrittpage_fortschrittpage",
-      "community": 310,
+      "community": 128,
       "norm_label": "fortschrittpage()"
     },
     {
@@ -7033,7 +7033,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittdashboard_fortschrittdashboard",
-      "community": 310,
+      "community": 242,
       "norm_label": "fortschrittdashboard()"
     },
     {
@@ -7053,7 +7053,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittheader",
-      "community": 310,
+      "community": 128,
       "norm_label": "fortschrittheader.tsx"
     },
     {
@@ -7063,7 +7063,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittheader_props",
-      "community": 310,
+      "community": 128,
       "norm_label": "props"
     },
     {
@@ -7073,7 +7073,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittheader_fortschrittheader",
-      "community": 310,
+      "community": 128,
       "norm_label": "fortschrittheader()"
     },
     {
@@ -7083,7 +7083,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_metricwheelpicker",
-      "community": 18,
+      "community": 128,
       "norm_label": "metricwheelpicker.tsx"
     },
     {
@@ -7093,7 +7093,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_metricwheelpicker_builddecimalrange",
-      "community": 18,
+      "community": 128,
       "norm_label": "builddecimalrange()"
     },
     {
@@ -7103,7 +7103,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_metricwheelpicker_indexforvalue",
-      "community": 18,
+      "community": 128,
       "norm_label": "indexforvalue()"
     },
     {
@@ -7113,7 +7113,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_metricwheelpicker_formatdecimal",
-      "community": 18,
+      "community": 128,
       "norm_label": "formatdecimal()"
     },
     {
@@ -7123,7 +7123,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_metricwheelpicker_props",
-      "community": 18,
+      "community": 128,
       "norm_label": "props"
     },
     {
@@ -7133,7 +7133,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_metricwheelpicker_metricwheelpicker",
-      "community": 18,
+      "community": 128,
       "norm_label": "metricwheelpicker()"
     },
     {
@@ -7143,7 +7143,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_placeholdertab",
-      "community": 18,
+      "community": 44,
       "norm_label": "placeholdertab.tsx"
     },
     {
@@ -7153,7 +7153,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_placeholdertab_placeholdertab",
-      "community": 18,
+      "community": 44,
       "norm_label": "placeholdertab()"
     },
     {
@@ -7163,7 +7163,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_stickyrangebar",
-      "community": 310,
+      "community": 128,
       "norm_label": "stickyrangebar.tsx"
     },
     {
@@ -7173,7 +7173,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_stickyrangebar_props",
-      "community": 310,
+      "community": 128,
       "norm_label": "props"
     },
     {
@@ -7183,7 +7183,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_stickyrangebar_stickyrangebar",
-      "community": 310,
+      "community": 128,
       "norm_label": "stickyrangebar()"
     },
     {
@@ -7273,7 +7273,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_wellnesssliderrow",
-      "community": 18,
+      "community": 128,
       "norm_label": "wellnesssliderrow.tsx"
     },
     {
@@ -7283,7 +7283,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_wellnesssliderrow_wellnessfillpercent",
-      "community": 18,
+      "community": 128,
       "norm_label": "wellnessfillpercent()"
     },
     {
@@ -7293,7 +7293,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_wellnesssliderrow_datefieldstyle",
-      "community": 18,
+      "community": 128,
       "norm_label": "datefieldstyle"
     },
     {
@@ -7303,7 +7303,7 @@
       "source_location": "L108",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_wellnesssliderrow_compactinputstyle",
-      "community": 18,
+      "community": 128,
       "norm_label": "compactinputstyle"
     },
     {
@@ -7313,7 +7313,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_wellnesssliderrow_props",
-      "community": 18,
+      "community": 128,
       "norm_label": "props"
     },
     {
@@ -7323,7 +7323,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_wellnesssliderrow_wellnesssliderrow",
-      "community": 18,
+      "community": 128,
       "norm_label": "wellnesssliderrow()"
     },
     {
@@ -7583,7 +7583,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_topchangessection",
-      "community": 18,
+      "community": 44,
       "norm_label": "topchangessection.tsx"
     },
     {
@@ -7593,7 +7593,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_topchangessection_props",
-      "community": 18,
+      "community": 44,
       "norm_label": "props"
     },
     {
@@ -7603,7 +7603,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_topchangessection_topchangessection",
-      "community": 18,
+      "community": 44,
       "norm_label": "topchangessection()"
     },
     {
@@ -7613,7 +7613,7 @@
       "source_location": "L119",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_topchangessection_changecard",
-      "community": 18,
+      "community": 44,
       "norm_label": "changecard()"
     },
     {
@@ -7623,7 +7623,7 @@
       "source_location": "L164",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_topchangessection_formatvalue",
-      "community": 18,
+      "community": 44,
       "norm_label": "formatvalue()"
     },
     {
@@ -7633,7 +7633,7 @@
       "source_location": "L172",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_topchangessection_formatdelta",
-      "community": 18,
+      "community": 44,
       "norm_label": "formatdelta()"
     },
     {
@@ -7643,7 +7643,7 @@
       "source_location": "L181",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_topchangessection_emptymessage",
-      "community": 18,
+      "community": 44,
       "norm_label": "emptymessage()"
     },
     {
@@ -7743,7 +7743,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartsettingsbutton",
-      "community": 89,
+      "community": 310,
       "norm_label": "chartsettingsbutton.tsx"
     },
     {
@@ -7753,7 +7753,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartsettingsbutton_props",
-      "community": 89,
+      "community": 310,
       "norm_label": "props"
     },
     {
@@ -7763,7 +7763,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_chartsettingsbutton_chartsettingsbutton",
-      "community": 89,
+      "community": 310,
       "norm_label": "chartsettingsbutton()"
     },
     {
@@ -8063,7 +8063,7 @@
       "source_location": "L666",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_metricchart_metricchart",
-      "community": 89,
+      "community": 310,
       "norm_label": "metricchart"
     },
     {
@@ -8153,7 +8153,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_verlaufsection",
-      "community": 89,
+      "community": 310,
       "norm_label": "verlaufsection.tsx"
     },
     {
@@ -8163,7 +8163,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_verlaufsection_props",
-      "community": 89,
+      "community": 310,
       "norm_label": "props"
     },
     {
@@ -8173,7 +8173,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_verlaufsection_verlaufsection",
-      "community": 89,
+      "community": 310,
       "norm_label": "verlaufsection()"
     },
     {
@@ -8293,7 +8293,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_verlaufsetupsheet",
-      "community": 128,
+      "community": 310,
       "norm_label": "verlaufsetupsheet.tsx"
     },
     {
@@ -8303,7 +8303,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_verlaufsetupsheet_props",
-      "community": 128,
+      "community": 310,
       "norm_label": "props"
     },
     {
@@ -8313,7 +8313,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_verlauf_verlaufsetupsheet_verlaufsetupsheet",
-      "community": 128,
+      "community": 310,
       "norm_label": "verlaufsetupsheet()"
     },
     {
@@ -8523,7 +8523,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_constants",
-      "community": 89,
+      "community": 310,
       "norm_label": "constants.ts"
     },
     {
@@ -8533,7 +8533,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_constants_metric_thresholds",
-      "community": 89,
+      "community": 310,
       "norm_label": "metric_thresholds"
     },
     {
@@ -8543,7 +8543,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_features_fortschritt_constants_wellness_fields",
-      "community": 89,
+      "community": 310,
       "norm_label": "wellness_fields"
     },
     {
@@ -8553,7 +8553,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_features_fortschritt_constants_chart_metric_keys",
-      "community": 89,
+      "community": 310,
       "norm_label": "chart_metric_keys"
     },
     {
@@ -8563,7 +8563,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_features_fortschritt_constants_iswellnessmetrickey",
-      "community": 89,
+      "community": 310,
       "norm_label": "iswellnessmetrickey()"
     },
     {
@@ -8573,7 +8573,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_features_fortschritt_constants_ischartmetrickey",
-      "community": 89,
+      "community": 310,
       "norm_label": "ischartmetrickey()"
     },
     {
@@ -8603,7 +8603,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_features_fortschritt_hooks_usechartpan_chartpanhandle",
-      "community": 89,
+      "community": 310,
       "norm_label": "chartpanhandle"
     },
     {
@@ -8723,7 +8723,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_hooks_usescrolllock",
-      "community": 128,
+      "community": 310,
       "norm_label": "usescrolllock.ts"
     },
     {
@@ -8733,7 +8733,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_features_fortschritt_hooks_usescrolllock_usescrolllock",
-      "community": 128,
+      "community": 310,
       "norm_label": "usescrolllock()"
     },
     {
@@ -9143,7 +9143,7 @@
       "source_location": "L152",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartvisibility_filtercyclesbyvisibility",
-      "community": 89,
+      "community": 310,
       "norm_label": "filtercyclesbyvisibility()"
     },
     {
@@ -9153,7 +9153,7 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_chartvisibility_filterongoingbyvisibility",
-      "community": 89,
+      "community": 310,
       "norm_label": "filterongoingbyvisibility()"
     },
     {
@@ -9413,7 +9413,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_test",
-      "community": 297,
+      "community": 89,
       "norm_label": "cyclelegend.test.ts"
     },
     {
@@ -9423,7 +9423,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_test_cycle",
-      "community": 297,
+      "community": 89,
       "norm_label": "cycle()"
     },
     {
@@ -9433,7 +9433,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_test_ongoing",
-      "community": 297,
+      "community": 89,
       "norm_label": "ongoing()"
     },
     {
@@ -9443,7 +9443,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend",
-      "community": 297,
+      "community": 89,
       "norm_label": "cyclelegend.ts"
     },
     {
@@ -9453,7 +9453,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_cyclelegenditem",
-      "community": 297,
+      "community": 89,
       "norm_label": "cyclelegenditem"
     },
     {
@@ -9463,7 +9463,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_cyclelegend_buildcyclelegenditems",
-      "community": 297,
+      "community": 89,
       "norm_label": "buildcyclelegenditems()"
     },
     {
@@ -9783,7 +9783,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefinitions_buildavailablemetrics",
-      "community": 89,
+      "community": 310,
       "norm_label": "buildavailablemetrics()"
     },
     {
@@ -9793,7 +9793,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metricdefinitions_normalizemetrickey",
-      "community": 89,
+      "community": 310,
       "norm_label": "normalizemetrickey()"
     },
     {
@@ -9843,7 +9843,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_metrics_numeric",
-      "community": 76,
+      "community": 242,
       "norm_label": "numeric()"
     },
     {
@@ -10173,7 +10173,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_range",
-      "community": 242,
+      "community": 76,
       "norm_label": "range.ts"
     },
     {
@@ -10183,7 +10183,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_range_filterdatesinrange",
-      "community": 242,
+      "community": 76,
       "norm_label": "filterdatesinrange()"
     },
     {
@@ -10313,7 +10313,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_substances_isinrange",
-      "community": 242,
+      "community": 76,
       "norm_label": "isinrange()"
     },
     {
@@ -10503,7 +10503,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_test",
-      "community": 310,
+      "community": 128,
       "norm_label": "verlaufrange.test.ts"
     },
     {
@@ -10513,7 +10513,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange",
-      "community": 310,
+      "community": 128,
       "norm_label": "verlaufrange.ts"
     },
     {
@@ -10523,7 +10523,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_rangechipkey",
-      "community": 310,
+      "community": 128,
       "norm_label": "rangechipkey"
     },
     {
@@ -10533,7 +10533,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_range_chips",
-      "community": 310,
+      "community": 128,
       "norm_label": "range_chips"
     },
     {
@@ -10543,7 +10543,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_rangefromchip",
-      "community": 310,
+      "community": 128,
       "norm_label": "rangefromchip()"
     },
     {
@@ -10563,7 +10563,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_barposition",
-      "community": 310,
+      "community": 128,
       "norm_label": "barposition()"
     },
     {
@@ -10573,7 +10573,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_formatrangelabel",
-      "community": 310,
+      "community": 128,
       "norm_label": "formatrangelabel()"
     },
     {
@@ -10583,7 +10583,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_styles",
-      "community": 18,
+      "community": 44,
       "norm_label": "styles.ts"
     },
     {
@@ -10593,7 +10593,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_fortschritt_styles_panel",
-      "community": 18,
+      "community": 44,
       "norm_label": "panel"
     },
     {
@@ -10603,7 +10603,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_styles_sectionlabel",
-      "community": 18,
+      "community": 44,
       "norm_label": "sectionlabel"
     },
     {
@@ -10613,7 +10613,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_features_fortschritt_styles_cardtitle",
-      "community": 18,
+      "community": 44,
       "norm_label": "cardtitle"
     },
     {
@@ -10623,7 +10623,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_features_fortschritt_styles_carddelta",
-      "community": 18,
+      "community": 44,
       "norm_label": "carddelta"
     },
     {
@@ -10633,7 +10633,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_features_fortschritt_styles_inputstyle",
-      "community": 18,
+      "community": 44,
       "norm_label": "inputstyle"
     },
     {
@@ -10643,7 +10643,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_features_fortschritt_styles_fieldlabel",
-      "community": 18,
+      "community": 128,
       "norm_label": "fieldlabel"
     },
     {
@@ -10653,7 +10653,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_types",
-      "community": 297,
+      "community": 76,
       "norm_label": "types.ts"
     },
     {
@@ -10663,7 +10663,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_substancemode",
-      "community": 297,
+      "community": 76,
       "norm_label": "substancemode"
     },
     {
@@ -10713,7 +10713,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_activesubstance",
-      "community": 310,
+      "community": 128,
       "norm_label": "activesubstance"
     },
     {
@@ -10763,7 +10763,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_doselogentry",
-      "community": 242,
+      "community": 76,
       "norm_label": "doselogentry"
     },
     {
@@ -10783,7 +10783,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_metricchange",
-      "community": 18,
+      "community": 44,
       "norm_label": "metricchange"
     },
     {
@@ -10793,7 +10793,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_overviewcarddata",
-      "community": 297,
+      "community": 76,
       "norm_label": "overviewcarddata"
     },
     {
@@ -10813,7 +10813,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_chartnavigation",
-      "community": 89,
+      "community": 310,
       "norm_label": "chartnavigation"
     },
     {
@@ -12333,7 +12333,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_my_stack_components_trackinglevelpicker_test",
-      "community": 39,
+      "community": 18,
       "norm_label": "trackinglevelpicker.test.tsx"
     },
     {
@@ -12343,7 +12343,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_my_stack_components_trackinglevelpicker",
-      "community": 39,
+      "community": 18,
       "norm_label": "trackinglevelpicker.tsx"
     },
     {
@@ -12353,7 +12353,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_my_stack_components_trackinglevelpicker_trackinglevelpickerprops",
-      "community": 39,
+      "community": 18,
       "norm_label": "trackinglevelpickerprops"
     },
     {
@@ -12363,7 +12363,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_my_stack_components_trackinglevelpicker_levels",
-      "community": 39,
+      "community": 18,
       "norm_label": "levels"
     },
     {
@@ -12373,7 +12373,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_my_stack_components_trackinglevelpicker_trackinglevelpicker",
-      "community": 39,
+      "community": 18,
       "norm_label": "trackinglevelpicker()"
     },
     {
@@ -13137,30 +13137,30 @@
       "norm_label": "pen_knob_rib_xs"
     },
     {
-      "label": "PEN_KNOB_SEAM",
+      "label": "PEN_KNOB_SHOULDER",
       "file_type": "code",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L34",
+      "source_location": "L36",
       "_origin": "ast",
-      "id": "src_features_my_stack_extensions_pen_penshape_pen_knob_seam",
+      "id": "src_features_my_stack_extensions_pen_penshape_pen_knob_shoulder",
       "community": 131,
-      "norm_label": "pen_knob_seam"
+      "norm_label": "pen_knob_shoulder"
     },
     {
-      "label": "PEN_KNOB_COLLAR",
+      "label": "PEN_BODY_SHOULDER_X",
       "file_type": "code",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L40",
+      "source_location": "L55",
       "_origin": "ast",
-      "id": "src_features_my_stack_extensions_pen_penshape_pen_knob_collar",
+      "id": "src_features_my_stack_extensions_pen_penshape_pen_body_shoulder_x",
       "community": 131,
-      "norm_label": "pen_knob_collar"
+      "norm_label": "pen_body_shoulder_x"
     },
     {
       "label": "PEN_KNOB_RIB_YS",
       "file_type": "code",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L47",
+      "source_location": "L60",
       "_origin": "ast",
       "id": "src_features_my_stack_extensions_pen_penshape_pen_knob_rib_ys",
       "community": 131,
@@ -13170,7 +13170,7 @@
       "label": "PEN_KNOB_RIBS",
       "file_type": "code",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L56",
+      "source_location": "L69",
       "_origin": "ast",
       "id": "src_features_my_stack_extensions_pen_penshape_pen_knob_ribs",
       "community": 131,
@@ -13180,7 +13180,7 @@
       "label": "PEN_NAME_ZONE",
       "file_type": "code",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L65",
+      "source_location": "L78",
       "_origin": "ast",
       "id": "src_features_my_stack_extensions_pen_penshape_pen_name_zone",
       "community": 131,
@@ -13190,7 +13190,7 @@
       "label": "PEN_DOSE_WINDOW_PCT",
       "file_type": "code",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L82",
+      "source_location": "L95",
       "_origin": "ast",
       "id": "src_features_my_stack_extensions_pen_penshape_pen_dose_window_pct",
       "community": 131,
@@ -13200,7 +13200,7 @@
       "label": "PEN_SPEC",
       "file_type": "code",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L92",
+      "source_location": "L105",
       "_origin": "ast",
       "id": "src_features_my_stack_extensions_pen_penshape_pen_spec",
       "community": 131,
@@ -14363,7 +14363,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_features_my_stack_lib_doseplan_titrationstep",
-      "community": 39,
+      "community": 18,
       "norm_label": "titrationstep"
     },
     {
@@ -14883,7 +14883,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_features_my_stack_lib_pkreadiness_pkreadinessinput",
-      "community": 39,
+      "community": 18,
       "norm_label": "pkreadinessinput"
     },
     {
@@ -14893,7 +14893,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_features_my_stack_lib_pkreadiness_pkschedulecycle",
-      "community": 39,
+      "community": 18,
       "norm_label": "pkschedulecycle"
     },
     {
@@ -14923,7 +14923,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_features_my_stack_lib_pkreadiness_topkmilligrams",
-      "community": 28,
+      "community": 39,
       "norm_label": "topkmilligrams()"
     },
     {
@@ -16693,7 +16693,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_features_my_stack_types_trackinglevel",
-      "community": 39,
+      "community": 18,
       "norm_label": "trackinglevel"
     },
     {
@@ -21053,7 +21053,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "src_pages_blutspiegelsimulation_protocolcycle",
-      "community": 39,
+      "community": 18,
       "norm_label": "protocolcycle"
     },
     {
@@ -22713,7 +22713,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_pages_progress",
-      "community": 310,
+      "community": 128,
       "norm_label": "progress.tsx"
     },
     {
@@ -25093,7 +25093,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "src_services_liveblutspiegelchart_cyclerow",
-      "community": 39,
+      "community": 18,
       "norm_label": "cyclerow"
     },
     {
@@ -35607,7 +35607,7 @@
       "contributor": null,
       "community": 169,
       "norm_label": "graphify skill trigger (/graphify)",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
     },
     {
       "label": "graphify pipeline (SKILL.md)",
@@ -71418,6 +71418,17 @@
       "source_location": "L5",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_pen_penvisual",
+      "target": "src_features_my_stack_extensions_pen_penshape_pen_body_shoulder_x",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/my-stack/extensions/pen/PenVisual.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "src_features_my_stack_extensions_pen_penvisual",
       "target": "src_features_my_stack_extensions_pen_penshape_pen_dose_window",
       "confidence_score": 1.0
     },
@@ -71430,28 +71441,6 @@
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_pen_penvisual",
       "target": "src_features_my_stack_extensions_pen_penshape_pen_dose_window_pct",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/features/my-stack/extensions/pen/PenVisual.tsx",
-      "source_location": "L5",
-      "weight": 1.0,
-      "source": "src_features_my_stack_extensions_pen_penvisual",
-      "target": "src_features_my_stack_extensions_pen_penshape_pen_knob",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/features/my-stack/extensions/pen/PenVisual.tsx",
-      "source_location": "L5",
-      "weight": 1.0,
-      "source": "src_features_my_stack_extensions_pen_penvisual",
-      "target": "src_features_my_stack_extensions_pen_penshape_pen_knob_collar",
       "confidence_score": 1.0
     },
     {
@@ -71484,7 +71473,7 @@
       "source_location": "L5",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_pen_penvisual",
-      "target": "src_features_my_stack_extensions_pen_penshape_pen_knob_seam",
+      "target": "src_features_my_stack_extensions_pen_penshape_pen_knob_shoulder",
       "confidence_score": 1.0
     },
     {
@@ -71752,17 +71741,6 @@
       "source_location": "L3",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_pen_penshape_test",
-      "target": "src_features_my_stack_extensions_pen_penshape_pen_knob_collar",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/features/my-stack/extensions/pen/penShape.test.ts",
-      "source_location": "L3",
-      "weight": 1.0,
-      "source": "src_features_my_stack_extensions_pen_penshape_test",
       "target": "src_features_my_stack_extensions_pen_penshape_pen_knob_ribs",
       "confidence_score": 1.0
     },
@@ -71774,7 +71752,7 @@
       "source_location": "L3",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_pen_penshape_test",
-      "target": "src_features_my_stack_extensions_pen_penshape_pen_knob_seam",
+      "target": "src_features_my_stack_extensions_pen_penshape_pen_knob_shoulder",
       "confidence_score": 1.0
     },
     {
@@ -71857,6 +71835,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
+      "source_location": "L55",
+      "weight": 1.0,
+      "source": "src_features_my_stack_extensions_pen_penshape",
+      "target": "src_features_my_stack_extensions_pen_penshape_pen_body_shoulder_x",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
       "source_location": "L23",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_pen_penshape",
@@ -71867,7 +71855,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L82",
+      "source_location": "L95",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_pen_penshape",
       "target": "src_features_my_stack_extensions_pen_penshape_pen_dose_window_pct",
@@ -71887,16 +71875,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L40",
-      "weight": 1.0,
-      "source": "src_features_my_stack_extensions_pen_penshape",
-      "target": "src_features_my_stack_extensions_pen_penshape_pen_knob_collar",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
       "source_location": "L29",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_pen_penshape",
@@ -71907,7 +71885,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L47",
+      "source_location": "L60",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_pen_penshape",
       "target": "src_features_my_stack_extensions_pen_penshape_pen_knob_rib_ys",
@@ -71917,7 +71895,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L56",
+      "source_location": "L69",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_pen_penshape",
       "target": "src_features_my_stack_extensions_pen_penshape_pen_knob_ribs",
@@ -71927,17 +71905,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L34",
+      "source_location": "L36",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_pen_penshape",
-      "target": "src_features_my_stack_extensions_pen_penshape_pen_knob_seam",
+      "target": "src_features_my_stack_extensions_pen_penshape_pen_knob_shoulder",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L65",
+      "source_location": "L78",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_pen_penshape",
       "target": "src_features_my_stack_extensions_pen_penshape_pen_name_zone",
@@ -71957,7 +71935,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/pen/penShape.ts",
-      "source_location": "L92",
+      "source_location": "L105",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_pen_penshape",
       "target": "src_features_my_stack_extensions_pen_penshape_pen_spec",
@@ -107555,5 +107533,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "ac0d5e5ab344004c1a6534e10ec2d41c916f33e5"
+  "built_at_commit": "56864c2256583dd6537047a4552428a0c51c2727"
 }

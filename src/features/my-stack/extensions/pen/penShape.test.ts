@@ -7,9 +7,9 @@ import {
   PEN_DOSE_WINDOW,
   PEN_DOSE_WINDOW_PCT,
   PEN_KNOB,
-  PEN_KNOB_HIGHLIGHT_X,
   PEN_KNOB_PATH,
-  PEN_KNOB_RIBS,
+  PEN_KNOB_RIB_XS,
+  PEN_KNOB_RIB_YS,
   PEN_KNOB_SHOULDER,
   PEN_NAME_BAND_PCT,
   PEN_NAME_RUN_PCT,
@@ -55,27 +55,12 @@ describe('penShape', () => {
     expect(PEN_KNOB_PATH).toContain(`L${PEN_KNOB.x} ${PEN_KNOB_SHOULDER.flareY} Z`)
   })
 
-  it('gibt jeder Rippe eine Licht- und eine Schattenseite', () => {
-    // Vorher waren es vier gleich helle Striche ohne Tiefe.
-    expect(PEN_KNOB_RIBS).toHaveLength(4)
-    for (const rippe of PEN_KNOB_RIBS) {
-      expect(rippe.licht).toBeGreaterThan(0)
-      expect(rippe.schatten).toBeGreaterThan(rippe.licht)
-    }
-  })
-
-  it('nimmt die Glanzlinie des Koerpers auf und laesst sie nach aussen abfallen', () => {
-    // Koerper und Knopf stehen unter demselben Licht, also laeuft die
-    // Glanzlinie durch. Die naechste Rippe ist die hellste, danach nimmt es ab.
-    const naechste = PEN_KNOB_RIBS.reduce((a, b) =>
-      Math.abs(a.x - PEN_KNOB_HIGHLIGHT_X) < Math.abs(b.x - PEN_KNOB_HIGHLIGHT_X) ? a : b,
-    )
-    expect(naechste.licht).toBe(Math.max(...PEN_KNOB_RIBS.map(r => r.licht)))
-    const sortiert = [...PEN_KNOB_RIBS].sort((a, b) => a.x - b.x)
-    const rechts = sortiert.filter(r => r.x > PEN_KNOB_HIGHLIGHT_X)
-    for (let i = 1; i < rechts.length; i += 1) {
-      expect(rechts[i].licht).toBeLessThan(rechts[i - 1].licht)
-    }
+  it('haelt die Rippen zwischen Schulter und Fussrundung', () => {
+    // Vier schlichte Striche, unterhalb der Schraege beginnend und oberhalb
+    // der Rundung endend.
+    expect(PEN_KNOB_RIB_XS).toHaveLength(4)
+    expect(PEN_KNOB_RIB_YS.top).toBeGreaterThanOrEqual(PEN_KNOB_SHOULDER.flareY)
+    expect(PEN_KNOB_RIB_YS.bottom).toBeLessThan(PEN_KNOB.y + PEN_KNOB.height - PEN_KNOB.rx)
   })
 
   it('setzt den Farbring an den oberen Rand des Koerpers', () => {

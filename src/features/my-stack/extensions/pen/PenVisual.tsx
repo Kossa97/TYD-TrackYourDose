@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useId, useRef } from 'react'
+import { useCallback, useId, useRef } from 'react'
 import type { Ref } from 'react'
 import { StageMarquee } from '../../stage/StageLabel'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
@@ -11,7 +11,7 @@ import {
   PEN_DOSE_WINDOW_PCT,
   PEN_BODY_SHOULDER_X,
   PEN_KNOB_PATH,
-  PEN_KNOB_RIBS,
+  PEN_KNOB_RIB_XS,
   PEN_KNOB_RIB_YS,
   PEN_KNOB_SHOULDER,
   PEN_NAME_BAND_PCT,
@@ -242,18 +242,14 @@ export function PenVisual({
           />
         </g>
 
-        <g data-pen-detail="knob-ribs" fill="none" strokeLinecap="round" strokeWidth="1">
-          {PEN_KNOB_RIBS.map(rippe => (
-            <Fragment key={rippe.x}>
-              <path
-                d={`M${rippe.x - 1} ${PEN_KNOB_RIB_YS.top} L${rippe.x - 1} ${PEN_KNOB_RIB_YS.bottom}`}
-                stroke={`rgba(0,0,0,${rippe.schatten.toFixed(2)})`}
-              />
-              <path
-                d={`M${rippe.x} ${PEN_KNOB_RIB_YS.top} L${rippe.x} ${PEN_KNOB_RIB_YS.bottom}`}
-                stroke={`rgba(255,255,255,${rippe.licht.toFixed(2)})`}
-              />
-            </Fragment>
+        <g
+          data-pen-detail="knob-ribs"
+          fill="none"
+          stroke="rgba(255,255,255,0.16)"
+          strokeWidth="0.9"
+        >
+          {PEN_KNOB_RIB_XS.map(x => (
+            <path key={x} d={`M${x} ${PEN_KNOB_RIB_YS.top} L${x} ${PEN_KNOB_RIB_YS.bottom}`} />
           ))}
         </g>
       </svg>

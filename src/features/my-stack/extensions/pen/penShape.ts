@@ -57,20 +57,12 @@ export const PEN_BODY_SHOULDER_X = {
   right: PEN_BODY.x + PEN_BODY.width,
 } as const
 
-export const PEN_KNOB_RIB_YS = { top: 264, bottom: 297 } as const
-
-// Jede Rippe bekommt eine Schatten- und eine Lichtseite; vorher waren es
-// gleich helle Striche ohne Tiefe. Die Helligkeit folgt der Zylinderkrümmung
-// um die Glanzkante des Körpers — Körper und Knopf stehen unter demselben
-// Licht, also muss die Glanzlinie durchlaufen. Der Abfall ist nach Augenmaß
-// gewählt: bei der äußersten Rippe bleibt rund ein Drittel übrig.
-export const PEN_KNOB_HIGHLIGHT_X = PEN_BODY.x + PEN_BODY.width * 0.2
-const PEN_KNOB_RIB_FALLOFF = 17
-export const PEN_KNOB_RIBS = PEN_KNOB_RIB_XS.map(x => {
-  const t = (x - PEN_KNOB_HIGHLIGHT_X) / PEN_KNOB_RIB_FALLOFF
-  const f = Math.max(0, Math.cos(Math.max(-1.4, Math.min(1.4, t)) * 1.15))
-  return { x, licht: 0.07 + 0.2 * f, schatten: 0.16 + 0.2 * f }
-})
+// Die Rippen bleiben schlichte, gleich helle Striche. Sie beginnen unterhalb
+// der Schulter und enden ueber der Fussrundung.
+export const PEN_KNOB_RIB_YS = {
+  top: PEN_KNOB.y + 9,
+  bottom: PEN_KNOB.y + PEN_KNOB.height - 9,
+} as const
 
 // Der Name steht ueber dem Dosisfenster: zwischen der Unterkante des Farbrings
 // und der Oberkante des Fensters. Das ist kuerzer als der ganze Koerper, aber

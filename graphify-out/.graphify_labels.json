@@ -296,6 +296,7 @@
   "294": "FotosTab.tsx",
   "295": "InjectionTrackerTabs.tsx",
   "296": "My Stack: Pen als siebte Bühnenform",
+  "297": "liquidGeometry.ts",
   "298": "stackInventory.ts",
   "299": "My Stack: Kapsel als dritte Bühnenform",
   "300": "vialStock.ts",
@@ -318,17 +319,8 @@
   "317": "BlutwertePage.tsx",
   "318": "My Stack: Tube als sechste Bühnenform",
   "319": "TubeVisual.tsx",
-  "320": "MetricTooltip.tsx",
   "321": "CycleBandLayer.tsx",
-  "322": "DoseUnitControl.tsx",
-  "323": "MyStackPage.visibility.test.tsx",
-  "324": "en.categories.ts",
-  "325": "hi.ts",
   "326": "Tagebuch.tsx",
   "327": "File Structure",
-  "328": "id.ts",
-  "329": "imageResize.ts",
-  "330": "pt.ts",
-  "331": "ru.ts",
-  "332": "tr.ts"
+  "329": "imageResize.ts"
 }
