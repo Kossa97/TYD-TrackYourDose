@@ -3045,8 +3045,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/pen/PenVisual.tsx": {
-    "mtime": 1788468734.8032591,
-    "ast_hash": "a2b78b06059b5a182ba5149e476a3e89",
+    "mtime": 1788470487.0390737,
+    "ast_hash": "af9e44c515f45109de2dbb934ef399e5",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/pen/penShape.test.ts": {
@@ -3065,8 +3065,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-03-my-stack-pen-buehnenform-design.md": {
-    "mtime": 1788468584.5085409,
-    "ast_hash": "1c64efeecaeb02ef0c8d05e9cf38a763",
+    "mtime": 1788469739.1099772,
+    "ast_hash": "f9457d25d3ba9742e685177d443c2abb",
     "semantic_hash": ""
   }
 }

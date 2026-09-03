@@ -56,8 +56,9 @@ const PREVIEW_TUBES = [
 const PREVIEW_PENS = [
   { name: 'Semaglutid', color: '#3f7fbf' },
   { name: 'Tirzepatid', color: '#a3e635' },
-  // bewusst zu lang: zeigt den senkrechten Durchlauf
-  { name: 'Insulin glargin 300 E/ml', color: '#f0b357' },
+  // bewusst zu lang: der vorige Name passte mit 0 px Reserve noch hinein und
+  // hat den senkrechten Durchlauf nie ausgeloest.
+  { name: 'Insulin glargin 300 Einheiten pro Milliliter', color: '#f0b357' },
 ]
 
 // Mixed forms in one row, the way My Stack will show them.
@@ -94,7 +95,7 @@ const MIXED_CAROUSEL: MixedEntry[] = [
   { kind: 'tube', name: 'Hydrocortison Acetat 1%', amount: null, unit: null, color: '#38bdf8' },
   { kind: 'pen', name: 'Semaglutid', amount: null, unit: null, color: '#3f7fbf' },
   { kind: 'pen', name: 'Tirzepatid', amount: null, unit: null, color: '#a3e635' },
-  { kind: 'pen', name: 'Insulin glargin 300 E/ml', amount: null, unit: null, color: '#f0b357' },
+  { kind: 'pen', name: 'Insulin glargin 300 Einheiten pro Milliliter', amount: null, unit: null, color: '#f0b357' },
 ]
 
 export function VialPreview() {

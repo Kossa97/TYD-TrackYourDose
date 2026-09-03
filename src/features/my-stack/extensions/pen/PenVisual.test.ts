@@ -70,6 +70,21 @@ describe('PenVisual', () => {
     expect(html).toContain('height:10.67%')
   })
 
+  it('laesst zu lange Namen laengs durchlaufen statt sie abzuschneiden', () => {
+    // Der Pen ist die schmalste Form; laengs hat er zwar mehr Platz als jede
+    // andere Form quer, aber lange Wirkstoffnamen sprengen ihn trotzdem. Die
+    // Huelle schneidet ab, der geteilte StageMarquee schiebt den Text durch.
+    const html = render({ name: 'Insulin glargin 300 Einheiten pro Milliliter' })
+    expect(html).toMatch(/data-pen-detail="name"[^>]*overflow-hidden/)
+    expect(html).toContain('vial-label-marquee')
+    // StageMarquee misst clientWidth der aeusseren Huelle gegen scrollWidth
+    // der inneren. In einer Flexbox schrumpft die aeussere auf ihren Inhalt,
+    // misst also gegen sich selbst und loest nie aus — deshalb w-full.
+    expect(html).toMatch(
+      /<span class="block overflow-hidden whitespace-nowrap w-full[^"]*"><span class="vial-label-marquee[^"]*">Insulin glargin/,
+    )
+  })
+
   it('schreibt Name und Ziffer als HTML, nicht als SVG-Text', () => {
     const source = readFileSync(new URL('./PenVisual.tsx', import.meta.url), 'utf8')
     expect(source).not.toContain('<text')
