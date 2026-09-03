@@ -247,13 +247,16 @@ export function PenVisual({
         {PEN_DOSE_TEXT}
       </div>
 
-      {/* Der Name laeuft laengs. Die Huelle ist um 90 Grad gedreht, darin
+      {/* Der Name laeuft laengs. items-center zentriert die Textzeile senkrecht
+          in der Huelle — ohne das saesse sie am oberen Rand, und nach der
+          90-Grad-Drehung heisst "oben in der Huelle" links am Pen.
+          Die Huelle ist um 90 Grad gedreht, darin
           arbeitet der bestehende waagerechte StageMarquee unveraendert weiter —
           so bleibt der geteilte Baustein fuer die sechs anderen Formen
           unangetastet. */}
       <div
         data-pen-detail="name"
-        className="pointer-events-none absolute overflow-hidden text-center"
+        className="pointer-events-none absolute flex items-center overflow-hidden text-center"
         style={{
           left: '50%',
           top: `${(PEN_NAME_TOP_PCT * 100).toFixed(2)}%`,
@@ -262,7 +265,7 @@ export function PenVisual({
           transform: 'translate(-50%, -50%) rotate(-90deg)',
         }}
       >
-        <StageMarquee className={`${NAME_CLASS[size]} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]`}>
+        <StageMarquee className={`w-full ${NAME_CLASS[size]} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]`}>
           {penName}
         </StageMarquee>
       </div>
