@@ -97,6 +97,21 @@ export const PATCH_FLEX_CLIPS = {
   middle: { x: PATCH_FLEX_CUT.left - 4, width: PATCH_FLEX_CUT.right - PATCH_FLEX_CUT.left + 8 },
 } as const
 
+// Die Enden hängen nicht starr am Kippwinkel, sondern schwingen nach: jedes
+// an einer eigenen Feder. Unterschiedliche Steifigkeit heißt unterschiedliche
+// Eigenfrequenz — sonst wackelten beide im Gleichtakt, und das sähe nach
+// einem Scharnier aus statt nach Flattern.
+// Dämpfungsgrad = daempfung / (2 * sqrt(steifigkeit)): 0,37 links und 0,29
+// rechts, beide deutlich unter 1 und damit schwingend statt kriechend.
+export const PATCH_FLUTTER = {
+  left: { steifigkeit: 150, daempfung: 9 },
+  right: { steifigkeit: 190, daempfung: 8 },
+} as const
+
+// Unterhalb davon ist die Bewegung nicht mehr zu sehen und die Schleife hält
+// an, statt für immer Bilder zu rechnen.
+export const PATCH_FLUTTER_RUHE = { winkel: 0.01, tempo: 0.05 } as const
+
 // Jedes Loch gehört zu genau einem Abschnitt und wird mit ihm bewegt.
 export const PATCH_DOTS_LEFT = PATCH_DOTS.filter(p => p.x <= PATCH_FLEX_CUT.left)
 export const PATCH_DOTS_RIGHT = PATCH_DOTS.filter(p => p.x >= PATCH_FLEX_CUT.right)

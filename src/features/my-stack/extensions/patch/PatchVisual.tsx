@@ -11,6 +11,8 @@ import {
   PATCH_FLEX_CLIPS,
   PATCH_FLEX_CUT,
   PATCH_FLEX_MAX_DEG,
+  PATCH_FLUTTER,
+  PATCH_FLUTTER_RUHE,
   PATCH_PIVOT_Y,
   PATCH_NAME_PCT,
   PATCH_PAD,
@@ -67,21 +69,81 @@ export function PatchVisual({
   const leftRef = useRef<SVGGElement | null>(null)
   const rightRef = useRef<SVGGElement | null>(null)
 
-  // Dieselbe Quelle, aus der die Tablette ihr Rollen bezieht.
+  // Dieselbe Quelle, aus der die Tablette ihr Rollen bezieht. Der Kippwinkel
+  // ist hier aber nur das Ziel, nicht die Stellung: jedes Ende haengt an einer
+  // eigenen Feder und schwingt nach. Deshalb laeuft eine eigene Schleife —
+  // die Slosh-Quelle meldet sich nicht mehr, sobald sie zur Ruhe kommt, die
+  // Enden zappeln aber noch.
   const subscribe = useSloshSubscribe()
+  const tiltRef = useRef(0)
   useEffect(() => {
-    if (!subscribe) return
-    return subscribe(({ tilt }: { tilt: number }) => {
-      const grad = tilt * PATCH_FLEX_MAX_DEG
-      leftRef.current?.setAttribute(
-        'transform',
-        `rotate(${(-grad).toFixed(3)} ${PATCH_FLEX_CUT.left} ${PATCH_PIVOT_Y})`,
+    if (!subscribe) return undefined
+    if (typeof window === 'undefined') return undefined
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined
+
+    const enden = [
+      { ref: leftRef, pivot: PATCH_FLEX_CUT.left, vorzeichen: -1, feder: PATCH_FLUTTER.left, winkel: 0, tempo: 0 },
+      { ref: rightRef, pivot: PATCH_FLEX_CUT.right, vorzeichen: 1, feder: PATCH_FLUTTER.right, winkel: 0, tempo: 0 },
+    ]
+
+    let raf = 0
+    let zuletzt = 0
+
+    const ruht = () =>
+      Math.abs(tiltRef.current) < 0.001 &&
+      enden.every(
+        e =>
+          Math.abs(e.winkel) < PATCH_FLUTTER_RUHE.winkel &&
+          Math.abs(e.tempo) < PATCH_FLUTTER_RUHE.tempo,
       )
-      rightRef.current?.setAttribute(
-        'transform',
-        `rotate(${grad.toFixed(3)} ${PATCH_FLEX_CUT.right} ${PATCH_PIVOT_Y})`,
-      )
+
+    const schritt = (jetzt: number) => {
+      // Grosse Spruenge (Tab im Hintergrund) wuerden die Feder sprengen.
+      const dt = Math.min((jetzt - zuletzt) / 1000, 1 / 30)
+      zuletzt = jetzt
+
+      for (const e of enden) {
+        const ziel = e.vorzeichen * tiltRef.current * PATCH_FLEX_MAX_DEG
+        e.tempo += ((ziel - e.winkel) * e.feder.steifigkeit - e.tempo * e.feder.daempfung) * dt
+        e.winkel += e.tempo * dt
+        e.ref.current?.setAttribute(
+          'transform',
+          `rotate(${e.winkel.toFixed(3)} ${e.pivot} ${PATCH_PIVOT_Y})`,
+        )
+      }
+
+      if (ruht() || document.hidden) {
+        raf = 0
+        return
+      }
+      raf = requestAnimationFrame(schritt)
+    }
+
+    const anstossen = () => {
+      if (raf || document.hidden) return
+      zuletzt = performance.now()
+      raf = requestAnimationFrame(schritt)
+    }
+
+    const abmelden = subscribe(({ tilt }: { tilt: number }) => {
+      tiltRef.current = tilt
+      anstossen()
     })
+
+    // Im verborgenen Tab liefert der Browser keine Bilder, die Schleife haelt
+    // an — und nur die Slosh-Quelle wuerde sie wieder anstossen. Kommt die
+    // nicht mehr, blieben die Enden ausgelenkt stehen. Deshalb hier selbst
+    // wieder aufnehmen, sobald der Tab zurueck ist.
+    const beiSichtbarkeit = () => {
+      if (!document.hidden) anstossen()
+    }
+    document.addEventListener('visibilitychange', beiSichtbarkeit)
+
+    return () => {
+      abmelden?.()
+      document.removeEventListener('visibilitychange', beiSichtbarkeit)
+      if (raf) cancelAnimationFrame(raf)
+    }
   }, [subscribe])
 
   const applyStageLight = useCallback((f: number, o: number) => {

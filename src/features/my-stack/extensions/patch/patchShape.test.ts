@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { carriesLabel } from '../../stage/types'
 import {
   PATCH_ASPECT,
+  PATCH_FLUTTER,
   PATCH_BODY,
   PATCH_DOTS,
   PATCH_DOT_R,
@@ -76,6 +77,18 @@ describe('patchShape', () => {
     )
     expect(PATCH_NAME_PCT.left + PATCH_NAME_PCT.width).toBeLessThanOrEqual(1)
     expect(PATCH_NAME_PCT.top + PATCH_NAME_PCT.height).toBeLessThanOrEqual(1)
+  })
+
+  it('stimmt beide Federn schwingend und gegeneinander ab', () => {
+    // Daempfungsgrad = daempfung / (2 * sqrt(steifigkeit)). Unter 1 heisst
+    // schwingend statt kriechend — sonst gaebe es kein Flattern.
+    const grad = (f: { steifigkeit: number; daempfung: number }) =>
+      f.daempfung / (2 * Math.sqrt(f.steifigkeit))
+    expect(grad(PATCH_FLUTTER.left)).toBeLessThan(1)
+    expect(grad(PATCH_FLUTTER.right)).toBeLessThan(1)
+    // Und die Eigenfrequenzen unterscheiden sich, sonst wackelten beide Enden
+    // im Gleichtakt und es saehe nach einem Scharnier aus.
+    expect(PATCH_FLUTTER.left.steifigkeit).not.toBe(PATCH_FLUTTER.right.steifigkeit)
   })
 
   it('hat keine Kammer und deshalb weder Etikett noch Fuellstand', () => {

@@ -81,14 +81,24 @@ describe('PatchVisual', () => {
     expect(render({ size: 'mini' })).toContain('h-[18px]')
   })
 
-  it('biegt beim Wischen die Enden, nicht die Mitte', () => {
+  it('laesst beim Wischen die Enden flattern, die Mitte nicht', () => {
     // Ein Pflaster ist biegsam, sein Wundkissen nicht. Die beiden Enden
     // drehen gegenlaeufig um Angelpunkte, die unter dem Mittelstueck liegen,
     // damit die Schnittkante nie sichtbar wird.
     const source = readFileSync(new URL('./PatchVisual.tsx', import.meta.url), 'utf8')
     expect(source).toContain('useSloshSubscribe')
-    expect(source).toMatch(/rotate\(\$\{\(-grad\)/)
-    expect(source).toMatch(/rotate\(\$\{grad/)
+    // Der Kippwinkel ist nur das Ziel, nicht die Stellung: die Enden schwingen
+    // an eigenen Federn nach und brauchen dafuer eine eigene Schleife.
+    expect(source).toContain('requestAnimationFrame')
+    expect(source).toContain('PATCH_FLUTTER')
+    // Sie haelt an, statt fuer immer Bilder zu rechnen.
+    expect(source).toContain('cancelAnimationFrame')
+    expect(source).toContain('document.hidden')
+    // Im verborgenen Tab haelt sie an — und muss sich selbst wieder aufnehmen,
+    // sonst blieben die Enden ausgelenkt stehen. Genau das ist im Browser
+    // passiert, bevor der Zuhoerer dazukam.
+    expect(source).toContain('visibilitychange')
+    expect(source).toContain('prefers-reduced-motion')
     const html = render()
     expect(html).toContain(`${uidFrei(html)}leftClip`)
     expect(html).toContain(`${uidFrei(html)}midClip`)
