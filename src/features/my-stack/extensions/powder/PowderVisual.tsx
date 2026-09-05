@@ -7,7 +7,6 @@ import {
   POWDER_BODY_PATH,
   POWDER_GROUND_SHIFT,
   POWDER_LABEL_BOX,
-  POWDER_LABEL_STRIPE_BOX,
   POWDER_LID,
   POWDER_LID_PATH,
   POWDER_LID_RIBS,
@@ -47,11 +46,13 @@ const SIZE_CLASS: Record<NonNullable<PowderVisualProps['size']>, string> = {
 
 // Die Dose ist die breiteste stehende Form: uebliche Namen passen hier ohne
 // Durchlauf hinein, wo Vial und Ampulle laengst wandern.
+// Weiss, fett, mit Schattenkante — wie auf jedem anderen Etikett.
+const NAME_SHARED = 'leading-tight font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]'
 const NAME_CLASS: Record<NonNullable<PowderVisualProps['size']>, string> = {
-  large: 'text-base leading-tight',
-  carousel: 'text-[7px] sm:text-[9px] leading-tight',
-  compact: 'text-[5.5px] leading-tight',
-  mini: 'text-[3px] leading-tight',
+  large: `text-lg ${NAME_SHARED}`,
+  carousel: `text-[8px] sm:text-[10px] ${NAME_SHARED}`,
+  compact: `text-[6px] ${NAME_SHARED}`,
+  mini: `text-[3.5px] ${NAME_SHARED}`,
 }
 
 export function PowderVisual({
@@ -166,11 +167,11 @@ export function PowderVisual({
           {/* Das Etikett ist Papier auf einem Zylinder: es bekommt dieselbe
               Woelbung wie der Korpus, nur flacher. */}
           <linearGradient id={`${uid}-labelShade`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="rgba(15,23,42,0.34)" />
-            <stop offset="16%" stopColor="rgba(15,23,42,0.06)" />
-            <stop offset="44%" stopColor="rgba(255,255,255,0.5)" />
-            <stop offset="76%" stopColor="rgba(15,23,42,0.05)" />
-            <stop offset="100%" stopColor="rgba(15,23,42,0.36)" />
+            <stop offset="0%" stopColor="rgba(15,23,42,0.4)" />
+            <stop offset="16%" stopColor="rgba(15,23,42,0.08)" />
+            <stop offset="44%" stopColor="rgba(255,255,255,0.22)" />
+            <stop offset="76%" stopColor="rgba(15,23,42,0.06)" />
+            <stop offset="100%" stopColor="rgba(15,23,42,0.42)" />
           </linearGradient>
           <radialGradient id={`${uid}-groundShadow`} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="rgba(0,0,0,0.7)" />
@@ -244,6 +245,9 @@ export function PowderVisual({
 
         {/* Das Etikett. Ober- und Unterkante sind Boegen, weil ein umlaufendes
             Band auf einem Zylinder unter Augenhoehe kein gerader Strich ist. */}
+        {/* Das Etikett traegt die Eintragsfarbe, damit die weisse Aufschrift
+            darauf steht statt darin zu verschwinden: die Dose selbst ist
+            hellgrau, ein weisses Etikett gaebe Weiss auf Weiss. */}
         <g data-powder-detail="label">
           <rect
             x={POWDER_LABEL_BOX.x}
@@ -251,16 +255,6 @@ export function PowderVisual({
             width={POWDER_LABEL_BOX.width}
             height={POWDER_LABEL_BOX.height}
             rx="1.5"
-            fill="#fbfcfe"
-          />
-          {/* Der farbige Streifen am Fuss des Etiketts. Er steht VOR der
-              Schattierung, damit die Woelbung des Zylinders ihn erfasst. */}
-          <rect
-            data-powder-detail="label-stripe"
-            x={POWDER_LABEL_STRIPE_BOX.x}
-            y={POWDER_LABEL_STRIPE_BOX.y}
-            width={POWDER_LABEL_STRIPE_BOX.width}
-            height={POWDER_LABEL_STRIPE_BOX.height}
             fill={color}
           />
           <rect
@@ -278,7 +272,7 @@ export function PowderVisual({
             height={POWDER_LABEL_BOX.height}
             rx="1.5"
             fill="none"
-            stroke="rgba(15,23,42,0.18)"
+            stroke="rgba(15,23,42,0.22)"
             strokeWidth="0.6"
             vectorEffect="non-scaling-stroke"
           />
@@ -348,7 +342,7 @@ export function PowderVisual({
           right: `${(POWDER_NAME_INSET_PCT * 100).toFixed(2)}%`,
         }}
       >
-        <StageMarquee className={`${NAME_CLASS[size]} font-black tracking-normal text-slate-900`}>
+        <StageMarquee className={NAME_CLASS[size]}>
           {labelName}
         </StageMarquee>
       </div>

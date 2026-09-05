@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { CSSProperties, HTMLAttributes, ReactNode, RefObject } from 'react'
-import { buildMarqueeMotion, MARQUEE_MIN_OVERFLOW } from './marquee'
+import { buildMarqueeMotion, marqueeRestOffset, MARQUEE_MIN_OVERFLOW } from './marquee'
 
 // The scrolling name. It only animates when the text really overflows —
 // measured, never guessed from the name length — so short names stay still.
@@ -24,11 +24,16 @@ export function StageMarquee({
 
     const setup = () => {
       anim?.cancel()
-      inner.style.transform = 'translateX(0)'
+
+      // Ein zu langer Name ruht mittig, nicht am linken Anschlag: text-align
+      // zentriert eine ueberbreite inline-box nicht, sie laeuft nach rechts
+      // ueber. Das gilt auch bei abgeschalteter Bewegung — dort ist die
+      // Ruhelage alles, was man sieht.
+      const overflow = inner.scrollWidth - wrap.clientWidth
+      const ruht = overflow > MARQUEE_MIN_OVERFLOW ? marqueeRestOffset(overflow) : 0
+      inner.style.transform = `translateX(-${ruht}px)`
 
       if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
-
-      const overflow = inner.scrollWidth - wrap.clientWidth
       if (overflow <= MARQUEE_MIN_OVERFLOW) return
 
       const motion = buildMarqueeMotion(overflow)

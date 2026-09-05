@@ -11,20 +11,33 @@ export interface MarqueeMotion {
   options: KeyframeAnimationOptions
 }
 
+// Die Ruhelage ist die MITTE, nicht der linke Anschlag. Ein zu langer Name
+// stand sonst buendig links und war damit als einziger nicht zentriert —
+// text-align kann eine ueberbreite inline-box nicht zentrieren, sie laeuft
+// nach rechts ueber. Von der Mitte aus faehrt der Name an beide Enden und
+// kehrt zurueck.
+export function marqueeRestOffset(overflow: number): number {
+  return overflow / 2
+}
+
 export function buildMarqueeMotion(overflow: number): MarqueeMotion {
-  const holdStart = 2200
-  const holdEnd = 1200
-  const moveOut = Math.max(1800, overflow * 35)
-  const moveBack = Math.max(700, overflow * 14)
-  const total = holdStart + moveOut + holdEnd + moveBack
+  const mitte = marqueeRestOffset(overflow)
+  const hold = 1600
+  const move = Math.max(900, overflow * 18)
+  // Mitte halten, nach links ans Ende, halten, ganz nach rechts, halten,
+  // zurueck in die Mitte.
+  const total = hold * 3 + move * 4
+  const at = (ms: number) => ms / total
 
   return {
     keyframes: [
-      { transform: 'translateX(0)', offset: 0 },
-      { transform: 'translateX(0)', offset: holdStart / total },
-      { transform: `translateX(-${overflow}px)`, offset: (holdStart + moveOut) / total },
-      { transform: `translateX(-${overflow}px)`, offset: (holdStart + moveOut + holdEnd) / total },
-      { transform: 'translateX(0)', offset: 1 },
+      { transform: `translateX(-${mitte}px)`, offset: 0 },
+      { transform: `translateX(-${mitte}px)`, offset: at(hold) },
+      { transform: `translateX(-${overflow}px)`, offset: at(hold + move) },
+      { transform: `translateX(-${overflow}px)`, offset: at(hold * 2 + move) },
+      { transform: 'translateX(0)', offset: at(hold * 2 + move * 3) },
+      { transform: 'translateX(0)', offset: at(hold * 3 + move * 3) },
+      { transform: `translateX(-${mitte}px)`, offset: 1 },
     ],
     options: { duration: total, iterations: Infinity, easing: 'linear' },
   }

@@ -1463,6 +1463,17 @@ main.flex-1 {
 [data-theme="light"] .text-slate-100,
 [data-theme="light"] .text-slate-200 { color: var(--text); }
 [data-theme="light"] .text-slate-300 { color: #1e293b; }
+
+/* Buehnenformen: die Aufschrift steht auf dem OBJEKT, nicht auf der Seite.
+   Die Regel darueber dreht jedes text-white im hellen Theme auf die
+   Textfarbe der Seite — richtig fuer Oberflaeche, falsch fuer ein Etikett
+   auf einem Vial: das Etikett wird nicht hell, nur weil die Seite es wird.
+
+   Nur dort, wo die Form selbst Weiss verlangt. Pen und Pflaster setzen eigene
+   Farben — das Dosisfenster leuchtet blass blau, und das Wundkissen ist
+   weisses Vlies, auf dem weisse Schrift verschwaende. Sie tragen kein
+   text-white und bleiben deshalb unberuehrt. */
+[data-theme="light"] .text-white > .vial-label-marquee { color: #ffffff; }
 [data-theme="light"] .text-slate-400 { color: #334155; }
 [data-theme="light"] .text-slate-500 { color: #475569; }
 [data-theme="light"] .text-slate-600 { color: #64748b; }

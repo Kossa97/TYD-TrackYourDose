@@ -85,19 +85,9 @@ export const POWDER_LABEL_BOX = {
   height: POWDER_LABEL.bottom - POWDER_LABEL.top,
 } as const
 
-// Der farbige Fußstreifen: er bindet die Eintragsfarbe des Deckels unten
-// wieder ein, damit die Dose nicht in zwei Hälften zerfällt.
-export const POWDER_LABEL_STRIPE_TOP = POWDER_LABEL.bottom - 12
-export const POWDER_LABEL_STRIPE_BOX = {
-  x: LX,
-  y: POWDER_LABEL_STRIPE_TOP,
-  width: RX - LX,
-  height: POWDER_LABEL.bottom - POWDER_LABEL_STRIPE_TOP,
-} as const
-
-// Mitte der Aufschrift in der Mitte des Etiketts über dem Streifen.
+// Mitte der Aufschrift in der Mitte des Etiketts.
 export const POWDER_NAME_TOP_PCT =
-  ((POWDER_LABEL.top + POWDER_LABEL_STRIPE_TOP) / 2 - POWDER_VIEWBOX.y) / POWDER_VIEWBOX.height
+  ((POWDER_LABEL.top + POWDER_LABEL.bottom) / 2 - POWDER_VIEWBOX.y) / POWDER_VIEWBOX.height
 
 // Der Einzug wird hergeleitet statt geraten: er ist der Rand des Etiketts.
 export const POWDER_NAME_INSET_PCT = (LX + 3 - POWDER_VIEWBOX.x) / POWDER_VIEWBOX.width
