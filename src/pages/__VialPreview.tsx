@@ -6,6 +6,7 @@ import { CapsuleVisual } from '../features/my-stack/extensions/capsule/CapsuleVi
 import { NasalSprayVisual } from '../features/my-stack/extensions/nasal-spray/NasalSprayVisual'
 import { DropsVisual } from '../features/my-stack/extensions/drops/DropsVisual'
 import { PatchVisual } from '../features/my-stack/extensions/patch/PatchVisual'
+import { GelVisual } from '../features/my-stack/extensions/gel/GelVisual'
 import { PenVisual } from '../features/my-stack/extensions/pen/PenVisual'
 import { PowderVisual } from '../features/my-stack/extensions/powder/PowderVisual'
 import { TabletVisual } from '../features/my-stack/extensions/tablet/TabletVisual'
@@ -87,9 +88,17 @@ const PREVIEW_POWDERS = [
   { name: 'Beta-Alanin Pulver ohne Zusaetze', color: '#f0b357' },
 ]
 
+const PREVIEW_GELS = [
+  { name: 'Testogel', color: '#a3e635' },
+  { name: 'Diclofenac', color: '#f97316' },
+  // bewusst zu lang: der Tiegel ist die breiteste Form, hier soll sichtbar
+  // werden, wo auch bei ihm der Durchlauf einsetzt
+  { name: 'Hydrocortison Acetat Creme 1 Prozent', color: '#38bdf8' },
+]
+
 // Mixed forms in one row, the way My Stack will show them.
 type MixedEntry = {
-  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'drops' | 'patch' | 'powder'
+  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'drops' | 'patch' | 'powder' | 'gel'
   name: string
   amount: number | null
   unit: string | null
@@ -131,6 +140,8 @@ const MIXED_CAROUSEL: MixedEntry[] = [
   { kind: 'patch', name: 'Rivastigmin transdermal 9,5 mg pro 24 Stunden', amount: null, unit: null, color: '#a3e635' },
   { kind: 'powder', name: 'Kreatin', amount: null, unit: null, color: '#38bdf8' },
   { kind: 'powder', name: 'Magnesium', amount: null, unit: null, color: '#a3e635' },
+  { kind: 'gel', name: 'Testogel', amount: null, unit: null, color: '#a3e635' },
+  { kind: 'gel', name: 'Diclofenac', amount: null, unit: null, color: '#f97316' },
 ]
 
 export function VialPreview() {
@@ -418,6 +429,15 @@ export function VialPreview() {
         ))}
       </div>
 
+      <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
+        Gel — Tiegel mit sichtbarer Masse in Detailgröße
+      </p>
+      <div className="mx-auto flex max-w-5xl flex-wrap items-end justify-center gap-10 pb-2">
+        {PREVIEW_GELS.map((g, i) => (
+          <GelVisual key={g.name} name={g.name} color={g.color} size="large" lightOffset={i - 1} />
+        ))}
+      </div>
+
       {/* The real thing: a mixed carousel narrow enough to actually swipe.
           Ampoules and vials share one ground line and one slosh engine. */}
       <p className="mx-auto max-w-sm pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
@@ -442,7 +462,15 @@ export function VialPreview() {
               data-stage-index={index}
               className={`shrink-0 ${isDragging ? '' : 'snap-center'}`}
             >
-              {entry.kind === 'powder' ? (
+              {entry.kind === 'gel' ? (
+                <GelVisual
+                  name={entry.name}
+                  color={entry.color}
+                  size="carousel"
+                  isActive={index === activeIndex}
+                  stageLightRef={registerStageLight(index)}
+                />
+              ) : entry.kind === 'powder' ? (
                 <PowderVisual
                   name={entry.name}
                   color={entry.color}

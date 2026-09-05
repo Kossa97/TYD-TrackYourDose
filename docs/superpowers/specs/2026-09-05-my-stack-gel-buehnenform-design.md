@@ -1,0 +1,128 @@
+# Gel als elfte Bühnenform
+
+**Datum:** 2026-09-05
+**Branch:** `codex/my-stack-foundation`
+**Status:** Gebaut
+
+## Ziel
+
+`gel` bekommt eine eigene Bühnengrafik. Danach fehlen nur noch `liquid` und
+`spray`; `other` bleibt als Auffangeintrag bewusst auf der Textkarte.
+
+## Die eigentliche Frage: wogegen grenzt sich Gel ab?
+
+Gel hat zwei Nachbarn, die dasselbe zeigen könnten.
+
+**Die Tube** deckt Gel heute faktisch mit ab — Diclofenac-Gel kommt in der Tube.
+Sie ist bereits eine eigene Form und bleibt es. Gel bekommt deshalb *nicht*
+noch eine Tube, sondern den anderen Behälter, in dem Gel steht: den **Tiegel**.
+
+**Die Pulverdose** ist seit heute ebenfalls ein Zylinder mit Schraubdeckel. Ohne
+klare Unterscheidung stünden zwei fast gleiche Objekte nebeneinander. Drei
+Signale trennen sie, und jedes einzelne trägt schon allein:
+
+| | Pulverdose | Gel-Tiegel |
+|---|---|---|
+| Silhouette | höher als breit (0,64) | **breiter als hoch (1,25)** |
+| Material | undurchsichtiges HDPE | **durchscheinend, Inhalt sichtbar** |
+| Deckel | geriffelt | **glatt** |
+
+Der Tiegel ist damit die erste Form überhaupt, die breiter als hoch steht. Auf
+dem Regal ist er auf einen Blick von allem anderen zu unterscheiden.
+
+## Abgenommene Entscheidungen
+
+| Thema | Entscheidung | Grund |
+|---|---|---|
+| Behälter | Tiegel mit glattem Schraubdeckel | Die Tube ist als Form vergeben. |
+| Material | durchscheinendes Glas | Erbt den Klarglas-Stapel von Vial, Ampulle, Nasenspray und Tropfen — dieselben Verlaufswerte, andere Silhouette. |
+| Inhalt | sichtbar, als ruhende gewölbte Masse | Gel ist der Grund für den Tiegel. Ohne sichtbaren Inhalt wäre das durchscheinende Glas sinnlos. |
+| Physik | keine | Gel schwappt nicht und läuft nicht aus. Kein `LiquidGraphic`, keine Slosh-Anbindung, kein Pegel. |
+| Etikettband | keins | `chamber: null`. Die Regel „Etikett nur, wo Flüssigkeit ist" wird nicht angefasst; der Name steht auf einem gedruckten Etikett des Tiegels, wie bei Tube und Pulverdose. |
+| Farbe | Deckel und Gel | Wie bei der Tropfflasche, wo Kappe und Flüssigkeit sie tragen. |
+
+## Warum Gel keine Flüssigkeit ist
+
+Das ist die inhaltliche Neuerung dieser Form. Jede flüssige Form bisher benutzt
+`LiquidGraphic`: eine waagerechte Oberfläche, die sich beim Wischen neigt, dazu
+Bläschen und ein Pegel. Für Gel ist davon nichts richtig.
+
+- **Die Oberfläche ist gewölbt, nicht waagerecht.** Gel nivelliert sich nicht.
+- **Sie steht still.** Beim Wischen darf nichts schwappen.
+- **Es gibt keinen Pegel.** `hasMeaningfulFill: false`, wie bei Tube, Pflaster
+  und Pulverdose.
+
+Die Masse wird deshalb eigens gezeichnet: ein Körper, dessen obere Kante der
+vordere Bogen der Oberflächenellipse ist, darüber die Ellipse selbst als
+Aufsicht auf das Gel, darauf ein Glanz. Derselbe Kunstgriff wie bei der
+Deckfläche der Pulverdose, nur für den Inhalt.
+
+## Größe
+
+Der Tiegel nimmt die Sprosse unter der Pulverdose: 90,9 → 115,5 px. Der Schritt
+bleibt ×1,2706. Ein flacher Tiegel ist niedriger als eine Pulverdose, und weil
+er breiter als hoch ist, wird er trotz der tieferen Sprosse das breiteste
+stehende Objekt.
+
+| Größe | Höhe | Breite |
+|---|---|---|
+| `large` | 226,1 px | 282,6 px |
+| `carousel` | 90,9 px, `sm` 115,5 px | 113,6 px, `sm` 144,4 px |
+| `compact` | 68,2 px | 85,2 px |
+| `mini` | 37,1 px | 46,4 px |
+
+## Grafik
+
+Raster 160 × 128, viewBox auf die Objektgrenzen beschnitten: `5 4 150 120`,
+Seitenverhältnis 1,25.
+
+Es gilt derselbe Grundsatz wie bei der Pulverdose: **jede waagerechte Kante ist
+ein Ellipsenbogen.** Deckelrand, Glasboden, Geloberfläche und Etikettkanten
+folgen ihm alle.
+
+**Deckel.** Glatt, niedrig, mit Deckfläche und Fase — bewusst ohne Riffelung,
+das ist das Unterscheidungsmerkmal zur Pulverdose. Er trägt die Eintragsfarbe.
+
+**Glas.** Klarglas-Stapel der Familie: nur die Ränder tragen die Glasdicke,
+dazu Schein und wanderndes Glanzband, beide beschnitten.
+
+**Gel.** Durchscheinende Masse in der Eintragsfarbe, Oberfläche als Ellipse mit
+eigenem Glanz. Sie steht ein gutes Stück unter dem Deckel — ein bis zum Rand
+gefüllter Tiegel sähe aus wie ein Farbtopf.
+
+**Etikett.** Ein Band über dem unteren Drittel, damit die Masse darüber
+sichtbar bleibt. Kanten als Bögen, wie bei der Pulverdose.
+
+## Architektur
+
+Neu, ausschließlich in `extensions/gel/`:
+
+| Datei | Verantwortung |
+|---|---|
+| `gelShape.ts` | Konturen, Deckel- und Gelmaße, Namenslage, `StageFormSpec`. Reine Daten. |
+| `GelVisual.tsx` | Die Grafik samt Größenleiter und Bühnenlicht. |
+| `GelRenderer.tsx` | Anbindung an `StackStage`. |
+
+Geteilt werden nur `useStageLight` und `StageMarquee`. Kein `LiquidGraphic`,
+kein `StageLabel`, keine Slosh-Anbindung.
+
+## Folgen ausserhalb
+
+`gel` war seit der Pulverdose das Negativbeispiel im Wächter von
+`StackStage.test.ts` — „Formen ohne Bühnengrafik bleiben Text". Es ist auf
+**`other`** umgezogen, und damit ist die Wanderung zu Ende: der Auffangeintrag
+hat keine Fähigkeiten und soll dauerhaft auf der Textkarte bleiben.
+`MyStackPage.visibility.test.tsx` benutzte Gel als Beispiel für „nicht-Vial ohne
+Bühne" und ist mitgezogen.
+
+Ein dritter Wächter ist geblieben, hat aber die Richtung gewechselt: der Test
+in `StackStage.test.ts`, der festhielt, dass die Tube den `gel`-Schlüssel nicht
+schluckt. Er prüfte bisher, dass Gel im Textzustand bleibt; jetzt prüft er, dass
+Gel seinen eigenen Tiegel bekommt und *nicht* die Tube. Die Aussage — „gel
+benennt einen Stoff, tube einen Behälter" — ist dieselbe geblieben.
+
+## Nicht Teil davon
+
+- Pumpspender und Sachets als eigene Behälter
+- eine Änderung an der Tube, die Gel weiter mit abdeckt
+- `liquid`, `spray` und `other`

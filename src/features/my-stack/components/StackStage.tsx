@@ -11,6 +11,7 @@ import { TabletRenderer } from '../extensions/tablet/TabletRenderer'
 import { DropsRenderer } from '../extensions/drops/DropsRenderer'
 import { PatchRenderer } from '../extensions/patch/PatchRenderer'
 import { PenRenderer } from '../extensions/pen/PenRenderer'
+import { GelRenderer } from '../extensions/gel/GelRenderer'
 import { PowderRenderer } from '../extensions/powder/PowderRenderer'
 import { TubeRenderer } from '../extensions/tube/TubeRenderer'
 import { VialRenderer } from '../extensions/peptide/VialRenderer'
@@ -76,6 +77,11 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
   // Wie die Tube: undurchsichtig, kein Etikett, kein Pegel, kein Schwappen.
   if (renderer === 'powder') {
     return <PowderRenderer item={item} {...visualProps} />
+  }
+
+  // Durchscheinend, aber ohne Fluessigkeitsphysik: Gel steht still.
+  if (renderer === 'gel') {
+    return <GelRenderer item={item} {...visualProps} />
   }
 
   return (

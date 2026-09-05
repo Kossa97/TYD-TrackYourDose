@@ -1,6 +1,7 @@
 import { AMPOULE_SPEC } from '../extensions/ampoule/ampouleShape'
 import { CAPSULE_SPEC } from '../extensions/capsule/capsuleShape'
 import { NASAL_SPRAY_SPEC } from '../extensions/nasal-spray/nasalSprayShape'
+import { GEL_SPEC } from '../extensions/gel/gelShape'
 import { PEN_SPEC } from '../extensions/pen/penShape'
 import { POWDER_SPEC } from '../extensions/powder/powderShape'
 import { TABLET_SPEC } from '../extensions/tablet/tabletShape'
@@ -17,7 +18,7 @@ export interface DosageFormDefinition {
   readonly suggestedUnits: readonly string[]
   readonly basisUnits: readonly string[]
   readonly capabilities: readonly DosageFormCapability[]
-  readonly stageRenderer?: 'vial' | 'ampoule' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'patch' | 'drops' | 'powder'
+  readonly stageRenderer?: 'vial' | 'ampoule' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'patch' | 'drops' | 'powder' | 'gel'
   // What the stage needs to know: where the liquid sits, whether the fill level
   // says anything, and — derived from the chamber — whether it wears our label.
   readonly stageForm?: StageFormSpec
@@ -34,7 +35,7 @@ export const DOSAGE_FORMS: readonly DosageFormDefinition[] = [
   { key: 'powder', labelKey: 'dosage_form_powder', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'portion'], capabilities: ['inventory_capable'], stageRenderer: 'powder', stageForm: POWDER_SPEC },
   { key: 'nasal_spray', labelKey: 'dosage_form_nasal_spray', suggestedUnits: ['mcg', 'mg'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'], stageRenderer: 'nasal_spray', stageForm: NASAL_SPRAY_SPEC },
   { key: 'spray', labelKey: 'dosage_form_spray', suggestedUnits: ['mcg', 'mg', 'ml'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'] },
-  { key: 'gel', labelKey: 'dosage_form_gel', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'application'], capabilities: ['inventory_capable'] },
+  { key: 'gel', labelKey: 'dosage_form_gel', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'application'], capabilities: ['inventory_capable'], stageRenderer: 'gel', stageForm: GEL_SPEC },
   { key: 'patch', labelKey: 'dosage_form_patch', suggestedUnits: ['mcg', 'mg'], basisUnits: ['patch', 'hour'], capabilities: ['countable', 'inventory_capable'], stageRenderer: 'patch', stageForm: PATCH_SPEC },
   { key: 'tube', labelKey: 'dosage_form_tube', suggestedUnits: ['mg', 'g', 'ml'], basisUnits: ['g', 'ml', 'application'], capabilities: ['inventory_capable'], stageRenderer: 'tube', stageForm: TUBE_SPEC },
   { key: 'other', labelKey: 'dosage_form_other', suggestedUnits: ['mcg', 'mg', 'g', 'IU', 'ml'], basisUnits: ['unit', 'portion'], capabilities: [] },

@@ -37,17 +37,18 @@ const vialItem: StackItem = {
   }],
 }
 
-// Das Negativbeispiel wandert mit: powder hat seit der Pulverdose einen
-// Renderer, gel noch nicht. Der Waechter unten faengt den naechsten Umzug.
-const gelItem: StackItem = {
+// Das Negativbeispiel ist beim Auffangeintrag angekommen: powder und gel
+// haben inzwischen eigene Renderer. `other` hat keine einzige Faehigkeit und
+// soll dauerhaft auf der Textkarte bleiben — hier endet die Wanderung.
+const otherItem: StackItem = {
   ...vialItem,
-  id: 'diclofenac-gel',
-  display_name: 'Diclofenac Gel',
+  id: 'sonstiges-1',
+  display_name: 'Sonstige Zubereitung',
   category: 'medication',
-  dosage_form: 'gel',
+  dosage_form: 'other',
   ingredients: [{
     ...vialItem.ingredients[0],
-    custom_name: 'Diclofenac',
+    custom_name: 'Sonstiges',
     amount_value: 5,
     amount_unit: 'g',
     basis_unit: 'g',
@@ -61,14 +62,14 @@ function renderStage(item: StackItem): string {
 describe('StackStage', () => {
   it('rendert das bestehende Vial nur für freigeschaltete Vial-Einträge', () => {
     expect(renderStage(vialItem)).toContain('data-stack-renderer="vial"')
-    expect(renderStage(gelItem)).toContain('data-stack-renderer="unsupported"')
+    expect(renderStage(otherItem)).toContain('data-stack-renderer="unsupported"')
   })
 
   it('behält nicht freigeschaltete Formen in einer textuellen Darstellung', () => {
-    const html = renderStage(gelItem)
+    const html = renderStage(otherItem)
     const source = readFileSync(new URL('./StackStage.tsx', import.meta.url), 'utf8')
 
-    expect(html).toContain('Diclofenac Gel')
+    expect(html).toContain('Sonstige Zubereitung')
     expect(html).toContain('my_stack_visual_pending')
     expect(html).not.toContain('PeptideVialVisual')
     expect(source).not.toContain('<svg')
@@ -119,7 +120,7 @@ describe('StackStage — Ampulle', () => {
   })
 
   it('lässt Formen ohne eigene Grafik weiterhin im Textzustand', () => {
-    expect(renderStage(gelItem)).toContain('data-stack-renderer="unsupported"')
+    expect(renderStage(otherItem)).toContain('data-stack-renderer="unsupported"')
   })
 
   it('hält den Ampullen-Adapter frei von eigener Grafik', () => {
@@ -219,12 +220,12 @@ describe('StackStage — Tablette', () => {
   })
 
   it('benutzt als Negativbeispiel eine Form, die wirklich keinen Renderer hat', () => {
-    // Diese Datei prueft mit gelItem, dass Formen ohne Buehnengrafik im
+    // Diese Datei prueft mit otherItem, dass Formen ohne Buehnengrafik im
     // Textzustand bleiben. Bekommt powder selbst einen Renderer, muss das
     // Beispiel auf eine andere Form ohne Renderer wechseln.
     expect(
-      getDosageForm(gelItem.dosage_form).stageRenderer,
-      'gel hat jetzt einen Renderer — Negativbeispiel auf eine andere Form ohne stageRenderer umstellen',
+      getDosageForm(otherItem.dosage_form).stageRenderer,
+      'other hat jetzt einen Renderer — der Auffangeintrag sollte auf der Textkarte bleiben',
     ).toBeUndefined()
   })
 })
@@ -313,11 +314,15 @@ describe('StackStage — Tube', () => {
     expect(source).not.toContain('color_hex')
   })
 
-  it('lässt den gel-Schlüssel im Textzustand', () => {
+  it('schluckt den gel-Schlüssel nicht', () => {
     // gel benennt einen Stoff, tube einen Behälter — ein Gel als Alutube zu
-    // zeichnen behauptet eine Verpackung, die die Daten nicht hergeben.
+    // zeichnen behauptet eine Verpackung, die die Daten nicht hergeben. Das
+    // galt, solange gel keine eigene Grafik hatte, und gilt weiter: es hat
+    // jetzt seinen Tiegel, und der ist nicht die Tube.
     const gelItem: StackItem = { ...tubeItem, id: 'voltaren-gel', dosage_form: 'gel' }
-    expect(renderStage(gelItem)).toContain('data-stack-renderer="unsupported"')
+    const html = renderStage(gelItem)
+    expect(html).toContain('data-stack-renderer="gel"')
+    expect(html).not.toContain('data-stack-renderer="tube"')
   })
 })
 
