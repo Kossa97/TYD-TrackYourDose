@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { carriesLabel } from '../../stage/types'
 import {
   DROPS_ASPECT,
+  DROPS_BODY,
   DROPS_CHAMBER,
   DROPS_CAP,
   DROPS_CAP_RADIUS,
@@ -15,8 +16,6 @@ import {
   DROPS_PIPETTE_TOP,
   DROPS_FILL,
   DROPS_INNER_PATH,
-  DROPS_INNER_STROKE_PATH,
-  DROPS_INNER_STROKE_TOP,
   DROPS_LABEL,
   DROPS_LABEL_TOP,
   DROPS_OUTER_PATH,
@@ -37,8 +36,8 @@ describe('dropsShape', () => {
     // Beide beginnen am Hals und enden am Boden; die Wandstaerke ist 5 % der
     // Koerperbreite, wie beim Vial und der Ampulle.
     expect(DROPS_WALL).toBeCloseTo(DROPS_WIDTHS.body * 0.05, 1)
-    expect(DROPS_OUTER_PATH.startsWith('M38 102')).toBe(true)
-    expect(DROPS_INNER_PATH.startsWith('M41.6 106')).toBe(true)
+    expect(DROPS_OUTER_PATH.startsWith('M28 100')).toBe(true)
+    expect(DROPS_INNER_PATH.startsWith('M28 103.6')).toBe(true)
   })
 
   it('legt die Kammer in den geraden Teil des Innenraums', () => {
@@ -46,7 +45,7 @@ describe('dropsShape', () => {
     // braucht — derselbe Kunstgriff wie bei Vial, Ampulle und Nasenspray.
     expect(DROPS_CHAMBER.aspect).toBeCloseTo(DROPS_CHAMBER.width / DROPS_CHAMBER.height, 6)
     // Sie beginnt unterhalb der Schulter und endet ueber dem Boden.
-    expect(DROPS_CHAMBER.y).toBeGreaterThan(154)
+    expect(DROPS_CHAMBER.y).toBeGreaterThan(114)
     expect(DROPS_CHAMBER.y + DROPS_CHAMBER.height).toBeLessThanOrEqual(284.4)
   })
 
@@ -68,9 +67,9 @@ describe('dropsShape', () => {
     // Klarglas verdeckte das Band die Oberflaeche und die Flasche wirkte wie
     // ein trueber Rest. Zwischen beiden muss Luft bleiben.
     expect(DROPS_SURFACE_Y).toBeLessThan(DROPS_LABEL_TOP - 10)
-    // Und der Spiegel steht unter der Schulter, nicht darin: die Innenwand
-    // wird erst ab y=154 gerade, darueber gibt es keine rechteckige Kammer.
-    expect(DROPS_SURFACE_Y).toBeGreaterThan(154)
+    // Und der Spiegel steht unter der Eckenrundung, nicht darin: die
+    // Innenwand wird erst ab y=114 gerade.
+    expect(DROPS_SURFACE_Y).toBeGreaterThan(114)
   })
 
   it('setzt das Etikettband auf den geraden Teil des Koerpers', () => {
@@ -81,16 +80,19 @@ describe('dropsShape', () => {
     expect(unten).toBeLessThan(288)
   })
 
-  it('zeichnet die Wandstaerke ohne Oberkante bis in die Kappe', () => {
-    // Der geschlossene Pfad wird zum Beschneiden gebraucht, gezeichnet ergaebe
-    // sein Ringschluss aber einen waagerechten Strich quer ueber den Hals.
+  it('setzt die Kappe unmittelbar auf den Koerper, ohne Hals', () => {
+    // Die Vorlage kennt keinen Hals: die Kappe sitzt auf einem
+    // Rundrechteck-Koerper, dessen Oberkante links und rechts neben ihr als
+    // Schulter sichtbar bleibt. Der lange Hals mit Schulterbogen machte die
+    // Form kopflastig.
+    expect(DROPS_BODY.top).toBeLessThan(DROPS_CAP.y + DROPS_CAP.height)
+    expect(DROPS_OUTER_PATH.startsWith(`M28 ${DROPS_BODY.top}`)).toBe(true)
+    // Die Kappe ist schmaler als der Koerper, sonst gaebe es keine Schulter.
+    expect(DROPS_WIDTHS.cap).toBeLessThan(DROPS_WIDTHS.body)
+    // Und die Wandstaerke ist wieder eine geschlossene Kontur: ihre
+    // Oberkante ist jetzt echte Schulter statt eines Strichs quer ueber
+    // einen schmalen Hals.
     expect(DROPS_INNER_PATH.endsWith('Z')).toBe(true)
-    expect(DROPS_INNER_STROKE_PATH).not.toContain('Z')
-    // Beide Enden liegen unter der Kappe, nicht darunter sichtbar.
-    expect(DROPS_INNER_STROKE_TOP).toBeLessThan(DROPS_CAP.y + DROPS_CAP.height)
-    expect(DROPS_INNER_STROKE_TOP).toBeGreaterThan(DROPS_CAP.y)
-    expect(DROPS_INNER_STROKE_PATH.startsWith(`M41.6 ${DROPS_INNER_STROKE_TOP}`)).toBe(true)
-    expect(DROPS_INNER_STROKE_PATH.endsWith(`L58.4 ${DROPS_INNER_STROKE_TOP}`)).toBe(true)
   })
 
   it('laesst die Pipette in die Kappe hineinreichen', () => {
@@ -125,8 +127,8 @@ describe('dropsShape', () => {
   it('haelt die Kappe kurz und breit und die Riffelung auf dem Mantel', () => {
     // Die Vorlage zeigt ein breites niedriges Band, keinen Zylinder.
     expect(DROPS_CAP.width).toBeGreaterThan(DROPS_CAP.height)
-    // Sie ueberdeckt den Hals auf beiden Seiten.
-    expect(DROPS_CAP.width).toBeGreaterThan(DROPS_WIDTHS.neck)
+    // Sie bleibt schmaler als der Koerper, damit die Schulter sichtbar ist.
+    expect(DROPS_CAP.width).toBeLessThan(DROPS_WIDTHS.body)
     // Die Riffelung beginnt unter der flachen Oberseite und endet ueber der
     // gebrochenen Unterkante.
     expect(DROPS_CAP_RIB_YS.top).toBeGreaterThan(DROPS_CAP.y + DROPS_CAP_TOP_BAND)
@@ -141,7 +143,6 @@ describe('dropsShape', () => {
     // breiter als der Hals — diese Staffelung macht die Flasche auf einen
     // Blick als Pipettenflasche lesbar.
     expect(DROPS_WIDTHS.teat).toBeLessThan(DROPS_WIDTHS.cap)
-    expect(DROPS_WIDTHS.neck).toBeLessThan(DROPS_WIDTHS.cap)
     expect(DROPS_WIDTHS.cap).toBeLessThan(DROPS_WIDTHS.body)
     expect(DROPS_CAP.width).toBe(DROPS_WIDTHS.cap)
   })

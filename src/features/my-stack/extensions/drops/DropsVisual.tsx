@@ -16,7 +16,6 @@ import {
   DROPS_FILL,
   DROPS_GROUND_SHIFT,
   DROPS_INNER_PATH,
-  DROPS_INNER_STROKE_PATH,
   DROPS_LABEL,
   DROPS_OUTER_PATH,
   DROPS_PIPETTE_PATH,
@@ -190,12 +189,16 @@ export function DropsVisual({
               scharfen Kante. Die Kappe ist glatterer Kunststoff: heller, mit
               einem schmaleren, helleren Glanzstreifen. Beide sind Zylinder,
               deshalb links und rechts abfallend. */}
-          <linearGradient id={`${uid}-teatBody`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#231a15" />
-            <stop offset="22%" stopColor="#6a5344" />
-            <stop offset="46%" stopColor="#4a382d" />
-            <stop offset="74%" stopColor="#3a2b23" />
-            <stop offset="100%" stopColor="#1d1611" />
+          {/* Ein Kopf, eine Farbe — beide Teile tragen die Eintragsfarbe.
+              Unterschieden werden sie ueber das Material: der Sauger ist
+              mattes Gummi und liegt deshalb durchgehend dunkler, mit einem
+              breiten weichen Glanz statt einer scharfen Kante. */}
+          <linearGradient id={`${uid}-teatShade`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="rgba(0,0,0,0.7)" />
+            <stop offset="22%" stopColor="rgba(0,0,0,0.2)" />
+            <stop offset="46%" stopColor="rgba(0,0,0,0.34)" />
+            <stop offset="74%" stopColor="rgba(0,0,0,0.46)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.72)" />
           </linearGradient>
           {/* Die Kuppe faengt oben zusaetzlich Licht — Gummi ist nie ganz
               matt, aber der Uebergang bleibt weich. */}
@@ -296,25 +299,25 @@ export function DropsVisual({
           />
         </g>
 
-        {/* Die Wandstaerke — ein offener Pfad ohne Oberkante. Seine Enden
-            liegen unter der Kappe, die gleich darueber gezeichnet wird: die
-            Linien laufen in den Deckel hinein statt an einer Kante zu enden.
-            Non-scaling, damit sie die Karussellbreite ueberlebt. */}
-        <path
+        {/* Die Wandstaerke. Ohne Hals ist die Oberkante echte Schulter und
+            wird mitgezeichnet — der offene Pfad von vorher war nur noetig,
+            solange die Kontur in einem schmalen Hals endete. Non-scaling,
+            damit sie die Karussellbreite ueberlebt. */}
+        <use
           data-drops-detail="inner-contour"
-          d={DROPS_INNER_STROKE_PATH}
+          href={`#${uid}-inner`}
           fill="none"
           stroke="rgba(226,232,240,0.34)"
-          strokeWidth="1"
+          strokeWidth="0.9"
           vectorEffect="non-scaling-stroke"
         />
 
-        {/* Kappe und Pipette sind ein Teil und stehen deshalb in einer
-            Gruppe: beim Aufschrauben kaeme die Pipette mit heraus. Die
-            Pipette wird zuerst gezeichnet, die Kappe deckt ihr oberes Ende
-            ab — dort kann so keine Fuge entstehen. Die Gruppe steht hinter
-            Wandstaerke und Glanzband, weil die vordere Glaswand vor der
-            Pipette liegt. */}
+        {/* Sauger, Kappe und Pipette sind ein Teil und stehen deshalb in
+            einer Gruppe: beim Aufschrauben kaeme die Pipette mit heraus. Die
+            Reihenfolge ist die, in der sie uebereinander liegen — Pipette,
+            dann Sauger, dann Kappe. Die Kappe deckt oben beides ab: das Ende
+            der Pipette und den Kragen des Saugers. Die Gruppe steht hinter
+            der Wandstaerke, weil die vordere Glaswand vor der Pipette liegt. */}
         <g data-drops-detail="dropper">
           {/* Die Pipette ist selbst leer: was dahinter liegt, scheint durch.
               Eine gefuellte waere eine Aussage ueber eine Menge, die die App
@@ -328,11 +331,9 @@ export function DropsVisual({
             vectorEffect="non-scaling-stroke"
           />
 
-          {/* Zwei Teile in der Reihenfolge, in der sie uebereinander
-              liegen: der Sauger zuerst, damit sein Kragen unter dem
-              Kappenrand verschwindet, dann die Kappe darueber. */}
           <g data-drops-detail="teat">
-            <path d={DROPS_TEAT_PATH} fill={`url(#${uid}-teatBody)`} />
+            <path data-drops-detail="teat-fill" d={DROPS_TEAT_PATH} fill={color} />
+            <path d={DROPS_TEAT_PATH} fill={`url(#${uid}-teatShade)`} />
             <path d={DROPS_TEAT_PATH} fill={`url(#${uid}-teatCrown)`} />
             {/* Der weiche Laengsglanz auf dem Gummi. Er wandert mit dem
                 Licht und liegt im Umriss, sonst malt er daneben. */}

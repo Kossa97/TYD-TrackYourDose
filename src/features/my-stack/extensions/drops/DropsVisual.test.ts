@@ -85,8 +85,9 @@ describe('DropsVisual', () => {
     const source = readFileSync(new URL('./DropsVisual.tsx', import.meta.url), 'utf8')
     expect(source.indexOf('data-drops-detail="inner-contour"'))
       .toBeLessThan(source.indexOf('data-drops-detail="dropper"'))
-    // Und sie benutzt den offenen Pfad, nicht den geschlossenen Clip-Pfad.
-    expect(source).toContain('d={DROPS_INNER_STROKE_PATH}')
+    // Sie ist wieder die geschlossene Kontur: ohne Hals ist ihre Oberkante
+    // echte Schulter und darf gezeichnet werden.
+    expect(source).toContain('href={`#${uid}-inner`}')
   })
 
   it('zeigt keinen Fuellstand in Prozent', () => {

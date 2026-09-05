@@ -8,10 +8,10 @@ export const DROPS_VIEWBOX = { x: 14, y: 16, width: 72, height: 272 } as const
 export const DROPS_ASPECT = DROPS_VIEWBOX.width / DROPS_VIEWBOX.height
 
 // Die Durchmesser von oben nach unten. Der Sauger ist schmaler als die
-// Kappe, die Kappe schmaler als der Körper und breiter als der Hals — genau
-// diese Staffelung macht die Flasche auf einen Blick als Pipettenflasche
-// lesbar. Die Einschnürung über dem Kappenrand ist die schmalste Stelle.
-export const DROPS_WIDTHS = { waist: 17, teat: 26, neck: 24, cap: 42, body: 72 } as const
+// Kappe und die Kappe schmaler als der Körper — genau diese Staffelung macht
+// die Flasche auf einen Blick als Pipettenflasche lesbar. Die Einschnürung
+// über dem Kappenrand ist die schmalste Stelle.
+export const DROPS_WIDTHS = { waist: 17, teat: 26, cap: 42, body: 72 } as const
 
 // Der Kopf ist ZWEITEILIG, wie in der Vorlage: ein Gummisauger auf einer
 // geriffelten Schraubkappe. Das ist die Umkehr des einteiligen Gussstücks
@@ -74,29 +74,26 @@ export const DROPS_CAP_DOME = { cx: 50, cy: 32, rx: 8 } as const
 
 // Aussen- und Innenkontur, wie beim Vial und der Ampulle. Die Wandstärke ist
 // 5 % der Körperbreite.
+//
+// Die Flasche hat KEINEN Hals: die Vorlage setzt die Kappe unmittelbar auf
+// einen Rundrechteck-Körper, dessen Oberkante links und rechts neben der
+// Kappe als Schulter sichtbar bleibt. Der lange Hals mit Schulterbogen davor
+// gehörte zu einer anderen Flaschenart und machte die Form kopflastig.
 export const DROPS_WALL = 3.6
+export const DROPS_BODY = { top: 100, bottom: 288, radiusTop: 14, radiusBottom: 12 } as const
 export const DROPS_OUTER_PATH =
-  'M38 102 L62 102 L62 128 C62 136 86 140 86 152 L86 278 ' +
-  'C86 284 82 288 76 288 L24 288 C18 288 14 284 14 278 L14 152 ' +
-  'C14 140 38 136 38 128 Z'
+  'M28 100 L72 100 C79.7 100 86 106.3 86 114 L86 276 ' +
+  'C86 282.6 82.6 288 76 288 L24 288 C17.4 288 14 282.6 14 276 ' +
+  'L14 114 C14 106.3 20.3 100 28 100 Z'
 export const DROPS_INNER_PATH =
-  'M41.6 106 L58.4 106 L58.4 130 C58.4 138.5 82.4 142 82.4 154 L82.4 276 ' +
-  'C82.4 281 79 284.4 74 284.4 L26 284.4 C21 284.4 17.6 281 17.6 276 ' +
-  'L17.6 154 C17.6 142 41.6 138.5 41.6 130 Z'
+  'M28 103.6 L72 103.6 C77.7 103.6 82.4 108.3 82.4 114 L82.4 276 ' +
+  'C82.4 280.6 78.6 284.4 74 284.4 L26 284.4 C21.4 284.4 17.6 280.6 17.6 276 ' +
+  'L17.6 114 C17.6 108.3 22.3 103.6 28 103.6 Z'
 
-// Zum Beschneiden der Flüssigkeit braucht es den geschlossenen Pfad oben.
-// Gezeichnet werden darf er so aber nicht: der Ringschluss ergäbe einen
-// waagerechten Strich quer über den Hals. Die sichtbare Wandstärke ist
-// deshalb ein OFFENER Pfad, dessen beide Enden oberhalb der Kappenunterkante
-// liegen und von der Kappe verdeckt werden — die Linien laufen in den Deckel
-// hinein, statt an einer Kante aufzuhören.
-export const DROPS_INNER_STROKE_TOP = 94
-export const DROPS_INNER_STROKE_PATH =
-  `M41.6 ${DROPS_INNER_STROKE_TOP} L41.6 130 ` +
-  'C41.6 138.5 17.6 142 17.6 154 L17.6 276 ' +
-  'C17.6 281 21 284.4 26 284.4 L74 284.4 C79 284.4 82.4 281 82.4 276 ' +
-  'L82.4 154 C82.4 142 58.4 138.5 58.4 130 ' +
-  `L58.4 ${DROPS_INNER_STROKE_TOP}`
+// Ohne Hals braucht die Wandstärke keinen offenen Pfad mehr. Der Trick war
+// nötig, solange die Kontur oben in einem schmalen Hals endete: dort hätte
+// ihr Ringschluss einen Strich quer über die Öffnung gezogen. Jetzt ist die
+// Oberkante echte Schulter und wird mitgezeichnet, wie beim Nasenspray.
 
 // Sauger, Kappe und Pipette sind EIN Teil: beim Aufschrauben kommt die
 // Pipette mit heraus. Sie beginnt deshalb oberhalb der Kappenunterkante und
@@ -111,18 +108,17 @@ export const DROPS_PIPETTE_PATH =
 export const DROPS_PIPETTE_OVERLAP = DROPS_CAP.y + DROPS_CAP.height - DROPS_PIPETTE_TOP
 
 // Nur der gerade Teil des Innenraums. Das hält die Kammer rechteckig, so
-// braucht die Geometrie kein Breitenprofil für die Schulter — derselbe
+// braucht die Geometrie kein Breitenprofil für die Rundung — derselbe
 // Kunstgriff, den Vial, Ampulle und Nasenspray schon benutzen.
 //
-// Die Oberkante sitzt dicht unter dem Ende der Schulter (Innenwand y=154),
-// nicht 11 Einheiten darunter: sonst kann oberhalb von y=165 nie Flüssigkeit
-// stehen, und im Klarglas bleibt dort ein leerer Streifen.
+// Ohne Hals und Schulter beginnt der gerade Teil viel weiter oben: gleich
+// unter der oberen Eckenrundung statt erst 50 Einheiten tiefer.
 export const DROPS_CHAMBER = {
   x: 17.6,
-  y: 156,
+  y: 118,
   width: 64.8,
-  height: 128.4,
-  aspect: 64.8 / 128.4,
+  height: 166.4,
+  aspect: 64.8 / 166.4,
 } as const
 
 // Fester Pegel. Die App kennt den Stand einer angebrochenen Tropfflasche
