@@ -4,6 +4,7 @@ import { PeptideVialVisual } from '../components/PeptideVialVisual'
 import { AmpouleVisual } from '../features/my-stack/extensions/ampoule/AmpouleVisual'
 import { CapsuleVisual } from '../features/my-stack/extensions/capsule/CapsuleVisual'
 import { NasalSprayVisual } from '../features/my-stack/extensions/nasal-spray/NasalSprayVisual'
+import { DropsVisual } from '../features/my-stack/extensions/drops/DropsVisual'
 import { PatchVisual } from '../features/my-stack/extensions/patch/PatchVisual'
 import { PenVisual } from '../features/my-stack/extensions/pen/PenVisual'
 import { TabletVisual } from '../features/my-stack/extensions/tablet/TabletVisual'
@@ -60,6 +61,13 @@ const PREVIEW_PENS = [
   // bewusst zu lang: der vorige Name passte mit 0 px Reserve noch hinein und
   // hat den senkrechten Durchlauf nie ausgeloest.
   { name: 'Insulin glargin 300 Einheiten pro Milliliter', color: '#f0b357' },
+]
+
+const PREVIEW_DROPS = [
+  { name: 'Vitamin D3', amount: 1000, unit: 'IU / drop', color: '#f0b357' },
+  { name: 'Melatonin', amount: 1, unit: 'mg / drop', color: '#8b7fd4' },
+  // bewusst ohne Menge: die Zeile bleibt dann weg statt zu raten
+  { name: 'Ohne Menge', amount: null, unit: null, color: '#4fd1c5' },
 ]
 
 // Ohne Farbe: das Pflaster ist die einzige Form ohne color_hex.
@@ -350,6 +358,26 @@ export function VialPreview() {
           <PenVisual key={p.name} name={p.name} color={p.color} size="large" />
         ))}
       </div>
+
+      <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
+        Tropfen — Braunglas mit Pipette in Detailgröße
+      </p>
+      {/* Mit Provider, sonst schwappt die Fluessigkeit nicht. */}
+      <SloshProvider engine={sloshEngine}>
+        <div className="mx-auto flex max-w-4xl flex-wrap items-end justify-center gap-12 pb-2">
+          {PREVIEW_DROPS.map((d, i) => (
+            <DropsVisual
+              key={d.name}
+              name={d.name}
+              amount={d.amount}
+              unit={d.unit}
+              color={d.color}
+              size="large"
+              lightOffset={i - 1}
+            />
+          ))}
+        </div>
+      </SloshProvider>
 
       <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
         Pflaster — Lochung und Wundkissen in Detailgröße

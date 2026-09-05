@@ -8,6 +8,7 @@ import { AmpouleRenderer } from '../extensions/ampoule/AmpouleRenderer'
 import { CapsuleRenderer } from '../extensions/capsule/CapsuleRenderer'
 import { NasalSprayRenderer } from '../extensions/nasal-spray/NasalSprayRenderer'
 import { TabletRenderer } from '../extensions/tablet/TabletRenderer'
+import { DropsRenderer } from '../extensions/drops/DropsRenderer'
 import { PatchRenderer } from '../extensions/patch/PatchRenderer'
 import { PenRenderer } from '../extensions/pen/PenRenderer'
 import { TubeRenderer } from '../extensions/tube/TubeRenderer'
@@ -49,6 +50,10 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
 
   if (renderer === 'ampoule') {
     return <AmpouleRenderer item={item} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
+  }
+
+  if (renderer === 'drops') {
+    return <DropsRenderer item={item} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
   }
 
   if (renderer === 'nasal_spray') {

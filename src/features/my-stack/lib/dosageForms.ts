@@ -3,6 +3,7 @@ import { CAPSULE_SPEC } from '../extensions/capsule/capsuleShape'
 import { NASAL_SPRAY_SPEC } from '../extensions/nasal-spray/nasalSprayShape'
 import { PEN_SPEC } from '../extensions/pen/penShape'
 import { TABLET_SPEC } from '../extensions/tablet/tabletShape'
+import { DROPS_SPEC } from '../extensions/drops/dropsShape'
 import { PATCH_SPEC } from '../extensions/patch/patchShape'
 import { TUBE_SPEC } from '../extensions/tube/tubeShape'
 import { VIAL_SPEC } from '../extensions/peptide/vialShape'
@@ -15,7 +16,7 @@ export interface DosageFormDefinition {
   readonly suggestedUnits: readonly string[]
   readonly basisUnits: readonly string[]
   readonly capabilities: readonly DosageFormCapability[]
-  readonly stageRenderer?: 'vial' | 'ampoule' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'patch'
+  readonly stageRenderer?: 'vial' | 'ampoule' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'patch' | 'drops'
   // What the stage needs to know: where the liquid sits, whether the fill level
   // says anything, and — derived from the chamber — whether it wears our label.
   readonly stageForm?: StageFormSpec
@@ -27,7 +28,7 @@ export const DOSAGE_FORMS: readonly DosageFormDefinition[] = [
   { key: 'pen', labelKey: 'dosage_form_pen', suggestedUnits: ['mg', 'mcg', 'IU'], basisUnits: ['dose', 'ml'], capabilities: ['injectable', 'liquid', 'concentration_based', 'inventory_capable'], stageRenderer: 'pen', stageForm: PEN_SPEC },
   { key: 'tablet', labelKey: 'dosage_form_tablet', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['tablet'], capabilities: ['countable', 'divisible', 'inventory_capable'], stageRenderer: 'tablet', stageForm: TABLET_SPEC },
   { key: 'capsule', labelKey: 'dosage_form_capsule', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['capsule'], capabilities: ['countable', 'inventory_capable'], stageRenderer: 'capsule', stageForm: CAPSULE_SPEC },
-  { key: 'drops', labelKey: 'dosage_form_drops', suggestedUnits: ['mcg', 'mg', 'IU', 'ml'], basisUnits: ['drop', 'ml'], capabilities: ['liquid', 'concentration_based', 'inventory_capable'] },
+  { key: 'drops', labelKey: 'dosage_form_drops', suggestedUnits: ['mcg', 'mg', 'IU', 'ml'], basisUnits: ['drop', 'ml'], capabilities: ['liquid', 'concentration_based', 'inventory_capable'], stageRenderer: 'drops', stageForm: DROPS_SPEC },
   { key: 'liquid', labelKey: 'dosage_form_liquid', suggestedUnits: ['mcg', 'mg', 'g', 'IU', 'ml'], basisUnits: ['ml', 'portion'], capabilities: ['liquid', 'concentration_based', 'inventory_capable'] },
   { key: 'powder', labelKey: 'dosage_form_powder', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'portion'], capabilities: ['inventory_capable'] },
   { key: 'nasal_spray', labelKey: 'dosage_form_nasal_spray', suggestedUnits: ['mcg', 'mg'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'], stageRenderer: 'nasal_spray', stageForm: NASAL_SPRAY_SPEC },

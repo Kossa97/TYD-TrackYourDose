@@ -3075,23 +3075,23 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/patch/PatchVisual.test.ts": {
-    "mtime": 1788566356.8390834,
-    "ast_hash": "4937c7e817aebe498d9d98a524e6f9f5",
+    "mtime": 1788566884.8054714,
+    "ast_hash": "fa4063ce4bfee18e978ac4a6c161da1d",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/patch/PatchVisual.tsx": {
-    "mtime": 1788566410.5409136,
-    "ast_hash": "63dd65ced1c8c6601a4e55ed8112c8e5",
+    "mtime": 1788566830.2749088,
+    "ast_hash": "dead87fee3970c1bc56277ff431000bd",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/patch/patchShape.test.ts": {
-    "mtime": 1788565072.700325,
-    "ast_hash": "27f2e1edf53ed55f8f8a9e407dcaf4d2",
+    "mtime": 1788567227.474128,
+    "ast_hash": "668ca692e9946d9102ce543973d1587f",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/patch/patchShape.ts": {
-    "mtime": 1788566247.9128098,
-    "ast_hash": "de1a147cacc3a4bbadfccde288b5d41e",
+    "mtime": 1788566676.097033,
+    "ast_hash": "d7d40d554afdbf1aff614c2a46a36c56",
     "semantic_hash": ""
   }
 }
