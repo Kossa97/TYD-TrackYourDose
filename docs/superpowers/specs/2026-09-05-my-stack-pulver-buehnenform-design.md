@@ -2,7 +2,7 @@
 
 **Datum:** 2026-09-05
 **Branch:** `codex/my-stack-foundation`
-**Status:** Entwurf
+**Status:** Gebaut und vom Nutzer geprüft
 
 ## Ziel
 
@@ -36,7 +36,7 @@ nicht der Maßstab.
 Die Dose nimmt aber als **erste stehende Form eine Sprosse nach unten**:
 115,5 → 146,7 px statt 146,7 → 186,4. Grund ist ihr Charakter. Sie ist die
 einzige stehende Form, die breiter als hoch wirkt; auf der oberen Sprosse wäre
-sie mit 98 px Breite doppelt so breit wie die breiteste bisherige Form und
+sie mit 94 px Breite fast doppelt so breit wie die breiteste bisherige Form und
 erschlüge die Reihe. Eine Sprosse tiefer ist sie niedrig und gedrungen — genau
 das, was eine Dose neben schlanken Flaschen ist.
 
@@ -45,15 +45,15 @@ und das ist exakt die Höhe, auf der Vial, Ampulle und Tropfflasche stehen.
 
 | Größe | Höhe | Breite |
 |---|---|---|
-| `large` | 287,3 px | 191,5 px |
-| `carousel` | 115,5 px, `sm` 146,7 px | 77 px, `sm` 97,8 px |
-| `compact` | 86,6 px | 57,7 px |
-| `mini` | 47,2 px | 31,5 px |
+| `large` | 287,3 px | 184,2 px |
+| `carousel` | 115,5 px, `sm` 146,7 px | 74 px, `sm` 94 px |
+| `compact` | 86,6 px | 55,5 px |
+| `mini` | 47,2 px | 30,3 px |
 
 ## Grafik
 
-Raster 120 × 170, viewBox auf die Objektgrenzen beschnitten: `10 6 100 150`,
-Seitenverhältnis 0,667.
+Raster 120 × 170, viewBox auf die Objektgrenzen beschnitten: `10 6 100 156`,
+Seitenverhältnis 0,641.
 
 Grundsatz für alles: **die Dose ist ein Zylinder, von leicht oben gesehen.**
 Jeder waagerechte Rand ist deshalb ein Ellipsenbogen, kein Strich. Wo dieser
