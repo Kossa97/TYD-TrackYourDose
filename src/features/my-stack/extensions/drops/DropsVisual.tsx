@@ -204,12 +204,17 @@ export function DropsVisual({
             <stop offset="55%" stopColor="rgba(255,255,255,0.05)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
           </linearGradient>
-          <linearGradient id={`${uid}-capBody`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#2b211a" />
-            <stop offset="16%" stopColor="#8b7059" />
-            <stop offset="42%" stopColor="#5d4839" />
-            <stop offset="72%" stopColor="#4a392d" />
-            <stop offset="100%" stopColor="#241c16" />
+          {/* Die Kappe traegt die Eintragsfarbe, der Sauger nicht: sie ist
+              die groessere, glattere Flaeche und haelt die Farbe sauber,
+              waehrend mattes Gummi sie stumpf machen wuerde. Der Verlauf
+              legt darueber nur Licht und Schatten, damit aus der flachen
+              Farbe ein Zylinder wird. */}
+          <linearGradient id={`${uid}-capShade`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="rgba(0,0,0,0.58)" />
+            <stop offset="18%" stopColor="rgba(255,255,255,0.32)" />
+            <stop offset="46%" stopColor="rgba(255,255,255,0.04)" />
+            <stop offset="74%" stopColor="rgba(0,0,0,0.12)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.62)" />
           </linearGradient>
           {/* Die Oberseite zeigt vom Licht weg. */}
           <linearGradient id={`${uid}-capTop`} x1="0" y1="0" x2="0" y2="1">
@@ -354,7 +359,8 @@ export function DropsVisual({
 
           {/* Die Kappe. Der Sauger sitzt ihr auf, also deckt ihr Rand seinen
               Kragen ab und es entsteht die Naht, die die Vorlage zeigt. */}
-          <path data-drops-detail="cap" d={DROPS_CAP_PATH} fill={`url(#${uid}-capBody)`} />
+          <path data-drops-detail="cap" d={DROPS_CAP_PATH} fill={color} />
+          <path d={DROPS_CAP_PATH} fill={`url(#${uid}-capShade)`} />
           <g clipPath={`url(#${uid}-capClip)`}>
             {/* Die flache Oberseite rund um den Sauger. */}
             <rect

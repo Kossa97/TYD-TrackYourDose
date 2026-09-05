@@ -68,9 +68,9 @@ describe('DropsVisual', () => {
     const html = render({ color: '#a3e635' })
     expect(html).toContain('data-drops-detail="teat"')
     expect(html).toContain('data-drops-detail="cap"')
-    // Beide tragen ihr Material, nicht die Eintragsfarbe: die kommt seit dem
-    // Klarglas aus der Fluessigkeit, wie beim Nasenspray.
-    expect(html).not.toMatch(/data-drops-detail="cap"[^>]*fill="#a3e635"/)
+    // Die Kappe traegt die Eintragsfarbe, der Sauger sein Material: sonst
+    // waere der Zweiteiler wieder ein einfarbiges Stueck.
+    expect(html).toMatch(/data-drops-detail="cap"[^>]*fill="#a3e635"/)
     expect(html).not.toMatch(/data-drops-detail="teat"[^>]*fill="#a3e635"/)
   })
 

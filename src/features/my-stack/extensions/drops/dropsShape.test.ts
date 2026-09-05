@@ -37,8 +37,8 @@ describe('dropsShape', () => {
     // Beide beginnen am Hals und enden am Boden; die Wandstaerke ist 5 % der
     // Koerperbreite, wie beim Vial und der Ampulle.
     expect(DROPS_WALL).toBeCloseTo(DROPS_WIDTHS.body * 0.05, 1)
-    expect(DROPS_OUTER_PATH.startsWith('M38 112')).toBe(true)
-    expect(DROPS_INNER_PATH.startsWith('M41.6 116')).toBe(true)
+    expect(DROPS_OUTER_PATH.startsWith('M38 102')).toBe(true)
+    expect(DROPS_INNER_PATH.startsWith('M41.6 106')).toBe(true)
   })
 
   it('legt die Kammer in den geraden Teil des Innenraums', () => {

@@ -11,7 +11,7 @@ export const DROPS_ASPECT = DROPS_VIEWBOX.width / DROPS_VIEWBOX.height
 // Kappe, die Kappe schmaler als der Körper und breiter als der Hals — genau
 // diese Staffelung macht die Flasche auf einen Blick als Pipettenflasche
 // lesbar. Die Einschnürung über dem Kappenrand ist die schmalste Stelle.
-export const DROPS_WIDTHS = { waist: 19, teat: 28, neck: 24, cap: 48, body: 72 } as const
+export const DROPS_WIDTHS = { waist: 17, teat: 26, neck: 24, cap: 42, body: 72 } as const
 
 // Der Kopf ist ZWEITEILIG, wie in der Vorlage: ein Gummisauger auf einer
 // geriffelten Schraubkappe. Das ist die Umkehr des einteiligen Gussstücks
@@ -25,16 +25,16 @@ export const DROPS_WIDTHS = { waist: 19, teat: 28, neck: 24, cap: 48, body: 72 }
 export const DROPS_TEAT = {
   top: 16,
   // Die sichtbare Naht: hier setzt der Kragen auf dem Kappenrand auf.
-  seam: 86,
+  seam: 80,
   // Der Sauger reicht darunter weiter, damit die Kappe die Verbindung
   // überdeckt. Ein stumpfer Stoß genau auf der Naht zeigt je nach Skalierung
   // eine Haarlinie — derselbe Grund, aus dem die Pipette in die Kappe
   // hineinreicht.
-  bottom: 91,
+  bottom: 85,
   // Auf dieser Höhe ist der Sauger am breitesten — knapp unter der Kuppe,
   // von da an verjüngt er sich bis zur Einschnürung.
-  widest: 32,
-  waistY: 74,
+  widest: 30,
+  waistY: 69,
 } as const
 
 // Ein geschlossener Umriss: Kuppe, Verjüngung, Einschnürung, und unten der
@@ -43,44 +43,44 @@ export const DROPS_TEAT = {
 // Das Verhältnis von Höhe zu Breite ist knapp 2,5 : 1 — schlanker wäre es
 // ein Pinselgriff, nicht der Gummiball der Vorlage.
 export const DROPS_TEAT_PATH =
-  'M36 32 C36 15 64 15 64 32 ' +
-  'C64 52 60 60 59.5 74 ' +
-  'C59.5 81 63 81 63 86 ' +
-  'L63 91 L37 91 L37 86 ' +
-  'C37 81 40.5 81 40.5 74 ' +
-  'C40 60 36 52 36 32 Z'
+  'M37 30 C37 14 63 14 63 30 ' +
+  'C63 48 59 56 58.5 69 ' +
+  'C58.5 75 62 75 62 80 ' +
+  'L62 85 L38 85 L38 80 ' +
+  'C38 75 41.5 75 41.5 69 ' +
+  'C41 56 37 48 37 30 Z'
 
 // Die Schraubkappe: kurz, breit, geriffelt, mit leicht gebrochenen Kanten.
-export const DROPS_CAP = { x: 26, y: 86, width: 48, height: 26 } as const
-export const DROPS_CAP_RADIUS = 2.5
+export const DROPS_CAP = { x: 29, y: 80, width: 42, height: 22 } as const
+export const DROPS_CAP_RADIUS = 2.2
 export const DROPS_CAP_PATH =
-  'M28.5 86 L71.5 86 C72.9 86 74 87.1 74 88.5 L74 109.5 ' +
-  'C74 110.9 72.9 112 71.5 112 L28.5 112 C27.1 112 26 110.9 26 109.5 ' +
-  'L26 88.5 C26 87.1 27.1 86 28.5 86 Z'
+  'M31.2 80 L68.8 80 C70 80 71 81 71 82.2 L71 99.8 ' +
+  'C71 101 70 102 68.8 102 L31.2 102 C30 102 29 101 29 99.8 ' +
+  'L29 82.2 C29 81 30 80 31.2 80 Z'
 
 // Die flache Oberseite der Kappe rund um den Sauger. Sie zeigt nach oben,
 // vom Licht weg, und ist deshalb dunkler als der Mantel — ohne diesen
 // Streifen sähe die Kappe wie ein aufgeklebtes Rechteck aus.
-export const DROPS_CAP_TOP_BAND = 5
+export const DROPS_CAP_TOP_BAND = 4
 
 // Die Riffelung sitzt nur auf dem Mantel, nicht auf der Oberseite und nicht
 // auf den gebrochenen Kanten.
-export const DROPS_CAP_RIB_YS = { top: 93, bottom: 109 } as const
+export const DROPS_CAP_RIB_YS = { top: 87, bottom: 98 } as const
 export const DROPS_CAP_RIB_XS: readonly number[] =
-  Array.from({ length: 17 }, (_, i) => Number((29.5 + i * 2.5625).toFixed(3)))
+  Array.from({ length: 15 }, (_, i) => Number((31.5 + i * 2.5).toFixed(3)))
 
 // Der Glanzpunkt auf der gewölbten Kuppe des Saugers.
-export const DROPS_CAP_DOME = { cx: 50, cy: 34, rx: 9 } as const
+export const DROPS_CAP_DOME = { cx: 50, cy: 32, rx: 8 } as const
 
 // Aussen- und Innenkontur, wie beim Vial und der Ampulle. Die Wandstärke ist
 // 5 % der Körperbreite.
 export const DROPS_WALL = 3.6
 export const DROPS_OUTER_PATH =
-  'M38 112 L62 112 L62 128 C62 136 86 140 86 152 L86 278 ' +
+  'M38 102 L62 102 L62 128 C62 136 86 140 86 152 L86 278 ' +
   'C86 284 82 288 76 288 L24 288 C18 288 14 284 14 278 L14 152 ' +
   'C14 140 38 136 38 128 Z'
 export const DROPS_INNER_PATH =
-  'M41.6 116 L58.4 116 L58.4 130 C58.4 138.5 82.4 142 82.4 154 L82.4 276 ' +
+  'M41.6 106 L58.4 106 L58.4 130 C58.4 138.5 82.4 142 82.4 154 L82.4 276 ' +
   'C82.4 281 79 284.4 74 284.4 L26 284.4 C21 284.4 17.6 281 17.6 276 ' +
   'L17.6 154 C17.6 142 41.6 138.5 41.6 130 Z'
 
@@ -90,7 +90,7 @@ export const DROPS_INNER_PATH =
 // deshalb ein OFFENER Pfad, dessen beide Enden oberhalb der Kappenunterkante
 // liegen und von der Kappe verdeckt werden — die Linien laufen in den Deckel
 // hinein, statt an einer Kante aufzuhören.
-export const DROPS_INNER_STROKE_TOP = 104
+export const DROPS_INNER_STROKE_TOP = 94
 export const DROPS_INNER_STROKE_PATH =
   `M41.6 ${DROPS_INNER_STROKE_TOP} L41.6 130 ` +
   'C41.6 138.5 17.6 142 17.6 154 L17.6 276 ' +
@@ -102,7 +102,7 @@ export const DROPS_INNER_STROKE_PATH =
 // Pipette mit heraus. Sie beginnt deshalb oberhalb der Kappenunterkante und
 // wird von der Kappe überdeckt — so gibt es an der Verbindung keine Fuge,
 // egal wie groß die Form skaliert wird.
-export const DROPS_PIPETTE_TOP = 104
+export const DROPS_PIPETTE_TOP = 94
 export const DROPS_PIPETTE_PATH =
   `M47 ${DROPS_PIPETTE_TOP} L53 ${DROPS_PIPETTE_TOP} L53 254 ` +
   'C53 260 50.5 262 50 262 C49.5 262 47 260 47 254 Z'
