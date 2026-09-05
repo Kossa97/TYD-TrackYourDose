@@ -4,8 +4,10 @@ import {
   DROPS_ASPECT,
   DROPS_CHAMBER,
   DROPS_CAP,
+  DROPS_CAP_DOME,
   DROPS_CAP_PATH,
   DROPS_CAP_RIB_YS,
+  DROPS_CAP_WAIST,
   DROPS_WIDTHS,
   DROPS_PIPETTE_OVERLAP,
   DROPS_PIPETTE_TOP,
@@ -106,6 +108,22 @@ describe('dropsShape', () => {
     // Geriffelt ist nur der Zylinder, die Kuppe bleibt glatt.
     expect(DROPS_CAP_RIB_YS.top).toBeGreaterThan(DROPS_CAP.y)
     expect(DROPS_CAP_RIB_YS.bottom).toBeLessThan(DROPS_CAP.y + DROPS_CAP.height)
+  })
+
+  it('zieht den Kopf zwischen Kuppe und Zylinder wirklich ein', () => {
+    // Der Kommentar versprach eine Einschnuerung, die Geometrie hatte keine:
+    // Kuppe und Saeule waren gleich breit, danach ging es nur auseinander.
+    // Das las sich als Trichter. Die Einschnuerung ist die schmalste Stelle
+    // der ganzen Form.
+    expect(DROPS_WIDTHS.waist).toBeLessThan(DROPS_WIDTHS.teat)
+    // Sie liegt unter der Kuppe und ueber dem Zylinder.
+    expect(DROPS_CAP_WAIST.top).toBeGreaterThan(DROPS_CAP_DOME.cy)
+    expect(DROPS_CAP_WAIST.to).toBeLessThan(DROPS_CAP.y)
+    // Und sie steht wirklich im Pfad, auf beiden Seiten spiegelgleich zu 50.
+    const links = 50 - DROPS_WIDTHS.waist / 2
+    const rechts = 50 + DROPS_WIDTHS.waist / 2
+    expect(DROPS_CAP_PATH).toContain(`L${rechts} ${DROPS_CAP_WAIST.to}`)
+    expect(DROPS_CAP_PATH).toContain(`L${links} ${DROPS_CAP_WAIST.from}`)
   })
 
   it('staffelt die Durchmesser von oben nach unten wie die Vorlage', () => {

@@ -7,18 +7,32 @@ import type { StageFormSpec } from '../../stage/types'
 export const DROPS_VIEWBOX = { x: 14, y: 16, width: 72, height: 272 } as const
 export const DROPS_ASPECT = DROPS_VIEWBOX.width / DROPS_VIEWBOX.height
 
-// Die vier Durchmesser von oben nach unten. Der Sauger ist schmaler als die
-// Kappe, die Kappe schmaler als der Körper und breiter als der Hals — genau
-// diese Staffelung macht die Flasche auf einen Blick als Pipettenflasche
-// lesbar.
-export const DROPS_WIDTHS = { teat: 16, cap: 40, neck: 24, body: 72 } as const
+// Die Durchmesser von oben nach unten. Die Einschnürung ist die schmalste
+// Stelle, der Sauger schmaler als die Kappe, die Kappe schmaler als der
+// Körper und breiter als der Hals — genau diese Staffelung macht die Flasche
+// auf einen Blick als Pipettenflasche lesbar.
+export const DROPS_WIDTHS = { waist: 12, teat: 16, cap: 40, neck: 24, body: 72 } as const
+
+// Die Einschnürung zwischen Kuppe und Aufweitung: sie beginnt unter der
+// Kuppe, hält ihre Breite ein Stück und geht dann in den Zylinder über.
+export const DROPS_CAP_WAIST = { top: 38, from: 44, to: 50 } as const
+const WAIST_L = 50 - DROPS_WIDTHS.waist / 2
+const WAIST_R = 50 + DROPS_WIDTHS.waist / 2
 
 // Kuppe und Kappe sind EIN gegossenes Teil, kein Gummisauger auf einem
 // Deckel: ein durchgehender Umriss von der gewölbten Spitze über die
 // Einschnürung bis zum geriffelten Zylinder. Deshalb auch eine einzige Farbe.
+//
+// Die Einschnürung ist die Stelle, an der die Silhouette wirklich schmaler
+// wird. Ohne sie waren Kuppe und Säule gleich breit und der Umriss weitete
+// sich von oben nach unten nur auf — der Kopf las sich als Trichter statt als
+// Sauger über einer Schraubkappe.
 export const DROPS_CAP_PATH =
-  'M42 30 C42 16 58 16 58 30 L58 50 C58 60 70 60 70 72 L70 112 ' +
-  'L30 112 L30 72 C30 60 42 60 42 50 Z'
+  `M42 30 C42 16 58 16 58 30 L58 ${DROPS_CAP_WAIST.top} ` +
+  `C58 41 ${WAIST_R} 41 ${WAIST_R} ${DROPS_CAP_WAIST.from} ` +
+  `L${WAIST_R} ${DROPS_CAP_WAIST.to} C${WAIST_R} 60 70 60 70 72 L70 112 ` +
+  `L30 112 L30 72 C30 60 ${WAIST_L} 60 ${WAIST_L} ${DROPS_CAP_WAIST.to} ` +
+  `L${WAIST_L} ${DROPS_CAP_WAIST.from} C${WAIST_L} 41 42 41 42 ${DROPS_CAP_WAIST.top} Z`
 
 // Der geriffelte Zylinder als eigene Maße: er begrenzt die Riffelung und
 // legt die Unterkante fest, an der die Flasche beginnt.
