@@ -293,7 +293,6 @@
   "291": "EscalationRow",
   "292": "LiveBlutspiegelChart.test.tsx",
   "293": "referenceBar.ts",
-  "294": "FotosTab.tsx",
   "295": "InjectionTrackerTabs.tsx",
   "296": "My Stack: Pen als siebte Bühnenform",
   "297": "WorkflowBanner.tsx",
@@ -301,7 +300,6 @@
   "299": "My Stack: Kapsel als dritte Bühnenform",
   "300": "vialStock.ts",
   "301": "inventoryMath.ts",
-  "302": "DoseUnitControl.tsx",
   "303": "trackingDepthSchema.test.ts",
   "305": "SubstanceCatalogEntry",
   "306": "Home",
@@ -309,14 +307,11 @@
   "309": "liquidGeometry.ts",
   "310": "metricDefinitions.ts",
   "311": "File Structure",
-  "312": "intakeConfirmation.ts",
   "315": "i18nMerge.test.ts",
-  "316": "Dashboard.test.ts",
   "317": "BlutwertePage.tsx",
   "318": "My Stack: Tube als sechste Bühnenform",
   "319": "TubeVisual.tsx",
   "321": "CycleBandLayer.tsx",
   "326": "Tagebuch.tsx",
-  "327": "File Structure",
-  "329": "imageResize.ts"
+  "327": "File Structure"
 }

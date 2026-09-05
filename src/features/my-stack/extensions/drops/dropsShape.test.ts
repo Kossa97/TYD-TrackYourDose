@@ -4,6 +4,8 @@ import {
   DROPS_ASPECT,
   DROPS_CHAMBER,
   DROPS_CAP,
+  DROPS_CAP_PATH,
+  DROPS_CAP_RIB_YS,
   DROPS_WIDTHS,
   DROPS_PIPETTE_OVERLAP,
   DROPS_PIPETTE_TOP,
@@ -83,6 +85,17 @@ describe('dropsShape', () => {
     expect(DROPS_PIPETTE_OVERLAP).toBeGreaterThan(4)
   })
 
+  it('zeichnet Kuppe und Kappe als einen Umriss', () => {
+    // Ein gegossenes Teil, kein Gummisauger auf einem Deckel: ein Pfad von
+    // der Spitze bis zur Unterkante, ohne Absatz dazwischen.
+    expect(DROPS_CAP_PATH.startsWith('M42 30')).toBe(true)
+    expect(DROPS_CAP_PATH).toContain('L70 112')
+    expect(DROPS_CAP_PATH.endsWith('Z')).toBe(true)
+    // Geriffelt ist nur der Zylinder, die Kuppe bleibt glatt.
+    expect(DROPS_CAP_RIB_YS.top).toBeGreaterThan(DROPS_CAP.y)
+    expect(DROPS_CAP_RIB_YS.bottom).toBeLessThan(DROPS_CAP.y + DROPS_CAP.height)
+  })
+
   it('staffelt die Durchmesser von oben nach unten wie die Vorlage', () => {
     // Sauger schmaler als die Kappe, Kappe schmaler als der Koerper und
     // breiter als der Hals — diese Staffelung macht die Flasche auf einen
@@ -91,7 +104,7 @@ describe('dropsShape', () => {
     expect(DROPS_WIDTHS.neck).toBeLessThan(DROPS_WIDTHS.cap)
     expect(DROPS_WIDTHS.cap).toBeLessThan(DROPS_WIDTHS.body)
     expect(DROPS_CAP.width).toBe(DROPS_WIDTHS.cap)
-    // Und die Kappe ist hoch, keine schmale Bandage.
-    expect(DROPS_CAP.height).toBeGreaterThan(DROPS_CAP.width * 0.9)
+    // Der Zylinder ist so hoch wie breit, keine schmale Bandage.
+    expect(DROPS_CAP.height).toBe(DROPS_CAP.width)
   })
 })

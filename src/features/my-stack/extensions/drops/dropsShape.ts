@@ -13,14 +13,21 @@ export const DROPS_ASPECT = DROPS_VIEWBOX.width / DROPS_VIEWBOX.height
 // lesbar.
 export const DROPS_WIDTHS = { teat: 16, cap: 40, neck: 24, body: 72 } as const
 
-// Der Gummisauger: gewölbte Kuppel, gerade Flanken, unten leicht eingezogen.
-export const DROPS_TEAT_PATH =
-  'M42 28 C42 16 58 16 58 28 L58 54 C58 60 56 62 53 62 L47 62 C44 62 42 60 42 54 Z'
+// Kuppe und Kappe sind EIN gegossenes Teil, kein Gummisauger auf einem
+// Deckel: ein durchgehender Umriss von der gewölbten Spitze über die
+// Einschnürung bis zum geriffelten Zylinder. Deshalb auch eine einzige Farbe.
+export const DROPS_CAP_PATH =
+  'M42 30 C42 16 58 16 58 30 L58 50 C58 60 70 60 70 72 L70 112 ' +
+  'L30 112 L30 72 C30 60 42 60 42 50 Z'
 
-// Die Schraubkappe. Sie ist die größte nichtgläserne Fläche und trägt deshalb
-// color_hex — in der Vorlage sind die Kappen gold, weiß oder schwarz.
-export const DROPS_CAP = { x: 30, y: 62, width: 40, height: 50, rx: 2 } as const
+// Der geriffelte Zylinder als eigene Maße: er begrenzt die Riffelung und
+// legt die Unterkante fest, an der die Flasche beginnt.
+export const DROPS_CAP = { x: 30, y: 72, width: 40, height: 40 } as const
 export const DROPS_CAP_RIB_XS = [33, 36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66] as const
+export const DROPS_CAP_RIB_YS = { top: 76, bottom: 108 } as const
+
+// Die gewölbte Kuppe oben, für den eigenen Glanzpunkt.
+export const DROPS_CAP_DOME = { cx: 50, cy: 30, rx: 8 } as const
 
 // Aussen- und Innenkontur, wie beim Vial und der Ampulle. Die Wandstärke ist
 // 5 % der Körperbreite.

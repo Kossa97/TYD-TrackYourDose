@@ -26,18 +26,17 @@ describe('DropsVisual', () => {
     const source = readFileSync(new URL('./DropsVisual.tsx', import.meta.url), 'utf8')
     const gruppe = source.match(/data-drops-detail="dropper"[\s\S]*?cap-light[\s\S]*?<\/g>/)?.[0] ?? ''
     expect(gruppe).toContain('data-drops-detail="pipette"')
-    expect(gruppe).toContain('data-drops-detail="teat"')
     expect(gruppe).toContain('data-drops-detail="cap"')
     // Die Pipette steht vor der Kappe im Quelltext, damit die Kappe ihr
     // oberes Ende ueberdeckt und dort keine Fuge entsteht.
     expect(gruppe.indexOf('"pipette"')).toBeLessThan(gruppe.indexOf('"cap"'))
   })
 
-  it('zeichnet Sauger, Kappe, Glas und Pipette', () => {
+  it('zeichnet Kappe, Glas und Pipette', () => {
     const html = render()
-    expect(html).toContain('data-drops-detail="teat"')
     expect(html).toContain('data-drops-detail="cap"')
     expect(html).toContain('data-drops-detail="cap-ribs"')
+    expect(html).toContain('data-drops-detail="dome-light"')
     expect(html).toContain('data-drops-detail="glass"')
     expect(html).toContain('data-drops-detail="pipette"')
   })
@@ -59,13 +58,12 @@ describe('DropsVisual', () => {
     expect(render({ lightOffset: -1 })).toMatch(/data-drops-detail="sweep"[^>]*translate\(-14/)
   })
 
-  it('gibt der Kappe die Eintragsfarbe, dem Sauger nicht', () => {
-    // Wie in der Vorlage: die Kappe ist gold, weiss oder schwarz, der Sauger
-    // bleibt Gummi. Das Braunglas daempft die Fluessigkeitsfarbe, deshalb
-    // braucht die Farbe am Objekt eine eigene, grosse Flaeche.
+  it('faerbt Kuppe und Kappe als ein Teil in einer Farbe', () => {
+    // In der Vorlage ist es ein gegossenes Stueck, kein Gummisauger auf einem
+    // Deckel. Es gibt deshalb nur einen Pfad und nur eine Fuellung.
     const html = render({ color: '#a3e635' })
     expect(html).toMatch(/data-drops-detail="cap"[^>]*fill="#a3e635"/)
-    expect(html).toMatch(/data-drops-detail="teat"[^>]*fill="#2a2622"/)
+    expect(html).not.toContain('data-drops-detail="teat"')
   })
 
   it('zeichnet die Wandstaerke vor der Kappe, damit sie darunter endet', () => {

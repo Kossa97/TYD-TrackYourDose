@@ -7,7 +7,9 @@ import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
   DROPS_CAP,
   DROPS_CAP_RIB_XS,
-  DROPS_TEAT_PATH,
+  DROPS_CAP_DOME,
+  DROPS_CAP_PATH,
+  DROPS_CAP_RIB_YS,
   DROPS_FILL,
   DROPS_GROUND_SHIFT,
   DROPS_INNER_PATH,
@@ -145,7 +147,7 @@ export function DropsVisual({
             <use href={`#${uid}-inner`} />
           </clipPath>
           <clipPath id={`${uid}-capClip`}>
-            <rect x={DROPS_CAP.x} y={DROPS_CAP.y} width={DROPS_CAP.width} height={DROPS_CAP.height} rx={DROPS_CAP.rx} />
+            <path d={DROPS_CAP_PATH} />
           </clipPath>
 
           {/* Braunglas. Es daempft die Fluessigkeitsfarbe dahinter — deshalb
@@ -230,12 +232,12 @@ export function DropsVisual({
           vectorEffect="non-scaling-stroke"
         />
 
-        {/* Sauger, Kappe und Pipette sind ein Teil und stehen deshalb in
-            einer Gruppe: beim Aufschrauben kaeme die Pipette mit heraus.
-            Die Pipette wird zuerst gezeichnet, die Kappe deckt ihr oberes
-            Ende ab — dort kann so keine Fuge entstehen. Die Gruppe steht
-            hinter Wandstaerke und Glanzband, weil die vordere Glaswand vor
-            der Pipette liegt. */}
+        {/* Kappe und Pipette sind ein Teil und stehen deshalb in einer
+            Gruppe: beim Aufschrauben kaeme die Pipette mit heraus. Die
+            Pipette wird zuerst gezeichnet, die Kappe deckt ihr oberes Ende
+            ab — dort kann so keine Fuge entstehen. Die Gruppe steht hinter
+            Wandstaerke und Glanzband, weil die vordere Glaswand vor der
+            Pipette liegt. */}
         <g data-drops-detail="dropper">
           {/* Die Pipette ist selbst leer: was dahinter liegt, scheint durch.
               Eine gefuellte waere eine Aussage ueber eine Menge, die die App
@@ -249,43 +251,18 @@ export function DropsVisual({
             vectorEffect="non-scaling-stroke"
           />
 
-          {/* Der Gummisauger. Er bleibt dunkles Gummi — in der Vorlage traegt
-              die Kappe die Farbe, nicht der Sauger. */}
-          <path data-drops-detail="teat" d={DROPS_TEAT_PATH} fill="#2a2622" />
-          <path
-            d={DROPS_TEAT_PATH}
-            fill="none"
-            stroke="rgba(255,255,255,0.18)"
-            strokeWidth="0.8"
-            vectorEffect="non-scaling-stroke"
-          />
-
-          {/* Die Schraubkappe ist die groesste nichtglaeserne Flaeche und traegt
-              deshalb color_hex. Der Verlauf darueber macht aus der Farbe einen
-              Zylinder statt eines flachen Rechtecks. */}
-          <rect
-            data-drops-detail="cap"
-            x={DROPS_CAP.x}
-            y={DROPS_CAP.y}
-            width={DROPS_CAP.width}
-            height={DROPS_CAP.height}
-            rx={DROPS_CAP.rx}
-            fill={color}
-          />
-          <rect
-            x={DROPS_CAP.x}
-            y={DROPS_CAP.y}
-            width={DROPS_CAP.width}
-            height={DROPS_CAP.height}
-            rx={DROPS_CAP.rx}
-            fill={`url(#${uid}-capShade)`}
-          />
+          {/* Kuppe und Kappe sind ein Teil: ein Umriss, eine Farbe. Der
+              Verlauf darueber macht daraus einen Zylinder statt einer
+              flachen Silhouette. */}
+          <path data-drops-detail="cap" d={DROPS_CAP_PATH} fill={color} />
+          <path d={DROPS_CAP_PATH} fill={`url(#${uid}-capShade)`} />
           <g clipPath={`url(#${uid}-capClip)`}>
+            {/* Geriffelt ist nur der Zylinder, die Kuppe bleibt glatt. */}
             <g data-drops-detail="cap-ribs" fill="none" strokeWidth="0.7">
               {DROPS_CAP_RIB_XS.map(x => (
                 <path
                   key={x}
-                  d={`M${x} ${DROPS_CAP.y + 3} L${x} ${DROPS_CAP.y + DROPS_CAP.height - 3}`}
+                  d={`M${x} ${DROPS_CAP_RIB_YS.top} L${x} ${DROPS_CAP_RIB_YS.bottom}`}
                   stroke="rgba(0,0,0,0.22)"
                 />
               ))}
@@ -294,13 +271,30 @@ export function DropsVisual({
               ref={bulbLightRef}
               data-drops-detail="cap-light"
               cx={39 - visualLightOffset * 4}
-              cy={DROPS_CAP.y + 14}
-              rx="6"
-              ry="16"
+              cy={DROPS_CAP.y + 12}
+              rx="5"
+              ry="14"
               fill="rgba(255,255,255,0.4)"
               opacity={0.18 + visualFocus * 0.3}
             />
+            {/* Die gewoelbte Kuppe faengt ihr eigenes Licht. */}
+            <ellipse
+              data-drops-detail="dome-light"
+              cx={DROPS_CAP_DOME.cx - 4 - visualLightOffset * 2}
+              cy={DROPS_CAP_DOME.cy}
+              rx="2.6"
+              ry="7"
+              fill="rgba(255,255,255,0.45)"
+              opacity={0.2 + visualFocus * 0.3}
+            />
           </g>
+          <path
+            d={DROPS_CAP_PATH}
+            fill="none"
+            stroke="rgba(0,0,0,0.35)"
+            strokeWidth="0.9"
+            vectorEffect="non-scaling-stroke"
+          />
         </g>
 
         <g clipPath={`url(#${uid}-outerClip)`}>
