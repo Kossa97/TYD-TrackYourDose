@@ -32,16 +32,30 @@ describe('GelVisual', () => {
     expect(html).not.toMatch(/data-gel-detail="glass"[^>]*fill="#f97316"/)
   })
 
-  it('benutzt keine Fluessigkeitsphysik', () => {
-    // Der inhaltliche Kern der Form: Gel nivelliert sich nicht, schwappt nicht
-    // und hat keinen aussagekraeftigen Pegel. Nichts aus dem
-    // Fluessigkeitsstapel darf hier auftauchen.
+  it('hoert dieselbe Geste, antwortet aber zaeh', () => {
+    // Der inhaltliche Kern der Form. Gel bewegt sich — aber es benutzt die
+    // Federantwort nicht direkt, sondern durch das Verzoegerungsglied aus
+    // gelFlow. Der Rest des Fluessigkeitsstapels bleibt draussen: kein
+    // LiquidGraphic, kein Pegel, keine Blaeschen, kein Etikettband.
     const src = source()
+    expect(src).toContain('useSloshSubscribe')
+    expect(src).toContain('stepGelFlow')
     expect(src).not.toContain('LiquidGraphic')
-    expect(src).not.toContain('SloshProvider')
-    expect(src).not.toContain('sloshEngine')
     expect(src).not.toContain('fillPct')
+    expect(src).not.toContain('bubbles')
     expect(src).not.toContain('<StageLabel')
+  })
+
+  it('neigt die Oberflaeche, statt den Koerper zu drehen', () => {
+    // Eine zaehe Masse verliert den Kontakt zur Wand nicht. Gedreht wird nur
+    // die Oberflaechengruppe; der Koerper bekommt einen neuen Pfad, dessen
+    // Boden liegen bleibt.
+    const src = source()
+    expect(src).toContain('data-gel-detail="gel-top"')
+    expect(src).toContain('buildGelBodyPath(rise)')
+    // Und alle drei Lagen der Masse haengen an einem Pfad, damit Fuellung,
+    // Tiefe und Seitenschatten beim Neigen nicht auseinanderlaufen koennen.
+    expect(src.match(/href=\{`#\$\{uid\}-gelBody`\}/g)?.length).toBe(3)
   })
 
   it('zeichnet beide Konturen vor dem Deckel', () => {

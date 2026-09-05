@@ -1,9 +1,13 @@
-import { useCallback, useId, useRef } from 'react'
+import { useCallback, useEffect, useId, useRef } from 'react'
 import type { Ref } from 'react'
+import { useSloshSubscribe } from '../../../../components/SloshContext'
+import type { SloshState } from '../../../../components/sloshEngine'
 import { StageMarquee } from '../../stage/StageLabel'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
   GEL_BODY_FILL_PATH,
+  GEL_SURFACE,
+  buildGelBodyPath,
   GEL_BODY_PATH,
   GEL_GROUND_SHIFT,
   GEL_INNER_PATH,
@@ -15,8 +19,8 @@ import {
   GEL_NAME_INSET_PCT,
   GEL_NAME_TOP_PCT,
   GEL_SHEEN_SHIFT,
-  GEL_SURFACE,
 } from './gelShape'
+import { GEL_TILT_RISE, gelTiltDegrees, stepGelFlow } from './gelFlow'
 
 export interface GelVisualProps {
   name?: string | null
@@ -72,6 +76,8 @@ export function GelVisual({
   const gelGlossRef = useRef<SVGEllipseElement | null>(null)
   const crownRef = useRef<SVGEllipseElement | null>(null)
   const outlineRef = useRef<SVGPathElement | null>(null)
+  const gelBodyRef = useRef<SVGPathElement | null>(null)
+  const gelTopRef = useRef<SVGGElement | null>(null)
 
   const applyStageLight = useCallback((f: number, o: number) => {
     rootRef.current?.setAttribute('data-gel-focus', f.toFixed(2))
@@ -92,6 +98,28 @@ export function GelVisual({
 
   useStageLight(applyStageLight, { focus: visualFocus, lightOffset: visualLightOffset }, stageLightRef)
 
+  // Dieselbe Geste wie bei der Fluessigkeit, andere Antwort. Die Feder der
+  // Slosh-Maschine schwingt ueber die Ruhelage hinaus; das Verzoegerungsglied
+  // hier kann seinen Zielwert nie ueberschreiten. Die Masse laeuft der
+  // Bewegung nach und bleibt stehen, wo sie angekommen ist.
+  const subscribe = useSloshSubscribe()
+  useEffect(() => {
+    if (!subscribe) return
+    let angle = 0
+    let last: number | null = null
+    return subscribe((state: SloshState) => {
+      const dt = last === null ? 0 : state.time - last
+      last = state.time
+      angle = stepGelFlow(angle, state.tilt, dt)
+      const rise = angle * GEL_TILT_RISE
+      gelBodyRef.current?.setAttribute('d', buildGelBodyPath(rise))
+      gelTopRef.current?.setAttribute(
+        'transform',
+        `rotate(${gelTiltDegrees(rise, GEL_SURFACE.rx).toFixed(3)} ${GEL_SURFACE.cx} ${GEL_SURFACE.cy})`,
+      )
+    })
+  }, [subscribe])
+
   return (
     <div
       ref={rootRef}
@@ -111,8 +139,17 @@ export function GelVisual({
           <clipPath id={`${uid}-bodyClip`}>
             <path d={GEL_BODY_PATH} />
           </clipPath>
-          <clipPath id={`${uid}-gelClip`}>
-            <path d={GEL_BODY_FILL_PATH} />
+          {/* Ein Pfad, drei Verwendungen: die Neigung wird pro Bild an genau
+              einer Stelle gesetzt, und Fuellung, Tiefe und Seitenschatten
+              koennen gar nicht auseinanderlaufen. */}
+          <path ref={gelBodyRef} id={`${uid}-gelBody`} d={GEL_BODY_FILL_PATH} />
+          <clipPath id={`${uid}-surfaceClip`}>
+            <ellipse
+              cx={GEL_SURFACE.cx}
+              cy={GEL_SURFACE.cy}
+              rx={GEL_SURFACE.rx}
+              ry={GEL_SURFACE.ry}
+            />
           </clipPath>
 
           {/* Klarglas: dieselben Werte wie bei Vial, Ampulle, Nasenspray und
@@ -223,58 +260,60 @@ export function GelVisual({
         {/* Das Gel. Es steht still: kein Neigen beim Wischen, keine Blaeschen,
             kein Pegel. Nur der Glanz auf der Oberflaeche wandert mit. */}
         <g data-gel-detail="gel">
-          <path d={GEL_BODY_FILL_PATH} fill={color} opacity="0.82" />
-          <path d={GEL_BODY_FILL_PATH} fill={`url(#${uid}-gelDepth)`} />
-          <path d={GEL_BODY_FILL_PATH} fill={`url(#${uid}-gelSide)`} />
-          {/* Die Aufsicht auf die Masse: dieselbe Ellipse, heller, weil man
-              von oben auf sie schaut. */}
-          <ellipse
-            data-gel-detail="gel-surface"
-            cx={GEL_SURFACE.cx}
-            cy={GEL_SURFACE.cy}
-            rx={GEL_SURFACE.rx}
-            ry={GEL_SURFACE.ry}
-            fill={color}
-          />
-          <ellipse
-            cx={GEL_SURFACE.cx}
-            cy={GEL_SURFACE.cy}
-            rx={GEL_SURFACE.rx}
-            ry={GEL_SURFACE.ry}
-            fill="rgba(255,255,255,0.22)"
-          />
-          {/* Die Woelbung. Gel nivelliert sich nicht — ohne sie waere die
-              Oberflaeche ein Fluessigkeitsspiegel. */}
-          <ellipse
-            data-gel-detail="gel-dome"
-            cx={GEL_DOME.cx}
-            cy={GEL_DOME.cy}
-            rx={GEL_DOME.rx}
-            ry={GEL_DOME.ry}
-            fill="rgba(255,255,255,0.16)"
-          />
-          <g clipPath={`url(#${uid}-gelClip)`}>
+          <use href={`#${uid}-gelBody`} fill={color} opacity="0.82" />
+          <use href={`#${uid}-gelBody`} fill={`url(#${uid}-gelDepth)`} />
+          <use href={`#${uid}-gelBody`} fill={`url(#${uid}-gelSide)`} />
+          {/* Die Oberflaeche kippt, der Boden bleibt liegen — eine zaehe Masse
+              verliert den Kontakt zur Wand nicht. */}
+          <g ref={gelTopRef} data-gel-detail="gel-top">
             <ellipse
-              ref={gelGlossRef}
-              data-gel-detail="gel-gloss"
-              cx={60 - visualLightOffset * 12}
-              cy={GEL_SURFACE.cy - 0.8}
-              rx="20"
-              ry="3"
-              fill="rgba(255,255,255,0.5)"
-              opacity={0.18 + visualFocus * 0.3}
+              data-gel-detail="gel-surface"
+              cx={GEL_SURFACE.cx}
+              cy={GEL_SURFACE.cy}
+              rx={GEL_SURFACE.rx}
+              ry={GEL_SURFACE.ry}
+              fill={color}
+            />
+            <ellipse
+              cx={GEL_SURFACE.cx}
+              cy={GEL_SURFACE.cy}
+              rx={GEL_SURFACE.rx}
+              ry={GEL_SURFACE.ry}
+              fill="rgba(255,255,255,0.22)"
+            />
+            {/* Die Woelbung. Gel nivelliert sich nicht — ohne sie waere die
+                Oberflaeche ein Fluessigkeitsspiegel. */}
+            <ellipse
+              data-gel-detail="gel-dome"
+              cx={GEL_DOME.cx}
+              cy={GEL_DOME.cy}
+              rx={GEL_DOME.rx}
+              ry={GEL_DOME.ry}
+              fill="rgba(255,255,255,0.16)"
+            />
+            <g clipPath={`url(#${uid}-surfaceClip)`}>
+              <ellipse
+                ref={gelGlossRef}
+                data-gel-detail="gel-gloss"
+                cx={60 - visualLightOffset * 12}
+                cy={GEL_SURFACE.cy - 0.8}
+                rx="20"
+                ry="3"
+                fill="rgba(255,255,255,0.5)"
+                opacity={0.18 + visualFocus * 0.3}
+              />
+            </g>
+            <ellipse
+              cx={GEL_SURFACE.cx}
+              cy={GEL_SURFACE.cy}
+              rx={GEL_SURFACE.rx}
+              ry={GEL_SURFACE.ry}
+              fill="none"
+              stroke="rgba(15,23,42,0.2)"
+              strokeWidth="0.7"
+              vectorEffect="non-scaling-stroke"
             />
           </g>
-          <ellipse
-            cx={GEL_SURFACE.cx}
-            cy={GEL_SURFACE.cy}
-            rx={GEL_SURFACE.rx}
-            ry={GEL_SURFACE.ry}
-            fill="none"
-            stroke="rgba(15,23,42,0.2)"
-            strokeWidth="0.7"
-            vectorEffect="non-scaling-stroke"
-          />
         </g>
 
         {/* Die Wandstaerke, wie bei den anderen Glasformen. */}

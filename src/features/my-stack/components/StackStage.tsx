@@ -79,9 +79,10 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
     return <PowderRenderer item={item} {...visualProps} />
   }
 
-  // Durchscheinend, aber ohne Fluessigkeitsphysik: Gel steht still.
+  // Durchscheinend, und es bewegt sich — aber zaeh: dieselbe Feder, durch ein
+  // Verzoegerungsglied gefiltert. Kein Etikettband, kein Pegel.
   if (renderer === 'gel') {
-    return <GelRenderer item={item} {...visualProps} />
+    return <GelRenderer item={item} sloshEngine={sloshEngine} {...visualProps} />
   }
 
   return (

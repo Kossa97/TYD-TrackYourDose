@@ -1,4 +1,5 @@
 import type { StageFormSpec } from '../../stage/types'
+import { gelTiltDegrees } from './gelFlow'
 
 // Gel-Tiegel: flacher Glasbehälter mit glattem Schraubdeckel, gezeichnet auf
 // einem Raster von 160 x 128 Einheiten; die viewBox ist auf die Objektgrenzen
@@ -75,11 +76,24 @@ export const GEL_SEAM_OVERLAP = GEL_LID_BOTTOM_Y + GEL_LID_RIM.ry - GEL_BODY.y
 // Aufsicht auf das Gel. Derselbe Kunstgriff wie bei der Deckfläche der
 // Pulverdose, nur für den Inhalt.
 export const GEL_SURFACE = { cx: 80, cy: 54, rx: 62, ry: 6.5 } as const
-export const GEL_BODY_FILL_PATH =
-  `M18 ${GEL_SURFACE.cy} ` +
-  `A ${GEL_SURFACE.rx} ${GEL_SURFACE.ry} 0 0 0 142 ${GEL_SURFACE.cy} ` +
-  `L142 ${GEL_INNER_BASE.cy} ` +
-  `A ${GEL_INNER_BASE.rx} ${GEL_INNER_BASE.ry} 0 0 1 18 ${GEL_INNER_BASE.cy} Z`
+
+// Der Körper der Masse, für einen gegebenen Wandanstieg. Nur die Oberkante
+// kippt: das linke Ende sinkt um `rise`, das rechte steigt um denselben Betrag,
+// der Boden bleibt liegen. Eine zähe Masse verliert den Kontakt zur Wand nicht
+// — deshalb wird die Oberfläche geneigt und nicht der ganze Körper gedreht.
+//
+// Der Bogen behält seine Radien und bekommt die Neigung als Achsdrehung mit;
+// bei rise = 0 ist er wieder genau der ruhende Pfad.
+export function buildGelBodyPath(rise = 0): string {
+  const deg = gelTiltDegrees(rise, GEL_SURFACE.rx)
+  return (
+    `M18 ${(GEL_SURFACE.cy - rise).toFixed(2)} ` +
+    `A ${GEL_SURFACE.rx} ${GEL_SURFACE.ry} ${deg.toFixed(2)} 0 0 142 ${(GEL_SURFACE.cy + rise).toFixed(2)} ` +
+    `L142 ${GEL_INNER_BASE.cy} ` +
+    `A ${GEL_INNER_BASE.rx} ${GEL_INNER_BASE.ry} 0 0 1 18 ${GEL_INNER_BASE.cy} Z`
+  )
+}
+export const GEL_BODY_FILL_PATH = buildGelBodyPath()
 
 // Die Wölbung: Gel nivelliert sich nicht, seine Oberfläche steht in der Mitte
 // höher als am Rand. Gezeichnet als zweite, kleinere Ellipse über der ersten —

@@ -37,7 +37,7 @@ dem Regal ist er auf einen Blick von allem anderen zu unterscheiden.
 | Behälter | Tiegel mit glattem Schraubdeckel | Die Tube ist als Form vergeben. |
 | Material | durchscheinendes Glas | Erbt den Klarglas-Stapel von Vial, Ampulle, Nasenspray und Tropfen — dieselben Verlaufswerte, andere Silhouette. |
 | Inhalt | sichtbar, als ruhende gewölbte Masse | Gel ist der Grund für den Tiegel. Ohne sichtbaren Inhalt wäre das durchscheinende Glas sinnlos. |
-| Physik | keine | Gel schwappt nicht und läuft nicht aus. Kein `LiquidGraphic`, keine Slosh-Anbindung, kein Pegel. |
+| Physik | dieselbe Geste, zähe Antwort | Gel bewegt sich, aber es schwappt nicht. Es hört dieselbe Feder wie die Flüssigkeit und filtert sie durch ein Verzögerungsglied. Kein `LiquidGraphic`, kein Pegel, keine Bläschen. |
 | Etikettband | keins | `chamber: null`. Die Regel „Etikett nur, wo Flüssigkeit ist" wird nicht angefasst; der Name steht auf einem gedruckten Etikett des Tiegels, wie bei Tube und Pulverdose. |
 | Farbe | Deckel und Gel | Wie bei der Tropfflasche, wo Kappe und Flüssigkeit sie tragen. |
 
@@ -48,14 +48,36 @@ Das ist die inhaltliche Neuerung dieser Form. Jede flüssige Form bisher benutzt
 Bläschen und ein Pegel. Für Gel ist davon nichts richtig.
 
 - **Die Oberfläche ist gewölbt, nicht waagerecht.** Gel nivelliert sich nicht.
-- **Sie steht still.** Beim Wischen darf nichts schwappen.
 - **Es gibt keinen Pegel.** `hasMeaningfulFill: false`, wie bei Tube, Pflaster
   und Pulverdose.
+- **Es bewegt sich — aber zäh.** Siehe unten.
 
 Die Masse wird deshalb eigens gezeichnet: ein Körper, dessen obere Kante der
 vordere Bogen der Oberflächenellipse ist, darüber die Ellipse selbst als
 Aufsicht auf das Gel, darauf ein Glanz. Derselbe Kunstgriff wie bei der
 Deckfläche der Pulverdose, nur für den Inhalt.
+
+## Dieselbe Geste, andere Antwort
+
+Die Slosh-Maschine liefert `tilt`: den Winkel einer unterdämpften Feder. Sie
+schwingt über die Ruhelage hinaus, schwappt zurück und pendelt sich ein — für
+Flüssigkeit genau richtig, für Gel falsch. Eine zähe Masse kriecht der Bewegung
+hinterher und bleibt stehen, wo sie angekommen ist.
+
+Gel übernimmt die Federantwort deshalb nicht, sondern **filtert** sie: ein
+Verzögerungsglied erster Ordnung (`gelFlow.ts`) auf denselben Eingang, mit einer
+Zeitkonstante von 0,38 s. Ein solches Glied kann seinen Zielwert nie
+überschreiten — genau das ist der Unterschied zwischen „schwappt" und „fliesst
+zäh", und genau das hält ein Test fest: dieselbe Anregung, die Feder schwingt
+durch die Null, das Gel nie.
+
+Der Ausschlag ist ein Viertel des flüssigen: 6 Einheiten Wandanstieg gegen die
+22 aus `liquidGeometry`. Und **nur die Oberfläche kippt** — der Boden bleibt
+liegen, weil eine zähe Masse den Kontakt zur Wand nicht verliert. Deshalb
+bekommt der Körper pro Bild einen neuen Pfad statt einer Drehung.
+
+Gemessen am laufenden Karussell: 2,4 Einheiten Ausschlag nach 80 ms, danach
+über gut eine Sekunde zurück auf die Ruhelage, ohne sie je zu überschreiten.
 
 ## Größe
 

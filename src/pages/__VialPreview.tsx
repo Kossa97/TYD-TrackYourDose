@@ -432,11 +432,14 @@ export function VialPreview() {
       <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
         Gel — Tiegel mit sichtbarer Masse in Detailgröße
       </p>
-      <div className="mx-auto flex max-w-5xl flex-wrap items-end justify-center gap-10 pb-2">
-        {PREVIEW_GELS.map((g, i) => (
-          <GelVisual key={g.name} name={g.name} color={g.color} size="large" lightOffset={i - 1} />
-        ))}
-      </div>
+      {/* Mit Provider, sonst fliesst die Masse beim Wischen nicht. */}
+      <SloshProvider engine={sloshEngine}>
+        <div className="mx-auto flex max-w-5xl flex-wrap items-end justify-center gap-10 pb-2">
+          {PREVIEW_GELS.map((g, i) => (
+            <GelVisual key={g.name} name={g.name} color={g.color} size="large" lightOffset={i - 1} />
+          ))}
+        </div>
+      </SloshProvider>
 
       {/* The real thing: a mixed carousel narrow enough to actually swipe.
           Ampoules and vials share one ground line and one slosh engine. */}
