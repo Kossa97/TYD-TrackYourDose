@@ -18,17 +18,20 @@ describe('GelVisual', () => {
     const html = render()
     expect(html).toContain('data-gel-detail="glass"')
     expect(html).toContain('data-gel-detail="gel"')
-    expect(html).toContain('data-gel-detail="gel-surface"')
-    expect(html).toContain('data-gel-detail="gel-dome"')
+    expect(html).toContain('data-gel-detail="gel-fill"')
+    // Die Oberflaeche ist eine Linie, keine Ellipse: der Tiegel steht in
+    // Frontansicht wie jede andere Form.
+    expect(html).toContain('data-gel-detail="gel-top"')
+    expect(html).not.toContain('data-gel-detail="gel-surface"')
     expect(html).toContain('data-gel-detail="lid"')
-    expect(html).toContain('data-gel-detail="crown-chamfer"')
+    expect(html).toContain('data-gel-detail="lid-chamfer"')
     expect(html).toContain('data-gel-detail="label"')
   })
 
   it('faerbt Deckel und Masse, nicht das Glas', () => {
     const html = render({ color: '#f97316' })
     expect(html).toMatch(/data-gel-detail="lid"[^>]*fill="#f97316"/)
-    expect(html).toMatch(/data-gel-detail="gel-surface"[^>]*fill="#f97316"/)
+    expect(html).toMatch(/data-gel-detail="gel-fill"[^>]*fill="#f97316"/)
     expect(html).not.toMatch(/data-gel-detail="glass"[^>]*fill="#f97316"/)
   })
 
@@ -46,16 +49,15 @@ describe('GelVisual', () => {
     expect(src).not.toContain('<StageLabel')
   })
 
-  it('neigt die Oberflaeche, statt den Koerper zu drehen', () => {
-    // Eine zaehe Masse verliert den Kontakt zur Wand nicht. Gedreht wird nur
-    // die Oberflaechengruppe; der Koerper bekommt einen neuen Pfad, dessen
-    // Boden liegen bleibt.
+  it('neigt die Oberkante, statt den Koerper zu drehen', () => {
+    // Eine zaehe Masse verliert den Kontakt zur Wand nicht. Gekippt wird nur
+    // die Oberkante; der Boden bleibt in jedem Pfad derselbe.
     const src = source()
-    expect(src).toContain('data-gel-detail="gel-top"')
     expect(src).toContain('buildGelBodyPath(rise)')
-    // Und alle drei Lagen der Masse haengen an einem Pfad, damit Fuellung,
-    // Tiefe und Seitenschatten beim Neigen nicht auseinanderlaufen koennen.
-    expect(src.match(/href=\{`#\$\{uid\}-gelBody`\}/g)?.length).toBe(3)
+    expect(src).toContain('buildGelSurfacePath(rise)')
+    // Koerper, Oberflaechenlinie und Beschnitt haengen an einer Pfaddefinition
+    // und einer Zahl, damit beim Neigen nichts auseinanderlaufen kann.
+    expect(src.match(/href=\{`#\$\{uid\}-gelBody`\}/g)?.length).toBe(4)
   })
 
   it('zeichnet beide Konturen vor dem Deckel', () => {

@@ -102,14 +102,17 @@ Es gilt derselbe Grundsatz wie bei der Pulverdose: **jede waagerechte Kante ist
 ein Ellipsenbogen.** Deckelrand, Glasboden, Geloberfläche und Etikettkanten
 folgen ihm alle.
 
-**Deckel.** Glatt, niedrig, mit Deckfläche und Fase — bewusst ohne Riffelung,
-das ist das Unterscheidungsmerkmal zur Pulverdose. Er trägt die Eintragsfarbe.
+**Deckel.** Glatt, niedrig, mit einer Fase als hellem Streifen — bewusst ohne
+Riffelung, das ist das Unterscheidungsmerkmal zur Pulverdose. Er trägt die
+Eintragsfarbe und kragt vier Einheiten je Seite über den Körper.
 
 **Glas.** Klarglas-Stapel der Familie: nur die Ränder tragen die Glasdicke,
 dazu Schein und wanderndes Glanzband, beide beschnitten.
 
-**Gel.** Durchscheinende Masse in der Eintragsfarbe, Oberfläche als Ellipse mit
-eigenem Glanz. Sie steht ein gutes Stück unter dem Deckel — ein bis zum Rand
+**Gel.** Durchscheinende Masse in der Eintragsfarbe. Die Oberfläche ist eine
+**Linie mit Wölbung**: dass Gel sich nicht nivelliert, steht in dieser Wölbung,
+während `liquidGeometry` seine Oberfläche ausdrücklich flach hält. Derselbe
+Unterschied wie vorher, nur ohne Aufsicht. Sie steht ein gutes Stück unter dem Deckel — ein bis zum Rand
 gefüllter Tiegel sähe aus wie ein Farbtopf.
 
 **Etikett.** Kanten als Bögen, wie bei der Pulverdose — und mit dem Radius des

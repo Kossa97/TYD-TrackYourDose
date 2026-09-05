@@ -45,42 +45,47 @@ und das ist exakt die Höhe, auf der Vial, Ampulle und Tropfflasche stehen.
 
 | Größe | Höhe | Breite |
 |---|---|---|
-| `large` | 287,3 px | 184,2 px |
-| `carousel` | 115,5 px, `sm` 146,7 px | 74 px, `sm` 94 px |
-| `compact` | 86,6 px | 55,5 px |
-| `mini` | 47,2 px | 30,3 px |
+| `large` | 287,3 px | 191,5 px |
+| `carousel` | 115,5 px, `sm` 146,7 px | 77 px, `sm` 97,8 px |
+| `compact` | 86,6 px | 57,7 px |
+| `mini` | 47,2 px | 31,5 px |
 
 ## Grafik
 
-Raster 120 × 170, viewBox auf die Objektgrenzen beschnitten: `10 6 100 156`,
-Seitenverhältnis 0,641.
+Raster 120 × 170, viewBox auf die Objektgrenzen beschnitten: `10 6 100 150`,
+Seitenverhältnis 0,667.
 
-Grundsatz für alles: **die Dose ist ein Zylinder, von leicht oben gesehen.**
-Jeder waagerechte Rand ist deshalb ein Ellipsenbogen, kein Strich. Wo dieser
-Satz verletzt wird, sieht man es sofort — die erste Fassung hatte einen flachen
-Deckel auf einem gerundeten Rechteck und las sich als aufgeklebte Grafik.
+Grundsatz für alles: **reine Frontansicht, wie jede andere Bühnenform.** Vial,
+Ampulle, Nasenspray und Tropfen zeigen nie eine Deckfläche; ihre Rundheit kommt
+allein aus dem waagerechten Verlauf, und `liquidGeometry` hält die
+Flüssigkeitsoberfläche ausdrücklich flach („real water is flat").
+
+Eine Zwischenfassung zeigte Deckel und Boden von leicht oben, mit elliptischen
+Rändern und einer sichtbaren Deckfläche. In sich stimmig, aber quer zur
+Familie: im Karussell neben einem Vial war der Bruch sofort zu sehen. Sie ist
+zurückgebaut.
 
 **Deckel.** Breiter als der Korpus, damit er als aufgeschraubt liest und nicht
-als abgesetztes Segment. Die Deckfläche ist eine eigene Ebene mit eigenem Licht
-und einem eingesenkten Spiegel, wie ihn jede Schraubkappe hat — nicht bloß ein
-dunkles Band am oberen Rand.
+als abgesetztes Segment. Über der Riffelung ein glatter heller Streifen, wie ihn
+jede Schraubkappe hat.
 
 **Riffelung.** Sie wird über den **Winkel um die Zylinderachse** verteilt, nicht
 über den Abstand auf dem Bildschirm. Daraus folgen beide Eigenschaften von
 selbst: die Rillen rücken zu den Rändern hin zusammen, wie es die Verkürzung
-verlangt, und jede beginnt auf dem vorderen Bogen des oberen Randes statt an
-einer gemeinsamen geraden Kante. Kerbe und helle Kante sind je Rille
-verschieden stark — die Lampe steht links oben, und zu den Rändern hin dreht
-sich die Fläche weg.
+verlangt. **Das ist kein Aufsicht-Merkmal** — es folgt aus der waagerechten
+Krümmung und gilt in der Frontansicht genauso, weshalb es den Rückbau überlebt
+hat. Weggefallen sind nur die senkrechten Versätze: alle Rillen beginnen und
+enden auf derselben Höhe. Kerbe und helle Kante sind je Rille verschieden stark
+— die Lampe steht links oben, und zu den Rändern hin dreht sich die Fläche weg.
 
 **Korpus.** Gerader Zylinder, unten ein Bogen statt einer Rundung, dazu Schulter
 und Fuß als Licht. Der Verlauf ist weicher als beim Glas: Kunststoff hat kein
 Kantenlicht, sondern einen breiten Kern.
 
-**Etikett.** Ein umlaufendes Band mit farbigem Fußstreifen, der die
-Deckelfarbe unten wieder aufnimmt. Ober- und Unterkante sind dieselben Bögen wie
-am Deckelrand, und der Streifen liegt **unter** der Wölbungsschattierung — sonst
-wäre er das einzige flache Teil auf einer runden Dose.
+**Etikett.** Ein Band mit farbigem Fußstreifen, der die Deckelfarbe unten wieder
+aufnimmt. Gerade Kanten: die gewölbten der Zwischenfassung waren die Aufsicht in
+klein. Der Streifen liegt **unter** der Zylinderschattierung, sonst wäre er das
+einzige flache Teil auf einer runden Dose.
 
 **Name.** Auf dem Etikett, mit `StageMarquee` wie bei der Tube. Die Dose ist die
 breiteste stehende Form und damit die einzige, auf der übliche Namen ohne

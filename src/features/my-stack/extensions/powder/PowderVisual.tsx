@@ -3,16 +3,16 @@ import type { Ref } from 'react'
 import { StageMarquee } from '../../stage/StageLabel'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
-  POWDER_BASE,
   POWDER_BODY,
   POWDER_BODY_PATH,
   POWDER_GROUND_SHIFT,
-  POWDER_LABEL_PATH,
-  POWDER_LABEL_STRIPE_PATH,
-  POWDER_LID_BOTTOM_Y,
+  POWDER_LABEL_BOX,
+  POWDER_LABEL_STRIPE_BOX,
+  POWDER_LID,
   POWDER_LID_PATH,
   POWDER_LID_RIBS,
-  POWDER_LID_RIM,
+  POWDER_LID_RIB_YS,
+  POWDER_LID_TOP_BAND,
   POWDER_NAME_INSET_PCT,
   POWDER_NAME_TOP_PCT,
   POWDER_SHEEN_SHIFT,
@@ -39,10 +39,10 @@ const clampOffset = (value: number) => (Number.isFinite(value) ? Math.max(-1, Ma
 // breiteste bisherige Form. Der Schritt bleibt x1,2706, die Leiter also
 // intakt — 146,7 ist genau die Hoehe von Vial, Ampulle und Tropfflasche.
 const SIZE_CLASS: Record<NonNullable<PowderVisualProps['size']>, string> = {
-  large: 'h-[287.3px] w-[184.2px]',
-  carousel: 'h-[115.5px] w-[74.0px] sm:h-[146.7px] sm:w-[94.0px]',
-  compact: 'h-[86.6px] w-[55.5px]',
-  mini: 'h-[47.2px] w-[30.3px]',
+  large: 'h-[287.3px] w-[191.5px]',
+  carousel: 'h-[115.5px] w-[77px] sm:h-[146.7px] sm:w-[97.8px]',
+  compact: 'h-[86.6px] w-[57.7px]',
+  mini: 'h-[47.2px] w-[31.5px]',
 }
 
 // Die Dose ist die breiteste stehende Form: uebliche Namen passen hier ohne
@@ -104,7 +104,7 @@ export function PowderVisual({
     >
       <svg
         className="absolute inset-0 h-full w-full overflow-visible"
-        viewBox="10 6 100 156"
+        viewBox="10 6 100 150"
         preserveAspectRatio="xMidYMid meet"
         aria-hidden="true"
       >
@@ -114,9 +114,6 @@ export function PowderVisual({
           </clipPath>
           <clipPath id={`${uid}-lidClip`}>
             <path d={POWDER_LID_PATH} />
-          </clipPath>
-          <clipPath id={`${uid}-labelClip`}>
-            <path d={POWDER_LABEL_PATH} />
           </clipPath>
 
           {/* Mattes HDPE, kein Glas und kein Blech: ein breiter weicher Kern
@@ -209,7 +206,7 @@ export function PowderVisual({
           <rect
             data-powder-detail="foot"
             x={POWDER_BODY.x}
-            y={POWDER_BASE.cy - 16}
+            y={POWDER_BODY.bottom - 22}
             width={POWDER_WIDTHS.body}
             height="22"
             fill={`url(#${uid}-foot)`}
@@ -248,15 +245,38 @@ export function PowderVisual({
         {/* Das Etikett. Ober- und Unterkante sind Boegen, weil ein umlaufendes
             Band auf einem Zylinder unter Augenhoehe kein gerader Strich ist. */}
         <g data-powder-detail="label">
-          <path d={POWDER_LABEL_PATH} fill="#fbfcfe" />
-          {/* Der farbige Streifen am Fuss des Etiketts: er bindet die
-              Eintragsfarbe des Deckels unten wieder ein, damit die Dose nicht
-              in zwei Haelften zerfaellt. Er steht VOR der Schattierung, sonst
-              waere er das einzige flache Teil auf einer runden Dose. */}
-          <path data-powder-detail="label-stripe" d={POWDER_LABEL_STRIPE_PATH} fill={color} />
-          <path d={POWDER_LABEL_PATH} fill={`url(#${uid}-labelShade)`} />
-          <path
-            d={POWDER_LABEL_PATH}
+          <rect
+            x={POWDER_LABEL_BOX.x}
+            y={POWDER_LABEL_BOX.y}
+            width={POWDER_LABEL_BOX.width}
+            height={POWDER_LABEL_BOX.height}
+            rx="1.5"
+            fill="#fbfcfe"
+          />
+          {/* Der farbige Streifen am Fuss des Etiketts. Er steht VOR der
+              Schattierung, damit die Woelbung des Zylinders ihn erfasst. */}
+          <rect
+            data-powder-detail="label-stripe"
+            x={POWDER_LABEL_STRIPE_BOX.x}
+            y={POWDER_LABEL_STRIPE_BOX.y}
+            width={POWDER_LABEL_STRIPE_BOX.width}
+            height={POWDER_LABEL_STRIPE_BOX.height}
+            fill={color}
+          />
+          <rect
+            x={POWDER_LABEL_BOX.x}
+            y={POWDER_LABEL_BOX.y}
+            width={POWDER_LABEL_BOX.width}
+            height={POWDER_LABEL_BOX.height}
+            rx="1.5"
+            fill={`url(#${uid}-labelShade)`}
+          />
+          <rect
+            x={POWDER_LABEL_BOX.x}
+            y={POWDER_LABEL_BOX.y}
+            width={POWDER_LABEL_BOX.width}
+            height={POWDER_LABEL_BOX.height}
+            rx="1.5"
             fill="none"
             stroke="rgba(15,23,42,0.18)"
             strokeWidth="0.6"
@@ -273,17 +293,28 @@ export function PowderVisual({
               daneben — eine einzelne Linie liest sich als aufgemalt. Kerbe und
               Kante sind je Rille verschieden stark: die Lampe steht links
               oben, und zu den Raendern hin dreht sich die Flaeche weg. */}
+          {/* Der glatte Rand ueber der Riffelung, den jede Schraubkappe hat.
+              In der Aufsicht war das die dunkle Deckflaeche; in der
+              Frontansicht ist es ein heller Streifen. */}
+          <rect
+            data-powder-detail="lid-band"
+            x={POWDER_LID.x}
+            y={POWDER_LID.y}
+            width={POWDER_LID.width}
+            height={POWDER_LID_TOP_BAND}
+            fill="rgba(255,255,255,0.14)"
+          />
           <g data-powder-detail="lid-ribs" fill="none">
             {POWDER_LID_RIBS.map(rib => (
               <g key={rib.x}>
                 <path
-                  d={`M${rib.x} ${rib.yTop} L${rib.x} ${rib.yBottom}`}
+                  d={`M${rib.x} ${POWDER_LID_RIB_YS.top} L${rib.x} ${POWDER_LID_RIB_YS.bottom}`}
                   stroke={`rgba(0,0,0,${rib.groove})`}
                   strokeWidth="0.9"
                 />
                 {rib.highlight > 0.02 && (
                   <path
-                    d={`M${rib.x + 0.85} ${rib.yTop} L${rib.x + 0.85} ${rib.yBottom}`}
+                    d={`M${rib.x + 0.85} ${POWDER_LID_RIB_YS.top} L${rib.x + 0.85} ${POWDER_LID_RIB_YS.bottom}`}
                     stroke={`rgba(255,255,255,${rib.highlight})`}
                     strokeWidth="0.55"
                   />
@@ -295,64 +326,11 @@ export function PowderVisual({
             ref={lidLightRef}
             data-powder-detail="lid-light"
             cx={34 - visualLightOffset * 7}
-            cy={(POWDER_LID_RIM.cy + POWDER_LID_BOTTOM_Y) / 2 + 2}
+            cy={POWDER_LID.y + POWDER_LID.height / 2 + 2}
             rx="8"
             ry="9"
             fill="rgba(255,255,255,0.3)"
             opacity={0.12 + visualFocus * 0.22}
-          />
-        </g>
-
-        {/* Die Deckflaeche liegt ueber dem Mantel: sie zeigt nach oben und ist
-            deshalb eine eigene Ebene mit eigenem Licht, nicht nur ein dunkles
-            Band am oberen Rand. Erst sie macht aus der Kappe einen Koerper. */}
-        <g data-powder-detail="lid-crown">
-          <ellipse
-            cx={POWDER_LID_RIM.cx}
-            cy={POWDER_LID_RIM.cy}
-            rx={POWDER_LID_RIM.rx}
-            ry={POWDER_LID_RIM.ry}
-            fill={color}
-          />
-          <ellipse
-            cx={POWDER_LID_RIM.cx}
-            cy={POWDER_LID_RIM.cy}
-            rx={POWDER_LID_RIM.rx}
-            ry={POWDER_LID_RIM.ry}
-            fill={`url(#${uid}-crown)`}
-          />
-          {/* Der eingesenkte Spiegel in der Deckflaeche, den jede Schraubkappe
-              hat: eine zweite Ellipse mit eigener Kante. */}
-          <ellipse
-            data-powder-detail="crown-inset"
-            cx={POWDER_LID_RIM.cx}
-            cy={POWDER_LID_RIM.cy}
-            rx={POWDER_LID_RIM.rx - 9}
-            ry={POWDER_LID_RIM.ry - 1.5}
-            fill="none"
-            stroke="rgba(0,0,0,0.22)"
-            strokeWidth="0.7"
-            vectorEffect="non-scaling-stroke"
-          />
-          <ellipse
-            ref={crownRef}
-            data-powder-detail="crown-light"
-            cx={46 - visualLightOffset * 9}
-            cy={POWDER_LID_RIM.cy - 1.4}
-            rx="16"
-            ry="2.4"
-            fill="rgba(255,255,255,0.4)"
-            opacity={0.16 + visualFocus * 0.24}
-          />
-          <ellipse
-            cx={POWDER_LID_RIM.cx}
-            cy={POWDER_LID_RIM.cy}
-            rx={POWDER_LID_RIM.rx}
-            ry={POWDER_LID_RIM.ry}
-            fill="none"
-            stroke="rgba(0,0,0,0.3)"
-            strokeWidth="0.8"
-            vectorEffect="non-scaling-stroke"
           />
         </g>
 

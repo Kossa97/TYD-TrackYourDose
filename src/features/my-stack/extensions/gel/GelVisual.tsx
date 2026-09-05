@@ -8,19 +8,19 @@ import {
   GEL_BODY_FILL_PATH,
   GEL_SURFACE,
   buildGelBodyPath,
+  buildGelSurfacePath,
   GEL_BODY_PATH,
   GEL_GROUND_SHIFT,
   GEL_INNER_PATH,
-  GEL_LABEL_PATH,
-  GEL_DOME,
-  GEL_LID_CHAMFER,
+  GEL_LABEL_BOX,
+  GEL_LID,
+  GEL_LID_CHAMFER_Y,
   GEL_LID_PATH,
-  GEL_LID_RIM,
   GEL_NAME_INSET_PCT,
   GEL_NAME_TOP_PCT,
   GEL_SHEEN_SHIFT,
 } from './gelShape'
-import { GEL_TILT_RISE, gelTiltDegrees, stepGelFlow } from './gelFlow'
+import { GEL_TILT_RISE, stepGelFlow } from './gelFlow'
 
 export interface GelVisualProps {
   name?: string | null
@@ -77,7 +77,7 @@ export function GelVisual({
   const crownRef = useRef<SVGEllipseElement | null>(null)
   const outlineRef = useRef<SVGPathElement | null>(null)
   const gelBodyRef = useRef<SVGPathElement | null>(null)
-  const gelTopRef = useRef<SVGGElement | null>(null)
+  const gelTopRef = useRef<SVGPathElement | null>(null)
 
   const applyStageLight = useCallback((f: number, o: number) => {
     rootRef.current?.setAttribute('data-gel-focus', f.toFixed(2))
@@ -112,11 +112,10 @@ export function GelVisual({
       last = state.time
       angle = stepGelFlow(angle, state.tilt, dt)
       const rise = angle * GEL_TILT_RISE
+      // Beides aus derselben Zahl: der Koerper und die Linie darauf koennen
+      // gar nicht auseinanderlaufen.
       gelBodyRef.current?.setAttribute('d', buildGelBodyPath(rise))
-      gelTopRef.current?.setAttribute(
-        'transform',
-        `rotate(${gelTiltDegrees(rise, GEL_SURFACE.rx).toFixed(3)} ${GEL_SURFACE.cx} ${GEL_SURFACE.cy})`,
-      )
+      gelTopRef.current?.setAttribute('d', buildGelSurfacePath(rise))
     })
   }, [subscribe])
 
@@ -143,13 +142,8 @@ export function GelVisual({
               einer Stelle gesetzt, und Fuellung, Tiefe und Seitenschatten
               koennen gar nicht auseinanderlaufen. */}
           <path ref={gelBodyRef} id={`${uid}-gelBody`} d={GEL_BODY_FILL_PATH} />
-          <clipPath id={`${uid}-surfaceClip`}>
-            <ellipse
-              cx={GEL_SURFACE.cx}
-              cy={GEL_SURFACE.cy}
-              rx={GEL_SURFACE.rx}
-              ry={GEL_SURFACE.ry}
-            />
+          <clipPath id={`${uid}-gelClip`}>
+            <use href={`#${uid}-gelBody`} />
           </clipPath>
 
           {/* Klarglas: dieselben Werte wie bei Vial, Ampulle, Nasenspray und
@@ -260,60 +254,34 @@ export function GelVisual({
         {/* Das Gel. Es steht still: kein Neigen beim Wischen, keine Blaeschen,
             kein Pegel. Nur der Glanz auf der Oberflaeche wandert mit. */}
         <g data-gel-detail="gel">
-          <use href={`#${uid}-gelBody`} fill={color} opacity="0.82" />
+          <use data-gel-detail="gel-fill" href={`#${uid}-gelBody`} fill={color} opacity="0.82" />
           <use href={`#${uid}-gelBody`} fill={`url(#${uid}-gelDepth)`} />
           <use href={`#${uid}-gelBody`} fill={`url(#${uid}-gelSide)`} />
-          {/* Die Oberflaeche kippt, der Boden bleibt liegen — eine zaehe Masse
-              verliert den Kontakt zur Wand nicht. */}
-          <g ref={gelTopRef} data-gel-detail="gel-top">
+          {/* Der Glanz dicht unter der Oberflaeche, auf die Masse beschnitten. */}
+          <g clipPath={`url(#${uid}-gelClip)`}>
             <ellipse
-              data-gel-detail="gel-surface"
-              cx={GEL_SURFACE.cx}
-              cy={GEL_SURFACE.cy}
-              rx={GEL_SURFACE.rx}
-              ry={GEL_SURFACE.ry}
-              fill={color}
-            />
-            <ellipse
-              cx={GEL_SURFACE.cx}
-              cy={GEL_SURFACE.cy}
-              rx={GEL_SURFACE.rx}
-              ry={GEL_SURFACE.ry}
-              fill="rgba(255,255,255,0.22)"
-            />
-            {/* Die Woelbung. Gel nivelliert sich nicht — ohne sie waere die
-                Oberflaeche ein Fluessigkeitsspiegel. */}
-            <ellipse
-              data-gel-detail="gel-dome"
-              cx={GEL_DOME.cx}
-              cy={GEL_DOME.cy}
-              rx={GEL_DOME.rx}
-              ry={GEL_DOME.ry}
-              fill="rgba(255,255,255,0.16)"
-            />
-            <g clipPath={`url(#${uid}-surfaceClip)`}>
-              <ellipse
-                ref={gelGlossRef}
-                data-gel-detail="gel-gloss"
-                cx={60 - visualLightOffset * 12}
-                cy={GEL_SURFACE.cy - 0.8}
-                rx="20"
-                ry="3"
-                fill="rgba(255,255,255,0.5)"
-                opacity={0.18 + visualFocus * 0.3}
-              />
-            </g>
-            <ellipse
-              cx={GEL_SURFACE.cx}
-              cy={GEL_SURFACE.cy}
-              rx={GEL_SURFACE.rx}
-              ry={GEL_SURFACE.ry}
-              fill="none"
-              stroke="rgba(15,23,42,0.2)"
-              strokeWidth="0.7"
-              vectorEffect="non-scaling-stroke"
+              ref={gelGlossRef}
+              data-gel-detail="gel-gloss"
+              cx={60 - visualLightOffset * 12}
+              cy={GEL_SURFACE.cy + 5}
+              rx="26"
+              ry="4"
+              fill="rgba(255,255,255,0.4)"
+              opacity={0.18 + visualFocus * 0.3}
             />
           </g>
+          {/* Die Oberflaeche als Linie. Ihre Woelbung ist das, was Gel von
+              Fluessigkeit unterscheidet: liquidGeometry haelt seine flach,
+              diese hebt sich in der Mitte. Sie kippt mit der Masse. */}
+          <path
+            ref={gelTopRef}
+            data-gel-detail="gel-top"
+            d={buildGelSurfacePath()}
+            fill="none"
+            stroke="rgba(255,255,255,0.5)"
+            strokeWidth="1.4"
+            vectorEffect="non-scaling-stroke"
+          />
         </g>
 
         {/* Die Wandstaerke, wie bei den anderen Glasformen. */}
@@ -342,10 +310,25 @@ export function GelVisual({
         />
 
         <g data-gel-detail="label">
-          <path d={GEL_LABEL_PATH} fill="#fbfcfe" />
-          <path d={GEL_LABEL_PATH} fill={`url(#${uid}-labelShade)`} />
-          <path
-            d={GEL_LABEL_PATH}
+          <rect
+            x={GEL_LABEL_BOX.x}
+            y={GEL_LABEL_BOX.y}
+            width={GEL_LABEL_BOX.width}
+            height={GEL_LABEL_BOX.height}
+            fill="#fbfcfe"
+          />
+          <rect
+            x={GEL_LABEL_BOX.x}
+            y={GEL_LABEL_BOX.y}
+            width={GEL_LABEL_BOX.width}
+            height={GEL_LABEL_BOX.height}
+            fill={`url(#${uid}-labelShade)`}
+          />
+          <rect
+            x={GEL_LABEL_BOX.x}
+            y={GEL_LABEL_BOX.y}
+            width={GEL_LABEL_BOX.width}
+            height={GEL_LABEL_BOX.height}
             fill="none"
             stroke="rgba(15,23,42,0.18)"
             strokeWidth="0.6"
@@ -358,53 +341,29 @@ export function GelVisual({
 
         {/* Die Deckflaeche mit ihrer Fase. Glatt, ohne Riffelung — das ist der
             Unterschied zur Pulverdose, die ihre Rillen hat. */}
-        <g data-gel-detail="lid-crown">
-          <ellipse
-            cx={GEL_LID_RIM.cx}
-            cy={GEL_LID_RIM.cy}
-            rx={GEL_LID_RIM.rx}
-            ry={GEL_LID_RIM.ry}
-            fill={color}
-          />
-          <ellipse
-            cx={GEL_LID_RIM.cx}
-            cy={GEL_LID_RIM.cy}
-            rx={GEL_LID_RIM.rx}
-            ry={GEL_LID_RIM.ry}
-            fill={`url(#${uid}-crown)`}
-          />
-          <ellipse
-            data-gel-detail="crown-chamfer"
-            cx={GEL_LID_RIM.cx}
-            cy={GEL_LID_RIM.cy}
-            rx={GEL_LID_CHAMFER.rx}
-            ry={GEL_LID_CHAMFER.ry}
-            fill="none"
-            stroke="rgba(0,0,0,0.2)"
-            strokeWidth="0.7"
-            vectorEffect="non-scaling-stroke"
+        <g clipPath={`url(#${uid}-lidClip)`}>
+          {/* Die Fase: ein schmaler heller Streifen unter der Oberkante. In
+              der Aufsicht war sie eine zweite Ellipse. */}
+          <rect
+            data-gel-detail="lid-chamfer"
+            x={GEL_LID.x}
+            y={GEL_LID_CHAMFER_Y}
+            width={GEL_LID.width}
+            height="1"
+            fill="rgba(255,255,255,0.28)"
           />
           <ellipse
             ref={crownRef}
-            data-gel-detail="crown-light"
+            data-gel-detail="lid-light"
             cx={58 - visualLightOffset * 14}
-            cy={GEL_LID_RIM.cy - 1.8}
-            rx="22"
-            ry="2.6"
-            fill="rgba(255,255,255,0.4)"
+            cy={GEL_LID.y + GEL_LID.height / 2}
+            rx="16"
+            ry="8"
+            fill="rgba(255,255,255,0.26)"
             opacity={0.16 + visualFocus * 0.24}
           />
-          <ellipse
-            cx={GEL_LID_RIM.cx}
-            cy={GEL_LID_RIM.cy}
-            rx={GEL_LID_RIM.rx}
-            ry={GEL_LID_RIM.ry}
-            fill="none"
-            stroke="rgba(0,0,0,0.3)"
-            strokeWidth="0.8"
-            vectorEffect="non-scaling-stroke"
-          />
         </g>
+
       </svg>
 
       <div
