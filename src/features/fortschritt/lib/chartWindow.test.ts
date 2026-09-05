@@ -14,8 +14,8 @@ describe('CHART_WINDOWS', () => {
     expect(CHART_WINDOWS.map(w => w.label)).toEqual(['30T', '3M'])
   })
 
-  it('Default ist 3M', () => {
-    expect(DEFAULT_CHART_WINDOW).toBe('3m')
+  it('Default ist 30T', () => {
+    expect(DEFAULT_CHART_WINDOW).toBe('30t')
   })
 })
 

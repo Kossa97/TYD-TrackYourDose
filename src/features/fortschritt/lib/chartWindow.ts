@@ -5,7 +5,7 @@ const DAY_MS = 24 * 3_600_000
 
 export type ChartWindowKey = '30t' | '3m'
 
-export const DEFAULT_CHART_WINDOW: ChartWindowKey = '3m'
+export const DEFAULT_CHART_WINDOW: ChartWindowKey = '30t'
 
 export const CHART_WINDOWS: { key: ChartWindowKey; label: string; days: number }[] = [
   { key: '30t', label: '30T', days: 30 },

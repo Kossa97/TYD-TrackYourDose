@@ -201,7 +201,10 @@ export function useFortschrittData() {
     void load()
   }, [load])
 
-  const state: FortschrittOverviewState = {
+  // Stabile Referenz: die Felder sind schon stabil, ein neues Objektliteral pro
+  // Render würde aber jeden `useMemo` der Konsumenten mit `state` in den Deps
+  // entwerten (Verlauf rechnet dort alle Metriken und Marker neu).
+  const state = useMemo<FortschrittOverviewState>(() => ({
     loading,
     dataReady,
     range,
@@ -214,7 +217,20 @@ export function useFortschrittData() {
     photos,
     doseLogs,
     stackItemNames,
-  }
+  }), [
+    loading,
+    dataReady,
+    range,
+    fullRange,
+    cycleSubstances,
+    ongoingSubstances,
+    dailyLogs,
+    weightLogs,
+    bloodwork,
+    photos,
+    doseLogs,
+    stackItemNames,
+  ])
 
   return { state, reload: load }
 }

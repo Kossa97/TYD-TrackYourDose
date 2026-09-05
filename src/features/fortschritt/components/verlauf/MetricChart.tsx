@@ -402,7 +402,13 @@ function MetricChartInner({
   useImperativeHandle(ref, () => ({ jumpToNow, jumpToTs }), [jumpToNow, jumpToTs])
 
   // Serie über den vollen Bereich — die Domain schneidet die Anzeige zu.
-  const series = buildMetricSeries(metric.key, dataRange, weights, dailyLogs, bloodwork)
+  // Memoisiert, weil das Sichtfenster beim Wischen pro Frame neu gesetzt wird:
+  // die Serie hängt nicht daran, die Memos darunter (lineData, snapDates) aber
+  // an ihrer Referenz.
+  const series = useMemo(
+    () => buildMetricSeries(metric.key, dataRange, weights, dailyLogs, bloodwork),
+    [metric.key, dataRange, weights, dailyLogs, bloodwork],
+  )
 
   const { bands, lanes } = useMemo(() => {
     const substances = [
@@ -516,7 +522,7 @@ function MetricChartInner({
     [metricSnapDates, bands],
   )
 
-  const delta = computeDelta(series)
+  const delta = useMemo(() => computeDelta(series), [series])
   const latest = series[series.length - 1]
 
   const metricBar = (

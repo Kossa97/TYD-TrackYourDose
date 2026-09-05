@@ -38,12 +38,12 @@ describe('Fortschritt-Chart-Aufbauanimation', () => {
     expect(source).toContain('[metricKey, lineData.length, showPersistentDots]')
   })
 
-  test('beh?lt Gewicht und drei Monate als Standardauswahl', () => {
+  test('beh?lt Gewicht und 30 Tage als Standardauswahl', () => {
     const section = readSource('./VerlaufSection.tsx')
     const chartWindow = readSource('../../lib/chartWindow.ts')
 
     expect(section).toContain("useState<MetricKey>('weight')")
-    expect(chartWindow).toContain("DEFAULT_CHART_WINDOW: ChartWindowKey = '3m'")
+    expect(chartWindow).toContain("DEFAULT_CHART_WINDOW: ChartWindowKey = '30t'")
   })
 
 
