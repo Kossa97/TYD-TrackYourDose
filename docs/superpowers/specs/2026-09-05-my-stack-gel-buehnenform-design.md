@@ -38,7 +38,7 @@ dem Regal ist er auf einen Blick von allem anderen zu unterscheiden.
 | Material | durchscheinendes Glas | Erbt den Klarglas-Stapel von Vial, Ampulle, Nasenspray und Tropfen — dieselben Verlaufswerte, andere Silhouette. |
 | Inhalt | sichtbar, als ruhende gewölbte Masse | Gel ist der Grund für den Tiegel. Ohne sichtbaren Inhalt wäre das durchscheinende Glas sinnlos. |
 | Physik | dieselbe Geste, zähe Antwort | Gel bewegt sich, aber es schwappt nicht. Es hört dieselbe Feder wie die Flüssigkeit und filtert sie durch ein Verzögerungsglied. Kein `LiquidGraphic`, kein Pegel, keine Bläschen. |
-| Etikettband | keins | `chamber: null`. Die Regel „Etikett nur, wo Flüssigkeit ist" wird nicht angefasst; der Name steht auf einem gedruckten Etikett des Tiegels, wie bei Tube und Pulverdose. |
+| Etikettband | dasselbe wie bei den Glasformen | Der Tiegel ist Glas mit sichtbarem Inhalt und trägt deshalb das `StageLabel`-Band von Vial, Ampulle, Nasenspray und Tropfflasche. |
 | Farbe | Deckel und Gel | Wie bei der Tropfflasche, wo Kappe und Flüssigkeit sie tragen. |
 
 ## Warum Gel keine Flüssigkeit ist
@@ -115,10 +115,12 @@ während `liquidGeometry` seine Oberfläche ausdrücklich flach hält. Derselbe
 Unterschied wie vorher, nur ohne Aufsicht. Sie steht ein gutes Stück unter dem Deckel — ein bis zum Rand
 gefüllter Tiegel sähe aus wie ein Farbtopf.
 
-**Etikett.** Kanten als Bögen, wie bei der Pulverdose — und mit dem Radius des
-**Körpers**, nicht des Innenraums: es klebt aussen auf dem Glas und läuft bis
-an die Silhouette. Mit Einzug spannte es nur über den Innenraum, und die beiden
-Streifen Glas daneben liessen es hinter der Wand liegen statt darauf.
+**Etikett.** Das `StageLabel`-Band der Glasfamilie — durchscheinend, mit
+Glasrand und Glanz. Ein eigener weisser Aufkleber sass auf dem Glas wie Papier
+auf Kunststoff; durch das Band sieht man die Masse hindurch, wie bei jeder
+anderen Glasform. Es sitzt auf dem **Glas**, nicht auf der ganzen Bühne: der
+Deckel kragt vier Einheiten je Seite über den Körper, ein Band bis dorthin
+stünde neben der Flasche in der Luft.
 
 Es liegt in der Mitte der Masse, nicht über ihrem unteren Rand. An der
 Mittellinie reicht das Gel vom vorderen Bogen der Oberfläche (60,5) bis zum
@@ -136,8 +138,8 @@ Neu, ausschließlich in `extensions/gel/`:
 | `GelVisual.tsx` | Die Grafik samt Größenleiter und Bühnenlicht. |
 | `GelRenderer.tsx` | Anbindung an `StackStage`. |
 
-Geteilt werden nur `useStageLight` und `StageMarquee`. Kein `LiquidGraphic`,
-kein `StageLabel`, keine Slosh-Anbindung.
+Geteilt werden `useStageLight` und `StageLabel` — das Band, das jede Glasform
+trägt. Kein `LiquidGraphic`: die Masse und ihre zähe Antwort sind eigen.
 
 ## Folgen ausserhalb
 
@@ -153,6 +155,18 @@ in `StackStage.test.ts`, der festhielt, dass die Tube den `gel`-Schlüssel nicht
 schluckt. Er prüfte bisher, dass Gel im Textzustand bleibt; jetzt prüft er, dass
 Gel seinen eigenen Tiegel bekommt und *nicht* die Tube. Die Aussage — „gel
 benennt einen Stoff, tube einen Behälter" — ist dieselbe geblieben.
+
+## Eine Regel, die dabei gerade gezogen wurde
+
+`carriesLabel` leitete das Band aus `chamber` ab, und der Kommentar dort sagte
+„a container that holds liquid wears our label“. Das stimmte, solange nur
+Flüssigkeiten eine Kammer hatten — es verwechselt aber zwei Dinge.
+
+Die Kammer steht jetzt für **sichtbaren Inhalt**, nicht für
+Flüssigkeitsphysik. Der Tiegel hat eine und benutzt trotzdem kein
+`LiquidGraphic`. Tablette, Kapsel, Pflaster, Tube und Pulverdose haben keine —
+sie zeigen nichts und drucken ihren Namen auf den Körper. Die Ableitung bleibt
+eine einzige, und sie ist jetzt wahr.
 
 ## Nicht Teil davon
 
