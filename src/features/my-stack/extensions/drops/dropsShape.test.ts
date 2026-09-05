@@ -3,7 +3,8 @@ import { carriesLabel } from '../../stage/types'
 import {
   DROPS_ASPECT,
   DROPS_CHAMBER,
-  DROPS_COLLAR,
+  DROPS_CAP,
+  DROPS_WIDTHS,
   DROPS_FILL,
   DROPS_INNER_PATH,
   DROPS_LABEL,
@@ -15,7 +16,7 @@ import {
 
 describe('dropsShape', () => {
   it('beschneidet die viewBox auf die Objektgrenzen', () => {
-    expect(DROPS_SPEC.viewBox).toEqual({ x: 8, y: 18, width: 84, height: 264 })
+    expect(DROPS_SPEC.viewBox).toEqual({ x: 14, y: 16, width: 72, height: 272 })
     // Eine stehende Flasche: hoeher als breit.
     expect(DROPS_ASPECT).toBeLessThan(1)
   })
@@ -23,9 +24,9 @@ describe('dropsShape', () => {
   it('haelt die Innenkontur ueberall innerhalb der Aussenkontur', () => {
     // Beide beginnen am Hals und enden am Boden; die Wandstaerke ist 5 % der
     // Koerperbreite, wie beim Vial und der Ampulle.
-    expect(DROPS_WALL).toBeCloseTo(DROPS_VIEWBOX.width * 0.05, 1)
-    expect(DROPS_OUTER_PATH.startsWith('M33 72')).toBe(true)
-    expect(DROPS_INNER_PATH.startsWith('M37.2 76')).toBe(true)
+    expect(DROPS_WALL).toBeCloseTo(DROPS_WIDTHS.body * 0.05, 1)
+    expect(DROPS_OUTER_PATH.startsWith('M38 112')).toBe(true)
+    expect(DROPS_INNER_PATH.startsWith('M41.6 116')).toBe(true)
   })
 
   it('legt die Kammer in den geraden Teil des Innenraums', () => {
@@ -33,8 +34,8 @@ describe('dropsShape', () => {
     // braucht — derselbe Kunstgriff wie bei Vial, Ampulle und Nasenspray.
     expect(DROPS_CHAMBER.aspect).toBeCloseTo(DROPS_CHAMBER.width / DROPS_CHAMBER.height, 6)
     // Sie beginnt unterhalb der Schulter und endet ueber dem Boden.
-    expect(DROPS_CHAMBER.y).toBeGreaterThan(130)
-    expect(DROPS_CHAMBER.y + DROPS_CHAMBER.height).toBeLessThanOrEqual(278)
+    expect(DROPS_CHAMBER.y).toBeGreaterThan(154)
+    expect(DROPS_CHAMBER.y + DROPS_CHAMBER.height).toBeLessThanOrEqual(284.4)
   })
 
   it('zeigt einen festen Pegel und keine Prozentzahl', () => {
@@ -54,12 +55,19 @@ describe('dropsShape', () => {
     const oben = DROPS_VIEWBOX.y + DROPS_LABEL.topPct * DROPS_VIEWBOX.height
     const unten = oben + DROPS_LABEL.heightPct * DROPS_VIEWBOX.height
     // Unterhalb der Schulter und oberhalb des Bodens.
-    expect(oben).toBeGreaterThan(130)
-    expect(unten).toBeLessThan(282)
+    expect(oben).toBeGreaterThan(152)
+    expect(unten).toBeLessThan(288)
   })
 
-  it('setzt den Schraubkragen zwischen Ballon und Flaschenhals', () => {
-    expect(DROPS_COLLAR.y).toBe(72)
-    expect(DROPS_COLLAR.width).toBeLessThan(DROPS_VIEWBOX.width)
+  it('staffelt die Durchmesser von oben nach unten wie die Vorlage', () => {
+    // Sauger schmaler als die Kappe, Kappe schmaler als der Koerper und
+    // breiter als der Hals — diese Staffelung macht die Flasche auf einen
+    // Blick als Pipettenflasche lesbar.
+    expect(DROPS_WIDTHS.teat).toBeLessThan(DROPS_WIDTHS.cap)
+    expect(DROPS_WIDTHS.neck).toBeLessThan(DROPS_WIDTHS.cap)
+    expect(DROPS_WIDTHS.cap).toBeLessThan(DROPS_WIDTHS.body)
+    expect(DROPS_CAP.width).toBe(DROPS_WIDTHS.cap)
+    // Und die Kappe ist hoch, keine schmale Bandage.
+    expect(DROPS_CAP.height).toBeGreaterThan(DROPS_CAP.width * 0.9)
   })
 })

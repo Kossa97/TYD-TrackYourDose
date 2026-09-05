@@ -20,10 +20,11 @@ describe('DropsVisual', () => {
     expect(render()).toContain('data-drops-detail="root"')
   })
 
-  it('zeichnet Ballon, Kragen, Glas und Pipette', () => {
+  it('zeichnet Sauger, Kappe, Glas und Pipette', () => {
     const html = render()
-    expect(html).toContain('data-drops-detail="bulb"')
-    expect(html).toContain('data-drops-detail="collar"')
+    expect(html).toContain('data-drops-detail="teat"')
+    expect(html).toContain('data-drops-detail="cap"')
+    expect(html).toContain('data-drops-detail="cap-ribs"')
     expect(html).toContain('data-drops-detail="glass"')
     expect(html).toContain('data-drops-detail="pipette"')
   })
@@ -41,16 +42,17 @@ describe('DropsVisual', () => {
     const source = readFileSync(new URL('./DropsVisual.tsx', import.meta.url), 'utf8')
     const band = source.match(/outerClip\)`\}>[\s\S]{0,400}?data-drops-detail="sweep"/)?.[0] ?? ''
     expect(band).not.toBe('')
-    expect(render({ lightOffset: 1 })).toMatch(/data-drops-detail="sweep"[^>]*translate\(16/)
-    expect(render({ lightOffset: -1 })).toMatch(/data-drops-detail="sweep"[^>]*translate\(-16/)
+    expect(render({ lightOffset: 1 })).toMatch(/data-drops-detail="sweep"[^>]*translate\(14/)
+    expect(render({ lightOffset: -1 })).toMatch(/data-drops-detail="sweep"[^>]*translate\(-14/)
   })
 
-  it('gibt dem Ballon die Eintragsfarbe, abgedunkelt', () => {
-    // Das Braunglas daempft die Fluessigkeitsfarbe, deshalb erscheint sie am
-    // Ballon noch einmal — dort aber unter einer Gummischicht.
+  it('gibt der Kappe die Eintragsfarbe, dem Sauger nicht', () => {
+    // Wie in der Vorlage: die Kappe ist gold, weiss oder schwarz, der Sauger
+    // bleibt Gummi. Das Braunglas daempft die Fluessigkeitsfarbe, deshalb
+    // braucht die Farbe am Objekt eine eigene, grosse Flaeche.
     const html = render({ color: '#a3e635' })
-    expect(html).toMatch(/data-drops-detail="bulb"[^>]*fill="#a3e635"/)
-    expect(html).toContain('rgba(12,10,8,0.45)')
+    expect(html).toMatch(/data-drops-detail="cap"[^>]*fill="#a3e635"/)
+    expect(html).toMatch(/data-drops-detail="teat"[^>]*fill="#2a2622"/)
   })
 
   it('zeigt keinen Fuellstand in Prozent', () => {
@@ -81,6 +83,7 @@ describe('DropsVisual', () => {
 
   it('haelt die im Spec festgelegten Groessen ein', () => {
     expect(render({ size: 'large' })).toContain('h-[365px]')
+    expect(render({ size: 'large' })).toContain('w-[96.6px]')
     expect(render({ size: 'carousel' })).toContain('h-[146.7px]')
     expect(render({ size: 'carousel' })).toContain('sm:h-[186.4px]')
     expect(render({ size: 'compact' })).toContain('h-[110px]')

@@ -5,9 +5,9 @@ import { StageLabel } from '../../stage/StageLabel'
 import { usePrefersReducedMotion } from '../../stage/usePrefersReducedMotion'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
-  DROPS_BULB_PATH,
-  DROPS_COLLAR,
-  DROPS_COLLAR_RIB_XS,
+  DROPS_CAP,
+  DROPS_CAP_RIB_XS,
+  DROPS_TEAT_PATH,
   DROPS_FILL,
   DROPS_GROUND_SHIFT,
   DROPS_INNER_PATH,
@@ -41,13 +41,14 @@ function dropsAmountLabel(amount?: string | number | null, unit?: string | null)
   return unit ? `${amount} ${unit}` : String(amount)
 }
 
-// Die Tropfflasche ist klein und nimmt deshalb dieselbe Sprosse wie die
-// Ampulle: 146,7 -> 186,4. Die Breite folgt dem eigenen Verhaeltnis 84/264.
+// Die Tropfflasche nimmt dieselbe Sprosse wie die Ampulle: 146,7 -> 186,4.
+// Die Breite folgt dem eigenen Verhaeltnis 72/272 = 0,265 — fast genau das
+// der Ampulle, weshalb beide nebeneinander wie eine Familie wirken.
 const SIZE_CLASS: Record<NonNullable<DropsVisualProps['size']>, string> = {
-  large: 'h-[365px] w-[116.1px]',
-  carousel: 'h-[146.7px] w-[46.7px] sm:h-[186.4px] sm:w-[59.3px]',
-  compact: 'h-[110px] w-[35px]',
-  mini: 'h-[60px] w-[19.1px]',
+  large: 'h-[365px] w-[96.6px]',
+  carousel: 'h-[146.7px] w-[38.8px] sm:h-[186.4px] sm:w-[49.3px]',
+  compact: 'h-[110px] w-[29.1px]',
+  mini: 'h-[60px] w-[15.9px]',
 }
 
 // Weiss, fett, mit Schattenkante — wie bei Vial, Ampulle und Nasenspray. Auf
@@ -102,11 +103,11 @@ export function DropsVisual({
     rootRef.current?.setAttribute('data-drops-focus', f.toFixed(2))
     rootRef.current?.setAttribute('data-drops-light-offset', o.toFixed(2))
     shadowRef.current?.setAttribute('cx', (50 - o * DROPS_GROUND_SHIFT).toFixed(2))
-    shadowRef.current?.setAttribute('rx', (30 + f * 8).toFixed(2))
+    shadowRef.current?.setAttribute('rx', (26 + f * 7).toFixed(2))
     shadowRef.current?.setAttribute('opacity', (0.2 + f * 0.28).toFixed(3))
     sweepRef.current?.setAttribute('transform', `translate(${(o * DROPS_SHEEN_SHIFT).toFixed(2)} 0)`)
     sweepRef.current?.setAttribute('opacity', (0.1 + f * 0.26).toFixed(3))
-    bulbLightRef.current?.setAttribute('cx', (42 - o * 4).toFixed(2))
+    bulbLightRef.current?.setAttribute('cx', (39 - o * 4).toFixed(2))
     bulbLightRef.current?.setAttribute('opacity', (0.18 + f * 0.3).toFixed(3))
     outlineRef.current?.setAttribute('stroke-opacity', (0.36 + f * 0.28).toFixed(3))
     liquidRef.current?.applyStageLight?.(f, o)
@@ -129,7 +130,7 @@ export function DropsVisual({
     >
       <svg
         className="absolute inset-0 h-full w-full overflow-visible"
-        viewBox="8 18 84 264"
+        viewBox="14 16 72 272"
         preserveAspectRatio="xMidYMid meet"
         aria-hidden="true"
       >
@@ -142,8 +143,8 @@ export function DropsVisual({
           <clipPath id={`${uid}-innerClip`}>
             <use href={`#${uid}-inner`} />
           </clipPath>
-          <clipPath id={`${uid}-bulbClip`}>
-            <path d={DROPS_BULB_PATH} />
+          <clipPath id={`${uid}-capClip`}>
+            <rect x={DROPS_CAP.x} y={DROPS_CAP.y} width={DROPS_CAP.width} height={DROPS_CAP.height} rx={DROPS_CAP.rx} />
           </clipPath>
 
           {/* Braunglas. Es daempft die Fluessigkeitsfarbe dahinter — deshalb
@@ -159,6 +160,14 @@ export function DropsVisual({
             <stop offset="0%" stopColor="rgba(255,255,255,0)" />
             <stop offset="50%" stopColor="rgba(255,236,205,0.5)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </linearGradient>
+          {/* Macht aus der Kappenfarbe einen Zylinder. */}
+          <linearGradient id={`${uid}-capShade`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="rgba(0,0,0,0.55)" />
+            <stop offset="20%" stopColor="rgba(255,255,255,0.34)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,0.04)" />
+            <stop offset="78%" stopColor="rgba(255,255,255,0.16)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.6)" />
           </linearGradient>
           <linearGradient id={`${uid}-collar`} x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#20242b" />
@@ -178,42 +187,64 @@ export function DropsVisual({
           ref={shadowRef}
           data-drops-detail="ground-shadow"
           cx={50 - visualLightOffset * DROPS_GROUND_SHIFT}
-          cy="286"
-          rx={30 + visualFocus * 8}
-          ry="5"
+          cy="292"
+          rx={26 + visualFocus * 7}
+          ry="4.5"
           fill={`url(#${uid}-groundShadow)`}
           opacity={0.2 + visualFocus * 0.28}
         />
 
-        {/* Der Gummiballon. Die Eintragsfarbe wird abgedunkelt, sonst saehe
-            Gummi aus wie lackierter Kunststoff. */}
-        <path data-drops-detail="bulb" d={DROPS_BULB_PATH} fill={color} />
-        <path d={DROPS_BULB_PATH} fill="rgba(12,10,8,0.45)" />
-        <g clipPath={`url(#${uid}-bulbClip)`}>
+        {/* Der Gummisauger. Er bleibt dunkles Gummi — in der Vorlage traegt
+            die Kappe die Farbe, nicht der Sauger. */}
+        <path data-drops-detail="teat" d={DROPS_TEAT_PATH} fill="#2a2622" />
+        <path
+          d={DROPS_TEAT_PATH}
+          fill="none"
+          stroke="rgba(255,255,255,0.18)"
+          strokeWidth="0.8"
+          vectorEffect="non-scaling-stroke"
+        />
+
+        {/* Die Schraubkappe ist die groesste nichtglaeserne Flaeche und traegt
+            deshalb color_hex. Der Verlauf darueber macht aus der Farbe einen
+            Zylinder statt eines flachen Rechtecks. */}
+        <rect
+          data-drops-detail="cap"
+          x={DROPS_CAP.x}
+          y={DROPS_CAP.y}
+          width={DROPS_CAP.width}
+          height={DROPS_CAP.height}
+          rx={DROPS_CAP.rx}
+          fill={color}
+        />
+        <rect
+          x={DROPS_CAP.x}
+          y={DROPS_CAP.y}
+          width={DROPS_CAP.width}
+          height={DROPS_CAP.height}
+          rx={DROPS_CAP.rx}
+          fill={`url(#${uid}-capShade)`}
+        />
+        <g clipPath={`url(#${uid}-capClip)`}>
+          <g data-drops-detail="cap-ribs" fill="none" strokeWidth="0.7">
+            {DROPS_CAP_RIB_XS.map(x => (
+              <path
+                key={x}
+                d={`M${x} ${DROPS_CAP.y + 3} L${x} ${DROPS_CAP.y + DROPS_CAP.height - 3}`}
+                stroke="rgba(0,0,0,0.22)"
+              />
+            ))}
+          </g>
           <ellipse
             ref={bulbLightRef}
-            data-drops-detail="bulb-light"
-            cx={42 - visualLightOffset * 4}
-            cy="38"
-            rx="13"
-            ry="8"
-            fill="rgba(255,255,255,0.5)"
+            data-drops-detail="cap-light"
+            cx={39 - visualLightOffset * 4}
+            cy={DROPS_CAP.y + 14}
+            rx="6"
+            ry="16"
+            fill="rgba(255,255,255,0.4)"
             opacity={0.18 + visualFocus * 0.3}
           />
-        </g>
-
-        <rect
-          data-drops-detail="collar"
-          x={DROPS_COLLAR.x}
-          y={DROPS_COLLAR.y}
-          width={DROPS_COLLAR.width}
-          height={DROPS_COLLAR.height}
-          fill={`url(#${uid}-collar)`}
-        />
-        <g fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="0.8">
-          {DROPS_COLLAR_RIB_XS.map(x => (
-            <path key={x} d={`M${x} ${DROPS_COLLAR.y + 4} L${x} ${DROPS_COLLAR.y + DROPS_COLLAR.height - 4}`} />
-          ))}
         </g>
 
         <use data-drops-detail="glass" href={`#${uid}-outer`} fill={`url(#${uid}-glass)`} />
@@ -264,10 +295,10 @@ export function DropsVisual({
           <rect
             ref={sweepRef}
             data-drops-detail="sweep"
-            x="18"
-            y="94"
-            width="18"
-            height="190"
+            x="22"
+            y="112"
+            width="15"
+            height="180"
             fill={`url(#${uid}-sweep)`}
             opacity={0.1 + visualFocus * 0.26}
             transform={`translate(${(visualLightOffset * DROPS_SHEEN_SHIFT).toFixed(2)} 0)`}

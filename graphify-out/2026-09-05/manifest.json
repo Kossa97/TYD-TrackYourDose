@@ -975,8 +975,8 @@
     "semantic_hash": "45a38b51cd13eca6ff8eea4e19b5ef7e"
   },
   "src/pages/__VialPreview.tsx": {
-    "mtime": 1788477914.5412738,
-    "ast_hash": "69b1fc8787afa062b5cd5b996aa56255",
+    "mtime": 1788568061.112859,
+    "ast_hash": "1ead9984032d7ed12d82c9d27b11cf3a",
     "semantic_hash": ""
   },
   "src/pages/lab/AdminPanel.tsx": {
@@ -2375,8 +2375,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.tsx": {
-    "mtime": 1788476322.106943,
-    "ast_hash": "844c8d64b138be99d7facc1854a617d9",
+    "mtime": 1788567999.1364267,
+    "ast_hash": "dc0a3fcc929e7663d6dd2cfb118abc11",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.tsx": {
@@ -2435,13 +2435,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.test.ts": {
-    "mtime": 1788476393.581643,
-    "ast_hash": "e41a35a20178cb48ab781f171ede794a",
+    "mtime": 1788568034.1110475,
+    "ast_hash": "7ec58c92a69d15cab527d62fbda43a22",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.ts": {
-    "mtime": 1788476322.106943,
-    "ast_hash": "af730f478deb0a59df9e6ba3aab18489",
+    "mtime": 1788567999.1359184,
+    "ast_hash": "d5cfb660752d7f63c15714ee54451b07",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/duplicateFingerprint.test.ts": {
@@ -3092,6 +3092,31 @@
   "src/features/my-stack/extensions/patch/patchShape.ts": {
     "mtime": 1788566676.097033,
     "ast_hash": "d7d40d554afdbf1aff614c2a46a36c56",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/drops/DropsRenderer.tsx": {
+    "mtime": 1788567975.976097,
+    "ast_hash": "13d201266410eb5506bc4b19410d6db4",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/drops/DropsVisual.test.ts": {
+    "mtime": 1788568199.8185923,
+    "ast_hash": "93daf27b562d6ee1807a9214e36cca6e",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/drops/DropsVisual.tsx": {
+    "mtime": 1788568133.1722634,
+    "ast_hash": "d3e1a16c8ebf5116933e024caaaea582",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/drops/dropsShape.test.ts": {
+    "mtime": 1788568179.2795742,
+    "ast_hash": "45d7f1728cd7dab92ea8a8dcf1df6100",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/extensions/drops/dropsShape.ts": {
+    "mtime": 1788567914.7499518,
+    "ast_hash": "61fcf2bda1303131768b0c585fe69473",
     "semantic_hash": ""
   }
 }
