@@ -91,7 +91,10 @@ eigenem Glanz. Sie steht ein gutes Stück unter dem Deckel — ein bis zum Rand
 gefüllter Tiegel sähe aus wie ein Farbtopf.
 
 **Etikett.** Ein Band über dem unteren Drittel, damit die Masse darüber
-sichtbar bleibt. Kanten als Bögen, wie bei der Pulverdose.
+sichtbar bleibt. Kanten als Bögen, wie bei der Pulverdose — und mit dem Radius
+des **Körpers**, nicht des Innenraums: es klebt aussen auf dem Glas und läuft
+bis an die Silhouette. Mit Einzug spannte es nur über den Innenraum, und die
+beiden Streifen Glas daneben liessen es hinter der Wand liegen statt darauf.
 
 ## Architektur
 

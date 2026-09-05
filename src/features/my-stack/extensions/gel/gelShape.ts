@@ -100,9 +100,15 @@ export const GEL_HEADROOM = GEL_SURFACE.cy - GEL_LID_BOTTOM_Y
 //
 // Ein Band über dem unteren Drittel: darüber bleibt die Masse sichtbar, sonst
 // wäre das durchscheinende Glas sinnlos.
-export const GEL_LABEL = { top: 84, bottom: 112, inset: 6, ry: 5 } as const
-const LX = GEL_BODY.x + GEL_LABEL.inset
-const RX = 147 - GEL_LABEL.inset
+//
+// Es klebt AUSSEN auf dem Glas und läuft deshalb bis an die Silhouette — ein
+// umlaufendes Etikett verschwindet an den Rändern um die Rundung herum, es
+// hört nicht davor auf. Mit Einzug spannte es nur über den Innenraum, und die
+// beiden Streifen Glas daneben liessen es hinter der Wand liegen statt darauf.
+// Sein Radius ist folgerichtig der des Körpers, nicht der des Innenraums.
+export const GEL_LABEL = { top: 84, bottom: 112, ry: 5.5 } as const
+const LX = GEL_BODY.x
+const RX = 147
 const LABEL_RX = (RX - LX) / 2
 export const GEL_LABEL_PATH =
   `M${LX} ${GEL_LABEL.top} ` +
@@ -112,7 +118,7 @@ export const GEL_LABEL_PATH =
 
 export const GEL_NAME_TOP_PCT =
   ((GEL_LABEL.top + GEL_LABEL.bottom) / 2 - GEL_VIEWBOX.y) / GEL_VIEWBOX.height
-export const GEL_NAME_INSET_PCT = (LX + 4 - GEL_VIEWBOX.x) / GEL_VIEWBOX.width
+export const GEL_NAME_INSET_PCT = (LX + 7 - GEL_VIEWBOX.x) / GEL_VIEWBOX.width
 
 // Wie weit Glanz und Bodenschatten beim Wischen wandern.
 export const GEL_SHEEN_SHIFT = 20

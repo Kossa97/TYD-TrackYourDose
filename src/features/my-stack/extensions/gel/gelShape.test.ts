@@ -74,8 +74,11 @@ describe('gelShape', () => {
     // Sonst waere das durchscheinende Glas sinnlos.
     expect(GEL_LABEL.top).toBeGreaterThan(GEL_SURFACE.cy + GEL_SURFACE.ry)
     expect(GEL_LABEL.bottom).toBeLessThan(GEL_BODY.bottom)
-    // Und seine Kanten sind Boegen wie alle waagerechten Kanten dieser Form.
-    expect(GEL_LABEL_PATH).toContain(`A 61 ${GEL_LABEL.ry}`)
+    // Und seine Kanten sind Boegen wie alle waagerechten Kanten dieser Form,
+    // mit dem Radius des KOERPERS: es klebt aussen auf dem Glas und laeuft bis
+    // an die Silhouette, statt vor ihr aufzuhoeren.
+    expect(GEL_LABEL_PATH).toContain(`A 67 ${GEL_LABEL.ry}`)
+    expect(GEL_LABEL_PATH.startsWith(`M${GEL_BODY.x} ${GEL_LABEL.top}`)).toBe(true)
     const namensHoehe = GEL_VIEWBOX.y + GEL_NAME_TOP_PCT * GEL_VIEWBOX.height
     expect(namensHoehe).toBeGreaterThan(GEL_LABEL.top)
     expect(namensHoehe).toBeLessThan(GEL_LABEL.bottom)
