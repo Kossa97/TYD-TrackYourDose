@@ -23,6 +23,36 @@ describe('PatchVisual', () => {
     expect(html).toContain('data-patch-detail="pad"')
   })
 
+  it('gibt dem Material Tiefe statt flacher Flaechen', () => {
+    const html = render()
+    // Koernung im Gewebe und Webstruktur auf dem Kissen.
+    expect(html).toContain('-grain')
+    expect(html).toContain('-weave')
+    // Die doppelte Kontur, die auch Ampulle und Nasenspray tragen.
+    expect(html).toMatch(/stroke="rgba\(92,56,24,0\.5\)"/)
+    expect(html).toMatch(/stroke="rgba\(255,255,255,0\.3\)"/)
+    // Das Kissen ist eingelassen: Fase oben, Schlagschatten darunter.
+    expect(html).toContain('data-patch-detail="pad-bevel"')
+    // Und der Streifen liegt auf der Buehne statt zu schweben.
+    expect(html).toContain('data-patch-detail="ground-shadow"')
+  })
+
+  it('macht aus jedem Loch ein Loch statt eines weissen Punktes', () => {
+    // Zwei Kreise je Loch: der dunkle darunter ist die Lochwand.
+    const html = render()
+    const gruppe = html.match(/data-patch-detail="dots"[\s\S]*?<\/g><\/g>/)?.[0] ?? ''
+    expect(gruppe).toContain('rgba(112,68,28,0.5)')
+    expect(gruppe).toContain('rgba(255,255,255,0.9)')
+  })
+
+  it('laesst den Bodenschatten dem Licht entgegenwandern', () => {
+    // Steht das Licht rechts, faellt der Schatten nach links.
+    const cx = (o: number) =>
+      Number(render({ lightOffset: o }).match(/data-patch-detail="ground-shadow"[^>]*cx="([-\d.]+)"/)?.[1])
+    expect(cx(1)).toBeLessThan(cx(0))
+    expect(cx(-1)).toBeGreaterThan(cx(0))
+  })
+
   it('zeigt kein Farbfeld', () => {
     // Ein Pflaster ist hautfarben; ein farbiges Feld darauf war der eine
     // Fremdkoerper im Bild. Diese Form nimmt color_hex deshalb gar nicht an.
@@ -43,10 +73,14 @@ describe('PatchVisual', () => {
   it('haengt die Lochung an die Abschnitte, nicht an den ganzen Streifen', () => {
     // Sonst blieben die Loecher stehen, waehrend sich die Enden biegen.
     const source = readFileSync(new URL('./PatchVisual.tsx', import.meta.url), 'utf8')
-    const links = source.match(/leftClip\)`\}>[\s\S]*?<\/g>\s*<\/g>/)?.[0] ?? ''
+    const links = source.match(/leftClip\)`\}>[\s\S]*?<\/g>/)?.[0] ?? ''
     expect(links).toContain('PATCH_DOTS_LEFT')
-    const rechts = source.match(/rightClip\)`\}>[\s\S]*?<\/g>\s*<\/g>/)?.[0] ?? ''
+    const rechts = source.match(/rightClip\)`\}>[\s\S]*?<\/g>/)?.[0] ?? ''
     expect(rechts).toContain('PATCH_DOTS_RIGHT')
+    // Und jeder Abschnitt traegt sein eigenes Gewebe, sonst bliebe die
+    // Koernung beim Flattern stehen.
+    expect(links).toContain('<Gewebe')
+    expect(rechts).toContain('<Gewebe')
   })
 
   it('laesst den Schimmer mit dem Licht wandern', () => {

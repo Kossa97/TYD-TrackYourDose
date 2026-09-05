@@ -81,6 +81,21 @@ export const PATCH_DOTS: readonly { x: number; y: number }[] = DOT_ROWS.flatMap(
 // Wie weit der Schimmer beim Wischen wandert.
 export const PATCH_SHEEN_SHIFT = 34
 
+// Der Streifen liegt auf der Bühne, statt in ihr zu schweben. Der Schatten
+// steht knapp unter der Unterkante und wandert dem Licht entgegen.
+export const PATCH_GROUND = {
+  cx: PATCH_BODY.width / 2,
+  cy: PATCH_BODY.height + 7,
+  rx: PATCH_BODY.width / 2 - 12,
+  ry: 6,
+} as const
+export const PATCH_GROUND_SHIFT = 10
+
+// Die Lochung sind Löcher, keine weißen Punkte: unter jedem hellen Kreis
+// liegt ein dunkler, leicht nach unten rechts versetzt — das ist der Schatten
+// in der Lochwand, gegenüber der Lichtseite oben links.
+export const PATCH_HOLE_OFFSET = { x: 0.4, y: 0.55 } as const
+
 // Beim Wischen biegen sich die beiden Enden gegenläufig, die Mitte mit dem
 // Kissen bleibt ruhig — ein Pflaster ist biegsam, sein Kissen nicht. Dafür
 // wird der Streifen in drei Abschnitte geschnitten; die Enden drehen um einen
