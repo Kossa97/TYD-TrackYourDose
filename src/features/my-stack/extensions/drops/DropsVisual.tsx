@@ -116,9 +116,9 @@ export function DropsVisual({
     sweepRef.current?.setAttribute('opacity', (0.1 + f * 0.26).toFixed(3))
     bloomRef.current?.setAttribute('transform', `translate(${(o * 9).toFixed(2)} 0)`)
     bloomRef.current?.setAttribute('opacity', (0.2 + f * 0.42).toFixed(3))
-    bulbLightRef.current?.setAttribute('cx', (39 - o * 4).toFixed(2))
+    bulbLightRef.current?.setAttribute('cx', (39 + o * 4).toFixed(2))
     bulbLightRef.current?.setAttribute('opacity', (0.16 + f * 0.26).toFixed(3))
-    teatLightRef.current?.setAttribute('cx', (DROPS_CAP_DOME.cx - 5 - o * 2.8).toFixed(2))
+    teatLightRef.current?.setAttribute('cx', (DROPS_CAP_DOME.cx - 5 + o * 2.8).toFixed(2))
     teatLightRef.current?.setAttribute('opacity', (0.16 + f * 0.26).toFixed(3))
     outlineRef.current?.setAttribute('stroke-opacity', (0.36 + f * 0.28).toFixed(3))
     liquidRef.current?.applyStageLight?.(f, o)
@@ -341,7 +341,7 @@ export function DropsVisual({
               <ellipse
                 ref={teatLightRef}
                 data-drops-detail="dome-light"
-                cx={DROPS_CAP_DOME.cx - 5 - visualLightOffset * 2.8}
+                cx={DROPS_CAP_DOME.cx - 5 + visualLightOffset * 2.8}
                 cy={DROPS_TEAT.widest + 12}
                 rx="3.6"
                 ry="17"
@@ -393,7 +393,7 @@ export function DropsVisual({
             <ellipse
               ref={bulbLightRef}
               data-drops-detail="cap-light"
-              cx={39 - visualLightOffset * 4}
+              cx={39 + visualLightOffset * 4}
               cy={DROPS_CAP.y + DROPS_CAP.height / 2}
               rx="4.5"
               ry="9"

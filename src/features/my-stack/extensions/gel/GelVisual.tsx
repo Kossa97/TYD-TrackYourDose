@@ -93,9 +93,9 @@ export function GelVisual({
     sheenRef.current?.setAttribute('opacity', (0.12 + f * 0.3).toFixed(3))
     bloomRef.current?.setAttribute('transform', `translate(${(o * 12).toFixed(2)} 0)`)
     bloomRef.current?.setAttribute('opacity', (0.2 + f * 0.4).toFixed(3))
-    gelGlossRef.current?.setAttribute('cx', (60 - o * 12).toFixed(2))
+    gelGlossRef.current?.setAttribute('cx', (60 + o * 12).toFixed(2))
     gelGlossRef.current?.setAttribute('opacity', (0.18 + f * 0.3).toFixed(3))
-    crownRef.current?.setAttribute('cx', (58 - o * 14).toFixed(2))
+    crownRef.current?.setAttribute('cx', (58 + o * 14).toFixed(2))
     crownRef.current?.setAttribute('opacity', (0.16 + f * 0.24).toFixed(3))
     outlineRef.current?.setAttribute('stroke-opacity', (0.3 + f * 0.26).toFixed(3))
     if (labelSheenRef.current) {
@@ -263,7 +263,7 @@ export function GelVisual({
             <ellipse
               ref={gelGlossRef}
               data-gel-detail="gel-gloss"
-              cx={60 - visualLightOffset * 12}
+              cx={60 + visualLightOffset * 12}
               cy={GEL_SURFACE.cy + 5}
               rx="26"
               ry="4"
@@ -329,7 +329,7 @@ export function GelVisual({
           <ellipse
             ref={crownRef}
             data-gel-detail="lid-light"
-            cx={58 - visualLightOffset * 14}
+            cx={58 + visualLightOffset * 14}
             cy={GEL_LID.y + GEL_LID.height / 2}
             rx="16"
             ry="8"

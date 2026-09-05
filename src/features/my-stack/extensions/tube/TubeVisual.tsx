@@ -51,8 +51,11 @@ const NAME_CLASS: Record<NonNullable<TubeVisualProps['size']>, string> = {
   mini: 'text-[4px] leading-tight',
 }
 
-const lightAngle = (o: number) => -o * TUBE_LIGHT_MAX_DEG
-const coreX = (o: number) => 60 - o * TUBE_LIGHT_CORE_SHIFT
+// Positiver Versatz heisst: die Lampe steht rechts von der Form. Der
+// Glanzkern laeuft also nach rechts, der Bodenschatten nach links — und die
+// Drehung des Oberlichts kippt die helle Seite mit ihm.
+const lightAngle = (o: number) => o * TUBE_LIGHT_MAX_DEG
+const coreX = (o: number) => 60 + o * TUBE_LIGHT_CORE_SHIFT
 
 export function TubeVisual({
   name,

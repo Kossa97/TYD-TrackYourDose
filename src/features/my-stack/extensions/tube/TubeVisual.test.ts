@@ -28,16 +28,19 @@ describe('TubeVisual', () => {
   })
 
   it('kippt das Oberlicht mit der Lage im Karussell', () => {
-    // Mittig unter der Lampe symmetrisch, seitlich schraeg.
+    // Mittig unter der Lampe symmetrisch, seitlich schraeg. Positiver
+    // Versatz heisst Lampe rechts, die helle Seite kippt also nach rechts.
     expect(render({ lightOffset: 0 })).toContain('rotate(0.0 0.5 0.5)')
-    expect(render({ lightOffset: 1 })).toContain('rotate(-34.0 0.5 0.5)')
-    expect(render({ lightOffset: -1 })).toContain('rotate(34.0 0.5 0.5)')
+    expect(render({ lightOffset: 1 })).toContain('rotate(34.0 0.5 0.5)')
+    expect(render({ lightOffset: -1 })).toContain('rotate(-34.0 0.5 0.5)')
   })
 
   it('laesst den Glanzkern zur beleuchteten Seite wandern', () => {
+    // Zur Lampe hin, nicht von ihr weg: der Kern lief bisher mit dem
+    // Bodenschatten mit, also auf die Schattenseite.
     expect(render({ lightOffset: 0 })).toMatch(/data-tube-detail="core"[^>]*cx="60"/)
-    expect(render({ lightOffset: 1 })).toMatch(/data-tube-detail="core"[^>]*cx="43"/)
-    expect(render({ lightOffset: -1 })).toMatch(/data-tube-detail="core"[^>]*cx="77"/)
+    expect(render({ lightOffset: 1 })).toMatch(/data-tube-detail="core"[^>]*cx="77"/)
+    expect(render({ lightOffset: -1 })).toMatch(/data-tube-detail="core"[^>]*cx="43"/)
   })
 
   it('laesst die Kantensaeume beim Wischen stehen', () => {

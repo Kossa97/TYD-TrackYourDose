@@ -74,7 +74,6 @@ export function PowderVisual({
   const shadowRef = useRef<SVGEllipseElement | null>(null)
   const sheenRef = useRef<SVGRectElement | null>(null)
   const lidLightRef = useRef<SVGEllipseElement | null>(null)
-  const crownRef = useRef<SVGEllipseElement | null>(null)
   const outlineRef = useRef<SVGPathElement | null>(null)
 
   const applyStageLight = useCallback((f: number, o: number) => {
@@ -85,10 +84,8 @@ export function PowderVisual({
     shadowRef.current?.setAttribute('opacity', (0.2 + f * 0.28).toFixed(3))
     sheenRef.current?.setAttribute('transform', `translate(${(o * POWDER_SHEEN_SHIFT).toFixed(2)} 0)`)
     sheenRef.current?.setAttribute('opacity', (0.12 + f * 0.3).toFixed(3))
-    lidLightRef.current?.setAttribute('cx', (34 - o * 7).toFixed(2))
+    lidLightRef.current?.setAttribute('cx', (34 + o * 7).toFixed(2))
     lidLightRef.current?.setAttribute('opacity', (0.12 + f * 0.22).toFixed(3))
-    crownRef.current?.setAttribute('cx', (46 - o * 9).toFixed(2))
-    crownRef.current?.setAttribute('opacity', (0.16 + f * 0.24).toFixed(3))
     outlineRef.current?.setAttribute('stroke-opacity', (0.3 + f * 0.26).toFixed(3))
   }, [])
 
@@ -147,11 +144,6 @@ export function PowderVisual({
             <stop offset="92%" stopColor="rgba(0,0,0,0.44)" />
             <stop offset="100%" stopColor="rgba(0,0,0,0.66)" />
           </linearGradient>
-          <radialGradient id={`${uid}-crown`} cx="38%" cy="34%" r="72%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.34)" />
-            <stop offset="55%" stopColor="rgba(255,255,255,0.08)" />
-            <stop offset="100%" stopColor="rgba(0,0,0,0.28)" />
-          </radialGradient>
           <linearGradient id={`${uid}-sheen`} x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="rgba(255,255,255,0)" />
             <stop offset="50%" stopColor="rgba(255,255,255,0.42)" />
@@ -324,7 +316,7 @@ export function PowderVisual({
           <ellipse
             ref={lidLightRef}
             data-powder-detail="lid-light"
-            cx={34 - visualLightOffset * 7}
+            cx={34 + visualLightOffset * 7}
             cy={POWDER_LID.y + POWDER_LID.height / 2 + 2}
             rx="8"
             ry="9"
