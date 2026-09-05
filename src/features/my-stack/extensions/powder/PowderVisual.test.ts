@@ -17,7 +17,11 @@ describe('PowderVisual', () => {
     expect(html).toContain('data-powder-detail="body"')
     expect(html).toContain('data-powder-detail="lid"')
     expect(html).toContain('data-powder-detail="lid-ribs"')
-    expect(html).toContain('data-powder-detail="lid-top"')
+    // Aus dem dunklen Band am oberen Rand ist eine echte Deckflaeche
+    // geworden: eine eigene Ebene mit eigenem Licht und eingesenktem Spiegel.
+    expect(html).toContain('data-powder-detail="lid-crown"')
+    expect(html).toContain('data-powder-detail="crown-inset"')
+    expect(html).toContain('data-powder-detail="label"')
     // Die Schulter ist der Schatten des Deckelrands auf dem Korpus. Ohne sie
     // schwebt der Deckel auf der Dose.
     expect(html).toContain('data-powder-detail="shoulder"')
@@ -43,6 +47,9 @@ describe('PowderVisual', () => {
       .toBeLessThan(source.indexOf('data-powder-detail="sheen"'))
     expect(source.indexOf('lidClip)`}>'))
       .toBeLessThan(source.indexOf('data-powder-detail="lid-light"'))
+    // Das Licht auf der Deckflaeche liegt in ihrer eigenen Gruppe.
+    expect(source.indexOf('data-powder-detail="lid-crown"'))
+      .toBeLessThan(source.indexOf('data-powder-detail="crown-light"'))
     expect(render({ lightOffset: 1 })).toMatch(/data-powder-detail="sheen"[^>]*translate\(16/)
     expect(render({ lightOffset: -1 })).toMatch(/data-powder-detail="sheen"[^>]*translate\(-16/)
   })

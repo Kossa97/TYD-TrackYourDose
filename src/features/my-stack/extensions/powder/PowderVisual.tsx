@@ -3,14 +3,16 @@ import type { Ref } from 'react'
 import { StageMarquee } from '../../stage/StageLabel'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
+  POWDER_BASE,
   POWDER_BODY,
   POWDER_BODY_PATH,
   POWDER_GROUND_SHIFT,
-  POWDER_LID,
+  POWDER_LABEL_PATH,
+  POWDER_LABEL_STRIPE_PATH,
+  POWDER_LID_BOTTOM_Y,
   POWDER_LID_PATH,
-  POWDER_LID_RIB_XS,
-  POWDER_LID_RIB_YS,
-  POWDER_LID_TOP_BAND,
+  POWDER_LID_RIBS,
+  POWDER_LID_RIM,
   POWDER_NAME_INSET_PCT,
   POWDER_NAME_TOP_PCT,
   POWDER_SHEEN_SHIFT,
@@ -31,25 +33,25 @@ export interface PowderVisualProps {
 const clamp01 = (value: number) => (Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0)
 const clampOffset = (value: number) => (Number.isFinite(value) ? Math.max(-1, Math.min(1, value)) : 0)
 
-// Die Dose nimmt als erste stehende Form eine Sprosse NACH UNTEN: 115,7 ->
+// Die Dose nimmt als erste stehende Form eine Sprosse NACH UNTEN: 115,5 ->
 // 146,7 statt 146,7 -> 186,4. Sie ist die einzige stehende Form, die breiter
 // als hoch wirkt; eine Sprosse hoeher waere sie doppelt so breit wie die
 // breiteste bisherige Form. Der Schritt bleibt x1,2706, die Leiter also
 // intakt — 146,7 ist genau die Hoehe von Vial, Ampulle und Tropfflasche.
 const SIZE_CLASS: Record<NonNullable<PowderVisualProps['size']>, string> = {
-  large: 'h-[287.3px] w-[191.5px]',
-  carousel: 'h-[115.5px] w-[77px] sm:h-[146.7px] sm:w-[97.8px]',
-  compact: 'h-[86.6px] w-[57.7px]',
-  mini: 'h-[47.2px] w-[31.5px]',
+  large: 'h-[287.3px] w-[184.2px]',
+  carousel: 'h-[115.5px] w-[74.0px] sm:h-[146.7px] sm:w-[94.0px]',
+  compact: 'h-[86.6px] w-[55.5px]',
+  mini: 'h-[47.2px] w-[30.3px]',
 }
 
 // Die Dose ist die breiteste stehende Form: uebliche Namen passen hier ohne
 // Durchlauf hinein, wo Vial und Ampulle laengst wandern.
 const NAME_CLASS: Record<NonNullable<PowderVisualProps['size']>, string> = {
-  large: 'text-lg leading-tight',
-  carousel: 'text-[8px] sm:text-[10px] leading-tight',
-  compact: 'text-[6px] leading-tight',
-  mini: 'text-[3.5px] leading-tight',
+  large: 'text-base leading-tight',
+  carousel: 'text-[7px] sm:text-[9px] leading-tight',
+  compact: 'text-[5.5px] leading-tight',
+  mini: 'text-[3px] leading-tight',
 }
 
 export function PowderVisual({
@@ -71,6 +73,7 @@ export function PowderVisual({
   const shadowRef = useRef<SVGEllipseElement | null>(null)
   const sheenRef = useRef<SVGRectElement | null>(null)
   const lidLightRef = useRef<SVGEllipseElement | null>(null)
+  const crownRef = useRef<SVGEllipseElement | null>(null)
   const outlineRef = useRef<SVGPathElement | null>(null)
 
   const applyStageLight = useCallback((f: number, o: number) => {
@@ -81,8 +84,10 @@ export function PowderVisual({
     shadowRef.current?.setAttribute('opacity', (0.2 + f * 0.28).toFixed(3))
     sheenRef.current?.setAttribute('transform', `translate(${(o * POWDER_SHEEN_SHIFT).toFixed(2)} 0)`)
     sheenRef.current?.setAttribute('opacity', (0.12 + f * 0.3).toFixed(3))
-    lidLightRef.current?.setAttribute('cx', (36 - o * 6).toFixed(2))
-    lidLightRef.current?.setAttribute('opacity', (0.14 + f * 0.24).toFixed(3))
+    lidLightRef.current?.setAttribute('cx', (34 - o * 7).toFixed(2))
+    lidLightRef.current?.setAttribute('opacity', (0.12 + f * 0.22).toFixed(3))
+    crownRef.current?.setAttribute('cx', (46 - o * 9).toFixed(2))
+    crownRef.current?.setAttribute('opacity', (0.16 + f * 0.24).toFixed(3))
     outlineRef.current?.setAttribute('stroke-opacity', (0.3 + f * 0.26).toFixed(3))
   }, [])
 
@@ -99,7 +104,7 @@ export function PowderVisual({
     >
       <svg
         className="absolute inset-0 h-full w-full overflow-visible"
-        viewBox="10 6 100 150"
+        viewBox="10 6 100 156"
         preserveAspectRatio="xMidYMid meet"
         aria-hidden="true"
       >
@@ -110,31 +115,40 @@ export function PowderVisual({
           <clipPath id={`${uid}-lidClip`}>
             <path d={POWDER_LID_PATH} />
           </clipPath>
+          <clipPath id={`${uid}-labelClip`}>
+            <path d={POWDER_LABEL_PATH} />
+          </clipPath>
 
           {/* Mattes HDPE, kein Glas und kein Blech: ein breiter weicher Kern
               statt einer harten Glanzkante. Genau das unterscheidet die Dose
               von der Tube, die daneben stehen kann. */}
           <linearGradient id={`${uid}-bodyShade`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#8b97a8" />
-            <stop offset="14%" stopColor="#cbd5e1" />
-            <stop offset="42%" stopColor="#eef2f7" />
-            <stop offset="72%" stopColor="#cdd6e2" />
-            <stop offset="100%" stopColor="#7d8899" />
+            <stop offset="0%" stopColor="#78849a" />
+            <stop offset="7%" stopColor="#a4b0c2" />
+            <stop offset="22%" stopColor="#dbe3ee" />
+            <stop offset="40%" stopColor="#f2f6fb" />
+            <stop offset="62%" stopColor="#dde5ef" />
+            <stop offset="84%" stopColor="#aeb9c9" />
+            <stop offset="100%" stopColor="#6f7a90" />
           </linearGradient>
-          {/* Der Deckel traegt die Eintragsfarbe; der Verlauf legt darueber
-              nur Licht und Schatten, damit aus der flachen Farbe ein Zylinder
-              wird — dieselbe Technik wie bei der Kappe der Tropfflasche. */}
+          {/* Der Deckel traegt die Eintragsfarbe; die Verlaeufe legen darueber
+              nur Licht und Schatten. Der Mantel ist ein Zylinder, die
+              Deckflaeche eine eigene Ebene — sie zeigt nach oben und bekommt
+              deshalb ihr eigenes, flacheres Licht. */}
           <linearGradient id={`${uid}-lidShade`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="rgba(0,0,0,0.55)" />
-            <stop offset="16%" stopColor="rgba(255,255,255,0.3)" />
-            <stop offset="44%" stopColor="rgba(255,255,255,0.05)" />
-            <stop offset="74%" stopColor="rgba(0,0,0,0.14)" />
-            <stop offset="100%" stopColor="rgba(0,0,0,0.6)" />
+            <stop offset="0%" stopColor="rgba(0,0,0,0.62)" />
+            <stop offset="8%" stopColor="rgba(0,0,0,0.28)" />
+            <stop offset="24%" stopColor="rgba(255,255,255,0.26)" />
+            <stop offset="46%" stopColor="rgba(255,255,255,0.04)" />
+            <stop offset="72%" stopColor="rgba(0,0,0,0.16)" />
+            <stop offset="92%" stopColor="rgba(0,0,0,0.44)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.66)" />
           </linearGradient>
-          <linearGradient id={`${uid}-lidTop`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(0,0,0,0.4)" />
-            <stop offset="100%" stopColor="rgba(0,0,0,0)" />
-          </linearGradient>
+          <radialGradient id={`${uid}-crown`} cx="38%" cy="34%" r="72%">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.34)" />
+            <stop offset="55%" stopColor="rgba(255,255,255,0.08)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.28)" />
+          </radialGradient>
           <linearGradient id={`${uid}-sheen`} x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="rgba(255,255,255,0)" />
             <stop offset="50%" stopColor="rgba(255,255,255,0.5)" />
@@ -143,8 +157,23 @@ export function PowderVisual({
           {/* Die Schulter: der Schatten, den der Deckelrand auf den Korpus
               wirft. Ohne ihn schwebt der Deckel auf der Dose. */}
           <linearGradient id={`${uid}-shoulder`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(15,23,42,0.32)" />
+            <stop offset="0%" stopColor="rgba(15,23,42,0.4)" />
             <stop offset="100%" stopColor="rgba(15,23,42,0)" />
+          </linearGradient>
+          {/* Der Fuss: das Licht laeuft am Boden aus, sonst steht die Dose
+              nicht auf, sondern hoert einfach auf. */}
+          <linearGradient id={`${uid}-foot`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(15,23,42,0)" />
+            <stop offset="100%" stopColor="rgba(15,23,42,0.34)" />
+          </linearGradient>
+          {/* Das Etikett ist Papier auf einem Zylinder: es bekommt dieselbe
+              Woelbung wie der Korpus, nur flacher. */}
+          <linearGradient id={`${uid}-labelShade`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="rgba(15,23,42,0.34)" />
+            <stop offset="16%" stopColor="rgba(15,23,42,0.06)" />
+            <stop offset="44%" stopColor="rgba(255,255,255,0.5)" />
+            <stop offset="76%" stopColor="rgba(15,23,42,0.05)" />
+            <stop offset="100%" stopColor="rgba(15,23,42,0.36)" />
           </linearGradient>
           <radialGradient id={`${uid}-groundShadow`} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="rgba(0,0,0,0.7)" />
@@ -174,17 +203,25 @@ export function PowderVisual({
             x={POWDER_BODY.x}
             y={POWDER_BODY.y}
             width={POWDER_WIDTHS.body}
-            height="10"
+            height="12"
             fill={`url(#${uid}-shoulder)`}
+          />
+          <rect
+            data-powder-detail="foot"
+            x={POWDER_BODY.x}
+            y={POWDER_BASE.cy - 16}
+            width={POWDER_WIDTHS.body}
+            height="22"
+            fill={`url(#${uid}-foot)`}
           />
           {/* Der wandernde Glanzkern. Beschnitten, sonst malt er neben die
               Dose — derselbe Fehler wie beim Tabletten-Glanz. */}
           <rect
             ref={sheenRef}
             data-powder-detail="sheen"
-            x="30"
+            x="28"
             y={POWDER_BODY.y}
-            width="22"
+            width="20"
             height="120"
             fill={`url(#${uid}-sheen)`}
             opacity={0.12 + visualFocus * 0.3}
@@ -192,43 +229,114 @@ export function PowderVisual({
           />
         </g>
 
+        {/* Das Etikett. Ober- und Unterkante sind Boegen, weil ein umlaufendes
+            Band auf einem Zylinder unter Augenhoehe kein gerader Strich ist. */}
+        <g data-powder-detail="label">
+          <path d={POWDER_LABEL_PATH} fill="#fbfcfe" />
+          {/* Der farbige Streifen am Fuss des Etiketts: er bindet die
+              Eintragsfarbe des Deckels unten wieder ein, damit die Dose nicht
+              in zwei Haelften zerfaellt. Er steht VOR der Schattierung, sonst
+              waere er das einzige flache Teil auf einer runden Dose. */}
+          <path data-powder-detail="label-stripe" d={POWDER_LABEL_STRIPE_PATH} fill={color} />
+          <path d={POWDER_LABEL_PATH} fill={`url(#${uid}-labelShade)`} />
+          <path
+            d={POWDER_LABEL_PATH}
+            fill="none"
+            stroke="rgba(15,23,42,0.18)"
+            strokeWidth="0.6"
+            vectorEffect="non-scaling-stroke"
+          />
+        </g>
+
         <path data-powder-detail="lid" d={POWDER_LID_PATH} fill={color} />
         <path d={POWDER_LID_PATH} fill={`url(#${uid}-lidShade)`} />
+
         <g clipPath={`url(#${uid}-lidClip)`}>
-          <rect
-            data-powder-detail="lid-top"
-            x={POWDER_LID.x}
-            y={POWDER_LID.y}
-            width={POWDER_LID.width}
-            height={POWDER_LID_TOP_BAND}
-            fill={`url(#${uid}-lidTop)`}
-          />
-          {/* Jede Rille ist eine dunkle Kerbe mit einer hellen Kante daneben.
-              Eine einzelne Linie liest sich als aufgemalt. */}
-          <g data-powder-detail="lid-ribs" fill="none" strokeWidth="1">
-            {POWDER_LID_RIB_XS.map(x => (
-              <g key={x}>
+          {/* Die Riffelung. Jede Rille beginnt auf dem vorderen Bogen des
+              oberen Randes und ist eine dunkle Kerbe mit einer hellen Kante
+              daneben — eine einzelne Linie liest sich als aufgemalt. Kerbe und
+              Kante sind je Rille verschieden stark: die Lampe steht links
+              oben, und zu den Raendern hin dreht sich die Flaeche weg. */}
+          <g data-powder-detail="lid-ribs" fill="none">
+            {POWDER_LID_RIBS.map(rib => (
+              <g key={rib.x}>
                 <path
-                  d={`M${x} ${POWDER_LID_RIB_YS.top} L${x} ${POWDER_LID_RIB_YS.bottom}`}
-                  stroke="rgba(0,0,0,0.26)"
+                  d={`M${rib.x} ${rib.yTop} L${rib.x} ${rib.yBottom}`}
+                  stroke={`rgba(0,0,0,${rib.groove})`}
+                  strokeWidth="0.9"
                 />
-                <path
-                  d={`M${x + 1.2} ${POWDER_LID_RIB_YS.top} L${x + 1.2} ${POWDER_LID_RIB_YS.bottom}`}
-                  stroke="rgba(255,255,255,0.12)"
-                  strokeWidth="0.7"
-                />
+                {rib.highlight > 0.02 && (
+                  <path
+                    d={`M${rib.x + 0.85} ${rib.yTop} L${rib.x + 0.85} ${rib.yBottom}`}
+                    stroke={`rgba(255,255,255,${rib.highlight})`}
+                    strokeWidth="0.55"
+                  />
+                )}
               </g>
             ))}
           </g>
           <ellipse
             ref={lidLightRef}
             data-powder-detail="lid-light"
-            cx={36 - visualLightOffset * 6}
-            cy={POWDER_LID.y + POWDER_LID.height / 2 + 2}
-            rx="7"
-            ry="10"
-            fill="rgba(255,255,255,0.32)"
-            opacity={0.14 + visualFocus * 0.24}
+            cx={34 - visualLightOffset * 7}
+            cy={(POWDER_LID_RIM.cy + POWDER_LID_BOTTOM_Y) / 2 + 2}
+            rx="8"
+            ry="9"
+            fill="rgba(255,255,255,0.3)"
+            opacity={0.12 + visualFocus * 0.22}
+          />
+        </g>
+
+        {/* Die Deckflaeche liegt ueber dem Mantel: sie zeigt nach oben und ist
+            deshalb eine eigene Ebene mit eigenem Licht, nicht nur ein dunkles
+            Band am oberen Rand. Erst sie macht aus der Kappe einen Koerper. */}
+        <g data-powder-detail="lid-crown">
+          <ellipse
+            cx={POWDER_LID_RIM.cx}
+            cy={POWDER_LID_RIM.cy}
+            rx={POWDER_LID_RIM.rx}
+            ry={POWDER_LID_RIM.ry}
+            fill={color}
+          />
+          <ellipse
+            cx={POWDER_LID_RIM.cx}
+            cy={POWDER_LID_RIM.cy}
+            rx={POWDER_LID_RIM.rx}
+            ry={POWDER_LID_RIM.ry}
+            fill={`url(#${uid}-crown)`}
+          />
+          {/* Der eingesenkte Spiegel in der Deckflaeche, den jede Schraubkappe
+              hat: eine zweite Ellipse mit eigener Kante. */}
+          <ellipse
+            data-powder-detail="crown-inset"
+            cx={POWDER_LID_RIM.cx}
+            cy={POWDER_LID_RIM.cy}
+            rx={POWDER_LID_RIM.rx - 9}
+            ry={POWDER_LID_RIM.ry - 1.5}
+            fill="none"
+            stroke="rgba(0,0,0,0.22)"
+            strokeWidth="0.7"
+            vectorEffect="non-scaling-stroke"
+          />
+          <ellipse
+            ref={crownRef}
+            data-powder-detail="crown-light"
+            cx={46 - visualLightOffset * 9}
+            cy={POWDER_LID_RIM.cy - 1.4}
+            rx="16"
+            ry="2.4"
+            fill="rgba(255,255,255,0.4)"
+            opacity={0.16 + visualFocus * 0.24}
+          />
+          <ellipse
+            cx={POWDER_LID_RIM.cx}
+            cy={POWDER_LID_RIM.cy}
+            rx={POWDER_LID_RIM.rx}
+            ry={POWDER_LID_RIM.ry}
+            fill="none"
+            stroke="rgba(0,0,0,0.3)"
+            strokeWidth="0.8"
+            vectorEffect="non-scaling-stroke"
           />
         </g>
 
@@ -244,13 +352,14 @@ export function PowderVisual({
         />
       </svg>
 
-      {/* Der Name steht direkt auf dem Korpus, wie bei der Tube: ohne Kammer
-          gibt es kein Etikettband, und die Regel dafuer wird nicht angefasst. */}
+      {/* Der Name steht auf dem Etikett, nicht auf nacktem Kunststoff. Ohne
+          Kammer gibt es kein Etikettband der Glasformen; die Regel dafuer wird
+          nicht angefasst — das hier ist Teil der Dose. */}
       <div
         data-powder-detail="name"
         className="absolute -translate-y-1/2 text-center"
         style={{
-          top: `${POWDER_NAME_TOP_PCT * 100}%`,
+          top: `${(POWDER_NAME_TOP_PCT * 100).toFixed(2)}%`,
           left: `${(POWDER_NAME_INSET_PCT * 100).toFixed(2)}%`,
           right: `${(POWDER_NAME_INSET_PCT * 100).toFixed(2)}%`,
         }}

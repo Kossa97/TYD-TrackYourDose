@@ -55,19 +55,36 @@ und das ist exakt die Höhe, auf der Vial, Ampulle und Tropfflasche stehen.
 Raster 120 × 170, viewBox auf die Objektgrenzen beschnitten: `10 6 100 150`,
 Seitenverhältnis 0,667.
 
+Grundsatz für alles: **die Dose ist ein Zylinder, von leicht oben gesehen.**
+Jeder waagerechte Rand ist deshalb ein Ellipsenbogen, kein Strich. Wo dieser
+Satz verletzt wird, sieht man es sofort — die erste Fassung hatte einen flachen
+Deckel auf einem gerundeten Rechteck und las sich als aufgeklebte Grafik.
+
 **Deckel.** Breiter als der Korpus, damit er als aufgeschraubt liest und nicht
-als abgesetztes Segment. Geriffelt wie die Kappe der Tropfflasche — dieselbe
-Rille aus dunkler Kerbe und heller Kante daneben, weil eine einzelne Linie sich
-als aufgemalt liest. Die flache Oberseite bekommt ein eigenes dunkleres Band:
-sie zeigt vom Licht weg.
+als abgesetztes Segment. Die Deckfläche ist eine eigene Ebene mit eigenem Licht
+und einem eingesenkten Spiegel, wie ihn jede Schraubkappe hat — nicht bloß ein
+dunkles Band am oberen Rand.
 
-**Korpus.** Gerader Zylinder mit gerundetem Fuß und einer schmalen Schulter
-unter dem Deckelrand. Der Zylinderverlauf ist weicher als beim Glas: Kunststoff
-hat kein Kantenlicht, sondern einen breiten Kern.
+**Riffelung.** Sie wird über den **Winkel um die Zylinderachse** verteilt, nicht
+über den Abstand auf dem Bildschirm. Daraus folgen beide Eigenschaften von
+selbst: die Rillen rücken zu den Rändern hin zusammen, wie es die Verkürzung
+verlangt, und jede beginnt auf dem vorderen Bogen des oberen Randes statt an
+einer gemeinsamen geraden Kante. Kerbe und helle Kante sind je Rille
+verschieden stark — die Lampe steht links oben, und zu den Rändern hin dreht
+sich die Fläche weg.
 
-**Name.** Direkt auf den Korpus, mittig, mit `StageMarquee` wie bei der Tube.
-Die Dose ist die breiteste stehende Form und damit die einzige, auf der übliche
-Namen ohne Durchlauf hineinpassen.
+**Korpus.** Gerader Zylinder, unten ein Bogen statt einer Rundung, dazu Schulter
+und Fuß als Licht. Der Verlauf ist weicher als beim Glas: Kunststoff hat kein
+Kantenlicht, sondern einen breiten Kern.
+
+**Etikett.** Ein umlaufendes Band mit farbigem Fußstreifen, der die
+Deckelfarbe unten wieder aufnimmt. Ober- und Unterkante sind dieselben Bögen wie
+am Deckelrand, und der Streifen liegt **unter** der Wölbungsschattierung — sonst
+wäre er das einzige flache Teil auf einer runden Dose.
+
+**Name.** Auf dem Etikett, mit `StageMarquee` wie bei der Tube. Die Dose ist die
+breiteste stehende Form und damit die einzige, auf der übliche Namen ohne
+Durchlauf hineinpassen.
 
 **Wanderndes Licht.** Ein breiter Glanzkern, auf den Korpus beschnitten, plus
 der Bodenschatten der Bühne. Beide folgen `lightOffset`, beide liegen in einem
