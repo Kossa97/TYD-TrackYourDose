@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { carriesLabel } from '../../stage/types'
 import {
   PATCH_ASPECT,
+  PATCH_FLEX_CUT,
   PATCH_FLUTTER,
+  PATCH_OUTLINE,
+  patchBiegung,
   PATCH_BODY,
   PATCH_DOTS,
   PATCH_DOT_R,
@@ -77,6 +80,34 @@ describe('patchShape', () => {
     )
     expect(PATCH_NAME_PCT.left + PATCH_NAME_PCT.width).toBeLessThanOrEqual(1)
     expect(PATCH_NAME_PCT.top + PATCH_NAME_PCT.height).toBeLessThanOrEqual(1)
+  })
+
+  it('geht am Einspannpunkt knickfrei in die ruhende Mitte ueber', () => {
+    // Das war der Fehler der ersten Fassung: drei starre Abschnitte ergaben
+    // dort einen Sprung. Das quadratische Profil ist am Einspannpunkt null
+    // UND hat die Steigung null — deshalb kann kein Knick entstehen.
+    const l = PATCH_FLEX_CUT.left
+    expect(patchBiegung(l).gL).toBe(0)
+    expect(patchBiegung(l - 1).gL).toBeLessThan(0.0002)
+    expect(patchBiegung(PATCH_FLEX_CUT.right).gR).toBe(0)
+    // In der Mitte ruht alles, an den Spitzen ist der Ausschlag voll.
+    expect(patchBiegung(150).gL + patchBiegung(150).gR).toBe(0)
+    expect(patchBiegung(0).gL).toBe(1)
+    expect(patchBiegung(PATCH_BODY.width).gR).toBe(1)
+  })
+
+  it('legt den Umriss als eine einzige Punktfolge ab', () => {
+    // Ein Umriss, nicht drei Teile — nur so kann beim Biegen keine Naht
+    // entstehen. Jeder Punkt traegt sein eigenes Biegegewicht.
+    expect(PATCH_OUTLINE.length).toBeGreaterThan(40)
+    for (const punkt of PATCH_OUTLINE) {
+      expect(typeof punkt.gL).toBe('number')
+      expect(typeof punkt.gR).toBe('number')
+    }
+    // Er ist geschlossen: der letzte Punkt liegt beim ersten.
+    const erst = PATCH_OUTLINE[0]
+    const letzt = PATCH_OUTLINE[PATCH_OUTLINE.length - 1]
+    expect(Math.hypot(erst.x - letzt.x, erst.y - letzt.y)).toBeLessThan(PATCH_BODY.rx)
   })
 
   it('stimmt beide Federn schwingend und gegeneinander ab', () => {

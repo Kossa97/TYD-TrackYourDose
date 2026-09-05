@@ -1,7 +1,7 @@
 # Graph Report - my-stack-foundation  (2026-09-05)
 
 ## Corpus Check
-- 579 files · ~664,703 words
+- 579 files · ~664,698 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -558,8 +558,8 @@ Cohesion: 0.33
 Nodes (4): bloodworkEntries, sb, startDate, weightLogs
 
 ### Community 60 - "Onboarding Callout Layout"
-Cohesion: 0.20
-Nodes (9): FortschrittHeader(), Props, Props, StickyRangeBar(), FortschrittPage(), RANGE_CHIPS, RangeChipKey, rangeFromChip() (+1 more)
+Cohesion: 0.31
+Nodes (6): buildMarqueeMotion(), MarqueeMotion, DivProps, StageLabel(), StageLabelProps, StageMarquee()
 
 ### Community 62 - "Push Test Endpoint"
 Cohesion: 0.14
@@ -870,8 +870,8 @@ Cohesion: 0.50
 Nodes (3): Active Add-Vial Glow Implementation Plan, Global Constraints, Task 1: Persist the Add-Vial Glow While Centered
 
 ### Community 242 - "metrics.ts"
-Cohesion: 0.13
-Nodes (30): FortschrittDashboard(), buildFocusSummary(), FocusSummary, FocusSummaryRow, formatDelta(), formatMetricValue(), pointsInWindow(), substanceBarEnd() (+22 more)
+Cohesion: 0.07
+Nodes (46): FortschrittDashboard(), Props, FortschrittHeader(), Props, EmptyOverview(), NoSubstancesBanner(), Props, Props (+38 more)
 
 ### Community 244 - "Global Constraints"
 Cohesion: 0.40
@@ -962,8 +962,8 @@ Cohesion: 0.10
 Nodes (20): lerp(), LiveBlutspiegelChart(), PAD, context, currentDash, currentPoints, StrokeRecord, strokes (+12 more)
 
 ### Community 294 - "FotosTab.tsx"
-Cohesion: 0.15
-Nodes (14): CapsuleVisual(), CapsuleVisualProps, clamp01(), clampOffset(), NAME_CLASS, SIZE_CLASS, base, render() (+6 more)
+Cohesion: 0.23
+Nodes (11): CapsuleVisual(), CapsuleVisualProps, clamp01(), clampOffset(), NAME_CLASS, SIZE_CLASS, base, render() (+3 more)
 
 ### Community 295 - "InjectionTrackerTabs.tsx"
 Cohesion: 0.23
@@ -994,8 +994,8 @@ Cohesion: 0.43
 Nodes (6): deltaForIngredient(), doseInAmountUnit(), inventoryDeltaForDose(), InventoryDoseInput, InventoryIngredientBasis, positive()
 
 ### Community 302 - "BefundListe.tsx"
-Cohesion: 0.14
-Nodes (20): ampouleAmountLabel(), AmpouleVisual(), AmpouleVisualProps, clamp01(), clampOffset(), SIZE_CLASS, base, render() (+12 more)
+Cohesion: 0.11
+Nodes (23): useSloshSubscribe(), ampouleAmountLabel(), AmpouleVisual(), AmpouleVisualProps, clamp01(), clampOffset(), SIZE_CLASS, base (+15 more)
 
 ### Community 303 - "trackingDepthSchema.test.ts"
 Cohesion: 0.33
@@ -1022,12 +1022,12 @@ Cohesion: 0.20
 Nodes (10): StackStage(), ampouleItem, capsuleItem, nasalSprayItem, penItem, powderItem, renderStage(), tabletItem (+2 more)
 
 ### Community 309 - "liquidGeometry.ts"
-Cohesion: 0.10
-Nodes (25): clamp01(), clampFill(), clampSlosh(), fillMotionShiftPct(), PeptideVialVisual(), PeptideVialVisualProps, vialAmountLabel(), VialTop() (+17 more)
+Cohesion: 0.13
+Nodes (19): clamp01(), clampFill(), clampSlosh(), fillMotionShiftPct(), PeptideVialVisual(), PeptideVialVisualProps, vialAmountLabel(), VialTop() (+11 more)
 
 ### Community 310 - "metricDefinitions.ts"
-Cohesion: 0.12
-Nodes (23): Props, EmptyOverview(), NoSubstancesBanner(), Props, ChartSettingsButton(), Props, Props, VerlaufSection() (+15 more)
+Cohesion: 0.17
+Nodes (16): ChartSettingsButton(), Props, Props, VerlaufSection(), CHART_METRIC_KEYS, isChartMetricKey(), isWellnessMetricKey(), filterCyclesByVisibility() (+8 more)
 
 ### Community 311 - "File Structure"
 Cohesion: 0.18

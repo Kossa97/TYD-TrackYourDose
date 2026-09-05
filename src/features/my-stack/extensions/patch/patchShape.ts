@@ -96,28 +96,61 @@ export const PATCH_GROUND_SHIFT = 10
 // in der Lochwand, gegenüber der Lichtseite oben links.
 export const PATCH_HOLE_OFFSET = { x: 0.4, y: 0.55 } as const
 
-// Beim Wischen biegen sich die beiden Enden gegenläufig, die Mitte mit dem
-// Kissen bleibt ruhig — ein Pflaster ist biegsam, sein Kissen nicht. Dafür
-// wird der Streifen in drei Abschnitte geschnitten; die Enden drehen um einen
-// Angelpunkt, der unter dem Mittelstück liegt, damit die Schnittkante nie
-// sichtbar wird.
-export const PATCH_FLEX_MAX_DEG = 3.5
-export const PATCH_PIVOT_Y = PATCH_BODY.height / 2
+// Beim Wischen biegt sich der Streifen. Nicht in Teilen: er ist EIN Umriss,
+// der durchgehend verformt wird. Drei starre Abschnitte gegeneinander zu
+// drehen ergab einen sichtbaren Knick in der Kontur — die Fläche liess sich
+// abdecken, der Sprung in der Linie nicht.
+export const PATCH_BEND_MAX = 7
 export const PATCH_FLEX_CUT = { left: 95, right: 205 } as const
 
-// Das Mittelstück überlappt beide Schnitte und wird zuletzt gezeichnet.
-export const PATCH_FLEX_CLIPS = {
-  left: { x: -30, width: PATCH_FLEX_CUT.left + 30 },
-  right: { x: PATCH_FLEX_CUT.right, width: PATCH_BODY.width - PATCH_FLEX_CUT.right + 30 },
-  middle: { x: PATCH_FLEX_CUT.left - 4, width: PATCH_FLEX_CUT.right - PATCH_FLEX_CUT.left + 8 },
-} as const
+// Auslenkungsprofil eines einseitig eingespannten Balkens: quadratisch mit
+// dem Abstand vom Einspannpunkt. Am Einspannpunkt ist es null UND hat dort
+// die Steigung null — genau deshalb geht die Biegung ohne Knick in das
+// ruhende Mittelstueck ueber.
+export const patchBiegung = (x: number) => {
+  const l = PATCH_FLEX_CUT.left
+  const r = PATCH_FLEX_CUT.right
+  return {
+    gL: x < l ? ((l - x) / l) ** 2 : 0,
+    gR: x > r ? ((x - r) / (PATCH_BODY.width - r)) ** 2 : 0,
+  }
+}
 
-// Die Enden hängen nicht starr am Kippwinkel, sondern schwingen nach: jedes
-// an einer eigenen Feder. Unterschiedliche Steifigkeit heißt unterschiedliche
-// Eigenfrequenz — sonst wackelten beide im Gleichtakt, und das sähe nach
-// einem Scharnier aus statt nach Flattern.
-// Dämpfungsgrad = daempfung / (2 * sqrt(steifigkeit)): 0,37 links und 0,29
-// rechts, beide deutlich unter 1 und damit schwingend statt kriechend.
+// Der Umriss wird als Punktfolge abgelegt, damit er sich Bild fuer Bild neu
+// zusammensetzen laesst. Die Kappen sind echte Halbkreise, in 10-Grad-
+// Schritten abgetastet: der Sehnenfehler bleibt unter 0,2 Einheiten.
+const umriss = (einzug: number) => {
+  const links = einzug
+  const rechts = PATCH_BODY.width - einzug
+  const oben = einzug
+  const unten = PATCH_BODY.height - einzug
+  const r = PATCH_BODY.rx - einzug
+  const mitte = PATCH_BODY.height / 2
+  const punkte: { x: number; y: number }[] = []
+
+  for (let x = links + r; x <= rechts - r; x += 14) punkte.push({ x, y: oben })
+  punkte.push({ x: rechts - r, y: oben })
+  for (let grad = -90; grad <= 90; grad += 10) {
+    const bogen = (grad * Math.PI) / 180
+    punkte.push({ x: rechts - r + Math.cos(bogen) * r, y: mitte + Math.sin(bogen) * r })
+  }
+  for (let x = rechts - r; x >= links + r; x -= 14) punkte.push({ x, y: unten })
+  punkte.push({ x: links + r, y: unten })
+  for (let grad = 90; grad <= 270; grad += 10) {
+    const bogen = (grad * Math.PI) / 180
+    punkte.push({ x: links + r + Math.cos(bogen) * r, y: mitte + Math.sin(bogen) * r })
+  }
+  return punkte.map(pt => ({ ...pt, ...patchBiegung(pt.x) }))
+}
+
+export const PATCH_OUTLINE = umriss(0)
+export const PATCH_OUTLINE_INNER = umriss(1.2)
+
+// Auch jedes Loch traegt sein Gewicht: es wandert mit der Stelle, an der es
+// sitzt. Blieben die Loecher liegen, waere die Biegung sofort als Trick zu
+// erkennen.
+export const PATCH_DOTS_BEND = PATCH_DOTS.map(pt => ({ ...pt, ...patchBiegung(pt.x) }))
+
 export const PATCH_FLUTTER = {
   left: { steifigkeit: 150, daempfung: 9 },
   right: { steifigkeit: 190, daempfung: 8 },
@@ -126,10 +159,6 @@ export const PATCH_FLUTTER = {
 // Unterhalb davon ist die Bewegung nicht mehr zu sehen und die Schleife hält
 // an, statt für immer Bilder zu rechnen.
 export const PATCH_FLUTTER_RUHE = { winkel: 0.01, tempo: 0.05 } as const
-
-// Jedes Loch gehört zu genau einem Abschnitt und wird mit ihm bewegt.
-export const PATCH_DOTS_LEFT = PATCH_DOTS.filter(p => p.x <= PATCH_FLEX_CUT.left)
-export const PATCH_DOTS_RIGHT = PATCH_DOTS.filter(p => p.x >= PATCH_FLEX_CUT.right)
 
 export const PATCH_SPEC: StageFormSpec = {
   viewBox: PATCH_VIEWBOX,

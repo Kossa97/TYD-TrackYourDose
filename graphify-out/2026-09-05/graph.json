@@ -4253,7 +4253,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_components_sloshcontext_usesloshsubscribe",
-      "community": 309,
+      "community": 302,
       "norm_label": "usesloshsubscribe()"
     },
     {
@@ -6993,7 +6993,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_fortschrittpage",
-      "community": 60,
+      "community": 242,
       "norm_label": "fortschrittpage.tsx"
     },
     {
@@ -7003,7 +7003,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_features_fortschritt_fortschrittpage_fortschrittpage",
-      "community": 60,
+      "community": 242,
       "norm_label": "fortschrittpage()"
     },
     {
@@ -7013,7 +7013,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittdashboard",
-      "community": 310,
+      "community": 242,
       "norm_label": "fortschrittdashboard.tsx"
     },
     {
@@ -7023,7 +7023,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittdashboard_props",
-      "community": 310,
+      "community": 242,
       "norm_label": "props"
     },
     {
@@ -7053,7 +7053,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittheader",
-      "community": 60,
+      "community": 242,
       "norm_label": "fortschrittheader.tsx"
     },
     {
@@ -7063,7 +7063,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittheader_props",
-      "community": 60,
+      "community": 242,
       "norm_label": "props"
     },
     {
@@ -7073,7 +7073,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_fortschrittheader_fortschrittheader",
-      "community": 60,
+      "community": 242,
       "norm_label": "fortschrittheader()"
     },
     {
@@ -7163,7 +7163,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_stickyrangebar",
-      "community": 60,
+      "community": 242,
       "norm_label": "stickyrangebar.tsx"
     },
     {
@@ -7173,7 +7173,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_stickyrangebar_props",
-      "community": 60,
+      "community": 242,
       "norm_label": "props"
     },
     {
@@ -7183,7 +7183,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_stickyrangebar_stickyrangebar",
-      "community": 60,
+      "community": 242,
       "norm_label": "stickyrangebar()"
     },
     {
@@ -7513,7 +7513,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview",
-      "community": 310,
+      "community": 242,
       "norm_label": "emptyoverview.tsx"
     },
     {
@@ -7523,7 +7523,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview_props",
-      "community": 310,
+      "community": 242,
       "norm_label": "props"
     },
     {
@@ -7533,7 +7533,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview_emptyoverview",
-      "community": 310,
+      "community": 242,
       "norm_label": "emptyoverview()"
     },
     {
@@ -7543,7 +7543,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview_step",
-      "community": 310,
+      "community": 242,
       "norm_label": "step()"
     },
     {
@@ -7553,7 +7553,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "src_features_fortschritt_components_overview_emptyoverview_nosubstancesbanner",
-      "community": 310,
+      "community": 242,
       "norm_label": "nosubstancesbanner()"
     },
     {
@@ -8533,7 +8533,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_constants_metric_thresholds",
-      "community": 310,
+      "community": 242,
       "norm_label": "metric_thresholds"
     },
     {
@@ -8543,7 +8543,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_features_fortschritt_constants_wellness_fields",
-      "community": 310,
+      "community": 242,
       "norm_label": "wellness_fields"
     },
     {
@@ -10503,7 +10503,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_test",
-      "community": 60,
+      "community": 242,
       "norm_label": "verlaufrange.test.ts"
     },
     {
@@ -10513,7 +10513,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange",
-      "community": 60,
+      "community": 242,
       "norm_label": "verlaufrange.ts"
     },
     {
@@ -10523,7 +10523,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_rangechipkey",
-      "community": 60,
+      "community": 242,
       "norm_label": "rangechipkey"
     },
     {
@@ -10533,7 +10533,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_range_chips",
-      "community": 60,
+      "community": 242,
       "norm_label": "range_chips"
     },
     {
@@ -10543,7 +10543,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_rangefromchip",
-      "community": 60,
+      "community": 242,
       "norm_label": "rangefromchip()"
     },
     {
@@ -10563,7 +10563,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_barposition",
-      "community": 60,
+      "community": 242,
       "norm_label": "barposition()"
     },
     {
@@ -10573,7 +10573,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_features_fortschritt_lib_verlaufrange_formatrangelabel",
-      "community": 60,
+      "community": 242,
       "norm_label": "formatrangelabel()"
     },
     {
@@ -10713,7 +10713,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_activesubstance",
-      "community": 60,
+      "community": 242,
       "norm_label": "activesubstance"
     },
     {
@@ -10803,7 +10803,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "src_features_fortschritt_types_fortschrittoverviewstate",
-      "community": 310,
+      "community": 242,
       "norm_label": "fortschrittoverviewstate"
     },
     {
@@ -13070,7 +13070,7 @@
       "label": "PatchVisual()",
       "file_type": "code",
       "source_file": "src/features/my-stack/extensions/patch/PatchVisual.tsx",
-      "source_location": "L128",
+      "source_location": "L126",
       "_origin": "ast",
       "id": "src_features_my_stack_extensions_patch_patchvisual_patchvisual",
       "community": 55,
@@ -16543,7 +16543,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_liquidgraphic_test",
-      "community": 309,
+      "community": 302,
       "norm_label": "liquidgraphic.test.ts"
     },
     {
@@ -16553,7 +16553,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_liquidgraphic_test_base",
-      "community": 309,
+      "community": 302,
       "norm_label": "base"
     },
     {
@@ -16563,7 +16563,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_liquidgraphic",
-      "community": 309,
+      "community": 302,
       "norm_label": "liquidgraphic.tsx"
     },
     {
@@ -16573,7 +16573,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_liquidgraphic_liquid_bubbles",
-      "community": 309,
+      "community": 302,
       "norm_label": "liquid_bubbles"
     },
     {
@@ -16583,7 +16583,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_liquidgraphic_liquidgraphichandle",
-      "community": 309,
+      "community": 302,
       "norm_label": "liquidgraphichandle"
     },
     {
@@ -16593,7 +16593,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_liquidgraphic_liquidgraphicprops",
-      "community": 309,
+      "community": 302,
       "norm_label": "liquidgraphicprops"
     },
     {
@@ -16603,7 +16603,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_liquidgraphic_liquidgraphic",
-      "community": 309,
+      "community": 302,
       "norm_label": "liquidgraphic()"
     },
     {
@@ -16613,7 +16613,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_stagelabel_test",
-      "community": 294,
+      "community": 60,
       "norm_label": "stagelabel.test.ts"
     },
     {
@@ -16623,7 +16623,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_stagelabel",
-      "community": 294,
+      "community": 60,
       "norm_label": "stagelabel.tsx"
     },
     {
@@ -16633,7 +16633,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_stagelabel_stagemarquee",
-      "community": 294,
+      "community": 60,
       "norm_label": "stagemarquee()"
     },
     {
@@ -16643,7 +16643,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_stagelabel_divprops",
-      "community": 294,
+      "community": 60,
       "norm_label": "divprops"
     },
     {
@@ -16653,7 +16653,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_stagelabel_stagelabelprops",
-      "community": 294,
+      "community": 60,
       "norm_label": "stagelabelprops"
     },
     {
@@ -16663,7 +16663,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_stagelabel_stagelabel",
-      "community": 294,
+      "community": 60,
       "norm_label": "stagelabel()"
     },
     {
@@ -16803,7 +16803,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_marquee",
-      "community": 294,
+      "community": 60,
       "norm_label": "marquee.ts"
     },
     {
@@ -16813,7 +16813,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_marquee_marqueemotion",
-      "community": 294,
+      "community": 60,
       "norm_label": "marqueemotion"
     },
     {
@@ -16823,7 +16823,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_marquee_buildmarqueemotion",
-      "community": 294,
+      "community": 60,
       "norm_label": "buildmarqueemotion()"
     },
     {
@@ -16933,7 +16933,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_usestagelight_test",
-      "community": 302,
+      "community": 294,
       "norm_label": "usestagelight.test.ts"
     },
     {
@@ -16943,7 +16943,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_usestagelight",
-      "community": 302,
+      "community": 294,
       "norm_label": "usestagelight.ts"
     },
     {
@@ -16963,7 +16963,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_usestagelight_clamp",
-      "community": 302,
+      "community": 294,
       "norm_label": "clamp()"
     },
     {
@@ -16973,7 +16973,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_usestagelight_clampstagelight",
-      "community": 302,
+      "community": 294,
       "norm_label": "clampstagelight()"
     },
     {
@@ -16983,7 +16983,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_features_my_stack_stage_usestagelight_usestagelight",
-      "community": 302,
+      "community": 294,
       "norm_label": "usestagelight()"
     },
     {
@@ -23043,7 +23043,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_pages_progress",
-      "community": 60,
+      "community": 242,
       "norm_label": "progress.tsx"
     },
     {
@@ -35947,7 +35947,7 @@
       "contributor": null,
       "community": 169,
       "norm_label": "graphify skill trigger (/graphify)",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_skill"
     },
     {
       "label": "graphify pipeline (SKILL.md)",
@@ -44778,7 +44778,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/extensions/patch/PatchVisual.tsx",
-      "source_location": "L154",
+      "source_location": "L152",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_patch_patchvisual_patchvisual",
       "target": "src_components_sloshcontext_usesloshsubscribe"
@@ -71979,7 +71979,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/patch/PatchVisual.tsx",
-      "source_location": "L128",
+      "source_location": "L126",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_patch_patchvisual",
       "target": "src_features_my_stack_extensions_patch_patchvisual_patchvisual",
@@ -72087,7 +72087,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/patch/PatchVisual.tsx",
-      "source_location": "L138",
+      "source_location": "L136",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_patch_patchvisual_patchvisual",
       "target": "src_features_my_stack_extensions_patch_patchvisual_clamp01",
@@ -72098,7 +72098,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/features/my-stack/extensions/patch/PatchVisual.tsx",
-      "source_location": "L139",
+      "source_location": "L137",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_patch_patchvisual_patchvisual",
       "target": "src_features_my_stack_extensions_patch_patchvisual_clampoffset",
@@ -72110,7 +72110,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/extensions/patch/PatchVisual.tsx",
-      "source_location": "L236",
+      "source_location": "L234",
       "weight": 1.0,
       "source": "src_features_my_stack_extensions_patch_patchvisual_patchvisual",
       "target": "src_features_my_stack_stage_usestagelight_usestagelight"

@@ -3080,8 +3080,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/patch/PatchVisual.tsx": {
-    "mtime": 1788566294.218187,
-    "ast_hash": "b421b56d35f768939bc7aa88fbd0e524",
+    "mtime": 1788566410.5409136,
+    "ast_hash": "63dd65ced1c8c6601a4e55ed8112c8e5",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/patch/patchShape.test.ts": {

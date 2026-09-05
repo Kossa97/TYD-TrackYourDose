@@ -4,20 +4,18 @@ import { useSloshSubscribe } from '../../../../components/SloshContext'
 import { StageMarquee } from '../../stage/StageLabel'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
+  PATCH_BEND_MAX,
   PATCH_BODY,
-  PATCH_DOTS_LEFT,
-  PATCH_DOTS_RIGHT,
+  PATCH_DOTS_BEND,
   PATCH_DOT_R,
-  PATCH_FLEX_CLIPS,
-  PATCH_FLEX_CUT,
-  PATCH_FLEX_MAX_DEG,
   PATCH_FLUTTER,
   PATCH_FLUTTER_RUHE,
   PATCH_GROUND,
   PATCH_GROUND_SHIFT,
   PATCH_HOLE_OFFSET,
-  PATCH_PIVOT_Y,
   PATCH_NAME_PCT,
+  PATCH_OUTLINE,
+  PATCH_OUTLINE_INNER,
   PATCH_PAD,
   PATCH_SHEEN_SHIFT,
 } from './patchShape'
@@ -52,75 +50,19 @@ const NAME_CLASS: Record<NonNullable<PatchVisualProps['size']>, string> = {
   mini: 'text-[3px] leading-tight',
 }
 
-// Ein Abschnitt des Streifens: Gewebe, Koernung und die doppelte Kontur, die
-// auch Ampulle und Nasenspray tragen — aussen dunkel, innen hell.
-function Gewebe({
-  uid,
-  focus,
-  bodyRef,
-  marker,
-}: {
-  uid: string
-  focus: number
-  bodyRef?: Ref<SVGRectElement>
-  marker?: string
-}) {
-  const masse = {
-    x: PATCH_BODY.x,
-    y: PATCH_BODY.y,
-    width: PATCH_BODY.width,
-    height: PATCH_BODY.height,
-    rx: PATCH_BODY.rx,
+// Setzt den Umriss aus seinen Punkten zusammen und verschiebt jeden davon
+// senkrecht um seinen Anteil an der Biegung. Weil ALLE Teile — Flaeche,
+// Koernung, beide Konturen, Beschnitt — denselben Pfad benutzen, kann darin
+// keine Naht entstehen.
+type Punkt = { x: number; y: number; gL: number; gR: number }
+const zeichne = (punkte: readonly Punkt[], aL: number, aR: number) => {
+  let d = ''
+  for (let i = 0; i < punkte.length; i += 1) {
+    const p = punkte[i]
+    const y = p.y + p.gL * aL + p.gR * aR
+    d += `${i === 0 ? 'M' : 'L'}${p.x.toFixed(2)} ${y.toFixed(2)}`
   }
-  return (
-    <>
-      <rect
-        ref={bodyRef}
-        data-patch-detail={marker}
-        {...masse}
-        fill={`url(#${uid}-fabric)`}
-        opacity={0.74 + focus * 0.26}
-      />
-      <rect {...masse} fill={`url(#${uid}-grain)`} />
-      <rect {...masse} fill="none" stroke="rgba(92,56,24,0.5)" strokeWidth="1.4" />
-      <rect
-        x={masse.x + 1.2}
-        y={masse.y + 1.2}
-        width={masse.width - 2.4}
-        height={masse.height - 2.4}
-        rx={masse.rx - 1.2}
-        fill="none"
-        stroke="rgba(255,255,255,0.3)"
-        strokeWidth="0.9"
-      />
-    </>
-  )
-}
-
-// Echte Loecher statt weisser Punkte: unter jedem hellen Kreis liegt ein
-// dunkler, nach unten rechts versetzt — der Schatten in der Lochwand.
-function Lochung({
-  punkte,
-  marker,
-}: {
-  punkte: readonly { x: number; y: number }[]
-  marker?: string
-}) {
-  return (
-    <g data-patch-detail={marker}>
-      {punkte.map(punkt => (
-        <g key={`${punkt.x}-${punkt.y}`}>
-          <circle
-            cx={punkt.x + PATCH_HOLE_OFFSET.x}
-            cy={punkt.y + PATCH_HOLE_OFFSET.y}
-            r={PATCH_DOT_R}
-            fill="rgba(112,68,28,0.5)"
-          />
-          <circle cx={punkt.x} cy={punkt.y} r={PATCH_DOT_R} fill="rgba(255,255,255,0.9)" />
-        </g>
-      ))}
-    </g>
-  )
+  return `${d}Z`
 }
 
 export function PatchVisual({
@@ -139,10 +81,11 @@ export function PatchVisual({
 
   const rootRef = useRef<HTMLDivElement | null>(null)
   const sheenRef = useRef<SVGRectElement | null>(null)
-  const bodyRef = useRef<SVGRectElement | null>(null)
-  const leftRef = useRef<SVGGElement | null>(null)
-  const rightRef = useRef<SVGGElement | null>(null)
+  const bodyRef = useRef<SVGUseElement | null>(null)
   const groundRef = useRef<SVGEllipseElement | null>(null)
+  const outlineRef = useRef<SVGPathElement | null>(null)
+  const innerRef = useRef<SVGPathElement | null>(null)
+  const dotsRef = useRef<SVGGElement | null>(null)
 
   // Dieselbe Quelle, aus der die Tablette ihr Rollen bezieht. Der Kippwinkel
   // ist hier aber nur das Ziel, nicht die Stellung: jedes Ende haengt an einer
@@ -157,8 +100,8 @@ export function PatchVisual({
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined
 
     const enden = [
-      { ref: leftRef, pivot: PATCH_FLEX_CUT.left, vorzeichen: -1, feder: PATCH_FLUTTER.left, winkel: 0, tempo: 0 },
-      { ref: rightRef, pivot: PATCH_FLEX_CUT.right, vorzeichen: 1, feder: PATCH_FLUTTER.right, winkel: 0, tempo: 0 },
+      { vorzeichen: -1, feder: PATCH_FLUTTER.left, weg: 0, tempo: 0 },
+      { vorzeichen: 1, feder: PATCH_FLUTTER.right, weg: 0, tempo: 0 },
     ]
 
     let raf = 0
@@ -168,7 +111,7 @@ export function PatchVisual({
       Math.abs(tiltRef.current) < 0.001 &&
       enden.every(
         e =>
-          Math.abs(e.winkel) < PATCH_FLUTTER_RUHE.winkel &&
+          Math.abs(e.weg) < PATCH_FLUTTER_RUHE.winkel &&
           Math.abs(e.tempo) < PATCH_FLUTTER_RUHE.tempo,
       )
 
@@ -178,13 +121,25 @@ export function PatchVisual({
       zuletzt = jetzt
 
       for (const e of enden) {
-        const ziel = e.vorzeichen * tiltRef.current * PATCH_FLEX_MAX_DEG
-        e.tempo += ((ziel - e.winkel) * e.feder.steifigkeit - e.tempo * e.feder.daempfung) * dt
-        e.winkel += e.tempo * dt
-        e.ref.current?.setAttribute(
-          'transform',
-          `rotate(${e.winkel.toFixed(3)} ${e.pivot} ${PATCH_PIVOT_Y})`,
-        )
+        const ziel = e.vorzeichen * tiltRef.current * PATCH_BEND_MAX
+        e.tempo += ((ziel - e.weg) * e.feder.steifigkeit - e.tempo * e.feder.daempfung) * dt
+        e.weg += e.tempo * dt
+      }
+      const links = enden[0].weg
+      const rechts = enden[1].weg
+
+      outlineRef.current?.setAttribute('d', zeichne(PATCH_OUTLINE, links, rechts))
+      innerRef.current?.setAttribute('d', zeichne(PATCH_OUTLINE_INNER, links, rechts))
+
+      // Die Loecher wandern mit der Stelle, an der sie sitzen. Blieben sie
+      // liegen, waere die Biegung sofort als Trick zu erkennen.
+      const loecher = dotsRef.current?.children
+      if (loecher) {
+        for (let i = 0; i < loecher.length; i += 1) {
+          const g = PATCH_DOTS_BEND[i]
+          const dy = g.gL * links + g.gR * rechts
+          loecher[i].setAttribute('transform', `translate(0 ${dy.toFixed(2)})`)
+        }
       }
 
       if (ruht() || document.hidden) {
@@ -233,6 +188,9 @@ export function PatchVisual({
 
   useStageLight(applyStageLight, { focus: visualFocus, lightOffset: visualLightOffset }, stageLightRef)
 
+  const ruheAussen = zeichne(PATCH_OUTLINE, 0, 0)
+  const ruheInnen = zeichne(PATCH_OUTLINE_INNER, 0, 0)
+
   return (
     <div
       ref={rootRef}
@@ -249,24 +207,15 @@ export function PatchVisual({
         aria-hidden="true"
       >
         <defs>
+          {/* Der eine Umriss. Flaeche, Koernung, Kontur und Beschnitt greifen
+              alle darauf zu — deshalb bewegt sich beim Biegen zwangslaeufig
+              alles gemeinsam, und es kann keine Naht geben. */}
+          <path id={`${uid}-outline`} ref={outlineRef} d={ruheAussen} />
+          <path id={`${uid}-outlineInner`} ref={innerRef} d={ruheInnen} />
           <clipPath id={`${uid}-bodyClip`}>
-            <rect
-              x={PATCH_BODY.x}
-              y={PATCH_BODY.y}
-              width={PATCH_BODY.width}
-              height={PATCH_BODY.height}
-              rx={PATCH_BODY.rx}
-            />
+            <use href={`#${uid}-outline`} />
           </clipPath>
-          <clipPath id={`${uid}-leftClip`}>
-            <rect x={PATCH_FLEX_CLIPS.left.x} y="-30" width={PATCH_FLEX_CLIPS.left.width} height="148" />
-          </clipPath>
-          <clipPath id={`${uid}-rightClip`}>
-            <rect x={PATCH_FLEX_CLIPS.right.x} y="-30" width={PATCH_FLEX_CLIPS.right.width} height="148" />
-          </clipPath>
-          <clipPath id={`${uid}-midClip`}>
-            <rect x={PATCH_FLEX_CLIPS.middle.x} y="-30" width={PATCH_FLEX_CLIPS.middle.width} height="148" />
-          </clipPath>
+
           {/* Hautfarbenes Gewebe, matt: ein weicher Verlauf statt Glanz. */}
           <linearGradient id={`${uid}-fabric`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#f2c9a3" />
@@ -324,22 +273,29 @@ export function PatchVisual({
           opacity={0.2 + visualFocus * 0.32}
         />
 
-        {/* Die beiden Enden biegen sich, das Mittelstueck deckt zuletzt
-            die Schnittkanten ab. Jeder Abschnitt traegt sein eigenes Gewebe
-            samt Koernung, Kontur und Lochung — sonst bliebe beim Flattern
-            eines davon stehen. */}
-        <g ref={leftRef} clipPath={`url(#${uid}-leftClip)`}>
-          <Gewebe uid={uid} focus={visualFocus} bodyRef={bodyRef} marker="body" />
-          <Lochung punkte={PATCH_DOTS_LEFT} marker="dots" />
-        </g>
+        <use
+          ref={bodyRef}
+          data-patch-detail="body"
+          href={`#${uid}-outline`}
+          fill={`url(#${uid}-fabric)`}
+          opacity={0.74 + visualFocus * 0.26}
+        />
+        <use href={`#${uid}-outline`} fill={`url(#${uid}-grain)`} />
 
-        <g ref={rightRef} clipPath={`url(#${uid}-rightClip)`}>
-          <Gewebe uid={uid} focus={visualFocus} />
-          <Lochung punkte={PATCH_DOTS_RIGHT} />
-        </g>
-
-        <g clipPath={`url(#${uid}-midClip)`}>
-          <Gewebe uid={uid} focus={visualFocus} />
+        {/* Echte Loecher: unter jedem hellen Kreis liegt ein dunkler, nach
+            unten rechts versetzt — der Schatten in der Lochwand. */}
+        <g data-patch-detail="dots" ref={dotsRef}>
+          {PATCH_DOTS_BEND.map(punkt => (
+            <g key={`${punkt.x}-${punkt.y}`}>
+              <circle
+                cx={punkt.x + PATCH_HOLE_OFFSET.x}
+                cy={punkt.y + PATCH_HOLE_OFFSET.y}
+                r={PATCH_DOT_R}
+                fill="rgba(112,68,28,0.5)"
+              />
+              <circle cx={punkt.x} cy={punkt.y} r={PATCH_DOT_R} fill="rgba(255,255,255,0.9)" />
+            </g>
+          ))}
         </g>
 
         <g clipPath={`url(#${uid}-bodyClip)`}>
@@ -348,18 +304,34 @@ export function PatchVisual({
             ref={sheenRef}
             data-patch-detail="sheen"
             x={PATCH_BODY.x + 40}
-            y={PATCH_BODY.y}
+            y={PATCH_BODY.y - 20}
             width="54"
-            height={PATCH_BODY.height}
+            height={PATCH_BODY.height + 40}
             fill={`url(#${uid}-sheen)`}
             opacity={0.05 + visualFocus * 0.16}
             transform={`translate(${(visualLightOffset * PATCH_SHEEN_SHIFT).toFixed(2)} 0)`}
           />
         </g>
 
+        {/* Die doppelte Kontur, die auch Ampulle und Nasenspray tragen. */}
+        <use
+          data-patch-detail="contour"
+          href={`#${uid}-outline`}
+          fill="none"
+          stroke="rgba(92,56,24,0.5)"
+          strokeWidth="1.4"
+        />
+        <use
+          href={`#${uid}-outlineInner`}
+          fill="none"
+          stroke="rgba(255,255,255,0.3)"
+          strokeWidth="0.9"
+        />
+
         {/* Das Kissen sitzt im Gewebe: erst sein Schlagschatten, dann die
             Flaeche, darauf die Webstruktur, zuletzt eine helle Oberkante und
-            eine dunkle Unterkante als Fase. */}
+            eine dunkle Unterkante als Fase. Es bleibt ungebogen — ein Kissen
+            ist steif, und in der Mitte ist die Biegung ohnehin null. */}
         <rect
           x={PATCH_PAD.x - 0.6}
           y={PATCH_PAD.y + 1.6}
@@ -402,7 +374,6 @@ export function PatchVisual({
           strokeWidth="0.9"
           fill="none"
         />
-
       </svg>
 
       {/* Der Name steht waagerecht auf dem Kissen: die Streifenform gibt ihm

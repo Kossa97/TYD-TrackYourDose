@@ -7,10 +7,6 @@ import { PatchVisual } from './PatchVisual'
 const render = (props: Partial<Parameters<typeof PatchVisual>[0]> = {}) =>
   renderToStaticMarkup(createElement(PatchVisual, { name: 'Nikotinpflaster', ...props }))
 
-// useId erzeugt bei jedem Rendern eine andere Kennung; fuer die Clip-Namen
-// zaehlt nur der Teil dahinter.
-const uidFrei = (html: string) => html.match(/id="([^"]*?)bodyClip"/)?.[1] ?? ''
-
 describe('PatchVisual', () => {
   it('meldet sich als Pflaster-Renderer', () => {
     expect(render()).toContain('data-patch-detail="root"')
@@ -70,17 +66,28 @@ describe('PatchVisual', () => {
     expect(gruppe).not.toBe('')
   })
 
-  it('haengt die Lochung an die Abschnitte, nicht an den ganzen Streifen', () => {
-    // Sonst blieben die Loecher stehen, waehrend sich die Enden biegen.
+  it('biegt einen einzigen Umriss statt Teile gegeneinander zu drehen', () => {
+    // Drei starre Abschnitte ergaben beim Flattern einen sichtbaren Knick in
+    // der Kontur: die Flaeche liess sich abdecken, der Sprung in der Linie
+    // nicht. Jetzt gibt es genau einen Pfad, auf den sich alles bezieht.
+    const html = render()
+    expect(html).not.toContain('leftClip')
+    expect(html).not.toContain('rightClip')
+    expect(html).not.toContain('midClip')
+    const kennung = html.match(/<path id="([^"]*-outline)"/)?.[1] ?? ''
+    expect(kennung).not.toBe('')
+    // Flaeche, Koernung, beide Konturen und der Beschnitt haengen daran.
+    expect(html.match(new RegExp(`href="#${kennung}"`, 'g'))?.length).toBeGreaterThanOrEqual(4)
+  })
+
+  it('laesst die Loecher mit der Biegung wandern', () => {
+    // Blieben sie liegen, waere die Biegung sofort als Trick zu erkennen.
     const source = readFileSync(new URL('./PatchVisual.tsx', import.meta.url), 'utf8')
-    const links = source.match(/leftClip\)`\}>[\s\S]*?<\/g>/)?.[0] ?? ''
-    expect(links).toContain('PATCH_DOTS_LEFT')
-    const rechts = source.match(/rightClip\)`\}>[\s\S]*?<\/g>/)?.[0] ?? ''
-    expect(rechts).toContain('PATCH_DOTS_RIGHT')
-    // Und jeder Abschnitt traegt sein eigenes Gewebe, sonst bliebe die
-    // Koernung beim Flattern stehen.
-    expect(links).toContain('<Gewebe')
-    expect(rechts).toContain('<Gewebe')
+    expect(source).toContain('PATCH_DOTS_BEND')
+    const schleife = source.match(/const loecher[\s\S]*?translate\(0 /)?.[0] ?? ''
+    expect(schleife).toContain('gL')
+    expect(schleife).toContain('gR')
+    expect(schleife).toContain('translate(0 ')
   })
 
   it('laesst den Schimmer mit dem Licht wandern', () => {
@@ -133,9 +140,8 @@ describe('PatchVisual', () => {
     // passiert, bevor der Zuhoerer dazukam.
     expect(source).toContain('visibilitychange')
     expect(source).toContain('prefers-reduced-motion')
-    const html = render()
-    expect(html).toContain(`${uidFrei(html)}leftClip`)
-    expect(html).toContain(`${uidFrei(html)}midClip`)
+    // Der Umriss wird Bild fuer Bild neu gesetzt, nicht per Transform gedreht.
+    expect(source).toContain("setAttribute('d'")
   })
 
   it('bekommt weder Etikettband noch Fuellstand', () => {
