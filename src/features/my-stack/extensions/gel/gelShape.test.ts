@@ -7,6 +7,7 @@ import {
   GEL_BODY,
   GEL_DOME,
   GEL_HEADROOM,
+  GEL_INNER_BASE,
   GEL_INNER_TOP,
   GEL_LABEL,
   GEL_LABEL_PATH,
@@ -70,9 +71,17 @@ describe('gelShape', () => {
     expect(GEL_DOME.ry).toBeLessThan(GEL_SURFACE.ry)
   })
 
-  it('setzt das Etikett unter die Masse, nicht darueber', () => {
-    // Sonst waere das durchscheinende Glas sinnlos.
-    expect(GEL_LABEL.top).toBeGreaterThan(GEL_SURFACE.cy + GEL_SURFACE.ry)
+  it('laesst die Masse oben und unten am Etikett vorbeischauen', () => {
+    // Gemessen an der Mittellinie, wo das Auge sie liest: von der Oberflaeche
+    // bis zum Boden, beide als vorderer Bogen. Lag das Band zu tief, schnitt
+    // es die Masse unten ab, statt auf ihr zu liegen — erst der Streifen
+    // darunter zeigt, dass der Tiegel hinter dem Papier weitergeht.
+    const obenSichtbar = GEL_LABEL.top - (GEL_SURFACE.cy + GEL_SURFACE.ry)
+    const untenSichtbar = (GEL_INNER_BASE.cy + GEL_INNER_BASE.ry) - GEL_LABEL.bottom
+    expect(obenSichtbar).toBeGreaterThan(10)
+    expect(untenSichtbar).toBeGreaterThan(10)
+    // Und zwar etwa gleich viel, nicht ein Spalt gegen ein Fenster.
+    expect(Math.abs(obenSichtbar - untenSichtbar)).toBeLessThan(5)
     expect(GEL_LABEL.bottom).toBeLessThan(GEL_BODY.bottom)
     // Und seine Kanten sind Boegen wie alle waagerechten Kanten dieser Form,
     // mit dem Radius des KOERPERS: es klebt aussen auf dem Glas und laeuft bis

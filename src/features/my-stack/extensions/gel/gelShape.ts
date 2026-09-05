@@ -98,15 +98,23 @@ export const GEL_HEADROOM = GEL_SURFACE.cy - GEL_LID_BOTTOM_Y
 
 // ─── Etikett ────────────────────────────────────────────────────────────────
 //
-// Ein Band über dem unteren Drittel: darüber bleibt die Masse sichtbar, sonst
-// wäre das durchscheinende Glas sinnlos.
+// Das Band sitzt so, dass die Masse OBEN UND UNTEN daran vorbeischaut. An der
+// Mittellinie — dort, wo das Auge sie liest — reicht sie vom vorderen Bogen
+// der Oberfläche (60,5) bis zum vorderen Bogen des Bodens (117,5), also über
+// 57 Einheiten. Das Band nimmt die mittleren 24 davon und lässt oben wie unten
+// 16,5 stehen.
+//
+// Vorher lag es bei 84 bis 112: darüber 23,5 Einheiten, darunter 5,5. Damit
+// schnitt es die Masse unten ab, statt auf ihr zu liegen — ein aufgeklebtes
+// Etikett endet aber über dem Boden, und erst der Streifen darunter zeigt,
+// dass der Tiegel hinter dem Papier weitergeht.
 //
 // Es klebt AUSSEN auf dem Glas und läuft deshalb bis an die Silhouette — ein
 // umlaufendes Etikett verschwindet an den Rändern um die Rundung herum, es
 // hört nicht davor auf. Mit Einzug spannte es nur über den Innenraum, und die
 // beiden Streifen Glas daneben liessen es hinter der Wand liegen statt darauf.
 // Sein Radius ist folgerichtig der des Körpers, nicht der des Innenraums.
-export const GEL_LABEL = { top: 84, bottom: 112, ry: 5.5 } as const
+export const GEL_LABEL = { top: 77, bottom: 101, ry: 5.5 } as const
 const LX = GEL_BODY.x
 const RX = 147
 const LABEL_RX = (RX - LX) / 2
