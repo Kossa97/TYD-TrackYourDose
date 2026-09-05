@@ -34,3 +34,9 @@ src/i18n/faq/data/translation-cache.json
 # Agent worktrees (ephemeral, not part of the project)
 .claude/worktrees/
 .worktrees/
+
+# Database dumps — these carry auth.users, bloodwork, dose and injection logs
+backup-*.sql
+backup-*.sqlnpx
+*.dump
+*.sql.gz
