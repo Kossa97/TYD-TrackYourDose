@@ -7,6 +7,7 @@ import { NasalSprayVisual } from '../features/my-stack/extensions/nasal-spray/Na
 import { DropsVisual } from '../features/my-stack/extensions/drops/DropsVisual'
 import { PatchVisual } from '../features/my-stack/extensions/patch/PatchVisual'
 import { PenVisual } from '../features/my-stack/extensions/pen/PenVisual'
+import { PowderVisual } from '../features/my-stack/extensions/powder/PowderVisual'
 import { TabletVisual } from '../features/my-stack/extensions/tablet/TabletVisual'
 import { TubeVisual } from '../features/my-stack/extensions/tube/TubeVisual'
 import { SloshProvider, useSloshEngine } from '../components/SloshContext'
@@ -78,9 +79,17 @@ const PREVIEW_PATCHES = [
   { name: 'Rivastigmin transdermal 9,5 mg pro 24 Stunden' },
 ]
 
+const PREVIEW_POWDERS = [
+  { name: 'Kreatin', color: '#38bdf8' },
+  { name: 'Magnesium', color: '#a3e635' },
+  // bewusst zu lang: die Dose ist die breiteste Form, hier soll sichtbar
+  // werden, wo auch bei ihr der Durchlauf einsetzt
+  { name: 'Beta-Alanin Pulver ohne Zusaetze', color: '#f0b357' },
+]
+
 // Mixed forms in one row, the way My Stack will show them.
 type MixedEntry = {
-  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'drops' | 'patch'
+  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'drops' | 'patch' | 'powder'
   name: string
   amount: number | null
   unit: string | null
@@ -120,6 +129,8 @@ const MIXED_CAROUSEL: MixedEntry[] = [
   // Typ sie verlangt, und wird an den Renderer nicht weitergereicht.
   { kind: 'patch', name: 'Nikotinpflaster', amount: null, unit: null, color: '#a3e635' },
   { kind: 'patch', name: 'Rivastigmin transdermal 9,5 mg pro 24 Stunden', amount: null, unit: null, color: '#a3e635' },
+  { kind: 'powder', name: 'Kreatin', amount: null, unit: null, color: '#38bdf8' },
+  { kind: 'powder', name: 'Magnesium', amount: null, unit: null, color: '#a3e635' },
 ]
 
 export function VialPreview() {
@@ -398,6 +409,15 @@ export function VialPreview() {
         </div>
       </SloshProvider>
 
+      <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
+        Pulver — Dose und Riffeldeckel in Detailgröße
+      </p>
+      <div className="mx-auto flex max-w-4xl flex-wrap items-end justify-center gap-12 pb-2">
+        {PREVIEW_POWDERS.map((p, i) => (
+          <PowderVisual key={p.name} name={p.name} color={p.color} size="large" lightOffset={i - 1} />
+        ))}
+      </div>
+
       {/* The real thing: a mixed carousel narrow enough to actually swipe.
           Ampoules and vials share one ground line and one slosh engine. */}
       <p className="mx-auto max-w-sm pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
@@ -422,7 +442,15 @@ export function VialPreview() {
               data-stage-index={index}
               className={`shrink-0 ${isDragging ? '' : 'snap-center'}`}
             >
-              {entry.kind === 'drops' ? (
+              {entry.kind === 'powder' ? (
+                <PowderVisual
+                  name={entry.name}
+                  color={entry.color}
+                  size="carousel"
+                  isActive={index === activeIndex}
+                  stageLightRef={registerStageLight(index)}
+                />
+              ) : entry.kind === 'drops' ? (
                 <DropsVisual
                   name={entry.name}
                   amount={entry.amount}

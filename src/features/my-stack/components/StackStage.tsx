@@ -11,6 +11,7 @@ import { TabletRenderer } from '../extensions/tablet/TabletRenderer'
 import { DropsRenderer } from '../extensions/drops/DropsRenderer'
 import { PatchRenderer } from '../extensions/patch/PatchRenderer'
 import { PenRenderer } from '../extensions/pen/PenRenderer'
+import { PowderRenderer } from '../extensions/powder/PowderRenderer'
 import { TubeRenderer } from '../extensions/tube/TubeRenderer'
 import { VialRenderer } from '../extensions/peptide/VialRenderer'
 
@@ -70,6 +71,11 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
 
   if (renderer === 'pen') {
     return <PenRenderer item={item} {...visualProps} />
+  }
+
+  // Wie die Tube: undurchsichtig, kein Etikett, kein Pegel, kein Schwappen.
+  if (renderer === 'powder') {
+    return <PowderRenderer item={item} {...visualProps} />
   }
 
   return (

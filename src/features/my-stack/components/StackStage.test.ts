@@ -37,15 +37,17 @@ const vialItem: StackItem = {
   }],
 }
 
-const powderItem: StackItem = {
+// Das Negativbeispiel wandert mit: powder hat seit der Pulverdose einen
+// Renderer, gel noch nicht. Der Waechter unten faengt den naechsten Umzug.
+const gelItem: StackItem = {
   ...vialItem,
-  id: 'kreatin-pulver',
-  display_name: 'Kreatin Monohydrat',
+  id: 'diclofenac-gel',
+  display_name: 'Diclofenac Gel',
   category: 'medication',
-  dosage_form: 'powder',
+  dosage_form: 'gel',
   ingredients: [{
     ...vialItem.ingredients[0],
-    custom_name: 'Kreatin',
+    custom_name: 'Diclofenac',
     amount_value: 5,
     amount_unit: 'g',
     basis_unit: 'g',
@@ -59,14 +61,14 @@ function renderStage(item: StackItem): string {
 describe('StackStage', () => {
   it('rendert das bestehende Vial nur für freigeschaltete Vial-Einträge', () => {
     expect(renderStage(vialItem)).toContain('data-stack-renderer="vial"')
-    expect(renderStage(powderItem)).toContain('data-stack-renderer="unsupported"')
+    expect(renderStage(gelItem)).toContain('data-stack-renderer="unsupported"')
   })
 
   it('behält nicht freigeschaltete Formen in einer textuellen Darstellung', () => {
-    const html = renderStage(powderItem)
+    const html = renderStage(gelItem)
     const source = readFileSync(new URL('./StackStage.tsx', import.meta.url), 'utf8')
 
-    expect(html).toContain('Kreatin Monohydrat')
+    expect(html).toContain('Diclofenac Gel')
     expect(html).toContain('my_stack_visual_pending')
     expect(html).not.toContain('PeptideVialVisual')
     expect(source).not.toContain('<svg')
@@ -117,7 +119,7 @@ describe('StackStage — Ampulle', () => {
   })
 
   it('lässt Formen ohne eigene Grafik weiterhin im Textzustand', () => {
-    expect(renderStage(powderItem)).toContain('data-stack-renderer="unsupported"')
+    expect(renderStage(gelItem)).toContain('data-stack-renderer="unsupported"')
   })
 
   it('hält den Ampullen-Adapter frei von eigener Grafik', () => {
@@ -217,12 +219,12 @@ describe('StackStage — Tablette', () => {
   })
 
   it('benutzt als Negativbeispiel eine Form, die wirklich keinen Renderer hat', () => {
-    // Diese Datei prueft mit powderItem, dass Formen ohne Buehnengrafik im
+    // Diese Datei prueft mit gelItem, dass Formen ohne Buehnengrafik im
     // Textzustand bleiben. Bekommt powder selbst einen Renderer, muss das
     // Beispiel auf eine andere Form ohne Renderer wechseln.
     expect(
-      getDosageForm(powderItem.dosage_form).stageRenderer,
-      'powder hat jetzt einen Renderer — Negativbeispiel auf eine andere Form ohne stageRenderer umstellen',
+      getDosageForm(gelItem.dosage_form).stageRenderer,
+      'gel hat jetzt einen Renderer — Negativbeispiel auf eine andere Form ohne stageRenderer umstellen',
     ).toBeUndefined()
   })
 })
