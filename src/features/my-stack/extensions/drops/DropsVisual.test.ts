@@ -62,12 +62,22 @@ describe('DropsVisual', () => {
     expect(render({ lightOffset: 1 })).toMatch(/data-drops-detail="bloom"[^>]*translate\(9/)
   })
 
-  it('faerbt Kuppe und Kappe als ein Teil in einer Farbe', () => {
-    // In der Vorlage ist es ein gegossenes Stueck, kein Gummisauger auf einem
-    // Deckel. Es gibt deshalb nur einen Pfad und nur eine Fuellung.
+  it('baut den Kopf aus Sauger und Kappe, nicht aus einem Stueck', () => {
+    // Die Vorlage zeigt zwei Teile aus zwei Materialien mit einer Naht
+    // dazwischen. Das ist die Umkehr des einteiligen Gussstuecks.
     const html = render({ color: '#a3e635' })
-    expect(html).toMatch(/data-drops-detail="cap"[^>]*fill="#a3e635"/)
-    expect(html).not.toContain('data-drops-detail="teat"')
+    expect(html).toContain('data-drops-detail="teat"')
+    expect(html).toContain('data-drops-detail="cap"')
+    // Beide tragen ihr Material, nicht die Eintragsfarbe: die kommt seit dem
+    // Klarglas aus der Fluessigkeit, wie beim Nasenspray.
+    expect(html).not.toMatch(/data-drops-detail="cap"[^>]*fill="#a3e635"/)
+    expect(html).not.toMatch(/data-drops-detail="teat"[^>]*fill="#a3e635"/)
+  })
+
+  it('zeichnet den Sauger vor der Kappe, damit sie die Naht deckt', () => {
+    const source = readFileSync(new URL('./DropsVisual.tsx', import.meta.url), 'utf8')
+    expect(source.indexOf('data-drops-detail="teat"'))
+      .toBeLessThan(source.indexOf('data-drops-detail="cap"'))
   })
 
   it('zeichnet die Wandstaerke vor der Kappe, damit sie darunter endet', () => {

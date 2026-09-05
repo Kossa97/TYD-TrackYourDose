@@ -9,6 +9,9 @@ import {
   DROPS_CAP_RIB_XS,
   DROPS_CAP_DOME,
   DROPS_CAP_PATH,
+  DROPS_CAP_TOP_BAND,
+  DROPS_TEAT,
+  DROPS_TEAT_PATH,
   DROPS_CAP_RIB_YS,
   DROPS_FILL,
   DROPS_GROUND_SHIFT,
@@ -99,6 +102,7 @@ export function DropsVisual({
   const sweepRef = useRef<SVGRectElement | null>(null)
   const bloomRef = useRef<SVGRectElement | null>(null)
   const bulbLightRef = useRef<SVGEllipseElement | null>(null)
+  const teatLightRef = useRef<SVGEllipseElement | null>(null)
   const outlineRef = useRef<SVGUseElement | null>(null)
   const liquidRef = useRef<LiquidGraphicHandle | null>(null)
   const labelSheenRef = useRef<HTMLDivElement | null>(null)
@@ -114,7 +118,9 @@ export function DropsVisual({
     bloomRef.current?.setAttribute('transform', `translate(${(o * 9).toFixed(2)} 0)`)
     bloomRef.current?.setAttribute('opacity', (0.2 + f * 0.42).toFixed(3))
     bulbLightRef.current?.setAttribute('cx', (39 - o * 4).toFixed(2))
-    bulbLightRef.current?.setAttribute('opacity', (0.18 + f * 0.3).toFixed(3))
+    bulbLightRef.current?.setAttribute('opacity', (0.16 + f * 0.26).toFixed(3))
+    teatLightRef.current?.setAttribute('cx', (DROPS_CAP_DOME.cx - 5 - o * 2.8).toFixed(2))
+    teatLightRef.current?.setAttribute('opacity', (0.16 + f * 0.26).toFixed(3))
     outlineRef.current?.setAttribute('stroke-opacity', (0.36 + f * 0.28).toFixed(3))
     liquidRef.current?.applyStageLight?.(f, o)
     if (labelSheenRef.current) {
@@ -152,6 +158,9 @@ export function DropsVisual({
           <clipPath id={`${uid}-capClip`}>
             <path d={DROPS_CAP_PATH} />
           </clipPath>
+          <clipPath id={`${uid}-teatClip`}>
+            <path d={DROPS_TEAT_PATH} />
+          </clipPath>
 
           {/* Klarglas, dieselben Werte wie bei Vial, Ampulle und Nasenspray:
               nur die Raender tragen die Glasdicke, die Mitte bleibt leer.
@@ -176,13 +185,36 @@ export function DropsVisual({
             <stop offset="50%" stopColor="rgba(255,255,255,0.55)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
           </linearGradient>
-          {/* Macht aus der Kappenfarbe einen Zylinder. */}
-          <linearGradient id={`${uid}-capShade`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="rgba(0,0,0,0.55)" />
-            <stop offset="20%" stopColor="rgba(255,255,255,0.34)" />
-            <stop offset="50%" stopColor="rgba(255,255,255,0.04)" />
-            <stop offset="78%" stopColor="rgba(255,255,255,0.16)" />
-            <stop offset="100%" stopColor="rgba(0,0,0,0.6)" />
+          {/* Zwei Materialien, wie in der Vorlage. Der Sauger ist mattes
+              Gummi: dunkler, mit einem breiten weichen Glanz statt einer
+              scharfen Kante. Die Kappe ist glatterer Kunststoff: heller, mit
+              einem schmaleren, helleren Glanzstreifen. Beide sind Zylinder,
+              deshalb links und rechts abfallend. */}
+          <linearGradient id={`${uid}-teatBody`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#231a15" />
+            <stop offset="22%" stopColor="#6a5344" />
+            <stop offset="46%" stopColor="#4a382d" />
+            <stop offset="74%" stopColor="#3a2b23" />
+            <stop offset="100%" stopColor="#1d1611" />
+          </linearGradient>
+          {/* Die Kuppe faengt oben zusaetzlich Licht — Gummi ist nie ganz
+              matt, aber der Uebergang bleibt weich. */}
+          <linearGradient id={`${uid}-teatCrown`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.22)" />
+            <stop offset="55%" stopColor="rgba(255,255,255,0.05)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </linearGradient>
+          <linearGradient id={`${uid}-capBody`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#2b211a" />
+            <stop offset="16%" stopColor="#8b7059" />
+            <stop offset="42%" stopColor="#5d4839" />
+            <stop offset="72%" stopColor="#4a392d" />
+            <stop offset="100%" stopColor="#241c16" />
+          </linearGradient>
+          {/* Die Oberseite zeigt vom Licht weg. */}
+          <linearGradient id={`${uid}-capTop`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(0,0,0,0.42)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0)" />
           </linearGradient>
           <linearGradient id={`${uid}-collar`} x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#20242b" />
@@ -291,41 +323,75 @@ export function DropsVisual({
             vectorEffect="non-scaling-stroke"
           />
 
-          {/* Kuppe und Kappe sind ein Teil: ein Umriss, eine Farbe. Der
-              Verlauf darueber macht daraus einen Zylinder statt einer
-              flachen Silhouette. */}
-          <path data-drops-detail="cap" d={DROPS_CAP_PATH} fill={color} />
-          <path d={DROPS_CAP_PATH} fill={`url(#${uid}-capShade)`} />
+          {/* Zwei Teile in der Reihenfolge, in der sie uebereinander
+              liegen: der Sauger zuerst, damit sein Kragen unter dem
+              Kappenrand verschwindet, dann die Kappe darueber. */}
+          <g data-drops-detail="teat">
+            <path d={DROPS_TEAT_PATH} fill={`url(#${uid}-teatBody)`} />
+            <path d={DROPS_TEAT_PATH} fill={`url(#${uid}-teatCrown)`} />
+            {/* Der weiche Laengsglanz auf dem Gummi. Er wandert mit dem
+                Licht und liegt im Umriss, sonst malt er daneben. */}
+            <g clipPath={`url(#${uid}-teatClip)`}>
+              <ellipse
+                ref={teatLightRef}
+                data-drops-detail="dome-light"
+                cx={DROPS_CAP_DOME.cx - 5 - visualLightOffset * 2.8}
+                cy={DROPS_TEAT.widest + 12}
+                rx="3.6"
+                ry="17"
+                fill="rgba(255,255,255,0.4)"
+                opacity={0.16 + visualFocus * 0.26}
+              />
+            </g>
+            <path
+              d={DROPS_TEAT_PATH}
+              fill="none"
+              stroke="rgba(0,0,0,0.4)"
+              strokeWidth="0.8"
+              vectorEffect="non-scaling-stroke"
+            />
+          </g>
+
+          {/* Die Kappe. Der Sauger sitzt ihr auf, also deckt ihr Rand seinen
+              Kragen ab und es entsteht die Naht, die die Vorlage zeigt. */}
+          <path data-drops-detail="cap" d={DROPS_CAP_PATH} fill={`url(#${uid}-capBody)`} />
           <g clipPath={`url(#${uid}-capClip)`}>
-            {/* Geriffelt ist nur der Zylinder, die Kuppe bleibt glatt. */}
+            {/* Die flache Oberseite rund um den Sauger. */}
+            <rect
+              data-drops-detail="cap-top"
+              x={DROPS_CAP.x}
+              y={DROPS_CAP.y}
+              width={DROPS_CAP.width}
+              height={DROPS_CAP_TOP_BAND}
+              fill={`url(#${uid}-capTop)`}
+            />
+            {/* Geriffelt ist nur der Mantel. Jede Rille ist eine dunkle
+                Kerbe mit einer hellen Kante rechts daneben — das ist es,
+                was sie als Rille statt als Strich lesbar macht. */}
             <g data-drops-detail="cap-ribs" fill="none" strokeWidth="0.7">
               {DROPS_CAP_RIB_XS.map(x => (
-                <path
-                  key={x}
-                  d={`M${x} ${DROPS_CAP_RIB_YS.top} L${x} ${DROPS_CAP_RIB_YS.bottom}`}
-                  stroke="rgba(0,0,0,0.22)"
-                />
+                <g key={x}>
+                  <path
+                    d={`M${x} ${DROPS_CAP_RIB_YS.top} L${x} ${DROPS_CAP_RIB_YS.bottom}`}
+                    stroke="rgba(0,0,0,0.3)"
+                  />
+                  <path
+                    d={`M${x + 0.9} ${DROPS_CAP_RIB_YS.top} L${x + 0.9} ${DROPS_CAP_RIB_YS.bottom}`}
+                    stroke="rgba(255,255,255,0.12)"
+                    strokeWidth="0.5"
+                  />
+                </g>
               ))}
             </g>
             <ellipse
               ref={bulbLightRef}
               data-drops-detail="cap-light"
               cx={39 - visualLightOffset * 4}
-              cy={DROPS_CAP.y + 12}
-              rx="5"
-              ry="14"
-              fill="rgba(255,255,255,0.4)"
-              opacity={0.18 + visualFocus * 0.3}
-            />
-            {/* Die gewoelbte Kuppe faengt ihr eigenes Licht. */}
-            <ellipse
-              data-drops-detail="dome-light"
-              cx={DROPS_CAP_DOME.cx - 4 - visualLightOffset * 2}
-              cy={DROPS_CAP_DOME.cy}
-              rx="2.6"
-              ry="7"
-              fill="rgba(255,255,255,0.45)"
-              opacity={0.2 + visualFocus * 0.3}
+              cy={DROPS_CAP.y + DROPS_CAP.height / 2}
+              rx="4.5"
+              ry="9"
+              fill="rgba(255,255,255,0.34)"
+              opacity={0.16 + visualFocus * 0.26}
             />
           </g>
           <path

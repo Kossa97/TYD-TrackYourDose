@@ -4,10 +4,12 @@ import {
   DROPS_ASPECT,
   DROPS_CHAMBER,
   DROPS_CAP,
-  DROPS_CAP_DOME,
-  DROPS_CAP_PATH,
+  DROPS_CAP_RADIUS,
+  DROPS_CAP_RIB_XS,
   DROPS_CAP_RIB_YS,
-  DROPS_CAP_WAIST,
+  DROPS_CAP_TOP_BAND,
+  DROPS_TEAT,
+  DROPS_TEAT_PATH,
   DROPS_WIDTHS,
   DROPS_PIPETTE_OVERLAP,
   DROPS_PIPETTE_TOP,
@@ -99,31 +101,39 @@ describe('dropsShape', () => {
     expect(DROPS_PIPETTE_OVERLAP).toBeGreaterThan(4)
   })
 
-  it('zeichnet Kuppe und Kappe als einen Umriss', () => {
-    // Ein gegossenes Teil, kein Gummisauger auf einem Deckel: ein Pfad von
-    // der Spitze bis zur Unterkante, ohne Absatz dazwischen.
-    expect(DROPS_CAP_PATH.startsWith('M42 30')).toBe(true)
-    expect(DROPS_CAP_PATH).toContain('L70 112')
-    expect(DROPS_CAP_PATH.endsWith('Z')).toBe(true)
-    // Geriffelt ist nur der Zylinder, die Kuppe bleibt glatt.
-    expect(DROPS_CAP_RIB_YS.top).toBeGreaterThan(DROPS_CAP.y)
-    expect(DROPS_CAP_RIB_YS.bottom).toBeLessThan(DROPS_CAP.y + DROPS_CAP.height)
+  it('setzt einen Gummisauger auf eine geriffelte Schraubkappe', () => {
+    // Zwei Teile, nicht ein Gussstueck: so zeigt es die Vorlage. Der Sauger
+    // ist die schmalere, hoehere Haelfte und sitzt oben auf der Form.
+    expect(DROPS_TEAT.top).toBe(DROPS_VIEWBOX.y)
+    expect(DROPS_TEAT.seam).toBe(DROPS_CAP.y)
+    expect(DROPS_TEAT.seam - DROPS_TEAT.top).toBeGreaterThan(DROPS_CAP.height)
+    expect(DROPS_WIDTHS.teat).toBeLessThan(DROPS_WIDTHS.cap)
+    // Die Einschnuerung ueber dem Kragen ist die schmalste Stelle der Form.
+    expect(DROPS_WIDTHS.waist).toBeLessThan(DROPS_WIDTHS.teat)
+    expect(DROPS_TEAT.waistY).toBeGreaterThan(DROPS_TEAT.widest)
+    expect(DROPS_TEAT.waistY).toBeLessThan(DROPS_TEAT.seam)
+    expect(DROPS_TEAT_PATH.endsWith('Z')).toBe(true)
   })
 
-  it('zieht den Kopf zwischen Kuppe und Zylinder wirklich ein', () => {
-    // Der Kommentar versprach eine Einschnuerung, die Geometrie hatte keine:
-    // Kuppe und Saeule waren gleich breit, danach ging es nur auseinander.
-    // Das las sich als Trichter. Die Einschnuerung ist die schmalste Stelle
-    // der ganzen Form.
-    expect(DROPS_WIDTHS.waist).toBeLessThan(DROPS_WIDTHS.teat)
-    // Sie liegt unter der Kuppe und ueber dem Zylinder.
-    expect(DROPS_CAP_WAIST.top).toBeGreaterThan(DROPS_CAP_DOME.cy)
-    expect(DROPS_CAP_WAIST.to).toBeLessThan(DROPS_CAP.y)
-    // Und sie steht wirklich im Pfad, auf beiden Seiten spiegelgleich zu 50.
-    const links = 50 - DROPS_WIDTHS.waist / 2
-    const rechts = 50 + DROPS_WIDTHS.waist / 2
-    expect(DROPS_CAP_PATH).toContain(`L${rechts} ${DROPS_CAP_WAIST.to}`)
-    expect(DROPS_CAP_PATH).toContain(`L${links} ${DROPS_CAP_WAIST.from}`)
+  it('laesst den Sauger unter den Kappenrand reichen', () => {
+    // Ein stumpfer Stoss genau auf der Naht zeigt je nach Skalierung eine
+    // Haarlinie. Die Kappe wird nach dem Sauger gezeichnet und deckt ihn ab.
+    expect(DROPS_TEAT.bottom).toBeGreaterThan(DROPS_CAP.y)
+    expect(DROPS_TEAT.bottom).toBeLessThan(DROPS_CAP.y + DROPS_CAP.height)
+  })
+
+  it('haelt die Kappe kurz und breit und die Riffelung auf dem Mantel', () => {
+    // Die Vorlage zeigt ein breites niedriges Band, keinen Zylinder.
+    expect(DROPS_CAP.width).toBeGreaterThan(DROPS_CAP.height)
+    // Sie ueberdeckt den Hals auf beiden Seiten.
+    expect(DROPS_CAP.width).toBeGreaterThan(DROPS_WIDTHS.neck)
+    // Die Riffelung beginnt unter der flachen Oberseite und endet ueber der
+    // gebrochenen Unterkante.
+    expect(DROPS_CAP_RIB_YS.top).toBeGreaterThan(DROPS_CAP.y + DROPS_CAP_TOP_BAND)
+    expect(DROPS_CAP_RIB_YS.bottom).toBeLessThan(DROPS_CAP.y + DROPS_CAP.height - DROPS_CAP_RADIUS)
+    // Und sie sitzt innerhalb der Kappenbreite.
+    expect(Math.min(...DROPS_CAP_RIB_XS)).toBeGreaterThan(DROPS_CAP.x)
+    expect(Math.max(...DROPS_CAP_RIB_XS)).toBeLessThan(DROPS_CAP.x + DROPS_CAP.width)
   })
 
   it('staffelt die Durchmesser von oben nach unten wie die Vorlage', () => {
@@ -134,7 +144,5 @@ describe('dropsShape', () => {
     expect(DROPS_WIDTHS.neck).toBeLessThan(DROPS_WIDTHS.cap)
     expect(DROPS_WIDTHS.cap).toBeLessThan(DROPS_WIDTHS.body)
     expect(DROPS_CAP.width).toBe(DROPS_WIDTHS.cap)
-    // Der Zylinder ist so hoch wie breit, keine schmale Bandage.
-    expect(DROPS_CAP.height).toBe(DROPS_CAP.width)
   })
 })

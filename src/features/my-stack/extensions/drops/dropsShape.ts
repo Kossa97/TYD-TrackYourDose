@@ -7,41 +7,70 @@ import type { StageFormSpec } from '../../stage/types'
 export const DROPS_VIEWBOX = { x: 14, y: 16, width: 72, height: 272 } as const
 export const DROPS_ASPECT = DROPS_VIEWBOX.width / DROPS_VIEWBOX.height
 
-// Die Durchmesser von oben nach unten. Die Einschnürung ist die schmalste
-// Stelle, der Sauger schmaler als die Kappe, die Kappe schmaler als der
-// Körper und breiter als der Hals — genau diese Staffelung macht die Flasche
-// auf einen Blick als Pipettenflasche lesbar.
-export const DROPS_WIDTHS = { waist: 12, teat: 16, cap: 40, neck: 24, body: 72 } as const
+// Die Durchmesser von oben nach unten. Der Sauger ist schmaler als die
+// Kappe, die Kappe schmaler als der Körper und breiter als der Hals — genau
+// diese Staffelung macht die Flasche auf einen Blick als Pipettenflasche
+// lesbar. Die Einschnürung über dem Kappenrand ist die schmalste Stelle.
+export const DROPS_WIDTHS = { waist: 19, teat: 28, neck: 24, cap: 48, body: 72 } as const
 
-// Die Einschnürung zwischen Kuppe und Aufweitung: sie beginnt unter der
-// Kuppe, hält ihre Breite ein Stück und geht dann in den Zylinder über.
-export const DROPS_CAP_WAIST = { top: 38, from: 44, to: 50 } as const
-const WAIST_L = 50 - DROPS_WIDTHS.waist / 2
-const WAIST_R = 50 + DROPS_WIDTHS.waist / 2
-
-// Kuppe und Kappe sind EIN gegossenes Teil, kein Gummisauger auf einem
-// Deckel: ein durchgehender Umriss von der gewölbten Spitze über die
-// Einschnürung bis zum geriffelten Zylinder. Deshalb auch eine einzige Farbe.
+// Der Kopf ist ZWEITEILIG, wie in der Vorlage: ein Gummisauger auf einer
+// geriffelten Schraubkappe. Das ist die Umkehr des einteiligen Gussstücks
+// aus dem vorigen Durchgang — die Vorlage zeigt zwei Teile aus zwei
+// Materialien, mattes Gummi über glatterem Kunststoff, mit einer sichtbaren
+// Naht dazwischen.
 //
-// Die Einschnürung ist die Stelle, an der die Silhouette wirklich schmaler
-// wird. Ohne sie waren Kuppe und Säule gleich breit und der Umriss weitete
-// sich von oben nach unten nur auf — der Kopf las sich als Trichter statt als
-// Sauger über einer Schraubkappe.
+// Die Proportion kommt ebenfalls von dort: eine kurze breite Kappe, ein
+// deutlich höherer, schmalerer Sauger darüber. Die Kappe überdeckt den Hals
+// (24) auf beiden Seiten um 12 Einheiten.
+export const DROPS_TEAT = {
+  top: 16,
+  // Die sichtbare Naht: hier setzt der Kragen auf dem Kappenrand auf.
+  seam: 86,
+  // Der Sauger reicht darunter weiter, damit die Kappe die Verbindung
+  // überdeckt. Ein stumpfer Stoß genau auf der Naht zeigt je nach Skalierung
+  // eine Haarlinie — derselbe Grund, aus dem die Pipette in die Kappe
+  // hineinreicht.
+  bottom: 91,
+  // Auf dieser Höhe ist der Sauger am breitesten — knapp unter der Kuppe,
+  // von da an verjüngt er sich bis zur Einschnürung.
+  widest: 32,
+  waistY: 74,
+} as const
+
+// Ein geschlossener Umriss: Kuppe, Verjüngung, Einschnürung, und unten der
+// kleine Kragen, mit dem der Sauger auf der Kappe aufsitzt.
+//
+// Das Verhältnis von Höhe zu Breite ist knapp 2,5 : 1 — schlanker wäre es
+// ein Pinselgriff, nicht der Gummiball der Vorlage.
+export const DROPS_TEAT_PATH =
+  'M36 32 C36 15 64 15 64 32 ' +
+  'C64 52 60 60 59.5 74 ' +
+  'C59.5 81 63 81 63 86 ' +
+  'L63 91 L37 91 L37 86 ' +
+  'C37 81 40.5 81 40.5 74 ' +
+  'C40 60 36 52 36 32 Z'
+
+// Die Schraubkappe: kurz, breit, geriffelt, mit leicht gebrochenen Kanten.
+export const DROPS_CAP = { x: 26, y: 86, width: 48, height: 26 } as const
+export const DROPS_CAP_RADIUS = 2.5
 export const DROPS_CAP_PATH =
-  `M42 30 C42 16 58 16 58 30 L58 ${DROPS_CAP_WAIST.top} ` +
-  `C58 41 ${WAIST_R} 41 ${WAIST_R} ${DROPS_CAP_WAIST.from} ` +
-  `L${WAIST_R} ${DROPS_CAP_WAIST.to} C${WAIST_R} 60 70 60 70 72 L70 112 ` +
-  `L30 112 L30 72 C30 60 ${WAIST_L} 60 ${WAIST_L} ${DROPS_CAP_WAIST.to} ` +
-  `L${WAIST_L} ${DROPS_CAP_WAIST.from} C${WAIST_L} 41 42 41 42 ${DROPS_CAP_WAIST.top} Z`
+  'M28.5 86 L71.5 86 C72.9 86 74 87.1 74 88.5 L74 109.5 ' +
+  'C74 110.9 72.9 112 71.5 112 L28.5 112 C27.1 112 26 110.9 26 109.5 ' +
+  'L26 88.5 C26 87.1 27.1 86 28.5 86 Z'
 
-// Der geriffelte Zylinder als eigene Maße: er begrenzt die Riffelung und
-// legt die Unterkante fest, an der die Flasche beginnt.
-export const DROPS_CAP = { x: 30, y: 72, width: 40, height: 40 } as const
-export const DROPS_CAP_RIB_XS = [33, 36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66] as const
-export const DROPS_CAP_RIB_YS = { top: 76, bottom: 108 } as const
+// Die flache Oberseite der Kappe rund um den Sauger. Sie zeigt nach oben,
+// vom Licht weg, und ist deshalb dunkler als der Mantel — ohne diesen
+// Streifen sähe die Kappe wie ein aufgeklebtes Rechteck aus.
+export const DROPS_CAP_TOP_BAND = 5
 
-// Die gewölbte Kuppe oben, für den eigenen Glanzpunkt.
-export const DROPS_CAP_DOME = { cx: 50, cy: 30, rx: 8 } as const
+// Die Riffelung sitzt nur auf dem Mantel, nicht auf der Oberseite und nicht
+// auf den gebrochenen Kanten.
+export const DROPS_CAP_RIB_YS = { top: 93, bottom: 109 } as const
+export const DROPS_CAP_RIB_XS: readonly number[] =
+  Array.from({ length: 17 }, (_, i) => Number((29.5 + i * 2.5625).toFixed(3)))
+
+// Der Glanzpunkt auf der gewölbten Kuppe des Saugers.
+export const DROPS_CAP_DOME = { cx: 50, cy: 34, rx: 9 } as const
 
 // Aussen- und Innenkontur, wie beim Vial und der Ampulle. Die Wandstärke ist
 // 5 % der Körperbreite.
