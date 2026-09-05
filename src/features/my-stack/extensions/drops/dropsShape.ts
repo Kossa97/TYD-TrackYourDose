@@ -34,12 +34,17 @@ export const DROPS_INNER_PATH =
   'C82.4 281 79 284.4 74 284.4 L26 284.4 C21 284.4 17.6 281 17.6 276 ' +
   'L17.6 154 C17.6 142 41.6 138.5 41.6 130 Z'
 
-// Die Glaspipette steckt im Hals und reicht fast bis auf den Boden; ihre
-// Spitze ist rund, nicht angespitzt. Sie ist nur Glas: was hinter ihr liegt,
-// scheint durch. Eine gefüllte Pipette wäre eine Aussage über eine Menge,
-// die die App nicht kennt.
+// Sauger, Kappe und Pipette sind EIN Teil: beim Aufschrauben kommt die
+// Pipette mit heraus. Sie beginnt deshalb oberhalb der Kappenunterkante und
+// wird von der Kappe überdeckt — so gibt es an der Verbindung keine Fuge,
+// egal wie groß die Form skaliert wird.
+export const DROPS_PIPETTE_TOP = 104
 export const DROPS_PIPETTE_PATH =
-  'M47 128 L53 128 L53 254 C53 260 50.5 262 50 262 C49.5 262 47 260 47 254 Z'
+  `M47 ${DROPS_PIPETTE_TOP} L53 ${DROPS_PIPETTE_TOP} L53 254 ` +
+  'C53 260 50.5 262 50 262 C49.5 262 47 260 47 254 Z'
+
+// Die Überdeckung: um so viele Einheiten steckt die Pipette in der Kappe.
+export const DROPS_PIPETTE_OVERLAP = DROPS_CAP.y + DROPS_CAP.height - DROPS_PIPETTE_TOP
 
 // Nur der gerade Teil des Innenraums. Das hält die Kammer rechteckig, so
 // braucht die Geometrie kein Breitenprofil für die Schulter — derselbe

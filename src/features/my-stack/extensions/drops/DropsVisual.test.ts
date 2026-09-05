@@ -20,6 +20,19 @@ describe('DropsVisual', () => {
     expect(render()).toContain('data-drops-detail="root"')
   })
 
+  it('fasst Sauger, Kappe und Pipette zu einem Objekt zusammen', () => {
+    // An einer echten Flasche ist das ein abnehmbares Teil: beim Aufschrauben
+    // kommt die Pipette mit heraus.
+    const source = readFileSync(new URL('./DropsVisual.tsx', import.meta.url), 'utf8')
+    const gruppe = source.match(/data-drops-detail="dropper"[\s\S]*?cap-light[\s\S]*?<\/g>/)?.[0] ?? ''
+    expect(gruppe).toContain('data-drops-detail="pipette"')
+    expect(gruppe).toContain('data-drops-detail="teat"')
+    expect(gruppe).toContain('data-drops-detail="cap"')
+    // Die Pipette steht vor der Kappe im Quelltext, damit die Kappe ihr
+    // oberes Ende ueberdeckt und dort keine Fuge entsteht.
+    expect(gruppe.indexOf('"pipette"')).toBeLessThan(gruppe.indexOf('"cap"'))
+  })
+
   it('zeichnet Sauger, Kappe, Glas und Pipette', () => {
     const html = render()
     expect(html).toContain('data-drops-detail="teat"')

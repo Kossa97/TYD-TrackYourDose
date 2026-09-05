@@ -5,6 +5,8 @@ import {
   DROPS_CHAMBER,
   DROPS_CAP,
   DROPS_WIDTHS,
+  DROPS_PIPETTE_OVERLAP,
+  DROPS_PIPETTE_TOP,
   DROPS_FILL,
   DROPS_INNER_PATH,
   DROPS_LABEL,
@@ -57,6 +59,14 @@ describe('dropsShape', () => {
     // Unterhalb der Schulter und oberhalb des Bodens.
     expect(oben).toBeGreaterThan(152)
     expect(unten).toBeLessThan(288)
+  })
+
+  it('laesst die Pipette in die Kappe hineinreichen', () => {
+    // Ohne Ueberdeckung klaffte an der Verbindung eine Fuge, sobald die Form
+    // hochskaliert wird. Die Kappe deckt das obere Ende ab.
+    expect(DROPS_PIPETTE_TOP).toBeLessThan(DROPS_CAP.y + DROPS_CAP.height)
+    expect(DROPS_PIPETTE_TOP).toBeGreaterThan(DROPS_CAP.y)
+    expect(DROPS_PIPETTE_OVERLAP).toBeGreaterThan(4)
   })
 
   it('staffelt die Durchmesser von oben nach unten wie die Vorlage', () => {

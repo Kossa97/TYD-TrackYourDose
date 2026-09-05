@@ -194,59 +194,6 @@ export function DropsVisual({
           opacity={0.2 + visualFocus * 0.28}
         />
 
-        {/* Der Gummisauger. Er bleibt dunkles Gummi — in der Vorlage traegt
-            die Kappe die Farbe, nicht der Sauger. */}
-        <path data-drops-detail="teat" d={DROPS_TEAT_PATH} fill="#2a2622" />
-        <path
-          d={DROPS_TEAT_PATH}
-          fill="none"
-          stroke="rgba(255,255,255,0.18)"
-          strokeWidth="0.8"
-          vectorEffect="non-scaling-stroke"
-        />
-
-        {/* Die Schraubkappe ist die groesste nichtglaeserne Flaeche und traegt
-            deshalb color_hex. Der Verlauf darueber macht aus der Farbe einen
-            Zylinder statt eines flachen Rechtecks. */}
-        <rect
-          data-drops-detail="cap"
-          x={DROPS_CAP.x}
-          y={DROPS_CAP.y}
-          width={DROPS_CAP.width}
-          height={DROPS_CAP.height}
-          rx={DROPS_CAP.rx}
-          fill={color}
-        />
-        <rect
-          x={DROPS_CAP.x}
-          y={DROPS_CAP.y}
-          width={DROPS_CAP.width}
-          height={DROPS_CAP.height}
-          rx={DROPS_CAP.rx}
-          fill={`url(#${uid}-capShade)`}
-        />
-        <g clipPath={`url(#${uid}-capClip)`}>
-          <g data-drops-detail="cap-ribs" fill="none" strokeWidth="0.7">
-            {DROPS_CAP_RIB_XS.map(x => (
-              <path
-                key={x}
-                d={`M${x} ${DROPS_CAP.y + 3} L${x} ${DROPS_CAP.y + DROPS_CAP.height - 3}`}
-                stroke="rgba(0,0,0,0.22)"
-              />
-            ))}
-          </g>
-          <ellipse
-            ref={bulbLightRef}
-            data-drops-detail="cap-light"
-            cx={39 - visualLightOffset * 4}
-            cy={DROPS_CAP.y + 14}
-            rx="6"
-            ry="16"
-            fill="rgba(255,255,255,0.4)"
-            opacity={0.18 + visualFocus * 0.3}
-          />
-        </g>
-
         <use data-drops-detail="glass" href={`#${uid}-outer`} fill={`url(#${uid}-glass)`} />
 
         {/* Die Fluessigkeit wird von der INNEN-Kontur beschnitten, nie von der
@@ -269,16 +216,78 @@ export function DropsVisual({
           />
         </g>
 
-        {/* Die Glaspipette steht vor der Fluessigkeit und ist selbst leer:
-            was dahinter liegt, scheint durch. */}
-        <path
-          data-drops-detail="pipette"
-          d={DROPS_PIPETTE_PATH}
-          fill="rgba(226,232,240,0.16)"
-          stroke="rgba(226,232,240,0.42)"
-          strokeWidth="0.9"
-          vectorEffect="non-scaling-stroke"
-        />
+        {/* Sauger, Kappe und Pipette sind ein Teil und stehen deshalb in
+            einer Gruppe: beim Aufschrauben kaeme die Pipette mit heraus.
+            Die Pipette wird zuerst gezeichnet, die Kappe deckt ihr oberes
+            Ende ab — dort kann so keine Fuge entstehen. Die Gruppe steht
+            hinter Wandstaerke und Glanzband, weil die vordere Glaswand vor
+            der Pipette liegt. */}
+        <g data-drops-detail="dropper">
+          {/* Die Pipette ist selbst leer: was dahinter liegt, scheint durch.
+              Eine gefuellte waere eine Aussage ueber eine Menge, die die App
+              nicht kennt. */}
+          <path
+            data-drops-detail="pipette"
+            d={DROPS_PIPETTE_PATH}
+            fill="rgba(226,232,240,0.16)"
+            stroke="rgba(226,232,240,0.42)"
+            strokeWidth="0.9"
+            vectorEffect="non-scaling-stroke"
+          />
+
+          {/* Der Gummisauger. Er bleibt dunkles Gummi — in der Vorlage traegt
+              die Kappe die Farbe, nicht der Sauger. */}
+          <path data-drops-detail="teat" d={DROPS_TEAT_PATH} fill="#2a2622" />
+          <path
+            d={DROPS_TEAT_PATH}
+            fill="none"
+            stroke="rgba(255,255,255,0.18)"
+            strokeWidth="0.8"
+            vectorEffect="non-scaling-stroke"
+          />
+
+          {/* Die Schraubkappe ist die groesste nichtglaeserne Flaeche und traegt
+              deshalb color_hex. Der Verlauf darueber macht aus der Farbe einen
+              Zylinder statt eines flachen Rechtecks. */}
+          <rect
+            data-drops-detail="cap"
+            x={DROPS_CAP.x}
+            y={DROPS_CAP.y}
+            width={DROPS_CAP.width}
+            height={DROPS_CAP.height}
+            rx={DROPS_CAP.rx}
+            fill={color}
+          />
+          <rect
+            x={DROPS_CAP.x}
+            y={DROPS_CAP.y}
+            width={DROPS_CAP.width}
+            height={DROPS_CAP.height}
+            rx={DROPS_CAP.rx}
+            fill={`url(#${uid}-capShade)`}
+          />
+          <g clipPath={`url(#${uid}-capClip)`}>
+            <g data-drops-detail="cap-ribs" fill="none" strokeWidth="0.7">
+              {DROPS_CAP_RIB_XS.map(x => (
+                <path
+                  key={x}
+                  d={`M${x} ${DROPS_CAP.y + 3} L${x} ${DROPS_CAP.y + DROPS_CAP.height - 3}`}
+                  stroke="rgba(0,0,0,0.22)"
+                />
+              ))}
+            </g>
+            <ellipse
+              ref={bulbLightRef}
+              data-drops-detail="cap-light"
+              cx={39 - visualLightOffset * 4}
+              cy={DROPS_CAP.y + 14}
+              rx="6"
+              ry="16"
+              fill="rgba(255,255,255,0.4)"
+              opacity={0.18 + visualFocus * 0.3}
+            />
+          </g>
+        </g>
 
         {/* Die Wandstaerke. Non-scaling, damit sie die Karussellbreite ueberlebt. */}
         <use
