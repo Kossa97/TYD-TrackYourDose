@@ -229,6 +229,22 @@ export function PowderVisual({
           />
         </g>
 
+        {/* Die Kontur des Korpus gehoert VOR den Deckel. Sein Pfad schliesst
+            oben waagerecht — als letztes gezeichnet legte dieser Ringschluss
+            einen kerzengeraden Strich quer ueber den ganzen Deckel. Hier
+            deckt der Deckelrand ihn ab, so wie er auch die Korpusflaeche
+            abdeckt. */}
+        <path
+          ref={outlineRef}
+          data-powder-detail="outline"
+          d={POWDER_BODY_PATH}
+          fill="none"
+          stroke="rgba(51,65,85,0.5)"
+          strokeOpacity={0.3 + visualFocus * 0.26}
+          strokeWidth="1.1"
+          vectorEffect="non-scaling-stroke"
+        />
+
         {/* Das Etikett. Ober- und Unterkante sind Boegen, weil ein umlaufendes
             Band auf einem Zylinder unter Augenhoehe kein gerader Strich ist. */}
         <g data-powder-detail="label">
@@ -340,16 +356,6 @@ export function PowderVisual({
           />
         </g>
 
-        <path
-          ref={outlineRef}
-          data-powder-detail="outline"
-          d={POWDER_BODY_PATH}
-          fill="none"
-          stroke="rgba(51,65,85,0.5)"
-          strokeOpacity={0.3 + visualFocus * 0.26}
-          strokeWidth="1.1"
-          vectorEffect="non-scaling-stroke"
-        />
       </svg>
 
       {/* Der Name steht auf dem Etikett, nicht auf nacktem Kunststoff. Ohne

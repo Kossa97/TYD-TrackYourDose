@@ -33,9 +33,14 @@ describe('PowderVisual', () => {
     expect(html).not.toMatch(/data-powder-detail="body"[^>]*fill="#a3e635"/)
   })
 
-  it('zeichnet den Korpus vor dem Deckel, damit er die Naht deckt', () => {
+  it('zeichnet den Korpus samt Kontur vor dem Deckel', () => {
     const source = readFileSync(new URL('./PowderVisual.tsx', import.meta.url), 'utf8')
     expect(source.indexOf('data-powder-detail="body"'))
+      .toBeLessThan(source.indexOf('data-powder-detail="lid"'))
+    // Und die Kontur genauso: der Korpuspfad schliesst oben waagerecht, als
+    // letztes gezeichnet legte dieser Ringschluss einen geraden Strich quer
+    // ueber den Deckel.
+    expect(source.indexOf('data-powder-detail="outline"'))
       .toBeLessThan(source.indexOf('data-powder-detail="lid"'))
   })
 
