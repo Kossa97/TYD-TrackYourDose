@@ -104,6 +104,14 @@ export const GEL_LABEL_BOX = {
   height: GEL_LABEL.bottom - GEL_LABEL.top,
 } as const
 
+// Das Band sitzt auf dem GLAS, nicht auf der ganzen Bühne: der Deckel kragt
+// vier Einheiten je Seite über den Körper, und ein Etikett, das bis dorthin
+// liefe, stünde neben der Flasche in der Luft. Der Einzug wird deshalb aus dem
+// Körper hergeleitet statt geraten.
+export const GEL_LABEL_INSET_PCT = (GEL_BODY.x - GEL_VIEWBOX.x) / GEL_VIEWBOX.width
+export const GEL_LABEL_TOP_PCT = (GEL_LABEL.top - GEL_VIEWBOX.y) / GEL_VIEWBOX.height
+export const GEL_LABEL_HEIGHT_PCT = (GEL_LABEL.bottom - GEL_LABEL.top) / GEL_VIEWBOX.height
+
 export const GEL_NAME_TOP_PCT =
   ((GEL_LABEL.top + GEL_LABEL.bottom) / 2 - GEL_VIEWBOX.y) / GEL_VIEWBOX.height
 export const GEL_NAME_INSET_PCT = (GEL_BODY.x + 7 - GEL_VIEWBOX.x) / GEL_VIEWBOX.width
@@ -112,10 +120,22 @@ export const GEL_NAME_INSET_PCT = (GEL_BODY.x + 7 - GEL_VIEWBOX.x) / GEL_VIEWBOX
 export const GEL_SHEEN_SHIFT = 20
 export const GEL_GROUND_SHIFT = 7
 
+// Die Kammer ist der Bereich, den die Masse einnimmt. Sie steht hier NICHT für
+// Flüssigkeitsphysik — die benutzt der Tiegel nicht —, sondern für sichtbaren
+// Inhalt: daran hängt über `carriesLabel` das Etikettband. Der Tiegel ist Glas
+// mit sichtbarem Inhalt und trägt deshalb dasselbe Band wie Vial, Ampulle,
+// Nasenspray und Tropfflasche, statt eines eigenen weissen Aufklebers.
+export const GEL_CHAMBER = {
+  x: GEL_CAVITY.x,
+  y: GEL_SURFACE.cy,
+  width: GEL_CAVITY.right - GEL_CAVITY.x,
+  height: GEL_CAVITY.bottom - GEL_SURFACE.cy,
+  aspect: (GEL_CAVITY.right - GEL_CAVITY.x) / (GEL_CAVITY.bottom - GEL_SURFACE.cy),
+} as const
+
 export const GEL_SPEC: StageFormSpec = {
   viewBox: GEL_VIEWBOX,
-  // Gel ist keine Flüssigkeit: keine Kammer, damit weder Etikettband noch
-  // Prozentzeile noch Schwappen. Der sichtbare Inhalt wird eigens gezeichnet.
-  chamber: null,
+  chamber: GEL_CHAMBER,
+  // Kein Pegel: der Tiegel zeigt seinen Inhalt, aber die App kennt keine Menge.
   hasMeaningfulFill: false,
 }

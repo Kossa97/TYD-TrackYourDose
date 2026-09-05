@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef } from 'react'
 import type { Ref } from 'react'
 import { useSloshSubscribe } from '../../../../components/SloshContext'
 import type { SloshState } from '../../../../components/sloshEngine'
-import { StageMarquee } from '../../stage/StageLabel'
+import { StageLabel } from '../../stage/StageLabel'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
   GEL_BODY_FILL_PATH,
@@ -12,12 +12,12 @@ import {
   GEL_BODY_PATH,
   GEL_GROUND_SHIFT,
   GEL_INNER_PATH,
-  GEL_LABEL_BOX,
+  GEL_LABEL_HEIGHT_PCT,
+  GEL_LABEL_INSET_PCT,
+  GEL_LABEL_TOP_PCT,
   GEL_LID,
   GEL_LID_CHAMFER_Y,
   GEL_LID_PATH,
-  GEL_NAME_INSET_PCT,
-  GEL_NAME_TOP_PCT,
   GEL_SHEEN_SHIFT,
 } from './gelShape'
 import { GEL_TILT_RISE, stepGelFlow } from './gelFlow'
@@ -47,11 +47,14 @@ const SIZE_CLASS: Record<NonNullable<GelVisualProps['size']>, string> = {
   mini: 'h-[37.1px] w-[46.4px]',
 }
 
+// Weiss, fett, mit Schattenkante — wie auf dem Band von Vial, Ampulle,
+// Nasenspray und Tropfflasche.
+const NAME_SHARED = 'leading-tight font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]'
 const NAME_CLASS: Record<NonNullable<GelVisualProps['size']>, string> = {
-  large: 'text-base leading-tight',
-  carousel: 'text-[7px] sm:text-[9px] leading-tight',
-  compact: 'text-[5.5px] leading-tight',
-  mini: 'text-[3px] leading-tight',
+  large: `text-base sm:text-lg ${NAME_SHARED}`,
+  carousel: `text-[7px] sm:text-[9px] ${NAME_SHARED}`,
+  compact: `text-[5.5px] ${NAME_SHARED}`,
+  mini: `text-[3px] ${NAME_SHARED}`,
 }
 
 export function GelVisual({
@@ -76,6 +79,7 @@ export function GelVisual({
   const gelGlossRef = useRef<SVGEllipseElement | null>(null)
   const crownRef = useRef<SVGEllipseElement | null>(null)
   const outlineRef = useRef<SVGPathElement | null>(null)
+  const labelSheenRef = useRef<HTMLDivElement | null>(null)
   const gelBodyRef = useRef<SVGPathElement | null>(null)
   const gelTopRef = useRef<SVGPathElement | null>(null)
 
@@ -94,6 +98,10 @@ export function GelVisual({
     crownRef.current?.setAttribute('cx', (58 - o * 14).toFixed(2))
     crownRef.current?.setAttribute('opacity', (0.16 + f * 0.24).toFixed(3))
     outlineRef.current?.setAttribute('stroke-opacity', (0.3 + f * 0.26).toFixed(3))
+    if (labelSheenRef.current) {
+      labelSheenRef.current.style.transform = `translateX(${(o * 12).toFixed(2)}%)`
+      labelSheenRef.current.style.opacity = (0.6 + f * 0.22).toFixed(3)
+    }
   }, [])
 
   useStageLight(applyStageLight, { focus: visualFocus, lightOffset: visualLightOffset }, stageLightRef)
@@ -199,13 +207,6 @@ export function GelVisual({
             <stop offset="55%" stopColor="rgba(255,255,255,0.07)" />
             <stop offset="100%" stopColor="rgba(0,0,0,0.26)" />
           </radialGradient>
-          <linearGradient id={`${uid}-labelShade`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="rgba(15,23,42,0.34)" />
-            <stop offset="16%" stopColor="rgba(15,23,42,0.06)" />
-            <stop offset="44%" stopColor="rgba(255,255,255,0.5)" />
-            <stop offset="76%" stopColor="rgba(15,23,42,0.05)" />
-            <stop offset="100%" stopColor="rgba(15,23,42,0.36)" />
-          </linearGradient>
           <radialGradient id={`${uid}-groundShadow`} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="rgba(0,0,0,0.7)" />
             <stop offset="62%" stopColor="rgba(0,0,0,0.4)" />
@@ -309,33 +310,6 @@ export function GelVisual({
           vectorEffect="non-scaling-stroke"
         />
 
-        <g data-gel-detail="label">
-          <rect
-            x={GEL_LABEL_BOX.x}
-            y={GEL_LABEL_BOX.y}
-            width={GEL_LABEL_BOX.width}
-            height={GEL_LABEL_BOX.height}
-            fill="#fbfcfe"
-          />
-          <rect
-            x={GEL_LABEL_BOX.x}
-            y={GEL_LABEL_BOX.y}
-            width={GEL_LABEL_BOX.width}
-            height={GEL_LABEL_BOX.height}
-            fill={`url(#${uid}-labelShade)`}
-          />
-          <rect
-            x={GEL_LABEL_BOX.x}
-            y={GEL_LABEL_BOX.y}
-            width={GEL_LABEL_BOX.width}
-            height={GEL_LABEL_BOX.height}
-            fill="none"
-            stroke="rgba(15,23,42,0.18)"
-            strokeWidth="0.6"
-            vectorEffect="non-scaling-stroke"
-          />
-        </g>
-
         <path data-gel-detail="lid" d={GEL_LID_PATH} fill={color} />
         <path d={GEL_LID_PATH} fill={`url(#${uid}-lidShade)`} />
 
@@ -366,19 +340,32 @@ export function GelVisual({
 
       </svg>
 
-      <div
-        data-gel-detail="name"
-        className="absolute -translate-y-1/2 text-center"
-        style={{
-          top: `${(GEL_NAME_TOP_PCT * 100).toFixed(2)}%`,
-          left: `${(GEL_NAME_INSET_PCT * 100).toFixed(2)}%`,
-          right: `${(GEL_NAME_INSET_PCT * 100).toFixed(2)}%`,
+      {/* Dasselbe Etikettband wie bei Vial, Ampulle, Nasenspray und
+          Tropfflasche: durchscheinend, mit Glasrand und Glanz. Ein weisser
+          Aufkleber sass auf dem Glas wie Papier auf Kunststoff — hier sieht
+          man die Masse hindurch, wie bei jeder anderen Glasform. */}
+      <StageLabel
+        name={labelName}
+        detail={null}
+        className="rounded-sm"
+        nameClassName={NAME_CLASS[size]}
+        detailClassName=""
+        wrapperProps={{
+          'data-gel-detail': 'label',
+          style: {
+            top: `${(GEL_LABEL_TOP_PCT * 100).toFixed(2)}%`,
+            height: `${(GEL_LABEL_HEIGHT_PCT * 100).toFixed(2)}%`,
+            left: `${(GEL_LABEL_INSET_PCT * 100).toFixed(2)}%`,
+            right: `${(GEL_LABEL_INSET_PCT * 100).toFixed(2)}%`,
+          },
         }}
-      >
-        <StageMarquee className={`${NAME_CLASS[size]} font-black tracking-normal text-slate-900`}>
-          {labelName}
-        </StageMarquee>
-      </div>
+        innerProps={{ className: 'flex h-full flex-col justify-center px-2' }}
+        sheenRef={labelSheenRef}
+        sheenStyle={{
+          transform: `translateX(${visualLightOffset * 12}%)`,
+          opacity: 0.6 + visualFocus * 0.22,
+        }}
+      />
     </div>
   )
 }

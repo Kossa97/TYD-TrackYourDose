@@ -25,7 +25,10 @@ describe('GelVisual', () => {
     expect(html).not.toContain('data-gel-detail="gel-surface"')
     expect(html).toContain('data-gel-detail="lid"')
     expect(html).toContain('data-gel-detail="lid-chamfer"')
+    // Dasselbe Band wie bei den anderen Glasformen: durchscheinend, mit
+    // Glasrand und Glanz — kein eigener weisser Aufkleber.
     expect(html).toContain('data-gel-detail="label"')
+    expect(html).toContain('border-y border-white/40 bg-white/28')
   })
 
   it('faerbt Deckel und Masse, nicht das Glas', () => {
@@ -46,7 +49,9 @@ describe('GelVisual', () => {
     expect(src).not.toContain('LiquidGraphic')
     expect(src).not.toContain('fillPct')
     expect(src).not.toContain('bubbles')
-    expect(src).not.toContain('<StageLabel')
+    // Das Etikettband kommt dagegen aus derselben Quelle wie bei Vial und
+    // Ampulle: die Regel „Band nur, wo Inhalt sichtbar ist" bleibt intakt.
+    expect(src).toContain('<StageLabel')
   })
 
   it('neigt die Oberkante, statt den Koerper zu drehen', () => {
@@ -88,10 +93,13 @@ describe('GelVisual', () => {
     expect(render({ size: 'mini' })).toContain('h-[37.1px]')
   })
 
-  it('setzt den Namen auf das Etikett, mit Durchlauf wie bei der Tube', () => {
+  it('setzt den Namen ins Band, mit Durchlauf wie bei den Glasformen', () => {
     const html = render({ name: 'Hydrocortison Acetat Creme 1 Prozent' })
-    expect(html).toContain('data-gel-detail="name"')
+    // Kein eigener Namenskasten mehr: er steht im Band, wie bei Vial und
+    // Ampulle, und in derselben Schrift — weiss, fett, mit Schattenkante.
+    expect(html).not.toContain('data-gel-detail="name"')
     expect(html).toContain('vial-label-marquee')
+    expect(html).toContain('font-black text-white tracking-normal')
     expect(html).toContain('Hydrocortison Acetat Creme 1 Prozent')
   })
 })

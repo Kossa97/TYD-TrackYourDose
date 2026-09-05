@@ -11,10 +11,11 @@ import {
   GEL_HEADROOM,
   GEL_INNER_TOP,
   GEL_LABEL,
-  GEL_LABEL_BOX,
+  GEL_LABEL_HEIGHT_PCT,
+  GEL_LABEL_INSET_PCT,
+  GEL_LABEL_TOP_PCT,
   GEL_LID,
   GEL_LID_PATH,
-  GEL_NAME_TOP_PCT,
   GEL_SEAM_OVERLAP,
   GEL_SPEC,
   GEL_SURFACE,
@@ -46,12 +47,16 @@ describe('gelShape', () => {
     expect(GEL_BODY_FILL_PATH).not.toContain('A ')
   })
 
-  it('traegt weder Etikettband noch Fuellstand', () => {
-    // Gel ist keine Fluessigkeit: keine Kammer, damit weder Etikettband noch
-    // Prozentzeile.
-    expect(GEL_SPEC.chamber).toBeNull()
+  it('traegt das Etikettband der Glasformen, aber keinen Fuellstand', () => {
+    // Die Kammer steht fuer sichtbaren Inhalt, nicht fuer
+    // Fluessigkeitsphysik — die benutzt der Tiegel nicht. Er ist Glas mit
+    // sichtbarem Inhalt und traegt deshalb dasselbe Band wie Vial, Ampulle,
+    // Nasenspray und Tropfflasche, statt eines eigenen weissen Aufklebers.
+    expect(GEL_SPEC.chamber).not.toBeNull()
+    expect(carriesLabel(GEL_SPEC)).toBe(true)
+    // Kein Pegel: der Tiegel zeigt seinen Inhalt, aber die App kennt keine
+    // Menge.
     expect(GEL_SPEC.hasMeaningfulFill).toBe(false)
-    expect(carriesLabel(GEL_SPEC)).toBe(false)
   })
 
   it('laesst den Deckelrand die Glasoberkante ueberdecken', () => {
@@ -102,13 +107,16 @@ describe('gelShape', () => {
     expect(Math.abs(obenSichtbar - untenSichtbar)).toBeLessThan(5)
   })
 
-  it('klebt das Etikett aussen auf, bis an die Silhouette', () => {
-    // Mit Einzug spannte es nur ueber den Innenraum, und die beiden Streifen
-    // Glas daneben liessen es hinter der Wand liegen statt darauf.
-    expect(GEL_LABEL_BOX.x).toBe(GEL_BODY.x)
-    expect(GEL_LABEL_BOX.width).toBe(GEL_BODY.right - GEL_BODY.x)
-    const namensHoehe = GEL_VIEWBOX.y + GEL_NAME_TOP_PCT * GEL_VIEWBOX.height
-    expect(namensHoehe).toBeGreaterThan(GEL_LABEL.top)
-    expect(namensHoehe).toBeLessThan(GEL_LABEL.bottom)
+  it('gibt dem Band dieselben Masse wie den Glasformen', () => {
+    // StageLabel wird ueber Prozent der viewBox gesetzt, nicht ueber
+    // viewBox-Einheiten — dieselbe Schnittstelle wie bei der Tropfflasche.
+    const oben = GEL_VIEWBOX.y + GEL_LABEL_TOP_PCT * GEL_VIEWBOX.height
+    const hoehe = GEL_LABEL_HEIGHT_PCT * GEL_VIEWBOX.height
+    expect(oben).toBeCloseTo(GEL_LABEL.top, 6)
+    expect(hoehe).toBeCloseTo(GEL_LABEL.bottom - GEL_LABEL.top, 6)
+    // Und es sitzt auf dem Glas, nicht auf der ganzen Buehne: der Deckel kragt
+    // ueber den Koerper, ein Band bis dorthin staende neben der Flasche.
+    const links = GEL_VIEWBOX.x + GEL_LABEL_INSET_PCT * GEL_VIEWBOX.width
+    expect(links).toBeCloseTo(GEL_BODY.x, 6)
   })
 })
