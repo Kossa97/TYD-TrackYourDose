@@ -220,9 +220,9 @@
     "semantic_hash": ""
   },
   "src/components/BlutspiegelCarousel.tsx": {
-    "mtime": 1784924362.3449404,
-    "ast_hash": "15b0d8f6a13d4b48aeda2b135732b36f",
-    "semantic_hash": ""
+    "mtime": 1780510239.387169,
+    "ast_hash": "49fa3d076d3a63902901d93a390650cb",
+    "semantic_hash": "49fa3d076d3a63902901d93a390650cb"
   },
   "src/components/CarouselChrome.tsx": {
     "mtime": 1783100259.6853576,
@@ -325,9 +325,9 @@
     "semantic_hash": "3ff49ae0d597d3d7b923fe0988bf4011"
   },
   "src/components/injection3d/InjectionHistorySheet.tsx": {
-    "mtime": 1784924362.3464499,
-    "ast_hash": "86d79301cf615aa29e270ee4376ee223",
-    "semantic_hash": ""
+    "mtime": 1782951695.1023557,
+    "ast_hash": "957a684d12ffed157310ccd317f41bcf",
+    "semantic_hash": "957a684d12ffed157310ccd317f41bcf"
   },
   "src/components/injection3d/InjectionIntroSheet.tsx": {
     "mtime": 1782951695.1023557,
@@ -335,9 +335,9 @@
     "semantic_hash": "8bb70b34f1d49fe111793ba00c54ac2b"
   },
   "src/components/injection3d/InjectionLogSheet.tsx": {
-    "mtime": 1784924362.346954,
-    "ast_hash": "1189a289761d4ccc723bdfb6c47b393b",
-    "semantic_hash": ""
+    "mtime": 1782951695.1038618,
+    "ast_hash": "df0478aec2fae047a779e5292bf1a99d",
+    "semantic_hash": "df0478aec2fae047a779e5292bf1a99d"
   },
   "src/components/injection3d/InjectionMapCanvas.test.ts": {
     "mtime": 1783498671.6178875,
@@ -360,8 +360,8 @@
     "semantic_hash": "f14a8c31ff5e41ca474743f669e7652c"
   },
   "src/components/injection3d/InjectionTrackerTabs.tsx": {
-    "mtime": 1784924362.347958,
-    "ast_hash": "fb2dac99cdf5e0ea6903fa6c9c166ae7",
+    "mtime": 1783497529.064263,
+    "ast_hash": "f494932be249ce90eb92677aacec53f5",
     "semantic_hash": ""
   },
   "src/components/liquidGeometry.test.ts": {
@@ -690,14 +690,14 @@
     "semantic_hash": ""
   },
   "src/lib/doseAdjustmentBackfill.test.ts": {
-    "mtime": 1784924362.3551273,
-    "ast_hash": "0bbfde3c90fb2848ddbc95ad2e682df2",
-    "semantic_hash": ""
+    "mtime": 1783030609.0258646,
+    "ast_hash": "b61f45e1afe879573611d3b143ef6d65",
+    "semantic_hash": "b61f45e1afe879573611d3b143ef6d65"
   },
   "src/lib/doseAdjustmentBackfill.ts": {
-    "mtime": 1784924362.3551273,
-    "ast_hash": "524c8cd76807e01de94c33f287ba610e",
-    "semantic_hash": ""
+    "mtime": 1783030609.026865,
+    "ast_hash": "fbf4cc55227fad7a907515d345564577",
+    "semantic_hash": "fbf4cc55227fad7a907515d345564577"
   },
   "src/lib/haptics.ts": {
     "mtime": 1780359700.2346246,
@@ -710,9 +710,9 @@
     "semantic_hash": "6d751b81609881cccc06d9beb61d3c73"
   },
   "src/lib/injectionDeepLink.test.ts": {
-    "mtime": 1784924362.356246,
-    "ast_hash": "984f61245df89155ada6cea7a981749f",
-    "semantic_hash": ""
+    "mtime": 1782951695.1074314,
+    "ast_hash": "de39bcfea4b8555afc9b6723a6f7bb0f",
+    "semantic_hash": "de39bcfea4b8555afc9b6723a6f7bb0f"
   },
   "src/lib/injectionDeepLink.ts": {
     "mtime": 1782951695.1074314,
@@ -720,9 +720,9 @@
     "semantic_hash": "b4b221ea7a2cb954fa924547a36b1a4b"
   },
   "src/lib/injectionGeometry.test.ts": {
-    "mtime": 1784924362.3567502,
-    "ast_hash": "455fb7f8f642210e247082efc69e5108",
-    "semantic_hash": ""
+    "mtime": 1782951695.1074314,
+    "ast_hash": "e74281bc07e36260559c8f7e5ef46c49",
+    "semantic_hash": "e74281bc07e36260559c8f7e5ef46c49"
   },
   "src/lib/injectionGeometry.ts": {
     "mtime": 1782951695.108431,
@@ -730,9 +730,9 @@
     "semantic_hash": "00092f2fec0c824e6a62159c1ccdf63d"
   },
   "src/lib/injectionHistory.test.ts": {
-    "mtime": 1784924362.3577538,
-    "ast_hash": "8a747c473b603c9adc35d748193d8819",
-    "semantic_hash": ""
+    "mtime": 1782951695.108431,
+    "ast_hash": "3f292c18916d5b478a042b4bbd0b7fd2",
+    "semantic_hash": "3f292c18916d5b478a042b4bbd0b7fd2"
   },
   "src/lib/injectionHistory.ts": {
     "mtime": 1782951695.108431,
@@ -750,9 +750,9 @@
     "semantic_hash": "881aa93ee4a9407f64f2265edd43c38f"
   },
   "src/lib/injectionLogTypes.ts": {
-    "mtime": 1784924362.3577538,
-    "ast_hash": "8b641e7057489834339f7b5d9dc1ac48",
-    "semantic_hash": ""
+    "mtime": 1782951695.1094315,
+    "ast_hash": "3d88dc7fe78b7f67b0d288716c1c1b29",
+    "semantic_hash": "3d88dc7fe78b7f67b0d288716c1c1b29"
   },
   "src/lib/injectionModelMaterial.test.ts": {
     "mtime": 1782951695.1094315,
@@ -765,24 +765,24 @@
     "semantic_hash": "13cc647be37f20abd070e01921cb568d"
   },
   "src/lib/injectionPersistence.test.ts": {
-    "mtime": 1784924362.3592849,
-    "ast_hash": "8d3427075ec2dec46400a808936c6e7c",
-    "semantic_hash": ""
+    "mtime": 1782951695.1104321,
+    "ast_hash": "61473eebaefac83e6f47dc80653b0e5a",
+    "semantic_hash": "61473eebaefac83e6f47dc80653b0e5a"
   },
   "src/lib/injectionPersistence.ts": {
-    "mtime": 1784924362.3592849,
-    "ast_hash": "51788c72935a5a1e93f67deff953f9f0",
-    "semantic_hash": ""
+    "mtime": 1782951695.1104321,
+    "ast_hash": "497f9a56bb46459bdc84c2226bed31ea",
+    "semantic_hash": "497f9a56bb46459bdc84c2226bed31ea"
   },
   "src/lib/injectionPinPresentation.test.ts": {
-    "mtime": 1784924362.3602881,
-    "ast_hash": "059cb33c03829ccd12ed7e6eff9d3765",
-    "semantic_hash": ""
+    "mtime": 1782951695.111432,
+    "ast_hash": "388ef8945257eb50aae3eba199f5de7b",
+    "semantic_hash": "388ef8945257eb50aae3eba199f5de7b"
   },
   "src/lib/injectionPinPresentation.ts": {
-    "mtime": 1784924362.3602881,
-    "ast_hash": "59d5886db128d4ed594be3aa55276dfc",
-    "semantic_hash": ""
+    "mtime": 1782951695.111432,
+    "ast_hash": "e49622f62c60d18101d1a930cb7616bb",
+    "semantic_hash": "e49622f62c60d18101d1a930cb7616bb"
   },
   "src/lib/injectionTrackerTabs.test.ts": {
     "mtime": 1782951695.111432,
@@ -795,24 +795,24 @@
     "semantic_hash": "946ceec232f859dfaed596f48443c6f5"
   },
   "src/lib/insights.ts": {
-    "mtime": 1784924362.3618183,
-    "ast_hash": "5b6e45ac97ac8f656f78caf0f489cfbd",
-    "semantic_hash": ""
+    "mtime": 1779884492.6761854,
+    "ast_hash": "92be4210d84930044a35caac2fd0373c",
+    "semantic_hash": "92be4210d84930044a35caac2fd0373c"
   },
   "src/lib/intakeSchedule.test.ts": {
-    "mtime": 1784924362.3618183,
-    "ast_hash": "8d58cb8d273dd991eefcd76852110c62",
-    "semantic_hash": ""
+    "mtime": 1782951695.1124325,
+    "ast_hash": "00b3d500775420bcb33fb56f85c313a0",
+    "semantic_hash": "00b3d500775420bcb33fb56f85c313a0"
   },
   "src/lib/intakeSchedule.ts": {
-    "mtime": 1784924362.363826,
-    "ast_hash": "3325f5a0d169d1b7f715e78515a9f36b",
-    "semantic_hash": ""
+    "mtime": 1782951695.1124325,
+    "ast_hash": "63b22e90a9c53c887d4119c0c20fa3fa",
+    "semantic_hash": "63b22e90a9c53c887d4119c0c20fa3fa"
   },
   "src/lib/openInjectionIntakeFilters.test.ts": {
-    "mtime": 1784924362.3678784,
-    "ast_hash": "2feb60428c20061cbf311587171b2510",
-    "semantic_hash": ""
+    "mtime": 1782951695.1124325,
+    "ast_hash": "fa772485b780c93b4baf3973d41374e6",
+    "semantic_hash": "fa772485b780c93b4baf3973d41374e6"
   },
   "src/lib/openInjectionIntakeFilters.ts": {
     "mtime": 1782951695.1134322,
@@ -845,24 +845,24 @@
     "semantic_hash": "f82ff4358df760993af86d14e15a1be7"
   },
   "src/lib/peptideStock.ts": {
-    "mtime": 1784924362.3678784,
-    "ast_hash": "2068ea7ae95e93cbf0c54a03a82d1688",
-    "semantic_hash": ""
+    "mtime": 1782951695.1134322,
+    "ast_hash": "bdc9bcc0afcc25f2f29f0cd88758d8d5",
+    "semantic_hash": "bdc9bcc0afcc25f2f29f0cd88758d8d5"
   },
   "src/lib/protocolPdf/loadProtocolData.ts": {
-    "mtime": 1784924362.3694189,
-    "ast_hash": "d622e7dd61f4433ab110e20b2775aa57",
-    "semantic_hash": ""
+    "mtime": 1783030559.5501754,
+    "ast_hash": "c23790e1d881cc5ca891ad4495d1480d",
+    "semantic_hash": "c23790e1d881cc5ca891ad4495d1480d"
   },
   "src/lib/protocolPdf/protocolPdf.test.ts": {
-    "mtime": 1784924362.370422,
-    "ast_hash": "541c57ce91812fa52876a0aa490f0715",
-    "semantic_hash": ""
+    "mtime": 1783030559.5501754,
+    "ast_hash": "3538783d56c5ce8b0cafe38a88efb499",
+    "semantic_hash": "3538783d56c5ce8b0cafe38a88efb499"
   },
   "src/lib/protocolPdf/renderProtocolPdf.ts": {
-    "mtime": 1784924362.3709269,
-    "ast_hash": "b1fe029520c30ac38092c082ef26c6f5",
-    "semantic_hash": ""
+    "mtime": 1783030559.5511756,
+    "ast_hash": "cd67f736720772880b8e683d4339ceff",
+    "semantic_hash": "cd67f736720772880b8e683d4339ceff"
   },
   "src/lib/protocolPdf/sections.ts": {
     "mtime": 1783030559.5521767,
@@ -870,9 +870,9 @@
     "semantic_hash": "10bfbbd811ff382b6177528a6c4865f2"
   },
   "src/lib/protocolPdf/types.ts": {
-    "mtime": 1784924362.3720682,
-    "ast_hash": "2582b38b34e2377e29512e73b443913c",
-    "semantic_hash": ""
+    "mtime": 1783030559.5521767,
+    "ast_hash": "008edaf1c5266f1c13e9cba53413d3e4",
+    "semantic_hash": "008edaf1c5266f1c13e9cba53413d3e4"
   },
   "src/lib/pushLocal.ts": {
     "mtime": 1779884492.6761854,
@@ -915,14 +915,14 @@
     "semantic_hash": "33a2ccf01de878f5d3e282fb390f08cd"
   },
   "src/pages/Bewertungen.tsx": {
-    "mtime": 1784924362.372573,
-    "ast_hash": "1cef068bb74212e1b933627dc8a103a6",
-    "semantic_hash": ""
+    "mtime": 1783030559.5531757,
+    "ast_hash": "3d2a5d0061d188e1ccb16ac8fe06ce25",
+    "semantic_hash": "3d2a5d0061d188e1ccb16ac8fe06ce25"
   },
   "src/pages/BlutspiegelSimulation.tsx": {
-    "mtime": 1784924362.3735766,
-    "ast_hash": "bca8d14f98947b39c342b12dff33a7ba",
-    "semantic_hash": ""
+    "mtime": 1781453823.583075,
+    "ast_hash": "79e58ed245896fbc0967e6b054eaa0f7",
+    "semantic_hash": "79e58ed245896fbc0967e6b054eaa0f7"
   },
   "src/pages/Blutwerte.tsx": {
     "mtime": 1784845751.6588714,
@@ -935,8 +935,8 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
-    "mtime": 1784924362.3751104,
-    "ast_hash": "b3f95ecb6379a0e38bcf3a57176ea365",
+    "mtime": 1783968772.0195153,
+    "ast_hash": "2d3c8896c9e302c7b96dffd09f3f713f",
     "semantic_hash": ""
   },
   "src/pages/FAQ.tsx": {
@@ -955,28 +955,28 @@
     "semantic_hash": "d8378ce27b5556725b4cb3baf19868a0"
   },
   "src/pages/Home.tsx": {
-    "mtime": 1784924362.376112,
-    "ast_hash": "bfd5b633fe4dbab40520fab78a48b33e",
+    "mtime": 1783495404.0622115,
+    "ast_hash": "b0cc71f4f5bb2ec2a8d7cd454478e32a",
     "semantic_hash": ""
   },
   "src/pages/InjektionsTracker.test.ts": {
-    "mtime": 1784924362.3771117,
-    "ast_hash": "48862278bb7977655ab3a9b7477284b8",
+    "mtime": 1783497555.9934466,
+    "ast_hash": "090325dae758ae0828925a4eb5c7f967",
     "semantic_hash": ""
   },
   "src/pages/InjektionsTracker.tsx": {
-    "mtime": 1784924362.377611,
-    "ast_hash": "970d86f9b4df86de66c04cadb7f66733",
+    "mtime": 1783497478.8923721,
+    "ast_hash": "622429899d2631eff397fe4f6b2f9a8f",
     "semantic_hash": ""
   },
   "src/pages/Peptide.test.ts": {
-    "mtime": 1784924362.3786113,
-    "ast_hash": "6dafea8e328ebc957d8fda42993e840f",
+    "mtime": 1784067813.0943954,
+    "ast_hash": "59d0eabcbc09e410baa5b1700c5f0387",
     "semantic_hash": ""
   },
   "src/pages/Peptide.tsx": {
-    "mtime": 1784924362.3806112,
-    "ast_hash": "0e699b21e5c9510f398216da66ebedce",
+    "mtime": 1784067779.4633126,
+    "ast_hash": "bb8b884e9efa388d32e601cec24c1d1d",
     "semantic_hash": ""
   },
   "src/pages/PeptideDetailPage.tsx": {
@@ -1000,19 +1000,19 @@
     "semantic_hash": ""
   },
   "src/pages/Protokoll.tsx": {
-    "mtime": 1784924362.3816113,
-    "ast_hash": "005332cfdea7ea8e9036461d9325d52c",
-    "semantic_hash": ""
+    "mtime": 1783030559.5571754,
+    "ast_hash": "f3b5ff15e41df144831273b192b892be",
+    "semantic_hash": "f3b5ff15e41df144831273b192b892be"
   },
   "src/pages/PublicProfile.tsx": {
-    "mtime": 1784924362.3826115,
-    "ast_hash": "5e1f42d208041b44b4426d51c4271e24",
-    "semantic_hash": ""
+    "mtime": 1781562196.6072085,
+    "ast_hash": "ab689c624f82f206c6b19a0fb0fe1272",
+    "semantic_hash": "ab689c624f82f206c6b19a0fb0fe1272"
   },
   "src/pages/Rechner.tsx": {
-    "mtime": 1784924362.3831122,
-    "ast_hash": "a907043a3f4d8fa3532553c09244eeef",
-    "semantic_hash": ""
+    "mtime": 1780146653.3818803,
+    "ast_hash": "3ee0fdae71f56df74727950b8ec60cdd",
+    "semantic_hash": "3ee0fdae71f56df74727950b8ec60cdd"
   },
   "src/pages/StudyDetail.tsx": {
     "mtime": 1779884492.6792195,
@@ -1020,9 +1020,9 @@
     "semantic_hash": "e43e042adf09628565e595615fd1d07e"
   },
   "src/pages/Tagebuch.tsx": {
-    "mtime": 1784924362.3846114,
-    "ast_hash": "cf513a4b4f534a9b450a14c918efe42d",
-    "semantic_hash": ""
+    "mtime": 1783030559.5571754,
+    "ast_hash": "67380329759c2f2858a55bbcf8bbb0c8",
+    "semantic_hash": "67380329759c2f2858a55bbcf8bbb0c8"
   },
   "src/pages/TheLab.tsx": {
     "mtime": 1779884492.6792195,
@@ -1095,14 +1095,14 @@
     "semantic_hash": "fbe882f4a17ab5f3f57488875a9ebf18"
   },
   "src/services/blutspiegelHistory.ts": {
-    "mtime": 1784924362.3856108,
-    "ast_hash": "7abd85797f9dfe57a91ee03817bcac30",
-    "semantic_hash": ""
+    "mtime": 1779994321.7777867,
+    "ast_hash": "f8217a2515f27fe5729c0d5724bfcbfc",
+    "semantic_hash": "f8217a2515f27fe5729c0d5724bfcbfc"
   },
   "src/services/liveBlutspiegelChart.ts": {
-    "mtime": 1784924362.3861103,
-    "ast_hash": "27863efe1ff2715f20596f9bbd324561",
-    "semantic_hash": ""
+    "mtime": 1780005156.0692546,
+    "ast_hash": "05abc2bb11dec5645d26c0758a2b7c80",
+    "semantic_hash": "05abc2bb11dec5645d26c0758a2b7c80"
   },
   "src/services/peptideLibrary.ts": {
     "mtime": 1783030559.559176,
@@ -1515,8 +1515,8 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/hooks/useFortschrittData.ts": {
-    "mtime": 1784924362.3490148,
-    "ast_hash": "7d82515d43a250f448429298c1c83863",
+    "mtime": 1784252351.7184663,
+    "ast_hash": "f6dcdf0c7d32a69333f14d82b3c66b9d",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/chartTooltip.test.ts": {
@@ -1550,8 +1550,8 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/focusSummary.ts": {
-    "mtime": 1784924362.3510244,
-    "ast_hash": "72bea847a83d2f7d509b9d5beb5ae951",
+    "mtime": 1784159482.1738944,
+    "ast_hash": "063c0f45dc14a61e6b2452c54e99d21a",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/metricDefinitions.ts": {
@@ -1565,8 +1565,8 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/metrics.ts": {
-    "mtime": 1784924362.3510244,
-    "ast_hash": "a40f7ecd94964d6ab6685bb7428829ba",
+    "mtime": 1784845751.6588714,
+    "ast_hash": "ad892447e9b6e672e45416275318aa61",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/range.ts": {
@@ -1575,13 +1575,13 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/substances.test.ts": {
-    "mtime": 1784924362.3520906,
-    "ast_hash": "f1c4bccca11f5bf7eae0b2b68dd8a399",
+    "mtime": 1783216382.9828753,
+    "ast_hash": "3e64b88b813bc61e424c583665b4e17f",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/substances.ts": {
-    "mtime": 1784924362.353115,
-    "ast_hash": "6c880671ac61590c26215a99fd62833a",
+    "mtime": 1783216461.5508385,
+    "ast_hash": "58fd0fa18ccf257fda9bac7d9f7d5415",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/verlaufRange.ts": {
@@ -1595,8 +1595,8 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/types.ts": {
-    "mtime": 1784924362.353619,
-    "ast_hash": "d718c841379582ea448e9339ce40a3b0",
+    "mtime": 1784159228.0892663,
+    "ast_hash": "1aeaac3b252017dd429e664ae19221c9",
     "semantic_hash": ""
   },
   "supabase-fortschritt-redesign.sql": {
@@ -1815,8 +1815,8 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/StickyRangeBar.tsx": {
-    "mtime": 1785287181.6414874,
-    "ast_hash": "080b43dc779de660e584f6c44ba71db5",
+    "mtime": 1784077794.654556,
+    "ast_hash": "fdfe224bc390645d19e4956acdb4e6db",
     "semantic_hash": ""
   },
   "src/features/fortschritt/components/fotos/FotosCard.tsx": {
@@ -1850,13 +1850,13 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/chartVisibility.test.ts": {
-    "mtime": 1784924362.3495173,
-    "ast_hash": "d98942379737d26994e1bddbfdf10e6b",
+    "mtime": 1783495404.0592117,
+    "ast_hash": "8bcdf3467db598499d4951f98f0e2087",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/chartVisibility.ts": {
-    "mtime": 1784924362.3505204,
-    "ast_hash": "6e65a23a5ec82f9761911d2387c652e6",
+    "mtime": 1783495404.0592117,
+    "ast_hash": "006169b3be3ffc73f9746f667887ff73",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/dates.ts": {
@@ -2115,8 +2115,8 @@
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/cycleLegend.test.ts": {
-    "mtime": 1784924362.3510244,
-    "ast_hash": "b9f14f43a0999f80870b88cc9504bca4",
+    "mtime": 1784159883.7032917,
+    "ast_hash": "035fa0cea26054681b414321c68b05ad",
     "semantic_hash": ""
   },
   "src/features/fortschritt/lib/cycleLegend.ts": {
@@ -2382,41 +2382,6 @@
   "docs/superpowers/specs/2026-07-21-my-stack-foundation-design.md": {
     "mtime": 1784845751.6200492,
     "ast_hash": "9d5fa84946b7e7275155944be7a229b2",
-    "semantic_hash": ""
-  },
-  "src/lib/legacyMyStackPersistence.test.ts": {
-    "mtime": 1784924362.3643296,
-    "ast_hash": "58335137e75457a38f8294dd19128a4e",
-    "semantic_hash": ""
-  },
-  "src/lib/legacyMyStackPersistence.ts": {
-    "mtime": 1784924362.3653479,
-    "ast_hash": "1385bab0b80fd677c6e45580f1b8b272",
-    "semantic_hash": ""
-  },
-  "src/lib/legacyMyStackSql.test.ts": {
-    "mtime": 1784924362.3663714,
-    "ast_hash": "ae5c74210c2e86b03c948868cbadbd57",
-    "semantic_hash": ""
-  },
-  "src/lib/legacyStackSchemaContract.test.ts": {
-    "mtime": 1784924362.3668754,
-    "ast_hash": "9d921f4a72c39f00437b9c83ca39a6c0",
-    "semantic_hash": ""
-  },
-  "supabase-legacy-my-stack-compat.sql": {
-    "mtime": 1784924362.387117,
-    "ast_hash": "bc57d0730ad4f6dc7e25021f431bf49e",
-    "semantic_hash": ""
-  },
-  "docs/superpowers/plans/2026-07-24-legacy-my-stack-schema-compat.md": {
-    "mtime": 1784924362.3424027,
-    "ast_hash": "3c0c4d439bb28a89a7a7f6b2d6e01e33",
-    "semantic_hash": ""
-  },
-  "docs/superpowers/specs/2026-07-24-legacy-my-stack-schema-compat-design.md": {
-    "mtime": 1784924362.343936,
-    "ast_hash": "b172149d26297ef6b9d2980a9eb29b11",
     "semantic_hash": ""
   }
 }
