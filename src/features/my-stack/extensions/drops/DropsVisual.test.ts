@@ -49,13 +49,17 @@ describe('DropsVisual', () => {
     expect(fenster).not.toContain('outerClip')
   })
 
-  it('beschneidet das wandernde Glanzband auf das Glas', () => {
+  it('beschneidet jedes wandernde Licht auf das Glas', () => {
     // Derselbe Fehler wie beim Tabletten-Glanz: unbeschnitten malt es daneben.
+    // Beide beweglichen Lichter — Schein und Glanzband — liegen in derselben
+    // beschnittenen Gruppe, die vor der Fluessigkeit endet.
     const source = readFileSync(new URL('./DropsVisual.tsx', import.meta.url), 'utf8')
-    const band = source.match(/outerClip\)`\}>[\s\S]{0,400}?data-drops-detail="sweep"/)?.[0] ?? ''
-    expect(band).not.toBe('')
+    const gruppe = source.match(/outerClip\)`\}>[\s\S]*?<\/g>/)?.[0] ?? ''
+    expect(gruppe).toContain('data-drops-detail="bloom"')
+    expect(gruppe).toContain('data-drops-detail="sweep"')
     expect(render({ lightOffset: 1 })).toMatch(/data-drops-detail="sweep"[^>]*translate\(14/)
     expect(render({ lightOffset: -1 })).toMatch(/data-drops-detail="sweep"[^>]*translate\(-14/)
+    expect(render({ lightOffset: 1 })).toMatch(/data-drops-detail="bloom"[^>]*translate\(9/)
   })
 
   it('faerbt Kuppe und Kappe als ein Teil in einer Farbe', () => {
@@ -94,7 +98,7 @@ describe('DropsVisual', () => {
     expect(render({ showLabel: false })).not.toContain('data-drops-detail="label"')
   })
 
-  it('schreibt die Etikettschrift hell genug fuer das Braunglas', () => {
+  it('schreibt die Etikettschrift mit Schattenkante', () => {
     // Ohne Farbe erbt sie die Seitenfarbe und verschwindet im Glas — genau
     // das war beim ersten Durchgang der Fall.
     expect(render()).toMatch(/vial-label-marquee[^>]*/)

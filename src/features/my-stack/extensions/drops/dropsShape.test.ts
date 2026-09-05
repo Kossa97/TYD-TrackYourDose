@@ -14,7 +14,9 @@ import {
   DROPS_INNER_STROKE_PATH,
   DROPS_INNER_STROKE_TOP,
   DROPS_LABEL,
+  DROPS_LABEL_TOP,
   DROPS_OUTER_PATH,
+  DROPS_SURFACE_Y,
   DROPS_SPEC,
   DROPS_VIEWBOX,
   DROPS_WALL,
@@ -55,6 +57,16 @@ describe('dropsShape', () => {
   it('traegt ein Etikett, weil es einen Behaelter mit Fluessigkeit gibt', () => {
     expect(DROPS_SPEC.chamber).not.toBeNull()
     expect(carriesLabel(DROPS_SPEC)).toBe(true)
+  })
+
+  it('laesst den Fluessigkeitsspiegel ueber dem Etikettband frei', () => {
+    // Der Spiegel lag genau auf der Bandoberkante: im Braunglas unsichtbar, im
+    // Klarglas verdeckte das Band die Oberflaeche und die Flasche wirkte wie
+    // ein trueber Rest. Zwischen beiden muss Luft bleiben.
+    expect(DROPS_SURFACE_Y).toBeLessThan(DROPS_LABEL_TOP - 10)
+    // Und der Spiegel steht unter der Schulter, nicht darin: die Innenwand
+    // wird erst ab y=154 gerade, darueber gibt es keine rechteckige Kammer.
+    expect(DROPS_SURFACE_Y).toBeGreaterThan(154)
   })
 
   it('setzt das Etikettband auf den geraden Teil des Koerpers', () => {

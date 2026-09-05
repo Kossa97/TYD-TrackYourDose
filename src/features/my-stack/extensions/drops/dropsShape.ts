@@ -70,24 +70,42 @@ export const DROPS_PIPETTE_OVERLAP = DROPS_CAP.y + DROPS_CAP.height - DROPS_PIPE
 // Nur der gerade Teil des Innenraums. Das hält die Kammer rechteckig, so
 // braucht die Geometrie kein Breitenprofil für die Schulter — derselbe
 // Kunstgriff, den Vial, Ampulle und Nasenspray schon benutzen.
+//
+// Die Oberkante sitzt dicht unter dem Ende der Schulter (Innenwand y=154),
+// nicht 11 Einheiten darunter: sonst kann oberhalb von y=165 nie Flüssigkeit
+// stehen, und im Klarglas bleibt dort ein leerer Streifen.
 export const DROPS_CHAMBER = {
   x: 17.6,
-  y: 165,
+  y: 156,
   width: 64.8,
-  height: 119.4,
-  aspect: 64.8 / 119.4,
+  height: 128.4,
+  aspect: 64.8 / 128.4,
 } as const
 
 // Fester Pegel. Die App kennt den Stand einer angebrochenen Tropfflasche
 // nicht: getVialFillPct liest vials_in_stock, ein vial-spezifisches Altfeld.
 // Die Grafik zeigt das Objekt, eine Prozentzahl wäre eine Behauptung.
-export const DROPS_FILL = 0.72
+//
+// Der Wert ist deshalb rein optisch: der Spiegel soll ein Stück unter der
+// Schulter stehen, wie bei einer normalen Flasche mit Kopfraum. Im Braunglas
+// war er unsichtbar und konnte irgendwo liegen; im Klarglas las sich 0,72 auf
+// der tiefer angesetzten Kammer als halbleere Flasche.
+export const DROPS_FILL = 0.78
 
-// Das Etikettband sitzt auf dem geraden Teil des Körpers.
+// Das Etikettband sitzt auf dem geraden Teil des Körpers — und unterhalb des
+// Flüssigkeitsspiegels. Bei y=195 lag seine Oberkante genau auf dem Spiegel
+// (Kammeroberkante 165 + 28 % von 119,4 ≈ 198): im Braunglas fiel das nicht
+// auf, im Klarglas verdeckte das Band die Oberfläche und ließ von der
+// Flüssigkeit nur den dunkelsten Rest darunter stehen.
+export const DROPS_LABEL_TOP = 214
 export const DROPS_LABEL = {
-  topPct: (195 - DROPS_VIEWBOX.y) / DROPS_VIEWBOX.height,
+  topPct: (DROPS_LABEL_TOP - DROPS_VIEWBOX.y) / DROPS_VIEWBOX.height,
   heightPct: 55 / DROPS_VIEWBOX.height,
 } as const
+
+// Wo die Flüssigkeit steht, ausgerechnet aus Kammer und Füllgrad. Nur zum
+// Prüfen: das Band darf den Spiegel nicht wieder überdecken.
+export const DROPS_SURFACE_Y = DROPS_CHAMBER.y + (1 - DROPS_FILL) * DROPS_CHAMBER.height
 
 // Wie weit Glanz und Schatten beim Wischen wandern.
 export const DROPS_SHEEN_SHIFT = 14

@@ -54,8 +54,8 @@ const SIZE_CLASS: Record<NonNullable<DropsVisualProps['size']>, string> = {
   mini: 'h-[60px] w-[15.9px]',
 }
 
-// Weiss, fett, mit Schattenkante — wie bei Vial, Ampulle und Nasenspray. Auf
-// dem Braunglas ist der Kontrast sonst zu gering.
+// Weiss, fett, mit Schattenkante — wie bei Vial, Ampulle und Nasenspray. Die
+// Schattenkante traegt den Kontrast, wenn helle Fluessigkeit dahinter steht.
 const NAME_SHARED = 'leading-tight font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]'
 const DETAIL_SHARED = 'mt-0.5 font-bold uppercase tracking-wide text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]'
 
@@ -97,6 +97,7 @@ export function DropsVisual({
   const rootRef = useRef<HTMLDivElement | null>(null)
   const shadowRef = useRef<SVGEllipseElement | null>(null)
   const sweepRef = useRef<SVGRectElement | null>(null)
+  const bloomRef = useRef<SVGRectElement | null>(null)
   const bulbLightRef = useRef<SVGEllipseElement | null>(null)
   const outlineRef = useRef<SVGUseElement | null>(null)
   const liquidRef = useRef<LiquidGraphicHandle | null>(null)
@@ -110,6 +111,8 @@ export function DropsVisual({
     shadowRef.current?.setAttribute('opacity', (0.2 + f * 0.28).toFixed(3))
     sweepRef.current?.setAttribute('transform', `translate(${(o * DROPS_SHEEN_SHIFT).toFixed(2)} 0)`)
     sweepRef.current?.setAttribute('opacity', (0.1 + f * 0.26).toFixed(3))
+    bloomRef.current?.setAttribute('transform', `translate(${(o * 9).toFixed(2)} 0)`)
+    bloomRef.current?.setAttribute('opacity', (0.2 + f * 0.42).toFixed(3))
     bulbLightRef.current?.setAttribute('cx', (39 - o * 4).toFixed(2))
     bulbLightRef.current?.setAttribute('opacity', (0.18 + f * 0.3).toFixed(3))
     outlineRef.current?.setAttribute('stroke-opacity', (0.36 + f * 0.28).toFixed(3))
@@ -150,18 +153,27 @@ export function DropsVisual({
             <path d={DROPS_CAP_PATH} />
           </clipPath>
 
-          {/* Braunglas. Es daempft die Fluessigkeitsfarbe dahinter — deshalb
-              traegt der Ballon die Eintragsfarbe noch einmal deutlich. */}
+          {/* Klarglas, dieselben Werte wie bei Vial, Ampulle und Nasenspray:
+              nur die Raender tragen die Glasdicke, die Mitte bleibt leer.
+              Deshalb ist die Pipette dahinter zu sehen und die Fluessigkeit
+              zeigt ihre echte Farbe, statt vom Braun gedaempft zu werden. */}
           <linearGradient id={`${uid}-glass`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#3a1f0c" />
-            <stop offset="18%" stopColor="#8a4f1e" />
-            <stop offset="46%" stopColor="#5c3212" />
-            <stop offset="78%" stopColor="#7a4419" />
-            <stop offset="100%" stopColor="#2c1708" />
+            <stop offset="0%" stopColor="rgba(2,6,23,0.62)" />
+            <stop offset="9%" stopColor="rgba(226,232,240,0.11)" />
+            <stop offset="32%" stopColor="rgba(255,255,255,0.02)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,0)" />
+            <stop offset="72%" stopColor="rgba(15,23,42,0.11)" />
+            <stop offset="100%" stopColor="rgba(2,6,23,0.72)" />
           </linearGradient>
+          {/* Der weiche Schein im Bauch der Flasche. */}
+          <radialGradient id={`${uid}-glassBloom`} gradientUnits="userSpaceOnUse" cx="50" cy="212" r="74">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.13)" />
+            <stop offset="48%" stopColor="rgba(255,255,255,0.03)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </radialGradient>
           <linearGradient id={`${uid}-sweep`} x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="rgba(255,255,255,0)" />
-            <stop offset="50%" stopColor="rgba(255,236,205,0.5)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,0.55)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
           </linearGradient>
           {/* Macht aus der Kappenfarbe einen Zylinder. */}
@@ -199,6 +211,34 @@ export function DropsVisual({
 
         <use data-drops-detail="glass" href={`#${uid}-outer`} fill={`url(#${uid}-glass)`} />
 
+        {/* Schein und Glanzband liegen im Glas, hinter der Fluessigkeit —
+            beide auf den Umriss beschnitten, sonst malen sie neben die
+            Flasche. Dieselbe Reihenfolge wie bei Ampulle und Nasenspray. */}
+        <g clipPath={`url(#${uid}-outerClip)`}>
+          <rect
+            ref={bloomRef}
+            data-drops-detail="bloom"
+            x="-40"
+            y="100"
+            width="200"
+            height="200"
+            fill={`url(#${uid}-glassBloom)`}
+            opacity={0.2 + visualFocus * 0.42}
+            transform={`translate(${(visualLightOffset * 9).toFixed(2)} 0)`}
+          />
+          <rect
+            ref={sweepRef}
+            data-drops-detail="sweep"
+            x="22"
+            y="112"
+            width="15"
+            height="180"
+            fill={`url(#${uid}-sweep)`}
+            opacity={0.1 + visualFocus * 0.26}
+            transform={`translate(${(visualLightOffset * DROPS_SHEEN_SHIFT).toFixed(2)} 0)`}
+          />
+        </g>
+
         {/* Die Fluessigkeit wird von der INNEN-Kontur beschnitten, nie von der
             aeusseren: sonst fehlt der Glasboden und sie klebt an der Aussenwand. */}
         <g data-drops-detail="liquid-window" clipPath={`url(#${uid}-innerClip)`}>
@@ -227,7 +267,7 @@ export function DropsVisual({
           data-drops-detail="inner-contour"
           d={DROPS_INNER_STROKE_PATH}
           fill="none"
-          stroke="rgba(255,224,180,0.3)"
+          stroke="rgba(226,232,240,0.34)"
           strokeWidth="1"
           vectorEffect="non-scaling-stroke"
         />
@@ -245,8 +285,8 @@ export function DropsVisual({
           <path
             data-drops-detail="pipette"
             d={DROPS_PIPETTE_PATH}
-            fill="rgba(226,232,240,0.16)"
-            stroke="rgba(226,232,240,0.42)"
+            fill="rgba(226,232,240,0.18)"
+            stroke="rgba(100,116,139,0.55)"
             strokeWidth="0.9"
             vectorEffect="non-scaling-stroke"
           />
@@ -297,27 +337,12 @@ export function DropsVisual({
           />
         </g>
 
-        <g clipPath={`url(#${uid}-outerClip)`}>
-          {/* Das wandernde Glanzband — beschnitten, sonst malt es neben das Glas. */}
-          <rect
-            ref={sweepRef}
-            data-drops-detail="sweep"
-            x="22"
-            y="112"
-            width="15"
-            height="180"
-            fill={`url(#${uid}-sweep)`}
-            opacity={0.1 + visualFocus * 0.26}
-            transform={`translate(${(visualLightOffset * DROPS_SHEEN_SHIFT).toFixed(2)} 0)`}
-          />
-        </g>
-
         <use
           ref={outlineRef}
           data-drops-detail="outer-contour"
           href={`#${uid}-outer`}
           fill="none"
-          stroke="rgba(20,10,4,0.75)"
+          stroke="rgba(203,213,225,0.56)"
           strokeOpacity={0.36 + visualFocus * 0.28}
           strokeWidth="1.4"
           vectorEffect="non-scaling-stroke"

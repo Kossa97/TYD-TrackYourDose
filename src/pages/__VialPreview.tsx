@@ -360,7 +360,7 @@ export function VialPreview() {
       </div>
 
       <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
-        Tropfen — Braunglas mit Pipette in Detailgröße
+        Tropfen — Klarglas mit Pipette in Detailgröße
       </p>
       {/* Mit Provider, sonst schwappt die Fluessigkeit nicht. */}
       <SloshProvider engine={sloshEngine}>
