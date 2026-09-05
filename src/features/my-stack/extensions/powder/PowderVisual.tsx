@@ -117,17 +117,22 @@ export function PowderVisual({
             <path d={POWDER_LID_PATH} />
           </clipPath>
 
-          {/* Mattes HDPE, kein Glas und kein Blech: ein breiter weicher Kern
-              statt einer harten Glanzkante. Genau das unterscheidet die Dose
-              von der Tube, die daneben stehen kann. */}
+          {/* Dunkles mattes Polymer — Stop fuer Stop dasselbe Material wie der
+              Pen-Korpus, nicht nur eine aehnliche Farbe. Zwei Formen aus einem
+              Guss lesen sich als eine Familie; zwei knapp verschiedene Dunkel
+              lesen sich als Fehler. Die Stops liegen enger als am Pen: dessen
+              Kappe ist schmal, hier laeuft derselbe Verlauf ueber die dreifache
+              Breite — mit den Pen-Abstaenden zoege sich das Glanzlicht zu einer
+              hellgrauen Flaeche auseinander und die Dose waere nicht mehr
+              dunkel. */}
           <linearGradient id={`${uid}-bodyShade`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#78849a" />
-            <stop offset="7%" stopColor="#a4b0c2" />
-            <stop offset="22%" stopColor="#dbe3ee" />
-            <stop offset="40%" stopColor="#f2f6fb" />
-            <stop offset="62%" stopColor="#dde5ef" />
-            <stop offset="84%" stopColor="#aeb9c9" />
-            <stop offset="100%" stopColor="#6f7a90" />
+            <stop offset="0%" stopColor="#1d2127" />
+            <stop offset="4%" stopColor="#23272e" />
+            <stop offset="15%" stopColor="#6f7683" />
+            <stop offset="32%" stopColor="#5e646f" />
+            <stop offset="62%" stopColor="#454b55" />
+            <stop offset="86%" stopColor="#23272e" />
+            <stop offset="100%" stopColor="#1d2127" />
           </linearGradient>
           {/* Der Deckel traegt die Eintragsfarbe; die Verlaeufe legen darueber
               nur Licht und Schatten. Der Mantel ist ein Zylinder, die
@@ -149,20 +154,20 @@ export function PowderVisual({
           </radialGradient>
           <linearGradient id={`${uid}-sheen`} x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="rgba(255,255,255,0)" />
-            <stop offset="50%" stopColor="rgba(255,255,255,0.5)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,0.42)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
           </linearGradient>
           {/* Die Schulter: der Schatten, den der Deckelrand auf den Korpus
               wirft. Ohne ihn schwebt der Deckel auf der Dose. */}
           <linearGradient id={`${uid}-shoulder`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(15,23,42,0.4)" />
-            <stop offset="100%" stopColor="rgba(15,23,42,0)" />
+            <stop offset="0%" stopColor="rgba(0,0,0,0.55)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0)" />
           </linearGradient>
           {/* Der Fuss: das Licht laeuft am Boden aus, sonst steht die Dose
               nicht auf, sondern hoert einfach auf. */}
           <linearGradient id={`${uid}-foot`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(15,23,42,0)" />
-            <stop offset="100%" stopColor="rgba(15,23,42,0.34)" />
+            <stop offset="0%" stopColor="rgba(0,0,0,0)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.5)" />
           </linearGradient>
           {/* Das Etikett ist Papier auf einem Zylinder: es bekommt dieselbe
               Woelbung wie der Korpus, nur flacher. */}
@@ -237,7 +242,7 @@ export function PowderVisual({
           data-powder-detail="outline"
           d={POWDER_BODY_PATH}
           fill="none"
-          stroke="rgba(51,65,85,0.5)"
+          stroke="rgba(255,255,255,0.28)"
           strokeOpacity={0.3 + visualFocus * 0.26}
           strokeWidth="1.1"
           vectorEffect="non-scaling-stroke"
@@ -245,9 +250,9 @@ export function PowderVisual({
 
         {/* Das Etikett. Ober- und Unterkante sind Boegen, weil ein umlaufendes
             Band auf einem Zylinder unter Augenhoehe kein gerader Strich ist. */}
-        {/* Das Etikett traegt die Eintragsfarbe, damit die weisse Aufschrift
-            darauf steht statt darin zu verschwinden: die Dose selbst ist
-            hellgrau, ein weisses Etikett gaebe Weiss auf Weiss. */}
+        {/* Das Etikett traegt die Eintragsfarbe wie bei jeder anderen Form.
+            Auf dem dunklen Korpus ist es zugleich die einzige helle Flaeche —
+            die Aufschrift steht darauf, nicht auf nacktem Polymer. */}
         <g data-powder-detail="label">
           <rect
             x={POWDER_LABEL_BOX.x}

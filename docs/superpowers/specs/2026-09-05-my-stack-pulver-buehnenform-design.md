@@ -24,7 +24,7 @@ davor ist die Tube — sie liefert das Muster, nicht die Grafik.
 | Füllstand | keiner | Undurchsichtiges Pulver in einer undurchsichtigen Dose. Ein Pegel wäre eine Behauptung — dieselbe Lage wie bei Tube und Pflaster. |
 | Etikettband | keins | `chamber: null`. Die Regel „Etikett nur, wo Flüssigkeit ist" wird nicht angefasst; der Name wird direkt auf den Körper gedruckt, wie bei der Tube. |
 | Farbe | auf dem Deckel | Der Körper bleibt Material. Wie bei der Tropfflasche trägt das kleinere, glattere Teil die Eintragsfarbe; ein ganz eingefärbter Korpus verlöre die Dose als Objekt. |
-| Material | mattes HDPE | Kein Glas, kein Blech. Weicher Zylinderverlauf ohne harte Glanzkante — sonst sähe sie aus wie die Tube. |
+| Material | dunkles mattes Polymer, Stop für Stop der Pen-Korpus | Kein Glas, kein Blech. Der Korpus teilt die Legierung des Pens (`#23272e → #6f7683 → #454b55 → #5e646f → #1d2127`) statt sie nur zu zitieren — zwei knapp verschiedene Dunkel lesen sich als Fehler. Auf dunklem Korpus trägt die Kontur hell (`rgba(255,255,255,0.28)`), Schulter und Fuß schatten in echtem Schwarz. |
 
 ## Warum eine Sprosse unter dem Vial
 
