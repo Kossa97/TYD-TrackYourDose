@@ -9,6 +9,8 @@ import {
   DROPS_PIPETTE_TOP,
   DROPS_FILL,
   DROPS_INNER_PATH,
+  DROPS_INNER_STROKE_PATH,
+  DROPS_INNER_STROKE_TOP,
   DROPS_LABEL,
   DROPS_OUTER_PATH,
   DROPS_SPEC,
@@ -59,6 +61,18 @@ describe('dropsShape', () => {
     // Unterhalb der Schulter und oberhalb des Bodens.
     expect(oben).toBeGreaterThan(152)
     expect(unten).toBeLessThan(288)
+  })
+
+  it('zeichnet die Wandstaerke ohne Oberkante bis in die Kappe', () => {
+    // Der geschlossene Pfad wird zum Beschneiden gebraucht, gezeichnet ergaebe
+    // sein Ringschluss aber einen waagerechten Strich quer ueber den Hals.
+    expect(DROPS_INNER_PATH.endsWith('Z')).toBe(true)
+    expect(DROPS_INNER_STROKE_PATH).not.toContain('Z')
+    // Beide Enden liegen unter der Kappe, nicht darunter sichtbar.
+    expect(DROPS_INNER_STROKE_TOP).toBeLessThan(DROPS_CAP.y + DROPS_CAP.height)
+    expect(DROPS_INNER_STROKE_TOP).toBeGreaterThan(DROPS_CAP.y)
+    expect(DROPS_INNER_STROKE_PATH.startsWith(`M41.6 ${DROPS_INNER_STROKE_TOP}`)).toBe(true)
+    expect(DROPS_INNER_STROKE_PATH.endsWith(`L58.4 ${DROPS_INNER_STROKE_TOP}`)).toBe(true)
   })
 
   it('laesst die Pipette in die Kappe hineinreichen', () => {

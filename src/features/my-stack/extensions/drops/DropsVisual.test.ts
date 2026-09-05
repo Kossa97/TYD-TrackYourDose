@@ -68,6 +68,15 @@ describe('DropsVisual', () => {
     expect(html).toMatch(/data-drops-detail="teat"[^>]*fill="#2a2622"/)
   })
 
+  it('zeichnet die Wandstaerke vor der Kappe, damit sie darunter endet', () => {
+    // Stuende sie danach, malte sie ihre Linienenden auf die Kappe.
+    const source = readFileSync(new URL('./DropsVisual.tsx', import.meta.url), 'utf8')
+    expect(source.indexOf('data-drops-detail="inner-contour"'))
+      .toBeLessThan(source.indexOf('data-drops-detail="dropper"'))
+    // Und sie benutzt den offenen Pfad, nicht den geschlossenen Clip-Pfad.
+    expect(source).toContain('d={DROPS_INNER_STROKE_PATH}')
+  })
+
   it('zeigt keinen Fuellstand in Prozent', () => {
     const html = render()
     expect(html).not.toContain('data-fill-pct')

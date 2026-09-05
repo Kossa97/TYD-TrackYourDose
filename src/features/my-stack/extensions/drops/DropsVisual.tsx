@@ -11,6 +11,7 @@ import {
   DROPS_FILL,
   DROPS_GROUND_SHIFT,
   DROPS_INNER_PATH,
+  DROPS_INNER_STROKE_PATH,
   DROPS_LABEL,
   DROPS_OUTER_PATH,
   DROPS_PIPETTE_PATH,
@@ -216,6 +217,19 @@ export function DropsVisual({
           />
         </g>
 
+        {/* Die Wandstaerke — ein offener Pfad ohne Oberkante. Seine Enden
+            liegen unter der Kappe, die gleich darueber gezeichnet wird: die
+            Linien laufen in den Deckel hinein statt an einer Kante zu enden.
+            Non-scaling, damit sie die Karussellbreite ueberlebt. */}
+        <path
+          data-drops-detail="inner-contour"
+          d={DROPS_INNER_STROKE_PATH}
+          fill="none"
+          stroke="rgba(255,224,180,0.3)"
+          strokeWidth="1"
+          vectorEffect="non-scaling-stroke"
+        />
+
         {/* Sauger, Kappe und Pipette sind ein Teil und stehen deshalb in
             einer Gruppe: beim Aufschrauben kaeme die Pipette mit heraus.
             Die Pipette wird zuerst gezeichnet, die Kappe deckt ihr oberes
@@ -288,16 +302,6 @@ export function DropsVisual({
             />
           </g>
         </g>
-
-        {/* Die Wandstaerke. Non-scaling, damit sie die Karussellbreite ueberlebt. */}
-        <use
-          data-drops-detail="inner-contour"
-          href={`#${uid}-inner`}
-          fill="none"
-          stroke="rgba(255,224,180,0.3)"
-          strokeWidth="1"
-          vectorEffect="non-scaling-stroke"
-        />
 
         <g clipPath={`url(#${uid}-outerClip)`}>
           {/* Das wandernde Glanzband — beschnitten, sonst malt es neben das Glas. */}

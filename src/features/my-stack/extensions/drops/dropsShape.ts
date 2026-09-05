@@ -34,6 +34,20 @@ export const DROPS_INNER_PATH =
   'C82.4 281 79 284.4 74 284.4 L26 284.4 C21 284.4 17.6 281 17.6 276 ' +
   'L17.6 154 C17.6 142 41.6 138.5 41.6 130 Z'
 
+// Zum Beschneiden der Flüssigkeit braucht es den geschlossenen Pfad oben.
+// Gezeichnet werden darf er so aber nicht: der Ringschluss ergäbe einen
+// waagerechten Strich quer über den Hals. Die sichtbare Wandstärke ist
+// deshalb ein OFFENER Pfad, dessen beide Enden oberhalb der Kappenunterkante
+// liegen und von der Kappe verdeckt werden — die Linien laufen in den Deckel
+// hinein, statt an einer Kante aufzuhören.
+export const DROPS_INNER_STROKE_TOP = 104
+export const DROPS_INNER_STROKE_PATH =
+  `M41.6 ${DROPS_INNER_STROKE_TOP} L41.6 130 ` +
+  'C41.6 138.5 17.6 142 17.6 154 L17.6 276 ' +
+  'C17.6 281 21 284.4 26 284.4 L74 284.4 C79 284.4 82.4 281 82.4 276 ' +
+  'L82.4 154 C82.4 142 58.4 138.5 58.4 130 ' +
+  `L58.4 ${DROPS_INNER_STROKE_TOP}`
+
 // Sauger, Kappe und Pipette sind EIN Teil: beim Aufschrauben kommt die
 // Pipette mit heraus. Sie beginnt deshalb oberhalb der Kappenunterkante und
 // wird von der Kappe überdeckt — so gibt es an der Verbindung keine Fuge,
