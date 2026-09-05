@@ -80,7 +80,7 @@ const PREVIEW_PATCHES = [
 
 // Mixed forms in one row, the way My Stack will show them.
 type MixedEntry = {
-  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen'
+  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'drops' | 'patch'
   name: string
   amount: number | null
   unit: string | null
@@ -113,6 +113,13 @@ const MIXED_CAROUSEL: MixedEntry[] = [
   { kind: 'pen', name: 'Semaglutid', amount: null, unit: null, color: '#3f7fbf' },
   { kind: 'pen', name: 'Tirzepatid', amount: null, unit: null, color: '#a3e635' },
   { kind: 'pen', name: 'Insulin glargin 300 Einheiten pro Milliliter', amount: null, unit: null, color: '#f0b357' },
+  { kind: 'drops', name: 'Vitamin D3', amount: 1000, unit: 'IU / drop', color: '#f0b357' },
+  { kind: 'drops', name: 'Melatonin', amount: 1, unit: 'mg / drop', color: '#8b7fd4' },
+  { kind: 'drops', name: 'Ohne Menge', amount: null, unit: null, color: '#4fd1c5' },
+  // Das Pflaster ist die einzige Form ohne Farbe; sie steht hier nur, weil der
+  // Typ sie verlangt, und wird an den Renderer nicht weitergereicht.
+  { kind: 'patch', name: 'Nikotinpflaster', amount: null, unit: null, color: '#a3e635' },
+  { kind: 'patch', name: 'Rivastigmin transdermal 9,5 mg pro 24 Stunden', amount: null, unit: null, color: '#a3e635' },
 ]
 
 export function VialPreview() {
@@ -415,7 +422,24 @@ export function VialPreview() {
               data-stage-index={index}
               className={`shrink-0 ${isDragging ? '' : 'snap-center'}`}
             >
-              {entry.kind === 'pen' ? (
+              {entry.kind === 'drops' ? (
+                <DropsVisual
+                  name={entry.name}
+                  amount={entry.amount}
+                  unit={entry.unit}
+                  color={entry.color}
+                  size="carousel"
+                  isActive={index === activeIndex}
+                  stageLightRef={registerStageLight(index)}
+                />
+              ) : entry.kind === 'patch' ? (
+                <PatchVisual
+                  name={entry.name}
+                  size="carousel"
+                  isActive={index === activeIndex}
+                  stageLightRef={registerStageLight(index)}
+                />
+              ) : entry.kind === 'pen' ? (
                 <PenVisual
                   name={entry.name}
                   color={entry.color}
