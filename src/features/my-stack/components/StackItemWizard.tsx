@@ -31,7 +31,6 @@ import {
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
 import { evaluatePkReadiness, toPkMilligrams } from '../lib/pkReadiness'
 import { DosageFormPicker } from './DosageFormPicker'
-import { DosageFormPreview } from './DosageFormPreview'
 import { IngredientEditor } from './IngredientEditor'
 import { IntakePlanEditor } from './IntakePlanEditor'
 import { ProductInventorySection } from './ProductInventorySection'
@@ -398,7 +397,6 @@ export function StackItemWizard({
         return (
           <DosageFormPicker
             value={state.draft.dosageForm}
-            colorHex={state.draft.colorHex}
             suggestedForms={selectedCatalogEntry?.suggested_dosage_forms ?? []}
             error={showErrors && Boolean(validationErrors.dosageForm)}
             onSelect={dosageForm => dispatch({
@@ -769,24 +767,6 @@ export function StackItemWizard({
         </header>
 
         <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-5 sm:px-6" data-step-autofocus tabIndex={-1}>
-          {/* Ab hier ist der Eintrag ein Gegenstand und keine Formularzeile
-              mehr. Die Vorschau steht ueber jedem Schritt, nicht nur ueber der
-              Formauswahl: Name, Farbe und Wirkstoffmenge kommen aus spaeteren
-              Schritten, und man soll sehen, was man gerade aendert. */}
-          {state.draft.dosageForm && (
-            <div
-              data-wizard-preview
-              className="mb-6 flex min-h-[124px] items-end justify-center rounded-2xl border border-white/10 bg-white/[0.02] px-4 pt-4 pb-3"
-            >
-              <DosageFormPreview
-                dosageForm={state.draft.dosageForm}
-                displayName={state.draft.displayName}
-                colorHex={state.draft.colorHex}
-                ingredients={state.draft.ingredients}
-                size="compact"
-              />
-            </div>
-          )}
           {renderStep()}
           {saveError && (
             <p role="alert" className="mt-5 flex items-start gap-2 rounded-2xl border border-rose-400/25 bg-rose-400/[0.07] p-4 text-sm text-rose-100">

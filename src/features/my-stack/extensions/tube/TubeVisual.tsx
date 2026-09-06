@@ -25,9 +25,6 @@ export interface TubeVisualProps {
   name?: string | null
   size?: 'large' | 'compact' | 'carousel' | 'mini'
   className?: string
-  // Ohne Namen: die Auswahlkachel im Formular zeigt das nackte Objekt,
-  // ihre eigene Beschriftung steht darunter.
-  showLabel?: boolean
   isActive?: boolean
   focus?: number
   lightOffset?: number
@@ -64,7 +61,6 @@ export function TubeVisual({
   name,
   size = 'large',
   className = '',
-  showLabel = true,
   isActive = true,
   focus,
   lightOffset = 0,
@@ -313,21 +309,19 @@ export function TubeVisual({
 
       {/* Weiss aufgedruckt. Der Einzug folgt der Verjuengung — hier ist der
           Koerper auf Namenshoehe schmaler als die viewBox. */}
-{showLabel && (
-        <div
-          data-tube-detail="name"
-          className="pointer-events-none absolute -translate-y-1/2 overflow-hidden text-center"
-          style={{
-            top: `${TUBE_NAME_TOP_PCT * 100}%`,
-            left: `${(TUBE_NAME_INSET_PCT * 100).toFixed(2)}%`,
-            right: `${(TUBE_NAME_INSET_PCT * 100).toFixed(2)}%`,
-          }}
-        >
-          <StageMarquee className={`${NAME_CLASS[size]} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
-            {tubeName}
-          </StageMarquee>
-        </div>
-      )}
+      <div
+        data-tube-detail="name"
+        className="pointer-events-none absolute -translate-y-1/2 overflow-hidden text-center"
+        style={{
+          top: `${TUBE_NAME_TOP_PCT * 100}%`,
+          left: `${(TUBE_NAME_INSET_PCT * 100).toFixed(2)}%`,
+          right: `${(TUBE_NAME_INSET_PCT * 100).toFixed(2)}%`,
+        }}
+      >
+        <StageMarquee className={`${NAME_CLASS[size]} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
+          {tubeName}
+        </StageMarquee>
+      </div>
     </div>
   )
 }

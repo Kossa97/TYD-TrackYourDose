@@ -12,9 +12,6 @@ export interface CapsuleVisualProps {
   color: string
   size?: 'large' | 'compact' | 'carousel' | 'mini'
   className?: string
-  // Ohne Namen: die Auswahlkachel im Formular zeigt das nackte Objekt,
-  // ihre eigene Beschriftung steht darunter.
-  showLabel?: boolean
   isActive?: boolean
   focus?: number
   lightOffset?: number
@@ -49,7 +46,6 @@ export function CapsuleVisual({
   color,
   size = 'large',
   className = '',
-  showLabel = true,
   isActive = true,
   focus,
   lightOffset = 0,
@@ -250,28 +246,26 @@ export function CapsuleVisual({
       {/* Beschriftet wie Vial und Ampulle: HTML statt SVG-Text, damit Hinting
           und Subpixel-Glättung greifen, dieselben Klassen, derselbe Durchlauf.
           Nur das Band fehlt — eine Kapsel ist kein Behälter. */}
-{showLabel && (
-        <div
-          data-capsule-detail="name"
-          className="pointer-events-none absolute inset-0"
-          style={{ clipPath: `url(#${uid}-nameClip)` }}
-        >
-          {/* Der Messrahmen fuer den Durchlauf bleibt rechteckig und etwas enger
-              als die Huelle — sonst liefe der Text erst los, wenn er laengst
-              unter der Woelbung steckt. Beschnitten wird trotzdem entlang der
-              Kontur. */}
-          <div className="absolute inset-x-[5%] top-1/2 -translate-y-1/2 overflow-hidden text-center">
-            <StageMarquee className={`${NAME_CLASS[size]} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
-              {engravedName}
-            </StageMarquee>
-          </div>
-          <div
-            ref={nameSheenRef}
-            className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/10 via-white/10 to-black/10"
-            style={{ transform: `translateX(${visualLightOffset * 10}%)`, opacity: 0.62 + visualFocus * 0.2 }}
-          />
+      <div
+        data-capsule-detail="name"
+        className="pointer-events-none absolute inset-0"
+        style={{ clipPath: `url(#${uid}-nameClip)` }}
+      >
+        {/* Der Messrahmen fuer den Durchlauf bleibt rechteckig und etwas enger
+            als die Huelle — sonst liefe der Text erst los, wenn er laengst
+            unter der Woelbung steckt. Beschnitten wird trotzdem entlang der
+            Kontur. */}
+        <div className="absolute inset-x-[5%] top-1/2 -translate-y-1/2 overflow-hidden text-center">
+          <StageMarquee className={`${NAME_CLASS[size]} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
+            {engravedName}
+          </StageMarquee>
         </div>
-      )}
+        <div
+          ref={nameSheenRef}
+          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/10 via-white/10 to-black/10"
+          style={{ transform: `translateX(${visualLightOffset * 10}%)`, opacity: 0.62 + visualFocus * 0.2 }}
+        />
+      </div>
     </div>
   )
 }

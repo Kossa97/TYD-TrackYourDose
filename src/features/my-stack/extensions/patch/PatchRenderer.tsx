@@ -7,7 +7,6 @@ export interface PatchRendererProps {
   item: StackItem
   size?: 'large' | 'compact' | 'carousel' | 'mini'
   className?: string
-  showLabel?: boolean
   isActive?: boolean
   focus?: number
   lightOffset?: number

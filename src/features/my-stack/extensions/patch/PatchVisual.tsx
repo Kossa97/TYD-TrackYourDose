@@ -24,9 +24,6 @@ export interface PatchVisualProps {
   name?: string | null
   size?: 'large' | 'compact' | 'carousel' | 'mini'
   className?: string
-  // Ohne Namen: die Auswahlkachel im Formular zeigt das nackte Objekt,
-  // ihre eigene Beschriftung steht darunter.
-  showLabel?: boolean
   isActive?: boolean
   focus?: number
   lightOffset?: number
@@ -72,7 +69,6 @@ export function PatchVisual({
   name,
   size = 'large',
   className = '',
-  showLabel = true,
   isActive = true,
   focus,
   lightOffset = 0,
@@ -383,22 +379,20 @@ export function PatchVisual({
       {/* Der Name steht waagerecht auf dem Kissen: die Streifenform gibt ihm
           die Breite, und ungedrehter Text bekommt vom Browser die schaerfere
           Subpixel-Glaettung. */}
-{showLabel && (
-        <div
-          data-patch-detail="name"
-          className="pointer-events-none absolute flex items-center justify-center overflow-hidden text-center"
-          style={{
-            left: `${(PATCH_NAME_PCT.left * 100).toFixed(2)}%`,
-            top: `${(PATCH_NAME_PCT.top * 100).toFixed(2)}%`,
-            width: `${(PATCH_NAME_PCT.width * 100).toFixed(2)}%`,
-            height: `${(PATCH_NAME_PCT.height * 100).toFixed(2)}%`,
-          }}
-        >
-          <StageMarquee className={`w-full ${NAME_CLASS[size]} font-bold text-[#3a3a34] tracking-normal`}>
-            {patchName}
-          </StageMarquee>
-        </div>
-      )}
+      <div
+        data-patch-detail="name"
+        className="pointer-events-none absolute flex items-center justify-center overflow-hidden text-center"
+        style={{
+          left: `${(PATCH_NAME_PCT.left * 100).toFixed(2)}%`,
+          top: `${(PATCH_NAME_PCT.top * 100).toFixed(2)}%`,
+          width: `${(PATCH_NAME_PCT.width * 100).toFixed(2)}%`,
+          height: `${(PATCH_NAME_PCT.height * 100).toFixed(2)}%`,
+        }}
+      >
+        <StageMarquee className={`w-full ${NAME_CLASS[size]} font-bold text-[#3a3a34] tracking-normal`}>
+          {patchName}
+        </StageMarquee>
+      </div>
     </div>
   )
 }

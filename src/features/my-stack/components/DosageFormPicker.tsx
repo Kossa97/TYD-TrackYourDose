@@ -1,10 +1,9 @@
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DOSAGE_FORMS, isStageRenderable } from '../lib/dosageForms'
+import { DOSAGE_FORMS } from '../lib/dosageForms'
 import type { DosageFormKey } from '../types'
 import { DosageFormIcon } from './DosageFormIcon'
-import { DosageFormPreview } from './DosageFormPreview'
 
 const COMMON_DOSAGE_FORMS: readonly DosageFormKey[] = [
   'tablet',
@@ -19,25 +18,13 @@ export interface DosageFormPickerProps {
   value: DosageFormKey | null
   suggestedForms: readonly DosageFormKey[]
   error?: boolean
-  // Die schon gewaehlte Eintragsfarbe. Steht sie noch nicht fest, zeigen die
-  // Kacheln das Material der Form — nicht irgendein Blau, das spaeter nicht
-  // stimmt.
-  colorHex?: string | null
   onSelect: (dosageForm: DosageFormKey) => void
 }
-
-// Hoehe des Standplatzes in jeder Kachel. Die Formen stehen darin auf einer
-// gemeinsamen Bodenlinie und behalten ihre Groessenverhaeltnisse: ein Pen ist
-// hoeher als eine Tablette, und das ist eine wahre Aussage ueber die Objekte.
-// 100 px, weil der Pen in Miniaturgroesse 96,9 px misst — die groesste Form
-// gibt das Mass vor, sonst wuerde sie beschnitten.
-const STANDPLATZ = 'flex h-[100px] w-full items-end justify-center'
 
 export function DosageFormPicker({
   value,
   suggestedForms,
   error = false,
-  colorHex,
   onSelect,
 }: DosageFormPickerProps) {
   const { t } = useTranslation()
@@ -63,28 +50,13 @@ export function DosageFormPicker({
         type="button"
         aria-pressed={selected}
         onClick={() => onSelect(form.key)}
-        className={`flex min-h-11 cursor-pointer flex-col items-center gap-2 rounded-2xl border px-3 py-3 text-center text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${selected
+        className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${selected
           ? 'border-sky-400/50 bg-sky-400/10 text-sky-200 shadow-[0_0_22px_rgba(0,204,245,0.09),inset_0_1px_0_rgba(255,255,255,0.06)]'
           : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25 hover:bg-white/[0.06]'
         }`}
       >
-        {/* Das Objekt selbst, ohne Aufschrift: die Kachel hat ihre eigene
-            Beschriftung darunter, und eine zweite auf dem Glas waere in dieser
-            Groesse nur ein Fleck — und stuende ausserdem im zugaenglichen
-            Namen des Knopfes. */}
-        <span className={STANDPLATZ} aria-hidden="true">
-          {isStageRenderable(form.key) ? (
-            <DosageFormPreview
-              dosageForm={form.key}
-              colorHex={colorHex}
-              size="mini"
-              showLabel={false}
-            />
-          ) : (
-            <span className={selected ? 'text-sky-300' : 'text-slate-500'}>
-              <DosageFormIcon form={form.key} />
-            </span>
-          )}
+        <span className={`shrink-0 ${selected ? 'text-sky-300' : 'text-slate-500'}`}>
+          <DosageFormIcon form={form.key} />
         </span>
         <span className="min-w-0 break-words">{t(form.labelKey)}</span>
       </button>
