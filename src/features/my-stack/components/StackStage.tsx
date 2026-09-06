@@ -44,11 +44,11 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
 
   // Weder Etikett noch Physik: beides ist fuer eine Kapsel bedeutungslos.
   if (renderer === 'capsule') {
-    return <CapsuleRenderer item={item} {...visualProps} />
+    return <CapsuleRenderer item={item} showLabel={showLabel} {...visualProps} />
   }
 
   if (renderer === 'tablet') {
-    return <TabletRenderer item={item} sloshEngine={sloshEngine} {...visualProps} />
+    return <TabletRenderer item={item} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
   }
 
   if (renderer === 'ampoule') {
@@ -64,26 +64,26 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
   }
 
   if (renderer === 'tube') {
-    return <TubeRenderer item={item} {...visualProps} />
+    return <TubeRenderer item={item} showLabel={showLabel} {...visualProps} />
   }
 
   if (renderer === 'patch') {
-    return <PatchRenderer item={item} {...visualProps} />
+    return <PatchRenderer item={item} showLabel={showLabel} {...visualProps} />
   }
 
   if (renderer === 'pen') {
-    return <PenRenderer item={item} {...visualProps} />
+    return <PenRenderer item={item} showLabel={showLabel} {...visualProps} />
   }
 
   // Wie die Tube: undurchsichtig, kein Etikett, kein Pegel, kein Schwappen.
   if (renderer === 'powder') {
-    return <PowderRenderer item={item} {...visualProps} />
+    return <PowderRenderer item={item} showLabel={showLabel} {...visualProps} />
   }
 
   // Durchscheinend, und es bewegt sich — aber zaeh: dieselbe Feder, durch ein
   // Verzoegerungsglied gefiltert. Kein Etikettband, kein Pegel.
   if (renderer === 'gel') {
-    return <GelRenderer item={item} sloshEngine={sloshEngine} {...visualProps} />
+    return <GelRenderer item={item} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
   }
 
   // Das Mundspray. Wie das Nasenspray eine Pumpflasche mit Etikett und

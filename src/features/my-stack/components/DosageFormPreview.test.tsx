@@ -68,11 +68,31 @@ describe('DosageFormPreview', () => {
     expect(container.innerHTML).toContain('rgb(224, 162, 63)')
   })
 
-  it('zeigt ohne eingetippten Namen den Vorgabenamen der Form', () => {
-    // Solange der Nutzer nichts eingegeben hat, steht der Name der Form da —
-    // kein leeres Band und kein erfundener Platzhalter aus dem Formular.
-    const { container } = render(<DosageFormPreview dosageForm="powder" displayName="" />)
+  it('kann das Objekt ohne jede Aufschrift zeigen', () => {
+    // Was die Auswahlkachel braucht: sie beschriftet sich selbst.
+    const { container } = render(
+      <DosageFormPreview dosageForm="powder" displayName="Kreatin" showLabel={false} />,
+    )
 
-    expect(sichtbarerText(container)).toBe('Pulver')
+    expect(container.querySelector('[data-powder-detail="root"]')).not.toBeNull()
+    expect(sichtbarerText(container)).toBe('')
+  })
+
+  it('gilt fuer jede Form: ohne showLabel steht der Name nicht im Bild', () => {
+    // Sieben Formen drucken ihren Namen auf den Koerper statt auf ein Band.
+    // Ohne einen Schalter dafuer stuende in jeder Kachel ein Fleck aus
+    // 3,5-px-Text — und im zugaenglichen Namen des Knopfes.
+    //
+    // Geprueft wird der NAME, nicht jedes Zeichen: das Zaehlwerk des Pens
+    // zeigt seine Null weiter. Die gehoert zum Geraet wie die Riffelung, nicht
+    // zur Beschriftung.
+    for (const form of DOSAGE_FORMS.filter(f => isStageRenderable(f.key))) {
+      const { container, unmount } = render(
+        <DosageFormPreview dosageForm={form.key} displayName="Testname" size="mini" showLabel={false} />,
+      )
+
+      expect(sichtbarerText(container), form.key).not.toContain('Testname')
+      unmount()
+    }
   })
 })

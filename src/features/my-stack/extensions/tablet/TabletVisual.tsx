@@ -13,6 +13,9 @@ export interface TabletVisualProps {
   color: string
   size?: 'large' | 'compact' | 'carousel' | 'mini'
   className?: string
+  // Ohne Namen: die Auswahlkachel im Formular zeigt das nackte Objekt,
+  // ihre eigene Beschriftung steht darunter.
+  showLabel?: boolean
   isActive?: boolean
   focus?: number
   lightOffset?: number
@@ -43,6 +46,7 @@ export function TabletVisual({
   color,
   size = 'large',
   className = '',
+  showLabel = true,
   isActive = true,
   focus,
   lightOffset = 0,
@@ -234,30 +238,32 @@ export function TabletVisual({
 
       {/* Beschriftet wie alle anderen Formen: HTML, dieselben Klassen, derselbe
           Durchlauf. Kein Band — die Tablette ist kein Behälter. */}
-      <div
-        ref={nameRollRef}
-        data-tablet-detail="name"
-        className="pointer-events-none absolute inset-0"
-        style={{ clipPath: `url(#${uid}-nameClip)` }}
-      >
+{showLabel && (
         <div
-          className="absolute -translate-y-1/2 overflow-hidden text-center"
-          style={{
-            top: `${TABLET_NAME_TOP_PCT * 100}%`,
-            left: `${(TABLET_NAME_INSET_PCT * 100).toFixed(2)}%`,
-            right: `${(TABLET_NAME_INSET_PCT * 100).toFixed(2)}%`,
-          }}
+          ref={nameRollRef}
+          data-tablet-detail="name"
+          className="pointer-events-none absolute inset-0"
+          style={{ clipPath: `url(#${uid}-nameClip)` }}
         >
-          <StageMarquee className={`${NAME_CLASS[size]} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
-            {tabletName}
-          </StageMarquee>
+          <div
+            className="absolute -translate-y-1/2 overflow-hidden text-center"
+            style={{
+              top: `${TABLET_NAME_TOP_PCT * 100}%`,
+              left: `${(TABLET_NAME_INSET_PCT * 100).toFixed(2)}%`,
+              right: `${(TABLET_NAME_INSET_PCT * 100).toFixed(2)}%`,
+            }}
+          >
+            <StageMarquee className={`${NAME_CLASS[size]} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}>
+              {tabletName}
+            </StageMarquee>
+          </div>
+          <div
+            ref={nameSheenRef}
+            className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/10 via-white/10 to-black/10"
+            style={{ transform: `translateX(${visualLightOffset * 10}%)`, opacity: 0.62 + visualFocus * 0.2 }}
+          />
         </div>
-        <div
-          ref={nameSheenRef}
-          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/10 via-white/10 to-black/10"
-          style={{ transform: `translateX(${visualLightOffset * 10}%)`, opacity: 0.62 + visualFocus * 0.2 }}
-        />
-      </div>
+      )}
     </div>
   )
 }

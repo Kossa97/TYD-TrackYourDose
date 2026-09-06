@@ -28,6 +28,9 @@ export interface PenVisualProps {
   color: string
   size?: 'large' | 'compact' | 'carousel' | 'mini'
   className?: string
+  // Ohne Namen: die Auswahlkachel im Formular zeigt das nackte Objekt,
+  // ihre eigene Beschriftung steht darunter.
+  showLabel?: boolean
   isActive?: boolean
   focus?: number
   lightOffset?: number
@@ -66,6 +69,7 @@ export function PenVisual({
   color,
   size = 'large',
   className = '',
+  showLabel = true,
   isActive = true,
   focus,
   lightOffset = 0,
@@ -347,21 +351,23 @@ export function PenVisual({
           Grad gedreht, und gedrehter Text bekommt vom Browser nur graue
           Kantenglaettung statt Subpixel-Glaettung. Ein Schein-Filter und
           fette Schnitte lassen ihn dann zulaufen. */}
-      <div
-        data-pen-detail="name"
-        className="pointer-events-none absolute flex items-center overflow-hidden text-center"
-        style={{
-          left: '50%',
-          top: `${(PEN_NAME_TOP_PCT * 100).toFixed(2)}%`,
-          width: `${(PEN_NAME_RUN_PCT * 100).toFixed(2)}%`,
-          height: `${(PEN_NAME_BAND_PCT * 100).toFixed(2)}%`,
-          transform: 'translate(-50%, -50%) rotate(-90deg)',
-        }}
-      >
-        <StageMarquee className={`w-full ${NAME_CLASS[size]} font-bold text-[#bfe6ff] tracking-normal`}>
-          {penName}
-        </StageMarquee>
-      </div>
+{showLabel && (
+        <div
+          data-pen-detail="name"
+          className="pointer-events-none absolute flex items-center overflow-hidden text-center"
+          style={{
+            left: '50%',
+            top: `${(PEN_NAME_TOP_PCT * 100).toFixed(2)}%`,
+            width: `${(PEN_NAME_RUN_PCT * 100).toFixed(2)}%`,
+            height: `${(PEN_NAME_BAND_PCT * 100).toFixed(2)}%`,
+            transform: 'translate(-50%, -50%) rotate(-90deg)',
+          }}
+        >
+          <StageMarquee className={`w-full ${NAME_CLASS[size]} font-bold text-[#bfe6ff] tracking-normal`}>
+            {penName}
+          </StageMarquee>
+        </div>
+      )}
     </div>
   )
 }

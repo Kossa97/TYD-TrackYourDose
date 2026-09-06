@@ -9,12 +9,18 @@ export interface DosageFormPreviewProps {
   colorHex?: string | null
   ingredients?: readonly StackItemIngredient[]
   size?: 'large' | 'compact' | 'carousel' | 'mini'
+  showLabel?: boolean
+  // Wie hell das Objekt steht. Die Auswahl dimmt damit, was nicht gewaehlt
+  // ist — mit demselben Regler, den das Karussell benutzt, statt mit einer
+  // Deckkraft ueber allem.
+  focus?: number
   className?: string
 }
 
 // Das Objekt selbst, gefuettert aus dem Entwurf statt aus einem gespeicherten
-// Eintrag: die Vorschau ueber dem Formular, mit allem, was schon eingetippt
-// ist.
+// Eintrag. Zwei Stellen benutzen es: die Auswahlkacheln (klein, ohne
+// Aufschrift) und die Vorschau ueber dem Formular (mit allem, was schon
+// eingetippt ist).
 //
 // Kein Buehnenlicht und keine Physik: die Lampe gehoert dem Karussell, wo sie
 // aus der Lage der Karte kommt. Im Formular gibt es keine Lage, also stuende
@@ -26,6 +32,8 @@ export function DosageFormPreview({
   colorHex,
   ingredients,
   size = 'compact',
+  showLabel = true,
+  focus,
   className = '',
 }: DosageFormPreviewProps) {
   // `liquid` und `other` haben keine Buehnengrafik. Sie bekommen hier auch
@@ -38,7 +46,7 @@ export function DosageFormPreview({
 
   return (
     <div data-dosage-form-preview={dosageForm} className={className}>
-      <StackStage item={item} size={size} />
+      <StackStage item={item} size={size} showLabel={showLabel} focus={focus} />
     </div>
   )
 }

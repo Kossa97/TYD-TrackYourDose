@@ -27,6 +27,9 @@ export interface GelVisualProps {
   color: string
   size?: 'large' | 'compact' | 'carousel' | 'mini'
   className?: string
+  // Ohne Namen: die Auswahlkachel im Formular zeigt das nackte Objekt,
+  // ihre eigene Beschriftung steht darunter.
+  showLabel?: boolean
   isActive?: boolean
   focus?: number
   lightOffset?: number
@@ -62,6 +65,7 @@ export function GelVisual({
   color,
   size = 'large',
   className = '',
+  showLabel = true,
   isActive = true,
   focus,
   lightOffset = 0,
@@ -344,28 +348,30 @@ export function GelVisual({
           Tropfflasche: durchscheinend, mit Glasrand und Glanz. Ein weisser
           Aufkleber sass auf dem Glas wie Papier auf Kunststoff — hier sieht
           man die Masse hindurch, wie bei jeder anderen Glasform. */}
-      <StageLabel
-        name={labelName}
-        detail={null}
-        className="rounded-sm"
-        nameClassName={NAME_CLASS[size]}
-        detailClassName=""
-        wrapperProps={{
-          'data-gel-detail': 'label',
-          style: {
-            top: `${(GEL_LABEL_TOP_PCT * 100).toFixed(2)}%`,
-            height: `${(GEL_LABEL_HEIGHT_PCT * 100).toFixed(2)}%`,
-            left: `${(GEL_LABEL_INSET_PCT * 100).toFixed(2)}%`,
-            right: `${(GEL_LABEL_INSET_PCT * 100).toFixed(2)}%`,
-          },
-        }}
-        innerProps={{ className: 'flex h-full flex-col justify-center px-2' }}
-        sheenRef={labelSheenRef}
-        sheenStyle={{
-          transform: `translateX(${visualLightOffset * 12}%)`,
-          opacity: 0.6 + visualFocus * 0.22,
-        }}
-      />
+{showLabel && (
+        <StageLabel
+          name={labelName}
+          detail={null}
+          className="rounded-sm"
+          nameClassName={NAME_CLASS[size]}
+          detailClassName=""
+          wrapperProps={{
+            'data-gel-detail': 'label',
+            style: {
+              top: `${(GEL_LABEL_TOP_PCT * 100).toFixed(2)}%`,
+              height: `${(GEL_LABEL_HEIGHT_PCT * 100).toFixed(2)}%`,
+              left: `${(GEL_LABEL_INSET_PCT * 100).toFixed(2)}%`,
+              right: `${(GEL_LABEL_INSET_PCT * 100).toFixed(2)}%`,
+            },
+          }}
+          innerProps={{ className: 'flex h-full flex-col justify-center px-2' }}
+          sheenRef={labelSheenRef}
+          sheenStyle={{
+            transform: `translateX(${visualLightOffset * 12}%)`,
+            opacity: 0.6 + visualFocus * 0.22,
+          }}
+        />
+      )}
     </div>
   )
 }
