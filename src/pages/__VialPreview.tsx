@@ -9,6 +9,7 @@ import { PatchVisual } from '../features/my-stack/extensions/patch/PatchVisual'
 import { GelVisual } from '../features/my-stack/extensions/gel/GelVisual'
 import { PenVisual } from '../features/my-stack/extensions/pen/PenVisual'
 import { PowderVisual } from '../features/my-stack/extensions/powder/PowderVisual'
+import { SprayVisual } from '../features/my-stack/extensions/spray/SprayVisual'
 import { TabletVisual } from '../features/my-stack/extensions/tablet/TabletVisual'
 import { TubeVisual } from '../features/my-stack/extensions/tube/TubeVisual'
 import { SloshProvider, useSloshEngine } from '../components/SloshContext'
@@ -96,9 +97,18 @@ const PREVIEW_GELS = [
   { name: 'Hydrocortison Acetat Creme 1 Prozent', color: '#38bdf8' },
 ]
 
+// Das Mundspray, nicht zu verwechseln mit PREVIEW_SPRAYS weiter oben — das
+// sind die Nasensprays.
+const PREVIEW_MOUTH_SPRAYS = [
+  { name: 'Vitamin D3', amount: 1000 as number | null, unit: 'IU / spray' as string | null, color: '#f0b357' },
+  { name: 'Melatonin', amount: 500 as number | null, unit: 'mcg / spray' as string | null, color: '#8b7fd4' },
+  // Langer Name: er soll dort wandern, wo auch die anderen Glasformen wandern.
+  { name: 'Vitamin B12 Methylcobalamin Mundspray', amount: null as number | null, unit: null as string | null, color: '#f43f5e' },
+]
+
 // Mixed forms in one row, the way My Stack will show them.
 type MixedEntry = {
-  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'drops' | 'patch' | 'powder' | 'gel'
+  kind: 'ampoule' | 'vial' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'drops' | 'patch' | 'powder' | 'gel' | 'spray'
   name: string
   amount: number | null
   unit: string | null
@@ -142,6 +152,10 @@ const MIXED_CAROUSEL: MixedEntry[] = [
   { kind: 'powder', name: 'Magnesium', amount: null, unit: null, color: '#a3e635' },
   { kind: 'gel', name: 'Testogel', amount: null, unit: null, color: '#a3e635' },
   { kind: 'gel', name: 'Diclofenac', amount: null, unit: null, color: '#f97316' },
+  // Direkt hinter dem Nasenspray waere der Vergleich zu leicht; hier steht das
+  // Mundspray am Ende und muss auch aus der Entfernung unterscheidbar sein.
+  { kind: 'spray', name: 'Vitamin D3', amount: 1000, unit: 'IU / spray', color: '#f0b357' },
+  { kind: 'spray', name: 'Melatonin', amount: 500, unit: 'mcg / spray', color: '#8b7fd4' },
 ]
 
 export function VialPreview() {
@@ -441,6 +455,25 @@ export function VialPreview() {
         </div>
       </SloshProvider>
 
+      <p className="mx-auto max-w-4xl pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
+        Spray — Mundspray mit seitlicher Düse in Detailgröße
+      </p>
+      <SloshProvider engine={sloshEngine}>
+        <div className="mx-auto flex max-w-5xl flex-wrap items-end justify-center gap-10 pb-2">
+          {PREVIEW_MOUTH_SPRAYS.map((s, i) => (
+            <SprayVisual
+              key={s.name}
+              name={s.name}
+              amount={s.amount}
+              unit={s.unit}
+              color={s.color}
+              size="large"
+              lightOffset={i - 1}
+            />
+          ))}
+        </div>
+      </SloshProvider>
+
       {/* The real thing: a mixed carousel narrow enough to actually swipe.
           Ampoules and vials share one ground line and one slosh engine. */}
       <p className="mx-auto max-w-sm pt-10 pb-3 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
@@ -465,7 +498,17 @@ export function VialPreview() {
               data-stage-index={index}
               className={`shrink-0 ${isDragging ? '' : 'snap-center'}`}
             >
-              {entry.kind === 'gel' ? (
+              {entry.kind === 'spray' ? (
+                <SprayVisual
+                  name={entry.name}
+                  amount={entry.amount}
+                  unit={entry.unit}
+                  color={entry.color}
+                  size="carousel"
+                  isActive={index === activeIndex}
+                  stageLightRef={registerStageLight(index)}
+                />
+              ) : entry.kind === 'gel' ? (
                 <GelVisual
                   name={entry.name}
                   color={entry.color}

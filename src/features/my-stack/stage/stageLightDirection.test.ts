@@ -11,6 +11,7 @@ import { NasalSprayVisual } from '../extensions/nasal-spray/NasalSprayVisual'
 import { PatchVisual } from '../extensions/patch/PatchVisual'
 import { PenVisual } from '../extensions/pen/PenVisual'
 import { PowderVisual } from '../extensions/powder/PowderVisual'
+import { SprayVisual } from '../extensions/spray/SprayVisual'
 import { TabletVisual } from '../extensions/tablet/TabletVisual'
 import { TubeVisual } from '../extensions/tube/TubeVisual'
 
@@ -72,6 +73,7 @@ const FORMEN: Array<{ form: string; Visual: Visual; props: Record<string, unknow
   { form: 'patch', Visual: PatchVisual, props: { name: 'Testpflaster' } },
   { form: 'powder', Visual: PowderVisual, props: { name: 'Testpulver', color: '#38bdf8' } },
   { form: 'gel', Visual: GelVisual, props: { name: 'Testgel', color: '#38bdf8' } },
+  { form: 'spray', Visual: SprayVisual, props: { name: 'Testspray', color: '#38bdf8' } },
 ]
 
 describe('Buehnenlicht: Richtung', () => {

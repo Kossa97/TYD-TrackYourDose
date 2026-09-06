@@ -13,6 +13,7 @@ import { PatchRenderer } from '../extensions/patch/PatchRenderer'
 import { PenRenderer } from '../extensions/pen/PenRenderer'
 import { GelRenderer } from '../extensions/gel/GelRenderer'
 import { PowderRenderer } from '../extensions/powder/PowderRenderer'
+import { SprayRenderer } from '../extensions/spray/SprayRenderer'
 import { TubeRenderer } from '../extensions/tube/TubeRenderer'
 import { VialRenderer } from '../extensions/peptide/VialRenderer'
 
@@ -83,6 +84,12 @@ export function StackStage({ item, fillPct, animateOnMount, showLabel, sloshEngi
   // Verzoegerungsglied gefiltert. Kein Etikettband, kein Pegel.
   if (renderer === 'gel') {
     return <GelRenderer item={item} sloshEngine={sloshEngine} {...visualProps} />
+  }
+
+  // Das Mundspray. Wie das Nasenspray eine Pumpflasche mit Etikett und
+  // Schwappen — aber die kleinere, mit seitlicher Duese statt Nasenkegel.
+  if (renderer === 'spray') {
+    return <SprayRenderer item={item} showLabel={showLabel} sloshEngine={sloshEngine} {...visualProps} />
   }
 
   return (

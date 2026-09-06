@@ -268,9 +268,21 @@ describe('StackStage — Nasenspray', () => {
     expect(source).not.toContain('fillPct')
   })
 
-  it('lässt den generischen spray-Schlüssel im Textzustand', () => {
-    const sprayItem: StackItem = { ...nasalSprayItem, id: 'rachenspray', dosage_form: 'spray' }
-    expect(renderStage(sprayItem)).toContain('data-stack-renderer="unsupported"')
+  it('gibt dem generischen spray-Schlüssel seine eigene Flasche', () => {
+    // Beide sind Pumpflaschen — aber nicht dieselbe. Das Mundspray hat die
+    // seitliche Düse, das Nasenspray den Kegel nach oben.
+    const sprayItem: StackItem = { ...nasalSprayItem, id: 'mundspray', dosage_form: 'spray' }
+    const html = renderStage(sprayItem)
+    expect(html).toContain('data-stack-renderer="spray"')
+    expect(html).toContain('data-spray-detail="nozzle"')
+    expect(html).not.toContain('data-nasal-spray-detail="nozzle"')
+  })
+
+  it('lässt die Formen ohne Bühnengrafik im Textzustand', () => {
+    // Der Gegenbeweis wandert mit: er stand zuletzt auf 'spray', das jetzt
+    // eine eigene Grafik hat.
+    const liquidItem: StackItem = { ...nasalSprayItem, id: 'saft', dosage_form: 'liquid' }
+    expect(renderStage(liquidItem)).toContain('data-stack-renderer="unsupported"')
   })
 })
 
