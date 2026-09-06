@@ -138,6 +138,46 @@ function completeCustomFlow(name = 'Custom Product'): void {
   continueWizard()
 }
 
+describe('StackItemWizard — Vorschau der Darreichungsform', () => {
+  it('zeigt erst ab der gewaehlten Form ein Objekt', () => {
+    renderWizard()
+    startCustom('Kreatin')
+
+    // Auf dem Schritt davor gibt es noch keine Form und damit nichts zu zeigen.
+    expect(document.querySelector('[data-wizard-preview]')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_powder' }))
+
+    const vorschau = document.querySelector('[data-wizard-preview]')
+    expect(vorschau).not.toBeNull()
+    expect(vorschau!.querySelector('[data-stack-renderer="powder"]')).not.toBeNull()
+  })
+
+  it('bleibt ueber allen weiteren Schritten stehen und uebernimmt den Namen', () => {
+    // Farbe und Menge kommen aus spaeteren Schritten. Stuende die Vorschau nur
+    // ueber der Formauswahl, saehe man genau die Aenderungen nicht, die man
+    // gerade macht.
+    renderWizard()
+    startCustom('Kreatin Monohydrat')
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_powder' }))
+    continueWizard()
+
+    const vorschau = document.querySelector('[data-wizard-preview]')
+    expect(vorschau).not.toBeNull()
+    expect(vorschau!.textContent).toContain('Kreatin Monohydrat')
+  })
+
+  it('zeigt fuer Formen ohne Buehnengrafik gar nichts', () => {
+    renderWizard()
+    startCustom('Saft')
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_liquid' }))
+
+    // Kein Rahmen, keine erfundene Grafik. Ein leerer Kasten saehe aus wie ein
+    // Fehler.
+    expect(document.querySelector('[data-wizard-preview]')).toBeNull()
+  })
+})
+
 function completeCatalogFlow(): void {
   fireEvent.change(screen.getByLabelText('my_stack_question'), { target: { value: 'Vitamin' } })
   fireEvent.click(screen.getByRole('option', { name: /Vitamin D3/ }))
