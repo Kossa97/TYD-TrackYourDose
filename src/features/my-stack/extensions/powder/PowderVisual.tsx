@@ -23,6 +23,9 @@ export interface PowderVisualProps {
   color: string
   size?: 'large' | 'compact' | 'carousel' | 'mini'
   className?: string
+  // Ohne Namen: die Auswahlkachel im Formular zeigt das nackte Objekt,
+  // ihre eigene Beschriftung steht darunter.
+  showLabel?: boolean
   isActive?: boolean
   focus?: number
   lightOffset?: number
@@ -60,6 +63,7 @@ export function PowderVisual({
   color,
   size = 'large',
   className = '',
+  showLabel = true,
   isActive = true,
   focus,
   lightOffset = 0,
@@ -330,19 +334,21 @@ export function PowderVisual({
       {/* Der Name steht auf dem Etikett, nicht auf nacktem Kunststoff. Ohne
           Kammer gibt es kein Etikettband der Glasformen; die Regel dafuer wird
           nicht angefasst — das hier ist Teil der Dose. */}
-      <div
-        data-powder-detail="name"
-        className="absolute -translate-y-1/2 text-center"
-        style={{
-          top: `${(POWDER_NAME_TOP_PCT * 100).toFixed(2)}%`,
-          left: `${(POWDER_NAME_INSET_PCT * 100).toFixed(2)}%`,
-          right: `${(POWDER_NAME_INSET_PCT * 100).toFixed(2)}%`,
-        }}
-      >
-        <StageMarquee className={NAME_CLASS[size]}>
-          {labelName}
-        </StageMarquee>
-      </div>
+{showLabel && (
+        <div
+          data-powder-detail="name"
+          className="absolute -translate-y-1/2 text-center"
+          style={{
+            top: `${(POWDER_NAME_TOP_PCT * 100).toFixed(2)}%`,
+            left: `${(POWDER_NAME_INSET_PCT * 100).toFixed(2)}%`,
+            right: `${(POWDER_NAME_INSET_PCT * 100).toFixed(2)}%`,
+          }}
+        >
+          <StageMarquee className={NAME_CLASS[size]}>
+            {labelName}
+          </StageMarquee>
+        </div>
+      )}
     </div>
   )
 }

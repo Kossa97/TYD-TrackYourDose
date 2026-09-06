@@ -2,7 +2,7 @@
 
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { DOSAGE_FORMS } from '../lib/dosageForms'
+import { DOSAGE_FORMS, isStageRenderable } from '../lib/dosageForms'
 import { DosageFormPicker } from './DosageFormPicker'
 
 vi.mock('react-i18next', () => ({
@@ -13,60 +13,70 @@ vi.mock('react-i18next', () => ({
 
 afterEach(cleanup)
 
+function renderAll(props: Partial<Parameters<typeof DosageFormPicker>[0]> = {}) {
+  return render(
+    <DosageFormPicker
+      value={null}
+      suggestedForms={DOSAGE_FORMS.map(form => form.key)}
+      onSelect={() => undefined}
+      {...props}
+    />,
+  )
+}
+
+const kachel = (labelKey: string) => screen.getByRole('button', { name: labelKey })
+
 describe('DosageFormPicker', () => {
-  function renderedIcon(labelKey: string) {
-    render(
-      <DosageFormPicker
-        value={null}
-        suggestedForms={DOSAGE_FORMS.map(form => form.key)}
-        onSelect={() => undefined}
-      />,
-    )
-    return screen.getByRole('button', { name: labelKey }).querySelector('svg')!
-  }
+  it('zeigt auf jeder Kachel das Objekt, das man bekommt', () => {
+    renderAll()
 
-  it('renders one visually unique, form-specific symbol for every dosage form', () => {
-    render(
-      <DosageFormPicker
-        value={null}
-        suggestedForms={DOSAGE_FORMS.map(form => form.key)}
-        onSelect={() => undefined}
-      />,
-    )
-
-    const renderedShapes = DOSAGE_FORMS.map(form => {
-      const button = screen.getByRole('button', { name: form.labelKey })
-      const icon = button.querySelector('svg')
-
-      expect(icon).not.toBeNull()
-      return icon!.innerHTML
-    })
-
-    expect(new Set(renderedShapes).size).toBe(DOSAGE_FORMS.length)
+    for (const form of DOSAGE_FORMS.filter(f => isStageRenderable(f.key))) {
+      const vorschau = kachel(form.labelKey).querySelector('[data-dosage-form-preview]')
+      expect(vorschau, form.key).not.toBeNull()
+      expect(vorschau!.getAttribute('data-dosage-form-preview')).toBe(form.key)
+    }
   })
 
-  it('renders the selected oblong scored tablet silhouette', () => {
-    const icon = renderedIcon('dosage_form_tablet')
+  it('faellt fuer Formen ohne Buehnengrafik auf das Symbol zurueck', () => {
+    // `liquid` und `other` bekommen keine erfundene Grafik. Die Regel „Formen
+    // ohne Buehnengrafik bleiben textlich" wird auch hier nicht aufgeweicht.
+    renderAll()
 
-    expect(icon.querySelector('rect[rx="5"]')).not.toBeNull()
-    expect(icon.querySelector('circle')).toBeNull()
+    for (const key of ['liquid', 'other'] as const) {
+      const form = DOSAGE_FORMS.find(f => f.key === key)!
+      expect(isStageRenderable(key)).toBe(false)
+      expect(kachel(form.labelKey).querySelector('[data-dosage-form-preview]')).toBeNull()
+      expect(kachel(form.labelKey).querySelector('svg')).not.toBeNull()
+    }
   })
 
-  it('renders the selected three-droplet silhouette', () => {
-    const paths = Array.from(renderedIcon('dosage_form_drops').querySelectorAll('path'))
+  it('haelt die Aufschrift vom Objekt fern', () => {
+    // Die Kachel beschriftet sich selbst. Eine zweite Aufschrift auf dem Glas
+    // waere in Miniaturgroesse ein Fleck — und stuende im zugaenglichen Namen
+    // des Knopfes.
+    renderAll()
 
-    expect(paths).toHaveLength(3)
-    expect(paths.every(path => path.getAttribute('d')?.endsWith('Z'))).toBe(true)
+    const dose = kachel('dosage_form_powder')
+    expect(dose.querySelector('.vial-label-marquee')).toBeNull()
+    expect(dose.querySelector('[aria-hidden="true"]')).not.toBeNull()
   })
 
-  it('renders the selected patch with a separate active surface', () => {
-    const icon = renderedIcon('dosage_form_patch')
+  it('reicht die Eintragsfarbe an die Objekte durch', () => {
+    renderAll({ colorHex: '#f97316' })
 
-    expect(icon.querySelectorAll('rect')).toHaveLength(2)
-    expect(icon.querySelector('circle')).toBeNull()
+    const deckel = kachel('dosage_form_powder').querySelector('[data-powder-detail="lid"]')
+    expect(deckel?.getAttribute('fill')).toBe('#f97316')
   })
 
-  it('shows only the substance-specific common forms first and hides remaining forms initially', () => {
+  it('laesst halb getippte Farben stehen, statt durch Schwarz zu flackern', () => {
+    // Im Farbfeld steht waehrend des Tippens jeder Zwischenstand.
+    renderAll({ colorHex: '#f9' })
+
+    const deckel = kachel('dosage_form_powder').querySelector('[data-powder-detail="lid"]')
+    expect(deckel?.getAttribute('fill')).not.toBe('#f9')
+  })
+
+  it('zeigt zuerst nur die substanzspezifischen Formen', () => {
     render(
       <DosageFormPicker
         value={null}
@@ -76,16 +86,16 @@ describe('DosageFormPicker', () => {
     )
 
     const common = screen.getByRole('group', { name: 'Häufige Darreichungsformen' })
-    expect(within(common).getAllByRole('button').map(button => button.textContent)).toEqual([
-      'dosage_form_ampoule',
-      'dosage_form_vial',
-      'dosage_form_gel',
-    ])
+    expect(within(common).getAllByRole('button').map(button => button.getAttribute('aria-pressed') === null ? null : button.textContent?.trim()))
+      .toHaveLength(3)
+    for (const key of ['dosage_form_ampoule', 'dosage_form_vial', 'dosage_form_gel']) {
+      expect(within(common).getByRole('button', { name: key })).toBeTruthy()
+    }
     expect(screen.queryByRole('button', { name: 'dosage_form_tablet' })).toBeNull()
     expect(screen.getByRole('button', { name: 'Weitere Darreichungsformen anzeigen' }).getAttribute('aria-expanded')).toBe('false')
   })
 
-  it('reveals every remaining form without duplicating common forms', () => {
+  it('klappt die restlichen Formen auf, ohne die haeufigen zu doppeln', () => {
     render(
       <DosageFormPicker
         value={null}
@@ -102,7 +112,7 @@ describe('DosageFormPicker', () => {
     }
   })
 
-  it('uses the neutral common forms when the catalog has no suggestions', () => {
+  it('nimmt die neutralen haeufigen Formen, wenn der Katalog nichts vorschlaegt', () => {
     render(
       <DosageFormPicker
         value={null}
@@ -112,17 +122,15 @@ describe('DosageFormPicker', () => {
     )
 
     const common = screen.getByRole('group', { name: 'Häufige Darreichungsformen' })
-    expect(within(common).getAllByRole('button').map(button => button.textContent)).toEqual([
-      'dosage_form_tablet',
-      'dosage_form_capsule',
-      'dosage_form_vial',
-      'dosage_form_drops',
-      'dosage_form_liquid',
-      'dosage_form_powder',
-    ])
+    const knoepfe = within(common).getAllByRole('button')
+    expect(knoepfe).toHaveLength(6)
+    for (const key of ['dosage_form_tablet', 'dosage_form_capsule', 'dosage_form_vial',
+      'dosage_form_drops', 'dosage_form_liquid', 'dosage_form_powder']) {
+      expect(within(common).getByRole('button', { name: key })).toBeTruthy()
+    }
   })
 
-  it('keeps a selected form outside the common forms visible while editing', () => {
+  it('haelt eine gewaehlte Form ausserhalb der haeufigen sichtbar', () => {
     render(
       <DosageFormPicker
         value="patch"
