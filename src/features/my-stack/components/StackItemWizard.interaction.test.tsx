@@ -200,7 +200,7 @@ function completeCatalogFlow(): void {
 function reachExistingReview(changeForm = false): void {
   continueWizard()
   if (changeForm) {
-    fireEvent.click(screen.getByRole('button', { name: 'my_stack_show_more_dosage_forms' }))
+    // Kein Aufklappen mehr noetig: beide Reihen stehen immer da.
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_drops' }))
   }
   continueWizard()

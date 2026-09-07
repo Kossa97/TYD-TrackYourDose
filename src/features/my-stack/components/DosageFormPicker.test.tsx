@@ -76,7 +76,7 @@ describe('DosageFormPicker', () => {
     expect(deckel?.getAttribute('fill')).not.toBe('#f9')
   })
 
-  it('zeigt zuerst nur die substanzspezifischen Formen', () => {
+  it('legt die empfohlenen in die erste Reihe und alle uebrigen darunter', () => {
     render(
       <DosageFormPicker
         value={null}
@@ -85,31 +85,36 @@ describe('DosageFormPicker', () => {
       />,
     )
 
-    const common = screen.getByRole('group', { name: 'Häufige Darreichungsformen' })
-    expect(within(common).getAllByRole('button').map(button => button.getAttribute('aria-pressed') === null ? null : button.textContent?.trim()))
-      .toHaveLength(3)
+    const empfohlen = screen.getByRole('group', { name: 'Häufige Darreichungsformen' })
+    expect(within(empfohlen).getAllByRole('button')).toHaveLength(3)
     for (const key of ['dosage_form_ampoule', 'dosage_form_vial', 'dosage_form_gel']) {
-      expect(within(common).getByRole('button', { name: key })).toBeTruthy()
+      expect(within(empfohlen).getByRole('button', { name: key })).toBeTruthy()
     }
-    expect(screen.queryByRole('button', { name: 'dosage_form_tablet' })).toBeNull()
-    expect(screen.getByRole('button', { name: 'Weitere Darreichungsformen anzeigen' }).getAttribute('aria-expanded')).toBe('false')
+
+    // Beide Reihen stehen immer da: eine Reihe zum Wischen muss nichts
+    // verstecken, was man wegwischen kann.
+    const uebrige = screen.getByRole('group', { name: 'Weitere Darreichungsformen' })
+    expect(within(uebrige).getAllByRole('button')).toHaveLength(DOSAGE_FORMS.length - 3)
+    expect(screen.queryByRole('button', { name: /anzeigen/ })).toBeNull()
+
+    // Und jede Form steht genau einmal da.
+    for (const form of DOSAGE_FORMS) {
+      expect(screen.getAllByRole('button', { name: form.labelKey }), form.key).toHaveLength(1)
+    }
   })
 
-  it('klappt die restlichen Formen auf, ohne die haeufigen zu doppeln', () => {
-    render(
-      <DosageFormPicker
-        value={null}
-        suggestedForms={['ampoule', 'vial', 'gel']}
-        onSelect={() => undefined}
-      />,
+  it('nennt die gewaehlte Form im Klartext, sonst steht kein Wort im Bild', () => {
+    // Vierzehn Aufschriften unter vierzehn Objekten waren zu viel; keine
+    // einzige waere ein Raetsel. Also genau eine: die gewaehlte.
+    const { rerender } = render(
+      <DosageFormPicker value={null} suggestedForms={[]} onSelect={() => undefined} />,
     )
+    expect(document.querySelector('[data-dosage-form-selected]')?.textContent).toBe('')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Weitere Darreichungsformen anzeigen' }))
-
-    expect(screen.getByRole('button', { name: 'Weitere Darreichungsformen ausblenden' }).getAttribute('aria-expanded')).toBe('true')
-    for (const form of DOSAGE_FORMS) {
-      expect(screen.getAllByRole('button', { name: form.labelKey })).toHaveLength(1)
-    }
+    rerender(
+      <DosageFormPicker value="powder" suggestedForms={[]} onSelect={() => undefined} />,
+    )
+    expect(document.querySelector('[data-dosage-form-selected]')?.textContent).toBe('dosage_form_powder')
   })
 
   it('nimmt die neutralen haeufigen Formen, wenn der Katalog nichts vorschlaegt', () => {
@@ -130,17 +135,16 @@ describe('DosageFormPicker', () => {
     }
   })
 
-  it('haelt eine gewaehlte Form ausserhalb der haeufigen sichtbar', () => {
+  it('holt die gewaehlte Form in ihrer Reihe ins Bild', () => {
+    // Beim Bearbeiten eines bestehenden Eintrags kann sie weit rechts liegen.
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+
     render(
-      <DosageFormPicker
-        value="patch"
-        suggestedForms={['ampoule', 'vial', 'gel']}
-        onSelect={() => undefined}
-      />,
+      <DosageFormPicker value="patch" suggestedForms={['ampoule', 'vial', 'gel']} onSelect={() => undefined} />,
     )
 
-    const current = screen.getByRole('group', { name: 'Aktuell ausgewählt' })
-    expect(within(current).getByRole('button', { name: 'dosage_form_patch' })).toBeTruthy()
-    expect(screen.getAllByRole('button', { name: 'dosage_form_patch' })).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'dosage_form_patch' }).getAttribute('aria-pressed')).toBe('true')
+    expect(scrollIntoView).toHaveBeenCalled()
   })
 })
