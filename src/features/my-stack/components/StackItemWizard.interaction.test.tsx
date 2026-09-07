@@ -167,21 +167,29 @@ describe('StackItemWizard — Vorschau der Darreichungsform', () => {
     expect(vorschau!.textContent).toContain('Kreatin Monohydrat')
   })
 
-  it('gibt der Vorschau die Farbpalette mit, nicht ein Hex-Feld', () => {
-    // Dieselbe Palette wie beim Anlegen eines Peptids, direkt unter dem Objekt,
-    // das sie faerbt. Frueher lag hier ein Hex-Textfeld im letzten Schritt.
+  it('gibt der Vorschau ein Farbfeld zum Ziehen, kein Hex-Feld', () => {
+    // Der Nutzer waehlt seine Farbe, nicht eine aus zwoelf. Und das Objekt
+    // darueber faerbt sich sofort mit, ohne einen Schritt weiterzugehen.
     renderWizard()
     startCustom('Kreatin')
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_powder' }))
 
     const vorschau = document.querySelector('[data-wizard-preview]')!
-    const felder = vorschau.querySelectorAll('[data-color-swatch]')
-    expect(felder.length).toBeGreaterThan(0)
+    const flaeche = vorschau.querySelector('[data-color-field="area"]')
+    const schiene = vorschau.querySelector('[data-color-field="hue"]')
+    expect(flaeche).not.toBeNull()
+    expect(schiene).not.toBeNull()
+    expect(vorschau.querySelector('input[type="text"]')).toBeNull()
 
-    fireEvent.click(vorschau.querySelector('[data-color-swatch="#f59e0b"]') as HTMLElement)
+    // Ziehen laesst sich in jsdom nicht messen (getBoundingClientRect ist
+    // ueberall null), die Pfeiltasten schon — sie gehen durch dieselbe
+    // Meldefunktion.
+    const vorher = vorschau.querySelector('[data-powder-detail="lid"]')?.getAttribute('fill')
+    fireEvent.keyDown(schiene as HTMLElement, { key: 'ArrowRight' })
+    const nachher = document.querySelector('[data-wizard-preview] [data-powder-detail="lid"]')?.getAttribute('fill')
 
-    // Das Objekt traegt die Farbe sofort — ohne einen Schritt weiter zu gehen.
-    expect(vorschau.querySelector('[data-powder-detail="lid"]')?.getAttribute('fill')).toBe('#f59e0b')
+    expect(nachher).not.toBe(vorher)
+    expect(nachher).toMatch(/^#[0-9a-f]{6}$/)
   })
 
   it('zeigt fuer Formen ohne Buehnengrafik gar nichts', () => {

@@ -33,7 +33,7 @@ import { evaluatePkReadiness, toPkMilligrams } from '../lib/pkReadiness'
 import { isStageRenderable } from '../lib/dosageForms'
 import { DosageFormPicker } from './DosageFormPicker'
 import { DosageFormPreview } from './DosageFormPreview'
-import { PeptideColorPalette } from '../../../components/PeptideColorPalette'
+import { ColorField } from '../../../components/ColorField'
 import { IngredientEditor } from './IngredientEditor'
 import { IntakePlanEditor } from './IntakePlanEditor'
 import { ProductInventorySection } from './ProductInventorySection'
@@ -779,15 +779,15 @@ export function StackItemWizard({
                   size="compact"
                 />
               </div>
-              {/* Die Farbe steht direkt unter dem Objekt, das sie faerbt —
-                  dieselbe Palette und dieselbe Komponente wie beim Anlegen
-                  eines Peptids. Frueher lag sie als Hex-Feld im letzten
-                  Schritt, weit weg von allem, was sie veraendert. */}
+              {/* Die Farbe steht direkt unter dem Objekt, das sie faerbt.
+                  Eine Flaeche zum Ziehen statt fertiger Felder: der Nutzer
+                  waehlt seine Farbe, nicht eine aus zwoelf. Waehrend des
+                  Ziehens faerbt sich das Objekt darueber mit. */}
               <div role="group" aria-labelledby="stack-color-label" className="border-t border-white/[0.07] pt-4">
                 <p id="stack-color-label" className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                   {t('my_stack_color_optional', { defaultValue: 'Farbe (optional)' })}
                 </p>
-                <PeptideColorPalette
+                <ColorField
                   value={state.draft.colorHex}
                   onChange={colorHex => dispatch({ type: 'details_changed', changes: { colorHex } })}
                 />
