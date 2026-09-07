@@ -167,6 +167,23 @@ describe('StackItemWizard — Vorschau der Darreichungsform', () => {
     expect(vorschau!.textContent).toContain('Kreatin Monohydrat')
   })
 
+  it('gibt der Vorschau die Farbpalette mit, nicht ein Hex-Feld', () => {
+    // Dieselbe Palette wie beim Anlegen eines Peptids, direkt unter dem Objekt,
+    // das sie faerbt. Frueher lag hier ein Hex-Textfeld im letzten Schritt.
+    renderWizard()
+    startCustom('Kreatin')
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_powder' }))
+
+    const vorschau = document.querySelector('[data-wizard-preview]')!
+    const felder = vorschau.querySelectorAll('[data-color-swatch]')
+    expect(felder.length).toBeGreaterThan(0)
+
+    fireEvent.click(vorschau.querySelector('[data-color-swatch="#f59e0b"]') as HTMLElement)
+
+    // Das Objekt traegt die Farbe sofort — ohne einen Schritt weiter zu gehen.
+    expect(vorschau.querySelector('[data-powder-detail="lid"]')?.getAttribute('fill')).toBe('#f59e0b')
+  })
+
   it('zeigt fuer Formen ohne Buehnengrafik gar nichts', () => {
     renderWizard()
     startCustom('Saft')

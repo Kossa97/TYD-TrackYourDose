@@ -33,6 +33,7 @@ import { evaluatePkReadiness, toPkMilligrams } from '../lib/pkReadiness'
 import { isStageRenderable } from '../lib/dosageForms'
 import { DosageFormPicker } from './DosageFormPicker'
 import { DosageFormPreview } from './DosageFormPreview'
+import { PeptideColorPalette } from '../../../components/PeptideColorPalette'
 import { IngredientEditor } from './IngredientEditor'
 import { IntakePlanEditor } from './IntakePlanEditor'
 import { ProductInventorySection } from './ProductInventorySection'
@@ -450,18 +451,6 @@ export function StackItemWizard({
               onInventoryChange={changes => dispatch({ type: 'inventory_changed', changes })}
             />
             <div>
-              <label htmlFor="stack-color" className="mb-2 block text-sm font-semibold text-slate-200">
-                {t('my_stack_color_optional', { defaultValue: 'Farbe (optional)' })}
-              </label>
-              <input
-                id="stack-color"
-                value={state.draft.colorHex}
-                onChange={event => dispatch({ type: 'details_changed', changes: { colorHex: event.target.value } })}
-                placeholder="#00ccf5"
-                className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-              />
-            </div>
-            <div>
               <label htmlFor="stack-notes" className="mb-2 block text-sm font-semibold text-slate-200">
                 {t('my_stack_notes_optional', { defaultValue: 'Notizen (optional)' })}
               </label>
@@ -779,15 +768,30 @@ export function StackItemWizard({
           {state.draft.dosageForm && isStageRenderable(state.draft.dosageForm) && (
             <div
               data-wizard-preview
-              className="mb-6 flex min-h-[124px] items-end justify-center rounded-2xl border border-white/10 bg-white/[0.02] px-4 pt-4 pb-3"
+              className="mb-6 rounded-2xl border border-white/10 bg-white/[0.02] px-4 pt-4 pb-4"
             >
-              <DosageFormPreview
-                dosageForm={state.draft.dosageForm}
-                displayName={state.draft.displayName}
-                colorHex={state.draft.colorHex}
-                ingredients={state.draft.ingredients}
-                size="compact"
-              />
+              <div className="flex min-h-[124px] items-end justify-center pb-3">
+                <DosageFormPreview
+                  dosageForm={state.draft.dosageForm}
+                  displayName={state.draft.displayName}
+                  colorHex={state.draft.colorHex}
+                  ingredients={state.draft.ingredients}
+                  size="compact"
+                />
+              </div>
+              {/* Die Farbe steht direkt unter dem Objekt, das sie faerbt —
+                  dieselbe Palette und dieselbe Komponente wie beim Anlegen
+                  eines Peptids. Frueher lag sie als Hex-Feld im letzten
+                  Schritt, weit weg von allem, was sie veraendert. */}
+              <div role="group" aria-labelledby="stack-color-label" className="border-t border-white/[0.07] pt-4">
+                <p id="stack-color-label" className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  {t('my_stack_color_optional', { defaultValue: 'Farbe (optional)' })}
+                </p>
+                <PeptideColorPalette
+                  value={state.draft.colorHex}
+                  onChange={colorHex => dispatch({ type: 'details_changed', changes: { colorHex } })}
+                />
+              </div>
             </div>
           )}
           {renderStep()}
