@@ -192,6 +192,46 @@ describe('StackItemWizard — Vorschau der Darreichungsform', () => {
     expect(nachher).toMatch(/^#[0-9a-f]{6}$/)
   })
 
+  it('verspricht keine Schrittzahl, solange die Tracking-Tiefe offen ist', () => {
+    // Vorher stand auf dem Tiefenschritt „3 von 3" — der Balken war voll und
+    // sah fertig aus, und sprang nach der Wahl auf „3 von 8" zurueck.
+    renderWizard()
+    startCustom('Kreatin')
+
+    const balken = () => document.querySelector('[role="progressbar"]')!
+    expect(balken().getAttribute('aria-valuemax')).toBeNull()
+    expect(balken().getAttribute('aria-valuetext')).toBe('my_stack_step_open_count')
+    expect(balken().querySelector('[data-progress-open]')).not.toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_powder' }))
+    continueWizard()
+    fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_complete_title/ }))
+
+    // Ab jetzt steht die Zahl fest, und das Restfeld verschwindet.
+    expect(balken().getAttribute('aria-valuemax')).toBe('8')
+    expect(balken().querySelector('[data-progress-open]')).toBeNull()
+  })
+
+  it('zeigt das Objekt gross nur dort, wo man sein Aussehen waehlt', () => {
+    // Der grosse Block nahm 368 von 687 px Inhaltsflaeche; auf dem
+    // Tiefenschritt war dadurch keine der drei Karten vollstaendig sichtbar.
+    renderWizard()
+    startCustom('Kreatin')
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_powder' }))
+
+    const vorschau = () => document.querySelector('[data-wizard-preview]')!
+    expect(vorschau().hasAttribute('data-wizard-preview-compact')).toBe(false)
+    expect(vorschau().querySelector('[data-color-field="area"]')).not.toBeNull()
+
+    continueWizard()
+
+    // Danach nur noch die Zeile: Objekt, Name, Darreichungsform — kein
+    // Farbfeld, das jeden weiteren Schritt nach unten schiebt.
+    expect(vorschau().hasAttribute('data-wizard-preview-compact')).toBe(true)
+    expect(vorschau().querySelector('[data-color-field="area"]')).toBeNull()
+    expect(vorschau().textContent).toContain('Kreatin')
+  })
+
   it('zeigt fuer Formen ohne Buehnengrafik gar nichts', () => {
     renderWizard()
     startCustom('Saft')

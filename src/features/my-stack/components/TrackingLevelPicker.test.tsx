@@ -53,8 +53,14 @@ describe('TrackingLevelPicker', () => {
       expect(within(card).getByText(/^Nicht erforderlich:/)).toBeTruthy()
       expect(within(card).getByText(/^Beispiel:/)).toBeTruthy()
       expect(within(card).getByText(/^Als Nächstes:/)).toBeTruthy()
-      expect(within(card).getByText(/später jederzeit ändern/i)).toBeTruthy()
+      // Der Hinweis auf die spaetere Aenderbarkeit steht NICHT in jeder Karte:
+      // er gilt der Wahl, nicht einer Stufe. Dreimal derselbe Satz verlaengert
+      // nur die Strecke bis zur Entscheidung.
+      expect(within(card).queryByText(/später jederzeit ändern/i)).toBeNull()
     }
+
+    // Einmal, unter der Gruppe.
+    expect(screen.getAllByText(/später jederzeit ändern/i)).toHaveLength(1)
   })
 
   it('reports PK availability from the selected catalog entry without promising a curve', () => {

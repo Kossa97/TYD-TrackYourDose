@@ -748,13 +748,37 @@ export function StackItemWizard({
             </button>
           </div>
 
-          <div className="mt-4 flex items-center gap-2" role="progressbar" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={currentStepIndex + 1}>
+          {/* Wie viele Schritte es werden, entscheidet erst die Tracking-Tiefe:
+              fuenf oder acht. Vorher stand hier trotzdem eine Zahl — auf dem
+              Tiefenschritt war der Balken VOLL (3 von 3, sah fertig aus) und
+              sprang nach der Wahl auf 3 von 8 zurueck. Gemessen, nicht
+              vermutet. Solange die Zahl offen ist, wird keine behauptet: die
+              bekannten Schritte stehen da, dahinter ein blasses Restfeld. */}
+          <div
+            className="mt-4 flex items-center gap-2"
+            role="progressbar"
+            aria-valuemin={1}
+            aria-valuenow={currentStepIndex + 1}
+            {...(state.trackingLevelSelected
+              ? { 'aria-valuemax': steps.length }
+              : { 'aria-valuetext': String(t('my_stack_step_open_count', {
+                  defaultValue: 'Schritt {{current}}, die weiteren Schritte stehen nach der Wahl der Tracking-Tiefe fest.',
+                  current: currentStepIndex + 1,
+                })) })}
+          >
             {steps.map((step, index) => (
               <span
                 key={step}
                 className={`h-1.5 flex-1 rounded-full ${index <= currentStepIndex ? 'bg-sky-400' : 'bg-white/10'}`}
               />
             ))}
+            {!state.trackingLevelSelected && (
+              <span
+                data-progress-open
+                aria-hidden="true"
+                className="h-1.5 flex-[2] rounded-full bg-[repeating-linear-gradient(115deg,rgba(255,255,255,0.14)_0_5px,transparent_5px_10px)]"
+              />
+            )}
           </div>
         </header>
 
@@ -766,6 +790,7 @@ export function StackItemWizard({
               `liquid` und `other` haben keine Buehnengrafik — dort faellt auch
               der Rahmen weg. Ein leerer Kasten sieht aus wie ein Fehler. */}
           {state.draft.dosageForm && isStageRenderable(state.draft.dosageForm) && (
+            state.step === 'dosage_form' ? (
             <div
               data-wizard-preview
               className="mb-6 rounded-2xl border border-white/10 bg-white/[0.02] px-4 pt-4 pb-4"
@@ -793,6 +818,34 @@ export function StackItemWizard({
                 />
               </div>
             </div>
+            ) : (
+              /* Auf allen weiteren Schritten nur noch eine Zeile. Der grosse
+                 Block nahm 368 von 687 px Inhaltsflaeche — auf dem
+                 Tiefenschritt war dadurch keine einzige der drei Karten
+                 vollstaendig sichtbar. Gemessen bei 430 px Fensterbreite.
+                 Das Objekt bleibt sichtbar, damit man weiss, woran man
+                 arbeitet; gefaerbt wird dort, wo die Form gewaehlt wird. */
+              <div
+                data-wizard-preview
+                data-wizard-preview-compact
+                className="mb-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-2"
+              >
+                <span className="flex h-[100px] w-[76px] shrink-0 items-end justify-center">
+                  <DosageFormPreview
+                    dosageForm={state.draft.dosageForm}
+                    colorHex={state.draft.colorHex}
+                    size="mini"
+                    showLabel={false}
+                  />
+                </span>
+                {/* Nur der Name. Welche Darreichungsform es ist, sagt das
+                    Objekt daneben — ihn danebenzuschreiben waere dieselbe
+                    Doppelung, die aus den Auswahlkacheln geflogen ist. */}
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">
+                  {state.draft.displayName.trim() || t('my_stack_this_substance', { defaultValue: 'diese Substanz' })}
+                </span>
+              </div>
+            )
           )}
           {renderStep()}
           {saveError && (

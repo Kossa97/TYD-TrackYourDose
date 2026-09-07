@@ -85,13 +85,13 @@ export function TrackingLevelPicker({
       <legend className="text-base font-semibold text-white">
         {t('my_stack_tracking_question', { defaultValue: 'Wie genau möchtest du tracken?' })}
       </legend>
-      <p className="mt-1 text-sm leading-relaxed text-slate-400">
+      <p className="mt-1 text-[13px] leading-snug text-slate-400">
         {t('my_stack_tracking_intro', {
           defaultValue: 'Wähle nur die Tiefe, die du im Alltag zuverlässig pflegen möchtest.',
         })}
       </p>
 
-      <div className="mt-4 grid min-w-0 gap-3">
+      <div className="mt-3 grid min-w-0 gap-2.5">
         {LEVELS.map(level => {
           const selected = value === level
           const item = content[level]
@@ -99,7 +99,7 @@ export function TrackingLevelPicker({
           return (
             <label
               key={level}
-              className={`flex min-h-11 min-w-0 cursor-pointer items-start gap-3 rounded-2xl border p-4 text-left transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${selected
+              className={`flex min-h-11 min-w-0 cursor-pointer items-start gap-3 rounded-2xl border p-3.5 text-left transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${selected
                 ? 'border-sky-400/50 bg-sky-400/10 shadow-[0_0_22px_rgba(0,204,245,0.09),inset_0_1px_0_rgba(255,255,255,0.06)]'
                 : 'border-white/10 bg-white/[0.035] hover:border-sky-400/25 hover:bg-white/[0.06]'
               }`}
@@ -118,7 +118,7 @@ export function TrackingLevelPicker({
                   <Icon aria-hidden="true" size={19} className="shrink-0 text-sky-300" />
                   <span className="min-w-0 break-words">{item.title}</span>
                 </span>
-                <span className="mt-2 block space-y-1.5 text-sm leading-relaxed text-slate-300">
+                <span className="mt-1.5 block space-y-1 text-[13px] leading-snug text-slate-300">
                   <span className="block">{item.recorded}</span>
                   <span className="block text-slate-400">{item.omitted}</span>
                   <span className="block text-slate-400">{item.example}</span>
@@ -136,17 +136,22 @@ export function TrackingLevelPicker({
                           })}
                     </span>
                   )}
-                  <span className="block text-xs text-slate-500">
-                    {t('my_stack_tracking_change_later', {
-                      defaultValue: 'Du kannst diese Auswahl später jederzeit ändern.',
-                    })}
-                  </span>
                 </span>
               </span>
             </label>
           )
         })}
       </div>
+
+      {/* Einmal unter der Gruppe statt dreimal in den Karten: der Satz gilt
+          fuer die Wahl, nicht fuer eine einzelne Stufe. Dreimal derselbe Satz
+          verlaengert nur die Strecke bis zur Entscheidung. */}
+      <p className="mt-3 text-xs text-slate-500">
+        {t('my_stack_tracking_change_later', {
+          defaultValue: 'Du kannst diese Auswahl später jederzeit ändern.',
+        })}
+      </p>
+
       {error && (
         <p id="stack-tracking-level-error" role="alert" className="mt-3 text-sm text-rose-300">
           {t('my_stack_tracking_level_required', {
