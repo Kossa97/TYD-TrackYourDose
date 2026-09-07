@@ -37,3 +37,6 @@ src/i18n/faq/data/translation-cache.json
 
 # Brainstorm-Mockups: nur zur Ansicht im Dev-Server
 public/__brainstorm/
+
+# graphify: Zeitstempel der letzten Abfrage, aendert sich bei jeder Abfrage
+graphify-out/cache/last_query_stamp
