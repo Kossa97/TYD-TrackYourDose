@@ -68,16 +68,15 @@ function renderSearch({
     onQueryChange: () => undefined,
     onSelect: () => undefined,
     onAddCustom: () => undefined,
+    onDetach: () => undefined,
     onCategoryChange: () => undefined,
   }))
 }
 
 function renderIngredientEditor(ingredients: StackItemIngredient[]): string {
   return renderToStaticMarkup(createElement(IngredientEditor, {
-    displayName: 'Vitamin-Komplex',
     ingredients,
     catalogNames: { 'vitamin-d3': 'Vitamin D3' },
-    onDisplayNameChange: () => undefined,
     onIngredientChange: () => undefined,
     onAddIngredient: () => undefined,
     onRemoveIngredient: () => undefined,

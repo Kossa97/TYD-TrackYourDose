@@ -5,25 +5,23 @@ import type { StackItemIngredient } from '../types'
 
 type IngredientChanges = Partial<Omit<StackItemIngredient, 'position'>>
 
+// Ohne Namensfeld. Der Name steht im ersten Schritt — er hier ein zweites Mal
+// unter einer anderen Aufschrift („Produktname“ statt „Was moechtest du
+// hinzufuegen?“) machte aus einem Wert zwei Dinge, die derselbe waren. Wer ihn
+// aendern will, geht einen Schritt zurueck; dafuer gibt es die Schrittleiste.
 export interface IngredientEditorProps {
-  displayName: string
   ingredients: StackItemIngredient[]
-  displayNameError?: boolean
   catalogNames?: Readonly<Record<string, string>>
   errors?: IngredientValidationErrors[]
-  onDisplayNameChange: (displayName: string) => void
   onIngredientChange: (index: number, changes: IngredientChanges) => void
   onAddIngredient: () => void
   onRemoveIngredient: (index: number) => void
 }
 
 export function IngredientEditor({
-  displayName,
   ingredients,
-  displayNameError = false,
   catalogNames = {},
   errors = [],
-  onDisplayNameChange,
   onIngredientChange,
   onAddIngredient,
   onRemoveIngredient,
@@ -32,27 +30,6 @@ export function IngredientEditor({
 
   return (
     <div className="space-y-5">
-      <div>
-        <label htmlFor="stack-product-name" className="mb-2 block text-sm font-semibold text-slate-200">
-          {t('my_stack_product_name', { defaultValue: 'Produktname' })}
-        </label>
-        <input
-          id="stack-product-name"
-          value={displayName}
-          onChange={event => onDisplayNameChange(event.target.value)}
-          aria-invalid={displayNameError || undefined}
-          aria-describedby={displayNameError ? 'stack-product-name-error' : undefined}
-          data-field="displayName"
-          className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-        />
-        {displayNameError && (
-          <p id="stack-product-name-error" role="alert" className="mt-2 flex items-center gap-2 text-sm text-rose-300">
-            <AlertCircle aria-hidden="true" size={16} />
-            {t('my_stack_name_required', { defaultValue: 'Bitte gib einen Produktnamen ein.' })}
-          </p>
-        )}
-      </div>
-
       <div className="space-y-3">
         {ingredients.map((ingredient, index) => {
           const labelKey = `my_stack_ingredient_${index + 1}`

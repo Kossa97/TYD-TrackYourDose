@@ -443,8 +443,27 @@ describe('StackItemWizard interactions', () => {
     expect(category.value).toBe('supplement')
   })
 
-  it('clears stale catalog identity when catalog text is edited', () => {
+  it('macht die Katalogwahl sichtbar und nimmt das Suchfeld weg', () => {
+    // Vorher sah der Bildschirm nach der Wahl aus wie davor: Trefferliste
+    // offen, „eigene Substanz“ daneben, kein Zeichen, dass etwas gewaehlt ist.
     renderWizard()
+    const input = screen.getByLabelText('my_stack_question') as HTMLInputElement
+
+    fireEvent.change(input, { target: { value: 'Vitamin' } })
+    fireEvent.click(screen.getByRole('option', { name: /Vitamin D3/ }))
+
+    expect(document.querySelector('[data-substance-selected="vitamin-d3"]')).not.toBeNull()
+    expect(screen.queryByLabelText('my_stack_question')).toBeNull()
+    expect(screen.queryByRole('listbox')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'my_stack_add_custom' })).toBeNull()
+  })
+
+  it('wirft die Katalogverknuepfung nicht mehr lautlos weg', async () => {
+    // Der Befund, der diesen Umbau ausgeloest hat: ein Tastendruck nach der
+    // Wahl setzte Katalog-ID, Kategorie und Einheit auf null — samt PK-Profil,
+    // also genau dem, wofuer man die tiefste Stufe waehlt. Loesen geht jetzt
+    // nur ueber das Kreuz, und dabei bleibt, was der Nutzer selbst gesetzt hat.
+    const { onSave } = renderWizard()
     const input = screen.getByLabelText('my_stack_question') as HTMLInputElement
     const category = screen.getByLabelText('my_stack_category') as HTMLSelectElement
 
@@ -452,8 +471,27 @@ describe('StackItemWizard interactions', () => {
     fireEvent.click(screen.getByRole('option', { name: /Vitamin D3/ }))
     expect(category.value).toBe('vitamin')
 
-    fireEvent.change(input, { target: { value: 'Own product' } })
-    expect(category.value).toBe('')
+    fireEvent.click(screen.getByRole('button', { name: 'my_stack_detach_catalog' }))
+
+    // Suchfeld wieder da, Name erhalten, Kategorie erhalten — nur die
+    // Verknuepfung ist weg, und zwar weil jemand darauf geklickt hat.
+    const wieder = screen.getByLabelText('my_stack_question') as HTMLInputElement
+    expect(wieder.value).toBe('Vitamin D3')
+    expect((screen.getByLabelText('my_stack_category') as HTMLSelectElement).value).toBe('vitamin')
+
+    continueWizard()
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
+    continueWizard()
+    fireEvent.click(screen.getByRole('radio', { name: /^my_stack_tracking_intake_only_title/ }))
+    continueWizard()
+    fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
+    continueWizard()
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
+    expect(onSave.mock.calls[0][0].ingredients[0].catalog_substance_id).toBeNull()
+    expect(onSave.mock.calls[0][0].ingredients[0].custom_name).toBe('Vitamin D3')
+    expect(onSave.mock.calls[0][0].category).toBe('vitamin')
   })
 
   it('supports listbox navigation and selection keys', () => {
@@ -466,6 +504,7 @@ describe('StackItemWizard interactions', () => {
         onQueryChange={() => undefined}
         onSelect={onSelect}
         onAddCustom={() => undefined}
+        onDetach={() => undefined}
         onCategoryChange={() => undefined}
       />,
     )
@@ -499,20 +538,19 @@ describe('StackItemWizard interactions', () => {
     expect(screen.getByRole('listbox')).toBeTruthy()
   })
 
-  it('shows and focuses the product-name error on the ingredient step', async () => {
+  it('zeigt den Namensfehler dort, wo der Name steht', async () => {
+    // Frueher gab es ihn zweimal: im Suchfeld und noch einmal unter
+    // „Produktname“ im Inhaltsstoff-Schritt. Es gibt nur einen Namen, also
+    // auch nur einen Ort, an dem er fehlen kann.
     renderWizard()
-    startCustom('Custom Product')
-    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
-    continueWizard()
-    fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_complete_title/ }))
-    continueWizard()
-    const productName = screen.getByLabelText('my_stack_product_name') as HTMLInputElement
-
-    fireEvent.change(productName, { target: { value: '' } })
+    const suche = screen.getByLabelText('my_stack_question') as HTMLInputElement
+    fireEvent.change(suche, { target: { value: 'Custom Product' } })
+    fireEvent.change(screen.getByLabelText('my_stack_category'), { target: { value: 'supplement' } })
+    fireEvent.change(suche, { target: { value: '' } })
     continueWizard()
 
     expect(screen.getByText('my_stack_name_required')).toBeTruthy()
-    await waitFor(() => expect(document.activeElement).toBe(productName))
+    await waitFor(() => expect(document.activeElement).toBe(suche))
     expect(screen.queryByText('my_stack_dosage_form')).toBeNull()
   })
 
@@ -773,10 +811,10 @@ describe('StackItemWizard interactions', () => {
     expect(onClose).not.toHaveBeenCalled()
     expect(screen.getByRole('heading', { name: 'Multi Word Product' })).toBeTruthy()
 
-    for (let index = 0; index < 3; index += 1) {
+    for (let index = 0; index < 6; index += 1) {
       fireEvent.click(screen.getByRole('button', { name: 'back' }))
     }
-    expect((screen.getByLabelText('my_stack_product_name') as HTMLInputElement).value)
+    expect((screen.getByLabelText('my_stack_question') as HTMLInputElement).value)
       .toBe('Multi Word Product')
   })
 })

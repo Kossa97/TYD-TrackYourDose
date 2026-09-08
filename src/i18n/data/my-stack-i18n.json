@@ -11,7 +11,6 @@
     "my_stack_category": "الفئة",
     "my_stack_category_select": "اختر فئة",
     "my_stack_category_required": "الرجاء تحديد الفئة.",
-    "my_stack_product_name": "اسم المنتج",
     "my_stack_name_required": "يرجى تحديد المادة أو تسميتها.",
     "my_stack_add_ingredient": "إضافة العنصر",
     "my_stack_ingredient_1": "المكون 1",
@@ -212,7 +211,10 @@
     "my_stack_tracking_promise": "ما لا يسجّله مستوى ما، لن يسألك عنه التطبيق لاحقًا أيضًا.",
     "my_stack_tracking_entry_caption": "هكذا ستبدو الجرعة",
     "my_stack_tracking_with_amount_entry": "كبسولة واحدة",
-    "my_stack_tracking_complete_entry": "كبسولة واحدة · 5000 وحدة دولية"
+    "my_stack_tracking_complete_entry": "كبسولة واحدة · 5000 وحدة دولية",
+    "my_stack_from_catalog": "من الكتالوج",
+    "my_stack_from_catalog_pk": "من الكتالوج · يوجد ملف حرائك دوائية",
+    "my_stack_detach_catalog": "إلغاء الاختيار"
   },
   "es": {
     "my_stack_title": "Mi pila",
@@ -226,7 +228,6 @@
     "my_stack_category": "Categoría",
     "my_stack_category_select": "Seleccione una categoría",
     "my_stack_category_required": "Seleccione una categoría.",
-    "my_stack_product_name": "Nombre del producto",
     "my_stack_name_required": "Seleccione o nombre una sustancia.",
     "my_stack_add_ingredient": "Agregar ingrediente",
     "my_stack_ingredient_1": "Ingrediente 1",
@@ -427,7 +428,10 @@
     "my_stack_tracking_promise": "Lo que un nivel no registra, la app tampoco te lo pedirá después.",
     "my_stack_tracking_entry_caption": "Así se vería una toma",
     "my_stack_tracking_with_amount_entry": "1 cápsula",
-    "my_stack_tracking_complete_entry": "1 cápsula · 5.000 UI"
+    "my_stack_tracking_complete_entry": "1 cápsula · 5.000 UI",
+    "my_stack_from_catalog": "Del catálogo",
+    "my_stack_from_catalog_pk": "Del catálogo · perfil PK disponible",
+    "my_stack_detach_catalog": "Quitar selección"
   },
   "fr": {
     "my_stack_title": "Ma pile",
@@ -441,7 +445,6 @@
     "my_stack_category": "Catégorie",
     "my_stack_category_select": "Sélectionnez une catégorie",
     "my_stack_category_required": "Veuillez sélectionner une catégorie.",
-    "my_stack_product_name": "Nom du produit",
     "my_stack_name_required": "Veuillez sélectionner ou nommer une substance.",
     "my_stack_add_ingredient": "Ajouter un ingrédient",
     "my_stack_ingredient_1": "Ingrédient 1",
@@ -642,7 +645,10 @@
     "my_stack_tracking_promise": "Ce qu’un niveau n’enregistre pas, l’application ne vous le demandera pas non plus ensuite.",
     "my_stack_tracking_entry_caption": "Voici à quoi ressemblerait une prise",
     "my_stack_tracking_with_amount_entry": "1 gélule",
-    "my_stack_tracking_complete_entry": "1 gélule · 5 000 UI"
+    "my_stack_tracking_complete_entry": "1 gélule · 5 000 UI",
+    "my_stack_from_catalog": "Depuis le catalogue",
+    "my_stack_from_catalog_pk": "Depuis le catalogue · profil PK disponible",
+    "my_stack_detach_catalog": "Effacer la sélection"
   },
   "hi": {
     "my_stack_title": "मेरा ढेर",
@@ -656,7 +662,6 @@
     "my_stack_category": "श्रेणी",
     "my_stack_category_select": "एक श्रेणी चुनें",
     "my_stack_category_required": "कृपया एक श्रेणी चुनें।",
-    "my_stack_product_name": "उत्पाद का नाम",
     "my_stack_name_required": "कृपया किसी पदार्थ का चयन करें या उसे नाम दें।",
     "my_stack_add_ingredient": "सामग्री जोड़ें",
     "my_stack_ingredient_1": "घटक 1",
@@ -857,7 +862,10 @@
     "my_stack_tracking_promise": "जो एक स्तर दर्ज नहीं करता, ऐप उसे बाद में भी नहीं पूछेगा।",
     "my_stack_tracking_entry_caption": "एक सेवन ऐसा दिखेगा",
     "my_stack_tracking_with_amount_entry": "1 कैप्सूल",
-    "my_stack_tracking_complete_entry": "1 कैप्सूल · 5,000 IU"
+    "my_stack_tracking_complete_entry": "1 कैप्सूल · 5,000 IU",
+    "my_stack_from_catalog": "कैटलॉग से",
+    "my_stack_from_catalog_pk": "कैटलॉग से · PK प्रोफ़ाइल उपलब्ध",
+    "my_stack_detach_catalog": "चयन हटाएँ"
   },
   "id": {
     "my_stack_title": "Tumpukan Saya",
@@ -871,7 +879,6 @@
     "my_stack_category": "Kategori",
     "my_stack_category_select": "Pilih kategori",
     "my_stack_category_required": "Silakan pilih kategori.",
-    "my_stack_product_name": "Nama produk",
     "my_stack_name_required": "Silakan pilih atau beri nama suatu zat.",
     "my_stack_add_ingredient": "Tambahkan bahan",
     "my_stack_ingredient_1": "Bahan 1",
@@ -1072,7 +1079,10 @@
     "my_stack_tracking_promise": "Apa yang tidak dicatat sebuah tingkat, tidak akan ditanyakan aplikasi di kemudian hari.",
     "my_stack_tracking_entry_caption": "Beginilah tampilan satu konsumsi",
     "my_stack_tracking_with_amount_entry": "1 kapsul",
-    "my_stack_tracking_complete_entry": "1 kapsul · 5.000 IU"
+    "my_stack_tracking_complete_entry": "1 kapsul · 5.000 IU",
+    "my_stack_from_catalog": "Dari katalog",
+    "my_stack_from_catalog_pk": "Dari katalog · profil PK tersedia",
+    "my_stack_detach_catalog": "Hapus pilihan"
   },
   "it": {
     "my_stack_title": "Il mio stack",
@@ -1086,7 +1096,6 @@
     "my_stack_category": "Categoria",
     "my_stack_category_select": "Seleziona una categoria",
     "my_stack_category_required": "Seleziona una categoria.",
-    "my_stack_product_name": "Nome del prodotto",
     "my_stack_name_required": "Selezionare o denominare una sostanza.",
     "my_stack_add_ingredient": "Aggiungi ingrediente",
     "my_stack_ingredient_1": "Ingrediente 1",
@@ -1287,7 +1296,10 @@
     "my_stack_tracking_promise": "Ciò che un livello non registra, l’app non te lo chiederà nemmeno in seguito.",
     "my_stack_tracking_entry_caption": "Ecco come apparirebbe un’assunzione",
     "my_stack_tracking_with_amount_entry": "1 capsula",
-    "my_stack_tracking_complete_entry": "1 capsula · 5.000 UI"
+    "my_stack_tracking_complete_entry": "1 capsula · 5.000 UI",
+    "my_stack_from_catalog": "Dal catalogo",
+    "my_stack_from_catalog_pk": "Dal catalogo · profilo PK disponibile",
+    "my_stack_detach_catalog": "Rimuovi selezione"
   },
   "ja": {
     "my_stack_title": "私のスタック",
@@ -1301,7 +1313,6 @@
     "my_stack_category": "カテゴリ",
     "my_stack_category_select": "カテゴリを選択してください",
     "my_stack_category_required": "カテゴリを選択してください。",
-    "my_stack_product_name": "商品名",
     "my_stack_name_required": "物質を選択または名前を付けてください。",
     "my_stack_add_ingredient": "材料を追加",
     "my_stack_ingredient_1": "成分1",
@@ -1502,7 +1513,10 @@
     "my_stack_tracking_promise": "その段階が記録しないことは、あとからも聞かれません。",
     "my_stack_tracking_entry_caption": "摂取はこう表示されます",
     "my_stack_tracking_with_amount_entry": "1カプセル",
-    "my_stack_tracking_complete_entry": "1カプセル · 5,000 IU"
+    "my_stack_tracking_complete_entry": "1カプセル · 5,000 IU",
+    "my_stack_from_catalog": "カタログから",
+    "my_stack_from_catalog_pk": "カタログから · PKプロファイルあり",
+    "my_stack_detach_catalog": "選択を解除"
   },
   "ko": {
     "my_stack_title": "내 스택",
@@ -1516,7 +1530,6 @@
     "my_stack_category": "카테고리",
     "my_stack_category_select": "카테고리 선택",
     "my_stack_category_required": "카테고리를 선택해주세요.",
-    "my_stack_product_name": "제품명",
     "my_stack_name_required": "물질을 선택하거나 이름을 지정해 주세요.",
     "my_stack_add_ingredient": "재료 추가",
     "my_stack_ingredient_1": "성분 1",
@@ -1717,7 +1730,10 @@
     "my_stack_tracking_promise": "한 단계가 기록하지 않는 것은 앱이 나중에도 묻지 않습니다.",
     "my_stack_tracking_entry_caption": "섭취는 이렇게 표시됩니다",
     "my_stack_tracking_with_amount_entry": "1캡슐",
-    "my_stack_tracking_complete_entry": "1캡슐 · 5,000 IU"
+    "my_stack_tracking_complete_entry": "1캡슐 · 5,000 IU",
+    "my_stack_from_catalog": "카탈로그에서",
+    "my_stack_from_catalog_pk": "카탈로그에서 · PK 프로필 있음",
+    "my_stack_detach_catalog": "선택 해제"
   },
   "pt": {
     "my_stack_title": "Minha pilha",
@@ -1731,7 +1747,6 @@
     "my_stack_category": "Categoria",
     "my_stack_category_select": "Selecione uma categoria",
     "my_stack_category_required": "Selecione uma categoria.",
-    "my_stack_product_name": "Nome do produto",
     "my_stack_name_required": "Selecione ou nomeie uma substância.",
     "my_stack_add_ingredient": "Adicionar ingrediente",
     "my_stack_ingredient_1": "Ingrediente 1",
@@ -1932,7 +1947,10 @@
     "my_stack_tracking_promise": "O que um nível não regista, a aplicação também não te pedirá depois.",
     "my_stack_tracking_entry_caption": "É assim que uma toma apareceria",
     "my_stack_tracking_with_amount_entry": "1 cápsula",
-    "my_stack_tracking_complete_entry": "1 cápsula · 5.000 UI"
+    "my_stack_tracking_complete_entry": "1 cápsula · 5.000 UI",
+    "my_stack_from_catalog": "Do catálogo",
+    "my_stack_from_catalog_pk": "Do catálogo · perfil PK disponível",
+    "my_stack_detach_catalog": "Limpar seleção"
   },
   "ru": {
     "my_stack_title": "Мой стек",
@@ -1946,7 +1964,6 @@
     "my_stack_category": "Категория",
     "my_stack_category_select": "Выберите категорию",
     "my_stack_category_required": "Пожалуйста, выберите категорию.",
-    "my_stack_product_name": "Название продукта",
     "my_stack_name_required": "Пожалуйста, выберите или назовите вещество.",
     "my_stack_add_ingredient": "Добавить ингредиент",
     "my_stack_ingredient_1": "Ингредиент 1",
@@ -2147,7 +2164,10 @@
     "my_stack_tracking_promise": "О том, что уровень не фиксирует, приложение не спросит и позже.",
     "my_stack_tracking_entry_caption": "Так выглядел бы приём",
     "my_stack_tracking_with_amount_entry": "1 капсула",
-    "my_stack_tracking_complete_entry": "1 капсула · 5000 МЕ"
+    "my_stack_tracking_complete_entry": "1 капсула · 5000 МЕ",
+    "my_stack_from_catalog": "Из каталога",
+    "my_stack_from_catalog_pk": "Из каталога · есть PK-профиль",
+    "my_stack_detach_catalog": "Снять выбор"
   },
   "tr": {
     "my_stack_title": "Yığınım",
@@ -2161,7 +2181,6 @@
     "my_stack_category": "Kategori",
     "my_stack_category_select": "Bir kategori seçin",
     "my_stack_category_required": "Lütfen bir kategori seçin.",
-    "my_stack_product_name": "Ürün adı",
     "my_stack_name_required": "Lütfen bir maddeyi seçin veya isimlendirin.",
     "my_stack_add_ingredient": "İçerik ekle",
     "my_stack_ingredient_1": "Malzeme 1",
@@ -2362,7 +2381,10 @@
     "my_stack_tracking_promise": "Bir düzeyin kaydetmediğini uygulama sonradan da sormaz.",
     "my_stack_tracking_entry_caption": "Bir alım şöyle görünürdü",
     "my_stack_tracking_with_amount_entry": "1 kapsül",
-    "my_stack_tracking_complete_entry": "1 kapsül · 5.000 IU"
+    "my_stack_tracking_complete_entry": "1 kapsül · 5.000 IU",
+    "my_stack_from_catalog": "Katalogdan",
+    "my_stack_from_catalog_pk": "Katalogdan · PK profili mevcut",
+    "my_stack_detach_catalog": "Seçimi kaldır"
   },
   "zh": {
     "my_stack_title": "我的堆栈",
@@ -2376,7 +2398,6 @@
     "my_stack_category": "类别",
     "my_stack_category_select": "选择类别",
     "my_stack_category_required": "请选择类别。",
-    "my_stack_product_name": "产品名称",
     "my_stack_name_required": "请选择或命名一种物质。",
     "my_stack_add_ingredient": "添加成分",
     "my_stack_ingredient_1": "成分1",
@@ -2577,6 +2598,9 @@
     "my_stack_tracking_promise": "某一档不记录的内容，应用之后也不会再问。",
     "my_stack_tracking_entry_caption": "一次服用会这样显示",
     "my_stack_tracking_with_amount_entry": "1 粒胶囊",
-    "my_stack_tracking_complete_entry": "1 粒胶囊 · 5,000 IU"
+    "my_stack_tracking_complete_entry": "1 粒胶囊 · 5,000 IU",
+    "my_stack_from_catalog": "来自目录",
+    "my_stack_from_catalog_pk": "来自目录 · 有 PK 档案",
+    "my_stack_detach_catalog": "清除选择"
   }
 }

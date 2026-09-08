@@ -1,4 +1,4 @@
-import { AlertCircle, Plus, Search } from 'lucide-react'
+import { AlertCircle, Check, Plus, Search, X } from 'lucide-react'
 import { useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { STACK_CATEGORIES } from '../lib/categories'
@@ -8,12 +8,15 @@ export interface SubstanceSearchProps {
   query: string
   entries: SubstanceCatalogEntry[]
   category: StackCategory | null
+  /** Der Katalogeintrag, an dem der Entwurf haengt — null bei freier Eingabe. */
+  selectedEntry?: SubstanceCatalogEntry | null
   catalogUnavailable?: boolean
   nameError?: boolean
   categoryError?: boolean
   onQueryChange: (query: string) => void
   onSelect: (entry: SubstanceCatalogEntry) => void
   onAddCustom: (name: string) => void
+  onDetach: () => void
   onCategoryChange: (category: StackCategory) => void
 }
 
@@ -21,12 +24,14 @@ export function SubstanceSearch({
   query,
   entries,
   category,
+  selectedEntry = null,
   catalogUnavailable = false,
   nameError = false,
   categoryError = false,
   onQueryChange,
   onSelect,
   onAddCustom,
+  onDetach,
   onCategoryChange,
 }: SubstanceSearchProps) {
   const { t } = useTranslation()
@@ -35,7 +40,11 @@ export function SubstanceSearch({
   const [activeIndex, setActiveIndex] = useState(0)
   const [resultsDismissed, setResultsDismissed] = useState(false)
   const selectedIndex = entries.length === 0 ? -1 : Math.min(activeIndex, entries.length - 1)
-  const showResults = hasQuery && entries.length > 0 && !resultsDismissed
+  // Steht eine Katalogwahl, ist die Suche vorbei: keine Trefferliste mehr und
+  // kein zweiter Weg daneben. Genau das fehlte — der Zustand „gewaehlt“ hatte
+  // kein Aussehen, deshalb liess er sich mit einem Tastendruck zerstoeren,
+  // ohne dass jemand es sah.
+  const showResults = !selectedEntry && hasQuery && entries.length > 0 && !resultsDismissed
 
   function handleResultsKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
     if (event.key === 'Escape') {
@@ -72,25 +81,50 @@ export function SubstanceSearch({
         <label htmlFor="stack-substance-search" className="mb-2 block text-sm font-semibold text-slate-200">
           {t('my_stack_question', { defaultValue: 'Was möchtest du hinzufügen?' })}
         </label>
-        <div className="relative">
-          <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-          <input
-            ref={inputRef}
-            id="stack-substance-search"
-            type="search"
-            value={query}
-            onChange={event => {
-              setResultsDismissed(false)
-              onQueryChange(event.target.value)
-            }}
-            data-field="displayName"
-            aria-invalid={nameError || undefined}
-            aria-describedby={nameError ? 'stack-substance-name-error' : undefined}
-            autoComplete="off"
-            className="input min-h-11 w-full pl-11 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-            placeholder={String(t('my_stack_search_placeholder', { defaultValue: 'Substanz oder Produkt suchen' }))}
-          />
-        </div>
+        {selectedEntry ? (
+          <div
+            data-substance-selected={selectedEntry.id}
+            className="flex min-h-11 items-center gap-3 rounded-xl border border-[color:var(--accent-border)] bg-[color:var(--accent-weak)] px-3 py-2"
+          >
+            <Check aria-hidden="true" size={18} className="shrink-0 text-[color:var(--accent)]" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-semibold text-white">{selectedEntry.canonical_name}</span>
+              <span className="block truncate text-[12px] text-slate-400">
+                {selectedEntry.pk_profile_id
+                  ? t('my_stack_from_catalog_pk', { defaultValue: 'Aus dem Katalog · PK-Profil vorhanden' })
+                  : t('my_stack_from_catalog', { defaultValue: 'Aus dem Katalog' })}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={onDetach}
+              aria-label={String(t('my_stack_detach_catalog', { defaultValue: 'Auswahl lösen' }))}
+              className="grid min-h-11 min-w-11 shrink-0 cursor-pointer place-items-center rounded-lg text-slate-400 transition-colors duration-200 hover:bg-white/[0.08] hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
+            >
+              <X aria-hidden="true" size={18} />
+            </button>
+          </div>
+        ) : (
+          <div className="relative">
+            <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+            <input
+              ref={inputRef}
+              id="stack-substance-search"
+              type="search"
+              value={query}
+              onChange={event => {
+                setResultsDismissed(false)
+                onQueryChange(event.target.value)
+              }}
+              data-field="displayName"
+              aria-invalid={nameError || undefined}
+              aria-describedby={nameError ? 'stack-substance-name-error' : undefined}
+              autoComplete="off"
+              className="input min-h-11 w-full pl-11 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              placeholder={String(t('my_stack_search_placeholder', { defaultValue: 'Substanz oder Produkt suchen' }))}
+            />
+          </div>
+        )}
         {nameError && (
           <p id="stack-substance-name-error" role="alert" className="mt-2 flex items-center gap-2 text-sm text-rose-300">
             <AlertCircle aria-hidden="true" size={16} />
@@ -120,7 +154,7 @@ export function SubstanceSearch({
               onClick={() => onSelect(entry)}
               className={`min-h-11 w-full cursor-pointer rounded-2xl border px-4 py-3 text-left transition-colors duration-200 focus-visible:outline-none motion-reduce:transition-none ${index === selectedIndex
                 ? 'border-sky-400/40 bg-sky-400/[0.08]'
-                : 'border-white/10 bg-white/[0.04] hover:border-sky-400/30 hover:bg-sky-400/[0.06]'
+                : 'border-slate-400/20 bg-slate-400/[0.06] hover:border-sky-400/30 hover:bg-sky-400/[0.06]'
               }`}
             >
               <span className="block font-semibold text-white">{entry.canonical_name}</span>
@@ -132,7 +166,7 @@ export function SubstanceSearch({
         </div>
       )}
 
-      {hasQuery && (
+      {!selectedEntry && hasQuery && (
         <button
           type="button"
           onClick={() => onAddCustom(query)}

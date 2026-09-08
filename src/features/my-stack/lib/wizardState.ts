@@ -57,6 +57,7 @@ export type WizardAction =
   | { type: 'step_selected'; step: WizardStep }
   | { type: 'catalog_selected'; entry: SubstanceCatalogEntry }
   | { type: 'custom_started'; name: string }
+  | { type: 'catalog_detached' }
   | { type: 'display_name_changed'; displayName: string }
   | { type: 'category_selected'; category: StackCategory }
   | { type: 'ingredient_added' }
@@ -230,6 +231,25 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
           ingredients,
         },
       }
+    }
+    // Die Katalogwahl bewusst loesen. Frueher passierte das als Nebenwirkung
+    // von 'custom_started', also bei jedem Tastendruck im Suchfeld — samt
+    // Kategorie, Einheit und PK-Profil, ohne dass es jemand merkte. Jetzt
+    // muss man es tun wollen, und der Name bleibt: nur die Verknuepfung faellt.
+    case 'catalog_detached': {
+      const frei = state.draft.ingredients.length > 0
+        ? state.draft.ingredients.map((zutat, index) => (
+            index === 0
+              ? { ...zutat, catalog_substance_id: null, custom_name: state.draft.displayName }
+              : zutat
+          ))
+        : [{
+            ...emptyIngredient(0),
+            custom_name: state.draft.displayName,
+            basis_unit: suggestedBasisUnit(state.draft.dosageForm),
+          }]
+
+      return { ...state, draft: { ...state.draft, ingredients: frei } }
     }
     case 'display_name_changed':
       return {

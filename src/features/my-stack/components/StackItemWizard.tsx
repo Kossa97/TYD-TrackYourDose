@@ -357,6 +357,7 @@ export function StackItemWizard({
             query={state.draft.displayName}
             entries={matchingEntries}
             category={state.draft.category}
+            selectedEntry={selectedCatalogEntry ?? null}
             catalogUnavailable={catalogUnavailable}
             nameError={showErrors && !state.draft.displayName.trim()}
             categoryError={showErrors && !state.draft.category}
@@ -372,18 +373,16 @@ export function StackItemWizard({
               dispatch({ type: 'custom_started', name })
               setShowErrors(false)
             }}
+            onDetach={() => dispatch({ type: 'catalog_detached' })}
             onCategoryChange={category => dispatch({ type: 'category_selected', category })}
           />
         )
       case 'ingredients':
         return (
           <IngredientEditor
-            displayName={state.draft.displayName}
             ingredients={state.draft.ingredients}
-            displayNameError={showErrors && !state.draft.displayName.trim()}
             catalogNames={catalogNames}
             errors={validationErrors.ingredients}
-            onDisplayNameChange={displayName => dispatch({ type: 'display_name_changed', displayName })}
             onIngredientChange={(index, changes) => dispatch({ type: 'ingredient_changed', index, changes })}
             onAddIngredient={() => dispatch({ type: 'ingredient_added' })}
             onRemoveIngredient={index => dispatch({ type: 'ingredient_removed', index })}
