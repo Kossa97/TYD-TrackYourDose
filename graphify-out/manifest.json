@@ -2802,9 +2802,9 @@
     "semantic_hash": "b7f063a4a0fe1a979bc182754c37579a"
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
-    "mtime": 1788907136.0921998,
-    "seen": 1788907282.9733696,
-    "ast_hash": "70496cdd5f2e46d311300bc0fc2da4d9",
+    "mtime": 1788908027.5602527,
+    "seen": 1788908225.0835047,
+    "ast_hash": "a1968d7b9b754f4144762af221c573fa",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/IngredientEditor.tsx": {
