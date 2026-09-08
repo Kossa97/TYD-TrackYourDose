@@ -35,14 +35,21 @@ const KARUSSELL_HOEHE = 'h-[27dvh] min-h-[190px] sm:h-[240px]'
 // Die Kanten laufen weich aus. Ohne Scrollbalken ist das der einzige
 // Hinweis, dass die Reihe weitergeht — ein hart abgeschnittenes Objekt am
 // Rand liest sich als Fehler, ein ausblendendes als Fortsetzung.
-const REIHE = 'flex snap-x snap-mandatory gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,transparent,black_24px,black_calc(100%-24px),transparent)]'
+// px-[15%]: Scroll-Padding, damit auch das erste und letzte Objekt bis in
+// die Mitte wischen koennen — bei einem Standplatz von 70% Breite ist das
+// genau der Rest, der links und rechts von ihm noch Platz hat. Die Blende
+// faellt jetzt ueber nur 12px statt 24px ab, sonst frisst sie den schmalen
+// Streifen, in dem der Nachbar zu sehen sein soll, gleich wieder auf.
+const REIHE = 'flex snap-x snap-mandatory gap-1 overflow-x-auto px-[15%] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]'
 
-// Der Standplatz. Die Formen stehen darin auf einer gemeinsamen Bodenlinie
-// und behalten ihre Groessenverhaeltnisse: ein Pen ist hoeher als eine
-// Tablette, und das ist eine wahre Aussage ueber die Objekte. Keine feste
-// Breite mehr — bei "carousel"-Groesse ist ein Patch (190 px) breiter als
-// eine Ampulle (49 px), eine erzwungene Breite haette den Patch beschnitten.
-const STANDPLATZ = 'relative flex h-full min-w-[84px] shrink-0 items-end justify-center px-2'
+// Der Standplatz nimmt fast die ganze Karussellbreite — nur ein schmaler
+// Streifen der Nachbarn schaut links und rechts noch herein, wie bei einem
+// Bilderkarussell. Vorher richtete sich die Breite nach dem Objekt selbst
+// (ein Patch war 190 px, eine Ampulle 49 px) und mehrere Formen standen
+// gleichzeitig nebeneinander — die Mitte war nicht klar erkennbar. Jetzt ist
+// die Breite fix, das Objekt bleibt darin zentriert und behaelt sein eigenes
+// Groessenverhaeltnis.
+const STANDPLATZ = 'relative flex h-full w-full items-end justify-center px-2'
 
 // Falloff wie im Vial-Karussell: direkt neben der Mitte noch gut sichtbar,
 // am Rand nie ganz schwarz — man soll die Nachbarn erkennen koennen.
@@ -167,7 +174,10 @@ export function DosageFormPicker({
         // min-h-11: die 44-px-Regel fuer Tippziele. Der Standplatz ist mit
         // dem Karussell ohnehin hoeher, aber der Vertrag steht am Knopf, nicht
         // am Inhalt — sonst faellt er beim naechsten Umbau still weg.
-        className="flex min-h-11 shrink-0 cursor-pointer snap-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+        // w-[70%]: fast die ganze Karussellbreite fuer den einen Standplatz,
+        // damit links und rechts ein Streifen der Nachbarn hereinschaut,
+        // statt mehrerer Formen gleichzeitig in voller Groesse.
+        className="flex h-full min-h-11 w-[70%] shrink-0 cursor-pointer snap-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
       >
         <span className={STANDPLATZ} aria-hidden="true">
           {/* Das Licht der Auswahl liegt UNTER dem Objekt, wie ein Spot auf der
