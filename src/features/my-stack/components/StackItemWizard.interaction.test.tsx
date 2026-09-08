@@ -166,6 +166,22 @@ describe('StackItemWizard — Vorschau der Darreichungsform', () => {
     expect(vorschau!.textContent).toContain('Kreatin Monohydrat')
   })
 
+  it('zeigt im Substanz-Schritt kein Objekt, auch nicht beim Zurueckgehen', () => {
+    // Gefunden beim Durchklicken: wer eine Form gewaehlt hatte und
+    // zurueckging, fand im ersten Schritt ploetzlich eine Kapsel vor, wo
+    // vorher nichts stand. Dort entscheidet man, WAS das Ding ist — das
+    // Objekt ist ein Vorgriff, und den Namen zeigte es doppelt.
+    renderWizard()
+    startCustom('Kreatin')
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
+    expect(document.querySelector('[data-wizard-preview]')).not.toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'back' }))
+
+    expect(screen.getByLabelText('my_stack_question')).toBeTruthy()
+    expect(document.querySelector('[data-wizard-preview]')).toBeNull()
+  })
+
   it('gibt der Vorschau ein Farbfeld zum Ziehen, kein Hex-Feld', () => {
     // Der Nutzer waehlt seine Farbe, nicht eine aus zwoelf. Und das Objekt
     // darueber faerbt sich sofort mit, ohne einen Schritt weiterzugehen.

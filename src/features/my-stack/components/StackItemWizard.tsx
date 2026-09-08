@@ -782,12 +782,17 @@ export function StackItemWizard({
 
         <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-5 sm:px-6" data-step-autofocus tabIndex={-1}>
           {/* Ab hier ist der Eintrag ein Gegenstand und keine Formularzeile
-              mehr. Die Vorschau steht ueber jedem Schritt, nicht nur ueber der
-              Formauswahl: Name, Farbe und Wirkstoffmenge kommen aus spaeteren
-              Schritten, und man soll sehen, was man gerade aendert.
+              mehr. Die Vorschau steht ueber jedem Schritt ab der Formauswahl:
+              Name, Farbe und Wirkstoffmenge kommen aus spaeteren Schritten,
+              und man soll sehen, was man gerade aendert.
+              Nicht im Substanz-Schritt: dort entscheidet man, WAS das Ding
+              ist: das Objekt waere ein Vorgriff auf den naechsten Schritt,
+              und beim Zurueckgehen tauchte es dort ploetzlich auf, wo vorher
+              nichts stand. Den Namen zeigte es obendrein doppelt — er steht
+              im Feld direkt darunter.
               `liquid` und `other` haben keine Buehnengrafik — dort faellt auch
               der Rahmen weg. Ein leerer Kasten sieht aus wie ein Fehler. */}
-          {state.draft.dosageForm && isStageRenderable(state.draft.dosageForm) && (
+          {state.step !== 'substance' && state.draft.dosageForm && isStageRenderable(state.draft.dosageForm) && (
             state.step === 'dosage_form' ? (
             <div
               data-wizard-preview
@@ -828,7 +833,11 @@ export function StackItemWizard({
                 data-wizard-preview-compact
                 className="mb-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-2"
               >
-                <span className="flex h-[100px] w-[76px] shrink-0 items-end justify-center">
+                {/* Ohne feste Hoehe: der Kasten war auf 100 px gestellt, weil
+                    ein Pen in Miniaturgroesse so hoch ist. Eine Kapsel misst
+                    21 px — die schwamm dann in 97 px Leere, und der Name
+                    stand daneben in der Mitte von nichts. Gemessen. */}
+                <span className="flex w-[76px] shrink-0 items-end justify-center">
                   <DosageFormPreview
                     dosageForm={state.draft.dosageForm}
                     colorHex={state.draft.colorHex}
