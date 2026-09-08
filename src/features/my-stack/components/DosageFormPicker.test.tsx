@@ -38,11 +38,11 @@ describe('DosageFormPicker', () => {
   })
 
   it('faellt fuer Formen ohne Buehnengrafik auf das Symbol zurueck', () => {
-    // `liquid` und `other` bekommen keine erfundene Grafik. Die Regel „Formen
-    // ohne Buehnengrafik bleiben textlich" wird auch hier nicht aufgeweicht.
+    // `other` bekommt keine erfundene Grafik. Die Regel „Formen ohne
+    // Buehnengrafik bleiben textlich" wird auch hier nicht aufgeweicht.
     renderAll()
 
-    for (const key of ['liquid', 'other'] as const) {
+    for (const key of ['other'] as const) {
       const form = DOSAGE_FORMS.find(f => f.key === key)!
       expect(isStageRenderable(key)).toBe(false)
       expect(kachel(form.labelKey).querySelector('[data-dosage-form-preview]')).toBeNull()
@@ -128,9 +128,9 @@ describe('DosageFormPicker', () => {
 
     const common = screen.getByRole('group', { name: 'Häufige Darreichungsformen' })
     const knoepfe = within(common).getAllByRole('button')
-    expect(knoepfe).toHaveLength(6)
+    expect(knoepfe).toHaveLength(5)
     for (const key of ['dosage_form_tablet', 'dosage_form_capsule', 'dosage_form_vial',
-      'dosage_form_drops', 'dosage_form_liquid', 'dosage_form_powder']) {
+      'dosage_form_drops', 'dosage_form_powder']) {
       expect(within(common).getByRole('button', { name: key })).toBeTruthy()
     }
   })

@@ -88,15 +88,15 @@ with catalog_dosage_forms (canonical_name, suggested_dosage_forms) as (
     ('Tirzepatid', array['pen', 'vial']::text[]),
     ('Selank', array['nasal_spray', 'drops']::text[]),
     ('Epithalon', array['vial', 'capsule', 'tablet']::text[]),
-    ('GHK-Cu', array['vial', 'liquid', 'gel', 'tube']::text[]),
+    ('GHK-Cu', array['vial', 'gel', 'tube']::text[]),
     ('Vitamin D3', array['capsule', 'drops', 'tablet', 'spray']::text[]),
     ('Vitamin K2', array['capsule', 'drops', 'tablet']::text[]),
-    ('Magnesium', array['capsule', 'tablet', 'powder', 'liquid']::text[]),
-    ('Omega-3', array['capsule', 'liquid']::text[]),
+    ('Magnesium', array['capsule', 'tablet', 'powder']::text[]),
+    ('Omega-3', array['capsule']::text[]),
     ('Creatin', array['powder', 'capsule', 'tablet']::text[]),
     ('Testosteron', array['vial', 'ampoule', 'gel', 'capsule', 'pen']::text[]),
     ('Testosteron Enantat', array['vial', 'ampoule', 'pen']::text[]),
-    ('Metformin', array['tablet', 'liquid']::text[]),
+    ('Metformin', array['tablet']::text[]),
     ('Melatonin', array['tablet', 'capsule', 'drops', 'spray']::text[])
 )
 update public.substance_catalog catalog

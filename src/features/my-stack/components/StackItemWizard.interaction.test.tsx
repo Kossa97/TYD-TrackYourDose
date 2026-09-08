@@ -235,7 +235,7 @@ describe('StackItemWizard — Vorschau der Darreichungsform', () => {
   it('zeigt fuer Formen ohne Buehnengrafik gar nichts', () => {
     renderWizard()
     startCustom('Saft')
-    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_liquid' }))
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_other' }))
 
     // Kein Rahmen, keine erfundene Grafik. Ein leerer Kasten saehe aus wie ein
     // Fehler.

@@ -184,7 +184,7 @@ describe('wizard state', () => {
 
     const next = wizardReducer(capsuleState, {
       type: 'dosage_form_selected',
-      dosageForm: 'liquid',
+      dosageForm: 'drops',
     })
 
     expect(next.draft.plan.unit).toBeNull()
@@ -203,7 +203,7 @@ describe('wizard state', () => {
 
     const next = wizardReducer(capsuleState, {
       type: 'dosage_form_selected',
-      dosageForm: 'liquid',
+      dosageForm: 'drops',
     })
 
     expect(next.draft.plan.unit).toBe('IU')

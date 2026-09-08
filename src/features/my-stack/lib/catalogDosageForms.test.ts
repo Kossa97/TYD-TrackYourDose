@@ -13,20 +13,20 @@ const approvedDosageForms = {
   Tirzepatid: ['pen', 'vial'],
   Selank: ['nasal_spray', 'drops'],
   Epithalon: ['vial', 'capsule', 'tablet'],
-  'GHK-Cu': ['vial', 'liquid', 'gel', 'tube'],
+  'GHK-Cu': ['vial', 'gel', 'tube'],
   'Vitamin D3': ['capsule', 'drops', 'tablet', 'spray'],
   'Vitamin K2': ['capsule', 'drops', 'tablet'],
-  Magnesium: ['capsule', 'tablet', 'powder', 'liquid'],
-  'Omega-3': ['capsule', 'liquid'],
+  Magnesium: ['capsule', 'tablet', 'powder'],
+  'Omega-3': ['capsule'],
   Creatin: ['powder', 'capsule', 'tablet'],
   Testosteron: ['vial', 'ampoule', 'gel', 'capsule', 'pen'],
   'Testosteron Enantat': ['vial', 'ampoule', 'pen'],
-  Metformin: ['tablet', 'liquid'],
+  Metformin: ['tablet'],
   Melatonin: ['tablet', 'capsule', 'drops', 'spray'],
 } as const
 
 const allowedDosageForms = new Set([
-  'vial', 'ampoule', 'pen', 'tablet', 'capsule', 'drops', 'liquid',
+  'vial', 'ampoule', 'pen', 'tablet', 'capsule', 'drops',
   'powder', 'nasal_spray', 'spray', 'gel', 'patch', 'tube', 'other',
 ])
 

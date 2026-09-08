@@ -10,7 +10,6 @@ const COMMON_DOSAGE_FORMS: readonly DosageFormKey[] = [
   'capsule',
   'vial',
   'drops',
-  'liquid',
   'powder',
 ]
 

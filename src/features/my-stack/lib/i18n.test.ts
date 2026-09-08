@@ -197,7 +197,6 @@ const EXPECTED_MY_STACK_KEYS = [
   'dosage_form_tablet',
   'dosage_form_capsule',
   'dosage_form_drops',
-  'dosage_form_liquid',
   'dosage_form_powder',
   'dosage_form_nasal_spray',
   'dosage_form_spray',

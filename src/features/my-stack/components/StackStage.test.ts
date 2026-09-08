@@ -279,10 +279,12 @@ describe('StackStage — Nasenspray', () => {
   })
 
   it('lässt die Formen ohne Bühnengrafik im Textzustand', () => {
-    // Der Gegenbeweis wandert mit: er stand zuletzt auf 'spray', das jetzt
-    // eine eigene Grafik hat.
-    const liquidItem: StackItem = { ...nasalSprayItem, id: 'saft', dosage_form: 'liquid' }
-    expect(renderStage(liquidItem)).toContain('data-stack-renderer="unsupported"')
+    // Der Gegenbeweis wandert mit: er stand zuletzt auf 'spray', dann auf
+    // 'liquid'. Beide haben inzwischen eine Grafik beziehungsweise gibt es
+    // nicht mehr. Uebrig bleibt 'other' — die Form, die absichtlich textlich
+    // bleibt, weil sich zu ihr kein Objekt zeichnen laesst.
+    const sonstigesItem: StackItem = { ...nasalSprayItem, id: 'sonstiges', dosage_form: 'other' }
+    expect(renderStage(sonstigesItem)).toContain('data-stack-renderer="unsupported"')
   })
 })
 

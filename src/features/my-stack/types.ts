@@ -4,7 +4,7 @@ export type TrackingLevel = 'intake_only' | 'with_amount' | 'complete'
 export type RoutineGroup = 'morning' | 'midday' | 'evening'
 
 export type DosageFormKey =
-  | 'vial' | 'ampoule' | 'pen' | 'tablet' | 'capsule' | 'drops' | 'liquid'
+  | 'vial' | 'ampoule' | 'pen' | 'tablet' | 'capsule' | 'drops'
   | 'powder' | 'nasal_spray' | 'spray' | 'gel' | 'patch' | 'tube' | 'other'
 export type DosageFormCapability =
   | 'countable' | 'divisible' | 'liquid' | 'injectable' | 'reconstitutable'

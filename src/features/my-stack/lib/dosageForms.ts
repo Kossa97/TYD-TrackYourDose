@@ -32,7 +32,6 @@ export const DOSAGE_FORMS: readonly DosageFormDefinition[] = [
   { key: 'tablet', labelKey: 'dosage_form_tablet', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['tablet'], capabilities: ['countable', 'divisible', 'inventory_capable'], stageRenderer: 'tablet', stageForm: TABLET_SPEC },
   { key: 'capsule', labelKey: 'dosage_form_capsule', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['capsule'], capabilities: ['countable', 'inventory_capable'], stageRenderer: 'capsule', stageForm: CAPSULE_SPEC },
   { key: 'drops', labelKey: 'dosage_form_drops', suggestedUnits: ['mcg', 'mg', 'IU', 'ml'], basisUnits: ['drop', 'ml'], capabilities: ['liquid', 'concentration_based', 'inventory_capable'], stageRenderer: 'drops', stageForm: DROPS_SPEC },
-  { key: 'liquid', labelKey: 'dosage_form_liquid', suggestedUnits: ['mcg', 'mg', 'g', 'IU', 'ml'], basisUnits: ['ml', 'portion'], capabilities: ['liquid', 'concentration_based', 'inventory_capable'] },
   { key: 'powder', labelKey: 'dosage_form_powder', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'portion'], capabilities: ['inventory_capable'], stageRenderer: 'powder', stageForm: POWDER_SPEC },
   { key: 'nasal_spray', labelKey: 'dosage_form_nasal_spray', suggestedUnits: ['mcg', 'mg'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'], stageRenderer: 'nasal_spray', stageForm: NASAL_SPRAY_SPEC },
   { key: 'spray', labelKey: 'dosage_form_spray', suggestedUnits: ['mcg', 'mg', 'ml'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'], stageRenderer: 'spray', stageForm: SPRAY_SPEC },
@@ -42,8 +41,15 @@ export const DOSAGE_FORMS: readonly DosageFormDefinition[] = [
   { key: 'other', labelKey: 'dosage_form_other', suggestedUnits: ['mcg', 'mg', 'g', 'IU', 'ml'], basisUnits: ['unit', 'portion'], capabilities: [] },
 ] as const
 
+// Faellt auf 'other' zurueck, wenn die Form unbekannt ist. Das ist kein
+// Sicherheitsnetz gegen Tippfehler — der Typ deckt das ab —, sondern gegen
+// Eintraege, die aelter sind als die Liste: 'liquid' stand bis September in
+// der Datenbank und liegt in Bestandsdaten weiter. Ohne den Rueckfall gaebe
+// die Suche undefined zurueck und der naechste Zugriff auf .stageRenderer
+// wuerde die Seite abstuerzen lassen, statt den Eintrag textuell zu zeigen.
 export function getDosageForm(key: DosageFormKey): DosageFormDefinition {
-  return DOSAGE_FORMS.find(form => form.key === key)!
+  return DOSAGE_FORMS.find(form => form.key === key)
+    ?? DOSAGE_FORMS.find(form => form.key === 'other')!
 }
 
 export function getIntakePlanUnitSuggestions(

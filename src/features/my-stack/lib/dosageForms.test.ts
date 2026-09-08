@@ -4,7 +4,7 @@ import { DOSAGE_FORMS, getDosageForm, isStageRenderable } from './dosageForms'
 describe('DOSAGE_FORMS', () => {
   it('enthält alle freigegebenen stabilen Schlüssel genau einmal', () => {
     expect(DOSAGE_FORMS.map(form => form.key)).toEqual([
-      'vial', 'ampoule', 'pen', 'tablet', 'capsule', 'drops', 'liquid',
+      'vial', 'ampoule', 'pen', 'tablet', 'capsule', 'drops',
       'powder', 'nasal_spray', 'spray', 'gel', 'patch', 'tube', 'other',
     ])
   })
@@ -39,10 +39,10 @@ describe('DOSAGE_FORMS', () => {
   it('liefert formgerechte Bezugsgrößen', () => {
     expect(getDosageForm('capsule').basisUnits).toContain('capsule')
     expect(getDosageForm('drops').basisUnits).toContain('drop')
-    expect(getDosageForm('liquid').basisUnits).toContain('ml')
+    expect(getDosageForm('tube').basisUnits).toContain('ml')
   })
 
-  it('erkennt die elf fertigen Formen als darstellbar, den Rest noch nicht', () => {
+  it('erkennt die zwölf fertigen Formen als darstellbar, den Rest noch nicht', () => {
     expect(isStageRenderable('vial')).toBe(true)
     expect(isStageRenderable('ampoule')).toBe(true)
     expect(isStageRenderable('pen')).toBe(true)
@@ -55,7 +55,16 @@ describe('DOSAGE_FORMS', () => {
     expect(isStageRenderable('powder')).toBe(true)
     expect(isStageRenderable('gel')).toBe(true)
     expect(isStageRenderable('spray')).toBe(true)
-    expect(isStageRenderable('liquid')).toBe(false)
     expect(isStageRenderable('other')).toBe(false)
+  })
+
+  it('faellt fuer eine Form, die es nicht mehr gibt, auf other zurueck', () => {
+    // 'liquid' stand bis September in der Liste und liegt in Bestandsdaten
+    // weiter. Ohne Rueckfall gaebe die Suche undefined zurueck und der
+    // naechste Zugriff auf .stageRenderer wuerde die Seite abstuerzen lassen.
+    const alt = 'liquid' as never
+
+    expect(getDosageForm(alt).key).toBe('other')
+    expect(isStageRenderable(alt)).toBe(false)
   })
 })

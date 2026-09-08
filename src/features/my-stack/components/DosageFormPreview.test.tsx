@@ -35,7 +35,7 @@ describe('DosageFormPreview', () => {
     // Die Regel „Formen ohne Buehnengrafik bleiben textlich" gilt auch im
     // Formular. Hier heisst sie: gar nichts zeigen — die Textkarte des Stacks
     // waere in einer Auswahlkachel sinnlos.
-    for (const key of ['liquid', 'other'] as const) {
+    for (const key of ['other'] as const) {
       const { container, unmount } = render(<DosageFormPreview dosageForm={key} />)
 
       expect(container.firstChild, key).toBeNull()

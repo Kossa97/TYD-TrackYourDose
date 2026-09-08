@@ -162,7 +162,7 @@ describe('IntakePlanEditor', () => {
     const { container } = render(
       <PlanHarness
         trackingLevel="with_amount"
-        dosageForm="liquid"
+        dosageForm="drops"
         initialPlan={staleCapsulePlan}
       />,
     )
@@ -174,7 +174,7 @@ describe('IntakePlanEditor', () => {
   })
 
   it('adapts quantity labels and controls to liquids and injectables', () => {
-    const { rerender } = render(<PlanHarness trackingLevel="with_amount" dosageForm="liquid" />)
+    const { rerender } = render(<PlanHarness trackingLevel="with_amount" dosageForm="drops" />)
 
     expect(screen.getByLabelText('Flüssigkeitsmenge pro Einnahme')).toBeTruthy()
     expect(screen.queryByRole('button', { name: /Tablette/ })).toBeNull()

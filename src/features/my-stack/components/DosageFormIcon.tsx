@@ -77,14 +77,6 @@ export function DosageFormIcon({ form, size = 22 }: DosageFormIconProps) {
           <path d="M18.5 15.5s2.5 2.8 2.5 4.2a2.5 2.5 0 0 1-5 0c0-1.4 2.5-4.2 2.5-4.2Z" />
         </IconFrame>
       )
-    case 'liquid':
-      return (
-        <IconFrame form={form} size={size}>
-          <path d="M8 3h8v4l2 2v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9l2-2V3Z" />
-          <path d="M8 6h8M6 14h12" />
-          <path d="M8 17c1.3-.8 2.7.8 4 0s2.7.8 4 0" />
-        </IconFrame>
-      )
     case 'powder':
       return (
         <IconFrame form={form} size={size}>
