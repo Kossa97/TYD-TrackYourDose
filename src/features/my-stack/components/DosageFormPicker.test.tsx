@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DOSAGE_FORMS, isStageRenderable } from '../lib/dosageForms'
 import { DosageFormPicker } from './DosageFormPicker'
 
@@ -11,7 +11,28 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
+
+// Das Karussell misst per requestAnimationFrame, nicht synchron im
+// Scroll-Handler — sonst wuerde jedes Scroll-Event, auch ein winziges beim
+// Bremsen, sofort neu rechnen. jsdom hat kein echtes rAF; dieselbe
+// Ersatzschaltung wie in StackItemWizard.interaction.test.tsx.
+beforeEach(() => {
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => (
+    window.setTimeout(() => callback(performance.now()), 0)
+  ))
+})
+
+// Setzt die Geometrie, die messen() abfragt. jsdom layoutet nicht wirklich —
+// offsetLeft/offsetWidth/clientWidth sind sonst immer 0, und jedes Objekt
+// waere gleich weit von der Mitte entfernt.
+function platziere(el: Element, offsetLeft: number, offsetWidth: number): void {
+  Object.defineProperty(el, 'offsetLeft', { value: offsetLeft, configurable: true })
+  Object.defineProperty(el, 'offsetWidth', { value: offsetWidth, configurable: true })
+}
 
 function renderAll(props: Partial<Parameters<typeof DosageFormPicker>[0]> = {}) {
   return render(
@@ -146,5 +167,94 @@ describe('DosageFormPicker', () => {
 
     expect(screen.getByRole('button', { name: 'dosage_form_patch' }).getAttribute('aria-pressed')).toBe('true')
     expect(scrollIntoView).toHaveBeenCalled()
+  })
+
+  it('waehlt nichts von sich aus, nur weil beim ersten Bild etwas am naechsten liegt', async () => {
+    // jsdom setzt clientWidth/scrollLeft mit 0 an — ohne die Geometrie unten
+    // waere jedes Objekt gleich weit weg, und schon das erste Messen koennte
+    // eines "zufaellig" als naechstes finden. Genau das darf nicht auswaehlen.
+    const onSelect = vi.fn()
+    render(
+      <DosageFormPicker value={null} suggestedForms={['ampoule', 'vial', 'gel']} onSelect={onSelect} />,
+    )
+
+    const gruppe = screen.getByRole('group', { name: 'Häufige Darreichungsformen' })
+    Object.defineProperty(gruppe, 'clientWidth', { value: 300, configurable: true })
+    platziere(within(gruppe).getByRole('button', { name: 'dosage_form_ampoule' }), 0, 100)
+    platziere(within(gruppe).getByRole('button', { name: 'dosage_form_vial' }), 110, 100)
+    platziere(within(gruppe).getByRole('button', { name: 'dosage_form_gel' }), 220, 100)
+
+    await new Promise(resolve => window.setTimeout(resolve, 0))
+    expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  it('waehlt aus, was man ins Zentrum wischt — ohne extra draufzutippen', async () => {
+    // Dieselbe Mechanik wie im Vial-Karussell auf der My-Stack-Seite: das
+    // zentrierte Objekt wird die Auswahl, das Wischen selbst reicht.
+    //
+    // jsdom layoutet nicht — vor dem Stubben unten sind offsetLeft/Width bei
+    // allen Knoepfen 0, und das lautlose Erst-Messen (siehe Test oben) sucht
+    // sich beim Gleichstand den ersten Eintrag der Liste ("ampoule") als
+    // Ausgangspunkt aus. Gewischt wird deshalb auf "vial" — sonst waere ein
+    // Zufall des leeren DOM die Bedingung, nicht das Wischen selbst.
+    const onSelect = vi.fn()
+    render(
+      <DosageFormPicker value={null} suggestedForms={['ampoule', 'vial', 'gel']} onSelect={onSelect} />,
+    )
+
+    const gruppe = screen.getByRole('group', { name: 'Häufige Darreichungsformen' })
+    Object.defineProperty(gruppe, 'clientWidth', { value: 300, configurable: true })
+    Object.defineProperty(gruppe, 'scrollLeft', { value: 0, writable: true, configurable: true })
+    platziere(within(gruppe).getByRole('button', { name: 'dosage_form_ampoule' }), 0, 100)
+    platziere(within(gruppe).getByRole('button', { name: 'dosage_form_vial' }), 110, 100)
+    platziere(within(gruppe).getByRole('button', { name: 'dosage_form_gel' }), 220, 100)
+
+    // Nach rechts wischen, bis "vial" (Zentrum 160) in der Mitte (ebenfalls
+    // 160, bei 300 px Breite) steht.
+    gruppe.scrollLeft = 10
+    fireEvent.scroll(gruppe)
+    await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1))
+    expect(onSelect).toHaveBeenCalledWith('vial')
+
+    // Ein zweites Scroll-Event ohne Positionswechsel meldet nichts erneut —
+    // es hat sich nichts geaendert, das Wischen ist nur zum Stillstand
+    // gekommen (z. B. am Ende der Traegheit).
+    fireEvent.scroll(gruppe)
+    await new Promise(resolve => window.setTimeout(resolve, 0))
+    expect(onSelect).toHaveBeenCalledTimes(1)
+  })
+
+  it('macht das zentrierte Objekt heller, den Rest dunkler — stetig, nicht nur an/aus', async () => {
+    // "Fokus" ist eine Zahl (wie im Vial-Karussell), kein Schalter: sie
+    // treibt das Leuchten unter dem Objekt direkt als CSS-Deckkraft.
+    render(
+      <DosageFormPicker value={null} suggestedForms={['ampoule', 'vial', 'gel']} onSelect={() => undefined} />,
+    )
+
+    const gruppe = screen.getByRole('group', { name: 'Häufige Darreichungsformen' })
+    Object.defineProperty(gruppe, 'clientWidth', { value: 300, configurable: true })
+    Object.defineProperty(gruppe, 'scrollLeft', { value: 0, writable: true, configurable: true })
+    const ampoule = within(gruppe).getByRole('button', { name: 'dosage_form_ampoule' })
+    const vial = within(gruppe).getByRole('button', { name: 'dosage_form_vial' })
+    platziere(ampoule, 0, 100)
+    platziere(vial, 110, 100)
+    platziere(within(gruppe).getByRole('button', { name: 'dosage_form_gel' }), 220, 100)
+
+    // Das Leuchten ist der erste <span> unter dem Standplatz-<span>.
+    const leuchtstaerke = (knopf: HTMLElement) => Number((knopf.querySelector('span > span') as HTMLElement).style.opacity)
+
+    gruppe.scrollLeft = 10 // "vial" (Zentrum 160) steht jetzt in der Mitte (160).
+    fireEvent.scroll(gruppe)
+    // Der Fokuswert ist ein separater React-State-Update aus einer
+    // rAF-Warteschlange — nicht dieselbe Warteschlange wie das synchrone
+    // onSelect() im Test darueber. waitFor statt einer festen Anzahl
+    // Ticks, damit der Test nicht an einer zufaellig passenden Zahl haengt.
+    // "vial" steht schon beim allerersten (geometrielosen) Messen auf 1 --
+    // in jsdom sind zunaechst alle Objekte gleich weit von der Mitte entfernt,
+    // also gleich hell. Erst wenn "ampoule" unter 1 faellt, hat das ECHTE,
+    // geometriebasierte Messen nach dem Wischen tatsaechlich stattgefunden.
+    await waitFor(() => expect(leuchtstaerke(ampoule)).toBeLessThan(1))
+    expect(leuchtstaerke(ampoule)).toBeGreaterThan(0)
+    expect(leuchtstaerke(vial)).toBe(1)
   })
 })
