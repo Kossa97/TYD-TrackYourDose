@@ -1,4 +1,4 @@
-import { CalendarCheck, ChartNoAxesCombined, Gauge } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { TrackingLevel } from '../types'
 
@@ -12,6 +12,16 @@ export interface TrackingLevelPickerProps {
 
 const LEVELS: readonly TrackingLevel[] = ['intake_only', 'with_amount', 'complete']
 
+// Drei Stufen nebeneinander statt drei Kaesten untereinander: so ist die
+// Steigerung raeumlich sichtbar — links wenig, rechts viel —, und der Schritt
+// belegt keinen ganzen Bildschirm mehr fuer eine Wahl, die man jederzeit
+// aendern kann.
+//
+// Darunter steht nicht noch mehr Prosa, sondern das Ergebnis: ein Eintrag, wie
+// er nachher aussieht. Das ist dieselbe Sprache, die das Formular ueberall
+// sonst spricht (die Buehnenform ueber dem Formular, das Farbfeld) — und der
+// Unterschied zwischen den Stufen ist in drei Zeilen gezeigt statt in zwoelf
+// erklaert.
 export function TrackingLevelPicker({
   value,
   substanceName,
@@ -21,6 +31,7 @@ export function TrackingLevelPicker({
 }: TrackingLevelPickerProps) {
   const { t } = useTranslation()
   const name = substanceName.trim() || String(t('my_stack_this_substance', { defaultValue: 'diese Substanz' }))
+
   const content = {
     intake_only: {
       title: t('my_stack_tracking_intake_only_title', { defaultValue: 'Einfach' }),
@@ -29,10 +40,8 @@ export function TrackingLevelPicker({
         defaultValue: 'Du hakst ab, dass du {{substanceName}} genommen hast. Mehr wird nicht gefragt.',
         substanceName: name,
       }),
-      example: t('my_stack_tracking_intake_only_example', {
-        defaultValue: 'Beispiel: „Heute genommen“ — ohne Menge, ohne Zahlen.',
-      }),
-      Icon: CalendarCheck,
+      // Kein Detail — genau das ist die Aussage dieser Stufe.
+      entry: '',
     },
     with_amount: {
       title: t('my_stack_tracking_with_amount_title', { defaultValue: 'Genau' }),
@@ -40,10 +49,7 @@ export function TrackingLevelPicker({
       recorded: t('my_stack_tracking_with_amount_recorded', {
         defaultValue: 'Zusätzlich, wie viel du genommen hast. Damit lässt sich der Verlauf deiner Dosis auswerten.',
       }),
-      example: t('my_stack_tracking_with_amount_example', {
-        defaultValue: 'Beispiel: „1 Kapsel morgens“ oder „0,5 Tablette abends“.',
-      }),
-      Icon: Gauge,
+      entry: t('my_stack_tracking_with_amount_entry', { defaultValue: '1 Kapsel' }),
     },
     complete: {
       title: t('my_stack_tracking_complete_title', { defaultValue: 'Gründlich' }),
@@ -51,12 +57,36 @@ export function TrackingLevelPicker({
       recorded: t('my_stack_tracking_complete_recorded', {
         defaultValue: 'Zusätzlich, wie viel Wirkstoff in einer Einheit steckt. Erst damit ist eine Blutspiegel-Kurve möglich.',
       }),
-      example: t('my_stack_tracking_complete_example', {
-        defaultValue: 'Beispiel: „5.000 IU je Kapsel, 1 Kapsel morgens“.',
-      }),
-      Icon: ChartNoAxesCombined,
+      entry: t('my_stack_tracking_complete_entry', { defaultValue: '1 Kapsel · 5.000 IU' }),
     },
   } as const
+
+  const caption = t('my_stack_tracking_entry_caption', { defaultValue: 'So sähe eine Einnahme aus' })
+
+  // Ein Eintrag, wie ihn der Stack zeigt: Haken, Name, und was die Stufe
+  // zusaetzlich festhaelt.
+  const eintrag = (level: TrackingLevel, gedaempft: boolean) => (
+    <span
+      data-tracking-entry={level}
+      className={`flex min-w-0 items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[13px] transition-colors duration-200 motion-reduce:transition-none ${gedaempft
+        ? 'border-slate-400/20 bg-slate-400/[0.07] text-slate-400'
+        : 'border-[color:var(--accent-border)] bg-[color:var(--accent-weak)] text-slate-100'
+      }`}
+    >
+      <Check
+        aria-hidden="true"
+        size={14}
+        className={`shrink-0 ${gedaempft ? 'text-slate-500' : 'text-[color:var(--accent)]'}`}
+      />
+      <span className="min-w-0 truncate font-medium">{name}</span>
+      {content[level].entry && (
+        <>
+          <span aria-hidden="true" className="text-slate-500">·</span>
+          <span className="min-w-0 truncate">{content[level].entry}</span>
+        </>
+      )}
+    </span>
+  )
 
   return (
     <fieldset
@@ -75,17 +105,24 @@ export function TrackingLevelPicker({
         })}
       </p>
 
-      <div className="mt-3 grid min-w-0 gap-2.5">
+      {/* Die Reihe. Echte Radios darunter, nur unsichtbar: die Tastatur und
+          der Screenreader bekommen dieselbe Gruppe wie vorher, das Auge eine
+          Skala statt eines Stapels. */}
+      <div
+        data-tracking-segments
+        className={`mt-3 grid grid-cols-3 gap-1 rounded-xl border p-1 ${error
+          ? 'border-rose-400/50 bg-rose-400/[0.06]'
+          : 'border-white/10 bg-white/[0.035]'
+        }`}
+      >
         {LEVELS.map(level => {
           const selected = value === level
-          const item = content[level]
-          const Icon = item.Icon
           return (
             <label
               key={level}
-              className={`flex min-h-11 min-w-0 cursor-pointer items-start gap-3 rounded-2xl border p-3.5 text-left transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${selected
-                ? 'border-sky-400/50 bg-sky-400/10 shadow-[0_0_22px_rgba(0,204,245,0.09),inset_0_1px_0_rgba(255,255,255,0.06)]'
-                : 'border-white/10 bg-white/[0.035] hover:border-sky-400/25 hover:bg-white/[0.06]'
+              className={`flex min-h-11 min-w-0 cursor-pointer items-center justify-center rounded-lg px-1 text-center text-[13px] font-semibold transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${selected
+                ? 'border border-[color:var(--accent-border)] bg-[color:var(--accent-weak)] text-[color:var(--accent)] shadow-[0_0_18px_rgba(0,204,245,0.10)]'
+                : 'border border-transparent text-slate-400 hover:bg-slate-400/[0.08]'
               }`}
             >
               <input
@@ -95,45 +132,63 @@ export function TrackingLevelPicker({
                 checked={selected}
                 onChange={() => onChange(level)}
                 required
-                className="mt-1 h-5 w-5 shrink-0 cursor-pointer accent-sky-400 focus-visible:outline-none"
+                className="sr-only"
               />
-              <span className="min-w-0 flex-1">
-                {/* Das Adjektiv traegt den Blick, die Bezeichnung den Sinn.
-                    „Einfach“ allein sagt nicht, was erfasst wird — und genau
-                    das muss wissen, wer hier sein Datenmodell waehlt. */}
-                <span className="flex min-w-0 items-center gap-2 font-semibold text-white">
-                  <Icon aria-hidden="true" size={19} className="shrink-0 text-sky-300" />
-                  <span data-tracking-card="title" className="min-w-0 break-words">{item.title}</span>
-                </span>
-                <span data-tracking-card="subtitle" className="mt-0.5 block text-[12px] font-medium uppercase tracking-wide text-slate-400">
-                  {item.subtitle}
-                </span>
-                <span className="mt-1.5 block space-y-1 text-[13px] leading-snug text-slate-300">
-                  <span data-tracking-card="recorded" className="block">{item.recorded}</span>
-                  <span data-tracking-card="example" className="block text-slate-400">{item.example}</span>
-                  {level === 'complete' && (
-                    <span data-tracking-card="pk" className="block text-[color:var(--accent)]">
-                      {pkProfileAvailable
-                        ? t('my_stack_tracking_pk_available', {
-                            defaultValue: 'Für {{substanceName}} ist ein PK-Profil verfügbar. Eine Kurve erscheint nur bei vollständigen Pflichtangaben.',
-                            substanceName: name,
-                          })
-                        : t('my_stack_tracking_pk_unavailable', {
-                            defaultValue: 'Für {{substanceName}} ist derzeit kein PK-Profil verknüpft; die Stufe lässt sich trotzdem wählen.',
-                            substanceName: name,
-                          })}
-                    </span>
-                  )}
-                </span>
-              </span>
+              <span className="min-w-0 break-words">{content[level].title}</span>
             </label>
           )
         })}
       </div>
 
-      {/* Beide Saetze einmal unter der Gruppe statt dreimal in den Karten:
-          sie gelten der Wahl, nicht einer einzelnen Stufe. Dreimal derselbe
-          Satz verlaengert nur die Strecke bis zur Entscheidung. */}
+      {/* Vor der Wahl der Vergleich, danach die eine Stufe. Beides zeigt
+          dasselbe: was am Ende im Stack steht. Ein leerer Kasten mit der
+          Aufforderung „waehle etwas“ wuerde nichts erklaeren. */}
+      <div data-tracking-preview className="mt-3">
+        <p className="flex items-baseline justify-between gap-3 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          <span>{caption}</span>
+          {value !== null && (
+            <span data-tracking-card="subtitle" className="shrink-0 text-slate-400">
+              {content[value].subtitle}
+            </span>
+          )}
+        </p>
+
+        {value === null ? (
+          <div className="mt-2 grid gap-1.5">
+            {LEVELS.map(level => (
+              <span key={level} className="flex min-w-0 items-center gap-2.5">
+                <span className="w-[68px] shrink-0 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                  {content[level].title}
+                </span>
+                {eintrag(level, true)}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-2 space-y-2">
+            {eintrag(value, false)}
+            <p data-tracking-card="recorded" className="text-[13px] leading-snug text-slate-300">
+              {content[value].recorded}
+            </p>
+            {value === 'complete' && (
+              <p data-tracking-card="pk" className="text-[13px] leading-snug text-[color:var(--accent)]">
+                {pkProfileAvailable
+                  ? t('my_stack_tracking_pk_available', {
+                      defaultValue: 'Für {{substanceName}} ist ein PK-Profil verfügbar. Eine Kurve erscheint nur bei vollständigen Pflichtangaben.',
+                      substanceName: name,
+                    })
+                  : t('my_stack_tracking_pk_unavailable', {
+                      defaultValue: 'Für {{substanceName}} ist derzeit kein PK-Profil verknüpft; die Stufe lässt sich trotzdem wählen.',
+                      substanceName: name,
+                    })}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Beide Saetze einmal unter der Gruppe: sie gelten der Wahl, nicht
+          einer einzelnen Stufe. */}
       <p className="mt-3 text-xs text-slate-500">
         {t('my_stack_tracking_promise', {
           defaultValue: 'Was eine Stufe nicht erfasst, fragt die App auch später nicht ab.',

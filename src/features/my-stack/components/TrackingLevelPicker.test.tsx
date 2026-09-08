@@ -33,7 +33,58 @@ describe('TrackingLevelPicker', () => {
     expect(screen.getByRole('alert').textContent).toBe('Bitte wähle eine Tracking-Tiefe.')
   })
 
-  it('explains the full consequence and next step on every semantic radio card', () => {
+  it('zeigt vor der Wahl alle drei Eintraege zum Vergleich', () => {
+    // Ein leerer Kasten mit „waehle etwas“ wuerde nichts erklaeren. Der
+    // Unterschied zwischen den Stufen ist genau das, was ein Eintrag am Ende
+    // enthaelt — also steht er da, dreimal nebeneinander.
+    render(
+      <TrackingLevelPicker
+        value={null}
+        substanceName="Vitamin D3"
+        pkProfileAvailable={false}
+        onChange={() => undefined}
+      />,
+    )
+
+    const vorschau = document.querySelector('[data-tracking-preview]')!
+    expect(vorschau.querySelectorAll('[data-tracking-entry]')).toHaveLength(3)
+    // Die Steigerung ist im Eintrag sichtbar: nur der Name, dann die Menge,
+    // dann die Wirkstaerke.
+    const text = (level: string) =>
+      vorschau.querySelector(`[data-tracking-entry="${level}"]`)!.textContent!
+    expect(text('intake_only')).toContain('Vitamin D3')
+    expect(text('intake_only').length).toBeLessThan(text('with_amount').length)
+    expect(text('with_amount').length).toBeLessThan(text('complete').length)
+  })
+
+  it('zeigt nach der Wahl nur noch die gewaehlte Stufe, mit Bezeichnung und Satz', () => {
+    render(
+      <TrackingLevelPicker
+        value="with_amount"
+        substanceName="Vitamin D3"
+        pkProfileAvailable={false}
+        onChange={() => undefined}
+      />,
+    )
+
+    const vorschau = document.querySelector('[data-tracking-preview]')!
+    expect(vorschau.querySelectorAll('[data-tracking-entry]')).toHaveLength(1)
+    expect(vorschau.querySelector('[data-tracking-entry="with_amount"]')).not.toBeNull()
+
+    // Die Struktur steht fest, nicht der Wortlaut: die Bezeichnung zum
+    // Adjektiv und der Satz, was die Stufe zusaetzlich erfasst.
+    for (const zeile of ['subtitle', 'recorded']) {
+      const feld = vorschau.querySelector(`[data-tracking-card="${zeile}"]`)
+      expect(feld, zeile).not.toBeNull()
+      expect(feld!.textContent?.trim(), zeile).not.toBe('')
+    }
+    // Der PK-Hinweis gehoert nur zur tiefsten Stufe.
+    expect(vorschau.querySelector('[data-tracking-card="pk"]')).toBeNull()
+  })
+
+  it('haelt Versprechen und Aenderbarkeit aus den Stufen heraus', () => {
+    // Beide Saetze gelten der Wahl, nicht einer Stufe. Dreimal derselbe Satz
+    // verlaengert nur die Strecke bis zur Entscheidung.
     render(
       <TrackingLevelPicker
         value="intake_only"
@@ -43,28 +94,12 @@ describe('TrackingLevelPicker', () => {
       />,
     )
 
-    const cards = screen.getAllByRole('radio')
-    expect(cards).toHaveLength(3)
-    expect((cards[0] as HTMLInputElement).checked).toBe(true)
-
-    for (const radio of cards) {
-      const card = radio.closest('label')!
-      // Die Struktur steht hier fest, nicht der Wortlaut: was erfasst wird,
-      // was nicht noetig ist, ein Beispiel und der naechste Schritt. Der
-      // Wortlaut gehoert in die Sprachdateien und darf sich aendern, ohne
-      // dass dieser Test bricht.
-      for (const zeile of ['title', 'subtitle', 'recorded', 'example']) {
-        const feld = card.querySelector(`[data-tracking-card="${zeile}"]`)
-        expect(feld, zeile).not.toBeNull()
-        expect(feld!.textContent?.trim(), zeile).not.toBe('')
-      }
-      // Weder das Versprechen noch der Hinweis auf die spaetere Aenderbarkeit
-      // steht in einer Karte: beide gelten der Wahl, nicht einer Stufe.
-      expect(within(card).queryByText(/später jederzeit ändern/i)).toBeNull()
-      expect(within(card).queryByText(/fragt die App auch später nicht ab/i)).toBeNull()
+    for (const radio of screen.getAllByRole('radio')) {
+      const segment = radio.closest('label')!
+      expect(within(segment).queryByText(/später jederzeit ändern/i)).toBeNull()
+      expect(within(segment).queryByText(/fragt die App auch später nicht ab/i)).toBeNull()
     }
 
-    // Einmal, unter der Gruppe.
     expect(screen.getAllByText(/später jederzeit ändern/i)).toHaveLength(1)
     expect(screen.getAllByText(/fragt die App auch später nicht ab/i)).toHaveLength(1)
   })

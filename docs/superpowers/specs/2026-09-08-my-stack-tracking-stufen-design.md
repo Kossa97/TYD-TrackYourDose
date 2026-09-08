@@ -160,3 +160,61 @@ Adjektiv erklärt und nicht mit ihm konkurriert.
 Der PK-Hinweis stand auf festem `text-sky-200` und war im hellen Theme kaum zu
 lesen. Das war schon vorher so; er steht jetzt auf `var(--accent)`, der
 Akzentfarbe der App, die beide Themes kennt. In beiden Themes gegengeprüft.
+
+---
+
+## Nachtrag 2: von drei Karten zu einer Reihe mit Vorschau
+
+Die drei Karten waren nicht falsch, nur zu schwer. Sechs Befunde:
+
+1. **Der Schritt war zu schwer für seine Entscheidung.** Reversibel, niedriges
+   Risiko — und belegte einen ganzen Bildschirm (≈650 px) mit drei Aufsätzen.
+   Die Gestaltung sagte „wichtig", der Text „kannst du jederzeit ändern".
+2. **Drei gleich schwere Kästen** führten den Blick nicht.
+3. **Der Radio-Knopf war doppelt gemoppelt** — die ganze Karte war klickbar, die
+   gewählte leuchtete, und der Kreis links schob jeden Inhalt 50 px nach rechts.
+4. **Die Icons trugen nichts.** Kalender, Tacho, Diagramm sagten nichts, was die
+   Wörter nicht schon sagten.
+5. **Die Steigerung wurde behauptet, nicht gezeigt.** Ein Stapel ist keine Skala.
+6. **Wir erzählten, statt zu zeigen** — und das war der eigentliche Punkt. Die
+   App zeigt Dinge: die Bühnenformen, die Vorschau überm Formular, das Farbfeld.
+   Der Tracking-Schritt war die einzige Stelle, die nur Prosa lieferte.
+
+### Was jetzt dasteht
+
+Eine Reihe aus drei Segmenten (links wenig, rechts viel — die Steigerung ist
+räumlich), darunter eine Fläche, die das **Ergebnis** zeigt: ein Eintrag, wie er
+nachher im Stack steht.
+
+```
+Einfach     ✓ Vitamin D3
+Genau       ✓ Vitamin D3 · 1 Kapsel
+Gründlich   ✓ Vitamin D3 · 1 Kapsel · 5.000 IU
+```
+
+**Zwei Zustände, beide nützlich.** Vor der Wahl steht der Vergleich aller drei
+Einträge — man sieht den Unterschied, statt ihn zu lesen. Nach der Wahl steht
+nur noch der gewählte Eintrag, darunter der eine Satz, was diese Stufe
+*zusätzlich* erfasst. Ein leerer Kasten mit „wähle etwas" hätte nichts erklärt.
+
+Die Radios bleiben echte Radios, nur unsichtbar (`sr-only`): Tastatur und
+Screenreader bekommen dieselbe Gruppe wie vorher, das Auge eine Skala.
+
+Der Beispielsatz („Beispiel: „1 Kapsel morgens"") ist zum Eintrag geworden —
+drei i18n-Schlüssel weniger, drei neue dafür: die Überschrift der Vorschau und
+je ein Detail für die beiden tieferen Stufen. `intake_only` hat kein Detail;
+genau das ist seine Aussage.
+
+**Gemessen:** 650 px → 288–331 px je nach Zustand, also rund die Hälfte.
+
+### Farben
+
+Das gewählte Segment trägt dieselbe Machart wie der Eintrag darunter — weiche
+Akzentfläche, Akzentrand, Akzentschrift. Eine grelle Vollfläche war der erste
+Entwurf; sie brach mit der übrigen App, die mit weichem Leuchten arbeitet, und
+band Segment und Eintrag nicht zusammen.
+
+Die gedämpften Vergleichseinträge standen zuerst auf `white/5` und waren auf
+hellem Grund unsichtbar — Weiß mit 5 % Deckkraft gibt es auf Weiß nicht. Jetzt
+`slate-400` mit Alpha, das steht auf beiden Gründen. In beiden Themes
+gegengeprüft.
