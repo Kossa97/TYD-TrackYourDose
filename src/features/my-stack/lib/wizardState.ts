@@ -13,6 +13,7 @@ import type {
 import { format } from 'date-fns'
 import { buildDuplicateFingerprint } from './duplicateFingerprint'
 import { getDosageForm, getIntakePlanUnitSuggestions } from './dosageForms'
+import { trackingCapabilities } from './trackingDepth'
 import { validateIntakePlan, validateStackItemDraft } from './validation'
 
 export type WizardStep =
@@ -20,7 +21,6 @@ export type WizardStep =
   | 'ingredients'
   | 'dosage_form'
   | 'strength'
-  | 'details'
   | 'tracking_level'
   | 'plan'
   | 'review'
@@ -35,23 +35,20 @@ export interface WizardState {
   trackingLevelSelected: boolean
 }
 
+// Die Schrittliste folgt der Faehigkeiten-Tabelle, statt die Stufe noch
+// einmal beim Namen zu nennen. Nur so bleibt eine Regel eine Regel: wer
+// productStrength einer Stufe gibt, bekommt die Schritte dazu automatisch.
 export function wizardSteps(state: WizardState): WizardStep[] {
-  const commonSteps: WizardStep[] = ['substance', 'dosage_form', 'tracking_level']
+  const gemeinsam: WizardStep[] = ['substance', 'dosage_form', 'tracking_level']
 
-  if (!state.trackingLevelSelected) return commonSteps
+  if (!state.trackingLevelSelected) return gemeinsam
 
-  if (state.draft.trackingLevel === 'complete') {
-    return [
-      ...commonSteps,
-      'ingredients',
-      'strength',
-      'details',
-      'plan',
-      'review',
-    ]
-  }
+  const kann = trackingCapabilities(state.draft.trackingLevel)
+  const wirkstoffSchritte: WizardStep[] = kann.productStrength
+    ? ['ingredients', 'strength']
+    : []
 
-  return [...commonSteps, 'plan', 'review']
+  return [...gemeinsam, ...wirkstoffSchritte, 'plan', 'review']
 }
 
 type IngredientChanges = Partial<Omit<StackItemIngredient, 'position'>>

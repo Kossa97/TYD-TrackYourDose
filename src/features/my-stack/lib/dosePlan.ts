@@ -2,6 +2,7 @@ import { format, isValid, parseISO } from 'date-fns'
 import { effectiveQuantity, scheduleForDay, type EscalationRow, type ScheduleCycle, type ScheduleSegment } from '../../../lib/intakeSchedule'
 import type { RoutineConfirmationEntry } from '../../routines/intakeGroups'
 import type { TrackingLevel } from '../types'
+import { trackingCapabilities } from './trackingDepth'
 
 export interface DosePlanCapabilitySet {
   oneOff: boolean
@@ -40,12 +41,16 @@ interface TitrationStep {
   startAfterDays: number | null
 }
 
+// Leitet sich aus trackingDepth ab, statt die Stufe erneut mit einem Namen
+// zu vergleichen. Sonst gaebe es zwei Antworten auf dieselbe Frage — hier
+// stand `level !== 'intake_only'`, was heute dasselbe ergibt wie die Tabelle
+// und morgen nicht mehr.
 export function dosePlanCapabilities(level: TrackingLevel): DosePlanCapabilitySet {
-  const quantified = level !== 'intake_only'
+  const { quantity, titration } = trackingCapabilities(level)
   return {
-    oneOff: quantified,
-    permanent: quantified,
-    titration: quantified,
+    oneOff: quantity,
+    permanent: quantity,
+    titration,
   }
 }
 

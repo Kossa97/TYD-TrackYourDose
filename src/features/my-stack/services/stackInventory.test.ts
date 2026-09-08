@@ -56,7 +56,6 @@ describe('stack inventory service', () => {
     await saveStackItemInventory({ from } as never, {
       userId: 'user-1',
       stackItemId: 'stack-1',
-      trackingLevel: 'complete',
       inventory: { ...inventory, packageUnit: ' capsule ', batchNumber: ' A-42 ' },
     })
 
@@ -72,23 +71,42 @@ describe('stack inventory service', () => {
     }, { onConflict: 'stack_item_id' })
   })
 
-  it.each(['intake_only', 'with_amount'] as const)(
-    'does not persist hidden inventory for %s tracking',
-    async trackingLevel => {
-      const query = queryResult(null)
-      query.upsert = vi.fn(async () => ({ error: null }))
-      const from = vi.fn(() => query)
+  it('schreibt den Bestand auf jeder Tracking-Stufe, sobald er eingeschaltet ist', () => {
+    // Wer nur abhakt, will trotzdem wissen, wann die Packung leer ist. Die
+    // Funktion kennt die Stufe deshalb gar nicht mehr.
+    const query = queryResult(null)
+    query.upsert = vi.fn(async () => ({ error: null }))
+    const from = vi.fn(() => query)
 
-      await saveStackItemInventory({ from } as never, {
-        userId: 'user-1',
-        stackItemId: 'stack-1',
-        trackingLevel,
-        inventory,
-      })
+    return saveStackItemInventory({ from } as never, {
+      userId: 'user-1',
+      stackItemId: 'stack-1',
+      inventory,
+    }).then(() => {
+      expect(from).toHaveBeenCalledWith('stack_item_inventory')
+      expect(query.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ enabled: true, remaining_quantity: 42 }),
+        { onConflict: 'stack_item_id' },
+      )
+    })
+  })
 
+  it('schreibt nichts, solange der Bestand ausgeschaltet ist', () => {
+    // Der Schalter ist das einzige Kriterium. Frueher stand hier die
+    // Tracking-Stufe: unterhalb von 'complete' wurde der Bestand
+    // weggeworfen, auch wenn er eingeschaltet war.
+    const query = queryResult(null)
+    query.upsert = vi.fn(async () => ({ error: null }))
+    const from = vi.fn(() => query)
+
+    return saveStackItemInventory({ from } as never, {
+      userId: 'user-1',
+      stackItemId: 'stack-1',
+      inventory: { ...inventory, enabled: false },
+    }).then(() => {
       expect(from).not.toHaveBeenCalled()
-    },
-  )
+    })
+  })
 
   it('calls the idempotent inventory RPC for a committed dose log', async () => {
     const rpc = vi.fn(async () => ({ data: 41, error: null }))

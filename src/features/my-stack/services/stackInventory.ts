@@ -1,4 +1,4 @@
-import type { InventoryDraft, TrackingLevel } from '../types'
+import type { InventoryDraft } from '../types'
 
 interface ServiceError {
   message: string
@@ -18,10 +18,12 @@ export interface StackItemInventoryRow {
   updated_at: string
 }
 
+// Ohne trackingLevel: der Bestand haengt am eigenen Schalter, nicht an der
+// Tracking-Stufe. Stand das Feld hier, waere es eine zweite Stelle, an der
+// jemand die Regel nachbaut.
 interface InventorySaveInput {
   userId: string
   stackItemId: string
-  trackingLevel: TrackingLevel
   inventory: InventoryDraft
 }
 
@@ -71,7 +73,7 @@ export async function saveStackItemInventory(
   },
   input: InventorySaveInput,
 ): Promise<void> {
-  if (input.trackingLevel !== 'complete' || !input.inventory.enabled) return
+  if (!input.inventory.enabled) return
   const { error } = await client.from('stack_item_inventory').upsert({
     user_id: input.userId,
     stack_item_id: input.stackItemId,

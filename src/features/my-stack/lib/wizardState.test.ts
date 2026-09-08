@@ -113,7 +113,7 @@ describe('wizard state', () => {
   it.each([
     ['intake_only', ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']],
     ['with_amount', ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']],
-    ['complete', ['substance', 'dosage_form', 'tracking_level', 'ingredients', 'strength', 'details', 'plan', 'review']],
+    ['complete', ['substance', 'dosage_form', 'tracking_level', 'ingredients', 'strength', 'plan', 'review']],
   ] as const)('builds the %s path', (trackingLevel, expected) => {
     const state = wizardReducer(
       initialWizardState(),
@@ -138,7 +138,7 @@ describe('wizard state', () => {
     expect(selected.trackingLevelSelected).toBe(true)
     expect(firstInvalidField(selected)).toBeNull()
     expect(wizardSteps(selected)).toEqual([
-      'substance', 'dosage_form', 'tracking_level', 'ingredients', 'strength', 'details', 'plan', 'review',
+      'substance', 'dosage_form', 'tracking_level', 'ingredients', 'strength', 'plan', 'review',
     ])
     expect(initialWizardState(existingVitaminD).trackingLevelSelected).toBe(true)
   })

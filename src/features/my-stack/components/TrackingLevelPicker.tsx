@@ -25,11 +25,11 @@ export function TrackingLevelPicker({
     intake_only: {
       title: t('my_stack_tracking_intake_only_title', { defaultValue: 'Nur Einnahme' }),
       recorded: t('my_stack_tracking_intake_only_recorded', {
-        defaultValue: 'Erfasst: ob du {{substanceName}} eingenommen hast.',
+        defaultValue: 'Erfasst, ob und wann du {{substanceName}} eingenommen hast.',
         substanceName: name,
       }),
       omitted: t('my_stack_tracking_intake_only_omitted', {
-        defaultValue: 'Nicht erforderlich: Menge, Produktstärke, Bestand und PK-Daten.',
+        defaultValue: 'Menge, Produktstärke und PK-Daten sind nicht erforderlich.',
       }),
       example: t('my_stack_tracking_intake_only_example', {
         defaultValue: 'Beispiel: „Heute eingenommen“ ohne Mengenangabe.',
@@ -42,11 +42,11 @@ export function TrackingLevelPicker({
     with_amount: {
       title: t('my_stack_tracking_with_amount_title', { defaultValue: 'Mit Menge' }),
       recorded: t('my_stack_tracking_with_amount_recorded', {
-        defaultValue: 'Erfasst: Einnahme und geplante Menge von {{substanceName}}.',
+        defaultValue: 'Erfasst die Einnahme und die geplante oder tatsächliche Menge von {{substanceName}}.',
         substanceName: name,
       }),
       omitted: t('my_stack_tracking_with_amount_omitted', {
-        defaultValue: 'Nicht erforderlich: Produktstärke oder Bestand. PK-Kurven sind erst mit „Vollständig“ verfügbar.',
+        defaultValue: 'Die Produktstärke ist nicht erforderlich. PK-Kurven gibt es erst auf der nächsten Stufe.',
       }),
       example: t('my_stack_tracking_with_amount_example', {
         defaultValue: 'Beispiel: „1 Kapsel morgens“ oder „0,5 Tablette abends“.',
@@ -57,18 +57,18 @@ export function TrackingLevelPicker({
       Icon: Gauge,
     },
     complete: {
-      title: t('my_stack_tracking_complete_title', { defaultValue: 'Vollständig' }),
+      title: t('my_stack_tracking_complete_title', { defaultValue: 'Mit Wirkstärke' }),
       recorded: t('my_stack_tracking_complete_recorded', {
-        defaultValue: 'Erfasst: Einnahme, Menge, Produktstärke und optionale Produktdetails.',
+        defaultValue: 'Erfasst Einnahme, Menge und die Produktstärke je Einheit.',
       }),
       omitted: t('my_stack_tracking_complete_omitted', {
-        defaultValue: 'Nicht erforderlich: Bestand und PK-Auswertung bleiben optional.',
+        defaultValue: 'PK benötigt ein verknüpftes Profil sowie vollständige Plan- und Einnahmedaten.',
       }),
       example: t('my_stack_tracking_complete_example', {
         defaultValue: 'Beispiel: „5.000 IU pro Kapsel, 1 Kapsel morgens“.',
       }),
       next: t('my_stack_tracking_complete_next', {
-        defaultValue: 'Als Nächstes: Produktstärke, Details und Einnahmeplan festlegen.',
+        defaultValue: 'Als Nächstes: Inhaltsstoffe, Produktstärke und Einnahmeplan festlegen.',
       }),
       Icon: ChartNoAxesCombined,
     },
@@ -119,19 +119,19 @@ export function TrackingLevelPicker({
                   <span className="min-w-0 break-words">{item.title}</span>
                 </span>
                 <span className="mt-1.5 block space-y-1 text-[13px] leading-snug text-slate-300">
-                  <span className="block">{item.recorded}</span>
-                  <span className="block text-slate-400">{item.omitted}</span>
-                  <span className="block text-slate-400">{item.example}</span>
-                  <span className="block text-slate-300">{item.next}</span>
+                  <span data-tracking-card="recorded" className="block">{item.recorded}</span>
+                  <span data-tracking-card="omitted" className="block text-slate-400">{item.omitted}</span>
+                  <span data-tracking-card="example" className="block text-slate-400">{item.example}</span>
+                  <span data-tracking-card="next" className="block text-slate-300">{item.next}</span>
                   {level === 'complete' && (
-                    <span className="block text-sky-200">
+                    <span data-tracking-card="pk" className="block text-sky-200">
                       {pkProfileAvailable
                         ? t('my_stack_tracking_pk_available', {
-                            defaultValue: 'Für {{substanceName}} ist ein PK-Profil verfügbar. Eine Kurve erscheint nur, wenn die nötigen Angaben vorliegen.',
+                            defaultValue: 'Für {{substanceName}} ist ein PK-Profil verfügbar. Eine Kurve erscheint nur bei vollständigen Pflichtangaben.',
                             substanceName: name,
                           })
                         : t('my_stack_tracking_pk_unavailable', {
-                            defaultValue: 'Für {{substanceName}} ist derzeit kein PK-Profil hinterlegt; vollständig tracken ist trotzdem möglich.',
+                            defaultValue: 'Für {{substanceName}} ist derzeit kein PK-Profil verknüpft; die Stufe lässt sich trotzdem wählen.',
                             substanceName: name,
                           })}
                     </span>

@@ -131,7 +131,6 @@ function completeCustomFlow(name = 'Custom Product'): void {
   fireEvent.change(screen.getByLabelText('my_stack_strength_unit'), { target: { value: 'mg' } })
   fireEvent.change(screen.getByLabelText('my_stack_basis_value'), { target: { value: '1' } })
   continueWizard()
-  continueWizard()
   fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
   fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: 'capsule' } })
@@ -208,7 +207,7 @@ describe('StackItemWizard — Vorschau der Darreichungsform', () => {
     fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_complete_title/ }))
 
     // Ab jetzt steht die Zahl fest, und das Restfeld verschwindet.
-    expect(balken().getAttribute('aria-valuemax')).toBe('8')
+    expect(balken().getAttribute('aria-valuemax')).toBe('7')
     expect(balken().querySelector('[data-progress-open]')).toBeNull()
   })
 
@@ -268,7 +267,6 @@ function reachExistingReview(changeForm = false): void {
     // Kein Aufklappen mehr noetig: beide Reihen stehen immer da.
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_drops' }))
   }
-  continueWizard()
   continueWizard()
   continueWizard()
   continueWizard()
@@ -666,7 +664,10 @@ describe('StackItemWizard interactions', () => {
     expect(screen.getByText('Example Brand')).toBeTruthy()
   })
 
-  it('does not emit hidden generic inventory after changing to a lower tracking level', async () => {
+  it('behaelt den Bestand, wenn die Tracking-Stufe sinkt', async () => {
+    // Frueher wurde er hier weggeworfen: der Bestand hing an 'complete'. Ob
+    // jemand Vorraete fuehrt, hat mit der Messgenauigkeit aber nichts zu tun
+    // — wer die Stufe senkt, will nicht seine Packungsangaben verlieren.
     const { onSave } = renderWizard()
     startCustom('Lower Depth Product')
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
@@ -697,7 +698,8 @@ describe('StackItemWizard interactions', () => {
 
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
     expect(onSave.mock.calls[0][0].trackingLevel).toBe('with_amount')
-    expect(onSave.mock.calls[0][0].inventory.enabled).toBe(false)
+    expect(onSave.mock.calls[0][0].inventory.enabled).toBe(true)
+    expect(onSave.mock.calls[0][0].inventory.remainingQuantity).toBe(42)
   })
   it('emits create, update, and duplicate payload modes', async () => {
     const createRun = renderWizard()
@@ -771,7 +773,7 @@ describe('StackItemWizard interactions', () => {
     expect(onClose).not.toHaveBeenCalled()
     expect(screen.getByRole('heading', { name: 'Multi Word Product' })).toBeTruthy()
 
-    for (let index = 0; index < 4; index += 1) {
+    for (let index = 0; index < 3; index += 1) {
       fireEvent.click(screen.getByRole('button', { name: 'back' }))
     }
     expect((screen.getByLabelText('my_stack_product_name') as HTMLInputElement).value)

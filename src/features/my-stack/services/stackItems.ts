@@ -336,8 +336,7 @@ export async function saveStackItemSetup(
 ): Promise<SavedStackItemRow> {
   const itemErrors = validateStackItemDraft(draft)
   const planErrors = validateIntakePlan(draft.plan, draft.trackingLevel)
-  const invalidInventory = draft.trackingLevel === 'complete'
-    && draft.inventory.enabled
+  const invalidInventory = draft.inventory.enabled
     && (
       draft.inventory.packageQuantity == null
       || !Number.isFinite(draft.inventory.packageQuantity)

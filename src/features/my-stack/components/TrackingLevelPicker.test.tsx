@@ -49,10 +49,15 @@ describe('TrackingLevelPicker', () => {
 
     for (const radio of cards) {
       const card = radio.closest('label')!
-      expect(within(card).getByText(/^Erfasst:/)).toBeTruthy()
-      expect(within(card).getByText(/^Nicht erforderlich:/)).toBeTruthy()
-      expect(within(card).getByText(/^Beispiel:/)).toBeTruthy()
-      expect(within(card).getByText(/^Als Nächstes:/)).toBeTruthy()
+      // Die Struktur steht hier fest, nicht der Wortlaut: was erfasst wird,
+      // was nicht noetig ist, ein Beispiel und der naechste Schritt. Der
+      // Wortlaut gehoert in die Sprachdateien und darf sich aendern, ohne
+      // dass dieser Test bricht.
+      for (const zeile of ['recorded', 'omitted', 'example', 'next']) {
+        const feld = card.querySelector(`[data-tracking-card="${zeile}"]`)
+        expect(feld, zeile).not.toBeNull()
+        expect(feld!.textContent?.trim(), zeile).not.toBe('')
+      }
       // Der Hinweis auf die spaetere Aenderbarkeit steht NICHT in jeder Karte:
       // er gilt der Wahl, nicht einer Stufe. Dreimal derselbe Satz verlaengert
       // nur die Strecke bis zur Entscheidung.
@@ -73,7 +78,7 @@ describe('TrackingLevelPicker', () => {
       />,
     )
 
-    expect(screen.getByText(/Für Vitamin D3 ist derzeit kein PK-Profil hinterlegt/)).toBeTruthy()
+    expect(screen.getByText(/Für Vitamin D3 ist derzeit kein PK-Profil verknüpft/)).toBeTruthy()
     expect(screen.queryByText(/garantiert.*Kurve/i)).toBeNull()
 
     rerender(
@@ -86,7 +91,7 @@ describe('TrackingLevelPicker', () => {
     )
 
     expect(screen.getByText(/Für Vitamin D3 ist ein PK-Profil verfügbar/)).toBeTruthy()
-    expect(screen.getByText(/Eine Kurve erscheint nur, wenn die nötigen Angaben vorliegen/)).toBeTruthy()
+    expect(screen.getByText(/Eine Kurve erscheint nur bei vollständigen Pflichtangaben/)).toBeTruthy()
   })
 
   it('changes selection through the radio control', () => {

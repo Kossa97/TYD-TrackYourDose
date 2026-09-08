@@ -53,7 +53,6 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_step_ingredients',
   'my_stack_step_dosage_form',
   'my_stack_step_strength',
-  'my_stack_step_details',
   'my_stack_step_review',
   'my_stack_identity_changed',
   'my_stack_existing_variant',
