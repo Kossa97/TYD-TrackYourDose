@@ -213,9 +213,24 @@ export function DosageFormPicker({
       className="min-w-0"
       data-field="dosageForm"
       tabIndex={-1} aria-invalid={error || undefined} aria-describedby={error ? 'stack-dosage-form-error' : undefined}>
-      <legend className="mb-3 text-sm font-semibold text-slate-200">
+      {/* <legend> muss das erste Kind von <fieldset> bleiben, sonst geht die
+          Verbindung zur Barrierefreiheit verloren — die Namensanzeige folgt
+          deshalb als eigenes Element danach statt in einer gemeinsamen
+          Wrapper-Zeile. */}
+      <legend className="mb-1 text-sm font-semibold text-slate-200">
         {t('my_stack_dosage_form', { defaultValue: 'Darreichungsform' })}
       </legend>
+      {/* Direkt unter der Ueberschrift statt unter beiden Karussells: dort
+          stand sie hinter zwei fast bildschirmhohen Reihen und war auf
+          kleineren Handys erst nach Scrollen zu sehen — obwohl sie genau
+          zeigen soll, was man gerade gewaehlt hat, sobald man es getan hat. */}
+      <p
+        data-dosage-form-selected
+        aria-live="polite"
+        className="mb-3 min-h-5 text-sm font-semibold text-sky-200"
+      >
+        {selectedForm ? t(selectedForm.labelKey) : ''}
+      </p>
 
       <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.025] px-3 py-4 sm:px-4">
         <div>
@@ -249,18 +264,6 @@ export function DosageFormPicker({
             </div>
           </div>
         )}
-
-        {/* Der einzige Text im Bild: wie das heisst, was gerade zentriert
-            steht. Vierzehn Aufschriften unter vierzehn Objekten waren zu
-            viel; keine einzige waere ein Raetsel. Also genau eine, und sie
-            folgt dem Wischen, nicht nur dem Antippen. */}
-        <p
-          data-dosage-form-selected
-          aria-live="polite"
-          className="min-h-5 border-t border-white/[0.07] pt-3 text-center text-sm font-semibold text-sky-200"
-        >
-          {selectedForm ? t(selectedForm.labelKey) : ''}
-        </p>
       </div>
 
       {error && (
