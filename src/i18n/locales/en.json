@@ -1089,6 +1089,7 @@
   "my_stack_step_substance": "Substance",
   "my_stack_step_ingredients": "Ingredients",
   "my_stack_step_dosage_form": "Dosage form",
+  "my_stack_step_color": "Color",
   "my_stack_step_strength": "Strength",
   "my_stack_step_review": "Review",
   "my_stack_identity_changed": "How would you like to continue with the changed variant?",

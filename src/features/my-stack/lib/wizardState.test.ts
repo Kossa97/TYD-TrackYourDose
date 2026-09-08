@@ -111,9 +111,9 @@ describe('wizard state', () => {
   })
 
   it.each([
-    ['intake_only', ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']],
-    ['with_amount', ['substance', 'dosage_form', 'tracking_level', 'plan', 'review']],
-    ['complete', ['substance', 'dosage_form', 'tracking_level', 'ingredients', 'strength', 'plan', 'review']],
+    ['intake_only', ['substance', 'dosage_form', 'color', 'tracking_level', 'plan', 'review']],
+    ['with_amount', ['substance', 'dosage_form', 'color', 'tracking_level', 'plan', 'review']],
+    ['complete', ['substance', 'dosage_form', 'color', 'tracking_level', 'ingredients', 'strength', 'plan', 'review']],
   ] as const)('builds the %s path', (trackingLevel, expected) => {
     const state = wizardReducer(
       initialWizardState(),
@@ -128,7 +128,7 @@ describe('wizard state', () => {
     const trackingStep = { ...initial, step: 'tracking_level' as const }
 
     expect(initial.trackingLevelSelected).toBe(false)
-    expect(wizardSteps(initial)).toEqual(['substance', 'dosage_form', 'tracking_level'])
+    expect(wizardSteps(initial)).toEqual(['substance', 'dosage_form', 'color', 'tracking_level'])
     expect(firstInvalidField(trackingStep)).toBe('trackingLevel')
 
     const selected = wizardReducer(
@@ -138,7 +138,7 @@ describe('wizard state', () => {
     expect(selected.trackingLevelSelected).toBe(true)
     expect(firstInvalidField(selected)).toBeNull()
     expect(wizardSteps(selected)).toEqual([
-      'substance', 'dosage_form', 'tracking_level', 'ingredients', 'strength', 'plan', 'review',
+      'substance', 'dosage_form', 'color', 'tracking_level', 'ingredients', 'strength', 'plan', 'review',
     ])
     expect(initialWizardState(existingVitaminD).trackingLevelSelected).toBe(true)
   })
@@ -167,7 +167,7 @@ describe('wizard state', () => {
     expect(next.draft.inventory).toEqual(completeDraft.inventory)
     expect(next.draft.pkProfileMethod).toBe('oral')
     expect(wizardSteps(next)).toEqual([
-      'substance', 'dosage_form', 'tracking_level', 'plan', 'review',
+      'substance', 'dosage_form', 'color', 'tracking_level', 'plan', 'review',
     ])
   })
 

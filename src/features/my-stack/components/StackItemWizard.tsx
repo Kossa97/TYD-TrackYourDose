@@ -97,6 +97,7 @@ const STEP_LABELS: Record<WizardStep, { key: string; defaultValue: string }> = {
   substance: { key: 'my_stack_step_substance', defaultValue: 'Substanz' },
   ingredients: { key: 'my_stack_step_ingredients', defaultValue: 'Inhaltsstoffe' },
   dosage_form: { key: 'my_stack_step_dosage_form', defaultValue: 'Darreichungsform' },
+  color: { key: 'my_stack_step_color', defaultValue: 'Farbe' },
   tracking_level: { key: 'my_stack_step_tracking_level', defaultValue: 'Tracking-Tiefe' },
   strength: { key: 'my_stack_step_strength', defaultValue: 'Stärke' },
   plan: { key: 'my_stack_step_plan', defaultValue: 'Einnahmeplan' },
@@ -402,6 +403,12 @@ export function StackItemWizard({
             })}
           />
         )
+      case 'color':
+        // Kein eigener Inhalt hier — das Objekt und das Farbfeld stehen
+        // schon im gemeinsamen Vorschaublock ueber diesem Schritt (weiter
+        // unten in der Datei), gross statt in Miniatur, weil hier nichts
+        // anderes zu sehen ist.
+        return null
       case 'tracking_level':
         return (
           <TrackingLevelPicker
@@ -790,10 +797,14 @@ export function StackItemWizard({
               und beim Zurueckgehen tauchte es dort ploetzlich auf, wo vorher
               nichts stand. Den Namen zeigte es obendrein doppelt — er steht
               im Feld direkt darunter.
+              Auch nicht (mehr) im Formschritt selbst: die zwei Karussells
+              dort brauchen den ganzen Bildschirm, eine zweite Vorschau
+              darueber wuerde ihnen den Platz nehmen, den sie gerade bekommen
+              haben. Das Faerben ist deshalb ein eigener Schritt danach.
               `liquid` und `other` haben keine Buehnengrafik — dort faellt auch
               der Rahmen weg. Ein leerer Kasten sieht aus wie ein Fehler. */}
-          {state.step !== 'substance' && state.draft.dosageForm && isStageRenderable(state.draft.dosageForm) && (
-            state.step === 'dosage_form' ? (
+          {state.step !== 'substance' && state.step !== 'dosage_form' && state.draft.dosageForm && isStageRenderable(state.draft.dosageForm) && (
+            state.step === 'color' ? (
             <div
               data-wizard-preview
               className="mb-6 rounded-2xl border border-white/10 bg-white/[0.02] px-4 pt-4 pb-4"
@@ -827,7 +838,7 @@ export function StackItemWizard({
                  Tiefenschritt war dadurch keine einzige der drei Karten
                  vollstaendig sichtbar. Gemessen bei 430 px Fensterbreite.
                  Das Objekt bleibt sichtbar, damit man weiss, woran man
-                 arbeitet; gefaerbt wird dort, wo die Form gewaehlt wird. */
+                 arbeitet; gefaerbt wird auf dem eigenen Farbschritt davor. */
               <div
                 data-wizard-preview
                 data-wizard-preview-compact

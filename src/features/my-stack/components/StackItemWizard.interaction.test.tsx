@@ -124,6 +124,7 @@ function completeCustomFlow(name = 'Custom Product'): void {
   startCustom(name)
   fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
   continueWizard()
+  continueWizard()
   fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_complete_title/ }))
   continueWizard()
   continueWizard()
@@ -146,6 +147,12 @@ describe('StackItemWizard — Vorschau der Darreichungsform', () => {
     expect(document.querySelector('[data-wizard-preview]')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_powder' }))
+
+    // Auch auf dem Formschritt selbst noch nichts: die zwei Karussells
+    // brauchen den ganzen Platz, das Objekt kommt erst auf dem Farbschritt.
+    expect(document.querySelector('[data-wizard-preview]')).toBeNull()
+
+    continueWizard()
 
     const vorschau = document.querySelector('[data-wizard-preview]')
     expect(vorschau).not.toBeNull()
@@ -174,8 +181,10 @@ describe('StackItemWizard — Vorschau der Darreichungsform', () => {
     renderWizard()
     startCustom('Kreatin')
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
+    continueWizard()
     expect(document.querySelector('[data-wizard-preview]')).not.toBeNull()
 
+    fireEvent.click(screen.getByRole('button', { name: 'back' }))
     fireEvent.click(screen.getByRole('button', { name: 'back' }))
 
     expect(screen.getByLabelText('my_stack_question')).toBeTruthy()
@@ -188,6 +197,7 @@ describe('StackItemWizard — Vorschau der Darreichungsform', () => {
     renderWizard()
     startCustom('Kreatin')
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_powder' }))
+    continueWizard()
 
     const vorschau = document.querySelector('[data-wizard-preview]')!
     const flaeche = vorschau.querySelector('[data-color-field="area"]')
@@ -220,10 +230,11 @@ describe('StackItemWizard — Vorschau der Darreichungsform', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_powder' }))
     continueWizard()
+    continueWizard()
     fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_complete_title/ }))
 
     // Ab jetzt steht die Zahl fest, und das Restfeld verschwindet.
-    expect(balken().getAttribute('aria-valuemax')).toBe('7')
+    expect(balken().getAttribute('aria-valuemax')).toBe('8')
     expect(balken().querySelector('[data-progress-open]')).toBeNull()
   })
 
@@ -233,6 +244,9 @@ describe('StackItemWizard — Vorschau der Darreichungsform', () => {
     renderWizard()
     startCustom('Kreatin')
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_powder' }))
+    expect(document.querySelector('[data-wizard-preview]')).toBeNull()
+
+    continueWizard()
 
     const vorschau = () => document.querySelector('[data-wizard-preview]')!
     expect(vorschau().hasAttribute('data-wizard-preview-compact')).toBe(false)
@@ -264,6 +278,7 @@ function completeCatalogFlow(): void {
   continueWizard()
   fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
   continueWizard()
+  continueWizard()
   fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_complete_title/ }))
   continueWizard()
   continueWizard()
@@ -283,6 +298,7 @@ function reachExistingReview(changeForm = false): void {
     // Kein Aufklappen mehr noetig: beide Reihen stehen immer da.
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_drops' }))
   }
+  continueWizard()
   continueWizard()
   continueWizard()
   continueWizard()
@@ -498,6 +514,7 @@ describe('StackItemWizard interactions', () => {
     continueWizard()
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
     continueWizard()
+    continueWizard()
     fireEvent.click(screen.getByRole('radio', { name: /^my_stack_tracking_intake_only_title/ }))
     continueWizard()
     fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
@@ -597,6 +614,7 @@ describe('StackItemWizard interactions', () => {
     startCustom('Choice Required')
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
     continueWizard()
+    continueWizard()
 
     const trackingGroup = screen.getByRole('group', { name: 'my_stack_tracking_question' })
     expect(screen.getAllByRole('radio').every(radio => !(radio as HTMLInputElement).checked))
@@ -618,6 +636,7 @@ describe('StackItemWizard interactions', () => {
     startCustom('Simple Product')
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
     continueWizard()
+  continueWizard()
   fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_intake_only_title/ }))
   continueWizard()
 
@@ -635,6 +654,7 @@ describe('StackItemWizard interactions', () => {
     const { onSave } = renderWizard()
     startCustom('Simple Product')
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
+    continueWizard()
     continueWizard()
     fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_intake_only_title/ }))
     continueWizard()
@@ -687,6 +707,7 @@ describe('StackItemWizard interactions', () => {
     startCustom('Inventory Product')
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
     continueWizard()
+    continueWizard()
     fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_complete_title/ }))
     continueWizard()
     continueWizard()
@@ -725,6 +746,7 @@ describe('StackItemWizard interactions', () => {
     const { onSave } = renderWizard()
     startCustom('Lower Depth Product')
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
+    continueWizard()
     continueWizard()
     fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_complete_title/ }))
     continueWizard()
@@ -827,7 +849,7 @@ describe('StackItemWizard interactions', () => {
     expect(onClose).not.toHaveBeenCalled()
     expect(screen.getByRole('heading', { name: 'Multi Word Product' })).toBeTruthy()
 
-    for (let index = 0; index < 6; index += 1) {
+    for (let index = 0; index < 7; index += 1) {
       fireEvent.click(screen.getByRole('button', { name: 'back' }))
     }
     expect((screen.getByLabelText('my_stack_question') as HTMLInputElement).value)

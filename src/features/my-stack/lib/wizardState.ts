@@ -20,6 +20,7 @@ export type WizardStep =
   | 'substance'
   | 'ingredients'
   | 'dosage_form'
+  | 'color'
   | 'strength'
   | 'tracking_level'
   | 'plan'
@@ -39,7 +40,7 @@ export interface WizardState {
 // einmal beim Namen zu nennen. Nur so bleibt eine Regel eine Regel: wer
 // productStrength einer Stufe gibt, bekommt die Schritte dazu automatisch.
 export function wizardSteps(state: WizardState): WizardStep[] {
-  const gemeinsam: WizardStep[] = ['substance', 'dosage_form', 'tracking_level']
+  const gemeinsam: WizardStep[] = ['substance', 'dosage_form', 'color', 'tracking_level']
 
   if (!state.trackingLevelSelected) return gemeinsam
 
