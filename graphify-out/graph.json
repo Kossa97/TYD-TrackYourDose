@@ -7865,7 +7865,7 @@
       "file_type": "code",
       "norm_label": "dosageformpicker()",
       "source_file": "src/features/my-stack/components/DosageFormPicker.tsx",
-      "source_location": "L56"
+      "source_location": "L63"
     },
     {
       "id": "src_features_my_stack_components_dosageformpicker_dosageformpicker_aufwischplanen",
@@ -7877,7 +7877,7 @@
       "file_type": "code",
       "norm_label": "aufwischplanen()",
       "source_file": "src/features/my-stack/components/DosageFormPicker.tsx",
-      "source_location": "L137"
+      "source_location": "L144"
     },
     {
       "id": "src_features_my_stack_components_dosageformpicker_dosageformpicker_messen",
@@ -7889,7 +7889,7 @@
       "file_type": "code",
       "norm_label": "messen()",
       "source_file": "src/features/my-stack/components/DosageFormPicker.tsx",
-      "source_location": "L94"
+      "source_location": "L101"
     },
     {
       "id": "src_features_my_stack_components_dosageformpicker_fokusausabstand",
@@ -7901,7 +7901,7 @@
       "file_type": "code",
       "norm_label": "fokusausabstand()",
       "source_file": "src/features/my-stack/components/DosageFormPicker.tsx",
-      "source_location": "L52"
+      "source_location": "L59"
     },
     {
       "id": "src_features_my_stack_components_dosageformpicker_test_kachel",
@@ -61269,7 +61269,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/DosageFormPicker.tsx",
-      "source_location": "L180",
+      "source_location": "L190",
       "weight": 1.0
     },
     {
@@ -61281,7 +61281,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/DosageFormPicker.tsx",
-      "source_location": "L146",
+      "source_location": "L153",
       "weight": 1.0
     },
     {
@@ -61293,7 +61293,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/DosageFormPicker.tsx",
-      "source_location": "L115",
+      "source_location": "L122",
       "weight": 1.0
     },
     {
@@ -69242,18 +69242,6 @@
     },
     {
       "source": "src_features_my_stack_components_dosageformpicker_dosageformpicker",
-      "target": "src_features_my_stack_components_dosageformpicker_dosageformpicker_aufwischplanen",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "src/features/my-stack/components/DosageFormPicker.tsx",
-      "source_location": "L137",
-      "weight": 1.0
-    },
-    {
-      "source": "src_features_my_stack_components_dosageformpicker_dosageformpicker",
       "target": "src_features_my_stack_components_dosageformpicker_dosageformpicker_messen",
       "relation": "contains",
       "_origin": "ast",
@@ -69261,7 +69249,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/DosageFormPicker.tsx",
-      "source_location": "L94",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_my_stack_components_dosageformpicker_dosageformpicker",
+      "target": "src_features_my_stack_components_dosageformpicker_dosageformpicker_aufwischplanen",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "src/features/my-stack/components/DosageFormPicker.tsx",
+      "source_location": "L144",
       "weight": 1.0
     },
     {
@@ -69585,7 +69585,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/DosageFormPicker.tsx",
-      "source_location": "L67",
+      "source_location": "L74",
       "weight": 1.0
     },
     {
@@ -135336,7 +135336,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/components/DosageFormPicker.tsx",
-      "source_location": "L52",
+      "source_location": "L59",
       "weight": 1.0
     },
     {
@@ -135347,7 +135347,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/components/DosageFormPicker.tsx",
-      "source_location": "L56",
+      "source_location": "L63",
       "weight": 1.0
     },
     {
@@ -163247,5 +163247,5 @@
       "source_file": "docs/superpowers/plans/2026-06-25-confirmed-injection-intake-linking.md"
     }
   ],
-  "built_at_commit": "bbbacb7e9d7156977c049516eceaa3810c0e9342"
+  "built_at_commit": "1861351c28a03ecaa65ae6d07a2df60c70fa08c5"
 }

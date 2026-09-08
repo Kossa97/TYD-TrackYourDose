@@ -2802,10 +2802,10 @@
     "semantic_hash": "b7f063a4a0fe1a979bc182754c37579a"
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
-    "mtime": 1788889346.6629057,
-    "seen": 1788890108.2201939,
-    "ast_hash": "8939ba25b44eb516086e3005e1bedbc3",
-    "semantic_hash": "8939ba25b44eb516086e3005e1bedbc3"
+    "mtime": 1788907136.0921998,
+    "seen": 1788907282.9733696,
+    "ast_hash": "70496cdd5f2e46d311300bc0fc2da4d9",
+    "semantic_hash": ""
   },
   "src/features/my-stack/components/IngredientEditor.tsx": {
     "mtime": 1788834243.8599713,
