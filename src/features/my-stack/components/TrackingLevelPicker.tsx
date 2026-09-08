@@ -23,52 +23,36 @@ export function TrackingLevelPicker({
   const name = substanceName.trim() || String(t('my_stack_this_substance', { defaultValue: 'diese Substanz' }))
   const content = {
     intake_only: {
-      title: t('my_stack_tracking_intake_only_title', { defaultValue: 'Nur Einnahme' }),
+      title: t('my_stack_tracking_intake_only_title', { defaultValue: 'Einfach' }),
+      subtitle: t('my_stack_tracking_intake_only_subtitle', { defaultValue: 'Nur Einnahme' }),
       recorded: t('my_stack_tracking_intake_only_recorded', {
-        defaultValue: 'Erfasst, ob und wann du {{substanceName}} eingenommen hast.',
+        defaultValue: 'Du hakst ab, dass du {{substanceName}} genommen hast. Mehr wird nicht gefragt.',
         substanceName: name,
       }),
-      omitted: t('my_stack_tracking_intake_only_omitted', {
-        defaultValue: 'Menge, Produktstärke und PK-Daten sind nicht erforderlich.',
-      }),
       example: t('my_stack_tracking_intake_only_example', {
-        defaultValue: 'Beispiel: „Heute eingenommen“ ohne Mengenangabe.',
-      }),
-      next: t('my_stack_tracking_intake_only_next', {
-        defaultValue: 'Als Nächstes: Rhythmus und Tageszeit festlegen.',
+        defaultValue: 'Beispiel: „Heute genommen“ — ohne Menge, ohne Zahlen.',
       }),
       Icon: CalendarCheck,
     },
     with_amount: {
-      title: t('my_stack_tracking_with_amount_title', { defaultValue: 'Mit Menge' }),
+      title: t('my_stack_tracking_with_amount_title', { defaultValue: 'Genau' }),
+      subtitle: t('my_stack_tracking_with_amount_subtitle', { defaultValue: 'Mit Menge' }),
       recorded: t('my_stack_tracking_with_amount_recorded', {
-        defaultValue: 'Erfasst die Einnahme und die geplante oder tatsächliche Menge von {{substanceName}}.',
-        substanceName: name,
-      }),
-      omitted: t('my_stack_tracking_with_amount_omitted', {
-        defaultValue: 'Die Produktstärke ist nicht erforderlich. PK-Kurven gibt es erst auf der nächsten Stufe.',
+        defaultValue: 'Zusätzlich, wie viel du genommen hast. Damit lässt sich der Verlauf deiner Dosis auswerten.',
       }),
       example: t('my_stack_tracking_with_amount_example', {
         defaultValue: 'Beispiel: „1 Kapsel morgens“ oder „0,5 Tablette abends“.',
       }),
-      next: t('my_stack_tracking_with_amount_next', {
-        defaultValue: 'Als Nächstes: Rhythmus, Tageszeit und Menge festlegen.',
-      }),
       Icon: Gauge,
     },
     complete: {
-      title: t('my_stack_tracking_complete_title', { defaultValue: 'Mit Wirkstärke' }),
+      title: t('my_stack_tracking_complete_title', { defaultValue: 'Gründlich' }),
+      subtitle: t('my_stack_tracking_complete_subtitle', { defaultValue: 'Mit Wirkstärke' }),
       recorded: t('my_stack_tracking_complete_recorded', {
-        defaultValue: 'Erfasst Einnahme, Menge und die Produktstärke je Einheit.',
-      }),
-      omitted: t('my_stack_tracking_complete_omitted', {
-        defaultValue: 'PK benötigt ein verknüpftes Profil sowie vollständige Plan- und Einnahmedaten.',
+        defaultValue: 'Zusätzlich, wie viel Wirkstoff in einer Einheit steckt. Erst damit ist eine Blutspiegel-Kurve möglich.',
       }),
       example: t('my_stack_tracking_complete_example', {
-        defaultValue: 'Beispiel: „5.000 IU pro Kapsel, 1 Kapsel morgens“.',
-      }),
-      next: t('my_stack_tracking_complete_next', {
-        defaultValue: 'Als Nächstes: Inhaltsstoffe, Produktstärke und Einnahmeplan festlegen.',
+        defaultValue: 'Beispiel: „5.000 IU je Kapsel, 1 Kapsel morgens“.',
       }),
       Icon: ChartNoAxesCombined,
     },
@@ -114,17 +98,21 @@ export function TrackingLevelPicker({
                 className="mt-1 h-5 w-5 shrink-0 cursor-pointer accent-sky-400 focus-visible:outline-none"
               />
               <span className="min-w-0 flex-1">
+                {/* Das Adjektiv traegt den Blick, die Bezeichnung den Sinn.
+                    „Einfach“ allein sagt nicht, was erfasst wird — und genau
+                    das muss wissen, wer hier sein Datenmodell waehlt. */}
                 <span className="flex min-w-0 items-center gap-2 font-semibold text-white">
                   <Icon aria-hidden="true" size={19} className="shrink-0 text-sky-300" />
-                  <span className="min-w-0 break-words">{item.title}</span>
+                  <span data-tracking-card="title" className="min-w-0 break-words">{item.title}</span>
+                </span>
+                <span data-tracking-card="subtitle" className="mt-0.5 block text-[12px] font-medium uppercase tracking-wide text-slate-400">
+                  {item.subtitle}
                 </span>
                 <span className="mt-1.5 block space-y-1 text-[13px] leading-snug text-slate-300">
                   <span data-tracking-card="recorded" className="block">{item.recorded}</span>
-                  <span data-tracking-card="omitted" className="block text-slate-400">{item.omitted}</span>
                   <span data-tracking-card="example" className="block text-slate-400">{item.example}</span>
-                  <span data-tracking-card="next" className="block text-slate-300">{item.next}</span>
                   {level === 'complete' && (
-                    <span data-tracking-card="pk" className="block text-sky-200">
+                    <span data-tracking-card="pk" className="block text-[color:var(--accent)]">
                       {pkProfileAvailable
                         ? t('my_stack_tracking_pk_available', {
                             defaultValue: 'Für {{substanceName}} ist ein PK-Profil verfügbar. Eine Kurve erscheint nur bei vollständigen Pflichtangaben.',
@@ -143,10 +131,14 @@ export function TrackingLevelPicker({
         })}
       </div>
 
-      {/* Einmal unter der Gruppe statt dreimal in den Karten: der Satz gilt
-          fuer die Wahl, nicht fuer eine einzelne Stufe. Dreimal derselbe Satz
-          verlaengert nur die Strecke bis zur Entscheidung. */}
+      {/* Beide Saetze einmal unter der Gruppe statt dreimal in den Karten:
+          sie gelten der Wahl, nicht einer einzelnen Stufe. Dreimal derselbe
+          Satz verlaengert nur die Strecke bis zur Entscheidung. */}
       <p className="mt-3 text-xs text-slate-500">
+        {t('my_stack_tracking_promise', {
+          defaultValue: 'Was eine Stufe nicht erfasst, fragt die App auch später nicht ab.',
+        })}
+        {' '}
         {t('my_stack_tracking_change_later', {
           defaultValue: 'Du kannst diese Auswahl später jederzeit ändern.',
         })}

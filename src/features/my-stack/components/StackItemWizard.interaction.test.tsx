@@ -571,7 +571,7 @@ describe('StackItemWizard interactions', () => {
   fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
   continueWizard()
 
-    expect(screen.getByText('my_stack_tracking_intake_only_title')).toBeTruthy()
+    expect(screen.getByText('my_stack_tracking_intake_only_subtitle')).toBeTruthy()
     expect(screen.getByText('my_stack_quantity_not_tracked')).toBeTruthy()
     expect(screen.getByText('dosage_form_capsule')).toBeTruthy()
     expect(screen.getByText('Täglich')).toBeTruthy()
@@ -620,7 +620,7 @@ describe('StackItemWizard interactions', () => {
     renderWizard({ existingItem: existingVitaminD })
     reachExistingReview()
 
-    expect(screen.getByText('my_stack_tracking_complete_title')).toBeTruthy()
+    expect(screen.getByText('my_stack_tracking_complete_subtitle')).toBeTruthy()
     expect(screen.getByText('Täglich')).toBeTruthy()
     expect(screen.getByText('my_stack_routine_morning')).toBeTruthy()
     expect(screen.getByText('my_stack_no_exact_time')).toBeTruthy()

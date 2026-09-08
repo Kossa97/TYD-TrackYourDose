@@ -567,11 +567,14 @@ export function StackItemWizard({
                 <div className="flex flex-wrap justify-between gap-2">
                   <dt className="text-slate-400">{t('my_stack_tracking_level', { defaultValue: 'Tracking-Tiefe' })}</dt>
                   <dd className="font-medium text-slate-200">
+                    {/* Die Bezeichnung, nicht das Adjektiv: „Gründlich“ allein
+                        sagt in einer Zusammenfassung nichts darüber, was
+                        gespeichert wurde. */}
                     {state.draft.trackingLevel === 'intake_only'
-                      ? t('my_stack_tracking_intake_only_title', { defaultValue: 'Nur Einnahme' })
+                      ? t('my_stack_tracking_intake_only_subtitle', { defaultValue: 'Nur Einnahme' })
                       : state.draft.trackingLevel === 'with_amount'
-                        ? t('my_stack_tracking_with_amount_title', { defaultValue: 'Mit Menge' })
-                        : t('my_stack_tracking_complete_title', { defaultValue: 'Mit Wirkstärke' })}
+                        ? t('my_stack_tracking_with_amount_subtitle', { defaultValue: 'Mit Menge' })
+                        : t('my_stack_tracking_complete_subtitle', { defaultValue: 'Mit Wirkstärke' })}
                   </dd>
                 </div>
                 <div className="flex flex-wrap justify-between gap-2">

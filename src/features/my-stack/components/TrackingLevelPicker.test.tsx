@@ -53,19 +53,20 @@ describe('TrackingLevelPicker', () => {
       // was nicht noetig ist, ein Beispiel und der naechste Schritt. Der
       // Wortlaut gehoert in die Sprachdateien und darf sich aendern, ohne
       // dass dieser Test bricht.
-      for (const zeile of ['recorded', 'omitted', 'example', 'next']) {
+      for (const zeile of ['title', 'subtitle', 'recorded', 'example']) {
         const feld = card.querySelector(`[data-tracking-card="${zeile}"]`)
         expect(feld, zeile).not.toBeNull()
         expect(feld!.textContent?.trim(), zeile).not.toBe('')
       }
-      // Der Hinweis auf die spaetere Aenderbarkeit steht NICHT in jeder Karte:
-      // er gilt der Wahl, nicht einer Stufe. Dreimal derselbe Satz verlaengert
-      // nur die Strecke bis zur Entscheidung.
+      // Weder das Versprechen noch der Hinweis auf die spaetere Aenderbarkeit
+      // steht in einer Karte: beide gelten der Wahl, nicht einer Stufe.
       expect(within(card).queryByText(/später jederzeit ändern/i)).toBeNull()
+      expect(within(card).queryByText(/fragt die App auch später nicht ab/i)).toBeNull()
     }
 
     // Einmal, unter der Gruppe.
     expect(screen.getAllByText(/später jederzeit ändern/i)).toHaveLength(1)
+    expect(screen.getAllByText(/fragt die App auch später nicht ab/i)).toHaveLength(1)
   })
 
   it('reports PK availability from the selected catalog entry without promising a curve', () => {
@@ -105,7 +106,7 @@ describe('TrackingLevelPicker', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('radio', { name: /^Mit Menge/ }))
+    fireEvent.click(screen.getByRole('radio', { name: /^Genau/ }))
     rerender(
       <TrackingLevelPicker
         value={selected}
@@ -115,6 +116,6 @@ describe('TrackingLevelPicker', () => {
       />,
     )
 
-    expect((screen.getByRole('radio', { name: /^Mit Menge/ }) as HTMLInputElement).checked).toBe(true)
+    expect((screen.getByRole('radio', { name: /^Genau/ }) as HTMLInputElement).checked).toBe(true)
   })
 })

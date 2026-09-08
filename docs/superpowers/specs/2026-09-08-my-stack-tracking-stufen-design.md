@@ -105,3 +105,58 @@ haben — das war schlicht falsch.
 
 1345 Tests grün, `tsc -p tsconfig.app.json` sauber, eslint unverändert bei 141
 Altbefunden (keine neuen).
+
+---
+
+## Nachtrag: Adjektive als Überschrift
+
+Die Bezeichnungen „Nur Einnahme / Mit Menge / Mit Wirkstärke" sind präzise, aber
+langsam zu lesen. Ein Adjektiv trägt den Blick schneller.
+
+**Einfach – Genau – Gründlich** (EN *Simple – Precise – Thorough*).
+
+Verworfen wurde *leicht – mittel – schwer*: „schwer" beschreibt die Last für den
+Nutzer, nicht den Gewinn. Wer wählt, wie viel vom eigenen Leben er protokolliert,
+liest bei „schwer" *das schaffst du wahrscheinlich nicht*. „mittel" sagt für sich
+genommen gar nichts. Ebenfalls verworfen: *grob – genau – exakt* („grob" wertet
+ab, genau/exakt sind nicht unterscheidbar) und *minimal – normal – maximal*
+(klingt nach Einstellungsmenü).
+
+Die drei gewählten Adjektive sind positiv oder neutral, bilden eine echte
+Steigerung und beschreiben die Qualität der Aufzeichnung, nicht den Aufwand.
+
+**Das Adjektiv ersetzt die Bezeichnung nicht, es steht darüber.** „Einfach"
+allein sagt nicht, was erfasst wird — und genau das muss wissen, wer hier sein
+Datenmodell wählt. In der Zusammenfassung steht umgekehrt die Bezeichnung, nicht
+das Adjektiv: „Gründlich" sagt dort nichts darüber, was gespeichert wurde.
+
+### Der Text der Karten
+
+Jede Karte sagt jetzt, was sie zur vorherigen **hinzufügt**, und wozu das gut
+ist — das beantwortet die eigentliche Frage: *warum sollte ich tiefer gehen?*
+
+- Einfach: „Du hakst ab, dass du X genommen hast. Mehr wird nicht gefragt."
+- Genau: „Zusätzlich, wie viel du genommen hast. Damit lässt sich der Verlauf
+  deiner Dosis auswerten."
+- Gründlich: „Zusätzlich, wie viel Wirkstoff in einer Einheit steckt. Erst damit
+  ist eine Blutspiegel-Kurve möglich."
+
+Zwei Zeilen pro Karte sind dafür entfallen:
+
+- **„Nicht erforderlich: …"** wandert als ein Satz unter die Gruppe („Was eine
+  Stufe nicht erfasst, fragt die App auch später nicht ab."). Er gilt der Wahl,
+  nicht einer Stufe — dasselbe Argument wie bei „später jederzeit ändern".
+- **„Als Nächstes: …"** entfällt. Ein Versprechen über den nächsten Bildschirm,
+  einen Klick bevor man ihn sieht.
+
+Sechs Zeilen pro Karte sind vier geworden.
+
+### Zwei Farben theme-fest gemacht
+
+Die Unterzeile stand zuerst auf `text-sky-300/70` und war im hellen Theme
+ausgewaschen; sie steht jetzt auf `text-slate-400` — leise, weil sie das
+Adjektiv erklärt und nicht mit ihm konkurriert.
+
+Der PK-Hinweis stand auf festem `text-sky-200` und war im hellen Theme kaum zu
+lesen. Das war schon vorher so; er steht jetzt auf `var(--accent)`, der
+Akzentfarbe der App, die beide Themes kennt. In beiden Themes gegengeprüft.
