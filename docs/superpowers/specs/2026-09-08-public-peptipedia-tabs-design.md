@@ -1,7 +1,7 @@
 # Öffentliche Peptipedia mit horizontaler Tab-Navigation
 
 **Datum:** 2026-09-08  
-**Status:** Zur Nutzerprüfung  
+**Status:** Freigegeben
 **Ausgangslage:** Die bestehende Peptipedia ist visuell bereits hochwertig, liegt aber innerhalb des geschützten App-Bereichs und bezieht ihre Inhalte aus Supabase. Die Detailseite zeigt alle Themen untereinander und wiederholt einzelne Informationen.
 
 ## Ziel
@@ -83,6 +83,7 @@ Der aktive Tab wird als URL-Fragment abgebildet, zum Beispiel `/peptipedia/bpc-1
 - untersuchte Forschungsbereiche
 - Zulassungsstatus
 - Evidenzübersicht für Human-, Tier- und klinische Daten
+- quellengebundene Angaben zu untersuchten Applikationswegen und Pharmakokinetik, sofern belastbar verfügbar
 
 #### Wirkung
 
@@ -137,6 +138,7 @@ Jedes Peptid erhält einen eigenständigen, strukturierten Inhaltseintrag pro Sp
 - Forschungs- und Zulassungsstatus
 - Evidenzstufen und Begründung
 - Mechanismus und Forschungsbereiche
+- quellengebundene Überblicksfakten, darunter vorhandene Angaben zu Applikationswegen und Halbwertszeit beziehungsweise Pharmakokinetik
 - Forschungslücken
 - Sicherheitsinformationen
 - strukturierte Studienprotokolle
