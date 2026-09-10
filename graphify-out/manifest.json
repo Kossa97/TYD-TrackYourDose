@@ -2802,9 +2802,9 @@
     "semantic_hash": "b7f063a4a0fe1a979bc182754c37579a"
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
-    "mtime": 1789063574.7991102,
-    "seen": 1789063694.8674037,
-    "ast_hash": "36f035bad23af345aa3b3cd964a031d1",
+    "mtime": 1789065618.4674084,
+    "seen": 1789065842.1259525,
+    "ast_hash": "b2ffb80088cc34602dd6272c9e3da073",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/IngredientEditor.tsx": {
@@ -3324,9 +3324,9 @@
     "semantic_hash": "b3de680e5c6ffddd4dd0573b6796cea4"
   },
   "src/features/my-stack/components/DosageFormPicker.test.tsx": {
-    "mtime": 1789063574.7991102,
-    "seen": 1789063694.8674026,
-    "ast_hash": "c8768517aa4cc798a07155014749bddf",
+    "mtime": 1789065618.4676256,
+    "seen": 1789065842.125951,
+    "ast_hash": "4e1e6716fa9f9895b76208f1f0b00718",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.test.tsx": {
@@ -4032,9 +4032,15 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-10-my-stack-karussell-auswahl-design.md": {
-    "mtime": 1789063622.9345396,
-    "seen": 1789063694.8679645,
-    "ast_hash": "0ebe576e759bf70b5b0419f760ae9498",
+    "mtime": 1789065819.765008,
+    "seen": 1789065842.1264248,
+    "ast_hash": "ce550f798f3cc80c78148bedf87e967c",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/lib/buehnenSkala.ts": {
+    "mtime": 1789065606.1964324,
+    "seen": 1789065842.1260643,
+    "ast_hash": "5be69529c1595969adaa51b23af0feb8",
     "semantic_hash": ""
   }
 }
