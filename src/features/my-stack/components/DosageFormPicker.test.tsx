@@ -27,11 +27,24 @@ beforeEach(() => {
 })
 
 // Setzt die Geometrie, die messen() abfragt. jsdom layoutet nicht wirklich —
-// offsetLeft/offsetWidth/clientWidth sind sonst immer 0, und jedes Objekt
-// waere gleich weit von der Mitte entfernt.
-function platziere(el: Element, offsetLeft: number, offsetWidth: number): void {
-  Object.defineProperty(el, 'offsetLeft', { value: offsetLeft, configurable: true })
-  Object.defineProperty(el, 'offsetWidth', { value: offsetWidth, configurable: true })
+// getBoundingClientRect liefert sonst ueberall Nullen, und jedes Objekt waere
+// gleich weit von der Mitte entfernt. Gemessen wird in Bildschirmkoordinaten,
+// weil `offsetLeft` vom offsetParent zaehlt und damit von einer CSS-Regel
+// woanders abhaengt: genau daran ging die Auswahl im echten Browser um 29 px
+// daneben. Der Scrollstand steckt hier schon in den Koordinaten — ein Wischen
+// verschiebt die Objekte, es gibt nichts extra zu setzen.
+function platziere(el: Element, left: number, breite: number): void {
+  el.getBoundingClientRect = () => ({
+    left,
+    width: breite,
+    right: left + breite,
+    top: 0,
+    bottom: 0,
+    height: 0,
+    x: left,
+    y: 0,
+    toJSON: () => ({}),
+  }) as DOMRect
 }
 
 function renderAll(props: Partial<Parameters<typeof DosageFormPicker>[0]> = {}) {
@@ -82,8 +95,9 @@ describe('DosageFormPicker', () => {
     expect(dose.querySelector('[aria-hidden="true"]')).not.toBeNull()
   })
 
-  it('reicht die Eintragsfarbe an die Objekte durch', () => {
-    renderAll({ colorHex: '#f97316' })
+  it('reicht die Eintragsfarbe an die gewaehlte Form durch', () => {
+    // Nur an sie: die Farbe ist hier das Zeichen fuer „das ist gewaehlt".
+    renderAll({ colorHex: '#f97316', value: 'powder' })
 
     const deckel = kachel('dosage_form_powder').querySelector('[data-powder-detail="lid"]')
     expect(deckel?.getAttribute('fill')).toBe('#f97316')
@@ -91,7 +105,7 @@ describe('DosageFormPicker', () => {
 
   it('laesst halb getippte Farben stehen, statt durch Schwarz zu flackern', () => {
     // Im Farbfeld steht waehrend des Tippens jeder Zwischenstand.
-    renderAll({ colorHex: '#f9' })
+    renderAll({ colorHex: '#f9', value: 'powder' })
 
     const deckel = kachel('dosage_form_powder').querySelector('[data-powder-detail="lid"]')
     expect(deckel?.getAttribute('fill')).not.toBe('#f9')
@@ -106,7 +120,7 @@ describe('DosageFormPicker', () => {
       />,
     )
 
-    const empfohlen = screen.getByRole('group', { name: 'Häufige Darreichungsformen' })
+    const empfohlen = screen.getByRole('group', { name: 'Für diese Substanz' })
     expect(within(empfohlen).getAllByRole('button')).toHaveLength(3)
     for (const key of ['dosage_form_ampoule', 'dosage_form_vial', 'dosage_form_gel']) {
       expect(within(empfohlen).getByRole('button', { name: key })).toBeTruthy()
@@ -136,6 +150,68 @@ describe('DosageFormPicker', () => {
       <DosageFormPicker value="powder" suggestedForms={[]} onSelect={() => undefined} />,
     )
     expect(document.querySelector('[data-dosage-form-selected]')?.textContent).toBe('dosage_form_powder')
+  })
+
+  it('markiert genau ein Objekt als gewaehlt, obwohl beide Reihen etwas zentrieren', () => {
+    // Der Befund aus dem Formular: unter der Ueberschrift stand „Vial",
+    // waehrend in der oberen Reihe genauso hell eine Kapsel zentriert war.
+    // Zwei Karussells haben zwei Mitten, aber nur eine Auswahl — und die
+    // muss man sehen koennen, egal in welcher Reihe sie liegt.
+    render(
+      <DosageFormPicker value="vial" suggestedForms={['capsule']} onSelect={() => undefined} />,
+    )
+
+    const markiert = document.querySelectorAll('[data-dosage-active]')
+    expect(markiert).toHaveLength(1)
+    expect(markiert[0].getAttribute('aria-label')).toBe('dosage_form_vial')
+    // Und die Kapsel oben, die zentriert steht, gehoert nicht dazu.
+    expect(kachel('dosage_form_capsule').hasAttribute('data-dosage-active')).toBe(false)
+  })
+
+  it('faerbt nur die gewaehlte Form, nicht die ganze Reihe', () => {
+    // Faerbte die Eintragsfarbe alle Objekte, waere sie kein Zeichen mehr,
+    // sondern Hintergrund — und die Gewaehlte bliebe wieder unkenntlich.
+    const deckel = () => document
+      .querySelector('[data-dosage-form-preview="powder"] [data-powder-detail="lid"]')
+      ?.getAttribute('fill')
+
+    const { rerender } = render(
+      <DosageFormPicker
+        value="powder"
+        colorHex="#ff0000"
+        suggestedForms={['powder']}
+        onSelect={() => undefined}
+      />,
+    )
+    const gewaehlt = deckel()
+
+    rerender(
+      <DosageFormPicker
+        value={null}
+        colorHex="#ff0000"
+        suggestedForms={['powder']}
+        onSelect={() => undefined}
+      />,
+    )
+
+    expect(gewaehlt).toBeTruthy()
+    expect(deckel()).not.toBe(gewaehlt)
+  })
+
+  it('nennt die obere Reihe nach dem Katalog, wenn er etwas vorschlaegt', () => {
+    // Vitamin D3 schlaegt nur die Kapsel vor. „Haeufige Darreichungsformen"
+    // war dort eine falsche Aussage: Vial, Tablette und Tropfen sind haeufig,
+    // standen aber unten in der zweiten Reihe.
+    const { rerender } = render(
+      <DosageFormPicker value={null} suggestedForms={['capsule']} onSelect={() => undefined} />,
+    )
+    expect(screen.getByRole('group', { name: 'Für diese Substanz' })).toBeTruthy()
+    expect(screen.queryByRole('group', { name: 'Häufige Darreichungsformen' })).toBeNull()
+
+    rerender(
+      <DosageFormPicker value={null} suggestedForms={[]} onSelect={() => undefined} />,
+    )
+    expect(screen.getByRole('group', { name: 'Häufige Darreichungsformen' })).toBeTruthy()
   })
 
   it('nimmt die neutralen haeufigen Formen, wenn der Katalog nichts vorschlaegt', () => {
@@ -178,8 +254,8 @@ describe('DosageFormPicker', () => {
       <DosageFormPicker value={null} suggestedForms={['ampoule', 'vial', 'gel']} onSelect={onSelect} />,
     )
 
-    const gruppe = screen.getByRole('group', { name: 'Häufige Darreichungsformen' })
-    Object.defineProperty(gruppe, 'clientWidth', { value: 300, configurable: true })
+    const gruppe = screen.getByRole('group', { name: 'Für diese Substanz' })
+    platziere(gruppe, 0, 300)
     platziere(within(gruppe).getByRole('button', { name: 'dosage_form_ampoule' }), 0, 100)
     platziere(within(gruppe).getByRole('button', { name: 'dosage_form_vial' }), 110, 100)
     platziere(within(gruppe).getByRole('button', { name: 'dosage_form_gel' }), 220, 100)
@@ -202,16 +278,14 @@ describe('DosageFormPicker', () => {
       <DosageFormPicker value={null} suggestedForms={['ampoule', 'vial', 'gel']} onSelect={onSelect} />,
     )
 
-    const gruppe = screen.getByRole('group', { name: 'Häufige Darreichungsformen' })
-    Object.defineProperty(gruppe, 'clientWidth', { value: 300, configurable: true })
-    Object.defineProperty(gruppe, 'scrollLeft', { value: 0, writable: true, configurable: true })
+    const gruppe = screen.getByRole('group', { name: 'Für diese Substanz' })
+    platziere(gruppe, 0, 300)
     platziere(within(gruppe).getByRole('button', { name: 'dosage_form_ampoule' }), 0, 100)
     platziere(within(gruppe).getByRole('button', { name: 'dosage_form_vial' }), 110, 100)
     platziere(within(gruppe).getByRole('button', { name: 'dosage_form_gel' }), 220, 100)
 
-    // Nach rechts wischen, bis "vial" (Zentrum 160) in der Mitte (ebenfalls
-    // 160, bei 300 px Breite) steht.
-    gruppe.scrollLeft = 10
+    // Gewischt ist, was oben steht: "vial" (Zentrum 160) liegt der Mitte
+    // (150 bei 300 px Breite) am naechsten. Das Scroll-Event meldet es.
     fireEvent.scroll(gruppe)
     await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1))
     expect(onSelect).toHaveBeenCalledWith('vial')
@@ -231,19 +305,19 @@ describe('DosageFormPicker', () => {
       <DosageFormPicker value={null} suggestedForms={['ampoule', 'vial', 'gel']} onSelect={() => undefined} />,
     )
 
-    const gruppe = screen.getByRole('group', { name: 'Häufige Darreichungsformen' })
-    Object.defineProperty(gruppe, 'clientWidth', { value: 300, configurable: true })
-    Object.defineProperty(gruppe, 'scrollLeft', { value: 0, writable: true, configurable: true })
+    const gruppe = screen.getByRole('group', { name: 'Für diese Substanz' })
+    platziere(gruppe, 0, 300)
     const ampoule = within(gruppe).getByRole('button', { name: 'dosage_form_ampoule' })
     const vial = within(gruppe).getByRole('button', { name: 'dosage_form_vial' })
-    platziere(ampoule, 0, 100)
-    platziere(vial, 110, 100)
-    platziere(within(gruppe).getByRole('button', { name: 'dosage_form_gel' }), 220, 100)
+    // So weit gewischt, dass "vial" (Zentrum 150) exakt in der Mitte des
+    // 300 px breiten Karussells steht; "ampoule" ist dann 110 px entfernt.
+    platziere(ampoule, -10, 100)
+    platziere(vial, 100, 100)
+    platziere(within(gruppe).getByRole('button', { name: 'dosage_form_gel' }), 210, 100)
 
     // Das Leuchten ist der erste <span> unter dem Standplatz-<span>.
     const leuchtstaerke = (knopf: HTMLElement) => Number((knopf.querySelector('span > span') as HTMLElement).style.opacity)
 
-    gruppe.scrollLeft = 10 // "vial" (Zentrum 160) steht jetzt in der Mitte (160).
     fireEvent.scroll(gruppe)
     // Der Fokuswert ist ein separater React-State-Update aus einer
     // rAF-Warteschlange — nicht dieselbe Warteschlange wie das synchrone

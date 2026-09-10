@@ -35,20 +35,24 @@ const KARUSSELL_HOEHE = 'h-[27dvh] min-h-[190px] sm:h-[240px]'
 // Die Kanten laufen weich aus. Ohne Scrollbalken ist das der einzige
 // Hinweis, dass die Reihe weitergeht — ein hart abgeschnittenes Objekt am
 // Rand liest sich als Fehler, ein ausblendendes als Fortsetzung.
-// px-[15%]: Scroll-Padding, damit auch das erste und letzte Objekt bis in
-// die Mitte wischen koennen — bei einem Standplatz von 70% Breite ist das
-// genau der Rest, der links und rechts von ihm noch Platz hat. Die Blende
-// faellt jetzt ueber nur 12px statt 24px ab, sonst frisst sie den schmalen
+// Der Rand, damit auch das erste und letzte Objekt bis in die Mitte wischen
+// koennen, haengt als Margin an genau diesen beiden Kindern — nicht als
+// Padding am Karussell. Als Padding bezog sich die Standplatzbreite auf die
+// content-box, also auf die um das Padding verkuerzte Breite: der Standplatz
+// war schmaler als angeschrieben und seine Mitte lag neben der sichtbaren
+// Mitte (gemessen bei 430 px: 10 px daneben). Als Margin bezieht sich `w-`
+// auf die volle Karussellbreite: 25% + 25% trifft die Mitte exakt, und bei
+// nur einem einzigen Objekt (Katalogvorschlag) ergeben beide Margins
+// zusammen mit ihm genau 100%.
+// Die Blende faellt ueber 12px statt 24px ab, sonst frisst sie den schmalen
 // Streifen, in dem der Nachbar zu sehen sein soll, gleich wieder auf.
-const REIHE = 'flex snap-x snap-mandatory gap-1 overflow-x-auto px-[15%] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]'
+const REIHE = 'flex snap-x snap-mandatory gap-1 overflow-x-auto [&>*:first-child]:ml-[25%] [&>*:last-child]:mr-[25%] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]'
 
-// Der Standplatz nimmt fast die ganze Karussellbreite — nur ein schmaler
-// Streifen der Nachbarn schaut links und rechts noch herein, wie bei einem
-// Bilderkarussell. Vorher richtete sich die Breite nach dem Objekt selbst
-// (ein Patch war 190 px, eine Ampulle 49 px) und mehrere Formen standen
-// gleichzeitig nebeneinander — die Mitte war nicht klar erkennbar. Jetzt ist
-// die Breite fix, das Objekt bleibt darin zentriert und behaelt sein eigenes
-// Groessenverhaeltnis.
+// Der Standplatz hat eine feste Breite, unabhaengig vom Objekt darin. Vorher
+// richtete sie sich nach dem Objekt selbst (ein Patch war 190 px, eine
+// Ampulle 49 px), und mehrere Formen standen gleichzeitig gleich gross
+// nebeneinander — welche in der Mitte stand, war nicht zu erkennen. Das
+// Objekt bleibt im Standplatz zentriert und behaelt sein Groessenverhaeltnis.
 const STANDPLATZ = 'relative flex h-full w-full items-end justify-center px-2'
 
 // Falloff wie im Vial-Karussell: direkt neben der Mitte noch gut sichtbar,
@@ -69,7 +73,12 @@ export function DosageFormPicker({
 }: DosageFormPickerProps) {
   const { t } = useTranslation()
   const suggestedKeys = Array.from(new Set(suggestedForms))
-  const primaryKeys = suggestedKeys.length > 0 ? suggestedKeys : COMMON_DOSAGE_FORMS
+  // Schlaegt der Katalog etwas vor, steht in der oberen Reihe nicht mehr, was
+  // haeufig ist, sondern was zu dieser Substanz passt — bei Vitamin D3 genau
+  // eine Kapsel. Unter „Haeufige Darreichungsformen" war das eine falsche
+  // Aussage: Vial, Tablette und Tropfen sind haeufig, standen aber unten.
+  const ausKatalog = suggestedKeys.length > 0
+  const primaryKeys = ausKatalog ? suggestedKeys : COMMON_DOSAGE_FORMS
   const primaryForms = primaryKeys
     .map(key => DOSAGE_FORMS.find(form => form.key === key))
     .filter((form): form is DosageFormDefinition => form !== undefined)
@@ -106,8 +115,19 @@ export function DosageFormPicker({
   ): void {
     if (!karussell) return
 
-    const mitte = karussell.scrollLeft + karussell.clientWidth / 2
-    const spanne = Math.max(1, karussell.clientWidth * 0.48)
+    // Gemessen wird in Bildschirmkoordinaten, nicht ueber `offsetLeft`.
+    // `offsetLeft` zaehlt vom offsetParent, und das ist das naechste
+    // positionierte Element — das Karussell selbst ist keines. Gemessen bei
+    // 430 px Fensterbreite kam dadurch auf jedes Objekt derselbe Zuschlag von
+    // 29 px, waehrend die Mitte aus `scrollLeft + clientWidth / 2` ohne ihn
+    // gerechnet wurde: der Nullpunkt sass um 29 px daneben. Beim Wischen galt
+    // deshalb der Nachbar als zentriert und wurde gewaehlt, obwohl mittig
+    // etwas anderes stand. `getBoundingClientRect` hat keinen Bezugspunkt, den
+    // eine CSS-Aenderung woanders still verschieben kann, und enthaelt den
+    // Scrollstand bereits.
+    const rahmen = karussell.getBoundingClientRect()
+    const mitte = rahmen.left + rahmen.width / 2
+    const spanne = Math.max(1, rahmen.width * 0.48)
 
     let naechster: DosageFormKey | null = null
     let naechsteDistanz = Number.POSITIVE_INFINITY
@@ -117,8 +137,8 @@ export function DosageFormPicker({
       const el = karussell.querySelector<HTMLElement>(`[data-dosage-key="${form.key}"]`)
       if (!el) continue
 
-      const elMitte = el.offsetLeft + el.offsetWidth / 2
-      const distanz = elMitte - mitte
+      const elRahmen = el.getBoundingClientRect()
+      const distanz = elRahmen.left + elRahmen.width / 2 - mitte
       helligkeiten[form.key] = fokusAusAbstand(distanz / spanne)
 
       if (Math.abs(distanz) < naechsteDistanz) {
@@ -166,6 +186,13 @@ export function DosageFormPicker({
         key={form.key}
         ref={selected ? gewaehltRef : undefined}
         data-dosage-key={form.key}
+        // Genau ein Objekt im ganzen Feld traegt diese Marke. Zwei Karussells
+        // heissen zwei Mitten: in beiden Reihen steht gleichzeitig etwas
+        // zentriert und hell, aber nur eines davon ist wirklich gewaehlt.
+        // Vorher sah man den Unterschied nicht — der Name unter der
+        // Ueberschrift sagte „Vial", waehrend oben genauso hell eine Kapsel
+        // stand.
+        data-dosage-active={selected || undefined}
         type="button"
         aria-pressed={selected}
         // Ohne Aufschrift unter dem Objekt braucht der Knopf seinen Namen hier.
@@ -174,26 +201,44 @@ export function DosageFormPicker({
         // min-h-11: die 44-px-Regel fuer Tippziele. Der Standplatz ist mit
         // dem Karussell ohnehin hoeher, aber der Vertrag steht am Knopf, nicht
         // am Inhalt — sonst faellt er beim naechsten Umbau still weg.
-        // w-[70%]: fast die ganze Karussellbreite fuer den einen Standplatz,
-        // damit links und rechts ein Streifen der Nachbarn hereinschaut,
-        // statt mehrerer Formen gleichzeitig in voller Groesse.
-        className="flex h-full min-h-11 w-[70%] shrink-0 cursor-pointer snap-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+        // w-[50%]: der Standplatz nimmt die halbe Karussellbreite, links und
+        // rechts bleiben je 25% fuer die angeschnittenen Nachbarn. Mit 70%
+        // stand die Mitte zwar allein da, aber die Nachbarobjekte lagen
+        // mittig in ihrem eigenen, dann sehr breiten Standplatz — und damit
+        // komplett ausserhalb des schmalen Streifens, der von ihnen zu sehen
+        // war. Gemessen bei 430 px: 186 px Standplatz, 93 px je Rand.
+        className="flex h-full min-h-11 w-[50%] shrink-0 cursor-pointer snap-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
       >
         <span className={STANDPLATZ} aria-hidden="true">
-          {/* Das Licht der Auswahl liegt UNTER dem Objekt, wie ein Spot auf der
-              Buehne. Ein Rahmen darum wuerde die Reihe wieder in Kacheln
-              zerlegen. */}
+          {/* Das Licht liegt UNTER dem Objekt, wie ein Spot auf der Buehne.
+              Ein Rahmen darum wuerde die Reihe wieder in Kacheln zerlegen.
+              Zwei Staerken, weil das Licht zwei verschiedene Dinge sagen
+              muss: farbig und kraeftig steht ueber der wirklich gewaehlten
+              Form, farblos und schwach nur unter dem, was gerade zentriert
+              ist. Beide zusammen in Blau hiessen „zweimal gewaehlt". */}
           <span
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-3/4 rounded-full bg-[radial-gradient(62%_60%_at_50%_78%,rgba(56,189,248,0.26),transparent_70%)]"
+            className={`pointer-events-none absolute inset-x-0 bottom-0 h-3/4 rounded-full ${
+              selected
+                ? 'bg-[radial-gradient(62%_60%_at_50%_78%,rgba(56,189,248,0.42),transparent_70%)]'
+                : 'bg-[radial-gradient(62%_60%_at_50%_78%,rgba(255,255,255,0.10),transparent_70%)]'
+            }`}
             style={{ opacity: leuchtstaerke }}
           />
           {isStageRenderable(form.key) ? (
             <DosageFormPreview
               dosageForm={form.key}
-              colorHex={colorHex}
+              // Die Eintragsfarbe traegt nur die gewaehlte Form. Faerbte sie
+              // alle, waere sie kein Zeichen mehr, sondern Hintergrund.
+              colorHex={selected ? colorHex : null}
               size="carousel"
               showLabel={false}
               focus={fokus}
+              // Etwas groesser, aber vom Boden aus: die Objekte stehen auf
+              // einer gemeinsamen Linie, ein zentriertes Skalieren wuerde die
+              // Gewaehlte darueber schweben lassen.
+              className={`origin-bottom transition-transform duration-200 motion-reduce:transition-none ${
+                selected ? 'scale-[1.08]' : 'scale-100'
+              }`}
             />
           ) : (
             <span className={`relative pb-8 ${selected ? 'text-sky-300' : 'text-slate-500'}`}>
@@ -235,7 +280,9 @@ export function DosageFormPicker({
       <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.025] px-3 py-4 sm:px-4">
         <div>
           <p id="stack-dosage-primary-label" className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-            {t('my_stack_common_dosage_forms', { defaultValue: 'Häufige Darreichungsformen' })}
+            {ausKatalog
+              ? t('my_stack_suggested_dosage_forms', { defaultValue: 'Für diese Substanz' })
+              : t('my_stack_common_dosage_forms', { defaultValue: 'Häufige Darreichungsformen' })}
           </p>
           <div
             ref={primaryRef}

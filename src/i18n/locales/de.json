@@ -1066,6 +1066,7 @@
   "my_stack_dosage_form": "Darreichungsform",
   "my_stack_dosage_form_required": "Bitte wähle eine Darreichungsform.",
   "my_stack_common_dosage_forms": "Häufige Darreichungsformen",
+  "my_stack_suggested_dosage_forms": "Für diese Substanz",
   "my_stack_current_dosage_form": "Aktuell ausgewählt",
   "my_stack_show_more_dosage_forms": "Weitere Darreichungsformen anzeigen",
   "my_stack_hide_more_dosage_forms": "Weitere Darreichungsformen ausblenden",
