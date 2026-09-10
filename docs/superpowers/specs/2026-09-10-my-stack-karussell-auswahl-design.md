@@ -82,3 +82,69 @@ Eigenschaft, die den Fehler verursacht hat.
 
 1356 Tests insgesamt grün, `tsc` sauber, eslint unverändert bei 140
 Altbefunden.
+
+---
+
+## Nachtrag am selben Tag: Bühne, Größe, Maus
+
+Aus dem laufenden Formular kamen fünf weitere Punkte.
+
+### Das Licht ist wieder Licht, die Farbe ist das Zeichen
+
+Der blaue Spot unter der gewählten Form war ein zweites Signal für dieselbe
+Aussage. Jetzt liegt unter jedem Objekt dasselbe gewöhnliche Bühnenlicht
+(weiß, `0.16`), und es sagt nur noch, was in der Mitte steht. Was gewählt
+ist, sagt die Form selbst: sie trägt als Einzige Farbe — die eigene
+Eintragsfarbe, sobald es eine gibt, sonst das Cyanblau der App (`#00ccf5`).
+Auf dem Formschritt steht die eigene Farbe noch nicht fest, sie kommt erst
+im Schritt danach.
+
+### Kein Rahmen, mittige Überschriften, keine Trennlinie
+
+Die zwei Karussells sind nicht zwei Kacheln. Rahmen, Radius und der helle
+Kachelgrund sind weg, die Fläche ist durchgehend dunkel und reicht per
+`-mx-4` bis an den Rand des Dialogs — die angeschnittenen Nachbarn blenden
+dort aus, statt an einer Kante zu enden. Was die Reihen trennt, sind ihre
+Überschriften; die Linie dazwischen war eine zweite Antwort auf dieselbe
+Frage.
+
+### Die Höhe kommt vom Bildschirm, die Objektgröße von der Höhe
+
+`h-[27dvh]` war eine geratene Zahl: unten blieb Rand stehen, auf 390×844
+liefen 22 px über. Und größer wurden die Objekte davon ohnehin nicht — die
+Bühnenformen bringen feste Pixelgrößen mit. Jetzt teilen sich beide Reihen
+per `flex-1` den Platz, den der Schritt übrig hat, und `skalenMessen` bringt
+die Objekte auf die Höhe, die ihre Reihe tatsächlich hat. Gemessen: 719 von
+719 px bei 430×932, 631 von 631 px bei 390×844 — beide ohne Scrollen.
+
+Der Maßstab untereinander wird dabei gelockert, nicht aufgegeben
+(`buehnenSkala`, eigene Datei, weil dort die Entscheidung steckt): die
+Zielhöhe wächst mit der 0,35-ten Potenz des Größenverhältnisses. Der Pen
+bleibt sichtbar der größte, eine Kapsel daneben ist kein Krümel mehr. Die
+Breite begrenzt mit — eine liegende Kapsel ist 42 px hoch, aber 140 px
+breit, und lag nur nach der Höhe skaliert über ihrem Nachbarn.
+
+`offsetHeight` statt `getBoundingClientRect`, weil es die Transform-Skalierung
+ignoriert; sonst misst die zweite Messung die erste mit und die Objekte
+schaukeln sich auf. Ein `ResizeObserver` hält die Größen am Platz fest,
+statt sie einmal beim Start zu raten.
+
+### Mit der Maus ließ sich nicht wischen
+
+Am Handy wischt der Finger die Reihe nativ. Am Schreibtisch — und damit in
+jeder Vorschau — tat ein Klick-Zug auf `overflow-x-auto` nichts, und das
+Mausrad scrollt vertikal: das Karussell sah aus, als ließe es sich nicht
+bewegen. Ein Pointer-Zug (nur `pointerType === 'mouse'`, sonst liefe er
+gegen das native Scrollen) zieht die Reihe jetzt mit. Ab 4 px gilt es als
+Zug: der Zeiger wird eingefangen und der Klick beim Loslassen wählt nichts
+aus — wer gezogen hat, wollte wischen, nicht die Form unter dem Zeiger.
+
+### Verifikation des Nachtrags
+
+17 Tests in `DosageFormPicker.test.tsx`, darunter zwei neue auf
+`buehnenSkala`: die Reihenfolge der Größen bleibt und das größte schöpft die
+Reihe aus; die Breite begrenzt die Skalierung, schöpft ihren Standplatz aber
+aus. Im echten Chromium nachgemessen: kein Objekt überlappt seinen Nachbarn
+mehr, ein Mauszug bewegt `scrollLeft` von 0 auf 268.
+
+1358 Tests grün, `tsc` sauber, eslint unverändert bei 140 Altbefunden.

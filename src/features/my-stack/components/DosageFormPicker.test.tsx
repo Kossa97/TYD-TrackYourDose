@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DOSAGE_FORMS, isStageRenderable } from '../lib/dosageForms'
 import { DosageFormPicker } from './DosageFormPicker'
+import { buehnenSkala } from '../lib/buehnenSkala'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -150,6 +151,45 @@ describe('DosageFormPicker', () => {
       <DosageFormPicker value="powder" suggestedForms={[]} onSelect={() => undefined} />,
     )
     expect(document.querySelector('[data-dosage-form-selected]')?.textContent).toBe('dosage_form_powder')
+  })
+
+  it('hebt kleine Formen an, ohne dem Pen seinen Vorrang zu nehmen', () => {
+    // Gemessene native Groessen aus dem Karussell. Linear skaliert waere eine
+    // Kapsel neben einem Pen (42 zu 237 px) kaum zu erkennen; alle gleich
+    // gross zu machen naehme dem Pen die wahre Aussage, dass er das groessere
+    // Ding ist. Beides soll gelten.
+    const reihe = { groessteHoehe: 237, platzHoehe: 261, platzBreite: 199 }
+    const hoeheNach = (masse: { hoehe: number; breite: number }) =>
+      masse.hoehe * buehnenSkala({ ...masse, ...reihe })
+
+    const pen = hoeheNach({ hoehe: 237, breite: 60 })
+    const vial = hoeheNach({ hoehe: 191, breite: 105 })
+
+    // Die Reihenfolge bleibt: der Pen ist weiterhin das groessere Objekt.
+    expect(pen).toBeGreaterThan(vial)
+
+    // Das groesste schoepft die Reihe fast aus, ohne sie zu ueberschreiten.
+    expect(pen).toBeLessThanOrEqual(reihe.platzHoehe)
+    expect(pen).toBeGreaterThan(reihe.platzHoehe * 0.85)
+
+    // Und der Abstand zwischen beiden ist kleiner geworden: genau das meint
+    // „gelockert". Nativ steht das Vial bei 81% der Pen-Hoehe, danach naeher
+    // an ihm — aber nie darueber, sonst waere der Maßstab aufgegeben.
+    expect(vial / pen).toBeGreaterThan(191 / 237)
+    expect(vial / pen).toBeLessThan(1)
+  })
+
+  it('laesst die Breite die Skalierung begrenzen, damit nichts ueber den Nachbarn liegt', () => {
+    // Eine liegende Kapsel ist flach und breit. Nur nach der Hoehe skaliert
+    // waere sie dreimal so breit wie ihr Standplatz -- genau so lagen im
+    // Formular Tablette und Kapsel uebereinander.
+    const masse = { hoehe: 42, breite: 140, groessteHoehe: 237, platzHoehe: 261, platzBreite: 199 }
+    const breiteNach = masse.breite * buehnenSkala(masse)
+
+    expect(breiteNach).toBeLessThanOrEqual(masse.platzBreite)
+    // Sie schoepft ihn dabei aber aus — eine flache, breite Form waechst in
+    // die Richtung, die sie hat, statt klein zu bleiben.
+    expect(breiteNach).toBeGreaterThan(masse.breite)
   })
 
   it('markiert genau ein Objekt als gewaehlt, obwohl beide Reihen etwas zentrieren', () => {
