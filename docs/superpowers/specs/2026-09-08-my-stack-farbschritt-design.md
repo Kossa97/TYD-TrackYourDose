@@ -175,3 +175,65 @@ Im Chromium bei 390×844, sechs Formen nacheinander gemessen (Flaeche
 
 Jede Form schoepft ihre knappere Seite bis auf die Deckung aus
 (358×0.94≈336.5, 349.75×0.94≈328.7) — beide Werte treffen exakt zu.
+
+---
+
+## Nachtrag 2026-09-11, dritter Teil: `zoom` statt `transform`
+
+„Die Darreichungsformen verlieren an Qualität, zudem auch die Effekte,
+außerdem ist das Etikett nicht mehr so wie erstellt."
+
+### Woran das lag
+
+Der Nachtrag davor vergrößerte das Objekt mit `transform: scale(...)` — bis
+zu 4× je nach Form. Ein CSS-Transform skaliert aber nur das schon fertig
+gemalte Bild. Die Bühnenformen bringen feste Pixelwerte fuer alles mit, was
+nicht die reine Form ist: `backdrop-blur-[2px]` auf dem Glasetikett,
+`box-shadow` mit festen Offsets, Textgrößen wie `text-[10px]`. Bei einem
+großen Transform bleiben die auf ihrer ursprünglichen, kleinen Größe
+gerechnet und werden zusammen mit dem Rest hochskaliert — ein 2px-Weichzeichner
+wird zu einem unverhältnismäßig weichen, verwaschenen Rand, sobald das
+Objekt selbst viermal so groß im Bild steht. Genau das meldete der Nutzer:
+Qualität, Effekte und das Etikett sahen nicht mehr so aus, wie sie gebaut
+worden waren.
+
+### Die Behebung: `zoom` statt `transform`
+
+`zoom` ist kein reines Paint-Transform, sondern ändert die tatsächlichen
+Layout-Maße des Teilbaums — der Browser rechnet SVG, Schrift, Schatten und
+Weichzeichner beim neuen, größeren Wert neu. Ein "2px"-Weichzeichner bleibt
+dadurch proportional zur neuen Größe richtig, statt als eingefrorenes,
+hochskaliertes Pixelraster zu erscheinen. Fuer die Bühnenformen (SVG-Grafik,
+CSS-Schatten, `backdrop-filter`) ist das genau der Unterschied zwischen
+"aussehen wie gebaut" und "aussehen wie hochskaliert".
+
+### Was sich dadurch bei der Messung ändern musste
+
+Ein CSS-Transform ändert nie die Layout-Maße eines Elements — `offsetWidth`/
+`offsetHeight` ignorieren es, deshalb konnte die vorherige Messung ungestört
+auf dem schon skalierten Element weiterlaufen. `zoom` ändert diese Maße
+dagegen wirklich: misst man ein Element, dessen `zoom` noch auf dem letzten
+Wert steht, bekommt man die BEREITS vergrößerte Größe zurück — die nächste
+Berechnung würde darauf aufbauen und sich aufschaukeln (dieselbe Falle wie
+im Karussell, nur an einer neuen Stelle, weil `zoom` anders funktioniert als
+`transform`).
+
+Die Messfunktion setzt deshalb den Zoom-Wrapper vor jeder Messung explizit
+auf `1` zurück, bevor sie `offsetHeight`/`offsetWidth` liest — erst dann ist
+die native Größe wieder sichtbar. Der synchrone Lesezugriff auf
+`offsetHeight` erzwingt den nötigen Zwischenschritt (Reflow) von selbst, kein
+zusätzlicher Aufruf nötig.
+
+### Gegengeprüft
+
+1370 Tests grün, `tsc` sauber (die `zoom`-Eigenschaft ist in den
+TypeScript-Typen fuer `CSSProperties` bereits vorhanden), ESLint unverändert
+bei 140. Im Chromium bei dreifacher Geräte-Pixel-Dichte: Vial-Etikett und
+Tabletten-Schrift beide randscharf, kein Verwaschen mehr sichtbar. Eine
+Fensterverkleinerung und -vergrößerung nacheinander liefert exakt denselben
+Zoom-Wert wie zuvor (`3.42708` vor und nach dem Wechsel) — keine
+Selbstverstärkung durch die Rücksetzung vor jeder Messung.
+
+Browser-Unterstützung fuer `zoom`: seit Firefox 126 (Mai 2024) in allen
+gängigen Engines vorhanden — Chrome, Safari und Edge unterstützen es schon
+deutlich länger.

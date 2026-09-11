@@ -157,18 +157,34 @@ export function StackItemWizard({
   // Wie gross das Objekt auf dem Farbschritt steht: die Flaeche darueber ist
   // `flex-1` und je nach Bildschirm und Darreichungsform unterschiedlich
   // gross — eine feste Skala fuellte sie mal aus, mal liess sie halb leer.
+  //
+  // Vergroessert wird mit `zoom`, nicht mit einem CSS-Transform. Ein
+  // Transform skaliert nur das schon fertig gemalte Bild: die Buehnenformen
+  // haben feste Pixelwerte fuer Schatten, Kanten-Weichzeichner und das
+  // Glasetikett (`backdrop-blur`, `box-shadow`) — bei einem groesseren
+  // Transform (hier bis zu 4x) blieben die auf ihrer urspruenglichen, kleinen
+  // Groesse und wurden mit hochskaliert: weich, verwaschen, das Etikett nicht
+  // mehr das, was gebaut wurde. `zoom` aendert stattdessen die tatsaechlichen
+  // Layout-Masse — der Browser rechnet SVG, Schrift, Schatten und
+  // Weichzeichner beim neuen, groesseren Wert neu, genau wie beim „echten"
+  // Groesserwerden.
+  //
   // `farbschrittPlatzRef` misst die Flaeche, `farbschrittVorschauRef` das
-  // Objekt darin in seiner nativen (unskalierten) Groesse — `offsetHeight`/
-  // `offsetWidth` ignorieren die eigene Transform-Skala, sonst wuerde die
-  // naechste Messung die vorherige Skalierung mitmessen und sich aufschaukeln.
+  // Objekt darin. Anders als bei einem Transform aendert `zoom` aber genau
+  // die Masse, die `offsetHeight`/`offsetWidth` liefern — deshalb wird der
+  // Zoom vor jeder Messung erst auf 1 zurueckgesetzt, sonst maesse die
+  // naechste Messung die vorherige Vergroesserung mit und schaukelte sich
+  // auf (dieselbe Falle wie im Karussell, nur an einer anderen Stelle).
   const farbschrittPlatzRef = useRef<HTMLDivElement | null>(null)
   const farbschrittVorschauRef = useRef<HTMLSpanElement | null>(null)
   const [farbschrittSkala, setFarbschrittSkala] = useState(1)
 
   const farbschrittSkalaMessen = useCallback(() => {
     const platz = farbschrittPlatzRef.current
-    const objekt = farbschrittVorschauRef.current?.querySelector<HTMLElement>('[data-dosage-form-preview]')
-    if (!platz || !objekt) return
+    const wrapper = farbschrittVorschauRef.current
+    const objekt = wrapper?.querySelector<HTMLElement>('[data-dosage-form-preview]')
+    if (!platz || !wrapper || !objekt) return
+    wrapper.style.zoom = '1'
     setFarbschrittSkala(objektSkala({
       hoehe: objekt.offsetHeight,
       breite: objekt.offsetWidth,
@@ -845,6 +861,11 @@ export function StackItemWizard({
                zu verlieren (dieselbe Idee wie `object-fit: contain`). Eine
                liegende Kapsel wird dadurch breiter skaliert als ein Pen, weil
                bei ihr die Breite der Flaschenhals ist, nicht die Hoehe.
+               Angewendet ueber `zoom`, nicht `transform`: ein Transform
+               skaliert nur das fertige Bild und lies Schatten, Weichzeichner
+               und das Glasetikett verwaschen zurueck. `zoom` laesst den
+               Browser bei der neuen Groesse neu rechnen — genauso scharf wie
+               beim „echten" Groesserwerden.
                Die Farbe steht unten, nicht in der Mitte: das Feld ist die
                Bedienfläche dieses Schritts, und unten liegt sie dem Daumen am
                naechsten — direkt ueber dem „Weiter"-Knopf im Footer. */
@@ -855,8 +876,8 @@ export function StackItemWizard({
               <div ref={farbschrittPlatzRef} className="flex min-h-0 flex-1 items-end justify-center pb-3">
                 <span
                   ref={farbschrittVorschauRef}
-                  className="origin-bottom"
-                  style={{ transform: `scale(${farbschrittSkala})` }}
+                  className="inline-block"
+                  style={{ zoom: farbschrittSkala }}
                 >
                   <DosageFormPreview
                     dosageForm={state.draft.dosageForm}
