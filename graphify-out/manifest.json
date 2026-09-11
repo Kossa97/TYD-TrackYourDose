@@ -2838,9 +2838,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1789149484.6430924,
-    "seen": 1789149812.212106,
-    "ast_hash": "4e47855483b43796828bd03e3f5ceb21",
+    "mtime": 1789150517.9619997,
+    "seen": 1789150873.3449113,
+    "ast_hash": "b7203887cd05ae3226134676febe25ab",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -4026,9 +4026,9 @@
     "semantic_hash": "5d3fdbfaa54f06203cb8079ac440f270"
   },
   "docs/superpowers/specs/2026-09-08-my-stack-farbschritt-design.md": {
-    "mtime": 1789149745.219102,
-    "seen": 1789149812.2126932,
-    "ast_hash": "e239d61059afbb3eefdd3beca1ccb0fb",
+    "mtime": 1789150839.955142,
+    "seen": 1789150873.3454237,
+    "ast_hash": "fe07a1b364314c475a410f264073e273",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-10-my-stack-karussell-auswahl-design.md": {
