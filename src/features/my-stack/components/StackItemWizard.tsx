@@ -796,21 +796,25 @@ export function StackItemWizard({
               der Rahmen weg. Ein leerer Kasten sieht aus wie ein Fehler. */}
           {state.step !== 'substance' && state.step !== 'dosage_form' && state.draft.dosageForm && isStageRenderable(state.draft.dosageForm) && (
             state.step === 'color' ? (
+            /* Kein Rahmen, kein Radius: derselbe durchgehende dunkle Grund
+               wie im Formschritt davor (siehe DosageFormPicker), nicht eine
+               eingerahmte Karte mittendrin. `-mx-4`/`sm:-mx-6` holt die
+               Flaeche bis an den Rand des Dialogs.
+               Die Spalte fuellt die ganze verfuegbare Hoehe (`h-full`): das
+               Objekt bekommt darin, was da ist — auf einem hohen Bildschirm
+               deutlich mehr als die frueheren festen 220px, auf einem
+               niedrigen nicht mehr, als tatsaechlich Platz hat. Nur so hat
+               ein Pen (589px in voller Groesse) eine Chance, ganz ins Bild zu
+               passen, ohne auf jedem Geraet zu ueberlappen.
+               Die Farbe steht unten, nicht in der Mitte: das Feld ist die
+               Bedienfläche dieses Schritts, und unten liegt sie dem Daumen am
+               naechsten — direkt ueber dem „Weiter"-Knopf im Footer. */
             <div
               data-wizard-preview
-              className="mb-6 rounded-2xl border border-white/10 bg-white/[0.02] px-4 pt-4 pb-4"
+              className="-mx-4 flex h-full min-h-0 flex-col bg-slate-950/60 px-4 py-4 sm:-mx-6 sm:px-6"
             >
-              {/* Deutlich groesser als vorher (124px): auf diesem Schritt
-                  gibt es sonst nichts, das den Platz braucht — das
-                  Farbfeld darunter ist schmal, der Rest der Karte war leer.
-                  `scale` statt einer eigenen groesseren Groessenstufe je
-                  Form: „large" ist fuer freistehende Karten gedacht und bei
-                  einem Pen 589px hoch, weit ueber das hinaus, was hier noch
-                  ins Bild passt. Der Skalierrahmen sitzt um das Objekt, nicht
-                  um den Kasten — sonst waechst der Kasten mit, statt einen
-                  festen Rahmen zu geben, in dem sich das Objekt zeigt. */}
-              <div className="flex min-h-[220px] items-end justify-center pb-3">
-                <span className="origin-bottom scale-[1.7]">
+              <div className="flex min-h-0 flex-1 items-end justify-center pb-3">
+                <span className="origin-bottom scale-[2]">
                   <DosageFormPreview
                     dosageForm={state.draft.dosageForm}
                     displayName={state.draft.displayName}
@@ -824,7 +828,7 @@ export function StackItemWizard({
                   Eine Flaeche zum Ziehen statt fertiger Felder: der Nutzer
                   waehlt seine Farbe, nicht eine aus zwoelf. Waehrend des
                   Ziehens faerbt sich das Objekt darueber mit. */}
-              <div role="group" aria-labelledby="stack-color-label" className="border-t border-white/[0.07] pt-4">
+              <div role="group" aria-labelledby="stack-color-label" className="shrink-0 border-t border-white/[0.07] pt-4">
                 <p id="stack-color-label" className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                   {t('my_stack_color_optional', { defaultValue: 'Farbe (optional)' })}
                 </p>

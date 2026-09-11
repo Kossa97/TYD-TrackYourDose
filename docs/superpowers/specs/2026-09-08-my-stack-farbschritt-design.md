@@ -53,3 +53,52 @@ erscheint) und wurden neu geschrieben, statt nur die Zaehlung zu korrigieren.
 
 1353 Tests insgesamt gruen, `tsc` sauber, eslint unveraendert bei 140
 Altbefunden.
+
+---
+
+## Nachtrag 2026-09-11: kein Rahmen, volle Höhe, Farbe unten am Daumen
+
+„Runden Rahmen entfernen, der Pen ist nicht ganz zu sehen, ruhig mehr die
+Höhe des Handybildschirms ausnutzen, die Farbpalette unten anordnen damit
+sie mit dem Daumen direkt besser zu erreichen ist."
+
+### Kein Rahmen mehr
+
+Der Vorschaukasten hatte `rounded-2xl border border-white/10 bg-white/[0.02]`
+— eine eingerahmte Karte mitten im Schritt. Der Formschritt davor hatte genau
+das schon hinter sich: „Kein Rahmen, kein Radius, eine durchgehend dunkle
+Fläche" (siehe `DosageFormPicker`). Der Farbschritt bekommt jetzt dieselbe
+Behandlung — `-mx-4`/`sm:-mx-6` holt die Fläche bis an den Dialogrand,
+`bg-slate-950/60` statt Rahmen und Radius.
+
+### Volle Höhe statt fester 220px
+
+Der Kasten stand vorher auf `min-h-[220px]` — eine Zahl, die für die meisten
+Formen reichte, für einen Pen in voller Höhe (589px bei `size="large"`, hier
+skaliert auf ~300px) aber knapp war. Die Behebung ist keine größere Zahl,
+sondern gar keine feste Zahl mehr: der ganze Block ist jetzt `h-full flex
+flex-col`, das Objekt sitzt in einem `flex-1`-Feld darüber. Auf einem hohen
+Bildschirm bekommt es entsprechend mehr Platz, auf einem niedrigen nicht mehr,
+als tatsächlich da ist — dasselbe Prinzip, das die zwei Karussells im
+Formschritt schon benutzen (`h-full` auf `DosageFormPicker`, geprüft in
+diesem Dialog-Wrapper).
+
+Die Skalierung selbst ist von `scale-[1.7]` auf `scale-[2]` gestiegen: mehr
+Höhe im Kasten ohne ein größeres Objekt wäre nur mehr Leerraum gewesen.
+
+### Die Farbe wandert ans untere Ende
+
+Weil das Objekt jetzt `flex-1` ist und das Farbfeld danach als normales
+Flex-Kind folgt, sitzt Letzteres automatisch am unteren Rand der Spalte — und
+damit direkt über dem „Weiter"-Knopf im Footer. Das ist keine zusätzliche
+Positionierung, sondern die Konsequenz der flex-1-Verteilung: das Objekt
+wächst nach oben, die Bedienfläche bleibt unten, wo der Daumen sie greift.
+
+### Gegengeprüft
+
+1365 Tests grün, `tsc` sauber, ESLint unverändert bei 140. Im Chromium bei
+390×844 mit einem Pen: Objektrahmen und Vorschaukasten überlappen sich auf
+unter 2px genau (`objRect.top` 148.3 gegen `wrapRect.top` 149.75 — im Rahmen
+der Sub-Pixel-Rundung der Skalierung), kein Rahmen, kein Radius mehr in der
+Klasse. Das Farbfeld liegt sichtbar am unteren Bildschirmrand, direkt über
+„Weiter".
