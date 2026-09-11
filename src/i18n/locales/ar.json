@@ -974,7 +974,7 @@
   "my_stack_tracking_with_amount_entry": "كبسولة واحدة",
   "my_stack_tracking_complete_title": "شامل",
   "my_stack_tracking_complete_subtitle": "مع التركيز",
-  "my_stack_tracking_complete_recorded": "إضافةً إلى ذلك، كم مادة فعالة في الوحدة الواحدة. عندها فقط يصبح منحنى مستوى الدم ممكنًا.",
+  "my_stack_tracking_complete_recorded": "بالإضافة إلى ذلك، كمية المادة الفعالة في الوحدة الواحدة. بذلك يحسب التطبيق بالمليغرام بدل الكبسولات — ويعرف كم بقي منها فيك في كل ساعة.",
   "my_stack_tracking_complete_entry": "كبسولة واحدة · 5000 وحدة دولية",
   "my_stack_tracking_pk_available": "{{substanceName}} لديه ملف تعريف PK. يظهر المنحنى فقط عند اكتمال كافة البيانات المطلوبة.",
   "my_stack_tracking_pk_unavailable": "لا يوجد حاليًا ملف حرائك دوائية مرتبط بـ {{substanceName}}؛ ومع ذلك يمكن اختيار هذا المستوى.",
@@ -1096,5 +1096,8 @@
   "my_stack_current_dosage_form": "المحدد حاليا",
   "my_stack_show_more_dosage_forms": "عرض المزيد من أشكال الجرعات",
   "my_stack_hide_more_dosage_forms": "إخفاء المزيد من أشكال الجرعات",
-  "my_stack_more_dosage_forms": "المزيد من أشكال الجرعات"
+  "my_stack_more_dosage_forms": "المزيد من أشكال الجرعات",
+  "my_stack_tracking_curve_caption": "هكذا ينشأ المستوى المباشر",
+  "my_stack_tracking_curve_example": "مثال",
+  "my_stack_tracking_curve_explained": "من التركيز والوقت وملف الحرائك الدوائية للمادة — سرعتَي الامتصاص والتخلص المخزَّنتين — يحسب التطبيق المنحنى بين الجرعات."
 }

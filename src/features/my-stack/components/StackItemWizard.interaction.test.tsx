@@ -217,25 +217,27 @@ describe('StackItemWizard — Vorschau der Darreichungsform', () => {
     expect(nachher).toMatch(/^#[0-9a-f]{6}$/)
   })
 
-  it('verspricht keine Schrittzahl, solange die Tracking-Tiefe offen ist', () => {
-    // Vorher stand auf dem Tiefenschritt „3 von 3" — der Balken war voll und
-    // sah fertig aus, und sprang nach der Wahl auf „3 von 8" zurueck.
+  it('nennt die Schrittzahl von Anfang an, weil die Tiefe vorgewaehlt ist', () => {
+    // Frueher war die Zahl anfangs offen, weil die Tiefe es war — der Balken
+    // haette sonst auf dem Tiefenschritt „3 von 3" angezeigt und waere nach
+    // der Wahl auf „3 von 8" zurueckgesprungen. Mit „Gruendlich" als Start
+    // steht die Zahl sofort fest.
     renderWizard()
     startCustom('Kreatin')
 
     const balken = () => document.querySelector('[role="progressbar"]')!
-    expect(balken().getAttribute('aria-valuemax')).toBeNull()
-    expect(balken().getAttribute('aria-valuetext')).toBe('my_stack_step_open_count')
-    expect(balken().querySelector('[data-progress-open]')).not.toBeNull()
+    expect(balken().getAttribute('aria-valuemax')).toBe('8')
+    expect(balken().querySelector('[data-progress-open]')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_powder' }))
     continueWizard()
     continueWizard()
-    fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_complete_title/ }))
 
-    // Ab jetzt steht die Zahl fest, und das Restfeld verschwindet.
-    expect(balken().getAttribute('aria-valuemax')).toBe('8')
-    expect(balken().querySelector('[data-progress-open]')).toBeNull()
+    // Eine flachere Stufe macht den Balken voller, nicht leerer: weniger
+    // Schritte bei gleichem Stand.
+    fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_intake_only_title/ }))
+    expect(balken().getAttribute('aria-valuemax')).toBe('6')
+    expect(balken().getAttribute('aria-valuenow')).toBe('4')
   })
 
   it('zeigt das Objekt gross nur dort, wo man sein Aussehen waehlt', () => {
@@ -609,23 +611,37 @@ describe('StackItemWizard interactions', () => {
     opener.remove()
   })
 
-  it('requires a conscious tracking choice before a new item can advance', async () => {
+  it('startet auf der tiefsten Stufe und laesst ohne Zwischenfrage weiter', () => {
+    // Frueher war die Tiefe eine Pflichtwahl: wer auf „Weiter" tippte, ohne
+    // etwas anzutippen, bekam eine Fehlermeldung. Das fragte nach einer
+    // Entscheidung, bevor der Schritt erklaert hatte, was die Stufen
+    // bedeuten. Jetzt steht „Gruendlich" schon da — wer weniger will, stellt
+    // zurueck.
     renderWizard()
     startCustom('Choice Required')
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
     continueWizard()
     continueWizard()
 
-    const trackingGroup = screen.getByRole('group', { name: 'my_stack_tracking_question' })
-    expect(screen.getAllByRole('radio').every(radio => !(radio as HTMLInputElement).checked))
-      .toBe(true)
+    const gewaehlt = screen.getAllByRole('radio').filter(radio => (radio as HTMLInputElement).checked)
+    expect(gewaehlt).toHaveLength(1)
+    expect(gewaehlt[0].getAttribute('value')).toBe('complete')
 
+    // Und die Stufe traegt weiter: nach der Wirkstoffstrecke steht der Plan.
+    continueWizard()
+    expect(screen.queryByText('my_stack_tracking_level_required')).toBeNull()
+    expect(screen.getByLabelText('my_stack_ingredient_1')).toBeTruthy()
+  })
+
+  it('laesst die vorgewaehlte Stufe zuruecknehmen', () => {
+    renderWizard()
+    startCustom('Choice Required')
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
+    continueWizard()
     continueWizard()
 
-    expect(screen.getByText('my_stack_tracking_level_required')).toBeTruthy()
-    expect(screen.queryByLabelText('my_stack_plan_frequency')).toBeNull()
-    await waitFor(() => expect(document.activeElement).toBe(trackingGroup))
-
+    // „Genau" kennt keine Wirkstaerke — der Wirkstoffschritt faellt weg und
+    // der Plan kommt direkt.
     fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_with_amount_title/ }))
     continueWizard()
     expect(screen.getByLabelText('my_stack_plan_frequency')).toBeTruthy()

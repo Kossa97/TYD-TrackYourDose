@@ -970,7 +970,7 @@
   "my_stack_tracking_with_amount_entry": "1 कैप्सूल",
   "my_stack_tracking_complete_title": "गहन",
   "my_stack_tracking_complete_subtitle": "शक्ति सहित",
-  "my_stack_tracking_complete_recorded": "इसके अलावा, एक इकाई में कितना सक्रिय तत्व है। तभी रक्त-स्तर वक्र संभव होता है।",
+  "my_stack_tracking_complete_recorded": "साथ ही, एक यूनिट में कितना सक्रिय तत्व है। इससे ऐप कैप्सूल नहीं, मिलीग्राम गिनता है — और जानता है कि हर घंटे आपमें कितना बचा है।",
   "my_stack_tracking_complete_entry": "1 कैप्सूल · 5,000 IU",
   "my_stack_tracking_pk_available": "{{substanceName}} की एक PK प्रोफ़ाइल है। एक वक्र तभी प्रकट होता है जब सभी आवश्यक डेटा पूरा हो जाता है।",
   "my_stack_tracking_pk_unavailable": "{{substanceName}} के लिए फ़िलहाल कोई PK प्रोफ़ाइल जुड़ी नहीं है; यह स्तर फिर भी चुना जा सकता है।",
@@ -1092,5 +1092,8 @@
   "my_stack_current_dosage_form": "वर्तमान में चयनित",
   "my_stack_show_more_dosage_forms": "अधिक खुराक प्रपत्र दिखाएँ",
   "my_stack_hide_more_dosage_forms": "अधिक खुराक रूपों को छुपाएं",
-  "my_stack_more_dosage_forms": "अधिक खुराक स्वरूप"
+  "my_stack_more_dosage_forms": "अधिक खुराक स्वरूप",
+  "my_stack_tracking_curve_caption": "लाइव स्तर ऐसे बनता है",
+  "my_stack_tracking_curve_example": "उदाहरण",
+  "my_stack_tracking_curve_explained": "मात्रा, समय और पदार्थ की PK प्रोफ़ाइल — उसकी दर्ज अवशोषण और निष्कासन गति — से ऐप खुराकों के बीच का वक्र निकालता है।"
 }

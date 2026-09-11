@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { TrackingLevel } from '../types'
@@ -11,6 +12,12 @@ export interface TrackingLevelPickerProps {
 }
 
 const LEVELS: readonly TrackingLevel[] = ['intake_only', 'with_amount', 'complete']
+
+// Zwei Dosen, schematisch: Anstieg, Abfall, und die zweite Dosis setzt auf
+// einem Spiegel auf, der noch nicht bei null ist — deshalb der hoehere zweite
+// Gipfel. Die Punkte sitzen auf der Kurve dort, wo die Dosis faellt.
+const KURVE = 'M 8,56 L 30,56 C 44,56 54,26 70,24 C 92,22 118,36 140,41 C 154,40 162,14 180,12 C 206,10 250,26 292,33'
+const EINNAHMEN: ReadonlyArray<readonly [number, number]> = [[30, 56], [140, 41]]
 
 // Drei Stufen nebeneinander statt drei Kaesten untereinander: so ist die
 // Steigerung raeumlich sichtbar — links wenig, rechts viel —, und der Schritt
@@ -30,6 +37,9 @@ export function TrackingLevelPicker({
   onChange,
 }: TrackingLevelPickerProps) {
   const { t } = useTranslation()
+  // Eigene Kennung fuer den Verlauf: eine feste id kollidiert, sobald zwei
+  // Picker gleichzeitig im Dokument stehen — dann faerbt der eine den anderen.
+  const uid = useId()
   const name = substanceName.trim() || String(t('my_stack_this_substance', { defaultValue: 'diese Substanz' }))
 
   const content = {
@@ -55,7 +65,7 @@ export function TrackingLevelPicker({
       title: t('my_stack_tracking_complete_title', { defaultValue: 'Gründlich' }),
       subtitle: t('my_stack_tracking_complete_subtitle', { defaultValue: 'Mit Wirkstärke' }),
       recorded: t('my_stack_tracking_complete_recorded', {
-        defaultValue: 'Zusätzlich, wie viel Wirkstoff in einer Einheit steckt. Erst damit ist eine Blutspiegel-Kurve möglich.',
+        defaultValue: 'Zusätzlich, wie viel Wirkstoff in einer Einheit steckt. Damit rechnet die App in Milligramm statt in Kapseln — und weiß, wie viel davon zu jeder Stunde noch in dir ist.',
       }),
       entry: t('my_stack_tracking_complete_entry', { defaultValue: '1 Kapsel · 5.000 IU' }),
     },
@@ -86,6 +96,64 @@ export function TrackingLevelPicker({
         </>
       )}
     </span>
+  )
+
+  // Was die tiefste Stufe eintraegt, sieht man oben im Beispieleintrag. Was
+  // sie einem dafuer gibt, sah man bisher nirgends — es stand nur als Wort da
+  // („Blutspiegel-Kurve"). Hier ist es als Bild: zwei Einnahmen, dazwischen
+  // der gerechnete Verlauf. Schematisch und als Beispiel ausgewiesen, keine
+  // Zahlen — es ist die Form der Aussage, nicht eine Vorhersage.
+  //
+  // Dieselbe Bildsprache wie der echte Live-Spiegel (`LiveBlutspiegelChart`):
+  // Akzentlinie ueber einer nach unten auslaufenden Flaeche, gruene Punkte auf
+  // den Einnahmen.
+  const kurve = (
+    <figure data-tracking-curve className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <figcaption className="flex items-baseline justify-between gap-3 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+        <span>{t('my_stack_tracking_curve_caption', { defaultValue: 'So entsteht der Live-Spiegel' })}</span>
+        <span className="shrink-0">{t('my_stack_tracking_curve_example', { defaultValue: 'Beispiel' })}</span>
+      </figcaption>
+      {/* Gleichmaessig skaliert (kein `preserveAspectRatio="none"`): sonst
+          zieht die Breite die Einnahme-Punkte zu Ellipsen. Das Seitenverhaeltnis
+          steht als Klasse da, damit die Hoehe nicht vom Browser geraten wird. */}
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 300 64"
+        className="mt-2 block aspect-[300/64] w-full"
+      >
+        <defs>
+          <linearGradient id={`${uid}-fill`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {/* Grundlinie: ohne sie schwebt die Kurve im Nichts. */}
+        <line x1="8" y1="56" x2="292" y2="56" stroke="rgba(255,255,255,0.10)" strokeWidth="1" />
+        <path
+          d={`${KURVE} L 292,56 L 8,56 Z`}
+          fill={`url(#${uid}-fill)`}
+        />
+        <path
+          d={KURVE}
+          fill="none"
+          stroke="var(--accent)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
+        {/* Die zwei Einnahmen. Die zweite faellt auf einen Spiegel, der noch
+            nicht bei null ist — genau das ist die Aussage der Kurve. */}
+        {EINNAHMEN.map(([x, y]) => (
+          <circle key={x} cx={x} cy={y} r="3.5" fill="#10b981" stroke="#0b1017" strokeWidth="1.5" />
+        ))}
+      </svg>
+      <p data-tracking-card="curve-explained" className="mt-2 text-[13px] leading-snug text-slate-300">
+        {t('my_stack_tracking_curve_explained', {
+          defaultValue: 'Aus Wirkstärke, Uhrzeit und dem PK-Profil der Substanz — ihrer hinterlegten Aufnahme- und Abbaugeschwindigkeit — rechnet die App den Verlauf zwischen den Einnahmen.',
+        })}
+      </p>
+    </figure>
   )
 
   return (
@@ -170,6 +238,7 @@ export function TrackingLevelPicker({
             <p data-tracking-card="recorded" className="text-[13px] leading-snug text-slate-300">
               {content[value].recorded}
             </p>
+            {value === 'complete' && kurve}
             {value === 'complete' && (
               <p data-tracking-card="pk" className="text-[13px] leading-snug text-[color:var(--accent)]">
                 {pkProfileAvailable

@@ -970,7 +970,7 @@
   "my_stack_tracking_with_amount_entry": "1 gélule",
   "my_stack_tracking_complete_title": "Complet",
   "my_stack_tracking_complete_subtitle": "Avec dosage",
-  "my_stack_tracking_complete_recorded": "En plus, la quantité de principe actif par unité. Ce n’est qu’ainsi qu’une courbe sanguine est possible.",
+  "my_stack_tracking_complete_recorded": "En plus, la quantité de principe actif par unité. L’app compte alors en milligrammes plutôt qu’en gélules — et sait combien il en reste en vous à chaque heure.",
   "my_stack_tracking_complete_entry": "1 gélule · 5 000 UI",
   "my_stack_tracking_pk_available": "{{substanceName}} a un profil PK. Une courbe apparaît uniquement lorsque toutes les données requises sont complètes.",
   "my_stack_tracking_pk_unavailable": "Aucun profil PK n’est actuellement lié à {{substanceName}} ; ce niveau reste disponible.",
@@ -1092,5 +1092,8 @@
   "my_stack_current_dosage_form": "Actuellement sélectionné",
   "my_stack_show_more_dosage_forms": "Afficher plus de formes posologiques",
   "my_stack_hide_more_dosage_forms": "Masquer plus de formes posologiques",
-  "my_stack_more_dosage_forms": "Plus de formes galéniques"
+  "my_stack_more_dosage_forms": "Plus de formes galéniques",
+  "my_stack_tracking_curve_caption": "Comment naît le niveau en direct",
+  "my_stack_tracking_curve_example": "Exemple",
+  "my_stack_tracking_curve_explained": "À partir du dosage, de l’heure et du profil PK de la substance — ses vitesses d’absorption et d’élimination enregistrées — l’app calcule la courbe entre les prises."
 }

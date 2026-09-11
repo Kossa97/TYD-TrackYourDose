@@ -1142,7 +1142,7 @@
   "my_stack_tracking_with_amount_entry": "1 capsule",
   "my_stack_tracking_complete_title": "Thorough",
   "my_stack_tracking_complete_subtitle": "With strength",
-  "my_stack_tracking_complete_recorded": "Additionally, how much active ingredient one unit holds. Only then is a blood level curve possible.",
+  "my_stack_tracking_complete_recorded": "Additionally, how much active ingredient one unit holds. That lets the app count in milligrams instead of capsules — and know how much of it is still in you at any hour.",
   "my_stack_tracking_complete_entry": "1 capsule · 5,000 IU",
   "my_stack_tracking_pk_available": "{{substanceName}} has a PK profile. A curve appears only when all required data is complete.",
   "my_stack_tracking_pk_unavailable": "{{substanceName}} currently has no linked PK profile; this level is still available.",
@@ -1240,5 +1240,8 @@
   "pk_open_simulation": "Open simulation",
   "inventory_update_failed": "Inventory could not be updated",
   "inventory_committed_retry": "The intake is saved, but inventory was not updated.",
-  "inventory_retry": "Retry inventory update"
+  "inventory_retry": "Retry inventory update",
+  "my_stack_tracking_curve_caption": "How the live level is built",
+  "my_stack_tracking_curve_example": "Example",
+  "my_stack_tracking_curve_explained": "From the strength, the time of day and the substance’s PK profile — its stored absorption and elimination rates — the app works out the curve between intakes."
 }

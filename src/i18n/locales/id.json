@@ -970,7 +970,7 @@
   "my_stack_tracking_with_amount_entry": "1 kapsul",
   "my_stack_tracking_complete_title": "Menyeluruh",
   "my_stack_tracking_complete_subtitle": "Dengan kekuatan",
-  "my_stack_tracking_complete_recorded": "Ditambah, berapa zat aktif dalam satu unit. Baru dengan itu kurva kadar darah mungkin dibuat.",
+  "my_stack_tracking_complete_recorded": "Selain itu, berapa banyak zat aktif dalam satu unit. Dengan itu aplikasi menghitung dalam miligram, bukan kapsul — dan tahu berapa yang masih ada di tubuhmu setiap jam.",
   "my_stack_tracking_complete_entry": "1 kapsul · 5.000 IU",
   "my_stack_tracking_pk_available": "{{substanceName}} memiliki profil PK. Kurva hanya muncul ketika semua data yang diperlukan sudah lengkap.",
   "my_stack_tracking_pk_unavailable": "{{substanceName}} saat ini belum memiliki profil PK yang tertaut; tingkat ini tetap bisa dipilih.",
@@ -1092,5 +1092,8 @@
   "my_stack_current_dosage_form": "Saat ini dipilih",
   "my_stack_show_more_dosage_forms": "Tampilkan lebih banyak bentuk sediaan",
   "my_stack_hide_more_dosage_forms": "Sembunyikan lebih banyak bentuk sediaan",
-  "my_stack_more_dosage_forms": "Lebih banyak bentuk sediaan"
+  "my_stack_more_dosage_forms": "Lebih banyak bentuk sediaan",
+  "my_stack_tracking_curve_caption": "Begini kadar live terbentuk",
+  "my_stack_tracking_curve_example": "Contoh",
+  "my_stack_tracking_curve_explained": "Dari kekuatan, waktu, dan profil PK zat tersebut — laju penyerapan dan peluruhan yang tersimpan — aplikasi menghitung kurva di antara asupan."
 }

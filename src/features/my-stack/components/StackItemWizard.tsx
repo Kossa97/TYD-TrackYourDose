@@ -411,10 +411,12 @@ export function StackItemWizard({
       case 'tracking_level':
         return (
           <TrackingLevelPicker
-            value={state.trackingLevelSelected ? state.draft.trackingLevel : null}
+            // Immer eine Stufe: der Entwurf startet auf „Gruendlich".
+            // Deshalb auch kein Fehlerzustand mehr — es gibt nichts, was der
+            // Nutzer hier vergessen koennte.
+            value={state.draft.trackingLevel}
             substanceName={state.draft.displayName}
             pkProfileAvailable={Boolean(selectedPkCatalogEntry?.pk_profile_id)}
-            error={showErrors && !state.trackingLevelSelected}
             onChange={trackingLevel => {
               dispatch({ type: 'tracking_level_selected', trackingLevel })
               setShowErrors(false)
@@ -752,23 +754,20 @@ export function StackItemWizard({
             </button>
           </div>
 
-          {/* Wie viele Schritte es werden, entscheidet erst die Tracking-Tiefe:
-              fuenf oder acht. Vorher stand hier trotzdem eine Zahl — auf dem
-              Tiefenschritt war der Balken VOLL (3 von 3, sah fertig aus) und
-              sprang nach der Wahl auf 3 von 8 zurueck. Gemessen, nicht
-              vermutet. Solange die Zahl offen ist, wird keine behauptet: die
-              bekannten Schritte stehen da, dahinter ein blasses Restfeld. */}
+          {/* Wie viele Schritte es werden, haengt an der Tracking-Tiefe:
+              sechs oder acht. Frueher war die Zahl anfangs offen (ein blasses
+              Restfeld hinter den bekannten Schritten), weil die Tiefe noch
+              nicht gewaehlt war und der Balken sonst VOLL aussah — 3 von 3 —
+              und nach der Wahl auf 3 von 8 zuruecksprang. Seit der Entwurf
+              mit „Gruendlich" startet, steht die Zahl von Anfang an fest.
+              Stellt jemand auf eine flachere Stufe zurueck, wird der Balken
+              voller, nicht leerer — die harmlose Richtung. */}
           <div
             className="mt-4 flex items-center gap-2"
             role="progressbar"
             aria-valuemin={1}
             aria-valuenow={currentStepIndex + 1}
-            {...(state.trackingLevelSelected
-              ? { 'aria-valuemax': steps.length }
-              : { 'aria-valuetext': String(t('my_stack_step_open_count', {
-                  defaultValue: 'Schritt {{current}}, die weiteren Schritte stehen nach der Wahl der Tracking-Tiefe fest.',
-                  current: currentStepIndex + 1,
-                })) })}
+            aria-valuemax={steps.length}
           >
             {steps.map((step, index) => (
               <span
@@ -776,13 +775,6 @@ export function StackItemWizard({
                 className={`h-1.5 flex-1 rounded-full ${index <= currentStepIndex ? 'bg-sky-400' : 'bg-white/10'}`}
               />
             ))}
-            {!state.trackingLevelSelected && (
-              <span
-                data-progress-open
-                aria-hidden="true"
-                className="h-1.5 flex-[2] rounded-full bg-[repeating-linear-gradient(115deg,rgba(255,255,255,0.14)_0_5px,transparent_5px_10px)]"
-              />
-            )}
           </div>
         </header>
 

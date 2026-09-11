@@ -972,7 +972,7 @@
   "my_stack_tracking_with_amount_entry": "1 капсула",
   "my_stack_tracking_complete_title": "Основательно",
   "my_stack_tracking_complete_subtitle": "С дозировкой",
-  "my_stack_tracking_complete_recorded": "Дополнительно — сколько действующего вещества в одной единице. Только так возможна кривая уровня в крови.",
+  "my_stack_tracking_complete_recorded": "Дополнительно — сколько действующего вещества в одной единице. Тогда приложение считает в миллиграммах, а не в капсулах, и знает, сколько его остаётся в вас в каждый час.",
   "my_stack_tracking_complete_entry": "1 капсула · 5000 МЕ",
   "my_stack_tracking_pk_available": "{{substanceName}} имеет профиль PK. Кривая появляется только тогда, когда все необходимые данные заполнены.",
   "my_stack_tracking_pk_unavailable": "Для {{substanceName}} сейчас нет связанного профиля PK; этот уровень всё равно доступен.",
@@ -1094,5 +1094,8 @@
   "my_stack_current_dosage_form": "Выбрано в данный момент",
   "my_stack_show_more_dosage_forms": "Показать больше лекарственных форм",
   "my_stack_hide_more_dosage_forms": "Скрыть больше лекарственных форм",
-  "my_stack_more_dosage_forms": "Еще лекарственные формы"
+  "my_stack_more_dosage_forms": "Еще лекарственные формы",
+  "my_stack_tracking_curve_caption": "Как получается живой уровень",
+  "my_stack_tracking_curve_example": "Пример",
+  "my_stack_tracking_curve_explained": "По дозировке, времени и ФК-профилю вещества — заложенным скоростям всасывания и выведения — приложение рассчитывает кривую между приёмами."
 }

@@ -218,3 +218,90 @@ Die gedämpften Vergleichseinträge standen zuerst auf `white/5` und waren auf
 hellem Grund unsichtbar — Weiß mit 5 % Deckkraft gibt es auf Weiß nicht. Jetzt
 `slate-400` mit Alpha, das steht auf beiden Gründen. In beiden Themes
 gegengeprüft.
+
+---
+
+## Nachtrag 2026-09-11: „Gründlich" steht schon da, und zeigt, was es einbringt
+
+„Ich will in dem Formular standardmäßig ‚Gründlich' vorausgewählt haben.
+Zudem den Blut-Live-Spiegel und PK-Profil erwähnen und auch anhand eines
+Beispieles zeigen. ‚Gründlich' besser erklären."
+
+### Die Pflichtwahl fällt weg
+
+Bisher war die Tiefe eine Pflichtwahl ohne Vorgabe: `trackingLevelSelected`
+stand für neue Entwürfe auf `false`, der Picker bekam `value={null}`, und wer
+auf „Weiter" tippte, ohne etwas anzutippen, bekam „Bitte wähle eine
+Tracking-Tiefe". Das verlangte eine Entscheidung, bevor der Schritt erklärt
+hatte, worin die Stufen sich unterscheiden.
+
+Jetzt startet der Entwurf auf `complete` — der Stufe, aus der die App das
+meiste machen kann. Wer weniger pflegen will, stellt zurück; das ist der
+billigere Weg als eine Pflichtwahl.
+
+### Was dabei an totem Code anfiel
+
+`trackingLevelSelected` wurde damit konstant wahr: es gab keinen Zustand
+mehr, in dem es `false` war. Drei Verzweigungen hingen daran (Schrittliste,
+Pflichtfeldprüfung, Fortschrittsbalken) und wären unerreichbar geworden — ein
+Flag, das nie umschlägt, mit drei Zweigen darauf, führt den nächsten Leser in
+die Irre. Deshalb ist es ganz raus (neun Stellen).
+
+Der Fortschrittsbalken verliert damit sein blasses Restfeld
+(`data-progress-open`) und nennt die Schrittzahl von Anfang an. Der Fehler,
+gegen den das Restfeld gebaut war — auf dem Tiefenschritt „3 von 3", dann
+Sprung auf „3 von 8" —, kann nicht mehr auftreten, weil die Tiefe von Anfang
+an feststeht. Stellt jemand auf eine flachere Stufe zurück, geht die Zahl von
+8 auf 6: der Balken wird *voller*, nicht leerer. Das ist die harmlose
+Richtung — er behauptet nie, fertig zu sein, wenn er es nicht ist.
+
+Der Picker selbst behält `value: TrackingLevel | null` und seinen
+Vergleichszustand: er ist eine eigenständige Komponente, und dass der
+derzeitige Aufrufer diesen Zustand nicht mehr erzeugt, macht ihn nicht
+falsch. `my_stack_step_open_count` bleibt aus demselben Grund in den
+Sprachdateien stehen, wird aber vorerst nicht mehr gerendert.
+
+### Die Kurve als Bild statt als Wort
+
+„Erst damit ist eine Blutspiegel-Kurve möglich" war eine Behauptung über
+etwas, das man an dieser Stelle nie gesehen hatte. Der neue Block unter der
+gewählten tiefsten Stufe zeigt sie: zwei Einnahmen als grüne Punkte, dazwischen
+der gerechnete Verlauf, in derselben Bildsprache wie der echte Live-Spiegel
+(`LiveBlutspiegelChart`) — Akzentlinie über einer nach unten auslaufenden
+Fläche, `#10b981` für die Einnahmen.
+
+Der zweite Punkt sitzt bewusst auf einem Spiegel, der noch nicht bei null
+ist, und der zweite Gipfel liegt höher als der erste. Das ist die eigentliche
+Aussage der Stufe: die App weiß nicht nur, *dass* du genommen hast, sondern
+was davon noch da war, als du das nächste Mal genommen hast.
+
+Ausgewiesen als „Beispiel", ohne Zahlen und ohne Achsenbeschriftung — es ist
+die Form der Aussage, keine Vorhersage für diese Substanz. Ob es für sie
+überhaupt eine Kurve gibt, sagt weiterhin die PK-Zeile darunter.
+
+Zwei Details: das SVG skaliert gleichmäßig (kein
+`preserveAspectRatio="none"`), sonst zieht die Breite die Einnahme-Punkte zu
+Ellipsen; und die Verlaufs-ID kommt aus `useId()`, weil eine feste ID
+kollidiert, sobald zwei Picker gleichzeitig im Dokument stehen.
+
+### Besser erklärt
+
+`my_stack_tracking_complete_recorded` sagt jetzt, was die Wirkstärke *tut*,
+statt nur, was sie ermöglicht: „Damit rechnet die App in Milligramm statt in
+Kapseln — und weiß, wie viel davon zu jeder Stunde noch in dir ist."
+
+Drei neue Schlüssel (`my_stack_tracking_curve_caption`, `_example`,
+`_explained`) in allen vierzehn Sprachen; DE und EN sorgfältig, die übrigen
+zwölf sinnvoll übersetzt, aber nicht auslieferungsreif gegengelesen (siehe
+CLAUDE.md).
+
+### Gegengeprüft
+
+1365 Tests grün, `tsc` sauber, ESLint unverändert bei 140. Im Chromium bei
+430×932: „Gründlich" vorgewählt, Kurve da, Balken bei 4 von 8, alles ohne
+Scrollen im Bild.
+
+Eine Beobachtung am Rand, nicht geändert: der Beispieleintrag steht fest auf
+„1 Kapsel · 5.000 IU", auch wenn die gewählte Darreichungsform ein Vial ist.
+Das stammt aus der ursprünglichen Fassung des Schritts und wäre eine eigene
+Änderung.

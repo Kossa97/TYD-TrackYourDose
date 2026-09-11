@@ -33,7 +33,6 @@ export interface WizardState {
   draft: StackItemSetupDraft
   original: StackItem | null
   saveMode: WizardSaveMode
-  trackingLevelSelected: boolean
 }
 
 // Die Schrittliste folgt der Faehigkeiten-Tabelle, statt die Stufe noch
@@ -42,8 +41,9 @@ export interface WizardState {
 export function wizardSteps(state: WizardState): WizardStep[] {
   const gemeinsam: WizardStep[] = ['substance', 'dosage_form', 'color', 'tracking_level']
 
-  if (!state.trackingLevelSelected) return gemeinsam
-
+  // Frueher stand hier ein Sonderfall fuer „Tiefe noch nicht gewaehlt": dann
+  // war die Schrittzahl offen. Seit der Entwurf mit „Gruendlich" startet,
+  // steht immer eine Tiefe fest — und damit auch, welche Schritte folgen.
   const kann = trackingCapabilities(state.draft.trackingLevel)
   const wirkstoffSchritte: WizardStep[] = kann.productStrength
     ? ['ingredients', 'strength']
@@ -168,6 +168,11 @@ export function initialWizardState(
       ? draftFromStackItem(existing, existingPlan)
       : {
           displayName: '',
+          // Vorgewaehlt, nicht offen: „Gruendlich" ist die Stufe, aus der die
+          // App das meiste machen kann (Wirkstaerke, und damit ueberhaupt ein
+          // Blutspiegel). Wer weniger pflegen will, stellt im Tiefenschritt
+          // zurueck — das ist der billigere Weg als eine Pflichtwahl, vor der
+          // niemand weiss, was die Stufen bedeuten.
           trackingLevel: 'complete',
           category: null,
           dosageForm: null,
@@ -181,7 +186,6 @@ export function initialWizardState(
         },
     original: existing ?? null,
     saveMode: existing ? 'update' : 'create',
-    trackingLevelSelected: Boolean(existing),
   }
 }
 
@@ -325,11 +329,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       }
     }
     case 'tracking_level_selected':
-      return {
-        ...state,
-        trackingLevelSelected: true,
-        draft: { ...state.draft, trackingLevel: action.trackingLevel },
-      }
+      return { ...state, draft: { ...state.draft, trackingLevel: action.trackingLevel } }
     case 'details_changed':
       return { ...state, draft: { ...state.draft, ...action.changes } }
     case 'inventory_changed':
@@ -375,7 +375,6 @@ export function firstInvalidField(state: WizardState): string | null {
     if (!state.draft.category) return 'category'
   }
   if (state.step === 'ingredients' && !state.draft.displayName.trim()) return 'displayName'
-  if (state.step === 'tracking_level' && !state.trackingLevelSelected) return 'trackingLevel'
 
   if (state.step === 'substance' || state.step === 'ingredients' || state.step === 'review') {
     const nameError = firstIngredientError(state, ['name'])

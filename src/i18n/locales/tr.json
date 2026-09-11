@@ -970,7 +970,7 @@
   "my_stack_tracking_with_amount_entry": "1 kapsül",
   "my_stack_tracking_complete_title": "Kapsamlı",
   "my_stack_tracking_complete_subtitle": "Etken madde ile",
-  "my_stack_tracking_complete_recorded": "Ayrıca bir birimde ne kadar etken madde bulunduğu. Kan düzeyi eğrisi ancak böyle mümkün olur.",
+  "my_stack_tracking_complete_recorded": "Ayrıca bir birimde ne kadar etken madde olduğu. Böylece uygulama kapsül yerine miligram sayar — ve her saat sende ne kadar kaldığını bilir.",
   "my_stack_tracking_complete_entry": "1 kapsül · 5.000 IU",
   "my_stack_tracking_pk_available": "{{substanceName}}'nun bir PK profili var. Bir eğri yalnızca gerekli tüm veriler tamamlandığında görünür.",
   "my_stack_tracking_pk_unavailable": "{{substanceName}} için şu anda bağlı bir PK profili yok; bu düzey yine de seçilebilir.",
@@ -1092,5 +1092,8 @@
   "my_stack_current_dosage_form": "Şu anda seçili",
   "my_stack_show_more_dosage_forms": "Daha fazla dozaj formu göster",
   "my_stack_hide_more_dosage_forms": "Daha fazla dozaj formunu gizleyin",
-  "my_stack_more_dosage_forms": "Daha fazla dozaj formu"
+  "my_stack_more_dosage_forms": "Daha fazla dozaj formu",
+  "my_stack_tracking_curve_caption": "Canlı seviye böyle oluşur",
+  "my_stack_tracking_curve_example": "Örnek",
+  "my_stack_tracking_curve_explained": "Etken madde miktarı, saat ve maddenin PK profili — kayıtlı emilim ve atılım hızları — üzerinden uygulama alımlar arasındaki eğriyi hesaplar."
 }

@@ -123,24 +123,33 @@ describe('wizard state', () => {
     expect(wizardSteps(state)).toEqual(expected)
   })
 
-  it('requires an explicit tracking choice for new drafts but accepts an existing persisted level', () => {
+  it('startet neue Entwuerfe auf der tiefsten Stufe und uebernimmt sonst die gespeicherte', () => {
+    // Die Tiefe war einmal eine Pflichtwahl ohne Vorgabe — samt offener
+    // Schrittzahl, solange sie fehlte. Jetzt steht sie von Anfang an fest,
+    // und damit auch die Schrittliste.
     const initial = initialWizardState()
     const trackingStep = { ...initial, step: 'tracking_level' as const }
 
-    expect(initial.trackingLevelSelected).toBe(false)
-    expect(wizardSteps(initial)).toEqual(['substance', 'dosage_form', 'color', 'tracking_level'])
-    expect(firstInvalidField(trackingStep)).toBe('trackingLevel')
-
-    const selected = wizardReducer(
-      trackingStep,
-      { type: 'tracking_level_selected', trackingLevel: 'complete' },
-    )
-    expect(selected.trackingLevelSelected).toBe(true)
-    expect(firstInvalidField(selected)).toBeNull()
-    expect(wizardSteps(selected)).toEqual([
+    expect(initial.draft.trackingLevel).toBe('complete')
+    expect(firstInvalidField(trackingStep)).toBeNull()
+    expect(wizardSteps(initial)).toEqual([
       'substance', 'dosage_form', 'color', 'tracking_level', 'ingredients', 'strength', 'plan', 'review',
     ])
-    expect(initialWizardState(existingVitaminD).trackingLevelSelected).toBe(true)
+
+    // Zuruecknehmen bleibt moeglich, und die Schrittliste folgt.
+    const flacher = wizardReducer(
+      trackingStep,
+      { type: 'tracking_level_selected', trackingLevel: 'intake_only' },
+    )
+    expect(flacher.draft.trackingLevel).toBe('intake_only')
+    expect(firstInvalidField(flacher)).toBeNull()
+    expect(wizardSteps(flacher)).toEqual([
+      'substance', 'dosage_form', 'color', 'tracking_level', 'plan', 'review',
+    ])
+
+    // Ein bestehender Eintrag bringt seine eigene Stufe mit.
+    expect(initialWizardState(existingVitaminD).draft.trackingLevel)
+      .toBe(existingVitaminD.tracking_level)
   })
 
   it('keeps complete-only details when a lower tracking level hides their steps', () => {

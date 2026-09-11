@@ -1142,7 +1142,7 @@
   "my_stack_tracking_with_amount_entry": "1 Kapsel",
   "my_stack_tracking_complete_title": "Gründlich",
   "my_stack_tracking_complete_subtitle": "Mit Wirkstärke",
-  "my_stack_tracking_complete_recorded": "Zusätzlich, wie viel Wirkstoff in einer Einheit steckt. Erst damit ist eine Blutspiegel-Kurve möglich.",
+  "my_stack_tracking_complete_recorded": "Zusätzlich, wie viel Wirkstoff in einer Einheit steckt. Damit rechnet die App in Milligramm statt in Kapseln — und weiß, wie viel davon zu jeder Stunde noch in dir ist.",
   "my_stack_tracking_complete_entry": "1 Kapsel · 5.000 IU",
   "my_stack_tracking_pk_available": "Für {{substanceName}} ist ein PK-Profil verfügbar. Eine Kurve erscheint nur bei vollständigen Pflichtangaben.",
   "my_stack_tracking_pk_unavailable": "Für {{substanceName}} ist derzeit kein PK-Profil verknüpft; die Stufe lässt sich trotzdem wählen.",
@@ -1240,5 +1240,8 @@
   "pk_open_simulation": "Zur Simulation",
   "inventory_update_failed": "Bestand konnte nicht aktualisiert werden",
   "inventory_committed_retry": "Die Einnahme ist gespeichert, aber der Bestand wurde nicht aktualisiert.",
-  "inventory_retry": "Bestand erneut versuchen"
+  "inventory_retry": "Bestand erneut versuchen",
+  "my_stack_tracking_curve_caption": "So entsteht der Live-Spiegel",
+  "my_stack_tracking_curve_example": "Beispiel",
+  "my_stack_tracking_curve_explained": "Aus Wirkstärke, Uhrzeit und dem PK-Profil der Substanz — ihrer hinterlegten Aufnahme- und Abbaugeschwindigkeit — rechnet die App den Verlauf zwischen den Einnahmen."
 }

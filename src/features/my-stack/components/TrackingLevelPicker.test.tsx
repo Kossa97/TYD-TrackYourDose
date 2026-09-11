@@ -104,6 +104,41 @@ describe('TrackingLevelPicker', () => {
     expect(screen.getAllByText(/fragt die App auch später nicht ab/i)).toHaveLength(1)
   })
 
+  it('zeigt bei der tiefsten Stufe, was sie einbringt: eine Beispielkurve', () => {
+    // „Blutspiegel-Kurve" stand bisher nur als Wort da. Was die Stufe
+    // einbringt, ist jetzt zu sehen — als Beispiel ausgewiesen, ohne Zahlen,
+    // damit es keine Vorhersage behauptet.
+    const { rerender } = render(
+      <TrackingLevelPicker
+        value="complete"
+        substanceName="Vitamin D3"
+        pkProfileAvailable
+        onChange={() => undefined}
+      />,
+    )
+
+    const kurve = document.querySelector('[data-tracking-curve]')!
+    expect(kurve).not.toBeNull()
+    expect(kurve.querySelector('svg')).not.toBeNull()
+    expect(kurve.textContent).toContain('Beispiel')
+    // Live-Spiegel und PK-Profil werden beide beim Namen genannt.
+    expect(kurve.textContent).toContain('Live-Spiegel')
+    expect(kurve.textContent).toContain('PK-Profil')
+
+    // Nur dort: die flacheren Stufen rechnen keinen Verlauf.
+    for (const flacher of ['intake_only', 'with_amount'] as const) {
+      rerender(
+        <TrackingLevelPicker
+          value={flacher}
+          substanceName="Vitamin D3"
+          pkProfileAvailable
+          onChange={() => undefined}
+        />,
+      )
+      expect(document.querySelector('[data-tracking-curve]'), flacher).toBeNull()
+    }
+  })
+
   it('reports PK availability from the selected catalog entry without promising a curve', () => {
     const { rerender } = render(
       <TrackingLevelPicker

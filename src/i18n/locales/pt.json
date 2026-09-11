@@ -970,7 +970,7 @@
   "my_stack_tracking_with_amount_entry": "1 cápsula",
   "my_stack_tracking_complete_title": "Minucioso",
   "my_stack_tracking_complete_subtitle": "Com dosagem",
-  "my_stack_tracking_complete_recorded": "Além disso, quanta substância ativa cabe numa unidade. Só assim é possível uma curva de nível sanguíneo.",
+  "my_stack_tracking_complete_recorded": "Além disso, quanto princípio ativo há em uma unidade. Assim o app conta em miligramas em vez de cápsulas — e sabe quanto ainda resta em você a cada hora.",
   "my_stack_tracking_complete_entry": "1 cápsula · 5.000 UI",
   "my_stack_tracking_pk_available": "{{substanceName}} possui um perfil PK. Uma curva aparece somente quando todos os dados necessários estão completos.",
   "my_stack_tracking_pk_unavailable": "{{substanceName}} não tem atualmente um perfil PK associado; este nível continua disponível.",
@@ -1092,5 +1092,8 @@
   "my_stack_current_dosage_form": "Atualmente selecionado",
   "my_stack_show_more_dosage_forms": "Mostrar mais formas farmacêuticas",
   "my_stack_hide_more_dosage_forms": "Ocultar mais formas farmacêuticas",
-  "my_stack_more_dosage_forms": "Mais formas farmacêuticas"
+  "my_stack_more_dosage_forms": "Mais formas farmacêuticas",
+  "my_stack_tracking_curve_caption": "Como surge o nível ao vivo",
+  "my_stack_tracking_curve_example": "Exemplo",
+  "my_stack_tracking_curve_explained": "A partir da concentração, do horário e do perfil PK da substância — suas velocidades de absorção e eliminação registradas — o app calcula a curva entre as tomadas."
 }
