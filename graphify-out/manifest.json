@@ -2802,9 +2802,9 @@
     "semantic_hash": "b7f063a4a0fe1a979bc182754c37579a"
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
-    "mtime": 1789092931.2357717,
-    "seen": 1789093064.354558,
-    "ast_hash": "2e8a5725ffaa1c9483239a0d71173e9c",
+    "mtime": 1789093890.8553195,
+    "seen": 1789094380.975502,
+    "ast_hash": "7acc97b6369e3c417ada8c2aba665cae",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/IngredientEditor.tsx": {
@@ -2868,10 +2868,10 @@
     "semantic_hash": "058dcf810f63eed796827d8ef65b084b"
   },
   "src/features/my-stack/extensions/peptide/VialRenderer.tsx": {
-    "mtime": 1788612179.7618778,
-    "seen": 1788803479.1910372,
-    "ast_hash": "31acbb8bdaf89abd30c923dff920f706",
-    "semantic_hash": "31acbb8bdaf89abd30c923dff920f706"
+    "mtime": 1789093678.6627028,
+    "seen": 1789094380.9755938,
+    "ast_hash": "a930d52a624741e60a2cc7702b18c6fa",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/peptide/VialTrackingEditor.test.ts": {
     "mtime": 1788612179.762604,
@@ -3336,10 +3336,10 @@
     "semantic_hash": "31b6a3c74fba7773635cba6e879d1f58"
   },
   "src/features/my-stack/extensions/ampoule/AmpouleRenderer.tsx": {
-    "mtime": 1788612179.7588074,
-    "seen": 1788803479.1909997,
-    "ast_hash": "d40d22980ad569901aa8bd1d03b041ed",
-    "semantic_hash": "d40d22980ad569901aa8bd1d03b041ed"
+    "mtime": 1789093678.6593068,
+    "seen": 1789094380.9755275,
+    "ast_hash": "57ced663042d5c24d375bb040b9dd470",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/ampoule/AmpouleVisual.test.ts": {
     "mtime": 1788612179.7588816,
@@ -3462,10 +3462,10 @@
     "semantic_hash": "561d8520028854dc80c48facb3a57c6d"
   },
   "src/features/my-stack/extensions/capsule/CapsuleRenderer.tsx": {
-    "mtime": 1788737622.0079522,
-    "seen": 1788803479.1910052,
-    "ast_hash": "85d1eabcc0c21409c19fbcc9b4b83323",
-    "semantic_hash": "85d1eabcc0c21409c19fbcc9b4b83323"
+    "mtime": 1789093678.6622365,
+    "seen": 1789094380.9755335,
+    "ast_hash": "41b3db1895dc6917aa4b15f73c6ddfc3",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.test.ts": {
     "mtime": 1788612179.759349,
@@ -3510,10 +3510,10 @@
     "semantic_hash": "2cca285405efbbeb3572de2642867901"
   },
   "src/features/my-stack/extensions/tablet/TabletRenderer.tsx": {
-    "mtime": 1788737622.0119522,
-    "seen": 1788803479.1910517,
-    "ast_hash": "5698a2dcc19848324866f32e097cd1ca",
-    "semantic_hash": "5698a2dcc19848324866f32e097cd1ca"
+    "mtime": 1789093678.663013,
+    "seen": 1789094380.9756112,
+    "ast_hash": "45e6355278a67125fe3f0aeb6fe6c267",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/tablet/TabletVisual.test.ts": {
     "mtime": 1788612179.7631984,
@@ -3552,10 +3552,10 @@
     "semantic_hash": "7e0d96828746dc1259cb55f99a03158c"
   },
   "src/features/my-stack/extensions/nasal-spray/NasalSprayRenderer.tsx": {
-    "mtime": 1788612179.759881,
-    "seen": 1788803479.191024,
-    "ast_hash": "28d8436095905fd0cd50b72d19a2b299",
-    "semantic_hash": "28d8436095905fd0cd50b72d19a2b299"
+    "mtime": 1789093678.6625142,
+    "seen": 1789094380.975577,
+    "ast_hash": "deec2f7a3c81ef753b7844de3de9ff83",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/nasal-spray/NasalSprayVisual.test.ts": {
     "mtime": 1788612179.7604554,
@@ -3642,10 +3642,10 @@
     "semantic_hash": "dc17cc440200f9ab2126bd33fb61848c"
   },
   "src/features/my-stack/extensions/pen/PenRenderer.tsx": {
-    "mtime": 1788737622.0119522,
-    "seen": 1788803479.1910324,
-    "ast_hash": "6ff614b12d35875e67fd2b5844ffa0c6",
-    "semantic_hash": "6ff614b12d35875e67fd2b5844ffa0c6"
+    "mtime": 1789093678.662619,
+    "seen": 1789094380.9755886,
+    "ast_hash": "800800d76a1c18b10ef08519ad080c92",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/pen/PenVisual.test.ts": {
     "mtime": 1788612179.7618778,
@@ -3714,10 +3714,10 @@
     "semantic_hash": "f0a063d14c83a5b3738b3c065d7be0a0"
   },
   "src/features/my-stack/extensions/drops/DropsRenderer.tsx": {
-    "mtime": 1788612179.759349,
-    "seen": 1788803479.1910105,
-    "ast_hash": "13d201266410eb5506bc4b19410d6db4",
-    "semantic_hash": "13d201266410eb5506bc4b19410d6db4"
+    "mtime": 1789093678.662335,
+    "seen": 1789094380.9755397,
+    "ast_hash": "5dbbe98ad9fa5ed27af212f933df7d00",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/drops/DropsVisual.test.ts": {
     "mtime": 1788618209.9141533,
@@ -3798,10 +3798,10 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/gel/GelRenderer.tsx": {
-    "mtime": 1788737622.0079522,
-    "seen": 1788803479.1910167,
-    "ast_hash": "ee5b77c70c73608f702a3631bc17fcf2",
-    "semantic_hash": "ee5b77c70c73608f702a3631bc17fcf2"
+    "mtime": 1789093678.6624281,
+    "seen": 1789094380.9755676,
+    "ast_hash": "d4f4d750d12994989c9e96b697beb7db",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/gel/GelVisual.test.ts": {
     "mtime": 1788630752.6726005,
@@ -3840,10 +3840,10 @@
     "semantic_hash": "4f9354f4fda2f590acdac5cd1b218b98"
   },
   "src/features/my-stack/extensions/powder/PowderRenderer.tsx": {
-    "mtime": 1788737622.0119522,
-    "seen": 1788803479.1910427,
-    "ast_hash": "bdaf4b737db5a73dee299be3a65a395e",
-    "semantic_hash": "bdaf4b737db5a73dee299be3a65a395e"
+    "mtime": 1789093678.6627977,
+    "seen": 1789094380.9756007,
+    "ast_hash": "96513b9163ff1ab4576532a4bea20bb3",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/powder/PowderVisual.test.ts": {
     "mtime": 1788629636.982444,
@@ -3870,10 +3870,10 @@
     "semantic_hash": "814c903641a770d9fac1f1bd79b5cc95"
   },
   "src/features/my-stack/extensions/spray/SprayRenderer.tsx": {
-    "mtime": 1788730284.5367591,
-    "seen": 1788803479.191047,
-    "ast_hash": "d22852881f544218cb3d9af07789d092",
-    "semantic_hash": "d22852881f544218cb3d9af07789d092"
+    "mtime": 1789093678.6629374,
+    "seen": 1789094380.975606,
+    "ast_hash": "9f8ec313432f06019db77ef5cf8fed91",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/spray/SprayVisual.test.ts": {
     "mtime": 1788730631.548751,
@@ -4032,9 +4032,9 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-10-my-stack-karussell-auswahl-design.md": {
-    "mtime": 1789093034.1764164,
-    "seen": 1789093064.3549428,
-    "ast_hash": "7899f103cba8daf64a3d640f95a5a86e",
+    "mtime": 1789094354.723347,
+    "seen": 1789094380.9759011,
+    "ast_hash": "fb0b27a4bbe088a18706396af5d0b271",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/buehnenSkala.ts": {
@@ -4044,9 +4044,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormCarousel.tsx": {
-    "mtime": 1789092593.688272,
-    "seen": 1789093064.3545516,
-    "ast_hash": "0338d9e004357d44552bac3a642f1834",
+    "mtime": 1789093701.613354,
+    "seen": 1789094380.9754956,
+    "ast_hash": "b07712b8ebc2ee4d7ede170ceed2ea9a",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/lib/fuellfarben.ts": {
+    "mtime": 1789093701.6130788,
+    "seen": 1789094380.9756353,
+    "ast_hash": "d832afdb39f9c6a7d6e47623f7c43adb",
     "semantic_hash": ""
   }
 }
