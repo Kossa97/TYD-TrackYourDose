@@ -2802,9 +2802,9 @@
     "semantic_hash": "b7f063a4a0fe1a979bc182754c37579a"
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
-    "mtime": 1789093890.8553195,
-    "seen": 1789094380.975502,
-    "ast_hash": "7acc97b6369e3c417ada8c2aba665cae",
+    "mtime": 1789094981.2824183,
+    "seen": 1789095320.5126338,
+    "ast_hash": "0aa8f4233217a8c7cb00dfb927fd57ee",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/IngredientEditor.tsx": {
@@ -2838,9 +2838,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1788891258.5684576,
-    "seen": 1788892483.9829893,
-    "ast_hash": "34f684ab0c6ea97d2b82169d732d14b8",
+    "mtime": 1789094996.7102818,
+    "seen": 1789095320.512653,
+    "ast_hash": "24e540d53bfab9711160222884e51c9d",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -3324,9 +3324,9 @@
     "semantic_hash": "b3de680e5c6ffddd4dd0573b6796cea4"
   },
   "src/features/my-stack/components/DosageFormPicker.test.tsx": {
-    "mtime": 1789092738.3543727,
-    "seen": 1789093064.354557,
-    "ast_hash": "b586ae21415e3b121aa17783fdd44c15",
+    "mtime": 1789095017.5051675,
+    "seen": 1789095320.5126328,
+    "ast_hash": "35a4659b1317efb71d27ed7100bb9cf2",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.test.tsx": {
@@ -4032,9 +4032,9 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-10-my-stack-karussell-auswahl-design.md": {
-    "mtime": 1789094354.723347,
-    "seen": 1789094380.9759011,
-    "ast_hash": "fb0b27a4bbe088a18706396af5d0b271",
+    "mtime": 1789095248.7954001,
+    "seen": 1789095320.5131202,
+    "ast_hash": "c9e4bdc41f9f5a342c3224cb53703535",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/buehnenSkala.ts": {
@@ -4044,9 +4044,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormCarousel.tsx": {
-    "mtime": 1789093701.613354,
-    "seen": 1789094380.9754956,
-    "ast_hash": "b07712b8ebc2ee4d7ede170ceed2ea9a",
+    "mtime": 1789094996.709737,
+    "seen": 1789095320.5126264,
+    "ast_hash": "2350479e4549151f4206c3f1f3dac609",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/fuellfarben.ts": {
