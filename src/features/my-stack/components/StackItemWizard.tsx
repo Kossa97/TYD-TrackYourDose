@@ -9,6 +9,7 @@ import {
   X,
 } from 'lucide-react'
 import {
+  useCallback,
   useEffect,
   useMemo,
   useReducer,
@@ -31,6 +32,7 @@ import {
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
 import { evaluatePkReadiness, toPkMilligrams } from '../lib/pkReadiness'
 import { isStageRenderable } from '../lib/dosageForms'
+import { objektSkala } from '../lib/objektSkala'
 import { DosageFormPicker } from './DosageFormPicker'
 import { DosageFormPreview } from './DosageFormPreview'
 import { ColorField } from '../../../components/ColorField'
@@ -151,6 +153,42 @@ export function StackItemWizard({
   const dialogRef = useRef<HTMLDivElement>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const duplicateActionRef = useRef<HTMLButtonElement>(null)
+
+  // Wie gross das Objekt auf dem Farbschritt steht: die Flaeche darueber ist
+  // `flex-1` und je nach Bildschirm und Darreichungsform unterschiedlich
+  // gross — eine feste Skala fuellte sie mal aus, mal liess sie halb leer.
+  // `farbschrittPlatzRef` misst die Flaeche, `farbschrittVorschauRef` das
+  // Objekt darin in seiner nativen (unskalierten) Groesse — `offsetHeight`/
+  // `offsetWidth` ignorieren die eigene Transform-Skala, sonst wuerde die
+  // naechste Messung die vorherige Skalierung mitmessen und sich aufschaukeln.
+  const farbschrittPlatzRef = useRef<HTMLDivElement | null>(null)
+  const farbschrittVorschauRef = useRef<HTMLSpanElement | null>(null)
+  const [farbschrittSkala, setFarbschrittSkala] = useState(1)
+
+  const farbschrittSkalaMessen = useCallback(() => {
+    const platz = farbschrittPlatzRef.current
+    const objekt = farbschrittVorschauRef.current?.querySelector<HTMLElement>('[data-dosage-form-preview]')
+    if (!platz || !objekt) return
+    setFarbschrittSkala(objektSkala({
+      hoehe: objekt.offsetHeight,
+      breite: objekt.offsetWidth,
+      platzHoehe: platz.clientHeight,
+      platzBreite: platz.clientWidth,
+    }))
+  }, [])
+
+  // Kein direkter Aufruf hier: `observe()` meldet die aktuelle Groesse sofort
+  // von selbst, und ein Wechsel der Darreichungsform (andere native Groesse)
+  // baut den Beobachter neu auf — beides loest genau die Messung aus, die
+  // sonst ein direkter Ruf im Effekt waere.
+  useEffect(() => {
+    if (state.step !== 'color' || typeof ResizeObserver === 'undefined') return
+    const platz = farbschrittPlatzRef.current
+    if (!platz) return
+    const beobachter = new ResizeObserver(farbschrittSkalaMessen)
+    beobachter.observe(platz)
+    return () => beobachter.disconnect()
+  }, [state.step, state.draft.dosageForm, farbschrittSkalaMessen])
 
   const steps = intent === 'pk' && pkIntentStepsRef.current
     ? pkIntentStepsRef.current
@@ -800,12 +838,13 @@ export function StackItemWizard({
                wie im Formschritt davor (siehe DosageFormPicker), nicht eine
                eingerahmte Karte mittendrin. `-mx-4`/`sm:-mx-6` holt die
                Flaeche bis an den Rand des Dialogs.
-               Die Spalte fuellt die ganze verfuegbare Hoehe (`h-full`): das
-               Objekt bekommt darin, was da ist — auf einem hohen Bildschirm
-               deutlich mehr als die frueheren festen 220px, auf einem
-               niedrigen nicht mehr, als tatsaechlich Platz hat. Nur so hat
-               ein Pen (589px in voller Groesse) eine Chance, ganz ins Bild zu
-               passen, ohne auf jedem Geraet zu ueberlappen.
+               Die Spalte fuellt die ganze verfuegbare Hoehe (`h-full`), und
+               die Skala des Objekts (`farbschrittSkala`) ist keine feste
+               Zahl mehr, sondern gemessen: `objektSkala` passt es an das ein,
+               was die Flaeche gerade hergibt — ohne die eigenen Proportionen
+               zu verlieren (dieselbe Idee wie `object-fit: contain`). Eine
+               liegende Kapsel wird dadurch breiter skaliert als ein Pen, weil
+               bei ihr die Breite der Flaschenhals ist, nicht die Hoehe.
                Die Farbe steht unten, nicht in der Mitte: das Feld ist die
                Bedienfläche dieses Schritts, und unten liegt sie dem Daumen am
                naechsten — direkt ueber dem „Weiter"-Knopf im Footer. */
@@ -813,8 +852,12 @@ export function StackItemWizard({
               data-wizard-preview
               className="-mx-4 flex h-full min-h-0 flex-col bg-slate-950/60 px-4 py-4 sm:-mx-6 sm:px-6"
             >
-              <div className="flex min-h-0 flex-1 items-end justify-center pb-3">
-                <span className="origin-bottom scale-[2]">
+              <div ref={farbschrittPlatzRef} className="flex min-h-0 flex-1 items-end justify-center pb-3">
+                <span
+                  ref={farbschrittVorschauRef}
+                  className="origin-bottom"
+                  style={{ transform: `scale(${farbschrittSkala})` }}
+                >
                   <DosageFormPreview
                     dosageForm={state.draft.dosageForm}
                     displayName={state.draft.displayName}

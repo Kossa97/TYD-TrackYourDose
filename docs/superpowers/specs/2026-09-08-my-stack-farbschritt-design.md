@@ -102,3 +102,76 @@ unter 2px genau (`objRect.top` 148.3 gegen `wrapRect.top` 149.75 — im Rahmen
 der Sub-Pixel-Rundung der Skalierung), kein Rahmen, kein Radius mehr in der
 Klasse. Das Farbfeld liegt sichtbar am unteren Bildschirmrand, direkt über
 „Weiter".
+
+---
+
+## Nachtrag 2026-09-11, zweiter Teil: die Flaeche wird gemessen, nicht geschaetzt
+
+„Jetzt kannst du den Bereich über der Palette perfekt mit jeder
+Darreichungsform füllen, aber so, dass die Proportionen nicht verloren
+gehen."
+
+### Eine feste Zahl passt nie fuer alle
+
+`scale-[2]` (aus dem Nachtrag davor) war fuer den Pen abgemessen — bei jeder
+anderen Form blieb Luft, bei einem noch groesseren Bildschirm waere selbst
+der Pen zu klein geblieben. Die feste Zahl konnte nicht gleichzeitig
+„perfekt fuellen" und „nichts verlieren" fuer vierzehn verschiedene
+Seitenverhaeltnisse und beliebig viele Bildschirmgroessen leisten.
+
+### `objektSkala`: dieselbe Idee wie `object-fit: contain`
+
+`lib/objektSkala.ts` ist eine neue, pure Funktion — kein Bezug zu
+`buehnenSkala`, die absichtlich anders rechnet: `buehnenSkala` lockert den
+Groessenunterschied zwischen mehreren Formen, die NEBENEINANDER in einer
+Karussellreihe stehen (eine Kapsel neben einem Pen soll nicht winzig wirken,
+aber auch nicht gleich gross). Hier steht immer nur ein einziges Objekt
+allein in seiner Flaeche — es darf sie ganz ausfuellen, ohne Ruecksicht auf
+einen Nachbarn:
+
+```
+nachHoehe  = platzHoehe  * DECKUNG / hoehe
+nachBreite = platzBreite * DECKUNG / breite
+skala      = min(nachHoehe, nachBreite)
+```
+
+Die knappere Seite gewinnt: ein Pen (hoch, schmal) scheitert an der Hoehe,
+eine liegende Kapsel (flach, breit) an der Breite — genau das Verhalten von
+`object-fit: contain`, nur fuer ein Objekt mit fester Pixelgroesse statt
+eines Bildes. `DECKUNG = 0.94` laesst etwas Luft zur Kante.
+
+### Gemessen wie im Karussell, nicht neu erfunden
+
+Zwei Refs: `farbschrittPlatzRef` auf die `flex-1`-Flaeche (`clientHeight`/
+`clientWidth`), `farbschrittVorschauRef` auf das Objekt in seiner nativen,
+unskalierten Groesse (`offsetHeight`/`offsetWidth` — die ignorieren die
+eigene Transform-Skala, sonst wuerde die naechste Messung die vorherige
+Skalierung mitmessen und sich aufschaukeln; genau die Falle, die im
+Karussell schon einmal zuschlug). Ein `ResizeObserver` auf der Flaeche
+uebernimmt die Messung: kein direkter Aufruf im Effekt (der waere
+`react-hooks/set-state-in-effect`), `observe()` meldet die aktuelle Groesse
+sofort von selbst. Ein Wechsel der Darreichungsform baut den Beobachter neu
+auf (er steht in den Abhaengigkeiten des Effekts) und erzwingt damit dieselbe
+sofortige Neumessung, ohne einen zweiten Codepfad zu brauchen.
+
+### Gegengeprueft
+
+1370 Tests gruen (fuenf neue fuer `objektSkala`: Rueckfall auf 1 bei
+ungueltigen Massen, Hoehe begrenzt ein Pen-Mass, Breite begrenzt ein
+Kapsel-Mass, das Seitenverhaeltnis bleibt exakt erhalten, die Deckung laesst
+Luft zur Kante), `tsc` sauber, ESLint unveraendert bei 140.
+
+Im Chromium bei 390×844, sechs Formen nacheinander gemessen (Flaeche
+358×349.75px):
+
+| Form    | Objektbreite | Objekthoehe | begrenzt von |
+|---------|-------------:|------------:|--------------|
+| Pen     | 42.7px       | 328.2px     | Hoehe |
+| Vial    | 180.0px      | 329.9px     | Hoehe |
+| Gel     | 337.3px      | 270.0px     | Breite |
+| Kapsel  | 336.5px      | 117.8px     | Breite |
+| Tablette| 329px        | 329px       | beide (Kreis) |
+| Pulver  | 218.2px      | 327.5px     | Hoehe |
+
+Jede Form schoepft ihre knappere Seite bis auf die Deckung aus
+(358×0.94≈336.5, 349.75×0.94≈328.7) — beide Werte treffen exakt zu.
