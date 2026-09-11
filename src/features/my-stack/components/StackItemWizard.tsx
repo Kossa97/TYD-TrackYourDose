@@ -31,6 +31,7 @@ import {
 } from '../lib/wizardState'
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
 import { evaluatePkReadiness, toPkMilligrams } from '../lib/pkReadiness'
+import { useSloshEngine } from '../../../components/SloshContext'
 import { isStageRenderable } from '../lib/dosageForms'
 import { objektSkala } from '../lib/objektSkala'
 import { DosageFormPicker } from './DosageFormPicker'
@@ -153,6 +154,14 @@ export function StackItemWizard({
   const dialogRef = useRef<HTMLDivElement>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const duplicateActionRef = useRef<HTMLButtonElement>(null)
+
+  // Dieselbe Physik wie im Stack und im Karussell: eine Engine je Ansicht.
+  // Ohne sie ueberspringen die Renderer ihren `SloshProvider` und jede Form
+  // steht still — kein Nachschwappen, kein Rollen der Tablette und auch nicht
+  // die leise Daueroberflaeche, die die Fluessigkeit ueberhaupt lebendig
+  // aussehen laesst. Auf dem Farbschritt ist das Objekt das Hauptbild des
+  // Schritts; dort ist Stillstand am auffaelligsten.
+  const sloshEngine = useSloshEngine()
 
   // Wie gross das Objekt auf dem Farbschritt steht: die Flaeche darueber ist
   // `flex-1` und je nach Bildschirm und Darreichungsform unterschiedlich
@@ -879,12 +888,25 @@ export function StackItemWizard({
                   className="inline-block"
                   style={{ zoom: farbschrittSkala }}
                 >
+                  {/* `large` ist die Stufe, die fuer Detailansichten gebaut
+                      wurde — mit ihrem eigenen Etikettenmass, ihrer eigenen
+                      Schriftgroesse und ihren eigenen Innenabstaenden.
+                      `compact` ist die Stufe fuer Miniaturen: bei ihr sind
+                      `px-1`/`py-1` absolute 4px, die auf einem 64px breiten
+                      Vial ein Vielfaches dessen ausmachen, was sie auf einem
+                      144px breiten ausmachen. Gezoomt blieb dieses Verhaeltnis
+                      stehen — das Band wurde hoeher, die Aufschrift brach an
+                      einer anderen Stelle um und schnitt frueher ab. Deshalb
+                      hier die Detailstufe, und `zoom` passt sie nur noch in
+                      die Flaeche ein (bei einem Pen nach unten, bei einer
+                      Tablette nach oben). */}
                   <DosageFormPreview
                     dosageForm={state.draft.dosageForm}
                     displayName={state.draft.displayName}
                     colorHex={state.draft.colorHex}
                     ingredients={state.draft.ingredients}
-                    size="compact"
+                    size="large"
+                    sloshEngine={sloshEngine}
                   />
                 </span>
               </div>

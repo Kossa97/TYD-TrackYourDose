@@ -237,3 +237,76 @@ Selbstverstärkung durch die Rücksetzung vor jeder Messung.
 Browser-Unterstützung fuer `zoom`: seit Firefox 126 (Mai 2024) in allen
 gängigen Engines vorhanden — Chrome, Safari und Edge unterstützen es schon
 deutlich länger.
+
+---
+
+## Nachtrag 2026-09-11, vierter Teil: die Detailstufe statt einer gezoomten Miniatur
+
+„Es geht eher um das Etikett (die Qualität wie sie vorher war, die Form links
+und rechts an den Seiten), und den Flüssigkeitseffekten und physikalischen
+Animationen der Darreichungsformen."
+
+### Das Etikett: die falsche Groessenstufe, nicht die falsche Technik
+
+`zoom` war richtig (siehe Nachtrag davor), aber gezoomt wurde die falsche
+Vorlage. Der Farbschritt rief `size="compact"` auf — die Stufe, die im Code
+ausdruecklich fuer „tiny inline previews" gebaut ist: beim Vial 64px breit
+mit 9px Aufschrift. `size="large"` ist die Stufe fuer „detail views (edit
+form, previews)", 144px breit, mit eigenem Etikettenmass.
+
+Der Unterschied steckt in den absoluten Werten: das Etikettenband hat
+`px-1`/`py-1` (4px). Auf einem 64px breiten Vial sind 4px ein Vielfaches
+dessen, was sie auf einem 144px breiten sind — und `zoom` haelt dieses
+Verhaeltnis fest. Nebeneinander gemessen, beide auf 144×264 gebracht:
+
+| | Bandbreite | Bandhoehe | Umbruch der Zeile |
+|---|---|---|---|
+| `large`, Zoom 1 | 93% | 34.1% | „WIRKSTOFF /" / „VIAL" |
+| `compact`, Zoom 2.25 | 93% | 37.5% | „WIRKSTOFF" / „/ VIAL" |
+
+Das Band wurde hoeher, die Aufschrift brach an einer anderen Stelle um und
+der Name schnitt frueher ab — genau „die Form links und rechts an den
+Seiten". Der Farbschritt rendert deshalb jetzt `size="large"`, und `zoom`
+passt diese Stufe nur noch in die Flaeche ein: bei einem Pen nach unten
+(0.56), bei einer Tablette nach oben (2.06).
+
+### Die Physik: es fehlte die Engine
+
+`DosageFormPreview` reicht eine `sloshEngine` an `StackStage` weiter, und
+jeder Renderer haengt seinen `SloshProvider` nur dann ein, wenn eine da ist.
+Der Farbschritt gab keine mit — also uebersprangen alle Formen den Provider,
+`useSloshSubscribe()` lieferte `null` und jede Fluessigkeit stand. Der
+Kommentar in `DosageFormPreview` („Kein Buehnenlicht und keine Physik")
+stammt aus der Zeit, als die Vorschau eine 124px-Miniatur ueber dem Formular
+war; seit sie das Hauptbild des Schritts ist, faellt der Stillstand auf.
+
+Der Assistent haelt jetzt eine eigene Engine (`useSloshEngine()`), wie
+MyStackPage und das Karussell es auch tun, und gibt sie dem Farbschritt mit.
+
+### Was sich dadurch bewegt — und was nicht
+
+Gemessen im Chromium (ohne `prefers-reduced-motion`, sonst schaltet die
+Engine ab): das Vial zeigt **40 verschiedene Zustaende in 40 Bildern** — die
+Daueroberflaeche laeuft wieder. Sie kommt aus der stetig laufenden Uhr der
+Engine (`state.time`) und betrifft die Formen mit sichtbarer Fluessigkeit:
+Vial, Ampulle, Tropfen, Spray, Nasenspray.
+
+Tablette, Gel, Kapsel und Pen stehen im Ruhezustand weiterhin still, und das
+ist so gebaut: sie haben keine Daueranimation, sondern antworten auf einen
+Anstoss. Gegengeprueft — dieselbe Tablette im Karussell, mit einem Wischen
+angeschubst: **35 verschiedene Zustaende**, sie rollt. Die Verdrahtung ist
+also in Ordnung; auf dem Farbschritt gibt es nur nichts, was schiebt. Kapsel,
+Pen, Pulver, Tube und Pflaster bekommen von `StackStage` ohnehin nie eine
+Engine — eine liegende Kapsel schwingt nicht.
+
+Einen Anstoss aus dem Farbfeld zu erfinden waere moeglich gewesen, ist aber
+bewusst unterblieben: die Physik dieses Projekts folgt einer Ursache (die
+Lage der Karte im Karussell, ein Wischen). Ein Ziehen am Farbregler bewegt
+das Objekt nicht, und eine Flasche schwappen zu lassen, weil nebenan ein
+Regler wandert, waere ein Effekt ohne Grund.
+
+### Gegengeprueft
+
+1370 Tests gruen, `tsc` sauber, ESLint unveraendert bei 140. Bei 390×844
+fuellt jede Form ihre knappere Seite auf 94% und ueberlaeuft nirgends
+(Pen 94% hoch, Tablette 92/94%, Gel 94% breit, Kapsel 94% breit).
