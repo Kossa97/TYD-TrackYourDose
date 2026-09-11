@@ -2,6 +2,7 @@ import type { Ref } from 'react'
 import { CapsuleVisual } from './CapsuleVisual'
 import type { StageLightHandle } from '../../stage/useStageLight'
 import type { StackItem } from '../../types'
+import { fuellfarbe } from '../../lib/fuellfarben'
 
 export interface CapsuleRendererProps {
   item: StackItem
@@ -21,7 +22,7 @@ export function CapsuleRenderer({ item, ...visualProps }: CapsuleRendererProps) 
     <div data-stack-renderer="capsule">
       <CapsuleVisual
         name={item.display_name}
-        color={item.color_hex ?? '#64748b'}
+        color={item.color_hex ?? fuellfarbe('capsule')}
         {...visualProps}
       />
     </div>

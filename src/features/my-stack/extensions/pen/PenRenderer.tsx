@@ -2,6 +2,7 @@ import type { Ref } from 'react'
 import { PenVisual } from './PenVisual'
 import type { StageLightHandle } from '../../stage/useStageLight'
 import type { StackItem } from '../../types'
+import { fuellfarbe } from '../../lib/fuellfarben'
 
 export interface PenRendererProps {
   item: StackItem
@@ -21,7 +22,7 @@ export function PenRenderer({ item, ...visualProps }: PenRendererProps) {
     <div data-stack-renderer="pen">
       <PenVisual
         name={item.display_name}
-        color={item.color_hex ?? '#64748b'}
+        color={item.color_hex ?? fuellfarbe('pen')}
         {...visualProps}
       />
     </div>

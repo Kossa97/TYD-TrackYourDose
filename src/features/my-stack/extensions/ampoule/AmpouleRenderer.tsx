@@ -4,6 +4,7 @@ import { SloshProvider } from '../../../../components/SloshContext'
 import type { SloshEngine } from '../../../../components/sloshEngine'
 import type { StageLightHandle } from '../../stage/useStageLight'
 import type { StackItem } from '../../types'
+import { fuellfarbe } from '../../lib/fuellfarben'
 
 export interface AmpouleRendererProps {
   item: StackItem
@@ -34,7 +35,7 @@ export function AmpouleRenderer({ item, sloshEngine, ...visualProps }: AmpouleRe
       name={item.display_name}
       amount={ingredient?.amount_value}
       unit={strengthLabel(item)}
-      color={item.color_hex ?? '#64748b'}
+      color={item.color_hex ?? fuellfarbe('ampoule')}
       {...visualProps}
     />
   )

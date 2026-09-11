@@ -2,6 +2,7 @@ import type { Ref } from 'react'
 import { PowderVisual } from './PowderVisual'
 import type { StageLightHandle } from '../../stage/useStageLight'
 import type { StackItem } from '../../types'
+import { fuellfarbe } from '../../lib/fuellfarben'
 
 export interface PowderRendererProps {
   item: StackItem
@@ -25,7 +26,7 @@ export function PowderRenderer({ item, ...visualProps }: PowderRendererProps) {
     <div data-stack-renderer="powder">
       <PowderVisual
         name={item.display_name}
-        color={item.color_hex ?? '#94a3b8'}
+        color={item.color_hex ?? fuellfarbe('powder')}
         {...visualProps}
       />
     </div>

@@ -320,3 +320,64 @@ zwischen ihnen sprängen die Höhen — woran wiederum die Objektgrößen hänge
 Beschriftet ist immer nur eine, deshalb steht der Name im Bild genau einmal.
 
 1360 Tests grün, `tsc` sauber, eslint unverändert bei 140 Altbefunden.
+
+---
+
+## Nachtrag 2026-09-11, vierter Teil: realistische Füllfarben
+
+„Ich würde die Farben der Füllungen der Darreichungsformen erstmal realistisch
+gestalten, also alle Flüssigkeiten blau (wasserähnlich) und die anderen Formen
+auch in realistischer Farbe."
+
+### Was vorher da stand
+
+Jeder Renderer fiel auf dasselbe Schieferblau zurück (`#64748b`, Gel und
+Pulver auf `#94a3b8`), solange der Nutzer noch keine Eintragsfarbe gewählt
+hatte — und im Darreichungsform-Schritt hat er sie noch nie gewählt, der
+Farbschritt kommt ja erst danach. Das Ergebnis: Ampulle, Tablette und Pflaster
+sahen aus demselben Material. Das war keine Aussage über das Ding, sondern die
+Abwesenheit einer.
+
+### Eine Tabelle statt zwölf Konstanten
+
+`src/features/my-stack/lib/fuellfarben.ts` hält die Standardfüllung pro
+Darreichungsform. Eine Datei, nicht zwölf verstreute Literale, damit Picker,
+My-Stack-Seite und Vorschau garantiert dasselbe zeigen.
+
+Alle Flüssigkeiten teilen ein einziges Wasserblau (`#9fd3e8`): Vial, Ampulle,
+Pen, Tropfen, Nasen- und Rachenspray. Eine Injektionslösung und Tropfen sind
+im Glas nicht zu unterscheiden — sie verschieden einzufärben wäre eine
+erfundene Unterscheidung. Das Vial steht dabei bewusst angesetzt auf der
+Bühne, nicht als Lyophilisat.
+
+Die festen Formen bekommen ihr eigenes Material: Tablette `#e8e6e1`
+(gepresstes Weiß, leicht ins Warme), Kapsel `#e6e1d8` (Gelatine, elfenbein),
+Pulver `#efe9dc` (cremeweiß im Glas), Gel `#cfe3ea` (durchscheinend, ein Hauch
+blau). Tube und Pflaster zeigen die Eintragsfarbe ohnehin nie — ihre Werte
+stehen der Vollständigkeit halber in der Tabelle, benutzt werden sie nicht.
+
+Es sind Standardwerte, keine festen Farben. Sobald im Farbschritt etwas
+gewählt ist, gilt das.
+
+### Was die Auswahl jetzt markiert
+
+Damit fällt die Füllfarbe als Auswahlsignal weg — vorher war sie das Cyanblau,
+das nur die gewählte Form trug. Übrig bleiben das Bühnenlicht, das der
+mittleren Form folgt, und der Name mittig unter der Reihe. Die Eintragsfarbe
+reicht der Karussell weiterhin nur an die gewählte Form durch
+(`colorHex={selected ? … : null}`), sie ist nur eben erst ab dem Farbschritt
+gesetzt.
+
+### Gegengeprüft
+
+1360 Tests grün, `tsc` sauber, ESLint unverändert bei 140 Problemen. Im
+Chromium zeigt die Vorschau Vial, Ampulle, Spray und Nasenspray in
+Wasserblau, die Tablette in gepresstem Weiß, das Pulverglas mit cremefarbenem
+Band.
+
+Ein ehrlicher Rest: die Kapsel ist im Renderer eine Tönung über dem dunklen
+Grund (`stopOpacity` 0.16 bis 0.6), kein deckender Körper. Das Elfenbein
+wirkt dort heller als vorher, liest sich aber weiterhin eher silbrig als
+elfenbein. Das liegt an der Bauart des `CapsuleVisual`, nicht an der Tabelle —
+wer eine wirklich deckende Kapsel will, braucht dort eine Grundfläche unter
+der Tönung.

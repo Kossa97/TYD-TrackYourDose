@@ -4,6 +4,7 @@ import type { VialStageLightHandle } from '../../../../components/PeptideVialVis
 import { SloshProvider } from '../../../../components/SloshContext'
 import type { SloshEngine } from '../../../../components/sloshEngine'
 import type { StackItem } from '../../types'
+import { fuellfarbe } from '../../lib/fuellfarben'
 
 export interface VialRendererProps {
   item: StackItem
@@ -39,7 +40,7 @@ export function VialRenderer({
       amount={ingredient?.amount_value}
       unit={ingredient?.amount_unit}
       fillPct={fillPct}
-      color={item.color_hex ?? '#64748b'}
+      color={item.color_hex ?? fuellfarbe('vial')}
       animateOnMount={animateOnMount}
       size={size}
       className={className}

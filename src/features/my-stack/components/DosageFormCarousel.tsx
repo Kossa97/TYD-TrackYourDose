@@ -52,8 +52,6 @@ export interface DosageFormCarouselProps {
   /** Die gewaehlte Form — auch dann, wenn sie in der anderen Reihe steht. */
   value: DosageFormKey | null
   colorHex?: string | null
-  /** Farbe fuer die gewaehlte Form, solange keine eigene gesetzt ist. */
-  akzentfarbe: string
   labelId: string
   // Nur die vordere Reihe waehlt beim Start ihre erste Form vor. In der
   // Reihe „Weitere Darreichungsformen" waere das eine Behauptung: dort steht
@@ -66,7 +64,6 @@ export function DosageFormCarousel({
   formen,
   value,
   colorHex,
-  akzentfarbe,
   labelId,
   waehltBeimStart = false,
   onSelect,
@@ -452,11 +449,11 @@ export function DosageFormCarousel({
             <span className="origin-bottom" style={{ transform: `scale(${skala})` }}>
               <DosageFormPreview
                 dosageForm={form.key}
-                // Gefaerbt ist nur die gewaehlte Form — das ist hier das
-                // Zeichen fuer „gewaehlt", nicht das Licht. Steht noch keine
-                // eigene Eintragsfarbe fest (sie kommt erst im Schritt
-                // danach), traegt sie das Cyanblau der App.
-                colorHex={selected ? (colorHex?.trim() || akzentfarbe) : null}
+                // Die Eintragsfarbe traegt nur die gewaehlte Form: sie
+                // gehoert diesem Eintrag, nicht der Form an sich. Steht noch
+                // keine fest — sie kommt erst im Schritt danach —, zeigt auch
+                // sie ihr Material, wie alle anderen (siehe `fuellfarbe`).
+                colorHex={selected ? (colorHex?.trim() || null) : null}
                 size="carousel"
                 showLabel={false}
                 focus={startFokus}

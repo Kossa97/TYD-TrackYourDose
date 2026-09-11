@@ -4,6 +4,7 @@ import { SloshProvider } from '../../../../components/SloshContext'
 import type { SloshEngine } from '../../../../components/sloshEngine'
 import type { StageLightHandle } from '../../stage/useStageLight'
 import type { StackItem } from '../../types'
+import { fuellfarbe } from '../../lib/fuellfarben'
 
 export interface GelRendererProps {
   item: StackItem
@@ -28,7 +29,7 @@ export function GelRenderer({ item, sloshEngine, ...visualProps }: GelRendererPr
   const jar = (
     <GelVisual
       name={item.display_name}
-      color={item.color_hex ?? '#94a3b8'}
+      color={item.color_hex ?? fuellfarbe('gel')}
       {...visualProps}
     />
   )

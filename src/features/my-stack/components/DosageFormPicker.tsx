@@ -11,11 +11,6 @@ const COMMON_DOSAGE_FORMS: readonly DosageFormKey[] = [
   'powder',
 ]
 
-// Das Cyanblau der App (sky-400 aus der Tailwind-Palette). Es faerbt die
-// gewaehlte Form, solange der Nutzer im naechsten Schritt noch keine eigene
-// Eintragsfarbe gesetzt hat.
-const AKZENTFARBE = '#00ccf5'
-
 export interface DosageFormPickerProps {
   value: DosageFormKey | null
   suggestedForms: readonly DosageFormKey[]
@@ -115,7 +110,6 @@ export function DosageFormPicker({
             formen={primaryForms}
             value={value}
             colorHex={colorHex}
-            akzentfarbe={AKZENTFARBE}
             labelId="stack-dosage-primary-label"
             waehltBeimStart
             onSelect={onSelect}
@@ -132,7 +126,6 @@ export function DosageFormPicker({
               formen={secondaryForms}
               value={value}
               colorHex={colorHex}
-              akzentfarbe={AKZENTFARBE}
               labelId="stack-dosage-more-label"
               onSelect={onSelect}
             />

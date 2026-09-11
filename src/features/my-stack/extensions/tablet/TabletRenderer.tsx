@@ -4,6 +4,7 @@ import { SloshProvider } from '../../../../components/SloshContext'
 import type { SloshEngine } from '../../../../components/sloshEngine'
 import type { StageLightHandle } from '../../stage/useStageLight'
 import type { StackItem } from '../../types'
+import { fuellfarbe } from '../../lib/fuellfarben'
 
 export interface TabletRendererProps {
   item: StackItem
@@ -23,7 +24,7 @@ export function TabletRenderer({ item, sloshEngine, ...visualProps }: TabletRend
   const tablet = (
     <TabletVisual
       name={item.display_name}
-      color={item.color_hex ?? '#64748b'}
+      color={item.color_hex ?? fuellfarbe('tablet')}
       {...visualProps}
     />
   )
