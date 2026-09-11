@@ -110,6 +110,17 @@ describe('DosageFormPicker', () => {
     expect(deckel?.getAttribute('fill')).toBe(fuellfarbe())
   })
 
+  it('graut nicht gewaehlte Formen aus, hebt nur die gewaehlte hervor', () => {
+    // Die Farbe im Objekt selbst zeigt die Auswahl — nicht das Licht in der
+    // Mitte, das jede Reihe unabhaengig von der Auswahl fuer sich zeigt.
+    renderAll({ value: 'powder' })
+
+    const rahmen = (key: string) => kachel(`dosage_form_${key}`).querySelector<HTMLElement>('.origin-bottom')
+
+    expect(rahmen('powder')?.style.filter).toBe('none')
+    expect(rahmen('tablet')?.style.filter).toBe('grayscale(0.9) brightness(0.55)')
+  })
+
   it('legt die empfohlenen in die erste Reihe und alle uebrigen darunter', () => {
     render(
       <DosageFormPicker

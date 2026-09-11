@@ -469,3 +469,57 @@ Vial, Ampulle, Tropfen, Spray, Nasenspray und das Pulverglas alle dasselbe
 helle, glasige Weiß — keine Form sticht farblich hervor. Tube und Pflaster
 bleiben unverändert bei ihrem eigenen Material, das die Eintragsfarbe
 ohnehin nie überschreibt.
+
+---
+
+## Nachtrag 2026-09-11, siebter Teil: die Auswahl zeigt sich wieder in Farbe
+
+„Nicht ausgewählte Formen verdunkeln/ausgrauen, nur die ausgewählte Form
+highlighten und in Farbe."
+
+### Zurueck zu einer alten Notiz im eigenen Code
+
+Ein Kommentar aus einem frueheren Durchgang stand schon im Code, unbenutzt:
+„Was gewaehlt ist, sagt die Farbe im Objekt selbst." Bis eben war das nicht
+mehr wahr — seit dem fuenften Nachtrag zeigte jede Form dieselbe helle
+Standardfarbe, unabhaengig von der Auswahl, weil genau diese
+Farbdurchreichung den Rot-Fehler verursacht hatte (siehe dort). Der Wunsch
+jetzt bringt das Prinzip zurueck, aber ohne die Eintragsfarbe: ein CSS-Filter
+je nach Auswahl, keine Farbe aus dem Entwurf.
+
+### Auswahl statt Zentrierung
+
+Wichtig war, welche der beiden vorhandenen Zahlen den Filter treibt. Jede
+Reihe misst fuer sich, was gerade in ihrer Mitte steht (`fokus`,
+kontinuierlich, fuer das Licht darunter) — unabhaengig davon, ob das die
+tatsaechlich gewaehlte Form ist. Die zweite Reihe zeigt beim Start z. B. das
+Vial zentriert, obwohl noch die Kapsel aus der ersten Reihe gewaehlt ist.
+Haenge der Filter an `fokus`, waeren zwei Formen gleichzeitig „hervorgehoben"
+— eine je Reihe, nur eine davon tatsaechlich ausgewaehlt. Der Filter haengt
+deshalb an `selected` (`value === form.key`), nicht an `fokus`. Genau eine
+Form im ganzen Bild ist damit in Farbe.
+
+### Der Filter
+
+```
+filter: selected ? 'none' : 'grayscale(0.9) brightness(0.55)'
+```
+mit `transition-[filter] duration-300 ease-out` fuer einen weichen Wechsel,
+wenn die Auswahl sich aendert. Kein neuer imperativer Kanal noetig: die
+Auswahl aendert sich ueber `onSelect` -> React-State -> Re-Render, nicht bei
+jedem Wischbild, und React rendert an dieser Stelle ohnehin schon (Name
+darunter, `aria-pressed`, `data-dosage-active`). Das Bühnenlicht bleibt
+unveraendert: es sagt weiterhin, was zentriert steht, unabhaengig von der
+Auswahl.
+
+Die Symbol-Formen (nur `other`) hatten diese Unterscheidung schon —
+`text-sky-300` gewaehlt gegen `text-slate-500` ungewaehlt — und blieben
+unveraendert.
+
+### Gegengeprüft
+
+1360 Tests gruen (ein neuer: haelt `filter: 'none'` fuer die gewaehlte und
+`filter: 'grayscale(0.9) brightness(0.55)'` fuer eine andere Form fest),
+`tsc` sauber, ESLint unveraendert bei 140. Im Chromium: Gel zentriert und
+ausgewaehlt steht hell und in voller Farbe, Vial und Pen daneben sichtbar
+verdunkelt und entsaettigt.

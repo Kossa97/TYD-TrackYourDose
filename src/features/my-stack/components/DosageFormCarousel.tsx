@@ -444,17 +444,28 @@ export function DosageFormCarousel({
             // derselben Linie stehen bleiben. Die Skala haengt nur am Platz,
             // nicht an der Auswahl — ein Objekt, das beim Wischen groesser
             // wird, macht die Reihe unruhig.
-            <span className="origin-bottom" style={{ transform: `scale(${skala})` }}>
+            <span
+              className="origin-bottom transition-[filter] duration-300 ease-out"
+              style={{
+                transform: `scale(${skala})`,
+                // Nicht die Mitte der Reihe entscheidet ueber Farbe, sondern
+                // die Auswahl: die gewaehlte Form steht in ihrem eigenen
+                // Material, alle anderen ausgegraut und verdunkelt daneben.
+                // Das Licht darunter sagt weiterhin, was gerade zentriert
+                // steht — das bleibt unabhaengig davon in Bewegung.
+                filter: selected ? 'none' : 'grayscale(0.9) brightness(0.55)',
+              }}
+            >
               <DosageFormPreview
                 dosageForm={form.key}
-                // Keine Eintragsfarbe, auch nicht auf der gewaehlten Form:
-                // in diesem Schritt hat der Nutzer noch keine gewaehlt. Was
-                // im Entwurf steht, ist die Zufallsfarbe, die MyStackPage
-                // beim Oeffnen vergibt (`getRandomStackItemColor`) — jede
-                // zwoelfte davon rosarot. Antippen faerbte die Form damit
-                // scheinbar willkuerlich ein. Gefaerbt wird im Farbschritt
-                // danach, wo die Vorschau daneben steht. Hier zeigt jede Form
-                // ihr Material (siehe `fuellfarbe`).
+                // Keine Eintragsfarbe: in diesem Schritt hat der Nutzer noch
+                // keine gewaehlt. Was im Entwurf steht, ist die Zufallsfarbe,
+                // die MyStackPage beim Oeffnen vergibt
+                // (`getRandomStackItemColor`) — jede zwoelfte davon rosarot.
+                // Antippen faerbte die Form damit scheinbar willkuerlich ein.
+                // Gefaerbt wird im Farbschritt danach, wo die Vorschau
+                // daneben steht. Hier zeigt jede Form ihr Material (siehe
+                // `fuellfarbe`), gedimmt durch den Filter oben.
                 size="carousel"
                 showLabel={false}
                 focus={startFokus}
