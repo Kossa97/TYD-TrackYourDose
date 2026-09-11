@@ -51,7 +51,6 @@ export interface DosageFormCarouselProps {
   formen: readonly DosageFormDefinition[]
   /** Die gewaehlte Form — auch dann, wenn sie in der anderen Reihe steht. */
   value: DosageFormKey | null
-  colorHex?: string | null
   labelId: string
   // Nur die vordere Reihe waehlt beim Start ihre erste Form vor. In der
   // Reihe „Weitere Darreichungsformen" waere das eine Behauptung: dort steht
@@ -63,7 +62,6 @@ export interface DosageFormCarouselProps {
 export function DosageFormCarousel({
   formen,
   value,
-  colorHex,
   labelId,
   waehltBeimStart = false,
   onSelect,
@@ -449,11 +447,14 @@ export function DosageFormCarousel({
             <span className="origin-bottom" style={{ transform: `scale(${skala})` }}>
               <DosageFormPreview
                 dosageForm={form.key}
-                // Die Eintragsfarbe traegt nur die gewaehlte Form: sie
-                // gehoert diesem Eintrag, nicht der Form an sich. Steht noch
-                // keine fest — sie kommt erst im Schritt danach —, zeigt auch
-                // sie ihr Material, wie alle anderen (siehe `fuellfarbe`).
-                colorHex={selected ? (colorHex?.trim() || null) : null}
+                // Keine Eintragsfarbe, auch nicht auf der gewaehlten Form:
+                // in diesem Schritt hat der Nutzer noch keine gewaehlt. Was
+                // im Entwurf steht, ist die Zufallsfarbe, die MyStackPage
+                // beim Oeffnen vergibt (`getRandomStackItemColor`) — jede
+                // zwoelfte davon rosarot. Antippen faerbte die Form damit
+                // scheinbar willkuerlich ein. Gefaerbt wird im Farbschritt
+                // danach, wo die Vorschau daneben steht. Hier zeigt jede Form
+                // ihr Material (siehe `fuellfarbe`).
                 size="carousel"
                 showLabel={false}
                 focus={startFokus}

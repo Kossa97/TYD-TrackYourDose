@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DOSAGE_FORMS, isStageRenderable } from '../lib/dosageForms'
 import { DosageFormPicker } from './DosageFormPicker'
 import { buehnenSkala } from '../lib/buehnenSkala'
+import { fuellfarbe } from '../lib/fuellfarben'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -96,20 +97,17 @@ describe('DosageFormPicker', () => {
     expect(dose.querySelector('[aria-hidden="true"]')).not.toBeNull()
   })
 
-  it('reicht die Eintragsfarbe an die gewaehlte Form durch', () => {
-    // Nur an sie: die Farbe ist hier das Zeichen fuer „das ist gewaehlt".
-    renderAll({ colorHex: '#f97316', value: 'powder' })
+  it('faerbt die gewaehlte Form nicht ein, sondern zeigt ihr Material', () => {
+    // In diesem Schritt hat der Nutzer noch keine Farbe gewaehlt. Im Entwurf
+    // steht trotzdem eine: MyStackPage vergibt beim Oeffnen eine zufaellige
+    // aus zwoelf (`getRandomStackItemColor`), darunter Rosarot. Reichte der
+    // Schritt sie durch, wuerde das Antippen einer Form sie scheinbar
+    // willkuerlich einfaerben — genau der Fehler, der hier nicht
+    // wiederkommen soll. Gefaerbt wird im Farbschritt danach.
+    renderAll({ value: 'powder' })
 
     const deckel = kachel('dosage_form_powder').querySelector('[data-powder-detail="lid"]')
-    expect(deckel?.getAttribute('fill')).toBe('#f97316')
-  })
-
-  it('laesst halb getippte Farben stehen, statt durch Schwarz zu flackern', () => {
-    // Im Farbfeld steht waehrend des Tippens jeder Zwischenstand.
-    renderAll({ colorHex: '#f9', value: 'powder' })
-
-    const deckel = kachel('dosage_form_powder').querySelector('[data-powder-detail="lid"]')
-    expect(deckel?.getAttribute('fill')).not.toBe('#f9')
+    expect(deckel?.getAttribute('fill')).toBe(fuellfarbe('powder'))
   })
 
   it('legt die empfohlenen in die erste Reihe und alle uebrigen darunter', () => {
@@ -257,34 +255,25 @@ describe('DosageFormPicker', () => {
     expect(kachel('dosage_form_capsule').hasAttribute('data-dosage-active')).toBe(false)
   })
 
-  it('faerbt nur die gewaehlte Form, nicht die ganze Reihe', () => {
-    // Faerbte die Eintragsfarbe alle Objekte, waere sie kein Zeichen mehr,
-    // sondern Hintergrund — und die Gewaehlte bliebe wieder unkenntlich.
+  it('sieht gewaehlt und ungewaehlt gleich aus — die Auswahl sagt das Licht', () => {
+    // Das Gegenstueck zum Test darueber: die Auswahl aendert die Farbe des
+    // Objekts nicht, weder auf der gewaehlten noch auf einer anderen Form.
+    // Was gewaehlt ist, sagen der Spot darunter und der Name unter der Reihe.
     const deckel = () => document
       .querySelector('[data-dosage-form-preview="powder"] [data-powder-detail="lid"]')
       ?.getAttribute('fill')
 
     const { rerender } = render(
-      <DosageFormPicker
-        value="powder"
-        colorHex="#ff0000"
-        suggestedForms={['powder']}
-        onSelect={() => undefined}
-      />,
+      <DosageFormPicker value="powder" suggestedForms={['powder']} onSelect={() => undefined} />,
     )
     const gewaehlt = deckel()
 
     rerender(
-      <DosageFormPicker
-        value={null}
-        colorHex="#ff0000"
-        suggestedForms={['powder']}
-        onSelect={() => undefined}
-      />,
+      <DosageFormPicker value={null} suggestedForms={['powder']} onSelect={() => undefined} />,
     )
 
-    expect(gewaehlt).toBeTruthy()
-    expect(deckel()).not.toBe(gewaehlt)
+    expect(gewaehlt).toBe(fuellfarbe('powder'))
+    expect(deckel()).toBe(gewaehlt)
   })
 
   it('nennt die obere Reihe nach dem Katalog, wenn er etwas vorschlaegt', () => {

@@ -15,10 +15,6 @@ export interface DosageFormPickerProps {
   value: DosageFormKey | null
   suggestedForms: readonly DosageFormKey[]
   error?: boolean
-  // Die schon gewaehlte Eintragsfarbe. Steht sie noch nicht fest, zeigen die
-  // Objekte das Material der Form — nicht irgendein Blau, das spaeter nicht
-  // stimmt.
-  colorHex?: string | null
   onSelect: (dosageForm: DosageFormKey) => void
 }
 
@@ -35,7 +31,6 @@ export function DosageFormPicker({
   value,
   suggestedForms,
   error = false,
-  colorHex,
   onSelect,
 }: DosageFormPickerProps) {
   const { t } = useTranslation()
@@ -109,7 +104,6 @@ export function DosageFormPicker({
           <DosageFormCarousel
             formen={primaryForms}
             value={value}
-            colorHex={colorHex}
             labelId="stack-dosage-primary-label"
             waehltBeimStart
             onSelect={onSelect}
@@ -125,7 +119,6 @@ export function DosageFormPicker({
             <DosageFormCarousel
               formen={secondaryForms}
               value={value}
-              colorHex={colorHex}
               labelId="stack-dosage-more-label"
               onSelect={onSelect}
             />

@@ -381,3 +381,56 @@ wirkt dort heller als vorher, liest sich aber weiterhin eher silbrig als
 elfenbein. Das liegt an der Bauart des `CapsuleVisual`, nicht an der Tabelle —
 wer eine wirklich deckende Kapsel will, braucht dort eine Grundfläche unter
 der Tönung.
+
+---
+
+## Nachtrag 2026-09-11, fünfter Teil: woher das Rot kam
+
+„Wenn ich eine Darreichungsform auswähle durch drauf Wischen oder Tippen wird
+sie rot/rötlich, das soll weg."
+
+### Die Ursache stand nicht im Karussell
+
+Das Karussell hat nie eine Farbe erfunden. Es reichte die *Eintragsfarbe* an
+die gewählte Form durch — und die stand schon fest, bevor der Nutzer sie je
+gewählt hatte: `MyStackPage` ruft beim Öffnen des Assistenten
+`getRandomStackItemColor()` und gibt das Ergebnis als `initialColorHex`
+hinein (`MyStackPage.tsx:731` und `:868`). Die Palette hat zwölf Einträge,
+darunter `#f43f5e` (Rosarot) und `#f59e0b` (Bernstein). Jedes zwölfte Öffnen
+des Assistenten färbte die angetippte Form also rot — zufällig, und deshalb
+schwer zu reproduzieren.
+
+Der Farbschritt kommt erst *nach* dem Formschritt. Im Formschritt ist die
+Farbe im Entwurf damit nie eine Entscheidung, sondern immer nur ein
+Vorschlag, den noch niemand gesehen hat.
+
+### Die Behebung
+
+`colorHex` fliegt aus dem Formschritt heraus — aus `DosageFormPicker`, aus
+`DosageFormCarousel` und aus der Übergabe in `StackItemWizard`. Beide
+Karussells zeigen jetzt ausnahmslos das Material der Form (siehe
+`fuellfarbe`), gewählt wie ungewählt. Gefärbt wird im Farbschritt danach, wo
+die Vorschau direkt über dem Farbfeld steht und man sieht, was man tut.
+
+Ein Prop weniger statt einer Bedingung mehr: eine Unterscheidung „echte
+Farbe" gegen „Zufallsvorschlag" gibt es im Entwurf nicht, sie hätte erst
+erfunden werden müssen.
+
+### Was die Auswahl markiert
+
+Unverändert: das Bühnenlicht unter der mittleren Form und der Name mittig
+unter der Reihe.
+
+### Gegengeprüft
+
+Im Chromium, mit `initialColorHex="#f43f5e"` — also genau dem Rosarot, das
+den Fehler erzeugte — für acht Formen je einmal die mittlere Farbe vor und
+nach dem Antippen gemessen: **größte Änderung 0**. Kein Objekt hat einen
+Rotstich (alle Flüssigkeiten liegen 18 bis 36 Punkte blauer als rot). Das
+einzige warme Objekt bleibt das Pflaster (`rgb(228,196,166)`) — das ist sein
+eigenes Material, unabhängig von der Auswahl.
+
+1359 Tests grün (einer weniger: drei Farbtests wurden zu zweien), `tsc`
+sauber, ESLint unverändert bei 140. Die beiden neuen Tests halten die Regel
+in beide Richtungen fest: die gewählte Form zeigt `fuellfarbe('powder')`, und
+gewählt sieht aus wie ungewählt.
