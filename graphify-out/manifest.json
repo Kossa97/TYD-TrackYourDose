@@ -2868,9 +2868,9 @@
     "semantic_hash": "058dcf810f63eed796827d8ef65b084b"
   },
   "src/features/my-stack/extensions/peptide/VialRenderer.tsx": {
-    "mtime": 1789093678.6627028,
-    "seen": 1789094380.9755938,
-    "ast_hash": "a930d52a624741e60a2cc7702b18c6fa",
+    "mtime": 1789098094.5292373,
+    "seen": 1789098364.2001908,
+    "ast_hash": "2cfc17ecd5e97609f7c9bae85a69a8ae",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/peptide/VialTrackingEditor.test.ts": {
@@ -3324,9 +3324,9 @@
     "semantic_hash": "b3de680e5c6ffddd4dd0573b6796cea4"
   },
   "src/features/my-stack/components/DosageFormPicker.test.tsx": {
-    "mtime": 1789095017.5051675,
-    "seen": 1789095320.5126328,
-    "ast_hash": "35a4659b1317efb71d27ed7100bb9cf2",
+    "mtime": 1789098112.6834233,
+    "seen": 1789098364.2001143,
+    "ast_hash": "3f1c0a85adc1f1b4e8ad8bb402dbeeb0",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.test.tsx": {
@@ -3336,9 +3336,9 @@
     "semantic_hash": "31b6a3c74fba7773635cba6e879d1f58"
   },
   "src/features/my-stack/extensions/ampoule/AmpouleRenderer.tsx": {
-    "mtime": 1789093678.6593068,
-    "seen": 1789094380.9755275,
-    "ast_hash": "57ced663042d5c24d375bb040b9dd470",
+    "mtime": 1789098094.5357997,
+    "seen": 1789098364.2001445,
+    "ast_hash": "ed1e38af0a4faa5011769bba890f943b",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/ampoule/AmpouleVisual.test.ts": {
@@ -3462,9 +3462,9 @@
     "semantic_hash": "561d8520028854dc80c48facb3a57c6d"
   },
   "src/features/my-stack/extensions/capsule/CapsuleRenderer.tsx": {
-    "mtime": 1789093678.6622365,
-    "seen": 1789094380.9755335,
-    "ast_hash": "41b3db1895dc6917aa4b15f73c6ddfc3",
+    "mtime": 1789098094.5196629,
+    "seen": 1789098364.2001522,
+    "ast_hash": "dfd88da2b7b1ba52cb25564047fbc9e3",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.test.ts": {
@@ -3510,9 +3510,9 @@
     "semantic_hash": "2cca285405efbbeb3572de2642867901"
   },
   "src/features/my-stack/extensions/tablet/TabletRenderer.tsx": {
-    "mtime": 1789093678.663013,
-    "seen": 1789094380.9756112,
-    "ast_hash": "45e6355278a67125fe3f0aeb6fe6c267",
+    "mtime": 1789098094.5216632,
+    "seen": 1789098364.2002063,
+    "ast_hash": "79ad40844a56c5481a5ec81551166f3d",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/tablet/TabletVisual.test.ts": {
@@ -3552,9 +3552,9 @@
     "semantic_hash": "7e0d96828746dc1259cb55f99a03158c"
   },
   "src/features/my-stack/extensions/nasal-spray/NasalSprayRenderer.tsx": {
-    "mtime": 1789093678.6625142,
-    "seen": 1789094380.975577,
-    "ast_hash": "deec2f7a3c81ef753b7844de3de9ff83",
+    "mtime": 1789098094.5255063,
+    "seen": 1789098364.2001739,
+    "ast_hash": "f54a42e1aeb0edb1e5c87dbc25b4ab0d",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/nasal-spray/NasalSprayVisual.test.ts": {
@@ -3642,9 +3642,9 @@
     "semantic_hash": "dc17cc440200f9ab2126bd33fb61848c"
   },
   "src/features/my-stack/extensions/pen/PenRenderer.tsx": {
-    "mtime": 1789093678.662619,
-    "seen": 1789094380.9755886,
-    "ast_hash": "800800d76a1c18b10ef08519ad080c92",
+    "mtime": 1789098094.5337014,
+    "seen": 1789098364.200185,
+    "ast_hash": "143d4b506175123c97a8c86161fdde69",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/pen/PenVisual.test.ts": {
@@ -3714,9 +3714,9 @@
     "semantic_hash": "f0a063d14c83a5b3738b3c065d7be0a0"
   },
   "src/features/my-stack/extensions/drops/DropsRenderer.tsx": {
-    "mtime": 1789093678.662335,
-    "seen": 1789094380.9755397,
-    "ast_hash": "5dbbe98ad9fa5ed27af212f933df7d00",
+    "mtime": 1789098094.5376613,
+    "seen": 1789098364.2001584,
+    "ast_hash": "6ea41271d5472d8a61fc32a3b5d89221",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/drops/DropsVisual.test.ts": {
@@ -3798,9 +3798,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/gel/GelRenderer.tsx": {
-    "mtime": 1789093678.6624281,
-    "seen": 1789094380.9755676,
-    "ast_hash": "d4f4d750d12994989c9e96b697beb7db",
+    "mtime": 1789098094.5237472,
+    "seen": 1789098364.2001653,
+    "ast_hash": "d32195d71447b3ead519716fbaf166ea",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/gel/GelVisual.test.ts": {
@@ -3840,9 +3840,9 @@
     "semantic_hash": "4f9354f4fda2f590acdac5cd1b218b98"
   },
   "src/features/my-stack/extensions/powder/PowderRenderer.tsx": {
-    "mtime": 1789093678.6627977,
-    "seen": 1789094380.9756007,
-    "ast_hash": "96513b9163ff1ab4576532a4bea20bb3",
+    "mtime": 1789098094.526328,
+    "seen": 1789098364.2001965,
+    "ast_hash": "82b5dd75cc1690ed066beabf0f29d770",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/powder/PowderVisual.test.ts": {
@@ -3870,9 +3870,9 @@
     "semantic_hash": "814c903641a770d9fac1f1bd79b5cc95"
   },
   "src/features/my-stack/extensions/spray/SprayRenderer.tsx": {
-    "mtime": 1789093678.6629374,
-    "seen": 1789094380.975606,
-    "ast_hash": "9f8ec313432f06019db77ef5cf8fed91",
+    "mtime": 1789098094.5315597,
+    "seen": 1789098364.2002017,
+    "ast_hash": "c75f034883be9f8587f07dbb79b563fb",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/spray/SprayVisual.test.ts": {
@@ -4032,9 +4032,9 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-10-my-stack-karussell-auswahl-design.md": {
-    "mtime": 1789095248.7954001,
-    "seen": 1789095320.5131202,
-    "ast_hash": "c9e4bdc41f9f5a342c3224cb53703535",
+    "mtime": 1789098324.8463418,
+    "seen": 1789098364.2005894,
+    "ast_hash": "6262540f44ce0c69dc68bb7c43aa4616",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/buehnenSkala.ts": {
@@ -4050,9 +4050,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/fuellfarben.ts": {
-    "mtime": 1789093701.6130788,
-    "seen": 1789094380.9756353,
-    "ast_hash": "d832afdb39f9c6a7d6e47623f7c43adb",
+    "mtime": 1789098094.517656,
+    "seen": 1789098364.2002654,
+    "ast_hash": "5f9fe16fbfecf8777890689682947c77",
     "semantic_hash": ""
   }
 }
