@@ -2838,9 +2838,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1789094996.7102818,
-    "seen": 1789095320.512653,
-    "ast_hash": "24e540d53bfab9711160222884e51c9d",
+    "mtime": 1789099767.1510196,
+    "seen": 1789100264.9745722,
+    "ast_hash": "477f998ea2d046f18d06aec63e72d380",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -3768,16 +3768,16 @@
     "semantic_hash": "13327b1ef7789969736a1f80856fb21d"
   },
   "src/components/ColorField.test.tsx": {
-    "mtime": 1788743852.1289737,
-    "seen": 1788803479.1907032,
-    "ast_hash": "03694de2cae2c3191a540d3a5998ca95",
-    "semantic_hash": "03694de2cae2c3191a540d3a5998ca95"
+    "mtime": 1789099950.8577087,
+    "seen": 1789100264.9743602,
+    "ast_hash": "f84c5bbf74059f2fd4f8bb2202e48103",
+    "semantic_hash": ""
   },
   "src/components/ColorField.tsx": {
-    "mtime": 1788743715.3723106,
-    "seen": 1788803479.1907053,
-    "ast_hash": "1a4372bc755ec7173360dc26250fd1ee",
-    "semantic_hash": "1a4372bc755ec7173360dc26250fd1ee"
+    "mtime": 1789099929.1803153,
+    "seen": 1789100264.9743629,
+    "ast_hash": "7d6428e852774cdd76f38129a8e16e67",
+    "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormIcon.test.tsx": {
     "mtime": 1788737622.0039523,
@@ -4032,9 +4032,9 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-10-my-stack-karussell-auswahl-design.md": {
-    "mtime": 1789098966.17438,
-    "seen": 1789099005.259077,
-    "ast_hash": "9c1becec6546e7d2272da8679742ebac",
+    "mtime": 1789100230.336333,
+    "seen": 1789100264.9749877,
+    "ast_hash": "51b080491df8ccf32d682771f2454d61",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/buehnenSkala.ts": {
