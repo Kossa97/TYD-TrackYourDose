@@ -1,5 +1,8 @@
+import type { Ref } from 'react'
+import type { SloshEngine } from '../../../components/sloshEngine'
 import { isStageRenderable } from '../lib/dosageForms'
 import { stagePreviewItem } from '../lib/stagePreview'
+import type { StageLightHandle } from '../stage/useStageLight'
 import type { DosageFormKey, StackItemIngredient } from '../types'
 import { StackStage } from './StackStage'
 
@@ -14,6 +17,16 @@ export interface DosageFormPreviewProps {
   // ist — mit demselben Regler, den das Karussell benutzt, statt mit einer
   // Deckkraft ueber allem.
   focus?: number
+  // Aus welcher Richtung das Buehnenlicht faellt (-1..1). Im Karussell ist das
+  // die Seite, auf der das Objekt zur Mitte steht.
+  lightOffset?: number
+  // Der imperative Kanal der Buehnenform: das Karussell schiebt Licht und
+  // Fokus beim Wischen direkt in den DOM, ohne React dazwischen. Ohne ihn
+  // muesste jedes Bild durch eine Renderrunde, und das ruckelt.
+  stageLightRef?: Ref<StageLightHandle>
+  // Die Fluessigkeitsphysik der Ansicht. Formen mit Inhalt schwappen damit
+  // beim Wischen; die uebrigen ignorieren sie.
+  sloshEngine?: SloshEngine
   className?: string
 }
 
@@ -34,6 +47,9 @@ export function DosageFormPreview({
   size = 'compact',
   showLabel = true,
   focus,
+  lightOffset,
+  stageLightRef,
+  sloshEngine,
   className = '',
 }: DosageFormPreviewProps) {
   // `liquid` und `other` haben keine Buehnengrafik. Sie bekommen hier auch
@@ -46,7 +62,15 @@ export function DosageFormPreview({
 
   return (
     <div data-dosage-form-preview={dosageForm} className={className}>
-      <StackStage item={item} size={size} showLabel={showLabel} focus={focus} />
+      <StackStage
+        item={item}
+        size={size}
+        showLabel={showLabel}
+        focus={focus}
+        lightOffset={lightOffset}
+        stageLightRef={stageLightRef}
+        sloshEngine={sloshEngine}
+      />
     </div>
   )
 }

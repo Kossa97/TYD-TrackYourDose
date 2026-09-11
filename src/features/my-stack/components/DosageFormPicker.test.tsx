@@ -192,6 +192,55 @@ describe('DosageFormPicker', () => {
     expect(breiteNach).toBeGreaterThan(masse.breite)
   })
 
+  it('schiebt den Fokus durch den imperativen Griff in die Buehnenform', () => {
+    // Der Grund, warum es fluessig laeuft: beim Wischen rendert React nicht.
+    // Jede Form meldet einen Griff an, und der Mess-Frame schreibt Licht und
+    // Fokus direkt in den DOM. Kaeme der Fokus wieder als Prop, liefe jedes
+    // Bild des Wischens durch eine Renderrunde ueber die ganze Reihe.
+    render(
+      <DosageFormPicker value={null} suggestedForms={['capsule', 'vial', 'gel']} onSelect={() => undefined} />,
+    )
+
+    const gruppe = screen.getByRole('group', { name: 'Für diese Substanz' })
+    platziere(gruppe, 0, 300)
+    const kapsel = within(gruppe).getByRole('button', { name: 'dosage_form_capsule' })
+    // Die Kapsel steht exakt in der Mitte, ihre Nachbarn weit daneben.
+    platziere(kapsel, 100, 100)
+    platziere(within(gruppe).getByRole('button', { name: 'dosage_form_vial' }), 260, 100)
+    platziere(within(gruppe).getByRole('button', { name: 'dosage_form_gel' }), 420, 100)
+
+    const fokus = () => kapsel.querySelector('[data-capsule-focus]')?.getAttribute('data-capsule-focus')
+    const vorher = fokus()
+
+    fireEvent.scroll(gruppe)
+
+    return waitFor(() => {
+      // Die zentrierte Kapsel steht auf vollem Licht — geschrieben hat das
+      // die Buehnenform selbst, ueber ihren Griff.
+      expect(Number(fokus())).toBe(1)
+      expect(fokus()).not.toBe(vorher)
+    })
+  })
+
+  it('macht die gewaehlte Form nicht groesser als die anderen', () => {
+    // Ein Objekt, das beim Wischen anschwillt, macht die Reihe unruhig. Die
+    // Groesse haengt nur am Platz, nicht an der Auswahl; dass etwas gewaehlt
+    // ist, sagt allein die Farbe.
+    const rahmen = (knopf: HTMLElement) =>
+      (knopf.querySelector('[data-dosage-form-preview]')?.parentElement as HTMLElement | null)?.style.transform
+
+    const { rerender } = render(
+      <DosageFormPicker value={null} suggestedForms={['capsule', 'vial']} onSelect={() => undefined} />,
+    )
+    const ungewaehlt = rahmen(kachel('dosage_form_capsule'))
+
+    rerender(
+      <DosageFormPicker value="capsule" suggestedForms={['capsule', 'vial']} onSelect={() => undefined} />,
+    )
+
+    expect(rahmen(kachel('dosage_form_capsule'))).toBe(ungewaehlt)
+  })
+
   it('markiert genau ein Objekt als gewaehlt, obwohl beide Reihen etwas zentrieren', () => {
     // Der Befund aus dem Formular: unter der Ueberschrift stand „Vial",
     // waehrend in der oberen Reihe genauso hell eine Kapsel zentriert war.

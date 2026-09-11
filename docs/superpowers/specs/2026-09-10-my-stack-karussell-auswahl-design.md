@@ -202,3 +202,68 @@ heller" wartete auf `ampoule < 1`, und das ist schon im Ruhezustand wahr
 lief, fiel das nicht auf. Die Bedingung prüft jetzt beides zusammen —
 zentriertes Objekt auf 1 UND Nachbar darunter —, was nur nach einer Messung
 mit echter Geometrie gilt.
+
+---
+
+## Nachtrag 2026-09-11, zweiter Teil: keine Vergrößerung, dafür echte Physik
+
+„Ich finde die Vergrößerung beim Swipen nicht gut" und „die Wischanimationen
+für alle Darreichungsformen nutzen, so flüssig wie im jetzigen MyStack — es
+soll unfassbar flüssig laufen."
+
+### Die Auswahl macht nichts mehr größer
+
+Der 6-%-Zuschlag auf die gewählte Form ist weg. Die Größe hängt jetzt nur
+noch am Platz (`buehnenSkala`), nicht an der Auswahl; ein Objekt, das beim
+Durchwischen anschwillt und wieder schrumpft, macht die Reihe unruhig. Dass
+etwas gewählt ist, sagt allein die Farbe. Ein Test hält das fest: derselbe
+`transform` vor und nach dem Wählen.
+
+### Warum es vorher nicht flüssig sein konnte
+
+Der Fokus lief über React-State (`setFokusJeForm`). Das heißt: jedes Bild
+eines Wischvorgangs war eine Renderrunde über alle Objekte der Reihe — bei
+vierzehn Bühnenformen mit ihren SVGs.
+
+Der Bestand hatte die Antwort längst: `stage/useStageLight.ts` mit
+`StageLightHandle`, und `StackStage` reicht `stageLightRef` schon durch. Das
+Vial-Karussell nutzt genau das („Stage light bypasses React entirely"). Es
+fehlte nur im Formular — `DosageFormPreview` reichte den Griff nicht weiter.
+
+Jetzt meldet jede Form ihren Griff an, und der Mess-Frame schreibt Licht und
+Fokus direkt in den DOM: `setStageLight(fokus, -normiert)`, dazu die
+Deckkraft des Spots per `style.opacity`. Durch React geht nur noch, was sich
+selten ändert — die Auswahl (einmal je Wechsel) und die Größen (einmal je
+Platzänderung). Erst messen, dann schreiben, wie im Original: ein Lesen
+zwischen zwei Schreiben zwingt den Browser zu einem Zwischenlayout.
+
+### Die Formen schwappen wieder
+
+Formen mit Inhalt — Tablette, Ampulle, Tropfen, Gel, die Sprays — hängen per
+`useSloshSubscribe()` an der Flüssigkeitsphysik. Ohne `SloshProvider` liefert
+der Context `null`, und sie stehen still: im Formular hing bisher nichts
+daran. Die Reihe besitzt jetzt eine eigene Engine (`useSloshEngine`) und
+füttert sie mit derselben Verstärkung wie das Vial-Karussell — aus dem
+Scrollen (×2,6, damit auch der Nachschwung noch schwappt) und aus dem
+Zeigerzug (×2,4).
+
+### Verifikation
+
+Im echten Chromium gemessen, ohne `prefers-reduced-motion` (sonst ist die
+Physik per Absicht aus):
+
+- **Imperativer Kanal**: `data-capsule-focus` im DOM wandert beim Wischen von
+  0,40 auf 1,00 — geschrieben von der Bühnenform selbst.
+- **Flüssigkeit**: 97 Frames während eines Zugs, Median 16,7 ms, p95 16,8 ms,
+  **kein einziger Frame über 32 ms**. Durchgehend 60 fps.
+- **Physik**: 59 verschiedene Roll-Transformationen an der Tablette während
+  eines Wischvorgangs.
+- **Keine Vergrößerung**: das Vial misst 120 × 220 px vor und nach dem
+  Wählen.
+
+Ein Messfehler unterwegs, der festgehalten gehört: die Tablette setzt ihr
+`transform` als **SVG-Attribut**, nicht als `style.transform`. Der erste
+Messlauf las `style` und meldete „keine Physik", obwohl sie lief.
+
+1360 Tests grün (zwei neue: Fokus über den Griff, keine Vergrößerung durch
+die Auswahl), `tsc` sauber, eslint unverändert bei 140 Altbefunden.
