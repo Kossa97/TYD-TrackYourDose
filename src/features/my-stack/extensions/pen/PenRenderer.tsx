@@ -22,7 +22,7 @@ export function PenRenderer({ item, ...visualProps }: PenRendererProps) {
     <div data-stack-renderer="pen">
       <PenVisual
         name={item.display_name}
-        color={item.color_hex ?? fuellfarbe('pen')}
+        color={item.color_hex ?? fuellfarbe()}
         {...visualProps}
       />
     </div>

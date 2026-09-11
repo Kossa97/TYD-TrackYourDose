@@ -107,7 +107,7 @@ describe('DosageFormPicker', () => {
     renderAll({ value: 'powder' })
 
     const deckel = kachel('dosage_form_powder').querySelector('[data-powder-detail="lid"]')
-    expect(deckel?.getAttribute('fill')).toBe(fuellfarbe('powder'))
+    expect(deckel?.getAttribute('fill')).toBe(fuellfarbe())
   })
 
   it('legt die empfohlenen in die erste Reihe und alle uebrigen darunter', () => {
@@ -272,7 +272,7 @@ describe('DosageFormPicker', () => {
       <DosageFormPicker value={null} suggestedForms={['powder']} onSelect={() => undefined} />,
     )
 
-    expect(gewaehlt).toBe(fuellfarbe('powder'))
+    expect(gewaehlt).toBe(fuellfarbe())
     expect(deckel()).toBe(gewaehlt)
   })
 

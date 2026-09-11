@@ -35,7 +35,7 @@ export function AmpouleRenderer({ item, sloshEngine, ...visualProps }: AmpouleRe
       name={item.display_name}
       amount={ingredient?.amount_value}
       unit={strengthLabel(item)}
-      color={item.color_hex ?? fuellfarbe('ampoule')}
+      color={item.color_hex ?? fuellfarbe()}
       {...visualProps}
     />
   )

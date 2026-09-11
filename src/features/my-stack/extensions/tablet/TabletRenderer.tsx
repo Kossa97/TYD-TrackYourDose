@@ -24,7 +24,7 @@ export function TabletRenderer({ item, sloshEngine, ...visualProps }: TabletRend
   const tablet = (
     <TabletVisual
       name={item.display_name}
-      color={item.color_hex ?? fuellfarbe('tablet')}
+      color={item.color_hex ?? fuellfarbe()}
       {...visualProps}
     />
   )

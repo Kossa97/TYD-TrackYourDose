@@ -35,7 +35,7 @@ export function SprayRenderer({ item, sloshEngine, ...visualProps }: SprayRender
       name={item.display_name}
       amount={ingredient?.amount_value}
       unit={strengthLabel(item)}
-      color={item.color_hex ?? fuellfarbe('spray')}
+      color={item.color_hex ?? fuellfarbe()}
       {...visualProps}
     />
   )

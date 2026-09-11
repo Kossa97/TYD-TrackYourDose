@@ -35,7 +35,7 @@ export function DropsRenderer({ item, sloshEngine, ...visualProps }: DropsRender
       name={item.display_name}
       amount={ingredient?.amount_value}
       unit={strengthLabel(item)}
-      color={item.color_hex ?? fuellfarbe('drops')}
+      color={item.color_hex ?? fuellfarbe()}
       {...visualProps}
     />
   )

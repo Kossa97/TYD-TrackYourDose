@@ -29,7 +29,7 @@ export function GelRenderer({ item, sloshEngine, ...visualProps }: GelRendererPr
   const jar = (
     <GelVisual
       name={item.display_name}
-      color={item.color_hex ?? fuellfarbe('gel')}
+      color={item.color_hex ?? fuellfarbe()}
       {...visualProps}
     />
   )

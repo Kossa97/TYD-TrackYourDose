@@ -40,7 +40,7 @@ export function VialRenderer({
       amount={ingredient?.amount_value}
       unit={ingredient?.amount_unit}
       fillPct={fillPct}
-      color={item.color_hex ?? fuellfarbe('vial')}
+      color={item.color_hex ?? fuellfarbe()}
       animateOnMount={animateOnMount}
       size={size}
       className={className}

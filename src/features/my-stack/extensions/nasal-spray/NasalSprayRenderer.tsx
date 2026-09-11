@@ -35,7 +35,7 @@ export function NasalSprayRenderer({ item, sloshEngine, ...visualProps }: NasalS
       name={item.display_name}
       amount={ingredient?.amount_value}
       unit={strengthLabel(item)}
-      color={item.color_hex ?? fuellfarbe('nasal_spray')}
+      color={item.color_hex ?? fuellfarbe()}
       {...visualProps}
     />
   )

@@ -26,7 +26,7 @@ export function PowderRenderer({ item, ...visualProps }: PowderRendererProps) {
     <div data-stack-renderer="powder">
       <PowderVisual
         name={item.display_name}
-        color={item.color_hex ?? fuellfarbe('powder')}
+        color={item.color_hex ?? fuellfarbe()}
         {...visualProps}
       />
     </div>

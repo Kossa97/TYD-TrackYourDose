@@ -434,3 +434,38 @@ eigenes Material, unabhängig von der Auswahl.
 sauber, ESLint unverändert bei 140. Die beiden neuen Tests halten die Regel
 in beide Richtungen fest: die gewählte Form zeigt `fuellfarbe('powder')`, und
 gewählt sieht aus wie ungewählt.
+
+---
+
+## Nachtrag 2026-09-11, sechster Teil: eine Standardfarbe für alle Formen
+
+„Okay wir machens anders. Standardfarbe ist weiß/glasfarbig/helles
+transparent für alle Darreichungsformen bitte so ändern."
+
+### Warum das Material-je-Form-Modell wieder raus ist
+
+Der vierte Nachtrag hatte jeder Form ihr eigenes Material gegeben —
+Wasserblau für Flüssigkeiten, gepresstes Weiß für die Tablette, Elfenbein für
+die Kapsel. Das sah eigenständig aus, aber genau das war das Problem: eine
+Form mit einem eigenen, plausiblen Material *wirkt* schon gewählt, obwohl der
+Nutzer im Formschritt noch gar keine Farbe festgelegt hat. Der Wunsch jetzt
+ist der ehrlichere Ausgangspunkt: alle Formen gleich, hell, glasig,
+durchscheinend — ein Rohling, kein Material.
+
+### Eine Konstante statt einer Tabelle
+
+`lib/fuellfarben.ts` hatte eine `Record<DosageFormKey, string>` mit einem
+Eintrag je Form. Da jetzt exakt ein Wert fuer alle gilt, waere die Tabelle
+eine Behauptung ohne Inhalt gewesen — sie hätte zwölfmal denselben Hex-Wert
+wiederholt. Die Funktion `fuellfarbe()` gibt jetzt direkt `#f3f5f7` zurück,
+ohne Parameter: den Parameter unterschiedlich zu behandeln gab es nicht mehr
+zu tun. Die zehn Renderer und die zwei Tests, die `fuellfarbe('form')`
+aufriefen, rufen jetzt `fuellfarbe()`.
+
+### Gegengeprüft
+
+1359 Tests grün, `tsc` sauber, ESLint unverändert bei 140. Im Chromium zeigen
+Vial, Ampulle, Tropfen, Spray, Nasenspray und das Pulverglas alle dasselbe
+helle, glasige Weiß — keine Form sticht farblich hervor. Tube und Pflaster
+bleiben unverändert bei ihrem eigenen Material, das die Eintragsfarbe
+ohnehin nie überschreibt.

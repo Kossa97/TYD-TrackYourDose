@@ -22,7 +22,7 @@ export function CapsuleRenderer({ item, ...visualProps }: CapsuleRendererProps) 
     <div data-stack-renderer="capsule">
       <CapsuleVisual
         name={item.display_name}
-        color={item.color_hex ?? fuellfarbe('capsule')}
+        color={item.color_hex ?? fuellfarbe()}
         {...visualProps}
       />
     </div>
