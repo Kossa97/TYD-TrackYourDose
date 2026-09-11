@@ -334,10 +334,17 @@ describe('DosageFormPicker', () => {
     expect(scrollIntoView).toHaveBeenCalled()
   })
 
-  it('waehlt nichts von sich aus, nur weil beim ersten Bild etwas am naechsten liegt', async () => {
-    // jsdom setzt clientWidth/scrollLeft mit 0 an — ohne die Geometrie unten
-    // waere jedes Objekt gleich weit weg, und schon das erste Messen koennte
-    // eines "zufaellig" als naechstes finden. Genau das darf nicht auswaehlen.
+  it('waehlt beim Start die erste empfohlene Form vor — und nur sie', async () => {
+    // Die erste Form der vorderen Reihe steht beim Oeffnen ohnehin zentriert.
+    // Sie unbeleuchtet dort stehen zu lassen, hiesse dem Nutzer eine Mitte zu
+    // zeigen, die nichts bedeutet. Das ist kein stilles Auswaehlen: man sieht
+    // sie hervorgehoben, und ihr Name steht darunter.
+    //
+    // Was weiterhin nicht passieren darf: dass die geratene Geometrie des
+    // ersten Bildes etwas auswaehlt. jsdom layoutet nicht, ohne die Stubs
+    // unten ist jedes Objekt gleich weit von der Mitte weg — gemeldet wird
+    // trotzdem genau die erste Form, nicht irgendeine. Und die hintere Reihe
+    // meldet gar nichts: dort steht nichts, was zu dieser Substanz passt.
     const onSelect = vi.fn()
     render(
       <DosageFormPicker value={null} suggestedForms={['ampoule', 'vial', 'gel']} onSelect={onSelect} />,
@@ -350,18 +357,18 @@ describe('DosageFormPicker', () => {
     platziere(within(gruppe).getByRole('button', { name: 'dosage_form_gel' }), 220, 100)
 
     await new Promise(resolve => window.setTimeout(resolve, 0))
-    expect(onSelect).not.toHaveBeenCalled()
+    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect).toHaveBeenCalledWith('ampoule')
   })
 
   it('waehlt aus, was man ins Zentrum wischt — ohne extra draufzutippen', async () => {
     // Dieselbe Mechanik wie im Vial-Karussell auf der My-Stack-Seite: das
     // zentrierte Objekt wird die Auswahl, das Wischen selbst reicht.
     //
-    // jsdom layoutet nicht — vor dem Stubben unten sind offsetLeft/Width bei
-    // allen Knoepfen 0, und das lautlose Erst-Messen (siehe Test oben) sucht
-    // sich beim Gleichstand den ersten Eintrag der Liste ("ampoule") als
-    // Ausgangspunkt aus. Gewischt wird deshalb auf "vial" — sonst waere ein
-    // Zufall des leeren DOM die Bedingung, nicht das Wischen selbst.
+    // Die vordere Reihe waehlt beim Start ihre erste Form vor ("ampoule",
+    // siehe Test oben) — dieser erste Aufruf gehoert nicht zum Wischen.
+    // Gewischt wird deshalb auf "vial": nur ein echter Positionswechsel darf
+    // danach noch etwas melden.
     const onSelect = vi.fn()
     render(
       <DosageFormPicker value={null} suggestedForms={['ampoule', 'vial', 'gel']} onSelect={onSelect} />,
@@ -376,15 +383,15 @@ describe('DosageFormPicker', () => {
     // Gewischt ist, was oben steht: "vial" (Zentrum 160) liegt der Mitte
     // (150 bei 300 px Breite) am naechsten. Das Scroll-Event meldet es.
     fireEvent.scroll(gruppe)
-    await waitFor(() => expect(onSelect).toHaveBeenCalledTimes(1))
-    expect(onSelect).toHaveBeenCalledWith('vial')
+    await waitFor(() => expect(onSelect).toHaveBeenLastCalledWith('vial'))
+    const nachDemWischen = onSelect.mock.calls.length
 
     // Ein zweites Scroll-Event ohne Positionswechsel meldet nichts erneut —
     // es hat sich nichts geaendert, das Wischen ist nur zum Stillstand
     // gekommen (z. B. am Ende der Traegheit).
     fireEvent.scroll(gruppe)
     await new Promise(resolve => window.setTimeout(resolve, 0))
-    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelect).toHaveBeenCalledTimes(nachDemWischen)
   })
 
   it('macht das zentrierte Objekt heller, den Rest dunkler — stetig, nicht nur an/aus', async () => {

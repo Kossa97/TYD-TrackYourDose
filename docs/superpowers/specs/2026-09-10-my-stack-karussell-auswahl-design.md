@@ -267,3 +267,56 @@ Messlauf las `style` und meldete „keine Physik", obwohl sie lief.
 
 1360 Tests grün (zwei neue: Fokus über den Griff, keine Vergrößerung durch
 die Auswahl), `tsc` sauber, eslint unverändert bei 140 Altbefunden.
+
+---
+
+## Nachtrag 2026-09-11, dritter Teil: der Sprung, der Start, die Beschriftung
+
+### Der abrupte Sprung kam aus dem eigenen Code
+
+„Nachdem man wischt, springt die Form nach einer gewissen Strecke zur
+nächsten, das passiert abrupt." Nicht das CSS-Snapping war schuld: Ein
+Effekt holte bei **jedem** `value`-Wechsel die gewählte Form per
+`scrollIntoView` ins Bild — ohne `behavior: 'smooth'`. Beim Wischen wechselt
+die Auswahl aber laufend, sobald die Mitte auf die nächste Form überspringt.
+Die Reihe wurde also mitten in der Bewegung hart auf sie geschossen.
+
+Der Effekt ist dafür da, eine Auswahl von **außen** ins Bild zu holen (ein
+bestehender Eintrag, dessen Form weit rechts liegt). Kam der Wechsel aus
+dieser Reihe selbst, ist nichts zu tun — das CSS-Snapping rastet ohnehin
+sanft ein. `letzterRef` weiß das bereits, es musste nur gefragt werden. Und
+nach dem ersten Bild scrollt der Effekt gleitend statt sofort.
+
+Nachgemessen im echten Chromium: während eines Zugs kein einziger
+`scrollIntoView`-Aufruf mehr, danach genau einer mit `behavior: "smooth"`.
+Größter Sprung von `scrollLeft` zwischen zwei Frames: 10 px.
+
+### Der Start steht nicht mehr auf einer Mitte ohne Bedeutung
+
+Die erste Form der vorderen Reihe steht beim Öffnen ohnehin zentriert. Sie
+unbeleuchtet und ungefärbt dort stehen zu lassen hieß, eine Mitte zu zeigen,
+die nichts bedeutet. Sie ist jetzt vorausgewählt — hervorgehoben, gefärbt,
+mit ihrem Namen darunter.
+
+Die alte Regel „kein stilles Auswählen beim ersten Bild" fällt damit nicht,
+sie wird genauer: Was die geratene Geometrie des ersten Bildes für zentriert
+hält, darf weiterhin nichts auswählen, und die hintere Reihe wählt gar nichts
+vor — dort steht nichts, was zu dieser Substanz passt. Vorgewählt wird genau
+die erste Form der vorderen Reihe, und man sieht sie. Der Test hält beides
+fest: genau ein Aufruf, und zwar mit der ersten Form.
+
+### Der Name steht unter seiner Form
+
+„Darreichungsform" stand zweimal im Bild — als Untertitel des Schritts und
+noch einmal als Überschrift darunter, mit dem gewählten Namen dazu. Die
+Überschrift ist jetzt `sr-only` (als `<legend>` muss sie das erste Kind des
+`<fieldset>` bleiben, sonst verliert die Gruppe ihren Namen), und der Name
+steht dort, wo er hingehört: mittig unter der Reihe, in der die Auswahl
+liegt.
+
+Beide Reihen halten die Zeile frei, auch die ohne Namen. Ließe man sie dort
+weg, wäre die eine Reihe 28 px höher als die andere, und beim Wechsel
+zwischen ihnen sprängen die Höhen — woran wiederum die Objektgrößen hängen.
+Beschriftet ist immer nur eine, deshalb steht der Name im Bild genau einmal.
+
+1360 Tests grün, `tsc` sauber, eslint unverändert bei 140 Altbefunden.

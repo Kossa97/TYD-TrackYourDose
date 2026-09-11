@@ -56,6 +56,31 @@ export function DosageFormPicker({
     .filter((form): form is DosageFormDefinition => form !== undefined)
   const secondaryForms = DOSAGE_FORMS.filter(form => !primaryKeys.includes(form.key))
   const selectedForm = value ? DOSAGE_FORMS.find(form => form.key === value) : undefined
+  const inVordererReihe = Boolean(value) && primaryForms.some(form => form.key === value)
+
+  // Der Name steht unter dem Objekt, das er benennt — also unter der Reihe,
+  // in der die Auswahl gerade liegt, und dort mittig. Er wandert mit, statt
+  // an einer festen Stelle zu stehen und auf eine der beiden Reihen zu
+  // zeigen, ohne zu sagen auf welche.
+  //
+  // Beide Reihen halten die Zeile frei, auch die ohne Namen: liesse man sie
+  // dort weg, waere die eine Reihe 28 px hoeher als die andere, und beim
+  // Wechsel zwischen ihnen sprungen die Hoehen — woran wiederum die
+  // Objektgroessen haengen (`skalenMessen`). Beschriftet ist immer nur eine,
+  // deshalb steht der Name im Bild genau einmal.
+  const namensZeile = (beschriftet: boolean) => (
+    beschriftet ? (
+      <p
+        data-dosage-form-selected
+        aria-live="polite"
+        className="mt-2 min-h-5 text-center text-sm font-semibold text-sky-200"
+      >
+        {selectedForm ? t(selectedForm.labelKey) : ''}
+      </p>
+    ) : (
+      <p aria-hidden="true" className="mt-2 min-h-5" />
+    )
+  )
 
   return (
     <fieldset
@@ -65,24 +90,13 @@ export function DosageFormPicker({
       className="flex h-full min-w-0 flex-col"
       data-field="dosageForm"
       tabIndex={-1} aria-invalid={error || undefined} aria-describedby={error ? 'stack-dosage-form-error' : undefined}>
-      {/* <legend> muss das erste Kind von <fieldset> bleiben, sonst geht die
-          Verbindung zur Barrierefreiheit verloren — die Namensanzeige folgt
-          deshalb als eigenes Element danach statt in einer gemeinsamen
-          Wrapper-Zeile. */}
-      <legend className="mb-1 text-sm font-semibold text-slate-200">
+      {/* Nur fuer Screenreader: „Darreichungsform" steht schon als Untertitel
+          ueber dem Schritt, ein zweites Mal daruntergeschrieben war es
+          doppelt. Als <legend> muss es trotzdem das erste Kind des
+          <fieldset> bleiben, sonst verliert die Gruppe ihren Namen. */}
+      <legend className="sr-only">
         {t('my_stack_dosage_form', { defaultValue: 'Darreichungsform' })}
       </legend>
-      {/* Direkt unter der Ueberschrift statt unter beiden Karussells: dort
-          stand sie hinter zwei fast bildschirmhohen Reihen und war auf
-          kleineren Handys erst nach Scrollen zu sehen — obwohl sie genau
-          zeigen soll, was man gerade gewaehlt hat, sobald man es getan hat. */}
-      <p
-        data-dosage-form-selected
-        aria-live="polite"
-        className="mb-3 min-h-5 text-sm font-semibold text-sky-200"
-      >
-        {selectedForm ? t(selectedForm.labelKey) : ''}
-      </p>
 
       {/* Kein Rahmen, kein Radius, eine durchgehend dunkle Flaeche: die zwei
           Karussells sind nicht zwei Kacheln, die man einrahmen muesste. Was
@@ -103,8 +117,10 @@ export function DosageFormPicker({
             colorHex={colorHex}
             akzentfarbe={AKZENTFARBE}
             labelId="stack-dosage-primary-label"
+            waehltBeimStart
             onSelect={onSelect}
           />
+          {namensZeile(inVordererReihe)}
         </div>
 
         {secondaryForms.length > 0 && (
@@ -120,6 +136,7 @@ export function DosageFormPicker({
               labelId="stack-dosage-more-label"
               onSelect={onSelect}
             />
+            {namensZeile(!inVordererReihe)}
           </div>
         )}
       </div>

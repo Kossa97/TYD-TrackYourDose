@@ -55,6 +55,10 @@ export interface DosageFormCarouselProps {
   /** Farbe fuer die gewaehlte Form, solange keine eigene gesetzt ist. */
   akzentfarbe: string
   labelId: string
+  // Nur die vordere Reihe waehlt beim Start ihre erste Form vor. In der
+  // Reihe „Weitere Darreichungsformen" waere das eine Behauptung: dort steht
+  // nichts, was zu dieser Substanz passt.
+  waehltBeimStart?: boolean
   onSelect: (dosageForm: DosageFormKey) => void
 }
 
@@ -64,6 +68,7 @@ export function DosageFormCarousel({
   colorHex,
   akzentfarbe,
   labelId,
+  waehltBeimStart = false,
   onSelect,
 }: DosageFormCarouselProps) {
   const { t } = useTranslation()
@@ -214,10 +219,20 @@ export function DosageFormCarousel({
     setSkalaJeForm(vorher => ({ ...vorher, ...skalen }))
   }
 
-  // Erstes Bild: nur das Licht setzen, nichts auswaehlen. Im naechsten Frame
-  // statt sofort — gemessen werden kann erst, wenn der Browser die Reihe
-  // gelegt hat.
+  // Erstes Bild: Licht setzen. Im naechsten Frame statt sofort — gemessen
+  // werden kann erst, wenn der Browser die Reihe gelegt hat.
+  //
+  // Und die vordere Reihe waehlt dabei ihre erste Form vor. Die steht beim
+  // Oeffnen ohnehin zentriert; sie unbeleuchtet und ungefaerbt dort stehen zu
+  // lassen, hiesse dem Nutzer eine Mitte zu zeigen, die nichts bedeutet. Das
+  // ist kein stilles Auswaehlen: man sieht sie hervorgehoben, und ihr Name
+  // steht darunter.
   useEffect(() => {
+    const erste = formen[0]
+    if (waehltBeimStart && !value && erste) {
+      letzterRef.current = erste.key
+      onSelect(erste.key)
+    }
     const frame = window.requestAnimationFrame(buehnenlichtMessen)
     return () => window.cancelAnimationFrame(frame)
     // Nur beim ersten Bild — welche Formen es gibt, aendert sich danach nicht.
@@ -237,11 +252,28 @@ export function DosageFormCarousel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Beim Bearbeiten eines bestehenden Eintrags kann die gewaehlte Form weit
-  // rechts liegen. Sie wird hereingeholt, sonst sieht man nicht, was
-  // eingestellt ist.
+  // Eine Auswahl, die von aussen kommt, wird ins Bild geholt: beim Bearbeiten
+  // eines bestehenden Eintrags kann die gewaehlte Form weit rechts liegen.
+  //
+  // Aber nur von aussen. Vorher lief das bei jedem `value`-Wechsel und ohne
+  // `smooth` — also auch mitten im Wischen, sobald die Mitte auf die naechste
+  // Form uebersprang: die Reihe wurde hart auf sie geschossen. Genau das war
+  // das abrupte Springen nach einer gewissen Strecke. Kam der Wechsel aus
+  // dieser Reihe selbst (`letzterRef`), rastet ohnehin das CSS-Snapping
+  // sanft ein, und hier ist nichts zu tun.
+  const ersterLaufRef = useRef(true)
   useEffect(() => {
-    gewaehltRef.current?.scrollIntoView?.({ block: 'nearest', inline: 'center' })
+    const warErsterLauf = ersterLaufRef.current
+    ersterLaufRef.current = false
+    if (!value || !formen.some(form => form.key === value)) return
+    if (letzterRef.current === value) return
+
+    letzterRef.current = value
+    // Beim ersten Bild sofort — da soll es von Anfang an richtig stehen.
+    // Danach gleitend, weil jemand zugesehen hat.
+    scrollZu(value, !warErsterLauf)
+    // `formen` steht fest, sobald der Katalogeintrag gewaehlt ist.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
   useEffect(() => () => {
