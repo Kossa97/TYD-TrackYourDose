@@ -3324,9 +3324,9 @@
     "semantic_hash": "b3de680e5c6ffddd4dd0573b6796cea4"
   },
   "src/features/my-stack/components/DosageFormPicker.test.tsx": {
-    "mtime": 1789090543.9692218,
-    "seen": 1789090759.566598,
-    "ast_hash": "0a4572038ff8f499cfdf8e24a933aea5",
+    "mtime": 1789091758.5523407,
+    "seen": 1789091916.165905,
+    "ast_hash": "25a11e51c0d969dee8df1cdf03ff989b",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.test.tsx": {
@@ -3792,10 +3792,10 @@
     "semantic_hash": "4df75c971e2a26e3f39921a346706dad"
   },
   "src/features/my-stack/components/DosageFormPreview.tsx": {
-    "mtime": 1788737676.4305758,
-    "seen": 1788803479.1909783,
-    "ast_hash": "821aef934b362b5fe258b0281ea3ec5a",
-    "semantic_hash": "821aef934b362b5fe258b0281ea3ec5a"
+    "mtime": 1789091364.9948993,
+    "seen": 1789091916.1659093,
+    "ast_hash": "773088b4b09107e15037ff559ccc1be3",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/gel/GelRenderer.tsx": {
     "mtime": 1788737622.0079522,
@@ -4032,9 +4032,9 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-10-my-stack-karussell-auswahl-design.md": {
-    "mtime": 1789090726.3812327,
-    "seen": 1789090759.5669854,
-    "ast_hash": "504908875c287cee2bedca25312130d9",
+    "mtime": 1789091886.7563484,
+    "seen": 1789091916.166347,
+    "ast_hash": "464b87032b2b8a3fd4285c93ae33de0e",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/buehnenSkala.ts": {
@@ -4044,9 +4044,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormCarousel.tsx": {
-    "mtime": 1789090287.3412066,
-    "seen": 1789090759.5665922,
-    "ast_hash": "e00ced2fa4c9b3109061dc20a9476b64",
+    "mtime": 1789091482.9483242,
+    "seen": 1789091916.1658998,
+    "ast_hash": "86773027c31950b5b5c19670f49028d2",
     "semantic_hash": ""
   }
 }
