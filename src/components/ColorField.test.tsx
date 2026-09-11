@@ -104,6 +104,56 @@ describe('ColorField', () => {
     expect(onChange).toHaveBeenCalledWith('#000000')
   })
 
+  it('zeigt die Lupe nur beim Finger, nicht bei der Maus', () => {
+    // Der Mauszeiger sitzt schon neben der Stelle, die man trifft — eine
+    // Lupe wuerde dort nur im Weg stehen.
+    const { flaeche, container } = aufbauen()
+    flaeche.setPointerCapture = vi.fn()
+    flaeche.releasePointerCapture = vi.fn()
+    flaeche.hasPointerCapture = () => true
+    flaeche.getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 100 }) as DOMRect
+
+    fireEvent.pointerDown(flaeche, { pointerId: 1, clientX: 50, clientY: 40, pointerType: 'mouse' })
+    expect(container.querySelector('[data-color-field="lupe"]')).toBeNull()
+
+    fireEvent.pointerDown(flaeche, { pointerId: 1, clientX: 50, clientY: 40, pointerType: 'touch' })
+    expect(container.querySelector('[data-color-field="lupe"]')).not.toBeNull()
+  })
+
+  it('zentriert die Lupe auf genau der beruehrten Stelle, vergroessert', () => {
+    const { flaeche, container } = aufbauen()
+    flaeche.setPointerCapture = vi.fn()
+    flaeche.releasePointerCapture = vi.fn()
+    flaeche.hasPointerCapture = () => true
+    flaeche.getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 100 }) as DOMRect
+
+    // Ein Viertel von links, ein Viertel von oben.
+    fireEvent.pointerDown(flaeche, { pointerId: 1, clientX: 50, clientY: 25, pointerType: 'touch' })
+
+    const ausschnitt = container.querySelector('[data-color-field="lupe"] > div') as HTMLElement
+    // Dreifach vergroessert: aus 200x100 wird 600x300.
+    expect(ausschnitt.style.width).toBe('600px')
+    expect(ausschnitt.style.height).toBe('300px')
+    // Verschoben, damit der beruehrte Punkt (150px, 75px im vergroesserten
+    // Ausschnitt) auf der Mitte der 96px-Lupe (48px) landet.
+    expect(ausschnitt.style.left).toBe(`${48 - 150}px`)
+    expect(ausschnitt.style.top).toBe(`${48 - 75}px`)
+  })
+
+  it('nimmt die Lupe wieder weg, sobald der Finger loslaesst', () => {
+    const { flaeche, container } = aufbauen()
+    flaeche.setPointerCapture = vi.fn()
+    flaeche.releasePointerCapture = vi.fn()
+    flaeche.hasPointerCapture = () => true
+    flaeche.getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 100 }) as DOMRect
+
+    fireEvent.pointerDown(flaeche, { pointerId: 1, clientX: 50, clientY: 40, pointerType: 'touch' })
+    expect(container.querySelector('[data-color-field="lupe"]')).not.toBeNull()
+
+    fireEvent.pointerUp(flaeche, { pointerId: 1 })
+    expect(container.querySelector('[data-color-field="lupe"]')).toBeNull()
+  })
+
   it('markiert unsere eigenen Farbtoene auf der Schiene', () => {
     const { container } = aufbauen()
     const marken = container.querySelectorAll('[data-color-field-mark]')

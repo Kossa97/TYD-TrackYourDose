@@ -808,14 +808,25 @@ export function StackItemWizard({
               data-wizard-preview
               className="mb-6 rounded-2xl border border-white/10 bg-white/[0.02] px-4 pt-4 pb-4"
             >
-              <div className="flex min-h-[124px] items-end justify-center pb-3">
-                <DosageFormPreview
-                  dosageForm={state.draft.dosageForm}
-                  displayName={state.draft.displayName}
-                  colorHex={state.draft.colorHex}
-                  ingredients={state.draft.ingredients}
-                  size="compact"
-                />
+              {/* Deutlich groesser als vorher (124px): auf diesem Schritt
+                  gibt es sonst nichts, das den Platz braucht — das
+                  Farbfeld darunter ist schmal, der Rest der Karte war leer.
+                  `scale` statt einer eigenen groesseren Groessenstufe je
+                  Form: „large" ist fuer freistehende Karten gedacht und bei
+                  einem Pen 589px hoch, weit ueber das hinaus, was hier noch
+                  ins Bild passt. Der Skalierrahmen sitzt um das Objekt, nicht
+                  um den Kasten — sonst waechst der Kasten mit, statt einen
+                  festen Rahmen zu geben, in dem sich das Objekt zeigt. */}
+              <div className="flex min-h-[220px] items-end justify-center pb-3">
+                <span className="origin-bottom scale-[1.7]">
+                  <DosageFormPreview
+                    dosageForm={state.draft.dosageForm}
+                    displayName={state.draft.displayName}
+                    colorHex={state.draft.colorHex}
+                    ingredients={state.draft.ingredients}
+                    size="compact"
+                  />
+                </span>
               </div>
               {/* Die Farbe steht direkt unter dem Objekt, das sie faerbt.
                   Eine Flaeche zum Ziehen statt fertiger Felder: der Nutzer

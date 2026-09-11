@@ -523,3 +523,64 @@ unveraendert.
 `tsc` sauber, ESLint unveraendert bei 140. Im Chromium: Gel zentriert und
 ausgewaehlt steht hell und in voller Farbe, Vial und Pen daneben sichtbar
 verdunkelt und entsaettigt.
+
+---
+
+## Nachtrag 2026-09-11, achter Teil: groessere Vorschau und eine Lupe beim Farbwaehlen
+
+„Bei dem Farbauswahl-Fenster oben die Vorschau viel groesser machen. Wenn man
+mit dem Finger in die Farbpalette tippt, druckt man automatisch etwas
+versetzt oben drueber und zoomt etwas rein, damit man besser anvisieren kann,
+welche Farbe man waehlt, lupenartig."
+
+### Die Vorschau
+
+Der Kasten ueber dem Farbfeld zeigte das Objekt bisher in `size="compact"`
+bei `min-h-[124px]` — auf dem Farbschritt ist sonst nichts im Weg, das den
+Platz braucht. Eine eigene, groessere Groessenstufe je Form kam nicht in
+Frage: `large` ist fuer freistehende Karten gedacht und bei einem Pen 589px
+hoch, weit ueber das hinaus, was hier noch ins Bild passt, waehrend eine
+Tablette bei `large` nur 160px hoch ist — die Sprnge zwischen den Stufen sind
+je Form verschieden gross. Stattdessen ein `scale-[1.7]` um das Objekt herum
+(`origin-bottom`, damit es weiterhin auf derselben Linie steht), der Kasten
+selbst auf `min-h-[220px]`. Das behaelt jede Form ihr eigenes Seitenverhaeltnis
+und wird trotzdem deutlich groesser — ohne dass zehn Renderer neue
+Groessenklassen bekommen muessten.
+
+### Die Lupe
+
+Beim Ziehen mit dem Finger auf der Saettigungs-/Helligkeitsflaeche deckt der
+Finger selbst genau die Stelle ab, die man treffen will — bei einer Maus gibt
+es das Problem nicht, der Zeiger sitzt ohnehin daneben. `ColorField` zeigt
+deshalb nur bei `event.pointerType === 'touch'` eine schwebende Lupe.
+
+Sie ist kein Bild, das skaliert wird, sondern derselbe CSS-Farbverlauf wie
+die Flaeche selbst, nur auf `LUPE_ZOOM` (3×) vergroessert gerendert und so
+verschoben, dass genau die beruehrte Stelle in der Mitte der Lupe liegt: eine
+kreisfoermige `overflow: hidden`-Blase mit einem darin verschobenen, groesser
+gerenderten Verlaufsrechteck. Das funktioniert, weil ein CSS-Gradient sich
+immer auf die eigene Boxgroesse bezieht — ein dreifach so grosses Rechteck
+mit demselben Gradient zeigt an jeder relativen Position exakt dieselbe
+Farbe, nur schaerfer aufgeloest. Ein Fadenkreuz in der Mitte markiert den
+Punkt, der gerade gemeldet wird.
+
+Die Lupe schwebt ueber dem Finger (`LUPE_ABSTAND`), nicht darunter, sonst
+verdeckt der Finger genau das, was sie zeigen soll. `position: fixed`, weil
+sie an Bildschirmkoordinaten haengt und nicht an der (unbewegten) Flaeche.
+Sie verschwindet, sobald der Finger loslaesst oder der Zug abbricht
+(`onPointerUp`/`onPointerCancel`).
+
+### Gegengeprueft
+
+1363 Tests gruen (drei neue: Lupe nur bei `touch`, nicht bei `mouse`;
+Vergroesserung und Verschiebung rechnerisch exakt fuer einen bekannten
+Beruehrungspunkt; verschwindet bei `pointerUp`), `tsc` sauber, ESLint
+unveraendert bei 140. Im Chromium mit einem simulierten Touch-Pointer zeigt
+die Lupe exakt die Farbe, die im Ergebnis-Feld daneben steht (`#6B9199` fuer
+denselben Punkt in beiden). Die Vorschau darueber (Vial) ist sichtbar
+groesser, ohne den Kasten zu sprengen.
+
+Ein Hinweis fuer den naechsten Test von Hand: die Lupe erscheint nur bei
+einem echten Touch-Pointer — eine Maus in einem normalen Browserfenster loest
+sie absichtlich nicht aus, das muss auf einem Touchscreen oder in den
+Devtools mit aktivierter Touch-Emulation geprueft werden.
