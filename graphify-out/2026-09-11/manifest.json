@@ -3324,9 +3324,9 @@
     "semantic_hash": "b3de680e5c6ffddd4dd0573b6796cea4"
   },
   "src/features/my-stack/components/DosageFormPicker.test.tsx": {
-    "mtime": 1789098112.6834233,
-    "seen": 1789098364.2001143,
-    "ast_hash": "3f1c0a85adc1f1b4e8ad8bb402dbeeb0",
+    "mtime": 1789098767.0568817,
+    "seen": 1789099005.2585616,
+    "ast_hash": "79ba967dc5cb6344e6d63129a55d2a28",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.test.tsx": {
@@ -4032,9 +4032,9 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-10-my-stack-karussell-auswahl-design.md": {
-    "mtime": 1789098324.8463418,
-    "seen": 1789098364.2005894,
-    "ast_hash": "6262540f44ce0c69dc68bb7c43aa4616",
+    "mtime": 1789098966.17438,
+    "seen": 1789099005.259077,
+    "ast_hash": "9c1becec6546e7d2272da8679742ebac",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/buehnenSkala.ts": {
@@ -4044,9 +4044,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormCarousel.tsx": {
-    "mtime": 1789094996.709737,
-    "seen": 1789095320.5126264,
-    "ast_hash": "2350479e4549151f4206c3f1f3dac609",
+    "mtime": 1789098730.178366,
+    "seen": 1789099005.2585554,
+    "ast_hash": "b65b543bbd77bd869e8a2b688e4b0f11",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/fuellfarben.ts": {
