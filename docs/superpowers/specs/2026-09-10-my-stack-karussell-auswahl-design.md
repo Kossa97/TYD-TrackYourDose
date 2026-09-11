@@ -148,3 +148,57 @@ aus. Im echten Chromium nachgemessen: kein Objekt überlappt seinen Nachbarn
 mehr, ein Mauszug bewegt `scrollLeft` von 0 auf 268.
 
 1358 Tests grün, `tsc` sauber, eslint unverändert bei 140 Altbefunden.
+
+---
+
+## Nachtrag 2026-09-11: die Mechanik kommt vom Vial-Karussell
+
+„Das jetzige lässt sich nicht wischen und hat Fehler." Die Wischmechanik ist
+jetzt die des Vial-Karussells auf der Peptid-Seite (`Peptide.tsx`,
+`updateVialFocus` und die Zeiger-Handler daneben), übernommen statt
+nachgebaut. Drei Dinge fehlten:
+
+### 1. Snapping muss während des Ziehens aus
+
+`snap-mandatory` bleibt aktiv, während der Zug `scrollLeft` setzt — der
+Browser zieht bei jedem gesetzten Wert sofort zum nächsten Snap-Punkt
+zurück, und die Reihe klebt fest. Das Vial-Karussell schaltet Snapping für
+die Dauer des Zugs ab (`snap-none`, am Element auch `snap-center` weg) und
+fängt beim Loslassen von Hand ein, was in der Mitte steht. Genau das macht
+die Reihe jetzt auch.
+
+### 2. Am Schreibtisch gibt es kein Wischen
+
+Das Mausrad scrollt vertikal, und `overflow-x-auto` nimmt davon nichts an.
+Eine Radumdrehung rückt die Reihe jetzt um ein Objekt weiter, mit 280 ms
+Sperre danach — sonst rauscht ein Trackpad-Wisch durch die halbe Reihe.
+
+### 3. Prozentbreiten vertragen sich nicht mit `paddingInline`
+
+Der Standplatz ist jetzt absolut breit (`min(12rem, 50vw)`), und der Rand
+zum Zentrieren hängt wieder als `paddingInline` am Karussell — zusammen mit
+`scrollPaddingInline`, das den Snap-Punkt auf dieselbe Mitte setzt. So macht
+es das Vial-Karussell, und so entsteht das content-box-Problem gar nicht
+erst, das vorher den Standplatz heimlich halbierte.
+
+### Eine Reihe, zweimal gerendert
+
+Die ganze Mechanik steckt in `DosageFormCarousel` — Messung, Zug, Rad,
+Snapping, Skalierung. Der Picker reicht nur noch Überschriften und Formen
+durch. Vorher stand alles doppelt im Picker, einmal für jede Reihe, mit
+je eigenen Refs; dass sich beide gleich anfühlen, war damit eine Frage der
+Sorgfalt statt eine der Bauart.
+
+### Verifikation
+
+In echtem Chromium alle drei Eingabewege gemessen: Maus-Ziehen bewegt
+`scrollLeft` von 0 auf 196 und wählt „Kapsel", das Mausrad rückt weiter auf
+„Vial", ein Touch-Wisch wählt „Kapsel". 1358 Tests grün, `tsc` sauber,
+eslint unverändert bei 140 Altbefunden.
+
+Ein Test hat dabei eine eigene Lücke gezeigt: „macht das zentrierte Objekt
+heller" wartete auf `ampoule < 1`, und das ist schon im Ruhezustand wahr
+(0,42), solange nichts gemessen wurde. Solange das Erst-Messen synchron
+lief, fiel das nicht auf. Die Bedingung prüft jetzt beides zusammen —
+zentriertes Objekt auf 1 UND Nachbar darunter —, was nur nach einer Messung
+mit echter Geometrie gilt.

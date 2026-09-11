@@ -367,8 +367,16 @@ describe('DosageFormPicker', () => {
     // in jsdom sind zunaechst alle Objekte gleich weit von der Mitte entfernt,
     // also gleich hell. Erst wenn "ampoule" unter 1 faellt, hat das ECHTE,
     // geometriebasierte Messen nach dem Wischen tatsaechlich stattgefunden.
-    await waitFor(() => expect(leuchtstaerke(ampoule)).toBeLessThan(1))
+    // Beide Bedingungen zusammen, weil jede einzelne auch ohne echtes Messen
+    // wahr sein kann: ohne gemessene Werte stehen alle Objekte auf demselben
+    // Ruhewert (0,42 — unter 1), und beim geometrielosen Messen in jsdom sind
+    // alle gleich weit von der Mitte weg und damit alle auf 1. Nur wenn das
+    // zentrierte Vial auf 1 steht UND die Ampulle daneben darunter liegt, hat
+    // die Messung mit echter Geometrie stattgefunden.
+    await waitFor(() => {
+      expect(leuchtstaerke(vial)).toBe(1)
+      expect(leuchtstaerke(ampoule)).toBeLessThan(1)
+    })
     expect(leuchtstaerke(ampoule)).toBeGreaterThan(0)
-    expect(leuchtstaerke(vial)).toBe(1)
   })
 })
