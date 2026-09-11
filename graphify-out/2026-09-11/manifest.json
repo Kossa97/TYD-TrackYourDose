@@ -2802,9 +2802,9 @@
     "semantic_hash": "b7f063a4a0fe1a979bc182754c37579a"
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
-    "mtime": 1789090200.3772016,
-    "seen": 1789090759.566599,
-    "ast_hash": "a390ccca4d4fcbe4029b3f881adb46a2",
+    "mtime": 1789065618.4674084,
+    "seen": 1789065842.1259525,
+    "ast_hash": "b2ffb80088cc34602dd6272c9e3da073",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/IngredientEditor.tsx": {
@@ -2832,10 +2832,10 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.test.ts": {
-    "mtime": 1789090374.593212,
-    "seen": 1789090759.5666149,
-    "ast_hash": "2e7c16ab0500d87dd392ba5b48727890",
-    "semantic_hash": ""
+    "mtime": 1788887318.6156385,
+    "seen": 1788890108.2202215,
+    "ast_hash": "a0f77c3d676928e2aa1a420829ede5d3",
+    "semantic_hash": "a0f77c3d676928e2aa1a420829ede5d3"
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
     "mtime": 1788891258.5684576,
@@ -3324,9 +3324,9 @@
     "semantic_hash": "b3de680e5c6ffddd4dd0573b6796cea4"
   },
   "src/features/my-stack/components/DosageFormPicker.test.tsx": {
-    "mtime": 1789090543.9692218,
-    "seen": 1789090759.566598,
-    "ast_hash": "0a4572038ff8f499cfdf8e24a933aea5",
+    "mtime": 1789065618.4676256,
+    "seen": 1789065842.125951,
+    "ast_hash": "4e1e6716fa9f9895b76208f1f0b00718",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.test.tsx": {
@@ -4032,21 +4032,15 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-10-my-stack-karussell-auswahl-design.md": {
-    "mtime": 1789090726.3812327,
-    "seen": 1789090759.5669854,
-    "ast_hash": "504908875c287cee2bedca25312130d9",
+    "mtime": 1789065819.765008,
+    "seen": 1789065842.1264248,
+    "ast_hash": "ce550f798f3cc80c78148bedf87e967c",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/buehnenSkala.ts": {
     "mtime": 1789065606.1964324,
     "seen": 1789065842.1260643,
     "ast_hash": "5be69529c1595969adaa51b23af0feb8",
-    "semantic_hash": ""
-  },
-  "src/features/my-stack/components/DosageFormCarousel.tsx": {
-    "mtime": 1789090287.3412066,
-    "seen": 1789090759.5665922,
-    "ast_hash": "e00ced2fa4c9b3109061dc20a9476b64",
     "semantic_hash": ""
   }
 }
