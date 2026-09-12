@@ -2,8 +2,9 @@ import { useEffect } from 'react'
 import type { PeptipediaLocale } from './content/types'
 import { buildPeptipediaMeta } from './seo'
 
-export function usePeptipediaHead(locale: PeptipediaLocale, slug?: string) {
+export function usePeptipediaHead(locale: PeptipediaLocale, slug?: string, enabled = true) {
   useEffect(() => {
+    if (!enabled) return
     const origin = document.getElementById('root')?.dataset.peptipediaOrigin || import.meta.env?.VITE_PUBLIC_SITE_URL || window.location.origin
     const meta = buildPeptipediaMeta(origin, locale, slug)
     const oldLang = document.documentElement.lang
@@ -29,5 +30,5 @@ export function usePeptipediaHead(locale: PeptipediaLocale, slug?: string) {
       document.documentElement.lang = oldLang
       document.documentElement.dir = oldDir
     }
-  }, [locale, slug])
+  }, [locale, slug, enabled])
 }

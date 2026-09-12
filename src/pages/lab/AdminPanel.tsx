@@ -340,7 +340,7 @@ export function AdminPanel() {
     <div className="max-w-2xl mx-auto pb-12">
 
       {/* Header */}
-      <button type="button" onClick={() => navigate('/lab/library')}
+      <button type="button" onClick={() => navigate('/lab/peptipedia')}
         className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors mb-4">
         <ArrowLeft size={12} />
         <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Bibliothek</span>

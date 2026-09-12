@@ -8,6 +8,7 @@ import { Layout } from './components/Layout'
 import { Auth } from './pages/Auth'
 import { VialPreview } from './pages/__VialPreview'
 import { publicPeptipediaRoutes } from './features/peptipedia/publicRoutes'
+import { PeptipediaAppPage } from './features/peptipedia/PeptipediaAppPage'
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })))
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })))
@@ -58,6 +59,8 @@ function PersonalApp() {
             <Route path="kalender" element={<LazyPage><Dashboard /></LazyPage>} />
             <Route path="peptide" element={<LazyPage><Peptide /></LazyPage>} />
             <Route path="lab" element={<LazyPage><TheLab /></LazyPage>} />
+            <Route path="lab/peptipedia" element={<PeptipediaAppPage />} />
+            <Route path="lab/peptipedia/:slug" element={<PeptipediaAppPage detail />} />
             <Route path="lab/study/:id" element={<LazyPage><StudyDetail /></LazyPage>} />
             <Route path="lab/admin" element={<LazyPage><AdminPanel /></LazyPage>} />
             <Route path="rechner" element={<LazyPage><Rechner /></LazyPage>} />

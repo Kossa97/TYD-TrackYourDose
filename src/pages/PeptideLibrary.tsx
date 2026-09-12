@@ -7,6 +7,7 @@ import { getPublishedPeptides } from '../features/peptipedia/content'
 import type { PeptipediaLocale, PeptideCategory, ResearchStatus } from '../features/peptipedia/content/types'
 import { PeptideCard } from './lab/PeptideCard'
 import { usePeptipediaHead } from '../features/peptipedia/usePeptipediaHead'
+import type { PeptipediaMode } from '../features/peptipedia/routing'
 
 // ─── Filter/Sort types ────────────────────────────────────────────────────────
 
@@ -65,8 +66,8 @@ function Pill({
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-export function PeptideLibrary({ locale = 'de' }: { locale?: PeptipediaLocale }) {
-  usePeptipediaHead(locale)
+export function PeptideLibrary({ locale = 'de', mode = 'public' }: { locale?: PeptipediaLocale; mode?: PeptipediaMode }) {
+  usePeptipediaHead(locale, undefined, mode === 'public')
   const t = peptipediaText(locale)
   const peptides = useMemo(() => getPublishedPeptides(locale), [locale])
   const [query, setQuery]             = useState('')
@@ -290,7 +291,7 @@ export function PeptideLibrary({ locale = 'de' }: { locale?: PeptipediaLocale })
 
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map(peptide => <PeptideCard key={peptide.slug} peptide={peptide} locale={locale} />)}
+        {filtered.map(peptide => <PeptideCard key={peptide.slug} peptide={peptide} locale={locale} mode={mode} />)}
       </div>
 
       {/* Empty */}

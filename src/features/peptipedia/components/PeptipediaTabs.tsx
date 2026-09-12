@@ -1,13 +1,15 @@
 import { useEffect, useRef } from 'react'
 import type { PeptipediaLocale } from '../content/types'
 import { PEPTIPEDIA_UI_COPY } from '../content/uiCopy'
-import { PEPTIPEDIA_TAB_IDS, type PeptipediaTabId } from '../routing'
+import { peptipediaTabs, type PeptipediaMode, type PeptipediaTabId } from '../routing'
 
-export function PeptipediaTabs({ locale, activeTab, onSelect }: {
+export function PeptipediaTabs({ locale, activeTab, onSelect, mode = 'public' }: {
   locale: PeptipediaLocale
   activeTab: PeptipediaTabId
   onSelect: (id: PeptipediaTabId) => void
+  mode?: PeptipediaMode
 }) {
+  const tabs = peptipediaTabs(mode)
   const strip = useRef<HTMLDivElement>(null)
   const buttons = useRef<Partial<Record<PeptipediaTabId, HTMLButtonElement | null>>>({})
   useEffect(() => {
@@ -21,22 +23,22 @@ export function PeptipediaTabs({ locale, activeTab, onSelect }: {
   }, [activeTab])
 
   return (
-    <div className="sticky top-14 z-20 bg-[#070B11] border-b border-white/[0.08]">
+    <div className={`sticky ${mode === 'public' ? 'top-14' : 'top-0'} z-20 bg-[#070B11] border-b border-white/[0.08]`}>
       <div ref={strip} role="tablist" aria-label={locale === 'de' ? 'Peptidinformationen' : 'Peptide information'}
         className="relative flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {PEPTIPEDIA_TAB_IDS.map((id, index) => (
+        {tabs.map((id, index) => (
           <button key={id} ref={button => { buttons.current[id] = button }} type="button" role="tab"
             id={`tab-${id}`} aria-controls={`panel-${id}`} aria-selected={activeTab === id}
             tabIndex={activeTab === id ? 0 : -1} onClick={() => onSelect(id)}
             onKeyDown={event => {
               let next: number | undefined
-              if (event.key === 'ArrowRight') next = (index + 1) % PEPTIPEDIA_TAB_IDS.length
-              if (event.key === 'ArrowLeft') next = (index + PEPTIPEDIA_TAB_IDS.length - 1) % PEPTIPEDIA_TAB_IDS.length
+              if (event.key === 'ArrowRight') next = (index + 1) % tabs.length
+              if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length
               if (event.key === 'Home') next = 0
-              if (event.key === 'End') next = PEPTIPEDIA_TAB_IDS.length - 1
+              if (event.key === 'End') next = tabs.length - 1
               if (next === undefined) return
               event.preventDefault()
-              const nextId = PEPTIPEDIA_TAB_IDS[next]
+              const nextId = tabs[next]
               onSelect(nextId)
               buttons.current[nextId]?.focus({ preventScroll: true })
             }}

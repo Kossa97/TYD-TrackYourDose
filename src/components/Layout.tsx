@@ -24,7 +24,7 @@ const QUICK_TILES = [
   { icon: Calculator,  label: 'Rechner',   path: '/rechner', color: '#3b82f6' },
   { icon: Microscope,  label: 'The Lab',   path: '/lab',     color: '#8b5cf6' },
   { icon: BookHeart,   label: 'Tagebuch',  path: '/tagebuch',color: '#ec4899' },
-  { icon: FlaskConical,label: 'Peptipedia',path: '/peptipedia', color: '#06b6d4' },
+  { icon: FlaskConical,label: 'Peptipedia',path: '/lab/peptipedia', color: '#06b6d4' },
 ] as const
 
 const PUSH_DISMISSED_KEY    = 'tyd_push_dismissed'

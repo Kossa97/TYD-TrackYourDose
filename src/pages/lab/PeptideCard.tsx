@@ -1,6 +1,7 @@
 // src/pages/lab/PeptideCard.tsx
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { peptipediaDetailPath, type PeptipediaMode } from '../../features/peptipedia/routing'
 import { peptipediaText } from '../../features/peptipedia/content/legacyLabels'
 import type { PeptipediaView, PeptipediaLocale } from '../../features/peptipedia/content/types'
 import {
@@ -16,14 +17,15 @@ import {
 interface PeptideCardProps {
   peptide: PeptipediaView
   locale: PeptipediaLocale
+  mode?: PeptipediaMode
 }
 
-export function PeptideCard({ peptide, locale }: PeptideCardProps) {
+export function PeptideCard({ peptide, locale, mode = 'public' }: PeptideCardProps) {
   const t = peptipediaText(locale)
   const catColors   = CATEGORY_COLORS[peptide.category]
   const confStyle   = getConfidenceStyle(peptide.evidence.score)
 
-  const detailPath = `${locale === 'en' ? '/en' : ''}/peptipedia/${peptide.slug}`
+  const detailPath = peptipediaDetailPath(locale, peptide.slug, mode)
 
   return (
     <article

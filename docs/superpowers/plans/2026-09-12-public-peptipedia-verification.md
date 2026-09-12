@@ -25,3 +25,11 @@ The approved 2026-09-08 plan is implemented locally on `main`. Nothing was pushe
 - Set `VITE_PUBLIC_SITE_URL` to the intended canonical production origin when deploying; Vercel host variables are supported as fallbacks. Local preview defaults to port 4173.
 - Existing filesystem-first Vercel routing already supports pre-rendered files and was left unchanged.
 - Deployment, legal/editorial release review, and public-domain verification remain separate release steps.
+
+## Follow-up: website-only calculator
+
+- Public `/peptipedia` and `/en/peptipedia` retain all six tabs, including the calculator, regardless of sign-in status.
+- Protected `/lab/peptipedia` and `/lab/peptipedia/:slug` reuse the same profiles and components inside the app layout, with five tabs and no calculator panel. Language follows the app setting (DE/EN).
+- App entry points and profile/back links stay in the app view. Legacy public redirects and the standalone app calculator remain unchanged.
+- Calculator fragments in app URLs safely display Overview; keyboard navigation uses only the visible tabs.
+- Follow-up verification: 77 test files / 595 tests passed; production build with 24 public pages passed; targeted lint passed.
