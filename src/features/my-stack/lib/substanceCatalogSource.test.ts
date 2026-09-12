@@ -48,6 +48,16 @@ const pkQuelle = await import(
 ) as { PK_PROFILE_ERWEITERUNG: PkSeed[] }
 const PK_ERWEITERUNG = pkQuelle.PK_PROFILE_ERWEITERUNG
 
+// Die 44 aelteren Profile aus `scripts/seed-pk-profiles.ts`. Der Generator
+// liest sie ohnehin — der Test nimmt dasselbe Ergebnis, statt die Datei ein
+// zweites Mal zu zerlegen. Gilt beides fuer sie wie fuer die neuen: sie
+// stehen in derselben Tabelle und speisen dieselbe Kurve.
+const pkGenerator = await import(
+  pathToFileURL(resolve('scripts/generate-pk-profiles-sql.mjs')).href
+) as { SEED_PROFILE: (PkSeed & { notes: string | null })[] }
+const PK_SEED = pkGenerator.SEED_PROFILE
+const PK_ALLE = [...PK_SEED, ...PK_ERWEITERUNG]
+
 /** Die PK-Profile aus dem alten Seed-Skript — Namen und Aliase. */
 function seedProfilNamen(): Set<string> {
   const text = readFileSync(resolve('scripts/seed-pk-profiles.ts'), 'utf8')
@@ -202,12 +212,22 @@ describe('PK-Profile (Quelldatei)', () => {
     // Vier Faelle sind echt, und nur diese vier. Wer einen fuenften eintraegt,
     // muss ihn hier eintragen und damit begruenden.
     const echt = new Set([
+      // Oral, wo die Aufnahme verzoegert oder gleich schnell ist:
       'Pantoprazol',  // magensaftresistent: Aufnahme beginnt erst im Darm
       'Omeprazol',    // dasselbe
       'Amoxicillin',  // Aufnahme und Ausscheidung laufen fast gleich schnell
       'Melatonin',    // Gipfel und Halbwertszeit liegen beide bei ~45 Minuten
+
+      // Subkutan gespritzte Peptide mit Halbwertszeiten von Minuten: dort
+      // dauert die Aufnahme aus dem Depot laenger als die Ausscheidung, und
+      // der Spiegel folgt nicht mehr der Elimination, sondern der Aufnahme.
+      // Das ist kein Fehler, sondern der Normalfall bei diesen Stoffen.
+      'AOD-9604',              // HWZ 18 min, Gipfel nach 24 min
+      'HGH Fragment 176-191',  // beides bei rund 24 min
+      'Kisspeptin-10',         // HWZ 4 min, Gipfel nach 6 min
+      'Melanotan II',          // HWZ 60 min, Gipfel nach 75 min
     ])
-    const auffaellig = PK_ERWEITERUNG
+    const auffaellig = PK_ALLE
       .filter(profil => profil.tmax_hours >= profil.half_life_hours)
       .map(profil => profil.name)
       .filter(name => !echt.has(name))
@@ -220,7 +240,7 @@ describe('PK-Profile (Quelldatei)', () => {
     // Eine Halbwertszeit von 0 teilt durch null, ein tmax groesser als die
     // Halbwertszeit ergibt eine Kurve, die faellt bevor sie steigt, und eine
     // Bioverfuegbarkeit ueber 1 behauptet mehr im Blut als geschluckt wurde.
-    for (const profil of PK_ERWEITERUNG) {
+    for (const profil of PK_ALLE) {
       expect(profil.half_life_hours, profil.name).toBeGreaterThan(0)
       expect(profil.tmax_hours, profil.name).toBeGreaterThan(0)
       expect(profil.tmax_hours, `${profil.name}: tmax ueber der Halbwertszeit`)
@@ -233,9 +253,19 @@ describe('PK-Profile (Quelldatei)', () => {
   it('gibt jeder Zahl eine Herkunft', () => {
     // Ein Profil ohne Notiz ist eine Zahl ohne Quelle. Bei pharmakologischen
     // Werten ist das der Unterschied zwischen „nachgeschlagen" und „geraten".
-    for (const profil of PK_ERWEITERUNG) {
+    for (const profil of PK_ALLE) {
       expect(profil.notes?.trim().length ?? 0, `${profil.name}: keine Notiz`).toBeGreaterThan(20)
     }
+  })
+
+  it('liest aus dem alten Seed so viele Profile, wie darin stehen', () => {
+    // Der Generator zerlegt `seed-pk-profiles.ts` mit einem Regex. Wenn dort
+    // jemand die Schreibweise aendert, faellt ein Eintrag still hinten runter
+    // und sein Profil verschwindet aus der Datenbank. Dieser Test zaehlt nach.
+    const text = readFileSync(resolve('scripts/seed-pk-profiles.ts'), 'utf8')
+    const eintraege = [...text.matchAll(/\{\s*name: '[^']+',\s*aliases: \[/g)].length
+
+    expect(PK_SEED.length, 'Der Generator hat Eintraege uebersehen').toBe(eintraege)
   })
 
   it('laesst Vitamine, Mineralien und schwankende Extrakte bewusst aus', () => {

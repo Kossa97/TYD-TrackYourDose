@@ -231,3 +231,42 @@ Halbwertszeit.
 `toPkMilligrams` in `src/features/my-stack/lib/pkReadiness.ts` rechnet nur `mg`
 und `mcg` um. Alles in **IU** — HCG und HGH — hat ein PK-Profil, dessen Kurve
 still ins Leere läuft. Das ist ein Fehler im Code, kein Datenproblem.
+
+
+---
+
+## Nachtrag — die alten 44 Profile nachgezogen
+
+29 der 93 Profile hatten keine Herkunftsnotiz: die älteren aus
+`scripts/seed-pk-profiles.ts`. Der Grund ist die RLS-Härtung — **das
+Seed-Skript läuft seit Monaten nicht mehr**, und Notizen, die dort inzwischen
+stehen, kamen nie in der Datenbank an. `Testosterone Cypionate` trug seine
+Notiz in der Quelldatei und in der Datenbank stand nichts.
+
+Statt das Skript wiederzubeleben liest der Generator es jetzt mit aus und gibt
+alle 93 Profile in eine Datei. Ein Test zählt nach, dass er keinen Eintrag
+übersieht — der Regex ist der schwache Punkt dieser Lösung.
+
+### Und wieder fand das Nachziehen mehr als Text
+
+| | Befund | Korrektur |
+|---|---|---|
+| **MK-677** | `bioavailability_sc = 1.0` — die Skalierung für injizierte Stoffe. MK-677 ist eine **Kapsel**. Der Live-Spiegel rechnete also mit knapp dem Doppelten. | **0,6** |
+| **Sermorelin** | tmax exakt gleich der Halbwertszeit (beides 0,17 h) — das Muster einer geratenen Zahl | tmax **0,1 h** |
+
+Der MK-677-Fehler war der schwerere: kein Schreibfehler, sondern eine
+Annahme, die für 43 der 44 Profile stimmte und für eines nicht.
+
+### Die Tests gelten jetzt für alle 93
+
+Notizpflicht, Plausibilität und die tmax-Regel prüfen nicht mehr nur die neuen
+Profile. Das brachte sofort vier weitere Fälle ans Licht — AOD-9604, HGH
+Fragment 176-191, Kisspeptin-10, Melanotan II —, bei denen tmax über der
+Halbwertszeit liegt. Die sind **echt**: bei subkutan gespritzten Peptiden mit
+Halbwertszeiten von Minuten dauert die Aufnahme aus dem Depot länger als die
+Ausscheidung, und der Spiegel folgt nicht mehr der Elimination, sondern der
+Aufnahme. Sie stehen jetzt namentlich in der Ausnahmeliste, jeder mit seiner
+Begründung.
+
+**Gemessen nach dem Lauf:** 93 Profile, **0 ohne Notiz**, 0 unplausible Werte,
+143 Substanzen, 93 verknüpft.
