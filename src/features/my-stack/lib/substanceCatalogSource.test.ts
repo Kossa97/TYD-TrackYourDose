@@ -33,12 +33,38 @@ const KATALOG = quelle.SUBSTANCE_CATALOG
 const KATEGORIEN: StackCategory[] = ['peptide', 'medication', 'hormone', 'supplement', 'vitamin']
 const FORMSCHLUESSEL = new Set(DOSAGE_FORMS.map(form => form.key))
 
-function pkProfilNamen(): Set<string> {
+interface PkSeed {
+  name: string
+  aliases: string[]
+  half_life_hours: number
+  tmax_hours: number
+  bioavailability_sc: number
+  category: string
+  notes: string
+}
+
+const pkQuelle = await import(
+  pathToFileURL(resolve('scripts/pk-profile-source.mjs')).href
+) as { PK_PROFILE_ERWEITERUNG: PkSeed[] }
+const PK_ERWEITERUNG = pkQuelle.PK_PROFILE_ERWEITERUNG
+
+/** Die PK-Profile aus dem alten Seed-Skript — Namen und Aliase. */
+function seedProfilNamen(): Set<string> {
   const text = readFileSync(resolve('scripts/seed-pk-profiles.ts'), 'utf8')
   const namen = new Set<string>()
   for (const treffer of text.matchAll(/\bname: '([^']+)'/g)) namen.add(treffer[1].toLowerCase())
   for (const treffer of text.matchAll(/\baliases: \[([^\]]*)\]/g)) {
     for (const alias of treffer[1].matchAll(/'([^']+)'/g)) namen.add(alias[1].toLowerCase())
+  }
+  return namen
+}
+
+/** Alle Profile, die es geben wird: der alte Seed plus die Erweiterung. */
+function pkProfilNamen(): Set<string> {
+  const namen = seedProfilNamen()
+  for (const profil of PK_ERWEITERUNG) {
+    namen.add(profil.name.toLowerCase())
+    for (const alias of profil.aliases) namen.add(alias.toLowerCase())
   }
   return namen
 }
@@ -140,5 +166,69 @@ describe('Substanzkatalog (Quelldatei)', () => {
     const ohneEintrag = profilNamen.filter(name => !verknuepft.has(name.toLowerCase()))
 
     expect(ohneEintrag, `PK-Profile ohne Substanz: ${ohneEintrag.join(', ')}`).toEqual([])
+  })
+})
+
+describe('PK-Profile (Quelldatei)', () => {
+  it('gehoert zu jedem Profil eine Substanz im Katalog — unter demselben Namen', () => {
+    // Die Verknuepfung in der Migration laeuft ueber den Namen. Ein Profil,
+    // das keinen Katalogeintrag gleichen Namens hat, haengt ins Leere und
+    // faellt niemandem auf.
+    const katalogNamen = new Set(KATALOG.map(eintrag => eintrag.name.toLowerCase()))
+    const ohneSubstanz = PK_ERWEITERUNG
+      .map(profil => profil.name)
+      .filter(name => !katalogNamen.has(name.toLowerCase()))
+
+    expect(ohneSubstanz, `Profile ohne Katalogeintrag: ${ohneSubstanz.join(', ')}`).toEqual([])
+  })
+
+  it('haelt jeden Profilnamen genau einmal und kollidiert nicht mit dem alten Seed', () => {
+    const seed = seedProfilNamen()
+    const gesehen = new Set<string>()
+    for (const profil of PK_ERWEITERUNG) {
+      const schluessel = profil.name.toLowerCase()
+      expect(gesehen.has(schluessel), `„${profil.name}" steht zweimal`).toBe(false)
+      expect(seed.has(schluessel), `„${profil.name}" steht schon im alten Seed`).toBe(false)
+      gesehen.add(schluessel)
+    }
+  })
+
+  it('nennt nur Zahlen, aus denen sich eine Kurve rechnen laesst', () => {
+    // Eine Halbwertszeit von 0 teilt durch null, ein tmax groesser als die
+    // Halbwertszeit ergibt eine Kurve, die faellt bevor sie steigt, und eine
+    // Bioverfuegbarkeit ueber 1 behauptet mehr im Blut als geschluckt wurde.
+    for (const profil of PK_ERWEITERUNG) {
+      expect(profil.half_life_hours, profil.name).toBeGreaterThan(0)
+      expect(profil.tmax_hours, profil.name).toBeGreaterThan(0)
+      expect(profil.tmax_hours, `${profil.name}: tmax ueber der Halbwertszeit`)
+        .toBeLessThan(profil.half_life_hours * 3)
+      expect(profil.bioavailability_sc, profil.name).toBeGreaterThan(0)
+      expect(profil.bioavailability_sc, profil.name).toBeLessThanOrEqual(1)
+    }
+  })
+
+  it('gibt jeder Zahl eine Herkunft', () => {
+    // Ein Profil ohne Notiz ist eine Zahl ohne Quelle. Bei pharmakologischen
+    // Werten ist das der Unterschied zwischen „nachgeschlagen" und „geraten".
+    for (const profil of PK_ERWEITERUNG) {
+      expect(profil.notes?.trim().length ?? 0, `${profil.name}: keine Notiz`).toBeGreaterThan(20)
+    }
+  })
+
+  it('laesst Vitamine, Mineralien und schwankende Extrakte bewusst aus', () => {
+    // Ein Blutspiegel von Zink nach Einzeldosis beschreibt nichts; bei
+    // Ashwagandha haengt die Aufnahme am Extrakt, nicht am Stoff. Beides
+    // waeren rechenbare, aber irrefuehrende Kurven. Dieser Test haelt die
+    // Entscheidung fest, damit sie nicht versehentlich zurueckgenommen wird.
+    const ausgelassen = [
+      'Vitamin C', 'Vitamin A', 'Vitamin E', 'Vitamin B12', 'Vitamin D3', 'Vitamin K2',
+      'Zink', 'Eisen', 'Calcium', 'Magnesium', 'Selen', 'Jod',
+      'Ashwagandha', 'Kurkuma', 'Rhodiola rosea', 'Ginkgo biloba', 'Mariendistel', 'Baldrian',
+      'Creatin', 'Kollagen', 'Whey Protein',
+    ]
+    const profilNamen = new Set(PK_ERWEITERUNG.map(profil => profil.name))
+    for (const name of ausgelassen) {
+      expect(profilNamen.has(name), `${name} hat ein PK-Profil bekommen`).toBe(false)
+    }
   })
 })

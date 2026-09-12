@@ -19,7 +19,8 @@
     "faq:generate": "node scripts/generate-faq-locales.mjs",
     "i18n:onboarding:merge": "node scripts/merge-onboarding-i18n.mjs",
     "i18n:onboarding:generate": "node scripts/generate-onboarding-i18n.mjs",
-    "catalog:sql": "node scripts/generate-substance-catalog-sql.mjs"
+    "catalog:sql": "node scripts/generate-substance-catalog-sql.mjs",
+    "pk:sql": "node scripts/generate-pk-profiles-sql.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",
