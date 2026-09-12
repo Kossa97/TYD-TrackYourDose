@@ -8,7 +8,7 @@ export type PeptideCategory =
   | 'anti_aging'
   | 'sexualgesundheit'
 
-export type ResearchStatus = 'preclinical' | 'phase_1' | 'phase_2' | 'approved'
+export type ResearchStatus = 'preclinical' | 'phase_1' | 'phase_2' | 'human_research' | 'historical_approval' | 'approved'
 export type EvidenceLevel = 'none' | 'limited' | 'moderate' | 'strong'
 export type ClinicalLevel = 'none' | 'sparse' | 'moderate' | 'extensive'
 export type ProtocolEvidenceType = 'approved_label' | 'human' | 'animal' | 'laboratory'

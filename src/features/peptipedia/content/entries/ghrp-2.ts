@@ -1,7 +1,7 @@
 import type { PeptipediaEntry } from '../types'
 
 export const ghrp2: PeptipediaEntry = {
-  slug: 'ghrp-2', name: 'GHRP-2', fullName: 'Growth Hormone Releasing Peptide-2', category: 'wachstumshormon', researchStatus: 'phase_1',
+  slug: 'ghrp-2', name: 'GHRP-2', fullName: 'Growth Hormone Releasing Peptide-2', category: 'wachstumshormon', researchStatus: 'human_research',
   evidence: { human: 'limited', animal: 'moderate', clinical: 'sparse', score: 4 }, reviewedAt: '2026-09-12', contentVersion: 1,
   sources: [
     { id: 'nijland-1998', kind: 'human_study', title: 'Five-day GHRP-2 treatment: response attenuation and IGF-I secretion', year: 1998, url: 'https://pubmed.ncbi.nlm.nih.gov/9820615/', doi: '10.1530/eje.0.1390395' },

@@ -6,6 +6,7 @@ import { PEPTIPEDIA_UI_COPY } from '../features/peptipedia/content/uiCopy'
 import { getPublishedPeptides } from '../features/peptipedia/content'
 import type { PeptipediaLocale, PeptideCategory, ResearchStatus } from '../features/peptipedia/content/types'
 import { PeptideCard } from './lab/PeptideCard'
+import { usePeptipediaHead } from '../features/peptipedia/usePeptipediaHead'
 
 // ─── Filter/Sort types ────────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ function Pill({
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 export function PeptideLibrary({ locale = 'de' }: { locale?: PeptipediaLocale }) {
+  usePeptipediaHead(locale)
   const t = peptipediaText(locale)
   const peptides = useMemo(() => getPublishedPeptides(locale), [locale])
   const [query, setQuery]             = useState('')
@@ -212,7 +214,7 @@ export function PeptideLibrary({ locale = 'de' }: { locale?: PeptipediaLocale })
             <p className="text-[0.52rem] uppercase tracking-widest text-slate-600 mb-2"
               style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{t('plib_status_label')}</p>
             <div className="flex flex-wrap gap-2">
-              {([['all', 'plib_all'], ['preclinical', 'plib_status_preclinical'], ['phase_1', 'plib_status_phase_1'], ['phase_2', 'plib_status_phase_2'], ['approved', 'plib_status_approved']] as const).map(([val, labelKey]) => (
+              {([['all', 'plib_all'], ['preclinical', 'plib_status_preclinical'], ['phase_1', 'plib_status_phase_1'], ['phase_2', 'plib_status_phase_2'], ['human_research', 'plib_status_human_research'], ['historical_approval', 'plib_status_historical_approval'], ['approved', 'plib_status_approved']] as const).map(([val, labelKey]) => (
                 <Pill key={val} active={filters.status === val}
                   onClick={() => setFilters(f => ({ ...f, status: val }))}>
                   {t(labelKey)}

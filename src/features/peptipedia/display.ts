@@ -25,6 +25,8 @@ export const STATUS_LABEL_KEYS: Record<ResearchStatus, string> = {
   preclinical: 'plib_status_preclinical',
   phase_1:     'plib_status_phase_1',
   phase_2:     'plib_status_phase_2',
+  human_research: 'plib_status_human_research',
+  historical_approval: 'plib_status_historical_approval',
   approved:    'plib_status_approved',
 }
 
@@ -32,6 +34,8 @@ export const STATUS_STYLES: Record<ResearchStatus, string> = {
   preclinical: 'bg-slate-700/50 text-slate-400 border border-slate-600/30',
   phase_1:     'bg-blue-500/15 text-blue-300 border border-blue-500/25',
   phase_2:     'bg-violet-500/15 text-violet-300 border border-violet-500/25',
+  human_research: 'bg-blue-500/15 text-blue-300 border border-blue-500/25',
+  historical_approval: 'bg-amber-500/15 text-amber-300 border border-amber-500/25',
   approved:    'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25',
 }
 

@@ -1,7 +1,7 @@
 import type { PeptipediaEntry } from '../types'
 
 export const ipamorelin: PeptipediaEntry = {
-  slug: 'ipamorelin', name: 'Ipamorelin', fullName: 'Growth hormone secretagogue', category: 'wachstumshormon', researchStatus: 'phase_1',
+  slug: 'ipamorelin', name: 'Ipamorelin', fullName: 'Growth hormone secretagogue', category: 'wachstumshormon', researchStatus: 'human_research',
   evidence: { human: 'limited', animal: 'moderate', clinical: 'sparse', score: 3 }, reviewedAt: '2026-09-12', contentVersion: 1,
   sources: [
     { id: 'gobburu-1999', kind: 'human_study', title: 'Pharmacokinetic-pharmacodynamic modeling of ipamorelin, a growth hormone releasing peptide, in human volunteers', year: 1999, url: 'https://pubmed.ncbi.nlm.nih.gov/10496658/', doi: '10.1023/a:1018955126402' },

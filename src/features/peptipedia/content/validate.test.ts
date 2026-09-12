@@ -48,6 +48,11 @@ function entry(overrides: Partial<PeptipediaEntry> = {}): PeptipediaEntry {
 }
 
 describe('assertValidPeptipedia', () => {
+  it('rejects a human protocol supported only by a regulator overview', () => {
+    const broken = entry()
+    broken.copy.de.protocols.push({ id: 'unsupported', evidenceType: 'human', populationOrModel: 'Adults', route: 'IV', amount: '1 mg', frequency: 'Once', duration: '1 day', objective: 'Safety', outcome: 'Unknown', sourceIds: ['fda-bpc-risk'] })
+    expect(() => assertValidPeptipedia([broken])).toThrow('matching primary source')
+  })
   it('accepts a complete bilingual entry', () => {
     expect(() => assertValidPeptipedia([entry()])).not.toThrow()
   })

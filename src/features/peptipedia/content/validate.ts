@@ -52,6 +52,7 @@ function validateCopy(
   locale: 'de' | 'en',
   slug: string,
   sourceIds: ReadonlySet<string>,
+  sources: PeptipediaSource[],
 ): void {
   if (!copy) throw new Error(`${slug}: incomplete ${locale} copy`)
   requireText(copy.tldr, `${slug}: incomplete ${locale} copy`)
@@ -77,6 +78,10 @@ function validateCopy(
     requireText(protocol.objective, `${slug}: protocol ${protocol.id} objective`)
     requireText(protocol.outcome, `${slug}: protocol ${protocol.id} outcome`)
     validateSourceReferences(protocol, sourceIds, slug, 'protocol')
+    const expectedKind = { human: 'human_study', animal: 'animal_study', laboratory: 'laboratory_study', approved_label: 'approved_label' }[protocol.evidenceType]
+    if (!sources.some(source => protocol.sourceIds.includes(source.id) && source.kind === expectedKind)) {
+      throw new Error(`${slug}: protocol ${protocol.id} requires a matching primary source`)
+    }
   }
 }
 
@@ -101,7 +106,7 @@ export function assertValidPeptipedia(entries: PeptipediaEntry[]): void {
     const sourceIds = new Set(entry.sources.map(source => source.id))
     if (sourceIds.size !== entry.sources.length) throw new Error(`${entry.slug}: duplicate source id`)
     entry.sources.forEach(source => validateSource(source, entry.slug))
-    validateCopy(entry.copy.de, 'de', entry.slug, sourceIds)
-    validateCopy(entry.copy.en, 'en', entry.slug, sourceIds)
+    validateCopy(entry.copy.de, 'de', entry.slug, sourceIds, entry.sources)
+    validateCopy(entry.copy.en, 'en', entry.slug, sourceIds, entry.sources)
   }
 }

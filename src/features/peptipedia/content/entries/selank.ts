@@ -1,7 +1,7 @@
 import type { PeptipediaEntry } from '../types'
 
 export const selank: PeptipediaEntry = {
-  slug: 'selank', name: 'Selank', fullName: 'Tuftsin analogue', category: 'nootropikum', researchStatus: 'phase_2',
+  slug: 'selank', name: 'Selank', fullName: 'Tuftsin analogue', category: 'nootropikum', researchStatus: 'human_research',
   evidence: { human: 'limited', animal: 'limited', clinical: 'sparse', score: 3 }, reviewedAt: '2026-09-12', contentVersion: 1,
   sources: [
     { id: 'selank-2014', kind: 'human_study', title: 'Selank in anxiety and somatoform disorders: comparative clinical study', year: 2014, url: 'https://pubmed.ncbi.nlm.nih.gov/25176261/' },

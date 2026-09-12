@@ -7,6 +7,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { Layout } from './components/Layout'
 import { Auth } from './pages/Auth'
 import { VialPreview } from './pages/__VialPreview'
+import { publicPeptipediaRoutes } from './features/peptipedia/publicRoutes'
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })))
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })))
@@ -21,8 +22,6 @@ const Blutwerte = lazy(() => import('./pages/Blutwerte').then(m => ({ default: m
 const Health = lazy(() => import('./pages/Health').then(m => ({ default: m.Health })))
 const TheLab = lazy(() => import('./pages/TheLab').then(m => ({ default: m.TheLab })))
 const StudyDetail = lazy(() => import('./pages/StudyDetail').then(m => ({ default: m.StudyDetail })))
-const PeptideLibrary = lazy(() => import('./pages/PeptideLibrary').then(m => ({ default: m.PeptideLibrary })))
-const PeptideDetailPage = lazy(() => import('./pages/PeptideDetailPage').then(m => ({ default: m.PeptideDetailPage })))
 const AdminPanel = lazy(() => import('./pages/lab/AdminPanel').then(m => ({ default: m.AdminPanel })))
 const InjektionsTracker = lazy(() => import('./pages/InjektionsTracker').then(m => ({ default: m.InjektionsTracker })))
 const Progress = lazy(() => import('./pages/Progress').then(m => ({ default: m.Progress })))
@@ -40,9 +39,8 @@ function LazyPage({ children }: { children: ReactNode }) {
   return <Suspense fallback={<RouteFallback />}>{children}</Suspense>
 }
 
-export default function App() {
+function PersonalApp() {
   return (
-    <BrowserRouter>
       <AuthProvider>
         <OnboardingProvider>
         <Toaster
@@ -61,8 +59,6 @@ export default function App() {
             <Route path="peptide" element={<LazyPage><Peptide /></LazyPage>} />
             <Route path="lab" element={<LazyPage><TheLab /></LazyPage>} />
             <Route path="lab/study/:id" element={<LazyPage><StudyDetail /></LazyPage>} />
-            <Route path="lab/library" element={<LazyPage><PeptideLibrary /></LazyPage>} />
-            <Route path="lab/library/:slug" element={<LazyPage><PeptideDetailPage /></LazyPage>} />
             <Route path="lab/admin" element={<LazyPage><AdminPanel /></LazyPage>} />
             <Route path="rechner" element={<LazyPage><Rechner /></LazyPage>} />
             <Route path="blutwerte" element={<LazyPage><Blutwerte /></LazyPage>} />
@@ -80,6 +76,12 @@ export default function App() {
         </Routes>
         </OnboardingProvider>
       </AuthProvider>
-    </BrowserRouter>
   )
+}
+
+export default function App() {
+  return <BrowserRouter><Routes>
+    {publicPeptipediaRoutes()}
+    <Route path="*" element={<PersonalApp />} />
+  </Routes></BrowserRouter>
 }

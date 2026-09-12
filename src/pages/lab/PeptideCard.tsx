@@ -137,7 +137,7 @@ export function PeptideCard({ peptide, locale }: PeptideCardProps) {
 
 // ─── Mini Evidence Bar ────────────────────────────────────────────────────────
 
-export function MiniEvidenceBar({
+function MiniEvidenceBar({
   locale,
   label,
   value,

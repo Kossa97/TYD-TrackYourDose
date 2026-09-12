@@ -1,7 +1,7 @@
 import type { PeptipediaEntry } from '../types'
 
 export const cjc1295: PeptipediaEntry = {
-  slug: 'cjc-1295', name: 'CJC-1295', fullName: 'Long-acting growth hormone-releasing hormone analog', category: 'wachstumshormon', researchStatus: 'phase_1',
+  slug: 'cjc-1295', name: 'CJC-1295', fullName: 'Long-acting growth hormone-releasing hormone analog', category: 'wachstumshormon', researchStatus: 'human_research',
   evidence: { human: 'limited', animal: 'moderate', clinical: 'sparse', score: 4 }, reviewedAt: '2026-09-12', contentVersion: 1,
   sources: [
     { id: 'teichman-2006', kind: 'human_study', title: 'Prolonged stimulation of growth hormone and insulin-like growth factor I secretion by CJC-1295', year: 2006, url: 'https://pubmed.ncbi.nlm.nih.gov/16352683/', doi: '10.1210/jc.2005-1536' },

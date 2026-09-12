@@ -2,7 +2,7 @@ import type { PeptipediaEntry } from '../types'
 
 export const ghkCu: PeptipediaEntry = {
   slug: 'ghk-cu', name: 'GHK-Cu', fullName: 'Glycyl-L-histidyl-L-lysine copper complex', category: 'anti_aging', researchStatus: 'preclinical',
-  evidence: { human: 'limited', animal: 'limited', clinical: 'sparse', score: 3 }, reviewedAt: '2026-09-12', contentVersion: 1,
+  evidence: { human: 'none', animal: 'limited', clinical: 'none', score: 3 }, reviewedAt: '2026-09-12', contentVersion: 1,
   sources: [
     { id: 'maquart-1988', kind: 'laboratory_study', title: 'GHK-Cu stimulates collagen synthesis in fibroblast cultures', year: 1988, url: 'https://pubmed.ncbi.nlm.nih.gov/3169264/', doi: '10.1016/0014-5793(88)80509-x' },
     { id: 'fda-ghkcu', kind: 'regulator', title: 'FDA: Injectable GHK-Cu safety information', year: 2024, url: 'https://www.fda.gov/drugs/human-drug-compounding/certain-bulk-drug-substances-use-compounding-may-present-significant-safety-risks' },

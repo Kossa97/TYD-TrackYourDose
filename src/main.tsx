@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { createRoot, hydrateRoot } from 'react-dom/client'
 import './index.css'
 import { applyDirection, i18nReady } from './i18n'
 import App from './App.tsx'
@@ -32,9 +32,8 @@ applyDirection(savedLang)
 // verhindert kurzes Aufblitzen roher i18n-Keys. .finally: auch bei
 // fehlgeschlagenem Laden rendern (i18next fällt dann auf 'de' zurück).
 i18nReady.finally(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  )
+  const root = document.getElementById('root')!
+  const app = <StrictMode><App /></StrictMode>
+  if (root.hasChildNodes()) hydrateRoot(root, app)
+  else createRoot(root).render(app)
 })

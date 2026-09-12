@@ -1,7 +1,7 @@
 import type { PeptipediaEntry } from '../types'
 
 export const sermorelin: PeptipediaEntry = {
-  slug: 'sermorelin', name: 'Sermorelin', fullName: 'GHRH(1–29)-NH₂', category: 'wachstumshormon', researchStatus: 'approved',
+  slug: 'sermorelin', name: 'Sermorelin', fullName: 'GHRH(1–29)-NH₂', category: 'wachstumshormon', researchStatus: 'historical_approval',
   evidence: { human: 'moderate', animal: 'moderate', clinical: 'moderate', score: 6 }, reviewedAt: '2026-09-12', contentVersion: 1,
   sources: [
     { id: 'geref-history', kind: 'regulator', title: 'FDA historical Geref (sermorelin acetate) approval documents', year: 1991, url: 'https://www.accessdata.fda.gov/drugsatfda_docs/nda/pre96/019863_S001_GEREF.pdf' },
