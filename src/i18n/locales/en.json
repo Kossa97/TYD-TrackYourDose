@@ -1256,5 +1256,13 @@
   "my_stack_intake_unit_unit": "unit",
   "my_stack_ingredients_question": "What is in your product?",
   "my_stack_ingredients_intro": "Usually a single active ingredient — it is already filled in. A combination product gets one line per ingredient.",
-  "my_stack_ingredients_next": "In the next step you state, for each ingredient, how much of it one product unit holds — the figure on the package. Only then can the app count in milligrams instead of capsules."
+  "my_stack_ingredients_next": "In the next step you state, for each ingredient, how much of it one product unit holds — the figure on the package. Only then can the app count in milligrams instead of capsules.",
+  "my_stack_strength_hint_per_unit": "How much active ingredient is in ONE unit? Enter the figure from the packaging. Example: 500 mg per 1 capsule. The product quantity is already set to 1 — change it only if the packaging states it differently. Not a dosage recommendation.",
+  "my_stack_strength_hint_per_volume": "Enter the concentration as printed on the label. Example: 250 mg per 1 ml. Not a dosage recommendation.",
+  "my_stack_strength_hint_reconstituted": "A powder vial (peptide) is dissolved before the first intake — the reconstitution. On the left, how much active ingredient is in the vial; on the right, how much solvent you add. Example: 10 mg in 2 ml gives 5 mg/ml. If the vial is already liquid, both figures are on the label. Not a dosage recommendation.",
+  "my_stack_strength_hint_per_mass": "How much active ingredient is in a given quantity of product? Enter what is shown on the packaging. Example: 50 mg per 1 g. Not a dosage recommendation.",
+  "my_stack_strength_value_vial": "Active ingredient in the vial",
+  "my_stack_basis_value_solvent": "Solvent",
+  "my_stack_basis_unit_solvent": "Unit",
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
 }

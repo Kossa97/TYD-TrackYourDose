@@ -1,8 +1,9 @@
 import { AlertCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { getDosageForm } from '../lib/dosageForms'
+import { getDosageForm, strengthHintKey } from '../lib/dosageForms'
+import { konzentrationProMl } from '../lib/konzentration'
 import type { IngredientValidationErrors } from '../lib/validation'
-import type { DosageFormKey, StackItemIngredient } from '../types'
+import type { DosageFormKey, StackItemIngredient, StrengthShape } from '../types'
 
 type IngredientChanges = Partial<Omit<StackItemIngredient, 'position'>>
 
@@ -13,6 +14,17 @@ export interface StrengthEditorProps {
   ingredientName?: string
   errors?: IngredientValidationErrors
   onChange: (changes: IngredientChanges) => void
+}
+
+// Die deutschen Vorgaben zu den fuenf Staerke-Formen. Ausgelagert, weil sie
+// im JSX die Zeile sprengen wuerden — der Wortlaut kommt im Betrieb aus den
+// Sprachdateien (`my_stack_strength_hint_*`).
+const HINWEIS_FALLBACK: Record<StrengthShape, string> = {
+  per_unit: 'Wie viel Wirkstoff steckt in EINER Einheit? Trage die Zahl von der Verpackung ein. Beispiel: 500 mg pro 1 Kapsel. Die Produktmenge steht schon auf 1 — ändere sie nur, wenn die Packung es anders angibt. Keine Dosierungsempfehlung.',
+  per_volume: 'Trage die Konzentration ein, wie sie auf dem Etikett steht. Beispiel: 250 mg pro 1 ml. Keine Dosierungsempfehlung.',
+  reconstituted: 'Ein Pulver-Vial (Peptid) wird vor der ersten Einnahme aufgelöst — die Rekonstitution. Links die Wirkstoffmenge im Vial, rechts wie viel Lösungsmittel du zugibst. Beispiel: 10 mg auf 2 ml ergibt 5 mg/ml. Ist das Vial schon flüssig, steht beides auf dem Etikett. Keine Dosierungsempfehlung.',
+  per_mass: 'Wie viel Wirkstoff steckt in einer Produktmenge? Trage ein, was auf der Verpackung steht. Beispiel: 50 mg pro 1 g. Keine Dosierungsempfehlung.',
+  free: 'Wie viel Wirkstoff ist in welcher Produktmenge enthalten? Trage ein, was auf der Verpackung steht. Beispiel: 250 mg/ml = 250 mg pro 1 ml. Keine Dosierungsempfehlung.',
 }
 
 function numericValue(value: string): number | null {
@@ -31,6 +43,18 @@ export function StrengthEditor({
 }: StrengthEditorProps) {
   const { t } = useTranslation()
   const form = getDosageForm(dosageForm)
+  // Der Schritt fragt ueberall dieselben zwei Zahlen ab. Was sie BEDEUTEN,
+  // haengt an der Form: bei einer Kapsel steckt die Staerke in einem Stueck,
+  // bei einer Ampulle in einem Milliliter, bei einem Pulver-Vial erst,
+  // nachdem der Nutzer es aufgeloest hat. Die Form sagt, welcher Hinweis
+  // danebensteht und wie die Felder heissen.
+  const istRekonstitution = form.strengthShape === 'reconstituted'
+  const konzentration = konzentrationProMl(
+    ingredient.amount_value,
+    ingredient.amount_unit,
+    ingredient.basis_value,
+    ingredient.basis_unit,
+  )
   const amountUnits = ingredient.amount_unit && !form.suggestedUnits.includes(ingredient.amount_unit)
     ? [...form.suggestedUnits, ingredient.amount_unit]
     : form.suggestedUnits
@@ -59,14 +83,16 @@ export function StrengthEditor({
         {displayedIngredientName}
       </legend>
 
-      <p className="mt-3 rounded-xl border border-white/[0.07] bg-black/20 px-3 py-2.5 text-xs leading-relaxed text-slate-400">
-        {t('my_stack_no_dosage_advice', { defaultValue: 'Wie viel Wirkstoff ist in welcher Produktmenge enthalten? Trage ein, was auf der Verpackung steht. Beispiel: 250 mg/ml = 250 mg pro 1 ml. Keine Dosierungsempfehlung.' })}
+      <p data-strength-hint={form.strengthShape} className="mt-3 rounded-xl border border-white/[0.07] bg-black/20 px-3 py-2.5 text-xs leading-relaxed text-slate-400">
+        {t(strengthHintKey(dosageForm), { defaultValue: HINWEIS_FALLBACK[form.strengthShape] })}
       </p>
 
       <div className="mt-4 grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_minmax(0,1fr)_minmax(0,1fr)] sm:items-start">
         <div className="min-w-0">
           <label htmlFor={`stack-strength-${ingredientIndex}-amount-value`} className="mb-2 block text-sm font-medium text-slate-300">
-            {t('my_stack_strength_value', { defaultValue: 'Wirkstoffmenge' })}
+            {istRekonstitution
+              ? t('my_stack_strength_value_vial', { defaultValue: 'Wirkstoff im Vial' })
+              : t('my_stack_strength_value', { defaultValue: 'Wirkstoffmenge' })}
           </label>
           <input
             id={`stack-strength-${ingredientIndex}-amount-value`}
@@ -124,7 +150,9 @@ export function StrengthEditor({
 
         <div className="min-w-0">
           <label htmlFor={`stack-strength-${ingredientIndex}-basis-value`} className="mb-2 block text-sm font-medium text-slate-300">
-            {t('my_stack_basis_value', { defaultValue: 'Produktmenge' })}
+            {istRekonstitution
+              ? t('my_stack_basis_value_solvent', { defaultValue: 'Lösungsmittel' })
+              : t('my_stack_basis_value', { defaultValue: 'Produktmenge' })}
           </label>
           <input
             id={`stack-strength-${ingredientIndex}-basis-value`}
@@ -149,7 +177,9 @@ export function StrengthEditor({
 
         <div className="min-w-0">
           <label htmlFor={`stack-strength-${ingredientIndex}-basis-unit`} className="mb-2 block text-sm font-medium text-slate-300">
-            {t('my_stack_basis_unit', { defaultValue: 'Produkteinheit' })}
+            {istRekonstitution
+              ? t('my_stack_basis_unit_solvent', { defaultValue: 'Einheit' })
+              : t('my_stack_basis_unit', { defaultValue: 'Produkteinheit' })}
           </label>
           <input
             id={`stack-strength-${ingredientIndex}-basis-unit`}
@@ -182,6 +212,17 @@ export function StrengthEditor({
           className="mt-4 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.05] px-3 py-2 text-sm text-cyan-100"
         >
           {displayedIngredientName}: {ingredient.amount_value} {ingredient.amount_unit} {t('my_stack_per', { defaultValue: 'pro' })} {ingredient.basis_value} {ingredient.basis_unit}
+          {/* Was in einem Milliliter steckt, ist die Zahl, mit der man
+              aufzieht — „10 mg pro 2 ml" allein sagt sie nicht. */}
+          {konzentration && (
+            <span data-strength-concentration className="ml-1 font-semibold">
+              {t('my_stack_strength_concentration', {
+                defaultValue: '= {{value}} {{unit}}/ml',
+                value: konzentration.value,
+                unit: konzentration.unit,
+              })}
+            </span>
+          )}
         </p>
       )}
     </fieldset>

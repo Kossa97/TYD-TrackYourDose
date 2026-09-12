@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DOSAGE_FORMS, getDosageForm, getIntakePlanUnitSuggestions, intakeUnitLabelKey, isStageRenderable } from './dosageForms'
+import { DOSAGE_FORMS, getDosageForm, getIntakePlanUnitSuggestions, intakeUnitLabelKey, isStageRenderable, strengthBasisDefault, strengthHintKey } from './dosageForms'
 import type { DosageFormKey } from '../types'
 
 describe('DOSAGE_FORMS', () => {
@@ -115,4 +115,68 @@ describe('Einnahmeeinheit je Darreichungsform', () => {
       expect(vorschlaege, key).toContain(getDosageForm(key).intakeUnit)
     }
   })
+
+  it('gibt jeder Form eine Staerke-Form und einen Hinweis dazu', () => {
+    for (const form of DOSAGE_FORMS) {
+      expect(form.strengthShape, form.key).toBeTruthy()
+      expect(strengthHintKey(form.key), form.key).toBe(
+        form.strengthShape === 'free'
+          ? 'my_stack_no_dosage_advice'
+          : `my_stack_strength_hint_${form.strengthShape}`,
+      )
+    }
+  })
+
+  it('ordnet jede Form der Staerke zu, die sie tatsaechlich hat', () => {
+    const shape = (key: Parameters<typeof getDosageForm>[0]) => getDosageForm(key).strengthShape
+
+    // Stueckware: die Staerke steckt in einem Stueck.
+    expect(shape('tablet')).toBe('per_unit')
+    expect(shape('capsule')).toBe('per_unit')
+    expect(shape('patch')).toBe('per_unit')
+    // Ein Spruehstoss ist auch ein Stueck — abgezaehlt, nicht abgemessen.
+    expect(shape('nasal_spray')).toBe('per_unit')
+    expect(shape('spray')).toBe('per_unit')
+
+    // Fluessiges traegt eine Konzentration.
+    expect(shape('ampoule')).toBe('per_volume')
+    expect(shape('pen')).toBe('per_volume')
+    expect(shape('drops')).toBe('per_volume')
+
+    // Das Pulver-Vial bekommt seine Konzentration erst beim Aufloesen.
+    expect(shape('vial')).toBe('reconstituted')
+
+    // Abgewogenes.
+    expect(shape('powder')).toBe('per_mass')
+    expect(shape('gel')).toBe('per_mass')
+    expect(shape('tube')).toBe('per_mass')
+
+    // Unbekannte Form: keine Annahme.
+    expect(shape('other')).toBe('free')
+  })
+
+  it('belegt die Produktmenge aus der Form vor — und beim Vial gerade nicht', () => {
+    // Eine Kapsel traegt ihre Staerke „pro 1 Kapsel", eine Ampulle „pro 1 ml".
+    expect(strengthBasisDefault('capsule')).toEqual({ value: 1, unit: 'capsule' })
+    expect(strengthBasisDefault('tablet')).toEqual({ value: 1, unit: 'tablet' })
+    expect(strengthBasisDefault('nasal_spray')).toEqual({ value: 1, unit: 'spray' })
+    expect(strengthBasisDefault('ampoule')).toEqual({ value: 1, unit: 'ml' })
+    expect(strengthBasisDefault('pen')).toEqual({ value: 1, unit: 'ml' })
+    expect(strengthBasisDefault('gel')).toEqual({ value: 1, unit: 'g' })
+
+    // Wie viel Loesungsmittel ins Vial kommt, steht auf keinem Etikett.
+    expect(strengthBasisDefault('vial')).toEqual({ value: null, unit: 'ml' })
+
+    // Ueber eine unbekannte Form wird nichts behauptet.
+    expect(strengthBasisDefault('other')).toEqual({ value: null, unit: 'unit' })
+  })
+
+  it('schlaegt nur Einheiten vor, die die Form auch kennt', () => {
+    for (const form of DOSAGE_FORMS) {
+      const vorgabe = strengthBasisDefault(form.key)
+      if (vorgabe.unit === null) continue
+      expect([...form.basisUnits, 'ml', 'g'], form.key).toContain(vorgabe.unit)
+    }
+  })
 })
+

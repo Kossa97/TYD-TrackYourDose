@@ -1107,5 +1107,13 @@
   "my_stack_intake_unit_unit": "单位",
   "my_stack_ingredients_question": "你的产品里有什么？",
   "my_stack_ingredients_intro": "通常只有一种有效成分——已经填好了。复方产品每种成分各占一行。",
-  "my_stack_ingredients_next": "下一步你要为每种成分填写一个产品单位中含多少——包装上的数字。这样应用才能按毫克而不是按胶囊计算。"
+  "my_stack_ingredients_next": "下一步你要为每种成分填写一个产品单位中含多少——包装上的数字。这样应用才能按毫克而不是按胶囊计算。",
+  "my_stack_strength_hint_per_unit": "一个单位里含多少有效成分？请填写包装上的数字。例如：每 1 粒胶囊 500 mg。产品量已设为 1——只有包装另有标示时才更改。这不是剂量建议。",
+  "my_stack_strength_hint_per_volume": "按标签上标示的浓度填写。例如：每 1 ml 250 mg。这不是剂量建议。",
+  "my_stack_strength_hint_reconstituted": "粉末瓶（多肽）在第一次使用前需溶解，即复溶。左侧填瓶中有效成分的量，右侧填你加入的溶剂量。例如：10 mg 溶于 2 ml 即为 5 mg/ml。若瓶中已是液体，两个数字都在标签上。这不是剂量建议。",
+  "my_stack_strength_hint_per_mass": "一定量的产品里含多少有效成分？请填写包装上的标示。例如：每 1 g 50 mg。这不是剂量建议。",
+  "my_stack_strength_value_vial": "瓶中有效成分",
+  "my_stack_basis_value_solvent": "溶剂",
+  "my_stack_basis_unit_solvent": "单位",
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
 }

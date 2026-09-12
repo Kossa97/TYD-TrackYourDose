@@ -1108,5 +1108,13 @@
   "my_stack_intake_unit_unit": "単位",
   "my_stack_ingredients_question": "この製品には何が入っていますか？",
   "my_stack_ingredients_intro": "通常は有効成分ひとつ — すでに入力済みです。配合製品は成分ごとに1行になります。",
-  "my_stack_ingredients_next": "次のステップで、成分ごとに製品1単位あたりの含有量（パッケージ記載の数値）を入力します。そうしてはじめて、カプセル単位ではなくミリグラムで計算できます。"
+  "my_stack_ingredients_next": "次のステップで、成分ごとに製品1単位あたりの含有量（パッケージ記載の数値）を入力します。そうしてはじめて、カプセル単位ではなくミリグラムで計算できます。",
+  "my_stack_strength_hint_per_unit": "1 単位に有効成分がどれだけ含まれていますか？ パッケージの数値を入力してください。例：1 カプセルあたり 500 mg。製品量はすでに 1 です。パッケージの表記が異なる場合のみ変更してください。用量の推奨ではありません。",
+  "my_stack_strength_hint_per_volume": "ラベルに記載のとおりの濃度を入力してください。例：1 ml あたり 250 mg。用量の推奨ではありません。",
+  "my_stack_strength_hint_reconstituted": "粉末バイアル（ペプチド）は初回使用の前に溶解します — これが再構成です。左にバイアル内の有効成分量、右に加える溶媒量を入力します。例：2 ml に 10 mg で 5 mg/ml になります。すでに液体のバイアルなら、どちらの数値もラベルにあります。用量の推奨ではありません。",
+  "my_stack_strength_hint_per_mass": "一定量の製品に有効成分がどれだけ含まれていますか？ パッケージの表記を入力してください。例：1 g あたり 50 mg。用量の推奨ではありません。",
+  "my_stack_strength_value_vial": "バイアル内の有効成分",
+  "my_stack_basis_value_solvent": "溶媒",
+  "my_stack_basis_unit_solvent": "単位",
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
 }

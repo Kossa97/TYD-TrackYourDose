@@ -11,7 +11,7 @@ import { PATCH_SPEC } from '../extensions/patch/patchShape'
 import { TUBE_SPEC } from '../extensions/tube/tubeShape'
 import { VIAL_SPEC } from '../extensions/peptide/vialShape'
 import type { StageFormSpec } from '../stage/types'
-import type { DosageFormCapability, DosageFormKey, IntakeUnitKey } from '../types'
+import type { DosageFormCapability, DosageFormKey, IntakeUnitKey, StrengthShape } from '../types'
 
 export interface DosageFormDefinition {
   readonly key: DosageFormKey
@@ -23,6 +23,10 @@ export interface DosageFormDefinition {
   // die sagen, worin das PRODUKT gemessen wird (eine Ampulle, ein ml), diese
   // sagt, was man TUT — aus der Ampulle wird eine Spritze aufgezogen.
   readonly intakeUnit: IntakeUnitKey
+  // Wie die Staerke dieser Form zustande kommt. Der Staerke-Schritt fragt
+  // ueberall dieselben zwei Zahlen ab — die Form sagt, was sie bedeuten und
+  // womit das Feld vorbelegt ist.
+  readonly strengthShape: StrengthShape
   readonly stageRenderer?: 'vial' | 'ampoule' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'patch' | 'drops' | 'powder' | 'gel' | 'spray'
   // What the stage needs to know: where the liquid sits, whether the fill level
   // says anything, and — derived from the chamber — whether it wears our label.
@@ -30,19 +34,19 @@ export interface DosageFormDefinition {
 }
 
 export const DOSAGE_FORMS: readonly DosageFormDefinition[] = [
-  { key: 'vial', labelKey: 'dosage_form_vial', suggestedUnits: ['mcg', 'mg', 'IU'], basisUnits: ['vial', 'ml'], capabilities: ['injectable', 'reconstitutable', 'concentration_based', 'inventory_capable'], intakeUnit: 'syringe', stageRenderer: 'vial', stageForm: VIAL_SPEC },
-  { key: 'ampoule', labelKey: 'dosage_form_ampoule', suggestedUnits: ['mg', 'ml', 'IU'], basisUnits: ['ml', 'ampoule'], capabilities: ['injectable', 'liquid', 'concentration_based', 'inventory_capable'], intakeUnit: 'syringe', stageRenderer: 'ampoule', stageForm: AMPOULE_SPEC },
-  { key: 'pen', labelKey: 'dosage_form_pen', suggestedUnits: ['mg', 'mcg', 'IU'], basisUnits: ['dose', 'ml'], capabilities: ['injectable', 'liquid', 'concentration_based', 'inventory_capable'], intakeUnit: 'dose', stageRenderer: 'pen', stageForm: PEN_SPEC },
-  { key: 'tablet', labelKey: 'dosage_form_tablet', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['tablet'], capabilities: ['countable', 'divisible', 'inventory_capable'], intakeUnit: 'tablet', stageRenderer: 'tablet', stageForm: TABLET_SPEC },
-  { key: 'capsule', labelKey: 'dosage_form_capsule', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['capsule'], capabilities: ['countable', 'inventory_capable'], intakeUnit: 'capsule', stageRenderer: 'capsule', stageForm: CAPSULE_SPEC },
-  { key: 'drops', labelKey: 'dosage_form_drops', suggestedUnits: ['mcg', 'mg', 'IU', 'ml'], basisUnits: ['drop', 'ml'], capabilities: ['liquid', 'concentration_based', 'inventory_capable'], intakeUnit: 'drop', stageRenderer: 'drops', stageForm: DROPS_SPEC },
-  { key: 'powder', labelKey: 'dosage_form_powder', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'portion'], capabilities: ['inventory_capable'], intakeUnit: 'portion', stageRenderer: 'powder', stageForm: POWDER_SPEC },
-  { key: 'nasal_spray', labelKey: 'dosage_form_nasal_spray', suggestedUnits: ['mcg', 'mg'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'], intakeUnit: 'spray', stageRenderer: 'nasal_spray', stageForm: NASAL_SPRAY_SPEC },
-  { key: 'spray', labelKey: 'dosage_form_spray', suggestedUnits: ['mcg', 'mg', 'ml'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'], intakeUnit: 'spray', stageRenderer: 'spray', stageForm: SPRAY_SPEC },
-  { key: 'gel', labelKey: 'dosage_form_gel', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'application'], capabilities: ['inventory_capable'], intakeUnit: 'application', stageRenderer: 'gel', stageForm: GEL_SPEC },
-  { key: 'patch', labelKey: 'dosage_form_patch', suggestedUnits: ['mcg', 'mg'], basisUnits: ['patch', 'hour'], capabilities: ['countable', 'inventory_capable'], intakeUnit: 'patch', stageRenderer: 'patch', stageForm: PATCH_SPEC },
-  { key: 'tube', labelKey: 'dosage_form_tube', suggestedUnits: ['mg', 'g', 'ml'], basisUnits: ['g', 'ml', 'application'], capabilities: ['inventory_capable'], intakeUnit: 'application', stageRenderer: 'tube', stageForm: TUBE_SPEC },
-  { key: 'other', labelKey: 'dosage_form_other', suggestedUnits: ['mcg', 'mg', 'g', 'IU', 'ml'], basisUnits: ['unit', 'portion'], capabilities: [], intakeUnit: 'unit' },
+  { key: 'vial', labelKey: 'dosage_form_vial', suggestedUnits: ['mcg', 'mg', 'IU'], basisUnits: ['vial', 'ml'], capabilities: ['injectable', 'reconstitutable', 'concentration_based', 'inventory_capable'], strengthShape: 'reconstituted', intakeUnit: 'syringe', stageRenderer: 'vial', stageForm: VIAL_SPEC },
+  { key: 'ampoule', labelKey: 'dosage_form_ampoule', suggestedUnits: ['mg', 'ml', 'IU'], basisUnits: ['ml', 'ampoule'], capabilities: ['injectable', 'liquid', 'concentration_based', 'inventory_capable'], strengthShape: 'per_volume', intakeUnit: 'syringe', stageRenderer: 'ampoule', stageForm: AMPOULE_SPEC },
+  { key: 'pen', labelKey: 'dosage_form_pen', suggestedUnits: ['mg', 'mcg', 'IU'], basisUnits: ['dose', 'ml'], capabilities: ['injectable', 'liquid', 'concentration_based', 'inventory_capable'], strengthShape: 'per_volume', intakeUnit: 'dose', stageRenderer: 'pen', stageForm: PEN_SPEC },
+  { key: 'tablet', labelKey: 'dosage_form_tablet', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['tablet'], capabilities: ['countable', 'divisible', 'inventory_capable'], strengthShape: 'per_unit', intakeUnit: 'tablet', stageRenderer: 'tablet', stageForm: TABLET_SPEC },
+  { key: 'capsule', labelKey: 'dosage_form_capsule', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['capsule'], capabilities: ['countable', 'inventory_capable'], strengthShape: 'per_unit', intakeUnit: 'capsule', stageRenderer: 'capsule', stageForm: CAPSULE_SPEC },
+  { key: 'drops', labelKey: 'dosage_form_drops', suggestedUnits: ['mcg', 'mg', 'IU', 'ml'], basisUnits: ['drop', 'ml'], capabilities: ['liquid', 'concentration_based', 'inventory_capable'], strengthShape: 'per_volume', intakeUnit: 'drop', stageRenderer: 'drops', stageForm: DROPS_SPEC },
+  { key: 'powder', labelKey: 'dosage_form_powder', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'portion'], capabilities: ['inventory_capable'], strengthShape: 'per_mass', intakeUnit: 'portion', stageRenderer: 'powder', stageForm: POWDER_SPEC },
+  { key: 'nasal_spray', labelKey: 'dosage_form_nasal_spray', suggestedUnits: ['mcg', 'mg'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'], strengthShape: 'per_unit', intakeUnit: 'spray', stageRenderer: 'nasal_spray', stageForm: NASAL_SPRAY_SPEC },
+  { key: 'spray', labelKey: 'dosage_form_spray', suggestedUnits: ['mcg', 'mg', 'ml'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'], strengthShape: 'per_unit', intakeUnit: 'spray', stageRenderer: 'spray', stageForm: SPRAY_SPEC },
+  { key: 'gel', labelKey: 'dosage_form_gel', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'application'], capabilities: ['inventory_capable'], strengthShape: 'per_mass', intakeUnit: 'application', stageRenderer: 'gel', stageForm: GEL_SPEC },
+  { key: 'patch', labelKey: 'dosage_form_patch', suggestedUnits: ['mcg', 'mg'], basisUnits: ['patch', 'hour'], capabilities: ['countable', 'inventory_capable'], strengthShape: 'per_unit', intakeUnit: 'patch', stageRenderer: 'patch', stageForm: PATCH_SPEC },
+  { key: 'tube', labelKey: 'dosage_form_tube', suggestedUnits: ['mg', 'g', 'ml'], basisUnits: ['g', 'ml', 'application'], capabilities: ['inventory_capable'], strengthShape: 'per_mass', intakeUnit: 'application', stageRenderer: 'tube', stageForm: TUBE_SPEC },
+  { key: 'other', labelKey: 'dosage_form_other', suggestedUnits: ['mcg', 'mg', 'g', 'IU', 'ml'], basisUnits: ['unit', 'portion'], capabilities: [], strengthShape: 'free', intakeUnit: 'unit' },
 ] as const
 
 // Faellt auf 'other' zurueck, wenn die Form unbekannt ist. Das ist kein
@@ -54,6 +58,44 @@ export const DOSAGE_FORMS: readonly DosageFormDefinition[] = [
 export function getDosageForm(key: DosageFormKey): DosageFormDefinition {
   return DOSAGE_FORMS.find(form => form.key === key)
     ?? DOSAGE_FORMS.find(form => form.key === 'other')!
+}
+
+export interface StrengthBasisDefault {
+  readonly value: number | null
+  readonly unit: string | null
+}
+
+// Womit der Staerke-Schritt die PRODUKTMENGE vorbelegt. Das ist keine
+// Bequemlichkeit, sondern die Aussage der Form:
+//   Eine Kapsel ist die Einheit — die Menge ist 1, und wer sie aendert, hat
+//   ein anderes Produkt vor sich. Eine Ampulle traegt eine Konzentration, und
+//   „pro 1 ml" ist die Zeile, in der Etiketten sie angeben.
+//   Beim Pulver-Vial bleibt die Zahl LEER: wie viel Loesungsmittel zugegeben
+//   wird, steht auf keinem Etikett — das entscheidet der Nutzer beim
+//   Anmischen. Eine Vorbelegung waere dort geraten.
+export function strengthBasisDefault(key: DosageFormKey): StrengthBasisDefault {
+  const form = getDosageForm(key)
+  switch (form.strengthShape) {
+    case 'per_unit':
+      return { value: 1, unit: form.basisUnits[0] ?? null }
+    case 'per_volume':
+      return { value: 1, unit: 'ml' }
+    case 'reconstituted':
+      return { value: null, unit: 'ml' }
+    case 'per_mass':
+      return { value: 1, unit: 'g' }
+    case 'free':
+      return { value: null, unit: form.basisUnits[0] ?? null }
+  }
+}
+
+// Der Uebersetzungsschluessel zum Hinweiskasten im Staerke-Schritt. Eine
+// Stelle, damit „was hier einzutragen ist" je Form dasselbe Beispiel nennt.
+export function strengthHintKey(key: DosageFormKey): string {
+  const shape = getDosageForm(key).strengthShape
+  // 'free' behaelt den alten Satz: er sagt genau das Richtige fuer eine Form,
+  // ueber die wir nichts wissen, und steht schon geprueft in 14 Sprachen.
+  return shape === 'free' ? 'my_stack_no_dosage_advice' : `my_stack_strength_hint_${shape}`
 }
 
 export function getIntakePlanUnitSuggestions(

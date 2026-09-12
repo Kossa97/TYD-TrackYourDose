@@ -332,8 +332,12 @@ describe('wizard state', () => {
     })
 
     expect(withDosageForm.draft.ingredients[0].basis_unit).toBe('capsule')
+    // Die Wirkstoffmenge bleibt leer — sie steht auf der Packung, nicht in
+    // der Form. Die PRODUKTMENGE dagegen sagt die Form: eine Kapsel traegt
+    // ihre Staerke „pro 1 Kapsel". Wer ein anderes Produkt vor sich hat,
+    // aendert die Zahl; vorgeschlagen ist sie trotzdem.
     expect(withDosageForm.draft.ingredients[0].amount_value).toBeNull()
-    expect(withDosageForm.draft.ingredients[0].basis_value).toBeNull()
+    expect(withDosageForm.draft.ingredients[0].basis_value).toBe(1)
     expect(next.draft.ingredients[0].basis_unit).toBe('portion')
   })
 
@@ -359,7 +363,7 @@ describe('wizard state', () => {
     const existingAmpoule = {
       ...existingVitaminD,
       dosage_form: 'ampoule' as const,
-      ingredients: [{ ...existingVitaminD.ingredients[0], basis_unit: 'ampoule' }],
+      ingredients: [{ ...existingVitaminD.ingredients[0], basis_value: 1, basis_unit: 'ampoule' }],
     }
 
     const next = wizardReducer(initialWizardState(existingAmpoule), {
@@ -367,7 +371,12 @@ describe('wizard state', () => {
       dosageForm: 'vial',
     })
 
-    expect(next.draft.ingredients[0].basis_unit).toBe('vial')
+    // Ein Vial wird rekonstituiert: die Staerke steht am Ende „pro ml", und
+    // wie viele Milliliter es werden, weiss nur der Nutzer beim Anmischen.
+    // Deshalb ml als Einheit und eine LEERE Zahl — die alte 1 aus der Ampulle
+    // waere hier eine Behauptung ueber die Rekonstitution.
+    expect(next.draft.ingredients[0].basis_unit).toBe('ml')
+    expect(next.draft.ingredients[0].basis_value).toBeNull()
   })
 
   it('unterscheidet Update und neue Variante beim Editieren', () => {

@@ -65,7 +65,7 @@ describe('StrengthEditor', () => {
     {
       language: 'de' as const,
       labels: ['Wirkstoffmenge', 'Wirkstoffeinheit', 'Produktmenge', 'Produkteinheit'],
-      explanation: 'Wie viel Wirkstoff ist in welcher Produktmenge enthalten? Trage ein, was auf der Verpackung steht. Beispiel: 250 mg/ml = 250 mg pro 1 ml. Keine Dosierungsempfehlung.',
+      explanation: 'Trage die Konzentration ein, wie sie auf dem Etikett steht. Beispiel: 250 mg pro 1 ml. Keine Dosierungsempfehlung.',
       errors: [
         'Bitte gib die Wirkstoffmenge an.',
         'Bitte wähle eine Wirkstoffeinheit.',
@@ -76,7 +76,7 @@ describe('StrengthEditor', () => {
     {
       language: 'en' as const,
       labels: ['Active ingredient amount', 'Active ingredient unit', 'Product quantity', 'Product unit'],
-      explanation: 'How much active ingredient is contained in what quantity of product? Enter what is shown on the packaging. Example: 250 mg/ml = 250 mg per 1 ml. Not a dosage recommendation.',
+      explanation: 'Enter the concentration as printed on the label. Example: 250 mg per 1 ml. Not a dosage recommendation.',
       errors: [
         'Please enter the active ingredient amount.',
         'Please select an active ingredient unit.',
@@ -144,9 +144,14 @@ describe('StrengthEditor', () => {
   })
 
   it.each([
-    ['ampoule', 'ml'],
-    ['vial', 'vial'],
-  ] as const)('renders %s with %s as its editable default product unit', async (dosageForm, expectedUnit) => {
+    ['ampoule', 'Produktmenge', 'ml', '1'],
+    ['capsule', 'Produktmenge', 'capsule', '1'],
+    ['gel', 'Produktmenge', 'g', '1'],
+    // Das Vial ist der Sonderfall: wie viel Loesungsmittel zugegeben wird,
+    // steht auf keinem Etikett — die Zahl bleibt leer, bis der Nutzer
+    // rekonstituiert.
+    ['vial', 'Lösungsmittel', 'ml', ''],
+  ] as const)('belegt die Produktmenge von %s aus der Form vor', async (dosageForm, mengenLabel, erwarteteEinheit, erwarteteMenge) => {
     const state = wizardReducer(
       wizardReducer(initialWizardState(), { type: 'custom_started', name: 'Testosteron Enantat' }),
       { type: 'dosage_form_selected', dosageForm },
@@ -154,6 +159,71 @@ describe('StrengthEditor', () => {
 
     await renderEditor({ dosageForm, ingredient: state.draft.ingredients[0] })
 
-    expect((screen.getByLabelText('Produkteinheit') as HTMLInputElement).value).toBe(expectedUnit)
+    const einheitLabel = dosageForm === 'vial' ? 'Einheit' : 'Produkteinheit'
+    expect((screen.getByLabelText(einheitLabel) as HTMLInputElement).value).toBe(erwarteteEinheit)
+    expect((screen.getByLabelText(mengenLabel) as HTMLInputElement).value).toBe(erwarteteMenge)
+  })
+
+  it('erklaert beim Vial die Rekonstitution und benennt die Felder danach', async () => {
+    // „Produktmenge" fragte beim Peptid nach einer Zahl, die auf keiner
+    // Packung steht. Gemeint ist das Loesungsmittel — das muss dranstehen.
+    await renderEditor({
+      dosageForm: 'vial',
+      ingredient: { ...completeIngredient, amount_value: 10, amount_unit: 'mg', basis_value: 2, basis_unit: 'ml' },
+    })
+
+    const hinweis = document.querySelector('[data-strength-hint]')!
+    expect(hinweis.getAttribute('data-strength-hint')).toBe('reconstituted')
+    expect(hinweis.textContent).toMatch(/Rekonstitution/)
+    expect(screen.getByLabelText('Wirkstoff im Vial')).toBeTruthy()
+    expect(screen.getByLabelText('Lösungsmittel')).toBeTruthy()
+    expect(screen.queryByLabelText('Produktmenge')).toBeNull()
+  })
+
+  it('rechnet vor, was nach dem Aufloesen in einem Milliliter steckt', async () => {
+    await renderEditor({
+      dosageForm: 'vial',
+      ingredient: { ...completeIngredient, amount_value: 10, amount_unit: 'mg', basis_value: 2, basis_unit: 'ml' },
+    })
+
+    expect(screen.getByRole('status').textContent).toBe('Testosteron Enantat: 10 mg pro 2 ml= 5 mg/ml')
+    expect(document.querySelector('[data-strength-concentration]')!.textContent).toBe('= 5 mg/ml')
+  })
+
+  it('laesst die Umrechnung weg, wo sie nichts hinzufuegt', async () => {
+    // „250 mg pro 1 ml" IST die Konzentration. Und eine Kapsel hat keine.
+    await renderEditor({ dosageForm: 'ampoule' })
+    expect(document.querySelector('[data-strength-concentration]')).toBeNull()
+
+    cleanup()
+    await renderEditor({
+      dosageForm: 'capsule',
+      ingredient: { ...completeIngredient, amount_value: 500, amount_unit: 'mg', basis_value: 1, basis_unit: 'capsule' },
+    })
+    expect(document.querySelector('[data-strength-concentration]')).toBeNull()
+  })
+
+  it.each([
+    ['capsule', 'per_unit'],
+    ['tablet', 'per_unit'],
+    ['ampoule', 'per_volume'],
+    ['pen', 'per_volume'],
+    ['drops', 'per_volume'],
+    ['vial', 'reconstituted'],
+    ['powder', 'per_mass'],
+    ['gel', 'per_mass'],
+    ['tube', 'per_mass'],
+    ['nasal_spray', 'per_unit'],
+    ['spray', 'per_unit'],
+    ['patch', 'per_unit'],
+    ['other', 'free'],
+  ] as const)('gibt %s den Hinweis seiner Staerke-Form (%s)', async (dosageForm, shape) => {
+    await renderEditor({ dosageForm })
+
+    const hinweis = document.querySelector('[data-strength-hint]')!
+    expect(hinweis.getAttribute('data-strength-hint')).toBe(shape)
+    // Kein Schluessel-Durchschlag: jede Form hat einen uebersetzten Satz.
+    expect(hinweis.textContent).not.toMatch(/^my_stack_/)
+    expect(hinweis.textContent!.length).toBeGreaterThan(40)
   })
 })

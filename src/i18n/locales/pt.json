@@ -1108,5 +1108,13 @@
   "my_stack_intake_unit_unit": "unidade",
   "my_stack_ingredients_question": "O que há no seu produto?",
   "my_stack_ingredients_intro": "Normalmente um único princípio ativo — já está preenchido. Um produto combinado recebe uma linha por princípio ativo.",
-  "my_stack_ingredients_next": "Na próxima etapa você informa, para cada princípio ativo, quanto há em uma unidade do produto — o número da embalagem. Só assim o app conta em miligramas em vez de cápsulas."
+  "my_stack_ingredients_next": "Na próxima etapa você informa, para cada princípio ativo, quanto há em uma unidade do produto — o número da embalagem. Só assim o app conta em miligramas em vez de cápsulas.",
+  "my_stack_strength_hint_per_unit": "Quanto princípio ativo há em UMA unidade? Insira o valor da embalagem. Exemplo: 500 mg por 1 cápsula. A quantidade de produto já está em 1 — altere apenas se a embalagem indicar de outra forma. Não é uma recomendação de dose.",
+  "my_stack_strength_hint_per_volume": "Insira a concentração como consta no rótulo. Exemplo: 250 mg por 1 ml. Não é uma recomendação de dose.",
+  "my_stack_strength_hint_reconstituted": "Um frasco de pó (peptídeo) é dissolvido antes da primeira toma — a reconstituição. À esquerda, quanto princípio ativo há no frasco; à direita, quanto solvente você adiciona. Exemplo: 10 mg em 2 ml dão 5 mg/ml. Se o frasco já for líquido, ambos os valores estão no rótulo. Não é uma recomendação de dose.",
+  "my_stack_strength_hint_per_mass": "Quanto princípio ativo há em uma quantidade de produto? Insira o que consta na embalagem. Exemplo: 50 mg por 1 g. Não é uma recomendação de dose.",
+  "my_stack_strength_value_vial": "Princípio ativo no frasco",
+  "my_stack_basis_value_solvent": "Solvente",
+  "my_stack_basis_unit_solvent": "Unidade",
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
 }

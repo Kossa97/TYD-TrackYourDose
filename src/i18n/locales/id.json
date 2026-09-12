@@ -1108,5 +1108,13 @@
   "my_stack_intake_unit_unit": "unit",
   "my_stack_ingredients_question": "Apa isi produkmu?",
   "my_stack_ingredients_intro": "Biasanya satu zat aktif — sudah terisi. Produk kombinasi mendapat satu baris per zat.",
-  "my_stack_ingredients_next": "Di langkah berikutnya kamu isi, untuk tiap zat, berapa banyak yang ada dalam satu unit produk — angka di kemasan. Barulah aplikasi menghitung dalam miligram, bukan kapsul."
+  "my_stack_ingredients_next": "Di langkah berikutnya kamu isi, untuk tiap zat, berapa banyak yang ada dalam satu unit produk — angka di kemasan. Barulah aplikasi menghitung dalam miligram, bukan kapsul.",
+  "my_stack_strength_hint_per_unit": "Berapa banyak zat aktif dalam SATU unit? Masukkan angka dari kemasan. Contoh: 500 mg per 1 kapsul. Jumlah produk sudah disetel ke 1 — ubah hanya jika kemasan menyatakan lain. Bukan rekomendasi dosis.",
+  "my_stack_strength_hint_per_volume": "Masukkan konsentrasi seperti tertera pada label. Contoh: 250 mg per 1 ml. Bukan rekomendasi dosis.",
+  "my_stack_strength_hint_reconstituted": "Vial serbuk (peptida) dilarutkan sebelum pemakaian pertama — itulah rekonstitusi. Di kiri, berapa banyak zat aktif dalam vial; di kanan, berapa banyak pelarut yang kamu tambahkan. Contoh: 10 mg dalam 2 ml menghasilkan 5 mg/ml. Jika vial sudah cair, kedua angka ada di label. Bukan rekomendasi dosis.",
+  "my_stack_strength_hint_per_mass": "Berapa banyak zat aktif dalam sejumlah produk? Masukkan yang tertera pada kemasan. Contoh: 50 mg per 1 g. Bukan rekomendasi dosis.",
+  "my_stack_strength_value_vial": "Zat aktif dalam vial",
+  "my_stack_basis_value_solvent": "Pelarut",
+  "my_stack_basis_unit_solvent": "Satuan",
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
 }

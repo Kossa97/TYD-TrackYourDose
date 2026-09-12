@@ -14,6 +14,18 @@ export type IntakeUnitKey =
   | 'syringe' | 'dose' | 'tablet' | 'capsule' | 'drop'
   | 'portion' | 'spray' | 'application' | 'patch' | 'unit'
 
+// Wie die Staerke einer Form ueberhaupt zustande kommt. Der Schritt fragt
+// ueberall dieselben zwei Zahlen ab (Wirkstoffmenge pro Produktmenge) — was
+// sie BEDEUTEN, ist je Form verschieden:
+//   per_unit      500 mg stecken in EINER Tablette. Die Produktmenge ist 1.
+//   per_volume    250 mg auf 1 ml. Die Konzentration steht auf dem Etikett.
+//   reconstituted 10 mg Pulver, aufgeloest in 2 ml — die Rekonstitution. Die
+//                 zweite Zahl gibt der Nutzer erst beim Anmischen selbst.
+//   per_mass      50 mg in 1 g Gel.
+//   free          unbekannte Form, keine Annahme.
+export type StrengthShape =
+  | 'per_unit' | 'per_volume' | 'reconstituted' | 'per_mass' | 'free'
+
 export type DosageFormCapability =
   | 'countable' | 'divisible' | 'liquid' | 'injectable' | 'reconstitutable'
   | 'concentration_based' | 'inventory_capable'

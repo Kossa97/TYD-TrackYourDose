@@ -1108,5 +1108,13 @@
   "my_stack_intake_unit_unit": "unità",
   "my_stack_ingredients_question": "Cosa contiene il tuo prodotto?",
   "my_stack_ingredients_intro": "Di solito un solo principio attivo — è già inserito. Un prodotto combinato riceve una riga per principio attivo.",
-  "my_stack_ingredients_next": "Nel passaggio successivo indichi, per ogni principio attivo, quanto ne contiene un’unità di prodotto — il dato sulla confezione. Solo così l’app conta in milligrammi invece che in capsule."
+  "my_stack_ingredients_next": "Nel passaggio successivo indichi, per ogni principio attivo, quanto ne contiene un’unità di prodotto — il dato sulla confezione. Solo così l’app conta in milligrammi invece che in capsule.",
+  "my_stack_strength_hint_per_unit": "Quanto principio attivo contiene UNA unità? Inserisci il valore riportato sulla confezione. Esempio: 500 mg per 1 capsula. La quantità di prodotto è già impostata su 1: cambiala solo se la confezione indica diversamente. Non è una raccomandazione di dosaggio.",
+  "my_stack_strength_hint_per_volume": "Inserisci la concentrazione come riportata sull’etichetta. Esempio: 250 mg per 1 ml. Non è una raccomandazione di dosaggio.",
+  "my_stack_strength_hint_reconstituted": "Un flaconcino di polvere (peptide) viene sciolto prima della prima assunzione: la ricostituzione. A sinistra quanto principio attivo c’è nel flaconcino, a destra quanto solvente aggiungi. Esempio: 10 mg in 2 ml danno 5 mg/ml. Se il flaconcino è già liquido, entrambi i valori sono sull’etichetta. Non è una raccomandazione di dosaggio.",
+  "my_stack_strength_hint_per_mass": "Quanto principio attivo contiene una quantità di prodotto? Inserisci quanto riportato sulla confezione. Esempio: 50 mg per 1 g. Non è una raccomandazione di dosaggio.",
+  "my_stack_strength_value_vial": "Principio attivo nel flaconcino",
+  "my_stack_basis_value_solvent": "Solvente",
+  "my_stack_basis_unit_solvent": "Unità",
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
 }

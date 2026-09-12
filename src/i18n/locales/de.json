@@ -1256,5 +1256,13 @@
   "my_stack_intake_unit_unit": "Einheit",
   "my_stack_ingredients_question": "Was steckt in deinem Produkt?",
   "my_stack_ingredients_intro": "Meist ein einziger Wirkstoff — er steht schon da. Ein Kombipräparat bekommt je Wirkstoff eine eigene Zeile.",
-  "my_stack_ingredients_next": "Im nächsten Schritt gibst du je Wirkstoff an, wie viel davon in einer Produkteinheit steckt — die Zahl von der Verpackung. Erst damit rechnet die App in Milligramm statt in Kapseln."
+  "my_stack_ingredients_next": "Im nächsten Schritt gibst du je Wirkstoff an, wie viel davon in einer Produkteinheit steckt — die Zahl von der Verpackung. Erst damit rechnet die App in Milligramm statt in Kapseln.",
+  "my_stack_strength_hint_per_unit": "Wie viel Wirkstoff steckt in EINER Einheit? Trage die Zahl von der Verpackung ein. Beispiel: 500 mg pro 1 Kapsel. Die Produktmenge steht schon auf 1 — ändere sie nur, wenn die Packung es anders angibt. Keine Dosierungsempfehlung.",
+  "my_stack_strength_hint_per_volume": "Trage die Konzentration ein, wie sie auf dem Etikett steht. Beispiel: 250 mg pro 1 ml. Keine Dosierungsempfehlung.",
+  "my_stack_strength_hint_reconstituted": "Ein Pulver-Vial (Peptid) wird vor der ersten Einnahme aufgelöst — die Rekonstitution. Links die Wirkstoffmenge im Vial, rechts wie viel Lösungsmittel du zugibst. Beispiel: 10 mg auf 2 ml ergibt 5 mg/ml. Ist das Vial schon flüssig, steht beides auf dem Etikett. Keine Dosierungsempfehlung.",
+  "my_stack_strength_hint_per_mass": "Wie viel Wirkstoff steckt in einer Produktmenge? Trage ein, was auf der Verpackung steht. Beispiel: 50 mg pro 1 g. Keine Dosierungsempfehlung.",
+  "my_stack_strength_value_vial": "Wirkstoff im Vial",
+  "my_stack_basis_value_solvent": "Lösungsmittel",
+  "my_stack_basis_unit_solvent": "Einheit",
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
 }

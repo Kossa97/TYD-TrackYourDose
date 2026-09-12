@@ -12,7 +12,7 @@ import type {
 } from '../types'
 import { format } from 'date-fns'
 import { buildDuplicateFingerprint } from './duplicateFingerprint'
-import { getDosageForm, getIntakePlanUnitSuggestions } from './dosageForms'
+import { getIntakePlanUnitSuggestions, strengthBasisDefault } from './dosageForms'
 import { trackingCapabilities } from './trackingDepth'
 import { validateIntakePlan, validateStackItemDraft } from './validation'
 
@@ -87,8 +87,17 @@ function emptyIngredient(position: number): StackItemIngredient {
   }
 }
 
-function suggestedBasisUnit(dosageForm: DosageFormKey | null): string | null {
-  return dosageForm ? getDosageForm(dosageForm).basisUnits[0] ?? null : null
+// Die Vorbelegung der Produktmenge kommt aus der Form (siehe
+// `strengthBasisDefault`): eine Kapsel traegt ihre Staerke „pro 1 Kapsel", eine
+// Ampulle „pro 1 ml" — beides steht so auf der Packung. Beim Pulver-Vial
+// bleibt die Zahl leer, denn wie viel Loesungsmittel zugegeben wird,
+// entscheidet der Nutzer beim Anmischen.
+function basisVorbelegung(
+  dosageForm: DosageFormKey | null,
+): Pick<StackItemIngredient, 'basis_value' | 'basis_unit'> {
+  if (!dosageForm) return { basis_value: null, basis_unit: null }
+  const vorgabe = strengthBasisDefault(dosageForm)
+  return { basis_value: vorgabe.value, basis_unit: vorgabe.unit }
 }
 
 function emptyPlan(name: string): IntakePlanDraft {
@@ -205,7 +214,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
             ...emptyIngredient(0),
             catalog_substance_id: action.entry.id,
             amount_unit: action.entry.suggested_units[0] ?? null,
-            basis_unit: suggestedBasisUnit(state.draft.dosageForm),
+            ...basisVorbelegung(state.draft.dosageForm),
           }],
         },
       }
@@ -220,7 +229,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         ? [{
             ...emptyIngredient(0),
             custom_name: action.name,
-            basis_unit: suggestedBasisUnit(state.draft.dosageForm),
+            ...basisVorbelegung(state.draft.dosageForm),
           }]
         : isSingleCustomIdentity
           ? [{ ...firstIngredient, custom_name: action.name }]
@@ -251,7 +260,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         : [{
             ...emptyIngredient(0),
             custom_name: state.draft.displayName,
-            basis_unit: suggestedBasisUnit(state.draft.dosageForm),
+            ...basisVorbelegung(state.draft.dosageForm),
           }]
 
       return { ...state, draft: { ...state.draft, ingredients: frei } }
@@ -276,7 +285,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
             ...state.draft.ingredients,
             {
               ...emptyIngredient(state.draft.ingredients.length),
-              basis_unit: suggestedBasisUnit(state.draft.dosageForm),
+              ...basisVorbelegung(state.draft.dosageForm),
             },
           ],
         },
@@ -304,7 +313,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     case 'dosage_form_selected': {
       if (state.draft.dosageForm === action.dosageForm) return state
 
-      const basisUnit = suggestedBasisUnit(action.dosageForm)
+      const basis = basisVorbelegung(action.dosageForm)
       const compatiblePlanUnits = getIntakePlanUnitSuggestions(
         action.dosageForm,
         action.catalogSuggestedUnits,
@@ -321,9 +330,13 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
               ? currentPlanUnit
               : null,
           },
+          // Die Produktmenge gehoert zur FORM: aus „1 Kapsel" wird beim
+          // Wechsel auf eine Ampulle „1 ml", beim Pulver-Vial eine leere
+          // Zeile, die auf die Rekonstitution wartet. Eine stehengebliebene
+          // alte Zahl waere eine falsche Angabe, kein geretteter Eintrag.
           ingredients: state.draft.ingredients.map(ingredient => ({
             ...ingredient,
-            basis_unit: basisUnit,
+            ...basis,
           })),
         },
       }

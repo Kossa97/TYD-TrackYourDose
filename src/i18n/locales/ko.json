@@ -1107,5 +1107,13 @@
   "my_stack_intake_unit_unit": "단위",
   "my_stack_ingredients_question": "제품에 무엇이 들어 있나요?",
   "my_stack_ingredients_intro": "보통 유효 성분 하나 — 이미 입력되어 있습니다. 복합 제품은 성분마다 한 줄씩 생깁니다.",
-  "my_stack_ingredients_next": "다음 단계에서 성분별로 제품 한 단위에 얼마나 들어 있는지(포장에 적힌 수치)를 입력합니다. 그래야 앱이 캡슐이 아니라 밀리그램으로 계산합니다."
+  "my_stack_ingredients_next": "다음 단계에서 성분별로 제품 한 단위에 얼마나 들어 있는지(포장에 적힌 수치)를 입력합니다. 그래야 앱이 캡슐이 아니라 밀리그램으로 계산합니다.",
+  "my_stack_strength_hint_per_unit": "한 단위에 유효 성분이 얼마나 들어 있나요? 포장에 적힌 숫자를 입력하세요. 예: 캡슐 1정당 500 mg. 제품량은 이미 1로 설정되어 있습니다 — 포장에 다르게 적혀 있을 때만 바꾸세요. 복용량 권고가 아닙니다.",
+  "my_stack_strength_hint_per_volume": "라벨에 적힌 그대로 농도를 입력하세요. 예: 1 ml당 250 mg. 복용량 권고가 아닙니다.",
+  "my_stack_strength_hint_reconstituted": "분말 바이알(펩타이드)은 첫 사용 전에 녹입니다 — 이것이 재구성입니다. 왼쪽에는 바이알 속 유효 성분량, 오른쪽에는 넣는 용매의 양을 적습니다. 예: 2 ml에 10 mg이면 5 mg/ml입니다. 이미 액체인 바이알이라면 두 숫자 모두 라벨에 있습니다. 복용량 권고가 아닙니다.",
+  "my_stack_strength_hint_per_mass": "일정량의 제품에 유효 성분이 얼마나 들어 있나요? 포장에 적힌 대로 입력하세요. 예: 1 g당 50 mg. 복용량 권고가 아닙니다.",
+  "my_stack_strength_value_vial": "바이알 속 유효 성분",
+  "my_stack_basis_value_solvent": "용매",
+  "my_stack_basis_unit_solvent": "단위",
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
 }

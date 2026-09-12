@@ -1108,5 +1108,13 @@
   "my_stack_intake_unit_unit": "birim",
   "my_stack_ingredients_question": "Ürününde ne var?",
   "my_stack_ingredients_intro": "Genellikle tek bir etken madde — zaten yazılı. Kombine ürün her madde için ayrı satır alır.",
-  "my_stack_ingredients_next": "Sonraki adımda her madde için bir ürün biriminde ne kadar bulunduğunu — ambalajdaki sayıyı — girersin. Ancak o zaman uygulama kapsül yerine miligram sayar."
+  "my_stack_ingredients_next": "Sonraki adımda her madde için bir ürün biriminde ne kadar bulunduğunu — ambalajdaki sayıyı — girersin. Ancak o zaman uygulama kapsül yerine miligram sayar.",
+  "my_stack_strength_hint_per_unit": "BİR birimde ne kadar etkin madde var? Ambalajdaki sayıyı gir. Örnek: 1 kapsül başına 500 mg. Ürün miktarı zaten 1 — yalnızca ambalaj farklı belirtiyorsa değiştir. Doz önerisi değildir.",
+  "my_stack_strength_hint_per_volume": "Konsantrasyonu etikette yazdığı gibi gir. Örnek: 1 ml başına 250 mg. Doz önerisi değildir.",
+  "my_stack_strength_hint_reconstituted": "Toz flakon (peptit) ilk kullanımdan önce çözülür — rekonstitüsyon. Solda flakondaki etkin madde miktarı, sağda eklediğin çözücü miktarı. Örnek: 2 ml içinde 10 mg, 5 mg/ml eder. Flakon zaten sıvıysa iki değer de etikette yazar. Doz önerisi değildir.",
+  "my_stack_strength_hint_per_mass": "Belirli bir ürün miktarında ne kadar etkin madde var? Ambalajda yazanı gir. Örnek: 1 g başına 50 mg. Doz önerisi değildir.",
+  "my_stack_strength_value_vial": "Flakondaki etkin madde",
+  "my_stack_basis_value_solvent": "Çözücü",
+  "my_stack_basis_unit_solvent": "Birim",
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
 }

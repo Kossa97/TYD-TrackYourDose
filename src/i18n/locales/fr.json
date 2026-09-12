@@ -1108,5 +1108,13 @@
   "my_stack_intake_unit_unit": "unité",
   "my_stack_ingredients_question": "Que contient votre produit ?",
   "my_stack_ingredients_intro": "En général un seul principe actif — il est déjà inscrit. Un produit combiné reçoit une ligne par principe actif.",
-  "my_stack_ingredients_next": "À l’étape suivante, vous indiquez pour chaque principe actif la quantité contenue dans une unité de produit — le chiffre figurant sur l’emballage. C’est ainsi que l’app compte en milligrammes plutôt qu’en gélules."
+  "my_stack_ingredients_next": "À l’étape suivante, vous indiquez pour chaque principe actif la quantité contenue dans une unité de produit — le chiffre figurant sur l’emballage. C’est ainsi que l’app compte en milligrammes plutôt qu’en gélules.",
+  "my_stack_strength_hint_per_unit": "Quelle quantité de principe actif contient UNE unité ? Saisis le chiffre figurant sur l’emballage. Exemple : 500 mg pour 1 gélule. La quantité de produit est déjà à 1 — ne la change que si l’emballage l’indique autrement. Pas une recommandation de dosage.",
+  "my_stack_strength_hint_per_volume": "Saisis la concentration telle qu’elle figure sur l’étiquette. Exemple : 250 mg pour 1 ml. Pas une recommandation de dosage.",
+  "my_stack_strength_hint_reconstituted": "Un flacon de poudre (peptide) se dissout avant la première prise — la reconstitution. À gauche, la quantité de principe actif dans le flacon ; à droite, la quantité de solvant que tu ajoutes. Exemple : 10 mg dans 2 ml donnent 5 mg/ml. Si le flacon est déjà liquide, les deux chiffres figurent sur l’étiquette. Pas une recommandation de dosage.",
+  "my_stack_strength_hint_per_mass": "Quelle quantité de principe actif contient une quantité de produit ? Saisis ce qui figure sur l’emballage. Exemple : 50 mg pour 1 g. Pas une recommandation de dosage.",
+  "my_stack_strength_value_vial": "Principe actif dans le flacon",
+  "my_stack_basis_value_solvent": "Solvant",
+  "my_stack_basis_unit_solvent": "Unité",
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
 }

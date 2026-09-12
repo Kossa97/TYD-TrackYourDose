@@ -1108,5 +1108,13 @@
   "my_stack_intake_unit_unit": "unidad",
   "my_stack_ingredients_question": "¿Qué contiene tu producto?",
   "my_stack_ingredients_intro": "Normalmente un solo principio activo: ya está puesto. Un preparado combinado recibe una línea por principio activo.",
-  "my_stack_ingredients_next": "En el siguiente paso indicas, por cada principio activo, cuánto contiene una unidad del producto: la cifra del envase. Solo así la app cuenta en miligramos en vez de cápsulas."
+  "my_stack_ingredients_next": "En el siguiente paso indicas, por cada principio activo, cuánto contiene una unidad del producto: la cifra del envase. Solo así la app cuenta en miligramos en vez de cápsulas.",
+  "my_stack_strength_hint_per_unit": "¿Cuánto principio activo hay en UNA unidad? Introduce la cifra del envase. Ejemplo: 500 mg por 1 cápsula. La cantidad de producto ya está en 1: cámbiala solo si el envase lo indica de otro modo. No es una recomendación de dosis.",
+  "my_stack_strength_hint_per_volume": "Introduce la concentración tal como aparece en la etiqueta. Ejemplo: 250 mg por 1 ml. No es una recomendación de dosis.",
+  "my_stack_strength_hint_reconstituted": "Un vial de polvo (péptido) se disuelve antes de la primera toma: la reconstitución. A la izquierda, cuánto principio activo hay en el vial; a la derecha, cuánto disolvente añades. Ejemplo: 10 mg en 2 ml dan 5 mg/ml. Si el vial ya es líquido, ambas cifras están en la etiqueta. No es una recomendación de dosis.",
+  "my_stack_strength_hint_per_mass": "¿Cuánto principio activo hay en una cantidad de producto? Introduce lo que indica el envase. Ejemplo: 50 mg por 1 g. No es una recomendación de dosis.",
+  "my_stack_strength_value_vial": "Principio activo en el vial",
+  "my_stack_basis_value_solvent": "Disolvente",
+  "my_stack_basis_unit_solvent": "Unidad",
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
 }
