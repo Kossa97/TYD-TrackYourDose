@@ -4104,9 +4104,9 @@
     "semantic_hash": ""
   },
   "scripts/substance-catalog-source.mjs": {
-    "mtime": 1789247318.4361901,
-    "seen": 1789247565.6076133,
-    "ast_hash": "28a68e93c6750cb55716846e39e05251",
+    "mtime": 1789248208.2300165,
+    "seen": 1789248377.031503,
+    "ast_hash": "015247752cc3e683cc075cef5708bfdd",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/substanceCatalogSource.test.ts": {
@@ -4116,9 +4116,9 @@
     "semantic_hash": ""
   },
   "supabase-my-stack-catalog-expansion.sql": {
-    "mtime": 1789247551.175235,
-    "seen": 1789247565.609229,
-    "ast_hash": "7af03207c7d7b36bbfb71509aa9ab57d",
+    "mtime": 1789248265.6463187,
+    "seen": 1789248377.032496,
+    "ast_hash": "0400b71cdffcef7aaaf50f79a037aca5",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-12-my-stack-substanzkatalog-design.md": {
