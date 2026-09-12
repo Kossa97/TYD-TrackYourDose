@@ -156,10 +156,10 @@
     "semantic_hash": "0d92cb44a62bc3f2d73464a2e4f9a890"
   },
   "package.json": {
-    "mtime": 1788612179.7473688,
-    "seen": 1788803479.1906369,
-    "ast_hash": "7eb523ae2b3be7594a6e743b6adfdb26",
-    "semantic_hash": "7eb523ae2b3be7594a6e743b6adfdb26"
+    "mtime": 1789245230.7906277,
+    "seen": 1789245571.3878615,
+    "ast_hash": "d163beced0529095b1bd528fc59cdd0a",
+    "semantic_hash": ""
   },
   "postcss.config.js": {
     "mtime": 1788611941.676646,
@@ -4095,6 +4095,36 @@
     "mtime": 1789238649.1798217,
     "seen": 1789238687.5969973,
     "ast_hash": "7ca63dd4558cf1a87ad886c1eba905ef",
+    "semantic_hash": ""
+  },
+  "scripts/generate-substance-catalog-sql.mjs": {
+    "mtime": 1789245162.5026293,
+    "seen": 1789245571.3878946,
+    "ast_hash": "fdcad0fde00104467bad2626b305d893",
+    "semantic_hash": ""
+  },
+  "scripts/substance-catalog-source.mjs": {
+    "mtime": 1789245136.647858,
+    "seen": 1789245571.3879263,
+    "ast_hash": "e9e4d4706c3854a71fa3999456fb517b",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/lib/substanceCatalogSource.test.ts": {
+    "mtime": 1789245202.1701038,
+    "seen": 1789245571.3885717,
+    "ast_hash": "aced9bc1fbe85bd30cb5f9239c1673d7",
+    "semantic_hash": ""
+  },
+  "supabase-my-stack-catalog-expansion.sql": {
+    "mtime": 1789245239.6786275,
+    "seen": 1789245571.3888588,
+    "ast_hash": "cac2d5f5881a2d5f6a18c20b1ce7b8e2",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-12-my-stack-substanzkatalog-design.md": {
+    "mtime": 1789245499.145785,
+    "seen": 1789245571.389072,
+    "ast_hash": "0363bf5ccf542eccb8e51f9065644a9e",
     "semantic_hash": ""
   }
 }
