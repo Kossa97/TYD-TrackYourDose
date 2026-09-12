@@ -4,7 +4,7 @@ import { LIQUID_VB_H, liquidSurfaceY } from '../features/my-stack/stage/liquidGe
 import { usePrefersReducedMotion } from '../features/my-stack/stage/usePrefersReducedMotion'
 import { useStageLight, type StageLightHandle } from '../features/my-stack/stage/useStageLight'
 import { LiquidGraphic, type LiquidGraphicHandle } from '../features/my-stack/stage/LiquidGraphic'
-import { VIAL_INNER_PATH, VIAL_OUTER_PATH, VIAL_SPEC } from '../features/my-stack/extensions/peptide/vialShape'
+import { VIAL_INNER_PATH, VIAL_LABEL_INSET_PCT, VIAL_OUTER_PATH, VIAL_SPEC } from '../features/my-stack/extensions/peptide/vialShape'
 import { StageLabel } from '../features/my-stack/stage/StageLabel'
 
 // Imperative stage-light channel: the carousel pushes focus/lightOffset per
@@ -242,9 +242,12 @@ export function PeptideVialVisual({
   // Cap overlap is proportional (5% of width = the carousel's 4px on 80px) so
   // the cap shrinks in lockstep with the vial at every size.
   const capMarginClass = size === 'carousel' ? '-mb-1' : '-mb-[5%]'
+  // Der seitliche Einzug kommt aus dem Glaskoerper (`VIAL_LABEL_INSET_PCT`),
+  // nicht aus einer getippten Prozentzahl — sonst wandert das Band von der
+  // Kante weg, sobald die Silhouette sich aendert.
   const labelClass = size === 'large'
-    ? 'left-[3.5%] right-[3.5%] top-1/2 -translate-y-1/2 rounded-sm px-1 py-2'
-    : 'left-[3.5%] right-[3.5%] top-1/2 -translate-y-1/2 rounded-sm px-1 py-1'
+    ? 'top-1/2 -translate-y-1/2 rounded-sm px-1 py-2'
+    : 'top-1/2 -translate-y-1/2 rounded-sm px-1 py-1'
   const nameClass = size === 'large'
     ? 'text-lg sm:text-xl leading-tight'
     : size === 'carousel'
@@ -506,7 +509,13 @@ export function PeptideVialVisual({
               className={labelClass}
               nameClassName={`${nameClass} font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]`}
               detailClassName={`${amountClass} font-bold uppercase tracking-wide text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]`}
-              wrapperProps={{ 'data-vial-detail': 'label-glass-wrap' }}
+              wrapperProps={{
+                'data-vial-detail': 'label-glass-wrap',
+                style: {
+                  left: `${(VIAL_LABEL_INSET_PCT * 100).toFixed(2)}%`,
+                  right: `${(VIAL_LABEL_INSET_PCT * 100).toFixed(2)}%`,
+                },
+              }}
               innerProps={{ 'data-vial-detail': 'full-width-label' }}
               sheenRef={labelSheenRef}
               sheenStyle={{ transform: `translateX(${visualLightOffset * 10}%)`, opacity: 0.62 + visualFocus * 0.2 }}

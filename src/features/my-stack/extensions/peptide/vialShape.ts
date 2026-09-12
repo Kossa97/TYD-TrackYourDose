@@ -17,8 +17,19 @@ export const VIAL_WALL = 5.6
 // beschneidet die Fluessigkeit, damit ein Glasboden darunter sichtbar bleibt.
 export const VIAL_INNER_PATH = 'M33.6 4 L86.4 4 L86.4 26 C86.4 37 110.4 43.5 110.4 58 L110.4 250 C110.4 269.5 98 280.4 75.5 280.4 L44.5 280.4 C22 280.4 9.6 269.5 9.6 250 L9.6 58 C9.6 43.5 33.6 37 33.6 26 Z'
 
+export const VIAL_VIEWBOX = { x: 0, y: 0, width: 120, height: 294 } as const
+
+// Die Kanten des Glaskoerpers, auf dem das Etikett sitzt — dieselben Werte
+// wie im aeusseren Pfad (`L 4 252` und `L 116 56`).
+export const VIAL_BODY = { x: 4, right: 116 } as const
+
+// Wie bei der Ampulle: hergeleitet statt geraten. Hier stand 3,5 %, der
+// Koerper beginnt bei 3,33 % — ein Haar, aber dieselbe Fehlerquelle.
+export const VIAL_LABEL_INSET_PCT =
+  (VIAL_BODY.x - VIAL_VIEWBOX.x) / VIAL_VIEWBOX.width
+
 export const VIAL_SPEC: StageFormSpec = {
-  viewBox: { x: 0, y: 0, width: 120, height: 294 },
+  viewBox: VIAL_VIEWBOX,
   // Innerhalb der Innenkontur, nicht der aeusseren: der Boden endet bei 280,4
   // und laesst darunter den Glasboden stehen.
   chamber: {

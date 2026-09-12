@@ -228,7 +228,11 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('data-vial-detail="liquid-glass-window"')
     expect(html).toContain('data-vial-detail="label-glass-wrap"')
     expect(source()).toContain('VialTop({ focus: visualFocus, lightOffset: visualLightOffset, sheenRef: capSheenRef, arcRef: capArcRef, marginClass: capMarginClass })')
-    expect(source()).toContain('left-[3.5%] right-[3.5%]')
+    // Der seitliche Einzug steht nicht mehr als getippte Prozentzahl im
+    // Klassennamen, sondern kommt aus dem Glaskoerper. Die alten 3,5 % lagen
+    // neben der Koerperkante bei 3,33 % — siehe stage/etikettEinzug.test.ts.
+    expect(source()).not.toContain('left-[3.5%] right-[3.5%]')
+    expect(source()).toContain('VIAL_LABEL_INSET_PCT')
     expect(source()).toContain('top-1/2 -translate-y-1/2 rounded-sm px-1 py-2')
     expect(source()).toContain('top-1/2 -translate-y-1/2 rounded-sm px-1 py-1')
     expect(source()).not.toContain('top-[53%] rounded-sm px-1 py-2')

@@ -310,3 +310,70 @@ Regler wandert, waere ein Effekt ohne Grund.
 1370 Tests gruen, `tsc` sauber, ESLint unveraendert bei 140. Bei 390×844
 fuellt jede Form ihre knappere Seite auf 94% und ueberlaeuft nirgends
 (Pen 94% hoch, Tablette 92/94%, Gel 94% breit, Kapsel 94% breit).
+
+---
+
+## Nachtrag 2026-09-12: der Einzug des Etikettbandes, für alle Formen geprüft
+
+„Bei der Ampulle ist das Etikett nicht ganz am linken Rand, bitte beheben und
+für alle anderen Darreichungsformen prüfen."
+
+### Drei Konventionen, zwei davon geraten
+
+Das Glasband wird von sechs Formen getragen (Vial, Ampulle, Tropfen,
+Nasenspray, Spray, Gel). Die sechs übrigen — Pen, Tablette, Kapsel, Pflaster,
+Tube, Pulver — haben keines: ihr Name steht direkt auf dem Objekt, beim Pulver
+als gebogenes SVG-Band im Körper selbst.
+
+Bei den sechs Bandformen fanden sich drei verschiedene Regeln für den
+seitlichen Einzug:
+
+| Form | Einzug des Bandes | Kante des Körpers | Ergebnis |
+|---|---|---|---|
+| Ampulle | `left-[4%]` getippt | 2/72 = **2,78 %** | 1,22 % Luft je Seite |
+| Vial | `left-[3.5%]` getippt | 4/120 = **3,33 %** | 0,17 % Luft je Seite |
+| Tropfen | `left-0` | Körper füllt die viewBox | richtig |
+| Nasenspray | `left-0` | Körper füllt die viewBox | richtig |
+| Spray | `SPRAY_LABEL_INSET_PCT` | hergeleitet | richtig |
+| Gel | `GEL_LABEL_INSET_PCT` | hergeleitet | richtig |
+
+Die Regel stand längst im Code, im Kommentar des Gels: „Das Band sitzt auf dem
+GLAS, nicht auf der ganzen Bühne … Der Einzug wird deshalb aus dem Körper
+hergeleitet statt geraten." Ampulle und Vial hatten ihn geraten — und bei der
+Ampulle ist der Fehler viermal so groß wie beim Vial und fällt auf dem
+schmalen Zylinder sofort auf: ein heller Streifen nacktes Glas zwischen
+Bandkante und Silhouette.
+
+### Behebung
+
+`AMPOULE_LABEL_INSET_PCT` und `VIAL_LABEL_INSET_PCT` werden jetzt aus
+benannten Körperkanten hergeleitet (`AMPOULE_BODY`, `VIAL_BODY` — dieselben
+Werte, die schon im äußeren Pfad stehen, nur nicht mehr namenlos). Die beiden
+Visuals setzen `left`/`right` über den Stil, wie Gel und Spray es tun; die
+getippten Prozentwerte sind aus den Klassennamen verschwunden.
+
+Gemessen im Chromium, Bandbreite als Anteil der Objektbreite:
+
+| Form | vorher | nachher |
+|---|---|---|
+| Ampulle | 92,0 % | **94,5 %** |
+| Vial | 93,0 % | **93,4 %** |
+
+Der gemessene Rest von rund einem Pixel ist der äußere Schein der Objekte, den
+die Pixelmessung als „Glas" mitzählt — beim Tropfenfläschchen misst sie
+deshalb sogar 102 % Glasbreite. Die Geometrie selbst ist jetzt deckungsgleich,
+weil sie aus derselben Zahl kommt.
+
+### Festgehalten
+
+`stage/etikettEinzug.test.ts` hält die Regel für alle sechs Bandformen fest:
+die hergeleiteten Werte stimmen mit der Körperkante überein, Tropfen und
+Nasenspray dürfen bündig bleiben, solange ihr Körperpfad an den
+viewBox-Kanten endet, und in keinem `<StageLabel …>`-Aufruf darf wieder ein
+`left-[n%]` stehen. Der Test prüft bewusst nur diesen Aufruf — anderswo sind
+feste Prozentwerte richtig, der Glanzstreifen des Vials etwa sitzt zu Recht
+auf `left-[24%]`.
+
+1375 Tests grün, `tsc` sauber, ESLint unverändert bei 140. Eine veraltete
+Zusicherung in `PeptideVialVisual.test.ts`, die den geratenen Wert festhielt,
+ist auf die neue Regel umgestellt.

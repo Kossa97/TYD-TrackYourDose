@@ -8,6 +8,7 @@ import {
   AMPOULE_FILL,
   AMPOULE_INNER_PATH,
   AMPOULE_LABEL,
+  AMPOULE_LABEL_INSET_PCT,
   AMPOULE_OUTER_PATH,
   AMPOULE_SPEC,
 } from './ampouleShape'
@@ -336,7 +337,7 @@ export function AmpouleVisual({
         <StageLabel
           name={labelName}
           detail={detail}
-          className="left-[4%] right-[4%] rounded-sm"
+          className="rounded-sm"
           nameClassName={nameClass}
           detailClassName={detailClass}
           wrapperProps={{
@@ -344,6 +345,8 @@ export function AmpouleVisual({
             style: {
               top: `${(AMPOULE_LABEL.topPct * 100).toFixed(1)}%`,
               height: `${(AMPOULE_LABEL.heightPct * 100).toFixed(1)}%`,
+              left: `${(AMPOULE_LABEL_INSET_PCT * 100).toFixed(2)}%`,
+              right: `${(AMPOULE_LABEL_INSET_PCT * 100).toFixed(2)}%`,
             },
           }}
           innerProps={{ 'data-ampoule-detail': 'label-inner' }}

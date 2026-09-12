@@ -18,10 +18,23 @@ export const AMPOULE_FILL = 0.94
 export const AMPOULE_LABEL = { topPct: 0.676, heightPct: 0.142 } as const
 
 // The ampoule scales uniformly, so its viewBox aspect fixes its width.
-export const AMPOULE_ASPECT = 72 / 274
+export const AMPOULE_VIEWBOX = { x: 24, y: 5, width: 72, height: 274 } as const
+export const AMPOULE_ASPECT = AMPOULE_VIEWBOX.width / AMPOULE_VIEWBOX.height
+
+// Die Kanten des geraden Zylinders, auf dem das Etikett sitzt — dieselben
+// Werte wie im aeusseren Pfad (`L 94 262` und `L 26 146`), hier benannt.
+export const AMPOULE_BODY = { x: 26, right: 94 } as const
+
+// Das Band sitzt auf dem GLAS, nicht auf der ganzen Buehne. Hier stand ein
+// geratenes `left-[4%] right-[4%]`, waehrend der Zylinder schon bei 2,78 %
+// beginnt: das Band blieb auf jeder Seite gut ein Prozent vor der Glaskante
+// stehen, sichtbar als heller Streifen daneben. Hergeleitet statt geraten —
+// dieselbe Regel, die Gel und Spray schon befolgen.
+export const AMPOULE_LABEL_INSET_PCT =
+  (AMPOULE_BODY.x - AMPOULE_VIEWBOX.x) / AMPOULE_VIEWBOX.width
 
 export const AMPOULE_SPEC: StageFormSpec = {
-  viewBox: { x: 24, y: 5, width: 72, height: 274 },
+  viewBox: AMPOULE_VIEWBOX,
   // Only the straight cylinder. That keeps the chamber rectangular, so the
   // geometry needs no width profile for the conical neck — the same trick the
   // vial already uses.
