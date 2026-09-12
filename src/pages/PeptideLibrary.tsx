@@ -1,11 +1,11 @@
 // src/pages/PeptideLibrary.tsx
-import { useEffect, useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, FlaskConical, Search, Settings, SlidersHorizontal, X } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import { getAllPeptides } from '../services/peptideLibrary'
-import type { PeptideEntry, PeptideCategory, ResearchStatus } from '../services/peptideLibrary'
-import { PeptideCard, PeptideCardSkeleton } from './lab/PeptideCard'
+import { useState, useMemo } from 'react'
+import { FlaskConical, Search, SlidersHorizontal, X } from 'lucide-react'
+import { peptipediaText } from '../features/peptipedia/content/legacyLabels'
+import { PEPTIPEDIA_UI_COPY } from '../features/peptipedia/content/uiCopy'
+import { getPublishedPeptides } from '../features/peptipedia/content'
+import type { PeptipediaLocale, PeptideCategory, ResearchStatus } from '../features/peptipedia/content/types'
+import { PeptideCard } from './lab/PeptideCard'
 
 // ─── Filter/Sort types ────────────────────────────────────────────────────────
 
@@ -64,28 +64,18 @@ function Pill({
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-export function PeptideLibrary() {
-  const { t }                         = useTranslation()
-  const navigate                      = useNavigate()
-  const [peptides, setPeptides]       = useState<PeptideEntry[]>([])
-  const [loading, setLoading]         = useState(true)
-  const [error, setError]             = useState<string | null>(null)
+export function PeptideLibrary({ locale = 'de' }: { locale?: PeptipediaLocale }) {
+  const t = peptipediaText(locale)
+  const peptides = useMemo(() => getPublishedPeptides(locale), [locale])
   const [query, setQuery]             = useState('')
   const [filters, setFilters]         = useState<Filters>(DEFAULT_FILTERS)
   const [sort, setSort]               = useState<SortKey>('sort_order')
   const [showFilters, setShowFilters] = useState(false)
 
-  useEffect(() => {
-    getAllPeptides()
-      .then(setPeptides)
-      .catch(err => setError(err instanceof Error && err.message ? err.message : ''))
-      .finally(() => setLoading(false))
-  }, [])
-
   // Collect all unique tags
   const allTags = useMemo(() => {
     const tagSet = new Set<string>()
-    peptides.forEach(p => (p.tags ?? []).forEach(t => tagSet.add(t)))
+    peptides.forEach(p => (p.researchAreas ?? []).forEach(t => tagSet.add(t)))
     return Array.from(tagSet).sort()
   }, [peptides])
 
@@ -108,8 +98,8 @@ export function PeptideLibrary() {
       list = list.filter(p =>
         p.name.toLowerCase().includes(q) ||
         p.tldr.toLowerCase().includes(q) ||
-        (p.full_name ?? '').toLowerCase().includes(q) ||
-        (p.tags ?? []).some(t => t.toLowerCase().includes(q))
+        (p.fullName ?? '').toLowerCase().includes(q) ||
+        (p.researchAreas ?? []).some(t => t.toLowerCase().includes(q))
       )
     }
 
@@ -117,27 +107,27 @@ export function PeptideLibrary() {
     if (filters.category !== 'all') list = list.filter(p => p.category === filters.category)
 
     // Status
-    if (filters.status !== 'all') list = list.filter(p => p.research_status === filters.status)
+    if (filters.status !== 'all') list = list.filter(p => p.researchStatus === filters.status)
 
     // Human evidence
     if (filters.humanEvidence === 'yes') {
-      list = list.filter(p => p.evidence_human !== 'none')
+      list = list.filter(p => p.evidence.human !== 'none')
     } else if (filters.humanEvidence === 'strong') {
-      list = list.filter(p => p.evidence_human === 'strong' || p.evidence_human === 'moderate')
+      list = list.filter(p => p.evidence.human === 'strong' || p.evidence.human === 'moderate')
     }
 
     // Tag
     if (filters.tag) {
-      list = list.filter(p => (p.tags ?? []).includes(filters.tag))
+      list = list.filter(p => (p.researchAreas ?? []).includes(filters.tag))
     }
 
     // Sort
     list.sort((a, b) => {
-      if (sort === 'score_desc') return b.evidence_score - a.evidence_score
-      if (sort === 'score_asc')  return a.evidence_score - b.evidence_score
+      if (sort === 'score_desc') return b.evidence.score - a.evidence.score
+      if (sort === 'score_asc')  return a.evidence.score - b.evidence.score
       if (sort === 'name_asc')   return a.name.localeCompare(b.name)
       if (sort === 'name_desc')  return b.name.localeCompare(a.name)
-      return a.sort_order - b.sort_order
+      return 0
     })
 
     return list
@@ -159,19 +149,6 @@ export function PeptideLibrary() {
         />
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#070B11] to-transparent pointer-events-none" />
         <div className="relative">
-          <div className="flex items-center justify-between mb-4">
-            <button type="button" onClick={() => navigate('/lab')}
-              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors">
-              <ArrowLeft size={12} />
-              <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>The Lab</span>
-            </button>
-            <button type="button" onClick={() => navigate('/lab/admin')}
-              className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-violet-400 transition-colors" title="Admin">
-              <Settings size={13} />
-              <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Admin</span>
-            </button>
-          </div>
-
           <p className="text-[0.58rem] font-black uppercase tracking-[0.2em] text-sky-400/65 mb-2"
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{t('plib_hero_kicker')}</p>
           <h1 className="text-3xl font-black text-white mb-1 leading-tight"
@@ -182,11 +159,11 @@ export function PeptideLibrary() {
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-              <input value={query} onChange={e => setQuery(e.target.value)}
+              <input type="search" aria-label={t('plib_search_placeholder')} value={query} onChange={e => setQuery(e.target.value)}
                 placeholder={t('plib_search_placeholder')}
                 className="w-full bg-[#0B1220] border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition-all duration-300 focus:border-sky-500/50 focus:shadow-[0_0_20px_rgba(0,204,245,0.08)]" />
             </div>
-            <button type="button" onClick={() => setShowFilters(f => !f)}
+            <button type="button" aria-label={locale === 'de' ? 'Filter anzeigen' : 'Show filters'} aria-expanded={showFilters} onClick={() => setShowFilters(f => !f)}
               className={`flex items-center gap-1.5 px-4 rounded-xl border text-sm transition-all duration-200 ${
                 showFilters || activeFilterCount > 0
                   ? 'bg-sky-500 border-transparent text-white'
@@ -301,32 +278,21 @@ export function PeptideLibrary() {
       )}
 
       {/* Count */}
-      {!loading && (
+      {(
         <p className="text-[0.6rem] text-slate-700 mb-4"
           style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
           {t('plib_count', { count: filtered.length })}
           {activeFilterCount > 0 && ` · ${t('plib_filtered')}`}
-          {' · peptide_library'}
         </p>
-      )}
-
-      {/* Error */}
-      {error !== null && (
-        <div className="card border border-red-500/20 bg-red-950/20 text-center py-8">
-          <p className="text-sm text-red-300 mb-3">{error || t('plib_load_error')}</p>
-        </div>
       )}
 
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {loading
-          ? Array.from({ length: 6 }).map((_, i) => <PeptideCardSkeleton key={i} />)
-          : filtered.map(peptide => <PeptideCard key={peptide.id} peptide={peptide} />)
-        }
+        {filtered.map(peptide => <PeptideCard key={peptide.slug} peptide={peptide} locale={locale} />)}
       </div>
 
       {/* Empty */}
-      {!loading && !error && filtered.length === 0 && (
+      {filtered.length === 0 && (
         <div className="text-center py-12 text-slate-600">
           <FlaskConical size={28} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm">{t('plib_empty')}</p>
@@ -342,7 +308,7 @@ export function PeptideLibrary() {
       <div className="mt-8 flex items-start gap-3 bg-amber-500/5 border border-amber-500/15 rounded-xl px-4 py-3">
         <FlaskConical size={14} className="text-amber-400/70 shrink-0 mt-0.5" />
         <p className="text-xs text-amber-300/60 leading-relaxed">
-          {t('plib_disclaimer_list')}
+          {PEPTIPEDIA_UI_COPY[locale].disclaimer}
         </p>
       </div>
     </div>

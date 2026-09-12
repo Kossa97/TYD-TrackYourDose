@@ -1,8 +1,8 @@
 // src/pages/lab/PeptideCard.tsx
 import { ArrowRight } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import type { PeptideEntry } from '../../services/peptideLibrary'
+import { Link } from 'react-router-dom'
+import { peptipediaText } from '../../features/peptipedia/content/legacyLabels'
+import type { PeptipediaView, PeptipediaLocale } from '../../features/peptipedia/content/types'
 import {
   CATEGORY_LABEL_KEYS,
   CATEGORY_COLORS,
@@ -11,19 +11,19 @@ import {
   EVIDENCE_BAR_WIDTH,
   EVIDENCE_LABEL_KEYS,
   getConfidenceStyle,
-} from '../../services/peptideLibrary'
+} from '../../features/peptipedia/display'
 
 interface PeptideCardProps {
-  peptide: PeptideEntry
+  peptide: PeptipediaView
+  locale: PeptipediaLocale
 }
 
-export function PeptideCard({ peptide }: PeptideCardProps) {
-  const { t }       = useTranslation()
-  const navigate    = useNavigate()
+export function PeptideCard({ peptide, locale }: PeptideCardProps) {
+  const t = peptipediaText(locale)
   const catColors   = CATEGORY_COLORS[peptide.category]
-  const confStyle   = getConfidenceStyle(peptide.evidence_score)
+  const confStyle   = getConfidenceStyle(peptide.evidence.score)
 
-  const openDetail = () => navigate(`/lab/library/${peptide.slug}`)
+  const detailPath = `${locale === 'en' ? '/en' : ''}/peptipedia/${peptide.slug}`
 
   return (
     <article
@@ -35,7 +35,6 @@ export function PeptideCard({ peptide }: PeptideCardProps) {
         'hover:border-white/[0.15] hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)]',
         'hover:-translate-y-0.5',
       ].join(' ')}
-      onClick={openDetail}
     >
       {/* Subtle inner gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/[0.015] via-transparent to-transparent pointer-events-none" />
@@ -54,7 +53,7 @@ export function PeptideCard({ peptide }: PeptideCardProps) {
               className={`text-[0.55rem] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border ${confStyle}`}
               style={{ fontFamily: "'IBM Plex Mono', monospace" }}
             >
-              {peptide.evidence_score}/10
+              {peptide.evidence.score}/10
             </span>
           </div>
         </div>
@@ -64,16 +63,16 @@ export function PeptideCard({ peptide }: PeptideCardProps) {
           className="text-xl font-black text-white mb-0.5 leading-tight group-hover:text-sky-50 transition-colors duration-200"
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
-          {peptide.name}
+          <Link to={detailPath} className="after:absolute after:inset-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400">{peptide.name}</Link>
         </h2>
 
         {/* Full name */}
-        {peptide.full_name && (
+        {peptide.fullName && (
           <p
             className="text-[0.6rem] text-slate-600 mb-3 leading-tight"
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
-            {peptide.full_name}
+            {peptide.fullName}
           </p>
         )}
 
@@ -84,27 +83,27 @@ export function PeptideCard({ peptide }: PeptideCardProps) {
 
         {/* Mini evidence bars */}
         <div className="space-y-1.5 mb-4">
-          <MiniEvidenceBar
+          <MiniEvidenceBar locale={locale}
             label={t('plib_ev_human_short')}
-            value={peptide.evidence_human}
+            value={peptide.evidence.human}
             color="bg-emerald-500"
           />
-          <MiniEvidenceBar
+          <MiniEvidenceBar locale={locale}
             label={t('plib_ev_animal_short')}
-            value={peptide.evidence_animal}
+            value={peptide.evidence.animal}
             color="bg-amber-500"
           />
-          <MiniEvidenceBar
+          <MiniEvidenceBar locale={locale}
             label={t('plib_ev_clinical_short')}
-            value={peptide.evidence_clinical}
+            value={peptide.evidence.clinical}
             color="bg-violet-500"
           />
         </div>
 
         {/* Tags */}
-        {peptide.tags && peptide.tags.length > 0 && (
+        {peptide.researchAreas && peptide.researchAreas.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
-            {peptide.tags.slice(0, 4).map((tag, i) => (
+            {peptide.researchAreas.slice(0, 4).map((tag, i) => (
               <span key={i}
                 className="text-[0.55rem] px-1.5 py-0.5 rounded-full bg-white/[0.04] text-slate-500 border border-white/[0.06]">
                 {tag}
@@ -116,10 +115,10 @@ export function PeptideCard({ peptide }: PeptideCardProps) {
         {/* Footer: status + CTA */}
         <div className="flex items-center justify-between">
           <span
-            className={`text-[0.56rem] font-black uppercase px-2 py-0.5 rounded-md ${STATUS_STYLES[peptide.research_status]}`}
+            className={`text-[0.56rem] font-black uppercase px-2 py-0.5 rounded-md ${STATUS_STYLES[peptide.researchStatus]}`}
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
-            {t(STATUS_LABEL_KEYS[peptide.research_status])}
+            {t(STATUS_LABEL_KEYS[peptide.researchStatus])}
           </span>
           <span
             className="flex items-center gap-1 text-xs text-slate-500 group-hover:text-sky-400 transition-colors duration-200"
@@ -138,16 +137,18 @@ export function PeptideCard({ peptide }: PeptideCardProps) {
 
 // ─── Mini Evidence Bar ────────────────────────────────────────────────────────
 
-function MiniEvidenceBar({
+export function MiniEvidenceBar({
+  locale,
   label,
   value,
   color,
 }: {
+  locale: PeptipediaLocale
   label: string
   value: string
   color: string
 }) {
-  const { t } = useTranslation()
+  const t = peptipediaText(locale)
   const width = EVIDENCE_BAR_WIDTH[value as keyof typeof EVIDENCE_BAR_WIDTH] ?? 'w-0'
   const text  = t(EVIDENCE_LABEL_KEYS[value as keyof typeof EVIDENCE_LABEL_KEYS] ?? 'plib_ev_none')
 
