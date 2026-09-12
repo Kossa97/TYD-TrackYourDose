@@ -1524,10 +1524,10 @@
     "semantic_hash": "c698309979460d0f02ba616417844399"
   },
   "CLAUDE.md": {
-    "mtime": 1788830887.3128507,
-    "seen": 1788833134.5978763,
-    "ast_hash": "d44ea51288248a657bc2850ab8d64208",
-    "semantic_hash": "d44ea51288248a657bc2850ab8d64208"
+    "mtime": 1789246664.0653577,
+    "seen": 1789247565.6094012,
+    "ast_hash": "076ed9e6651be9d0f7bac65e0a10e5e2",
+    "semantic_hash": ""
   },
   "HANDOFF.md": {
     "mtime": 1788611941.3946776,
@@ -4098,15 +4098,15 @@
     "semantic_hash": ""
   },
   "scripts/generate-substance-catalog-sql.mjs": {
-    "mtime": 1789245162.5026293,
-    "seen": 1789245571.3878946,
-    "ast_hash": "fdcad0fde00104467bad2626b305d893",
+    "mtime": 1789247332.04977,
+    "seen": 1789247565.6075659,
+    "ast_hash": "ea3b17f9872b7ef52850b64ecab23920",
     "semantic_hash": ""
   },
   "scripts/substance-catalog-source.mjs": {
-    "mtime": 1789245136.647858,
-    "seen": 1789245571.3879263,
-    "ast_hash": "e9e4d4706c3854a71fa3999456fb517b",
+    "mtime": 1789248208.2300165,
+    "seen": 1789248377.031503,
+    "ast_hash": "015247752cc3e683cc075cef5708bfdd",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/substanceCatalogSource.test.ts": {
@@ -4116,15 +4116,21 @@
     "semantic_hash": ""
   },
   "supabase-my-stack-catalog-expansion.sql": {
-    "mtime": 1789245239.6786275,
-    "seen": 1789245571.3888588,
-    "ast_hash": "cac2d5f5881a2d5f6a18c20b1ce7b8e2",
+    "mtime": 1789248265.6463187,
+    "seen": 1789248377.032496,
+    "ast_hash": "0400b71cdffcef7aaaf50f79a037aca5",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-12-my-stack-substanzkatalog-design.md": {
-    "mtime": 1789245499.145785,
-    "seen": 1789245571.389072,
-    "ast_hash": "0363bf5ccf542eccb8e51f9065644a9e",
+    "mtime": 1789247550.982481,
+    "seen": 1789247565.609697,
+    "ast_hash": "1959c2543322f669dfe91d0a9692f245",
+    "semantic_hash": ""
+  },
+  "backups/substance_catalog-2026-09-12.sql": {
+    "mtime": 1789247298.1032405,
+    "seen": 1789247565.6074867,
+    "ast_hash": "2fff9d6fcbd5e90488c3c2816513f485",
     "semantic_hash": ""
   }
 }

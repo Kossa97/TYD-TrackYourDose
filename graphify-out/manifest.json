@@ -156,9 +156,9 @@
     "semantic_hash": "0d92cb44a62bc3f2d73464a2e4f9a890"
   },
   "package.json": {
-    "mtime": 1789245230.7906277,
-    "seen": 1789245571.3878615,
-    "ast_hash": "d163beced0529095b1bd528fc59cdd0a",
+    "mtime": 1789249137.1594439,
+    "seen": 1789249371.8680937,
+    "ast_hash": "4fb26d6295db2405103a450cbeb5c663",
     "semantic_hash": ""
   },
   "postcss.config.js": {
@@ -4104,21 +4104,21 @@
     "semantic_hash": ""
   },
   "scripts/substance-catalog-source.mjs": {
-    "mtime": 1789248208.2300165,
-    "seen": 1789248377.031503,
-    "ast_hash": "015247752cc3e683cc075cef5708bfdd",
+    "mtime": 1789249117.4383006,
+    "seen": 1789249371.8681707,
+    "ast_hash": "180cd19abecacb61bc8d4a4e9671b784",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/substanceCatalogSource.test.ts": {
-    "mtime": 1789245202.1701038,
-    "seen": 1789245571.3885717,
-    "ast_hash": "aced9bc1fbe85bd30cb5f9239c1673d7",
+    "mtime": 1789249197.841885,
+    "seen": 1789249371.8687673,
+    "ast_hash": "2e24e6d452e07e5dfc86a1e06e824cd9",
     "semantic_hash": ""
   },
   "supabase-my-stack-catalog-expansion.sql": {
-    "mtime": 1789248265.6463187,
-    "seen": 1789248377.032496,
-    "ast_hash": "0400b71cdffcef7aaaf50f79a037aca5",
+    "mtime": 1789249217.8502984,
+    "seen": 1789249371.8691163,
+    "ast_hash": "a7ff83f6a8e228f5dd875b1f0ba3564c",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-12-my-stack-substanzkatalog-design.md": {
@@ -4131,6 +4131,24 @@
     "mtime": 1789247298.1032405,
     "seen": 1789247565.6074867,
     "ast_hash": "2fff9d6fcbd5e90488c3c2816513f485",
+    "semantic_hash": ""
+  },
+  "scripts/generate-pk-profiles-sql.mjs": {
+    "mtime": 1789249137.1324604,
+    "seen": 1789249371.868132,
+    "ast_hash": "11d7feb69fe93c0911be4280c85dab13",
+    "semantic_hash": ""
+  },
+  "scripts/pk-profile-source.mjs": {
+    "mtime": 1789249105.5423007,
+    "seen": 1789249371.8681517,
+    "ast_hash": "88c03a3414b6dbed186e3b7e3e13976b",
+    "semantic_hash": ""
+  },
+  "supabase-pk-profiles-expansion.sql": {
+    "mtime": 1789249137.6983001,
+    "seen": 1789249371.8691432,
+    "ast_hash": "38ba58e41e2a2e3de884f0f76d1aa8d2",
     "semantic_hash": ""
   }
 }
