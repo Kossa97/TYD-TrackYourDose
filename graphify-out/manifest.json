@@ -708,87 +708,87 @@
     "semantic_hash": "1f112d35842ac0f4f4f8ff9477e0a174"
   },
   "src/i18n/locales/ar.json": {
-    "mtime": 1789173939.5290203,
-    "seen": 1789174538.8375895,
-    "ast_hash": "d47f804512104c3f5c4cc5ff48bbff88",
+    "mtime": 1789176979.0471485,
+    "seen": 1789177364.2622473,
+    "ast_hash": "5e5f8153f663e517f7012dcf690abb31",
     "semantic_hash": ""
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1789173939.5170202,
-    "seen": 1789174538.8375905,
-    "ast_hash": "e053514ed87f3026a96a513cf6f58d6f",
+    "mtime": 1789176979.0351484,
+    "seen": 1789177364.2622488,
+    "ast_hash": "0b0a78b8c9703f4e9f13db79ad0e47d1",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1789173939.5290203,
-    "seen": 1789174538.8375916,
-    "ast_hash": "9ec6172f7714cc4a4a8ee93707565e59",
+    "mtime": 1789176979.0431483,
+    "seen": 1789177364.26225,
+    "ast_hash": "5856d0b93217b008b906a6bc6f95fd53",
     "semantic_hash": ""
   },
   "src/i18n/locales/es.json": {
-    "mtime": 1789173939.5290203,
-    "seen": 1789174538.8375924,
-    "ast_hash": "f29c44c0d223c425145da395e819f6d2",
+    "mtime": 1789176979.0471485,
+    "seen": 1789177364.2622516,
+    "ast_hash": "ad43c13e0be1e330d4d6e68c200c53d5",
     "semantic_hash": ""
   },
   "src/i18n/locales/fr.json": {
-    "mtime": 1789173939.5330203,
-    "seen": 1789174538.837593,
-    "ast_hash": "71b71c1b1abe597df519b1686aab6eac",
+    "mtime": 1789176979.0471485,
+    "seen": 1789177364.262253,
+    "ast_hash": "0af256660caa8042ae73e65ae744a6a4",
     "semantic_hash": ""
   },
   "src/i18n/locales/hi.json": {
-    "mtime": 1789173939.5330203,
-    "seen": 1789174538.837594,
-    "ast_hash": "d0accb61c2af60a1e1db93b6b9af0dad",
+    "mtime": 1789176979.0471485,
+    "seen": 1789177364.2622542,
+    "ast_hash": "d121ea7bec6400069354f77841295415",
     "semantic_hash": ""
   },
   "src/i18n/locales/id.json": {
-    "mtime": 1789173939.5330203,
-    "seen": 1789174538.837595,
-    "ast_hash": "18acf36b538169a7733f8eac64f49941",
+    "mtime": 1789176979.0511484,
+    "seen": 1789177364.262256,
+    "ast_hash": "2f1f24443f5946efd392f76cf5a965f4",
     "semantic_hash": ""
   },
   "src/i18n/locales/it.json": {
-    "mtime": 1789173939.5330203,
-    "seen": 1789174538.8375957,
-    "ast_hash": "fd9ad0e6cbf4d5bd1c27069a96529cc1",
+    "mtime": 1789176979.0511484,
+    "seen": 1789177364.2622569,
+    "ast_hash": "f441c53fbdd5088df7c6f544cf2412a3",
     "semantic_hash": ""
   },
   "src/i18n/locales/ja.json": {
-    "mtime": 1789173939.5370202,
-    "seen": 1789174538.8375967,
-    "ast_hash": "0a200cc5a1a1342f40d5dd8b08395bbf",
+    "mtime": 1789176979.0511484,
+    "seen": 1789177364.2622585,
+    "ast_hash": "0ed58e7405375e88409fb075ca832490",
     "semantic_hash": ""
   },
   "src/i18n/locales/ko.json": {
-    "mtime": 1789173939.5370202,
-    "seen": 1789174538.8375974,
-    "ast_hash": "5a78010768714cffd421a4d1b1990842",
+    "mtime": 1789176979.0511484,
+    "seen": 1789177364.26226,
+    "ast_hash": "79a6c080d083548cebb2d0c137c0cd9b",
     "semantic_hash": ""
   },
   "src/i18n/locales/pt.json": {
-    "mtime": 1789173939.5410202,
-    "seen": 1789174538.8375983,
-    "ast_hash": "877cdf756860ed919e0748baae177310",
+    "mtime": 1789176979.0551484,
+    "seen": 1789177364.262261,
+    "ast_hash": "73238d468e8c08e63092d0ddf85dfe2c",
     "semantic_hash": ""
   },
   "src/i18n/locales/ru.json": {
-    "mtime": 1789173939.5410202,
-    "seen": 1789174538.837599,
-    "ast_hash": "a3f935a8a6aaccaec7418a7a6ae55521",
+    "mtime": 1789176979.0551484,
+    "seen": 1789177364.2622626,
+    "ast_hash": "cdb133d2eb5d071ce9e34a33a381bf64",
     "semantic_hash": ""
   },
   "src/i18n/locales/tr.json": {
-    "mtime": 1789173939.54502,
-    "seen": 1789174538.8376,
-    "ast_hash": "b0d95a62f80c451c3ffdd59b909f0dd9",
+    "mtime": 1789176979.0591483,
+    "seen": 1789177364.2622638,
+    "ast_hash": "ef85a551949b1edc32c668d41883e23c",
     "semantic_hash": ""
   },
   "src/i18n/locales/zh.json": {
-    "mtime": 1789173939.54502,
-    "seen": 1789174538.837601,
-    "ast_hash": "7191f68bec20e08b67c1be7c3e8ce1e7",
+    "mtime": 1789176979.0591483,
+    "seen": 1789177364.2622652,
+    "ast_hash": "b3920764e3995d4b77aa2ca03a4eecdf",
     "semantic_hash": ""
   },
   "src/lib/dailyLogs.ts": {
@@ -2784,9 +2784,9 @@
     "semantic_hash": "4cf9d99d02ad6700e9211cadb2142110"
   },
   "scripts/my-stack-i18n-source.mjs": {
-    "mtime": 1789173939.1710107,
-    "seen": 1789174538.8371527,
-    "ast_hash": "58b392021f047580535f63dee3e9947d",
+    "mtime": 1789176978.9232216,
+    "seen": 1789177364.2614894,
+    "ast_hash": "774d77e3a978571822259db7fb2ea427",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
@@ -3120,15 +3120,15 @@
     "semantic_hash": "74ebd1910cd6c8a62a16d9ee1535f387"
   },
   "src/features/my-stack/components/TrackingLevelPicker.test.tsx": {
-    "mtime": 1789173381.527929,
-    "seen": 1789173674.264413,
-    "ast_hash": "e81d0d1d60201a36ca319e6e7ebab924",
+    "mtime": 1789177056.6111498,
+    "seen": 1789177364.261952,
+    "ast_hash": "8fd6ee0f069962a720f46e5d3fd5ca6b",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/TrackingLevelPicker.tsx": {
-    "mtime": 1789173294.2677803,
-    "seen": 1789173674.2644148,
-    "ast_hash": "de2d1839c92752a4df9af5722b691a34",
+    "mtime": 1789176985.2351484,
+    "seen": 1789177364.2619538,
+    "ast_hash": "c71d488b3151d83acb6343002bb3ac5f",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosePlan.test.ts": {
@@ -3246,9 +3246,9 @@
     "semantic_hash": "f99817326113d9a27f477dbbe2ec057f"
   },
   "src/i18n/data/my-stack-i18n.json": {
-    "mtime": 1789173939.204776,
-    "seen": 1789174538.8375547,
-    "ast_hash": "25cc9c849b6185daa14ce96c0dfac799",
+    "mtime": 1789176968.3031483,
+    "seen": 1789177364.2621908,
+    "ast_hash": "dd66e04b9c941831a6865d92d8114de3",
     "semantic_hash": ""
   },
   "src/pages/BlutspiegelSimulation.readiness.test.tsx": {
@@ -4008,9 +4008,9 @@
     "semantic_hash": "7a9340d966ff6c249649cf505d63b889"
   },
   "docs/superpowers/specs/2026-09-08-my-stack-tracking-stufen-design.md": {
-    "mtime": 1789173657.3890035,
-    "seen": 1789173674.2649248,
-    "ast_hash": "648d4c2720a65452f8e3c344ca1a0287",
+    "mtime": 1789177303.999154,
+    "seen": 1789177364.2626457,
+    "ast_hash": "99222d91e6fd2fb75299b3cdc832942b",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-08-my-stack-formauswahl-karussell-design.md": {
