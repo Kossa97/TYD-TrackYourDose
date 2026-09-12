@@ -21,3 +21,30 @@ Das heißt für Textänderungen:
   Übersetzungen eintragen, nicht daran feilen — und nicht so tun, als wären
   sie geprüft.
 - Vor dem Start weiterer Sprachen muss jemand mit der Sprache drüberlesen.
+
+## Datenbankänderungen (Supabase)
+
+In der Produktivdatenbank liegen **Gesundheitsdaten echter Nutzer** — Stack,
+Einnahmeprotokolle, Blutwerte. Jede Änderung folgt deshalb derselben Reihenfolge,
+auch wenn ein Supabase-Zugang verbunden ist:
+
+1. **Als Datei ins Repo.** Jede Migration ist eine `supabase-*.sql`, reviewbar und
+   versioniert — nie getippte Ad-hoc-SQL. Wo die Daten aus einer Quelle kommen,
+   wird die Datei generiert (`npm run catalog:sql`) und nicht von Hand gepflegt.
+2. **Trockenlauf hier im Container.** Postgres 16 liegt unter
+   `/usr/lib/postgresql/16/bin` (`initdb`, `pg_ctl`, `psql`). Als `postgres`-Nutzer
+   in einem für ihn erreichbaren Verzeichnis starten — `/tmp/claude-*` ist es
+   nicht, `/var/tmp/...` schon. Dort das betroffene Schema nachbauen, den
+   **Ist-Zustand der Produktivtabellen nachstellen**, die Migration **zweimal**
+   laufen lassen (Idempotenz) und nachzählen.
+3. **Erst dann gegen das echte Projekt.**
+4. **Nachzählen und berichten.** Nach dem Lauf dieselbe Zählung wie im Trockenlauf,
+   und das Ergebnis in der Antwort nennen — nicht „ist durchgelaufen".
+
+Ohne ausdrückliche Zustimmung im selben Gespräch nie ausführen: `drop`,
+`truncate`, `delete` ohne `where`, `alter … drop column`, `update` ohne `where`.
+Auch nicht „nur kurz zum Testen".
+
+Lesen ist erlaubt, aber sparsam: Nutzerzeilen (`stack_items`, `daily_logs`,
+Blutwerte) nur, wenn die Aufgabe es verlangt — und Inhalte nie in Antworten,
+Commits oder Artefakte kopieren.
