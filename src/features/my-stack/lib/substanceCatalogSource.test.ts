@@ -193,6 +193,29 @@ describe('PK-Profile (Quelldatei)', () => {
     }
   })
 
+  it('laesst den Gipfel nur dort an der Halbwertszeit liegen, wo das stimmt', () => {
+    // Liegt tmax bei oder ueber der Halbwertszeit, faellt die Kurve schon
+    // waehrend sie noch steigt. Meist ist das ein Fehler — bei der ASS war es
+    // einer: dort standen die Zahlen der Muttersubstanz, die binnen zwanzig
+    // Minuten zerfaellt, statt die des Salicylats.
+    //
+    // Vier Faelle sind echt, und nur diese vier. Wer einen fuenften eintraegt,
+    // muss ihn hier eintragen und damit begruenden.
+    const echt = new Set([
+      'Pantoprazol',  // magensaftresistent: Aufnahme beginnt erst im Darm
+      'Omeprazol',    // dasselbe
+      'Amoxicillin',  // Aufnahme und Ausscheidung laufen fast gleich schnell
+      'Melatonin',    // Gipfel und Halbwertszeit liegen beide bei ~45 Minuten
+    ])
+    const auffaellig = PK_ERWEITERUNG
+      .filter(profil => profil.tmax_hours >= profil.half_life_hours)
+      .map(profil => profil.name)
+      .filter(name => !echt.has(name))
+
+    expect(auffaellig, `tmax ab Halbwertszeit ohne Begruendung: ${auffaellig.join(', ')}`)
+      .toEqual([])
+  })
+
   it('nennt nur Zahlen, aus denen sich eine Kurve rechnen laesst', () => {
     // Eine Halbwertszeit von 0 teilt durch null, ein tmax groesser als die
     // Halbwertszeit ergibt eine Kurve, die faellt bevor sie steigt, und eine

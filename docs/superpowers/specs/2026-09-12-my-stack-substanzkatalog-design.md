@@ -164,3 +164,70 @@ Backups führt; für Welle 2 wird dieselbe Aufnahme vorher wieder gemacht.
 Generator zweimal gelaufen, byte-gleiches Ergebnis. Suche in der Vorschau:
 „Semaglutide", „Ozempic" und „Semaglutid" finden denselben Eintrag; „Test E"
 findet Testosteron Enantat, „Wachstumshormon" findet HGH.
+
+
+---
+
+## Welle 2a und die PK-Profile — eingespielt am 2026-09-12
+
+**90 Substanzen** für Tablette und Kapsel (53 → 143): 12 Vitamine, 10
+Mineralien, 12 Aminosäuren und Alltagssupplemente, 14 pflanzliche und
+Longevity-Stoffe, 38 Medikamente, 4 Hormone in Stückform. Handelsnamen als
+Aliase, damit die Suche sie findet.
+
+Keine sechste Kategorie. Die Kategorie tut in der App genau zwei Dinge: sie
+entscheidet beim Vial über die Rekonstitution und steht als Zeile in der
+Zusammenfassung. Zink verhält sich in einer Kapsel wie Magnesium — eine
+Schublade „Mineral" wäre eine Regel mehr ohne Gegenwert.
+
+### 49 PK-Profile für den Live-Blutspiegel
+
+Von 143 Substanzen hatten 99 keines. Die Kurve braucht drei Zahlen:
+Halbwertszeit, tmax, Peak-Skalierung. Dazugekommen sind 39 Medikamente, 4
+Hormone und 6 Supplemente.
+
+**Bewusst ausgelassen, und als Test festgehalten** (`substanceCatalogSource.test.ts`):
+Vitamine und Mineralien — ein Blutspiegel von Zink nach Einzeldosis beschreibt
+nichts, das sind Speicher. Pflanzenextrakte mit schwankender Bioverfügbarkeit
+(Ashwagandha, Kurkuma, Rhodiola, Ginkgo, Mariendistel, Baldrian) — die Werte
+hängen am Extrakt, nicht am Stoff. Creatin, Kollagen, Aminosäuren, Whey —
+ihr Nutzen hängt an der Sättigung von Speichern.
+
+### Was die Selbstprüfung fand
+
+Vier Fehler, alle vor dem Einspielen gefunden, keiner durch einen Test, den es
+schon gab — sondern durch eine Abfrage gegen die eigenen Zahlen:
+
+| | Befund | Korrektur |
+|---|---|---|
+| **ASS** | tmax 0,5 h über einer Halbwertszeit von 0,33 h — die Kurve wäre gefallen, bevor sie stand | Werte des Salicylats: 3 h / 1 h |
+| **Ramipril** | Notiz nannte Ramiprilat, tmax war das der Muttersubstanz | tmax 1 h → 3 h |
+| **Pregnenolon** | tmax gleich der Halbwertszeit — geraten, nicht gemessen | tmax 1,5 h → 1 h |
+| **Berberin** | Bioverfügbarkeit unter 1 %, Halbwertszeit zwischen 4 und über 20 Stunden berichtet, Wirkort teils im Darm | **gestrichen** — genau der Fall, den wir auslassen wollten |
+
+Daraus ein neuer Test: **tmax ab der Halbwertszeit ist nur für vier namentlich
+genannte Fälle erlaubt** — Pantoprazol und Omeprazol (magensaftresistent, die
+Aufnahme beginnt erst im Darm), Amoxicillin (Aufnahme und Ausscheidung fast
+gleich schnell) und Melatonin (beides bei rund 45 Minuten). Ein fünfter
+zwingt den, der ihn einträgt, zur Begründung.
+
+### Gemessen nach dem Lauf
+
+| | vorher | nachher |
+|---|---|---|
+| Substanzen | 53 | **143** |
+| PK-Profile | 44 | **93** |
+| Substanzen mit Profil | 44 | **93** |
+| Profile ohne Substanz | — | **0** |
+| unplausible Werte | — | **0** |
+| verwaiste Katalogverweise | — | **0** |
+
+Die 50 ohne Profil sind es absichtlich: 33 Supplemente, 14 Vitamine,
+SLU-PP-332, und das generische „Testosteron" — ohne Ester hat es keine eine
+Halbwertszeit.
+
+### Bekannte Grenze, nicht Teil dieser Runde
+
+`toPkMilligrams` in `src/features/my-stack/lib/pkReadiness.ts` rechnet nur `mg`
+und `mcg` um. Alles in **IU** — HCG und HGH — hat ein PK-Profil, dessen Kurve
+still ins Leere läuft. Das ist ein Fehler im Code, kein Datenproblem.

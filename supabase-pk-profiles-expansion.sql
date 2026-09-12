@@ -2,7 +2,7 @@
 -- Nicht von Hand aendern — die Quelle ist scripts/pk-profile-source.mjs.
 -- Neu erzeugen mit: npm run pk:sql
 --
--- 50 PK-Profile fuer den Live-Blutspiegel, plus die Verknuepfung
+-- 49 PK-Profile fuer den Live-Blutspiegel, plus die Verknuepfung
 -- mit den Katalogzeilen gleichen Namens. Ein zweiter Lauf aendert nichts.
 
 begin;
@@ -11,14 +11,14 @@ with quelle (name, aliases, half_life_hours, tmax_hours, bioavailability_sc, cat
   values
     ('Ibuprofen', array['Nurofen']::text[], 2, 1.5, 0.9, 'other', 'Fachinformation/Standardliteratur, Median gesunder Erwachsener.'),
     ('Paracetamol', array['Acetaminophen']::text[], 2.5, 1, 0.85, 'other', 'Fachinformation/Standardliteratur, Median gesunder Erwachsener.'),
-    ('Acetylsalicylsäure', array['ASS', 'Aspirin']::text[], 0.33, 0.5, 0.7, 'other', 'Halbwertszeit der ASS selbst; der wirksame Salicylat-Metabolit bleibt deutlich laenger.'),
+    ('Acetylsalicylsäure', array['ASS', 'Aspirin']::text[], 3, 1, 0.7, 'other', 'Werte des Salicylats, nicht der ASS selbst: die zerfaellt binnen 20 Minuten, und eine Kurve darueber waere gefallen bevor sie stand. Bei hoeheren Dosen verlaengert sich die Halbwertszeit deutlich.'),
     ('Prednisolon', array['Prednisolone']::text[], 3, 1.5, 0.8, 'other', 'Plasma-Halbwertszeit; die biologische Wirkung haelt laenger an als die Kurve zeigt.'),
-    ('Pantoprazol', array['Pantoprazole']::text[], 1, 2.5, 0.77, 'other', 'Kurze Plasma-Halbwertszeit, aber irreversible Pumpenhemmung — die Wirkung ueberdauert den Spiegel deutlich.'),
-    ('Omeprazol', array['Omeprazole']::text[], 1, 1.5, 0.4, 'other', 'Wie Pantoprazol: Wirkung ueberdauert den Spiegel. Bioverfuegbarkeit steigt bei wiederholter Gabe.'),
+    ('Pantoprazol', array['Pantoprazole']::text[], 1, 2.5, 0.77, 'other', 'Magensaftresistent ueberzogen: der Gipfel kommt nach der Halbwertszeit, die Kurve steigt also langsamer als sie faellt. Das ist richtig so. Die irreversible Pumpenhemmung ueberdauert den Spiegel ohnehin deutlich.'),
+    ('Omeprazol', array['Omeprazole']::text[], 1, 1.5, 0.4, 'other', 'Wie Pantoprazol magensaftresistent — der Gipfel liegt bei der Halbwertszeit, und die Wirkung ueberdauert den Spiegel. Bioverfuegbarkeit steigt bei wiederholter Gabe.'),
     ('Atorvastatin', array['Sortis']::text[], 14, 1.5, 0.14, 'other', 'Fachinformation/Standardliteratur, Median gesunder Erwachsener.'),
     ('Rosuvastatin', array['Crestor']::text[], 19, 4, 0.2, 'other', 'Fachinformation/Standardliteratur, Median gesunder Erwachsener.'),
     ('Simvastatin', array['Zocor']::text[], 2, 1.5, 0.05, 'other', 'Prodrug mit starkem First-Pass; der aktive Metabolit bleibt laenger als die Muttersubstanz.'),
-    ('Ramipril', array['Delix']::text[], 15, 1, 0.28, 'other', 'Werte des aktiven Metaboliten Ramiprilat.'),
+    ('Ramipril', array['Delix']::text[], 15, 3, 0.28, 'other', 'Werte des aktiven Metaboliten Ramiprilat, der nach zwei bis vier Stunden gipfelt — Ramipril selbst ist nach einer Stunde oben und binnen Stunden weg.'),
     ('Bisoprolol', array['Concor']::text[], 11, 3, 0.9, 'other', 'Fachinformation/Standardliteratur, Median gesunder Erwachsener.'),
     ('Metoprolol', array['Beloc']::text[], 3.5, 1.5, 0.4, 'other', 'Werte fuer schnell freisetzende Form; Retardformen verlaufen flacher.'),
     ('Amlodipin', array['Norvasc']::text[], 40, 7, 0.65, 'other', 'Fachinformation/Standardliteratur, Median gesunder Erwachsener.'),
@@ -45,20 +45,19 @@ with quelle (name, aliases, half_life_hours, tmax_hours, bioavailability_sc, cat
     ('Allopurinol', array['Zyloric']::text[], 2, 1.5, 0.8, 'other', 'Der wirksame Metabolit Oxypurinol hat rund 20 Stunden — die Kurve zeigt nur die Muttersubstanz.'),
     ('Cetirizin', array['Zyrtec']::text[], 10, 1, 0.7, 'other', 'Fachinformation/Standardliteratur, Median gesunder Erwachsener.'),
     ('Loratadin', array['Lorano']::text[], 8, 1.5, 0.4, 'other', 'Der aktive Metabolit Desloratadin bleibt mit rund 27 Stunden deutlich laenger.'),
-    ('Amoxicillin', array['Amoxi']::text[], 1.2, 1.5, 0.8, 'other', 'Fachinformation/Standardliteratur, Median gesunder Erwachsener.'),
+    ('Amoxicillin', array['Amoxi']::text[], 1.2, 1.5, 0.8, 'other', 'Aufnahme und Ausscheidung laufen fast gleich schnell — der Gipfel liegt bei der Halbwertszeit. Fachinformation.'),
     ('Naltrexon', array['Naltrexone', 'LDN']::text[], 4, 1, 0.2, 'other', 'Starker First-Pass. Der aktive Metabolit 6-beta-Naltrexol bleibt laenger.'),
     ('Rapamycin', array['Sirolimus', 'Rapamune']::text[], 62, 2, 0.15, 'other', 'Fachinformation/Standardliteratur, Median gesunder Erwachsener.'),
-    ('DHEA', array['Dehydroepiandrosteron']::text[], 12, 1.5, 0.5, 'hormone', 'Literaturwerte mit breiter Streuung — die Kurve zeigt die Groessenordnung, nicht den Einzelfall.'),
-    ('Pregnenolon', array['Pregnenolone']::text[], 1.5, 1.5, 0.3, 'hormone', 'Duenne Datenlage beim Menschen — die Kurve ist eine Groessenordnung, keine Messung.'),
+    ('DHEA', array['Dehydroepiandrosteron']::text[], 12, 1.5, 0.5, 'hormone', 'Die lange Fahne kommt vom Sulfat DHEA-S; DHEA selbst ist nach ein bis zwei Stunden weg. Literaturwerte mit breiter Streuung.'),
+    ('Pregnenolon', array['Pregnenolone']::text[], 1.5, 1, 0.3, 'hormone', 'Duenne Datenlage beim Menschen — die Kurve ist eine Groessenordnung, keine Messung. Ein kleines Steroid wird schneller aufgenommen als ausgeschieden, daher tmax unter der Halbwertszeit.'),
     ('Östradiol', array['Estradiol', 'Oestradiol']::text[], 15, 5, 0.05, 'hormone', 'Werte fuer orales Estradiol mit starkem First-Pass. Gel und Pflaster umgehen ihn und verlaufen ganz anders.'),
     ('Progesteron', array['Progesterone', 'Utrogest']::text[], 16, 2.5, 0.1, 'hormone', 'Werte fuer orales mikronisiertes Progesteron.'),
     ('Koffein', array['Caffeine', 'Coffein']::text[], 5, 0.75, 1, 'other', 'Nahezu vollstaendig aufgenommen. Die Halbwertszeit schwankt genetisch zwischen etwa 2 und 10 Stunden.'),
-    ('Melatonin', '{}'::text[], 0.75, 0.75, 0.15, 'other', 'Sehr kurze Halbwertszeit und starker First-Pass. Retardformen verlaufen deutlich flacher.'),
+    ('Melatonin', '{}'::text[], 0.75, 0.75, 0.15, 'other', 'Gipfel und Halbwertszeit liegen beide bei etwa 45 Minuten — der Stoff ist weg, bevor die Kurve richtig anfaengt. Starker First-Pass. Retardformen verlaufen deutlich flacher.'),
     ('5-HTP', array['5-Hydroxytryptophan']::text[], 2.2, 1.5, 0.7, 'other', 'Literaturwerte, gut belegt.'),
     ('L-Theanin', array['Theanin']::text[], 1.2, 0.8, 0.9, 'other', 'Literaturwerte, gut belegt.'),
     ('NAC', array['N-Acetyl-Cystein']::text[], 6, 1, 0.1, 'other', 'Sehr geringe orale Bioverfuegbarkeit der unveraenderten Substanz.'),
-    ('Coenzym Q10', array['CoQ10', 'Ubiquinol']::text[], 33, 6, 0.05, 'other', 'Schlecht loeslich; die Aufnahme haengt stark an der Formulierung und an der Mahlzeit.'),
-    ('Berberin', array['Berberine']::text[], 4, 4, 0.05, 'other', 'Sehr geringe orale Bioverfuegbarkeit; der Wirkort liegt teils im Darm, nicht im Blut.')
+    ('Coenzym Q10', array['CoQ10', 'Ubiquinol']::text[], 33, 6, 0.05, 'other', 'Schlecht loeslich; die Aufnahme haengt stark an der Formulierung und an der Mahlzeit.')
 )
 insert into public.pk_profiles as ziel (
   name, aliases, half_life_hours, tmax_hours, bioavailability_sc, vd_l_kg, category, notes
@@ -82,6 +81,6 @@ set pk_profile_id = profil.id, updated_at = now()
 from public.pk_profiles profil
 where katalog.pk_profile_id is null
   and lower(katalog.canonical_name) = lower(profil.name)
-  and lower(profil.name) in ('ibuprofen', 'paracetamol', 'acetylsalicylsäure', 'prednisolon', 'pantoprazol', 'omeprazol', 'atorvastatin', 'rosuvastatin', 'simvastatin', 'ramipril', 'bisoprolol', 'metoprolol', 'amlodipin', 'candesartan', 'sertralin', 'escitalopram', 'venlafaxin', 'bupropion', 'methylphenidat', 'lisdexamfetamin', 'modafinil', 'finasterid', 'dutasterid', 'anastrozol', 'tamoxifen', 'enclomifen', 'levothyroxin', 'liothyronin', 'tadalafil', 'sildenafil', 'metformin', 'dapagliflozin', 'empagliflozin', 'allopurinol', 'cetirizin', 'loratadin', 'amoxicillin', 'naltrexon', 'rapamycin', 'dhea', 'pregnenolon', 'östradiol', 'progesteron', 'koffein', 'melatonin', '5-htp', 'l-theanin', 'nac', 'coenzym q10', 'berberin');
+  and lower(profil.name) in ('ibuprofen', 'paracetamol', 'acetylsalicylsäure', 'prednisolon', 'pantoprazol', 'omeprazol', 'atorvastatin', 'rosuvastatin', 'simvastatin', 'ramipril', 'bisoprolol', 'metoprolol', 'amlodipin', 'candesartan', 'sertralin', 'escitalopram', 'venlafaxin', 'bupropion', 'methylphenidat', 'lisdexamfetamin', 'modafinil', 'finasterid', 'dutasterid', 'anastrozol', 'tamoxifen', 'enclomifen', 'levothyroxin', 'liothyronin', 'tadalafil', 'sildenafil', 'metformin', 'dapagliflozin', 'empagliflozin', 'allopurinol', 'cetirizin', 'loratadin', 'amoxicillin', 'naltrexon', 'rapamycin', 'dhea', 'pregnenolon', 'östradiol', 'progesteron', 'koffein', 'melatonin', '5-htp', 'l-theanin', 'nac', 'coenzym q10');
 
 commit;

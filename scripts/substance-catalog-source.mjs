@@ -159,7 +159,7 @@ export const SUBSTANCE_CATALOG = [
   { name: 'Coenzym Q10', aliases: ['CoQ10', 'Ubiquinol', 'Ubichinon'], category: 'supplement', dosageForms: ['capsule'], units: ['mg'], pkProfile: 'Coenzym Q10' },
   { name: 'Alpha-Liponsäure', aliases: ['ALA', 'Alpha Lipoic Acid', 'Liponsäure'], category: 'supplement', dosageForms: ['capsule', 'tablet'], units: ['mg'], pkProfile: null },
   { name: 'Resveratrol', aliases: ['Trans-Resveratrol'], category: 'supplement', dosageForms: ['capsule'], units: ['mg'], pkProfile: null },
-  { name: 'Berberin', aliases: ['Berberine', 'Berberin-HCl'], category: 'supplement', dosageForms: ['capsule', 'tablet'], units: ['mg'], pkProfile: 'Berberin' },
+  { name: 'Berberin', aliases: ['Berberine', 'Berberin-HCl'], category: 'supplement', dosageForms: ['capsule', 'tablet'], units: ['mg'], pkProfile: null },
   { name: 'Spermidin', aliases: ['Spermidine'], category: 'supplement', dosageForms: ['capsule'], units: ['mg'], pkProfile: null },
   { name: 'NMN', aliases: ['Nicotinamid-Mononukleotid', 'Nicotinamide Mononucleotide'], category: 'supplement', dosageForms: ['capsule', 'powder'], units: ['mg'], pkProfile: null },
   { name: 'NR', aliases: ['Nicotinamid-Ribosid', 'Nicotinamide Riboside', 'Niagen'], category: 'supplement', dosageForms: ['capsule'], units: ['mg'], pkProfile: null },

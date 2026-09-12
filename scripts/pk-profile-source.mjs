@@ -49,18 +49,18 @@ export const PK_PROFILE_ERWEITERUNG = [
   // ── Schmerz und Entzuendung ──────────────────────────────────────────
   { name: 'Ibuprofen', aliases: ['Nurofen'], half_life_hours: 2, tmax_hours: 1.5, bioavailability_sc: 0.9, category: 'other', notes: FI },
   { name: 'Paracetamol', aliases: ['Acetaminophen'], half_life_hours: 2.5, tmax_hours: 1, bioavailability_sc: 0.85, category: 'other', notes: FI },
-  { name: 'Acetylsalicylsäure', aliases: ['ASS', 'Aspirin'], half_life_hours: 0.33, tmax_hours: 0.5, bioavailability_sc: 0.7, category: 'other', notes: 'Halbwertszeit der ASS selbst; der wirksame Salicylat-Metabolit bleibt deutlich laenger.' },
+  { name: 'Acetylsalicylsäure', aliases: ['ASS', 'Aspirin'], half_life_hours: 3, tmax_hours: 1, bioavailability_sc: 0.7, category: 'other', notes: 'Werte des Salicylats, nicht der ASS selbst: die zerfaellt binnen 20 Minuten, und eine Kurve darueber waere gefallen bevor sie stand. Bei hoeheren Dosen verlaengert sich die Halbwertszeit deutlich.' },
   { name: 'Prednisolon', aliases: ['Prednisolone'], half_life_hours: 3, tmax_hours: 1.5, bioavailability_sc: 0.8, category: 'other', notes: 'Plasma-Halbwertszeit; die biologische Wirkung haelt laenger an als die Kurve zeigt.' },
 
   // ── Magen ────────────────────────────────────────────────────────────
-  { name: 'Pantoprazol', aliases: ['Pantoprazole'], half_life_hours: 1, tmax_hours: 2.5, bioavailability_sc: 0.77, category: 'other', notes: 'Kurze Plasma-Halbwertszeit, aber irreversible Pumpenhemmung — die Wirkung ueberdauert den Spiegel deutlich.' },
-  { name: 'Omeprazol', aliases: ['Omeprazole'], half_life_hours: 1, tmax_hours: 1.5, bioavailability_sc: 0.4, category: 'other', notes: 'Wie Pantoprazol: Wirkung ueberdauert den Spiegel. Bioverfuegbarkeit steigt bei wiederholter Gabe.' },
+  { name: 'Pantoprazol', aliases: ['Pantoprazole'], half_life_hours: 1, tmax_hours: 2.5, bioavailability_sc: 0.77, category: 'other', notes: 'Magensaftresistent ueberzogen: der Gipfel kommt nach der Halbwertszeit, die Kurve steigt also langsamer als sie faellt. Das ist richtig so. Die irreversible Pumpenhemmung ueberdauert den Spiegel ohnehin deutlich.' },
+  { name: 'Omeprazol', aliases: ['Omeprazole'], half_life_hours: 1, tmax_hours: 1.5, bioavailability_sc: 0.4, category: 'other', notes: 'Wie Pantoprazol magensaftresistent — der Gipfel liegt bei der Halbwertszeit, und die Wirkung ueberdauert den Spiegel. Bioverfuegbarkeit steigt bei wiederholter Gabe.' },
 
   // ── Herz und Kreislauf ───────────────────────────────────────────────
   { name: 'Atorvastatin', aliases: ['Sortis'], half_life_hours: 14, tmax_hours: 1.5, bioavailability_sc: 0.14, category: 'other', notes: FI },
   { name: 'Rosuvastatin', aliases: ['Crestor'], half_life_hours: 19, tmax_hours: 4, bioavailability_sc: 0.2, category: 'other', notes: FI },
   { name: 'Simvastatin', aliases: ['Zocor'], half_life_hours: 2, tmax_hours: 1.5, bioavailability_sc: 0.05, category: 'other', notes: 'Prodrug mit starkem First-Pass; der aktive Metabolit bleibt laenger als die Muttersubstanz.' },
-  { name: 'Ramipril', aliases: ['Delix'], half_life_hours: 15, tmax_hours: 1, bioavailability_sc: 0.28, category: 'other', notes: 'Werte des aktiven Metaboliten Ramiprilat.' },
+  { name: 'Ramipril', aliases: ['Delix'], half_life_hours: 15, tmax_hours: 3, bioavailability_sc: 0.28, category: 'other', notes: 'Werte des aktiven Metaboliten Ramiprilat, der nach zwei bis vier Stunden gipfelt — Ramipril selbst ist nach einer Stunde oben und binnen Stunden weg.' },
   { name: 'Bisoprolol', aliases: ['Concor'], half_life_hours: 11, tmax_hours: 3, bioavailability_sc: 0.9, category: 'other', notes: FI },
   { name: 'Metoprolol', aliases: ['Beloc'], half_life_hours: 3.5, tmax_hours: 1.5, bioavailability_sc: 0.4, category: 'other', notes: 'Werte fuer schnell freisetzende Form; Retardformen verlaufen flacher.' },
   { name: 'Amlodipin', aliases: ['Norvasc'], half_life_hours: 40, tmax_hours: 7, bioavailability_sc: 0.65, category: 'other', notes: FI },
@@ -95,22 +95,21 @@ export const PK_PROFILE_ERWEITERUNG = [
   // ── Weitere ──────────────────────────────────────────────────────────
   { name: 'Cetirizin', aliases: ['Zyrtec'], half_life_hours: 10, tmax_hours: 1, bioavailability_sc: 0.7, category: 'other', notes: FI },
   { name: 'Loratadin', aliases: ['Lorano'], half_life_hours: 8, tmax_hours: 1.5, bioavailability_sc: 0.4, category: 'other', notes: 'Der aktive Metabolit Desloratadin bleibt mit rund 27 Stunden deutlich laenger.' },
-  { name: 'Amoxicillin', aliases: ['Amoxi'], half_life_hours: 1.2, tmax_hours: 1.5, bioavailability_sc: 0.8, category: 'other', notes: FI },
+  { name: 'Amoxicillin', aliases: ['Amoxi'], half_life_hours: 1.2, tmax_hours: 1.5, bioavailability_sc: 0.8, category: 'other', notes: 'Aufnahme und Ausscheidung laufen fast gleich schnell — der Gipfel liegt bei der Halbwertszeit. Fachinformation.' },
   { name: 'Naltrexon', aliases: ['Naltrexone', 'LDN'], half_life_hours: 4, tmax_hours: 1, bioavailability_sc: 0.2, category: 'other', notes: 'Starker First-Pass. Der aktive Metabolit 6-beta-Naltrexol bleibt laenger.' },
   { name: 'Rapamycin', aliases: ['Sirolimus', 'Rapamune'], half_life_hours: 62, tmax_hours: 2, bioavailability_sc: 0.15, category: 'other', notes: FI },
 
   // ── Hormone in Stueckform ────────────────────────────────────────────
-  { name: 'DHEA', aliases: ['Dehydroepiandrosteron'], half_life_hours: 12, tmax_hours: 1.5, bioavailability_sc: 0.5, category: 'hormone', notes: UNSICHER },
-  { name: 'Pregnenolon', aliases: ['Pregnenolone'], half_life_hours: 1.5, tmax_hours: 1.5, bioavailability_sc: 0.3, category: 'hormone', notes: 'Duenne Datenlage beim Menschen — die Kurve ist eine Groessenordnung, keine Messung.' },
+  { name: 'DHEA', aliases: ['Dehydroepiandrosteron'], half_life_hours: 12, tmax_hours: 1.5, bioavailability_sc: 0.5, category: 'hormone', notes: 'Die lange Fahne kommt vom Sulfat DHEA-S; DHEA selbst ist nach ein bis zwei Stunden weg. Literaturwerte mit breiter Streuung.' },
+  { name: 'Pregnenolon', aliases: ['Pregnenolone'], half_life_hours: 1.5, tmax_hours: 1, bioavailability_sc: 0.3, category: 'hormone', notes: 'Duenne Datenlage beim Menschen — die Kurve ist eine Groessenordnung, keine Messung. Ein kleines Steroid wird schneller aufgenommen als ausgeschieden, daher tmax unter der Halbwertszeit.' },
   { name: 'Östradiol', aliases: ['Estradiol', 'Oestradiol'], half_life_hours: 15, tmax_hours: 5, bioavailability_sc: 0.05, category: 'hormone', notes: 'Werte fuer orales Estradiol mit starkem First-Pass. Gel und Pflaster umgehen ihn und verlaufen ganz anders.' },
   { name: 'Progesteron', aliases: ['Progesterone', 'Utrogest'], half_life_hours: 16, tmax_hours: 2.5, bioavailability_sc: 0.1, category: 'hormone', notes: 'Werte fuer orales mikronisiertes Progesteron.' },
 
   // ── Supplemente mit belastbaren Werten ───────────────────────────────
   { name: 'Koffein', aliases: ['Caffeine', 'Coffein'], half_life_hours: 5, tmax_hours: 0.75, bioavailability_sc: 1.0, category: 'other', notes: 'Nahezu vollstaendig aufgenommen. Die Halbwertszeit schwankt genetisch zwischen etwa 2 und 10 Stunden.' },
-  { name: 'Melatonin', aliases: [], half_life_hours: 0.75, tmax_hours: 0.75, bioavailability_sc: 0.15, category: 'other', notes: 'Sehr kurze Halbwertszeit und starker First-Pass. Retardformen verlaufen deutlich flacher.' },
+  { name: 'Melatonin', aliases: [], half_life_hours: 0.75, tmax_hours: 0.75, bioavailability_sc: 0.15, category: 'other', notes: 'Gipfel und Halbwertszeit liegen beide bei etwa 45 Minuten — der Stoff ist weg, bevor die Kurve richtig anfaengt. Starker First-Pass. Retardformen verlaufen deutlich flacher.' },
   { name: '5-HTP', aliases: ['5-Hydroxytryptophan'], half_life_hours: 2.2, tmax_hours: 1.5, bioavailability_sc: 0.7, category: 'other', notes: OK },
   { name: 'L-Theanin', aliases: ['Theanin'], half_life_hours: 1.2, tmax_hours: 0.8, bioavailability_sc: 0.9, category: 'other', notes: OK },
   { name: 'NAC', aliases: ['N-Acetyl-Cystein'], half_life_hours: 6, tmax_hours: 1, bioavailability_sc: 0.1, category: 'other', notes: 'Sehr geringe orale Bioverfuegbarkeit der unveraenderten Substanz.' },
   { name: 'Coenzym Q10', aliases: ['CoQ10', 'Ubiquinol'], half_life_hours: 33, tmax_hours: 6, bioavailability_sc: 0.05, category: 'other', notes: 'Schlecht loeslich; die Aufnahme haengt stark an der Formulierung und an der Mahlzeit.' },
-  { name: 'Berberin', aliases: ['Berberine'], half_life_hours: 4, tmax_hours: 4, bioavailability_sc: 0.05, category: 'other', notes: 'Sehr geringe orale Bioverfuegbarkeit; der Wirkort liegt teils im Darm, nicht im Blut.' },
 ]
