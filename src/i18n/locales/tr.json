@@ -1095,5 +1095,15 @@
   "my_stack_more_dosage_forms": "Daha fazla dozaj formu",
   "my_stack_tracking_curve_caption": "Canlı seviye böyle oluşur",
   "my_stack_tracking_curve_example": "Örnek",
-  "my_stack_tracking_curve_explained": "Etken madde miktarı, saat ve maddenin PK profili — kayıtlı emilim ve atılım hızları — üzerinden uygulama alımlar arasındaki eğriyi hesaplar."
+  "my_stack_tracking_curve_explained": "Etken madde miktarı, saat ve maddenin PK profili — kayıtlı emilim ve atılım hızları — üzerinden uygulama alımlar arasındaki eğriyi hesaplar.",
+  "my_stack_intake_unit_syringe": "şırınga",
+  "my_stack_intake_unit_dose": "doz",
+  "my_stack_intake_unit_tablet": "tablet",
+  "my_stack_intake_unit_capsule": "kapsül",
+  "my_stack_intake_unit_drop": "damla",
+  "my_stack_intake_unit_portion": "porsiyon",
+  "my_stack_intake_unit_spray": "püskürtme",
+  "my_stack_intake_unit_application": "uygulama",
+  "my_stack_intake_unit_patch": "bant",
+  "my_stack_intake_unit_unit": "birim"
 }

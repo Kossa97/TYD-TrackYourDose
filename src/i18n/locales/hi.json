@@ -1095,5 +1095,15 @@
   "my_stack_more_dosage_forms": "अधिक खुराक स्वरूप",
   "my_stack_tracking_curve_caption": "लाइव स्तर ऐसे बनता है",
   "my_stack_tracking_curve_example": "उदाहरण",
-  "my_stack_tracking_curve_explained": "मात्रा, समय और पदार्थ की PK प्रोफ़ाइल — उसकी दर्ज अवशोषण और निष्कासन गति — से ऐप खुराकों के बीच का वक्र निकालता है।"
+  "my_stack_tracking_curve_explained": "मात्रा, समय और पदार्थ की PK प्रोफ़ाइल — उसकी दर्ज अवशोषण और निष्कासन गति — से ऐप खुराकों के बीच का वक्र निकालता है।",
+  "my_stack_intake_unit_syringe": "सिरिंज",
+  "my_stack_intake_unit_dose": "खुराक",
+  "my_stack_intake_unit_tablet": "गोली",
+  "my_stack_intake_unit_capsule": "कैप्सूल",
+  "my_stack_intake_unit_drop": "बूंद",
+  "my_stack_intake_unit_portion": "हिस्सा",
+  "my_stack_intake_unit_spray": "स्प्रे",
+  "my_stack_intake_unit_application": "प्रयोग",
+  "my_stack_intake_unit_patch": "पैच",
+  "my_stack_intake_unit_unit": "इकाई"
 }

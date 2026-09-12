@@ -1243,5 +1243,15 @@
   "inventory_retry": "Retry inventory update",
   "my_stack_tracking_curve_caption": "How the live level is built",
   "my_stack_tracking_curve_example": "Example",
-  "my_stack_tracking_curve_explained": "From the strength, the time of day and the substance’s PK profile — its stored absorption and elimination rates — the app works out the curve between intakes."
+  "my_stack_tracking_curve_explained": "From the strength, the time of day and the substance’s PK profile — its stored absorption and elimination rates — the app works out the curve between intakes.",
+  "my_stack_intake_unit_syringe": "syringe",
+  "my_stack_intake_unit_dose": "dose",
+  "my_stack_intake_unit_tablet": "tablet",
+  "my_stack_intake_unit_capsule": "capsule",
+  "my_stack_intake_unit_drop": "drop",
+  "my_stack_intake_unit_portion": "portion",
+  "my_stack_intake_unit_spray": "spray",
+  "my_stack_intake_unit_application": "application",
+  "my_stack_intake_unit_patch": "patch",
+  "my_stack_intake_unit_unit": "unit"
 }

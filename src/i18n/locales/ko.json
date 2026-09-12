@@ -1094,5 +1094,15 @@
   "my_stack_more_dosage_forms": "더 많은 제형",
   "my_stack_tracking_curve_caption": "실시간 혈중 농도가 만들어지는 방식",
   "my_stack_tracking_curve_example": "예시",
-  "my_stack_tracking_curve_explained": "함량과 시각, 그리고 물질의 PK 프로필(저장된 흡수·소실 속도)로 앱이 복용 사이의 곡선을 계산합니다."
+  "my_stack_tracking_curve_explained": "함량과 시각, 그리고 물질의 PK 프로필(저장된 흡수·소실 속도)로 앱이 복용 사이의 곡선을 계산합니다.",
+  "my_stack_intake_unit_syringe": "주사기",
+  "my_stack_intake_unit_dose": "용량",
+  "my_stack_intake_unit_tablet": "정",
+  "my_stack_intake_unit_capsule": "캡슐",
+  "my_stack_intake_unit_drop": "방울",
+  "my_stack_intake_unit_portion": "1회분",
+  "my_stack_intake_unit_spray": "분무",
+  "my_stack_intake_unit_application": "도포",
+  "my_stack_intake_unit_patch": "패치",
+  "my_stack_intake_unit_unit": "단위"
 }

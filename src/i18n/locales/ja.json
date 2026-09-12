@@ -1095,5 +1095,15 @@
   "my_stack_more_dosage_forms": "その他の剤形",
   "my_stack_tracking_curve_caption": "ライブ血中濃度のつくられ方",
   "my_stack_tracking_curve_example": "例",
-  "my_stack_tracking_curve_explained": "含有量、時刻、そして物質のPKプロファイル（登録された吸収速度と消失速度）から、アプリが服用の間の推移を計算します。"
+  "my_stack_tracking_curve_explained": "含有量、時刻、そして物質のPKプロファイル（登録された吸収速度と消失速度）から、アプリが服用の間の推移を計算します。",
+  "my_stack_intake_unit_syringe": "注射器",
+  "my_stack_intake_unit_dose": "用量",
+  "my_stack_intake_unit_tablet": "錠",
+  "my_stack_intake_unit_capsule": "カプセル",
+  "my_stack_intake_unit_drop": "滴",
+  "my_stack_intake_unit_portion": "1回分",
+  "my_stack_intake_unit_spray": "噴霧",
+  "my_stack_intake_unit_application": "塗布",
+  "my_stack_intake_unit_patch": "パッチ",
+  "my_stack_intake_unit_unit": "単位"
 }

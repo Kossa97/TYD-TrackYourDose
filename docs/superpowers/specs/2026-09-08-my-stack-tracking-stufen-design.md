@@ -366,3 +366,85 @@ Offen geblieben, weil es eine eigene Entscheidung ist: „1 Gel", „1 Pulver" u
 (Gramm) oder eine Anwendung, nicht das Behältnis. Die übrigen zehn Formen
 zählen sich sauber. Wer das glätten will, braucht je Form ein eigenes
 Einheitenwort; die Formbezeichnung allein reicht dafür nicht.
+
+---
+
+## Nachtrag 2026-09-12, zweiter Teil: die Einnahmeeinheit je Form
+
+„Das ‚So sähe eine Einnahme aus' muss überarbeitet werden. Beispiel: bei einer
+Ampulle werden die Einnahmen mit einer Spritze gemacht, bei einem Vial auch,
+bei einem Spray sind es Sprühstöße, usw. Das müssen wir in die Datenbank
+einpflegen und auch alles so überarbeiten, dass es konform ist."
+
+### Packung ist nicht Einnahme
+
+Der Nachtrag davor hatte den Beispieleintrag von „1 Kapsel" auf die gewählte
+Form umgestellt — und damit einen Fehler durch einen kleineren ersetzt:
+„1 Ampulle" beschreibt, was im Schrank steht, nicht, was man tut. Aus einer
+Ampulle wird mit der Spritze aufgezogen; ein Spray gibt Sprühstöße ab; ein Gel
+wird angewendet. Das ist eine dritte Größe neben den beiden, die es schon gab:
+
+| Feld | Was es sagt | Beispiel Ampulle |
+|---|---|---|
+| `suggestedUnits` | worin der **Wirkstoff** gemessen wird | mg, ml, IU |
+| `basisUnits` | worin das **Produkt** gemessen wird | ml, Ampulle |
+| `intakeUnit` *(neu)* | womit **eine Einnahme** gezählt wird | Spritze |
+
+### Eingepflegt, nicht geraten
+
+`intakeUnit` ist jetzt ein Pflichtfeld jeder Definition in `DOSAGE_FORMS` —
+der Registry, die für Darreichungsformen die Datenbank der App ist (in
+Supabase liegt zu Formen nur der gewählte Schlüssel je Eintrag, keine
+Metadaten). Der Schlüssel wird gespeichert, das Wort kommt aus der Übersetzung:
+
+| Form | Einheit | DE |
+|---|---|---|
+| Vial, Ampulle | `syringe` | Spritze |
+| Spray, Nasenspray | `spray` | Sprühstoß |
+| Pen | `dose` | Dosis |
+| Tablette / Kapsel / Tropfen / Pflaster | `tablet` / `capsule` / `drop` / `patch` | zählt sich selbst |
+| Gel, Tube | `application` | Anwendung |
+| Pulver | `portion` | Portion |
+| Andere | `unit` | Einheit |
+
+Zehn neue Schlüssel `my_stack_intake_unit_*` in allen vierzehn Sprachen; DE
+und EN sorgfältig, die übrigen zwölf sinnvoll übersetzt (siehe CLAUDE.md).
+
+### Konform gemacht
+
+`intakeUnitLabelKey()` ist die eine Stelle, an der aus einer Form ihr
+Einheitenwort wird — damit „Spritze" überall dasselbe Wort ist. Benutzt von:
+
+- dem Beispieleintrag im Tiefenschritt (der Anlass),
+- `getIntakePlanUnitSuggestions()`: die Einnahmeeinheit führt jetzt die
+  Vorschlagsliste des Einnahmeplans an, vor den Wirkstoffmengen und den
+  Packungsmaßen — was der Nutzer im Alltag zählt, steht vorn.
+
+### Gegengeprüft
+
+Alle zwölf Formen mit Bühnengrafik im Chromium durch den Assistenten:
+
+```
+ampoule -> 1 Spritze      vial    -> 1 Spritze     nasal_spray -> 1 Sprühstoß
+spray   -> 1 Sprühstoß    pen     -> 1 Dosis       tablet      -> 1 Tablette
+capsule -> 1 Kapsel       drops   -> 1 Tropfen     powder      -> 1 Portion
+gel     -> 1 Anwendung    tube    -> 1 Anwendung   patch       -> 1 Pflaster
+```
+
+Damit sind auch die drei holprigen Fälle des vorigen Nachtrags erledigt:
+„1 Gel", „1 Pulver" und „1 Tube" heißen jetzt „1 Anwendung", „1 Portion" und
+„1 Anwendung".
+
+1380 Tests grün (drei neue in `dosageForms.test.ts`: Ampulle und Vial zählen
+in Spritzen, jede Form hat Einheit und Schlüssel, die Einheit führt die
+Vorschläge an; der Test im Picker pinnt jetzt die Einnahmeeinheit statt der
+Formbezeichnung), `tsc` sauber, ESLint unverändert bei 140.
+
+### Offen
+
+Die Eingabefelder für Einheit im Plan- und Stärkeschritt sind Freitext mit
+Vorschlagsliste und zeigen die Schlüssel weiterhin roh („ml", „spray",
+„syringe"). Sie übersetzt anzuzeigen hieße, entweder übersetzte Wörter in die
+Datenbank zu schreiben — dann hinge der Inhalt an der Sprache des Nutzers —
+oder die Felder von Freitext auf Auswahl umzustellen. Das ist eine eigene
+Entscheidung und wurde hier nicht mitgetroffen.

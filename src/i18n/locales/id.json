@@ -1095,5 +1095,15 @@
   "my_stack_more_dosage_forms": "Lebih banyak bentuk sediaan",
   "my_stack_tracking_curve_caption": "Begini kadar live terbentuk",
   "my_stack_tracking_curve_example": "Contoh",
-  "my_stack_tracking_curve_explained": "Dari kekuatan, waktu, dan profil PK zat tersebut — laju penyerapan dan peluruhan yang tersimpan — aplikasi menghitung kurva di antara asupan."
+  "my_stack_tracking_curve_explained": "Dari kekuatan, waktu, dan profil PK zat tersebut — laju penyerapan dan peluruhan yang tersimpan — aplikasi menghitung kurva di antara asupan.",
+  "my_stack_intake_unit_syringe": "suntikan",
+  "my_stack_intake_unit_dose": "dosis",
+  "my_stack_intake_unit_tablet": "tablet",
+  "my_stack_intake_unit_capsule": "kapsul",
+  "my_stack_intake_unit_drop": "tetes",
+  "my_stack_intake_unit_portion": "porsi",
+  "my_stack_intake_unit_spray": "semprotan",
+  "my_stack_intake_unit_application": "pemakaian",
+  "my_stack_intake_unit_patch": "koyo",
+  "my_stack_intake_unit_unit": "unit"
 }

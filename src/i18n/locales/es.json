@@ -1095,5 +1095,15 @@
   "my_stack_more_dosage_forms": "Más formas farmacéuticas",
   "my_stack_tracking_curve_caption": "Así surge el nivel en vivo",
   "my_stack_tracking_curve_example": "Ejemplo",
-  "my_stack_tracking_curve_explained": "A partir de la concentración, la hora y el perfil PK de la sustancia — sus velocidades de absorción y eliminación registradas — la app calcula la curva entre tomas."
+  "my_stack_tracking_curve_explained": "A partir de la concentración, la hora y el perfil PK de la sustancia — sus velocidades de absorción y eliminación registradas — la app calcula la curva entre tomas.",
+  "my_stack_intake_unit_syringe": "jeringa",
+  "my_stack_intake_unit_dose": "dosis",
+  "my_stack_intake_unit_tablet": "comprimido",
+  "my_stack_intake_unit_capsule": "cápsula",
+  "my_stack_intake_unit_drop": "gota",
+  "my_stack_intake_unit_portion": "porción",
+  "my_stack_intake_unit_spray": "pulsación",
+  "my_stack_intake_unit_application": "aplicación",
+  "my_stack_intake_unit_patch": "parche",
+  "my_stack_intake_unit_unit": "unidad"
 }

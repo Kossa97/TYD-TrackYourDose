@@ -1099,5 +1099,15 @@
   "my_stack_more_dosage_forms": "المزيد من أشكال الجرعات",
   "my_stack_tracking_curve_caption": "هكذا ينشأ المستوى المباشر",
   "my_stack_tracking_curve_example": "مثال",
-  "my_stack_tracking_curve_explained": "من التركيز والوقت وملف الحرائك الدوائية للمادة — سرعتَي الامتصاص والتخلص المخزَّنتين — يحسب التطبيق المنحنى بين الجرعات."
+  "my_stack_tracking_curve_explained": "من التركيز والوقت وملف الحرائك الدوائية للمادة — سرعتَي الامتصاص والتخلص المخزَّنتين — يحسب التطبيق المنحنى بين الجرعات.",
+  "my_stack_intake_unit_syringe": "محقنة",
+  "my_stack_intake_unit_dose": "جرعة",
+  "my_stack_intake_unit_tablet": "قرص",
+  "my_stack_intake_unit_capsule": "كبسولة",
+  "my_stack_intake_unit_drop": "قطرة",
+  "my_stack_intake_unit_portion": "حصة",
+  "my_stack_intake_unit_spray": "بخة",
+  "my_stack_intake_unit_application": "استعمال",
+  "my_stack_intake_unit_patch": "لصقة",
+  "my_stack_intake_unit_unit": "وحدة"
 }

@@ -1095,5 +1095,15 @@
   "my_stack_more_dosage_forms": "Plus de formes galéniques",
   "my_stack_tracking_curve_caption": "Comment naît le niveau en direct",
   "my_stack_tracking_curve_example": "Exemple",
-  "my_stack_tracking_curve_explained": "À partir du dosage, de l’heure et du profil PK de la substance — ses vitesses d’absorption et d’élimination enregistrées — l’app calcule la courbe entre les prises."
+  "my_stack_tracking_curve_explained": "À partir du dosage, de l’heure et du profil PK de la substance — ses vitesses d’absorption et d’élimination enregistrées — l’app calcule la courbe entre les prises.",
+  "my_stack_intake_unit_syringe": "seringue",
+  "my_stack_intake_unit_dose": "dose",
+  "my_stack_intake_unit_tablet": "comprimé",
+  "my_stack_intake_unit_capsule": "gélule",
+  "my_stack_intake_unit_drop": "goutte",
+  "my_stack_intake_unit_portion": "portion",
+  "my_stack_intake_unit_spray": "pulvérisation",
+  "my_stack_intake_unit_application": "application",
+  "my_stack_intake_unit_patch": "patch",
+  "my_stack_intake_unit_unit": "unité"
 }

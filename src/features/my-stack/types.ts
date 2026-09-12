@@ -6,6 +6,14 @@ export type RoutineGroup = 'morning' | 'midday' | 'evening'
 export type DosageFormKey =
   | 'vial' | 'ampoule' | 'pen' | 'tablet' | 'capsule' | 'drops'
   | 'powder' | 'nasal_spray' | 'spray' | 'gel' | 'patch' | 'tube' | 'other'
+// Womit EINE Einnahme gezaehlt wird — nicht, was im Schrank steht. Aus einer
+// Ampulle und einem Vial wird mit der Spritze aufgezogen, ein Spray gibt
+// Spruehstoesse ab, ein Gel wird angewendet. Der Schluessel wird gespeichert,
+// das Wort dazu kommt aus der Uebersetzung (`my_stack_intake_unit_*`).
+export type IntakeUnitKey =
+  | 'syringe' | 'dose' | 'tablet' | 'capsule' | 'drop'
+  | 'portion' | 'spray' | 'application' | 'patch' | 'unit'
+
 export type DosageFormCapability =
   | 'countable' | 'divisible' | 'liquid' | 'injectable' | 'reconstitutable'
   | 'concentration_based' | 'inventory_capable'

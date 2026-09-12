@@ -112,9 +112,10 @@ describe('TrackingLevelPicker', () => {
     expect(screen.getAllByText(/fragt die App auch später nicht ab/i)).toHaveLength(1)
   })
 
-  it('zaehlt den Beispieleintrag in der gewaehlten Darreichungsform', () => {
-    // Hier stand fest „1 Kapsel" — auch bei einer Ampulle. Der Beispieleintrag
-    // soll zeigen, wie DIESER Eintrag aussieht, nicht irgendeiner.
+  it('zaehlt den Beispieleintrag in der Einnahmeeinheit der Form', () => {
+    // Hier stand fest „1 Kapsel" — auch bei einer Ampulle. Und danach „1
+    // Ampulle", was die Packung beschrieb statt der Einnahme: aus einer
+    // Ampulle wird mit der Spritze aufgezogen.
     const { rerender } = render(
       <TrackingLevelPicker
         value="with_amount"
@@ -128,10 +129,10 @@ describe('TrackingLevelPicker', () => {
     const eintrag = (level: string) =>
       document.querySelector(`[data-tracking-entry="${level}"]`)!.textContent!
 
-    // Der i18n-Ersatz liefert fuer die Formbezeichnung den Schluessel —
-    // dass genau DIESER ankommt, ist der Punkt (so auch in DosageFormPicker.test).
-    expect(eintrag('with_amount')).toContain('dosage_form_ampoule')
-    expect(eintrag('with_amount')).not.toContain('dosage_form_capsule')
+    // Der i18n-Ersatz liefert den Schluessel — dass genau DIESER ankommt, ist
+    // der Punkt (so auch in DosageFormPicker.test).
+    expect(eintrag('with_amount')).toContain('my_stack_intake_unit_syringe')
+    expect(eintrag('with_amount')).not.toContain('dosage_form_ampoule')
 
     // Die tiefste Stufe nimmt zusaetzlich die Wirkstoffeinheit der Form.
     rerender(
@@ -143,7 +144,7 @@ describe('TrackingLevelPicker', () => {
         onChange={() => undefined}
       />,
     )
-    expect(eintrag('complete')).toContain('dosage_form_ampoule')
+    expect(eintrag('complete')).toContain('my_stack_intake_unit_syringe')
     expect(eintrag('complete')).toContain('mg')
 
     // Und eine andere Form zaehlt in ihrer eigenen Einheit.
@@ -156,7 +157,20 @@ describe('TrackingLevelPicker', () => {
         onChange={() => undefined}
       />,
     )
-    expect(eintrag('with_amount')).toContain('dosage_form_tablet')
+    expect(eintrag('with_amount')).toContain('my_stack_intake_unit_tablet')
+
+    // Und ein Spray zaehlt in Spruehstoessen, nicht in Flaschen.
+    rerender(
+      <TrackingLevelPicker
+        value="with_amount"
+        substanceName="Melatonin"
+        dosageForm="nasal_spray"
+        pkProfileAvailable={false}
+        onChange={() => undefined}
+      />,
+    )
+    expect(eintrag('with_amount')).toContain('my_stack_intake_unit_spray')
+    expect(eintrag('with_amount')).not.toContain('dosage_form_nasal_spray')
   })
 
   it('laesst das Detail weg, solange keine Form gewaehlt ist', () => {

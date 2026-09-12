@@ -1094,5 +1094,15 @@
   "my_stack_more_dosage_forms": "更多剂型",
   "my_stack_tracking_curve_caption": "实时血药浓度是这样得出的",
   "my_stack_tracking_curve_example": "示例",
-  "my_stack_tracking_curve_explained": "根据含量、时间以及该物质的 PK 曲线参数（已存的吸收与消除速度），应用算出两次服用之间的走势。"
+  "my_stack_tracking_curve_explained": "根据含量、时间以及该物质的 PK 曲线参数（已存的吸收与消除速度），应用算出两次服用之间的走势。",
+  "my_stack_intake_unit_syringe": "注射器",
+  "my_stack_intake_unit_dose": "剂量",
+  "my_stack_intake_unit_tablet": "片",
+  "my_stack_intake_unit_capsule": "粒",
+  "my_stack_intake_unit_drop": "滴",
+  "my_stack_intake_unit_portion": "份",
+  "my_stack_intake_unit_spray": "喷",
+  "my_stack_intake_unit_application": "涂抹",
+  "my_stack_intake_unit_patch": "贴片",
+  "my_stack_intake_unit_unit": "单位"
 }

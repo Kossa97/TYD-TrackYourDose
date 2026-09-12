@@ -1243,5 +1243,15 @@
   "inventory_retry": "Bestand erneut versuchen",
   "my_stack_tracking_curve_caption": "So entsteht der Live-Spiegel",
   "my_stack_tracking_curve_example": "Beispiel",
-  "my_stack_tracking_curve_explained": "Aus Wirkstärke, Uhrzeit und dem PK-Profil der Substanz — ihrer hinterlegten Aufnahme- und Abbaugeschwindigkeit — rechnet die App den Verlauf zwischen den Einnahmen."
+  "my_stack_tracking_curve_explained": "Aus Wirkstärke, Uhrzeit und dem PK-Profil der Substanz — ihrer hinterlegten Aufnahme- und Abbaugeschwindigkeit — rechnet die App den Verlauf zwischen den Einnahmen.",
+  "my_stack_intake_unit_syringe": "Spritze",
+  "my_stack_intake_unit_dose": "Dosis",
+  "my_stack_intake_unit_tablet": "Tablette",
+  "my_stack_intake_unit_capsule": "Kapsel",
+  "my_stack_intake_unit_drop": "Tropfen",
+  "my_stack_intake_unit_portion": "Portion",
+  "my_stack_intake_unit_spray": "Sprühstoß",
+  "my_stack_intake_unit_application": "Anwendung",
+  "my_stack_intake_unit_patch": "Pflaster",
+  "my_stack_intake_unit_unit": "Einheit"
 }

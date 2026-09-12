@@ -1095,5 +1095,15 @@
   "my_stack_more_dosage_forms": "Altre forme di dosaggio",
   "my_stack_tracking_curve_caption": "Come nasce il livello live",
   "my_stack_tracking_curve_example": "Esempio",
-  "my_stack_tracking_curve_explained": "Da dosaggio, orario e profilo PK della sostanza — le sue velocità di assorbimento ed eliminazione registrate — l’app calcola la curva tra le assunzioni."
+  "my_stack_tracking_curve_explained": "Da dosaggio, orario e profilo PK della sostanza — le sue velocità di assorbimento ed eliminazione registrate — l’app calcola la curva tra le assunzioni.",
+  "my_stack_intake_unit_syringe": "siringa",
+  "my_stack_intake_unit_dose": "dose",
+  "my_stack_intake_unit_tablet": "compressa",
+  "my_stack_intake_unit_capsule": "capsula",
+  "my_stack_intake_unit_drop": "goccia",
+  "my_stack_intake_unit_portion": "porzione",
+  "my_stack_intake_unit_spray": "spruzzo",
+  "my_stack_intake_unit_application": "applicazione",
+  "my_stack_intake_unit_patch": "cerotto",
+  "my_stack_intake_unit_unit": "unità"
 }

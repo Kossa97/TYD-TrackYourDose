@@ -1,7 +1,7 @@
 import { useId } from 'react'
 import { Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { getDosageForm } from '../lib/dosageForms'
+import { getDosageForm, intakeUnitLabelKey } from '../lib/dosageForms'
 import type { DosageFormKey, TrackingLevel } from '../types'
 
 export interface TrackingLevelPickerProps {
@@ -57,12 +57,12 @@ export function TrackingLevelPicker({
   const uid = useId()
   const name = substanceName.trim() || String(t('my_stack_this_substance', { defaultValue: 'diese Substanz' }))
 
-  // Der Beispieleintrag zaehlt in der gewaehlten Form, nicht in einer
-  // festen: hier stand „1 Kapsel", auch wenn eine Ampulle gewaehlt war.
-  // Die Bezeichnung der Form ist ohnehin schon uebersetzt (`labelKey`), die
-  // Wirkstoffeinheit nimmt die Form aus ihrer eigenen Vorschlagsliste.
+  // Der Beispieleintrag zaehlt in der EINNAHMEEINHEIT der gewaehlten Form,
+  // nicht im Namen des Behaeltnisses: aus einer Ampulle und einem Vial wird
+  // mit der Spritze aufgezogen, ein Spray gibt Spruehstoesse ab, ein Gel wird
+  // angewendet. „1 Ampulle" beschrieb die Packung, nicht die Einnahme.
   const form = dosageForm ? getDosageForm(dosageForm) : null
-  const formName = form ? String(t(form.labelKey)) : ''
+  const formName = dosageForm ? String(t(intakeUnitLabelKey(dosageForm))) : ''
   const wirkstoffEinheit = form?.suggestedUnits[0] ?? ''
   const staerke = wirkstoffEinheit
     ? `${BEISPIELMENGE[wirkstoffEinheit] ?? '1'} ${wirkstoffEinheit}`

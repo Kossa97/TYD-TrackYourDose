@@ -1097,5 +1097,15 @@
   "my_stack_more_dosage_forms": "Еще лекарственные формы",
   "my_stack_tracking_curve_caption": "Как получается живой уровень",
   "my_stack_tracking_curve_example": "Пример",
-  "my_stack_tracking_curve_explained": "По дозировке, времени и ФК-профилю вещества — заложенным скоростям всасывания и выведения — приложение рассчитывает кривую между приёмами."
+  "my_stack_tracking_curve_explained": "По дозировке, времени и ФК-профилю вещества — заложенным скоростям всасывания и выведения — приложение рассчитывает кривую между приёмами.",
+  "my_stack_intake_unit_syringe": "шприц",
+  "my_stack_intake_unit_dose": "доза",
+  "my_stack_intake_unit_tablet": "таблетка",
+  "my_stack_intake_unit_capsule": "капсула",
+  "my_stack_intake_unit_drop": "капля",
+  "my_stack_intake_unit_portion": "порция",
+  "my_stack_intake_unit_spray": "впрыск",
+  "my_stack_intake_unit_application": "нанесение",
+  "my_stack_intake_unit_patch": "пластырь",
+  "my_stack_intake_unit_unit": "единица"
 }
