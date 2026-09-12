@@ -971,7 +971,7 @@
   "my_stack_tracking_complete_title": "Accurato",
   "my_stack_tracking_complete_subtitle": "Con dosaggio",
   "my_stack_tracking_complete_recorded": "Inoltre, quanto principio attivo contiene un’unità. Così l’app conta in milligrammi invece che in capsule — e sa quanto ne resta in te ora per ora.",
-  "my_stack_tracking_complete_entry": "1 {{form}} · {{strength}}",
+  "my_stack_tracking_complete_entry": "per assunzione · {{strength}}",
   "my_stack_tracking_pk_available": "{{substanceName}} ha un profilo PK. Una curva viene visualizzata solo quando tutti i dati richiesti sono completi.",
   "my_stack_tracking_pk_unavailable": "Per {{substanceName}} non è attualmente collegato alcun profilo PK; questo livello resta disponibile.",
   "my_stack_tracking_promise": "Ciò che un livello non registra, l’app non te lo chiederà nemmeno in seguito.",

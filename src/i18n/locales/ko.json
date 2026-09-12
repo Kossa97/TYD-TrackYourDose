@@ -970,7 +970,7 @@
   "my_stack_tracking_complete_title": "철저",
   "my_stack_tracking_complete_subtitle": "함량 포함",
   "my_stack_tracking_complete_recorded": "추가로, 한 단위에 유효 성분이 얼마나 들어 있는지. 그러면 앱이 캡슐이 아니라 밀리그램으로 계산하고, 매 시간 몸에 얼마가 남아 있는지 압니다.",
-  "my_stack_tracking_complete_entry": "1 {{form}} · {{strength}}",
+  "my_stack_tracking_complete_entry": "1회 섭취당 · {{strength}}",
   "my_stack_tracking_pk_available": "{{substanceName}}에 PK 프로필이 있습니다. 필요한 모든 데이터가 완료된 경우에만 곡선이 나타납니다.",
   "my_stack_tracking_pk_unavailable": "{{substanceName}}에 현재 연결된 PK 프로필이 없지만 이 단계는 선택할 수 있습니다.",
   "my_stack_tracking_promise": "한 단계가 기록하지 않는 것은 앱이 나중에도 묻지 않습니다.",

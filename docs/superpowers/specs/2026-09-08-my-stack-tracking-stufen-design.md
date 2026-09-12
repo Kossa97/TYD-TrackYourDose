@@ -448,3 +448,41 @@ Vorschlagsliste und zeigen die Schlüssel weiterhin roh („ml", „spray",
 Datenbank zu schreiben — dann hinge der Inhalt an der Sprache des Nutzers —
 oder die Felder von Freitext auf Auswahl umzustellen. Das ist eine eigene
 Entscheidung und wurde hier nicht mitgetroffen.
+
+---
+
+## Nachtrag 2026-09-12 — „pro Einnahme" statt des Behältnisses
+
+Der Beispieleintrag der Stufe **Gründlich** las sich zuletzt so:
+
+```
+BPC-157 · 1 Spritze · 500 mcg
+```
+
+Zwei Mengen nebeneinander, und keine sagt, worauf sich die andere bezieht.
+Sind 500 mcg in der Spritze? Im ganzen Vial? Pro Tag? Die Zeile nannte das
+Behältnis und den Wirkstoff und ließ die Beziehung offen — genau die Frage,
+für die es die Stufe gibt.
+
+**Jetzt:**
+
+```
+BPC-157 · pro Einnahme · 500 mcg
+```
+
+Die Einnahmeeinheit verschwindet damit nicht aus dem Formular: sie steht eine
+Stufe darüber, bei **Genau** („BPC-157 · 1 Spritze"). Dort *ist* sie das
+Ergebnis — das ist der Unterschied zwischen den beiden Stufen. Bei Gründlich
+wäre sie Beiwerk vor der Zahl, auf die es ankommt.
+
+Der Schlüssel `my_stack_tracking_complete_entry` verliert damit den Platzhalter
+`{{form}}` und trägt nur noch `{{strength}}` — in allen 14 Sprachdateien, wie
+der i18n-Vertrag es verlangt. Er trug bisher überall denselben unübersetzten
+Rohtext; „pro Einnahme" ist jetzt je Sprache gesetzt (de/en geschrieben, die
+übrigen zwölf übersetzt und ungeprüft).
+
+**Geprüft.** `TrackingLevelPicker.test.tsx`: die tiefste Stufe zeigt „pro
+Einnahme" und die Wirkstoffmenge und **nicht** mehr die Einnahmeeinheit. Der
+Leiter-Test vergleicht jetzt den Inhalt der drei Einträge statt ihrer Länge —
+im Test steht anstelle von „1 Kapsel" der Übersetzungsschlüssel, und der ist
+länger als die Zeile, die er später ersetzt.

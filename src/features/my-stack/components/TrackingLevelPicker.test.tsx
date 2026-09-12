@@ -54,13 +54,17 @@ describe('TrackingLevelPicker', () => {
 
     const vorschau = document.querySelector('[data-tracking-preview]')!
     expect(vorschau.querySelectorAll('[data-tracking-entry]')).toHaveLength(3)
-    // Die Steigerung ist im Eintrag sichtbar: nur der Name, dann die Menge,
-    // dann die Wirkstaerke.
+    // Die Steigerung ist im Eintrag sichtbar: nur der Name, dann die Menge in
+    // Einnahmeeinheiten, dann die Wirkstaerke. Gemessen wird der INHALT, nicht
+    // die Laenge — im Test steht statt „1 Kapsel" der Schluessel, und der ist
+    // laenger als die Zeile, die er spaeter ersetzt.
     const text = (level: string) =>
       vorschau.querySelector(`[data-tracking-entry="${level}"]`)!.textContent!
     expect(text('intake_only')).toContain('Vitamin D3')
-    expect(text('intake_only').length).toBeLessThan(text('with_amount').length)
-    expect(text('with_amount').length).toBeLessThan(text('complete').length)
+    expect(text('intake_only')).not.toContain('·')
+    expect(text('with_amount')).toContain('my_stack_intake_unit_capsule')
+    expect(text('with_amount')).not.toContain('mcg')
+    expect(text('complete')).toContain('500 mcg')
   })
 
   it('zeigt nach der Wahl nur noch die gewaehlte Stufe, mit Bezeichnung und Satz', () => {
@@ -134,7 +138,9 @@ describe('TrackingLevelPicker', () => {
     expect(eintrag('with_amount')).toContain('my_stack_intake_unit_syringe')
     expect(eintrag('with_amount')).not.toContain('dosage_form_ampoule')
 
-    // Die tiefste Stufe nimmt zusaetzlich die Wirkstoffeinheit der Form.
+    // Die tiefste Stufe zaehlt den WIRKSTOFF, nicht das Behaeltnis: „1
+    // Spritze · 250 mg" nannte beides und liess offen, worauf sich die Menge
+    // bezieht. Jetzt steht dort, worauf sie sich bezieht — die Einnahme.
     rerender(
       <TrackingLevelPicker
         value="complete"
@@ -144,8 +150,9 @@ describe('TrackingLevelPicker', () => {
         onChange={() => undefined}
       />,
     )
-    expect(eintrag('complete')).toContain('my_stack_intake_unit_syringe')
-    expect(eintrag('complete')).toContain('mg')
+    expect(eintrag('complete')).toContain('pro Einnahme')
+    expect(eintrag('complete')).toContain('250 mg')
+    expect(eintrag('complete')).not.toContain('my_stack_intake_unit_syringe')
 
     // Und eine andere Form zaehlt in ihrer eigenen Einheit.
     rerender(

@@ -975,7 +975,7 @@
   "my_stack_tracking_complete_title": "شامل",
   "my_stack_tracking_complete_subtitle": "مع التركيز",
   "my_stack_tracking_complete_recorded": "بالإضافة إلى ذلك، كمية المادة الفعالة في الوحدة الواحدة. بذلك يحسب التطبيق بالمليغرام بدل الكبسولات — ويعرف كم بقي منها فيك في كل ساعة.",
-  "my_stack_tracking_complete_entry": "1 {{form}} · {{strength}}",
+  "my_stack_tracking_complete_entry": "لكل جرعة · {{strength}}",
   "my_stack_tracking_pk_available": "{{substanceName}} لديه ملف تعريف PK. يظهر المنحنى فقط عند اكتمال كافة البيانات المطلوبة.",
   "my_stack_tracking_pk_unavailable": "لا يوجد حاليًا ملف حرائك دوائية مرتبط بـ {{substanceName}}؛ ومع ذلك يمكن اختيار هذا المستوى.",
   "my_stack_tracking_promise": "ما لا يسجّله مستوى ما، لن يسألك عنه التطبيق لاحقًا أيضًا.",

@@ -971,7 +971,7 @@
   "my_stack_tracking_complete_title": "Complet",
   "my_stack_tracking_complete_subtitle": "Avec dosage",
   "my_stack_tracking_complete_recorded": "En plus, la quantité de principe actif par unité. L’app compte alors en milligrammes plutôt qu’en gélules — et sait combien il en reste en vous à chaque heure.",
-  "my_stack_tracking_complete_entry": "1 {{form}} · {{strength}}",
+  "my_stack_tracking_complete_entry": "par prise · {{strength}}",
   "my_stack_tracking_pk_available": "{{substanceName}} a un profil PK. Une courbe apparaît uniquement lorsque toutes les données requises sont complètes.",
   "my_stack_tracking_pk_unavailable": "Aucun profil PK n’est actuellement lié à {{substanceName}} ; ce niveau reste disponible.",
   "my_stack_tracking_promise": "Ce qu’un niveau n’enregistre pas, l’application ne vous le demandera pas non plus ensuite.",

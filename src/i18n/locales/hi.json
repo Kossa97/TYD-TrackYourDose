@@ -971,7 +971,7 @@
   "my_stack_tracking_complete_title": "गहन",
   "my_stack_tracking_complete_subtitle": "शक्ति सहित",
   "my_stack_tracking_complete_recorded": "साथ ही, एक यूनिट में कितना सक्रिय तत्व है। इससे ऐप कैप्सूल नहीं, मिलीग्राम गिनता है — और जानता है कि हर घंटे आपमें कितना बचा है।",
-  "my_stack_tracking_complete_entry": "1 {{form}} · {{strength}}",
+  "my_stack_tracking_complete_entry": "प्रति खुराक · {{strength}}",
   "my_stack_tracking_pk_available": "{{substanceName}} की एक PK प्रोफ़ाइल है। एक वक्र तभी प्रकट होता है जब सभी आवश्यक डेटा पूरा हो जाता है।",
   "my_stack_tracking_pk_unavailable": "{{substanceName}} के लिए फ़िलहाल कोई PK प्रोफ़ाइल जुड़ी नहीं है; यह स्तर फिर भी चुना जा सकता है।",
   "my_stack_tracking_promise": "जो एक स्तर दर्ज नहीं करता, ऐप उसे बाद में भी नहीं पूछेगा।",

@@ -971,7 +971,7 @@
   "my_stack_tracking_complete_title": "Kapsamlı",
   "my_stack_tracking_complete_subtitle": "Etken madde ile",
   "my_stack_tracking_complete_recorded": "Ayrıca bir birimde ne kadar etken madde olduğu. Böylece uygulama kapsül yerine miligram sayar — ve her saat sende ne kadar kaldığını bilir.",
-  "my_stack_tracking_complete_entry": "1 {{form}} · {{strength}}",
+  "my_stack_tracking_complete_entry": "alım başına · {{strength}}",
   "my_stack_tracking_pk_available": "{{substanceName}}'nun bir PK profili var. Bir eğri yalnızca gerekli tüm veriler tamamlandığında görünür.",
   "my_stack_tracking_pk_unavailable": "{{substanceName}} için şu anda bağlı bir PK profili yok; bu düzey yine de seçilebilir.",
   "my_stack_tracking_promise": "Bir düzeyin kaydetmediğini uygulama sonradan da sormaz.",

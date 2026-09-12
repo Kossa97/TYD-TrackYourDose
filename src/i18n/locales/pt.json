@@ -971,7 +971,7 @@
   "my_stack_tracking_complete_title": "Minucioso",
   "my_stack_tracking_complete_subtitle": "Com dosagem",
   "my_stack_tracking_complete_recorded": "Além disso, quanto princípio ativo há em uma unidade. Assim o app conta em miligramas em vez de cápsulas — e sabe quanto ainda resta em você a cada hora.",
-  "my_stack_tracking_complete_entry": "1 {{form}} · {{strength}}",
+  "my_stack_tracking_complete_entry": "por toma · {{strength}}",
   "my_stack_tracking_pk_available": "{{substanceName}} possui um perfil PK. Uma curva aparece somente quando todos os dados necessários estão completos.",
   "my_stack_tracking_pk_unavailable": "{{substanceName}} não tem atualmente um perfil PK associado; este nível continua disponível.",
   "my_stack_tracking_promise": "O que um nível não regista, a aplicação também não te pedirá depois.",

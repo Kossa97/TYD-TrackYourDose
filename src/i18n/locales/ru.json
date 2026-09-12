@@ -973,7 +973,7 @@
   "my_stack_tracking_complete_title": "Основательно",
   "my_stack_tracking_complete_subtitle": "С дозировкой",
   "my_stack_tracking_complete_recorded": "Дополнительно — сколько действующего вещества в одной единице. Тогда приложение считает в миллиграммах, а не в капсулах, и знает, сколько его остаётся в вас в каждый час.",
-  "my_stack_tracking_complete_entry": "1 {{form}} · {{strength}}",
+  "my_stack_tracking_complete_entry": "за приём · {{strength}}",
   "my_stack_tracking_pk_available": "{{substanceName}} имеет профиль PK. Кривая появляется только тогда, когда все необходимые данные заполнены.",
   "my_stack_tracking_pk_unavailable": "Для {{substanceName}} сейчас нет связанного профиля PK; этот уровень всё равно доступен.",
   "my_stack_tracking_promise": "О том, что уровень не фиксирует, приложение не спросит и позже.",

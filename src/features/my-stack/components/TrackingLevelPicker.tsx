@@ -94,10 +94,13 @@ export function TrackingLevelPicker({
       recorded: t('my_stack_tracking_complete_recorded', {
         defaultValue: 'Zusätzlich, wie viel Wirkstoff in einer Einheit steckt. Damit rechnet die App in Milligramm statt in Kapseln — und weiß, wie viel davon zu jeder Stunde noch in dir ist.',
       }),
-      entry: form
+      // Hier zaehlt der Wirkstoff, nicht das Behaeltnis: „1 Spritze · 500 mcg"
+      // nannte beides und liess offen, worauf sich die Menge bezieht. „pro
+      // Einnahme" sagt es. Die Einnahmeeinheit steht eine Stufe darueber
+      // („Genau") — dort ist sie das Ergebnis, hier waere sie Beiwerk.
+      entry: staerke
         ? t('my_stack_tracking_complete_entry', {
-            defaultValue: '1 {{form}} · {{strength}}',
-            form: formName,
+            defaultValue: 'pro Einnahme · {{strength}}',
             strength: staerke,
           })
         : '',

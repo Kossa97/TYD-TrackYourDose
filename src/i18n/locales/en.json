@@ -1143,7 +1143,7 @@
   "my_stack_tracking_complete_title": "Thorough",
   "my_stack_tracking_complete_subtitle": "With strength",
   "my_stack_tracking_complete_recorded": "Additionally, how much active ingredient one unit holds. That lets the app count in milligrams instead of capsules — and know how much of it is still in you at any hour.",
-  "my_stack_tracking_complete_entry": "1 {{form}} · {{strength}}",
+  "my_stack_tracking_complete_entry": "per intake · {{strength}}",
   "my_stack_tracking_pk_available": "{{substanceName}} has a PK profile. A curve appears only when all required data is complete.",
   "my_stack_tracking_pk_unavailable": "{{substanceName}} currently has no linked PK profile; this level is still available.",
   "my_stack_tracking_promise": "What a level does not record, the app will not ask for later either.",
