@@ -35,6 +35,27 @@ const zeilen = SUBSTANCE_CATALOG.map(eintrag => (
   + `${eintrag.pkProfile === null ? 'null' : quote(eintrag.pkProfile)})`
 )).join(',\n')
 
+// Umbenennungen laufen VOR dem Upsert. Sonst trifft er die alte Schreibweise
+// nicht und legt eine zweite Zeile an — waehrend die alte die id behaelt, an
+// der `stack_item_ingredients.catalog_substance_id` haengt.
+// Die `not exists`-Bedingung schuetzt vor einer Unique-Verletzung, falls der
+// Zielname schon dasteht (etwa weil die Umbenennung bereits gelaufen ist).
+const umbenennungen = SUBSTANCE_CATALOG
+  .filter(eintrag => eintrag.renameFrom)
+  .map(eintrag => (
+    `update public.substance_catalog set canonical_name = ${quote(eintrag.name)}, updated_at = now()\n`
+    + `where lower(canonical_name) = lower(${quote(eintrag.renameFrom)})\n`
+    + `  and not exists (\n`
+    + `    select 1 from public.substance_catalog andere\n`
+    + `    where lower(andere.canonical_name) = lower(${quote(eintrag.name)})\n`
+    + `  );`
+  ))
+  .join('\n\n')
+
+const umbenennungsBlock = umbenennungen
+  ? `-- ${SUBSTANCE_CATALOG.filter(e => e.renameFrom).length} Umbenennung(en): bestehende Zeilen behalten ihre id.\n${umbenennungen}\n\n`
+  : ''
+
 const sql = `-- GENERIERT von scripts/generate-substance-catalog-sql.mjs.
 -- Nicht von Hand aendern — die Quelle ist scripts/substance-catalog-source.mjs.
 -- Neu erzeugen mit: npm run catalog:sql
@@ -45,7 +66,7 @@ const sql = `-- GENERIERT von scripts/generate-substance-catalog-sql.mjs.
 
 begin;
 
-with quelle (canonical_name, aliases, default_category, suggested_dosage_forms, suggested_units, pk_profile_name) as (
+${umbenennungsBlock}with quelle (canonical_name, aliases, default_category, suggested_dosage_forms, suggested_units, pk_profile_name) as (
   values
 ${zeilen}
 ),

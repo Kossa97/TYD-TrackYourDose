@@ -29,9 +29,13 @@
  *   units        Wirkstoffeinheiten, die uebliche zuerst. Jede muss zu einer
  *                der genannten Formen passen.
  *   pkProfile    Name in `pk_profiles`, oder null
+ *   renameFrom   optional: die Schreibweise, unter der die Zeile HEUTE in der
+ *                Datenbank steht. Ohne sie legt der Upsert eine zweite Zeile
+ *                an, statt die bestehende zu treffen — und die bestehende
+ *                traegt die id, an der `stack_item_ingredients` haengt.
  */
 
-/** @typedef {{ name: string, aliases: string[], category: string, dosageForms: string[], units: string[], pkProfile: string | null }} SubstanceSeed */
+/** @typedef {{ name: string, aliases: string[], category: string, dosageForms: string[], units: string[], pkProfile: string | null, renameFrom?: string }} SubstanceSeed */
 
 /** @type {SubstanceSeed[]} */
 export const SUBSTANCE_CATALOG = [
@@ -40,7 +44,7 @@ export const SUBSTANCE_CATALOG = [
   { name: 'Tirzepatid', aliases: ['Tirzepatide', 'Mounjaro', 'Zepbound'], category: 'peptide', dosageForms: ['pen', 'vial'], units: ['mg', 'mcg'], pkProfile: 'Tirzepatide' },
   { name: 'Liraglutid', aliases: ['Liraglutide', 'Victoza', 'Saxenda'], category: 'peptide', dosageForms: ['pen'], units: ['mg'], pkProfile: 'Liraglutide' },
   { name: 'Exenatid', aliases: ['Exenatide', 'Byetta', 'Bydureon'], category: 'peptide', dosageForms: ['pen', 'vial'], units: ['mcg', 'mg'], pkProfile: 'Exenatide' },
-  { name: 'Retatrutid', aliases: ['Retatrutide', 'LY3437943', 'Reta', 'Triple-G'], category: 'peptide', dosageForms: ['vial', 'pen'], units: ['mg', 'mcg'], pkProfile: 'Retatrutide' },
+  { name: 'Retatrutid', aliases: ['Retatrutide', 'LY3437943', 'Reta', 'Triple-G'], category: 'peptide', dosageForms: ['vial', 'pen'], units: ['mg', 'mcg'], pkProfile: 'Retatrutide', renameFrom: 'Retatrutide' },
   { name: 'Cagrilintid', aliases: ['Cagrilintide', 'AM833', 'NN9838', 'Cagri'], category: 'peptide', dosageForms: ['vial', 'pen'], units: ['mg', 'mcg'], pkProfile: 'Cagrilintide' },
   { name: 'Survodutid', aliases: ['Survodutide', 'BI 456906'], category: 'peptide', dosageForms: ['vial', 'pen'], units: ['mg', 'mcg'], pkProfile: 'Survodutide' },
   { name: 'Mazdutid', aliases: ['Mazdutide', 'IBI362', 'LY3305677'], category: 'peptide', dosageForms: ['vial', 'pen'], units: ['mg', 'mcg'], pkProfile: 'Mazdutide' },
@@ -72,7 +76,7 @@ export const SUBSTANCE_CATALOG = [
   { name: 'Cerebrolysin', aliases: [], category: 'peptide', dosageForms: ['ampoule', 'vial'], units: ['ml', 'mg'], pkProfile: 'Cerebrolysin' },
   { name: 'NA-Semax Amidat', aliases: ['NA-Semax Amidate', 'N-Acetyl Semax Amidate', 'NA-Semax'], category: 'peptide', dosageForms: ['nasal_spray', 'drops', 'vial'], units: ['mg', 'mcg'], pkProfile: 'NA-Semax Amidate' },
   { name: 'PT-141', aliases: ['Bremelanotid', 'Bremelanotide', 'Vyleesi'], category: 'peptide', dosageForms: ['vial', 'nasal_spray'], units: ['mg', 'mcg'], pkProfile: 'PT-141' },
-  { name: 'Melanotan II', aliases: ['Melanotan 2', 'MT-2', 'MT-II'], category: 'peptide', dosageForms: ['vial'], units: ['mg', 'mcg'], pkProfile: 'Melanotan II' },
+  { name: 'Melanotan II', aliases: ['Melanotan 2', 'MT-2', 'MT-II'], category: 'peptide', dosageForms: ['vial'], units: ['mg', 'mcg'], pkProfile: 'Melanotan II', renameFrom: 'Melanotan II (MT2)' },
   { name: 'Epithalon', aliases: ['Epitalon', 'Epithalone'], category: 'peptide', dosageForms: ['vial', 'capsule', 'tablet'], units: ['mg', 'mcg'], pkProfile: 'Epithalon' },
   { name: 'SS-31', aliases: ['Elamipretid', 'Elamipretide', 'MTP-131'], category: 'peptide', dosageForms: ['vial'], units: ['mg', 'mcg'], pkProfile: 'SS-31' },
   { name: 'Humanin', aliases: [], category: 'peptide', dosageForms: ['vial'], units: ['mg', 'mcg'], pkProfile: 'Humanin' },

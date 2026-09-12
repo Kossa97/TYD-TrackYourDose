@@ -8,6 +8,21 @@
 
 begin;
 
+-- 2 Umbenennung(en): bestehende Zeilen behalten ihre id.
+update public.substance_catalog set canonical_name = 'Retatrutid', updated_at = now()
+where lower(canonical_name) = lower('Retatrutide')
+  and not exists (
+    select 1 from public.substance_catalog andere
+    where lower(andere.canonical_name) = lower('Retatrutid')
+  );
+
+update public.substance_catalog set canonical_name = 'Melanotan II', updated_at = now()
+where lower(canonical_name) = lower('Melanotan II (MT2)')
+  and not exists (
+    select 1 from public.substance_catalog andere
+    where lower(andere.canonical_name) = lower('Melanotan II')
+  );
+
 with quelle (canonical_name, aliases, default_category, suggested_dosage_forms, suggested_units, pk_profile_name) as (
   values
     ('Semaglutid', array['Semaglutide', 'Ozempic', 'Wegovy', 'Rybelsus']::text[], 'peptide', array['pen', 'vial', 'tablet']::text[], array['mg', 'mcg']::text[], 'Semaglutide'),

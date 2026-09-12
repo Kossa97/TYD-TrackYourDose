@@ -2,7 +2,7 @@
 
 **Datum:** 2026-09-12
 **Betrifft:** `scripts/substance-catalog-source.mjs`, `scripts/generate-substance-catalog-sql.mjs`, `supabase-my-stack-catalog-expansion.sql`
-**Status:** umgesetzt (SQL noch auszuführen)
+**Status:** umgesetzt und eingespielt
 
 ## Der Bestand, bevor etwas passierte
 
@@ -106,11 +106,58 @@ Verhalten (ob ein Vial rekonstituiert wird). Für „alles tracken" müsste Zink
 unter „supplement" fallen oder es bräuchte „Mineral". Mehr Schubladen heißen
 mehr Regeln — bis auf Weiteres bleibt es bei fünf und großzügiger Einsortierung.
 
-## Auszuführen
+## Eingespielt am 2026-09-12
 
-`supabase-my-stack-catalog-expansion.sql` im Supabase-SQL-Editor (dort greift
-RLS nicht; seit `supabase-rls-hardening.sql` ist das der einzige Weg,
-Katalogzeilen zu schreiben).
+Über den Supabase-Connector, nach der Reihenfolge aus `CLAUDE.md`.
+
+**Der erste Trockenlauf war wertlos** — er lief gegen einen *angenommenen*
+Ist-Zustand (die 20 Zeilen aus den Repo-SQL-Dateien). Die echte Datenbank hatte
+**26**, und zwei davon hätten Doppeleinträge erzeugt:
+
+| in der Datenbank | in der Quelldatei | ohne Korrektur |
+|---|---|---|
+| `Retatrutide` | `Retatrutid` | zwei Zeilen |
+| `Melanotan II (MT2)` | `Melanotan II` | zwei Zeilen |
+
+Daraus das Feld **`renameFrom`**: der Generator setzt vor den Upsert ein
+`update canonical_name`, sodass die bestehende Zeile ihre `id` behält — und
+damit alle Verweise aus `stack_item_ingredients.catalog_substance_id`. Eine
+`not exists`-Bedingung schützt vor einer Unique-Verletzung, falls die
+Umbenennung schon gelaufen ist.
+
+Die Lehre für alles Weitere: **erst lesen, dann den Trockenlauf aufsetzen.**
+Der Ist-Zustand steht in der Datenbank, nicht in den Migrationsdateien.
+
+Weitere Funde beim Lesen:
+
+- Die bisherigen `aliases` waren **Beschreibungen**, keine Suchbegriffe — bei
+  Tesamorelin der vollständige IUPAC-Name. Sie wurden ersetzt.
+- Vier Zeilen trugen den toten Formschlüssel **`liquid`** (GHK-Cu, Magnesium,
+  Metformin, Omega-3), den die App seit `supabase-my-stack-drop-liquid.sql`
+  nicht mehr kennt. Jetzt nirgends mehr.
+- **`SLU-PP-332`** steht im Katalog und nicht in der Quelldatei. Der Upsert
+  löscht nichts, also blieb die Zeile unberührt — sie ist die eine ohne Form
+  und ohne Einheiten. Sie gehört in Welle 2, sobald jemand ihre üblichen
+  Darreichungsformen benennt.
+
+**Ergebnis, gemessen nach dem Lauf:**
+
+| | vorher | nachher |
+|---|---|---|
+| Substanzen | 26 | **53** |
+| ohne Einheiten | 26 | **1** (SLU-PP-332) |
+| ohne Darreichungsform | 6 | **1** (SLU-PP-332) |
+| mit PK-Profil | 12 | **44** |
+| doppelte Namen | — | **0** |
+| toter Formschlüssel `liquid` | 4 | **0** |
+| verwaiste Katalogverweise | — | **0** |
+
+## Rückweg
+
+`backups/substance_catalog-2026-09-12.sql` — der Stand der 26 Zeilen vor dem
+Lauf, mit ihren echten `id`s. Die Datei setzt genau diese Zeilen zurück, löscht
+nichts und lässt alles Spätere stehen. Sie entstand, weil das Projekt keine
+Backups führt; für Welle 2 wird dieselbe Aufnahme vorher wieder gemacht.
 
 ## Geprüft
 
