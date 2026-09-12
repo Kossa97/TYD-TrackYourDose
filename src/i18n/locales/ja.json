@@ -1105,5 +1105,8 @@
   "my_stack_intake_unit_spray": "噴霧",
   "my_stack_intake_unit_application": "塗布",
   "my_stack_intake_unit_patch": "パッチ",
-  "my_stack_intake_unit_unit": "単位"
+  "my_stack_intake_unit_unit": "単位",
+  "my_stack_ingredients_question": "この製品には何が入っていますか？",
+  "my_stack_ingredients_intro": "通常は有効成分ひとつ — すでに入力済みです。配合製品は成分ごとに1行になります。",
+  "my_stack_ingredients_next": "次のステップで、成分ごとに製品1単位あたりの含有量（パッケージ記載の数値）を入力します。そうしてはじめて、カプセル単位ではなくミリグラムで計算できます。"
 }

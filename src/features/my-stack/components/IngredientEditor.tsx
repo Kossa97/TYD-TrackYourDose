@@ -30,6 +30,25 @@ export function IngredientEditor({
 
   return (
     <div className="space-y-5">
+      {/* Der Schritt stand ohne ein Wort der Erklaerung da: ein Feld mit dem
+          schon eingetragenen Namen und ein Knopf „Inhaltsstoff hinzufuegen".
+          Was ein Inhaltsstoff hier ist und warum es mehr als einer sein
+          koennte, musste man raten.
+          Die Ueberschrift wiederholt nicht „Inhaltsstoffe" — das steht schon
+          als Untertitel ueber dem Schritt —, sondern stellt die Frage, die
+          der Schritt beantwortet. Dieselbe Teilung wie im Tiefenschritt
+          („Tracking-Tiefe" oben, „Wie genau moechtest du tracken?" hier). */}
+      <div>
+        <h3 className="text-base font-semibold text-white">
+          {t('my_stack_ingredients_question', { defaultValue: 'Was steckt in deinem Produkt?' })}
+        </h3>
+        <p className="mt-1 text-[13px] leading-snug text-slate-400">
+          {t('my_stack_ingredients_intro', {
+            defaultValue: 'Meist ein einziger Wirkstoff — er steht schon da. Ein Kombipräparat bekommt je Wirkstoff eine eigene Zeile.',
+          })}
+        </p>
+      </div>
+
       <div className="space-y-3">
         {ingredients.map((ingredient, index) => {
           const labelKey = `my_stack_ingredient_${index + 1}`
@@ -93,6 +112,19 @@ export function IngredientEditor({
         <Plus aria-hidden="true" size={18} />
         {t('my_stack_add_ingredient', { defaultValue: 'Inhaltsstoff hinzufügen' })}
       </button>
+
+      {/* Wozu das Ganze: der naechste Schritt fragt je Wirkstoff nach der
+          Menge. Dieselbe Machart wie der Hinweiskasten dort
+          (`my_stack_no_dosage_advice`) — erklaert, was als Naechstes kommt,
+          statt es den Nutzer erst dort entdecken zu lassen. */}
+      <p
+        data-ingredients-next
+        className="rounded-xl border border-white/[0.07] bg-black/20 px-3 py-2.5 text-xs leading-relaxed text-slate-400"
+      >
+        {t('my_stack_ingredients_next', {
+          defaultValue: 'Im nächsten Schritt gibst du je Wirkstoff an, wie viel davon in einer Produkteinheit steckt — die Zahl von der Verpackung. Erst damit rechnet die App in Milligramm statt in Kapseln.',
+        })}
+      </p>
     </div>
   )
 }

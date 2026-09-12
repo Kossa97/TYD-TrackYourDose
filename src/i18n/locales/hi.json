@@ -1105,5 +1105,8 @@
   "my_stack_intake_unit_spray": "स्प्रे",
   "my_stack_intake_unit_application": "प्रयोग",
   "my_stack_intake_unit_patch": "पैच",
-  "my_stack_intake_unit_unit": "इकाई"
+  "my_stack_intake_unit_unit": "इकाई",
+  "my_stack_ingredients_question": "आपके उत्पाद में क्या है?",
+  "my_stack_ingredients_intro": "आमतौर पर एक ही सक्रिय तत्व — वह पहले से दर्ज है। संयुक्त उत्पाद को हर तत्व के लिए अलग पंक्ति मिलती है।",
+  "my_stack_ingredients_next": "अगले चरण में आप हर तत्व के लिए बताते हैं कि एक उत्पाद इकाई में उसकी कितनी मात्रा है — पैकेट पर लिखा आंकड़ा। तभी ऐप कैप्सूल नहीं, मिलीग्राम गिनता है।"
 }

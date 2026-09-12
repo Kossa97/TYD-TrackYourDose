@@ -1105,5 +1105,8 @@
   "my_stack_intake_unit_spray": "borrifada",
   "my_stack_intake_unit_application": "aplicação",
   "my_stack_intake_unit_patch": "adesivo",
-  "my_stack_intake_unit_unit": "unidade"
+  "my_stack_intake_unit_unit": "unidade",
+  "my_stack_ingredients_question": "O que há no seu produto?",
+  "my_stack_ingredients_intro": "Normalmente um único princípio ativo — já está preenchido. Um produto combinado recebe uma linha por princípio ativo.",
+  "my_stack_ingredients_next": "Na próxima etapa você informa, para cada princípio ativo, quanto há em uma unidade do produto — o número da embalagem. Só assim o app conta em miligramas em vez de cápsulas."
 }

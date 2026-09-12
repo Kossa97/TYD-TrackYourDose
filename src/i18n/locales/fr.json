@@ -1105,5 +1105,8 @@
   "my_stack_intake_unit_spray": "pulvérisation",
   "my_stack_intake_unit_application": "application",
   "my_stack_intake_unit_patch": "patch",
-  "my_stack_intake_unit_unit": "unité"
+  "my_stack_intake_unit_unit": "unité",
+  "my_stack_ingredients_question": "Que contient votre produit ?",
+  "my_stack_ingredients_intro": "En général un seul principe actif — il est déjà inscrit. Un produit combiné reçoit une ligne par principe actif.",
+  "my_stack_ingredients_next": "À l’étape suivante, vous indiquez pour chaque principe actif la quantité contenue dans une unité de produit — le chiffre figurant sur l’emballage. C’est ainsi que l’app compte en milligrammes plutôt qu’en gélules."
 }

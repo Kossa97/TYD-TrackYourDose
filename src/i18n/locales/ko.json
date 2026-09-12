@@ -1104,5 +1104,8 @@
   "my_stack_intake_unit_spray": "분무",
   "my_stack_intake_unit_application": "도포",
   "my_stack_intake_unit_patch": "패치",
-  "my_stack_intake_unit_unit": "단위"
+  "my_stack_intake_unit_unit": "단위",
+  "my_stack_ingredients_question": "제품에 무엇이 들어 있나요?",
+  "my_stack_ingredients_intro": "보통 유효 성분 하나 — 이미 입력되어 있습니다. 복합 제품은 성분마다 한 줄씩 생깁니다.",
+  "my_stack_ingredients_next": "다음 단계에서 성분별로 제품 한 단위에 얼마나 들어 있는지(포장에 적힌 수치)를 입력합니다. 그래야 앱이 캡슐이 아니라 밀리그램으로 계산합니다."
 }

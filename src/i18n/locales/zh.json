@@ -1104,5 +1104,8 @@
   "my_stack_intake_unit_spray": "喷",
   "my_stack_intake_unit_application": "涂抹",
   "my_stack_intake_unit_patch": "贴片",
-  "my_stack_intake_unit_unit": "单位"
+  "my_stack_intake_unit_unit": "单位",
+  "my_stack_ingredients_question": "你的产品里有什么？",
+  "my_stack_ingredients_intro": "通常只有一种有效成分——已经填好了。复方产品每种成分各占一行。",
+  "my_stack_ingredients_next": "下一步你要为每种成分填写一个产品单位中含多少——包装上的数字。这样应用才能按毫克而不是按胶囊计算。"
 }

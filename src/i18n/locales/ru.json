@@ -1107,5 +1107,8 @@
   "my_stack_intake_unit_spray": "впрыск",
   "my_stack_intake_unit_application": "нанесение",
   "my_stack_intake_unit_patch": "пластырь",
-  "my_stack_intake_unit_unit": "единица"
+  "my_stack_intake_unit_unit": "единица",
+  "my_stack_ingredients_question": "Что входит в ваш продукт?",
+  "my_stack_ingredients_intro": "Обычно одно действующее вещество — оно уже указано. Комбинированный препарат получает по строке на каждое вещество.",
+  "my_stack_ingredients_next": "На следующем шаге вы указываете для каждого вещества, сколько его в одной единице продукта — число с упаковки. Только тогда приложение считает в миллиграммах, а не в капсулах."
 }

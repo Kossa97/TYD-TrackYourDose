@@ -1105,5 +1105,8 @@
   "my_stack_intake_unit_spray": "spruzzo",
   "my_stack_intake_unit_application": "applicazione",
   "my_stack_intake_unit_patch": "cerotto",
-  "my_stack_intake_unit_unit": "unità"
+  "my_stack_intake_unit_unit": "unità",
+  "my_stack_ingredients_question": "Cosa contiene il tuo prodotto?",
+  "my_stack_ingredients_intro": "Di solito un solo principio attivo — è già inserito. Un prodotto combinato riceve una riga per principio attivo.",
+  "my_stack_ingredients_next": "Nel passaggio successivo indichi, per ogni principio attivo, quanto ne contiene un’unità di prodotto — il dato sulla confezione. Solo così l’app conta in milligrammi invece che in capsule."
 }

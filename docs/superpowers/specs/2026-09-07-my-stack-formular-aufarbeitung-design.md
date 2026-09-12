@@ -69,3 +69,47 @@ solange die Tiefe offen ist; danach beides umgekehrt. Großer Block nur auf dem
 Formschritt, danach die Zeile ohne Farbfeld.
 `TrackingLevelPicker.test.tsx` — alle vier Aussagen weiterhin auf jeder Karte,
 der Änderungshinweis genau einmal.
+
+---
+
+## Nachtrag 2026-09-12 — der Schritt „Inhaltsstoffe" erklärte sich nicht
+
+**Befund.** Der Schritt bestand aus genau zwei Dingen: einem Feld, in dem der
+Name schon stand, und einem Knopf „Inhaltsstoff hinzufügen". Kein Satz dazu.
+Wer TB-500 gewählt hat, sieht TB-500 — und danach eine Frage, die niemand
+gestellt hat: *warum steht das hier noch einmal, und was soll ich hinzufügen?*
+
+Der Schritt hat zwei Aufgaben, beide unsichtbar:
+
+1. Er trennt das **Produkt** vom **Wirkstoff**. Meist sind sie dasselbe; bei
+   einem Kombipräparat (D3+K2, ein Vitamin-Komplex) sind sie es nicht.
+2. Er legt die Zeilen an, nach denen der **nächste** Schritt fragt. „Stärke"
+   fragt je Wirkstoff nach der Menge je Produkteinheit. Ohne diese Zeilen gibt
+   es dort nichts zu füllen.
+
+**Jetzt.** Drei Textblöcke, keine neue Mechanik:
+
+| | |
+|---|---|
+| Überschrift | „Was steckt in deinem Produkt?" |
+| Einleitung | „Meist ein einziger Wirkstoff — er steht schon da. Ein Kombipräparat bekommt je Wirkstoff eine eigene Zeile." |
+| Hinweiskasten unten | „Im nächsten Schritt gibst du je Wirkstoff an, wie viel davon in einer Produkteinheit steckt — die Zahl von der Verpackung. Erst damit rechnet die App in Milligramm statt in Kapseln." |
+
+Die Überschrift wiederholt **nicht** „Inhaltsstoffe". Das steht schon als
+Untertitel über dem Schritt; ein zweites Mal darunter wäre dieselbe Doppelung,
+die aus dem Formschritt bereits geflogen ist. Stattdessen dieselbe Teilung wie
+beim Tiefenschritt: Bezeichnung oben, Frage im Inhalt.
+
+Der Hinweiskasten ist in Machart und Ton der Kasten aus „Stärke"
+(`my_stack_no_dosage_advice`) — er sagt, was als Nächstes kommt, statt es den
+Nutzer erst dort entdecken zu lassen. Er trägt `data-ingredients-next`, damit
+der Test ihn findet, ohne auf den Wortlaut zu zielen.
+
+**Schlüssel.** `my_stack_ingredients_question`, `_intro`, `_next` — in allen 14
+Sprachdateien. Deutsch und Englisch sind geschrieben, die übrigen zwölf tragen
+sinnvolle Übersetzungen und bleiben ungeprüft (siehe `CLAUDE.md`).
+
+**Geprüft.** `IngredientEditor.test.tsx` (neu, 4 Fälle): Frage als `h3`,
+Einleitung vorhanden, Hinweiskasten nennt „nächsten Schritt" und
+„Produkteinheit", die Überschrift ist nicht wörtlich „Inhaltsstoffe", und die
+durchgezählten Zeilen samt Knopf stehen weiterhin.

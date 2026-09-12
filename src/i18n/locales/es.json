@@ -1105,5 +1105,8 @@
   "my_stack_intake_unit_spray": "pulsación",
   "my_stack_intake_unit_application": "aplicación",
   "my_stack_intake_unit_patch": "parche",
-  "my_stack_intake_unit_unit": "unidad"
+  "my_stack_intake_unit_unit": "unidad",
+  "my_stack_ingredients_question": "¿Qué contiene tu producto?",
+  "my_stack_ingredients_intro": "Normalmente un solo principio activo: ya está puesto. Un preparado combinado recibe una línea por principio activo.",
+  "my_stack_ingredients_next": "En el siguiente paso indicas, por cada principio activo, cuánto contiene una unidad del producto: la cifra del envase. Solo así la app cuenta en miligramos en vez de cápsulas."
 }

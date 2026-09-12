@@ -1253,5 +1253,8 @@
   "my_stack_intake_unit_spray": "Sprühstoß",
   "my_stack_intake_unit_application": "Anwendung",
   "my_stack_intake_unit_patch": "Pflaster",
-  "my_stack_intake_unit_unit": "Einheit"
+  "my_stack_intake_unit_unit": "Einheit",
+  "my_stack_ingredients_question": "Was steckt in deinem Produkt?",
+  "my_stack_ingredients_intro": "Meist ein einziger Wirkstoff — er steht schon da. Ein Kombipräparat bekommt je Wirkstoff eine eigene Zeile.",
+  "my_stack_ingredients_next": "Im nächsten Schritt gibst du je Wirkstoff an, wie viel davon in einer Produkteinheit steckt — die Zahl von der Verpackung. Erst damit rechnet die App in Milligramm statt in Kapseln."
 }

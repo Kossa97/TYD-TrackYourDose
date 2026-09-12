@@ -1253,5 +1253,8 @@
   "my_stack_intake_unit_spray": "spray",
   "my_stack_intake_unit_application": "application",
   "my_stack_intake_unit_patch": "patch",
-  "my_stack_intake_unit_unit": "unit"
+  "my_stack_intake_unit_unit": "unit",
+  "my_stack_ingredients_question": "What is in your product?",
+  "my_stack_ingredients_intro": "Usually a single active ingredient — it is already filled in. A combination product gets one line per ingredient.",
+  "my_stack_ingredients_next": "In the next step you state, for each ingredient, how much of it one product unit holds — the figure on the package. Only then can the app count in milligrams instead of capsules."
 }

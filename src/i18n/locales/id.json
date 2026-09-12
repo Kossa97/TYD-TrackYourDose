@@ -1105,5 +1105,8 @@
   "my_stack_intake_unit_spray": "semprotan",
   "my_stack_intake_unit_application": "pemakaian",
   "my_stack_intake_unit_patch": "koyo",
-  "my_stack_intake_unit_unit": "unit"
+  "my_stack_intake_unit_unit": "unit",
+  "my_stack_ingredients_question": "Apa isi produkmu?",
+  "my_stack_ingredients_intro": "Biasanya satu zat aktif — sudah terisi. Produk kombinasi mendapat satu baris per zat.",
+  "my_stack_ingredients_next": "Di langkah berikutnya kamu isi, untuk tiap zat, berapa banyak yang ada dalam satu unit produk — angka di kemasan. Barulah aplikasi menghitung dalam miligram, bukan kapsul."
 }

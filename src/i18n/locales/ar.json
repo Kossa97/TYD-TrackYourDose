@@ -1109,5 +1109,8 @@
   "my_stack_intake_unit_spray": "بخة",
   "my_stack_intake_unit_application": "استعمال",
   "my_stack_intake_unit_patch": "لصقة",
-  "my_stack_intake_unit_unit": "وحدة"
+  "my_stack_intake_unit_unit": "وحدة",
+  "my_stack_ingredients_question": "ما الذي يحتويه منتجك؟",
+  "my_stack_ingredients_intro": "عادةً مادة فعالة واحدة — وهي مُدرجة بالفعل. المستحضر المركّب يحصل على سطر لكل مادة.",
+  "my_stack_ingredients_next": "في الخطوة التالية تُدخل لكل مادة كم منها في وحدة المنتج الواحدة — الرقم المكتوب على العبوة. عندها فقط يحسب التطبيق بالمليغرام بدل الكبسولات."
 }
