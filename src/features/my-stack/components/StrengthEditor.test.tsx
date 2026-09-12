@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import de from '../../../i18n/locales/de.json'
 import en from '../../../i18n/locales/en.json'
 import { initialWizardState, wizardReducer } from '../lib/wizardState'
-import type { DosageFormKey, StackItemIngredient } from '../types'
+import type { DosageFormKey, StackCategory, StackItemIngredient } from '../types'
 import { StrengthEditor } from './StrengthEditor'
 
 const completeIngredient: StackItemIngredient = {
@@ -23,12 +23,14 @@ const completeIngredient: StackItemIngredient = {
 async function renderEditor({
   language = 'de',
   dosageForm = 'ampoule',
+  category = 'peptide',
   ingredient = completeIngredient,
   ingredientName = 'Testosteron Enantat',
   errors,
 }: {
   language?: 'de' | 'en'
   dosageForm?: DosageFormKey
+  category?: StackCategory | null
   ingredient?: StackItemIngredient
   ingredientName?: string
   errors?: Parameters<typeof StrengthEditor>[0]['errors']
@@ -48,6 +50,7 @@ async function renderEditor({
     <I18nextProvider i18n={i18n}>
       <StrengthEditor
         dosageForm={dosageForm}
+        category={category}
         ingredient={ingredient}
         ingredientIndex={0}
         ingredientName={ingredientName}
@@ -226,4 +229,50 @@ describe('StrengthEditor', () => {
     expect(hinweis.textContent).not.toMatch(/^my_stack_/)
     expect(hinweis.textContent!.length).toBeGreaterThan(40)
   })
+
+  it('fragt beim Oel-Vial nach der Konzentration, nicht nach der Rekonstitution', async () => {
+    // Der gemeldete Fall: Testosteron Enantat im Vial ist ein Oel. Der
+    // Schritt bot „Wirkstoff im Vial pro Loesungsmittel" an und erklaerte
+    // eine Rekonstitution, die bei diesem Produkt nie stattfindet.
+    await renderEditor({
+      dosageForm: 'vial',
+      category: 'hormone',
+      ingredient: { ...completeIngredient, amount_value: 250, amount_unit: 'mg', basis_value: 1, basis_unit: 'ml' },
+    })
+
+    const hinweis = document.querySelector('[data-strength-hint]')!
+    expect(hinweis.getAttribute('data-strength-hint')).toBe('per_volume')
+    expect(hinweis.textContent).not.toMatch(/Rekonstitution/)
+    expect(screen.getByLabelText('Produktmenge')).toBeTruthy()
+    expect(screen.queryByLabelText('Lösungsmittel')).toBeNull()
+    expect(screen.queryByLabelText('Wirkstoff im Vial')).toBeNull()
+  })
+
+  it('nennt beim Oel-Vial den Ausweg, falls doch ein Pulver drin liegt', async () => {
+    // Die Kategorie kann danebenliegen — HCG ist ein Hormon und kommt
+    // trotzdem als Pulver. Der Hinweis sagt, was dann zu tun ist, statt es
+    // den Nutzer suchen zu lassen.
+    await renderEditor({ dosageForm: 'vial', category: 'hormone' })
+
+    expect(document.querySelector('[data-strength-hint]')!.textContent).toMatch(/Peptid/)
+  })
+
+  it('bleibt beim Peptid-Vial bei der Rekonstitution', async () => {
+    await renderEditor({ dosageForm: 'vial', category: 'peptide' })
+
+    expect(document.querySelector('[data-strength-hint]')!.getAttribute('data-strength-hint'))
+      .toBe('reconstituted')
+    expect(screen.getByLabelText('Lösungsmittel')).toBeTruthy()
+  })
+
+  it('laesst die Kategorie jede andere Form in Ruhe', async () => {
+    // Eine Kapsel ist eine Kapsel, egal ob Peptid oder Vitamin drin ist.
+    for (const category of ['peptide', 'vitamin'] as const) {
+      await renderEditor({ dosageForm: 'capsule', category })
+      expect(document.querySelector('[data-strength-hint]')!.getAttribute('data-strength-hint'))
+        .toBe('per_unit')
+      cleanup()
+    }
+  })
 })
+

@@ -1115,5 +1115,6 @@
   "my_stack_strength_value_vial": "바이알 속 유효 성분",
   "my_stack_basis_value_solvent": "용매",
   "my_stack_basis_unit_solvent": "단위",
-  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
+  "my_stack_strength_hint_vial_solution": "라벨에 적힌 그대로 농도를 입력하세요. 예: 1 ml당 250 mg. 바이알에 먼저 녹여야 하는 분말이 들어 있다면 분류에서 “펩타이드”를 선택하세요 — 그러면 이 단계가 용매를 묻습니다. 복용량 권고가 아닙니다."
 }

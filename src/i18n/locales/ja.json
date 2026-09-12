@@ -1116,5 +1116,6 @@
   "my_stack_strength_value_vial": "バイアル内の有効成分",
   "my_stack_basis_value_solvent": "溶媒",
   "my_stack_basis_unit_solvent": "単位",
-  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
+  "my_stack_strength_hint_vial_solution": "ラベルに記載のとおりの濃度を入力してください。例：1 ml あたり 250 mg。バイアルに先に溶かす粉末が入っている場合は、カテゴリーで「ペプチド」を選んでください。そのときは溶媒を尋ねます。用量の推奨ではありません。"
 }

@@ -1116,5 +1116,6 @@
   "my_stack_strength_value_vial": "Zat aktif dalam vial",
   "my_stack_basis_value_solvent": "Pelarut",
   "my_stack_basis_unit_solvent": "Satuan",
-  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
+  "my_stack_strength_hint_vial_solution": "Masukkan konsentrasi seperti tertera pada label. Contoh: 250 mg per 1 ml. Jika vialmu berisi serbuk yang kamu larutkan dulu, pilih “Peptida” sebagai kategori — maka langkah ini akan menanyakan pelarutnya. Bukan rekomendasi dosis."
 }

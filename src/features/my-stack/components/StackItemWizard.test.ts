@@ -92,6 +92,7 @@ function renderStrengthEditor({
 }): string {
   return renderToStaticMarkup(createElement(StrengthEditor, {
     dosageForm,
+    category: 'supplement',
     ingredient,
     ingredientIndex: 0,
     onChange: () => undefined,

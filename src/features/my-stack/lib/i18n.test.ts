@@ -55,6 +55,7 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_strength_hint_per_volume',
   'my_stack_strength_hint_reconstituted',
   'my_stack_strength_hint_per_mass',
+  'my_stack_strength_hint_vial_solution',
   'my_stack_strength_value_vial',
   'my_stack_basis_value_solvent',
   'my_stack_basis_unit_solvent',

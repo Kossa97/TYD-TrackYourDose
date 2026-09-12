@@ -1118,5 +1118,6 @@
   "my_stack_strength_value_vial": "Действующее вещество во флаконе",
   "my_stack_basis_value_solvent": "Растворитель",
   "my_stack_basis_unit_solvent": "Единица",
-  "my_stack_strength_concentration": "= {{value}} {{unit}}/мл"
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/мл",
+  "my_stack_strength_hint_vial_solution": "Введите концентрацию так, как она указана на этикетке. Пример: 250 мг на 1 мл. Если в вашем флаконе порошок, который вы сначала растворяете, выберите категорию «Пептид» — тогда шаг спросит про растворитель. Не является рекомендацией по дозировке."
 }

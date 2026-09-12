@@ -94,9 +94,10 @@ function emptyIngredient(position: number): StackItemIngredient {
 // entscheidet der Nutzer beim Anmischen.
 function basisVorbelegung(
   dosageForm: DosageFormKey | null,
+  category: StackCategory | null,
 ): Pick<StackItemIngredient, 'basis_value' | 'basis_unit'> {
   if (!dosageForm) return { basis_value: null, basis_unit: null }
-  const vorgabe = strengthBasisDefault(dosageForm)
+  const vorgabe = strengthBasisDefault(dosageForm, category)
   return { basis_value: vorgabe.value, basis_unit: vorgabe.unit }
 }
 
@@ -214,7 +215,9 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
             ...emptyIngredient(0),
             catalog_substance_id: action.entry.id,
             amount_unit: action.entry.suggested_units[0] ?? null,
-            ...basisVorbelegung(state.draft.dosageForm),
+            // Die Kategorie des NEUEN Eintrags, nicht die alte: sie entscheidet
+            // beim Vial, ob dort ein Pulver liegt oder eine fertige Loesung.
+            ...basisVorbelegung(state.draft.dosageForm, action.entry.default_category),
           }],
         },
       }
@@ -229,7 +232,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         ? [{
             ...emptyIngredient(0),
             custom_name: action.name,
-            ...basisVorbelegung(state.draft.dosageForm),
+            ...basisVorbelegung(state.draft.dosageForm, state.draft.category),
           }]
         : isSingleCustomIdentity
           ? [{ ...firstIngredient, custom_name: action.name }]
@@ -260,7 +263,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         : [{
             ...emptyIngredient(0),
             custom_name: state.draft.displayName,
-            ...basisVorbelegung(state.draft.dosageForm),
+            ...basisVorbelegung(state.draft.dosageForm, state.draft.category),
           }]
 
       return { ...state, draft: { ...state.draft, ingredients: frei } }
@@ -274,8 +277,22 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
           plan: { ...state.draft.plan, name: action.displayName },
         },
       }
-    case 'category_selected':
-      return { ...state, draft: { ...state.draft, category: action.category } }
+    case 'category_selected': {
+      // Die Kategorie ist nicht nur eine Schublade: beim Vial entscheidet sie,
+      // ob dort ein Pulver liegt, das aufgeloest wird, oder eine fertige
+      // Loesung. Aus „Peptid" wird „Hormon" — und aus der leeren
+      // Loesungsmittelzeile die vorbelegte „pro 1 ml".
+      if (state.draft.category === action.category) return state
+      const basis = basisVorbelegung(state.draft.dosageForm, action.category)
+      return {
+        ...state,
+        draft: {
+          ...state.draft,
+          category: action.category,
+          ingredients: state.draft.ingredients.map(ingredient => ({ ...ingredient, ...basis })),
+        },
+      }
+    }
     case 'ingredient_added':
       return {
         ...state,
@@ -285,7 +302,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
             ...state.draft.ingredients,
             {
               ...emptyIngredient(state.draft.ingredients.length),
-              ...basisVorbelegung(state.draft.dosageForm),
+              ...basisVorbelegung(state.draft.dosageForm, state.draft.category),
             },
           ],
         },
@@ -313,7 +330,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     case 'dosage_form_selected': {
       if (state.draft.dosageForm === action.dosageForm) return state
 
-      const basis = basisVorbelegung(action.dosageForm)
+      const basis = basisVorbelegung(action.dosageForm, state.draft.category)
       const compatiblePlanUnits = getIntakePlanUnitSuggestions(
         action.dosageForm,
         action.catalogSuggestedUnits,

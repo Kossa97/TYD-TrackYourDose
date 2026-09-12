@@ -1116,5 +1116,6 @@
   "my_stack_strength_value_vial": "Principio attivo nel flaconcino",
   "my_stack_basis_value_solvent": "Solvente",
   "my_stack_basis_unit_solvent": "Unità",
-  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
+  "my_stack_strength_hint_vial_solution": "Inserisci la concentrazione come riportata sull’etichetta. Esempio: 250 mg per 1 ml. Se il tuo flaconcino contiene una polvere da sciogliere, scegli «Peptide» come categoria: il passaggio chiederà allora il solvente. Non è una raccomandazione di dosaggio."
 }

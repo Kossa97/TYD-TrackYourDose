@@ -115,3 +115,64 @@ Konzentrationszeile samt ihren Schweige-Fällen, und für alle 13 Formen ein
 übersetzter Hinweis ohne Schlüssel-Durchschlag.
 `wizardState.test.ts` — Kapsel bekommt die 1, das Vial beim Formwechsel die
 leere Zeile.
+
+---
+
+## Nachtrag — die Substanz hat beim Vial das letzte Wort
+
+**Befund aus dem Formular.** Testosteron Enantat, Darreichungsform Vial. Der
+Schritt zeigte:
+
+```
+Wirkstoff im Vial [250] [mg]   pro   Lösungsmittel [1] [ml]
+„Ein Pulver-Vial (Peptid) wird vor der ersten Einnahme aufgelöst …"
+```
+
+Testosteron Enantat im Vial ist ein **Öl**. Es wird nie rekonstituiert. Der
+Schritt erklärte einen Vorgang, den es bei diesem Produkt nicht gibt, und
+nannte das Feld nach einem Lösungsmittel, das niemand zugibt.
+
+Der Fehler war die Annahme, die Stärke hinge an der Darreichungsform allein.
+Sie hängt am **Paar**:
+
+| | |
+|---|---|
+| BPC-157 im Vial | ein Pulver. Es wird aufgelöst — 10 mg auf 2 ml. |
+| Testosteron Enantat im Vial | ein Öl. Die Konzentration steht auf dem Etikett — 250 mg pro 1 ml. |
+
+Dieselbe Form, zwei verschiedene Fragen.
+
+**Die Regel.** `strengthShapeFor(form, category)` — die Kategorie überschreibt
+die Vorgabe der Form, aber nur dort, wo die Form mehrdeutig ist:
+
+- `vial` + `peptide` → `reconstituted`
+- `vial` + Hormon, Medikament, Supplement, Vitamin → `per_volume`
+- `vial` ohne Kategorie → bleibt `reconstituted`, die Vorgabe der Form. Die
+  Kategorie **überschreibt**, sie rät nicht: solange niemand gesagt hat, was
+  drinliegt, ist das Vial das, was das Vial immer war.
+- jede andere Form → unberührt. Eine Kapsel ist eine Kapsel, egal was drin
+  ist; nur das Vial trägt zwei verschiedene Dinge unter einem Namen.
+
+**Warum die Kategorie und nicht eine neue Spalte.** Der Katalog führt zu jeder
+Substanz `default_category` — mehr weiß er über ihren Aggregatzustand nicht,
+und eine zweite Wahrheit („ist lyophilisiert") wäre eine Spalte, die niemand
+pflegt. Die Kategorie steht schon im Formular, eine Seite vor der Stärke.
+
+**Der Ausweg, wenn die Kategorie danebenliegt.** HCG ist ein Hormon und kommt
+trotzdem als Pulver. Deshalb bekommt das fertig gelöste Vial einen eigenen
+Hinweis (`my_stack_strength_hint_vial_solution`) statt des allgemeinen
+Konzentrationssatzes: er nennt den Weg zurück — Kategorie „Peptid" wählen,
+dann fragt der Schritt nach dem Lösungsmittel. Kein verstecktes Verhalten,
+kein zusätzlicher Schalter.
+
+**Beim Kategoriewechsel.** `category_selected` belegt die Produktmenge neu.
+Aus „Peptid" wird „Hormon" — und aus der leeren Lösungsmittelzeile die
+vorbelegte „pro 1 ml". Die Kategorie ist nicht nur eine Schublade.
+
+**Geprüft.** `dosageForms.test.ts` — die Zuordnung Kategorie × Vial Fall für
+Fall, dass alle zwölf anderen Formen von der Kategorie unberührt bleiben, und
+dass Vorbelegung und Hinweis mitziehen. `StrengthEditor.test.tsx` — der
+gemeldete Fall (Öl-Vial: `per_volume`, kein Wort „Rekonstitution", keine
+Lösungsmittel-Beschriftung), der Ausweg-Satz, das Peptid-Vial unverändert,
+und die Kapsel unter beiden Kategorien gleich. `wizardState.test.ts` — das
+Vial deutet sich beim Kategoriewechsel in beide Richtungen neu.

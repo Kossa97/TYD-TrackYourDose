@@ -1116,5 +1116,6 @@
   "my_stack_strength_value_vial": "Princípio ativo no frasco",
   "my_stack_basis_value_solvent": "Solvente",
   "my_stack_basis_unit_solvent": "Unidade",
-  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
+  "my_stack_strength_hint_vial_solution": "Insira a concentração como consta no rótulo. Exemplo: 250 mg por 1 ml. Se o seu frasco contém um pó que você dissolve primeiro, escolha «Peptídeo» como categoria — então o passo perguntará pelo solvente. Não é uma recomendação de dose."
 }

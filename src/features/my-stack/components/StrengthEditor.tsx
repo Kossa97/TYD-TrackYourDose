@@ -1,14 +1,20 @@
 import { AlertCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { getDosageForm, strengthHintKey } from '../lib/dosageForms'
+import { getDosageForm, strengthHintKey, strengthShapeFor } from '../lib/dosageForms'
 import { konzentrationProMl } from '../lib/konzentration'
 import type { IngredientValidationErrors } from '../lib/validation'
-import type { DosageFormKey, StackItemIngredient, StrengthShape } from '../types'
+import type { DosageFormKey, StackCategory, StackItemIngredient, StrengthShape } from '../types'
 
 type IngredientChanges = Partial<Omit<StackItemIngredient, 'position'>>
 
 export interface StrengthEditorProps {
   dosageForm: DosageFormKey
+  /**
+   * Die Kategorie der Substanz. Sie entscheidet beim Vial mit: ein Peptid
+   * liegt dort als Pulver und wird aufgeloest, ein Hormon liegt fertig
+   * geloest darin. Dieselbe Form, zwei verschiedene Fragen.
+   */
+  category: StackCategory | null
   ingredient: StackItemIngredient
   ingredientIndex: number
   ingredientName?: string
@@ -27,6 +33,13 @@ const HINWEIS_FALLBACK: Record<StrengthShape, string> = {
   free: 'Wie viel Wirkstoff ist in welcher Produktmenge enthalten? Trage ein, was auf der Verpackung steht. Beispiel: 250 mg/ml = 250 mg pro 1 ml. Keine Dosierungsempfehlung.',
 }
 
+// Ein Vial, in dem schon eine Loesung steht (Testosteron Enantat etwa). Es
+// bekommt einen eigenen Satz statt des allgemeinen Konzentrationshinweises,
+// weil es die eine Stelle ist, an der die Kategorie danebenliegen kann — HCG
+// ist ein Hormon und liegt trotzdem als Pulver vor. Der Satz nennt deshalb
+// den Ausweg, statt ihn den Nutzer suchen zu lassen.
+const HINWEIS_VIAL_LOESUNG = 'Trage die Konzentration ein, wie sie auf dem Etikett steht. Beispiel: 250 mg pro 1 ml. Liegt in deinem Vial ein Pulver, das du erst auflöst, wähle als Kategorie „Peptid" — dann fragt der Schritt nach dem Lösungsmittel. Keine Dosierungsempfehlung.'
+
 function numericValue(value: string): number | null {
   if (value === '') return null
   const parsed = Number(value)
@@ -35,6 +48,7 @@ function numericValue(value: string): number | null {
 
 export function StrengthEditor({
   dosageForm,
+  category,
   ingredient,
   ingredientIndex,
   ingredientName,
@@ -44,11 +58,13 @@ export function StrengthEditor({
   const { t } = useTranslation()
   const form = getDosageForm(dosageForm)
   // Der Schritt fragt ueberall dieselben zwei Zahlen ab. Was sie BEDEUTEN,
-  // haengt an der Form: bei einer Kapsel steckt die Staerke in einem Stueck,
-  // bei einer Ampulle in einem Milliliter, bei einem Pulver-Vial erst,
-  // nachdem der Nutzer es aufgeloest hat. Die Form sagt, welcher Hinweis
-  // danebensteht und wie die Felder heissen.
-  const istRekonstitution = form.strengthShape === 'reconstituted'
+  // haengt am Paar aus Substanz und Form: bei einer Kapsel steckt die Staerke
+  // in einem Stueck, bei einer Ampulle in einem Milliliter — und beim Vial
+  // haengt es daran, was drinliegt. BPC-157 ist ein Pulver und wird
+  // aufgeloest; Testosteron Enantat ist ein Oel und traegt seine
+  // Konzentration auf dem Etikett.
+  const shape = strengthShapeFor(dosageForm, category)
+  const istRekonstitution = shape === 'reconstituted'
   const konzentration = konzentrationProMl(
     ingredient.amount_value,
     ingredient.amount_unit,
@@ -83,8 +99,12 @@ export function StrengthEditor({
         {displayedIngredientName}
       </legend>
 
-      <p data-strength-hint={form.strengthShape} className="mt-3 rounded-xl border border-white/[0.07] bg-black/20 px-3 py-2.5 text-xs leading-relaxed text-slate-400">
-        {t(strengthHintKey(dosageForm), { defaultValue: HINWEIS_FALLBACK[form.strengthShape] })}
+      <p data-strength-hint={shape} className="mt-3 rounded-xl border border-white/[0.07] bg-black/20 px-3 py-2.5 text-xs leading-relaxed text-slate-400">
+        {t(strengthHintKey(dosageForm, category), {
+          defaultValue: dosageForm === 'vial' && shape === 'per_volume'
+            ? HINWEIS_VIAL_LOESUNG
+            : HINWEIS_FALLBACK[shape],
+        })}
       </p>
 
       <div className="mt-4 grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_minmax(0,1fr)_minmax(0,1fr)] sm:items-start">

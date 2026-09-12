@@ -1116,5 +1116,6 @@
   "my_stack_strength_value_vial": "Principio activo en el vial",
   "my_stack_basis_value_solvent": "Disolvente",
   "my_stack_basis_unit_solvent": "Unidad",
-  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
+  "my_stack_strength_hint_vial_solution": "Introduce la concentración tal como aparece en la etiqueta. Ejemplo: 250 mg por 1 ml. Si tu vial contiene un polvo que disuelves primero, elige «Péptido» como categoría: entonces el paso preguntará por el disolvente. No es una recomendación de dosis."
 }

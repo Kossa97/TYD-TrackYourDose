@@ -1120,5 +1120,6 @@
   "my_stack_strength_value_vial": "المادة الفعّالة في القارورة",
   "my_stack_basis_value_solvent": "المذيب",
   "my_stack_basis_unit_solvent": "الوحدة",
-  "my_stack_strength_concentration": "= {{value}} {{unit}}/مل"
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/مل",
+  "my_stack_strength_hint_vial_solution": "أدخل التركيز كما هو مدوَّن على الملصق. مثال: 250 مغ لكل 1 مل. إذا كانت قارورتك تحتوي على مسحوق تذيبه أولاً، فاختر «ببتيد» كفئة — عندها يسأل عن المذيب. ليست توصية جرعة."
 }

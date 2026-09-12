@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DOSAGE_FORMS, getDosageForm, getIntakePlanUnitSuggestions, intakeUnitLabelKey, isStageRenderable, strengthBasisDefault, strengthHintKey } from './dosageForms'
+import { DOSAGE_FORMS, getDosageForm, getIntakePlanUnitSuggestions, intakeUnitLabelKey, isStageRenderable, strengthBasisDefault, strengthHintKey, strengthShapeFor } from './dosageForms'
 import type { DosageFormKey } from '../types'
 
 describe('DOSAGE_FORMS', () => {
@@ -177,6 +177,49 @@ describe('Einnahmeeinheit je Darreichungsform', () => {
       if (vorgabe.unit === null) continue
       expect([...form.basisUnits, 'ml', 'g'], form.key).toContain(vorgabe.unit)
     }
+  })
+
+  it('laesst die Substanz beim Vial entscheiden, was fuer eine Staerke gefragt wird', () => {
+    // Der Fall aus dem Formular: Testosteron Enantat im Vial ist ein Oel und
+    // wird nie rekonstituiert; BPC-157 im Vial ist ein Pulver und wird
+    // aufgeloest. Dieselbe Form, zwei verschiedene Fragen.
+    expect(strengthShapeFor('vial', 'peptide')).toBe('reconstituted')
+    expect(strengthShapeFor('vial', 'hormone')).toBe('per_volume')
+    expect(strengthShapeFor('vial', 'medication')).toBe('per_volume')
+    expect(strengthShapeFor('vial', 'vitamin')).toBe('per_volume')
+    expect(strengthShapeFor('vial', 'supplement')).toBe('per_volume')
+
+    // Ohne Kategorie bleibt es bei der Vorgabe der Form: die Kategorie
+    // ueberschreibt, sie raet nicht.
+    expect(strengthShapeFor('vial', null)).toBe('reconstituted')
+  })
+
+  it('laesst die Kategorie alle anderen Formen unberuehrt', () => {
+    // Eine Kapsel ist eine Kapsel, egal was drin ist. Nur das Vial traegt
+    // zwei verschiedene Dinge unter einem Namen.
+    for (const form of DOSAGE_FORMS) {
+      if (form.key === 'vial') continue
+      for (const kategorie of ['peptide', 'hormone', 'medication', 'supplement', 'vitamin', null] as const) {
+        expect(strengthShapeFor(form.key, kategorie), `${form.key}/${kategorie}`)
+          .toBe(form.strengthShape)
+      }
+    }
+  })
+
+  it('richtet Vorbelegung und Hinweis des Vials nach der Substanz', () => {
+    // Peptid: die Loesungsmittelzeile bleibt leer und der Hinweis erklaert
+    // die Rekonstitution.
+    expect(strengthBasisDefault('vial', 'peptide')).toEqual({ value: null, unit: 'ml' })
+    expect(strengthHintKey('vial', 'peptide')).toBe('my_stack_strength_hint_reconstituted')
+
+    // Hormon: eine fertige Loesung, „pro 1 ml" vom Etikett — und ein eigener
+    // Hinweis, der den Ausweg nennt, falls doch ein Pulver drinliegt.
+    expect(strengthBasisDefault('vial', 'hormone')).toEqual({ value: 1, unit: 'ml' })
+    expect(strengthHintKey('vial', 'hormone')).toBe('my_stack_strength_hint_vial_solution')
+
+    // Der Sonderhinweis gilt nur dem Vial: eine Ampulle bleibt beim
+    // allgemeinen Konzentrationssatz.
+    expect(strengthHintKey('ampoule', 'hormone')).toBe('my_stack_strength_hint_per_volume')
   })
 })
 

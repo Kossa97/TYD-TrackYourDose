@@ -11,7 +11,7 @@ import { PATCH_SPEC } from '../extensions/patch/patchShape'
 import { TUBE_SPEC } from '../extensions/tube/tubeShape'
 import { VIAL_SPEC } from '../extensions/peptide/vialShape'
 import type { StageFormSpec } from '../stage/types'
-import type { DosageFormCapability, DosageFormKey, IntakeUnitKey, StrengthShape } from '../types'
+import type { DosageFormCapability, DosageFormKey, IntakeUnitKey, StackCategory, StrengthShape } from '../types'
 
 export interface DosageFormDefinition {
   readonly key: DosageFormKey
@@ -23,9 +23,8 @@ export interface DosageFormDefinition {
   // die sagen, worin das PRODUKT gemessen wird (eine Ampulle, ein ml), diese
   // sagt, was man TUT — aus der Ampulle wird eine Spritze aufgezogen.
   readonly intakeUnit: IntakeUnitKey
-  // Wie die Staerke dieser Form zustande kommt. Der Staerke-Schritt fragt
-  // ueberall dieselben zwei Zahlen ab — die Form sagt, was sie bedeuten und
-  // womit das Feld vorbelegt ist.
+  // Wie die Staerke dieser Form zustande kommt — die VORGABE der Form. Beim
+  // Vial hat die Substanz das letzte Wort; siehe `strengthShapeFor`.
   readonly strengthShape: StrengthShape
   readonly stageRenderer?: 'vial' | 'ampoule' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'patch' | 'drops' | 'powder' | 'gel' | 'spray'
   // What the stage needs to know: where the liquid sits, whether the fill level
@@ -60,6 +59,32 @@ export function getDosageForm(key: DosageFormKey): DosageFormDefinition {
     ?? DOSAGE_FORMS.find(form => form.key === 'other')!
 }
 
+// Die Staerke haengt nicht an der Form allein, sondern am PAAR aus Substanz
+// und Form. Das Vial ist der Fall, an dem das sichtbar wird:
+//
+//   BPC-157 im Vial          ein Pulver. Es wird aufgeloest — 10 mg auf 2 ml.
+//   Testosteron Enantat      ein Oel. Die Konzentration steht auf dem Etikett
+//   im Vial                  — 250 mg pro 1 ml, nie rekonstituiert.
+//
+// Dieselbe Form, zwei verschiedene Fragen. Getrennt werden sie an der
+// Kategorie: lyophilisiert kommt, was als Peptid gefuehrt wird; Hormone,
+// Medikamente und Vitamine liegen im Vial fertig geloest vor.
+//
+// Der Rest der Formen ist eindeutig: eine Kapsel ist eine Kapsel, egal was
+// drin ist. Nur das Vial fragt nach, was es traegt.
+export function strengthShapeFor(
+  key: DosageFormKey,
+  category: StackCategory | null,
+): StrengthShape {
+  const vorgabe = getDosageForm(key).strengthShape
+  if (vorgabe !== 'reconstituted') return vorgabe
+  // Ohne Kategorie bleibt es bei der Vorgabe der Form. Die Kategorie
+  // UEBERSCHREIBT, sie raet nicht: solange niemand gesagt hat, was drinliegt,
+  // ist das Vial das, was das Vial immer war.
+  if (category === null) return vorgabe
+  return category === 'peptide' ? 'reconstituted' : 'per_volume'
+}
+
 export interface StrengthBasisDefault {
   readonly value: number | null
   readonly unit: string | null
@@ -73,9 +98,12 @@ export interface StrengthBasisDefault {
 //   Beim Pulver-Vial bleibt die Zahl LEER: wie viel Loesungsmittel zugegeben
 //   wird, steht auf keinem Etikett — das entscheidet der Nutzer beim
 //   Anmischen. Eine Vorbelegung waere dort geraten.
-export function strengthBasisDefault(key: DosageFormKey): StrengthBasisDefault {
+export function strengthBasisDefault(
+  key: DosageFormKey,
+  category: StackCategory | null = null,
+): StrengthBasisDefault {
   const form = getDosageForm(key)
-  switch (form.strengthShape) {
+  switch (strengthShapeFor(key, category)) {
     case 'per_unit':
       return { value: 1, unit: form.basisUnits[0] ?? null }
     case 'per_volume':
@@ -91,11 +119,21 @@ export function strengthBasisDefault(key: DosageFormKey): StrengthBasisDefault {
 
 // Der Uebersetzungsschluessel zum Hinweiskasten im Staerke-Schritt. Eine
 // Stelle, damit „was hier einzutragen ist" je Form dasselbe Beispiel nennt.
-export function strengthHintKey(key: DosageFormKey): string {
-  const shape = getDosageForm(key).strengthShape
+export function strengthHintKey(
+  key: DosageFormKey,
+  category: StackCategory | null = null,
+): string {
+  const shape = strengthShapeFor(key, category)
   // 'free' behaelt den alten Satz: er sagt genau das Richtige fuer eine Form,
   // ueber die wir nichts wissen, und steht schon geprueft in 14 Sprachen.
-  return shape === 'free' ? 'my_stack_no_dosage_advice' : `my_stack_strength_hint_${shape}`
+  if (shape === 'free') return 'my_stack_no_dosage_advice'
+  // Ein fertig geloestes Vial bekommt einen eigenen Satz statt des
+  // allgemeinen Konzentrationshinweises: Es ist die eine Stelle, an der die
+  // Kategorie danebenliegen kann (HCG etwa ist ein Hormon und liegt trotzdem
+  // als Pulver vor). Der Satz nennt deshalb den Ausweg, statt ihn dem Nutzer
+  // zu ueberlassen.
+  if (shape === 'per_volume' && key === 'vial') return 'my_stack_strength_hint_vial_solution'
+  return `my_stack_strength_hint_${shape}`
 }
 
 export function getIntakePlanUnitSuggestions(

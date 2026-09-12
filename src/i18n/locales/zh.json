@@ -1115,5 +1115,6 @@
   "my_stack_strength_value_vial": "瓶中有效成分",
   "my_stack_basis_value_solvent": "溶剂",
   "my_stack_basis_unit_solvent": "单位",
-  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
+  "my_stack_strength_hint_vial_solution": "按标签上标示的浓度填写。例如：每 1 ml 250 mg。若你的瓶中是需要先溶解的粉末，请将类别选为“多肽”——此步骤便会改问溶剂。这不是剂量建议。"
 }

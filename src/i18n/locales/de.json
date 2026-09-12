@@ -1264,5 +1264,6 @@
   "my_stack_strength_value_vial": "Wirkstoff im Vial",
   "my_stack_basis_value_solvent": "Lösungsmittel",
   "my_stack_basis_unit_solvent": "Einheit",
-  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
+  "my_stack_strength_hint_vial_solution": "Trage die Konzentration ein, wie sie auf dem Etikett steht. Beispiel: 250 mg pro 1 ml. Liegt in deinem Vial ein Pulver, das du erst auflöst, wähle als Kategorie „Peptid\" — dann fragt der Schritt nach dem Lösungsmittel. Keine Dosierungsempfehlung."
 }

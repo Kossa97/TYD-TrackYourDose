@@ -1116,5 +1116,6 @@
   "my_stack_strength_value_vial": "Principe actif dans le flacon",
   "my_stack_basis_value_solvent": "Solvant",
   "my_stack_basis_unit_solvent": "Unité",
-  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
+  "my_stack_strength_hint_vial_solution": "Saisis la concentration telle qu’elle figure sur l’étiquette. Exemple : 250 mg pour 1 ml. Si ton flacon contient une poudre que tu dissous d’abord, choisis « Peptide » comme catégorie — l’étape demandera alors le solvant. Pas une recommandation de dosage."
 }

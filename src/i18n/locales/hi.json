@@ -1116,5 +1116,6 @@
   "my_stack_strength_value_vial": "वायल में सक्रिय तत्व",
   "my_stack_basis_value_solvent": "विलायक",
   "my_stack_basis_unit_solvent": "इकाई",
-  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml"
+  "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
+  "my_stack_strength_hint_vial_solution": "लेबल पर जैसी लिखी है वैसी सांद्रता दर्ज करें। उदाहरण: 1 ml में 250 मि.ग्रा.। यदि आपकी वायल में पाउडर है जिसे आप पहले घोलते हैं, तो श्रेणी में „पेप्टाइड\" चुनें — तब यह चरण विलायक पूछेगा। यह खुराक की सिफ़ारिश नहीं है।"
 }

@@ -371,12 +371,55 @@ describe('wizard state', () => {
       dosageForm: 'vial',
     })
 
-    // Ein Vial wird rekonstituiert: die Staerke steht am Ende „pro ml", und
-    // wie viele Milliliter es werden, weiss nur der Nutzer beim Anmischen.
-    // Deshalb ml als Einheit und eine LEERE Zahl — die alte 1 aus der Ampulle
-    // waere hier eine Behauptung ueber die Rekonstitution.
+    // Die Staerke steht am Ende „pro ml" — aber pro wie vielen, haengt daran,
+    // was im Vial liegt. Vitamin D3 ist kein Peptid: das Vial traegt eine
+    // fertige Loesung, und „pro 1 ml" ist die Zeile vom Etikett.
+    expect(next.draft.ingredients[0].basis_unit).toBe('ml')
+    expect(next.draft.ingredients[0].basis_value).toBe(1)
+  })
+
+  it('laesst die Loesungsmittelzeile leer, wenn im Vial ein Peptid liegt', () => {
+    // Dasselbe Vial, andere Substanz: ein Peptid liegt als Pulver darin und
+    // wird aufgeloest. Wie viel Loesungsmittel dazukommt, steht auf keinem
+    // Etikett — eine vorbelegte 1 waere eine Behauptung ueber die
+    // Rekonstitution.
+    const existingPeptid = {
+      ...existingVitaminD,
+      category: 'peptide' as const,
+      dosage_form: 'ampoule' as const,
+      ingredients: [{ ...existingVitaminD.ingredients[0], basis_value: 1, basis_unit: 'ampoule' }],
+    }
+
+    const next = wizardReducer(initialWizardState(existingPeptid), {
+      type: 'dosage_form_selected',
+      dosageForm: 'vial',
+    })
+
     expect(next.draft.ingredients[0].basis_unit).toBe('ml')
     expect(next.draft.ingredients[0].basis_value).toBeNull()
+  })
+
+  it('deutet dasselbe Vial neu, wenn die Kategorie wechselt', () => {
+    // Der Fall aus dem Formular: jemand legt Testosteron Enantat als Vial an.
+    // Solange „Peptid" eingestellt ist, fragt der Schritt nach dem
+    // Loesungsmittel; sobald „Hormon" dasteht, ist es eine fertige Loesung
+    // und die Produktmenge steht auf 1 ml.
+    const peptid = wizardReducer(
+      wizardReducer(
+        wizardReducer(initialWizardState(), { type: 'custom_started', name: 'Testosteron Enantat' }),
+        { type: 'category_selected', category: 'peptide' },
+      ),
+      { type: 'dosage_form_selected', dosageForm: 'vial' },
+    )
+    expect(peptid.draft.ingredients[0].basis_value).toBeNull()
+
+    const hormon = wizardReducer(peptid, { type: 'category_selected', category: 'hormone' })
+    expect(hormon.draft.ingredients[0].basis_value).toBe(1)
+    expect(hormon.draft.ingredients[0].basis_unit).toBe('ml')
+
+    // Und zurueck: die Zeile wird wieder frei fuer die Rekonstitution.
+    const wiederPeptid = wizardReducer(hormon, { type: 'category_selected', category: 'peptide' })
+    expect(wiederPeptid.draft.ingredients[0].basis_value).toBeNull()
   })
 
   it('unterscheidet Update und neue Variante beim Editieren', () => {

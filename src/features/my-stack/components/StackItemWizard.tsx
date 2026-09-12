@@ -494,6 +494,7 @@ export function StackItemWizard({
               <StrengthEditor
                 key={`${ingredient.position}-${ingredient.catalog_substance_id ?? 'custom'}`}
                 dosageForm={state.draft.dosageForm!}
+                category={state.draft.category}
                 ingredient={ingredient}
                 ingredientIndex={index}
                 ingredientName={ingredient.catalog_substance_id
