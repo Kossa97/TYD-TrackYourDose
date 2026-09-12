@@ -330,16 +330,16 @@
     "semantic_hash": "c277228a8247ad7b45a08976da6390c7"
   },
   "src/components/PeptideVialVisual.test.ts": {
-    "mtime": 1789171334.9414706,
-    "seen": 1789171470.828993,
-    "ast_hash": "e1d3169ad47de7d232a9d0fd77950830",
-    "semantic_hash": ""
+    "mtime": 1788612179.7473688,
+    "seen": 1788803479.1907303,
+    "ast_hash": "d15c4df2984f45ab92b7a17ea25aae30",
+    "semantic_hash": "d15c4df2984f45ab92b7a17ea25aae30"
   },
   "src/components/PeptideVialVisual.tsx": {
-    "mtime": 1789171161.092855,
-    "seen": 1789171470.8289948,
-    "ast_hash": "95e6a83cd5306f1222955f3c47b57e9c",
-    "semantic_hash": ""
+    "mtime": 1788612179.7473688,
+    "seen": 1788803479.1907322,
+    "ast_hash": "eb78d46a3dab742cc8f49d37574d5659",
+    "semantic_hash": "eb78d46a3dab742cc8f49d37574d5659"
   },
   "src/components/ProtectedRoute.tsx": {
     "mtime": 1788611941.9153547,
@@ -3348,10 +3348,10 @@
     "semantic_hash": "f3b2e09877fe950a4ee62b8cc1825d41"
   },
   "src/features/my-stack/extensions/ampoule/AmpouleVisual.tsx": {
-    "mtime": 1789171154.7315218,
-    "seen": 1789171470.8291929,
-    "ast_hash": "e7b9ff08fea06b67ba7bcb956f2ce3b7",
-    "semantic_hash": ""
+    "mtime": 1788612179.7588816,
+    "seen": 1788803479.1910017,
+    "ast_hash": "8741d9f7010e128f7e246e9d938e2ab5",
+    "semantic_hash": "8741d9f7010e128f7e246e9d938e2ab5"
   },
   "src/features/my-stack/extensions/ampoule/ampouleShape.test.ts": {
     "mtime": 1788612179.7588816,
@@ -3360,16 +3360,16 @@
     "semantic_hash": "5d0ce8bf8e0e58760e90ca3d53015896"
   },
   "src/features/my-stack/extensions/ampoule/ampouleShape.ts": {
-    "mtime": 1789171139.2720351,
-    "seen": 1789171470.8291953,
-    "ast_hash": "76d8484bee59ef6447cac0fad48588c6",
-    "semantic_hash": ""
+    "mtime": 1788612179.7588816,
+    "seen": 1788803479.1910036,
+    "ast_hash": "5b6572c6ac56471300e974902b0a7e1f",
+    "semantic_hash": "5b6572c6ac56471300e974902b0a7e1f"
   },
   "src/features/my-stack/extensions/peptide/vialShape.ts": {
-    "mtime": 1789171139.2722714,
-    "seen": 1789171470.8292382,
-    "ast_hash": "130337fb85b441eaef83bab753b29fd3",
-    "semantic_hash": ""
+    "mtime": 1788612179.762604,
+    "seen": 1788803479.1910408,
+    "ast_hash": "a536c4bb600724e750d4a5d7db85e3e0",
+    "semantic_hash": "a536c4bb600724e750d4a5d7db85e3e0"
   },
   "src/features/my-stack/lib/catalogDosageForms.test.ts": {
     "mtime": 1788825795.331614,
@@ -4026,9 +4026,9 @@
     "semantic_hash": "5d3fdbfaa54f06203cb8079ac440f270"
   },
   "docs/superpowers/specs/2026-09-08-my-stack-farbschritt-design.md": {
-    "mtime": 1789171435.1208713,
-    "seen": 1789171470.8296187,
-    "ast_hash": "f13b2dfaa804567990f1d106e1a22f83",
+    "mtime": 1789150839.955142,
+    "seen": 1789150873.3454237,
+    "ast_hash": "fe07a1b364314c475a410f264073e273",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-10-my-stack-karussell-auswahl-design.md": {
@@ -4065,12 +4065,6 @@
     "mtime": 1789145918.1774478,
     "seen": 1789146295.3360288,
     "ast_hash": "d410b16d7ae27bd9d93354335a1754a2",
-    "semantic_hash": ""
-  },
-  "src/features/my-stack/stage/etikettEinzug.test.ts": {
-    "mtime": 1789171231.3153884,
-    "seen": 1789171470.8293054,
-    "ast_hash": "6c6ba851802145782f16654b802c9592",
     "semantic_hash": ""
   }
 }
