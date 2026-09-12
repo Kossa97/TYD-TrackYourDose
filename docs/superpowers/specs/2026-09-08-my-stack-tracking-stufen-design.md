@@ -305,3 +305,64 @@ Eine Beobachtung am Rand, nicht geändert: der Beispieleintrag steht fest auf
 „1 Kapsel · 5.000 IU", auch wenn die gewählte Darreichungsform ein Vial ist.
 Das stammt aus der ursprünglichen Fassung des Schritts und wäre eine eigene
 Änderung.
+
+---
+
+## Nachtrag 2026-09-12: der Beispieleintrag zählt in der gewählten Form
+
+„Bei ‚Genau' macht manches im Fall vom Screenshot (Testosteron – Ampulle)
+keinen Sinn. Nach ‚So sähe deine Einnahme aus' steht ‚Testosteron · 1 Kapsel',
+dort sollte aber immer die gewählte Darreichungsform sein."
+
+### Die Zeile war fest verdrahtet
+
+`my_stack_tracking_with_amount_entry` war wörtlich „1 Kapsel" und
+`my_stack_tracking_complete_entry` wörtlich „1 Kapsel · 5.000 IU" — unabhängig
+davon, was im Formschritt davor gewählt worden war. Bei einer Ampulle stand
+also eine Kapsel im Beispiel. Der Fehler stammt aus der ersten Fassung des
+Schritts, als es die Formauswahl davor noch nicht gab; im dritten Nachtrag zum
+Farbschritt war er schon einmal als Beobachtung vermerkt, aber nicht behoben.
+
+### Aus Schlüsseln wurden Vorlagen
+
+Beide Schlüssel tragen jetzt Platzhalter statt fester Wörter:
+
+```
+my_stack_tracking_with_amount_entry: '1 {{form}}'
+my_stack_tracking_complete_entry:    '1 {{form}} · {{strength}}'
+```
+
+Keine neuen Schlüssel — nur andere Inhalte, in allen vierzehn Sprachen
+(dieselben Platzhalter überall, sonst schlägt der i18n-Vertrag fehl).
+
+`{{form}}` kommt aus der Bezeichnung der gewählten Form (`labelKey`), die
+ohnehin schon in allen Sprachen vorliegt — „Ampulle", „Vial", „Tablette",
+„Pflaster". `{{strength}}` nimmt die Wirkstoffeinheit aus der Vorschlagsliste
+derselben Form (`suggestedUnits[0]`), mit einer Größenordnung je Einheit
+(IU 5.000, mcg 500, mg 250, g 5, ml 1). Die Zeile zeigt die FORM eines
+Eintrags, keine Dosierungsempfehlung — deshalb runde Zahlen und deshalb steht
+darüber „So sähe eine Einnahme aus".
+
+Ohne gewählte Form bleibt das Detail leer statt „1 " als halbe Aussage
+stehenzulassen.
+
+### Gegengeprüft
+
+Im Chromium, fünf Formen nacheinander durch den Assistenten:
+
+| Form | Genau | Gründlich |
+|---|---|---|
+| Ampulle | Testosteron · 1 Ampulle | Testosteron · 1 Ampulle · 250 mg |
+| Vial | Testosteron · 1 Vial | Testosteron · 1 Vial · 500 mcg |
+| Tablette | Testosteron · 1 Tablette | Testosteron · 1 Tablette · 500 mcg |
+| Gel | Testosteron · 1 Gel | Testosteron · 1 Gel · 250 mg |
+| Pflaster | Testosteron · 1 Pflaster | Testosteron · 1 Pflaster · 500 mcg |
+
+1377 Tests grün (zwei neue: der Eintrag zählt in der gewählten Form, und ohne
+Form bleibt das Detail weg), `tsc` sauber, ESLint unverändert bei 140.
+
+Offen geblieben, weil es eine eigene Entscheidung ist: „1 Gel", „1 Pulver" und
+„1 Tube" lesen sich holprig — dort ist die Einheit in Wahrheit eine Menge
+(Gramm) oder eine Anwendung, nicht das Behältnis. Die übrigen zehn Formen
+zählen sich sauber. Wer das glätten will, braucht je Form ein eigenes
+Einheitenwort; die Formbezeichnung allein reicht dafür nicht.

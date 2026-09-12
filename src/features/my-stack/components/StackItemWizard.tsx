@@ -479,6 +479,7 @@ export function StackItemWizard({
             // Nutzer hier vergessen koennte.
             value={state.draft.trackingLevel}
             substanceName={state.draft.displayName}
+            dosageForm={state.draft.dosageForm}
             pkProfileAvailable={Boolean(selectedPkCatalogEntry?.pk_profile_id)}
             onChange={trackingLevel => {
               dispatch({ type: 'tracking_level_selected', trackingLevel })

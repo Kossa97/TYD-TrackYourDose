@@ -1,14 +1,28 @@
 import { useId } from 'react'
 import { Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import type { TrackingLevel } from '../types'
+import { getDosageForm } from '../lib/dosageForms'
+import type { DosageFormKey, TrackingLevel } from '../types'
 
 export interface TrackingLevelPickerProps {
   value: TrackingLevel | null
   substanceName: string
+  /** Die gewaehlte Darreichungsform — der Beispieleintrag zaehlt in ihr. */
+  dosageForm: DosageFormKey | null
   pkProfileAvailable: boolean
   error?: boolean
   onChange: (value: TrackingLevel) => void
+}
+
+// Wie viel Wirkstoff im Beispiel steht. Nur die Groessenordnung, passend zur
+// Einheit — die Zeile zeigt die FORM eines Eintrags, nicht eine Dosierung.
+// Ohne Eintrag bleibt die Einheit stehen und die Zahl faellt auf 1 zurueck.
+const BEISPIELMENGE: Record<string, string> = {
+  IU: '5.000',
+  mcg: '500',
+  mg: '250',
+  g: '5',
+  ml: '1',
 }
 
 const LEVELS: readonly TrackingLevel[] = ['intake_only', 'with_amount', 'complete']
@@ -32,6 +46,7 @@ const EINNAHMEN: ReadonlyArray<readonly [number, number]> = [[30, 56], [140, 41]
 export function TrackingLevelPicker({
   value,
   substanceName,
+  dosageForm,
   pkProfileAvailable,
   error = false,
   onChange,
@@ -41,6 +56,17 @@ export function TrackingLevelPicker({
   // Picker gleichzeitig im Dokument stehen — dann faerbt der eine den anderen.
   const uid = useId()
   const name = substanceName.trim() || String(t('my_stack_this_substance', { defaultValue: 'diese Substanz' }))
+
+  // Der Beispieleintrag zaehlt in der gewaehlten Form, nicht in einer
+  // festen: hier stand „1 Kapsel", auch wenn eine Ampulle gewaehlt war.
+  // Die Bezeichnung der Form ist ohnehin schon uebersetzt (`labelKey`), die
+  // Wirkstoffeinheit nimmt die Form aus ihrer eigenen Vorschlagsliste.
+  const form = dosageForm ? getDosageForm(dosageForm) : null
+  const formName = form ? String(t(form.labelKey)) : ''
+  const wirkstoffEinheit = form?.suggestedUnits[0] ?? ''
+  const staerke = wirkstoffEinheit
+    ? `${BEISPIELMENGE[wirkstoffEinheit] ?? '1'} ${wirkstoffEinheit}`
+    : ''
 
   const content = {
     intake_only: {
@@ -59,7 +85,8 @@ export function TrackingLevelPicker({
       recorded: t('my_stack_tracking_with_amount_recorded', {
         defaultValue: 'Zusätzlich, wie viel du genommen hast. Damit lässt sich der Verlauf deiner Dosis auswerten.',
       }),
-      entry: t('my_stack_tracking_with_amount_entry', { defaultValue: '1 Kapsel' }),
+      // Ohne Form kein Detail: „1 " allein waere eine halbe Aussage.
+      entry: form ? t('my_stack_tracking_with_amount_entry', { defaultValue: '1 {{form}}', form: formName }) : '',
     },
     complete: {
       title: t('my_stack_tracking_complete_title', { defaultValue: 'Gründlich' }),
@@ -67,7 +94,13 @@ export function TrackingLevelPicker({
       recorded: t('my_stack_tracking_complete_recorded', {
         defaultValue: 'Zusätzlich, wie viel Wirkstoff in einer Einheit steckt. Damit rechnet die App in Milligramm statt in Kapseln — und weiß, wie viel davon zu jeder Stunde noch in dir ist.',
       }),
-      entry: t('my_stack_tracking_complete_entry', { defaultValue: '1 Kapsel · 5.000 IU' }),
+      entry: form
+        ? t('my_stack_tracking_complete_entry', {
+            defaultValue: '1 {{form}} · {{strength}}',
+            form: formName,
+            strength: staerke,
+          })
+        : '',
     },
   } as const
 

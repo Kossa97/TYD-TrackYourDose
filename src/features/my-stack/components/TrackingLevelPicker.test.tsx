@@ -7,9 +7,13 @@ import { TrackingLevelPicker } from './TrackingLevelPicker'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, options?: { defaultValue?: string; substanceName?: string }) => (
-      options?.defaultValue?.replace('{{substanceName}}', options.substanceName ?? '') ?? key
-    ),
+    t: (key: string, options?: Record<string, unknown>) => {
+      const vorlage = options?.defaultValue
+      if (typeof vorlage !== 'string') return key
+      return vorlage.replace(/{{\s*(\w+)\s*}}/g, (_treffer, name: string) => (
+        options?.[name] === undefined ? '' : String(options[name])
+      ))
+    },
   }),
 }))
 
@@ -21,6 +25,7 @@ describe('TrackingLevelPicker', () => {
       <TrackingLevelPicker
         value={null}
         substanceName="Vitamin D3"
+        dosageForm="capsule"
         pkProfileAvailable={false}
         error
         onChange={() => undefined}
@@ -41,6 +46,7 @@ describe('TrackingLevelPicker', () => {
       <TrackingLevelPicker
         value={null}
         substanceName="Vitamin D3"
+        dosageForm="capsule"
         pkProfileAvailable={false}
         onChange={() => undefined}
       />,
@@ -62,6 +68,7 @@ describe('TrackingLevelPicker', () => {
       <TrackingLevelPicker
         value="with_amount"
         substanceName="Vitamin D3"
+        dosageForm="capsule"
         pkProfileAvailable={false}
         onChange={() => undefined}
       />,
@@ -89,6 +96,7 @@ describe('TrackingLevelPicker', () => {
       <TrackingLevelPicker
         value="intake_only"
         substanceName="Vitamin D3"
+        dosageForm="capsule"
         pkProfileAvailable={false}
         onChange={() => undefined}
       />,
@@ -104,6 +112,70 @@ describe('TrackingLevelPicker', () => {
     expect(screen.getAllByText(/fragt die App auch später nicht ab/i)).toHaveLength(1)
   })
 
+  it('zaehlt den Beispieleintrag in der gewaehlten Darreichungsform', () => {
+    // Hier stand fest „1 Kapsel" — auch bei einer Ampulle. Der Beispieleintrag
+    // soll zeigen, wie DIESER Eintrag aussieht, nicht irgendeiner.
+    const { rerender } = render(
+      <TrackingLevelPicker
+        value="with_amount"
+        substanceName="Testosteron"
+        dosageForm="ampoule"
+        pkProfileAvailable={false}
+        onChange={() => undefined}
+      />,
+    )
+
+    const eintrag = (level: string) =>
+      document.querySelector(`[data-tracking-entry="${level}"]`)!.textContent!
+
+    // Der i18n-Ersatz liefert fuer die Formbezeichnung den Schluessel —
+    // dass genau DIESER ankommt, ist der Punkt (so auch in DosageFormPicker.test).
+    expect(eintrag('with_amount')).toContain('dosage_form_ampoule')
+    expect(eintrag('with_amount')).not.toContain('dosage_form_capsule')
+
+    // Die tiefste Stufe nimmt zusaetzlich die Wirkstoffeinheit der Form.
+    rerender(
+      <TrackingLevelPicker
+        value="complete"
+        substanceName="Testosteron"
+        dosageForm="ampoule"
+        pkProfileAvailable={false}
+        onChange={() => undefined}
+      />,
+    )
+    expect(eintrag('complete')).toContain('dosage_form_ampoule')
+    expect(eintrag('complete')).toContain('mg')
+
+    // Und eine andere Form zaehlt in ihrer eigenen Einheit.
+    rerender(
+      <TrackingLevelPicker
+        value="with_amount"
+        substanceName="Vitamin D3"
+        dosageForm="tablet"
+        pkProfileAvailable={false}
+        onChange={() => undefined}
+      />,
+    )
+    expect(eintrag('with_amount')).toContain('dosage_form_tablet')
+  })
+
+  it('laesst das Detail weg, solange keine Form gewaehlt ist', () => {
+    // „1 " allein waere eine halbe Aussage.
+    render(
+      <TrackingLevelPicker
+        value="with_amount"
+        substanceName="Testosteron"
+        dosageForm={null}
+        pkProfileAvailable={false}
+        onChange={() => undefined}
+      />,
+    )
+
+    const eintrag = document.querySelector('[data-tracking-entry="with_amount"]')!
+    expect(eintrag.textContent).toContain('Testosteron')
+    expect(eintrag.textContent).not.toContain('1 ')
+  })
+
   it('zeigt bei der tiefsten Stufe, was sie einbringt: eine Beispielkurve', () => {
     // „Blutspiegel-Kurve" stand bisher nur als Wort da. Was die Stufe
     // einbringt, ist jetzt zu sehen — als Beispiel ausgewiesen, ohne Zahlen,
@@ -112,6 +184,7 @@ describe('TrackingLevelPicker', () => {
       <TrackingLevelPicker
         value="complete"
         substanceName="Vitamin D3"
+        dosageForm="capsule"
         pkProfileAvailable
         onChange={() => undefined}
       />,
@@ -131,6 +204,7 @@ describe('TrackingLevelPicker', () => {
         <TrackingLevelPicker
           value={flacher}
           substanceName="Vitamin D3"
+          dosageForm="capsule"
           pkProfileAvailable
           onChange={() => undefined}
         />,
@@ -144,6 +218,7 @@ describe('TrackingLevelPicker', () => {
       <TrackingLevelPicker
         value="complete"
         substanceName="Vitamin D3"
+        dosageForm="capsule"
         pkProfileAvailable={false}
         onChange={() => undefined}
       />,
@@ -156,6 +231,7 @@ describe('TrackingLevelPicker', () => {
       <TrackingLevelPicker
         value="complete"
         substanceName="Vitamin D3"
+        dosageForm="capsule"
         pkProfileAvailable
         onChange={() => undefined}
       />,
@@ -171,6 +247,7 @@ describe('TrackingLevelPicker', () => {
       <TrackingLevelPicker
         value={selected}
         substanceName="Vitamin D3"
+        dosageForm="capsule"
         pkProfileAvailable={false}
         onChange={value => { selected = value }}
       />,
@@ -181,6 +258,7 @@ describe('TrackingLevelPicker', () => {
       <TrackingLevelPicker
         value={selected}
         substanceName="Vitamin D3"
+        dosageForm="capsule"
         pkProfileAvailable={false}
         onChange={value => { selected = value }}
       />,
