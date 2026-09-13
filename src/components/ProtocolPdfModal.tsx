@@ -211,21 +211,20 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
             range,
             sections: [...selected],
             note,
-            preset: activePreset,
+            preset: activePreset === 'custom' ? undefined : activePreset,
           })
           if (cancelled) return
-          const raw = doc.output('bloburl')
-          const url = typeof raw === 'string' ? raw : raw.href
-          if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+          // dataurl is more reliable in iframe than bloburl across browsers
+          const url = doc.output('datauristring')
+          if (previewUrlRef.current?.startsWith('blob:')) URL.revokeObjectURL(previewUrlRef.current)
           previewUrlRef.current = url
           setPreviewUrl(url)
-        } catch {
+        } catch (err) {
+          console.error('[pdf-preview]', err)
           if (!cancelled) {
             setPreviewError(true)
-            if (previewUrlRef.current) {
-              URL.revokeObjectURL(previewUrlRef.current)
-              previewUrlRef.current = null
-            }
+            if (previewUrlRef.current?.startsWith('blob:')) URL.revokeObjectURL(previewUrlRef.current)
+            previewUrlRef.current = null
             setPreviewUrl(null)
           }
         } finally {

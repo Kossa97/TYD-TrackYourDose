@@ -1168,7 +1168,11 @@ function autoTableSafe(ctx: Ctx, o: AutoTableOpts) {
   const { doc, theme } = ctx
   ensureSpace(ctx, 14)
   const medical = theme.id === 'medical' || theme.id === 'forum'
-  autoTableFn(doc, {
+  const table = typeof autoTableFn === 'function' ? autoTableFn : autoTableFn?.default
+  if (typeof table !== 'function') {
+    throw new Error('jspdf-autotable failed to load')
+  }
+  table(doc, {
     startY: ctx.y,
     head: o.head,
     body: o.body,
@@ -1292,7 +1296,7 @@ export async function buildProtocolPdf(data: ProtocolData, opts: PdfBuildOptions
     import('jspdf'),
     import('jspdf-autotable'),
   ])
-  autoTableFn = autoTableMod.default
+  autoTableFn = autoTableMod.default ?? autoTableMod
 
   const doc = new JsPdf('p', 'mm', 'a4')
   const theme = resolveTheme(opts.preset)
