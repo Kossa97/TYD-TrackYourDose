@@ -1026,9 +1026,9 @@
     "semantic_hash": ""
   },
   "src/lib/protocolPdf/renderProtocolPdf.ts": {
-    "mtime": 1789317237.1159532,
-    "seen": 1789317414.17679,
-    "ast_hash": "320b5ea9f872485d1177abc55f861fb0",
+    "mtime": 1789322910.824644,
+    "seen": 1789322915.1831667,
+    "ast_hash": "2f0f35d3e3f5f95e0554cfe57830169d",
     "semantic_hash": ""
   },
   "src/lib/protocolPdf/sections.ts": {
@@ -3042,6 +3042,24 @@
     "mtime": 1789314740.9785283,
     "seen": 1789314854.7126617,
     "ast_hash": "60519d35fff304ba2808e670cd6972a4",
+    "semantic_hash": ""
+  },
+  "src/lib/protocolPdf/chartData.test.ts": {
+    "mtime": 1789322862.028358,
+    "seen": 1789322915.1830869,
+    "ast_hash": "9a30b66ee7860a96413023b2732ebae7",
+    "semantic_hash": ""
+  },
+  "src/lib/protocolPdf/chartData.ts": {
+    "mtime": 1789322727.1315515,
+    "seen": 1789322915.1830885,
+    "ast_hash": "48576b899171d63dc4f8e1a7e364a3a6",
+    "semantic_hash": ""
+  },
+  "public/pdf-preview/TYD-wellness-long-range.pdf": {
+    "mtime": 1789322878.496455,
+    "seen": 1789322915.1856155,
+    "ast_hash": "cefa9d75ab4fdd5ac8798b0f5b7291aa",
     "semantic_hash": ""
   }
 }

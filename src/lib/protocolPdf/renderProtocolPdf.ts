@@ -7,6 +7,7 @@ import type {
   ProtocolData, PdfBuildOptions, PdfLang, PdfCycle, SectionId,
 } from './types'
 import { SECTIONS, visibleSections, resolveSubject } from './sections'
+import { prepareLongRangePoints, type ChartPoint } from './chartData'
 
 type RGB = [number, number, number]
 
@@ -79,6 +80,7 @@ interface Copy {
   bloodMarker: string; bloodUnit: string; bloodRange: string; bloodFirst: string; bloodLast: string; bloodChange: string
   weightStart: string; weightEnd: string; weightChange: string; kg: string
   wellnessEnergy: string; wellnessSleep: string; wellnessLibido: string; scale: string
+  wellnessWeeklyNote: string
   effectType: string; effectDesc: string; effectSeverity: string; effectDate: string; effect: string; sideEffect: string
   reviewSubstance: string; reviewRating: string; reviewExperience: string
   expGood: string; expMedium: string; expBad: string
@@ -115,6 +117,7 @@ const COPY: Record<PdfLang, Copy> = {
     bloodFirst: 'Erst', bloodLast: 'Letzt', bloodChange: 'Veränd.',
     weightStart: 'Start', weightEnd: 'Ende', weightChange: 'Veränderung', kg: 'kg',
     wellnessEnergy: 'Energie', wellnessSleep: 'Schlaf', wellnessLibido: 'Libido', scale: 'Skala 1–10',
+    wellnessWeeklyNote: 'Lange Zeiträume: Anzeige als Wochenmittel (lesbarer Verlauf).',
     effectType: 'Typ', effectDesc: 'Beschreibung', effectSeverity: 'Stärke', effectDate: 'Datum',
     effect: 'Wirkung', sideEffect: 'Nebenwirkung',
     reviewSubstance: 'Peptid', reviewRating: 'Bewertung', reviewExperience: 'Erfahrung',
@@ -151,6 +154,7 @@ const COPY: Record<PdfLang, Copy> = {
     bloodFirst: 'First', bloodLast: 'Last', bloodChange: 'Change',
     weightStart: 'Start', weightEnd: 'End', weightChange: 'Change', kg: 'kg',
     wellnessEnergy: 'Energy', wellnessSleep: 'Sleep', wellnessLibido: 'Libido', scale: 'Scale 1–10',
+    wellnessWeeklyNote: 'Long ranges: shown as weekly averages (clearer trend).',
     effectType: 'Type', effectDesc: 'Description', effectSeverity: 'Severity', effectDate: 'Date',
     effect: 'Effect', sideEffect: 'Side effect',
     reviewSubstance: 'Peptide', reviewRating: 'Rating', reviewExperience: 'Experience',
@@ -442,16 +446,32 @@ function finalYAfterTable(doc: jsPDF): number {
 
 // ─── Vektor-Charts ───────────────────────────────────────────────────────────
 
-interface Series { name: string; color: RGB; points: { t: number; v: number }[] }
+interface Series {
+  name: string
+  color: RGB
+  points: ChartPoint[]
+  /** Strichmuster für S/W-Druck (z. B. [2, 1.5]). */
+  dash?: number[]
+}
 
 function drawLineChart(
   ctx: Ctx, series: Series[],
-  opts: { height: number; yMin?: number; yMax?: number; legend?: boolean },
+  opts: {
+    height: number
+    yMin?: number
+    yMax?: number
+    legend?: boolean
+    /** Punkte zeichnen; default: nur bei wenigen Messwerten. */
+    showDots?: boolean
+    /** Kurze Datumsachsen-Beschriftung (Von / Bis). */
+    xLabels?: boolean
+  },
 ) {
-  const { doc } = ctx
+  const { doc, lang } = ctx
   const legendH = opts.legend ? 6 : 0
+  const xLabelH = opts.xLabels ? 5 : 0
   const h = opts.height
-  ensureSpace(ctx, h + legendH + 4)
+  ensureSpace(ctx, h + legendH + xLabelH + 4)
 
   const x0 = MARGIN + 12
   const x1 = PAGE_W - MARGIN
@@ -460,7 +480,7 @@ function drawLineChart(
 
   const allV = series.flatMap(s => s.points.map(p => p.v))
   const allT = series.flatMap(s => s.points.map(p => p.t))
-  if (allV.length === 0) { ctx.y += h + legendH; return }
+  if (allV.length === 0) { ctx.y += h + legendH + xLabelH; return }
   let vMin = opts.yMin ?? Math.min(...allV)
   let vMax = opts.yMax ?? Math.max(...allV)
   if (vMin === vMax) { vMin -= 1; vMax += 1 }
@@ -470,6 +490,9 @@ function drawLineChart(
 
   const sx = (t: number) => x0 + ((t - tMin) / tSpan) * plotW
   const sy = (v: number) => yBot - ((v - vMin) / (vMax - vMin)) * h
+
+  const pointCount = series.reduce((n, s) => n + s.points.length, 0)
+  const showDots = opts.showDots ?? pointCount <= 28
 
   // Gridlines + Y-Ticks (3)
   doc.setFont('helvetica', 'normal')
@@ -483,19 +506,40 @@ function drawLineChart(
     doc.text(fmtNum(v, Math.abs(vMax - vMin) < 5 ? 1 : 0), x0 - 2, yy + 1.5, { align: 'right' })
   }
 
-  // Serien
+  // Serien (Strichmuster + Farbe — S/W und Farbe)
   for (const s of series) {
     if (s.points.length === 0) continue
-    setDraw(doc, s.color); doc.setLineWidth(1.1)
+    setDraw(doc, s.color)
+    doc.setLineWidth(1.15)
+    if (s.dash && s.dash.length > 0) doc.setLineDashPattern(s.dash, 0)
+    else doc.setLineDashPattern([], 0)
     const pts = [...s.points].sort((a, b) => a.t - b.t)
     for (let i = 1; i < pts.length; i++) {
       doc.line(sx(pts[i - 1].t), sy(pts[i - 1].v), sx(pts[i].t), sy(pts[i].v))
     }
-    setFill(doc, s.color)
-    for (const p of pts) doc.circle(sx(p.t), sy(p.v), 0.8, 'F')
+    doc.setLineDashPattern([], 0)
+    if (showDots) {
+      setFill(doc, s.color)
+      for (const p of pts) doc.circle(sx(p.t), sy(p.v), 0.75, 'F')
+    }
   }
 
   ctx.y = yBot + 3
+
+  if (opts.xLabels) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(6.5)
+    setText(doc, FAINT)
+    // Lokal formatieren — toISOString verschiebt Datumsachsen um einen Tag (UTC).
+    const fmtAxis = (ms: number) => {
+      const d = new Date(ms)
+      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      return fmtDate(iso, lang)
+    }
+    doc.text(fmtAxis(tMin), x0, ctx.y)
+    doc.text(fmtAxis(tMax), x1, ctx.y, { align: 'right' })
+    ctx.y += xLabelH
+  }
 
   if (opts.legend) {
     let lx = x0
@@ -769,36 +813,79 @@ function renderBloodwork(ctx: Ctx, data: ProtocolData) {
 }
 
 function renderWeight(ctx: Ctx, data: ProtocolData) {
-  const { c } = ctx
-  const pts = [...data.weightLogs]
+  const { c, theme } = ctx
+  const raw = [...data.weightLogs]
     .sort((a, b) => a.logged_at.localeCompare(b.logged_at))
     .map(w => ({ t: new Date(w.logged_at).getTime(), v: w.weight_kg }))
-  if (pts.length === 0) { bodyText(ctx, c.noData); return }
-  if (pts.length >= 2) {
-    drawLineChart(ctx, [{ name: c.weight, color: ctx.theme.accent, points: pts }], { height: 42 })
+  if (raw.length === 0) { bodyText(ctx, c.noData); return }
+
+  const { points, weekly } = prepareLongRangePoints(raw)
+  if (points.length >= 2) {
+    drawLineChart(
+      ctx,
+      [{ name: c.weight, color: theme.accent, points }],
+      { height: 36, xLabels: true, showDots: points.length <= 28 },
+    )
   }
-  const first = pts[0].v
-  const last = pts[pts.length - 1].v
+  if (weekly) bodyText(ctx, c.wellnessWeeklyNote, { size: 7.5, gap: 1 })
+
+  const first = raw[0].v
+  const last = raw[raw.length - 1].v
   const delta = last - first
   const summary = `${c.weightStart}: ${fmtNum(first)} ${c.kg}   ·   ${c.weightEnd}: ${fmtNum(last)} ${c.kg}   ·   ${c.weightChange}: ${signed(delta, 1, ' ' + c.kg)}`
   bodyText(ctx, summary, { color: INK, size: 9.5, gap: 2 })
 }
 
+/**
+ * Ein Chart je Metrik (S/W-druckbar) + bei langen Zeiträumen Wochenmittel
+ * statt täglicher Punkte (sonst unleserlich).
+ */
 function renderWellness(ctx: Ctx, data: ProtocolData) {
-  const { c } = ctx
-  const build = (field: 'energie' | 'schlaf' | 'libido') =>
-    data.dailyLogs
-      .filter(l => l[field] != null)
-      .map(l => ({ t: new Date(`${l.log_date}T00:00:00`).getTime(), v: l[field] as number }))
-      .sort((a, b) => a.t - b.t)
-  const series: Series[] = [
-    { name: c.wellnessEnergy, color: [8, 145, 178] as RGB, points: build('energie') },
-    { name: c.wellnessSleep, color: [99, 102, 241] as RGB, points: build('schlaf') },
-    { name: c.wellnessLibido, color: [219, 39, 119] as RGB, points: build('libido') },
-  ].filter(s => s.points.length > 0)
-  if (series.length === 0) { bodyText(ctx, c.noData); return }
+  const { doc, c, theme } = ctx
+  const metrics: {
+    field: 'energie' | 'schlaf' | 'libido'
+    label: string
+    dash?: number[]
+  }[] = [
+    { field: 'energie', label: c.wellnessEnergy },
+    { field: 'schlaf', label: c.wellnessSleep, dash: [2.2, 1.4] },
+    { field: 'libido', label: c.wellnessLibido, dash: [0.8, 1.2] },
+  ]
+
+  const built = metrics.map(m => {
+    const raw = data.dailyLogs
+      .filter(l => l[m.field] != null)
+      .map(l => ({ t: new Date(`${l.log_date}T00:00:00`).getTime(), v: l[m.field] as number }))
+    const prepared = prepareLongRangePoints(raw)
+    return { ...m, ...prepared, rawCount: raw.length }
+  }).filter(m => m.rawCount > 0)
+
+  if (built.length === 0) { bodyText(ctx, c.noData); return }
+
   bodyText(ctx, c.scale, { size: 8, gap: 1 })
-  drawLineChart(ctx, series, { height: 42, yMin: 0, yMax: 10, legend: true })
+  const anyWeekly = built.some(m => m.weekly)
+  if (anyWeekly) bodyText(ctx, c.wellnessWeeklyNote, { size: 7.5, gap: 2 })
+
+  for (const m of built) {
+    ensureSpace(ctx, 48)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    setText(doc, theme.accent)
+    doc.text(m.label.toUpperCase(), MARGIN, ctx.y, { charSpace: 0.25 })
+    ctx.y += 4
+
+    if (m.points.length === 1) {
+      bodyText(ctx, `${fmtNum(m.points[0].v, 1)} / 10`, { color: INK, size: 10, gap: 4 })
+      continue
+    }
+
+    drawLineChart(
+      ctx,
+      [{ name: m.label, color: theme.accent, points: m.points, dash: m.dash }],
+      { height: 30, yMin: 0, yMax: 10, xLabels: true },
+    )
+    ctx.y += 3
+  }
 }
 
 function renderEffects(ctx: Ctx, data: ProtocolData) {
