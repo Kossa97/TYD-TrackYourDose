@@ -9,6 +9,7 @@ import { Auth } from './pages/Auth'
 import { VialPreview } from './pages/__VialPreview'
 import { PdfPreview } from './pages/__PdfPreview'
 import { BefundPreview } from './pages/__BefundPreview'
+import { PdfThemesPreview } from './pages/__PdfThemesPreview'
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })))
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })))
@@ -58,6 +59,7 @@ export default function App() {
           <Route path="/__vialpreview" element={<VialPreview />} />
           <Route path="/__pdfpreview" element={<PdfPreview />} />
           <Route path="/__befundpreview" element={<BefundPreview />} />
+          <Route path="/__pdfthemes" element={<PdfThemesPreview />} />
           <Route path="/u/:username" element={<LazyPage><PublicProfile /></LazyPage>} />
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<LazyPage><Home /></LazyPage>} />

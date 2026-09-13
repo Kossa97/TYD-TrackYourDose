@@ -206,3 +206,32 @@ describe('Arzt-Befund Theme', () => {
     expect(bytes.byteLength).toBeGreaterThan(3000)
   })
 })
+
+
+describe('Coach & Forum Themes', () => {
+  it('erzeugt ein Coaching-PDF mit preset coach', async () => {
+    const doc = await buildProtocolPdf(makeData(), {
+      lang: 'de',
+      range: { from: '2026-06-01', to: '2026-06-30' },
+      sections: ['personal', 'summary', 'cycles', 'adherence', 'weight', 'wellness', 'effects', 'reviews', 'notes'],
+      note: 'Frage an den Coach',
+      preset: 'coach',
+    })
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2)
+    const bytes = doc.output('arraybuffer') as ArrayBuffer
+    expect(bytes.byteLength).toBeGreaterThan(3000)
+  })
+
+  it('erzeugt ein anonymes Forum-PDF mit preset forum', async () => {
+    const doc = await buildProtocolPdf(makeData(), {
+      lang: 'de',
+      range: { from: '2026-06-01', to: '2026-06-30' },
+      sections: ['summary', 'cycles', 'adherence', 'weight', 'wellness', 'effects', 'reviews'],
+      note: '',
+      preset: 'forum',
+    })
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2)
+    const bytes = doc.output('arraybuffer') as ArrayBuffer
+    expect(bytes.byteLength).toBeGreaterThan(2500)
+  })
+})

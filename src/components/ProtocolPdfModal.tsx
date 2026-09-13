@@ -5,7 +5,7 @@ import { loadProtocolData } from '../lib/protocolPdf/loadProtocolData'
 import { SECTIONS } from '../lib/protocolPdf/sections'
 import { PRESETS, applyPreset, matchPreset, type ActivePreset, type PresetId } from '../lib/protocolPdf/presets'
 import { loadPdfExportPrefs, savePdfExportPrefs } from '../lib/protocolPdf/persistence'
-import { downloadProtocolPdf } from '../lib/protocolPdf/renderProtocolPdf'
+import { buildProtocolPdf, downloadProtocolPdf } from '../lib/protocolPdf/renderProtocolPdf'
 import type { ProtocolData, PdfLang, PdfDateRange, SectionId } from '../lib/protocolPdf/types'
 
 interface Props {
@@ -25,10 +25,11 @@ const T: Record<UILang, {
   note: string; notePlaceholder: string; language: string; download: string; generating: string
   loading: string; noneSelected: string; empty: string; loadError: string; genError: string
   personalHint: string
+  livePreview: string; previewUpdating: string; previewEmpty: string; previewError: string
 }> = {
   de: {
     title: 'PDF-Protokoll erstellen',
-    intro: 'Wähle ein Muster oder setze die Häkchen selbst. Leere Bereiche sind ausgegraut.',
+    intro: 'Wähle ein Muster oder setze die Häkchen selbst. Die Vorschau aktualisiert sich live.',
     presets: 'Muster',
     custom: 'Benutzerdefiniert',
     sections: 'Inhalte',
@@ -45,10 +46,14 @@ const T: Record<UILang, {
     loadError: 'Daten konnten nicht geladen werden',
     genError: 'PDF konnte nicht erstellt werden',
     personalHint: 'Ohne „Persönliche Angaben“ wird das PDF anonymisiert (z. B. fürs Forum).',
+    livePreview: 'Live-Vorschau',
+    previewUpdating: 'Vorschau wird aktualisiert …',
+    previewEmpty: 'Wähle Inhalte, um die Vorschau zu sehen.',
+    previewError: 'Vorschau konnte nicht erzeugt werden.',
   },
   en: {
     title: 'Create PDF report',
-    intro: 'Pick a template or tick the boxes yourself. Empty areas are greyed out.',
+    intro: 'Pick a template or tick the boxes yourself. The preview updates live.',
     presets: 'Templates',
     custom: 'Custom',
     sections: 'Contents',
@@ -65,6 +70,10 @@ const T: Record<UILang, {
     loadError: 'Could not load data',
     genError: 'Could not create PDF',
     personalHint: 'Without “Personal details” the PDF is anonymised (e.g. for forums).',
+    livePreview: 'Live preview',
+    previewUpdating: 'Updating preview …',
+    previewEmpty: 'Select contents to see the preview.',
+    previewError: 'Could not generate preview.',
   },
 }
 
@@ -110,8 +119,12 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
   const [selected, setSelected] = useState<Set<SectionId>>(new Set())
   const [note, setNote] = useState('')
   const [generating, setGenerating] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewBusy, setPreviewBusy] = useState(false)
+  const [previewError, setPreviewError] = useState(false)
   const t = T[lang]
   const prefsReady = useRef(false)
+  const previewUrlRef = useRef<string | null>(null)
 
   // Sprache nur für Fehlermeldungen — nicht als load-Dependency, sonst setzt ein
   // Sprachwechsel die Häkchen-Auswahl durch einen Reload zurück.
@@ -172,6 +185,65 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
     })
   }
 
+  const selectedKey = useMemo(() => [...selected].sort().join('|'), [selected])
+
+  // Live-Vorschau: debounced Rebuild bei Muster-/Häkchen-/Sprach-/Notiz-Änderung.
+  useEffect(() => {
+    if (!data || selected.size === 0) {
+      setPreviewBusy(false)
+      setPreviewError(false)
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current)
+        previewUrlRef.current = null
+      }
+      setPreviewUrl(null)
+      return
+    }
+
+    let cancelled = false
+    setPreviewBusy(true)
+    setPreviewError(false)
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const doc = await buildProtocolPdf(data, {
+            lang,
+            range,
+            sections: [...selected],
+            note,
+            preset: activePreset,
+          })
+          if (cancelled) return
+          const raw = doc.output('bloburl')
+          const url = typeof raw === 'string' ? raw : raw.href
+          if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+          previewUrlRef.current = url
+          setPreviewUrl(url)
+        } catch {
+          if (!cancelled) {
+            setPreviewError(true)
+            if (previewUrlRef.current) {
+              URL.revokeObjectURL(previewUrlRef.current)
+              previewUrlRef.current = null
+            }
+            setPreviewUrl(null)
+          }
+        } finally {
+          if (!cancelled) setPreviewBusy(false)
+        }
+      })()
+    }, 300)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [data, selectedKey, lang, range, note, activePreset, selected])
+
+  useEffect(() => () => {
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+  }, [])
+
   const canGenerate = data != null && selected.size > 0 && !generating
 
   const generate = async () => {
@@ -206,7 +278,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
       onClick={onClose}
     >
       <div
-        className="bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg flex flex-col max-h-[92dvh] pt-[env(safe-area-inset-top)] sm:pt-0"
+        className="bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-5xl flex flex-col max-h-[94dvh] pt-[env(safe-area-inset-top)] sm:pt-0"
         onClick={e => e.stopPropagation()}
       >
         <div className="shrink-0 border-b border-slate-800 px-5 py-4 flex items-center justify-between">
@@ -219,7 +291,8 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
+        <div className="lg:w-[380px] lg:shrink-0 overflow-y-auto px-5 py-4 space-y-5 max-h-[46vh] lg:max-h-none">
           <p className="text-sm text-slate-400">{t.intro}</p>
 
           <div>
@@ -360,6 +433,31 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
               />
             </div>
           )}
+        </div>
+
+          <div className="flex-1 min-h-[38vh] lg:min-h-0 flex flex-col border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-950/40">
+            <div className="shrink-0 px-4 py-2.5 flex items-center justify-between gap-2 border-b border-slate-800">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.livePreview}</p>
+              {previewBusy && (
+                <span className="inline-flex items-center gap-1.5 text-[0.7rem] text-slate-400">
+                  <Loader2 size={12} className="animate-spin" /> {t.previewUpdating}
+                </span>
+              )}
+            </div>
+            <div className="relative flex-1 min-h-0 bg-slate-300">
+              {previewUrl ? (
+                <iframe
+                  title={t.livePreview}
+                  src={previewUrl}
+                  className="absolute inset-0 h-full w-full border-0 bg-white"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-slate-600">
+                  {previewError ? t.previewError : t.previewEmpty}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="shrink-0 border-t border-slate-800 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
