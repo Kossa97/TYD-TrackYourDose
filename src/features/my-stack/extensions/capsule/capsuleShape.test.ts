@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { carriesLabel } from '../../stage/types'
 import {
-  CAPSULE_ASPECT, CAPSULE_CAP_PATH, CAPSULE_CAP_INNER_PATH, CAPSULE_SEAM_X,
+  CAPSULE_ASPECT, CAPSULE_CAP_INNER_OUTLINE_PATH, CAPSULE_CAP_OUTLINE_PATH,
+  CAPSULE_CAP_PATH, CAPSULE_CAP_INNER_PATH, CAPSULE_SEAM_X,
   CAPSULE_SHELL_PATH, CAPSULE_SHELL_INNER_PATH, CAPSULE_SHELL_INNER_PATH_NORMALIZED, CAPSULE_SPEC,
 } from './capsuleShape'
 
@@ -11,6 +12,21 @@ describe('capsuleShape', () => {
       expect(d.startsWith('M')).toBe(true)
       expect(d.trimEnd().endsWith('Z')).toBe(true)
     }
+  })
+
+  it('haelt die Kappenkontur offen, damit die Naht keine Linie zieht', () => {
+    // Die geschlossene Fassung braucht Fuellung und Clip. Gestrichen zieht ihr
+    // `Z` aber eine Senkrechte ueber die volle Hoehe bei x = 130 — die offene
+    // Seite der Kappe, die in Wirklichkeit im Koerper steckt. Zusammen mit den
+    // beiden waagerechten Kanten, die ausserhalb des Koerpers verlaufen, stand
+    // ein Rechteck quer ueber der linken Kapselhaelfte.
+    expect(CAPSULE_CAP_OUTLINE_PATH.trimEnd().endsWith('Z')).toBe(false)
+    expect(CAPSULE_CAP_INNER_OUTLINE_PATH.trimEnd().endsWith('Z')).toBe(false)
+
+    // Dieselben Kanten, nur ohne den Schluss — sonst laufen Fuellung und
+    // Kontur auseinander.
+    expect(`${CAPSULE_CAP_OUTLINE_PATH} Z`).toBe(CAPSULE_CAP_PATH)
+    expect(`${CAPSULE_CAP_INNER_OUTLINE_PATH} Z`).toBe(CAPSULE_CAP_INNER_PATH)
   })
 
   it('zeichnet den Grundkoerper durchgehend, nicht nur die rechte Haelfte', () => {

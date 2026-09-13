@@ -51,8 +51,20 @@ function fillMotionShiftPct(previousFill: number, nextFill: number): number {
   return Number((((previousY - nextY) / LIQUID_VB_H) * 100).toFixed(2))
 }
 
-function vialAmountLabel(amount?: string | number | null, unit?: string | null): string {
-  if (amount === null || amount === undefined || amount === '') return 'Wirkstoff / Vial'
+// Die zweite Zeile auf dem Etikett — die Wirkstoffmenge.
+//
+// Hier stand bisher ein Rueckfall auf „Wirkstoff / Vial": ein FELDNAME, fett
+// und in Versalien auf dem Etikett, hartkodiert auf Deutsch in einer App, die
+// auf Deutsch UND Englisch startet. Sichtbar wurde er ueberall, wo die Menge
+// noch fehlt — unter anderem auf dem ganzen Farbschritt, der vor dem
+// Staerke-Schritt kommt. Keine andere Darreichungsform tut das: Tablette und
+// Kapsel tragen dort nur den Namen.
+//
+// Ein leeres Feld beschriftet man nicht mit seinem eigenen Namen. Fehlt die
+// Menge, faellt die Zeile weg (StageLabel laesst `null` aus) und das Etikett
+// traegt nur noch den Namen — wie bei allen anderen Formen.
+function vialAmountLabel(amount?: string | number | null, unit?: string | null): string | null {
+  if (amount === null || amount === undefined || amount === '') return null
   return `${amount} ${unit || 'mg'} / Vial`
 }
 
@@ -265,7 +277,7 @@ export function PeptideVialVisual({
       data-fill-pct={clampedFill}
       data-vial-focus={focusAttr}
       data-vial-light-offset={lightOffsetAttr}
-      aria-label={`${labelName}, ${vialAmountLabel(amount, unit)}, ${clampedFill}%`}
+      aria-label={[labelName, vialAmountLabel(amount, unit), `${clampedFill}%`].filter(Boolean).join(', ')}
     >
       <style>{`
         @keyframes vial-shimmer {

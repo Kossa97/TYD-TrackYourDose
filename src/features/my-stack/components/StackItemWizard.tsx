@@ -886,7 +886,12 @@ export function StackItemWizard({
               data-wizard-preview
               className="-mx-4 flex h-full min-h-0 flex-col bg-slate-950/60 px-4 py-4 sm:-mx-6 sm:px-6"
             >
-              <div ref={farbschrittPlatzRef} className="flex min-h-0 flex-1 items-end justify-center pb-3">
+              {/* Mittig, nicht am Boden: hier steht IMMER nur ein Objekt, und die
+                  Bodenlinie der Buehne (die mehrere Formen nebeneinander auf
+                  dieselbe Hoehe stellt) hat allein keinen Sinn. Eine liegende
+                  Kapsel ist 128 px hoch in 366 px Flaeche — am Boden klebend
+                  liess sie 238 px Leere ueber sich stehen. Gemessen. */}
+              <div ref={farbschrittPlatzRef} className="flex min-h-0 flex-1 items-center justify-center pb-3">
                 <span
                   ref={farbschrittVorschauRef}
                   className="inline-block"

@@ -2,7 +2,8 @@ import { useCallback, useId, useRef } from 'react'
 import type { Ref } from 'react'
 import { useStageLight, type StageLightHandle } from '../../stage/useStageLight'
 import {
-  CAPSULE_CAP_INNER_PATH, CAPSULE_CAP_PATH,
+  CAPSULE_CAP_INNER_OUTLINE_PATH, CAPSULE_CAP_INNER_PATH,
+  CAPSULE_CAP_OUTLINE_PATH, CAPSULE_CAP_PATH,
   CAPSULE_SHELL_INNER_PATH, CAPSULE_SHELL_INNER_PATH_NORMALIZED, CAPSULE_SHELL_PATH,
 } from './capsuleShape'
 import { StageMarquee } from '../../stage/StageLabel'
@@ -182,10 +183,18 @@ export function CapsuleVisual({
         <g clipPath={`url(#${uid}-capInnerClip)`}>
           <use href={`#${uid}-cap`} fill={`url(#${uid}-tint)`} opacity="0.55" />
         </g>
+        {/* Fuellung und Kontur getrennt: die Kontur laeuft ueber die OFFENE
+            Fassung des Pfades, damit die Naht — die steckt im Koerper — nicht
+            als senkrechte Linie quer ueber der Kapsel steht. */}
         <use
           data-capsule-detail="cap"
           href={`#${uid}-cap`}
           fill={`url(#${uid}-depth)`}
+        />
+        <path
+          data-capsule-detail="cap-outline"
+          d={CAPSULE_CAP_OUTLINE_PATH}
+          fill="none"
           stroke="rgba(203,213,225,0.56)"
           strokeWidth="1.25"
           vectorEffect="non-scaling-stroke"
@@ -215,7 +224,7 @@ export function CapsuleVisual({
         />
         <path
           data-capsule-detail="cap-inner"
-          d={CAPSULE_CAP_INNER_PATH}
+          d={CAPSULE_CAP_INNER_OUTLINE_PATH}
           fill="none"
           stroke="rgba(226,232,240,0.34)"
           strokeWidth="0.9"

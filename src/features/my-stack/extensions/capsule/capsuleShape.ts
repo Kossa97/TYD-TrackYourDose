@@ -13,6 +13,19 @@ export const CAPSULE_SEAM_X = 130
 export const CAPSULE_CAP_PATH = 'M130 4 L42 4 C21 4 4 21 4 42 C4 63 21 80 42 80 L130 80 Z'
 export const CAPSULE_CAP_INNER_PATH = 'M127 7.5 L42 7.5 C23 7.5 7.5 23 7.5 42 C7.5 61 23 76.5 42 76.5 L127 76.5 Z'
 
+// Dieselben Kanten OHNE das schliessende `Z`.
+//
+// Die geschlossene Fassung braucht die Fuellung und der Clip. Wird sie aber
+// auch gestrichen, zeichnet das `Z` eine senkrechte Linie ueber die volle
+// Hoehe bei x = 130 — die offene Seite der Kappe, die in Wirklichkeit IM
+// Koerper steckt und nichts zu zeigen hat. Zusammen mit den beiden waagerechten
+// Kanten, die 4 Einheiten ausserhalb des Koerpers verlaufen (die Kappe ist
+// weiter, so steckt man eine Kapsel zusammen), ergab das ein Rechteck quer
+// ueber der linken Kapselhaelfte. Auf dem Farbschritt, wo das Objekt gross
+// steht, war es nicht zu uebersehen.
+export const CAPSULE_CAP_OUTLINE_PATH = 'M130 4 L42 4 C21 4 4 21 4 42 C4 63 21 80 42 80 L130 80'
+export const CAPSULE_CAP_INNER_OUTLINE_PATH = 'M127 7.5 L42 7.5 C23 7.5 7.5 23 7.5 42 C7.5 61 23 76.5 42 76.5 L127 76.5'
+
 // Dieselbe Innenkontur in objektbezogenen Einheiten (0…1 der viewBox). Nur so
 // kann sie auch die HTML-Beschriftung beschneiden — CSS clip-path kennt die
 // viewBox nicht, aber objectBoundingBox skaliert mit dem Element.

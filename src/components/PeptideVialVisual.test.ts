@@ -34,6 +34,34 @@ describe('PeptideVialVisual', () => {
     expect(html).toContain('5 mg / Vial')
   })
 
+  test('laesst die Mengenzeile weg, solange keine Menge eingetragen ist', () => {
+    // Hier stand ein Rueckfall auf „Wirkstoff / Vial": ein FELDNAME, fett und
+    // in Versalien auf dem Etikett, hartkodiert auf Deutsch in einer App, die
+    // auf Deutsch UND Englisch startet. Sichtbar ueberall, wo die Menge noch
+    // fehlt — unter anderem auf dem ganzen Farbschritt, der vor dem
+    // Staerke-Schritt kommt. Keine andere Form tut das.
+    const ohneMenge = renderToStaticMarkup(createElement(PeptideVialVisual, {
+      name: 'BPC-157',
+      amount: null,
+      unit: null,
+      fillPct: 75,
+      color: '#06b6d4',
+    }))
+
+    expect(ohneMenge).toContain('BPC-157')
+    expect(ohneMenge).not.toContain('Wirkstoff')
+    expect(ohneMenge).not.toContain('/ Vial')
+
+    // Und auch nicht in der Vorlesefassung — dort stand derselbe Feldname.
+    expect(ohneMenge).not.toMatch(/aria-label="[^"]*Wirkstoff/)
+
+    // Mit Menge bleibt die Zeile, wie sie war.
+    const mitMenge = renderToStaticMarkup(createElement(PeptideVialVisual, {
+      name: 'BPC-157', amount: '5', unit: 'mg', fillPct: 75, color: '#06b6d4',
+    }))
+    expect(mitMenge).toContain('5 mg / Vial')
+  })
+
   test('clamps liquid fill percentage into the visual range', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
       name: 'CJC-1295 DAC',
