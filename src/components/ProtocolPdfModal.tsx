@@ -297,44 +297,49 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
-        <div className={`lg:w-[380px] lg:shrink-0 overflow-y-auto px-5 py-4 space-y-5 ${isPage ? '' : 'max-h-[46vh] lg:max-h-none'}`}>
-          <p className="text-sm text-slate-400">{t.intro}</p>
-
-          <div>
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.presets}</p>
-              {activePreset === 'custom' && (
-                <span className="text-[0.7rem] font-medium text-slate-400">{t.custom}</span>
-              )}
-            </div>
-            <div className="grid grid-cols-1 gap-2">
-              {PRESETS.map(p => {
-                const active = activePreset === p.id
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    disabled={loading || !data}
-                    onClick={() => selectPreset(p.id)}
-                    className={`w-full rounded-xl border px-3 py-2.5 text-left transition-colors ${
-                      active
-                        ? 'border-sky-500/50 bg-sky-500/10'
-                        : 'border-slate-800 bg-slate-800/30 hover:border-slate-700'
-                    } disabled:opacity-50`}
-                  >
-                    <span className={`block text-sm font-semibold ${active ? 'text-sky-300' : 'text-slate-200'}`}>
-                      {p.label[lang]}
-                    </span>
-                    <span className="mt-0.5 block text-[0.72rem] leading-relaxed text-slate-500">
-                      {p.description[lang]}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
+        {/* Muster-Tabs + Inhalt darunter — mobil zuerst */}
+        <div className="shrink-0 px-4 pt-3 pb-2 border-b border-slate-800">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.presets}</p>
+            {activePreset === 'custom' && (
+              <span className="text-[0.7rem] font-medium text-amber-300/90">{t.custom}</span>
+            )}
           </div>
+          <div
+            className="grid grid-cols-3 gap-1 rounded-xl bg-slate-800/80 p-1"
+            role="tablist"
+            aria-label={t.presets}
+          >
+            {PRESETS.map(preset => {
+              const active = activePreset === preset.id
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  disabled={loading || !data}
+                  onClick={() => selectPreset(preset.id)}
+                  className={`rounded-lg px-2 py-2.5 text-center text-sm font-semibold transition-colors disabled:opacity-50 ${
+                    active
+                      ? 'bg-sky-500 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {preset.label[lang]}
+                </button>
+              )
+            })}
+          </div>
+          <p className="mt-2 text-[0.75rem] leading-relaxed text-slate-500">
+            {activePreset === 'custom'
+              ? t.intro
+              : (PRESETS.find(preset => preset.id === activePreset) ?? PRESETS[0]).description[lang]}
+          </p>
+        </div>
 
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
+          <div className={`lg:w-[380px] lg:shrink-0 overflow-y-auto px-4 py-4 space-y-4 ${isPage ? '' : 'max-h-[42vh] lg:max-h-none'}`}>
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.language}</span>
             <div className="flex gap-1 rounded-lg bg-slate-800 p-0.5">
