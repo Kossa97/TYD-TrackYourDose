@@ -467,7 +467,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
                 <Loader2 size={16} className="animate-spin" /> {t.loading}
               </div>
             ) : (
-              <div className="space-y-1">
+              <div className="grid grid-cols-2 gap-1.5">
                 {SECTIONS.map(s => {
                   const has = availability.get(s.id) ?? false
                   const checked = selected.has(s.id)
@@ -477,7 +477,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
                       type="button"
                       disabled={!has}
                       onClick={() => toggle(s.id)}
-                      className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                      className={`flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-colors ${
                         !has
                           ? 'border-slate-800/60 bg-slate-900/40 opacity-45 cursor-not-allowed'
                           : checked
@@ -496,10 +496,9 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
                           </svg>
                         )}
                       </span>
-                      <span className={`flex-1 text-sm font-medium ${has ? 'text-slate-200' : 'text-slate-500'}`}>
+                      <span className={`min-w-0 flex-1 break-words text-[0.8rem] font-medium leading-snug ${has ? 'text-slate-200' : 'text-slate-500'}`}>
                         {s.label[lang]}
                       </span>
-                      {!has && <span className="text-[0.7rem] text-slate-600">{t.empty}</span>}
                     </button>
                   )
                 })}
