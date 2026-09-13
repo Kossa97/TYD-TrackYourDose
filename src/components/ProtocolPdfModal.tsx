@@ -316,37 +316,44 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
 
         {/* Muster-Tabs + Inhalt darunter — mobil zuerst */}
         <div className={`shrink-0 border-b border-slate-800 ${isPage ? 'px-3 pt-2 pb-2' : 'px-4 pt-3 pb-2'}`}>
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.presets}</p>
-            {activePreset === 'custom' && (
-              <span className="text-[0.7rem] font-medium text-amber-300/90">{t.custom}</span>
-            )}
-          </div>
-          <div
-            className="grid grid-cols-3 gap-1 rounded-xl bg-slate-800/80 p-1"
-            role="tablist"
-            aria-label={t.presets}
-          >
-            {PRESETS.map(preset => {
-              const active = activePreset === preset.id
-              return (
-                <button
-                  key={preset.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  disabled={loading || !data}
-                  onClick={() => selectPreset(preset.id)}
-                  className={`rounded-lg px-2 py-2.5 text-center text-sm font-semibold transition-colors disabled:opacity-50 ${
-                    active
-                      ? 'bg-sky-500 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {preset.label[lang]}
-                </button>
-              )
-            })}
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{t.presets}</p>
+          <div className="rounded-xl bg-slate-800/80 p-1">
+            <div
+              className="grid grid-cols-3 gap-1"
+              role="tablist"
+              aria-label={t.presets}
+            >
+              {PRESETS.map(preset => {
+                const active = activePreset === preset.id
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    disabled={loading || !data}
+                    onClick={() => selectPreset(preset.id)}
+                    className={`rounded-lg px-2 py-2.5 text-center text-sm font-semibold transition-colors disabled:opacity-50 ${
+                      active
+                        ? 'bg-sky-500 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {preset.label[lang]}
+                  </button>
+                )
+              })}
+            </div>
+            <div
+              className={`mt-1 rounded-lg px-2 py-1.5 text-center text-[0.7rem] font-semibold tracking-wide transition-colors ${
+                activePreset === 'custom'
+                  ? 'bg-amber-500/15 text-amber-300'
+                  : 'text-slate-500'
+              }`}
+              aria-live="polite"
+            >
+              {t.custom}
+            </div>
           </div>
           <p className="mt-2 text-[0.75rem] leading-relaxed text-slate-500">
             {activePreset === 'custom'
