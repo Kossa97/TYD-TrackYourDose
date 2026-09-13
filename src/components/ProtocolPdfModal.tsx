@@ -159,11 +159,22 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
   const previewUrlRef = useRef<string | null>(null)
   const loadGenRef = useRef(0)
   const previewGenRef = useRef(0)
+  const sectionBtnRefs = useRef(new Map<SectionId, HTMLButtonElement>())
 
   // Sprache nur für Fehlermeldungen — nicht als load-Dependency, sonst setzt ein
   // Sprachwechsel die Häkchen-Auswahl durch einen Reload zurück.
   const langRef = useRef(lang)
   langRef.current = lang
+
+  const flashUnavailableSection = (id: SectionId) => {
+    const el = sectionBtnRefs.current.get(id)
+    if (el) {
+      el.classList.remove('pdf-section-deny')
+      // Reflow, damit ein erneuter Klick die Animation neu startet.
+      void el.offsetWidth
+      el.classList.add('pdf-section-deny')
+    }
+  }
 
   // Daten laden: Zeitraum debouncen, Prefs nur beim ersten Load anwenden.
   // Bei späteren Range-Änderungen Auswahl nur auf verfügbare Sektionen beschneiden
@@ -245,6 +256,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
     const section = SECTIONS.find(s => s.id === id)
     if (!section) return
     if (!(availability.get(id) ?? false)) {
+      flashUnavailableSection(id)
       toast(t.emptyClick(section.label[lang]), { duration: 2800 })
       return
     }
@@ -484,9 +496,18 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
                     <button
                       key={s.id}
                       type="button"
+                      ref={el => {
+                        if (el) sectionBtnRefs.current.set(s.id, el)
+                        else sectionBtnRefs.current.delete(s.id)
+                      }}
                       aria-disabled={!has}
                       title={!has ? t.emptyClick(s.label[lang]) : undefined}
                       onClick={() => toggle(s.id)}
+                      onAnimationEnd={e => {
+                        if (e.animationName === 'pdf-section-deny') {
+                          e.currentTarget.classList.remove('pdf-section-deny')
+                        }
+                      }}
                       className={`flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-colors ${
                         !has
                           ? 'border-slate-800/60 bg-slate-900/40 opacity-45'

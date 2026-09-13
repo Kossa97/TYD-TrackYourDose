@@ -1423,6 +1423,23 @@ main.flex-1 {
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes tydPulseSoft { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* Kurzer „geht nicht“-Hinweis: dezenter roter Rahmen + leichtes Wackeln */
+@keyframes pdf-section-deny {
+  0%, 100% { transform: translateX(0); }
+  16% { transform: translateX(-2.5px); }
+  32% { transform: translateX(2.5px); }
+  48% { transform: translateX(-1.5px); }
+  64% { transform: translateX(1.5px); }
+  80% { transform: translateX(-0.75px); }
+}
+.pdf-section-deny {
+  animation: pdf-section-deny 0.42s ease;
+  border-color: rgb(248 113 113 / 0.7) !important;
+  box-shadow: 0 0 0 1px rgb(248 113 113 / 0.28);
+  opacity: 0.85 !important;
+}
+
 .pulse-soft { animation: tydPulseSoft 1.2s ease-in-out infinite; }
 .motion-fade-up { animation: tydFadeUp var(--t-std) cubic-bezier(0.22,1,0.36,1) both; }
 .motion-press   { transition: transform var(--t-fast); }
