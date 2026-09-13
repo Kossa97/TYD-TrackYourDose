@@ -15,6 +15,8 @@ interface Props {
   onClose: () => void
   /** Optional: Demo/Preview ohne Supabase-Load (z. B. /__pdfpreview). */
   previewData?: ProtocolData
+  /** page = Vollseite im Layout statt Overlay-Modal. */
+  variant?: 'modal' | 'page'
 }
 
 type UILang = PdfLang
@@ -108,7 +110,8 @@ function restoreSelection(
   return { selected: new Set(restored), lang: prefs.lang }
 }
 
-export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previewData }: Props) {
+export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previewData, variant = 'modal' }: Props) {
+  const isPage = variant === 'page'
   const [lang, setLang] = useState<UILang>(() => {
     const prefs = loadPdfExportPrefs(userId)
     return prefs?.lang ?? initialLang(uiLang)
@@ -260,7 +263,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
         note,
         preset: activePreset,
       })
-      onClose()
+      if (!isPage) onClose()
     } catch {
       toast.error(t.genError)
     } finally {
@@ -272,13 +275,17 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center"
-      data-app-modal
-      onClick={onClose}
+      className={isPage
+        ? 'w-full flex flex-col min-h-[calc(100dvh-7rem)]'
+        : 'fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center'}
+      data-app-modal={isPage ? undefined : true}
+      onClick={isPage ? undefined : onClose}
     >
       <div
-        className="bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-5xl flex flex-col max-h-[94dvh] pt-[env(safe-area-inset-top)] sm:pt-0"
-        onClick={e => e.stopPropagation()}
+        className={isPage
+          ? 'bg-slate-900 rounded-2xl w-full flex flex-col flex-1 min-h-0 border border-slate-800'
+          : 'bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-5xl flex flex-col max-h-[94dvh] pt-[env(safe-area-inset-top)] sm:pt-0'}
+        onClick={isPage ? undefined : (e => e.stopPropagation())}
       >
         <div className="shrink-0 border-b border-slate-800 px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -291,7 +298,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
         </div>
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
-        <div className="lg:w-[380px] lg:shrink-0 overflow-y-auto px-5 py-4 space-y-5 max-h-[46vh] lg:max-h-none">
+        <div className={`lg:w-[380px] lg:shrink-0 overflow-y-auto px-5 py-4 space-y-5 ${isPage ? '' : 'max-h-[46vh] lg:max-h-none'}`}>
           <p className="text-sm text-slate-400">{t.intro}</p>
 
           <div>
@@ -434,7 +441,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
           )}
         </div>
 
-          <div className="flex-1 min-h-[38vh] lg:min-h-0 flex flex-col border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-950/40">
+          <div className={`flex-1 ${isPage ? 'min-h-[50vh]' : 'min-h-[38vh]'} lg:min-h-0 flex flex-col border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-950/40`}>
             <div className="shrink-0 px-4 py-2.5 flex items-center justify-between gap-2 border-b border-slate-800">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.livePreview}</p>
               {previewBusy && (

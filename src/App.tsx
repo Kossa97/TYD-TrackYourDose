@@ -29,6 +29,7 @@ const PeptideDetailPage = lazy(() => import('./pages/PeptideDetailPage').then(m 
 const AdminPanel = lazy(() => import('./pages/lab/AdminPanel').then(m => ({ default: m.AdminPanel })))
 const InjektionsTracker = lazy(() => import('./pages/InjektionsTracker').then(m => ({ default: m.InjektionsTracker })))
 const Progress = lazy(() => import('./pages/Progress').then(m => ({ default: m.Progress })))
+const PdfProtokoll = lazy(() => import('./pages/PdfProtokoll').then(m => ({ default: m.PdfProtokoll })))
 const Protokoll = lazy(() => import('./pages/Protokoll').then(m => ({ default: m.Protokoll })))
 const BlutspiegelSimulation = lazy(() => import('./pages/BlutspiegelSimulation').then(m => ({ default: m.BlutspiegelSimulation })))
 
@@ -74,7 +75,8 @@ export default function App() {
             <Route path="rechner" element={<LazyPage><Rechner /></LazyPage>} />
             <Route path="blutwerte" element={<LazyPage><Blutwerte /></LazyPage>} />
             <Route path="health" element={<LazyPage><Health /></LazyPage>} />
-            <Route path="protokoll" element={<LazyPage><Protokoll /></LazyPage>} />
+            <Route path="protokoll" element={<LazyPage><PdfProtokoll /></LazyPage>} />
+            <Route path="protokoll/analyse" element={<LazyPage><Protokoll /></LazyPage>} />
             <Route path="the-lab" element={<LazyPage><TheLab /></LazyPage>} />
             <Route path="tagebuch" element={<LazyPage><Tagebuch /></LazyPage>} />
             <Route path="bewertungen" element={<LazyPage><Bewertungen /></LazyPage>} />
