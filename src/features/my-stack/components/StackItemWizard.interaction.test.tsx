@@ -499,16 +499,23 @@ describe('StackItemWizard interactions', () => {
     // nur ueber das Kreuz, und dabei bleibt, was der Nutzer selbst gesetzt hat.
     const { onSave } = renderWizard()
     const input = screen.getByLabelText('my_stack_question') as HTMLInputElement
-    const category = screen.getByLabelText('my_stack_category') as HTMLSelectElement
+
+    // Vor der Wahl steht das Kategoriefeld da — es gilt der freien Eingabe.
+    expect(screen.getByLabelText('my_stack_category')).toBeTruthy()
 
     fireEvent.change(input, { target: { value: 'Vitamin' } })
     fireEvent.click(screen.getByRole('option', { name: /Vitamin D3/ }))
-    expect(category.value).toBe('vitamin')
+
+    // Nach der Wahl ist es verschwunden: der Katalogeintrag bringt seine
+    // Kategorie mit, und ein Pflichtfeld mit feststehender Antwort ist eines
+    // zu viel. Gesetzt ist sie trotzdem — das prueft der Speicheraufruf unten.
+    expect(screen.queryByLabelText('my_stack_category')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'my_stack_detach_catalog' }))
 
-    // Suchfeld wieder da, Name erhalten, Kategorie erhalten — nur die
-    // Verknuepfung ist weg, und zwar weil jemand darauf geklickt hat.
+    // Suchfeld wieder da, Name erhalten, Kategorie erhalten — und das
+    // Kategoriefeld auch, denn ohne Katalogeintrag wird es wieder gebraucht.
+    // Weg ist nur die Verknuepfung, und zwar weil jemand darauf geklickt hat.
     const wieder = screen.getByLabelText('my_stack_question') as HTMLInputElement
     expect(wieder.value).toBe('Vitamin D3')
     expect((screen.getByLabelText('my_stack_category') as HTMLSelectElement).value).toBe('vitamin')

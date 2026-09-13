@@ -2,11 +2,15 @@ import { AlertCircle, Check, Plus, Search, X } from 'lucide-react'
 import { useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { STACK_CATEGORIES } from '../lib/categories'
+import { SubstanceBrowser } from './SubstanceBrowser'
 import type { StackCategory, SubstanceCatalogEntry } from '../types'
 
 export interface SubstanceSearchProps {
   query: string
+  /** Die Treffer zur Eingabe. Leer, solange niemand tippt. */
   entries: SubstanceCatalogEntry[]
+  /** Der ganze Katalog — fuer das Blaettern, nicht fuer die Suche. */
+  allEntries?: SubstanceCatalogEntry[]
   category: StackCategory | null
   /** Der Katalogeintrag, an dem der Entwurf haengt — null bei freier Eingabe. */
   selectedEntry?: SubstanceCatalogEntry | null
@@ -23,6 +27,7 @@ export interface SubstanceSearchProps {
 export function SubstanceSearch({
   query,
   entries,
+  allEntries = [],
   category,
   selectedEntry = null,
   catalogUnavailable = false,
@@ -166,6 +171,13 @@ export function SubstanceSearch({
         </div>
       )}
 
+      {/* Blaettern statt tippen. Nur solange nichts gewaehlt und nichts
+          getippt ist: wer schon sucht, will Treffer sehen, keine Liste
+          daneben. */}
+      {!selectedEntry && !hasQuery && allEntries.length > 0 && (
+        <SubstanceBrowser entries={allEntries} onSelect={onSelect} />
+      )}
+
       {!selectedEntry && hasQuery && (
         <button
           type="button"
@@ -184,6 +196,11 @@ export function SubstanceSearch({
         </p>
       )}
 
+      {/* Das Kategoriefeld gilt nur der freien Eingabe. Ein Katalogeintrag
+          bringt seine Kategorie mit (`catalog_selected` setzt sie), und ein
+          Pflichtfeld, dessen Antwort schon feststeht, ist eines zu viel.
+          Sichtbar bleibt sie in der Zusammenfassung. */}
+      {!selectedEntry && (
       <div>
         <label htmlFor="stack-category" className="mb-2 block text-sm font-semibold text-slate-200">
           {t('my_stack_category', { defaultValue: 'Kategorie' })}
@@ -209,6 +226,7 @@ export function SubstanceSearch({
           </p>
         )}
       </div>
+      )}
     </div>
   )
 }

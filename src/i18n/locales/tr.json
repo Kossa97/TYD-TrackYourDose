@@ -1117,5 +1117,7 @@
   "my_stack_basis_value_solvent": "Çözücü",
   "my_stack_basis_unit_solvent": "Birim",
   "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
-  "my_stack_strength_hint_vial_solution": "Konsantrasyonu etikette yazdığı gibi gir. Örnek: 1 ml başına 250 mg. Flakonunda önce çözdüğün bir toz varsa kategori olarak “Peptit” seç — o zaman adım çözücüyü sorar. Doz önerisi değildir."
+  "my_stack_strength_hint_vial_solution": "Konsantrasyonu etikette yazdığı gibi gir. Örnek: 1 ml başına 250 mg. Flakonunda önce çözdüğün bir toz varsa kategori olarak “Peptit” seç — o zaman adım çözücüyü sorar. Doz önerisi değildir.",
+  "my_stack_browse_catalog": "Kataloğa göz at",
+  "my_stack_jump_to_letter": "{{letter}} harfine git"
 }

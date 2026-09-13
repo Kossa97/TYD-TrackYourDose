@@ -421,6 +421,7 @@ export function StackItemWizard({
           <SubstanceSearch
             query={state.draft.displayName}
             entries={matchingEntries}
+            allEntries={catalogEntries}
             category={state.draft.category}
             selectedEntry={selectedCatalogEntry ?? null}
             catalogUnavailable={catalogUnavailable}

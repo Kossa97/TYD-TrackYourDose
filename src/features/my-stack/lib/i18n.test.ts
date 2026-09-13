@@ -15,6 +15,8 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_question',
   'my_stack_search_placeholder',
   'my_stack_catalog_results',
+  'my_stack_browse_catalog',
+  'my_stack_jump_to_letter',
   'my_stack_catalog_unavailable',
   'my_stack_add_custom',
   'my_stack_category',
