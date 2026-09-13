@@ -28,6 +28,8 @@ interface PkProfileEmbed {
   half_life_hours: number
   tmax_hours: number
   bioavailability_sc: number
+  /** IU je Milligramm; null, wenn die Substanz nicht in IU dosiert wird. */
+  iu_per_mg: number | null
   category: string
 }
 
@@ -507,6 +509,7 @@ export function BlutspiegelCarousel() {
                   half_life_hours,
                   tmax_hours,
                   bioavailability_sc,
+                  iu_per_mg,
                   category
                 )
               )
@@ -549,6 +552,9 @@ export function BlutspiegelCarousel() {
           dose: schedule.dose,
           unit: schedule.unit,
           scheduledAt: schedule.scheduledAt,
+          // Ohne den Faktor faellt eine in IU geplante Einnahme hier durch
+          // und die Karte verschwindet wortlos aus dem Karussell.
+          iuPerMg: linked?.profile.iu_per_mg ?? null,
         })
         if (readiness.status === 'unsupported' || !cycle.stack_items) return null
         if (readiness.status === 'missing') {
@@ -569,6 +575,7 @@ export function BlutspiegelCarousel() {
           pk.half_life_hours,
           pk.tmax_hours,
           pk.bioavailability_sc,
+          pk.iu_per_mg,
         )
         return {
           kind: 'ready',

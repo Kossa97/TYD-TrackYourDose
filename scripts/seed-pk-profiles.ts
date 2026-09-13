@@ -26,6 +26,8 @@ interface PkSeed {
   tmax_hours: number;
   category: 'glp1' | 'peptide' | 'hormone' | 'sarm' | 'other';
   bioavailability_sc?: number;
+  /** IU je Milligramm. Nur fuer Substanzen, die in IU dosiert werden. */
+  iu_per_mg?: number;
   notes?: string;
 }
 
@@ -92,9 +94,9 @@ const PK_PROFILES: PkSeed[] = [
   { name: 'Testosterone Cypionate', aliases: ['Test C'], half_life_hours: 192, tmax_hours: 48, category: 'hormone',
     notes: 'HWZ ~8 Tage (IM-Depot). Quelle: FDA-Label Testosteron-Cypionat.' },
   { name: 'Testosterone Propionate', aliases: ['Test P'], half_life_hours: 20, tmax_hours: 12, category: 'hormone', notes: 'Kurzer Depotester, intramuskulaer. Die Halbwertszeit ist die der Freisetzung aus dem Oeldepot.' },
-  { name: 'HCG', aliases: ['Human Chorionic Gonadotropin'], half_life_hours: 36, tmax_hours: 6, category: 'hormone', notes: 'Subkutan oder intramuskulaer. Wird in IU dosiert — die Kurve rechnet derzeit nur mg und mcg um und bleibt deshalb leer.' },
+  { name: 'HCG', aliases: ['Human Chorionic Gonadotropin'], half_life_hours: 36, tmax_hours: 6, category: 'hormone', iu_per_mg: 10000, notes: 'Subkutan oder intramuskulaer. In IU dosiert: rund 10.000 IU je Milligramm — der Wert haengt an der Zubereitung, die Kurve ist dort eine Naeherung.' },
   { name: 'IGF-1 LR3', aliases: ['Long R3 IGF-1'], half_life_hours: 20, tmax_hours: 2, category: 'hormone', notes: 'Die Laenge der Halbwertszeit stammt aus der Bindung an Traegerproteine; Literaturwerte mit breiter Streuung. Subkutan.' },
-  { name: 'HGH', aliases: ['Somatropin', 'Human Growth Hormone'], half_life_hours: 3.8, tmax_hours: 3, category: 'hormone', notes: 'Subkutan. Wird in IU dosiert — die Kurve rechnet derzeit nur mg und mcg um und bleibt deshalb leer.' },
+  { name: 'HGH', aliases: ['Somatropin', 'Human Growth Hormone'], half_life_hours: 3.8, tmax_hours: 3, category: 'hormone', iu_per_mg: 3, notes: 'Subkutan. In IU dosiert: genau 3 IU je Milligramm (WHO-Standard fuer Somatropin).' },
 ];
 
 async function main() {
@@ -105,6 +107,7 @@ async function main() {
     tmax_hours: p.tmax_hours,
     category: p.category,
     bioavailability_sc: p.bioavailability_sc ?? 1.0,
+    iu_per_mg: p.iu_per_mg ?? null,
     vd_l_kg: 0.3,
     notes: p.notes ?? null,
   }));

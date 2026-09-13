@@ -38,7 +38,7 @@ function textArray(werte) {
 // gefundenen Eintraege zur Datei passt.
 function seedProfile() {
   const text = readFileSync('scripts/seed-pk-profiles.ts', 'utf8')
-  const muster = /\{\s*name: '([^']+)',\s*aliases: \[([^\]]*)\],\s*half_life_hours: ([\d.]+),\s*tmax_hours: ([\d.]+),\s*category: '([a-z0-9]+)'(?:,\s*bioavailability_sc: ([\d.]+))?(?:,\s*notes: '((?:[^'\\]|\\.)*)')?\s*\}/g
+  const muster = /\{\s*name: '([^']+)',\s*aliases: \[([^\]]*)\],\s*half_life_hours: ([\d.]+),\s*tmax_hours: ([\d.]+),\s*category: '([a-z0-9]+)'(?:,\s*bioavailability_sc: ([\d.]+))?(?:,\s*iu_per_mg: ([\d.]+))?(?:,\s*notes: '((?:[^'\\]|\\.)*)')?\s*\}/g
   const gefunden = []
   for (const treffer of text.matchAll(muster)) {
     gefunden.push({
@@ -48,7 +48,8 @@ function seedProfile() {
       tmax_hours: Number(treffer[4]),
       category: treffer[5],
       bioavailability_sc: treffer[6] === undefined ? 1 : Number(treffer[6]),
-      notes: treffer[7] === undefined ? null : treffer[7].replace(/\\'/g, "'"),
+      iu_per_mg: treffer[7] === undefined ? null : Number(treffer[7]),
+      notes: treffer[8] === undefined ? null : treffer[8].replace(/\\'/g, "'"),
     })
   }
   return gefunden
@@ -60,7 +61,8 @@ const alleProfile = [...SEED_PROFILE, ...PK_PROFILE_ERWEITERUNG]
 
 const zeilen = alleProfile.map(p => (
   `    (${quote(p.name)}, ${textArray(p.aliases)}, ${p.half_life_hours}, ${p.tmax_hours}, `
-  + `${p.bioavailability_sc}, ${quote(p.category)}, ${p.notes === null ? 'null' : quote(p.notes)})`
+  + `${p.bioavailability_sc}, ${p.iu_per_mg == null ? 'null' : p.iu_per_mg}, `
+  + `${quote(p.category)}, ${p.notes === null ? 'null' : quote(p.notes)})`
 )).join(',\n')
 
 const sql = `-- GENERIERT von scripts/generate-pk-profiles-sql.mjs.
@@ -75,20 +77,21 @@ const sql = `-- GENERIERT von scripts/generate-pk-profiles-sql.mjs.
 
 begin;
 
-with quelle (name, aliases, half_life_hours, tmax_hours, bioavailability_sc, category, notes) as (
+with quelle (name, aliases, half_life_hours, tmax_hours, bioavailability_sc, iu_per_mg, category, notes) as (
   values
 ${zeilen}
 )
 insert into public.pk_profiles as ziel (
-  name, aliases, half_life_hours, tmax_hours, bioavailability_sc, vd_l_kg, category, notes
+  name, aliases, half_life_hours, tmax_hours, bioavailability_sc, iu_per_mg, vd_l_kg, category, notes
 )
-select name, aliases, half_life_hours, tmax_hours, bioavailability_sc, 0.3, category, notes
+select name, aliases, half_life_hours, tmax_hours, bioavailability_sc, iu_per_mg, 0.3, category, notes
 from quelle
 on conflict (name) do update set
   aliases = excluded.aliases,
   half_life_hours = excluded.half_life_hours,
   tmax_hours = excluded.tmax_hours,
   bioavailability_sc = excluded.bioavailability_sc,
+  iu_per_mg = excluded.iu_per_mg,
   category = excluded.category,
   notes = excluded.notes,
   updated_at = now();

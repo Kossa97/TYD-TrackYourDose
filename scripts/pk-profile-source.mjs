@@ -36,6 +36,10 @@
  *   bioavailability_sc  Peak-Skalierung: 1.0 = voll, <1 = oraler Verlust
  *   category            'other' fuer Medikamente und Supplemente, sonst 'hormone'
  *   notes               Belastbarkeit der Zahlen — ehrlich, nicht werbend
+ *
+ * Keines dieser Profile traegt `iu_per_mg`: alle werden in mg oder mcg
+ * dosiert. Den Faktor brauchen nur HCG und HGH, und die stehen im aelteren
+ * Seed.
  */
 
 /** @typedef {{ name: string, aliases: string[], half_life_hours: number, tmax_hours: number, bioavailability_sc: number, category: string, notes: string }} PkSeed */

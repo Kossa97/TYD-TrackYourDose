@@ -60,6 +60,7 @@ export interface StackItemWizardProps {
 function pkIntentSteps(
   item: StackItem,
   plan: StackItemSetupDraft['plan'] | undefined,
+  iuPerMg: number | null = null,
 ): WizardStep[] {
   const steps: WizardStep[] = []
   if (item.tracking_level !== 'complete') steps.push('tracking_level')
@@ -82,7 +83,7 @@ function pkIntentSteps(
     || plan?.dose == null
     || !plan.unit?.trim()
     || !plan.time?.trim()
-    || (plan.dose != null && plan.unit != null && toPkMilligrams(plan.dose, plan.unit) == null)
+    || (plan.dose != null && plan.unit != null && toPkMilligrams(plan.dose, plan.unit, iuPerMg) == null)
   if (planNeedsAttention) steps.push('plan')
   return steps.length ? steps : ['plan']
 }

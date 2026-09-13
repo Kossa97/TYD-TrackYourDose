@@ -23,6 +23,8 @@ export interface PkReadinessInput {
   dose: number | null
   unit: string | null
   scheduledAt: string | null
+  /** IU je Milligramm aus dem PK-Profil; null, wenn die Substanz keinen hat. */
+  iuPerMg?: number | null
 }
 
 export type PkScheduleCycle = ScheduleCycle & { method: string | null }
@@ -36,11 +38,32 @@ function normalizedText(value: string | null): string {
   return value?.trim().toLocaleLowerCase() ?? ''
 }
 
-export function toPkMilligrams(value: number, unit: string): number | null {
+/**
+ * Rechnet eine geplante Menge in Milligramm um — die Waehrung, in der die
+ * Blutspiegelkurve rechnet.
+ *
+ * `mg` und `mcg` gehen immer. **IU geht nur mit Faktor**, denn eine
+ * Internationale Einheit ist keine Masse, sondern eine biologische Wirkstaerke:
+ * ein Milligramm HGH sind 3 IU, ein Milligramm HCG rund 10.000. Der Faktor
+ * gehoert deshalb zur Substanz und steht im PK-Profil (`iu_per_mg`), nicht hier.
+ *
+ * Ohne Faktor bleibt es bei `null` — und `null` heisst „koennen wir nicht
+ * umrechnen", nicht „hat der Nutzer vergessen". Wer das verwechselt, laesst
+ * eine Substanz aus der Kurve verschwinden, ohne zu sagen warum.
+ */
+export function toPkMilligrams(
+  value: number,
+  unit: string,
+  iuPerMg: number | null = null,
+): number | null {
   if (!Number.isFinite(value)) return null
   const normalizedUnit = unit.trim().toLocaleLowerCase()
   if (normalizedUnit === 'mg') return value
   if (normalizedUnit === 'mcg') return value / 1000
+  if (normalizedUnit === 'iu') {
+    if (iuPerMg == null || !Number.isFinite(iuPerMg) || iuPerMg <= 0) return null
+    return value / iuPerMg
+  }
   return null
 }
 
@@ -74,7 +97,7 @@ export function evaluatePkReadiness(input: PkReadinessInput): PkReadiness {
   if (!input.scheduledAt?.trim()) missing.push('time')
 
   if (missing.length) return { status: 'missing', missing }
-  if (toPkMilligrams(input.dose!, input.unit!) == null) {
+  if (toPkMilligrams(input.dose!, input.unit!, input.iuPerMg ?? null) == null) {
     return { status: 'unsupported', reason: 'unit_conversion' }
   }
 

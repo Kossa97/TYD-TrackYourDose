@@ -74,10 +74,36 @@ describe('evaluatePkReadiness', () => {
 })
 
 describe('toPkMilligrams', () => {
-  it('normalizes only mg and mcg', () => {
+  it('normalizes mg and mcg without help', () => {
     expect(toPkMilligrams(1, 'mg')).toBe(1)
     expect(toPkMilligrams(1000, 'mcg')).toBe(1)
+  })
+
+  it('rechnet IU um, sobald die Substanz ihren Faktor mitbringt', () => {
+    // Eine Internationale Einheit ist keine Masse, sondern eine biologische
+    // Wirkstaerke — der Faktor haengt an der Substanz. HGH: 3 IU je mg.
+    expect(toPkMilligrams(6, 'IU', 3)).toBe(2)
+    // HCG: rund 10.000 IU je mg.
+    expect(toPkMilligrams(5000, 'IU', 10000)).toBe(0.5)
+    expect(toPkMilligrams(5000, 'iu', 10000)).toBe(0.5)
+  })
+
+  it('bleibt bei null, solange kein brauchbarer Faktor dasteht', () => {
+    // Vor dieser Runde fielen HCG und HGH genau hier durch — mit dem
+    // Unterschied, dass es gar keinen Faktor geben konnte.
     expect(toPkMilligrams(5000, 'IU')).toBeNull()
+    expect(toPkMilligrams(5000, 'IU', null)).toBeNull()
+    expect(toPkMilligrams(5000, 'IU', 0)).toBeNull()
+    expect(toPkMilligrams(5000, 'IU', -3)).toBeNull()
+    expect(toPkMilligrams(5000, 'IU', Number.NaN)).toBeNull()
+  })
+
+  it('laesst einen Faktor Einheiten unberuehrt, die keine IU sind', () => {
+    // Der Faktor gilt der Umrechnung von IU. Auf ml oder Kapseln angewendet
+    // waere er eine erfundene Masse.
+    expect(toPkMilligrams(2, 'ml', 10000)).toBeNull()
+    expect(toPkMilligrams(1, 'capsule', 3)).toBeNull()
+    expect(toPkMilligrams(1, 'mg', 3)).toBe(1)
   })
 })
 

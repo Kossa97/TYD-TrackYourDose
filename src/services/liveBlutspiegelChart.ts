@@ -57,6 +57,7 @@ interface PkRow {
   half_life_hours: number
   tmax_hours: number
   bioavailability_sc: number
+  iu_per_mg: number | null
   category: string
 }
 
@@ -114,7 +115,7 @@ export async function loadAllCycleChartData(userId: string): Promise<CycleChartD
         stack_items ( id, display_name, tracking_level, pk_profile_method,
           ingredients:stack_item_ingredients ( position,
             substance_catalog ( pk_profile_id,
-              pk_profiles ( half_life_hours, tmax_hours, bioavailability_sc, category )
+              pk_profiles ( half_life_hours, tmax_hours, bioavailability_sc, iu_per_mg, category )
             )
           )
         )`)
@@ -160,6 +161,7 @@ export async function loadAllCycleChartData(userId: string): Promise<CycleChartD
         pk.bioavailability_sc,
         15,
         interruptedAt ? new Date(interruptedAt) : null,
+        pk.iu_per_mg,
       )
       const points: ChartPoint[] = curveRaw.map(p => ({
         timestamp: p.time.getTime(),
