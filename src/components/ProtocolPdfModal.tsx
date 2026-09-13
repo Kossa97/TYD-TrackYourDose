@@ -159,8 +159,9 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
   const previewUrlRef = useRef<string | null>(null)
   const loadGenRef = useRef(0)
   const previewGenRef = useRef(0)
-  const sectionBtnRefs = useRef(new Map<SectionId, HTMLButtonElement>())
-  const denyFlashTimers = useRef(new Map<SectionId, number>())
+  const denyFlashTimer = useRef<number | null>(null)
+  const [denyFlashId, setDenyFlashId] = useState<SectionId | null>(null)
+  const [denyFlashKey, setDenyFlashKey] = useState(0)
 
   // Sprache nur für Fehlermeldungen — nicht als load-Dependency, sonst setzt ein
   // Sprachwechsel die Häkchen-Auswahl durch einen Reload zurück.
@@ -168,22 +169,14 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
   langRef.current = lang
 
   const flashUnavailableSection = (id: SectionId) => {
-    const el = sectionBtnRefs.current.get(id)
-    if (!el) return
-    const prev = denyFlashTimers.current.get(id)
-    if (prev) window.clearTimeout(prev)
-    el.classList.remove('pdf-section-deny')
-    // Reflow, damit ein erneuter Klick die Animation neu startet.
-    void el.offsetWidth
-    el.classList.add('pdf-section-deny')
-    // Timeout statt nur animationend: Rahmen bleibt auch bei reduced-motion sichtbar.
-    denyFlashTimers.current.set(
-      id,
-      window.setTimeout(() => {
-        el.classList.remove('pdf-section-deny')
-        denyFlashTimers.current.delete(id)
-      }, 480),
-    )
+    // State-gesteuert: imperative classList wird von React-className beim Toast-Re-Render gelöscht.
+    if (denyFlashTimer.current) window.clearTimeout(denyFlashTimer.current)
+    setDenyFlashId(id)
+    setDenyFlashKey(k => k + 1)
+    denyFlashTimer.current = window.setTimeout(() => {
+      setDenyFlashId(null)
+      denyFlashTimer.current = null
+    }, 480)
   }
 
   // Daten laden: Zeitraum debouncen, Prefs nur beim ersten Load anwenden.
@@ -504,12 +497,8 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
                   const checked = selected.has(s.id)
                   return (
                     <button
-                      key={s.id}
+                      key={denyFlashId === s.id ? `${s.id}-deny-${denyFlashKey}` : s.id}
                       type="button"
-                      ref={el => {
-                        if (el) sectionBtnRefs.current.set(s.id, el)
-                        else sectionBtnRefs.current.delete(s.id)
-                      }}
                       aria-disabled={!has}
                       title={!has ? t.emptyClick(s.label[lang]) : undefined}
                       onClick={() => toggle(s.id)}
@@ -519,7 +508,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
                           : checked
                             ? 'border-sky-500/40 bg-sky-500/10'
                             : 'border-slate-800 bg-slate-800/30 hover:border-slate-700'
-                      }`}
+                      } ${denyFlashId === s.id ? 'pdf-section-deny' : ''}`}
                     >
                       <span
                         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
