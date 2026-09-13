@@ -1423,6 +1423,36 @@ main.flex-1 {
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes tydPulseSoft { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* Kurzer „geht nicht“-Hinweis: dezenter roter Rahmen + leichtes Wackeln */
+@keyframes pdf-section-deny {
+  0%, 100% { transform: translateX(0); }
+  16% { transform: translateX(-3px); }
+  32% { transform: translateX(3px); }
+  48% { transform: translateX(-2px); }
+  64% { transform: translateX(2px); }
+  80% { transform: translateX(-1px); }
+}
+.pdf-section-deny {
+  /* outline statt border-color: kämpft nicht mit Tailwind-Border-Utilities */
+  outline: 1px solid rgb(248 113 113 / 0.75);
+  outline-offset: 0;
+  box-shadow: 0 0 0 1px rgb(248 113 113 / 0.3);
+  opacity: 0.9 !important;
+  animation-name: pdf-section-deny;
+  animation-duration: 0.48s;
+  animation-timing-function: ease;
+  animation-iteration-count: 1;
+}
+
+/* Gegen globales prefers-reduced-motion: * { animation-duration: 0.001ms } —
+   Shake nur wenn Motion erlaubt; Rahmen bleibt über die Klasse sichtbar. */
+@media (prefers-reduced-motion: no-preference) {
+  .pdf-section-deny {
+    animation-duration: 0.48s !important;
+  }
+}
+
 .pulse-soft { animation: tydPulseSoft 1.2s ease-in-out infinite; }
 .motion-fade-up { animation: tydFadeUp var(--t-std) cubic-bezier(0.22,1,0.36,1) both; }
 .motion-press   { transition: transform var(--t-fast); }
@@ -1448,6 +1478,11 @@ main.flex-1 {
   .injection-map-pulse {
     animation: none !important;
     transition: none !important;
+  }
+
+  /* Roter Rahmen bleibt sichtbar; nur das Wackeln entfällt */
+  .pdf-section-deny {
+    animation: none !important;
   }
 }
 
