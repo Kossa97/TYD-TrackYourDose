@@ -99,8 +99,8 @@ export const SUBSTANCE_CATALOG = [
   // Der Anfang; Welle 2 fuellt hier je Darreichungsform auf.
   { name: 'Vitamin D3', aliases: ['Cholecalciferol', 'Colecalciferol'], category: 'vitamin', dosageForms: ['capsule', 'drops', 'tablet', 'spray'], units: ['IU', 'mcg'], pkProfile: null },
   { name: 'Vitamin K2', aliases: ['Menachinon-7', 'MK-7', 'Menaquinon'], category: 'vitamin', dosageForms: ['capsule', 'drops', 'tablet'], units: ['mcg'], pkProfile: null },
-  { name: 'Magnesium', aliases: ['Magnesiumcitrat', 'Magnesium citrate'], category: 'supplement', dosageForms: ['capsule', 'tablet', 'powder'], units: ['mg'], pkProfile: null },
-  { name: 'Omega-3', aliases: ['Omega 3', 'Fischöl', 'Fish oil', 'EPA/DHA'], category: 'supplement', dosageForms: ['capsule'], units: ['mg', 'g'], pkProfile: null },
+  { name: 'Magnesium', aliases: ['Magnesiumcitrat', 'Magnesium citrate', 'Magnesiumöl'], category: 'supplement', dosageForms: ['capsule', 'tablet', 'powder', 'spray', 'drops'], units: ['mg'], pkProfile: null },
+  { name: 'Omega-3', aliases: ['Omega 3', 'Fischöl', 'Fish oil', 'EPA/DHA'], category: 'supplement', dosageForms: ['capsule', 'drops'], units: ['mg', 'g'], pkProfile: null },
   { name: 'Creatin', aliases: ['Kreatin', 'Creatine', 'Creatin-Monohydrat'], category: 'supplement', dosageForms: ['powder', 'capsule', 'tablet'], units: ['g', 'mg'], pkProfile: null },
   { name: 'Metformin', aliases: ['Metformin HCl', 'Glucophage'], category: 'medication', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: 'Metformin' },
   { name: 'Melatonin', aliases: [], category: 'supplement', dosageForms: ['tablet', 'capsule', 'drops', 'spray'], units: ['mg', 'mcg'], pkProfile: 'Melatonin' },
@@ -123,7 +123,7 @@ export const SUBSTANCE_CATALOG = [
   // Als 'supplement' gefuehrt: eine eigene Kategorie „Mineral" braeuchte eine
   // eigene Regel und bekaeme keine — Zink verhaelt sich in einer Kapsel
   // genau wie Magnesium.
-  { name: 'Zink', aliases: ['Zinc', 'Zinkgluconat', 'Zinkbisglycinat', 'Zinkpicolinat'], category: 'supplement', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Zink', aliases: ['Zinc', 'Zinkgluconat', 'Zinkbisglycinat', 'Zinkpicolinat'], category: 'supplement', dosageForms: ['tablet', 'capsule', 'drops'], units: ['mg'], pkProfile: null },
   { name: 'Eisen', aliases: ['Ferrum', 'Iron', 'Eisenbisglycinat', 'Eisensulfat'], category: 'supplement', dosageForms: ['tablet', 'capsule', 'drops'], units: ['mg'], pkProfile: null },
   { name: 'Calcium', aliases: ['Kalzium', 'Calciumcitrat', 'Calciumcarbonat'], category: 'supplement', dosageForms: ['tablet', 'capsule', 'powder'], units: ['mg'], pkProfile: null },
   { name: 'Kalium', aliases: ['Potassium', 'Kaliumcitrat'], category: 'supplement', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: null },
@@ -167,7 +167,7 @@ export const SUBSTANCE_CATALOG = [
   // ── Welle 2a: Medikamente ────────────────────────────────────────────
   // Nur Namen und uebliche Formen. Keine Dosierung, keine Indikation — was
   // jemand verschrieben bekommt, steht auf seiner Packung, nicht hier.
-  { name: 'Ibuprofen', aliases: ['Nurofen'], category: 'medication', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: 'Ibuprofen' },
+  { name: 'Ibuprofen', aliases: ['Nurofen'], category: 'medication', dosageForms: ['tablet', 'capsule', 'gel', 'tube'], units: ['mg'], pkProfile: 'Ibuprofen' },
   { name: 'Paracetamol', aliases: ['Acetaminophen', 'Ben-u-ron'], category: 'medication', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: 'Paracetamol' },
   { name: 'Acetylsalicylsäure', aliases: ['ASS', 'Aspirin'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: 'Acetylsalicylsäure' },
   { name: 'Pantoprazol', aliases: ['Pantoprazole', 'Pantozol'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: 'Pantoprazol' },
@@ -210,5 +210,61 @@ export const SUBSTANCE_CATALOG = [
   { name: 'DHEA', aliases: ['Dehydroepiandrosteron', 'Prasteron'], category: 'hormone', dosageForms: ['capsule', 'tablet'], units: ['mg'], pkProfile: 'DHEA' },
   { name: 'Pregnenolon', aliases: ['Pregnenolone'], category: 'hormone', dosageForms: ['capsule', 'tablet'], units: ['mg'], pkProfile: 'Pregnenolon' },
   { name: 'Östradiol', aliases: ['Estradiol', 'Oestradiol', 'Estrogel'], category: 'hormone', dosageForms: ['tablet', 'gel', 'patch'], units: ['mg', 'mcg'], pkProfile: 'Östradiol' },
-  { name: 'Progesteron', aliases: ['Progesterone', 'Utrogest'], category: 'hormone', dosageForms: ['capsule', 'tablet'], units: ['mg'], pkProfile: 'Progesteron' },
+  { name: 'Progesteron', aliases: ['Progesterone', 'Utrogest'], category: 'hormone', dosageForms: ['capsule', 'tablet', 'gel', 'tube'], units: ['mg'], pkProfile: 'Progesteron' },
+  // ── Welle 2b: topisch, Pflaster, Spray, Tropfen ──────────────────────
+  // Die duennen Formen. Kein Eintrag hier traegt ein PK-Profil: die Kurve
+  // rechnet mit einem Bolus, der aufgenommen und ausgeschieden wird. Ein
+  // 24-Stunden-Pflaster ist aber eine Dauerinfusion, und eine Salbe wirkt
+  // vor Ort statt im Blut. Dafuer braeuchte es ein anderes Modell.
+
+  // Schmerz und Entzuendung, aeusserlich
+  { name: 'Diclofenac', aliases: ['Voltaren', 'Diclo'], category: 'medication', dosageForms: ['gel', 'tube', 'tablet', 'patch'], units: ['mg'], pkProfile: null },
+  { name: 'Ketoprofen', aliases: ['Gabrilen'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Heparin', aliases: ['Heparin-Salbe', 'Heparinoid'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Lidocain', aliases: ['Lidocaine', 'Xylocain'], category: 'medication', dosageForms: ['gel', 'tube', 'spray', 'patch'], units: ['mg'], pkProfile: null },
+  { name: 'Capsaicin', aliases: ['Cayennepfeffer-Extrakt'], category: 'medication', dosageForms: ['gel', 'tube', 'patch'], units: ['mg'], pkProfile: null },
+
+  // Haut
+  { name: 'Hydrocortison', aliases: ['Hydrocortisone'], category: 'medication', dosageForms: ['gel', 'tube', 'tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Mometason', aliases: ['Mometasone', 'Nasonex'], category: 'medication', dosageForms: ['gel', 'tube', 'nasal_spray'], units: ['mcg', 'mg'], pkProfile: null },
+  { name: 'Betamethason', aliases: ['Betamethasone'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Tretinoin', aliases: ['Vitamin-A-Säure', 'Retinsäure'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Adapalen', aliases: ['Adapalene', 'Differin'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Benzoylperoxid', aliases: ['BPO', 'Benzoyl peroxide'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Azelainsäure', aliases: ['Azelaic acid', 'Skinoren'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Clotrimazol', aliases: ['Clotrimazole', 'Canesten'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Tacrolimus', aliases: ['Protopic'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Minoxidil', aliases: ['Regaine', 'Rogaine'], category: 'medication', dosageForms: ['spray', 'drops', 'gel', 'tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Dexpanthenol', aliases: ['Bepanthen', 'Panthenol'], category: 'medication', dosageForms: ['gel', 'tube', 'drops'], units: ['mg'], pkProfile: null },
+  { name: 'Zinkoxid', aliases: ['Zinksalbe', 'Zinc oxide'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
+
+  // Pflanzlich, aeusserlich
+  { name: 'Arnika', aliases: ['Arnica montana', 'Bergwohlverleih'], category: 'supplement', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Beinwell', aliases: ['Symphytum', 'Wallwurz'], category: 'supplement', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Aloe Vera', aliases: ['Aloe'], category: 'supplement', dosageForms: ['gel', 'tube', 'drops'], units: ['mg', 'g'], pkProfile: null },
+  { name: 'Kamille', aliases: ['Matricaria', 'Chamomilla'], category: 'supplement', dosageForms: ['drops', 'gel', 'tube'], units: ['mg'], pkProfile: null },
+
+  // Pflaster
+  { name: 'Nikotin', aliases: ['Nicotine', 'Nicorette', 'Nikotinersatz'], category: 'medication', dosageForms: ['patch', 'spray'], units: ['mg'], pkProfile: null },
+  { name: 'Fentanyl', aliases: ['Durogesic'], category: 'medication', dosageForms: ['patch'], units: ['mcg'], pkProfile: null },
+  { name: 'Buprenorphin', aliases: ['Buprenorphine', 'Transtec', 'Norspan'], category: 'medication', dosageForms: ['patch', 'tablet'], units: ['mcg', 'mg'], pkProfile: null },
+  { name: 'Scopolamin', aliases: ['Scopoderm', 'Hyoscin'], category: 'medication', dosageForms: ['patch'], units: ['mg'], pkProfile: null },
+  { name: 'Rivastigmin', aliases: ['Rivastigmine', 'Exelon'], category: 'medication', dosageForms: ['patch', 'capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Rotigotin', aliases: ['Rotigotine', 'Neupro'], category: 'medication', dosageForms: ['patch'], units: ['mg'], pkProfile: null },
+
+  // Spray und Nasenspray
+  { name: 'Xylometazolin', aliases: ['Xylometazoline', 'Otriven', 'Olynth'], category: 'medication', dosageForms: ['nasal_spray'], units: ['mg', 'mcg'], pkProfile: null },
+  { name: 'Oxymetazolin', aliases: ['Oxymetazoline', 'Nasivin'], category: 'medication', dosageForms: ['nasal_spray'], units: ['mg', 'mcg'], pkProfile: null },
+  { name: 'Fluticason', aliases: ['Fluticasone', 'Flutide', 'Avamys'], category: 'medication', dosageForms: ['nasal_spray', 'spray'], units: ['mcg'], pkProfile: null },
+  { name: 'Azelastin', aliases: ['Azelastine', 'Vividrin'], category: 'medication', dosageForms: ['nasal_spray', 'drops'], units: ['mcg', 'mg'], pkProfile: null },
+  { name: 'Budesonid', aliases: ['Budesonide', 'Pulmicort'], category: 'medication', dosageForms: ['spray', 'nasal_spray', 'capsule'], units: ['mcg'], pkProfile: null },
+  { name: 'Salbutamol', aliases: ['Albuterol', 'Sultanol', 'Ventolin'], category: 'medication', dosageForms: ['spray'], units: ['mcg'], pkProfile: null },
+  { name: 'Glyceroltrinitrat', aliases: ['Nitroglycerin', 'Nitrolingual', 'GTN'], category: 'medication', dosageForms: ['spray', 'patch'], units: ['mg'], pkProfile: null },
+
+  // Tropfen
+  { name: 'CBD', aliases: ['Cannabidiol', 'CBD-Öl'], category: 'supplement', dosageForms: ['drops', 'capsule', 'spray'], units: ['mg'], pkProfile: null },
+  { name: 'Hyaluronsäure', aliases: ['Hyaluronic acid', 'Hyaluron'], category: 'supplement', dosageForms: ['drops', 'capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Propolis', aliases: ['Bienenharz'], category: 'supplement', dosageForms: ['drops', 'spray', 'capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Ginseng', aliases: ['Panax ginseng', 'Roter Ginseng'], category: 'supplement', dosageForms: ['capsule', 'drops', 'tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Echinacea', aliases: ['Sonnenhut'], category: 'supplement', dosageForms: ['drops', 'tablet', 'capsule'], units: ['mg'], pkProfile: null },
 ]

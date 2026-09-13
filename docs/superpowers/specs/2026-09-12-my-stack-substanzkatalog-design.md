@@ -270,3 +270,52 @@ Begründung.
 
 **Gemessen nach dem Lauf:** 93 Profile, **0 ohne Notiz**, 0 unplausible Werte,
 143 Substanzen, 93 verknüpft.
+
+
+---
+
+## Welle 2b — die dünnen Formen, eingespielt am 2026-09-13
+
+Nach Welle 2a war die Abdeckung schief: Tablette 84 und Kapsel 76 gegen Gel 3,
+Spray 3, Pflaster 2, Tube 2. Für die halbe Formliste ließ sich praktisch nichts
+anlegen, ohne den Namen selbst zu tippen.
+
+**39 neue Substanzen** — topische Schmerz- und Hautmittel (Diclofenac,
+Ketoprofen, Heparin, Lidocain, Capsaicin, Hydrocortison, Mometason,
+Betamethason, Tretinoin, Adapalen, Benzoylperoxid, Azelainsäure, Clotrimazol,
+Tacrolimus, Minoxidil, Dexpanthenol, Zinkoxid), pflanzliche Salben (Arnika,
+Beinwell, Aloe Vera, Kamille), Pflaster (Nikotin, Fentanyl, Buprenorphin,
+Scopolamin, Rivastigmin, Rotigotin), Sprays und Nasensprays (Xylometazolin,
+Oxymetazolin, Fluticason, Azelastin, Budesonid, Salbutamol,
+Glyceroltrinitrat) und Tropfen (CBD, Hyaluronsäure, Propolis, Ginseng,
+Echinacea).
+
+**Und fünf bestehende Einträge wurden verbreitert.** Das war der weniger
+offensichtliche Teil: Ibuprofen gibt es auch als Gel, Magnesium als Spray und
+Tropfen, Zink und Omega-3 als Tropfen, Progesteron als Creme. Der Upsert
+ersetzt `suggested_dosage_forms`, also genügte dieselbe Migration — eine Zeile
+muss nicht neu sein, um zu wachsen.
+
+### Keine PK-Profile in dieser Welle
+
+Kein Eintrag aus 2b bekam eines, und das ist kein Vergessen. Die Kurve rechnet
+mit einem **Bolus**, der aufgenommen und ausgeschieden wird. Ein
+24-Stunden-Pflaster ist aber eine Dauerinfusion, und eine Salbe wirkt vor Ort
+statt im Blut. Für beides bräuchte es ein anderes Modell — mit dem
+vorhandenen wären die Kurven rechenbar und falsch.
+
+### Gemessen nach dem Lauf
+
+| | vorher | nachher |
+|---|---|---|
+| Substanzen | 143 | **182** |
+| doppelte Namen | 0 | **0** |
+| verwaiste Katalogverweise | 0 | **0** |
+
+Abdeckung je Darreichungsform: Tablette 90 · Kapsel 83 · Vial 42 · Tropfen 26 ·
+Gel 26 · Tube 24 · Pulver 17 · Nasenspray 14 · Spray 13 · Pflaster 12 · Pen 11 ·
+Ampulle 7.
+
+**Die dünnste Form ist jetzt die Ampulle mit 7** — und das ist in Ordnung: in
+Ampullen kommt wenig, was man dauerhaft trackt. Die Lückenanzeige im
+Vertragstest bleibt grün.
