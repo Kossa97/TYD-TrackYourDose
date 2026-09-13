@@ -30,8 +30,8 @@ function makeData(overrides: Partial<ProtocolData> = {}): ProtocolData {
       { stack_item_name: 'BPC-157', rating: 5, experience: 'gut' },
     ],
     dailyLogs: [
-      { log_date: '2026-06-01', energie: 6, schlaf: 7, libido: 5 },
-      { log_date: '2026-06-15', energie: 8, schlaf: 8, libido: 7 },
+      { log_date: '2026-06-01', energie: 6, schlaf: 7, wohlbefinden: 6, libido: 5 },
+      { log_date: '2026-06-15', energie: 8, schlaf: 8, wohlbefinden: 7, libido: 7 },
     ],
     stackItemNames: new Map([['p1', 'BPC-157']]),
     ...overrides,
@@ -79,6 +79,59 @@ describe('defaultSelection', () => {
     expect(sel).toContain('bloodwork')
     expect(sel).toContain('weight')
     expect(sel).not.toContain('notes')
+  })
+})
+
+/** Ein Jahr taeglicher Wohlbefinden-Eintraege, wie auf dem Testaccount. */
+function jahrDailyLogs(): ProtocolData['dailyLogs'] {
+  const basis = Date.UTC(2026, 0, 1)
+  return Array.from({ length: 365 }, (_, i) => ({
+    log_date: new Date(basis + i * 86_400_000).toISOString().slice(0, 10),
+    energie: 4 + (i % 7),
+    schlaf: 3 + (i % 8),
+    wohlbefinden: 5 + (i % 6),
+    libido: 2 + (i % 9),
+  }))
+}
+
+describe('Wohlbefinden ueber einen langen Zeitraum', () => {
+  const opts: PdfBuildOptions = {
+    lang: 'de',
+    range: { from: '2026-01-01', to: '2026-12-31' },
+    sections: ['wellness'],
+    note: '',
+  }
+
+  it('rendert ein Jahr ohne Fehler und ohne aus dem Blatt zu laufen', async () => {
+    // Vorher wurden 365 Punkte je Metrik roh in einen 42-mm-Kasten gezeichnet.
+    // Jetzt fasst der Renderer zu Monaten zusammen — die Datenmenge darf die
+    // Seitenzahl nicht mehr treiben.
+    const doc = await buildProtocolPdf(makeData({ dailyLogs: jahrDailyLogs() }), opts)
+    const kurz = await buildProtocolPdf(makeData(), opts)
+    expect(doc.getNumberOfPages()).toBe(kurz.getNumberOfPages())
+  })
+
+  it('zeichnet vier getrennte Charts, auch wenn nur eine Metrik gefuellt ist', async () => {
+    // Der Schwarzweiss-Grund: eine Linie je Chart, damit die Ueberschrift die
+    // Zuordnung traegt und nicht die Farbe. Eine leere Metrik bekommt keinen
+    // leeren Kasten.
+    const nurSchlaf = jahrDailyLogs().map(l => ({
+      ...l, energie: null, wohlbefinden: null, libido: null,
+    }))
+    const doc = await buildProtocolPdf(makeData({ dailyLogs: nurSchlaf }), opts)
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2)
+  })
+
+  it('kommt mit einem einzigen Eintrag zurecht', async () => {
+    // Ein Punkt ist kein Verlauf. Er darf trotzdem nicht zum Absturz fuehren.
+    const einer = [{ log_date: '2026-06-01', energie: 7, schlaf: null, wohlbefinden: null, libido: null }]
+    const doc = await buildProtocolPdf(makeData({ dailyLogs: einer }), opts)
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2)
+  })
+
+  it('rendert das Jahr auch auf Englisch', async () => {
+    const doc = await buildProtocolPdf(makeData({ dailyLogs: jahrDailyLogs() }), { ...opts, lang: 'en' })
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2)
   })
 })
 

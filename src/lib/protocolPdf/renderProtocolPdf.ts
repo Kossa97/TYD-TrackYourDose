@@ -7,6 +7,10 @@ import type {
   ProtocolData, PdfBuildOptions, PdfLang, PdfCycle, SectionId,
 } from './types'
 import { SECTIONS, visibleSections, resolveSubject } from './sections'
+import {
+  aggregate, chooseBucketSize, summarise,
+  type BucketSize, type WellnessBucket, type WellnessSample,
+} from './wellnessBuckets'
 
 type RGB = [number, number, number]
 
@@ -44,7 +48,10 @@ interface Copy {
   adherenceIntro: string; taken: string; skipped: string
   bloodMarker: string; bloodUnit: string; bloodRange: string; bloodFirst: string; bloodLast: string; bloodChange: string
   weightStart: string; weightEnd: string; weightChange: string; kg: string
-  wellnessEnergy: string; wellnessSleep: string; wellnessLibido: string; scale: string
+  wellnessEnergy: string; wellnessSleep: string; wellnessMood: string; wellnessLibido: string
+  scale: string; wellnessSpread: string; wellnessEntries: string
+  aggDay: string; aggWeek: string; aggMonth: string; aggQuarter: string
+  unitDay: string; unitWeek: string; unitMonth: string; unitQuarter: string
   effectType: string; effectDesc: string; effectSeverity: string; effectDate: string; effect: string; sideEffect: string
   reviewSubstance: string; reviewRating: string; reviewExperience: string
   expGood: string; expMedium: string; expBad: string
@@ -77,7 +84,13 @@ const COPY: Record<PdfLang, Copy> = {
     bloodMarker: 'Marker', bloodUnit: 'Einheit', bloodRange: 'Normbereich',
     bloodFirst: 'Erst', bloodLast: 'Letzt', bloodChange: 'Veränd.',
     weightStart: 'Start', weightEnd: 'Ende', weightChange: 'Veränderung', kg: 'kg',
-    wellnessEnergy: 'Energie', wellnessSleep: 'Schlaf', wellnessLibido: 'Libido', scale: 'Skala 1–10',
+    wellnessEnergy: 'Energie', wellnessSleep: 'Schlaf', wellnessMood: 'Wohlbefinden',
+    wellnessLibido: 'Libido', scale: 'Skala 1–10',
+    wellnessSpread: 'Senkrechter Strich: niedrigster und höchster Wert im Abschnitt.',
+    wellnessEntries: 'Einträge',
+    aggDay: 'Tageswerte', aggWeek: 'Median je Woche',
+    aggMonth: 'Median je Monat', aggQuarter: 'Median je Quartal',
+    unitDay: 'Tage', unitWeek: 'Wochen', unitMonth: 'Monate', unitQuarter: 'Quartale',
     effectType: 'Typ', effectDesc: 'Beschreibung', effectSeverity: 'Stärke', effectDate: 'Datum',
     effect: 'Wirkung', sideEffect: 'Nebenwirkung',
     reviewSubstance: 'Substanz', reviewRating: 'Bewertung', reviewExperience: 'Erfahrung',
@@ -110,7 +123,13 @@ const COPY: Record<PdfLang, Copy> = {
     bloodMarker: 'Marker', bloodUnit: 'Unit', bloodRange: 'Normal range',
     bloodFirst: 'First', bloodLast: 'Last', bloodChange: 'Change',
     weightStart: 'Start', weightEnd: 'End', weightChange: 'Change', kg: 'kg',
-    wellnessEnergy: 'Energy', wellnessSleep: 'Sleep', wellnessLibido: 'Libido', scale: 'Scale 1–10',
+    wellnessEnergy: 'Energy', wellnessSleep: 'Sleep', wellnessMood: 'Well-being',
+    wellnessLibido: 'Libido', scale: 'Scale 1–10',
+    wellnessSpread: 'Vertical bar: lowest and highest value in the interval.',
+    wellnessEntries: 'entries',
+    aggDay: 'Daily values', aggWeek: 'Median per week',
+    aggMonth: 'Median per month', aggQuarter: 'Median per quarter',
+    unitDay: 'days', unitWeek: 'weeks', unitMonth: 'months', unitQuarter: 'quarters',
     effectType: 'Type', effectDesc: 'Description', effectSeverity: 'Severity', effectDate: 'Date',
     effect: 'Effect', sideEffect: 'Side effect',
     reviewSubstance: 'Substance', reviewRating: 'Rating', reviewExperience: 'Experience',
@@ -542,21 +561,149 @@ function renderWeight(ctx: Ctx, data: ProtocolData) {
   bodyText(ctx, summary, { color: INK, size: 9.5, gap: 2 })
 }
 
+// Ein Chart JE Metrik, statt drei Linien uebereinander.
+//
+// Vorher lagen Energie, Schlaf und Libido als cyan, indigo und pink in
+// demselben 42-mm-Kasten. Wer das Protokoll schwarzweiss ausdruckt — und in
+// einer Arztpraxis wird schwarzweiss ausgedruckt — bekommt drei Graustufen,
+// die sich kaum unterscheiden, und eine Legende, die keine davon zuordnet.
+//
+// Mit einer Linie je Chart traegt die Farbe nichts mehr: die Ueberschrift sagt,
+// was zu sehen ist. Die feste Achse 0–10 macht die vier trotzdem vergleichbar.
+const WELLNESS_CHART_H = 22
+
+function bucketLabels(c: Copy, groesse: BucketSize): { agg: string; unit: string } {
+  if (groesse === 'day') return { agg: c.aggDay, unit: c.unitDay }
+  if (groesse === 'week') return { agg: c.aggWeek, unit: c.unitWeek }
+  if (groesse === 'month') return { agg: c.aggMonth, unit: c.unitMonth }
+  return { agg: c.aggQuarter, unit: c.unitQuarter }
+}
+
+function drawWellnessChart(
+  ctx: Ctx,
+  opts: { title: string; summary: string; caption: string; period: string; buckets: WellnessBucket[] },
+) {
+  const { doc } = ctx
+  const h = WELLNESS_CHART_H
+  ensureSpace(ctx, h + 14)
+
+  // Titel links, Zusammenfassung rechts auf derselben Zeile: der Satz gehoert
+  // zur Ueberschrift, nicht unter den Kasten.
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5)
+  setText(doc, INK)
+  doc.text(opts.title, MARGIN, ctx.y)
+  if (opts.summary) {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5)
+    setText(doc, MUTED)
+    doc.text(opts.summary, PAGE_W - MARGIN, ctx.y, { align: 'right' })
+  }
+  ctx.y += 3
+
+  const x0 = MARGIN + 8
+  const x1 = PAGE_W - MARGIN
+  const yBot = ctx.y + h
+  const plotW = x1 - x0
+  const tMin = opts.buckets[0].t
+  const tMax = opts.buckets[opts.buckets.length - 1].t
+  const tSpan = tMax - tMin || 1
+  // Ein Rand von einem halben Punktabstand, damit der erste und der letzte
+  // Punkt nicht auf der Kastenkante kleben.
+  const rand = Math.min(plotW / 2, plotW / (opts.buckets.length * 2 || 1))
+  const sx = (t: number) => x0 + rand + ((t - tMin) / tSpan) * (plotW - rand * 2)
+  const sy = (v: number) => yBot - (v / 10) * h
+
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7)
+  for (const v of [0, 5, 10]) {
+    const yy = sy(v)
+    setDraw(doc, RULE); doc.setLineWidth(0.2)
+    doc.line(x0, yy, x1, yy)
+    setText(doc, FAINT)
+    doc.text(String(v), x0 - 2, yy + 1.5, { align: 'right' })
+  }
+
+  // Spannweite zuerst, damit die Medianlinie darauf liegt. Hellgrau und duenn:
+  // sie soll die Streuung zeigen, nicht um Aufmerksamkeit mit der Linie ringen.
+  setDraw(doc, RULE); doc.setLineWidth(0.9)
+  for (const eimer of opts.buckets) {
+    if (eimer.max === eimer.min) continue
+    doc.line(sx(eimer.t), sy(eimer.min), sx(eimer.t), sy(eimer.max))
+  }
+
+  setDraw(doc, ACCENT); doc.setLineWidth(1.1)
+  for (let i = 1; i < opts.buckets.length; i++) {
+    const a = opts.buckets[i - 1]
+    const b = opts.buckets[i]
+    doc.line(sx(a.t), sy(a.median), sx(b.t), sy(b.median))
+  }
+  setFill(doc, ACCENT)
+  for (const eimer of opts.buckets) doc.circle(sx(eimer.t), sy(eimer.median), 0.9, 'F')
+
+  ctx.y = yBot + 3.5
+  doc.setFontSize(7.5)
+  setText(doc, FAINT)
+  doc.text(opts.caption, x0, ctx.y)
+  doc.text(opts.period, PAGE_W - MARGIN, ctx.y, { align: 'right' })
+  ctx.y += 6
+}
+
 function renderWellness(ctx: Ctx, data: ProtocolData) {
-  const { c } = ctx
-  const build = (field: 'energie' | 'schlaf' | 'libido') =>
+  const { c, lang } = ctx
+  const build = (field: 'energie' | 'schlaf' | 'wohlbefinden' | 'libido'): WellnessSample[] =>
     data.dailyLogs
       .filter(l => l[field] != null)
-      .map(l => ({ t: new Date(`${l.log_date}T00:00:00`).getTime(), v: l[field] as number }))
-      .sort((a, b) => a.t - b.t)
-  const series: Series[] = [
-    { name: c.wellnessEnergy, color: [8, 145, 178] as RGB, points: build('energie') },
-    { name: c.wellnessSleep, color: [99, 102, 241] as RGB, points: build('schlaf') },
-    { name: c.wellnessLibido, color: [219, 39, 119] as RGB, points: build('libido') },
-  ].filter(s => s.points.length > 0)
-  if (series.length === 0) { bodyText(ctx, c.noData); return }
-  bodyText(ctx, c.scale, { size: 8, gap: 1 })
-  drawLineChart(ctx, series, { height: 42, yMin: 0, yMax: 10, legend: true })
+      .map(l => ({ date: l.log_date.slice(0, 10), value: l[field] as number }))
+
+  const metriken = [
+    { title: c.wellnessEnergy, samples: build('energie') },
+    { title: c.wellnessSleep, samples: build('schlaf') },
+    { title: c.wellnessMood, samples: build('wohlbefinden') },
+    { title: c.wellnessLibido, samples: build('libido') },
+  ].filter(m => m.samples.length > 0)
+
+  if (metriken.length === 0) { bodyText(ctx, c.noData); return }
+
+  bodyText(ctx, `${c.scale}   ·   ${c.wellnessSpread}`, { size: 8, gap: 2 })
+
+  for (const metrik of metriken) {
+    const groesse = chooseBucketSize(metrik.samples)
+    const buckets = aggregate(metrik.samples, groesse)
+    if (buckets.length === 0) continue
+
+    // Ein einziger Abschnitt ergibt keine Linie. Dann steht der Wert da, statt
+    // dass ein leerer Kasten so tut, als gaebe es einen Verlauf.
+    if (buckets.length < 2) {
+      einzelwertZeile(ctx, metrik.title, buckets[0])
+      continue
+    }
+
+    const { agg, unit } = bucketLabels(c, groesse)
+    const zusammen = summarise(buckets)
+    const caption = groesse === 'day'
+      ? `${agg} · ${buckets.length} ${unit}`
+      : `${agg} · ${buckets.length} ${unit} · ${zusammen?.entries ?? 0} ${c.wellnessEntries}`
+    const summary = zusammen
+      ? `${c.weightStart} ${fmtNum(zusammen.first)}   ·   ${c.weightEnd} ${fmtNum(zusammen.last)}   ·   ${c.weightChange} ${signed(zusammen.delta, 1)}`
+      : ''
+    // Der ERSTE und LETZTE Eintrag, nicht der Beginn des ersten Eimers: wer im
+    // September anfaengt, hat nicht ab dem 1. September Daten, und ein Datum
+    // unter dem Chart wird als Datenbeginn gelesen.
+    const tage = metrik.samples.map(probe => probe.date).sort()
+    const period = `${fmtDate(tage[0], lang)} – ${fmtDate(tage[tage.length - 1], lang)}`
+
+    drawWellnessChart(ctx, { title: metrik.title, summary, caption, period, buckets })
+  }
+}
+
+function einzelwertZeile(ctx: Ctx, title: string, eimer: WellnessBucket) {
+  const { doc } = ctx
+  ensureSpace(ctx, 8)
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5)
+  setText(doc, INK)
+  doc.text(title, MARGIN, ctx.y)
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5)
+  setText(doc, MUTED)
+  doc.text(`${fmtNum(eimer.median)} / 10`, PAGE_W - MARGIN, ctx.y, { align: 'right' })
+  ctx.y += 6
 }
 
 function renderEffects(ctx: Ctx, data: ProtocolData) {

@@ -90,7 +90,7 @@ export async function loadProtocolData(userId: string, range: PdfDateRange): Pro
     supabase.from('reviews').select('rating, experience, stack_items(display_name)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false }),
-    supabase.from('daily_logs').select('log_date, energie, schlaf, libido')
+    supabase.from('daily_logs').select('log_date, energie, schlaf, wohlbefinden, libido')
       .eq('user_id', userId)
       .gte('log_date', range.from).lte('log_date', range.to)
       .order('log_date', { ascending: true }),
@@ -123,7 +123,7 @@ export async function loadProtocolData(userId: string, range: PdfDateRange): Pro
       })),
     reviews: ((reviewRes.data as { rating: number; experience: 'gut' | 'mittel' | 'schlecht' | null; stack_items: { display_name: string } | { display_name: string }[] | null }[] | null) ?? [])
       .map(r => ({ rating: r.rating, experience: r.experience, stack_item_name: embedName(r.stack_items) })),
-    dailyLogs: ((dailyRes.data as { log_date: string; energie: number | null; schlaf: number | null; libido: number | null }[] | null) ?? []),
+    dailyLogs: ((dailyRes.data as { log_date: string; energie: number | null; schlaf: number | null; wohlbefinden: number | null; libido: number | null }[] | null) ?? []),
     stackItemNames,
   }
 }

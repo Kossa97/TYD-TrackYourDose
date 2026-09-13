@@ -14,7 +14,8 @@ export interface SectionDef {
 }
 
 function hasWellness(data: ProtocolData): boolean {
-  return data.dailyLogs.some(l => l.energie != null || l.schlaf != null || l.libido != null)
+  return data.dailyLogs.some(l =>
+    l.energie != null || l.schlaf != null || l.wohlbefinden != null || l.libido != null)
 }
 
 // Reihenfolge hier = Reihenfolge im PDF.

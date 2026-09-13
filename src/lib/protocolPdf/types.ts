@@ -68,6 +68,8 @@ export interface PdfDailyLog {
   log_date: string
   energie: number | null
   schlaf: number | null
+  /** Die Metrik, nach der die Sektion heisst — und die bis jetzt fehlte. */
+  wohlbefinden: number | null
   libido: number | null
 }
 
