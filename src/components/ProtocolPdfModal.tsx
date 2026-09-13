@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Download, FileText, Loader2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { loadProtocolData } from '../lib/protocolPdf/loadProtocolData'
@@ -80,9 +80,32 @@ const T: Record<UILang, {
 }
 
 const DEFAULT_PRESET: PresetId = 'arzt'
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
 function initialLang(uiLang: string): UILang {
   return uiLang.toLowerCase().startsWith('en') ? 'en' : 'de'
+}
+
+function isValidIsoDate(value: string): boolean {
+  if (!ISO_DATE_RE.test(value)) return false
+  const t = Date.parse(`${value}T00:00:00`)
+  return Number.isFinite(t)
+}
+
+/** Leere Zwischenwerte beim Jahres-Spinner der date-Inputs verwerfen. */
+function isValidRange(range: PdfDateRange): boolean {
+  return isValidIsoDate(range.from) && isValidIsoDate(range.to) && range.from <= range.to
+}
+
+function availableSectionIds(data: ProtocolData): Set<SectionId> {
+  return new Set(
+    SECTIONS.filter(s => s.alwaysAvailable || s.hasData(data)).map(s => s.id),
+  )
+}
+
+function pruneSelection(selected: Iterable<SectionId>, data: ProtocolData): Set<SectionId> {
+  const available = availableSectionIds(data)
+  return new Set([...selected].filter(id => available.has(id)))
 }
 
 function restoreSelection(
@@ -100,14 +123,15 @@ function restoreSelection(
     }
   }
 
-  const available = new Set(
-    SECTIONS.filter(s => s.alwaysAvailable || s.hasData(data)).map(s => s.id),
-  )
-  const restored = prefs.sections.filter(id => available.has(id))
+  const restored = [...pruneSelection(prefs.sections, data)]
   if (restored.length === 0) {
     return { selected: new Set(applyPreset(DEFAULT_PRESET, data)), lang: prefs.lang }
   }
   return { selected: new Set(restored), lang: prefs.lang }
+}
+
+function revokePreviewUrl(url: string | null | undefined) {
+  if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
 }
 
 export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previewData, variant = 'modal' }: Props) {
@@ -123,35 +147,70 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
   const [note, setNote] = useState('')
   const [generating, setGenerating] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewKey, setPreviewKey] = useState(0)
   const [previewBusy, setPreviewBusy] = useState(false)
   const [previewError, setPreviewError] = useState(false)
   const t = T[lang]
   const prefsReady = useRef(false)
+  const initialLoadDone = useRef(false)
   const previewUrlRef = useRef<string | null>(null)
+  const loadGenRef = useRef(0)
+  const previewGenRef = useRef(0)
 
   // Sprache nur für Fehlermeldungen — nicht als load-Dependency, sonst setzt ein
   // Sprachwechsel die Häkchen-Auswahl durch einen Reload zurück.
   const langRef = useRef(lang)
   langRef.current = lang
 
-  const load = useCallback(async () => {
+  // Daten laden: Zeitraum debouncen, Prefs nur beim ersten Load anwenden.
+  // Bei späteren Range-Änderungen Auswahl nur auf verfügbare Sektionen beschneiden
+  // (nicht jedes Mal neu aus Prefs überschreiben — das leerte die Vorschau).
+  useEffect(() => {
+    if (!isValidRange(range)) return
+
+    const gen = ++loadGenRef.current
+    let cancelled = false
     setLoading(true)
-    try {
-      const d = previewData ?? await loadProtocolData(userId, range)
-      setData(d)
-      const prefs = loadPdfExportPrefs(userId)
-      const restored = restoreSelection(d, prefs)
-      setSelected(restored.selected)
-      if (restored.lang) setLang(restored.lang)
-      prefsReady.current = true
-    } catch {
-      toast.error(T[langRef.current].loadError)
-    } finally {
-      setLoading(false)
+
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const d = previewData ?? await loadProtocolData(userId, range)
+          if (cancelled || gen !== loadGenRef.current) return
+          setData(d)
+
+          if (!initialLoadDone.current) {
+            const prefs = loadPdfExportPrefs(userId)
+            const restored = restoreSelection(d, prefs)
+            setSelected(restored.selected)
+            if (restored.lang) setLang(restored.lang)
+            initialLoadDone.current = true
+            prefsReady.current = true
+          } else {
+            setSelected(prev => {
+              const pruned = pruneSelection(prev, d)
+              if (pruned.size > 0) return pruned
+              const prefs = loadPdfExportPrefs(userId)
+              const fallback =
+                prefs?.preset && prefs.preset !== 'custom' ? prefs.preset : DEFAULT_PRESET
+              return new Set(applyPreset(fallback, d))
+            })
+          }
+        } catch {
+          if (!cancelled && gen === loadGenRef.current) {
+            toast.error(T[langRef.current].loadError)
+          }
+        } finally {
+          if (!cancelled && gen === loadGenRef.current) setLoading(false)
+        }
+      })()
+    }, 280)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
     }
   }, [userId, range, previewData])
-
-  useEffect(() => { void load() }, [load])
 
   const activePreset: ActivePreset = data
     ? matchPreset([...selected], data)
@@ -188,24 +247,37 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
     })
   }
 
+  const updateRange = (patch: Partial<PdfDateRange>) => {
+    setRange(prev => {
+      const next = { ...prev, ...patch }
+      // Leere Zwischenwerte vom date-Input (z. B. Jahres-Spinner) ignorieren.
+      if (patch.from !== undefined && patch.from !== '' && !isValidIsoDate(patch.from)) return prev
+      if (patch.to !== undefined && patch.to !== '' && !isValidIsoDate(patch.to)) return prev
+      if (patch.from === '' || patch.to === '') return prev
+      return next
+    })
+  }
+
   const selectedKey = useMemo(() => [...selected].sort().join('|'), [selected])
 
-  // Live-Vorschau: debounced Rebuild bei Muster-/Häkchen-/Sprach-/Notiz-Änderung.
+  // Live-Vorschau: Blob-URL + iframe-Remount (data:-URIs werden in Chrome oft weiß
+  // und aktualisieren sich nach Range-Wechseln nicht mehr).
+  // Auch ohne Häkchen: Cover + Disclaimer rendern (leerer Zeitraum / Forum ohne Daten).
   useEffect(() => {
-    if (!data || selected.size === 0) {
+    if (!data || !isValidRange(range)) {
       setPreviewBusy(false)
       setPreviewError(false)
-      if (previewUrlRef.current) {
-        URL.revokeObjectURL(previewUrlRef.current)
-        previewUrlRef.current = null
-      }
+      revokePreviewUrl(previewUrlRef.current)
+      previewUrlRef.current = null
       setPreviewUrl(null)
       return
     }
 
+    const gen = ++previewGenRef.current
     let cancelled = false
     setPreviewBusy(true)
     setPreviewError(false)
+
     const timer = window.setTimeout(() => {
       void (async () => {
         try {
@@ -216,25 +288,27 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
             note,
             preset: activePreset === 'custom' ? undefined : activePreset,
           })
-          if (cancelled) return
-          // dataurl is more reliable in iframe than bloburl across browsers
-          const url = doc.output('datauristring')
-          if (previewUrlRef.current?.startsWith('blob:')) URL.revokeObjectURL(previewUrlRef.current)
+          if (cancelled || gen !== previewGenRef.current) return
+
+          const blob = doc.output('blob')
+          const url = URL.createObjectURL(blob)
+          revokePreviewUrl(previewUrlRef.current)
           previewUrlRef.current = url
           setPreviewUrl(url)
+          setPreviewKey(k => k + 1)
         } catch (err) {
           console.error('[pdf-preview]', err)
-          if (!cancelled) {
+          if (!cancelled && gen === previewGenRef.current) {
             setPreviewError(true)
-            if (previewUrlRef.current?.startsWith('blob:')) URL.revokeObjectURL(previewUrlRef.current)
+            revokePreviewUrl(previewUrlRef.current)
             previewUrlRef.current = null
             setPreviewUrl(null)
           }
         } finally {
-          if (!cancelled) setPreviewBusy(false)
+          if (!cancelled && gen === previewGenRef.current) setPreviewBusy(false)
         }
       })()
-    }, 300)
+    }, 350)
 
     return () => {
       cancelled = true
@@ -243,17 +317,13 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
   }, [data, selectedKey, lang, range, note, activePreset, selected])
 
   useEffect(() => () => {
-    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    revokePreviewUrl(previewUrlRef.current)
   }, [])
 
-  const canGenerate = data != null && selected.size > 0 && !generating
+  const canGenerate = data != null && isValidRange(range) && !generating
 
   const generate = async () => {
-    if (!data) return
-    if (selected.size === 0) {
-      toast.error(t.noneSelected)
-      return
-    }
+    if (!data || !isValidRange(range)) return
     setGenerating(true)
     try {
       await downloadProtocolPdf(data, {
@@ -373,7 +443,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
                   type="date"
                   value={range.from}
                   max={range.to}
-                  onChange={e => setRange(r => ({ ...r, from: e.target.value }))}
+                  onChange={e => updateRange({ from: e.target.value })}
                   className="input mt-0.5"
                 />
               </label>
@@ -383,7 +453,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
                   type="date"
                   value={range.to}
                   min={range.from}
-                  onChange={e => setRange(r => ({ ...r, to: e.target.value }))}
+                  onChange={e => updateRange({ to: e.target.value })}
                   className="input mt-0.5"
                 />
               </label>
@@ -464,6 +534,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
             <div className="relative flex-1 min-h-0 bg-slate-300">
               {previewUrl ? (
                 <iframe
+                  key={previewKey}
                   title={t.livePreview}
                   src={previewUrl}
                   className="absolute inset-0 h-full w-full border-0 bg-white"
