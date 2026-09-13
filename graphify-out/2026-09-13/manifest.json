@@ -4104,9 +4104,9 @@
     "semantic_hash": ""
   },
   "scripts/substance-catalog-source.mjs": {
-    "mtime": 1789249754.8887253,
-    "seen": 1789250005.3135138,
-    "ast_hash": "a2ffd42fed168703622c5430c152483d",
+    "mtime": 1789308527.1252291,
+    "seen": 1789309089.7875764,
+    "ast_hash": "9e7d2fb52f031340a64d28cee5215da5",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/substanceCatalogSource.test.ts": {
@@ -4116,15 +4116,15 @@
     "semantic_hash": ""
   },
   "supabase-my-stack-catalog-expansion.sql": {
-    "mtime": 1789249755.546287,
-    "seen": 1789250005.314428,
-    "ast_hash": "a94b37b64033e47c7693d8486fcac9e9",
+    "mtime": 1789308553.4491699,
+    "seen": 1789309089.788175,
+    "ast_hash": "220992b05fbc18bac0f74e021d3c9917",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-12-my-stack-substanzkatalog-design.md": {
-    "mtime": 1789250681.6722064,
-    "seen": 1789250695.7068074,
-    "ast_hash": "c7ca480e712b04e038b645687ebbd0e3",
+    "mtime": 1789309078.1787298,
+    "seen": 1789309089.788315,
+    "ast_hash": "f9277405c3ef595dac4867e98052b6f3",
     "semantic_hash": ""
   },
   "backups/substance_catalog-2026-09-12.sql": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789306633.6433277,
-    "seen": 1789306739.083195,
+    "mtime": 1789309001.536924,
+    "seen": 1789309089.7881901,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
