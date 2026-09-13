@@ -267,4 +267,21 @@ export const SUBSTANCE_CATALOG = [
   { name: 'Propolis', aliases: ['Bienenharz'], category: 'supplement', dosageForms: ['drops', 'spray', 'capsule'], units: ['mg'], pkProfile: null },
   { name: 'Ginseng', aliases: ['Panax ginseng', 'Roter Ginseng'], category: 'supplement', dosageForms: ['capsule', 'drops', 'tablet'], units: ['mg'], pkProfile: null },
   { name: 'Echinacea', aliases: ['Sonnenhut'], category: 'supplement', dosageForms: ['drops', 'tablet', 'capsule'], units: ['mg'], pkProfile: null },
+
+  // ── Nachtrag: die eine Zeile, die schon in der Datenbank stand ────────
+  // SLU-PP-332 lag im Katalog ohne Form und ohne Einheiten — jemand hatte
+  // sie angelegt, bevor es diese Quelldatei gab. Verkauft wird der Stoff als
+  // lyophilisiertes Pulver im Vial (5 und 10 mg) und als Kapsel.
+  //
+  // Die Kategorie 'peptide' ist fachlich falsch: SLU-PP-332 ist ein kleines
+  // Molekuel, ein pan-ERR-Agonist. Sie steht trotzdem hier, aus demselben
+  // Grund wie bei MK-677 — die fuenf Kategorien haben keine Schublade fuer
+  // Forschungschemikalien, und 'peptide' erzeugt beim Vial zufaellig das
+  // richtige Verhalten: ein lyophilisiertes Pulver WIRD rekonstituiert.
+  //
+  // Kein PK-Profil: es gibt keine humanen pharmakokinetischen Daten. Die
+  // veroeffentlichten Tierversuche spritzten intraperitoneal — eine Route,
+  // die die App nicht kennt und die fuer Menschen ohnehin nicht in Frage
+  // kommt.
+  { name: 'SLU-PP-332', aliases: ['SLU PP 332', 'SLUPP-332', 'SLUPP332'], category: 'peptide', dosageForms: ['vial', 'capsule'], units: ['mg', 'mcg'], pkProfile: null },
 ]

@@ -319,3 +319,39 @@ Ampulle 7.
 **Die dünnste Form ist jetzt die Ampulle mit 7** — und das ist in Ordnung: in
 Ampullen kommt wenig, was man dauerhaft trackt. Die Lückenanzeige im
 Vertragstest bleibt grün.
+
+
+---
+
+## Nachtrag — SLU-PP-332, die letzte Zeile ohne Form
+
+Sie stand im Katalog, bevor es die Quelldatei gab: ohne Darreichungsform, ohne
+Einheiten, und der Upsert ließ sie unberührt, weil er nichts löscht. Nach
+Recherche eingetragen:
+
+| | |
+|---|---|
+| Formen | **Vial, Kapsel** — verkauft wird lyophilisiertes Pulver im Vial (5 und 10 mg) sowie als Kapsel |
+| Einheiten | mg, mcg |
+| PK-Profil | **keines** |
+
+**Kein PK-Profil, weil es keine humanen Daten gibt.** Die veröffentlichte
+Tierforschung spritzte intraperitoneal — eine Route, die die App nicht kennt
+und die für Menschen ohnehin nicht in Frage kommt. Es existiert keine
+Humanstudie und keine Humanformulierung.
+
+**Die Kategorie bleibt `peptide`, obwohl das fachlich falsch ist.** SLU-PP-332
+ist ein kleines Molekül, ein pan-ERR-Agonist (CAS 303760-60-3) — kein Peptid.
+Derselbe Fall wie MK-677: die fünf Kategorien haben keine Schublade für
+Forschungschemikalien, und `peptide` erzeugt beim Vial zufällig das richtige
+Verhalten, weil ein lyophilisiertes Pulver tatsächlich rekonstituiert wird.
+Das ist der Punkt, an dem die Doppelrolle der Kategorie (Etikett **und**
+Verhaltensschalter) zum zweiten Mal weh tut.
+
+**Zur Quellenlage:** die Suche fand fast nur Händlerseiten mit
+Dosierungsempfehlungen. Davon ist nichts eingeflossen. Verwendet wurden allein
+die Angaben zur Darreichungsform und zur Stoffklasse — nachprüfbar über
+Wikipedia und Cayman Chemical, einen regulären Laborreagenzien-Händler.
+
+**Gemessen nach dem Lauf:** 182 Substanzen, **0 ohne Einheiten, 0 ohne Form**,
+0 doppelte Namen.

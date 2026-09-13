@@ -2,7 +2,7 @@
 -- Nicht von Hand aendern — die Quelle ist scripts/substance-catalog-source.mjs.
 -- Neu erzeugen mit: npm run catalog:sql
 --
--- 181 Substanzen. Der Upsert trifft den Unique-Index auf
+-- 182 Substanzen. Der Upsert trifft den Unique-Index auf
 -- lower(canonical_name): bekannte Zeilen werden aktualisiert, neue angelegt.
 -- Ein zweiter Lauf aendert nichts.
 
@@ -205,7 +205,8 @@ with quelle (canonical_name, aliases, default_category, suggested_dosage_forms, 
     ('Hyaluronsäure', array['Hyaluronic acid', 'Hyaluron']::text[], 'supplement', array['drops', 'capsule']::text[], array['mg']::text[], null),
     ('Propolis', array['Bienenharz']::text[], 'supplement', array['drops', 'spray', 'capsule']::text[], array['mg']::text[], null),
     ('Ginseng', array['Panax ginseng', 'Roter Ginseng']::text[], 'supplement', array['capsule', 'drops', 'tablet']::text[], array['mg']::text[], null),
-    ('Echinacea', array['Sonnenhut']::text[], 'supplement', array['drops', 'tablet', 'capsule']::text[], array['mg']::text[], null)
+    ('Echinacea', array['Sonnenhut']::text[], 'supplement', array['drops', 'tablet', 'capsule']::text[], array['mg']::text[], null),
+    ('SLU-PP-332', array['SLU PP 332', 'SLUPP-332', 'SLUPP332']::text[], 'peptide', array['vial', 'capsule']::text[], array['mg', 'mcg']::text[], null)
 ),
 aufgeloest as (
   select
