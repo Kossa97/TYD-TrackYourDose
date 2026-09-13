@@ -966,34 +966,34 @@
     "semantic_hash": "f9373082d7ca65aac8e14fd105d5c627"
   },
   "src/lib/protocolPdf/loadProtocolData.ts": {
-    "mtime": 1788611941.9593546,
-    "seen": 1788803479.1912565,
-    "ast_hash": "add28b281cf4ed5640bbe4ad539c5207",
-    "semantic_hash": "add28b281cf4ed5640bbe4ad539c5207"
+    "mtime": 1789322237.9294527,
+    "seen": 1789322552.076349,
+    "ast_hash": "5a5886f3bd268e48912231c1bd40b757",
+    "semantic_hash": ""
   },
   "src/lib/protocolPdf/protocolPdf.test.ts": {
-    "mtime": 1788611941.9628258,
-    "seen": 1788803479.1912582,
-    "ast_hash": "3ac174a27725f5acc49130dbd344aa9e",
-    "semantic_hash": "3ac174a27725f5acc49130dbd344aa9e"
+    "mtime": 1789322279.8551397,
+    "seen": 1789322552.0763505,
+    "ast_hash": "74bf7a21703cf52271db7143db18fac6",
+    "semantic_hash": ""
   },
   "src/lib/protocolPdf/renderProtocolPdf.ts": {
-    "mtime": 1788612179.7753687,
-    "seen": 1788803479.1912596,
-    "ast_hash": "8dd11dbbec3669488c68bddf9034b610",
-    "semantic_hash": "8dd11dbbec3669488c68bddf9034b610"
+    "mtime": 1789322396.0002053,
+    "seen": 1789322552.0763512,
+    "ast_hash": "1654c0d11a2a013638445f1c7f109bda",
+    "semantic_hash": ""
   },
   "src/lib/protocolPdf/sections.ts": {
-    "mtime": 1788611941.9628258,
-    "seen": 1788803479.1912608,
-    "ast_hash": "a71939e1e5d2d383c25b0d65f1c10d18",
-    "semantic_hash": "a71939e1e5d2d383c25b0d65f1c10d18"
+    "mtime": 1789322157.2597198,
+    "seen": 1789322552.0763524,
+    "ast_hash": "4b1d6c5baa2029a3ae273aebab9671e6",
+    "semantic_hash": ""
   },
   "src/lib/protocolPdf/types.ts": {
-    "mtime": 1788611941.9628258,
-    "seen": 1788803479.1912634,
-    "ast_hash": "e2cbb39aa168875d4be2d097bcfad6e4",
-    "semantic_hash": "e2cbb39aa168875d4be2d097bcfad6e4"
+    "mtime": 1789322157.2594597,
+    "seen": 1789322552.0763528,
+    "ast_hash": "3104c16496b746ae996e37cd42c8f7f0",
+    "semantic_hash": ""
   },
   "src/lib/pushLocal.ts": {
     "mtime": 1788611941.9628258,
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789318245.5434513,
-    "seen": 1789318383.7883008,
+    "mtime": 1789322430.0243647,
+    "seen": 1789322552.0764325,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4209,6 +4209,24 @@
     "mtime": 1789318353.1194553,
     "seen": 1789318383.7884643,
     "ast_hash": "588b9fea56bd7fa8adeb94cc1bba7945",
+    "semantic_hash": ""
+  },
+  "src/lib/protocolPdf/wellnessBuckets.test.ts": {
+    "mtime": 1789322120.1954262,
+    "seen": 1789322552.0763543,
+    "ast_hash": "e20e81e589975a56cebf86e92072bb02",
+    "semantic_hash": ""
+  },
+  "src/lib/protocolPdf/wellnessBuckets.ts": {
+    "mtime": 1789322041.6803415,
+    "seen": 1789322552.0763552,
+    "ast_hash": "29878b9f95335557eb3789bf6e9c3b5d",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-13-protokoll-wohlbefinden-lange-zeitraeume-design.md": {
+    "mtime": 1789322538.2558649,
+    "seen": 1789322552.0765398,
+    "ast_hash": "f628e8123f10c61b0eede95363f44bb5",
     "semantic_hash": ""
   }
 }
