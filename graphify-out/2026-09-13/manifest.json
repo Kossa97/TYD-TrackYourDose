@@ -234,9 +234,9 @@
     "semantic_hash": "01708fca51b16e8569aaae89888b6930"
   },
   "scripts/seed-pk-profiles.ts": {
-    "mtime": 1789250316.7392855,
-    "seen": 1789250695.705652,
-    "ast_hash": "793561c14701cde38664a5d69c181cc6",
+    "mtime": 1789255000.8171372,
+    "seen": 1789306739.0824955,
+    "ast_hash": "4e7982ec4a4d395a59b5eec50b040992",
     "semantic_hash": ""
   },
   "scripts/seed-test-data.mjs": {
@@ -258,10 +258,10 @@
     "semantic_hash": "be35d084b3b8daa1ac0146ea7802e3c6"
   },
   "src/components/BlutspiegelCarousel.tsx": {
-    "mtime": 1788612179.7473688,
-    "seen": 1788803479.1906996,
-    "ast_hash": "b80582c70d2baeca04c78d15e50e06ef",
-    "semantic_hash": "b80582c70d2baeca04c78d15e50e06ef"
+    "mtime": 1789254947.9211826,
+    "seen": 1789306739.0825124,
+    "ast_hash": "ff9718aae42fb0d4c81096762f1b4635",
+    "semantic_hash": ""
   },
   "src/components/CarouselChrome.tsx": {
     "mtime": 1788611941.9151807,
@@ -1248,16 +1248,16 @@
     "semantic_hash": "fbe882f4a17ab5f3f57488875a9ebf18"
   },
   "src/services/blutspiegelHistory.ts": {
-    "mtime": 1788612179.7753687,
-    "seen": 1788803479.1913397,
-    "ast_hash": "da6e473951ef0ec35842364e82275320",
-    "semantic_hash": "da6e473951ef0ec35842364e82275320"
+    "mtime": 1789254905.3712525,
+    "seen": 1789306739.0831497,
+    "ast_hash": "f9423da3249724cd0912f31738dca338",
+    "semantic_hash": ""
   },
   "src/services/liveBlutspiegelChart.ts": {
-    "mtime": 1788612179.7753687,
-    "seen": 1788803479.1913428,
-    "ast_hash": "e70c0b2be5750a8b92e913a9b0a26df9",
-    "semantic_hash": "e70c0b2be5750a8b92e913a9b0a26df9"
+    "mtime": 1789254947.9216492,
+    "seen": 1789306739.0831523,
+    "ast_hash": "cd2f9bb7bbd31f179692d16f0c79ea72",
+    "semantic_hash": ""
   },
   "src/services/peptideLibrary.ts": {
     "mtime": 1788611941.9750857,
@@ -2838,9 +2838,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1789238147.867792,
-    "seen": 1789238687.5965385,
-    "ast_hash": "e10b97ae1a9c0c3fd383669e20f0c81f",
+    "mtime": 1789254947.9221463,
+    "seen": 1789306739.0828137,
+    "ast_hash": "92ca6399e9963dcc70be142408a3fdbd",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -3156,16 +3156,16 @@
     "semantic_hash": "99f2c143ff7a4077aabd70fbe15b1ee9"
   },
   "src/features/my-stack/lib/pkReadiness.test.ts": {
-    "mtime": 1788612179.7642007,
-    "seen": 1788803479.1910794,
-    "ast_hash": "bf22c91fa7ca925d385cb34bec76ba24",
-    "semantic_hash": "bf22c91fa7ca925d385cb34bec76ba24"
+    "mtime": 1789254867.4838805,
+    "seen": 1789306739.0829263,
+    "ast_hash": "4422955f6b814c737a246aa9c972faca",
+    "semantic_hash": ""
   },
   "src/features/my-stack/lib/pkReadiness.ts": {
-    "mtime": 1788612179.7642007,
-    "seen": 1788803479.1910803,
-    "ast_hash": "759543e4068786d9d910b0297148429a",
-    "semantic_hash": "759543e4068786d9d910b0297148429a"
+    "mtime": 1789254850.4417844,
+    "seen": 1789306739.0829275,
+    "ast_hash": "29cae586f8bae9b738a0a85ac26bf5e6",
+    "semantic_hash": ""
   },
   "src/features/my-stack/lib/trackingDepth.test.ts": {
     "mtime": 1788827515.8266494,
@@ -4134,21 +4134,39 @@
     "semantic_hash": ""
   },
   "scripts/generate-pk-profiles-sql.mjs": {
-    "mtime": 1789250349.5306575,
-    "seen": 1789250695.70562,
-    "ast_hash": "e0df682174f9886095bed75a0a828ec4",
+    "mtime": 1789255000.8178358,
+    "seen": 1789306739.082471,
+    "ast_hash": "4100066252c7f8cfac8ec0800dbac176",
     "semantic_hash": ""
   },
   "scripts/pk-profile-source.mjs": {
-    "mtime": 1789249735.0285802,
-    "seen": 1789250005.313493,
-    "ast_hash": "5a29a7c338eec2c6ab7f58cdc2cafb88",
+    "mtime": 1789255000.818322,
+    "seen": 1789306739.0824893,
+    "ast_hash": "2421e330d0d6d0f1c35529fac5780794",
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789250657.794268,
-    "seen": 1789250695.7066126,
-    "ast_hash": "4878343d2147dcf4186bdd8f55e498a1",
+    "mtime": 1789306633.6433277,
+    "seen": 1789306739.083195,
+    "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
+    "semantic_hash": ""
+  },
+  "src/services/blutspiegelHistory.iu.test.ts": {
+    "mtime": 1789306565.9547324,
+    "seen": 1789306739.0831478,
+    "ast_hash": "2115f58cbe03fe04000d46f011d349b8",
+    "semantic_hash": ""
+  },
+  "supabase-pk-iu-per-mg.sql": {
+    "mtime": 1789255018.6943774,
+    "seen": 1789306739.0831923,
+    "ast_hash": "5afcd148edb3871e204903f000033bab",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-13-blutspiegel-iu-umrechnung-design.md": {
+    "mtime": 1789306722.476714,
+    "seen": 1789306739.083329,
+    "ast_hash": "6d6eb14ccc77b9bb247a433720f85ab7",
     "semantic_hash": ""
   }
 }
