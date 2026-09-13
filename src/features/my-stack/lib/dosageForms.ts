@@ -81,7 +81,11 @@ export function strengthShapeFor(
   // Ohne Kategorie bleibt es bei der Vorgabe der Form. Die Kategorie
   // UEBERSCHREIBT, sie raet nicht: solange niemand gesagt hat, was drinliegt,
   // ist das Vial das, was das Vial immer war.
-  if (category === null) return vorgabe
+  //
+  // `other` faellt in denselben Fall. Es ist keine sechste Aussage ueber den
+  // Inhalt, sondern das Gegenteil einer Aussage — es waere falsch, daraus
+  // „fertig geloest" zu schliessen, nur weil es nicht „Peptid" heisst.
+  if (category === null || category === 'other') return vorgabe
   return category === 'peptide' ? 'reconstituted' : 'per_volume'
 }
 

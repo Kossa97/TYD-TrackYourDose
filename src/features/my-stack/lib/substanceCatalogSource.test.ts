@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { STACK_CATEGORIES } from './categories'
 import { DOSAGE_FORMS, getDosageForm } from './dosageForms'
 import type { DosageFormKey, StackCategory } from '../types'
 
@@ -30,7 +31,14 @@ const quelle = await import(
 ) as { SUBSTANCE_CATALOG: SubstanceSeed[] }
 const KATALOG = quelle.SUBSTANCE_CATALOG
 
-const KATEGORIEN: StackCategory[] = ['peptide', 'medication', 'hormone', 'supplement', 'vitamin']
+// Abgeleitet, nicht abgeschrieben: sonst haette der Katalog eine zweite
+// Kategorienliste, die still veraltet. `other` ist ausgenommen — es ist das
+// Auffangfach fuer eine eigene Substanz im Formular. Ein KURATIERTER Eintrag,
+// den niemand einsortieren konnte, ist kein Auffangfall, sondern eine Luecke:
+// dann fehlt die Kategorie, nicht die Substanz.
+const KATEGORIEN = STACK_CATEGORIES
+  .map(option => option.key)
+  .filter(key => key !== 'other') as StackCategory[]
 const FORMSCHLUESSEL = new Set(DOSAGE_FORMS.map(form => form.key))
 
 interface PkSeed {
@@ -95,7 +103,7 @@ describe('Substanzkatalog (Quelldatei)', () => {
     }
   })
 
-  it('gibt jedem Eintrag eine gueltige Kategorie', () => {
+  it('gibt jedem Eintrag eine gueltige Kategorie, und keinem „Sonstiges"', () => {
     for (const eintrag of KATALOG) {
       expect(KATEGORIEN, eintrag.name).toContain(eintrag.category)
     }

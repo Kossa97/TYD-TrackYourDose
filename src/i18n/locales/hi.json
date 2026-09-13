@@ -1119,5 +1119,6 @@
   "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
   "my_stack_strength_hint_vial_solution": "लेबल पर जैसी लिखी है वैसी सांद्रता दर्ज करें। उदाहरण: 1 ml में 250 मि.ग्रा.। यदि आपकी वायल में पाउडर है जिसे आप पहले घोलते हैं, तो श्रेणी में „पेप्टाइड\" चुनें — तब यह चरण विलायक पूछेगा। यह खुराक की सिफ़ारिश नहीं है।",
   "my_stack_browse_catalog": "कैटलॉग देखें",
-  "my_stack_jump_to_letter": "{{letter}} पर जाएँ"
+  "my_stack_jump_to_letter": "{{letter}} पर जाएँ",
+  "stack_category_other": "अन्य"
 }

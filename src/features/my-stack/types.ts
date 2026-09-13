@@ -1,4 +1,8 @@
-export type StackCategory = 'peptide' | 'medication' | 'hormone' | 'supplement' | 'vitamin'
+// `other` ist kein Fach, sondern das Eingestaendnis, dass keines passt.
+// Es traegt deshalb auch keine Aussage: wo die Kategorie das Formular steuert
+// (siehe `strengthShapeFor`), verhaelt es sich wie „noch nicht gewaehlt".
+export type StackCategory =
+  | 'peptide' | 'medication' | 'hormone' | 'supplement' | 'vitamin' | 'other'
 export type ConfigurationStatus = 'complete' | 'needs_review'
 export type TrackingLevel = 'intake_only' | 'with_amount' | 'complete'
 export type RoutineGroup = 'morning' | 'midday' | 'evening'

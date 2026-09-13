@@ -5,7 +5,7 @@ create table public.substance_catalog (
   canonical_name text not null,
   aliases text[] not null default '{}',
   default_category text not null
-    check (default_category in ('peptide', 'medication', 'hormone', 'supplement', 'vitamin')),
+    check (default_category in ('peptide', 'medication', 'hormone', 'supplement', 'vitamin', 'other')),
   suggested_units text[] not null default '{}',
   suggested_dosage_forms text[] not null default '{}',
   pk_profile_id uuid references public.pk_profiles(id) on delete set null,
@@ -109,7 +109,7 @@ alter table public.stack_items rename column name to display_name;
 
 alter table public.stack_items
   add column category text not null default 'peptide'
-    check (category in ('peptide', 'medication', 'hormone', 'supplement', 'vitamin')),
+    check (category in ('peptide', 'medication', 'hormone', 'supplement', 'vitamin', 'other')),
   add column dosage_form text not null default 'vial'
     check (dosage_form in (
       'vial', 'ampoule', 'pen', 'tablet', 'capsule', 'drops', 'liquid',
@@ -609,7 +609,7 @@ begin
   end if;
 
   if item_category is null or item_category not in (
-    'peptide', 'medication', 'hormone', 'supplement', 'vitamin'
+    'peptide', 'medication', 'hormone', 'supplement', 'vitamin', 'other'
   ) then
     raise exception 'Invalid category';
   end if;

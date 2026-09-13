@@ -245,7 +245,7 @@ begin
   end if;
 
   if item_category is null or item_category not in (
-    'peptide', 'medication', 'hormone', 'supplement', 'vitamin'
+    'peptide', 'medication', 'hormone', 'supplement', 'vitamin', 'other'
   ) then
     raise exception 'Invalid category';
   end if;

@@ -219,6 +219,7 @@ const EXPECTED_MY_STACK_KEYS = [
   'stack_category_hormone',
   'stack_category_supplement',
   'stack_category_vitamin',
+  'stack_category_other',
   'dosage_form_vial',
   'dosage_form_ampoule',
   'dosage_form_pen',

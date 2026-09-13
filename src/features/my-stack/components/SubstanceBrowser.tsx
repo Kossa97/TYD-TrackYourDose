@@ -33,8 +33,6 @@ export function SubstanceBrowser({ entries, onSelect }: SubstanceBrowserProps) {
   const [kategorie, setKategorie] = useState<StackCategory>('peptide')
   const listeRef = useRef<HTMLDivElement>(null)
 
-  const gefiltert = useMemo(() => nachKategorie(entries, kategorie), [entries, kategorie])
-  const gruppen = useMemo(() => nachBuchstaben(gefiltert), [gefiltert])
   const gesamt = useMemo(() => entries.filter(eintrag => eintrag.active).length, [entries])
 
   // Die Zahl je Reiter steht am Reiter: sonst tippt man auf „Hormone" und
@@ -47,6 +45,26 @@ export function SubstanceBrowser({ entries, onSelect }: SubstanceBrowserProps) {
     }
     return zaehler
   }, [entries])
+
+  // Nur Reiter, hinter denen etwas steht. „Sonstiges" gehoert ins Formular, wo
+  // jemand eine eigene Substanz benennt — im Katalog liegt nichts darunter,
+  // und ein Reiter, der auf eine leere Liste fuehrt, sieht aus wie ein Fehler.
+  const sichtbar = useMemo(
+    () => STACK_CATEGORIES.filter(option => (anzahlJeKategorie.get(option.key) ?? 0) > 0),
+    [anzahlJeKategorie],
+  )
+  // Abgeleitet statt nachgezogen: waere der gewaehlte Reiter verschwunden,
+  // muesste ein Effekt den Zustand korrigieren — und bis er laeuft, stuende
+  // eine leere Liste da.
+  const aktiveKategorie = sichtbar.some(option => option.key === kategorie)
+    ? kategorie
+    : sichtbar[0]?.key ?? kategorie
+
+  const gefiltert = useMemo(
+    () => nachKategorie(entries, aktiveKategorie),
+    [entries, aktiveKategorie],
+  )
+  const gruppen = useMemo(() => nachBuchstaben(gefiltert), [gefiltert])
 
   function springeZu(buchstabe: string): void {
     listeRef.current
@@ -87,8 +105,8 @@ export function SubstanceBrowser({ entries, onSelect }: SubstanceBrowserProps) {
             aria-label={String(t('my_stack_category', { defaultValue: 'Kategorie' }))}
             className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-3"
           >
-            {STACK_CATEGORIES.map(option => {
-              const aktiv = option.key === kategorie
+            {sichtbar.map(option => {
+              const aktiv = option.key === aktiveKategorie
               return (
                 <button
                   key={option.key}

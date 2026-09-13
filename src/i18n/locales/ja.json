@@ -1119,5 +1119,6 @@
   "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
   "my_stack_strength_hint_vial_solution": "ラベルに記載のとおりの濃度を入力してください。例：1 ml あたり 250 mg。バイアルに先に溶かす粉末が入っている場合は、カテゴリーで「ペプチド」を選んでください。そのときは溶媒を尋ねます。用量の推奨ではありません。",
   "my_stack_browse_catalog": "カタログを見る",
-  "my_stack_jump_to_letter": "{{letter}} へ移動"
+  "my_stack_jump_to_letter": "{{letter}} へ移動",
+  "stack_category_other": "その他"
 }

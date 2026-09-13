@@ -11,4 +11,8 @@ export const STACK_CATEGORIES: readonly StackCategoryDefinition[] = [
   { key: 'hormone', labelKey: 'stack_category_hormone' },
   { key: 'supplement', labelKey: 'stack_category_supplement' },
   { key: 'vitamin', labelKey: 'stack_category_vitamin' },
+  // Zuletzt und mit Absicht: wer hier landet, hat die anderen fuenf
+  // gelesen. Ein Auffangfach ganz oben waere eine Einladung, nicht zu
+  // lesen.
+  { key: 'other', labelKey: 'stack_category_other' },
 ] as const

@@ -1119,5 +1119,6 @@
   "my_stack_strength_concentration": "= {{value}} {{unit}}/ml",
   "my_stack_strength_hint_vial_solution": "Masukkan konsentrasi seperti tertera pada label. Contoh: 250 mg per 1 ml. Jika vialmu berisi serbuk yang kamu larutkan dulu, pilih “Peptida” sebagai kategori — maka langkah ini akan menanyakan pelarutnya. Bukan rekomendasi dosis.",
   "my_stack_browse_catalog": "Telusuri katalog",
-  "my_stack_jump_to_letter": "Lompat ke {{letter}}"
+  "my_stack_jump_to_letter": "Lompat ke {{letter}}",
+  "stack_category_other": "Lainnya"
 }

@@ -192,6 +192,13 @@ describe('Einnahmeeinheit je Darreichungsform', () => {
     // Ohne Kategorie bleibt es bei der Vorgabe der Form: die Kategorie
     // ueberschreibt, sie raet nicht.
     expect(strengthShapeFor('vial', null)).toBe('reconstituted')
+
+    // „Sonstiges" ist keine sechste Aussage ueber den Inhalt, sondern das
+    // Gegenteil einer Aussage — es faellt in denselben Fall wie „noch nichts
+    // gewaehlt". Aus „nicht Peptid" folgt NICHT „fertig geloest".
+    expect(strengthShapeFor('vial', 'other')).toBe('reconstituted')
+    expect(strengthBasisDefault('vial', 'other')).toEqual(strengthBasisDefault('vial', null))
+    expect(strengthHintKey('vial', 'other')).toBe(strengthHintKey('vial', null))
   })
 
   it('laesst die Kategorie alle anderen Formen unberuehrt', () => {
@@ -199,7 +206,7 @@ describe('Einnahmeeinheit je Darreichungsform', () => {
     // zwei verschiedene Dinge unter einem Namen.
     for (const form of DOSAGE_FORMS) {
       if (form.key === 'vial') continue
-      for (const kategorie of ['peptide', 'hormone', 'medication', 'supplement', 'vitamin', null] as const) {
+      for (const kategorie of ['peptide', 'hormone', 'medication', 'supplement', 'vitamin', 'other', null] as const) {
         expect(strengthShapeFor(form.key, kategorie), `${form.key}/${kategorie}`)
           .toBe(form.strengthShape)
       }

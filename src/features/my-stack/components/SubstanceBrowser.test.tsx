@@ -74,21 +74,38 @@ describe('SubstanceBrowser', () => {
     expect(within(liste as HTMLElement).queryByText('Metformin')).toBeNull()
   })
 
-  it('schreibt die Anzahl an jeden Reiter', () => {
+  it('schreibt die Anzahl an jeden Reiter und laesst leere weg', () => {
     // Sonst tippt man auf „Hormone" und findet einen Eintrag, wo man hundert
-    // erwartet hat.
+    // erwartet hat. Und ein Reiter, der auf eine leere Liste fuehrt, sieht aus
+    // wie ein Fehler — „Vitamin" und „Sonstiges" stehen hier deshalb nicht.
     render(<SubstanceBrowser entries={KATALOG} onSelect={() => undefined} />)
     oeffnen()
 
     const reiter = screen.getAllByRole('tab')
-    expect(reiter).toHaveLength(5)
     expect(reiter.map(r => r.textContent)).toEqual([
       'stack_category_peptide4',
       'stack_category_medication2',
       'stack_category_hormone1',
       'stack_category_supplement1',
-      'stack_category_vitamin0',
     ])
+  })
+
+  it('faellt auf den ersten gefuellten Reiter zurueck, wenn Peptide fehlen', () => {
+    // Der Vorgabereiter ist „Peptid". Liegt dort nichts, darf nicht eine leere
+    // Liste dastehen — und zwar sofort, nicht nach einem nachziehenden Effekt.
+    render(
+      <SubstanceBrowser
+        entries={[eintrag('Ibuprofen', 'medication'), eintrag('Zink', 'supplement')]}
+        onSelect={() => undefined}
+      />,
+    )
+    oeffnen()
+
+    const reiter = screen.getAllByRole('tab')
+    expect(reiter).toHaveLength(2)
+    expect(reiter[0].getAttribute('aria-selected')).toBe('true')
+    const liste = document.querySelector('[data-katalog-eintraege]') as HTMLElement
+    expect(within(liste).getByText('Ibuprofen')).toBeTruthy()
   })
 
   it('wechselt die Liste beim Reiterwechsel', () => {

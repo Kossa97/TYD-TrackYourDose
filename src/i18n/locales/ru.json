@@ -1121,5 +1121,6 @@
   "my_stack_strength_concentration": "= {{value}} {{unit}}/мл",
   "my_stack_strength_hint_vial_solution": "Введите концентрацию так, как она указана на этикетке. Пример: 250 мг на 1 мл. Если в вашем флаконе порошок, который вы сначала растворяете, выберите категорию «Пептид» — тогда шаг спросит про растворитель. Не является рекомендацией по дозировке.",
   "my_stack_browse_catalog": "Просмотреть каталог",
-  "my_stack_jump_to_letter": "Перейти к {{letter}}"
+  "my_stack_jump_to_letter": "Перейти к {{letter}}",
+  "stack_category_other": "Другое"
 }

@@ -477,6 +477,30 @@ describe('StackItemWizard interactions', () => {
     expect(category.value).toBe('supplement')
   })
 
+  it('bietet „Sonstiges" als letzte Kategorie an und laesst weitergehen', () => {
+    // Der Katalog hat 182 Eintraege und deckt trotzdem nicht alles ab. Wer
+    // seine Substanz frei eintraegt, musste sie bisher in eines von fuenf
+    // Faechern zwingen — und jede dieser Wahlen ist eine Behauptung, die die
+    // App spaeter auswertet. „Sonstiges" ist die ehrliche Antwort darauf.
+    renderWizard()
+    const kategorie = screen.getByLabelText('my_stack_category') as HTMLSelectElement
+
+    const werte = Array.from(kategorie.options).map(option => option.value)
+    expect(werte).toEqual(['', 'peptide', 'medication', 'hormone', 'supplement', 'vitamin', 'other'])
+
+    fireEvent.change(screen.getByLabelText('my_stack_question'), { target: { value: 'Rotlichtlampe' } })
+    fireEvent.click(screen.getByText('my_stack_add_custom'))
+    fireEvent.change(kategorie, { target: { value: 'other' } })
+    expect(kategorie.value).toBe('other')
+    continueWizard()
+
+    // Der Schritt ist beantwortet: keine Pflichtmeldung, und die Frage nach
+    // der Substanz steht nicht mehr da.
+    expect(screen.queryByText('my_stack_name_required')).toBeNull()
+    expect(screen.queryByText('my_stack_category_required')).toBeNull()
+    expect(screen.queryByLabelText('my_stack_question')).toBeNull()
+  })
+
   it('macht die Katalogwahl sichtbar und nimmt das Suchfeld weg', () => {
     // Vorher sah der Bildschirm nach der Wahl aus wie davor: Trefferliste
     // offen, „eigene Substanz“ daneben, kein Zeichen, dass etwas gewaehlt ist.
