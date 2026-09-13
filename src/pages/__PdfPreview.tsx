@@ -36,10 +36,8 @@ const DEMO_DATA: ProtocolData = {
     { logged_at: '2026-06-15T08:00:00Z', weight_kg: 82.5 },
     { logged_at: '2026-06-29T08:00:00Z', weight_kg: 81.2 },
   ],
-  bloodwork: [
-    { tested_at: '2026-06-01', marker: 'IGF-1', value: 180, unit: 'ng/ml' },
-    { tested_at: '2026-06-28', marker: 'IGF-1', value: 240, unit: 'ng/ml' },
-  ],
+  // Leer gelassen: ausgegraute Sektion + Toast „keine Daten“ im Modal testbar.
+  bloodwork: [],
   effects: [
     {
       type: 'effect',

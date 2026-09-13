@@ -25,7 +25,8 @@ const T: Record<UILang, {
   title: string; intro: string; presets: string; custom: string; sections: string
   period: string; from: string; to: string
   note: string; notePlaceholder: string; language: string; download: string; generating: string
-  loading: string; noneSelected: string; empty: string; loadError: string; genError: string
+  loading: string; noneSelected: string; empty: string; emptyClick: (label: string) => string
+  loadError: string; genError: string
   personalHint: string
   livePreview: string; previewUpdating: string; previewEmpty: string; previewError: string
 }> = {
@@ -45,6 +46,7 @@ const T: Record<UILang, {
     loading: 'Daten werden geladen …',
     noneSelected: 'Wähle mindestens einen Inhalt aus.',
     empty: 'keine Daten',
+    emptyClick: label => `Keine Daten für „${label}“ im gewählten Zeitraum.`,
     loadError: 'Daten konnten nicht geladen werden',
     genError: 'PDF konnte nicht erstellt werden',
     personalHint: 'Ohne „Persönliche Angaben“ wird das PDF anonymisiert (z. B. fürs Forum).',
@@ -69,6 +71,7 @@ const T: Record<UILang, {
     loading: 'Loading data …',
     noneSelected: 'Select at least one section.',
     empty: 'no data',
+    emptyClick: label => `No data for “${label}” in the selected period.`,
     loadError: 'Could not load data',
     genError: 'Could not create PDF',
     personalHint: 'Without “Personal details” the PDF is anonymised (e.g. for forums).',
@@ -239,6 +242,12 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
   }
 
   const toggle = (id: SectionId) => {
+    const section = SECTIONS.find(s => s.id === id)
+    if (!section) return
+    if (!(availability.get(id) ?? false)) {
+      toast(t.emptyClick(section.label[lang]), { duration: 2800 })
+      return
+    }
     setSelected(prev => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -475,11 +484,12 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
                     <button
                       key={s.id}
                       type="button"
-                      disabled={!has}
+                      aria-disabled={!has}
+                      title={!has ? t.emptyClick(s.label[lang]) : undefined}
                       onClick={() => toggle(s.id)}
                       className={`flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-colors ${
                         !has
-                          ? 'border-slate-800/60 bg-slate-900/40 opacity-45 cursor-not-allowed'
+                          ? 'border-slate-800/60 bg-slate-900/40 opacity-45'
                           : checked
                             ? 'border-sky-500/40 bg-sky-500/10'
                             : 'border-slate-800 bg-slate-800/30 hover:border-slate-700'
