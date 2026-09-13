@@ -170,13 +170,18 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
 
   const flashUnavailableSection = (id: SectionId) => {
     // State-gesteuert: imperative classList wird von React-className beim Toast-Re-Render gelöscht.
+    // Kurz null → wieder setzen, damit die CSS-Animation bei erneutem Klick neu startet
+    // (ohne Button-Remount via key, der den Flash unzuverlässig abbrach).
     if (denyFlashTimer.current) window.clearTimeout(denyFlashTimer.current)
-    setDenyFlashId(id)
+    setDenyFlashId(null)
     setDenyFlashKey(k => k + 1)
-    denyFlashTimer.current = window.setTimeout(() => {
-      setDenyFlashId(null)
-      denyFlashTimer.current = null
-    }, 480)
+    requestAnimationFrame(() => {
+      setDenyFlashId(id)
+      denyFlashTimer.current = window.setTimeout(() => {
+        setDenyFlashId(null)
+        denyFlashTimer.current = null
+      }, 650)
+    })
   }
 
   // Daten laden: Zeitraum debouncen, Prefs nur beim ersten Load anwenden.
@@ -497,11 +502,12 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
                   const checked = selected.has(s.id)
                   return (
                     <button
-                      key={denyFlashId === s.id ? `${s.id}-deny-${denyFlashKey}` : s.id}
+                      key={s.id}
                       type="button"
                       aria-disabled={!has}
                       title={!has ? t.emptyClick(s.label[lang]) : undefined}
                       onClick={() => toggle(s.id)}
+                      data-deny-key={denyFlashId === s.id ? denyFlashKey : undefined}
                       className={`flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-colors ${
                         !has
                           ? 'border-slate-800/60 bg-slate-900/40 opacity-45'

@@ -1434,12 +1434,23 @@ main.flex-1 {
   80% { transform: translateX(-1px); }
 }
 .pdf-section-deny {
-  animation: pdf-section-deny 0.48s ease;
   /* outline statt border-color: kämpft nicht mit Tailwind-Border-Utilities */
-  outline: 1px solid rgb(248 113 113 / 0.72);
+  outline: 1px solid rgb(248 113 113 / 0.75);
   outline-offset: 0;
-  box-shadow: 0 0 0 1px rgb(248 113 113 / 0.22);
-  opacity: 0.88 !important;
+  box-shadow: 0 0 0 1px rgb(248 113 113 / 0.3);
+  opacity: 0.9 !important;
+  animation-name: pdf-section-deny;
+  animation-duration: 0.48s;
+  animation-timing-function: ease;
+  animation-iteration-count: 1;
+}
+
+/* Gegen globales prefers-reduced-motion: * { animation-duration: 0.001ms } —
+   Shake nur wenn Motion erlaubt; Rahmen bleibt über die Klasse sichtbar. */
+@media (prefers-reduced-motion: no-preference) {
+  .pdf-section-deny {
+    animation-duration: 0.48s !important;
+  }
 }
 
 .pulse-soft { animation: tydPulseSoft 1.2s ease-in-out infinite; }
