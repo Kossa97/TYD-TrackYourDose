@@ -252,9 +252,9 @@
     "semantic_hash": ""
   },
   "src/App.tsx": {
-    "mtime": 1789310494.4137335,
-    "seen": 1789310514.5072618,
-    "ast_hash": "4a788a4933603c7a694a38a2413ae41f",
+    "mtime": 1789314740.9785283,
+    "seen": 1789314854.7077055,
+    "ast_hash": "edbc5f86871068620eb852a5c5c40163",
     "semantic_hash": ""
   },
   "src/components/BlutspiegelCarousel.tsx": {
@@ -360,9 +360,9 @@
     "semantic_hash": "f8b8a10b823713532fbd6437d7efe886"
   },
   "src/components/ProtocolPdfModal.tsx": {
-    "mtime": 1789310426.2492452,
-    "seen": 1789310514.5075464,
-    "ast_hash": "0694493c663a75b856bf44fdf8ca8ae7",
+    "mtime": 1789314841.475309,
+    "seen": 1789314854.7079854,
+    "ast_hash": "30343633b4af41c45498711eb11c14ef",
     "semantic_hash": ""
   },
   "src/components/PushNotificationListener.tsx": {
@@ -738,15 +738,15 @@
     "semantic_hash": ""
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1789252867.965673,
-    "seen": 1789307374.5276525,
-    "ast_hash": "47446c145b1d1b1f6409a67ab0926f83",
+    "mtime": 1789314806.327041,
+    "seen": 1789314854.711432,
+    "ast_hash": "d2672386aed1c20993beaefa7dc5a898",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1789252867.965673,
-    "seen": 1789307374.5276532,
-    "ast_hash": "9a7a280e32d6a4d4055ed86cb0c5f0fb",
+    "mtime": 1789314806.327041,
+    "seen": 1789314854.711433,
+    "ast_hash": "9e469546bbb88deb09d73310e8058692",
     "semantic_hash": ""
   },
   "src/i18n/locales/es.json": {
@@ -1026,9 +1026,9 @@
     "semantic_hash": ""
   },
   "src/lib/protocolPdf/renderProtocolPdf.ts": {
-    "mtime": 1789310151.1111286,
-    "seen": 1789310514.5119767,
-    "ast_hash": "a9ab87dd3c95ad4c8e7787ab3eacaaea",
+    "mtime": 1789311121.9335263,
+    "seen": 1789311310.8755922,
+    "ast_hash": "37ce6a3f8dfc72dcbc002f08b019b33f",
     "semantic_hash": ""
   },
   "src/lib/protocolPdf/sections.ts": {
@@ -1140,9 +1140,9 @@
     "semantic_hash": ""
   },
   "src/pages/Home.tsx": {
-    "mtime": 1789252867.977675,
-    "seen": 1789307374.5277228,
-    "ast_hash": "0cc81e97b9cc847f3e373dec39852fd3",
+    "mtime": 1789314806.327041,
+    "seen": 1789314854.712628,
+    "ast_hash": "d7933f5070642526a175f24477c2fd87",
     "semantic_hash": ""
   },
   "src/pages/InjektionsTracker.test.ts": {
@@ -3036,6 +3036,12 @@
     "mtime": 1789310476.613608,
     "seen": 1789310514.5153677,
     "ast_hash": "a5f7f92d6daa32aca2f2539a85a5b163",
+    "semantic_hash": ""
+  },
+  "src/pages/PdfProtokoll.tsx": {
+    "mtime": 1789314740.9785283,
+    "seen": 1789314854.7126617,
+    "ast_hash": "60519d35fff304ba2808e670cd6972a4",
     "semantic_hash": ""
   }
 }

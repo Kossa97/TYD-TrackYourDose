@@ -103,6 +103,6 @@ export interface PdfBuildOptions {
   range: PdfDateRange
   sections: SectionId[]   // vom Nutzer gewählte Reihenfolge ist fix (siehe SECTION_ORDER)
   note: string            // Freitext für die "Notizen / Fragen"-Sektion
-  /** Steuert Layout/Look — 'arzt' = weißer medizinischer Befund. */
+  /** Steuert Abschnitte und Texte — das visuelle Layout ist für alle Presets gleich. */
   preset?: PdfPresetKind
 }

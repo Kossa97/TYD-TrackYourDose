@@ -192,8 +192,8 @@ describe('persistence', () => {
 })
 
 
-describe('Arzt-Befund Theme', () => {
-  it('erzeugt ein medizinisches PDF mit preset arzt', async () => {
+describe('Einheitliches Report-Layout', () => {
+  it('erzeugt ein PDF mit preset arzt', async () => {
     const doc = await buildProtocolPdf(makeData(), {
       lang: 'de',
       range: { from: '2026-06-01', to: '2026-06-30' },
@@ -208,8 +208,8 @@ describe('Arzt-Befund Theme', () => {
 })
 
 
-describe('Coach & Forum Themes', () => {
-  it('erzeugt ein Coaching-PDF mit preset coach', async () => {
+describe('Presets mit gleichem Layout', () => {
+  it('erzeugt ein Coaching-PDF mit gleichem Layout', async () => {
     const doc = await buildProtocolPdf(makeData(), {
       lang: 'de',
       range: { from: '2026-06-01', to: '2026-06-30' },
@@ -222,7 +222,7 @@ describe('Coach & Forum Themes', () => {
     expect(bytes.byteLength).toBeGreaterThan(3000)
   })
 
-  it('erzeugt ein anonymes Forum-PDF mit preset forum', async () => {
+  it('erzeugt ein anonymes Forum-PDF mit gleichem Layout', async () => {
     const doc = await buildProtocolPdf(makeData(), {
       lang: 'de',
       range: { from: '2026-06-01', to: '2026-06-30' },
