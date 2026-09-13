@@ -273,32 +273,49 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
 
   const showNoteField = selected.has('notes')
 
+  const langToggle = (
+    <button
+      type="button"
+      onClick={() => setLang(lang === 'de' ? 'en' : 'de')}
+      className="text-[0.7rem] font-bold tracking-wide text-slate-400 hover:text-white px-1.5 py-1"
+      aria-label={t.language}
+      title={t.language}
+    >
+      <span className={lang === 'de' ? 'text-sky-400' : 'text-slate-500'}>DE</span>
+      <span className="text-slate-600 mx-0.5">/</span>
+      <span className={lang === 'en' ? 'text-sky-400' : 'text-slate-500'}>EN</span>
+    </button>
+  )
+
   return (
     <div
       className={isPage
-        ? 'w-full flex flex-col min-h-[calc(100dvh-7rem)]'
+        ? 'w-[calc(100%+1.5rem)] -mx-3 -mt-4 flex flex-col min-h-[calc(100dvh-4.5rem)] bg-slate-950'
         : 'fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center'}
       data-app-modal={isPage ? undefined : true}
       onClick={isPage ? undefined : onClose}
     >
       <div
         className={isPage
-          ? 'bg-slate-900 rounded-2xl w-full flex flex-col flex-1 min-h-0 border border-slate-800'
+          ? 'bg-slate-950 w-full flex flex-col flex-1 min-h-0'
           : 'bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-5xl flex flex-col max-h-[94dvh] pt-[env(safe-area-inset-top)] sm:pt-0'}
         onClick={isPage ? undefined : (e => e.stopPropagation())}
       >
-        <div className="shrink-0 border-b border-slate-800 px-5 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FileText size={18} className="text-sky-400" />
-            <h2 className="font-bold text-white text-lg">{t.title}</h2>
+        <div className={`shrink-0 border-b border-slate-800 flex items-center justify-between gap-2 ${isPage ? 'px-3 py-2.5' : 'px-5 py-4'}`}>
+          <div className="flex items-center gap-2 min-w-0">
+            <FileText size={isPage ? 16 : 18} className="text-sky-400 shrink-0" />
+            <h2 className={`font-bold text-white truncate ${isPage ? 'text-base' : 'text-lg'}`}>{t.title}</h2>
           </div>
-          <button type="button" onClick={onClose} className="p-1.5 text-slate-400 hover:text-white">
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            {langToggle}
+            <button type="button" onClick={onClose} className="p-1.5 text-slate-400 hover:text-white">
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Muster-Tabs + Inhalt darunter — mobil zuerst */}
-        <div className="shrink-0 px-4 pt-3 pb-2 border-b border-slate-800">
+        <div className={`shrink-0 border-b border-slate-800 ${isPage ? 'px-3 pt-2 pb-2' : 'px-4 pt-3 pb-2'}`}>
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.presets}</p>
             {activePreset === 'custom' && (
@@ -340,24 +357,6 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
           <div className={`lg:w-[380px] lg:shrink-0 overflow-y-auto px-4 py-4 space-y-4 ${isPage ? '' : 'max-h-[42vh] lg:max-h-none'}`}>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.language}</span>
-            <div className="flex gap-1 rounded-lg bg-slate-800 p-0.5">
-              {(['de', 'en'] as const).map(l => (
-                <button
-                  key={l}
-                  type="button"
-                  onClick={() => setLang(l)}
-                  className={`px-3 py-1 rounded-md text-sm font-semibold transition-colors ${
-                    lang === l ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {l.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">{t.period}</p>
             <div className="grid grid-cols-2 gap-2">
