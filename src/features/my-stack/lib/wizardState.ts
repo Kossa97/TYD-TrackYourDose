@@ -12,7 +12,7 @@ import type {
 } from '../types'
 import { format } from 'date-fns'
 import { buildDuplicateFingerprint } from './duplicateFingerprint'
-import { getIntakePlanUnitSuggestions, strengthBasisDefault } from './dosageForms'
+import { getIntakePlanUnitSuggestions, showsColor, strengthBasisDefault } from './dosageForms'
 import { trackingCapabilities } from './trackingDepth'
 import { validateIntakePlan, validateStackItemDraft } from './validation'
 
@@ -39,7 +39,16 @@ export interface WizardState {
 // einmal beim Namen zu nennen. Nur so bleibt eine Regel eine Regel: wer
 // productStrength einer Stufe gibt, bekommt die Schritte dazu automatisch.
 export function wizardSteps(state: WizardState): WizardStep[] {
-  const gemeinsam: WizardStep[] = ['substance', 'dosage_form', 'color', 'tracking_level']
+  // Die Farbe wird ausschliesslich von der Buehnengrafik gezeigt. Pflaster
+  // und Tube zeigen sie bewusst nicht (hautfarben, Aluminium), `other` hat gar
+  // keine Grafik — dort ging die Wahl ins Leere: man zog an der Flaeche, und
+  // nichts nahm die Farbe an. Ein Schritt, dessen Antwort nirgends ankommt,
+  // wird nicht gestellt. Solange keine Form feststeht, bleibt er drin: er
+  // kommt ohnehin erst nach dem Formschritt.
+  const farbeZeigtSich = state.draft.dosageForm === null || showsColor(state.draft.dosageForm)
+  const gemeinsam: WizardStep[] = farbeZeigtSich
+    ? ['substance', 'dosage_form', 'color', 'tracking_level']
+    : ['substance', 'dosage_form', 'tracking_level']
 
   // Frueher stand hier ein Sonderfall fuer „Tiefe noch nicht gewaehlt": dann
   // war die Schrittzahl offen. Seit der Entwurf mit „Gruendlich" startet,

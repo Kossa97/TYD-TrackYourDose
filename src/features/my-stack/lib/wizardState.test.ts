@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { IntakePlanDraft, StackItem, SubstanceCatalogEntry } from '../types'
+import type { DosageFormKey, IntakePlanDraft, StackItem, SubstanceCatalogEntry } from '../types'
 import {
   canContinue,
   didIdentityChange,
@@ -121,6 +121,41 @@ describe('wizard state', () => {
     )
 
     expect(wizardSteps(state)).toEqual(expected)
+  })
+
+  it('laesst den Farbschritt weg, wo die Form die Farbe nicht zeigt', () => {
+    // `color_hex` wird ausschliesslich von der Buehnengrafik gezeigt. Pflaster
+    // und Tube zeigen sie bewusst nicht (hautfarben, Aluminium), `other` hat
+    // gar keine Grafik. Vorher stand der Schritt trotzdem da: man zog an der
+    // Farbflaeche, und nichts nahm die Farbe an — bei `other` war der Schritt
+    // sogar voellig leer.
+    const mitForm = (dosageForm: DosageFormKey) => wizardSteps(wizardReducer(
+      initialWizardState(),
+      { type: 'dosage_form_selected', dosageForm },
+    ))
+
+    for (const ohneFarbe of ['patch', 'tube', 'other'] as const) {
+      expect(mitForm(ohneFarbe), ohneFarbe).not.toContain('color')
+    }
+    for (const mitFarbe of ['vial', 'ampoule', 'pen', 'tablet', 'capsule', 'drops', 'powder', 'nasal_spray', 'spray', 'gel'] as const) {
+      expect(mitForm(mitFarbe), mitFarbe).toContain('color')
+    }
+
+    // Solange keine Form feststeht, bleibt der Schritt drin — er kommt
+    // ohnehin erst nach dem Formschritt.
+    expect(wizardSteps(initialWizardState())).toContain('color')
+  })
+
+  it('haelt die Schrittliste und den aktuellen Schritt beisammen', () => {
+    // Faellt ein Schritt weg, waehrend er der aktuelle ist, waere
+    // `steps.indexOf(step)` gleich -1 und „Weiter" spraenge an den Anfang
+    // zurueck. Die Form wird einen Schritt VOR der Farbe gewaehlt, also darf
+    // das nicht passieren — hier festgehalten, damit es so bleibt.
+    let state = initialWizardState()
+    for (const dosageForm of ['patch', 'vial', 'tube', 'capsule', 'other'] as const) {
+      state = wizardReducer(state, { type: 'dosage_form_selected', dosageForm })
+      expect(wizardSteps(state), dosageForm).toContain(state.step)
+    }
   })
 
   it('startet neue Entwuerfe auf der tiefsten Stufe und uebernimmt sonst die gespeicherte', () => {

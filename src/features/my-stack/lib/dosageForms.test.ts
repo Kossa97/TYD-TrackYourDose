@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DOSAGE_FORMS, getDosageForm, getIntakePlanUnitSuggestions, intakeUnitLabelKey, isStageRenderable, strengthBasisDefault, strengthHintKey, strengthShapeFor } from './dosageForms'
+import { DOSAGE_FORMS, getDosageForm, getIntakePlanUnitSuggestions, intakeUnitLabelKey, isStageRenderable, showsColor, strengthBasisDefault, strengthHintKey, strengthShapeFor } from './dosageForms'
 import type { DosageFormKey } from '../types'
 
 describe('DOSAGE_FORMS', () => {
@@ -176,6 +176,24 @@ describe('Einnahmeeinheit je Darreichungsform', () => {
       const vorgabe = strengthBasisDefault(form.key)
       if (vorgabe.unit === null) continue
       expect([...form.basisUnits, 'ml', 'g'], form.key).toContain(vorgabe.unit)
+    }
+  })
+
+  it('sagt je Form, ob sie die Eintragsfarbe ueberhaupt zeigt', () => {
+    // Die Aussage gehoert zur Form, nicht zum Formular: `color_hex` wird
+    // ausschliesslich von der Buehnengrafik gezeigt. Wo sie das nicht tut,
+    // faellt der Farbschritt weg (siehe wizardSteps).
+    expect(showsColor('patch')).toBe(false)   // hautfarben, mit Absicht
+    expect(showsColor('tube')).toBe(false)    // Aluminium, mit Absicht
+    expect(showsColor('other')).toBe(false)   // gar keine Grafik
+    expect(showsColor('vial')).toBe(true)
+
+    // Ohne Grafik kann keine Farbe ankommen — die Umkehrung gilt nicht:
+    // Pflaster und Tube HABEN eine Grafik und zeigen sie trotzdem nicht.
+    for (const form of DOSAGE_FORMS) {
+      if (!isStageRenderable(form.key)) {
+        expect(showsColor(form.key), form.key).toBe(false)
+      }
     }
   })
 

@@ -26,6 +26,11 @@ export interface DosageFormDefinition {
   // Wie die Staerke dieser Form zustande kommt — die VORGABE der Form. Beim
   // Vial hat die Substanz das letzte Wort; siehe `strengthShapeFor`.
   readonly strengthShape: StrengthShape
+  // Ob die Grafik dieser Form `color_hex` ueberhaupt zeigt. Pflaster und Tube
+  // tun es bewusst nicht (hautfarben, Aluminium), `other` hat gar keine
+  // Grafik. Das Formular fragt die Farbe deshalb dort nicht ab — ein
+  // Farbfeld, dessen Wahl nirgends ankommt, sieht aus wie ein Fehler.
+  readonly showsColor: boolean
   readonly stageRenderer?: 'vial' | 'ampoule' | 'capsule' | 'tablet' | 'nasal_spray' | 'tube' | 'pen' | 'patch' | 'drops' | 'powder' | 'gel' | 'spray'
   // What the stage needs to know: where the liquid sits, whether the fill level
   // says anything, and — derived from the chamber — whether it wears our label.
@@ -33,19 +38,19 @@ export interface DosageFormDefinition {
 }
 
 export const DOSAGE_FORMS: readonly DosageFormDefinition[] = [
-  { key: 'vial', labelKey: 'dosage_form_vial', suggestedUnits: ['mcg', 'mg', 'IU'], basisUnits: ['vial', 'ml'], capabilities: ['injectable', 'reconstitutable', 'concentration_based', 'inventory_capable'], strengthShape: 'reconstituted', intakeUnit: 'syringe', stageRenderer: 'vial', stageForm: VIAL_SPEC },
-  { key: 'ampoule', labelKey: 'dosage_form_ampoule', suggestedUnits: ['mg', 'ml', 'IU'], basisUnits: ['ml', 'ampoule'], capabilities: ['injectable', 'liquid', 'concentration_based', 'inventory_capable'], strengthShape: 'per_volume', intakeUnit: 'syringe', stageRenderer: 'ampoule', stageForm: AMPOULE_SPEC },
-  { key: 'pen', labelKey: 'dosage_form_pen', suggestedUnits: ['mg', 'mcg', 'IU'], basisUnits: ['dose', 'ml'], capabilities: ['injectable', 'liquid', 'concentration_based', 'inventory_capable'], strengthShape: 'per_volume', intakeUnit: 'dose', stageRenderer: 'pen', stageForm: PEN_SPEC },
-  { key: 'tablet', labelKey: 'dosage_form_tablet', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['tablet'], capabilities: ['countable', 'divisible', 'inventory_capable'], strengthShape: 'per_unit', intakeUnit: 'tablet', stageRenderer: 'tablet', stageForm: TABLET_SPEC },
-  { key: 'capsule', labelKey: 'dosage_form_capsule', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['capsule'], capabilities: ['countable', 'inventory_capable'], strengthShape: 'per_unit', intakeUnit: 'capsule', stageRenderer: 'capsule', stageForm: CAPSULE_SPEC },
-  { key: 'drops', labelKey: 'dosage_form_drops', suggestedUnits: ['mcg', 'mg', 'IU', 'ml'], basisUnits: ['drop', 'ml'], capabilities: ['liquid', 'concentration_based', 'inventory_capable'], strengthShape: 'per_volume', intakeUnit: 'drop', stageRenderer: 'drops', stageForm: DROPS_SPEC },
-  { key: 'powder', labelKey: 'dosage_form_powder', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'portion'], capabilities: ['inventory_capable'], strengthShape: 'per_mass', intakeUnit: 'portion', stageRenderer: 'powder', stageForm: POWDER_SPEC },
-  { key: 'nasal_spray', labelKey: 'dosage_form_nasal_spray', suggestedUnits: ['mcg', 'mg'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'], strengthShape: 'per_unit', intakeUnit: 'spray', stageRenderer: 'nasal_spray', stageForm: NASAL_SPRAY_SPEC },
-  { key: 'spray', labelKey: 'dosage_form_spray', suggestedUnits: ['mcg', 'mg', 'ml'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'], strengthShape: 'per_unit', intakeUnit: 'spray', stageRenderer: 'spray', stageForm: SPRAY_SPEC },
-  { key: 'gel', labelKey: 'dosage_form_gel', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'application'], capabilities: ['inventory_capable'], strengthShape: 'per_mass', intakeUnit: 'application', stageRenderer: 'gel', stageForm: GEL_SPEC },
-  { key: 'patch', labelKey: 'dosage_form_patch', suggestedUnits: ['mcg', 'mg'], basisUnits: ['patch', 'hour'], capabilities: ['countable', 'inventory_capable'], strengthShape: 'per_unit', intakeUnit: 'patch', stageRenderer: 'patch', stageForm: PATCH_SPEC },
-  { key: 'tube', labelKey: 'dosage_form_tube', suggestedUnits: ['mg', 'g', 'ml'], basisUnits: ['g', 'ml', 'application'], capabilities: ['inventory_capable'], strengthShape: 'per_mass', intakeUnit: 'application', stageRenderer: 'tube', stageForm: TUBE_SPEC },
-  { key: 'other', labelKey: 'dosage_form_other', suggestedUnits: ['mcg', 'mg', 'g', 'IU', 'ml'], basisUnits: ['unit', 'portion'], capabilities: [], strengthShape: 'free', intakeUnit: 'unit' },
+  { key: 'vial', labelKey: 'dosage_form_vial', suggestedUnits: ['mcg', 'mg', 'IU'], basisUnits: ['vial', 'ml'], capabilities: ['injectable', 'reconstitutable', 'concentration_based', 'inventory_capable'], showsColor: true, strengthShape: 'reconstituted', intakeUnit: 'syringe', stageRenderer: 'vial', stageForm: VIAL_SPEC },
+  { key: 'ampoule', labelKey: 'dosage_form_ampoule', suggestedUnits: ['mg', 'ml', 'IU'], basisUnits: ['ml', 'ampoule'], capabilities: ['injectable', 'liquid', 'concentration_based', 'inventory_capable'], showsColor: true, strengthShape: 'per_volume', intakeUnit: 'syringe', stageRenderer: 'ampoule', stageForm: AMPOULE_SPEC },
+  { key: 'pen', labelKey: 'dosage_form_pen', suggestedUnits: ['mg', 'mcg', 'IU'], basisUnits: ['dose', 'ml'], capabilities: ['injectable', 'liquid', 'concentration_based', 'inventory_capable'], showsColor: true, strengthShape: 'per_volume', intakeUnit: 'dose', stageRenderer: 'pen', stageForm: PEN_SPEC },
+  { key: 'tablet', labelKey: 'dosage_form_tablet', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['tablet'], capabilities: ['countable', 'divisible', 'inventory_capable'], showsColor: true, strengthShape: 'per_unit', intakeUnit: 'tablet', stageRenderer: 'tablet', stageForm: TABLET_SPEC },
+  { key: 'capsule', labelKey: 'dosage_form_capsule', suggestedUnits: ['mcg', 'mg', 'g', 'IU'], basisUnits: ['capsule'], capabilities: ['countable', 'inventory_capable'], showsColor: true, strengthShape: 'per_unit', intakeUnit: 'capsule', stageRenderer: 'capsule', stageForm: CAPSULE_SPEC },
+  { key: 'drops', labelKey: 'dosage_form_drops', suggestedUnits: ['mcg', 'mg', 'IU', 'ml'], basisUnits: ['drop', 'ml'], capabilities: ['liquid', 'concentration_based', 'inventory_capable'], showsColor: true, strengthShape: 'per_volume', intakeUnit: 'drop', stageRenderer: 'drops', stageForm: DROPS_SPEC },
+  { key: 'powder', labelKey: 'dosage_form_powder', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'portion'], capabilities: ['inventory_capable'], showsColor: true, strengthShape: 'per_mass', intakeUnit: 'portion', stageRenderer: 'powder', stageForm: POWDER_SPEC },
+  { key: 'nasal_spray', labelKey: 'dosage_form_nasal_spray', suggestedUnits: ['mcg', 'mg'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'], showsColor: true, strengthShape: 'per_unit', intakeUnit: 'spray', stageRenderer: 'nasal_spray', stageForm: NASAL_SPRAY_SPEC },
+  { key: 'spray', labelKey: 'dosage_form_spray', suggestedUnits: ['mcg', 'mg', 'ml'], basisUnits: ['spray'], capabilities: ['countable', 'liquid', 'inventory_capable'], showsColor: true, strengthShape: 'per_unit', intakeUnit: 'spray', stageRenderer: 'spray', stageForm: SPRAY_SPEC },
+  { key: 'gel', labelKey: 'dosage_form_gel', suggestedUnits: ['mg', 'g'], basisUnits: ['g', 'application'], capabilities: ['inventory_capable'], showsColor: true, strengthShape: 'per_mass', intakeUnit: 'application', stageRenderer: 'gel', stageForm: GEL_SPEC },
+  { key: 'patch', labelKey: 'dosage_form_patch', suggestedUnits: ['mcg', 'mg'], basisUnits: ['patch', 'hour'], capabilities: ['countable', 'inventory_capable'], showsColor: false, strengthShape: 'per_unit', intakeUnit: 'patch', stageRenderer: 'patch', stageForm: PATCH_SPEC },
+  { key: 'tube', labelKey: 'dosage_form_tube', suggestedUnits: ['mg', 'g', 'ml'], basisUnits: ['g', 'ml', 'application'], capabilities: ['inventory_capable'], showsColor: false, strengthShape: 'per_mass', intakeUnit: 'application', stageRenderer: 'tube', stageForm: TUBE_SPEC },
+  { key: 'other', labelKey: 'dosage_form_other', suggestedUnits: ['mcg', 'mg', 'g', 'IU', 'ml'], basisUnits: ['unit', 'portion'], capabilities: [], showsColor: false, strengthShape: 'free', intakeUnit: 'unit' },
 ] as const
 
 // Faellt auf 'other' zurueck, wenn die Form unbekannt ist. Das ist kein
@@ -168,4 +173,11 @@ export function intakeUnitLabelKey(key: DosageFormKey): string {
 
 export function isStageRenderable(key: DosageFormKey): boolean {
   return getDosageForm(key).stageRenderer !== undefined
+}
+
+// Ob es sich lohnt, nach einer Farbe zu fragen. `color_hex` wird ausschliesslich
+// von der Buehnengrafik gezeigt (StackStage) — zeigt die Grafik sie nicht, oder
+// gibt es gar keine, bleibt die Wahl folgenlos. Der Farbschritt faellt dann weg.
+export function showsColor(key: DosageFormKey): boolean {
+  return getDosageForm(key).showsColor
 }
