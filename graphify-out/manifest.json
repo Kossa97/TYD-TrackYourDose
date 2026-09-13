@@ -330,15 +330,15 @@
     "semantic_hash": "c277228a8247ad7b45a08976da6390c7"
   },
   "src/components/PeptideVialVisual.test.ts": {
-    "mtime": 1789171334.9414706,
-    "seen": 1789171470.828993,
-    "ast_hash": "e1d3169ad47de7d232a9d0fd77950830",
+    "mtime": 1789340505.5796828,
+    "seen": 1789340663.98022,
+    "ast_hash": "bad6689a1d5a6e57105cad39d4232908",
     "semantic_hash": ""
   },
   "src/components/PeptideVialVisual.tsx": {
-    "mtime": 1789171161.092855,
-    "seen": 1789171470.8289948,
-    "ast_hash": "95e6a83cd5306f1222955f3c47b57e9c",
+    "mtime": 1789340221.505087,
+    "seen": 1789340663.9802217,
+    "ast_hash": "4c277b1b7e621e4caecd5a6ac57c7f86",
     "semantic_hash": ""
   },
   "src/components/ProtectedRoute.tsx": {
@@ -2838,9 +2838,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1789313848.1574926,
-    "seen": 1789314477.7122173,
-    "ast_hash": "dd89fb9b8bd7e604a4eb68437066812a",
+    "mtime": 1789340258.821886,
+    "seen": 1789340663.9803991,
+    "ast_hash": "b12be5c57f6ced9268b69ac61fc6a552",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -3474,22 +3474,22 @@
     "semantic_hash": "f55a211519e6dab24ae880418babad06"
   },
   "src/features/my-stack/extensions/capsule/CapsuleVisual.tsx": {
-    "mtime": 1788737622.0079522,
-    "seen": 1788803479.1910074,
-    "ast_hash": "f68ba95deb918f187e07e5061e3bc561",
-    "semantic_hash": "f68ba95deb918f187e07e5061e3bc561"
+    "mtime": 1789340346.968239,
+    "seen": 1789340663.9804208,
+    "ast_hash": "780464f126c10dbbbd6e42ab4d44afc8",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/capsuleShape.test.ts": {
-    "mtime": 1788612179.759349,
-    "seen": 1788803479.1910086,
-    "ast_hash": "0cef8637d2bda28561701b086b71201b",
-    "semantic_hash": "0cef8637d2bda28561701b086b71201b"
+    "mtime": 1789340488.683109,
+    "seen": 1789340663.9804225,
+    "ast_hash": "ef776743a16ec9ff5ca3d568b789ec2a",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/capsule/capsuleShape.ts": {
-    "mtime": 1788612179.759349,
-    "seen": 1788803479.1910095,
-    "ast_hash": "82fb6727c9e2c9527d167fe43fe1bdce",
-    "semantic_hash": "82fb6727c9e2c9527d167fe43fe1bdce"
+    "mtime": 1789340346.96805,
+    "seen": 1789340663.9804235,
+    "ast_hash": "3574fec70d9cbb5571997a2c75bed4cc",
+    "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-09-01-my-stack-kapsel-buehnenform.md": {
     "mtime": 1788612179.516111,
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789337960.6705205,
-    "seen": 1789338136.1889322,
+    "mtime": 1789340534.040616,
+    "seen": 1789340663.9807594,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4233,6 +4233,12 @@
     "mtime": 1789338122.9630682,
     "seen": 1789338136.1890607,
     "ast_hash": "f48eeefe182b7755b264da8829263fae",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-13-my-stack-farbschritt-darstellung-design.md": {
+    "mtime": 1789340654.264775,
+    "seen": 1789340663.9808683,
+    "ast_hash": "06b4364e04c1d2c8c3fdd704eed64126",
     "semantic_hash": ""
   }
 }
