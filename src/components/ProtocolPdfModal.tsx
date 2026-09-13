@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Download, FileText, Loader2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { loadProtocolData } from '../lib/protocolPdf/loadProtocolData'
-import { SECTIONS, defaultSelection } from '../lib/protocolPdf/sections'
+import { SECTIONS } from '../lib/protocolPdf/sections'
+import { PRESETS, applyPreset, matchPreset, type ActivePreset, type PresetId } from '../lib/protocolPdf/presets'
+import { loadPdfExportPrefs, savePdfExportPrefs } from '../lib/protocolPdf/persistence'
 import { downloadProtocolPdf } from '../lib/protocolPdf/renderProtocolPdf'
 import type { ProtocolData, PdfLang, PdfDateRange, SectionId } from '../lib/protocolPdf/types'
 
@@ -16,14 +18,17 @@ interface Props {
 type UILang = PdfLang
 
 const T: Record<UILang, {
-  title: string; intro: string; sections: string; period: string; from: string; to: string
+  title: string; intro: string; presets: string; custom: string; sections: string
+  period: string; from: string; to: string
   note: string; notePlaceholder: string; language: string; download: string; generating: string
   loading: string; noneSelected: string; empty: string; loadError: string; genError: string
   personalHint: string
 }> = {
   de: {
     title: 'PDF-Protokoll erstellen',
-    intro: 'Wähle aus, was ins PDF kommt. Leere Bereiche sind ausgegraut.',
+    intro: 'Wähle ein Muster oder setze die Häkchen selbst. Leere Bereiche sind ausgegraut.',
+    presets: 'Muster',
+    custom: 'Benutzerdefiniert',
     sections: 'Inhalte',
     period: 'Zeitraum',
     from: 'Von', to: 'Bis',
@@ -41,7 +46,9 @@ const T: Record<UILang, {
   },
   en: {
     title: 'Create PDF report',
-    intro: 'Choose what goes into the PDF. Empty areas are greyed out.',
+    intro: 'Pick a template or tick the boxes yourself. Empty areas are greyed out.',
+    presets: 'Templates',
+    custom: 'Custom',
     sections: 'Contents',
     period: 'Period',
     from: 'From', to: 'To',
@@ -59,8 +66,42 @@ const T: Record<UILang, {
   },
 }
 
+const DEFAULT_PRESET: PresetId = 'arzt'
+
+function initialLang(uiLang: string): UILang {
+  return uiLang.toLowerCase().startsWith('en') ? 'en' : 'de'
+}
+
+function restoreSelection(
+  data: ProtocolData,
+  prefs: ReturnType<typeof loadPdfExportPrefs>,
+): { selected: Set<SectionId>; lang?: UILang } {
+  if (!prefs) {
+    return { selected: new Set(applyPreset(DEFAULT_PRESET, data)) }
+  }
+
+  if (prefs.preset !== 'custom') {
+    return {
+      selected: new Set(applyPreset(prefs.preset, data)),
+      lang: prefs.lang,
+    }
+  }
+
+  const available = new Set(
+    SECTIONS.filter(s => s.alwaysAvailable || s.hasData(data)).map(s => s.id),
+  )
+  const restored = prefs.sections.filter(id => available.has(id))
+  if (restored.length === 0) {
+    return { selected: new Set(applyPreset(DEFAULT_PRESET, data)), lang: prefs.lang }
+  }
+  return { selected: new Set(restored), lang: prefs.lang }
+}
+
 export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Props) {
-  const [lang, setLang] = useState<UILang>(uiLang.toLowerCase().startsWith('en') ? 'en' : 'de')
+  const [lang, setLang] = useState<UILang>(() => {
+    const prefs = loadPdfExportPrefs(userId)
+    return prefs?.lang ?? initialLang(uiLang)
+  })
   const [range, setRange] = useState<PdfDateRange>(initialRange)
   const [data, setData] = useState<ProtocolData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -68,9 +109,10 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
   const [note, setNote] = useState('')
   const [generating, setGenerating] = useState(false)
   const t = T[lang]
+  const prefsReady = useRef(false)
 
-  // Sprache nur für die Fehlermeldung; NICHT als load-Dependency, sonst würde ein
-  // Sprachwechsel Daten neu laden und die Häkchen-Auswahl zurücksetzen.
+  // Sprache nur für Fehlermeldungen — nicht als load-Dependency, sonst setzt ein
+  // Sprachwechsel die Häkchen-Auswahl durch einen Reload zurück.
   const langRef = useRef(lang)
   langRef.current = lang
 
@@ -79,7 +121,11 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
     try {
       const d = await loadProtocolData(userId, range)
       setData(d)
-      setSelected(new Set(defaultSelection(d)))
+      const prefs = loadPdfExportPrefs(userId)
+      const restored = restoreSelection(d, prefs)
+      setSelected(restored.selected)
+      if (restored.lang) setLang(restored.lang)
+      prefsReady.current = true
     } catch {
       toast.error(T[langRef.current].loadError)
     } finally {
@@ -89,11 +135,31 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
 
   useEffect(() => { void load() }, [load])
 
+  const activePreset: ActivePreset = data
+    ? matchPreset([...selected], data)
+    : DEFAULT_PRESET
+
+  useEffect(() => {
+    if (!prefsReady.current || loading || !data) return
+    savePdfExportPrefs(userId, {
+      preset: activePreset,
+      sections: [...selected],
+      lang,
+    })
+  }, [userId, activePreset, selected, lang, loading, data])
+
   const availability = useMemo(() => {
     const map = new Map<SectionId, boolean>()
-    if (data) for (const s of SECTIONS) map.set(s.id, s.alwaysAvailable || s.hasData(data))
+    if (data) {
+      for (const s of SECTIONS) map.set(s.id, Boolean(s.alwaysAvailable || s.hasData(data)))
+    }
     return map
   }, [data])
+
+  const selectPreset = (id: PresetId) => {
+    if (!data) return
+    setSelected(new Set(applyPreset(id, data)))
+  }
 
   const toggle = (id: SectionId) => {
     setSelected(prev => {
@@ -108,11 +174,15 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
 
   const generate = async () => {
     if (!data) return
-    if (selected.size === 0) { toast.error(t.noneSelected); return }
+    if (selected.size === 0) {
+      toast.error(t.noneSelected)
+      return
+    }
     setGenerating(true)
     try {
       await downloadProtocolPdf(data, {
-        lang, range,
+        lang,
+        range,
         sections: [...selected],
         note,
       })
@@ -127,12 +197,15 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
   const showNoteField = selected.has('notes')
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center" data-app-modal onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center"
+      data-app-modal
+      onClick={onClose}
+    >
       <div
         className="bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg flex flex-col max-h-[92dvh] pt-[env(safe-area-inset-top)] sm:pt-0"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="shrink-0 border-b border-slate-800 px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileText size={18} className="text-sky-400" />
@@ -146,7 +219,40 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
           <p className="text-sm text-slate-400">{t.intro}</p>
 
-          {/* Sprache */}
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.presets}</p>
+              {activePreset === 'custom' && (
+                <span className="text-[0.7rem] font-medium text-slate-400">{t.custom}</span>
+              )}
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              {PRESETS.map(p => {
+                const active = activePreset === p.id
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    disabled={loading || !data}
+                    onClick={() => selectPreset(p.id)}
+                    className={`w-full rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                      active
+                        ? 'border-sky-500/50 bg-sky-500/10'
+                        : 'border-slate-800 bg-slate-800/30 hover:border-slate-700'
+                    } disabled:opacity-50`}
+                  >
+                    <span className={`block text-sm font-semibold ${active ? 'text-sky-300' : 'text-slate-200'}`}>
+                      {p.label[lang]}
+                    </span>
+                    <span className="mt-0.5 block text-[0.72rem] leading-relaxed text-slate-500">
+                      {p.description[lang]}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.language}</span>
             <div className="flex gap-1 rounded-lg bg-slate-800 p-0.5">
@@ -165,14 +271,15 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
             </div>
           </div>
 
-          {/* Zeitraum */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">{t.period}</p>
             <div className="grid grid-cols-2 gap-2">
               <label className="block">
                 <span className="text-[0.7rem] text-slate-500">{t.from}</span>
                 <input
-                  type="date" value={range.from} max={range.to}
+                  type="date"
+                  value={range.from}
+                  max={range.to}
                   onChange={e => setRange(r => ({ ...r, from: e.target.value }))}
                   className="input mt-0.5"
                 />
@@ -180,7 +287,9 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
               <label className="block">
                 <span className="text-[0.7rem] text-slate-500">{t.to}</span>
                 <input
-                  type="date" value={range.to} min={range.from}
+                  type="date"
+                  value={range.to}
+                  min={range.from}
                   onChange={e => setRange(r => ({ ...r, to: e.target.value }))}
                   className="input mt-0.5"
                 />
@@ -188,7 +297,6 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
             </div>
           </div>
 
-          {/* Sektionen */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">{t.sections}</p>
             {loading ? (
@@ -237,7 +345,6 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
             <p className="mt-2 text-[0.72rem] leading-relaxed text-slate-500">{t.personalHint}</p>
           </div>
 
-          {/* Notiz-Feld (nur wenn Notizen gewählt) */}
           {showNoteField && (
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">{t.note}</p>
@@ -252,11 +359,10 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
           )}
         </div>
 
-        {/* Footer */}
         <div className="shrink-0 border-t border-slate-800 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <button
             type="button"
-            onClick={generate}
+            onClick={() => { void generate() }}
             disabled={!canGenerate}
             className="btn-primary w-full flex items-center justify-center gap-2"
           >
