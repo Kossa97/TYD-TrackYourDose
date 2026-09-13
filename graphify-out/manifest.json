@@ -360,9 +360,9 @@
     "semantic_hash": "f8b8a10b823713532fbd6437d7efe886"
   },
   "src/components/ProtocolPdfModal.tsx": {
-    "mtime": 1789314841.475309,
-    "seen": 1789314854.7079854,
-    "ast_hash": "30343633b4af41c45498711eb11c14ef",
+    "mtime": 1789316561.0211232,
+    "seen": 1789317414.1725698,
+    "ast_hash": "4760cf7889dbd3a93b696ea9b49cc68e",
     "semantic_hash": ""
   },
   "src/components/PushNotificationListener.tsx": {
@@ -1020,15 +1020,15 @@
     "semantic_hash": ""
   },
   "src/lib/protocolPdf/protocolPdf.test.ts": {
-    "mtime": 1789310426.2692451,
-    "seen": 1789310514.511976,
-    "ast_hash": "91f94a2f8e488f790b7157e5871e5d8e",
+    "mtime": 1789317274.9881308,
+    "seen": 1789317414.1767893,
+    "ast_hash": "b10af9c2a91effbae890b3d061f5c5c6",
     "semantic_hash": ""
   },
   "src/lib/protocolPdf/renderProtocolPdf.ts": {
-    "mtime": 1789311121.9335263,
-    "seen": 1789311310.8755922,
-    "ast_hash": "37ce6a3f8dfc72dcbc002f08b019b33f",
+    "mtime": 1789317237.1159532,
+    "seen": 1789317414.17679,
+    "ast_hash": "320b5ea9f872485d1177abc55f861fb0",
     "semantic_hash": ""
   },
   "src/lib/protocolPdf/sections.ts": {
@@ -1038,9 +1038,9 @@
     "semantic_hash": ""
   },
   "src/lib/protocolPdf/types.ts": {
-    "mtime": 1789308224.731754,
-    "seen": 1789309404.738792,
-    "ast_hash": "3c25700c0ce30d38b2bd7b31fa7b0559",
+    "mtime": 1789317274.9681308,
+    "seen": 1789317414.1768093,
+    "ast_hash": "d2703b5fb0076e9c9038085c480daeba",
     "semantic_hash": ""
   },
   "src/lib/pushLocal.ts": {
@@ -2985,57 +2985,57 @@
     "semantic_hash": ""
   },
   "public/pdf-preview/TYD-arzt-demo.pdf": {
-    "mtime": 1789310460.5254934,
-    "seen": 1789310514.5144272,
-    "ast_hash": "c2afb377017a69a2fbc0c04b301e72d0",
+    "mtime": 1789317322.9643576,
+    "seen": 1789317414.179252,
+    "ast_hash": "b6db4cbe4b0aaf5e0444038a3c9670b6",
     "semantic_hash": ""
   },
   "public/pdf-preview/TYD-coach-demo.pdf": {
-    "mtime": 1789310461.2254984,
-    "seen": 1789310514.5144281,
-    "ast_hash": "290e614e14a49e873fe0d44565aa14f3",
+    "mtime": 1789317324.0283628,
+    "seen": 1789317414.179253,
+    "ast_hash": "9fbcf984590d7294990ea8e16f6a7ac3",
     "semantic_hash": ""
   },
   "public/pdf-preview/TYD-forum-demo.pdf": {
-    "mtime": 1789310461.8255026,
-    "seen": 1789310514.5144289,
-    "ast_hash": "e86a76d4b61e05f48d095936c1cca080",
+    "mtime": 1789317324.3923645,
+    "seen": 1789317414.1792538,
+    "ast_hash": "07485fc66246a3e37fd78126cf98497e",
     "semantic_hash": ""
   },
   "public/pdf-preview/arzt-page-1.png": {
-    "mtime": 1789310471.533572,
-    "seen": 1789310514.5153093,
-    "ast_hash": "524d939aa8a97f98f3adac022d68eeda",
+    "mtime": 1789317354.324507,
+    "seen": 1789317414.1800537,
+    "ast_hash": "934fbacd1b41d6c454302fcb67d23b84",
     "semantic_hash": ""
   },
   "public/pdf-preview/arzt-page-2.png": {
-    "mtime": 1789310471.9415748,
-    "seen": 1789310514.5153103,
-    "ast_hash": "ccf0c0dd212d3ee7c14a8ec137d56170",
+    "mtime": 1789317357.1645205,
+    "seen": 1789317414.1800544,
+    "ast_hash": "0ce8184d55cb4645a388cbaec9d1a86e",
     "semantic_hash": ""
   },
   "public/pdf-preview/coach-page-1.png": {
-    "mtime": 1789310472.241577,
-    "seen": 1789310514.515365,
-    "ast_hash": "9543258fd4e193bb4213ee0cb0231917",
+    "mtime": 1789317358.5045269,
+    "seen": 1789317414.180103,
+    "ast_hash": "6d33e20583b7f7a151aa2ab85aba6057",
     "semantic_hash": ""
   },
   "public/pdf-preview/coach-page-2.png": {
-    "mtime": 1789310472.5615792,
-    "seen": 1789310514.5153656,
-    "ast_hash": "bcc04f88937d7fa5896bddf73cb2c015",
+    "mtime": 1789317360.2925353,
+    "seen": 1789317414.1801043,
+    "ast_hash": "8282d865dd065f1c71b7c4c3997db705",
     "semantic_hash": ""
   },
   "public/pdf-preview/forum-page-1.png": {
-    "mtime": 1789310476.0976043,
-    "seen": 1789310514.5153666,
-    "ast_hash": "89e91fb5dfc254b4a19f0bb8263fe5ba",
+    "mtime": 1789317362.5525463,
+    "seen": 1789317414.180105,
+    "ast_hash": "52b5da9aaa5959e75455b033b9e68e1a",
     "semantic_hash": ""
   },
   "public/pdf-preview/forum-page-2.png": {
-    "mtime": 1789310476.613608,
-    "seen": 1789310514.5153677,
-    "ast_hash": "a5f7f92d6daa32aca2f2539a85a5b163",
+    "mtime": 1789317371.1285872,
+    "seen": 1789317414.1801057,
+    "ast_hash": "f61fa4cc1194f6fd1cce7c8c3406fde5",
     "semantic_hash": ""
   },
   "src/pages/PdfProtokoll.tsx": {
