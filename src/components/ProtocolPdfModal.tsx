@@ -160,6 +160,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
   const loadGenRef = useRef(0)
   const previewGenRef = useRef(0)
   const sectionBtnRefs = useRef(new Map<SectionId, HTMLButtonElement>())
+  const denyFlashTimers = useRef(new Map<SectionId, number>())
 
   // Sprache nur für Fehlermeldungen — nicht als load-Dependency, sonst setzt ein
   // Sprachwechsel die Häkchen-Auswahl durch einen Reload zurück.
@@ -168,12 +169,21 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
 
   const flashUnavailableSection = (id: SectionId) => {
     const el = sectionBtnRefs.current.get(id)
-    if (el) {
-      el.classList.remove('pdf-section-deny')
-      // Reflow, damit ein erneuter Klick die Animation neu startet.
-      void el.offsetWidth
-      el.classList.add('pdf-section-deny')
-    }
+    if (!el) return
+    const prev = denyFlashTimers.current.get(id)
+    if (prev) window.clearTimeout(prev)
+    el.classList.remove('pdf-section-deny')
+    // Reflow, damit ein erneuter Klick die Animation neu startet.
+    void el.offsetWidth
+    el.classList.add('pdf-section-deny')
+    // Timeout statt nur animationend: Rahmen bleibt auch bei reduced-motion sichtbar.
+    denyFlashTimers.current.set(
+      id,
+      window.setTimeout(() => {
+        el.classList.remove('pdf-section-deny')
+        denyFlashTimers.current.delete(id)
+      }, 480),
+    )
   }
 
   // Daten laden: Zeitraum debouncen, Prefs nur beim ersten Load anwenden.
@@ -503,11 +513,6 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
                       aria-disabled={!has}
                       title={!has ? t.emptyClick(s.label[lang]) : undefined}
                       onClick={() => toggle(s.id)}
-                      onAnimationEnd={e => {
-                        if (e.animationName === 'pdf-section-deny') {
-                          e.currentTarget.classList.remove('pdf-section-deny')
-                        }
-                      }}
                       className={`flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-colors ${
                         !has
                           ? 'border-slate-800/60 bg-slate-900/40 opacity-45'
