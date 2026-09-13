@@ -252,9 +252,9 @@
     "semantic_hash": ""
   },
   "src/App.tsx": {
-    "mtime": 1789252868.0736885,
-    "seen": 1789307374.5274835,
-    "ast_hash": "42791a69f5c5c7f73e5cd06d2072579e",
+    "mtime": 1789309134.9629583,
+    "seen": 1789309404.7341137,
+    "ast_hash": "ae433e785a4e4c996e30082b4ef2fecb",
     "semantic_hash": ""
   },
   "src/components/BlutspiegelCarousel.tsx": {
@@ -360,9 +360,9 @@
     "semantic_hash": "f8b8a10b823713532fbd6437d7efe886"
   },
   "src/components/ProtocolPdfModal.tsx": {
-    "mtime": 1789307154.519316,
-    "seen": 1789307374.5275028,
-    "ast_hash": "63fc4892f9b7a85ceb8ee0fd9d810df8",
+    "mtime": 1789308570.6208386,
+    "seen": 1789309404.7343864,
+    "ast_hash": "5663088985950a27db873cd0b410dd73",
     "semantic_hash": ""
   },
   "src/components/PushNotificationListener.tsx": {
@@ -1020,15 +1020,15 @@
     "semantic_hash": ""
   },
   "src/lib/protocolPdf/protocolPdf.test.ts": {
-    "mtime": 1789307349.18413,
-    "seen": 1789307374.527702,
-    "ast_hash": "921749a9307c02cd0672c40a00d0b39b",
+    "mtime": 1789308684.653242,
+    "seen": 1789309404.7387714,
+    "ast_hash": "2c961484cddc8add5e30a78d2d416677",
     "semantic_hash": ""
   },
   "src/lib/protocolPdf/renderProtocolPdf.ts": {
-    "mtime": 1789252867.9736743,
-    "seen": 1789307374.5277026,
-    "ast_hash": "2681c756879d86f66dde5d141e1829a4",
+    "mtime": 1789308684.637242,
+    "seen": 1789309404.7387724,
+    "ast_hash": "ecaca4a00bf6920b9d3649e713ad0a0a",
     "semantic_hash": ""
   },
   "src/lib/protocolPdf/sections.ts": {
@@ -1038,9 +1038,9 @@
     "semantic_hash": ""
   },
   "src/lib/protocolPdf/types.ts": {
-    "mtime": 1789252867.9736743,
-    "seen": 1789307374.5277035,
-    "ast_hash": "e2cbb39aa168875d4be2d097bcfad6e4",
+    "mtime": 1789308224.731754,
+    "seen": 1789309404.738792,
+    "ast_hash": "3c25700c0ce30d38b2bd7b31fa7b0559",
     "semantic_hash": ""
   },
   "src/lib/pushLocal.ts": {
@@ -2928,6 +2928,66 @@
     "mtime": 1789252867.9576719,
     "seen": 1789307374.5277596,
     "ast_hash": "2246982fb94082d773a71c2e104c64fc",
+    "semantic_hash": ""
+  },
+  "src/pages/__BefundPreview.tsx": {
+    "mtime": 1789309134.586957,
+    "seen": 1789309404.7392795,
+    "ast_hash": "ecc5a9e66a5e036b4e64cddd0c319f52",
+    "semantic_hash": ""
+  },
+  "src/pages/__PdfPreview.tsx": {
+    "mtime": 1789307775.2299592,
+    "seen": 1789309404.7392807,
+    "ast_hash": "bc418e2d81899d269e2b7ce1d70b05d6",
+    "semantic_hash": ""
+  },
+  ".pdf-preview/TYD-Befund-demo.pdf": {
+    "mtime": 1789309016.6704934,
+    "seen": 1789309404.741037,
+    "ast_hash": "48225de15d1e52976ef0f519826ddd27",
+    "semantic_hash": ""
+  },
+  "public/pdf-preview/TYD-Befund-demo.pdf": {
+    "mtime": 1789309119.674898,
+    "seen": 1789309404.741038,
+    "ast_hash": "48225de15d1e52976ef0f519826ddd27",
+    "semantic_hash": ""
+  },
+  ".pdf-preview/befund-page-1.png": {
+    "mtime": 1789309016.6704934,
+    "seen": 1789309404.7410388,
+    "ast_hash": "524d939aa8a97f98f3adac022d68eeda",
+    "semantic_hash": ""
+  },
+  ".pdf-preview/befund-page-2.png": {
+    "mtime": 1789309016.6744933,
+    "seen": 1789309404.7410393,
+    "ast_hash": "6a5674d4fa162f7a92d8ab0d47e05556",
+    "semantic_hash": ""
+  },
+  ".pdf-preview/befund-page-3.png": {
+    "mtime": 1789309016.6744933,
+    "seen": 1789309404.7410402,
+    "ast_hash": "026c5f3df43dd9572c4a490da1fb34b5",
+    "semantic_hash": ""
+  },
+  "public/pdf-preview/befund-page-1.png": {
+    "mtime": 1789309119.674898,
+    "seen": 1789309404.7418277,
+    "ast_hash": "524d939aa8a97f98f3adac022d68eeda",
+    "semantic_hash": ""
+  },
+  "public/pdf-preview/befund-page-2.png": {
+    "mtime": 1789309119.674898,
+    "seen": 1789309404.741829,
+    "ast_hash": "6a5674d4fa162f7a92d8ab0d47e05556",
+    "semantic_hash": ""
+  },
+  "public/pdf-preview/befund-page-3.png": {
+    "mtime": 1789309119.674898,
+    "seen": 1789309404.7418296,
+    "ast_hash": "026c5f3df43dd9572c4a490da1fb34b5",
     "semantic_hash": ""
   }
 }
