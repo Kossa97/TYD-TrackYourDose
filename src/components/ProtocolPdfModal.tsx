@@ -13,6 +13,8 @@ interface Props {
   initialRange: PdfDateRange
   uiLang: string
   onClose: () => void
+  /** Optional: Demo/Preview ohne Supabase-Load (z. B. /__pdfpreview). */
+  previewData?: ProtocolData
 }
 
 type UILang = PdfLang
@@ -97,7 +99,7 @@ function restoreSelection(
   return { selected: new Set(restored), lang: prefs.lang }
 }
 
-export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Props) {
+export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previewData }: Props) {
   const [lang, setLang] = useState<UILang>(() => {
     const prefs = loadPdfExportPrefs(userId)
     return prefs?.lang ?? initialLang(uiLang)
@@ -119,7 +121,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const d = await loadProtocolData(userId, range)
+      const d = previewData ?? await loadProtocolData(userId, range)
       setData(d)
       const prefs = loadPdfExportPrefs(userId)
       const restored = restoreSelection(d, prefs)
@@ -131,7 +133,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
     } finally {
       setLoading(false)
     }
-  }, [userId, range])
+  }, [userId, range, previewData])
 
   useEffect(() => { void load() }, [load])
 
@@ -185,6 +187,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose }: Prop
         range,
         sections: [...selected],
         note,
+        preset: activePreset,
       })
       onClose()
     } catch {

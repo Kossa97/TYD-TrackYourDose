@@ -96,9 +96,13 @@ export type SectionId =
   | 'reviews'
   | 'notes'
 
+export type PdfPresetKind = 'arzt' | 'coach' | 'forum' | 'custom'
+
 export interface PdfBuildOptions {
   lang: PdfLang
   range: PdfDateRange
   sections: SectionId[]   // vom Nutzer gewählte Reihenfolge ist fix (siehe SECTION_ORDER)
   note: string            // Freitext für die "Notizen / Fragen"-Sektion
+  /** Steuert Layout/Look — 'arzt' = weißer medizinischer Befund. */
+  preset?: PdfPresetKind
 }

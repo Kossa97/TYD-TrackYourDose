@@ -7,6 +7,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { Layout } from './components/Layout'
 import { Auth } from './pages/Auth'
 import { VialPreview } from './pages/__VialPreview'
+import { PdfPreview } from './pages/__PdfPreview'
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })))
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })))
@@ -54,6 +55,7 @@ export default function App() {
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/__vialpreview" element={<VialPreview />} />
+          <Route path="/__pdfpreview" element={<PdfPreview />} />
           <Route path="/u/:username" element={<LazyPage><PublicProfile /></LazyPage>} />
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<LazyPage><Home /></LazyPage>} />

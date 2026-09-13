@@ -10,15 +10,64 @@ import { SECTIONS, visibleSections, resolveSubject } from './sections'
 
 type RGB = [number, number, number]
 
-const INK: RGB = [15, 23, 42]
-const MUTED: RGB = [100, 116, 139]
-const FAINT: RGB = [148, 163, 184]
-const RULE: RGB = [226, 232, 240]
-const ACCENT: RGB = [8, 145, 178]
-const HEAD_FILL: RGB = [236, 254, 255]
-const ZEBRA: RGB = [248, 250, 252]
-const GOOD: RGB = [22, 163, 74]
-const BAD: RGB = [220, 38, 38]
+/** Visuelles Theme — default = bisheriges Look, medical = Arzt-Befund. */
+interface Theme {
+  id: 'default' | 'medical'
+  ink: RGB
+  muted: RGB
+  faint: RGB
+  rule: RGB
+  accent: RGB
+  headFill: RGB
+  zebra: RGB
+  cardFill: RGB
+  good: RGB
+  bad: RGB
+}
+
+const THEME_DEFAULT: Theme = {
+  id: 'default',
+  ink: [15, 23, 42],
+  muted: [100, 116, 139],
+  faint: [148, 163, 184],
+  rule: [226, 232, 240],
+  accent: [8, 145, 178],
+  headFill: [236, 254, 255],
+  zebra: [248, 250, 252],
+  cardFill: [252, 253, 254],
+  good: [22, 163, 74],
+  bad: [220, 38, 38],
+}
+
+/** Weißer medizinischer Befund: Navy statt Cyan, Haarlinien, klinische Typo. */
+const THEME_MEDICAL: Theme = {
+  id: 'medical',
+  ink: [17, 24, 39],
+  muted: [75, 85, 99],
+  faint: [107, 114, 128],
+  rule: [209, 213, 219],
+  accent: [30, 58, 95],
+  headFill: [243, 244, 246],
+  zebra: [249, 250, 251],
+  cardFill: [255, 255, 255],
+  good: [21, 128, 61],
+  bad: [185, 28, 28],
+}
+
+function resolveTheme(preset: PdfBuildOptions['preset']): Theme {
+  return preset === 'arzt' ? THEME_MEDICAL : THEME_DEFAULT
+}
+
+// Kurzaliase für Stellen, die noch die alten Konstanten erwarten (Charts etc.)
+const INK = THEME_DEFAULT.ink
+const MUTED = THEME_DEFAULT.muted
+const FAINT = THEME_DEFAULT.faint
+const RULE = THEME_DEFAULT.rule
+const ACCENT = THEME_DEFAULT.accent
+const HEAD_FILL = THEME_DEFAULT.headFill
+const ZEBRA = THEME_DEFAULT.zebra
+const GOOD = THEME_DEFAULT.good
+const BAD = THEME_DEFAULT.bad
 
 const PAGE_W = 210
 const PAGE_H = 297
@@ -123,6 +172,60 @@ const COPY: Record<PdfLang, Copy> = {
   },
 }
 
+
+function applyMedicalCopy(base: Copy, lang: PdfLang): Copy {
+  if (lang === 'de') {
+    return {
+      ...base,
+      docTitle: 'Befundbericht',
+      brand: 'TYD · MEDIZINISCHE DOKUMENTATION',
+      subject: 'Patient',
+      contents: 'Gliederung',
+      footer: 'Vertraulich — persönliche medizinische Dokumentation · TYD',
+      sectionTitles: {
+        ...base.sectionTitles,
+        personal: 'Patientendaten',
+        summary: 'Klinische Übersicht',
+        cycles: 'Therapieprotokoll',
+        adherence: 'Therapietreue',
+        bloodwork: 'Laborbefund',
+        weight: 'Körpergewicht',
+        wellness: 'Befinden',
+        effects: 'Beobachtungen & Nebenwirkungen',
+        reviews: 'Einschätzungen',
+        notes: 'Fragen an die behandelnde Person',
+      },
+      disclaimerTitle: 'Hinweis zur Verwendung',
+      disclaimer:
+        'Dieses Dokument ist eine vom Nutzer erstellte Verlaufsdokumentation und kein amtlicher Labor- oder Arztbrief. Es ersetzt keine ärztliche Diagnose, Beratung oder Therapie. Bitte mit der behandelnden Fachperson besprechen.',
+    }
+  }
+  return {
+    ...base,
+    docTitle: 'Medical Report',
+    brand: 'TYD · MEDICAL DOCUMENTATION',
+    subject: 'Patient',
+    contents: 'Contents',
+    footer: 'Confidential — personal medical documentation · TYD',
+    sectionTitles: {
+      ...base.sectionTitles,
+      personal: 'Patient details',
+      summary: 'Clinical overview',
+      cycles: 'Treatment protocol',
+      adherence: 'Treatment adherence',
+      bloodwork: 'Lab results',
+      weight: 'Body weight',
+      wellness: 'Well-being',
+      effects: 'Observations & side effects',
+      reviews: 'Assessments',
+      notes: 'Questions for the clinician',
+    },
+    disclaimerTitle: 'Intended use',
+    disclaimer:
+      'This document is a user-generated progress record and not an official lab or physician letter. It does not replace medical diagnosis, advice, or treatment. Please review with a qualified clinician.',
+  }
+}
+
 const FREQ_EN: Record<string, string> = {
   'Täglich': 'Daily', '2x täglich': '2x daily', '3x täglich': '3x daily',
   'Jeden 2. Tag': 'Every 2nd day', 'Alle X Tage': 'Every X days',
@@ -173,6 +276,7 @@ interface Ctx {
   y: number
   lang: PdfLang
   c: Copy
+  theme: Theme
 }
 
 function setFill(doc: jsPDF, [r, g, b]: RGB) { doc.setFillColor(r, g, b) }
@@ -188,17 +292,33 @@ function ensureSpace(ctx: Ctx, needed: number) {
 
 function sectionTitle(ctx: Ctx, title: string) {
   ensureSpace(ctx, 16)
-  const { doc } = ctx
+  const { doc, theme } = ctx
   ctx.y += 2
+  if (theme.id === 'medical') {
+    // Klinische Zwischenüberschrift: Nummer-frei, Uppercase-Label-Feel, volle Haarlinie
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    setText(doc, theme.accent)
+    doc.text(title.toUpperCase(), MARGIN, ctx.y, { charSpace: 0.4 })
+    ctx.y += 2.2
+    setDraw(doc, theme.accent)
+    doc.setLineWidth(0.35)
+    doc.line(MARGIN, ctx.y, PAGE_W - MARGIN, ctx.y)
+    setDraw(doc, theme.rule)
+    doc.setLineWidth(0.15)
+    doc.line(MARGIN, ctx.y + 0.7, PAGE_W - MARGIN, ctx.y + 0.7)
+    ctx.y += 6
+    return
+  }
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(13)
-  setText(doc, INK)
+  setText(doc, theme.ink)
   doc.text(title, MARGIN, ctx.y)
   ctx.y += 2.5
-  setDraw(doc, ACCENT)
+  setDraw(doc, theme.accent)
   doc.setLineWidth(0.6)
   doc.line(MARGIN, ctx.y, MARGIN + 22, ctx.y)
-  setDraw(doc, RULE)
+  setDraw(doc, theme.rule)
   doc.setLineWidth(0.2)
   doc.line(MARGIN + 22, ctx.y, PAGE_W - MARGIN, ctx.y)
   ctx.y += 6
@@ -295,18 +415,19 @@ function drawAdherenceBars(ctx: Ctx, rows: { label: string; pct: number; detail:
   const rowH = 9
   for (const r of rows) {
     ensureSpace(ctx, rowH + 2)
+    const { theme } = ctx
     doc.setFont('helvetica', 'bold'); doc.setFontSize(9)
-    setText(doc, INK)
+    setText(doc, theme.ink)
     doc.text(r.label, MARGIN, ctx.y)
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5)
-    setText(doc, MUTED)
+    setText(doc, theme.muted)
     doc.text(`${r.pct}%  ·  ${r.detail}`, PAGE_W - MARGIN, ctx.y, { align: 'right' })
     ctx.y += 2.5
     const barW = CONTENT_W
-    setFill(doc, RULE)
+    setFill(doc, theme.rule)
     doc.roundedRect(MARGIN, ctx.y, barW, 2.4, 1.2, 1.2, 'F')
     const fillW = Math.max(0.1, (r.pct / 100) * barW)
-    setFill(doc, r.pct >= 80 ? GOOD : r.pct >= 50 ? ACCENT : BAD)
+    setFill(doc, r.pct >= 80 ? theme.good : r.pct >= 50 ? theme.accent : theme.bad)
     doc.roundedRect(MARGIN, ctx.y, fillW, 2.4, 1.2, 1.2, 'F')
     ctx.y += rowH - 2.5
   }
@@ -315,23 +436,27 @@ function drawAdherenceBars(ctx: Ctx, rows: { label: string; pct: number; detail:
 // ─── Deckblatt ───────────────────────────────────────────────────────────────
 
 function coverPage(ctx: Ctx, data: ProtocolData, opts: PdfBuildOptions, includedTitles: string[]) {
-  const { doc, c, lang } = ctx
+  if (ctx.theme.id === 'medical') {
+    coverPageMedical(ctx, data, opts, includedTitles)
+    return
+  }
+  const { doc, c, lang, theme } = ctx
 
   // Akzentband oben
-  setFill(doc, ACCENT)
+  setFill(doc, theme.accent)
   doc.rect(0, 0, PAGE_W, 3, 'F')
 
   // Wortmarke
   doc.setFont('helvetica', 'bold'); doc.setFontSize(30)
-  setText(doc, ACCENT)
+  setText(doc, theme.accent)
   doc.text('TYD', MARGIN, 40)
   doc.setFont('helvetica', 'bold'); doc.setFontSize(8)
-  setText(doc, FAINT)
+  setText(doc, theme.faint)
   doc.text(c.brand.split('').join(' '), MARGIN + 1, 46, { charSpace: 1.2 })
 
   // Titel
   doc.setFont('helvetica', 'bold'); doc.setFontSize(26)
-  setText(doc, INK)
+  setText(doc, theme.ink)
   doc.text(c.docTitle, MARGIN, 92)
 
   // Info-Karte
@@ -344,16 +469,16 @@ function coverPage(ctx: Ctx, data: ProtocolData, opts: PdfBuildOptions, included
   ]
   let cy = 104
   const cardH = rows.length * 11 + 8
-  setDraw(doc, RULE); doc.setLineWidth(0.3)
-  setFill(doc, [252, 253, 254])
+  setDraw(doc, theme.rule); doc.setLineWidth(0.3)
+  setFill(doc, theme.cardFill)
   doc.roundedRect(MARGIN, cy, CONTENT_W, cardH, 2, 2, 'FD')
   cy += 9
   for (const [label, value] of rows) {
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5)
-    setText(doc, FAINT)
+    setText(doc, theme.faint)
     doc.text(label.toUpperCase(), MARGIN + 6, cy, { charSpace: 0.5 })
     doc.setFont('helvetica', 'bold'); doc.setFontSize(11)
-    setText(doc, INK)
+    setText(doc, theme.ink)
     doc.text(value, MARGIN + 46, cy)
     cy += 11
   }
@@ -361,20 +486,106 @@ function coverPage(ctx: Ctx, data: ProtocolData, opts: PdfBuildOptions, included
   // Inhaltsverzeichnis
   cy += 12
   doc.setFont('helvetica', 'bold'); doc.setFontSize(10)
-  setText(doc, ACCENT)
+  setText(doc, theme.accent)
   doc.text(c.contents.toUpperCase(), MARGIN, cy, { charSpace: 0.8 })
   cy += 3
-  setDraw(doc, RULE); doc.setLineWidth(0.2)
+  setDraw(doc, theme.rule); doc.setLineWidth(0.2)
   doc.line(MARGIN, cy, PAGE_W - MARGIN, cy)
   cy += 7
   doc.setFontSize(10.5)
   includedTitles.forEach((title, i) => {
     doc.setFont('helvetica', 'normal')
-    setText(doc, MUTED)
+    setText(doc, theme.muted)
     doc.text(String(i + 1).padStart(2, '0'), MARGIN, cy)
-    setText(doc, INK)
+    setText(doc, theme.ink)
     doc.text(title, MARGIN + 10, cy)
     cy += 7
+  })
+}
+
+/** Arzt-Befund: Briefkopf, Patientenblock, Gliederung — weiß, Navy, Haarlinien. */
+function coverPageMedical(ctx: Ctx, data: ProtocolData, opts: PdfBuildOptions, includedTitles: string[]) {
+  const { doc, c, lang, theme } = ctx
+  const includePersonal = opts.sections.includes('personal')
+  const subject = resolveSubject(data, includePersonal, lang)
+  const created = new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-US', { dateStyle: 'long' }).format(new Date())
+  const period = `${fmtDate(opts.range.from, lang)} – ${fmtDate(opts.range.to, lang)}`
+
+  // Doppelte Kopf-Linie (Briefkopf)
+  setDraw(doc, theme.accent)
+  doc.setLineWidth(0.8)
+  doc.line(MARGIN, 18, PAGE_W - MARGIN, 18)
+  doc.setLineWidth(0.25)
+  doc.line(MARGIN, 20, PAGE_W - MARGIN, 20)
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9)
+  setText(doc, theme.accent)
+  doc.text(c.brand.toUpperCase(), MARGIN, 28, { charSpace: 0.6 })
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8)
+  setText(doc, theme.muted)
+  doc.text(lang === 'de' ? 'Zur Vorlage bei der behandelnden Fachperson' : 'For review by the treating clinician', PAGE_W - MARGIN, 28, { align: 'right' })
+
+  // Dokumenttitel
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(22)
+  setText(doc, theme.ink)
+  doc.text(c.docTitle, MARGIN, 48)
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
+  setText(doc, theme.muted)
+  doc.text(lang === 'de' ? 'Persönliche Verlaufs- und Labordokumentation' : 'Personal progress and lab documentation', MARGIN, 56)
+
+  // Patienten-/Metablock (eckig, befundartig)
+  const boxY = 66
+  const boxH = 42
+  setDraw(doc, theme.accent); doc.setLineWidth(0.4)
+  setFill(doc, theme.cardFill)
+  doc.rect(MARGIN, boxY, CONTENT_W, boxH, 'FD')
+  // linker Navy-Streifen
+  setFill(doc, theme.accent)
+  doc.rect(MARGIN, boxY, 1.2, boxH, 'F')
+
+  const meta: [string, string][] = [
+    [c.subject, subject],
+    [c.period, period],
+    [c.createdAt, created],
+    [lang === 'de' ? 'Dokument' : 'Document', lang === 'de' ? 'Befundbericht (Selbstauskunft)' : 'Medical report (self-reported)'],
+  ]
+  let my = boxY + 9
+  for (const [label, value] of meta) {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8)
+    setText(doc, theme.muted)
+    doc.text(label.toUpperCase(), MARGIN + 6, my, { charSpace: 0.35 })
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10)
+    setText(doc, theme.ink)
+    doc.text(value, MARGIN + 48, my)
+    my += 8.2
+  }
+
+  // Gliederung
+  let cy = boxY + boxH + 14
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9)
+  setText(doc, theme.accent)
+  doc.text(c.contents.toUpperCase(), MARGIN, cy, { charSpace: 0.7 })
+  cy += 2.5
+  setDraw(doc, theme.rule); doc.setLineWidth(0.3)
+  doc.line(MARGIN, cy, PAGE_W - MARGIN, cy)
+  cy += 8
+  includedTitles.forEach((title, i) => {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
+    setText(doc, theme.muted)
+    const num = `${i + 1}.`
+    doc.text(num, MARGIN, cy)
+    setText(doc, theme.ink)
+    doc.text(title, MARGIN + 10, cy)
+    // Punktlinie zur rechten Seite
+    setDraw(doc, theme.rule); doc.setLineWidth(0.15)
+    const tw = doc.getTextWidth(title)
+    const startX = MARGIN + 12 + tw
+    if (startX < PAGE_W - MARGIN - 8) {
+      for (let x = startX; x < PAGE_W - MARGIN - 4; x += 2.2) {
+        doc.line(x, cy - 0.5, x + 0.8, cy - 0.5)
+      }
+    }
+    cy += 7.2
   })
 }
 
@@ -426,18 +637,25 @@ function renderSummary(ctx: Ctx, data: ProtocolData, opts: PdfBuildOptions) {
   const cardW = (CONTENT_W - gap * (cards.length - 1)) / cards.length
   const cardH = 20
   ensureSpace(ctx, cardH + 4)
+  const { theme } = ctx
   cards.forEach((card, i) => {
     const x = MARGIN + i * (cardW + gap)
-    setDraw(doc, RULE); doc.setLineWidth(0.3)
-    setFill(doc, [252, 253, 254])
-    doc.roundedRect(x, ctx.y, cardW, cardH, 2, 2, 'FD')
-    setFill(doc, ACCENT)
-    doc.rect(x, ctx.y, cardW, 1, 'F')
+    setDraw(doc, theme.rule); doc.setLineWidth(0.3)
+    setFill(doc, theme.cardFill)
+    if (theme.id === 'medical') {
+      doc.rect(x, ctx.y, cardW, cardH, 'FD')
+      setFill(doc, theme.accent)
+      doc.rect(x, ctx.y, 1.1, cardH, 'F')
+    } else {
+      doc.roundedRect(x, ctx.y, cardW, cardH, 2, 2, 'FD')
+      setFill(doc, theme.accent)
+      doc.rect(x, ctx.y, cardW, 1, 'F')
+    }
     doc.setFont('helvetica', 'normal'); doc.setFontSize(7)
-    setText(doc, FAINT)
+    setText(doc, theme.faint)
     doc.text(card.label.toUpperCase(), x + 4, ctx.y + 7, { charSpace: 0.3, maxWidth: cardW - 8 })
     doc.setFont('helvetica', 'bold'); doc.setFontSize(15)
-    setText(doc, INK)
+    setText(doc, theme.ink)
     doc.text(card.value, x + 4, ctx.y + 16)
   })
   ctx.y += cardH + 6
@@ -533,7 +751,7 @@ function renderWeight(ctx: Ctx, data: ProtocolData) {
     .map(w => ({ t: new Date(w.logged_at).getTime(), v: w.weight_kg }))
   if (pts.length === 0) { bodyText(ctx, c.noData); return }
   if (pts.length >= 2) {
-    drawLineChart(ctx, [{ name: c.weight, color: ACCENT, points: pts }], { height: 42 })
+    drawLineChart(ctx, [{ name: c.weight, color: ctx.theme.accent, points: pts }], { height: 42 })
   }
   const first = pts[0].v
   const last = pts[pts.length - 1].v
@@ -615,23 +833,28 @@ interface AutoTableOpts {
 let autoTableFn: any = null
 
 function autoTableSafe(ctx: Ctx, o: AutoTableOpts) {
-  const { doc } = ctx
+  const { doc, theme } = ctx
   ensureSpace(ctx, 14)
+  const medical = theme.id === 'medical'
   autoTableFn(doc, {
     startY: ctx.y,
     head: o.head,
     body: o.body,
-    theme: o.theme ?? 'striped',
+    theme: o.theme ?? (medical ? 'grid' : 'striped'),
     margin: { left: MARGIN, right: MARGIN, bottom: PAGE_H - BOTTOM_Y },
     styles: {
-      font: 'helvetica', fontSize: 9, cellPadding: 2.2,
-      textColor: INK, lineColor: RULE, lineWidth: 0.1, overflow: 'linebreak',
+      font: 'helvetica', fontSize: medical ? 8.5 : 9, cellPadding: medical ? 2.4 : 2.2,
+      textColor: theme.ink, lineColor: theme.rule, lineWidth: medical ? 0.2 : 0.1, overflow: 'linebreak',
     },
     headStyles: {
-      fillColor: HEAD_FILL, textColor: ACCENT, fontStyle: 'bold', fontSize: 8.5,
-      lineColor: RULE, lineWidth: 0.1,
+      fillColor: theme.headFill,
+      textColor: theme.accent,
+      fontStyle: 'bold',
+      fontSize: medical ? 8 : 8.5,
+      lineColor: theme.rule,
+      lineWidth: medical ? 0.2 : 0.1,
     },
-    alternateRowStyles: { fillColor: ZEBRA },
+    alternateRowStyles: { fillColor: theme.zebra },
     columnStyles: o.columnStyles,
   })
   ctx.y = finalYAfterTable(doc) + 6
@@ -639,25 +862,42 @@ function autoTableSafe(ctx: Ctx, o: AutoTableOpts) {
 
 // ─── Kopf-/Fußzeile (finaler Pass über alle Seiten) ──────────────────────────
 
-function decoratePages(doc: jsPDF, c: Copy, subject: string) {
+function decoratePages(doc: jsPDF, c: Copy, subject: string, theme: Theme) {
   const total = doc.getNumberOfPages()
   for (let p = 2; p <= total; p++) {
     doc.setPage(p)
-    // Running Header
+    if (theme.id === 'medical') {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(7)
+      setText(doc, theme.accent)
+      doc.text(c.docTitle.toUpperCase(), MARGIN, 11, { charSpace: 0.35 })
+      doc.setFont('helvetica', 'normal')
+      setText(doc, theme.muted)
+      doc.text(subject, PAGE_W - MARGIN, 11, { align: 'right' })
+      setDraw(doc, theme.accent); doc.setLineWidth(0.35)
+      doc.line(MARGIN, 14, PAGE_W - MARGIN, 14)
+      setDraw(doc, theme.rule); doc.setLineWidth(0.15)
+      doc.line(MARGIN, 15, PAGE_W - MARGIN, 15)
+      setDraw(doc, theme.rule); doc.setLineWidth(0.25)
+      doc.line(MARGIN, 286, PAGE_W - MARGIN, 286)
+      doc.setFontSize(7)
+      setText(doc, theme.muted)
+      doc.text(c.footer, MARGIN, 291)
+      doc.text(`${p} / ${total}`, PAGE_W - MARGIN, 291, { align: 'right' })
+      continue
+    }
     doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5)
-    setText(doc, ACCENT)
+    setText(doc, theme.accent)
     doc.text('TYD', MARGIN, 12)
     doc.setFont('helvetica', 'normal')
-    setText(doc, FAINT)
+    setText(doc, theme.faint)
     doc.text(c.docTitle, MARGIN + 8, 12)
     doc.text(subject, PAGE_W - MARGIN, 12, { align: 'right' })
-    setDraw(doc, RULE); doc.setLineWidth(0.2)
+    setDraw(doc, theme.rule); doc.setLineWidth(0.2)
     doc.line(MARGIN, 15, PAGE_W - MARGIN, 15)
-    // Footer
-    setDraw(doc, RULE); doc.setLineWidth(0.2)
+    setDraw(doc, theme.rule); doc.setLineWidth(0.2)
     doc.line(MARGIN, 286, PAGE_W - MARGIN, 286)
     doc.setFontSize(7.5)
-    setText(doc, FAINT)
+    setText(doc, theme.faint)
     doc.text(c.footer, MARGIN, 291)
     doc.text(`${p} / ${total}`, PAGE_W - MARGIN, 291, { align: 'right' })
   }
@@ -686,8 +926,10 @@ export async function buildProtocolPdf(data: ProtocolData, opts: PdfBuildOptions
   autoTableFn = autoTableMod.default
 
   const doc = new JsPdf('p', 'mm', 'a4')
-  const c = COPY[opts.lang]
-  const ctx: Ctx = { doc, y: TOP_Y, lang: opts.lang, c }
+  const theme = resolveTheme(opts.preset)
+  const baseCopy = COPY[opts.lang]
+  const c = theme.id === 'medical' ? applyMedicalCopy(baseCopy, opts.lang) : baseCopy
+  const ctx: Ctx = { doc, y: TOP_Y, lang: opts.lang, c, theme }
 
   const shown = visibleSections(opts.sections, data)
   const titles = shown.map(id => c.sectionTitles[id])
@@ -712,12 +954,15 @@ export async function buildProtocolPdf(data: ProtocolData, opts: PdfBuildOptions
   bodyText(ctx, c.disclaimer, { size: 8.5, color: MUTED })
 
   const includePersonal = opts.sections.includes('personal')
-  decoratePages(doc, c, resolveSubject(data, includePersonal, opts.lang))
+  decoratePages(doc, c, resolveSubject(data, includePersonal, opts.lang), theme)
 
   return doc
 }
 
 export function pdfFileName(opts: PdfBuildOptions): string {
+  if (opts.preset === 'arzt') {
+    return `TYD-${opts.lang === 'de' ? 'Befund' : 'Report'}-${opts.range.to}.pdf`
+  }
   return `TYD-${opts.lang === 'de' ? 'Protokoll' : 'Protocol'}-${opts.range.to}.pdf`
 }
 

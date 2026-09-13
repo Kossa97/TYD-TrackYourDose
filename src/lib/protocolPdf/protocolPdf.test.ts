@@ -190,3 +190,19 @@ describe('persistence', () => {
     expect(loadPdfExportPrefs('user-2')).toBeNull()
   })
 })
+
+
+describe('Arzt-Befund Theme', () => {
+  it('erzeugt ein medizinisches PDF mit preset arzt', async () => {
+    const doc = await buildProtocolPdf(makeData(), {
+      lang: 'de',
+      range: { from: '2026-06-01', to: '2026-06-30' },
+      sections: ['personal', 'summary', 'cycles', 'adherence', 'bloodwork', 'weight', 'effects', 'notes'],
+      note: 'Frage an den Arzt',
+      preset: 'arzt',
+    })
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2)
+    const bytes = doc.output('arraybuffer') as ArrayBuffer
+    expect(bytes.byteLength).toBeGreaterThan(3000)
+  })
+})
