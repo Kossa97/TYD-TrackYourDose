@@ -161,7 +161,7 @@ export async function loadAllCycleChartData(userId: string): Promise<CycleChartD
         pk.bioavailability_sc,
         15,
         interruptedAt ? new Date(interruptedAt) : null,
-        pk.iu_per_mg,
+        { iuPerMg: pk.iu_per_mg },
       )
       const points: ChartPoint[] = curveRaw.map(p => ({
         timestamp: p.time.getTime(),

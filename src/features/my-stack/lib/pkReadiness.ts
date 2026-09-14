@@ -25,6 +25,37 @@ export interface PkReadinessInput {
   scheduledAt: string | null
   /** IU je Milligramm aus dem PK-Profil; null, wenn die Substanz keinen hat. */
   iuPerMg?: number | null
+  /** Milligramm Wirkstoff je Milliliter Loesung; null, wenn keine vorliegt. */
+  mgPerMl?: number | null
+}
+
+/**
+ * Milligramm Wirkstoff je Milliliter — aus der Staerke einer Zutat.
+ *
+ * Das ist der Rechenschritt, der bei einem aufgeloesten Vial fehlte. So wird
+ * ein Peptid wirklich dosiert:
+ *
+ *     5 mg im Vial  +  2 ml BAC-Wasser   ->  2,5 mg/ml
+ *     davon 0,2 ml aufgezogen            ->  0,5 mg
+ *
+ * Niemand rechnet das im Kopf und traegt dann „500 mcg" in den Plan ein — man
+ * zieht auf, was die Spritze zeigt. Und bei einem Kombi-Vial (5 mg CJC UND
+ * 5 mg Ipamorelin in derselben Loesung) traegt jede Zutat ihre eigene
+ * Konzentration, also auch ihre eigene Dosis aus demselben aufgezogenen Volumen.
+ */
+export function mgPerMlFromStrength(
+  amountValue: number | null,
+  amountUnit: string | null,
+  basisValue: number | null,
+  basisUnit: string | null,
+): number | null {
+  if (basisUnit?.trim().toLocaleLowerCase() !== 'ml') return null
+  if (amountValue == null || !Number.isFinite(amountValue) || amountValue <= 0) return null
+  if (basisValue == null || !Number.isFinite(basisValue) || basisValue <= 0) return null
+
+  const proEinheit = toPkMilligrams(amountValue, amountUnit ?? '')
+  if (proEinheit == null) return null
+  return proEinheit / basisValue
 }
 
 export type PkScheduleCycle = ScheduleCycle & { method: string | null }
@@ -55,6 +86,7 @@ export function toPkMilligrams(
   value: number,
   unit: string,
   iuPerMg: number | null = null,
+  mgPerMl: number | null = null,
 ): number | null {
   if (!Number.isFinite(value)) return null
   const normalizedUnit = unit.trim().toLocaleLowerCase()
@@ -63,6 +95,13 @@ export function toPkMilligrams(
   if (normalizedUnit === 'iu') {
     if (iuPerMg == null || !Number.isFinite(iuPerMg) || iuPerMg <= 0) return null
     return value / iuPerMg
+  }
+  // Milliliter sind keine Wirkstoffmenge, sondern ein Volumen — sie werden zur
+  // Menge erst mit der Konzentration der Loesung. Genau so dosiert man ein
+  // aufgeloestes Vial: man zieht Volumen auf, nicht Milligramm.
+  if (normalizedUnit === 'ml') {
+    if (mgPerMl == null || !Number.isFinite(mgPerMl) || mgPerMl <= 0) return null
+    return value * mgPerMl
   }
   return null
 }
@@ -97,7 +136,7 @@ export function evaluatePkReadiness(input: PkReadinessInput): PkReadiness {
   if (!input.scheduledAt?.trim()) missing.push('time')
 
   if (missing.length) return { status: 'missing', missing }
-  if (toPkMilligrams(input.dose!, input.unit!, input.iuPerMg ?? null) == null) {
+  if (toPkMilligrams(input.dose!, input.unit!, input.iuPerMg ?? null, input.mgPerMl ?? null) == null) {
     return { status: 'unsupported', reason: 'unit_conversion' }
   }
 

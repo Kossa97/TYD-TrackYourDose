@@ -12,6 +12,7 @@ import {
 } from '../services/blutspiegelHistory'
 import {
   evaluatePkReadiness,
+  mgPerMlFromStrength,
   resolvePkScheduleForDay,
   type PkRequirement,
   type PkScheduleCycle,
@@ -42,7 +43,15 @@ interface CycleWithPk extends PkScheduleCycle {
     pk_profile_method: string | null
     ingredients: Array<{
       position: number
+      custom_name: string | null
+      // Die Staerke der Zutat — ohne sie laesst sich ein in Millilitern
+      // geplantes Vial nicht in Milligramm umrechnen.
+      amount_value: number | string | null
+      amount_unit: string | null
+      basis_value: number | string | null
+      basis_unit: string | null
       substance_catalog: {
+        canonical_name: string | null
         pk_profile_id: string | null
         pk_profiles: PkProfileEmbed | null
       } | null
@@ -61,6 +70,11 @@ interface ReadyCarouselCard {
   dose: number
   halfLifeHours: number
   level: CurrentBlutspiegelLevel
+  /**
+   * Die uebrigen Wirkstoffe desselben Eintrags, jeder mit seinem eigenen
+   * Spiegel. Leer, solange nur einer ein PK-Profil hat — der Normalfall.
+   */
+  weitere: Array<{ profileId: string; substanceName: string; level: CurrentBlutspiegelLevel }>
 }
 
 interface IncompleteCarouselCard {
@@ -97,15 +111,47 @@ function isCycleActiveForCarousel(cycle: CycleWithPk, todayKey: string): boolean
   return false
 }
 
-function linkedProfile(cycle: CycleWithPk): { id: string; profile: PkProfileEmbed } | null {
+interface VerknuepfteZutat {
+  id: string
+  profile: PkProfileEmbed
+  /** Wie die Zutat heisst — bei einer Kombination steht sie an ihrer Kurve. */
+  name: string
+  /** Milligramm je Milliliter aus ihrer Staerke; null, wenn nicht in ml gemessen. */
+  mgPerMl: number | null
+}
+
+function zahl(wert: number | string | null): number | null {
+  if (wert == null) return null
+  const n = typeof wert === 'number' ? wert : Number(wert)
+  return Number.isFinite(n) ? n : null
+}
+
+/**
+ * Alle Zutaten des Eintrags, die ein PK-Profil tragen — in ihrer Reihenfolge.
+ *
+ * Ein Kombi-Vial traegt zwei: „5 mg CJC-1295 ohne DAC UND 5 mg Ipamorelin".
+ * Beide stecken in derselben Loesung, beide haben ihre eigene Konzentration,
+ * und aus demselben aufgezogenen Volumen folgt fuer jede eine eigene Dosis.
+ */
+function linkedProfiles(cycle: CycleWithPk): VerknuepfteZutat[] {
   const ingredients = cycle.stack_items?.ingredients.slice().sort((a, b) => a.position - b.position) ?? []
+  const verknuepft: VerknuepfteZutat[] = []
   for (const ingredient of ingredients) {
     const catalog = ingredient.substance_catalog
-    if (catalog?.pk_profile_id && catalog.pk_profiles) {
-      return { id: catalog.pk_profile_id, profile: catalog.pk_profiles }
-    }
+    if (!catalog?.pk_profile_id || !catalog.pk_profiles) continue
+    verknuepft.push({
+      id: catalog.pk_profile_id,
+      profile: catalog.pk_profiles,
+      name: catalog.canonical_name ?? ingredient.custom_name ?? catalog.pk_profiles.name,
+      mgPerMl: mgPerMlFromStrength(
+        zahl(ingredient.amount_value),
+        ingredient.amount_unit,
+        zahl(ingredient.basis_value),
+        ingredient.basis_unit,
+      ),
+    })
   }
-  return null
+  return verknuepft
 }
 
 const REFRESH_INTERVAL_MS = 5000
@@ -325,7 +371,7 @@ function BlutspiegelCard({
 }) {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const { accent, level, peptideName, pkProfileId } = card
+  const { accent, level, peptideName, pkProfileId, weitere } = card
 
   return (
     <div
@@ -404,6 +450,36 @@ function BlutspiegelCard({
             mehr
           </button>
         </div>
+
+        {/* Ein Kombipraeparat traegt mehrere Wirkstoffe in derselben Loesung.
+            Aus einer Einnahme folgt fuer jeden ein eigener Spiegel — dieselbe
+            Menge Loesung, aber jede Zutat mit ihrer eigenen Konzentration,
+            Halbwertszeit und Verfuegbarkeit. Die grosse Zahl gehoert der
+            ersten Zutat; die uebrigen stehen darunter in einer Zeile, damit
+            die Karte nicht zu einer Tabelle wird. */}
+        {weitere.length > 0 && (
+          <div data-blutspiegel-weitere style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {weitere.map(zutat => (
+              <div
+                key={zutat.profileId}
+                style={{
+                  display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10,
+                  paddingTop: 6, borderTop: '1px solid rgba(148,163,184,0.16)',
+                }}
+              >
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted, #94a3b8)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {zutat.substanceName}
+                </span>
+                <span style={{ flexShrink: 0, fontFamily: 'monospace', fontSize: 14, fontWeight: 800, color: accent }}>
+                  {zutat.level.currentLevel.toFixed(2)}
+                  <span style={{ marginLeft: 4, fontSize: 11, fontWeight: 600, color: 'var(--text-muted, #94a3b8)' }}>
+                    {zutat.level.unit}
+                  </span>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <p className="disclaimer" style={{ marginTop: 8, textAlign: 'center' }}>
           Die angezeigten Werte basieren auf pharmakokinetischen Modellen und sind Schätzungen. Kein medizinischer Rat.
@@ -502,7 +578,13 @@ export function BlutspiegelCarousel() {
             pk_profile_method,
             ingredients:stack_item_ingredients (
               position,
+              custom_name,
+              amount_value,
+              amount_unit,
+              basis_value,
+              basis_unit,
               substance_catalog (
+                canonical_name,
                 pk_profile_id,
                 pk_profiles (
                   name,
@@ -540,7 +622,8 @@ export function BlutspiegelCarousel() {
 
     const levels = await Promise.all(
       eligible.map(async (cycle) => {
-        const linked = linkedProfile(cycle)
+        const verknuepft = linkedProfiles(cycle)
+        const linked = verknuepft[0] ?? null
         const cycleEscalations = ((escalationRows ?? []) as EscalationRow[])
           .filter(row => row.cycle_id === cycle.id)
         const schedule = resolvePkScheduleForDay(cycle, cycleEscalations, new Date())
@@ -555,6 +638,10 @@ export function BlutspiegelCarousel() {
           // Ohne den Faktor faellt eine in IU geplante Einnahme hier durch
           // und die Karte verschwindet wortlos aus dem Karussell.
           iuPerMg: linked?.profile.iu_per_mg ?? null,
+          // Und ohne die Konzentration faellt ein in Millilitern geplantes
+          // Vial durch — so dosiert man ein aufgeloestes Peptid aber: man
+          // zieht Volumen auf, nicht Milligramm.
+          mgPerMl: linked?.mgPerMl ?? null,
         })
         if (readiness.status === 'unsupported' || !cycle.stack_items) return null
         if (readiness.status === 'missing') {
@@ -569,14 +656,23 @@ export function BlutspiegelCarousel() {
         if (!linked) return null
         const pk = linked.profile
         const category = normalizeCategory(pk.category)
-        const level = await getCurrentBlutspiegelLevel(
-          cycle,
-          cycleEscalations,
-          pk.half_life_hours,
-          pk.tmax_hours,
-          pk.bioavailability_sc,
-          pk.iu_per_mg,
-        )
+        // Je Zutat mit Profil ein eigener Spiegel: dieselbe Einnahme, aber
+        // jede Zutat mit ihrer eigenen Konzentration, Halbwertszeit und
+        // Verfuegbarkeit. Aus 0,2 ml eines Kombi-Vials werden so 0,5 mg CJC
+        // UND 0,5 mg Ipamorelin, jedes mit seinem eigenen Verlauf.
+        const spiegel = await Promise.all(verknuepft.map(async zutat => ({
+          profileId: zutat.id,
+          substanceName: zutat.name,
+          level: await getCurrentBlutspiegelLevel(
+            cycle,
+            cycleEscalations,
+            zutat.profile.half_life_hours,
+            zutat.profile.tmax_hours,
+            zutat.profile.bioavailability_sc,
+            { iuPerMg: zutat.profile.iu_per_mg, mgPerMl: zutat.mgPerMl },
+          ),
+        })))
+        const level = spiegel[0].level
         return {
           kind: 'ready',
           cycleId: cycle.id,
@@ -588,6 +684,7 @@ export function BlutspiegelCarousel() {
           dose: Number(cycle.dose),
           halfLifeHours: pk.half_life_hours,
           level,
+          weitere: spiegel.slice(1),
         } satisfies CarouselCard
       }),
     )

@@ -78,3 +78,76 @@ einer Gesundheits-App.
 - `TZ=Europe/Berlin npx vitest run` — **1509 Tests grün** (143 Dateien).
 - `npx tsc -p tsconfig.app.json --noEmit` — sauber.
 - `npx eslint src scripts` — **140 Probleme**, unverändert zur Baseline.
+
+---
+
+## Nachtrag: Stufe 3 umgesetzt — die Konzentration war der fehlende Schritt
+
+Die offene Frage oben hat der Nutzer beantwortet, und zwar mit der Wirklichkeit:
+
+> bei peptiden ist es beispielsweise so, das vial enthält 5mg cjc1295 no dac und
+> 5mg ipamorelin, je nachdem wieviel an bac wasser hinzugefügt wird und
+> anschließend einheiten aufgezogen werden hat man dann die menge an wirkstoff
+
+Damit ist die Plan-Menge **ein Volumen**, keine Wirkstoffmenge — und die Dosis
+je Wirkstoff folgt aus seiner eigenen Konzentration:
+
+```
+Vial:   5 mg CJC-1295 ohne DAC  +  10 mg Ipamorelin
+      + 2 ml BAC-Wasser
+      ⇒ 2,5 mg/ml CJC        und  5,0 mg/ml Ipamorelin
+
+Plan:   0,2 ml aufgezogen
+      ⇒ 0,5 mg CJC           und  1,0 mg Ipamorelin
+```
+
+### Das war schon für eine EINZELNE Substanz kaputt
+
+`toPkMilligrams` kannte nur `mg`, `mcg` und `IU`. Wer sein Vial in **ml** oder
+in **Spritzen** plante — also so, wie man es tatsächlich aufzieht — bekam
+`unsupported`, und die Karte verschwand wortlos aus dem Karussell. Der
+Planschritt bietet beide Einheiten an (`getIntakePlanUnitSuggestions` gibt für
+ein Vial `syringe`, `mcg`, `mg`, `IU`, `vial`, `ml` aus).
+
+Die Angaben dafür liegen längst vor: der Stärke-Schritt erfasst genau
+„Wirkstoffmenge je Produktmenge", und beim aufgelösten Vial ist die
+Produktmenge das Lösungsmittel in ml.
+
+### Was jetzt gilt
+
+`mgPerMlFromStrength(amount, amountUnit, basis, basisUnit)` rechnet die
+Konzentration aus der Stärke **einer Zutat**. `toPkMilligrams` nimmt sie als
+vierten Faktor und kann damit Milliliter. Und weil jede Zutat ihre eigene
+Stärke trägt, fällt die Kombination als Sonderfall weg — sie ist derselbe
+Rechenweg, zweimal.
+
+Der Blutspiegel sammelt deshalb nicht mehr die **erste** Zutat mit Profil,
+sondern **alle** (`linkedProfiles`), und rechnet je Zutat einen eigenen
+Spiegel: eigene Konzentration, eigene Halbwertszeit, eigene Verfügbarkeit.
+Die große Zahl gehört der ersten; die übrigen stehen darunter in je einer
+Zeile mit Namen und Wert, damit die Karte keine Tabelle wird.
+
+### Nebenbei aufgeräumt
+
+`calculateHistoryBlutspiegelCurve` nahm sieben Argumente, das siebte war eine
+nackte Zahl (`iuPerMg`). Mit `mgPerMl` wären es acht geworden. Beide Faktoren
+stehen jetzt in einem `DoseUmrechnung`-Objekt — sie gehören ohnehin zusammen:
+beides sind Angaben, die nicht der Kurve gehören, sondern der Substanz und
+ihrer Zubereitung.
+
+### Verifikation
+
+- Neun neue Tests, darunter der Kombi-Fall mit zwei verschiedenen Stärken
+  (5 mg und 10 mg in denselben 2 ml → 0,5 mg und 1,0 mg aus denselben 0,2 ml)
+  und der Nachweis, dass ein in ml geplanter Zyklus vorher `unsupported` war
+  und jetzt `ready` ist.
+- Ohne Konzentration bleibt es bei `null` — „können wir nicht umrechnen", nicht
+  „sind null Milligramm". Ein Test hält das fest.
+- `TZ=Europe/Berlin npx vitest run` — **1518 Tests grün** (143 Dateien).
+- `npx tsc -p tsconfig.app.json --noEmit` — sauber.
+- `npx eslint src scripts` — **140 Probleme**, unverändert zur Baseline.
+
+### Was bleibt
+
+Stufe 2 (fertige Kombi-Einträge im Katalog) ist offen — sie ist reine
+Bequemlichkeit, seit Stufe 1 jede Zutat an den Katalog hängt.

@@ -33,7 +33,7 @@ describe('Blutspiegel mit IU-Dosierung', () => {
 
   it('rechnet mit, sobald der Faktor der Substanz dabei ist', () => {
     // HGH: 3 IU je Milligramm. Aus 3 IU wird 1 mg.
-    const kurve = calculateHistoryBlutspiegelCurve(EINNAHME, 3.8, 3, 1, 30, null, 3)
+    const kurve = calculateHistoryBlutspiegelCurve(EINNAHME, 3.8, 3, 1, 30, null, { iuPerMg: 3 })
 
     expect(hoechster(kurve)).toBeGreaterThan(0)
   })
@@ -41,7 +41,7 @@ describe('Blutspiegel mit IU-Dosierung', () => {
   it('kommt auf denselben Verlauf wie dieselbe Menge in Milligramm', () => {
     // 3 IU HGH sind 1 mg. Beide Wege muessen dieselbe Kurve ergeben —
     // sonst rechnet die Umrechnung an der falschen Stelle.
-    const ueberIu = calculateHistoryBlutspiegelCurve(EINNAHME, 3.8, 3, 1, 30, null, 3)
+    const ueberIu = calculateHistoryBlutspiegelCurve(EINNAHME, 3.8, 3, 1, 30, null, { iuPerMg: 3 })
     const ueberMg = calculateHistoryBlutspiegelCurve(
       [{ ...EINNAHME[0], dose: 1, unit: 'mg' }], 3.8, 3, 1, 30, null,
     )
@@ -70,9 +70,9 @@ describe('Blutspiegel mit IU-Dosierung', () => {
     ]
 
     // Mit 3 IU/mg sind beide Gaben 1 mg — zwei gleich hohe Gipfel.
-    const gleichgewichtig = calculateHistoryBlutspiegelCurve(gemischt, 3.8, 3, 1, 30, null, 3)
+    const gleichgewichtig = calculateHistoryBlutspiegelCurve(gemischt, 3.8, 3, 1, 30, null, { iuPerMg: 3 })
     // Mit 10.000 IU/mg ist die erste Gabe verschwindend klein.
-    const einseitig = calculateHistoryBlutspiegelCurve(gemischt, 3.8, 3, 1, 30, null, 10000)
+    const einseitig = calculateHistoryBlutspiegelCurve(gemischt, 3.8, 3, 1, 30, null, { iuPerMg: 10000 })
 
     // Der Gipfel der ERSTEN Gabe, gemessen in den sechs Stunden danach.
     const ersterGipfel = (kurve: { time: Date; level: number }[]) => hoechster(

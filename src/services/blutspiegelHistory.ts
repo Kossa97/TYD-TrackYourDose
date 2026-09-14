@@ -157,6 +157,26 @@ function doseContributionAt(
 }
 
 /** Berechnet den Blutspiegel-Verlauf basierend auf echten Einnahme-Events. */
+/**
+ * Was eine geplante Menge in Milligramm uebersetzt.
+ *
+ * Zwei Faktoren, beide gehoeren nicht der Kurve, sondern der Substanz bzw.
+ * ihrer Zubereitung — deshalb kommen sie von aussen herein:
+ *
+ *   iuPerMg   Internationale Einheiten sind eine Wirkstaerke, keine Masse.
+ *             Steht im PK-Profil.
+ *   mgPerMl   Milliliter sind ein Volumen, keine Menge. Aus der Staerke der
+ *             Zutat: 5 mg im Vial auf 2 ml Loesungsmittel sind 2,5 mg/ml.
+ *
+ * Als Objekt statt als zwei weitere Stellen in der Argumentliste: die Kurve
+ * nahm zuletzt sieben Argumente, und das siebte war schon eine Zahl, die man
+ * an der Aufrufstelle nicht mehr lesen konnte.
+ */
+export interface DoseUmrechnung {
+  iuPerMg?: number | null
+  mgPerMl?: number | null
+}
+
 export function calculateHistoryBlutspiegelCurve(
   events: DoseEvent[],
   halfLifeHours: number,
@@ -164,9 +184,10 @@ export function calculateHistoryBlutspiegelCurve(
   bioavailability: number = 1.0,
   resolutionMinutes: number = 30,
   interruptedAt: Date | null = null,
-  // IU je Milligramm aus dem PK-Profil. Ohne ihn faellt jede in IU geplante
-  // Einnahme still aus der Summe — genau das liess HCG und HGH verschwinden.
-  iuPerMg: number | null = null,
+  // Ohne die Umrechnung faellt jede Einnahme still aus der Summe, deren
+  // Einheit nicht schon mg oder mcg ist — genau das liess HCG und HGH
+  // verschwinden, und dasselbe gilt fuer ein in Millilitern geplantes Vial.
+  umrechnung: DoseUmrechnung = {},
 ): BlutspiegelCurvePoint[] {
   if (events.length === 0 || halfLifeHours <= 0 || tmaxHours <= 0 || resolutionMinutes <= 0) {
     return []
@@ -194,7 +215,7 @@ export function calculateHistoryBlutspiegelCurve(
 
     for (const event of events) {
       if (event.status === 'skipped') continue
-      const doseMg = toPkMilligrams(event.dose, event.unit, iuPerMg)
+      const doseMg = toPkMilligrams(event.dose, event.unit, umrechnung.iuPerMg ?? null, umrechnung.mgPerMl ?? null)
       if (doseMg == null) continue
       const deltaTHours = (tMs - event.timestamp.getTime()) / 3_600_000
       total += doseContributionAt(doseMg, bioavailability, deltaTHours, ke, ka)
@@ -302,7 +323,7 @@ function calculateCurveTo(
   tmaxHours: number,
   bioavailability: number,
   resolutionMinutes: number,
-  iuPerMg: number | null = null,
+  umrechnung: DoseUmrechnung = {},
 ): BlutspiegelCurvePoint[] {
   if (events.length === 0 || halfLifeHours <= 0 || tmaxHours <= 0 || resolutionMinutes <= 0) {
     return []
@@ -323,7 +344,7 @@ function calculateCurveTo(
     let total = 0
     for (const event of events) {
       if (event.status === 'skipped') continue
-      const doseMg = toPkMilligrams(event.dose, event.unit, iuPerMg)
+      const doseMg = toPkMilligrams(event.dose, event.unit, umrechnung.iuPerMg ?? null, umrechnung.mgPerMl ?? null)
       if (doseMg == null) continue
       const deltaTHours = (tMs - event.timestamp.getTime()) / 3_600_000
       total += doseContributionAt(doseMg, bioavailability, deltaTHours, ke, ka)
@@ -405,7 +426,7 @@ export async function getCurrentBlutspiegelLevel(
   halfLifeHours: number,
   tmaxHours: number,
   bioavailability: number = 1.0,
-  iuPerMg: number | null = null,
+  umrechnung: DoseUmrechnung = {},
 ): Promise<CurrentBlutspiegelLevel> {
   const history = await loadDoseHistory(cycle.id)
   const { events, interruptedAt } = history
@@ -433,7 +454,7 @@ export async function getCurrentBlutspiegelLevel(
     bioavailability,
     30,
     interruptedAt ? new Date(interruptedAt) : null,
-    iuPerMg,
+    umrechnung,
   )
 
   if (!curve.length) {
@@ -456,7 +477,7 @@ export async function getCurrentBlutspiegelLevel(
     bioavailability,
     30,
     interruptedAt ? new Date(interruptedAt) : null,
-    iuPerMg,
+    umrechnung,
   )
   const tenHoursAgo = new Date(now.getTime() - 10 * 3_600_000)
   const recentSpark = sparkCurve.filter(p => p.time.getTime() >= tenHoursAgo.getTime())
@@ -479,7 +500,7 @@ export async function getCurrentBlutspiegelLevel(
         tmaxHours,
         bioavailability,
         30,
-        iuPerMg,
+        umrechnung,
       )
   const afterNext = futureCurve.filter(p => p.time.getTime() >= nextDose.timestamp.getTime())
   const levelAfterNextDose = afterNext.length
