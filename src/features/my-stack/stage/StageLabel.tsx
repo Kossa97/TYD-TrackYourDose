@@ -97,9 +97,19 @@ export function StageLabel({
   return (
     <div
       {...wrapperProps}
-      className={`absolute ${className} overflow-hidden border-y border-white/40 bg-white/28 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)] backdrop-blur-[2px]`}
+      // Die Aufschrift steht MITTIG im Band — bei jeder Form gleich.
+      //
+      // Vorher lag sie oben an: die meisten Formen geben dem Band eine feste
+      // Hoehe (`top`/`height` in Prozent), und ein Block ohne Ausrichtung
+      // faengt am oberen Rand an. Solange zwei Zeilen darin standen, fiel das
+      // kaum auf; seit die Mengenzeile wegfaellt, sobald keine Menge
+      // eingetragen ist, stand der Name allein und klebte an der Oberkante.
+      //
+      // `justify-center` richtet den Inhalt aus, nicht die Zeilen einzeln: eine
+      // Zeile sitzt in der Mitte, zwei sitzen als Block in der Mitte.
+      className={`absolute ${className} flex flex-col justify-center overflow-hidden border-y border-white/40 bg-white/28 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)] backdrop-blur-[2px]`}
     >
-      <div {...innerProps} className="relative overflow-hidden">
+      <div {...innerProps} className="relative w-full overflow-hidden">
         <StageMarquee className={nameClassName}>{name}</StageMarquee>
         {detail !== null && detail !== '' && <p className={detailClassName}>{detail}</p>}
       </div>

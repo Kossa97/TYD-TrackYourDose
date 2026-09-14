@@ -24,6 +24,30 @@ describe('StageLabel', () => {
     expect(html).toContain('whitespace-nowrap')
   })
 
+  it('stellt die Aufschrift mittig ins Band, egal ob eine Zeile oder zwei', () => {
+    // Die meisten Formen geben dem Band eine feste Hoehe (top/height in
+    // Prozent). Ein Block ohne Ausrichtung faengt am oberen Rand an — solange
+    // zwei Zeilen darin standen, fiel das kaum auf; seit die Mengenzeile
+    // wegfaellt, sobald keine Menge eingetragen ist, klebte der Name allein an
+    // der Oberkante (gemeldet an der Ampulle).
+    //
+    // `justify-center` richtet den INHALT aus, nicht die Zeilen einzeln: eine
+    // Zeile sitzt in der Mitte, zwei sitzen als Block in der Mitte.
+    for (const detail of ['250 mg / ml', null]) {
+      const html = renderToStaticMarkup(createElement(StageLabel, {
+        name: 'Semaglutid',
+        detail,
+        className: 'left-0 right-0',
+        nameClassName: 'text-sm',
+        detailClassName: 'text-xs',
+      }))
+      const band = html.slice(0, html.indexOf('>'))
+      expect(band, String(detail)).toContain('flex')
+      expect(band, String(detail)).toContain('flex-col')
+      expect(band, String(detail)).toContain('justify-center')
+    }
+  })
+
   it('leaves the detail line out instead of printing an empty one', () => {
     const html = renderToStaticMarkup(createElement(StageLabel, {
       name: 'Ampulle ohne Menge',

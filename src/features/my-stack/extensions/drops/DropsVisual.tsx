@@ -62,7 +62,7 @@ const NAME_SHARED = 'leading-tight font-black text-white tracking-normal drop-sh
 const DETAIL_SHARED = 'mt-0.5 font-bold uppercase tracking-wide text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]'
 
 const NAME_CLASS: Record<NonNullable<DropsVisualProps['size']>, string> = {
-  large: `text-sm sm:text-base ${NAME_SHARED}`,
+  large: `text-[13px] ${NAME_SHARED}`,
   carousel: `text-[7px] sm:text-[8.5px] ${NAME_SHARED}`,
   compact: `text-[5.5px] ${NAME_SHARED}`,
   mini: `text-[3px] ${NAME_SHARED}`,

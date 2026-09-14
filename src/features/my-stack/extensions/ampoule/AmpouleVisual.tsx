@@ -107,7 +107,7 @@ export function AmpouleVisual({
   useStageLight(applyStageLight, { focus: visualFocus, lightOffset: visualLightOffset }, stageLightRef)
 
   const nameClass = size === 'large'
-    ? 'text-base sm:text-lg leading-tight font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]'
+    ? 'text-[13px] leading-tight font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]'
     : size === 'carousel'
       ? 'text-[8.5px] sm:text-[10px] leading-tight font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]'
       : 'text-[7px] leading-tight font-black text-white'
