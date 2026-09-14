@@ -1,7 +1,8 @@
 import { AlertCircle, Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { IngredientValidationErrors } from '../lib/validation'
-import type { StackItemIngredient } from '../types'
+import type { StackItemIngredient, SubstanceCatalogEntry } from '../types'
+import { IngredientCatalogPicker } from './IngredientCatalogPicker'
 
 type IngredientChanges = Partial<Omit<StackItemIngredient, 'position'>>
 
@@ -12,6 +13,8 @@ type IngredientChanges = Partial<Omit<StackItemIngredient, 'position'>>
 export interface IngredientEditorProps {
   ingredients: StackItemIngredient[]
   catalogNames?: Readonly<Record<string, string>>
+  /** Der Katalog, damit JEDE Zeile daran haengen kann — nicht nur die erste. */
+  catalogEntries?: readonly SubstanceCatalogEntry[]
   errors?: IngredientValidationErrors[]
   onIngredientChange: (index: number, changes: IngredientChanges) => void
   onAddIngredient: () => void
@@ -21,12 +24,15 @@ export interface IngredientEditorProps {
 export function IngredientEditor({
   ingredients,
   catalogNames = {},
+  catalogEntries = [],
   errors = [],
   onIngredientChange,
   onAddIngredient,
   onRemoveIngredient,
 }: IngredientEditorProps) {
   const { t } = useTranslation()
+  const eintragZu = (id: string | null) =>
+    (id ? catalogEntries.find(eintrag => eintrag.id === id) ?? null : null)
 
   return (
     <div className="space-y-5">
@@ -74,7 +80,12 @@ export function IngredientEditor({
                   </button>
                 )}
               </div>
-              {catalogName ? (
+              {/* Die ERSTE Zeile ist die Substanz des Eintrags — sie kommt
+                  aus dem Substanzschritt und wird hier nur angezeigt. Jede
+                  WEITERE haengt an ihrer eigenen Katalogsuche: ohne sie war
+                  der zweite Wirkstoff eines Kombipraeparats reiner Freitext,
+                  also ohne Einheitenvorschlaege und ohne PK-Profil. */}
+              {index === 0 && catalogName ? (
                 <input
                   id={`stack-ingredient-${index}`}
                   value={catalogName}
@@ -82,7 +93,7 @@ export function IngredientEditor({
                   aria-readonly="true"
                   className="min-h-11 w-full rounded-xl border border-sky-400/20 bg-sky-400/[0.06] px-3 font-medium text-sky-100 outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
                 />
-              ) : (
+              ) : index === 0 ? (
                 <input
                   id={`stack-ingredient-${index}`}
                   value={ingredient.custom_name}
@@ -91,6 +102,25 @@ export function IngredientEditor({
                   aria-invalid={Boolean(fieldError) || undefined}
                   aria-describedby={fieldError ? `stack-ingredient-${index}-error` : undefined}
                   className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                />
+              ) : (
+                <IngredientCatalogPicker
+                  entry={eintragZu(ingredient.catalog_substance_id)}
+                  customName={ingredient.custom_name}
+                  entries={catalogEntries}
+                  inputId={`stack-ingredient-${index}`}
+                  fieldName={`ingredients.${index}.name`}
+                  invalid={Boolean(fieldError)}
+                  describedBy={fieldError ? `stack-ingredient-${index}-error` : undefined}
+                  onPick={eintrag => onIngredientChange(index, {
+                    catalog_substance_id: eintrag.id,
+                    custom_name: eintrag.canonical_name,
+                  })}
+                  onCustomName={name => onIngredientChange(index, {
+                    custom_name: name,
+                    catalog_substance_id: null,
+                  })}
+                  onDetach={() => onIngredientChange(index, { catalog_substance_id: null })}
                 />
               )}
               {fieldError && (

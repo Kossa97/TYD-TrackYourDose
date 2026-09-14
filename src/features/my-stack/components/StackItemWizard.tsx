@@ -496,6 +496,7 @@ export function StackItemWizard({
           <IngredientEditor
             ingredients={state.draft.ingredients}
             catalogNames={catalogNames}
+            catalogEntries={catalogEntries}
             errors={validationErrors.ingredients}
             onIngredientChange={(index, changes) => dispatch({ type: 'ingredient_changed', index, changes })}
             onAddIngredient={() => dispatch({ type: 'ingredient_added' })}
