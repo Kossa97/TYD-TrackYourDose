@@ -138,6 +138,68 @@ function completeCustomFlow(name = 'Custom Product'): void {
   continueWizard()
 }
 
+/**
+ * Misst wie ein Browser: jsdom meldet sonst ueberall 0 — und genau dieser Fall
+ * ist der Fehler, um den es hier geht. `offset*` bekommt nur das Objekt,
+ * `client*` die Flaeche.
+ */
+function masseStellen(masse: null | { objekt: [number, number]; platz: [number, number] }) {
+  const setzen = (name: string, wert: (el: HTMLElement) => number) => {
+    Object.defineProperty(HTMLElement.prototype, name, {
+      configurable: true,
+      get(this: HTMLElement) { return masse ? wert(this) : 0 },
+    })
+  }
+  const istObjekt = (el: HTMLElement) => el.hasAttribute('data-dosage-form-preview')
+  setzen('offsetWidth', el => (istObjekt(el) ? masse!.objekt[0] : 0))
+  setzen('offsetHeight', el => (istObjekt(el) ? masse!.objekt[1] : 0))
+  setzen('clientWidth', () => masse!.platz[0])
+  setzen('clientHeight', () => masse!.platz[1])
+}
+
+describe('Farbschritt — die Groesse des Objekts', () => {
+  afterEach(() => {
+    for (const name of ['offsetWidth', 'offsetHeight', 'clientWidth', 'clientHeight']) {
+      Reflect.deleteProperty(HTMLElement.prototype, name)
+    }
+  })
+
+  async function zumFarbschritt(): Promise<HTMLElement> {
+    renderWizard()
+    startCustom('Semaglutid')
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_pen' }))
+    continueWizard()
+    // Die Messung faellt Bild fuer Bild nach, bis sie zustande kommt —
+    // jsdom braucht dafuer ein paar Zeitscheiben.
+    await act(async () => { await new Promise(aufloesen => setTimeout(aufloesen, 80)) })
+    return document.querySelector<HTMLElement>('[data-wizard-preview] span.inline-block')!
+  }
+
+  it('laesst das Objekt ungezoomt, solange nichts zu messen ist', async () => {
+    // Der Fehler, den der Pen zeigte: die einzige Messung lief, bevor die
+    // native Groesse feststand. `objektSkala` gab seinen Rueckfall 1 zurueck —
+    // und 1 heisst beim Pen 589 px in einer 420 px hohen Flaeche, oben und
+    // unten abgeschnitten. Ohne Masse wird deshalb GAR NICHTS gesetzt, statt
+    // den Rueckfall festzuschreiben.
+    masseStellen(null)
+    const wrapper = await zumFarbschritt()
+    // Unsichtbar statt in voller Groesse: solange die Skala nicht steht, gibt
+    // es keine richtige Groesse, und die native ist die falsche.
+    expect(wrapper.style.visibility).toBe('hidden')
+  })
+
+  it('schrumpft ein Objekt, das groesser ist als die Flaeche', async () => {
+    // Der Pen: 589 px nativ in 420 px Flaeche, bei 94 % Deckung also 0,67.
+    masseStellen({ objekt: [77, 589], platz: [485, 420] })
+    const wrapper = await zumFarbschritt()
+    expect(wrapper.style.visibility).not.toBe('hidden')
+    const skala = Number(wrapper.style.zoom)
+    expect(skala).toBeGreaterThan(0)
+    expect(skala).toBeLessThan(1)
+    expect(skala * 589).toBeLessThanOrEqual(420)
+  })
+})
+
 describe('StackItemWizard — Vorschau der Darreichungsform', () => {
   it('zeigt erst ab der gewaehlten Form ein Objekt', () => {
     renderWizard()

@@ -187,33 +187,81 @@ export function StackItemWizard({
   // auf (dieselbe Falle wie im Karussell, nur an einer anderen Stelle).
   const farbschrittPlatzRef = useRef<HTMLDivElement | null>(null)
   const farbschrittVorschauRef = useRef<HTMLSpanElement | null>(null)
-  const [farbschrittSkala, setFarbschrittSkala] = useState(1)
+  // `null` heisst „noch nicht gemessen". Nicht 1: 1 hiesse „native Groesse",
+  // und die ist beim Pen 589 px hoch — in einer 420 px hohen Flaeche waere das
+  // ein abgeschnittenes Objekt, sei es auch nur fuer ein paar Bilder.
+  const [farbschrittSkala, setFarbschrittSkala] = useState<number | null>(null)
 
   const farbschrittSkalaMessen = useCallback(() => {
     const platz = farbschrittPlatzRef.current
     const wrapper = farbschrittVorschauRef.current
     const objekt = wrapper?.querySelector<HTMLElement>('[data-dosage-form-preview]')
-    if (!platz || !wrapper || !objekt) return
+    if (!platz || !wrapper || !objekt) return false
+
+    // Zum Messen muss der Zoom kurz weg — sonst misst man das Ergebnis der
+    // letzten Messung mit. Der alte Wert wird gemerkt, damit ein Abbruch ihn
+    // nicht auf 1 stehen laesst: 1 heisst „native Groesse", und beim Pen sind
+    // das 589 px in einer 420 px hohen Flaeche, oben und unten abgeschnitten.
+    const vorher = wrapper.style.zoom
     wrapper.style.zoom = '1'
-    setFarbschrittSkala(objektSkala({
+    const masse = {
       hoehe: objekt.offsetHeight,
       breite: objekt.offsetWidth,
       platzHoehe: platz.clientHeight,
       platzBreite: platz.clientWidth,
-    }))
+    }
+    // Noch nichts zu messen — der Aufrufer kommt im naechsten Bild wieder.
+    if (masse.hoehe <= 0 || masse.breite <= 0 || masse.platzHoehe <= 0 || masse.platzBreite <= 0) {
+      wrapper.style.zoom = vorher
+      return false
+    }
+
+    const skala = objektSkala(masse)
+    // Das Ergebnis geht SOFORT an den DOM und erst danach an React. Ohne die
+    // erste Zeile bliebe die 1 von oben stehen, sobald derselbe Wert
+    // herauskommt, den der Zustand schon traegt: dann rendert React nicht neu,
+    // und der Stil, den es geschrieben haette, bleibt aus. Der Zustand bleibt
+    // trotzdem noetig — er ueberlebt Renderrunden, die nichts mit der Groesse
+    // zu tun haben.
+    wrapper.style.zoom = String(skala)
+    setFarbschrittSkala(skala)
+    return true
   }, [])
 
-  // Kein direkter Aufruf hier: `observe()` meldet die aktuelle Groesse sofort
-  // von selbst, und ein Wechsel der Darreichungsform (andere native Groesse)
-  // baut den Beobachter neu auf — beides loest genau die Messung aus, die
-  // sonst ein direkter Ruf im Effekt waere.
+  // Zwei Ausloeser, weil die Rechnung zwei Seiten hat.
+  //
+  // Die FLAECHE meldet sich selbst: `observe()` liefert ihre Groesse sofort und
+  // bei jeder Aenderung (Tastatur, Drehung, Adressleiste).
+  //
+  // Das OBJEKT meldet sich nicht — und seine native Groesse steht nicht
+  // zwingend schon fest, wenn die Flaeche zum ersten Mal misst (SVG-Layout,
+  // Schrift). Genau dort stand der Pen ungeschrumpft: die eine Messung lief
+  // mit Hoehe 0, `objektSkala` gab seinen Rueckfall 1 zurueck, und weil sich
+  // die Flaeche danach nicht mehr aenderte, kam nie eine zweite. Deshalb
+  // zusaetzlich Bild fuer Bild nachfassen, bis eine Messung wirklich zustande
+  // kommt. Kein Beobachter auf dem Objekt: dessen Groesse haengt an `zoom`,
+  // und das schriebe sich im Kreis.
   useEffect(() => {
-    if (state.step !== 'color' || typeof ResizeObserver === 'undefined') return
+    if (state.step !== 'color') return
+    let laeuft = true
+    let bild = 0
+    const nachfassen = () => {
+      if (!laeuft) return
+      if (farbschrittSkalaMessen()) return
+      if (++bild > 60) return
+      window.requestAnimationFrame(nachfassen)
+    }
+    window.requestAnimationFrame(nachfassen)
+
+    if (typeof ResizeObserver === 'undefined') return () => { laeuft = false }
     const platz = farbschrittPlatzRef.current
-    if (!platz) return
-    const beobachter = new ResizeObserver(farbschrittSkalaMessen)
+    if (!platz) return () => { laeuft = false }
+    const beobachter = new ResizeObserver(() => { farbschrittSkalaMessen() })
     beobachter.observe(platz)
-    return () => beobachter.disconnect()
+    return () => {
+      laeuft = false
+      beobachter.disconnect()
+    }
   }, [state.step, state.draft.dosageForm, farbschrittSkalaMessen])
 
   const steps = intent === 'pk' && pkIntentStepsRef.current
@@ -895,7 +943,12 @@ export function StackItemWizard({
                 <span
                   ref={farbschrittVorschauRef}
                   className="inline-block"
-                  style={{ zoom: farbschrittSkala }}
+                  // Unsichtbar, solange die Skala nicht steht — aber im Layout,
+                  // denn genau dort wird sie gemessen.
+                  style={{
+                    zoom: farbschrittSkala ?? 1,
+                    visibility: farbschrittSkala === null ? 'hidden' : undefined,
+                  }}
                 >
                   {/* `large` ist die Stufe, die fuer Detailansichten gebaut
                       wurde — mit ihrem eigenen Etikettenmass, ihrer eigenen
