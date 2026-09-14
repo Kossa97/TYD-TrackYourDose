@@ -2826,9 +2826,9 @@
     "semantic_hash": "2749a82e615b1d1fa75debee0fd34607"
   },
   "src/features/my-stack/components/StackItemWizard.interaction.test.tsx": {
-    "mtime": 1789317367.6266026,
-    "seen": 1789318383.7879598,
-    "ast_hash": "b0eeb267757c4c2ce5c71a4b20fa2a24",
+    "mtime": 1789389794.7543721,
+    "seen": 1789389981.3218021,
+    "ast_hash": "bb962aac9b736cc22712e5237809eaba",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.test.ts": {
@@ -2838,9 +2838,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1789340258.821886,
-    "seen": 1789340663.9803991,
-    "ast_hash": "b12be5c57f6ced9268b69ac61fc6a552",
+    "mtime": 1789389785.0464609,
+    "seen": 1789389981.3218048,
+    "ast_hash": "8d1385d965644d0b42a284c39fcc17b4",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789389108.8577886,
-    "seen": 1789389289.5383737,
+    "mtime": 1789389872.437834,
+    "seen": 1789389981.3221133,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4245,6 +4245,12 @@
     "mtime": 1789389275.8777986,
     "seen": 1789389289.538488,
     "ast_hash": "edc5c6ef6b6af1eea44c68fcea047f25",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-14-my-stack-farbschritt-messung-design.md": {
+    "mtime": 1789389971.768286,
+    "seen": 1789389981.3222287,
+    "ast_hash": "93304b2e256509e4328da8c19c74f16e",
     "semantic_hash": ""
   }
 }
