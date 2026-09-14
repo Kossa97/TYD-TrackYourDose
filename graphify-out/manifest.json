@@ -3876,16 +3876,16 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/spray/SprayVisual.test.ts": {
-    "mtime": 1788730631.548751,
-    "seen": 1788803479.191048,
-    "ast_hash": "eb12717d275cd8f73a9ed085bbeafaf9",
-    "semantic_hash": "eb12717d275cd8f73a9ed085bbeafaf9"
+    "mtime": 1789395299.0405006,
+    "seen": 1789395476.633826,
+    "ast_hash": "b4fb1f62b56568599922e27b74ca1329",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/spray/SprayVisual.tsx": {
-    "mtime": 1788730276.5075095,
-    "seen": 1788803479.1910486,
-    "ast_hash": "75e01205df088d819f4e4797bfb1c6c0",
-    "semantic_hash": "75e01205df088d819f4e4797bfb1c6c0"
+    "mtime": 1789395160.106558,
+    "seen": 1789395476.633829,
+    "ast_hash": "f72d54d6e440013eba9e895246e86179",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/spray/sprayShape.test.ts": {
     "mtime": 1788730606.1887517,
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789394616.7682817,
-    "seen": 1789394820.944536,
+    "mtime": 1789395336.7723246,
+    "seen": 1789395476.6343317,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4269,6 +4269,12 @@
     "mtime": 1789394801.1497238,
     "seen": 1789394820.9447057,
     "ast_hash": "237a0b6808fbc42f936548ac976ed502",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-14-my-stack-spraykopf-weiss-design.md": {
+    "mtime": 1789395465.286215,
+    "seen": 1789395476.634584,
+    "ast_hash": "5216ac82763eefc76c69eb3fd535f4c7",
     "semantic_hash": ""
   }
 }

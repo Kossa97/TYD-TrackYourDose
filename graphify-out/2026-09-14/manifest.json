@@ -330,15 +330,15 @@
     "semantic_hash": "c277228a8247ad7b45a08976da6390c7"
   },
   "src/components/PeptideVialVisual.test.ts": {
-    "mtime": 1789389104.46129,
-    "seen": 1789389289.537895,
-    "ast_hash": "03011a26145efa0810a98482afc3578a",
+    "mtime": 1789394610.0047376,
+    "seen": 1789394820.9439785,
+    "ast_hash": "b86bbd9ea352b14bdfa494680d56b338",
     "semantic_hash": ""
   },
   "src/components/PeptideVialVisual.tsx": {
-    "mtime": 1789388865.0013342,
-    "seen": 1789389289.5378969,
-    "ast_hash": "bd3acccd0763410635c0189214104f49",
+    "mtime": 1789394417.6382873,
+    "seen": 1789394820.9439807,
+    "ast_hash": "bb24856ea4c2bd61ad925d92e03cad5e",
     "semantic_hash": ""
   },
   "src/components/ProtectedRoute.tsx": {
@@ -3396,9 +3396,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/StageLabel.tsx": {
-    "mtime": 1789390976.822214,
-    "seen": 1789391430.9662158,
-    "ast_hash": "5a7240fa654590f5b6ea0c30260d90a8",
+    "mtime": 1789394417.6380558,
+    "seen": 1789394820.9443274,
+    "ast_hash": "b1e7a3ba73f12343138698f8f3ea0585",
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/liquidGeometry.test.ts": {
@@ -3504,10 +3504,10 @@
     "semantic_hash": "f1dd41f00c4318db4f1930b3550cf69d"
   },
   "src/features/my-stack/stage/marquee.ts": {
-    "mtime": 1788631501.4634593,
-    "seen": 1788803479.191108,
-    "ast_hash": "2cca285405efbbeb3572de2642867901",
-    "semantic_hash": "2cca285405efbbeb3572de2642867901"
+    "mtime": 1789394417.637772,
+    "seen": 1789394820.9443343,
+    "ast_hash": "3b3c3db80d333c5a9e866f8ad074081f",
+    "semantic_hash": ""
   },
   "src/features/my-stack/extensions/tablet/TabletRenderer.tsx": {
     "mtime": 1789098094.5216632,
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789391281.3142133,
-    "seen": 1789391430.9665613,
+    "mtime": 1789394616.7682817,
+    "seen": 1789394820.944536,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4257,6 +4257,18 @@
     "mtime": 1789391420.9065068,
     "seen": 1789391430.9668317,
     "ast_hash": "1191005748a590e8ece384d19ff76e89",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/stage/marquee.test.ts": {
+    "mtime": 1789394525.8042765,
+    "seen": 1789394820.9443328,
+    "ast_hash": "d64024f52af3e593de934f472f42b6aa",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-14-my-stack-etikett-durchlauf-design.md": {
+    "mtime": 1789394801.1497238,
+    "seen": 1789394820.9447057,
+    "ast_hash": "237a0b6808fbc42f936548ac976ed502",
     "semantic_hash": ""
   }
 }
