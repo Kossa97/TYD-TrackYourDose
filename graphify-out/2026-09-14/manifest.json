@@ -2808,9 +2808,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/IngredientEditor.tsx": {
-    "mtime": 1789173962.276,
-    "seen": 1789174538.8373957,
-    "ast_hash": "dd685ca2a1b987c95fc85538d9a1cdcd",
+    "mtime": 1789401103.0893054,
+    "seen": 1789401466.9481525,
+    "ast_hash": "77fb3061799f8aa96990919116fe2874",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackArchive.tsx": {
@@ -2838,9 +2838,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1789389785.0464609,
-    "seen": 1789389981.3218048,
-    "ast_hash": "8d1385d965644d0b42a284c39fcc17b4",
+    "mtime": 1789401103.099073,
+    "seen": 1789401466.9481726,
+    "ast_hash": "9590f00703843a383adf359e957b9445",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -4074,9 +4074,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/IngredientEditor.test.tsx": {
-    "mtime": 1789173999.5210238,
-    "seen": 1789174538.8373938,
-    "ast_hash": "e1d77b4d3bf0ae9725d50a7f5786f626",
+    "mtime": 1789401297.5149407,
+    "seen": 1789401466.9481506,
+    "ast_hash": "a02c9a23244cb5bc0e1f82c4bfb6d28b",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/konzentration.test.ts": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789399444.8203416,
-    "seen": 1789399583.0567412,
+    "mtime": 1789401237.611081,
+    "seen": 1789401466.9486704,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4281,6 +4281,18 @@
     "mtime": 1789399570.356349,
     "seen": 1789399583.0569448,
     "ast_hash": "47a932c93fad2095af2ef6ecad1cfd5d",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/components/IngredientCatalogPicker.tsx": {
+    "mtime": 1789401056.5448902,
+    "seen": 1789401466.9481473,
+    "ast_hash": "262998acb3c09ef444c28d2f5f9623a9",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-14-my-stack-kombi-substanzen-design.md": {
+    "mtime": 1789401456.8831632,
+    "seen": 1789401466.9488244,
+    "ast_hash": "95c3021ca29b1844911a6dc0e070a7d2",
     "semantic_hash": ""
   }
 }

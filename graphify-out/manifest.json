@@ -258,9 +258,9 @@
     "semantic_hash": "be35d084b3b8daa1ac0146ea7802e3c6"
   },
   "src/components/BlutspiegelCarousel.tsx": {
-    "mtime": 1789254947.9211826,
-    "seen": 1789306739.0825124,
-    "ast_hash": "ff9718aae42fb0d4c81096762f1b4635",
+    "mtime": 1789402038.0103378,
+    "seen": 1789402264.388059,
+    "ast_hash": "e5bfeb208656d58487ea9c40640b1ba2",
     "semantic_hash": ""
   },
   "src/components/CarouselChrome.tsx": {
@@ -1248,15 +1248,15 @@
     "semantic_hash": "fbe882f4a17ab5f3f57488875a9ebf18"
   },
   "src/services/blutspiegelHistory.ts": {
-    "mtime": 1789254905.3712525,
-    "seen": 1789306739.0831497,
-    "ast_hash": "f9423da3249724cd0912f31738dca338",
+    "mtime": 1789401910.4280698,
+    "seen": 1789402264.388532,
+    "ast_hash": "75e75c9bf2dc9a62fbc136cd25885f56",
     "semantic_hash": ""
   },
   "src/services/liveBlutspiegelChart.ts": {
-    "mtime": 1789254947.9216492,
-    "seen": 1789306739.0831523,
-    "ast_hash": "cd2f9bb7bbd31f179692d16f0c79ea72",
+    "mtime": 1789401939.6872442,
+    "seen": 1789402264.3885338,
+    "ast_hash": "1b48918a48fca0568f8d2ed52f1648d2",
     "semantic_hash": ""
   },
   "src/services/peptideLibrary.ts": {
@@ -3156,15 +3156,15 @@
     "semantic_hash": "99f2c143ff7a4077aabd70fbe15b1ee9"
   },
   "src/features/my-stack/lib/pkReadiness.test.ts": {
-    "mtime": 1789254867.4838805,
-    "seen": 1789306739.0829263,
-    "ast_hash": "4422955f6b814c737a246aa9c972faca",
+    "mtime": 1789402126.0885613,
+    "seen": 1789402264.3883848,
+    "ast_hash": "cc87babf8710b491abf9dfec4b03bc0b",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/pkReadiness.ts": {
-    "mtime": 1789254850.4417844,
-    "seen": 1789306739.0829275,
-    "ast_hash": "29cae586f8bae9b738a0a85ac26bf5e6",
+    "mtime": 1789401849.7775095,
+    "seen": 1789402264.3883858,
+    "ast_hash": "def19f942b02c2735796085e87fe84ee",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/trackingDepth.test.ts": {
@@ -4146,15 +4146,15 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789401237.611081,
-    "seen": 1789401466.9486704,
+    "mtime": 1789402159.0511358,
+    "seen": 1789402264.3885639,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
   "src/services/blutspiegelHistory.iu.test.ts": {
-    "mtime": 1789306565.9547324,
-    "seen": 1789306739.0831478,
-    "ast_hash": "2115f58cbe03fe04000d46f011d349b8",
+    "mtime": 1789401939.6877227,
+    "seen": 1789402264.388531,
+    "ast_hash": "0b416ec4c926dc029b49869d81e276d6",
     "semantic_hash": ""
   },
   "supabase-pk-iu-per-mg.sql": {
@@ -4290,9 +4290,9 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-14-my-stack-kombi-substanzen-design.md": {
-    "mtime": 1789401456.8831632,
-    "seen": 1789401466.9488244,
-    "ast_hash": "95c3021ca29b1844911a6dc0e070a7d2",
+    "mtime": 1789402254.2191412,
+    "seen": 1789402264.3886704,
+    "ast_hash": "e234e2bd8e9feb99ed8376aae9a33259",
     "semantic_hash": ""
   }
 }
