@@ -334,4 +334,170 @@ export const SUBSTANCE_CATALOG = [
 
   // Hormone
   { name: 'Östradiol + Progesteron', aliases: ['Estradiol + Progesteron', 'Bijuva'], category: 'hormone', dosageForms: ['capsule', 'tablet', 'gel'], units: ['mg'], pkProfile: null, components: ['Östradiol', 'Progesteron'] },
+
+  // ── Welle „Apotheke" ─────────────────────────────────────────────────
+  // Der Katalog deckte die Biohacker-Seite gut ab und die Apotheke kaum: von
+  // 99 in Deutschland sehr haeufig verordneten Wirkstoffen fehlten 96. Ganze
+  // Gruppen waren leer — Gerinnungshemmer, Diuretika, Insulin, Verhuetung —,
+  // und das ausgerechnet dort, wo Menschen am genauesten protokollieren.
+  //
+  // Aufgenommen ist, was haeufig verordnet wird, entlang der
+  // Verordnungshaeufigkeit statt nach Gefuehl. Kein Eintrag traegt ein
+  // PK-Profil: eine Kurve braucht es hier nicht, einen Eintrag zum Tracken
+  // schon. Handelsnamen stehen als Aliase dabei, denn danach sucht man.
+
+  // Gerinnungshemmer und Thrombozytenhemmer
+  { name: 'Apixaban', aliases: ['Eliquis'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Rivaroxaban', aliases: ['Xarelto'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Edoxaban', aliases: ['Lixiana'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Dabigatran', aliases: ['Pradaxa', 'Dabigatranetexilat'], category: 'medication', dosageForms: ['capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Phenprocoumon', aliases: ['Marcumar', 'Falithrom', 'Marcuphen'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Clopidogrel', aliases: ['Plavix', 'Iscover'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Ticagrelor', aliases: ['Brilique'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Enoxaparin', aliases: ['Clexane', 'Lovenox', 'Niedermolekulares Heparin'], category: 'medication', dosageForms: ['pen', 'ampoule'], units: ['mg', 'IU'], pkProfile: null },
+
+  // Diuretika
+  { name: 'Hydrochlorothiazid', aliases: ['Hydrochlorothiazide', 'HCT', 'Esidrix'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Torasemid', aliases: ['Torasemide', 'Torem', 'Unat'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Furosemid', aliases: ['Furosemide', 'Lasix'], category: 'medication', dosageForms: ['tablet', 'ampoule'], units: ['mg'], pkProfile: null },
+  { name: 'Spironolacton', aliases: ['Spironolactone', 'Aldactone'], category: 'medication', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Eplerenon', aliases: ['Eplerenone', 'Inspra'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+
+  // Blutdruck und Herz
+  { name: 'Valsartan', aliases: ['Diovan', 'Provas'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Losartan', aliases: ['Lorzaar', 'Cosaar'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Olmesartan', aliases: ['Votum', 'Olmetec'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Irbesartan', aliases: ['Aprovel', 'Karvea'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Lisinopril', aliases: ['Acerbon', 'Lisi'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Enalapril', aliases: ['Xanef', 'Pres', 'Enahexal'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Nebivolol', aliases: ['Nebilet'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Lercanidipin', aliases: ['Lercanidipine', 'Carmen', 'Corifeo'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Doxazosin', aliases: ['Cardular', 'Diblocin'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Moxonidin', aliases: ['Moxonidine', 'Physiotens'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Ezetimib', aliases: ['Ezetimibe', 'Ezetrol'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Fenofibrat', aliases: ['Fenofibrate', 'Lipidil'], category: 'medication', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: null },
+
+  // Antibiotika und Antiinfektiva
+  { name: 'Cefuroxim', aliases: ['Cefuroxime', 'Elobact', 'Zinnat'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Doxycyclin', aliases: ['Doxycycline', 'Doxyhexal', 'Supracyclin'], category: 'medication', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Azithromycin', aliases: ['Zithromax', 'Azi'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Clarithromycin', aliases: ['Klacid', 'Mavid'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Ciprofloxacin', aliases: ['Ciprobay', 'Cipro'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Levofloxacin', aliases: ['Tavanic'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Clindamycin', aliases: ['Sobelin', 'Clinda'], category: 'medication', dosageForms: ['capsule', 'tablet', 'gel'], units: ['mg'], pkProfile: null },
+  { name: 'Nitrofurantoin', aliases: ['Furadantin', 'Uro-Tablinen', 'Nifurantin'], category: 'medication', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Fosfomycin', aliases: ['Monuril', 'Fosfomycin-Trometamol'], category: 'medication', dosageForms: ['powder'], units: ['g', 'mg'], pkProfile: null },
+  { name: 'Penicillin V', aliases: ['Phenoxymethylpenicillin', 'Isocillin', 'Megacillin'], category: 'medication', dosageForms: ['tablet'], units: ['mg', 'IU'], pkProfile: null },
+  { name: 'Metronidazol', aliases: ['Metronidazole', 'Clont', 'Arilin'], category: 'medication', dosageForms: ['tablet', 'gel'], units: ['mg'], pkProfile: null },
+  { name: 'Cotrimoxazol', aliases: ['Co-trimoxazol', 'Cotrim', 'Bactrim', 'Trimethoprim-Sulfamethoxazol'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Aciclovir', aliases: ['Acyclovir', 'Zovirax'], category: 'medication', dosageForms: ['tablet', 'gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Valaciclovir', aliases: ['Valacyclovir', 'Valtrex'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Fluconazol', aliases: ['Fluconazole', 'Diflucan'], category: 'medication', dosageForms: ['capsule', 'tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Itraconazol', aliases: ['Itraconazole', 'Sempera'], category: 'medication', dosageForms: ['capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Terbinafin', aliases: ['Terbinafine', 'Lamisil'], category: 'medication', dosageForms: ['tablet', 'gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Nystatin', aliases: ['Moronal', 'Nystaderm'], category: 'medication', dosageForms: ['drops', 'tube'], units: ['IU', 'mg'], pkProfile: null },
+  { name: 'Ivermectin', aliases: ['Scabioral', 'Soolantra'], category: 'medication', dosageForms: ['tablet', 'gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Mebendazol', aliases: ['Mebendazole', 'Vermox'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+
+  // Diabetes und Insuline
+  { name: 'Insulin glargin', aliases: ['Insulin glargine', 'Lantus', 'Toujeo', 'Abasaglar'], category: 'hormone', dosageForms: ['pen', 'vial'], units: ['IU'], pkProfile: null },
+  { name: 'Insulin detemir', aliases: ['Levemir'], category: 'hormone', dosageForms: ['pen'], units: ['IU'], pkProfile: null },
+  { name: 'Insulin degludec', aliases: ['Tresiba'], category: 'hormone', dosageForms: ['pen'], units: ['IU'], pkProfile: null },
+  { name: 'Insulin aspart', aliases: ['NovoRapid', 'Fiasp'], category: 'hormone', dosageForms: ['pen', 'vial'], units: ['IU'], pkProfile: null },
+  { name: 'Insulin lispro', aliases: ['Humalog', 'Liprolog'], category: 'hormone', dosageForms: ['pen', 'vial'], units: ['IU'], pkProfile: null },
+  { name: 'Humaninsulin', aliases: ['Normalinsulin', 'Insuman', 'Actrapid', 'Huminsulin'], category: 'hormone', dosageForms: ['pen', 'vial'], units: ['IU'], pkProfile: null },
+  { name: 'Sitagliptin', aliases: ['Januvia', 'Xelevia'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Linagliptin', aliases: ['Trajenta'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Glimepirid', aliases: ['Glimepiride', 'Amaryl'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Gliclazid', aliases: ['Gliclazide', 'Diamicron'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+
+  // Psyche und Nervensystem
+  { name: 'Citalopram', aliases: ['Cipramil'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Fluoxetin', aliases: ['Fluoxetine', 'Fluctin', 'Prozac'], category: 'medication', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Paroxetin', aliases: ['Paroxetine', 'Seroxat', 'Tagonis'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Mirtazapin', aliases: ['Mirtazapine', 'Remergil'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Duloxetin', aliases: ['Duloxetine', 'Cymbalta'], category: 'medication', dosageForms: ['capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Amitriptylin', aliases: ['Amitriptyline', 'Saroten'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Quetiapin', aliases: ['Quetiapine', 'Seroquel'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Olanzapin', aliases: ['Olanzapine', 'Zyprexa'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Risperidon', aliases: ['Risperidone', 'Risperdal'], category: 'medication', dosageForms: ['tablet', 'drops'], units: ['mg'], pkProfile: null },
+  { name: 'Lamotrigin', aliases: ['Lamotrigine', 'Lamictal'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Levetiracetam', aliases: ['Keppra'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Valproinsäure', aliases: ['Valproic acid', 'Valproat', 'Ergenyl', 'Orfiril'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Pregabalin', aliases: ['Lyrica'], category: 'medication', dosageForms: ['capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Gabapentin', aliases: ['Neurontin'], category: 'medication', dosageForms: ['capsule', 'tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Lithium', aliases: ['Lithiumcarbonat', 'Quilonum', 'Hypnorex'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Zopiclon', aliases: ['Zopiclone', 'Ximovan'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Zolpidem', aliases: ['Stilnox', 'Bikalm'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Lorazepam', aliases: ['Tavor', 'Ativan'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Diazepam', aliases: ['Valium', 'Faustan'], category: 'medication', dosageForms: ['tablet', 'drops'], units: ['mg'], pkProfile: null },
+  { name: 'Promethazin', aliases: ['Promethazine', 'Atosil'], category: 'medication', dosageForms: ['tablet', 'drops'], units: ['mg'], pkProfile: null },
+
+  // Schmerz und Migräne
+  { name: 'Metamizol', aliases: ['Metamizole', 'Novalgin', 'Novaminsulfon'], category: 'medication', dosageForms: ['tablet', 'drops'], units: ['mg'], pkProfile: null },
+  { name: 'Tramadol', aliases: ['Tramal', 'Tramundin'], category: 'medication', dosageForms: ['capsule', 'tablet', 'drops'], units: ['mg'], pkProfile: null },
+  { name: 'Tilidin', aliases: ['Tilidine', 'Valoron'], category: 'medication', dosageForms: ['capsule', 'drops'], units: ['mg'], pkProfile: null },
+  { name: 'Oxycodon', aliases: ['Oxycodone', 'Oxygesic', 'Targin'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Morphin', aliases: ['Morphine', 'MST', 'Sevredol'], category: 'medication', dosageForms: ['tablet', 'drops'], units: ['mg'], pkProfile: null },
+  { name: 'Hydromorphon', aliases: ['Hydromorphone', 'Palladon', 'Jurnista'], category: 'medication', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Codein', aliases: ['Codeine', 'Codipront'], category: 'medication', dosageForms: ['tablet', 'drops'], units: ['mg'], pkProfile: null },
+  { name: 'Naproxen', aliases: ['Aleve', 'Proxen'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Etoricoxib', aliases: ['Arcoxia'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Celecoxib', aliases: ['Celebrex'], category: 'medication', dosageForms: ['capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Sumatriptan', aliases: ['Imigran'], category: 'medication', dosageForms: ['tablet', 'nasal_spray'], units: ['mg', 'mcg'], pkProfile: null },
+  { name: 'Rizatriptan', aliases: ['Maxalt'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+
+  // Magen und Darm
+  { name: 'Esomeprazol', aliases: ['Esomeprazole', 'Nexium'], category: 'medication', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Famotidin', aliases: ['Famotidine', 'Pepdul'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Metoclopramid', aliases: ['Metoclopramide', 'MCP', 'Paspertin'], category: 'medication', dosageForms: ['tablet', 'drops'], units: ['mg'], pkProfile: null },
+  { name: 'Domperidon', aliases: ['Domperidone', 'Motilium'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Ondansetron', aliases: ['Zofran'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Dimenhydrinat', aliases: ['Dimenhydrinate', 'Vomex'], category: 'medication', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: null },
+  { name: 'Loperamid', aliases: ['Loperamide', 'Imodium'], category: 'medication', dosageForms: ['capsule', 'tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Macrogol', aliases: ['Polyethylenglykol', 'Movicol', 'Laxbene'], category: 'medication', dosageForms: ['powder'], units: ['g'], pkProfile: null },
+  { name: 'Mesalazin', aliases: ['Mesalazine', 'Salofalk', 'Pentasa'], category: 'medication', dosageForms: ['tablet', 'capsule'], units: ['mg', 'g'], pkProfile: null },
+  { name: 'Simeticon', aliases: ['Simethicone', 'Lefax', 'Sab simplex'], category: 'medication', dosageForms: ['tablet', 'capsule', 'drops'], units: ['mg'], pkProfile: null },
+
+  // Atemwege und Allergie
+  { name: 'Formoterol', aliases: ['Foradil', 'Oxis'], category: 'medication', dosageForms: ['spray'], units: ['mcg'], pkProfile: null },
+  { name: 'Salmeterol', aliases: ['Serevent'], category: 'medication', dosageForms: ['spray'], units: ['mcg'], pkProfile: null },
+  { name: 'Tiotropium', aliases: ['Spiriva'], category: 'medication', dosageForms: ['spray', 'capsule'], units: ['mcg'], pkProfile: null },
+  { name: 'Ipratropium', aliases: ['Atrovent', 'Ipratropiumbromid'], category: 'medication', dosageForms: ['spray', 'nasal_spray'], units: ['mcg'], pkProfile: null },
+  { name: 'Montelukast', aliases: ['Singulair'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Ambroxol', aliases: ['Mucosolvan', 'Ambroxolhydrochlorid'], category: 'medication', dosageForms: ['tablet', 'drops'], units: ['mg'], pkProfile: null },
+  { name: 'Desloratadin', aliases: ['Desloratadine', 'Aerius'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Levocetirizin', aliases: ['Levocetirizine', 'Xusal'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Fexofenadin', aliases: ['Fexofenadine', 'Telfast'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Bilastin', aliases: ['Bilastine', 'Bilaxten'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Dimetinden', aliases: ['Dimetindene', 'Fenistil'], category: 'medication', dosageForms: ['drops', 'gel', 'tube'], units: ['mg'], pkProfile: null },
+  { name: 'Cromoglicinsäure', aliases: ['Cromoglicic acid', 'Cromoglycinsäure', 'DNCG'], category: 'medication', dosageForms: ['nasal_spray', 'drops'], units: ['mg', 'mcg'], pkProfile: null },
+
+  // Kortison, Immunsuppression, Rheuma
+  { name: 'Dexamethason', aliases: ['Dexamethasone', 'Fortecortin'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Methylprednisolon', aliases: ['Methylprednisolone', 'Urbason', 'Medrol'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Methotrexat', aliases: ['Methotrexate', 'MTX', 'Lantarel', 'Metex'], category: 'medication', dosageForms: ['tablet', 'pen'], units: ['mg'], pkProfile: null },
+  { name: 'Azathioprin', aliases: ['Azathioprine', 'Imurek'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+
+  // Urologie, Gicht, Knochen
+  { name: 'Tamsulosin', aliases: ['Alna', 'Omnic'], category: 'medication', dosageForms: ['capsule', 'tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Solifenacin', aliases: ['Vesikur'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Febuxostat', aliases: ['Adenuric'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Colchicin', aliases: ['Colchicine', 'Colchicum-Dispert'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Alendronsäure', aliases: ['Alendronate', 'Alendronat', 'Fosamax'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Risedronsäure', aliases: ['Risedronate', 'Risedronat', 'Actonel'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Vardenafil', aliases: ['Levitra'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+
+  // Hormonelle Verhütung und Gynäkologie
+  { name: 'Ethinylestradiol', aliases: ['Ethinyl estradiol', 'Ethinylöstradiol'], category: 'hormone', dosageForms: ['tablet'], units: ['mcg'], pkProfile: null },
+  { name: 'Levonorgestrel', aliases: ['Pidana', 'Microlut'], category: 'hormone', dosageForms: ['tablet'], units: ['mcg', 'mg'], pkProfile: null },
+  { name: 'Desogestrel', aliases: ['Cerazette', 'Desirett'], category: 'hormone', dosageForms: ['tablet'], units: ['mcg'], pkProfile: null },
+  { name: 'Drospirenon', aliases: ['Drospirenone', 'Slinda'], category: 'hormone', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Dienogest', aliases: ['Visanne'], category: 'hormone', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+  { name: 'Norethisteron', aliases: ['Norethisterone', 'Primolut'], category: 'hormone', dosageForms: ['tablet'], units: ['mg'], pkProfile: null },
+
+  // Augentropfen
+  { name: 'Latanoprost', aliases: ['Xalatan'], category: 'medication', dosageForms: ['drops'], units: ['mcg', 'mg'], pkProfile: null },
+  { name: 'Timolol', aliases: ['Timoptol', 'Tim-Ophtal'], category: 'medication', dosageForms: ['drops'], units: ['mg'], pkProfile: null },
+  { name: 'Brimonidin', aliases: ['Brimonidine', 'Alphagan'], category: 'medication', dosageForms: ['drops'], units: ['mg'], pkProfile: null },
 ]
