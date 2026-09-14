@@ -25,12 +25,12 @@ export function StageMarquee({
     const setup = () => {
       anim?.cancel()
 
-      // Ein zu langer Name ruht mittig, nicht am linken Anschlag: text-align
-      // zentriert eine ueberbreite inline-box nicht, sie laeuft nach rechts
-      // ueber. Das gilt auch bei abgeschalteter Bewegung — dort ist die
+      // Ein zu langer Name ruht am ANFANG, nicht in seiner Mitte: was man im
+      // Ruhezustand sieht, soll der Wortanfang sein und nicht ein Stueck aus
+      // der Mitte. Das gilt auch bei abgeschalteter Bewegung — dort ist die
       // Ruhelage alles, was man sieht.
       const overflow = inner.scrollWidth - wrap.clientWidth
-      const ruht = overflow > MARQUEE_MIN_OVERFLOW ? marqueeRestOffset(overflow) : 0
+      const ruht = overflow > MARQUEE_MIN_OVERFLOW ? marqueeRestOffset() : 0
       inner.style.transform = `translateX(-${ruht}px)`
 
       if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return

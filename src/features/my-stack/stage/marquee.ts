@@ -11,33 +11,35 @@ export interface MarqueeMotion {
   options: KeyframeAnimationOptions
 }
 
-// Die Ruhelage ist die MITTE, nicht der linke Anschlag. Ein zu langer Name
-// stand sonst buendig links und war damit als einziger nicht zentriert —
-// text-align kann eine ueberbreite inline-box nicht zentrieren, sie laeuft
-// nach rechts ueber. Von der Mitte aus faehrt der Name an beide Enden und
-// kehrt zurueck.
-export function marqueeRestOffset(overflow: number): number {
-  return overflow / 2
+// Die Ruhelage ist der ANFANG des Namens, nicht seine Mitte.
+//
+// Vorher ruhte ein zu langer Name mittig — der Gedanke war, dass er dann
+// wie jeder kurze Name zentriert steht. In der Ansicht hiess das aber: was
+// man im Ruhezustand sieht, ist ein Stueck aus der MITTE des Wortes, vorn und
+// hinten abgeschnitten („Semagluti" auf der Ampulle). Ein Etikett liest man
+// von vorne. Also faengt der Lauf vorne an, faehrt einmal bis ans andere Ende
+// durch und kommt zurueck.
+export function marqueeRestOffset(): number {
+  return 0
 }
 
 export function buildMarqueeMotion(overflow: number): MarqueeMotion {
-  const mitte = marqueeRestOffset(overflow)
   const hold = 1600
   const move = Math.max(900, overflow * 18)
-  // Mitte halten, nach links ans Ende, halten, ganz nach rechts, halten,
-  // zurueck in die Mitte.
-  const total = hold * 3 + move * 4
+  // Vorne halten, einmal ganz nach hinten durchlaufen, hinten halten, wieder
+  // nach vorne. Beide Enden werden voll ausgefahren: bei `0` steht der erste
+  // Buchstabe an der linken Etikettkante, bei `-overflow` der letzte an der
+  // rechten. Dazwischen laeuft der Name durch, ohne in der Mitte zu ruhen.
+  const total = hold * 2 + move * 2
   const at = (ms: number) => ms / total
 
   return {
     keyframes: [
-      { transform: `translateX(-${mitte}px)`, offset: 0 },
-      { transform: `translateX(-${mitte}px)`, offset: at(hold) },
+      { transform: 'translateX(0)', offset: 0 },
+      { transform: 'translateX(0)', offset: at(hold) },
       { transform: `translateX(-${overflow}px)`, offset: at(hold + move) },
       { transform: `translateX(-${overflow}px)`, offset: at(hold * 2 + move) },
-      { transform: 'translateX(0)', offset: at(hold * 2 + move * 3) },
-      { transform: 'translateX(0)', offset: at(hold * 3 + move * 3) },
-      { transform: `translateX(-${mitte}px)`, offset: 1 },
+      { transform: 'translateX(0)', offset: 1 },
     ],
     options: { duration: total, iterations: Infinity, easing: 'linear' },
   }

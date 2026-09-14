@@ -261,8 +261,12 @@ describe('PeptideVialVisual', () => {
     // neben der Koerperkante bei 3,33 % — siehe stage/etikettEinzug.test.ts.
     expect(source()).not.toContain('left-[3.5%] right-[3.5%]')
     expect(source()).toContain('VIAL_LABEL_INSET_PCT')
-    expect(source()).toContain('top-1/2 -translate-y-1/2 rounded-sm px-1 py-2')
-    expect(source()).toContain('top-1/2 -translate-y-1/2 rounded-sm px-1 py-1')
+    // Ohne seitlichen Innenabstand: die 4 px je Seite waren Bandbreite, die die
+    // Aufschrift nie benutzen konnte — der Durchlauf endete 8 px vor den
+    // Etikettkanten. Als einzige Form hatte der Vial ihn.
+    expect(source()).toContain('top-1/2 -translate-y-1/2 rounded-sm py-2')
+    expect(source()).toContain('top-1/2 -translate-y-1/2 rounded-sm py-1')
+    expect(source()).not.toContain('rounded-sm px-1')
     expect(source()).not.toContain('top-[53%] rounded-sm px-1 py-2')
     expect(source()).not.toContain('top-[50%] rounded-sm px-1 py-1')
     expect(source()).toContain('text-[26px] leading-tight')

@@ -260,9 +260,13 @@ export function PeptideVialVisual({
   // Der seitliche Einzug kommt aus dem Glaskoerper (`VIAL_LABEL_INSET_PCT`),
   // nicht aus einer getippten Prozentzahl — sonst wandert das Band von der
   // Kante weg, sobald die Silhouette sich aendert.
+  // Kein seitlicher Innenabstand: die 4 px auf jeder Seite waren Bandbreite,
+  // die die Aufschrift nie benutzen konnte — der Durchlauf endete 8 px vor den
+  // Etikettkanten. Als einzige Form hatte der Vial ihn; die uebrigen fuenf
+  // Baender laufen von jeher bis an ihre Kante.
   const labelClass = size === 'large'
-    ? 'top-1/2 -translate-y-1/2 rounded-sm px-1 py-2'
-    : 'top-1/2 -translate-y-1/2 rounded-sm px-1 py-1'
+    ? 'top-1/2 -translate-y-1/2 rounded-sm py-2'
+    : 'top-1/2 -translate-y-1/2 rounded-sm py-1'
   const nameClass = size === 'large'
     ? 'text-[26px] leading-tight'
     : size === 'carousel'
