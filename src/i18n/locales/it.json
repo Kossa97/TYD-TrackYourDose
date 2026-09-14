@@ -1127,5 +1127,8 @@
   "my_stack_plan_end_date_hint": "Lascia vuoto se lo assumi a lungo termine. Per un ciclo, l'ultimo giorno di assunzione.",
   "my_stack_plan_end_date_before_start": "La fine precede l'inizio.",
   "my_stack_plan_end_open": "Aperto",
-  "my_stack_plan_on_demand_hint": "Nessun orario fisso: nulla scade né risulta saltato. Registri l'assunzione dopo che è avvenuta."
+  "my_stack_plan_on_demand_hint": "Nessun orario fisso: nulla scade né risulta saltato. Registri l'assunzione dopo che è avvenuta.",
+  "my_stack_plan_add_slot": "Un'altra assunzione lo stesso giorno",
+  "my_stack_plan_remove_slot": "Rimuovi momento di assunzione",
+  "my_stack_plan_slot_duplicate": "Questo momento c'è già — dagli un orario suo."
 }

@@ -1126,5 +1126,8 @@
   "my_stack_plan_end_date_hint": "长期服用可留空。若为一个疗程，请填最后一次服用日期。",
   "my_stack_plan_end_date_before_start": "结束日期早于开始日期。",
   "my_stack_plan_end_open": "未设定",
-  "my_stack_plan_on_demand_hint": "没有固定时间：不会到期，也不会算作漏服。服用之后再记录。"
+  "my_stack_plan_on_demand_hint": "没有固定时间：不会到期，也不会算作漏服。服用之后再记录。",
+  "my_stack_plan_add_slot": "同一天再服一次",
+  "my_stack_plan_remove_slot": "移除服用时间",
+  "my_stack_plan_slot_duplicate": "该时间点已存在 — 请为它设定自己的时刻。"
 }

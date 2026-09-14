@@ -28,7 +28,7 @@ import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackIte
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
-import { INTAKE_FREQUENCIES } from './lib/intakeFrequency'
+import { INTAKE_FREQUENCIES, LEGACY_DAILY_FREQUENCIES } from './lib/intakeFrequency'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
 import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
 import { backfillMessageKey, buildPermanentScheduleChange, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
@@ -452,7 +452,12 @@ function cycleAsIntakePlanDraft(cycle: Cycle, day: Date): IntakePlanDraft {
     dose: segment.dose,
     unit: segment.unit,
     method: cycle.method,
-    frequency: segment.frequency,
+    // Alte Zyklen tragen die Tageszahl noch in der Frequenz („2x taeglich").
+    // Im Formular steht sie jetzt daneben, als Zahl der Einnahmezeitpunkte —
+    // die Frequenz sagt nur noch, an welchen TAGEN. „2x taeglich" mit zwei
+    // Zeitpunkten und „Taeglich" mit zwei Zeitpunkten bedeuten dasselbe, auch
+    // fuer `cycleAppliesToDay`.
+    frequency: LEGACY_DAILY_FREQUENCIES[segment.frequency] ? 'Täglich' : segment.frequency,
     xDaysInterval: segment.x_days_interval,
     scheduleDays: segment.schedule_days ?? [],
     startDate: format(new Date(), 'yyyy-MM-dd'),

@@ -1,5 +1,5 @@
 import type { IntakePlanDraft, StackItemDraft, StackItemIngredient, TrackingLevel } from '../types'
-import { isOnDemand, slotCountForFrequency } from './intakeFrequency'
+import { MAX_INTAKE_SLOTS, isOnDemand } from './intakeFrequency'
 import { trackingCapabilities } from './trackingDepth'
 
 export interface IngredientValidationErrors {
@@ -119,15 +119,25 @@ export function validateIntakePlan(
   if (ende && plan.startDate.trim() && ende < plan.startDate.trim()) errors.endDate = 'before_start'
 
   // „Bei Bedarf" hat keinen geplanten Zeitpunkt — dort nach einer Tageszeit zu
-  // fragen waere eine Pflichtangabe ohne Bedeutung.
+  // fragen waere eine Pflichtangabe ohne Bedeutung. Jede andere Frequenz
+  // braucht mindestens einen; wie viele es werden, entscheidet der Nutzer.
   if (!isOnDemand(plan.frequency)) {
-    const erwartet = slotCountForFrequency(plan.frequency)
-    const slotFehler = plan.slots.map(slot => (slot.routineGroup ? '' : 'required'))
-    if (plan.slots.length !== erwartet) {
-      // Die Zahl der Zeitpunkte folgt der Frequenz. Weicht sie ab, ist der
-      // Entwurf in einem Zustand, den das Formular nicht erzeugt.
-      while (slotFehler.length < erwartet) slotFehler.push('required')
+    const slotFehler: string[] = plan.slots.map(slot => (slot.routineGroup ? '' : 'required'))
+    if (plan.slots.length === 0) slotFehler.push('required')
+    if (plan.slots.length > MAX_INTAKE_SLOTS) {
+      slotFehler[MAX_INTAKE_SLOTS] = 'too_many'
     }
+
+    // Zwei Zeitpunkte, die sich in nichts unterscheiden, sind einer. Dieselbe
+    // Tageszeit zweimal ist erlaubt — aber dann mit verschiedenen Uhrzeiten,
+    // sonst weiss weder die App noch der Nutzer, welcher welcher ist.
+    const gesehen = new Set<string>()
+    plan.slots.forEach((slot, index) => {
+      const schluessel = `${slot.routineGroup}|${slot.time ?? ''}`
+      if (gesehen.has(schluessel)) slotFehler[index] = 'duplicate'
+      gesehen.add(schluessel)
+    })
+
     if (slotFehler.some(Boolean)) errors.slots = slotFehler
   }
   if (trackingCapabilities(level).quantity) {

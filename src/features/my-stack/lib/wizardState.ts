@@ -124,22 +124,30 @@ function basisVorbelegung(
 }
 
 /**
- * Die Einnahmezeitpunkte, die zur Frequenz gehoeren. Bestehende bleiben stehen
- * (samt gesetzter Uhrzeit), fehlende kommen dazu, ueberzaehlige fallen weg.
- * Ein neuer Zeitpunkt startet auf der Tageszeit, die noch frei ist — zweimal
- * „morgens" ist nie gemeint.
+ * Die Einnahmezeitpunkte nach einem FREQUENZWECHSEL. Die Frequenz sagt nur,
+ * an welchen Tagen etwas ansteht — wie oft am Tag, entscheidet der Nutzer
+ * daneben. Deshalb wird hier nichts abgeschnitten: „Bei Bedarf" laesst keinen
+ * Zeitpunkt uebrig, jede geplante Frequenz mindestens einen, und die alten
+ * Tagesfrequenzen („2x taeglich") bringen ihre Zahl noch mit, damit ein
+ * bestehender Zyklus beim Laden nicht die Haelfte verliert.
  */
 function slotsFuerFrequenz(plan: IntakePlanDraft): IntakeSlotDraft[] {
   if (isOnDemand(plan.frequency)) return []
-  const anzahl = slotCountForFrequency(plan.frequency)
-  const reihenfolge: RoutineGroup[] = ['morning', 'midday', 'evening']
-  const slots = plan.slots.slice(0, anzahl)
-  while (slots.length < anzahl) {
-    const belegt = new Set(slots.map(slot => slot.routineGroup))
-    const frei = reihenfolge.find(gruppe => !belegt.has(gruppe)) ?? 'morning'
-    slots.push({ routineGroup: frei, time: null })
-  }
+  const mindestens = Math.max(1, slotCountForFrequency(plan.frequency))
+  const slots = [...plan.slots]
+  while (slots.length < mindestens) slots.push(naechsterSlot(slots))
   return slots
+}
+
+/**
+ * Ein weiterer Zeitpunkt. Er startet auf der Tageszeit, die noch frei ist —
+ * zweimal „morgens" ist selten gemeint, und wo doch (zwei Abenddosen), setzt
+ * man die Uhrzeiten von Hand.
+ */
+export function naechsterSlot(slots: readonly IntakeSlotDraft[]): IntakeSlotDraft {
+  const reihenfolge: RoutineGroup[] = ['morning', 'midday', 'evening']
+  const belegt = new Set(slots.map(slot => slot.routineGroup))
+  return { routineGroup: reihenfolge.find(gruppe => !belegt.has(gruppe)) ?? 'evening', time: null }
 }
 
 function emptyPlan(name: string): IntakePlanDraft {
@@ -444,14 +452,12 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       }
     case 'plan_changed': {
       const plan = { ...state.draft.plan, ...action.changes }
-      // Die Zahl der Einnahmezeitpunkte folgt der Frequenz, nicht der Hand:
-      // „2x taeglich" hat zwei, „Bei Bedarf" keinen. Sie hier anzupassen statt
-      // im Formular heisst, dass jeder Weg zum selben Ergebnis fuehrt — auch
-      // das Laden eines bestehenden Zyklus.
-      return {
-        ...state,
-        draft: { ...state.draft, plan: { ...plan, slots: slotsFuerFrequenz(plan) } },
-      }
+      // Nur ein FREQUENZWECHSEL fasst die Zeitpunkte an — sonst wuerde jede
+      // Aenderung am Plan die selbst hinzugefuegten wieder einsammeln.
+      const slots = action.changes.frequency === undefined
+        ? plan.slots
+        : slotsFuerFrequenz(plan)
+      return { ...state, draft: { ...state.draft, plan: { ...plan, slots } } }
     }
     case 'save_mode_selected':
       return { ...state, saveMode: action.mode }

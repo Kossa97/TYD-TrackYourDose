@@ -1275,5 +1275,8 @@
   "my_stack_plan_end_date_hint": "Leer lassen, wenn du es dauerhaft nimmst. Für eine Kur das letzte Einnahmedatum.",
   "my_stack_plan_end_date_before_start": "Das Ende liegt vor dem Start.",
   "my_stack_plan_end_open": "Offen",
-  "my_stack_plan_on_demand_hint": "Kein fester Zeitpunkt: nichts wird fällig, nichts gilt als verpasst. Du trägst die Einnahme ein, wenn sie stattgefunden hat."
+  "my_stack_plan_on_demand_hint": "Kein fester Zeitpunkt: nichts wird fällig, nichts gilt als verpasst. Du trägst die Einnahme ein, wenn sie stattgefunden hat.",
+  "my_stack_plan_add_slot": "Weitere Einnahme am selben Tag",
+  "my_stack_plan_remove_slot": "Einnahmezeitpunkt entfernen",
+  "my_stack_plan_slot_duplicate": "Dieser Zeitpunkt steht schon da — gib ihm eine eigene Uhrzeit."
 }

@@ -1127,5 +1127,8 @@
   "my_stack_plan_end_date_hint": "継続して使う場合は空欄のままに。クールの場合は最終服用日を入力します。",
   "my_stack_plan_end_date_before_start": "終了日が開始日より前です。",
   "my_stack_plan_end_open": "未設定",
-  "my_stack_plan_on_demand_hint": "決まった時刻なし: 期限も飲み忘れも発生しません。服用したあとに記録します。"
+  "my_stack_plan_on_demand_hint": "決まった時刻なし: 期限も飲み忘れも発生しません。服用したあとに記録します。",
+  "my_stack_plan_add_slot": "同じ日にもう一回",
+  "my_stack_plan_remove_slot": "服用タイミングを削除",
+  "my_stack_plan_slot_duplicate": "そのタイミングは既にあります。個別の時刻を設定してください。"
 }

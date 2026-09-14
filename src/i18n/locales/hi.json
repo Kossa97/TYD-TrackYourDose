@@ -1127,5 +1127,8 @@
   "my_stack_plan_end_date_hint": "लंबे समय तक लेते हैं तो खाली छोड़ें। कोर्स के लिए अंतिम सेवन तिथि।",
   "my_stack_plan_end_date_before_start": "समाप्ति तिथि प्रारंभ से पहले है।",
   "my_stack_plan_end_open": "खुला",
-  "my_stack_plan_on_demand_hint": "कोई निश्चित समय नहीं: न कुछ देय होता है, न छूटा गिना जाता है। सेवन के बाद दर्ज करें।"
+  "my_stack_plan_on_demand_hint": "कोई निश्चित समय नहीं: न कुछ देय होता है, न छूटा गिना जाता है। सेवन के बाद दर्ज करें।",
+  "my_stack_plan_add_slot": "उसी दिन एक और सेवन",
+  "my_stack_plan_remove_slot": "सेवन समय हटाएँ",
+  "my_stack_plan_slot_duplicate": "यह समय पहले से है — इसे अपना समय दें।"
 }

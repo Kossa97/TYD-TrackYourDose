@@ -1131,5 +1131,8 @@
   "my_stack_plan_end_date_hint": "اتركه فارغًا إذا كنت تتناوله لفترة طويلة. للدورة العلاجية، آخر يوم تتناوله فيه.",
   "my_stack_plan_end_date_before_start": "تاريخ النهاية قبل تاريخ البدء.",
   "my_stack_plan_end_open": "مفتوح",
-  "my_stack_plan_on_demand_hint": "لا وقت محدد: لا شيء يصبح مستحقًا ولا شيء يُحتسب فائتًا. تسجّل الجرعة بعد تناولها."
+  "my_stack_plan_on_demand_hint": "لا وقت محدد: لا شيء يصبح مستحقًا ولا شيء يُحتسب فائتًا. تسجّل الجرعة بعد تناولها.",
+  "my_stack_plan_add_slot": "جرعة أخرى في اليوم نفسه",
+  "my_stack_plan_remove_slot": "إزالة موعد التناول",
+  "my_stack_plan_slot_duplicate": "هذا الموعد موجود بالفعل — امنحه وقتًا خاصًا به."
 }

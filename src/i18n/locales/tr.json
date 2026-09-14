@@ -1127,5 +1127,8 @@
   "my_stack_plan_end_date_hint": "Uzun süre kullanıyorsanız boş bırakın. Bir kür içinse son kullanım gününü girin.",
   "my_stack_plan_end_date_before_start": "Bitiş, başlangıçtan önce.",
   "my_stack_plan_end_open": "Açık",
-  "my_stack_plan_on_demand_hint": "Sabit saat yok: hiçbir şey zamanı gelmiş ya da kaçırılmış sayılmaz. Aldıktan sonra kaydedersiniz."
+  "my_stack_plan_on_demand_hint": "Sabit saat yok: hiçbir şey zamanı gelmiş ya da kaçırılmış sayılmaz. Aldıktan sonra kaydedersiniz.",
+  "my_stack_plan_add_slot": "Aynı gün bir alım daha",
+  "my_stack_plan_remove_slot": "Alım zamanını kaldır",
+  "my_stack_plan_slot_duplicate": "Bu zaman zaten var — ona kendi saatini verin."
 }

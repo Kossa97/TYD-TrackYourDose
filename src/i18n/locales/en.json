@@ -1275,5 +1275,8 @@
   "my_stack_plan_end_date_hint": "Leave empty if you take it long term. For a course, the last day you take it.",
   "my_stack_plan_end_date_before_start": "The end is before the start.",
   "my_stack_plan_end_open": "Open",
-  "my_stack_plan_on_demand_hint": "No fixed time: nothing becomes due, nothing counts as missed. You log the intake once it has happened."
+  "my_stack_plan_on_demand_hint": "No fixed time: nothing becomes due, nothing counts as missed. You log the intake once it has happened.",
+  "my_stack_plan_add_slot": "Another intake on the same day",
+  "my_stack_plan_remove_slot": "Remove intake time",
+  "my_stack_plan_slot_duplicate": "That time is already listed — give it its own clock time."
 }

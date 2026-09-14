@@ -633,8 +633,10 @@ begin
   end if;
   plan_effective_date := (p_plan ->> 'start_date')::date;
   -- Mehrere Einnahmezeitpunkte je Tag stehen kommagetrennt: „morgens,abends"
-  -- bei „2x taeglich". Die Auswertung (`resolveScheduleSlots`) liest sie genau
-  -- so; geprueft wird deshalb jeder Teil einzeln.
+  -- fuer morgens und abends am selben Tag. Die Auswertung
+  -- (`resolveScheduleSlots`) liest sie genau so; geprueft wird deshalb jeder
+  -- Teil einzeln. Dieselbe Tageszeit darf zweimal vorkommen — zwei Abenddosen
+  -- mit verschiedenen Uhrzeiten sind ein gueltiger Plan.
   if plan_intake_time is null then
     raise exception 'Invalid plan intake time';
   end if;
@@ -642,7 +644,7 @@ begin
     select 1
     from unnest(string_to_array(plan_intake_time, ',')) teil
     where btrim(teil) not in ('morgens', 'mittags', 'abends')
-  ) or coalesce(array_length(string_to_array(plan_intake_time, ','), 1), 0) not between 1 and 3 then
+  ) or coalesce(array_length(string_to_array(plan_intake_time, ','), 1), 0) not between 1 and 4 then
     -- coalesce, weil string_to_array('', ',') ein LEERES Array liefert und
     -- array_length darauf null ist: ohne das ginge ein leerer Wert durch, und
     -- die Zeile truege eine Tageszeit, die keine ist.

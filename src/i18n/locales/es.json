@@ -1127,5 +1127,8 @@
   "my_stack_plan_end_date_hint": "Déjalo vacío si lo tomas de forma prolongada. Para una pauta corta, el último día de toma.",
   "my_stack_plan_end_date_before_start": "El fin es anterior al inicio.",
   "my_stack_plan_end_open": "Abierto",
-  "my_stack_plan_on_demand_hint": "Sin hora fija: nada vence ni cuenta como omitido. Registras la toma cuando ya ha ocurrido."
+  "my_stack_plan_on_demand_hint": "Sin hora fija: nada vence ni cuenta como omitido. Registras la toma cuando ya ha ocurrido.",
+  "my_stack_plan_add_slot": "Otra toma el mismo día",
+  "my_stack_plan_remove_slot": "Quitar momento de toma",
+  "my_stack_plan_slot_duplicate": "Ese momento ya está — dale su propia hora."
 }

@@ -143,14 +143,72 @@ describe('IntakePlanEditor', () => {
       .toContain('nichts gilt als verpasst')
   })
 
-  it('bietet die Frequenzen an, die die Auswertung kennt', () => {
+  it('fragt in der Frequenz nur nach den TAGEN, nicht nach der Tageszahl', () => {
+    // „2x täglich" stand hier einmal mit drin. Das mischte zwei Fragen: wer
+    // „Wochentage wählen" brauchte, bekam zwangsläufig genau eine Einnahme.
     render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
 
     const frequenz = screen.getByLabelText('Frequenz') as HTMLSelectElement
     expect(Array.from(frequenz.options).map(option => option.value)).toEqual([
-      'Täglich', '2x täglich', '3x täglich', 'Jeden 2. Tag', '5 Tage an / 2 aus',
+      'Täglich', 'Jeden 2. Tag', '5 Tage an / 2 aus',
       'Mo-Fr', 'Wöchentlich', 'Alle X Tage', 'Wochentage wählen', 'Bei Bedarf',
     ])
+  })
+
+  it('lässt weitere Einnahmen am selben Tag zu — auch bei „Wochentage wählen"', () => {
+    // Genau der gemeldete Fall: Mo/Mi/Fr morgens UND abends.
+    render(<PlanHarness
+      trackingLevel="intake_only"
+      dosageForm="tablet"
+      initialPlan={{ ...plan, frequency: 'Wochentage wählen', scheduleDays: ['Mo', 'Mi', 'Fr'] }}
+    />)
+
+    expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(1)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Weitere Einnahme am selben Tag' }))
+    expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(2)
+    expect(screen.getByText('Einnahme 1')).toBeTruthy()
+    expect(screen.getByText('Einnahme 2')).toBeTruthy()
+
+    // Die Wochentage bleiben, wo sie waren.
+    expect((screen.getByLabelText('Frequenz') as HTMLSelectElement).value).toBe('Wochentage wählen')
+    expect(screen.getByRole('button', { name: 'Mo' }).getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('nimmt einen Zeitpunkt wieder weg, aber nie den letzten', () => {
+    render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
+
+    // Bei einem einzigen Zeitpunkt gibt es nichts zu entfernen.
+    expect(screen.queryByRole('button', { name: 'Einnahmezeitpunkt entfernen' })).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Weitere Einnahme am selben Tag' }))
+    const entfernen = screen.getAllByRole('button', { name: 'Einnahmezeitpunkt entfernen' })
+    expect(entfernen).toHaveLength(2)
+
+    fireEvent.click(entfernen[0])
+    expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(1)
+    expect(screen.queryByRole('button', { name: 'Einnahmezeitpunkt entfernen' })).toBeNull()
+  })
+
+  it('hört bei vier Einnahmen am Tag auf', () => {
+    render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
+
+    for (let i = 0; i < 3; i += 1) {
+      fireEvent.click(screen.getByRole('button', { name: 'Weitere Einnahme am selben Tag' }))
+    }
+
+    expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(4)
+    expect(screen.queryByRole('button', { name: 'Weitere Einnahme am selben Tag' })).toBeNull()
+  })
+
+  it('bietet bei „Bei Bedarf" gar keinen Zeitpunkt an', () => {
+    render(<PlanHarness
+      trackingLevel="intake_only"
+      dosageForm="tablet"
+      initialPlan={{ ...plan, frequency: 'Bei Bedarf', slots: [] }}
+    />)
+
+    expect(screen.queryByRole('button', { name: 'Weitere Einnahme am selben Tag' })).toBeNull()
   })
 
   it('omits planned quantity for intake-only tracking', () => {

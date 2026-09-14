@@ -1,12 +1,14 @@
-import { BellRing, Clock, Moon, Sun, Sunrise } from 'lucide-react'
+import { BellRing, Clock, Moon, Plus, Sun, Sunrise, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getDosageForm, getIntakePlanUnitSuggestions } from '../lib/dosageForms'
 import {
   INTAKE_FREQUENCIES,
+  MAX_INTAKE_SLOTS,
   isOnDemand,
   needsInterval,
   needsWeekdays,
 } from '../lib/intakeFrequency'
+import { naechsterSlot } from '../lib/wizardState'
 import { trackingCapabilities } from '../lib/trackingDepth'
 import type { IntakePlanValidationErrors } from '../lib/validation'
 import type {
@@ -99,6 +101,19 @@ export function IntakePlanEditor({
         position === index ? { ...slot, ...changes } : slot
       )),
     })
+  }
+
+  // Wie oft am Tag ist eine eigene Frage — unabhaengig davon, an welchen Tagen.
+  // Mo/Mi/Fr morgens UND abends ist ein normaler Plan; solange die Zahl in der
+  // Frequenz steckte, liess er sich nicht ausdruecken.
+  function addSlot(): void {
+    if (plan.slots.length >= MAX_INTAKE_SLOTS) return
+    onChange({ slots: [...plan.slots, naechsterSlot(plan.slots)] })
+  }
+
+  function removeSlot(index: number): void {
+    if (plan.slots.length <= 1) return
+    onChange({ slots: plan.slots.filter((_, position) => position !== index) })
   }
 
   function toggleWeekday(day: string): void {
@@ -287,7 +302,19 @@ export function IntakePlanEditor({
           </span>
         </p>
       ) : plan.slots.map((slot, index) => (
-        <div key={index} data-plan-slot={index} className="min-w-0 space-y-3">
+        <div key={index} data-plan-slot={index} className="min-w-0 space-y-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
+          {plan.slots.length > 1 && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => removeSlot(index)}
+                aria-label={String(t('my_stack_plan_remove_slot', { defaultValue: 'Einnahmezeitpunkt entfernen' }))}
+                className="grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-xl text-slate-400 transition-colors duration-200 hover:bg-rose-400/10 hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
+              >
+                <Trash2 aria-hidden="true" size={18} />
+              </button>
+            </div>
+          )}
           <fieldset
             data-field={`plan.slots.${index}.routineGroup`}
             tabIndex={-1}
@@ -329,7 +356,9 @@ export function IntakePlanEditor({
             </div>
             {errors.slots?.[index] && (
               <p id={`stack-plan-routine-${index}-error`} role="alert" className="mt-2 text-sm text-rose-300">
-                {t('my_stack_plan_routine_required', { defaultValue: 'Bitte wähle eine Tageszeit.' })}
+                {errors.slots[index] === 'duplicate'
+                  ? t('my_stack_plan_slot_duplicate', { defaultValue: 'Dieser Zeitpunkt steht schon da — gib ihm eine eigene Uhrzeit.' })
+                  : t('my_stack_plan_routine_required', { defaultValue: 'Bitte wähle eine Tageszeit.' })}
               </p>
             )}
           </fieldset>
@@ -349,6 +378,18 @@ export function IntakePlanEditor({
           </div>
         </div>
       ))}
+
+      {!isOnDemand(plan.frequency) && plan.slots.length < MAX_INTAKE_SLOTS && (
+        <button
+          type="button"
+          onClick={addSlot}
+          data-plan-add-slot
+          className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-200 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
+        >
+          <Plus aria-hidden="true" size={18} />
+          {t('my_stack_plan_add_slot', { defaultValue: 'Weitere Einnahme am selben Tag' })}
+        </button>
+      )}
 
       {tracksQuantity && (
         <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] p-4">

@@ -1127,5 +1127,8 @@
   "my_stack_plan_end_date_hint": "Deixe vazio se tomar a longo prazo. Para um ciclo, o último dia de toma.",
   "my_stack_plan_end_date_before_start": "O fim é anterior ao início.",
   "my_stack_plan_end_open": "Em aberto",
-  "my_stack_plan_on_demand_hint": "Sem horário fixo: nada vence nem conta como esquecido. Regista a toma depois de acontecer."
+  "my_stack_plan_on_demand_hint": "Sem horário fixo: nada vence nem conta como esquecido. Regista a toma depois de acontecer.",
+  "my_stack_plan_add_slot": "Outra toma no mesmo dia",
+  "my_stack_plan_remove_slot": "Remover momento de toma",
+  "my_stack_plan_slot_duplicate": "Esse momento já existe — dê-lhe uma hora própria."
 }

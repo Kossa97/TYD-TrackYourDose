@@ -100,8 +100,47 @@ Datei, keine Nachmigration):
 - `npx tsc -p tsconfig.app.json --noEmit` — sauber.
 - `npx eslint src scripts` — **140 Probleme**, unverändert zur Baseline.
 
-## Offen
+---
 
-Die Welle „Apotheke" — rund 120–150 Wirkstoffe entlang der
-Verordnungshäufigkeit. Sie war der Anlass; erst musste der Plan die
-Kurzzeitfälle abbilden können.
+## Nachtrag: „wie oft am Tag" gehört nicht in die Frequenz
+
+Gemeldet, mit Screenshot: bei „Wochentage wählen" gab es nur **eine**
+Tageszeit. Mo/Mi/Fr morgens **und** abends war nicht ausdrückbar.
+
+Der Fehler lag in meinem eigenen ersten Anlauf oben: ich hatte „2x täglich"
+und „3x täglich" in dieselbe Liste gesteckt wie „Mo-Fr" und „Wochentage
+wählen". Das mischt zwei Fragen, die nichts miteinander zu tun haben:
+
+| | |
+|---|---|
+| **An welchen Tagen?** | täglich, jeden zweiten, Mo/Mi/Fr, alle X Tage … |
+| **Wie oft am Tag?** | einmal, morgens und abends, dreimal … |
+
+In einer Liste heißt das: jede Tagesauswahl außer „täglich" bekommt zwingend
+genau eine Einnahme. Das ist keine Einschränkung, die irgendwo begründet wäre
+— sie ist ein Nebeneffekt davon, zwei Achsen in ein Feld zu falten.
+
+### Was jetzt gilt
+
+Die Frequenzliste sagt nur noch, an welchen **Tagen** etwas ansteht.
+„2x täglich" und „3x täglich" stehen nicht mehr darin. Wie oft am Tag,
+bestimmt der Nutzer daneben: unter den Tageszeiten steht **„Weitere Einnahme
+am selben Tag"**, jeder Zeitpunkt lässt sich einzeln entfernen (nie der
+letzte), höchstens vier.
+
+Das passt auch besser zur Auswertung, die die Zahl der Zeitpunkte ohnehin aus
+`intake_time` liest und nie aus der Frequenz.
+
+Zwei Feinheiten:
+
+- **Dieselbe Tageszeit darf zweimal vorkommen** — zwei Abenddosen um 18 und 22
+  Uhr sind ein gültiger Plan. Nur zwei Zeitpunkte, die sich in *nichts*
+  unterscheiden, werden abgewiesen: das wären einer.
+- **Alte Zyklen** tragen die Tageszahl noch in der Frequenz. Beim Laden ins
+  Formular wird `2x täglich` zu `Täglich` plus zwei Zeitpunkten — dasselbe,
+  auch für `cycleAppliesToDay`, das die alten Werte weiter versteht.
+
+Die Schemaprüfung erlaubt jetzt ein bis **vier** Tageszeiten statt drei;
+Trockenlauf mit gültigen und ungültigen Fällen, `abends,abends` inbegriffen.
+
+**1558 Tests grün** (6 weitere), tsc sauber, eslint 140.

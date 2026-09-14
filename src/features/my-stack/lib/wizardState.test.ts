@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { bestandteileAufloesen } from './kombination'
+import { naechsterSlot } from './wizardState'
 import type { DosageFormKey, IntakePlanDraft, StackItem, SubstanceCatalogEntry } from '../types'
 import {
   canContinue,
@@ -360,38 +361,70 @@ describe('wizard state', () => {
     expect(geloest.draft.ingredients[0].custom_name).toBe('Vitamin D3')
   })
 
-  it('legt bei „2x täglich" zwei Einnahmezeitpunkte an — auf verschiedenen Tageszeiten', () => {
-    // Zweimal „morgens" ist nie gemeint. Der zweite Zeitpunkt startet deshalb
-    // auf der Tageszeit, die noch frei ist.
-    const zwei = wizardReducer(initialWizardState(), {
+  it('lässt mehrere Einnahmen am Tag unabhängig von der Frequenz zu', () => {
+    // Der Fehler im ersten Anlauf: die Tageszahl steckte in der Frequenz.
+    // „Wochentage wählen" hatte damit zwingend genau eine Einnahme — Mo/Mi/Fr
+    // morgens UND abends war nicht ausdrückbar, obwohl das ein normaler Plan
+    // ist. An welchen Tagen und wie oft am Tag sind zwei Fragen.
+    const wochentage = wizardReducer(initialWizardState(), {
+      type: 'plan_changed',
+      changes: { frequency: 'Wochentage wählen', scheduleDays: ['Mo', 'Mi', 'Fr'] },
+    })
+    expect(wochentage.draft.plan.slots).toHaveLength(1)
+
+    const zweiMal = wizardReducer(wochentage, {
+      type: 'plan_changed',
+      changes: { slots: [
+        { routineGroup: 'morning', time: '08:00' },
+        { routineGroup: 'evening', time: '20:00' },
+      ] },
+    })
+
+    expect(zweiMal.draft.plan.frequency).toBe('Wochentage wählen')
+    expect(zweiMal.draft.plan.scheduleDays).toEqual(['Mo', 'Mi', 'Fr'])
+    expect(zweiMal.draft.plan.slots).toHaveLength(2)
+  })
+
+  it('sammelt selbst hinzugefügte Zeitpunkte nicht bei der nächsten Planänderung wieder ein', () => {
+    // Nur ein Frequenzwechsel fasst die Zeitpunkte an. Sonst hätte jede
+    // Änderung an Dosis oder Methode die zweite Einnahme gelöscht.
+    const zweiMal = wizardReducer(initialWizardState(), {
+      type: 'plan_changed',
+      changes: { slots: [
+        { routineGroup: 'morning', time: null },
+        { routineGroup: 'evening', time: null },
+      ] },
+    })
+    const spaeter = wizardReducer(zweiMal, { type: 'plan_changed', changes: { dose: 500 } })
+
+    expect(spaeter.draft.plan.slots).toHaveLength(2)
+  })
+
+  it('gibt einem weiteren Zeitpunkt die Tageszeit, die noch frei ist', () => {
+    // Zweimal „morgens" ist selten gemeint. Sind alle drei belegt, bleibt nur
+    // die Wiederholung — dann setzt man die Uhrzeiten von Hand.
+    expect(naechsterSlot([]).routineGroup).toBe('morning')
+    expect(naechsterSlot([{ routineGroup: 'morning', time: null }]).routineGroup).toBe('midday')
+    expect(naechsterSlot([
+      { routineGroup: 'morning', time: null },
+      { routineGroup: 'midday', time: null },
+    ]).routineGroup).toBe('evening')
+    expect(naechsterSlot([
+      { routineGroup: 'morning', time: null },
+      { routineGroup: 'midday', time: null },
+      { routineGroup: 'evening', time: null },
+    ]).routineGroup).toBe('evening')
+  })
+
+  it('übernimmt die Tageszahl aus einer alten „2x täglich"-Frequenz', () => {
+    // Bestehende Zyklen tragen sie noch dort. Beim Laden ins Formular darf die
+    // zweite Einnahme nicht verschwinden.
+    const alt = wizardReducer(initialWizardState(), {
       type: 'plan_changed',
       changes: { frequency: '2x täglich' },
     })
 
-    expect(zwei.draft.plan.slots.map(slot => slot.routineGroup)).toEqual(['morning', 'midday'])
-
-    const drei = wizardReducer(zwei, { type: 'plan_changed', changes: { frequency: '3x täglich' } })
-    expect(drei.draft.plan.slots.map(slot => slot.routineGroup))
-      .toEqual(['morning', 'midday', 'evening'])
-  })
-
-  it('behält beim Verringern die vorderen Zeitpunkte samt Uhrzeit', () => {
-    const drei = wizardReducer(initialWizardState(), {
-      type: 'plan_changed',
-      changes: { frequency: '3x täglich' },
-    })
-    const mitZeit = wizardReducer(drei, {
-      type: 'plan_changed',
-      changes: { slots: drei.draft.plan.slots.map((slot, index) => (
-        index === 0 ? { ...slot, time: '07:15' } : slot
-      )) },
-    })
-    const zurueck = wizardReducer(mitZeit, {
-      type: 'plan_changed',
-      changes: { frequency: 'Täglich' },
-    })
-
-    expect(zurueck.draft.plan.slots).toEqual([{ routineGroup: 'morning', time: '07:15' }])
+    expect(alt.draft.plan.slots.map(slot => slot.routineGroup)).toEqual(['morning', 'midday'])
   })
 
   it('nimmt „Bei Bedarf" jeden geplanten Zeitpunkt weg', () => {
