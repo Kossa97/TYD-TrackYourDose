@@ -3378,16 +3378,16 @@
     "semantic_hash": "f23fa776d2efa4b2a4acc2cd08edba27"
   },
   "src/features/my-stack/stage/LiquidGraphic.test.ts": {
-    "mtime": 1788612179.767182,
-    "seen": 1788803479.1911001,
-    "ast_hash": "dbf9c538c81d6c517d3e1068104c2258",
-    "semantic_hash": "dbf9c538c81d6c517d3e1068104c2258"
+    "mtime": 1789399412.943126,
+    "seen": 1789399583.0564315,
+    "ast_hash": "f4862b1e9ecb2fb8921ecc3b8d20aece",
+    "semantic_hash": ""
   },
   "src/features/my-stack/stage/LiquidGraphic.tsx": {
-    "mtime": 1788612179.76766,
-    "seen": 1788803479.1911016,
-    "ast_hash": "4c0e6e0cbc807397be282100570c9187",
-    "semantic_hash": "4c0e6e0cbc807397be282100570c9187"
+    "mtime": 1789399260.8216925,
+    "seen": 1789399583.056434,
+    "ast_hash": "98548bed2fb8426fb530d826cac22d16",
+    "semantic_hash": ""
   },
   "src/features/my-stack/stage/StageLabel.test.ts": {
     "mtime": 1789391212.2799854,
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789395336.7723246,
-    "seen": 1789395476.6343317,
+    "mtime": 1789399444.8203416,
+    "seen": 1789399583.0567412,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4275,6 +4275,12 @@
     "mtime": 1789395465.286215,
     "seen": 1789395476.634584,
     "ast_hash": "5216ac82763eefc76c69eb3fd535f4c7",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-14-my-stack-lichtteich-design.md": {
+    "mtime": 1789399570.356349,
+    "seen": 1789399583.0569448,
+    "ast_hash": "47a932c93fad2095af2ef6ecad1cfd5d",
     "semantic_hash": ""
   }
 }
