@@ -4104,9 +4104,9 @@
     "semantic_hash": ""
   },
   "scripts/substance-catalog-source.mjs": {
-    "mtime": 1789406796.654388,
-    "seen": 1789408392.898526,
-    "ast_hash": "3522aeb9616803bbcaff7345d612a708",
+    "mtime": 1789413805.0275629,
+    "seen": 1789414731.0928633,
+    "ast_hash": "7f15f4943a4e75948480b075134ad359",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/substanceCatalogSource.test.ts": {
@@ -4116,9 +4116,9 @@
     "semantic_hash": ""
   },
   "supabase-my-stack-catalog-expansion.sql": {
-    "mtime": 1789406848.9987087,
-    "seen": 1789408392.8989804,
-    "ast_hash": "f71facaf31ada40a720c6fc19d7d236d",
+    "mtime": 1789413828.8525684,
+    "seen": 1789414731.093224,
+    "ast_hash": "7fb6f600bdc33046af2c0c011e917d51",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-12-my-stack-substanzkatalog-design.md": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789412577.3924603,
-    "seen": 1789412717.6008458,
+    "mtime": 1789414627.7174153,
+    "seen": 1789414731.0932353,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4329,6 +4329,12 @@
     "mtime": 1789412701.7726617,
     "seen": 1789412717.6009617,
     "ast_hash": "9d7724797a781481ed508d9828aea94a",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-14-substanzkatalog-welle-apotheke-design.md": {
+    "mtime": 1789414721.5490906,
+    "seen": 1789414731.093326,
+    "ast_hash": "59d20d3123bba93075b2e2f13fe3c122",
     "semantic_hash": ""
   }
 }
