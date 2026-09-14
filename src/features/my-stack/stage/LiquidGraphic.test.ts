@@ -15,6 +15,40 @@ const base = {
 }
 
 describe('LiquidGraphic', () => {
+  it('haelt den Lichtteich am Boden klein und tut ihn nicht als Fleck hin', () => {
+    // Der Teich war fest 48 x 15 gross und mit 0,58 Weiss die hellste Flaeche
+    // im Bild. In einer flachen, breiten Kammer — dem Nasenspray — war das
+    // kein Lichtreflex mehr, sondern ein weisser Fleck ueber dem halben Boden.
+    const html = renderToStaticMarkup(createElement(LiquidGraphic, base))
+    const verlauf = html.slice(html.indexOf('id="probe-caustic"'))
+    const block = verlauf.slice(0, verlauf.indexOf('</radialGradient>'))
+
+    expect(block).toContain('rgba(255,255,255,0.32)')
+    expect(block).not.toContain('rgba(255,255,255,0.58)')
+    // Ein weicher Rand, der frueher anfaengt: ohne Zwischenstufe war der Teich
+    // bis weit nach aussen hell.
+    expect(block).toContain('offset="55%"')
+  })
+
+  it('bemisst den Lichtteich an der Fuellung, nicht an der Kammer', () => {
+    // Steht wenig drin, liegt der Boden nah unter der Oberflaeche und das
+    // Licht sammelt sich auf kleinerer Flaeche. Eine feste Groesse deckte in
+    // einer flachen Kammer den ganzen Boden zu.
+    const radius = (html: string) => {
+      const treffer = /<ellipse cx="60" cy="187" rx="([\d.]+)" ry="([\d.]+)"/.exec(html)
+      return treffer ? [Number(treffer[1]), Number(treffer[2])] : null
+    }
+    const voll = radius(renderToStaticMarkup(createElement(LiquidGraphic, { ...base, fill: 1 })))
+    const wenig = radius(renderToStaticMarkup(createElement(LiquidGraphic, { ...base, fill: 0.1 })))
+
+    expect(voll, 'voll').not.toBeNull()
+    expect(wenig, 'wenig').not.toBeNull()
+    expect(voll![0]).toBeGreaterThan(wenig![0])
+    expect(voll![1]).toBeGreaterThan(wenig![1])
+    // Und nie so breit, dass er den Boden zudeckt (Kammer ist 120 breit).
+    expect(voll![0] * 2).toBeLessThan(120 * 0.75)
+  })
+
   it('draws body, glow, surface and rim as one coherent graphic', () => {
     const html = renderToStaticMarkup(createElement(LiquidGraphic, base))
 

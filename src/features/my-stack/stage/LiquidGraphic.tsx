@@ -4,6 +4,10 @@ import { buildLiquid, LIQUID_VB_H, LIQUID_VB_W } from './liquidGeometry'
 import { useSloshSubscribe } from '../../../components/SloshContext'
 import type { SloshState } from '../../../components/sloshEngine'
 
+function clamp01(wert: number): number {
+  return Number.isFinite(wert) ? Math.max(0, Math.min(1, wert)) : 0
+}
+
 // A few rising bubbles give the liquid life. Positions are in viewBox units and
 // the body clip-path makes them pop out of existence at the waterline.
 const LIQUID_BUBBLES = [
@@ -184,8 +188,13 @@ export function LiquidGraphic({
     <stop offset="0%" stopColor="rgba(255,255,255,0.58)" />
     <stop offset="100%" stopColor="rgba(255,255,255,0.05)" />
     </linearGradient>
+    {/* Der Lichtteich am Boden. Frueher 0,58 hell und 48 breit — in einer
+        flachen, breiten Kammer (Nasenspray) war das kein Lichtreflex mehr,
+        sondern ein weisser Fleck ueber dem halben Boden. Jetzt halb so hell
+        und mit einem weichen Rand, der frueher anfaengt. */}
     <radialGradient id={`${uid}-caustic`} cx="50%" cy="50%" r="50%">
-    <stop offset="0%" stopColor="rgba(255,255,255,0.58)" />
+    <stop offset="0%" stopColor="rgba(255,255,255,0.32)" />
+    <stop offset="55%" stopColor="rgba(255,255,255,0.12)" />
     <stop offset="100%" stopColor="rgba(255,255,255,0)" />
     </radialGradient>
     <radialGradient id={`${uid}-floor`} cx="50%" cy="100%" r="70%">
@@ -205,7 +214,17 @@ export function LiquidGraphic({
     <use href={`#${uid}-bodyPath`} fill={`url(#${uid}-depth)`} />
     <use href={`#${uid}-bodyPath`} fill={`url(#${uid}-side)`} />
     <rect x="0" y={LIQUID_VB_H - 34} width={LIQUID_VB_W} height="34" fill={`url(#${uid}-floor)`} />
-    <ellipse cx={LIQUID_VB_W / 2} cy={LIQUID_VB_H - 13} rx="48" ry="15" fill={`url(#${uid}-caustic)`} />
+    {/* Der Teich gehoert der FLUESSIGKEIT, nicht der Kammer: steht wenig
+        drin, liegt der Boden nah unter der Oberflaeche und das Licht sammelt
+        sich auf kleinerer Flaeche. Vorher war er eine feste Groesse, und in
+        einer flachen Kammer deckte er den Boden fast zu. */}
+    <ellipse
+    cx={LIQUID_VB_W / 2}
+    cy={LIQUID_VB_H - 13}
+    rx={32 + 10 * clamp01(fill)}
+    ry={10 + 3 * clamp01(fill)}
+    fill={`url(#${uid}-caustic)`}
+    />
     <rect ref={refractLeftRef} x={5 + seedLightOffset * 8} y="0" width="16" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity={0.46 + seedFocus * 0.22} />
     <rect ref={refractRightRef} x={99 + seedLightOffset * 5} y="0" width="10" height={LIQUID_VB_H} fill={`url(#${uid}-refract)`} opacity={0.14 + seedFocus * 0.16} />
     <path ref={glowRef} data-vial-detail="liquid-glow" d={geom.glow} fill={`url(#${uid}-glow)`} />
