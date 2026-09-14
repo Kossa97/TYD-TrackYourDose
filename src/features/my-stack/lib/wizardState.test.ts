@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { bestandteileAufloesen } from './kombination'
 import type { DosageFormKey, IntakePlanDraft, StackItem, SubstanceCatalogEntry } from '../types'
 import {
   canContinue,
@@ -18,6 +19,29 @@ const vitaminD3: SubstanceCatalogEntry = {
   suggested_dosage_forms: ['capsule', 'drops'],
   pk_profile_id: null,
   active: true,
+}
+
+const vitaminK2: SubstanceCatalogEntry = {
+  id: 'vitamin-k2',
+  canonical_name: 'Vitamin K2',
+  aliases: ['Menachinon'],
+  default_category: 'vitamin',
+  suggested_units: ['mcg', 'mg'],
+  suggested_dosage_forms: ['capsule', 'drops'],
+  pk_profile_id: null,
+  active: true,
+}
+
+const d3k2: SubstanceCatalogEntry = {
+  id: 'd3-k2',
+  canonical_name: 'Vitamin D3 + K2',
+  aliases: ['D3K2'],
+  default_category: 'vitamin',
+  suggested_units: ['IU', 'mcg'],
+  suggested_dosage_forms: ['capsule', 'drops'],
+  pk_profile_id: null,
+  active: true,
+  component_names: ['Vitamin D3', 'Vitamin K2'],
 }
 
 const existingVitaminD: StackItem = {
@@ -273,6 +297,68 @@ describe('wizard state', () => {
       basis_unit: null,
       position: 0,
     })
+  })
+
+  it('legt beim Kombipräparat je Bestandteil eine Zutat an', () => {
+    // Der ganze Zweck eines Kombi-Eintrags: „Vitamin D3 + K2" wählen und
+    // beide Wirkstoffe stehen da. Die Zeilen tragen die ids der BESTANDTEILE,
+    // nicht die des Produkts — nur so hängt jeder an seinem eigenen PK-Profil.
+    const next = wizardReducer(initialWizardState(), {
+      type: 'catalog_selected',
+      entry: d3k2,
+      components: bestandteileAufloesen(d3k2, [vitaminD3, vitaminK2, d3k2]),
+    })
+
+    expect(next.draft.displayName).toBe('Vitamin D3 + K2')
+    expect(next.draft.catalogEntryId).toBe('d3-k2')
+    expect(next.draft.ingredients.map(zutat => [
+      zutat.catalog_substance_id, zutat.custom_name, zutat.amount_unit, zutat.position,
+    ])).toEqual([
+      ['vitamin-d3', 'Vitamin D3', 'IU', 0],
+      ['vitamin-k2', 'Vitamin K2', 'mcg', 1],
+    ])
+  })
+
+  it('merkt sich beim Kombipräparat, welcher Eintrag gewählt wurde', () => {
+    // Ohne dieses Feld ließe sich das Produkt nicht mehr von seinem ersten
+    // Bestandteil unterscheiden: an den Zutaten steht seine id nirgends.
+    const gewaehlt = wizardReducer(initialWizardState(), {
+      type: 'catalog_selected',
+      entry: d3k2,
+      components: bestandteileAufloesen(d3k2, [vitaminD3, vitaminK2, d3k2]),
+    })
+
+    expect(gewaehlt.draft.ingredients.some(zutat => zutat.catalog_substance_id === 'd3-k2'))
+      .toBe(false)
+    expect(gewaehlt.draft.catalogEntryId).toBe('d3-k2')
+    expect(wizardReducer(gewaehlt, { type: 'catalog_detached' }).draft.catalogEntryId).toBeNull()
+  })
+
+  it('lässt ein gelöstes Kombipräparat auf eine freie Zeile zurückfallen', () => {
+    // Die Bestandteile stehen zu lassen, während oben der Produktname frei
+    // eingetippt wird, hieße: unten Vitamin D3 und K2, oben etwas anderes.
+    const gewaehlt = wizardReducer(initialWizardState(), {
+      type: 'catalog_selected',
+      entry: d3k2,
+      components: bestandteileAufloesen(d3k2, [vitaminD3, vitaminK2, d3k2]),
+    })
+    const geloest = wizardReducer(gewaehlt, { type: 'catalog_detached' })
+
+    expect(geloest.draft.ingredients).toHaveLength(1)
+    expect(geloest.draft.ingredients[0].custom_name).toBe('Vitamin D3 + K2')
+    expect(geloest.draft.ingredients[0].catalog_substance_id).toBeNull()
+  })
+
+  it('lässt selbst hinzugefügte Zutaten beim Lösen stehen', () => {
+    // Die Gegenprobe: hier ist die erste Zeile der Eintrag selbst, die zweite
+    // hat jemand von Hand angelegt. Sie darf nicht verschwinden.
+    const gewaehlt = wizardReducer(initialWizardState(), { type: 'catalog_selected', entry: vitaminD3 })
+    const mitZweiter = wizardReducer(gewaehlt, { type: 'ingredient_added' })
+    const geloest = wizardReducer(mitZweiter, { type: 'catalog_detached' })
+
+    expect(geloest.draft.ingredients).toHaveLength(2)
+    expect(geloest.draft.ingredients[0].catalog_substance_id).toBeNull()
+    expect(geloest.draft.ingredients[0].custom_name).toBe('Vitamin D3')
   })
 
   it('erlaubt freie Eingabe ohne Katalog-ID', () => {

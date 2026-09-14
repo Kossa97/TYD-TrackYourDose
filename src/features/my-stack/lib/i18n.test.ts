@@ -24,6 +24,7 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_category_required',
   'my_stack_from_catalog',
   'my_stack_from_catalog_pk',
+  'my_stack_combination',
   'my_stack_detach_catalog',
   'my_stack_name_required',
   'my_stack_add_ingredient',

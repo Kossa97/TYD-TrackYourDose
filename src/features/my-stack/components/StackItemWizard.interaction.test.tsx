@@ -29,6 +29,15 @@ const vitaminK2: SubstanceCatalogEntry = {
   aliases: ['Menachinon'],
 }
 
+const d3k2: SubstanceCatalogEntry = {
+  ...vitaminD3,
+  id: 'd3-k2',
+  canonical_name: 'Vitamin D3 + K2',
+  aliases: ['D3K2'],
+  suggested_units: ['IU', 'mcg'],
+  component_names: ['Vitamin D3', 'Vitamin K2'],
+}
+
 const existingVitaminD: StackItem = {
   id: 'stack-1',
   user_id: 'user-1',
@@ -561,6 +570,46 @@ describe('StackItemWizard interactions', () => {
     expect(screen.queryByText('my_stack_name_required')).toBeNull()
     expect(screen.queryByText('my_stack_category_required')).toBeNull()
     expect(screen.queryByLabelText('my_stack_question')).toBeNull()
+  })
+
+  it('füllt beim Kombipräparat beide Zutatenzeilen', () => {
+    // Der Zweck eines Kombi-Eintrags: einmal wählen, beide Wirkstoffe stehen
+    // da — jeder mit seinem eigenen Katalogbezug, also mit Einheiten und
+    // PK-Profil. Vorher war der zweite Wirkstoff reiner Freitext.
+    renderWizard({ catalogEntries: [vitaminD3, vitaminK2, d3k2] })
+
+    fireEvent.change(screen.getByLabelText('my_stack_question'), { target: { value: 'D3 +' } })
+    fireEvent.click(screen.getByRole('option', { name: /Vitamin D3 \+ K2/ }))
+
+    // Der Substanzschritt zeigt das Produkt, nicht seinen ersten Bestandteil.
+    expect(document.querySelector('[data-substance-selected="d3-k2"]')).not.toBeNull()
+    expect(document.querySelector('[data-substance-selected-hint]')?.textContent)
+      .toBe('my_stack_combination · Vitamin D3 + Vitamin K2')
+
+    continueWizard()
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
+    continueWizard()  // Farbe
+    continueWizard()  // Tracking-Tiefe (startet auf „Gründlich")
+    continueWizard()
+
+    // Zwei Zeilen, benannt, und beide am Katalog.
+    expect((screen.getByLabelText('my_stack_ingredient_1') as HTMLInputElement).value)
+      .toBe('Vitamin D3')
+    // Die zweite Zeile steht als gewählter Katalogeintrag da, nicht als
+    // Freitext — genau das war vorher unmöglich.
+    const zweite = document.querySelector('[data-ingredient-catalog="vitamin-k2"]')
+    expect(zweite).not.toBeNull()
+    expect(zweite?.textContent).toContain('Vitamin K2')
+  })
+
+  it('weist ein Kombipräparat schon in der Trefferliste aus', () => {
+    renderWizard({ catalogEntries: [vitaminD3, vitaminK2, d3k2] })
+
+    fireEvent.change(screen.getByLabelText('my_stack_question'), { target: { value: 'Vitamin' } })
+
+    const treffer = document.querySelectorAll('[data-substance-combination]')
+    expect(treffer).toHaveLength(1)
+    expect(treffer[0].textContent).toBe('my_stack_combination · Vitamin D3 + Vitamin K2')
   })
 
   it('macht die Katalogwahl sichtbar und nimmt das Suchfeld weg', () => {

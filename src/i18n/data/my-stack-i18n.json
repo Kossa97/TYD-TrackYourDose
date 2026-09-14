@@ -244,6 +244,7 @@
     "my_stack_tracking_curve_explained": "من التركيز والوقت وملف الحرائك الدوائية للمادة — سرعتَي الامتصاص والتخلص المخزَّنتين — يحسب التطبيق المنحنى بين الجرعات.",
     "my_stack_from_catalog": "من الكتالوج",
     "my_stack_from_catalog_pk": "من الكتالوج · يوجد ملف حرائك دوائية",
+    "my_stack_combination": "مستحضر مركب",
     "my_stack_detach_catalog": "إلغاء الاختيار"
   },
   "es": {
@@ -491,6 +492,7 @@
     "my_stack_tracking_curve_explained": "A partir de la concentración, la hora y el perfil PK de la sustancia — sus velocidades de absorción y eliminación registradas — la app calcula la curva entre tomas.",
     "my_stack_from_catalog": "Del catálogo",
     "my_stack_from_catalog_pk": "Del catálogo · perfil PK disponible",
+    "my_stack_combination": "Producto combinado",
     "my_stack_detach_catalog": "Quitar selección"
   },
   "fr": {
@@ -738,6 +740,7 @@
     "my_stack_tracking_curve_explained": "À partir du dosage, de l’heure et du profil PK de la substance — ses vitesses d’absorption et d’élimination enregistrées — l’app calcule la courbe entre les prises.",
     "my_stack_from_catalog": "Depuis le catalogue",
     "my_stack_from_catalog_pk": "Depuis le catalogue · profil PK disponible",
+    "my_stack_combination": "Association",
     "my_stack_detach_catalog": "Effacer la sélection"
   },
   "hi": {
@@ -985,6 +988,7 @@
     "my_stack_tracking_curve_explained": "मात्रा, समय और पदार्थ की PK प्रोफ़ाइल — उसकी दर्ज अवशोषण और निष्कासन गति — से ऐप खुराकों के बीच का वक्र निकालता है।",
     "my_stack_from_catalog": "कैटलॉग से",
     "my_stack_from_catalog_pk": "कैटलॉग से · PK प्रोफ़ाइल उपलब्ध",
+    "my_stack_combination": "संयोजन उत्पाद",
     "my_stack_detach_catalog": "चयन हटाएँ"
   },
   "id": {
@@ -1232,6 +1236,7 @@
     "my_stack_tracking_curve_explained": "Dari kekuatan, waktu, dan profil PK zat tersebut — laju penyerapan dan peluruhan yang tersimpan — aplikasi menghitung kurva di antara asupan.",
     "my_stack_from_catalog": "Dari katalog",
     "my_stack_from_catalog_pk": "Dari katalog · profil PK tersedia",
+    "my_stack_combination": "Produk kombinasi",
     "my_stack_detach_catalog": "Hapus pilihan"
   },
   "it": {
@@ -1479,6 +1484,7 @@
     "my_stack_tracking_curve_explained": "Da dosaggio, orario e profilo PK della sostanza — le sue velocità di assorbimento ed eliminazione registrate — l’app calcola la curva tra le assunzioni.",
     "my_stack_from_catalog": "Dal catalogo",
     "my_stack_from_catalog_pk": "Dal catalogo · profilo PK disponibile",
+    "my_stack_combination": "Prodotto combinato",
     "my_stack_detach_catalog": "Rimuovi selezione"
   },
   "ja": {
@@ -1726,6 +1732,7 @@
     "my_stack_tracking_curve_explained": "含有量、時刻、そして物質のPKプロファイル（登録された吸収速度と消失速度）から、アプリが服用の間の推移を計算します。",
     "my_stack_from_catalog": "カタログから",
     "my_stack_from_catalog_pk": "カタログから · PKプロファイルあり",
+    "my_stack_combination": "配合製剤",
     "my_stack_detach_catalog": "選択を解除"
   },
   "ko": {
@@ -1973,6 +1980,7 @@
     "my_stack_tracking_curve_explained": "함량과 시각, 그리고 물질의 PK 프로필(저장된 흡수·소실 속도)로 앱이 복용 사이의 곡선을 계산합니다.",
     "my_stack_from_catalog": "카탈로그에서",
     "my_stack_from_catalog_pk": "카탈로그에서 · PK 프로필 있음",
+    "my_stack_combination": "복합 제제",
     "my_stack_detach_catalog": "선택 해제"
   },
   "pt": {
@@ -2220,6 +2228,7 @@
     "my_stack_tracking_curve_explained": "A partir da concentração, do horário e do perfil PK da substância — suas velocidades de absorção e eliminação registradas — o app calcula a curva entre as tomadas.",
     "my_stack_from_catalog": "Do catálogo",
     "my_stack_from_catalog_pk": "Do catálogo · perfil PK disponível",
+    "my_stack_combination": "Produto combinado",
     "my_stack_detach_catalog": "Limpar seleção"
   },
   "ru": {
@@ -2467,6 +2476,7 @@
     "my_stack_tracking_curve_explained": "По дозировке, времени и ФК-профилю вещества — заложенным скоростям всасывания и выведения — приложение рассчитывает кривую между приёмами.",
     "my_stack_from_catalog": "Из каталога",
     "my_stack_from_catalog_pk": "Из каталога · есть PK-профиль",
+    "my_stack_combination": "Комбинированный препарат",
     "my_stack_detach_catalog": "Снять выбор"
   },
   "tr": {
@@ -2714,6 +2724,7 @@
     "my_stack_tracking_curve_explained": "Etken madde miktarı, saat ve maddenin PK profili — kayıtlı emilim ve atılım hızları — üzerinden uygulama alımlar arasındaki eğriyi hesaplar.",
     "my_stack_from_catalog": "Katalogdan",
     "my_stack_from_catalog_pk": "Katalogdan · PK profili mevcut",
+    "my_stack_combination": "Kombinasyon ürünü",
     "my_stack_detach_catalog": "Seçimi kaldır"
   },
   "zh": {
@@ -2961,6 +2972,7 @@
     "my_stack_tracking_curve_explained": "根据含量、时间以及该物质的 PK 曲线参数（已存的吸收与消除速度），应用算出两次服用之间的走势。",
     "my_stack_from_catalog": "来自目录",
     "my_stack_from_catalog_pk": "来自目录 · 有 PK 档案",
+    "my_stack_combination": "复方制剂",
     "my_stack_detach_catalog": "清除选择"
   }
 }

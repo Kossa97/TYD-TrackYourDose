@@ -1120,5 +1120,6 @@
   "my_stack_strength_hint_vial_solution": "Saisis la concentration telle qu’elle figure sur l’étiquette. Exemple : 250 mg pour 1 ml. Si ton flacon contient une poudre que tu dissous d’abord, choisis « Peptide » comme catégorie — l’étape demandera alors le solvant. Pas une recommandation de dosage.",
   "my_stack_browse_catalog": "Parcourir le catalogue",
   "my_stack_jump_to_letter": "Aller à {{letter}}",
-  "stack_category_other": "Autre"
+  "stack_category_other": "Autre",
+  "my_stack_combination": "Association"
 }

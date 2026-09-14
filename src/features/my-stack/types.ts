@@ -43,6 +43,12 @@ export interface SubstanceCatalogEntry {
   suggested_dosage_forms: DosageFormKey[]
   pk_profile_id: string | null
   active: boolean
+  // Ein Kombipraeparat nennt hier die kanonischen Namen seiner Bestandteile —
+  // „CJC-1295 ohne DAC + Ipamorelin" also die beiden Peptide. Leer oder
+  // fehlend heisst: eine einzelne Substanz. Optional, weil aeltere Abfragen
+  // (etwa der eingebettete Katalog an `stack_item_ingredients`) die Spalte
+  // nicht mitlesen.
+  component_names?: string[] | null
 }
 
 export interface StackItemIngredient {
@@ -88,6 +94,12 @@ export interface StackItem {
 
 export interface StackItemDraft {
   id?: string
+  // Der Katalogeintrag, aus dem der Entwurf stammt. Bei einer EINZELNEN
+  // Substanz steht dieselbe id auch an der ersten Zutat — bei einem
+  // Kombipraeparat nicht: dort tragen die Zutaten die ids der BESTANDTEILE,
+  // und ohne dieses Feld liesse sich nicht mehr sagen, was gewaehlt wurde.
+  // Nur fuer das Formular; gespeichert wird es nicht.
+  catalogEntryId?: string | null
   displayName: string
   category: StackCategory | null
   trackingLevel: TrackingLevel

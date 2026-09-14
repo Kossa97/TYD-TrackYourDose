@@ -30,8 +30,12 @@ const CATALOG_COLUMNS = [
   'suggested_units',
   'suggested_dosage_forms',
   'pk_profile_id',
+  'component_names',
   'active',
 ].join(', ')
+
+/** So viele Treffer zeigt die Suche hoechstens. */
+const MAX_TREFFER = 20
 
 function normalize(value: string): string {
   return value.trim().toLocaleLowerCase()
@@ -62,8 +66,15 @@ export async function searchSubstanceCatalog(
 
     if (error) return { entries: [], unavailable: true }
 
+    // Die Obergrenze gilt der TREFFERLISTE, nicht dem Katalog. Ohne Suchwort
+    // fragt die Seite den ganzen Katalog ab, um ihn im Blaettern zu zeigen und
+    // um die Bestandteile eines Kombipraeparats aufloesen zu koennen — und
+    // bekam bisher zwanzig von zweihundert Substanzen. Der Rest war nicht
+    // auffindbar.
+    const treffer = filterCatalog(data ?? [], query)
+
     return {
-      entries: filterCatalog(data ?? [], query).slice(0, 20),
+      entries: query.trim() ? treffer.slice(0, MAX_TREFFER) : treffer,
       unavailable: false,
     }
   } catch {

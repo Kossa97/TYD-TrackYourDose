@@ -29,6 +29,7 @@ import {
   type WizardSaveMode,
   type WizardStep,
 } from '../lib/wizardState'
+import { bestandteileAufloesen } from '../lib/kombination'
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
 import { evaluatePkReadiness, toPkMilligrams } from '../lib/pkReadiness'
 import { useSloshEngine } from '../../../components/SloshContext'
@@ -284,15 +285,23 @@ export function StackItemWizard({
       || entry.aliases.some(alias => alias.toLocaleLowerCase().includes(normalizedQuery))
     ))
   }, [catalogEntries, state.draft.displayName])
+  // Der gewaehlte Katalogeintrag. Bei einem Kombipraeparat steht er NICHT an
+  // den Zutaten — die tragen die ids der Bestandteile —, sondern im Entwurf.
+  // Ohne diesen Vorrang zeigte der Substanzschritt nach der Wahl von
+  // „Dymista" den ersten Bestandteil an, also Fluticason.
   const selectedCatalogEntry = useMemo(() => {
     const catalogById = new Map(catalogEntries.map(entry => [entry.id, entry]))
+    const gewaehlt = state.draft.catalogEntryId
+      ? catalogById.get(state.draft.catalogEntryId)
+      : undefined
+    if (gewaehlt) return gewaehlt
     return [...state.draft.ingredients]
       .sort((a, b) => a.position - b.position)
       .map(ingredient => ingredient.catalog_substance_id
         ? catalogById.get(ingredient.catalog_substance_id)
         : undefined)
       .find((entry): entry is SubstanceCatalogEntry => Boolean(entry))
-  }, [catalogEntries, state.draft.ingredients])
+  }, [catalogEntries, state.draft.catalogEntryId, state.draft.ingredients])
   const selectedPkCatalogEntry = useMemo(() => {
     const catalogById = new Map(catalogEntries.map(entry => [entry.id, entry]))
     return [...state.draft.ingredients]
@@ -480,7 +489,11 @@ export function StackItemWizard({
               setShowErrors(false)
             }}
             onSelect={entry => {
-              dispatch({ type: 'catalog_selected', entry })
+              dispatch({
+                type: 'catalog_selected',
+                entry,
+                components: bestandteileAufloesen(entry, catalogEntries),
+              })
               setShowErrors(false)
             }}
             onAddCustom={name => {

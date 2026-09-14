@@ -151,3 +151,113 @@ ihrer Zubereitung.
 
 Stufe 2 (fertige Kombi-Einträge im Katalog) ist offen — sie ist reine
 Bequemlichkeit, seit Stufe 1 jede Zutat an den Katalog hängt.
+
+---
+
+## Nachtrag: Stufe 2 umgesetzt — Kombis stehen im Katalog
+
+> ja, fertige kombi einträge im katalog. da müssen wir die datenbank noch mit
+> bestehenden bekannten kombinationen füllen
+
+### Wie ein Kombi-Eintrag aussieht
+
+Ein Feld `components` in `scripts/substance-catalog-source.mjs`, das die
+**Namen** anderer Einträge nennt:
+
+```js
+{ name: 'Vitamin D3 + K2', aliases: ['D3K2', …], category: 'vitamin',
+  dosageForms: ['capsule', 'drops', 'tablet'], units: ['IU', 'mcg', 'mg'],
+  pkProfile: null, components: ['Vitamin D3', 'Vitamin K2'] }
+```
+
+Namen statt ids: der Katalog hat einen Unique-Index auf
+`lower(canonical_name)` — der Name **ist** der Schlüssel. Er ist im SQL-Editor
+lesbar, übersteht ein Neuaufsetzen der Tabelle, und ein Name, den die App nicht
+auflösen kann, bleibt wenigstens als benannte Zutat stehen statt lautlos zu
+verschwinden. Dass jeder Name existiert, ist keine Fußnote, sondern ein Test.
+
+`pkProfile` ist bei jeder Kombination `null`. Die Bestandteile haben
+verschiedene Halbwertszeiten; ein gemeinsames Profil wäre eine erfundene Kurve.
+Gerechnet wird je Wirkstoff, aus seiner eigenen Konzentration — das ist genau
+die Maschinerie aus Stufe 3.
+
+### Was in der Datenbank steht
+
+**24 Kombinationen**, alle mit Bestandteilen, die einzeln im Katalog liegen:
+
+| | |
+|---|---|
+| Peptid-Blends (8) | CJC-1295 ohne DAC + Ipamorelin, CJC-1295 DAC + Ipamorelin, BPC-157 + TB-500, GHRP-2 + CJC no DAC, GHRP-6 + CJC no DAC, Sermorelin + Ipamorelin, Tesamorelin + Ipamorelin, Semaglutid + Cagrilintid (CagriSema) |
+| Nahrungsergänzung (6) | Vitamin D3 + K2, Calcium + Vitamin D3, Eisen + Vitamin C, ZMA, NMN + Resveratrol, Koffein + L-Theanin |
+| Fixkombinationen (9) | Ibuprofen + Paracetamol, Metformin + Dapagliflozin (Xigduo), Metformin + Empagliflozin (Synjardy), Naltrexon + Bupropion (Mysimba), Levothyroxin + Liothyronin, Ramipril + Amlodipin, Adapalen + Benzoylperoxid (Epiduo), Fluticason + Azelastin (Dymista), Xylometazolin + Dexpanthenol (Nasic) |
+| Hormone (1) | Östradiol + Progesteron (Bijuva) |
+
+Aufgenommen wurde nur, was es als Produkt wirklich gibt — die Handelsnamen
+stehen als Aliase dabei, damit die Suche sie findet.
+
+### Der Vertrag
+
+Vier neue Fälle in `substanceCatalogSource.test.ts`:
+
+- jeder Bestandteil steht einzeln im Katalog (über Name **oder** Alias), und
+  ist selbst keine Kombination — keine Verschachtelung
+- mindestens zwei Bestandteile, keiner doppelt, keiner er selbst
+- kein eigenes PK-Profil
+- jeder Bestandteil teilt mindestens eine Darreichungsform mit der Kombination
+  — ein Kombipräparat aus Pflaster und Tablette gibt es nicht
+
+### Was im Formular passiert
+
+`catalog_selected` legt jetzt **je Bestandteil** eine Zutatenzeile an, mit der
+id des Bestandteils, seinem Namen und seiner üblichen Einheit. Die Zeilen
+tragen bewusst **nicht** die id des Produkts: nur so hängt jeder Wirkstoff an
+seinem eigenen PK-Profil.
+
+Damit fehlte allerdings die Information, *was* gewählt wurde — bei einer
+Kombination steht ihre id an keiner Zutat. Dafür gibt es `catalogEntryId` im
+Entwurf (nur fürs Formular, nicht gespeichert). Ohne das Feld zeigte der
+Substanzschritt nach der Wahl von „Dymista" den ersten Bestandteil an, also
+Fluticason.
+
+Das Lösen (`catalog_detached`) fällt bei einer Kombination auf **eine** freie
+Zeile mit dem Produktnamen zurück. Selbst hinzugefügte Zutaten bleiben dagegen
+stehen — dort trägt die erste Zeile die id des Eintrags, und daran lassen sich
+die beiden Fälle unterscheiden.
+
+Sichtbar ist es zweimal: in der Trefferliste steht unter einer Kombination
+„Kombipräparat · Fluticason + Azelastin", und nach der Wahl an derselben
+Stelle, wo sonst „Aus dem Katalog" steht.
+
+### Ein Fund nebenbei: der Katalog war auf zwanzig Einträge gedeckelt
+
+`searchSubstanceCatalog` schnitt **immer** nach 20 Treffern ab — auch beim Laden
+ohne Suchwort, mit dem die Seite den ganzen Katalog holt. Die App kannte
+deshalb zwanzig von zweihundert Substanzen: das Blättern zeigte zwanzig, die
+Suche fand nur unter diesen zwanzig, und die Bestandteile einer Kombination
+hätten sich gar nicht auflösen lassen. Die Grenze gilt jetzt der Trefferliste,
+nicht der Abfrage.
+
+### Die Datenbank
+
+Zwei Dateien, in dieser Reihenfolge:
+
+1. `supabase-my-stack-catalog-combinations.sql` — die Spalte
+   `component_names text[] not null default '{}'`, idempotent.
+2. `supabase-my-stack-catalog-expansion.sql` — generiert, füllt sie.
+
+**Trockenlauf** (Postgres 16 lokal, `/var/tmp`): den Ist-Zustand der Produktion
+nachgebaut — 93 PK-Profile, 182 Katalogzeilen, 93 davon verknüpft, exakt die
+Zahlen aus der echten Datenbank. Beide Dateien **zweimal** laufen lassen:
+206 Zeilen, 24 Kombinationen, 93 Verknüpfungen, der zweite Lauf ändert nichts.
+Null unauflösbare Bestandteilnamen.
+
+**Produktion:** 182 → **206 Zeilen**, **24 Kombinationen**, 93 Verknüpfungen,
+**0 unauflösbare** Bestandteile. Die Prüfsumme über alle Zeilen (Name, Aliase,
+Kategorie, Formen, Einheiten, Bestandteile, Profilname) stimmt mit dem
+Trockenlauf überein: `3e7d8d74c746bbcf4752a44d72b21361`.
+
+### Verifikation
+
+- **1534 Tests grün** (144 Dateien, 16 neue)
+- `npx tsc -p tsconfig.app.json --noEmit` — sauber
+- `npx eslint src scripts` — **140 Probleme**, unverändert zur Baseline

@@ -1124,5 +1124,6 @@
   "my_stack_strength_hint_vial_solution": "أدخل التركيز كما هو مدوَّن على الملصق. مثال: 250 مغ لكل 1 مل. إذا كانت قارورتك تحتوي على مسحوق تذيبه أولاً، فاختر «ببتيد» كفئة — عندها يسأل عن المذيب. ليست توصية جرعة.",
   "my_stack_browse_catalog": "تصفّح الفهرس",
   "my_stack_jump_to_letter": "الانتقال إلى {{letter}}",
-  "stack_category_other": "أخرى"
+  "stack_category_other": "أخرى",
+  "my_stack_combination": "مستحضر مركب"
 }

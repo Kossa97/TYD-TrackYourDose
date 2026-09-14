@@ -29,13 +29,17 @@
  *   units        Wirkstoffeinheiten, die uebliche zuerst. Jede muss zu einer
  *                der genannten Formen passen.
  *   pkProfile    Name in `pk_profiles`, oder null
+ *   components   optional: die Bestandteile eines Kombipraeparats, als Namen
+ *                anderer Eintraege. Nicht leer heisst: dieser Eintrag IST eine
+ *                Kombination. Er traegt dann kein eigenes PK-Profil — die
+ *                Kurve entsteht je Wirkstoff aus dessen eigenem Profil.
  *   renameFrom   optional: die Schreibweise, unter der die Zeile HEUTE in der
  *                Datenbank steht. Ohne sie legt der Upsert eine zweite Zeile
  *                an, statt die bestehende zu treffen — und die bestehende
  *                traegt die id, an der `stack_item_ingredients` haengt.
  */
 
-/** @typedef {{ name: string, aliases: string[], category: string, dosageForms: string[], units: string[], pkProfile: string | null, renameFrom?: string }} SubstanceSeed */
+/** @typedef {{ name: string, aliases: string[], category: string, dosageForms: string[], units: string[], pkProfile: string | null, renameFrom?: string, components?: string[] }} SubstanceSeed */
 
 /** @type {SubstanceSeed[]} */
 export const SUBSTANCE_CATALOG = [
@@ -235,7 +239,7 @@ export const SUBSTANCE_CATALOG = [
   { name: 'Clotrimazol', aliases: ['Clotrimazole', 'Canesten'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
   { name: 'Tacrolimus', aliases: ['Protopic'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
   { name: 'Minoxidil', aliases: ['Regaine', 'Rogaine'], category: 'medication', dosageForms: ['spray', 'drops', 'gel', 'tablet'], units: ['mg'], pkProfile: null },
-  { name: 'Dexpanthenol', aliases: ['Bepanthen', 'Panthenol'], category: 'medication', dosageForms: ['gel', 'tube', 'drops'], units: ['mg'], pkProfile: null },
+  { name: 'Dexpanthenol', aliases: ['Bepanthen', 'Panthenol'], category: 'medication', dosageForms: ['gel', 'tube', 'drops', 'nasal_spray'], units: ['mg'], pkProfile: null },
   { name: 'Zinkoxid', aliases: ['Zinksalbe', 'Zinc oxide'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null },
 
   // Pflanzlich, aeusserlich
@@ -284,4 +288,50 @@ export const SUBSTANCE_CATALOG = [
   // die die App nicht kennt und die fuer Menschen ohnehin nicht in Frage
   // kommt.
   { name: 'SLU-PP-332', aliases: ['SLU PP 332', 'SLUPP-332', 'SLUPP332'], category: 'peptide', dosageForms: ['vial', 'capsule'], units: ['mg', 'mcg'], pkProfile: null },
+
+  // ── Kombipraeparate ──────────────────────────────────────────────────
+  // Ein Eintrag, der beim Auswaehlen MEHRERE Zutatenzeilen fuellt. Er ist
+  // keine eigene Substanz: `components` nennt die Eintraege, aus denen er
+  // besteht, und jeder davon steht oben einzeln.
+  //
+  // Warum kein eigenes PK-Profil: die Bestandteile haben verschiedene
+  // Halbwertszeiten. Ein gemeinsames Profil waere eine erfundene Kurve —
+  // gerechnet wird je Wirkstoff, aus seiner eigenen Konzentration im Produkt
+  // (siehe `mgPerMlFromStrength`). Der Test haelt das fest.
+  //
+  // Aufgenommen wurde, was es wirklich gibt: zugelassene Fixkombinationen
+  // (Dymista, Mysimba, Synjardy, Epiduo …), gaengige Peptid-Blends, und die
+  // Nahrungsergaenzungen, die als ein Produkt verkauft werden.
+
+  // Peptid-Blends — ein Vial, zwei Wirkstoffe, gemeinsam rekonstituiert
+  { name: 'CJC-1295 ohne DAC + Ipamorelin', aliases: ['CJC-1295 no DAC + Ipamorelin', 'CJC + Ipamorelin', 'CJC/Ipa', 'Mod GRF 1-29 + Ipamorelin'], category: 'peptide', dosageForms: ['vial'], units: ['mg', 'mcg'], pkProfile: null, components: ['CJC-1295 ohne DAC', 'Ipamorelin'] },
+  { name: 'CJC-1295 DAC + Ipamorelin', aliases: ['CJC-1295 with DAC + Ipamorelin', 'CJC DAC + Ipa'], category: 'peptide', dosageForms: ['vial'], units: ['mg', 'mcg'], pkProfile: null, components: ['CJC-1295', 'Ipamorelin'] },
+  { name: 'BPC-157 + TB-500', aliases: ['BPC-157 und TB-500', 'BPC/TB-500', 'Wolverine Blend'], category: 'peptide', dosageForms: ['vial'], units: ['mg', 'mcg'], pkProfile: null, components: ['BPC-157', 'TB-500'] },
+  { name: 'GHRP-2 + CJC-1295 ohne DAC', aliases: ['GHRP-2 + Mod GRF 1-29', 'GHRP-2 / CJC no DAC'], category: 'peptide', dosageForms: ['vial'], units: ['mcg', 'mg'], pkProfile: null, components: ['GHRP-2', 'CJC-1295 ohne DAC'] },
+  { name: 'GHRP-6 + CJC-1295 ohne DAC', aliases: ['GHRP-6 + Mod GRF 1-29', 'GHRP-6 / CJC no DAC'], category: 'peptide', dosageForms: ['vial'], units: ['mcg', 'mg'], pkProfile: null, components: ['GHRP-6', 'CJC-1295 ohne DAC'] },
+  { name: 'Sermorelin + Ipamorelin', aliases: ['Sermorelin/Ipamorelin'], category: 'peptide', dosageForms: ['vial'], units: ['mcg', 'mg'], pkProfile: null, components: ['Sermorelin', 'Ipamorelin'] },
+  { name: 'Tesamorelin + Ipamorelin', aliases: ['Tesamorelin/Ipamorelin', 'Tesa + Ipa'], category: 'peptide', dosageForms: ['vial'], units: ['mg', 'mcg'], pkProfile: null, components: ['Tesamorelin', 'Ipamorelin'] },
+  { name: 'Semaglutid + Cagrilintid', aliases: ['CagriSema', 'Semaglutide + Cagrilintide'], category: 'peptide', dosageForms: ['pen', 'vial'], units: ['mg', 'mcg'], pkProfile: null, components: ['Semaglutid', 'Cagrilintid'] },
+
+  // Vitamine und Nahrungsergaenzung — als ein Produkt verkauft
+  { name: 'Vitamin D3 + K2', aliases: ['Vitamin D3 K2', 'D3 + K2', 'D3K2', 'Vitamin D3 plus K2'], category: 'vitamin', dosageForms: ['capsule', 'drops', 'tablet'], units: ['IU', 'mcg', 'mg'], pkProfile: null, components: ['Vitamin D3', 'Vitamin K2'] },
+  { name: 'Calcium + Vitamin D3', aliases: ['Calcium D3', 'Calcium-Vitamin-D3', 'Calcium plus D3'], category: 'supplement', dosageForms: ['tablet', 'capsule'], units: ['mg', 'IU'], pkProfile: null, components: ['Calcium', 'Vitamin D3'] },
+  { name: 'Eisen + Vitamin C', aliases: ['Eisen mit Vitamin C', 'Iron + Vitamin C'], category: 'supplement', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: null, components: ['Eisen', 'Vitamin C'] },
+  { name: 'ZMA', aliases: ['Zink-Magnesium-Aspartat', 'Zink + Magnesium + B6', 'ZMA Komplex'], category: 'supplement', dosageForms: ['capsule', 'tablet'], units: ['mg', 'mcg'], pkProfile: null, components: ['Zink', 'Magnesium', 'Vitamin B6'] },
+  { name: 'NMN + Resveratrol', aliases: ['NMN mit Resveratrol', 'NMN/Resveratrol'], category: 'supplement', dosageForms: ['capsule'], units: ['mg'], pkProfile: null, components: ['NMN', 'Resveratrol'] },
+  { name: 'Koffein + L-Theanin', aliases: ['Caffeine + L-Theanine', 'Koffein/Theanin'], category: 'supplement', dosageForms: ['capsule', 'tablet'], units: ['mg'], pkProfile: null, components: ['Koffein', 'L-Theanin'] },
+
+  // Zugelassene Fixkombinationen
+  { name: 'Ibuprofen + Paracetamol', aliases: ['Paracetamol + Ibuprofen', 'Ibuprofen/Paracetamol'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null, components: ['Ibuprofen', 'Paracetamol'] },
+  { name: 'Metformin + Dapagliflozin', aliases: ['Xigduo', 'Dapagliflozin/Metformin'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null, components: ['Metformin', 'Dapagliflozin'] },
+  { name: 'Metformin + Empagliflozin', aliases: ['Synjardy', 'Empagliflozin/Metformin'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null, components: ['Metformin', 'Empagliflozin'] },
+  { name: 'Naltrexon + Bupropion', aliases: ['Mysimba', 'Contrave', 'Bupropion/Naltrexon'], category: 'medication', dosageForms: ['tablet'], units: ['mg'], pkProfile: null, components: ['Naltrexon', 'Bupropion'] },
+  { name: 'Levothyroxin + Liothyronin', aliases: ['Novothyral', 'Prothyrid', 'T4 + T3'], category: 'medication', dosageForms: ['tablet'], units: ['mcg'], pkProfile: null, components: ['Levothyroxin', 'Liothyronin'] },
+  { name: 'Ramipril + Amlodipin', aliases: ['Amlodipin/Ramipril', 'Tonarssa'], category: 'medication', dosageForms: ['tablet', 'capsule'], units: ['mg'], pkProfile: null, components: ['Ramipril', 'Amlodipin'] },
+  { name: 'Adapalen + Benzoylperoxid', aliases: ['Epiduo', 'Adapalen/BPO'], category: 'medication', dosageForms: ['gel', 'tube'], units: ['mg'], pkProfile: null, components: ['Adapalen', 'Benzoylperoxid'] },
+  { name: 'Fluticason + Azelastin', aliases: ['Dymista', 'Azelastin/Fluticason'], category: 'medication', dosageForms: ['nasal_spray'], units: ['mcg'], pkProfile: null, components: ['Fluticason', 'Azelastin'] },
+  { name: 'Xylometazolin + Dexpanthenol', aliases: ['Nasic', 'Olynth plus', 'Xylo + Dexpanthenol'], category: 'medication', dosageForms: ['nasal_spray'], units: ['mg', 'mcg'], pkProfile: null, components: ['Xylometazolin', 'Dexpanthenol'] },
+
+  // Hormone
+  { name: 'Östradiol + Progesteron', aliases: ['Estradiol + Progesteron', 'Bijuva'], category: 'hormone', dosageForms: ['capsule', 'tablet', 'gel'], units: ['mg'], pkProfile: null, components: ['Östradiol', 'Progesteron'] },
 ]

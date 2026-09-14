@@ -1120,5 +1120,6 @@
   "my_stack_strength_hint_vial_solution": "Insira a concentração como consta no rótulo. Exemplo: 250 mg por 1 ml. Se o seu frasco contém um pó que você dissolve primeiro, escolha «Peptídeo» como categoria — então o passo perguntará pelo solvente. Não é uma recomendação de dose.",
   "my_stack_browse_catalog": "Explorar o catálogo",
   "my_stack_jump_to_letter": "Ir para {{letter}}",
-  "stack_category_other": "Outros"
+  "stack_category_other": "Outros",
+  "my_stack_combination": "Produto combinado"
 }

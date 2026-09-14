@@ -24,6 +24,7 @@ interface SubstanceSeed {
   dosageForms: DosageFormKey[]
   units: string[]
   pkProfile: string | null
+  components?: string[]
 }
 
 const quelle = await import(
@@ -170,6 +171,72 @@ describe('Substanzkatalog (Quelldatei)', () => {
       .filter(key => key !== 'other' && !belegt.has(key))
 
     expect(fehlend, `Formen ohne Substanz: ${fehlend.join(', ')}`).toEqual([])
+  })
+
+  it('nennt als Bestandteil nur, was auch einzeln im Katalog steht', () => {
+    // Die Aufloesung laeuft im Formular ueber den Namen. Ein Tippfehler hier
+    // bricht nichts sichtbar: die Zutatenzeile entstuende ohne Katalogbezug,
+    // also ohne Einheitenvorschlag und ohne PK-Profil — und niemand merkt es.
+    const bekannt = new Map<string, SubstanceSeed>()
+    for (const eintrag of KATALOG) {
+      bekannt.set(eintrag.name.toLowerCase(), eintrag)
+      for (const alias of eintrag.aliases) bekannt.set(alias.toLowerCase(), eintrag)
+    }
+
+    for (const eintrag of KATALOG) {
+      if (!eintrag.components) continue
+      for (const bestandteil of eintrag.components) {
+        const gefunden = bekannt.get(bestandteil.trim().toLowerCase())
+        expect(gefunden, `${eintrag.name}: „${bestandteil}" steht nicht im Katalog`).toBeDefined()
+        expect(gefunden?.components ?? [], `${eintrag.name}: „${bestandteil}" ist selbst eine Kombination`)
+          .toEqual([])
+      }
+    }
+  })
+
+  it('gibt jeder Kombination mindestens zwei verschiedene Bestandteile', () => {
+    // Eine Kombination aus einem Stoff ist keine; ein Stoff, der zweimal
+    // dasteht, legt zwei Zeilen fuer denselben Wirkstoff an.
+    for (const eintrag of KATALOG) {
+      if (!eintrag.components) continue
+      expect(eintrag.components.length, `${eintrag.name}: zu wenige Bestandteile`)
+        .toBeGreaterThanOrEqual(2)
+      const klein = eintrag.components.map(name => name.toLowerCase())
+      expect(new Set(klein).size, `${eintrag.name}: Bestandteil doppelt`).toBe(klein.length)
+      expect(klein, `${eintrag.name}: enthaelt sich selbst`).not.toContain(eintrag.name.toLowerCase())
+    }
+  })
+
+  it('laesst eine Kombination kein eigenes PK-Profil tragen', () => {
+    // Die Bestandteile haben verschiedene Halbwertszeiten. Ein gemeinsames
+    // Profil waere eine erfundene Kurve — gerechnet wird je Wirkstoff.
+    for (const eintrag of KATALOG) {
+      if (!eintrag.components) continue
+      expect(eintrag.pkProfile, `${eintrag.name}: traegt ein eigenes PK-Profil`).toBeNull()
+    }
+  })
+
+  it('gibt jeder Kombination eine Form, die ihre Bestandteile auch haben', () => {
+    // Ein Kombipraeparat aus einem Pflaster und einer Tablette gibt es nicht.
+    // Teilt ein Bestandteil keine einzige Form mit der Kombination, stimmt
+    // eine der beiden Angaben nicht.
+    const nachName = new Map<string, SubstanceSeed>()
+    for (const eintrag of KATALOG) {
+      nachName.set(eintrag.name.toLowerCase(), eintrag)
+      for (const alias of eintrag.aliases) nachName.set(alias.toLowerCase(), eintrag)
+    }
+
+    for (const eintrag of KATALOG) {
+      if (!eintrag.components) continue
+      const formen = new Set(eintrag.dosageForms)
+      for (const bestandteil of eintrag.components) {
+        const teil = nachName.get(bestandteil.trim().toLowerCase())
+        if (!teil) continue
+        const gemeinsam = teil.dosageForms.filter(form => formen.has(form))
+        expect(gemeinsam.length, `${eintrag.name}: „${bestandteil}" teilt keine Form`)
+          .toBeGreaterThan(0)
+      }
+    }
   })
 
   it('erntet jedes PK-Profil, das die App kennt', () => {

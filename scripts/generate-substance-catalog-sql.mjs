@@ -32,7 +32,8 @@ function textArray(werte) {
 const zeilen = SUBSTANCE_CATALOG.map(eintrag => (
   `    (${quote(eintrag.name)}, ${textArray(eintrag.aliases)}, ${quote(eintrag.category)}, `
   + `${textArray(eintrag.dosageForms)}, ${textArray(eintrag.units)}, `
-  + `${eintrag.pkProfile === null ? 'null' : quote(eintrag.pkProfile)})`
+  + `${eintrag.pkProfile === null ? 'null' : quote(eintrag.pkProfile)}, `
+  + `${textArray(eintrag.components ?? [])})`
 )).join(',\n')
 
 // Umbenennungen laufen VOR dem Upsert. Sonst trifft er die alte Schreibweise
@@ -60,13 +61,16 @@ const sql = `-- GENERIERT von scripts/generate-substance-catalog-sql.mjs.
 -- Nicht von Hand aendern — die Quelle ist scripts/substance-catalog-source.mjs.
 -- Neu erzeugen mit: npm run catalog:sql
 --
--- ${SUBSTANCE_CATALOG.length} Substanzen. Der Upsert trifft den Unique-Index auf
--- lower(canonical_name): bekannte Zeilen werden aktualisiert, neue angelegt.
--- Ein zweiter Lauf aendert nichts.
+-- ${SUBSTANCE_CATALOG.length} Substanzen, davon ${SUBSTANCE_CATALOG.filter(e => (e.components ?? []).length > 0).length} Kombipraeparate.
+-- Der Upsert trifft den Unique-Index auf lower(canonical_name): bekannte
+-- Zeilen werden aktualisiert, neue angelegt. Ein zweiter Lauf aendert nichts.
+--
+-- SETZT supabase-my-stack-catalog-combinations.sql VORAUS — dort entsteht
+-- die Spalte component_names, die diese Datei fuellt.
 
 begin;
 
-${umbenennungsBlock}with quelle (canonical_name, aliases, default_category, suggested_dosage_forms, suggested_units, pk_profile_name) as (
+${umbenennungsBlock}with quelle (canonical_name, aliases, default_category, suggested_dosage_forms, suggested_units, pk_profile_name, component_names) as (
   values
 ${zeilen}
 ),
@@ -77,6 +81,7 @@ aufgeloest as (
     quelle.default_category,
     quelle.suggested_dosage_forms,
     quelle.suggested_units,
+    quelle.component_names,
     -- Das PK-Profil wird ueber Name ODER Alias gesucht, wie schon im
     -- Foundation-Seed: der Katalog schreibt "Semaglutid", das Profil
     -- "Semaglutide".
@@ -104,6 +109,7 @@ insert into public.substance_catalog as ziel (
   suggested_dosage_forms,
   suggested_units,
   pk_profile_id,
+  component_names,
   active
 )
 select
@@ -113,6 +119,7 @@ select
   suggested_dosage_forms,
   suggested_units,
   pk_profile_id,
+  component_names,
   true
 from aufgeloest
 on conflict (lower(canonical_name)) do update set
@@ -123,6 +130,7 @@ on conflict (lower(canonical_name)) do update set
   -- Eine bestehende Verknuepfung wird nicht geloescht, nur ergaenzt: steht in
   -- der Quelle kein Profil, bleibt das gefundene stehen.
   pk_profile_id = coalesce(excluded.pk_profile_id, ziel.pk_profile_id),
+  component_names = excluded.component_names,
   active = true,
   updated_at = now();
 
@@ -130,4 +138,5 @@ commit;
 `
 
 writeFileSync(ZIEL, sql)
-console.log(`${ZIEL}: ${SUBSTANCE_CATALOG.length} Substanzen`)
+const kombis = SUBSTANCE_CATALOG.filter(eintrag => (eintrag.components ?? []).length > 0).length
+console.log(`${ZIEL}: ${SUBSTANCE_CATALOG.length} Substanzen, davon ${kombis} Kombipraeparate`)

@@ -1120,5 +1120,6 @@
   "my_stack_strength_hint_vial_solution": "Introduce la concentración tal como aparece en la etiqueta. Ejemplo: 250 mg por 1 ml. Si tu vial contiene un polvo que disuelves primero, elige «Péptido» como categoría: entonces el paso preguntará por el disolvente. No es una recomendación de dosis.",
   "my_stack_browse_catalog": "Explorar el catálogo",
   "my_stack_jump_to_letter": "Ir a {{letter}}",
-  "stack_category_other": "Otros"
+  "stack_category_other": "Otros",
+  "my_stack_combination": "Producto combinado"
 }

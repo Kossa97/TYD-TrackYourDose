@@ -13,6 +13,7 @@ import type {
 import { format } from 'date-fns'
 import { buildDuplicateFingerprint } from './duplicateFingerprint'
 import { getIntakePlanUnitSuggestions, showsColor, strengthBasisDefault } from './dosageForms'
+import type { Kombinationsbestandteil } from './kombination'
 import { trackingCapabilities } from './trackingDepth'
 import { validateIntakePlan, validateStackItemDraft } from './validation'
 
@@ -65,7 +66,16 @@ type IngredientChanges = Partial<Omit<StackItemIngredient, 'position'>>
 
 export type WizardAction =
   | { type: 'step_selected'; step: WizardStep }
-  | { type: 'catalog_selected'; entry: SubstanceCatalogEntry }
+  | {
+      type: 'catalog_selected'
+      entry: SubstanceCatalogEntry
+      /**
+       * Die aufgeloesten Bestandteile, wenn der Eintrag ein Kombipraeparat ist
+       * (`bestandteileAufloesen`). Leer oder fehlend heisst: eine einzelne
+       * Substanz, und es entsteht eine Zutat wie bisher.
+       */
+      components?: readonly Kombinationsbestandteil[]
+    }
   | { type: 'custom_started'; name: string }
   | { type: 'catalog_detached' }
   | { type: 'display_name_changed'; displayName: string }
@@ -212,24 +222,44 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
   switch (action.type) {
     case 'step_selected':
       return { ...state, step: action.step }
-    case 'catalog_selected':
+    case 'catalog_selected': {
+      // Die Kategorie des NEUEN Eintrags, nicht die alte: sie entscheidet beim
+      // Vial, ob dort ein Pulver liegt oder eine fertige Loesung.
+      const basis = basisVorbelegung(state.draft.dosageForm, action.entry.default_category)
+      const bestandteile = action.components ?? []
+
+      // Ein Kombipraeparat bekommt je Bestandteil eine Zeile — das ist der
+      // ganze Zweck des Eintrags. Die Zeilen tragen die ids der BESTANDTEILE,
+      // nicht die des Produkts: nur so haengt jeder Wirkstoff an seinem
+      // eigenen PK-Profil, und nur so laesst sich je Wirkstoff rechnen.
+      // Der Name des Produkts bleibt oben stehen (`displayName`).
+      const ingredients: StackItemIngredient[] = bestandteile.length > 0
+        ? bestandteile.map((bestandteil, index) => ({
+            ...emptyIngredient(index),
+            catalog_substance_id: bestandteil.catalogId,
+            custom_name: bestandteil.name,
+            amount_unit: bestandteil.unit ?? action.entry.suggested_units[0] ?? null,
+            ...basis,
+          }))
+        : [{
+            ...emptyIngredient(0),
+            catalog_substance_id: action.entry.id,
+            amount_unit: action.entry.suggested_units[0] ?? null,
+            ...basis,
+          }]
+
       return {
         ...state,
         draft: {
           ...state.draft,
+          catalogEntryId: action.entry.id,
           displayName: action.entry.canonical_name,
           category: action.entry.default_category,
           plan: { ...state.draft.plan, name: action.entry.canonical_name },
-          ingredients: [{
-            ...emptyIngredient(0),
-            catalog_substance_id: action.entry.id,
-            amount_unit: action.entry.suggested_units[0] ?? null,
-            // Die Kategorie des NEUEN Eintrags, nicht die alte: sie entscheidet
-            // beim Vial, ob dort ein Pulver liegt oder eine fertige Loesung.
-            ...basisVorbelegung(state.draft.dosageForm, action.entry.default_category),
-          }],
+          ingredients,
         },
       }
+    }
     case 'custom_started': {
       const firstIngredient = state.draft.ingredients[0]
       const wasCatalogSelection = state.draft.ingredients.length === 1
@@ -251,6 +281,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         ...state,
         draft: {
           ...state.draft,
+          catalogEntryId: null,
           displayName: action.name,
           category: wasCatalogSelection ? null : state.draft.category,
           plan: { ...state.draft.plan, name: action.name },
@@ -263,19 +294,30 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     // Kategorie, Einheit und PK-Profil, ohne dass es jemand merkte. Jetzt
     // muss man es tun wollen, und der Name bleibt: nur die Verknuepfung faellt.
     case 'catalog_detached': {
-      const frei = state.draft.ingredients.length > 0
-        ? state.draft.ingredients.map((zutat, index) => (
+      // Ein geloestes Kombipraeparat faellt auf EINE freie Zeile zurueck. Die
+      // bestehenden Zeilen sind seine Bestandteile — sie ohne das Produkt
+      // stehen zu lassen hiesse, dass oben „Dymista" steht und unten trotzdem
+      // Fluticason und Azelastin. Selbst hinzugefuegte Zutaten bleiben dagegen
+      // unangetastet: dort traegt die erste Zeile die id des Eintrags.
+      const warKombination = Boolean(state.draft.catalogEntryId)
+        && state.draft.ingredients.length > 1
+        && !state.draft.ingredients.some(
+          zutat => zutat.catalog_substance_id === state.draft.catalogEntryId,
+        )
+      const freieZeile = {
+        ...emptyIngredient(0),
+        custom_name: state.draft.displayName,
+        ...basisVorbelegung(state.draft.dosageForm, state.draft.category),
+      }
+      const frei = warKombination || state.draft.ingredients.length === 0
+        ? [freieZeile]
+        : state.draft.ingredients.map((zutat, index) => (
             index === 0
               ? { ...zutat, catalog_substance_id: null, custom_name: state.draft.displayName }
               : zutat
           ))
-        : [{
-            ...emptyIngredient(0),
-            custom_name: state.draft.displayName,
-            ...basisVorbelegung(state.draft.dosageForm, state.draft.category),
-          }]
 
-      return { ...state, draft: { ...state.draft, ingredients: frei } }
+      return { ...state, draft: { ...state.draft, catalogEntryId: null, ingredients: frei } }
     }
     case 'display_name_changed':
       return {

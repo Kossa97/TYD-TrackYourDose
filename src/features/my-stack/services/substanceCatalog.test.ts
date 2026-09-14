@@ -71,4 +71,20 @@ describe('substance catalog service', () => {
 
     expect(result).toEqual({ entries: entries.slice(0, 20), unavailable: false })
   })
+
+  it('gibt ohne Suchwort den ganzen Katalog heraus, nicht die ersten zwanzig', async () => {
+    // Die Grenze gilt der Trefferliste. Ohne Suchwort fragt die Seite den
+    // ganzen Katalog ab — zum Blättern und um die Bestandteile eines
+    // Kombipräparats aufzulösen. Bekam sie zwanzig von zweihundert, war der
+    // Rest weder auffindbar noch auflösbar.
+    const entries = Array.from({ length: 25 }, (_, index): SubstanceCatalogEntry => ({
+      ...vitaminD3,
+      id: `vitamin-${index}`,
+      canonical_name: `Vitamin ${index}`,
+    }))
+
+    const result = await searchSubstanceCatalog(catalogClient({ data: entries, error: null }), '')
+
+    expect(result.entries).toHaveLength(25)
+  })
 })

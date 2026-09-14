@@ -2,6 +2,7 @@ import { AlertCircle, Check, Plus, Search, X } from 'lucide-react'
 import { useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { STACK_CATEGORIES } from '../lib/categories'
+import { istKombination } from '../lib/kombination'
 import { SubstanceBrowser } from './SubstanceBrowser'
 import type { StackCategory, SubstanceCatalogEntry } from '../types'
 
@@ -41,6 +42,12 @@ export function SubstanceSearch({
 }: SubstanceSearchProps) {
   const { t } = useTranslation()
   const hasQuery = query.trim().length > 0
+  // „Kombipräparat · Fluticason + Azelastin". Wer „Dymista" waehlt, soll sehen,
+  // woraus es besteht — im naechsten Schritt stehen genau diese Zeilen da.
+  const kombinationsHinweis = (entry: SubstanceCatalogEntry): string => ([
+    String(t('my_stack_combination', { defaultValue: 'Kombipräparat' })),
+    (entry.component_names ?? []).join(' + '),
+  ].filter(Boolean).join(' · '))
   const inputRef = useRef<HTMLInputElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const [resultsDismissed, setResultsDismissed] = useState(false)
@@ -94,10 +101,12 @@ export function SubstanceSearch({
             <Check aria-hidden="true" size={18} className="shrink-0 text-[color:var(--accent)]" />
             <span className="min-w-0 flex-1">
               <span className="block truncate font-semibold text-white">{selectedEntry.canonical_name}</span>
-              <span className="block truncate text-[12px] text-slate-400">
-                {selectedEntry.pk_profile_id
-                  ? t('my_stack_from_catalog_pk', { defaultValue: 'Aus dem Katalog · PK-Profil vorhanden' })
-                  : t('my_stack_from_catalog', { defaultValue: 'Aus dem Katalog' })}
+              <span data-substance-selected-hint className="block truncate text-[12px] text-slate-400">
+                {istKombination(selectedEntry)
+                  ? kombinationsHinweis(selectedEntry)
+                  : selectedEntry.pk_profile_id
+                    ? t('my_stack_from_catalog_pk', { defaultValue: 'Aus dem Katalog · PK-Profil vorhanden' })
+                    : t('my_stack_from_catalog', { defaultValue: 'Aus dem Katalog' })}
               </span>
             </span>
             <button
@@ -163,6 +172,11 @@ export function SubstanceSearch({
               }`}
             >
               <span className="block font-semibold text-white">{entry.canonical_name}</span>
+              {istKombination(entry) && (
+                <span data-substance-combination className="mt-1 block text-sm text-[color:var(--accent)]">
+                  {kombinationsHinweis(entry)}
+                </span>
+              )}
               {entry.aliases.length > 0 && (
                 <span className="mt-1 block text-sm text-slate-400">{entry.aliases.join(', ')}</span>
               )}
