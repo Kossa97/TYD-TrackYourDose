@@ -195,17 +195,31 @@ export function SprayVisual({
             <stop offset="50%" stopColor="rgba(255,255,255,0.55)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
           </linearGradient>
-          {/* Der Kopf traegt die Eintragsfarbe, einfarbig ueber alle drei
-              Teile — dieselbe Entscheidung wie beim Tropfenkopf. Die Verlaeufe
-              darueber legen nur Licht und Schatten auf einen Zylinder. */}
+          {/* Weisses Polypropylen: matt, weiche Kante, kein Metallglanz —
+              dasselbe Material wie am Nasenspraykopf, und dasselbe, aus dem
+              ein Mundspraykopf in Wirklichkeit ist.
+              Vorher trug der Kopf die EINTRAGSFARBE. Das machte aus einem
+              Pumpkopf ein gefaerbtes Bauteil, das es so nicht gibt: die Farbe
+              gehoert dem Inhalt (Fluessigkeit und Etikettband), nicht der
+              Mechanik darueber. */}
+          <linearGradient id={`${uid}-pp`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#9aa6b4" />
+            <stop offset="16%" stopColor="#f4f7fb" />
+            <stop offset="52%" stopColor="#e2e8f0" />
+            <stop offset="86%" stopColor="#c2cbd7" />
+            <stop offset="100%" stopColor="#8d99a8" />
+          </linearGradient>
+          {/* Licht und Schatten auf dem Zylinder, jetzt auf hellem Material —
+              deshalb flacher als zuvor: die alten Werte waren fuer eine
+              gesaettigte Eintragsfarbe gerechnet und machten aus Weiss Grau. */}
           <linearGradient id={`${uid}-headShade`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="rgba(0,0,0,0.55)" />
-            <stop offset="9%" stopColor="rgba(0,0,0,0.22)" />
-            <stop offset="26%" stopColor="rgba(255,255,255,0.28)" />
-            <stop offset="48%" stopColor="rgba(255,255,255,0.05)" />
-            <stop offset="74%" stopColor="rgba(0,0,0,0.18)" />
-            <stop offset="93%" stopColor="rgba(0,0,0,0.42)" />
-            <stop offset="100%" stopColor="rgba(0,0,0,0.6)" />
+            <stop offset="0%" stopColor="rgba(0,0,0,0.30)" />
+            <stop offset="9%" stopColor="rgba(0,0,0,0.10)" />
+            <stop offset="26%" stopColor="rgba(255,255,255,0.30)" />
+            <stop offset="48%" stopColor="rgba(255,255,255,0.06)" />
+            <stop offset="74%" stopColor="rgba(0,0,0,0.08)" />
+            <stop offset="93%" stopColor="rgba(0,0,0,0.20)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.32)" />
           </linearGradient>
           <linearGradient id={`${uid}-headLight`} x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="rgba(255,255,255,0)" />
@@ -351,7 +365,7 @@ export function SprayVisual({
             width={SPRAY_NOZZLE.width}
             height={SPRAY_NOZZLE.height}
             rx={SPRAY_NOZZLE.rx}
-            fill={color}
+            fill={`url(#${uid}-pp)`}
           />
           <rect
             data-spray-detail="collar"
@@ -359,7 +373,7 @@ export function SprayVisual({
             y={SPRAY_COLLAR.y}
             width={SPRAY_COLLAR.width}
             height={SPRAY_COLLAR.height}
-            fill={color}
+            fill={`url(#${uid}-pp)`}
           />
           <rect
             data-spray-detail="actuator"
@@ -368,7 +382,7 @@ export function SprayVisual({
             width={SPRAY_ACTUATOR.width}
             height={SPRAY_ACTUATOR.height}
             rx={SPRAY_ACTUATOR.rx}
-            fill={color}
+            fill={`url(#${uid}-pp)`}
           />
 
           {/* Licht und Schatten liegen als eigene Ebene ueber allen drei

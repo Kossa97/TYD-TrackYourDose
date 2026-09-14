@@ -30,14 +30,28 @@ describe('SprayVisual', () => {
     expect(html).toContain('border-y border-white/40 bg-white/28')
   })
 
-  it('faerbt den Kopf einfarbig, nicht das Glas', () => {
-    // Dieselbe Entscheidung wie beim Tropfenkopf: alle drei Teile in einer
-    // Farbe, Licht und Schatten als eigene Ebene darueber.
+  it('laesst den Kopf weiss, egal welche Farbe der Eintrag hat', () => {
+    // Ein Pumpkopf ist weisses Polypropylen — dasselbe Material wie am
+    // Nasenspray, und dasselbe, aus dem er in Wirklichkeit ist. Vorher trug
+    // er die Eintragsfarbe und wurde damit zu einem gefaerbten Bauteil, das
+    // es so nicht gibt. Die Farbe gehoert dem Inhalt, nicht der Mechanik
+    // darueber.
     const html = render({ color: '#f97316' })
-    expect(html).toMatch(/data-spray-detail="actuator"[^>]*fill="#f97316"/)
-    expect(html).toMatch(/data-spray-detail="nozzle"[^>]*fill="#f97316"/)
-    expect(html).toMatch(/data-spray-detail="collar"[^>]*fill="#f97316"/)
+    for (const teil of ['actuator', 'nozzle', 'collar']) {
+      expect(html, teil).toMatch(new RegExp(`data-spray-detail="${teil}"[^>]*fill="url\\(#[^)]*-pp\\)"`))
+      expect(html, teil).not.toMatch(new RegExp(`data-spray-detail="${teil}"[^>]*fill="#f97316"`))
+    }
     expect(html).not.toMatch(/data-spray-detail="outer-contour"[^>]*fill="#f97316"/)
+
+    // Und byteweise dasselbe Polypropylen wie am Nasenspray — sonst stehen
+    // zwei Sprays aus verschiedenem Kunststoff nebeneinander.
+    expect(source()).toContain('<stop offset="16%" stopColor="#f4f7fb" />')
+    expect(source()).toContain('<stop offset="100%" stopColor="#8d99a8" />')
+  })
+
+  it('gibt die Eintragsfarbe weiter an das, was sie traegt: die Fluessigkeit', () => {
+    const html = render({ color: '#f97316' })
+    expect(html).toContain('#f97316')
   })
 
   it('benutzt dasselbe Klarglas wie die anderen Glasformen', () => {
