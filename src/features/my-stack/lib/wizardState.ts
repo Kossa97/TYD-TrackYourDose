@@ -1,7 +1,9 @@
 import type {
   DosageFormKey,
   IntakePlanDraft,
+  IntakeSlotDraft,
   InventoryDraft,
+  RoutineGroup,
   StackCategory,
   StackItem,
   StackItemDraft,
@@ -13,6 +15,7 @@ import type {
 import { format } from 'date-fns'
 import { buildDuplicateFingerprint } from './duplicateFingerprint'
 import { getIntakePlanUnitSuggestions, showsColor, strengthBasisDefault } from './dosageForms'
+import { isOnDemand, slotCountForFrequency } from './intakeFrequency'
 import type { Kombinationsbestandteil } from './kombination'
 import { trackingCapabilities } from './trackingDepth'
 import { validateIntakePlan, validateStackItemDraft } from './validation'
@@ -120,6 +123,25 @@ function basisVorbelegung(
   return { basis_value: vorgabe.value, basis_unit: vorgabe.unit }
 }
 
+/**
+ * Die Einnahmezeitpunkte, die zur Frequenz gehoeren. Bestehende bleiben stehen
+ * (samt gesetzter Uhrzeit), fehlende kommen dazu, ueberzaehlige fallen weg.
+ * Ein neuer Zeitpunkt startet auf der Tageszeit, die noch frei ist — zweimal
+ * „morgens" ist nie gemeint.
+ */
+function slotsFuerFrequenz(plan: IntakePlanDraft): IntakeSlotDraft[] {
+  if (isOnDemand(plan.frequency)) return []
+  const anzahl = slotCountForFrequency(plan.frequency)
+  const reihenfolge: RoutineGroup[] = ['morning', 'midday', 'evening']
+  const slots = plan.slots.slice(0, anzahl)
+  while (slots.length < anzahl) {
+    const belegt = new Set(slots.map(slot => slot.routineGroup))
+    const frei = reihenfolge.find(gruppe => !belegt.has(gruppe)) ?? 'morning'
+    slots.push({ routineGroup: frei, time: null })
+  }
+  return slots
+}
+
 function emptyPlan(name: string): IntakePlanDraft {
   return {
     name,
@@ -131,8 +153,7 @@ function emptyPlan(name: string): IntakePlanDraft {
     scheduleDays: [],
     startDate: format(new Date(), 'yyyy-MM-dd'),
     endDate: null,
-    routineGroup: 'morning',
-    time: null,
+    slots: [{ routineGroup: 'morning', time: null }],
     reminders: [],
   }
 }
@@ -421,11 +442,17 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
           inventory: { ...state.draft.inventory, ...action.changes },
         },
       }
-    case 'plan_changed':
+    case 'plan_changed': {
+      const plan = { ...state.draft.plan, ...action.changes }
+      // Die Zahl der Einnahmezeitpunkte folgt der Frequenz, nicht der Hand:
+      // „2x taeglich" hat zwei, „Bei Bedarf" keinen. Sie hier anzupassen statt
+      // im Formular heisst, dass jeder Weg zum selben Ergebnis fuehrt — auch
+      // das Laden eines bestehenden Zyklus.
       return {
         ...state,
-        draft: { ...state.draft, plan: { ...state.draft.plan, ...action.changes } },
+        draft: { ...state.draft, plan: { ...plan, slots: slotsFuerFrequenz(plan) } },
       }
+    }
     case 'save_mode_selected':
       return { ...state, saveMode: action.mode }
   }
@@ -485,7 +512,9 @@ export function firstInvalidField(state: WizardState): string | null {
     if (planErrors.xDaysInterval) return 'plan.xDaysInterval'
     if (planErrors.scheduleDays) return 'plan.scheduleDays'
     if (planErrors.startDate) return 'plan.startDate'
-    if (planErrors.routineGroup) return 'plan.routineGroup'
+    if (planErrors.endDate) return 'plan.endDate'
+    const fehlenderSlot = planErrors.slots?.findIndex(Boolean) ?? -1
+    if (fehlenderSlot >= 0) return `plan.slots.${fehlenderSlot}.routineGroup`
     if (planErrors.dose) return 'plan.dose'
     if (planErrors.unit) return 'plan.unit'
   }

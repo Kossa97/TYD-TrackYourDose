@@ -48,7 +48,10 @@ interface RecordedMutation {
 
 function resolvedQuery(data: unknown) {
   const query: Record<string, unknown> = {}
-  for (const method of ['eq', 'gte', 'lte', 'order', 'limit', 'single']) {
+  // `select` gehoert dazu, weil ein Insert sein Ergebnis zurueckliest
+  // (`.insert(...).select('id').single()`) — ohne das lief die Kette ins Leere
+  // und warf eine unbehandelte Ablehnung neben dem gruenen Test.
+  for (const method of ['eq', 'gte', 'lte', 'order', 'limit', 'single', 'select']) {
     query[method] = vi.fn(() => query)
   }
   query.then = (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => (
@@ -109,6 +112,17 @@ function intakeOnlyCycle() {
   }
 }
 
+function onDemandCycle() {
+  return {
+    ...intakeOnlyCycle(),
+    id: 'cycle-2',
+    name: 'Ibuprofen',
+    stack_item_id: 'stack-2',
+    frequency: 'Bei Bedarf',
+    stack_items: { display_name: 'Ibuprofen', tracking_level: 'intake_only' },
+  }
+}
+
 function renderDashboard(client: ReturnType<typeof createDashboardClient>) {
   const TestDashboard = Dashboard as ComponentType<{ dashboardDataClient: unknown }>
   return render(createElement(MemoryRouter, null, createElement(TestDashboard, { dashboardDataClient: client })))
@@ -143,6 +157,39 @@ describe('Dashboard intake confirmation actions', () => {
       dose: null,
       unit: null,
       injectable: true,
+    })
+  })
+
+  it('bietet „Bei Bedarf" zum Eintragen an, ohne es fällig zu machen', async () => {
+    // Der Haken an einer Frequenz ohne Plan: `cycleAppliesToDay` gibt für sie
+    // nie true zurück — richtig so, nichts soll fällig werden oder als
+    // verpasst gelten. Genau deshalb erschiene sie ohne diesen Weg NIRGENDS,
+    // und man könnte ein Schmerzmittel gar nicht eintragen.
+    const client = createDashboardClient({
+      cycles: [onDemandCycle()],
+      dose_logs: [],
+      stack_items: [{ id: 'stack-2', display_name: 'Ibuprofen', dosage_form: 'tablet' }],
+      dose_escalations: [],
+    })
+    renderDashboard(client)
+
+    const zeile = await waitFor(() => {
+      const treffer = document.querySelector('[data-on-demand-cycle="cycle-2"]')
+      if (!treffer) throw new Error('keine Bei-Bedarf-Zeile')
+      return treffer as HTMLElement
+    })
+    expect(zeile.textContent).toContain('Ibuprofen')
+
+    // Kein „fällig", kein „verpasst": es steht keine geplante Einnahme da.
+    expect(screen.queryByRole('button', { name: 'Alle als eingenommen markieren' })).toBeNull()
+
+    fireEvent.click(within(zeile).getByRole('button', { name: 'Eingenommen' }))
+    await waitFor(() => expect(
+      client.mutations.filter(eintrag => eintrag.table === 'dose_logs' && eintrag.kind === 'insert'),
+    ).toHaveLength(1))
+    expect(client.mutations.find(eintrag => eintrag.kind === 'insert')?.values).toMatchObject({
+      stack_item_id: 'stack-2',
+      taken: true,
     })
   })
 

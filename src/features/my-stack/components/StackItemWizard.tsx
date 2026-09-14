@@ -83,7 +83,7 @@ function pkIntentSteps(
   const planNeedsAttention = !methodMatches
     || plan?.dose == null
     || !plan.unit?.trim()
-    || !plan.time?.trim()
+    || !plan.slots.some(slot => slot.time?.trim())
     || (plan.dose != null && plan.unit != null && toPkMilligrams(plan.dose, plan.unit, iuPerMg) == null)
   if (planNeedsAttention) steps.push('plan')
   return steps.length ? steps : ['plan']
@@ -418,7 +418,9 @@ export function StackItemWizard({
         method: state.draft.plan.method,
         dose: state.draft.plan.dose,
         unit: state.draft.plan.unit,
-        scheduledAt: state.draft.plan.time,
+        // Die PK-Kurve braucht EINEN Startzeitpunkt. Bei mehreren Einnahmen
+        // am Tag ist das die erste mit gesetzter Uhrzeit.
+        scheduledAt: state.draft.plan.slots.find(slot => slot.time?.trim())?.time ?? null,
       })
       if (readiness.status !== 'ready') {
         const field = readiness.status === 'unsupported'
@@ -426,7 +428,7 @@ export function StackItemWizard({
           : readiness.missing[0] === 'complete_tracking' ? 'trackingLevel'
             : readiness.missing[0] === 'dose' ? 'plan.dose'
               : readiness.missing[0] === 'unit' ? 'plan.unit'
-                : readiness.missing[0] === 'time' ? 'plan.time'
+                : readiness.missing[0] === 'time' ? 'plan.slots.0.routineGroup'
                   : state.draft.plan.method.trim() ? 'pkProfileMethod' : 'plan.method'
         setPkIntentError(String(t('my_stack_pk_requirements_missing', {
           defaultValue: 'Vervollständige und bestätige alle PK-Angaben, bevor du speicherst.',
@@ -732,21 +734,36 @@ export function StackItemWizard({
                   <dd className="font-medium text-slate-200">{state.draft.plan.frequency}</dd>
                 </div>
                 <div className="flex flex-wrap justify-between gap-2">
-                  <dt className="text-slate-400">{t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}</dt>
-                  <dd className="font-medium text-slate-200">
-                    {state.draft.plan.routineGroup === 'morning'
-                      ? t('my_stack_routine_morning', { defaultValue: 'Morgens' })
-                      : state.draft.plan.routineGroup === 'midday'
-                        ? t('my_stack_routine_midday', { defaultValue: 'Mittags' })
-                        : t('my_stack_routine_evening', { defaultValue: 'Abends' })}
+                  <dt className="text-slate-400">{t('my_stack_plan_end_date', { defaultValue: 'Ende (optional)' })}</dt>
+                  <dd data-review-end-date className="font-medium text-slate-200">
+                    {state.draft.plan.endDate || t('my_stack_plan_end_open', { defaultValue: 'Offen' })}
                   </dd>
                 </div>
-                <div className="flex flex-wrap justify-between gap-2">
-                  <dt className="text-slate-400">{t('my_stack_plan_exact_time', { defaultValue: 'Genaue Uhrzeit' })}</dt>
-                  <dd className="font-medium text-slate-200">
-                    {state.draft.plan.time || t('my_stack_no_exact_time', { defaultValue: 'Nicht festgelegt' })}
-                  </dd>
-                </div>
+                {/* Je Einnahmezeitpunkt eine Zeile. Vorher stand hier eine
+                    einzige Tageszeit — bei „2x taeglich" hiesse das, die
+                    Haelfte des Plans in der Zusammenfassung zu verschweigen. */}
+                {state.draft.plan.slots.length === 0 ? (
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <dt className="text-slate-400">{t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}</dt>
+                    <dd className="font-medium text-slate-200">{state.draft.plan.frequency}</dd>
+                  </div>
+                ) : state.draft.plan.slots.map((slot, index) => (
+                  <div key={index} data-review-slot={index} className="flex flex-wrap justify-between gap-2">
+                    <dt className="text-slate-400">
+                      {state.draft.plan.slots.length > 1
+                        ? t('einnahme_nr', { defaultValue: `Einnahme ${index + 1}`, n: index + 1 })
+                        : t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}
+                    </dt>
+                    <dd className="font-medium text-slate-200">
+                      {slot.routineGroup === 'morning'
+                        ? t('my_stack_routine_morning', { defaultValue: 'Morgens' })
+                        : slot.routineGroup === 'midday'
+                          ? t('my_stack_routine_midday', { defaultValue: 'Mittags' })
+                          : t('my_stack_routine_evening', { defaultValue: 'Abends' })}
+                      {slot.time ? ` · ${slot.time}` : ''}
+                    </dd>
+                  </div>
+                ))}
                 <div className="flex flex-wrap justify-between gap-2">
                   <dt className="text-slate-400">{t('my_stack_plan_quantity_summary', { defaultValue: 'Menge' })}</dt>
                   <dd className="font-medium text-slate-200">

@@ -394,6 +394,7 @@
   "freq_woechentlich": "Hebdomadaire",
   "freq_alle_x": "Tous les X jours",
   "freq_wochentage": "Sélectionner les jours",
+  "freq_bei_bedarf": "Au besoin",
   "method_subkutan": "Sous-cutané",
   "method_intramusk": "Intramusculaire",
   "method_nasal": "Nasal",
@@ -1121,5 +1122,10 @@
   "my_stack_browse_catalog": "Parcourir le catalogue",
   "my_stack_jump_to_letter": "Aller à {{letter}}",
   "stack_category_other": "Autre",
-  "my_stack_combination": "Association"
+  "my_stack_combination": "Association",
+  "my_stack_plan_end_date": "Fin (facultatif)",
+  "my_stack_plan_end_date_hint": "Laissez vide si vous le prenez au long cours. Pour une cure, le dernier jour de prise.",
+  "my_stack_plan_end_date_before_start": "La fin précède le début.",
+  "my_stack_plan_end_open": "Ouvert",
+  "my_stack_plan_on_demand_hint": "Pas d'horaire fixe : rien n'est dû ni compté comme manqué. Vous notez la prise une fois faite."
 }

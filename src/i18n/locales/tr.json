@@ -394,6 +394,7 @@
   "freq_woechentlich": "Haftalık",
   "freq_alle_x": "Her X günde",
   "freq_wochentage": "Günleri seçin",
+  "freq_bei_bedarf": "Gerektiğinde",
   "method_subkutan": "Derialtı",
   "method_intramusk": "Kas içi",
   "method_nasal": "Nazal",
@@ -1121,5 +1122,10 @@
   "my_stack_browse_catalog": "Kataloğa göz at",
   "my_stack_jump_to_letter": "{{letter}} harfine git",
   "stack_category_other": "Diğer",
-  "my_stack_combination": "Kombinasyon ürünü"
+  "my_stack_combination": "Kombinasyon ürünü",
+  "my_stack_plan_end_date": "Bitiş (isteğe bağlı)",
+  "my_stack_plan_end_date_hint": "Uzun süre kullanıyorsanız boş bırakın. Bir kür içinse son kullanım gününü girin.",
+  "my_stack_plan_end_date_before_start": "Bitiş, başlangıçtan önce.",
+  "my_stack_plan_end_open": "Açık",
+  "my_stack_plan_on_demand_hint": "Sabit saat yok: hiçbir şey zamanı gelmiş ya da kaçırılmış sayılmaz. Aldıktan sonra kaydedersiniz."
 }

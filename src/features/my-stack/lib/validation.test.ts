@@ -33,8 +33,7 @@ const validPlan: IntakePlanDraft = {
   scheduleDays: [],
   startDate: '2026-07-29',
   endDate: null,
-  routineGroup: 'morning',
-  time: null,
+  slots: [{ routineGroup: 'morning', time: null }],
   reminders: [],
 }
 
@@ -47,11 +46,49 @@ describe('validateStackItemDraft', () => {
       dose: 'required',
       unit: 'required',
     })
-    expect(validateIntakePlan({ ...validPlan, name: ' ', frequency: '', routineGroup: '' as never }, 'complete')).toEqual({
+    expect(validateIntakePlan({
+      ...validPlan,
+      name: ' ',
+      frequency: '',
+      slots: [{ routineGroup: '' as never, time: null }],
+    }, 'complete')).toEqual({
       name: 'required',
       frequency: 'required',
-      routineGroup: 'required',
+      slots: ['required'],
     })
+  })
+
+  it('lässt ein Ende vor dem Start nicht durch — und ein leeres Ende schon', () => {
+    // Eine Kur hat ein Ende, alles andere nicht. Nur die Umkehrung ist ein
+    // Fehler: ein Ende, das vor dem Start liegt.
+    expect(validateIntakePlan({ ...validPlan, endDate: '2026-07-28' }, 'complete'))
+      .toMatchObject({ endDate: 'before_start' })
+    expect(validateIntakePlan({ ...validPlan, endDate: '2026-07-29' }, 'complete').endDate)
+      .toBeUndefined()
+    expect(validateIntakePlan({ ...validPlan, endDate: '2026-08-05' }, 'complete').endDate)
+      .toBeUndefined()
+    expect(validateIntakePlan({ ...validPlan, endDate: null }, 'complete').endDate).toBeUndefined()
+  })
+
+  it('verlangt bei „Bei Bedarf" keine Tageszeit', () => {
+    // Dort gibt es keinen geplanten Zeitpunkt — eine Pflichtangabe ohne
+    // Bedeutung wäre schlimmer als keine.
+    const beiBedarf = { ...validPlan, frequency: 'Bei Bedarf', slots: [] }
+
+    expect(validateIntakePlan(beiBedarf, 'complete').slots).toBeUndefined()
+  })
+
+  it('verlangt je geplantem Einnahmezeitpunkt eine Tageszeit', () => {
+    const zweiMal = {
+      ...validPlan,
+      frequency: '2x täglich',
+      slots: [
+        { routineGroup: 'morning' as const, time: null },
+        { routineGroup: '' as never, time: null },
+      ],
+    }
+
+    expect(validateIntakePlan(zweiMal, 'complete').slots).toEqual(['', 'required'])
   })
 
   it('requires a method and a start/effective date for every tracking level', () => {

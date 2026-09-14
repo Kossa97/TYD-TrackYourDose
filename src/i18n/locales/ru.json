@@ -394,6 +394,7 @@
   "freq_woechentlich": "Еженедельно",
   "freq_alle_x": "Каждые X дней",
   "freq_wochentage": "Выбрать дни",
+  "freq_bei_bedarf": "По потребности",
   "method_subkutan": "Подкожно",
   "method_intramusk": "Внутримышечно",
   "method_nasal": "Назально",
@@ -1123,5 +1124,10 @@
   "my_stack_browse_catalog": "Просмотреть каталог",
   "my_stack_jump_to_letter": "Перейти к {{letter}}",
   "stack_category_other": "Другое",
-  "my_stack_combination": "Комбинированный препарат"
+  "my_stack_combination": "Комбинированный препарат",
+  "my_stack_plan_end_date": "Окончание (необязательно)",
+  "my_stack_plan_end_date_hint": "Оставьте пустым при длительном приёме. Для курса укажите последний день приёма.",
+  "my_stack_plan_end_date_before_start": "Дата окончания раньше даты начала.",
+  "my_stack_plan_end_open": "Не задано",
+  "my_stack_plan_on_demand_hint": "Без фиксированного времени: ничего не наступает и не считается пропущенным. Вы отмечаете приём после него."
 }

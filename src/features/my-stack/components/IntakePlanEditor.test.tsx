@@ -40,8 +40,7 @@ const plan: IntakePlanDraft = {
   scheduleDays: [],
   startDate: '2026-08-16',
   endDate: null,
-  routineGroup: 'morning',
-  time: null,
+  slots: [{ routineGroup: 'morning', time: null }],
   reminders: [],
 }
 
@@ -84,6 +83,74 @@ describe('IntakePlanEditor', () => {
     ]))
     expect(startDate.required).toBe(true)
     expect(startDate.value).toBe('2026-08-16')
+  })
+
+  it('fragt nach einem Ende — optional, und nie vor dem Start', () => {
+    // Das Feld fehlte ganz: der Entwurf trug `endDate`, das Formular fragte
+    // nie danach. Eine Antibiotikakur lief damit weiter, bis jemand sie von
+    // Hand beendete.
+    render(<PlanHarness trackingLevel="intake_only" dosageForm="capsule" />)
+
+    const ende = screen.getByLabelText('Ende (optional)') as HTMLInputElement
+    expect(ende.required).toBe(false)
+    expect(ende.value).toBe('')
+    expect(ende.min).toBe('2026-08-16')
+
+    fireEvent.change(ende, { target: { value: '2026-08-23' } })
+    expect((screen.getByLabelText('Ende (optional)') as HTMLInputElement).value).toBe('2026-08-23')
+  })
+
+  it('zeigt bei „2x täglich" zwei Einnahmezeitpunkte mit eigener Uhrzeit', () => {
+    // Bei einem Antibiotikum ist das die Regel. Die Auswertung konnte mehrere
+    // Zeitpunkte von Anfang an — das Formular bot nur einen an.
+    render(<PlanHarness
+      trackingLevel="intake_only"
+      dosageForm="tablet"
+      initialPlan={{
+        ...plan,
+        frequency: '2x täglich',
+        slots: [
+          { routineGroup: 'morning', time: null },
+          { routineGroup: 'evening', time: null },
+        ],
+      }}
+    />)
+
+    expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(2)
+    expect(screen.getByText('Einnahme 1')).toBeTruthy()
+    expect(screen.getByText('Einnahme 2')).toBeTruthy()
+
+    const uhrzeiten = screen.getAllByLabelText('Genaue Uhrzeit (optional)') as HTMLInputElement[]
+    expect(uhrzeiten).toHaveLength(2)
+
+    // Jeder Zeitpunkt haelt seine eigene Uhrzeit.
+    fireEvent.change(uhrzeiten[1], { target: { value: '20:00' } })
+    const danach = screen.getAllByLabelText('Genaue Uhrzeit (optional)') as HTMLInputElement[]
+    expect(danach[0].value).toBe('')
+    expect(danach[1].value).toBe('20:00')
+  })
+
+  it('nimmt bei „Bei Bedarf" die Tageszeit weg und sagt warum', () => {
+    render(<PlanHarness
+      trackingLevel="intake_only"
+      dosageForm="tablet"
+      initialPlan={{ ...plan, frequency: 'Bei Bedarf', slots: [] }}
+    />)
+
+    expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(0)
+    expect(screen.queryByLabelText('Genaue Uhrzeit (optional)')).toBeNull()
+    expect(document.querySelector('[data-plan-on-demand]')?.textContent)
+      .toContain('nichts gilt als verpasst')
+  })
+
+  it('bietet die Frequenzen an, die die Auswertung kennt', () => {
+    render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
+
+    const frequenz = screen.getByLabelText('Frequenz') as HTMLSelectElement
+    expect(Array.from(frequenz.options).map(option => option.value)).toEqual([
+      'Täglich', '2x täglich', '3x täglich', 'Jeden 2. Tag', '5 Tage an / 2 aus',
+      'Mo-Fr', 'Wöchentlich', 'Alle X Tage', 'Wochentage wählen', 'Bei Bedarf',
+    ])
   })
 
   it('omits planned quantity for intake-only tracking', () => {

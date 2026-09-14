@@ -394,6 +394,7 @@
   "freq_woechentlich": "毎週",
   "freq_alle_x": "X 日ごと",
   "freq_wochentage": "曜日を選択",
+  "freq_bei_bedarf": "頓用",
   "method_subkutan": "皮下",
   "method_intramusk": "筋肉内",
   "method_nasal": "鼻腔内",
@@ -1121,5 +1122,10 @@
   "my_stack_browse_catalog": "カタログを見る",
   "my_stack_jump_to_letter": "{{letter}} へ移動",
   "stack_category_other": "その他",
-  "my_stack_combination": "配合製剤"
+  "my_stack_combination": "配合製剤",
+  "my_stack_plan_end_date": "終了（任意）",
+  "my_stack_plan_end_date_hint": "継続して使う場合は空欄のままに。クールの場合は最終服用日を入力します。",
+  "my_stack_plan_end_date_before_start": "終了日が開始日より前です。",
+  "my_stack_plan_end_open": "未設定",
+  "my_stack_plan_on_demand_hint": "決まった時刻なし: 期限も飲み忘れも発生しません。服用したあとに記録します。"
 }

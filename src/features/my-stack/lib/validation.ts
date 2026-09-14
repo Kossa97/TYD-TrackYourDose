@@ -1,4 +1,5 @@
 import type { IntakePlanDraft, StackItemDraft, StackItemIngredient, TrackingLevel } from '../types'
+import { isOnDemand, slotCountForFrequency } from './intakeFrequency'
 import { trackingCapabilities } from './trackingDepth'
 
 export interface IngredientValidationErrors {
@@ -23,7 +24,9 @@ export interface IntakePlanValidationErrors {
   xDaysInterval?: string
   scheduleDays?: string
   startDate?: string
-  routineGroup?: string
+  endDate?: string
+  /** Ein Eintrag je fehlerhaftem Einnahmezeitpunkt, in derselben Reihenfolge. */
+  slots?: string[]
 }
 
 export const MIN_EVERY_X_DAYS = 2
@@ -109,7 +112,24 @@ export function validateIntakePlan(
   if (!plan.frequency.trim()) errors.frequency = 'required'
   Object.assign(errors, validateRecurrence(plan.frequency, plan.xDaysInterval, plan.scheduleDays))
   if (!plan.startDate.trim()) errors.startDate = 'required'
-  if (!plan.routineGroup) errors.routineGroup = 'required'
+
+  // Ein Ende VOR dem Start ist keine Kur, sondern ein Tippfehler. Leer bleibt
+  // erlaubt: das ist der Dauerfall und der haeufigere.
+  const ende = plan.endDate?.trim() ?? ''
+  if (ende && plan.startDate.trim() && ende < plan.startDate.trim()) errors.endDate = 'before_start'
+
+  // „Bei Bedarf" hat keinen geplanten Zeitpunkt — dort nach einer Tageszeit zu
+  // fragen waere eine Pflichtangabe ohne Bedeutung.
+  if (!isOnDemand(plan.frequency)) {
+    const erwartet = slotCountForFrequency(plan.frequency)
+    const slotFehler = plan.slots.map(slot => (slot.routineGroup ? '' : 'required'))
+    if (plan.slots.length !== erwartet) {
+      // Die Zahl der Zeitpunkte folgt der Frequenz. Weicht sie ab, ist der
+      // Entwurf in einem Zustand, den das Formular nicht erzeugt.
+      while (slotFehler.length < erwartet) slotFehler.push('required')
+    }
+    if (slotFehler.some(Boolean)) errors.slots = slotFehler
+  }
   if (trackingCapabilities(level).quantity) {
     if (plan.dose == null || !Number.isFinite(plan.dose) || plan.dose <= 0) errors.dose = 'required'
     if (!plan.unit?.trim()) errors.unit = 'required'

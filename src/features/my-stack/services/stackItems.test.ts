@@ -58,8 +58,7 @@ const completeSetupDraft: StackItemSetupDraft = {
     scheduleDays: [],
     startDate: '2026-08-17',
     endDate: null,
-    routineGroup: 'morning',
-    time: '08:30',
+    slots: [{ routineGroup: 'morning', time: '08:30' }],
     reminders: ['on_time'],
   },
   inventory: {
@@ -171,6 +170,69 @@ describe('stack item service', () => {
         reminder: 'on_time',
       }),
     })
+  })
+
+  it('schreibt mehrere Einnahmezeitpunkte kommagetrennt in eine Zeile', async () => {
+    // So liest sie die Auswertung (`resolveScheduleSlots`): „morgens,abends"
+    // und „08:00,20:00" in derselben Reihenfolge. Vorher konnte der Assistent
+    // nur einen Zeitpunkt speichern — bei einem Antibiotikum die Regel, nicht
+    // die Ausnahme.
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, {
+      ...completeSetupDraft,
+      plan: {
+        ...completeSetupDraft.plan,
+        frequency: '3x täglich',
+        slots: [
+          { routineGroup: 'morning', time: '08:00' },
+          { routineGroup: 'midday', time: null },
+          { routineGroup: 'evening', time: '20:00' },
+        ],
+      },
+    })
+
+    expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
+      p_plan: expect.objectContaining({
+        frequency: '3x täglich',
+        intake_time: 'morgens,mittags,abends',
+        // Die mittlere Uhrzeit bleibt leer — dort greift die Standardzeit der
+        // Tageszeit. Die Position muss trotzdem stehen, sonst verrutscht alles.
+        intake_time_custom: '08:00,,20:00',
+      }),
+    }))
+  })
+
+  it('schickt bei „Bei Bedarf" keine Uhrzeit mit', async () => {
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, {
+      ...completeSetupDraft,
+      plan: { ...completeSetupDraft.plan, frequency: 'Bei Bedarf', slots: [] },
+    })
+
+    expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
+      p_plan: expect.objectContaining({
+        frequency: 'Bei Bedarf',
+        // Die Tabelle verlangt eine Tageszeit. Sie bedeutet hier nichts:
+        // `cycleAppliesToDay` plant für diese Frequenz keinen Tag.
+        intake_time: 'morgens',
+        intake_time_custom: null,
+      }),
+    }))
+  })
+
+  it('reicht das Enddatum einer Kur durch', async () => {
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, {
+      ...completeSetupDraft,
+      plan: { ...completeSetupDraft.plan, endDate: '2026-08-23' },
+    })
+
+    expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
+      p_plan: expect.objectContaining({ end_date: '2026-08-23' }),
+    }))
   })
 
   it('sends null dose and unit for intake_only', async () => {

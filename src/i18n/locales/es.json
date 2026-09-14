@@ -394,6 +394,7 @@
   "freq_woechentlich": "Semanal",
   "freq_alle_x": "Cada X días",
   "freq_wochentage": "Seleccionar días",
+  "freq_bei_bedarf": "Según necesidad",
   "method_subkutan": "Subcutáneo",
   "method_intramusk": "Intramuscular",
   "method_nasal": "Nasal",
@@ -1121,5 +1122,10 @@
   "my_stack_browse_catalog": "Explorar el catálogo",
   "my_stack_jump_to_letter": "Ir a {{letter}}",
   "stack_category_other": "Otros",
-  "my_stack_combination": "Producto combinado"
+  "my_stack_combination": "Producto combinado",
+  "my_stack_plan_end_date": "Fin (opcional)",
+  "my_stack_plan_end_date_hint": "Déjalo vacío si lo tomas de forma prolongada. Para una pauta corta, el último día de toma.",
+  "my_stack_plan_end_date_before_start": "El fin es anterior al inicio.",
+  "my_stack_plan_end_open": "Abierto",
+  "my_stack_plan_on_demand_hint": "Sin hora fija: nada vence ni cuenta como omitido. Registras la toma cuando ya ha ocurrido."
 }

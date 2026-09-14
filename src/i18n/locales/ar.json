@@ -394,6 +394,7 @@
   "freq_woechentlich": "أسبوعي",
   "freq_alle_x": "كل X أيام",
   "freq_wochentage": "اختر الأيام",
+  "freq_bei_bedarf": "عند الحاجة",
   "method_subkutan": "تحت الجلد",
   "method_intramusk": "عضلي",
   "method_nasal": "أنفي",
@@ -1125,5 +1126,10 @@
   "my_stack_browse_catalog": "تصفّح الفهرس",
   "my_stack_jump_to_letter": "الانتقال إلى {{letter}}",
   "stack_category_other": "أخرى",
-  "my_stack_combination": "مستحضر مركب"
+  "my_stack_combination": "مستحضر مركب",
+  "my_stack_plan_end_date": "النهاية (اختياري)",
+  "my_stack_plan_end_date_hint": "اتركه فارغًا إذا كنت تتناوله لفترة طويلة. للدورة العلاجية، آخر يوم تتناوله فيه.",
+  "my_stack_plan_end_date_before_start": "تاريخ النهاية قبل تاريخ البدء.",
+  "my_stack_plan_end_open": "مفتوح",
+  "my_stack_plan_on_demand_hint": "لا وقت محدد: لا شيء يصبح مستحقًا ولا شيء يُحتسب فائتًا. تسجّل الجرعة بعد تناولها."
 }

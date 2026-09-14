@@ -1,11 +1,18 @@
 import { BellRing, Clock, Moon, Sun, Sunrise } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getDosageForm, getIntakePlanUnitSuggestions } from '../lib/dosageForms'
+import {
+  INTAKE_FREQUENCIES,
+  isOnDemand,
+  needsInterval,
+  needsWeekdays,
+} from '../lib/intakeFrequency'
 import { trackingCapabilities } from '../lib/trackingDepth'
 import type { IntakePlanValidationErrors } from '../lib/validation'
 import type {
   DosageFormKey,
   IntakePlanDraft,
+  IntakeSlotDraft,
   RoutineGroup,
   SubstanceCatalogEntry,
   TrackingLevel,
@@ -20,15 +27,6 @@ export interface IntakePlanEditorProps {
   onChange: (changes: Partial<IntakePlanDraft>) => void
 }
 
-const FREQUENCIES = [
-  'Täglich',
-  'Jeden 2. Tag',
-  '5 Tage an / 2 aus',
-  'Mo-Fr',
-  'Wöchentlich',
-  'Alle X Tage',
-  'Wochentage wählen',
-] as const
 const METHODS = [
   'Subkutan',
   'Intramuskulär',
@@ -85,10 +83,21 @@ export function IntakePlanEditor({
   const canSuggestFractions = dosageForm === 'tablet' && form.capabilities.includes('divisible')
 
   function selectFrequency(frequency: string): void {
+    // Die Zahl der Einnahmezeitpunkte setzt der Reducer (`slotsFuerFrequenz`) —
+    // hier fallen nur die Begleitfelder weg, die zur neuen Frequenz nicht
+    // gehoeren.
     onChange({
       frequency,
-      xDaysInterval: frequency === 'Alle X Tage' ? plan.xDaysInterval : null,
-      scheduleDays: frequency === 'Wochentage wählen' ? plan.scheduleDays : [],
+      xDaysInterval: needsInterval(frequency) ? plan.xDaysInterval : null,
+      scheduleDays: needsWeekdays(frequency) ? plan.scheduleDays : [],
+    })
+  }
+
+  function changeSlot(index: number, changes: Partial<IntakeSlotDraft>): void {
+    onChange({
+      slots: plan.slots.map((slot, position) => (
+        position === index ? { ...slot, ...changes } : slot
+      )),
     })
   }
 
@@ -140,7 +149,7 @@ export function IntakePlanEditor({
           required
           className="select min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
         >
-          {FREQUENCIES.map(frequency => <option key={frequency} value={frequency}>{frequency}</option>)}
+          {INTAKE_FREQUENCIES.map(frequency => <option key={frequency} value={frequency}>{frequency}</option>)}
         </select>
         {errors.frequency && (
           <p id="stack-plan-frequency-error" role="alert" className="mt-2 text-sm text-rose-300">
@@ -171,7 +180,37 @@ export function IntakePlanEditor({
         )}
       </div>
 
-      {plan.frequency === 'Alle X Tage' && (
+      {/* Das Ende. Es fehlte ganz — der Entwurf trug das Feld, das Formular
+          fragte nie danach. Fuer alles, was man laenger nimmt, bleibt es leer;
+          eine Antibiotikakur oder ein Kortisonstoss hat hier ein Datum, und
+          erst damit ist sie als das erkennbar, was sie ist. */}
+      <div>
+        <label htmlFor="stack-plan-end-date" className="mb-2 block text-sm font-semibold text-slate-200">
+          {t('my_stack_plan_end_date', { defaultValue: 'Ende (optional)' })}
+        </label>
+        <input
+          id="stack-plan-end-date"
+          type="date"
+          value={plan.endDate ?? ''}
+          min={plan.startDate || undefined}
+          onChange={event => onChange({ endDate: event.target.value || null })}
+          data-field="plan.endDate"
+          aria-invalid={Boolean(errors.endDate) || undefined}
+          aria-describedby={errors.endDate ? 'stack-plan-end-date-error' : 'stack-plan-end-date-hint'}
+          className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+        />
+        {errors.endDate ? (
+          <p id="stack-plan-end-date-error" role="alert" className="mt-2 text-sm text-rose-300">
+            {t('my_stack_plan_end_date_before_start', { defaultValue: 'Das Ende liegt vor dem Start.' })}
+          </p>
+        ) : (
+          <p id="stack-plan-end-date-hint" className="mt-2 text-xs leading-relaxed text-slate-400">
+            {t('my_stack_plan_end_date_hint', { defaultValue: 'Leer lassen, wenn du es dauerhaft nimmst. Für eine Kur das letzte Einnahmedatum.' })}
+          </p>
+        )}
+      </div>
+
+      {needsInterval(plan.frequency) && (
         <div>
           <label htmlFor="stack-plan-interval" className="mb-2 block text-sm font-semibold text-slate-200">
             {t('my_stack_plan_interval', { defaultValue: 'Intervall in Tagen' })}
@@ -197,7 +236,7 @@ export function IntakePlanEditor({
         </div>
       )}
 
-      {plan.frequency === 'Wochentage wählen' && (
+      {needsWeekdays(plan.frequency) && (
         <fieldset
           data-field="plan.scheduleDays"
           tabIndex={-1}
@@ -233,59 +272,83 @@ export function IntakePlanEditor({
         </fieldset>
       )}
 
-      <fieldset
-        data-field="plan.routineGroup"
-        tabIndex={-1}
-        aria-invalid={Boolean(errors.routineGroup) || undefined}
-        aria-describedby={errors.routineGroup ? 'stack-plan-routine-error' : undefined}
-        className="min-w-0"
-      >
-        <legend className="mb-2 text-sm font-semibold text-slate-200">
-          {t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}
-        </legend>
-        <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-3">
-          {ROUTINE_GROUPS.map(({ value, labelKey, defaultValue, Icon }) => (
-            <label
-              key={value}
-              className={`flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${plan.routineGroup === value
-                ? 'border-sky-400/50 bg-sky-400/10 text-sky-200'
-                : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25'
-              }`}
-            >
-              <input
-                type="radio"
-                name="stack-plan-routine"
-                value={value}
-                checked={plan.routineGroup === value}
-                onChange={() => onChange({ routineGroup: value })}
-                required
-                className="h-5 w-5 shrink-0 cursor-pointer accent-sky-400"
-              />
-              <Icon aria-hidden="true" size={18} className="shrink-0" />
-              <span className="min-w-0 break-words">{t(labelKey, { defaultValue })}</span>
-            </label>
-          ))}
-        </div>
-        {errors.routineGroup && (
-          <p id="stack-plan-routine-error" role="alert" className="mt-2 text-sm text-rose-300">
-            {t('my_stack_plan_routine_required', { defaultValue: 'Bitte wähle eine Tageszeit.' })}
-          </p>
-        )}
-      </fieldset>
+      {/* „Bei Bedarf" hat keinen geplanten Zeitpunkt — nach einer Tageszeit zu
+          fragen waere eine Pflichtangabe ohne Bedeutung. */}
+      {isOnDemand(plan.frequency) ? (
+        <p
+          data-plan-on-demand
+          className="flex min-w-0 items-start gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-sm leading-relaxed text-slate-400"
+        >
+          <Clock aria-hidden="true" size={17} className="mt-0.5 shrink-0 text-slate-500" />
+          <span>
+            {t('my_stack_plan_on_demand_hint', {
+              defaultValue: 'Kein fester Zeitpunkt: nichts wird fällig, nichts gilt als verpasst. Du trägst die Einnahme ein, wenn sie stattgefunden hat.',
+            })}
+          </span>
+        </p>
+      ) : plan.slots.map((slot, index) => (
+        <div key={index} data-plan-slot={index} className="min-w-0 space-y-3">
+          <fieldset
+            data-field={`plan.slots.${index}.routineGroup`}
+            tabIndex={-1}
+            aria-invalid={Boolean(errors.slots?.[index]) || undefined}
+            aria-describedby={errors.slots?.[index] ? `stack-plan-routine-${index}-error` : undefined}
+            className="min-w-0"
+          >
+            <legend className="mb-2 text-sm font-semibold text-slate-200">
+              {/* Bei einem einzigen Zeitpunkt bleibt die Aufschrift, wie sie
+                  war — „Tageszeit 1 von 1" waere eine Zahl ohne Anlass. */}
+              {/* `einnahme_nr` gibt es laengst in allen vierzehn Sprachen — aus
+                  der aelteren Oberflaeche, die 2x/3x taeglich schon anbot. */}
+              {plan.slots.length > 1
+                ? t('einnahme_nr', { defaultValue: `Einnahme ${index + 1}`, n: index + 1 })
+                : t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}
+            </legend>
+            <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-3">
+              {ROUTINE_GROUPS.map(({ value, labelKey, defaultValue, Icon }) => (
+                <label
+                  key={value}
+                  className={`flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${slot.routineGroup === value
+                    ? 'border-sky-400/50 bg-sky-400/10 text-sky-200'
+                    : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name={`stack-plan-routine-${index}`}
+                    value={value}
+                    checked={slot.routineGroup === value}
+                    onChange={() => changeSlot(index, { routineGroup: value })}
+                    required
+                    className="h-5 w-5 shrink-0 cursor-pointer accent-sky-400"
+                  />
+                  <Icon aria-hidden="true" size={18} className="shrink-0" />
+                  <span className="min-w-0 break-words">{t(labelKey, { defaultValue })}</span>
+                </label>
+              ))}
+            </div>
+            {errors.slots?.[index] && (
+              <p id={`stack-plan-routine-${index}-error`} role="alert" className="mt-2 text-sm text-rose-300">
+                {t('my_stack_plan_routine_required', { defaultValue: 'Bitte wähle eine Tageszeit.' })}
+              </p>
+            )}
+          </fieldset>
 
-      <div>
-        <label htmlFor="stack-plan-time" className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
-          <Clock aria-hidden="true" size={17} className="text-slate-400" />
-          {t('my_stack_plan_time', { defaultValue: 'Genaue Uhrzeit (optional)' })}
-        </label>
-        <input
-          id="stack-plan-time"
-          type="time"
-          value={plan.time ?? ''}
-          onChange={event => onChange({ time: event.target.value || null })}
-          className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-        />
-      </div>
+          <div>
+            <label htmlFor={`stack-plan-time-${index}`} className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
+              <Clock aria-hidden="true" size={17} className="text-slate-400" />
+              {t('my_stack_plan_time', { defaultValue: 'Genaue Uhrzeit (optional)' })}
+            </label>
+            <input
+              id={`stack-plan-time-${index}`}
+              type="time"
+              value={slot.time ?? ''}
+              onChange={event => changeSlot(index, { time: event.target.value || null })}
+              className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            />
+          </div>
+        </div>
+      ))}
 
       {tracksQuantity && (
         <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] p-4">

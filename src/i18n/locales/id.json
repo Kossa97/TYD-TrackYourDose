@@ -395,6 +395,7 @@
   "freq_woechentlich": "Mingguan",
   "freq_alle_x": "Setiap X hari",
   "freq_wochentage": "Pilih hari",
+  "freq_bei_bedarf": "Bila perlu",
   "method_subkutan": "Subkutan",
   "method_intramusk": "Intramuskular",
   "method_nasal": "Nasal",
@@ -1121,5 +1122,10 @@
   "my_stack_browse_catalog": "Telusuri katalog",
   "my_stack_jump_to_letter": "Lompat ke {{letter}}",
   "stack_category_other": "Lainnya",
-  "my_stack_combination": "Produk kombinasi"
+  "my_stack_combination": "Produk kombinasi",
+  "my_stack_plan_end_date": "Akhir (opsional)",
+  "my_stack_plan_end_date_hint": "Kosongkan jika dikonsumsi jangka panjang. Untuk satu kur, isi hari terakhir.",
+  "my_stack_plan_end_date_before_start": "Tanggal akhir sebelum tanggal mulai.",
+  "my_stack_plan_end_open": "Terbuka",
+  "my_stack_plan_on_demand_hint": "Tanpa waktu tetap: tidak ada yang jatuh tempo atau terlewat. Anda mencatat setelah diminum."
 }

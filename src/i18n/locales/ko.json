@@ -394,6 +394,7 @@
   "freq_woechentlich": "매주",
   "freq_alle_x": "X일마다",
   "freq_wochentage": "요일 선택",
+  "freq_bei_bedarf": "필요할 때",
   "method_subkutan": "피하",
   "method_intramusk": "근육내",
   "method_nasal": "비강",
@@ -1120,5 +1121,10 @@
   "my_stack_browse_catalog": "카탈로그 둘러보기",
   "my_stack_jump_to_letter": "{{letter}}(으)로 이동",
   "stack_category_other": "기타",
-  "my_stack_combination": "복합 제제"
+  "my_stack_combination": "복합 제제",
+  "my_stack_plan_end_date": "종료 (선택)",
+  "my_stack_plan_end_date_hint": "장기간 복용한다면 비워 두세요. 한 번의 치료 과정이라면 마지막 복용일을 입력합니다.",
+  "my_stack_plan_end_date_before_start": "종료일이 시작일보다 앞섭니다.",
+  "my_stack_plan_end_open": "미정",
+  "my_stack_plan_on_demand_hint": "정해진 시각 없음: 예정도 누락도 생기지 않습니다. 복용한 뒤에 기록합니다."
 }

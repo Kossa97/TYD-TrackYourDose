@@ -632,8 +632,27 @@ begin
     raise exception 'Plan start date is required';
   end if;
   plan_effective_date := (p_plan ->> 'start_date')::date;
-  if plan_intake_time is null or plan_intake_time not in ('morgens', 'mittags', 'abends') then
+  -- Mehrere Einnahmezeitpunkte je Tag stehen kommagetrennt: „morgens,abends"
+  -- bei „2x taeglich". Die Auswertung (`resolveScheduleSlots`) liest sie genau
+  -- so; geprueft wird deshalb jeder Teil einzeln.
+  if plan_intake_time is null then
     raise exception 'Invalid plan intake time';
+  end if;
+  if exists (
+    select 1
+    from unnest(string_to_array(plan_intake_time, ',')) teil
+    where btrim(teil) not in ('morgens', 'mittags', 'abends')
+  ) or coalesce(array_length(string_to_array(plan_intake_time, ','), 1), 0) not between 1 and 3 then
+    -- coalesce, weil string_to_array('', ',') ein LEERES Array liefert und
+    -- array_length darauf null ist: ohne das ginge ein leerer Wert durch, und
+    -- die Zeile truege eine Tageszeit, die keine ist.
+    raise exception 'Invalid plan intake time';
+  end if;
+
+  -- Ein Ende vor dem Start ist keine Kur, sondern ein Tippfehler. Null bleibt
+  -- erlaubt und ist der Dauerfall.
+  if plan_end_date is not null and plan_end_date < plan_effective_date then
+    raise exception 'Plan end date is before its start date';
   end if;
 
   if jsonb_typeof(p_plan -> 'schedule_days') = 'array' then

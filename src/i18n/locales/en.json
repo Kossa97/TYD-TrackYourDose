@@ -467,6 +467,7 @@
   "freq_woechentlich": "Weekly",
   "freq_alle_x": "Every X days",
   "freq_wochentage": "Select weekdays",
+  "freq_bei_bedarf": "As needed",
   "method_subkutan": "Subcutaneous",
   "method_intramusk": "Intramuscular",
   "method_nasal": "Nasal",
@@ -1269,5 +1270,10 @@
   "my_stack_browse_catalog": "Browse the catalogue",
   "my_stack_jump_to_letter": "Jump to {{letter}}",
   "stack_category_other": "Other",
-  "my_stack_combination": "Combination product"
+  "my_stack_combination": "Combination product",
+  "my_stack_plan_end_date": "End (optional)",
+  "my_stack_plan_end_date_hint": "Leave empty if you take it long term. For a course, the last day you take it.",
+  "my_stack_plan_end_date_before_start": "The end is before the start.",
+  "my_stack_plan_end_open": "Open",
+  "my_stack_plan_on_demand_hint": "No fixed time: nothing becomes due, nothing counts as missed. You log the intake once it has happened."
 }

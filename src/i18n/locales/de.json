@@ -469,6 +469,7 @@
   "freq_woechentlich": "Wöchentlich",
   "freq_alle_x": "Alle X Tage",
   "freq_wochentage": "Wochentage wählen",
+  "freq_bei_bedarf": "Bei Bedarf",
   "method_subkutan": "Subkutan",
   "method_intramusk": "Intramuskulär",
   "method_nasal": "Nasal",
@@ -1269,5 +1270,10 @@
   "my_stack_browse_catalog": "Katalog durchblättern",
   "my_stack_jump_to_letter": "Zu {{letter}} springen",
   "stack_category_other": "Sonstiges",
-  "my_stack_combination": "Kombipräparat"
+  "my_stack_combination": "Kombipräparat",
+  "my_stack_plan_end_date": "Ende (optional)",
+  "my_stack_plan_end_date_hint": "Leer lassen, wenn du es dauerhaft nimmst. Für eine Kur das letzte Einnahmedatum.",
+  "my_stack_plan_end_date_before_start": "Das Ende liegt vor dem Start.",
+  "my_stack_plan_end_open": "Offen",
+  "my_stack_plan_on_demand_hint": "Kein fester Zeitpunkt: nichts wird fällig, nichts gilt als verpasst. Du trägst die Einnahme ein, wenn sie stattgefunden hat."
 }

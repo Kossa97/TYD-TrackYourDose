@@ -17,6 +17,7 @@ import toast from 'react-hot-toast'
 import { getStackItemColor } from '../features/my-stack/lib/colors'
 import { getDateLocale } from '../i18n/dateLocales'
 import { cycleAppliesToDay, effectiveQuantity, resolveScheduleSlots, scheduleForDay, AUTO_MISSED_NOTE, type ResolvedRoutineGroup, type ScheduleSegment } from '../lib/intakeSchedule'
+import { isOnDemand } from '../features/my-stack/lib/intakeFrequency'
 import { debitPeptideStockForDoseById } from '../features/my-stack/extensions/peptide/vialStock'
 import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/quantityPresentation'
 import {
@@ -596,9 +597,21 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
   const logsForDay = (day: Date) => logs.filter(l => isSameDay(new Date(l.logged_at), day))
   const cyclesForDay = (day: Date) => cycles.filter(c => cycleAppliesToDay(c, day))
+  // „Bei Bedarf" ist kein Plan: `cycleAppliesToDay` gibt fuer diese Frequenz
+  // NIE true zurueck, damit nichts faellig wird und nichts als verpasst gilt.
+  // Genau deshalb taucht so ein Zyklus in keiner Tagesliste auf — und liesse
+  // sich ohne diese Liste hier gar nicht eintragen. Ein Schmerzmittel hat
+  // keinen Plan, nur eine Historie.
+  const onDemandCyclesForDay = (day: Date) => cycles.filter(cycle => {
+    if (!isOnDemand(cycle.frequency)) return false
+    const tag = format(day, 'yyyy-MM-dd')
+    if (tag < cycle.start_date) return false
+    return !cycle.end_date || tag <= cycle.end_date
+  })
 
   const selLogs     = logsForDay(selectedDay)
   const selCycles   = cyclesForDay(selectedDay)
+  const selOnDemand = onDemandCyclesForDay(selectedDay)
   const isTodaySelected = isToday(selectedDay)
   // Vergangener Tag (vor heute): nicht bestätigte Slots gelten als „verpasst".
   const isPastSelected = format(selectedDay, 'yyyy-MM-dd') < format(new Date(), 'yyyy-MM-dd')
@@ -1570,15 +1583,54 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
               </div>
             )}
           </div>
-        ) : dueSlots.length === 0 && selCycles.length === 0 ? (
+        ) : dueSlots.length === 0 && selCycles.length === 0 && selOnDemand.length === 0 ? (
           <p className="text-slate-600 text-sm text-center py-4">
             {isTodaySelected ? t('noch_nichts_heute') : t('kein_eintrag_tag')}
           </p>
-        ) : dueSlots.length === 0 ? (
+        ) : dueSlots.length === 0 && selCycles.length > 0 ? (
           <p className="text-slate-600 text-xs text-center py-2">
             {t('all_intakes_done', { defaultValue: 'Alle geplanten Einnahmen sind bestätigt.' })}
           </p>
         ) : null}
+
+        {/* Was bei Bedarf genommen wird, steht unter dem Plan, nicht darin:
+            nichts davon ist faellig, es gibt nichts abzuhaken. Der Knopf traegt
+            eine Einnahme ein, die stattgefunden hat. */}
+        {selOnDemand.length > 0 && (
+          <div data-on-demand-section className="mt-4 space-y-2 border-t border-white/[0.06] pt-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              {t('freq_bei_bedarf', { defaultValue: 'Bei Bedarf' })}
+            </p>
+            {selOnDemand.map(cycle => {
+              const bereits = selLogs.filter(
+                log => log.stack_item_id === cycle.stack_item_id && log.taken === true,
+              ).length
+              return (
+                <div
+                  key={cycle.id}
+                  data-on-demand-cycle={cycle.id}
+                  className="flex min-h-11 flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2"
+                >
+                  <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-200">
+                    {cycle.stack_items?.display_name ?? cycle.name}
+                    {bereits > 0 && (
+                      <span data-on-demand-count className="ml-2 text-xs font-normal text-slate-400">
+                        {`×${bereits}`}
+                      </span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void confirmCycleDose(cycle, true, new Date().toISOString())}
+                    className="min-h-11 shrink-0 cursor-pointer rounded-xl border border-emerald-400/30 bg-emerald-400/[0.08] px-3 py-2 text-sm font-semibold text-emerald-200 transition-colors duration-200 hover:bg-emerald-400/[0.14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 motion-reduce:transition-none"
+                  >
+                    {t('eingenommen', { defaultValue: 'Eingenommen' })}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </GlassPanel>
       </div>
 

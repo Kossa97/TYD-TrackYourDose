@@ -172,8 +172,8 @@ vi.mock('./components/StackItemWizard', () => ({
       <span data-testid="wizard-plan-dose">{existingPlan?.dose ?? ''}</span>
       <span data-testid="wizard-plan-unit">{existingPlan?.unit ?? ''}</span>
       <span data-testid="wizard-plan-frequency">{existingPlan?.frequency ?? ''}</span>
-      <span data-testid="wizard-plan-routine-group">{existingPlan?.routineGroup ?? ''}</span>
-      <span data-testid="wizard-plan-time">{existingPlan?.time ?? ''}</span>
+      <span data-testid="wizard-plan-routine-group">{existingPlan?.slots[0]?.routineGroup ?? ''}</span>
+      <span data-testid="wizard-plan-time">{existingPlan?.slots[0]?.time ?? ''}</span>
       <button
         type="button"
         onClick={() => {
@@ -231,8 +231,7 @@ vi.mock('./components/StackItemWizard', () => ({
               scheduleDays: [],
               startDate: '2026-08-16',
               endDate: null,
-              routineGroup: 'morning',
-              time: null,
+              slots: [{ routineGroup: 'morning', time: null }],
               reminders: [],
             },
             inventory,

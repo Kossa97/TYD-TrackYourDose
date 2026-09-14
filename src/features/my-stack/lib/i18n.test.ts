@@ -129,6 +129,11 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_plan_frequency_required',
   'my_stack_plan_start_date',
   'my_stack_plan_start_date_required',
+  'my_stack_plan_end_date',
+  'my_stack_plan_end_date_hint',
+  'my_stack_plan_end_date_before_start',
+  'my_stack_plan_end_open',
+  'my_stack_plan_on_demand_hint',
   'my_stack_plan_interval',
   'my_stack_plan_weekdays',
   'my_stack_plan_routine_group',
@@ -256,23 +261,27 @@ const EXPECTED_MY_STACK_KEYS = [
   'calendar_plan_kicker',
   'due_intakes_hint',
 ] as const
+// Die Pruefsumme ueber ALLES ausserhalb des My-Stack-Blocks. Sie soll eine
+// unbeabsichtigte Aenderung dort auffallen lassen — und tut das auch: mit
+// „Bei Bedarf" ist `freq_bei_bedarf` dazugekommen, ein Schluessel ausserhalb
+// des Blocks, und die Zahlen mussten deshalb bewusst neu gesetzt werden.
 const MANUAL_OUTSIDE_OVERLAY_HASHES = {
-  de: '258cc643a3bb558ee9a16f20d7a0bd6295e38def2ad9d9d926134eb7c751829d',
-  en: '0f202b9ea6b8691b2a132c343d4370cce6ae30353b1c99a0bbd8c3e9d13aeba2',
+  de: '46212e2d24da60b387e5f3f80fe3887ae7ea53edd7d088a455e1847a6c7681b9',
+  en: 'e340b56298e5bc47f368deb82cec55687d1ef5476f9c7e224fefb3e8755fd954',
 } as const
 const TRANSLATED_OUTSIDE_OVERLAY_HASHES = {
-  ar: '47d5344e6b2132e3f01b5f34676ef2ed038f2d3fa075b4fc737caf3f60955af7',
-  es: '91640876a543c84520c876db1e39e1927cb12822011223627cbb76a9384f602c',
-  fr: '50c0c189ec48eab0cc972539715e47d9f342f5dd797d6a8c32622a827bac5732',
-  hi: '0b18ee80cf3bdab20895e31418df4b9106a3668cba05b4300b8b012c71fb9c44',
-  id: 'b809bfe4d2a3eaf32237947bdc3ed5b40fea252fe39c494eeeeefacd305356e8',
-  it: 'f125dd3b1a9192fc7b862ace19e63637118d648f13e9afc6ee4a1c25171e3c8f',
-  ja: '27cc7be0583af500e96e85ace97b0e7d90ab8d23ae94237e33e48667c91a90b4',
-  ko: '3369b42b59420f70e780f4004c70e3a83d3edfbbe116d05d3b2ab2fcb6a4acc0',
-  pt: '9b72cfc750c43c71e02962f324d14c6e2c8c831fc656f5a0976c2f35b4d2146e',
-  ru: '6502048e718de1669b14a1b9a1a34d94e53ad19885e4b147800bda7b46c44f75',
-  tr: '14b492940010acc2b4a6da47e72cc8da982a2c9819772443ea70cc3b2cde2a42',
-  zh: 'eb50fbd256c08d05fa789078635b5e9398d471c8316bfeba958f3ca76110794f',
+  ar: '45167d07462705a9d069e63944f685b3c9a7b9bfa353f552be75d9c74b41c48e',
+  es: 'faf0fd45f1d334a588aba4c7a8c55a5943dc3333d69c18f60337d1d1dbd0f5e3',
+  fr: '2b472e44e3b4e0d96d82536b4c9221731372d793349696ff1838fb85734a2ff2',
+  hi: '5fe2321710a10bdf40b2b9a7a4a9091581359f6a8d5e8274608476263f2e131e',
+  id: '4f2a8f808dc8d69179994c1c27ee2612433d1b5cc9800d997fbc4e1874bdb1f6',
+  it: '35c08610e0d51cb491ac6e50644c513f02440341a81e26db8c5a1a3a639b166b',
+  ja: 'f8ecf4c6adc7f837f3a436ba9132a90e7811ea3ef7fc7ef0ac38b494150d5291',
+  ko: '6a4205088b21a4ae5fae9d1592712ab5531499bdc6281e07df3d80e48ecbb1bd',
+  pt: '6820d77703529205004f9534c063b41428ec3b0677a4d31e75361bcebeceb4fb',
+  ru: 'c89ace06851227e4400364ffd08fc4ae81d07a3cef63bf37e9e3a310abfa94a5',
+  tr: 'f63e2d545afcd0c53c6e420c37e02cd49d11af71c741ce74a87f8da8b535b943',
+  zh: '2d2e7b2da9ead8c442a8891e29c373016405f1a590972abe4048cf437a9080d2',
 } as const
 const expectedKeySet = new Set<string>(EXPECTED_MY_STACK_KEYS)
 

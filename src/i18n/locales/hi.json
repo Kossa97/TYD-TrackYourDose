@@ -394,6 +394,7 @@
   "freq_woechentlich": "साप्ताहिक",
   "freq_alle_x": "हर X दिन",
   "freq_wochentage": "दिन चुनें",
+  "freq_bei_bedarf": "आवश्यकतानुसार",
   "method_subkutan": "त्वचा के नीचे",
   "method_intramusk": "इंट्रामस्कुलर",
   "method_nasal": "नाक से",
@@ -1121,5 +1122,10 @@
   "my_stack_browse_catalog": "कैटलॉग देखें",
   "my_stack_jump_to_letter": "{{letter}} पर जाएँ",
   "stack_category_other": "अन्य",
-  "my_stack_combination": "संयोजन उत्पाद"
+  "my_stack_combination": "संयोजन उत्पाद",
+  "my_stack_plan_end_date": "समाप्ति (वैकल्पिक)",
+  "my_stack_plan_end_date_hint": "लंबे समय तक लेते हैं तो खाली छोड़ें। कोर्स के लिए अंतिम सेवन तिथि।",
+  "my_stack_plan_end_date_before_start": "समाप्ति तिथि प्रारंभ से पहले है।",
+  "my_stack_plan_end_open": "खुला",
+  "my_stack_plan_on_demand_hint": "कोई निश्चित समय नहीं: न कुछ देय होता है, न छूटा गिना जाता है। सेवन के बाद दर्ज करें।"
 }

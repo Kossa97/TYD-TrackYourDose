@@ -110,6 +110,18 @@ export interface StackItemDraft {
   ingredients: StackItemIngredient[]
 }
 
+// EIN Einnahmezeitpunkt des Tages. „2x taeglich" hat zwei davon.
+//
+// Die Auswerteseite konnte mehrere Zeitpunkte von Anfang an (`intake_time`
+// haelt sie kommagetrennt, `resolveScheduleSlots` loest sie auf), der Entwurf
+// trug aber nur einen — und beim Bearbeiten eines bestehenden Zyklus fiel
+// jeder weitere still hinten runter.
+export interface IntakeSlotDraft {
+  routineGroup: RoutineGroup
+  /** Genaue Uhrzeit, oder null fuer die Standardzeit der Tageszeit. */
+  time: string | null
+}
+
 export interface IntakePlanDraft {
   id?: string
   name: string
@@ -120,9 +132,10 @@ export interface IntakePlanDraft {
   xDaysInterval: number | null
   scheduleDays: string[]
   startDate: string
+  /** Leer heisst: laeuft weiter. Eine Antibiotikakur hat hier ein Datum. */
   endDate: string | null
-  routineGroup: RoutineGroup
-  time: string | null
+  /** Ein Eintrag je Einnahmezeitpunkt; bei „Bei Bedarf" leer. */
+  slots: IntakeSlotDraft[]
   reminders: string[]
 }
 

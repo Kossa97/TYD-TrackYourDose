@@ -174,6 +174,11 @@ export function cycleAppliesToDay(cycle: ScheduleCycle, day: Date): boolean {
   const diff = differenceInDays(day, start)
   const hasDayFilter = (seg.schedule_days ?? []).length > 0
 
+  // „Bei Bedarf" ist kein Plan: kein Tag ist faellig, nichts kann verpasst
+  // werden, nichts wird automatisch als ausgelassen geloggt. Eingetragen wird
+  // die Einnahme, wenn sie stattgefunden hat. Das folgte bisher nur aus dem
+  // Fallthrough am Ende — hier steht es als Absicht.
+  if (freq === 'Bei Bedarf') return false
   if (freq === 'Täglich' || freq === '2x täglich' || freq === '3x täglich')
     return hasDayFilter ? (seg.schedule_days ?? []).includes(dayOfWeek) : true
   if (freq === 'Jeden 2. Tag') return diff % 2 === 0

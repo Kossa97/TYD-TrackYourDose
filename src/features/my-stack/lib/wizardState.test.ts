@@ -84,8 +84,7 @@ const activePlan: IntakePlanDraft = {
   scheduleDays: ['Mo', 'Di', 'Mi', 'Do', 'Fr'],
   startDate: '2025-01-01',
   endDate: '2026-12-31',
-  routineGroup: 'morning',
-  time: '08:30',
+  slots: [{ routineGroup: 'morning', time: '08:30' }],
   reminders: ['on_time'],
 }
 
@@ -361,6 +360,51 @@ describe('wizard state', () => {
     expect(geloest.draft.ingredients[0].custom_name).toBe('Vitamin D3')
   })
 
+  it('legt bei „2x täglich" zwei Einnahmezeitpunkte an — auf verschiedenen Tageszeiten', () => {
+    // Zweimal „morgens" ist nie gemeint. Der zweite Zeitpunkt startet deshalb
+    // auf der Tageszeit, die noch frei ist.
+    const zwei = wizardReducer(initialWizardState(), {
+      type: 'plan_changed',
+      changes: { frequency: '2x täglich' },
+    })
+
+    expect(zwei.draft.plan.slots.map(slot => slot.routineGroup)).toEqual(['morning', 'midday'])
+
+    const drei = wizardReducer(zwei, { type: 'plan_changed', changes: { frequency: '3x täglich' } })
+    expect(drei.draft.plan.slots.map(slot => slot.routineGroup))
+      .toEqual(['morning', 'midday', 'evening'])
+  })
+
+  it('behält beim Verringern die vorderen Zeitpunkte samt Uhrzeit', () => {
+    const drei = wizardReducer(initialWizardState(), {
+      type: 'plan_changed',
+      changes: { frequency: '3x täglich' },
+    })
+    const mitZeit = wizardReducer(drei, {
+      type: 'plan_changed',
+      changes: { slots: drei.draft.plan.slots.map((slot, index) => (
+        index === 0 ? { ...slot, time: '07:15' } : slot
+      )) },
+    })
+    const zurueck = wizardReducer(mitZeit, {
+      type: 'plan_changed',
+      changes: { frequency: 'Täglich' },
+    })
+
+    expect(zurueck.draft.plan.slots).toEqual([{ routineGroup: 'morning', time: '07:15' }])
+  })
+
+  it('nimmt „Bei Bedarf" jeden geplanten Zeitpunkt weg', () => {
+    // Kein Plan heißt: keine Tageszeit, nach der zu fragen wäre.
+    const beiBedarf = wizardReducer(initialWizardState(), {
+      type: 'plan_changed',
+      changes: { frequency: 'Bei Bedarf' },
+    })
+
+    expect(beiBedarf.draft.plan.slots).toEqual([])
+    expect(canContinue({ ...beiBedarf, step: 'plan' })).toBe(false) // Methode fehlt noch
+  })
+
   it('erlaubt freie Eingabe ohne Katalog-ID', () => {
     const next = wizardReducer(initialWizardState(), { type: 'custom_started', name: 'Eigene Mischung' })
 
@@ -574,8 +618,7 @@ describe('wizard state', () => {
         scheduleDays: [],
         startDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         endDate: null,
-        routineGroup: 'morning',
-        time: null,
+        slots: [{ routineGroup: 'morning', time: null }],
         reminders: [],
       },
       inventory: {

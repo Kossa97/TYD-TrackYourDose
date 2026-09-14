@@ -111,7 +111,12 @@ interface SaveIntakePlanParams {
   schedule_days: string[]
   start_date: string
   end_date: string | null
-  intake_time: 'morgens' | 'mittags' | 'abends'
+  /**
+  * Die Tageszeiten der Einnahmezeitpunkte, kommagetrennt — „morgens,abends"
+  * bei „2x taeglich". `resolveScheduleSlots` liest sie genau so.
+  */
+  intake_time: string
+  /** Die genauen Uhrzeiten in derselben Reihenfolge; leer = Standardzeit. */
   intake_time_custom: string | null
   reminder: string
 }
@@ -271,8 +276,17 @@ function planParams(
     schedule_days: [...plan.scheduleDays],
     start_date: plan.startDate.trim(),
     end_date: nullableText(plan.endDate ?? ''),
-    intake_time: ROUTINE_INTAKE_TIME[plan.routineGroup],
-    intake_time_custom: nullableText(plan.time ?? ''),
+    // „Bei Bedarf" hat keinen geplanten Zeitpunkt. Die Tabelle verlangt
+    // trotzdem eine Tageszeit — sie bleibt bei 'morgens' und bedeutet dort
+    // nichts, denn `cycleAppliesToDay` plant fuer diese Frequenz keinen Tag.
+    intake_time: plan.slots.length > 0
+      ? plan.slots.map(slot => ROUTINE_INTAKE_TIME[slot.routineGroup]).join(',')
+      : ROUTINE_INTAKE_TIME.morning,
+    intake_time_custom: nullableText(
+      plan.slots.some(slot => slot.time?.trim())
+        ? plan.slots.map(slot => slot.time?.trim() ?? '').join(',')
+        : '',
+    ),
     reminder: plan.reminders.map(value => value.trim()).filter(Boolean).join(',') || 'none',
   }
 }

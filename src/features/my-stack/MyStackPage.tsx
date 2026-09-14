@@ -28,6 +28,7 @@ import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackIte
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
+import { INTAKE_FREQUENCIES } from './lib/intakeFrequency'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
 import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
 import { backfillMessageKey, buildPermanentScheduleChange, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
@@ -231,15 +232,13 @@ const SYRINGE_PRESETS = [
   { label: '2 mL · 200 Einh. (U-100)',  ml: '2',   units: '200' },
   { label: '1 mL · 40 Einh. (U-40)',    ml: '1',   units: '40'  },
 ]
-const BASE_FREQUENCIES = [
-  'Täglich','Jeden 2. Tag',
-  '5 Tage an / 2 aus','Mo-Fr','Wöchentlich',
-  'Alle X Tage','Wochentage wählen',
-]
+const BASE_FREQUENCIES = [...INTAKE_FREQUENCIES]
 const FREQ_KEYS: Record<string,string> = {
-  'Täglich':'freq_taeglich','Jeden 2. Tag':'freq_jeden2',
+  'Täglich':'freq_taeglich','2x täglich':'freq_2x','3x täglich':'freq_3x',
+  'Jeden 2. Tag':'freq_jeden2',
   '5 Tage an / 2 aus':'freq_5an2aus','Mo-Fr':'freq_mofr','Wöchentlich':'freq_woechentlich',
   'Alle X Tage':'freq_alle_x','Wochentage wählen':'freq_wochentage',
+  'Bei Bedarf':'freq_bei_bedarf',
 }
 const INTAKE_TIME_CONFIG = {
   morgens: { labelKey: 'morgens', icon: Sunrise, time: '08:00' },
@@ -438,7 +437,15 @@ function nextScheduleHistory(
 
 function cycleAsIntakePlanDraft(cycle: Cycle, day: Date): IntakePlanDraft {
   const segment = scheduleForDay(cycle, day)
-  const primarySlot = (segment.intake_time ?? '').split(',').find(Boolean) ?? ''
+  // Jeder Einnahmezeitpunkt, nicht nur der erste. Vorher nahm der Assistent
+  // `…split(',').find(Boolean)` — beim Bearbeiten eines „2x taeglich"-Zyklus
+  // fiel die zweite Einnahme damit still weg, und Speichern loeschte sie.
+  const slotKeys = (segment.intake_time ?? '').split(',').map(key => key.trim()).filter(Boolean)
+  const slotTimes = (segment.intake_time_custom ?? '').split(',').map(time => time.trim())
+  const slots = slotKeys.map((key, index) => ({
+    routineGroup: INTAKE_TIME_TO_ROUTINE_GROUP[key] ?? 'morning',
+    time: slotTimes[index] || null,
+  }))
   return {
     id: cycle.id,
     name: cycle.name,
@@ -450,8 +457,7 @@ function cycleAsIntakePlanDraft(cycle: Cycle, day: Date): IntakePlanDraft {
     scheduleDays: segment.schedule_days ?? [],
     startDate: format(new Date(), 'yyyy-MM-dd'),
     endDate: cycle.end_date,
-    routineGroup: INTAKE_TIME_TO_ROUTINE_GROUP[primarySlot] ?? 'morning',
-    time: segment.intake_time_custom?.split(',').find(Boolean) ?? null,
+    slots: slots.length > 0 ? slots : [{ routineGroup: 'morning' as const, time: null }],
     reminders: cycle.reminder && cycle.reminder !== 'none'
       ? cycle.reminder.split(',').filter(Boolean)
       : [],
