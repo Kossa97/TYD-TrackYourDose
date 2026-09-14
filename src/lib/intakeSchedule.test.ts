@@ -59,6 +59,9 @@ describe('resolveScheduleSlots', () => {
         routineGroup: 'morning',
         time,
         minutes: Number(time.slice(0, 2)) * 60 + Number(time.slice(3)),
+        // Ohne eigene Menge gilt die des Zyklus — so war es bei jedem Plan,
+        // bevor die Menge je Zeitpunkt stehen konnte.
+        dose: null,
       }])
     },
   )

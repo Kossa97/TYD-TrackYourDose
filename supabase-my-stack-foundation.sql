@@ -878,6 +878,10 @@ declare
   plan_end_date date := nullif(p_plan ->> 'end_date', '')::date;
   plan_intake_time text := nullif(btrim(p_plan ->> 'intake_time'), '');
   plan_intake_time_custom text := nullif(btrim(p_plan ->> 'intake_time_custom'), '');
+  plan_interval_unit text := nullif(btrim(p_plan ->> 'interval_unit'), '');
+  plan_cycle_on integer := nullif(p_plan ->> 'cycle_on_days', '')::integer;
+  plan_cycle_off integer := nullif(p_plan ->> 'cycle_off_days', '')::integer;
+  plan_slot_doses text := nullif(btrim(p_plan ->> 'slot_doses'), '');
   plan_reminder text := coalesce(nullif(btrim(p_plan ->> 'reminder'), ''), 'none');
   schedule_changed boolean;
   next_history jsonb;
@@ -907,8 +911,56 @@ begin
     raise exception 'Plan start date is required';
   end if;
   plan_effective_date := (p_plan ->> 'start_date')::date;
-  if plan_intake_time is null or plan_intake_time not in ('morgens', 'mittags', 'abends') then
+  -- Mehrere Einnahmezeitpunkte je Tag stehen kommagetrennt: „morgens,abends"
+  -- fuer morgens und abends am selben Tag. Die Auswertung
+  -- (`resolveScheduleSlots`) liest sie genau so; geprueft wird deshalb jeder
+  -- Teil einzeln. Dieselbe Tageszeit darf zweimal vorkommen — zwei Abenddosen
+  -- mit verschiedenen Uhrzeiten sind ein gueltiger Plan.
+  if plan_intake_time is null then
     raise exception 'Invalid plan intake time';
+  end if;
+  if exists (
+    select 1
+    from unnest(string_to_array(plan_intake_time, ',')) teil
+    where btrim(teil) not in ('morgens', 'mittags', 'abends')
+  ) or coalesce(array_length(string_to_array(plan_intake_time, ','), 1), 0) not between 1 and 4 then
+    -- coalesce, weil string_to_array('', ',') ein LEERES Array liefert und
+    -- array_length darauf null ist: ohne das ginge ein leerer Wert durch, und
+    -- die Zeile truege eine Tageszeit, die keine ist.
+    raise exception 'Invalid plan intake time';
+  end if;
+
+  -- Ein Ende vor dem Start ist keine Kur, sondern ein Tippfehler. Null bleibt
+  -- erlaubt und ist der Dauerfall.
+  if plan_end_date is not null and plan_end_date < plan_effective_date then
+    raise exception 'Plan end date is before its start date';
+  end if;
+
+  -- Die Einheit des Abstands. Ohne Pruefung liefe ein Tippfehler still als
+  -- „Tage" durch, und ein Depot alle sechs Monate waere alle sechs Tage.
+  if plan_interval_unit is not null and plan_interval_unit not in ('day', 'week', 'month') then
+    raise exception 'Invalid plan interval unit';
+  end if;
+
+  -- „X Tage an, Y Tage aus" braucht beide Zahlen; eine allein ist kein Wechsel.
+  if plan_frequency = 'Im Wechsel' then
+    if plan_cycle_on is null or plan_cycle_off is null
+      or plan_cycle_on not between 1 and 90
+      or plan_cycle_off not between 1 and 90 then
+      raise exception 'Alternating frequency requires on and off days between 1 and 90';
+    end if;
+  else
+    plan_cycle_on := null;
+    plan_cycle_off := null;
+  end if;
+
+  -- Die Mengen je Zeitpunkt stehen in derselben Reihenfolge wie die
+  -- Tageszeiten. Mehr Mengen als Zeitpunkte hiesse, dass eine davon nirgends
+  -- ankommt — und die Zuordnung waere ab da geraten.
+  if plan_slot_doses is not null
+    and array_length(string_to_array(plan_slot_doses, ','), 1)
+        is distinct from array_length(string_to_array(plan_intake_time, ','), 1) then
+    raise exception 'Slot doses must line up with intake times';
   end if;
 
   if jsonb_typeof(p_plan -> 'schedule_days') = 'array' then
@@ -924,12 +976,17 @@ begin
       raise exception 'Every-X-days frequency requires a whole-day interval';
     end if;
     plan_interval_value := (p_plan ->> 'x_days_interval')::numeric;
-    if not (plan_interval_value between 2 and 30) then
-      raise exception 'Every-X-days interval must be between 2 and 30';
+    -- Die Grenze haengt an der Einheit: 90 Tage, 52 Wochen, 12 Monate. Vorher
+    -- galten pauschal 2 bis 30 Tage — ein Depot alle zehn Wochen war damit
+    -- nicht speicherbar.
+    if not (plan_interval_value between 1 and case coalesce(plan_interval_unit, 'day')
+      when 'month' then 12 when 'week' then 52 else 90 end) then
+      raise exception 'Interval is outside the range of its unit';
     end if;
     plan_interval := plan_interval_value::integer;
   else
     plan_interval := null;
+    plan_interval_unit := null;
   end if;
 
   if plan_frequency = 'Wochentage wählen' then
@@ -967,12 +1024,16 @@ begin
       method,
       frequency,
       x_days_interval,
+      interval_unit,
+      cycle_on_days,
+      cycle_off_days,
       schedule_days,
       start_date,
       end_date,
       active,
       intake_time,
       intake_time_custom,
+      slot_doses,
       reminder
     ) values (
       owner_id,
@@ -983,12 +1044,16 @@ begin
       plan_method,
       plan_frequency,
       plan_interval,
+      plan_interval_unit,
+      plan_cycle_on,
+      plan_cycle_off,
       plan_schedule_days,
       plan_effective_date,
       plan_end_date,
       true,
       plan_intake_time,
       plan_intake_time_custom,
+      plan_slot_doses,
       plan_reminder
     );
   else
@@ -1011,9 +1076,13 @@ begin
 
     schedule_changed := cycle_row.frequency is distinct from plan_frequency
       or cycle_row.x_days_interval is distinct from plan_interval
+      or cycle_row.interval_unit is distinct from plan_interval_unit
+      or cycle_row.cycle_on_days is distinct from plan_cycle_on
+      or cycle_row.cycle_off_days is distinct from plan_cycle_off
       or coalesce(cycle_row.schedule_days, '{}'::text[]) is distinct from plan_schedule_days
       or cycle_row.intake_time is distinct from plan_intake_time
       or cycle_row.intake_time_custom is distinct from plan_intake_time_custom
+      or cycle_row.slot_doses is distinct from plan_slot_doses
       or cycle_row.dose is distinct from plan_dose
       or cycle_row.unit is distinct from plan_unit;
 
@@ -1022,9 +1091,13 @@ begin
         'effective_from', cycle_row.start_date,
         'frequency', cycle_row.frequency,
         'x_days_interval', cycle_row.x_days_interval,
+        'interval_unit', cycle_row.interval_unit,
+        'cycle_on_days', cycle_row.cycle_on_days,
+        'cycle_off_days', cycle_row.cycle_off_days,
         'schedule_days', cycle_row.schedule_days,
         'intake_time', cycle_row.intake_time,
         'intake_time_custom', cycle_row.intake_time_custom,
+        'slot_doses', cycle_row.slot_doses,
         'dose', cycle_row.dose,
         'unit', cycle_row.unit
       );
@@ -1032,9 +1105,13 @@ begin
         'effective_from', plan_effective_date,
         'frequency', plan_frequency,
         'x_days_interval', plan_interval,
+        'interval_unit', plan_interval_unit,
+        'cycle_on_days', plan_cycle_on,
+        'cycle_off_days', plan_cycle_off,
         'schedule_days', plan_schedule_days,
         'intake_time', plan_intake_time,
         'intake_time_custom', plan_intake_time_custom,
+        'slot_doses', plan_slot_doses,
         'dose', plan_dose,
         'unit', plan_unit
       );
@@ -1062,10 +1139,14 @@ begin
       method = plan_method,
       frequency = plan_frequency,
       x_days_interval = plan_interval,
+      interval_unit = plan_interval_unit,
+      cycle_on_days = plan_cycle_on,
+      cycle_off_days = plan_cycle_off,
       schedule_days = plan_schedule_days,
       end_date = plan_end_date,
       intake_time = plan_intake_time,
       intake_time_custom = plan_intake_time_custom,
+      slot_doses = plan_slot_doses,
       reminder = plan_reminder,
       schedule_history = next_history
     where id = plan_id

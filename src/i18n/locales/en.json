@@ -1278,5 +1278,20 @@
   "my_stack_plan_on_demand_hint": "No fixed time: nothing becomes due, nothing counts as missed. You log the intake once it has happened.",
   "my_stack_plan_add_slot": "Another intake on the same day",
   "my_stack_plan_remove_slot": "Remove intake time",
-  "my_stack_plan_slot_duplicate": "That time is already listed — give it its own clock time."
+  "my_stack_plan_slot_duplicate": "That time is already listed — give it its own clock time.",
+  "my_stack_plan_rhythm": "Which days?",
+  "my_stack_rhythm_daily": "Every day",
+  "my_stack_rhythm_weekdays": "Weekdays",
+  "my_stack_rhythm_interval": "Every",
+  "my_stack_rhythm_cycle": "On and off",
+  "my_stack_rhythm_on_demand": "Only as needed",
+  "my_stack_rhythm_interval_value": "Interval",
+  "my_stack_rhythm_interval_unit": "Interval unit",
+  "my_stack_rhythm_unit_day": "days",
+  "my_stack_rhythm_unit_week": "weeks",
+  "my_stack_rhythm_unit_month": "months",
+  "my_stack_rhythm_interval_invalid": "Please enter an interval within the chosen unit.",
+  "my_stack_rhythm_cycle_on": "Days on",
+  "my_stack_rhythm_cycle_off": "Days off",
+  "my_stack_rhythm_cycle_invalid": "An on/off cycle needs at least one day on and one day off."
 }

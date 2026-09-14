@@ -1130,5 +1130,20 @@
   "my_stack_plan_on_demand_hint": "Tanpa waktu tetap: tidak ada yang jatuh tempo atau terlewat. Anda mencatat setelah diminum.",
   "my_stack_plan_add_slot": "Konsumsi lain di hari yang sama",
   "my_stack_plan_remove_slot": "Hapus waktu konsumsi",
-  "my_stack_plan_slot_duplicate": "Waktu itu sudah ada — beri jam tersendiri."
+  "my_stack_plan_slot_duplicate": "Waktu itu sudah ada — beri jam tersendiri.",
+  "my_stack_plan_rhythm": "Hari apa saja?",
+  "my_stack_rhythm_daily": "Setiap hari",
+  "my_stack_rhythm_weekdays": "Hari kerja tertentu",
+  "my_stack_rhythm_interval": "Setiap",
+  "my_stack_rhythm_cycle": "Bergantian",
+  "my_stack_rhythm_on_demand": "Hanya bila perlu",
+  "my_stack_rhythm_interval_value": "Jarak",
+  "my_stack_rhythm_interval_unit": "Satuan jarak",
+  "my_stack_rhythm_unit_day": "hari",
+  "my_stack_rhythm_unit_week": "minggu",
+  "my_stack_rhythm_unit_month": "bulan",
+  "my_stack_rhythm_interval_invalid": "Masukkan jarak sesuai satuan yang dipilih.",
+  "my_stack_rhythm_cycle_on": "Hari aktif",
+  "my_stack_rhythm_cycle_off": "Hari jeda",
+  "my_stack_rhythm_cycle_invalid": "Siklus butuh minimal satu hari aktif dan satu hari jeda."
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { IntakePlanDraft, StackItemDraft, StackItemIngredient } from '../types'
 import { validateIntakePlan, validateStackItemDraft } from './validation'
+import { emptyRhythm } from './intakeRhythm'
 
 const ingredient: StackItemIngredient = {
   catalog_substance_id: 'vitamin-d3',
@@ -25,21 +26,22 @@ const validVitaminD: StackItemDraft = {
 
 const validPlan: IntakePlanDraft = {
   name: 'Vitamin D3',
-  dose: 1,
   unit: 'capsule',
   method: 'Oral',
-  frequency: 'daily',
-  xDaysInterval: null,
-  scheduleDays: [],
+  rhythm: emptyRhythm(),
   startDate: '2026-07-29',
   endDate: null,
-  slots: [{ routineGroup: 'morning', time: null }],
+  slots: [{ routineGroup: 'morning', time: null, dose: 1 }],
   reminders: [],
 }
 
 describe('validateStackItemDraft', () => {
   it('requires a positive dose and unit only when tracking quantity', () => {
-    const planWithoutQuantity = { ...validPlan, dose: null, unit: null }
+    const planWithoutQuantity = {
+      ...validPlan,
+      unit: null,
+      slots: [{ routineGroup: 'morning' as const, time: null, dose: null }],
+    }
 
     expect(validateIntakePlan(planWithoutQuantity, 'intake_only')).toEqual({})
     expect(validateIntakePlan(planWithoutQuantity, 'with_amount')).toEqual({
@@ -49,11 +51,10 @@ describe('validateStackItemDraft', () => {
     expect(validateIntakePlan({
       ...validPlan,
       name: ' ',
-      frequency: '',
-      slots: [{ routineGroup: '' as never, time: null }],
+      slots: [{ routineGroup: '' as never, time: null, dose: null }],
     }, 'complete')).toEqual({
       name: 'required',
-      frequency: 'required',
+      dose: 'required',
       slots: ['required'],
     })
   })
@@ -73,7 +74,7 @@ describe('validateStackItemDraft', () => {
   it('verlangt bei „Bei Bedarf" keine Tageszeit', () => {
     // Dort gibt es keinen geplanten Zeitpunkt — eine Pflichtangabe ohne
     // Bedeutung wäre schlimmer als keine.
-    const beiBedarf = { ...validPlan, frequency: 'Bei Bedarf', slots: [] }
+    const beiBedarf = { ...validPlan, rhythm: { ...emptyRhythm(), kind: 'on_demand' as const }, slots: [] }
 
     expect(validateIntakePlan(beiBedarf, 'complete').slots).toBeUndefined()
   })
@@ -81,10 +82,9 @@ describe('validateStackItemDraft', () => {
   it('verlangt je geplantem Einnahmezeitpunkt eine Tageszeit', () => {
     const zweiMal = {
       ...validPlan,
-      frequency: '2x täglich',
       slots: [
-        { routineGroup: 'morning' as const, time: null },
-        { routineGroup: '' as never, time: null },
+        { routineGroup: 'morning' as const, time: null, dose: 1 },
+        { routineGroup: '' as never, time: null, dose: 1 },
       ],
     }
 
@@ -98,30 +98,79 @@ describe('validateStackItemDraft', () => {
     }
   })
 
-  it.each([null, 0, 1, 2.5, 31, Number.POSITIVE_INFINITY])(
-    'rejects an invalid every-x-days interval (%s)',
-    xDaysInterval => {
+  it.each([null, 0, 2.5, 91, Number.POSITIVE_INFINITY])(
+    'weist einen unbrauchbaren Abstand ab (%s)',
+    intervalValue => {
       expect(validateIntakePlan({
         ...validPlan,
-        frequency: 'Alle X Tage',
-        xDaysInterval,
+        rhythm: { ...emptyRhythm(), kind: 'interval' as const, intervalValue },
       }, 'complete').xDaysInterval).toBe('invalid_interval')
     },
   )
 
+  it('richtet die Grenze des Abstands nach seiner Einheit', () => {
+    // 52 Wochen sind gültig, 53 nicht; 12 Monate gültig, 13 nicht. Vorher galt
+    // pauschal „2 bis 30 Tage", und ein Depot alle zehn Wochen ging gar nicht.
+    const mit = (intervalUnit: 'day' | 'week' | 'month', intervalValue: number) =>
+      validateIntakePlan({
+        ...validPlan,
+        rhythm: { ...emptyRhythm(), kind: 'interval' as const, intervalUnit, intervalValue },
+      }, 'complete').xDaysInterval
+
+    expect(mit('week', 10)).toBeUndefined()
+    expect(mit('week', 52)).toBeUndefined()
+    expect(mit('week', 53)).toBe('invalid_interval')
+    expect(mit('month', 6)).toBeUndefined()
+    expect(mit('month', 13)).toBe('invalid_interval')
+    expect(mit('day', 90)).toBeUndefined()
+    expect(mit('day', 91)).toBe('invalid_interval')
+  })
+
+  it('verlangt beim Wechsel einen Tag an und einen Tag Pause', () => {
+    const mit = (onDays: number | null, offDays: number | null) =>
+      validateIntakePlan({
+        ...validPlan,
+        rhythm: { ...emptyRhythm(), kind: 'cycle' as const, onDays, offDays },
+      }, 'complete').scheduleDays
+
+    expect(mit(21, 7)).toBeUndefined()   // die Pille
+    expect(mit(5, 2)).toBeUndefined()
+    expect(mit(null, 2)).toBe('invalid_cycle')
+    expect(mit(5, null)).toBe('invalid_cycle')
+    expect(mit(0, 2)).toBe('invalid_cycle')
+    expect(mit(5, 91)).toBe('invalid_cycle')
+  })
+
   it('requires at least one valid unique selected weekday', () => {
-    for (const scheduleDays of [[], ['XX'], ['Mo', 'Mo']]) {
+    for (const weekdays of [[], ['XX'], ['Mo', 'Mo']]) {
       expect(validateIntakePlan({
         ...validPlan,
-        frequency: 'Wochentage wählen',
-        scheduleDays,
+        rhythm: { ...emptyRhythm(), kind: 'weekdays' as const, weekdays },
       }, 'complete').scheduleDays).toBe('invalid_weekdays')
     }
     expect(validateIntakePlan({
       ...validPlan,
-      frequency: 'Wochentage wählen',
-      scheduleDays: ['Mo', 'Fr'],
+      rhythm: { ...emptyRhythm(), kind: 'weekdays' as const, weekdays: ['Mo', 'Fr'] },
     }, 'complete').scheduleDays).toBeUndefined()
+  })
+
+  it('verlangt die Menge an JEDEM Einnahmezeitpunkt', () => {
+    // „morgens 1000, abends —" ist kein Plan, sondern ein halber.
+    expect(validateIntakePlan({
+      ...validPlan,
+      slots: [
+        { routineGroup: 'morning' as const, time: '08:00', dose: 1000 },
+        { routineGroup: 'evening' as const, time: '20:00', dose: null },
+      ],
+    }, 'with_amount').dose).toBe('required')
+
+    expect(validateIntakePlan({
+      ...validPlan,
+      slots: [
+        { routineGroup: 'morning' as const, time: '08:00', dose: 1000 },
+        { routineGroup: 'evening' as const, time: '20:00', dose: 500 },
+      ],
+    }, 'with_amount').dose).toBeUndefined()
   })
 
   it('allows missing strength for intake_only and with_amount', () => {
@@ -157,8 +206,10 @@ describe('validateStackItemDraft', () => {
   })
 
   it('rejects non-finite tracked quantities and complete strength before SQL', () => {
-    expect(validateIntakePlan({ ...validPlan, dose: Number.POSITIVE_INFINITY }, 'with_amount').dose)
-      .toBe('required')
+    expect(validateIntakePlan({
+      ...validPlan,
+      slots: [{ routineGroup: 'morning' as const, time: null, dose: Number.POSITIVE_INFINITY }],
+    }, 'with_amount').dose).toBe('required')
     expect(validateStackItemDraft({
       ...validVitaminD,
       ingredients: [{ ...ingredient, amount_value: Number.POSITIVE_INFINITY }],

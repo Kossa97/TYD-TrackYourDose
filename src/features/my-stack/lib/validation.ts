@@ -1,5 +1,12 @@
-import type { IntakePlanDraft, StackItemDraft, StackItemIngredient, TrackingLevel } from '../types'
-import { MAX_INTAKE_SLOTS, isOnDemand } from './intakeFrequency'
+import type {
+  IntakePlanDraft,
+  IntakeRhythm,
+  StackItemDraft,
+  StackItemIngredient,
+  TrackingLevel,
+} from '../types'
+import { MAX_INTAKE_SLOTS } from './intakeFrequency'
+import { CYCLE_BOUNDS, INTERVAL_BOUNDS, isOnDemandRhythm } from './intakeRhythm'
 import { trackingCapabilities } from './trackingDepth'
 
 export interface IngredientValidationErrors {
@@ -20,8 +27,11 @@ export interface IntakePlanValidationErrors {
   dose?: string
   unit?: string
   method?: string
+  /** Die Form des Rhythmus selbst — heute immer gesetzt, also nie ein Fehler. */
   frequency?: string
+  /** 'interval': der Abstand fehlt oder liegt ausserhalb seiner Einheit. */
   xDaysInterval?: string
+  /** 'weekdays': kein Tag gewaehlt. 'cycle': an/aus unbrauchbar. */
   scheduleDays?: string
   startDate?: string
   endDate?: string
@@ -55,6 +65,46 @@ export function validateRecurrence(
       scheduleDays.length === 0
       || scheduleDays.some(day => !validDays.has(day))
       || new Set(scheduleDays).size !== scheduleDays.length
+    ) return { scheduleDays: 'invalid_weekdays' }
+  }
+
+  return {}
+}
+
+/**
+ * Der Rhythmus des Assistenten. `validateRecurrence` darueber prueft dasselbe
+ * fuer die aeltere Zyklusmaske, die noch mit Frequenztexten arbeitet.
+ */
+export function validateRhythm(
+  rhythm: IntakeRhythm,
+): Pick<IntakePlanValidationErrors, 'xDaysInterval' | 'scheduleDays'> {
+  if (rhythm.kind === 'interval') {
+    const grenzen = INTERVAL_BOUNDS[rhythm.intervalUnit]
+    const n = rhythm.intervalValue
+    if (
+      n == null || !Number.isFinite(n) || !Number.isInteger(n)
+      || n < grenzen.min || n > grenzen.max
+    ) return { xDaysInterval: 'invalid_interval' }
+  }
+
+  if (rhythm.kind === 'cycle') {
+    // „X Tage an, Y Tage aus" — null an beiden Stellen waere kein Wechsel,
+    // sondern eine Pause ohne Ende oder ein Dauerplan mit Umweg.
+    const gueltig = (wert: number | null) => (
+      wert != null && Number.isFinite(wert) && Number.isInteger(wert)
+      && wert >= CYCLE_BOUNDS.min && wert <= CYCLE_BOUNDS.max
+    )
+    if (!gueltig(rhythm.onDays) || !gueltig(rhythm.offDays)) {
+      return { scheduleDays: 'invalid_cycle' }
+    }
+  }
+
+  if (rhythm.kind === 'weekdays') {
+    const validDays = new Set<string>(VALID_SCHEDULE_DAYS)
+    if (
+      rhythm.weekdays.length === 0
+      || rhythm.weekdays.some(day => !validDays.has(day))
+      || new Set(rhythm.weekdays).size !== rhythm.weekdays.length
     ) return { scheduleDays: 'invalid_weekdays' }
   }
 
@@ -109,8 +159,7 @@ export function validateIntakePlan(
   const errors: IntakePlanValidationErrors = {}
   if (!plan.name.trim()) errors.name = 'required'
   if (!plan.method.trim()) errors.method = 'required'
-  if (!plan.frequency.trim()) errors.frequency = 'required'
-  Object.assign(errors, validateRecurrence(plan.frequency, plan.xDaysInterval, plan.scheduleDays))
+  Object.assign(errors, validateRhythm(plan.rhythm))
   if (!plan.startDate.trim()) errors.startDate = 'required'
 
   // Ein Ende VOR dem Start ist keine Kur, sondern ein Tippfehler. Leer bleibt
@@ -121,7 +170,7 @@ export function validateIntakePlan(
   // „Bei Bedarf" hat keinen geplanten Zeitpunkt — dort nach einer Tageszeit zu
   // fragen waere eine Pflichtangabe ohne Bedeutung. Jede andere Frequenz
   // braucht mindestens einen; wie viele es werden, entscheidet der Nutzer.
-  if (!isOnDemand(plan.frequency)) {
+  if (!isOnDemandRhythm(plan.rhythm)) {
     const slotFehler: string[] = plan.slots.map(slot => (slot.routineGroup ? '' : 'required'))
     if (plan.slots.length === 0) slotFehler.push('required')
     if (plan.slots.length > MAX_INTAKE_SLOTS) {
@@ -141,7 +190,13 @@ export function validateIntakePlan(
     if (slotFehler.some(Boolean)) errors.slots = slotFehler
   }
   if (trackingCapabilities(level).quantity) {
-    if (plan.dose == null || !Number.isFinite(plan.dose) || plan.dose <= 0) errors.dose = 'required'
+    // Die Menge steht je Einnahmezeitpunkt — „morgens 1000, abends 500". Fehlt
+    // sie an EINEM Zeitpunkt, ist der Plan unvollstaendig, nicht nur knapp.
+    // Auch „Bei Bedarf" braucht sie: dort ist es die Menge je Einnahme.
+    const ohneMenge = plan.slots.some(
+      slot => slot.dose == null || !Number.isFinite(slot.dose) || slot.dose <= 0,
+    )
+    if (plan.slots.length === 0 || ohneMenge) errors.dose = 'required'
     if (!plan.unit?.trim()) errors.unit = 'required'
   }
   return errors

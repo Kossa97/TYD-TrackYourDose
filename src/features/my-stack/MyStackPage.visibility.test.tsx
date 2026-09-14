@@ -6,6 +6,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom'
 import { addDays, format } from 'date-fns'
 import { loadStackItems, type LoadedStackItem } from './services/stackItems'
 import type { StackItemWizardProps } from './components/StackItemWizard'
+import { emptyRhythm } from './lib/intakeRhythm'
 import { MyStackPage } from './MyStackPage'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -169,9 +170,9 @@ vi.mock('./components/StackItemWizard', () => ({
       <span data-testid="wizard-item-id">{existingItem?.id ?? ''}</span>
       <span data-testid="wizard-plan-id">{existingPlan?.id ?? ''}</span>
       <span data-testid="wizard-plan-method">{existingPlan?.method ?? ''}</span>
-      <span data-testid="wizard-plan-dose">{existingPlan?.dose ?? ''}</span>
+      <span data-testid="wizard-plan-dose">{existingPlan?.slots[0]?.dose ?? ''}</span>
       <span data-testid="wizard-plan-unit">{existingPlan?.unit ?? ''}</span>
-      <span data-testid="wizard-plan-frequency">{existingPlan?.frequency ?? ''}</span>
+      <span data-testid="wizard-plan-frequency">{existingPlan?.rhythm.kind ?? ''}</span>
       <span data-testid="wizard-plan-routine-group">{existingPlan?.slots[0]?.routineGroup ?? ''}</span>
       <span data-testid="wizard-plan-time">{existingPlan?.slots[0]?.time ?? ''}</span>
       <button
@@ -223,15 +224,12 @@ vi.mock('./components/StackItemWizard', () => ({
             pkProfileMethod: null,
             plan: {
               name: 'Start plan',
-              dose: null,
               unit: null,
               method: 'Oral',
-              frequency: 'daily',
-              xDaysInterval: null,
-              scheduleDays: [],
+              rhythm: emptyRhythm(),
               startDate: '2026-08-16',
               endDate: null,
-              slots: [{ routineGroup: 'morning', time: null }],
+              slots: [{ routineGroup: 'morning', time: null, dose: null }],
               reminders: [],
             },
             inventory,
@@ -528,7 +526,8 @@ describe('MyStackPage non-vial visibility', () => {
     fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'bearbeiten' }))
 
     expect(screen.getByTestId('wizard-plan-dose').textContent).toBe('100')
-    expect(screen.getByTestId('wizard-plan-frequency').textContent).toBe('Täglich')
+    // Die Harness zeigt die Form des Rhythmus, nicht mehr den Frequenztext.
+    expect(screen.getByTestId('wizard-plan-frequency').textContent).toBe('daily')
     expect(screen.getByTestId('wizard-plan-routine-group').textContent).toBe('evening')
     expect(screen.getByTestId('wizard-plan-time').textContent).toBe('20:30')
   })

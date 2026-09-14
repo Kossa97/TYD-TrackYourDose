@@ -1,4 +1,5 @@
 import { buildDuplicateFingerprint } from '../lib/duplicateFingerprint'
+import { fuehrendeMenge, rhythmToStorage } from '../lib/intakeRhythm'
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
 import type {
   DosageFormKey,
@@ -108,6 +109,11 @@ interface SaveIntakePlanParams {
   method: string
   frequency: string
   x_days_interval: number | null
+  /** 'day' | 'week' | 'month' — nur bei „Alle X Tage" gesetzt. */
+  interval_unit: string | null
+  /** Wechselzyklus: X Tage an, Y Tage aus. */
+  cycle_on_days: number | null
+  cycle_off_days: number | null
   schedule_days: string[]
   start_date: string
   end_date: string | null
@@ -118,6 +124,8 @@ interface SaveIntakePlanParams {
   intake_time: string
   /** Die genauen Uhrzeiten in derselben Reihenfolge; leer = Standardzeit. */
   intake_time_custom: string | null
+  /** Die Mengen in derselben Reihenfolge; leer = die Menge des Zyklus. */
+  slot_doses: string | null
   reminder: string
 }
 
@@ -261,32 +269,47 @@ const ROUTINE_INTAKE_TIME = {
   evening: 'abends',
 } as const
 
+/** Tragen die Zeitpunkte verschiedene Mengen, oder ueberall dieselbe? */
+function hatEigeneMengen(slots: readonly { dose: number | null }[]): boolean {
+  return new Set(slots.map(slot => slot.dose)).size > 1
+}
+
 function planParams(
   plan: IntakePlanDraft,
   trackingLevel: TrackingLevel,
 ): SaveIntakePlanParams {
+  // „Bei Bedarf" hat keinen geplanten Zeitpunkt. Die Tabelle verlangt trotzdem
+  // eine Tageszeit; sie bedeutet dort nichts, denn `cycleAppliesToDay` plant
+  // fuer diese Frequenz keinen Tag.
+  const beiBedarf = plan.rhythm.kind === 'on_demand'
   return {
     id: plan.id ?? null,
     name: plan.name.trim(),
-    dose: trackingLevel === 'intake_only' ? null : plan.dose,
+    // `cycles.dose` ist EINE Zahl und bleibt es — sie traegt die fuehrende
+    // Menge, damit alles, was den Zyklus liest, weiter funktioniert. Die
+    // Mengen der weiteren Zeitpunkte stehen daneben in `slot_doses`.
+    dose: trackingLevel === 'intake_only' ? null : fuehrendeMenge(plan.slots),
     unit: trackingLevel === 'intake_only' ? null : nullableText(plan.unit ?? ''),
     method: plan.method.trim(),
-    frequency: plan.frequency.trim(),
-    x_days_interval: plan.xDaysInterval,
-    schedule_days: [...plan.scheduleDays],
+    ...rhythmToStorage(plan.rhythm),
     start_date: plan.startDate.trim(),
     end_date: nullableText(plan.endDate ?? ''),
     // „Bei Bedarf" hat keinen geplanten Zeitpunkt. Die Tabelle verlangt
     // trotzdem eine Tageszeit — sie bleibt bei 'morgens' und bedeutet dort
     // nichts, denn `cycleAppliesToDay` plant fuer diese Frequenz keinen Tag.
-    intake_time: plan.slots.length > 0
-      ? plan.slots.map(slot => ROUTINE_INTAKE_TIME[slot.routineGroup]).join(',')
-      : ROUTINE_INTAKE_TIME.morning,
-    intake_time_custom: nullableText(
+    intake_time: beiBedarf || plan.slots.length === 0
+      ? ROUTINE_INTAKE_TIME.morning
+      : plan.slots.map(slot => ROUTINE_INTAKE_TIME[slot.routineGroup]).join(','),
+    intake_time_custom: beiBedarf ? null : nullableText(
       plan.slots.some(slot => slot.time?.trim())
         ? plan.slots.map(slot => slot.time?.trim() ?? '').join(',')
         : '',
     ),
+    // Nur wenn sich die Mengen ueberhaupt unterscheiden — bei einem Plan mit
+    // einer einzigen Zahl bleibt die Spalte leer, wie bei jedem Zyklus zuvor.
+    slot_doses: beiBedarf || trackingLevel === 'intake_only' || !hatEigeneMengen(plan.slots)
+      ? null
+      : plan.slots.map(slot => (slot.dose == null ? '' : String(slot.dose))).join(','),
     reminder: plan.reminders.map(value => value.trim()).filter(Boolean).join(',') || 'none',
   }
 }

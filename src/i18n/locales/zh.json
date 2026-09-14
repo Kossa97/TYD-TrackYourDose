@@ -1129,5 +1129,20 @@
   "my_stack_plan_on_demand_hint": "没有固定时间：不会到期，也不会算作漏服。服用之后再记录。",
   "my_stack_plan_add_slot": "同一天再服一次",
   "my_stack_plan_remove_slot": "移除服用时间",
-  "my_stack_plan_slot_duplicate": "该时间点已存在 — 请为它设定自己的时刻。"
+  "my_stack_plan_slot_duplicate": "该时间点已存在 — 请为它设定自己的时刻。",
+  "my_stack_plan_rhythm": "在哪些天？",
+  "my_stack_rhythm_daily": "每天",
+  "my_stack_rhythm_weekdays": "按星期",
+  "my_stack_rhythm_interval": "每隔",
+  "my_stack_rhythm_cycle": "周期停用",
+  "my_stack_rhythm_on_demand": "仅按需",
+  "my_stack_rhythm_interval_value": "间隔",
+  "my_stack_rhythm_interval_unit": "间隔单位",
+  "my_stack_rhythm_unit_day": "天",
+  "my_stack_rhythm_unit_week": "周",
+  "my_stack_rhythm_unit_month": "个月",
+  "my_stack_rhythm_interval_invalid": "请输入符合所选单位的间隔。",
+  "my_stack_rhythm_cycle_on": "服用天数",
+  "my_stack_rhythm_cycle_off": "停用天数",
+  "my_stack_rhythm_cycle_invalid": "周期至少需要一个服用日和一个停用日。"
 }

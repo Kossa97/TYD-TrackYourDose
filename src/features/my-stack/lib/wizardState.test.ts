@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { bestandteileAufloesen } from './kombination'
 import { naechsterSlot } from './wizardState'
+import { emptyRhythm } from './intakeRhythm'
 import type { DosageFormKey, IntakePlanDraft, StackItem, SubstanceCatalogEntry } from '../types'
 import {
   canContinue,
@@ -77,15 +78,12 @@ const existingVitaminD: StackItem = {
 const activePlan: IntakePlanDraft = {
   id: 'cycle-1',
   name: 'Vitamin D breakfast',
-  dose: 5000,
   unit: 'IU',
   method: 'Oral',
-  frequency: 'Mo-Fr',
-  xDaysInterval: null,
-  scheduleDays: ['Mo', 'Di', 'Mi', 'Do', 'Fr'],
+  rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Di', 'Mi', 'Do', 'Fr'] },
   startDate: '2025-01-01',
   endDate: '2026-12-31',
-  slots: [{ routineGroup: 'morning', time: '08:30' }],
+  slots: [{ routineGroup: 'morning', time: '08:30', dose: 5000 }],
   reminders: ['on_time'],
 }
 
@@ -368,34 +366,34 @@ describe('wizard state', () => {
     // ist. An welchen Tagen und wie oft am Tag sind zwei Fragen.
     const wochentage = wizardReducer(initialWizardState(), {
       type: 'plan_changed',
-      changes: { frequency: 'Wochentage wählen', scheduleDays: ['Mo', 'Mi', 'Fr'] },
+      changes: { rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Mi', 'Fr'] } },
     })
     expect(wochentage.draft.plan.slots).toHaveLength(1)
 
     const zweiMal = wizardReducer(wochentage, {
       type: 'plan_changed',
       changes: { slots: [
-        { routineGroup: 'morning', time: '08:00' },
-        { routineGroup: 'evening', time: '20:00' },
+        { routineGroup: 'morning', time: '08:00', dose: null },
+        { routineGroup: 'evening', time: '20:00', dose: null },
       ] },
     })
 
-    expect(zweiMal.draft.plan.frequency).toBe('Wochentage wählen')
-    expect(zweiMal.draft.plan.scheduleDays).toEqual(['Mo', 'Mi', 'Fr'])
+    expect(zweiMal.draft.plan.rhythm.kind).toBe('weekdays')
+    expect(zweiMal.draft.plan.rhythm.weekdays).toEqual(['Mo', 'Mi', 'Fr'])
     expect(zweiMal.draft.plan.slots).toHaveLength(2)
   })
 
   it('sammelt selbst hinzugefügte Zeitpunkte nicht bei der nächsten Planänderung wieder ein', () => {
-    // Nur ein Frequenzwechsel fasst die Zeitpunkte an. Sonst hätte jede
-    // Änderung an Dosis oder Methode die zweite Einnahme gelöscht.
+    // Nur ein Rhythmuswechsel fasst die Zeitpunkte an. Sonst hätte jede
+    // Änderung an Methode oder Ende die zweite Einnahme gelöscht.
     const zweiMal = wizardReducer(initialWizardState(), {
       type: 'plan_changed',
       changes: { slots: [
-        { routineGroup: 'morning', time: null },
-        { routineGroup: 'evening', time: null },
+        { routineGroup: 'morning', time: null, dose: null },
+        { routineGroup: 'evening', time: null, dose: null },
       ] },
     })
-    const spaeter = wizardReducer(zweiMal, { type: 'plan_changed', changes: { dose: 500 } })
+    const spaeter = wizardReducer(zweiMal, { type: 'plan_changed', changes: { method: 'Oral' } })
 
     expect(spaeter.draft.plan.slots).toHaveLength(2)
   })
@@ -404,37 +402,55 @@ describe('wizard state', () => {
     // Zweimal „morgens" ist selten gemeint. Sind alle drei belegt, bleibt nur
     // die Wiederholung — dann setzt man die Uhrzeiten von Hand.
     expect(naechsterSlot([]).routineGroup).toBe('morning')
-    expect(naechsterSlot([{ routineGroup: 'morning', time: null }]).routineGroup).toBe('midday')
+    expect(naechsterSlot([{ routineGroup: 'morning', time: null, dose: null }]).routineGroup).toBe('midday')
     expect(naechsterSlot([
-      { routineGroup: 'morning', time: null },
-      { routineGroup: 'midday', time: null },
+      { routineGroup: 'morning', time: null, dose: null },
+      { routineGroup: 'midday', time: null, dose: null },
     ]).routineGroup).toBe('evening')
     expect(naechsterSlot([
-      { routineGroup: 'morning', time: null },
-      { routineGroup: 'midday', time: null },
-      { routineGroup: 'evening', time: null },
+      { routineGroup: 'morning', time: null, dose: null },
+      { routineGroup: 'midday', time: null, dose: null },
+      { routineGroup: 'evening', time: null, dose: null },
     ]).routineGroup).toBe('evening')
   })
 
-  it('übernimmt die Tageszahl aus einer alten „2x täglich"-Frequenz', () => {
-    // Bestehende Zyklen tragen sie noch dort. Beim Laden ins Formular darf die
-    // zweite Einnahme nicht verschwinden.
-    const alt = wizardReducer(initialWizardState(), {
+  it('lässt den Rhythmuswechsel die Zeitpunkte in Ruhe', () => {
+    // An welchen Tagen etwas ansteht, sagt nichts darüber, wie oft am Tag.
+    // Von „täglich" auf „alle 3 Wochen" zu wechseln darf die zweite Einnahme
+    // nicht kosten.
+    const zweiMal = wizardReducer(initialWizardState(), {
       type: 'plan_changed',
-      changes: { frequency: '2x täglich' },
+      changes: { slots: [
+        { routineGroup: 'morning', time: '08:00', dose: 1 },
+        { routineGroup: 'evening', time: '20:00', dose: 2 },
+      ] },
+    })
+    const alleDreiWochen = wizardReducer(zweiMal, {
+      type: 'plan_changed',
+      changes: { rhythm: { ...emptyRhythm(), kind: 'interval', intervalValue: 3, intervalUnit: 'week' } },
     })
 
-    expect(alt.draft.plan.slots.map(slot => slot.routineGroup)).toEqual(['morning', 'midday'])
+    expect(alleDreiWochen.draft.plan.slots).toHaveLength(2)
+    expect(alleDreiWochen.draft.plan.slots[1].dose).toBe(2)
   })
 
-  it('nimmt „Bei Bedarf" jeden geplanten Zeitpunkt weg', () => {
-    // Kein Plan heißt: keine Tageszeit, nach der zu fragen wäre.
-    const beiBedarf = wizardReducer(initialWizardState(), {
+  it('lässt „Bei Bedarf" genau einen Zeitpunkt — für die Menge', () => {
+    // Kein Plan heißt: keine Tageszeit, nach der zu fragen wäre. Eine Menge
+    // braucht es trotzdem — 400 mg je Einnahme —, und sie braucht einen Ort.
+    const zweiMal = wizardReducer(initialWizardState(), {
       type: 'plan_changed',
-      changes: { frequency: 'Bei Bedarf' },
+      changes: { slots: [
+        { routineGroup: 'morning', time: '08:00', dose: 400 },
+        { routineGroup: 'evening', time: '20:00', dose: 400 },
+      ] },
+    })
+    const beiBedarf = wizardReducer(zweiMal, {
+      type: 'plan_changed',
+      changes: { rhythm: { ...emptyRhythm(), kind: 'on_demand' } },
     })
 
-    expect(beiBedarf.draft.plan.slots).toEqual([])
+    expect(beiBedarf.draft.plan.slots).toHaveLength(1)
+    expect(beiBedarf.draft.plan.slots[0].dose).toBe(400)
     expect(canContinue({ ...beiBedarf, step: 'plan' })).toBe(false) // Methode fehlt noch
   })
 
@@ -643,15 +659,12 @@ describe('wizard state', () => {
       ingredients: existingVitaminD.ingredients,
       plan: {
         name: 'Vitamin D3',
-        dose: null,
         unit: null,
         method: '',
-        frequency: 'Täglich',
-        xDaysInterval: null,
-        scheduleDays: [],
+        rhythm: emptyRhythm(),
         startDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         endDate: null,
-        slots: [{ routineGroup: 'morning', time: null }],
+        slots: [{ routineGroup: 'morning', time: null, dose: null }],
         reminders: [],
       },
       inventory: {

@@ -69,6 +69,10 @@ export function scheduleForDay(cycle, dateKey) {
     intake_time_custom: cycle.intake_time_custom,
     dose: cycle.dose,
     unit: cycle.unit,
+    interval_unit: cycle.interval_unit ?? null,
+    cycle_on_days: cycle.cycle_on_days ?? null,
+    cycle_off_days: cycle.cycle_off_days ?? null,
+    slot_doses: cycle.slot_doses ?? null,
   }
   const history = cycle.schedule_history
   if (!Array.isArray(history) || history.length === 0) return flat
@@ -95,18 +99,52 @@ export function cycleAppliesToDay(cycle, dateKey) {
   const days = Array.isArray(seg.schedule_days) ? seg.schedule_days : []
   const hasDayFilter = days.length > 0
 
+  if (freq === 'Bei Bedarf') return false
+
   if (freq === 'Täglich' || freq === '2x täglich' || freq === '3x täglich')
     return hasDayFilter ? days.includes(dayOfWeek) : true
-  if (freq === 'Jeden 2. Tag') return diff % 2 === 0
+
   if (freq === 'Alle X Tage') {
-    const intervalOk = diff % (seg.x_days_interval ?? 2) === 0
-    return intervalOk && (hasDayFilter ? days.includes(dayOfWeek) : true)
+    const einheit = seg.interval_unit ?? 'day'
+    const n = seg.x_days_interval ?? 2
+    if (!Number.isInteger(n) || n < 1) return false
+    if (einheit === 'month') return n <= 12 && trifftMonatsabstand(cycle.start_date, dateKey, n)
+    const schritt = einheit === 'week' ? n * 7 : n
+    if (schritt > 366) return false
+    return diff % schritt === 0 && (hasDayFilter ? days.includes(dayOfWeek) : true)
   }
+
+  if (freq === 'Im Wechsel') {
+    const an = seg.cycle_on_days
+    const aus = seg.cycle_off_days
+    if (!Number.isInteger(an) || !Number.isInteger(aus)) return false
+    if (an < 1 || aus < 1 || an > 90 || aus > 90) return false
+    return diff % (an + aus) < an
+  }
+
+  if (freq === 'Wochentage wählen') return days.includes(dayOfWeek)
+
+  // Alte Frequenztexte aus bestehenden Zyklen.
+  if (freq === 'Jeden 2. Tag') return diff % 2 === 0
   if (freq === '5 Tage an / 2 aus') return diff % 7 < 5
   if (freq === 'Mo-Fr') return jsDay >= 1 && jsDay <= 5
   if (freq === 'Wöchentlich') return diff % 7 === 0
-  if (freq === 'Wochentage wählen') return days.includes(dayOfWeek)
   return false
+}
+
+/**
+ * Monatsabstand ueber Kalendermonate, mit Kappung auf den letzten Tag des
+ * Zielmonats — dieselbe Regel wie `addMonths` im Frontend
+ * (`src/lib/intakeSchedule.ts`). Beide Seiten muessen dasselbe sagen, sonst
+ * erinnert der Cron an Tagen, an denen die App nichts faellig zeigt.
+ */
+function trifftMonatsabstand(startKey, dateKey, monate) {
+  const [sj, sm, sd] = String(startKey).split('-').map(Number)
+  const [zj, zm, zd] = String(dateKey).split('-').map(Number)
+  const abstand = (zj - sj) * 12 + (zm - sm)
+  if (abstand < 0 || abstand % monate !== 0) return false
+  const letzterImZielmonat = new Date(Date.UTC(zj, zm, 0)).getUTCDate()
+  return zd === Math.min(sd, letzterImZielmonat)
 }
 
 /** Geplante Einnahme-Slots des Tages als { minutes, time }, zeitlich sortiert. */

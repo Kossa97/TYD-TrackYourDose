@@ -59,6 +59,10 @@ interface Cycle {
   method: string
   frequency: string
   x_days_interval: number | null
+  interval_unit: string | null
+  cycle_on_days: number | null
+  cycle_off_days: number | null
+  slot_doses: string | null
   schedule_days: string[] | null
   start_date: string
   end_date: string | null

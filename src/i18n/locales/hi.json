@@ -1130,5 +1130,20 @@
   "my_stack_plan_on_demand_hint": "कोई निश्चित समय नहीं: न कुछ देय होता है, न छूटा गिना जाता है। सेवन के बाद दर्ज करें।",
   "my_stack_plan_add_slot": "उसी दिन एक और सेवन",
   "my_stack_plan_remove_slot": "सेवन समय हटाएँ",
-  "my_stack_plan_slot_duplicate": "यह समय पहले से है — इसे अपना समय दें।"
+  "my_stack_plan_slot_duplicate": "यह समय पहले से है — इसे अपना समय दें।",
+  "my_stack_plan_rhythm": "किन दिनों?",
+  "my_stack_rhythm_daily": "हर दिन",
+  "my_stack_rhythm_weekdays": "सप्ताह के दिन",
+  "my_stack_rhythm_interval": "हर",
+  "my_stack_rhythm_cycle": "चक्र में",
+  "my_stack_rhythm_on_demand": "केवल आवश्यकतानुसार",
+  "my_stack_rhythm_interval_value": "अंतराल",
+  "my_stack_rhythm_interval_unit": "अंतराल की इकाई",
+  "my_stack_rhythm_unit_day": "दिन",
+  "my_stack_rhythm_unit_week": "सप्ताह",
+  "my_stack_rhythm_unit_month": "माह",
+  "my_stack_rhythm_interval_invalid": "चुनी गई इकाई के भीतर अंतराल दर्ज करें।",
+  "my_stack_rhythm_cycle_on": "सेवन के दिन",
+  "my_stack_rhythm_cycle_off": "विराम के दिन",
+  "my_stack_rhythm_cycle_invalid": "चक्र के लिए कम से कम एक सेवन दिन और एक विराम दिन चाहिए।"
 }

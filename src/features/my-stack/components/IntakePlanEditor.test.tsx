@@ -10,6 +10,7 @@ import type {
   TrackingLevel,
 } from '../types'
 import { IntakePlanEditor } from './IntakePlanEditor'
+import { emptyRhythm } from '../lib/intakeRhythm'
 
 const i18nTestState = vi.hoisted(() => ({ translations: {} as Record<string, string> }))
 
@@ -32,15 +33,12 @@ const vitaminD3: SubstanceCatalogEntry = {
 
 const plan: IntakePlanDraft = {
   name: 'Vitamin D3',
-  dose: null,
   unit: null,
   method: '',
-  frequency: 'Täglich',
-  xDaysInterval: null,
-  scheduleDays: [],
+  rhythm: emptyRhythm(),
   startDate: '2026-08-16',
   endDate: null,
-  slots: [{ routineGroup: 'morning', time: null }],
+  slots: [{ routineGroup: 'morning', time: null, dose: null }],
   reminders: [],
 }
 
@@ -108,10 +106,9 @@ describe('IntakePlanEditor', () => {
       dosageForm="tablet"
       initialPlan={{
         ...plan,
-        frequency: '2x täglich',
         slots: [
-          { routineGroup: 'morning', time: null },
-          { routineGroup: 'evening', time: null },
+          { routineGroup: 'morning', time: null, dose: null },
+          { routineGroup: 'evening', time: null, dose: null },
         ],
       }}
     />)
@@ -134,7 +131,7 @@ describe('IntakePlanEditor', () => {
     render(<PlanHarness
       trackingLevel="intake_only"
       dosageForm="tablet"
-      initialPlan={{ ...plan, frequency: 'Bei Bedarf', slots: [] }}
+      initialPlan={{ ...plan, rhythm: { ...emptyRhythm(), kind: 'on_demand' }, slots: [] }}
     />)
 
     expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(0)
@@ -143,16 +140,45 @@ describe('IntakePlanEditor', () => {
       .toContain('nichts gilt als verpasst')
   })
 
-  it('fragt in der Frequenz nur nach den TAGEN, nicht nach der Tageszahl', () => {
-    // „2x täglich" stand hier einmal mit drin. Das mischte zwei Fragen: wer
-    // „Wochentage wählen" brauchte, bekam zwangsläufig genau eine Einnahme.
+  it('fragt nach den Tagen in vier Formen statt in einer Liste', () => {
+    // Eine Liste deckt immer nur ab, was jemand hineingeschrieben hat — ein
+    // Depot alle zehn Wochen stand nie darin. Diese vier decken den Kalender.
     render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
 
-    const frequenz = screen.getByLabelText('Frequenz') as HTMLSelectElement
-    expect(Array.from(frequenz.options).map(option => option.value)).toEqual([
-      'Täglich', 'Jeden 2. Tag', '5 Tage an / 2 aus',
-      'Mo-Fr', 'Wöchentlich', 'Alle X Tage', 'Wochentage wählen', 'Bei Bedarf',
-    ])
+    expect([...document.querySelectorAll('[data-rhythm-kind]')]
+      .map(knopf => knopf.getAttribute('data-rhythm-kind')))
+      .toEqual(['daily', 'weekdays', 'interval', 'cycle'])
+    expect(document.querySelector('[data-rhythm-on-demand]')).not.toBeNull()
+  })
+
+  it('erlaubt einen Abstand in Tagen, Wochen und Monaten', () => {
+    // Der Fall, an dem die alte Liste scheiterte: ein Depot alle zehn Wochen,
+    // Denosumab alle sechs Monate. „Alle X Tage" war auf 30 Tage begrenzt.
+    render(<PlanHarness trackingLevel="intake_only" dosageForm="vial" />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Im Abstand von/ }))
+    const abstand = screen.getByLabelText('Abstand') as HTMLInputElement
+    const einheit = screen.getByLabelText('Einheit des Abstands') as HTMLSelectElement
+
+    expect(Array.from(einheit.options).map(option => option.value)).toEqual(['day', 'week', 'month'])
+    fireEvent.change(abstand, { target: { value: '10' } })
+    fireEvent.change(einheit, { target: { value: 'week' } })
+
+    expect((screen.getByLabelText('Abstand') as HTMLInputElement).value).toBe('10')
+    expect((screen.getByLabelText('Einheit des Abstands') as HTMLSelectElement).value).toBe('week')
+  })
+
+  it('erlaubt einen Wechsel aus Einnahme- und Pausentagen', () => {
+    // Die Pille: drei Wochen an, eine Woche Pause. Vorher gab es genau einen
+    // fest verdrahteten Wechsel, „5 Tage an / 2 aus".
+    render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Im Wechsel/ }))
+    fireEvent.change(screen.getByLabelText('Tage an'), { target: { value: '21' } })
+    fireEvent.change(screen.getByLabelText('Tage Pause'), { target: { value: '7' } })
+
+    expect((screen.getByLabelText('Tage an') as HTMLInputElement).value).toBe('21')
+    expect((screen.getByLabelText('Tage Pause') as HTMLInputElement).value).toBe('7')
   })
 
   it('lässt weitere Einnahmen am selben Tag zu — auch bei „Wochentage wählen"', () => {
@@ -160,7 +186,7 @@ describe('IntakePlanEditor', () => {
     render(<PlanHarness
       trackingLevel="intake_only"
       dosageForm="tablet"
-      initialPlan={{ ...plan, frequency: 'Wochentage wählen', scheduleDays: ['Mo', 'Mi', 'Fr'] }}
+      initialPlan={{ ...plan, rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Mi', 'Fr'] } }}
     />)
 
     expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(1)
@@ -171,7 +197,8 @@ describe('IntakePlanEditor', () => {
     expect(screen.getByText('Einnahme 2')).toBeTruthy()
 
     // Die Wochentage bleiben, wo sie waren.
-    expect((screen.getByLabelText('Frequenz') as HTMLSelectElement).value).toBe('Wochentage wählen')
+    expect(document.querySelector('[data-rhythm-kind="weekdays"]')?.getAttribute('aria-pressed'))
+      .toBe('true')
     expect(screen.getByRole('button', { name: 'Mo' }).getAttribute('aria-pressed')).toBe('true')
   })
 
@@ -205,7 +232,7 @@ describe('IntakePlanEditor', () => {
     render(<PlanHarness
       trackingLevel="intake_only"
       dosageForm="tablet"
-      initialPlan={{ ...plan, frequency: 'Bei Bedarf', slots: [] }}
+      initialPlan={{ ...plan, rhythm: { ...emptyRhythm(), kind: 'on_demand' }, slots: [] }}
     />)
 
     expect(screen.queryByRole('button', { name: 'Weitere Einnahme am selben Tag' })).toBeNull()
@@ -216,7 +243,7 @@ describe('IntakePlanEditor', () => {
 
     expect(screen.queryByLabelText('Geplante Menge pro Einnahme')).toBeNull()
     expect(screen.queryByLabelText('Einheit der geplanten Menge')).toBeNull()
-    expect(screen.getByLabelText('Frequenz')).toBeTruthy()
+    expect(document.querySelector('[data-rhythm-kind="daily"]')).not.toBeNull()
   })
 
   it.each(['with_amount', 'complete'] as const)('shows quantity and unit for %s', trackingLevel => {
@@ -309,16 +336,21 @@ describe('IntakePlanEditor', () => {
     expect(screen.queryByRole('button', { name: /Tablette/ })).toBeNull()
   })
 
-  it('shows weekday and interval controls only for their frequencies', () => {
+  it('zeigt je Form nur ihr eigenes Feld', () => {
     render(<PlanHarness trackingLevel="intake_only" dosageForm="capsule" />)
-    const frequency = screen.getByLabelText('Frequenz')
 
-    fireEvent.change(frequency, { target: { value: 'Wochentage wählen' } })
-    expect(screen.getByRole('group', { name: 'Wochentage' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Wochentage/ }))
+    expect(screen.getByRole('button', { name: 'Mo' })).toBeTruthy()
+    expect(screen.queryByLabelText('Abstand')).toBeNull()
 
-    fireEvent.change(frequency, { target: { value: 'Alle X Tage' } })
-    expect(screen.getByLabelText('Intervall in Tagen')).toBeTruthy()
-    expect(screen.queryByRole('group', { name: 'Wochentage' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /Im Abstand von/ }))
+    expect(screen.getByLabelText('Abstand')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Mo' })).toBeNull()
+    expect(screen.queryByLabelText('Tage an')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: /Im Wechsel/ }))
+    expect(screen.getByLabelText('Tage an')).toBeTruthy()
+    expect(screen.queryByLabelText('Abstand')).toBeNull()
   })
 
   it('renders recurrence validation errors beside the active control', () => {
@@ -331,16 +363,16 @@ describe('IntakePlanEditor', () => {
     const { rerender } = render(
       <IntakePlanEditor
         {...common}
-        plan={{ ...plan, frequency: 'Alle X Tage', xDaysInterval: null }}
+        plan={{ ...plan, rhythm: { ...emptyRhythm(), kind: 'interval', intervalValue: null } }}
         errors={{ xDaysInterval: 'invalid_interval' }}
       />,
     )
 
-    expect(screen.getByRole('alert').textContent).toContain('Tage')
+    expect(screen.getByRole('alert').textContent).toContain('Abstand')
     rerender(
       <IntakePlanEditor
         {...common}
-        plan={{ ...plan, frequency: 'Wochentage wählen', scheduleDays: [] }}
+        plan={{ ...plan, rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: [] } }}
         errors={{ scheduleDays: 'invalid_weekdays' }}
       />,
     )

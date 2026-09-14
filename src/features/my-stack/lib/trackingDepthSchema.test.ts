@@ -54,7 +54,14 @@ describe('My Stack tracking depth schema', () => {
     expect(rpc).not.toContain('update public.dose_logs')
     expect(rpc).toContain('return saved_item')
     expect(rpc).toContain("plan_frequency = 'Alle X Tage'")
-    expect(rpc).toContain('plan_interval_value between 2 and 30')
+    // Die Grenze haengt an der Einheit: 90 Tage, 52 Wochen, 12 Monate. Vorher
+    // galten pauschal 2 bis 30 Tage — ein Depot alle zehn Wochen war damit
+    // nicht speicherbar.
+    expect(rpc).toContain("when 'month' then 12 when 'week' then 52 else 90 end")
+    expect(rpc).toContain('Invalid plan interval unit')
+    expect(rpc).toContain("plan_frequency = 'Im Wechsel'")
+    expect(rpc).toContain('Alternating frequency requires on and off days between 1 and 90')
+    expect(rpc).toContain('Slot doses must line up with intake times')
     expect(rpc).toContain("plan_frequency = 'Wochentage wählen'")
     expect(rpc).toContain("array['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']")
     expect(rpc).toContain('count(distinct weekday)')

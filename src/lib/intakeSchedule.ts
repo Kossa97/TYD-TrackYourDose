@@ -1,4 +1,4 @@
-import { differenceInDays, format, parseISO, startOfDay, subDays } from 'date-fns'
+import { addMonths, differenceInCalendarMonths, differenceInDays, format, parseISO, startOfDay, subDays } from 'date-fns'
 
 // Maps JS getDay() (0 = Sunday) to the German weekday codes stored on cycles.
 const WEEKDAYS_DE: Record<number, string> = { 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 6: 'Sa', 0: 'So' }
@@ -12,6 +12,12 @@ export interface ResolvedScheduleSlot {
   routineGroup: ResolvedRoutineGroup
   time: string
   minutes: number
+  /**
+   * Die Menge DIESER Einnahme, wenn der Plan sie je Zeitpunkt festhaelt
+   * („morgens 1000 mg, abends 500 mg"). null heisst: es gilt die Menge des
+   * Zyklus, wie bei jedem Plan mit einer einzigen Zahl.
+   */
+  dose: number | null
 }
 
 export interface ScheduleSegment {
@@ -23,6 +29,13 @@ export interface ScheduleSegment {
   intake_time_custom: string | null
   dose: number | null
   unit: string | null
+  /** 'day' | 'week' | 'month' — fehlt bei alten Zyklen, dort sind es Tage. */
+  interval_unit?: string | null
+  /** Wechselzyklus: X Tage an, Y Tage aus. */
+  cycle_on_days?: number | null
+  cycle_off_days?: number | null
+  /** Menge je Einnahmezeitpunkt, kommagetrennt wie `intake_time`. */
+  slot_doses?: string | null
 }
 
 export interface ScheduleCycle {
@@ -38,6 +51,10 @@ export interface ScheduleCycle {
   dose: number | null
   unit: string | null
   schedule_history: ScheduleSegment[] | null
+  interval_unit?: string | null
+  cycle_on_days?: number | null
+  cycle_off_days?: number | null
+  slot_doses?: string | null
 }
 
 export interface EscalationRow {
@@ -72,6 +89,10 @@ export function scheduleForDay(cycle: ScheduleCycle, day: Date): ScheduleSegment
     intake_time_custom: cycle.intake_time_custom,
     dose: cycle.dose,
     unit: cycle.unit,
+    interval_unit: cycle.interval_unit ?? null,
+    cycle_on_days: cycle.cycle_on_days ?? null,
+    cycle_off_days: cycle.cycle_off_days ?? null,
+    slot_doses: cycle.slot_doses ?? null,
   }
   const history = cycle.schedule_history
   if (!history || history.length === 0) return flat
@@ -130,18 +151,23 @@ function routineGroupForMinutes(minutes: number): ResolvedRoutineGroup {
 }
 
 export function resolveScheduleSlots(
-  schedule: Pick<ScheduleSegment, 'intake_time' | 'intake_time_custom'>,
+  schedule: Pick<ScheduleSegment, 'intake_time' | 'intake_time_custom'> & { slot_doses?: string | null },
 ): ResolvedScheduleSlot[] {
   const keys = (schedule.intake_time ?? '').split(',').filter(Boolean)
   const exactTimes = (schedule.intake_time_custom ?? '').split(',')
+  // Die Mengen stehen in derselben Reihenfolge wie die Tageszeiten, leere
+  // Stellen eingeschlossen — sonst verrutscht die Zuordnung.
+  const doses = (schedule.slot_doses ?? '').split(',')
 
   return keys.flatMap((key, index) => {
     const fixedGroup = SLOT_GROUPS[key as keyof typeof SLOT_GROUPS]
     const clock = parsedClock(exactTimes[index]) ?? parsedClock(SLOT_TIMES[key])
     if (!clock) return []
+    const menge = Number(doses[index])
     return [{
       key,
       routineGroup: fixedGroup ?? routineGroupForMinutes(clock.minutes),
+      dose: (doses[index] ?? '').trim() !== '' && Number.isFinite(menge) && menge > 0 ? menge : null,
       ...clock,
     }]
   }).sort((left, right) => left.minutes - right.minutes)
@@ -176,26 +202,36 @@ export function cycleAppliesToDay(cycle: ScheduleCycle, day: Date): boolean {
 
   // „Bei Bedarf" ist kein Plan: kein Tag ist faellig, nichts kann verpasst
   // werden, nichts wird automatisch als ausgelassen geloggt. Eingetragen wird
-  // die Einnahme, wenn sie stattgefunden hat. Das folgte bisher nur aus dem
-  // Fallthrough am Ende — hier steht es als Absicht.
+  // die Einnahme, wenn sie stattgefunden hat.
   if (freq === 'Bei Bedarf') return false
+
+  // Die vier Formen, die das Formular schreibt. Danach die alten Texte, die in
+  // bestehenden Zyklen stehen und weiter gelten muessen.
   if (freq === 'Täglich' || freq === '2x täglich' || freq === '3x täglich')
     return hasDayFilter ? (seg.schedule_days ?? []).includes(dayOfWeek) : true
-  if (freq === 'Jeden 2. Tag') return diff % 2 === 0
+
   if (freq === 'Alle X Tage') {
-    if (
-      seg.x_days_interval == null
-      || !Number.isFinite(seg.x_days_interval)
-      || !Number.isInteger(seg.x_days_interval)
-      || seg.x_days_interval < 2
-      || seg.x_days_interval > 30
-    ) return false
-    const intervalOk = diff % seg.x_days_interval === 0
+    const einheit = seg.interval_unit ?? 'day'
+    const n = seg.x_days_interval
+    if (n == null || !Number.isFinite(n) || !Number.isInteger(n) || n < 1) return false
+    if (einheit === 'month') {
+      if (n > 12) return false
+      return trifftMonatsabstand(start, day, n)
+    }
+    const schritt = einheit === 'week' ? n * 7 : n
+    if (schritt > 366) return false
+    const intervalOk = diff % schritt === 0
     return intervalOk && (hasDayFilter ? (seg.schedule_days ?? []).includes(dayOfWeek) : true)
   }
-  if (freq === '5 Tage an / 2 aus') return diff % 7 < 5
-  if (freq === 'Mo-Fr') return day.getDay() >= 1 && day.getDay() <= 5
-  if (freq === 'Wöchentlich') return diff % 7 === 0
+
+  if (freq === 'Im Wechsel') {
+    const an = seg.cycle_on_days
+    const aus = seg.cycle_off_days
+    if (an == null || aus == null || !Number.isInteger(an) || !Number.isInteger(aus)) return false
+    if (an < 1 || aus < 1 || an > 90 || aus > 90) return false
+    return diff % (an + aus) < an
+  }
+
   if (freq === 'Wochentage wählen') {
     const days = seg.schedule_days ?? []
     if (days.length === 0 || new Set(days).size !== days.length || days.some(day => !Object.values(WEEKDAYS_DE).includes(day))) {
@@ -203,7 +239,26 @@ export function cycleAppliesToDay(cycle: ScheduleCycle, day: Date): boolean {
     }
     return days.includes(dayOfWeek)
   }
+
+  // ── Alte Frequenztexte. Sie stehen in bestehenden Zyklen; das Formular
+  // schreibt sie nicht mehr, aber sie bedeuten unveraendert dasselbe.
+  if (freq === 'Jeden 2. Tag') return diff % 2 === 0
+  if (freq === '5 Tage an / 2 aus') return diff % 7 < 5
+  if (freq === 'Mo-Fr') return day.getDay() >= 1 && day.getDay() <= 5
+  if (freq === 'Wöchentlich') return diff % 7 === 0
   return false
+}
+
+/**
+ * Trifft der Tag einen Monatsabstand ab dem Start? Gerechnet wird ueber
+ * Kalendermonate, nicht ueber 30 Tage: „alle 3 Monate ab dem 31. Januar" ist
+ * der 30. April, nicht der 1. Mai. `addMonths` kappt dabei auf den letzten Tag
+ * des Zielmonats — dieselbe Regel, die auch ein Kalender anwendet.
+ */
+function trifftMonatsabstand(start: Date, day: Date, monate: number): boolean {
+  const abstand = differenceInCalendarMonths(day, start)
+  if (abstand < 0 || abstand % monate !== 0) return false
+  return format(addMonths(start, abstand), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')
 }
 
 // All scheduled slots of a cycle ON a given day, sorted by time (segment-resolved).

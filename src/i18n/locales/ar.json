@@ -1134,5 +1134,20 @@
   "my_stack_plan_on_demand_hint": "لا وقت محدد: لا شيء يصبح مستحقًا ولا شيء يُحتسب فائتًا. تسجّل الجرعة بعد تناولها.",
   "my_stack_plan_add_slot": "جرعة أخرى في اليوم نفسه",
   "my_stack_plan_remove_slot": "إزالة موعد التناول",
-  "my_stack_plan_slot_duplicate": "هذا الموعد موجود بالفعل — امنحه وقتًا خاصًا به."
+  "my_stack_plan_slot_duplicate": "هذا الموعد موجود بالفعل — امنحه وقتًا خاصًا به.",
+  "my_stack_plan_rhythm": "في أي أيام؟",
+  "my_stack_rhythm_daily": "كل يوم",
+  "my_stack_rhythm_weekdays": "أيام الأسبوع",
+  "my_stack_rhythm_interval": "كل",
+  "my_stack_rhythm_cycle": "بالتناوب",
+  "my_stack_rhythm_on_demand": "عند الحاجة فقط",
+  "my_stack_rhythm_interval_value": "الفاصل",
+  "my_stack_rhythm_interval_unit": "وحدة الفاصل",
+  "my_stack_rhythm_unit_day": "أيام",
+  "my_stack_rhythm_unit_week": "أسابيع",
+  "my_stack_rhythm_unit_month": "أشهر",
+  "my_stack_rhythm_interval_invalid": "يرجى إدخال فاصل ضمن الوحدة المختارة.",
+  "my_stack_rhythm_cycle_on": "أيام التناول",
+  "my_stack_rhythm_cycle_off": "أيام التوقف",
+  "my_stack_rhythm_cycle_invalid": "تحتاج الدورة إلى يوم تناول واحد ويوم توقف على الأقل."
 }

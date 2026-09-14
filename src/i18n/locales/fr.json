@@ -1130,5 +1130,20 @@
   "my_stack_plan_on_demand_hint": "Pas d'horaire fixe : rien n'est dû ni compté comme manqué. Vous notez la prise une fois faite.",
   "my_stack_plan_add_slot": "Une autre prise le même jour",
   "my_stack_plan_remove_slot": "Supprimer ce moment de prise",
-  "my_stack_plan_slot_duplicate": "Ce moment existe déjà — donnez-lui sa propre heure."
+  "my_stack_plan_slot_duplicate": "Ce moment existe déjà — donnez-lui sa propre heure.",
+  "my_stack_plan_rhythm": "Quels jours ?",
+  "my_stack_rhythm_daily": "Chaque jour",
+  "my_stack_rhythm_weekdays": "Jours de la semaine",
+  "my_stack_rhythm_interval": "Tous les",
+  "my_stack_rhythm_cycle": "En alternance",
+  "my_stack_rhythm_on_demand": "Seulement au besoin",
+  "my_stack_rhythm_interval_value": "Intervalle",
+  "my_stack_rhythm_interval_unit": "Unité de l'intervalle",
+  "my_stack_rhythm_unit_day": "jours",
+  "my_stack_rhythm_unit_week": "semaines",
+  "my_stack_rhythm_unit_month": "mois",
+  "my_stack_rhythm_interval_invalid": "Saisissez un intervalle compatible avec l'unité choisie.",
+  "my_stack_rhythm_cycle_on": "Jours de prise",
+  "my_stack_rhythm_cycle_off": "Jours de pause",
+  "my_stack_rhythm_cycle_invalid": "Un cycle exige au moins un jour de prise et un jour de pause."
 }

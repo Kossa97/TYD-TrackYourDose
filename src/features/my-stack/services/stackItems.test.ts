@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { emptyRhythm } from '../lib/intakeRhythm'
 import type {
   StackItemDraft,
   StackItemIngredient,
@@ -50,15 +51,12 @@ const completeSetupDraft: StackItemSetupDraft = {
   ...validDraft,
   plan: {
     name: 'Vitamin D3 morgens',
-    dose: 5000,
     unit: 'IU',
     method: 'Oral',
-    frequency: 'Täglich',
-    xDaysInterval: null,
-    scheduleDays: [],
+    rhythm: emptyRhythm(),
     startDate: '2026-08-17',
     endDate: null,
-    slots: [{ routineGroup: 'morning', time: '08:30' }],
+    slots: [{ routineGroup: 'morning', time: '08:30', dose: 5000 }],
     reminders: ['on_time'],
   },
   inventory: {
@@ -78,8 +76,8 @@ const intakeOnlySetupDraft: StackItemSetupDraft = {
   trackingLevel: 'intake_only',
   plan: {
     ...completeSetupDraft.plan,
-    dose: null,
     unit: null,
+    slots: completeSetupDraft.plan.slots.map(slot => ({ ...slot, dose: null })),
   },
 }
 
@@ -183,22 +181,26 @@ describe('stack item service', () => {
       ...completeSetupDraft,
       plan: {
         ...completeSetupDraft.plan,
-        frequency: '3x täglich',
         slots: [
-          { routineGroup: 'morning', time: '08:00' },
-          { routineGroup: 'midday', time: null },
-          { routineGroup: 'evening', time: '20:00' },
+          { routineGroup: 'morning', time: '08:00', dose: 1000 },
+          { routineGroup: 'midday', time: null, dose: 1000 },
+          { routineGroup: 'evening', time: '20:00', dose: 500 },
         ],
       },
     })
 
     expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
       p_plan: expect.objectContaining({
-        frequency: '3x täglich',
+        frequency: 'Täglich',
         intake_time: 'morgens,mittags,abends',
         // Die mittlere Uhrzeit bleibt leer — dort greift die Standardzeit der
         // Tageszeit. Die Position muss trotzdem stehen, sonst verrutscht alles.
         intake_time_custom: '08:00,,20:00',
+        // Dasselbe für die Mengen: „morgens 1000, mittags 1000, abends 500".
+        slot_doses: '1000,1000,500',
+        // `cycles.dose` bleibt EINE Zahl und trägt die führende Menge, damit
+        // alles, was den Zyklus liest, weiter funktioniert.
+        dose: 1000,
       }),
     }))
   })
@@ -208,7 +210,12 @@ describe('stack item service', () => {
 
     await saveStackItemSetup(mockClient.client, {
       ...completeSetupDraft,
-      plan: { ...completeSetupDraft.plan, frequency: 'Bei Bedarf', slots: [] },
+      plan: {
+        ...completeSetupDraft.plan,
+        rhythm: { ...emptyRhythm(), kind: 'on_demand' },
+        // Ein Zeitpunkt bleibt: er trägt die Menge je Einnahme.
+        slots: [{ routineGroup: 'morning', time: '08:30', dose: 400 }],
+      },
     })
 
     expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
@@ -219,6 +226,66 @@ describe('stack item service', () => {
         intake_time: 'morgens',
         intake_time_custom: null,
       }),
+    }))
+  })
+
+  it('schreibt den Rhythmus in seine eigenen Spalten', async () => {
+    // Ein Depot alle zehn Wochen und die Pille mit drei Wochen an, einer aus —
+    // beides ging nicht, solange die Frequenz einer von acht festen Texten war.
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, {
+      ...completeSetupDraft,
+      plan: {
+        ...completeSetupDraft.plan,
+        rhythm: { ...emptyRhythm(), kind: 'interval', intervalValue: 10, intervalUnit: 'week' },
+      },
+    })
+    expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
+      p_plan: expect.objectContaining({
+        frequency: 'Alle X Tage',
+        x_days_interval: 10,
+        interval_unit: 'week',
+        cycle_on_days: null,
+        cycle_off_days: null,
+      }),
+    }))
+
+    await saveStackItemSetup(mockClient.client, {
+      ...completeSetupDraft,
+      plan: {
+        ...completeSetupDraft.plan,
+        rhythm: { ...emptyRhythm(), kind: 'cycle', onDays: 21, offDays: 7 },
+      },
+    })
+    expect(mockClient.rpc).toHaveBeenLastCalledWith('save_stack_item_with_plan', expect.objectContaining({
+      p_plan: expect.objectContaining({
+        frequency: 'Im Wechsel',
+        cycle_on_days: 21,
+        cycle_off_days: 7,
+        x_days_interval: null,
+        interval_unit: null,
+      }),
+    }))
+  })
+
+  it('lässt slot_doses leer, wenn überall dieselbe Menge steht', async () => {
+    // Sonst trüge jeder gewöhnliche Plan eine Spalte mit, die nichts sagt.
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, {
+      ...completeSetupDraft,
+      plan: {
+        ...completeSetupDraft.plan,
+        slots: [
+          { routineGroup: 'morning', time: '08:00', dose: 1000 },
+          { routineGroup: 'evening', time: '20:00', dose: 1000 },
+        ],
+      },
+    })
+
+    expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
+      p_plan: expect.objectContaining({ slot_doses: null, dose: 1000 }),
     }))
   })
 

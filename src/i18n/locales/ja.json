@@ -1130,5 +1130,20 @@
   "my_stack_plan_on_demand_hint": "決まった時刻なし: 期限も飲み忘れも発生しません。服用したあとに記録します。",
   "my_stack_plan_add_slot": "同じ日にもう一回",
   "my_stack_plan_remove_slot": "服用タイミングを削除",
-  "my_stack_plan_slot_duplicate": "そのタイミングは既にあります。個別の時刻を設定してください。"
+  "my_stack_plan_slot_duplicate": "そのタイミングは既にあります。個別の時刻を設定してください。",
+  "my_stack_plan_rhythm": "どの曜日に？",
+  "my_stack_rhythm_daily": "毎日",
+  "my_stack_rhythm_weekdays": "曜日を指定",
+  "my_stack_rhythm_interval": "間隔",
+  "my_stack_rhythm_cycle": "休薬をはさむ",
+  "my_stack_rhythm_on_demand": "頓用のみ",
+  "my_stack_rhythm_interval_value": "間隔",
+  "my_stack_rhythm_interval_unit": "間隔の単位",
+  "my_stack_rhythm_unit_day": "日",
+  "my_stack_rhythm_unit_week": "週",
+  "my_stack_rhythm_unit_month": "か月",
+  "my_stack_rhythm_interval_invalid": "選んだ単位の範囲で間隔を入力してください。",
+  "my_stack_rhythm_cycle_on": "服用する日数",
+  "my_stack_rhythm_cycle_off": "休む日数",
+  "my_stack_rhythm_cycle_invalid": "休薬サイクルには服用日と休薬日が各1日以上必要です。"
 }

@@ -120,17 +120,42 @@ export interface IntakeSlotDraft {
   routineGroup: RoutineGroup
   /** Genaue Uhrzeit, oder null fuer die Standardzeit der Tageszeit. */
   time: string | null
+  /**
+   * Die Menge DIESER Einnahme. „morgens 1000 mg, abends 500 mg" ist bei
+   * Levothyroxin, Insulin und Metformin der Normalfall; eine Zahl fuer den
+   * ganzen Tag konnte das nicht abbilden. Die Einheit gilt fuer alle
+   * Zeitpunkte gemeinsam und steht am Plan.
+   */
+  dose: number | null
+}
+
+/**
+ * An welchen TAGEN etwas ansteht. Vier Formen decken ab, was ein Kalender
+ * hergibt — siehe `lib/intakeRhythm.ts`.
+ */
+export type IntakeRhythmKind = 'daily' | 'weekdays' | 'interval' | 'cycle' | 'on_demand'
+export type IntervalUnit = 'day' | 'week' | 'month'
+
+export interface IntakeRhythm {
+  kind: IntakeRhythmKind
+  /** kind 'interval': im Abstand von N Einheiten. */
+  intervalValue: number | null
+  intervalUnit: IntervalUnit
+  /** kind 'cycle': X Tage an, Y Tage aus, dann von vorn. */
+  onDays: number | null
+  offDays: number | null
+  /** kind 'weekdays': 'Mo' … 'So'. */
+  weekdays: string[]
 }
 
 export interface IntakePlanDraft {
   id?: string
   name: string
-  dose: number | null
+  /** Die Einheit gilt fuer alle Zeitpunkte; die Menge steht je Zeitpunkt. */
   unit: string | null
   method: string
-  frequency: string
-  xDaysInterval: number | null
-  scheduleDays: string[]
+  /** An welchen Tagen. Ersetzt die frueheren Felder frequency/interval/days. */
+  rhythm: IntakeRhythm
   startDate: string
   /** Leer heisst: laeuft weiter. Eine Antibiotikakur hat hier ein Datum. */
   endDate: string | null

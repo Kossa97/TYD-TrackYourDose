@@ -1278,5 +1278,20 @@
   "my_stack_plan_on_demand_hint": "Kein fester Zeitpunkt: nichts wird fällig, nichts gilt als verpasst. Du trägst die Einnahme ein, wenn sie stattgefunden hat.",
   "my_stack_plan_add_slot": "Weitere Einnahme am selben Tag",
   "my_stack_plan_remove_slot": "Einnahmezeitpunkt entfernen",
-  "my_stack_plan_slot_duplicate": "Dieser Zeitpunkt steht schon da — gib ihm eine eigene Uhrzeit."
+  "my_stack_plan_slot_duplicate": "Dieser Zeitpunkt steht schon da — gib ihm eine eigene Uhrzeit.",
+  "my_stack_plan_rhythm": "An welchen Tagen?",
+  "my_stack_rhythm_daily": "Täglich",
+  "my_stack_rhythm_weekdays": "Wochentage",
+  "my_stack_rhythm_interval": "Im Abstand von",
+  "my_stack_rhythm_cycle": "Im Wechsel",
+  "my_stack_rhythm_on_demand": "Nur bei Bedarf",
+  "my_stack_rhythm_interval_value": "Abstand",
+  "my_stack_rhythm_interval_unit": "Einheit des Abstands",
+  "my_stack_rhythm_unit_day": "Tagen",
+  "my_stack_rhythm_unit_week": "Wochen",
+  "my_stack_rhythm_unit_month": "Monaten",
+  "my_stack_rhythm_interval_invalid": "Bitte gib einen Abstand innerhalb der gewählten Einheit an.",
+  "my_stack_rhythm_cycle_on": "Tage an",
+  "my_stack_rhythm_cycle_off": "Tage Pause",
+  "my_stack_rhythm_cycle_invalid": "Ein Wechsel braucht mindestens einen Tag an und einen Tag Pause."
 }

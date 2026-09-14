@@ -1,20 +1,18 @@
-import { BellRing, Clock, Moon, Plus, Sun, Sunrise, Trash2 } from 'lucide-react'
+import { BellRing, CalendarDays, CalendarRange, Clock, Moon, Plus, Repeat, Sun, Sunrise, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getDosageForm, getIntakePlanUnitSuggestions } from '../lib/dosageForms'
-import {
-  INTAKE_FREQUENCIES,
-  MAX_INTAKE_SLOTS,
-  isOnDemand,
-  needsInterval,
-  needsWeekdays,
-} from '../lib/intakeFrequency'
+import { MAX_INTAKE_SLOTS } from '../lib/intakeFrequency'
+import { INTERVAL_BOUNDS, INTERVAL_UNITS, WEEKDAY_KEYS, emptyRhythm } from '../lib/intakeRhythm'
 import { naechsterSlot } from '../lib/wizardState'
 import { trackingCapabilities } from '../lib/trackingDepth'
 import type { IntakePlanValidationErrors } from '../lib/validation'
 import type {
   DosageFormKey,
   IntakePlanDraft,
+  IntakeRhythm,
+  IntakeRhythmKind,
   IntakeSlotDraft,
+  IntervalUnit,
   RoutineGroup,
   SubstanceCatalogEntry,
   TrackingLevel,
@@ -38,7 +36,29 @@ const METHODS = [
   'Intravenös',
   'Andere',
 ] as const
-const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'] as const
+
+// Der Rhythmus als vier Formen statt als Liste fester Texte. Eine Liste deckt
+// immer nur ab, was jemand hineingeschrieben hat — ein Depot alle zehn Wochen
+// oder drei Wochen Pille mit einer Woche Pause standen nicht darin und haetten
+// je einen neuen Eintrag gebraucht. Diese vier decken den Kalender ab.
+const RHYTHM_OPTIONS: readonly {
+  kind: IntakeRhythmKind
+  labelKey: string
+  defaultValue: string
+  Icon: typeof CalendarDays
+}[] = [
+  { kind: 'daily', labelKey: 'my_stack_rhythm_daily', defaultValue: 'Täglich', Icon: CalendarDays },
+  { kind: 'weekdays', labelKey: 'my_stack_rhythm_weekdays', defaultValue: 'Wochentage', Icon: CalendarRange },
+  { kind: 'interval', labelKey: 'my_stack_rhythm_interval', defaultValue: 'Im Abstand von', Icon: Repeat },
+  { kind: 'cycle', labelKey: 'my_stack_rhythm_cycle', defaultValue: 'Im Wechsel', Icon: Repeat },
+]
+
+const INTERVAL_UNIT_LABELS: Record<IntervalUnit, { labelKey: string; defaultValue: string }> = {
+  day: { labelKey: 'my_stack_rhythm_unit_day', defaultValue: 'Tagen' },
+  week: { labelKey: 'my_stack_rhythm_unit_week', defaultValue: 'Wochen' },
+  month: { labelKey: 'my_stack_rhythm_unit_month', defaultValue: 'Monaten' },
+}
+
 const ROUTINE_GROUPS: readonly {
   value: RoutineGroup
   labelKey: string
@@ -49,6 +69,7 @@ const ROUTINE_GROUPS: readonly {
   { value: 'midday', labelKey: 'my_stack_routine_midday', defaultValue: 'Mittags', Icon: Sun },
   { value: 'evening', labelKey: 'my_stack_routine_evening', defaultValue: 'Abends', Icon: Moon },
 ]
+
 const TABLET_FRACTIONS = [
   { label: '1/2 Tablette', value: 0.5 },
   { label: '1/3 Tablette', value: 0.333333 },
@@ -78,20 +99,34 @@ export function IntakePlanEditor({
   const { t } = useTranslation()
   const form = getDosageForm(dosageForm)
   const tracksQuantity = trackingCapabilities(trackingLevel).quantity
-  const unitSuggestions = getIntakePlanUnitSuggestions(
-    dosageForm,
-    catalogEntry?.suggested_units,
-  )
+  const unitSuggestions = getIntakePlanUnitSuggestions(dosageForm, catalogEntry?.suggested_units)
   const canSuggestFractions = dosageForm === 'tablet' && form.capabilities.includes('divisible')
+  const rhythm = plan.rhythm
+  const onDemand = rhythm.kind === 'on_demand'
 
-  function selectFrequency(frequency: string): void {
-    // Die Zahl der Einnahmezeitpunkte setzt der Reducer (`slotsFuerFrequenz`) —
-    // hier fallen nur die Begleitfelder weg, die zur neuen Frequenz nicht
-    // gehoeren.
-    onChange({
-      frequency,
-      xDaysInterval: needsInterval(frequency) ? plan.xDaysInterval : null,
-      scheduleDays: needsWeekdays(frequency) ? plan.scheduleDays : [],
+  function changeRhythm(changes: Partial<IntakeRhythm>): void {
+    onChange({ rhythm: { ...rhythm, ...changes } })
+  }
+
+  function selectKind(kind: IntakeRhythmKind): void {
+    if (rhythm.kind === kind) return
+    // Die Zahlen der anderen Formen bleiben stehen: wer zwischen „Abstand" und
+    // „Wechsel" hin und her tippt, soll seine Eingaben wiederfinden. Nur was
+    // fehlt, wird auf einen brauchbaren Vorschlag gesetzt.
+    const vorgabe = emptyRhythm()
+    changeRhythm({
+      kind,
+      intervalValue: rhythm.intervalValue ?? vorgabe.intervalValue,
+      onDays: rhythm.onDays ?? vorgabe.onDays,
+      offDays: rhythm.offDays ?? vorgabe.offDays,
+    })
+  }
+
+  function toggleWeekday(day: string): void {
+    changeRhythm({
+      weekdays: rhythm.weekdays.includes(day)
+        ? rhythm.weekdays.filter(value => value !== day)
+        : [...rhythm.weekdays, day],
     })
   }
 
@@ -104,8 +139,7 @@ export function IntakePlanEditor({
   }
 
   // Wie oft am Tag ist eine eigene Frage — unabhaengig davon, an welchen Tagen.
-  // Mo/Mi/Fr morgens UND abends ist ein normaler Plan; solange die Zahl in der
-  // Frequenz steckte, liess er sich nicht ausdruecken.
+  // Mo/Mi/Fr morgens UND abends ist ein normaler Plan.
   function addSlot(): void {
     if (plan.slots.length >= MAX_INTAKE_SLOTS) return
     onChange({ slots: [...plan.slots, naechsterSlot(plan.slots)] })
@@ -114,14 +148,6 @@ export function IntakePlanEditor({
   function removeSlot(index: number): void {
     if (plan.slots.length <= 1) return
     onChange({ slots: plan.slots.filter((_, position) => position !== index) })
-  }
-
-  function toggleWeekday(day: string): void {
-    onChange({
-      scheduleDays: plan.scheduleDays.includes(day)
-        ? plan.scheduleDays.filter(value => value !== day)
-        : [...plan.scheduleDays, day],
-    })
   }
 
   return (
@@ -150,28 +176,156 @@ export function IntakePlanEditor({
         )}
       </div>
 
-      <div>
-        <label htmlFor="stack-plan-frequency" className="mb-2 block text-sm font-semibold text-slate-200">
-          {t('my_stack_plan_frequency', { defaultValue: 'Frequenz' })}
-        </label>
-        <select
-          id="stack-plan-frequency"
-          value={plan.frequency}
-          onChange={event => selectFrequency(event.target.value)}
-          data-field="plan.frequency"
-          aria-invalid={Boolean(errors.frequency) || undefined}
-          aria-describedby={errors.frequency ? 'stack-plan-frequency-error' : undefined}
-          required
-          className="select min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-        >
-          {INTAKE_FREQUENCIES.map(frequency => <option key={frequency} value={frequency}>{frequency}</option>)}
-        </select>
-        {errors.frequency && (
-          <p id="stack-plan-frequency-error" role="alert" className="mt-2 text-sm text-rose-300">
-            {t('my_stack_plan_frequency_required', { defaultValue: 'Bitte wähle eine Frequenz.' })}
-          </p>
+      {/* ── An welchen Tagen ────────────────────────────────────────────── */}
+      <fieldset data-field="plan.frequency" tabIndex={-1} className="min-w-0">
+        <legend className="mb-2 text-sm font-semibold text-slate-200">
+          {t('my_stack_plan_rhythm', { defaultValue: 'An welchen Tagen?' })}
+        </legend>
+        <div className="grid min-w-0 grid-cols-2 gap-2">
+          {RHYTHM_OPTIONS.map(({ kind, labelKey, defaultValue, Icon }) => (
+            <button
+              key={kind}
+              type="button"
+              aria-pressed={rhythm.kind === kind}
+              data-rhythm-kind={kind}
+              onClick={() => selectKind(kind)}
+              disabled={onDemand}
+              className={`flex min-h-11 min-w-0 items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none ${rhythm.kind === kind
+                ? 'border-sky-400/50 bg-sky-400/10 text-sky-200'
+                : 'cursor-pointer border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25'
+              }`}
+            >
+              <Icon aria-hidden="true" size={17} className="shrink-0" />
+              <span className="min-w-0 break-words text-left">{t(labelKey, { defaultValue })}</span>
+            </button>
+          ))}
+        </div>
+
+        {!onDemand && rhythm.kind === 'weekdays' && (
+          <div
+            data-field="plan.scheduleDays"
+            className="mt-3 min-w-0"
+            aria-invalid={Boolean(errors.scheduleDays) || undefined}
+          >
+            <div className="grid min-w-0 grid-cols-4 gap-2 sm:grid-cols-7">
+              {WEEKDAY_KEYS.map(day => {
+                const selected = rhythm.weekdays.includes(day)
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => toggleWeekday(day)}
+                    className={`min-h-11 min-w-0 cursor-pointer rounded-xl border px-2 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${selected
+                      ? 'border-sky-400/50 bg-sky-400/15 text-sky-200'
+                      : 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-sky-400/25 hover:text-slate-200'
+                    }`}
+                  >
+                    {day}
+                  </button>
+                )
+              })}
+            </div>
+            {errors.scheduleDays && (
+              <p role="alert" className="mt-2 text-sm text-rose-300">
+                {t('wochentag_auswaehlen_hint', { defaultValue: 'Mindestens einen Wochentag auswählen' })}
+              </p>
+            )}
+          </div>
         )}
-      </div>
+
+        {!onDemand && rhythm.kind === 'interval' && (
+          <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+            <input
+              id="stack-plan-interval"
+              type="number"
+              inputMode="numeric"
+              min={INTERVAL_BOUNDS[rhythm.intervalUnit].min}
+              max={INTERVAL_BOUNDS[rhythm.intervalUnit].max}
+              value={rhythm.intervalValue ?? ''}
+              onChange={event => changeRhythm({ intervalValue: numericValue(event.target.value) })}
+              data-field="plan.xDaysInterval"
+              aria-label={String(t('my_stack_rhythm_interval_value', { defaultValue: 'Abstand' }))}
+              aria-invalid={Boolean(errors.xDaysInterval) || undefined}
+              className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            />
+            <select
+              value={rhythm.intervalUnit}
+              onChange={event => changeRhythm({ intervalUnit: event.target.value as IntervalUnit })}
+              aria-label={String(t('my_stack_rhythm_interval_unit', { defaultValue: 'Einheit des Abstands' }))}
+              className="select min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            >
+              {INTERVAL_UNITS.map(unit => (
+                <option key={unit} value={unit}>
+                  {t(INTERVAL_UNIT_LABELS[unit].labelKey, { defaultValue: INTERVAL_UNIT_LABELS[unit].defaultValue })}
+                </option>
+              ))}
+            </select>
+            {errors.xDaysInterval && (
+              <p role="alert" className="text-sm text-rose-300 sm:col-span-2">
+                {t('my_stack_rhythm_interval_invalid', { defaultValue: 'Bitte gib einen Abstand innerhalb der gewählten Einheit an.' })}
+              </p>
+            )}
+          </div>
+        )}
+
+        {!onDemand && rhythm.kind === 'cycle' && (
+          <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-2">
+            <label className="min-w-0 text-sm text-slate-300">
+              <span className="mb-1 block font-semibold text-slate-200">
+                {t('my_stack_rhythm_cycle_on', { defaultValue: 'Tage an' })}
+              </span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={90}
+                value={rhythm.onDays ?? ''}
+                onChange={event => changeRhythm({ onDays: numericValue(event.target.value) })}
+                data-field="plan.cycleOnDays"
+                aria-invalid={Boolean(errors.scheduleDays) || undefined}
+                className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              />
+            </label>
+            <label className="min-w-0 text-sm text-slate-300">
+              <span className="mb-1 block font-semibold text-slate-200">
+                {t('my_stack_rhythm_cycle_off', { defaultValue: 'Tage Pause' })}
+              </span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={90}
+                value={rhythm.offDays ?? ''}
+                onChange={event => changeRhythm({ offDays: numericValue(event.target.value) })}
+                data-field="plan.cycleOffDays"
+                aria-invalid={Boolean(errors.scheduleDays) || undefined}
+                className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              />
+            </label>
+            {errors.scheduleDays && (
+              <p role="alert" className="text-sm text-rose-300 sm:col-span-2">
+                {t('my_stack_rhythm_cycle_invalid', { defaultValue: 'Ein Wechsel braucht mindestens einen Tag an und einen Tag Pause.' })}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* „Bei Bedarf" ist kein Rhythmus, sondern dessen Abwesenheit — deshalb
+            steht es daneben und nicht in der Reihe. */}
+        <label className="mt-3 flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-3">
+          <input
+            type="checkbox"
+            checked={onDemand}
+            data-rhythm-on-demand
+            onChange={event => changeRhythm({ kind: event.target.checked ? 'on_demand' : 'daily' })}
+            className="h-5 w-5 shrink-0 cursor-pointer accent-sky-400"
+          />
+          <span className="min-w-0 text-sm font-semibold text-slate-200">
+            {t('my_stack_rhythm_on_demand', { defaultValue: 'Nur bei Bedarf' })}
+          </span>
+        </label>
+      </fieldset>
 
       <div>
         <label htmlFor="stack-plan-start-date" className="mb-2 block text-sm font-semibold text-slate-200">
@@ -195,10 +349,8 @@ export function IntakePlanEditor({
         )}
       </div>
 
-      {/* Das Ende. Es fehlte ganz — der Entwurf trug das Feld, das Formular
-          fragte nie danach. Fuer alles, was man laenger nimmt, bleibt es leer;
-          eine Antibiotikakur oder ein Kortisonstoss hat hier ein Datum, und
-          erst damit ist sie als das erkennbar, was sie ist. */}
+      {/* Das Ende. Fuer alles, was man laenger nimmt, bleibt es leer; eine
+          Antibiotikakur oder ein Kortisonstoss hat hier ein Datum. */}
       <div>
         <label htmlFor="stack-plan-end-date" className="mb-2 block text-sm font-semibold text-slate-200">
           {t('my_stack_plan_end_date', { defaultValue: 'Ende (optional)' })}
@@ -225,82 +377,42 @@ export function IntakePlanEditor({
         )}
       </div>
 
-      {needsInterval(plan.frequency) && (
-        <div>
-          <label htmlFor="stack-plan-interval" className="mb-2 block text-sm font-semibold text-slate-200">
-            {t('my_stack_plan_interval', { defaultValue: 'Intervall in Tagen' })}
-          </label>
-          <input
-            id="stack-plan-interval"
-            type="number"
-            inputMode="numeric"
-            min="2"
-            max="30"
-            value={plan.xDaysInterval ?? ''}
-            onChange={event => onChange({ xDaysInterval: numericValue(event.target.value) })}
-            data-field="plan.xDaysInterval"
-            aria-invalid={Boolean(errors.xDaysInterval) || undefined}
-            aria-describedby={errors.xDaysInterval ? 'stack-plan-interval-error' : undefined}
-            className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-          />
-          {errors.xDaysInterval && (
-            <p id="stack-plan-interval-error" role="alert" className="mt-2 text-sm text-rose-300">
-              {t('alle_x_tage_frage', { defaultValue: 'Alle wie viele Tage?' })}
-            </p>
+      {/* ── Wie oft am Tag ──────────────────────────────────────────────── */}
+      {onDemand ? (
+        <div className="min-w-0 space-y-3">
+          <p
+            data-plan-on-demand
+            className="flex min-w-0 items-start gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-sm leading-relaxed text-slate-400"
+          >
+            <Clock aria-hidden="true" size={17} className="mt-0.5 shrink-0 text-slate-500" />
+            <span>
+              {t('my_stack_plan_on_demand_hint', {
+                defaultValue: 'Kein fester Zeitpunkt: nichts wird fällig, nichts gilt als verpasst. Du trägst die Einnahme ein, wenn sie stattgefunden hat.',
+              })}
+            </span>
+          </p>
+          {/* Eine Menge braucht es trotzdem: „400 mg je Einnahme". Sie haengt
+              am selben einen Zeitpunkt, der nur seine Tageszeit nicht zeigt. */}
+          {tracksQuantity && (
+            <div>
+              <label htmlFor="stack-plan-quantity-0" className="mb-2 block text-sm font-semibold text-slate-200">
+                {t('my_stack_plan_quantity', { defaultValue: quantityLabel(form) })}
+              </label>
+              <input
+                id="stack-plan-quantity-0"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="any"
+                value={plan.slots[0]?.dose ?? ''}
+                onChange={event => changeSlot(0, { dose: numericValue(event.target.value) })}
+                data-field="plan.dose"
+                aria-invalid={Boolean(errors.dose) || undefined}
+                className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              />
+            </div>
           )}
         </div>
-      )}
-
-      {needsWeekdays(plan.frequency) && (
-        <fieldset
-          data-field="plan.scheduleDays"
-          tabIndex={-1}
-          className="min-w-0"
-          aria-label={String(t('my_stack_plan_weekdays', { defaultValue: 'Wochentage' }))}
-          aria-invalid={Boolean(errors.scheduleDays) || undefined}
-          aria-describedby={errors.scheduleDays ? 'stack-plan-weekdays-error' : undefined}
-        >
-          <div className="grid min-w-0 grid-cols-4 gap-2 sm:grid-cols-7">
-            {WEEKDAYS.map(day => {
-              const selected = plan.scheduleDays.includes(day)
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => toggleWeekday(day)}
-                  className={`min-h-11 min-w-0 cursor-pointer rounded-xl border px-2 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${selected
-                    ? 'border-sky-400/50 bg-sky-400/15 text-sky-200'
-                    : 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-sky-400/25 hover:text-slate-200'
-                  }`}
-                >
-                  {day}
-                </button>
-              )
-            })}
-          </div>
-          {errors.scheduleDays && (
-            <p id="stack-plan-weekdays-error" role="alert" className="mt-2 text-sm text-rose-300">
-              {t('wochentag_auswaehlen_hint', { defaultValue: 'Mindestens einen Wochentag auswählen' })}
-            </p>
-          )}
-        </fieldset>
-      )}
-
-      {/* „Bei Bedarf" hat keinen geplanten Zeitpunkt — nach einer Tageszeit zu
-          fragen waere eine Pflichtangabe ohne Bedeutung. */}
-      {isOnDemand(plan.frequency) ? (
-        <p
-          data-plan-on-demand
-          className="flex min-w-0 items-start gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-sm leading-relaxed text-slate-400"
-        >
-          <Clock aria-hidden="true" size={17} className="mt-0.5 shrink-0 text-slate-500" />
-          <span>
-            {t('my_stack_plan_on_demand_hint', {
-              defaultValue: 'Kein fester Zeitpunkt: nichts wird fällig, nichts gilt als verpasst. Du trägst die Einnahme ein, wenn sie stattgefunden hat.',
-            })}
-          </span>
-        </p>
       ) : plan.slots.map((slot, index) => (
         <div key={index} data-plan-slot={index} className="min-w-0 space-y-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
           {plan.slots.length > 1 && (
@@ -323,10 +435,9 @@ export function IntakePlanEditor({
             className="min-w-0"
           >
             <legend className="mb-2 text-sm font-semibold text-slate-200">
-              {/* Bei einem einzigen Zeitpunkt bleibt die Aufschrift, wie sie
-                  war — „Tageszeit 1 von 1" waere eine Zahl ohne Anlass. */}
-              {/* `einnahme_nr` gibt es laengst in allen vierzehn Sprachen — aus
-                  der aelteren Oberflaeche, die 2x/3x taeglich schon anbot. */}
+              {/* `einnahme_nr` gibt es laengst in allen vierzehn Sprachen. Bei
+                  einem einzigen Zeitpunkt bleibt die Aufschrift, wie sie war —
+                  „Einnahme 1 von 1" waere eine Zahl ohne Anlass. */}
               {plan.slots.length > 1
                 ? t('einnahme_nr', { defaultValue: `Einnahme ${index + 1}`, n: index + 1 })
                 : t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}
@@ -363,23 +474,66 @@ export function IntakePlanEditor({
             )}
           </fieldset>
 
-          <div>
-            <label htmlFor={`stack-plan-time-${index}`} className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
-              <Clock aria-hidden="true" size={17} className="text-slate-400" />
-              {t('my_stack_plan_time', { defaultValue: 'Genaue Uhrzeit (optional)' })}
-            </label>
-            <input
-              id={`stack-plan-time-${index}`}
-              type="time"
-              value={slot.time ?? ''}
-              onChange={event => changeSlot(index, { time: event.target.value || null })}
-              className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-            />
+          <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+            <div>
+              <label htmlFor={`stack-plan-time-${index}`} className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
+                <Clock aria-hidden="true" size={17} className="text-slate-400" />
+                {t('my_stack_plan_time', { defaultValue: 'Genaue Uhrzeit (optional)' })}
+              </label>
+              <input
+                id={`stack-plan-time-${index}`}
+                type="time"
+                value={slot.time ?? ''}
+                onChange={event => changeSlot(index, { time: event.target.value || null })}
+                className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              />
+            </div>
+
+            {/* Die Menge steht am ZEITPUNKT, nicht am Plan: „morgens 1000 mg,
+                abends 500 mg" ist bei Levothyroxin, Insulin und Metformin der
+                Normalfall. Bei einem Zeitpunkt sieht es aus wie vorher. */}
+            {tracksQuantity && (
+              <div>
+                <label htmlFor={`stack-plan-quantity-${index}`} className="mb-2 block text-sm font-semibold text-slate-200">
+                  {t('my_stack_plan_quantity', { defaultValue: quantityLabel(form) })}
+                </label>
+                <input
+                  id={`stack-plan-quantity-${index}`}
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="any"
+                  value={slot.dose ?? ''}
+                  onChange={event => changeSlot(index, { dose: numericValue(event.target.value) })}
+                  data-field={index === 0 ? 'plan.dose' : `plan.slots.${index}.dose`}
+                  aria-invalid={Boolean(errors.dose) || undefined}
+                  aria-describedby={errors.dose ? 'stack-plan-dose-error' : undefined}
+                  className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                />
+                {canSuggestFractions && (
+                  <div className="mt-2 flex min-w-0 flex-wrap gap-2">
+                    {TABLET_FRACTIONS.map(fraction => (
+                      <button
+                        key={fraction.label}
+                        type="button"
+                        onClick={() => {
+                          changeSlot(index, { dose: fraction.value })
+                          if (!plan.unit) onChange({ unit: 'tablet' })
+                        }}
+                        className="min-h-11 cursor-pointer rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-sm font-semibold text-slate-300 transition-colors duration-200 hover:border-sky-400/30 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
+                      >
+                        {fraction.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ))}
 
-      {!isOnDemand(plan.frequency) && plan.slots.length < MAX_INTAKE_SLOTS && (
+      {!onDemand && plan.slots.length < MAX_INTAKE_SLOTS && (
         <button
           type="button"
           onClick={addSlot}
@@ -392,71 +546,33 @@ export function IntakePlanEditor({
       )}
 
       {tracksQuantity && (
-        <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-          <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-            <div>
-              <label htmlFor="stack-plan-quantity" className="mb-2 block text-sm font-semibold text-slate-200">
-                {t('my_stack_plan_quantity', { defaultValue: quantityLabel(form) })}
-              </label>
-              <input
-                id="stack-plan-quantity"
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="any"
-                value={plan.dose ?? ''}
-                onChange={event => onChange({ dose: numericValue(event.target.value) })}
-                data-field="plan.dose"
-                aria-invalid={Boolean(errors.dose) || undefined}
-                aria-describedby={errors.dose ? 'stack-plan-dose-error' : undefined}
-                className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-              />
-              {errors.dose && (
-                <p id="stack-plan-dose-error" role="alert" className="mt-2 text-sm text-rose-300">
-                  {t('my_stack_plan_quantity_required', { defaultValue: 'Bitte gib eine Menge größer als 0 an.' })}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="stack-plan-unit" className="mb-2 block text-sm font-semibold text-slate-200">
-                {t('my_stack_plan_unit', { defaultValue: 'Einheit der geplanten Menge' })}
-              </label>
-              <input
-                id="stack-plan-unit"
-                list="stack-plan-unit-suggestions"
-                value={plan.unit ?? ''}
-                onChange={event => onChange({ unit: event.target.value || null })}
-                data-field="plan.unit"
-                aria-invalid={Boolean(errors.unit) || undefined}
-                aria-describedby={errors.unit ? 'stack-plan-unit-error' : undefined}
-                autoComplete="off"
-                className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-              />
-              <datalist id="stack-plan-unit-suggestions">
-                {unitSuggestions.map(unit => <option key={unit} value={unit} />)}
-              </datalist>
-              {errors.unit && (
-                <p id="stack-plan-unit-error" role="alert" className="mt-2 text-sm text-rose-300">
-                  {t('my_stack_plan_unit_required', { defaultValue: 'Bitte wähle oder benenne eine Einheit.' })}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {canSuggestFractions && (
-            <div className="mt-3 flex min-w-0 flex-wrap gap-2">
-              {TABLET_FRACTIONS.map(fraction => (
-                <button
-                  key={fraction.label}
-                  type="button"
-                  onClick={() => onChange({ dose: fraction.value, unit: plan.unit ?? 'tablet' })}
-                  className="min-h-11 cursor-pointer rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-sm font-semibold text-slate-300 transition-colors duration-200 hover:border-sky-400/30 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
-                >
-                  {fraction.label}
-                </button>
-              ))}
-            </div>
+        <div className="min-w-0">
+          <label htmlFor="stack-plan-unit" className="mb-2 block text-sm font-semibold text-slate-200">
+            {t('my_stack_plan_unit', { defaultValue: 'Einheit der geplanten Menge' })}
+          </label>
+          <input
+            id="stack-plan-unit"
+            list="stack-plan-unit-suggestions"
+            value={plan.unit ?? ''}
+            onChange={event => onChange({ unit: event.target.value || null })}
+            data-field="plan.unit"
+            aria-invalid={Boolean(errors.unit) || undefined}
+            aria-describedby={errors.unit ? 'stack-plan-unit-error' : undefined}
+            autoComplete="off"
+            className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+          />
+          <datalist id="stack-plan-unit-suggestions">
+            {unitSuggestions.map(unit => <option key={unit} value={unit} />)}
+          </datalist>
+          {errors.unit && (
+            <p id="stack-plan-unit-error" role="alert" className="mt-2 text-sm text-rose-300">
+              {t('my_stack_plan_unit_required', { defaultValue: 'Bitte wähle oder benenne eine Einheit.' })}
+            </p>
+          )}
+          {errors.dose && (
+            <p id="stack-plan-dose-error" role="alert" className="mt-2 text-sm text-rose-300">
+              {t('my_stack_plan_quantity_required', { defaultValue: 'Bitte gib eine Menge größer als 0 an.' })}
+            </p>
           )}
         </div>
       )}

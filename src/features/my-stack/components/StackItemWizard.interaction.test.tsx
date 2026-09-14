@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntakePlanDraft, StackItem, StackItemSetupDraft, SubstanceCatalogEntry } from '../types'
 import type { WizardSaveMode } from '../lib/wizardState'
+import { emptyRhythm } from '../lib/intakeRhythm'
 import { StackItemWizard, type StackItemWizardProps } from './StackItemWizard'
 import { SubstanceSearch } from './SubstanceSearch'
 
@@ -76,15 +77,12 @@ const pkVitaminD3: SubstanceCatalogEntry = {
 const existingPlan: IntakePlanDraft = {
   id: 'cycle-1',
   name: 'Vitamin D breakfast',
-  dose: 5000,
   unit: 'IU',
   method: 'Oral',
-  frequency: 'Täglich',
-  xDaysInterval: null,
-  scheduleDays: [],
+  rhythm: emptyRhythm(),
   startDate: '2025-01-01',
   endDate: null,
-  slots: [{ routineGroup: 'morning', time: '08:30' }],
+  slots: [{ routineGroup: 'morning', time: '08:30', dose: 5000 }],
   reminders: ['on_time'],
 }
 
@@ -413,9 +411,8 @@ describe('StackItemWizard interactions', () => {
     }
     const pkPlan: IntakePlanDraft = {
       ...existingPlan,
-      dose: 1,
       unit: 'mg',
-      slots: [{ routineGroup: 'morning', time: '08:30' }],
+      slots: [{ routineGroup: 'morning', time: '08:30', dose: 1 }],
     }
     const { onSave } = renderWizard({
       catalogEntries: [vitaminK2, pkVitaminD3],
@@ -447,9 +444,8 @@ describe('StackItemWizard interactions', () => {
     }
     const pkPlan: IntakePlanDraft = {
       ...existingPlan,
-      dose: 1,
       unit: 'mg',
-      slots: [{ routineGroup: 'morning', time: null }],
+      slots: [{ routineGroup: 'morning', time: null, dose: 1 }],
     }
     renderWizard({
       catalogEntries: [pkVitaminD3],
@@ -473,9 +469,8 @@ describe('StackItemWizard interactions', () => {
     }
     const pkPlan: IntakePlanDraft = {
       ...existingPlan,
-      dose: 1,
       unit: 'mg',
-      slots: [{ routineGroup: 'morning', time: '08:30' }],
+      slots: [{ routineGroup: 'morning', time: '08:30', dose: 1 }],
     }
     const { onSave } = renderWizard({
       catalogEntries: [pkVitaminD3],
@@ -486,7 +481,7 @@ describe('StackItemWizard interactions', () => {
 
     expect(screen.getByRole('group', { name: 'my_stack_tracking_question' })).toBeTruthy()
     expect(screen.queryByLabelText('my_stack_question')).toBeNull()
-    expect(screen.queryByLabelText('my_stack_plan_frequency')).toBeNull()
+    expect(document.querySelector('[data-rhythm-kind="daily"]')).toBeNull()
 
     fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_complete_title/ }))
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
@@ -495,7 +490,7 @@ describe('StackItemWizard interactions', () => {
     expect(onSave.mock.calls[0][0]).toMatchObject({
       trackingLevel: 'complete',
       pkProfileMethod: 'Oral',
-      plan: { dose: 1, unit: 'mg', slots: [{ routineGroup: 'morning', time: '08:30' }] },
+      plan: { unit: 'mg', slots: [{ routineGroup: 'morning', time: '08:30', dose: 1 }] },
     })
   })
 
@@ -506,9 +501,8 @@ describe('StackItemWizard interactions', () => {
     }
     const pkPlan: IntakePlanDraft = {
       ...existingPlan,
-      dose: 1,
       unit: 'mg',
-      slots: [{ routineGroup: 'morning', time: null }],
+      slots: [{ routineGroup: 'morning', time: null, dose: 1 }],
     }
     const { onSave } = renderWizard({
       catalogEntries: [pkVitaminD3],
@@ -517,7 +511,7 @@ describe('StackItemWizard interactions', () => {
       intent: 'pk',
     })
 
-    expect(screen.getByLabelText('my_stack_plan_frequency')).toBeTruthy()
+    expect(document.querySelector('[data-rhythm-kind="daily"]')).not.toBeNull()
     expect(screen.queryByRole('group', { name: 'my_stack_tracking_question' })).toBeNull()
     fireEvent.change(screen.getByLabelText('my_stack_plan_time'), { target: { value: '08:30' } })
     fireEvent.click(screen.getByRole('checkbox', { name: 'my_stack_pk_method_confirm' }))
@@ -526,7 +520,7 @@ describe('StackItemWizard interactions', () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
     expect(onSave.mock.calls[0][0]).toMatchObject({
       pkProfileMethod: 'Oral',
-      plan: { method: 'Oral', dose: 1, unit: 'mg', slots: [{ routineGroup: 'morning', time: '08:30' }] },
+      plan: { method: 'Oral', unit: 'mg', slots: [{ routineGroup: 'morning', time: '08:30', dose: 1 }] },
     })
   })
 
@@ -785,7 +779,7 @@ describe('StackItemWizard interactions', () => {
     // der Plan kommt direkt.
     fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_with_amount_title/ }))
     continueWizard()
-    expect(screen.getByLabelText('my_stack_plan_frequency')).toBeTruthy()
+    expect(document.querySelector('[data-rhythm-kind="daily"]')).not.toBeNull()
   })
 
   it('follows the lower-depth path and reviews an intake without quantity', () => {
@@ -822,7 +816,8 @@ describe('StackItemWizard interactions', () => {
 
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
     expect(onSave.mock.calls[0][0].trackingLevel).toBe('intake_only')
-    expect(onSave.mock.calls[0][0].plan).toMatchObject({ dose: null, unit: null })
+    expect(onSave.mock.calls[0][0].plan).toMatchObject({ unit: null })
+    expect(onSave.mock.calls[0][0].plan.slots[0].dose).toBeNull()
     expect(onSave.mock.calls[0][1]).toBe('create')
     expect(screen.queryByLabelText('my_stack_strength_value')).toBeNull()
   })
@@ -835,7 +830,9 @@ describe('StackItemWizard interactions', () => {
       id: 'cycle-1',
       name: 'Vitamin D breakfast',
       method: 'Oral',
-      slots: [{ routineGroup: 'morning', time: '08:30' }],
+      // `reachExistingReview` tippt unterwegs eine 1 in das Mengenfeld — die
+      // Menge steht jetzt am Zeitpunkt, also kommt sie dort an.
+      slots: [{ routineGroup: 'morning', time: '08:30', dose: 1 }],
     })
     cleanup()
 
@@ -851,11 +848,11 @@ describe('StackItemWizard interactions', () => {
     reachExistingReview()
 
     expect(screen.getByText('my_stack_tracking_complete_subtitle')).toBeTruthy()
-    expect(screen.getByText('Täglich')).toBeTruthy()
-    // Die Zusammenfassung nennt jetzt Tageszeit UND Uhrzeit in einer Zeile,
-    // damit bei „2x täglich" nicht die Hälfte des Plans fehlt. Ohne gesetzte
-    // Uhrzeit steht dort nur die Tageszeit.
-    expect(screen.getByText('my_stack_routine_morning')).toBeTruthy()
+    // Die Zusammenfassung nennt Tageszeit, Uhrzeit UND Menge in einer Zeile,
+    // damit bei mehreren Einnahmen am Tag nichts verschwiegen wird.
+    expect(document.querySelector('[data-review-slot="0"]')?.textContent)
+      .toContain('my_stack_routine_morning')
+    expect(document.querySelector('[data-review-rhythm]')?.textContent).toBe('Täglich')
     // Und das Ende, das es vorher im Formular gar nicht gab.
     expect(document.querySelector('[data-review-end-date]')?.textContent)
       .toBe('my_stack_plan_end_open')
@@ -944,7 +941,8 @@ describe('StackItemWizard interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
     await waitFor(() => expect(createRun.onSave).toHaveBeenCalledTimes(1))
     expect(createRun.onSave.mock.calls[0][0].displayName).toBe('Create Product')
-    expect(createRun.onSave.mock.calls[0][0].plan).toMatchObject({ dose: 1, unit: 'capsule' })
+    expect(createRun.onSave.mock.calls[0][0].plan).toMatchObject({ unit: 'capsule' })
+    expect(createRun.onSave.mock.calls[0][0].plan.slots[0].dose).toBe(1)
     expect(createRun.onSave.mock.calls[0][0].inventory.enabled).toBe(false)
     expect(createRun.onSave.mock.calls[0][1]).toBe('create')
     cleanup()

@@ -15,7 +15,7 @@ import type {
 import { format } from 'date-fns'
 import { buildDuplicateFingerprint } from './duplicateFingerprint'
 import { getIntakePlanUnitSuggestions, showsColor, strengthBasisDefault } from './dosageForms'
-import { isOnDemand, slotCountForFrequency } from './intakeFrequency'
+import { emptyRhythm, isOnDemandRhythm } from './intakeRhythm'
 import type { Kombinationsbestandteil } from './kombination'
 import { trackingCapabilities } from './trackingDepth'
 import { validateIntakePlan, validateStackItemDraft } from './validation'
@@ -131,11 +131,13 @@ function basisVorbelegung(
  * Tagesfrequenzen („2x taeglich") bringen ihre Zahl noch mit, damit ein
  * bestehender Zyklus beim Laden nicht die Haelfte verliert.
  */
-function slotsFuerFrequenz(plan: IntakePlanDraft): IntakeSlotDraft[] {
-  if (isOnDemand(plan.frequency)) return []
-  const mindestens = Math.max(1, slotCountForFrequency(plan.frequency))
+function slotsFuerRhythmus(plan: IntakePlanDraft): IntakeSlotDraft[] {
   const slots = [...plan.slots]
-  while (slots.length < mindestens) slots.push(naechsterSlot(slots))
+  // Auch „Bei Bedarf" behaelt EINEN Zeitpunkt: er traegt die Menge, die man
+  // eintraegt, wenn man das Mittel genommen hat. Tageszeit und Uhrzeit
+  // bedeuten dort nichts und werden nicht gezeigt.
+  if (isOnDemandRhythm(plan.rhythm)) return slots.slice(0, 1).length > 0 ? slots.slice(0, 1) : [naechsterSlot([])]
+  if (slots.length === 0) slots.push(naechsterSlot(slots))
   return slots
 }
 
@@ -147,21 +149,24 @@ function slotsFuerFrequenz(plan: IntakePlanDraft): IntakeSlotDraft[] {
 export function naechsterSlot(slots: readonly IntakeSlotDraft[]): IntakeSlotDraft {
   const reihenfolge: RoutineGroup[] = ['morning', 'midday', 'evening']
   const belegt = new Set(slots.map(slot => slot.routineGroup))
-  return { routineGroup: reihenfolge.find(gruppe => !belegt.has(gruppe)) ?? 'evening', time: null }
+  return {
+    routineGroup: reihenfolge.find(gruppe => !belegt.has(gruppe)) ?? 'evening',
+    time: null,
+    // Die Menge des ersten Zeitpunkts als Vorschlag: meist ist sie ueberall
+    // gleich, und wo nicht, aendert man genau die eine Zahl.
+    dose: slots[0]?.dose ?? null,
+  }
 }
 
 function emptyPlan(name: string): IntakePlanDraft {
   return {
     name,
-    dose: null,
     unit: null,
     method: '',
-    frequency: 'Täglich',
-    xDaysInterval: null,
-    scheduleDays: [],
+    rhythm: emptyRhythm(),
     startDate: format(new Date(), 'yyyy-MM-dd'),
     endDate: null,
-    slots: [{ routineGroup: 'morning', time: null }],
+    slots: [{ routineGroup: 'morning', time: null, dose: null }],
     reminders: [],
   }
 }
@@ -195,7 +200,8 @@ function draftFromStackItem(
     plan: existingPlan
       ? {
           ...existingPlan,
-          scheduleDays: [...existingPlan.scheduleDays],
+          rhythm: { ...existingPlan.rhythm, weekdays: [...existingPlan.rhythm.weekdays] },
+          slots: existingPlan.slots.map(slot => ({ ...slot })),
           reminders: [...existingPlan.reminders],
           startDate: format(new Date(), 'yyyy-MM-dd'),
         }
@@ -452,11 +458,13 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       }
     case 'plan_changed': {
       const plan = { ...state.draft.plan, ...action.changes }
-      // Nur ein FREQUENZWECHSEL fasst die Zeitpunkte an — sonst wuerde jede
-      // Aenderung am Plan die selbst hinzugefuegten wieder einsammeln.
-      const slots = action.changes.frequency === undefined
+      // Nur ein RHYTHMUSWECHSEL fasst die Zeitpunkte an — sonst wuerde jede
+      // Aenderung am Plan die selbst hinzugefuegten wieder einsammeln. Und
+      // auch dann nur, wenn „Bei Bedarf" ins Spiel kommt oder daraus zurueck:
+      // an welchen Tagen etwas ansteht, sagt nichts darueber, wie oft am Tag.
+      const slots = action.changes.rhythm === undefined
         ? plan.slots
-        : slotsFuerFrequenz(plan)
+        : slotsFuerRhythmus(plan)
       return { ...state, draft: { ...state.draft, plan: { ...plan, slots } } }
     }
     case 'save_mode_selected':

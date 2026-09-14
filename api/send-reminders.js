@@ -82,7 +82,8 @@ export default async function handler(req, res) {
     const userFilter = userIds.map(id => `"${id}"`).join(',')
     const cycles = await sbGet(
       `${base}/rest/v1/cycles?active=eq.true&user_id=in.(${userFilter})` +
-      `&select=id,user_id,name,dose,unit,frequency,x_days_interval,schedule_days,` +
+      `&select=id,user_id,name,dose,unit,frequency,x_days_interval,` +
+      `interval_unit,cycle_on_days,cycle_off_days,slot_doses,schedule_days,` +
       `start_date,end_date,intake_time,intake_time_custom,reminder,schedule_history,peptides(name)`,
       key,
     )

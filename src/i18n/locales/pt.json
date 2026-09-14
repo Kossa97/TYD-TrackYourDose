@@ -1130,5 +1130,20 @@
   "my_stack_plan_on_demand_hint": "Sem horário fixo: nada vence nem conta como esquecido. Regista a toma depois de acontecer.",
   "my_stack_plan_add_slot": "Outra toma no mesmo dia",
   "my_stack_plan_remove_slot": "Remover momento de toma",
-  "my_stack_plan_slot_duplicate": "Esse momento já existe — dê-lhe uma hora própria."
+  "my_stack_plan_slot_duplicate": "Esse momento já existe — dê-lhe uma hora própria.",
+  "my_stack_plan_rhythm": "Em que dias?",
+  "my_stack_rhythm_daily": "Todos os dias",
+  "my_stack_rhythm_weekdays": "Dias da semana",
+  "my_stack_rhythm_interval": "A cada",
+  "my_stack_rhythm_cycle": "Em ciclos",
+  "my_stack_rhythm_on_demand": "Apenas quando necessário",
+  "my_stack_rhythm_interval_value": "Intervalo",
+  "my_stack_rhythm_interval_unit": "Unidade do intervalo",
+  "my_stack_rhythm_unit_day": "dias",
+  "my_stack_rhythm_unit_week": "semanas",
+  "my_stack_rhythm_unit_month": "meses",
+  "my_stack_rhythm_interval_invalid": "Indica um intervalo dentro da unidade escolhida.",
+  "my_stack_rhythm_cycle_on": "Dias de toma",
+  "my_stack_rhythm_cycle_off": "Dias de pausa",
+  "my_stack_rhythm_cycle_invalid": "Um ciclo precisa de pelo menos um dia de toma e um de pausa."
 }

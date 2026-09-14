@@ -1132,5 +1132,20 @@
   "my_stack_plan_on_demand_hint": "Без фиксированного времени: ничего не наступает и не считается пропущенным. Вы отмечаете приём после него.",
   "my_stack_plan_add_slot": "Ещё один приём в тот же день",
   "my_stack_plan_remove_slot": "Удалить время приёма",
-  "my_stack_plan_slot_duplicate": "Такое время уже есть — задайте ему собственные часы."
+  "my_stack_plan_slot_duplicate": "Такое время уже есть — задайте ему собственные часы.",
+  "my_stack_plan_rhythm": "В какие дни?",
+  "my_stack_rhythm_daily": "Каждый день",
+  "my_stack_rhythm_weekdays": "Дни недели",
+  "my_stack_rhythm_interval": "Каждые",
+  "my_stack_rhythm_cycle": "Циклами",
+  "my_stack_rhythm_on_demand": "Только по потребности",
+  "my_stack_rhythm_interval_value": "Интервал",
+  "my_stack_rhythm_interval_unit": "Единица интервала",
+  "my_stack_rhythm_unit_day": "дней",
+  "my_stack_rhythm_unit_week": "недель",
+  "my_stack_rhythm_unit_month": "месяцев",
+  "my_stack_rhythm_interval_invalid": "Укажите интервал в пределах выбранной единицы.",
+  "my_stack_rhythm_cycle_on": "Дней приёма",
+  "my_stack_rhythm_cycle_off": "Дней перерыва",
+  "my_stack_rhythm_cycle_invalid": "Цикл требует минимум один день приёма и один день перерыва."
 }

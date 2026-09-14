@@ -30,6 +30,7 @@ import {
   type WizardStep,
 } from '../lib/wizardState'
 import { bestandteileAufloesen } from '../lib/kombination'
+import { fuehrendeMenge, rhythmSummary } from '../lib/intakeRhythm'
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
 import { evaluatePkReadiness, toPkMilligrams } from '../lib/pkReadiness'
 import { useSloshEngine } from '../../../components/SloshContext'
@@ -81,10 +82,13 @@ function pkIntentSteps(
     && item.pk_profile_method?.trim().toLocaleLowerCase() === plan.method.trim().toLocaleLowerCase(),
   )
   const planNeedsAttention = !methodMatches
-    || plan?.dose == null
-    || !plan.unit?.trim()
+    || fuehrendeMenge(plan?.slots ?? []) == null
+    || !plan?.unit?.trim()
     || !plan.slots.some(slot => slot.time?.trim())
-    || (plan.dose != null && plan.unit != null && toPkMilligrams(plan.dose, plan.unit, iuPerMg) == null)
+    || (() => {
+        const menge = fuehrendeMenge(plan.slots)
+        return menge != null && plan.unit != null && toPkMilligrams(menge, plan.unit, iuPerMg) == null
+      })()
   if (planNeedsAttention) steps.push('plan')
   return steps.length ? steps : ['plan']
 }
@@ -416,7 +420,7 @@ export function StackItemWizard({
         pkProfileId: linkedProfileId,
         pkProfileMethod,
         method: state.draft.plan.method,
-        dose: state.draft.plan.dose,
+        dose: fuehrendeMenge(state.draft.plan.slots),
         unit: state.draft.plan.unit,
         // Die PK-Kurve braucht EINEN Startzeitpunkt. Bei mehreren Einnahmen
         // am Tag ist das die erste mit gesetzter Uhrzeit.
@@ -730,8 +734,8 @@ export function StackItemWizard({
                   <dd className="font-medium text-slate-200">{state.draft.dosageForm && t(`dosage_form_${state.draft.dosageForm}`)}</dd>
                 </div>
                 <div className="flex flex-wrap justify-between gap-2">
-                  <dt className="text-slate-400">{t('my_stack_plan_frequency', { defaultValue: 'Frequenz' })}</dt>
-                  <dd className="font-medium text-slate-200">{state.draft.plan.frequency}</dd>
+                  <dt className="text-slate-400">{t('my_stack_plan_rhythm', { defaultValue: 'An welchen Tagen?' })}</dt>
+                  <dd data-review-rhythm className="font-medium text-slate-200">{rhythmSummary(state.draft.plan.rhythm)}</dd>
                 </div>
                 <div className="flex flex-wrap justify-between gap-2">
                   <dt className="text-slate-400">{t('my_stack_plan_end_date', { defaultValue: 'Ende (optional)' })}</dt>
@@ -745,7 +749,7 @@ export function StackItemWizard({
                 {state.draft.plan.slots.length === 0 ? (
                   <div className="flex flex-wrap justify-between gap-2">
                     <dt className="text-slate-400">{t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}</dt>
-                    <dd className="font-medium text-slate-200">{state.draft.plan.frequency}</dd>
+                    <dd className="font-medium text-slate-200">{rhythmSummary(state.draft.plan.rhythm)}</dd>
                   </div>
                 ) : state.draft.plan.slots.map((slot, index) => (
                   <div key={index} data-review-slot={index} className="flex flex-wrap justify-between gap-2">
@@ -761,6 +765,9 @@ export function StackItemWizard({
                           ? t('my_stack_routine_midday', { defaultValue: 'Mittags' })
                           : t('my_stack_routine_evening', { defaultValue: 'Abends' })}
                       {slot.time ? ` · ${slot.time}` : ''}
+                      {state.draft.trackingLevel !== 'intake_only' && slot.dose != null
+                        ? ` · ${slot.dose} ${state.draft.plan.unit ?? ''}`.trimEnd()
+                        : ''}
                     </dd>
                   </div>
                 ))}
@@ -769,7 +776,7 @@ export function StackItemWizard({
                   <dd className="font-medium text-slate-200">
                     {state.draft.trackingLevel === 'intake_only'
                       ? t('my_stack_quantity_not_tracked', { defaultValue: 'Menge wird nicht getrackt' })
-                      : `${state.draft.plan.dose} ${state.draft.plan.unit}`}
+                      : `${fuehrendeMenge(state.draft.plan.slots) ?? ''} ${state.draft.plan.unit ?? ''}`.trim()}
                   </dd>
                 </div>
                 {state.draft.trackingLevel === 'complete' && (

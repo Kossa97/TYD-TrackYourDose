@@ -26,9 +26,10 @@ import { StackItemDetails } from './components/StackItemDetails'
 import { StackArchive } from './components/StackArchive'
 import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, restoreStackItem, saveStackItemSetup, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
 import { searchSubstanceCatalog } from './services/substanceCatalog'
-import type { IntakePlanDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
+import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
-import { INTAKE_FREQUENCIES, LEGACY_DAILY_FREQUENCIES } from './lib/intakeFrequency'
+import { INTAKE_FREQUENCIES } from './lib/intakeFrequency'
+import { rhythmFromStorage } from './lib/intakeRhythm'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
 import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
 import { backfillMessageKey, buildPermanentScheduleChange, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
@@ -442,27 +443,33 @@ function cycleAsIntakePlanDraft(cycle: Cycle, day: Date): IntakePlanDraft {
   // fiel die zweite Einnahme damit still weg, und Speichern loeschte sie.
   const slotKeys = (segment.intake_time ?? '').split(',').map(key => key.trim()).filter(Boolean)
   const slotTimes = (segment.intake_time_custom ?? '').split(',').map(time => time.trim())
-  const slots = slotKeys.map((key, index) => ({
-    routineGroup: INTAKE_TIME_TO_ROUTINE_GROUP[key] ?? 'morning',
-    time: slotTimes[index] || null,
-  }))
+  // Die Mengen je Zeitpunkt. Steht dort nichts, gilt ueberall die eine Menge
+  // des Zyklus — so war es bei jedem Plan vor dieser Runde.
+  const slotDoses = (segment.slot_doses ?? '').split(',').map(wert => wert.trim())
+  const slots: IntakeSlotDraft[] = slotKeys.map((key, index) => {
+    const eigene = Number(slotDoses[index])
+    return {
+      routineGroup: INTAKE_TIME_TO_ROUTINE_GROUP[key] ?? 'morning',
+      time: slotTimes[index] || null,
+      dose: (slotDoses[index] ?? '') !== '' && Number.isFinite(eigene) ? eigene : segment.dose,
+    }
+  })
   return {
     id: cycle.id,
     name: cycle.name,
-    dose: segment.dose,
     unit: segment.unit,
     method: cycle.method,
-    // Alte Zyklen tragen die Tageszahl noch in der Frequenz („2x taeglich").
-    // Im Formular steht sie jetzt daneben, als Zahl der Einnahmezeitpunkte —
-    // die Frequenz sagt nur noch, an welchen TAGEN. „2x taeglich" mit zwei
-    // Zeitpunkten und „Taeglich" mit zwei Zeitpunkten bedeuten dasselbe, auch
-    // fuer `cycleAppliesToDay`.
-    frequency: LEGACY_DAILY_FREQUENCIES[segment.frequency] ? 'Täglich' : segment.frequency,
-    xDaysInterval: segment.x_days_interval,
-    scheduleDays: segment.schedule_days ?? [],
+    // Alte Frequenztexte werden auf die vier Formen abgebildet — „Wöchentlich"
+    // ist ein Abstand von einer Woche, „Mo-Fr" sind fuenf Wochentage. Sie
+    // bedeuten dasselbe, und ein bestehender Zyklus verliert beim Oeffnen
+    // nichts. Die Tageszahl der alten „2x taeglich" steckt in den
+    // Einnahmezeitpunkten, nicht im Rhythmus.
+    rhythm: rhythmFromStorage(segment),
     startDate: format(new Date(), 'yyyy-MM-dd'),
     endDate: cycle.end_date,
-    slots: slots.length > 0 ? slots : [{ routineGroup: 'morning' as const, time: null }],
+    slots: slots.length > 0
+      ? slots
+      : [{ routineGroup: 'morning' as const, time: null, dose: segment.dose }],
     reminders: cycle.reminder && cycle.reminder !== 'none'
       ? cycle.reminder.split(',').filter(Boolean)
       : [],

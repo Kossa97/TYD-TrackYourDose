@@ -1129,5 +1129,20 @@
   "my_stack_plan_on_demand_hint": "정해진 시각 없음: 예정도 누락도 생기지 않습니다. 복용한 뒤에 기록합니다.",
   "my_stack_plan_add_slot": "같은 날 한 번 더",
   "my_stack_plan_remove_slot": "복용 시점 삭제",
-  "my_stack_plan_slot_duplicate": "이미 있는 시점입니다 — 고유한 시각을 지정하세요."
+  "my_stack_plan_slot_duplicate": "이미 있는 시점입니다 — 고유한 시각을 지정하세요.",
+  "my_stack_plan_rhythm": "어떤 날에?",
+  "my_stack_rhythm_daily": "매일",
+  "my_stack_rhythm_weekdays": "특정 요일",
+  "my_stack_rhythm_interval": "간격",
+  "my_stack_rhythm_cycle": "주기적으로 쉬기",
+  "my_stack_rhythm_on_demand": "필요할 때만",
+  "my_stack_rhythm_interval_value": "간격",
+  "my_stack_rhythm_interval_unit": "간격 단위",
+  "my_stack_rhythm_unit_day": "일",
+  "my_stack_rhythm_unit_week": "주",
+  "my_stack_rhythm_unit_month": "개월",
+  "my_stack_rhythm_interval_invalid": "선택한 단위 범위 안에서 간격을 입력하세요.",
+  "my_stack_rhythm_cycle_on": "복용 일수",
+  "my_stack_rhythm_cycle_off": "휴약 일수",
+  "my_stack_rhythm_cycle_invalid": "주기에는 복용일과 휴약일이 각각 하루 이상 필요합니다."
 }
