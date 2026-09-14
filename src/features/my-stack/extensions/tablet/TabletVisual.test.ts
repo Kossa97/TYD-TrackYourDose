@@ -28,7 +28,8 @@ describe('TabletVisual', () => {
   })
 
   it('haelt die im Spec festgelegten Durchmesser ein', () => {
-    expect(render({ size: 'large' })).toContain('w-[160px]')
+    // `large` ist die Groesse des Farbschritts, nicht eine Sprosse der Leiter.
+    expect(render({ size: 'large' })).toContain('w-[344px]')
     expect(render({ size: 'carousel' })).toContain('w-[62px]')
     expect(render({ size: 'compact' })).toContain('w-[96px]')
     expect(render({ size: 'mini' })).toContain('w-[40px]')

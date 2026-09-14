@@ -70,9 +70,11 @@ describe('PowderVisual', () => {
   })
 
   it('haelt die im Spec festgelegten Groessen ein', () => {
+    // `large` gehoert nicht mehr zur Sprossenleiter: es ist die Groesse des
+    // Farbschritts, gross genug fuer dessen Flaeche.
     // Eine Sprosse unter Vial und Ampulle: 115,5 -> 146,7 statt 146,7 ->
     // 186,4. Der Schritt bleibt x1,2706.
-    expect(render({ size: 'large' })).toContain('h-[287.3px]')
+    expect(render({ size: 'large' })).toContain('h-[344px]')
     expect(render({ size: 'carousel' })).toContain('h-[115.5px]')
     expect(render({ size: 'carousel' })).toContain('sm:h-[146.7px]')
     expect(render({ size: 'compact' })).toContain('h-[86.6px]')

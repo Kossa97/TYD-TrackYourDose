@@ -41,7 +41,7 @@ const clampOffset = (value: number) => (Number.isFinite(value) ? Math.max(-1, Ma
 // breiteste bisherige Form. Der Schritt bleibt x1,2706, die Leiter also
 // intakt — 146,7 ist genau die Hoehe von Vial, Ampulle und Tropfflasche.
 const SIZE_CLASS: Record<NonNullable<PowderVisualProps['size']>, string> = {
-  large: 'h-[287.3px] w-[191.5px]',
+  large: 'h-[344px] w-[229.3px]',
   carousel: 'h-[115.5px] w-[77px] sm:h-[146.7px] sm:w-[97.8px]',
   compact: 'h-[86.6px] w-[57.7px]',
   mini: 'h-[47.2px] w-[31.5px]',
@@ -52,7 +52,7 @@ const SIZE_CLASS: Record<NonNullable<PowderVisualProps['size']>, string> = {
 // Weiss, fett, mit Schattenkante — wie auf jedem anderen Etikett.
 const NAME_SHARED = 'leading-tight font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]'
 const NAME_CLASS: Record<NonNullable<PowderVisualProps['size']>, string> = {
-  large: `text-lg ${NAME_SHARED}`,
+  large: `text-[22px] ${NAME_SHARED}`,
   carousel: `text-[8px] sm:text-[10px] ${NAME_SHARED}`,
   compact: `text-[6px] ${NAME_SHARED}`,
   mini: `text-[3.5px] ${NAME_SHARED}`,

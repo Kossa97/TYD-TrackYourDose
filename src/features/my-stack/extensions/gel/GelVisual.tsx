@@ -44,7 +44,7 @@ const clampOffset = (value: number) => (Number.isFinite(value) ? Math.max(-1, Ma
 // als eine Dose — und wird trotz der tieferen Sprosse das breiteste stehende
 // Objekt, weil er als einziger breiter als hoch ist.
 const SIZE_CLASS: Record<NonNullable<GelVisualProps['size']>, string> = {
-  large: 'h-[226.1px] w-[282.6px]',
+  large: 'h-[291px] w-[364px]',
   carousel: 'h-[90.9px] w-[113.6px] sm:h-[115.5px] sm:w-[144.4px]',
   compact: 'h-[68.2px] w-[85.2px]',
   mini: 'h-[37.1px] w-[46.4px]',
@@ -54,7 +54,7 @@ const SIZE_CLASS: Record<NonNullable<GelVisualProps['size']>, string> = {
 // Nasenspray und Tropfflasche.
 const NAME_SHARED = 'leading-tight font-black text-white tracking-normal drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]'
 const NAME_CLASS: Record<NonNullable<GelVisualProps['size']>, string> = {
-  large: `text-base sm:text-lg ${NAME_SHARED}`,
+  large: `text-[23px] ${NAME_SHARED}`,
   carousel: `text-[7px] sm:text-[9px] ${NAME_SHARED}`,
   compact: `text-[5.5px] ${NAME_SHARED}`,
   mini: `text-[3px] ${NAME_SHARED}`,

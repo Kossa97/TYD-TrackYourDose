@@ -75,7 +75,11 @@ export const POWDER_SEAM_OVERLAP = POWDER_LID.y + POWDER_LID.height - POWDER_BOD
 // Gerade Kanten. Die gewölbten von vorher waren die Aufsicht in klein: ein
 // waagerecht umlaufendes Band wölbt sich nur, wenn man von oben auf die Dose
 // sieht. In der Frontansicht ist es ein Strich, wie das Etikettband am Vial.
-export const POWDER_LABEL = { top: 76, bottom: 118, inset: 4 } as const
+// Kein seitlicher Einzug mehr: das Band laeuft von Wand zu Wand, wie am Vial
+// und am Gel-Tiegel. Die vier Einheiten davor waren als einzige Form eine
+// getippte Zahl neben der Korpuskante — sichtbar als Rand, den sonst niemand
+// hat.
+export const POWDER_LABEL = { top: 76, bottom: 118, inset: 0 } as const
 const LX = POWDER_BODY.x + POWDER_LABEL.inset
 const RX = POWDER_BODY.x + POWDER_WIDTHS.body - POWDER_LABEL.inset
 export const POWDER_LABEL_BOX = {

@@ -85,8 +85,11 @@ describe('GelVisual', () => {
   })
 
   it('haelt die im Spec festgelegten Groessen ein', () => {
+    // `large` gehoert nicht mehr zur Sprossenleiter des Karussells: es ist die
+    // Groesse des Farbschritts und dort so gross, wie die Flaeche hergibt —
+    // damit es nicht hochgezogen werden muss (siehe objektSkala).
     // Die Sprosse unter der Pulverdose: 90,9 -> 115,5. Schritt x1,2706.
-    expect(render({ size: 'large' })).toContain('h-[226.1px]')
+    expect(render({ size: 'large' })).toContain('h-[291px]')
     expect(render({ size: 'carousel' })).toContain('h-[90.9px]')
     expect(render({ size: 'carousel' })).toContain('sm:h-[115.5px]')
     expect(render({ size: 'compact' })).toContain('h-[68.2px]')

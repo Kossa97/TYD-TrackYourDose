@@ -85,7 +85,10 @@ describe('powderShape', () => {
     // umlaufendes Band woelbt sich nur, wenn man von oben auf die Dose sieht.
     expect(POWDER_LABEL_BOX.y).toBe(POWDER_LABEL.top)
     expect(POWDER_LABEL_BOX.height).toBe(POWDER_LABEL.bottom - POWDER_LABEL.top)
-    expect(POWDER_LABEL_BOX.x).toBeGreaterThan(POWDER_BODY.x)
+    // Und von Wand zu Wand: der seitliche Einzug von vier Einheiten war als
+    // einzige Form eine getippte Zahl neben der Korpuskante — sichtbar als
+    // Rand, den weder Vial noch Gel-Tiegel haben.
+    expect(POWDER_LABEL_BOX.x).toBe(POWDER_BODY.x)
   })
 
   it('traegt weder Etikettband noch Fuellstand', () => {

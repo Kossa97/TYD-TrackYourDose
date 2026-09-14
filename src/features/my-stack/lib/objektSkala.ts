@@ -31,5 +31,12 @@ export function objektSkala({ hoehe, breite, platzHoehe, platzBreite }: ObjektMa
   const nachBreite = (platzBreite * OBJEKT_DECKUNG) / breite
   // Die knappere Seite gewinnt: ein hohes, schmales Objekt (Pen) wird von der
   // Hoehe begrenzt, ein flaches, breites (liegende Kapsel) von der Breite.
-  return Math.min(nachHoehe, nachBreite)
+  //
+  // Und nie ueber 1: verkleinern ist verlustfrei, vergroessern nicht. Die
+  // Buehnenformen bringen feste Pixelwerte mit, die nicht die reine Form sind
+  // — Weichzeichnerradien, Schattenversaetze, Schriftgroessen, Haarlinien. Ueber
+  // 1 werden die mitgezogen und das Objekt sieht aus wie aufgeblasen statt wie
+  // gebaut. Wer es groesser will, zeichnet es groesser (die `large`-Groesse der
+  // Form), statt es zu strecken.
+  return Math.min(nachHoehe, nachBreite, 1)
 }

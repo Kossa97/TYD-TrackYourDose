@@ -28,14 +28,14 @@ const clampOffset = (v: number) => (Number.isFinite(v) ? Math.max(-1, Math.min(1
 // Rund bei jeder Stufe. Bewusst groesser als massstaeblich richtig — eine echte
 // Tablette waere rund 40 px, aber dann bliebe fuer den Namen nichts uebrig.
 const SIZE_CLASS: Record<NonNullable<TabletVisualProps['size']>, string> = {
-  large: 'w-[160px] max-w-full aspect-square',
+  large: 'w-[344px] max-w-full aspect-square',
   carousel: 'w-[62px] max-w-full aspect-square',
   compact: 'w-[96px] max-w-full aspect-square',
   mini: 'w-[40px] max-w-full aspect-square',
 }
 
 const NAME_CLASS: Record<NonNullable<TabletVisualProps['size']>, string> = {
-  large: 'text-base leading-tight',
+  large: 'text-[34px] leading-tight',
   carousel: 'text-[7px] leading-tight',
   compact: 'text-[10px] leading-tight',
   mini: 'text-[5px] leading-tight',

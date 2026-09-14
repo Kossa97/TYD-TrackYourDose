@@ -29,7 +29,7 @@ const clampOffset = (v: number) => (Number.isFinite(v) ? Math.max(-1, Math.min(1
 // sm-Breakpoint deshalb nicht mit — sie füllt den Slot bereits. Die Höhe folgt
 // immer dem Seitenverhältnis, nie einer festen Zahl.
 const SIZE_CLASS: Record<NonNullable<CapsuleVisualProps['size']>, string> = {
-  large: 'w-[240px] aspect-[240/84]',
+  large: 'w-[364px] max-w-full aspect-[240/84]',
   // Feste Breite, aber nie breiter als der Slot: w-full allein waere in
   // einem inhaltsbestimmten Flex-Container null Pixel breit.
   carousel: 'w-[92px] max-w-full aspect-[240/84]',
@@ -39,7 +39,7 @@ const SIZE_CLASS: Record<NonNullable<CapsuleVisualProps['size']>, string> = {
 
 // Eine Stufe kleiner als beim Vial, weil die Kapsel flach liegt.
 const NAME_CLASS: Record<NonNullable<CapsuleVisualProps['size']>, string> = {
-  large: 'text-lg leading-tight',
+  large: 'text-[27px] leading-tight',
   carousel: 'text-[9px] leading-tight',
   compact: 'text-[11px] leading-tight',
   mini: 'text-[6px] leading-tight',

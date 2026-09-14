@@ -246,7 +246,10 @@ export function PeptideVialVisual({
   // 'large' = detail views (edit form, previews); 'carousel' = the My Stack
   // carousel, sized so several vials can peek in side by side; 'compact' =
   // tiny inline previews.
-  const widthClass = size === 'large' ? 'w-28 sm:w-36' : size === 'carousel' ? 'w-20 sm:w-24' : size === 'mini' ? 'w-12' : 'w-16'
+  // `large` ist die Groesse des Farbschritts und sonst nichts (der einzige
+  // Aufrufer in der App). Sie steht deshalb fest und gross genug fuer die
+  // Flaeche dort — statt klein zu sein und hochgezogen zu werden.
+  const widthClass = size === 'large' ? 'w-[184px] max-w-full' : size === 'carousel' ? 'w-20 sm:w-24' : size === 'mini' ? 'w-12' : 'w-16'
   // Every non-carousel size is a pure scale of the My Stack carousel vial: the
   // glass body keeps the carousel's 5:7 aspect (mobile 80×112) so width alone
   // drives height, and the cap (w-full) scales with it automatically.
@@ -261,12 +264,12 @@ export function PeptideVialVisual({
     ? 'top-1/2 -translate-y-1/2 rounded-sm px-1 py-2'
     : 'top-1/2 -translate-y-1/2 rounded-sm px-1 py-1'
   const nameClass = size === 'large'
-    ? 'text-lg sm:text-xl leading-tight'
+    ? 'text-[26px] leading-tight'
     : size === 'carousel'
       ? 'text-sm sm:text-base leading-tight'
       : 'text-[9px] leading-tight'
   const amountClass = size === 'large'
-    ? 'text-xs sm:text-sm mt-1'
+    ? 'text-[18px] mt-1'
     : size === 'carousel'
       ? 'text-[10px] sm:text-xs mt-0.5'
       : 'text-[7px] mt-0.5'

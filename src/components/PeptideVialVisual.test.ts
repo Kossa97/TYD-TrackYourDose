@@ -265,7 +265,7 @@ describe('PeptideVialVisual', () => {
     expect(source()).toContain('top-1/2 -translate-y-1/2 rounded-sm px-1 py-1')
     expect(source()).not.toContain('top-[53%] rounded-sm px-1 py-2')
     expect(source()).not.toContain('top-[50%] rounded-sm px-1 py-1')
-    expect(source()).toContain('text-lg sm:text-xl leading-tight')
+    expect(source()).toContain('text-[26px] leading-tight')
   })
 
   test('uses a full-width single-line label with delayed marquee for long names', () => {
