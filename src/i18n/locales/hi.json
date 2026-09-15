@@ -1145,5 +1145,15 @@
   "my_stack_rhythm_interval_invalid": "चुनी गई इकाई के भीतर अंतराल दर्ज करें।",
   "my_stack_rhythm_cycle_on": "सेवन के दिन",
   "my_stack_rhythm_cycle_off": "विराम के दिन",
-  "my_stack_rhythm_cycle_invalid": "चक्र के लिए कम से कम एक सेवन दिन और एक विराम दिन चाहिए।"
+  "my_stack_rhythm_cycle_invalid": "चक्र के लिए कम से कम एक सेवन दिन और एक विराम दिन चाहिए।",
+  "my_stack_plan_section_when": "कब",
+  "my_stack_plan_section_each": "प्रति सेवन",
+  "my_stack_plan_summary": "{{start}} से: {{plan}}",
+  "my_stack_plan_summary_until": "{{ende}} तक।",
+  "my_stack_plan_reminders_on_demand": "निश्चित समय के बिना याद दिलाने को कुछ नहीं है।",
+  "my_stack_rhythm_summary_weekdays": "{{tage}}",
+  "my_stack_rhythm_summary_interval": "हर {{n}} {{einheit}}",
+  "my_stack_rhythm_summary_every_week": "हर सप्ताह",
+  "my_stack_rhythm_summary_every_month": "हर माह",
+  "my_stack_rhythm_summary_cycle": "{{an}} दिन सेवन, {{aus}} दिन विराम"
 }

@@ -289,6 +289,21 @@ describe('stack item service', () => {
     }))
   })
 
+  it('speichert die gewählten Erinnerungen statt stillschweigend keine', async () => {
+    // Der Assistent fragte nie danach und schrieb deshalb bei jedem neuen
+    // Eintrag 'none' — während die alte Zyklusmaske die Wahl hatte.
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, {
+      ...completeSetupDraft,
+      plan: { ...completeSetupDraft.plan, reminders: ['on_time', '2h'] },
+    })
+
+    expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
+      p_plan: expect.objectContaining({ reminder: 'on_time,2h' }),
+    }))
+  })
+
   it('reicht das Enddatum einer Kur durch', async () => {
     const mockClient = setupRpcClient()
 

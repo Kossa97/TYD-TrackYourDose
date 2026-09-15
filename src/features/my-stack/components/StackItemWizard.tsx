@@ -30,7 +30,7 @@ import {
   type WizardStep,
 } from '../lib/wizardState'
 import { bestandteileAufloesen } from '../lib/kombination'
-import { fuehrendeMenge, rhythmSummary } from '../lib/intakeRhythm'
+import { fuehrendeMenge, rhythmSummary, rhythmText } from '../lib/intakeRhythm'
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
 import { evaluatePkReadiness, toPkMilligrams } from '../lib/pkReadiness'
 import { useSloshEngine } from '../../../components/SloshContext'
@@ -735,7 +735,7 @@ export function StackItemWizard({
                 </div>
                 <div className="flex flex-wrap justify-between gap-2">
                   <dt className="text-slate-400">{t('my_stack_plan_rhythm', { defaultValue: 'An welchen Tagen?' })}</dt>
-                  <dd data-review-rhythm className="font-medium text-slate-200">{rhythmSummary(state.draft.plan.rhythm)}</dd>
+                  <dd data-review-rhythm className="font-medium text-slate-200">{rhythmText(rhythmSummary(state.draft.plan.rhythm), t)}</dd>
                 </div>
                 <div className="flex flex-wrap justify-between gap-2">
                   <dt className="text-slate-400">{t('my_stack_plan_end_date', { defaultValue: 'Ende (optional)' })}</dt>
@@ -749,7 +749,7 @@ export function StackItemWizard({
                 {state.draft.plan.slots.length === 0 ? (
                   <div className="flex flex-wrap justify-between gap-2">
                     <dt className="text-slate-400">{t('my_stack_plan_routine_group', { defaultValue: 'Tageszeit' })}</dt>
-                    <dd className="font-medium text-slate-200">{rhythmSummary(state.draft.plan.rhythm)}</dd>
+                    <dd className="font-medium text-slate-200">{rhythmText(rhythmSummary(state.draft.plan.rhythm), t)}</dd>
                   </div>
                 ) : state.draft.plan.slots.map((slot, index) => (
                   <div key={index} data-review-slot={index} className="flex flex-wrap justify-between gap-2">

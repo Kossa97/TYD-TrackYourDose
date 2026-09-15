@@ -181,3 +181,61 @@ export function isStageRenderable(key: DosageFormKey): boolean {
 export function showsColor(key: DosageFormKey): boolean {
   return getDosageForm(key).showsColor
 }
+
+// ── Einnahmeroute ────────────────────────────────────────────────────────
+// Die Route folgt fast immer aus der Darreichungsform: eine Tablette wird
+// geschluckt, ein Pflaster geklebt, ein Nasenspray genommen wie sein Name
+// sagt. Sie stand trotzdem als leeres Pflichtfeld ganz oben im Plan — eine
+// Pflichtwahl, deren Antwort feststeht, ist eine Frage zu viel.
+//
+// Nur wo es wirklich mehrere gibt (was man spritzt, kann subkutan,
+// intramuskulaer oder intravenoes gehen), bleibt die Wahl stehen.
+
+export const INTAKE_METHODS = [
+  'Subkutan',
+  'Intramuskulär',
+  'Nasal',
+  'Oral',
+  'Transdermal',
+  'Intravenös',
+  'Andere',
+] as const
+
+const METHOD_CHOICES: Partial<Record<DosageFormKey, readonly string[]>> = {
+  vial: ['Subkutan', 'Intramuskulär', 'Intravenös'],
+  ampoule: ['Subkutan', 'Intramuskulär', 'Intravenös'],
+  pen: ['Subkutan', 'Intramuskulär'],
+  nasal_spray: ['Nasal'],
+  patch: ['Transdermal'],
+  gel: ['Transdermal'],
+  tube: ['Transdermal'],
+  tablet: ['Oral'],
+  capsule: ['Oral'],
+  drops: ['Oral'],
+  powder: ['Oral'],
+  // Ein Spray kann ein Rachenspray sein oder ein Dosieraerosol. Die Liste
+  // kennt keine Inhalation, deshalb bleibt hier die Wahl offen.
+  spray: ['Oral', 'Nasal', 'Andere'],
+}
+
+/** Die Routen, die zu dieser Form ueberhaupt in Frage kommen. */
+export function methodChoicesFor(key: DosageFormKey): readonly string[] {
+  return METHOD_CHOICES[key] ?? INTAKE_METHODS
+}
+
+/** Die Route, die vorbelegt wird — leer, wo die Form nichts hergibt. */
+export function defaultMethodFor(key: DosageFormKey): string {
+  const choices = methodChoicesFor(key)
+  return choices.length === INTAKE_METHODS.length ? '' : choices[0]
+}
+
+/**
+ * Die Einheit, die vorbelegt wird. Der erste Vorschlag stimmt fast immer —
+ * er kam bisher nur als Vorschlagsliste, und getippt hat trotzdem der Nutzer.
+ */
+export function defaultIntakeUnitFor(
+  key: DosageFormKey,
+  catalogSuggestedUnits: readonly string[] = [],
+): string | null {
+  return getIntakePlanUnitSuggestions(key, catalogSuggestedUnits)[0] ?? null
+}

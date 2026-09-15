@@ -160,23 +160,64 @@ export function fuehrendeMenge(slots: readonly { dose: number | null }[]): numbe
 }
 
 /**
- * Der Rhythmus als Satz, fuer die Zusammenfassung. Deutsch, wie schon zuvor
- * der rohe Frequenztext an dieser Stelle.
+ * Der Rhythmus als Satz — als Schluessel plus Werte, nicht als fertiger Text.
+ * Die App laeuft auf Deutsch UND Englisch; ein hier zusammengebauter deutscher
+ * Satz waere in der englischen Oberflaeche ein Fremdkoerper.
  */
-export function rhythmSummary(rhythm: IntakeRhythm): string {
+export interface RhythmSatz {
+  key: string
+  defaultValue: string
+  values?: Record<string, string | number>
+}
+
+export function rhythmSummary(rhythm: IntakeRhythm): RhythmSatz {
   switch (rhythm.kind) {
-    case 'on_demand': return 'Bei Bedarf'
-    case 'weekdays': return rhythm.weekdays.length > 0 ? rhythm.weekdays.join(', ') : 'Wochentage'
+    case 'on_demand':
+      return { key: 'my_stack_rhythm_on_demand', defaultValue: 'Nur bei Bedarf' }
+    case 'weekdays':
+      return rhythm.weekdays.length > 0
+        ? { key: 'my_stack_rhythm_summary_weekdays', defaultValue: '{{tage}}', values: { tage: rhythm.weekdays.join(', ') } }
+        : { key: 'my_stack_rhythm_weekdays', defaultValue: 'Wochentage' }
     case 'interval': {
       const n = rhythm.intervalValue ?? 0
-      const einheit = rhythm.intervalUnit === 'month'
-        ? (n === 1 ? 'Monat' : 'Monaten')
-        : rhythm.intervalUnit === 'week'
-          ? (n === 1 ? 'Woche' : 'Wochen')
-          : (n === 1 ? 'Tag' : 'Tagen')
-      return `Alle ${n} ${einheit}`
+      if (n === 1) {
+        if (rhythm.intervalUnit === 'week') return { key: 'my_stack_rhythm_summary_every_week', defaultValue: 'Jede Woche' }
+        if (rhythm.intervalUnit === 'month') return { key: 'my_stack_rhythm_summary_every_month', defaultValue: 'Jeden Monat' }
+        return { key: 'my_stack_rhythm_daily', defaultValue: 'Täglich' }
+      }
+      const einheit = {
+        day: { key: 'my_stack_rhythm_unit_day', defaultValue: 'Tagen' },
+        week: { key: 'my_stack_rhythm_unit_week', defaultValue: 'Wochen' },
+        month: { key: 'my_stack_rhythm_unit_month', defaultValue: 'Monaten' },
+      }[rhythm.intervalUnit]
+      return {
+        key: 'my_stack_rhythm_summary_interval',
+        defaultValue: 'Alle {{n}} {{einheit}}',
+        values: { n, einheit: einheit.key },
+      }
     }
-    case 'cycle': return `${rhythm.onDays ?? 0} Tage an / ${rhythm.offDays ?? 0} Tage Pause`
-    default: return 'Täglich'
+    case 'cycle':
+      return {
+        key: 'my_stack_rhythm_summary_cycle',
+        defaultValue: '{{an}} Tage an, {{aus}} Tage Pause',
+        values: { an: rhythm.onDays ?? 0, aus: rhythm.offDays ?? 0 },
+      }
+    default:
+      return { key: 'my_stack_rhythm_daily', defaultValue: 'Täglich' }
   }
+}
+
+/** Minimal, damit die Bibliothek nicht von react-i18next abhaengt. */
+type Uebersetzer = (key: string, options?: Record<string, unknown>) => unknown
+
+/**
+ * Den Satz uebersetzen. Die Einheit ist selbst ein Schluessel und wird zuerst
+ * aufgeloest — sonst staende „Alle 10 my_stack_rhythm_unit_week" da.
+ */
+export function rhythmText(satz: RhythmSatz, t: Uebersetzer): string {
+  const werte: Record<string, string | number> = { ...satz.values }
+  if (typeof werte.einheit === 'string') {
+    werte.einheit = String(t(werte.einheit, { defaultValue: werte.einheit }))
+  }
+  return String(t(satz.key, { defaultValue: satz.defaultValue, ...werte }))
 }

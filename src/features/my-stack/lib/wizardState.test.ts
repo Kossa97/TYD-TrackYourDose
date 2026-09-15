@@ -253,7 +253,10 @@ describe('wizard state', () => {
       dosageForm: 'drops',
     })
 
-    expect(next.draft.plan.unit).toBeNull()
+    // Die alte Einheit passt nicht mehr — und statt einer leeren Zeile steht
+    // jetzt die übliche der neuen Form da. Getippt hat der Nutzer sie vorher
+    // ohnehin selbst, obwohl der erste Vorschlag fast immer stimmt.
+    expect(next.draft.plan.unit).toBe('drop')
   })
 
   it('preserves a plan unit that remains compatible with the new dosage form', () => {
@@ -659,8 +662,11 @@ describe('wizard state', () => {
       ingredients: existingVitaminD.ingredients,
       plan: {
         name: 'Vitamin D3',
-        unit: null,
-        method: '',
+        // Route und Einheit bringt die Form mit: die Kapsel wird geschluckt.
+        // Die Route ist gar kein sichtbares Feld mehr — bliebe sie leer,
+        // blockierte der Planschritt lautlos.
+        unit: 'capsule',
+        method: 'Oral',
         rhythm: emptyRhythm(),
         startDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         endDate: null,

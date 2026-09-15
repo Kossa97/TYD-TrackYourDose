@@ -1144,5 +1144,15 @@
   "my_stack_rhythm_interval_invalid": "선택한 단위 범위 안에서 간격을 입력하세요.",
   "my_stack_rhythm_cycle_on": "복용 일수",
   "my_stack_rhythm_cycle_off": "휴약 일수",
-  "my_stack_rhythm_cycle_invalid": "주기에는 복용일과 휴약일이 각각 하루 이상 필요합니다."
+  "my_stack_rhythm_cycle_invalid": "주기에는 복용일과 휴약일이 각각 하루 이상 필요합니다.",
+  "my_stack_plan_section_when": "언제",
+  "my_stack_plan_section_each": "1회당",
+  "my_stack_plan_summary": "{{start}}부터: {{plan}}",
+  "my_stack_plan_summary_until": "{{ende}}까지.",
+  "my_stack_plan_reminders_on_demand": "정해진 시각이 없으면 알릴 것도 없습니다.",
+  "my_stack_rhythm_summary_weekdays": "{{tage}}",
+  "my_stack_rhythm_summary_interval": "{{n}}{{einheit}}마다",
+  "my_stack_rhythm_summary_every_week": "매주",
+  "my_stack_rhythm_summary_every_month": "매월",
+  "my_stack_rhythm_summary_cycle": "복용 {{an}}일, 휴약 {{aus}}일"
 }

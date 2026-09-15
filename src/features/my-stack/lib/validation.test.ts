@@ -46,6 +46,9 @@ describe('validateStackItemDraft', () => {
     expect(validateIntakePlan(planWithoutQuantity, 'intake_only')).toEqual({})
     expect(validateIntakePlan(planWithoutQuantity, 'with_amount')).toEqual({
       dose: 'required',
+      // Und je Zeitpunkt, damit der Hinweis an der Karte stehen kann, in der
+      // die Zahl fehlt — und nicht unten bei der Einheit.
+      doses: ['required'],
       unit: 'required',
     })
     expect(validateIntakePlan({
@@ -55,6 +58,7 @@ describe('validateStackItemDraft', () => {
     }, 'complete')).toEqual({
       name: 'required',
       dose: 'required',
+      doses: ['required'],
       slots: ['required'],
     })
   })

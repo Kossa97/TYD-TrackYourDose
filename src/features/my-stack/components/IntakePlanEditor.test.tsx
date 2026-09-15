@@ -14,9 +14,18 @@ import { emptyRhythm } from '../lib/intakeRhythm'
 
 const i18nTestState = vi.hoisted(() => ({ translations: {} as Record<string, string> }))
 
+// Der Mock interpoliert {{platzhalter}} wie i18next selbst — sonst liesse
+// sich ein zusammengesetzter Satz wie die Planvorschau gar nicht pruefen.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, options?: { defaultValue?: string }) => i18nTestState.translations[key] ?? options?.defaultValue ?? key,
+    t: (key: string, options?: Record<string, unknown>) => {
+      const vorlage = i18nTestState.translations[key]
+        ?? (options?.defaultValue as string | undefined)
+        ?? key
+      return vorlage.replace(/\{\{(\w+)\}\}/g, (treffer, name: string) => (
+        options && name in options ? String(options[name]) : treffer
+      ))
+    },
   }),
 }))
 
@@ -69,16 +78,132 @@ beforeEach(() => {
 })
 
 describe('IntakePlanEditor', () => {
-  it('shows a required method and editable start/effective date without inferring a route', () => {
+  it('fragt die Route nur, wo die Form sie offenlässt', () => {
+    // Eine Kapsel wird geschluckt — eine Pflichtwahl, deren Antwort feststeht,
+    // ist eine Frage zu viel. Was man spritzt, kann dagegen subkutan,
+    // intramuskulär oder intravenös gehen; dort bleibt die Wahl.
+    const { rerender } = render(<PlanHarness trackingLevel="intake_only" dosageForm="capsule" />)
+    expect(screen.queryByLabelText('Methode')).toBeNull()
+
+    rerender(<PlanHarness trackingLevel="intake_only" dosageForm="vial" />)
+    const method = screen.getByLabelText('Methode') as HTMLSelectElement
+    expect(method.required).toBe(true)
+    expect(Array.from(method.options).map(option => option.value))
+      .toEqual(['', 'Subkutan', 'Intramuskulär', 'Intravenös'])
+  })
+
+  it('setzt die einzige Route selbst, damit der Schritt nicht lautlos blockiert', () => {
+    // Das Feld ist bei der Kapsel unsichtbar — bliebe die Route leer, stünde
+    // eine Pflichtangabe im Weg, die niemand sehen und also auch nicht
+    // nachtragen kann.
+    const onChange = vi.fn()
+    render(
+      <IntakePlanEditor
+        trackingLevel="intake_only"
+        plan={{ ...plan, method: '' }}
+        dosageForm="capsule"
+        onChange={onChange}
+      />,
+    )
+
+    expect(onChange).toHaveBeenCalledWith({ method: 'Oral' })
+  })
+
+  it('stellt die Einheit neben die Mengen, nicht unter alle Karten', () => {
+    // Seit die Menge am Zeitpunkt steht, tippte man „500" und musste an drei
+    // Karten vorbeiscrollen, um „mg" zu finden.
+    render(<PlanHarness
+      trackingLevel="with_amount"
+      dosageForm="tablet"
+      initialPlan={{
+        ...plan,
+        slots: [
+          { routineGroup: 'morning', time: '08:00', dose: 1000 },
+          { routineGroup: 'evening', time: '20:00', dose: 500 },
+        ],
+      }}
+    />)
+
+    const einheit = screen.getByLabelText('Einheit der geplanten Menge')
+    const ersteKarte = document.querySelector('[data-plan-slot="0"]')!
+    // Die Einheit steht VOR der ersten Karte im Dokument.
+    expect(ersteKarte.compareDocumentPosition(einheit) & Node.DOCUMENT_POSITION_PRECEDING)
+      .toBeTruthy()
+  })
+
+  it('stellt den Mengenfehler an die Karte, in der die Zahl fehlt', () => {
+    render(
+      <IntakePlanEditor
+        trackingLevel="with_amount"
+        plan={{
+          ...plan,
+          unit: 'mg',
+          slots: [
+            { routineGroup: 'morning', time: '08:00', dose: 1000 },
+            { routineGroup: 'evening', time: '20:00', dose: null },
+          ],
+        }}
+        dosageForm="tablet"
+        errors={{ dose: 'required', doses: ['', 'required'] }}
+        onChange={vi.fn()}
+      />,
+    )
+
+    // Genau eine Meldung, und zwar in der zweiten Karte.
+    const meldungen = screen.getAllByRole('alert')
+    expect(meldungen).toHaveLength(1)
+    expect(document.querySelector('[data-plan-slot="1"]')!.contains(meldungen[0])).toBe(true)
+  })
+
+  it('fragt die Erinnerung, statt sie zu versprechen', () => {
+    // Vorher stand hier ein Satz „kann nach dem Speichern eingerichtet
+    // werden" — und jeder neue Eintrag wurde mit 'none' gespeichert.
+    render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
+
+    fireEvent.click(screen.getByLabelText('2 Std vorher'))
+    expect((screen.getByLabelText('2 Std vorher') as HTMLInputElement).checked).toBe(true)
+    expect((screen.getByLabelText('Bei Einnahme') as HTMLInputElement).checked).toBe(false)
+  })
+
+  it('nimmt bei „Bei Bedarf" die Erinnerung weg und sagt warum', () => {
+    render(<PlanHarness
+      trackingLevel="intake_only"
+      dosageForm="tablet"
+      initialPlan={{ ...plan, rhythm: { ...emptyRhythm(), kind: 'on_demand' } }}
+    />)
+
+    expect(document.querySelector('[data-plan-reminders]')).toBeNull()
+    expect(document.querySelector('[data-plan-reminders-off]')?.textContent)
+      .toContain('nichts, woran erinnert werden könnte')
+  })
+
+  it('liest den Plan in einem Satz zurück', () => {
+    // Der Plan besteht aus drei Achsen über zehn Felder; ohne diese Zeile muss
+    // man sie im Kopf zusammensetzen.
+    render(<PlanHarness
+      trackingLevel="with_amount"
+      dosageForm="tablet"
+      initialPlan={{
+        ...plan,
+        unit: 'mg',
+        rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Mi', 'Fr'] },
+        slots: [
+          { routineGroup: 'morning', time: '08:00', dose: 1000 },
+          { routineGroup: 'evening', time: '20:00', dose: 500 },
+        ],
+      }}
+    />)
+
+    const satz = document.querySelector('[data-plan-summary]')?.textContent ?? ''
+    expect(satz).toContain('Mo, Mi, Fr')
+    expect(satz).toContain('Morgens 08:00 · 1000 mg')
+    expect(satz).toContain('Abends 20:00 · 500 mg')
+  })
+
+  it('zeigt ein Startdatum, das sich ändern lässt', () => {
     render(<PlanHarness trackingLevel="intake_only" dosageForm="capsule" />)
 
-    const method = screen.getByLabelText('Methode') as HTMLSelectElement
     const startDate = screen.getByLabelText('Start / gültig ab') as HTMLInputElement
-    expect(method.required).toBe(true)
-    expect(method.value).toBe('')
-    expect(Array.from(method.options).map(option => option.value)).toEqual(expect.arrayContaining([
-      'Subkutan', 'Intramuskulär', 'Nasal', 'Oral', 'Transdermal', 'Intravenös', 'Andere',
-    ]))
     expect(startDate.required).toBe(true)
     expect(startDate.value).toBe('2026-08-16')
   })
@@ -147,8 +272,7 @@ describe('IntakePlanEditor', () => {
 
     expect([...document.querySelectorAll('[data-rhythm-kind]')]
       .map(knopf => knopf.getAttribute('data-rhythm-kind')))
-      .toEqual(['daily', 'weekdays', 'interval', 'cycle'])
-    expect(document.querySelector('[data-rhythm-on-demand]')).not.toBeNull()
+      .toEqual(['daily', 'weekdays', 'interval', 'cycle', 'on_demand'])
   })
 
   it('erlaubt einen Abstand in Tagen, Wochen und Monaten', () => {
@@ -259,7 +383,9 @@ describe('IntakePlanEditor', () => {
 
     expect((screen.getByRole('radio', { name: 'Morgens' }) as HTMLInputElement).required).toBe(true)
     expect((screen.getByLabelText('Genaue Uhrzeit (optional)') as HTMLInputElement).required).toBe(false)
-    expect(screen.getByText(/Erinnerungen sind optional/)).toBeTruthy()
+    // Statt eines Satzes „kann später eingerichtet werden" stehen hier jetzt
+    // die drei Vorlaufzeiten, die der Push-Cron ohnehin kennt.
+    expect(document.querySelector('[data-plan-reminders]')).not.toBeNull()
   })
 
   it('renders translated routine labels without changing their stored ids', () => {

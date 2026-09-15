@@ -1144,5 +1144,15 @@
   "my_stack_rhythm_interval_invalid": "请输入符合所选单位的间隔。",
   "my_stack_rhythm_cycle_on": "服用天数",
   "my_stack_rhythm_cycle_off": "停用天数",
-  "my_stack_rhythm_cycle_invalid": "周期至少需要一个服用日和一个停用日。"
+  "my_stack_rhythm_cycle_invalid": "周期至少需要一个服用日和一个停用日。",
+  "my_stack_plan_section_when": "何时",
+  "my_stack_plan_section_each": "每次服用",
+  "my_stack_plan_summary": "自 {{start}} 起：{{plan}}",
+  "my_stack_plan_summary_until": "至 {{ende}}。",
+  "my_stack_plan_reminders_on_demand": "没有固定时间，也就无从提醒。",
+  "my_stack_rhythm_summary_weekdays": "{{tage}}",
+  "my_stack_rhythm_summary_interval": "每 {{n}}{{einheit}}",
+  "my_stack_rhythm_summary_every_week": "每周",
+  "my_stack_rhythm_summary_every_month": "每月",
+  "my_stack_rhythm_summary_cycle": "服用 {{an}} 天，停用 {{aus}} 天"
 }

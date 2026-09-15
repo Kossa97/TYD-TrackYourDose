@@ -14,7 +14,13 @@ import type {
 } from '../types'
 import { format } from 'date-fns'
 import { buildDuplicateFingerprint } from './duplicateFingerprint'
-import { getIntakePlanUnitSuggestions, showsColor, strengthBasisDefault } from './dosageForms'
+import {
+  defaultIntakeUnitFor,
+  defaultMethodFor,
+  getIntakePlanUnitSuggestions,
+  showsColor,
+  strengthBasisDefault,
+} from './dosageForms'
 import { emptyRhythm, isOnDemandRhythm } from './intakeRhythm'
 import type { Kombinationsbestandteil } from './kombination'
 import { trackingCapabilities } from './trackingDepth'
@@ -158,11 +164,18 @@ export function naechsterSlot(slots: readonly IntakeSlotDraft[]): IntakeSlotDraf
   }
 }
 
-function emptyPlan(name: string): IntakePlanDraft {
+/**
+ * Ein leerer Plan. Steht die Darreichungsform schon fest — beim Bearbeiten
+ * eines bestehenden Eintrags tut sie das —, bringt sie Route und Einheit
+ * gleich mit. Sonst blieben beide leer, und die Route ist seit sie aus der
+ * Form folgt gar kein sichtbares Feld mehr: der Schritt haette lautlos
+ * blockiert.
+ */
+function emptyPlan(name: string, dosageForm: DosageFormKey | null = null): IntakePlanDraft {
   return {
     name,
-    unit: null,
-    method: '',
+    unit: dosageForm ? defaultIntakeUnitFor(dosageForm) : null,
+    method: dosageForm ? defaultMethodFor(dosageForm) : '',
     rhythm: emptyRhythm(),
     startDate: format(new Date(), 'yyyy-MM-dd'),
     endDate: null,
@@ -205,7 +218,7 @@ function draftFromStackItem(
           reminders: [...existingPlan.reminders],
           startDate: format(new Date(), 'yyyy-MM-dd'),
         }
-      : emptyPlan(existing.display_name),
+      : emptyPlan(existing.display_name, existing.dosage_form),
     inventory: existing.inventory
       ? {
           enabled: existing.inventory.enabled,
@@ -422,6 +435,15 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         action.catalogSuggestedUnits,
       )
       const currentPlanUnit = state.draft.plan.unit
+      // Route und Einheit folgen fast immer aus der Form: eine Tablette wird
+      // geschluckt und in mg gezaehlt. Beides stand trotzdem als leere
+      // Pflichteingabe da. Vorbelegt wird nur, was der Nutzer nicht selbst
+      // gesetzt hat — oder was die VORIGE Form vorbelegt hatte.
+      const alteVorgabe = state.draft.dosageForm
+        ? defaultMethodFor(state.draft.dosageForm)
+        : ''
+      const methodeFrei = !state.draft.plan.method.trim()
+        || state.draft.plan.method === alteVorgabe
       return {
         ...state,
         draft: {
@@ -429,9 +451,12 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
           dosageForm: action.dosageForm,
           plan: {
             ...state.draft.plan,
+            method: methodeFrei
+              ? defaultMethodFor(action.dosageForm)
+              : state.draft.plan.method,
             unit: currentPlanUnit && compatiblePlanUnits.includes(currentPlanUnit)
               ? currentPlanUnit
-              : null,
+              : defaultIntakeUnitFor(action.dosageForm, action.catalogSuggestedUnits),
           },
           // Die Produktmenge gehoert zur FORM: aus „1 Kapsel" wird beim
           // Wechsel auf eine Ampulle „1 ml", beim Pulver-Vial eine leere

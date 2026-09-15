@@ -1145,5 +1145,15 @@
   "my_stack_rhythm_interval_invalid": "Inserisci un intervallo compatibile con l'unità scelta.",
   "my_stack_rhythm_cycle_on": "Giorni di assunzione",
   "my_stack_rhythm_cycle_off": "Giorni di pausa",
-  "my_stack_rhythm_cycle_invalid": "Un ciclo richiede almeno un giorno di assunzione e uno di pausa."
+  "my_stack_rhythm_cycle_invalid": "Un ciclo richiede almeno un giorno di assunzione e uno di pausa.",
+  "my_stack_plan_section_when": "Quando",
+  "my_stack_plan_section_each": "Per assunzione",
+  "my_stack_plan_summary": "Dal {{start}}: {{plan}}",
+  "my_stack_plan_summary_until": "Fino al {{ende}}.",
+  "my_stack_plan_reminders_on_demand": "Senza un orario fisso non c'è nulla da ricordare.",
+  "my_stack_rhythm_summary_weekdays": "{{tage}}",
+  "my_stack_rhythm_summary_interval": "Ogni {{n}} {{einheit}}",
+  "my_stack_rhythm_summary_every_week": "Ogni settimana",
+  "my_stack_rhythm_summary_every_month": "Ogni mese",
+  "my_stack_rhythm_summary_cycle": "{{an}} giorni di assunzione, {{aus}} giorni di pausa"
 }

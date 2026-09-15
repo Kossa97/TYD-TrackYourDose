@@ -1,8 +1,20 @@
-import { BellRing, CalendarDays, CalendarRange, Clock, Moon, Plus, Repeat, Sun, Sunrise, Trash2 } from 'lucide-react'
+import { BellRing, CalendarDays, CalendarRange, Clock, HandHelping, Moon, Plus, Repeat, Sun, Sunrise, Trash2 } from 'lucide-react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { getDosageForm, getIntakePlanUnitSuggestions } from '../lib/dosageForms'
+import {
+  getDosageForm,
+  getIntakePlanUnitSuggestions,
+  methodChoicesFor,
+} from '../lib/dosageForms'
 import { MAX_INTAKE_SLOTS } from '../lib/intakeFrequency'
-import { INTERVAL_BOUNDS, INTERVAL_UNITS, WEEKDAY_KEYS, emptyRhythm } from '../lib/intakeRhythm'
+import {
+  INTERVAL_BOUNDS,
+  INTERVAL_UNITS,
+  WEEKDAY_KEYS,
+  emptyRhythm,
+  rhythmSummary,
+  rhythmText,
+} from '../lib/intakeRhythm'
 import { naechsterSlot } from '../lib/wizardState'
 import { trackingCapabilities } from '../lib/trackingDepth'
 import type { IntakePlanValidationErrors } from '../lib/validation'
@@ -27,16 +39,6 @@ export interface IntakePlanEditorProps {
   onChange: (changes: Partial<IntakePlanDraft>) => void
 }
 
-const METHODS = [
-  'Subkutan',
-  'Intramuskulär',
-  'Nasal',
-  'Oral',
-  'Transdermal',
-  'Intravenös',
-  'Andere',
-] as const
-
 // Der Rhythmus als vier Formen statt als Liste fester Texte. Eine Liste deckt
 // immer nur ab, was jemand hineingeschrieben hat — ein Depot alle zehn Wochen
 // oder drei Wochen Pille mit einer Woche Pause standen nicht darin und haetten
@@ -51,7 +53,17 @@ const RHYTHM_OPTIONS: readonly {
   { kind: 'weekdays', labelKey: 'my_stack_rhythm_weekdays', defaultValue: 'Wochentage', Icon: CalendarRange },
   { kind: 'interval', labelKey: 'my_stack_rhythm_interval', defaultValue: 'Im Abstand von', Icon: Repeat },
   { kind: 'cycle', labelKey: 'my_stack_rhythm_cycle', defaultValue: 'Im Wechsel', Icon: Repeat },
+  // „Nur bei Bedarf" ist die fuenfte Form, nicht ein Haken darunter: erst vier
+  // Schalter anzubieten und dann „eigentlich doch nicht" liest sich rueckwaerts.
+  { kind: 'on_demand', labelKey: 'my_stack_rhythm_on_demand', defaultValue: 'Nur bei Bedarf', Icon: HandHelping },
 ]
+
+/** Die drei Vorlaufzeiten, die der Push-Cron kennt. */
+const REMINDER_OPTIONS = [
+  { value: 'on_time', labelKey: 'reminder_on_time', defaultValue: 'Bei Einnahme' },
+  { value: '2h', labelKey: 'reminder_2h', defaultValue: '2 Std vorher' },
+  { value: '1day', labelKey: 'reminder_1day', defaultValue: '1 Tag vorher' },
+] as const
 
 const INTERVAL_UNIT_LABELS: Record<IntervalUnit, { labelKey: string; defaultValue: string }> = {
   day: { labelKey: 'my_stack_rhythm_unit_day', defaultValue: 'Tagen' },
@@ -103,6 +115,45 @@ export function IntakePlanEditor({
   const canSuggestFractions = dosageForm === 'tablet' && form.capabilities.includes('divisible')
   const rhythm = plan.rhythm
   const onDemand = rhythm.kind === 'on_demand'
+  const methodChoices = methodChoicesFor(dosageForm)
+  const einheit = plan.unit?.trim() ?? ''
+
+  function toggleReminder(value: string): void {
+    onChange({
+      reminders: plan.reminders.includes(value)
+        ? plan.reminders.filter(eintrag => eintrag !== value)
+        : [...plan.reminders, value],
+    })
+  }
+
+  /** Was der Plan sagt, in einem Satz — zusammengesetzt aus allen drei Achsen. */
+  function planSatz(): string {
+    const teile = [rhythmText(rhythmSummary(rhythm), t)]
+    if (!onDemand) {
+      const einnahmen = plan.slots.map(slot => {
+        const tageszeit = ROUTINE_GROUPS.find(gruppe => gruppe.value === slot.routineGroup)
+        const wann = [
+          tageszeit ? String(t(tageszeit.labelKey, { defaultValue: tageszeit.defaultValue })) : '',
+          slot.time ?? '',
+        ].filter(Boolean).join(' ')
+        const menge = tracksQuantity && slot.dose != null ? `${slot.dose} ${einheit}`.trim() : ''
+        return [wann, menge].filter(Boolean).join(' · ')
+      }).filter(Boolean)
+      if (einnahmen.length > 0) teile.push(einnahmen.join(' + '))
+    } else if (tracksQuantity && plan.slots[0]?.dose != null) {
+      teile.push(`${plan.slots[0].dose} ${einheit}`.trim())
+    }
+    return teile.join(' — ')
+  }
+
+  // Laesst die Form nur EINE Route zu, wird das Feld nicht gezeigt — dann muss
+  // der Wert trotzdem stehen. Ohne diese Zusicherung blockierte der Schritt
+  // lautlos: eine Pflichtangabe, die niemand sehen und also auch nicht
+  // nachtragen kann.
+  const einzigeRoute = methodChoices.length === 1 ? methodChoices[0] : null
+  useEffect(() => {
+    if (einzigeRoute && plan.method !== einzigeRoute) onChange({ method: einzigeRoute })
+  }, [einzigeRoute, plan.method, onChange])
 
   function changeRhythm(changes: Partial<IntakeRhythm>): void {
     onChange({ rhythm: { ...rhythm, ...changes } })
@@ -152,31 +203,40 @@ export function IntakePlanEditor({
 
   return (
     <div className="min-w-0 space-y-5">
-      <div>
-        <label htmlFor="stack-plan-method" className="mb-2 block text-sm font-semibold text-slate-200">
-          {t('my_stack_plan_method', { defaultValue: 'Methode' })}
-        </label>
-        <select
-          id="stack-plan-method"
-          value={plan.method}
-          onChange={event => onChange({ method: event.target.value })}
-          data-field="plan.method"
-          aria-invalid={Boolean(errors.method) || undefined}
-          aria-describedby={errors.method ? 'stack-plan-method-error' : undefined}
-          required
-          className="select min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-        >
-          <option value="">{t('my_stack_plan_method_placeholder', { defaultValue: 'Methode wählen' })}</option>
-          {METHODS.map(method => <option key={method} value={method}>{method}</option>)}
-        </select>
-        {errors.method && (
-          <p id="stack-plan-method-error" role="alert" className="mt-2 text-sm text-rose-300">
-            {t('my_stack_plan_method_required', { defaultValue: 'Bitte wähle eine Methode.' })}
-          </p>
-        )}
-      </div>
+      {/* Die Route folgt fast immer aus der Form — eine Tablette wird
+          geschluckt. Nur wo es wirklich mehrere gibt (was man spritzt, kann
+          subkutan, intramuskulaer oder intravenoes gehen), bleibt die Wahl. */}
+      {methodChoices.length > 1 && (
+        <div>
+          <label htmlFor="stack-plan-method" className="mb-2 block text-sm font-semibold text-slate-200">
+            {t('my_stack_plan_method', { defaultValue: 'Methode' })}
+          </label>
+          <select
+            id="stack-plan-method"
+            value={plan.method}
+            onChange={event => onChange({ method: event.target.value })}
+            data-field="plan.method"
+            aria-invalid={Boolean(errors.method) || undefined}
+            aria-describedby={errors.method ? 'stack-plan-method-error' : undefined}
+            required
+            className="select min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+          >
+            <option value="">{t('my_stack_plan_method_placeholder', { defaultValue: 'Methode wählen' })}</option>
+            {methodChoices.map(method => <option key={method} value={method}>{method}</option>)}
+          </select>
+          {errors.method && (
+            <p id="stack-plan-method-error" role="alert" className="mt-2 text-sm text-rose-300">
+              {t('my_stack_plan_method_required', { defaultValue: 'Bitte wähle eine Methode.' })}
+            </p>
+          )}
+        </div>
+      )}
 
-      {/* ── An welchen Tagen ────────────────────────────────────────────── */}
+      {/* ── WANN ────────────────────────────────────────────────────────── */}
+      <section className="min-w-0 space-y-4">
+      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        {t('my_stack_plan_section_when', { defaultValue: 'Wann' })}
+      </h3>
       <fieldset data-field="plan.frequency" tabIndex={-1} className="min-w-0">
         <legend className="mb-2 text-sm font-semibold text-slate-200">
           {t('my_stack_plan_rhythm', { defaultValue: 'An welchen Tagen?' })}
@@ -189,8 +249,7 @@ export function IntakePlanEditor({
               aria-pressed={rhythm.kind === kind}
               data-rhythm-kind={kind}
               onClick={() => selectKind(kind)}
-              disabled={onDemand}
-              className={`flex min-h-11 min-w-0 items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none ${rhythm.kind === kind
+              className={`flex min-h-11 min-w-0 items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${rhythm.kind === kind
                 ? 'border-sky-400/50 bg-sky-400/10 text-sky-200'
                 : 'cursor-pointer border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25'
               }`}
@@ -311,20 +370,6 @@ export function IntakePlanEditor({
           </div>
         )}
 
-        {/* „Bei Bedarf" ist kein Rhythmus, sondern dessen Abwesenheit — deshalb
-            steht es daneben und nicht in der Reihe. */}
-        <label className="mt-3 flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-3">
-          <input
-            type="checkbox"
-            checked={onDemand}
-            data-rhythm-on-demand
-            onChange={event => changeRhythm({ kind: event.target.checked ? 'on_demand' : 'daily' })}
-            className="h-5 w-5 shrink-0 cursor-pointer accent-sky-400"
-          />
-          <span className="min-w-0 text-sm font-semibold text-slate-200">
-            {t('my_stack_rhythm_on_demand', { defaultValue: 'Nur bei Bedarf' })}
-          </span>
-        </label>
       </fieldset>
 
       <div>
@@ -376,8 +421,46 @@ export function IntakePlanEditor({
           </p>
         )}
       </div>
+      </section>
 
-      {/* ── Wie oft am Tag ──────────────────────────────────────────────── */}
+      {/* ── WAS JE EINNAHME ─────────────────────────────────────────────── */}
+      <section className="min-w-0 space-y-4">
+      <div className="flex min-w-0 flex-wrap items-end justify-between gap-3">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          {t('my_stack_plan_section_each', { defaultValue: 'Was je Einnahme' })}
+        </h3>
+        {/* Die Einheit gehoert NEBEN die Mengen, nicht unter alle Karten: seit
+            die Menge am Zeitpunkt steht, tippte man „500" und musste an drei
+            Karten vorbeiscrollen, um „mg" zu finden. */}
+        {tracksQuantity && (
+          <div className="min-w-0">
+            <label htmlFor="stack-plan-unit" className="mb-1 block text-xs font-semibold text-slate-400">
+              {t('my_stack_plan_unit', { defaultValue: 'Einheit der geplanten Menge' })}
+            </label>
+            <input
+              id="stack-plan-unit"
+              list="stack-plan-unit-suggestions"
+              value={plan.unit ?? ''}
+              onChange={event => onChange({ unit: event.target.value || null })}
+              data-field="plan.unit"
+              aria-invalid={Boolean(errors.unit) || undefined}
+              aria-describedby={errors.unit ? 'stack-plan-unit-error' : undefined}
+              autoComplete="off"
+              size={8}
+              className="input min-h-11 w-28 min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            />
+            <datalist id="stack-plan-unit-suggestions">
+              {unitSuggestions.map(unit => <option key={unit} value={unit} />)}
+            </datalist>
+            {errors.unit && (
+              <p id="stack-plan-unit-error" role="alert" className="mt-2 text-sm text-rose-300">
+                {t('my_stack_plan_unit_required', { defaultValue: 'Bitte wähle oder benenne eine Einheit.' })}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
       {onDemand ? (
         <div className="min-w-0 space-y-3">
           <p
@@ -407,9 +490,15 @@ export function IntakePlanEditor({
                 value={plan.slots[0]?.dose ?? ''}
                 onChange={event => changeSlot(0, { dose: numericValue(event.target.value) })}
                 data-field="plan.dose"
-                aria-invalid={Boolean(errors.dose) || undefined}
+                aria-invalid={Boolean(errors.doses?.[0]) || undefined}
+                aria-describedby={errors.doses?.[0] ? 'stack-plan-dose-0-error' : undefined}
                 className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
               />
+              {errors.doses?.[0] && (
+                <p id="stack-plan-dose-0-error" role="alert" className="mt-2 text-sm text-rose-300">
+                  {t('my_stack_plan_quantity_required', { defaultValue: 'Bitte gib eine Menge größer als 0 an.' })}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -506,10 +595,17 @@ export function IntakePlanEditor({
                   value={slot.dose ?? ''}
                   onChange={event => changeSlot(index, { dose: numericValue(event.target.value) })}
                   data-field={index === 0 ? 'plan.dose' : `plan.slots.${index}.dose`}
-                  aria-invalid={Boolean(errors.dose) || undefined}
-                  aria-describedby={errors.dose ? 'stack-plan-dose-error' : undefined}
+                  aria-invalid={Boolean(errors.doses?.[index]) || undefined}
+                  aria-describedby={errors.doses?.[index] ? `stack-plan-dose-${index}-error` : undefined}
                   className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
                 />
+                {/* An DIESER Karte, nicht unten bei der Einheit: bei drei
+                    Einnahmen sagte der Hinweis dort nicht, welche fehlt. */}
+                {errors.doses?.[index] && (
+                  <p id={`stack-plan-dose-${index}-error`} role="alert" className="mt-2 text-sm text-rose-300">
+                    {t('my_stack_plan_quantity_required', { defaultValue: 'Bitte gib eine Menge größer als 0 an.' })}
+                  </p>
+                )}
                 {canSuggestFractions && (
                   <div className="mt-2 flex min-w-0 flex-wrap gap-2">
                     {TABLET_FRACTIONS.map(fraction => (
@@ -545,46 +641,69 @@ export function IntakePlanEditor({
         </button>
       )}
 
-      {tracksQuantity && (
-        <div className="min-w-0">
-          <label htmlFor="stack-plan-unit" className="mb-2 block text-sm font-semibold text-slate-200">
-            {t('my_stack_plan_unit', { defaultValue: 'Einheit der geplanten Menge' })}
-          </label>
-          <input
-            id="stack-plan-unit"
-            list="stack-plan-unit-suggestions"
-            value={plan.unit ?? ''}
-            onChange={event => onChange({ unit: event.target.value || null })}
-            data-field="plan.unit"
-            aria-invalid={Boolean(errors.unit) || undefined}
-            aria-describedby={errors.unit ? 'stack-plan-unit-error' : undefined}
-            autoComplete="off"
-            className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-          />
-          <datalist id="stack-plan-unit-suggestions">
-            {unitSuggestions.map(unit => <option key={unit} value={unit} />)}
-          </datalist>
-          {errors.unit && (
-            <p id="stack-plan-unit-error" role="alert" className="mt-2 text-sm text-rose-300">
-              {t('my_stack_plan_unit_required', { defaultValue: 'Bitte wähle oder benenne eine Einheit.' })}
-            </p>
-          )}
-          {errors.dose && (
-            <p id="stack-plan-dose-error" role="alert" className="mt-2 text-sm text-rose-300">
-              {t('my_stack_plan_quantity_required', { defaultValue: 'Bitte gib eine Menge größer als 0 an.' })}
-            </p>
-          )}
-        </div>
-      )}
+      </section>
 
-      <p className="flex min-w-0 items-start gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-sm leading-relaxed text-slate-400">
-        <BellRing aria-hidden="true" size={17} className="mt-0.5 shrink-0 text-slate-500" />
+      {/* ── ERINNERUNG ──────────────────────────────────────────────────── */}
+      {/* Hier stand bisher nur ein Satz: „Erinnerungen sind optional und
+          koennen nach dem Speichern eingerichtet werden." Der Entwurf traegt
+          `reminders`, die Tabelle die Spalte, der Push-Cron kennt die drei
+          Vorlaufzeiten — nur gefragt hat der Assistent nie, und jeder neue
+          Eintrag wurde mit 'none' gespeichert. Ein Versprechen ohne
+          Einloesung. */}
+      <section className="min-w-0 space-y-3">
+        <h3 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <BellRing aria-hidden="true" size={14} />
+          {t('erinnerung_label', { defaultValue: 'Erinnerung' })}
+        </h3>
+        {onDemand ? (
+          <p data-plan-reminders-off className="text-xs leading-relaxed text-slate-400">
+            {t('my_stack_plan_reminders_on_demand', {
+              defaultValue: 'Ohne festen Zeitpunkt gibt es nichts, woran erinnert werden könnte.',
+            })}
+          </p>
+        ) : (
+          <div data-plan-reminders className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-3">
+            {REMINDER_OPTIONS.map(({ value, labelKey, defaultValue }) => (
+              <label
+                key={value}
+                className={`flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${plan.reminders.includes(value)
+                  ? 'border-sky-400/50 bg-sky-400/10 text-sky-200'
+                  : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={plan.reminders.includes(value)}
+                  onChange={() => toggleReminder(value)}
+                  className="h-5 w-5 shrink-0 cursor-pointer accent-sky-400"
+                />
+                <span className="min-w-0 break-words">{t(labelKey, { defaultValue })}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Was gerade dasteht, in einem Satz. Der Plan besteht aus drei Achsen
+          ueber zehn Felder; ohne diese Zeile muss man sie im Kopf
+          zusammensetzen. */}
+      <p
+        data-plan-summary
+        className="flex min-w-0 items-start gap-2 rounded-xl border border-sky-400/20 bg-sky-400/[0.06] p-3 text-sm leading-relaxed text-sky-100"
+      >
+        <CalendarDays aria-hidden="true" size={17} className="mt-0.5 shrink-0 text-sky-300/80" />
         <span>
-          {t('my_stack_plan_reminders_optional', {
-            defaultValue: 'Erinnerungen sind optional und können nach dem Speichern eingerichtet werden.',
+          {t('my_stack_plan_summary', {
+            defaultValue: 'Ab {{start}}: {{plan}}',
+            start: plan.startDate || '—',
+            plan: planSatz(),
           })}
+          {plan.endDate
+            ? ` ${t('my_stack_plan_summary_until', { defaultValue: 'Bis {{ende}}.', ende: plan.endDate })}`
+            : ''}
         </span>
       </p>
+
     </div>
   )
 }

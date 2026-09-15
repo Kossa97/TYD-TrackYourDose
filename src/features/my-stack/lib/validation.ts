@@ -37,6 +37,12 @@ export interface IntakePlanValidationErrors {
   endDate?: string
   /** Ein Eintrag je fehlerhaftem Einnahmezeitpunkt, in derselben Reihenfolge. */
   slots?: string[]
+  /**
+   * Die fehlende Menge je Zeitpunkt. `dose` sagt nur DASS eine fehlt — bei
+   * drei Einnahmen am Tag half das niemandem, denn der Hinweis stand unten
+   * bei der Einheit und nicht an der Karte, in der die Zahl fehlte.
+   */
+  doses?: string[]
 }
 
 export const MIN_EVERY_X_DAYS = 2
@@ -193,10 +199,11 @@ export function validateIntakePlan(
     // Die Menge steht je Einnahmezeitpunkt — „morgens 1000, abends 500". Fehlt
     // sie an EINEM Zeitpunkt, ist der Plan unvollstaendig, nicht nur knapp.
     // Auch „Bei Bedarf" braucht sie: dort ist es die Menge je Einnahme.
-    const ohneMenge = plan.slots.some(
-      slot => slot.dose == null || !Number.isFinite(slot.dose) || slot.dose <= 0,
-    )
-    if (plan.slots.length === 0 || ohneMenge) errors.dose = 'required'
+    const mengenFehler = plan.slots.map(slot => (
+      slot.dose == null || !Number.isFinite(slot.dose) || slot.dose <= 0 ? 'required' : ''
+    ))
+    if (plan.slots.length === 0 || mengenFehler.some(Boolean)) errors.dose = 'required'
+    if (mengenFehler.some(Boolean)) errors.doses = mengenFehler
     if (!plan.unit?.trim()) errors.unit = 'required'
   }
   return errors

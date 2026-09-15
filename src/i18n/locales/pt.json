@@ -1145,5 +1145,15 @@
   "my_stack_rhythm_interval_invalid": "Indica um intervalo dentro da unidade escolhida.",
   "my_stack_rhythm_cycle_on": "Dias de toma",
   "my_stack_rhythm_cycle_off": "Dias de pausa",
-  "my_stack_rhythm_cycle_invalid": "Um ciclo precisa de pelo menos um dia de toma e um de pausa."
+  "my_stack_rhythm_cycle_invalid": "Um ciclo precisa de pelo menos um dia de toma e um de pausa.",
+  "my_stack_plan_section_when": "Quando",
+  "my_stack_plan_section_each": "Por toma",
+  "my_stack_plan_summary": "A partir de {{start}}: {{plan}}",
+  "my_stack_plan_summary_until": "Até {{ende}}.",
+  "my_stack_plan_reminders_on_demand": "Sem uma hora fixa não há nada a lembrar.",
+  "my_stack_rhythm_summary_weekdays": "{{tage}}",
+  "my_stack_rhythm_summary_interval": "A cada {{n}} {{einheit}}",
+  "my_stack_rhythm_summary_every_week": "Todas as semanas",
+  "my_stack_rhythm_summary_every_month": "Todos os meses",
+  "my_stack_rhythm_summary_cycle": "{{an}} dias de toma, {{aus}} dias de pausa"
 }

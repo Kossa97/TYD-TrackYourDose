@@ -1293,5 +1293,15 @@
   "my_stack_rhythm_interval_invalid": "Please enter an interval within the chosen unit.",
   "my_stack_rhythm_cycle_on": "Days on",
   "my_stack_rhythm_cycle_off": "Days off",
-  "my_stack_rhythm_cycle_invalid": "An on/off cycle needs at least one day on and one day off."
+  "my_stack_rhythm_cycle_invalid": "An on/off cycle needs at least one day on and one day off.",
+  "my_stack_plan_section_when": "When",
+  "my_stack_plan_section_each": "Per intake",
+  "my_stack_plan_summary": "From {{start}}: {{plan}}",
+  "my_stack_plan_summary_until": "Until {{ende}}.",
+  "my_stack_plan_reminders_on_demand": "Without a fixed time there is nothing to remind you of.",
+  "my_stack_rhythm_summary_weekdays": "{{tage}}",
+  "my_stack_rhythm_summary_interval": "Every {{n}} {{einheit}}",
+  "my_stack_rhythm_summary_every_week": "Every week",
+  "my_stack_rhythm_summary_every_month": "Every month",
+  "my_stack_rhythm_summary_cycle": "{{an}} days on, {{aus}} days off"
 }

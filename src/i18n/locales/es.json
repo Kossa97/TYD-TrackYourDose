@@ -1145,5 +1145,15 @@
   "my_stack_rhythm_interval_invalid": "Introduce un intervalo dentro de la unidad elegida.",
   "my_stack_rhythm_cycle_on": "Días activos",
   "my_stack_rhythm_cycle_off": "Días de pausa",
-  "my_stack_rhythm_cycle_invalid": "Un ciclo necesita al menos un día activo y uno de pausa."
+  "my_stack_rhythm_cycle_invalid": "Un ciclo necesita al menos un día activo y uno de pausa.",
+  "my_stack_plan_section_when": "Cuándo",
+  "my_stack_plan_section_each": "Por toma",
+  "my_stack_plan_summary": "Desde {{start}}: {{plan}}",
+  "my_stack_plan_summary_until": "Hasta {{ende}}.",
+  "my_stack_plan_reminders_on_demand": "Sin una hora fija no hay nada que recordar.",
+  "my_stack_rhythm_summary_weekdays": "{{tage}}",
+  "my_stack_rhythm_summary_interval": "Cada {{n}} {{einheit}}",
+  "my_stack_rhythm_summary_every_week": "Cada semana",
+  "my_stack_rhythm_summary_every_month": "Cada mes",
+  "my_stack_rhythm_summary_cycle": "{{an}} días activos, {{aus}} días de pausa"
 }

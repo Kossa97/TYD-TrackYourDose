@@ -1147,5 +1147,15 @@
   "my_stack_rhythm_interval_invalid": "Укажите интервал в пределах выбранной единицы.",
   "my_stack_rhythm_cycle_on": "Дней приёма",
   "my_stack_rhythm_cycle_off": "Дней перерыва",
-  "my_stack_rhythm_cycle_invalid": "Цикл требует минимум один день приёма и один день перерыва."
+  "my_stack_rhythm_cycle_invalid": "Цикл требует минимум один день приёма и один день перерыва.",
+  "my_stack_plan_section_when": "Когда",
+  "my_stack_plan_section_each": "За один приём",
+  "my_stack_plan_summary": "С {{start}}: {{plan}}",
+  "my_stack_plan_summary_until": "До {{ende}}.",
+  "my_stack_plan_reminders_on_demand": "Без фиксированного времени напоминать не о чем.",
+  "my_stack_rhythm_summary_weekdays": "{{tage}}",
+  "my_stack_rhythm_summary_interval": "Каждые {{n}} {{einheit}}",
+  "my_stack_rhythm_summary_every_week": "Каждую неделю",
+  "my_stack_rhythm_summary_every_month": "Каждый месяц",
+  "my_stack_rhythm_summary_cycle": "{{an}} дней приёма, {{aus}} дней перерыва"
 }

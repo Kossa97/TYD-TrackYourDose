@@ -1145,5 +1145,15 @@
   "my_stack_rhythm_interval_invalid": "選んだ単位の範囲で間隔を入力してください。",
   "my_stack_rhythm_cycle_on": "服用する日数",
   "my_stack_rhythm_cycle_off": "休む日数",
-  "my_stack_rhythm_cycle_invalid": "休薬サイクルには服用日と休薬日が各1日以上必要です。"
+  "my_stack_rhythm_cycle_invalid": "休薬サイクルには服用日と休薬日が各1日以上必要です。",
+  "my_stack_plan_section_when": "いつ",
+  "my_stack_plan_section_each": "1 回あたり",
+  "my_stack_plan_summary": "{{start}} から: {{plan}}",
+  "my_stack_plan_summary_until": "{{ende}} まで。",
+  "my_stack_plan_reminders_on_demand": "決まった時刻がなければ、知らせるものがありません。",
+  "my_stack_rhythm_summary_weekdays": "{{tage}}",
+  "my_stack_rhythm_summary_interval": "{{n}}{{einheit}}ごと",
+  "my_stack_rhythm_summary_every_week": "毎週",
+  "my_stack_rhythm_summary_every_month": "毎月",
+  "my_stack_rhythm_summary_cycle": "服用 {{an}} 日、休薬 {{aus}} 日"
 }

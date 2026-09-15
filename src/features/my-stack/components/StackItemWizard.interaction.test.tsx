@@ -116,6 +116,38 @@ function renderWizard(overrides: Partial<StackItemWizardProps> = {}) {
   return { ...result, onClose, onOpenExisting, onSave }
 }
 
+/**
+ * Die Route setzen, WENN sie überhaupt gefragt wird. Bei Tablette und Kapsel
+ * folgt sie aus der Form und das Feld fehlt — genau das ist der Sinn.
+ */
+/**
+ * Bis zum Planschritt weiterklicken, statt Klicks zu zaehlen. Die Schrittzahl
+ * haengt an der Tracking-Tiefe und an der Form; jede Aenderung daran liess
+ * sonst eine feste Zahl von `continue`-Klicks danebenliegen — und ein Klick
+ * zu viel fiel nur deshalb nicht auf, weil ihn die Validierung schluckte.
+ */
+function advanceToPlanStep(): void {
+  for (let i = 0; i < 10; i += 1) {
+    if (document.querySelector('[data-field="plan.frequency"]')) return
+    continueWizard()
+  }
+  throw new Error('Planschritt nicht erreicht')
+}
+
+/** Bis zur Zusammenfassung weiterklicken — aus demselben Grund. */
+function advanceToReview(): void {
+  for (let i = 0; i < 10; i += 1) {
+    if (screen.queryByRole('button', { name: 'save' })) return
+    continueWizard()
+  }
+  throw new Error('Zusammenfassung nicht erreicht; Felder: ' + [...document.querySelectorAll('[data-field]')].map(e => e.getAttribute('data-field')).join(','))
+}
+
+function setMethodIfAsked(value = 'Oral'): void {
+  const select = screen.queryByLabelText('my_stack_plan_method') as HTMLSelectElement | null
+  if (select) fireEvent.change(select, { target: { value } })
+}
+
 function continueWizard(): void {
   fireEvent.click(screen.getByRole('button', { name: 'continue' }))
 }
@@ -138,10 +170,10 @@ function completeCustomFlow(name = 'Custom Product'): void {
   fireEvent.change(screen.getByLabelText('my_stack_strength_unit'), { target: { value: 'mg' } })
   fireEvent.change(screen.getByLabelText('my_stack_basis_value'), { target: { value: '1' } })
   continueWizard()
-  fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
+  setMethodIfAsked()
   fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: 'capsule' } })
-  continueWizard()
+  advanceToReview()
 }
 
 /**
@@ -354,12 +386,11 @@ function completeCatalogFlow(): void {
   continueWizard()
   fireEvent.change(screen.getByLabelText('my_stack_strength_value'), { target: { value: '5000' } })
   fireEvent.change(screen.getByLabelText('my_stack_basis_value'), { target: { value: '1' } })
-  continueWizard()
-  continueWizard()
-  fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
+  advanceToPlanStep()
+  setMethodIfAsked()
   fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: 'capsule' } })
-  continueWizard()
+  advanceToReview()
 }
 
 function reachExistingReview(changeForm = false): void {
@@ -368,17 +399,11 @@ function reachExistingReview(changeForm = false): void {
     // Kein Aufklappen mehr noetig: beide Reihen stehen immer da.
     fireEvent.click(screen.getByRole('button', { name: 'dosage_form_drops' }))
   }
-  continueWizard()
-  continueWizard()
-  continueWizard()
-  continueWizard()
-  continueWizard()
-  if (!(screen.getByLabelText('my_stack_plan_method') as HTMLSelectElement).value) {
-    fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
-  }
+  advanceToPlanStep()
+  setMethodIfAsked()
   fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
   fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: changeForm ? 'ml' : 'capsule' } })
-  continueWizard()
+  advanceToReview()
 }
 
 beforeEach(() => {
@@ -654,7 +679,7 @@ describe('StackItemWizard interactions', () => {
     continueWizard()
     fireEvent.click(screen.getByRole('radio', { name: /^my_stack_tracking_intake_only_title/ }))
     continueWizard()
-    fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
+    setMethodIfAsked()
     continueWizard()
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
 
@@ -792,13 +817,16 @@ describe('StackItemWizard interactions', () => {
   continueWizard()
 
   expect(screen.queryByLabelText('my_stack_plan_quantity')).toBeNull()
-  fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
+  setMethodIfAsked()
   continueWizard()
 
     expect(screen.getByText('my_stack_tracking_intake_only_subtitle')).toBeTruthy()
     expect(screen.getByText('my_stack_quantity_not_tracked')).toBeTruthy()
     expect(screen.getByText('dosage_form_capsule')).toBeTruthy()
-    expect(screen.getByText('Täglich')).toBeTruthy()
+    // Der Rhythmus steht jetzt als Schlüssel da, nicht als deutscher Text:
+    // die Zusammenfassung wird übersetzt, nicht zusammengebaut.
+    expect(document.querySelector('[data-review-rhythm]')?.textContent)
+      .toBe('my_stack_rhythm_daily')
   })
 
   it('saves intake-only from review with null quantity instead of redirecting to hidden strength', async () => {
@@ -809,14 +837,15 @@ describe('StackItemWizard interactions', () => {
     continueWizard()
     fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_intake_only_title/ }))
     continueWizard()
-    fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
+    setMethodIfAsked()
     continueWizard()
 
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
 
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
     expect(onSave.mock.calls[0][0].trackingLevel).toBe('intake_only')
-    expect(onSave.mock.calls[0][0].plan).toMatchObject({ unit: null })
+    // Die Einheit ist aus der Form vorbelegt — gespeichert wird sie für
+    // `intake_only` trotzdem nicht (das prüft `stackItems.test.ts`).
     expect(onSave.mock.calls[0][0].plan.slots[0].dose).toBeNull()
     expect(onSave.mock.calls[0][1]).toBe('create')
     expect(screen.queryByLabelText('my_stack_strength_value')).toBeNull()
@@ -852,7 +881,7 @@ describe('StackItemWizard interactions', () => {
     // damit bei mehreren Einnahmen am Tag nichts verschwiegen wird.
     expect(document.querySelector('[data-review-slot="0"]')?.textContent)
       .toContain('my_stack_routine_morning')
-    expect(document.querySelector('[data-review-rhythm]')?.textContent).toBe('Täglich')
+    expect(document.querySelector('[data-review-rhythm]')?.textContent).toBe('my_stack_rhythm_daily')
     // Und das Ende, das es vorher im Formular gar nicht gab.
     expect(document.querySelector('[data-review-end-date]')?.textContent)
       .toBe('my_stack_plan_end_open')
@@ -888,7 +917,7 @@ describe('StackItemWizard interactions', () => {
     fireEvent.change(screen.getByLabelText('my_stack_remaining_quantity'), { target: { value: '42' } })
 
     continueWizard()
-    fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
+    setMethodIfAsked()
     fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: 'capsule' } })
     continueWizard()
@@ -924,7 +953,7 @@ describe('StackItemWizard interactions', () => {
     }
     fireEvent.click(screen.getByRole('radio', { name: /my_stack_tracking_with_amount_title/ }))
     continueWizard()
-    fireEvent.change(screen.getByLabelText('my_stack_plan_method'), { target: { value: 'Oral' } })
+    setMethodIfAsked()
     fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('my_stack_plan_unit'), { target: { value: 'capsule' } })
     continueWizard()
