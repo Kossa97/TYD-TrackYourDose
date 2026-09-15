@@ -1304,7 +1304,8 @@
   "my_stack_rhythm_summary_every_week": "Jede Woche",
   "my_stack_rhythm_summary_every_month": "Jeden Monat",
   "my_stack_rhythm_summary_cycle": "{{an}} Tage an, {{aus}} Tage Pause",
-  "my_stack_plan_slot_days": "An welchen dieser Tage?",
   "my_stack_plan_slot_unknown_day": "Dieser Zeitpunkt liegt an einem Tag, den der Plan nicht auswählt.",
-  "my_stack_plan_day_without_intake": "An mindestens einem gewählten Tag steht keine Einnahme."
+  "my_stack_plan_day_without_intake": "An mindestens einem gewählten Tag steht keine Einnahme.",
+  "my_stack_plan_day_tabs": "Tage des Plans",
+  "my_stack_plan_day_tab": "{{day}}: {{count}} Einnahmen"
 }

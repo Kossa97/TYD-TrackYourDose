@@ -1155,7 +1155,8 @@
   "my_stack_rhythm_summary_every_week": "每周",
   "my_stack_rhythm_summary_every_month": "每月",
   "my_stack_rhythm_summary_cycle": "服用 {{an}} 天，停用 {{aus}} 天",
-  "my_stack_plan_slot_days": "在这些日子中的哪几天？",
   "my_stack_plan_slot_unknown_day": "该次服用落在计划未选择的日子。",
-  "my_stack_plan_day_without_intake": "所选日子中至少有一天没有任何服用。"
+  "my_stack_plan_day_without_intake": "所选日子中至少有一天没有任何服用。",
+  "my_stack_plan_day_tabs": "计划日",
+  "my_stack_plan_day_tab": "{{day}}：{{count}} 次"
 }

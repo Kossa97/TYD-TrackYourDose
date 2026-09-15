@@ -21,7 +21,7 @@ import {
   showsColor,
   strengthBasisDefault,
 } from './dosageForms'
-import { emptyRhythm, isOnDemandRhythm } from './intakeRhythm'
+import { WEEKDAY_KEYS, emptyRhythm, isOnDemandRhythm } from './intakeRhythm'
 import type { Kombinationsbestandteil } from './kombination'
 import { trackingCapabilities } from './trackingDepth'
 import { validateIntakePlan, validateStackItemDraft } from './validation'
@@ -138,20 +138,52 @@ function basisVorbelegung(
  * bestehender Zyklus beim Laden nicht die Haelfte verliert.
  */
 function slotsFuerRhythmus(plan: IntakePlanDraft): IntakeSlotDraft[] {
-  // Wochentage, die der Rhythmus gar nicht mehr auswaehlt, fallen aus den
-  // Zeitpunkten heraus: ein „nur montags" in einem Plan ohne Montag waere eine
-  // Angabe, die nirgends ankommt.
-  const erlaubt = plan.rhythm.kind === 'weekdays' ? new Set(plan.rhythm.weekdays) : null
-  const slots = plan.slots.map(slot => ({
-    ...slot,
-    weekdays: erlaubt ? slot.weekdays.filter(tag => erlaubt.has(tag)) : [],
-  }))
   // Auch „Bei Bedarf" behaelt EINEN Zeitpunkt: er traegt die Menge, die man
   // eintraegt, wenn man das Mittel genommen hat. Tageszeit und Uhrzeit
   // bedeuten dort nichts und werden nicht gezeigt.
-  if (isOnDemandRhythm(plan.rhythm)) return slots.slice(0, 1).length > 0 ? slots.slice(0, 1) : [naechsterSlot([])]
+  if (isOnDemandRhythm(plan.rhythm)) {
+    const erster = plan.slots[0]
+    return [erster ? { ...erster, weekdays: [] } : naechsterSlot([])]
+  }
+
+  // Bei „Wochentage waehlen" gehoert jeder Zeitpunkt GENAU EINEM Tag. Das ist
+  // die Form, in der das Formular ihn zeigt — ein Reiter je Tag —, und die
+  // Form, in der `slot_days` ihn speichert. Ein Zeitpunkt ohne Tag hiess
+  // „an allen": er wird dann auf alle gewaehlten Tage vervielfacht.
+  if (plan.rhythm.kind === 'weekdays' && plan.rhythm.weekdays.length > 0) {
+    return slotsJeTag(plan.slots, plan.rhythm.weekdays)
+  }
+
+  // Jede andere Form kennt keine einzelnen Tage: ein „nur montags" waere dort
+  // eine Angabe, die nirgends ankommt.
+  const slots: IntakeSlotDraft[] = plan.slots.map(slot => ({ ...slot, weekdays: [] }))
   if (slots.length === 0) slots.push(naechsterSlot(slots))
   return slots
+}
+
+/**
+ * Die Zeitpunkte nach Tagen sortiert, je Zeitpunkt genau ein Tag.
+ *
+ * Ein Tag, fuer den nichts dasteht, ist gerade erst dazugekommen — er
+ * uebernimmt das Muster des ersten Tages, der schon eines hat. Drei Tage
+ * anzuwaehlen soll nicht heissen, dreimal von vorn zu tippen.
+ */
+function slotsJeTag(
+  slots: readonly IntakeSlotDraft[],
+  weekdays: readonly string[],
+): IntakeSlotDraft[] {
+  const gewaehlt = WEEKDAY_KEYS.filter(tag => weekdays.includes(tag))
+  const jeTag = new Map<string, IntakeSlotDraft[]>(
+    gewaehlt.map(tag => [tag, slots
+      .filter(slot => slot.weekdays.length === 0 || slot.weekdays.includes(tag))
+      .map(slot => ({ ...slot, weekdays: [tag] }))]),
+  )
+  const vorlage = gewaehlt.map(tag => jeTag.get(tag) ?? []).find(tagesSlots => tagesSlots.length > 0)
+  return gewaehlt.flatMap(tag => {
+    const tagesSlots = jeTag.get(tag) ?? []
+    if (tagesSlots.length > 0) return tagesSlots
+    return (vorlage ?? [naechsterSlot([])]).map(slot => ({ ...slot, weekdays: [tag] }))
+  })
 }
 
 /**
@@ -171,9 +203,9 @@ export function naechsterSlot(
     // Die Menge des ersten Zeitpunkts als Vorschlag: meist ist sie ueberall
     // gleich, und wo nicht, aendert man genau die eine Zahl.
     dose: slots[0]?.dose ?? null,
-    // Ein neuer Zeitpunkt gilt zunaechst an allen Tagen, die der Rhythmus
-    // ohnehin auswaehlt — wer ihn auf montags einschraenken will, nimmt Tage
-    // weg, statt sie erst zu suchen.
+    // Der Tag, an dem er entsteht: im Formular der offene Reiter. Leer heisst
+    // „der Rhythmus kennt keine einzelnen Tage" — taeglich, im Abstand, im
+    // Wechsel.
     weekdays: [...weekdays],
   }
 }
@@ -225,13 +257,7 @@ function draftFromStackItem(
     notes: existing.notes ?? '',
     ingredients: existing.ingredients.map(ingredient => ({ ...ingredient })),
     plan: existingPlan
-      ? {
-          ...existingPlan,
-          rhythm: { ...existingPlan.rhythm, weekdays: [...existingPlan.rhythm.weekdays] },
-          slots: existingPlan.slots.map(slot => ({ ...slot })),
-          reminders: [...existingPlan.reminders],
-          startDate: format(new Date(), 'yyyy-MM-dd'),
-        }
+      ? geladenerPlan(existingPlan)
       : emptyPlan(existing.display_name, existing.dosage_form),
     inventory: existing.inventory
       ? {
@@ -246,6 +272,26 @@ function draftFromStackItem(
       : emptyInventory(),
     pkProfileMethod: existing.pk_profile_method,
   }
+}
+
+/**
+ * Ein gespeicherter Plan, wie ihn der Entwurf braucht.
+ *
+ * Die Zeitpunkte laufen durch dieselbe Normalisierung wie bei einem
+ * Rhythmuswechsel. Ein Plan aus der Zeit vor den Tagesreitern traegt seine
+ * Zeitpunkte ohne Tag — „an allen" —; beim Oeffnen wuerde derselbe Zeitpunkt
+ * dann in jedem Reiter stehen und sich ueberall zugleich aendern. Vervielfacht
+ * gehoert er jedem Tag einzeln, so wie ein neu angelegter Plan.
+ */
+function geladenerPlan(gespeichert: IntakePlanDraft): IntakePlanDraft {
+  const plan: IntakePlanDraft = {
+    ...gespeichert,
+    rhythm: { ...gespeichert.rhythm, weekdays: [...gespeichert.rhythm.weekdays] },
+    slots: gespeichert.slots.map(slot => ({ ...slot, weekdays: [...slot.weekdays] })),
+    reminders: [...gespeichert.reminders],
+    startDate: format(new Date(), 'yyyy-MM-dd'),
+  }
+  return { ...plan, slots: slotsFuerRhythmus(plan) }
 }
 
 export function initialWizardState(

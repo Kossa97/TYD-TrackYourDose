@@ -104,7 +104,17 @@ describe('wizard state', () => {
 
     const state = initialWizardState(existingVitaminD, '', activePlan)
 
-    expect(state.draft.plan).toEqual({ ...activePlan, startDate: '2026-08-16' })
+    // Ein gespeicherter Plan traegt seine Zeitpunkte womoeglich noch ohne Tag
+    // — „an allen". Beim Oeffnen bekommt jeder Tag seinen eigenen, sonst
+    // staende dieselbe Karte in jedem Reiter und aenderte sich ueberall auf
+    // einmal.
+    expect(state.draft.plan).toEqual({
+      ...activePlan,
+      startDate: '2026-08-16',
+      slots: ['Mo', 'Di', 'Mi', 'Do', 'Fr'].map(tag => ({
+        routineGroup: 'morning', time: '08:30', dose: 5000, weekdays: [tag],
+      })),
+    })
     expect(state.draft.plan).not.toBe(activePlan)
   })
 
@@ -371,7 +381,13 @@ describe('wizard state', () => {
       type: 'plan_changed',
       changes: { rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Mi', 'Fr'] } },
     })
-    expect(wochentage.draft.plan.slots).toHaveLength(1)
+    // Ein Zeitpunkt JE TAG: das ist die Form, in der das Formular ihn zeigt
+    // (ein Reiter je Tag) und in der `slot_days` ihn speichert. Drei Tage
+    // anzuwaehlen heisst nicht, dreimal von vorn zu tippen — jeder neue Tag
+    // uebernimmt das Muster des ersten.
+    expect(wochentage.draft.plan.slots).toHaveLength(3)
+    expect(wochentage.draft.plan.slots.map(slot => slot.weekdays)).toEqual([['Mo'], ['Mi'], ['Fr']])
+    expect(new Set(wochentage.draft.plan.slots.map(slot => slot.routineGroup))).toEqual(new Set(['morning']))
 
     const zweiMal = wizardReducer(wochentage, {
       type: 'plan_changed',
@@ -384,6 +400,60 @@ describe('wizard state', () => {
     expect(zweiMal.draft.plan.rhythm.kind).toBe('weekdays')
     expect(zweiMal.draft.plan.rhythm.weekdays).toEqual(['Mo', 'Mi', 'Fr'])
     expect(zweiMal.draft.plan.slots).toHaveLength(2)
+  })
+
+  it('gibt einem neu gewählten Tag das Muster des ersten', () => {
+    // Drei Tage anzuwählen soll nicht heißen, dreimal von vorn zu tippen.
+    const montags = wizardReducer(initialWizardState(), {
+      type: 'plan_changed',
+      changes: { rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo'] } },
+    })
+    const zweiMalMontags = wizardReducer(montags, {
+      type: 'plan_changed',
+      changes: { slots: [
+        { routineGroup: 'morning', time: '08:00', dose: 500, weekdays: ['Mo'] },
+        { routineGroup: 'evening', time: '20:00', dose: 250, weekdays: ['Mo'] },
+      ] },
+    })
+
+    const plusFreitag = wizardReducer(zweiMalMontags, {
+      type: 'plan_changed',
+      changes: { rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Fr'] } },
+    })
+
+    expect(plusFreitag.draft.plan.slots).toHaveLength(4)
+    expect(plusFreitag.draft.plan.slots.map(slot => (
+      `${slot.weekdays.join('')} ${slot.routineGroup} ${slot.time} ${slot.dose}`
+    ))).toEqual([
+      'Mo morning 08:00 500',
+      'Mo evening 20:00 250',
+      'Fr morning 08:00 500',
+      'Fr evening 20:00 250',
+    ])
+
+    // Und ein Tag, der wieder herausfällt, nimmt seine Einnahmen mit.
+    const ohneMontag = wizardReducer(plusFreitag, {
+      type: 'plan_changed',
+      changes: { rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Fr'] } },
+    })
+    expect(ohneMontag.draft.plan.slots.map(slot => slot.weekdays)).toEqual([['Fr'], ['Fr']])
+  })
+
+  it('legt die Tage ab, sobald der Rhythmus keine einzelnen mehr kennt', () => {
+    // „Täglich" oder „alle 3 Wochen" hat keine Tage, unter denen ein
+    // Zeitpunkt liegen könnte — ein „nur montags" käme dort nirgends an.
+    const montagsUndFreitags = wizardReducer(initialWizardState(), {
+      type: 'plan_changed',
+      changes: { rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Fr'] } },
+    })
+    expect(montagsUndFreitags.draft.plan.slots).toHaveLength(2)
+
+    const taeglich = wizardReducer(montagsUndFreitags, {
+      type: 'plan_changed',
+      changes: { rhythm: emptyRhythm() },
+    })
+
+    expect(taeglich.draft.plan.slots.every(slot => slot.weekdays.length === 0)).toBe(true)
   })
 
   it('sammelt selbst hinzugefügte Zeitpunkte nicht bei der nächsten Planänderung wieder ein', () => {

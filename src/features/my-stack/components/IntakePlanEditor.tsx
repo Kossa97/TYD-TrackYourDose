@@ -1,5 +1,5 @@
 import { BellRing, CalendarDays, CalendarRange, Clock, HandHelping, Moon, Plus, Repeat, Sun, Sunrise, Trash2 } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   getDosageForm,
@@ -118,6 +118,28 @@ export function IntakePlanEditor({
   const methodChoices = methodChoicesFor(dosageForm)
   const einheit = plan.unit?.trim() ?? ''
 
+  // Ein Reiter je gewaehltem Wochentag, in Wochenreihenfolge und hoechstens
+  // sieben. Nur „Wochentage waehlen" kennt einzelne Tage — taeglich, im
+  // Abstand oder im Wechsel gibt es nichts zu unterscheiden.
+  const tage = rhythm.kind === 'weekdays'
+    ? WEEKDAY_KEYS.filter(tag => rhythm.weekdays.includes(tag))
+    : []
+  const [gewaehlterTag, setGewaehlterTag] = useState<string | null>(null)
+  // Abgeleitet statt gespeichert: nimmt man den offenen Tag aus dem Rhythmus
+  // heraus, faellt der Reiter auf den ersten zurueck, ohne dass ein Effekt
+  // hinterherraeumen muss.
+  const offenerTag = tage.length === 0
+    ? null
+    : tage.find(tag => tag === gewaehlterTag) ?? tage[0]
+  const amTag = (tag: string | null) => plan.slots.filter(slot => (
+    tag == null || slot.weekdays.length === 0 || slot.weekdays.includes(tag)
+  ))
+  const sichtbareSlots = plan.slots
+    .map((slot, index) => ({ slot, index }))
+    .filter(({ slot }) => (
+      offenerTag == null || slot.weekdays.length === 0 || slot.weekdays.includes(offenerTag)
+    ))
+
   function toggleReminder(value: string): void {
     onChange({
       reminders: plan.reminders.includes(value)
@@ -130,19 +152,30 @@ export function IntakePlanEditor({
   function planSatz(): string {
     const teile = [rhythmText(rhythmSummary(rhythm), t)]
     if (!onDemand) {
-      const einnahmen = plan.slots.map(slot => {
+      // Je Tag gesammelt. Sagen alle Tage dasselbe — der Normalfall —, steht es
+      // einmal da: welche Tage es sind, hat der Rhythmus schon gesagt. Erst wo
+      // sie sich unterscheiden, bekommt jeder Tag seine eigene Zeile.
+      const jeTag = new Map<string, string[]>()
+      plan.slots.forEach(slot => {
         const tageszeit = ROUTINE_GROUPS.find(gruppe => gruppe.value === slot.routineGroup)
         const wann = [
           tageszeit ? String(t(tageszeit.labelKey, { defaultValue: tageszeit.defaultValue })) : '',
           slot.time ?? '',
         ].filter(Boolean).join(' ')
         const menge = tracksQuantity && slot.dose != null ? `${slot.dose} ${einheit}`.trim() : ''
-        // Nur wo ein Zeitpunkt eigene Tage hat — sonst staende an jeder Zeile
-        // dieselbe Aufzaehlung, die schon vorn im Satz steht.
-        const tage = slot.weekdays.length > 0 ? slot.weekdays.join('/') : ''
-        return [tage, wann, menge].filter(Boolean).join(' · ')
-      }).filter(Boolean)
-      if (einnahmen.length > 0) teile.push(einnahmen.join(' + '))
+        const text = [wann, menge].filter(Boolean).join(' · ')
+        if (!text) return
+        const tag = slot.weekdays[0] ?? ''
+        jeTag.set(tag, [...(jeTag.get(tag) ?? []), text])
+      })
+      const gruppen = [...jeTag.entries()]
+      if (gruppen.length > 0) {
+        const erste = gruppen[0][1].join(' + ')
+        const gleich = gruppen.every(([, texte]) => texte.join(' + ') === erste)
+        teile.push(gleich
+          ? erste
+          : gruppen.map(([tag, texte]) => (tag ? `${tag}: ` : '') + texte.join(' + ')).join(' / '))
+      }
     } else if (tracksQuantity && plan.slots[0]?.dose != null) {
       teile.push(`${plan.slots[0].dose} ${einheit}`.trim())
     }
@@ -192,15 +225,18 @@ export function IntakePlanEditor({
     })
   }
 
-  // Wie oft am Tag ist eine eigene Frage — unabhaengig davon, an welchen Tagen.
-  // Mo/Mi/Fr morgens UND abends ist ein normaler Plan.
+  // Wie oft am Tag ist eine eigene Frage — und sie wird JE TAG beantwortet.
+  // Gezaehlt wird darum, was am offenen Reiter haengt: „montags dreimal,
+  // freitags zweimal" sind fuenf Zeitpunkte und an keinem Tag zu viele.
   function addSlot(): void {
-    if (plan.slots.length >= MAX_INTAKE_SLOTS) return
-    onChange({ slots: [...plan.slots, naechsterSlot(plan.slots, rhythm.weekdays)] })
+    if (amTag(offenerTag).length >= MAX_INTAKE_SLOTS) return
+    const neuerSlot = naechsterSlot(amTag(offenerTag), offenerTag ? [offenerTag] : [])
+    onChange({ slots: [...plan.slots, neuerSlot] })
   }
 
   function removeSlot(index: number): void {
-    if (plan.slots.length <= 1) return
+    const tag = plan.slots[index]?.weekdays[0] ?? null
+    if (amTag(tag).length <= 1) return
     onChange({ slots: plan.slots.filter((_, position) => position !== index) })
   }
 
@@ -465,6 +501,53 @@ export function IntakePlanEditor({
         {t('my_stack_plan_section_each', { defaultValue: 'Was je Einnahme' })}
       </h3>
 
+      {/* Ein Reiter je Tag. Die Zahl daneben sagt, wie viele Einnahmen dieser
+          Tag hat — „Mo 2 · Mi 1 · Fr 1" steht damit lesbar da, ohne dass man
+          sich durch die Reiter klicken muss. */}
+      {!onDemand && tage.length > 0 && (
+        <div
+          role="tablist"
+          data-plan-day-tabs
+          aria-label={String(t('my_stack_plan_day_tabs', { defaultValue: 'Tage des Plans' }))}
+          className="flex min-w-0 flex-wrap gap-2"
+        >
+          {tage.map(tag => {
+            const anzahl = amTag(tag).length
+            const offen = tag === offenerTag
+            return (
+              <button
+                key={tag}
+                type="button"
+                role="tab"
+                id={`stack-plan-day-tab-${tag}`}
+                aria-selected={offen}
+                aria-controls={`stack-plan-day-panel-${tag}`}
+                data-plan-day-tab={tag}
+                data-plan-day-count={anzahl}
+                aria-label={String(t('my_stack_plan_day_tab', {
+                  defaultValue: '{{day}}: {{count}} Einnahmen',
+                  day: tag,
+                  count: anzahl,
+                }))}
+                onClick={() => setGewaehlterTag(tag)}
+                className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${offen
+                  ? 'border-sky-400/50 bg-sky-400/15 text-sky-200'
+                  : 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-sky-400/25 hover:text-slate-200'
+                }`}
+              >
+                <span aria-hidden="true">{tag}</span>
+                <span
+                  aria-hidden="true"
+                  className={`grid h-5 min-w-5 place-items-center rounded-full px-1 text-xs font-semibold ${offen ? 'bg-sky-400/25 text-sky-100' : 'bg-white/[0.06] text-slate-400'}`}
+                >
+                  {anzahl}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {onDemand ? (
         <div className="min-w-0 space-y-3">
           <p
@@ -482,9 +565,16 @@ export function IntakePlanEditor({
               am selben einen Zeitpunkt, der nur seine Tageszeit nicht zeigt. */}
           {tracksQuantity && mengeUndEinheit(0)}
         </div>
-      ) : plan.slots.map((slot, index) => (
+      ) : (
+        <div
+          role={offenerTag ? 'tabpanel' : undefined}
+          id={offenerTag ? `stack-plan-day-panel-${offenerTag}` : undefined}
+          aria-labelledby={offenerTag ? `stack-plan-day-tab-${offenerTag}` : undefined}
+          className="min-w-0 space-y-3"
+        >
+          {sichtbareSlots.map(({ slot, index }) => (
         <div key={index} data-plan-slot={index} className="min-w-0 space-y-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
-          {plan.slots.length > 1 && (
+          {sichtbareSlots.length > 1 && (
             <div className="flex justify-end">
               <button
                 type="button"
@@ -545,48 +635,6 @@ export function IntakePlanEditor({
             )}
           </fieldset>
 
-          {/* An welchen dieser Tage? „Montags zweimal, mittwochs einmal" war
-              vorher nicht ausdrueckbar: die Zeitpunkte galten fuer jeden Tag
-              gleich. Leer heisst weiterhin „an allen" — der Normalfall. */}
-          {rhythm.kind === 'weekdays' && rhythm.weekdays.length > 0 && (
-            <div data-plan-slot-days={index} className="min-w-0">
-              <span className="mb-2 block text-xs font-semibold text-slate-400">
-                {t('my_stack_plan_slot_days', { defaultValue: 'An welchen dieser Tage?' })}
-              </span>
-              <div className="flex min-w-0 flex-wrap gap-2">
-                {rhythm.weekdays.map(tag => {
-                  // Ein Zeitpunkt ohne eigene Tage gilt an allen — dann sind
-                  // alle Chips an, und das erste Abwaehlen macht daraus eine
-                  // ausdrueckliche Auswahl.
-                  const gewaehlt = slot.weekdays.length === 0 || slot.weekdays.includes(tag)
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      aria-pressed={gewaehlt}
-                      onClick={() => {
-                        const bisher = slot.weekdays.length === 0 ? [...rhythm.weekdays] : slot.weekdays
-                        const naechste = gewaehlt
-                          ? bisher.filter(eintrag => eintrag !== tag)
-                          : [...bisher, tag]
-                        // Wieder alle? Dann zurueck auf „an allen Tagen" statt
-                        // einer Liste, die dasselbe sagt.
-                        const alle = naechste.length === rhythm.weekdays.length
-                        changeSlot(index, { weekdays: alle ? [] : naechste })
-                      }}
-                      className={`min-h-11 min-w-11 cursor-pointer rounded-xl border px-3 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${gewaehlt
-                        ? 'border-sky-400/50 bg-sky-400/15 text-sky-200'
-                        : 'border-white/10 bg-white/[0.035] text-slate-500 hover:border-sky-400/25 hover:text-slate-300'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
           <div className="grid min-w-0 gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor={`stack-plan-time-${index}`} className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
@@ -604,19 +652,23 @@ export function IntakePlanEditor({
 
             {tracksQuantity && mengeUndEinheit(index)}
           </div>
-        </div>
-      ))}
+            </div>
+          ))}
 
-      {!onDemand && plan.slots.length < MAX_INTAKE_SLOTS && (
-        <button
-          type="button"
-          onClick={addSlot}
-          data-plan-add-slot
-          className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-200 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
-        >
-          <Plus aria-hidden="true" size={18} />
-          {t('my_stack_plan_add_slot', { defaultValue: 'Weitere Einnahme am selben Tag' })}
-        </button>
+          {/* Zaehlt den offenen Reiter: an einem Tag hoechstens vier, im Plan
+              so viele, wie die Tage zusammen ergeben. */}
+          {sichtbareSlots.length < MAX_INTAKE_SLOTS && (
+            <button
+              type="button"
+              onClick={addSlot}
+              data-plan-add-slot
+              className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-200 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
+            >
+              <Plus aria-hidden="true" size={18} />
+              {t('my_stack_plan_add_slot', { defaultValue: 'Weitere Einnahme am selben Tag' })}
+            </button>
+          )}
+        </div>
       )}
 
       {/* Der Zeitraum steht hinter den Zeitpunkten: erst was, dann ab wann. */}

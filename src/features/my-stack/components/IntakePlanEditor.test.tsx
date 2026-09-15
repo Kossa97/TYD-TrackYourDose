@@ -337,8 +337,10 @@ describe('IntakePlanEditor', () => {
       .getAttribute('aria-pressed')).toBe('true')
   })
 
-  it('lässt je Einnahme sagen, an welchen der gewählten Tage sie liegt', () => {
-    // Genau der gefragte Fall: montags zweimal, mittwochs einmal.
+  it('gibt jedem Tag einen Reiter und zählt darin die Einnahmen', () => {
+    // Genau der gefragte Fall: montags zweimal, mittwochs einmal. Jeder Tag
+    // gehoert sich selbst — der Reiter sagt schon von aussen, wie viele
+    // Einnahmen an ihm haengen.
     render(<PlanHarness
       trackingLevel="intake_only"
       dosageForm="tablet"
@@ -346,35 +348,77 @@ describe('IntakePlanEditor', () => {
         ...plan,
         rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Mi'] },
         slots: [
-          { routineGroup: 'morning', time: '08:00', dose: null, weekdays: [] },
-          { routineGroup: 'evening', time: '20:00', dose: null, weekdays: [] },
+          { routineGroup: 'morning', time: '08:00', dose: null, weekdays: ['Mo'] },
+          { routineGroup: 'evening', time: '20:00', dose: null, weekdays: ['Mo'] },
+          { routineGroup: 'morning', time: '08:00', dose: null, weekdays: ['Mi'] },
         ],
       }}
     />)
 
-    // Je Einnahme eine Chipreihe, beide Tage zunächst an: der Normalfall ist
-    // „an allen Tagen des Rhythmus".
-    const zweite = document.querySelector('[data-plan-slot-days="1"]') as HTMLElement
-    expect(zweite).not.toBeNull()
-    expect(within(zweite).getByRole('button', { name: 'Mi' }).getAttribute('aria-pressed'))
-      .toBe('true')
+    const reiter = document.querySelector('[data-plan-day-tabs]') as HTMLElement
+    expect(reiter).not.toBeNull()
+    expect([...reiter.querySelectorAll('[data-plan-day-tab]')].map(knopf => [
+      knopf.getAttribute('data-plan-day-tab'),
+      knopf.getAttribute('data-plan-day-count'),
+    ])).toEqual([['Mo', '2'], ['Mi', '1']])
 
-    // Mittwoch bei der Abendeinnahme abwählen → sie liegt nur noch montags.
-    fireEvent.click(within(zweite).getByRole('button', { name: 'Mi' }))
-    const danach = document.querySelector('[data-plan-slot-days="1"]') as HTMLElement
-    expect(within(danach).getByRole('button', { name: 'Mo' }).getAttribute('aria-pressed'))
-      .toBe('true')
-    expect(within(danach).getByRole('button', { name: 'Mi' }).getAttribute('aria-pressed'))
-      .toBe('false')
-    // Und der Satz sagt es: die Abendeinnahme trägt ihren Tag.
-    expect(document.querySelector('[data-plan-summary]')?.textContent).toContain('Mo · Abends 20:00')
+    // Montag ist offen: seine beiden Einnahmen stehen da, die mittwochs nicht.
+    const karten = document.querySelectorAll('[data-plan-slot]')
+    expect(karten).toHaveLength(2)
+    expect((within(karten[1] as HTMLElement).getByRole('radio', { name: 'Abends' }) as HTMLInputElement).checked)
+      .toBe(true)
+
+    // Auf Mittwoch wechseln: eine Einnahme, morgens, und kein Abend.
+    const mittwoch = within(reiter).getByRole('tab', { name: 'Mi: 1 Einnahmen' })
+    fireEvent.click(mittwoch)
+    expect(mittwoch.getAttribute('aria-selected')).toBe('true')
+    const amMittwoch = document.querySelectorAll('[data-plan-slot]')
+    expect(amMittwoch).toHaveLength(1)
+    const erste = within(amMittwoch[0] as HTMLElement)
+    expect((erste.getByRole('radio', { name: 'Morgens' }) as HTMLInputElement).checked).toBe(true)
+    expect((erste.getByRole('radio', { name: 'Abends' }) as HTMLInputElement).checked).toBe(false)
+
+    // Der Satz nennt die Tage, weil sie sich unterscheiden.
+    const satz = document.querySelector('[data-plan-summary]')?.textContent ?? ''
+    expect(satz).toContain('Mo: Morgens 08:00 + Abends 20:00')
+    expect(satz).toContain('Mi: Morgens 08:00')
   })
 
-  it('zeigt die Tageswahl nur, wo es Wochentage gibt', () => {
-    // Bei „täglich" oder „alle 3 Wochen" gibt es keine Tage, unter denen man
-    // wählen könnte — dort wäre die Chipreihe eine Frage ohne Gegenstand.
+  it('legt eine weitere Einnahme im offenen Reiter an, nicht im ganzen Plan', () => {
+    const onChange = vi.fn()
+    render(
+      <IntakePlanEditor
+        trackingLevel="intake_only"
+        dosageForm="tablet"
+        plan={{
+          ...plan,
+          rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Fr'] },
+          slots: [
+            { routineGroup: 'morning', time: '08:00', dose: null, weekdays: ['Mo'] },
+            { routineGroup: 'morning', time: '08:00', dose: null, weekdays: ['Fr'] },
+          ],
+        }}
+        errors={{}}
+        onChange={onChange}
+      />,
+    )
+
+    // Freitag öffnen, dann eine zweite Einnahme anlegen: sie gehört Freitag.
+    fireEvent.click(screen.getByRole('tab', { name: 'Fr: 1 Einnahmen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Weitere Einnahme am selben Tag' }))
+
+    const slots = onChange.mock.calls.at(-1)?.[0].slots as IntakePlanDraft['slots']
+    expect(slots).toHaveLength(3)
+    expect(slots[2].weekdays).toEqual(['Fr'])
+    // Und sie sitzt auf der nächsten freien Tageszeit DIESES Tages.
+    expect(slots[2].routineGroup).toBe('midday')
+  })
+
+  it('zeigt die Reiter nur, wo es Wochentage gibt', () => {
+    // Bei „täglich" oder „alle 3 Wochen" gibt es keine Tage, zwischen denen
+    // man wechseln könnte — dort wären Reiter eine Frage ohne Gegenstand.
     render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
-    expect(document.querySelector('[data-plan-slot-days]')).toBeNull()
+    expect(document.querySelector('[data-plan-day-tabs]')).toBeNull()
     cleanup()
 
     // `PlanHarness` haelt den Plan in eigenem State — ein `rerender` mit
@@ -384,7 +428,7 @@ describe('IntakePlanEditor', () => {
       dosageForm="tablet"
       initialPlan={{ ...plan, rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo'] } }}
     />)
-    expect(document.querySelector('[data-plan-slot-days]')).not.toBeNull()
+    expect(document.querySelector('[data-plan-day-tabs]')).not.toBeNull()
   })
 
   it('nimmt einen Zeitpunkt wieder weg, aber nie den letzten', () => {

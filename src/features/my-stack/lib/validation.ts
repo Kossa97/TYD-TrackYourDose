@@ -179,9 +179,18 @@ export function validateIntakePlan(
   if (!isOnDemandRhythm(plan.rhythm)) {
     const slotFehler: string[] = plan.slots.map(slot => (slot.routineGroup ? '' : 'required'))
     if (plan.slots.length === 0) slotFehler.push('required')
-    if (plan.slots.length > MAX_INTAKE_SLOTS) {
-      slotFehler[MAX_INTAKE_SLOTS] = 'too_many'
-    }
+    // Vier Einnahmen an EINEM Tag sind die Grenze, nicht vier im ganzen Plan:
+    // „montags dreimal, freitags zweimal" sind fuenf Zeitpunkte und trotzdem
+    // an keinem Tag zu viele.
+    const jeTag = new Map<string, number>()
+    plan.slots.forEach((slot, index) => {
+      const tage = slot.weekdays.length > 0 ? slot.weekdays : ['*']
+      tage.forEach(tag => {
+        const anzahl = (jeTag.get(tag) ?? 0) + 1
+        jeTag.set(tag, anzahl)
+        if (anzahl > MAX_INTAKE_SLOTS) slotFehler[index] = 'too_many'
+      })
+    })
 
     // Zwei Zeitpunkte, die sich in nichts unterscheiden, sind einer. Dieselbe
     // Tageszeit zweimal ist erlaubt — aber dann mit verschiedenen Uhrzeiten

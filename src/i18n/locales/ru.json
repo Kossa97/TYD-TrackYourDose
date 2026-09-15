@@ -1158,7 +1158,8 @@
   "my_stack_rhythm_summary_every_week": "Каждую неделю",
   "my_stack_rhythm_summary_every_month": "Каждый месяц",
   "my_stack_rhythm_summary_cycle": "{{an}} дней приёма, {{aus}} дней перерыва",
-  "my_stack_plan_slot_days": "В какие из этих дней?",
   "my_stack_plan_slot_unknown_day": "Этот приём приходится на день, который план не выбирает.",
-  "my_stack_plan_day_without_intake": "Хотя бы в один выбранный день нет ни одного приёма."
+  "my_stack_plan_day_without_intake": "Хотя бы в один выбранный день нет ни одного приёма.",
+  "my_stack_plan_day_tabs": "Дни плана",
+  "my_stack_plan_day_tab": "{{day}}: {{count}} приёмов"
 }

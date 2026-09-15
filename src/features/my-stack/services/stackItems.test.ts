@@ -290,7 +290,8 @@ describe('stack item service', () => {
   })
 
   it('schreibt die Wochentage je Einnahmezeitpunkt', async () => {
-    // „Mo|Mi,Mo" heißt: morgens an Mo und Mi, abends nur an Mo.
+    // Montags zweimal, mittwochs einmal — so, wie die Tagesreiter es angeben:
+    // jeder Zeitpunkt gehört genau einem Tag.
     const mockClient = setupRpcClient()
 
     await saveStackItemSetup(mockClient.client, {
@@ -299,8 +300,9 @@ describe('stack item service', () => {
         ...completeSetupDraft.plan,
         rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Mi'] },
         slots: [
-          { routineGroup: 'morning', time: '08:00', dose: 1000, weekdays: ['Mo', 'Mi'] },
+          { routineGroup: 'morning', time: '08:00', dose: 1000, weekdays: ['Mo'] },
           { routineGroup: 'evening', time: '20:00', dose: 1000, weekdays: ['Mo'] },
+          { routineGroup: 'morning', time: '08:00', dose: 1000, weekdays: ['Mi'] },
         ],
       },
     })
@@ -309,8 +311,9 @@ describe('stack item service', () => {
       p_plan: expect.objectContaining({
         frequency: 'Wochentage wählen',
         schedule_days: ['Mo', 'Mi'],
-        intake_time: 'morgens,abends',
-        slot_days: 'Mo|Mi,Mo',
+        intake_time: 'morgens,abends,morgens',
+        intake_time_custom: '08:00,20:00,08:00',
+        slot_days: 'Mo,Mo,Mi',
       }),
     }))
   })

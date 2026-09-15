@@ -180,6 +180,43 @@ describe('validateStackItemDraft', () => {
     }, 'complete').scheduleDays).toBeUndefined()
   })
 
+  it('zählt die Obergrenze je Tag, nicht über den ganzen Plan', () => {
+    // „Montags dreimal, freitags zweimal" sind fünf Zeitpunkte und an keinem
+    // Tag zu viele. Vorher war bei vier im Plan Schluss — ein Plan über
+    // mehrere Tage stieß damit an eine Grenze, die es gar nicht gibt.
+    const moFr = {
+      ...validPlan,
+      rhythm: { ...emptyRhythm(), kind: 'weekdays' as const, weekdays: ['Mo', 'Fr'] },
+    }
+    const slot = (routineGroup: 'morning' | 'midday' | 'evening', time: string, tag: string) => ({
+      routineGroup, time, dose: 1, weekdays: [tag],
+    })
+
+    expect(validateIntakePlan({
+      ...moFr,
+      slots: [
+        slot('morning', '08:00', 'Mo'),
+        slot('midday', '12:00', 'Mo'),
+        slot('evening', '20:00', 'Mo'),
+        slot('morning', '08:00', 'Fr'),
+        slot('evening', '20:00', 'Fr'),
+      ],
+    }, 'complete').slots).toBeUndefined()
+
+    // Fünf an EINEM Tag sind zu viele — und der Hinweis hängt am fünften.
+    expect(validateIntakePlan({
+      ...moFr,
+      slots: [
+        slot('morning', '06:00', 'Mo'),
+        slot('morning', '08:00', 'Mo'),
+        slot('midday', '12:00', 'Mo'),
+        slot('evening', '20:00', 'Mo'),
+        slot('evening', '23:00', 'Mo'),
+        slot('morning', '08:00', 'Fr'),
+      ],
+    }, 'complete').slots).toEqual(['', '', '', '', 'too_many', ''])
+  })
+
   it('weist einen Zeitpunkt an einem Tag ab, den der Plan nicht auswählt', () => {
     expect(validateIntakePlan({
       ...validPlan,

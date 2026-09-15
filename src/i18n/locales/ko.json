@@ -1155,7 +1155,8 @@
   "my_stack_rhythm_summary_every_week": "매주",
   "my_stack_rhythm_summary_every_month": "매월",
   "my_stack_rhythm_summary_cycle": "복용 {{an}}일, 휴약 {{aus}}일",
-  "my_stack_plan_slot_days": "이 중 어떤 요일에?",
   "my_stack_plan_slot_unknown_day": "이 복용은 계획이 선택하지 않은 요일에 있습니다.",
-  "my_stack_plan_day_without_intake": "선택한 요일 중 복용이 없는 날이 있습니다."
+  "my_stack_plan_day_without_intake": "선택한 요일 중 복용이 없는 날이 있습니다.",
+  "my_stack_plan_day_tabs": "계획 요일",
+  "my_stack_plan_day_tab": "{{day}}: {{count}}회"
 }
