@@ -1128,7 +1128,6 @@
   "my_stack_plan_end_date_before_start": "Tanggal akhir sebelum tanggal mulai.",
   "my_stack_plan_end_open": "Terbuka",
   "my_stack_plan_on_demand_hint": "Tanpa waktu tetap: tidak ada yang jatuh tempo atau terlewat. Anda mencatat setelah diminum.",
-  "my_stack_plan_add_slot": "Konsumsi lain di hari yang sama",
   "my_stack_plan_remove_slot": "Hapus waktu konsumsi",
   "my_stack_plan_slot_duplicate": "Waktu itu sudah ada — beri jam tersendiri.",
   "my_stack_plan_rhythm": "Hari apa saja?",
@@ -1168,5 +1167,8 @@
   "my_stack_weekday_do": "Kamis",
   "my_stack_weekday_fr": "Jumat",
   "my_stack_weekday_sa": "Sabtu",
-  "my_stack_weekday_so": "Minggu"
+  "my_stack_weekday_so": "Minggu",
+  "my_stack_plan_day_question_any": "Seberapa sering kamu meminumnya per hari?",
+  "my_stack_plan_slot_fewer": "Satu asupan lebih sedikit",
+  "my_stack_plan_slot_more": "Satu asupan lebih banyak"
 }

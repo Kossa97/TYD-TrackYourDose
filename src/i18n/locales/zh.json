@@ -1127,7 +1127,6 @@
   "my_stack_plan_end_date_before_start": "结束日期早于开始日期。",
   "my_stack_plan_end_open": "未设定",
   "my_stack_plan_on_demand_hint": "没有固定时间：不会到期，也不会算作漏服。服用之后再记录。",
-  "my_stack_plan_add_slot": "同一天再服一次",
   "my_stack_plan_remove_slot": "移除服用时间",
   "my_stack_plan_slot_duplicate": "该时间点已存在 — 请为它设定自己的时刻。",
   "my_stack_plan_rhythm": "在哪些天？",
@@ -1167,5 +1166,8 @@
   "my_stack_weekday_do": "周四",
   "my_stack_weekday_fr": "周五",
   "my_stack_weekday_sa": "周六",
-  "my_stack_weekday_so": "周日"
+  "my_stack_weekday_so": "周日",
+  "my_stack_plan_day_question_any": "你每天服用几次？",
+  "my_stack_plan_slot_fewer": "减少一次",
+  "my_stack_plan_slot_more": "增加一次"
 }

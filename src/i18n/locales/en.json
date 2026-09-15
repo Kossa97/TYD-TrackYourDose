@@ -1276,7 +1276,6 @@
   "my_stack_plan_end_date_before_start": "The end is before the start.",
   "my_stack_plan_end_open": "Open",
   "my_stack_plan_on_demand_hint": "No fixed time: nothing becomes due, nothing counts as missed. You log the intake once it has happened.",
-  "my_stack_plan_add_slot": "Another intake on the same day",
   "my_stack_plan_remove_slot": "Remove intake time",
   "my_stack_plan_slot_duplicate": "That time is already listed — give it its own clock time.",
   "my_stack_plan_rhythm": "Which days?",
@@ -1316,5 +1315,8 @@
   "my_stack_weekday_do": "Thursdays",
   "my_stack_weekday_fr": "Fridays",
   "my_stack_weekday_sa": "Saturdays",
-  "my_stack_weekday_so": "Sundays"
+  "my_stack_weekday_so": "Sundays",
+  "my_stack_plan_day_question_any": "How often do you take it per day?",
+  "my_stack_plan_slot_fewer": "One intake fewer",
+  "my_stack_plan_slot_more": "One intake more"
 }

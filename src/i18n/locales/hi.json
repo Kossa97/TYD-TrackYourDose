@@ -1128,7 +1128,6 @@
   "my_stack_plan_end_date_before_start": "समाप्ति तिथि प्रारंभ से पहले है।",
   "my_stack_plan_end_open": "खुला",
   "my_stack_plan_on_demand_hint": "कोई निश्चित समय नहीं: न कुछ देय होता है, न छूटा गिना जाता है। सेवन के बाद दर्ज करें।",
-  "my_stack_plan_add_slot": "उसी दिन एक और सेवन",
   "my_stack_plan_remove_slot": "सेवन समय हटाएँ",
   "my_stack_plan_slot_duplicate": "यह समय पहले से है — इसे अपना समय दें।",
   "my_stack_plan_rhythm": "किन दिनों?",
@@ -1168,5 +1167,8 @@
   "my_stack_weekday_do": "गुरुवार",
   "my_stack_weekday_fr": "शुक्रवार",
   "my_stack_weekday_sa": "शनिवार",
-  "my_stack_weekday_so": "रविवार"
+  "my_stack_weekday_so": "रविवार",
+  "my_stack_plan_day_question_any": "आप इसे दिन में कितनी बार लेते हैं?",
+  "my_stack_plan_slot_fewer": "एक खुराक कम",
+  "my_stack_plan_slot_more": "एक खुराक अधिक"
 }

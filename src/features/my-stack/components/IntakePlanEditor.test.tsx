@@ -342,7 +342,7 @@ describe('IntakePlanEditor', () => {
 
     expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(1)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Weitere Einnahme am selben Tag' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Eine Einnahme mehr' }))
     expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(2)
     expect(screen.getByText('Einnahme 1')).toBeTruthy()
     expect(screen.getByText('Einnahme 2')).toBeTruthy()
@@ -425,7 +425,7 @@ describe('IntakePlanEditor', () => {
 
     // Freitag öffnen, dann eine zweite Einnahme anlegen: sie gehört Freitag.
     fireEvent.click(screen.getByRole('tab', { name: 'Fr: 1 Einnahmen' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Weitere Einnahme am selben Tag' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Eine Einnahme mehr' }))
 
     const slots = onChange.mock.calls.at(-1)?.[0].slots as IntakePlanDraft['slots']
     expect(slots).toHaveLength(3)
@@ -521,7 +521,7 @@ describe('IntakePlanEditor', () => {
     // Bei einem einzigen Zeitpunkt gibt es nichts zu entfernen.
     expect(screen.queryByRole('button', { name: 'Einnahmezeitpunkt entfernen' })).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Weitere Einnahme am selben Tag' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Eine Einnahme mehr' }))
     const entfernen = screen.getAllByRole('button', { name: 'Einnahmezeitpunkt entfernen' })
     expect(entfernen).toHaveLength(2)
 
@@ -530,15 +530,27 @@ describe('IntakePlanEditor', () => {
     expect(screen.queryByRole('button', { name: 'Einnahmezeitpunkt entfernen' })).toBeNull()
   })
 
-  it('hört bei vier Einnahmen am Tag auf', () => {
+  it('zählt am Zähler hoch und runter und hört bei vier auf', () => {
     render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
 
-    for (let i = 0; i < 3; i += 1) {
-      fireEvent.click(screen.getByRole('button', { name: 'Weitere Einnahme am selben Tag' }))
-    }
+    const mehr = () => screen.getByRole('button', { name: 'Eine Einnahme mehr' }) as HTMLButtonElement
+    const weniger = () => screen.getByRole('button', { name: 'Eine Einnahme weniger' }) as HTMLButtonElement
+    const anzahl = () => document.querySelector('[data-plan-slot-count]')?.textContent
+
+    // Bei einer Einnahme gibt es nichts wegzunehmen.
+    expect(anzahl()).toBe('1')
+    expect(weniger().disabled).toBe(true)
+
+    for (let i = 0; i < 3; i += 1) fireEvent.click(mehr())
 
     expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(4)
-    expect(screen.queryByRole('button', { name: 'Weitere Einnahme am selben Tag' })).toBeNull()
+    expect(anzahl()).toBe('4')
+    expect(mehr().disabled).toBe(true)
+
+    // Und wieder zurück: der Zähler nimmt die letzte Einnahme weg.
+    fireEvent.click(weniger())
+    expect(document.querySelectorAll('[data-plan-slot]')).toHaveLength(3)
+    expect(mehr().disabled).toBe(false)
   })
 
   it('bietet bei „Bei Bedarf" gar keinen Zeitpunkt an', () => {
@@ -548,7 +560,7 @@ describe('IntakePlanEditor', () => {
       initialPlan={{ ...plan, rhythm: { ...emptyRhythm(), kind: 'on_demand' }, slots: [] }}
     />)
 
-    expect(screen.queryByRole('button', { name: 'Weitere Einnahme am selben Tag' })).toBeNull()
+    expect(document.querySelector('[data-plan-slot-count]')).toBeNull()
   })
 
   it('omits planned quantity for intake-only tracking', () => {

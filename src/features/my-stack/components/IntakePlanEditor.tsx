@@ -1,4 +1,4 @@
-import { BellRing, CalendarDays, CalendarRange, Clock, HandHelping, Moon, Plus, Repeat, Sun, Sunrise, Trash2 } from 'lucide-react'
+import { BellRing, CalendarDays, CalendarRange, Clock, HandHelping, Minus, Moon, Plus, Repeat, Sun, Sunrise, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -243,6 +243,13 @@ export function IntakePlanEditor({
     if (amTag(offenerTag).length >= MAX_INTAKE_SLOTS) return
     const neuerSlot = naechsterSlot(amTag(offenerTag), offenerTag ? [offenerTag] : [])
     onChange({ slots: [...plan.slots, neuerSlot] })
+  }
+
+  // Der Zaehler nimmt die LETZTE Einnahme des offenen Tages weg. Eine
+  // bestimmte trifft man weiterhin ueber den Papierkorb an ihrer Karte.
+  function removeLastSlot(): void {
+    const letzte = [...sichtbareSlots].pop()
+    if (letzte && sichtbareSlots.length > 1) removeSlot(letzte.index)
   }
 
   function removeSlot(index: number): void {
@@ -604,17 +611,50 @@ export function IntakePlanEditor({
           {/* Die Frage nennt den Tag, den man gerade offen hat. Ohne sie waere
               der Reiter die einzige Stelle, die sagt, wovon die Karten
               darunter handeln — und den liest man beim Tippen nicht mehr. */}
-          {offenerTag && (
-            <h4 data-plan-day-question className="text-sm font-semibold text-slate-200">
-              {t('my_stack_plan_day_question', {
-                defaultValue: 'Wie oft nimmst du {{day}} ein?',
-                day: t(
-                  WEEKDAY_LABELS[offenerTag]?.labelKey ?? '',
-                  { defaultValue: WEEKDAY_LABELS[offenerTag]?.defaultValue ?? offenerTag },
-                ),
-              })}
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+            <h4 data-plan-day-question className="min-w-0 text-sm font-semibold text-slate-200">
+              {offenerTag
+                ? t('my_stack_plan_day_question', {
+                    defaultValue: 'Wie oft nimmst du {{day}} ein?',
+                    day: t(
+                      WEEKDAY_LABELS[offenerTag]?.labelKey ?? '',
+                      { defaultValue: WEEKDAY_LABELS[offenerTag]?.defaultValue ?? offenerTag },
+                    ),
+                  })
+                : t('my_stack_plan_day_question_any', { defaultValue: 'Wie oft nimmst du es am Tag ein?' })}
             </h4>
-          )}
+            {/* Die Antwort als Zaehler, direkt an der Frage: eine Zahl, zwei
+                Knoepfe. Vorher stand unter den Karten ein „+ Weitere Einnahme",
+                und wie viele es schon sind, musste man abzaehlen. */}
+            <div data-plan-slot-count className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={removeLastSlot}
+                disabled={sichtbareSlots.length <= 1}
+                data-plan-slot-fewer
+                aria-label={String(t('my_stack_plan_slot_fewer', { defaultValue: 'Eine Einnahme weniger' }))}
+                className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-slate-300 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/10 disabled:hover:text-slate-300 enabled:cursor-pointer motion-reduce:transition-none"
+              >
+                <Minus aria-hidden="true" size={18} />
+              </button>
+              <span
+                aria-live="polite"
+                className="min-w-8 text-center text-base font-semibold tabular-nums text-slate-100"
+              >
+                {sichtbareSlots.length}
+              </span>
+              <button
+                type="button"
+                onClick={addSlot}
+                disabled={sichtbareSlots.length >= MAX_INTAKE_SLOTS}
+                data-plan-slot-more
+                aria-label={String(t('my_stack_plan_slot_more', { defaultValue: 'Eine Einnahme mehr' }))}
+                className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-slate-300 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/10 disabled:hover:text-slate-300 enabled:cursor-pointer motion-reduce:transition-none"
+              >
+                <Plus aria-hidden="true" size={18} />
+              </button>
+            </div>
+          </div>
           {sichtbareSlots.map(({ slot, index }) => (
         <div key={index} data-plan-slot={index} className="min-w-0 space-y-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
           {sichtbareSlots.length > 1 && (
@@ -698,19 +738,6 @@ export function IntakePlanEditor({
             </div>
           ))}
 
-          {/* Zaehlt den offenen Reiter: an einem Tag hoechstens vier, im Plan
-              so viele, wie die Tage zusammen ergeben. */}
-          {sichtbareSlots.length < MAX_INTAKE_SLOTS && (
-            <button
-              type="button"
-              onClick={addSlot}
-              data-plan-add-slot
-              className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-200 transition-colors duration-200 hover:border-sky-400/25 hover:text-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
-            >
-              <Plus aria-hidden="true" size={18} />
-              {t('my_stack_plan_add_slot', { defaultValue: 'Weitere Einnahme am selben Tag' })}
-            </button>
-          )}
         </div>
       )}
 

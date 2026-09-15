@@ -1130,7 +1130,6 @@
   "my_stack_plan_end_date_before_start": "Дата окончания раньше даты начала.",
   "my_stack_plan_end_open": "Не задано",
   "my_stack_plan_on_demand_hint": "Без фиксированного времени: ничего не наступает и не считается пропущенным. Вы отмечаете приём после него.",
-  "my_stack_plan_add_slot": "Ещё один приём в тот же день",
   "my_stack_plan_remove_slot": "Удалить время приёма",
   "my_stack_plan_slot_duplicate": "Такое время уже есть — задайте ему собственные часы.",
   "my_stack_plan_rhythm": "В какие дни?",
@@ -1170,5 +1169,8 @@
   "my_stack_weekday_do": "четвергам",
   "my_stack_weekday_fr": "пятницам",
   "my_stack_weekday_sa": "субботам",
-  "my_stack_weekday_so": "воскресеньям"
+  "my_stack_weekday_so": "воскресеньям",
+  "my_stack_plan_day_question_any": "Сколько раз в день вы принимаете?",
+  "my_stack_plan_slot_fewer": "На один приём меньше",
+  "my_stack_plan_slot_more": "На один приём больше"
 }

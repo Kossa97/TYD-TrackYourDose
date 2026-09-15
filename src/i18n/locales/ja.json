@@ -1128,7 +1128,6 @@
   "my_stack_plan_end_date_before_start": "終了日が開始日より前です。",
   "my_stack_plan_end_open": "未設定",
   "my_stack_plan_on_demand_hint": "決まった時刻なし: 期限も飲み忘れも発生しません。服用したあとに記録します。",
-  "my_stack_plan_add_slot": "同じ日にもう一回",
   "my_stack_plan_remove_slot": "服用タイミングを削除",
   "my_stack_plan_slot_duplicate": "そのタイミングは既にあります。個別の時刻を設定してください。",
   "my_stack_plan_rhythm": "どの曜日に？",
@@ -1168,5 +1167,8 @@
   "my_stack_weekday_do": "木曜日",
   "my_stack_weekday_fr": "金曜日",
   "my_stack_weekday_sa": "土曜日",
-  "my_stack_weekday_so": "日曜日"
+  "my_stack_weekday_so": "日曜日",
+  "my_stack_plan_day_question_any": "1日に何回飲みますか？",
+  "my_stack_plan_slot_fewer": "1回減らす",
+  "my_stack_plan_slot_more": "1回増やす"
 }

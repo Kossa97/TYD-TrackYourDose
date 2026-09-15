@@ -1276,7 +1276,6 @@
   "my_stack_plan_end_date_before_start": "Das Ende liegt vor dem Start.",
   "my_stack_plan_end_open": "Offen",
   "my_stack_plan_on_demand_hint": "Kein fester Zeitpunkt: nichts wird fällig, nichts gilt als verpasst. Du trägst die Einnahme ein, wenn sie stattgefunden hat.",
-  "my_stack_plan_add_slot": "Weitere Einnahme am selben Tag",
   "my_stack_plan_remove_slot": "Einnahmezeitpunkt entfernen",
   "my_stack_plan_slot_duplicate": "Dieser Zeitpunkt steht schon da — gib ihm eine eigene Uhrzeit.",
   "my_stack_plan_rhythm": "An welchen Tagen?",
@@ -1316,5 +1315,8 @@
   "my_stack_weekday_do": "donnerstags",
   "my_stack_weekday_fr": "freitags",
   "my_stack_weekday_sa": "samstags",
-  "my_stack_weekday_so": "sonntags"
+  "my_stack_weekday_so": "sonntags",
+  "my_stack_plan_day_question_any": "Wie oft nimmst du es am Tag ein?",
+  "my_stack_plan_slot_fewer": "Eine Einnahme weniger",
+  "my_stack_plan_slot_more": "Eine Einnahme mehr"
 }

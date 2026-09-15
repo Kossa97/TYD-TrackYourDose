@@ -1127,7 +1127,6 @@
   "my_stack_plan_end_date_before_start": "종료일이 시작일보다 앞섭니다.",
   "my_stack_plan_end_open": "미정",
   "my_stack_plan_on_demand_hint": "정해진 시각 없음: 예정도 누락도 생기지 않습니다. 복용한 뒤에 기록합니다.",
-  "my_stack_plan_add_slot": "같은 날 한 번 더",
   "my_stack_plan_remove_slot": "복용 시점 삭제",
   "my_stack_plan_slot_duplicate": "이미 있는 시점입니다 — 고유한 시각을 지정하세요.",
   "my_stack_plan_rhythm": "어떤 날에?",
@@ -1167,5 +1166,8 @@
   "my_stack_weekday_do": "목요일",
   "my_stack_weekday_fr": "금요일",
   "my_stack_weekday_sa": "토요일",
-  "my_stack_weekday_so": "일요일"
+  "my_stack_weekday_so": "일요일",
+  "my_stack_plan_day_question_any": "하루에 몇 번 복용하나요?",
+  "my_stack_plan_slot_fewer": "한 번 줄이기",
+  "my_stack_plan_slot_more": "한 번 늘리기"
 }

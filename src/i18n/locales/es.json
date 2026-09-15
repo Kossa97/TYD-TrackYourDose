@@ -1128,7 +1128,6 @@
   "my_stack_plan_end_date_before_start": "El fin es anterior al inicio.",
   "my_stack_plan_end_open": "Abierto",
   "my_stack_plan_on_demand_hint": "Sin hora fija: nada vence ni cuenta como omitido. Registras la toma cuando ya ha ocurrido.",
-  "my_stack_plan_add_slot": "Otra toma el mismo día",
   "my_stack_plan_remove_slot": "Quitar momento de toma",
   "my_stack_plan_slot_duplicate": "Ese momento ya está — dale su propia hora.",
   "my_stack_plan_rhythm": "¿Qué días?",
@@ -1168,5 +1167,8 @@
   "my_stack_weekday_do": "jueves",
   "my_stack_weekday_fr": "viernes",
   "my_stack_weekday_sa": "sábados",
-  "my_stack_weekday_so": "domingos"
+  "my_stack_weekday_so": "domingos",
+  "my_stack_plan_day_question_any": "¿Con qué frecuencia lo tomas al día?",
+  "my_stack_plan_slot_fewer": "Una toma menos",
+  "my_stack_plan_slot_more": "Una toma más"
 }
