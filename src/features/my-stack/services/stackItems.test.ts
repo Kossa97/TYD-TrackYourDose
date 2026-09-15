@@ -56,7 +56,7 @@ const completeSetupDraft: StackItemSetupDraft = {
     rhythm: emptyRhythm(),
     startDate: '2026-08-17',
     endDate: null,
-    slots: [{ routineGroup: 'morning', time: '08:30', dose: 5000 }],
+    slots: [{ routineGroup: 'morning', time: '08:30', dose: 5000, weekdays: [] }],
     reminders: ['on_time'],
   },
   inventory: {
@@ -182,9 +182,9 @@ describe('stack item service', () => {
       plan: {
         ...completeSetupDraft.plan,
         slots: [
-          { routineGroup: 'morning', time: '08:00', dose: 1000 },
-          { routineGroup: 'midday', time: null, dose: 1000 },
-          { routineGroup: 'evening', time: '20:00', dose: 500 },
+          { routineGroup: 'morning', time: '08:00', dose: 1000, weekdays: [] },
+          { routineGroup: 'midday', time: null, dose: 1000, weekdays: [] },
+          { routineGroup: 'evening', time: '20:00', dose: 500, weekdays: [] },
         ],
       },
     })
@@ -214,7 +214,7 @@ describe('stack item service', () => {
         ...completeSetupDraft.plan,
         rhythm: { ...emptyRhythm(), kind: 'on_demand' },
         // Ein Zeitpunkt bleibt: er trägt die Menge je Einnahme.
-        slots: [{ routineGroup: 'morning', time: '08:30', dose: 400 }],
+        slots: [{ routineGroup: 'morning', time: '08:30', dose: 400, weekdays: [] }],
       },
     })
 
@@ -278,14 +278,51 @@ describe('stack item service', () => {
       plan: {
         ...completeSetupDraft.plan,
         slots: [
-          { routineGroup: 'morning', time: '08:00', dose: 1000 },
-          { routineGroup: 'evening', time: '20:00', dose: 1000 },
+          { routineGroup: 'morning', time: '08:00', dose: 1000, weekdays: [] },
+          { routineGroup: 'evening', time: '20:00', dose: 1000, weekdays: [] },
         ],
       },
     })
 
     expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
       p_plan: expect.objectContaining({ slot_doses: null, dose: 1000 }),
+    }))
+  })
+
+  it('schreibt die Wochentage je Einnahmezeitpunkt', async () => {
+    // „Mo|Mi,Mo" heißt: morgens an Mo und Mi, abends nur an Mo.
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, {
+      ...completeSetupDraft,
+      plan: {
+        ...completeSetupDraft.plan,
+        rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Mi'] },
+        slots: [
+          { routineGroup: 'morning', time: '08:00', dose: 1000, weekdays: ['Mo', 'Mi'] },
+          { routineGroup: 'evening', time: '20:00', dose: 1000, weekdays: ['Mo'] },
+        ],
+      },
+    })
+
+    expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
+      p_plan: expect.objectContaining({
+        frequency: 'Wochentage wählen',
+        schedule_days: ['Mo', 'Mi'],
+        intake_time: 'morgens,abends',
+        slot_days: 'Mo|Mi,Mo',
+      }),
+    }))
+  })
+
+  it('lässt slot_days leer, wenn alle Zeitpunkte an allen Tagen liegen', async () => {
+    // Sonst trüge jeder gewöhnliche Plan eine Spalte mit, die nichts sagt.
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, completeSetupDraft)
+
+    expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
+      p_plan: expect.objectContaining({ slot_days: null }),
     }))
   })
 

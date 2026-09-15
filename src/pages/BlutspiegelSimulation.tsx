@@ -895,7 +895,7 @@ export function BlutspiegelSimulation() {
       supabase
         .from('cycles')
         .select(`id, stack_item_id, start_date, end_date, dose, unit, method,
-          frequency, x_days_interval, interval_unit, cycle_on_days, cycle_off_days, slot_doses, schedule_days, intake_time, intake_time_custom, schedule_history,
+          frequency, x_days_interval, interval_unit, cycle_on_days, cycle_off_days, slot_doses, slot_days, schedule_days, intake_time, intake_time_custom, schedule_history,
           stack_items ( id, display_name, tracking_level, pk_profile_method,
             ingredients:stack_item_ingredients ( position,
               substance_catalog ( pk_profile_id,

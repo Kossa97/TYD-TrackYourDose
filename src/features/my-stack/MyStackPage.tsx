@@ -446,12 +446,15 @@ function cycleAsIntakePlanDraft(cycle: Cycle, day: Date): IntakePlanDraft {
   // Die Mengen je Zeitpunkt. Steht dort nichts, gilt ueberall die eine Menge
   // des Zyklus — so war es bei jedem Plan vor dieser Runde.
   const slotDoses = (segment.slot_doses ?? '').split(',').map(wert => wert.trim())
+  // Leer heisst „an jedem Tag" — so stand es in jedem Plan vor dieser Runde.
+  const slotDays = (segment.slot_days ?? '').split(',')
   const slots: IntakeSlotDraft[] = slotKeys.map((key, index) => {
     const eigene = Number(slotDoses[index])
     return {
       routineGroup: INTAKE_TIME_TO_ROUTINE_GROUP[key] ?? 'morning',
       time: slotTimes[index] || null,
       dose: (slotDoses[index] ?? '') !== '' && Number.isFinite(eigene) ? eigene : segment.dose,
+      weekdays: (slotDays[index] ?? '').split('|').map(tag => tag.trim()).filter(Boolean),
     }
   })
   return {
@@ -469,7 +472,7 @@ function cycleAsIntakePlanDraft(cycle: Cycle, day: Date): IntakePlanDraft {
     endDate: cycle.end_date,
     slots: slots.length > 0
       ? slots
-      : [{ routineGroup: 'morning' as const, time: null, dose: segment.dose }],
+      : [{ routineGroup: 'morning' as const, time: null, dose: segment.dose, weekdays: [] }],
     reminders: cycle.reminder && cycle.reminder !== 'none'
       ? cycle.reminder.split(',').filter(Boolean)
       : [],

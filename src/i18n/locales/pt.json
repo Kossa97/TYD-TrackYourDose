@@ -1155,5 +1155,8 @@
   "my_stack_rhythm_summary_interval": "A cada {{n}} {{einheit}}",
   "my_stack_rhythm_summary_every_week": "Todas as semanas",
   "my_stack_rhythm_summary_every_month": "Todos os meses",
-  "my_stack_rhythm_summary_cycle": "{{an}} dias de toma, {{aus}} dias de pausa"
+  "my_stack_rhythm_summary_cycle": "{{an}} dias de toma, {{aus}} dias de pausa",
+  "my_stack_plan_slot_days": "Em quais destes dias?",
+  "my_stack_plan_slot_unknown_day": "Esta toma cai num dia que o plano não seleciona.",
+  "my_stack_plan_day_without_intake": "Pelo menos um dia selecionado não tem qualquer toma."
 }

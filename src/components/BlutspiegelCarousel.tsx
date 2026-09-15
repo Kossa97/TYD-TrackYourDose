@@ -570,6 +570,7 @@ export function BlutspiegelCarousel() {
           cycle_on_days,
           cycle_off_days,
           slot_doses,
+          slot_days,
           schedule_days,
           intake_time,
           intake_time_custom,

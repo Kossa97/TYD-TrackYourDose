@@ -1155,5 +1155,8 @@
   "my_stack_rhythm_summary_interval": "Tous les {{n}} {{einheit}}",
   "my_stack_rhythm_summary_every_week": "Chaque semaine",
   "my_stack_rhythm_summary_every_month": "Chaque mois",
-  "my_stack_rhythm_summary_cycle": "{{an}} jours de prise, {{aus}} jours de pause"
+  "my_stack_rhythm_summary_cycle": "{{an}} jours de prise, {{aus}} jours de pause",
+  "my_stack_plan_slot_days": "Lesquels de ces jours ?",
+  "my_stack_plan_slot_unknown_day": "Cette prise tombe un jour que le plan ne retient pas.",
+  "my_stack_plan_day_without_intake": "Au moins un jour sélectionné n'a aucune prise."
 }

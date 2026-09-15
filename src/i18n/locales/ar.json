@@ -1159,5 +1159,8 @@
   "my_stack_rhythm_summary_interval": "كل {{n}} {{einheit}}",
   "my_stack_rhythm_summary_every_week": "كل أسبوع",
   "my_stack_rhythm_summary_every_month": "كل شهر",
-  "my_stack_rhythm_summary_cycle": "{{an}} يوم تناول، {{aus}} يوم توقف"
+  "my_stack_rhythm_summary_cycle": "{{an}} يوم تناول، {{aus}} يوم توقف",
+  "my_stack_plan_slot_days": "في أي من هذه الأيام؟",
+  "my_stack_plan_slot_unknown_day": "هذه الجرعة تقع في يوم لا تختاره الخطة.",
+  "my_stack_plan_day_without_intake": "يوجد يوم مختار بلا أي جرعة."
 }

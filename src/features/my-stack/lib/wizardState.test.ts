@@ -83,7 +83,7 @@ const activePlan: IntakePlanDraft = {
   rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Di', 'Mi', 'Do', 'Fr'] },
   startDate: '2025-01-01',
   endDate: '2026-12-31',
-  slots: [{ routineGroup: 'morning', time: '08:30', dose: 5000 }],
+  slots: [{ routineGroup: 'morning', time: '08:30', dose: 5000, weekdays: [] }],
   reminders: ['on_time'],
 }
 
@@ -376,8 +376,8 @@ describe('wizard state', () => {
     const zweiMal = wizardReducer(wochentage, {
       type: 'plan_changed',
       changes: { slots: [
-        { routineGroup: 'morning', time: '08:00', dose: null },
-        { routineGroup: 'evening', time: '20:00', dose: null },
+        { routineGroup: 'morning', time: '08:00', dose: null, weekdays: [] },
+        { routineGroup: 'evening', time: '20:00', dose: null, weekdays: [] },
       ] },
     })
 
@@ -392,8 +392,8 @@ describe('wizard state', () => {
     const zweiMal = wizardReducer(initialWizardState(), {
       type: 'plan_changed',
       changes: { slots: [
-        { routineGroup: 'morning', time: null, dose: null },
-        { routineGroup: 'evening', time: null, dose: null },
+        { routineGroup: 'morning', time: null, dose: null, weekdays: [] },
+        { routineGroup: 'evening', time: null, dose: null, weekdays: [] },
       ] },
     })
     const spaeter = wizardReducer(zweiMal, { type: 'plan_changed', changes: { method: 'Oral' } })
@@ -405,15 +405,15 @@ describe('wizard state', () => {
     // Zweimal „morgens" ist selten gemeint. Sind alle drei belegt, bleibt nur
     // die Wiederholung — dann setzt man die Uhrzeiten von Hand.
     expect(naechsterSlot([]).routineGroup).toBe('morning')
-    expect(naechsterSlot([{ routineGroup: 'morning', time: null, dose: null }]).routineGroup).toBe('midday')
+    expect(naechsterSlot([{ routineGroup: 'morning', time: null, dose: null, weekdays: [] }]).routineGroup).toBe('midday')
     expect(naechsterSlot([
-      { routineGroup: 'morning', time: null, dose: null },
-      { routineGroup: 'midday', time: null, dose: null },
+      { routineGroup: 'morning', time: null, dose: null, weekdays: [] },
+      { routineGroup: 'midday', time: null, dose: null, weekdays: [] },
     ]).routineGroup).toBe('evening')
     expect(naechsterSlot([
-      { routineGroup: 'morning', time: null, dose: null },
-      { routineGroup: 'midday', time: null, dose: null },
-      { routineGroup: 'evening', time: null, dose: null },
+      { routineGroup: 'morning', time: null, dose: null, weekdays: [] },
+      { routineGroup: 'midday', time: null, dose: null, weekdays: [] },
+      { routineGroup: 'evening', time: null, dose: null, weekdays: [] },
     ]).routineGroup).toBe('evening')
   })
 
@@ -424,8 +424,8 @@ describe('wizard state', () => {
     const zweiMal = wizardReducer(initialWizardState(), {
       type: 'plan_changed',
       changes: { slots: [
-        { routineGroup: 'morning', time: '08:00', dose: 1 },
-        { routineGroup: 'evening', time: '20:00', dose: 2 },
+        { routineGroup: 'morning', time: '08:00', dose: 1, weekdays: [] },
+        { routineGroup: 'evening', time: '20:00', dose: 2, weekdays: [] },
       ] },
     })
     const alleDreiWochen = wizardReducer(zweiMal, {
@@ -443,8 +443,8 @@ describe('wizard state', () => {
     const zweiMal = wizardReducer(initialWizardState(), {
       type: 'plan_changed',
       changes: { slots: [
-        { routineGroup: 'morning', time: '08:00', dose: 400 },
-        { routineGroup: 'evening', time: '20:00', dose: 400 },
+        { routineGroup: 'morning', time: '08:00', dose: 400, weekdays: [] },
+        { routineGroup: 'evening', time: '20:00', dose: 400, weekdays: [] },
       ] },
     })
     const beiBedarf = wizardReducer(zweiMal, {
@@ -670,7 +670,7 @@ describe('wizard state', () => {
         rhythm: emptyRhythm(),
         startDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         endDate: null,
-        slots: [{ routineGroup: 'morning', time: null, dose: null }],
+        slots: [{ routineGroup: 'morning', time: null, dose: null, weekdays: [] }],
         reminders: [],
       },
       inventory: {

@@ -229,7 +229,7 @@ vi.mock('./components/StackItemWizard', () => ({
               rhythm: emptyRhythm(),
               startDate: '2026-08-16',
               endDate: null,
-              slots: [{ routineGroup: 'morning', time: null, dose: null }],
+              slots: [{ routineGroup: 'morning', time: null, dose: null, weekdays: [] }],
               reminders: [],
             },
             inventory,

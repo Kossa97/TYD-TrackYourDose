@@ -82,7 +82,7 @@ const existingPlan: IntakePlanDraft = {
   rhythm: emptyRhythm(),
   startDate: '2025-01-01',
   endDate: null,
-  slots: [{ routineGroup: 'morning', time: '08:30', dose: 5000 }],
+  slots: [{ routineGroup: 'morning', time: '08:30', dose: 5000, weekdays: [] }],
   reminders: ['on_time'],
 }
 
@@ -437,7 +437,7 @@ describe('StackItemWizard interactions', () => {
     const pkPlan: IntakePlanDraft = {
       ...existingPlan,
       unit: 'mg',
-      slots: [{ routineGroup: 'morning', time: '08:30', dose: 1 }],
+      slots: [{ routineGroup: 'morning', time: '08:30', dose: 1, weekdays: [] }],
     }
     const { onSave } = renderWizard({
       catalogEntries: [vitaminK2, pkVitaminD3],
@@ -470,7 +470,7 @@ describe('StackItemWizard interactions', () => {
     const pkPlan: IntakePlanDraft = {
       ...existingPlan,
       unit: 'mg',
-      slots: [{ routineGroup: 'morning', time: null, dose: 1 }],
+      slots: [{ routineGroup: 'morning', time: null, dose: 1, weekdays: [] }],
     }
     renderWizard({
       catalogEntries: [pkVitaminD3],
@@ -495,7 +495,7 @@ describe('StackItemWizard interactions', () => {
     const pkPlan: IntakePlanDraft = {
       ...existingPlan,
       unit: 'mg',
-      slots: [{ routineGroup: 'morning', time: '08:30', dose: 1 }],
+      slots: [{ routineGroup: 'morning', time: '08:30', dose: 1, weekdays: [] }],
     }
     const { onSave } = renderWizard({
       catalogEntries: [pkVitaminD3],
@@ -515,7 +515,7 @@ describe('StackItemWizard interactions', () => {
     expect(onSave.mock.calls[0][0]).toMatchObject({
       trackingLevel: 'complete',
       pkProfileMethod: 'Oral',
-      plan: { unit: 'mg', slots: [{ routineGroup: 'morning', time: '08:30', dose: 1 }] },
+      plan: { unit: 'mg', slots: [{ routineGroup: 'morning', time: '08:30', dose: 1, weekdays: [] }] },
     })
   })
 
@@ -527,7 +527,7 @@ describe('StackItemWizard interactions', () => {
     const pkPlan: IntakePlanDraft = {
       ...existingPlan,
       unit: 'mg',
-      slots: [{ routineGroup: 'morning', time: null, dose: 1 }],
+      slots: [{ routineGroup: 'morning', time: null, dose: 1, weekdays: [] }],
     }
     const { onSave } = renderWizard({
       catalogEntries: [pkVitaminD3],
@@ -545,7 +545,7 @@ describe('StackItemWizard interactions', () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
     expect(onSave.mock.calls[0][0]).toMatchObject({
       pkProfileMethod: 'Oral',
-      plan: { method: 'Oral', unit: 'mg', slots: [{ routineGroup: 'morning', time: '08:30', dose: 1 }] },
+      plan: { method: 'Oral', unit: 'mg', slots: [{ routineGroup: 'morning', time: '08:30', dose: 1, weekdays: [] }] },
     })
   })
 
@@ -861,7 +861,7 @@ describe('StackItemWizard interactions', () => {
       method: 'Oral',
       // `reachExistingReview` tippt unterwegs eine 1 in das Mengenfeld — die
       // Menge steht jetzt am Zeitpunkt, also kommt sie dort an.
-      slots: [{ routineGroup: 'morning', time: '08:30', dose: 1 }],
+      slots: [{ routineGroup: 'morning', time: '08:30', dose: 1, weekdays: [] }],
     })
     cleanup()
 

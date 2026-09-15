@@ -1155,5 +1155,8 @@
   "my_stack_rhythm_summary_interval": "Ogni {{n}} {{einheit}}",
   "my_stack_rhythm_summary_every_week": "Ogni settimana",
   "my_stack_rhythm_summary_every_month": "Ogni mese",
-  "my_stack_rhythm_summary_cycle": "{{an}} giorni di assunzione, {{aus}} giorni di pausa"
+  "my_stack_rhythm_summary_cycle": "{{an}} giorni di assunzione, {{aus}} giorni di pausa",
+  "my_stack_plan_slot_days": "In quali di questi giorni?",
+  "my_stack_plan_slot_unknown_day": "Questa assunzione cade in un giorno che il piano non seleziona.",
+  "my_stack_plan_day_without_intake": "Almeno un giorno selezionato non ha alcuna assunzione."
 }

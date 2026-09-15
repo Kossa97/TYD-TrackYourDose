@@ -127,6 +127,16 @@ export interface IntakeSlotDraft {
    * Zeitpunkte gemeinsam und steht am Plan.
    */
   dose: number | null
+  /**
+   * An welchen Wochentagen DIESER Zeitpunkt stattfindet. Leer heisst: an
+   * jedem Tag, den der Rhythmus ohnehin auswaehlt — das ist der Normalfall.
+   *
+   * Damit laesst sich sagen, was vorher nicht ging: montags zweimal, mittwochs
+   * einmal. Ein Zeitpunkt traegt seine Tage selbst, statt dass jeder Tag seine
+   * Zeitpunkte auflistet — so steht „morgens" fuer Mo und Mi in EINER Zeile
+   * und nicht zweimal.
+   */
+  weekdays: string[]
 }
 
 /**

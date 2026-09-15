@@ -143,6 +143,7 @@ export function buildPermanentScheduleChange(
         cycle_on_days: cycle.cycle_on_days ?? null,
         cycle_off_days: cycle.cycle_off_days ?? null,
         slot_doses: cycle.slot_doses ?? null,
+        slot_days: cycle.slot_days ?? null,
         schedule_days: cycle.schedule_days,
         intake_time: cycle.intake_time,
         intake_time_custom: cycle.intake_time_custom,

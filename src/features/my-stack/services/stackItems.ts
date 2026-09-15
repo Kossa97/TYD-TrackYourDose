@@ -126,6 +126,11 @@ interface SaveIntakePlanParams {
   intake_time_custom: string | null
   /** Die Mengen in derselben Reihenfolge; leer = die Menge des Zyklus. */
   slot_doses: string | null
+  /**
+   * Die Wochentage je Zeitpunkt, mit `|` getrennt: „Mo|Mi,Mo" heisst morgens
+   * an Mo und Mi, abends nur an Mo. Leer = an jedem Tag des Rhythmus.
+   */
+  slot_days: string | null
   reminder: string
 }
 
@@ -269,6 +274,11 @@ const ROUTINE_INTAKE_TIME = {
   evening: 'abends',
 } as const
 
+/** Liegt mindestens ein Zeitpunkt nur an bestimmten Tagen? */
+function hatEigeneTage(slots: readonly { weekdays: string[] }[]): boolean {
+  return slots.some(slot => slot.weekdays.length > 0)
+}
+
 /** Tragen die Zeitpunkte verschiedene Mengen, oder ueberall dieselbe? */
 function hatEigeneMengen(slots: readonly { dose: number | null }[]): boolean {
   return new Set(slots.map(slot => slot.dose)).size > 1
@@ -310,6 +320,12 @@ function planParams(
     slot_doses: beiBedarf || trackingLevel === 'intake_only' || !hatEigeneMengen(plan.slots)
       ? null
       : plan.slots.map(slot => (slot.dose == null ? '' : String(slot.dose))).join(','),
+    // Nur wenn sich die Zeitpunkte ueberhaupt nach Tagen unterscheiden. Ein
+    // Plan, in dem alle an allen Tagen liegen, laesst die Spalte leer — wie
+    // jeder Zyklus vor dieser Runde.
+    slot_days: beiBedarf || !hatEigeneTage(plan.slots)
+      ? null
+      : plan.slots.map(slot => slot.weekdays.join('|')).join(','),
     reminder: plan.reminders.map(value => value.trim()).filter(Boolean).join(',') || 'none',
   }
 }

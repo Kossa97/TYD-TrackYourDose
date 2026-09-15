@@ -1303,5 +1303,8 @@
   "my_stack_rhythm_summary_interval": "Every {{n}} {{einheit}}",
   "my_stack_rhythm_summary_every_week": "Every week",
   "my_stack_rhythm_summary_every_month": "Every month",
-  "my_stack_rhythm_summary_cycle": "{{an}} days on, {{aus}} days off"
+  "my_stack_rhythm_summary_cycle": "{{an}} days on, {{aus}} days off",
+  "my_stack_plan_slot_days": "On which of these days?",
+  "my_stack_plan_slot_unknown_day": "This intake falls on a day the plan does not select.",
+  "my_stack_plan_day_without_intake": "At least one selected day has no intake."
 }

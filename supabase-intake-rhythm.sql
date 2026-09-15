@@ -23,6 +23,12 @@
 --                    Reihenfolge wie `intake_time` — leere Stellen erlaubt,
 --                    dann gilt dort `dose`. Leer/NULL heisst: ueberall `dose`,
 --                    wie bei jedem Zyklus vor dieser Aenderung.
+--   slot_days        Wochentage je Zeitpunkt, kommagetrennt wie `intake_time`,
+--                    die Tage eines Zeitpunkts mit `|`: „Mo|Mi,Mo" heisst
+--                    morgens an Mo und Mi, abends nur an Mo. Ein leerer
+--                    Eintrag heisst: an jedem Tag, den der Rhythmus auswaehlt.
+--                    Damit laesst sich sagen, was vorher fehlte — montags
+--                    zweimal, mittwochs einmal.
 --
 -- Idempotent: zweimal ausgefuehrt aendert der zweite Lauf nichts.
 
@@ -32,7 +38,8 @@ alter table public.cycles
   add column if not exists interval_unit text,
   add column if not exists cycle_on_days integer,
   add column if not exists cycle_off_days integer,
-  add column if not exists slot_doses text;
+  add column if not exists slot_doses text,
+  add column if not exists slot_days text;
 
 -- Nur die drei Einheiten, die die App kennt. Ohne Pruefung liefe ein Tippfehler
 -- still als „Tage" durch, und ein Depot alle sechs Monate waere alle sechs Tage.
@@ -59,5 +66,7 @@ comment on column public.cycles.cycle_off_days is
   'Wechselzyklus: Tage Pause danach.';
 comment on column public.cycles.slot_doses is
   'Menge je Einnahmezeitpunkt, kommagetrennt wie intake_time. NULL = ueberall dose.';
+comment on column public.cycles.slot_days is
+  'Wochentage je Zeitpunkt, kommagetrennt wie intake_time, Tage mit | getrennt. NULL = alle Tage.';
 
 commit;

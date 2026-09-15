@@ -1155,5 +1155,8 @@
   "my_stack_rhythm_summary_interval": "Setiap {{n}} {{einheit}}",
   "my_stack_rhythm_summary_every_week": "Setiap minggu",
   "my_stack_rhythm_summary_every_month": "Setiap bulan",
-  "my_stack_rhythm_summary_cycle": "{{an}} hari aktif, {{aus}} hari jeda"
+  "my_stack_rhythm_summary_cycle": "{{an}} hari aktif, {{aus}} hari jeda",
+  "my_stack_plan_slot_days": "Pada hari yang mana?",
+  "my_stack_plan_slot_unknown_day": "Konsumsi ini jatuh pada hari yang tidak dipilih rencana.",
+  "my_stack_plan_day_without_intake": "Setidaknya satu hari terpilih tanpa konsumsi."
 }

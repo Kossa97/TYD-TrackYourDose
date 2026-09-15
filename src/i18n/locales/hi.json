@@ -1155,5 +1155,8 @@
   "my_stack_rhythm_summary_interval": "हर {{n}} {{einheit}}",
   "my_stack_rhythm_summary_every_week": "हर सप्ताह",
   "my_stack_rhythm_summary_every_month": "हर माह",
-  "my_stack_rhythm_summary_cycle": "{{an}} दिन सेवन, {{aus}} दिन विराम"
+  "my_stack_rhythm_summary_cycle": "{{an}} दिन सेवन, {{aus}} दिन विराम",
+  "my_stack_plan_slot_days": "इनमें से किन दिनों?",
+  "my_stack_plan_slot_unknown_day": "यह सेवन ऐसे दिन पड़ता है जिसे योजना नहीं चुनती।",
+  "my_stack_plan_day_without_intake": "कम से कम एक चुने दिन पर कोई सेवन नहीं है।"
 }

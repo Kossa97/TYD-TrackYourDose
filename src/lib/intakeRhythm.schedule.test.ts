@@ -1,6 +1,6 @@
 import { addDays, format, parseISO } from 'date-fns'
 import { describe, expect, it } from 'vitest'
-import { cycleAppliesToDay, type ScheduleCycle } from './intakeSchedule'
+import { cycleAppliesToDay, resolveScheduleSlots, type ScheduleCycle } from './intakeSchedule'
 
 // Der Rhythmus als vier Formen statt als Liste fester Texte. Diese Tests
 // halten fest, was die vier bedeuten. Dass der Push-Cron dasselbe sagt, prueft
@@ -127,6 +127,45 @@ describe('Rhythmus: im Wechsel', () => {
       const kaputt = zyklus({ start_date: '2026-03-02', frequency: 'Im Wechsel', ...teile })
       expect(cycleAppliesToDay(kaputt, parseISO('2026-03-02')), JSON.stringify(teile)).toBe(false)
     }
+  })
+})
+
+describe('Einnahmezeitpunkte je Wochentag', () => {
+  // 2026-03-02 ist ein Montag.
+  const moMiFr = zyklus({
+    start_date: '2026-03-02',
+    frequency: 'Wochentage wählen',
+    schedule_days: ['Mo', 'Mi', 'Fr'],
+    intake_time: 'morgens,abends',
+    intake_time_custom: '08:00,20:00',
+    slot_days: ',Mo',
+  })
+
+  it('gibt einem Tag nur die Zeitpunkte, die an ihm liegen', () => {
+    // Montags zweimal, mittwochs und freitags einmal — vorher galten die
+    // Zeitpunkte für jeden Tag gleich, und das war nicht ausdrückbar.
+    const am = (tag: string) => resolveScheduleSlots(moMiFr, parseISO(`${tag}T12:00:00`))
+      .map(slot => slot.time)
+
+    expect(am('2026-03-02')).toEqual(['08:00', '20:00'])   // Mo
+    expect(am('2026-03-04')).toEqual(['08:00'])            // Mi
+    expect(am('2026-03-06')).toEqual(['08:00'])            // Fr
+  })
+
+  it('behandelt einen leeren Eintrag als „an jedem Tag"', () => {
+    // So stand es in jedem Plan vor dieser Runde — und so bleibt es der
+    // Normalfall, ohne dass irgendein Zyklus angefasst werden müsste.
+    const ohneTage = { ...moMiFr, slot_days: null }
+
+    for (const tag of ['2026-03-02', '2026-03-04', '2026-03-06']) {
+      expect(resolveScheduleSlots(ohneTage, parseISO(`${tag}T12:00:00`)), tag).toHaveLength(2)
+    }
+  })
+
+  it('gibt ohne Tag alle Zeitpunkte heraus', () => {
+    // Wer den Plan als Ganzes ansieht (die PK-Bereitschaft etwa), fragt nach
+    // keinem bestimmten Tag und bekommt alles.
+    expect(resolveScheduleSlots(moMiFr)).toHaveLength(2)
   })
 })
 

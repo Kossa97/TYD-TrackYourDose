@@ -73,6 +73,7 @@ export function scheduleForDay(cycle, dateKey) {
     cycle_on_days: cycle.cycle_on_days ?? null,
     cycle_off_days: cycle.cycle_off_days ?? null,
     slot_doses: cycle.slot_doses ?? null,
+    slot_days: cycle.slot_days ?? null,
   }
   const history = cycle.schedule_history
   if (!Array.isArray(history) || history.length === 0) return flat
@@ -152,8 +153,14 @@ export function daySlots(cycle, dateKey) {
   const seg = scheduleForDay(cycle, dateKey)
   const slots = String(seg.intake_time ?? '').split(',').filter(Boolean)
   const customs = String(seg.intake_time_custom ?? '').split(',')
+  // Wochentage je Zeitpunkt — leer heisst „an jedem Tag". Ohne diesen Filter
+  // erinnerte der Cron an Tagen, an denen die App nichts faellig zeigt.
+  const dayLists = String(seg.slot_days ?? '').split(',')
+  const weekday = WEEKDAYS_DE[noonUTC(dateKey).getUTCDay()]
   const out = []
   slots.forEach((slot, i) => {
+    const eigeneTage = String(dayLists[i] ?? '').split('|').map(t => t.trim()).filter(Boolean)
+    if (eigeneTage.length > 0 && !eigeneTage.includes(weekday)) return
     const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
     if (!/^\d{1,2}:\d{2}$/.test(tm)) return
     const [h, m] = tm.split(':').map(Number)

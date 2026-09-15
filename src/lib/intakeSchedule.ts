@@ -36,6 +36,12 @@ export interface ScheduleSegment {
   cycle_off_days?: number | null
   /** Menge je Einnahmezeitpunkt, kommagetrennt wie `intake_time`. */
   slot_doses?: string | null
+  /**
+   * Wochentage je Einnahmezeitpunkt, kommagetrennt wie `intake_time`, die
+   * Tage eines Zeitpunkts mit `|`: „Mo|Mi,Mo" heisst morgens an Mo und Mi,
+   * abends nur an Mo. Ein leerer Eintrag heisst: an jedem Tag des Rhythmus.
+   */
+  slot_days?: string | null
 }
 
 export interface ScheduleCycle {
@@ -55,6 +61,7 @@ export interface ScheduleCycle {
   cycle_on_days?: number | null
   cycle_off_days?: number | null
   slot_doses?: string | null
+  slot_days?: string | null
 }
 
 export interface EscalationRow {
@@ -93,6 +100,7 @@ export function scheduleForDay(cycle: ScheduleCycle, day: Date): ScheduleSegment
     cycle_on_days: cycle.cycle_on_days ?? null,
     cycle_off_days: cycle.cycle_off_days ?? null,
     slot_doses: cycle.slot_doses ?? null,
+    slot_days: cycle.slot_days ?? null,
   }
   const history = cycle.schedule_history
   if (!history || history.length === 0) return flat
@@ -150,16 +158,31 @@ function routineGroupForMinutes(minutes: number): ResolvedRoutineGroup {
   return 'evening'
 }
 
+/**
+ * Die Einnahmezeitpunkte eines Segments. MIT `day` nur die, die an diesem
+ * Wochentag stattfinden — „montags zweimal, mittwochs einmal" ist sonst nicht
+ * darstellbar. Ohne `day` kommen alle; das braucht nur, wer den Plan als
+ * Ganzes ansieht und keinen bestimmten Tag (die PK-Bereitschaft etwa).
+ */
 export function resolveScheduleSlots(
-  schedule: Pick<ScheduleSegment, 'intake_time' | 'intake_time_custom'> & { slot_doses?: string | null },
+  schedule: Pick<ScheduleSegment, 'intake_time' | 'intake_time_custom'>
+    & { slot_doses?: string | null; slot_days?: string | null },
+  day?: Date,
 ): ResolvedScheduleSlot[] {
   const keys = (schedule.intake_time ?? '').split(',').filter(Boolean)
   const exactTimes = (schedule.intake_time_custom ?? '').split(',')
   // Die Mengen stehen in derselben Reihenfolge wie die Tageszeiten, leere
   // Stellen eingeschlossen — sonst verrutscht die Zuordnung.
   const doses = (schedule.slot_doses ?? '').split(',')
+  const days = (schedule.slot_days ?? '').split(',')
+  const wochentag = day ? WEEKDAYS_DE[day.getDay()] : null
 
   return keys.flatMap((key, index) => {
+    // Leer heisst „an jedem Tag" — so stand es in jedem Plan vor dieser
+    // Aenderung, und so bleibt es der Normalfall.
+    const tageDesSlots = (days[index] ?? '').split('|').map(tag => tag.trim()).filter(Boolean)
+    if (wochentag && tageDesSlots.length > 0 && !tageDesSlots.includes(wochentag)) return []
+
     const fixedGroup = SLOT_GROUPS[key as keyof typeof SLOT_GROUPS]
     const clock = parsedClock(exactTimes[index]) ?? parsedClock(SLOT_TIMES[key])
     if (!clock) return []
@@ -264,7 +287,7 @@ function trifftMonatsabstand(start: Date, day: Date, monate: number): boolean {
 // All scheduled slots of a cycle ON a given day, sorted by time (segment-resolved).
 function cycleDaySlots(c: ScheduleCycle, day: Date): { min: number; time: string }[] {
   const seg = scheduleForDay(c, day)
-  return resolveScheduleSlots(seg).map(slot => ({ min: slot.minutes, time: slot.time }))
+  return resolveScheduleSlots(seg, day).map(slot => ({ min: slot.minutes, time: slot.time }))
 }
 
 /**

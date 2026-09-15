@@ -380,7 +380,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
       try {
         const [{ data: cycleData }, { data: logData }, { data: stackItemData }, { data: inventoryData }, { data: escalationData }, { data: injectionData }] = await Promise.all([
           homeDataClient.from('cycles')
-            .select('id, intake_time, intake_time_custom, stack_item_id, dose, unit, method, start_date, end_date, frequency, x_days_interval, interval_unit, cycle_on_days, cycle_off_days, slot_doses, schedule_days, schedule_history, stack_items(display_name, tracking_level, dosage_form)')
+            .select('id, intake_time, intake_time_custom, stack_item_id, dose, unit, method, start_date, end_date, frequency, x_days_interval, interval_unit, cycle_on_days, cycle_off_days, slot_doses, slot_days, schedule_days, schedule_history, stack_items(display_name, tracking_level, dosage_form)')
             .eq('user_id', user!.id).eq('active', true),
           // All decided/reset logs — taken filtered per use site (overdue/timer).
           homeDataClient.from('dose_logs')
@@ -425,7 +425,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
           // Nur Zyklen, die HEUTE gelten (Frequenz/Start/Ende), wie im Kalender.
           if (!cycleAppliesToDay(c, now)) continue
           const seg = scheduleForDay(c, now)   // segment-/historienaufgelöste Slots
-          const slots = resolveScheduleSlots(seg)
+          const slots = resolveScheduleSlots(seg, now)
           const resolvedQuantity = resolveHomeIntakeQuantity(c, now, escalations)
           const intakeOnly = c.stack_items.tracking_level === 'intake_only'
           const doseNumber = intakeOnly ? null : resolvedQuantity.doseNumber

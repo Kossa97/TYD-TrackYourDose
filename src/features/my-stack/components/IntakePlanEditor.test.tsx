@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type {
@@ -47,7 +47,7 @@ const plan: IntakePlanDraft = {
   rhythm: emptyRhythm(),
   startDate: '2026-08-16',
   endDate: null,
-  slots: [{ routineGroup: 'morning', time: null, dose: null }],
+  slots: [{ routineGroup: 'morning', time: null, dose: null, weekdays: [] }],
   reminders: [],
 }
 
@@ -118,8 +118,8 @@ describe('IntakePlanEditor', () => {
       initialPlan={{
         ...plan,
         slots: [
-          { routineGroup: 'morning', time: '08:00', dose: 1000 },
-          { routineGroup: 'evening', time: '20:00', dose: 500 },
+          { routineGroup: 'morning', time: '08:00', dose: 1000, weekdays: [] },
+          { routineGroup: 'evening', time: '20:00', dose: 500, weekdays: [] },
         ],
       }}
     />)
@@ -139,8 +139,8 @@ describe('IntakePlanEditor', () => {
           ...plan,
           unit: 'mg',
           slots: [
-            { routineGroup: 'morning', time: '08:00', dose: 1000 },
-            { routineGroup: 'evening', time: '20:00', dose: null },
+            { routineGroup: 'morning', time: '08:00', dose: 1000, weekdays: [] },
+            { routineGroup: 'evening', time: '20:00', dose: null, weekdays: [] },
           ],
         }}
         dosageForm="tablet"
@@ -188,8 +188,8 @@ describe('IntakePlanEditor', () => {
         unit: 'mg',
         rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Mi', 'Fr'] },
         slots: [
-          { routineGroup: 'morning', time: '08:00', dose: 1000 },
-          { routineGroup: 'evening', time: '20:00', dose: 500 },
+          { routineGroup: 'morning', time: '08:00', dose: 1000, weekdays: [] },
+          { routineGroup: 'evening', time: '20:00', dose: 500, weekdays: [] },
         ],
       }}
     />)
@@ -232,8 +232,8 @@ describe('IntakePlanEditor', () => {
       initialPlan={{
         ...plan,
         slots: [
-          { routineGroup: 'morning', time: null, dose: null },
-          { routineGroup: 'evening', time: null, dose: null },
+          { routineGroup: 'morning', time: null, dose: null, weekdays: [] },
+          { routineGroup: 'evening', time: null, dose: null, weekdays: [] },
         ],
       }}
     />)
@@ -323,7 +323,61 @@ describe('IntakePlanEditor', () => {
     // Die Wochentage bleiben, wo sie waren.
     expect(document.querySelector('[data-rhythm-kind="weekdays"]')?.getAttribute('aria-pressed'))
       .toBe('true')
-    expect(screen.getByRole('button', { name: 'Mo' }).getAttribute('aria-pressed')).toBe('true')
+    // „Mo" gibt es jetzt mehrfach: einmal im Rhythmus, einmal je Einnahme.
+    // Gemeint ist der im Rhythmus.
+    const rhythmusTage = document.querySelector('[data-field="plan.scheduleDays"]')!
+    expect(within(rhythmusTage as HTMLElement).getByRole('button', { name: 'Mo' })
+      .getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('lässt je Einnahme sagen, an welchen der gewählten Tage sie liegt', () => {
+    // Genau der gefragte Fall: montags zweimal, mittwochs einmal.
+    render(<PlanHarness
+      trackingLevel="intake_only"
+      dosageForm="tablet"
+      initialPlan={{
+        ...plan,
+        rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Mi'] },
+        slots: [
+          { routineGroup: 'morning', time: '08:00', dose: null, weekdays: [] },
+          { routineGroup: 'evening', time: '20:00', dose: null, weekdays: [] },
+        ],
+      }}
+    />)
+
+    // Je Einnahme eine Chipreihe, beide Tage zunächst an: der Normalfall ist
+    // „an allen Tagen des Rhythmus".
+    const zweite = document.querySelector('[data-plan-slot-days="1"]') as HTMLElement
+    expect(zweite).not.toBeNull()
+    expect(within(zweite).getByRole('button', { name: 'Mi' }).getAttribute('aria-pressed'))
+      .toBe('true')
+
+    // Mittwoch bei der Abendeinnahme abwählen → sie liegt nur noch montags.
+    fireEvent.click(within(zweite).getByRole('button', { name: 'Mi' }))
+    const danach = document.querySelector('[data-plan-slot-days="1"]') as HTMLElement
+    expect(within(danach).getByRole('button', { name: 'Mo' }).getAttribute('aria-pressed'))
+      .toBe('true')
+    expect(within(danach).getByRole('button', { name: 'Mi' }).getAttribute('aria-pressed'))
+      .toBe('false')
+    // Und der Satz sagt es: die Abendeinnahme trägt ihren Tag.
+    expect(document.querySelector('[data-plan-summary]')?.textContent).toContain('Mo · Abends 20:00')
+  })
+
+  it('zeigt die Tageswahl nur, wo es Wochentage gibt', () => {
+    // Bei „täglich" oder „alle 3 Wochen" gibt es keine Tage, unter denen man
+    // wählen könnte — dort wäre die Chipreihe eine Frage ohne Gegenstand.
+    render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
+    expect(document.querySelector('[data-plan-slot-days]')).toBeNull()
+    cleanup()
+
+    // `PlanHarness` haelt den Plan in eigenem State — ein `rerender` mit
+    // anderem `initialPlan` erreicht ihn nicht.
+    render(<PlanHarness
+      trackingLevel="intake_only"
+      dosageForm="tablet"
+      initialPlan={{ ...plan, rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo'] } }}
+    />)
+    expect(document.querySelector('[data-plan-slot-days]')).not.toBeNull()
   })
 
   it('nimmt einen Zeitpunkt wieder weg, aber nie den letzten', () => {

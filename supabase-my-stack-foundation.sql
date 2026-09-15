@@ -882,6 +882,7 @@ declare
   plan_cycle_on integer := nullif(p_plan ->> 'cycle_on_days', '')::integer;
   plan_cycle_off integer := nullif(p_plan ->> 'cycle_off_days', '')::integer;
   plan_slot_doses text := nullif(btrim(p_plan ->> 'slot_doses'), '');
+  plan_slot_days text := nullif(btrim(p_plan ->> 'slot_days'), '');
   plan_reminder text := coalesce(nullif(btrim(p_plan ->> 'reminder'), ''), 'none');
   schedule_changed boolean;
   next_history jsonb;
@@ -963,6 +964,24 @@ begin
     raise exception 'Slot doses must line up with intake times';
   end if;
 
+  -- Dasselbe fuer die Wochentage je Zeitpunkt, und jeder genannte Tag muss
+  -- einer sein: ein „Mx" liefe sonst still als „nie" durch.
+  if plan_slot_days is not null then
+    if array_length(string_to_array(plan_slot_days, ','), 1)
+        is distinct from array_length(string_to_array(plan_intake_time, ','), 1) then
+      raise exception 'Slot days must line up with intake times';
+    end if;
+    if exists (
+      select 1
+      from unnest(string_to_array(plan_slot_days, ',')) eintrag,
+           unnest(string_to_array(eintrag, '|')) tag
+      where btrim(tag) <> ''
+        and btrim(tag) <> all (array['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'])
+    ) then
+      raise exception 'Slot days must be German weekday codes';
+    end if;
+  end if;
+
   if jsonb_typeof(p_plan -> 'schedule_days') = 'array' then
     select coalesce(array_agg(value), '{}'::text[])
     into plan_schedule_days
@@ -1034,6 +1053,7 @@ begin
       intake_time,
       intake_time_custom,
       slot_doses,
+      slot_days,
       reminder
     ) values (
       owner_id,
@@ -1054,6 +1074,7 @@ begin
       plan_intake_time,
       plan_intake_time_custom,
       plan_slot_doses,
+      plan_slot_days,
       plan_reminder
     );
   else
@@ -1083,6 +1104,7 @@ begin
       or cycle_row.intake_time is distinct from plan_intake_time
       or cycle_row.intake_time_custom is distinct from plan_intake_time_custom
       or cycle_row.slot_doses is distinct from plan_slot_doses
+      or cycle_row.slot_days is distinct from plan_slot_days
       or cycle_row.dose is distinct from plan_dose
       or cycle_row.unit is distinct from plan_unit;
 
@@ -1098,6 +1120,7 @@ begin
         'intake_time', cycle_row.intake_time,
         'intake_time_custom', cycle_row.intake_time_custom,
         'slot_doses', cycle_row.slot_doses,
+        'slot_days', cycle_row.slot_days,
         'dose', cycle_row.dose,
         'unit', cycle_row.unit
       );
@@ -1112,6 +1135,7 @@ begin
         'intake_time', plan_intake_time,
         'intake_time_custom', plan_intake_time_custom,
         'slot_doses', plan_slot_doses,
+        'slot_days', plan_slot_days,
         'dose', plan_dose,
         'unit', plan_unit
       );
@@ -1147,6 +1171,7 @@ begin
       intake_time = plan_intake_time,
       intake_time_custom = plan_intake_time_custom,
       slot_doses = plan_slot_doses,
+      slot_days = plan_slot_days,
       reminder = plan_reminder,
       schedule_history = next_history
     where id = plan_id

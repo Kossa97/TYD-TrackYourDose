@@ -1155,5 +1155,8 @@
   "my_stack_rhythm_summary_interval": "Her {{n}} {{einheit}}",
   "my_stack_rhythm_summary_every_week": "Her hafta",
   "my_stack_rhythm_summary_every_month": "Her ay",
-  "my_stack_rhythm_summary_cycle": "{{an}} gün kullanım, {{aus}} gün ara"
+  "my_stack_rhythm_summary_cycle": "{{an}} gün kullanım, {{aus}} gün ara",
+  "my_stack_plan_slot_days": "Bu günlerden hangilerinde?",
+  "my_stack_plan_slot_unknown_day": "Bu alım, planın seçmediği bir güne denk geliyor.",
+  "my_stack_plan_day_without_intake": "Seçilen günlerden en az birinde hiç alım yok."
 }

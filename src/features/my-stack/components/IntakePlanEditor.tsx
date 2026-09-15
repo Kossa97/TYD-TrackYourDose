@@ -137,7 +137,10 @@ export function IntakePlanEditor({
           slot.time ?? '',
         ].filter(Boolean).join(' ')
         const menge = tracksQuantity && slot.dose != null ? `${slot.dose} ${einheit}`.trim() : ''
-        return [wann, menge].filter(Boolean).join(' · ')
+        // Nur wo ein Zeitpunkt eigene Tage hat — sonst staende an jeder Zeile
+        // dieselbe Aufzaehlung, die schon vorn im Satz steht.
+        const tage = slot.weekdays.length > 0 ? slot.weekdays.join('/') : ''
+        return [tage, wann, menge].filter(Boolean).join(' · ')
       }).filter(Boolean)
       if (einnahmen.length > 0) teile.push(einnahmen.join(' + '))
     } else if (tracksQuantity && plan.slots[0]?.dose != null) {
@@ -193,7 +196,7 @@ export function IntakePlanEditor({
   // Mo/Mi/Fr morgens UND abends ist ein normaler Plan.
   function addSlot(): void {
     if (plan.slots.length >= MAX_INTAKE_SLOTS) return
-    onChange({ slots: [...plan.slots, naechsterSlot(plan.slots)] })
+    onChange({ slots: [...plan.slots, naechsterSlot(plan.slots, rhythm.weekdays)] })
   }
 
   function removeSlot(index: number): void {
@@ -287,7 +290,9 @@ export function IntakePlanEditor({
             </div>
             {errors.scheduleDays && (
               <p role="alert" className="mt-2 text-sm text-rose-300">
-                {t('wochentag_auswaehlen_hint', { defaultValue: 'Mindestens einen Wochentag auswählen' })}
+                {errors.scheduleDays === 'day_without_intake'
+                  ? t('my_stack_plan_day_without_intake', { defaultValue: 'An mindestens einem gewählten Tag steht keine Einnahme.' })
+                  : t('wochentag_auswaehlen_hint', { defaultValue: 'Mindestens einen Wochentag auswählen' })}
               </p>
             )}
           </div>
@@ -371,60 +376,8 @@ export function IntakePlanEditor({
         )}
 
       </fieldset>
-
-      <div>
-        <label htmlFor="stack-plan-start-date" className="mb-2 block text-sm font-semibold text-slate-200">
-          {t('my_stack_plan_start_date', { defaultValue: 'Start / gültig ab' })}
-        </label>
-        <input
-          id="stack-plan-start-date"
-          type="date"
-          value={plan.startDate}
-          onChange={event => onChange({ startDate: event.target.value })}
-          data-field="plan.startDate"
-          aria-invalid={Boolean(errors.startDate) || undefined}
-          aria-describedby={errors.startDate ? 'stack-plan-start-date-error' : undefined}
-          required
-          className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-        />
-        {errors.startDate && (
-          <p id="stack-plan-start-date-error" role="alert" className="mt-2 text-sm text-rose-300">
-            {t('my_stack_plan_start_date_required', { defaultValue: 'Bitte wähle ein Startdatum.' })}
-          </p>
-        )}
-      </div>
-
-      {/* Das Ende. Fuer alles, was man laenger nimmt, bleibt es leer; eine
-          Antibiotikakur oder ein Kortisonstoss hat hier ein Datum. */}
-      <div>
-        <label htmlFor="stack-plan-end-date" className="mb-2 block text-sm font-semibold text-slate-200">
-          {t('my_stack_plan_end_date', { defaultValue: 'Ende (optional)' })}
-        </label>
-        <input
-          id="stack-plan-end-date"
-          type="date"
-          value={plan.endDate ?? ''}
-          min={plan.startDate || undefined}
-          onChange={event => onChange({ endDate: event.target.value || null })}
-          data-field="plan.endDate"
-          aria-invalid={Boolean(errors.endDate) || undefined}
-          aria-describedby={errors.endDate ? 'stack-plan-end-date-error' : 'stack-plan-end-date-hint'}
-          className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-        />
-        {errors.endDate ? (
-          <p id="stack-plan-end-date-error" role="alert" className="mt-2 text-sm text-rose-300">
-            {t('my_stack_plan_end_date_before_start', { defaultValue: 'Das Ende liegt vor dem Start.' })}
-          </p>
-        ) : (
-          <p id="stack-plan-end-date-hint" className="mt-2 text-xs leading-relaxed text-slate-400">
-            {t('my_stack_plan_end_date_hint', { defaultValue: 'Leer lassen, wenn du es dauerhaft nimmst. Für eine Kur das letzte Einnahmedatum.' })}
-          </p>
-        )}
-      </div>
-      </section>
-
-      {/* ── WAS JE EINNAHME ─────────────────────────────────────────────── */}
-      <section className="min-w-0 space-y-4">
+      {/* ── WAS JE EINNAHME — direkt unter „An welchen Tagen?", denn die
+             Zeitpunkte gehoeren zu den Tagen und nicht hinter den Zeitraum. */}
       <div className="flex min-w-0 flex-wrap items-end justify-between gap-3">
         <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
           {t('my_stack_plan_section_each', { defaultValue: 'Was je Einnahme' })}
@@ -558,10 +511,54 @@ export function IntakePlanEditor({
               <p id={`stack-plan-routine-${index}-error`} role="alert" className="mt-2 text-sm text-rose-300">
                 {errors.slots[index] === 'duplicate'
                   ? t('my_stack_plan_slot_duplicate', { defaultValue: 'Dieser Zeitpunkt steht schon da — gib ihm eine eigene Uhrzeit.' })
-                  : t('my_stack_plan_routine_required', { defaultValue: 'Bitte wähle eine Tageszeit.' })}
+                  : errors.slots[index] === 'unknown_day'
+                    ? t('my_stack_plan_slot_unknown_day', { defaultValue: 'Dieser Zeitpunkt liegt an einem Tag, den der Plan nicht auswählt.' })
+                    : t('my_stack_plan_routine_required', { defaultValue: 'Bitte wähle eine Tageszeit.' })}
               </p>
             )}
           </fieldset>
+
+          {/* An welchen dieser Tage? „Montags zweimal, mittwochs einmal" war
+              vorher nicht ausdrueckbar: die Zeitpunkte galten fuer jeden Tag
+              gleich. Leer heisst weiterhin „an allen" — der Normalfall. */}
+          {rhythm.kind === 'weekdays' && rhythm.weekdays.length > 0 && (
+            <div data-plan-slot-days={index} className="min-w-0">
+              <span className="mb-2 block text-xs font-semibold text-slate-400">
+                {t('my_stack_plan_slot_days', { defaultValue: 'An welchen dieser Tage?' })}
+              </span>
+              <div className="flex min-w-0 flex-wrap gap-2">
+                {rhythm.weekdays.map(tag => {
+                  // Ein Zeitpunkt ohne eigene Tage gilt an allen — dann sind
+                  // alle Chips an, und das erste Abwaehlen macht daraus eine
+                  // ausdrueckliche Auswahl.
+                  const gewaehlt = slot.weekdays.length === 0 || slot.weekdays.includes(tag)
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      aria-pressed={gewaehlt}
+                      onClick={() => {
+                        const bisher = slot.weekdays.length === 0 ? [...rhythm.weekdays] : slot.weekdays
+                        const naechste = gewaehlt
+                          ? bisher.filter(eintrag => eintrag !== tag)
+                          : [...bisher, tag]
+                        // Wieder alle? Dann zurueck auf „an allen Tagen" statt
+                        // einer Liste, die dasselbe sagt.
+                        const alle = naechste.length === rhythm.weekdays.length
+                        changeSlot(index, { weekdays: alle ? [] : naechste })
+                      }}
+                      className={`min-h-11 min-w-11 cursor-pointer rounded-xl border px-3 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${gewaehlt
+                        ? 'border-sky-400/50 bg-sky-400/15 text-sky-200'
+                        : 'border-white/10 bg-white/[0.035] text-slate-500 hover:border-sky-400/25 hover:text-slate-300'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="grid min-w-0 gap-3 sm:grid-cols-2">
             <div>
@@ -640,6 +637,58 @@ export function IntakePlanEditor({
           {t('my_stack_plan_add_slot', { defaultValue: 'Weitere Einnahme am selben Tag' })}
         </button>
       )}
+
+      {/* Der Zeitraum steht hinter den Zeitpunkten: erst was, dann ab wann. */}
+
+      <div>
+        <label htmlFor="stack-plan-start-date" className="mb-2 block text-sm font-semibold text-slate-200">
+          {t('my_stack_plan_start_date', { defaultValue: 'Start / gültig ab' })}
+        </label>
+        <input
+          id="stack-plan-start-date"
+          type="date"
+          value={plan.startDate}
+          onChange={event => onChange({ startDate: event.target.value })}
+          data-field="plan.startDate"
+          aria-invalid={Boolean(errors.startDate) || undefined}
+          aria-describedby={errors.startDate ? 'stack-plan-start-date-error' : undefined}
+          required
+          className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+        />
+        {errors.startDate && (
+          <p id="stack-plan-start-date-error" role="alert" className="mt-2 text-sm text-rose-300">
+            {t('my_stack_plan_start_date_required', { defaultValue: 'Bitte wähle ein Startdatum.' })}
+          </p>
+        )}
+      </div>
+
+      {/* Das Ende. Fuer alles, was man laenger nimmt, bleibt es leer; eine
+          Antibiotikakur oder ein Kortisonstoss hat hier ein Datum. */}
+      <div>
+        <label htmlFor="stack-plan-end-date" className="mb-2 block text-sm font-semibold text-slate-200">
+          {t('my_stack_plan_end_date', { defaultValue: 'Ende (optional)' })}
+        </label>
+        <input
+          id="stack-plan-end-date"
+          type="date"
+          value={plan.endDate ?? ''}
+          min={plan.startDate || undefined}
+          onChange={event => onChange({ endDate: event.target.value || null })}
+          data-field="plan.endDate"
+          aria-invalid={Boolean(errors.endDate) || undefined}
+          aria-describedby={errors.endDate ? 'stack-plan-end-date-error' : 'stack-plan-end-date-hint'}
+          className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+        />
+        {errors.endDate ? (
+          <p id="stack-plan-end-date-error" role="alert" className="mt-2 text-sm text-rose-300">
+            {t('my_stack_plan_end_date_before_start', { defaultValue: 'Das Ende liegt vor dem Start.' })}
+          </p>
+        ) : (
+          <p id="stack-plan-end-date-hint" className="mt-2 text-xs leading-relaxed text-slate-400">
+            {t('my_stack_plan_end_date_hint', { defaultValue: 'Leer lassen, wenn du es dauerhaft nimmst. Für eine Kur das letzte Einnahmedatum.' })}
+          </p>
+        )}
+      </div>
 
       </section>
 

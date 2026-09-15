@@ -184,14 +184,30 @@ export function validateIntakePlan(
     }
 
     // Zwei Zeitpunkte, die sich in nichts unterscheiden, sind einer. Dieselbe
-    // Tageszeit zweimal ist erlaubt — aber dann mit verschiedenen Uhrzeiten,
-    // sonst weiss weder die App noch der Nutzer, welcher welcher ist.
+    // Tageszeit zweimal ist erlaubt — aber dann mit verschiedenen Uhrzeiten
+    // oder an verschiedenen Tagen, sonst weiss weder die App noch der Nutzer,
+    // welcher welcher ist.
     const gesehen = new Set<string>()
     plan.slots.forEach((slot, index) => {
-      const schluessel = `${slot.routineGroup}|${slot.time ?? ''}`
+      const schluessel = `${slot.routineGroup}|${slot.time ?? ''}|${[...slot.weekdays].sort().join('+')}`
       if (gesehen.has(schluessel)) slotFehler[index] = 'duplicate'
       gesehen.add(schluessel)
     })
+
+    // Ein Zeitpunkt darf nur an Tagen liegen, die der Rhythmus auch auswaehlt,
+    // und ein gewaehlter Tag ohne jede Einnahme ist ein Tag, an dem nichts
+    // passiert — dann gehoert er nicht in die Auswahl.
+    if (plan.rhythm.kind === 'weekdays' && plan.rhythm.weekdays.length > 0) {
+      const gewaehlt = new Set(plan.rhythm.weekdays)
+      plan.slots.forEach((slot, index) => {
+        if (slot.weekdays.some(tag => !gewaehlt.has(tag))) slotFehler[index] = 'unknown_day'
+      })
+      const abgedeckt = new Set(
+        plan.slots.flatMap(slot => (slot.weekdays.length > 0 ? slot.weekdays : [...gewaehlt])),
+      )
+      const ohneEinnahme = plan.rhythm.weekdays.filter(tag => !abgedeckt.has(tag))
+      if (ohneEinnahme.length > 0) errors.scheduleDays = 'day_without_intake'
+    }
 
     if (slotFehler.some(Boolean)) errors.slots = slotFehler
   }

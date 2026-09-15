@@ -138,7 +138,14 @@ function basisVorbelegung(
  * bestehender Zyklus beim Laden nicht die Haelfte verliert.
  */
 function slotsFuerRhythmus(plan: IntakePlanDraft): IntakeSlotDraft[] {
-  const slots = [...plan.slots]
+  // Wochentage, die der Rhythmus gar nicht mehr auswaehlt, fallen aus den
+  // Zeitpunkten heraus: ein „nur montags" in einem Plan ohne Montag waere eine
+  // Angabe, die nirgends ankommt.
+  const erlaubt = plan.rhythm.kind === 'weekdays' ? new Set(plan.rhythm.weekdays) : null
+  const slots = plan.slots.map(slot => ({
+    ...slot,
+    weekdays: erlaubt ? slot.weekdays.filter(tag => erlaubt.has(tag)) : [],
+  }))
   // Auch „Bei Bedarf" behaelt EINEN Zeitpunkt: er traegt die Menge, die man
   // eintraegt, wenn man das Mittel genommen hat. Tageszeit und Uhrzeit
   // bedeuten dort nichts und werden nicht gezeigt.
@@ -152,7 +159,10 @@ function slotsFuerRhythmus(plan: IntakePlanDraft): IntakeSlotDraft[] {
  * zweimal „morgens" ist selten gemeint, und wo doch (zwei Abenddosen), setzt
  * man die Uhrzeiten von Hand.
  */
-export function naechsterSlot(slots: readonly IntakeSlotDraft[]): IntakeSlotDraft {
+export function naechsterSlot(
+  slots: readonly IntakeSlotDraft[],
+  weekdays: readonly string[] = [],
+): IntakeSlotDraft {
   const reihenfolge: RoutineGroup[] = ['morning', 'midday', 'evening']
   const belegt = new Set(slots.map(slot => slot.routineGroup))
   return {
@@ -161,6 +171,10 @@ export function naechsterSlot(slots: readonly IntakeSlotDraft[]): IntakeSlotDraf
     // Die Menge des ersten Zeitpunkts als Vorschlag: meist ist sie ueberall
     // gleich, und wo nicht, aendert man genau die eine Zahl.
     dose: slots[0]?.dose ?? null,
+    // Ein neuer Zeitpunkt gilt zunaechst an allen Tagen, die der Rhythmus
+    // ohnehin auswaehlt — wer ihn auf montags einschraenken will, nimmt Tage
+    // weg, statt sie erst zu suchen.
+    weekdays: [...weekdays],
   }
 }
 
@@ -179,7 +193,7 @@ function emptyPlan(name: string, dosageForm: DosageFormKey | null = null): Intak
     rhythm: emptyRhythm(),
     startDate: format(new Date(), 'yyyy-MM-dd'),
     endDate: null,
-    slots: [{ routineGroup: 'morning', time: null, dose: null }],
+    slots: [{ routineGroup: 'morning', time: null, dose: null, weekdays: [] }],
     reminders: [],
   }
 }

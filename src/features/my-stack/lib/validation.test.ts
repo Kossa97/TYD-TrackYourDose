@@ -31,7 +31,7 @@ const validPlan: IntakePlanDraft = {
   rhythm: emptyRhythm(),
   startDate: '2026-07-29',
   endDate: null,
-  slots: [{ routineGroup: 'morning', time: null, dose: 1 }],
+  slots: [{ routineGroup: 'morning', time: null, dose: 1, weekdays: [] }],
   reminders: [],
 }
 
@@ -40,7 +40,7 @@ describe('validateStackItemDraft', () => {
     const planWithoutQuantity = {
       ...validPlan,
       unit: null,
-      slots: [{ routineGroup: 'morning' as const, time: null, dose: null }],
+      slots: [{ routineGroup: 'morning' as const, time: null, dose: null, weekdays: [] }],
     }
 
     expect(validateIntakePlan(planWithoutQuantity, 'intake_only')).toEqual({})
@@ -54,7 +54,7 @@ describe('validateStackItemDraft', () => {
     expect(validateIntakePlan({
       ...validPlan,
       name: ' ',
-      slots: [{ routineGroup: '' as never, time: null, dose: null }],
+      slots: [{ routineGroup: '' as never, time: null, dose: null, weekdays: [] }],
     }, 'complete')).toEqual({
       name: 'required',
       dose: 'required',
@@ -87,8 +87,8 @@ describe('validateStackItemDraft', () => {
     const zweiMal = {
       ...validPlan,
       slots: [
-        { routineGroup: 'morning' as const, time: null, dose: 1 },
-        { routineGroup: '' as never, time: null, dose: 1 },
+        { routineGroup: 'morning' as const, time: null, dose: 1, weekdays: [] },
+        { routineGroup: '' as never, time: null, dose: 1, weekdays: [] },
       ],
     }
 
@@ -158,21 +158,65 @@ describe('validateStackItemDraft', () => {
     }, 'complete').scheduleDays).toBeUndefined()
   })
 
+  it('lässt keinen gewählten Tag ohne Einnahme', () => {
+    // Ein Tag, an dem nichts passiert, gehört nicht in die Auswahl — sonst
+    // stünde er im Kalender und bliebe für immer leer.
+    const moMi = {
+      ...validPlan,
+      rhythm: { ...emptyRhythm(), kind: 'weekdays' as const, weekdays: ['Mo', 'Mi'] },
+    }
+
+    expect(validateIntakePlan({
+      ...moMi,
+      slots: [{ routineGroup: 'morning' as const, time: null, dose: 1, weekdays: ['Mo'] }],
+    }, 'complete').scheduleDays).toBe('day_without_intake')
+
+    expect(validateIntakePlan({
+      ...moMi,
+      slots: [
+        { routineGroup: 'morning' as const, time: '08:00', dose: 1, weekdays: ['Mo', 'Mi'] },
+        { routineGroup: 'evening' as const, time: '20:00', dose: 1, weekdays: ['Mo'] },
+      ],
+    }, 'complete').scheduleDays).toBeUndefined()
+  })
+
+  it('weist einen Zeitpunkt an einem Tag ab, den der Plan nicht auswählt', () => {
+    expect(validateIntakePlan({
+      ...validPlan,
+      rhythm: { ...emptyRhythm(), kind: 'weekdays' as const, weekdays: ['Mo', 'Mi'] },
+      slots: [
+        { routineGroup: 'morning' as const, time: '08:00', dose: 1, weekdays: ['Mo', 'Mi'] },
+        { routineGroup: 'evening' as const, time: '20:00', dose: 1, weekdays: ['Sa'] },
+      ],
+    }, 'complete').slots).toEqual(['', 'unknown_day'])
+  })
+
+  it('erlaubt dieselbe Tageszeit zweimal, wenn sie an verschiedenen Tagen liegt', () => {
+    expect(validateIntakePlan({
+      ...validPlan,
+      rhythm: { ...emptyRhythm(), kind: 'weekdays' as const, weekdays: ['Mo', 'Mi'] },
+      slots: [
+        { routineGroup: 'morning' as const, time: '08:00', dose: 1, weekdays: ['Mo'] },
+        { routineGroup: 'morning' as const, time: '08:00', dose: 2, weekdays: ['Mi'] },
+      ],
+    }, 'complete').slots).toBeUndefined()
+  })
+
   it('verlangt die Menge an JEDEM Einnahmezeitpunkt', () => {
     // „morgens 1000, abends —" ist kein Plan, sondern ein halber.
     expect(validateIntakePlan({
       ...validPlan,
       slots: [
-        { routineGroup: 'morning' as const, time: '08:00', dose: 1000 },
-        { routineGroup: 'evening' as const, time: '20:00', dose: null },
+        { routineGroup: 'morning' as const, time: '08:00', dose: 1000, weekdays: [] },
+        { routineGroup: 'evening' as const, time: '20:00', dose: null, weekdays: [] },
       ],
     }, 'with_amount').dose).toBe('required')
 
     expect(validateIntakePlan({
       ...validPlan,
       slots: [
-        { routineGroup: 'morning' as const, time: '08:00', dose: 1000 },
-        { routineGroup: 'evening' as const, time: '20:00', dose: 500 },
+        { routineGroup: 'morning' as const, time: '08:00', dose: 1000, weekdays: [] },
+        { routineGroup: 'evening' as const, time: '20:00', dose: 500, weekdays: [] },
       ],
     }, 'with_amount').dose).toBeUndefined()
   })
@@ -212,7 +256,7 @@ describe('validateStackItemDraft', () => {
   it('rejects non-finite tracked quantities and complete strength before SQL', () => {
     expect(validateIntakePlan({
       ...validPlan,
-      slots: [{ routineGroup: 'morning' as const, time: null, dose: Number.POSITIVE_INFINITY }],
+      slots: [{ routineGroup: 'morning' as const, time: null, dose: Number.POSITIVE_INFINITY, weekdays: [] }],
     }, 'with_amount').dose).toBe('required')
     expect(validateStackItemDraft({
       ...validVitaminD,

@@ -63,6 +63,7 @@ interface Cycle {
   cycle_on_days: number | null
   cycle_off_days: number | null
   slot_doses: string | null
+  slot_days: string | null
   schedule_days: string[] | null
   start_date: string
   end_date: string | null
@@ -140,7 +141,7 @@ function resolveDashboardCycleQuantity(
 }
 
 function cycleIntakeMinutes(c: Cycle, day: Date): number {
-  return resolveScheduleSlots(scheduleForDay(c, day))[0]?.minutes ?? 25 * 60
+  return resolveScheduleSlots(scheduleForDay(c, day), day)[0]?.minutes ?? 25 * 60
 }
 
 interface DaySlot {
@@ -154,7 +155,8 @@ interface DaySlot {
 // Expand a cycle's intake times into individual day-slots for a given day (segment-resolved).
 function cycleSlots(c: Cycle, day: Date): DaySlot[] {
   const seg = scheduleForDay(c, day)
-  const out: DaySlot[] = resolveScheduleSlots(seg).map(slot => ({
+  // MIT dem Tag: ein Zeitpunkt kann nur an bestimmten Wochentagen liegen.
+  const out: DaySlot[] = resolveScheduleSlots(seg, day).map(slot => ({
     key: slot.key === 'custom' ? slot.time : slot.key,
     minutes: slot.minutes,
     time: slot.time,
