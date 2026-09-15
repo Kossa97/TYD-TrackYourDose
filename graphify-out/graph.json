@@ -11086,7 +11086,7 @@
       "file_type": "code",
       "norm_label": "canonicalhash()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L346"
+      "source_location": "L348"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_interpolationtokens",
@@ -11098,7 +11098,7 @@
       "file_type": "code",
       "norm_label": "interpolationtokens()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L359"
+      "source_location": "L361"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_loadlocale",
@@ -11110,7 +11110,7 @@
       "file_type": "code",
       "norm_label": "loadlocale()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L339"
+      "source_location": "L341"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_loadsource",
@@ -11122,7 +11122,7 @@
       "file_type": "code",
       "norm_label": "loadsource()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L331"
+      "source_location": "L333"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_withoutmystackoverlay",
@@ -11134,7 +11134,7 @@
       "file_type": "code",
       "norm_label": "withoutmystackoverlay()",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L353"
+      "source_location": "L355"
     },
     {
       "id": "src_app_app",
@@ -26181,7 +26181,7 @@
       "file_type": "code",
       "norm_label": "my_stack_de",
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L299"
+      "source_location": "L301"
     },
     {
       "id": "scripts_my_stack_i18n_source_my_stack_en",
@@ -26203,7 +26203,7 @@
       "file_type": "code",
       "norm_label": "my_stack_keys",
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L596"
+      "source_location": "L600"
     },
     {
       "id": "docs_superpowers_specs_2026_09_12_my_stack_staerke_je_form_design",
@@ -30395,7 +30395,7 @@
       "file_type": "code",
       "norm_label": "expectedkeyset",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L329"
+      "source_location": "L331"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_localecodes",
@@ -30417,7 +30417,7 @@
       "file_type": "code",
       "norm_label": "manual_outside_overlay_hashes",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L311"
+      "source_location": "L313"
     },
     {
       "id": "src_features_my_stack_lib_i18n_test_manuallocalecodes",
@@ -30450,7 +30450,7 @@
       "file_type": "code",
       "norm_label": "translated_outside_overlay_hashes",
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L315"
+      "source_location": "L317"
     },
     {
       "id": "src_i18n_index",
@@ -141965,7 +141965,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L299",
+      "source_location": "L301",
       "weight": 1.0
     },
     {
@@ -141976,7 +141976,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/my-stack-i18n-source.mjs",
-      "source_location": "L596",
+      "source_location": "L600",
       "weight": 1.0
     },
     {
@@ -156210,7 +156210,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L311",
+      "source_location": "L313",
       "weight": 1.0
     },
     {
@@ -156221,7 +156221,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L315",
+      "source_location": "L317",
       "weight": 1.0
     },
     {
@@ -156232,7 +156232,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L329",
+      "source_location": "L331",
       "weight": 1.0
     },
     {
@@ -156243,7 +156243,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L331",
+      "source_location": "L333",
       "weight": 1.0
     },
     {
@@ -156254,7 +156254,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L339",
+      "source_location": "L341",
       "weight": 1.0
     },
     {
@@ -156265,7 +156265,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L346",
+      "source_location": "L348",
       "weight": 1.0
     },
     {
@@ -156276,7 +156276,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L353",
+      "source_location": "L355",
       "weight": 1.0
     },
     {
@@ -156287,7 +156287,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/i18n.test.ts",
-      "source_location": "L359",
+      "source_location": "L361",
       "weight": 1.0
     },
     {
@@ -179837,5 +179837,5 @@
       "source_file": "docs/superpowers/plans/2026-06-25-confirmed-injection-intake-linking.md"
     }
   ],
-  "built_at_commit": "32a30e538f3dee1f11387b127ce46d4dab0638b8"
+  "built_at_commit": "beb1aa60d19dd61e16e2db902c4fde35185fe3d7"
 }
