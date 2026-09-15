@@ -991,7 +991,7 @@
   "my_stack_plan_time": "सटीक समय (वैकल्पिक)",
   "my_stack_plan_quantity": "प्रति सेवन नियोजित राशि",
   "my_stack_plan_quantity_required": "कृपया 0 से अधिक राशि दर्ज करें।",
-  "my_stack_plan_unit": "नियोजित राशि की इकाई",
+  "my_stack_plan_unit": "इकाई",
   "my_stack_plan_unit_required": "कृपया एक इकाई चुनें या दर्ज करें।",
   "my_stack_plan_reminders_optional": "रिमाइंडर वैकल्पिक हैं और सहेजने के बाद कॉन्फ़िगर किए जा सकते हैं।",
   "my_stack_routine_morning": "सुबह",

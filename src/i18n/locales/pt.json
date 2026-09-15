@@ -991,7 +991,7 @@
   "my_stack_plan_time": "Hora exata (opcional)",
   "my_stack_plan_quantity": "Quantidade planejada por ingestão",
   "my_stack_plan_quantity_required": "Insira um valor maior que 0.",
-  "my_stack_plan_unit": "Unidade do valor planejado",
+  "my_stack_plan_unit": "Unidade",
   "my_stack_plan_unit_required": "Escolha ou insira uma unidade.",
   "my_stack_plan_reminders_optional": "Os lembretes são opcionais e podem ser configurados após salvar.",
   "my_stack_routine_morning": "Manhã",

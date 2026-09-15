@@ -991,7 +991,7 @@
   "my_stack_plan_time": "Tam zaman (isteğe bağlı)",
   "my_stack_plan_quantity": "Alım başına planlanan miktar",
   "my_stack_plan_quantity_required": "Lütfen 0'dan büyük bir tutar giriniz.",
-  "my_stack_plan_unit": "Planlanan tutarın birimi",
+  "my_stack_plan_unit": "Birim",
   "my_stack_plan_unit_required": "Lütfen bir birim seçin veya girin.",
   "my_stack_plan_reminders_optional": "Hatırlatıcılar isteğe bağlıdır ve kaydedildikten sonra yapılandırılabilir.",
   "my_stack_routine_morning": "Sabah",

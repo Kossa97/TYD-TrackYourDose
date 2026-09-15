@@ -204,6 +204,89 @@ export function IntakePlanEditor({
     onChange({ slots: plan.slots.filter((_, position) => position !== index) })
   }
 
+  // Menge und Einheit gehoeren nebeneinander: man tippt „500" und liest gleich
+  // daneben „mg". Die Einheit gilt fuer den ganzen Plan, es gibt sie also nur
+  // einmal — an der ersten Karte zum Eingeben, an weiteren nur noch zu lesen.
+  const mengeUndEinheit = (index: number) => (
+    <div>
+      <div className="flex min-w-0 items-end gap-2">
+        <div className="min-w-0 flex-1">
+          <label htmlFor={`stack-plan-quantity-${index}`} className="mb-2 block text-sm font-semibold text-slate-200">
+            {t('my_stack_plan_quantity', { defaultValue: quantityLabel(form) })}
+          </label>
+          <input
+            id={`stack-plan-quantity-${index}`}
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="any"
+            value={plan.slots[index]?.dose ?? ''}
+            onChange={event => changeSlot(index, { dose: numericValue(event.target.value) })}
+            data-field={index === 0 ? 'plan.dose' : `plan.slots.${index}.dose`}
+            aria-invalid={Boolean(errors.doses?.[index]) || undefined}
+            aria-describedby={errors.doses?.[index] ? `stack-plan-dose-${index}-error` : undefined}
+            className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+          />
+        </div>
+        {index === 0 ? (
+          <div className="w-24 shrink-0">
+            <label htmlFor="stack-plan-unit" className="mb-2 block text-sm font-semibold text-slate-200">
+              {t('my_stack_plan_unit', { defaultValue: 'Einheit' })}
+            </label>
+            <input
+              id="stack-plan-unit"
+              list="stack-plan-unit-suggestions"
+              value={plan.unit ?? ''}
+              onChange={event => onChange({ unit: event.target.value || null })}
+              data-field="plan.unit"
+              aria-invalid={Boolean(errors.unit) || undefined}
+              aria-describedby={errors.unit ? 'stack-plan-unit-error' : undefined}
+              autoComplete="off"
+              size={6}
+              className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            />
+            <datalist id="stack-plan-unit-suggestions">
+              {unitSuggestions.map(unit => <option key={unit} value={unit} />)}
+            </datalist>
+          </div>
+        ) : plan.unit?.trim() ? (
+          <span className="flex h-11 shrink-0 items-center text-sm font-semibold text-slate-400">
+            {plan.unit}
+          </span>
+        ) : null}
+      </div>
+      {/* An DIESER Karte, nicht unten bei der Einheit: bei drei Einnahmen
+          sagte der Hinweis dort nicht, welche fehlt. */}
+      {errors.doses?.[index] && (
+        <p id={`stack-plan-dose-${index}-error`} role="alert" className="mt-2 text-sm text-rose-300">
+          {t('my_stack_plan_quantity_required', { defaultValue: 'Bitte gib eine Menge größer als 0 an.' })}
+        </p>
+      )}
+      {index === 0 && errors.unit && (
+        <p id="stack-plan-unit-error" role="alert" className="mt-2 text-sm text-rose-300">
+          {t('my_stack_plan_unit_required', { defaultValue: 'Bitte wähle oder benenne eine Einheit.' })}
+        </p>
+      )}
+      {canSuggestFractions && (
+        <div className="mt-2 flex min-w-0 flex-wrap gap-2">
+          {TABLET_FRACTIONS.map(fraction => (
+            <button
+              key={fraction.label}
+              type="button"
+              onClick={() => {
+                changeSlot(index, { dose: fraction.value })
+                if (!plan.unit) onChange({ unit: 'tablet' })
+              }}
+              className="min-h-11 cursor-pointer rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-sm font-semibold text-slate-300 transition-colors duration-200 hover:border-sky-400/30 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
+            >
+              {fraction.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <div className="min-w-0 space-y-5">
       {/* Die Route folgt fast immer aus der Form — eine Tablette wird
@@ -378,41 +461,9 @@ export function IntakePlanEditor({
       </fieldset>
       {/* ── WAS JE EINNAHME — direkt unter „An welchen Tagen?", denn die
              Zeitpunkte gehoeren zu den Tagen und nicht hinter den Zeitraum. */}
-      <div className="flex min-w-0 flex-wrap items-end justify-between gap-3">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-          {t('my_stack_plan_section_each', { defaultValue: 'Was je Einnahme' })}
-        </h3>
-        {/* Die Einheit gehoert NEBEN die Mengen, nicht unter alle Karten: seit
-            die Menge am Zeitpunkt steht, tippte man „500" und musste an drei
-            Karten vorbeiscrollen, um „mg" zu finden. */}
-        {tracksQuantity && (
-          <div className="min-w-0">
-            <label htmlFor="stack-plan-unit" className="mb-1 block text-xs font-semibold text-slate-400">
-              {t('my_stack_plan_unit', { defaultValue: 'Einheit der geplanten Menge' })}
-            </label>
-            <input
-              id="stack-plan-unit"
-              list="stack-plan-unit-suggestions"
-              value={plan.unit ?? ''}
-              onChange={event => onChange({ unit: event.target.value || null })}
-              data-field="plan.unit"
-              aria-invalid={Boolean(errors.unit) || undefined}
-              aria-describedby={errors.unit ? 'stack-plan-unit-error' : undefined}
-              autoComplete="off"
-              size={8}
-              className="input min-h-11 w-28 min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-            />
-            <datalist id="stack-plan-unit-suggestions">
-              {unitSuggestions.map(unit => <option key={unit} value={unit} />)}
-            </datalist>
-            {errors.unit && (
-              <p id="stack-plan-unit-error" role="alert" className="mt-2 text-sm text-rose-300">
-                {t('my_stack_plan_unit_required', { defaultValue: 'Bitte wähle oder benenne eine Einheit.' })}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
+      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        {t('my_stack_plan_section_each', { defaultValue: 'Was je Einnahme' })}
+      </h3>
 
       {onDemand ? (
         <div className="min-w-0 space-y-3">
@@ -429,31 +480,7 @@ export function IntakePlanEditor({
           </p>
           {/* Eine Menge braucht es trotzdem: „400 mg je Einnahme". Sie haengt
               am selben einen Zeitpunkt, der nur seine Tageszeit nicht zeigt. */}
-          {tracksQuantity && (
-            <div>
-              <label htmlFor="stack-plan-quantity-0" className="mb-2 block text-sm font-semibold text-slate-200">
-                {t('my_stack_plan_quantity', { defaultValue: quantityLabel(form) })}
-              </label>
-              <input
-                id="stack-plan-quantity-0"
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="any"
-                value={plan.slots[0]?.dose ?? ''}
-                onChange={event => changeSlot(0, { dose: numericValue(event.target.value) })}
-                data-field="plan.dose"
-                aria-invalid={Boolean(errors.doses?.[0]) || undefined}
-                aria-describedby={errors.doses?.[0] ? 'stack-plan-dose-0-error' : undefined}
-                className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-              />
-              {errors.doses?.[0] && (
-                <p id="stack-plan-dose-0-error" role="alert" className="mt-2 text-sm text-rose-300">
-                  {t('my_stack_plan_quantity_required', { defaultValue: 'Bitte gib eine Menge größer als 0 an.' })}
-                </p>
-              )}
-            </div>
-          )}
+          {tracksQuantity && mengeUndEinheit(0)}
         </div>
       ) : plan.slots.map((slot, index) => (
         <div key={index} data-plan-slot={index} className="min-w-0 space-y-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
@@ -575,53 +602,7 @@ export function IntakePlanEditor({
               />
             </div>
 
-            {/* Die Menge steht am ZEITPUNKT, nicht am Plan: „morgens 1000 mg,
-                abends 500 mg" ist bei Levothyroxin, Insulin und Metformin der
-                Normalfall. Bei einem Zeitpunkt sieht es aus wie vorher. */}
-            {tracksQuantity && (
-              <div>
-                <label htmlFor={`stack-plan-quantity-${index}`} className="mb-2 block text-sm font-semibold text-slate-200">
-                  {t('my_stack_plan_quantity', { defaultValue: quantityLabel(form) })}
-                </label>
-                <input
-                  id={`stack-plan-quantity-${index}`}
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="any"
-                  value={slot.dose ?? ''}
-                  onChange={event => changeSlot(index, { dose: numericValue(event.target.value) })}
-                  data-field={index === 0 ? 'plan.dose' : `plan.slots.${index}.dose`}
-                  aria-invalid={Boolean(errors.doses?.[index]) || undefined}
-                  aria-describedby={errors.doses?.[index] ? `stack-plan-dose-${index}-error` : undefined}
-                  className="input min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-                />
-                {/* An DIESER Karte, nicht unten bei der Einheit: bei drei
-                    Einnahmen sagte der Hinweis dort nicht, welche fehlt. */}
-                {errors.doses?.[index] && (
-                  <p id={`stack-plan-dose-${index}-error`} role="alert" className="mt-2 text-sm text-rose-300">
-                    {t('my_stack_plan_quantity_required', { defaultValue: 'Bitte gib eine Menge größer als 0 an.' })}
-                  </p>
-                )}
-                {canSuggestFractions && (
-                  <div className="mt-2 flex min-w-0 flex-wrap gap-2">
-                    {TABLET_FRACTIONS.map(fraction => (
-                      <button
-                        key={fraction.label}
-                        type="button"
-                        onClick={() => {
-                          changeSlot(index, { dose: fraction.value })
-                          if (!plan.unit) onChange({ unit: 'tablet' })
-                        }}
-                        className="min-h-11 cursor-pointer rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-sm font-semibold text-slate-300 transition-colors duration-200 hover:border-sky-400/30 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
-                      >
-                        {fraction.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            {tracksQuantity && mengeUndEinheit(index)}
           </div>
         </div>
       ))}

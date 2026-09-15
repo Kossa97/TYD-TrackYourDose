@@ -991,7 +991,7 @@
   "my_stack_plan_time": "Waktu yang tepat (opsional)",
   "my_stack_plan_quantity": "Jumlah yang direncanakan per asupan",
   "my_stack_plan_quantity_required": "Silakan masukkan jumlah yang lebih besar dari 0.",
-  "my_stack_plan_unit": "Satuan dari jumlah yang direncanakan",
+  "my_stack_plan_unit": "Satuan",
   "my_stack_plan_unit_required": "Silakan pilih atau masukkan satuan.",
   "my_stack_plan_reminders_optional": "Pengingat bersifat opsional dan dapat dikonfigurasi setelah disimpan.",
   "my_stack_routine_morning": "Pagi",

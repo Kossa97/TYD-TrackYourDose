@@ -991,7 +991,7 @@
   "my_stack_plan_time": "Heure exacte (facultatif)",
   "my_stack_plan_quantity": "Montant prévu par prise",
   "my_stack_plan_quantity_required": "Veuillez saisir un montant supérieur à 0.",
-  "my_stack_plan_unit": "Unité du montant prévu",
+  "my_stack_plan_unit": "Unité",
   "my_stack_plan_unit_required": "Veuillez choisir ou saisir une unité.",
   "my_stack_plan_reminders_optional": "Les rappels sont facultatifs et peuvent être configurés après l'enregistrement.",
   "my_stack_routine_morning": "Matin",

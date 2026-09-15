@@ -991,7 +991,7 @@
   "my_stack_plan_time": "Ora esatta (opzionale)",
   "my_stack_plan_quantity": "Importo pianificato per assunzione",
   "my_stack_plan_quantity_required": "Inserisci un importo maggiore di 0.",
-  "my_stack_plan_unit": "Unità dell'importo pianificato",
+  "my_stack_plan_unit": "Unità",
   "my_stack_plan_unit_required": "Scegli o inserisci un'unità.",
   "my_stack_plan_reminders_optional": "I promemoria sono opzionali e possono essere configurati dopo il salvataggio.",
   "my_stack_routine_morning": "Mattino",

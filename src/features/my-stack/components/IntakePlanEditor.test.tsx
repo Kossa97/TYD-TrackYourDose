@@ -109,14 +109,16 @@ describe('IntakePlanEditor', () => {
     expect(onChange).toHaveBeenCalledWith({ method: 'Oral' })
   })
 
-  it('stellt die Einheit neben die Mengen, nicht unter alle Karten', () => {
-    // Seit die Menge am Zeitpunkt steht, tippte man „500" und musste an drei
-    // Karten vorbeiscrollen, um „mg" zu finden.
+  it('stellt die Einheit direkt neben die Menge, und nur einmal', () => {
+    // Man tippt „500" und liest gleich daneben „mg" — nicht erst, nachdem man
+    // an drei Karten vorbeigescrollt ist. Die Einheit gilt fuer den ganzen
+    // Plan: eingeben laesst sie sich an der ersten Karte, weitere zeigen sie.
     render(<PlanHarness
       trackingLevel="with_amount"
       dosageForm="tablet"
       initialPlan={{
         ...plan,
+        unit: 'mg',
         slots: [
           { routineGroup: 'morning', time: '08:00', dose: 1000, weekdays: [] },
           { routineGroup: 'evening', time: '20:00', dose: 500, weekdays: [] },
@@ -124,11 +126,16 @@ describe('IntakePlanEditor', () => {
       }}
     />)
 
-    const einheit = screen.getByLabelText('Einheit der geplanten Menge')
+    const einheit = screen.getByLabelText('Einheit')
     const ersteKarte = document.querySelector('[data-plan-slot="0"]')!
-    // Die Einheit steht VOR der ersten Karte im Dokument.
-    expect(ersteKarte.compareDocumentPosition(einheit) & Node.DOCUMENT_POSITION_PRECEDING)
-      .toBeTruthy()
+    const zweiteKarte = document.querySelector('[data-plan-slot="1"]')!
+    // Sie steht IN der ersten Karte, in derselben Zeile wie deren Menge.
+    expect(ersteKarte.contains(einheit)).toBe(true)
+    const menge = within(ersteKarte as HTMLElement).getByLabelText('Geplante Menge pro Einnahme')
+    expect(menge.parentElement?.parentElement).toBe(einheit.parentElement?.parentElement)
+    // Die zweite Karte bekommt kein zweites Eingabefeld, nur den Text.
+    expect(within(zweiteKarte as HTMLElement).queryByLabelText('Einheit')).toBeNull()
+    expect(zweiteKarte.textContent).toContain('mg')
   })
 
   it('stellt den Mengenfehler an die Karte, in der die Zahl fehlt', () => {
@@ -420,7 +427,7 @@ describe('IntakePlanEditor', () => {
     render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
 
     expect(screen.queryByLabelText('Geplante Menge pro Einnahme')).toBeNull()
-    expect(screen.queryByLabelText('Einheit der geplanten Menge')).toBeNull()
+    expect(screen.queryByLabelText('Einheit')).toBeNull()
     expect(document.querySelector('[data-rhythm-kind="daily"]')).not.toBeNull()
   })
 
@@ -428,7 +435,7 @@ describe('IntakePlanEditor', () => {
     render(<PlanHarness trackingLevel={trackingLevel} dosageForm="tablet" />)
 
     expect(screen.getByLabelText('Geplante Menge pro Einnahme')).toBeTruthy()
-    expect(screen.getByLabelText('Einheit der geplanten Menge')).toBeTruthy()
+    expect(screen.getByLabelText('Einheit')).toBeTruthy()
     if (trackingLevel === 'complete') expect(screen.queryByLabelText('Stärke')).toBeNull()
   })
 

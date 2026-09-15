@@ -1163,7 +1163,7 @@
   "my_stack_plan_time": "Genaue Uhrzeit (optional)",
   "my_stack_plan_quantity": "Geplante Menge pro Einnahme",
   "my_stack_plan_quantity_required": "Bitte gib eine Menge größer als 0 an.",
-  "my_stack_plan_unit": "Einheit der geplanten Menge",
+  "my_stack_plan_unit": "Einheit",
   "my_stack_plan_unit_required": "Bitte wähle oder benenne eine Einheit.",
   "my_stack_plan_reminders_optional": "Erinnerungen sind optional und können nach dem Speichern eingerichtet werden.",
   "my_stack_routine_morning": "Morgens",

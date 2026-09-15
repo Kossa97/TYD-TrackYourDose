@@ -991,7 +991,7 @@
   "my_stack_plan_time": "正確な時刻 (オプション)",
   "my_stack_plan_quantity": "1回当たりの摂取予定量",
   "my_stack_plan_quantity_required": "0 より大きい金額を入力してください。",
-  "my_stack_plan_unit": "計画金額の単位",
+  "my_stack_plan_unit": "単位",
   "my_stack_plan_unit_required": "単位を選択または入力してください。",
   "my_stack_plan_reminders_optional": "リマインダーはオプションで、保存後に設定できます。",
   "my_stack_routine_morning": "朝",

@@ -993,7 +993,7 @@
   "my_stack_plan_time": "Точное время (необязательно)",
   "my_stack_plan_quantity": "Планируемая сумма на прием",
   "my_stack_plan_quantity_required": "Пожалуйста, введите сумму больше 0.",
-  "my_stack_plan_unit": "Единица плановой суммы",
+  "my_stack_plan_unit": "Единица",
   "my_stack_plan_unit_required": "Пожалуйста, выберите или введите единицу измерения.",
   "my_stack_plan_reminders_optional": "Напоминания не являются обязательными и могут быть настроены после сохранения.",
   "my_stack_routine_morning": "Утро",

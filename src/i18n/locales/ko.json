@@ -990,7 +990,7 @@
   "my_stack_plan_time": "정확한 시간(선택사항)",
   "my_stack_plan_quantity": "1회 섭취예정량",
   "my_stack_plan_quantity_required": "0보다 큰 금액을 입력해 주세요.",
-  "my_stack_plan_unit": "계획금액 단위",
+  "my_stack_plan_unit": "단위",
   "my_stack_plan_unit_required": "단위를 선택하거나 입력해주세요.",
   "my_stack_plan_reminders_optional": "알림은 선택사항이며 저장 후 구성할 수 있습니다.",
   "my_stack_routine_morning": "아침",

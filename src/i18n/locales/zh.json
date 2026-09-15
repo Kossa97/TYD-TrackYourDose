@@ -990,7 +990,7 @@
   "my_stack_plan_time": "具体时间（可选）",
   "my_stack_plan_quantity": "每次摄入的计划数量",
   "my_stack_plan_quantity_required": "请输入大于0的金额。",
-  "my_stack_plan_unit": "计划金额单位",
+  "my_stack_plan_unit": "单位",
   "my_stack_plan_unit_required": "请选择或输入单位。",
   "my_stack_plan_reminders_optional": "提醒是可选的，保存后可以配置。",
   "my_stack_routine_morning": "早上",

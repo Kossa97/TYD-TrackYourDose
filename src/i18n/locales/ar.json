@@ -995,7 +995,7 @@
   "my_stack_plan_time": "الوقت المحدد (اختياري)",
   "my_stack_plan_quantity": "المبلغ المخطط لكل تناول",
   "my_stack_plan_quantity_required": "الرجاء إدخال مبلغ أكبر من 0.",
-  "my_stack_plan_unit": "وحدة المبلغ المقرر",
+  "my_stack_plan_unit": "الوحدة",
   "my_stack_plan_unit_required": "الرجاء اختيار أو إدخال وحدة.",
   "my_stack_plan_reminders_optional": "التذكيرات اختيارية ويمكن تهيئتها بعد الحفظ.",
   "my_stack_routine_morning": "صباح",

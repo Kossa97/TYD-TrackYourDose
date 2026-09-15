@@ -991,7 +991,7 @@
   "my_stack_plan_time": "Hora exacta (opcional)",
   "my_stack_plan_quantity": "Cantidad planificada por ingesta",
   "my_stack_plan_quantity_required": "Ingrese una cantidad mayor que 0.",
-  "my_stack_plan_unit": "Unidad del importe planificado",
+  "my_stack_plan_unit": "Unidad",
   "my_stack_plan_unit_required": "Elija o ingrese una unidad.",
   "my_stack_plan_reminders_optional": "Los recordatorios son opcionales y se pueden configurar después de guardarlos.",
   "my_stack_routine_morning": "Mañana",
