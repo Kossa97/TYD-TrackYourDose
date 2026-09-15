@@ -1147,7 +1147,7 @@
   "my_stack_rhythm_cycle_off": "विराम के दिन",
   "my_stack_rhythm_cycle_invalid": "चक्र के लिए कम से कम एक सेवन दिन और एक विराम दिन चाहिए।",
   "my_stack_plan_section_when": "कब",
-  "my_stack_plan_section_each": "प्रति सेवन",
+  "my_stack_plan_section_each": "दिन का समय",
   "my_stack_plan_summary": "{{start}} से: {{plan}}",
   "my_stack_plan_summary_until": "{{ende}} तक।",
   "my_stack_plan_reminders_on_demand": "निश्चित समय के बिना याद दिलाने को कुछ नहीं है।",

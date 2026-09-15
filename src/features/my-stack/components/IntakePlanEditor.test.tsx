@@ -162,6 +162,26 @@ describe('IntakePlanEditor', () => {
     expect(document.querySelector('[data-plan-slot="1"]')!.contains(meldungen[0])).toBe(true)
   })
 
+  it('hält die Erinnerung bedienbar, obwohl das Kästchen nicht mehr zu sehen ist', () => {
+    // Drei Angebote nebeneinander lassen auf Telefonbreite keinen Platz fürs
+    // Kästchen — seine Aussage trägt jetzt der Rahmen. Die Checkbox bleibt
+    // aber da: sie ist es, die Screenreader und Tastatur bedienen.
+    const onChange = vi.fn()
+    render(
+      <IntakePlanEditor
+        trackingLevel="intake_only"
+        dosageForm="tablet"
+        plan={plan}
+        errors={{}}
+        onChange={onChange}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('checkbox', { name: '2 Std vorher' }))
+
+    expect(onChange).toHaveBeenCalledWith({ reminders: ['2h'] })
+  })
+
   it('fragt die Erinnerung, statt sie zu versprechen', () => {
     // Vorher stand hier ein Satz „kann nach dem Speichern eingerichtet
     // werden" — und jeder neue Eintrag wurde mit 'none' gespeichert.

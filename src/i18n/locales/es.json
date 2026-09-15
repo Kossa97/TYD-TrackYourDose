@@ -1147,7 +1147,7 @@
   "my_stack_rhythm_cycle_off": "Días de pausa",
   "my_stack_rhythm_cycle_invalid": "Un ciclo necesita al menos un día activo y uno de pausa.",
   "my_stack_plan_section_when": "Cuándo",
-  "my_stack_plan_section_each": "Por toma",
+  "my_stack_plan_section_each": "Momento del día",
   "my_stack_plan_summary": "Desde {{start}}: {{plan}}",
   "my_stack_plan_summary_until": "Hasta {{ende}}.",
   "my_stack_plan_reminders_on_demand": "Sin una hora fija no hay nada que recordar.",

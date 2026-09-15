@@ -1295,7 +1295,7 @@
   "my_stack_rhythm_cycle_off": "Tage Pause",
   "my_stack_rhythm_cycle_invalid": "Ein Wechsel braucht mindestens einen Tag an und einen Tag Pause.",
   "my_stack_plan_section_when": "Wann",
-  "my_stack_plan_section_each": "Was je Einnahme",
+  "my_stack_plan_section_each": "Tageszeit",
   "my_stack_plan_summary": "Ab {{start}}: {{plan}}",
   "my_stack_plan_summary_until": "Bis {{ende}}.",
   "my_stack_plan_reminders_on_demand": "Ohne festen Zeitpunkt gibt es nichts, woran erinnert werden könnte.",

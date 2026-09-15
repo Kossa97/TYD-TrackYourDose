@@ -1151,7 +1151,7 @@
   "my_stack_rhythm_cycle_off": "أيام التوقف",
   "my_stack_rhythm_cycle_invalid": "تحتاج الدورة إلى يوم تناول واحد ويوم توقف على الأقل.",
   "my_stack_plan_section_when": "متى",
-  "my_stack_plan_section_each": "لكل جرعة",
+  "my_stack_plan_section_each": "وقت اليوم",
   "my_stack_plan_summary": "من {{start}}: {{plan}}",
   "my_stack_plan_summary_until": "حتى {{ende}}.",
   "my_stack_plan_reminders_on_demand": "بدون وقت محدد لا يوجد ما يُذكَّر به.",

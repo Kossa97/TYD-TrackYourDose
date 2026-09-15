@@ -1146,7 +1146,7 @@
   "my_stack_rhythm_cycle_off": "停用天数",
   "my_stack_rhythm_cycle_invalid": "周期至少需要一个服用日和一个停用日。",
   "my_stack_plan_section_when": "何时",
-  "my_stack_plan_section_each": "每次服用",
+  "my_stack_plan_section_each": "时段",
   "my_stack_plan_summary": "自 {{start}} 起：{{plan}}",
   "my_stack_plan_summary_until": "至 {{ende}}。",
   "my_stack_plan_reminders_on_demand": "没有固定时间，也就无从提醒。",

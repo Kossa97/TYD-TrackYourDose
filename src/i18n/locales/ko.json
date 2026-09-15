@@ -1146,7 +1146,7 @@
   "my_stack_rhythm_cycle_off": "휴약 일수",
   "my_stack_rhythm_cycle_invalid": "주기에는 복용일과 휴약일이 각각 하루 이상 필요합니다.",
   "my_stack_plan_section_when": "언제",
-  "my_stack_plan_section_each": "1회당",
+  "my_stack_plan_section_each": "시간대",
   "my_stack_plan_summary": "{{start}}부터: {{plan}}",
   "my_stack_plan_summary_until": "{{ende}}까지.",
   "my_stack_plan_reminders_on_demand": "정해진 시각이 없으면 알릴 것도 없습니다.",

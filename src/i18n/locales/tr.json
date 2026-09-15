@@ -1147,7 +1147,7 @@
   "my_stack_rhythm_cycle_off": "Ara verilen gün",
   "my_stack_rhythm_cycle_invalid": "Bir döngü en az bir kullanım ve bir ara günü gerektirir.",
   "my_stack_plan_section_when": "Ne zaman",
-  "my_stack_plan_section_each": "Alım başına",
+  "my_stack_plan_section_each": "Günün saati",
   "my_stack_plan_summary": "{{start}} tarihinden itibaren: {{plan}}",
   "my_stack_plan_summary_until": "{{ende}} tarihine kadar.",
   "my_stack_plan_reminders_on_demand": "Sabit bir saat yoksa hatırlatılacak bir şey de yoktur.",

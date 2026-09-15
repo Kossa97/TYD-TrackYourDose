@@ -1147,7 +1147,7 @@
   "my_stack_rhythm_cycle_off": "Jours de pause",
   "my_stack_rhythm_cycle_invalid": "Un cycle exige au moins un jour de prise et un jour de pause.",
   "my_stack_plan_section_when": "Quand",
-  "my_stack_plan_section_each": "Par prise",
+  "my_stack_plan_section_each": "Moment de la journée",
   "my_stack_plan_summary": "À partir du {{start}} : {{plan}}",
   "my_stack_plan_summary_until": "Jusqu'au {{ende}}.",
   "my_stack_plan_reminders_on_demand": "Sans horaire fixe, il n'y a rien à rappeler.",

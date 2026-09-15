@@ -1147,7 +1147,7 @@
   "my_stack_rhythm_cycle_off": "Giorni di pausa",
   "my_stack_rhythm_cycle_invalid": "Un ciclo richiede almeno un giorno di assunzione e uno di pausa.",
   "my_stack_plan_section_when": "Quando",
-  "my_stack_plan_section_each": "Per assunzione",
+  "my_stack_plan_section_each": "Momento della giornata",
   "my_stack_plan_summary": "Dal {{start}}: {{plan}}",
   "my_stack_plan_summary_until": "Fino al {{ende}}.",
   "my_stack_plan_reminders_on_demand": "Senza un orario fisso non c'è nulla da ricordare.",

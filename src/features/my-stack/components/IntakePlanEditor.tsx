@@ -516,7 +516,7 @@ export function IntakePlanEditor({
       {/* ── WAS JE EINNAHME — direkt unter „An welchen Tagen?", denn die
              Zeitpunkte gehoeren zu den Tagen und nicht hinter den Zeitraum. */}
       <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-        {t('my_stack_plan_section_each', { defaultValue: 'Was je Einnahme' })}
+        {t('my_stack_plan_section_each', { defaultValue: 'Tageszeit' })}
       </h3>
 
       {/* Ein Reiter je Tag. Die Zahl daneben sagt, wie viele Einnahmen dieser
@@ -689,9 +689,12 @@ export function IntakePlanEditor({
         </div>
       )}
 
-      {/* Der Zeitraum steht hinter den Zeitpunkten: erst was, dann ab wann. */}
+      {/* Der Zeitraum steht hinter den Zeitpunkten: erst was, dann ab wann.
+          Beide Daten in einer Zeile — es sind zwei kurze Felder, und
+          untereinander schoben sie die Erinnerung aus dem Blick. */}
+      <div className="grid min-w-0 grid-cols-2 gap-3">
 
-      <div>
+      <div className="min-w-0">
         <label htmlFor="stack-plan-start-date" className="mb-2 block text-sm font-semibold text-slate-200">
           {t('my_stack_plan_start_date', { defaultValue: 'Start / gültig ab' })}
         </label>
@@ -715,7 +718,7 @@ export function IntakePlanEditor({
 
       {/* Das Ende. Fuer alles, was man laenger nimmt, bleibt es leer; eine
           Antibiotikakur oder ein Kortisonstoss hat hier ein Datum. */}
-      <div>
+      <div className="min-w-0">
         <label htmlFor="stack-plan-end-date" className="mb-2 block text-sm font-semibold text-slate-200">
           {t('my_stack_plan_end_date', { defaultValue: 'Ende (optional)' })}
         </label>
@@ -741,6 +744,8 @@ export function IntakePlanEditor({
         )}
       </div>
 
+      </div>
+
       </section>
 
       {/* ── ERINNERUNG ──────────────────────────────────────────────────── */}
@@ -762,11 +767,16 @@ export function IntakePlanEditor({
             })}
           </p>
         ) : (
-          <div data-plan-reminders className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-3">
+          // Drei Angebote nebeneinander statt untereinander. Das Kaestchen
+          // entfaellt, seine Aussage traegt der Rahmen — bei drei Feldern auf
+          // Telefonbreite ist es der Platz, den die Aufschrift braucht. Die
+          // Checkbox bleibt, nur unsichtbar: sie ist es, die der Screenreader
+          // vorliest und die Tastatur bedient.
+          <div data-plan-reminders className="grid min-w-0 grid-cols-3 gap-2">
             {REMINDER_OPTIONS.map(({ value, labelKey, defaultValue }) => (
               <label
                 key={value}
-                className={`flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${plan.reminders.includes(value)
+                className={`flex min-h-11 min-w-0 cursor-pointer items-center justify-center rounded-xl border px-2 py-2 text-center text-xs font-semibold leading-tight transition-colors duration-200 focus-within:ring-2 focus-within:ring-sky-400 motion-reduce:transition-none ${plan.reminders.includes(value)
                   ? 'border-sky-400/50 bg-sky-400/10 text-sky-200'
                   : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-sky-400/25'
                 }`}
@@ -775,7 +785,7 @@ export function IntakePlanEditor({
                   type="checkbox"
                   checked={plan.reminders.includes(value)}
                   onChange={() => toggleReminder(value)}
-                  className="h-5 w-5 shrink-0 cursor-pointer accent-sky-400"
+                  className="sr-only"
                 />
                 <span className="min-w-0 break-words">{t(labelKey, { defaultValue })}</span>
               </label>

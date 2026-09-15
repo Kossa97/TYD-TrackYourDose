@@ -1147,7 +1147,7 @@
   "my_stack_rhythm_cycle_off": "休む日数",
   "my_stack_rhythm_cycle_invalid": "休薬サイクルには服用日と休薬日が各1日以上必要です。",
   "my_stack_plan_section_when": "いつ",
-  "my_stack_plan_section_each": "1 回あたり",
+  "my_stack_plan_section_each": "時間帯",
   "my_stack_plan_summary": "{{start}} から: {{plan}}",
   "my_stack_plan_summary_until": "{{ende}} まで。",
   "my_stack_plan_reminders_on_demand": "決まった時刻がなければ、知らせるものがありません。",

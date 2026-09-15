@@ -1147,7 +1147,7 @@
   "my_stack_rhythm_cycle_off": "Hari jeda",
   "my_stack_rhythm_cycle_invalid": "Siklus butuh minimal satu hari aktif dan satu hari jeda.",
   "my_stack_plan_section_when": "Kapan",
-  "my_stack_plan_section_each": "Per konsumsi",
+  "my_stack_plan_section_each": "Waktu hari",
   "my_stack_plan_summary": "Mulai {{start}}: {{plan}}",
   "my_stack_plan_summary_until": "Sampai {{ende}}.",
   "my_stack_plan_reminders_on_demand": "Tanpa waktu tetap tidak ada yang perlu diingatkan.",
