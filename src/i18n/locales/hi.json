@@ -1145,7 +1145,7 @@
   "my_stack_rhythm_cycle_on": "सेवन के दिन",
   "my_stack_rhythm_cycle_off": "विराम के दिन",
   "my_stack_rhythm_cycle_invalid": "चक्र के लिए कम से कम एक सेवन दिन और एक विराम दिन चाहिए।",
-  "my_stack_plan_section_when": "कब",
+  "my_stack_plan_section_when": "किन दिनों में",
   "my_stack_plan_section_each": "दिन का समय",
   "my_stack_plan_summary": "{{start}} से: {{plan}}",
   "my_stack_plan_summary_until": "{{ende}} तक।",
@@ -1170,5 +1170,7 @@
   "my_stack_weekday_so": "रविवार",
   "my_stack_plan_day_question_any": "आप इसे दिन में कितनी बार लेते हैं?",
   "my_stack_plan_slot_fewer": "एक खुराक कम",
-  "my_stack_plan_slot_more": "एक खुराक अधिक"
+  "my_stack_plan_slot_more": "एक खुराक अधिक",
+  "my_stack_plan_section_how": "कैसे",
+  "my_stack_plan_section_period": "अवधि"
 }

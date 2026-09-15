@@ -78,6 +78,30 @@ beforeEach(() => {
 })
 
 describe('IntakePlanEditor', () => {
+  it('gliedert den Plan in fünf Abschnitte, keiner im anderen', () => {
+    // „Wann" trug einmal alles: Rhythmus, Tageszeit, Menge und Zeitraum lagen
+    // in einer Section, mit einer zweiten Überschrift mittendrin. Der Kopf
+    // behauptete damit mehr, als er meinte — und für Screenreader war die
+    // Gliederung schlicht falsch.
+    render(<PlanHarness trackingLevel="with_amount" dosageForm="vial" />)
+
+    const koepfe = [...document.querySelectorAll('section > h3')].map(kopf => kopf.textContent)
+    expect(koepfe).toEqual(['Wie', 'An welchen Tagen', 'Tageszeit', 'Zeitraum', 'Erinnerung'])
+
+    // Keiner steckt im anderen.
+    for (const abschnitt of document.querySelectorAll('section')) {
+      expect(abschnitt.querySelector('section')).toBeNull()
+    }
+  })
+
+  it('lässt den Abschnitt „Wie" weg, wo die Form nur eine Route zulässt', () => {
+    // Eine Tablette wird geschluckt — dort wäre die Frage ohne Gegenstand.
+    render(<PlanHarness trackingLevel="with_amount" dosageForm="tablet" />)
+
+    expect([...document.querySelectorAll('section > h3')].map(kopf => kopf.textContent))
+      .toEqual(['An welchen Tagen', 'Tageszeit', 'Zeitraum', 'Erinnerung'])
+  })
+
   it('fragt die Route nur, wo die Form sie offenlässt', () => {
     // Eine Kapsel wird geschluckt — eine Pflichtwahl, deren Antwort feststeht,
     // ist eine Frage zu viel. Was man spritzt, kann dagegen subkutan,

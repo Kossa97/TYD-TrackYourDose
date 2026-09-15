@@ -1145,7 +1145,7 @@
   "my_stack_rhythm_cycle_on": "Hari aktif",
   "my_stack_rhythm_cycle_off": "Hari jeda",
   "my_stack_rhythm_cycle_invalid": "Siklus butuh minimal satu hari aktif dan satu hari jeda.",
-  "my_stack_plan_section_when": "Kapan",
+  "my_stack_plan_section_when": "Pada hari apa",
   "my_stack_plan_section_each": "Waktu hari",
   "my_stack_plan_summary": "Mulai {{start}}: {{plan}}",
   "my_stack_plan_summary_until": "Sampai {{ende}}.",
@@ -1170,5 +1170,7 @@
   "my_stack_weekday_so": "Minggu",
   "my_stack_plan_day_question_any": "Seberapa sering kamu meminumnya per hari?",
   "my_stack_plan_slot_fewer": "Satu asupan lebih sedikit",
-  "my_stack_plan_slot_more": "Satu asupan lebih banyak"
+  "my_stack_plan_slot_more": "Satu asupan lebih banyak",
+  "my_stack_plan_section_how": "Bagaimana",
+  "my_stack_plan_section_period": "Periode"
 }

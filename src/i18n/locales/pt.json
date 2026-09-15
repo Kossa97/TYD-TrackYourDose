@@ -1145,7 +1145,7 @@
   "my_stack_rhythm_cycle_on": "Dias de toma",
   "my_stack_rhythm_cycle_off": "Dias de pausa",
   "my_stack_rhythm_cycle_invalid": "Um ciclo precisa de pelo menos um dia de toma e um de pausa.",
-  "my_stack_plan_section_when": "Quando",
+  "my_stack_plan_section_when": "Em quais dias",
   "my_stack_plan_section_each": "Hora do dia",
   "my_stack_plan_summary": "A partir de {{start}}: {{plan}}",
   "my_stack_plan_summary_until": "Até {{ende}}.",
@@ -1170,5 +1170,7 @@
   "my_stack_weekday_so": "domingos",
   "my_stack_plan_day_question_any": "Com que frequência você toma por dia?",
   "my_stack_plan_slot_fewer": "Uma tomada a menos",
-  "my_stack_plan_slot_more": "Uma tomada a mais"
+  "my_stack_plan_slot_more": "Uma tomada a mais",
+  "my_stack_plan_section_how": "Como",
+  "my_stack_plan_section_period": "Período"
 }

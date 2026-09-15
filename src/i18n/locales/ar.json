@@ -1149,7 +1149,7 @@
   "my_stack_rhythm_cycle_on": "أيام التناول",
   "my_stack_rhythm_cycle_off": "أيام التوقف",
   "my_stack_rhythm_cycle_invalid": "تحتاج الدورة إلى يوم تناول واحد ويوم توقف على الأقل.",
-  "my_stack_plan_section_when": "متى",
+  "my_stack_plan_section_when": "في أي أيام",
   "my_stack_plan_section_each": "وقت اليوم",
   "my_stack_plan_summary": "من {{start}}: {{plan}}",
   "my_stack_plan_summary_until": "حتى {{ende}}.",
@@ -1174,5 +1174,7 @@
   "my_stack_weekday_so": "أيام الأحد",
   "my_stack_plan_day_question_any": "كم مرة تتناوله يوميًا؟",
   "my_stack_plan_slot_fewer": "جرعة أقل",
-  "my_stack_plan_slot_more": "جرعة أكثر"
+  "my_stack_plan_slot_more": "جرعة أكثر",
+  "my_stack_plan_section_how": "كيف",
+  "my_stack_plan_section_period": "الفترة"
 }

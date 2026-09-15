@@ -347,8 +347,13 @@ export function IntakePlanEditor({
           geschluckt. Nur wo es wirklich mehrere gibt (was man spritzt, kann
           subkutan, intramuskulaer oder intravenoes gehen), bleibt die Wahl. */}
       {methodChoices.length > 1 && (
-        <div>
-          <label htmlFor="stack-plan-method" className="mb-2 block text-sm font-semibold text-slate-200">
+        <section className="min-w-0">
+          <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            {t('my_stack_plan_section_how', { defaultValue: 'Wie' })}
+          </h3>
+          {/* Die Aufschrift steht schon im Abschnittskopf. Fuer Screenreader
+              braucht das Feld sie trotzdem — sichtbar waere sie doppelt. */}
+          <label htmlFor="stack-plan-method" className="sr-only">
             {t('my_stack_plan_method', { defaultValue: 'Methode' })}
           </label>
           <select
@@ -369,16 +374,16 @@ export function IntakePlanEditor({
               {t('my_stack_plan_method_required', { defaultValue: 'Bitte wähle eine Methode.' })}
             </p>
           )}
-        </div>
+        </section>
       )}
 
-      {/* ── WANN ────────────────────────────────────────────────────────── */}
+      {/* ── AN WELCHEN TAGEN ────────────────────────────────────────────── */}
       <section className="min-w-0 space-y-4">
       <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-        {t('my_stack_plan_section_when', { defaultValue: 'Wann' })}
+        {t('my_stack_plan_section_when', { defaultValue: 'An welchen Tagen' })}
       </h3>
       <fieldset data-field="plan.frequency" tabIndex={-1} className="min-w-0">
-        <legend className="mb-2 text-sm font-semibold text-slate-200">
+        <legend className="sr-only">
           {t('my_stack_plan_rhythm', { defaultValue: 'An welchen Tagen?' })}
         </legend>
         <div className="grid min-w-0 grid-cols-2 gap-2">
@@ -531,8 +536,11 @@ export function IntakePlanEditor({
         )}
 
       </fieldset>
-      {/* ── WAS JE EINNAHME — direkt unter „An welchen Tagen?", denn die
-             Zeitpunkte gehoeren zu den Tagen und nicht hinter den Zeitraum. */}
+      </section>
+
+      {/* ── TAGESZEIT — direkt hinter den Tagen, denn die Zeitpunkte gehoeren
+             zu ihnen und nicht hinter den Zeitraum. */}
+      <section className="min-w-0 space-y-3">
       <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
         {t('my_stack_plan_section_each', { defaultValue: 'Tageszeit' })}
       </h3>
@@ -741,9 +749,15 @@ export function IntakePlanEditor({
         </div>
       )}
 
-      {/* Der Zeitraum steht hinter den Zeitpunkten: erst was, dann ab wann.
-          Beide Daten in einer Zeile — es sind zwei kurze Felder, und
-          untereinander schoben sie die Erinnerung aus dem Blick. */}
+      </section>
+
+      {/* ── ZEITRAUM — erst was und wann, dann ab wann. Beide Daten in einer
+             Zeile: zwei kurze Felder, die untereinander die Erinnerung aus dem
+             Blick schoben. */}
+      <section className="min-w-0 space-y-3">
+      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        {t('my_stack_plan_section_period', { defaultValue: 'Zeitraum' })}
+      </h3>
       <div className="grid min-w-0 grid-cols-2 gap-3">
 
       <div className="min-w-0">

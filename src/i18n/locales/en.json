@@ -1293,7 +1293,7 @@
   "my_stack_rhythm_cycle_on": "Days on",
   "my_stack_rhythm_cycle_off": "Days off",
   "my_stack_rhythm_cycle_invalid": "An on/off cycle needs at least one day on and one day off.",
-  "my_stack_plan_section_when": "When",
+  "my_stack_plan_section_when": "On which days",
   "my_stack_plan_section_each": "Time of day",
   "my_stack_plan_summary": "From {{start}}: {{plan}}",
   "my_stack_plan_summary_until": "Until {{ende}}.",
@@ -1318,5 +1318,7 @@
   "my_stack_weekday_so": "Sundays",
   "my_stack_plan_day_question_any": "How often do you take it per day?",
   "my_stack_plan_slot_fewer": "One intake fewer",
-  "my_stack_plan_slot_more": "One intake more"
+  "my_stack_plan_slot_more": "One intake more",
+  "my_stack_plan_section_how": "How",
+  "my_stack_plan_section_period": "Period"
 }

@@ -1145,7 +1145,7 @@
   "my_stack_rhythm_cycle_on": "Giorni di assunzione",
   "my_stack_rhythm_cycle_off": "Giorni di pausa",
   "my_stack_rhythm_cycle_invalid": "Un ciclo richiede almeno un giorno di assunzione e uno di pausa.",
-  "my_stack_plan_section_when": "Quando",
+  "my_stack_plan_section_when": "In quali giorni",
   "my_stack_plan_section_each": "Momento della giornata",
   "my_stack_plan_summary": "Dal {{start}}: {{plan}}",
   "my_stack_plan_summary_until": "Fino al {{ende}}.",
@@ -1170,5 +1170,7 @@
   "my_stack_weekday_so": "domenica",
   "my_stack_plan_day_question_any": "Quante volte lo prendi al giorno?",
   "my_stack_plan_slot_fewer": "Una assunzione in meno",
-  "my_stack_plan_slot_more": "Una assunzione in più"
+  "my_stack_plan_slot_more": "Una assunzione in più",
+  "my_stack_plan_section_how": "Come",
+  "my_stack_plan_section_period": "Periodo"
 }

@@ -1145,7 +1145,7 @@
   "my_stack_rhythm_cycle_on": "Jours de prise",
   "my_stack_rhythm_cycle_off": "Jours de pause",
   "my_stack_rhythm_cycle_invalid": "Un cycle exige au moins un jour de prise et un jour de pause.",
-  "my_stack_plan_section_when": "Quand",
+  "my_stack_plan_section_when": "Quels jours",
   "my_stack_plan_section_each": "Moment de la journée",
   "my_stack_plan_summary": "À partir du {{start}} : {{plan}}",
   "my_stack_plan_summary_until": "Jusqu'au {{ende}}.",
@@ -1170,5 +1170,7 @@
   "my_stack_weekday_so": "dimanche",
   "my_stack_plan_day_question_any": "À quelle fréquence le prends-tu par jour ?",
   "my_stack_plan_slot_fewer": "Une prise de moins",
-  "my_stack_plan_slot_more": "Une prise de plus"
+  "my_stack_plan_slot_more": "Une prise de plus",
+  "my_stack_plan_section_how": "Comment",
+  "my_stack_plan_section_period": "Période"
 }

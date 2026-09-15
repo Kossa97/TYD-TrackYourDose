@@ -1145,7 +1145,7 @@
   "my_stack_rhythm_cycle_on": "服用する日数",
   "my_stack_rhythm_cycle_off": "休む日数",
   "my_stack_rhythm_cycle_invalid": "休薬サイクルには服用日と休薬日が各1日以上必要です。",
-  "my_stack_plan_section_when": "いつ",
+  "my_stack_plan_section_when": "どの曜日に",
   "my_stack_plan_section_each": "時間帯",
   "my_stack_plan_summary": "{{start}} から: {{plan}}",
   "my_stack_plan_summary_until": "{{ende}} まで。",
@@ -1170,5 +1170,7 @@
   "my_stack_weekday_so": "日曜日",
   "my_stack_plan_day_question_any": "1日に何回飲みますか？",
   "my_stack_plan_slot_fewer": "1回減らす",
-  "my_stack_plan_slot_more": "1回増やす"
+  "my_stack_plan_slot_more": "1回増やす",
+  "my_stack_plan_section_how": "方法",
+  "my_stack_plan_section_period": "期間"
 }

@@ -1144,7 +1144,7 @@
   "my_stack_rhythm_cycle_on": "복용 일수",
   "my_stack_rhythm_cycle_off": "휴약 일수",
   "my_stack_rhythm_cycle_invalid": "주기에는 복용일과 휴약일이 각각 하루 이상 필요합니다.",
-  "my_stack_plan_section_when": "언제",
+  "my_stack_plan_section_when": "어느 요일에",
   "my_stack_plan_section_each": "시간대",
   "my_stack_plan_summary": "{{start}}부터: {{plan}}",
   "my_stack_plan_summary_until": "{{ende}}까지.",
@@ -1169,5 +1169,7 @@
   "my_stack_weekday_so": "일요일",
   "my_stack_plan_day_question_any": "하루에 몇 번 복용하나요?",
   "my_stack_plan_slot_fewer": "한 번 줄이기",
-  "my_stack_plan_slot_more": "한 번 늘리기"
+  "my_stack_plan_slot_more": "한 번 늘리기",
+  "my_stack_plan_section_how": "방법",
+  "my_stack_plan_section_period": "기간"
 }

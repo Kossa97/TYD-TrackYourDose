@@ -149,6 +149,8 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_rhythm_cycle_on',
   'my_stack_rhythm_cycle_off',
   'my_stack_rhythm_cycle_invalid',
+  'my_stack_plan_section_how',
+  'my_stack_plan_section_period',
   'my_stack_plan_section_when',
   'my_stack_plan_section_each',
   'my_stack_plan_summary',

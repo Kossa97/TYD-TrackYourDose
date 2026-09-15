@@ -1144,7 +1144,7 @@
   "my_stack_rhythm_cycle_on": "服用天数",
   "my_stack_rhythm_cycle_off": "停用天数",
   "my_stack_rhythm_cycle_invalid": "周期至少需要一个服用日和一个停用日。",
-  "my_stack_plan_section_when": "何时",
+  "my_stack_plan_section_when": "哪些天",
   "my_stack_plan_section_each": "时段",
   "my_stack_plan_summary": "自 {{start}} 起：{{plan}}",
   "my_stack_plan_summary_until": "至 {{ende}}。",
@@ -1169,5 +1169,7 @@
   "my_stack_weekday_so": "周日",
   "my_stack_plan_day_question_any": "你每天服用几次？",
   "my_stack_plan_slot_fewer": "减少一次",
-  "my_stack_plan_slot_more": "增加一次"
+  "my_stack_plan_slot_more": "增加一次",
+  "my_stack_plan_section_how": "方式",
+  "my_stack_plan_section_period": "时段范围"
 }

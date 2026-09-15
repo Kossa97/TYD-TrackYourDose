@@ -1147,7 +1147,7 @@
   "my_stack_rhythm_cycle_on": "Дней приёма",
   "my_stack_rhythm_cycle_off": "Дней перерыва",
   "my_stack_rhythm_cycle_invalid": "Цикл требует минимум один день приёма и один день перерыва.",
-  "my_stack_plan_section_when": "Когда",
+  "my_stack_plan_section_when": "В какие дни",
   "my_stack_plan_section_each": "Время суток",
   "my_stack_plan_summary": "С {{start}}: {{plan}}",
   "my_stack_plan_summary_until": "До {{ende}}.",
@@ -1172,5 +1172,7 @@
   "my_stack_weekday_so": "воскресеньям",
   "my_stack_plan_day_question_any": "Сколько раз в день вы принимаете?",
   "my_stack_plan_slot_fewer": "На один приём меньше",
-  "my_stack_plan_slot_more": "На один приём больше"
+  "my_stack_plan_slot_more": "На один приём больше",
+  "my_stack_plan_section_how": "Как",
+  "my_stack_plan_section_period": "Период"
 }

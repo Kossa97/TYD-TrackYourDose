@@ -1145,7 +1145,7 @@
   "my_stack_rhythm_cycle_on": "Kullanım günü",
   "my_stack_rhythm_cycle_off": "Ara verilen gün",
   "my_stack_rhythm_cycle_invalid": "Bir döngü en az bir kullanım ve bir ara günü gerektirir.",
-  "my_stack_plan_section_when": "Ne zaman",
+  "my_stack_plan_section_when": "Hangi günlerde",
   "my_stack_plan_section_each": "Günün saati",
   "my_stack_plan_summary": "{{start}} tarihinden itibaren: {{plan}}",
   "my_stack_plan_summary_until": "{{ende}} tarihine kadar.",
@@ -1170,5 +1170,7 @@
   "my_stack_weekday_so": "Pazar",
   "my_stack_plan_day_question_any": "Günde ne sıklıkla alıyorsun?",
   "my_stack_plan_slot_fewer": "Bir alım az",
-  "my_stack_plan_slot_more": "Bir alım fazla"
+  "my_stack_plan_slot_more": "Bir alım fazla",
+  "my_stack_plan_section_how": "Nasıl",
+  "my_stack_plan_section_period": "Dönem"
 }
