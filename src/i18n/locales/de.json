@@ -1307,5 +1307,6 @@
   "my_stack_plan_slot_unknown_day": "Dieser Zeitpunkt liegt an einem Tag, den der Plan nicht auswählt.",
   "my_stack_plan_day_without_intake": "An mindestens einem gewählten Tag steht keine Einnahme.",
   "my_stack_plan_day_tabs": "Tage des Plans",
-  "my_stack_plan_day_tab": "{{day}}: {{count}} Einnahmen"
+  "my_stack_plan_day_tab": "{{day}}: {{count}} Einnahmen",
+  "my_stack_plan_daily_per_day": "An jedem Tag eine andere Tageszeit?"
 }

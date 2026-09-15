@@ -1159,5 +1159,6 @@
   "my_stack_plan_slot_unknown_day": "Questa assunzione cade in un giorno che il piano non seleziona.",
   "my_stack_plan_day_without_intake": "Almeno un giorno selezionato non ha alcuna assunzione.",
   "my_stack_plan_day_tabs": "Giorni del piano",
-  "my_stack_plan_day_tab": "{{day}}: {{count}} assunzioni"
+  "my_stack_plan_day_tab": "{{day}}: {{count}} assunzioni",
+  "my_stack_plan_daily_per_day": "Un momento della giornata diverso ogni giorno?"
 }

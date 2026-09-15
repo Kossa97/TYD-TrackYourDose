@@ -162,6 +162,7 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_rhythm_summary_cycle',
   'my_stack_plan_remove_slot',
   'my_stack_plan_slot_duplicate',
+  'my_stack_plan_daily_per_day',
   'my_stack_plan_day_tabs',
   'my_stack_plan_day_tab',
   'my_stack_plan_slot_unknown_day',

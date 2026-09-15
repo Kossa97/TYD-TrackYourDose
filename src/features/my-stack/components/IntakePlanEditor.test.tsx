@@ -414,6 +414,47 @@ describe('IntakePlanEditor', () => {
     expect(slots[2].routineGroup).toBe('midday')
   })
 
+  it('führt von „täglich" zu den Reitern, statt die Frage offen zu lassen', () => {
+    // „Täglich" heißt: an jedem Tag dasselbe. Wer montags morgens und
+    // dienstags abends nimmt, sucht die Tageszeit je Tag genau hier — und
+    // fände sie sonst nur, wenn er von selbst auf „Wochentage wählen" käme.
+    const onChange = vi.fn()
+    render(
+      <IntakePlanEditor
+        trackingLevel="intake_only"
+        dosageForm="tablet"
+        plan={plan}
+        errors={{}}
+        onChange={onChange}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'An jedem Tag eine andere Tageszeit?' }))
+
+    const rhythm = onChange.mock.calls.at(-1)?.[0].rhythm as IntakePlanDraft['rhythm']
+    expect(rhythm.kind).toBe('weekdays')
+    expect(rhythm.weekdays).toEqual(['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'])
+  })
+
+  it('bietet den Weg zu den Reitern nur bei „täglich" an', () => {
+    // Wo die Reiter schon stehen, wäre der Satz eine Wiederholung; „bei
+    // Bedarf" hat gar keinen Zeitpunkt.
+    render(<PlanHarness
+      trackingLevel="intake_only"
+      dosageForm="tablet"
+      initialPlan={{ ...plan, rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo'] } }}
+    />)
+    expect(document.querySelector('[data-rhythm-per-day]')).toBeNull()
+    cleanup()
+
+    render(<PlanHarness
+      trackingLevel="intake_only"
+      dosageForm="tablet"
+      initialPlan={{ ...plan, rhythm: { ...emptyRhythm(), kind: 'on_demand' } }}
+    />)
+    expect(document.querySelector('[data-rhythm-per-day]')).toBeNull()
+  })
+
   it('zeigt die Reiter nur, wo es Wochentage gibt', () => {
     // Bei „täglich" oder „alle 3 Wochen" gibt es keine Tage, zwischen denen
     // man wechseln könnte — dort wären Reiter eine Frage ohne Gegenstand.

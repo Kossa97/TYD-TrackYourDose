@@ -1159,5 +1159,6 @@
   "my_stack_plan_slot_unknown_day": "Cette prise tombe un jour que le plan ne retient pas.",
   "my_stack_plan_day_without_intake": "Au moins un jour sélectionné n'a aucune prise.",
   "my_stack_plan_day_tabs": "Jours du plan",
-  "my_stack_plan_day_tab": "{{day}} : {{count}} prises"
+  "my_stack_plan_day_tab": "{{day}} : {{count}} prises",
+  "my_stack_plan_daily_per_day": "Un moment de la journée différent chaque jour ?"
 }

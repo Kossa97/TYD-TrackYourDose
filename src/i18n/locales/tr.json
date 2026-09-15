@@ -1159,5 +1159,6 @@
   "my_stack_plan_slot_unknown_day": "Bu alım, planın seçmediği bir güne denk geliyor.",
   "my_stack_plan_day_without_intake": "Seçilen günlerden en az birinde hiç alım yok.",
   "my_stack_plan_day_tabs": "Planın günleri",
-  "my_stack_plan_day_tab": "{{day}}: {{count}} alım"
+  "my_stack_plan_day_tab": "{{day}}: {{count}} alım",
+  "my_stack_plan_daily_per_day": "Her gün farklı bir zaman mı?"
 }

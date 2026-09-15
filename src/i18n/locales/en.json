@@ -1307,5 +1307,6 @@
   "my_stack_plan_slot_unknown_day": "This intake falls on a day the plan does not select.",
   "my_stack_plan_day_without_intake": "At least one selected day has no intake.",
   "my_stack_plan_day_tabs": "Days of the plan",
-  "my_stack_plan_day_tab": "{{day}}: {{count}} intakes"
+  "my_stack_plan_day_tab": "{{day}}: {{count}} intakes",
+  "my_stack_plan_daily_per_day": "A different time of day on each day?"
 }

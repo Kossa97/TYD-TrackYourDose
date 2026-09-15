@@ -1159,5 +1159,6 @@
   "my_stack_plan_slot_unknown_day": "Esta toma cae en un día que el plan no selecciona.",
   "my_stack_plan_day_without_intake": "Al menos un día seleccionado no tiene ninguna toma.",
   "my_stack_plan_day_tabs": "Días del plan",
-  "my_stack_plan_day_tab": "{{day}}: {{count}} tomas"
+  "my_stack_plan_day_tab": "{{day}}: {{count}} tomas",
+  "my_stack_plan_daily_per_day": "¿Una hora del día distinta cada día?"
 }

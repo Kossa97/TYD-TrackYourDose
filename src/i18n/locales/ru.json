@@ -1161,5 +1161,6 @@
   "my_stack_plan_slot_unknown_day": "Этот приём приходится на день, который план не выбирает.",
   "my_stack_plan_day_without_intake": "Хотя бы в один выбранный день нет ни одного приёма.",
   "my_stack_plan_day_tabs": "Дни плана",
-  "my_stack_plan_day_tab": "{{day}}: {{count}} приёмов"
+  "my_stack_plan_day_tab": "{{day}}: {{count}} приёмов",
+  "my_stack_plan_daily_per_day": "Разное время суток в каждый день?"
 }

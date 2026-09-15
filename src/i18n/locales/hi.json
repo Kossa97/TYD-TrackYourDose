@@ -1159,5 +1159,6 @@
   "my_stack_plan_slot_unknown_day": "यह सेवन ऐसे दिन पड़ता है जिसे योजना नहीं चुनती।",
   "my_stack_plan_day_without_intake": "कम से कम एक चुने दिन पर कोई सेवन नहीं है।",
   "my_stack_plan_day_tabs": "योजना के दिन",
-  "my_stack_plan_day_tab": "{{day}}: {{count}} खुराकें"
+  "my_stack_plan_day_tab": "{{day}}: {{count}} खुराकें",
+  "my_stack_plan_daily_per_day": "हर दिन अलग समय?"
 }

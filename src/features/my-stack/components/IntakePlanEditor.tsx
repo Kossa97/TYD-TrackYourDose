@@ -382,6 +382,24 @@ export function IntakePlanEditor({
           ))}
         </div>
 
+        {/* „Taeglich" heisst: an jedem Tag dasselbe. Wer montags morgens und
+            dienstags abends nimmt, braucht die Reiter — und die haengen an
+            „Wochentage waehlen". Alle sieben Tage anzuwaehlen ist fuer den
+            Kalender dasselbe wie taeglich, also fuehrt ein Satz dorthin,
+            statt die Frage im leeren Raum stehen zu lassen. */}
+        {rhythm.kind === 'daily' && (
+          <button
+            type="button"
+            data-rhythm-per-day
+            onClick={() => changeRhythm({ kind: 'weekdays', weekdays: [...WEEKDAY_KEYS] })}
+            className="mt-3 min-h-11 cursor-pointer text-left text-sm font-semibold text-sky-300 underline decoration-sky-400/40 underline-offset-4 transition-colors duration-200 hover:text-sky-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none"
+          >
+            {t('my_stack_plan_daily_per_day', {
+              defaultValue: 'An jedem Tag eine andere Tageszeit?',
+            })}
+          </button>
+        )}
+
         {!onDemand && rhythm.kind === 'weekdays' && (
           <div
             data-field="plan.scheduleDays"

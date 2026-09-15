@@ -1163,5 +1163,6 @@
   "my_stack_plan_slot_unknown_day": "هذه الجرعة تقع في يوم لا تختاره الخطة.",
   "my_stack_plan_day_without_intake": "يوجد يوم مختار بلا أي جرعة.",
   "my_stack_plan_day_tabs": "أيام الخطة",
-  "my_stack_plan_day_tab": "{{day}}: {{count}} جرعات"
+  "my_stack_plan_day_tab": "{{day}}: {{count}} جرعات",
+  "my_stack_plan_daily_per_day": "وقت مختلف من اليوم لكل يوم؟"
 }
