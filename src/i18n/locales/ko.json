@@ -1159,5 +1159,13 @@
   "my_stack_plan_day_without_intake": "선택한 요일 중 복용이 없는 날이 있습니다.",
   "my_stack_plan_day_tabs": "계획 요일",
   "my_stack_plan_day_tab": "{{day}}: {{count}}회",
-  "my_stack_plan_daily_per_day": "날마다 다른 시간대로 할까요?"
+  "my_stack_plan_daily_per_day": "날마다 다른 시간대로 할까요?",
+  "my_stack_plan_day_question": "{{day}}에는 몇 번 복용하나요?",
+  "my_stack_weekday_mo": "월요일",
+  "my_stack_weekday_di": "화요일",
+  "my_stack_weekday_mi": "수요일",
+  "my_stack_weekday_do": "목요일",
+  "my_stack_weekday_fr": "금요일",
+  "my_stack_weekday_sa": "토요일",
+  "my_stack_weekday_so": "일요일"
 }

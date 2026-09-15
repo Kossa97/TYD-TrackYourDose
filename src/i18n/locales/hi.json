@@ -1160,5 +1160,13 @@
   "my_stack_plan_day_without_intake": "कम से कम एक चुने दिन पर कोई सेवन नहीं है।",
   "my_stack_plan_day_tabs": "योजना के दिन",
   "my_stack_plan_day_tab": "{{day}}: {{count}} खुराकें",
-  "my_stack_plan_daily_per_day": "हर दिन अलग समय?"
+  "my_stack_plan_daily_per_day": "हर दिन अलग समय?",
+  "my_stack_plan_day_question": "{{day}} को आप इसे कितनी बार लेते हैं?",
+  "my_stack_weekday_mo": "सोमवार",
+  "my_stack_weekday_di": "मंगलवार",
+  "my_stack_weekday_mi": "बुधवार",
+  "my_stack_weekday_do": "गुरुवार",
+  "my_stack_weekday_fr": "शुक्रवार",
+  "my_stack_weekday_sa": "शनिवार",
+  "my_stack_weekday_so": "रविवार"
 }

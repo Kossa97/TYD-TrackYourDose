@@ -1160,5 +1160,13 @@
   "my_stack_plan_day_without_intake": "Al menos un día seleccionado no tiene ninguna toma.",
   "my_stack_plan_day_tabs": "Días del plan",
   "my_stack_plan_day_tab": "{{day}}: {{count}} tomas",
-  "my_stack_plan_daily_per_day": "¿Una hora del día distinta cada día?"
+  "my_stack_plan_daily_per_day": "¿Una hora del día distinta cada día?",
+  "my_stack_plan_day_question": "¿Con qué frecuencia lo tomas los {{day}}?",
+  "my_stack_weekday_mo": "lunes",
+  "my_stack_weekday_di": "martes",
+  "my_stack_weekday_mi": "miércoles",
+  "my_stack_weekday_do": "jueves",
+  "my_stack_weekday_fr": "viernes",
+  "my_stack_weekday_sa": "sábados",
+  "my_stack_weekday_so": "domingos"
 }

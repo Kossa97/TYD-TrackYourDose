@@ -1160,5 +1160,13 @@
   "my_stack_plan_day_without_intake": "選んだ曜日のうち、服用のない日があります。",
   "my_stack_plan_day_tabs": "計画の曜日",
   "my_stack_plan_day_tab": "{{day}}：{{count}}回",
-  "my_stack_plan_daily_per_day": "日ごとに違う時間帯にしますか？"
+  "my_stack_plan_daily_per_day": "日ごとに違う時間帯にしますか？",
+  "my_stack_plan_day_question": "{{day}}は何回飲みますか？",
+  "my_stack_weekday_mo": "月曜日",
+  "my_stack_weekday_di": "火曜日",
+  "my_stack_weekday_mi": "水曜日",
+  "my_stack_weekday_do": "木曜日",
+  "my_stack_weekday_fr": "金曜日",
+  "my_stack_weekday_sa": "土曜日",
+  "my_stack_weekday_so": "日曜日"
 }

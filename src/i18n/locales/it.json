@@ -1160,5 +1160,13 @@
   "my_stack_plan_day_without_intake": "Almeno un giorno selezionato non ha alcuna assunzione.",
   "my_stack_plan_day_tabs": "Giorni del piano",
   "my_stack_plan_day_tab": "{{day}}: {{count}} assunzioni",
-  "my_stack_plan_daily_per_day": "Un momento della giornata diverso ogni giorno?"
+  "my_stack_plan_daily_per_day": "Un momento della giornata diverso ogni giorno?",
+  "my_stack_plan_day_question": "Quante volte lo prendi il {{day}}?",
+  "my_stack_weekday_mo": "lunedì",
+  "my_stack_weekday_di": "martedì",
+  "my_stack_weekday_mi": "mercoledì",
+  "my_stack_weekday_do": "giovedì",
+  "my_stack_weekday_fr": "venerdì",
+  "my_stack_weekday_sa": "sabato",
+  "my_stack_weekday_so": "domenica"
 }

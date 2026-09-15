@@ -65,6 +65,17 @@ const REMINDER_OPTIONS = [
   { value: '1day', labelKey: 'reminder_1day', defaultValue: '1 Tag vorher' },
 ] as const
 
+/** „Mo" heisst im Fliesstext „montags" — je Sprache eine eigene Aufschrift. */
+const WEEKDAY_LABELS: Record<string, { labelKey: string; defaultValue: string }> = {
+  Mo: { labelKey: 'my_stack_weekday_mo', defaultValue: 'montags' },
+  Di: { labelKey: 'my_stack_weekday_di', defaultValue: 'dienstags' },
+  Mi: { labelKey: 'my_stack_weekday_mi', defaultValue: 'mittwochs' },
+  Do: { labelKey: 'my_stack_weekday_do', defaultValue: 'donnerstags' },
+  Fr: { labelKey: 'my_stack_weekday_fr', defaultValue: 'freitags' },
+  Sa: { labelKey: 'my_stack_weekday_sa', defaultValue: 'samstags' },
+  So: { labelKey: 'my_stack_weekday_so', defaultValue: 'sonntags' },
+}
+
 const INTERVAL_UNIT_LABELS: Record<IntervalUnit, { labelKey: string; defaultValue: string }> = {
   day: { labelKey: 'my_stack_rhythm_unit_day', defaultValue: 'Tagen' },
   week: { labelKey: 'my_stack_rhythm_unit_week', defaultValue: 'Wochen' },
@@ -527,7 +538,7 @@ export function IntakePlanEditor({
           role="tablist"
           data-plan-day-tabs
           aria-label={String(t('my_stack_plan_day_tabs', { defaultValue: 'Tage des Plans' }))}
-          className="flex min-w-0 flex-wrap gap-2"
+          className="no-scrollbar -mx-1 flex min-w-0 snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1"
         >
           {tage.map(tag => {
             const anzahl = amTag(tag).length
@@ -548,7 +559,7 @@ export function IntakePlanEditor({
                   count: anzahl,
                 }))}
                 onClick={() => setGewaehlterTag(tag)}
-                className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${offen
+                className={`flex min-h-11 shrink-0 snap-start cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 motion-reduce:transition-none ${offen
                   ? 'border-sky-400/50 bg-sky-400/15 text-sky-200'
                   : 'border-white/10 bg-white/[0.035] text-slate-400 hover:border-sky-400/25 hover:text-slate-200'
                 }`}
@@ -590,6 +601,20 @@ export function IntakePlanEditor({
           aria-labelledby={offenerTag ? `stack-plan-day-tab-${offenerTag}` : undefined}
           className="min-w-0 space-y-3"
         >
+          {/* Die Frage nennt den Tag, den man gerade offen hat. Ohne sie waere
+              der Reiter die einzige Stelle, die sagt, wovon die Karten
+              darunter handeln — und den liest man beim Tippen nicht mehr. */}
+          {offenerTag && (
+            <h4 data-plan-day-question className="text-sm font-semibold text-slate-200">
+              {t('my_stack_plan_day_question', {
+                defaultValue: 'Wie oft nimmst du {{day}} ein?',
+                day: t(
+                  WEEKDAY_LABELS[offenerTag]?.labelKey ?? '',
+                  { defaultValue: WEEKDAY_LABELS[offenerTag]?.defaultValue ?? offenerTag },
+                ),
+              })}
+            </h4>
+          )}
           {sichtbareSlots.map(({ slot, index }) => (
         <div key={index} data-plan-slot={index} className="min-w-0 space-y-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
           {sichtbareSlots.length > 1 && (

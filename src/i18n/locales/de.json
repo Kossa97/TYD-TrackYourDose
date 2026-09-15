@@ -1308,5 +1308,13 @@
   "my_stack_plan_day_without_intake": "An mindestens einem gewählten Tag steht keine Einnahme.",
   "my_stack_plan_day_tabs": "Tage des Plans",
   "my_stack_plan_day_tab": "{{day}}: {{count}} Einnahmen",
-  "my_stack_plan_daily_per_day": "An jedem Tag eine andere Tageszeit?"
+  "my_stack_plan_daily_per_day": "An jedem Tag eine andere Tageszeit?",
+  "my_stack_plan_day_question": "Wie oft nimmst du {{day}} ein?",
+  "my_stack_weekday_mo": "montags",
+  "my_stack_weekday_di": "dienstags",
+  "my_stack_weekday_mi": "mittwochs",
+  "my_stack_weekday_do": "donnerstags",
+  "my_stack_weekday_fr": "freitags",
+  "my_stack_weekday_sa": "samstags",
+  "my_stack_weekday_so": "sonntags"
 }

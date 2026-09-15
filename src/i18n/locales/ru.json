@@ -1162,5 +1162,13 @@
   "my_stack_plan_day_without_intake": "Хотя бы в один выбранный день нет ни одного приёма.",
   "my_stack_plan_day_tabs": "Дни плана",
   "my_stack_plan_day_tab": "{{day}}: {{count}} приёмов",
-  "my_stack_plan_daily_per_day": "Разное время суток в каждый день?"
+  "my_stack_plan_daily_per_day": "Разное время суток в каждый день?",
+  "my_stack_plan_day_question": "Сколько раз вы принимаете по {{day}}?",
+  "my_stack_weekday_mo": "понедельникам",
+  "my_stack_weekday_di": "вторникам",
+  "my_stack_weekday_mi": "средам",
+  "my_stack_weekday_do": "четвергам",
+  "my_stack_weekday_fr": "пятницам",
+  "my_stack_weekday_sa": "субботам",
+  "my_stack_weekday_so": "воскресеньям"
 }

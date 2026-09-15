@@ -475,6 +475,29 @@ describe('IntakePlanEditor', () => {
     expect(document.querySelector('[data-rhythm-per-day]')).toBeNull()
   })
 
+  it('fragt unter den Reitern nach dem Tag, den man offen hat', () => {
+    render(<PlanHarness
+      trackingLevel="intake_only"
+      dosageForm="tablet"
+      initialPlan={{
+        ...plan,
+        rhythm: { ...emptyRhythm(), kind: 'weekdays', weekdays: ['Mo', 'Fr'] },
+        slots: [
+          { routineGroup: 'morning', time: '08:00', dose: null, weekdays: ['Mo'] },
+          { routineGroup: 'morning', time: '08:00', dose: null, weekdays: ['Fr'] },
+        ],
+      }}
+    />)
+
+    expect(document.querySelector('[data-plan-day-question]')?.textContent)
+      .toBe('Wie oft nimmst du montags ein?')
+
+    // Reiter wechseln → die Frage nennt den anderen Tag.
+    fireEvent.click(screen.getByRole('tab', { name: 'Fr: 1 Einnahmen' }))
+    expect(document.querySelector('[data-plan-day-question]')?.textContent)
+      .toBe('Wie oft nimmst du freitags ein?')
+  })
+
   it('zeigt die Reiter nur, wo es Wochentage gibt', () => {
     // Bei „täglich" oder „alle 3 Wochen" gibt es keine Tage, zwischen denen
     // man wechseln könnte — dort wären Reiter eine Frage ohne Gegenstand.

@@ -1164,5 +1164,13 @@
   "my_stack_plan_day_without_intake": "يوجد يوم مختار بلا أي جرعة.",
   "my_stack_plan_day_tabs": "أيام الخطة",
   "my_stack_plan_day_tab": "{{day}}: {{count}} جرعات",
-  "my_stack_plan_daily_per_day": "وقت مختلف من اليوم لكل يوم؟"
+  "my_stack_plan_daily_per_day": "وقت مختلف من اليوم لكل يوم؟",
+  "my_stack_plan_day_question": "كم مرة تتناوله {{day}}؟",
+  "my_stack_weekday_mo": "أيام الاثنين",
+  "my_stack_weekday_di": "أيام الثلاثاء",
+  "my_stack_weekday_mi": "أيام الأربعاء",
+  "my_stack_weekday_do": "أيام الخميس",
+  "my_stack_weekday_fr": "أيام الجمعة",
+  "my_stack_weekday_sa": "أيام السبت",
+  "my_stack_weekday_so": "أيام الأحد"
 }

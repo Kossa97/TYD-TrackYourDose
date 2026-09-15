@@ -1160,5 +1160,13 @@
   "my_stack_plan_day_without_intake": "Setidaknya satu hari terpilih tanpa konsumsi.",
   "my_stack_plan_day_tabs": "Hari dalam rencana",
   "my_stack_plan_day_tab": "{{day}}: {{count}} asupan",
-  "my_stack_plan_daily_per_day": "Waktu yang berbeda setiap hari?"
+  "my_stack_plan_daily_per_day": "Waktu yang berbeda setiap hari?",
+  "my_stack_plan_day_question": "Seberapa sering kamu meminumnya pada hari {{day}}?",
+  "my_stack_weekday_mo": "Senin",
+  "my_stack_weekday_di": "Selasa",
+  "my_stack_weekday_mi": "Rabu",
+  "my_stack_weekday_do": "Kamis",
+  "my_stack_weekday_fr": "Jumat",
+  "my_stack_weekday_sa": "Sabtu",
+  "my_stack_weekday_so": "Minggu"
 }
