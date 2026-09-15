@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   findOldestOverdueIntake, collectMissedIntakes, collectOpenIntakes, cycleAppliesToDay, scheduleForDay, effectiveDose,
+  effectiveQuantity, effectiveSlotQuantity,
   resolveScheduleSlots,
   type ScheduleCycle, type IntakeLog, type ScheduleSegment, type EscalationRow,
 } from './intakeSchedule'
@@ -231,8 +232,8 @@ describe('collectOpenIntakes', () => {
     const now = new Date(2026, 5, 2, 12, 0) // 02.06., 12:00 (vor dem 20:00-Slot)
     const logs: IntakeLog[] = [{ stack_item_id: 'p5', logged_at: '2026-06-02T08:30:00', taken: true }]
     expect(collectOpenIntakes([twice], logs, now, 3)).toEqual([
-      { cycleId: 'c5', stackItemId: 'p5', dateKey: '2026-06-01', minutes: 480 },
-      { cycleId: 'c5', stackItemId: 'p5', dateKey: '2026-06-01', minutes: 1200 },
+      { cycleId: 'c5', stackItemId: 'p5', dateKey: '2026-06-01', minutes: 480, slotDose: null },
+      { cycleId: 'c5', stackItemId: 'p5', dateKey: '2026-06-01', minutes: 1200, slotDose: null },
     ])
   })
 
@@ -240,10 +241,51 @@ describe('collectOpenIntakes', () => {
     const later = new Date(2026, 5, 2, 21, 0) // 21:00 → 20:00-Slot ist jetzt fällig
     const logs: IntakeLog[] = [{ stack_item_id: 'p5', logged_at: '2026-06-02T08:30:00', taken: true }]
     expect(collectOpenIntakes([twice], logs, later, 1)).toEqual([
-      { cycleId: 'c5', stackItemId: 'p5', dateKey: '2026-06-01', minutes: 480 },
-      { cycleId: 'c5', stackItemId: 'p5', dateKey: '2026-06-01', minutes: 1200 },
-      { cycleId: 'c5', stackItemId: 'p5', dateKey: '2026-06-02', minutes: 1200 },
+      { cycleId: 'c5', stackItemId: 'p5', dateKey: '2026-06-01', minutes: 480, slotDose: null },
+      { cycleId: 'c5', stackItemId: 'p5', dateKey: '2026-06-01', minutes: 1200, slotDose: null },
+      { cycleId: 'c5', stackItemId: 'p5', dateKey: '2026-06-02', minutes: 1200, slotDose: null },
     ])
+  })
+})
+
+describe('effectiveSlotQuantity — die Menge JE Zeitpunkt', () => {
+  const zweiMengen = {
+    id: 'c9', stack_item_id: 'p9', start_date: '2026-06-01', end_date: null,
+    frequency: 'Täglich', x_days_interval: null, schedule_days: null,
+    intake_time: 'morgens,abends', intake_time_custom: null,
+    dose: 1000, unit: 'mg',
+    slot_doses: '1000,500',
+    schedule_history: null,
+  }
+
+  it('nimmt die eigene Menge des Zeitpunkts statt der des Zyklus', () => {
+    // Vorher stand bei „morgens 1000, abends 500" an BEIDEN 1000 — die
+    // Zyklusmenge ist die führende, nicht die jedes Zeitpunkts.
+    const tag = new Date(2026, 5, 2)
+    const slots = resolveScheduleSlots(zweiMengen, tag)
+
+    expect(slots.map(slot => slot.dose)).toEqual([1000, 500])
+    expect(slots.map(slot => effectiveSlotQuantity(zweiMengen, tag, [], slot.dose)))
+      .toEqual([{ dose: 1000, unit: 'mg' }, { dose: 500, unit: 'mg' }])
+  })
+
+  it('legt eine Anpassung auf jeden Zeitpunkt, denn sie gilt dem ganzen Plan', () => {
+    const tag = new Date(2026, 5, 2)
+    const erhoehung = [{
+      cycle_id: 'c9', increase_amount: 250, unit: 'mg',
+      start_type: 'date' as const, start_date: '2026-06-01', start_after_days: null,
+    }]
+
+    expect(resolveScheduleSlots(zweiMengen, tag)
+      .map(slot => effectiveSlotQuantity(zweiMengen, tag, erhoehung, slot.dose)?.dose))
+      .toEqual([1250, 750])
+  })
+
+  it('ist ohne eigene Menge genau die Zyklusmenge', () => {
+    const tag = new Date(2026, 5, 2)
+
+    expect(effectiveSlotQuantity(zweiMengen, tag, [], null))
+      .toEqual(effectiveQuantity(zweiMengen, tag, []))
   })
 })
 

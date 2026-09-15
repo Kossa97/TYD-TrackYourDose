@@ -101,7 +101,8 @@ export default async function handler(req, res) {
       const nowLocal = nowLocalMap[cycle.user_id]
       if (!nowLocal) continue
       for (const due of dueReminders(cycle, nowLocal, windowMin)) {
-        const dose = effectiveDoseForDay(cycle, due.slotDateKey, escalations)
+        // Die Menge DIESES Zeitpunkts, nicht die des Zyklus.
+        const dose = effectiveDoseForDay(cycle, due.slotDateKey, escalations, due.slotDose)
         if (!dueMap[cycle.user_id]) dueMap[cycle.user_id] = []
         dueMap[cycle.user_id].push(payloadFor(cycle, due, dose))
       }

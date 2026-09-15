@@ -148,7 +148,12 @@ function trifftMonatsabstand(startKey, dateKey, monate) {
   return zd === Math.min(sd, letzterImZielmonat)
 }
 
-/** Geplante Einnahme-Slots des Tages als { minutes, time }, zeitlich sortiert. */
+/**
+ * Geplante Einnahme-Slots des Tages als { minutes, time, dose }, zeitlich sortiert.
+ * `dose` ist die eigene Menge DIESES Zeitpunkts (`slot_doses`); null heisst, es
+ * gilt die Menge des Zyklus. Ohne sie nannte die Erinnerung bei „morgens 1000,
+ * abends 500" an beiden 1000.
+ */
 export function daySlots(cycle, dateKey) {
   const seg = scheduleForDay(cycle, dateKey)
   const slots = String(seg.intake_time ?? '').split(',').filter(Boolean)
@@ -156,6 +161,7 @@ export function daySlots(cycle, dateKey) {
   // Wochentage je Zeitpunkt — leer heisst „an jedem Tag". Ohne diesen Filter
   // erinnerte der Cron an Tagen, an denen die App nichts faellig zeigt.
   const dayLists = String(seg.slot_days ?? '').split(',')
+  const doses = String(seg.slot_doses ?? '').split(',')
   const weekday = WEEKDAYS_DE[noonUTC(dateKey).getUTCDay()]
   const out = []
   slots.forEach((slot, i) => {
@@ -164,7 +170,11 @@ export function daySlots(cycle, dateKey) {
     const tm = slot === 'custom' ? (customs[i] ?? '') : (SLOT_TIMES[slot] ?? '')
     if (!/^\d{1,2}:\d{2}$/.test(tm)) return
     const [h, m] = tm.split(':').map(Number)
-    out.push({ minutes: h * 60 + m, time: tm })
+    const menge = Number(String(doses[i] ?? '').trim())
+    const eigeneMenge = String(doses[i] ?? '').trim() !== '' && Number.isFinite(menge) && menge > 0
+      ? menge
+      : null
+    out.push({ minutes: h * 60 + m, time: tm, dose: eigeneMenge })
   })
   return out.sort((a, b) => a.minutes - b.minutes)
 }
@@ -182,9 +192,14 @@ export function reminderKeys(cycle) {
     .filter(k => k && k !== 'none' && REMINDER_OFFSETS_MIN[k] != null)
 }
 
-/** Effektive Dosis am Tag: Segment-Basis + aktive Dosis-Anpassungen (dose_escalations). */
-export function effectiveDoseForDay(cycle, dateKey, escalations = []) {
-  let total = scheduleForDay(cycle, dateKey).dose
+/**
+ * Effektive Dosis am Tag: Segment-Basis + aktive Dosis-Anpassungen
+ * (dose_escalations). `slotDose` ist die eigene Menge eines Zeitpunkts und
+ * tritt an die Stelle der Segment-Basis; die Anpassungen gelten dem ganzen
+ * Plan und kommen wie sonst obendrauf.
+ */
+export function effectiveDoseForDay(cycle, dateKey, escalations = [], slotDose = null) {
+  let total = slotDose ?? scheduleForDay(cycle, dateKey).dose
   const daysFromStart = diffDays(dateKey, cycle.start_date)
   for (const esc of escalations) {
     if (esc.cycle_id !== cycle.id) continue
@@ -215,7 +230,7 @@ export function dueReminders(cycle, nowLocal, windowMin) {
       for (const key of offsets) {
         const fireMinutes = slot.minutes + dayShift * 1440 - REMINDER_OFFSETS_MIN[key]
         if (fireMinutes <= nowLocal.minutes && fireMinutes > nowLocal.minutes - windowMin) {
-          due.push({ offset: key, slotTime: slot.time, slotDateKey: dayKey })
+          due.push({ offset: key, slotTime: slot.time, slotDateKey: dayKey, slotDose: slot.dose })
         }
       }
     }

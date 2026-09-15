@@ -116,8 +116,27 @@ export function scheduleForDay(cycle: ScheduleCycle, day: Date): ScheduleSegment
 
 // Effective quantity for a cycle on a given day: segment base + same-unit active adjustments.
 export function effectiveQuantity(cycle: ScheduleCycle, day: Date, escalations: EscalationRow[]): EffectiveQuantity | null {
+  return effectiveSlotQuantity(cycle, day, escalations, null)
+}
+
+/**
+ * Dasselbe fuer EINEN Einnahmezeitpunkt.
+ *
+ * Traegt der Zeitpunkt eine eigene Menge („morgens 1000, abends 500"), gilt
+ * sie statt der Zyklusmenge — die Anpassungen kommen wie sonst obendrauf, denn
+ * sie gelten fuer den ganzen Plan und nicht fuer einen Zeitpunkt.
+ *
+ * `slotDose` ist die `dose` aus `resolveScheduleSlots`; null heisst „dieser
+ * Zeitpunkt hat keine eigene", und dann ist es genau `effectiveQuantity`.
+ */
+export function effectiveSlotQuantity(
+  cycle: ScheduleCycle,
+  day: Date,
+  escalations: EscalationRow[],
+  slotDose: number | null,
+): EffectiveQuantity | null {
   const segment = scheduleForDay(cycle, day)
-  const baseDose = segment.dose
+  const baseDose = slotDose ?? segment.dose
   const baseUnit = segment.unit
   if (baseDose == null || !Number.isFinite(baseDose) || baseDose <= 0 || !baseUnit?.trim()) return null
 
@@ -285,9 +304,11 @@ function trifftMonatsabstand(start: Date, day: Date, monate: number): boolean {
 }
 
 // All scheduled slots of a cycle ON a given day, sorted by time (segment-resolved).
-function cycleDaySlots(c: ScheduleCycle, day: Date): { min: number; time: string }[] {
+// MIT der Menge des Zeitpunkts: „morgens 1000, abends 500" sind zwei Slots mit
+// zwei Zahlen, und wer sie spaeter protokolliert, braucht die richtige.
+function cycleDaySlots(c: ScheduleCycle, day: Date): { min: number; time: string; dose: number | null }[] {
   const seg = scheduleForDay(c, day)
-  return resolveScheduleSlots(seg, day).map(slot => ({ min: slot.minutes, time: slot.time }))
+  return resolveScheduleSlots(seg, day).map(slot => ({ min: slot.minutes, time: slot.time, dose: slot.dose }))
 }
 
 /**
@@ -360,6 +381,11 @@ export interface MissedIntake {
   dateKey: string
   /** Minuten seit Mitternacht (Slot-Zeit). */
   minutes: number
+  /**
+   * Die eigene Menge dieses Zeitpunkts, falls der Plan sie je Zeitpunkt
+   * festhaelt. null heisst: es gilt die Menge des Zyklus.
+   */
+  slotDose: number | null
 }
 
 /**
@@ -401,12 +427,12 @@ export function collectMissedIntakes(
     const day = startOfDay(subDays(now, back))
     const dayKey = format(day, 'yyyy-MM-dd')
 
-    const slotsByStackItem = new Map<string, { min: number; cycleId: string }[]>()
+    const slotsByStackItem = new Map<string, { min: number; cycleId: string; dose: number | null }[]>()
     for (const c of cycles) {
       if (!cycleAppliesToDay(c, day)) continue
       for (const s of cycleDaySlots(c, day)) {
         const arr = slotsByStackItem.get(c.stack_item_id) ?? []
-        arr.push({ min: s.min, cycleId: c.id })
+        arr.push({ min: s.min, cycleId: c.id, dose: s.dose })
         slotsByStackItem.set(c.stack_item_id, arr)
       }
     }
@@ -415,7 +441,7 @@ export function collectMissedIntakes(
       const ordered = [...slots].sort((a, b) => a.min - b.min)
       const covered = loggedByDay.get(`${stackItemId}|${dayKey}`) ?? 0
       for (const slot of ordered.slice(covered)) {
-        out.push({ cycleId: slot.cycleId, stackItemId, dateKey: dayKey, minutes: slot.min })
+        out.push({ cycleId: slot.cycleId, stackItemId, dateKey: dayKey, minutes: slot.min, slotDose: slot.dose })
       }
     }
   }
@@ -429,6 +455,11 @@ export interface OpenIntake {
   dateKey: string
   /** Minuten seit Mitternacht (Slot-Zeit). */
   minutes: number
+  /**
+   * Die eigene Menge dieses Zeitpunkts, falls der Plan sie je Zeitpunkt
+   * festhaelt. null heisst: es gilt die Menge des Zyklus.
+   */
+  slotDose: number | null
 }
 
 /**
@@ -459,12 +490,12 @@ export function collectOpenIntakes(
     const dayKey = format(day, 'yyyy-MM-dd')
     const isToday = dayKey === todayKey
 
-    const slotsByStackItem = new Map<string, { min: number; cycleId: string }[]>()
+    const slotsByStackItem = new Map<string, { min: number; cycleId: string; dose: number | null }[]>()
     for (const c of cycles) {
       if (!cycleAppliesToDay(c, day)) continue
       for (const s of cycleDaySlots(c, day)) {
         const arr = slotsByStackItem.get(c.stack_item_id) ?? []
-        arr.push({ min: s.min, cycleId: c.id })
+        arr.push({ min: s.min, cycleId: c.id, dose: s.dose })
         slotsByStackItem.set(c.stack_item_id, arr)
       }
     }
@@ -474,7 +505,7 @@ export function collectOpenIntakes(
       const covered = decidedByDay.get(`${stackItemId}|${dayKey}`) ?? 0
       for (const slot of ordered.slice(covered)) {
         if (isToday && slot.min > nowMin) continue // heute noch nicht fällig
-        out.push({ cycleId: slot.cycleId, stackItemId, dateKey: dayKey, minutes: slot.min })
+        out.push({ cycleId: slot.cycleId, stackItemId, dateKey: dayKey, minutes: slot.min, slotDose: slot.dose })
       }
     }
   }

@@ -15,7 +15,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
-import { collectMissedIntakes, cycleAppliesToDay, effectiveQuantity, resolveScheduleSlots, scheduleForDay, AUTO_MISSED_NOTE, type EscalationRow, type ResolvedRoutineGroup, type ScheduleCycle } from '../lib/intakeSchedule'
+import { collectMissedIntakes, cycleAppliesToDay, effectiveSlotQuantity, resolveScheduleSlots, scheduleForDay, AUTO_MISSED_NOTE, type EscalationRow, type ResolvedRoutineGroup, type ScheduleCycle } from '../lib/intakeSchedule'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
 import { InjectionTrackerHero, type InjectionHeroPin } from '../components/injection3d/InjectionTrackerHero'
@@ -256,8 +256,14 @@ export function resolveHomeIntakeQuantity(
   cycle: ScheduleCycle,
   day: Date,
   escalations: EscalationRow[],
+  /**
+   * Die eigene Menge DIESES Zeitpunkts, falls der Plan sie je Zeitpunkt
+   * festhaelt. Ohne sie galt bei „morgens 1000, abends 500" an beiden 1000 —
+   * und dieselbe falsche Zahl landete bei verpassten Einnahmen im Protokoll.
+   */
+  slotDose: number | null = null,
 ): { doseNumber: number | null; unit: string | null; dose: string | null } {
-  const quantity = effectiveQuantity(cycle, day, escalations) ?? { dose: null, unit: null }
+  const quantity = effectiveSlotQuantity(cycle, day, escalations, slotDose) ?? { dose: null, unit: null }
   return {
     doseNumber: quantity.dose,
     unit: quantity.unit,
@@ -426,12 +432,14 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
           if (!cycleAppliesToDay(c, now)) continue
           const seg = scheduleForDay(c, now)   // segment-/historienaufgelöste Slots
           const slots = resolveScheduleSlots(seg, now)
-          const resolvedQuantity = resolveHomeIntakeQuantity(c, now, escalations)
           const intakeOnly = c.stack_items.tracking_level === 'intake_only'
-          const doseNumber = intakeOnly ? null : resolvedQuantity.doseNumber
-          const unit = intakeOnly ? null : resolvedQuantity.unit
-          const doseLabel = intakeOnly ? null : resolvedQuantity.dose
           slots.forEach(slot => {
+            // Je Zeitpunkt aufgeloest, nicht einmal je Zyklus: die Menge kann
+            // sich von Einnahme zu Einnahme unterscheiden.
+            const resolvedQuantity = resolveHomeIntakeQuantity(c, now, escalations, slot.dose)
+            const doseNumber = intakeOnly ? null : resolvedQuantity.doseNumber
+            const unit = intakeOnly ? null : resolvedQuantity.unit
+            const doseLabel = intakeOnly ? null : resolvedQuantity.dose
             const scheduledAt = new Date(now)
             scheduledAt.setHours(Math.floor(slot.minutes / 60), slot.minutes % 60, 0, 0)
             todaySlots.push({
@@ -480,7 +488,9 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
             const at = startOfDay(parseISO(m.dateKey))
             at.setHours(Math.floor(m.minutes / 60), m.minutes % 60, 0, 0)
             const intakeOnly = c.stack_items.tracking_level === 'intake_only'
-            const quantity = intakeOnly ? null : effectiveQuantity(c, parseISO(m.dateKey), escalations)
+            // Die Menge DIESES Zeitpunkts, nicht die des Zyklus: sonst stuende
+            // bei „morgens 1000, abends 500" an beiden 1000 im Protokoll.
+            const quantity = intakeOnly ? null : effectiveSlotQuantity(c, parseISO(m.dateKey), escalations, m.slotDose)
             return {
               user_id: user!.id,
               stack_item_id: c.stack_item_id,

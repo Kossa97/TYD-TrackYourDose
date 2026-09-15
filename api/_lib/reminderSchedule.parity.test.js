@@ -1,7 +1,7 @@
 import { addDays, format, parseISO } from 'date-fns'
 import { describe, expect, it } from 'vitest'
-import { cycleAppliesToDay as cron } from './reminderSchedule.js'
-import { cycleAppliesToDay as app } from '../../src/lib/intakeSchedule.ts'
+import { cycleAppliesToDay as cron, daySlots as cronSlots } from './reminderSchedule.js'
+import { cycleAppliesToDay as app, resolveScheduleSlots, scheduleForDay } from '../../src/lib/intakeSchedule.ts'
 
 // Die Regel „gilt dieser Zyklus heute?" gibt es ZWEIMAL: in der App
 // (`src/lib/intakeSchedule.ts`) und hier im Push-Cron, weil die api/-Functions
@@ -50,6 +50,40 @@ const FAELLE = [
   zyklus({ frequency: '2x täglich' }),
   zyklus({ end_date: '2026-03-10' }),
 ]
+
+// Dieselben Zyklen, aber mit Mengen und Tagen je Zeitpunkt: was der Cron in
+// die Erinnerung schreibt, muss die Zahl sein, die die App auf der Karte zeigt.
+const MIT_MENGEN = [
+  zyklus({ intake_time: 'morgens,abends', intake_time_custom: ',', slot_doses: '1000,500', dose: 1000 }),
+  zyklus({ intake_time: 'morgens,abends', intake_time_custom: ',', dose: 250 }),
+  zyklus({
+    frequency: 'Wochentage wählen', schedule_days: ['Mo', 'Mi', 'Fr'],
+    intake_time: 'morgens,abends,morgens', intake_time_custom: ',,',
+    slot_doses: '1000,500,750', slot_days: 'Mo,Mo,Mi', dose: 1000,
+  }),
+  zyklus({ intake_time: 'custom,abends', intake_time_custom: '06:30,', slot_doses: '2,4', dose: 2 }),
+]
+
+describe('App und Push-Cron sagen dieselbe MENGE', () => {
+  it('je Zeitpunkt, über 400 Tage', () => {
+    const abweichungen = []
+    for (const cycle of MIT_MENGEN) {
+      for (let i = 0; i < 400; i += 1) {
+        const tag = addDays(parseISO('2026-01-01'), i)
+        const schluessel = format(tag, 'yyyy-MM-dd')
+        if (!cron(cycle, schluessel)) continue
+        const imCron = cronSlots(cycle, schluessel).map(slot => `${slot.time}=${slot.dose ?? '-'}`)
+        const inDerApp = resolveScheduleSlots(scheduleForDay(cycle, tag), tag)
+          .map(slot => `${slot.time}=${slot.dose ?? '-'}`)
+        if (imCron.join(' ') !== inDerApp.join(' ')) {
+          abweichungen.push(`${cycle.frequency} am ${schluessel}: Cron=[${imCron}], App=[${inDerApp}]`)
+        }
+      }
+    }
+
+    expect(abweichungen.slice(0, 5).join('\n')).toBe('')
+  })
+})
 
 describe('App und Push-Cron sagen dasselbe', () => {
   it('über 400 Tage, für jeden Rhythmus', () => {

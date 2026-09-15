@@ -137,9 +137,9 @@ describe('daySlots', () => {
   it('mischt benannte Slots und Custom-Zeiten in zeitlicher Reihenfolge', () => {
     const c = makeCycle({ intake_time: 'abends,custom,morgens', intake_time_custom: ',06:30,' })
     expect(daySlots(c, MONDAY)).toEqual([
-      { minutes: 6 * 60 + 30, time: '06:30' },
-      { minutes: 8 * 60, time: '08:00' },
-      { minutes: 20 * 60, time: '20:00' },
+      { minutes: 6 * 60 + 30, time: '06:30', dose: null },
+      { minutes: 8 * 60, time: '08:00', dose: null },
+      { minutes: 20 * 60, time: '20:00', dose: null },
     ])
   })
 
@@ -188,7 +188,7 @@ describe('dueReminders', () => {
   it('on_time feuert im Fenster (now-60, now]', () => {
     const c = makeCycle({ intake_time: 'morgens', reminder: 'on_time' })
     expect(dueReminders(c, now(MONDAY, '08:00'), 60)).toEqual([
-      { offset: 'on_time', slotTime: '08:00', slotDateKey: MONDAY },
+      { offset: 'on_time', slotTime: '08:00', slotDateKey: MONDAY, slotDose: null },
     ])
     expect(dueReminders(c, now(MONDAY, '08:59'), 60)).toHaveLength(1)
     expect(dueReminders(c, now(MONDAY, '09:00'), 60)).toEqual([])
@@ -205,7 +205,7 @@ describe('dueReminders', () => {
   it('2h-Offset feuert zwei Stunden vor dem Slot', () => {
     const c = makeCycle({ intake_time: 'abends', reminder: '2h' })
     expect(dueReminders(c, now(MONDAY, '18:00'), 60)).toEqual([
-      { offset: '2h', slotTime: '20:00', slotDateKey: MONDAY },
+      { offset: '2h', slotTime: '20:00', slotDateKey: MONDAY, slotDose: null },
     ])
     expect(dueReminders(c, now(MONDAY, '20:00'), 60)).toEqual([])
   })
@@ -214,7 +214,7 @@ describe('dueReminders', () => {
     // Nur-Montags-Zyklus: 1day-Erinnerung muss am Sonntag feuern
     const c = makeCycle({ frequency: 'Wochentage wählen', schedule_days: ['Mo'], intake_time: 'morgens', reminder: '1day' })
     expect(dueReminders(c, now('2026-06-28', '08:30'), 60)).toEqual([
-      { offset: '1day', slotTime: '08:00', slotDateKey: MONDAY },
+      { offset: '1day', slotTime: '08:00', slotDateKey: MONDAY, slotDose: null },
     ])
     expect(dueReminders(c, now(MONDAY, '08:30'), 60)).toEqual([])
   })
@@ -222,14 +222,14 @@ describe('dueReminders', () => {
   it('2h-Offset über Mitternacht (Slot 01:00 => Erinnerung 23:00 am Vortag)', () => {
     const c = makeCycle({ intake_time: 'custom', intake_time_custom: '01:00', reminder: '2h' })
     expect(dueReminders(c, now('2026-06-28', '23:30'), 60)).toEqual([
-      { offset: '2h', slotTime: '01:00', slotDateKey: MONDAY },
+      { offset: '2h', slotTime: '01:00', slotDateKey: MONDAY, slotDose: null },
     ])
   })
 
   it('on_time über Mitternacht (Cron 00:05, Slot 23:50 gestern)', () => {
     const c = makeCycle({ intake_time: 'custom', intake_time_custom: '23:50', reminder: 'on_time' })
     expect(dueReminders(c, now('2026-06-30', '00:05'), 60)).toEqual([
-      { offset: 'on_time', slotTime: '23:50', slotDateKey: MONDAY },
+      { offset: 'on_time', slotTime: '23:50', slotDateKey: MONDAY, slotDose: null },
     ])
   })
 
@@ -237,10 +237,10 @@ describe('dueReminders', () => {
     const c = makeCycle({ intake_time: 'morgens,abends', reminder: 'on_time,2h' })
     // 08:30: on_time für 08:00 fällig; 2h-Erinnerung für 20:00 erst um 18:00
     expect(dueReminders(c, now(MONDAY, '08:30'), 60)).toEqual([
-      { offset: 'on_time', slotTime: '08:00', slotDateKey: MONDAY },
+      { offset: 'on_time', slotTime: '08:00', slotDateKey: MONDAY, slotDose: null },
     ])
     expect(dueReminders(c, now(MONDAY, '18:30'), 60)).toEqual([
-      { offset: '2h', slotTime: '20:00', slotDateKey: MONDAY },
+      { offset: '2h', slotTime: '20:00', slotDateKey: MONDAY, slotDose: null },
     ])
   })
 
@@ -254,7 +254,7 @@ describe('dueReminders', () => {
     // Stündlicher Cron um 21:00 deckt 20:45 ab; um 20:00 noch nicht
     expect(dueReminders(c, now(MONDAY, '20:00'), 60)).toEqual([])
     expect(dueReminders(c, now(MONDAY, '21:00'), 60)).toEqual([
-      { offset: 'on_time', slotTime: '20:45', slotDateKey: MONDAY },
+      { offset: 'on_time', slotTime: '20:45', slotDateKey: MONDAY, slotDose: null },
     ])
   })
 })

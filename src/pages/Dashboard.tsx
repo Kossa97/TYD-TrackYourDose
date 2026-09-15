@@ -16,7 +16,7 @@ import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getStackItemColor } from '../features/my-stack/lib/colors'
 import { getDateLocale } from '../i18n/dateLocales'
-import { cycleAppliesToDay, effectiveQuantity, resolveScheduleSlots, scheduleForDay, AUTO_MISSED_NOTE, type ResolvedRoutineGroup, type ScheduleSegment } from '../lib/intakeSchedule'
+import { cycleAppliesToDay, effectiveSlotQuantity, resolveScheduleSlots, scheduleForDay, AUTO_MISSED_NOTE, type ResolvedRoutineGroup, type ScheduleSegment } from '../lib/intakeSchedule'
 import { isOnDemand } from '../features/my-stack/lib/intakeFrequency'
 import { debitPeptideStockForDoseById } from '../features/my-stack/extensions/peptide/vialStock'
 import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/quantityPresentation'
@@ -135,9 +135,12 @@ function resolveDashboardCycleQuantity(
   cycle: Cycle,
   day: Date,
   escalations: Escalation[],
+  slotDose: number | null = null,
 ): DashboardQuantity {
   if (cycle.stack_items?.tracking_level === 'intake_only') return { dose: null, unit: null }
-  return effectiveQuantity(cycle, day, escalations) ?? { dose: null, unit: null }
+  // `slotDose` ist die eigene Menge EINES Zeitpunkts — ohne sie gaelte bei
+  // „morgens 1000, abends 500" an beiden Karten dieselbe Zahl.
+  return effectiveSlotQuantity(cycle, day, escalations, slotDose) ?? { dose: null, unit: null }
 }
 
 function cycleIntakeMinutes(c: Cycle, day: Date): number {
@@ -150,6 +153,8 @@ interface DaySlot {
   time: string
   groupKey: IntakeGroupKey
   routineGroup: ResolvedRoutineGroup
+  /** Eigene Menge dieses Zeitpunkts; null heisst: die des Zyklus gilt. */
+  dose: number | null
 }
 
 // Expand a cycle's intake times into individual day-slots for a given day (segment-resolved).
@@ -166,8 +171,9 @@ function cycleSlots(c: Cycle, day: Date): DaySlot[] {
         ? 'mittags' as const
         : 'abends' as const,
     routineGroup: slot.routineGroup,
+    dose: slot.dose,
   }))
-  if (out.length === 0) out.push({ key: 'later', minutes: 25 * 60, time: '', groupKey: 'later', routineGroup: 'morning' })
+  if (out.length === 0) out.push({ key: 'later', minutes: 25 * 60, time: '', groupKey: 'later', routineGroup: 'morning', dose: null })
   return out
 }
 
@@ -414,7 +420,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
 
   // Einnahme-Bestätigungs-Sheet
-  interface ConfirmSheet { cycle?: Cycle; log?: DoseLog }
+  interface ConfirmSheet { cycle?: Cycle; log?: DoseLog; slotDose?: number | null }
   const [confirmSheet, setConfirmSheet] = useState<ConfirmSheet | null>(null)
   const [routineGroupSheet, setRoutineGroupSheet] = useState<RoutineGroupModel | null>(null)
   const [confirmTime, setConfirmTime]   = useState('')
@@ -630,7 +636,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   // Per-slot due list: expand each cycle into its individual intake slots, then drop the
   // slots already covered (in time order) by decided logs (taken !== null) for that stack item.
   // Reset logs (taken === null) keep a slot "due" and are reused on confirm to avoid duplicates.
-  interface DueSlot { key: string; cycle: Cycle; minutes: number; time: string; groupKey: IntakeGroupKey; routineGroup: ResolvedRoutineGroup; pendingLog?: DoseLog }
+  interface DueSlot { key: string; cycle: Cycle; minutes: number; time: string; groupKey: IntakeGroupKey; routineGroup: ResolvedRoutineGroup; dose: number | null; pendingLog?: DoseLog }
   const decidedByStackItem = new Map<string, number>()
   const pendingByStackItem = new Map<string, DoseLog[]>()
   for (const log of selLogs) {
@@ -641,7 +647,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   for (const cycle of selCycles) {
     for (const s of cycleSlots(cycle, selectedDay)) {
       const arr = slotsByStackItem.get(cycle.stack_item_id) ?? []
-      arr.push({ key: `${cycle.id}-${s.minutes}`, cycle, minutes: s.minutes, time: s.time, groupKey: s.groupKey, routineGroup: s.routineGroup })
+      arr.push({ key: `${cycle.id}-${s.minutes}`, cycle, minutes: s.minutes, time: s.time, groupKey: s.groupKey, routineGroup: s.routineGroup, dose: s.dose })
       slotsByStackItem.set(cycle.stack_item_id, arr)
     }
   }
@@ -671,7 +677,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       routineGroup: slot.routineGroup,
       minutes: slot.minutes,
       scheduledAt: slot.pendingLog?.logged_at ?? slotTimestamp(selectedDay, slot.minutes),
-      ...resolveDashboardCycleQuantity(slot.cycle, selectedDay, escalations),
+      ...resolveDashboardCycleQuantity(slot.cycle, selectedDay, escalations, slot.dose),
       method: slot.cycle.method,
     })
   }))
@@ -797,9 +803,9 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     toast.success(t('dose_undo_success', { defaultValue: 'Einnahme zurückgesetzt' }))
   }
 
-  const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string) => {
+  const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string, slotDose: number | null = null) => {
     if (!user) return
-    const quantity = resolveDashboardCycleQuantity(cycle, selectedDay, escalations)
+    const quantity = resolveDashboardCycleQuantity(cycle, selectedDay, escalations, slotDose)
     const { data: savedLog, error } = await dashboardDataClient.from('dose_logs').insert({
       user_id: user.id,
       stack_item_id: cycle.stack_item_id,
@@ -827,7 +833,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   }
 
   // ── Bestätigungs-Sheet ───────────────────────────────────────────────────
-  const openConfirmSheet = (cycle?: Cycle, log?: DoseLog, slotTime?: string) => {
+  const openConfirmSheet = (cycle?: Cycle, log?: DoseLog, slotTime?: string, slotDose: number | null = null) => {
     let defaultTime: string
     if (cycle && slotTime) {
       defaultTime = slotTime
@@ -843,7 +849,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       defaultTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
     }
     setConfirmTime(defaultTime)
-    setConfirmSheet({ cycle, log })
+    setConfirmSheet({ cycle, log, slotDose })
   }
 
   const openInjectionTrackerForSlot = (slot: DueSlot) => {
@@ -866,9 +872,9 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         confirmSheet.log,
         true,
         day.toISOString(),
-        resolveDashboardCycleQuantity(confirmSheet.cycle, selectedDay, escalations),
+        resolveDashboardCycleQuantity(confirmSheet.cycle, selectedDay, escalations, confirmSheet.slotDose ?? null),
       )
-      else                  await confirmCycleDose(confirmSheet.cycle, true, day.toISOString())
+      else                  await confirmCycleDose(confirmSheet.cycle, true, day.toISOString(), confirmSheet.slotDose ?? null)
     } else if (confirmSheet.log) {
       const logDate = new Date(confirmSheet.log.logged_at)
       logDate.setHours(h, m, 0, 0)
@@ -1085,8 +1091,8 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const renderDueSlotCard = (slot: DueSlot) => {
     const c = slot.cycle
     const segment = scheduleForDay(c, selectedDay)
-    const { dose, unit } = resolveDashboardCycleQuantity(c, selectedDay, escalations)
-    const baseDose = c.stack_items?.tracking_level === 'intake_only' ? null : segment.dose
+    const { dose, unit } = resolveDashboardCycleQuantity(c, selectedDay, escalations, slot.dose)
+    const baseDose = c.stack_items?.tracking_level === 'intake_only' ? null : slot.dose ?? segment.dose
     const isEscalated = dose != null && baseDose != null && dose !== baseDose
     const doseLabel = formatTrackedQuantity(dose, unit, String(t('quantity_not_tracked', { defaultValue: 'Menge nicht getrackt' })))
     const pendingLog = slot.pendingLog
@@ -1164,14 +1170,14 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           <div className="grid gap-2">
             <div className="grid grid-cols-2 gap-2">
               <button
-                onClick={() => openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined)}
+                onClick={() => openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined, slot.dose)}
                 className="flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-emerald-500/25 bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/25">
                 <Check size={11} /> <span className="truncate">{isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}</span>
               </button>
               <button
                 onClick={() => pendingLog
-                  ? confirmDose(pendingLog, false, undefined, resolveDashboardCycleQuantity(c, selectedDay, escalations))
-                  : confirmCycleDose(c, false, slotTimestamp(selectedDay, slot.minutes))}
+                  ? confirmDose(pendingLog, false, undefined, resolveDashboardCycleQuantity(c, selectedDay, escalations, slot.dose))
+                  : confirmCycleDose(c, false, slotTimestamp(selectedDay, slot.minutes), slot.dose)}
                 className="flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-red-500/25 bg-red-500/15 px-2 py-1 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/25">
                 <XCircle size={11} /> <span className="truncate">{t('uebersprungen')}</span>
               </button>
