@@ -18,7 +18,8 @@
     "faq:export": "tsx scripts/export-faq-en.ts",
     "faq:generate": "node scripts/generate-faq-locales.mjs",
     "i18n:onboarding:merge": "node scripts/merge-onboarding-i18n.mjs",
-    "i18n:onboarding:generate": "node scripts/generate-onboarding-i18n.mjs"
+    "i18n:onboarding:generate": "node scripts/generate-onboarding-i18n.mjs",
+    "peptipedia:audit": "tsx --tsconfig tsconfig.app.json scripts/audit-peptipedia.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",

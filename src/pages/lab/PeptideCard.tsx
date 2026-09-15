@@ -3,15 +3,13 @@ import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { peptipediaDetailPath, type PeptipediaMode } from '../../features/peptipedia/routing'
 import { peptipediaText } from '../../features/peptipedia/content/legacyLabels'
+import { PEPTIPEDIA_UI_COPY } from '../../features/peptipedia/content/uiCopy'
 import type { PeptipediaView, PeptipediaLocale } from '../../features/peptipedia/content/types'
 import {
   CATEGORY_LABEL_KEYS,
   CATEGORY_COLORS,
   STATUS_LABEL_KEYS,
   STATUS_STYLES,
-  EVIDENCE_BAR_WIDTH,
-  EVIDENCE_LABEL_KEYS,
-  getConfidenceStyle,
 } from '../../features/peptipedia/display'
 
 interface PeptideCardProps {
@@ -22,8 +20,9 @@ interface PeptideCardProps {
 
 export function PeptideCard({ peptide, locale, mode = 'public' }: PeptideCardProps) {
   const t = peptipediaText(locale)
+  const evidenceCopy = PEPTIPEDIA_UI_COPY[locale].evidence
   const catColors   = CATEGORY_COLORS[peptide.category]
-  const confStyle   = getConfidenceStyle(peptide.evidence.score)
+  const approvedRegions = [...new Set(peptide.approvals?.filter(approval => approval.status === 'approved').map(approval => approval.region))]
 
   const detailPath = peptipediaDetailPath(locale, peptide.slug, mode)
 
@@ -42,20 +41,18 @@ export function PeptideCard({ peptide, locale, mode = 'public' }: PeptideCardPro
       <div className="absolute inset-0 bg-gradient-to-br from-white/[0.015] via-transparent to-transparent pointer-events-none" />
 
       <div className="relative p-5">
-        {/* Top row: category + score */}
-        <div className="flex items-center justify-between mb-3">
+        {/* Top row: category + identity */}
+        <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
           <span
             className={`text-[0.55rem] font-black uppercase tracking-[0.18em] ${catColors.text}`}
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
             {t(CATEGORY_LABEL_KEYS[peptide.category])}
           </span>
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`text-[0.55rem] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border ${confStyle}`}
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-            >
-              {peptide.evidence.score}/10
+          <div className="flex max-w-full flex-wrap items-center gap-1.5 text-[0.55rem]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+            <span className="uppercase tracking-wider text-slate-600">{locale === 'de' ? 'Identität' : 'Identity'}</span>
+            <span className="break-words rounded border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5 font-black text-slate-300">
+              {evidenceCopy.identity[peptide.identity.status]}
             </span>
           </div>
         </div>
@@ -69,6 +66,7 @@ export function PeptideCard({ peptide, locale, mode = 'public' }: PeptideCardPro
         </h2>
 
         {/* Full name */}
+        {peptide.blend && <span className="inline-block text-[0.55rem] text-sky-300 border border-sky-500/25 rounded-full px-2 py-0.5 my-2">Blend · {peptide.blend.components.length} {locale === 'de' ? 'Bestandteile' : 'components'}</span>}
         {peptide.fullName && (
           <p
             className="text-[0.6rem] text-slate-600 mb-3 leading-tight"
@@ -83,23 +81,10 @@ export function PeptideCard({ peptide, locale, mode = 'public' }: PeptideCardPro
           {peptide.tldr}
         </p>
 
-        {/* Mini evidence bars */}
-        <div className="space-y-1.5 mb-4">
-          <MiniEvidenceBar locale={locale}
-            label={t('plib_ev_human_short')}
-            value={peptide.evidence.human}
-            color="bg-emerald-500"
-          />
-          <MiniEvidenceBar locale={locale}
-            label={t('plib_ev_animal_short')}
-            value={peptide.evidence.animal}
-            color="bg-amber-500"
-          />
-          <MiniEvidenceBar locale={locale}
-            label={t('plib_ev_clinical_short')}
-            value={peptide.evidence.clinical}
-            color="bg-violet-500"
-          />
+        {/* Compact, non-aggregate evidence summary */}
+        <div className="mb-4 flex items-center justify-between gap-3 border-y border-white/[0.05] py-2 text-[0.6rem]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+          <span className="uppercase tracking-wider text-slate-600">{evidenceCopy.dimensions.human}</span>
+          <span className="text-right text-slate-400">{evidenceCopy.human[peptide.evidenceMatrix.human]}</span>
         </div>
 
         {/* Tags */}
@@ -120,7 +105,7 @@ export function PeptideCard({ peptide, locale, mode = 'public' }: PeptideCardPro
             className={`text-[0.56rem] font-black uppercase px-2 py-0.5 rounded-md ${STATUS_STYLES[peptide.researchStatus]}`}
             style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
-            {t(STATUS_LABEL_KEYS[peptide.researchStatus])}
+            {t(STATUS_LABEL_KEYS[peptide.researchStatus])}{approvedRegions?.length ? ` · ${approvedRegions.join('/')}` : ''}
           </span>
           <span
             className="flex items-center gap-1 text-xs text-slate-500 group-hover:text-sky-400 transition-colors duration-200"
@@ -134,44 +119,6 @@ export function PeptideCard({ peptide, locale, mode = 'public' }: PeptideCardPro
         </div>
       </div>
     </article>
-  )
-}
-
-// ─── Mini Evidence Bar ────────────────────────────────────────────────────────
-
-function MiniEvidenceBar({
-  locale,
-  label,
-  value,
-  color,
-}: {
-  locale: PeptipediaLocale
-  label: string
-  value: string
-  color: string
-}) {
-  const t = peptipediaText(locale)
-  const width = EVIDENCE_BAR_WIDTH[value as keyof typeof EVIDENCE_BAR_WIDTH] ?? 'w-0'
-  const text  = t(EVIDENCE_LABEL_KEYS[value as keyof typeof EVIDENCE_LABEL_KEYS] ?? 'plib_ev_none')
-
-  return (
-    <div className="flex items-center gap-2">
-      <span
-        className="text-[0.5rem] uppercase tracking-widest text-slate-700 w-10 shrink-0"
-        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-      >
-        {label}
-      </span>
-      <div className="flex-1 h-[2px] bg-white/[0.05] rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${color} ${width}`} />
-      </div>
-      <span
-        className="text-[0.5rem] text-slate-600 w-14 text-right shrink-0"
-        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-      >
-        {text}
-      </span>
-    </div>
   )
 }
 

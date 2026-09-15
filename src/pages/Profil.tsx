@@ -118,7 +118,7 @@ export function Profil() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const set = (field: keyof Profile) => (val: any) =>
+  const set = <K extends keyof Profile>(field: K) => (val: Profile[K]) =>
     setProfile(p => ({ ...p, [field]: val }))
 
   const sharedCount = [
@@ -564,7 +564,6 @@ function LanguageSwitcher() {
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState(i18n.language)
   const current = LANGUAGES.find(l => l.code === i18n.language) ?? LANGUAGES[0]
-  const selectedLang = LANGUAGES.find(l => l.code === selected) ?? current
 
   function apply() {
     i18n.changeLanguage(selected)

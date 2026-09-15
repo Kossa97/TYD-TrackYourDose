@@ -344,7 +344,7 @@ describe('buildSelectableInjectionIntakes', () => {
         logged_at: '2026-06-23T18:00:00.000Z',
         taken: false,
         notes: 'auto-missed',
-      } as any],
+      } as Parameters<typeof buildSelectableInjectionIntakes>[0]['logs'][number]],
       linkedDoseLogIds: new Set(),
       escalations: [],
       now: new Date('2026-06-24T21:00:00.000Z'),

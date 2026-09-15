@@ -81,12 +81,11 @@ function LiveCycleChartCanvas({
   const drawRaf = useRef<number | null>(null)
   const lastHapticTick = useRef<number | null>(null)
 
-  const [showJetzt, setShowJetzt] = useState(false)
   const [hasHistory, setHasHistory] = useState(false)
   const onNavStateRef = useRef(onNavState)
   useEffect(() => { onNavStateRef.current = onNavState }, [onNavState])
   const notifyNav = useCallback((jetzt: boolean, hist: boolean) => {
-    setShowJetzt(jetzt); setHasHistory(hist)
+    setHasHistory(hist)
     onNavStateRef.current?.(jetzt, hist)
   }, [])
 

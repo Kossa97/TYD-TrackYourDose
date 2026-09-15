@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import type { DotItemDotProps } from 'recharts'
 import type { CycleSubstance, DateRange, MetricKey, OngoingSubstance } from '../../types'
 import type { MetricDefinition } from '../../lib/metricDefinitions'
 import { buildMetricSeries, computeDelta } from '../../lib/metrics'
@@ -214,6 +215,7 @@ function AnimatedMetricDot({
     />
   )
 }
+
 function MetricChartBody({
   lineData,
   visibleLineData,
@@ -299,14 +301,15 @@ function MetricChartBody({
         name="value"
         stroke={metric.color}
         strokeWidth={2.5}
-        dot={showPersistentDots ? (dotProps: any) => {
+        dot={showPersistentDots ? (dotProps: DotItemDotProps) => {
           const animationIndex = dotProps.payload?.ts != null
             ? visiblePointIndex.get(dotProps.payload.ts)
             : undefined
           if (animationIndex == null) return null
           return (
             <AnimatedMetricDot
-              {...dotProps}
+              cx={dotProps.cx}
+              cy={dotProps.cy}
               fill="#07091a"
               stroke={metric.color}
               animationIndex={animationIndex}

@@ -21,7 +21,6 @@ export function InjectionPin({
   position,
   normal,
   active = false,
-  reference = false,
   onClick,
   color,
 }: {

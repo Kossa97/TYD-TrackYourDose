@@ -21,7 +21,10 @@ it('writes localized searchable HTML and sitemap without a database', async () =
   expect(english).toContain('lang="en"')
   expect(english).toContain('Study protocols')
   const sitemap = await readFile(join(directory, 'sitemap.xml'), 'utf8')
-  expect(sitemap.match(/<loc>/g)).toHaveLength(24)
+  expect(sitemap.match(/<loc>/g)).toHaveLength(134)
+  const blend = await readFile(join(directory, 'en/peptipedia/glow/index.html'), 'utf8')
+  expect(blend).toContain('GHK-Cu')
+  expect(blend).toContain('href="/en/peptipedia/ghk-cu"')
   expect(await readFile(join(directory, 'robots.txt'), 'utf8')).toContain('https://example.test/sitemap.xml')
 })
 it('fails on a template without its root marker', async () => {

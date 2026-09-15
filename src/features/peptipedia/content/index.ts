@@ -9,10 +9,17 @@ import { tirzepatid } from './entries/tirzepatid'
 import { selank } from './entries/selank'
 import { epithalon } from './entries/epithalon'
 import { ghkCu } from './entries/ghk-cu'
+import { metabolicProfiles } from './entries/catalogue-metabolic'
+import { hormoneProfiles } from './entries/catalogue-hormones'
+import { neuroProfiles } from './entries/catalogue-neuro'
+import { experimentalProfiles } from './entries/catalogue-experimental'
+import { bioregulatorProfiles, unresolvedProfiles } from './entries/catalogue-bioregulators'
+import { blendProfiles } from './entries/catalogue-blends'
 import { assertValidPeptipedia } from './validate'
 import type { PeptipediaEntry, PeptipediaLocale, PeptipediaView } from './types'
 
-const entries = [bpc157, tb500, ipamorelin, cjc1295, ghrp2, sermorelin, semaglutid, tirzepatid, selank, epithalon, ghkCu]
+const entries = [bpc157, tb500, ipamorelin, cjc1295, ghrp2, sermorelin, semaglutid, tirzepatid, selank, epithalon, ghkCu,
+  ...metabolicProfiles, ...hormoneProfiles, ...neuroProfiles, ...experimentalProfiles, ...bioregulatorProfiles, ...unresolvedProfiles, ...blendProfiles]
 assertValidPeptipedia(entries)
 export const PUBLISHED_PEPTIDES = Object.freeze(entries)
 

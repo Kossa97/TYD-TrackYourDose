@@ -2,42 +2,29 @@ import type { ReactNode } from 'react'
 import { ExternalLink } from 'lucide-react'
 import type { PeptipediaView, PeptipediaSource } from '../content/types'
 import { PEPTIPEDIA_UI_COPY } from '../content/uiCopy'
-import { peptipediaText } from '../content/legacyLabels'
-import { CATEGORY_COLORS, EVIDENCE_BAR_WIDTH, EVIDENCE_LABEL_KEYS } from '../display'
-import type { PeptipediaLocale, EvidenceLevel, ClinicalLevel } from '../content/types'
+import type { PeptipediaLocale } from '../content/types'
 
 function EvidenceRow({
-  locale,
   label,
   value,
-  barColor,
+  detail,
 }: {
-  locale: PeptipediaLocale
   label: string
-  value: EvidenceLevel | ClinicalLevel
-  barColor: string
+  value: ReactNode
+  detail?: string
 }) {
-  const t = peptipediaText(locale)
-  const width = EVIDENCE_BAR_WIDTH[value] ?? 'w-0'
-  const text  = t(EVIDENCE_LABEL_KEYS[value] ?? 'plib_ev_none')
-
   return (
-    <div className="flex items-center gap-3">
-      <span
-        className="text-[0.6rem] text-slate-500 w-24 shrink-0"
+    <div className="grid gap-1 py-3 first:pt-0 last:pb-0 sm:grid-cols-[10rem_1fr] sm:gap-4">
+      <dt
+        className="text-[0.6rem] uppercase tracking-[0.12em] text-slate-500"
         style={{ fontFamily: "'IBM Plex Mono', monospace" }}
       >
         {label}
-      </span>
-      <div className="flex-1 h-[3px] bg-white/[0.05] rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${barColor} ${width}`} />
-      </div>
-      <span
-        className="text-[0.6rem] text-slate-500 w-20 text-right shrink-0"
-        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-      >
-        {text}
-      </span>
+      </dt>
+      <dd className="text-sm text-slate-300 leading-relaxed">
+        <div>{value}</div>
+        {detail && <p className="mt-1 text-xs text-slate-500">{detail}</p>}
+      </dd>
     </div>
   )
 }
@@ -49,11 +36,19 @@ function SectionCard({ label, children }: { label: string; children: ReactNode }
   </div>
 }
 
-function SourceLinks({ sources }: { sources: PeptipediaSource[] }) {
-  return <ul className="space-y-2 mt-3">{sources.map(source => <li key={source.id}>
-    <a href={source.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1.5 text-xs text-sky-400 hover:text-sky-300 break-words">
-      <span>{source.title} ({source.year})</span><ExternalLink size={12} className="shrink-0 mt-0.5" />
+function SourceLinks({ sources, locale }: { sources: PeptipediaSource[]; locale: PeptipediaLocale }) {
+  const copy = PEPTIPEDIA_UI_COPY[locale].sources
+  return <ul className="space-y-3 mt-3">{sources.map(source => <li key={source.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+    <a href={source.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1.5 text-xs text-sky-400 hover:text-sky-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 rounded-sm break-words">
+      <span>{source.title}</span><ExternalLink size={12} className="shrink-0 mt-0.5" />
     </a>
+    <div className="mt-2 flex flex-wrap gap-2 text-[0.62rem]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+      <span className="rounded-full border border-sky-500/20 bg-sky-500/[0.07] px-2 py-0.5 text-sky-300">{copy.kind[source.kind]}</span>
+      <span className="px-1 py-0.5 text-slate-500">{source.year}</span>
+    </div>
+    <p className="mt-2 text-xs text-slate-400">{source.publisherOrAuthors}</p>
+    <p className="mt-1 text-[0.65rem] text-slate-500">{copy.accessed}: <time dateTime={source.accessedAt}>{source.accessedAt}</time></p>
+    {source.kind === 'catalog' && <p className="mt-2 text-[0.65rem] text-amber-300/70">{copy.catalogueNote}</p>}
   </li>)}</ul>
 }
 
@@ -63,31 +58,30 @@ function TextList({ items, empty }: { items: string[]; empty: string }) {
 
 export function OverviewPanel({ peptide }: { peptide: PeptipediaView }) {
   const copy = PEPTIPEDIA_UI_COPY[peptide.locale]
-  const t = peptipediaText(peptide.locale)
+  const matrix = copy.evidence
+  const approvals = peptide.approvals?.filter(approval => approval.status === 'approved') ?? []
   return <div className="space-y-5">
     <SectionCard label={copy.headings.researchAreas}><div className="flex flex-wrap gap-2">{peptide.researchAreas.map(area => <span key={area} className="text-xs text-slate-300 bg-white/[0.05] border border-white/[0.08] px-3 py-1 rounded-full">{area}</span>)}</div></SectionCard>
-    <SectionCard label={t('plib_evidence')}>
-      <div className="space-y-3 mb-4">
-        <EvidenceRow locale={peptide.locale} label={t('plib_ev_human_long')} value={peptide.evidence.human} barColor="bg-emerald-500" />
-        <EvidenceRow locale={peptide.locale} label={t('plib_ev_animal_long')} value={peptide.evidence.animal} barColor="bg-amber-500" />
-        <EvidenceRow locale={peptide.locale} label={t('plib_ev_clinical_long')} value={peptide.evidence.clinical} barColor="bg-violet-500" />
-      </div>
-      <div className="border-t border-white/[0.05] pt-3 flex items-center justify-between">
-        <div className="flex-1">
-          <p className="text-[0.55rem] uppercase tracking-widest text-slate-600 mb-1" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{t('plib_total_score')}</p>
-          <div className="flex items-center gap-2">{Array.from({ length: 10 }).map((_, index) => <div key={index} className={`h-1.5 w-full rounded-full ${index < peptide.evidence.score ? CATEGORY_COLORS[peptide.category].scoreDot : 'bg-white/[0.05]'}`} />)}</div>
-        </div>
-        <span className={`ml-4 text-sm font-black ${CATEGORY_COLORS[peptide.category].text}`} style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{peptide.evidence.score}/10</span>
-      </div>
-      <p className="text-xs text-slate-500 mt-2">{peptide.locale === 'de' ? 'Redaktionelle Einordnung der ausgewerteten Evidenz, kein validierter medizinischer Score.' : 'Editorial assessment of the reviewed evidence, not a validated medical score.'}</p>
+    <SectionCard label={matrix.heading}>
+      <dl className="divide-y divide-white/[0.05]">
+        <EvidenceRow label={matrix.dimensions.identity} value={matrix.identity[peptide.identity.status]} detail={peptide.identity.description[peptide.locale]} />
+        <EvidenceRow label={matrix.dimensions.human} value={matrix.human[peptide.evidenceMatrix.human]} />
+        <EvidenceRow label={matrix.dimensions.replication} value={matrix.replication[peptide.evidenceMatrix.replication]} />
+        <EvidenceRow label={matrix.dimensions.endpoints} value={matrix.endpoints[peptide.evidenceMatrix.endpoints]} />
+        <EvidenceRow label={matrix.dimensions.safety} value={matrix.safety[peptide.evidenceMatrix.safety]} />
+        <EvidenceRow label={matrix.dimensions.approval} value={approvals.length
+          ? <div className="flex flex-wrap gap-2">{approvals.map(approval => <span key={`${approval.region}-${approval.product}`} title={`${approval.product}: ${approval.indication}`} className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-300">{approval.region} · {peptide.locale === 'de' ? 'Zugelassen' : 'Approved'}</span>)}</div>
+          : matrix.noApproval} />
+      </dl>
+      <p className="mt-4 border-t border-white/[0.05] pt-3 text-xs text-slate-500">{matrix.note}</p>
     </SectionCard>
-    {peptide.overviewFacts.map(fact => <SectionCard key={fact.id} label={fact.label}><p className="text-sm text-slate-300 leading-relaxed">{fact.value}</p><SourceLinks sources={peptide.sources.filter(source => fact.sourceIds.includes(source.id))} /></SectionCard>)}
+    {peptide.overviewFacts.map(fact => <SectionCard key={fact.id} label={fact.label}><p className="text-sm text-slate-300 leading-relaxed">{fact.value}</p><SourceLinks locale={peptide.locale} sources={peptide.sources.filter(source => fact.sourceIds.includes(source.id))} /></SectionCard>)}
     <SectionCard label={copy.headings.researchGaps}><TextList items={peptide.researchGaps} empty={copy.empty.list} /></SectionCard>
   </div>
 }
 
 export function MechanismPanel({ peptide }: { peptide: PeptipediaView }) {
-  return <SectionCard label={PEPTIPEDIA_UI_COPY[peptide.locale].tabs.mechanism}><p className="text-sm text-slate-300 leading-relaxed">{peptide.mechanism}</p><SourceLinks sources={peptide.sources.filter(source => source.kind !== 'regulator')} /></SectionCard>
+  return <SectionCard label={PEPTIPEDIA_UI_COPY[peptide.locale].tabs.mechanism}><p className="text-sm text-slate-300 leading-relaxed">{peptide.mechanism}</p><SourceLinks locale={peptide.locale} sources={peptide.sources.filter(source => peptide.mechanismSourceIds.includes(source.id))} /></SectionCard>
 }
 
 export function ProtocolsPanel({ peptide }: { peptide: PeptipediaView }) {
@@ -100,18 +94,19 @@ export function ProtocolsPanel({ peptide }: { peptide: PeptipediaView }) {
     <dl className="space-y-3">{(Object.keys(labels) as Array<keyof typeof labels>).map(field => <div key={field}>
       <dt className="text-xs text-slate-500 mb-1">{labels[field]}</dt><dd className="text-sm text-slate-300 leading-relaxed">{protocol[field]}</dd>
     </div>)}</dl>
-    <SourceLinks sources={peptide.sources.filter(source => protocol.sourceIds.includes(source.id))} />
+    <SourceLinks locale={peptide.locale} sources={peptide.sources.filter(source => protocol.sourceIds.includes(source.id))} />
   </SectionCard>)}</div>
 }
 
 export function SafetyPanel({ peptide }: { peptide: PeptipediaView }) {
   const copy = PEPTIPEDIA_UI_COPY[peptide.locale]
   return <div className="space-y-5">{(['sideEffects', 'contraindications', 'interactions'] as const).map(field => <SectionCard key={field} label={copy.headings[field]}><TextList items={peptide[field]} empty={copy.empty.list} /></SectionCard>)}
-    <SectionCard label={copy.headings.researchGaps}><TextList items={peptide.researchGaps} empty={copy.empty.list} /><SourceLinks sources={peptide.sources} /></SectionCard>
+    <SectionCard label={copy.headings.researchGaps}><TextList items={peptide.researchGaps} empty={copy.empty.list} /><SourceLinks locale={peptide.locale} sources={peptide.sources.filter(source => peptide.safetySourceIds.includes(source.id))} /></SectionCard>
   </div>
 }
 
 export function SourcesPanel({ peptide }: { peptide: PeptipediaView }) {
   const copy = PEPTIPEDIA_UI_COPY[peptide.locale]
-  return <SectionCard label={copy.tabs.sources}><p className="text-xs text-slate-500">{copy.reviewed}: <time dateTime={peptide.reviewedAt}>{peptide.reviewedAt}</time> · Version {peptide.contentVersion}</p><SourceLinks sources={peptide.sources} /></SectionCard>
+  const versionLabel = peptide.locale === 'de' ? 'Fassung' : 'Version'
+  return <SectionCard label={copy.tabs.sources}><p className="text-xs text-slate-500">{copy.reviewed}: <time dateTime={peptide.reviewedAt}>{peptide.reviewedAt}</time> · {versionLabel} {peptide.contentVersion}</p><SourceLinks locale={peptide.locale} sources={peptide.sources} /></SectionCard>
 }

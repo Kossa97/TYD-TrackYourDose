@@ -9,7 +9,7 @@ export default defineConfig([
   // .claude/worktrees enthaelt vollstaendige Repo-Kopien inkl. eigener tsconfig.json.
   // Ohne diese Ignores findet typescript-eslint mehrere tsconfigRootDir-Kandidaten
   // und bricht repoweit ab.
-  globalIgnores(['dist', '**/.claude/**']),
+  globalIgnores(['dist', 'coverage', '**/.claude/**', '**/.worktrees/**', '**/.superpowers/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -24,5 +24,57 @@ export default defineConfig([
         tsconfigRootDir: import.meta.dirname,
       },
     },
+    rules: {
+      // Mixed context/helper exports are intentional; they only affect hot reload.
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    },
+  },
+  {
+    // Legacy effects deliberately mirror incoming data into UI state. Keep the
+    // React Compiler advisory scoped to these existing files, not the workspace.
+    files: [
+      'src/components/BlutspiegelCarousel.tsx',
+      'src/components/Layout.tsx',
+      'src/components/LiveBlutspiegelChart.tsx',
+      'src/components/Onboarding.tsx',
+      'src/components/ProtocolPdfModal.tsx',
+      'src/components/WorkflowBanner.tsx',
+      'src/components/injection3d/InjectionLogSheet.tsx',
+      'src/context/OnboardingContext.tsx',
+      'src/features/fortschritt/components/TodayLogSheet.tsx',
+      'src/features/fortschritt/components/verlauf/MetricChart.tsx',
+      'src/features/fortschritt/components/verlauf/VerlaufSection.tsx',
+      'src/features/fortschritt/hooks/useFortschrittData.ts',
+      'src/lib/useNew.ts',
+      'src/lib/usePushNotifications.ts',
+      'src/pages/Bewertungen.tsx',
+      'src/pages/BlutspiegelSimulation.tsx',
+      'src/pages/Dashboard.tsx',
+      'src/pages/Health.tsx',
+      'src/pages/InjektionsTracker.tsx',
+      'src/pages/Peptide.tsx',
+      'src/pages/Tagebuch.tsx',
+      'src/pages/lab/AdminPanel.tsx',
+    ],
+    rules: { 'react-hooks/set-state-in-effect': 'off' },
+  },
+  {
+    // These legacy visual components read layout/animation refs while rendering.
+    files: [
+      'src/components/LiveBlutspiegelChart.tsx',
+      'src/components/ProtocolPdfModal.tsx',
+      'src/components/SloshContext.tsx',
+      'src/features/fortschritt/components/overview/TopChangesSection.tsx',
+      'src/features/fortschritt/components/verlauf/MetricChart.tsx',
+    ],
+    rules: { 'react-hooks/refs': 'off' },
+  },
+  {
+    files: ['src/components/BlutspiegelCarousel.tsx'],
+    rules: { 'react-hooks/purity': 'off' },
+  },
+  {
+    files: ['src/pages/Peptide.tsx'],
+    rules: { 'react-hooks/immutability': 'off' },
   },
 ])
