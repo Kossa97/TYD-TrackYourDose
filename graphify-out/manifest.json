@@ -72,9 +72,9 @@
     "semantic_hash": "4b3fce8ea2a515a9d2e47e74757172ec"
   },
   "api/_lib/reminderSchedule.js": {
-    "mtime": 1789419360.5431662,
-    "seen": 1789419719.6347857,
-    "ast_hash": "031802d8c0dcf84df01b4369849e379f",
+    "mtime": 1789446831.290386,
+    "seen": 1789452023.1285362,
+    "ast_hash": "0668c0e230d0ad95e03517af42987e9f",
     "semantic_hash": ""
   },
   "api/_lib/reminderSchedule.test.js": {
@@ -90,9 +90,9 @@
     "semantic_hash": "f6b8665fe0f824255156a942bb9f48c0"
   },
   "api/send-reminders.js": {
-    "mtime": 1789417919.5950067,
-    "seen": 1789419719.6347954,
-    "ast_hash": "7bd7227d8d27d2d152fe6e3093b5e99a",
+    "mtime": 1789446831.304426,
+    "seen": 1789452023.1285417,
+    "ast_hash": "1eca2cf89ff76eae8fe9d426f6600ae8",
     "semantic_hash": ""
   },
   "api/test-push.js": {
@@ -258,9 +258,9 @@
     "semantic_hash": "be35d084b3b8daa1ac0146ea7802e3c6"
   },
   "src/components/BlutspiegelCarousel.tsx": {
-    "mtime": 1789417919.5943809,
-    "seen": 1789419719.6348975,
-    "ast_hash": "77661e39cc1be6444be737ccc58eabd0",
+    "mtime": 1789446831.3042495,
+    "seen": 1789452023.1285872,
+    "ast_hash": "372ed474a273214340bd18c77e7867fb",
     "semantic_hash": ""
   },
   "src/components/CarouselChrome.tsx": {
@@ -708,87 +708,87 @@
     "semantic_hash": "1f112d35842ac0f4f4f8ff9477e0a174"
   },
   "src/i18n/locales/ar.json": {
-    "mtime": 1789444406.7983503,
-    "seen": 1789445330.4262245,
-    "ast_hash": "99fa65d61a2beedb4fdf13339b1bd716",
+    "mtime": 1789446785.8477197,
+    "seen": 1789452023.1289315,
+    "ast_hash": "4c79a5790b24297e08531cfb56e0c44d",
     "semantic_hash": ""
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1789444406.7943504,
-    "seen": 1789445330.4262254,
-    "ast_hash": "4aa1f9c2d9628d50f9bc94e65a4e2625",
+    "mtime": 1789446785.8437197,
+    "seen": 1789452023.1289322,
+    "ast_hash": "5380fa1712a7adf0e185a17b3a69f39d",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1789444406.7983503,
-    "seen": 1789445330.4262261,
-    "ast_hash": "e9efb88d59da45f2c2932770c629d47a",
+    "mtime": 1789446785.8437197,
+    "seen": 1789452023.1289332,
+    "ast_hash": "8b74f39ec0644745a99951f6ec873690",
     "semantic_hash": ""
   },
   "src/i18n/locales/es.json": {
-    "mtime": 1789444406.7983503,
-    "seen": 1789445330.426227,
-    "ast_hash": "fc81e2517ea8a8e18f01569cf35b8c8b",
+    "mtime": 1789446785.8477197,
+    "seen": 1789452023.128934,
+    "ast_hash": "76f67891cd9fa88a64e9333e18970ae3",
     "semantic_hash": ""
   },
   "src/i18n/locales/fr.json": {
-    "mtime": 1789444406.7983503,
-    "seen": 1789445330.426228,
-    "ast_hash": "9b800770c4b3e79764f17857c508ad37",
+    "mtime": 1789446785.8477197,
+    "seen": 1789452023.1289346,
+    "ast_hash": "e886626a1aacecbe9a9a60e5cec20ca6",
     "semantic_hash": ""
   },
   "src/i18n/locales/hi.json": {
-    "mtime": 1789444406.8023505,
-    "seen": 1789445330.4262295,
-    "ast_hash": "8d3badaf1e4e5d84b3f20cff02af1242",
+    "mtime": 1789446785.8477197,
+    "seen": 1789452023.128935,
+    "ast_hash": "c22fa3db8d424d2881fd6db1ce6fdfb4",
     "semantic_hash": ""
   },
   "src/i18n/locales/id.json": {
-    "mtime": 1789444406.8023505,
-    "seen": 1789445330.4262307,
-    "ast_hash": "9df1c2f1755b6caea5e064fb2368066f",
+    "mtime": 1789446785.8477197,
+    "seen": 1789452023.128936,
+    "ast_hash": "734217dc1ebc58ef274e101aea95490f",
     "semantic_hash": ""
   },
   "src/i18n/locales/it.json": {
-    "mtime": 1789444406.8023505,
-    "seen": 1789445330.4262323,
-    "ast_hash": "b8f75665dd1927c5ad7c5c5ed0552ff9",
+    "mtime": 1789446785.8477197,
+    "seen": 1789452023.1289368,
+    "ast_hash": "163e6acfc442fe7f1b1605880cfdbd30",
     "semantic_hash": ""
   },
   "src/i18n/locales/ja.json": {
-    "mtime": 1789444406.8023505,
-    "seen": 1789445330.426233,
-    "ast_hash": "e844db509337c780fb323b9e940879c0",
+    "mtime": 1789446785.8517199,
+    "seen": 1789452023.1289375,
+    "ast_hash": "c58c112949e7d0c4e9f4b4bca064abb7",
     "semantic_hash": ""
   },
   "src/i18n/locales/ko.json": {
-    "mtime": 1789444406.8023505,
-    "seen": 1789445330.426234,
-    "ast_hash": "dca73b990c7cea979f29ddffd2c2b466",
+    "mtime": 1789446785.8517199,
+    "seen": 1789452023.1289382,
+    "ast_hash": "f7c02b9824bc28da543a1e95cd8064e8",
     "semantic_hash": ""
   },
   "src/i18n/locales/pt.json": {
-    "mtime": 1789444406.8063505,
-    "seen": 1789445330.4262352,
-    "ast_hash": "5b27fadffd910ef67e82e26f008f722a",
+    "mtime": 1789446785.8517199,
+    "seen": 1789452023.128939,
+    "ast_hash": "8ae20d1c1f692daeb1b3f5c820f0ee2a",
     "semantic_hash": ""
   },
   "src/i18n/locales/ru.json": {
-    "mtime": 1789444406.8063505,
-    "seen": 1789445330.426236,
-    "ast_hash": "5a1817edd05421e4d5278d48377c1b72",
+    "mtime": 1789446785.8517199,
+    "seen": 1789452023.1289396,
+    "ast_hash": "0433792726bbe2cf699804a209ebadfe",
     "semantic_hash": ""
   },
   "src/i18n/locales/tr.json": {
-    "mtime": 1789444406.8063505,
-    "seen": 1789445330.4262369,
-    "ast_hash": "65f49850c62a16717d4e9c35dec3eaea",
+    "mtime": 1789446785.8517199,
+    "seen": 1789452023.1289406,
+    "ast_hash": "18e8afa39e95ba92c5245e99bfdec7d6",
     "semantic_hash": ""
   },
   "src/i18n/locales/zh.json": {
-    "mtime": 1789444406.8063505,
-    "seen": 1789445330.426238,
-    "ast_hash": "0ccc6c3d001699a0d094858ccbc156e5",
+    "mtime": 1789446785.8557198,
+    "seen": 1789452023.1289413,
+    "ast_hash": "67117e061c3eff8fd435c1d97230f4d5",
     "semantic_hash": ""
   },
   "src/lib/dailyLogs.ts": {
@@ -936,9 +936,9 @@
     "semantic_hash": ""
   },
   "src/lib/intakeSchedule.ts": {
-    "mtime": 1789417387.5688617,
-    "seen": 1789419719.6356044,
-    "ast_hash": "724b16a74ab66cf9699706836bcfb29a",
+    "mtime": 1789446498.5100102,
+    "seen": 1789452023.1289625,
+    "ast_hash": "9c79d5fd37e18b7eaca8063b45b0e821",
     "semantic_hash": ""
   },
   "src/lib/openInjectionIntakeFilters.test.ts": {
@@ -1050,9 +1050,9 @@
     "semantic_hash": "99d553d6cdea3bea14150eaaefd553ac"
   },
   "src/pages/BlutspiegelSimulation.tsx": {
-    "mtime": 1789417919.5928924,
-    "seen": 1789419719.6356406,
-    "ast_hash": "a7e592c0f134b9ce9ccaa4b08d6a57dd",
+    "mtime": 1789446831.3035262,
+    "seen": 1789452023.1289814,
+    "ast_hash": "36d3edf2d4369c2ddaed4abb0e718a62",
     "semantic_hash": ""
   },
   "src/pages/Blutwerte.tsx": {
@@ -1068,9 +1068,9 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
-    "mtime": 1789417919.5955884,
-    "seen": 1789419719.635645,
-    "ast_hash": "60339010e6aa72d3c82b797183af4512",
+    "mtime": 1789446870.8159575,
+    "seen": 1789452023.1289835,
+    "ast_hash": "32f40011a45f9dd4ec96e69976ac93eb",
     "semantic_hash": ""
   },
   "src/pages/FAQ.tsx": {
@@ -1092,9 +1092,9 @@
     "semantic_hash": "47c2e97adaf16ae0ccfdda888c58e618"
   },
   "src/pages/Home.tsx": {
-    "mtime": 1789417919.5938,
-    "seen": 1789419719.635651,
-    "ast_hash": "a2cf6f639c979e351f6faa556798fc63",
+    "mtime": 1789446870.8163633,
+    "seen": 1789452023.1289864,
+    "ast_hash": "844aa41e755f61ba2f9243959a001276",
     "semantic_hash": ""
   },
   "src/pages/InjektionsTracker.test.ts": {
@@ -1254,9 +1254,9 @@
     "semantic_hash": ""
   },
   "src/services/liveBlutspiegelChart.ts": {
-    "mtime": 1789417919.5922878,
-    "seen": 1789419719.6356952,
-    "ast_hash": "5a7bf53075573df0b67092b46685f3cd",
+    "mtime": 1789446831.3031528,
+    "seen": 1789452023.129012,
+    "ast_hash": "5304bd09a95e6c1545bacc85ac1fddea",
     "semantic_hash": ""
   },
   "src/services/peptideLibrary.ts": {
@@ -2784,9 +2784,9 @@
     "semantic_hash": "4cf9d99d02ad6700e9211cadb2142110"
   },
   "scripts/my-stack-i18n-source.mjs": {
-    "mtime": 1789444406.187541,
-    "seen": 1789445330.425753,
-    "ast_hash": "e3632839f88d310f51f7e1a529a63c74",
+    "mtime": 1789446785.7079675,
+    "seen": 1789452023.1285725,
+    "ast_hash": "aac6fecddf771e3d00bfad5f61f56d45",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
@@ -2796,9 +2796,9 @@
     "semantic_hash": "93a8afd40bf6413cda822fe34e600177"
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1789417825.8160312,
-    "seen": 1789419719.63519,
-    "ast_hash": "1fd0219b4fe6dd0a59f96e01e13b9284",
+    "mtime": 1789446545.3797054,
+    "seen": 1789452023.1287417,
+    "ast_hash": "36d5aff5b33372afb212e3a48af19406",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
@@ -2826,9 +2826,9 @@
     "semantic_hash": "2749a82e615b1d1fa75debee0fd34607"
   },
   "src/features/my-stack/components/StackItemWizard.interaction.test.tsx": {
-    "mtime": 1789445005.4769683,
-    "seen": 1789445330.4259999,
-    "ast_hash": "a05fecf643d56b06630d2d9547ad18f7",
+    "mtime": 1789446870.837998,
+    "seen": 1789452023.1287599,
+    "ast_hash": "5a5b48a511dd764b59dc8390a8d761d8",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.test.ts": {
@@ -2946,9 +2946,9 @@
     "semantic_hash": "7dc0fb8183ed73ec4e50e26e852fa29b"
   },
   "src/features/my-stack/lib/i18n.test.ts": {
-    "mtime": 1789444406.1955895,
-    "seen": 1789445330.4261174,
-    "ast_hash": "11dbe5d56330a74a6ea535fe48d94d07",
+    "mtime": 1789446785.716239,
+    "seen": 1789452023.128836,
+    "ast_hash": "81c2355e0e3413283750060b90fb8fef",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/schemaMigration.test.ts": {
@@ -2964,39 +2964,39 @@
     "semantic_hash": "747da0a5b7fd5fea036fab213d24bdff"
   },
   "src/features/my-stack/lib/validation.test.ts": {
-    "mtime": 1789445092.6097023,
-    "seen": 1789445330.426146,
-    "ast_hash": "1c3861723cf5c5cd98a982c72a411d78",
+    "mtime": 1789447029.412559,
+    "seen": 1789452023.1288562,
+    "ast_hash": "e247ae1e54f23ccd62858066a77b573f",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/validation.ts": {
-    "mtime": 1789444144.533555,
-    "seen": 1789445330.426147,
-    "ast_hash": "2dfae527ae62acad2f37cbb55aea50c4",
+    "mtime": 1789446646.3717804,
+    "seen": 1789452023.128857,
+    "ast_hash": "705a5ce5a5c93a512ed404480800a0e9",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/wizardState.test.ts": {
-    "mtime": 1789445083.5297787,
-    "seen": 1789445330.426148,
-    "ast_hash": "b1ad26727c5fd45516815f68f8ee12c7",
+    "mtime": 1789446870.8387337,
+    "seen": 1789452023.1288576,
+    "ast_hash": "27fdb28ccdcad69be1bc311531cd235b",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/wizardState.ts": {
-    "mtime": 1789444939.173844,
-    "seen": 1789445330.426149,
-    "ast_hash": "443e4b51a6277036229df470a3d93299",
+    "mtime": 1789446574.2758608,
+    "seen": 1789452023.128858,
+    "ast_hash": "997b4d4217e361e53b1c63e9e278ba8f",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/stackItems.test.ts": {
-    "mtime": 1789445179.6373293,
-    "seen": 1789445330.4261522,
-    "ast_hash": "02edbcb6e74fd5d03d4c5e8126deec71",
+    "mtime": 1789447029.4127507,
+    "seen": 1789452023.1288607,
+    "ast_hash": "537b3656b394b9f2df6d7d7c13c55e26",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/stackItems.ts": {
-    "mtime": 1789418309.2721672,
-    "seen": 1789419719.6354332,
-    "ast_hash": "736eeca76e0c3ed2e697ed5cea5a9cfd",
+    "mtime": 1789446646.3848734,
+    "seen": 1789452023.1288614,
+    "ast_hash": "511ef971ef5aa12045e28d56f9ef1de2",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/substanceCatalog.test.ts": {
@@ -3012,15 +3012,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/types.ts": {
-    "mtime": 1789417264.5165555,
-    "seen": 1789419719.6354623,
-    "ast_hash": "b1d8fc639eca0a4d0fc141db5dd7c347",
+    "mtime": 1789446498.4876363,
+    "seen": 1789452023.1288762,
+    "ast_hash": "d1110555bdd6170c2d5c06f85abd8f13",
     "semantic_hash": ""
   },
   "supabase-my-stack-foundation.sql": {
-    "mtime": 1789419172.4999712,
-    "seen": 1789419719.635748,
-    "ast_hash": "4b53684fc735c883a9564f5fb5573a3d",
+    "mtime": 1789446831.2766013,
+    "seen": 1789452023.1290321,
+    "ast_hash": "3338a9c2d8cf0ff8c2434bb4ee56b9a6",
     "semantic_hash": ""
   },
   "supabase-my-stack-rollback.sql": {
@@ -3078,9 +3078,9 @@
     "semantic_hash": "63a8011686ab717b60d7bc387d28a314"
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
-    "mtime": 1789418972.7363503,
-    "seen": 1789419719.635192,
-    "ast_hash": "fb2c83f1504f10a8af635cfc41af2973",
+    "mtime": 1789446870.837031,
+    "seen": 1789452023.1287427,
+    "ast_hash": "4b5b9e5f444922bcf9a3c3cf291effc6",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DoseUnitControl.test.tsx": {
@@ -3096,15 +3096,15 @@
     "semantic_hash": "ef625d1680913acdb91b0e04e254ec64"
   },
   "src/features/my-stack/components/IntakePlanEditor.test.tsx": {
-    "mtime": 1789445163.4647207,
-    "seen": 1789445330.4259932,
-    "ast_hash": "5072e76f60cb6f9409c04a5ef805934b",
+    "mtime": 1789447045.9202554,
+    "seen": 1789452023.128755,
+    "ast_hash": "e38a1e8a9408e3cb61a1f9edf6972ac7",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/IntakePlanEditor.tsx": {
-    "mtime": 1789444939.186756,
-    "seen": 1789445330.4259944,
-    "ast_hash": "3afc2f7b9c40b86e5ed1e095df9e15f1",
+    "mtime": 1789446785.6846733,
+    "seen": 1789452023.128756,
+    "ast_hash": "adc847420e54f183431b4a2961f62810",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/ProductInventorySection.test.tsx": {
@@ -3138,9 +3138,9 @@
     "semantic_hash": "c938a827c3f9e5ecc7208acac2de82da"
   },
   "src/features/my-stack/lib/dosePlan.ts": {
-    "mtime": 1789417919.5959508,
-    "seen": 1789419719.635377,
-    "ast_hash": "fe1038321299264cd4b320404a7e4c8b",
+    "mtime": 1789446831.304582,
+    "seen": 1789452023.128833,
+    "ast_hash": "ff77b1c83d3a5c3e9d8bfb4211f7518f",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/inventoryMath.test.ts": {
@@ -3246,9 +3246,9 @@
     "semantic_hash": "f99817326113d9a27f477dbbe2ec057f"
   },
   "src/i18n/data/my-stack-i18n.json": {
-    "mtime": 1789444406.1950538,
-    "seen": 1789445330.4261825,
-    "ast_hash": "279d2afff01ddfa4498998c205639d44",
+    "mtime": 1789446785.7117198,
+    "seen": 1789452023.1289022,
+    "ast_hash": "36514882f263d8cb57fc326cfa1b77f7",
     "semantic_hash": ""
   },
   "src/pages/BlutspiegelSimulation.readiness.test.tsx": {
@@ -3282,9 +3282,9 @@
     "semantic_hash": "e611982730abfed2ae6e65c198187f47"
   },
   "supabase-my-stack-tracking-depth.sql": {
-    "mtime": 1789418007.1038089,
-    "seen": 1789419719.6357582,
-    "ast_hash": "69109ce7977ec26eb62b03cd74d01a18",
+    "mtime": 1789446831.274931,
+    "seen": 1789452023.1290355,
+    "ast_hash": "4104d6099d7c335fccf6ae04d78906fd",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-25-my-stack-tracking-depth.md": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789445184.0863967,
-    "seen": 1789445330.4263585,
+    "mtime": 1789451868.1680381,
+    "seen": 1789452023.129042,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4350,15 +4350,15 @@
     "semantic_hash": ""
   },
   "src/lib/intakeRhythm.schedule.test.ts": {
-    "mtime": 1789419526.031784,
-    "seen": 1789419719.6356006,
-    "ast_hash": "d4d5eda0148d35cb4ed490e4b5711eba",
+    "mtime": 1789446991.2899919,
+    "seen": 1789452023.128961,
+    "ast_hash": "5ba3d8e6b03ecc2258680abba8b16242",
     "semantic_hash": ""
   },
   "supabase-intake-rhythm.sql": {
-    "mtime": 1789417966.8932605,
-    "seen": 1789419719.6357343,
-    "ast_hash": "73dd15f589d0b65387f6b13ddd7ba474",
+    "mtime": 1789446831.2736282,
+    "seen": 1789452023.129026,
+    "ast_hash": "0e83ce84f6163c27155c67486b448c23",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-14-einnahmerhythmus-design.md": {
@@ -4371,6 +4371,12 @@
     "mtime": 1789445313.7179172,
     "seen": 1789445330.426522,
     "ast_hash": "999d6f742b6dc9fe9bf2a9ee085d40fa",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-15-einnahmezeitpunkte-je-wochentag-design.md": {
+    "mtime": 1789451985.4465306,
+    "seen": 1789452023.1291497,
+    "ast_hash": "4486fc9d6d9489bc2fc11b5c68febf3a",
     "semantic_hash": ""
   }
 }
