@@ -160,3 +160,71 @@ Nichts davon läuft, bevor das My-Stack-Schema in der Produktivdatenbank ist:
 `save_stack_item_with_plan` und `stack_items.tracking_level` fehlen dort. Das ist
 seit Wochen der eigentliche Blocker — der Wizard kann aktuell überhaupt nicht
 speichern, Titration hin oder her.
+
+---
+
+## Nachtrag 16.09.: Die Voraussetzung ist erfüllt
+
+`supabase-my-stack-tracking-depth.sql` liegt in Produktion (`peptid-tracker`),
+in fünf Teilen angewendet.
+
+**Der Trockenlauf hat zwei Dinge gefunden**, bevor irgendetwas die echte
+Datenbank berührte:
+
+1. `stack_item_ingredients_name_check` — die Migration bricht ab, wenn eine
+   Zutat weder Katalogbezug noch eigenen Namen trägt. Meine erste Fixture hatte
+   genau solche Zeilen. **Gegen Produktion geprüft: 0 von 15 verletzen die
+   Regel**, die Migration war dort also gefahrlos.
+2. `role "authenticated" does not exist` — die Supabase-Rollen fehlen einem
+   nackten Postgres. Umgebungssache; lokal nachgestellt.
+
+**Zählung, vorher und nachher gleich:**
+
+| | vorher | nachher |
+|---|---|---|
+| `stack_items` | 15 | 15 |
+| `stack_item_ingredients` | 15 | 15 |
+| `cycles` | 148 | 148 |
+| `dose_logs` | 9145 | 9145 |
+| `substance_catalog` | 335 | 335 |
+| `pk_profiles` | 93 | 93 |
+| `dose_escalations` | 9 | 9 |
+
+Dazu: `tracking_level` überall `complete` (der Vorgabewert),
+`pk_profile_method` in genau den 3 Einträgen gefüllt, die ein PK-Profil haben,
+die drei neuen Tabellen angelegt und leer, sechs Funktionen vorhanden.
+
+**Byte-Abgleich gegen den Trockenlauf**, damit die stückweise Übertragung
+nachweislich nichts verändert hat:
+
+| | Trockenlauf | Produktion |
+|---|---|---|
+| `md5(prosrc)` von `save_stack_item_with_plan` | `fba6c777…` | `fba6c777…` ✓ |
+| Spalten der sieben Tabellen | `dc99c152…` | `dc99c152…` ✓ |
+| Check-Constraints | `7943af5b…` | `7985895f…` ✗ |
+
+Die Check-Liste weicht ab, und zwar erklärbar: **neun Prüfungen gibt es nur in
+Produktion** (`stack_items_category_check`, `…_dosage_form_check`,
+`cycles_interval_unit_check` und weitere aus früheren Migrationen). Mein
+Nachbau entstand aus `information_schema.columns`, und das trägt keine
+Check-Constraints. Umgekehrt fehlt nichts — alles, was diese Migration anlegt,
+ist in beiden. Für den nächsten Trockenlauf gehören die Constraints in den
+Nachbau.
+
+**Der RPC wurde im Trockenlauf durchgespielt**, mit genau dem Fall aus der
+Fragestellung:
+
+```
+nach dem Anlegen:  zyklen=1  historie=0
+nach der Stufe:    historie=2  stichtage=2026-09-01 | 2026-10-01
+                               mengen=1000,500 | 1500,500
+nach dem Ersetzen: historie=2  mengen=1000,500 | 1750,500
+```
+
+Morgens gesteigert, abends gleich — als zweites Segment ab dem 01.10. Und ein
+zweiter Speichervorgang auf dasselbe Stichdatum **ersetzt** die Stufe, statt sie
+zu verdoppeln.
+
+Damit sind von den vier offenen Punkten oben nur noch die drei aus „Was wirklich
+fehlt" übrig: Stichdatum in der Zukunft, die Liste der Stufen, das Entfernen
+einer vorgemerkten Stufe.
