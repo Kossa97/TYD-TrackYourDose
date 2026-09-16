@@ -1172,5 +1172,12 @@
   "my_stack_plan_slot_fewer": "1回減らす",
   "my_stack_plan_slot_more": "1回増やす",
   "my_stack_plan_section_how": "方法",
-  "my_stack_plan_section_period": "期間"
+  "my_stack_plan_section_period": "期間",
+  "my_stack_plan_steps": "計画の段階",
+  "my_stack_plan_step_from": "{{date}}から",
+  "my_stack_plan_step_current": "現在適用",
+  "my_stack_plan_step_remove": "{{date}}からの段階を取り消す",
+  "my_stack_plan_step_removed": "段階を取り消しました。",
+  "my_stack_plan_step_remove_failed": "段階を取り消せませんでした。",
+  "my_stack_plan_start_date_hint": "この日から適用されます。今日のままなら現在の計画の修正、将来の日付なら新しい段階になります。"
 }

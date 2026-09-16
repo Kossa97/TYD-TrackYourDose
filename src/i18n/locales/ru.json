@@ -1174,5 +1174,12 @@
   "my_stack_plan_slot_fewer": "На один приём меньше",
   "my_stack_plan_slot_more": "На один приём больше",
   "my_stack_plan_section_how": "Как",
-  "my_stack_plan_section_period": "Период"
+  "my_stack_plan_section_period": "Период",
+  "my_stack_plan_steps": "Этапы плана",
+  "my_stack_plan_step_from": "с {{date}}",
+  "my_stack_plan_step_current": "действует сейчас",
+  "my_stack_plan_step_remove": "Отменить этап с {{date}}",
+  "my_stack_plan_step_removed": "Этап отменён.",
+  "my_stack_plan_step_remove_failed": "Не удалось отменить этап.",
+  "my_stack_plan_start_date_hint": "Действует с этой даты. Оставьте сегодня, чтобы поправить текущий план; будущая дата создаёт этап."
 }

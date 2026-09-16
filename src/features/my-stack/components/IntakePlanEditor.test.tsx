@@ -259,6 +259,18 @@ describe('IntakePlanEditor', () => {
     expect(startDate.value).toBe('2026-08-16')
   })
 
+  it('sagt am Startdatum, dass es das Stichdatum der Änderung ist', () => {
+    // Das Feld IST die Titration: ein Datum in der Zukunft legt eine Stufe an,
+    // statt den laufenden Plan zu überschreiben. Ohne den Satz stand dort nur
+    // „Start / gültig ab", und niemand kam darauf.
+    render(<PlanHarness trackingLevel="intake_only" dosageForm="tablet" />)
+
+    const hinweis = document.querySelector('[data-plan-start-hint]')
+    expect(hinweis?.textContent).toContain('Gilt ab diesem Datum')
+    expect((screen.getByLabelText('Start / gültig ab') as HTMLInputElement)
+      .getAttribute('aria-describedby')).toBe('stack-plan-start-date-hint')
+  })
+
   it('fragt nach einem Ende — optional, und nie vor dem Start', () => {
     // Das Feld fehlte ganz: der Entwurf trug `endDate`, das Formular fragte
     // nie danach. Eine Antibiotikakur lief damit weiter, bis jemand sie von

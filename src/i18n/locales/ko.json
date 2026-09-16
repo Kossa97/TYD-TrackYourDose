@@ -1171,5 +1171,12 @@
   "my_stack_plan_slot_fewer": "한 번 줄이기",
   "my_stack_plan_slot_more": "한 번 늘리기",
   "my_stack_plan_section_how": "방법",
-  "my_stack_plan_section_period": "기간"
+  "my_stack_plan_section_period": "기간",
+  "my_stack_plan_steps": "계획 단계",
+  "my_stack_plan_step_from": "{{date}}부터",
+  "my_stack_plan_step_current": "현재 적용",
+  "my_stack_plan_step_remove": "{{date}}부터의 단계 철회",
+  "my_stack_plan_step_removed": "단계를 철회했습니다.",
+  "my_stack_plan_step_remove_failed": "단계를 철회할 수 없었습니다.",
+  "my_stack_plan_start_date_hint": "이 날짜부터 적용됩니다. 오늘로 두면 현재 계획을 수정하고, 미래 날짜를 고르면 새 단계가 됩니다."
 }

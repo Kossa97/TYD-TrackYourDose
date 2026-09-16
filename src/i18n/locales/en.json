@@ -1320,5 +1320,12 @@
   "my_stack_plan_slot_fewer": "One intake fewer",
   "my_stack_plan_slot_more": "One intake more",
   "my_stack_plan_section_how": "How",
-  "my_stack_plan_section_period": "Period"
+  "my_stack_plan_section_period": "Period",
+  "my_stack_plan_steps": "Plan steps",
+  "my_stack_plan_step_from": "from {{date}}",
+  "my_stack_plan_step_current": "applies now",
+  "my_stack_plan_step_remove": "Withdraw step from {{date}}",
+  "my_stack_plan_step_removed": "Step withdrawn.",
+  "my_stack_plan_step_remove_failed": "The step could not be withdrawn.",
+  "my_stack_plan_start_date_hint": "Applies from this date. Leave it on today to correct the current plan; pick a future date to plan a step — the current plan then stays valid until then."
 }

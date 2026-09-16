@@ -1172,5 +1172,12 @@
   "my_stack_plan_slot_fewer": "Une prise de moins",
   "my_stack_plan_slot_more": "Une prise de plus",
   "my_stack_plan_section_how": "Comment",
-  "my_stack_plan_section_period": "Période"
+  "my_stack_plan_section_period": "Période",
+  "my_stack_plan_steps": "Paliers du plan",
+  "my_stack_plan_step_from": "à partir du {{date}}",
+  "my_stack_plan_step_current": "en vigueur",
+  "my_stack_plan_step_remove": "Retirer le palier du {{date}}",
+  "my_stack_plan_step_removed": "Palier retiré.",
+  "my_stack_plan_step_remove_failed": "Le palier n’a pas pu être retiré.",
+  "my_stack_plan_start_date_hint": "S’applique à partir de cette date. Laissez aujourd’hui pour corriger le plan en cours ; choisissez une date future pour planifier un palier — le plan actuel reste valable jusque-là."
 }

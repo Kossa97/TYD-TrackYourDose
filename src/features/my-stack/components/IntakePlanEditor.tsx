@@ -771,13 +771,23 @@ export function IntakePlanEditor({
           onChange={event => onChange({ startDate: event.target.value })}
           data-field="plan.startDate"
           aria-invalid={Boolean(errors.startDate) || undefined}
-          aria-describedby={errors.startDate ? 'stack-plan-start-date-error' : undefined}
+          aria-describedby={errors.startDate ? 'stack-plan-start-date-error' : 'stack-plan-start-date-hint'}
           required
           className="input min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
         />
-        {errors.startDate && (
+        {errors.startDate ? (
           <p id="stack-plan-start-date-error" role="alert" className="mt-2 text-sm text-rose-300">
             {t('my_stack_plan_start_date_required', { defaultValue: 'Bitte wähle ein Startdatum.' })}
+          </p>
+        ) : (
+          /* Das Feld ist die Titration: es sagt, AB WANN dieser Plan gilt. Ohne
+             diesen Satz stand nur „Start / gültig ab" da, und niemand kam
+             darauf, dass ein Datum in der Zukunft eine Stufe anlegt statt den
+             laufenden Plan zu überschreiben. */
+          <p id="stack-plan-start-date-hint" data-plan-start-hint className="mt-2 text-xs leading-relaxed text-slate-400">
+            {t('my_stack_plan_start_date_hint', {
+              defaultValue: 'Gilt ab diesem Datum. Heute stehen lassen korrigiert den laufenden Plan; ein Datum in der Zukunft legt eine Stufe an — bis dahin gilt der bisherige Plan weiter.',
+            })}
           </p>
         )}
       </div>

@@ -228,3 +228,57 @@ zu verdoppeln.
 Damit sind von den vier offenen Punkten oben nur noch die drei aus „Was wirklich
 fehlt" übrig: Stichdatum in der Zukunft, die Liste der Stufen, das Entfernen
 einer vorgemerkten Stufe.
+
+---
+
+## Nachtrag 16.09., zweiter Teil: gebaut
+
+Und noch eine Korrektur an dieser Spec. Unter „Was wirklich fehlt" stand als
+Punkt 1, ein Stichdatum in der Zukunft lasse sich **nicht** sagen. Das stimmt
+nicht: `initialWizardState` setzt das Feld beim Öffnen auf heute, aber es
+bleibt danach frei editierbar, die Prüfung kennt keine Obergrenze, und der RPC
+weist nur ein Datum **vor** dem Zyklusstart ab. Es war eine Vorgabe, keine
+Sperre — die Lücke war Auffindbarkeit, nicht Fähigkeit.
+
+Gebaut wurde darum:
+
+**Ein Hinweis am Datumsfeld.** „Gilt ab diesem Datum. Heute stehen lassen
+korrigiert den laufenden Plan; ein Datum in der Zukunft legt eine Stufe an —
+bis dahin gilt der bisherige Plan weiter." Damit ist ein Eingabefeld, das die
+ganze Titration trägt, auch als solches lesbar.
+
+**Die Liste der Stufen** (`planSegments.ts`, `data-plan-steps`). Sie erscheint
+nur, wo es mehr als eine Stufe gibt — bei einem nie geänderten Plan wäre sie
+eine Wiederholung. „Gilt jetzt" folgt derselben Regel wie `scheduleForDay`: die
+jüngste Stufe, deren Stichdatum nicht in der Zukunft liegt. Ein Plan ohne
+Historie ist genau eine Stufe: er selbst, ab seinem Start.
+
+**Das Zurücknehmen** (`supabase-plan-segment-remove.sql`,
+`remove_plan_segment`). Nur was noch nicht angefangen hat; eine laufende oder
+vergangene Stufe ist eingetreten, der Kalender hat danach geplant. Die Regel
+steht im RPC, nicht in der Oberfläche — dort ließe sie sich umgehen.
+
+Das Feine daran: die flachen Spalten von `cycles` tragen immer den **jüngsten**
+Plan, weil der nächste Speichervorgang sie als „bisher" vergleicht. Fällt die
+letzte Stufe weg, müssen sie auf die dann letzte zurück, sonst bliebe die
+zurückgenommene Menge dort stehen. Der Trockenlauf zeigt es:
+
+```
+drei Stufen: 250,500 | 500,500 | 750,500 · flach=750,500
+Mitte weg:   250,500 | 750,500          · flach=750,500
+letzte weg:  historie=null               · flach=250,500
+```
+
+Und die vier Zusicherungen greifen: eine laufende Stufe, heute, ein unbekanntes
+Stichdatum und ein fremder Zyklus werden alle abgewiesen.
+
+`remove_plan_segment` liegt in Produktion, `md5(prosrc)` stimmt mit dem
+Trockenlauf überein (`943f9203…`). Bestand unverändert: 148 Zyklen, 0 mit
+Historie, 15 Einträge, 9145 Protokollzeilen.
+
+**Offen geblieben**, bewusst: mehrere Stufen in einer Tabelle auf einmal
+anzulegen. Jede Stufe ist ein eigener Speichervorgang — umständlicher, aber es
+benutzt genau den Weg, den der RPC ohnehin geht, und braucht keine zweite
+Schreiblogik. Und `dose_escalations` bleibt daneben bestehen: die bestehende
+Zeitleiste in der Detailansicht zeigt weiter die neun Produktivzeilen, die
+Planstufen stehen als eigener Block darunter.

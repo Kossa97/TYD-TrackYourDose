@@ -1176,5 +1176,12 @@
   "my_stack_plan_slot_fewer": "جرعة أقل",
   "my_stack_plan_slot_more": "جرعة أكثر",
   "my_stack_plan_section_how": "كيف",
-  "my_stack_plan_section_period": "الفترة"
+  "my_stack_plan_section_period": "الفترة",
+  "my_stack_plan_steps": "مراحل الخطة",
+  "my_stack_plan_step_from": "من {{date}}",
+  "my_stack_plan_step_current": "سارٍ الآن",
+  "my_stack_plan_step_remove": "سحب المرحلة من {{date}}",
+  "my_stack_plan_step_removed": "تم سحب المرحلة.",
+  "my_stack_plan_step_remove_failed": "تعذر سحب المرحلة.",
+  "my_stack_plan_start_date_hint": "يسري من هذا التاريخ. اتركه اليوم لتصحيح الخطة الحالية، أو اختر تاريخًا مستقبليًا لإضافة مرحلة."
 }

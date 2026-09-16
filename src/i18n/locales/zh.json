@@ -1171,5 +1171,12 @@
   "my_stack_plan_slot_fewer": "减少一次",
   "my_stack_plan_slot_more": "增加一次",
   "my_stack_plan_section_how": "方式",
-  "my_stack_plan_section_period": "时段范围"
+  "my_stack_plan_section_period": "时段范围",
+  "my_stack_plan_steps": "计划阶段",
+  "my_stack_plan_step_from": "自 {{date}} 起",
+  "my_stack_plan_step_current": "当前生效",
+  "my_stack_plan_step_remove": "撤销自 {{date}} 起的阶段",
+  "my_stack_plan_step_removed": "阶段已撤销。",
+  "my_stack_plan_step_remove_failed": "无法撤销该阶段。",
+  "my_stack_plan_start_date_hint": "自该日期起生效。保持今天则修正当前计划；选择未来日期则新增一个阶段。"
 }

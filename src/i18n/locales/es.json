@@ -1172,5 +1172,12 @@
   "my_stack_plan_slot_fewer": "Una toma menos",
   "my_stack_plan_slot_more": "Una toma más",
   "my_stack_plan_section_how": "Cómo",
-  "my_stack_plan_section_period": "Periodo"
+  "my_stack_plan_section_period": "Periodo",
+  "my_stack_plan_steps": "Fases del plan",
+  "my_stack_plan_step_from": "desde {{date}}",
+  "my_stack_plan_step_current": "vigente ahora",
+  "my_stack_plan_step_remove": "Retirar la fase desde {{date}}",
+  "my_stack_plan_step_removed": "Fase retirada.",
+  "my_stack_plan_step_remove_failed": "No se pudo retirar la fase.",
+  "my_stack_plan_start_date_hint": "Rige desde esta fecha. Déjala en hoy para corregir el plan actual; elige una fecha futura para planificar una fase — hasta entonces sigue vigente el plan anterior."
 }

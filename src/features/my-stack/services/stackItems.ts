@@ -152,6 +152,18 @@ export interface StackItemSetupRpcClient {
   ): PromiseLike<{ data: SavedStackItemRow | null; error: ServiceError | null }>
 }
 
+export interface RemovePlanSegmentRpcParams {
+  p_cycle_id: string
+  p_effective_from: string
+}
+
+export interface PlanSegmentRpcClient {
+  rpc(
+    name: 'remove_plan_segment',
+    params: RemovePlanSegmentRpcParams,
+  ): PromiseLike<{ data: unknown; error: ServiceError | null }>
+}
+
 export interface StackItemQueryClient {
   from(table: 'stack_items'): {
     select(columns: string): {
@@ -419,6 +431,26 @@ export async function saveStackItemSetup(
   throwIfError(error)
   if (!data) throw new Error('save_stack_item_with_plan returned no data')
   return data
+}
+
+/**
+ * Eine vorgemerkte Planstufe zuruecknehmen.
+ *
+ * Nur was noch nicht angefangen hat: eine laufende oder vergangene Stufe ist
+ * eingetreten, der Kalender hat danach geplant, und bestaetigte Einnahmen
+ * haengen daran. Der RPC weist beides ab — hier steht dieselbe Regel nicht
+ * noch einmal, damit sie nicht auseinanderlaufen kann.
+ */
+export async function removePlanSegment(
+  client: PlanSegmentRpcClient,
+  cycleId: string,
+  effectiveFrom: string,
+): Promise<void> {
+  const { error } = await client.rpc('remove_plan_segment', {
+    p_cycle_id: cycleId,
+    p_effective_from: effectiveFrom,
+  })
+  throwIfError(error)
 }
 
 export async function archiveStackItem(

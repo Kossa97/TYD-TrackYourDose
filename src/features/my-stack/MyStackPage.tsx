@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 import {
   Plus, Minus, Trash2, Pencil, FlaskConical, Activity,
-  CalendarDays, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, List,
+  CalendarDays, CalendarRange, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, List,
   TrendingUp, TrendingDown, Search, Bell, Check, SlidersHorizontal,
   Package, FileUp, Droplets, X, FileText, ExternalLink,
   Archive, Info, RefreshCw, Sunrise, Sun, Moon, Clock, AlertTriangle,
@@ -24,12 +24,13 @@ import { StackItemWizard } from './components/StackItemWizard'
 import { StackStage } from './components/StackStage'
 import { StackItemDetails } from './components/StackItemDetails'
 import { StackArchive } from './components/StackArchive'
-import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, restoreStackItem, saveStackItemSetup, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
+import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, saveStackItemSetup, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
 import { INTAKE_FREQUENCIES } from './lib/intakeFrequency'
 import { rhythmFromStorage } from './lib/intakeRhythm'
+import { planSegments, stufenText } from './lib/planSegments'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
 import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
 import { backfillMessageKey, buildPermanentScheduleChange, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
@@ -1063,6 +1064,25 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     setCycleForPeptide(p); setEditingCycleId(null)
     setCForm(emptyCycleForm(p, t)); setShowCycleForm(true)
   }
+  /**
+   * Eine vorgemerkte Stufe zuruecknehmen.
+   *
+   * Geprueft wird im RPC, nicht hier: dass nur Kuenftiges geht, ist eine
+   * Regel ueber die Daten und gehoert dorthin, wo sie sich nicht umgehen
+   * laesst. Hier steht nur, was danach zu sehen ist.
+   */
+  const stufeZuruecknehmen = async (c: Cycle, effectiveFrom: string) => {
+    try {
+      await removePlanSegment(supabase, c.id, effectiveFrom)
+      await loadCycles()
+      toast.success(String(t('my_stack_plan_step_removed', { defaultValue: 'Stufe zurückgenommen.' })))
+    } catch {
+      toast.error(String(t('my_stack_plan_step_remove_failed', {
+        defaultValue: 'Die Stufe konnte nicht zurückgenommen werden.',
+      })))
+    }
+  }
+
   const openEditCycle = (p: Peptide, c: Cycle) => {
     const currentSegment = scheduleForDay(c, new Date())
     setCycleForPeptide(p); setEditingCycleId(c.id)
@@ -1505,6 +1525,68 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       ? `${segment.dose} ${segment.unit}`
       : '-'
   }
+  /**
+   * Was ab wann gilt.
+   *
+   * Nur wenn es mehr als eine Stufe gibt — bei einem Plan, der nie geaendert
+   * wurde, saehe die Liste aus wie eine Wiederholung dessen, was darueber
+   * schon steht.
+   */
+  const planStufenListe = (c: Cycle) => {
+    const stufen = planSegments(c, new Date())
+    if (stufen.length <= 1) return null
+    return (
+      <div data-plan-steps className="rounded-lg border border-sky-500/20 bg-sky-500/5 p-2">
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-sky-300">
+          <CalendarRange size={13} /> {t('my_stack_plan_steps', { defaultValue: 'Planstufen' })}
+        </p>
+        <div className="space-y-1.5">
+          {stufen.map(({ effectiveFrom, segment, status }) => (
+            <div
+              key={effectiveFrom}
+              data-plan-step={effectiveFrom}
+              data-plan-step-status={status}
+              className={`flex min-h-11 min-w-0 items-center gap-2 rounded-lg border px-3 py-2 text-xs ${status === 'current'
+                ? 'border-sky-400/50 bg-sky-400/15 text-sky-100'
+                : status === 'past'
+                  ? 'border-slate-800 bg-slate-950/70 text-slate-500'
+                  : 'border-slate-700 bg-slate-950/70 text-slate-300'
+              }`}
+            >
+              <span className="shrink-0 font-semibold">
+                {t('my_stack_plan_step_from', {
+                  defaultValue: 'ab {{date}}',
+                  date: format(parseISO(effectiveFrom), 'dd.MM.yyyy'),
+                })}
+              </span>
+              <span className="min-w-0 flex-1 truncate">{stufenText(segment)}</span>
+              {status === 'current' && (
+                <span className="shrink-0 rounded-md border border-sky-400/40 bg-sky-400/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-200">
+                  {t('my_stack_plan_step_current', { defaultValue: 'gilt jetzt' })}
+                </span>
+              )}
+              {/* Zuruecknehmen laesst sich nur, was noch nicht angefangen hat.
+                  Was laeuft, ist eingetreten: der Kalender hat danach geplant. */}
+              {status === 'future' && (
+                <button
+                  type="button"
+                  onClick={() => stufeZuruecknehmen(c, effectiveFrom)}
+                  aria-label={String(t('my_stack_plan_step_remove', {
+                    defaultValue: 'Stufe ab {{date}} zurücknehmen',
+                    date: format(parseISO(effectiveFrom), 'dd.MM.yyyy'),
+                  }))}
+                  className="grid min-h-11 min-w-11 shrink-0 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-rose-400/10 hover:text-rose-300"
+                >
+                  <Trash2 size={15} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   const plannedQuantityRows = (c: Cycle) => {
     const planned = dosePlanViewFor(c).planned
     if (planned.length === 0) return null
@@ -2300,6 +2382,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                   </div>
                                 </div>
                                 {doseCapabilities.permanent && plannedQuantityRows(activeCycle)}
+                                {planStufenListe(activeCycle)}
 
                                 {doseCapabilities.titration && (
                                 <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-2">

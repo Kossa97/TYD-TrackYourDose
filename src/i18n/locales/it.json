@@ -1172,5 +1172,12 @@
   "my_stack_plan_slot_fewer": "Una assunzione in meno",
   "my_stack_plan_slot_more": "Una assunzione in più",
   "my_stack_plan_section_how": "Come",
-  "my_stack_plan_section_period": "Periodo"
+  "my_stack_plan_section_period": "Periodo",
+  "my_stack_plan_steps": "Fasi del piano",
+  "my_stack_plan_step_from": "dal {{date}}",
+  "my_stack_plan_step_current": "in vigore ora",
+  "my_stack_plan_step_remove": "Ritira la fase dal {{date}}",
+  "my_stack_plan_step_removed": "Fase ritirata.",
+  "my_stack_plan_step_remove_failed": "Non è stato possibile ritirare la fase.",
+  "my_stack_plan_start_date_hint": "Vale da questa data. Lasciala su oggi per correggere il piano in corso; scegli una data futura per pianificare una fase — fino ad allora resta valido il piano attuale."
 }

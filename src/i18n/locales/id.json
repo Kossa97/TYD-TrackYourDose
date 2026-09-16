@@ -1172,5 +1172,12 @@
   "my_stack_plan_slot_fewer": "Satu asupan lebih sedikit",
   "my_stack_plan_slot_more": "Satu asupan lebih banyak",
   "my_stack_plan_section_how": "Bagaimana",
-  "my_stack_plan_section_period": "Periode"
+  "my_stack_plan_section_period": "Periode",
+  "my_stack_plan_steps": "Tahap rencana",
+  "my_stack_plan_step_from": "mulai {{date}}",
+  "my_stack_plan_step_current": "berlaku sekarang",
+  "my_stack_plan_step_remove": "Tarik tahap mulai {{date}}",
+  "my_stack_plan_step_removed": "Tahap ditarik.",
+  "my_stack_plan_step_remove_failed": "Tahap tidak dapat ditarik.",
+  "my_stack_plan_start_date_hint": "Berlaku mulai tanggal ini. Biarkan hari ini untuk mengoreksi rencana berjalan; pilih tanggal mendatang untuk merencanakan tahap — sampai saat itu rencana lama tetap berlaku."
 }

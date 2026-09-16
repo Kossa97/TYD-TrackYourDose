@@ -1172,5 +1172,12 @@
   "my_stack_plan_slot_fewer": "Bir alım az",
   "my_stack_plan_slot_more": "Bir alım fazla",
   "my_stack_plan_section_how": "Nasıl",
-  "my_stack_plan_section_period": "Dönem"
+  "my_stack_plan_section_period": "Dönem",
+  "my_stack_plan_steps": "Plan aşamaları",
+  "my_stack_plan_step_from": "{{date}} tarihinden itibaren",
+  "my_stack_plan_step_current": "şu anda geçerli",
+  "my_stack_plan_step_remove": "{{date}} tarihli aşamayı geri al",
+  "my_stack_plan_step_removed": "Aşama geri alındı.",
+  "my_stack_plan_step_remove_failed": "Aşama geri alınamadı.",
+  "my_stack_plan_start_date_hint": "Bu tarihten itibaren geçerlidir. Bugünü bırakırsanız mevcut planı düzeltirsiniz; ileri bir tarih seçerseniz bir aşama planlarsınız — o güne kadar eski plan geçerli kalır."
 }
