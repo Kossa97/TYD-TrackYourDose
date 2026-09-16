@@ -2790,15 +2790,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1788612179.7513688,
-    "seen": 1788803479.1909688,
-    "ast_hash": "93a8afd40bf6413cda822fe34e600177",
-    "semantic_hash": "93a8afd40bf6413cda822fe34e600177"
+    "mtime": 1789547726.2185245,
+    "seen": 1789547899.4196496,
+    "ast_hash": "3e9ddf89f902dc524ea8a9006f08d5eb",
+    "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1789534784.305758,
-    "seen": 1789535091.663719,
-    "ast_hash": "f9616a0b2264430b68fe0e79fd4c79e2",
+    "mtime": 1789547331.4384727,
+    "seen": 1789547899.419651,
+    "ast_hash": "b88cd9257438543b27d5d1360e743b59",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
@@ -2826,9 +2826,9 @@
     "semantic_hash": "2749a82e615b1d1fa75debee0fd34607"
   },
   "src/features/my-stack/components/StackItemWizard.interaction.test.tsx": {
-    "mtime": 1789446870.837998,
-    "seen": 1789452023.1287599,
-    "ast_hash": "5a5b48a511dd764b59dc8390a8d761d8",
+    "mtime": 1789547752.652272,
+    "seen": 1789547899.419682,
+    "ast_hash": "db4ec76a04a525a19d6b3312047e91b1",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.test.ts": {
@@ -2838,9 +2838,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1789444109.7623742,
-    "seen": 1789445330.4260015,
-    "ast_hash": "a4326a5afe157ab604a375148bc68a24",
+    "mtime": 1789546732.756645,
+    "seen": 1789547899.4196842,
+    "ast_hash": "c0288c7fc5a8aa2a368e7bce332a8e22",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789534998.1570349,
-    "seen": 1789535091.6640594,
+    "mtime": 1789547793.4122744,
+    "seen": 1789547899.42003,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4407,6 +4407,12 @@
     "mtime": 1789535076.7237327,
     "seen": 1789535091.664198,
     "ast_hash": "a6c76fe88172c2fb7b92df111d79cee1",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-09-16-ein-schreibweg-zyklus-design.md": {
+    "mtime": 1789547889.132846,
+    "seen": 1789547899.4201512,
+    "ast_hash": "9ec535a67bc09e3945966ce4e0778d54",
     "semantic_hash": ""
   }
 }
