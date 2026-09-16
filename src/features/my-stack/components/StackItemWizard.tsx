@@ -56,7 +56,14 @@ export interface StackItemWizardProps {
   onClose: () => void
   onSave: (draft: StackItemSetupDraft, mode: WizardSaveMode) => Promise<void>
   onOpenExisting: (item: StackItem) => void
-  intent?: 'pk'
+  /**
+   * Womit der Assistent geoeffnet wird.
+   *
+   * `pk` fragt nur, was einem Blutspiegel noch fehlt. `plan` ist der
+   * Einnahmeplan eines bestehenden Eintrags — er hat das alte Zyklusformular
+   * abgeloest, damit es nur EINEN Weg gibt, der einen Zyklus schreibt.
+   */
+  intent?: 'pk' | 'plan'
 }
 
 function pkIntentSteps(
@@ -141,6 +148,7 @@ export function StackItemWizard({
     undefined,
     () => {
       const initial = initialWizardState(existingItem, initialColorHex, existingPlan)
+      if (intent === 'plan') initial.step = 'plan'
       if (intent === 'pk' && existingItem) {
         const intentSteps = pkIntentSteps(existingItem, existingPlan)
         pkIntentStepsRef.current = intentSteps
@@ -269,7 +277,9 @@ export function StackItemWizard({
     }
   }, [state.step, state.draft.dosageForm, farbschrittSkalaMessen])
 
-  const steps = intent === 'pk' && pkIntentStepsRef.current
+  const steps = intent === 'plan'
+    ? (['plan'] as WizardStep[])
+    : intent === 'pk' && pkIntentStepsRef.current
     ? pkIntentStepsRef.current
     : wizardSteps(state)
   const currentStepIndex = steps.indexOf(state.step)

@@ -454,6 +454,22 @@ describe('StackItemWizard interactions', () => {
     expect(onSave.mock.calls[0][0].pkProfileMethod).toBe('Oral')
   })
 
+  it('zeigt mit intent="plan" nur den Einnahmeplan', () => {
+    // „Plan ändern" führt jetzt durch den Assistenten statt durch ein eigenes
+    // Zyklusformular — dort schrieb es am RPC vorbei. Wer nur den Plan
+    // ändert, soll aber nicht durch Substanz, Form und Farbe geführt werden.
+    renderWizard({
+      existingItem: existingVitaminD,
+      existingPlan,
+      intent: 'plan',
+    })
+
+    expect(document.querySelector('[data-plan-summary]')).not.toBeNull()
+    expect(screen.queryByText('my_stack_step_substance')).toBeNull()
+    expect(screen.queryByText('my_stack_step_dosage_form')).toBeNull()
+    expect(screen.queryByText('my_stack_step_color')).toBeNull()
+  })
+
   it('includes missing complete-strength fields in a PK upgrade flow', () => {
     const pkItem: StackItem = {
       ...existingVitaminD,

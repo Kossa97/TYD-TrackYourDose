@@ -28,13 +28,11 @@ import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackIte
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
-import { INTAKE_FREQUENCIES } from './lib/intakeFrequency'
 import { rhythmFromStorage } from './lib/intakeRhythm'
 import { planSegments, stufenText } from './lib/planSegments'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
 import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
-import { backfillMessageKey, buildPermanentScheduleChange, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
-import { validateRecurrence } from './lib/validation'
+import { backfillMessageKey, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
 import { DoseUnitControl } from './components/DoseUnitControl'
 import { VialTrackingEditor, emptyVialTrackingDraft, type PkProfileOption, type VialTrackingDraft } from './extensions/peptide/VialTrackingEditor'
 
@@ -110,12 +108,10 @@ const POPULAR_PEPTIDES = [
   'Thymosin Alpha-1','LL-37','Hexarelin','MGF',
 ]
 const UNITS   = ['mcg','mg','IU','ml','nmol']
-const METHODS = ['Subkutan','Intramuskulär','Nasal','Oral','Transdermal','Intravenös','Andere']
 const METHOD_KEYS: Record<string,string> = {
   'Subkutan':'method_subkutan','Intramuskulär':'method_intramusk','Nasal':'method_nasal',
   'Oral':'method_oral','Transdermal':'method_transdermal','Intravenös':'method_intravenoese','Andere':'method_andere',
 }
-const WOCHENTAGE = ['Mo','Di','Mi','Do','Fr','Sa','So']
 const EXPIRY_PRESETS = [10, 14, 21, 28, 42, 90]
 
 type PeptideSortKey =
@@ -234,7 +230,6 @@ const SYRINGE_PRESETS = [
   { label: '2 mL · 200 Einh. (U-100)',  ml: '2',   units: '200' },
   { label: '1 mL · 40 Einh. (U-40)',    ml: '1',   units: '40'  },
 ]
-const BASE_FREQUENCIES = [...INTAKE_FREQUENCIES]
 const FREQ_KEYS: Record<string,string> = {
   'Täglich':'freq_taeglich','2x täglich':'freq_2x','3x täglich':'freq_3x',
   'Jeden 2. Tag':'freq_jeden2',
@@ -263,21 +258,6 @@ const REMINDER_OPTIONS = [
 ]
 
 // ─── Formular-Typen ───────────────────────────────────────────────────────────
-interface CycleForm {
-  name: string; dose: string; unit: string; method: string
-  frequency: string; x_days_interval: string; schedule_days: string[]
-  start_date: string; end_date: string
-  daily_freq: string  // '1' | '2' | '3' — how many times per day
-  intake_times: string[]; intake_time_customs: string[]; reminder: string[]
-}
-const emptyCycleForm = (p: Peptide, tFn: (k:string)=>string): CycleForm => ({
-  name: p.name + ' ' + tFn('zyklus'),
-  dose: '', unit: 'mcg',
-  method: p.default_method, frequency: 'Täglich',
-  x_days_interval: '3', schedule_days: [],
-  start_date: format(new Date(), 'yyyy-MM-dd'), end_date: '',
-  daily_freq: '1', intake_times: [], intake_time_customs: [], reminder: [],
-})
 
 function parseStoredDay(value: string): Date | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
@@ -413,29 +393,6 @@ function VialStockDisplay({ current, initial, inUse = 0 }: {
 }
 
 // Schedule-relevante Felder eines Standes (für Vergleich + Segmentaufbau).
-type SchedFields = Pick<ScheduleSegment, 'frequency' | 'x_days_interval' | 'schedule_days' | 'intake_time' | 'intake_time_custom' | 'dose' | 'unit'>
-
-function schedKey(s: SchedFields): string {
-  return JSON.stringify([s.frequency, s.x_days_interval, [...(s.schedule_days ?? [])].sort(), s.intake_time, s.intake_time_custom, s.dose, s.unit])
-}
-
-// Neue Historie nach einem Edit. prev = geladener Zyklus vor dem Edit; next = neue Felder.
-function nextScheduleHistory(
-  prevHistory: ScheduleSegment[] | null,
-  prevFields: SchedFields,
-  prevStartDate: string,
-  next: SchedFields,
-  today: string,
-): ScheduleSegment[] | null {
-  if (schedKey(prevFields) === schedKey(next)) return prevHistory ?? null
-  const history: ScheduleSegment[] = (prevHistory && prevHistory.length > 0)
-    ? [...prevHistory]
-    : [{ effective_from: prevStartDate, ...prevFields }]
-  const todaySeg: ScheduleSegment = { effective_from: today, ...next }
-  if (history[history.length - 1].effective_from === today) history[history.length - 1] = todaySeg
-  else history.push(todaySeg)
-  return history
-}
 
 function cycleAsIntakePlanDraft(cycle: Cycle, day: Date): IntakePlanDraft {
   const segment = scheduleForDay(cycle, day)
@@ -542,7 +499,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [catalogEntries, setCatalogEntries] = useState<SubstanceCatalogEntry[]>([])
   const [catalogUnavailable, setCatalogUnavailable] = useState(false)
   const [wizardInitialColor, setWizardInitialColor] = useState('')
-  const [wizardIntent, setWizardIntent] = useState<'pk' | undefined>()
+  const [wizardIntent, setWizardIntent] = useState<'pk' | 'plan' | undefined>()
+  // Ein zweiter Plan statt einer Aenderung am bestehenden.
+  const [wizardNeuerZyklus, setWizardNeuerZyklus] = useState(false)
   const [infoPeptide, setInfoPeptide]         = useState<Peptide | null>(null)
   const [search, setSearch]                   = useState('')
   const [showTrackingForm, setShowTrackingForm] = useState(false)
@@ -583,8 +542,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [animationEpoch, setAnimationEpoch] = useState(0)
 
   // ── Zyklen ────────────────────────────────────────────────────────────────
-  const [showCycleForm, setShowCycleForm]         = useState(false)
-  const [cycleForPeptide, setCycleForPeptide]     = useState<Peptide | null>(null)
   const [cycleManagerPeptide, setCycleManagerPeptide] = useState<Peptide | null>(null)
   // Zyklus-Manager: welche inaktiven Karten / Dosisanpassungs-Sektionen sind aufgeklappt
   const [managerCardOpen, setManagerCardOpen] = useState<Set<string>>(() => new Set())
@@ -600,13 +557,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const archiveInfoBackButtonRef = useRef<HTMLButtonElement | null>(null)
   const archiveDialogRef = useRef<HTMLDivElement | null>(null)
   const archiveCloseButtonRef = useRef<HTMLButtonElement | null>(null)
-  const [editingCycleId, setEditingCycleId]       = useState<string | null>(null)
-  const [cForm, setCForm]                         = useState<CycleForm | null>(null)
-  const [savingCycle, setSavingCycle]             = useState(false)
-  // Beim Bearbeiten eines bestehenden Zyklus: Planänderung rückwirkend oder ab heute?
-  const [scheduleChoiceOpen, setScheduleChoiceOpen] = useState(false)
-  const [scheduleEffectiveFrom, setScheduleEffectiveFrom] = useState(() => format(new Date(), 'yyyy-MM-dd'))
-  const [quantityScheduleChange, setQuantityScheduleChange] = useState(false)
 
   // ── Dosisanpassungen ──────────────────────────────────────────────────────
   const [escalations, setEscalations]             = useState<Escalation[]>([])
@@ -1060,9 +1010,19 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   }
 
   // ── Zyklus-Aktionen ───────────────────────────────────────────────────────
+  /**
+   * Ein ZWEITER Plan fuer denselben Eintrag.
+   *
+   * Derselbe Weg wie „Plan aendern", nur ohne den bestehenden Plan im
+   * Gepaeck: `save_stack_item_with_plan` legt ohne `p_plan.id` einen neuen
+   * Zyklus an, statt den vorhandenen fortzuschreiben.
+   */
   const openNewCycle = (p: Peptide) => {
-    setCycleForPeptide(p); setEditingCycleId(null)
-    setCForm(emptyCycleForm(p, t)); setShowCycleForm(true)
+    setEditingPeptideId(p.id)
+    setWizardInitialColor('')
+    setWizardIntent('plan')
+    setWizardNeuerZyklus(true)
+    setShowPeptideForm(true)
   }
   /**
    * Eine vorgemerkte Stufe zuruecknehmen.
@@ -1083,185 +1043,26 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     }
   }
 
-  const openEditCycle = (p: Peptide, c: Cycle) => {
-    const currentSegment = scheduleForDay(c, new Date())
-    setCycleForPeptide(p); setEditingCycleId(c.id)
-    setCForm({
-      name: c.name, dose: currentSegment.dose?.toString() ?? '', unit: currentSegment.unit ?? '',
-      method: c.method, frequency: currentSegment.frequency,
-      x_days_interval: currentSegment.x_days_interval?.toString() ?? '3',
-      schedule_days: currentSegment.schedule_days ?? [],
-      start_date: c.start_date, end_date: c.end_date ?? '',
-      intake_times: (currentSegment.intake_time ?? '').split(',').filter(Boolean),
-      intake_time_customs: (currentSegment.intake_time_custom ?? '').split(',').filter(Boolean),
-      daily_freq: String(Math.max(1, Math.min(3, (currentSegment.intake_time ?? '').split(',').filter(Boolean).length || 1))),
-      reminder: (c.reminder && c.reminder !== 'none') ? c.reminder.split(',').filter(Boolean) : [],
-    })
-    setShowCycleForm(true)
-  }
-  // Schedule-Felder des aktuellen Formularstands (für Vergleich + Segmentaufbau).
-  const formSchedFields = (): SchedFields => ({
-    frequency: cForm!.frequency,
-    x_days_interval: cForm!.frequency === 'Alle X Tage' ? parseInt(cForm!.x_days_interval) : null,
-    schedule_days: ['Wochentage wählen', 'Alle X Tage'].includes(cForm!.frequency) ? cForm!.schedule_days : null,
-    intake_time: cForm!.intake_times.filter(Boolean).join(',') || null,
-    intake_time_custom: cForm!.intake_times.some(time => time === 'custom') ? cForm!.intake_time_customs.join(',') : null,
-    dose: cycleForPeptide?.tracking_level === 'intake_only' ? null : parseFloat(cForm!.dose),
-    unit: cycleForPeptide?.tracking_level === 'intake_only' ? null : cForm!.unit,
-  })
-
-  const saveCycle = async () => {
-    if (!cForm || !cycleForPeptide) return
-    const formDose = Number(cForm.dose)
-    if (
-      !cForm.name
-      || (dosePlanCapabilities(cycleForPeptide.tracking_level).permanent
-        && (!Number.isFinite(formDose) || formDose <= 0 || !cForm.unit.trim()))
-    ) {
-      return toast.error(t('name_dosis_erforderlich'))
-    }
-    const recurrenceErrors = validateRecurrence(
-      cForm.frequency,
-      cForm.frequency === 'Alle X Tage' ? Number(cForm.x_days_interval) : null,
-      cForm.schedule_days,
-    )
-    if (recurrenceErrors.xDaysInterval) return toast.error(t('alle_x_tage_frage'))
-    if (recurrenceErrors.scheduleDays)
-      return toast.error(t('wochentag_auswaehlen_hint'))
-    // Bei einer Planungsänderung an einem bestehenden Zyklus erst fragen: rückwirkend oder ab heute?
-    if (editingCycleId) {
-      const prev = cycles.find(c => c.id === editingCycleId)
-      if (prev) {
-        const currentSegment = scheduleForDay(prev, new Date())
-        const prevFields: SchedFields = { frequency: currentSegment.frequency, x_days_interval: currentSegment.x_days_interval, schedule_days: currentSegment.schedule_days, intake_time: currentSegment.intake_time, intake_time_custom: currentSegment.intake_time_custom, dose: currentSegment.dose, unit: currentSegment.unit }
-        if (schedKey(prevFields) !== schedKey(formSchedFields())) {
-          const nextFields = formSchedFields()
-          setQuantityScheduleChange(prevFields.dose !== nextFields.dose || prevFields.unit !== nextFields.unit)
-          setScheduleEffectiveFrom(format(new Date(), 'yyyy-MM-dd'))
-          setScheduleChoiceOpen(true)
-          return
-        }
-      }
-    }
-    await finalizeSave(null)
-  }
-
-  // mode: 'retroactive' = neuer Plan gilt für gesamten Zyklus; 'fromDate' = neues Segment ab gewähltem Datum;
-  // null = keine Planänderung (oder neuer Zyklus) → bestehende Historie bleibt unverändert.
-  const finalizeSave = async (mode: 'retroactive' | 'fromDate' | null) => {
-    if (!cForm || !cycleForPeptide) return
-    if (mode === 'fromDate' && !parseStoredDay(scheduleEffectiveFrom)) {
-      toast.error(t('error'))
-      return
-    }
-    setSavingCycle(true)
-    const payload = {
-      user_id: user!.id, stack_item_id: cycleForPeptide.id,
-      name: cForm.name,
-      dose: cycleForPeptide.tracking_level === 'intake_only' ? null : parseFloat(cForm.dose),
-      unit: cycleForPeptide.tracking_level === 'intake_only' ? null : cForm.unit,
-      method: cForm.method, frequency: cForm.frequency,
-      x_days_interval: cForm.frequency === 'Alle X Tage' ? parseInt(cForm.x_days_interval) : null,
-      schedule_days: ['Wochentage wählen', 'Alle X Tage'].includes(cForm.frequency) ? cForm.schedule_days : null,
-      start_date: cForm.start_date, end_date: cForm.end_date || null, active: true,
-      intake_time: cForm.intake_times.filter(Boolean).join(',') || null,
-      intake_time_custom: cForm.intake_times.some(time => time === 'custom')
-        ? cForm.intake_time_customs.join(',')
-        : null,
-      reminder: cForm.reminder.length > 0 ? cForm.reminder.join(',') : 'none',
-    }
-    const nextFields = formSchedFields()
-    let scheduleHistory: ScheduleSegment[] | null = null
-    if (editingCycleId) {
-      const prev = cycles.find(c => c.id === editingCycleId)
-      if (prev) {
-        const currentSegment = scheduleForDay(prev, new Date())
-        const prevFields: SchedFields = { frequency: currentSegment.frequency, x_days_interval: currentSegment.x_days_interval, schedule_days: currentSegment.schedule_days, intake_time: currentSegment.intake_time, intake_time_custom: currentSegment.intake_time_custom, dose: currentSegment.dose, unit: currentSegment.unit }
-        if (schedKey(prevFields) === schedKey(nextFields)) {
-          scheduleHistory = prev.schedule_history ?? null            // unverändert: Historie behalten
-        } else if (mode === 'retroactive') {
-          scheduleHistory = null                                     // neuer Plan rückwirkend für gesamten Zyklus
-        } else {
-          const effectiveFrom = scheduleEffectiveFrom
-          if (quantityScheduleChange && dosePlanCapabilities(cycleForPeptide.tracking_level).permanent && nextFields.dose != null && nextFields.unit) {
-            let quantityChange
-            try {
-              quantityChange = buildPermanentScheduleChange(prev, {
-                trackingLevel: cycleForPeptide.tracking_level,
-                effectiveFrom,
-                dose: nextFields.dose,
-                unit: nextFields.unit,
-              })
-            } catch {
-              toast.error(t('error'))
-              setSavingCycle(false)
-              return
-            }
-            payload.dose = quantityChange.dose
-            payload.unit = quantityChange.unit
-            scheduleHistory = quantityChange.schedule_history?.map(segment => segment.effective_from === effectiveFrom
-              ? { effective_from: effectiveFrom, ...nextFields }
-              : segment) ?? null
-          } else {
-            scheduleHistory = nextScheduleHistory(
-              prev.schedule_history ?? null,
-              prevFields,
-              prev.start_date,
-              nextFields,
-              effectiveFrom,
-            )
-          }
-        }
-      }
-    }
-    const { error } = editingCycleId
-      ? await supabase.from('cycles').update({ ...payload, schedule_history: scheduleHistory }).eq('id', editingCycleId)
-      : await supabase.from('cycles').insert(payload)
-    if (error) { toast.error(t('error')); setSavingCycle(false); return }
-    if (editingCycleId && mode === 'fromDate' && quantityScheduleChange && dosePlanCapabilities(cycleForPeptide.tracking_level).permanent) {
-      const previousCycle = cycles.find(cycle => cycle.id === editingCycleId)
-      if (previousCycle) {
-        const changedCycle: Cycle = {
-          ...previousCycle,
-          ...payload,
-          schedule_history: scheduleHistory,
-        }
-        try {
-          await backfillDoseAdjustmentLogs(changedCycle, escalationsOf(changedCycle.id), [], scheduleEffectiveFrom)
-        } catch {
-          toast.error(t('dose_plan_permanent_backfill_failed', { defaultValue: 'Die Standarddosis wurde gespeichert, aber offene oder verpasste Einnahmen konnten nicht aktualisiert werden.' }))
-        }
-      }
-    }
-    toast.success(editingCycleId ? t('zyklus_aktualisiert') : t('zyklus_erstellt'))
-    if (cForm.reminder.length > 0 && 'Notification' in window) {
-      const perm = await Notification.requestPermission()
-      if (perm === 'granted') {
-        const firstSlot = cForm.intake_times[0] ?? ''
-        const baseTime = firstSlot === 'custom'
-          ? (cForm.intake_time_customs[0] ?? '')
-          : (INTAKE_TIME_CONFIG as Record<string, { time: string }>)[firstSlot]?.time ?? ''
-        if (baseTime) {
-          const [h, m] = baseTime.split(':').map(Number)
-          let scheduled = 0
-          for (const r of cForm.reminder) {
-            const fireAt = new Date(); fireAt.setHours(h, m, 0, 0)
-            if (r === '2h')   fireAt.setHours(fireAt.getHours() - 2)
-            if (r === '1day') fireAt.setDate(fireAt.getDate() - 1)
-            const delay = fireAt.getTime() - Date.now()
-            if (delay > 0) {
-              const label = r === '2h' ? ' in 2 Stunden' : r === '1day' ? ' morgen' : ''
-              setTimeout(() => new Notification(`ðŸ’Š ${cForm.name}`, {
-                body: `Einnahme${label} um ${baseTime} Uhr`,
-              }), delay)
-              scheduled++
-            }
-          }
-          if (scheduled > 0) toast.success(`${scheduled} Erinnerung${scheduled > 1 ? 'en' : ''} gesetzt!`)
-        }
-      }
-    }
-    setSavingCycle(false); setShowCycleForm(false); setExpandedId(cycleForPeptide.id); loadCycles()
+  /**
+   * Den Einnahmeplan eines Eintrags aendern.
+   *
+   * Frueher oeffnete das ein eigenes Zyklusformular, das direkt in `cycles`
+   * schrieb — am RPC vorbei und damit an dessen Pruefungen. Es kannte
+   * `slot_doses`, `slot_days`, `interval_unit` und die Wechseltage gar nicht:
+   * ein `update` liess sie stehen, waehrend es `intake_time` ueberschrieb, und
+   * die Listen liefen auseinander. Seine Segmentlogik war eine zweite, engere
+   * Kopie der des RPC.
+   *
+   * Jetzt fuehrt auch dieser Weg durch den Assistenten und damit durch
+   * `save_stack_item_with_plan`: ein Schreibweg, eine Pruefung, eine
+   * Segmentlogik.
+   */
+  const openEditCycle = (p: Peptide) => {
+    setEditingPeptideId(p.id)
+    setWizardInitialColor('')
+    setWizardNeuerZyklus(false)
+    setWizardIntent('plan')
+    setShowPeptideForm(true)
   }
   const toggleCycleActive = async (c: Cycle) => {
     await supabase.from('cycles').update({ active: !c.active }).eq('id', c.id)
@@ -1627,15 +1428,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       return opt ? t(opt.labelKey) : v
     }).filter(Boolean)
     return labels.length > 0 ? labels.join(' · ') : null
-  }
-  const toggleDay = (day: string) => {
-    setCForm(f => {
-      if (!f) return f
-      const days = f.schedule_days.includes(day)
-        ? f.schedule_days.filter(d => d !== day)
-        : [...f.schedule_days, day]
-      return { ...f, schedule_days: days }
-    })
   }
 
   const activeIndex = Math.max(0, stagePeptides.findIndex(p => p.id === activePeptideId))
@@ -2438,7 +2230,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                   <div className="mt-2 flex justify-center">
                                     <DosePlanActions
                                       trackingLevel={activePeptide.tracking_level}
-                                      onPermanent={() => openEditCycle(activePeptide, activeCycle)}
+                                      onPermanent={() => openEditCycle(activePeptide)}
                                       onTitration={() => openNewEsc(activeCycle)}
                                     />
                                   </div>
@@ -2714,7 +2506,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                   </div>
                                 </button>
                                 <button className="p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
-                                  onClick={() => openEditCycle(p, c)}><Pencil size={13} /></button>
+                                  onClick={() => openEditCycle(p)}><Pencil size={13} /></button>
                                 <button className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"
                                   onClick={() => removeCycle(c.id)}><Trash2 size={13} /></button>
                               </div>
@@ -2760,7 +2552,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                               <div className="mt-2">
                                 <DosePlanActions
                                   trackingLevel={p.tracking_level}
-                                  onPermanent={() => openEditCycle(p, c)}
+                                  onPermanent={() => openEditCycle(p)}
                                   onTitration={() => openNewEsc(c)}
                                 />
                               </div>
@@ -2788,7 +2580,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
-              onClick={() => { openEditCycle(cycleManagerPeptide, c); setCycleManagerPeptide(null) }}
+              onClick={() => { openEditCycle(cycleManagerPeptide); setCycleManagerPeptide(null) }}
               aria-label={t('bearbeiten')}
               className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-800 bg-slate-950 text-slate-400 transition-colors hover:border-sky-500/40 hover:text-sky-300"
             >
@@ -2913,7 +2705,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   })}
                   <DosePlanActions
                     trackingLevel={cycleManagerPeptide.tracking_level}
-                    onPermanent={() => { openEditCycle(cycleManagerPeptide, c); setCycleManagerPeptide(null) }}
+                    onPermanent={() => { openEditCycle(cycleManagerPeptide); setCycleManagerPeptide(null) }}
                     onTitration={() => { openNewEsc(c); setCycleManagerPeptide(null) }}
                   />
                 </div>
@@ -3056,12 +2848,13 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           catalogUnavailable={catalogUnavailable}
           existingItems={peptides}
           existingItem={editingPeptideId ? peptides.find(item => item.id === editingPeptideId) : undefined}
-          existingPlan={editingPeptideId ? activePlanFor(editingPeptideId) : undefined}
+          existingPlan={editingPeptideId && !wizardNeuerZyklus ? activePlanFor(editingPeptideId) : undefined}
           initialColorHex={wizardInitialColor}
           intent={wizardIntent}
           onClose={() => {
             setShowPeptideForm(false)
             setWizardIntent(undefined)
+            setWizardNeuerZyklus(false)
           }}
           onSave={handleSaveStackItem}
           onOpenExisting={openExistingStackItem}
@@ -3507,235 +3300,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       )}
 
       {/* ══ ZYKLUS-FORMULAR ══════════════════════════════════════════════════ */}
-      {showCycleForm && cForm && (
-        <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-slate-950 sm:items-end sm:bg-black/80" data-app-modal
-          onClick={() => setShowCycleForm(false)}>
-          <div className="flex h-full w-full flex-col overflow-hidden bg-slate-900 sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-t-2xl"
-            onClick={e => e.stopPropagation()}>
-
-            <div className="shrink-0 border-b border-slate-800 px-6 pb-4 pt-[calc(1.25rem+env(safe-area-inset-top))] sm:pt-6">
-              <div className="flex items-center gap-2">
-                <CalendarDays size={18} className="text-violet-400" />
-                <h2 className="text-lg font-bold">{editingCycleId ? t('zyklus_bearbeiten') : t('neuer_zyklus_title')}</h2>
-              </div>
-              {cycleForPeptide && <p className="text-sky-400 text-sm mt-0.5 ml-6">{cycleForPeptide.name}</p>}
-            </div>
-
-            <div data-ob="cycle-core" className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
-            <div data-ob="cyc-name">
-              <label className="label">{t('zyklus_name')}</label>
-              <input className="input" placeholder={t('zyklus_name_placeholder')}
-                value={cForm.name} onChange={e => setCForm(f => f ? { ...f, name: e.target.value } : f)} />
-            </div>
-
-            {dosePlanCapabilities(cycleForPeptide?.tracking_level ?? 'intake_only').permanent && (
-            <div className="grid grid-cols-2 gap-3">
-              <div data-ob="cyc-dose">
-                <label className="label">{t('dosis_label')}</label>
-                <input className="input" type="number" value={cForm.dose}
-                  onChange={e => setCForm(f => f ? { ...f, dose: e.target.value } : f)} />
-              </div>
-              <div data-ob="cyc-unit">
-                <label className="label">{t('einheit_label')}</label>
-                <DoseUnitControl
-                  label={t('einheit_label')}
-                  unit={cForm.unit}
-                  units={UNITS}
-                  locked={editingCycleId != null}
-                  onChange={unit => setCForm(f => f ? { ...f, unit } : f)}
-                />
-              </div>
-            </div>
-            )}
-
-            <div data-ob="cyc-method">
-              <label className="label">{t('applikationsart_label')}</label>
-              <select className="select" value={cForm.method}
-                onChange={e => setCForm(f => f ? { ...f, method: e.target.value } : f)}>
-                {METHODS.map(m => <option key={m} value={m}>{t(METHOD_KEYS[m] ?? m)}</option>)}
-              </select>
-            </div>
-
-            <div data-ob="cyc-frequency">
-              <label className="label">{t('frequenz')}</label>
-              <select className="select" value={cForm.frequency}
-                onChange={e => setCForm(f => {
-                  if (!f) return f
-                  const newFreq = e.target.value
-                  const newSlots = parseInt(f?.daily_freq ?? '1')
-                  const keepDays = ['Wochentage wählen', 'Alle X Tage'].includes(newFreq)
-                  return {
-                    ...f,
-                    frequency: newFreq,
-                    intake_times: f.intake_times.slice(0, newSlots),
-                    intake_time_customs: f.intake_time_customs.slice(0, newSlots),
-                    schedule_days: keepDays ? f.schedule_days : [],
-                  }
-                })}>
-                {BASE_FREQUENCIES.map(freq => <option key={freq} value={freq}>{t(FREQ_KEYS[freq] ?? freq)}</option>)}
-              </select>
-            </div>
-
-            {cForm.frequency === 'Alle X Tage' && (
-              <div data-ob="cyc-interval">
-                <label className="label">{t('alle_x_tage_frage')}</label>
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-400 text-sm">{t('alle_prefix')}</span>
-                  <input className="input w-24" type="number" min="2" max="30"
-                    value={cForm.x_days_interval}
-                    onChange={e => setCForm(f => f ? { ...f, x_days_interval: e.target.value } : f)} />
-                  <span className="text-slate-400 text-sm">{t('tage_suffix')}</span>
-                </div>
-              </div>
-            )}
-
-            {cForm.frequency === 'Wochentage wählen' && (
-              <div data-ob="cyc-weekdays" data-ob-self>
-                <label className="label">{t('injektionstage_label')}</label>
-                <div className="flex gap-2">
-                  {WOCHENTAGE.map(day => (
-                    <button key={day} type="button" onClick={() => toggleDay(day)}
-                      className={`flex-1 h-10 rounded-lg text-sm font-medium transition-colors ${
-                        cForm.schedule_days.includes(day) ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                      }`}>
-                      {day}
-                    </button>
-                  ))}
-                </div>
-                {cForm.schedule_days.length > 0 && (
-                  <p className="text-sky-400 text-xs mt-2">{t('ausgewaehlt_label')} {cForm.schedule_days.join(', ')}</p>
-                )}
-              </div>
-            )}
-
-            <div data-ob="cyc-dates" data-ob-self>
-              <div>
-                <label className="label">{t('startdatum_label')}</label>
-                <input className="input" type="date" value={cForm.start_date}
-                  onChange={e => setCForm(f => f ? { ...f, start_date: e.target.value } : f)} />
-              </div>
-              <div className="mt-3">
-                <label className="label">{t('enddatum_optional_label')}</label>
-                <input className="input" type="date" value={cForm.end_date}
-                  onChange={e => setCForm(f => f ? { ...f, end_date: e.target.value } : f)} />
-              </div>
-            </div>
-
-            <div data-ob="cyc-intake" data-ob-self>
-              <div className="flex items-center justify-between mb-2">
-                <label className="label mb-0">{t('einnahmezeitpunkt')}</label>
-                <span className="text-xs text-slate-500">optional</span>
-              </div>
-              {/* Wie oft täglich? */}
-              <div className="flex gap-2 mb-3">
-                {(['1','2','3'] as const).map(n => (
-                  <button key={n} type="button"
-                    onClick={() => setCForm(f => f ? {
-                      ...f,
-                      daily_freq: n,
-                      intake_times: f.intake_times.slice(0, parseInt(n)),
-                      intake_time_customs: f.intake_time_customs.slice(0, parseInt(n)),
-                    } : f)}
-                    className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                      cForm.daily_freq === n ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                    }`}>
-                    {n}× {t('freq_taeglich')}
-                  </button>
-                ))}
-              </div>
-              {Array.from({ length: parseInt(cForm.daily_freq) }, (_, slotIdx) => (
-                <div key={slotIdx} className={slotIdx > 0 ? 'mt-3' : ''}>
-                  {parseInt(cForm.daily_freq) > 1 && (
-                    <p className="text-xs text-slate-400 mb-1.5 font-medium">
-                      {t('einnahme_nr', { n: slotIdx + 1 })}
-                    </p>
-                  )}
-                  <div className="grid grid-cols-4 gap-2">
-                    {(Object.entries(INTAKE_TIME_CONFIG) as [string, { labelKey: string; icon: LucideIcon }][]).map(([key, cfg]) => {
-                      const isActive = cForm.intake_times[slotIdx] === key
-                      return (
-                        <button key={key} type="button"
-                          onClick={() => setCForm(f => {
-                            if (!f) return f
-                            const newTimes = [...f.intake_times]
-                            const newCustoms = [...f.intake_time_customs]
-                            newTimes[slotIdx] = isActive ? '' : key
-                            if (isActive) newCustoms[slotIdx] = ''
-                            return { ...f, intake_times: newTimes, intake_time_customs: newCustoms }
-                          })}
-                          className={`py-2.5 rounded-xl text-xs font-medium transition-colors flex flex-col items-center gap-1 ${
-                            isActive ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                          }`}>
-                          <cfg.icon size={18} />
-                          {t(cfg.labelKey)}
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {cForm.intake_times[slotIdx] === 'custom' && (
-                    <input className="input mt-2" type="time"
-                      value={cForm.intake_time_customs[slotIdx] ?? ''}
-                      onChange={e => setCForm(f => {
-                        if (!f) return f
-                        const newCustoms = [...f.intake_time_customs]
-                        newCustoms[slotIdx] = e.target.value
-                        return { ...f, intake_time_customs: newCustoms }
-                      })} />
-                  )}
-                </div>
-              ))}
-            </div>{/* /einnahmezeitpunkt data-ob-self */}
-
-            <div data-ob="cyc-reminder" data-ob-self>
-              <div className="flex items-center justify-between mb-1">
-                <label className="label mb-0 flex items-center gap-1.5">
-                  <Bell size={13} className="text-sky-400" /> {t('erinnerung_label')}
-                </label>
-                <span className="text-xs text-slate-500">{t('mehrfachauswahl_hint')}</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {REMINDER_OPTIONS.map(opt => {
-                  const active = cForm.reminder.includes(opt.value)
-                  return (
-                    <button key={opt.value} type="button"
-                      onClick={() => setCForm(f => {
-                        if (!f) return f
-                        const next = f.reminder.includes(opt.value)
-                          ? f.reminder.filter(v => v !== opt.value)
-                          : [...f.reminder, opt.value]
-                        return { ...f, reminder: next }
-                      })}
-                      className={`py-2.5 px-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-between gap-2 ${
-                        active ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                      }`}>
-                      <span>{t(opt.labelKey)}</span>
-                      <span className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
-                        active ? 'bg-white/20 border-white/60' : 'border-slate-600'
-                      }`}>
-                        {active && <Check size={10} strokeWidth={3} />}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-              {cForm.reminder.length > 0 && (
-                <p className="text-slate-500 text-xs mt-1.5">
-                  {t('erinnerung_info', { n: cForm.reminder.length })}
-                </p>
-              )}
-            </div>{/* /erinnerung data-ob-self */}
-
-            </div>{/* /cycle-core */}
-
-            <div className="flex shrink-0 gap-3 border-t border-slate-800 bg-slate-900 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-              <button className="btn-secondary flex-1" onClick={() => setShowCycleForm(false)}>{t('cancel')}</button>
-              <button data-ob="btn-cycle-save" className="btn-primary flex-1" onClick={saveCycle} disabled={savingCycle}>
-                {savingCycle ? t('loading') : t('save')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Das eigene Zyklusformular ist entfallen. Es schrieb direkt in
+          `cycles` — am RPC vorbei, ohne dessen Pruefungen, und mit einer
+          zweiten, engeren Segmentlogik. „Plan aendern" fuehrt jetzt durch
+          den Assistenten (`intent: 'plan'`) und damit durch
+          `save_stack_item_with_plan`. */}
 
       {/* DOSISANPASSUNG-FORMULAR */}
       {showEscForm && eForm && (
@@ -3886,61 +3455,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       )}
 
       {/* ══ PLANÄNDERUNG: RÜCKWIRKEND ODER AB HEUTE ═══════════════════════════ */}
-      {scheduleChoiceOpen && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center px-4" data-app-modal>
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 max-w-sm w-full space-y-4">
-            <h3 className="font-bold text-white text-lg">
-              {t('schedule_change_title', { defaultValue: 'Änderung übernehmen' })}
-            </h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              {quantityScheduleChange
-                ? 'Wähle das Datum, ab dem die neue Standarddosis gelten soll. Bestätigte Einnahmen bleiben unverändert.'
-                : t('schedule_change_desc', { defaultValue: 'Du hast den Einnahmeplan geändert. Soll die Änderung rückwirkend für den gesamten Zyklus gelten oder ab einem gewählten Datum?' })}
-            </p>
-            <div className="space-y-2.5 pt-1">
-              <label className="label" htmlFor="schedule-effective-from">Gültig ab</label>
-              <input
-                id="schedule-effective-from"
-                className="input"
-                type="date"
-                min={format(new Date(), 'yyyy-MM-dd')}
-                value={scheduleEffectiveFrom}
-                onChange={event => {
-                  const nextDate = event.target.value
-                  setScheduleEffectiveFrom(nextDate)
-                  if (!quantityScheduleChange || !editingCycleId) return
-                  const previousCycle = cycles.find(cycle => cycle.id === editingCycleId)
-                  const parsed = parseStoredDay(nextDate)
-                  setCForm(form => form
-                    ? { ...form, unit: previousCycle && parsed ? scheduleForDay(previousCycle, parsed).unit ?? '' : '' }
-                    : form)
-                }}
-              />
-              <button onClick={() => { setScheduleChoiceOpen(false); finalizeSave('fromDate') }}
-                className="min-h-11 w-full cursor-pointer rounded-xl bg-sky-500 px-4 py-2.5 text-left text-sm font-semibold text-white transition-colors hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
-                {quantityScheduleChange
-                  ? t('dose_plan_new_standard', { defaultValue: 'Neue Standarddosis ab …' })
-                  : t('schedule_change_from_today', { defaultValue: 'Ab diesem Datum' })}
-                <span className="block text-xs font-normal text-sky-100/80 mt-0.5">
-                  {t('schedule_change_from_today_hint', { defaultValue: 'Vergangene Tage behalten den bisherigen Plan.' })}
-                </span>
-              </button>
-              {!quantityScheduleChange && (
-              <button onClick={() => { setScheduleChoiceOpen(false); finalizeSave('retroactive') }}
-                className="min-h-11 w-full cursor-pointer rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-left text-sm font-semibold text-white transition-colors hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300">
-                {t('schedule_change_retroactive', { defaultValue: 'Rückwirkend für den gesamten Zyklus' })}
-                <span className="block text-xs font-normal text-slate-400 mt-0.5">
-                  {t('schedule_change_retroactive_hint', { defaultValue: 'Der neue Plan gilt auch für alle vergangenen Tage. Erinnerungen werden entsprechend angepasst.' })}
-                </span>
-              </button>
-              )}
-            </div>
-            <button className="btn-secondary w-full" onClick={() => { setScheduleChoiceOpen(false); setSavingCycle(false) }}>
-              {t('cancel', { defaultValue: 'Abbrechen' })}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ══ INFO-SHEET ═══════════════════════════════════════════════════════ */}
       {infoPeptide && (() => {

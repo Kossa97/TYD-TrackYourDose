@@ -425,7 +425,7 @@ describe('My Stack page vial view', () => {
     expect(text).toContain("t('zyklen_verwalten')")
     expect(text).toContain('toggleManagerCard(c.id)')
     expect(text).toContain('cyclesOf(cycleManagerPeptide.id)')
-    expect(text).toContain('openEditCycle(cycleManagerPeptide, c)')
+    expect(text).toContain('openEditCycle(cycleManagerPeptide)')
     expect(text).toContain('toggleCycleActive(c)')
     expect(text).toContain('removeCycle(c.id)')
     expect(text).toContain('openNewEsc(c)')
@@ -434,24 +434,42 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('escalationsOf(c.id)')
   })
 
-  test('uses the full mobile screen for the cycle form', () => {
+  test('schreibt einen Plan nur über den RPC, nie an ihm vorbei', () => {
+    // Das eigene Zyklusformular schrieb direkt in `cycles` — ohne die
+    // Prüfungen des RPC und mit einer zweiten, engeren Segmentlogik. Es kannte
+    // `slot_doses`, `slot_days` und `interval_unit` nicht: ein `update` ließ
+    // sie stehen, während es `intake_time` überschrieb, und die Listen liefen
+    // auseinander. Dieser Test hält fest, dass es diesen Weg nicht mehr gibt.
     const text = source()
 
-    expect(text).toContain('fixed inset-0 z-50 flex items-stretch justify-center bg-slate-950 sm:items-end sm:bg-black/80')
-    expect(text).toContain('flex h-full w-full flex-col overflow-hidden bg-slate-900 sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-t-2xl')
-    expect(text).toContain('flex-1 space-y-4 overflow-y-auto px-6 py-4')
-    expect(text).toContain('pb-[calc(1rem+env(safe-area-inset-bottom))]')
+    for (const weg of ['nextScheduleHistory', 'schedKey', 'formSchedFields', 'setShowCycleForm', 'emptyCycleForm']) {
+      expect(text, weg).not.toContain(weg)
+    }
+    // Was direkt an `cycles` geht, betrifft nur den Lebenszyklus — nie den Plan.
+    for (const planfeld of ['intake_time', 'slot_doses', 'slot_days', 'schedule_history:']) {
+      const schreibend = text
+        .split('\n')
+        .filter(zeile => zeile.includes('.update(') || zeile.includes('.insert('))
+        .join('\n')
+      expect(schreibend, planfeld).not.toContain(planfeld)
+    }
   })
 
-  test('allows adding a new cycle even when another cycle is active', () => {
+  test('führt beide Zyklus-Wege durch den Assistenten', () => {
     const text = source()
-    const openNewCycleStart = text.indexOf('const openNewCycle = (p: Peptide) => {')
-    const openEditCycleStart = text.indexOf('const openEditCycle = (p: Peptide, c: Cycle) => {')
-    const openNewCycleSource = text.slice(openNewCycleStart, openEditCycleStart)
+    const abschnitt = (name: string) => {
+      const start = text.indexOf(`const ${name} = (p: Peptide) => {`)
+      expect(start, name).toBeGreaterThan(-1)
+      return text.slice(start, text.indexOf('\n  }', start))
+    }
 
-    expect(openNewCycleSource).toContain('setShowCycleForm(true)')
-    expect(openNewCycleSource).not.toContain('aktiver_zyklus_hinweis')
-    expect(openNewCycleSource).not.toContain('activeExists')
+    // „Plan ändern" nimmt den bestehenden Plan mit …
+    expect(abschnitt('openEditCycle')).toContain("setWizardIntent('plan')")
+    expect(abschnitt('openEditCycle')).toContain('setWizardNeuerZyklus(false)')
+    // … ein zweiter Zyklus nicht: ohne `p_plan.id` legt der RPC einen neuen an.
+    expect(abschnitt('openNewCycle')).toContain("setWizardIntent('plan')")
+    expect(abschnitt('openNewCycle')).toContain('setWizardNeuerZyklus(true)')
+    expect(text).toContain('existingPlan={editingPeptideId && !wizardNeuerZyklus ? activePlanFor(editingPeptideId) : undefined}')
   })
 
   test('centers Neue Substanz field editors for mobile thumb reach', () => {
