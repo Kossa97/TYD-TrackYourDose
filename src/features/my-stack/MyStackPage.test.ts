@@ -70,12 +70,37 @@ describe('My Stack page vial view', () => {
     expect(text).not.toContain('onClick={() => setActivePeptideId(p.id)}')
   })
 
-  test('keeps neighboring vials partially visible around the centered active vial', () => {
+  test('stellt die Bühne groß und alle Objekte auf eine Standlinie', () => {
+    // Die Mitte beherrscht den Bildschirm (62 % statt 25 %), die Nachbarn
+    // lugen nur noch herein — zurückgesetzt über Größe, Deckkraft und
+    // Sättigung. `origin-bottom` ist dabei das Entscheidende: ohne das
+    // skaliert jedes Objekt um seine eigene Mitte, die Nachbarn schrumpfen
+    // nach oben UND unten weg und schweben über dem Boden.
     const text = source()
 
-    expect(text).toContain('min(6rem, 25vw)')
+    expect(text).toContain('min(15rem, 62vw)')
     expect(text).toContain('snap-center')
-    expect(text).toContain("isActive ? 'scale-100' : 'scale-90'")
+    expect(text).toContain('origin-bottom')
+    expect(text).toContain("isActive ? 'scale-100' : 'scale-[0.82] opacity-45 saturate-50'")
+  })
+
+  test('setzt das Objekt mit einem Kontaktschatten auf den Boden', () => {
+    // Der breite, weichgezeichnete Spot ließ es in Dunst schweben. Was
+    // „steht auf etwas" macht, ist ein schmaler Schatten direkt darunter.
+    const text = source()
+
+    expect(text).toContain('data-vial-detail="carousel-contact-shadow"')
+  })
+
+  test('zeigt an, wo im Karussell man steht', () => {
+    // Bei 62 % Breite sind die Nachbarn nur noch angeschnitten — ohne diese
+    // Zeile weiß niemand, ob nach dem dritten Wisch noch fünf kommen.
+    const text = source()
+
+    expect(text).toContain('data-vial-position')
+    expect(text).toContain('data-vial-dot={index}')
+    // Ab acht Einträgen eine Leiste: fünfzehn Punkte zählt niemand mehr.
+    expect(text).toContain('stagePeptides.length <= 7')
   })
 
   test('aligns the Neue Substanz tile with the vial carousel axis', () => {
@@ -194,7 +219,9 @@ describe('My Stack page vial view', () => {
 
     expect(text).toContain('updateVialFocus')
     expect(text).toContain('data-vial-detail="carousel-spotlight"')
-    expect(text).toContain('1 - Math.abs(normalized) * 0.78')
+    // Steiler als vorher (0,78): die Nachbarn waren deutlich mitbeleuchtet,
+    // und damit sah keines der Objekte nach Hauptdarsteller aus.
+    expect(text).toContain('1 - Math.abs(normalized) * 1.35')
   })
 
   test('pushes scroll focus through imperative stage-light handles instead of React state', () => {

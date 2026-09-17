@@ -1510,7 +1510,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     }
 
     for (const { handle, normalized } of measured) {
-      const focus = Math.max(0.22, 1 - Math.abs(normalized) * 0.78)
+      // Vorher 0,22 bis 1,0 — die Nachbarn waren deutlich mitbeleuchtet, und
+      // damit sah keines der Objekte nach Hauptdarsteller aus. Jetzt faellt
+      // das Licht steiler ab: die Mitte hat es fast allein.
+      const focus = Math.max(0.1, 1 - Math.abs(normalized) * 1.35)
       handle.setStageLight(focus, -normalized)
     }
   }
@@ -1953,10 +1956,20 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 </div>
 
                 <div className="relative -mx-3">
+                  {/* Der breite, weichgezeichnete Spot ueber der ganzen
+                      Flaeche liess das Objekt in Dunst schweben. Was „steht
+                      auf etwas" macht, ist ein SCHMALER Schatten direkt unter
+                      ihm — und ein Licht, das nur die Mitte trifft, nicht die
+                      ganze Bahn. */}
                   <div
                     data-vial-detail="carousel-spotlight"
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-8 top-4 bottom-10 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.20),rgba(34,211,238,0.08)_38%,transparent_72%)] blur-xl"
+                    className="pointer-events-none absolute inset-x-1/4 top-6 bottom-14 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.16),rgba(34,211,238,0.05)_46%,transparent_74%)] blur-2xl"
+                  />
+                  <div
+                    data-vial-detail="carousel-contact-shadow"
+                    aria-hidden="true"
+                    className="pointer-events-none absolute bottom-[3.25rem] left-1/2 h-3 w-[38%] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.55),transparent_70%)] blur-[6px]"
                   />
                 <SloshProvider engine={sloshEngine}>
                 <div
@@ -1971,17 +1984,22 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
                   }`}
                   style={{
-                    paddingInline: 'calc((100% - min(6rem, 25vw)) / 2)',
-                    scrollPaddingInline: 'calc((100% - min(6rem, 25vw)) / 2)',
+                    // Die Buehne beherrscht den Bildschirm; die Nachbarn lugen
+                    // nur noch herein. Damit man trotzdem weiss, wie viele es
+                    // sind, stehen die Punkte darunter — sie sind hier keine
+                    // Zierde, sondern der Ersatz fuer das, was die Breite
+                    // verdeckt.
+                    paddingInline: 'calc((100% - min(15rem, 62vw)) / 2)',
+                    scrollPaddingInline: 'calc((100% - min(15rem, 62vw)) / 2)',
                   }}
                 >
                   <div
                     data-vial-add
                     data-vial-add-slot
-                    className={`${vialItemSnapClassName} flex items-center min-h-[calc(7rem+3rem)] shrink-0 rounded-2xl px-2 py-2 sm:min-h-[calc(9rem+3rem)] ${
+                    className={`${vialItemSnapClassName} flex origin-bottom items-center min-h-[calc(7rem+3rem)] shrink-0 rounded-2xl px-2 py-2 sm:min-h-[calc(9rem+3rem)] ${
                       isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
-                    } ${addTileActive ? 'scale-100' : 'scale-90'}`}
-                    style={{ width: 'min(6rem, 25vw)' }}
+                    } ${addTileActive ? 'scale-100' : 'scale-[0.82] opacity-45'}`}
+                    style={{ width: 'min(15rem, 62vw)' }}
                   >
                     <AddVialTile
                       active={addTileActive}
@@ -2001,12 +2019,18 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                       <div
                         key={p.id}
                         data-vial-index={index}
-                        className={`${vialItemSnapClassName} shrink-0 rounded-2xl px-2 py-2 ${
+                        // `origin-bottom`: alle Objekte stehen auf DERSELBEN
+                        // Standlinie. Ohne das skaliert jedes um seine eigene
+                        // Mitte, also schrumpfen die Nachbarn nach oben UND
+                        // unten weg und schweben ueber dem Boden. Beim
+                        // Formular-Karussell war das laengst entschieden; hier
+                        // fehlte es, und bei 62 % Breite faellt es auf.
+                        className={`${vialItemSnapClassName} origin-bottom shrink-0 rounded-2xl px-2 py-2 ${
                           isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
                         } ${
-                          isActive ? 'scale-100' : 'scale-90'
+                          isActive ? 'scale-100' : 'scale-[0.82] opacity-45 saturate-50'
                         }`}
-                        style={{ width: 'min(6rem, 25vw)' }}
+                        style={{ width: 'min(15rem, 62vw)' }}
                         aria-label={p.name}
                         role="button"
                         tabIndex={0}
@@ -2037,6 +2061,40 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 </div>
                 </SloshProvider>
                 </div>
+
+                {/* Wo bin ich. Bei 62 % Breite sind die Nachbarn nur noch
+                    angeschnitten — ohne diese Zeile wuesste niemand, ob nach
+                    dem dritten Wisch noch fuenf kommen oder einer. Bis zu
+                    sieben Eintraege als Punkte zum Antippen, darueber eine
+                    Leiste, weil fuenfzehn Punkte niemand mehr zaehlt. */}
+                {stagePeptides.length > 1 && (
+                  <div data-vial-position className="mt-1 flex items-center justify-center gap-1.5">
+                    {stagePeptides.length <= 7 ? stagePeptides.map((p, index) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => scrollToPeptideIndex(index)}
+                        aria-label={p.name}
+                        aria-current={index === activeIndex}
+                        data-vial-dot={index}
+                        className={`h-2.5 rounded-full transition-all duration-300 ${
+                          index === activeIndex ? 'w-6 bg-cyan-300' : 'w-2.5 bg-slate-700 hover:bg-slate-500'
+                        }`}
+                      />
+                    )) : (
+                      <div className="h-1 w-24 overflow-hidden rounded-full bg-slate-800">
+                        <div
+                          className="h-full rounded-full bg-cyan-300 transition-all duration-300"
+                          style={{
+                            width: `${100 / stagePeptides.length}%`,
+                            marginInlineStart: `${(activeIndex / stagePeptides.length) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
 
                 <div className="mt-2 flex gap-2 px-1 text-xs font-semibold">
                   <button
