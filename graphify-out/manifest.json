@@ -2790,15 +2790,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1789630030.834038,
-    "seen": 1789630167.4697993,
-    "ast_hash": "fd842a4e8e974905fbe078a4d2ac6155",
+    "mtime": 1789630854.6019921,
+    "seen": 1789630983.3075233,
+    "ast_hash": "ab040b1851e864286d990929c124074d",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1789630001.275024,
-    "seen": 1789630167.4698014,
-    "ast_hash": "84d12d3e9d3a207f681ba6bec7b47df5",
+    "mtime": 1789630732.9102154,
+    "seen": 1789630983.3075247,
+    "ast_hash": "bd1d8a3afe7b5c62c92b5300a739d5cd",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789630058.0715249,
-    "seen": 1789630167.4701886,
+    "mtime": 1789630880.2275739,
+    "seen": 1789630983.3078268,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4473,30 +4473,6 @@
     "mtime": 1789620604.0540361,
     "seen": 1789620898.8099995,
     "ast_hash": "609d905af5902d4d970f54a5bd07c2cd",
-    "semantic_hash": ""
-  },
-  "src/features/my-stack/lib/carouselSettle.test.ts": {
-    "mtime": 1789622146.0584226,
-    "seen": 1789622616.0001402,
-    "ast_hash": "76399804656903e3061377e6d0634759",
-    "semantic_hash": ""
-  },
-  "src/features/my-stack/lib/carouselSettle.ts": {
-    "mtime": 1789622146.0565875,
-    "seen": 1789622616.0001419,
-    "ast_hash": "b3f228bb935b1e245b57b97e2976c389",
-    "semantic_hash": ""
-  },
-  "src/features/my-stack/lib/wischSchritte.test.ts": {
-    "mtime": 1789627271.7606468,
-    "seen": 1789630167.469999,
-    "ast_hash": "0b49e30052ced32d68b0538ad77bb092",
-    "semantic_hash": ""
-  },
-  "src/features/my-stack/lib/wischSchritte.ts": {
-    "mtime": 1789627271.759228,
-    "seen": 1789630167.4700003,
-    "ast_hash": "e9542a08554c270d833d6a21939838ad",
     "semantic_hash": ""
   }
 }
