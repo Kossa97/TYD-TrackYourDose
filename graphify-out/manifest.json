@@ -3390,15 +3390,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/StageLabel.test.ts": {
-    "mtime": 1789633103.8507738,
-    "seen": 1789633216.9360855,
-    "ast_hash": "ec5f0e8b946891056ea177f46c04c571",
+    "mtime": 1789633755.7320485,
+    "seen": 1789633997.4825635,
+    "ast_hash": "ebd29ddcd0bd00791bab626bc3620420",
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/StageLabel.tsx": {
-    "mtime": 1789632866.8454583,
-    "seen": 1789633216.9360876,
-    "ast_hash": "8eca5ed5f6530bec076e57e079456bac",
+    "mtime": 1789633755.7318516,
+    "seen": 1789633997.4825654,
+    "ast_hash": "4b89820da95fe329a3114706523994f1",
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/liquidGeometry.test.ts": {
@@ -3804,9 +3804,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/gel/GelVisual.test.ts": {
-    "mtime": 1789389104.460429,
-    "seen": 1789389289.5381322,
-    "ast_hash": "ce062fe4bc196b4502719190ffa60ee5",
+    "mtime": 1789633871.4548216,
+    "seen": 1789633997.4824002,
+    "ast_hash": "62b0062e6ea9a735d6f3645152e56a25",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/gel/GelVisual.tsx": {
@@ -3876,9 +3876,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/spray/SprayVisual.test.ts": {
-    "mtime": 1789395299.0405006,
-    "seen": 1789395476.633826,
-    "ast_hash": "b4fb1f62b56568599922e27b74ca1329",
+    "mtime": 1789633871.4551585,
+    "seen": 1789633997.482449,
+    "ast_hash": "246c63324d3673dae9391843b3081ab3",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/spray/SprayVisual.tsx": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789633128.7715147,
-    "seen": 1789633216.9363048,
+    "mtime": 1789633875.771559,
+    "seen": 1789633997.482825,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
