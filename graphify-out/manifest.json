@@ -2790,15 +2790,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1789638434.0714169,
-    "seen": 1789639223.7131815,
-    "ast_hash": "43553557ad1eeebb565c8f7c2d165bf4",
+    "mtime": 1789639976.9013233,
+    "seen": 1789640451.3670464,
+    "ast_hash": "a445b8efcb53a1f8fedbe69414790c20",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1789632246.6311,
-    "seen": 1789632485.0827975,
-    "ast_hash": "951281a88c5713211ab96655ac63809f",
+    "mtime": 1789639976.9001918,
+    "seen": 1789640451.3670478,
+    "ast_hash": "b028cb7c1c760fe269d9081c9ee76913",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789638835.8069143,
-    "seen": 1789639223.7135508,
+    "mtime": 1789640259.6804163,
+    "seen": 1789640451.3674145,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4476,21 +4476,21 @@
     "semantic_hash": ""
   },
   "src/components/navigation/BottomNavigation.tsx": {
-    "mtime": 1789638712.9458292,
-    "seen": 1789639223.7130263,
-    "ast_hash": "875b55b0e24e1ef0bd1e5eaa6666d481",
+    "mtime": 1789640111.908618,
+    "seen": 1789640451.3668633,
+    "ast_hash": "1fa2850bc4d3325f3df2af9264212e20",
     "semantic_hash": ""
   },
   "src/components/navigation/LiquidGlassTabBar.test.tsx": {
-    "mtime": 1789638712.9530451,
-    "seen": 1789639223.713028,
-    "ast_hash": "454e91ad0695c877eb79f5e9cadbc55d",
+    "mtime": 1789640227.144555,
+    "seen": 1789640451.3668659,
+    "ast_hash": "a246ea4a23327936034ca8fcd362f653",
     "semantic_hash": ""
   },
   "src/components/navigation/LiquidGlassTabBar.tsx": {
-    "mtime": 1789638325.018218,
-    "seen": 1789639223.7130299,
-    "ast_hash": "c8f9e63530b720107250a18dbfba0532",
+    "mtime": 1789640155.6196468,
+    "seen": 1789640451.3668673,
+    "ast_hash": "3ae4883a91b892459100060071e77c9b",
     "semantic_hash": ""
   },
   "src/components/navigation/bottomNavMetrics.test.ts": {
