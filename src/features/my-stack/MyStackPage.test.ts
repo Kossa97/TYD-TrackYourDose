@@ -564,7 +564,12 @@ describe('My Stack page vial view', () => {
     // einer Klasse in diesem Bildschirm, nicht geschätzt.
     const text = source()
 
-    expect(text).toContain("'calc(100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 208px)'")
+    expect(text).toContain("'calc(100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 224px)'")
+    // 208 feste Teile plus 16, die nicht zur Bühne gehören: die neue
+    // Navigationsleiste belegt 16 px weniger als die alte (74 statt 90). Ohne
+    // diesen Posten wäre die Bühne um ebendiese 16 px gewachsen — gewollt ist
+    // nur, dass alles höher sitzt, nicht dass es größer wird.
+    expect(208 + (90 - 74)).toBe(224)
     // Die Abstände, aus denen die 208 px bestehen, dürfen sich nicht ändern,
     // ohne dass die Zahl mitgeht.
     expect(text).toContain('-mx-3 mb-2 flex snap-x gap-2 overflow-x-auto px-3 pb-1')

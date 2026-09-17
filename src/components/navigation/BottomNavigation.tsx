@@ -1,6 +1,7 @@
 import { CalendarDays, FlaskConical, Home, Plus, User, X } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { hapticTick } from '../../lib/haptics'
 import { CENTER_ACTION_INDEX, TAB_ITEMS, resolveActiveTabId, type TabId } from './tabModel'
 import { LiquidGlassTabBar, type GlassTabItem } from './LiquidGlassTabBar'
 
@@ -33,7 +34,19 @@ export function BottomNavigation({
   onToggleQuickActions,
 }: BottomNavigationProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const activeId = resolveActiveTabId(pathname)
+
+  /**
+   * Halten und schieben endet hier: der Reiter unter dem Finger wird beim
+   * Loslassen geoeffnet. Ein einfacher Tipp laeuft nicht hierueber — den
+   * erledigt die Verknuepfung selbst, samt allem, was ein Browser an einer
+   * Verknuepfung kann (Mittelklick, Kontextmenue, Vorlesung).
+   */
+  const oeffne = (id: string) => {
+    const ziel = TAB_ITEMS.find(tab => tab.id === id)
+    if (ziel) navigate(ziel.route)
+  }
 
   const items: GlassTabItem[] = TAB_ITEMS.map(tab => {
     const Icon = ICONS[tab.id]
@@ -59,6 +72,10 @@ export function BottomNavigation({
       items={items}
       activeId={activeId}
       centerIndex={CENTER_ACTION_INDEX}
+      onSelect={oeffne}
+      // Ein Klick je Reiter, den der Finger ueberstreicht — wie am Rad einer
+      // Uhr, und dasselbe Gefuehl wie im My-Stack-Karussell.
+      onPreviewChange={() => { void hapticTick() }}
       // „Navigation" heisst in beiden Startsprachen gleich. Ein eigener
       // Schluessel dafuer haette die Sprachdateien angefasst, und der Vertrag
       // in `my-stack/lib/i18n.test.ts` haelt die ausserhalb seines Bereichs

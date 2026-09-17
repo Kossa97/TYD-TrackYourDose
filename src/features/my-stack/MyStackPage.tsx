@@ -2299,11 +2299,18 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                    *   14  Positionsleiste: h-2.5 plus mt-1
                    *    6  Reserve gegen Rundung und andere Schriftgroessen
                    *
+                   * Dazu 16 px, die nicht zur Buehne gehoeren: die neue
+                   * Navigationsleiste belegt 16 px weniger als die alte
+                   * (74 statt 90). Ohne diesen Posten waere die Buehne um
+                   * ebendiese 16 px gewachsen und My Stack saehe anders aus
+                   * als vorher. Gewollt ist nur, dass alles hoeher sitzt —
+                   * gleich gross, nicht groesser. 208 + 16 = 224.
+                   *
                    * dvh und nicht vh: auf dem Telefon zaehlt die Flaeche, die
                    * gerade zu sehen ist, nicht die ohne Adressleiste.
                    */
                   '--buehne-hoehe':
-                    'calc(100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 208px)',
+                    'calc(100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 224px)',
                 } as CSSProperties}
               >
                 {/* Die Reiter: „Alle" und alle sechs Kategorien, feste Plaetze.
