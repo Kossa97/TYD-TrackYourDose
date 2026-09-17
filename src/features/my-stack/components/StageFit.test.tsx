@@ -69,11 +69,53 @@ describe('StageFit', () => {
     expect(skalaVon()).toBe('scale(1)')
   })
 
-  it('skaliert vom Boden, damit alle auf einer Standlinie stehen', () => {
+  it('skaliert von der unteren linken Ecke in den Kasten hinein', () => {
+    // Der aeussere Kasten IST das fertige Bild; das Objekt fuellt ihn von
+    // seiner unteren linken Ecke aus genau aus. Die Standlinie unten bleibt
+    // damit fuer alle Formen dieselbe.
     masse({ width: 240, height: 340 }, { width: 92, height: 32 })
     render(<StageFit><div /></StageFit>)
 
     expect((document.querySelector('[data-stage-fit-object]') as HTMLElement).style.transformOrigin)
-      .toBe('bottom center')
+      .toBe('bottom left')
+  })
+
+  it('macht den Kasten so gross wie das fertige Bild', () => {
+    // Das ist der Kern: `scale()` aendert das Bild, nicht das Layout. Ohne
+    // diesen Kasten belegte eine auf 240 px heruntergerechnete Kapsel im
+    // Layout weiterhin ihre 364 px — sie ragte aus dem Karussellplatz heraus
+    // und verbreiterte den scrollbaren Streifen.
+    masse({ width: 240, height: 340 }, { width: 92, height: 32 })
+    render(<StageFit maxScale={4}><div /></StageFit>)
+
+    const kasten = document.querySelector('[data-stage-fit-box]') as HTMLElement
+    // 92 x 2,6087 = 240 (die Flaechenbreite), 32 x 2,6087 = 83,48.
+    expect(kasten.style.width).toBe('240px')
+    expect(kasten.style.height).toBe('83.47826086956522px')
+  })
+
+  it('steht mittig, ohne dass die gemessene Breite daran haengt', () => {
+    // Die Mitte kommt aus `left-1/2 -translate-x-1/2` am Kasten, nicht aus
+    // einer Flussmessung. Sonst verschoebe jede Aenderung an der Objektbreite
+    // — erste Messung, Schriftnachladung, Etikettenwechsel — das Objekt
+    // seitlich, und genau das hat nach dem Wischen kurz gezuckt.
+    masse({ width: 240, height: 340 }, { width: 92, height: 32 })
+    render(<StageFit><div /></StageFit>)
+
+    const kasten = document.querySelector('[data-stage-fit-box]') as HTMLElement
+    expect(kasten.className).toContain('left-1/2')
+    expect(kasten.className).toContain('-translate-x-1/2')
+    expect(kasten.className).toContain('absolute')
+  })
+
+  it('zeigt nichts, bevor gemessen wurde', () => {
+    // Gemessen wird im Layout-Effekt, also vor dem ersten Anzeigen. Bliebe das
+    // Objekt sichtbar, saehe man einen Bildwechsel von Vorlagengroesse auf
+    // eingepasst.
+    masse({ width: 0, height: 0 }, { width: 0, height: 0 })
+    render(<StageFit><div /></StageFit>)
+
+    expect((document.querySelector('[data-stage-fit-object]') as HTMLElement).style.visibility)
+      .toBe('hidden')
   })
 })
