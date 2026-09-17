@@ -107,8 +107,10 @@ describe('My Stack page vial view', () => {
     const text = source()
 
     expect(text).toContain('data-vial-add-slot')
-    expect(text).toContain('min-h-[calc(7rem+3rem)]')
-    expect(text).toContain('sm:min-h-[calc(9rem+3rem)]')
+    // Dieselbe Höhe wie die Standplätze der Objekte, damit die Kachel auf
+    // derselben Linie steht statt daneben zu schweben.
+    expect(text).toContain('min-h-[46vh] max-h-[26rem]')
+
     expect(text).toContain('flex items-center')
   })
 
@@ -479,6 +481,28 @@ describe('My Stack page vial view', () => {
     const text = source()
 
     expect(text).toContain('onFlightChange={imFlug => sloshEngine.setEnabled(!imFlug)}')
+  })
+
+  test('lässt unter dem Karussell nichts als Bühne, Name und eine Zeile', () => {
+    // Zyklus, Bestand, Info-Klappe und die Knopfreihe standen alle unter dem
+    // Objekt — der Bildschirm war voll, bevor man irgendetwas angetippt
+    // hatte. Jetzt liegen sie im Vollbild, das der Tipp öffnet.
+    const text = source()
+
+    expect(text).toContain('const eintragDetails = () => (')
+    // Aufgerufen wird die Funktion genau einmal: im Vollbild.
+    expect(text.split('eintragDetails()').length - 1).toBe(1)
+    const sheet = text.slice(text.indexOf('<StageDetailSheet'), text.indexOf('</StageDetailSheet>'))
+    expect(sheet).toContain('{eintragDetails()}')
+  })
+
+  test('passt das Objekt in die Fläche ein, statt es fest zu bemessen', () => {
+    // Jede Form bringt eigene Pixelmaße mit: ein Pen ist bei Karussellgröße
+    // 237 px hoch, eine Kapsel 92 px breit. Ein gemeinsamer Faktor gäbe es
+    // nicht — derselbe, der die Kapsel füllt, schöbe den Pen über den Rand.
+    const text = source()
+
+    expect(text).toContain('<StageFit className="h-[46vh] max-h-[26rem] w-full">')
   })
 
   test('zeigt alle sieben Reiter, auch die leeren, an festem Platz', () => {

@@ -22,6 +22,7 @@ import { SloshProvider, useSloshEngine } from '../../components/SloshContext'
 import { LabLoader } from '../../components/LabLoader'
 import { StackItemWizard } from './components/StackItemWizard'
 import { StageDetailSheet } from './components/StageDetailSheet'
+import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
 import { StackItemDetails } from './components/StackItemDetails'
 import { StackArchive } from './components/StackArchive'
@@ -1725,393 +1726,17 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
   // ─────────────────────────────────────────────────────────────────────────
 
-  return (
-    <div>
-      {/* ── Header (single row): Titel · Suche · Ansicht/Filter ─────────── */}
-      <div className="relative flex items-center gap-2 mb-4">
-        {/* Titel — kollabiert smooth, sobald die Suche geöffnet wird */}
-        <div className={`flex min-w-0 items-center gap-2 overflow-hidden transition-all duration-300 ${searchOpen ? 'max-w-0 opacity-0' : 'max-w-[70%] opacity-100'}`}>
-          <FlaskConical size={18} className="shrink-0 text-sky-400" />
-          <h2 className="whitespace-nowrap font-semibold text-white">{t('meine_peptide')}</h2>
-          {peptides.length > 0 && (
-            <span className="badge bg-slate-700 text-slate-400">{peptides.length}</span>
-          )}
-        </div>
-
-        {peptides.length > 0 && (
-          <>
-            {/* Suchfeld — wächst smooth von rechts in die Zeile */}
-            <div className={`relative overflow-hidden transition-[max-width] duration-300 ease-out ${searchOpen ? 'max-w-full flex-1' : 'max-w-0'}`}>
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-              <input
-                ref={searchInputRef}
-                className="input w-full pl-9 text-sm"
-                placeholder={t('peptid_suchen')}
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Escape') closeSearch() }}
-              />
-            </div>
-
-            {!searchOpen && <div className="flex-1" />}
-
-            {/* Lupe / Schließen */}
-            <button
-              type="button"
-              onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
-              aria-label={searchOpen ? t('close') : t('peptid_suchen')}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
-            >
-              {searchOpen ? <X size={18} /> : <Search size={18} />}
-            </button>
-
-            {!searchOpen && (
-              <button
-                type="button"
-                onClick={() => { setFilterOpen(false); setArchiveViewOpen(true); loadArchived() }}
-                aria-label={t('archiv')}
-                title={t('archiv')}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
-              >
-                <Archive size={18} />
-              </button>
-            )}
-
-            {/* Ansicht + Sortierung (Popover) */}
-            {!searchOpen && (
-              <div className="relative shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setFilterOpen(o => !o)}
-                  aria-label={t('sort_aria_label')}
-                  aria-expanded={filterOpen}
-                  className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-colors ${
-                    filterOpen
-                      ? 'border-cyan-400/50 bg-cyan-400/10 text-cyan-300'
-                      : 'border-slate-800 bg-slate-900/70 text-slate-300 hover:border-cyan-400/50 hover:text-cyan-300'
-                  }`}
-                >
-                  <SlidersHorizontal size={18} />
-                </button>
-
-                {filterOpen && (
-                  <>
-                    <div className="fixed inset-0 z-20" onClick={() => setFilterOpen(false)} />
-                    <div className="absolute right-0 top-full z-30 mt-2 w-56 space-y-3 rounded-xl border border-slate-800 bg-[var(--surface-raised)] p-3 shadow-2xl">
-                      <div>
-                        <p className="mb-1.5 text-xs font-semibold text-slate-400">Ansicht</p>
-                        <div className="flex rounded-xl border border-slate-800 bg-slate-900/70 p-1">
-                          <button
-                            type="button"
-                            onClick={() => setViewMode('vials')}
-                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                              viewMode === 'vials' ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:text-white'
-                            }`}
-                          >
-                            <FlaskConical size={14} /> Vials
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setViewMode('list')}
-                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                              viewMode === 'list' ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:text-white'
-                            }`}
-                          >
-                            <List size={14} /> Liste
-                          </button>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="mb-1.5 text-xs font-semibold text-slate-400">{t('sort_aria_label')}</p>
-                        <select
-                          className="select w-full pr-8 text-sm"
-                          value={wirksameSortierung}
-                          aria-label={t('sort_aria_label')}
-                          onChange={e => setSortBy(e.target.value as PeptideSortKey)}
-                        >
-                          <option value="active_name">{t('sort_option_active_name')}</option>
-                          {PEPTIDE_SORT_GROUPS
-                            .filter(group => !group.needs || moeglicheSortierungen.has(group.needs))
-                            .map(group => (
-                            <optgroup key={group.labelKey} label={t(group.labelKey)}>
-                              {group.options.map(key => (
-                                <option key={key} value={key}>{t(SORT_OPTION_LABEL_KEYS[key])}</option>
-                              ))}
-                            </optgroup>
-                          ))}
-                        </select>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => { setFilterOpen(false); setArchiveViewOpen(true); loadArchived() }}
-                        className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
-                      >
-                        <Archive size={14} /> {t('archiv')}
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
-      <div>
-          {initialLoad && <LabLoader fadingOut={loaderFading} />}
-
-          {!loading && peptides.length > 0 && viewMode === 'list' && (
-            <button
-              type="button"
-              data-ob="btn-peptid-anlegen"
-              onClick={handleNewPeptide}
-              className="mb-4 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-700 bg-slate-900/40 py-2.5 text-sm font-semibold text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
-            >
-              <Plus size={15} /> {t('neues_peptid_title')}
-            </button>
-          )}
-
-          {!loading && peptides.length === 0 && (
-            <div className="card text-center py-10 text-slate-500">
-              <p className="mb-4">{t('keine_peptide')}</p>
-              <AddVialTile onClick={handleNewPeptide} label={t('neues_peptid_title')} obKey="btn-peptid-anlegen" />
-            </div>
-          )}
-
-          {search && displayPeptides.length === 0 && (
-            <div className="card text-center py-8 text-slate-500 text-sm">
-              {t('kein_peptid_gefunden_msg', { search })}
-            </div>
-          )}
-
-          {!loading && viewMode === 'vials' && activePeptide && (
-            <div className="space-y-4">
-              <div className="py-5">
-                {/* Die Reiter: „Alle" und alle sechs Kategorien, feste Plaetze.
-                    Leere bleiben stehen und sind gedimmt — „Medikamente" ohne
-                    Inhalt sagt, dass die App das auch kann; versteckt saehe
-                    das niemand. Die Leiste wischt waagerecht, das Karussell
-                    darunter auch: deshalb ist sie flach, mit Pillen, und
-                    deutlich abgesetzt. */}
-                <div
-                  data-stack-tabs
-                  role="tablist"
-                  aria-label={String(t('my_stack_category', { defaultValue: 'Kategorie' }))}
-                  className="no-scrollbar -mx-3 mb-3 flex snap-x gap-2 overflow-x-auto px-3 pb-1"
-                >
-                  {STACK_TABS.map(reiter => {
-                    const anzahl = reiterZaehler.get(reiter.key) ?? 0
-                    const offen = reiter.key === activeTab
-                    return (
-                      <button
-                        key={reiter.key}
-                        type="button"
-                        role="tab"
-                        aria-selected={offen}
-                        data-stack-tab={reiter.key}
-                        data-stack-tab-count={anzahl}
-                        onClick={() => reiterWechseln(reiter.key)}
-                        className={`flex min-h-9 shrink-0 snap-start cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${offen
-                          ? 'border-cyan-400/50 bg-cyan-400/15 text-cyan-200'
-                          : anzahl === 0
-                            ? 'border-white/[0.06] bg-white/[0.02] text-slate-600'
-                            : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-cyan-400/25'
-                        }`}
-                      >
-                        {t(reiter.labelKey, { defaultValue: reiter.defaultValue })}
-                        {anzahl > 0 && (
-                          <span className={`text-xs font-semibold tabular-nums ${offen ? 'text-cyan-100/70' : 'text-slate-500'}`}>
-                            {anzahl}
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-
-                <div className="mb-2 flex items-center justify-between px-3">
-                  <button
-                    type="button"
-                    onClick={() => selectPeptideOffset(-1)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-900/80 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
-                    aria-label="Vorheriges Peptid"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  {addTileActive ? <div aria-hidden /> : (() => {
-                    const days = expiryDaysLeft(activePeptide)
-                    const expiryTone = days === null ? 'border-slate-700 bg-slate-900 text-slate-300' : days > 7 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : days > 0 ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-red-500/30 bg-red-500/10 text-red-300'
-                    const expiryLabel = days === null
-                      ? t('peptide_form_not_set', { defaultValue: 'Nicht gesetzt' })
-                      : days > 0
-                        ? `Haltbar: ${days} ${days === 1 ? 'Tag' : 'Tage'}`
-                        : t('abgelaufen_warn')
-                    const hasActive = cyclesOf(activePeptide.id).some(c => c.active)
-
-                    return (
-                      <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5 text-xs">
-                        <span className={`rounded-full border px-2.5 py-1 font-semibold ${expiryTone}`}>{expiryLabel}</span>
-                        <span className={`rounded-full px-2.5 py-1 font-semibold ${hasActive ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
-                          {hasActive ? t('aktiv_badge') : t('inaktiv_badge')}
-                        </span>
-                        <span className="rounded-full bg-slate-900 px-2.5 py-1 font-semibold tabular-nums text-slate-500">
-                          {activeIndex + 1} / {stagePeptides.length}
-                        </span>
-                      </div>
-                    )
-                  })()}
-                  <button
-                    type="button"
-                    onClick={() => selectPeptideOffset(1)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-900/80 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
-                    aria-label="Nächstes Peptid"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-
-                <div className="relative -mx-3">
-                  {/* Der breite, weichgezeichnete Spot ueber der ganzen
-                      Flaeche liess das Objekt in Dunst schweben. Was „steht
-                      auf etwas" macht, ist ein SCHMALER Schatten direkt unter
-                      ihm — und ein Licht, das nur die Mitte trifft, nicht die
-                      ganze Bahn. */}
-                  <div
-                    data-vial-detail="carousel-spotlight"
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-1/4 top-6 bottom-14 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.16),rgba(34,211,238,0.05)_46%,transparent_74%)] blur-2xl"
-                  />
-                  <div
-                    data-vial-detail="carousel-contact-shadow"
-                    aria-hidden="true"
-                    className="pointer-events-none absolute bottom-[3.25rem] left-1/2 h-3 w-[38%] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.55),transparent_70%)] blur-[6px]"
-                  />
-                <SloshProvider engine={sloshEngine}>
-                <div
-                  ref={vialCarouselRef}
-                  onScroll={handleVialCarouselScroll}
-                  onPointerDown={handleVialCarouselPointerDown}
-                  onPointerMove={handleVialCarouselPointerMove}
-                  onPointerUp={handleVialCarouselPointerUp}
-                  onPointerCancel={handleVialCarouselPointerUp}
-                  onWheel={handleVialCarouselWheel}
-                  className={`relative z-10 flex ${vialSnapClassName} gap-2 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
-                    isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
-                  }`}
-                  style={{
-                    // Die Buehne beherrscht den Bildschirm; die Nachbarn lugen
-                    // nur noch herein. Damit man trotzdem weiss, wie viele es
-                    // sind, stehen die Punkte darunter — sie sind hier keine
-                    // Zierde, sondern der Ersatz fuer das, was die Breite
-                    // verdeckt.
-                    paddingInline: 'calc((100% - min(15rem, 62vw)) / 2)',
-                    scrollPaddingInline: 'calc((100% - min(15rem, 62vw)) / 2)',
-                  }}
-                >
-                  <div
-                    data-vial-add
-                    data-vial-add-slot
-                    className={`${vialItemSnapClassName} flex origin-bottom items-center min-h-[calc(7rem+3rem)] shrink-0 rounded-2xl px-2 py-2 sm:min-h-[calc(9rem+3rem)] ${
-                      isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
-                    } ${addTileActive ? 'scale-100' : 'scale-[0.82] opacity-45'}`}
-                    style={{ width: 'min(15rem, 62vw)' }}
-                  >
-                    <AddVialTile
-                      active={addTileActive}
-                      onClick={() => { if (!vialSuppressClickRef.current) handleNewPeptide() }}
-                      label={t('neues_peptid_title')}
-                    />
-                  </div>
-                  {stagePeptides.map((p, index) => {
-                    const isActive = p.id === activePeptide.id
-                    const peptideColor = p.color_hex ?? getStableStackItemColor(p.id)
-                    const vialPct = Math.round(getVialFillPct(p) ?? 100)
-                    // Only forms whose fill level says something show it. A
-                    // sealed ampoule would otherwise read "100 %" forever.
-                    const showsFillPct = getDosageForm(p.dosage_form).stageForm?.hasMeaningfulFill ?? false
-
-                    return (
-                      <div
-                        key={p.id}
-                        data-vial-index={index}
-                        // `origin-bottom`: alle Objekte stehen auf DERSELBEN
-                        // Standlinie. Ohne das skaliert jedes um seine eigene
-                        // Mitte, also schrumpfen die Nachbarn nach oben UND
-                        // unten weg und schweben ueber dem Boden. Beim
-                        // Formular-Karussell war das laengst entschieden; hier
-                        // fehlte es, und bei 62 % Breite faellt es auf.
-                        className={`${vialItemSnapClassName} origin-bottom shrink-0 rounded-2xl px-2 py-2 ${
-                          isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
-                        } ${
-                          isActive ? 'scale-100' : 'scale-[0.82] opacity-45 saturate-50'
-                        }`}
-                        style={{ width: 'min(15rem, 62vw)' }}
-                        aria-label={p.name}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => handleVialCarouselItemClick(index)}
-                        onKeyDown={e => handleVialCarouselItemKeyDown(e, index)}
-                      >
-                        <StackStage
-                          key={animationEpoch}
-                          item={{ ...p, color_hex: peptideColor }}
-                          fillPct={vialPct}
-                          animateOnMount={true}
-                          isActive={isActive}
-                          size="carousel"
-                          stageLightRef={handle => {
-                            const handles = vialStageLightHandlesRef.current
-                            if (handle) handles.set(index, handle)
-                            else handles.delete(index)
-                          }}
-                        />
-                        {isActive && showsFillPct && (
-                          <p className="mt-1 text-center text-xs font-semibold tabular-nums text-slate-400">
-                            {Math.round(vialPct)}%
-                          </p>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-                </SloshProvider>
-                </div>
-
-                {/* Wo bin ich. Bei 62 % Breite sind die Nachbarn nur noch
-                    angeschnitten — ohne diese Zeile wuesste niemand, ob nach
-                    dem dritten Wisch noch fuenf kommen oder einer. Bis zu
-                    sieben Eintraege als Punkte zum Antippen, darueber eine
-                    Leiste, weil fuenfzehn Punkte niemand mehr zaehlt. */}
-                {stagePeptides.length > 1 && (
-                  <div data-vial-position className="mt-1 flex items-center justify-center gap-1.5">
-                    {stagePeptides.length <= 7 ? stagePeptides.map((p, index) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => scrollToPeptideIndex(index)}
-                        aria-label={p.name}
-                        aria-current={index === activeIndex}
-                        data-vial-dot={index}
-                        className={`h-2.5 rounded-full transition-all duration-300 ${
-                          index === activeIndex ? 'w-6 bg-cyan-300' : 'w-2.5 bg-slate-700 hover:bg-slate-500'
-                        }`}
-                      />
-                    )) : (
-                      <div className="h-1 w-24 overflow-hidden rounded-full bg-slate-800">
-                        <div
-                          className="h-full rounded-full bg-cyan-300 transition-all duration-300"
-                          style={{
-                            width: `${100 / stagePeptides.length}%`,
-                            marginInlineStart: `${(activeIndex / stagePeptides.length) * 100}%`,
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-
+  /**
+   * Alles zu dem Eintrag, der auf der Buehne steht.
+   *
+   * Steht NICHT mehr unter dem Karussell: dort ist jetzt das Objekt, sein
+   * Name und eine Zeile — sonst nichts. Erst das Antippen oeffnet das hier,
+   * im Vollbild. Als Funktion im Komponenten statt als eigene Datei, weil
+   * der Block auf zwei Dutzend Zustaende und Handler zugreift, die alle
+   * hier leben; herauszuloesen hiesse, sie alle durchzureichen.
+   */
+  const eintragDetails = () => (
+    <>
                 <div className="mt-2 flex gap-2 px-1 text-xs font-semibold">
                   <button
                     type="button"
@@ -2465,6 +2090,404 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     </>
                   )
                 })()}
+    </>
+  )
+
+  return (
+    <div>
+      {/* ── Header (single row): Titel · Suche · Ansicht/Filter ─────────── */}
+      <div className="relative flex items-center gap-2 mb-4">
+        {/* Titel — kollabiert smooth, sobald die Suche geöffnet wird */}
+        <div className={`flex min-w-0 items-center gap-2 overflow-hidden transition-all duration-300 ${searchOpen ? 'max-w-0 opacity-0' : 'max-w-[70%] opacity-100'}`}>
+          <FlaskConical size={18} className="shrink-0 text-sky-400" />
+          <h2 className="whitespace-nowrap font-semibold text-white">{t('meine_peptide')}</h2>
+          {peptides.length > 0 && (
+            <span className="badge bg-slate-700 text-slate-400">{peptides.length}</span>
+          )}
+        </div>
+
+        {peptides.length > 0 && (
+          <>
+            {/* Suchfeld — wächst smooth von rechts in die Zeile */}
+            <div className={`relative overflow-hidden transition-[max-width] duration-300 ease-out ${searchOpen ? 'max-w-full flex-1' : 'max-w-0'}`}>
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                className="input w-full pl-9 text-sm"
+                placeholder={t('peptid_suchen')}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Escape') closeSearch() }}
+              />
+            </div>
+
+            {!searchOpen && <div className="flex-1" />}
+
+            {/* Lupe / Schließen */}
+            <button
+              type="button"
+              onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
+              aria-label={searchOpen ? t('close') : t('peptid_suchen')}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+            >
+              {searchOpen ? <X size={18} /> : <Search size={18} />}
+            </button>
+
+            {!searchOpen && (
+              <button
+                type="button"
+                onClick={() => { setFilterOpen(false); setArchiveViewOpen(true); loadArchived() }}
+                aria-label={t('archiv')}
+                title={t('archiv')}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+              >
+                <Archive size={18} />
+              </button>
+            )}
+
+            {/* Ansicht + Sortierung (Popover) */}
+            {!searchOpen && (
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setFilterOpen(o => !o)}
+                  aria-label={t('sort_aria_label')}
+                  aria-expanded={filterOpen}
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-colors ${
+                    filterOpen
+                      ? 'border-cyan-400/50 bg-cyan-400/10 text-cyan-300'
+                      : 'border-slate-800 bg-slate-900/70 text-slate-300 hover:border-cyan-400/50 hover:text-cyan-300'
+                  }`}
+                >
+                  <SlidersHorizontal size={18} />
+                </button>
+
+                {filterOpen && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setFilterOpen(false)} />
+                    <div className="absolute right-0 top-full z-30 mt-2 w-56 space-y-3 rounded-xl border border-slate-800 bg-[var(--surface-raised)] p-3 shadow-2xl">
+                      <div>
+                        <p className="mb-1.5 text-xs font-semibold text-slate-400">Ansicht</p>
+                        <div className="flex rounded-xl border border-slate-800 bg-slate-900/70 p-1">
+                          <button
+                            type="button"
+                            onClick={() => setViewMode('vials')}
+                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                              viewMode === 'vials' ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <FlaskConical size={14} /> Vials
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setViewMode('list')}
+                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                              viewMode === 'list' ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <List size={14} /> Liste
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="mb-1.5 text-xs font-semibold text-slate-400">{t('sort_aria_label')}</p>
+                        <select
+                          className="select w-full pr-8 text-sm"
+                          value={wirksameSortierung}
+                          aria-label={t('sort_aria_label')}
+                          onChange={e => setSortBy(e.target.value as PeptideSortKey)}
+                        >
+                          <option value="active_name">{t('sort_option_active_name')}</option>
+                          {PEPTIDE_SORT_GROUPS
+                            .filter(group => !group.needs || moeglicheSortierungen.has(group.needs))
+                            .map(group => (
+                            <optgroup key={group.labelKey} label={t(group.labelKey)}>
+                              {group.options.map(key => (
+                                <option key={key} value={key}>{t(SORT_OPTION_LABEL_KEYS[key])}</option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setFilterOpen(false); setArchiveViewOpen(true); loadArchived() }}
+                        className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+                      >
+                        <Archive size={14} /> {t('archiv')}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
+      <div>
+          {initialLoad && <LabLoader fadingOut={loaderFading} />}
+
+          {!loading && peptides.length > 0 && viewMode === 'list' && (
+            <button
+              type="button"
+              data-ob="btn-peptid-anlegen"
+              onClick={handleNewPeptide}
+              className="mb-4 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-700 bg-slate-900/40 py-2.5 text-sm font-semibold text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+            >
+              <Plus size={15} /> {t('neues_peptid_title')}
+            </button>
+          )}
+
+          {!loading && peptides.length === 0 && (
+            <div className="card text-center py-10 text-slate-500">
+              <p className="mb-4">{t('keine_peptide')}</p>
+              <AddVialTile onClick={handleNewPeptide} label={t('neues_peptid_title')} obKey="btn-peptid-anlegen" />
+            </div>
+          )}
+
+          {search && displayPeptides.length === 0 && (
+            <div className="card text-center py-8 text-slate-500 text-sm">
+              {t('kein_peptid_gefunden_msg', { search })}
+            </div>
+          )}
+
+          {!loading && viewMode === 'vials' && activePeptide && (
+            <div className="space-y-4">
+              <div className="py-5">
+                {/* Die Reiter: „Alle" und alle sechs Kategorien, feste Plaetze.
+                    Leere bleiben stehen und sind gedimmt — „Medikamente" ohne
+                    Inhalt sagt, dass die App das auch kann; versteckt saehe
+                    das niemand. Die Leiste wischt waagerecht, das Karussell
+                    darunter auch: deshalb ist sie flach, mit Pillen, und
+                    deutlich abgesetzt. */}
+                <div
+                  data-stack-tabs
+                  role="tablist"
+                  aria-label={String(t('my_stack_category', { defaultValue: 'Kategorie' }))}
+                  className="no-scrollbar -mx-3 mb-3 flex snap-x gap-2 overflow-x-auto px-3 pb-1"
+                >
+                  {STACK_TABS.map(reiter => {
+                    const anzahl = reiterZaehler.get(reiter.key) ?? 0
+                    const offen = reiter.key === activeTab
+                    return (
+                      <button
+                        key={reiter.key}
+                        type="button"
+                        role="tab"
+                        aria-selected={offen}
+                        data-stack-tab={reiter.key}
+                        data-stack-tab-count={anzahl}
+                        onClick={() => reiterWechseln(reiter.key)}
+                        className={`flex min-h-9 shrink-0 snap-start cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${offen
+                          ? 'border-cyan-400/50 bg-cyan-400/15 text-cyan-200'
+                          : anzahl === 0
+                            ? 'border-white/[0.06] bg-white/[0.02] text-slate-600'
+                            : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-cyan-400/25'
+                        }`}
+                      >
+                        {t(reiter.labelKey, { defaultValue: reiter.defaultValue })}
+                        {anzahl > 0 && (
+                          <span className={`text-xs font-semibold tabular-nums ${offen ? 'text-cyan-100/70' : 'text-slate-500'}`}>
+                            {anzahl}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div className="mb-2 flex items-center justify-between px-3">
+                  <button
+                    type="button"
+                    onClick={() => selectPeptideOffset(-1)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-900/80 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+                    aria-label="Vorheriges Peptid"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  {addTileActive ? <div aria-hidden /> : (() => {
+                    const days = expiryDaysLeft(activePeptide)
+                    const expiryTone = days === null ? 'border-slate-700 bg-slate-900 text-slate-300' : days > 7 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : days > 0 ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-red-500/30 bg-red-500/10 text-red-300'
+                    const expiryLabel = days === null
+                      ? t('peptide_form_not_set', { defaultValue: 'Nicht gesetzt' })
+                      : days > 0
+                        ? `Haltbar: ${days} ${days === 1 ? 'Tag' : 'Tage'}`
+                        : t('abgelaufen_warn')
+                    const hasActive = cyclesOf(activePeptide.id).some(c => c.active)
+
+                    return (
+                      <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5 text-xs">
+                        <span className={`rounded-full border px-2.5 py-1 font-semibold ${expiryTone}`}>{expiryLabel}</span>
+                        <span className={`rounded-full px-2.5 py-1 font-semibold ${hasActive ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-800 text-slate-400'}`}>
+                          {hasActive ? t('aktiv_badge') : t('inaktiv_badge')}
+                        </span>
+                        <span className="rounded-full bg-slate-900 px-2.5 py-1 font-semibold tabular-nums text-slate-500">
+                          {activeIndex + 1} / {stagePeptides.length}
+                        </span>
+                      </div>
+                    )
+                  })()}
+                  <button
+                    type="button"
+                    onClick={() => selectPeptideOffset(1)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-900/80 text-slate-300 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
+                    aria-label="Nächstes Peptid"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+
+                <div className="relative -mx-3">
+                  {/* Der breite, weichgezeichnete Spot ueber der ganzen
+                      Flaeche liess das Objekt in Dunst schweben. Was „steht
+                      auf etwas" macht, ist ein SCHMALER Schatten direkt unter
+                      ihm — und ein Licht, das nur die Mitte trifft, nicht die
+                      ganze Bahn. */}
+                  <div
+                    data-vial-detail="carousel-spotlight"
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-1/4 top-6 bottom-14 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.16),rgba(34,211,238,0.05)_46%,transparent_74%)] blur-2xl"
+                  />
+                  <div
+                    data-vial-detail="carousel-contact-shadow"
+                    aria-hidden="true"
+                    className="pointer-events-none absolute bottom-[3.25rem] left-1/2 h-3 w-[38%] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.55),transparent_70%)] blur-[6px]"
+                  />
+                <SloshProvider engine={sloshEngine}>
+                <div
+                  ref={vialCarouselRef}
+                  onScroll={handleVialCarouselScroll}
+                  onPointerDown={handleVialCarouselPointerDown}
+                  onPointerMove={handleVialCarouselPointerMove}
+                  onPointerUp={handleVialCarouselPointerUp}
+                  onPointerCancel={handleVialCarouselPointerUp}
+                  onWheel={handleVialCarouselWheel}
+                  className={`relative z-10 flex ${vialSnapClassName} gap-2 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                    isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
+                  }`}
+                  style={{
+                    // Die Buehne beherrscht den Bildschirm; die Nachbarn lugen
+                    // nur noch herein. Damit man trotzdem weiss, wie viele es
+                    // sind, stehen die Punkte darunter — sie sind hier keine
+                    // Zierde, sondern der Ersatz fuer das, was die Breite
+                    // verdeckt.
+                    paddingInline: 'calc((100% - min(15rem, 62vw)) / 2)',
+                    scrollPaddingInline: 'calc((100% - min(15rem, 62vw)) / 2)',
+                  }}
+                >
+                  <div
+                    data-vial-add
+                    data-vial-add-slot
+                    className={`${vialItemSnapClassName} flex origin-bottom items-end min-h-[46vh] max-h-[26rem] shrink-0 rounded-2xl px-2 py-2 ${
+                      isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
+                    } ${addTileActive ? 'scale-100' : 'scale-[0.82] opacity-45'}`}
+                    style={{ width: 'min(15rem, 62vw)' }}
+                  >
+                    <AddVialTile
+                      active={addTileActive}
+                      onClick={() => { if (!vialSuppressClickRef.current) handleNewPeptide() }}
+                      label={t('neues_peptid_title')}
+                    />
+                  </div>
+                  {stagePeptides.map((p, index) => {
+                    const isActive = p.id === activePeptide.id
+                    const peptideColor = p.color_hex ?? getStableStackItemColor(p.id)
+                    const vialPct = Math.round(getVialFillPct(p) ?? 100)
+                    // Only forms whose fill level says something show it. A
+                    // sealed ampoule would otherwise read "100 %" forever.
+                    const showsFillPct = getDosageForm(p.dosage_form).stageForm?.hasMeaningfulFill ?? false
+
+                    return (
+                      <div
+                        key={p.id}
+                        data-vial-index={index}
+                        // `origin-bottom`: alle Objekte stehen auf DERSELBEN
+                        // Standlinie. Ohne das skaliert jedes um seine eigene
+                        // Mitte, also schrumpfen die Nachbarn nach oben UND
+                        // unten weg und schweben ueber dem Boden. Beim
+                        // Formular-Karussell war das laengst entschieden; hier
+                        // fehlte es, und bei 62 % Breite faellt es auf.
+                        className={`${vialItemSnapClassName} origin-bottom shrink-0 rounded-2xl px-2 py-2 ${
+                          isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
+                        } ${
+                          isActive ? 'scale-100' : 'scale-[0.82] opacity-45 saturate-50'
+                        }`}
+                        style={{ width: 'min(15rem, 62vw)' }}
+                        aria-label={p.name}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleVialCarouselItemClick(index)}
+                        onKeyDown={e => handleVialCarouselItemKeyDown(e, index)}
+                      >
+                        {/* Eingepasst statt fest bemessen: jede Form bringt
+                            eigene Pixelmasse mit — ein Pen ist bei
+                            Karussellgroesse 237 px hoch, eine Kapsel 92 px
+                            breit. `StageFit` misst und skaliert, damit beide
+                            die Flaeche fuellen, ohne dass in elf Dateien elf
+                            neue Zahlen stehen. */}
+                        <StageFit className="h-[46vh] max-h-[26rem] w-full">
+                          <StackStage
+                            key={animationEpoch}
+                            item={{ ...p, color_hex: peptideColor }}
+                            fillPct={vialPct}
+                            animateOnMount={true}
+                            isActive={isActive}
+                            size="carousel"
+                            stageLightRef={handle => {
+                              const handles = vialStageLightHandlesRef.current
+                              if (handle) handles.set(index, handle)
+                              else handles.delete(index)
+                            }}
+                          />
+                        </StageFit>
+                        {isActive && showsFillPct && (
+                          <p className="mt-1 text-center text-xs font-semibold tabular-nums text-slate-400">
+                            {Math.round(vialPct)}%
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                </SloshProvider>
+                </div>
+
+                {/* Wo bin ich. Bei 62 % Breite sind die Nachbarn nur noch
+                    angeschnitten — ohne diese Zeile wuesste niemand, ob nach
+                    dem dritten Wisch noch fuenf kommen oder einer. Bis zu
+                    sieben Eintraege als Punkte zum Antippen, darueber eine
+                    Leiste, weil fuenfzehn Punkte niemand mehr zaehlt. */}
+                {stagePeptides.length > 1 && (
+                  <div data-vial-position className="mt-1 flex items-center justify-center gap-1.5">
+                    {stagePeptides.length <= 7 ? stagePeptides.map((p, index) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => scrollToPeptideIndex(index)}
+                        aria-label={p.name}
+                        aria-current={index === activeIndex}
+                        data-vial-dot={index}
+                        className={`h-2.5 rounded-full transition-all duration-300 ${
+                          index === activeIndex ? 'w-6 bg-cyan-300' : 'w-2.5 bg-slate-700 hover:bg-slate-500'
+                        }`}
+                      />
+                    )) : (
+                      <div className="h-1 w-24 overflow-hidden rounded-full bg-slate-800">
+                        <div
+                          className="h-full rounded-full bg-cyan-300 transition-all duration-300"
+                          style={{
+                            width: `${100 / stagePeptides.length}%`,
+                            marginInlineStart: `${(activeIndex / stagePeptides.length) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+
               </div>
             </div>
           )}
@@ -3038,7 +3061,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             </SloshProvider>
           )}
         >
-          <StackItemDetails item={activePeptide} />
+          {eintragDetails()}
         </StageDetailSheet>
       )}
 
