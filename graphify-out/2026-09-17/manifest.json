@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789619019.1658027,
-    "seen": 1789619155.8761911,
+    "mtime": 1789619772.5538304,
+    "seen": 1789619896.929063,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4464,15 +4464,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageFit.test.tsx": {
-    "mtime": 1789618952.7106283,
-    "seen": 1789619155.8756273,
-    "ast_hash": "51e6bb595f0ab3f1050b69c5685acb65",
+    "mtime": 1789619723.4738622,
+    "seen": 1789619896.9284923,
+    "ast_hash": "54729b282b8034716bf633297a7ac090",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageFit.tsx": {
-    "mtime": 1789618937.7311609,
-    "seen": 1789619155.8756294,
-    "ast_hash": "1950ea406195d041c1910f2ecb35e92c",
+    "mtime": 1789619700.6618779,
+    "seen": 1789619896.928495,
+    "ast_hash": "d267be9ddbe69206c9089fd02e018519",
     "semantic_hash": ""
   }
 }

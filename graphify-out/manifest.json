@@ -2790,15 +2790,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1789618965.9125881,
-    "seen": 1789619155.8755689,
-    "ast_hash": "32bd34ae0388bebdb14ce343ac5c5b70",
+    "mtime": 1789620729.8082373,
+    "seen": 1789620898.8099477,
+    "ast_hash": "df7167c6d8ada41992f3676ea05b1f16",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1789618922.3103518,
-    "seen": 1789619155.8755717,
-    "ast_hash": "25ea2729078ccf5b760c7121b76ad253",
+    "mtime": 1789620621.7048533,
+    "seen": 1789620898.8099496,
+    "ast_hash": "6f4954d7e3b20e1b2073241316f4ad2f",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789619772.5538304,
-    "seen": 1789619896.929063,
+    "mtime": 1789620735.1978657,
+    "seen": 1789620898.8105307,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4464,15 +4464,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageFit.test.tsx": {
-    "mtime": 1789619723.4738622,
-    "seen": 1789619896.9284923,
-    "ast_hash": "54729b282b8034716bf633297a7ac090",
+    "mtime": 1789620646.8784194,
+    "seen": 1789620898.8099976,
+    "ast_hash": "761223e561d73acc2304038aecb9569d",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageFit.tsx": {
-    "mtime": 1789619700.6618779,
-    "seen": 1789619896.928495,
-    "ast_hash": "d267be9ddbe69206c9089fd02e018519",
+    "mtime": 1789620604.0540361,
+    "seen": 1789620898.8099995,
+    "ast_hash": "609d905af5902d4d970f54a5bd07c2cd",
     "semantic_hash": ""
   }
 }
