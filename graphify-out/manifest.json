@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789640860.964452,
-    "seen": 1789641365.3962111,
+    "mtime": 1789642433.3992813,
+    "seen": 1789688538.8476436,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4476,21 +4476,21 @@
     "semantic_hash": ""
   },
   "src/components/navigation/BottomNavigation.tsx": {
-    "mtime": 1789640782.3504655,
-    "seen": 1789641365.3956773,
-    "ast_hash": "758171611f7fa395b09917ad0a9be9ed",
+    "mtime": 1789642341.3109384,
+    "seen": 1789688538.847222,
+    "ast_hash": "69d6a04a2f732bd56bcebd632b3a0bfc",
     "semantic_hash": ""
   },
   "src/components/navigation/LiquidGlassTabBar.test.tsx": {
-    "mtime": 1789640835.1461287,
-    "seen": 1789641365.395679,
-    "ast_hash": "06dd0f1a3a450a4bbb8c8a8c0474c292",
+    "mtime": 1789642215.918756,
+    "seen": 1789688538.8472238,
+    "ast_hash": "cc345f35fcb3509efb7f1c37c5a1b455",
     "semantic_hash": ""
   },
   "src/components/navigation/LiquidGlassTabBar.tsx": {
-    "mtime": 1789640768.6903133,
-    "seen": 1789641365.39568,
-    "ast_hash": "a2d7974e0f2c71fad3d498fd41b32625",
+    "mtime": 1789642029.8700578,
+    "seen": 1789688538.8472254,
+    "ast_hash": "09e1e4e283be56a06a97005f87996076",
     "semantic_hash": ""
   },
   "src/components/navigation/bottomNavMetrics.test.ts": {

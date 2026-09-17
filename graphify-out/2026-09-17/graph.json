@@ -6825,7 +6825,7 @@
       "file_type": "code",
       "norm_label": "einpassung",
       "source_file": "src/components/navigation/LiquidGlassTabBar.tsx",
-      "source_location": "L59"
+      "source_location": "L60"
     },
     {
       "id": "src_components_navigation_liquidglasstabbar_glasstabitem",
@@ -6851,7 +6851,7 @@
       "file_type": "code",
       "norm_label": "liquidglasstabbarprops",
       "source_file": "src/components/navigation/LiquidGlassTabBar.tsx",
-      "source_location": "L40"
+      "source_location": "L41"
     },
     {
       "id": "src_components_injection3d_injectionlogsheet_injectionsaveinput",
@@ -21617,7 +21617,7 @@
       "file_type": "code",
       "norm_label": "gleich()",
       "source_file": "src/components/navigation/LiquidGlassTabBar.tsx",
-      "source_location": "L264"
+      "source_location": "L263"
     },
     {
       "id": "src_components_navigation_liquidglasstabbar_liquidglasstabbar",
@@ -21629,7 +21629,7 @@
       "file_type": "code",
       "norm_label": "liquidglasstabbar()",
       "source_file": "src/components/navigation/LiquidGlassTabBar.tsx",
-      "source_location": "L65"
+      "source_location": "L66"
     },
     {
       "id": "src_components_navigation_liquidglasstabbar_tabtraeger",
@@ -21641,7 +21641,7 @@
       "file_type": "code",
       "norm_label": "tabtraeger()",
       "source_file": "src/components/navigation/LiquidGlassTabBar.tsx",
-      "source_location": "L270"
+      "source_location": "L269"
     },
     {
       "id": "src_components_navigation_liquidglasstabbar_test_disconnect",
@@ -64867,7 +64867,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/navigation/LiquidGlassTabBar.tsx",
-      "source_location": "L136",
+      "source_location": "L137",
       "weight": 1.0
     },
     {
@@ -72235,7 +72235,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2368",
+      "source_location": "L2373",
       "weight": 1.0
     },
     {
@@ -72247,7 +72247,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2462",
+      "source_location": "L2467",
       "weight": 1.0
     },
     {
@@ -72259,7 +72259,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2465",
+      "source_location": "L2470",
       "weight": 1.0
     },
     {
@@ -147106,7 +147106,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/navigation/LiquidGlassTabBar.tsx",
-      "source_location": "L264",
+      "source_location": "L263",
       "weight": 1.0
     },
     {
@@ -147117,7 +147117,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/navigation/LiquidGlassTabBar.tsx",
-      "source_location": "L270",
+      "source_location": "L269",
       "weight": 1.0
     },
     {
@@ -147128,7 +147128,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/navigation/LiquidGlassTabBar.tsx",
-      "source_location": "L40",
+      "source_location": "L41",
       "weight": 1.0
     },
     {
@@ -147139,7 +147139,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/navigation/LiquidGlassTabBar.tsx",
-      "source_location": "L59",
+      "source_location": "L60",
       "weight": 1.0
     },
     {
@@ -147150,7 +147150,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/navigation/LiquidGlassTabBar.tsx",
-      "source_location": "L65",
+      "source_location": "L66",
       "weight": 1.0
     },
     {
@@ -183262,5 +183262,5 @@
       "source_file": "docs/superpowers/plans/2026-06-25-confirmed-injection-intake-linking.md"
     }
   ],
-  "built_at_commit": "c72e845399b4a727a6e533ddc7395f2de4a029e9"
+  "built_at_commit": "5a8aa5d5e24e1caecd76d32eb47372de79aad0ad"
 }

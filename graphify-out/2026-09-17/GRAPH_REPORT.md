@@ -1,7 +1,7 @@
 # Graph Report - TYD-TrackYourDose  (2026-09-17)
 
 ## Corpus Check
-- 708 files · ~821,119 words
+- 708 files · ~821,289 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c72e8453`
+- Built from commit: `5a8aa5d5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -338,10 +338,10 @@
   docs/superpowers/plans/2026-07-06-content-studio-sub1-content-engine.md → HANDOFF.md
 - `The Lab — Vollständiger Design-Entwurf` --conceptually_related_to--> `Studies / PubMed-Forschungsmodul`  [INFERRED]
   .superpowers/brainstorm/1918-1779323004/content/full-design.html → HANDOFF.md
-- `No Re-Confirm or Stock Debit` --semantically_similar_to--> `Inventar-Workflow (Vials-Abzug)`  [INFERRED] [semantically similar]
-  docs/superpowers/plans/2026-06-25-confirmed-injection-intake-linking.md → HANDOFF.md
 - `data-tracking-card (test hook)` --semantically_similar_to--> `Sprachen beim Start (DE/EN only launch policy)`  [INFERRED] [semantically similar]
   docs/superpowers/specs/2026-09-08-my-stack-tracking-stufen-design.md → CLAUDE.md
+- `graphify Knowledge Graph Workflow` --semantically_similar_to--> `Die Tabelle ist die einzige Wahrheit (single source of truth)`  [INFERRED] [semantically similar]
+  CLAUDE.md → docs/superpowers/specs/2026-09-08-my-stack-tracking-stufen-design.md
 
 ## Import Cycles
 - None detected.
@@ -1441,11 +1441,11 @@ _Questions this graph is uniquely positioned to answer:_
 - **What is the exact relationship between `data-ob Anchors` and `StackItemWizard`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
 - **Why does `react` connect `react` to `BlutspiegelCarousel.tsx`, `ProtocolPdfModal.tsx`, `App.tsx`, `Dashboard.test.ts`, `Protokoll.tsx`, `faq/types.ts`, `PeptideDetailPage.tsx`, `VerlaufSection.tsx`, `BefundEditor.tsx`, `StageLabel.tsx`, `Health.tsx`, `ArticleCards.tsx`, `stage/types.ts`, `lucide-react`, `TodayLogSheet.tsx`, `MyStackPage.tsx`, `Home.tsx`, `IntakePlanEditor.tsx`, `MetricChart.tsx`, `DropsVisual.tsx`, `AdminPanel.tsx`, `chartVisibility.ts`, `PenVisual.tsx`, `chartMath.ts`, `TubeVisual.tsx`, `InjectionLogSheet.tsx`, `SprayVisual.tsx`, `dateLocales.ts`, `Profil.tsx`, `Home`, `InjectionMapCanvas.tsx`, `RoutineConfirmationSheet.tsx`, `StudyCard.tsx`, `ColorField.tsx`, `BlutspiegelSimulation.tsx`, `metrics.ts`, `Dashboard.tsx`, `my-stack/types.ts`, `PowderVisual.tsx`, `StackItemWizard.tsx`, `PatchVisual.tsx`, `stageLightDirection.test.ts`, `package.json`, `InjectionTrackerTabs.tsx`, `fortschritt/types.ts`, `GelVisual.tsx`, `TabletVisual.tsx`, `FilterSheet.tsx`, `TheLab.tsx`, `LiveBlutspiegelChart.test.tsx`, `DesignSystem.tsx`, `PeptideVialVisual.tsx`, `NasalSprayVisual.tsx`, `StackStage.test.ts`, `LiquidGlassTabBar.test.tsx`, `react-router-dom`, `InjektionsTracker.tsx`, `Onboarding.tsx`, `ProductInventorySection.tsx`, `StageDetailSheet.tsx`, `StageFit.test.tsx`, `SubstanceSearch.tsx`, `LiveCycleChartCanvas.tsx`, `TrackingLevelPicker.tsx`, `__VialPreview.tsx`, `FotosTab.tsx`, `PeptideLibrary.tsx`, `dosageForms.ts`, `VialTrackingEditor.tsx`?**
-  _High betweenness centrality (0.156) - this node is a cross-community bridge._
+  _High betweenness centrality (0.161) - this node is a cross-community bridge._
 - **Why does `vitest` connect `vitest` to `BlutspiegelCarousel.tsx`, `ProtocolPdfModal.tsx`, `colorMigration.ts`, `bloodwork-extract/index.ts`, `Dashboard.test.ts`, `react`, `stackInventory.ts`, `BefundEditor.tsx`, `StageLabel.tsx`, `StackItemWizard.interaction.test.tsx`, `stage/types.ts`, `stackItems.ts`, `lucide-react`, `TodayLogSheet.tsx`, `MyStackPage.tsx`, `IntakePlanEditor.tsx`, `MetricChart.tsx`, `DropsVisual.tsx`, `progress-year-data.ts`, `chartVisibility.ts`, `PenVisual.tsx`, `chartMath.ts`, `TubeVisual.tsx`, `InjectionLogSheet.tsx`, `SprayVisual.tsx`, `Home`, `i18n.test.ts`, `RoutineConfirmationSheet.tsx`, `InjectionMapCanvas.tsx`, `wizardState.ts`, `ColorField.tsx`, `BlutspiegelSimulation.tsx`, `metrics.ts`, `date-fns`, `my-stack/types.ts`, `PowderVisual.tsx`, `StackItemWizard.tsx`, `PatchVisual.tsx`, `reminderSchedule.js`, `substanceCatalog.ts`, `stageLightDirection.test.ts`, `package.json`, `injectionPinPresentation.ts`, `InjectionTrackerTabs.tsx`, `fortschritt/types.ts`, `GelVisual.tsx`, `TabletVisual.tsx`, `injectionPersistence.ts`, `dosePlan.ts`, `LiveBlutspiegelChart.test.tsx`, `PeptideVialVisual.tsx`, `NasalSprayVisual.tsx`, `StackStage.test.ts`, `MyStackPage.visibility.test.tsx`, `LiquidGlassTabBar.test.tsx`, `InjektionsTracker.tsx`, `injectionLogTypes.ts`, `vialStock.ts`, `bloodwork.ts`, `ProductInventorySection.tsx`, `StageDetailSheet.tsx`, `StageFit.test.tsx`, `SubstanceSearch.tsx`, `stackSort.ts`, `planSegments.ts`, `inventoryMath.ts`, `doseAdjustmentBackfill.ts`, `chartTooltip.ts`, `wellnessBuckets.ts`, `TrackingLevelPicker.tsx`, `FotosTab.tsx`, `BottomNavigation.tsx`, `dosageForms.ts`, `VialTrackingEditor.tsx`, `duplicateFingerprint.test.ts`?**
   _High betweenness centrality (0.102) - this node is a cross-community bridge._
 - **Why does `date-fns` connect `date-fns` to `BlutspiegelCarousel.tsx`, `App.tsx`, `Protokoll.tsx`, `VerlaufSection.tsx`, `Health.tsx`, `lucide-react`, `TodayLogSheet.tsx`, `MyStackPage.tsx`, `Home.tsx`, `MetricChart.tsx`, `progress-year-data.ts`, `InjectionLogSheet.tsx`, `dateLocales.ts`, `wizardState.ts`, `BlutspiegelSimulation.tsx`, `Dashboard.tsx`, `metrics.ts`, `injectionPinPresentation.ts`, `package.json`, `InjectionTrackerTabs.tsx`, `fortschritt/types.ts`, `injectionPersistence.ts`, `dosePlan.ts`, `LiveBlutspiegelChart.test.tsx`, `MyStackPage.visibility.test.tsx`, `vialStock.ts`, `InjektionsTracker.tsx`, `seed-test-data.ts`, `injectionLogTypes.ts`, `bloodwork.ts`, `planSegments.ts`, `doseAdjustmentBackfill.ts`, `chartTooltip.ts`, `LiveCycleChartCanvas.tsx`, `FotosTab.tsx`, `VialTrackingEditor.tsx`?**
-  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+  _High betweenness centrality (0.035) - this node is a cross-community bridge._
 - **What connects `SLOT_TIMES`, `WEEKDAYS_DE`, `REMINDER_OFFSETS_MIN` to the rest of the system?**
   _1763 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `BlutspiegelCarousel.tsx` be split into smaller, more focused modules?**
