@@ -80,72 +80,46 @@ describe('My Stack page vial view', () => {
     const text = source()
 
     expect(text).toContain('min(15rem, 62vw)')
+    expect(text).toContain('snap-center')
     expect(text).toContain('origin-bottom')
     expect(text).toContain("isActive ? 'scale-100' : 'scale-[0.88] opacity-65 saturate-75'")
   })
 
-  test('rastet selbst ein, statt es dem Browser zu überlassen', () => {
-    // Auf dem Gerät griff `scroll-snap-type: x mandatory` zu spät: in einer
-    // Bildschirmaufnahme dreimal dasselbe Muster — der Wisch läuft aus, das
-    // Objekt steht 25 bis 33 px neben der Mitte still, hält dort 220 bis
-    // 300 ms, und springt dann in EINEM Bild auf die Mitte. Ein Ruck, kein
-    // Gleiten. Deshalb kein CSS-Einrasten mehr, sondern eine eigene
-    // Zielposition, weich angefahren, sobald das Rollen zur Ruhe kommt.
+  test('lässt einen Wisch genau einen Eintrag weit gehen', () => {
+    // Ohne `scroll-snap-stop: always` setzt der Browser den Schwung fort, bis
+    // die Reibung ihn aufbraucht — ein kurzer Stups trug den Streifen über
+    // drei, vier Objekte, weil der Schwung nur das Tempo kennt und nicht die
+    // Absicht. Im Browser nachgemessen (402x844, echter Wischgestus): mit
+    // `always` sind 40 px in 30 ms ein Schritt und 90 px in 40 ms auch einer,
+    // während ein gezogener Wisch über 300 px weiterhin zwei geht.
     const text = source()
 
-    expect(text).toContain("const vialSnapClassName = 'snap-none'")
-    expect(text).not.toContain('snap-mandatory')
-    expect(text).toContain('einrastenNachRuhe')
-    expect(text).toContain('zentrierPosition({')
-    expect(text).toContain("carousel.scrollTo({ left: ziel, behavior: 'smooth' })")
+    expect(text).toContain('snap-always')
+    expect(text).toContain('snap-x snap-mandatory')
   })
 
-  test('macht aus einem kurzen Wisch genau einen Schritt', () => {
-    // Der native Schwung kennt nur das Tempo, nicht die Absicht: ein kurzer
-    // Stups trug den Streifen über drei, vier Objekte. Jetzt zieht der Finger
-    // ihn eins zu eins, und beim Loslassen entscheidet `wischSchritte`.
+  test('gibt dem Fangfenster Schlupf, damit es breiter ist als ein Eintrag', () => {
+    // Ohne die acht Pixel ist das Fangfenster (Streifenbreite minus diesem
+    // Rand) exakt so breit wie ein Eintrag — im Browser nachgemessen: 240
+    // gegen 240. Bei Gleichstand fällt das Einrasten laut Spezifikation von
+    // „mittig" auf „an die Kante" zurück, und ein halbes Pixel Rundung
+    // entscheidet, welche Regel gerade gilt. Genau so sah der Sprung nach dem
+    // Wischen aus: 25 bis 33 px daneben, und beim nächsten Anlass zurück.
     const text = source()
 
-    expect(text).toContain('touch-pan-y')
-    expect(text).toContain('const schritte = wischSchritte({')
-    // Der Mauspfad ist nicht mehr der einzige: nur die Maustaste steigt aus.
-    expect(text).toContain("if (e.pointerType === 'mouse' && e.button !== 0) return")
-    expect(text).not.toContain("if (e.pointerType !== 'mouse' || e.button !== 0) return")
+    expect(text).toContain("paddingInline: 'calc((100% - min(15rem, 62vw)) / 2)'")
+    expect(text).toContain("scrollPaddingInline: 'calc((100% - min(15rem, 62vw)) / 2 - 8px)'")
   })
 
-  test('lässt einen senkrechten Wisch die Seite scrollen, nicht das Karussell', () => {
-    // `touch-pan-y` gibt die Längsachse an die Seite zurück. Ohne Achsensperre
-    // zöge jeder senkrechte Wisch den Streifen nebenbei zur Seite, weil
-    // `scrollLeft` bei JEDER Bewegung nachgeführt wird.
-    const text = source()
-
-    expect(text).toContain("vialAchseRef.current = Math.abs(delta) > Math.abs(hoch) ? 'quer' : 'laengs'")
-    expect(text).toContain("if (vialAchseRef.current === 'laengs') return")
-    expect(text).toContain("if (!vialDragMovedRef.current || vialAchseRef.current !== 'quer') return")
-  })
-
-  test('gibt beim Einrasten einen haptischen Klick', () => {
-    // Beim ENTSCHEIDEN, nicht am Ende der Bewegung — so fühlt es sich an, als
-    // hätte der Finger ihn ausgelöst. Und für jede Eingabeart derselbe.
+  test('gibt einen haptischen Klick je Eintrag, den das Karussell passiert', () => {
+    // An einer Stelle und nirgends sonst: jede Auswahl — Wisch, Punkt, Pfeil,
+    // Rad — läuft über dieses Rollen, also fühlt sich auch jede gleich an.
     const text = source()
 
     expect(text).toContain("import { hapticTick } from '../../lib/haptics'")
-    const wisch = text.slice(text.indexOf('const beendeWisch'), text.indexOf('const handleVialCarouselWheel'))
-    expect(wisch).toContain('void hapticTick()')
-    const auswahl = text.slice(text.indexOf('const selectPeptideIndex'))
-    expect(auswahl.slice(0, 400)).toContain('if (index !== activeIndex) void hapticTick()')
-  })
-
-  test('rastet nicht ein, solange jemand den Streifen hält', () => {
-    // Sonst zöge es dem Nutzer das Karussell unter dem Finger weg, sobald er
-    // einen Moment stillhält. Der Zeigerzustand wird deshalb für JEDE
-    // Eingabeart gesetzt — vor dem Ausstieg, den der Mauspfad hat.
-    const text = source()
-
-    expect(text).toContain('if (!carousel || vialZeigerUntenRef.current) return')
-    const down = text.slice(text.indexOf('const handleVialCarouselPointerDown'))
-    const bisAusstieg = down.slice(0, down.indexOf("if (e.pointerType !== 'mouse'"))
-    expect(bisAusstieg).toContain('vialZeigerUntenRef.current = true')
+    const scrollHandler = text.slice(text.indexOf('const handleVialCarouselScroll'), text.indexOf('const scrollToClosestVial'))
+    expect(scrollHandler).toContain('void hapticTick()')
+    expect(text.match(/void hapticTick\(\)/g)).toHaveLength(1)
   })
 
   test('setzt das Objekt mit einem Kontaktschatten auf den Boden', () => {
@@ -235,12 +209,11 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('handleVialCarouselPointerMove')
     expect(text).toContain('handleVialCarouselPointerUp')
     expect(text).toContain('handleVialCarouselWheel')
-    expect(text).toContain('beendeWisch')
+    expect(text).toContain('scrollToClosestVial')
     expect(text).toContain('pushVialSlosh')
     expect(text).toContain('vialLastScrollLeftRef')
-    // Kein CSS-Einrasten mehr — weder beim Ziehen noch danach. Das Zentrieren
-    // macht `einrastenNachRuhe`, für Maus und Finger dieselbe Strecke.
-    expect(text).toContain("const vialSnapClassName = 'snap-none'")
+    expect(text).toContain("const vialSnapClassName = isVialCarouselDragging ? 'snap-none' : 'snap-x snap-mandatory'")
+    expect(text).toContain("const vialItemSnapClassName = isVialCarouselDragging ? '' : 'snap-center snap-always'")
     expect(text).toContain('onPointerDown={handleVialCarouselPointerDown}')
     expect(text).toContain('onPointerMove={handleVialCarouselPointerMove}')
     expect(text).toContain('onPointerUp={handleVialCarouselPointerUp}')
@@ -255,7 +228,7 @@ describe('My Stack page vial view', () => {
   test('keeps programmatic vial selection stable while smooth-scrolling to the target', () => {
     const text = source()
     const selectHandler = text.slice(text.indexOf('const selectPeptideIndex'), text.indexOf('const getClosestVialIndex'))
-    const scrollHandler = text.slice(text.indexOf('const handleVialCarouselScroll'), text.indexOf('const vialStandplaetze'))
+    const scrollHandler = text.slice(text.indexOf('const handleVialCarouselScroll'), text.indexOf('const scrollToClosestVial'))
     const offsetHandler = text.slice(text.indexOf('const selectPeptideOffset'), text.indexOf('const handleVialCarouselPointerDown'))
 
     expect(text).toContain('vialTargetIndexRef')
@@ -306,7 +279,7 @@ describe('My Stack page vial view', () => {
 
   test('batches carousel spotlight updates so liquid slosh frames stay smooth', () => {
     const text = source()
-    const scrollHandler = text.slice(text.indexOf('const handleVialCarouselScroll'), text.indexOf('const vialStandplaetze'))
+    const scrollHandler = text.slice(text.indexOf('const handleVialCarouselScroll'), text.indexOf('const scrollToClosestVial'))
 
     expect(text).toContain('vialFocusFrameRef')
     expect(text).toContain('scheduleVialFocusUpdate')

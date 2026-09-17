@@ -23,8 +23,6 @@ import { LabLoader } from '../../components/LabLoader'
 import { StackItemWizard } from './components/StackItemWizard'
 import { StageDetailSheet } from './components/StageDetailSheet'
 import { hapticTick } from '../../lib/haptics'
-import { mussEinrasten, zentrierPosition } from './lib/carouselSettle'
-import { wischSchritte } from './lib/wischSchritte'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
 import { StackItemDetails } from './components/StackItemDetails'
@@ -485,13 +483,6 @@ interface MyStackPageProps {
   stackDataClient?: typeof supabase
 }
 
-/**
- * Wartezeit, nach der das Karussell als ausgerollt gilt. Kurz genug, dass es
- * sich wie Einrasten anfuehlt, lang genug, dass der Ausklang eines Wisches es
- * nicht mitten in der Bewegung erwischt.
- */
-const VIAL_RUHE_MS = 110
-
 export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {}) {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
@@ -567,24 +558,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const vialWheelCooldownRef = useRef<number | null>(null)
   const vialLastScrollLeftRef = useRef(0)
   const vialLastScrollTimeRef = useRef(0)
-  const vialRuheTimerRef = useRef<number | null>(null)
-  // Liegt gerade ein Finger oder eine Maustaste auf dem Streifen? Solange das
-  // so ist, wird nicht eingerastet — sonst zoege es dem Nutzer das Karussell
-  // unter dem Finger weg, sobald er einen Moment stillhaelt.
-  const vialZeigerUntenRef = useRef(false)
-  /** Tempo des Fingers beim Loslassen, px/ms. Nach links negativ. */
-  const vialTempoRef = useRef(0)
-  /** Wo der Streifen stand, als die Geste begann. -1 ist die Kachel „Neue Substanz". */
-  const vialGestenStartRef = useRef(0)
-  const vialDragStartYRef = useRef(0)
-  /**
-   * Achse der laufenden Geste, einmal entschieden und dann fest.
-   *
-   * `touch-pan-y` laesst die Seite senkrecht weiterscrollen — ohne diese
-   * Sperre zoege jeder senkrechte Wisch den Streifen nebenbei ein Stueck zur
-   * Seite, weil wir `scrollLeft` bei JEDER Bewegung nachfuehren.
-   */
-  const vialAchseRef = useRef<'quer' | 'laengs' | null>(null)
   const [animationEpoch, setAnimationEpoch] = useState(0)
 
   // ── Zyklen ────────────────────────────────────────────────────────────────
@@ -1516,17 +1489,18 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, loading])
+  const vialSnapClassName = isVialCarouselDragging ? 'snap-none' : 'snap-x snap-mandatory'
   /**
-   * Kein CSS-Einrasten mehr.
+   * `snap-always`: ein Wisch geht genau einen Eintrag weit.
    *
-   * `scroll-snap-type: x mandatory` hat auf dem Geraet zu spaet gegriffen: in
-   * der Bildschirmaufnahme dreimal dasselbe Muster — der Wisch laeuft aus, das
-   * Objekt steht 25 bis 33 px neben der Mitte still, haelt dort 220 bis 300 ms,
-   * und springt dann in einem einzigen Bild auf die Mitte. Das Einrasten macht
-   * jetzt `einrastenNachRuhe()`, gleichmaessig weich und fuer jede Eingabeart
-   * dieselbe Strecke.
+   * Ohne das setzt der Browser den Schwung fort, bis die Reibung ihn
+   * aufbraucht — ein kurzer Stups trug den Streifen ueber drei, vier Objekte,
+   * weil der Schwung nur das Tempo kennt und nicht die Absicht.
+   * `scroll-snap-stop: always` verbietet ihm, einen Standplatz zu
+   * ueberfliegen. Wer weiter will, zieht weiter: beim Ziehen gilt die Regel
+   * nicht, nur beim Ausrollen danach.
    */
-  const vialSnapClassName = 'snap-none'
+  const vialItemSnapClassName = isVialCarouselDragging ? '' : 'snap-center snap-always'
   // Feed carousel interaction velocity into the shared liquid physics engine.
   const pushVialSlosh = (velocity: number) => sloshEngine.pushImpulse(velocity)
   const updateVialFocus = () => {
@@ -1594,9 +1568,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   }
   const selectPeptideIndex = (index: number) => {
     if (!stagePeptides[index]) return
-    // Derselbe Klick wie beim Wischen — Punkte, Pfeile, Rad und ein Tipp auf
-    // den Nachbarn duerfen sich nicht anders anfuehlen als der Finger.
-    if (index !== activeIndex) void hapticTick()
     vialTargetIndexRef.current = index
     setAddTileActive(false)
     scrollToPeptideIndex(index)
@@ -1645,14 +1616,20 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     vialLastScrollLeftRef.current = carousel.scrollLeft
     vialLastScrollTimeRef.current = now
     scheduleVialFocusUpdate()
-    planeEinrasten()
 
     if (vialScrollFrameRef.current !== null) window.cancelAnimationFrame(vialScrollFrameRef.current)
 
     vialScrollFrameRef.current = window.requestAnimationFrame(() => {
       const closestIndex = getClosestVialIndex(carousel)
       const next = stagePeptides[closestIndex]
-      if (next && next.id !== activePeptideId) setActivePeptideId(next.id)
+      if (next && next.id !== activePeptideId) {
+        // Ein Klick je Eintrag, den das Karussell passiert — wie am Rad einer
+        // Uhr. Hier und nirgends sonst: jede Auswahl, ob Wisch, Punkt, Pfeil
+        // oder Rad, laeuft ueber dieses Rollen, also fuehlt sich auch jede
+        // gleich an.
+        void hapticTick()
+        setActivePeptideId(next.id)
+      }
       if (vialTargetIndexRef.current === closestIndex) {
         vialTargetIndexRef.current = null
       }
@@ -1660,58 +1637,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       vialScrollFrameRef.current = null
     })
   }
-  /**
-   * Einrasten, sobald das Rollen zur Ruhe kommt.
-   *
-   * Die Zielposition kommt aus `zentrierPosition` — dieselbe Rechnung, die
-   * `scroll-snap-align: center` gemacht haette, nur zu einem Zeitpunkt, den
-   * wir bestimmen. Angefahren wird sie weich; einen Ruck gibt es nicht mehr.
-   */
-  /** Alle Standplaetze in der Reihenfolge, in der sie im Streifen stehen. */
-  const vialStandplaetze = (carousel: HTMLDivElement) =>
-    Array.from(carousel.querySelectorAll<HTMLElement>('[data-vial-add], [data-vial-index]'))
-  /**
-   * Abstand zweier Standplaetze, aus dem Layout gelesen statt getippt: Breite
-   * plus Luecke stehen in zwei verschiedenen Regeln, und die Luecke hier noch
-   * einmal als Zahl zu fuehren waere die zweite Wahrheit.
-   */
-  const vialSchrittweite = (carousel: HTMLDivElement) => {
-    const plaetze = vialStandplaetze(carousel)
-    if (plaetze.length >= 2) return Math.abs(plaetze[1].offsetLeft - plaetze[0].offsetLeft)
-    return plaetze[0]?.offsetWidth ?? 0
-  }
-  /** Das Element eines Standplatzes: -1 ist die Kachel „Neue Substanz". */
-  const vialStandplatz = (carousel: HTMLDivElement, position: number) =>
-    position < 0
-      ? carousel.querySelector<HTMLElement>('[data-vial-add]')
-      : carousel.querySelector<HTMLElement>(`[data-vial-index="${position}"]`)
-  const zentriereStandplatz = (carousel: HTMLDivElement, el: HTMLElement) => {
-    const ziel = zentrierPosition({
-      itemLeft: el.offsetLeft,
-      itemWidth: el.offsetWidth,
-      clientWidth: carousel.clientWidth,
-      scrollWidth: carousel.scrollWidth,
-    })
-    if (!mussEinrasten(carousel.scrollLeft, ziel)) return false
-    carousel.scrollTo({ left: ziel, behavior: 'smooth' })
-    return true
-  }
-  const einrastenNachRuhe = () => {
+  const scrollToClosestVial = () => {
     const carousel = vialCarouselRef.current
-    if (!carousel || vialZeigerUntenRef.current) return
+    if (!carousel) return
 
-    const naechster = isAddTileClosest(carousel)
-      ? carousel.querySelector<HTMLElement>('[data-vial-add]')
-      : carousel.querySelector<HTMLElement>(`[data-vial-index="${getClosestVialIndex(carousel)}"]`)
-    if (!naechster) return
-    zentriereStandplatz(carousel, naechster)
-  }
-  const planeEinrasten = () => {
-    if (vialRuheTimerRef.current !== null) window.clearTimeout(vialRuheTimerRef.current)
-    vialRuheTimerRef.current = window.setTimeout(() => {
-      vialRuheTimerRef.current = null
-      einrastenNachRuhe()
-    }, VIAL_RUHE_MS)
+    selectPeptideIndex(getClosestVialIndex(carousel))
   }
   const selectPeptideOffset = (offset: number) => {
     if (stagePeptides.length === 0) return
@@ -1720,27 +1650,12 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     pushVialSlosh(offset > 0 ? 1 : -1)
     selectPeptideIndex(nextIndex)
   }
-  /**
-   * Der Wisch gehoert uns — auch am Finger.
-   *
-   * Vorher rollte der Browser mit seinem eigenen Schwung weiter, und der
-   * kennt nur das Tempo, nicht die Absicht: ein kurzer Stups trug den
-   * Streifen ueber drei, vier Objekte. Jetzt zieht der Finger den Streifen
-   * eins zu eins, und beim Loslassen entscheidet `wischSchritte`, wie weit es
-   * geht. `touch-pan-y` am Streifen haelt dem Browser die Querachse frei;
-   * senkrecht scrollt die Seite weiter wie immer.
-   */
   const handleVialCarouselPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     vialTargetIndexRef.current = null
-    vialZeigerUntenRef.current = true
-    if (e.pointerType === 'mouse' && e.button !== 0) return
+    if (e.pointerType !== 'mouse' || e.button !== 0) return
     const carousel = vialCarouselRef.current
     if (!carousel) return
 
-    vialTempoRef.current = 0
-    vialAchseRef.current = null
-    vialGestenStartRef.current = addTileActive ? -1 : activeIndex
-    vialDragStartYRef.current = e.clientY
     vialDragStartXRef.current = e.clientX
     vialDragLastXRef.current = e.clientX
     vialDragLastTimeRef.current = e.timeStamp
@@ -1757,12 +1672,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     if (!carousel) return
 
     const delta = e.clientX - vialDragStartXRef.current
-    const hoch = e.clientY - vialDragStartYRef.current
-    if (vialAchseRef.current === null && Math.max(Math.abs(delta), Math.abs(hoch)) > 6) {
-      vialAchseRef.current = Math.abs(delta) > Math.abs(hoch) ? 'quer' : 'laengs'
-    }
-    if (vialAchseRef.current === 'laengs') return
-
     const now = e.timeStamp
     const stepDelta = e.clientX - vialDragLastXRef.current
     const dt = Math.max(16, now - vialDragLastTimeRef.current)
@@ -1773,58 +1682,23 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       }
     }
     if (Math.abs(stepDelta) > 0.5) pushVialSlosh((-stepDelta / dt) * 2.4)
-    // Geglaettet, damit ein einzelnes zappeliges letztes Bild nicht ueber die
-    // ganze Geste entscheidet.
-    vialTempoRef.current = vialTempoRef.current * 0.3 + (stepDelta / dt) * 0.7
     vialDragLastXRef.current = e.clientX
     vialDragLastTimeRef.current = now
     carousel.scrollLeft = vialDragStartScrollLeftRef.current - delta
     e.preventDefault()
   }
   const handleVialCarouselPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
-    vialZeigerUntenRef.current = false
-    planeEinrasten()
     if (!vialDraggingRef.current) return
     vialDraggingRef.current = false
     setIsVialCarouselDragging(false)
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
-    if (!vialDragMovedRef.current || vialAchseRef.current !== 'quer') return
-
-    vialSuppressClickRef.current = true
-    window.setTimeout(() => { vialSuppressClickRef.current = false }, 0)
-    beendeWisch(e.clientX - vialDragStartXRef.current)
-  }
-  /**
-   * Ende eines Wisches: wie viele Standplaetze weit, und dann dorthin.
-   */
-  const beendeWisch = (strecke: number) => {
-    const carousel = vialCarouselRef.current
-    if (!carousel) return
-
-    const schritte = wischSchritte({
-      strecke,
-      tempo: vialTempoRef.current,
-      schrittweite: vialSchrittweite(carousel),
-    })
-    const ziel = Math.max(-1, Math.min(stagePeptides.length - 1, vialGestenStartRef.current + schritte))
-    const el = vialStandplatz(carousel, ziel)
-    if (!el) return
-
-    if (ziel !== vialGestenStartRef.current) {
-      // Der Klick beim Einrasten. Er kommt beim ENTSCHEIDEN, nicht am Ende der
-      // Bewegung — so fuehlt es sich an, als haette der Finger ihn ausgeloest.
-      void hapticTick()
-      pushVialSlosh(schritte > 0 ? 1 : -1)
-      setAddTileActive(ziel < 0)
-      const naechstes = stagePeptides[ziel]
-      if (naechstes) {
-        vialTargetIndexRef.current = ziel
-        setActivePeptideId(naechstes.id)
-      }
+    if (vialDragMovedRef.current) {
+      vialSuppressClickRef.current = true
+      window.setTimeout(() => { vialSuppressClickRef.current = false }, 0)
+      scrollToClosestVial()
     }
-    zentriereStandplatz(carousel, el)
   }
   const handleVialCarouselWheel = (e: ReactWheelEvent<HTMLDivElement>) => {
     if (stagePeptides.length <= 1 || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return
@@ -1866,7 +1740,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       if (vialScrollFrameRef.current !== null) window.cancelAnimationFrame(vialScrollFrameRef.current)
       if (vialFocusFrameRef.current !== null) window.cancelAnimationFrame(vialFocusFrameRef.current)
       if (vialWheelCooldownRef.current !== null) window.clearTimeout(vialWheelCooldownRef.current)
-      if (vialRuheTimerRef.current !== null) window.clearTimeout(vialRuheTimerRef.current)
     }
   }, [])
 
@@ -2510,7 +2383,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   onPointerUp={handleVialCarouselPointerUp}
                   onPointerCancel={handleVialCarouselPointerUp}
                   onWheel={handleVialCarouselWheel}
-                  className={`relative z-10 flex ${vialSnapClassName} touch-pan-y gap-2 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                  className={`relative z-10 flex ${vialSnapClassName} gap-2 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
                     isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
                   }`}
                   style={{
@@ -2520,13 +2393,21 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     // Zierde, sondern der Ersatz fuer das, was die Breite
                     // verdeckt.
                     paddingInline: 'calc((100% - min(15rem, 62vw)) / 2)',
-                    scrollPaddingInline: 'calc((100% - min(15rem, 62vw)) / 2)',
+                    // Acht Pixel Schlupf, und zwar mit Absicht: ohne sie waere
+                    // das Fangfenster (Streifenbreite minus diesem Rand) genau
+                    // so breit wie ein Eintrag. Bei Gleichstand faellt das
+                    // Einrasten laut Spezifikation von „mittig" auf „an die
+                    // Kante" zurueck, und ein halbes Pixel Rundung entscheidet,
+                    // welche der beiden Regeln gerade gilt. Genau so sah der
+                    // Sprung aus, der nach dem Wischen kam: 25 bis 33 px
+                    // daneben, und beim naechsten Anlass zurueck.
+                    scrollPaddingInline: 'calc((100% - min(15rem, 62vw)) / 2 - 8px)',
                   }}
                 >
                   <div
                     data-vial-add
                     data-vial-add-slot
-                    className={`flex origin-bottom items-end min-h-[46vh] max-h-[26rem] shrink-0 rounded-2xl px-2 py-2 ${
+                    className={`${vialItemSnapClassName} flex origin-bottom items-end min-h-[46vh] max-h-[26rem] shrink-0 rounded-2xl px-2 py-2 ${
                       isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
                     } ${addTileActive ? 'scale-100' : 'scale-[0.82] opacity-45'}`}
                     style={{ width: 'min(15rem, 62vw)' }}
@@ -2555,7 +2436,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         // unten weg und schweben ueber dem Boden. Beim
                         // Formular-Karussell war das laengst entschieden; hier
                         // fehlte es, und bei 62 % Breite faellt es auf.
-                        className={`origin-bottom shrink-0 rounded-2xl px-2 py-2 ${
+                        className={`${vialItemSnapClassName} origin-bottom shrink-0 rounded-2xl px-2 py-2 ${
                           isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
                         } ${
                           isActive ? 'scale-100' : 'scale-[0.88] opacity-65 saturate-75'
