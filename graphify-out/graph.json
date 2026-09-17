@@ -4446,7 +4446,7 @@
       "file_type": "code",
       "norm_label": "stagefitprops",
       "source_file": "src/features/my-stack/components/StageFit.tsx",
-      "source_location": "L19"
+      "source_location": "L26"
     },
     {
       "id": "src_features_my_stack_lib_stacktabs_stacktab",
@@ -16054,7 +16054,7 @@
       "file_type": "code",
       "norm_label": "stagefit()",
       "source_file": "src/features/my-stack/components/StageFit.tsx",
-      "source_location": "L27"
+      "source_location": "L37"
     },
     {
       "id": "src_features_my_stack_components_stagefit_test_disconnect",
@@ -64702,7 +64702,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/PeptideVialVisual.tsx",
-      "source_location": "L287",
+      "source_location": "L288",
       "weight": 1.0
     },
     {
@@ -64714,7 +64714,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/PeptideVialVisual.tsx",
-      "source_location": "L309",
+      "source_location": "L310",
       "weight": 1.0
     },
     {
@@ -153206,7 +153206,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/components/StageFit.tsx",
-      "source_location": "L19",
+      "source_location": "L26",
       "weight": 1.0
     },
     {
@@ -153217,7 +153217,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/components/StageFit.tsx",
-      "source_location": "L27",
+      "source_location": "L37",
       "weight": 1.0
     },
     {
@@ -182069,5 +182069,5 @@
       "source_file": "docs/superpowers/plans/2026-06-25-confirmed-injection-intake-linking.md"
     }
   ],
-  "built_at_commit": "c0c00f7c25c29cc2f102091372b53ff264c88c2b"
+  "built_at_commit": "1d4de7cbc02d80923be7b152a5fbfb003f17103b"
 }
