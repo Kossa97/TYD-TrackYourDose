@@ -21,6 +21,7 @@ import type { VialStageLightHandle } from '../../components/PeptideVialVisual'
 import { SloshProvider, useSloshEngine } from '../../components/SloshContext'
 import { LabLoader } from '../../components/LabLoader'
 import { StackItemWizard } from './components/StackItemWizard'
+import { StageDetailSheet } from './components/StageDetailSheet'
 import { StackStage } from './components/StackStage'
 import { StackItemDetails } from './components/StackItemDetails'
 import { StackArchive } from './components/StackArchive'
@@ -533,6 +534,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   )
   const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
   const [vialDetailsOpen, setVialDetailsOpen] = useState(false)
+  // Das Rechteck des angetippten Objekts — der Startpunkt des Flugs.
+  const [detailUrsprung, setDetailUrsprung] = useState<DOMRect | null>(null)
   const [isVialCarouselDragging, setIsVialCarouselDragging] = useState(false)
   const [addTileActive, setAddTileActive] = useState(false)
   // Stage light bypasses React entirely: each vial registers an imperative
@@ -1687,10 +1690,23 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       vialWheelCooldownRef.current = null
     }, 280)
   }
+  /**
+   * Erst wischen, dann tippen.
+   *
+   * Ein Tipp auf einen NACHBARN waehlt ihn nur aus — man holt ihn in die
+   * Mitte. Ein Tipp auf das Objekt, das schon in der Mitte steht, oeffnet das
+   * Vollbild. So braucht es keine zweite Schaltflaeche, und ein Fehltipp beim
+   * Wischen kostet hoechstens einen Schritt, nie einen Bildschirmwechsel.
+   */
   const handleVialCarouselItemClick = (index: number) => {
     if (vialSuppressClickRef.current) return
-    if (index !== activeIndex) pushVialSlosh(index > activeIndex ? 1 : -1)
-    selectPeptideIndex(index)
+    if (index !== activeIndex) {
+      pushVialSlosh(index > activeIndex ? 1 : -1)
+      selectPeptideIndex(index)
+      return
+    }
+    const objekt = vialCarouselRef.current?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
+    if (objekt) setDetailUrsprung(objekt.getBoundingClientRect())
   }
   const handleVialCarouselItemKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>, index: number) => {
     if (e.key !== 'Enter' && e.key !== ' ') return
@@ -2993,6 +3009,39 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       })()}
 
       {/* PEPTID-FORMULAR */}
+      {/* Das Vollbild hinter einem Objekt. Der Uebergang ist FLIP: das Objekt
+          wird an seinem Platz im Karussell gemessen und fliegt von dort an
+          seine Stelle hier oben, dabei verkleinert. Waehrend des Flugs ist die
+          Fluessigkeitsphysik still. */}
+      {detailUrsprung && activePeptide && (
+        <StageDetailSheet
+          originRect={detailUrsprung}
+          onClose={() => setDetailUrsprung(null)}
+          onFlightChange={imFlug => sloshEngine.setEnabled(!imFlug)}
+          title={activePeptide.name}
+          subtitle={(() => {
+            // Die eine Zeile unter dem Namen: was der laufende Plan sagt.
+            const laufend = cyclesOf(activePeptide.id).find(c => c.active)
+            if (!laufend) return null
+            return [freqLabel(laufend), intakeLabel(laufend)].filter(Boolean).join(' · ')
+          })()}
+          stage={(
+            <SloshProvider engine={sloshEngine}>
+              <div style={{ width: 'min(9rem, 38vw)' }}>
+                <StackStage
+                  item={{ ...activePeptide, color_hex: activePeptide.color_hex ?? getStableStackItemColor(activePeptide.id) }}
+                  fillPct={Math.round(getVialFillPct(activePeptide) ?? 100)}
+                  isActive
+                  size="carousel"
+                />
+              </div>
+            </SloshProvider>
+          )}
+        >
+          <StackItemDetails item={activePeptide} />
+        </StageDetailSheet>
+      )}
+
       {showPeptideForm && (
         <StackItemWizard
           catalogEntries={catalogEntries}

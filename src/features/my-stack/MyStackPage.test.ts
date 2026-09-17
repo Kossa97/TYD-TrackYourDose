@@ -461,6 +461,26 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('escalationsOf(c.id)')
   })
 
+  test('öffnet das Vollbild erst beim Tippen auf die Mitte', () => {
+    // Erst wischen, dann tippen: ein Tipp auf einen Nachbarn holt ihn nur in
+    // die Mitte. Sonst kostete ein Fehltipp beim Wischen einen ganzen
+    // Bildschirmwechsel statt eines Schritts.
+    const text = source()
+    const start = text.indexOf('const handleVialCarouselItemClick =')
+    const handler = text.slice(start, text.indexOf('\n  }', start))
+
+    expect(handler).toContain('if (index !== activeIndex)')
+    expect(handler).toContain('selectPeptideIndex(index)')
+    expect(handler).toContain('setDetailUrsprung(objekt.getBoundingClientRect())')
+  })
+
+  test('legt die Flüssigkeitsphysik für den Flug still', () => {
+    // Ein schwappendes Vial mitten im Flug wirkt falsch.
+    const text = source()
+
+    expect(text).toContain('onFlightChange={imFlug => sloshEngine.setEnabled(!imFlug)}')
+  })
+
   test('zeigt alle sieben Reiter, auch die leeren, an festem Platz', () => {
     // Ein leerer Reiter „Medikamente" sagt, dass die App das auch kann. In
     // Produktion sind drei der sechs Kategorien gar nicht belegt — versteckt
