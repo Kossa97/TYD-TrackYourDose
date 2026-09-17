@@ -2484,11 +2484,19 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                             }}
                           />
                         </StageFit>
-                        {isActive && showsFillPct && (
-                          <p className="mt-1 text-center text-xs font-semibold tabular-nums text-slate-400">
-                            {Math.round(vialPct)}%
-                          </p>
-                        )}
+                        {/* Die Zeile steht IMMER, auch wenn nichts darin steht.
+                            Sonst waere jeder Eintrag ohne Fuellstand — ein
+                            Spray, ein Pflaster — eine Zeile kuerzer als einer
+                            mit, und die Positionsleiste darunter huepfte bei
+                            jedem Wisch mit. Reserviert wird der Platz mit
+                            einem geschuetzten Leerzeichen; fuer die Vorlesung
+                            ist die leere Zeile ausgeblendet. */}
+                        <p
+                          className="mt-1 text-center text-xs font-semibold tabular-nums text-slate-400"
+                          aria-hidden={isActive && showsFillPct ? undefined : true}
+                        >
+                          {isActive && showsFillPct ? `${Math.round(vialPct)}%` : '\u00a0'}
+                        </p>
                       </div>
                     )
                   })}

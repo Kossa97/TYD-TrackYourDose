@@ -165,9 +165,21 @@ describe('My Stack page vial view', () => {
 
     // still under the active item — but only for forms whose fill level says
     // something, so a sealed ampoule does not read "100 %" forever
-    expect(text).toContain('{isActive && showsFillPct && (')
     expect(text).toContain('mt-1 text-center')
-    expect(text).toContain('{Math.round(vialPct)}%')
+    expect(text).toContain('{isActive && showsFillPct ? `${Math.round(vialPct)}%`')
+  })
+
+  test('hält die Zeile unter dem Objekt frei, auch wenn nichts darin steht', () => {
+    // Ein Spray hat keinen Füllstand, ein Vial schon. Stand die Zeile nur dort,
+    // wo etwas darin steht, war jeder Eintrag ohne sie eine Zeile kürzer — und
+    // die Positionsleiste darunter hüpfte bei jedem Wisch mit. Reserviert wird
+    // der Platz mit einem geschützten Leerzeichen.
+    const text = source()
+
+    expect(text).toContain("{isActive && showsFillPct ? `${Math.round(vialPct)}%` : '\\u00a0'}")
+    expect(text).toContain('aria-hidden={isActive && showsFillPct ? undefined : true}')
+    // Die alte Fassung ließ die Zeile ganz weg.
+    expect(text).not.toContain('{isActive && showsFillPct && (')
   })
 
   test('shrinks the vial carousel and removes its surrounding frame so it can bleed edge-to-edge', () => {
