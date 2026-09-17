@@ -15,16 +15,26 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
  * selbst.
  *
  * Skaliert wird vom Boden, damit alle Objekte auf derselben Standlinie stehen.
+ *
+ * WICHTIG fuer die Bildqualitaet: eine CSS-Skalierung vergroessert nicht die
+ * Zeichnung, sondern das fertige Bild. Der Aufrufer muss deshalb die groesste
+ * passende Vorlage hereingeben (`size="large"`, nicht `carousel`), damit hier
+ * ueberwiegend VERKLEINERT wird — das ist immer scharf. `maxScale` ist die
+ * Notbremse dagegen: was darueber hinaus vergroessert werden muesste, ist kein
+ * Skalierungsproblem, sondern eine zu kleine Vorlage.
  */
 export interface StageFitProps {
   children: ReactNode
   /** Groesse der Flaeche, in die eingepasst wird. */
   className?: string
-  /** Hoechster Faktor — ohne ihn wuerde ein winziges Objekt ins Gigantische gezogen. */
+  /**
+   * Hoechster Faktor — ohne ihn wuerde ein winziges Objekt ins Gigantische
+   * gezogen, und jedes Vergroessern kostet Schaerfe (siehe oben).
+   */
   maxScale?: number
 }
 
-export function StageFit({ children, className, maxScale = 4 }: StageFitProps) {
+export function StageFit({ children, className, maxScale = 1.6 }: StageFitProps) {
   const flaecheRef = useRef<HTMLDivElement>(null)
   const objektRef = useRef<HTMLDivElement>(null)
   const [skala, setSkala] = useState(1)
@@ -58,6 +68,11 @@ export function StageFit({ children, className, maxScale = 4 }: StageFitProps) {
       <div
         ref={objektRef}
         data-stage-fit-object
+        // `shrink-0`: die grossen Vorlagen sind breiter als der Karussellplatz
+        // (Kapsel 364 px, Pen-Nachbarn) — als Flex-Kind wuerden sie sonst auf
+        // die Flaechenbreite gestaucht, und gemessen wuerde die gestauchte
+        // Breite statt der echten.
+        className="shrink-0"
         style={{ transform: `scale(${skala})`, transformOrigin: 'bottom center' }}
       >
         {children}

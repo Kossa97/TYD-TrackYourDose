@@ -502,7 +502,21 @@ describe('My Stack page vial view', () => {
     // nicht — derselbe, der die Kapsel füllt, schöbe den Pen über den Rand.
     const text = source()
 
-    expect(text).toContain('<StageFit className="h-[46vh] max-h-[26rem] w-full">')
+    expect(text).toContain('<StageFit className="h-[46vh] max-h-[26rem] w-full" maxScale={1.6}>')
+  })
+
+  test('gibt der Buehne die grosse Vorlage, nicht die Karussellgroesse', () => {
+    // Eine CSS-Skalierung vergroessert das fertige Bild, nicht die Zeichnung:
+    // Vial und Tube tragen `feGaussianBlur`, mehrere Formen laufende
+    // Animationen — beides legt die Form auf eine eigene Ebene, die in ihrer
+    // Layoutgroesse gerastert und danach hochgezogen wird. Mit `carousel`
+    // (80–125 px) lag der Faktor bei rund 3. Mit `large` (109–589 px) liegt er
+    // zwischen 0,64 und 1,3, also meist beim Verkleinern — das ist scharf.
+    const text = source()
+    const buehne = text.slice(text.indexOf('<StageFit'), text.indexOf('</StageFit>'))
+
+    expect(buehne).toContain('size="large"')
+    expect(buehne).not.toContain('size="carousel"')
   })
 
   test('zeigt alle sieben Reiter, auch die leeren, an festem Platz', () => {

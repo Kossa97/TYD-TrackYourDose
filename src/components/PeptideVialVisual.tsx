@@ -246,9 +246,10 @@ export function PeptideVialVisual({
   // 'large' = detail views (edit form, previews); 'carousel' = the My Stack
   // carousel, sized so several vials can peek in side by side; 'compact' =
   // tiny inline previews.
-  // `large` ist die Groesse des Farbschritts und sonst nichts (der einzige
-  // Aufrufer in der App). Sie steht deshalb fest und gross genug fuer die
-  // Flaeche dort — statt klein zu sein und hochgezogen zu werden.
+  // `large` ist die grosse, fuer grosse Flaechen GEZEICHNETE Vorlage: der
+  // Farbschritt im Formular und die My-Stack-Buehne (dort in `StageFit`
+  // eingepasst). Sie steht deshalb fest und gross genug — statt klein zu sein
+  // und hochgezogen zu werden.
   const widthClass = size === 'large' ? 'w-[184px] max-w-full' : size === 'carousel' ? 'w-20 sm:w-24' : size === 'mini' ? 'w-12' : 'w-16'
   // Every non-carousel size is a pure scale of the My Stack carousel vial: the
   // glass body keeps the carousel's 5:7 aspect (mobile 80×112) so width alone

@@ -36,9 +36,21 @@ describe('StageFit', () => {
   it('nimmt bei einer breiten Form die Breite', () => {
     // Eine liegende Kapsel ist breit und flach — dort begrenzt die Breite.
     masse({ width: 240, height: 340 }, { width: 92, height: 32 })
-    render(<StageFit><div /></StageFit>)
+    render(<StageFit maxScale={4}><div /></StageFit>)
 
     expect(skalaVon()).toBe('scale(2.608695652173913)')
+  })
+
+  it('vergroessert von sich aus hoechstens um zwei Drittel', () => {
+    // Skalieren vergroessert das fertige Bild, nicht die Zeichnung: laufende
+    // Animationen und SVG-Filter legen eine Form auf eine eigene Ebene, die in
+    // ihrer Layoutgroesse gerastert und danach hochgezogen wird. Der Aufrufer
+    // gibt deshalb die grosse Vorlage herein; die Voreinstellung hier ist die
+    // Notbremse, falls er es vergisst.
+    masse({ width: 240, height: 340 }, { width: 92, height: 32 })
+    render(<StageFit><div /></StageFit>)
+
+    expect(skalaVon()).toBe('scale(1.6)')
   })
 
   it('zieht ein winziges Objekt nicht ins Gigantische', () => {

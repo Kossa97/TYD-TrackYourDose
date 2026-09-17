@@ -2422,19 +2422,34 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         onKeyDown={e => handleVialCarouselItemKeyDown(e, index)}
                       >
                         {/* Eingepasst statt fest bemessen: jede Form bringt
-                            eigene Pixelmasse mit — ein Pen ist bei
-                            Karussellgroesse 237 px hoch, eine Kapsel 92 px
-                            breit. `StageFit` misst und skaliert, damit beide
-                            die Flaeche fuellen, ohne dass in elf Dateien elf
-                            neue Zahlen stehen. */}
-                        <StageFit className="h-[46vh] max-h-[26rem] w-full">
+                            eigene Pixelmasse mit — ein Pen ist 589 px hoch,
+                            eine Kapsel 364 px breit. `StageFit` misst und
+                            skaliert, damit beide die Flaeche fuellen, ohne
+                            dass in elf Dateien elf neue Zahlen stehen.
+
+                            `size="large"` und nicht `carousel`: die Buehne ist
+                            gross, also muss die GEZEICHNETE Vorlage gross
+                            sein. Mit `carousel` (80–125 px) lag der Faktor bei
+                            rund 3 — und eine CSS-Skalierung vergroessert nicht
+                            die Zeichnung, sondern das fertige Bild: laufende
+                            Animationen und SVG-Filter (`feGaussianBlur` in
+                            Vial und Tube) legen die Form auf eine eigene
+                            Ebene, die in ihrer Layoutgroesse gerastert und
+                            danach hochgezogen wird. Dazu ist die kleine
+                            Zeichnung fuer klein entworfen: 1-px-Linien werden
+                            zu 3-px-Balken, der Schriftanteil ist zu fett. Mit
+                            `large` liegt der Faktor zwischen 0,64 (Pen) und
+                            1,3 (Vial) — meist also VERKLEINERN, und das ist
+                            immer scharf. Die Groesse auf dem Schirm aendert
+                            sich nicht: eingepasst wird in dieselbe Flaeche. */}
+                        <StageFit className="h-[46vh] max-h-[26rem] w-full" maxScale={1.6}>
                           <StackStage
                             key={animationEpoch}
                             item={{ ...p, color_hex: peptideColor }}
                             fillPct={vialPct}
                             animateOnMount={true}
                             isActive={isActive}
-                            size="carousel"
+                            size="large"
                             stageLightRef={handle => {
                               const handles = vialStageLightHandlesRef.current
                               if (handle) handles.set(index, handle)
