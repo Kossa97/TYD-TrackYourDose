@@ -2,17 +2,17 @@
 
 import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { LiquidGlassTabBar, TAB_ATTR, type GlassTabItem } from './LiquidGlassTabBar'
+import { LiquidGlassTabBar, PILLE_BREITE, SLOT_ATTR, type GlassTabItem } from './LiquidGlassTabBar'
 
 function masse(reiter: Record<string, { links: number; breite: number }>, kapsel = 360) {
   Object.defineProperty(HTMLElement.prototype, 'offsetLeft', {
     configurable: true,
-    get(this: HTMLElement) { return reiter[this.getAttribute(TAB_ATTR) ?? '']?.links ?? 0 },
+    get(this: HTMLElement) { return reiter[this.getAttribute(SLOT_ATTR) ?? '']?.links ?? 0 },
   })
   Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
     configurable: true,
     get(this: HTMLElement) {
-      const eigen = reiter[this.getAttribute(TAB_ATTR) ?? '']
+      const eigen = reiter[this.getAttribute(SLOT_ATTR) ?? '']
       return eigen ? eigen.breite : kapsel
     },
   })
@@ -21,15 +21,18 @@ function masse(reiter: Record<string, { links: number; breite: number }>, kapsel
 const eintraege = (ids: string[]): GlassTabItem[] => ids.map(id => ({
   id,
   label: id,
+  art: id === 'plus' ? 'aktion' : 'tab',
   icon: <svg data-icon={id} />,
   render: ({ className, children, ...rest }) => (
-    <a key={id} href={`/${id}`} className={className} {...rest}>{children}</a>
+    id === 'plus'
+      ? <button key={id} type="button" className={className} data-tyd-center {...rest}>{children}</button>
+      : <a key={id} href={`/${id}`} className={className} {...rest}>{children}</a>
   ),
 }))
 
 const pille = () => document.querySelector('[data-tyd-pill]') as HTMLElement
 const leiste = () => document.querySelector('.tyd-tabbar') as HTMLElement
-const reiter = (id: string) => document.querySelector(`[${TAB_ATTR}="${id}"]`) as HTMLElement
+const reiter = (id: string) => document.querySelector(`[${SLOT_ATTR}="${id}"]`) as HTMLElement
 
 /** Ein Zeigerereignis, wie es ein Finger auslöst. jsdom kennt PointerEvent nicht. */
 function zeiger(art: string, ziel: HTMLElement, clientX: number) {
@@ -55,10 +58,8 @@ describe('LiquidGlassTabBar', () => {
     haken: { onSelect?: (id: string) => void; onPreviewChange?: (id: string) => void } = {},
   ) => render(
     <LiquidGlassTabBar
-      items={eintraege(['home', 'my-stack', 'kalender', 'profil'])}
+      items={eintraege(['home', 'my-stack', 'plus', 'kalender', 'profil'])}
       activeId={activeId}
-      centerIndex={2}
-      centerAction={<button type="button" aria-label="Quick Actions" className="tyd-tabbar-item" data-tyd-center>+</button>}
       ariaLabel="Navigation"
       {...haken}
     />,
@@ -71,14 +72,16 @@ describe('LiquidGlassTabBar', () => {
     el.hasPointerCapture = () => true
   }
 
-  it('legt die Pille auf den aktiven Reiter, gemessen statt gerechnet', () => {
-    // Die Reiter sind unterschiedlich breit, sobald eine Beschriftung länger
-    // ist — eine Formel aus „Kapselbreite durch Anzahl" träfe daneben.
+  it('legt die Pille mittig auf den aktiven Reiter, gemessen statt gerechnet', () => {
+    // Die Plätze sind unterschiedlich breit — eine Formel aus „Kapselbreite
+    // durch Anzahl" träfe daneben. Die Pille ist schmaler als ein Platz und
+    // sitzt in seiner Mitte: sie umfasst das Symbol, sie malt nicht das Fach
+    // aus. 82 + (96 − 46) / 2 = 107.
     masse({ home: { links: 8, breite: 70 }, 'my-stack': { links: 82, breite: 96 } })
     bauen('my-stack')
 
-    expect(pille().style.transform).toBe('translateX(82px)')
-    expect(pille().style.width).toBe('96px')
+    expect(pille().style.transform).toBe('translateX(107px)')
+    expect(pille().style.width).toBe(`${PILLE_BREITE}px`)
   })
 
   it('blendet die Pille aus, wo kein Reiter gilt', () => {
@@ -90,13 +93,13 @@ describe('LiquidGlassTabBar', () => {
     expect(pille().dataset.ohneZiel).toBe('true')
   })
 
-  it('schiebt die mittlere Schaltfläche zwischen zwei und zwei Reiter', () => {
+  it('führt die mittlere Schaltfläche als vollwertigen Platz mit', () => {
     masse({ home: { links: 8, breite: 70 } })
     bauen('home')
 
     const kinder = [...leiste().children].slice(1)   // ohne die Pille
-    expect(kinder.map(k => k.getAttribute(TAB_ATTR) ?? k.getAttribute('aria-label')))
-      .toEqual(['home', 'my-stack', 'Quick Actions', 'kalender', 'profil'])
+    expect(kinder.map(k => k.getAttribute(SLOT_ATTR)))
+      .toEqual(['home', 'my-stack', 'plus', 'kalender', 'profil'])
   })
 
   it('setzt den aktiven Reiter als aktuelle Seite, für Vorlesung und Farbe', () => {
@@ -104,7 +107,7 @@ describe('LiquidGlassTabBar', () => {
     bauen('kalender')
 
     const aktiv = document.querySelector('[aria-current="page"]')
-    expect(aktiv?.getAttribute(TAB_ATTR)).toBe('kalender')
+    expect(aktiv?.getAttribute(SLOT_ATTR)).toBe('kalender')
     expect(document.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
   })
 
@@ -135,7 +138,8 @@ describe('LiquidGlassTabBar', () => {
     expect(pille().dataset.gehalten).toBe('true')
 
     zeiger('pointermove', leiste(), 240)          // über „Kalender" (Mitte 240)
-    expect(pille().style.transform).toBe('translateX(200px)')
+    // 200 + (80 − 46) / 2 = 217
+    expect(pille().style.transform).toBe('translateX(217px)')
   })
 
   it('öffnet beim Loslassen den Reiter unter dem Finger', () => {
@@ -169,20 +173,40 @@ describe('LiquidGlassTabBar', () => {
     expect(geoeffnet).toEqual([])
   })
 
-  it('startet kein Ziehen an der mittleren Schaltfläche', () => {
-    // Sie ist kein Reiter — wer sie drückt, will den Schnellzugriff, nicht die
-    // Leiste entlangfahren.
-    const geoeffnet: string[] = []
-    masse({ home: { links: 8, breite: 70 }, kalender: { links: 200, breite: 80 } })
-    bauen('home', { onSelect: id => geoeffnet.push(id) })
+  it('lässt sich auch auf die mittlere Schaltfläche schieben und loslassen', () => {
+    // Sie führt zu keiner Seite, ist aber ein Ort wie jeder andere: wer auf
+    // ihr loslässt, löst sie aus. Vorher übersprang die Pille sie, und das
+    // fühlte sich an wie ein Loch in der Leiste.
+    const ausgeloest: string[] = []
+    // Alle fünf Plätze vermessen: ein Platz ohne Maße fiele auf die
+    // Kapselbreite zurück und läge dann bei jeder Stelle „am nächsten".
+    masse({
+      home: { links: 8, breite: 64 },
+      'my-stack': { links: 76, breite: 64 },
+      plus: { links: 148, breite: 64 },
+      kalender: { links: 216, breite: 64 },
+      profil: { links: 284, breite: 64 },
+    })
+    bauen('home', { onSelect: id => ausgeloest.push(id) })
     zeigerfaehig(leiste())
+    leiste().getBoundingClientRect = () => ({ left: 0, top: 0, right: 360, bottom: 56, width: 360, height: 56, x: 0, y: 0, toJSON: () => ({}) })
 
-    zeiger('pointerdown', document.querySelector('[data-tyd-center]') as HTMLElement, 150)
-    zeiger('pointermove', leiste(), 240)
-    zeiger('pointerup', leiste(), 240)
+    zeiger('pointerdown', reiter('home'), 40)
+    zeiger('pointermove', leiste(), 180)          // über dem „+" (Mitte 180)
+    expect(pille().dataset.gehalten).toBe('true')
+    // 148 + (64 − 46) / 2 = 157
+    expect(pille().style.transform).toBe('translateX(157px)')
 
-    expect(geoeffnet).toEqual([])
-    expect(pille().dataset.gehalten).toBe('false')
+    zeiger('pointerup', leiste(), 180)
+    expect(ausgeloest).toEqual(['plus'])
+  })
+
+  it('gibt der mittleren Schaltfläche kein aria-current', () => {
+    // Eine Aktion ist nie „die aktuelle Seite" — sie führt zu keiner.
+    masse({ plus: { links: 150, breite: 60 } })
+    bauen('plus')
+
+    expect(document.querySelector('[aria-current="page"]')).toBeNull()
   })
 
   it('meldet jeden Reiter, über den der Finger gleitet', () => {
@@ -215,7 +239,7 @@ describe('LiquidGlassTabBar', () => {
     zeiger('pointerdown', reiter('home'), 40)
     zeiger('pointermove', leiste(), 240)
 
-    expect(document.querySelector('[aria-current="page"]')?.getAttribute(TAB_ATTR)).toBe('home')
+    expect(document.querySelector('[aria-current="page"]')?.getAttribute(SLOT_ATTR)).toBe('home')
   })
 
   it('trägt eine Beschriftung für die Vorlesung', () => {

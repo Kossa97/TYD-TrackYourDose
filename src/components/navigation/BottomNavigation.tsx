@@ -22,6 +22,15 @@ const ICONS: Record<TabId, typeof Home> = {
   profil: User,
 }
 
+/**
+ * Kennung der mittleren Schaltflaeche im Streifen.
+ *
+ * Sie ist kein Reiter — sie fuehrt zu keiner Seite —, aber sie ist ein Platz:
+ * der Finger kann ueber sie gleiten und auf ihr loslassen. Die zwei
+ * Unterstriche halten sie von jeder echten Reiterkennung fern.
+ */
+export const CENTER_SLOT_ID = '__quick-actions'
+
 export interface BottomNavigationProps {
   pathname: string
   quickActionsOpen: boolean
@@ -37,18 +46,7 @@ export function BottomNavigation({
   const navigate = useNavigate()
   const activeId = resolveActiveTabId(pathname)
 
-  /**
-   * Halten und schieben endet hier: der Reiter unter dem Finger wird beim
-   * Loslassen geoeffnet. Ein einfacher Tipp laeuft nicht hierueber — den
-   * erledigt die Verknuepfung selbst, samt allem, was ein Browser an einer
-   * Verknuepfung kann (Mittelklick, Kontextmenue, Vorlesung).
-   */
-  const oeffne = (id: string) => {
-    const ziel = TAB_ITEMS.find(tab => tab.id === id)
-    if (ziel) navigate(ziel.route)
-  }
-
-  const items: GlassTabItem[] = TAB_ITEMS.map(tab => {
+  const reiter: GlassTabItem[] = TAB_ITEMS.map(tab => {
     const Icon = ICONS[tab.id]
     return {
       id: tab.id,
@@ -67,40 +65,64 @@ export function BottomNavigation({
     }
   })
 
+  /**
+   * Die Mitte: dasselbe Symbolmass, dieselbe Klasse, derselbe Platz im
+   * Streifen wie ein Reiter. Anders ist nur, wohin sie fuehrt — naemlich
+   * nirgends: sie oeffnet den Schnellzugriff. Dass sie offen ist, sagt das
+   * Symbol (ein X statt eines Plus) und `aria-expanded`.
+   */
+  const mitte: GlassTabItem = {
+    id: CENTER_SLOT_ID,
+    art: 'aktion',
+    label: 'Quick Actions',
+    icon: quickActionsOpen
+      ? <X size={25} aria-hidden="true" />
+      : <Plus size={25} aria-hidden="true" />,
+    // `aria-current` wird bewusst NICHT durchgereicht: die Darstellung setzt es
+    // fuer eine Aktion ohnehin nicht, und ein `aria-current` an einer
+    // Schaltflaeche, die zu keiner Seite fuehrt, waere schlicht falsch.
+    render: ({ className, children, ...rest }) => (
+      <button
+        type="button"
+        onClick={onToggleQuickActions}
+        aria-expanded={quickActionsOpen}
+        className={className}
+        data-tyd-center
+        style={{ color: quickActionsOpen ? 'var(--accent)' : undefined }}
+        {...rest}
+      >
+        {children}
+      </button>
+    ),
+  }
+
+  const plaetze = [
+    ...reiter.slice(0, CENTER_ACTION_INDEX),
+    mitte,
+    ...reiter.slice(CENTER_ACTION_INDEX),
+  ]
+
+  /**
+   * Halten und schieben endet hier: der Platz unter dem Finger wird beim
+   * Loslassen ausgeloest. Ein einfacher Tipp laeuft nicht hierueber — den
+   * erledigt das Element selbst, samt allem, was ein Browser an einer
+   * Verknuepfung kann.
+   */
+  const ausloesen = (id: string) => {
+    if (id === CENTER_SLOT_ID) { onToggleQuickActions(); return }
+    const ziel = TAB_ITEMS.find(tab => tab.id === id)
+    if (ziel) navigate(ziel.route)
+  }
+
   return (
     <LiquidGlassTabBar
-      items={items}
+      items={plaetze}
       activeId={activeId}
-      centerIndex={CENTER_ACTION_INDEX}
-      onSelect={oeffne}
-      // Ein Klick je Reiter, den der Finger ueberstreicht — wie am Rad einer
+      onSelect={ausloesen}
+      // Ein Klick je Platz, den der Finger ueberstreicht — wie am Rad einer
       // Uhr, und dasselbe Gefuehl wie im My-Stack-Karussell.
       onPreviewChange={() => { void hapticTick() }}
-      // „Navigation" heisst in beiden Startsprachen gleich. Ein eigener
-      // Schluessel dafuer haette die Sprachdateien angefasst, und der Vertrag
-      // in `my-stack/lib/i18n.test.ts` haelt die ausserhalb seines Bereichs
-      // bewusst unveraendert.
       ariaLabel={String(t('nav_aria_label', { defaultValue: 'Navigation' }))}
-      centerAction={(
-        // Dieselbe Klasse und dieselbe Symbolgroesse wie ein Reiter: die Mitte
-        // soll sich in die Reihe einfuegen, nicht als Knopf herausstechen.
-        // Anders ist nur, was sie tut — sie fuehrt zu keiner Seite, traegt
-        // keine Pille und zieht beim Wischen nicht mit. Dass sie offen ist,
-        // sagt das Symbol (ein X statt eines Plus) und `aria-expanded`.
-        <button
-          type="button"
-          aria-label="Quick Actions"
-          aria-expanded={quickActionsOpen}
-          onClick={onToggleQuickActions}
-          className="tyd-tabbar-item"
-          data-tyd-center
-          style={{ color: quickActionsOpen ? 'var(--accent)' : undefined }}
-        >
-          {quickActionsOpen
-            ? <X size={25} aria-hidden="true" />
-            : <Plus size={25} aria-hidden="true" />}
-        </button>
-      )}
     />
   )
 }

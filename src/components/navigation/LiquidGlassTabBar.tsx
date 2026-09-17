@@ -17,13 +17,31 @@ import {
  * Browser `backdrop-filter` oder Masken nicht kann.
  */
 
-/** Attribut, an dem die Messung die Reiter im Streifen wiederfindet. */
-export const TAB_ATTR = 'data-tyd-tab'
+/**
+ * Attribut, an dem die Messung die Plaetze im Streifen wiederfindet.
+ *
+ * PLAETZE, nicht Reiter: die mittlere Schaltflaeche traegt es ebenso. Sie
+ * fuehrt zwar zu keiner Seite, ist aber ein Ort, ueber den der Finger gleiten
+ * und auf dem er loslassen kann — vorher uebersprang die Pille sie, und das
+ * fuehlte sich an wie ein Loch in der Leiste.
+ */
+export const SLOT_ATTR = 'data-tyd-slot'
+
+/**
+ * Wie breit die Pille ist — schmaler als ein Platz, damit sie das Symbol
+ * umfasst und nicht das ganze Fach ausmalt.
+ */
+export const PILLE_BREITE = 46
 
 export interface GlassTabItem {
   id: string
   label: string
   icon: ReactNode
+  /**
+   * `tab` fuehrt zu einer Seite und kann aktiv sein. `aktion` tut etwas —
+   * sie traegt kein `aria-current`, laesst sich aber genauso anfahren.
+   */
+  art?: 'tab' | 'aktion'
   /**
    * Was beim Tippen gerendert wird — eine Verknuepfung oder eine
    * Schaltflaeche. Die Darstellung reicht die Eigenschaften durch, die sie
@@ -34,17 +52,15 @@ export interface GlassTabItem {
     children: ReactNode
     'aria-current': 'page' | undefined
     'aria-label': string
-    [TAB_ATTR]: string
+    [SLOT_ATTR]: string
   }) => ReactNode
 }
 
 export interface LiquidGlassTabBarProps {
+  /** Alle Plaetze in der Reihenfolge, in der sie auf dem Schirm stehen. */
   items: readonly GlassTabItem[]
   /** Der aktive Reiter, oder null auf einer Seite, die zu keinem gehoert. */
   activeId: string | null
-  /** Nach wie vielen Reitern die mittlere Schaltflaeche eingeschoben wird. */
-  centerIndex: number
-  centerAction: ReactNode
   ariaLabel: string
   /**
    * Wird gerufen, wenn der Finger ueber der Leiste losgelassen wird und dabei
@@ -66,8 +82,6 @@ interface Einpassung {
 export function LiquidGlassTabBar({
   items,
   activeId,
-  centerIndex,
-  centerAction,
   ariaLabel,
   onSelect,
   onPreviewChange,
@@ -115,12 +129,12 @@ export function LiquidGlassTabBar({
     const kapsel = kapselRef.current
     if (!kapsel) return
 
-    const reiter = () => [...kapsel.querySelectorAll<HTMLElement>(`[${TAB_ATTR}]`)]
+    const reiter = () => [...kapsel.querySelectorAll<HTMLElement>(`[${SLOT_ATTR}]`)]
 
     const messen = () => {
       const alle = reiter()
       mittenRef.current = alle.map(el => ({
-        id: el.getAttribute(TAB_ATTR) ?? '',
+        id: el.getAttribute(SLOT_ATTR) ?? '',
         mitte: el.offsetLeft + el.offsetWidth / 2,
       }))
 
@@ -128,10 +142,16 @@ export function LiquidGlassTabBar({
       // eingesetzter Kennung: das braucht kein `CSS.escape` (das jsdom gar
       // nicht hat) und kann an keiner Kennung zerbrechen.
       const ziel = gezeigt
-        ? alle.find(el => el.getAttribute(TAB_ATTR) === gezeigt) ?? null
+        ? alle.find(el => el.getAttribute(SLOT_ATTR) === gezeigt) ?? null
         : null
       const naechste: Einpassung | null = ziel && kapsel.offsetWidth
-        ? { links: ziel.offsetLeft, breite: ziel.offsetWidth, kapselBreite: kapsel.offsetWidth }
+        ? {
+            // Mittig auf dem Platz statt ihn auszufuellen: die Pille umfasst
+            // das Symbol, sie malt nicht das Fach aus.
+            links: ziel.offsetLeft + (ziel.offsetWidth - PILLE_BREITE) / 2,
+            breite: PILLE_BREITE,
+            kapselBreite: kapsel.offsetWidth,
+          }
         : null
 
       setPille(vorher => (gleich(vorher, naechste) ? vorher : naechste))
@@ -163,12 +183,12 @@ export function LiquidGlassTabBar({
   }
 
   const beiZeigerAb = (e: ReactPointerEvent<HTMLElement>) => {
-    const auf = (e.target as HTMLElement).closest?.(`[${TAB_ATTR}]`)
+    const auf = (e.target as HTMLElement).closest?.(`[${SLOT_ATTR}]`)
     if (!auf) return          // die mittlere Schaltflaeche zieht nicht mit
     ziehtRef.current = true
     gewandertRef.current = false
     e.currentTarget.setPointerCapture(e.pointerId)
-    setzeVorschau(auf.getAttribute(TAB_ATTR))
+    setzeVorschau(auf.getAttribute(SLOT_ATTR))
   }
 
   const beiZeigerBewegung = (e: ReactPointerEvent<HTMLElement>) => {
@@ -215,15 +235,16 @@ export function LiquidGlassTabBar({
     e.stopPropagation()
   }
 
-  const reiter = (item: GlassTabItem) => item.render({
+  const platz = (item: GlassTabItem) => item.render({
     className: 'tyd-tabbar-item',
     // Nur Symbole, keine Unterschriften — wie in der Leiste aus iOS 26. Der
     // Name muss dann als Beschriftung mit, sonst hoert die Vorlesung nur „Link".
     'aria-label': item.label,
-    [TAB_ATTR]: item.id,
+    [SLOT_ATTR]: item.id,
     // Immer der Reiter der GEZEIGTEN Seite, nie der unter dem Finger: was
     // vorgelesen wird, darf nicht von einer Geste abhaengen, die noch laeuft.
-    'aria-current': item.id === activeId ? 'page' : undefined,
+    // Eine Aktion ist nie „die aktuelle Seite", sie fuehrt zu keiner.
+    'aria-current': item.art !== 'aktion' && item.id === activeId ? 'page' : undefined,
     children: item.icon,
   })
 
@@ -249,12 +270,8 @@ export function LiquidGlassTabBar({
           ? { width: pille.breite, transform: `translateX(${pille.links}px)` }
           : undefined}
       />
-      {items.slice(0, centerIndex).map(item => (
-        <TabTraeger key={item.id}>{reiter(item)}</TabTraeger>
-      ))}
-      {centerAction}
-      {items.slice(centerIndex).map(item => (
-        <TabTraeger key={item.id}>{reiter(item)}</TabTraeger>
+      {items.map(item => (
+        <TabTraeger key={item.id}>{platz(item)}</TabTraeger>
       ))}
     </nav>
   )
