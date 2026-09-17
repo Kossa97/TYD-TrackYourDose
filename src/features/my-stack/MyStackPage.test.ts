@@ -80,9 +80,36 @@ describe('My Stack page vial view', () => {
     const text = source()
 
     expect(text).toContain('min(15rem, 62vw)')
-    expect(text).toContain('snap-center')
     expect(text).toContain('origin-bottom')
     expect(text).toContain("isActive ? 'scale-100' : 'scale-[0.88] opacity-65 saturate-75'")
+  })
+
+  test('rastet selbst ein, statt es dem Browser zu überlassen', () => {
+    // Auf dem Gerät griff `scroll-snap-type: x mandatory` zu spät: in einer
+    // Bildschirmaufnahme dreimal dasselbe Muster — der Wisch läuft aus, das
+    // Objekt steht 25 bis 33 px neben der Mitte still, hält dort 220 bis
+    // 300 ms, und springt dann in EINEM Bild auf die Mitte. Ein Ruck, kein
+    // Gleiten. Deshalb kein CSS-Einrasten mehr, sondern eine eigene
+    // Zielposition, weich angefahren, sobald das Rollen zur Ruhe kommt.
+    const text = source()
+
+    expect(text).toContain("const vialSnapClassName = 'snap-none'")
+    expect(text).not.toContain('snap-mandatory')
+    expect(text).toContain('einrastenNachRuhe')
+    expect(text).toContain('zentrierPosition({')
+    expect(text).toContain("carousel.scrollTo({ left: ziel, behavior: 'smooth' })")
+  })
+
+  test('rastet nicht ein, solange jemand den Streifen hält', () => {
+    // Sonst zöge es dem Nutzer das Karussell unter dem Finger weg, sobald er
+    // einen Moment stillhält. Der Zeigerzustand wird deshalb für JEDE
+    // Eingabeart gesetzt — vor dem Ausstieg, den der Mauspfad hat.
+    const text = source()
+
+    expect(text).toContain('if (!carousel || vialZeigerUntenRef.current) return')
+    const down = text.slice(text.indexOf('const handleVialCarouselPointerDown'))
+    const bisAusstieg = down.slice(0, down.indexOf("if (e.pointerType !== 'mouse'"))
+    expect(bisAusstieg).toContain('vialZeigerUntenRef.current = true')
   })
 
   test('setzt das Objekt mit einem Kontaktschatten auf den Boden', () => {
@@ -175,8 +202,9 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('scrollToClosestVial')
     expect(text).toContain('pushVialSlosh')
     expect(text).toContain('vialLastScrollLeftRef')
-    expect(text).toContain("const vialSnapClassName = isVialCarouselDragging ? 'snap-none' : 'snap-x snap-mandatory'")
-    expect(text).toContain("const vialItemSnapClassName = isVialCarouselDragging ? '' : 'snap-center'")
+    // Kein CSS-Einrasten mehr — weder beim Ziehen noch danach. Das Zentrieren
+    // macht `einrastenNachRuhe`, für Maus und Finger dieselbe Strecke.
+    expect(text).toContain("const vialSnapClassName = 'snap-none'")
     expect(text).toContain('onPointerDown={handleVialCarouselPointerDown}')
     expect(text).toContain('onPointerMove={handleVialCarouselPointerMove}')
     expect(text).toContain('onPointerUp={handleVialCarouselPointerUp}')

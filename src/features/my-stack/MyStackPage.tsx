@@ -22,6 +22,7 @@ import { SloshProvider, useSloshEngine } from '../../components/SloshContext'
 import { LabLoader } from '../../components/LabLoader'
 import { StackItemWizard } from './components/StackItemWizard'
 import { StageDetailSheet } from './components/StageDetailSheet'
+import { mussEinrasten, zentrierPosition } from './lib/carouselSettle'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
 import { StackItemDetails } from './components/StackItemDetails'
@@ -482,6 +483,13 @@ interface MyStackPageProps {
   stackDataClient?: typeof supabase
 }
 
+/**
+ * Wartezeit, nach der das Karussell als ausgerollt gilt. Kurz genug, dass es
+ * sich wie Einrasten anfuehlt, lang genug, dass der Ausklang eines Wisches es
+ * nicht mitten in der Bewegung erwischt.
+ */
+const VIAL_RUHE_MS = 110
+
 export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {}) {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
@@ -557,6 +565,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const vialWheelCooldownRef = useRef<number | null>(null)
   const vialLastScrollLeftRef = useRef(0)
   const vialLastScrollTimeRef = useRef(0)
+  const vialRuheTimerRef = useRef<number | null>(null)
+  // Liegt gerade ein Finger oder eine Maustaste auf dem Streifen? Solange das
+  // so ist, wird nicht eingerastet — sonst zoege es dem Nutzer das Karussell
+  // unter dem Finger weg, sobald er einen Moment stillhaelt.
+  const vialZeigerUntenRef = useRef(false)
   const [animationEpoch, setAnimationEpoch] = useState(0)
 
   // ── Zyklen ────────────────────────────────────────────────────────────────
@@ -1488,8 +1501,17 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, loading])
-  const vialSnapClassName = isVialCarouselDragging ? 'snap-none' : 'snap-x snap-mandatory'
-  const vialItemSnapClassName = isVialCarouselDragging ? '' : 'snap-center'
+  /**
+   * Kein CSS-Einrasten mehr.
+   *
+   * `scroll-snap-type: x mandatory` hat auf dem Geraet zu spaet gegriffen: in
+   * der Bildschirmaufnahme dreimal dasselbe Muster — der Wisch laeuft aus, das
+   * Objekt steht 25 bis 33 px neben der Mitte still, haelt dort 220 bis 300 ms,
+   * und springt dann in einem einzigen Bild auf die Mitte. Das Einrasten macht
+   * jetzt `einrastenNachRuhe()`, gleichmaessig weich und fuer jede Eingabeart
+   * dieselbe Strecke.
+   */
+  const vialSnapClassName = 'snap-none'
   // Feed carousel interaction velocity into the shared liquid physics engine.
   const pushVialSlosh = (velocity: number) => sloshEngine.pushImpulse(velocity)
   const updateVialFocus = () => {
@@ -1605,6 +1627,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     vialLastScrollLeftRef.current = carousel.scrollLeft
     vialLastScrollTimeRef.current = now
     scheduleVialFocusUpdate()
+    planeEinrasten()
 
     if (vialScrollFrameRef.current !== null) window.cancelAnimationFrame(vialScrollFrameRef.current)
 
@@ -1625,6 +1648,38 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
     selectPeptideIndex(getClosestVialIndex(carousel))
   }
+  /**
+   * Einrasten, sobald das Rollen zur Ruhe kommt.
+   *
+   * Die Zielposition kommt aus `zentrierPosition` — dieselbe Rechnung, die
+   * `scroll-snap-align: center` gemacht haette, nur zu einem Zeitpunkt, den
+   * wir bestimmen. Angefahren wird sie weich; einen Ruck gibt es nicht mehr.
+   */
+  const einrastenNachRuhe = () => {
+    const carousel = vialCarouselRef.current
+    if (!carousel || vialZeigerUntenRef.current) return
+
+    const naechster = isAddTileClosest(carousel)
+      ? carousel.querySelector<HTMLElement>('[data-vial-add]')
+      : carousel.querySelector<HTMLElement>(`[data-vial-index="${getClosestVialIndex(carousel)}"]`)
+    if (!naechster) return
+
+    const ziel = zentrierPosition({
+      itemLeft: naechster.offsetLeft,
+      itemWidth: naechster.offsetWidth,
+      clientWidth: carousel.clientWidth,
+      scrollWidth: carousel.scrollWidth,
+    })
+    if (!mussEinrasten(carousel.scrollLeft, ziel)) return
+    carousel.scrollTo({ left: ziel, behavior: 'smooth' })
+  }
+  const planeEinrasten = () => {
+    if (vialRuheTimerRef.current !== null) window.clearTimeout(vialRuheTimerRef.current)
+    vialRuheTimerRef.current = window.setTimeout(() => {
+      vialRuheTimerRef.current = null
+      einrastenNachRuhe()
+    }, VIAL_RUHE_MS)
+  }
   const selectPeptideOffset = (offset: number) => {
     if (stagePeptides.length === 0) return
     const baseIndex = vialTargetIndexRef.current ?? activeIndex
@@ -1634,6 +1689,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   }
   const handleVialCarouselPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     vialTargetIndexRef.current = null
+    // Vor dem Ausstieg fuer den Finger: das Einrasten muss fuer JEDE
+    // Eingabeart wissen, dass gerade jemand den Streifen haelt.
+    vialZeigerUntenRef.current = true
     if (e.pointerType !== 'mouse' || e.button !== 0) return
     const carousel = vialCarouselRef.current
     if (!carousel) return
@@ -1670,6 +1728,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     e.preventDefault()
   }
   const handleVialCarouselPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    vialZeigerUntenRef.current = false
+    // Auch der Finger rastet ein: sein Wisch rollt den Streifen nativ weiter,
+    // und wenn der ausgelaufen ist, zieht `planeEinrasten` ihn auf die Mitte.
+    planeEinrasten()
     if (!vialDraggingRef.current) return
     vialDraggingRef.current = false
     setIsVialCarouselDragging(false)
@@ -1722,6 +1784,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       if (vialScrollFrameRef.current !== null) window.cancelAnimationFrame(vialScrollFrameRef.current)
       if (vialFocusFrameRef.current !== null) window.cancelAnimationFrame(vialFocusFrameRef.current)
       if (vialWheelCooldownRef.current !== null) window.clearTimeout(vialWheelCooldownRef.current)
+      if (vialRuheTimerRef.current !== null) window.clearTimeout(vialRuheTimerRef.current)
     }
   }, [])
 
@@ -2381,7 +2444,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   <div
                     data-vial-add
                     data-vial-add-slot
-                    className={`${vialItemSnapClassName} flex origin-bottom items-end min-h-[46vh] max-h-[26rem] shrink-0 rounded-2xl px-2 py-2 ${
+                    className={`flex origin-bottom items-end min-h-[46vh] max-h-[26rem] shrink-0 rounded-2xl px-2 py-2 ${
                       isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
                     } ${addTileActive ? 'scale-100' : 'scale-[0.82] opacity-45'}`}
                     style={{ width: 'min(15rem, 62vw)' }}
@@ -2410,7 +2473,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         // unten weg und schweben ueber dem Boden. Beim
                         // Formular-Karussell war das laengst entschieden; hier
                         // fehlte es, und bei 62 % Breite faellt es auf.
-                        className={`${vialItemSnapClassName} origin-bottom shrink-0 rounded-2xl px-2 py-2 ${
+                        className={`origin-bottom shrink-0 rounded-2xl px-2 py-2 ${
                           isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
                         } ${
                           isActive ? 'scale-100' : 'scale-[0.88] opacity-65 saturate-75'
