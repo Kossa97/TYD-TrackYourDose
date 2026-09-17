@@ -78,9 +78,9 @@ describe('StageLabel', () => {
     // Durchscheinend war das Band nie wegen der Unschärfe, sondern wegen der
     // weißen Fläche — die muss bleiben, sonst verschwindet der Füllstand
     // dahinter.
-    expect(klassen![0]).toContain('from-white/25')
-    expect(klassen![0]).toContain('via-white/10')
-    expect(klassen![0]).toContain('to-white/25')
+    expect(klassen![0]).toContain('from-white/10')
+    expect(klassen![0]).toContain('via-white/5')
+    expect(klassen![0]).toContain('to-white/10')
   })
 
   it('setzt die Deckkraft des Bandes auf Werte, die Tailwind auch zeichnet', () => {

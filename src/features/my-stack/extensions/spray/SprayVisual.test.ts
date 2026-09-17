@@ -31,7 +31,7 @@ describe('SprayVisual', () => {
     // zwar daneben, hat aber nie gezeichnet (Tailwind kennt Deckkraft nur in
     // Fuenferschritten). Jetzt macht ihn ein senkrechter Verlauf, an den
     // Kanten dichter als in der Mitte.
-    expect(html).toContain('border-y border-white/40 bg-gradient-to-b from-white/25 via-white/10 to-white/25')
+    expect(html).toContain('border-y border-white/40 bg-gradient-to-b from-white/10 via-white/5 to-white/10')
   })
 
   it('laesst den Kopf weiss, egal welche Farbe der Eintrag hat', () => {

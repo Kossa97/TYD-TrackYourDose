@@ -126,14 +126,15 @@ export function StageLabel({
       // seinen Kanten dichter als in der Mitte, weil das Licht dort streift;
       // genau das macht die Tiefe aus, die vorher aus der Unschaerfe kam.
       //
-      // Die Werte sind bewusst zurueckhaltend. Hier stand vorher `bg-white/28`,
-      // und das hat NIE eine Flaeche gezeichnet: Tailwind kennt nur Deckkraft
-      // in Fuenferschritten, 28 ist keiner davon, also fiel die Klasse still
-      // aus dem Stylesheet. Der milchige Eindruck kam damit allein aus der
-      // Unschaerfe. Wer jetzt 28 Prozent Weiss einsetzt, macht das Band heller
-      // als es je war — deshalb im Mittel (25 + 2x10 + 25) / 4 = 17,5 Prozent.
-      // Alle drei Werte liegen auf der Skala und lassen sich glatt anheben.
-      className={`absolute ${className} flex flex-col justify-center overflow-hidden border-y border-white/40 bg-gradient-to-b from-white/25 via-white/10 to-white/25 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)]`}
+      // Die Werte sind bewusst klein. Hier stand vorher `bg-white/28`, und das
+      // hat NIE eine Flaeche gezeichnet: Tailwind kennt Deckkraft nur in
+      // Fuenferschritten, 28 ist keiner davon, also fiel die Klasse still aus
+      // dem Stylesheet. Der milchige Eindruck kam damit allein aus der
+      // Unschaerfe, und ein Band mit 28 Prozent Weiss waere heller als es je
+      // war. Im Mittel sind es jetzt (10 + 2x5 + 10) / 4 = 7,5 Prozent: ein
+      // Hauch an den Kanten, in der Mitte fast klar. Alle drei Werte liegen auf
+      // der Skala und lassen sich in Fuenferschritten anheben.
+      className={`absolute ${className} flex flex-col justify-center overflow-hidden border-y border-white/40 bg-gradient-to-b from-white/10 via-white/5 to-white/10 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)]`}
     >
       <div {...innerProps} className="relative w-full overflow-hidden">
         <StageMarquee className={nameClassName}>{name}</StageMarquee>
