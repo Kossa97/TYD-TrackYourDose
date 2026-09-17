@@ -636,15 +636,20 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
      Sicherheitszone belegt: Kapsel plus Abstand nach unten. Alle sieben
      Stellen, die damit rechnen (Inhaltspolster, FAQ-Knopf, Schnellzugriff,
      Onboarding, My-Stack-Buehne), bleiben dadurch unveraendert richtig. */
-  --bottom-nav-capsule: 62px;
-  --bottom-nav-gap: 12px;
+  /* Masse nach dem Vorbild der schwebenden Leiste aus iOS 26 (WhatsApp,
+     TicketSwap): flacher als eine Leiste mit Beschriftung, weiter vom Rand
+     weg, dichter an der Sicherheitszone. Abgelesen, nicht aus einer
+     Spezifikation — die drei Zahlen stehen bewusst beieinander und lassen
+     sich zusammen verschieben. */
+  --bottom-nav-capsule: 56px;
+  --bottom-nav-gap: 10px;
   /* Bewusst als glatte Zahl und NICHT als calc(): `onboardingPlacement.ts`
      liest diese Variable mit `parseInt`, und eigene Eigenschaften werden nicht
      ausgerechnet — `parseInt('calc(62px + 12px)')` waere NaN und die
      Einblendungen saessen falsch. Die drei Zahlen haengen zusammen:
-     62 + 12 = 74. Ein Test in `bottomNavMetrics.test.ts` haelt das fest. */
-  --bottom-nav-height: 74px;
-  --bottom-nav-inset: 12px;
+     56 + 10 = 66. Ein Test in `bottomNavMetrics.test.ts` haelt das fest. */
+  --bottom-nav-height: 66px;
+  --bottom-nav-inset: 16px;
 }
 
 /* ── Light theme overrides ── */
@@ -1747,42 +1752,16 @@ main.flex-1 {
 .tyd-tabbar-item[aria-current='page'] { color: var(--accent); }
 .tyd-tabbar-item:active { transform: scale(0.93); }
 
-.tyd-tabbar-label {
-  font-size: 10px;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  line-height: 1;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Die mittlere Schaltflaeche ist kein Reiter: kein Etikett, keine Pille,
-   eigene Farbe. Sie oeffnet den Schnellzugriff. */
-.tyd-tabbar-center {
-  position: relative;
-  z-index: 1;
-  flex: 0 0 auto;
-  width: 46px;
-  height: 46px;
-  margin-inline: 2px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 180ms cubic-bezier(0.34, 1.32, 0.52, 1), background 200ms ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.tyd-tabbar-center:active { transform: scale(0.92); }
+/* Die mittlere Schaltflaeche traegt dieselbe Klasse wie ein Reiter — sie soll
+   sich in die Reihe einfuegen, nicht herausheben. Anders ist nur, was sie tut:
+   sie fuehrt zu keiner Seite, traegt keine Pille und zieht beim Wischen nicht
+   mit. Das steht in der Darstellung, nicht hier. */
 
 /* Wer Bewegung abbestellt hat, bekommt dieselbe Leiste ohne Wege. */
 @media (prefers-reduced-motion: reduce) {
   .tyd-tabbar-pill,
   .tyd-tabbar::after,
-  .tyd-tabbar-item,
-  .tyd-tabbar-center {
+  .tyd-tabbar-item {
     transition: none;
   }
 }

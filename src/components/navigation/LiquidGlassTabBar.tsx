@@ -33,6 +33,7 @@ export interface GlassTabItem {
     className: string
     children: ReactNode
     'aria-current': 'page' | undefined
+    'aria-label': string
     [TAB_ATTR]: string
   }) => ReactNode
 }
@@ -216,16 +217,14 @@ export function LiquidGlassTabBar({
 
   const reiter = (item: GlassTabItem) => item.render({
     className: 'tyd-tabbar-item',
+    // Nur Symbole, keine Unterschriften — wie in der Leiste aus iOS 26. Der
+    // Name muss dann als Beschriftung mit, sonst hoert die Vorlesung nur „Link".
+    'aria-label': item.label,
     [TAB_ATTR]: item.id,
     // Immer der Reiter der GEZEIGTEN Seite, nie der unter dem Finger: was
     // vorgelesen wird, darf nicht von einer Geste abhaengen, die noch laeuft.
     'aria-current': item.id === activeId ? 'page' : undefined,
-    children: (
-      <>
-        {item.icon}
-        <span className="tyd-tabbar-label">{item.label}</span>
-      </>
-    ),
+    children: item.icon,
   })
 
   return (

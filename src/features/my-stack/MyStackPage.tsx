@@ -2298,19 +2298,24 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                    *   20  Zeile fuer den Fuellstand: eine Zeile text-xs, mt-1
                    *   14  Positionsleiste: h-2.5 plus mt-1
                    *    6  Reserve gegen Rundung und andere Schriftgroessen
+                   *    90  die Navigationsleiste, wie sie stand, als diese
+                   *        Buehne eingestellt wurde
                    *
-                   * Dazu 16 px, die nicht zur Buehne gehoeren: die neue
-                   * Navigationsleiste belegt 16 px weniger als die alte
-                   * (74 statt 90). Ohne diesen Posten waere die Buehne um
-                   * ebendiese 16 px gewachsen und My Stack saehe anders aus
-                   * als vorher. Gewollt ist nur, dass alles hoeher sitzt —
-                   * gleich gross, nicht groesser. 208 + 16 = 224.
+                   * Die 90 sind hier fest und stehen ABSICHTLICH nicht als
+                   * `var(--bottom-nav-height)` da. Sonst waere die Buehne bei
+                   * jedem Umbau der Leiste mitgewachsen, und My Stack saehe
+                   * jedes Mal anders aus — zweimal ist genau das passiert.
+                   * Gewollt ist: die Buehne bleibt, wie sie ist, und alles
+                   * rutscht hoch, wenn die Leiste flacher wird. Also faellt
+                   * die Leistenhoehe aus der Rechnung heraus. 208 + 90 = 298.
+                   *
+                   * Wird die Leiste jemals HOEHER als 90 px, muss die Zahl
+                   * mitgehen — `bottomNavMetrics.test.ts` schlaegt dann an.
                    *
                    * dvh und nicht vh: auf dem Telefon zaehlt die Flaeche, die
                    * gerade zu sehen ist, nicht die ohne Adressleiste.
                    */
-                  '--buehne-hoehe':
-                    'calc(100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 224px)',
+                  '--buehne-hoehe': 'calc(100dvh - env(safe-area-inset-bottom) - 298px)',
                 } as CSSProperties}
               >
                 {/* Die Reiter: „Alle" und alle sechs Kategorien, feste Plaetze.

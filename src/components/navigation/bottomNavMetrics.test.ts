@@ -32,6 +32,14 @@ describe('Maße der Bottom-Navigation', () => {
     expect(css()).toContain('right: max(var(--bottom-nav-inset), env(safe-area-inset-right))')
   })
 
+  it('bleibt flacher als die Höhe, mit der My Stack eingestellt wurde', () => {
+    // `MyStackPage` rechnet mit festen 90 px für die Leiste, damit die Bühne
+    // bei jedem Umbau gleich groß bleibt und nur höher rutscht. Das trägt nur,
+    // solange die Leiste nicht höher wird als 90 — sonst verdeckte sie den
+    // unteren Rand der Bühne.
+    expect(wert('bottom-nav-height')).toBeLessThanOrEqual(90)
+  })
+
   it('gibt jedem Reiter mindestens 44 px für den Finger', () => {
     expect(css()).toMatch(/\.tyd-tabbar-item\s*\{[^}]*min-height:\s*44px/)
   })

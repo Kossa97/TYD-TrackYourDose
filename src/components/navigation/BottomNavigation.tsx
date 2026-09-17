@@ -53,7 +53,7 @@ export function BottomNavigation({
     return {
       id: tab.id,
       label: tab.labelKey ? String(t(tab.labelKey, { defaultValue: tab.fallbackLabel })) : tab.fallbackLabel,
-      icon: <Icon size={21} aria-hidden="true" />,
+      icon: <Icon size={25} aria-hidden="true" />,
       render: ({ className, children, ...rest }) => (
         <NavLink
           to={tab.route}
@@ -82,23 +82,23 @@ export function BottomNavigation({
       // bewusst unveraendert.
       ariaLabel={String(t('nav_aria_label', { defaultValue: 'Navigation' }))}
       centerAction={(
+        // Dieselbe Klasse und dieselbe Symbolgroesse wie ein Reiter: die Mitte
+        // soll sich in die Reihe einfuegen, nicht als Knopf herausstechen.
+        // Anders ist nur, was sie tut — sie fuehrt zu keiner Seite, traegt
+        // keine Pille und zieht beim Wischen nicht mit. Dass sie offen ist,
+        // sagt das Symbol (ein X statt eines Plus) und `aria-expanded`.
         <button
           type="button"
           aria-label="Quick Actions"
           aria-expanded={quickActionsOpen}
           onClick={onToggleQuickActions}
-          className="tyd-tabbar-center"
-          style={{
-            background: quickActionsOpen
-              ? 'var(--surface-raised)'
-              : 'linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #003a6e))',
-            border: quickActionsOpen ? '1px solid var(--border-strong)' : 'none',
-            boxShadow: quickActionsOpen ? 'none' : '0 2px 10px rgba(0,0,0,0.30)',
-          }}
+          className="tyd-tabbar-item"
+          data-tyd-center
+          style={{ color: quickActionsOpen ? 'var(--accent)' : undefined }}
         >
           {quickActionsOpen
-            ? <X size={23} color="var(--text)" />
-            : <Plus size={25} color="var(--accent-contrast)" />}
+            ? <X size={25} aria-hidden="true" />
+            : <Plus size={25} aria-hidden="true" />}
         </button>
       )}
     />

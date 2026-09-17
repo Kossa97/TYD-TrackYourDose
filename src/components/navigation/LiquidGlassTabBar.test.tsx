@@ -58,7 +58,7 @@ describe('LiquidGlassTabBar', () => {
       items={eintraege(['home', 'my-stack', 'kalender', 'profil'])}
       activeId={activeId}
       centerIndex={2}
-      centerAction={<button type="button" aria-label="Quick Actions" className="tyd-tabbar-center">+</button>}
+      centerAction={<button type="button" aria-label="Quick Actions" className="tyd-tabbar-item" data-tyd-center>+</button>}
       ariaLabel="Navigation"
       {...haken}
     />,
@@ -177,7 +177,7 @@ describe('LiquidGlassTabBar', () => {
     bauen('home', { onSelect: id => geoeffnet.push(id) })
     zeigerfaehig(leiste())
 
-    zeiger('pointerdown', document.querySelector('.tyd-tabbar-center') as HTMLElement, 150)
+    zeiger('pointerdown', document.querySelector('[data-tyd-center]') as HTMLElement, 150)
     zeiger('pointermove', leiste(), 240)
     zeiger('pointerup', leiste(), 240)
 
