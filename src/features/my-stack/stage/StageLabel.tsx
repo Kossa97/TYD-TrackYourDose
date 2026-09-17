@@ -107,7 +107,20 @@ export function StageLabel({
       //
       // `justify-center` richtet den Inhalt aus, nicht die Zeilen einzeln: eine
       // Zeile sitzt in der Mitte, zwei sitzen als Block in der Mitte.
-      className={`absolute ${className} flex flex-col justify-center overflow-hidden border-y border-white/40 bg-white/28 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)] backdrop-blur-[2px]`}
+      //
+      // KEIN `backdrop-blur`. Es stand hier mit 2 px und hat einen sichtbaren
+      // Fehler gekostet: `backdrop-filter` liest, was HINTER dem Band liegt —
+      // aber nur aus derselben Zeichenebene. Solange die Fuellanimation laeuft,
+      // liegt die Fluessigkeit auf einer eigenen Ebene (jede laufende
+      // CSS-Animation legt sie dorthin), und WebKit nimmt die nicht in den
+      // Hintergrund auf. Beim Laden blieb das Band deshalb dunkel, waehrend
+      // darueber und darunter schon Gruen stand, und wurde erst richtig, wenn
+      // die Animation endete oder ein Wisch die Ebenen neu zusammensetzte.
+      //
+      // Zwei Pixel Unschaerfe ueber einer fast einfarbigen Fluessigkeit sind
+      // das nicht wert. Durchscheinend ist das Band weiterhin, das macht
+      // `bg-white/28` — nur eben ohne eigenen Hintergrund-Durchgriff.
+      className={`absolute ${className} flex flex-col justify-center overflow-hidden border-y border-white/40 bg-white/28 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)]`}
     >
       <div {...innerProps} className="relative w-full overflow-hidden">
         <StageMarquee className={nameClassName}>{name}</StageMarquee>

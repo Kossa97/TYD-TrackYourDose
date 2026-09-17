@@ -61,6 +61,26 @@ describe('StageLabel', () => {
     expect(html).not.toContain('<p')
   })
 
+  it('trägt keinen Hintergrund-Durchgriff', () => {
+    // `backdrop-filter` liest, was hinter dem Band liegt — aber nur aus
+    // derselben Zeichenebene. Solange die Füllanimation läuft, liegt die
+    // Flüssigkeit auf einer eigenen (jede laufende CSS-Animation legt sie
+    // dorthin), und WebKit nimmt die nicht in den Hintergrund auf: beim Laden
+    // blieb das Band dunkel, während darüber und darunter schon Grün stand,
+    // und wurde erst richtig, wenn die Animation endete oder ein Wisch die
+    // Ebenen neu zusammensetzte. Zwei Pixel Unschärfe über einer fast
+    // einfarbigen Flüssigkeit sind das nicht wert.
+    const source = readFileSync(new URL('./StageLabel.tsx', import.meta.url), 'utf8')
+    const klassen = source.match(/className=\{`absolute [^`]*`\}/)
+
+    expect(klassen).not.toBeNull()
+    expect(klassen![0]).not.toContain('backdrop-')
+    // Durchscheinend war das Band nie wegen der Unschärfe, sondern wegen
+    // dieser Fläche — sie muss bleiben, sonst verschwindet der Füllstand
+    // hinter dem Band.
+    expect(klassen![0]).toContain('bg-white/28')
+  })
+
   it('measures real overflow rather than guessing from the name length', () => {
     const source = readFileSync(new URL('./StageLabel.tsx', import.meta.url), 'utf8')
 
