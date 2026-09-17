@@ -1514,10 +1514,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     }
 
     for (const { handle, normalized } of measured) {
-      // Vorher 0,22 bis 1,0 — die Nachbarn waren deutlich mitbeleuchtet, und
-      // damit sah keines der Objekte nach Hauptdarsteller aus. Jetzt faellt
-      // das Licht steiler ab: die Mitte hat es fast allein.
-      const focus = Math.max(0.1, 1 - Math.abs(normalized) * 1.35)
+      // Der Abfall war zwischendurch sehr steil (Faktor 1,35, Boden 0,1) —
+      // damit lagen die Nachbarn fast im Dunkeln. Jetzt liegt er dazwischen:
+      // die Mitte bleibt der Hauptdarsteller, aber man erkennt daneben noch,
+      // WAS dort steht.
+      const focus = Math.max(0.25, 1 - Math.abs(normalized) * 1.05)
       handle.setStageLight(focus, -normalized)
     }
   }
@@ -2412,7 +2413,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         className={`${vialItemSnapClassName} origin-bottom shrink-0 rounded-2xl px-2 py-2 ${
                           isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
                         } ${
-                          isActive ? 'scale-100' : 'scale-[0.82] opacity-45 saturate-50'
+                          isActive ? 'scale-100' : 'scale-[0.88] opacity-65 saturate-75'
                         }`}
                         style={{ width: 'min(15rem, 62vw)' }}
                         aria-label={p.name}

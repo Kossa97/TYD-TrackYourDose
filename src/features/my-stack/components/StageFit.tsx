@@ -44,6 +44,22 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
  * Vor der ersten Messung bleibt das Objekt unsichtbar. Gemessen wird in
  * `useLayoutEffect`, also vor dem ersten Anzeigen — es gibt kein Bild in
  * falscher Groesse und keinen Sprung danach.
+ *
+ * ## Warum `clientWidth` und nicht `getBoundingClientRect`
+ *
+ * Im Karussell steht jeder Eintrag unter einem `scale()`: der aktive auf 1,
+ * die Nachbarn kleiner, und dazwischen laeuft ein Uebergang von 300 ms.
+ * `getBoundingClientRect()` liefert die Masse NACH dieser Skalierung,
+ * `offsetWidth` dagegen das Layoutmass davor. Wer beides mischt, rechnet den
+ * Faktor eines Nachbarn um dessen Eintragsskalierung zu klein — im Browser
+ * gemessen 0,998 statt 1,217, also 22 % — und sobald derselbe Eintrag aktiv
+ * wird und irgendetwas eine neue Messung ausloest, springt das Objekt um
+ * ebendiese 22 %. Genau das war das Zucken nach dem Wischen.
+ *
+ * `clientWidth`/`clientHeight` sind Layoutmasse und von jeder Skalierung eines
+ * Vorfahren unberuehrt. Damit faellt fuer dieselbe Flaeche immer derselbe
+ * Faktor heraus, egal ob der Eintrag gerade aktiv, Nachbar oder mitten im
+ * Uebergang ist.
  */
 export interface StageFitProps {
   children: ReactNode
@@ -54,6 +70,19 @@ export interface StageFitProps {
    * gezogen, und jedes Vergroessern kostet Schaerfe (siehe oben).
    */
   maxScale?: number
+}
+
+/**
+ * Faktoren dicht an 1 werden zu genau 1.
+ *
+ * `scale(1)` ist die Identitaet — der Browser rechnet das Bild dann gar nicht
+ * um. Bei 1,04 dagegen wird jede Kante neu abgetastet, fuer vier Prozent mehr
+ * Groesse, die niemand sieht. Innerhalb dieser Totzone ist die native
+ * Zeichnung das bessere Bild.
+ */
+const EINRASTEN = 0.08
+function einrasten(skala: number) {
+  return Math.abs(skala - 1) < EINRASTEN ? 1 : skala
 }
 
 interface Einpassung {
@@ -74,14 +103,18 @@ export function StageFit({ children, className, maxScale = 1.6 }: StageFitProps)
     if (!flaeche || !objekt) return
 
     const messen = () => {
-      const platz = flaeche.getBoundingClientRect()
+      // Layoutmasse, KEIN getBoundingClientRect: der Eintrag im Karussell
+      // steht unter einem `scale()`, und dessen Ergebnis darf hier nicht
+      // einfliessen (siehe oben).
+      const platzBreite = flaeche.clientWidth
+      const platzHoehe = flaeche.clientHeight
       // Die NATIVE Groesse des Objekts, also ohne die Skalierung, die wir ihm
       // gerade selbst gegeben haben — sonst misst sich die Rechnung immer
       // wieder an ihrem eigenen Ergebnis und schaukelt sich hoch.
       const breite = objekt.offsetWidth
       const hoehe = objekt.offsetHeight
-      if (!platz.width || !platz.height || !breite || !hoehe) return
-      const skala = Math.min(maxScale, platz.width / breite, platz.height / hoehe)
+      if (!platzBreite || !platzHoehe || !breite || !hoehe) return
+      const skala = einrasten(Math.min(maxScale, platzBreite / breite, platzHoehe / hoehe))
       setFit(vorher => (
         vorher && vorher.skala === skala && vorher.breite === breite && vorher.hoehe === hoehe
           ? vorher

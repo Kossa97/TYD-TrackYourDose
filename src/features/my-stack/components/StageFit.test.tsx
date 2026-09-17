@@ -5,11 +5,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { StageFit } from './StageFit'
 
 function masse(platz: { width: number; height: number }, objekt: { width: number; height: number }) {
-  Element.prototype.getBoundingClientRect = vi.fn(function (this: Element) {
-    const istFlaeche = (this as HTMLElement).dataset?.stageFit !== undefined
-    const m = istFlaeche ? platz : objekt
-    return { ...m, x: 0, y: 0, top: 0, left: 0, right: m.width, bottom: m.height, toJSON: () => ({}) } as DOMRect
-  }) as unknown as typeof Element.prototype.getBoundingClientRect
+  // Die Flaeche wird ueber `clientWidth`/`clientHeight` gemessen, nicht ueber
+  // `getBoundingClientRect` — das ist der Kern: Layoutmasse, die eine
+  // Skalierung des Eintrags nicht mitnehmen.
+  Object.defineProperty(Element.prototype, 'clientWidth', {
+    configurable: true,
+    get(this: Element) { return (this as HTMLElement).dataset?.stageFit !== undefined ? platz.width : 0 },
+  })
+  Object.defineProperty(Element.prototype, 'clientHeight', {
+    configurable: true,
+    get(this: Element) { return (this as HTMLElement).dataset?.stageFit !== undefined ? platz.height : 0 },
+  })
   Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: objekt.width })
   Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: objekt.height })
 }
@@ -106,6 +112,38 @@ describe('StageFit', () => {
     expect(kasten.className).toContain('left-1/2')
     expect(kasten.className).toContain('-translate-x-1/2')
     expect(kasten.className).toContain('absolute')
+  })
+
+  it('misst die Flaeche als Layoutmass, nicht als Bildmass', () => {
+    // Im Karussell steht jeder Eintrag unter einem `scale()`. `getBounding-
+    // ClientRect()` liefert die Masse NACH dieser Skalierung, `offsetWidth`
+    // davor — wer beides mischt, rechnet den Faktor eines Nachbarn um dessen
+    // Eintragsskalierung zu klein (im Browser gemessen: 0,998 statt 1,217) und
+    // laesst das Objekt um 22 % springen, sobald der Eintrag aktiv wird.
+    masse({ width: 240, height: 340 }, { width: 92, height: 32 })
+    const rect = vi.spyOn(Element.prototype, 'getBoundingClientRect')
+
+    render(<StageFit maxScale={4}><div /></StageFit>)
+
+    expect(skalaVon()).toBe('scale(2.608695652173913)')
+    expect(rect).not.toHaveBeenCalled()
+  })
+
+  it('rastet einen Faktor dicht an 1 auf genau 1 ein', () => {
+    // `scale(1)` ist die Identitaet — der Browser rechnet das Bild dann gar
+    // nicht um. Bei 1,04 wird jede Kante neu abgetastet, fuer vier Prozent
+    // mehr Groesse, die niemand sieht.
+    masse({ width: 104, height: 1000 }, { width: 100, height: 100 })
+    render(<StageFit><div /></StageFit>)
+
+    expect(skalaVon()).toBe('scale(1)')
+  })
+
+  it('laesst einen Faktor ausserhalb der Totzone stehen', () => {
+    masse({ width: 120, height: 1000 }, { width: 100, height: 100 })
+    render(<StageFit><div /></StageFit>)
+
+    expect(skalaVon()).toBe('scale(1.2)')
   })
 
   it('zeigt nichts, bevor gemessen wurde', () => {

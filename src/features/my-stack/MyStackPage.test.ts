@@ -72,8 +72,9 @@ describe('My Stack page vial view', () => {
 
   test('stellt die Bühne groß und alle Objekte auf eine Standlinie', () => {
     // Die Mitte beherrscht den Bildschirm (62 % statt 25 %), die Nachbarn
-    // lugen nur noch herein — zurückgesetzt über Größe, Deckkraft und
-    // Sättigung. `origin-bottom` ist dabei das Entscheidende: ohne das
+    // lugen herein — zurückgesetzt über Größe, Deckkraft und Sättigung, aber
+    // nicht so weit, dass man nicht mehr erkennt, WAS dort steht (vorher 0,82
+    // / 45 % / 50 %). `origin-bottom` ist dabei das Entscheidende: ohne das
     // skaliert jedes Objekt um seine eigene Mitte, die Nachbarn schrumpfen
     // nach oben UND unten weg und schweben über dem Boden.
     const text = source()
@@ -81,7 +82,7 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('min(15rem, 62vw)')
     expect(text).toContain('snap-center')
     expect(text).toContain('origin-bottom')
-    expect(text).toContain("isActive ? 'scale-100' : 'scale-[0.82] opacity-45 saturate-50'")
+    expect(text).toContain("isActive ? 'scale-100' : 'scale-[0.88] opacity-65 saturate-75'")
   })
 
   test('setzt das Objekt mit einem Kontaktschatten auf den Boden', () => {
@@ -221,9 +222,10 @@ describe('My Stack page vial view', () => {
 
     expect(text).toContain('updateVialFocus')
     expect(text).toContain('data-vial-detail="carousel-spotlight"')
-    // Steiler als vorher (0,78): die Nachbarn waren deutlich mitbeleuchtet,
-    // und damit sah keines der Objekte nach Hauptdarsteller aus.
-    expect(text).toContain('1 - Math.abs(normalized) * 1.35')
+    // Zwischen den beiden Extremen: bei 0,78 sah keines der Objekte nach
+    // Hauptdarsteller aus, bei 1,35 lagen die Nachbarn fast im Dunkeln.
+    expect(text).toContain('1 - Math.abs(normalized) * 1.05')
+    expect(text).toContain('Math.max(0.25,')
   })
 
   test('pushes scroll focus through imperative stage-light handles instead of React state', () => {
