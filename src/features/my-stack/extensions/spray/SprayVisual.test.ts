@@ -27,7 +27,11 @@ describe('SprayVisual', () => {
     expect(html).toContain('data-spray-detail="collar"')
     // Dasselbe Band wie bei den anderen Glasformen.
     expect(html).toContain('data-spray-detail="label"')
-    expect(html).toContain('border-y border-white/40 bg-white/28')
+    // Der milchige Ton kam frueher aus `backdrop-blur`; `bg-white/28` stand
+    // zwar daneben, hat aber nie gezeichnet (Tailwind kennt Deckkraft nur in
+    // Fuenferschritten). Jetzt macht ihn ein senkrechter Verlauf, an den
+    // Kanten dichter als in der Mitte.
+    expect(html).toContain('border-y border-white/40 bg-gradient-to-b from-white/25 via-white/10 to-white/25')
   })
 
   it('laesst den Kopf weiss, egal welche Farbe der Eintrag hat', () => {

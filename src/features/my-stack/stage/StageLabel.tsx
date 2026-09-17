@@ -118,9 +118,22 @@ export function StageLabel({
       // die Animation endete oder ein Wisch die Ebenen neu zusammensetzte.
       //
       // Zwei Pixel Unschaerfe ueber einer fast einfarbigen Fluessigkeit sind
-      // das nicht wert. Durchscheinend ist das Band weiterhin, das macht
-      // `bg-white/28` — nur eben ohne eigenen Hintergrund-Durchgriff.
-      className={`absolute ${className} flex flex-col justify-center overflow-hidden border-y border-white/40 bg-white/28 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)]`}
+      // das nicht wert. Was dabei verlorenging, war nicht der milchige TON —
+      // den macht die weisse Flaeche —, sondern die Streuung: Blaeschen und
+      // Glanzlichter lasen sich ploetzlich scharf durch das Band.
+      //
+      // Statt des Durchgriffs jetzt ein senkrechter Verlauf. Milchglas ist an
+      // seinen Kanten dichter als in der Mitte, weil das Licht dort streift;
+      // genau das macht die Tiefe aus, die vorher aus der Unschaerfe kam.
+      //
+      // Die Werte sind bewusst zurueckhaltend. Hier stand vorher `bg-white/28`,
+      // und das hat NIE eine Flaeche gezeichnet: Tailwind kennt nur Deckkraft
+      // in Fuenferschritten, 28 ist keiner davon, also fiel die Klasse still
+      // aus dem Stylesheet. Der milchige Eindruck kam damit allein aus der
+      // Unschaerfe. Wer jetzt 28 Prozent Weiss einsetzt, macht das Band heller
+      // als es je war — deshalb im Mittel (25 + 2x10 + 25) / 4 = 17,5 Prozent.
+      // Alle drei Werte liegen auf der Skala und lassen sich glatt anheben.
+      className={`absolute ${className} flex flex-col justify-center overflow-hidden border-y border-white/40 bg-gradient-to-b from-white/25 via-white/10 to-white/25 text-center shadow-[0_8px_22px_rgba(0,0,0,0.28)]`}
     >
       <div {...innerProps} className="relative w-full overflow-hidden">
         <StageMarquee className={nameClassName}>{name}</StageMarquee>

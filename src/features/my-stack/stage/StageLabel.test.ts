@@ -75,10 +75,41 @@ describe('StageLabel', () => {
 
     expect(klassen).not.toBeNull()
     expect(klassen![0]).not.toContain('backdrop-')
-    // Durchscheinend war das Band nie wegen der Unschärfe, sondern wegen
-    // dieser Fläche — sie muss bleiben, sonst verschwindet der Füllstand
-    // hinter dem Band.
-    expect(klassen![0]).toContain('bg-white/28')
+    // Durchscheinend war das Band nie wegen der Unschärfe, sondern wegen der
+    // weißen Fläche — die muss bleiben, sonst verschwindet der Füllstand
+    // dahinter.
+    expect(klassen![0]).toContain('from-white/25')
+    expect(klassen![0]).toContain('via-white/10')
+    expect(klassen![0]).toContain('to-white/25')
+  })
+
+  it('setzt die Deckkraft des Bandes auf Werte, die Tailwind auch zeichnet', () => {
+    // Hier stand `bg-white/28`, und das hat NIE eine Fläche gezeichnet:
+    // Tailwind kennt Deckkraft nur in Fünferschritten, 28 ist keiner davon,
+    // also fiel die Klasse still aus dem Stylesheet. Der milchige Eindruck kam
+    // damit allein aus der Unschärfe — und als die wegfiel, war das Band leer.
+    // Eine Zahl, die niemand sieht, ist schlimmer als eine falsche: sie sieht
+    // im Quelltext nach einer Entscheidung aus.
+    const source = readFileSync(new URL('./StageLabel.tsx', import.meta.url), 'utf8')
+    const klassen = source.match(/className=\{`absolute [^`]*`\}/)![0]
+    const deckkraft = [...klassen.matchAll(/-(?:white|black)\/(\d+)/g)].map(m => Number(m[1]))
+
+    expect(deckkraft.length).toBeGreaterThan(0)
+    for (const wert of deckkraft) expect(wert % 5, `${wert} % liegt nicht auf der Skala`).toBe(0)
+  })
+
+  it('macht die Kanten des Bandes dichter als seine Mitte', () => {
+    // Der senkrechte Verlauf ersetzt die Streuung, die mit dem
+    // Hintergrund-Durchgriff wegfiel: Milchglas ist an seinen Kanten dichter,
+    // weil das Licht dort streift. Andersherum höhlte der Verlauf das Band aus,
+    // statt ihm Tiefe zu geben.
+    const source = readFileSync(new URL('./StageLabel.tsx', import.meta.url), 'utf8')
+    const [von, mitte, bis] = ['from', 'via', 'to']
+      .map(k => Number(source.match(new RegExp(`${k}-white/(\\d+)`))![1]))
+
+    expect(von).toBeGreaterThan(mitte)
+    expect(bis).toBeGreaterThan(mitte)
+    expect(von).toBe(bis)
   })
 
   it('measures real overflow rather than guessing from the name length', () => {
