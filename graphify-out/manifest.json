@@ -2790,15 +2790,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1789620729.8082373,
-    "seen": 1789620898.8099477,
-    "ast_hash": "df7167c6d8ada41992f3676ea05b1f16",
+    "mtime": 1789622438.297588,
+    "seen": 1789622615.9999473,
+    "ast_hash": "f370ab15869e6dcbd6ed10cde863d9f4",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1789620621.7048533,
-    "seen": 1789620898.8099496,
-    "ast_hash": "6f4954d7e3b20e1b2073241316f4ad2f",
+    "mtime": 1789622260.7160807,
+    "seen": 1789622615.99995,
+    "ast_hash": "71f5eb2d31b17696c6a824e02fa1390f",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789620735.1978657,
-    "seen": 1789620898.8105307,
+    "mtime": 1789622443.0551846,
+    "seen": 1789622616.0005417,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4473,6 +4473,18 @@
     "mtime": 1789620604.0540361,
     "seen": 1789620898.8099995,
     "ast_hash": "609d905af5902d4d970f54a5bd07c2cd",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/lib/carouselSettle.test.ts": {
+    "mtime": 1789622146.0584226,
+    "seen": 1789622616.0001402,
+    "ast_hash": "76399804656903e3061377e6d0634759",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/lib/carouselSettle.ts": {
+    "mtime": 1789622146.0565875,
+    "seen": 1789622616.0001419,
+    "ast_hash": "b3f228bb935b1e245b57b97e2976c389",
     "semantic_hash": ""
   }
 }
