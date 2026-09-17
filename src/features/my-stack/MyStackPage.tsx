@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type UIEvent as ReactUIEvent, type WheelEvent as ReactWheelEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type UIEvent as ReactUIEvent, type WheelEvent as ReactWheelEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
@@ -2274,7 +2274,38 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
           {!loading && viewMode === 'vials' && activePeptide && (
             <div className="space-y-4">
-              <div className="py-5">
+              <div
+                className="pt-1"
+                style={{
+                  /*
+                   * Die Buehne bekommt, was uebrig ist — statt einer geratenen
+                   * Bildschirmhoehe.
+                   *
+                   * Vorher standen dort 46vh mit Deckel bei 26rem. Auf einem
+                   * grossen Telefon blieb darunter ein totes Feld: 46 % einer
+                   * hohen Anzeige sind weniger als das, was zwischen Reitern
+                   * und Fussleiste frei ist. Jetzt wird abgezogen statt
+                   * geschaetzt. Die 208 px sind die Summe dessen, was ober- und
+                   * unterhalb der Buehne FEST steht, jede Zahl aus einer Klasse
+                   * in diesem Bildschirm:
+                   *
+                   *   16  pt-4 am Seiteninhalt (Layout)
+                   *   52  Kopfzeile: h-9 plus mb-4
+                   *    4  pt-1 hier
+                   *   48  Reiter: min-h-9, pb-1, mb-2
+                   *   40  Zeile mit Pfeilen und Kennzeichen: h-9 plus mb-1
+                   *    8  pb-2 am Streifen
+                   *   20  Zeile fuer den Fuellstand: eine Zeile text-xs, mt-1
+                   *   14  Positionsleiste: h-2.5 plus mt-1
+                   *    6  Reserve gegen Rundung und andere Schriftgroessen
+                   *
+                   * dvh und nicht vh: auf dem Telefon zaehlt die Flaeche, die
+                   * gerade zu sehen ist, nicht die ohne Adressleiste.
+                   */
+                  '--buehne-hoehe':
+                    'calc(100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 208px)',
+                } as CSSProperties}
+              >
                 {/* Die Reiter: „Alle" und alle sechs Kategorien, feste Plaetze.
                     Leere bleiben stehen und sind gedimmt — „Medikamente" ohne
                     Inhalt sagt, dass die App das auch kann; versteckt saehe
@@ -2285,7 +2316,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   data-stack-tabs
                   role="tablist"
                   aria-label={String(t('my_stack_category', { defaultValue: 'Kategorie' }))}
-                  className="no-scrollbar -mx-3 mb-3 flex snap-x gap-2 overflow-x-auto px-3 pb-1"
+                  className="no-scrollbar -mx-3 mb-2 flex snap-x gap-2 overflow-x-auto px-3 pb-1"
                 >
                   {STACK_TABS.map(reiter => {
                     const anzahl = reiterZaehler.get(reiter.key) ?? 0
@@ -2317,7 +2348,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   })}
                 </div>
 
-                <div className="mb-2 flex items-center justify-between px-3">
+                <div className="mb-1 flex items-center justify-between px-3">
                   <button
                     type="button"
                     onClick={() => selectPeptideOffset(-1)}
@@ -2407,7 +2438,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   <div
                     data-vial-add
                     data-vial-add-slot
-                    className={`${vialItemSnapClassName} flex origin-bottom items-end min-h-[46vh] max-h-[26rem] shrink-0 rounded-2xl px-2 py-2 ${
+                    className={`${vialItemSnapClassName} flex origin-bottom items-end min-h-[var(--buehne-hoehe)] shrink-0 rounded-2xl px-2 py-2 ${
                       isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
                     } ${addTileActive ? 'scale-100' : 'scale-[0.82] opacity-45'}`}
                     style={{ width: 'min(15rem, 62vw)' }}
@@ -2469,7 +2500,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                             1,3 (Vial) — meist also VERKLEINERN, und das ist
                             immer scharf. Die Groesse auf dem Schirm aendert
                             sich nicht: eingepasst wird in dieselbe Flaeche. */}
-                        <StageFit className="h-[46vh] max-h-[26rem] w-full" maxScale={1.6}>
+                        <StageFit className="h-[var(--buehne-hoehe)] w-full" maxScale={1.6}>
                           <StackStage
                             key={animationEpoch}
                             item={{ ...p, color_hex: peptideColor }}

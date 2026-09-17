@@ -147,7 +147,7 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('data-vial-add-slot')
     // Dieselbe Höhe wie die Standplätze der Objekte, damit die Kachel auf
     // derselben Linie steht statt daneben zu schweben.
-    expect(text).toContain('min-h-[46vh] max-h-[26rem]')
+    expect(text).toContain('min-h-[var(--buehne-hoehe)]')
 
     expect(text).toContain('flex items-center')
   })
@@ -553,7 +553,24 @@ describe('My Stack page vial view', () => {
     // nicht — derselbe, der die Kapsel füllt, schöbe den Pen über den Rand.
     const text = source()
 
-    expect(text).toContain('<StageFit className="h-[46vh] max-h-[26rem] w-full" maxScale={1.6}>')
+    expect(text).toContain('<StageFit className="h-[var(--buehne-hoehe)] w-full" maxScale={1.6}>')
+  })
+
+  test('gibt der Bühne, was übrig ist, statt einer geratenen Bildschirmhöhe', () => {
+    // Vorher 46vh mit Deckel bei 26rem. Auf einem großen Telefon blieb darunter
+    // ein totes Feld: 46 % einer hohen Anzeige sind weniger als das, was
+    // zwischen Reitern und Fußleiste frei ist. Die 208 px sind die Summe
+    // dessen, was ober- und unterhalb der Bühne fest steht — jede Zahl aus
+    // einer Klasse in diesem Bildschirm, nicht geschätzt.
+    const text = source()
+
+    expect(text).toContain("'calc(100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 208px)'")
+    // Die Abstände, aus denen die 208 px bestehen, dürfen sich nicht ändern,
+    // ohne dass die Zahl mitgeht.
+    expect(text).toContain('-mx-3 mb-2 flex snap-x gap-2 overflow-x-auto px-3 pb-1')
+    expect(text).toContain('<div className="mb-1 flex items-center justify-between px-3">')
+    expect(text).not.toContain('h-[46vh]')
+    expect(text).not.toContain('max-h-[26rem]')
   })
 
   test('gibt der Buehne die grosse Vorlage, nicht die Karussellgroesse', () => {
