@@ -22,7 +22,9 @@ import { SloshProvider, useSloshEngine } from '../../components/SloshContext'
 import { LabLoader } from '../../components/LabLoader'
 import { StackItemWizard } from './components/StackItemWizard'
 import { StageDetailSheet } from './components/StageDetailSheet'
+import { hapticTick } from '../../lib/haptics'
 import { mussEinrasten, zentrierPosition } from './lib/carouselSettle'
+import { wischSchritte } from './lib/wischSchritte'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
 import { StackItemDetails } from './components/StackItemDetails'
@@ -570,6 +572,19 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // so ist, wird nicht eingerastet — sonst zoege es dem Nutzer das Karussell
   // unter dem Finger weg, sobald er einen Moment stillhaelt.
   const vialZeigerUntenRef = useRef(false)
+  /** Tempo des Fingers beim Loslassen, px/ms. Nach links negativ. */
+  const vialTempoRef = useRef(0)
+  /** Wo der Streifen stand, als die Geste begann. -1 ist die Kachel „Neue Substanz". */
+  const vialGestenStartRef = useRef(0)
+  const vialDragStartYRef = useRef(0)
+  /**
+   * Achse der laufenden Geste, einmal entschieden und dann fest.
+   *
+   * `touch-pan-y` laesst die Seite senkrecht weiterscrollen — ohne diese
+   * Sperre zoege jeder senkrechte Wisch den Streifen nebenbei ein Stueck zur
+   * Seite, weil wir `scrollLeft` bei JEDER Bewegung nachfuehren.
+   */
+  const vialAchseRef = useRef<'quer' | 'laengs' | null>(null)
   const [animationEpoch, setAnimationEpoch] = useState(0)
 
   // ── Zyklen ────────────────────────────────────────────────────────────────
@@ -1579,6 +1594,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   }
   const selectPeptideIndex = (index: number) => {
     if (!stagePeptides[index]) return
+    // Derselbe Klick wie beim Wischen — Punkte, Pfeile, Rad und ein Tipp auf
+    // den Nachbarn duerfen sich nicht anders anfuehlen als der Finger.
+    if (index !== activeIndex) void hapticTick()
     vialTargetIndexRef.current = index
     setAddTileActive(false)
     scrollToPeptideIndex(index)
@@ -1642,12 +1660,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       vialScrollFrameRef.current = null
     })
   }
-  const scrollToClosestVial = () => {
-    const carousel = vialCarouselRef.current
-    if (!carousel) return
-
-    selectPeptideIndex(getClosestVialIndex(carousel))
-  }
   /**
    * Einrasten, sobald das Rollen zur Ruhe kommt.
    *
@@ -1655,6 +1667,35 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
    * `scroll-snap-align: center` gemacht haette, nur zu einem Zeitpunkt, den
    * wir bestimmen. Angefahren wird sie weich; einen Ruck gibt es nicht mehr.
    */
+  /** Alle Standplaetze in der Reihenfolge, in der sie im Streifen stehen. */
+  const vialStandplaetze = (carousel: HTMLDivElement) =>
+    Array.from(carousel.querySelectorAll<HTMLElement>('[data-vial-add], [data-vial-index]'))
+  /**
+   * Abstand zweier Standplaetze, aus dem Layout gelesen statt getippt: Breite
+   * plus Luecke stehen in zwei verschiedenen Regeln, und die Luecke hier noch
+   * einmal als Zahl zu fuehren waere die zweite Wahrheit.
+   */
+  const vialSchrittweite = (carousel: HTMLDivElement) => {
+    const plaetze = vialStandplaetze(carousel)
+    if (plaetze.length >= 2) return Math.abs(plaetze[1].offsetLeft - plaetze[0].offsetLeft)
+    return plaetze[0]?.offsetWidth ?? 0
+  }
+  /** Das Element eines Standplatzes: -1 ist die Kachel „Neue Substanz". */
+  const vialStandplatz = (carousel: HTMLDivElement, position: number) =>
+    position < 0
+      ? carousel.querySelector<HTMLElement>('[data-vial-add]')
+      : carousel.querySelector<HTMLElement>(`[data-vial-index="${position}"]`)
+  const zentriereStandplatz = (carousel: HTMLDivElement, el: HTMLElement) => {
+    const ziel = zentrierPosition({
+      itemLeft: el.offsetLeft,
+      itemWidth: el.offsetWidth,
+      clientWidth: carousel.clientWidth,
+      scrollWidth: carousel.scrollWidth,
+    })
+    if (!mussEinrasten(carousel.scrollLeft, ziel)) return false
+    carousel.scrollTo({ left: ziel, behavior: 'smooth' })
+    return true
+  }
   const einrastenNachRuhe = () => {
     const carousel = vialCarouselRef.current
     if (!carousel || vialZeigerUntenRef.current) return
@@ -1663,15 +1704,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       ? carousel.querySelector<HTMLElement>('[data-vial-add]')
       : carousel.querySelector<HTMLElement>(`[data-vial-index="${getClosestVialIndex(carousel)}"]`)
     if (!naechster) return
-
-    const ziel = zentrierPosition({
-      itemLeft: naechster.offsetLeft,
-      itemWidth: naechster.offsetWidth,
-      clientWidth: carousel.clientWidth,
-      scrollWidth: carousel.scrollWidth,
-    })
-    if (!mussEinrasten(carousel.scrollLeft, ziel)) return
-    carousel.scrollTo({ left: ziel, behavior: 'smooth' })
+    zentriereStandplatz(carousel, naechster)
   }
   const planeEinrasten = () => {
     if (vialRuheTimerRef.current !== null) window.clearTimeout(vialRuheTimerRef.current)
@@ -1687,15 +1720,27 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     pushVialSlosh(offset > 0 ? 1 : -1)
     selectPeptideIndex(nextIndex)
   }
+  /**
+   * Der Wisch gehoert uns — auch am Finger.
+   *
+   * Vorher rollte der Browser mit seinem eigenen Schwung weiter, und der
+   * kennt nur das Tempo, nicht die Absicht: ein kurzer Stups trug den
+   * Streifen ueber drei, vier Objekte. Jetzt zieht der Finger den Streifen
+   * eins zu eins, und beim Loslassen entscheidet `wischSchritte`, wie weit es
+   * geht. `touch-pan-y` am Streifen haelt dem Browser die Querachse frei;
+   * senkrecht scrollt die Seite weiter wie immer.
+   */
   const handleVialCarouselPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     vialTargetIndexRef.current = null
-    // Vor dem Ausstieg fuer den Finger: das Einrasten muss fuer JEDE
-    // Eingabeart wissen, dass gerade jemand den Streifen haelt.
     vialZeigerUntenRef.current = true
-    if (e.pointerType !== 'mouse' || e.button !== 0) return
+    if (e.pointerType === 'mouse' && e.button !== 0) return
     const carousel = vialCarouselRef.current
     if (!carousel) return
 
+    vialTempoRef.current = 0
+    vialAchseRef.current = null
+    vialGestenStartRef.current = addTileActive ? -1 : activeIndex
+    vialDragStartYRef.current = e.clientY
     vialDragStartXRef.current = e.clientX
     vialDragLastXRef.current = e.clientX
     vialDragLastTimeRef.current = e.timeStamp
@@ -1712,6 +1757,12 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     if (!carousel) return
 
     const delta = e.clientX - vialDragStartXRef.current
+    const hoch = e.clientY - vialDragStartYRef.current
+    if (vialAchseRef.current === null && Math.max(Math.abs(delta), Math.abs(hoch)) > 6) {
+      vialAchseRef.current = Math.abs(delta) > Math.abs(hoch) ? 'quer' : 'laengs'
+    }
+    if (vialAchseRef.current === 'laengs') return
+
     const now = e.timeStamp
     const stepDelta = e.clientX - vialDragLastXRef.current
     const dt = Math.max(16, now - vialDragLastTimeRef.current)
@@ -1722,6 +1773,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       }
     }
     if (Math.abs(stepDelta) > 0.5) pushVialSlosh((-stepDelta / dt) * 2.4)
+    // Geglaettet, damit ein einzelnes zappeliges letztes Bild nicht ueber die
+    // ganze Geste entscheidet.
+    vialTempoRef.current = vialTempoRef.current * 0.3 + (stepDelta / dt) * 0.7
     vialDragLastXRef.current = e.clientX
     vialDragLastTimeRef.current = now
     carousel.scrollLeft = vialDragStartScrollLeftRef.current - delta
@@ -1729,8 +1783,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   }
   const handleVialCarouselPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
     vialZeigerUntenRef.current = false
-    // Auch der Finger rastet ein: sein Wisch rollt den Streifen nativ weiter,
-    // und wenn der ausgelaufen ist, zieht `planeEinrasten` ihn auf die Mitte.
     planeEinrasten()
     if (!vialDraggingRef.current) return
     vialDraggingRef.current = false
@@ -1738,11 +1790,41 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
-    if (vialDragMovedRef.current) {
-      vialSuppressClickRef.current = true
-      window.setTimeout(() => { vialSuppressClickRef.current = false }, 0)
-      scrollToClosestVial()
+    if (!vialDragMovedRef.current || vialAchseRef.current !== 'quer') return
+
+    vialSuppressClickRef.current = true
+    window.setTimeout(() => { vialSuppressClickRef.current = false }, 0)
+    beendeWisch(e.clientX - vialDragStartXRef.current)
+  }
+  /**
+   * Ende eines Wisches: wie viele Standplaetze weit, und dann dorthin.
+   */
+  const beendeWisch = (strecke: number) => {
+    const carousel = vialCarouselRef.current
+    if (!carousel) return
+
+    const schritte = wischSchritte({
+      strecke,
+      tempo: vialTempoRef.current,
+      schrittweite: vialSchrittweite(carousel),
+    })
+    const ziel = Math.max(-1, Math.min(stagePeptides.length - 1, vialGestenStartRef.current + schritte))
+    const el = vialStandplatz(carousel, ziel)
+    if (!el) return
+
+    if (ziel !== vialGestenStartRef.current) {
+      // Der Klick beim Einrasten. Er kommt beim ENTSCHEIDEN, nicht am Ende der
+      // Bewegung — so fuehlt es sich an, als haette der Finger ihn ausgeloest.
+      void hapticTick()
+      pushVialSlosh(schritte > 0 ? 1 : -1)
+      setAddTileActive(ziel < 0)
+      const naechstes = stagePeptides[ziel]
+      if (naechstes) {
+        vialTargetIndexRef.current = ziel
+        setActivePeptideId(naechstes.id)
+      }
     }
+    zentriereStandplatz(carousel, el)
   }
   const handleVialCarouselWheel = (e: ReactWheelEvent<HTMLDivElement>) => {
     if (stagePeptides.length <= 1 || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return
@@ -2428,7 +2510,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   onPointerUp={handleVialCarouselPointerUp}
                   onPointerCancel={handleVialCarouselPointerUp}
                   onWheel={handleVialCarouselWheel}
-                  className={`relative z-10 flex ${vialSnapClassName} gap-2 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                  className={`relative z-10 flex ${vialSnapClassName} touch-pan-y gap-2 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
                     isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
                   }`}
                   style={{

@@ -100,6 +100,42 @@ describe('My Stack page vial view', () => {
     expect(text).toContain("carousel.scrollTo({ left: ziel, behavior: 'smooth' })")
   })
 
+  test('macht aus einem kurzen Wisch genau einen Schritt', () => {
+    // Der native Schwung kennt nur das Tempo, nicht die Absicht: ein kurzer
+    // Stups trug den Streifen über drei, vier Objekte. Jetzt zieht der Finger
+    // ihn eins zu eins, und beim Loslassen entscheidet `wischSchritte`.
+    const text = source()
+
+    expect(text).toContain('touch-pan-y')
+    expect(text).toContain('const schritte = wischSchritte({')
+    // Der Mauspfad ist nicht mehr der einzige: nur die Maustaste steigt aus.
+    expect(text).toContain("if (e.pointerType === 'mouse' && e.button !== 0) return")
+    expect(text).not.toContain("if (e.pointerType !== 'mouse' || e.button !== 0) return")
+  })
+
+  test('lässt einen senkrechten Wisch die Seite scrollen, nicht das Karussell', () => {
+    // `touch-pan-y` gibt die Längsachse an die Seite zurück. Ohne Achsensperre
+    // zöge jeder senkrechte Wisch den Streifen nebenbei zur Seite, weil
+    // `scrollLeft` bei JEDER Bewegung nachgeführt wird.
+    const text = source()
+
+    expect(text).toContain("vialAchseRef.current = Math.abs(delta) > Math.abs(hoch) ? 'quer' : 'laengs'")
+    expect(text).toContain("if (vialAchseRef.current === 'laengs') return")
+    expect(text).toContain("if (!vialDragMovedRef.current || vialAchseRef.current !== 'quer') return")
+  })
+
+  test('gibt beim Einrasten einen haptischen Klick', () => {
+    // Beim ENTSCHEIDEN, nicht am Ende der Bewegung — so fühlt es sich an, als
+    // hätte der Finger ihn ausgelöst. Und für jede Eingabeart derselbe.
+    const text = source()
+
+    expect(text).toContain("import { hapticTick } from '../../lib/haptics'")
+    const wisch = text.slice(text.indexOf('const beendeWisch'), text.indexOf('const handleVialCarouselWheel'))
+    expect(wisch).toContain('void hapticTick()')
+    const auswahl = text.slice(text.indexOf('const selectPeptideIndex'))
+    expect(auswahl.slice(0, 400)).toContain('if (index !== activeIndex) void hapticTick()')
+  })
+
   test('rastet nicht ein, solange jemand den Streifen hält', () => {
     // Sonst zöge es dem Nutzer das Karussell unter dem Finger weg, sobald er
     // einen Moment stillhält. Der Zeigerzustand wird deshalb für JEDE
@@ -199,7 +235,7 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('handleVialCarouselPointerMove')
     expect(text).toContain('handleVialCarouselPointerUp')
     expect(text).toContain('handleVialCarouselWheel')
-    expect(text).toContain('scrollToClosestVial')
+    expect(text).toContain('beendeWisch')
     expect(text).toContain('pushVialSlosh')
     expect(text).toContain('vialLastScrollLeftRef')
     // Kein CSS-Einrasten mehr — weder beim Ziehen noch danach. Das Zentrieren
@@ -219,7 +255,7 @@ describe('My Stack page vial view', () => {
   test('keeps programmatic vial selection stable while smooth-scrolling to the target', () => {
     const text = source()
     const selectHandler = text.slice(text.indexOf('const selectPeptideIndex'), text.indexOf('const getClosestVialIndex'))
-    const scrollHandler = text.slice(text.indexOf('const handleVialCarouselScroll'), text.indexOf('const scrollToClosestVial'))
+    const scrollHandler = text.slice(text.indexOf('const handleVialCarouselScroll'), text.indexOf('const vialStandplaetze'))
     const offsetHandler = text.slice(text.indexOf('const selectPeptideOffset'), text.indexOf('const handleVialCarouselPointerDown'))
 
     expect(text).toContain('vialTargetIndexRef')
@@ -270,7 +306,7 @@ describe('My Stack page vial view', () => {
 
   test('batches carousel spotlight updates so liquid slosh frames stay smooth', () => {
     const text = source()
-    const scrollHandler = text.slice(text.indexOf('const handleVialCarouselScroll'), text.indexOf('const scrollToClosestVial'))
+    const scrollHandler = text.slice(text.indexOf('const handleVialCarouselScroll'), text.indexOf('const vialStandplaetze'))
 
     expect(text).toContain('vialFocusFrameRef')
     expect(text).toContain('scheduleVialFocusUpdate')
