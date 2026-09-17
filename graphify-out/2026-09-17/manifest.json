@@ -336,9 +336,9 @@
     "semantic_hash": ""
   },
   "src/components/PeptideVialVisual.tsx": {
-    "mtime": 1789394417.6382873,
-    "seen": 1789394820.9439807,
-    "ast_hash": "bb24856ea4c2bd61ad925d92e03cad5e",
+    "mtime": 1789618965.913258,
+    "seen": 1789619155.8752809,
+    "ast_hash": "bf67dbe1f8e63eed35ae60d106f9e57b",
     "semantic_hash": ""
   },
   "src/components/ProtectedRoute.tsx": {
@@ -2790,15 +2790,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1789618255.5416007,
-    "seen": 1789618412.4801543,
-    "ast_hash": "5ab6e660bdf53ffee424287cdc3381ea",
+    "mtime": 1789618965.9125881,
+    "seen": 1789619155.8755689,
+    "ast_hash": "32bd34ae0388bebdb14ce343ac5c5b70",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1789618036.7064266,
-    "seen": 1789618412.480157,
-    "ast_hash": "1caf568f395d396e25005899ac7afa5e",
+    "mtime": 1789618922.3103518,
+    "seen": 1789619155.8755717,
+    "ast_hash": "25ea2729078ccf5b760c7121b76ad253",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789618260.513775,
-    "seen": 1789618412.480872,
+    "mtime": 1789619019.1658027,
+    "seen": 1789619155.8761911,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4464,15 +4464,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageFit.test.tsx": {
-    "mtime": 1789617797.0767086,
-    "seen": 1789618412.4802155,
-    "ast_hash": "1168fd6dd02047c9a53bece2065e998b",
+    "mtime": 1789618952.7106283,
+    "seen": 1789619155.8756273,
+    "ast_hash": "51e6bb595f0ab3f1050b69c5685acb65",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageFit.tsx": {
-    "mtime": 1789617752.5057564,
-    "seen": 1789618412.480217,
-    "ast_hash": "e277bc414e0d7b18f4ef489b149e4a1a",
+    "mtime": 1789618937.7311609,
+    "seen": 1789619155.8756294,
+    "ast_hash": "1950ea406195d041c1910f2ecb35e92c",
     "semantic_hash": ""
   }
 }
