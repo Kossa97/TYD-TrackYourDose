@@ -1178,5 +1178,15 @@
   "my_stack_plan_step_remove": "撤销自 {{date}} 起的阶段",
   "my_stack_plan_step_removed": "阶段已撤销。",
   "my_stack_plan_step_remove_failed": "无法撤销该阶段。",
-  "my_stack_plan_start_date_hint": "自该日期起生效。保持今天则修正当前计划；选择未来日期则新增一个阶段。"
+  "my_stack_plan_start_date_hint": "自该日期起生效。保持今天则修正当前计划；选择未来日期则新增一个阶段。",
+  "my_stack_tab_peptide": "肽",
+  "my_stack_tab_medication": "药物",
+  "my_stack_tab_hormone": "激素",
+  "my_stack_tab_supplement": "补充剂",
+  "my_stack_tab_vitamin": "维生素",
+  "my_stack_tab_other": "其他",
+  "my_stack_tab_empty": "这里还没有内容。",
+  "my_stack_sort_created_desc": "最新优先",
+  "my_stack_sort_created_asc": "最早优先",
+  "my_stack_sort_group_created": "添加时间"
 }

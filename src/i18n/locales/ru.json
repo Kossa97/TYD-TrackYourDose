@@ -1181,5 +1181,15 @@
   "my_stack_plan_step_remove": "Отменить этап с {{date}}",
   "my_stack_plan_step_removed": "Этап отменён.",
   "my_stack_plan_step_remove_failed": "Не удалось отменить этап.",
-  "my_stack_plan_start_date_hint": "Действует с этой даты. Оставьте сегодня, чтобы поправить текущий план; будущая дата создаёт этап."
+  "my_stack_plan_start_date_hint": "Действует с этой даты. Оставьте сегодня, чтобы поправить текущий план; будущая дата создаёт этап.",
+  "my_stack_tab_peptide": "Пептиды",
+  "my_stack_tab_medication": "Лекарства",
+  "my_stack_tab_hormone": "Гормоны",
+  "my_stack_tab_supplement": "Добавки",
+  "my_stack_tab_vitamin": "Витамины",
+  "my_stack_tab_other": "Прочее",
+  "my_stack_tab_empty": "Здесь пока ничего нет.",
+  "my_stack_sort_created_desc": "Сначала новые",
+  "my_stack_sort_created_asc": "Сначала старые",
+  "my_stack_sort_group_created": "Добавлено"
 }

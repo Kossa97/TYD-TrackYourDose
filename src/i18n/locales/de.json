@@ -1327,5 +1327,15 @@
   "my_stack_plan_step_remove": "Stufe ab {{date}} zurücknehmen",
   "my_stack_plan_step_removed": "Stufe zurückgenommen.",
   "my_stack_plan_step_remove_failed": "Die Stufe konnte nicht zurückgenommen werden.",
-  "my_stack_plan_start_date_hint": "Gilt ab diesem Datum. Heute stehen lassen korrigiert den laufenden Plan; ein Datum in der Zukunft legt eine Stufe an — bis dahin gilt der bisherige Plan weiter."
+  "my_stack_plan_start_date_hint": "Gilt ab diesem Datum. Heute stehen lassen korrigiert den laufenden Plan; ein Datum in der Zukunft legt eine Stufe an — bis dahin gilt der bisherige Plan weiter.",
+  "my_stack_tab_peptide": "Peptide",
+  "my_stack_tab_medication": "Medikamente",
+  "my_stack_tab_hormone": "Hormone",
+  "my_stack_tab_supplement": "Supplemente",
+  "my_stack_tab_vitamin": "Vitamine",
+  "my_stack_tab_other": "Sonstiges",
+  "my_stack_tab_empty": "Hier ist noch nichts.",
+  "my_stack_sort_created_desc": "Neu → alt",
+  "my_stack_sort_created_asc": "Alt → neu",
+  "my_stack_sort_group_created": "Hinzugefügt"
 }

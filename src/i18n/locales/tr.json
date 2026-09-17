@@ -1179,5 +1179,15 @@
   "my_stack_plan_step_remove": "{{date}} tarihli aşamayı geri al",
   "my_stack_plan_step_removed": "Aşama geri alındı.",
   "my_stack_plan_step_remove_failed": "Aşama geri alınamadı.",
-  "my_stack_plan_start_date_hint": "Bu tarihten itibaren geçerlidir. Bugünü bırakırsanız mevcut planı düzeltirsiniz; ileri bir tarih seçerseniz bir aşama planlarsınız — o güne kadar eski plan geçerli kalır."
+  "my_stack_plan_start_date_hint": "Bu tarihten itibaren geçerlidir. Bugünü bırakırsanız mevcut planı düzeltirsiniz; ileri bir tarih seçerseniz bir aşama planlarsınız — o güne kadar eski plan geçerli kalır.",
+  "my_stack_tab_peptide": "Peptitler",
+  "my_stack_tab_medication": "İlaçlar",
+  "my_stack_tab_hormone": "Hormonlar",
+  "my_stack_tab_supplement": "Takviyeler",
+  "my_stack_tab_vitamin": "Vitaminler",
+  "my_stack_tab_other": "Diğer",
+  "my_stack_tab_empty": "Burada henüz bir şey yok.",
+  "my_stack_sort_created_desc": "Önce en yeni",
+  "my_stack_sort_created_asc": "Önce en eski",
+  "my_stack_sort_group_created": "Eklendi"
 }

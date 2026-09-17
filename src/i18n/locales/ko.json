@@ -1178,5 +1178,15 @@
   "my_stack_plan_step_remove": "{{date}}부터의 단계 철회",
   "my_stack_plan_step_removed": "단계를 철회했습니다.",
   "my_stack_plan_step_remove_failed": "단계를 철회할 수 없었습니다.",
-  "my_stack_plan_start_date_hint": "이 날짜부터 적용됩니다. 오늘로 두면 현재 계획을 수정하고, 미래 날짜를 고르면 새 단계가 됩니다."
+  "my_stack_plan_start_date_hint": "이 날짜부터 적용됩니다. 오늘로 두면 현재 계획을 수정하고, 미래 날짜를 고르면 새 단계가 됩니다.",
+  "my_stack_tab_peptide": "펙타이드",
+  "my_stack_tab_medication": "약물",
+  "my_stack_tab_hormone": "호르몬",
+  "my_stack_tab_supplement": "보충제",
+  "my_stack_tab_vitamin": "비타민",
+  "my_stack_tab_other": "기타",
+  "my_stack_tab_empty": "아직 아무것도 없습니다.",
+  "my_stack_sort_created_desc": "최신순",
+  "my_stack_sort_created_asc": "오래된순",
+  "my_stack_sort_group_created": "추가됨"
 }

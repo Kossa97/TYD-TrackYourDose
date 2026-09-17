@@ -1179,5 +1179,15 @@
   "my_stack_plan_step_remove": "{{date}} से चरण हटाएं",
   "my_stack_plan_step_removed": "चरण हटा दिया गया।",
   "my_stack_plan_step_remove_failed": "चरण नहीं हटाया जा सका।",
-  "my_stack_plan_start_date_hint": "इस तारीख से लागू। आज रहने दें तो मौजूदा योजना सुधरती है; भविष्य की तारीख एक नया चरण बनाती है।"
+  "my_stack_plan_start_date_hint": "इस तारीख से लागू। आज रहने दें तो मौजूदा योजना सुधरती है; भविष्य की तारीख एक नया चरण बनाती है।",
+  "my_stack_tab_peptide": "पेप्टाइड",
+  "my_stack_tab_medication": "दवाएं",
+  "my_stack_tab_hormone": "हार्मोन",
+  "my_stack_tab_supplement": "सप्लीमेंट",
+  "my_stack_tab_vitamin": "विटामिन",
+  "my_stack_tab_other": "अन्य",
+  "my_stack_tab_empty": "यहाँ अभी कुछ नहीं।",
+  "my_stack_sort_created_desc": "नए पहले",
+  "my_stack_sort_created_asc": "पुराने पहले",
+  "my_stack_sort_group_created": "जोड़ा गया"
 }

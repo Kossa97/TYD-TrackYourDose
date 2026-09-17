@@ -1327,5 +1327,15 @@
   "my_stack_plan_step_remove": "Withdraw step from {{date}}",
   "my_stack_plan_step_removed": "Step withdrawn.",
   "my_stack_plan_step_remove_failed": "The step could not be withdrawn.",
-  "my_stack_plan_start_date_hint": "Applies from this date. Leave it on today to correct the current plan; pick a future date to plan a step — the current plan then stays valid until then."
+  "my_stack_plan_start_date_hint": "Applies from this date. Leave it on today to correct the current plan; pick a future date to plan a step — the current plan then stays valid until then.",
+  "my_stack_tab_peptide": "Peptides",
+  "my_stack_tab_medication": "Medication",
+  "my_stack_tab_hormone": "Hormones",
+  "my_stack_tab_supplement": "Supplements",
+  "my_stack_tab_vitamin": "Vitamins",
+  "my_stack_tab_other": "Other",
+  "my_stack_tab_empty": "Nothing here yet.",
+  "my_stack_sort_created_desc": "Newest first",
+  "my_stack_sort_created_asc": "Oldest first",
+  "my_stack_sort_group_created": "Added"
 }

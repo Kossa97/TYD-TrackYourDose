@@ -1179,5 +1179,15 @@
   "my_stack_plan_step_remove": "Tarik tahap mulai {{date}}",
   "my_stack_plan_step_removed": "Tahap ditarik.",
   "my_stack_plan_step_remove_failed": "Tahap tidak dapat ditarik.",
-  "my_stack_plan_start_date_hint": "Berlaku mulai tanggal ini. Biarkan hari ini untuk mengoreksi rencana berjalan; pilih tanggal mendatang untuk merencanakan tahap — sampai saat itu rencana lama tetap berlaku."
+  "my_stack_plan_start_date_hint": "Berlaku mulai tanggal ini. Biarkan hari ini untuk mengoreksi rencana berjalan; pilih tanggal mendatang untuk merencanakan tahap — sampai saat itu rencana lama tetap berlaku.",
+  "my_stack_tab_peptide": "Peptida",
+  "my_stack_tab_medication": "Obat",
+  "my_stack_tab_hormone": "Hormon",
+  "my_stack_tab_supplement": "Suplemen",
+  "my_stack_tab_vitamin": "Vitamin",
+  "my_stack_tab_other": "Lainnya",
+  "my_stack_tab_empty": "Belum ada apa-apa di sini.",
+  "my_stack_sort_created_desc": "Terbaru dulu",
+  "my_stack_sort_created_asc": "Terlama dulu",
+  "my_stack_sort_group_created": "Ditambahkan"
 }

@@ -1179,5 +1179,15 @@
   "my_stack_plan_step_remove": "{{date}}からの段階を取り消す",
   "my_stack_plan_step_removed": "段階を取り消しました。",
   "my_stack_plan_step_remove_failed": "段階を取り消せませんでした。",
-  "my_stack_plan_start_date_hint": "この日から適用されます。今日のままなら現在の計画の修正、将来の日付なら新しい段階になります。"
+  "my_stack_plan_start_date_hint": "この日から適用されます。今日のままなら現在の計画の修正、将来の日付なら新しい段階になります。",
+  "my_stack_tab_peptide": "ペプチド",
+  "my_stack_tab_medication": "医薬品",
+  "my_stack_tab_hormone": "ホルモン",
+  "my_stack_tab_supplement": "サプリ",
+  "my_stack_tab_vitamin": "ビタミン",
+  "my_stack_tab_other": "その他",
+  "my_stack_tab_empty": "まだ何もありません。",
+  "my_stack_sort_created_desc": "新しい順",
+  "my_stack_sort_created_asc": "古い順",
+  "my_stack_sort_group_created": "追加日"
 }

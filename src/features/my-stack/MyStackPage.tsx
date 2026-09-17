@@ -29,6 +29,8 @@ import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
 import { rhythmFromStorage } from './lib/intakeRhythm'
+import { STACK_TABS, filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
+import { sortAbilities, type SortAbility } from './lib/stackSort'
 import { planSegments, stufenText } from './lib/planSegments'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
 import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
@@ -116,22 +118,29 @@ const EXPIRY_PRESETS = [10, 14, 21, 28, 42, 90]
 
 type PeptideSortKey =
   | 'active_name'
+  | 'created_desc' | 'created_asc'
   | 'name_asc' | 'name_desc'
   | 'expiry_asc' | 'expiry_desc'
   | 'fill_asc' | 'fill_desc'
   | 'recon_asc' | 'recon_desc'
   | 'stock_asc' | 'stock_desc'
 
-const PEPTIDE_SORT_GROUPS: { labelKey: string; options: PeptideSortKey[] }[] = [
+// Jede Gruppe sagt, welche Angabe sie braucht. Fehlt sie im offenen Reiter,
+// wird die Gruppe nicht angeboten — eine Sortierung, die nichts bewegt, sieht
+// aus wie ein Fehler.
+const PEPTIDE_SORT_GROUPS: { labelKey: string; options: PeptideSortKey[]; needs?: SortAbility }[] = [
+  { labelKey: 'my_stack_sort_group_created', options: ['created_desc', 'created_asc'] },
   { labelKey: 'sort_group_name', options: ['name_asc', 'name_desc'] },
-  { labelKey: 'sort_group_expiry', options: ['expiry_asc', 'expiry_desc'] },
-  { labelKey: 'sort_group_fill', options: ['fill_asc', 'fill_desc'] },
-  { labelKey: 'sort_group_recon', options: ['recon_asc', 'recon_desc'] },
-  { labelKey: 'sort_group_stock', options: ['stock_asc', 'stock_desc'] },
+  { labelKey: 'sort_group_expiry', options: ['expiry_asc', 'expiry_desc'], needs: 'expiry' },
+  { labelKey: 'sort_group_fill', options: ['fill_asc', 'fill_desc'], needs: 'fill' },
+  { labelKey: 'sort_group_recon', options: ['recon_asc', 'recon_desc'], needs: 'recon' },
+  { labelKey: 'sort_group_stock', options: ['stock_asc', 'stock_desc'], needs: 'stock' },
 ]
 
 const SORT_OPTION_LABEL_KEYS: Record<PeptideSortKey, string> = {
   active_name: 'sort_option_active_name',
+  created_desc: 'my_stack_sort_created_desc',
+  created_asc: 'my_stack_sort_created_asc',
   name_asc: 'sort_option_name_asc',
   name_desc: 'sort_option_name_desc',
   expiry_asc: 'sort_option_expiry_asc',
@@ -207,6 +216,10 @@ function sortPeptides(list: Peptide[], sortBy: PeptideSortKey, activeIds: Set<st
         const rank = (p: Peptide) => (activeIds.has(p.id) ? 0 : 1)
         return rank(a) - rank(b) || a.name.localeCompare(b.name)
       }
+      // `created_at` kann bei alten Zeilen fehlen — dann hinten einsortieren,
+      // statt die ganze Liste durcheinanderzubringen.
+      case 'created_desc': return (b.created_at ?? '').localeCompare(a.created_at ?? '')
+      case 'created_asc': return (a.created_at ?? '').localeCompare(b.created_at ?? '')
       case 'name_asc': return a.name.localeCompare(b.name)
       case 'name_desc': return b.name.localeCompare(a.name)
       case 'expiry_asc': return compareNullableNum(expiryDaysLeft(a), expiryDaysLeft(b), true)
@@ -514,6 +527,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [filterOpen, setFilterOpen]           = useState(false)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
   const [sortBy, setSortBy]                   = useState<PeptideSortKey>('active_name')
+  const [activeTab, setActiveTab]             = useState<StackTabKey>('all')
   const [viewMode, setViewModeState]          = useState<'vials' | 'list'>(() =>
     localStorage.getItem('tyd_peptide_view') === 'list' ? 'list' : 'vials'
   )
@@ -757,11 +771,26 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     () => new Set(cycles.filter(c => c.active).map(c => c.stack_item_id)),
     [cycles],
   )
-  const displayPeptides = sortPeptides(
-    peptides.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase())),
-    sortBy,
-    activePeptideIds,
+  const gesuchtePeptides = peptides.filter(
+    p => !search || p.name.toLowerCase().includes(search.toLowerCase()),
   )
+  // Was in den Reitern steht, zaehlt ueber den GANZEN Stack — nicht ueber die
+  // gerade gefilterte Liste, sonst zeigte jeder Reiter ausser dem offenen 0.
+  const reiterZaehler = tabCounts(peptides)
+  const offeneKategorie = filterByTab(gesuchtePeptides, activeTab)
+  // Welche Sortierungen dieser Reiter ueberhaupt beantworten kann.
+  const moeglicheSortierungen = sortAbilities(offeneKategorie)
+  // Sortiert jemand nach Fuellstand und wechselt dann in einen Reiter ohne
+  // Vials, gaebe es die gewaehlte Sortierung dort nicht mehr — die Auswahl
+  // zeigte einen Wert, den das Menue gar nicht fuehrt. Dann zurueck auf die
+  // Vorgabe, die immer geht.
+  const sortierungMoeglich = PEPTIDE_SORT_GROUPS.some(group => (
+    group.options.includes(sortBy) && (!group.needs || moeglicheSortierungen.has(group.needs))
+  ))
+  const wirksameSortierung: PeptideSortKey = sortBy === 'active_name' || sortierungMoeglich
+    ? sortBy
+    : 'active_name'
+  const displayPeptides = sortPeptides(offeneKategorie, wirksameSortierung, activePeptideIds)
   const stagePeptides = displayPeptides.filter(p => isStageRenderable(p.dosage_form))
   const listPeptides = viewMode === 'list'
     ? displayPeptides
@@ -1492,6 +1521,26 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       updateVialFocus()
     })
   }
+  /**
+   * Reiter wechseln.
+   *
+   * Welcher Eintrag dann auf der Buehne steht, muss hier NICHT gesetzt werden:
+   * `activeIndex` faellt ueber `Math.max(0, findIndex(...))` von selbst auf den
+   * ersten des Reiters, sobald der bisherige nicht mehr dabei ist. Zu tun
+   * bleibt nur, was keine Ableitung erledigen kann — das Karussell an den
+   * Anfang rollen und das Licht neu rechnen.
+   */
+  const reiterWechseln = (key: StackTabKey) => {
+    setActiveTab(key)
+    setAddTileActive(false)
+    requestAnimationFrame(() => {
+      vialCarouselRef.current
+        ?.querySelector<HTMLElement>('[data-vial-index="0"]')
+        ?.scrollIntoView({ block: 'nearest', inline: 'center' })
+      updateVialFocus()
+    })
+  }
+
   const scrollToPeptideIndex = (index: number) => {
     const carousel = vialCarouselRef.current
     const item = carousel?.querySelector<HTMLElement>(`[data-vial-index="${index}"]`)
@@ -1757,12 +1806,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         <p className="mb-1.5 text-xs font-semibold text-slate-400">{t('sort_aria_label')}</p>
                         <select
                           className="select w-full pr-8 text-sm"
-                          value={sortBy}
+                          value={wirksameSortierung}
                           aria-label={t('sort_aria_label')}
                           onChange={e => setSortBy(e.target.value as PeptideSortKey)}
                         >
                           <option value="active_name">{t('sort_option_active_name')}</option>
-                          {PEPTIDE_SORT_GROUPS.map(group => (
+                          {PEPTIDE_SORT_GROUPS
+                            .filter(group => !group.needs || moeglicheSortierungen.has(group.needs))
+                            .map(group => (
                             <optgroup key={group.labelKey} label={t(group.labelKey)}>
                               {group.options.map(key => (
                                 <option key={key} value={key}>{t(SORT_OPTION_LABEL_KEYS[key])}</option>
@@ -1818,6 +1869,48 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           {!loading && viewMode === 'vials' && activePeptide && (
             <div className="space-y-4">
               <div className="py-5">
+                {/* Die Reiter: „Alle" und alle sechs Kategorien, feste Plaetze.
+                    Leere bleiben stehen und sind gedimmt — „Medikamente" ohne
+                    Inhalt sagt, dass die App das auch kann; versteckt saehe
+                    das niemand. Die Leiste wischt waagerecht, das Karussell
+                    darunter auch: deshalb ist sie flach, mit Pillen, und
+                    deutlich abgesetzt. */}
+                <div
+                  data-stack-tabs
+                  role="tablist"
+                  aria-label={String(t('my_stack_category', { defaultValue: 'Kategorie' }))}
+                  className="no-scrollbar -mx-3 mb-3 flex snap-x gap-2 overflow-x-auto px-3 pb-1"
+                >
+                  {STACK_TABS.map(reiter => {
+                    const anzahl = reiterZaehler.get(reiter.key) ?? 0
+                    const offen = reiter.key === activeTab
+                    return (
+                      <button
+                        key={reiter.key}
+                        type="button"
+                        role="tab"
+                        aria-selected={offen}
+                        data-stack-tab={reiter.key}
+                        data-stack-tab-count={anzahl}
+                        onClick={() => reiterWechseln(reiter.key)}
+                        className={`flex min-h-9 shrink-0 snap-start cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${offen
+                          ? 'border-cyan-400/50 bg-cyan-400/15 text-cyan-200'
+                          : anzahl === 0
+                            ? 'border-white/[0.06] bg-white/[0.02] text-slate-600'
+                            : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-cyan-400/25'
+                        }`}
+                      >
+                        {t(reiter.labelKey, { defaultValue: reiter.defaultValue })}
+                        {anzahl > 0 && (
+                          <span className={`text-xs font-semibold tabular-nums ${offen ? 'text-cyan-100/70' : 'text-slate-500'}`}>
+                            {anzahl}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+
                 <div className="mb-2 flex items-center justify-between px-3">
                   <button
                     type="button"

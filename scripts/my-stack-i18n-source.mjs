@@ -1,6 +1,16 @@
 /** Manual German and English source for My Stack and neutral stack-facing copy. */
 export const MY_STACK_EN = {
   my_stack_title: 'My Stack',
+  my_stack_tab_peptide: 'Peptides',
+  my_stack_tab_medication: 'Medication',
+  my_stack_tab_hormone: 'Hormones',
+  my_stack_tab_supplement: 'Supplements',
+  my_stack_tab_vitamin: 'Vitamins',
+  my_stack_tab_other: 'Other',
+  my_stack_tab_empty: 'Nothing here yet.',
+  my_stack_sort_created_desc: 'Newest first',
+  my_stack_sort_created_asc: 'Oldest first',
+  my_stack_sort_group_created: 'Added',
   my_stack_add_item: 'Add substance',
   my_stack_edit_item: 'Edit entry',
   my_stack_question: 'What would you like to add?',
@@ -307,6 +317,16 @@ export const MY_STACK_EN = {
 
 export const MY_STACK_DE = {
   my_stack_title: 'My Stack',
+  my_stack_tab_peptide: 'Peptide',
+  my_stack_tab_medication: 'Medikamente',
+  my_stack_tab_hormone: 'Hormone',
+  my_stack_tab_supplement: 'Supplemente',
+  my_stack_tab_vitamin: 'Vitamine',
+  my_stack_tab_other: 'Sonstiges',
+  my_stack_tab_empty: 'Hier ist noch nichts.',
+  my_stack_sort_created_desc: 'Neu → alt',
+  my_stack_sort_created_asc: 'Alt → neu',
+  my_stack_sort_group_created: 'Hinzugefügt',
   my_stack_add_item: 'Substanz hinzuf\u00fcgen',
   my_stack_edit_item: 'Eintrag bearbeiten',
   my_stack_question: 'Was m\u00f6chtest du hinzuf\u00fcgen?',

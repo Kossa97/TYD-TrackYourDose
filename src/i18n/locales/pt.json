@@ -1179,5 +1179,15 @@
   "my_stack_plan_step_remove": "Retirar a etapa a partir de {{date}}",
   "my_stack_plan_step_removed": "Etapa retirada.",
   "my_stack_plan_step_remove_failed": "Não foi possível retirar a etapa.",
-  "my_stack_plan_start_date_hint": "Vale a partir desta data. Deixe em hoje para corrigir o plano atual; escolha uma data futura para planejar uma etapa — até lá o plano atual continua válido."
+  "my_stack_plan_start_date_hint": "Vale a partir desta data. Deixe em hoje para corrigir o plano atual; escolha uma data futura para planejar uma etapa — até lá o plano atual continua válido.",
+  "my_stack_tab_peptide": "Peptídeos",
+  "my_stack_tab_medication": "Medicamentos",
+  "my_stack_tab_hormone": "Hormônios",
+  "my_stack_tab_supplement": "Suplementos",
+  "my_stack_tab_vitamin": "Vitaminas",
+  "my_stack_tab_other": "Outros",
+  "my_stack_tab_empty": "Ainda não há nada aqui.",
+  "my_stack_sort_created_desc": "Mais recentes primeiro",
+  "my_stack_sort_created_asc": "Mais antigos primeiro",
+  "my_stack_sort_group_created": "Adicionado"
 }

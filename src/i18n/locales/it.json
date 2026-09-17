@@ -1179,5 +1179,15 @@
   "my_stack_plan_step_remove": "Ritira la fase dal {{date}}",
   "my_stack_plan_step_removed": "Fase ritirata.",
   "my_stack_plan_step_remove_failed": "Non è stato possibile ritirare la fase.",
-  "my_stack_plan_start_date_hint": "Vale da questa data. Lasciala su oggi per correggere il piano in corso; scegli una data futura per pianificare una fase — fino ad allora resta valido il piano attuale."
+  "my_stack_plan_start_date_hint": "Vale da questa data. Lasciala su oggi per correggere il piano in corso; scegli una data futura per pianificare una fase — fino ad allora resta valido il piano attuale.",
+  "my_stack_tab_peptide": "Peptidi",
+  "my_stack_tab_medication": "Farmaci",
+  "my_stack_tab_hormone": "Ormoni",
+  "my_stack_tab_supplement": "Integratori",
+  "my_stack_tab_vitamin": "Vitamine",
+  "my_stack_tab_other": "Altro",
+  "my_stack_tab_empty": "Qui non c’è ancora nulla.",
+  "my_stack_sort_created_desc": "Più recenti prima",
+  "my_stack_sort_created_asc": "Più vecchi prima",
+  "my_stack_sort_group_created": "Aggiunto"
 }

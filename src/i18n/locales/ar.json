@@ -1183,5 +1183,15 @@
   "my_stack_plan_step_remove": "سحب المرحلة من {{date}}",
   "my_stack_plan_step_removed": "تم سحب المرحلة.",
   "my_stack_plan_step_remove_failed": "تعذر سحب المرحلة.",
-  "my_stack_plan_start_date_hint": "يسري من هذا التاريخ. اتركه اليوم لتصحيح الخطة الحالية، أو اختر تاريخًا مستقبليًا لإضافة مرحلة."
+  "my_stack_plan_start_date_hint": "يسري من هذا التاريخ. اتركه اليوم لتصحيح الخطة الحالية، أو اختر تاريخًا مستقبليًا لإضافة مرحلة.",
+  "my_stack_tab_peptide": "الببتيدات",
+  "my_stack_tab_medication": "الأدوية",
+  "my_stack_tab_hormone": "الهرمونات",
+  "my_stack_tab_supplement": "المكملات",
+  "my_stack_tab_vitamin": "الفيتامينات",
+  "my_stack_tab_other": "أخرى",
+  "my_stack_tab_empty": "لا شيء هنا بعد.",
+  "my_stack_sort_created_desc": "الأحدث أولاً",
+  "my_stack_sort_created_asc": "الأقدم أولاً",
+  "my_stack_sort_group_created": "تمت الإضافة"
 }

@@ -434,6 +434,45 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('escalationsOf(c.id)')
   })
 
+  test('zeigt alle sieben Reiter, auch die leeren, an festem Platz', () => {
+    // Ein leerer Reiter „Medikamente" sagt, dass die App das auch kann. In
+    // Produktion sind drei der sechs Kategorien gar nicht belegt — versteckt
+    // entdeckte sie niemand. Und der Platz bleibt fest, sonst springt
+    // „Medikamente" beim ersten Medikament von hinten nach vorn.
+    const text = source()
+
+    expect(text).toContain('STACK_TABS.map(reiter =>')
+    expect(text).toContain('data-stack-tab={reiter.key}')
+    expect(text).toContain('data-stack-tab-count={anzahl}')
+    // Gezählt wird über den ganzen Stack, nicht über die gefilterte Liste —
+    // sonst stünde in jedem Reiter außer dem offenen eine 0.
+    expect(text).toContain('tabCounts(peptides)')
+  })
+
+  test('bietet im Reiter nur Sortierungen an, die er beantworten kann', () => {
+    // Füllstand, Rekonstitution und Bestand lesen Vial-Felder. In einem
+    // Reiter aus Kapseln bewegt sich nichts, und die App wirkt kaputt.
+    const text = source()
+
+    expect(text).toContain("moeglicheSortierungen.has(group.needs)")
+    // Und wer nach Füllstand sortiert und dann den Reiter wechselt, landet
+    // nicht auf einem Wert, den das Menü gar nicht mehr führt.
+    expect(text).toContain('wirksameSortierung')
+  })
+
+  test('setzt beim Reiterwechsel ohne Effekt zurück', () => {
+    // Welcher Eintrag auf der Bühne steht, fällt aus `Math.max(0, findIndex)`
+    // von selbst auf den ersten des Reiters. Ein Effekt, der dasselbe noch
+    // einmal per setState nachzieht, wäre eine zweite Wahrheit.
+    const text = source()
+    const start = text.indexOf('const reiterWechseln =')
+    expect(start).toBeGreaterThan(-1)
+    const handler = text.slice(start, text.indexOf('\n  }', start))
+
+    expect(handler).toContain('setActiveTab(key)')
+    expect(handler).not.toContain('setActivePeptideId')
+  })
+
   test('schreibt einen Plan nur über den RPC, nie an ihm vorbei', () => {
     // Das eigene Zyklusformular schrieb direkt in `cycles` — ohne die
     // Prüfungen des RPC und mit einer zweiten, engeren Segmentlogik. Es kannte

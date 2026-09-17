@@ -1179,5 +1179,15 @@
   "my_stack_plan_step_remove": "Retirer le palier du {{date}}",
   "my_stack_plan_step_removed": "Palier retiré.",
   "my_stack_plan_step_remove_failed": "Le palier n’a pas pu être retiré.",
-  "my_stack_plan_start_date_hint": "S’applique à partir de cette date. Laissez aujourd’hui pour corriger le plan en cours ; choisissez une date future pour planifier un palier — le plan actuel reste valable jusque-là."
+  "my_stack_plan_start_date_hint": "S’applique à partir de cette date. Laissez aujourd’hui pour corriger le plan en cours ; choisissez une date future pour planifier un palier — le plan actuel reste valable jusque-là.",
+  "my_stack_tab_peptide": "Peptides",
+  "my_stack_tab_medication": "Médicaments",
+  "my_stack_tab_hormone": "Hormones",
+  "my_stack_tab_supplement": "Compléments",
+  "my_stack_tab_vitamin": "Vitamines",
+  "my_stack_tab_other": "Autres",
+  "my_stack_tab_empty": "Rien ici pour l’instant.",
+  "my_stack_sort_created_desc": "Plus récents d’abord",
+  "my_stack_sort_created_asc": "Plus anciens d’abord",
+  "my_stack_sort_group_created": "Ajouté"
 }
