@@ -630,9 +630,21 @@ body.onboarding-active [data-ob="ob-cal-today"][data-ob-active] {
     0 0 18px rgba(0,204,245,0.06),
     inset 0 2px 6px rgba(0,0,0,0.45);
 
-  /* Bottom tab bar (incl. raised Home button) — keep content & onboarding above it */
-  --bottom-nav-height: 90px;
+  /* Bottom tab bar — keep content & onboarding above it.
+     Die Leiste schwebt jetzt als Kapsel. `--bottom-nav-height` ist deshalb
+     nicht mehr ihre Hoehe allein, sondern der Platz, den sie ueber der
+     Sicherheitszone belegt: Kapsel plus Abstand nach unten. Alle sieben
+     Stellen, die damit rechnen (Inhaltspolster, FAQ-Knopf, Schnellzugriff,
+     Onboarding, My-Stack-Buehne), bleiben dadurch unveraendert richtig. */
+  --bottom-nav-capsule: 62px;
   --bottom-nav-gap: 12px;
+  /* Bewusst als glatte Zahl und NICHT als calc(): `onboardingPlacement.ts`
+     liest diese Variable mit `parseInt`, und eigene Eigenschaften werden nicht
+     ausgerechnet — `parseInt('calc(62px + 12px)')` waere NaN und die
+     Einblendungen saessen falsch. Die drei Zahlen haengen zusammen:
+     62 + 12 = 74. Ein Test in `bottomNavMetrics.test.ts` haelt das fest. */
+  --bottom-nav-height: 74px;
+  --bottom-nav-inset: 12px;
 }
 
 /* ── Light theme overrides ── */
@@ -1546,4 +1558,240 @@ main.flex-1 {
 /* Inactive vial overlay is less aggressive in light mode. */
 [data-theme="light"] [data-vial-detail="inactive-overlay"] {
   background-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Liquid-Glass-Tab-Bar
+
+   Nachbildung der schwebenden Tab-Bar aus iOS 26 mit den Mitteln, die eine
+   PWA hat. Was den Eindruck traegt, sind vier Schichten uebereinander — keine
+   graue Flaeche, sondern Material:
+
+     1. `backdrop-filter` mit Unschaerfe UND Saettigung: der Inhalt dahinter
+        bleibt sichtbar und bekommt Farbe, statt zu Grau zu verwaschen.
+     2. eine sehr helle, sehr duenne Fuellung als Verlauf — oben heller als
+        unten, wie Glas, in das Licht von oben faellt.
+     3. ein Lichtrand (`::before`) als Haarlinie, oben hell und unten fast weg.
+        Gemacht als Verlauf mit Maske, weil ein `border` ringsum gleich hell
+        waere und damit flach aussaehe.
+     4. ein weicher Schimmer im Inneren (`::after`), der der aktiven Pille
+        folgt — das ist der raeumliche Anteil, den Apple aus echter Brechung
+        holt und den wir andeuten.
+
+   Kein WebGL: der sichtbare Gewinn waere eine Nuance Brechung, der Preis eine
+   zweite Zeichenebene auf jedem Bildschirm.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.tyd-tabbar {
+  position: fixed;
+  left: max(var(--bottom-nav-inset), env(safe-area-inset-left));
+  right: max(var(--bottom-nav-inset), env(safe-area-inset-right));
+  bottom: calc(env(safe-area-inset-bottom) + var(--bottom-nav-gap));
+  z-index: 40;
+  height: var(--bottom-nav-capsule);
+  max-width: 480px;
+  margin-inline: auto;
+  border-radius: 999px;
+  isolation: isolate;
+  /* Kein schwerer Schatten: Glas liegt auf dem Bild, es schwebt nicht davor. */
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.11) 0%,
+      rgba(255, 255, 255, 0.05) 46%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .tyd-tabbar {
+    -webkit-backdrop-filter: blur(24px) saturate(190%) brightness(1.06);
+    backdrop-filter: blur(24px) saturate(190%) brightness(1.06);
+  }
+}
+
+/* Ohne Unschaerfe traegt die duenne Fuellung nichts — dann wird die Kapsel
+   deckend, damit die Beschriftung lesbar bleibt. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tyd-tabbar { background: var(--glass-bg); }
+}
+
+/* Lichtrand. Die Maske schneidet die Mitte heraus, sodass vom Verlauf nur die
+   Haarlinie am Rand stehen bleibt. */
+.tyd-tabbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.50) 0%,
+    rgba(255, 255, 255, 0.10) 28%,
+    rgba(255, 255, 255, 0.04) 56%,
+    rgba(255, 255, 255, 0.26) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+/* Wo die Maske fehlt, ein schlichter Rand statt gar keiner Kante. */
+@supports not ((mask-composite: exclude) or (-webkit-mask-composite: xor)) {
+  .tyd-tabbar::before {
+    padding: 0;
+    background: none;
+    border: 1px solid var(--border-strong);
+  }
+}
+
+/* Der Schimmer, der der Pille folgt. `--tyd-glint` setzt die Darstellung. */
+.tyd-tabbar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.9;
+  background: radial-gradient(
+    120% 160% at var(--tyd-glint, 50%) -40%,
+    rgba(255, 255, 255, 0.20) 0%,
+    rgba(255, 255, 255, 0.06) 42%,
+    transparent 72%
+  );
+  transition: background 420ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Die aktive Pille: dasselbe Material, eine Stufe dichter. */
+.tyd-tabbar-pill {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  border-radius: 999px;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.20) 0%,
+    rgba(255, 255, 255, 0.09) 60%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.16),
+    0 2px 10px rgba(0, 0, 0, 0.18);
+  /* Weich mit leichtem Ueberschwingen — das ist der Feder-Anteil. Nur
+     `transform` und `width`, damit nichts neu umbrochen wird. */
+  transition:
+    transform 460ms cubic-bezier(0.34, 1.32, 0.52, 1),
+    width 460ms cubic-bezier(0.34, 1.32, 0.52, 1),
+    opacity 200ms linear;
+  will-change: transform, width;
+}
+
+.tyd-tabbar-pill[data-ohne-ziel='true'] { opacity: 0; }
+
+/* Ein Reiter. 44 px in beide Richtungen sind die Untergrenze fuer den Finger. */
+.tyd-tabbar-item {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 999px;
+  /* `--text-dim` und nicht `--text-muted`: auf dem Glas liegt Inhalt, der
+     durchscheint, und das gedaempfte Grau verschwand darin fast. Der ruhende
+     Reiter muss lesbar bleiben, auch wenn er nicht der aktive ist. */
+  color: var(--text-dim);
+  transition: color 240ms ease, transform 160ms cubic-bezier(0.32, 0.72, 0, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tyd-tabbar-item[aria-current='page'] { color: var(--accent); }
+.tyd-tabbar-item:active { transform: scale(0.93); }
+
+.tyd-tabbar-label {
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Die mittlere Schaltflaeche ist kein Reiter: kein Etikett, keine Pille,
+   eigene Farbe. Sie oeffnet den Schnellzugriff. */
+.tyd-tabbar-center {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  margin-inline: 2px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 180ms cubic-bezier(0.34, 1.32, 0.52, 1), background 200ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tyd-tabbar-center:active { transform: scale(0.92); }
+
+/* Wer Bewegung abbestellt hat, bekommt dieselbe Leiste ohne Wege. */
+@media (prefers-reduced-motion: reduce) {
+  .tyd-tabbar-pill,
+  .tyd-tabbar::after,
+  .tyd-tabbar-item,
+  .tyd-tabbar-center {
+    transition: none;
+  }
+}
+
+/* Im hellen Thema kippt das Licht: dunkle Kanten statt heller. */
+[data-theme='light'] .tyd-tabbar {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(255, 255, 255, 0.52) 100%
+  );
+  box-shadow:
+    0 6px 24px rgba(15, 30, 60, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.80),
+    inset 0 -1px 0 rgba(15, 30, 60, 0.06);
+}
+
+[data-theme='light'] .tyd-tabbar::before {
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(15, 30, 60, 0.06) 40%,
+    rgba(15, 30, 60, 0.04) 60%,
+    rgba(255, 255, 255, 0.70) 100%
+  );
+}
+
+[data-theme='light'] .tyd-tabbar-pill {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.72) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 2px 10px rgba(15, 30, 60, 0.10);
 }

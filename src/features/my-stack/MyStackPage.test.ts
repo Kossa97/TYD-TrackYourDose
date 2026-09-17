@@ -752,15 +752,22 @@ describe('My Stack modular integration', () => {
   })
 
   test('uses only neutral My Stack links and active-route naming in navigation', () => {
+    // Die Reiter der Bottom-Navigation stehen seit dem Umbau auf die
+    // Liquid-Glass-Leiste im Modell (`navigation/tabModel.ts`), nicht mehr
+    // inline im Layout. Die Bedingung ist dieselbe geblieben: die Route heißt
+    // `/my-stack`, das alte `/peptide` kommt nirgends mehr vor.
     const layout = readFileSync(new URL('../../components/Layout.tsx', import.meta.url), 'utf8')
+    const model = readFileSync(new URL('../../components/navigation/tabModel.ts', import.meta.url), 'utf8')
+    const navigation = readFileSync(new URL('../../components/navigation/BottomNavigation.tsx', import.meta.url), 'utf8')
     const home = readFileSync(new URL('../../pages/Home.tsx', import.meta.url), 'utf8')
 
     expect(layout).toContain("path: '/my-stack#new-substance'")
-    expect(layout).toContain('to="/my-stack"')
-    expect(layout).toContain("const isMyStack = pathname === '/my-stack'")
-    expect(layout).toContain('active={isMyStack}')
-    expect(layout).not.toContain('/peptide')
-    expect(layout).not.toContain('isPeptide')
+    expect(model).toContain("id: 'my-stack'")
+    expect(model).toContain("route: '/my-stack'")
+    for (const quelle of [layout, model, navigation]) {
+      expect(quelle).not.toContain('/peptide')
+      expect(quelle).not.toContain('isPeptide')
+    }
     expect(home).toContain("path: '/my-stack'")
     expect(home).not.toContain("path: '/peptide'")
   })
