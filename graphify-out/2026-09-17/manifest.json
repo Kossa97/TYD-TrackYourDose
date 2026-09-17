@@ -2790,15 +2790,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1789631662.7995589,
-    "seen": 1789631806.8287265,
-    "ast_hash": "e2af49fcebbbb16897a83a18b8975761",
+    "mtime": 1789632365.7433383,
+    "seen": 1789632485.082795,
+    "ast_hash": "73eb9cd5ecf224897e27558b3f82d552",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1789631648.4256804,
-    "seen": 1789631806.8287284,
-    "ast_hash": "b815780c2998b72e98cd61417e5f7860",
+    "mtime": 1789632246.6311,
+    "seen": 1789632485.0827975,
+    "ast_hash": "951281a88c5713211ab96655ac63809f",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
@@ -3390,15 +3390,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/StageLabel.test.ts": {
-    "mtime": 1789391212.2799854,
-    "seen": 1789391430.9662147,
-    "ast_hash": "da4614f76753db9f7817ce105a08cc98",
+    "mtime": 1789634211.2941194,
+    "seen": 1789634322.0328693,
+    "ast_hash": "125b100b5c5d112de3279e2610136a9d",
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/StageLabel.tsx": {
-    "mtime": 1789394417.6380558,
-    "seen": 1789394820.9443274,
-    "ast_hash": "b1e7a3ba73f12343138698f8f3ea0585",
+    "mtime": 1789634211.2939444,
+    "seen": 1789634322.032871,
+    "ast_hash": "124f3142a6f01bf31b69f6f897ab7eaa",
     "semantic_hash": ""
   },
   "src/features/my-stack/stage/liquidGeometry.test.ts": {
@@ -3804,9 +3804,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/gel/GelVisual.test.ts": {
-    "mtime": 1789389104.460429,
-    "seen": 1789389289.5381322,
-    "ast_hash": "ce062fe4bc196b4502719190ffa60ee5",
+    "mtime": 1789634211.294237,
+    "seen": 1789634322.0326874,
+    "ast_hash": "40c69fcd9eb5180d43a90e78f3d25cbc",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/gel/GelVisual.tsx": {
@@ -3876,9 +3876,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/spray/SprayVisual.test.ts": {
-    "mtime": 1789395299.0405006,
-    "seen": 1789395476.633826,
-    "ast_hash": "b4fb1f62b56568599922e27b74ca1329",
+    "mtime": 1789634211.2943618,
+    "seen": 1789634322.0327358,
+    "ast_hash": "aa48a95d0578991632db7f182f5b5de6",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/spray/SprayVisual.tsx": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789631698.9194295,
-    "seen": 1789631806.8291626,
+    "mtime": 1789634237.7075806,
+    "seen": 1789634322.0330791,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },

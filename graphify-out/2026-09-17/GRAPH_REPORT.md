@@ -1,7 +1,7 @@
 # Graph Report - TYD-TrackYourDose  (2026-09-17)
 
 ## Corpus Check
-- 702 files · ~816,526 words
+- 702 files · ~816,983 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `944bea94`
+- Built from commit: `11650dd1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -1465,9 +1465,9 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `react` connect `react` to `blutspiegelHistory.ts`, `App.tsx`, `GelVisual`, `Dashboard.test.ts`, `faq/types.ts`, `react-router-dom`, `FortschrittDashboard.tsx`, `BefundEditor.tsx`, `Protokoll.tsx`, `StageLabel.tsx`, `ArticleCards.tsx`, `stageLightDirection.test.ts`, `BefundListe.tsx`, `TodayLogSheet.tsx`, `MyStackPage.tsx`, `Home.tsx`, `wizardState.ts`, `MetricChart.tsx`, `DropsVisual.tsx`, `Home.test.ts`, `chartVisibility.ts`, `PenVisual.tsx`, `chartMath.ts`, `TubeVisual.tsx`, `InjectionLogSheet.tsx`, `SprayVisual.tsx`, `usePushNotifications.ts`, `InjectionMapCanvas.tsx`, `RoutineConfirmationSheet.tsx`, `StudyCard.tsx`, `ColorField.tsx`, `BlutspiegelSimulation.tsx`, `metrics.ts`, `Dashboard.tsx`, `react-i18next`, `PowderVisual.tsx`, `PatchVisual.tsx`, `useFortschrittData.ts`, `stage/types.ts`, `package.json`, `InjectionTrackerTabs.tsx`, `fortschritt/types.ts`, `GelVisual.tsx`, `TabletVisual.tsx`, `PowderVisual`, `InjektionsTracker.tsx`, `FilterSheet.tsx`, `TheLab.tsx`, `LiveBlutspiegelChart.test.tsx`, `DesignSystem.tsx`, `LiquidGraphic.tsx`, `NasalSprayVisual.tsx`, `StackStage.test.ts`, `ProtocolPdfModal.tsx`, `PeptideVialVisual.tsx`, `Onboarding.tsx`, `BlutwertePage.tsx`, `ProductInventorySection.tsx`, `StageDetailSheet.tsx`, `StageFit.test.tsx`, `StackItemWizard.tsx`, `chartTooltip.ts`, `lucide-react`, `Health.tsx`, `__VialPreview.tsx`, `fortschritt/styles.ts`, `my-stack/types.ts`, `VerlaufSection.tsx`, `VialTrackingEditor.tsx`, `BlutspiegelCarousel.tsx`?**
   _High betweenness centrality (0.186) - this node is a cross-community bridge._
 - **Why does `vitest` connect `vitest` to `blutspiegelHistory.ts`, `protocolPdf/types.ts`, `react`, `FortschrittDashboard.tsx`, `BefundEditor.tsx`, `stackItems.ts`, `BefundListe.tsx`, `TodayLogSheet.tsx`, `MyStackPage.tsx`, `wizardState.ts`, `DropsVisual.tsx`, `Home.test.ts`, `chartVisibility.ts`, `PenVisual.tsx`, `chartMath.ts`, `TubeVisual.tsx`, `InjectionLogSheet.tsx`, `SprayVisual.tsx`, `InjectionMapCanvas.tsx`, `BlutspiegelSimulation.tsx`, `metrics.ts`, `date-fns`, `react-i18next`, `PowderVisual.tsx`, `StackItemWizard`, `PatchVisual.tsx`, `reminderSchedule.js`, `useFortschrittData.ts`, `stage/types.ts`, `package.json`, `InjectionTrackerTabs.tsx`, `fortschritt/types.ts`, `GelVisual.tsx`, `TabletVisual.tsx`, `liveBlutspiegelChart.ts`, `LiquidGraphic.tsx`, `NasalSprayVisual.tsx`, `StackStage.test.ts`, `PeptideVialVisual.tsx`, `StackItemWizard.tsx`, `ScheduleCycle`, `doseAdjustmentBackfill.ts`, `chartTooltip.ts`, `wellnessBuckets.ts`, `my-stack/types.ts`, `BlutspiegelCarousel.tsx`, `bloodwork-extract/index.ts`, `Dashboard.test.ts`, `StageLabel.tsx`, `stageLightDirection.test.ts`, `MetricChart.tsx`, `progress-year-data.ts`, `Home`, `i18n.test.ts`, `RoutineConfirmationSheet.tsx`, `dosePlan.ts`, `intakeFrequency.ts`, `inventoryMath.ts`, `VialTrackingEditor.tsx`, `colorMigration.ts`, `GelVisual`, `stackInventory.ts`, `duplicateFingerprint.test.ts`, `ColorField.tsx`, `substanceCatalog.ts`, `stackTabs.ts`, `InjektionsTracker.tsx`, `PowderVisual`, `LiveBlutspiegelChart.test.tsx`, `MyStackPage.visibility.test.tsx`, `vialStock.ts`, `injectionLogTypes.ts`, `BlutwertePage.tsx`, `ProductInventorySection.tsx`, `StageDetailSheet.tsx`, `StageFit.test.tsx`, `gelFlow.test.ts`, `konzentration.ts`, `stackSort.ts`, `trackingDepthSchema.test.ts`, `catalogDosageForms.test.ts`, `i18nMerge.test.ts`?**
-  _High betweenness centrality (0.096) - this node is a cross-community bridge._
+  _High betweenness centrality (0.093) - this node is a cross-community bridge._
 - **Why does `date-fns` connect `date-fns` to `blutspiegelHistory.ts`, `App.tsx`, `Protokoll.tsx`, `FortschrittDashboard.tsx`, `BefundListe.tsx`, `TodayLogSheet.tsx`, `MyStackPage.tsx`, `Home.tsx`, `wizardState.ts`, `MetricChart.tsx`, `progress-year-data.ts`, `chartMath.ts`, `InjectionLogSheet.tsx`, `dateLocales.ts`, `BlutspiegelSimulation.tsx`, `Dashboard.tsx`, `metrics.ts`, `useFortschrittData.ts`, `package.json`, `InjectionTrackerTabs.tsx`, `fortschritt/types.ts`, `InjektionsTracker.tsx`, `dosePlan.ts`, `LiveBlutspiegelChart.test.tsx`, `MyStackPage.visibility.test.tsx`, `vialStock.ts`, `seed-test-data.ts`, `injectionLogTypes.ts`, `BlutwertePage.tsx`, `ScheduleCycle`, `doseAdjustmentBackfill.ts`, `chartTooltip.ts`, `Health.tsx`, `injectionPersistence.ts`, `VialTrackingEditor.tsx`, `BlutspiegelCarousel.tsx`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
 - **What connects `SLOT_TIMES`, `WEEKDAYS_DE`, `REMINDER_OFFSETS_MIN` to the rest of the system?**
   _1758 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `blutspiegelHistory.ts` be split into smaller, more focused modules?**

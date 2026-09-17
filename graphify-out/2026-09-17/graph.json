@@ -71807,7 +71807,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2330",
+      "source_location": "L2361",
       "weight": 1.0
     },
     {
@@ -71819,7 +71819,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2424",
+      "source_location": "L2455",
       "weight": 1.0
     },
     {
@@ -71831,7 +71831,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2427",
+      "source_location": "L2458",
       "weight": 1.0
     },
     {
@@ -182164,5 +182164,5 @@
       "source_file": "docs/superpowers/plans/2026-06-25-confirmed-injection-intake-linking.md"
     }
   ],
-  "built_at_commit": "944bea947076fe11a383b47e6a1cb7d76abeab3b"
+  "built_at_commit": "11650dd184afd61f52e422992d58e006b8a9faf1"
 }

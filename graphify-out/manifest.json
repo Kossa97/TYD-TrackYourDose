@@ -294,10 +294,10 @@
     "semantic_hash": "8e6851da28c8043806cf6eb37d2acc9c"
   },
   "src/components/Layout.tsx": {
-    "mtime": 1788612179.7473688,
-    "seen": 1788803479.1907158,
-    "ast_hash": "82a8da1dfa78f564ef092e23bec640fb",
-    "semantic_hash": "82a8da1dfa78f564ef092e23bec640fb"
+    "mtime": 1789638203.26004,
+    "seen": 1789639223.7129855,
+    "ast_hash": "a445ff1f6bbf03283c479f3c9de2c068",
+    "semantic_hash": ""
   },
   "src/components/LiveBlutspiegelChart.tsx": {
     "mtime": 1788612179.7473688,
@@ -714,14 +714,14 @@
     "semantic_hash": ""
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1789616137.6187923,
-    "seen": 1789617187.4680767,
+    "mtime": 1789638712.923025,
+    "seen": 1789639223.7134292,
     "ast_hash": "b25ed024020d57ed23d472bac53d5c0e",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1789616137.619489,
-    "seen": 1789617187.468078,
+    "mtime": 1789638712.9236522,
+    "seen": 1789639223.7134306,
     "ast_hash": "d9612f02e2de7c080299ffda352c00ea",
     "semantic_hash": ""
   },
@@ -2790,9 +2790,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1789632365.7433383,
-    "seen": 1789632485.082795,
-    "ast_hash": "73eb9cd5ecf224897e27558b3f82d552",
+    "mtime": 1789638434.0714169,
+    "seen": 1789639223.7131815,
+    "ast_hash": "43553557ad1eeebb565c8f7c2d165bf4",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789634237.7075806,
-    "seen": 1789634322.0330791,
+    "mtime": 1789638835.8069143,
+    "seen": 1789639223.7135508,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4473,6 +4473,42 @@
     "mtime": 1789620604.0540361,
     "seen": 1789620898.8099995,
     "ast_hash": "609d905af5902d4d970f54a5bd07c2cd",
+    "semantic_hash": ""
+  },
+  "src/components/navigation/BottomNavigation.tsx": {
+    "mtime": 1789638712.9458292,
+    "seen": 1789639223.7130263,
+    "ast_hash": "875b55b0e24e1ef0bd1e5eaa6666d481",
+    "semantic_hash": ""
+  },
+  "src/components/navigation/LiquidGlassTabBar.test.tsx": {
+    "mtime": 1789638712.9530451,
+    "seen": 1789639223.713028,
+    "ast_hash": "454e91ad0695c877eb79f5e9cadbc55d",
+    "semantic_hash": ""
+  },
+  "src/components/navigation/LiquidGlassTabBar.tsx": {
+    "mtime": 1789638325.018218,
+    "seen": 1789639223.7130299,
+    "ast_hash": "c8f9e63530b720107250a18dbfba0532",
+    "semantic_hash": ""
+  },
+  "src/components/navigation/bottomNavMetrics.test.ts": {
+    "mtime": 1789638276.0580454,
+    "seen": 1789639223.713032,
+    "ast_hash": "27906a3abde87fe839fe4d85143657bd",
+    "semantic_hash": ""
+  },
+  "src/components/navigation/tabModel.test.ts": {
+    "mtime": 1789638276.056159,
+    "seen": 1789639223.713033,
+    "ast_hash": "84061af41068ac40587eb1b5a5682c80",
+    "semantic_hash": ""
+  },
+  "src/components/navigation/tabModel.ts": {
+    "mtime": 1789637916.769732,
+    "seen": 1789639223.7130337,
+    "ast_hash": "6a10a8673ab9aaca68946c4efd7a916f",
     "semantic_hash": ""
   }
 }
