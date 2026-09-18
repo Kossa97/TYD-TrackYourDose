@@ -318,6 +318,208 @@ $$;
 revoke all on function public.normalize_plan_schedule(jsonb, text)
   from public, anon, authenticated;
 
+create or replace function public.save_stack_item_with_plan(
+  p_item jsonb,
+  p_ingredients jsonb,
+  p_plan jsonb
+)
+returns public.stack_items
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  owner_id uuid := auth.uid();
+  saved_item public.stack_items;
+  cycle_row public.cycles;
+  normalized jsonb;
+  plan_id uuid;
+  plan_name text := nullif(btrim(p_plan ->> 'name'), '');
+  plan_effective_date date;
+  plan_end_date date := nullif(p_plan ->> 'end_date', '')::date;
+  plan_reminder text := coalesce(nullif(btrim(p_plan ->> 'reminder'), ''), 'none');
+  plan_schedule_days text[];
+  schedule_changed boolean;
+  next_history jsonb;
+  previous_segment jsonb;
+  next_segment jsonb;
+begin
+  if owner_id is null then
+    raise exception 'Authentication required';
+  end if;
+  if p_plan is null or jsonb_typeof(p_plan) <> 'object' then
+    raise exception 'Invalid plan';
+  end if;
+  if plan_name is null then
+    raise exception 'Plan name is required';
+  end if;
+  if nullif(p_plan ->> 'start_date', '') is null then
+    raise exception 'Plan start date is required';
+  end if;
+
+  plan_effective_date := (p_plan ->> 'start_date')::date;
+  if plan_end_date is not null and plan_end_date < plan_effective_date then
+    raise exception 'Plan end date is before its start date';
+  end if;
+
+  saved_item := public.save_stack_item(p_item, p_ingredients);
+  normalized := public.normalize_plan_schedule(p_plan, saved_item.tracking_level);
+  select coalesce(array_agg(value), '{}'::text[])
+  into plan_schedule_days
+  from jsonb_array_elements_text(normalized -> 'schedule_days') value;
+
+  if nullif(p_plan ->> 'id', '') is null then
+    insert into public.cycles (
+      user_id, stack_item_id, name, dose, unit, method, frequency,
+      x_days_interval, interval_unit, cycle_on_days, cycle_off_days,
+      schedule_days, start_date, end_date, active, intake_time,
+      intake_time_custom, slot_doses, slot_days, reminder, started_at
+    ) values (
+      owner_id, saved_item.id, plan_name,
+      (normalized ->> 'dose')::numeric, normalized ->> 'unit',
+      normalized ->> 'method', normalized ->> 'frequency',
+      (normalized ->> 'x_days_interval')::integer,
+      normalized ->> 'interval_unit',
+      (normalized ->> 'cycle_on_days')::integer,
+      (normalized ->> 'cycle_off_days')::integer,
+      plan_schedule_days, plan_effective_date, plan_end_date, true,
+      normalized ->> 'intake_time', normalized ->> 'intake_time_custom',
+      normalized ->> 'slot_doses', normalized ->> 'slot_days',
+      plan_reminder,
+      plan_effective_date::timestamp at time zone 'UTC'
+    )
+    returning * into cycle_row;
+
+    insert into public.cycle_plan_versions (
+      user_id, cycle_id, effective_kind, effective_at, effective_local_date,
+      change_kind, frequency, x_days_interval, interval_unit, cycle_on_days,
+      cycle_off_days, schedule_days, intake_time, intake_time_custom,
+      slot_doses, slot_days, dose, unit, method
+    ) values (
+      owner_id, cycle_row.id, 'local_date', null, plan_effective_date, 'initial',
+      normalized ->> 'frequency',
+      (normalized ->> 'x_days_interval')::integer,
+      normalized ->> 'interval_unit',
+      (normalized ->> 'cycle_on_days')::integer,
+      (normalized ->> 'cycle_off_days')::integer,
+      plan_schedule_days,
+      normalized ->> 'intake_time',
+      normalized ->> 'intake_time_custom',
+      normalized ->> 'slot_doses',
+      normalized ->> 'slot_days',
+      (normalized ->> 'dose')::numeric,
+      normalized ->> 'unit',
+      normalized ->> 'method'
+    );
+    return saved_item;
+  end if;
+
+  plan_id := (p_plan ->> 'id')::uuid;
+  select * into cycle_row
+  from public.cycles
+  where id = plan_id
+    and stack_item_id = saved_item.id
+    and user_id = owner_id
+  for update;
+  if not found then
+    raise exception 'Plan not found';
+  end if;
+  if plan_effective_date < cycle_row.start_date then
+    raise exception 'Plan effective date cannot precede cycle start';
+  end if;
+
+  schedule_changed := cycle_row.frequency is distinct from (normalized ->> 'frequency')
+    or cycle_row.x_days_interval is distinct from (normalized ->> 'x_days_interval')::integer
+    or cycle_row.interval_unit is distinct from (normalized ->> 'interval_unit')
+    or cycle_row.cycle_on_days is distinct from (normalized ->> 'cycle_on_days')::integer
+    or cycle_row.cycle_off_days is distinct from (normalized ->> 'cycle_off_days')::integer
+    or coalesce(cycle_row.schedule_days, '{}'::text[]) is distinct from plan_schedule_days
+    or cycle_row.intake_time is distinct from (normalized ->> 'intake_time')
+    or cycle_row.intake_time_custom is distinct from (normalized ->> 'intake_time_custom')
+    or cycle_row.slot_doses is distinct from (normalized ->> 'slot_doses')
+    or cycle_row.slot_days is distinct from (normalized ->> 'slot_days')
+    or cycle_row.dose is distinct from (normalized ->> 'dose')::numeric
+    or cycle_row.unit is distinct from (normalized ->> 'unit');
+
+  if schedule_changed then
+    previous_segment := jsonb_build_object(
+      'effective_from', cycle_row.start_date,
+      'frequency', cycle_row.frequency,
+      'x_days_interval', cycle_row.x_days_interval,
+      'interval_unit', cycle_row.interval_unit,
+      'cycle_on_days', cycle_row.cycle_on_days,
+      'cycle_off_days', cycle_row.cycle_off_days,
+      'schedule_days', cycle_row.schedule_days,
+      'intake_time', cycle_row.intake_time,
+      'intake_time_custom', cycle_row.intake_time_custom,
+      'slot_doses', cycle_row.slot_doses,
+      'slot_days', cycle_row.slot_days,
+      'dose', cycle_row.dose,
+      'unit', cycle_row.unit
+    );
+    next_segment := jsonb_build_object(
+      'effective_from', plan_effective_date,
+      'frequency', normalized ->> 'frequency',
+      'x_days_interval', (normalized ->> 'x_days_interval')::integer,
+      'interval_unit', normalized ->> 'interval_unit',
+      'cycle_on_days', (normalized ->> 'cycle_on_days')::integer,
+      'cycle_off_days', (normalized ->> 'cycle_off_days')::integer,
+      'schedule_days', plan_schedule_days,
+      'intake_time', normalized ->> 'intake_time',
+      'intake_time_custom', normalized ->> 'intake_time_custom',
+      'slot_doses', normalized ->> 'slot_doses',
+      'slot_days', normalized ->> 'slot_days',
+      'dose', (normalized ->> 'dose')::numeric,
+      'unit', normalized ->> 'unit'
+    );
+    next_history := case
+      when cycle_row.schedule_history is null
+        or jsonb_typeof(cycle_row.schedule_history) <> 'array'
+        or jsonb_array_length(cycle_row.schedule_history) = 0
+        then jsonb_build_array(previous_segment)
+      else cycle_row.schedule_history
+    end;
+    select coalesce(jsonb_agg(segment), '[]'::jsonb)
+    into next_history
+    from jsonb_array_elements(next_history) segment
+    where segment ->> 'effective_from' is distinct from plan_effective_date::text;
+    next_history := next_history || jsonb_build_array(next_segment);
+  else
+    next_history := cycle_row.schedule_history;
+  end if;
+
+  update public.cycles
+  set
+    name = plan_name,
+    dose = (normalized ->> 'dose')::numeric,
+    unit = normalized ->> 'unit',
+    method = normalized ->> 'method',
+    frequency = normalized ->> 'frequency',
+    x_days_interval = (normalized ->> 'x_days_interval')::integer,
+    interval_unit = normalized ->> 'interval_unit',
+    cycle_on_days = (normalized ->> 'cycle_on_days')::integer,
+    cycle_off_days = (normalized ->> 'cycle_off_days')::integer,
+    schedule_days = plan_schedule_days,
+    end_date = plan_end_date,
+    intake_time = normalized ->> 'intake_time',
+    intake_time_custom = normalized ->> 'intake_time_custom',
+    slot_doses = normalized ->> 'slot_doses',
+    slot_days = normalized ->> 'slot_days',
+    reminder = plan_reminder,
+    schedule_history = next_history
+  where id = plan_id
+    and stack_item_id = saved_item.id
+    and user_id = owner_id;
+
+  return saved_item;
+end
+$$;
+
+revoke execute on function public.save_stack_item_with_plan(jsonb, jsonb, jsonb)
+  from public, anon;
+grant execute on function public.save_stack_item_with_plan(jsonb, jsonb, jsonb)
+  to authenticated;
+
 create or replace function public.try_legacy_local_date(p_value text)
 returns date
 language plpgsql

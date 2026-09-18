@@ -1,6 +1,13 @@
 import { buildDuplicateFingerprint } from '../lib/duplicateFingerprint'
 import { fuehrendeMenge, rhythmToStorage } from '../lib/intakeRhythm'
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
+import type { CyclePlanVersion, PlanChangeKind, PlanScheduleSnapshot } from '../../../lib/planTimeline'
+import type { PlanEditTarget, PlanEffectiveDraft } from '../lib/wizardState'
+import {
+  createPlanVersion,
+  replaceFuturePlanVersion,
+  type PlanRpcClient,
+} from './planLifecycle'
 import type {
   DosageFormKey,
   IntakePlanDraft,
@@ -340,6 +347,78 @@ function planParams(
       : plan.slots.map(slot => slot.weekdays.join('|')).join(','),
     reminder: plan.reminders.map(value => value.trim()).filter(Boolean).join(',') || 'none',
   }
+}
+
+export function planScheduleSnapshot(
+  plan: IntakePlanDraft,
+  trackingLevel: TrackingLevel,
+): PlanScheduleSnapshot {
+  const params = planParams(plan, trackingLevel)
+  return {
+    frequency: params.frequency,
+    x_days_interval: params.x_days_interval,
+    interval_unit: params.interval_unit,
+    cycle_on_days: params.cycle_on_days,
+    cycle_off_days: params.cycle_off_days,
+    schedule_days: params.schedule_days,
+    intake_time: params.intake_time,
+    intake_time_custom: params.intake_time_custom,
+    slot_doses: params.slot_doses,
+    slot_days: params.slot_days,
+    dose: params.dose,
+    unit: params.unit,
+    method: params.method,
+  }
+}
+
+export interface SavePlanChangeOptions {
+  changeKind: Exclude<PlanChangeKind, 'initial'>
+  idempotencyKey: string
+  timeZone: string
+}
+
+export async function savePlanChange(
+  client: PlanRpcClient,
+  target: PlanEditTarget,
+  snapshot: PlanScheduleSnapshot,
+  effective: PlanEffectiveDraft,
+  options: SavePlanChangeOptions,
+): Promise<CyclePlanVersion> {
+  const boundary = effective.kind === 'now'
+    ? {
+        effectiveKind: 'instant' as const,
+        effectiveAt: new Date().toISOString(),
+        effectiveLocalDate: null,
+      }
+    : {
+        effectiveKind: 'local_date' as const,
+        effectiveAt: null,
+        effectiveLocalDate: effective.localDate ?? '',
+      }
+
+  if (effective.kind === 'date' && !effective.localDate) {
+    throw new Error('Plan effective date is required')
+  }
+
+  if (target.mode === 'replace_future') {
+    if (!target.versionId) throw new Error('Future plan version id is required')
+    return replaceFuturePlanVersion(client, {
+      versionId: target.versionId,
+      ...boundary,
+      changeKind: options.changeKind,
+      schedule: snapshot,
+      timeZone: options.timeZone,
+      idempotencyKey: options.idempotencyKey,
+    })
+  }
+
+  return createPlanVersion(client, {
+    cycleId: target.cycleId,
+    ...boundary,
+    changeKind: options.changeKind,
+    schedule: snapshot,
+    idempotencyKey: options.idempotencyKey,
+  })
 }
 
 function stackItemAsDraft(item: StackItem): StackItemDraft {

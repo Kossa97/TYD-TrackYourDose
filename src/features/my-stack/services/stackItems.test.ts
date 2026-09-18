@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { PlanScheduleSnapshot } from '../../../lib/planTimeline'
 import { emptyRhythm } from '../lib/intakeRhythm'
+import type { PlanEditTarget, PlanEffectiveDraft } from '../lib/wizardState'
 import type {
   StackItemDraft,
   StackItemIngredient,
@@ -13,6 +15,7 @@ import {
   loadStackItems,
   restoreStackItem,
   reconstituteStackItem,
+  savePlanChange,
   saveStackItem,
   saveStackItemSetup,
   saveVialTracking,
@@ -25,6 +28,7 @@ import {
   type StackItemRpcClient,
   type StackItemSetupRpcClient,
 } from './stackItems'
+import type { PlanRpcClient } from './planLifecycle'
 
 const ingredient: StackItemIngredient = {
   catalog_substance_id: 'vitamin-d3',
@@ -136,7 +140,110 @@ function setupRpcClient() {
   return { client, rpc }
 }
 
+function planRpcClient() {
+  const rpc = vi.fn(async (_name: string, _params: Record<string, unknown>) => ({
+    data: [{
+      id: 'version-result',
+      cycle_id: 'cycle-1',
+      effective_kind: 'instant',
+      effective_at: '2026-09-19T10:15:00.000Z',
+      effective_local_date: null,
+      change_kind: 'dose',
+      frequency: 'Täglich',
+      x_days_interval: null,
+      interval_unit: null,
+      cycle_on_days: null,
+      cycle_off_days: null,
+      schedule_days: [],
+      intake_time: 'morgens',
+      intake_time_custom: '08:30',
+      slot_doses: null,
+      slot_days: null,
+      dose: 6000,
+      unit: 'IU',
+      method: 'Oral',
+    }],
+    error: null,
+  }))
+  const client = { rpc, from: vi.fn() } as unknown as PlanRpcClient
+  return { client, rpc }
+}
+
+const planSnapshot: PlanScheduleSnapshot = {
+  frequency: 'Täglich',
+  x_days_interval: null,
+  interval_unit: null,
+  cycle_on_days: null,
+  cycle_off_days: null,
+  schedule_days: [],
+  intake_time: 'morgens',
+  intake_time_custom: '08:30',
+  slot_doses: null,
+  slot_days: null,
+  dose: 6000,
+  unit: 'IU',
+  method: 'Oral',
+}
+
 describe('stack item service', () => {
+  it('creates a new version for the exact cycle with an instant boundary', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-19T10:15:00.000Z'))
+    const mockClient = planRpcClient()
+    const target: PlanEditTarget = {
+      cycleId: 'cycle-1',
+      versionId: null,
+      mode: 'new_change',
+    }
+    const effective: PlanEffectiveDraft = { kind: 'now', localDate: null }
+
+    await savePlanChange(mockClient.client, target, planSnapshot, effective, {
+      changeKind: 'dose',
+      idempotencyKey: 'plan-change-1',
+      timeZone: 'Europe/Berlin',
+    })
+
+    expect(mockClient.rpc).toHaveBeenCalledTimes(1)
+    expect(mockClient.rpc).toHaveBeenCalledWith('create_plan_version', {
+      p_cycle_id: 'cycle-1',
+      p_effective_kind: 'instant',
+      p_effective_at: '2026-09-19T10:15:00.000Z',
+      p_effective_local_date: null,
+      p_change_kind: 'dose',
+      p_schedule: planSnapshot,
+      p_idempotency_key: 'plan-change-1',
+    })
+    vi.useRealTimers()
+  })
+
+  it('replaces only the selected future version with a local-date boundary', async () => {
+    const mockClient = planRpcClient()
+    const target: PlanEditTarget = {
+      cycleId: 'cycle-1',
+      versionId: 'future-version-2',
+      mode: 'replace_future',
+    }
+    const effective: PlanEffectiveDraft = { kind: 'date', localDate: '2026-10-01' }
+
+    await savePlanChange(mockClient.client, target, planSnapshot, effective, {
+      changeKind: 'schedule',
+      idempotencyKey: 'plan-change-2',
+      timeZone: 'Europe/Berlin',
+    })
+
+    expect(mockClient.rpc).toHaveBeenCalledTimes(1)
+    expect(mockClient.rpc).toHaveBeenCalledWith('replace_future_plan_version', {
+      p_version_id: 'future-version-2',
+      p_effective_kind: 'local_date',
+      p_effective_at: null,
+      p_effective_local_date: '2026-10-01',
+      p_change_kind: 'schedule',
+      p_schedule: planSnapshot,
+      p_timezone: 'Europe/Berlin',
+      p_idempotency_key: 'plan-change-2',
+    })
+  })
+
   it('sends item, ingredients, and the initial plan to one RPC', async () => {
     const mockClient = setupRpcClient()
 

@@ -82,6 +82,42 @@ create table public.dose_escalations (
 
 grant select on public.cycles to authenticated;
 
+create or replace function public.save_stack_item(p_item jsonb, p_ingredients jsonb)
+returns public.stack_items
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  saved_item public.stack_items;
+  owner_id uuid := auth.uid();
+begin
+  if nullif(p_item ->> 'id', '') is null then
+    insert into public.stack_items (user_id, tracking_level)
+    values (owner_id, coalesce(nullif(p_item ->> 'tracking_level', ''), 'complete'))
+    returning * into saved_item;
+  else
+    select * into saved_item
+    from public.stack_items
+    where id = (p_item ->> 'id')::uuid
+      and user_id = owner_id;
+  end if;
+  return saved_item;
+end
+$$;
+
+create or replace function public.reject_atomic_initial_version()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.method = 'Reject' then
+    raise exception 'forced initial version failure';
+  end if;
+  return new;
+end
+$$;
+
 insert into auth.users (id)
 values ('30000000-0000-0000-0000-000000000003');
 
@@ -579,16 +615,104 @@ begin
 end
 $$;
 
+create trigger reject_atomic_initial_version
+before insert on public.cycle_plan_versions
+for each row execute function public.reject_atomic_initial_version();
+
 set local role authenticated;
 set local request.jwt.claim.sub = '10000000-0000-0000-0000-000000000001';
+
+do $$
+declare
+  saved_item public.stack_items;
+  created_cycle public.cycles;
+  row_count integer;
+begin
+  select * into saved_item
+  from public.save_stack_item_with_plan(
+    jsonb_build_object('tracking_level', 'complete'),
+    jsonb_build_array(jsonb_build_object('position', 0)),
+    jsonb_build_object(
+      'name', 'Atomic initial setup',
+      'dose', 1.5,
+      'unit', 'mg',
+      'method', 'Oral',
+      'frequency', 'Täglich',
+      'schedule_days', jsonb_build_array(),
+      'start_date', '2026-09-19',
+      'end_date', null,
+      'intake_time', 'morgens',
+      'intake_time_custom', '08:00',
+      'slot_doses', null,
+      'slot_days', null,
+      'reminder', 'on_time'
+    )
+  );
+
+  select * into strict created_cycle
+  from public.cycles
+  where stack_item_id = saved_item.id;
+
+  select count(*) into row_count
+  from public.cycle_plan_versions
+  where cycle_id = created_cycle.id
+    and effective_kind = 'local_date'
+    and effective_local_date = '2026-09-19'
+    and change_kind = 'initial'
+    and dose = 1.5
+    and unit = 'mg'
+    and method = 'Oral';
+  if row_count <> 1 then
+    raise exception 'initial setup wrote % canonical versions instead of 1', row_count;
+  end if;
+  if created_cycle.dose <> 1.5
+    or created_cycle.unit <> 'mg'
+    or created_cycle.method <> 'Oral'
+    or created_cycle.frequency <> 'Täglich' then
+    raise exception 'initial setup did not retain legacy cycle fields';
+  end if;
+
+  begin
+    perform public.save_stack_item_with_plan(
+      jsonb_build_object('tracking_level', 'complete'),
+      jsonb_build_array(jsonb_build_object('position', 0)),
+      jsonb_build_object(
+        'name', 'Atomic rollback setup',
+        'dose', 2,
+        'unit', 'mg',
+        'method', 'Reject',
+        'frequency', 'Täglich',
+        'schedule_days', jsonb_build_array(),
+        'start_date', '2026-09-19',
+        'intake_time', 'morgens',
+        'reminder', 'none'
+      )
+    );
+    raise exception 'forced initial version failure was not raised';
+  exception
+    when others then
+      if sqlerrm <> 'forced initial version failure' then
+        raise;
+      end if;
+  end;
+
+  if exists (
+    select 1
+    from public.cycles
+    where name = 'Atomic rollback setup'
+  ) then
+    raise exception 'failed initial version left a legacy cycle behind';
+  end if;
+end
+$$;
 
 do $$
 declare
   visible_count integer;
 begin
   select count(*) into visible_count from public.cycle_plan_versions;
-  if visible_count <> 1 then
-    raise exception 'owner RLS exposed % plan versions instead of 1', visible_count;
+  if visible_count <> 2 then
+    raise exception 'owner RLS exposed % plan versions instead of 2', visible_count;
   end if;
 
   begin

@@ -19,7 +19,8 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react'
 import { useTranslation } from 'react-i18next'
-import { findDuplicate } from '../services/stackItems'
+import { findDuplicate, planScheduleSnapshot } from '../services/stackItems'
+import type { PlanChangeKind } from '../../../lib/planTimeline'
 import type { StackItem, StackItemSetupDraft, SubstanceCatalogEntry } from '../types'
 import {
   didIdentityChange,
@@ -30,6 +31,8 @@ import {
   zutatenAusDemKatalog,
   type WizardSaveMode,
   type WizardStep,
+  type PlanEditTarget,
+  type PlanEffectiveDraft,
 } from '../lib/wizardState'
 import { bestandteileAufloesen } from '../lib/kombination'
 import { fuehrendeMenge, rhythmSummary, rhythmText } from '../lib/intakeRhythm'
@@ -57,7 +60,16 @@ export interface StackItemWizardProps {
   catalogUnavailable?: boolean
   onClose: () => void
   onSave: (draft: StackItemSetupDraft, mode: WizardSaveMode) => Promise<void>
+  onSavePlanChange?: (
+    target: PlanEditTarget,
+    snapshot: ReturnType<typeof planScheduleSnapshot>,
+    effective: PlanEffectiveDraft,
+    changeKind: Exclude<PlanChangeKind, 'initial'>,
+  ) => Promise<void>
   onOpenExisting: (item: StackItem) => void
+  planEditTarget?: PlanEditTarget
+  initialPlanEffective?: PlanEffectiveDraft
+  planChangeKind?: Exclude<PlanChangeKind, 'initial'>
   /**
    * Womit der Assistent geoeffnet wird.
    *
@@ -140,7 +152,11 @@ export function StackItemWizard({
   initialColorHex = '',
   onClose,
   onSave,
+  onSavePlanChange,
   onOpenExisting,
+  planEditTarget,
+  initialPlanEffective,
+  planChangeKind = 'schedule',
   intent,
 }: StackItemWizardProps) {
   const { t } = useTranslation()
@@ -167,6 +183,12 @@ export function StackItemWizard({
   const [duplicateCandidate, setDuplicateCandidate] = useState<StackItem | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [planEffective, setPlanEffective] = useState<PlanEffectiveDraft>(() => (
+    initialPlanEffective
+    ?? (planEditTarget?.mode === 'replace_future'
+      ? { kind: 'date', localDate: existingPlan?.startDate ?? null }
+      : { kind: 'now', localDate: null })
+  ))
   const dialogRef = useRef<HTMLDivElement>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const duplicateActionRef = useRef<HTMLButtonElement>(null)
@@ -398,7 +420,7 @@ export function StackItemWizard({
 
     const nextStep = steps[currentStepIndex + 1]
     if (nextStep) selectStep(nextStep)
-    else if (intent === 'pk') void handleSave()
+    else if (intent === 'pk' || intent === 'plan') void handleSave()
   }
 
   function handleBack(): void {
@@ -478,7 +500,17 @@ export function StackItemWizard({
     setSaving(true)
     setSaveError(null)
     try {
-      await onSave(draftForSave, mode)
+      if (planEditTarget) {
+        if (!onSavePlanChange) throw new Error('Plan change handler is required')
+        await onSavePlanChange(
+          planEditTarget,
+          planScheduleSnapshot(draftForSave.plan, draftForSave.trackingLevel),
+          planEffective,
+          planChangeKind,
+        )
+      } else {
+        await onSave(draftForSave, mode)
+      }
       onClose()
     } catch {
       setSaveError(String(t('my_stack_save_error', {
@@ -612,6 +644,51 @@ export function StackItemWizard({
       case 'plan':
         return state.draft.dosageForm ? (
           <div className="space-y-5">
+            {planEditTarget && (
+              <fieldset className="rounded-2xl border border-white/10 bg-white/[0.025] p-4">
+                <legend className="px-1 text-sm font-semibold text-slate-200">
+                  {t('my_stack_plan_effective_title', { defaultValue: 'Gültig ab' })}
+                </legend>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-white/10 px-3 text-sm font-semibold text-slate-200">
+                    <input
+                      type="radio"
+                      name="plan-effective-kind"
+                      checked={planEffective.kind === 'now'}
+                      onChange={() => setPlanEffective({ kind: 'now', localDate: null })}
+                      className="h-5 w-5 accent-sky-400"
+                    />
+                    {t('my_stack_plan_effective_now', { defaultValue: 'Ab sofort' })}
+                  </label>
+                  <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-white/10 px-3 text-sm font-semibold text-slate-200">
+                    <input
+                      type="radio"
+                      name="plan-effective-kind"
+                      checked={planEffective.kind === 'date'}
+                      onChange={() => setPlanEffective({
+                        kind: 'date',
+                        localDate: planEffective.localDate ?? state.draft.plan.startDate,
+                      })}
+                      className="h-5 w-5 accent-sky-400"
+                    />
+                    {t('my_stack_plan_effective_date', { defaultValue: 'Ab Datum' })}
+                  </label>
+                </div>
+                {planEffective.kind === 'date' && (
+                  <input
+                    type="date"
+                    aria-label={String(t('my_stack_plan_effective_date', { defaultValue: 'Ab Datum' }))}
+                    value={planEffective.localDate ?? ''}
+                    onChange={event => setPlanEffective({
+                      kind: 'date',
+                      localDate: event.target.value || null,
+                    })}
+                    required
+                    className="input mt-3 min-h-11 w-full text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                  />
+                )}
+              </fieldset>
+            )}
             <IntakePlanEditor
               trackingLevel={state.draft.trackingLevel}
               plan={state.draft.plan}
@@ -1112,7 +1189,7 @@ export function StackItemWizard({
             </span>
           </button>
 
-          {state.step === 'review' || (intent === 'pk' && currentStepIndex === steps.length - 1) ? (
+          {state.step === 'review' || ((intent === 'pk' || intent === 'plan') && currentStepIndex === steps.length - 1) ? (
             <button
               type="button"
               onClick={() => void handleSave()}

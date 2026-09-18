@@ -38,6 +38,17 @@ export type WizardStep =
 
 export type WizardSaveMode = 'create' | 'update' | 'duplicate'
 
+export interface PlanEditTarget {
+  cycleId: string
+  versionId: string | null
+  mode: 'new_change' | 'replace_future'
+}
+
+export interface PlanEffectiveDraft {
+  kind: 'now' | 'date'
+  localDate: string | null
+}
+
 export interface WizardState {
   step: WizardStep
   draft: StackItemSetupDraft
