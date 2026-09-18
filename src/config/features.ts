@@ -3,6 +3,9 @@
 // false = versteckt (noch in Entwicklung)
 
 export const FEATURES = {
+  // Interner Rollout-Schalter: wird erst nach bestaetigter Leseparitaet aktiviert.
+  planTimelineV2: false,
+
   // ✅ Release v1.0 — aktiv
   SIMULATION_SINGLE_DOSE: true,
   LIVE_BLUTSPIEGEL_CAROUSEL: true,

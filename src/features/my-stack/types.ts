@@ -1,3 +1,9 @@
+import type {
+  PlanChangeKind,
+  PlanEffectiveKind,
+  PlanScheduleSnapshot,
+} from '../../lib/planTimeline'
+
 // `other` ist kein Fach, sondern das Eingestaendnis, dass keines passt.
 // Es traegt deshalb auch keine Aussage: wo die Kategorie das Formular steuert
 // (siehe `strengthShapeFor`), verhaelt es sich wie „noch nicht gewaehlt".
@@ -188,4 +194,63 @@ export interface StackItemSetupDraft extends StackItemDraft {
   plan: IntakePlanDraft
   inventory: InventoryDraft
   pkProfileMethod: string | null
+}
+
+interface PlanMutationInput {
+  /** Bleibt fuer alle Wiederholungen derselben Nutzeraktion unveraendert. */
+  idempotencyKey: string
+}
+
+type PlanVersionBoundaryInput =
+  | {
+      effectiveKind: Extract<PlanEffectiveKind, 'instant'>
+      effectiveAt: string
+      effectiveLocalDate: null
+    }
+  | {
+      effectiveKind: Extract<PlanEffectiveKind, 'local_date'>
+      effectiveAt: null
+      effectiveLocalDate: string
+    }
+
+export type CreatePlanVersionInput = PlanMutationInput & PlanVersionBoundaryInput & {
+  cycleId: string
+  changeKind: PlanChangeKind
+  schedule: PlanScheduleSnapshot
+}
+
+export type ReplacePlanVersionInput = PlanMutationInput & PlanVersionBoundaryInput & {
+  versionId: string
+  changeKind: PlanChangeKind
+  schedule: PlanScheduleSnapshot
+  timeZone: string
+}
+
+export interface RemovePlanVersionInput extends PlanMutationInput {
+  versionId: string
+  timeZone: string
+}
+
+export interface PauseCycleInput extends PlanMutationInput {
+  cycleId: string
+  endsAt: string | null
+}
+
+export interface SetPauseEndInput extends PlanMutationInput {
+  pauseId: string
+  endsAt: string
+}
+
+export interface ResumeCycleInput extends PlanMutationInput {
+  cycleId: string
+}
+
+export interface EndCycleInput extends PlanMutationInput {
+  cycleId: string
+}
+
+export interface RestartCycleInput extends PlanMutationInput {
+  sourceCycleId: string
+  startedAt: string
+  initialSchedule: PlanScheduleSnapshot
 }
