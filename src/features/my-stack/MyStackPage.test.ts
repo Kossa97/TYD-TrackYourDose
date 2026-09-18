@@ -130,7 +130,7 @@ describe('My Stack page vial view', () => {
     // was die Form ohnehin über sich sagt.
     const text = source()
 
-    expect(text).toContain("import {\n  detailAbschnitte, wirkstoffBezug,")
+    expect(text).toContain("import {\n  detailAbschnitte, produktTitel, wirkstoffBezug, zeigtFeld,")
     expect(text).toContain('detailAbschnitte(form).map(abschnitt => (')
     expect(text).toContain('data-stack-detail={abschnitt.id}')
     expect(text).toContain('data-stack-detail-field={feld}')
@@ -231,17 +231,21 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('className="relative -mx-3"')
   })
 
-  test('ordnet das Vollbild von „was tue ich jetzt" nach „was ist das"', () => {
+  test('ordnet das Vollbild von „was ist das" nach „was ändere ich"', () => {
     // Vorher standen die vier Verwaltungsknöpfe ganz oben — mitsamt dem
     // Löschen, direkt unter dem Daumen, bevor man gesehen hat, was man vor
-    // sich hat. Jetzt: Zyklus, dann Bestand und Substanz, und erst zuletzt,
-    // was man am Eintrag ändert.
+    // sich hat. Jetzt in dieser Reihenfolge: Substanz, dann der
+    // formabhängige Produktabschnitt (Rekonstitution oder Bestand), dann
+    // der Zyklus als Knopf, und erst zuletzt, was man am Eintrag ändert.
     const text = source()
     const platz = (s: string) => text.indexOf(s)
 
-    expect(platz("t('aktiver_zyklus')")).toBeGreaterThan(-1)
-    expect(platz("t('aktiver_zyklus')")).toBeLessThan(platz('detailAbschnitte(form).map'))
-    expect(platz('detailAbschnitte(form).map')).toBeLessThan(platz('data-stack-detail="verwalten"'))
+    // Substanz und Produkt kommen aus derselben Schleife — ihre Reihenfolge
+    // untereinander liegt in `detailAbschnitte`, hier zählt, dass die
+    // Schleife vor dem Zyklus steht.
+    expect(platz('detailAbschnitte(form).map')).toBeGreaterThan(-1)
+    expect(platz('detailAbschnitte(form).map')).toBeLessThan(platz('data-stack-detail="zyklus"'))
+    expect(platz('data-stack-detail="zyklus"')).toBeLessThan(platz('data-stack-detail="verwalten"'))
   })
 
   test('versteckt im Vollbild nichts mehr hinter einem Klappknopf', () => {
@@ -254,14 +258,35 @@ describe('My Stack page vial view', () => {
     expect(text).not.toContain('<span>Info</span>')
   })
 
-  test('renders a single active-cycle cockpit with empty states for no active / no cycle', () => {
+  test('zeigt den Zyklus als einen Knopf mit Live-Punkt und Schalter', () => {
+    // Frequenz, Start und Ende, Erinnerung, geplante Mengen und
+    // Dosisanpassungen standen hier ausgebreitet — und im Zyklusverwalter
+    // noch einmal. Geblieben ist die Zeile, die man im Vorbeigehen liest:
+    // wo im Zyklus man steht, ob er läuft, und ein Weg hinein.
     const text = source()
+    const knopf = text.slice(
+      text.indexOf('data-stack-detail="zyklus"'),
+      text.indexOf('data-stack-detail="verwalten"'),
+    )
 
-    // only one cockpit block exists (no old always-visible second copy)
-    expect(text.split("t('aktiver_zyklus')").length - 1).toBe(1)
-    // empty states branch on whether cycles exist
-    expect(text).toContain("t('kein_aktiver_zyklus')")
-    expect(text).toContain("t('noch_kein_zyklus_desc')")
+    expect(knopf).toContain('data-zyklus-live')
+    expect(knopf).toContain('animate-ping')
+    // Die Zusammenfassung: Tag im Zyklus, Dosis, Frequenz — mehr nicht.
+    expect(knopf).toContain("[t('tag') + ' ' + cycleDayLabel")
+    expect(knopf).toContain('activeFrequency')
+    // Der Schalter legt `active` um, statt in den Verwalter zu führen.
+    expect(knopf).toContain('onClick={() => toggleCycleActive(activeCycle)}')
+    expect(knopf).toContain('aria-pressed={activeCycle.active}')
+    // Der Knopf selbst öffnet den Verwalter.
+    expect(knopf).toContain('setCycleManagerPeptide(activePeptide)')
+
+    // Zwei Leerzustände, je nachdem ob es überhaupt Zyklen gibt.
+    expect(knopf).toContain("t('kein_aktiver_zyklus')")
+    expect(knopf).toContain("t('noch_kein_zyklus_desc')")
+    expect(knopf).toContain('openNewCycle(activePeptide)')
+
+    // Und das ausgebreitete Cockpit ist weg, nicht bloss versteckt.
+    expect(text).not.toContain("t('aktiver_zyklus')")
     expect(text).not.toContain('setCycleManagerPeptide(p)')
   })
 
@@ -350,34 +375,20 @@ describe('My Stack page vial view', () => {
     expect(scrollHandler).not.toContain('updateVialFocus()')
   })
 
-  test('uses a compact mobile cockpit for vial details and the active cycle', () => {
+  test('zeigt die Angaben als ein Raster, nicht als drei Fassungen derselben Daten', () => {
+    // Die Angaben stehen in nach Form ausgesuchten Abschnitten; die drei
+    // Fassungen derselben Daten (zwei davon `hidden`) sind weg, ebenso die
+    // Kachel „Peptidname" — der Name steht auf dem Objekt darüber.
     const text = source()
 
-    expect(text).toContain("t('aktiver_zyklus')")
-    expect(text).toContain('Dosisanpassungen')
-    expect(text).toContain('dosePlanViewFor(activeCycle).current')
-    expect(text).toContain('escalationTargetQuantity(activeCycle, e)')
-    expect(text).toContain('doseAdjustmentIcon(activeCycle, e)')
-    expect(text).toContain('activeFrequency')
-    expect(text).toContain("[freqLabel(activeCycle), activeIntake].filter(Boolean).join(' · ')")
-    expect(text).toContain('currentEscalationId')
-    expect(text).toContain('absolute bottom-5 left-[13px] top-5 w-px -translate-x-1/2')
-    expect(text).toContain('ring-orange-500/15')
-    expect(text).toContain('<Clock size={15} />')
-    expect(text).toContain('mt-2 flex justify-center')
-    expect(text).toContain("cycleDay ? `${cycleDay} / ${cycleTotalDays ?? t('ende_offen')}` : '-'")
-    expect(text).toContain('{cycleDayLabel}')
-    // Die Angaben stehen jetzt in nach Form ausgesuchten Abschnitten; die
-    // drei Fassungen derselben Daten (zwei davon `hidden`) sind weg, ebenso
-    // die Kachel „Peptidname" — der Name steht auf dem Objekt darüber.
+    expect(text).toContain('grid grid-cols-2 gap-2')
     expect(text).toContain('Haltbar danach')
     expect(text).toContain('Angemischt am')
+    expect(text).toContain('Analyse-Dokument')
     expect(text).not.toContain('Peptidname')
     expect(text).not.toContain('Rohe Vials in Reserve')
     expect(text).not.toContain('compactInfoRows')
     expect(text).not.toContain('moreInfoRows')
-    expect(text).toContain('grid grid-cols-2 gap-2')
-    expect(text).toContain('Analyse-Dokument')
     expect(text).not.toContain('Nächste Dosis')
     expect(text).not.toContain('Zeit offen')
     const mojibakeSeparator = String.fromCharCode(0xc3, 0x201a, 0xc2, 0xb7)
@@ -387,8 +398,22 @@ describe('My Stack page vial view', () => {
     expect(text).not.toContain('Standard-Dosis')
     expect(text).not.toContain('standard_dosis_label')
     expect(text).not.toContain('Mehr Optionen')
-    expect(text).toContain('sortedEscalationsOf(activeCycle.id)')
     expect(text).not.toContain('<h3 className="truncate text-xl font-bold text-white">{p.name}</h3>')
+  })
+
+  test('behält Planstufen und Dosisanpassungen im Zyklusverwalter', () => {
+    // Beides stand auf der Vollbildseite. Seit der Zyklus dort nur noch ein
+    // Knopf ist, müssen sie im Verwalter stehen — nicht im Papierkorb.
+    // „Stufe zurücknehmen" hängt am RPC `remove_plan_segment`; es ist eine
+    // Funktion, keine tote Zeile.
+    const text = source()
+    const verwalter = text.slice(text.indexOf('{cycleManagerPeptide && (() => {'))
+
+    expect(text).toContain('const planStufenListe = (c: Cycle) => {')
+    expect(verwalter).toContain('{planStufenListe(c)}')
+    expect(verwalter).toContain('plannedQuantityRows(c)')
+    expect(text).toContain('const escalationTargetQuantity = (c: Cycle, e: Escalation) => {')
+    expect(verwalter).toContain('doseAdjustmentIcon(c, e)')
   })
 
   test('places the archive icon between search and view controls', () => {

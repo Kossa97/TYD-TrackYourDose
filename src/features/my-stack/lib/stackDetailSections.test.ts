@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DOSAGE_FORMS, getDosageForm } from './dosageForms'
-import { detailAbschnitte, wirkstoffBezug, zeigtFeld } from './stackDetailSections'
+import { detailAbschnitte, produktTitel, wirkstoffBezug, zeigtFeld } from './stackDetailSections'
 
 describe('detailAbschnitte', () => {
   it('zeigt Flüssigkeit, Datum und Haltbarkeit nur, wo man selbst anmischt', () => {
@@ -41,6 +41,11 @@ describe('detailAbschnitte', () => {
   it('verträgt eine unbekannte Form', () => {
     expect(detailAbschnitte(undefined).map(a => a.id)).toEqual(['substanz'])
   })
+
+  it('nennt zuerst, WAS es ist, dann was diese Packung ist', () => {
+    expect(detailAbschnitte(getDosageForm('vial')).map(a => a.id)).toEqual(['substanz', 'produkt'])
+    expect(detailAbschnitte(getDosageForm('tablet')).map(a => a.id)).toEqual(['substanz', 'produkt'])
+  })
 })
 
 describe('wirkstoffBezug', () => {
@@ -56,6 +61,23 @@ describe('wirkstoffBezug', () => {
   it('lässt keine Form ohne Bezug', () => {
     for (const form of DOSAGE_FORMS) {
       expect(wirkstoffBezug(form), form.key).toBeTruthy()
+    }
+  })
+})
+
+describe('produktTitel', () => {
+  it('heißt „Rekonstitution", wo eine Flüssigkeit zugefügt wird', () => {
+    const vial = detailAbschnitte(getDosageForm('vial')).find(a => a.id === 'produkt')!
+    expect(produktTitel(vial)).toBe('rekonstitution')
+  })
+
+  it('heißt sonst „Bestand" — auch beim Pen', () => {
+    // Aus `strengthShape` abgeleitet hieße er beim Pen „Zusammensetzung",
+    // obwohl dort nur „Vorrat" steht. Eine Überschrift, die mehr verspricht
+    // als darunter steht, ist schlimmer als eine schlichte.
+    for (const key of ['pen', 'tablet', 'patch', 'gel'] as const) {
+      const abschnitt = detailAbschnitte(getDosageForm(key)).find(a => a.id === 'produkt')!
+      expect(produktTitel(abschnitt), key).toBe('bestand')
     }
   })
 })

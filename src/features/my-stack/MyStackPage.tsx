@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import {
   Plus, Minus, Trash2, Pencil, FlaskConical, Activity,
   CalendarDays, CalendarRange, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, List,
-  TrendingUp, TrendingDown, Search, Bell, Check, SlidersHorizontal,
+  TrendingUp, TrendingDown, Search, Bell, SlidersHorizontal,
   Package, FileUp, Droplets, X, FileText, ExternalLink,
   Archive, Info, RefreshCw, Sunrise, Sun, Moon, Clock, AlertTriangle,
   RotateCcw, Flag, Pause, Play, CalendarPlus, type LucideIcon,
@@ -24,8 +24,8 @@ import { StackItemWizard } from './components/StackItemWizard'
 import { StageDetailSheet } from './components/StageDetailSheet'
 import { hapticTick } from '../../lib/haptics'
 import {
-  detailAbschnitte, wirkstoffBezug, zeigtFeld,
-  type AbschnittId, type DetailFeld,
+  detailAbschnitte, produktTitel, wirkstoffBezug, zeigtFeld,
+  type DetailFeld,
 } from './lib/stackDetailSections'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
@@ -1424,7 +1424,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       </div>
     )
   }
-
   const plannedQuantityRows = (c: Cycle) => {
     const planned = dosePlanViewFor(c).planned
     if (planned.length === 0) return null
@@ -1760,18 +1759,12 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   const invItem = activePeptide.inventory_item_id ? inventory.find(i => i.id === activePeptide.inventory_item_id) : null
                   const pCycles = cyclesOf(activePeptide.id)
                   const activeCycle = pCycles.find(c => c.active) ?? null
-                  const doseCapabilities = dosePlanCapabilities(activePeptide.tracking_level)
-                  const activeEscs = activeCycle ? sortedEscalationsOf(activeCycle.id) : []
-                  const currentEscalationId = activeCycle
-                    ? activeEscs.filter(e => escalationIsActive(activeCycle, e)).at(-1)?.id ?? null
-                    : null
                   const activeQuantity = activeCycle ? dosePlanViewFor(activeCycle).current : null
                   const cycleStart = activeCycle ? parseISO(activeCycle.start_date) : null
                   const cycleEnd = activeCycle?.end_date ? parseISO(activeCycle.end_date) : null
                   const cycleDay = cycleStart ? Math.max(1, differenceInDays(new Date(), cycleStart) + 1) : null
                   const cycleTotalDays = cycleStart && cycleEnd ? Math.max(1, differenceInDays(cycleEnd, cycleStart) + 1) : null
                   const cycleDayLabel = cycleDay ? `${cycleDay} / ${cycleTotalDays ?? t('ende_offen')}` : '-'
-                  const activeReminder = activeCycle ? reminderLabel(activeCycle) : null
                   const activeIntake = activeCycle ? intakeLabel(activeCycle) : null
                   const activeFrequency = activeCycle
                     ? [freqLabel(activeCycle), activeIntake].filter(Boolean).join(' · ')
@@ -1822,182 +1815,16 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     },
                     notizen: { label: 'Notizen', value: activePeptide.notes || notSet, wide: true },
                   }
-                  const ABSCHNITT_TITEL: Record<AbschnittId, string> = {
-                    bestand: 'Bestand',
+                  // Wie der Produktabschnitt heisst, folgt seinem INHALT —
+                  // „Rekonstitution", wo eine Fluessigkeit zugefuegt wird,
+                  // sonst „Bestand". Siehe `produktTitel`.
+                  const ABSCHNITT_TITEL: Record<'substanz' | 'rekonstitution' | 'bestand', string> = {
                     substanz: 'Substanz',
+                    rekonstitution: 'Rekonstitution',
+                    bestand: 'Bestand',
                   }
                   return (
                     <>
-                    <div className="mx-1 mt-2 rounded-xl border border-violet-500/20 bg-slate-950/55 p-3 text-xs">
-                            {activeCycle ? (
-                            <>
-                            <div className="mb-3 flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-violet-300">
-                                  <Activity size={14} /> {t('aktiver_zyklus')}
-                                </p>
-                                <p className="mt-1 truncate text-base font-bold text-white">{activeCycle.name}</p>
-                              </div>
-                              <div className="flex shrink-0 items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => setCycleManagerPeptide(activePeptide)}
-                                  className="flex min-h-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/70 px-3 text-xs font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
-                                >
-                                  {t('verwalten')}
-                                </button>
-                              </div>
-                            </div>
-
-                              <div className="space-y-3">
-                                <div className="grid grid-cols-2 gap-2 text-xs">
-                                  <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                                    <p className="text-slate-500">{t('tag')}</p>
-                                    <p className="font-semibold text-white">
-                                      {cycleDayLabel}
-                                    </p>
-                                  </div>
-                                  {doseCapabilities.permanent && (
-                                    <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                                      <p className="text-slate-500">{t('aktuelle_dosis')}</p>
-                                      <p className="font-semibold text-white">{activeQuantity ? `${activeQuantity.dose} ${activeQuantity.unit}` : '-'}</p>
-                                    </div>
-                                  )}
-                                  <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                                    <p className="text-slate-500">{t('frequenz')}</p>
-                                    <p className="font-semibold text-white">{activeFrequency}</p>
-                                  </div>
-                                  <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                                    <p className="text-slate-500">{t('methode')}</p>
-                                    <p className="font-semibold text-white">{t(METHOD_KEYS[activeCycle.method] ?? activeCycle.method)}</p>
-                                  </div>
-                                  <div className="col-span-2 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                                    <p className="text-slate-500">{t('reminder')}</p>
-                                    <p className="font-semibold text-white">{activeReminder ?? '-'}</p>
-                                  </div>
-                                </div>
-                                {doseCapabilities.permanent && plannedQuantityRows(activeCycle)}
-                                {planStufenListe(activeCycle)}
-
-                                {doseCapabilities.titration && (
-                                <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-2">
-                                  <div className="mb-2 flex items-center justify-between gap-2">
-                                    <p className="flex items-center gap-1.5 text-xs font-semibold text-orange-300">
-                                      <SlidersHorizontal size={13} /> {t('dosiserhoehungen')}
-                                    </p>
-                                  </div>
-                                  <div className="relative space-y-1.5 pl-8">
-                                    <div className="absolute bottom-5 left-[13px] top-5 w-px -translate-x-1/2 bg-slate-700/70" />
-                                    <div className={`relative flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${currentEscalationId ? 'border-slate-800 bg-slate-950/70 text-slate-300' : 'border-orange-500/50 bg-orange-500/15 text-orange-100 shadow-[0_0_0_1px_rgba(249,115,22,0.14)]'}`}>
-                                      <span className={`absolute -left-8 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border-2 ${currentEscalationId ? 'border-slate-500 bg-slate-900 text-slate-300' : 'border-orange-400 bg-orange-500/20 text-orange-200 ring-4 ring-orange-500/15'}`}>
-                                        {currentEscalationId ? <Check size={13} /> : <span className="h-2.5 w-2.5 rounded-full bg-orange-300" />}
-                                      </span>
-                                      <span className="min-w-0 truncate">{t('basis')}</span>
-                                      <span className="shrink-0 font-semibold text-white">{scheduledQuantityLabel(activeCycle, parseISO(activeCycle.start_date))}</span>
-                                      {!currentEscalationId && (
-                                        <span className="shrink-0 rounded-md border border-orange-400/40 bg-orange-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-200">
-                                          {t('aktuell')}
-                                        </span>
-                                      )}
-                                    </div>
-                                    {activeEscs.length === 0 && (
-                                      <p className="px-1 py-1 text-xs italic text-slate-500">{t('keine_dosiserhoehungen')}</p>
-                                    )}
-                                    {activeEscs.map(e => {
-                                      const isCurrent = e.id === currentEscalationId
-                                      const isPast = escalationIsActive(activeCycle, e) && !isCurrent
-                                      const targetQuantity = escalationTargetQuantity(activeCycle, e)
-                                      const AdjustmentIcon = doseAdjustmentIcon(activeCycle, e)
-                                      return (
-                                        <div key={e.id} className={`relative flex min-h-11 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${isCurrent ? 'border-orange-500/50 bg-orange-500/15 text-orange-100 shadow-[0_0_0_1px_rgba(249,115,22,0.16)]' : 'border-slate-800 bg-slate-950/70 text-slate-300'}`}>
-                                          <span className={`absolute -left-8 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border-2 ${isCurrent ? 'border-orange-400 bg-orange-500/25 text-orange-100 ring-4 ring-orange-500/15' : isPast ? 'border-slate-500 bg-slate-900 text-slate-300' : 'border-slate-600 bg-slate-950 text-slate-500'}`}>
-                                            {isCurrent ? <span className="h-2.5 w-2.5 rounded-full bg-orange-300" /> : isPast ? <Check size={13} /> : <span className="h-2.5 w-2.5 rounded-full border border-slate-500" />}
-                                          </span>
-                                          <span className="min-w-0 truncate">{escLabel(e)}</span>
-                                          <span className="flex shrink-0 items-center gap-1 font-semibold">
-                                            <AdjustmentIcon size={13} /> {targetQuantity ? `${targetQuantity.dose} ${targetQuantity.unit}` : '-'}
-                                          </span>
-                                          {isCurrent ? (
-                                            <span className="shrink-0 rounded-md border border-orange-400/40 bg-orange-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-orange-200">
-                                              Aktuell
-                                            </span>
-                                          ) : (
-                                            <span className="flex shrink-0 items-center gap-1 text-slate-500">
-                                              {isPast ? <Check size={15} /> : <><Clock size={15} /> {t('dose_plan_planned', { defaultValue: 'Geplant' })}</>}
-                                            </span>
-                                          )}
-                                        </div>
-                                      )
-                                    })}
-                                  </div>
-                                  <div className="mt-2 flex justify-center">
-                                    <DosePlanActions
-                                      trackingLevel={activePeptide.tracking_level}
-                                      onPermanent={() => openEditCycle(activePeptide)}
-                                      onTitration={() => openNewEsc(activeCycle)}
-                                    />
-                                  </div>
-                                </div>
-                                )}
-
-                                <button
-                                  type="button"
-                                  onClick={() => navigate('/kalender')}
-                                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-500 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-violet-400"
-                                >
-                                  <CalendarDays size={15} /> {doseCapabilities.oneOff
-                                    ? t('dosis_im_kalender_loggen')
-                                    : t('dose_plan_intake_log', { defaultValue: 'Einnahme im Kalender loggen' })}
-                                </button>
-                              </div>
-                            </>
-                            ) : pCycles.length > 0 ? (
-                              <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/25 p-5 text-center">
-                                <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-500/12 text-slate-300">
-                                  <Pause size={20} />
-                                </div>
-                                <p className="text-sm font-semibold text-white">{t('kein_aktiver_zyklus')}</p>
-                                <p className="mt-1 text-xs text-slate-400">
-                                  {pCycles.length === 1 ? t('zyklus_count_one') : t('zyklus_count_many', { n: pCycles.length })} · {t('keiner_aktiv')}
-                                </p>
-                                <div className="mt-3.5 flex flex-wrap justify-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setCycleManagerPeptide(activePeptide)}
-                                    className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/15 px-3.5 text-xs font-semibold text-violet-300 transition-colors hover:border-violet-400/50 hover:bg-violet-500/25"
-                                  >
-                                    <SlidersHorizontal size={14} /> {t('verwalten')}
-                                  </button>
-                                  <button
-                                    data-ob="btn-zyklus-add"
-                                    type="button"
-                                    onClick={() => { openNewCycle(activePeptide); dismissZyklusBtn() }}
-                                    className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/70 px-3.5 text-xs font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
-                                  >
-                                    <Plus size={14} /> {t('neuer_zyklus')}
-                                    {zyklusBtnNew && <NewDot />}
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="rounded-xl border border-dashed border-violet-500/25 bg-violet-500/[0.04] p-5 text-center">
-                                <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-violet-500/15 text-violet-300">
-                                  <CalendarPlus size={20} />
-                                </div>
-                                <p className="text-sm font-semibold text-white">{t('noch_kein_zyklus')}</p>
-                                <p className="mt-1 text-xs text-slate-400">{t('noch_kein_zyklus_desc')}</p>
-                                <button
-                                  data-ob="btn-zyklus-add"
-                                  type="button"
-                                  onClick={() => { openNewCycle(activePeptide); dismissZyklusBtn() }}
-                                  className="mt-3.5 inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-500 px-4 text-xs font-bold text-white transition-colors hover:bg-violet-400"
-                                >
-                                  <Plus size={14} /> {t('zyklus_hinzufuegen')}
-                                  {zyklusBtnNew && <NewDot />}
-                                </button>
-                              </div>
-                            )}
-                    </div>
                     {/* Bestand und Substanz: offen, nicht hinter einem
                         Akkordeon. Wer das Vollbild oeffnet, will sie sehen —
                         ein Klappknopf davor war eine Huerde ohne Gegenwert.
@@ -2006,7 +1833,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     {detailAbschnitte(form).map(abschnitt => (
                       <section key={abschnitt.id} data-stack-detail={abschnitt.id} className="mx-1 mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50">
                         <h3 className="border-b border-slate-800 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                          {ABSCHNITT_TITEL[abschnitt.id]}
+                          {ABSCHNITT_TITEL[abschnitt.id === 'substanz' ? 'substanz' : produktTitel(abschnitt)]}
                         </h3>
                         {abschnitt.id === 'substanz' && <StackItemDetails item={activePeptide} />}
                         <div className="grid grid-cols-2 gap-2 p-2 text-xs">
@@ -2025,12 +1852,84 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                       </section>
                     ))}
 
+                    {/*
+                        Der Zyklus als KNOPF, nicht als Feld — und nach den
+                        Angaben, nicht davor: erst was das IST (Substanz,
+                        Zusammensetzung), dann was damit LAEUFT.
+                        
+                        Alles, was hier frueher ausgebreitet stand — Frequenz,
+                        Start und Ende, Erinnerung, geplante Mengen,
+                        Dosisanpassungen samt Bearbeiten und Loeschen —, zeigt
+                        der Zyklusverwalter ohnehin. Es stand also zweimal da,
+                        und die Vollbildseite wurde davon lang. Was bleibt, ist
+                        die Zeile, die man im Vorbeigehen liest: wo im Zyklus
+                        man steht, und ob er laeuft.
+
+                        Der Schalter legt `active` um, der Punkt daneben zeigt
+                        es. Beides nur, wenn es einen aktiven Zyklus gibt —
+                        ohne einen waere ein Schalter ohne Gegenstueck.
+                    */}
+                    <div data-stack-detail="zyklus" className="mx-1 mt-2">
+                      {activeCycle ? (
+                        <div className="flex items-stretch gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setCycleManagerPeptide(activePeptide)}
+                            className="flex min-h-14 flex-1 items-center gap-3 rounded-xl border border-violet-500/25 bg-slate-950/55 px-3 text-left transition-colors hover:border-violet-400/45"
+                          >
+                            <span className="relative flex h-2.5 w-2.5 shrink-0" data-zyklus-live>
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/70" />
+                              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-bold text-white">{activeCycle.name}</span>
+                              <span className="mt-0.5 block truncate text-xs text-slate-400">
+                                {[t('tag') + ' ' + cycleDayLabel, activeQuantity ? `${activeQuantity.dose} ${activeQuantity.unit}` : null, activeFrequency]
+                                  .filter(Boolean).join(' · ')}
+                              </span>
+                            </span>
+                            <ChevronRight size={16} className="shrink-0 text-slate-600" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleCycleActive(activeCycle)}
+                            aria-pressed={activeCycle.active}
+                            aria-label={String(t('deaktivieren_title'))}
+                            className="flex min-h-14 w-14 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-[10px] font-bold uppercase tracking-wide text-emerald-300 transition-colors hover:border-emerald-400/45"
+                          >
+                            <Pause size={15} />
+                            {t('aktiv_badge')}
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => (pCycles.length > 0 ? setCycleManagerPeptide(activePeptide) : openNewCycle(activePeptide))}
+                          className="flex min-h-14 w-full items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/55 px-3 text-left transition-colors hover:border-violet-400/35"
+                        >
+                          <Activity size={16} className="shrink-0 text-slate-600" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold text-white">
+                              {pCycles.length > 0 ? t('kein_aktiver_zyklus') : t('noch_kein_zyklus')}
+                            </span>
+                            <span className="mt-0.5 block truncate text-xs text-slate-500">
+                              {pCycles.length > 0
+                                ? `${pCycles.length === 1 ? t('zyklus_count_one') : t('zyklus_count_many', { n: pCycles.length })} · ${t('keiner_aktiv')}`
+                                : t('noch_kein_zyklus_desc')}
+                            </span>
+                          </span>
+                          {pCycles.length > 0
+                            ? <ChevronRight size={16} className="shrink-0 text-slate-600" />
+                            : <Plus size={16} className="shrink-0 text-violet-300" />}
+                        </button>
+                      )}
+                    </div>
+
                     {/* Verwalten zuletzt. Oben standen diese vier Knoepfe als
                         Erstes — mitsamt dem Loeschen, direkt unter dem Daumen,
                         bevor man ueberhaupt gesehen hat, was man da vor sich
-                        hat. Was man TUT, gehoert nach oben (Dosis loggen,
-                        Zyklus verwalten); was man am Eintrag AENDERT, nach
-                        unten. */}
+                        hat. Was man liest, gehoert nach oben; was man am
+                        Eintrag AENDERT, nach unten. */}
                     <div data-stack-detail="verwalten" className="mt-3 border-t border-slate-800/70 px-1 pt-3">
                       <h3 className="mb-2 px-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">Verwalten</h3>
                 <div className="mt-2 flex gap-2 px-1 text-xs font-semibold">
@@ -2861,6 +2760,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               ) : null
             })()}
             {dosePlanCapabilities(cycleManagerPeptide.tracking_level).permanent && plannedQuantityRows(c)}
+            {/* Die Planstufen samt „Stufe zuruecknehmen" standen frueher auf der
+                Vollbildseite. Seit der Zyklus dort nur noch ein Knopf ist, gehoeren
+                sie hierher — nicht in den Papierkorb. */}
+            {planStufenListe(c)}
           </>
         )
 
