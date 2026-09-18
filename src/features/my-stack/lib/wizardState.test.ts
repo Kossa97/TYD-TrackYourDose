@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { bestandteileAufloesen } from './kombination'
 import { naechsterSlot } from './wizardState'
 import { emptyRhythm } from './intakeRhythm'
-import type { DosageFormKey, IntakePlanDraft, StackItem, SubstanceCatalogEntry } from '../types'
+import type { DosageFormKey, IntakePlanDraft, StackItem, StackItemIngredient, SubstanceCatalogEntry } from '../types'
 import {
   canContinue,
   didIdentityChange,
@@ -176,6 +176,42 @@ describe('wizard state', () => {
     // Solange keine Form feststeht, bleibt der Schritt drin — er kommt
     // ohnehin erst nach dem Formschritt.
     expect(wizardSteps(initialWizardState())).toContain('color')
+  })
+
+  it('laesst den Zutatenschritt weg, wo der Katalog die Namen schon kennt', () => {
+    // Der Schritt fragt nur nach NAMEN — die Mengen stehen im Schritt danach,
+    // und der zeigt je Zutat eine eigene Karte mit ihrem Namen. Kommt jede
+    // Zutat aus dem Katalog, bestaetigt der Schritt nur, was feststeht: seine
+    // Pruefung kann gar nicht mehr ausschlagen, denn `validateIngredient`
+    // verlangt einen Namen nur ohne Katalog-id.
+    const mitZutaten = (ingredients: StackItemIngredient[]) => {
+      const initial = initialWizardState()
+      return wizardSteps({ ...initial, draft: { ...initial.draft, ingredients } })
+    }
+    const zutat = (position: number, catalogId: string | null, name = '') => ({
+      catalog_substance_id: catalogId,
+      custom_name: name,
+      amount_value: null, amount_unit: null,
+      basis_value: null, basis_unit: null,
+      position,
+    })
+
+    // Einzelne Substanz und Kombipraeparat aus dem Katalog: kein Schritt.
+    expect(mitZutaten([zutat(0, 'vitamin-d3')])).not.toContain('ingredients')
+    expect(mitZutaten([zutat(0, 'vitamin-d3'), zutat(1, 'vitamin-k2')])).not.toContain('ingredients')
+    // Die Staerke bleibt — dort steht die Frage, die der Katalog nicht
+    // beantwortet.
+    expect(mitZutaten([zutat(0, 'vitamin-d3')])).toContain('strength')
+
+    // Manuell angelegt: der Schritt ist der einzige Ort, an dem „das ist
+    // eigentlich eine Mischung aus zweien" ueberhaupt sagbar ist.
+    expect(mitZutaten([zutat(0, null, 'Eigenmischung')])).toContain('ingredients')
+    // Ein Kombieintrag, dessen zweiter Bestandteil sich nicht aufloesen liess
+    // (`bestandteileAufloesen` laesst ihn benannt, aber ohne id stehen) —
+    // damit man ihn geradeziehen kann.
+    expect(mitZutaten([zutat(0, 'vitamin-d3'), zutat(1, null, 'Vitamin K2')])).toContain('ingredients')
+    // Und solange noch gar nichts gewaehlt ist, bleibt er stehen.
+    expect(mitZutaten([])).toContain('ingredients')
   })
 
   it('haelt die Schrittliste und den aktuellen Schritt beisammen', () => {

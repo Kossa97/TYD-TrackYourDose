@@ -48,6 +48,22 @@ export interface WizardState {
 // Die Schrittliste folgt der Faehigkeiten-Tabelle, statt die Stufe noch
 // einmal beim Namen zu nennen. Nur so bleibt eine Regel eine Regel: wer
 // productStrength einer Stufe gibt, bekommt die Schritte dazu automatisch.
+/**
+ * Haengt JEDE Zutat an einer Katalogsubstanz?
+ *
+ * Gefragt wird die `catalog_substance_id` an der Zutat und nicht
+ * `draft.catalogEntryId`: letzteres ist ausdruecklich nur fuer das Formular da
+ * und wird nicht gespeichert (siehe `StackItemDraft`). Beim Bearbeiten eines
+ * bestehenden Eintrags saehe sonst jeder Katalogeintrag wieder manuell aus.
+ *
+ * Ein Kombipraeparat, bei dem sich ein Bestandteil nicht aufloesen liess,
+ * faellt hier durch — `bestandteileAufloesen` laesst ihn als benannte Zeile
+ * ohne id stehen, und dann soll man ihn geradeziehen koennen.
+ */
+export function zutatenAusDemKatalog(ingredients: readonly StackItemIngredient[]): boolean {
+  return ingredients.length > 0 && ingredients.every(zutat => Boolean(zutat.catalog_substance_id))
+}
+
 export function wizardSteps(state: WizardState): WizardStep[] {
   // Die Farbe wird ausschliesslich von der Buehnengrafik gezeigt. Pflaster
   // und Tube zeigen sie bewusst nicht (hautfarben, Aluminium), `other` hat gar
@@ -64,8 +80,16 @@ export function wizardSteps(state: WizardState): WizardStep[] {
   // war die Schrittzahl offen. Seit der Entwurf mit „Gruendlich" startet,
   // steht immer eine Tiefe fest — und damit auch, welche Schritte folgen.
   const kann = trackingCapabilities(state.draft.trackingLevel)
+  // Der Zutatenschritt fragt nur nach NAMEN — die Mengen stehen im Schritt
+  // danach, und der zeigt ohnehin je Zutat eine eigene Karte mit ihrem Namen
+  // als Ueberschrift. Haengt jede Zutat an einer Katalogsubstanz, sind die
+  // Namen also schon entschieden: bei einem Kombipraeparat hat der
+  // Katalogeintrag sie mitgebracht, bei einer einzelnen Substanz ist es der
+  // Eintrag selbst. Dann bestaetigt der Schritt nur noch, was feststeht — und
+  // die Pruefung dort kann gar nicht mehr ausschlagen (`validateIngredient`
+  // verlangt einen Namen nur ohne Katalog-id).
   const wirkstoffSchritte: WizardStep[] = kann.productStrength
-    ? ['ingredients', 'strength']
+    ? (zutatenAusDemKatalog(state.draft.ingredients) ? ['strength'] : ['ingredients', 'strength'])
     : []
 
   return [...gemeinsam, ...wirkstoffSchritte, 'plan', 'review']

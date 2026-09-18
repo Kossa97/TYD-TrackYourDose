@@ -626,14 +626,35 @@ describe('StackItemWizard interactions', () => {
     continueWizard()  // Tracking-Tiefe (startet auf „Gründlich")
     continueWizard()
 
-    // Zwei Zeilen, benannt, und beide am Katalog.
-    expect((screen.getByLabelText('my_stack_ingredient_1') as HTMLInputElement).value)
-      .toBe('Vitamin D3')
-    // Die zweite Zeile steht als gewählter Katalogeintrag da, nicht als
-    // Freitext — genau das war vorher unmöglich.
-    const zweite = document.querySelector('[data-ingredient-catalog="vitamin-k2"]')
-    expect(zweite).not.toBeNull()
-    expect(zweite?.textContent).toContain('Vitamin K2')
+    // Kein Zutatenschritt mehr: beide Namen kommen aus dem Katalog, dort
+    // wäre nichts mehr zu entscheiden. Der nächste Schritt ist die Stärke —
+    // und die fragt je Wirkstoff, mit seinem Namen über der Karte.
+    expect(screen.queryByLabelText('my_stack_ingredient_1')).toBeNull()
+    expect(document.querySelector('#stack-strength-0-amount-value')).not.toBeNull()
+    expect(document.querySelector('#stack-strength-1-amount-value')).not.toBeNull()
+    expect(document.body.textContent).toContain('Vitamin D3')
+    expect(document.body.textContent).toContain('Vitamin K2')
+  })
+
+  it('lässt aus dem Stärkeschritt einen weiteren Wirkstoff nachtragen', () => {
+    // Die Tür für den Fall, den der Katalog nicht kennt: das eigene Produkt
+    // ist ein Blend. Ohne sie säße man fest, weil der Zutatenschritt bei
+    // einer Katalogauswahl gar nicht mehr kommt.
+    renderWizard({ catalogEntries: [vitaminD3, vitaminK2, d3k2] })
+
+    fireEvent.change(screen.getByLabelText('my_stack_question'), { target: { value: 'D3 +' } })
+    fireEvent.click(screen.getByRole('option', { name: /Vitamin D3 \+ K2/ }))
+    continueWizard()
+    fireEvent.click(screen.getByRole('button', { name: 'dosage_form_capsule' }))
+    continueWizard()  // Farbe
+    continueWizard()  // Tracking-Tiefe
+    continueWizard()
+
+    fireEvent.click(screen.getByRole('button', { name: 'my_stack_strength_add_ingredient' }))
+
+    // Die neue Zeile hat keinen Namen — also ist der Zutatenschritt wieder da,
+    // und man steht darin.
+    expect(screen.getByLabelText('my_stack_ingredient_3')).not.toBeNull()
   })
 
   it('weist ein Kombipräparat schon in der Trefferliste aus', () => {

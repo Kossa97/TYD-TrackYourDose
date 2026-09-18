@@ -5,6 +5,7 @@ import {
   Check,
   ExternalLink,
   LoaderCircle,
+  Plus,
   Save,
   X,
 } from 'lucide-react'
@@ -26,6 +27,7 @@ import {
   initialWizardState,
   wizardReducer,
   wizardSteps,
+  zutatenAusDemKatalog,
   type WizardSaveMode,
   type WizardStep,
 } from '../lib/wizardState'
@@ -584,6 +586,27 @@ export function StackItemWizard({
                 onChange={changes => dispatch({ type: 'ingredient_changed', index, changes })}
               />
             ))}
+            {/* Die Tuer steht genau dort, wo der Zutatenschritt fehlt.
+                Wer manuell anlegt, geht ohnehin durch ihn und hat den Knopf
+                dort; wer einen Katalogeintrag gewaehlt hat, saesse ohne das
+                hier fest, sobald sein Produkt ein Blend ist, den der Katalog
+                nicht kennt. Der Knopf legt die Zeile an UND geht in den
+                Schritt, denn der Name laesst sich nur dort eintragen — und
+                die leere Zeile bringt ihn gerade zurueck. */}
+            {zutatenAusDemKatalog(state.draft.ingredients) && (
+              <button
+                type="button"
+                data-wizard-action="add-ingredient"
+                onClick={() => {
+                  dispatch({ type: 'ingredient_added' })
+                  dispatch({ type: 'step_selected', step: 'ingredients' })
+                }}
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 text-sm font-semibold text-slate-300 transition-colors hover:border-white/30 hover:text-white"
+              >
+                <Plus size={15} />
+                {t('my_stack_strength_add_ingredient', { defaultValue: 'Weiterer Wirkstoff' })}
+              </button>
+            )}
           </div>
         ) : null
       case 'plan':
