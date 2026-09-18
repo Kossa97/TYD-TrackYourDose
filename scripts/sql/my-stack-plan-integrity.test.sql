@@ -32,7 +32,8 @@ grant execute on function auth.uid() to authenticated;
 create table public.stack_items (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  tracking_level text not null default 'complete'
+  tracking_level text not null default 'complete',
+  configuration_status text not null default 'complete'
 );
 
 create table public.cycles (
@@ -67,7 +68,93 @@ create table public.dose_logs (
   user_id uuid not null references auth.users(id) on delete cascade
 );
 
+create table public.dose_escalations (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  cycle_id uuid not null references public.cycles(id) on delete cascade,
+  increase_amount numeric(10,3) not null,
+  unit text not null,
+  start_type text not null,
+  start_date date,
+  start_after_days integer,
+  created_at timestamptz not null default now()
+);
+
 grant select on public.cycles to authenticated;
+
+insert into auth.users (id)
+values ('30000000-0000-0000-0000-000000000003');
+
+insert into public.stack_items (id, user_id)
+values
+  ('33000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000003'),
+  ('34000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000003');
+
+insert into public.cycles (
+  id, user_id, stack_item_id, name, dose, unit, method, frequency,
+  schedule_days, start_date, end_date, active, intake_time,
+  intake_time_custom, slot_doses, schedule_history
+)
+values
+  (
+    '33100000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000003',
+    '33000000-0000-0000-0000-000000000003',
+    'Conflicting A', 1, 'mg', 'Oral', 'Täglich', '{}',
+    '2026-01-01', null, true, 'morgens', '08:00', null, null
+  ),
+  (
+    '33200000-0000-0000-0000-000000000002',
+    '30000000-0000-0000-0000-000000000003',
+    '33000000-0000-0000-0000-000000000003',
+    'Conflicting B', 2, 'mg', 'Oral', 'Täglich', '{}',
+    '2026-02-01', null, true, 'morgens', '08:00', null, null
+  ),
+  (
+    '34100000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000003',
+    '34000000-0000-0000-0000-000000000004',
+    'Legacy history', 200, 'mg', 'Oral', '2x täglich', '{}',
+    '2026-01-01', '2026-02-28', false, 'morgens,abends', '08:00,20:00', '200,250',
+    jsonb_build_array(
+      jsonb_build_object(
+        'effective_from', '2026-01-01', 'frequency', 'Täglich',
+        'x_days_interval', null, 'schedule_days', jsonb_build_array(),
+        'intake_time', 'morgens', 'intake_time_custom', '08:00',
+        'slot_doses', null, 'slot_days', null, 'dose', 100, 'unit', 'mg'
+      ),
+      jsonb_build_object(
+        'effective_from', '2026-02-01', 'frequency', '2x täglich',
+        'x_days_interval', null, 'schedule_days', jsonb_build_array(),
+        'intake_time', 'morgens,abends', 'intake_time_custom', '08:00,20:00',
+        'slot_doses', '200,250', 'slot_days', null, 'dose', 200, 'unit', 'mg'
+      )
+    )
+  );
+
+insert into public.dose_escalations (
+  id, user_id, cycle_id, increase_amount, unit,
+  start_type, start_date, start_after_days
+)
+values
+  (
+    '34110000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000003',
+    '34100000-0000-0000-0000-000000000001',
+    25, 'mg', 'date', '2026-01-15', null
+  ),
+  (
+    '34110000-0000-0000-0000-000000000002',
+    '30000000-0000-0000-0000-000000000003',
+    '34100000-0000-0000-0000-000000000001',
+    -10, 'mg', 'after_days', null, 40
+  ),
+  (
+    '34110000-0000-0000-0000-000000000003',
+    '30000000-0000-0000-0000-000000000003',
+    '34100000-0000-0000-0000-000000000001',
+    500, 'mcg', 'date', '2026-01-20', null
+  );
 
 \ir ../../supabase-my-stack-plan-integrity.sql
 
@@ -158,6 +245,107 @@ begin
       and qual like '%auth.uid()%user_id%'
   ) <> 4 then
     raise exception 'not every plan-integrity table has the owner-read policy';
+  end if;
+end
+$$;
+
+do $$
+declare
+  version_count integer;
+  conflict_cycles uuid[];
+begin
+  if not exists (
+    select 1
+    from public.cycles
+    where id = '34100000-0000-0000-0000-000000000001'
+      and start_date = '2026-01-01'
+      and end_date = '2026-02-28'
+      and started_at = '2026-01-01T00:00:00Z'
+      and ended_at = '2026-03-01T00:00:00Z'
+  ) then
+    raise exception 'legacy lifecycle dates were not backfilled without changing the source dates';
+  end if;
+
+  select count(*) into version_count
+  from public.cycle_plan_versions
+  where cycle_id = '34100000-0000-0000-0000-000000000001';
+  if version_count <> 4 then
+    raise exception 'legacy history/escalations produced % versions instead of 4', version_count;
+  end if;
+
+  if not exists (
+    select 1
+    from public.cycle_plan_versions
+    where cycle_id = '34100000-0000-0000-0000-000000000001'
+      and effective_kind = 'local_date'
+      and effective_local_date = '2026-01-01'
+      and change_kind = 'initial'
+      and dose = 100
+      and frequency = 'Täglich'
+  ) or not exists (
+    select 1
+    from public.cycle_plan_versions
+    where cycle_id = '34100000-0000-0000-0000-000000000001'
+      and effective_local_date = '2026-01-15'
+      and change_kind = 'titration'
+      and dose = 125
+  ) or not exists (
+    select 1
+    from public.cycle_plan_versions
+    where cycle_id = '34100000-0000-0000-0000-000000000001'
+      and effective_local_date = '2026-02-01'
+      and change_kind = 'schedule'
+      and dose = 225
+      and slot_doses = '225,275'
+      and intake_time = 'morgens,abends'
+  ) or not exists (
+    select 1
+    from public.cycle_plan_versions
+    where cycle_id = '34100000-0000-0000-0000-000000000001'
+      and effective_local_date = '2026-02-10'
+      and change_kind = 'titration'
+      and dose = 215
+      and slot_doses = '215,265'
+  ) then
+    raise exception 'legacy versions are not complete parity snapshots';
+  end if;
+
+  if exists (
+    select 1
+    from public.cycle_plan_versions
+    where cycle_id = '34100000-0000-0000-0000-000000000001'
+      and effective_local_date = '2026-01-20'
+  ) then
+    raise exception 'mixed-unit escalation was converted by inventing arithmetic';
+  end if;
+  if (
+    select count(*)
+    from public.dose_escalations
+    where cycle_id = '34100000-0000-0000-0000-000000000001'
+  ) <> 3 then
+    raise exception 'legacy escalation rows were deleted during backfill';
+  end if;
+
+  select cycle_ids into conflict_cycles
+  from public.cycle_migration_conflicts
+  where user_id = '30000000-0000-0000-0000-000000000003'
+    and stack_item_id = '33000000-0000-0000-0000-000000000003'
+    and resolved_at is null;
+  if conflict_cycles is null
+    or cardinality(conflict_cycles) <> 2
+    or not conflict_cycles @> array[
+      '33100000-0000-0000-0000-000000000001'::uuid,
+      '33200000-0000-0000-0000-000000000002'::uuid
+    ] then
+    raise exception 'multiple open cycles did not produce one deterministic conflict row';
+  end if;
+  if not exists (
+    select 1
+    from public.stack_items
+    where id = '33000000-0000-0000-0000-000000000003'
+      and configuration_status = 'needs_review'
+  ) then
+    raise exception 'conflicted stack item was not marked needs_review';
   end if;
 end
 $$;

@@ -318,6 +318,107 @@ $$;
 revoke all on function public.normalize_plan_schedule(jsonb, text)
   from public, anon, authenticated;
 
+create or replace function public.try_legacy_local_date(p_value text)
+returns date
+language plpgsql
+immutable
+security definer
+set search_path = public
+as $$
+declare
+  parsed date;
+begin
+  if p_value is null or p_value !~ '^\d{4}-\d{2}-\d{2}$' then
+    return null;
+  end if;
+  begin
+    parsed := p_value::date;
+  exception
+    when others then return null;
+  end;
+  if to_char(parsed, 'YYYY-MM-DD') <> p_value then
+    return null;
+  end if;
+  return parsed;
+end
+$$;
+
+revoke all on function public.try_legacy_local_date(text)
+  from public, anon, authenticated;
+
+create or replace function public.legacy_schedule_snapshot(
+  p_cycle_id uuid,
+  p_day date
+)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  cycle_row public.cycles;
+  segment jsonb;
+begin
+  select * into cycle_row
+  from public.cycles
+  where id = p_cycle_id;
+  if not found then
+    return null;
+  end if;
+
+  if jsonb_typeof(cycle_row.schedule_history) = 'array'
+    and jsonb_array_length(cycle_row.schedule_history) > 0 then
+    select candidate.value into segment
+    from jsonb_array_elements(cycle_row.schedule_history) with ordinality candidate(value, position)
+    where public.try_legacy_local_date(candidate.value ->> 'effective_from') <= p_day
+    order by public.try_legacy_local_date(candidate.value ->> 'effective_from') desc,
+      candidate.position desc
+    limit 1;
+
+    if segment is null then
+      select candidate.value into segment
+      from jsonb_array_elements(cycle_row.schedule_history) with ordinality candidate(value, position)
+      where public.try_legacy_local_date(candidate.value ->> 'effective_from') is not null
+      order by public.try_legacy_local_date(candidate.value ->> 'effective_from'),
+        candidate.position
+      limit 1;
+    end if;
+  end if;
+
+  return jsonb_build_object(
+    'frequency', case when segment ? 'frequency'
+      then segment -> 'frequency' else to_jsonb(cycle_row.frequency) end,
+    'x_days_interval', case when segment ? 'x_days_interval'
+      then segment -> 'x_days_interval' else to_jsonb(cycle_row.x_days_interval) end,
+    'interval_unit', case when segment ? 'interval_unit'
+      then segment -> 'interval_unit' else to_jsonb(cycle_row.interval_unit) end,
+    'cycle_on_days', case when segment ? 'cycle_on_days'
+      then segment -> 'cycle_on_days' else to_jsonb(cycle_row.cycle_on_days) end,
+    'cycle_off_days', case when segment ? 'cycle_off_days'
+      then segment -> 'cycle_off_days' else to_jsonb(cycle_row.cycle_off_days) end,
+    'schedule_days', case when segment ? 'schedule_days'
+      then segment -> 'schedule_days' else to_jsonb(coalesce(cycle_row.schedule_days, '{}'::text[])) end,
+    'intake_time', case when segment ? 'intake_time'
+      then segment -> 'intake_time' else to_jsonb(cycle_row.intake_time) end,
+    'intake_time_custom', case when segment ? 'intake_time_custom'
+      then segment -> 'intake_time_custom' else to_jsonb(cycle_row.intake_time_custom) end,
+    'slot_doses', case when segment ? 'slot_doses'
+      then segment -> 'slot_doses' else to_jsonb(cycle_row.slot_doses) end,
+    'slot_days', case when segment ? 'slot_days'
+      then segment -> 'slot_days' else to_jsonb(cycle_row.slot_days) end,
+    'dose', case when segment ? 'dose'
+      then segment -> 'dose' else to_jsonb(cycle_row.dose) end,
+    'unit', case when segment ? 'unit'
+      then segment -> 'unit' else to_jsonb(cycle_row.unit) end,
+    'method', to_jsonb(cycle_row.method)
+  );
+end
+$$;
+
+revoke all on function public.legacy_schedule_snapshot(uuid, date)
+  from public, anon, authenticated;
+
 create or replace function public.create_plan_version(
   p_cycle_id uuid,
   p_effective_kind text,
@@ -1200,6 +1301,235 @@ begin
   return mutation_result;
 end
 $$;
+
+update public.cycles
+set
+  started_at = coalesce(
+    started_at,
+    start_date::timestamp at time zone 'UTC'
+  ),
+  ended_at = coalesce(
+    ended_at,
+    case
+      when end_date is not null
+        then (end_date + 1)::timestamp at time zone 'UTC'
+      when not active
+        then transaction_timestamp()
+      else null
+    end
+  );
+
+do $$
+declare
+  cycle_row public.cycles;
+  escalation_row public.dose_escalations;
+  snapshot jsonb;
+  activation_snapshot jsonb;
+  boundary date;
+  escalation_date date;
+  boundary_dates date[];
+  history_dates date[];
+  base_dose numeric;
+  adjustment numeric;
+  adjusted_slot_doses text;
+  version_change_kind text;
+begin
+  for cycle_row in
+    select *
+    from public.cycles
+    order by id
+  loop
+    history_dates := '{}'::date[];
+    if jsonb_typeof(cycle_row.schedule_history) = 'array'
+      and jsonb_array_length(cycle_row.schedule_history) > 0 then
+      select coalesce(array_agg(distinct history_date order by history_date), '{}'::date[])
+      into history_dates
+      from (
+        select public.try_legacy_local_date(entry.value ->> 'effective_from') history_date
+        from jsonb_array_elements(cycle_row.schedule_history) entry(value)
+      ) dates
+      where history_date is not null;
+
+      boundary_dates := case
+        when cardinality(history_dates) > 0
+          then array_append(history_dates, cycle_row.start_date)
+        else '{}'::date[]
+      end;
+    else
+      boundary_dates := array[cycle_row.start_date];
+    end if;
+
+    for escalation_row in
+      select *
+      from public.dose_escalations
+      where cycle_id = cycle_row.id
+      order by created_at, id
+    loop
+      escalation_date := case escalation_row.start_type
+        when 'date' then escalation_row.start_date
+        when 'after_days' then case
+          when escalation_row.start_after_days is not null
+            and escalation_row.start_after_days >= 0
+            then cycle_row.start_date + escalation_row.start_after_days
+        end
+        when 'after_weeks' then case
+          when escalation_row.start_after_days is not null
+            and escalation_row.start_after_days >= 0
+            then cycle_row.start_date + escalation_row.start_after_days
+        end
+      end;
+
+      if escalation_date is not null
+        and escalation_row.increase_amount <> 'NaN'::numeric then
+        activation_snapshot := public.legacy_schedule_snapshot(
+          cycle_row.id,
+          escalation_date
+        );
+        if nullif(btrim(activation_snapshot ->> 'unit'), '') = btrim(escalation_row.unit) then
+          boundary_dates := array_append(boundary_dates, escalation_date);
+        end if;
+      end if;
+    end loop;
+
+    for boundary in
+      select distinct candidate
+      from unnest(boundary_dates) candidate
+      order by candidate
+    loop
+      snapshot := public.legacy_schedule_snapshot(cycle_row.id, boundary);
+      if snapshot is null then
+        continue;
+      end if;
+
+      base_dose := case
+        when coalesce(snapshot ->> 'dose', '')
+          ~ '^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'
+          then (snapshot ->> 'dose')::numeric
+        else null
+      end;
+
+      select coalesce(sum(escalation.increase_amount), 0)
+      into adjustment
+      from public.dose_escalations escalation
+      cross join lateral (
+        select case escalation.start_type
+          when 'date' then escalation.start_date
+          when 'after_days' then case
+            when escalation.start_after_days is not null
+              and escalation.start_after_days >= 0
+              then cycle_row.start_date + escalation.start_after_days
+          end
+          when 'after_weeks' then case
+            when escalation.start_after_days is not null
+              and escalation.start_after_days >= 0
+              then cycle_row.start_date + escalation.start_after_days
+          end
+        end activation_date
+      ) activation
+      where escalation.cycle_id = cycle_row.id
+        and activation.activation_date is not null
+        and activation.activation_date <= boundary
+        and escalation.increase_amount <> 'NaN'::numeric
+        and btrim(escalation.unit) = nullif(btrim(snapshot ->> 'unit'), '')
+        and btrim(escalation.unit) = nullif(btrim(
+          public.legacy_schedule_snapshot(
+            cycle_row.id,
+            activation.activation_date
+          ) ->> 'unit'
+        ), '');
+
+      adjusted_slot_doses := nullif(btrim(snapshot ->> 'slot_doses'), '');
+      if adjusted_slot_doses is not null and adjustment <> 0 then
+        select string_agg(
+          case
+            when btrim(slot.value) = '' then ''
+            when btrim(slot.value) ~ '^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'
+              then trim_scale(btrim(slot.value)::numeric + adjustment)::text
+            else slot.value
+          end,
+          ',' order by slot.position
+        )
+        into adjusted_slot_doses
+        from unnest(string_to_array(adjusted_slot_doses, ','))
+          with ordinality slot(value, position);
+      end if;
+
+      version_change_kind := case
+        when boundary = (
+          select min(candidate) from unnest(boundary_dates) candidate
+        ) then 'initial'
+        when boundary = any(history_dates) then 'schedule'
+        else 'titration'
+      end;
+
+      insert into public.cycle_plan_versions (
+        user_id, cycle_id, effective_kind, effective_at,
+        effective_local_date, change_kind, frequency, x_days_interval,
+        interval_unit, cycle_on_days, cycle_off_days, schedule_days,
+        intake_time, intake_time_custom, slot_doses, slot_days,
+        dose, unit, method
+      ) values (
+        cycle_row.user_id,
+        cycle_row.id,
+        'local_date',
+        null,
+        boundary,
+        version_change_kind,
+        coalesce(nullif(btrim(snapshot ->> 'frequency'), ''), cycle_row.frequency),
+        case when coalesce(snapshot ->> 'x_days_interval', '') ~ '^[0-9]+$'
+          then (snapshot ->> 'x_days_interval')::integer else null end,
+        nullif(btrim(snapshot ->> 'interval_unit'), ''),
+        case when coalesce(snapshot ->> 'cycle_on_days', '') ~ '^[0-9]+$'
+          then (snapshot ->> 'cycle_on_days')::integer else null end,
+        case when coalesce(snapshot ->> 'cycle_off_days', '') ~ '^[0-9]+$'
+          then (snapshot ->> 'cycle_off_days')::integer else null end,
+        case when jsonb_typeof(snapshot -> 'schedule_days') = 'array'
+          then array(select jsonb_array_elements_text(snapshot -> 'schedule_days'))
+          else '{}'::text[] end,
+        coalesce(nullif(btrim(snapshot ->> 'intake_time'), ''), 'morgens'),
+        nullif(btrim(snapshot ->> 'intake_time_custom'), ''),
+        adjusted_slot_doses,
+        nullif(btrim(snapshot ->> 'slot_days'), ''),
+        case
+          when base_dose is null then null
+          when base_dose + adjustment > 0 then base_dose + adjustment
+          else null
+        end,
+        nullif(btrim(snapshot ->> 'unit'), ''),
+        coalesce(nullif(btrim(snapshot ->> 'method'), ''), cycle_row.method)
+      )
+      on conflict (cycle_id, effective_local_date)
+        where effective_kind = 'local_date'
+      do nothing;
+    end loop;
+  end loop;
+end
+$$;
+
+insert into public.cycle_migration_conflicts (
+  user_id, stack_item_id, cycle_ids
+)
+select
+  user_id,
+  stack_item_id,
+  array_agg(id order by started_at, id)
+from public.cycles
+where ended_at is null
+group by user_id, stack_item_id
+having count(*) > 1
+on conflict (user_id, stack_item_id) do update set
+  cycle_ids = excluded.cycle_ids,
+  resolved_at = null;
+
+update public.stack_items item
+set configuration_status = 'needs_review'
+where exists (
+  select 1
+  from public.cycle_migration_conflicts conflict
+  where conflict.user_id = item.user_id
+    and conflict.stack_item_id = item.id
+    and conflict.resolved_at is null
+);
 
 revoke all on function public.create_plan_version(
   uuid, text, timestamptz, date, text, jsonb, text
