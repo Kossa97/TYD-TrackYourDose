@@ -10,7 +10,16 @@ interface LabLoaderProps {
 export function LabLoader({ fadingOut = false }: LabLoaderProps) {
   return (
     <div
-      className={`fixed inset-0 z-50 bg-[#070B11] flex flex-col items-center justify-center gap-5 transition-opacity duration-500 ${
+      // z-40 und nicht z-50: die Navigationsleiste (z-41) bleibt SICHTBAR,
+      // waehrend geladen wird. Sie ist Geruest der App, kein Seiteninhalt —
+      // wer auf eine Seite wechselt, die noch laedt, soll nicht das Gefuehl
+      // haben, die App sei weg. Der schwebende Glaskoerper legt sich dabei auf
+      // die Ladeflaeche und zeichnet sie weich, was gut aussieht.
+      //
+      // Ueber dem FAQ-Knopf (z-39) liegt sie weiterhin: der gehoert zur Seite
+      // und hat auf einem Ladebildschirm nichts zu suchen. Dialoge (z-45
+      // aufwaerts) liegen weiterhin ueber allem.
+      className={`fixed inset-0 z-40 bg-[#070B11] flex flex-col items-center justify-center gap-5 transition-opacity duration-500 ${
         fadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
     >

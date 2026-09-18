@@ -1596,7 +1596,20 @@ main.flex-1 {
   left: max(var(--bottom-nav-inset), env(safe-area-inset-left));
   right: max(var(--bottom-nav-inset), env(safe-area-inset-right));
   bottom: calc(env(safe-area-inset-bottom) + var(--bottom-nav-gap));
-  z-index: 40;
+  /*
+   * Die Stapelordnung am unteren Rand, von unten nach oben:
+   *
+   *   39  FAQ-Knopf          gehoert zur Seite
+   *   40  Ladebildschirm     verdeckt die Seite, nicht das Geruest
+   *   41  diese Leiste       bleibt IMMER stehen, auch waehrend geladen wird
+   *   45  Schnellzugriff-Hintergrund
+   *   46  Schnellzugriff
+   *   50  Dialoge            duerfen alles verdecken, auch die Leiste
+   *
+   * Der Sprung von 40 auf 41 ist der Kern: vorher lag der Ladebildschirm mit
+   * z-50 darueber, und die Leiste verschwand beim Seitenwechsel.
+   */
+  z-index: 41;
   height: var(--bottom-nav-capsule);
   max-width: 480px;
   margin-inline: auto;

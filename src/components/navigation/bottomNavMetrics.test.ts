@@ -40,6 +40,22 @@ describe('Maße der Bottom-Navigation', () => {
     expect(wert('bottom-nav-height')).toBeLessThanOrEqual(90)
   })
 
+  it('bleibt über dem Ladebildschirm stehen', () => {
+    // Die Leiste ist Gerüst der App, kein Seiteninhalt: wer auf eine Seite
+    // wechselt, die noch lädt, soll nicht das Gefühl haben, die App sei weg.
+    // Vorher lag `LabLoader` mit z-50 darüber und sie verschwand.
+    //
+    // Die Ordnung am unteren Rand: 39 FAQ-Knopf, 40 Ladebildschirm, 41 diese
+    // Leiste, 45/46 Schnellzugriff, 50 Dialoge. Dialoge dürfen die Leiste
+    // verdecken — ein Dialog ist kein Ladezustand.
+    const loader = readFileSync(new URL('../LabLoader.tsx', import.meta.url), 'utf8')
+
+    expect(css()).toMatch(/\.tyd-tabbar\s*\{[\s\S]*?z-index:\s*41;/)
+    const klassen = loader.match(/className=\{`fixed[^`]*`/)![0]
+    expect(klassen).toContain('z-40')
+    expect(klassen).not.toContain('z-50')
+  })
+
   it('gibt jedem Reiter mindestens 44 px für den Finger', () => {
     expect(css()).toMatch(/\.tyd-tabbar-item\s*\{[^}]*min-height:\s*44px/)
   })
