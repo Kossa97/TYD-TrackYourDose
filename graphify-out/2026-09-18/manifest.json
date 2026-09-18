@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789689670.0127928,
-    "seen": 1789690246.0666814,
+    "mtime": 1789642433.3992813,
+    "seen": 1789688538.8476436,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4482,21 +4482,21 @@
     "semantic_hash": ""
   },
   "src/components/navigation/LiquidGlassTabBar.test.tsx": {
-    "mtime": 1789689539.234774,
-    "seen": 1789690246.0660944,
-    "ast_hash": "d40fe9d0b4f4d2421598c563c1249684",
+    "mtime": 1789642215.918756,
+    "seen": 1789688538.8472238,
+    "ast_hash": "cc345f35fcb3509efb7f1c37c5a1b455",
     "semantic_hash": ""
   },
   "src/components/navigation/LiquidGlassTabBar.tsx": {
-    "mtime": 1789689388.0968952,
-    "seen": 1789690246.066099,
-    "ast_hash": "25c62b8c1621ed46b31f5a288d7ef81b",
+    "mtime": 1789642029.8700578,
+    "seen": 1789688538.8472254,
+    "ast_hash": "09e1e4e283be56a06a97005f87996076",
     "semantic_hash": ""
   },
   "src/components/navigation/bottomNavMetrics.test.ts": {
-    "mtime": 1789689666.0941641,
-    "seen": 1789690246.0661,
-    "ast_hash": "f492efe2785f2335f4d28ed8929f61b0",
+    "mtime": 1789640835.1260383,
+    "seen": 1789641365.3956811,
+    "ast_hash": "afdd80e605e84ef77ad0aec57930d155",
     "semantic_hash": ""
   },
   "src/components/navigation/tabModel.test.ts": {
@@ -4509,18 +4509,6 @@
     "mtime": 1789637916.769732,
     "seen": 1789639223.7130337,
     "ast_hash": "6a10a8673ab9aaca68946c4efd7a916f",
-    "semantic_hash": ""
-  },
-  "src/components/navigation/tabBarGeometry.test.ts": {
-    "mtime": 1789689503.5209215,
-    "seen": 1789690246.0661018,
-    "ast_hash": "89a13a0a7524f7e44bb1407c69a90c0d",
-    "semantic_hash": ""
-  },
-  "src/components/navigation/tabBarGeometry.ts": {
-    "mtime": 1789689503.5207586,
-    "seen": 1789690246.066103,
-    "ast_hash": "5357b5f1a9315df950c909cb6414cff6",
     "semantic_hash": ""
   }
 }
