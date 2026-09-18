@@ -20,6 +20,8 @@ import type { DosageFormDefinition } from './dosageForms'
 
 export type DetailFeld =
   | 'wirkstoff'
+  | 'kategorie'
+  | 'marke'
   | 'fluessigkeit'
   | 'rekonstituiert_am'
   | 'haltbarkeit'
@@ -72,7 +74,16 @@ export function detailAbschnitte(form: DosageFormDefinition | undefined): Detail
   if (kann('reconstitutable')) produkt.push('fluessigkeit', 'rekonstituiert_am', 'haltbarkeit')
   if (kann('inventory_capable')) produkt.push('vorrat')
 
-  const substanz: DetailFeld[] = ['wirkstoff', 'applikation', 'batch', 'quelle', 'analyse', 'notizen']
+  // Kategorie und Marke standen bis eben in einer zweiten Darstellung
+  // DARUEBER (`StackItemDetails`), zusammen mit Name, Zutaten und Notizen —
+  // also dreimal dasselbe untereinander, aus zwei verschiedenen Quellen. Was
+  // dort einzigartig war, steht jetzt hier; die Darreichungsform nennt schon
+  // die Ueberschrift des Wirkstoffs („Wirkstoff pro Pflaster"), und der Name
+  // steht auf dem Objekt darueber.
+  const substanz: DetailFeld[] = [
+    'wirkstoff', 'kategorie', 'applikation', 'marke',
+    'batch', 'quelle', 'analyse', 'notizen',
+  ]
 
   // Zuerst WAS es ist, dann was DIESE Packung ist.
   const abschnitte: DetailAbschnitt[] = [{ id: 'substanz', felder: substanz }]

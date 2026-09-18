@@ -2790,15 +2790,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1789750333.089065,
-    "seen": 1789750442.406304,
-    "ast_hash": "e516578e4010de70bc1d5069ed9c1102",
+    "mtime": 1789756027.8607965,
+    "seen": 1789756134.7709482,
+    "ast_hash": "b020438ce4cad3277727249b0e0a9c62",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1789750222.9792821,
-    "seen": 1789750442.406306,
-    "ast_hash": "c5520c22a316c390bab91e6256682ed4",
+    "mtime": 1789755945.579111,
+    "seen": 1789756134.7709498,
+    "ast_hash": "289fcec3b7112f1f76ae53ed814c5f2e",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
@@ -2818,12 +2818,6 @@
     "seen": 1788803479.1909873,
     "ast_hash": "fb778564f1d16edfe93a34d00fb681c3",
     "semantic_hash": "fb778564f1d16edfe93a34d00fb681c3"
-  },
-  "src/features/my-stack/components/StackItemDetails.tsx": {
-    "mtime": 1788612179.7562935,
-    "seen": 1788803479.190988,
-    "ast_hash": "2749a82e615b1d1fa75debee0fd34607",
-    "semantic_hash": "2749a82e615b1d1fa75debee0fd34607"
   },
   "src/features/my-stack/components/StackItemWizard.interaction.test.tsx": {
     "mtime": 1789547752.652272,
@@ -4146,8 +4140,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789750370.2432787,
-    "seen": 1789750442.406779,
+    "mtime": 1789756061.7731543,
+    "seen": 1789756134.7712963,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4482,9 +4476,21 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/stackDetailSections.ts": {
-    "mtime": 1789749480.6785364,
-    "seen": 1789750442.4064956,
-    "ast_hash": "bc80ef272cec0e20f6458b6bac8e25a5",
+    "mtime": 1789755591.6576042,
+    "seen": 1789756134.7710927,
+    "ast_hash": "2c8684f15ef3602639a5e01e95385da4",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/lib/produktAngaben.test.ts": {
+    "mtime": 1789755722.6971343,
+    "seen": 1789756134.7710874,
+    "ast_hash": "31d3d8491e03991c1b716d3ff6019aa6",
+    "semantic_hash": ""
+  },
+  "src/features/my-stack/lib/produktAngaben.ts": {
+    "mtime": 1789755579.2291257,
+    "seen": 1789756134.7710884,
+    "ast_hash": "3c3fc22feac24ca8772faf74b69c7a32",
     "semantic_hash": ""
   }
 }

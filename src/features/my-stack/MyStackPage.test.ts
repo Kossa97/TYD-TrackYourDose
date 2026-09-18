@@ -139,6 +139,60 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('}[wirkstoffBezug(form)]')
   })
 
+  test('nennt in „Verwalten" jede Tür beim Namen', () => {
+    // „Bearbeiten" fuehrt in den Assistenten, „Vial-Tracking" in das aeltere
+    // Formular — zwei Tueren in denselben Raum, die in verschiedene Spalten
+    // schreiben. Ein Zahnrad ohne Wort verschweigt den Unterschied. Und das
+    // Vial-Tracking nur dort, wo es etwas tut: `openTrackingDetails` steigt
+    // bei einer Form ohne Buehnenobjekt sofort wieder aus.
+    const text = source()
+    const verwalten = text.slice(
+      text.indexOf('data-stack-detail="verwalten"'),
+      text.indexOf('\n  return (', text.indexOf('data-stack-detail="verwalten"')),
+    )
+    const platz = (s: string) => verwalten.indexOf(s)
+
+    expect(verwalten).toContain('<Pencil size={14} /> Bearbeiten')
+    expect(verwalten).toContain('<SlidersHorizontal size={14} /> Vial-Tracking')
+    expect(verwalten).toContain('isStageRenderable(activePeptide.dosage_form) && (')
+    expect(verwalten).toContain('<Trash2 size={14} /> Substanz löschen')
+    expect(verwalten).not.toContain('> Edit')
+    // Das Löschen abgesetzt und zuletzt.
+    expect(platz('Substanz löschen')).toBeGreaterThan(platz('Bearbeiten'))
+    expect(platz('Substanz löschen')).toBeGreaterThan(platz('Vial-Tracking'))
+  })
+
+  test('liest die Angaben durch die Leseschicht, nicht aus den Altspalten', () => {
+    // Das Vollbild las `vial_amount_mg`, `batch_number`, `inventory_items` —
+    // also genau die Spalten, die NUR die Tracking-Details schreiben. Ein
+    // Eintrag aus dem Assistenten zeigte deshalb ueberall „Nicht gesetzt",
+    // obwohl seine Angaben in `stack_item_ingredients` und
+    // `stack_item_inventory` standen.
+    const text = source()
+    const vollbild = text.slice(
+      text.indexOf('const eintragDetails'),
+      text.indexOf('\n  return (', text.indexOf('const eintragDetails')),
+    )
+
+    expect(text).toContain("import { produktAngaben, type Angabe, type Zutat } from './lib/produktAngaben'")
+    expect(vollbild).toContain('const angaben = produktAngaben({')
+    expect(vollbild).toContain('vorratsposten: invItem')
+    expect(vollbild).toContain("zyklusMethode: activeCycle?.method ?? null")
+
+    // Keine Altspalte mehr direkt im Vollbild — sie stehen jetzt alle in
+    // `produktAngaben.ts`, wo auch ihr Ersatz steht. Gemeint ist der CODE:
+    // im Kommentar darueber steht `vial_amount_mg` als Begruendung.
+    const code = vollbild.split('\n').filter(z => !/^\s*(\/\/|\*|\/\*)/.test(z)).join('\n')
+    for (const spalte of [
+      'activePeptide.vial_amount_mg', 'activePeptide.reconstitution_ml',
+      'activePeptide.reconstitution_date', 'activePeptide.expiry_days',
+      'activePeptide.batch_number', 'activePeptide.batch_source',
+      'activePeptide.batch_file_url', 'activePeptide.default_method',
+    ]) {
+      expect(code, spalte).not.toContain(spalte)
+    }
+  })
+
   test('bietet „Erneut anmischen" nur an, wo man anmischt', () => {
     // Bei einem Pflaster stand der Knopf da und war für immer ausgegraut —
     // dieselbe Regel wie bei den Angaben. Und ohne den Tippfehler von vorher
@@ -158,7 +212,7 @@ describe('My Stack page vial view', () => {
     // Nur im Wortlaut der Oberfläche, nicht in Kommentaren — dort steht der
     // alte Name als Begründung.
     expect(text).not.toContain("label: 'Applikationsart'")
-    expect(text).toContain("applikation: { label: String(t('methode'))")
+    expect(text).toContain("applikation: String(t('methode')),")
   })
 
   test('setzt das Objekt mit einem Kontaktschatten auf den Boden', () => {
@@ -798,11 +852,15 @@ describe('My Stack modular integration', () => {
     const text = source()
     expect(text).toContain('<StackItemWizard')
     expect(text).toContain('<StackStage')
-    expect(text).toContain('<StackItemDetails')
     expect(text).toContain('<StackArchive')
     expect(text).not.toContain('const myStackComponents')
+    // `StackItemDetails` ist weg: es zeigte Name, Zutaten und Notizen ein
+    // zweites Mal ueber dem Feldraster, aus dem neuen Modell, waehrend das
+    // Raster dieselben Angaben aus den Altspalten las. Was dort einzigartig
+    // war — Kategorie und Marke —, steht jetzt im Raster.
+    expect(text).not.toContain('StackItemDetails')
 
-    for (const name of ['StackItemDetails', 'StackArchive']) {
+    for (const name of ['StackArchive']) {
       const component = componentSource(name)
       expect(component).not.toContain('children: ReactNode')
       expect(component).not.toContain('return <>{children}</>')

@@ -27,9 +27,9 @@ import {
   detailAbschnitte, produktTitel, wirkstoffBezug, zeigtFeld,
   type DetailFeld,
 } from './lib/stackDetailSections'
+import { produktAngaben, type Angabe, type Zutat } from './lib/produktAngaben'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
-import { StackItemDetails } from './components/StackItemDetails'
 import { StackArchive } from './components/StackArchive'
 import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, saveStackItemSetup, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
 import { searchSubstanceCatalog } from './services/substanceCatalog'
@@ -1786,34 +1786,89 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     pro_masse: 'Wirkstoff pro g',
                     roh: 'Wirkstoff',
                   }[wirkstoffBezug(form)]
-                  const felder: Record<DetailFeld, InfoRow> = {
-                    wirkstoff: {
-                      label: wirkstoffLabel,
-                      value: activePeptide.vial_amount_mg
-                        ? `${activePeptide.vial_amount_mg} ${activePeptide.vial_amount_unit ?? 'mg'}`
-                        : notSet,
-                    },
-                    fluessigkeit: { label: 'Zugefügte Flüssigkeit', value: activePeptide.reconstitution_ml ? `${activePeptide.reconstitution_ml} mL` : notSet },
-                    rekonstituiert_am: { label: 'Angemischt am', value: activePeptide.reconstitution_date ? format(parseISO(activePeptide.reconstitution_date), 'dd.MM.yyyy') : notSet },
-                    haltbarkeit: { label: 'Haltbar danach', value: activePeptide.expiry_days ? `${activePeptide.expiry_days} Tage` : notSet },
-                    vorrat: { label: 'Vorrat', value: invItem ? t('vials_vorratig', { n: invItem.vials_count }) : notSet },
-                    // „Methode" und nicht „Applikationsart": im Zyklusfeld
-                    // darueber steht dasselbe Feld unter demselben Namen.
-                    applikation: { label: String(t('methode')), value: activePeptide.default_method ? String(t(METHOD_KEYS[activePeptide.default_method] ?? activePeptide.default_method)) : notSet },
-                    batch: { label: 'Batch', value: activePeptide.batch_number || notSet },
-                    quelle: { label: 'Quelle', value: activePeptide.batch_source || notSet },
-                    analyse: {
-                      label: 'Analyse-Dokument',
-                      wide: true,
-                      valueNode: activePeptide.batch_file_url
-                        ? (
-                          <a className="truncate text-cyan-300 hover:text-cyan-200" href={activePeptide.batch_file_url} target="_blank" rel="noopener noreferrer">
-                            {activePeptide.batch_file_url.split('/').pop() || 'Öffnen'}
+                  /**
+                   * Die Angaben kommen aus der Leseschicht, nicht direkt aus
+                   * den Altspalten.
+                   *
+                   * Vorher stand hier `activePeptide.vial_amount_mg` und so
+                   * fort — also genau die Spalten, die NUR die
+                   * Tracking-Details schreiben. Ein Eintrag aus dem
+                   * Assistenten zeigte deshalb ueberall „Nicht gesetzt",
+                   * obwohl seine Angaben in `stack_item_ingredients` und
+                   * `stack_item_inventory` standen. Siehe `produktAngaben.ts`.
+                   */
+                  const angaben = produktAngaben({
+                    item: activePeptide,
+                    vorratsposten: invItem,
+                    zyklusMethode: activeCycle?.method ?? null,
+                  })
+                  const methodeText = (m: string) => String(t(METHOD_KEYS[m] ?? m))
+                  const zutatText = (z: Zutat, mitNamen: boolean) => [
+                    mitNamen ? z.name : null,
+                    `${z.wert ?? '-'} ${z.einheit ?? ''}`.trim(),
+                    z.basis != null ? `/ ${z.basis} ${z.basisEinheit ?? ''}`.trim() : null,
+                  ].filter(Boolean).join(' ')
+                  const angabeText = (feld: DetailFeld, a: Angabe): string => {
+                    switch (a.art) {
+                      case 'leer': return notSet
+                      case 'zutaten':
+                        return a.zutaten.map(z => zutatText(z, a.zutaten.length > 1)).join(' · ')
+                      case 'menge': return `${a.wert} ${a.einheit ?? ''}`.trim()
+                      case 'vorrat':
+                        // Alt zaehlt Vials, neu zaehlt, was auf der Packung
+                        // steht — „12 von 30 Tabletten".
+                        return a.einheit == null
+                          ? String(t('vials_vorratig', { n: a.rest }))
+                          : a.packung != null
+                            ? `${a.rest} / ${a.packung} ${a.einheit}`
+                            : `${a.rest} ${a.einheit}`
+                      case 'datum': return format(parseISO(a.iso), 'dd.MM.yyyy')
+                      case 'tage': return `${a.n} Tage`
+                      case 'datei': return a.url.split('/').pop() || 'Öffnen'
+                      case 'text':
+                        if (feld === 'kategorie') return String(t(`stack_category_${a.text}`))
+                        if (feld === 'applikation') return methodeText(a.text)
+                        return a.text
+                    }
+                  }
+                  // „Haltbar danach" zaehlt ab dem Anmischen, „Haltbar bis"
+                  // steht auf der Packung. Welche der beiden es ist, sagt die
+                  // Angabe selbst — nicht die Form.
+                  const haltbarkeitLabel = angaben.haltbarkeit.art === 'datum' ? 'Haltbar bis' : 'Haltbar danach'
+                  const FELD_LABEL: Record<DetailFeld, string> = {
+                    wirkstoff: wirkstoffLabel,
+                    kategorie: 'Kategorie',
+                    marke: 'Marke',
+                    fluessigkeit: 'Zugefügte Flüssigkeit',
+                    rekonstituiert_am: 'Angemischt am',
+                    haltbarkeit: haltbarkeitLabel,
+                    vorrat: 'Vorrat',
+                    // „Methode" und nicht „Applikationsart": im Zyklusknopf
+                    // steht dasselbe Feld unter demselben Namen.
+                    applikation: String(t('methode')),
+                    batch: 'Batch',
+                    quelle: 'Quelle',
+                    analyse: 'Analyse-Dokument',
+                    notizen: 'Notizen',
+                  }
+                  const zeileFuer = (feld: DetailFeld): InfoRow => {
+                    const a = angaben[feld]
+                    const wert = angabeText(feld, a)
+                    // Ueber zwei Spalten, wo eine Zeile sonst abgeschnitten
+                    // waere: ein Kombipraeparat, ein Dateiname, eine Notiz.
+                    const wide = feld === 'analyse' || feld === 'notizen'
+                      || (a.art === 'zutaten' && a.zutaten.length > 1)
+                    if (a.art === 'datei') {
+                      return {
+                        label: FELD_LABEL[feld], wide,
+                        valueNode: (
+                          <a className="truncate text-cyan-300 hover:text-cyan-200" href={a.url} target="_blank" rel="noopener noreferrer">
+                            {wert}
                           </a>
-                        )
-                        : <span>{notSet}</span>,
-                    },
-                    notizen: { label: 'Notizen', value: activePeptide.notes || notSet, wide: true },
+                        ),
+                      }
+                    }
+                    return { label: FELD_LABEL[feld], value: wert, wide }
                   }
                   // Wie der Produktabschnitt heisst, folgt seinem INHALT —
                   // „Rekonstitution", wo eine Fluessigkeit zugefuegt wird,
@@ -1835,10 +1890,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         <h3 className="border-b border-slate-800 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                           {ABSCHNITT_TITEL[abschnitt.id === 'substanz' ? 'substanz' : produktTitel(abschnitt)]}
                         </h3>
-                        {abschnitt.id === 'substanz' && <StackItemDetails item={activePeptide} />}
                         <div className="grid grid-cols-2 gap-2 p-2 text-xs">
                           {abschnitt.felder.map(feld => {
-                            const zeile = felder[feld]
+                            const zeile = zeileFuer(feld)
                             return (
                               <div key={feld} data-stack-detail-field={feld} className={`min-h-14 rounded-lg border border-slate-800 bg-slate-900/55 px-2.5 py-2 ${'wide' in zeile && zeile.wide ? 'col-span-2' : ''}`}>
                                 <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-slate-500">{zeile.label}</p>
@@ -1932,7 +1986,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         Eintrag AENDERT, nach unten. */}
                     <div data-stack-detail="verwalten" className="mt-3 border-t border-slate-800/70 px-1 pt-3">
                       <h3 className="mb-2 px-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">Verwalten</h3>
-                <div className="mt-2 flex gap-2 px-1 text-xs font-semibold">
+                <div className="flex flex-col gap-2 px-1 text-xs font-semibold">
                   {/* Dieselbe Regel wie bei den Angaben: wer nicht anmischt,
                       braucht auch keinen Knopf dafuer. Bei einem Pflaster stand
                       er hier und war fuer immer ausgegraut. */}
@@ -1941,35 +1995,45 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     type="button"
                     onClick={() => handleRekonstitution(activePeptide)}
                     disabled={!activePeptide.inventory_item_id}
-                    className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 text-cyan-200 transition-colors hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-900/60 disabled:text-slate-600"
+                    className="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 text-cyan-200 transition-colors hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-900/60 disabled:text-slate-600"
                   >
                     <RefreshCw size={14} /> Erneut anmischen
                   </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => openTrackingDetails(activePeptide)}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/5 text-violet-300 transition-colors hover:border-violet-400/40 hover:bg-violet-500/10"
-                    aria-label="Vial-Tracking bearbeiten"
-                    title="Vial-Tracking bearbeiten"
-                  >
-                    <SlidersHorizontal size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openEditPeptide(activePeptide)}
-                    className="flex min-h-10 w-20 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/70 px-2 text-slate-200 transition-colors hover:border-sky-400/40 hover:text-sky-300"
-                  >
-                    <Pencil size={14} /> Edit
-                  </button>
+                  {/* Zwei Tueren in denselben Raum: „Bearbeiten" fuehrt in den
+                      Assistenten, „Vial-Tracking" in das aeltere Formular, und
+                      die beiden schreiben in verschiedene Spalten (siehe
+                      `produktAngaben.ts`). Solange das so ist, heisst hier
+                      jede, was sie oeffnet — ein Zahnrad ohne Wort verschweigt
+                      den Unterschied bloss. Das Vial-Tracking nur dort, wo es
+                      ueberhaupt etwas tut: `openTrackingDetails` steigt bei
+                      einer Form ohne Buehnenobjekt sofort wieder aus. */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEditPeptide(activePeptide)}
+                      className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/70 px-2 text-slate-200 transition-colors hover:border-sky-400/40 hover:text-sky-300"
+                    >
+                      <Pencil size={14} /> Bearbeiten
+                    </button>
+                    {isStageRenderable(activePeptide.dosage_form) && (
+                      <button
+                        type="button"
+                        onClick={() => openTrackingDetails(activePeptide)}
+                        className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-violet-500/20 bg-violet-500/5 px-2 text-violet-300 transition-colors hover:border-violet-400/40 hover:bg-violet-500/10"
+                      >
+                        <SlidersHorizontal size={14} /> Vial-Tracking
+                      </button>
+                    )}
+                  </div>
+                  {/* Abgesetzt und zuletzt. Es stand einmal ganz oben, direkt
+                      unter dem Daumen. */}
                   <button
                     type="button"
                     onClick={() => removePeptide(activePeptide.id)}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/5 text-red-300 transition-colors hover:border-red-400/40 hover:bg-red-500/10"
-                    aria-label="Substanz löschen"
-                    title="Substanz löschen"
+                    className="mt-1 flex min-h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/5 text-red-300 transition-colors hover:border-red-400/40 hover:bg-red-500/10"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={14} /> Substanz löschen
                   </button>
                 </div>                    </div>
                     </>
