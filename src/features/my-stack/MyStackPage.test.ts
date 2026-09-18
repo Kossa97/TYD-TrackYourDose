@@ -122,6 +122,45 @@ describe('My Stack page vial view', () => {
     expect(text.match(/void hapticTick\(\)/g)).toHaveLength(1)
   })
 
+  test('sucht die Angaben nach Darreichungsform aus', () => {
+    // Bei einem Pflaster standen dort drei Kacheln „Nicht gesetzt" —
+    // Flüssigkeit, Angemischt am, Haltbar danach —, weil ein Pflaster nichts
+    // davon kennt. Das sieht nicht nach „noch nicht ausgefüllt" aus, sondern
+    // nach kaputt. Was vorkommt, entscheidet jetzt `detailAbschnitte` aus dem,
+    // was die Form ohnehin über sich sagt.
+    const text = source()
+
+    expect(text).toContain("import {\n  detailAbschnitte, wirkstoffBezug,")
+    expect(text).toContain('detailAbschnitte(form).map(abschnitt => (')
+    expect(text).toContain('data-stack-detail={abschnitt.id}')
+    expect(text).toContain('data-stack-detail-field={feld}')
+    // Und die Stärke heißt, wie die Form sie misst — „pro Vial" stimmt beim
+    // Vial und sonst nirgends.
+    expect(text).toContain('}[wirkstoffBezug(form)]')
+  })
+
+  test('bietet „Erneut anmischen" nur an, wo man anmischt', () => {
+    // Bei einem Pflaster stand der Knopf da und war für immer ausgegraut —
+    // dieselbe Regel wie bei den Angaben. Und ohne den Tippfehler von vorher
+    // („rekonstitutieren").
+    const text = source()
+
+    expect(text).toContain("{zeigtFeld(form, 'fluessigkeit') && (")
+    expect(text).toContain('Erneut anmischen')
+    expect(text).not.toContain('rekonstitutieren')
+  })
+
+  test('nennt die Methode überall gleich', () => {
+    // In der Info hieß dasselbe Feld „Applikationsart", im Zyklusfeld darüber
+    // „Methode" — beide zeigen `default_method` beziehungsweise `method`.
+    const text = source()
+
+    // Nur im Wortlaut der Oberfläche, nicht in Kommentaren — dort steht der
+    // alte Name als Begründung.
+    expect(text).not.toContain("label: 'Applikationsart'")
+    expect(text).toContain("applikation: { label: String(t('methode'))")
+  })
+
   test('setzt das Objekt mit einem Kontaktschatten auf den Boden', () => {
     // Der breite, weichgezeichnete Spot ließ es in Dunst schweben. Was
     // „steht auf etwas" macht, ist ein schmaler Schatten direkt darunter.
@@ -192,15 +231,27 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('className="relative -mx-3"')
   })
 
-  test('shows the cycle panel directly under the Info panel, without a collapse toggle', () => {
+  test('ordnet das Vollbild von „was tue ich jetzt" nach „was ist das"', () => {
+    // Vorher standen die vier Verwaltungsknöpfe ganz oben — mitsamt dem
+    // Löschen, direkt unter dem Daumen, bevor man gesehen hat, was man vor
+    // sich hat. Jetzt: Zyklus, dann Bestand und Substanz, und erst zuletzt,
+    // was man am Eintrag ändert.
+    const text = source()
+    const platz = (s: string) => text.indexOf(s)
+
+    expect(platz("t('aktiver_zyklus')")).toBeGreaterThan(-1)
+    expect(platz("t('aktiver_zyklus')")).toBeLessThan(platz('detailAbschnitte(form).map'))
+    expect(platz('detailAbschnitte(form).map')).toBeLessThan(platz('data-stack-detail="verwalten"'))
+  })
+
+  test('versteckt im Vollbild nichts mehr hinter einem Klappknopf', () => {
+    // Wer das Vollbild öffnet, will die Angaben sehen. Der „Info"-Knopf davor
+    // war eine Hürde ohne Gegenwert.
     const text = source()
 
-    // the cycle section is no longer hidden behind an expandable toggle
     expect(text).not.toContain('vialCyclesOpen')
-    // it renders directly under the Info panel
-    expect(text).toContain('<span>Info</span>')
-    expect(text).toContain("t('aktiver_zyklus')")
-    expect(text.indexOf('<span>Info</span>')).toBeLessThan(text.indexOf("t('aktiver_zyklus')"))
+    expect(text).not.toContain('vialDetailsOpen')
+    expect(text).not.toContain('<span>Info</span>')
   })
 
   test('renders a single active-cycle cockpit with empty states for no active / no cycle', () => {
@@ -302,12 +353,6 @@ describe('My Stack page vial view', () => {
   test('uses a compact mobile cockpit for vial details and the active cycle', () => {
     const text = source()
 
-    expect(text).toContain('vialDetailsOpen')
-    expect(text).toContain('const [vialDetailsOpen, setVialDetailsOpen] = useState(false)')
-    expect(text).toContain('setVialDetailsOpen(false)')
-    expect(text).toContain('<FileText size={15} className="text-cyan-300" />')
-    expect(text).toContain('<span>Info</span>')
-    expect(text).toContain('justify-center gap-2')
     expect(text).toContain("t('aktiver_zyklus')")
     expect(text).toContain('Dosisanpassungen')
     expect(text).toContain('dosePlanViewFor(activeCycle).current')
@@ -322,12 +367,16 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('mt-2 flex justify-center')
     expect(text).toContain("cycleDay ? `${cycleDay} / ${cycleTotalDays ?? t('ende_offen')}` : '-'")
     expect(text).toContain('{cycleDayLabel}')
-    expect(text).toContain('Haltbar')
-    expect(text).toContain('Rekonst.')
-    expect(text).toContain('Peptidname')
-    expect(text).toContain('Rohe Vials in Reserve')
+    // Die Angaben stehen jetzt in nach Form ausgesuchten Abschnitten; die
+    // drei Fassungen derselben Daten (zwei davon `hidden`) sind weg, ebenso
+    // die Kachel „Peptidname" — der Name steht auf dem Objekt darüber.
+    expect(text).toContain('Haltbar danach')
+    expect(text).toContain('Angemischt am')
+    expect(text).not.toContain('Peptidname')
+    expect(text).not.toContain('Rohe Vials in Reserve')
+    expect(text).not.toContain('compactInfoRows')
+    expect(text).not.toContain('moreInfoRows')
     expect(text).toContain('grid grid-cols-2 gap-2')
-    expect(text).toContain('compactInfoRows.map')
     expect(text).toContain('Analyse-Dokument')
     expect(text).not.toContain('Nächste Dosis')
     expect(text).not.toContain('Zeit offen')
@@ -338,9 +387,7 @@ describe('My Stack page vial view', () => {
     expect(text).not.toContain('Standard-Dosis')
     expect(text).not.toContain('standard_dosis_label')
     expect(text).not.toContain('Mehr Optionen')
-    expect(text).toContain('aria-expanded={vialDetailsOpen}')
     expect(text).toContain('sortedEscalationsOf(activeCycle.id)')
-    expect(text.indexOf('Rekonst.')).toBeLessThan(text.indexOf('<span>Info</span>'))
     expect(text).not.toContain('<h3 className="truncate text-xl font-bold text-white">{p.name}</h3>')
   })
 

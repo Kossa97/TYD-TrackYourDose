@@ -23,6 +23,10 @@ import { LabLoader } from '../../components/LabLoader'
 import { StackItemWizard } from './components/StackItemWizard'
 import { StageDetailSheet } from './components/StageDetailSheet'
 import { hapticTick } from '../../lib/haptics'
+import {
+  detailAbschnitte, wirkstoffBezug, zeigtFeld,
+  type AbschnittId, type DetailFeld,
+} from './lib/stackDetailSections'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
 import { StackItemDetails } from './components/StackItemDetails'
@@ -535,7 +539,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     localStorage.getItem('tyd_peptide_view') === 'list' ? 'list' : 'vials'
   )
   const [activePeptideId, setActivePeptideId] = useState<string | null>(null)
-  const [vialDetailsOpen, setVialDetailsOpen] = useState(false)
   // Das Rechteck des angetippten Objekts — der Startpunkt des Flugs.
   const [detailUrsprung, setDetailUrsprung] = useState<DOMRect | null>(null)
   const [isVialCarouselDragging, setIsVialCarouselDragging] = useState(false)
@@ -1466,9 +1469,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
   const activeIndex = Math.max(0, stagePeptides.findIndex(p => p.id === activePeptideId))
   const activePeptide = stagePeptides[activeIndex] ?? null
-  useEffect(() => {
-    setVialDetailsOpen(false)
-  }, [activePeptideId])
   // Focus the search field right after it expands.
   useEffect(() => {
     if (searchOpen) searchInputRef.current?.focus()
@@ -1756,42 +1756,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
    */
   const eintragDetails = () => (
     <>
-                <div className="mt-2 flex gap-2 px-1 text-xs font-semibold">
-                  <button
-                    type="button"
-                    onClick={() => handleRekonstitution(activePeptide)}
-                    disabled={!activePeptide.inventory_item_id}
-                    className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 text-cyan-200 transition-colors hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-900/60 disabled:text-slate-600"
-                  >
-                    <RefreshCw size={14} /> Erneut rekonstitutieren
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openTrackingDetails(activePeptide)}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/5 text-violet-300 transition-colors hover:border-violet-400/40 hover:bg-violet-500/10"
-                    aria-label="Vial-Tracking bearbeiten"
-                    title="Vial-Tracking bearbeiten"
-                  >
-                    <SlidersHorizontal size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openEditPeptide(activePeptide)}
-                    className="flex min-h-10 w-20 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/70 px-2 text-slate-200 transition-colors hover:border-sky-400/40 hover:text-sky-300"
-                  >
-                    <Pencil size={14} /> Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removePeptide(activePeptide.id)}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/5 text-red-300 transition-colors hover:border-red-400/40 hover:bg-red-500/10"
-                    aria-label="Substanz löschen"
-                    title="Substanz löschen"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-
                 {(() => {
                   const invItem = activePeptide.inventory_item_id ? inventory.find(i => i.id === activePeptide.inventory_item_id) : null
                   const pCycles = cyclesOf(activePeptide.id)
@@ -1813,17 +1777,39 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     ? [freqLabel(activeCycle), activeIntake].filter(Boolean).join(' · ')
                     : null
                   const notSet = 'Nicht gesetzt'
-                  const compactInfoRows: InfoRow[] = [
-                    { label: 'Peptidname', value: activePeptide.name || notSet, wide: true },
-                    { label: 'Wirkstoff/Vial', value: activePeptide.vial_amount_mg ? `${activePeptide.vial_amount_mg} ${activePeptide.vial_amount_unit ?? 'mg'}` : notSet },
-                    { label: 'Flüssigkeit', value: activePeptide.reconstitution_ml ? `${activePeptide.reconstitution_ml} mL` : notSet },
-                    { label: 'Rekonst.', value: activePeptide.reconstitution_date ? format(parseISO(activePeptide.reconstitution_date), 'dd.MM.yyyy') : notSet },
-                    { label: 'Haltbarkeit', value: activePeptide.expiry_days ? `${activePeptide.expiry_days} Tage` : notSet },
-                    { label: 'Reserve', value: invItem ? t('vials_vorratig', { n: invItem.vials_count }) : notSet },
-                    { label: 'Applikationsart', value: activePeptide.default_method ? t(METHOD_KEYS[activePeptide.default_method] ?? activePeptide.default_method) : notSet },
-                    { label: 'Batch', value: activePeptide.batch_number || notSet },
-                    { label: 'Quelle', value: activePeptide.batch_source || notSet },
-                    {
+                  /**
+                   * Die Angaben, nach Form ausgesucht.
+                   *
+                   * Welche ueberhaupt vorkommen, entscheidet `detailAbschnitte`
+                   * aus dem, was die Form ueber sich sagt — ein Pflaster kennt
+                   * kein Anmischen, also steht dort auch keine Zeile dazu. Was
+                   * hier steht, ist nur noch der TEXT dazu.
+                   */
+                  const form = getDosageForm(activePeptide.dosage_form)
+                  const wirkstoffLabel = {
+                    pro_vial: 'Wirkstoff pro Vial',
+                    pro_volumen: 'Wirkstoff pro ml',
+                    pro_einheit: `Wirkstoff pro ${String(t(form.labelKey))}`,
+                    pro_masse: 'Wirkstoff pro g',
+                    roh: 'Wirkstoff',
+                  }[wirkstoffBezug(form)]
+                  const felder: Record<DetailFeld, InfoRow> = {
+                    wirkstoff: {
+                      label: wirkstoffLabel,
+                      value: activePeptide.vial_amount_mg
+                        ? `${activePeptide.vial_amount_mg} ${activePeptide.vial_amount_unit ?? 'mg'}`
+                        : notSet,
+                    },
+                    fluessigkeit: { label: 'Zugefügte Flüssigkeit', value: activePeptide.reconstitution_ml ? `${activePeptide.reconstitution_ml} mL` : notSet },
+                    rekonstituiert_am: { label: 'Angemischt am', value: activePeptide.reconstitution_date ? format(parseISO(activePeptide.reconstitution_date), 'dd.MM.yyyy') : notSet },
+                    haltbarkeit: { label: 'Haltbar danach', value: activePeptide.expiry_days ? `${activePeptide.expiry_days} Tage` : notSet },
+                    vorrat: { label: 'Vorrat', value: invItem ? t('vials_vorratig', { n: invItem.vials_count }) : notSet },
+                    // „Methode" und nicht „Applikationsart": im Zyklusfeld
+                    // darueber steht dasselbe Feld unter demselben Namen.
+                    applikation: { label: String(t('methode')), value: activePeptide.default_method ? String(t(METHOD_KEYS[activePeptide.default_method] ?? activePeptide.default_method)) : notSet },
+                    batch: { label: 'Batch', value: activePeptide.batch_number || notSet },
+                    quelle: { label: 'Quelle', value: activePeptide.batch_source || notSet },
+                    analyse: {
                       label: 'Analyse-Dokument',
                       wide: true,
                       valueNode: activePeptide.batch_file_url
@@ -1834,108 +1820,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         )
                         : <span>{notSet}</span>,
                     },
-                    { label: 'Notizen', value: activePeptide.notes || notSet, wide: true },
-                  ]
-                  const infoRows: InfoRow[] = [
-                    { label: 'Peptidname', value: activePeptide.name || notSet },
-                    { label: 'Wirkstoff pro Vial', value: activePeptide.vial_amount_mg ? `${activePeptide.vial_amount_mg} ${activePeptide.vial_amount_unit ?? 'mg'}` : notSet },
-                    { label: 'Zugefügte Flüssigkeit', value: activePeptide.reconstitution_ml ? `${activePeptide.reconstitution_ml} mL` : notSet },
-                    { label: 'Datum Rekonstitution', value: activePeptide.reconstitution_date ? format(parseISO(activePeptide.reconstitution_date), 'dd.MM.yyyy') : notSet },
-                    { label: 'Haltbarkeit nach Rekonstitution', value: activePeptide.expiry_days ? `${activePeptide.expiry_days} Tage` : notSet },
-                    { label: 'Rohe Vials in Reserve', value: invItem ? t('vials_vorratig', { n: invItem.vials_count }) : notSet },
-                    { label: 'Applikationsart', value: activePeptide.default_method ? t(METHOD_KEYS[activePeptide.default_method] ?? activePeptide.default_method) : notSet },
-                  ]
-                  const moreInfoRows: InfoRow[] = [
-                    { label: 'Batch', value: activePeptide.batch_number || notSet },
-                    { label: 'Quelle', value: activePeptide.batch_source || notSet },
-                    {
-                      label: 'Analyse-Dokument',
-                      valueNode: activePeptide.batch_file_url
-                        ? (
-                          <a className="truncate text-cyan-300 hover:text-cyan-200" href={activePeptide.batch_file_url} target="_blank" rel="noopener noreferrer">
-                            {activePeptide.batch_file_url.split('/').pop() || 'Öffnen'}
-                          </a>
-                        )
-                        : <span>{notSet}</span>,
-                    },
-                    { label: 'Notizen', value: activePeptide.notes || notSet },
-                  ]
-
+                    notizen: { label: 'Notizen', value: activePeptide.notes || notSet, wide: true },
+                  }
+                  const ABSCHNITT_TITEL: Record<AbschnittId, string> = {
+                    bestand: 'Bestand',
+                    substanz: 'Substanz',
+                  }
                   return (
                     <>
-                    <div className="mx-1 mt-2 overflow-hidden rounded-lg border border-slate-800 bg-slate-950/50">
-                      <button
-                        type="button"
-                        onClick={() => setVialDetailsOpen(open => !open)}
-                        aria-expanded={vialDetailsOpen}
-                        className="flex w-full items-center justify-center gap-2 px-3 py-3 text-center text-sm font-semibold text-white"
-                      >
-                        <FileText size={15} className="text-cyan-300" />
-                        <span>Info</span>
-                        {vialDetailsOpen ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
-                      </button>
-                      {vialDetailsOpen && (
-                        <>
-                        <StackItemDetails item={activePeptide} />
-                        <div className="border-t border-slate-800 text-xs">
-                          <div className="grid grid-cols-2 gap-2 p-2">
-                            {compactInfoRows.map(row => (
-                              <div key={row.label} className={`min-h-14 rounded-lg border border-slate-800 bg-slate-900/55 px-2.5 py-2 ${'wide' in row && row.wide ? 'col-span-2' : ''}`}>
-                                <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-slate-500">{row.label}</p>
-                                <div className="mt-1 truncate text-sm font-semibold text-slate-200">
-                                  {'valueNode' in row ? row.valueNode : row.value}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="hidden">
-                          {infoRows.map(row => (
-                            <div key={row.label} className="flex min-h-12 items-center justify-between gap-3 border-b border-slate-800/70 px-4 py-3 last:border-b-0">
-                              <span className="text-slate-300">{row.label}</span>
-                              <span className="min-w-0 max-w-[48%] truncate text-right font-medium text-slate-500">
-                                {'valueNode' in row ? row.valueNode : row.value}
-                              </span>
-                            </div>
-                          ))}
-                          <div className="flex min-h-10 items-center justify-center border-y border-slate-800 bg-slate-950/70 px-4 py-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Weitere Daten</span>
-                          </div>
-                          {moreInfoRows.map(row => (
-                            <div key={row.label} className="flex min-h-12 items-center justify-between gap-3 border-b border-slate-800/70 px-4 py-3 last:border-b-0">
-                              <span className="text-slate-300">{row.label}</span>
-                              <span className="min-w-0 max-w-[48%] truncate text-right font-medium text-slate-500">
-                                {'valueNode' in row ? row.valueNode : row.value}
-                              </span>
-                            </div>
-                          ))}
-                          </div>
-                          <div className="hidden">
-                          <div className="bg-slate-950/80 px-3 py-2">
-                            <p className="text-slate-500">Wirkstoff</p>
-                            <p className="font-semibold text-white">{activePeptide.vial_amount_mg ? `${activePeptide.vial_amount_mg} ${activePeptide.vial_amount_unit ?? 'mg'}/Vial` : '-'}</p>
-                          </div>
-                          <div className="bg-slate-950/80 px-3 py-2">
-                            <p className="text-slate-500">Flüssigkeit</p>
-                            <p className="font-semibold text-white">{activePeptide.reconstitution_ml ? `${activePeptide.reconstitution_ml} ml` : '-'}</p>
-                          </div>
-                          <div className="bg-slate-950/80 px-3 py-2">
-                            <p className="text-slate-500">Rekonst.</p>
-                            <p className="font-semibold text-white">{activePeptide.reconstitution_date ? format(parseISO(activePeptide.reconstitution_date), 'dd.MM.yyyy') : '-'}</p>
-                          </div>
-                          <div className="bg-slate-950/80 px-3 py-2">
-                            <p className="text-slate-500">Methode</p>
-                            <p className="font-semibold text-white">{t(METHOD_KEYS[activePeptide.default_method] ?? activePeptide.default_method)}</p>
-                          </div>
-                          <div className="bg-slate-950/80 px-3 py-2">
-                            <p className="text-slate-500">Vorrat</p>
-                            <p className="font-semibold text-white">{invItem ? t('vials_vorratig', { n: invItem.vials_count }) : '-'}</p>
-                          </div>
-                        </div>
-                        </div>
-                        </>
-                      )}
-                    </div>
-
                     <div className="mx-1 mt-2 rounded-xl border border-violet-500/20 bg-slate-950/55 p-3 text-xs">
                             {activeCycle ? (
                             <>
@@ -2106,6 +1998,81 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                               </div>
                             )}
                     </div>
+                    {/* Bestand und Substanz: offen, nicht hinter einem
+                        Akkordeon. Wer das Vollbild oeffnet, will sie sehen —
+                        ein Klappknopf davor war eine Huerde ohne Gegenwert.
+                        Die Darreichungsform entscheidet, welche Zeilen es
+                        ueberhaupt gibt. */}
+                    {detailAbschnitte(form).map(abschnitt => (
+                      <section key={abschnitt.id} data-stack-detail={abschnitt.id} className="mx-1 mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/50">
+                        <h3 className="border-b border-slate-800 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                          {ABSCHNITT_TITEL[abschnitt.id]}
+                        </h3>
+                        {abschnitt.id === 'substanz' && <StackItemDetails item={activePeptide} />}
+                        <div className="grid grid-cols-2 gap-2 p-2 text-xs">
+                          {abschnitt.felder.map(feld => {
+                            const zeile = felder[feld]
+                            return (
+                              <div key={feld} data-stack-detail-field={feld} className={`min-h-14 rounded-lg border border-slate-800 bg-slate-900/55 px-2.5 py-2 ${'wide' in zeile && zeile.wide ? 'col-span-2' : ''}`}>
+                                <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-slate-500">{zeile.label}</p>
+                                <div className="mt-1 truncate text-sm font-semibold text-slate-200">
+                                  {'valueNode' in zeile ? zeile.valueNode : zeile.value}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </section>
+                    ))}
+
+                    {/* Verwalten zuletzt. Oben standen diese vier Knoepfe als
+                        Erstes — mitsamt dem Loeschen, direkt unter dem Daumen,
+                        bevor man ueberhaupt gesehen hat, was man da vor sich
+                        hat. Was man TUT, gehoert nach oben (Dosis loggen,
+                        Zyklus verwalten); was man am Eintrag AENDERT, nach
+                        unten. */}
+                    <div data-stack-detail="verwalten" className="mt-3 border-t border-slate-800/70 px-1 pt-3">
+                      <h3 className="mb-2 px-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">Verwalten</h3>
+                <div className="mt-2 flex gap-2 px-1 text-xs font-semibold">
+                  {/* Dieselbe Regel wie bei den Angaben: wer nicht anmischt,
+                      braucht auch keinen Knopf dafuer. Bei einem Pflaster stand
+                      er hier und war fuer immer ausgegraut. */}
+                  {zeigtFeld(form, 'fluessigkeit') && (
+                  <button
+                    type="button"
+                    onClick={() => handleRekonstitution(activePeptide)}
+                    disabled={!activePeptide.inventory_item_id}
+                    className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 text-cyan-200 transition-colors hover:border-cyan-400/40 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-900/60 disabled:text-slate-600"
+                  >
+                    <RefreshCw size={14} /> Erneut anmischen
+                  </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => openTrackingDetails(activePeptide)}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/5 text-violet-300 transition-colors hover:border-violet-400/40 hover:bg-violet-500/10"
+                    aria-label="Vial-Tracking bearbeiten"
+                    title="Vial-Tracking bearbeiten"
+                  >
+                    <SlidersHorizontal size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openEditPeptide(activePeptide)}
+                    className="flex min-h-10 w-20 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/70 px-2 text-slate-200 transition-colors hover:border-sky-400/40 hover:text-sky-300"
+                  >
+                    <Pencil size={14} /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removePeptide(activePeptide.id)}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/5 text-red-300 transition-colors hover:border-red-400/40 hover:bg-red-500/10"
+                    aria-label="Substanz löschen"
+                    title="Substanz löschen"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>                    </div>
                     </>
                   )
                 })()}
