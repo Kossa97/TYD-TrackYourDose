@@ -45,7 +45,39 @@ describe('Maße der Bottom-Navigation', () => {
   })
 
   it('nimmt die Wege heraus, wenn jemand Bewegung abbestellt hat', () => {
-    expect(css()).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{[^}]*\.tyd-tabbar-pill/)
+    // Die Datei hat mehrere solche Blöcke; gemeint ist der der Leiste.
+    const block = css().slice(css().lastIndexOf('@media (prefers-reduced-motion: reduce)'))
+    const bis = block.slice(0, block.indexOf('\n}\n') + 3)
+
+    expect(bis).toContain('.tyd-tabbar-pill')
+    // Auch das Anheben beim Drücken und das Aufblähen der Blase.
+    expect(bis).toContain(".tyd-tabbar[data-gedrueckt='true'] { transform: none; }")
+    expect(bis).toContain(".tyd-tabbar-pill[data-gehalten='true'] { scale: 1; }")
+  })
+
+  it('rundet die Pille konzentrisch zur Kapsel, statt eine Zahl zu raten', () => {
+    // Außen die halbe Kapselhöhe, innen dieselbe Rundung minus dem Einzug —
+    // so laufen beide Kurven parallel. Ein fester Wert (oder 999px) träfe nur
+    // zufällig und liefe auseinander, sobald sich Höhe oder Einzug ändern.
+    expect(css()).toContain('border-radius: calc(var(--bottom-nav-capsule) / 2 - var(--bottom-nav-pill-inset))')
+    expect(css()).toContain('top: var(--bottom-nav-pill-inset)')
+    expect(css()).toContain('bottom: var(--bottom-nav-pill-inset)')
+  })
+
+  it('hebt die Leiste unter dem Finger ganz leicht an', () => {
+    // Dieselbe Geste wie bei Apple: nicht „Knopf gedrückt", sondern „Material
+    // antwortet". Über `transform`, damit nichts neu umbrochen wird.
+    expect(css()).toContain(".tyd-tabbar[data-gedrueckt='true'] { transform: scale(1.025); }")
+    expect(css()).toContain('transform-origin: bottom center')
+  })
+
+  it('lässt die Pille am Finger nicht nachfedern', () => {
+    // Frei heißt: sie hängt am Finger. Ein Nachfahren auf `transform` ließe
+    // sie der Bewegung hinterherlaufen wie an einem Gummi — aus „ich halte
+    // sie" würde „ich zerre sie". Farbe und Größe dürfen weich bleiben.
+    const frei = css().slice(css().indexOf(".tyd-tabbar-pill[data-frei='true']"))
+    expect(frei.slice(0, 220)).toContain('transition: background')
+    expect(frei.slice(0, 220)).not.toContain('transform')
   })
 
   it('bleibt brauchbar, wo Unschärfe oder Masken fehlen', () => {

@@ -2,7 +2,8 @@
 
 import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { LiquidGlassTabBar, PILLE_BREITE, SLOT_ATTR, type GlassTabItem } from './LiquidGlassTabBar'
+import { LiquidGlassTabBar, type GlassTabItem } from './LiquidGlassTabBar'
+import { SLOT_ATTR, pillenBreite } from './tabBarGeometry'
 
 function masse(reiter: Record<string, { links: number; breite: number }>, kapsel = 360) {
   Object.defineProperty(HTMLElement.prototype, 'offsetLeft', {
@@ -80,8 +81,9 @@ describe('LiquidGlassTabBar', () => {
     masse({ home: { links: 8, breite: 70 }, 'my-stack': { links: 82, breite: 96 } })
     bauen('my-stack')
 
-    expect(pille().style.transform).toBe('translateX(107px)')
-    expect(pille().style.width).toBe(`${PILLE_BREITE}px`)
+    // pillenBreite(96) = 64; links = 82 + (96 − 64) / 2 = 98
+    expect(pille().style.transform).toBe('translateX(98px)')
+    expect(pille().style.width).toBe(`${pillenBreite(96)}px`)
   })
 
   it('blendet die Pille aus, wo kein Reiter gilt', () => {
@@ -121,9 +123,10 @@ describe('LiquidGlassTabBar', () => {
     expect(leiste().style.getPropertyValue('--tyd-glint')).toBe('36.11111111111111%')
   })
 
-  it('lässt die Pille dem Finger folgen, solange er liegt', () => {
-    // Halten und schieben: der Finger setzt auf einem Reiter auf, die Pille
-    // folgt ihm die Leiste entlang.
+  it('lässt die Pille am Finger hängen, ohne unterwegs einzurasten', () => {
+    // Vorher sprang sie von Platz zu Platz; das fühlte sich an wie ein
+    // Schalter, nicht wie etwas, das man in der Hand hat. Jetzt sitzt sie
+    // mittig unter der Fingerspitze — auch dort, wo gar kein Platz ist.
     masse({
       home: { links: 8, breite: 70 },
       'my-stack': { links: 82, breite: 90 },
@@ -137,9 +140,15 @@ describe('LiquidGlassTabBar', () => {
     zeiger('pointerdown', reiter('home'), 40)
     expect(pille().dataset.gehalten).toBe('true')
 
-    zeiger('pointermove', leiste(), 240)          // über „Kalender" (Mitte 240)
-    // 200 + (80 − 46) / 2 = 217
-    expect(pille().style.transform).toBe('translateX(217px)')
+    // Breite bleibt die des Platzes, auf dem der Finger aufsetzte:
+    // pillenBreite(70) = 58. Bei x = 240 also 240 − 29 = 211 …
+    zeiger('pointermove', leiste(), 240)
+    expect(pille().style.transform).toBe('translateX(211px)')
+    expect(pille().dataset.frei).toBe('true')
+
+    // … und bei x = 250 zehn Pixel weiter, nicht wieder auf 211 gerastet.
+    zeiger('pointermove', leiste(), 250)
+    expect(pille().style.transform).toBe('translateX(221px)')
   })
 
   it('öffnet beim Loslassen den Reiter unter dem Finger', () => {
@@ -194,11 +203,37 @@ describe('LiquidGlassTabBar', () => {
     zeiger('pointerdown', reiter('home'), 40)
     zeiger('pointermove', leiste(), 180)          // über dem „+" (Mitte 180)
     expect(pille().dataset.gehalten).toBe('true')
-    // 148 + (64 − 46) / 2 = 157
-    expect(pille().style.transform).toBe('translateX(157px)')
+    // Frei am Finger: pillenBreite(64) = 52, also 180 − 26 = 154
+    expect(pille().style.transform).toBe('translateX(154px)')
 
     zeiger('pointerup', leiste(), 180)
     expect(ausgeloest).toEqual(['plus'])
+  })
+
+  it('rastet erst beim Loslassen ein, und dann auf den nächsten Platz', () => {
+    // Das ist die Gegenprobe zum freien Ziehen: währenddessen sitzt die Pille
+    // beim Finger, danach genau mittig auf einem Platz — und ohne `frei`, also
+    // weich angefahren.
+    masse({
+      home: { links: 8, breite: 64 },
+      'my-stack': { links: 76, breite: 64 },
+      plus: { links: 148, breite: 64 },
+      kalender: { links: 216, breite: 64 },
+      profil: { links: 284, breite: 64 },
+    })
+    bauen('home')
+    zeigerfaehig(leiste())
+    leiste().getBoundingClientRect = () => ({ left: 0, top: 0, right: 360, bottom: 56, width: 360, height: 56, x: 0, y: 0, toJSON: () => ({}) })
+
+    zeiger('pointerdown', reiter('home'), 40)
+    zeiger('pointermove', leiste(), 230)          // zwischen „kalender" (248) und „plus"
+    expect(pille().style.transform).toBe('translateX(204px)')   // frei: 230 − 26
+
+    zeiger('pointerup', leiste(), 230)
+    // Eingerastet auf „kalender": 216 + (64 − 52) / 2 = 222
+    expect(pille().style.transform).toBe('translateX(222px)')
+    expect(pille().dataset.frei).toBe('false')
+    expect(pille().dataset.gehalten).toBe('false')
   })
 
   it('gibt der mittleren Schaltfläche kein aria-current', () => {
