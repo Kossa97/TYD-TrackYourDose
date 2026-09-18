@@ -276,8 +276,8 @@
     "semantic_hash": "cd010ea737d0c1bf222156e24a65f048"
   },
   "src/components/LabLoader.tsx": {
-    "mtime": 1789745272.241406,
-    "seen": 1789745472.7886012,
+    "mtime": 1788611941.9151807,
+    "seen": 1788803479.19071,
     "ast_hash": "dbaebf61043731b55c3912c306d7e7df",
     "semantic_hash": "dbaebf61043731b55c3912c306d7e7df"
   },
@@ -294,8 +294,8 @@
     "semantic_hash": "8e6851da28c8043806cf6eb37d2acc9c"
   },
   "src/components/Layout.tsx": {
-    "mtime": 1789745272.24536,
-    "seen": 1789745472.7886071,
+    "mtime": 1788612179.7473688,
+    "seen": 1788803479.1907158,
     "ast_hash": "82a8da1dfa78f564ef092e23bec640fb",
     "semantic_hash": "82a8da1dfa78f564ef092e23bec640fb"
   },
@@ -714,14 +714,14 @@
     "semantic_hash": ""
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1789638712.923025,
-    "seen": 1789745472.7891474,
+    "mtime": 1789616137.6187923,
+    "seen": 1789617187.4680767,
     "ast_hash": "b25ed024020d57ed23d472bac53d5c0e",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1789638712.9236522,
-    "seen": 1789745472.7891486,
+    "mtime": 1789616137.619489,
+    "seen": 1789617187.468078,
     "ast_hash": "d9612f02e2de7c080299ffda352c00ea",
     "semantic_hash": ""
   },
@@ -2790,15 +2790,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1789745277.4068463,
-    "seen": 1789745472.7888181,
-    "ast_hash": "5443d3a3a2b85bbac91d138796ec1d30",
+    "mtime": 1789632365.7433383,
+    "seen": 1789632485.082795,
+    "ast_hash": "73eb9cd5ecf224897e27558b3f82d552",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1789745277.4070654,
-    "seen": 1789745472.7888193,
-    "ast_hash": "149572a23cbf0b8c225663b603dda5c0",
+    "mtime": 1789632246.6311,
+    "seen": 1789632485.0827975,
+    "ast_hash": "951281a88c5713211ab96655ac63809f",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789745345.8254044,
-    "seen": 1789745472.7892976,
+    "mtime": 1789634237.7075806,
+    "seen": 1789634322.0330791,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4473,18 +4473,6 @@
     "mtime": 1789620604.0540361,
     "seen": 1789620898.8099995,
     "ast_hash": "609d905af5902d4d970f54a5bd07c2cd",
-    "semantic_hash": ""
-  },
-  "src/features/my-stack/lib/stackDetailSections.test.ts": {
-    "mtime": 1789745277.412402,
-    "seen": 1789745472.7890332,
-    "ast_hash": "a0bacdd50ce4d443dc28da2bfb640452",
-    "semantic_hash": ""
-  },
-  "src/features/my-stack/lib/stackDetailSections.ts": {
-    "mtime": 1789745277.412402,
-    "seen": 1789745472.7890368,
-    "ast_hash": "ce30eb571669933ff9894182bbb27587",
     "semantic_hash": ""
   }
 }
