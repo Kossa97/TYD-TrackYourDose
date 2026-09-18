@@ -2820,9 +2820,9 @@
     "semantic_hash": "fb778564f1d16edfe93a34d00fb681c3"
   },
   "src/features/my-stack/components/StackItemWizard.interaction.test.tsx": {
-    "mtime": 1789547752.652272,
-    "seen": 1789547899.419682,
-    "ast_hash": "db4ec76a04a525a19d6b3312047e91b1",
+    "mtime": 1789757448.448782,
+    "seen": 1789757594.878173,
+    "ast_hash": "c2b64dabe67bd9501a01f684c56d123d",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.test.ts": {
@@ -2832,9 +2832,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1789546732.756645,
-    "seen": 1789547899.4196842,
-    "ast_hash": "c0288c7fc5a8aa2a368e7bce332a8e22",
+    "mtime": 1789757337.4185398,
+    "seen": 1789757594.8781762,
+    "ast_hash": "6dfc9cdea4a73f79367d36c51a537878",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -2970,15 +2970,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/wizardState.test.ts": {
-    "mtime": 1789454859.197619,
-    "seen": 1789455121.4590957,
-    "ast_hash": "887ffab1d9ad8c4cafd13f19a9b2c8a2",
+    "mtime": 1789757488.006496,
+    "seen": 1789757594.8783216,
+    "ast_hash": "da7461f2f037ea930a6030446c53ba96",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/wizardState.ts": {
-    "mtime": 1789454830.509916,
-    "seen": 1789455121.459097,
-    "ast_hash": "ba0c5d43945bbc03f951601a87d5408b",
+    "mtime": 1789757294.401947,
+    "seen": 1789757594.8783226,
+    "ast_hash": "07b33d141a2108d674ee2f2fa62ceeec",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/stackItems.test.ts": {
@@ -4140,8 +4140,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789756061.7731543,
-    "seen": 1789756134.7712963,
+    "mtime": 1789757532.7144988,
+    "seen": 1789757594.87852,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
