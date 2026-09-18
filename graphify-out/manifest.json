@@ -276,10 +276,10 @@
     "semantic_hash": "cd010ea737d0c1bf222156e24a65f048"
   },
   "src/components/LabLoader.tsx": {
-    "mtime": 1788611941.9151807,
-    "seen": 1788803479.19071,
-    "ast_hash": "dbaebf61043731b55c3912c306d7e7df",
-    "semantic_hash": "dbaebf61043731b55c3912c306d7e7df"
+    "mtime": 1789740191.1765304,
+    "seen": 1789741773.7098436,
+    "ast_hash": "c05bcd75eee9852b5e9ff0eecbcd584f",
+    "semantic_hash": ""
   },
   "src/components/LanguageGate.tsx": {
     "mtime": 1788611941.9151807,
@@ -4146,8 +4146,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789689670.0127928,
-    "seen": 1789690246.0666814,
+    "mtime": 1789740311.8607588,
+    "seen": 1789741773.7105932,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -4494,9 +4494,9 @@
     "semantic_hash": ""
   },
   "src/components/navigation/bottomNavMetrics.test.ts": {
-    "mtime": 1789689666.0941641,
-    "seen": 1789690246.0661,
-    "ast_hash": "f492efe2785f2335f4d28ed8929f61b0",
+    "mtime": 1789740306.698016,
+    "seen": 1789741773.7099013,
+    "ast_hash": "34c67cf3c696500b0e7b44757cbc2271",
     "semantic_hash": ""
   },
   "src/components/navigation/tabModel.test.ts": {
