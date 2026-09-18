@@ -1,4 +1,10 @@
-import { addMonths, differenceInCalendarMonths, differenceInDays, format, parseISO, startOfDay, subDays } from 'date-fns'
+import { addDays, addMonths, differenceInCalendarMonths, differenceInDays, format, parseISO, startOfDay, subDays } from 'date-fns'
+import {
+  localDateTimeKey,
+  resolveCycleAtLocalSlot,
+  type CyclePlanVersion,
+  type CycleTimeline,
+} from './planTimeline'
 
 // Maps JS getDay() (0 = Sunday) to the German weekday codes stored on cycles.
 const WEEKDAYS_DE: Record<number, string> = { 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 6: 'Sa', 0: 'So' }
@@ -18,6 +24,16 @@ export interface ResolvedScheduleSlot {
    * Zyklus, wie bei jedem Plan mit einer einzigen Zahl.
    */
   dose: number | null
+}
+
+export interface ResolvedTimelineIntake extends ResolvedScheduleSlot {
+  cycleId: string
+  stackItemId: string
+  planVersionId: string
+  dose: number | null
+  unit: string | null
+  method: string
+  localDate: string
 }
 
 export interface ScheduleSegment {
@@ -213,6 +229,104 @@ export function resolveScheduleSlots(
       ...clock,
     }]
   }).sort((left, right) => left.minutes - right.minutes)
+}
+
+function timelineVersionAsCycle(
+  timeline: CycleTimeline,
+  version: CyclePlanVersion,
+  timeZone: string,
+): ScheduleCycle {
+  const startedAt = new Date(timeline.cycle.started_at)
+  const startDate = localDateTimeKey(startedAt, timeZone).slice(0, 10)
+  return {
+    id: timeline.cycle.id,
+    stack_item_id: timeline.cycle.stack_item_id,
+    start_date: startDate,
+    end_date: null,
+    frequency: version.frequency,
+    x_days_interval: version.x_days_interval,
+    schedule_days: version.schedule_days,
+    intake_time: version.intake_time,
+    intake_time_custom: version.intake_time_custom,
+    dose: version.dose,
+    unit: version.unit,
+    schedule_history: null,
+    interval_unit: version.interval_unit,
+    cycle_on_days: version.cycle_on_days,
+    cycle_off_days: version.cycle_off_days,
+    slot_doses: version.slot_doses,
+    slot_days: version.slot_days,
+  }
+}
+
+export function resolveTimelineIntakesForDay(
+  timeline: CycleTimeline,
+  localDate: string,
+  timeZone: string,
+): ResolvedTimelineIntake[] {
+  const day = parseISO(localDate)
+  if (!Number.isFinite(day.getTime()) || format(day, 'yyyy-MM-dd') !== localDate) {
+    throw new Error(`Invalid local intake date: ${localDate}`)
+  }
+
+  const candidates = timeline.versions.flatMap(version => {
+    const cycle = timelineVersionAsCycle(timeline, version, timeZone)
+    return cycleAppliesToDay(cycle, day) ? resolveScheduleSlots(version, day) : []
+  })
+  const uniqueCandidates = new Map(
+    candidates.map(slot => [`${slot.key}|${slot.time}`, slot]),
+  )
+
+  const resolved = [...uniqueCandidates.values()].flatMap(candidate => {
+    const atSlot = resolveCycleAtLocalSlot(timeline, localDate, candidate.minutes, timeZone)
+    if (atSlot.status !== 'active' || !atSlot.planVersion) return []
+
+    const activeCycle = timelineVersionAsCycle(timeline, atSlot.planVersion, timeZone)
+    if (!cycleAppliesToDay(activeCycle, day)) return []
+    const activeSlot = resolveScheduleSlots(atSlot.planVersion, day).find(slot => (
+      slot.key === candidate.key && slot.time === candidate.time
+    ))
+    if (!activeSlot) return []
+
+    return [{
+      ...activeSlot,
+      cycleId: timeline.cycle.id,
+      stackItemId: timeline.cycle.stack_item_id,
+      planVersionId: atSlot.planVersion.id,
+      dose: activeSlot.dose ?? atSlot.planVersion.dose,
+      unit: atSlot.planVersion.unit,
+      method: atSlot.planVersion.method,
+      localDate,
+    }]
+  })
+
+  const uniqueIntakes = new Map<string, ResolvedTimelineIntake>()
+  for (const intake of resolved) {
+    const key = `${intake.cycleId}|${intake.localDate}|${intake.time}`
+    if (!uniqueIntakes.has(key)) uniqueIntakes.set(key, intake)
+  }
+  return [...uniqueIntakes.values()].sort((left, right) => left.minutes - right.minutes)
+}
+
+export function findNextTimelineIntake(
+  timeline: CycleTimeline,
+  after: Date,
+  timeZone: string,
+  lookaheadDays = 366,
+): ResolvedTimelineIntake | null {
+  if (!Number.isInteger(lookaheadDays) || lookaheadDays < 1) {
+    throw new Error(`Invalid timeline lookahead: ${lookaheadDays}`)
+  }
+
+  const afterKey = localDateTimeKey(after, timeZone)
+  const firstDate = parseISO(afterKey.slice(0, 10))
+  for (let offset = 0; offset < lookaheadDays; offset += 1) {
+    const localDate = format(addDays(firstDate, offset), 'yyyy-MM-dd')
+    const next = resolveTimelineIntakesForDay(timeline, localDate, timeZone)
+      .find(intake => `${localDate}|${intake.time}:00` > afterKey)
+    if (next) return next
+  }
+  return null
 }
 
 export function effectiveDose(cycle: ScheduleCycle, day: Date, escalations: EscalationRow[]): number | null {

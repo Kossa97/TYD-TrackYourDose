@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
   findOldestOverdueIntake, collectMissedIntakes, collectOpenIntakes, cycleAppliesToDay, scheduleForDay, effectiveDose,
-  effectiveQuantity, effectiveSlotQuantity,
+  effectiveQuantity, effectiveSlotQuantity, findNextTimelineIntake,
   resolveScheduleSlots,
+  resolveTimelineIntakesForDay,
   type ScheduleCycle, type IntakeLog, type ScheduleSegment, type EscalationRow,
 } from './intakeSchedule'
+import type { CycleTimeline, PlanScheduleSnapshot } from './planTimeline'
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 const seg = (effective_from: string, intake_time: string, dose: number): ScheduleSegment => ({
@@ -66,6 +68,112 @@ describe('resolveScheduleSlots', () => {
       }])
     },
   )
+})
+
+const timelineSchedule = (
+  dose: number,
+  overrides: Partial<PlanScheduleSnapshot> = {},
+): PlanScheduleSnapshot => ({
+  frequency: 'Täglich',
+  x_days_interval: null,
+  interval_unit: null,
+  cycle_on_days: null,
+  cycle_off_days: null,
+  schedule_days: [],
+  intake_time: 'morgens,abends',
+  intake_time_custom: '08:00,20:00',
+  slot_doses: null,
+  slot_days: null,
+  dose,
+  unit: 'mg',
+  method: 'Oral',
+  ...overrides,
+})
+
+const planTimeline: CycleTimeline = {
+  cycle: {
+    id: 'timeline-cycle',
+    stack_item_id: 'timeline-stack-item',
+    started_at: '2026-09-17T00:00:00Z',
+    ended_at: null,
+  },
+  versions: [
+    {
+      id: 'timeline-v1',
+      cycle_id: 'timeline-cycle',
+      effective_kind: 'local_date',
+      effective_at: null,
+      effective_local_date: '2026-09-18',
+      change_kind: 'initial',
+      ...timelineSchedule(0.25),
+    },
+    {
+      id: 'timeline-v2',
+      cycle_id: 'timeline-cycle',
+      effective_kind: 'instant',
+      effective_at: '2026-09-18T10:00:00Z',
+      effective_local_date: null,
+      change_kind: 'dose',
+      ...timelineSchedule(0.5),
+    },
+  ],
+  pauses: [],
+}
+
+describe('versioned timeline occurrences', () => {
+  it('uses the old morning plan and the new evening plan after a noon change', () => {
+    expect(
+      resolveTimelineIntakesForDay(planTimeline, '2026-09-18', 'Europe/Berlin')
+        .map(intake => [intake.time, intake.planVersionId, intake.dose]),
+    ).toEqual([
+      ['08:00', 'timeline-v1', 0.25],
+      ['20:00', 'timeline-v2', 0.5],
+    ])
+  })
+
+  it('suppresses only slots inside a pause that begins at noon', () => {
+    const pausedAtNoon: CycleTimeline = {
+      ...planTimeline,
+      pauses: [{
+        id: 'timeline-pause',
+        cycle_id: 'timeline-cycle',
+        paused_at: '2026-09-18T10:00:00Z',
+        ends_at: null,
+      }],
+    }
+
+    expect(
+      resolveTimelineIntakesForDay(pausedAtNoon, '2026-09-18', 'Europe/Berlin')
+        .map(intake => intake.time),
+    ).toEqual(['08:00'])
+  })
+
+  it('does not create automatic occurrences for PRN plans', () => {
+    const prnTimeline: CycleTimeline = {
+      ...planTimeline,
+      versions: [{
+        ...planTimeline.versions[0],
+        ...timelineSchedule(0.25, {
+          frequency: 'Bei Bedarf',
+          intake_time: '',
+          intake_time_custom: null,
+        }),
+      }],
+    }
+
+    expect(resolveTimelineIntakesForDay(prnTimeline, '2026-09-18', 'Europe/Berlin')).toEqual([])
+  })
+
+  it('finds the first occurrence strictly after the supplied instant', () => {
+    const next = findNextTimelineIntake(
+      planTimeline,
+      new Date('2026-09-18T06:00:00Z'),
+      'Europe/Berlin',
+    )
+
+    expect(next?.time).toBe('20:00')
+    expect(next?.planVersionId).toBe('timeline-v2')
+  })
 })
 
 describe('recurrence validation at schedule evaluation', () => {
