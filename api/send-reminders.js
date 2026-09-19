@@ -1,15 +1,8 @@
 // api/send-reminders.js — Vercel Cron (stündlich, siehe vercel.json).
-// Fälligkeit = Feuerzeitpunkt liegt im Fenster (now - REMINDER_WINDOW_MIN, now];
-// das Fenster (Default 60) MUSS der Cron-Kadenz entsprechen — bei abweichender
-// Kadenz (z. B. Vercel Hobby: nur täglich) REMINDER_WINDOW_MIN anpassen oder
-// den Endpoint extern (Cron-Dienst + CRON_SECRET) im gewünschten Takt aufrufen.
+// Fälligkeit = Feuerzeitpunkt liegt im Fenster (now - REMINDER_WINDOW_MIN, now].
 
 import { createRequire } from 'node:module'
-import {
-  dueReminders,
-  effectiveDoseForDay,
-  localParts,
-} from './_lib/reminderSchedule.js'
+import { dueReminders, localParts } from './_lib/reminderSchedule.js'
 
 const require = createRequire(import.meta.url)
 
@@ -18,30 +11,115 @@ function sbHeaders(key) {
 }
 
 async function sbGet(url, key) {
-  const r = await fetch(url, { headers: sbHeaders(key) })
-  const text = await r.text()
-  if (!r.ok) throw new Error(`Supabase ${r.status}: ${text}`)
+  const response = await fetch(url, { headers: sbHeaders(key) })
+  const text = await response.text()
+  if (!response.ok) throw new Error(`Supabase ${response.status}: ${text}`)
   return JSON.parse(text)
 }
 
-function fmtDose(dose, unit) {
-  const n = Math.round(dose * 100) / 100
-  return `${n} ${unit}`
+export function mapTimelineRow(row) {
+  return {
+    cycle: {
+      id: row.id,
+      stack_item_id: row.stack_item_id,
+      started_at: row.started_at,
+      ended_at: row.ended_at,
+    },
+    versions: row.versions ?? [],
+    pauses: row.pauses ?? [],
+  }
 }
 
-function payloadFor(cycle, due, dose) {
+export function buildCyclesUrl(base, userIds) {
+  const userFilter = userIds.map(id => `"${id}"`).join(',')
+  const select = [
+    'id', 'user_id', 'stack_item_id', 'name', 'reminder', 'started_at', 'ended_at',
+    'peptides(name)',
+    'versions:cycle_plan_versions(id,cycle_id,effective_kind,effective_at,effective_local_date,change_kind,frequency,x_days_interval,interval_unit,cycle_on_days,cycle_off_days,schedule_days,intake_time,intake_time_custom,slot_doses,slot_days,dose,unit,method)',
+    'pauses:cycle_pause_periods(id,cycle_id,paused_at,ends_at)',
+  ].join(',')
+  return `${base}/rest/v1/cycles?ended_at=is.null&user_id=in.(${userFilter})&select=${select}`
+}
+
+function formattedQuantity(dose, unit) {
+  if (!Number.isFinite(dose) || dose <= 0 || typeof unit !== 'string' || !unit.trim()) return null
+  return `${Math.round(dose * 100) / 100} ${unit.trim()}`
+}
+
+export function payloadFor(cycle, due) {
   const name = cycle.peptides?.name ?? cycle.name
-  const body =
-    due.offset === '1day' ? `${fmtDose(dose, cycle.unit)} · morgen um ${due.slotTime} Uhr` :
-    due.offset === '2h'   ? `${fmtDose(dose, cycle.unit)} · in 2 Stunden (${due.slotTime} Uhr)` :
-                            `${fmtDose(dose, cycle.unit)} · ${due.slotTime} Uhr – jetzt einnehmen`
+  const quantity = formattedQuantity(due.dose, due.unit)
+  const timing = due.offset === '1day'
+    ? `morgen um ${due.time} Uhr`
+    : due.offset === '2h'
+      ? `in 2 Stunden (${due.time} Uhr)`
+      : `${due.time} Uhr – jetzt einnehmen`
   return {
     title: `💊 ${name}`,
-    body,
+    body: quantity ? `${quantity} · ${timing}` : timing,
     url: '/kalender',
-    // Datum + Slot + Offset im Tag → pro Erinnerung genau eine Notification
-    tag: `dose-${cycle.id}-${due.slotDateKey}-${due.slotTime.replace(':', '')}-${due.offset}`,
+    tag: `dose-${due.routineSlotKey}-${due.offset}`,
   }
+}
+
+export async function sendRemindersForSubscriptions({
+  subscriptions,
+  cycles,
+  now,
+  windowMin,
+  sendNotification,
+  logError = console.error,
+}) {
+  const cyclesByUser = new Map()
+  for (const cycle of cycles) {
+    const userCycles = cyclesByUser.get(cycle.user_id) ?? []
+    userCycles.push(cycle)
+    cyclesByUser.set(cycle.user_id, userCycles)
+  }
+
+  let sent = 0
+  let failed = 0
+  const stale = []
+  const dueUsers = new Set()
+
+  for (const subscription of subscriptions) {
+    let payloads
+    try {
+      localParts(now, subscription.timezone)
+      payloads = (cyclesByUser.get(subscription.user_id) ?? []).flatMap(cycle => (
+        dueReminders(
+          mapTimelineRow(cycle),
+          cycle.reminder,
+          now,
+          subscription.timezone,
+          windowMin,
+        ).map(due => payloadFor(cycle, due))
+      ))
+    } catch (error) {
+      failed += 1
+      logError('Reminder subscription skipped', {
+        endpoint: subscription.endpoint,
+        userId: subscription.user_id,
+        timezone: subscription.timezone,
+        error: String(error?.message ?? error),
+      })
+      continue
+    }
+
+    if (!payloads.length) continue
+    dueUsers.add(subscription.user_id)
+    for (const payload of payloads) {
+      try {
+        await sendNotification(subscription.subscription, JSON.stringify(payload))
+        sent += 1
+      } catch (error) {
+        failed += 1
+        if (error?.statusCode === 410 || error?.statusCode === 404) stale.push(subscription.endpoint)
+      }
+    }
+  }
+
+  return { sent, failed, dueUsers: dueUsers.size, stale }
 }
 
 export default async function handler(req, res) {
@@ -49,7 +127,6 @@ export default async function handler(req, res) {
 
   try {
     const webPush = require('web-push')
-
     const cronSecret = (req.headers['authorization'] ?? '').replace('Bearer ', '')
     if (process.env.CRON_SECRET && cronSecret !== process.env.CRON_SECRET) {
       return res.status(401).end(JSON.stringify({ error: 'Unauthorized' }))
@@ -64,77 +141,49 @@ export default async function handler(req, res) {
 
     webPush.setVapidDetails(
       `mailto:${VAPID_EMAIL ?? 'admin@tyd.app'}`,
-      VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY,
+      VAPID_PUBLIC_KEY,
+      VAPID_PRIVATE_KEY,
     )
 
-    const base = SUPABASE_URL, key = SUPABASE_SERVICE_KEY, now = new Date()
+    const base = SUPABASE_URL
+    const key = SUPABASE_SERVICE_KEY
+    const now = new Date()
     const windowMin = Number(process.env.REMINDER_WINDOW_MIN ?? 60)
-
-    const subs = await sbGet(`${base}/rest/v1/push_subscriptions?select=user_id,endpoint,subscription,timezone`, key)
-    if (!subs?.length) return res.status(200).end(JSON.stringify({ sent: 0, info: 'no subscriptions' }))
-
-    const userIds = [...new Set(subs.map(s => s.user_id))]
-    const nowLocalMap = {}
-    for (const sub of subs) {
-      if (!nowLocalMap[sub.user_id]) nowLocalMap[sub.user_id] = localParts(now, sub.timezone ?? 'UTC')
-    }
-
-    const userFilter = userIds.map(id => `"${id}"`).join(',')
-    const cycles = await sbGet(
-      `${base}/rest/v1/cycles?active=eq.true&user_id=in.(${userFilter})` +
-      `&select=id,user_id,name,dose,unit,frequency,x_days_interval,` +
-      `interval_unit,cycle_on_days,cycle_off_days,slot_doses,slot_days,schedule_days,` +
-      `start_date,end_date,intake_time,intake_time_custom,reminder,schedule_history,peptides(name)`,
+    const subscriptions = await sbGet(
+      `${base}/rest/v1/push_subscriptions?select=user_id,endpoint,subscription,timezone`,
       key,
     )
-    if (!cycles?.length) return res.status(200).end(JSON.stringify({ sent: 0, info: 'no active cycles' }))
-
-    const cycleFilter = cycles.map(c => `"${c.id}"`).join(',')
-    const escalations = await sbGet(
-      `${base}/rest/v1/dose_escalations?cycle_id=in.(${cycleFilter})` +
-      `&select=cycle_id,increase_amount,start_type,start_date,start_after_days`,
-      key,
-    ).catch(() => [])
-
-    const dueMap = {}
-    for (const cycle of cycles) {
-      const nowLocal = nowLocalMap[cycle.user_id]
-      if (!nowLocal) continue
-      for (const due of dueReminders(cycle, nowLocal, windowMin)) {
-        // Die Menge DIESES Zeitpunkts, nicht die des Zyklus.
-        const dose = effectiveDoseForDay(cycle, due.slotDateKey, escalations, due.slotDose)
-        if (!dueMap[cycle.user_id]) dueMap[cycle.user_id] = []
-        dueMap[cycle.user_id].push(payloadFor(cycle, due, dose))
-      }
+    if (!subscriptions?.length) {
+      return res.status(200).end(JSON.stringify({ sent: 0, info: 'no subscriptions' }))
     }
 
-    if (!Object.keys(dueMap).length) return res.status(200).end(JSON.stringify({ sent: 0, info: 'nothing due' }))
+    const userIds = [...new Set(subscriptions.map(subscription => subscription.user_id))]
+    const cycles = await sbGet(buildCyclesUrl(base, userIds), key)
+    if (!cycles?.length) return res.status(200).end(JSON.stringify({ sent: 0, info: 'no open cycles' }))
 
-    let sent = 0, failed = 0
-    const stale = []
+    const result = await sendRemindersForSubscriptions({
+      subscriptions,
+      cycles,
+      now,
+      windowMin,
+      sendNotification: (subscription, payload) => webPush.sendNotification(subscription, payload),
+      logError: console.error,
+    })
 
-    for (const sub of subs) {
-      const payloads = dueMap[sub.user_id]
-      if (!payloads?.length) continue
-      for (const p of payloads) {
-        try { await webPush.sendNotification(sub.subscription, JSON.stringify(p)); sent++ }
-        catch (err) { failed++; if (err.statusCode === 410 || err.statusCode === 404) stale.push(sub.endpoint) }
-      }
-    }
-
-    if (stale.length) {
+    if (result.stale.length) {
       await fetch(
-        `${base}/rest/v1/push_subscriptions?endpoint=in.(${stale.map(e => `"${e}"`).join(',')})`,
+        `${base}/rest/v1/push_subscriptions?endpoint=in.(${result.stale.map(endpoint => `"${endpoint}"`).join(',')})`,
         { method: 'DELETE', headers: sbHeaders(key) },
       ).catch(() => {})
     }
 
-    return res.status(200).end(JSON.stringify({ sent, failed, dueUsers: Object.keys(dueMap).length }))
-
-  } catch (err) {
+    const { stale: _stale, ...response } = result
+    if (result.sent === 0 && result.failed === 0) response.info = 'nothing due'
+    return res.status(200).end(JSON.stringify(response))
+  } catch (error) {
     return res.status(500).end(JSON.stringify({
       error: 'Server crash',
-      hint:  String(err && err.message ? err.message : err),
+      hint: String(error?.message ?? error),
     }))
   }
 }

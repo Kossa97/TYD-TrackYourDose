@@ -1,260 +1,213 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { dueReminders, localParts, reminderKeys } from './reminderSchedule.js'
 import {
-  addDaysKey,
-  cycleAppliesToDay,
-  daySlots,
-  diffDays,
-  dueReminders,
-  effectiveDoseForDay,
-  localParts,
-  reminderKeys,
-  scheduleForDay,
-} from './reminderSchedule.js'
+  buildCyclesUrl,
+  mapTimelineRow,
+  payloadFor,
+  sendRemindersForSubscriptions,
+} from '../send-reminders.js'
 
-// 2026-06-29 ist ein Montag
-const MONDAY = '2026-06-29'
-
-function makeCycle(overrides = {}) {
+function version(overrides = {}) {
   return {
-    id: 'c1',
-    user_id: 'u1',
-    name: 'Test',
-    dose: 250,
-    unit: 'mcg',
-    frequency: 'Täglich',
-    x_days_interval: null,
-    schedule_days: null,
-    start_date: '2026-06-01',
-    end_date: null,
-    intake_time: 'morgens',
-    intake_time_custom: null,
-    reminder: 'on_time',
-    schedule_history: null,
+    id: 'v1', cycle_id: 'c1', effective_kind: 'local_date', effective_at: null,
+    effective_local_date: '2026-01-01', change_kind: 'initial', frequency: 'Täglich',
+    x_days_interval: null, interval_unit: null, cycle_on_days: null, cycle_off_days: null,
+    schedule_days: [], intake_time: 'morgens', intake_time_custom: null,
+    slot_doses: null, slot_days: null, dose: 10, unit: 'mg', method: 'oral',
+    ...overrides,
+  }
+}
+
+function timeline(overrides = {}) {
+  return {
+    cycle: {
+      id: 'c1', stack_item_id: 's1', started_at: '2026-01-01T00:00:00.000Z', ended_at: null,
+    },
+    versions: [version()],
+    pauses: [],
+    ...overrides,
+  }
+}
+
+function cycleRow(overrides = {}) {
+  return {
+    id: 'c1', user_id: 'u1', stack_item_id: 's1', name: 'Cycle name', reminder: 'on_time',
+    started_at: '2026-01-01T00:00:00.000Z', ended_at: null,
+    versions: [version()], pauses: [], peptides: { name: 'Exact peptide' },
     ...overrides,
   }
 }
 
 describe('localParts', () => {
-  it('liefert lokales Datum und Minuten für eine Zeitzone', () => {
-    // 2026-06-29T18:30Z = 20:30 in Berlin (Sommerzeit, UTC+2)
-    const p = localParts(new Date('2026-06-29T18:30:00Z'), 'Europe/Berlin')
-    expect(p).toEqual({ dateKey: '2026-06-29', minutes: 20 * 60 + 30 })
+  it('returns the stored-zone local date and minute', () => {
+    expect(localParts(new Date('2026-06-29T18:30:00.000Z'), 'Europe/Berlin'))
+      .toEqual({ dateKey: '2026-06-29', minutes: 1230 })
+    expect(localParts(new Date('2026-06-29T18:30:00.000Z'), 'America/New_York'))
+      .toEqual({ dateKey: '2026-06-29', minutes: 870 })
   })
 
-  it('wechselt den Tag korrekt über Mitternacht', () => {
-    // 22:30Z = 00:30 am Folgetag in Berlin
-    const p = localParts(new Date('2026-06-29T22:30:00Z'), 'Europe/Berlin')
-    expect(p).toEqual({ dateKey: '2026-06-30', minutes: 30 })
-  })
-
-  it('fällt bei ungültiger Zeitzone auf UTC zurück', () => {
-    const p = localParts(new Date('2026-06-29T08:15:00Z'), 'Not/AZone')
-    expect(p).toEqual({ dateKey: '2026-06-29', minutes: 8 * 60 + 15 })
+  it('throws instead of silently substituting UTC for an invalid or missing zone', () => {
+    expect(() => localParts(new Date('2026-06-29T08:15:00.000Z'), 'Not/AZone'))
+      .toThrow('Invalid IANA time zone: Not/AZone')
+    expect(() => localParts(new Date('2026-06-29T08:15:00.000Z'), ''))
+      .toThrow('Missing IANA time zone')
   })
 })
 
-describe('Datums-Helfer', () => {
-  it('diffDays und addDaysKey sind konsistent', () => {
-    expect(diffDays('2026-06-29', '2026-06-01')).toBe(28)
-    expect(addDaysKey('2026-06-30', 1)).toBe('2026-07-01')
-    expect(addDaysKey('2026-07-01', -1)).toBe('2026-06-30')
-  })
-})
-
-describe('cycleAppliesToDay', () => {
-  it('respektiert start_date und end_date', () => {
-    const c = makeCycle({ start_date: '2026-06-10', end_date: '2026-06-20' })
-    expect(cycleAppliesToDay(c, '2026-06-09')).toBe(false)
-    expect(cycleAppliesToDay(c, '2026-06-10')).toBe(true)
-    expect(cycleAppliesToDay(c, '2026-06-20')).toBe(true)
-    expect(cycleAppliesToDay(c, '2026-06-21')).toBe(false)
+describe('reminder evaluation from normalized occurrences', () => {
+  it('keeps the exact exclusive/inclusive instant window boundaries', () => {
+    const value = timeline()
+    expect(dueReminders(value, 'on_time', new Date('2026-06-29T06:00:00.000Z'), 'Europe/Berlin', 60)).toHaveLength(1)
+    expect(dueReminders(value, 'on_time', new Date('2026-06-29T06:59:00.000Z'), 'Europe/Berlin', 60)).toHaveLength(1)
+    expect(dueReminders(value, 'on_time', new Date('2026-06-29T07:00:00.000Z'), 'Europe/Berlin', 60)).toEqual([])
+    expect(dueReminders(value, 'on_time', new Date('2026-06-29T05:59:00.000Z'), 'Europe/Berlin', 60)).toEqual([])
   })
 
-  it('Jeden 2. Tag: nur gerade Abstände zum Start', () => {
-    const c = makeCycle({ frequency: 'Jeden 2. Tag', start_date: '2026-06-01' })
-    expect(cycleAppliesToDay(c, '2026-06-01')).toBe(true)
-    expect(cycleAppliesToDay(c, '2026-06-02')).toBe(false)
-    expect(cycleAppliesToDay(c, '2026-06-03')).toBe(true)
+  it('uses absolute occurrence instants for a 2h offset across midnight', () => {
+    const value = timeline({ versions: [version({ intake_time: 'custom', intake_time_custom: '01:00' })] })
+    const due = dueReminders(value, '2h', new Date('2026-06-28T21:30:00.000Z'), 'Europe/Berlin', 60)
+    expect(due).toEqual([expect.objectContaining({
+      offset: '2h', scheduledAt: '2026-06-28T23:00:00.000Z',
+      localDate: '2026-06-29', time: '01:00', planVersionId: 'v1',
+    })])
   })
 
-  it('Alle X Tage mit Intervall', () => {
-    const c = makeCycle({ frequency: 'Alle X Tage', x_days_interval: 3, start_date: '2026-06-01' })
-    expect(cycleAppliesToDay(c, '2026-06-01')).toBe(true)
-    expect(cycleAppliesToDay(c, '2026-06-02')).toBe(false)
-    expect(cycleAppliesToDay(c, '2026-06-04')).toBe(true)
+  it('uses an absolute 1day offset across the spring DST boundary', () => {
+    const value = timeline({ versions: [version({ intake_time: 'morgens' })] })
+    const due = dueReminders(value, '1day', new Date('2026-03-28T06:30:00.000Z'), 'Europe/Berlin', 60)
+    expect(due).toEqual([expect.objectContaining({
+      offset: '1day', scheduledAt: '2026-03-29T06:00:00.000Z',
+      localDate: '2026-03-29', time: '08:00',
+    })])
   })
 
-  it('Mo-Fr: Wochenende ausgenommen', () => {
-    const c = makeCycle({ frequency: 'Mo-Fr' })
-    expect(cycleAppliesToDay(c, MONDAY)).toBe(true)           // Montag
-    expect(cycleAppliesToDay(c, '2026-06-27')).toBe(false)    // Samstag
-    expect(cycleAppliesToDay(c, '2026-06-28')).toBe(false)    // Sonntag
+  it('returns per-slot quantity and exact plan provenance without a latest-version guess', () => {
+    const value = timeline({ versions: [
+      version({ id: 'old', intake_time: 'morgens,abends', slot_doses: '5,6' }),
+      version({
+        id: 'new', effective_kind: 'instant', effective_at: '2026-06-29T10:00:00.000Z',
+        effective_local_date: null, intake_time: 'morgens,abends', slot_doses: '15,16',
+        unit: 'ml', method: 'injection',
+      }),
+    ] })
+    const due = dueReminders(value, 'on_time', new Date('2026-06-29T06:30:00.000Z'), 'Europe/Berlin', 60)
+    expect(due).toEqual([expect.objectContaining({
+      offset: 'on_time', cycleId: 'c1', stackItemId: 's1', planVersionId: 'old',
+      scheduledAt: '2026-06-29T06:00:00.000Z',
+      routineSlotKey: 'c1@2026-06-29T06:00:00.000Z', slotKey: 'morgens',
+      dose: 5, unit: 'mg', method: 'oral',
+    })])
   })
 
-  it('Wöchentlich: nur im 7-Tage-Raster ab Start', () => {
-    const c = makeCycle({ frequency: 'Wöchentlich', start_date: '2026-06-01' })
-    expect(cycleAppliesToDay(c, '2026-06-01')).toBe(true)
-    expect(cycleAppliesToDay(c, '2026-06-04')).toBe(false)
-    expect(cycleAppliesToDay(c, '2026-06-08')).toBe(true)
-  })
+  it('suppresses PRN and paused occurrences but keeps a slot before a later pause', () => {
+    const prn = timeline({ versions: [version({ frequency: 'Bei Bedarf' })] })
+    expect(dueReminders(prn, 'on_time', new Date('2026-06-29T06:30:00.000Z'), 'Europe/Berlin', 60)).toEqual([])
 
-  it('5 Tage an / 2 aus', () => {
-    const c = makeCycle({ frequency: '5 Tage an / 2 aus', start_date: '2026-06-01' })
-    expect(cycleAppliesToDay(c, '2026-06-05')).toBe(true)     // Tag 5 (Index 4)
-    expect(cycleAppliesToDay(c, '2026-06-06')).toBe(false)    // Tag 6 (aus)
-    expect(cycleAppliesToDay(c, '2026-06-08')).toBe(true)     // neue Woche
-  })
-
-  it('Wochentage wählen', () => {
-    const c = makeCycle({ frequency: 'Wochentage wählen', schedule_days: ['Mo', 'Do'] })
-    expect(cycleAppliesToDay(c, MONDAY)).toBe(true)           // Montag
-    expect(cycleAppliesToDay(c, '2026-06-30')).toBe(false)    // Dienstag
-    expect(cycleAppliesToDay(c, '2026-07-02')).toBe(true)     // Donnerstag
-  })
-
-  it('Täglich mit Tagesfilter', () => {
-    const c = makeCycle({ frequency: 'Täglich', schedule_days: ['Mo'] })
-    expect(cycleAppliesToDay(c, MONDAY)).toBe(true)
-    expect(cycleAppliesToDay(c, '2026-06-30')).toBe(false)
-  })
-})
-
-describe('scheduleForDay', () => {
-  it('nutzt das jüngste Segment mit effective_from <= Tag', () => {
-    const c = makeCycle({
-      schedule_history: [
-        { effective_from: '2026-06-01', frequency: 'Täglich', intake_time: 'morgens', intake_time_custom: null, x_days_interval: null, schedule_days: null, dose: 100, unit: 'mcg' },
-        { effective_from: '2026-06-15', frequency: 'Jeden 2. Tag', intake_time: 'abends', intake_time_custom: null, x_days_interval: null, schedule_days: null, dose: 200, unit: 'mcg' },
-      ],
+    const pausedLater = timeline({
+      versions: [version({ intake_time: 'morgens,abends' })],
+      pauses: [{ id: 'p1', cycle_id: 'c1', paused_at: '2026-06-29T10:00:00.000Z', ends_at: null }],
     })
-    expect(scheduleForDay(c, '2026-06-10').dose).toBe(100)
-    expect(scheduleForDay(c, '2026-06-15').dose).toBe(200)
-    expect(scheduleForDay(c, '2026-06-20').frequency).toBe('Jeden 2. Tag')
+    expect(dueReminders(pausedLater, 'on_time', new Date('2026-06-29T06:30:00.000Z'), 'Europe/Berlin', 60))
+      .toEqual([expect.objectContaining({ time: '08:00', planVersionId: 'v1' })])
+    expect(dueReminders(pausedLater, 'on_time', new Date('2026-06-29T18:30:00.000Z'), 'Europe/Berlin', 60)).toEqual([])
+  })
+
+  it('keeps cycle-level reminder defaults and explicit none', () => {
+    expect(reminderKeys(null)).toEqual(['on_time'])
+    expect(reminderKeys('')).toEqual(['on_time'])
+    expect(reminderKeys('none')).toEqual([])
+    expect(reminderKeys('on_time,2h,unknown')).toEqual(['on_time', '2h'])
   })
 })
 
-describe('daySlots', () => {
-  it('mischt benannte Slots und Custom-Zeiten in zeitlicher Reihenfolge', () => {
-    const c = makeCycle({ intake_time: 'abends,custom,morgens', intake_time_custom: ',06:30,' })
-    expect(daySlots(c, MONDAY)).toEqual([
-      { minutes: 6 * 60 + 30, time: '06:30', dose: null },
-      { minutes: 8 * 60, time: '08:00', dose: null },
-      { minutes: 20 * 60, time: '20:00', dose: null },
-    ])
+describe('reminder worker boundary', () => {
+  it('maps relational rows to the client timeline shape', () => {
+    const row = cycleRow()
+    expect(mapTimelineRow(row)).toEqual({
+      cycle: { id: 'c1', stack_item_id: 's1', started_at: '2026-01-01T00:00:00.000Z', ended_at: null },
+      versions: row.versions,
+      pauses: row.pauses,
+    })
   })
 
-  it('ignoriert kaputte Custom-Zeiten', () => {
-    const c = makeCycle({ intake_time: 'custom', intake_time_custom: 'abc' })
-    expect(daySlots(c, MONDAY)).toEqual([])
-  })
-})
-
-describe('reminderKeys', () => {
-  it('Alt-Daten ohne Wahl => on_time (bisheriges Verhalten)', () => {
-    expect(reminderKeys(makeCycle({ reminder: null }))).toEqual(['on_time'])
-    expect(reminderKeys(makeCycle({ reminder: '' }))).toEqual(['on_time'])
-  })
-
-  it("explizites 'none' => keine Erinnerungen", () => {
-    expect(reminderKeys(makeCycle({ reminder: 'none' }))).toEqual([])
+  it('queries open relational timelines without legacy schedule or escalation reads', () => {
+    const url = decodeURIComponent(buildCyclesUrl('https://example.supabase.co', ['u1', 'u2']))
+    expect(url).toContain('/rest/v1/cycles?ended_at=is.null&user_id=in.("u1","u2")')
+    expect(url).toContain('started_at,ended_at')
+    expect(url).toContain('versions:cycle_plan_versions')
+    expect(url).toContain('pauses:cycle_pause_periods')
+    expect(url).not.toContain('active=eq.true')
+    expect(url).not.toContain('schedule_history')
+    expect(url).not.toContain('dose_escalations')
   })
 
-  it('mehrere Offsets werden geparst, Unbekanntes verworfen', () => {
-    expect(reminderKeys(makeCycle({ reminder: 'on_time,2h,kaputt' }))).toEqual(['on_time', '2h'])
-    expect(reminderKeys(makeCycle({ reminder: '1day' }))).toEqual(['1day'])
-  })
-})
-
-describe('effectiveDoseForDay', () => {
-  it('addiert Anpassungen nach Datum und nach Tagen', () => {
-    const c = makeCycle({ dose: 100, start_date: '2026-06-01' })
-    const esc = [
-      { cycle_id: 'c1', increase_amount: 50, start_type: 'date', start_date: '2026-06-10', start_after_days: null },
-      { cycle_id: 'c1', increase_amount: 25, start_type: 'after_days', start_date: null, start_after_days: 20 },
-      { cycle_id: 'anderer', increase_amount: 999, start_type: 'date', start_date: '2026-06-01', start_after_days: null },
-    ]
-    expect(effectiveDoseForDay(c, '2026-06-05', esc)).toBe(100)
-    expect(effectiveDoseForDay(c, '2026-06-10', esc)).toBe(150)
-    expect(effectiveDoseForDay(c, '2026-06-21', esc)).toBe(175)
-  })
-})
-
-describe('dueReminders', () => {
-  const now = (dateKey, hhmm) => {
-    const [h, m] = hhmm.split(':').map(Number)
-    return { dateKey, minutes: h * 60 + m }
-  }
-
-  it('on_time feuert im Fenster (now-60, now]', () => {
-    const c = makeCycle({ intake_time: 'morgens', reminder: 'on_time' })
-    expect(dueReminders(c, now(MONDAY, '08:00'), 60)).toEqual([
-      { offset: 'on_time', slotTime: '08:00', slotDateKey: MONDAY, slotDose: null },
-    ])
-    expect(dueReminders(c, now(MONDAY, '08:59'), 60)).toHaveLength(1)
-    expect(dueReminders(c, now(MONDAY, '09:00'), 60)).toEqual([])
-    expect(dueReminders(c, now(MONDAY, '07:59'), 60)).toEqual([])
+  it('builds payload quantity and tag from the exact normalized occurrence', () => {
+    const due = {
+      offset: 'on_time', cycleId: 'c1', planVersionId: 'old',
+      routineSlotKey: 'c1@2026-06-29T06:00:00.000Z', time: '08:00',
+      dose: 5, unit: 'mg',
+    }
+    expect(payloadFor(cycleRow(), due)).toEqual({
+      title: '💊 Exact peptide',
+      body: '5 mg · 08:00 Uhr – jetzt einnehmen',
+      url: '/kalender',
+      tag: 'dose-c1@2026-06-29T06:00:00.000Z-on_time',
+    })
   })
 
-  it('feuert NICHT an Off-Tagen (Kernbug: Frequenz wurde ignoriert)', () => {
-    const c = makeCycle({ frequency: 'Jeden 2. Tag', start_date: '2026-06-01', reminder: 'on_time' })
-    // 2026-06-29 = 28 Tage nach Start => fällig; 30.06. => Off-Tag
-    expect(dueReminders(c, now('2026-06-29', '08:30'), 60)).toHaveLength(1)
-    expect(dueReminders(c, now('2026-06-30', '08:30'), 60)).toEqual([])
+  it('keeps a useful time-only payload when quantity is absent or invalid', () => {
+    for (const [dose, unit] of [[null, null], [0, 'mg'], [5, '']]) {
+      const payload = payloadFor(cycleRow(), {
+        offset: '2h', cycleId: 'c1', routineSlotKey: 'c1@slot', time: '08:00', dose, unit,
+      })
+      expect(payload.body).toBe('in 2 Stunden (08:00 Uhr)')
+      expect(payload.body).not.toContain('0 mg')
+      expect(payload.body).not.toContain('null')
+      expect(payload.body).not.toContain('undefined')
+    }
   })
 
-  it('2h-Offset feuert zwei Stunden vor dem Slot', () => {
-    const c = makeCycle({ intake_time: 'abends', reminder: '2h' })
-    expect(dueReminders(c, now(MONDAY, '18:00'), 60)).toEqual([
-      { offset: '2h', slotTime: '20:00', slotDateKey: MONDAY, slotDose: null },
-    ])
-    expect(dueReminders(c, now(MONDAY, '20:00'), 60)).toEqual([])
+  it('evaluates two subscriptions for one user in their own stored zones', async () => {
+    const sendNotification = vi.fn().mockResolvedValue(undefined)
+    const result = await sendRemindersForSubscriptions({
+      subscriptions: [
+        { user_id: 'u1', endpoint: 'berlin', subscription: { endpoint: 'berlin' }, timezone: 'Europe/Berlin' },
+        { user_id: 'u1', endpoint: 'new-york', subscription: { endpoint: 'new-york' }, timezone: 'America/New_York' },
+      ],
+      cycles: [cycleRow()],
+      now: new Date('2026-06-29T06:30:00.000Z'),
+      windowMin: 60,
+      sendNotification,
+      logError: vi.fn(),
+    })
+
+    expect(sendNotification).toHaveBeenCalledTimes(1)
+    expect(sendNotification).toHaveBeenCalledWith(
+      { endpoint: 'berlin' },
+      expect.stringContaining('08:00 Uhr'),
+    )
+    expect(result).toEqual({ sent: 1, failed: 0, dueUsers: 1, stale: [] })
   })
 
-  it('1day-Offset prüft den Plan von MORGEN', () => {
-    // Nur-Montags-Zyklus: 1day-Erinnerung muss am Sonntag feuern
-    const c = makeCycle({ frequency: 'Wochentage wählen', schedule_days: ['Mo'], intake_time: 'morgens', reminder: '1day' })
-    expect(dueReminders(c, now('2026-06-28', '08:30'), 60)).toEqual([
-      { offset: '1day', slotTime: '08:00', slotDateKey: MONDAY, slotDose: null },
-    ])
-    expect(dueReminders(c, now(MONDAY, '08:30'), 60)).toEqual([])
-  })
+  it('logs bad subscription zones, sends nothing to them, and continues valid subscriptions', async () => {
+    const sendNotification = vi.fn().mockResolvedValue(undefined)
+    const logError = vi.fn()
+    const result = await sendRemindersForSubscriptions({
+      subscriptions: [
+        { user_id: 'u1', endpoint: 'invalid', subscription: { endpoint: 'invalid' }, timezone: 'Not/AZone' },
+        { user_id: 'u1', endpoint: 'missing', subscription: { endpoint: 'missing' }, timezone: null },
+        { user_id: 'u1', endpoint: 'valid', subscription: { endpoint: 'valid' }, timezone: 'Europe/Berlin' },
+      ],
+      cycles: [cycleRow()],
+      now: new Date('2026-06-29T06:30:00.000Z'),
+      windowMin: 60,
+      sendNotification,
+      logError,
+    })
 
-  it('2h-Offset über Mitternacht (Slot 01:00 => Erinnerung 23:00 am Vortag)', () => {
-    const c = makeCycle({ intake_time: 'custom', intake_time_custom: '01:00', reminder: '2h' })
-    expect(dueReminders(c, now('2026-06-28', '23:30'), 60)).toEqual([
-      { offset: '2h', slotTime: '01:00', slotDateKey: MONDAY, slotDose: null },
-    ])
-  })
-
-  it('on_time über Mitternacht (Cron 00:05, Slot 23:50 gestern)', () => {
-    const c = makeCycle({ intake_time: 'custom', intake_time_custom: '23:50', reminder: 'on_time' })
-    expect(dueReminders(c, now('2026-06-30', '00:05'), 60)).toEqual([
-      { offset: 'on_time', slotTime: '23:50', slotDateKey: MONDAY, slotDose: null },
-    ])
-  })
-
-  it('mehrere Offsets + mehrere Slots kombinieren sich korrekt', () => {
-    const c = makeCycle({ intake_time: 'morgens,abends', reminder: 'on_time,2h' })
-    // 08:30: on_time für 08:00 fällig; 2h-Erinnerung für 20:00 erst um 18:00
-    expect(dueReminders(c, now(MONDAY, '08:30'), 60)).toEqual([
-      { offset: 'on_time', slotTime: '08:00', slotDateKey: MONDAY, slotDose: null },
-    ])
-    expect(dueReminders(c, now(MONDAY, '18:30'), 60)).toEqual([
-      { offset: '2h', slotTime: '20:00', slotDateKey: MONDAY, slotDose: null },
-    ])
-  })
-
-  it("reminder='none' unterdrückt alle Pushes des Zyklus", () => {
-    const c = makeCycle({ reminder: 'none' })
-    expect(dueReminders(c, now(MONDAY, '08:00'), 60)).toEqual([])
-  })
-
-  it('nutzt Custom-Zeiten minutengenau statt nur Stunden-Vergleich', () => {
-    const c = makeCycle({ intake_time: 'custom', intake_time_custom: '20:45', reminder: 'on_time' })
-    // Stündlicher Cron um 21:00 deckt 20:45 ab; um 20:00 noch nicht
-    expect(dueReminders(c, now(MONDAY, '20:00'), 60)).toEqual([])
-    expect(dueReminders(c, now(MONDAY, '21:00'), 60)).toEqual([
-      { offset: 'on_time', slotTime: '20:45', slotDateKey: MONDAY, slotDose: null },
-    ])
+    expect(sendNotification).toHaveBeenCalledTimes(1)
+    expect(sendNotification).toHaveBeenCalledWith({ endpoint: 'valid' }, expect.any(String))
+    expect(logError).toHaveBeenCalledTimes(2)
+    expect(result).toEqual({ sent: 1, failed: 2, dueUsers: 1, stale: [] })
   })
 })
