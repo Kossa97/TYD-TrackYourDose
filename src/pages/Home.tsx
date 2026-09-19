@@ -15,7 +15,24 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { BlutspiegelCarousel } from '../components/BlutspiegelCarousel'
 import { getPeptideExpiryAlerts, type PeptideExpiryAlert } from '../lib/peptideExpiry'
-import { collectMissedIntakes, cycleAppliesToDay, effectiveSlotQuantity, resolveScheduleSlots, scheduleForDay, AUTO_MISSED_NOTE, type EscalationRow, type ResolvedRoutineGroup, type ScheduleCycle } from '../lib/intakeSchedule'
+import {
+  collectMissedIntakes,
+  collectMissedTimelineIntakes,
+  collectOpenTimelineIntakes,
+  cycleAppliesToDay,
+  effectiveSlotQuantity,
+  resolveScheduleSlots,
+  resolveTimelineIntakesForDay,
+  scheduleForDay,
+  AUTO_MISSED_NOTE,
+  type EscalationRow,
+  type IntakeLog,
+  type ResolvedRoutineGroup,
+  type ResolvedTimelineIntake,
+  type ScheduleCycle,
+} from '../lib/intakeSchedule'
+import { loadCycleTimelines } from '../features/my-stack/services/planLifecycle'
+import { localDateTimeKey, type CycleTimeline } from '../lib/planTimeline'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
 import { InjectionTrackerHero, type InjectionHeroPin } from '../components/injection3d/InjectionTrackerHero'
@@ -24,6 +41,7 @@ import { confirmIntakeDoseLog } from '../lib/injectionPersistence'
 import { debitPeptideStockForDoseById } from '../features/my-stack/extensions/peptide/vialStock'
 import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/quantityPresentation'
 import {
+  buildConfirmationEntry,
   groupRoutineIntakes,
   type RoutineConfirmationEntry,
   type RoutineGroupModel,
@@ -36,7 +54,7 @@ import {
   InventoryConfirmationError,
 } from '../features/my-stack/services/stackInventory'
 import toast from 'react-hot-toast'
-import { format, parseISO, startOfDay } from 'date-fns'
+import { differenceInDays, format, parseISO, startOfDay } from 'date-fns'
 import { getDateLocale } from '../i18n/dateLocales'
 
 const ROUTINE_GROUP_LABELS: Record<RoutineGroupModel['key'], { key: string; defaultValue: string }> = {
@@ -242,6 +260,9 @@ interface HomeDoseLogPayloadInput {
   scheduledAt: string
   taken: boolean
   timeValue?: string
+  cycleId?: string | null
+  planVersionId?: string | null
+  routineSlotKey?: string | null
 }
 
 function buildHomeLoggedAt(scheduledAt: string, timeValue?: string): string {
@@ -284,6 +305,9 @@ export function buildHomeDoseLogPayload(input: HomeDoseLogPayloadInput) {
     method: input.method ?? '',
     logged_at: buildHomeLoggedAt(input.scheduledAt, input.timeValue),
     taken: input.taken,
+    ...(input.cycleId ? { cycle_id: input.cycleId } : {}),
+    ...(input.planVersionId ? { plan_version_id: input.planVersionId } : {}),
+    ...(input.routineSlotKey ? { routine_slot_key: input.routineSlotKey } : {}),
   }
 }
 
@@ -306,6 +330,7 @@ export interface TodayIntake {
   unit: string | null
   stackItemId: string
   cycleId: string
+  planVersionId: string | null
   pendingLogId: string | null
   routineGroup: ResolvedRoutineGroup
   trackingLevel: 'intake_only' | 'with_amount' | 'complete'
@@ -319,7 +344,7 @@ export function buildHomeRoutineIntake(intake: TodayIntake): RoutineIntake {
   return {
     key: intake.key,
     cycleId: intake.cycleId,
-    planVersionId: null,
+    planVersionId: intake.planVersionId,
     pendingLogId: intake.pendingLogId,
     stackItemId: intake.stackItemId,
     stackItemName: intake.substance ?? '',
@@ -385,106 +410,205 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
       const todayKey = format(new Date(), 'yyyy-MM-dd')
 
       try {
-        const [{ data: cycleData }, { data: logData }, { data: stackItemData }, { data: inventoryData }, { data: escalationData }, { data: injectionData }] = await Promise.all([
-          homeDataClient.from('cycles')
-            .select('id, intake_time, intake_time_custom, stack_item_id, dose, unit, method, start_date, end_date, frequency, x_days_interval, interval_unit, cycle_on_days, cycle_off_days, slot_doses, slot_days, schedule_days, schedule_history, stack_items(display_name, tracking_level, dosage_form)')
-            .eq('user_id', user!.id).eq('active', true),
-          // All decided/reset logs — taken filtered per use site (overdue/timer).
-          homeDataClient.from('dose_logs')
-            .select('id, logged_at, stack_item_id, taken')
-            .eq('user_id', user!.id)
-            .order('logged_at', { ascending: false }),
-          homeDataClient.from('stack_items')
-            .select('id, display_name, tracking_level, dosage_form, vials_in_stock, reconstitution_date, expiry_days')
-            .eq('user_id', user!.id),
-          homeDataClient.from('inventory_items')
-            .select('id, vials_count')
-            .eq('user_id', user!.id),
-          homeDataClient.from('dose_escalations')
-            .select('cycle_id, increase_amount, unit, start_type, start_date, start_after_days')
-            .eq('user_id', user!.id),
-          homeDataClient.from('injection_logs')
-            .select('id, logged_at, body_region, body_side, position, normal')
-            .eq('user_id', user!.id)
-            .order('logged_at', { ascending: false })
-            .limit(30),
-        ])
+        let timelines: CycleTimeline[] = []
+        let cycleData: unknown[] = []
+        let logData: IntakeLog[] = []
+        let stackItemData: Record<string, unknown>[] = []
+        let inventoryData: Record<string, unknown>[] = []
+        let escalationData: unknown[] = []
+        let injectionData: Record<string, unknown>[] = []
+
+        if (FEATURES.planTimelineV2) {
+          const [loadedTimelines, logsResult, stackItemsResult, inventoryResult, injectionsResult] = await Promise.all([
+            loadCycleTimelines(homeDataClient as never, user!.id),
+            homeDataClient.from('dose_logs')
+              .select('id, logged_at, stack_item_id, taken, cycle_id, plan_version_id, routine_slot_key')
+              .eq('user_id', user!.id)
+              .order('logged_at', { ascending: false }),
+            homeDataClient.from('stack_items')
+              .select('id, display_name, tracking_level, dosage_form, vials_in_stock, reconstitution_date, expiry_days')
+              .eq('user_id', user!.id),
+            homeDataClient.from('inventory_items')
+              .select('id, vials_count')
+              .eq('user_id', user!.id),
+            homeDataClient.from('injection_logs')
+              .select('id, logged_at, body_region, body_side, position, normal')
+              .eq('user_id', user!.id)
+              .order('logged_at', { ascending: false })
+              .limit(30),
+          ])
+          timelines = loadedTimelines
+          logData = (logsResult.data ?? []) as IntakeLog[]
+          stackItemData = (stackItemsResult.data ?? []) as Record<string, unknown>[]
+          inventoryData = (inventoryResult.data ?? []) as Record<string, unknown>[]
+          injectionData = (injectionsResult.data ?? []) as Record<string, unknown>[]
+        } else {
+          const [cyclesResult, logsResult, stackItemsResult, inventoryResult, escalationsResult, injectionsResult] = await Promise.all([
+            homeDataClient.from('cycles')
+              .select('id, intake_time, intake_time_custom, stack_item_id, dose, unit, method, start_date, end_date, frequency, x_days_interval, interval_unit, cycle_on_days, cycle_off_days, slot_doses, slot_days, schedule_days, schedule_history, stack_items(display_name, tracking_level, dosage_form)')
+              .eq('user_id', user!.id).eq('active', true),
+            // All decided/reset logs — taken filtered per use site (overdue/timer).
+            homeDataClient.from('dose_logs')
+              .select('id, logged_at, stack_item_id, taken')
+              .eq('user_id', user!.id)
+              .order('logged_at', { ascending: false }),
+            homeDataClient.from('stack_items')
+              .select('id, display_name, tracking_level, dosage_form, vials_in_stock, reconstitution_date, expiry_days')
+              .eq('user_id', user!.id),
+            homeDataClient.from('inventory_items')
+              .select('id, vials_count')
+              .eq('user_id', user!.id),
+            homeDataClient.from('dose_escalations')
+              .select('cycle_id, increase_amount, unit, start_type, start_date, start_after_days')
+              .eq('user_id', user!.id),
+            homeDataClient.from('injection_logs')
+              .select('id, logged_at, body_region, body_side, position, normal')
+              .eq('user_id', user!.id)
+              .order('logged_at', { ascending: false })
+              .limit(30),
+          ])
+          cycleData = cyclesResult.data ?? []
+          logData = (logsResult.data ?? []) as IntakeLog[]
+          stackItemData = (stackItemsResult.data ?? []) as Record<string, unknown>[]
+          inventoryData = (inventoryResult.data ?? []) as Record<string, unknown>[]
+          escalationData = escalationsResult.data ?? []
+          injectionData = (injectionsResult.data ?? []) as Record<string, unknown>[]
+        }
         const cycles = (cycleData ?? []) as unknown as HomeCycle[]
         const escalations = (escalationData ?? []) as EscalationRow[]
-        // How many of today's intakes are already decided (taken=true/false) per stack item.
-        const decidedCountByStackItem = new Map<string, number>()
-        const pendingLogIdsByStackItem = new Map<string, string[]>()
-        for (const l of logData ?? []) {
-          if (format(parseISO(l.logged_at), 'yyyy-MM-dd') !== todayKey) continue
-          if (l.taken !== null) {
-            decidedCountByStackItem.set(l.stack_item_id, (decidedCountByStackItem.get(l.stack_item_id) ?? 0) + 1)
-          } else {
-            const pendingIds = pendingLogIdsByStackItem.get(l.stack_item_id) ?? []
-            pendingIds.unshift(l.id as string)
-            pendingLogIdsByStackItem.set(l.stack_item_id, pendingIds)
-          }
-        }
 
         // ── Next intake time ─────────────────────────────────────────
         const now = new Date()
-        const todaySlots: TodayIntake[] = []
-        for (const c of cycles) {
-          // Nur Zyklen, die HEUTE gelten (Frequenz/Start/Ende), wie im Kalender.
-          if (!cycleAppliesToDay(c, now)) continue
-          const seg = scheduleForDay(c, now)   // segment-/historienaufgelöste Slots
-          const slots = resolveScheduleSlots(seg, now)
-          const intakeOnly = c.stack_items.tracking_level === 'intake_only'
-          slots.forEach(slot => {
-            // Je Zeitpunkt aufgeloest, nicht einmal je Zyklus: die Menge kann
-            // sich von Einnahme zu Einnahme unterscheiden.
-            const resolvedQuantity = resolveHomeIntakeQuantity(c, now, escalations, slot.dose)
-            const doseNumber = intakeOnly ? null : resolvedQuantity.doseNumber
-            const unit = intakeOnly ? null : resolvedQuantity.unit
-            const doseLabel = intakeOnly ? null : resolvedQuantity.dose
-            const scheduledAt = new Date(now)
-            scheduledAt.setHours(Math.floor(slot.minutes / 60), slot.minutes % 60, 0, 0)
-            todaySlots.push({
-              key: `${c.id}-${slot.minutes}`,
-              min: slot.minutes,
-              time: slot.time,
-              substance: c.stack_items.display_name,
-              dose: doseLabel,
-              doseNumber,
-              unit,
-              stackItemId: c.stack_item_id,
-              cycleId: c.id,
-              pendingLogId: null,
-              routineGroup: slot.routineGroup,
-              trackingLevel: c.stack_items.tracking_level,
-              dosageForm: c.stack_items.dosage_form,
-              method: c.method,
-              scheduledAt: scheduledAt.toISOString(),
-            })
-          })
-        }
-        todaySlots.sort((a, b) => a.min - b.min)
-        // Alle heute noch offenen Slots sammeln (pro Peptid die bereits entschiedenen in
-        // Zeitreihenfolge abziehen). Übrig bleiben fällige + anstehende Einnahmen für heute.
-        const consumedByStackItem = new Map<string, number>()
-        const openSlots: typeof todaySlots = []
-        for (const s of todaySlots) {
-          const used = consumedByStackItem.get(s.stackItemId) ?? 0
-          if (used < (decidedCountByStackItem.get(s.stackItemId) ?? 0)) {
-            consumedByStackItem.set(s.stackItemId, used + 1)
-            continue
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+        let todaySlots: TodayIntake[] = []
+        let openSlots: TodayIntake[] = []
+
+        if (FEATURES.planTimelineV2) {
+          const stackItemById = new Map(stackItemData.map(item => [item.id as string, item]))
+          const toTodayIntake = (intake: ResolvedTimelineIntake): TodayIntake | null => {
+            const stackItem = stackItemById.get(intake.stackItemId)
+            if (!stackItem) return null
+            const trackingLevel = stackItem.tracking_level as TodayIntake['trackingLevel']
+            const intakeOnly = trackingLevel === 'intake_only'
+            const quantity = { dose: intake.dose, unit: intake.unit }
+            return {
+              key: intake.routineSlotKey,
+              min: intake.minutes,
+              time: intake.time,
+              substance: stackItem.display_name as string,
+              dose: intakeOnly || !hasTrackedQuantity(quantity)
+                ? null
+                : formatTrackedQuantity(quantity.dose, quantity.unit, ''),
+              doseNumber: intakeOnly ? null : intake.dose,
+              unit: intakeOnly ? null : intake.unit,
+              stackItemId: intake.stackItemId,
+              cycleId: intake.cycleId,
+              planVersionId: intake.planVersionId,
+              pendingLogId: intake.pendingLogId,
+              routineGroup: intake.routineGroup,
+              trackingLevel,
+              dosageForm: (stackItem.dosage_form as string | null) ?? null,
+              method: intake.method,
+              scheduledAt: intake.scheduledAt,
+            }
           }
-          s.pendingLogId = pendingLogIdsByStackItem.get(s.stackItemId)?.shift() ?? null
-          openSlots.push(s)
+          const localDate = localDateTimeKey(now, timeZone).slice(0, 10)
+          todaySlots = timelines
+            .flatMap(timeline => resolveTimelineIntakesForDay(timeline, localDate, timeZone))
+            .map(toTodayIntake)
+            .filter((intake): intake is TodayIntake => Boolean(intake))
+          openSlots = collectOpenTimelineIntakes(timelines, logData, now, timeZone)
+            .map(toTodayIntake)
+            .filter((intake): intake is TodayIntake => Boolean(intake))
+        } else {
+          // How many of today's intakes are already decided (taken=true/false) per stack item.
+          const decidedCountByStackItem = new Map<string, number>()
+          const pendingLogIdsByStackItem = new Map<string, string[]>()
+          for (const l of logData) {
+            if (format(parseISO(l.logged_at), 'yyyy-MM-dd') !== todayKey) continue
+            if (l.taken !== null) {
+              decidedCountByStackItem.set(l.stack_item_id, (decidedCountByStackItem.get(l.stack_item_id) ?? 0) + 1)
+            } else if (l.id) {
+              const pendingIds = pendingLogIdsByStackItem.get(l.stack_item_id) ?? []
+              pendingIds.unshift(l.id)
+              pendingLogIdsByStackItem.set(l.stack_item_id, pendingIds)
+            }
+          }
+          for (const c of cycles) {
+            if (!cycleAppliesToDay(c, now)) continue
+            const seg = scheduleForDay(c, now)
+            const slots = resolveScheduleSlots(seg, now)
+            const intakeOnly = c.stack_items.tracking_level === 'intake_only'
+            slots.forEach(slot => {
+              const resolvedQuantity = resolveHomeIntakeQuantity(c, now, escalations, slot.dose)
+              const scheduledAt = new Date(now)
+              scheduledAt.setHours(Math.floor(slot.minutes / 60), slot.minutes % 60, 0, 0)
+              todaySlots.push({
+                key: `${c.id}-${slot.minutes}`,
+                min: slot.minutes,
+                time: slot.time,
+                substance: c.stack_items.display_name,
+                dose: intakeOnly ? null : resolvedQuantity.dose,
+                doseNumber: intakeOnly ? null : resolvedQuantity.doseNumber,
+                unit: intakeOnly ? null : resolvedQuantity.unit,
+                stackItemId: c.stack_item_id,
+                cycleId: c.id,
+                planVersionId: null,
+                pendingLogId: null,
+                routineGroup: slot.routineGroup,
+                trackingLevel: c.stack_items.tracking_level,
+                dosageForm: c.stack_items.dosage_form,
+                method: c.method,
+                scheduledAt: scheduledAt.toISOString(),
+              })
+            })
+          }
+          todaySlots.sort((a, b) => a.min - b.min)
+          const consumedByStackItem = new Map<string, number>()
+          for (const slot of todaySlots) {
+            const used = consumedByStackItem.get(slot.stackItemId) ?? 0
+            if (used < (decidedCountByStackItem.get(slot.stackItemId) ?? 0)) {
+              consumedByStackItem.set(slot.stackItemId, used + 1)
+              continue
+            }
+            slot.pendingLogId = pendingLogIdsByStackItem.get(slot.stackItemId)?.shift() ?? null
+            openSlots.push(slot)
+          }
         }
         // Frist = Tagesende: nicht bestätigte Slots vergangener Tage automatisch als
         // „verpasst" (taken=false) in die Historie schreiben, damit sie sich nicht stapeln.
         // Nur ab Aktivierung (localStorage) — kein rückwirkendes Backfill der Historie.
         let autoMissSince = localStorage.getItem('tyd_automiss_since')
         if (!autoMissSince) { autoMissSince = todayKey; localStorage.setItem('tyd_automiss_since', autoMissSince) }
-        const missed = collectMissedIntakes(cycles, logData ?? [], now, parseISO(autoMissSince))
+        const missed = FEATURES.planTimelineV2
+          ? collectMissedTimelineIntakes(
+              timelines,
+              logData,
+              now,
+              timeZone,
+              Math.max(0, differenceInDays(startOfDay(now), startOfDay(parseISO(autoMissSince)))),
+            )
+          : collectMissedIntakes(cycles, logData, now, parseISO(autoMissSince))
         if (missed.length > 0) {
           const cycleById = new Map(cycles.map(c => [c.id, c]))
           const rows = missed.map(m => {
+            if (FEATURES.planTimelineV2) {
+              const stackItem = stackItemData.find(item => item.id === m.stackItemId)
+              const intakeOnly = stackItem?.tracking_level === 'intake_only'
+              return {
+                user_id: user!.id,
+                stack_item_id: m.stackItemId,
+                cycle_id: m.cycleId,
+                plan_version_id: m.planVersionId,
+                routine_slot_key: m.routineSlotKey,
+                dose: intakeOnly ? null : m.slotDose,
+                unit: intakeOnly ? null : m.unit ?? null,
+                method: m.method ?? '',
+                logged_at: m.scheduledAt,
+                taken: false,
+                notes: AUTO_MISSED_NOTE,
+              }
+            }
             const c = cycleById.get(m.cycleId)!
             const at = startOfDay(parseISO(m.dateKey))
             at.setHours(Math.floor(m.minutes / 60), m.minutes % 60, 0, 0)
@@ -516,8 +640,8 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
           .slice(0, 4)
           .map(row => ({
             id: row.id as string,
-            position: row.position,
-            normal: row.normal,
+            position: row.position as InjectionHeroPin['position'],
+            normal: row.normal as InjectionHeroPin['normal'],
           }))
 
         setPlannedToday(todaySlots.length)
@@ -525,10 +649,15 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
         setTodayDone(todaySlots.length > 0 && openSlots.length === 0)
         setInjectionHero({ pins })
 
-        setExpiryAlerts(getPeptideExpiryAlerts((stackItemData ?? []).map(item => ({ ...item, name: item.display_name }))))
+        setExpiryAlerts(getPeptideExpiryAlerts(stackItemData.map(item => ({
+          id: item.id as string,
+          name: item.display_name as string,
+          reconstitution_date: item.reconstitution_date as string | null,
+          expiry_days: item.expiry_days as number | null,
+        }))))
 
         setOverview({
-          activeCycles: cycles.length,
+          activeCycles: FEATURES.planTimelineV2 ? timelines.length : cycles.length,
           peptides: (stackItemData ?? []).length,
           inventoryVials: (inventoryData ?? []).reduce((sum, item) => sum + Number(item.vials_count ?? 0), 0),
           loggedToday: (logData ?? []).filter((log) => log.taken === true && format(parseISO(log.logged_at), 'yyyy-MM-dd') === todayKey).length,
@@ -598,7 +727,15 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
     if (!user) return
     try {
       const quantity = { dose: intake.doseNumber, unit: intake.unit }
-      if (taken && hasTrackedQuantity(quantity)) {
+      if (FEATURES.planTimelineV2 && taken) {
+        const [doseLogId] = await confirmIntakeGroup(
+          homeDataClient as unknown as IntakeConfirmationClient,
+          [buildConfirmationEntry(buildHomeRoutineIntake(intake))],
+        )
+        if (doseLogId && (intake.dosageForm === 'vial' || intake.trackingLevel === 'complete')) {
+          await applyHomeSingleInventory(doseLogId)
+        }
+      } else if (taken && hasTrackedQuantity(quantity)) {
         const doseLogId = await confirmIntakeDoseLog(homeDataClient, {
           userId: user.id,
           stackItemId: intake.stackItemId,
@@ -622,6 +759,9 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
           scheduledAt: intake.scheduledAt,
           taken,
           timeValue,
+          cycleId: FEATURES.planTimelineV2 ? intake.cycleId : null,
+          planVersionId: FEATURES.planTimelineV2 ? intake.planVersionId : null,
+          routineSlotKey: FEATURES.planTimelineV2 ? intake.key : null,
         }))
         if (error) throw error
       }

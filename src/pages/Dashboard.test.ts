@@ -5,6 +5,7 @@ import { createElement, type ComponentType } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { FEATURES } from '../config/features'
 import { Dashboard, buildDashboardRoutineIntake } from './Dashboard'
 
 const pageMocks = vi.hoisted(() => {
@@ -68,11 +69,13 @@ function createDashboardClient(
   }> = async () => ({ data: [{ id: 'saved-log-1' }], error: null }),
 ) {
   const selectCounts = new Map<string, number>()
+  const selectCalls: Array<{ table: string; columns: string }> = []
   const mutations: RecordedMutation[] = []
   const rpc = vi.fn(rpcImplementation)
   const from = vi.fn((table: string) => ({
-    select: vi.fn(() => {
+    select: vi.fn((columns: string) => {
       selectCounts.set(table, (selectCounts.get(table) ?? 0) + 1)
+      selectCalls.push({ table, columns })
       return resolvedQuery(fixtures[table] ?? [])
     }),
     insert: vi.fn((values: unknown) => {
@@ -88,7 +91,7 @@ function createDashboardClient(
       return resolvedQuery(null)
     }),
   }))
-  return { from, rpc, selectCounts, mutations }
+  return { from, rpc, selectCounts, selectCalls, mutations }
 }
 
 function intakeOnlyCycle() {
@@ -130,8 +133,146 @@ function renderDashboard(client: ReturnType<typeof createDashboardClient>) {
 
 afterEach(() => {
   cleanup()
+  ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false
   vi.clearAllMocks()
   vi.unstubAllGlobals()
+})
+
+describe('Dashboard normalized timeline path', () => {
+  function normalizedCycle(frequency = 'Täglich', pauses: unknown[] = []) {
+    const today = new Date()
+    today.setHours(12, 0, 0, 0)
+    const localDate = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, '0'),
+      String(today.getDate()).padStart(2, '0'),
+    ].join('-')
+    return {
+      id: 'timeline-cycle',
+      stack_item_id: 'stack-1',
+      name: 'Vitamin D3',
+      start_date: localDate,
+      end_date: null,
+      active: true,
+      frequency,
+      x_days_interval: null,
+      interval_unit: null,
+      cycle_on_days: null,
+      cycle_off_days: null,
+      schedule_days: null,
+      intake_time: frequency === 'Bei Bedarf' ? '' : 'morgens',
+      intake_time_custom: frequency === 'Bei Bedarf' ? null : '08:00',
+      slot_doses: null,
+      slot_days: null,
+      dose: 25,
+      unit: 'mg',
+      method: 'Oral',
+      schedule_history: null,
+      stack_items: { display_name: 'Vitamin D3', tracking_level: 'complete' },
+      started_at: new Date(today.getTime() - 86_400_000).toISOString(),
+      ended_at: null,
+      versions: [{
+        id: 'timeline-version',
+        cycle_id: 'timeline-cycle',
+        effective_kind: 'local_date',
+        effective_at: null,
+        effective_local_date: localDate,
+        change_kind: 'initial',
+        frequency,
+        x_days_interval: null,
+        interval_unit: null,
+        cycle_on_days: null,
+        cycle_off_days: null,
+        schedule_days: [],
+        intake_time: frequency === 'Bei Bedarf' ? '' : 'morgens',
+        intake_time_custom: frequency === 'Bei Bedarf' ? null : '08:00',
+        slot_doses: null,
+        slot_days: null,
+        dose: 25,
+        unit: 'mg',
+        method: 'Oral',
+      }],
+      pauses,
+    }
+  }
+
+  it('keeps the timeline rollout flag disabled by default', () => {
+    const source = readFileSync('src/config/features.ts', 'utf8')
+    expect(source).toMatch(/planTimelineV2:\s*false/)
+  })
+
+  it('uses timeline slots without dose escalations and confirms the exact version', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const client = createDashboardClient({
+      cycles: [normalizedCycle()],
+      dose_logs: [],
+      stack_items: [{
+        id: 'stack-1', display_name: 'Vitamin D3', default_method: 'Oral',
+        dosage_form: 'capsule', tracking_level: 'complete',
+      }],
+    })
+    renderDashboard(client)
+
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Alle als eingenommen markieren' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Alle als eingenommen markieren' }))
+
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: [expect.objectContaining({
+        cycle_id: 'timeline-cycle',
+        plan_version_id: 'timeline-version',
+        slot_key: expect.stringMatching(/^timeline-cycle@/),
+      })],
+    }))
+    expect(client.selectCounts.get('dose_escalations')).toBeUndefined()
+    expect(client.selectCalls.find(call => call.table === 'cycles')?.columns)
+      .toContain('cycle_plan_versions')
+  })
+
+  it('keeps lifecycle-valid PRN access without creating a due intake', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const client = createDashboardClient({
+      cycles: [normalizedCycle('Bei Bedarf')],
+      dose_logs: [],
+      stack_items: [{
+        id: 'stack-1', display_name: 'Ibuprofen', default_method: 'Oral',
+        dosage_form: 'tablet', tracking_level: 'intake_only',
+      }],
+    })
+    renderDashboard(client)
+
+    const prn = await waitFor(() => {
+      const row = document.querySelector('[data-on-demand-cycle="timeline-cycle"]')
+      if (!row) throw new Error('missing normalized PRN row')
+      return row as HTMLElement
+    })
+    expect(prn.textContent).toContain('Ibuprofen')
+    expect(screen.queryByRole('button', { name: 'Alle als eingenommen markieren' })).toBeNull()
+  })
+
+  it('renders one neutral message for a fully paused selected day', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const now = new Date()
+    const client = createDashboardClient({
+      cycles: [normalizedCycle('Täglich', [{
+        id: 'pause-1',
+        cycle_id: 'timeline-cycle',
+        paused_at: new Date(now.getTime() - 86_400_000).toISOString(),
+        ends_at: new Date(now.getTime() + 86_400_000).toISOString(),
+      }])],
+      dose_logs: [],
+      stack_items: [{
+        id: 'stack-1', display_name: 'Vitamin D3', default_method: 'Oral',
+        dosage_form: 'capsule', tracking_level: 'complete',
+      }],
+    })
+    renderDashboard(client)
+
+    expect(await screen.findByText('Plan pausiert')).toBeTruthy()
+    expect(screen.getAllByText('Während der Pause ist keine Einnahme fällig.')).toHaveLength(1)
+    expect(screen.queryByRole('button', { name: 'Alle als eingenommen markieren' })).toBeNull()
+  })
 })
 
 describe('Dashboard intake confirmation actions', () => {
@@ -214,6 +355,9 @@ describe('Dashboard intake confirmation actions', () => {
       p_entries: [expect.objectContaining({ dose: null, unit: null })],
     })
     await waitFor(() => expect(client.selectCounts.get('dose_logs')).toBe(2))
+    expect(client.selectCounts.get('dose_escalations')).toBe(1)
+    expect(client.selectCalls.find(call => call.table === 'cycles')?.columns)
+      .not.toContain('cycle_plan_versions')
   })
 
   it('shows and persists no quantity when confirming one pending intake-only slot', async () => {

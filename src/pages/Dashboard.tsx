@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Poin
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { FEATURES } from '../config/features'
 import { useAuth } from '../context/AuthContext'
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval,
@@ -16,11 +17,25 @@ import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getStackItemColor } from '../features/my-stack/lib/colors'
 import { getDateLocale } from '../i18n/dateLocales'
-import { cycleAppliesToDay, effectiveSlotQuantity, resolveScheduleSlots, scheduleForDay, AUTO_MISSED_NOTE, type ResolvedRoutineGroup, type ScheduleSegment } from '../lib/intakeSchedule'
+import {
+  collectOpenTimelineIntakes,
+  cycleAppliesToDay,
+  effectiveSlotQuantity,
+  resolveScheduleSlots,
+  resolveTimelineIntakesForDay,
+  scheduleForDay,
+  AUTO_MISSED_NOTE,
+  type IntakeLog,
+  type ResolvedRoutineGroup,
+  type ScheduleSegment,
+} from '../lib/intakeSchedule'
+import { loadCycleTimelines } from '../features/my-stack/services/planLifecycle'
+import { localDateTimeKey, resolveCycleAtLocalSlot, type CycleTimeline } from '../lib/planTimeline'
 import { isOnDemand } from '../features/my-stack/lib/intakeFrequency'
 import { debitPeptideStockForDoseById } from '../features/my-stack/extensions/peptide/vialStock'
 import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/quantityPresentation'
 import {
+  buildConfirmationEntry,
   groupRoutineIntakes,
   routineGroupFromMinutes,
   type RoutineConfirmationEntry,
@@ -48,6 +63,9 @@ interface DoseLog {
   notes: string | null
   taken: boolean | null
   stack_items: { display_name: string }
+  cycle_id?: string | null
+  plan_version_id?: string | null
+  routine_slot_key?: string | null
 }
 
 interface Cycle {
@@ -72,6 +90,7 @@ interface Cycle {
   intake_time_custom: string | null
   schedule_history: ScheduleSegment[] | null
   stack_items: { display_name: string; tracking_level: 'intake_only' | 'with_amount' | 'complete' }
+  planVersionId?: string | null
 }
 
 interface StackItem {
@@ -96,6 +115,7 @@ interface Escalation {
 interface DashboardRoutineIntakeInput {
   key: string
   cycleId: string
+  planVersionId?: string | null
   pendingLogId: string | null
   stackItemId: string
   stackItemName: string
@@ -113,7 +133,7 @@ export function buildDashboardRoutineIntake(input: DashboardRoutineIntakeInput):
   return {
     key: input.key,
     cycleId: input.cycleId,
-    planVersionId: null,
+    planVersionId: input.planVersionId ?? null,
     pendingLogId: input.pendingLogId,
     stackItemId: input.stackItemId,
     stackItemName: input.stackItemName,
@@ -184,6 +204,43 @@ function slotTimestamp(day: Date, minutes: number): string {
   const safe = minutes >= 24 * 60 ? 12 * 60 : minutes
   d.setHours(Math.floor(safe / 60), safe % 60, 0, 0)
   return d.toISOString()
+}
+
+function dashboardCycleFromTimeline(
+  timeline: CycleTimeline,
+  version: CycleTimeline['versions'][number],
+  stackItem: StackItem | undefined,
+  timeZone: string,
+): Cycle {
+  return {
+    id: timeline.cycle.id,
+    name: stackItem?.display_name ?? '',
+    stack_item_id: timeline.cycle.stack_item_id,
+    dose: version.dose,
+    unit: version.unit,
+    method: version.method,
+    frequency: version.frequency,
+    x_days_interval: version.x_days_interval,
+    interval_unit: version.interval_unit,
+    cycle_on_days: version.cycle_on_days,
+    cycle_off_days: version.cycle_off_days,
+    slot_doses: version.slot_doses,
+    slot_days: version.slot_days,
+    schedule_days: version.schedule_days,
+    start_date: localDateTimeKey(new Date(timeline.cycle.started_at), timeZone).slice(0, 10),
+    end_date: timeline.cycle.ended_at
+      ? localDateTimeKey(new Date(timeline.cycle.ended_at), timeZone).slice(0, 10)
+      : null,
+    active: timeline.cycle.ended_at === null,
+    intake_time: version.intake_time,
+    intake_time_custom: version.intake_time_custom,
+    schedule_history: null,
+    stack_items: {
+      display_name: stackItem?.display_name ?? '',
+      tracking_level: stackItem?.tracking_level ?? 'intake_only',
+    },
+    planVersionId: version.id,
+  }
 }
 
 type IntakeGroupKey = 'morgens' | 'mittags' | 'abends' | 'custom' | 'later'
@@ -415,13 +472,14 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [logs, setLogs] = useState<DoseLog[]>([])
   const [cycles, setCycles] = useState<Cycle[]>([])
+  const [timelines, setTimelines] = useState<CycleTimeline[]>([])
   const [stackItems, setStackItems] = useState<StackItem[]>([])
   const [escalations, setEscalations] = useState<Escalation[]>([])
 
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
 
   // Einnahme-Bestätigungs-Sheet
-  interface ConfirmSheet { cycle?: Cycle; log?: DoseLog; slotDose?: number | null }
+  interface ConfirmSheet { cycle?: Cycle; log?: DoseLog; slotDose?: number | null; scheduledAt?: string }
   const [confirmSheet, setConfirmSheet] = useState<ConfirmSheet | null>(null)
   const [routineGroupSheet, setRoutineGroupSheet] = useState<RoutineGroupModel | null>(null)
   const [confirmTime, setConfirmTime]   = useState('')
@@ -522,22 +580,32 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     const end = format(rangeEnd, 'yyyy-MM-dd')
     const { data } = await dashboardDataClient
       .from('dose_logs')
-      .select('*, stack_items(display_name)')
+      .select(FEATURES.planTimelineV2
+        ? 'id, stack_item_id, dose, unit, method, logged_at, notes, taken, cycle_id, plan_version_id, routine_slot_key, stack_items(display_name)'
+        : '*, stack_items(display_name)')
       .eq('user_id', user.id)
       .gte('logged_at', start)
       .lte('logged_at', end + 'T23:59:59')
       .order('logged_at', { ascending: true })
-    if (data) setLogs(data as DoseLog[])
+    if (data) setLogs(data as unknown as DoseLog[])
   }, [currentDate, dashboardDataClient, user])
 
   const loadCycles = useCallback(async () => {
     if (!user) return
+    if (FEATURES.planTimelineV2) {
+      setTimelines(await loadCycleTimelines(dashboardDataClient as never, user.id))
+      setCycles([])
+      return
+    }
     const { data } = await dashboardDataClient
       .from('cycles')
       .select('*, stack_items(display_name, tracking_level)')
       .eq('user_id', user.id)
       .eq('active', true)
-    if (data) setCycles(data as Cycle[])
+    if (data) {
+      setCycles(data as Cycle[])
+      setTimelines([])
+    }
   }, [dashboardDataClient, user])
 
   const loadStackItems = useCallback(async () => {
@@ -548,6 +616,10 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
   const loadEscalations = useCallback(async () => {
     if (!user) return
+    if (FEATURES.planTimelineV2) {
+      setEscalations([])
+      return
+    }
     const { data } = await dashboardDataClient.from('dose_escalations').select('*').eq('user_id', user.id)
     if (data) setEscalations(data as Escalation[])
   }, [dashboardDataClient, user])
@@ -608,23 +680,75 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         })
     : []
 
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  const stackItemById = new Map(stackItems.map(item => [item.id, item]))
+  const timelineOccurrencesForDay = (day: Date) => {
+    const localDate = localDateTimeKey(day, timeZone).slice(0, 10)
+    return timelines.flatMap(timeline => (
+      resolveTimelineIntakesForDay(timeline, localDate, timeZone)
+    ))
+  }
   const logsForDay = (day: Date) => logs.filter(l => isSameDay(new Date(l.logged_at), day))
-  const cyclesForDay = (day: Date) => cycles.filter(c => cycleAppliesToDay(c, day))
+  const cyclesForDay = (day: Date) => {
+    if (!FEATURES.planTimelineV2) return cycles.filter(c => cycleAppliesToDay(c, day))
+    return timelineOccurrencesForDay(day).flatMap(intake => {
+      const timeline = timelines.find(candidate => candidate.cycle.id === intake.cycleId)
+      const version = timeline?.versions.find(candidate => candidate.id === intake.planVersionId)
+      if (!timeline || !version) return []
+      return [dashboardCycleFromTimeline(
+        timeline, version, stackItemById.get(intake.stackItemId), timeZone,
+      )]
+    })
+  }
   // „Bei Bedarf" ist kein Plan: `cycleAppliesToDay` gibt fuer diese Frequenz
   // NIE true zurueck, damit nichts faellig wird und nichts als verpasst gilt.
   // Genau deshalb taucht so ein Zyklus in keiner Tagesliste auf — und liesse
   // sich ohne diese Liste hier gar nicht eintragen. Ein Schmerzmittel hat
   // keinen Plan, nur eine Historie.
-  const onDemandCyclesForDay = (day: Date) => cycles.filter(cycle => {
-    if (!isOnDemand(cycle.frequency)) return false
-    const tag = format(day, 'yyyy-MM-dd')
-    if (tag < cycle.start_date) return false
-    return !cycle.end_date || tag <= cycle.end_date
-  })
+  const onDemandCyclesForDay = (day: Date) => {
+    if (!FEATURES.planTimelineV2) {
+      return cycles.filter(cycle => {
+        if (!isOnDemand(cycle.frequency)) return false
+        const tag = format(day, 'yyyy-MM-dd')
+        if (tag < cycle.start_date) return false
+        return !cycle.end_date || tag <= cycle.end_date
+      })
+    }
+    const localDate = localDateTimeKey(day, timeZone).slice(0, 10)
+    return timelines.flatMap(timeline => {
+      const resolved = resolveCycleAtLocalSlot(timeline, localDate, 12 * 60, timeZone)
+      if (resolved.status !== 'active' || !resolved.planVersion || !isOnDemand(resolved.planVersion.frequency)) {
+        return []
+      }
+      return [dashboardCycleFromTimeline(
+        timeline,
+        resolved.planVersion,
+        stackItemById.get(timeline.cycle.stack_item_id),
+        timeZone,
+      )]
+    })
+  }
 
   const selLogs     = logsForDay(selectedDay)
   const selCycles   = cyclesForDay(selectedDay)
   const selOnDemand = onDemandCyclesForDay(selectedDay)
+  const selectedLocalDate = localDateTimeKey(selectedDay, timeZone).slice(0, 10)
+  const selectedPause = FEATURES.planTimelineV2
+    ? timelines.flatMap(timeline => {
+        const start = resolveCycleAtLocalSlot(timeline, selectedLocalDate, 0, timeZone)
+        const end = resolveCycleAtLocalSlot(timeline, selectedLocalDate, 24 * 60 - 1, timeZone)
+        return start.status === 'paused' && end.status === 'paused' && start.pause?.id === end.pause?.id
+          ? [start.pause]
+          : []
+      })[0] ?? null
+    : null
+  const selectedPauseRange = selectedPause
+    ? `${localDateTimeKey(new Date(selectedPause.paused_at), timeZone).slice(0, 10)} – ${
+        selectedPause.ends_at
+          ? localDateTimeKey(new Date(selectedPause.ends_at), timeZone).slice(0, 10)
+          : t('my_stack_plan_pause_until_optional', { defaultValue: 'offen' })
+      }`
+    : null
   const isTodaySelected = isToday(selectedDay)
   // Vergangener Tag (vor heute): nicht bestätigte Slots gelten als „verpasst".
   const isPastSelected = format(selectedDay, 'yyyy-MM-dd') < format(new Date(), 'yyyy-MM-dd')
@@ -637,32 +761,74 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   // Per-slot due list: expand each cycle into its individual intake slots, then drop the
   // slots already covered (in time order) by decided logs (taken !== null) for that stack item.
   // Reset logs (taken === null) keep a slot "due" and are reused on confirm to avoid duplicates.
-  interface DueSlot { key: string; cycle: Cycle; minutes: number; time: string; groupKey: IntakeGroupKey; routineGroup: ResolvedRoutineGroup; dose: number | null; pendingLog?: DoseLog }
-  const decidedByStackItem = new Map<string, number>()
-  const pendingByStackItem = new Map<string, DoseLog[]>()
-  for (const log of selLogs) {
-    if (log.taken !== null) decidedByStackItem.set(log.stack_item_id, (decidedByStackItem.get(log.stack_item_id) ?? 0) + 1)
-    else { const arr = pendingByStackItem.get(log.stack_item_id) ?? []; arr.push(log); pendingByStackItem.set(log.stack_item_id, arr) }
-  }
-  const slotsByStackItem = new Map<string, DueSlot[]>()
-  for (const cycle of selCycles) {
-    for (const s of cycleSlots(cycle, selectedDay)) {
-      const arr = slotsByStackItem.get(cycle.stack_item_id) ?? []
-      arr.push({ key: `${cycle.id}-${s.minutes}`, cycle, minutes: s.minutes, time: s.time, groupKey: s.groupKey, routineGroup: s.routineGroup, dose: s.dose })
-      slotsByStackItem.set(cycle.stack_item_id, arr)
-    }
-  }
+  interface DueSlot { key: string; cycle: Cycle; planVersionId: string | null; scheduledAt: string; minutes: number; time: string; groupKey: IntakeGroupKey; routineGroup: ResolvedRoutineGroup; dose: number | null; pendingLog?: DoseLog }
   const dueSlots: DueSlot[] = []
   let totalDaySlots = 0
-  for (const [stackItemId, slots] of slotsByStackItem) {
-    totalDaySlots += slots.length
-    const ordered = [...slots].sort((a, b) => a.minutes - b.minutes)
-    const decided = decidedByStackItem.get(stackItemId) ?? 0
-    const pendings = [...(pendingByStackItem.get(stackItemId) ?? [])]
-    ordered.slice(decided).forEach(slot => {
-      slot.pendingLog = pendings.shift()
-      dueSlots.push(slot)
-    })
+  if (FEATURES.planTimelineV2) {
+    const planned = timelineOccurrencesForDay(selectedDay)
+    const open = collectOpenTimelineIntakes(
+      timelines, logs as IntakeLog[], selectedDay, timeZone,
+    )
+    totalDaySlots = planned.length
+    for (const intake of open) {
+      const timeline = timelines.find(candidate => candidate.cycle.id === intake.cycleId)
+      const version = timeline?.versions.find(candidate => candidate.id === intake.planVersionId)
+      if (!timeline || !version) continue
+      const cycle = dashboardCycleFromTimeline(
+        timeline, version, stackItemById.get(intake.stackItemId), timeZone,
+      )
+      dueSlots.push({
+        key: intake.routineSlotKey,
+        cycle,
+        planVersionId: intake.planVersionId,
+        scheduledAt: intake.scheduledAt,
+        minutes: intake.minutes,
+        time: intake.time,
+        groupKey: intake.routineGroup === 'morning'
+          ? 'morgens'
+          : intake.routineGroup === 'midday' ? 'mittags' : 'abends',
+        routineGroup: intake.routineGroup,
+        dose: intake.dose,
+        pendingLog: intake.pendingLogId
+          ? logs.find(log => log.id === intake.pendingLogId)
+          : undefined,
+      })
+    }
+  } else {
+    const decidedByStackItem = new Map<string, number>()
+    const pendingByStackItem = new Map<string, DoseLog[]>()
+    for (const log of selLogs) {
+      if (log.taken !== null) decidedByStackItem.set(log.stack_item_id, (decidedByStackItem.get(log.stack_item_id) ?? 0) + 1)
+      else { const arr = pendingByStackItem.get(log.stack_item_id) ?? []; arr.push(log); pendingByStackItem.set(log.stack_item_id, arr) }
+    }
+    const slotsByStackItem = new Map<string, DueSlot[]>()
+    for (const cycle of selCycles) {
+      for (const slot of cycleSlots(cycle, selectedDay)) {
+        const arr = slotsByStackItem.get(cycle.stack_item_id) ?? []
+        arr.push({
+          key: `${cycle.id}-${slot.minutes}`,
+          cycle,
+          planVersionId: null,
+          scheduledAt: slotTimestamp(selectedDay, slot.minutes),
+          minutes: slot.minutes,
+          time: slot.time,
+          groupKey: slot.groupKey,
+          routineGroup: slot.routineGroup,
+          dose: slot.dose,
+        })
+        slotsByStackItem.set(cycle.stack_item_id, arr)
+      }
+    }
+    for (const [stackItemId, slots] of slotsByStackItem) {
+      totalDaySlots += slots.length
+      const ordered = [...slots].sort((a, b) => a.minutes - b.minutes)
+      const decided = decidedByStackItem.get(stackItemId) ?? 0
+      const pendings = [...(pendingByStackItem.get(stackItemId) ?? [])]
+      ordered.slice(decided).forEach(slot => {
+        slot.pendingLog = pendings.shift()
+        dueSlots.push(slot)
+      })
+    }
   }
   const completedDaySlots = totalDaySlots - dueSlots.length
   const dueSlotByKey = new Map(dueSlots.map(slot => [slot.key, slot]))
@@ -671,13 +837,14 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     return buildDashboardRoutineIntake({
       key: slot.key,
       cycleId: slot.cycle.id,
+      planVersionId: slot.planVersionId,
       pendingLogId: slot.pendingLog?.id ?? null,
       stackItemId: slot.cycle.stack_item_id,
       stackItemName: slot.cycle.stack_items?.display_name ?? '',
       trackingLevel,
       routineGroup: slot.routineGroup,
       minutes: slot.minutes,
-      scheduledAt: slot.pendingLog?.logged_at ?? slotTimestamp(selectedDay, slot.minutes),
+      scheduledAt: slot.pendingLog?.logged_at ?? slot.scheduledAt,
       ...resolveDashboardCycleQuantity(slot.cycle, selectedDay, escalations, slot.dose),
       method: slot.cycle.method,
     })
@@ -807,14 +974,47 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string, slotDose: number | null = null) => {
     if (!user) return
     const quantity = resolveDashboardCycleQuantity(cycle, selectedDay, escalations, slotDose)
+    const scheduledAt = loggedAt ?? cycleLogTimestamp(cycle, selectedDay)
+    if (FEATURES.planTimelineV2 && taken && cycle.planVersionId) {
+      const [doseLogId] = await confirmIntakeGroup(
+        dashboardDataClient as unknown as IntakeConfirmationClient,
+        [buildConfirmationEntry(buildDashboardRoutineIntake({
+          key: `${cycle.id}@${new Date(scheduledAt).toISOString()}`,
+          cycleId: cycle.id,
+          planVersionId: cycle.planVersionId,
+          pendingLogId: null,
+          stackItemId: cycle.stack_item_id,
+          stackItemName: cycle.stack_items.display_name,
+          trackingLevel: cycle.stack_items.tracking_level,
+          routineGroup: routineGroupFromMinutes(new Date(scheduledAt).getHours() * 60 + new Date(scheduledAt).getMinutes()),
+          minutes: 0,
+          scheduledAt,
+          dose: quantity.dose,
+          unit: quantity.unit,
+          method: cycle.method,
+        }))],
+      )
+      const stackItem = stackItems.find(item => item.id === cycle.stack_item_id)
+      if (doseLogId && (stackItem?.dosage_form === 'vial' || stackItem?.tracking_level === 'complete')) {
+        await applyGenericInventory(doseLogId)
+      }
+      loadLogs(); loadStackItems()
+      toast.success(t('einnahme_bestaetigt'))
+      return
+    }
     const { data: savedLog, error } = await dashboardDataClient.from('dose_logs').insert({
       user_id: user.id,
       stack_item_id: cycle.stack_item_id,
       dose: quantity.dose,
       unit: quantity.unit,
       method: cycle.method,
-      logged_at: loggedAt ?? cycleLogTimestamp(cycle, selectedDay),
+      logged_at: scheduledAt,
       taken,
+      ...(FEATURES.planTimelineV2 ? {
+        cycle_id: cycle.id,
+        plan_version_id: cycle.planVersionId ?? null,
+        routine_slot_key: `${cycle.id}@${new Date(scheduledAt).toISOString()}`,
+      } : {}),
     }).select('id').single()
     if (error) return toast.error(t('fehler_speichern'))
     const stackItem = stackItems.find(item => item.id === cycle.stack_item_id)
@@ -834,7 +1034,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   }
 
   // ── Bestätigungs-Sheet ───────────────────────────────────────────────────
-  const openConfirmSheet = (cycle?: Cycle, log?: DoseLog, slotTime?: string, slotDose: number | null = null) => {
+  const openConfirmSheet = (cycle?: Cycle, log?: DoseLog, slotTime?: string, slotDose: number | null = null, scheduledAt?: string) => {
     let defaultTime: string
     if (cycle && slotTime) {
       defaultTime = slotTime
@@ -850,7 +1050,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       defaultTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
     }
     setConfirmTime(defaultTime)
-    setConfirmSheet({ cycle, log, slotDose })
+    setConfirmSheet({ cycle, log, slotDose, scheduledAt })
   }
 
   const openInjectionTrackerForSlot = (slot: DueSlot) => {
@@ -858,7 +1058,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     navigate(buildInjectionTrackerUrl({
       doseLogId: slot.pendingLog?.id ?? null,
       cycleId: slot.cycle.id,
-      scheduledAt: slot.pendingLog?.logged_at ?? slotTimestamp(selectedDay, slot.minutes),
+      scheduledAt: slot.pendingLog?.logged_at ?? slot.scheduledAt,
       returnTo,
     }))
   }
@@ -875,7 +1075,14 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         day.toISOString(),
         resolveDashboardCycleQuantity(confirmSheet.cycle, selectedDay, escalations, confirmSheet.slotDose ?? null),
       )
-      else                  await confirmCycleDose(confirmSheet.cycle, true, day.toISOString(), confirmSheet.slotDose ?? null)
+      else                  await confirmCycleDose(
+        confirmSheet.cycle,
+        true,
+        FEATURES.planTimelineV2 && confirmSheet.scheduledAt
+          ? confirmSheet.scheduledAt
+          : day.toISOString(),
+        confirmSheet.slotDose ?? null,
+      )
     } else if (confirmSheet.log) {
       const logDate = new Date(confirmSheet.log.logged_at)
       logDate.setHours(h, m, 0, 0)
@@ -1171,14 +1378,14 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           <div className="grid gap-2">
             <div className="grid grid-cols-2 gap-2">
               <button
-                onClick={() => openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined, slot.dose)}
+                onClick={() => openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined, slot.dose, slot.scheduledAt)}
                 className="flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-emerald-500/25 bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/25">
                 <Check size={11} /> <span className="truncate">{isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}</span>
               </button>
               <button
                 onClick={() => pendingLog
                   ? confirmDose(pendingLog, false, undefined, resolveDashboardCycleQuantity(c, selectedDay, escalations, slot.dose))
-                  : confirmCycleDose(c, false, slotTimestamp(selectedDay, slot.minutes), slot.dose)}
+                  : confirmCycleDose(c, false, slot.scheduledAt, slot.dose)}
                 className="flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-red-500/25 bg-red-500/15 px-2 py-1 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/25">
                 <XCircle size={11} /> <span className="truncate">{t('uebersprungen')}</span>
               </button>
@@ -1487,6 +1694,18 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           </div>
         </div>
 
+        {selectedPause && (
+          <div className="mb-3 rounded-xl border border-sky-500/20 bg-sky-500/[0.07] px-3 py-2.5">
+            <p className="text-sm font-bold text-sky-200">
+              <span>{t('my_stack_plan_status_paused', { defaultValue: 'Plan pausiert' })}</span>
+              {selectedPauseRange && <span className="font-normal text-sky-300/70"> · {selectedPauseRange}</span>}
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              {t('my_stack_plan_pause_neutral', { defaultValue: 'Während der Pause ist keine Einnahme fällig.' })}
+            </p>
+          </div>
+        )}
+
         {/* Noch fällig */}
         {dueSlots.length > 0 && (
           <div className="mb-3 space-y-3">
@@ -1596,7 +1815,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
               </div>
             )}
           </div>
-        ) : dueSlots.length === 0 && selCycles.length === 0 && selOnDemand.length === 0 ? (
+        ) : dueSlots.length === 0 && selCycles.length === 0 && selOnDemand.length === 0 && !selectedPause ? (
           <p className="text-slate-600 text-sm text-center py-4">
             {isTodaySelected ? t('noch_nichts_heute') : t('kein_eintrag_tag')}
           </p>

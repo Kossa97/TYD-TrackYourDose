@@ -4,6 +4,7 @@ import { createElement, type ComponentType } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { FEATURES } from '../config/features'
 import { Home, buildHomeDoseLogPayload, buildHomeRoutineIntake, resolveHomeIntakeQuantity } from './Home'
 
 const pageMocks = vi.hoisted(() => {
@@ -128,6 +129,7 @@ async function confirmSingleHomeIntake(name: string): Promise<void> {
 afterEach(() => {
   cleanup()
   localStorage.clear()
+  ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false
   vi.clearAllMocks()
 })
 
@@ -143,6 +145,7 @@ describe('Home upcoming intake confirmation flow', () => {
       unit: null,
       stackItemId: 'stack-1',
       cycleId: 'cycle-1',
+      planVersionId: null,
       pendingLogId: 'pending-1',
       routineGroup: 'evening',
       trackingLevel: 'intake_only',
@@ -193,6 +196,9 @@ describe('Home upcoming intake confirmation flow', () => {
       p_dose_log_id: 'saved-log-2',
     })
     await waitFor(() => expect(client.selectCounts.get('dose_logs')).toBe(2))
+    expect(client.selectCounts.get('dose_escalations')).toBeGreaterThan(0)
+    expect(client.selectCalls.find(call => call.table === 'cycles')?.columns)
+      .not.toContain('cycle_plan_versions')
   })
 
   it('retries only generic inventory after a committed home routine', async () => {
@@ -493,5 +499,179 @@ describe('Home upcoming intake confirmation flow', () => {
       logged_at: '2026-07-29T06:00:00.000Z',
       taken: false,
     }))
+  })
+})
+
+describe('Home normalized timeline path', () => {
+  function normalizedCycle(pauses: unknown[] = []) {
+    const today = new Date()
+    today.setHours(12, 0, 0, 0)
+    const localDate = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, '0'),
+      String(today.getDate()).padStart(2, '0'),
+    ].join('-')
+    return {
+      id: 'timeline-cycle',
+      stack_item_id: 'stack-1',
+      start_date: localDate,
+      end_date: null,
+      active: true,
+      frequency: 'Täglich',
+      x_days_interval: null,
+      schedule_days: null,
+      intake_time: 'morgens',
+      intake_time_custom: '08:00',
+      dose: 25,
+      unit: 'mg',
+      method: 'Oral',
+      schedule_history: null,
+      stack_items: {
+        display_name: 'Vitamin D3', tracking_level: 'complete', dosage_form: 'capsule',
+      },
+      started_at: new Date(today.getTime() - 86_400_000).toISOString(),
+      ended_at: null,
+      versions: [{
+        id: 'timeline-version',
+        cycle_id: 'timeline-cycle',
+        effective_kind: 'local_date',
+        effective_at: null,
+        effective_local_date: localDate,
+        change_kind: 'initial',
+        frequency: 'Täglich',
+        x_days_interval: null,
+        interval_unit: null,
+        cycle_on_days: null,
+        cycle_off_days: null,
+        schedule_days: [],
+        intake_time: 'morgens',
+        intake_time_custom: '08:00',
+        slot_doses: null,
+        slot_days: null,
+        dose: 25,
+        unit: 'mg',
+        method: 'Oral',
+      }],
+      pauses,
+    }
+  }
+
+  it('loads normalized timelines without dose escalations and confirms the exact version', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const client = createHomeClient({
+      cycles: [normalizedCycle()],
+      dose_logs: [],
+      stack_items: [{
+        id: 'stack-1', display_name: 'Vitamin D3', tracking_level: 'complete',
+        dosage_form: 'capsule', vials_in_stock: 3,
+      }],
+      inventory_items: [],
+      injection_logs: [],
+    })
+    const TestHome = Home as ComponentType<{ homeDataClient: unknown }>
+    render(createElement(MemoryRouter, null, createElement(TestHome, { homeDataClient: client })))
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Alle als eingenommen markieren – Morgens' }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Alle als eingenommen markieren' }))
+
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: [expect.objectContaining({
+        cycle_id: 'timeline-cycle',
+        plan_version_id: 'timeline-version',
+        slot_key: expect.stringMatching(/^timeline-cycle@/),
+      })],
+    }))
+    expect(client.selectCounts.get('dose_escalations')).toBeUndefined()
+    expect(client.selectCalls.find(call => call.table === 'cycles')?.columns)
+      .toContain('cycle_plan_versions')
+    expect(client.selectCalls.find(call => call.table === 'dose_logs')?.columns)
+      .toContain('routine_slot_key')
+  })
+
+  it('does not render or auto-insert an intake during a full-day pause', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const now = new Date()
+    const yesterday = new Date(now)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayKey = [
+      yesterday.getFullYear(),
+      String(yesterday.getMonth() + 1).padStart(2, '0'),
+      String(yesterday.getDate()).padStart(2, '0'),
+    ].join('-')
+    localStorage.setItem('tyd_automiss_since', yesterdayKey)
+    const pausedCycle = normalizedCycle([{
+      id: 'pause-1',
+      cycle_id: 'timeline-cycle',
+      paused_at: new Date(now.getTime() - 2 * 86_400_000).toISOString(),
+      ends_at: new Date(now.getTime() + 86_400_000).toISOString(),
+    }])
+    pausedCycle.start_date = yesterdayKey
+    pausedCycle.started_at = new Date(now.getTime() - 2 * 86_400_000).toISOString()
+    pausedCycle.versions[0].effective_local_date = yesterdayKey
+    const client = createHomeClient({
+      cycles: [pausedCycle],
+      dose_logs: [],
+      stack_items: [{
+        id: 'stack-1', display_name: 'Vitamin D3', tracking_level: 'complete',
+        dosage_form: 'capsule', vials_in_stock: 3,
+      }],
+      inventory_items: [],
+      injection_logs: [],
+    })
+    const TestHome = Home as ComponentType<{ homeDataClient: unknown }>
+    render(createElement(MemoryRouter, null, createElement(TestHome, { homeDataClient: client })))
+
+    await waitFor(() => expect(client.selectCounts.get('cycles')).toBe(1))
+    expect(screen.queryByRole('button', { name: /Alle als eingenommen markieren/ })).toBeNull()
+    expect(client.mutationCalls.filter(call => call.table === 'dose_logs' && call.operation === 'insert'))
+      .toHaveLength(0)
+  })
+
+  it('auto-marks a closed normalized slot with exact version and stable provenance', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const now = new Date()
+    const yesterday = new Date(now)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayKey = [
+      yesterday.getFullYear(),
+      String(yesterday.getMonth() + 1).padStart(2, '0'),
+      String(yesterday.getDate()).padStart(2, '0'),
+    ].join('-')
+    localStorage.setItem('tyd_automiss_since', yesterdayKey)
+    const cycle = normalizedCycle()
+    cycle.start_date = yesterdayKey
+    cycle.started_at = new Date(now.getTime() - 2 * 86_400_000).toISOString()
+    cycle.versions[0].effective_local_date = yesterdayKey
+    const client = createHomeClient({
+      cycles: [cycle],
+      dose_logs: [],
+      stack_items: [{
+        id: 'stack-1', display_name: 'Vitamin D3', tracking_level: 'complete',
+        dosage_form: 'capsule', vials_in_stock: 3,
+      }],
+      inventory_items: [],
+      injection_logs: [],
+    })
+    const TestHome = Home as ComponentType<{ homeDataClient: unknown }>
+    render(createElement(MemoryRouter, null, createElement(TestHome, { homeDataClient: client })))
+
+    await waitFor(() => expect(
+      client.mutationCalls.filter(call => call.table === 'dose_logs' && call.operation === 'insert'),
+    ).toHaveLength(1))
+    const missedRows = client.mutationCalls.find(
+      call => call.table === 'dose_logs' && call.operation === 'insert',
+    )?.values
+    expect(missedRows).toEqual([expect.objectContaining({
+      stack_item_id: 'stack-1',
+      cycle_id: 'timeline-cycle',
+      plan_version_id: 'timeline-version',
+      routine_slot_key: expect.stringMatching(/^timeline-cycle@/),
+      logged_at: expect.any(String),
+      dose: 25,
+      unit: 'mg',
+      method: 'Oral',
+      taken: false,
+    })])
   })
 })

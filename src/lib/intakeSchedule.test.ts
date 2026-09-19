@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {
-  findOldestOverdueIntake, collectMissedIntakes, collectOpenIntakes, cycleAppliesToDay, scheduleForDay, effectiveDose,
+  findOldestOverdueIntake, findOldestOverdueTimelineIntake,
+  collectMissedIntakes, collectMissedTimelineIntakes,
+  collectOpenIntakes, collectOpenTimelineIntakes,
+  cycleAppliesToDay, scheduleForDay, effectiveDose,
   effectiveQuantity, effectiveSlotQuantity, findNextTimelineIntake,
   resolveScheduleSlots,
   resolveTimelineIntakesForDay,
@@ -173,6 +176,185 @@ describe('versioned timeline occurrences', () => {
 
     expect(next?.time).toBe('20:00')
     expect(next?.planVersionId).toBe('timeline-v2')
+  })
+})
+
+describe('versioned timeline collectors', () => {
+  const berlinDay = new Date('2026-09-18T10:00:00.000Z')
+  const nextBerlinDay = new Date('2026-09-19T10:00:00.000Z')
+
+  it('keeps exact version provenance and stable confirmation keys around a midday change', () => {
+    expect(collectOpenTimelineIntakes([planTimeline], [], berlinDay, 'Europe/Berlin'))
+      .toMatchObject([
+        {
+          key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+          scheduledAt: '2026-09-18T06:00:00.000Z',
+          planVersionId: 'timeline-v1',
+          time: '08:00',
+        },
+        {
+          key: 'timeline-cycle@2026-09-18T18:00:00.000Z',
+          scheduledAt: '2026-09-18T18:00:00.000Z',
+          planVersionId: 'timeline-v2',
+          time: '20:00',
+        },
+      ])
+  })
+
+  it('does not let an explicitly mismatched plan-version log consume another slot', () => {
+    const logs: IntakeLog[] = [{
+      id: 'wrong-version',
+      stack_item_id: 'timeline-stack-item',
+      logged_at: '2026-09-18T06:00:00.000Z',
+      taken: true,
+      cycle_id: 'timeline-cycle',
+      plan_version_id: 'timeline-v2',
+      routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+    }]
+
+    expect(collectOpenTimelineIntakes([planTimeline], logs, berlinDay, 'Europe/Berlin'))
+      .toHaveLength(2)
+  })
+
+  it('matches exact stable provenance first and carries a compatible pending log id', () => {
+    const logs: IntakeLog[] = [{
+      id: 'pending-evening',
+      stack_item_id: 'timeline-stack-item',
+      logged_at: '2026-09-18T18:00:00.000Z',
+      taken: null,
+      cycle_id: 'timeline-cycle',
+      plan_version_id: 'timeline-v2',
+      routine_slot_key: 'timeline-cycle@2026-09-18T18:00:00.000Z',
+    }, {
+      id: 'taken-morning',
+      stack_item_id: 'timeline-stack-item',
+      logged_at: '2026-09-18T06:00:00.000Z',
+      taken: true,
+      cycle_id: 'timeline-cycle',
+      plan_version_id: 'timeline-v1',
+      routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+    }]
+
+    expect(collectOpenTimelineIntakes([planTimeline], logs, berlinDay, 'Europe/Berlin'))
+      .toMatchObject([{
+        planVersionId: 'timeline-v2',
+        pendingLogId: 'pending-evening',
+      }])
+  })
+
+  it('matches a stable slot key before the editable logged-at calendar day', () => {
+    const logs: IntakeLog[] = [{
+      id: 'taken-morning-late',
+      stack_item_id: 'timeline-stack-item',
+      logged_at: '2026-09-19T00:15:00.000Z',
+      taken: true,
+      cycle_id: 'timeline-cycle',
+      plan_version_id: 'timeline-v1',
+      routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+    }]
+
+    expect(collectOpenTimelineIntakes([planTimeline], logs, berlinDay, 'Europe/Berlin'))
+      .toMatchObject([{ planVersionId: 'timeline-v2', time: '20:00' }])
+  })
+
+  it('keeps duplicate-named items separate by stack item id during legacy fallback', () => {
+    const separateTimeline: CycleTimeline = {
+      ...planTimeline,
+      cycle: {
+        ...planTimeline.cycle,
+        id: 'separate-cycle',
+        stack_item_id: 'separate-stack-item',
+      },
+      versions: planTimeline.versions.map(version => ({
+        ...version,
+        id: `separate-${version.id}`,
+        cycle_id: 'separate-cycle',
+      })),
+    }
+    const logs: IntakeLog[] = [{
+      id: 'legacy-log',
+      stack_item_id: 'timeline-stack-item',
+      logged_at: '2026-09-18T07:00:00.000Z',
+      taken: true,
+    }]
+
+    const open = collectOpenTimelineIntakes(
+      [planTimeline, separateTimeline], logs, berlinDay, 'Europe/Berlin',
+    )
+    const duplicateNames = new Map([
+      ['timeline-stack-item', 'Vitamin D3'],
+      ['separate-stack-item', 'Vitamin D3'],
+    ])
+    expect(open.map(intake => duplicateNames.get(intake.stackItemId)))
+      .toEqual(['Vitamin D3', 'Vitamin D3', 'Vitamin D3'])
+    expect(open.filter(intake => intake.stackItemId === 'timeline-stack-item'))
+      .toHaveLength(1)
+    expect(open.filter(intake => intake.stackItemId === 'separate-stack-item'))
+      .toHaveLength(2)
+  })
+
+  it('creates no automatic miss for a fully paused or PRN day', () => {
+    const paused: CycleTimeline = {
+      ...planTimeline,
+      pauses: [{
+        id: 'full-day-pause',
+        cycle_id: 'timeline-cycle',
+        paused_at: '2026-09-17T22:00:00.000Z',
+        ends_at: '2026-09-18T22:00:00.000Z',
+      }],
+    }
+    const prn: CycleTimeline = {
+      ...planTimeline,
+      cycle: { ...planTimeline.cycle, id: 'prn-cycle' },
+      versions: [{
+        ...planTimeline.versions[0],
+        id: 'prn-version',
+        cycle_id: 'prn-cycle',
+        ...timelineSchedule(0.25, {
+          frequency: 'Bei Bedarf',
+          intake_time: '',
+          intake_time_custom: null,
+        }),
+      }],
+    }
+
+    expect(collectMissedTimelineIntakes(
+      [paused, prn], [], nextBerlinDay, 'Europe/Berlin', 1,
+    )).toEqual([])
+  })
+
+  it('keeps a pre-pause morning slot eligible to become missed after day close', () => {
+    const pausedAtNoon: CycleTimeline = {
+      ...planTimeline,
+      pauses: [{
+        id: 'noon-pause',
+        cycle_id: 'timeline-cycle',
+        paused_at: '2026-09-18T10:00:00.000Z',
+        ends_at: null,
+      }],
+    }
+
+    expect(collectMissedTimelineIntakes(
+      [pausedAtNoon], [], nextBerlinDay, 'Europe/Berlin', 1,
+    )).toMatchObject([{
+      cycleId: 'timeline-cycle',
+      planVersionId: 'timeline-v1',
+      routineSlotKey: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+      scheduledAt: '2026-09-18T06:00:00.000Z',
+      minutes: 480,
+    }])
+  })
+
+  it('finds the oldest overdue normalized slot with its exact cycle', () => {
+    expect(findOldestOverdueTimelineIntake(
+      [planTimeline], [], new Map([['timeline-stack-item', 'Vitamin D3']]),
+      new Date('2026-09-18T19:00:00.000Z'), 'Europe/Berlin', 0,
+    )).toMatchObject({
+      cycleId: 'timeline-cycle',
+      substance: 'Vitamin D3',
+      time: '08:00',
+      dateKey: '2026-09-18',
+    })
   })
 })
 

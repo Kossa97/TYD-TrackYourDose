@@ -27,6 +27,8 @@ export interface ResolvedScheduleSlot {
 }
 
 export interface ResolvedTimelineIntake extends ResolvedScheduleSlot {
+  /** Persisted slot key inside the plan snapshot (for example `morgens`). */
+  slotKey: string
   cycleId: string
   stackItemId: string
   planVersionId: string
@@ -34,6 +36,10 @@ export interface ResolvedTimelineIntake extends ResolvedScheduleSlot {
   unit: string | null
   method: string
   localDate: string
+  scheduledAt: string
+  /** Stable confirmation key: `${cycleId}@${scheduledAt.toISOString()}`. */
+  routineSlotKey: string
+  pendingLogId: string | null
 }
 
 export interface ScheduleSegment {
@@ -95,10 +101,14 @@ export interface EffectiveQuantity {
 }
 
 export interface IntakeLog {
+  id?: string
   stack_item_id: string
   logged_at: string
   /** true = taken, false = skipped, null = reset. Decided (non-null) logs cover a slot. */
   taken: boolean | null
+  cycle_id?: string | null
+  plan_version_id?: string | null
+  routine_slot_key?: string | null
 }
 
 // Active schedule segment for a given day. Empty history => flat cycle fields from start_date.
@@ -191,6 +201,32 @@ function routineGroupForMinutes(minutes: number): ResolvedRoutineGroup {
   if (hour < 12) return 'morning'
   if (hour < 18) return 'midday'
   return 'evening'
+}
+
+function localSlotInstant(localDate: string, minutes: number, timeZone: string): Date {
+  const [year, month, day] = localDate.split('-').map(Number)
+  const hour = Math.floor(minutes / 60)
+  const minute = minutes % 60
+  const desiredLocalMillis = Date.UTC(year, month - 1, day, hour, minute)
+  let instantMillis = desiredLocalMillis
+
+  // Intl exposes offsets only through formatted local parts. Iterating the
+  // difference converges for ordinary offsets and DST boundaries without
+  // assuming that the runtime's own time zone equals the planning zone.
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const localKey = localDateTimeKey(new Date(instantMillis), timeZone)
+    const [datePart, timePart] = localKey.split('|')
+    const [actualYear, actualMonth, actualDay] = datePart.split('-').map(Number)
+    const [actualHour, actualMinute] = timePart.split(':').map(Number)
+    const actualLocalMillis = Date.UTC(
+      actualYear, actualMonth - 1, actualDay, actualHour, actualMinute,
+    )
+    const correction = desiredLocalMillis - actualLocalMillis
+    if (correction === 0) return new Date(instantMillis)
+    instantMillis += correction
+  }
+
+  throw new Error(`Could not resolve local intake slot: ${localDate} ${hour}:${minute} ${timeZone}`)
 }
 
 /**
@@ -288,8 +324,13 @@ export function resolveTimelineIntakesForDay(
     ))
     if (!activeSlot) return []
 
+    const scheduledAt = localSlotInstant(localDate, activeSlot.minutes, timeZone).toISOString()
+    const routineSlotKey = `${timeline.cycle.id}@${scheduledAt}`
+
     return [{
       ...activeSlot,
+      key: routineSlotKey,
+      slotKey: activeSlot.key,
       cycleId: timeline.cycle.id,
       stackItemId: timeline.cycle.stack_item_id,
       planVersionId: atSlot.planVersion.id,
@@ -297,12 +338,15 @@ export function resolveTimelineIntakesForDay(
       unit: atSlot.planVersion.unit,
       method: atSlot.planVersion.method,
       localDate,
+      scheduledAt,
+      routineSlotKey,
+      pendingLogId: null,
     }]
   })
 
   const uniqueIntakes = new Map<string, ResolvedTimelineIntake>()
   for (const intake of resolved) {
-    const key = `${intake.cycleId}|${intake.localDate}|${intake.time}`
+    const key = intake.routineSlotKey
     if (!uniqueIntakes.has(key)) uniqueIntakes.set(key, intake)
   }
   return [...uniqueIntakes.values()].sort((left, right) => left.minutes - right.minutes)
@@ -341,6 +385,9 @@ export interface OverdueIntake {
   dateKey: string
   /** id of the cycle this overdue intake belongs to. */
   cycleId: string
+  planVersionId?: string
+  routineSlotKey?: string
+  scheduledAt?: string
 }
 
 // Single source of truth — Dashboard.tsx imports this instead of duplicating it.
@@ -500,6 +547,185 @@ export interface MissedIntake {
    * festhaelt. null heisst: es gilt die Menge des Zyklus.
    */
   slotDose: number | null
+  planVersionId?: string
+  routineSlotKey?: string
+  scheduledAt?: string
+  unit?: string | null
+  method?: string
+}
+
+interface TimelineLogMatch {
+  intake: ResolvedTimelineIntake
+  log: IntakeLog
+}
+
+function timelineIntakesForDate(
+  timelines: CycleTimeline[],
+  localDate: string,
+  timeZone: string,
+): ResolvedTimelineIntake[] {
+  return timelines
+    .flatMap(timeline => resolveTimelineIntakesForDay(timeline, localDate, timeZone))
+    .sort((left, right) => (
+      left.scheduledAt.localeCompare(right.scheduledAt)
+      || left.stackItemId.localeCompare(right.stackItemId)
+      || left.cycleId.localeCompare(right.cycleId)
+    ))
+}
+
+function logLocalDate(log: IntakeLog, timeZone: string): string | null {
+  const instant = new Date(log.logged_at)
+  return Number.isFinite(instant.getTime())
+    ? localDateTimeKey(instant, timeZone).slice(0, 10)
+    : null
+}
+
+function matchTimelineLogs(
+  intakes: ResolvedTimelineIntake[],
+  logs: IntakeLog[],
+  localDate: string,
+  timeZone: string,
+): TimelineLogMatch[] {
+  const orderedLogs = [...logs]
+    .sort((left, right) => left.logged_at.localeCompare(right.logged_at))
+  const keyedLogs = orderedLogs.filter(log => Boolean(log.routine_slot_key))
+  const dayLogs = orderedLogs
+    .filter(log => !log.routine_slot_key)
+    .filter(log => logLocalDate(log, timeZone) === localDate)
+  const usedIntakes = new Set<number>()
+  const matches: TimelineLogMatch[] = []
+  const explicitLogs = [
+    ...keyedLogs,
+    ...dayLogs.filter(log => Boolean(log.cycle_id) || Boolean(log.plan_version_id)),
+  ]
+  const legacyLogs = dayLogs.filter(log => (
+    !log.cycle_id && !log.plan_version_id
+  ))
+
+  for (const log of explicitLogs) {
+    const index = intakes.findIndex((intake, candidateIndex) => (
+      !usedIntakes.has(candidateIndex)
+      && intake.stackItemId === log.stack_item_id
+      && (!log.routine_slot_key || intake.routineSlotKey === log.routine_slot_key)
+      && (!log.cycle_id || intake.cycleId === log.cycle_id)
+      && (!log.plan_version_id || intake.planVersionId === log.plan_version_id)
+    ))
+    if (index < 0) continue
+    usedIntakes.add(index)
+    matches.push({ intake: intakes[index], log })
+  }
+
+  // Pre-cutover rows have no stable provenance. Keep their fallback bounded
+  // to one remaining slot of the same stack item and local calendar day.
+  for (const log of legacyLogs) {
+    const index = intakes.findIndex((intake, candidateIndex) => (
+      !usedIntakes.has(candidateIndex) && intake.stackItemId === log.stack_item_id
+    ))
+    if (index < 0) continue
+    usedIntakes.add(index)
+    matches.push({ intake: intakes[index], log })
+  }
+
+  return matches
+}
+
+function collectOpenTimelineIntakesForDate(
+  timelines: CycleTimeline[],
+  logs: IntakeLog[],
+  localDate: string,
+  timeZone: string,
+): ResolvedTimelineIntake[] {
+  const intakes = timelineIntakesForDate(timelines, localDate, timeZone)
+  const matches = matchTimelineLogs(intakes, logs, localDate, timeZone)
+  const matchByKey = new Map(matches.map(match => [match.intake.routineSlotKey, match.log]))
+  return intakes.flatMap(intake => {
+    const log = matchByKey.get(intake.routineSlotKey)
+    if (log?.taken !== null && log?.taken !== undefined) return []
+    return [{ ...intake, pendingLogId: log?.id ?? null }]
+  })
+}
+
+export function collectOpenTimelineIntakes(
+  timelines: CycleTimeline[],
+  logs: IntakeLog[],
+  day: Date,
+  timeZone: string,
+): ResolvedTimelineIntake[] {
+  const localDate = localDateTimeKey(day, timeZone).slice(0, 10)
+  return collectOpenTimelineIntakesForDate(timelines, logs, localDate, timeZone)
+}
+
+export function collectMissedTimelineIntakes(
+  timelines: CycleTimeline[],
+  logs: IntakeLog[],
+  now: Date,
+  timeZone: string,
+  lookbackDays = 90,
+): MissedIntake[] {
+  if (!Number.isInteger(lookbackDays) || lookbackDays < 0) {
+    throw new Error(`Invalid timeline lookback: ${lookbackDays}`)
+  }
+  const todayKey = localDateTimeKey(now, timeZone).slice(0, 10)
+  const today = parseISO(todayKey)
+  const missed: MissedIntake[] = []
+
+  for (let back = lookbackDays; back >= 1; back -= 1) {
+    const localDate = format(subDays(today, back), 'yyyy-MM-dd')
+    const intakes = timelineIntakesForDate(timelines, localDate, timeZone)
+    const coveredKeys = new Set(
+      matchTimelineLogs(intakes, logs, localDate, timeZone)
+        .map(match => match.intake.routineSlotKey),
+    )
+    for (const intake of intakes) {
+      if (coveredKeys.has(intake.routineSlotKey)) continue
+      missed.push({
+        cycleId: intake.cycleId,
+        stackItemId: intake.stackItemId,
+        planVersionId: intake.planVersionId,
+        routineSlotKey: intake.routineSlotKey,
+        scheduledAt: intake.scheduledAt,
+        dateKey: localDate,
+        minutes: intake.minutes,
+        slotDose: intake.dose,
+        unit: intake.unit,
+        method: intake.method,
+      })
+    }
+  }
+  return missed
+}
+
+export function findOldestOverdueTimelineIntake(
+  timelines: CycleTimeline[],
+  logs: IntakeLog[],
+  stackItemNameById: Map<string, string>,
+  now: Date,
+  timeZone: string,
+  lookbackDays = 90,
+): OverdueIntake | null {
+  if (!Number.isInteger(lookbackDays) || lookbackDays < 0) {
+    throw new Error(`Invalid timeline lookback: ${lookbackDays}`)
+  }
+  const todayKey = localDateTimeKey(now, timeZone).slice(0, 10)
+  const today = parseISO(todayKey)
+
+  for (let back = lookbackDays; back >= 0; back -= 1) {
+    const localDate = format(subDays(today, back), 'yyyy-MM-dd')
+    const intake = collectOpenTimelineIntakesForDate(timelines, logs, localDate, timeZone)
+      .find(candidate => new Date(candidate.scheduledAt) <= now)
+    if (!intake) continue
+    return {
+      time: intake.time,
+      substance: stackItemNameById.get(intake.stackItemId) ?? null,
+      daysOverdue: differenceInDays(today, parseISO(localDate)),
+      dateKey: localDate,
+      cycleId: intake.cycleId,
+      planVersionId: intake.planVersionId,
+      routineSlotKey: intake.routineSlotKey,
+      scheduledAt: intake.scheduledAt,
+    }
+  }
+  return null
 }
 
 /**
