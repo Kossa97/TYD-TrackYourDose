@@ -1,6 +1,7 @@
 \set ON_ERROR_STOP on
 
 create extension if not exists pgcrypto;
+create extension if not exists dblink;
 create schema auth;
 
 do $$
@@ -93,7 +94,8 @@ create table public.dose_escalations (
   created_at timestamptz not null default now()
 );
 
-grant select on public.stack_items, public.cycles to authenticated;
+grant select on public.stack_items to authenticated;
+grant select, update on public.cycles to authenticated;
 
 create or replace function public.save_stack_item(p_item jsonb, p_ingredients jsonb)
 returns public.stack_items
@@ -216,6 +218,19 @@ create policy "Owner reads cycle plan versions"
   using (true);
 
 \ir ../../supabase-my-stack-plan-integrity.sql
+
+create or replace function public.test_confirm_intake_error(p_entries jsonb)
+returns text
+language plpgsql
+set search_path = public
+as $$
+begin
+  perform public.confirm_intake_group(p_entries);
+  return 'accepted';
+exception
+  when others then return sqlerrm;
+end
+$$;
 
 begin;
 
@@ -656,6 +671,105 @@ as $$
 $$;
 grant execute on function public.test_plan_integrity_counts() to authenticated;
 
+do $$
+declare
+  concurrent_cycle_id constant uuid := '33100000-0000-0000-0000-000000000001';
+  concurrent_item_id constant uuid := '33000000-0000-0000-0000-000000000003';
+  initial_version_id uuid;
+  confirmation_entries jsonb;
+  confirmation_outcome text;
+  persisted_count integer;
+begin
+  select id into strict initial_version_id
+  from public.cycle_plan_versions
+  where cycle_id = concurrent_cycle_id
+  order by effective_local_date nulls last, effective_at nulls last, created_at, id
+  limit 1;
+
+  perform dblink_connect('task9_lifecycle', 'dbname=' || current_database());
+  perform dblink_connect('task9_confirmation', 'dbname=' || current_database());
+  perform dblink_exec(
+    'task9_lifecycle',
+    'set request.jwt.claim.sub = ''30000000-0000-0000-0000-000000000003'''
+  );
+  perform dblink_exec(
+    'task9_confirmation',
+    'set request.jwt.claim.sub = ''30000000-0000-0000-0000-000000000003'''
+  );
+  perform dblink_exec('task9_lifecycle', 'begin');
+
+  perform created_version_id
+  from dblink(
+    'task9_lifecycle',
+    $query$
+      select (public.create_plan_version(
+        '33100000-0000-0000-0000-000000000001',
+        'instant',
+        '2026-09-18T07:00:00Z',
+        null,
+        'dose',
+        jsonb_build_object(
+          'frequency', 'Täglich',
+          'schedule_days', jsonb_build_array(),
+          'intake_time', 'morgens',
+          'dose', 9,
+          'unit', 'mg',
+          'method', 'Oral'
+        ),
+        'task9-concurrent-version'
+      )).id
+    $query$
+  ) as lifecycle_result(created_version_id uuid);
+
+  confirmation_entries := jsonb_build_array(jsonb_build_object(
+    'cycle_id', concurrent_cycle_id,
+    'plan_version_id', initial_version_id,
+    'timezone', 'Europe/Berlin',
+    'dose_log_id', null,
+    'slot_key', 'routine:concurrent-version',
+    'stack_item_id', concurrent_item_id,
+    'dose', 1,
+    'unit', 'mg',
+    'method', 'Oral',
+    'logged_at', '2026-09-18T08:00:00Z'
+  ));
+
+  if dblink_send_query(
+    'task9_confirmation',
+    format(
+      'select public.test_confirm_intake_error(%L::jsonb)',
+      confirmation_entries::text
+    )
+  ) <> 1 then
+    raise exception 'concurrent confirmation query was not dispatched';
+  end if;
+
+  perform pg_sleep(0.2);
+  if dblink_is_busy('task9_confirmation') <> 1 then
+    raise exception 'confirmation did not serialize on the lifecycle cycle lock';
+  end if;
+
+  perform dblink_exec('task9_lifecycle', 'commit');
+
+  select outcome into strict confirmation_outcome
+  from dblink_get_result('task9_confirmation') as confirmation_result(outcome text);
+
+  if confirmation_outcome is distinct from 'Plan version does not match scheduled intake' then
+    raise exception 'concurrent confirmation returned %, expected the exact mismatch error', confirmation_outcome;
+  end if;
+
+  select count(*) into persisted_count
+  from public.dose_logs
+  where routine_slot_key = 'routine:concurrent-version';
+  if persisted_count <> 0 then
+    raise exception 'concurrent plan mutation allowed % confirmation writes', persisted_count;
+  end if;
+
+  perform dblink_disconnect('task9_lifecycle');
+  perform dblink_disconnect('task9_confirmation');
+end
+$$;
+
 create trigger reject_atomic_initial_version
 before insert on public.cycle_plan_versions
 for each row execute function public.reject_atomic_initial_version();
@@ -670,6 +784,7 @@ declare
   prn_log public.dose_logs;
   pending_log_id uuid := '11112000-0000-0000-0000-000000000001';
   completed_pending public.dose_logs;
+  persisted_log public.dose_logs;
   row_count integer;
 begin
   select * into correct_log
@@ -686,9 +801,22 @@ begin
     'logged_at', '2026-09-18T08:00:00Z'
   )));
 
-  if correct_log.cycle_id <> '11100000-0000-0000-0000-000000000001'
-    or correct_log.plan_version_id <> '11110000-0000-0000-0000-000000000001' then
+  if correct_log.id is null
+    or correct_log.cycle_id is null
+    or correct_log.plan_version_id is null
+    or correct_log.cycle_id is distinct from '11100000-0000-0000-0000-000000000001'
+    or correct_log.plan_version_id is distinct from '11110000-0000-0000-0000-000000000001' then
     raise exception 'correct confirmation did not persist exact provenance';
+  end if;
+  select * into persisted_log
+  from public.dose_logs
+  where id = correct_log.id;
+  if not found
+    or persisted_log.cycle_id is null
+    or persisted_log.plan_version_id is null
+    or persisted_log.cycle_id is distinct from correct_log.cycle_id
+    or persisted_log.plan_version_id is distinct from correct_log.plan_version_id then
+    raise exception 'correct confirmation return did not match a persisted provenance row';
   end if;
 
   select * into retry_log
@@ -705,10 +833,24 @@ begin
     'logged_at', '2026-09-18T08:00:00Z'
   )));
 
-  if retry_log.id <> correct_log.id
-    or retry_log.cycle_id <> correct_log.cycle_id
-    or retry_log.plan_version_id <> correct_log.plan_version_id then
+  if retry_log.id is null
+    or retry_log.cycle_id is null
+    or retry_log.plan_version_id is null
+    or retry_log.id is distinct from correct_log.id
+    or retry_log.cycle_id is distinct from correct_log.cycle_id
+    or retry_log.plan_version_id is distinct from correct_log.plan_version_id then
     raise exception 'idempotent retry changed log identity or provenance';
+  end if;
+  select * into persisted_log
+  from public.dose_logs
+  where id = retry_log.id;
+  if not found
+    or persisted_log.id is distinct from correct_log.id
+    or persisted_log.cycle_id is null
+    or persisted_log.plan_version_id is null
+    or persisted_log.cycle_id is distinct from correct_log.cycle_id
+    or persisted_log.plan_version_id is distinct from correct_log.plan_version_id then
+    raise exception 'idempotent retry did not reuse the persisted provenance row';
   end if;
 
   begin
@@ -815,9 +957,22 @@ begin
     'logged_at', '2026-09-18T15:00:00Z'
   )));
 
-  if prn_log.plan_version_id <> '11110000-0000-0000-0000-000000000002'
-    or prn_log.cycle_id <> '11100000-0000-0000-0000-000000000001' then
+  if prn_log.id is null
+    or prn_log.cycle_id is null
+    or prn_log.plan_version_id is null
+    or prn_log.plan_version_id is distinct from '11110000-0000-0000-0000-000000000002'
+    or prn_log.cycle_id is distinct from '11100000-0000-0000-0000-000000000001' then
     raise exception 'manual PRN confirmation did not store resolved provenance';
+  end if;
+  select * into persisted_log
+  from public.dose_logs
+  where id = prn_log.id;
+  if not found
+    or persisted_log.cycle_id is null
+    or persisted_log.plan_version_id is null
+    or persisted_log.cycle_id is distinct from prn_log.cycle_id
+    or persisted_log.plan_version_id is distinct from prn_log.plan_version_id then
+    raise exception 'manual PRN return did not match a persisted provenance row';
   end if;
 
   insert into public.dose_logs (
@@ -847,10 +1002,24 @@ begin
     'logged_at', '2026-09-18T16:00:00Z'
   )));
 
-  if completed_pending.id <> pending_log_id
-    or completed_pending.cycle_id <> '11100000-0000-0000-0000-000000000001'
-    or completed_pending.plan_version_id <> '11110000-0000-0000-0000-000000000002' then
+  if completed_pending.id is null
+    or completed_pending.cycle_id is null
+    or completed_pending.plan_version_id is null
+    or completed_pending.id is distinct from pending_log_id
+    or completed_pending.cycle_id is distinct from '11100000-0000-0000-0000-000000000001'
+    or completed_pending.plan_version_id is distinct from '11110000-0000-0000-0000-000000000002' then
     raise exception 'pending-log completion did not preserve identity and set provenance';
+  end if;
+  select * into persisted_log
+  from public.dose_logs
+  where id = completed_pending.id;
+  if not found
+    or persisted_log.id is distinct from pending_log_id
+    or persisted_log.cycle_id is null
+    or persisted_log.plan_version_id is null
+    or persisted_log.cycle_id is distinct from completed_pending.cycle_id
+    or persisted_log.plan_version_id is distinct from completed_pending.plan_version_id then
+    raise exception 'pending-log completion return did not match its persisted provenance row';
   end if;
 end
 $$;

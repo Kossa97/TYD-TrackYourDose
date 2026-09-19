@@ -840,6 +840,7 @@ declare
   entry_method text;
   entry_logged_at timestamptz;
   item_tracking_level text;
+  validated_entries jsonb := '[]'::jsonb;
 begin
   if owner_id is null then
     raise exception 'Authentication required';
@@ -876,6 +877,22 @@ begin
   ) then
     raise exception 'Duplicate cycle and logged_at in intake group';
   end if;
+
+  for entry_cycle_id in
+    select requested.cycle_id
+    from (
+      select distinct nullif(btrim(value ->> 'cycle_id'), '')::uuid as cycle_id
+      from jsonb_array_elements(p_entries)
+    ) requested
+    where requested.cycle_id is not null
+    order by requested.cycle_id
+  loop
+    perform 1
+    from public.cycles
+    where id = entry_cycle_id
+      and user_id = owner_id
+    for update;
+  end loop;
 
   for entry in
     select value
@@ -995,11 +1012,17 @@ begin
         raise exception 'Pending dose log not found';
       end if;
     end if;
+
+    validated_entries := validated_entries || jsonb_build_array(
+      entry || jsonb_build_object(
+        '_resolved_plan_version_id', expected_plan_version_id
+      )
+    );
   end loop;
 
   for entry in
     select value
-    from jsonb_array_elements(p_entries)
+    from jsonb_array_elements(validated_entries)
   loop
     entry_cycle_id := nullif(btrim(entry ->> 'cycle_id'), '')::uuid;
     entry_timezone := nullif(btrim(entry ->> 'timezone'), '');
@@ -1015,11 +1038,13 @@ begin
       entry_dose := (entry ->> 'dose')::numeric;
     end if;
 
-    expected_plan_version_id := public.resolve_plan_version_id(
-      entry_cycle_id,
-      entry_logged_at,
-      entry_timezone
-    );
+    expected_plan_version_id := nullif(
+      btrim(entry ->> '_resolved_plan_version_id'),
+      ''
+    )::uuid;
+    if expected_plan_version_id is null then
+      raise exception 'Plan version not found';
+    end if;
 
     select *
     into saved_log
