@@ -47,6 +47,9 @@ insert into public.cycle_plan_versions(id,user_id,cycle_id,effective_kind,effect
  ('99810000-0000-0000-0000-000000000003','30000000-0000-0000-0000-000000000003','99810000-0000-0000-0000-000000000002','instant',clock_timestamp()-interval '1 day','initial','Täglich','morgens',1,'mg','Oral'),
  ('99820000-0000-0000-0000-000000000003','30000000-0000-0000-0000-000000000003','99820000-0000-0000-0000-000000000002','instant',clock_timestamp()-interval '1 day','initial','Täglich','morgens',1,'mg','Oral'),
  ('99830000-0000-0000-0000-000000000003','30000000-0000-0000-0000-000000000003','99830000-0000-0000-0000-000000000002','instant',clock_timestamp()-interval '1 day','initial','Täglich','morgens',1,'mg','Oral');
+insert into public.cycle_plan_versions(id,user_id,cycle_id,effective_kind,effective_at,change_kind,frequency,intake_time,dose,unit,method) values
+ ('99810000-0000-0000-0000-000000000004','30000000-0000-0000-0000-000000000003','99810000-0000-0000-0000-000000000002','instant',clock_timestamp()+interval '2 seconds','dose','Täglich','morgens',2,'mg','Oral'),
+ ('99820000-0000-0000-0000-000000000004','30000000-0000-0000-0000-000000000003','99820000-0000-0000-0000-000000000002','instant',clock_timestamp()+interval '1 hour','dose','Täglich','morgens',2,'mg','Oral');
 
 create or replace function public.final_gate_rpc_result(p_sql text)
 returns jsonb
@@ -65,20 +68,17 @@ $$;
 
 do $$
 declare
-  remove_boundary timestamptz := clock_timestamp() + interval '2 seconds';
+  remove_boundary timestamptz;
   replace_boundary timestamptz := clock_timestamp() + interval '2 seconds';
-  remove_version uuid;
-  replace_version uuid;
+  remove_version uuid := '99810000-0000-0000-0000-000000000004';
+  replace_version uuid := '99820000-0000-0000-0000-000000000004';
   remove_transaction_started_at timestamptz;
   replace_transaction_started_at timestamptz;
   result jsonb;
 begin
-  insert into public.cycle_plan_versions(user_id,cycle_id,effective_kind,effective_at,change_kind,frequency,intake_time,dose,unit,method)
-  values ('30000000-0000-0000-0000-000000000003','99810000-0000-0000-0000-000000000002','instant',remove_boundary,'dose','Täglich','morgens',2,'mg','Oral')
-  returning id into remove_version;
-  insert into public.cycle_plan_versions(user_id,cycle_id,effective_kind,effective_at,change_kind,frequency,intake_time,dose,unit,method)
-  values ('30000000-0000-0000-0000-000000000003','99820000-0000-0000-0000-000000000002','instant',clock_timestamp()+interval '1 hour','dose','Täglich','morgens',2,'mg','Oral')
-  returning id into replace_version;
+  select effective_at into strict remove_boundary
+  from public.cycle_plan_versions
+  where id = remove_version;
 
   perform dblink_connect('final_gate_lock','dbname='||current_database());
   perform dblink_connect('final_gate_remove','dbname='||current_database());
@@ -105,7 +105,10 @@ begin
       replace_version,'instant',replace_boundary,'dose',
       '{"frequency":"Täglich","intake_time":"morgens","dose":3,"unit":"mg","method":"Oral"}',
       'UTC','final-aged-replace')));
-  perform pg_sleep(2.25);
+  perform pg_sleep(greatest(
+    0,
+    extract(epoch from greatest(remove_boundary,replace_boundary)-clock_timestamp()) + 0.25
+  ));
   if dblink_is_busy('final_gate_remove') <> 1 or dblink_is_busy('final_gate_replace') <> 1 then
     raise exception 'future mutation did not wait on the lifecycle lock';
   end if;
@@ -114,10 +117,12 @@ begin
   if result->>'error' <> 'Plan version is already effective' then
     raise exception 'aged remove used transaction start instead of post-lock time: %',result;
   end if;
+  perform value from dblink_get_result('final_gate_remove') as drained(value jsonb);
   select value into result from dblink_get_result('final_gate_replace') as done(value jsonb);
   if result->>'error' <> 'Plan version is already effective' then
     raise exception 'aged replace used transaction start instead of post-lock time: %',result;
   end if;
+  perform value from dblink_get_result('final_gate_replace') as drained(value jsonb);
   perform dblink_exec('final_gate_remove','rollback');
   perform dblink_exec('final_gate_replace','rollback');
   perform dblink_disconnect('final_gate_lock');
@@ -174,6 +179,7 @@ begin
   if dblink_is_busy('final_gate_skip') <> 1 then raise exception 'stale skip did not wait for pause lock'; end if;
   perform dblink_exec('final_gate_pause','commit');
   select value into result from dblink_get_result('final_gate_skip') as done(value text);
+  perform value from dblink_get_result('final_gate_skip') as drained(value text);
   perform dblink_disconnect('final_gate_pause');
   perform dblink_disconnect('final_gate_skip');
   if result <> 'Intake falls within a paused cycle'

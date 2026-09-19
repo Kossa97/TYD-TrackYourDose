@@ -814,3 +814,29 @@ und produktionsnaher Double-Migration-/Double-Enforcement-Dry-Run bestanden.
 Graphify wurde nach den Quelländerungen aktualisiert und fokussiert abgefragt;
 generierte Ausgaben bleiben im Commit. Bestehende Build-Warnungen und Lint-Schuld
 bleiben; der SQL-Rollout erfordert weiterhin separate Produktionsfreigabe.
+
+#### Re-Review-Ruling: Final-Gate-Fixture (2026-09-20)
+
+**Important bestätigt; ausschließlich Testkorrektur, kein Produkt-SQL und kein
+Rollout.** Der bisherige Nachweis für die beiden gealterten Future-Mutationen war
+ungültig: Die äußere `DO`-Transaktion fügte die Zielversionen ein und hielt dadurch
+FK-Key-Share-Locks auf den Cycles, während die dblink-Lock-Session auf denselben
+Cycles `FOR UPDATE` anforderte. RED: Die unveränderte Fixture lief nach 12 Sekunden
+noch; `pg_stat_activity` zeigte den `DO`-Backend im dblink-Warten und die
+Lock-Session im `transactionid`-Wait, unmittelbar durch diesen Backend blockiert.
+
+Die Future-Versionen werden nun vor dem `DO` committed angelegt. Die echten
+Remote-Transaktionen beginnen weiterhin vor der Grenze, warten nachweislich am
+Cycle-Lock bis hinter die Grenze und müssen für Remove und Replace weiterhin
+`Plan version is already effective` liefern. Nach jedem asynchronen Resultat wird
+auch das abschließende leere dblink-Resultat konsumiert, bevor Rollback oder
+Disconnect erfolgen; dasselbe gilt für den Pause-vs-Skip-Race.
+
+GREEN: Verhaltensfixture und korrigierte Final-Gate-Fixture bestanden in zwei
+separaten frischen Datenbanken desselben schreibgeschützt gemounteten
+`postgres:16`-Wegwerfcontainers. Beide Future-Versionen blieben vorhanden, der
+gültige Skip blieb mit `taken=false` und exakter Provenienz gespeichert, für den
+stale Skip entstand keine Zeile. Die fokussierten Planintegritäts-, Intake-, Home-
+und Dashboard-Tests bestanden mit **87/87**. Produkt-Vollsuite und Build wurden
+nicht erneut ausgeführt, weil der Diff nur die SQL-Testfixture und diesen Nachweis
+berührt.
