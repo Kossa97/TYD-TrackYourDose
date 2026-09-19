@@ -232,6 +232,120 @@ exception
 end
 $$;
 
+create table public.test_confirmation_gates (
+  routine_slot_key text primary key,
+  advisory_lock_key bigint not null unique
+);
+
+insert into public.test_confirmation_gates (routine_slot_key, advisory_lock_key)
+values
+  ('routine:confirmation-first-replace', 9001001),
+  ('routine:confirmation-first-remove', 9001002);
+
+create or replace function public.wait_for_test_confirmation_gate()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  gate_key bigint;
+begin
+  select advisory_lock_key into gate_key
+  from public.test_confirmation_gates
+  where routine_slot_key = new.routine_slot_key;
+
+  if found then
+    perform pg_advisory_xact_lock(gate_key);
+  end if;
+  return new;
+end
+$$;
+
+create trigger wait_for_test_confirmation_gate
+before insert or update on public.dose_logs
+for each row execute function public.wait_for_test_confirmation_gate();
+
+create or replace function public.test_confirm_intake_result(p_entries jsonb)
+returns jsonb
+language plpgsql
+set search_path = public
+as $$
+declare
+  saved_log public.dose_logs;
+begin
+  select * into strict saved_log
+  from public.confirm_intake_group(p_entries);
+  return jsonb_build_object(
+    'id', saved_log.id,
+    'cycle_id', saved_log.cycle_id,
+    'plan_version_id', saved_log.plan_version_id,
+    'taken', saved_log.taken
+  );
+exception
+  when others then return jsonb_build_object('error', sqlerrm);
+end
+$$;
+
+create or replace function public.test_replace_future_plan_version_result(
+  p_version_id uuid,
+  p_effective_at timestamptz,
+  p_idempotency_key text
+)
+returns jsonb
+language plpgsql
+set search_path = public
+as $$
+declare
+  saved_version public.cycle_plan_versions;
+begin
+  select * into strict saved_version
+  from public.replace_future_plan_version(
+    p_version_id,
+    'instant',
+    p_effective_at,
+    null,
+    'dose',
+    jsonb_build_object(
+      'frequency', 'Täglich',
+      'schedule_days', jsonb_build_array(),
+      'intake_time', 'morgens',
+      'dose', 12,
+      'unit', 'mg',
+      'method', 'Oral'
+    ),
+    'Europe/Berlin',
+    p_idempotency_key
+  );
+  return jsonb_build_object(
+    'id', saved_version.id,
+    'cycle_id', saved_version.cycle_id,
+    'effective_at', saved_version.effective_at
+  );
+exception
+  when others then return jsonb_build_object('error', sqlerrm);
+end
+$$;
+
+create or replace function public.test_remove_future_plan_version_result(
+  p_version_id uuid,
+  p_idempotency_key text
+)
+returns jsonb
+language plpgsql
+set search_path = public
+as $$
+begin
+  return public.remove_future_plan_version(
+    p_version_id,
+    'Europe/Berlin',
+    p_idempotency_key
+  );
+exception
+  when others then return jsonb_build_object('error', sqlerrm);
+end
+$$;
+
 begin;
 
 do $$
@@ -767,6 +881,257 @@ begin
 
   perform dblink_disconnect('task9_lifecycle');
   perform dblink_disconnect('task9_confirmation');
+end
+$$;
+
+do $$
+declare
+  concurrent_cycle_id constant uuid := '33100000-0000-0000-0000-000000000001';
+  concurrent_item_id constant uuid := '33000000-0000-0000-0000-000000000003';
+  owner_id constant uuid := '30000000-0000-0000-0000-000000000003';
+  replace_version_id uuid;
+  remove_version_id uuid;
+  pending_log_id uuid := '33900000-0000-0000-0000-000000000002';
+  confirmation_entries jsonb;
+  confirmation_outcome jsonb;
+  lifecycle_outcome jsonb;
+  persisted_log public.dose_logs;
+begin
+  perform dblink_connect('task9_confirmation_first', 'dbname=' || current_database());
+  perform dblink_connect('task9_lifecycle_second', 'dbname=' || current_database());
+  perform dblink_exec(
+    'task9_confirmation_first',
+    format('set request.jwt.claim.sub = %L', owner_id::text)
+  );
+  perform dblink_exec(
+    'task9_lifecycle_second',
+    format('set request.jwt.claim.sub = %L', owner_id::text)
+  );
+  perform dblink_exec('task9_confirmation_first', 'set lock_timeout = ''5s''');
+  perform dblink_exec('task9_confirmation_first', 'set statement_timeout = ''10s''');
+  perform dblink_exec('task9_confirmation_first', 'set deadlock_timeout = ''100ms''');
+  perform dblink_exec('task9_lifecycle_second', 'set lock_timeout = ''5s''');
+  perform dblink_exec('task9_lifecycle_second', 'set statement_timeout = ''10s''');
+  perform dblink_exec('task9_lifecycle_second', 'set deadlock_timeout = ''100ms''');
+
+  select created_version_id into strict replace_version_id
+  from dblink(
+    'task9_lifecycle_second',
+    $query$
+      select (public.create_plan_version(
+        '33100000-0000-0000-0000-000000000001',
+        'instant',
+        '2099-01-01T00:00:00Z',
+        null,
+        'dose',
+        jsonb_build_object(
+          'frequency', 'Täglich',
+          'schedule_days', jsonb_build_array(),
+          'intake_time', 'morgens',
+          'dose', 11,
+          'unit', 'mg',
+          'method', 'Oral'
+        ),
+        'task9-confirmation-first-replace-create'
+      )).id
+    $query$
+  ) as create_result(created_version_id uuid);
+
+  confirmation_entries := jsonb_build_array(jsonb_build_object(
+    'cycle_id', concurrent_cycle_id,
+    'plan_version_id', replace_version_id,
+    'timezone', 'Europe/Berlin',
+    'dose_log_id', null,
+    'slot_key', 'routine:confirmation-first-replace',
+    'stack_item_id', concurrent_item_id,
+    'dose', 11,
+    'unit', 'mg',
+    'method', 'Oral',
+    'logged_at', '2099-01-02T08:00:00Z'
+  ));
+
+  perform pg_advisory_lock(9001001);
+  if dblink_send_query(
+    'task9_confirmation_first',
+    format('select public.test_confirm_intake_result(%L::jsonb)', confirmation_entries::text)
+  ) <> 1 then
+    raise exception 'replacement confirmation query was not dispatched';
+  end if;
+  perform pg_sleep(0.2);
+  if dblink_is_busy('task9_confirmation_first') <> 1 then
+    raise exception 'replacement confirmation did not reach its gated write';
+  end if;
+
+  if dblink_send_query(
+    'task9_lifecycle_second',
+    format(
+      'select public.test_replace_future_plan_version_result(%L, %L, %L)',
+      replace_version_id,
+      '2099-01-03T00:00:00Z',
+      'task9-confirmation-first-replace'
+    )
+  ) <> 1 then
+    raise exception 'concurrent replacement query was not dispatched';
+  end if;
+  perform pg_sleep(0.2);
+  if dblink_is_busy('task9_lifecycle_second') <> 1 then
+    raise exception 'replacement did not serialize on the confirmation cycle lock';
+  end if;
+
+  perform pg_advisory_unlock(9001001);
+  select outcome into strict confirmation_outcome
+  from dblink_get_result('task9_confirmation_first') as confirmation_result(outcome jsonb);
+  select outcome into strict lifecycle_outcome
+  from dblink_get_result('task9_lifecycle_second') as lifecycle_result(outcome jsonb);
+  perform *
+  from dblink_get_result('task9_confirmation_first') as confirmation_result(outcome jsonb);
+  perform *
+  from dblink_get_result('task9_lifecycle_second') as lifecycle_result(outcome jsonb);
+
+  if confirmation_outcome ? 'error' or lifecycle_outcome ? 'error' then
+    raise exception 'confirmation-first replacement failed: confirmation %, lifecycle %',
+      confirmation_outcome, lifecycle_outcome;
+  end if;
+  if (confirmation_outcome ->> 'plan_version_id')::uuid is distinct from replace_version_id
+    or (confirmation_outcome ->> 'cycle_id')::uuid is distinct from concurrent_cycle_id
+    or coalesce((confirmation_outcome ->> 'taken')::boolean, false) is not true then
+    raise exception 'replacement confirmation lost authoritative provenance: %', confirmation_outcome;
+  end if;
+  if (lifecycle_outcome ->> 'id')::uuid is distinct from replace_version_id
+    or (lifecycle_outcome ->> 'cycle_id')::uuid is distinct from concurrent_cycle_id
+    or (lifecycle_outcome ->> 'effective_at')::timestamptz
+      is distinct from '2099-01-03T00:00:00Z'::timestamptz then
+    raise exception 'replacement lost exact lifecycle semantics: %', lifecycle_outcome;
+  end if;
+
+  select * into strict persisted_log
+  from public.dose_logs
+  where id = (confirmation_outcome ->> 'id')::uuid;
+  if persisted_log.plan_version_id is distinct from replace_version_id
+    or persisted_log.cycle_id is distinct from concurrent_cycle_id then
+    raise exception 'replacement confirmation provenance was not persisted';
+  end if;
+
+  select created_version_id into strict remove_version_id
+  from dblink(
+    'task9_lifecycle_second',
+    $query$
+      select (public.create_plan_version(
+        '33100000-0000-0000-0000-000000000001',
+        'instant',
+        '2099-02-01T00:00:00Z',
+        null,
+        'dose',
+        jsonb_build_object(
+          'frequency', 'Täglich',
+          'schedule_days', jsonb_build_array(),
+          'intake_time', 'morgens',
+          'dose', 13,
+          'unit', 'mg',
+          'method', 'Oral'
+        ),
+        'task9-confirmation-first-remove-create'
+      )).id
+    $query$
+  ) as create_result(created_version_id uuid);
+
+  perform dblink_exec(
+    'task9_lifecycle_second',
+    format(
+      $query$
+        insert into public.dose_logs (
+          id, user_id, stack_item_id, dose, unit, method,
+          logged_at, taken
+        ) values (%L, %L, %L, 13, 'mg', 'Oral', %L, null)
+      $query$,
+      pending_log_id,
+      owner_id,
+      concurrent_item_id,
+      '2099-02-02T08:00:00Z'
+    )
+  );
+
+  confirmation_entries := jsonb_build_array(jsonb_build_object(
+    'cycle_id', concurrent_cycle_id,
+    'plan_version_id', remove_version_id,
+    'timezone', 'Europe/Berlin',
+    'dose_log_id', pending_log_id,
+    'slot_key', 'routine:confirmation-first-remove',
+    'stack_item_id', concurrent_item_id,
+    'dose', 13,
+    'unit', 'mg',
+    'method', 'Oral',
+    'logged_at', '2099-02-02T08:00:00Z'
+  ));
+
+  perform pg_advisory_lock(9001002);
+  if dblink_send_query(
+    'task9_confirmation_first',
+    format('select public.test_confirm_intake_result(%L::jsonb)', confirmation_entries::text)
+  ) <> 1 then
+    raise exception 'pending confirmation query was not dispatched';
+  end if;
+  perform pg_sleep(0.2);
+  if dblink_is_busy('task9_confirmation_first') <> 1 then
+    select outcome into strict confirmation_outcome
+    from dblink_get_result('task9_confirmation_first') as confirmation_result(outcome jsonb);
+    raise exception 'pending confirmation did not reach its gated write: %', confirmation_outcome;
+  end if;
+
+  if dblink_send_query(
+    'task9_lifecycle_second',
+    format(
+      'select public.test_remove_future_plan_version_result(%L, %L)',
+      remove_version_id,
+      'task9-confirmation-first-remove'
+    )
+  ) <> 1 then
+    raise exception 'concurrent removal query was not dispatched';
+  end if;
+  perform pg_sleep(0.2);
+  if dblink_is_busy('task9_lifecycle_second') <> 1 then
+    raise exception 'removal did not serialize on the confirmation cycle lock';
+  end if;
+
+  perform pg_advisory_unlock(9001002);
+  select outcome into strict confirmation_outcome
+  from dblink_get_result('task9_confirmation_first') as confirmation_result(outcome jsonb);
+  select outcome into strict lifecycle_outcome
+  from dblink_get_result('task9_lifecycle_second') as lifecycle_result(outcome jsonb);
+  perform *
+  from dblink_get_result('task9_confirmation_first') as confirmation_result(outcome jsonb);
+  perform *
+  from dblink_get_result('task9_lifecycle_second') as lifecycle_result(outcome jsonb);
+
+  if confirmation_outcome ? 'error' or lifecycle_outcome ? 'error' then
+    raise exception 'confirmation-first removal failed: confirmation %, lifecycle %',
+      confirmation_outcome, lifecycle_outcome;
+  end if;
+  if (confirmation_outcome ->> 'id')::uuid is distinct from pending_log_id
+    or (confirmation_outcome ->> 'plan_version_id')::uuid is distinct from remove_version_id
+    or (confirmation_outcome ->> 'cycle_id')::uuid is distinct from concurrent_cycle_id
+    or coalesce((confirmation_outcome ->> 'taken')::boolean, false) is not true then
+    raise exception 'pending confirmation lost authoritative provenance: %', confirmation_outcome;
+  end if;
+  if (lifecycle_outcome ->> 'version_id')::uuid is distinct from remove_version_id
+    or (lifecycle_outcome ->> 'cycle_id')::uuid is distinct from concurrent_cycle_id then
+    raise exception 'removal lost exact lifecycle semantics: %', lifecycle_outcome;
+  end if;
+  if exists (select 1 from public.cycle_plan_versions where id = remove_version_id) then
+    raise exception 'confirmation-first removal left the exact version in place';
+  end if;
+
+  select * into strict persisted_log
+  from public.dose_logs
+  where id = pending_log_id;
+  if persisted_log.taken is not true
+    or persisted_log.cycle_id is distinct from concurrent_cycle_id
+    or persisted_log.plan_version_id is not null then
+    raise exception 'pending confirmation/removal serialization persisted an invalid log';
+  end if;
+
+  perform dblink_disconnect('task9_confirmation_first');
+  perform dblink_disconnect('task9_lifecycle_second');
 end
 $$;
 

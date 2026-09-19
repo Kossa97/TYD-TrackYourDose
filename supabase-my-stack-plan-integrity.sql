@@ -1165,6 +1165,7 @@ declare
   owner_id uuid := auth.uid();
   cycle_row public.cycles;
   version_row public.cycle_plan_versions;
+  discovered_cycle_id uuid;
   normalized jsonb;
   item_tracking_level text;
   prior_result jsonb;
@@ -1193,22 +1194,31 @@ begin
     return version_row;
   end if;
 
-  select * into version_row
+  select cycle_id into discovered_cycle_id
   from public.cycle_plan_versions
   where id = p_version_id
-    and user_id = owner_id
-  for update;
+    and user_id = owner_id;
   if not found then
     raise exception 'Plan version not found';
   end if;
 
   select * into cycle_row
   from public.cycles
-  where id = version_row.cycle_id
+  where id = discovered_cycle_id
     and user_id = owner_id
   for update;
   if not found then
     raise exception 'Cycle not found';
+  end if;
+
+  select * into version_row
+  from public.cycle_plan_versions
+  where id = p_version_id
+    and cycle_id = discovered_cycle_id
+    and user_id = owner_id
+  for update;
+  if not found then
+    raise exception 'Plan version not found';
   end if;
   if cycle_row.ended_at is not null then
     raise exception 'Cycle is already ended';
@@ -1298,6 +1308,7 @@ declare
   owner_id uuid := auth.uid();
   cycle_row public.cycles;
   version_row public.cycle_plan_versions;
+  discovered_cycle_id uuid;
   prior_result jsonb;
   mutation_result jsonb;
   current_boundary timestamptz;
@@ -1322,22 +1333,31 @@ begin
     return prior_result;
   end if;
 
-  select * into version_row
+  select cycle_id into discovered_cycle_id
   from public.cycle_plan_versions
   where id = p_version_id
-    and user_id = owner_id
-  for update;
+    and user_id = owner_id;
   if not found then
     raise exception 'Plan version not found';
   end if;
 
   select * into cycle_row
   from public.cycles
-  where id = version_row.cycle_id
+  where id = discovered_cycle_id
     and user_id = owner_id
   for update;
   if not found then
     raise exception 'Cycle not found';
+  end if;
+
+  select * into version_row
+  from public.cycle_plan_versions
+  where id = p_version_id
+    and cycle_id = discovered_cycle_id
+    and user_id = owner_id
+  for update;
+  if not found then
+    raise exception 'Plan version not found';
   end if;
   if cycle_row.ended_at is not null then
     raise exception 'Cycle is already ended';
