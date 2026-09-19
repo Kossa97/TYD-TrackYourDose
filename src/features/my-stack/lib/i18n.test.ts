@@ -189,6 +189,7 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_plan_pause_end',
   'my_stack_plan_end',
   'my_stack_plan_action_error',
+  'my_stack_plan_load_error',
   'my_stack_plan_restart_error',
   'my_stack_plan_pause_title',
   'my_stack_plan_pause_end_title',
@@ -479,11 +480,13 @@ describe('My Stack DE/EN locale contract', () => {
     expect(MY_STACK_DE.my_stack_plan_pause_neutral).toBe('Während der Pause ist keine Einnahme fällig.')
     expect(MY_STACK_DE.my_stack_plan_end_copy).toContain('Verlauf bleibt erhalten')
     expect(MY_STACK_DE.my_stack_plan_action_error).toContain('Bitte versuche es erneut')
+    expect(MY_STACK_DE.my_stack_plan_load_error).toContain('nicht geladen')
     expect(MY_STACK_EN.my_stack_plan_adjust_dose).toBe('Adjust dose')
     expect(MY_STACK_EN.my_stack_plan_adjust_schedule).toBe('Adjust schedule')
     expect(MY_STACK_EN.my_stack_plan_pause_neutral).toBe('No intake is due while the plan is paused.')
     expect(MY_STACK_EN.my_stack_plan_end_copy).toContain('history remains available')
     expect(MY_STACK_EN.my_stack_plan_action_error).toContain('Please try again')
+    expect(MY_STACK_EN.my_stack_plan_load_error).toContain('could not be loaded')
   })
 
   it.each(localeCodes)('keeps locale %s complete, token-safe, and unchanged outside the overlay', async (code) => {

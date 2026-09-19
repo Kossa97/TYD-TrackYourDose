@@ -1225,5 +1225,6 @@
   "my_stack_tab_empty": "Belum ada apa-apa di sini.",
   "my_stack_sort_created_desc": "Terbaru dulu",
   "my_stack_sort_created_asc": "Terlama dulu",
-  "my_stack_sort_group_created": "Ditambahkan"
+  "my_stack_sort_group_created": "Ditambahkan",
+  "my_stack_plan_load_error": "The intake plans could not be loaded. Your other data remains available."
 }

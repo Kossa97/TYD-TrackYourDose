@@ -1224,5 +1224,6 @@
   "my_stack_tab_empty": "아직 아무것도 없습니다.",
   "my_stack_sort_created_desc": "최신순",
   "my_stack_sort_created_asc": "오래된순",
-  "my_stack_sort_group_created": "추가됨"
+  "my_stack_sort_group_created": "추가됨",
+  "my_stack_plan_load_error": "The intake plans could not be loaded. Your other data remains available."
 }

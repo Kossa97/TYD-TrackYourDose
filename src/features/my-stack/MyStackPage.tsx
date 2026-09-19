@@ -478,6 +478,11 @@ function cycleAsIntakePlanDraft(cycle: Cycle, day: Date): IntakePlanDraft {
   }
 }
 
+interface RecoverableMutation {
+  key: string
+  committed: boolean
+}
+
 function versionAsIntakePlanDraft(
   timeline: CycleTimeline,
   version: CyclePlanVersion,
@@ -606,6 +611,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [loaderFading, setLoaderFading]       = useState(false)
   const [cycles, setCycles]                   = useState<Cycle[]>([])
   const [cycleTimelines, setCycleTimelines]   = useState<CycleTimeline[]>([])
+  const [timelineLoadError, setTimelineLoadError] = useState(false)
+  const [timelineLoading, setTimelineLoading] = useState(false)
   const [expandedId, setExpandedId]           = useState<string | null>(null)
   const [showPeptideForm, setShowPeptideForm] = useState(false)
   const [editingPeptideId, setEditingPeptideId] = useState<string | null>(null)
@@ -615,8 +622,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [wizardIntent, setWizardIntent] = useState<'pk' | 'plan' | undefined>()
   const [wizardCycleId, setWizardCycleId] = useState<string | null>(null)
   const [planEditContext, setPlanEditContext] = useState<PlanEditContext | null>(null)
-  const planSaveIdempotencyKeyRef = useRef<string | null>(null)
-  const lifecycleIdempotencyKeysRef = useRef(new Map<string, string>())
+  const planSaveRecoveryRef = useRef<(RecoverableMutation & { identity: string }) | null>(null)
+  const lifecycleIdempotencyKeysRef = useRef(new Map<string, RecoverableMutation>())
   // Ein zweiter Plan statt einer Aenderung am bestehenden.
   const [wizardNeuerZyklus, setWizardNeuerZyklus] = useState(false)
   const [infoPeptide, setInfoPeptide]         = useState<Peptide | null>(null)
@@ -785,9 +792,18 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const { data } = await stackDataClient.from('cycles').select('*').eq('user_id', user!.id)
     if (data) setCycles(data as Cycle[])
   }
-  const loadTimelines = async () => {
+  const loadTimelines = async (throwOnError = false) => {
     if (!FEATURES.planTimelineV2) return
-    setCycleTimelines(await loadCycleTimelines(stackDataClient as never, user!.id))
+    setTimelineLoading(true)
+    setTimelineLoadError(false)
+    try {
+      setCycleTimelines(await loadCycleTimelines(stackDataClient as never, user!.id))
+    } catch (error) {
+      setTimelineLoadError(true)
+      if (throwOnError) throw error
+    } finally {
+      setTimelineLoading(false)
+    }
   }
   const loadEscalations = async () => {
     const { data } = await supabase.from('dose_escalations').select('*').eq('user_id', user!.id).order('start_after_days').order('start_date')
@@ -1097,7 +1113,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     idempotencyKey: string,
   ) => {
     const savedRow = await saveStackItemSetup(stackDataClient as never, draft, idempotencyKey)
-    await Promise.all([loadPeptides(), loadCycles()])
+    await Promise.all([
+      loadPeptides(),
+      loadCycles(),
+      ...(FEATURES.planTimelineV2 ? [loadTimelines(true)] : []),
+    ])
     setExpandedId(savedRow.id)
     toast.success(draft.id ? t('peptid_aktualisiert') : t('peptid_hinzugefuegt'))
   }
@@ -1231,7 +1251,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           : { kind: 'now', localDate: null },
       })
       setWizardCycleId(null)
-      planSaveIdempotencyKeyRef.current = globalThis.crypto.randomUUID()
+      const identity = versionId ? `replace:${versionId}` : `change:${cycleId}`
+      if (planSaveRecoveryRef.current?.identity !== identity) {
+        planSaveRecoveryRef.current = {
+          identity,
+          key: globalThis.crypto.randomUUID(),
+          committed: false,
+        }
+      }
     } else {
       if (!cycles.some(cycle => cycle.id === cycleId && cycle.stack_item_id === p.id)) return
       setWizardCycleId(cycleId)
@@ -1253,10 +1280,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const lifecycleKey = (action: string, targetId: string) => {
     const identity = `${action}:${targetId}`
     const existing = lifecycleIdempotencyKeysRef.current.get(identity)
-    if (existing) return { identity, key: existing }
-    const key = globalThis.crypto.randomUUID()
-    lifecycleIdempotencyKeysRef.current.set(identity, key)
-    return { identity, key }
+    if (existing) return { identity, mutation: existing }
+    const mutation = { key: globalThis.crypto.randomUUID(), committed: false }
+    lifecycleIdempotencyKeysRef.current.set(identity, mutation)
+    return { identity, mutation }
   }
 
   const completeLifecycleMutation = (identity: string, next: CycleTimeline) => {
@@ -1265,30 +1292,44 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   }
 
   const saveVersionChange = async (submission: PlanChangeSubmission) => {
-    await savePlanChange(
-      stackDataClient as never,
-      submission.target,
-      submission.snapshot,
-      submission.effective,
-      {
-        changeKind: submission.changeKind,
-        idempotencyKey: planSaveIdempotencyKeyRef.current ?? globalThis.crypto.randomUUID(),
-        timeZone: submission.timeZone,
-      },
-    )
-    planSaveIdempotencyKeyRef.current = null
-    await loadTimelines()
+    const identity = submission.target.mode === 'replace_future'
+      ? `replace:${submission.target.versionId}`
+      : `change:${submission.target.cycleId}`
+    let recovery = planSaveRecoveryRef.current
+    if (!recovery || recovery.identity !== identity) {
+      recovery = { identity, key: globalThis.crypto.randomUUID(), committed: false }
+      planSaveRecoveryRef.current = recovery
+    }
+    if (!recovery.committed) {
+      await savePlanChange(
+        stackDataClient as never,
+        submission.target,
+        submission.snapshot,
+        submission.effective,
+        {
+          changeKind: submission.changeKind,
+          idempotencyKey: recovery.key,
+          timeZone: submission.timeZone,
+        },
+      )
+      recovery.committed = true
+    }
+    await loadTimelines(true)
+    planSaveRecoveryRef.current = null
   }
 
   const removeFutureVersion = async (version: CyclePlanVersion) => {
     const mutation = lifecycleKey('remove-version', version.id)
-    await removeFuturePlanVersion(stackDataClient as never, {
-      versionId: version.id,
-      timeZone,
-      idempotencyKey: mutation.key,
-    })
+    if (!mutation.mutation.committed) {
+      await removeFuturePlanVersion(stackDataClient as never, {
+        versionId: version.id,
+        timeZone,
+        idempotencyKey: mutation.mutation.key,
+      })
+      mutation.mutation.committed = true
+    }
+    await loadTimelines(true)
     lifecycleIdempotencyKeysRef.current.delete(mutation.identity)
-    await loadTimelines()
   }
 
   const pauseTimeline = async (timeline: CycleTimeline, endsAt: string | null) => {
@@ -1296,7 +1337,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const next = await pauseCycle(stackDataClient as never, {
       cycleId: timeline.cycle.id,
       endsAt,
-      idempotencyKey: mutation.key,
+      idempotencyKey: mutation.mutation.key,
     })
     completeLifecycleMutation(mutation.identity, next)
   }
@@ -1308,7 +1349,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const next = await setPauseEnd(stackDataClient as never, {
       pauseId: pause.id,
       endsAt,
-      idempotencyKey: mutation.key,
+      idempotencyKey: mutation.mutation.key,
     })
     completeLifecycleMutation(mutation.identity, next)
   }
@@ -1317,7 +1358,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const mutation = lifecycleKey('resume', timeline.cycle.id)
     const next = await resumeCycle(stackDataClient as never, {
       cycleId: timeline.cycle.id,
-      idempotencyKey: mutation.key,
+      idempotencyKey: mutation.mutation.key,
     })
     completeLifecycleMutation(mutation.identity, next)
   }
@@ -1326,7 +1367,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const mutation = lifecycleKey('end', timeline.cycle.id)
     const next = await endTimelineCycle(stackDataClient as never, {
       cycleId: timeline.cycle.id,
-      idempotencyKey: mutation.key,
+      idempotencyKey: mutation.mutation.key,
     })
     completeLifecycleMutation(mutation.identity, next)
   }
@@ -1335,19 +1376,17 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const source = resolveCycleAt(timeline, new Date(), timeZone).planVersion
     if (!source) return
     const mutation = lifecycleKey('restart', timeline.cycle.id)
-    try {
-      const next = await restartCycle(stackDataClient as never, {
-        sourceCycleId: timeline.cycle.id,
-        startedAt: new Date().toISOString(),
-        initialSchedule: versionSnapshot(source),
-        idempotencyKey: mutation.key,
-      })
-      completeLifecycleMutation(mutation.identity, next)
-    } catch {
-      toast.error(String(t('my_stack_plan_restart_error', {
-        defaultValue: 'Der Plan konnte nicht neu gestartet werden. Bitte versuche es erneut.',
-      })))
-    }
+    const next = await restartCycle(stackDataClient as never, {
+      sourceCycleId: timeline.cycle.id,
+      startedAt: new Date().toISOString(),
+      initialSchedule: versionSnapshot(source),
+      idempotencyKey: mutation.mutation.key,
+    })
+    lifecycleIdempotencyKeysRef.current.delete(mutation.identity)
+    setCycleTimelines(current => [
+      next,
+      ...current.filter(candidate => candidate.cycle.id !== next.cycle.id),
+    ])
   }
 
   const planManagementSection = (p: Peptide, timeline: CycleTimeline) => (
@@ -1369,7 +1408,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       onSetPauseEnd={endsAt => setTimelinePauseEnd(timeline, endsAt)}
       onResume={() => resumeTimeline(timeline)}
       onEnd={() => finishTimeline(timeline)}
-      onRestart={() => { void restartTimeline(timeline) }}
+      onRestart={() => restartTimeline(timeline)}
     />
   )
   const toggleCycleActive = async (c: Cycle) => {
@@ -2449,6 +2488,20 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       <div>
           {initialLoad && <LabLoader fadingOut={loaderFading} />}
 
+          {FEATURES.planTimelineV2 && timelineLoadError && (
+            <div role="alert" className="mb-4 rounded-xl border border-rose-300/25 bg-rose-300/10 p-3 text-sm text-rose-100">
+              <p>{t('my_stack_plan_load_error', { defaultValue: 'Die Einnahmepläne konnten nicht geladen werden. Die übrigen Daten bleiben sichtbar.' })}</p>
+              <button
+                type="button"
+                disabled={timelineLoading}
+                onClick={() => { void loadTimelines() }}
+                className="mt-2 min-h-10 rounded-lg border border-rose-200/30 px-3 font-semibold disabled:opacity-50"
+              >
+                {t('lab_retry', { defaultValue: 'Erneut versuchen' })}
+              </button>
+            </div>
+          )}
+
           {!loading && peptides.length > 0 && viewMode === 'list' && (
             <button
               type="button"
@@ -3418,7 +3471,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             setWizardNeuerZyklus(false)
             setWizardCycleId(null)
             setPlanEditContext(null)
-            planSaveIdempotencyKeyRef.current = null
+            if (!planSaveRecoveryRef.current?.committed) planSaveRecoveryRef.current = null
           }}
           onSave={handleSaveStackItem}
           onOpenExisting={openExistingStackItem}

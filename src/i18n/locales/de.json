@@ -1373,5 +1373,6 @@
   "my_stack_tab_empty": "Hier ist noch nichts.",
   "my_stack_sort_created_desc": "Neu → alt",
   "my_stack_sort_created_asc": "Alt → neu",
-  "my_stack_sort_group_created": "Hinzugefügt"
+  "my_stack_sort_group_created": "Hinzugefügt",
+  "my_stack_plan_load_error": "Die Einnahmepläne konnten nicht geladen werden. Deine übrigen Daten bleiben verfügbar."
 }

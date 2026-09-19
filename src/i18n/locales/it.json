@@ -1225,5 +1225,6 @@
   "my_stack_tab_empty": "Qui non c’è ancora nulla.",
   "my_stack_sort_created_desc": "Più recenti prima",
   "my_stack_sort_created_asc": "Più vecchi prima",
-  "my_stack_sort_group_created": "Aggiunto"
+  "my_stack_sort_group_created": "Aggiunto",
+  "my_stack_plan_load_error": "The intake plans could not be loaded. Your other data remains available."
 }

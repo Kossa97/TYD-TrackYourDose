@@ -8,8 +8,13 @@ import { PlanManagementSection, type PlanManagementSectionProps } from './PlanMa
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'de' },
-    t: (_key: string, options?: Record<string, unknown>) => {
-      let value = String(options?.defaultValue ?? _key)
+    t: (key: string, options?: Record<string, unknown>) => {
+      const translations: Record<string, string> = {
+        my_stack_rhythm_unit_day: 'Tagen',
+        my_stack_rhythm_unit_week: 'Wochen',
+        my_stack_rhythm_unit_month: 'Monaten',
+      }
+      let value = translations[key] ?? String(options?.defaultValue ?? key)
       for (const [name, replacement] of Object.entries(options ?? {})) {
         value = value.replaceAll(`{{${name}}}`, String(replacement))
       }
@@ -133,6 +138,50 @@ describe('PlanManagementSection', () => {
     expect(screen.getByRole('dialog', { name: 'Plan pausieren' })).toBeTruthy()
   })
 
+  it('converts pause and pause-end wall clocks to deterministic timezone-safe instants', async () => {
+    const onPause = vi.fn(async () => undefined)
+    const onSetPauseEnd = vi.fn(async () => undefined)
+    const { rerender } = render(<PlanManagementSection {...callbacks({ onPause, onSetPauseEnd })} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pausieren' }))
+    fireEvent.change(screen.getByLabelText('Pausieren bis (optional)'), {
+      target: { value: '2026-09-19T10:30' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Pause bestätigen' }))
+    await waitFor(() => expect(onPause).toHaveBeenCalledWith('2026-09-19T08:30:00.000Z'))
+
+    const paused = timeline({
+      pauses: [{
+        id: 'pause-1',
+        cycle_id: 'cycle-1',
+        paused_at: '2026-09-18T10:00:00.000Z',
+        ends_at: null,
+      }],
+    })
+    rerender(<PlanManagementSection {...callbacks({ timeline: paused, onPause, onSetPauseEnd })} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Pausenende festlegen' }))
+    fireEvent.change(screen.getByLabelText('Pausieren bis'), {
+      target: { value: '2026-10-25T02:30' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Pausenende speichern' }))
+    await waitFor(() => expect(onSetPauseEnd).toHaveBeenCalledWith('2026-10-25T00:30:00.000Z'))
+  })
+
+  it('rejects a DST-gap wall clock without closing the pause dialog', async () => {
+    const onPause = vi.fn(async () => undefined)
+    render(<PlanManagementSection {...callbacks({ onPause })} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pausieren' }))
+    fireEvent.change(screen.getByLabelText('Pausieren bis (optional)'), {
+      target: { value: '2026-03-29T02:30' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Pause bestätigen' }))
+
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Bitte versuche es erneut'))
+    expect(onPause).not.toHaveBeenCalled()
+    expect(screen.getByRole('dialog', { name: 'Plan pausieren' })).toBeTruthy()
+  })
+
   it('describes a pause neutrally without due, missed, or skipped language', () => {
     const paused = timeline({
       pauses: [{
@@ -169,6 +218,122 @@ describe('PlanManagementSection', () => {
     expect(screen.queryByRole('button', { name: 'Beenden' })).toBeNull()
     expect(screen.queryByRole('button', { name: /bearbeiten/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /entfernen/i })).toBeNull()
+  })
+
+  it('keeps ended history visible while restart is pending and retryable after failure', async () => {
+    let rejectRestart: ((error: Error) => void) | undefined
+    const onRestart = vi.fn(() => new Promise<void>((_resolve, reject) => { rejectRestart = reject }))
+    const ended = timeline({
+      cycle: {
+        id: 'cycle-1',
+        stack_item_id: 'stack-1',
+        started_at: '2026-09-01T08:00:00.000Z',
+        ended_at: '2026-09-18T08:00:00.000Z',
+      },
+    })
+    render(<PlanManagementSection {...callbacks({ timeline: ended, onRestart })} />)
+
+    const restart = screen.getByRole('button', { name: 'Neu starten' }) as HTMLButtonElement
+    fireEvent.click(restart)
+    expect(restart.disabled).toBe(true)
+    expect(screen.getByText('Verlauf')).toBeTruthy()
+
+    rejectRestart?.(new Error('network'))
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Bitte versuche es erneut'))
+    expect(restart.disabled).toBe(false)
+    expect(screen.getByText('Verlauf')).toBeTruthy()
+  })
+
+  it('treats a planned initial version as an editable future preview with its next intake', async () => {
+    const planned = timeline({
+      cycle: {
+        id: 'cycle-1',
+        stack_item_id: 'stack-1',
+        started_at: '2026-09-20T08:00:00.000Z',
+        ended_at: null,
+      },
+      versions: [version('version-planned', 5, '2026-09-20')],
+    })
+    render(<PlanManagementSection {...callbacks({ timeline: planned })} />)
+
+    const section = screen.getByTestId('plan-management-cycle-1')
+    expect(section.textContent).toContain('Geplant')
+    expect(section.textContent).toContain('20.09.2026 · 20:00')
+    expect(within(section).getByRole('button', { name: 'Geplante Änderung vom 20.09.2026 bearbeiten' })).toBeTruthy()
+    fireEvent.click(within(section).getByRole('button', { name: 'Geplante Änderung vom 20.09.2026 entfernen' }))
+    expect(screen.getByRole('dialog', { name: 'Geplante Änderung entfernen' })).toBeTruthy()
+    expect(within(section).queryByRole('button', { name: 'Dosis anpassen' })).toBeNull()
+    expect(within(section).queryByRole('button', { name: 'Plan anpassen' })).toBeNull()
+  })
+
+  it.each([
+    {
+      label: 'interval',
+      changes: { frequency: 'interval', x_days_interval: 10, interval_unit: 'week' },
+      expected: 'Alle 10 Wochen',
+    },
+    {
+      label: 'weekdays',
+      changes: { frequency: 'weekdays', schedule_days: ['Mo', 'Mi'] },
+      expected: 'Mo, Mi',
+    },
+    {
+      label: 'cycle',
+      changes: { frequency: 'cycle', cycle_on_days: 5, cycle_off_days: 2 },
+      expected: '5 Tage an, 2 Tage Pause',
+    },
+  ])('shows the complete $label rhythm summary', ({ changes, expected }) => {
+    const detailed = timeline({
+      versions: [version('version-current', 5, '2026-09-01', changes)],
+    })
+    render(<PlanManagementSection {...callbacks({ timeline: detailed })} />)
+
+    expect(screen.getByTestId('plan-management-cycle-1').textContent).toContain(expected)
+  })
+
+  it('portals confirmations to the viewport and restores focus after Escape', async () => {
+    const { container } = render(<PlanManagementSection {...callbacks()} />)
+    const pause = screen.getByRole('button', { name: 'Pausieren' })
+    pause.focus()
+    fireEvent.click(pause)
+
+    const dialog = screen.getByRole('dialog', { name: 'Plan pausieren' })
+    const input = screen.getByLabelText('Pausieren bis (optional)')
+    await waitFor(() => expect(document.activeElement).toBe(input))
+    expect(container.contains(dialog)).toBe(false)
+    expect((container as HTMLElement).inert).toBe(true)
+
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Plan pausieren' })).toBeNull())
+    expect(document.activeElement).toBe(pause)
+    expect((container as HTMLElement).inert).not.toBe(true)
+  })
+
+  it('contains focus and disables the pause input throughout a pending mutation', async () => {
+    let resolvePause: (() => void) | undefined
+    const onPause = vi.fn(() => new Promise<void>(resolve => { resolvePause = resolve }))
+    render(<PlanManagementSection {...callbacks({ onPause })} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pausieren' }))
+    const dialog = screen.getByRole('dialog', { name: 'Plan pausieren' })
+    const input = screen.getByLabelText('Pausieren bis (optional)') as HTMLInputElement
+    const confirm = screen.getByRole('button', { name: 'Pause bestätigen' }) as HTMLButtonElement
+    const cancel = screen.getByRole('button', { name: 'Abbrechen' }) as HTMLButtonElement
+    const close = screen.getByRole('button', { name: 'Schließen' })
+
+    confirm.focus()
+    fireEvent.keyDown(dialog, { key: 'Tab' })
+    expect(document.activeElement).toBe(close)
+    close.focus()
+    fireEvent.keyDown(dialog, { key: 'Tab', shiftKey: true })
+    expect(document.activeElement).toBe(confirm)
+
+    fireEvent.click(confirm)
+    expect(input.disabled).toBe(true)
+    expect(confirm.disabled).toBe(true)
+    expect(cancel.disabled).toBe(true)
+    resolvePause?.()
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Plan pausieren' })).toBeNull())
   })
 
   it('keeps duplicate-looking timelines independent by cycle identity', () => {

@@ -1229,5 +1229,6 @@
   "my_stack_tab_empty": "لا شيء هنا بعد.",
   "my_stack_sort_created_desc": "الأحدث أولاً",
   "my_stack_sort_created_asc": "الأقدم أولاً",
-  "my_stack_sort_group_created": "تمت الإضافة"
+  "my_stack_sort_group_created": "تمت الإضافة",
+  "my_stack_plan_load_error": "The intake plans could not be loaded. Your other data remains available."
 }

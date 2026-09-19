@@ -122,6 +122,88 @@ const activeCycle = {
   created_at: '2026-07-24T00:30:00.000Z',
 }
 
+function normalizedVersion(
+  id: string,
+  cycleId: string,
+  changes: Record<string, unknown> = {},
+) {
+  return {
+    id,
+    cycle_id: cycleId,
+    change_kind: 'initial' as const,
+    effective_kind: 'local_date' as const,
+    effective_at: null,
+    effective_local_date: '2026-07-24',
+    frequency: 'daily',
+    x_days_interval: null,
+    interval_unit: null,
+    cycle_on_days: null,
+    cycle_off_days: null,
+    schedule_days: [],
+    intake_time: 'abends',
+    intake_time_custom: '20:30',
+    slot_doses: null,
+    slot_days: null,
+    dose: 100,
+    unit: 'mg',
+    method: 'Oral',
+    ...changes,
+  }
+}
+
+function timelineRow(
+  cycleId: string,
+  versions = [normalizedVersion(`${cycleId}-version`, cycleId)],
+  changes: Record<string, unknown> = {},
+) {
+  return {
+    id: cycleId,
+    stack_item_id: 'other-1',
+    started_at: '2026-07-24T00:30:00.000Z',
+    ended_at: null,
+    versions,
+    pauses: [],
+    ...changes,
+  }
+}
+
+function v2Client(options: {
+  timelineResults: Array<{ data: unknown[] | null; error: { message: string } | null }>
+  rpc?: ReturnType<typeof vi.fn>
+  singleRows?: Record<string, unknown>
+  legacyCycles?: unknown[]
+}) {
+  const timelineQuery = vi.fn(async () => (
+    options.timelineResults.shift() ?? { data: [], error: null }
+  ))
+  const rpc = options.rpc ?? vi.fn(async () => ({ data: null, error: null }))
+  const client = {
+    from: vi.fn((table: string) => {
+      if (table !== 'cycles') throw new Error(`Unexpected table: ${table}`)
+      return {
+        select: vi.fn((columns: string) => ({
+          eq: vi.fn((column: string, value: string) => {
+            if (columns === '*') {
+              return Promise.resolve({ data: options.legacyCycles ?? [], error: null })
+            }
+            if (column === 'id') {
+              return {
+                single: vi.fn(async () => ({
+                  data: options.singleRows?.[value] ?? null,
+                  error: options.singleRows?.[value] ? null : { message: 'missing timeline' },
+                })),
+              }
+            }
+            return { order: timelineQuery }
+          }),
+        })),
+      }
+    }),
+    rpc,
+  }
+  return { client, rpc, timelineQuery }
+}
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'de' } }),
 }))
@@ -164,7 +246,7 @@ vi.mock('./components/StackStage', () => ({
 }))
 
 vi.mock('./components/StackItemWizard', () => ({
-  StackItemWizard: ({ catalogEntries, existingItem, existingPlan, planEditContext, intent, onClose, onSave }: StackItemWizardProps) => {
+  StackItemWizard: ({ catalogEntries, existingItem, existingPlan, planEditContext, intent, onClose, onSave, onSavePlanChange }: StackItemWizardProps) => {
     const selectedPlan = planEditContext?.snapshot ?? existingPlan
     return (
       <div role="dialog" aria-label="stack-item-wizard">
@@ -244,6 +326,36 @@ vi.mock('./components/StackItemWizard', () => ({
       >
         save hydrated plan
       </button>
+      {planEditContext && onSavePlanChange && (
+        <button
+          type="button"
+          onClick={() => {
+            void onSavePlanChange({
+              target: planEditContext.target,
+              snapshot: {
+                frequency: 'daily',
+                x_days_interval: null,
+                interval_unit: null,
+                cycle_on_days: null,
+                cycle_off_days: null,
+                schedule_days: [],
+                intake_time: 'abends',
+                intake_time_custom: '20:30',
+                slot_doses: null,
+                slot_days: null,
+                dose: 125,
+                unit: 'mg',
+                method: 'Oral',
+              },
+              effective: planEditContext.initialEffective ?? { kind: 'now', localDate: null },
+              changeKind: planEditContext.changeKind,
+              timeZone: planEditContext.timeZone,
+            }).then(onClose).catch(() => undefined)
+          }}
+        >
+          save version change
+        </button>
+      )}
       </div>
     )
   },
@@ -631,6 +743,193 @@ describe('MyStackPage non-vial visibility', () => {
     expect(screen.getByTestId('wizard-target-cycle-id').textContent).toBe(activeCycle.id)
     expect(screen.getByTestId('wizard-target-version-id').textContent).toBe('version-future-exact')
     expect(screen.getByTestId('wizard-change-kind').textContent).toBe('schedule')
+  })
+
+  it('keeps safe stack content visible and retries a failed initial V2 timeline load', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const row = timelineRow('cycle-recovered')
+    const { client, timelineQuery } = v2Client({
+      timelineResults: [
+        { data: null, error: { message: 'offline' } },
+        { data: [row], error: null },
+      ],
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('my_stack_plan_load_error'))
+    expect(visibleCardFor(qaName)).not.toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'lab_retry' }))
+    await waitFor(() => expect(timelineQuery).toHaveBeenCalledTimes(2))
+    expect(screen.queryByRole('alert')).toBeNull()
+
+    const card = visibleCardFor(qaName)!
+    fireEvent.click(within(card).getAllByRole('button')[0])
+    expect(await screen.findByTestId('plan-management-cycle-recovered')).toBeTruthy()
+  })
+
+  it('refreshes canonical V2 timelines after creating a new setup', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const created = timelineRow('cycle-created')
+    const rpc = vi.fn(async (name: string) => {
+      if (name === 'save_stack_item_with_plan') return { data: loadedItems[0], error: null }
+      return { data: null, error: { message: `Unexpected RPC: ${name}` } }
+    })
+    const { client, timelineQuery } = v2Client({
+      timelineResults: [
+        { data: [], error: null },
+        { data: [created], error: null },
+      ],
+      rpc,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(screen.getByRole('button', { name: 'neues_peptid_title' })).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'neues_peptid_title' }))
+    fireEvent.click(screen.getByRole('button', { name: 'save hydrated plan' }))
+
+    expect(await screen.findByTestId('plan-management-cycle-created')).toBeTruthy()
+    expect(timelineQuery).toHaveBeenCalledTimes(2)
+  })
+
+  it('inserts a restarted cycle as a separately identified visible timeline', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const ended = timelineRow('cycle-ended', undefined, { ended_at: '2026-09-18T08:00:00.000Z' })
+    const restarted = timelineRow('cycle-restarted')
+    const rpc = vi.fn(async (name: string) => {
+      if (name === 'restart_cycle') return { data: { cycle_id: 'cycle-restarted' }, error: null }
+      return { data: null, error: { message: `Unexpected RPC: ${name}` } }
+    })
+    const { client } = v2Client({
+      timelineResults: [{ data: [ended], error: null }],
+      rpc,
+      singleRows: { 'cycle-restarted': restarted },
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+    const card = visibleCardFor(qaName)!
+    fireEvent.click(within(card).getAllByRole('button')[0])
+    const endedSection = await screen.findByTestId('plan-management-cycle-ended')
+    fireEvent.click(within(endedSection).getByRole('button', { name: 'my_stack_plan_restart' }))
+
+    expect(await screen.findByTestId('plan-management-cycle-restarted')).toBeTruthy()
+    expect(screen.getByTestId('plan-management-cycle-ended')).toBeTruthy()
+    expect(rpc).toHaveBeenCalledWith('restart_cycle', expect.objectContaining({
+      p_source_cycle_id: 'cycle-ended',
+    }))
+  })
+
+  it('reuses a plan-change key and retries only refresh after the committed write', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const current = timelineRow('cycle-plan-change')
+    const createCalls: Array<Record<string, unknown>> = []
+    const rpc = vi.fn(async (name: string, params: Record<string, unknown>) => {
+      if (name !== 'create_plan_version') {
+        return { data: null, error: { message: `Unexpected RPC: ${name}` } }
+      }
+      createCalls.push(params)
+      if (createCalls.length === 1) return { data: null, error: { message: 'temporary write failure' } }
+      return { data: normalizedVersion('version-committed', 'cycle-plan-change'), error: null }
+    })
+    const { client, timelineQuery } = v2Client({
+      timelineResults: [
+        { data: [current], error: null },
+        { data: null, error: { message: 'refresh failed after commit' } },
+        { data: [current], error: null },
+      ],
+      rpc,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+    const card = visibleCardFor(qaName)!
+    fireEvent.click(within(card).getAllByRole('button')[0])
+    const section = await screen.findByTestId('plan-management-cycle-plan-change')
+    fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_dose' }))
+
+    const save = screen.getByRole('button', { name: 'save version change' })
+    fireEvent.click(save)
+    await waitFor(() => expect(createCalls).toHaveLength(1))
+    fireEvent.click(save)
+    await waitFor(() => expect(timelineQuery).toHaveBeenCalledTimes(2))
+    fireEvent.click(save)
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'stack-item-wizard' })).toBeNull())
+
+    expect(createCalls).toHaveLength(2)
+    expect(createCalls[0].p_idempotency_key).toBe(createCalls[1].p_idempotency_key)
+    expect(timelineQuery).toHaveBeenCalledTimes(3)
+  })
+
+  it('does not repeat a committed future removal when only canonical refresh failed', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const currentVersion = normalizedVersion('version-current', 'cycle-remove')
+    const futureVersion = normalizedVersion('version-future', 'cycle-remove', {
+      change_kind: 'schedule',
+      effective_local_date: '2099-10-01',
+    })
+    const before = timelineRow('cycle-remove', [currentVersion, futureVersion])
+    const after = timelineRow('cycle-remove', [currentVersion])
+    const removeCalls: Array<Record<string, unknown>> = []
+    const rpc = vi.fn(async (name: string, params: Record<string, unknown>) => {
+      if (name !== 'remove_future_plan_version') {
+        return { data: null, error: { message: `Unexpected RPC: ${name}` } }
+      }
+      removeCalls.push(params)
+      return { data: { removed: true }, error: null }
+    })
+    const { client, timelineQuery } = v2Client({
+      timelineResults: [
+        { data: [before], error: null },
+        { data: null, error: { message: 'refresh failed after removal' } },
+        { data: [after], error: null },
+      ],
+      rpc,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+    const card = visibleCardFor(qaName)!
+    fireEvent.click(within(card).getAllByRole('button')[0])
+    const section = await screen.findByTestId('plan-management-cycle-remove')
+    fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_remove_future' }))
+    fireEvent.click(screen.getByRole('button', { name: 'my_stack_plan_remove_future_confirm' }))
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'my_stack_plan_remove_future_confirm' }))
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'my_stack_plan_remove_future_title' })).toBeNull())
+
+    expect(removeCalls).toHaveLength(1)
+    expect(removeCalls[0].p_idempotency_key).toEqual(expect.any(String))
+    expect(timelineQuery).toHaveBeenCalledTimes(3)
+    expect(within(screen.getByTestId('plan-management-cycle-remove')).queryByRole('button', {
+      name: 'my_stack_plan_remove_future',
+    })).toBeNull()
   })
 })
 

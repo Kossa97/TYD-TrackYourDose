@@ -1225,5 +1225,6 @@
   "my_stack_tab_empty": "まだ何もありません。",
   "my_stack_sort_created_desc": "新しい順",
   "my_stack_sort_created_asc": "古い順",
-  "my_stack_sort_group_created": "追加日"
+  "my_stack_sort_group_created": "追加日",
+  "my_stack_plan_load_error": "The intake plans could not be loaded. Your other data remains available."
 }

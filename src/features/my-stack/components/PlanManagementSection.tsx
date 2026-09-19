@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { CalendarDays, Clock, Flag, Pause, Pencil, Play, RotateCcw, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { findNextTimelineIntake } from '../../../lib/intakeSchedule'
@@ -9,6 +10,7 @@ import {
   type CycleTimeline,
 } from '../../../lib/planTimeline'
 import { planVersionSegments, type PlanVersionSegment } from '../lib/planSegments'
+import { rhythmFromStorage, rhythmSummary, rhythmText } from '../lib/intakeRhythm'
 
 export interface PlanManagementSectionProps {
   timeline: CycleTimeline
@@ -22,7 +24,7 @@ export interface PlanManagementSectionProps {
   onSetPauseEnd(endsAt: string | null): Promise<void>
   onResume(): Promise<void>
   onEnd(): Promise<void>
-  onRestart(sourceCycleId: string): void
+  onRestart(sourceCycleId: string): Promise<void>
 }
 
 type DialogState =
@@ -36,18 +38,26 @@ function doseLabel(version: CyclePlanVersion): string {
   return `${version.dose} ${version.unit ?? ''}`.trim()
 }
 
-function rhythmLabel(version: CyclePlanVersion, language: string): string {
-  const german = language.toLowerCase().startsWith('de')
-  const labels: Record<string, [string, string]> = {
-    daily: ['Täglich', 'Daily'],
-    'Täglich': ['Täglich', 'Daily'],
-    weekdays: ['Wochentage', 'Weekdays'],
-    'Wochentage wählen': ['Wochentage', 'Weekdays'],
-    interval: ['Intervall', 'Interval'],
-    cycle: ['Wechselrhythmus', 'On/off cycle'],
-    on_demand: ['Bei Bedarf', 'As needed'],
+function rhythmLabel(
+  version: CyclePlanVersion,
+  t: (key: string, options?: Record<string, unknown>) => unknown,
+): string {
+  const legacyFrequency: Record<string, string> = {
+    daily: 'Täglich',
+    weekdays: 'Wochentage wählen',
+    interval: 'Alle X Tage',
+    cycle: 'Im Wechsel',
+    on_demand: 'Bei Bedarf',
   }
-  return labels[version.frequency]?.[german ? 0 : 1] ?? version.frequency
+  const rhythm = rhythmFromStorage({
+    frequency: legacyFrequency[version.frequency] ?? version.frequency,
+    x_days_interval: version.x_days_interval,
+    interval_unit: version.interval_unit,
+    cycle_on_days: version.cycle_on_days,
+    cycle_off_days: version.cycle_off_days,
+    schedule_days: version.schedule_days,
+  })
+  return rhythmText(rhythmSummary(rhythm), t)
 }
 
 function timelineForIntakeResolution(timeline: CycleTimeline): CycleTimeline {
@@ -79,14 +89,55 @@ function dateLabel(value: string, language: string, timeZone: string): string {
   }).format(instant)
 }
 
+function wallClockToIso(value: string, timeZone: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value)
+  if (!match) throw new Error('Invalid local date-time')
+  const [, yearText, monthText, dayText, hourText, minuteText] = match
+  const year = Number(yearText)
+  const month = Number(monthText)
+  const day = Number(dayText)
+  const hour = Number(hourText)
+  const minute = Number(minuteText)
+  const calendarCheck = new Date(Date.UTC(year, month - 1, day, hour, minute))
+  if (
+    calendarCheck.getUTCFullYear() !== year
+    || calendarCheck.getUTCMonth() !== month - 1
+    || calendarCheck.getUTCDate() !== day
+    || hour > 23
+    || minute > 59
+  ) {
+    throw new Error('Invalid local date-time')
+  }
+
+  const formatter = new Intl.DateTimeFormat('en-CA-u-ca-iso8601-nu-latn', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  })
+  const target = `${yearText}-${monthText}-${dayText}T${hourText}:${minuteText}`
+  const guess = Date.UTC(year, month - 1, day, hour, minute)
+  for (let candidate = guess - 16 * 60 * 60_000; candidate <= guess + 16 * 60 * 60_000; candidate += 60_000) {
+    const parts = new Map(formatter.formatToParts(new Date(candidate)).map(part => [part.type, part.value]))
+    const candidateWallClock = `${parts.get('year')}-${parts.get('month')}-${parts.get('day')}T${parts.get('hour')}:${parts.get('minute')}`
+    if (candidateWallClock === target) return new Date(candidate).toISOString()
+  }
+  throw new Error(`Local date-time does not exist in ${timeZone}`)
+}
+
 function HistoryRow({
   segment,
   language,
   timeZone,
+  t,
 }: {
   segment: PlanVersionSegment
   language: string
   timeZone: string
+  t: (key: string, options?: Record<string, unknown>) => unknown
 }) {
   return (
     <li className="flex items-center justify-between gap-3 rounded-xl border border-slate-800/80 bg-slate-950/45 px-3 py-2.5">
@@ -95,7 +146,7 @@ function HistoryRow({
           {dateLabel(segment.effectiveFrom, language, timeZone)}
         </p>
         <p className="mt-0.5 truncate text-xs text-slate-500">
-          {doseLabel(segment.version)} · {rhythmLabel(segment.version, language)}
+          {doseLabel(segment.version)} · {rhythmLabel(segment.version, t)}
         </p>
       </div>
     </li>
@@ -120,12 +171,11 @@ export function PlanManagementSection({
   const language = i18n.language || 'de'
   const resolved = resolveCycleAt(timeline, now, timeZone)
   const segments = planVersionSegments(timeline, now, timeZone)
-  const currentVersion = resolved.planVersion ?? segments[0]?.version ?? null
-  const futureSegments = segments.filter(segment => (
-    segment.status === 'future' && segment.version.id !== currentVersion?.id
-  ))
+  const currentVersion = resolved.planVersion
+  const futureSegments = segments.filter(segment => segment.status === 'future')
+  const displayVersion = currentVersion ?? futureSegments[0]?.version ?? null
   const historySegments = segments.filter(segment => segment.status !== 'future')
-  const nextIntake = resolved.status === 'active'
+  const nextIntake = resolved.status === 'active' || resolved.status === 'planned'
     ? findNextTimelineIntake(timelineForIntakeResolution(timeline), now, timeZone)
     : null
   const nextFuture = futureSegments[0] ?? null
@@ -133,6 +183,11 @@ export function PlanManagementSection({
   const [pauseEnd, setPauseEnd] = useState('')
   const [pending, setPending] = useState(false)
   const [inlineError, setInlineError] = useState<string | null>(null)
+  const pendingRef = useRef(false)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const pauseInputRef = useRef<HTMLInputElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+  pendingRef.current = pending
 
   const statusCopy = {
     planned: t('my_stack_plan_status_planned', { defaultValue: 'Geplant' }),
@@ -142,6 +197,9 @@ export function PlanManagementSection({
   }[resolved.status]
 
   const openDialog = (next: DialogState) => {
+    previousFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null
     setInlineError(null)
     if (next.kind === 'pause_end') {
       const currentEnd = resolved.pause?.ends_at
@@ -154,13 +212,74 @@ export function PlanManagementSection({
     setDialog(next)
   }
 
+  const closeDialog = () => {
+    if (pendingRef.current) return
+    setDialog(null)
+  }
+
+  useEffect(() => {
+    if (!dialog) return
+    const overlay = dialogRef.current?.parentElement
+    const background = [...document.body.children].filter(element => element !== overlay)
+    const previous = background.map(element => ({
+      element: element as HTMLElement,
+      inert: (element as HTMLElement).inert,
+      ariaHidden: element.getAttribute('aria-hidden'),
+    }))
+    for (const entry of previous) {
+      entry.element.inert = true
+      entry.element.setAttribute('aria-hidden', 'true')
+    }
+
+    const initialFocus = pauseInputRef.current
+      ?? dialogRef.current?.querySelector<HTMLElement>('button:not([disabled])')
+      ?? dialogRef.current
+    initialFocus?.focus()
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (!pendingRef.current) closeDialog()
+        return
+      }
+      if (event.key !== 'Tab') return
+      const focusable = [...(dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ) ?? [])]
+      if (focusable.length === 0) {
+        event.preventDefault()
+        dialogRef.current?.focus()
+        return
+      }
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      for (const entry of previous) {
+        entry.element.inert = entry.inert
+        if (entry.ariaHidden === null) entry.element.removeAttribute('aria-hidden')
+        else entry.element.setAttribute('aria-hidden', entry.ariaHidden)
+      }
+      previousFocusRef.current?.focus()
+    }
+  }, [dialog])
+
   const submitDialog = async () => {
     if (!dialog) return
     setPending(true)
     setInlineError(null)
     try {
-      if (dialog.kind === 'pause') await onPause(pauseEnd || null)
-      if (dialog.kind === 'pause_end') await onSetPauseEnd(pauseEnd || null)
+      const pauseEndInstant = pauseEnd ? wallClockToIso(pauseEnd, timeZone) : null
+      if (dialog.kind === 'pause') await onPause(pauseEndInstant)
+      if (dialog.kind === 'pause_end') await onSetPauseEnd(pauseEndInstant)
       if (dialog.kind === 'remove') await onRemoveFuture(dialog.version)
       if (dialog.kind === 'end') await onEnd()
       setDialog(null)
@@ -181,6 +300,20 @@ export function PlanManagementSection({
     } catch {
       setInlineError(String(t('my_stack_plan_action_error', {
         defaultValue: 'Die Änderung konnte nicht gespeichert werden. Bitte versuche es erneut.',
+      })))
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const restart = async () => {
+    setPending(true)
+    setInlineError(null)
+    try {
+      await onRestart(timeline.cycle.id)
+    } catch {
+      setInlineError(String(t('my_stack_plan_restart_error', {
+        defaultValue: 'Der Plan konnte nicht neu gestartet werden. Bitte versuche es erneut.',
       })))
     } finally {
       setPending(false)
@@ -227,29 +360,31 @@ export function PlanManagementSection({
             </h3>
             <ul className="mt-2 space-y-2">
               {segments.map(segment => (
-                <HistoryRow key={segment.version.id} segment={segment} language={language} timeZone={timeZone} />
+                <HistoryRow key={segment.version.id} segment={segment} language={language} timeZone={timeZone} t={t} />
               ))}
             </ul>
           </div>
           <button
             type="button"
-            onClick={() => onRestart(timeline.cycle.id)}
+            disabled={pending}
+            onClick={() => void restart()}
             className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-4 text-sm font-bold text-cyan-100 transition-colors hover:bg-cyan-300/15"
           >
             <RotateCcw size={15} /> {t('my_stack_plan_restart', { defaultValue: 'Neu starten' })}
           </button>
+          {inlineError && <p role="alert" className="mt-3 text-sm text-rose-200">{inlineError}</p>}
         </>
-      ) : currentVersion ? (
+      ) : displayVersion ? (
         <>
           <div className="mt-4 rounded-2xl border border-cyan-300/20 bg-slate-950/45 p-4">
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-xs text-slate-500">{t('my_stack_plan_dose', { defaultValue: 'Dosis' })}</p>
-                <p className="mt-1 font-semibold text-white">{doseLabel(currentVersion)}</p>
+                <p className="mt-1 font-semibold text-white">{doseLabel(displayVersion)}</p>
               </div>
               <div>
                 <p className="text-xs text-slate-500">{t('my_stack_plan_rhythm_label', { defaultValue: 'Rhythmus' })}</p>
-                <p className="mt-1 font-semibold text-white">{rhythmLabel(currentVersion, language)}</p>
+                <p className="mt-1 font-semibold text-white">{rhythmLabel(displayVersion, t)}</p>
               </div>
             </div>
 
@@ -283,7 +418,7 @@ export function PlanManagementSection({
               </div>
             )}
 
-            {resolved.planVersion && (
+            {currentVersion && (
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -318,7 +453,7 @@ export function PlanManagementSection({
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-semibold text-violet-100">{effectiveDate}</p>
                         <p className="mt-0.5 truncate text-xs text-slate-400">
-                          {doseLabel(segment.version)} · {rhythmLabel(segment.version, language)}
+                          {doseLabel(segment.version)} · {rhythmLabel(segment.version, t)}
                         </p>
                       </div>
                       <button
@@ -359,7 +494,7 @@ export function PlanManagementSection({
               </h3>
               <ul className="mt-2 space-y-2">
                 {historySegments.filter(segment => segment.status === 'past').map(segment => (
-                  <HistoryRow key={segment.version.id} segment={segment} language={language} timeZone={timeZone} />
+                  <HistoryRow key={segment.version.id} segment={segment} language={language} timeZone={timeZone} t={t} />
                 ))}
               </ul>
             </div>
@@ -408,12 +543,14 @@ export function PlanManagementSection({
         </>
       ) : null}
 
-      {dialog && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/75 p-4 sm:items-center">
+      {dialog && createPortal((
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/75 p-4 sm:items-center" data-app-modal>
           <div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-label={String(dialogTitle)}
+            tabIndex={-1}
             className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-950 p-4 shadow-2xl"
           >
             <div className="flex items-start justify-between gap-3">
@@ -421,7 +558,7 @@ export function PlanManagementSection({
               <button
                 type="button"
                 disabled={pending}
-                onClick={() => setDialog(null)}
+                onClick={closeDialog}
                 aria-label={String(t('close', { defaultValue: 'Schließen' }))}
                 className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50"
               >
@@ -435,8 +572,10 @@ export function PlanManagementSection({
                   ? t('my_stack_plan_pause_until_optional', { defaultValue: 'Pausieren bis (optional)' })
                   : t('my_stack_plan_pause_until', { defaultValue: 'Pausieren bis' })}
                 <input
+                  ref={pauseInputRef}
                   type="datetime-local"
                   value={pauseEnd}
+                  disabled={pending}
                   onChange={event => setPauseEnd(event.target.value)}
                   className="input mt-2 w-full"
                 />
@@ -460,7 +599,7 @@ export function PlanManagementSection({
               <button
                 type="button"
                 disabled={pending}
-                onClick={() => setDialog(null)}
+                onClick={closeDialog}
                 className="min-h-11 flex-1 rounded-xl border border-slate-700 px-3 text-sm font-semibold text-slate-300 disabled:opacity-50"
               >
                 {t('cancel', { defaultValue: 'Abbrechen' })}
@@ -476,7 +615,7 @@ export function PlanManagementSection({
             </div>
           </div>
         </div>
-      )}
+      ), document.body)}
     </section>
   )
 }
