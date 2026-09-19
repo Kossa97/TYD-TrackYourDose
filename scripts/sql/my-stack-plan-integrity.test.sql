@@ -896,6 +896,11 @@ declare
   confirmation_outcome jsonb;
   lifecycle_outcome jsonb;
   persisted_log public.dose_logs;
+  replace_version_before public.cycle_plan_versions;
+  replace_version_after public.cycle_plan_versions;
+  remove_version_before public.cycle_plan_versions;
+  remove_version_after public.cycle_plan_versions;
+  receipt_count integer;
 begin
   perform dblink_connect('task9_confirmation_first', 'dbname=' || current_database());
   perform dblink_connect('task9_lifecycle_second', 'dbname=' || current_database());
@@ -936,6 +941,10 @@ begin
       )).id
     $query$
   ) as create_result(created_version_id uuid);
+
+  select * into strict replace_version_before
+  from public.cycle_plan_versions
+  where id = replace_version_id;
 
   confirmation_entries := jsonb_build_array(jsonb_build_object(
     'cycle_id', concurrent_cycle_id,
@@ -988,20 +997,31 @@ begin
   perform *
   from dblink_get_result('task9_lifecycle_second') as lifecycle_result(outcome jsonb);
 
-  if confirmation_outcome ? 'error' or lifecycle_outcome ? 'error' then
-    raise exception 'confirmation-first replacement failed: confirmation %, lifecycle %',
-      confirmation_outcome, lifecycle_outcome;
+  if confirmation_outcome ? 'error' then
+    raise exception 'confirmation-first replacement confirmation failed: %', confirmation_outcome;
+  end if;
+  if lifecycle_outcome ->> 'error' is distinct from 'Plan version has confirmed intake history' then
+    raise exception 'confirmation-first replacement returned %, expected history rejection',
+      lifecycle_outcome;
   end if;
   if (confirmation_outcome ->> 'plan_version_id')::uuid is distinct from replace_version_id
     or (confirmation_outcome ->> 'cycle_id')::uuid is distinct from concurrent_cycle_id
     or coalesce((confirmation_outcome ->> 'taken')::boolean, false) is not true then
     raise exception 'replacement confirmation lost authoritative provenance: %', confirmation_outcome;
   end if;
-  if (lifecycle_outcome ->> 'id')::uuid is distinct from replace_version_id
-    or (lifecycle_outcome ->> 'cycle_id')::uuid is distinct from concurrent_cycle_id
-    or (lifecycle_outcome ->> 'effective_at')::timestamptz
-      is distinct from '2099-01-03T00:00:00Z'::timestamptz then
-    raise exception 'replacement lost exact lifecycle semantics: %', lifecycle_outcome;
+  select * into strict replace_version_after
+  from public.cycle_plan_versions
+  where id = replace_version_id;
+  if replace_version_after is distinct from replace_version_before then
+    raise exception 'rejected replacement changed the referenced snapshot';
+  end if;
+  select count(*) into receipt_count
+  from public.plan_mutation_receipts
+  where user_id = owner_id
+    and operation = 'replace_future_plan_version'
+    and idempotency_key = 'task9-confirmation-first-replace';
+  if receipt_count <> 0 then
+    raise exception 'rejected replacement wrote % success receipts', receipt_count;
   end if;
 
   select * into strict persisted_log
@@ -1010,6 +1030,40 @@ begin
   if persisted_log.plan_version_id is distinct from replace_version_id
     or persisted_log.cycle_id is distinct from concurrent_cycle_id then
     raise exception 'replacement confirmation provenance was not persisted';
+  end if;
+
+  update public.cycle_plan_versions
+  set dose = dose
+  where id = replace_version_id;
+
+  begin
+    update public.cycle_plan_versions
+    set dose = dose + 1
+    where id = replace_version_id;
+    raise exception 'direct update rewrote a referenced plan version';
+  exception
+    when others then
+      if sqlerrm <> 'Plan version has confirmed intake history' then
+        raise;
+      end if;
+  end;
+
+  begin
+    delete from public.cycle_plan_versions
+    where id = replace_version_id;
+    raise exception 'direct delete removed a referenced plan version';
+  exception
+    when others then
+      if sqlerrm <> 'Plan version has confirmed intake history' then
+        raise;
+      end if;
+  end;
+
+  select * into strict replace_version_after
+  from public.cycle_plan_versions
+  where id = replace_version_id;
+  if replace_version_after is distinct from replace_version_before then
+    raise exception 'direct mutation changed the referenced snapshot';
   end if;
 
   select created_version_id into strict remove_version_id
@@ -1034,6 +1088,10 @@ begin
       )).id
     $query$
   ) as create_result(created_version_id uuid);
+
+  select * into strict remove_version_before
+  from public.cycle_plan_versions
+  where id = remove_version_id;
 
   perform dblink_exec(
     'task9_lifecycle_second',
@@ -1103,9 +1161,12 @@ begin
   perform *
   from dblink_get_result('task9_lifecycle_second') as lifecycle_result(outcome jsonb);
 
-  if confirmation_outcome ? 'error' or lifecycle_outcome ? 'error' then
-    raise exception 'confirmation-first removal failed: confirmation %, lifecycle %',
-      confirmation_outcome, lifecycle_outcome;
+  if confirmation_outcome ? 'error' then
+    raise exception 'confirmation-first removal confirmation failed: %', confirmation_outcome;
+  end if;
+  if lifecycle_outcome ->> 'error' is distinct from 'Plan version has confirmed intake history' then
+    raise exception 'confirmation-first removal returned %, expected history rejection',
+      lifecycle_outcome;
   end if;
   if (confirmation_outcome ->> 'id')::uuid is distinct from pending_log_id
     or (confirmation_outcome ->> 'plan_version_id')::uuid is distinct from remove_version_id
@@ -1113,12 +1174,19 @@ begin
     or coalesce((confirmation_outcome ->> 'taken')::boolean, false) is not true then
     raise exception 'pending confirmation lost authoritative provenance: %', confirmation_outcome;
   end if;
-  if (lifecycle_outcome ->> 'version_id')::uuid is distinct from remove_version_id
-    or (lifecycle_outcome ->> 'cycle_id')::uuid is distinct from concurrent_cycle_id then
-    raise exception 'removal lost exact lifecycle semantics: %', lifecycle_outcome;
+  select * into strict remove_version_after
+  from public.cycle_plan_versions
+  where id = remove_version_id;
+  if remove_version_after is distinct from remove_version_before then
+    raise exception 'rejected removal changed the referenced snapshot';
   end if;
-  if exists (select 1 from public.cycle_plan_versions where id = remove_version_id) then
-    raise exception 'confirmation-first removal left the exact version in place';
+  select count(*) into receipt_count
+  from public.plan_mutation_receipts
+  where user_id = owner_id
+    and operation = 'remove_future_plan_version'
+    and idempotency_key = 'task9-confirmation-first-remove';
+  if receipt_count <> 0 then
+    raise exception 'rejected removal wrote % success receipts', receipt_count;
   end if;
 
   select * into strict persisted_log
@@ -1126,7 +1194,7 @@ begin
   where id = pending_log_id;
   if persisted_log.taken is not true
     or persisted_log.cycle_id is distinct from concurrent_cycle_id
-    or persisted_log.plan_version_id is not null then
+    or persisted_log.plan_version_id is distinct from remove_version_id then
     raise exception 'pending confirmation/removal serialization persisted an invalid log';
   end if;
 

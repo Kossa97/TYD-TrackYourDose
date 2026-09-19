@@ -37,4 +37,14 @@ describe('My Stack plan-integrity confirmation contract', () => {
     expect(rpc).toContain('saved_log.cycle_id is distinct from entry_cycle_id')
     expect(rpc).toContain('saved_log.plan_version_id is distinct from expected_plan_version_id')
   })
+
+  it('protects referenced plan versions at the table boundary', () => {
+    expect(migration).toContain(
+      'create or replace function public.reject_referenced_plan_version_mutation()',
+    )
+    expect(migration).toContain('Plan version has confirmed intake history')
+    expect(migration).toMatch(
+      /create trigger reject_referenced_plan_version_mutation\s+before update or delete\s+on public\.cycle_plan_versions/,
+    )
+  })
 })

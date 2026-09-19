@@ -133,6 +133,44 @@ alter table public.dose_logs
   add column if not exists plan_version_id uuid
     references public.cycle_plan_versions(id) on delete set null;
 
+create or replace function public.reject_referenced_plan_version_mutation()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if tg_op = 'UPDATE' and new is not distinct from old then
+    return new;
+  end if;
+
+  if exists (
+    select 1
+    from public.dose_logs
+    where plan_version_id = old.id
+  ) then
+    raise exception 'Plan version has confirmed intake history';
+  end if;
+
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
+end
+$$;
+
+drop trigger if exists reject_referenced_plan_version_mutation
+  on public.cycle_plan_versions;
+
+create trigger reject_referenced_plan_version_mutation
+before update or delete
+on public.cycle_plan_versions
+for each row
+execute function public.reject_referenced_plan_version_mutation();
+
+revoke all on function public.reject_referenced_plan_version_mutation()
+  from public, anon, authenticated;
+
 create or replace function public.normalize_plan_schedule(
   p_schedule jsonb,
   p_tracking_level text
