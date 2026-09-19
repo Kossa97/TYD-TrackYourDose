@@ -254,6 +254,18 @@ export async function endCycle(
   return loadCycleTimeline(client, result.cycle_id)
 }
 
+export async function resolveCycleMigrationConflict(
+  client: PlanRpcClient,
+  input: { stackItemId: string; keepCycleId: string; idempotencyKey: string },
+): Promise<CycleTimeline> {
+  const result = await callRpc<{ cycle_id: string }>(client, 'resolve_cycle_migration_conflict', {
+    p_stack_item_id: input.stackItemId,
+    p_keep_cycle_id: input.keepCycleId,
+    p_idempotency_key: input.idempotencyKey,
+  })
+  return loadCycleTimeline(client, result.cycle_id)
+}
+
 export async function restartCycle(
   client: PlanRpcClient,
   input: RestartCycleInput,

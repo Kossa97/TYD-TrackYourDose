@@ -86,6 +86,8 @@ function callbacks(overrides: Partial<PlanManagementSectionProps> = {}): PlanMan
     onResume: vi.fn(async () => undefined),
     onEnd: vi.fn(async () => undefined),
     onRestart: vi.fn(),
+    needsReview: false,
+    onResolveConflict: vi.fn(async () => undefined),
     ...overrides,
   }
 }
@@ -93,6 +95,24 @@ function callbacks(overrides: Partial<PlanManagementSectionProps> = {}): PlanMan
 afterEach(cleanup)
 
 describe('PlanManagementSection', () => {
+  it('replaces every ordinary plan presentation with a history-preserving conflict choice', async () => {
+    const onResolveConflict = vi.fn(async () => undefined)
+    render(<PlanManagementSection {...callbacks({ needsReview: true, onResolveConflict })} />)
+
+    const section = screen.getByTestId('plan-management-cycle-1')
+    expect(section.textContent).toContain('Welcher Plan läuft wirklich?')
+    expect(section.textContent).toContain('Deine bisherigen Einnahmen und der gesamte Verlauf bleiben erhalten.')
+    expect(section.textContent).not.toContain('Aktiv')
+    expect(section.textContent).not.toContain('5 mg')
+    expect(section.textContent).not.toContain('Nächste Einnahme')
+    expect(section.textContent).not.toContain('Nächste Änderung')
+    expect(within(section).queryByRole('button', { name: 'Dosis anpassen' })).toBeNull()
+    expect(within(section).queryByRole('button', { name: 'Plan anpassen' })).toBeNull()
+
+    fireEvent.click(within(section).getByRole('button', { name: 'Diesen laufenden Plan behalten' }))
+    await waitFor(() => expect(onResolveConflict).toHaveBeenCalledTimes(1))
+  })
+
   it('shows the resolved current plan, next intake, and the next exact future change', () => {
     render(<PlanManagementSection {...callbacks()} />)
 

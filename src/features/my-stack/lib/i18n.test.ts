@@ -200,6 +200,11 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_plan_remove_future_confirm',
   'my_stack_plan_end_confirm',
   'my_stack_plan_pause_neutral',
+  'my_stack_plan_conflict_title',
+  'my_stack_plan_conflict_copy',
+  'my_stack_plan_conflict_started',
+  'my_stack_plan_conflict_keep',
+  'my_stack_plan_conflict_error',
   'my_stack_plan_pause_until_optional',
   'my_stack_plan_pause_until',
   'my_stack_plan_end_copy',
@@ -484,6 +489,8 @@ describe('My Stack DE/EN locale contract', () => {
     expect(MY_STACK_EN.my_stack_plan_adjust_dose).toBe('Adjust dose')
     expect(MY_STACK_EN.my_stack_plan_adjust_schedule).toBe('Adjust schedule')
     expect(MY_STACK_EN.my_stack_plan_pause_neutral).toBe('No intake is due while the plan is paused.')
+    expect(MY_STACK_EN.my_stack_plan_conflict_title).toBe('Which plan is actually running?')
+    expect(MY_STACK_EN.my_stack_plan_conflict_copy).toContain('complete history will be preserved')
     expect(MY_STACK_EN.my_stack_plan_end_copy).toContain('history remains available')
     expect(MY_STACK_EN.my_stack_plan_action_error).toContain('Please try again')
     expect(MY_STACK_EN.my_stack_plan_load_error).toContain('could not be loaded')

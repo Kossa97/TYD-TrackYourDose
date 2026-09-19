@@ -9,6 +9,7 @@ import {
   pauseCycle,
   removeFuturePlanVersion,
   replaceFuturePlanVersion,
+  resolveCycleMigrationConflict,
   restartCycle,
   resumeCycle,
   setPauseEnd,
@@ -274,6 +275,31 @@ describe('plan lifecycle service', () => {
       p_idempotency_key: 'mutation-restart',
     })
     expect(restarting.query.eq).toHaveBeenLastCalledWith('id', 'cycle-2')
+  })
+
+  it('resolves a migration conflict for the exact stack item and kept cycle before loading that timeline', async () => {
+    const resolution = rpcClient({ data: { cycle_id: 'cycle-1' }, error: null })
+    const input = {
+      stackItemId: 'stack-1',
+      keepCycleId: 'cycle-1',
+      idempotencyKey: 'migration-resolution-1',
+    }
+
+    await expect(resolveCycleMigrationConflict(resolution.client, input)).resolves.toEqual(timeline)
+    await expect(resolveCycleMigrationConflict(resolution.client, input)).resolves.toEqual(timeline)
+
+    expect(resolution.rpc).toHaveBeenCalledTimes(2)
+    expect(resolution.rpc).toHaveBeenNthCalledWith(1, 'resolve_cycle_migration_conflict', {
+      p_stack_item_id: 'stack-1',
+      p_keep_cycle_id: 'cycle-1',
+      p_idempotency_key: 'migration-resolution-1',
+    })
+    expect(resolution.rpc).toHaveBeenNthCalledWith(2, 'resolve_cycle_migration_conflict', {
+      p_stack_item_id: 'stack-1',
+      p_keep_cycle_id: 'cycle-1',
+      p_idempotency_key: 'migration-resolution-1',
+    })
+    expect(resolution.query.eq).toHaveBeenLastCalledWith('id', 'cycle-1')
   })
 
   it.each([

@@ -528,6 +528,195 @@ begin
 end
 $$;
 
+insert into public.stack_items (id, user_id, configuration_status)
+values (
+  '35000000-0000-0000-0000-000000000005',
+  '30000000-0000-0000-0000-000000000003',
+  'needs_review'
+);
+
+insert into public.cycles (
+  id, user_id, stack_item_id, started_at, ended_at, end_date, active
+)
+values
+  (
+    '35100000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000003',
+    '35000000-0000-0000-0000-000000000005',
+    '2026-03-01T08:00:00Z', null, null, true
+  ),
+  (
+    '35200000-0000-0000-0000-000000000002',
+    '30000000-0000-0000-0000-000000000003',
+    '35000000-0000-0000-0000-000000000005',
+    '2026-04-01T08:00:00Z', null, null, true
+  ),
+  (
+    '35300000-0000-0000-0000-000000000003',
+    '30000000-0000-0000-0000-000000000003',
+    '35000000-0000-0000-0000-000000000005',
+    '2026-01-01T08:00:00Z', '2026-02-01T08:00:00Z', '2026-02-01', false
+  );
+
+insert into public.cycle_plan_versions (
+  id, user_id, cycle_id, effective_kind, effective_at, change_kind,
+  frequency, schedule_days, intake_time, dose, unit, method
+)
+values
+  (
+    '35110000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000003',
+    '35100000-0000-0000-0000-000000000001',
+    'instant', '2026-03-01T08:00:00Z', 'initial',
+    'Täglich', '{}', 'morgens', 1, 'mg', 'Oral'
+  ),
+  (
+    '35210000-0000-0000-0000-000000000002',
+    '30000000-0000-0000-0000-000000000003',
+    '35200000-0000-0000-0000-000000000002',
+    'instant', '2026-04-01T08:00:00Z', 'initial',
+    'Täglich', '{}', 'morgens', 2, 'mg', 'Oral'
+  );
+
+insert into public.cycle_migration_conflicts (user_id, stack_item_id, cycle_ids)
+values (
+  '30000000-0000-0000-0000-000000000003',
+  '35000000-0000-0000-0000-000000000005',
+  array[
+    '35100000-0000-0000-0000-000000000001'::uuid,
+    '35200000-0000-0000-0000-000000000002'::uuid
+  ]
+);
+
+insert into public.dose_logs (
+  id, user_id, stack_item_id, dose, unit, method, logged_at, taken,
+  cycle_id, plan_version_id
+)
+select
+  '33900000-0000-0000-0000-000000000009',
+  '30000000-0000-0000-0000-000000000003',
+  '35000000-0000-0000-0000-000000000005',
+  1, 'mg', 'Oral', '2026-01-02T08:00:00Z', true,
+  '35100000-0000-0000-0000-000000000001',
+  id
+from public.cycle_plan_versions
+where cycle_id = '35100000-0000-0000-0000-000000000001'
+order by effective_local_date, effective_at
+limit 1;
+
+do $$
+declare
+  first_result jsonb;
+  retry_result jsonb;
+  cycle_count_before integer;
+  version_count_before integer;
+  log_count_before integer;
+  resolution_time timestamptz := transaction_timestamp();
+begin
+  perform set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);
+  begin
+    perform public.resolve_cycle_migration_conflict(
+      '35000000-0000-0000-0000-000000000005',
+      '35200000-0000-0000-0000-000000000002',
+      'wrong-owner-resolution'
+    );
+    raise exception 'non-owner resolved a migration conflict';
+  exception
+    when others then
+      if sqlerrm = 'non-owner resolved a migration conflict'
+        or sqlerrm <> 'Stack item not found' then
+        raise;
+      end if;
+  end;
+
+  perform set_config('request.jwt.claim.sub', '30000000-0000-0000-0000-000000000003', true);
+  select count(*) into cycle_count_before
+  from public.cycles
+  where stack_item_id = '35000000-0000-0000-0000-000000000005';
+  select count(*) into version_count_before
+  from public.cycle_plan_versions
+  where cycle_id = any(array[
+    '35100000-0000-0000-0000-000000000001'::uuid,
+    '35200000-0000-0000-0000-000000000002'::uuid
+  ]);
+  select count(*) into log_count_before
+  from public.dose_logs
+  where cycle_id = '35100000-0000-0000-0000-000000000001';
+
+  first_result := public.resolve_cycle_migration_conflict(
+    '35000000-0000-0000-0000-000000000005',
+    '35200000-0000-0000-0000-000000000002',
+    'resolve-conflicting-stack-item'
+  );
+  retry_result := public.resolve_cycle_migration_conflict(
+    '35000000-0000-0000-0000-000000000005',
+    '35200000-0000-0000-0000-000000000002',
+    'resolve-conflicting-stack-item'
+  );
+
+  if first_result is distinct from retry_result
+    or first_result ->> 'cycle_id' <> '35200000-0000-0000-0000-000000000002' then
+    raise exception 'migration-conflict retry did not return the exact kept cycle';
+  end if;
+  if not exists (
+    select 1 from public.cycles
+    where id = '35200000-0000-0000-0000-000000000002'
+      and ended_at is null
+      and closed_by_migration_resolution is false
+  ) then
+    raise exception 'selected migration-conflict cycle was not kept open';
+  end if;
+  if not exists (
+    select 1 from public.cycles
+    where id = '35100000-0000-0000-0000-000000000001'
+      and ended_at = resolution_time
+      and active is false
+      and closed_by_migration_resolution is true
+  ) then
+    raise exception 'other recorded migration-conflict cycle was not closed atomically';
+  end if;
+  if not exists (
+    select 1 from public.cycles
+    where id = '35300000-0000-0000-0000-000000000003'
+      and ended_at = '2026-02-01T08:00:00Z'
+      and closed_by_migration_resolution is false
+  ) then
+    raise exception 'cycle outside the recorded conflict was changed';
+  end if;
+  if (select count(*) from public.cycles
+      where stack_item_id = '35000000-0000-0000-0000-000000000005') <> cycle_count_before
+    or (select count(*) from public.cycle_plan_versions
+        where cycle_id = any(array[
+          '35100000-0000-0000-0000-000000000001'::uuid,
+          '35200000-0000-0000-0000-000000000002'::uuid
+        ])) <> version_count_before
+    or (select count(*) from public.dose_logs
+        where cycle_id = '35100000-0000-0000-0000-000000000001') <> log_count_before then
+    raise exception 'migration-conflict resolution deleted cycle, version, or intake history';
+  end if;
+  if exists (
+    select 1 from public.cycle_migration_conflicts
+    where user_id = '30000000-0000-0000-0000-000000000003'
+      and stack_item_id = '35000000-0000-0000-0000-000000000005'
+      and resolved_at is null
+  ) or not exists (
+    select 1 from public.stack_items
+    where id = '35000000-0000-0000-0000-000000000005'
+      and configuration_status = 'complete'
+  ) then
+    raise exception 'resolved conflict or needs_review state was not cleared';
+  end if;
+  if (
+    select count(*) from public.plan_mutation_receipts
+    where user_id = '30000000-0000-0000-0000-000000000003'
+      and idempotency_key = 'resolve-conflicting-stack-item'
+      and operation = 'resolve_cycle_migration_conflict'
+  ) <> 1 then
+    raise exception 'migration-conflict retry was not idempotent';
+  end if;
+end
+$$;
+
 insert into auth.users (id)
 values
   ('10000000-0000-0000-0000-000000000001'),

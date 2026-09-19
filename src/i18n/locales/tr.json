@@ -1226,5 +1226,10 @@
   "my_stack_sort_created_desc": "Önce en yeni",
   "my_stack_sort_created_asc": "Önce en eski",
   "my_stack_sort_group_created": "Eklendi",
-  "my_stack_plan_load_error": "The intake plans could not be loaded. Your other data remains available."
+  "my_stack_plan_load_error": "The intake plans could not be loaded. Your other data remains available.",
+  "my_stack_plan_conflict_title": "Which plan is actually running?",
+  "my_stack_plan_conflict_copy": "Choose the plan that is currently active. Your previous intakes and the complete history will be preserved.",
+  "my_stack_plan_conflict_started": "Started {{date}}",
+  "my_stack_plan_conflict_keep": "Keep this running plan",
+  "my_stack_plan_conflict_error": "The conflict could not be resolved. Please try again."
 }

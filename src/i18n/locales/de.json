@@ -1374,5 +1374,10 @@
   "my_stack_sort_created_desc": "Neu → alt",
   "my_stack_sort_created_asc": "Alt → neu",
   "my_stack_sort_group_created": "Hinzugefügt",
-  "my_stack_plan_load_error": "Die Einnahmepläne konnten nicht geladen werden. Deine übrigen Daten bleiben verfügbar."
+  "my_stack_plan_load_error": "Die Einnahmepläne konnten nicht geladen werden. Deine übrigen Daten bleiben verfügbar.",
+  "my_stack_plan_conflict_title": "Welcher Plan läuft wirklich?",
+  "my_stack_plan_conflict_copy": "Wähle den Plan, der gerade tatsächlich läuft. Deine bisherigen Einnahmen und der gesamte Verlauf bleiben erhalten.",
+  "my_stack_plan_conflict_started": "Gestartet am {{date}}",
+  "my_stack_plan_conflict_keep": "Diesen laufenden Plan behalten",
+  "my_stack_plan_conflict_error": "Der Konflikt konnte nicht aufgelöst werden. Bitte versuche es erneut."
 }

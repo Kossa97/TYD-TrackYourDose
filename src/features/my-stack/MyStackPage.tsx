@@ -52,6 +52,7 @@ import {
   loadCycleTimelines,
   pauseCycle,
   removeFuturePlanVersion,
+  resolveCycleMigrationConflict,
   restartCycle,
   resumeCycle,
   setPauseEnd,
@@ -1404,6 +1405,20 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     ])
   }
 
+  const resolveTimelineConflict = async (p: Peptide, timeline: CycleTimeline) => {
+    const mutation = lifecycleKey('resolve-conflict', `${p.id}:${timeline.cycle.id}`)
+    if (!mutation.mutation.committed) {
+      await resolveCycleMigrationConflict(stackDataClient as never, {
+        stackItemId: p.id,
+        keepCycleId: timeline.cycle.id,
+        idempotencyKey: mutation.mutation.key,
+      })
+      mutation.mutation.committed = true
+    }
+    await Promise.all([loadTimelines(true), loadPeptides()])
+    lifecycleIdempotencyKeysRef.current.delete(mutation.identity)
+  }
+
   const planManagementSection = (p: Peptide, timeline: CycleTimeline) => (
     <PlanManagementSection
       key={timeline.cycle.id}
@@ -1424,6 +1439,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       onResume={() => resumeTimeline(timeline)}
       onEnd={() => finishTimeline(timeline)}
       onRestart={() => restartTimeline(timeline)}
+      needsReview={p.configuration_status === 'needs_review'}
+      onResolveConflict={() => resolveTimelineConflict(p, timeline)}
     />
   )
   const toggleCycleActive = async (c: Cycle) => {
@@ -2851,6 +2868,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             {listPeptides.map(p => {
               const pCycles   = cyclesOf(p.id)
               const pTimelines = timelinesOf(p.id)
+              const presentedTimelines = p.configuration_status === 'needs_review'
+                ? pTimelines.filter(timeline => timeline.cycle.ended_at === null)
+                : pTimelines
               const planCount = FEATURES.planTimelineV2 ? pTimelines.length : pCycles.length
               const isOpen    = expandedId === p.id
               const hasActive = pCycles.some(c => c.active)
@@ -3009,7 +3029,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                           {t('noch_kein_zyklus')}
                         </p>
                       )}
-                      {FEATURES.planTimelineV2 && pTimelines.map(timeline => planManagementSection(p, timeline))}
+                      {FEATURES.planTimelineV2 && presentedTimelines.map(timeline => planManagementSection(p, timeline))}
                       {!FEATURES.planTimelineV2 && pCycles.map(c => {
                         const pEscs = escalationsOf(c.id)
                         return (
@@ -3139,7 +3159,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               </div>
             </div>
             <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-              {timelinesOf(cycleManagerPeptide.id).map(timeline => (
+              {timelinesOf(cycleManagerPeptide.id)
+                .filter(timeline => cycleManagerPeptide.configuration_status !== 'needs_review' || timeline.cycle.ended_at === null)
+                .map(timeline => (
                 planManagementSection(cycleManagerPeptide, timeline)
               ))}
               {timelinesOf(cycleManagerPeptide.id).length === 0 && (

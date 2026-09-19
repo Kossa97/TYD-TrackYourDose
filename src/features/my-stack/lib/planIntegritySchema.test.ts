@@ -1,8 +1,12 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 const migration = readFileSync('supabase-my-stack-plan-integrity.sql', 'utf8')
   .replace(/\r\n/g, '\n')
+const enforcementPath = 'supabase-my-stack-plan-integrity-enforce.sql'
+const enforcement = existsSync(enforcementPath)
+  ? readFileSync(enforcementPath, 'utf8').replace(/\r\n/g, '\n')
+  : ''
 
 describe('My Stack plan-integrity confirmation contract', () => {
   it('resolves the authoritative plan version before any dose-log write', () => {
@@ -65,5 +69,25 @@ describe('My Stack plan-integrity confirmation contract', () => {
     expect(migration).toMatch(
       /create constraint trigger reject_referenced_plan_version_mutation_at_commit\s+after update or delete\s+on public\.cycle_plan_versions\s+deferrable initially deferred\s+for each row\s+execute function public\.reject_referenced_plan_version_mutation\(\)/,
     )
+  })
+
+  it('installs the owner-only idempotent migration-conflict resolver before enforcement', () => {
+    expect(migration).toContain('create or replace function public.resolve_cycle_migration_conflict(')
+    expect(migration).toContain("operation_name constant text := 'resolve_cycle_migration_conflict'")
+    expect(migration).toContain('transaction_timestamp()')
+    expect(migration).toContain('closed_by_migration_resolution = true')
+    expect(migration).toContain('grant execute on function public.resolve_cycle_migration_conflict(uuid, uuid, text)')
+  })
+
+  it('gates the exact one-open-cycle index before disabling legacy plan writes', () => {
+    const conflictGate = enforcement.indexOf('from public.cycle_migration_conflicts')
+    const uniqueIndex = enforcement.indexOf('create unique index if not exists cycles_one_open_per_stack_item')
+    const legacyGuard = enforcement.indexOf('revoke insert, update, delete on public.cycles from authenticated')
+
+    expect(conflictGate).toBeGreaterThan(-1)
+    expect(uniqueIndex).toBeGreaterThan(conflictGate)
+    expect(legacyGuard).toBeGreaterThan(uniqueIndex)
+    expect(enforcement).toContain('on public.cycles(stack_item_id)\n  where ended_at is null;')
+    expect(enforcement).not.toMatch(/drop\s+(table|column)[\s\S]*(schedule_history|dose_escalations)/i)
   })
 })

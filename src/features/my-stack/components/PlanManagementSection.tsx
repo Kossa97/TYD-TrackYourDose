@@ -25,6 +25,8 @@ export interface PlanManagementSectionProps {
   onResume(): Promise<void>
   onEnd(): Promise<void>
   onRestart(sourceCycleId: string): Promise<void>
+  needsReview?: boolean
+  onResolveConflict?(): Promise<void>
 }
 
 type DialogState =
@@ -166,6 +168,8 @@ export function PlanManagementSection({
   onResume,
   onEnd,
   onRestart,
+  needsReview = false,
+  onResolveConflict,
 }: PlanManagementSectionProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.language || 'de'
@@ -325,6 +329,21 @@ export function PlanManagementSection({
     }
   }
 
+  const resolveConflict = async () => {
+    if (!onResolveConflict) return
+    setPending(true)
+    setInlineError(null)
+    try {
+      await onResolveConflict()
+    } catch {
+      setInlineError(String(t('my_stack_plan_conflict_error', {
+        defaultValue: 'Der Konflikt konnte nicht aufgelöst werden. Bitte versuche es erneut.',
+      })))
+    } finally {
+      setPending(false)
+    }
+  }
+
   const dialogTitle = dialog?.kind === 'pause'
     ? t('my_stack_plan_pause_title', { defaultValue: 'Plan pausieren' })
     : dialog?.kind === 'pause_end'
@@ -340,6 +359,39 @@ export function PlanManagementSection({
       : dialog?.kind === 'remove'
         ? t('my_stack_plan_remove_future_confirm', { defaultValue: 'Änderung entfernen' })
         : t('my_stack_plan_end_confirm', { defaultValue: 'Plan beenden' })
+
+  if (needsReview) {
+    return (
+      <section
+        data-testid={`plan-management-${timeline.cycle.id}`}
+        className="rounded-2xl border border-amber-300/25 bg-amber-300/5 p-4 shadow-[0_18px_60px_rgba(2,6,23,0.28)]"
+      >
+        <p className="text-sm font-bold text-amber-100">
+          {t('my_stack_plan_conflict_title', { defaultValue: 'Welcher Plan läuft wirklich?' })}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-300">
+          {t('my_stack_plan_conflict_copy', {
+            defaultValue: 'Wähle den Plan, der gerade tatsächlich läuft. Deine bisherigen Einnahmen und der gesamte Verlauf bleiben erhalten.',
+          })}
+        </p>
+        <p className="mt-3 text-xs font-semibold text-slate-400">
+          {t('my_stack_plan_conflict_started', {
+            defaultValue: 'Gestartet am {{date}}',
+            date: dateLabel(timeline.cycle.started_at, language, timeZone),
+          })}
+        </p>
+        <button
+          type="button"
+          disabled={pending || !onResolveConflict}
+          onClick={() => void resolveConflict()}
+          className="mt-4 min-h-11 w-full rounded-xl border border-amber-300/30 bg-amber-300/10 px-4 text-sm font-bold text-amber-100 disabled:opacity-50"
+        >
+          {t('my_stack_plan_conflict_keep', { defaultValue: 'Diesen laufenden Plan behalten' })}
+        </button>
+        {inlineError && <p role="alert" className="mt-3 text-sm text-rose-200">{inlineError}</p>}
+      </section>
+    )
+  }
 
   return (
     <section

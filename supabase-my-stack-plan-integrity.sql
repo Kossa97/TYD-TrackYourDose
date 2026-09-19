@@ -2175,6 +2175,123 @@ where exists (
     and conflict.resolved_at is null
 );
 
+create or replace function public.resolve_cycle_migration_conflict(
+  p_stack_item_id uuid,
+  p_keep_cycle_id uuid,
+  p_idempotency_key text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  owner_id uuid := auth.uid();
+  conflict_row public.cycle_migration_conflicts;
+  kept_cycle public.cycles;
+  prior_result jsonb;
+  mutation_result jsonb;
+  mutation_time timestamptz;
+  operation_name constant text := 'resolve_cycle_migration_conflict';
+begin
+  if owner_id is null then
+    raise exception 'Authentication required';
+  end if;
+  if nullif(btrim(p_idempotency_key), '') is null then
+    raise exception 'Idempotency key is required';
+  end if;
+
+  perform pg_advisory_xact_lock(
+    hashtextextended(owner_id::text || ':' || operation_name || ':' || p_idempotency_key, 0)
+  );
+  select result into prior_result
+  from public.plan_mutation_receipts
+  where user_id = owner_id
+    and idempotency_key = p_idempotency_key
+    and operation = operation_name;
+  if found then
+    return prior_result;
+  end if;
+
+  perform 1
+  from public.stack_items
+  where id = p_stack_item_id
+    and user_id = owner_id
+  for update;
+  if not found then
+    raise exception 'Stack item not found';
+  end if;
+
+  select * into conflict_row
+  from public.cycle_migration_conflicts
+  where user_id = owner_id
+    and stack_item_id = p_stack_item_id
+    and resolved_at is null
+  for update;
+  if not found then
+    raise exception 'Migration conflict not found';
+  end if;
+
+  perform id
+  from public.cycles
+  where user_id = owner_id
+    and stack_item_id = p_stack_item_id
+  order by id
+  for update;
+
+  select * into kept_cycle
+  from public.cycles
+  where id = p_keep_cycle_id
+    and user_id = owner_id
+    and stack_item_id = p_stack_item_id
+    and ended_at is null
+    and id = any(conflict_row.cycle_ids);
+  if not found then
+    raise exception 'Selected cycle is not an open conflicted cycle';
+  end if;
+
+  mutation_time := transaction_timestamp();
+  update public.cycles
+  set
+    ended_at = mutation_time,
+    end_date = mutation_time::date,
+    active = false,
+    closed_by_migration_resolution = true
+  where user_id = owner_id
+    and stack_item_id = p_stack_item_id
+    and id = any(conflict_row.cycle_ids)
+    and id <> p_keep_cycle_id;
+
+  delete from public.cycle_migration_conflicts
+  where id = conflict_row.id;
+
+  update public.stack_items item
+  set configuration_status = 'complete'
+  where item.id = p_stack_item_id
+    and item.user_id = owner_id
+    and not exists (
+      select 1
+      from public.cycle_migration_conflicts remaining
+      where remaining.user_id = owner_id
+        and remaining.stack_item_id = p_stack_item_id
+        and remaining.resolved_at is null
+    );
+
+  mutation_result := jsonb_build_object(
+    'cycle_id', kept_cycle.id,
+    'stack_item_id', kept_cycle.stack_item_id,
+    'resolved_at', mutation_time
+  );
+  insert into public.plan_mutation_receipts (
+    user_id, idempotency_key, operation, result
+  ) values (
+    owner_id, p_idempotency_key, operation_name, mutation_result
+  );
+
+  return mutation_result;
+end
+$$;
+
 revoke all on function public.create_plan_version(
   uuid, text, timestamptz, date, text, jsonb, text
 ) from public, anon;
@@ -2194,6 +2311,8 @@ revoke all on function public.end_cycle(uuid, text)
 revoke all on function public.restart_cycle(uuid, timestamptz, jsonb, text)
   from public, anon;
 revoke all on function public.resolve_plan_version_id(uuid, timestamptz, text)
+  from public, anon;
+revoke all on function public.resolve_cycle_migration_conflict(uuid, uuid, text)
   from public, anon;
 
 grant execute on function public.create_plan_version(
@@ -2215,6 +2334,8 @@ grant execute on function public.end_cycle(uuid, text)
 grant execute on function public.restart_cycle(uuid, timestamptz, jsonb, text)
   to authenticated;
 grant execute on function public.resolve_plan_version_id(uuid, timestamptz, text)
+  to authenticated;
+grant execute on function public.resolve_cycle_migration_conflict(uuid, uuid, text)
   to authenticated;
 
 alter table public.cycle_plan_versions enable row level security;
