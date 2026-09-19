@@ -168,6 +168,18 @@ on public.cycle_plan_versions
 for each row
 execute function public.reject_referenced_plan_version_mutation();
 
+-- A concurrent confirmation can commit after the immediate check because its
+-- FK key-share lock permits a non-key update. Recheck at transaction end.
+drop trigger if exists reject_referenced_plan_version_mutation_at_commit
+  on public.cycle_plan_versions;
+
+create constraint trigger reject_referenced_plan_version_mutation_at_commit
+after update or delete
+on public.cycle_plan_versions
+deferrable initially deferred
+for each row
+execute function public.reject_referenced_plan_version_mutation();
+
 revoke all on function public.reject_referenced_plan_version_mutation()
   from public, anon, authenticated;
 

@@ -47,4 +47,10 @@ describe('My Stack plan-integrity confirmation contract', () => {
       /create trigger reject_referenced_plan_version_mutation\s+before update or delete\s+on public\.cycle_plan_versions/,
     )
   })
+
+  it('rechecks version immutability at transaction end after concurrent confirmations', () => {
+    expect(migration).toMatch(
+      /create constraint trigger reject_referenced_plan_version_mutation_at_commit\s+after update or delete\s+on public\.cycle_plan_versions\s+deferrable initially deferred\s+for each row\s+execute function public\.reject_referenced_plan_version_mutation\(\)/,
+    )
+  })
 })

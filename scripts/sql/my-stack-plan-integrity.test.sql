@@ -810,6 +810,10 @@ begin
     'task9_confirmation',
     'set request.jwt.claim.sub = ''30000000-0000-0000-0000-000000000003'''
   );
+  perform dblink_exec('task9_lifecycle', 'set lock_timeout = ''5s''');
+  perform dblink_exec('task9_lifecycle', 'set statement_timeout = ''10s''');
+  perform dblink_exec('task9_confirmation', 'set lock_timeout = ''5s''');
+  perform dblink_exec('task9_confirmation', 'set statement_timeout = ''10s''');
   perform dblink_exec('task9_lifecycle', 'begin');
 
   perform created_version_id
@@ -881,6 +885,128 @@ begin
 
   perform dblink_disconnect('task9_lifecycle');
   perform dblink_disconnect('task9_confirmation');
+end
+$$;
+
+-- A non-key privileged update can coexist with the confirmation's FK key-share
+-- lock. Its immediate check runs before history exists; COMMIT must recheck it.
+do $$
+declare
+  concurrent_cycle_id constant uuid := '33100000-0000-0000-0000-000000000001';
+  concurrent_item_id constant uuid := '33000000-0000-0000-0000-000000000003';
+  owner_id constant uuid := '30000000-0000-0000-0000-000000000003';
+  version_id constant uuid := '33310000-0000-0000-0000-000000000004';
+  version_before public.cycle_plan_versions;
+  version_after public.cycle_plan_versions;
+  persisted_log public.dose_logs;
+  confirmation_outcome jsonb;
+  commit_outcome text := 'accepted';
+begin
+  perform dblink_connect('task9_direct_update', 'dbname=' || current_database());
+  perform dblink_connect('task9_direct_confirmation', 'dbname=' || current_database());
+  perform dblink_exec('task9_direct_update', 'set lock_timeout = ''5s''');
+  perform dblink_exec('task9_direct_update', 'set statement_timeout = ''10s''');
+  perform dblink_exec('task9_direct_update', 'set idle_in_transaction_session_timeout = ''15s''');
+  perform dblink_exec('task9_direct_confirmation', 'set lock_timeout = ''5s''');
+  perform dblink_exec('task9_direct_confirmation', 'set statement_timeout = ''10s''');
+  perform dblink_exec(
+    'task9_direct_confirmation',
+    format('set request.jwt.claim.sub = %L', owner_id::text)
+  );
+  perform dblink_exec(
+    'task9_direct_update',
+    format($query$
+      insert into public.cycle_plan_versions (
+        id, user_id, cycle_id, effective_kind, effective_at,
+        change_kind, frequency, intake_time, dose, unit, method
+      ) values (%L, %L, %L, 'instant', '2098-01-01T00:00:00Z',
+        'dose', 'Täglich', 'morgens', 17, 'mg', 'Oral')
+    $query$, version_id, owner_id, concurrent_cycle_id)
+  );
+  select * into strict version_before
+  from public.cycle_plan_versions where id = version_id;
+  if exists (select 1 from public.dose_logs where plan_version_id = version_id) then
+    raise exception 'direct-update race requires an unreferenced version';
+  end if;
+
+  perform dblink_exec('task9_direct_update', 'begin');
+  if dblink_exec('task9_direct_update', format(
+    'update public.cycle_plan_versions set dose = 18 where id = %L', version_id
+  )) is distinct from 'UPDATE 1' then
+    raise exception 'direct update did not pass its immediate check';
+  end if;
+  perform dblink_exec('task9_direct_update', format($query$
+    insert into public.plan_mutation_receipts (user_id, idempotency_key, operation, result)
+    values (%L, 'task9-direct-update-rollback', 'test_direct_update', '{}')
+  $query$, owner_id));
+
+  -- This is a separate real session. Its autocommit completes before the direct
+  -- updater's COMMIT, while the non-key version rewrite remains uncommitted.
+  select outcome into strict confirmation_outcome
+  from dblink('task9_direct_confirmation', format(
+    'select public.test_confirm_intake_result(%L::jsonb)',
+    jsonb_build_array(jsonb_build_object(
+      'cycle_id', concurrent_cycle_id,
+      'plan_version_id', version_id,
+      'timezone', 'Europe/Berlin',
+      'dose_log_id', null,
+      'slot_key', 'routine:direct-update-race',
+      'stack_item_id', concurrent_item_id,
+      'dose', 17,
+      'unit', 'mg',
+      'method', 'Oral',
+      'logged_at', '2098-01-02T08:00:00Z'
+    ))::text
+  )) as confirmation_result(outcome jsonb);
+  if confirmation_outcome ? 'error'
+    or (confirmation_outcome ->> 'id') is null
+    or (confirmation_outcome ->> 'cycle_id')::uuid is distinct from concurrent_cycle_id
+    or (confirmation_outcome ->> 'plan_version_id')::uuid is distinct from version_id then
+    raise exception 'direct-update race confirmation failed: %', confirmation_outcome;
+  end if;
+  select * into strict persisted_log
+  from public.dose_logs where id = (confirmation_outcome ->> 'id')::uuid;
+  if persisted_log.taken is not true
+    or persisted_log.cycle_id is distinct from concurrent_cycle_id
+    or persisted_log.plan_version_id is distinct from version_id then
+    raise exception 'confirmation did not commit exact provenance before direct-update commit';
+  end if;
+
+  begin
+    perform dblink_exec('task9_direct_update', 'commit');
+  exception when others then
+    commit_outcome := sqlerrm;
+  end;
+  if commit_outcome is distinct from 'Plan version has confirmed intake history' then
+    raise exception 'concurrent direct-update commit returned %, expected history rejection', commit_outcome;
+  end if;
+  select * into strict version_after
+  from public.cycle_plan_versions where id = version_id;
+  if version_after is distinct from version_before then
+    raise exception 'rejected direct-update commit changed the complete version snapshot';
+  end if;
+  if exists (
+    select 1 from public.plan_mutation_receipts
+    where user_id = owner_id and idempotency_key = 'task9-direct-update-rollback'
+  ) then
+    raise exception 'rejected direct-update commit retained a partial receipt';
+  end if;
+  select * into strict persisted_log
+  from public.dose_logs where id = (confirmation_outcome ->> 'id')::uuid;
+  if persisted_log.taken is not true
+    or persisted_log.cycle_id is distinct from concurrent_cycle_id
+    or persisted_log.plan_version_id is distinct from version_id then
+    raise exception 'rejected direct-update commit damaged confirmed provenance';
+  end if;
+
+  -- Prove a no-op still commits even with the deferred guard and existing history.
+  if dblink_exec('task9_direct_update', format(
+    'update public.cycle_plan_versions set dose = dose where id = %L', version_id
+  )) is distinct from 'UPDATE 1' then
+    raise exception 'referenced no-op update did not commit';
+  end if;
+  perform dblink_disconnect('task9_direct_update');
+  perform dblink_disconnect('task9_direct_confirmation');
 end
 $$;
 
@@ -2090,5 +2216,9 @@ end
 $$;
 
 reset role;
+
+-- Flush deferred checks for the sequential no-op and unreferenced future
+-- replacement/removal regressions before rolling back this fixture's data.
+set constraints all immediate;
 
 rollback;
