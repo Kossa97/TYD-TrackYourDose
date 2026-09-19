@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
-  CalendarDays, FlaskConical, User, Home, HelpCircle, Bell, X, Share,
-  Plus, Syringe, Activity, Droplets, Calculator, Microscope, BookHeart, CheckCircle2,
+  CalendarDays, FlaskConical, HelpCircle, Bell, X, Share,
+  Syringe, Activity, Droplets, Calculator, Microscope, BookHeart, CheckCircle2,
 } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -10,10 +10,11 @@ import { LanguageGate } from './LanguageGate'
 import { useAuth } from '../context/AuthContext'
 import { usePushNotifications } from '../lib/usePushNotifications'
 import { PushNotificationListener } from './PushNotificationListener'
+import { BottomNavigation } from './navigation/BottomNavigation'
 
 const QUICK_ACTIONS = [
   { icon: CheckCircle2, label: 'Einnahme bestätigen', path: '/kalender#due-intakes', color: '#10b981' },
-  { icon: FlaskConical, label: 'Substanz hinzufügen', path: '/peptide#new-substance', color: '#00ccf5' },
+  { icon: FlaskConical, label: 'Substanz hinzufügen', path: '/my-stack#new-substance', color: '#00ccf5' },
   { icon: Syringe,      label: 'Injektion loggen',  path: '/injektionen',  color: '#10b981' },
   { icon: CalendarDays, label: 'Kalender / Zyklus', path: '/kalender',     color: '#8b5cf6' },
   { icon: Activity,     label: 'Blutspiegel',       path: '/simulation',   color: '#06b6d4' },
@@ -80,10 +81,6 @@ export function Layout() {
     navigate(path)
   }
 
-  const isPeptide  = pathname === '/peptide'
-  const isHome     = pathname === '/'
-  const isKalender = pathname === '/kalender'
-  const isProfil   = pathname === '/profil'
   const hideBottomNav = pathname === '/injektionen'
   const hideFloatingFaq = pathname === '/injektionen'
 
@@ -240,86 +237,16 @@ export function Layout() {
         </>
       )}
 
-      {/* ── Bottom nav ─────────────────────────────────────────────────────── */}
+      {/* ── Bottom nav ─────────────────────────────────────────────────────
+          Die Leiste selbst liegt in `navigation/`: Modell, Optik und
+          Verdrahtung getrennt, damit im nativen iOS-Bau Apples echte Tab-Bar
+          an die Stelle der Web-Nachbildung treten kann. */}
       {!hideBottomNav && (
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-40"
-        style={{
-          background: 'var(--surface)',
-          borderTop: '1px solid var(--border)',
-          backdropFilter: 'blur(28px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(28px) saturate(180%)',
-          boxShadow: '0 -8px 32px rgba(0,0,0,0.55)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-        }}
-      >
-        <div
-          className="flex items-end justify-around"
-          style={{ maxWidth: 640, margin: '0 auto', padding: '6px 4px 10px' }}
-        >
-          {/* Home — links, normal */}
-          <NavItem
-            to="/"
-            icon={<Home size={20} />}
-            label={t('nav_home')}
-            active={isHome}
-            obKey="nav-home"
-          />
-
-          {/* My Stack */}
-          <NavItem
-            to="/peptide"
-            icon={<FlaskConical size={20} />}
-            label="My Stack"
-            active={isPeptide}
-            obKey="nav-peptide"
-          />
-
-          {/* Quick Action — Mitte, hervorgehoben */}
-          <button
-            aria-label="Quick Actions"
-            onClick={() => setShowQuickActions(v => !v)}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              alignSelf: 'stretch',   // fill full bar height (incl. the others' label row)
-              flex: '1 1 0', minWidth: 0, cursor: 'pointer',
-            }}
-          >
-            <div style={{
-              width: 46, height: 46, borderRadius: 16, flexShrink: 0,
-              background: showQuickActions
-                ? 'var(--surface-raised)'
-                : 'linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #003a6e))',
-              border: showQuickActions ? '1px solid var(--border-strong)' : 'none',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: showQuickActions ? 'none' : '0 2px 10px rgba(0,0,0,0.30)',
-              transition: 'all 0.2s cubic-bezier(0.22,1,0.36,1)',
-            }}>
-              {showQuickActions
-                ? <X size={24} color="var(--text)" />
-                : <Plus size={26} color="var(--accent-contrast)" />
-              }
-            </div>
-          </button>
-
-          {/* Kalender */}
-          <NavItem
-            to="/kalender"
-            icon={<CalendarDays size={20} />}
-            label={t('nav_kalender')}
-            active={isKalender}
-            obKey="nav-kalender"
-          />
-
-          {/* Profil */}
-          <NavItem
-            to="/profil"
-            icon={<User size={20} />}
-            label={t('nav_profil')}
-            active={isProfil}
-          />
-        </div>
-      </nav>
+        <BottomNavigation
+          pathname={pathname}
+          quickActionsOpen={showQuickActions}
+          onToggleQuickActions={() => setShowQuickActions(v => !v)}
+        />
       )}
     </div>
   )
@@ -395,51 +322,5 @@ function PushBanner({
         <X size={12} />
       </button>
     </div>
-  )
-}
-
-function NavItem({
-  to, icon, label, active, obKey,
-}: {
-  to: string
-  icon: React.ReactNode
-  label: string
-  active: boolean
-  obKey?: string
-}) {
-  return (
-    <NavLink
-      to={to}
-      {...(obKey ? { 'data-ob': obKey } : {})}
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '1 1 0', minWidth: 0 }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 4,
-          padding: '2px 4px',
-          borderRadius: 14,
-        }}
-      >
-      <div style={{
-        padding: '5px 12px', borderRadius: 12,
-        color: active ? 'var(--accent)' : 'var(--text-muted)',
-        transition: 'color 0.2s',
-      }}>
-        {icon}
-      </div>
-      <span style={{
-        fontSize: '9px', fontWeight: 600,
-        color: active ? 'var(--accent)' : 'var(--text-muted)',
-        letterSpacing: '0.02em',
-        transition: 'color 0.2s',
-        textAlign: 'center',
-      }}>
-        {label}
-      </span>
-      </div>
-    </NavLink>
   )
 }
