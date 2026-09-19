@@ -527,7 +527,7 @@ export function PlanManagementSection({
                       </button>
                       <button
                         type="button"
-                        disabled={pending}
+                        disabled={pending || segment.version.change_kind === 'initial' || timeline.versions.length === 1}
                         onClick={() => openDialog({ kind: 'remove', version: segment.version })}
                         aria-label={String(t('my_stack_plan_remove_future', {
                           defaultValue: 'Geplante Änderung vom {{date}} entfernen',

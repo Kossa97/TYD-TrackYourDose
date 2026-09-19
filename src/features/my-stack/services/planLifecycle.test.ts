@@ -10,6 +10,7 @@ import {
   removeFuturePlanVersion,
   replaceFuturePlanVersion,
   resolveCycleMigrationConflict,
+  resolveCycleCourseTimezone,
   restartCycle,
   resumeCycle,
   setPauseEnd,
@@ -85,7 +86,22 @@ function rpcClient(
   return { client: { from: query.client.from, rpc }, rpc, query }
 }
 
+it('confirms a course timezone with one stable mutation key and surfaces the review marker', async () => {
+  const mock = rpcClient({ data: { stack_item_id: 'stack-1' }, error: null })
+  await resolveCycleCourseTimezone(mock.client, { stackItemId: 'stack-1', timeZone: 'Asia/Tokyo', idempotencyKey: 'zone-review' })
+  expect(mock.rpc).toHaveBeenCalledWith('resolve_cycle_course_timezone', {
+    p_stack_item_id: 'stack-1', p_timezone: 'Asia/Tokyo', p_idempotency_key: 'zone-review',
+  })
+  const query = queryClient([{ ...databaseRow(), timezone_review_required: true }])
+  expect(await loadCycleTimelines(query.client, 'user')).toEqual([])
+  expect((await loadCycleTimelines(query.client, 'user', { includeUnavailable: true }))[0].cycle.timezone_review_required).toBe(true)
+})
+
 describe('plan lifecycle service', () => {
+  it('surfaces a versionless open cycle instead of silently producing no dues', async () => {
+    const query = queryClient([databaseRow({ ...timeline, versions: [] })])
+    await expect(loadCycleTimelines(query.client, 'user-1')).rejects.toThrow('Cycle has no plan versions')
+  })
   it('retains rejected migration history only for management without hiding ordinary ended cycles', async () => {
     const rejected = { ...databaseRow(), ended_at: '2026-10-01T08:00:00Z', closed_by_migration_resolution: true }
     const ordinaryEnded = { ...databaseRow(), id: 'ordinary-ended', ended_at: '2026-10-01T08:00:00Z', closed_by_migration_resolution: false }

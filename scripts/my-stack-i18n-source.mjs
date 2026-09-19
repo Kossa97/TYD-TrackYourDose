@@ -1,5 +1,11 @@
 /** Manual German and English source for My Stack and neutral stack-facing copy. */
 export const MY_STACK_EN = {
+  my_stack_course_timezone_review: "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+  my_stack_course_timezone: "Original course timezone (e.g. Europe/Berlin)",
+  my_stack_course_timezone_error: "Enter a valid IANA timezone and try again.",
+  my_stack_course_timezone_confirm: "Confirm timezone",
+  pk_data_load_error: "PK data could not be loaded.",
+  inj_plan_load_error: "The intake plan could not be loaded.",
   my_stack_title: 'My Stack',
   my_stack_tab_peptide: 'Peptides',
   my_stack_tab_medication: 'Medication',
@@ -358,6 +364,12 @@ export const MY_STACK_EN = {
 }
 
 export const MY_STACK_DE = {
+  my_stack_course_timezone_review: "Die ursprünglichen Start- und Enddaten benötigen eine Zeitzone. Bis zur Bestätigung bleiben Einnahmen und Erinnerungen gesperrt.",
+  my_stack_course_timezone: "Zeitzone der ursprünglichen Kur (z. B. Europe/Berlin)",
+  my_stack_course_timezone_error: "Bitte eine gültige IANA-Zeitzone eingeben und erneut versuchen.",
+  my_stack_course_timezone_confirm: "Zeitzone bestätigen",
+  pk_data_load_error: "PK-Daten konnten nicht geladen werden.",
+  inj_plan_load_error: "Einnahmeplan konnte nicht geladen werden.",
   my_stack_title: 'My Stack',
   my_stack_tab_peptide: 'Peptide',
   my_stack_tab_medication: 'Medikamente',

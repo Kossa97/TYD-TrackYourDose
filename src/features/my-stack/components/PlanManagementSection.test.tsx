@@ -306,16 +306,17 @@ describe('PlanManagementSection', () => {
         started_at: '2026-09-20T08:00:00.000Z',
         ended_at: null,
       },
-      versions: [version('version-planned', 5, '2026-09-20')],
+      versions: [version('version-planned', 5, '2026-09-20', { change_kind: 'initial' })],
     })
     render(<PlanManagementSection {...callbacks({ timeline: planned })} />)
+    expect((screen.getByRole('button', { name: /Geplante Änderung.*entfernen/ }) as HTMLButtonElement).disabled).toBe(true)
 
     const section = screen.getByTestId('plan-management-cycle-1')
     expect(section.textContent).toContain('Geplant')
     expect(section.textContent).toContain('20.09.2026 · 20:00')
     expect(within(section).getByRole('button', { name: 'Geplante Änderung vom 20.09.2026 bearbeiten' })).toBeTruthy()
     fireEvent.click(within(section).getByRole('button', { name: 'Geplante Änderung vom 20.09.2026 entfernen' }))
-    expect(screen.getByRole('dialog', { name: 'Geplante Änderung entfernen' })).toBeTruthy()
+    expect(screen.queryByRole('dialog', { name: 'Geplante Änderung entfernen' })).toBeNull()
     expect(within(section).queryByRole('button', { name: 'Dosis anpassen' })).toBeNull()
     expect(within(section).queryByRole('button', { name: 'Plan anpassen' })).toBeNull()
   })

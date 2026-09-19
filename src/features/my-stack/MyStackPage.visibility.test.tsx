@@ -289,7 +289,7 @@ vi.mock('./components/StackItemWizard', async importOriginal => {
             batchNumber: '',
             expiresAt: null,
           }
-          if (existingItem && existingPlan) {
+          if (existingItem) {
             void onSave({
               id: existingItem.id,
               displayName: existingItem.display_name,
@@ -301,7 +301,8 @@ vi.mock('./components/StackItemWizard', async importOriginal => {
               notes: existingItem.notes ?? '',
               ingredients: existingItem.ingredients,
               pkProfileMethod: existingItem.pk_profile_method,
-              plan: existingPlan,
+              plan: existingPlan ?? { name: 'Existing metadata', method: 'Oral', unit: 'mg', rhythm: emptyRhythm(),
+                startDate: '2026-09-19', endDate: null, slots: [{ routineGroup: 'morning', time: '08:00', dose: 1, weekdays: [] }], reminders: [] },
               inventory,
             }, 'update', 'wizard-save-key').then(onClose)
             return
@@ -707,6 +708,46 @@ describe('MyStackPage non-vial visibility', () => {
     expect(screen.queryByText('Zyklus anlegen')).toBeNull()
   })
 
+  it.each(['', '&intent=pk'])('saves existing metadata without invoking initial cycle creation (%s)', async suffix => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const row = timelineRow('existing-cycle')
+    const rpc = vi.fn(async (name: string) => name === 'save_stack_item'
+      ? { data: loadedItems[0], error: null }
+      : { data: null, error: { message: 'duplicate key violates cycles_one_open_per_stack_item' } })
+    const { client } = v2Client({ timelineResults: [{ data: [row], error: null }, { data: [row], error: null }], rpc })
+    render(<MemoryRouter initialEntries={[`/my-stack?edit=other-1${suffix}`]}><MyStackPage stackDataClient={client as never} /></MemoryRouter>)
+    if (!suffix) {
+      await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+      fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'bearbeiten' }))
+    }
+    fireEvent.click(await screen.findByRole('button', { name: 'save hydrated plan' }))
+    await waitFor(() => expect(rpc).toHaveBeenCalledWith('save_stack_item', expect.objectContaining({
+      p_item: expect.objectContaining({ id: 'other-1' }),
+    })))
+    expect(rpc).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'stack-item-wizard' })).toBeNull())
+  })
+
+  it('saves through the real metadata wizard without offering discarded plan edits', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    visibilityMocks.realWizard = true
+    const row = timelineRow('metadata-real-cycle')
+    const rpc = vi.fn(async (name: string) => name === 'save_stack_item'
+      ? { data: loadedItems[0], error: null }
+      : { data: null, error: { message: 'duplicate key violates cycles_one_open_per_stack_item' } })
+    const { client } = v2Client({ timelineResults: [{ data: [row], error: null }, { data: [row], error: null }], rpc })
+    render(<MemoryRouter initialEntries={['/my-stack']}><MyStackPage stackDataClient={client as never} /></MemoryRouter>)
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+    fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'bearbeiten' }))
+    for (let step = 0; step < 10 && !screen.queryByRole('button', { name: 'save' }); step++) {
+      expect(screen.queryByLabelText('my_stack_plan_start_date')).toBeNull()
+      fireEvent.click(screen.getByRole('button', { name: 'continue' }))
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    await waitFor(() => expect(rpc).toHaveBeenCalledWith('save_stack_item', expect.objectContaining({ p_item: expect.objectContaining({ id: 'other-1' }) })))
+    expect(rpc).toHaveBeenCalledTimes(1)
+  })
+
   it.each([null, 'archive rejected'])('archives under V2 without ending or updating a cycle (%s)', async error => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
     visibilityMocks.archiveError = error
@@ -839,6 +880,36 @@ describe('MyStackPage non-vial visibility', () => {
     }))
     await waitFor(() => expect(screen.getByText('my_stack_plan_next_intake')).toBeTruthy())
     expect(screen.getByTestId('plan-management-cycle-conflict-kept').textContent).toContain('250')
+  })
+
+  it('keeps missing-timezone history visible and refreshes only after explicit zone review', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    vi.mocked(loadStackItems)
+      .mockResolvedValueOnce([{ ...loadedItems[0], configuration_status: 'needs_review' }, loadedItems[1]])
+      .mockResolvedValueOnce(loadedItems)
+    const unknown = timelineRow('unknown-zone', undefined, {
+      started_at: null, ended_at: null, timezone_review_required: true,
+      stack_items: { archived: false, configuration_status: 'needs_review', migration_conflicts: [{ resolved_at: null }] },
+    })
+    const resolved = timelineRow('unknown-zone', unknown.versions, {
+      started_at: '2026-09-01T04:00:00Z', lifecycle_timezone: 'America/New_York', timezone_review_required: false,
+    })
+    const rpc = vi.fn(async () => ({ data: { stack_item_id: 'other-1' }, error: null }))
+    const { client } = v2Client({ timelineResults: [{ data: [unknown], error: null }, { data: [resolved], error: null }], rpc })
+    render(<MemoryRouter initialEntries={['/my-stack']}><MyStackPage stackDataClient={client as never} /></MemoryRouter>)
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+    fireEvent.click(within(visibleCardFor(qaName)!).getAllByRole('button')[0])
+    const input = await screen.findByLabelText('my_stack_course_timezone')
+    expect(rpc).not.toHaveBeenCalled()
+    expect(screen.queryByText('my_stack_plan_next_intake')).toBeNull()
+    fireEvent.change(input, { target: { value: 'America/New_York' } })
+    fireEvent.click(screen.getByRole('button', { name: 'my_stack_course_timezone_confirm' }))
+    await waitFor(() => expect(rpc).toHaveBeenCalledWith('resolve_cycle_course_timezone', {
+      p_stack_item_id: 'other-1', p_timezone: 'America/New_York', p_idempotency_key: expect.any(String),
+    }))
+    await waitFor(() => expect(screen.queryByText('my_stack_course_timezone_review')).toBeNull())
+    expect(screen.getByTestId('plan-management-unknown-zone')).toBeTruthy()
   })
 
   it('keeps both conflict choices when the timeline refresh fails after resolution', async () => {

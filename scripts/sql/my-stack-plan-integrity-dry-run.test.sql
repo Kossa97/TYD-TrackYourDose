@@ -21,6 +21,7 @@ create function storage.foldername(text) returns text[] language sql as $$ selec
 \ir ../../supabase-schema-update.sql
 \ir ../../supabase-cycles-update.sql
 \ir ../../supabase-intake-reminder.sql
+\ir ../../supabase-push.sql
 \ir ../../supabase-intake-rhythm.sql
 \ir ../../supabase-cycle-schedule-history.sql
 \ir ../../supabase-inventory.sql
@@ -41,6 +42,8 @@ grant select, insert, update, delete on stack_items, cycles, dose_logs to authen
 
 begin;
 insert into auth.users values ('14000000-0000-0000-0000-000000000001'), ('14000000-0000-0000-0000-000000000002');
+insert into push_subscriptions(user_id,endpoint,subscription,timezone) values
+('14000000-0000-0000-0000-000000000001','https://synthetic.invalid/push','{}','America/New_York');
 insert into stack_items(id, user_id, display_name, dosage_form, default_method)
 select ('14000000-0000-0000-0001-' || lpad(n::text,12,'0'))::uuid,
   '14000000-0000-0000-0000-000000000001', 'Synthetic item ' || n, 'tablet', 'Oral'
@@ -165,3 +168,27 @@ select test_review_rejected();
 \echo FINAL ENFORCED COUNTS
 select test_counts();
 select 'PASS: idempotency, exact conflicts, initial versions, logs, pauses, escalation parity, review guards, enforcement' as result;
+
+-- Real foundation guards + enforced authenticated intake writes. Roll back so
+-- the original migration counts and legacy snapshot comparison remain intact.
+begin;
+set role authenticated;
+do $$ declare base jsonb := jsonb_build_object(
+  'cycle_id','14000000-0000-0000-0002-000000000002','stack_item_id','14000000-0000-0000-0001-000000000001',
+  'timezone','America/New_York','dose',2,'unit','mg','method','Oral');
+begin
+  perform confirm_intake_group(jsonb_build_array(base||jsonb_build_object('logged_at','2026-06-01T12:00Z','slot_key','production-shaped-ordinary')));
+  perform confirm_intake_group(jsonb_build_array(
+    base||jsonb_build_object('logged_at','2026-06-02T12:00Z','slot_key','production-shaped-group'),
+    base||jsonb_build_object('logged_at','2026-06-03T12:00Z','slot_key','production-shaped-injection','method','Subkutan')));
+  if (select count(*) from dose_logs where routine_slot_key like 'production-shaped-%' and taken) <> 3 then
+    raise exception 'production-shaped enforced confirmation missing';
+  end if;
+  begin
+    update cycles set active=false where id='14000000-0000-0000-0002-000000000002';
+    raise exception 'direct lifecycle write accepted';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+rollback;
+select 'PASS: production-shaped post-enforcement ordinary, group and injection-route confirmations; direct cycle writes denied' as result;

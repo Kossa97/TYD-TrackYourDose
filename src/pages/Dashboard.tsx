@@ -1563,10 +1563,10 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
             {log.notes && log.notes !== AUTO_MISSED_NOTE && <span className="text-slate-600 text-xs truncate">· {log.notes}</span>}
           </div>
         </div>
-        <button aria-label={t('eintrag_loeschen')} className="p-1.5 text-slate-600 hover:text-red-400 transition-colors shrink-0"
+        {(!FEATURES.planTimelineV2 || log.taken === null) && <button aria-label={t('eintrag_loeschen')} className="p-1.5 text-slate-600 hover:text-red-400 transition-colors shrink-0"
           onClick={() => deleteLog(log)}>
           <X size={13} />
-        </button>
+        </button>}
       </div>
 
       {log.taken === null && (
@@ -1584,7 +1584,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         </div>
       )}
 
-      {log.taken !== null && (
+      {!FEATURES.planTimelineV2 && log.taken !== null && (
         <div className="flex gap-2 mt-2 ml-[26px]">
           {log.taken === false && (
             <button

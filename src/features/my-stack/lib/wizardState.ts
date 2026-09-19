@@ -624,7 +624,7 @@ function firstIngredientError(
   return null
 }
 
-export function firstInvalidField(state: WizardState): string | null {
+export function firstInvalidField(state: WizardState, validatePlan = true): string | null {
   const errors = validateStackItemDraft(state.draft)
 
   if (state.step === 'substance' || state.step === 'review') {
@@ -653,7 +653,7 @@ export function firstInvalidField(state: WizardState): string | null {
     if (strengthError) return strengthError
   }
 
-  if (state.step === 'plan' || state.step === 'review') {
+  if (validatePlan && (state.step === 'plan' || state.step === 'review')) {
     const planErrors = validateIntakePlan(state.draft.plan, state.draft.trackingLevel)
     if (planErrors.name) return 'displayName'
     if (planErrors.method) return 'plan.method'

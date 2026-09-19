@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase'
 import { FEATURES } from '../config/features'
 import { loadCycleTimelines } from '../features/my-stack/services/planLifecycle'
+import { resolveCycleAt } from '../lib/planTimeline'
 import {
   loadDoseHistory,
   calculateHistoryBlutspiegelCurve,
@@ -122,7 +123,7 @@ export async function loadNormalizedPkCycles(userId: string): Promise<CycleRow[]
     )`).eq('user_id', userId),
   ])
   if (metadata.error) throw metadata.error
-  return timelines.filter(timeline => timeline.cycle.ended_at === null).map(timeline => {
+  return timelines.filter(timeline => resolveCycleAt(timeline, new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone).status !== 'ended').map(timeline => {
     const row = metadata.data?.find(candidate => candidate.id === timeline.cycle.id)
     if (!row) throw new Error('PK cycle metadata unavailable')
     return { ...row, ...timeline.cycle, timeline } as unknown as CycleRow

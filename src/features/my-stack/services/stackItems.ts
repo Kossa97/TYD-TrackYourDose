@@ -114,6 +114,7 @@ export interface SaveStackItemRpcParams {
 }
 
 interface SaveIntakePlanParams {
+  timezone?: string
   id: string | null
   name: string
   dose: number | null
@@ -390,6 +391,10 @@ export async function savePlanChange(
   effective: PlanEffectiveDraft,
   options: SavePlanChangeOptions,
 ): Promise<CyclePlanVersion> {
+  if (target.mode === 'new_change' && effective.kind === 'date'
+    && (!effective.localDate || effective.localDate <= localDateTimeKey(new Date(), options.timeZone).slice(0, 10))) {
+    throw new Error('Plan changes require a future local date or now')
+  }
   if (target.mode === 'replace_future') {
     const localDate = effective.kind === 'date' ? effective.localDate : null
     const parsedDate = localDate && /^\d{4}-\d{2}-\d{2}$/.test(localDate)
@@ -437,6 +442,8 @@ export async function savePlanChange(
     ...boundary,
     changeKind: options.changeKind,
     schedule: snapshot,
+    timeZone: options.timeZone,
+    effectiveNow: effective.kind === 'now',
     idempotencyKey: options.idempotencyKey,
   })
 }
@@ -471,7 +478,7 @@ export async function loadStackItems(
 
 export async function saveStackItem(
   client: StackItemRpcClient,
-  draft: StackItemDraft,
+  draft: StackItemDraft | StackItemSetupDraft,
 ): Promise<SavedStackItemRow> {
   const validationErrors = validateStackItemDraft(draft)
   if (
@@ -484,7 +491,8 @@ export async function saveStackItem(
   }
 
   const params: SaveStackItemRpcParams = {
-    p_item: itemParams(draft),
+    p_item: itemParams(draft, 'pkProfileMethod' in draft ? draft.pkProfileMethod : null,
+      'inventory' in draft ? draft.inventory : undefined),
     p_ingredients: draft.ingredients.map(ingredientForSave),
   }
 
@@ -526,7 +534,7 @@ export async function saveStackItemSetup(
   const params: SaveStackItemSetupRpcParams = {
     p_item: itemParams(draft, draft.pkProfileMethod, draft.inventory),
     p_ingredients: draft.ingredients.map(ingredientForSave),
-    p_plan: planParams(draft.plan, draft.trackingLevel),
+    p_plan: { ...planParams(draft.plan, draft.trackingLevel), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
     p_idempotency_key: idempotencyKey,
   }
   const { data, error } = await client.rpc('save_stack_item_with_plan', params)

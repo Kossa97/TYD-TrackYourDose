@@ -31,7 +31,7 @@ import { produktAngaben, type Angabe, type Zutat } from './lib/produktAngaben'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
 import { StackArchive } from './components/StackArchive'
-import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, savePlanChange, saveStackItemSetup, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
+import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, savePlanChange, saveStackItem, saveStackItemSetup, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
@@ -47,6 +47,8 @@ import { DoseUnitControl } from './components/DoseUnitControl'
 import { VialTrackingEditor, emptyVialTrackingDraft, type PkProfileOption, type VialTrackingDraft } from './extensions/peptide/VialTrackingEditor'
 import { FEATURES } from '../../config/features'
 import { PlanManagementSection } from './components/PlanManagementSection'
+import { CourseTimezoneReview } from './components/CourseTimezoneReview'
+import { resolveCycleCourseTimezone } from './services/planLifecycle'
 import {
   endCycle as endTimelineCycle,
   loadCycleTimelines,
@@ -1152,7 +1154,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     _mode: WizardSaveMode,
     idempotencyKey: string,
   ) => {
-    const savedRow = await saveStackItemSetup(stackDataClient as never, draft, idempotencyKey)
+    const savedRow = FEATURES.planTimelineV2 && draft.id && !wizardCycleId && !wizardNeuerZyklus
+      ? await saveStackItem(stackDataClient as never, draft)
+      : await saveStackItemSetup(stackDataClient as never, draft, idempotencyKey)
     await Promise.all([
       loadPeptides(),
       loadCycles(),
@@ -1450,7 +1454,23 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     }
   }
 
-  const planManagementSection = (p: Peptide, timeline: CycleTimeline) => (
+  const planManagementSection = (p: Peptide, timeline: CycleTimeline) => timeline.cycle.timezone_review_required ? (
+    <CourseTimezoneReview key={timeline.cycle.id} timeZone={timeZone} onConfirm={async zone => {
+      const mutation = lifecycleKey('resolve-timezone', `${p.id}:${zone}`)
+      if (!mutation.mutation.committed) {
+        await resolveCycleCourseTimezone(stackDataClient as never, {
+          stackItemId: p.id, timeZone: zone, idempotencyKey: mutation.mutation.key,
+        })
+        mutation.mutation.committed = true
+      }
+      const [nextTimelines, nextPeptides] = await Promise.all([
+        loadCycleTimelines(stackDataClient as never, user!.id, { includeUnavailable: true }), loadPeptides(false),
+      ])
+      setCycleTimelines(nextTimelines)
+      publishPeptides(nextPeptides)
+      lifecycleIdempotencyKeysRef.current.delete(mutation.identity)
+    }} />
+  ) : (
     <PlanManagementSection
       key={timeline.cycle.id}
       timeline={timeline}
@@ -2900,7 +2920,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               const pCycles   = cyclesOf(p.id)
               const pTimelines = timelinesOf(p.id)
               const presentedTimelines = p.configuration_status === 'needs_review'
-                ? pTimelines.filter(timeline => timeline.cycle.ended_at === null)
+                ? pTimelines.filter(timeline => timeline.cycle.timezone_review_required || timeline.cycle.ended_at === null || new Date(timeline.cycle.ended_at) > new Date())
                 : pTimelines
               const planCount = FEATURES.planTimelineV2 ? pTimelines.length : pCycles.length
               const isOpen    = expandedId === p.id
@@ -3191,7 +3211,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             </div>
             <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
               {timelinesOf(currentCycleManagerPeptide.id)
-                .filter(timeline => currentCycleManagerPeptide.configuration_status !== 'needs_review' || timeline.cycle.ended_at === null)
+                .filter(timeline => currentCycleManagerPeptide.configuration_status !== 'needs_review' || timeline.cycle.timezone_review_required || timeline.cycle.ended_at === null || new Date(timeline.cycle.ended_at) > new Date())
                 .map(timeline => (
                 planManagementSection(currentCycleManagerPeptide, timeline)
               ))}
@@ -3519,10 +3539,20 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           catalogUnavailable={catalogUnavailable}
           existingItems={peptides}
           existingItem={editingPeptideId ? peptides.find(item => item.id === editingPeptideId) : undefined}
+          metadataOnly={FEATURES.planTimelineV2 && Boolean(editingPeptideId) && !wizardCycleId && !wizardNeuerZyklus && !planEditContext}
           {...(planEditContext
             ? { planEditContext, onSavePlanChange: saveVersionChange }
             : {
-                existingPlan: editingPeptideId && wizardCycleId && !wizardNeuerZyklus
+                existingPlan: FEATURES.planTimelineV2 && editingPeptideId && !wizardCycleId && !wizardNeuerZyklus
+                  ? (() => {
+                      const candidates = timelinesOf(editingPeptideId).filter(value => !value.cycle.timezone_review_required
+                        && resolveCycleAt(value, new Date(), timeZone).status !== 'ended')
+                      if (candidates.length !== 1) return undefined
+                      const value = candidates[0]
+                      const version = resolveCycleAt(value, new Date(), timeZone).planVersion ?? value.versions[0]
+                      return version ? versionAsIntakePlanDraft(value, version, timeZone) : undefined
+                    })()
+                  : editingPeptideId && wizardCycleId && !wizardNeuerZyklus
                   ? cycles.find(cycle => cycle.id === wizardCycleId && cycle.stack_item_id === editingPeptideId)
                     ? cycleAsIntakePlanDraft(
                         cycles.find(cycle => cycle.id === wizardCycleId && cycle.stack_item_id === editingPeptideId)!,

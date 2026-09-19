@@ -217,6 +217,8 @@ export type CreatePlanVersionInput = PlanMutationInput & PlanVersionBoundaryInpu
   cycleId: string
   changeKind: PlanChangeKind
   schedule: PlanScheduleSnapshot
+  timeZone?: string
+  effectiveNow?: boolean
 }
 
 export type ReplacePlanVersionInput = PlanMutationInput & PlanVersionBoundaryInput & {

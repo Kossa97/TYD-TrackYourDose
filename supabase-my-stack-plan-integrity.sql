@@ -3,6 +3,10 @@ begin;
 alter table public.cycles
   add column if not exists started_at timestamptz,
   add column if not exists ended_at timestamptz,
+  add column if not exists start_local_date date,
+  add column if not exists end_local_date date,
+  add column if not exists lifecycle_timezone text,
+  add column if not exists timezone_review_required boolean not null default false,
   add column if not exists closed_by_migration_resolution boolean not null default false;
 
 create table if not exists public.cycle_plan_versions (
@@ -416,6 +420,7 @@ declare
   plan_id uuid;
   plan_name text := nullif(btrim(p_plan ->> 'name'), '');
   plan_effective_date date;
+  plan_timezone text := nullif(p_plan ->> 'timezone', '');
   plan_end_date date := nullif(p_plan ->> 'end_date', '')::date;
   plan_reminder text := coalesce(nullif(btrim(p_plan ->> 'reminder'), ''), 'none');
   plan_schedule_days text[];
@@ -467,6 +472,9 @@ begin
   end if;
 
   plan_effective_date := (p_plan ->> 'start_date')::date;
+  if plan_timezone is null or not exists (select from pg_timezone_names where name = plan_timezone) then
+    raise exception 'Valid course timezone is required';
+  end if;
   if plan_end_date is not null and plan_end_date < plan_effective_date then
     raise exception 'Plan end date is before its start date';
   end if;
@@ -478,11 +486,15 @@ begin
   from jsonb_array_elements_text(normalized -> 'schedule_days') value;
 
   if nullif(p_plan ->> 'id', '') is null then
+    if exists (select from public.cycles where stack_item_id = saved_item.id
+      and coalesce(ended_at, 'infinity'::timestamptz) > plan_effective_date::timestamp at time zone plan_timezone) then
+      raise exception 'Another open cycle exists';
+    end if;
     insert into public.cycles (
       user_id, stack_item_id, name, dose, unit, method, frequency,
       x_days_interval, interval_unit, cycle_on_days, cycle_off_days,
       schedule_days, start_date, end_date, active, intake_time,
-      intake_time_custom, slot_doses, slot_days, reminder, started_at
+      intake_time_custom, slot_doses, slot_days, reminder, started_at, ended_at, start_local_date, end_local_date, lifecycle_timezone
     ) values (
       owner_id, saved_item.id, plan_name,
       (normalized ->> 'dose')::numeric, normalized ->> 'unit',
@@ -495,7 +507,9 @@ begin
       normalized ->> 'intake_time', normalized ->> 'intake_time_custom',
       normalized ->> 'slot_doses', normalized ->> 'slot_days',
       plan_reminder,
-      plan_effective_date::timestamp at time zone 'UTC'
+      plan_effective_date::timestamp at time zone plan_timezone,
+      (plan_end_date + 1)::timestamp at time zone plan_timezone,
+      plan_effective_date, plan_end_date + 1, plan_timezone
     )
     returning * into cycle_row;
 
@@ -792,7 +806,7 @@ begin
   if not found then
     raise exception 'Cycle not found';
   end if;
-  if cycle_row.ended_at is not null then
+  if cycle_row.ended_at is not null and cycle_row.ended_at <= clock_timestamp() then
     raise exception 'Cycle is already ended';
   end if;
   if p_effective_kind not in ('instant', 'local_date')
@@ -813,6 +827,17 @@ begin
   end if;
 
   normalized := public.normalize_plan_schedule(p_schedule, item_tracking_level);
+
+  if p_change_kind <> 'initial' or exists (
+    select 1 from public.cycle_plan_versions where cycle_id = p_cycle_id
+  ) then
+    if p_effective_kind = 'instant' and coalesce((p_schedule ->> '_effective_now')::boolean, false) then
+      p_effective_at := transaction_timestamp();
+    elsif (case p_effective_kind when 'instant' then p_effective_at
+      else p_effective_local_date::timestamp at time zone coalesce(p_schedule ->> '_timezone', 'UTC') end) <= transaction_timestamp() then
+      raise exception 'Plan changes require a future boundary or now';
+    end if;
+  end if;
 
   insert into public.cycle_plan_versions (
     user_id, cycle_id, effective_kind, effective_at, effective_local_date,
@@ -902,8 +927,8 @@ $$;
 create or replace function public.confirm_intake_group(p_entries jsonb)
 returns setof public.dose_logs
 language plpgsql
-security invoker
-set search_path = public
+security definer
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   owner_id uuid := auth.uid();
@@ -920,6 +945,8 @@ declare
   entry_unit text;
   entry_method text;
   entry_logged_at timestamptz;
+  cycle_started_at timestamptz;
+  cycle_ended_at timestamptz;
   item_tracking_level text;
   validated_entries jsonb := '[]'::jsonb;
 begin
@@ -1019,8 +1046,8 @@ begin
       raise exception 'Dose must be positive';
     end if;
 
-    select item.tracking_level
-    into item_tracking_level
+    select item.tracking_level, cycle.started_at, cycle.ended_at
+    into item_tracking_level, cycle_started_at, cycle_ended_at
     from public.cycles cycle
     join public.stack_items item on item.id = cycle.stack_item_id
     where cycle.id = entry_cycle_id
@@ -1030,6 +1057,10 @@ begin
 
     if not found then
       raise exception 'Intake cycle not found';
+    end if;
+    if cycle_started_at is null or entry_logged_at < cycle_started_at
+      or entry_logged_at >= coalesce(cycle_ended_at, 'infinity'::timestamptz) then
+      raise exception 'Intake falls outside cycle lifecycle';
     end if;
     if item_tracking_level = 'intake_only' then
       if entry_dose is not null then
@@ -1307,7 +1338,7 @@ begin
   if not found then
     raise exception 'Plan version not found';
   end if;
-  if cycle_row.ended_at is not null then
+  if cycle_row.ended_at is not null and cycle_row.ended_at <= clock_timestamp() then
     raise exception 'Cycle is already ended';
   end if;
   if nullif(btrim(p_timezone), '') is null then
@@ -1446,7 +1477,7 @@ begin
   if not found then
     raise exception 'Plan version not found';
   end if;
-  if cycle_row.ended_at is not null then
+  if cycle_row.ended_at is not null and cycle_row.ended_at <= clock_timestamp() then
     raise exception 'Cycle is already ended';
   end if;
   if nullif(btrim(p_timezone), '') is null then
@@ -1459,6 +1490,15 @@ begin
   end;
   if current_boundary <= transaction_timestamp() then
     raise exception 'Plan version is already effective';
+  end if;
+
+  if version_row.change_kind = 'initial' or not exists (
+    select 1 from public.cycle_plan_versions earlier
+    where earlier.cycle_id = version_row.cycle_id and earlier.id <> version_row.id
+      and (case earlier.effective_kind when 'instant' then earlier.effective_at
+        else earlier.effective_local_date::timestamp at time zone p_timezone end) < current_boundary
+  ) then
+    raise exception 'Initial plan coverage cannot be removed';
   end if;
 
   delete from public.cycle_plan_versions
@@ -1524,7 +1564,7 @@ begin
   if not found then
     raise exception 'Cycle not found';
   end if;
-  if cycle_row.ended_at is not null then
+  if cycle_row.ended_at is not null and cycle_row.ended_at <= clock_timestamp() then
     raise exception 'Cycle is already ended';
   end if;
 
@@ -1607,8 +1647,7 @@ begin
   select * into pause_row
   from public.cycle_pause_periods
   where id = p_pause_id
-    and user_id = owner_id
-  for update;
+    and user_id = owner_id;
   if not found then
     raise exception 'Cycle is not paused';
   end if;
@@ -1621,9 +1660,15 @@ begin
   if not found then
     raise exception 'Cycle not found';
   end if;
-  if cycle_row.ended_at is not null then
+  if cycle_row.ended_at is not null and cycle_row.ended_at <= clock_timestamp() then
     raise exception 'Cycle is already ended';
   end if;
+
+  select * into pause_row
+  from public.cycle_pause_periods
+  where id = p_pause_id and cycle_id = cycle_row.id and user_id = owner_id
+  for update;
+  if not found then raise exception 'Cycle is not paused'; end if;
 
   mutation_time := clock_timestamp();
   if pause_row.paused_at > mutation_time
@@ -1700,7 +1745,7 @@ begin
   if not found then
     raise exception 'Cycle not found';
   end if;
-  if cycle_row.ended_at is not null then
+  if cycle_row.ended_at is not null and cycle_row.ended_at <= clock_timestamp() then
     raise exception 'Cycle is already ended';
   end if;
 
@@ -1782,7 +1827,7 @@ begin
   if not found then
     raise exception 'Cycle not found';
   end if;
-  if cycle_row.ended_at is not null then
+  if cycle_row.ended_at is not null and cycle_row.ended_at <= clock_timestamp() then
     raise exception 'Cycle is already ended';
   end if;
 
@@ -1797,6 +1842,7 @@ begin
   update public.cycles
   set
     ended_at = mutation_time,
+    end_local_date = null,
     end_date = mutation_time::date,
     active = false
   where id = p_cycle_id
@@ -1865,7 +1911,7 @@ begin
   if not found then
     raise exception 'Cycle not found';
   end if;
-  if source_cycle.ended_at is null then
+  if source_cycle.ended_at is null or source_cycle.ended_at > clock_timestamp() then
     raise exception 'Cycle is not ended';
   end if;
   if p_started_at is null then
@@ -1890,7 +1936,7 @@ begin
   from public.cycles
   where user_id = owner_id
     and stack_item_id = source_cycle.stack_item_id
-    and ended_at is null
+    and (ended_at is null or ended_at > p_started_at)
     and id <> source_cycle.id
   for update;
   if found then
@@ -1977,22 +2023,31 @@ begin
 end
 $$;
 
-update public.cycles
-set
-  started_at = coalesce(
-    started_at,
-    start_date::timestamp at time zone 'UTC'
-  ),
-  ended_at = coalesce(
-    ended_at,
-    case
-      when end_date is not null
-        then (end_date + 1)::timestamp at time zone 'UTC'
-      when not active
-        then transaction_timestamp()
-      else null
-    end
-  );
+-- A subscription stores the device's IANA zone. Multiple different zones are
+-- ambiguous: the owner must explicitly review them, just like a missing zone.
+do $$ begin
+  if to_regclass('public.push_subscriptions') is not null then
+    execute $migration$
+      update public.cycles c set lifecycle_timezone = zones.timezone
+      from (
+        select s.user_id, min(s.timezone) as timezone
+        from public.push_subscriptions s join pg_timezone_names z on z.name = s.timezone
+        group by s.user_id having count(distinct s.timezone) = 1
+      ) zones
+      where c.user_id = zones.user_id and c.started_at is null and c.lifecycle_timezone is null
+    $migration$;
+  end if;
+end $$;
+update public.cycles set
+  start_local_date = coalesce(start_local_date, start_date),
+  end_local_date = coalesce(end_local_date, end_date + 1),
+  timezone_review_required = lifecycle_timezone is null,
+  started_at = start_date::timestamp at time zone lifecycle_timezone,
+  ended_at = case
+    when end_date is not null then (end_date + 1)::timestamp at time zone lifecycle_timezone
+    when not active then transaction_timestamp()
+    else null end
+where started_at is null;
 
 do $$
 declare
@@ -2189,9 +2244,9 @@ select
   stack_item_id,
   array_agg(id order by started_at, id)
 from public.cycles
-where ended_at is null
+where ended_at is null or ended_at > transaction_timestamp() or timezone_review_required
 group by user_id, stack_item_id
-having count(*) > 1
+having count(*) > 1 or bool_or(timezone_review_required)
 on conflict (user_id, stack_item_id) do update set
   cycle_ids = excluded.cycle_ids,
   resolved_at = null;
@@ -2205,6 +2260,51 @@ where exists (
     and conflict.stack_item_id = item.id
     and conflict.resolved_at is null
 );
+
+create or replace function public.resolve_cycle_course_timezone(
+  p_stack_item_id uuid, p_timezone text, p_idempotency_key text
+)
+returns jsonb language plpgsql security definer
+set search_path = pg_catalog, public, pg_temp
+as $$
+declare
+  owner_id uuid := auth.uid();
+  prior_result jsonb;
+  result jsonb;
+begin
+  if owner_id is null then raise exception 'Authentication required'; end if;
+  if nullif(btrim(p_idempotency_key), '') is null then raise exception 'Idempotency key is required'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(owner_id::text || ':resolve_cycle_course_timezone:' || p_idempotency_key, 0));
+  select receipt.result into prior_result from public.plan_mutation_receipts receipt
+  where user_id = owner_id and idempotency_key = p_idempotency_key and operation = 'resolve_cycle_course_timezone';
+  if found then return prior_result; end if;
+  perform 1 from public.stack_items where id = p_stack_item_id and user_id = owner_id for update;
+  if not found then raise exception 'Stack item not found'; end if;
+  if p_timezone is null or not exists(select from pg_timezone_names where name = p_timezone) then
+    raise exception 'Valid course timezone is required';
+  end if;
+  perform id from public.cycles where stack_item_id = p_stack_item_id and user_id = owner_id order by id for update;
+  if not exists(select from public.cycles where stack_item_id = p_stack_item_id and user_id = owner_id and timezone_review_required) then
+    raise exception 'Course timezone review is not required';
+  end if;
+  update public.cycles set lifecycle_timezone = p_timezone, timezone_review_required = false,
+    started_at = start_local_date::timestamp at time zone p_timezone,
+    ended_at = case when end_local_date is not null then end_local_date::timestamp at time zone p_timezone
+      when not active then coalesce(ended_at, transaction_timestamp()) else null end
+  where stack_item_id = p_stack_item_id and user_id = owner_id and timezone_review_required;
+  -- A timezone confirmation cannot implicitly choose among contradictory cycles.
+  if (select count(*) from public.cycles where stack_item_id = p_stack_item_id and user_id = owner_id
+    and (ended_at is null or ended_at > transaction_timestamp())) <= 1 then
+    delete from public.cycle_migration_conflicts where stack_item_id = p_stack_item_id and user_id = owner_id;
+    update public.stack_items set configuration_status = 'complete' where id = p_stack_item_id and user_id = owner_id;
+  end if;
+  result := jsonb_build_object('stack_item_id', p_stack_item_id, 'timezone', p_timezone);
+  insert into public.plan_mutation_receipts(user_id,idempotency_key,operation,result)
+  values(owner_id,p_idempotency_key,'resolve_cycle_course_timezone',result);
+  return result;
+end $$;
+revoke all on function public.resolve_cycle_course_timezone(uuid,text,text) from public, anon;
+grant execute on function public.resolve_cycle_course_timezone(uuid,text,text) to authenticated;
 
 create or replace function public.resolve_cycle_migration_conflict(
   p_stack_item_id uuid,
@@ -2271,12 +2371,17 @@ begin
   order by id
   for update;
 
+  if exists (select from public.cycles where stack_item_id = p_stack_item_id
+    and user_id = owner_id and timezone_review_required) then
+    raise exception 'Course timezone review is required';
+  end if;
+
   select * into kept_cycle
   from public.cycles
   where id = p_keep_cycle_id
     and user_id = owner_id
     and stack_item_id = p_stack_item_id
-    and ended_at is null
+    and (ended_at is null or ended_at > transaction_timestamp())
     and id = any(conflict_row.cycle_ids);
   if not found then
     raise exception 'Selected cycle is not an open conflicted cycle';
@@ -2287,7 +2392,7 @@ begin
   from public.cycles
   where user_id = owner_id
     and stack_item_id = p_stack_item_id
-    and ended_at is null;
+    and (ended_at is null or ended_at > transaction_timestamp());
   if not open_cycle_ids <@ conflict_row.cycle_ids then
     raise exception 'Open cycle set changed since migration conflict';
   end if;
@@ -2296,6 +2401,7 @@ begin
   update public.cycles
   set
     ended_at = mutation_time,
+    end_local_date = null,
     end_date = mutation_time::date,
     active = false,
     closed_by_migration_resolution = true
@@ -2303,7 +2409,7 @@ begin
     and stack_item_id = p_stack_item_id
     and id = any(conflict_row.cycle_ids)
     and id <> p_keep_cycle_id
-    and ended_at is null;
+    and (ended_at is null or ended_at > transaction_timestamp());
 
   delete from public.cycle_migration_conflicts
   where id = conflict_row.id;

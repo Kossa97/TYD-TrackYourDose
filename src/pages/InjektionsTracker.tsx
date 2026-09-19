@@ -316,8 +316,8 @@ export function InjektionsTracker() {
   }
 
   if (timelineLoadError) return <div role="alert">
-    Einnahmeplan konnte nicht geladen werden.
-    <button type="button" onClick={() => void loadData()}>Erneut versuchen</button>
+    {t('inj_plan_load_error')}
+    <button type="button" onClick={() => void loadData()}>{t('routine_confirmation_retry')}</button>
   </div>
   if (tableError) {
     return (

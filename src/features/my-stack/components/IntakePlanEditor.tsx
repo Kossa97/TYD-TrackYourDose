@@ -31,6 +31,7 @@ import type {
 } from '../types'
 
 export interface IntakePlanEditorProps {
+  scheduleOnly?: boolean
   trackingLevel: TrackingLevel
   plan: IntakePlanDraft
   dosageForm: DosageFormKey
@@ -112,6 +113,7 @@ function quantityLabel(form: ReturnType<typeof getDosageForm>): string {
 }
 
 export function IntakePlanEditor({
+  scheduleOnly = false,
   trackingLevel,
   plan,
   dosageForm,
@@ -751,6 +753,7 @@ export function IntakePlanEditor({
 
       </section>
 
+      {!scheduleOnly && <>
       {/* ── ZEITRAUM — erst was und wann, dann ab wann. Beide Daten in einer
              Zeile: zwei kurze Felder, die untereinander die Erinnerung aus dem
              Blick schoben. */}
@@ -890,6 +893,7 @@ export function IntakePlanEditor({
         </span>
       </p>
 
+      </>}
     </div>
   )
 }

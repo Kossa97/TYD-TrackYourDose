@@ -67,6 +67,12 @@ describe('planSegments', () => {
         expect.objectContaining({ version: expect.objectContaining({ id: 'version-current' }), status: 'current' }),
         expect.objectContaining({ version: expect.objectContaining({ id: 'version-future' }), status: 'future' }),
       ])
+    const fold = { ...timeline, versions: [
+      { ...timeline.versions[0], id: 'older', effective_kind: 'instant' as const, effective_local_date: null, effective_at: '2026-10-25T00:50:00Z' },
+      { ...timeline.versions[1], id: 'newer', effective_kind: 'instant' as const, effective_local_date: null, effective_at: '2026-10-25T01:10:00Z' },
+    ] }
+    expect(planVersionSegments(fold, new Date('2026-10-25T01:00:00Z'), 'Europe/Berlin').map(value => [value.version.id, value.status]))
+      .toEqual([['older', 'current'], ['newer', 'future']])
   })
 
   it('sieht in einem Plan ohne Historie genau eine Stufe: ihn selbst', () => {

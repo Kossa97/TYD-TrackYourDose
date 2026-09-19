@@ -1,4 +1,10 @@
 {
+  "my_stack_course_timezone_review": "Die ursprünglichen Start- und Enddaten benötigen eine Zeitzone. Bis zur Bestätigung bleiben Einnahmen und Erinnerungen gesperrt.",
+  "my_stack_course_timezone": "Zeitzone der ursprünglichen Kur (z. B. Europe/Berlin)",
+  "my_stack_course_timezone_error": "Bitte eine gültige IANA-Zeitzone eingeben und erneut versuchen.",
+  "my_stack_course_timezone_confirm": "Zeitzone bestätigen",
+  "pk_data_load_error": "PK-Daten konnten nicht geladen werden.",
+  "inj_plan_load_error": "Einnahmeplan konnte nicht geladen werden.",
   "nav_lager": "Lager",
   "archiviert_am": "Archiviert am {{date}}",
   "nav_peptide": "My Stack",

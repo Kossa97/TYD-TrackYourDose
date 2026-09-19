@@ -272,7 +272,8 @@ function timelineVersionAsCycle(
   timeZone: string,
 ): ScheduleCycle {
   const startedAt = new Date(timeline.cycle.started_at)
-  const startDate = localDateTimeKey(startedAt, timeZone).slice(0, 10)
+  const startDate = timeline.versions.find(version => version.change_kind === 'initial' && version.effective_kind === 'local_date')?.effective_local_date
+    ?? timeline.cycle.start_local_date ?? localDateTimeKey(startedAt, timeZone).slice(0, 10)
   return {
     id: timeline.cycle.id,
     stack_item_id: timeline.cycle.stack_item_id,

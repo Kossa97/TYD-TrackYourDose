@@ -81,10 +81,15 @@ const TIMELINE_SELECT = `
   stack_item_id,
   started_at,
   ended_at,
+  start_local_date,
+  end_local_date,
+  lifecycle_timezone,
+  timezone_review_required,
   closed_by_migration_resolution,
   stack_items(archived, configuration_status, migration_conflicts:cycle_migration_conflicts(resolved_at)),
   versions:cycle_plan_versions (
     id,
+    created_at,
     cycle_id,
     effective_kind,
     effective_at,
@@ -126,12 +131,17 @@ function throwIfError(error: ServiceError | null): void {
 }
 
 function mapTimeline(row: CycleTimelineRow): CycleTimeline {
+  if (!row.versions?.length) throw new PlanLifecycleError('unknown', 'Cycle has no plan versions')
   return {
     cycle: {
       id: row.id,
       stack_item_id: row.stack_item_id,
       started_at: row.started_at,
       ended_at: row.ended_at,
+      ...(row.start_local_date ? { start_local_date: row.start_local_date } : {}),
+      ...(row.end_local_date ? { end_local_date: row.end_local_date } : {}),
+      ...(row.lifecycle_timezone ? { lifecycle_timezone: row.lifecycle_timezone } : {}),
+      ...(row.timezone_review_required ? { timezone_review_required: true } : {}),
     },
     versions: row.versions ?? [],
     pauses: row.pauses ?? [],
@@ -176,6 +186,7 @@ export async function loadCycleTimelines(
   // must not offer archived or contradictory plans. Archiving does not end them.
   return (data ?? []).filter(row => options.includeUnavailable || (
     row.closed_by_migration_resolution !== true
+    && row.timezone_review_required !== true
     && row.stack_items?.archived !== true
     && row.stack_items?.configuration_status !== 'needs_review'
     && !row.stack_items?.migration_conflicts?.some(conflict => conflict.resolved_at === null)
@@ -192,7 +203,9 @@ export async function createPlanVersion(
     p_effective_at: input.effectiveAt,
     p_effective_local_date: input.effectiveLocalDate,
     p_change_kind: input.changeKind,
-    p_schedule: input.schedule,
+    p_schedule: { ...input.schedule,
+      ...(input.timeZone ? { _timezone: input.timeZone, _effective_now: input.effectiveNow === true } : {}),
+    },
     p_idempotency_key: input.idempotencyKey,
   })
 }
@@ -280,6 +293,17 @@ export async function resolveCycleMigrationConflict(
     p_idempotency_key: input.idempotencyKey,
   })
   return loadCycleTimeline(client, result.cycle_id)
+}
+
+export async function resolveCycleCourseTimezone(
+  client: PlanRpcClient,
+  input: { stackItemId: string; timeZone: string; idempotencyKey: string },
+): Promise<void> {
+  await callRpc(client, 'resolve_cycle_course_timezone', {
+    p_stack_item_id: input.stackItemId,
+    p_timezone: input.timeZone,
+    p_idempotency_key: input.idempotencyKey,
+  })
 }
 
 export async function restartCycle(

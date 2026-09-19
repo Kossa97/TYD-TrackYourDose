@@ -110,7 +110,7 @@ describe('InjektionsTracker committed stock retry', () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
     trackerMocks.loadError = true
     render(createElement(MemoryRouter, null, createElement(InjektionsTracker)))
-    expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringMatching(/nicht geladen/))
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('inj_plan_load_error'))
   })
   it('pins a confirmed V2 intake using its persisted snapshot rather than editable sheet values', async () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true

@@ -780,7 +780,7 @@ export function BlutspiegelCarousel() {
     setDragPx(delta)
   }
 
-  if (loadError) return <div role="alert" className={shellClassName}>PK-Daten konnten nicht geladen werden.</div>
+  if (loadError) return <div role="alert" className={shellClassName}>{t('pk_data_load_error')}</div>
   if (loading) {
     return (
       <div

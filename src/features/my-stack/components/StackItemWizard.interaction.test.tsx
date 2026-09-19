@@ -461,6 +461,13 @@ describe('StackItemWizard interactions', () => {
       name: 'my_stack_plan_effective_now',
     }) as HTMLInputElement).checked).toBe(true)
     expect(screen.getByRole('radio', { name: 'my_stack_plan_effective_date' })).toBeTruthy()
+    expect(screen.queryByLabelText('my_stack_plan_start_date')).toBeNull()
+    expect(screen.queryByLabelText('my_stack_plan_end_date')).toBeNull()
+    expect(screen.queryByRole('checkbox', { name: 'reminder_on_time' })).toBeNull()
+    expect(screen.queryByRole('checkbox', { name: 'my_stack_pk_method_confirm' })).toBeNull()
+    fireEvent.click(screen.getByRole('radio', { name: 'my_stack_plan_effective_date' }))
+    expect((screen.getByLabelText('my_stack_plan_effective_date', { selector: 'input[type="date"]' }) as HTMLInputElement).min).not.toBe('')
+    fireEvent.click(screen.getByRole('radio', { name: 'my_stack_plan_effective_now' }))
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
 
     await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1))
@@ -472,6 +479,8 @@ describe('StackItemWizard interactions', () => {
       p_effective_local_date: null,
       p_change_kind: 'dose',
       p_schedule: {
+        _timezone: 'Europe/Berlin',
+        _effective_now: true,
         frequency: 'Täglich',
         x_days_interval: null,
         interval_unit: null,

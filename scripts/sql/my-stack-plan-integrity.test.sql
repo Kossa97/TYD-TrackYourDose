@@ -18,6 +18,8 @@ $$;
 create table auth.users (
   id uuid primary key
 );
+create table public.push_subscriptions(user_id uuid, timezone text);
+insert into public.push_subscriptions values ('30000000-0000-0000-0000-000000000003', 'UTC');
 
 create function auth.uid()
 returns uuid
@@ -1113,7 +1115,7 @@ begin
       select (public.create_plan_version(
         '33100000-0000-0000-0000-000000000001',
         'instant',
-        '2026-09-18T07:00:00Z',
+        '2098-09-18T07:00:00Z',
         null,
         'dose',
         jsonb_build_object(
@@ -1139,7 +1141,7 @@ begin
     'dose', 1,
     'unit', 'mg',
     'method', 'Oral',
-    'logged_at', '2026-09-18T08:00:00Z'
+    'logged_at', '2098-09-18T08:00:00Z'
   ));
 
   if dblink_send_query(
@@ -2065,6 +2067,7 @@ begin
       'frequency', 'Täglich',
       'schedule_days', jsonb_build_array(),
       'start_date', '2026-09-19',
+      'timezone', 'UTC',
       'end_date', null,
       'intake_time', 'morgens',
       'intake_time_custom', '08:00',
@@ -2087,6 +2090,7 @@ begin
       'frequency', 'Täglich',
       'schedule_days', jsonb_build_array(),
       'start_date', '2026-09-19',
+      'timezone', 'UTC',
       'end_date', null,
       'intake_time', 'morgens',
       'intake_time_custom', '08:00',
@@ -2124,6 +2128,7 @@ begin
   from public.cycles
   where stack_item_id = saved_item.id;
 
+
   select count(*) into row_count
   from public.cycle_plan_versions
   where cycle_id = created_cycle.id
@@ -2159,6 +2164,7 @@ begin
         'frequency', 'Täglich',
         'schedule_days', jsonb_build_array(),
         'start_date', '2026-09-19',
+        'timezone', 'UTC',
         'intake_time', 'morgens',
         'reminder', 'none'
       ),
@@ -2715,12 +2721,14 @@ begin
     jsonb_build_array(jsonb_build_object('position', 0)),
     jsonb_build_object(
       'name', 'Allowed enforced initial plan',
+      'timezone', 'America/New_York',
       'dose', 1,
       'unit', 'mg',
       'method', 'Oral',
       'frequency', 'Täglich',
       'schedule_days', jsonb_build_array(),
       'start_date', '2026-09-19',
+      'end_date', '2026-09-20',
       'intake_time', 'morgens',
       'reminder', 'none'
     ),
@@ -2729,6 +2737,24 @@ begin
   select * into strict created_cycle
   from public.cycles
   where stack_item_id = saved_item.id;
+
+  if to_jsonb(created_cycle)->>'start_local_date' is distinct from '2026-09-19'
+    or to_jsonb(created_cycle)->>'end_local_date' is distinct from '2026-09-21'
+    or to_jsonb(created_cycle)->>'lifecycle_timezone' is distinct from 'America/New_York'
+    or created_cycle.started_at <> '2026-09-19T04:00:00Z'::timestamptz
+    or created_cycle.ended_at is distinct from '2026-09-21T04:00:00Z'::timestamptz then
+    raise exception 'finite course lost its local date boundaries';
+  end if;
+
+  -- All normalized consumers use this RPC after direct lifecycle writes are revoked.
+  perform public.confirm_intake_group(jsonb_build_array(jsonb_build_object(
+    'cycle_id', created_cycle.id, 'stack_item_id', saved_item.id,
+    'timezone', 'UTC', 'slot_key', 'enforced-ordinary',
+    'logged_at', '2026-09-19T08:00:00Z', 'dose', 1, 'unit', 'mg', 'method', 'Oral'
+  )));
+  if not exists (select 1 from public.dose_logs where routine_slot_key = 'enforced-ordinary' and taken) then
+    raise exception 'post-enforcement confirmation did not persist';
+  end if;
 
   begin
     perform public.save_stack_item_with_plan(

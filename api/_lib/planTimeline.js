@@ -84,7 +84,7 @@ function resolvePlanVersion(versions, target, timeZone) {
         throw new Error(`Invalid local-date boundary for plan version ${version.id}`)
       }
       const key = localDateKey(version.effective_local_date, `plan version ${version.id}`)
-      if (key <= target.localKey) eligible.push({ version, key, instantMs: null })
+      if (key <= target.localKey) eligible.push({ version, key, instantMs: localSlotInstant(version.effective_local_date, 0, timeZone).getTime() })
       continue
     }
 
@@ -110,11 +110,10 @@ function resolvePlanVersion(versions, target, timeZone) {
   }
 
   eligible.sort((left, right) => {
-    const keyOrder = right.key.localeCompare(left.key)
-    if (keyOrder !== 0) return keyOrder
-    if (left.instantMs === null && right.instantMs !== null) return 1
-    if (left.instantMs !== null && right.instantMs === null) return -1
-    if (left.instantMs !== null && right.instantMs !== null) return right.instantMs - left.instantMs
+    const instantOrder = right.instantMs - left.instantMs
+    if (instantOrder !== 0) return instantOrder
+    const creationOrder = new Date(right.version.created_at ?? 0).getTime() - new Date(left.version.created_at ?? 0).getTime()
+    if (creationOrder !== 0) return creationOrder
     return right.version.id.localeCompare(left.version.id)
   })
   return eligible[0]?.version ?? null
@@ -188,7 +187,8 @@ function resolveScheduleSlots(schedule, day) {
 }
 
 function timelineVersionAsCycle(timeline, version, timeZone) {
-  const startDate = localDateTimeKey(new Date(timeline.cycle.started_at), timeZone).slice(0, 10)
+  const startDate = timeline.versions.find(version => version.change_kind === 'initial' && version.effective_kind === 'local_date')?.effective_local_date
+    ?? timeline.cycle.start_local_date ?? localDateTimeKey(new Date(timeline.cycle.started_at), timeZone).slice(0, 10)
   return {
     start_date: startDate,
     end_date: null,

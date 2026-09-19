@@ -21,12 +21,24 @@ vi.mock('../lib/supabase', () => ({ supabase: { from: (table: string) => {
     lte: (key: string, value: string) => { rows = rows.filter(row => row[key] <= value); return query },
     not: () => query, order: () => query,
     maybeSingle: async () => ({ data: { id: 'c1', stack_item_id: 's1', start_date: '2026-09-01', end_date: null,
+      stack_items: { pk_profile_method: 'Subkutan' },
       started_at: '2026-09-01T00:00:00.000Z', ended_at: null }, error: historyDb.error }),
     then: (resolve: any) => Promise.resolve({ data: rows, error: historyDb.error }).then(resolve),
   }; return query
 } } }))
 
 describe('normalized PK history and projection', () => {
+  it('interrupts at a persisted route incompatible with the current PK model', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    vi.useFakeTimers(); vi.setSystemTime(new Date('2026-09-19T12:00:00Z'))
+    const row = { stack_item_id: 's1', cycle_id: 'c1', plan_version_id: 'v1', logged_at: '2026-09-18T08:00:00.000Z', dose: 1, unit: 'mg', taken: true, method: 'Subkutan' }
+    historyDb.logs = [row, { ...row, logged_at: '2026-09-18T09:00:00.000Z', method: 'Oral' },
+      { ...row, logged_at: '2026-09-18T10:00:00.000Z' }]
+    const history = await loadDoseHistory('c1')
+    expect(history.interruptedAt).toBe('2026-09-18T09:00:00.000Z')
+    expect(history.events).toHaveLength(1)
+    expect(history.events[0]).toMatchObject({ method: 'Subkutan', dose: 1 })
+  })
   afterEach(() => { (FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false; vi.useRealTimers(); historyDb.error = null })
   const timeline: CycleTimeline = { cycle: { id: 'c1', stack_item_id: 's1', started_at: '2026-09-01T00:00:00Z', ended_at: null },
     versions: [{ id: 'v1', cycle_id: 'c1', effective_kind: 'local_date', effective_at: null, effective_local_date: '2026-09-01',
@@ -37,15 +49,15 @@ describe('normalized PK history and projection', () => {
   it('isolates exact-cycle snapshots and bounded null-provenance legacy rows', async () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
     vi.useFakeTimers(); vi.setSystemTime(new Date('2026-09-19T12:00:00Z'))
-    const row = { stack_item_id: 's1', cycle_id: 'c1', plan_version_id: 'old-version', logged_at: '2026-09-18T08:00:00.000Z', dose: 250, unit: 'mcg', taken: true }
+    const row = { stack_item_id: 's1', cycle_id: 'c1', plan_version_id: 'old-version', logged_at: '2026-09-18T08:00:00.000Z', dose: 250, unit: 'mcg', taken: true, method: 'Subkutan' }
     historyDb.logs = [row, { ...row, cycle_id: 'c2', dose: 999 },
       { ...row, cycle_id: null, plan_version_id: null, logged_at: '2026-09-18T09:00:00.000Z', dose: 2, unit: 'mg' },
       { ...row, cycle_id: null, plan_version_id: null, logged_at: '2026-08-31T09:00:00.000Z' }]
     historyDb.filters = []
     const history = await loadDoseHistory('c1')
     expect(history.events).toEqual([
-      { timestamp: new Date('2026-09-18T08:00:00.000Z'), dose: 250, unit: 'mcg', status: 'taken', cycleId: 'c1', planVersionId: 'old-version' },
-      { timestamp: new Date('2026-09-18T09:00:00.000Z'), dose: 2, unit: 'mg', status: 'taken', cycleId: null, planVersionId: null },
+      { timestamp: new Date('2026-09-18T08:00:00.000Z'), dose: 250, unit: 'mcg', status: 'taken', cycleId: 'c1', planVersionId: 'old-version', method: 'Subkutan' },
+      { timestamp: new Date('2026-09-18T09:00:00.000Z'), dose: 2, unit: 'mg', status: 'taken', cycleId: null, planVersionId: null, method: 'Subkutan' },
     ])
     expect(historyDb.filters).toContainEqual(['dose_logs', 'cycle_id', 'c1'])
   })
@@ -101,7 +113,7 @@ describe('normalized PK history and projection', () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
     vi.useFakeTimers(); vi.setSystemTime(new Date('2026-09-19T09:00:00Z'))
     historyDb.logs = [{ stack_item_id: 's1', cycle_id: 'c1', plan_version_id: 'v1',
-      logged_at: '2026-09-19T06:00:00.000Z', dose: 1, unit: 'mg', taken: true }]
+      logged_at: '2026-09-19T06:00:00.000Z', dose: 1, unit: 'mg', taken: true, method: 'Subkutan' }]
     const future = { ...timeline, versions: [...timeline.versions, { ...timeline.versions[0], id: 'v2',
       effective_kind: 'instant' as const, effective_at: '2026-09-19T10:00:00Z', effective_local_date: null,
       dose: 3, unit, method }] }

@@ -188,6 +188,18 @@ const planSnapshot: PlanScheduleSnapshot = {
 }
 
 describe('stack item service', () => {
+  it('rejects new changes on an already-started local day in the caller timezone', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-19T22:30:00Z'))
+    try {
+      const client = planRpcClient()
+      await expect(savePlanChange(client.client, { cycleId: 'cycle-1', versionId: null, mode: 'new_change' },
+        planSnapshot, { kind: 'date', localDate: '2026-09-20' },
+        { changeKind: 'dose', idempotencyKey: 'past-change', timeZone: 'Europe/Berlin' },
+      )).rejects.toThrow('Plan changes require a future local date or now')
+      expect(client.rpc).not.toHaveBeenCalled()
+    } finally { vi.useRealTimers() }
+  })
   it('creates a new version for the exact cycle with an instant boundary', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-09-19T10:15:00.000Z'))
@@ -212,7 +224,7 @@ describe('stack item service', () => {
       p_effective_at: '2026-09-19T10:15:00.000Z',
       p_effective_local_date: null,
       p_change_kind: 'dose',
-      p_schedule: planSnapshot,
+      p_schedule: { ...planSnapshot, _timezone: 'Europe/Berlin', _effective_now: true },
       p_idempotency_key: 'plan-change-1',
     })
     vi.useRealTimers()
@@ -598,7 +610,7 @@ describe('stack item service', () => {
 
     expect(mockClient.rpc).toHaveBeenCalledWith(
       'save_stack_item_with_plan',
-      expect.objectContaining({ p_plan: expect.objectContaining({ id: 'cycle-1' }) }),
+      expect.objectContaining({ p_plan: expect.objectContaining({ id: 'cycle-1', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }) }),
     )
   })
 

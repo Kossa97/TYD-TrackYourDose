@@ -27,6 +27,7 @@ export interface CurrentBlutspiegelLevel {
 }
 
 export interface DoseEvent {
+  method?: string
   cycleId?: string | null
   planVersionId?: string | null
   timestamp: Date   // Zeitpunkt der Einnahme
@@ -141,12 +142,12 @@ export async function loadDoseHistory(cycleId: string): Promise<DoseHistory> {
 
 async function loadNormalizedDoseHistory(cycleId: string): Promise<DoseHistory> {
   const { data: cycle, error } = await supabase.from('cycles')
-    .select('id, stack_item_id, started_at, ended_at').eq('id', cycleId).maybeSingle()
+    .select('id, stack_item_id, started_at, ended_at, start_local_date, end_local_date, stack_items(pk_profile_method)').eq('id', cycleId).maybeSingle()
   if (error) throw error
   if (!cycle?.started_at) throw new Error('Cycle history boundary unavailable')
   const now = new Date().toISOString()
   const upper = cycle.ended_at && cycle.ended_at < now ? cycle.ended_at : now
-  const fields = 'logged_at, dose, unit, taken, cycle_id, plan_version_id'
+  const fields = 'logged_at, dose, unit, method, taken, cycle_id, plan_version_id'
   const [exact, legacy] = await Promise.all([
     supabase.from('dose_logs').select(fields).eq('cycle_id', cycleId).eq('taken', true)
       .lte('logged_at', now).order('logged_at', { ascending: true }),
@@ -161,9 +162,14 @@ async function loadNormalizedDoseHistory(cycleId: string): Promise<DoseHistory> 
   const events: DoseEvent[] = []
   for (const row of rows) {
     const dose = row.dose == null ? null : Number(row.dose)
+    const profileMethod = (cycle.stack_items as unknown as { pk_profile_method?: string } | null)?.pk_profile_method
+    if (!row.method?.trim() || !profileMethod?.trim()
+      || row.method.trim().toLocaleLowerCase() !== profileMethod.trim().toLocaleLowerCase()) {
+      return { events, interruptedAt: row.logged_at }
+    }
     if (dose == null || !Number.isFinite(dose) || !row.unit?.trim()) return { events, interruptedAt: row.logged_at }
     events.push({ timestamp: new Date(row.logged_at), dose, unit: row.unit, status: 'taken',
-      cycleId: row.cycle_id, planVersionId: row.plan_version_id })
+      cycleId: row.cycle_id, planVersionId: row.plan_version_id, method: row.method })
   }
   return { events, interruptedAt: null }
 }

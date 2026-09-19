@@ -2,6 +2,7 @@ import { format } from 'date-fns'
 import type { ScheduleCycle, ScheduleSegment } from '../../../lib/intakeSchedule'
 import {
   localDateTimeKey,
+  localSlotInstant,
   resolveCycleAt,
   type CyclePlanVersion,
   type CycleTimeline,
@@ -48,19 +49,19 @@ export function planVersionSegments(
   timeZone = 'UTC',
 ): PlanVersionSegment[] {
   const currentId = resolveCycleAt(timeline, day, timeZone).planVersion?.id ?? null
-  const nowKey = localDateTimeKey(day, timeZone)
   return timeline.versions
-    .map(version => ({ version, effectiveFrom: versionBoundary(version, timeZone) }))
+    .map(version => ({ version, effectiveFrom: versionBoundary(version, timeZone), boundaryMs: version.effective_kind === 'instant'
+      ? new Date(version.effective_at!).getTime() : localSlotInstant(version.effective_local_date!, 0, timeZone).getTime() }))
     .sort((left, right) => (
-      left.effectiveFrom.localeCompare(right.effectiveFrom)
+      left.boundaryMs - right.boundaryMs
       || left.version.id.localeCompare(right.version.id)
     ))
-    .map(({ version, effectiveFrom }) => ({
+    .map(({ version, effectiveFrom, boundaryMs }) => ({
       version,
       effectiveFrom,
       status: version.id === currentId
         ? 'current'
-        : effectiveFrom > nowKey ? 'future' : 'past',
+        : boundaryMs > day.getTime() ? 'future' : 'past',
     }))
 }
 

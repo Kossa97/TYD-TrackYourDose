@@ -62,7 +62,49 @@ function summary(intakes) {
   }))
 }
 
+describe('local-date lifecycle and recurrence anchors', () => {
+  it.each(['America/New_York', 'Asia/Tokyo'])('preserves the declared day in %s', timeZone => {
+    for (const resolve of [resolveIntakesNode, resolveIntakesTypeScript]) {
+      for (const cadence of [
+        { frequency: 'Alle X Tage', x_days_interval: 2, interval_unit: 'day' },
+        { frequency: 'Im Wechsel', cycle_on_days: 1, cycle_off_days: 1 },
+        { frequency: 'Alle X Tage', x_days_interval: 1, interval_unit: 'month' },
+      ]) {
+        const value = timeline({
+          cycle: { started_at: timeZone === 'Asia/Tokyo' ? '2026-09-17T15:00:00Z' : '2026-09-18T04:00:00Z' },
+          versions: [version('anchor', { effective_local_date: '2026-09-18', ...cadence })],
+        })
+        expect(resolve(value, '2026-09-18', timeZone)).toHaveLength(1)
+        expect(resolve(value, '2026-09-19', timeZone)).toHaveLength(0)
+        expect(resolve(value, cadence.interval_unit === 'month' ? '2026-10-18' : '2026-09-20', timeZone)).toHaveLength(1)
+      }
+      const course = timeline({
+        cycle: { started_at: timeZone === 'Asia/Tokyo' ? '2026-09-17T15:00:00Z' : '2026-09-18T04:00:00Z', ended_at: timeZone === 'Asia/Tokyo' ? '2026-09-19T15:00:00Z' : '2026-09-20T04:00:00Z', end_local_date: '2026-09-20' },
+        versions: [version('course', { effective_local_date: '2026-09-18', intake_time: 'custom', intake_time_custom: '23:00' })],
+      })
+      expect(resolve(course, '2026-09-19', timeZone)).toHaveLength(1)
+      expect(resolve(course, '2026-09-20', timeZone)).toHaveLength(0)
+    }
+  })
+})
+
 const CASES = [
+  {
+    name: 'fall-back instant versions are ordered by elapsed time, not repeated wall clock',
+    localDate: '2026-10-25',
+    timeZone: 'Europe/Berlin',
+    timeline: timeline({ versions: [
+      version('older-fold', { effective_kind: 'instant', effective_at: '2026-10-25T00:50:00Z', effective_local_date: null, intake_time: 'custom', intake_time_custom: '03:00', dose: 10 }),
+      version('newer-fold', { effective_kind: 'instant', effective_at: '2026-10-25T01:10:00Z', effective_local_date: null, intake_time: 'custom', intake_time_custom: '03:00', dose: 20 }),
+    ] }),
+    expected: [{
+      cycleId: 'c1', stackItemId: 's1', planVersionId: 'newer-fold',
+      scheduledAt: '2026-10-25T02:00:00.000Z',
+      routineSlotKey: 'c1@2026-10-25T02:00:00.000Z', slotKey: 'custom',
+      localDate: '2026-10-25', time: '03:00', minutes: 180,
+      dose: 20, unit: 'mg', method: 'oral',
+    }],
+  },
   {
     name: 'local-date boundary selects the new snapshot',
     localDate: '2026-06-15',
@@ -243,6 +285,28 @@ const FREQUENCY_CASES = [
 ]
 
 describe('Node timeline adapter parity', () => {
+  it('uses persisted creation order to break equal absolute boundaries like SQL', () => {
+    const value = timeline({ versions: [
+      version('z-old', { effective_local_date: '2026-06-15', created_at: '2026-01-01T00:00Z' }),
+      version('a-new', { effective_kind: 'instant', effective_at: '2026-06-14T22:00Z', effective_local_date: null, created_at: '2026-01-02T00:00Z' }),
+    ] })
+    for (const resolve of [resolveCycleAtNode, resolveCycleAtTypeScript]) {
+      expect(resolve(value, new Date('2026-06-15T06:00Z'), 'Europe/Berlin').planVersion.id).toBe('a-new')
+    }
+  })
+  it('keeps lifecycle instants fixed when the viewer travels', () => {
+    const value = timeline({ cycle: {
+      started_at: '2026-09-18T04:00:00Z', ended_at: '2026-09-20T04:00:00Z',
+      start_local_date: '2026-09-18', end_local_date: '2026-09-20',
+    } })
+    for (const resolve of [resolveCycleAtNode, resolveCycleAtTypeScript]) {
+      for (const zone of ['Asia/Tokyo', 'America/New_York']) {
+        expect(resolve(value, new Date('2026-09-18T03:59:00Z'), zone).status).toBe('planned')
+        expect(resolve(value, new Date('2026-09-20T03:59:00Z'), zone).status).toBe('active')
+        expect(resolve(value, new Date('2026-09-20T04:00:00Z'), zone).status).toBe('ended')
+      }
+    }
+  })
   it.each(CASES)('$name', ({ timeline: value, localDate, timeZone, expected }) => {
     const fromTypeScript = resolveIntakesTypeScript(value, localDate, timeZone)
     const fromNode = resolveIntakesNode(value, localDate, timeZone)

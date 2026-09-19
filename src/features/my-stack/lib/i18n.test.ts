@@ -9,6 +9,12 @@ const sourcePath = resolve('scripts/my-stack-i18n-source.mjs')
 const localeCodes = ['de', 'en', 'ar', 'es', 'fr', 'hi', 'id', 'it', 'ja', 'ko', 'pt', 'ru', 'tr', 'zh'] as const
 const manualLocaleCodes = ['de', 'en'] as const
 const EXPECTED_MY_STACK_KEYS = [
+  'my_stack_course_timezone_review',
+  'my_stack_course_timezone',
+  'my_stack_course_timezone_error',
+  'my_stack_course_timezone_confirm',
+  'pk_data_load_error',
+  'inj_plan_load_error',
   'my_stack_title',
   'my_stack_tab_peptide',
   'my_stack_tab_medication',

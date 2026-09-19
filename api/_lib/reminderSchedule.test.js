@@ -121,6 +121,16 @@ describe('reminder evaluation from normalized occurrences', () => {
 })
 
 describe('reminder worker boundary', () => {
+  it('reminds a finite course until its local exclusive end, not merely until ended_at is populated', async () => {
+    const cycle = cycleRow({ ended_at: '2026-06-30T00:00:00Z', end_local_date: '2026-06-30' })
+    const sendNotification = vi.fn().mockResolvedValue(undefined)
+    const result = await sendRemindersForSubscriptions({
+      subscriptions: [{ user_id: 'u1', endpoint: 'test', subscription: {}, timezone: 'Europe/Berlin' }],
+      cycles: [cycle], now: new Date('2026-06-29T06:30:00Z'), windowMin: 60, sendNotification,
+    })
+    expect(result.sent).toBe(1)
+    expect(decodeURIComponent(buildCyclesUrl('https://example.supabase.co', ['u1']))).not.toContain('ended_at=is.null')
+  })
   it.each([
     { archived: true, configuration_status: 'complete', migration_conflicts: [] },
     { archived: false, configuration_status: 'needs_review', migration_conflicts: [] },
@@ -154,7 +164,7 @@ describe('reminder worker boundary', () => {
 
   it('queries open relational timelines without legacy schedule or escalation reads', () => {
     const url = decodeURIComponent(buildCyclesUrl('https://example.supabase.co', ['u1', 'u2']))
-    expect(url).toContain('/rest/v1/cycles?ended_at=is.null&user_id=in.("u1","u2")')
+    expect(url).toContain('/rest/v1/cycles?user_id=in.("u1","u2")')
     expect(url).toContain('started_at,ended_at')
     expect(url).toContain('stack_items(display_name,archived,configuration_status,migration_conflicts:cycle_migration_conflicts(resolved_at))')
     expect(url).not.toContain('peptides(')

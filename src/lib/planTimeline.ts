@@ -19,6 +19,7 @@ export interface PlanScheduleSnapshot {
 }
 
 export interface CyclePlanVersion extends PlanScheduleSnapshot {
+  created_at?: string
   id: string
   cycle_id: string
   effective_kind: PlanEffectiveKind
@@ -32,6 +33,10 @@ export interface TimelineCycle {
   stack_item_id: string
   started_at: string
   ended_at: string | null
+  start_local_date?: string | null
+  end_local_date?: string | null
+  lifecycle_timezone?: string | null
+  timezone_review_required?: boolean
 }
 
 export interface CyclePausePeriod {
@@ -62,6 +67,22 @@ interface VersionCandidate {
   version: CyclePlanVersion
   key: string
   instantMs: number | null
+}
+
+export function localSlotInstant(localDate: string, minutes: number, timeZone: string): Date {
+  const [year, month, day] = localDate.split('-').map(Number)
+  const desired = Date.UTC(year, month - 1, day, Math.floor(minutes / 60), minutes % 60)
+  const wallMillis = (instant: number) => Date.parse(localDateTimeKey(new Date(instant), timeZone).replace('|', 'T') + 'Z')
+  const candidates = [...new Set([-1, 0, 1].map(offset => {
+    const sample = desired + offset * 86_400_000
+    return desired - (wallMillis(sample) - sample)
+  }))].sort((a, b) => a - b)
+  const exact = candidates.find(candidate => wallMillis(candidate) === desired)
+  if (exact !== undefined) return new Date(exact)
+  for (let instant = candidates[0]; instant <= candidates[candidates.length - 1]; instant += 60_000) {
+    if (wallMillis(instant) >= desired) return new Date(instant)
+  }
+  throw new Error(`Could not resolve local intake slot: ${localDate} ${minutes} ${timeZone}`)
 }
 
 const LOCAL_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
@@ -118,7 +139,7 @@ function resolvePlanVersion(
         throw new Error(`Invalid local-date boundary for plan version ${version.id}`)
       }
       const key = localDateKey(version.effective_local_date, `plan version ${version.id}`)
-      if (key <= target.localKey) eligible.push({ version, key, instantMs: null })
+      if (key <= target.localKey) eligible.push({ version, key, instantMs: localSlotInstant(version.effective_local_date, 0, timeZone).getTime() })
       continue
     }
 
@@ -144,11 +165,10 @@ function resolvePlanVersion(
   }
 
   eligible.sort((left, right) => {
-    const keyOrder = right.key.localeCompare(left.key)
-    if (keyOrder !== 0) return keyOrder
-    if (left.instantMs === null && right.instantMs !== null) return 1
-    if (left.instantMs !== null && right.instantMs === null) return -1
-    if (left.instantMs !== null && right.instantMs !== null) return right.instantMs - left.instantMs
+    const instantOrder = right.instantMs! - left.instantMs!
+    if (instantOrder !== 0) return instantOrder
+    const creationOrder = new Date(right.version.created_at ?? 0).getTime() - new Date(left.version.created_at ?? 0).getTime()
+    if (creationOrder !== 0) return creationOrder
     return right.version.id.localeCompare(left.version.id)
   })
 

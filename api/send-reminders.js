@@ -24,6 +24,8 @@ export function mapTimelineRow(row) {
       stack_item_id: row.stack_item_id,
       started_at: row.started_at,
       ended_at: row.ended_at,
+      ...(row.start_local_date ? { start_local_date: row.start_local_date } : {}),
+      ...(row.end_local_date ? { end_local_date: row.end_local_date } : {}),
     },
     versions: row.versions ?? [],
     pauses: row.pauses ?? [],
@@ -33,12 +35,12 @@ export function mapTimelineRow(row) {
 export function buildCyclesUrl(base, userIds) {
   const userFilter = userIds.map(id => `"${id}"`).join(',')
   const select = [
-    'id', 'user_id', 'stack_item_id', 'name', 'reminder', 'started_at', 'ended_at',
+    'id', 'user_id', 'stack_item_id', 'name', 'reminder', 'started_at', 'ended_at', 'start_local_date', 'end_local_date', 'closed_by_migration_resolution',
     'stack_items(display_name,archived,configuration_status,migration_conflicts:cycle_migration_conflicts(resolved_at))',
-    'versions:cycle_plan_versions(id,cycle_id,effective_kind,effective_at,effective_local_date,change_kind,frequency,x_days_interval,interval_unit,cycle_on_days,cycle_off_days,schedule_days,intake_time,intake_time_custom,slot_doses,slot_days,dose,unit,method)',
+    'versions:cycle_plan_versions(id,created_at,cycle_id,effective_kind,effective_at,effective_local_date,change_kind,frequency,x_days_interval,interval_unit,cycle_on_days,cycle_off_days,schedule_days,intake_time,intake_time_custom,slot_doses,slot_days,dose,unit,method)',
     'pauses:cycle_pause_periods(id,cycle_id,paused_at,ends_at)',
   ].join(',')
-  return `${base}/rest/v1/cycles?ended_at=is.null&user_id=in.(${userFilter})&select=${select}`
+  return `${base}/rest/v1/cycles?user_id=in.(${userFilter})&select=${select}`
 }
 
 function formattedQuantity(dose, unit) {
@@ -73,7 +75,7 @@ export async function sendRemindersForSubscriptions({
   const cyclesByUser = new Map()
   for (const cycle of cycles) {
     const item = cycle.stack_items
-    if (cycle.ended_at || item?.archived || item?.configuration_status === 'needs_review'
+    if (cycle.closed_by_migration_resolution || item?.archived || item?.configuration_status === 'needs_review'
       || item?.migration_conflicts?.some(conflict => conflict.resolved_at === null)) continue
     const userCycles = cyclesByUser.get(cycle.user_id) ?? []
     userCycles.push(cycle)

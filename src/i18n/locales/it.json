@@ -1,4 +1,10 @@
 {
+  "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+  "my_stack_course_timezone": "Original course timezone (e.g. Europe/Berlin)",
+  "my_stack_course_timezone_error": "Enter a valid IANA timezone and try again.",
+  "my_stack_course_timezone_confirm": "Confirm timezone",
+  "pk_data_load_error": "PK data could not be loaded.",
+  "inj_plan_load_error": "The intake plan could not be loaded.",
   "nav_lager": "Magazzino",
   "archiviert_am": "Archiviato il {{date}}",
   "nav_peptide": "Il mio stack",

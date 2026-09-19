@@ -119,7 +119,7 @@ describe('loadAllCycleChartData date-effective readiness', () => {
   it('loads a normalized current version without querying legacy escalations', async () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
     fixtures.cycles = [{ ...cycle, dose: null, unit: null, schedule_history: null,
-      started_at: '2026-08-01T00:00:00Z', ended_at: null, pauses: [], versions: [{
+      started_at: '2026-08-01T00:00:00Z', ended_at: '2026-08-22T00:00:00Z', end_local_date: '2026-08-22', pauses: [], versions: [{
         id: 'v1', cycle_id: 'cycle-1', effective_kind: 'local_date', effective_at: null, effective_local_date: '2026-08-01',
         change_kind: 'initial', frequency: 'Täglich', x_days_interval: null, interval_unit: null,
         cycle_on_days: null, cycle_off_days: null, schedule_days: [], intake_time: 'custom', intake_time_custom: '08:00',

@@ -622,3 +622,100 @@ Update-Lauf meldete keine weitere Topologieänderung. Die zuvor dokumentierten
 Service-/Resolver-Verbindungen bleiben erhalten, generierte Ausgaben werden
 mit committed. Keine SQL-Änderung, kein neuer Datenbanklauf, keine
 Produktionsmigration, kein Push. V2 bleibt aktiviert.
+
+### Finale Review-Welle: Lifecycle-, Zeit- und Mutationsgrenzen (2026-09-19)
+
+Nur lokal gemessene Evidenz; keine Produktionsmigration und kein Push. V2 bleibt
+aktiviert. Alle Legacy-Spalten und -Tabellen bleiben für Rollback erhalten.
+
+Die authentifizierte Bestätigung nach Enforcement wurde in PostgreSQL 16 zuerst
+mit `permission denied for table cycles` bei `SELECT ... FOR UPDATE` reproduziert.
+`confirm_intake_group` verwendet nun SECURITY DEFINER mit festem Suchpfad
+`pg_catalog, public, pg_temp`, behält die expliziten Eigentümer-/Item-/Log-/Slot-
+Prüfungen und prüft unter dem Lifecycle-Lock `started_at <= logged_at < ended_at`.
+Gewöhnliche, gruppierte und Injektionsrouten-Bestätigungen funktionieren auch mit
+den echten Foundation-Triggern nach Enforcement; fremde Eigentümer und direkte
+Cycle-Updates bleiben abgewiesen. Ein Zwei-Verbindungs-Test bestätigt, dass eine
+veraltete Bestätigung auf den End-Lock wartet und danach ohne Log abgewiesen wird.
+
+Datumsbasierte Kurgrenzen erhalten eine persistierte feste IANA-Zeitzone
+`lifecycle_timezone`: Start am lokalen Tagesanfang, Ende exklusiv am Anfang des
+Folgetags. Beide werden als exakte `started_at`/`ended_at` gespeichert. Ein
+zukünftiges Ende bedeutet nicht bereits beendet; Leser, Erinnerungen, PK und
+Lifecycle-RPCs berücksichtigen die tatsächliche Grenze. Explizites Beenden und
+Neustarten bleiben exakte Instant-Operationen ohne zusätzliche Zeitzonenparameter.
+Die Wiederholungsreferenz kommt separat aus dem initialen `effective_local_date`.
+Der Wechsel der Betrachtungszeitzone ändert keine Lifecycle-Grenze.
+
+Für Migrationen ist eine einzige eindeutige gültige gespeicherte
+`push_subscriptions.timezone` die vorhandene Quelle. Fehlende/mehrdeutige Quellen
+werden nicht stillschweigend als UTC interpretiert: `timezone_review_required`
+und ein ungelöster Migrationskonflikt blockieren Aktionen und Enforcement. My Stack
+zeigt einen blockierenden Review mit vorausgewählter, bearbeitbarer Geräte-IANA-
+Zone und verlangt explizite Bestätigung. Der idempotente, eigentümergeprüfte RPC
+materialisiert dann die Grenzen, ohne Versionen/Logs zu verändern; eine zusätzliche
+Mehr-Cycle-Auswahl bleibt bei widersprüchlichen Cycles erforderlich. Dieser
+bewusste Migrationsaufwand ersetzt jede versteckte Zeitzonenannahme.
+
+Weitere Korrekturen: Planversionen werden in TS/Node nach tatsächlichem Instant
+geordnet (einschließlich wiederholter Berliner DST-Stunde und persistiertem
+Erstellzeitpunkt bei Gleichstand). Management sortiert dieselben Grenzen zeitlich.
+Neue Änderungen akzeptieren serverseitig nur zukünftige Grenzen oder ein vom
+Server materialisiertes „jetzt“. Die unverzichtbare initiale Version kann nicht
+entfernt werden; versionlose Cycles ergeben einen sichtbaren Ladefehler. V2 zeigt
+für bereits entschiedene Dashboard-Logs keine Umschreib-/Löschaktionen mehr.
+Metadaten/PK werden separat vom initialen Plan gespeichert; der echte
+Metadaten-Wizard bietet keine verworfenen Planfelder an. Planänderungen zeigen nur
+eine wirksame Gültigkeitssteuerung und deren Review. PK-Historie trägt die gespeicherte
+Route; fehlende/abweichende Routen unterbrechen konservativ statt umgedeutet zu
+werden. `set_pause_end` sperrt Cycle vor Pause und liest die Pause danach erneut.
+Fehler-/Review-Texte sind im DE/EN-Overlay mit expliziten Fallbacks aller 14 Locales.
+
+PostgreSQL-Befehle im ausschließlich für diese Welle erstellten Container
+`codex-task14-final` (`postgres:16`, Repository read-only nach `/workspace` gemountet):
+
+```text
+docker exec codex-task14-final createdb -U postgres final_production_shape2
+docker exec codex-task14-final psql -U postgres -d final_production_shape2 -v ON_ERROR_STOP=1 -q -f /workspace/scripts/sql/my-stack-plan-integrity-dry-run.test.sql
+docker exec codex-task14-final createdb -U postgres final_sql_race
+docker exec codex-task14-final psql -U postgres -d final_sql_race -v ON_ERROR_STOP=1 -q -f /workspace/scripts/sql/my-stack-plan-integrity.test.sql -f /workspace/scripts/sql/my-stack-final-boundaries.test.sql -f /workspace/scripts/sql/my-stack-timezone-review.test.sql
+```
+
+Beide finalen Befehle Exit 0. Die produktionsnahe Fixture lädt die eingecheckten
+Schemas, Constraints, Indizes, Policies und Guards sowie eine synthetische New-York-
+Subscription; sie enthält zwei konkurrierende Cycles, Historie/Restart,
+`schedule_history`, alle drei Escalation-Startarten, bestätigte/übersprungene Logs,
+PRN und eine mehrtägige Pause. Additive Migration zweimal: vorab 4 Items / 6 Cycles /
+0 Versionen / 1 Pause / 3 Escalations / 3 Logs; nach beiden Läufen jeweils
+4 / 6 / 10 / 1 / 3 / 3, 0 Receipts, genau 1 Konflikt. Versionen/Pausen und die
+Legacy-Log-Snapshots unverändert, keine erfundene Log-Provenienz, jede Initialversion
+vorhanden. Nach expliziter Auswahl und zweimal Enforcement: dieselben sechs
+Fachzählungen, 1 Receipt, 0 Konflikte; zweiter offener Cycle abgewiesen. Drei
+zusätzliche authentifizierte Bestätigungen wurden in einer zurückgerollten
+Transaktion geprüft, sodass die Migrationsevidenz unverändert bleibt.
+
+Erweiterte SQL-Evidenz: fehlende Zeitzone für zwei synthetische Items bleibt
+ungelöst; unberechtigte/ungültige Bestätigung abgewiesen; New-York- und Tokio-
+Bestätigung erzeugt exakte Tagesgrenzen, Retry liefert denselben Receipt und
+Versionen bleiben identisch. Enforcement auf der ungelösten Fixture wurde separat
+mit `Unresolved cycle migration conflicts remain` abgewiesen (Exit 1, erwartet).
+Pause eines endlichen zukünftigen Kurses erlaubt; DST-Reihenfolge, historische
+Änderungsablehnung, lokales „heute“ in beiden Zonen, servergenaues Jetzt,
+Initialversionsschutz sowie Lock-Reihenfolge und End/Confirm-Race bestanden.
+
+Finale Verifikation nach allen Code-/Teständerungen: `npm test` Exit 0,
+**1.942/1.942 Tests in 162 Dateien**; darunter TS/Node-, Reminder- und Legacy-Dual-
+Read-Parität ohne unerklärte Abweichung. `npm run build` Exit 0, 4.050 Module,
+Client 1,62 s, 134 PWA-Einträge/4.834,73 KiB; bekannte Chunk-/Deprecation-Warnungen.
+`npm run lint` Exit 1 mit exakt **145 Fehlern/17 Warnungen**, unverändert zur
+Task-13-Baseline. 32 geänderte bestehende JS/TS-Dateien separat gegen HEAD geprüft:
+44 bestehende Fehler/3 Warnungen, keine neue Diagnose (Zeilenverschiebungen
+normalisiert). Neue Dateien und zuletzt geänderte Resolver/Worker separat lintfrei.
+
+`graphify update .` nach den Quelländerungen: Exit 0, 723 Dateien, **5.289 Nodes /
+9.139 Edges / 847 Communities**. Geforderte fokussierte Query: Exit 0, BFS Tiefe 2,
+314 Nodes. Import-Edges für My Stack, Home, Dashboard, Routine-Bestätigung,
+Reminder-Adapter, Injection und PK wurden zusätzlich direkt in `graph.json`
+geprüft. Kein aktiver V2-Konsument ist ausschließlich an die Legacy-Planquellen
+gebunden; Legacy-Pfade bleiben vorhanden. Generierte Ausgaben bleiben im Commit.
+Das unveränderte 5.000-Node-HTML-Limit verhindert nur die optionale HTML-Ausgabe.

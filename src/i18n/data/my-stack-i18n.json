@@ -1,5 +1,11 @@
 {
   "ar": {
+    "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+    "my_stack_course_timezone": "Original course timezone (e.g. Europe/Berlin)",
+    "my_stack_course_timezone_error": "Enter a valid IANA timezone and try again.",
+    "my_stack_course_timezone_confirm": "Confirm timezone",
+    "pk_data_load_error": "PK data could not be loaded.",
+    "inj_plan_load_error": "Intake plans could not be loaded.",
     "my_stack_title": "مكدسي",
     "my_stack_tab_peptide": "الببتيدات",
     "my_stack_tab_medication": "الأدوية",
@@ -357,6 +363,12 @@
     "my_stack_detach_catalog": "إلغاء الاختيار"
   },
   "es": {
+    "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+    "my_stack_course_timezone": "Original course timezone (e.g. Europe/Berlin)",
+    "my_stack_course_timezone_error": "Enter a valid IANA timezone and try again.",
+    "my_stack_course_timezone_confirm": "Confirm timezone",
+    "pk_data_load_error": "PK data could not be loaded.",
+    "inj_plan_load_error": "Intake plans could not be loaded.",
     "my_stack_title": "Mi pila",
     "my_stack_tab_peptide": "Péptidos",
     "my_stack_tab_medication": "Medicamentos",
@@ -714,6 +726,12 @@
     "my_stack_detach_catalog": "Quitar selección"
   },
   "fr": {
+    "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+    "my_stack_course_timezone": "Original course timezone (e.g. Europe/Berlin)",
+    "my_stack_course_timezone_error": "Enter a valid IANA timezone and try again.",
+    "my_stack_course_timezone_confirm": "Confirm timezone",
+    "pk_data_load_error": "PK data could not be loaded.",
+    "inj_plan_load_error": "Intake plans could not be loaded.",
     "my_stack_title": "Ma pile",
     "my_stack_tab_peptide": "Peptides",
     "my_stack_tab_medication": "Médicaments",
@@ -1071,6 +1089,12 @@
     "my_stack_detach_catalog": "Effacer la sélection"
   },
   "hi": {
+    "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+    "my_stack_course_timezone": "Original course timezone (e.g. Europe/Berlin)",
+    "my_stack_course_timezone_error": "Enter a valid IANA timezone and try again.",
+    "my_stack_course_timezone_confirm": "Confirm timezone",
+    "pk_data_load_error": "PK data could not be loaded.",
+    "inj_plan_load_error": "Intake plans could not be loaded.",
     "my_stack_title": "मेरा ढेर",
     "my_stack_tab_peptide": "पेप्टाइड",
     "my_stack_tab_medication": "दवाएं",
@@ -1428,6 +1452,12 @@
     "my_stack_detach_catalog": "चयन हटाएँ"
   },
   "id": {
+    "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+    "my_stack_course_timezone": "Original course timezone (e.g. Europe/Berlin)",
+    "my_stack_course_timezone_error": "Enter a valid IANA timezone and try again.",
+    "my_stack_course_timezone_confirm": "Confirm timezone",
+    "pk_data_load_error": "PK data could not be loaded.",
+    "inj_plan_load_error": "Intake plans could not be loaded.",
     "my_stack_title": "Tumpukan Saya",
     "my_stack_tab_peptide": "Peptida",
     "my_stack_tab_medication": "Obat",
@@ -1785,6 +1815,12 @@
     "my_stack_detach_catalog": "Hapus pilihan"
   },
   "it": {
+    "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+    "my_stack_course_timezone": "Original course timezone (e.g. Europe/Berlin)",
+    "my_stack_course_timezone_error": "Enter a valid IANA timezone and try again.",
+    "my_stack_course_timezone_confirm": "Confirm timezone",
+    "pk_data_load_error": "PK data could not be loaded.",
+    "inj_plan_load_error": "Intake plans could not be loaded.",
     "my_stack_title": "Il mio stack",
     "my_stack_tab_peptide": "Peptidi",
     "my_stack_tab_medication": "Farmaci",
@@ -2142,6 +2178,12 @@
     "my_stack_detach_catalog": "Rimuovi selezione"
   },
   "ja": {
+    "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+    "my_stack_course_timezone": "Original course timezone (e.g. Europe/Berlin)",
+    "my_stack_course_timezone_error": "Enter a valid IANA timezone and try again.",
+    "my_stack_course_timezone_confirm": "Confirm timezone",
+    "pk_data_load_error": "PK data could not be loaded.",
+    "inj_plan_load_error": "Intake plans could not be loaded.",
     "my_stack_title": "私のスタック",
     "my_stack_tab_peptide": "ペプチド",
     "my_stack_tab_medication": "医薬品",
@@ -2499,6 +2541,12 @@
     "my_stack_detach_catalog": "選択を解除"
   },
   "ko": {
+    "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+    "my_stack_course_timezone": "Original course timezone (e.g. Europe/Berlin)",
+    "my_stack_course_timezone_error": "Enter a valid IANA timezone and try again.",
+    "my_stack_course_timezone_confirm": "Confirm timezone",
+    "pk_data_load_error": "PK data could not be loaded.",
+    "inj_plan_load_error": "Intake plans could not be loaded.",
     "my_stack_title": "내 스택",
     "my_stack_tab_peptide": "펙타이드",
     "my_stack_tab_medication": "약물",
@@ -2856,6 +2904,12 @@
     "my_stack_detach_catalog": "선택 해제"
   },
   "pt": {
+    "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+    "my_stack_course_timezone": "Original course timezone (e.g. Europe/Berlin)",
+    "my_stack_course_timezone_error": "Enter a valid IANA timezone and try again.",
+    "my_stack_course_timezone_confirm": "Confirm timezone",
+    "pk_data_load_error": "PK data could not be loaded.",
+    "inj_plan_load_error": "Intake plans could not be loaded.",
     "my_stack_title": "Minha pilha",
     "my_stack_tab_peptide": "Peptídeos",
     "my_stack_tab_medication": "Medicamentos",
@@ -3213,6 +3267,12 @@
     "my_stack_detach_catalog": "Limpar seleção"
   },
   "ru": {
+    "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+    "my_stack_course_timezone": "Original course timezone (e.g. Europe/Berlin)",
+    "my_stack_course_timezone_error": "Enter a valid IANA timezone and try again.",
+    "my_stack_course_timezone_confirm": "Confirm timezone",
+    "pk_data_load_error": "PK data could not be loaded.",
+    "inj_plan_load_error": "Intake plans could not be loaded.",
     "my_stack_title": "Мой стек",
     "my_stack_tab_peptide": "Пептиды",
     "my_stack_tab_medication": "Лекарства",
@@ -3570,6 +3630,12 @@
     "my_stack_detach_catalog": "Снять выбор"
   },
   "tr": {
+    "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+    "my_stack_course_timezone": "Original course timezone (e.g. Europe/Berlin)",
+    "my_stack_course_timezone_error": "Enter a valid IANA timezone and try again.",
+    "my_stack_course_timezone_confirm": "Confirm timezone",
+    "pk_data_load_error": "PK data could not be loaded.",
+    "inj_plan_load_error": "Intake plans could not be loaded.",
     "my_stack_title": "Yığınım",
     "my_stack_tab_peptide": "Peptitler",
     "my_stack_tab_medication": "İlaçlar",
@@ -3927,6 +3993,12 @@
     "my_stack_detach_catalog": "Seçimi kaldır"
   },
   "zh": {
+    "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
+    "my_stack_course_timezone": "Original course timezone (e.g. Europe/Berlin)",
+    "my_stack_course_timezone_error": "Enter a valid IANA timezone and try again.",
+    "my_stack_course_timezone_confirm": "Confirm timezone",
+    "pk_data_load_error": "PK data could not be loaded.",
+    "inj_plan_load_error": "Intake plans could not be loaded.",
     "my_stack_title": "我的堆栈",
     "my_stack_tab_peptide": "肽",
     "my_stack_tab_medication": "药物",

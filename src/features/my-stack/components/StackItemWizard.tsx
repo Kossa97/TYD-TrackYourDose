@@ -73,6 +73,7 @@ interface StackItemWizardBaseProps {
    * abgeloest, damit es nur EINEN Weg gibt, der einen Zyklus schreibt.
    */
   intent?: 'pk' | 'plan'
+  metadataOnly?: boolean
 }
 
 export type StackItemWizardProps = StackItemWizardBaseProps & (
@@ -171,6 +172,7 @@ export function StackItemWizard({
   onOpenExisting,
   planEditContext,
   intent,
+  metadataOnly = false,
 }: StackItemWizardProps) {
   const { t } = useTranslation()
   const selectedPlan = planEditContext?.snapshot ?? existingPlan
@@ -434,7 +436,7 @@ export function StackItemWizard({
   }
 
   function handleContinue(): void {
-    const invalidField = firstInvalidField(state)
+    const invalidField = firstInvalidField(state, !metadataOnly)
     if (invalidField) {
       setShowErrors(true)
       focusField(invalidField)
@@ -461,7 +463,7 @@ export function StackItemWizard({
 
   async function handleSave(allowDuplicate = false): Promise<void> {
     if (saving) return
-    const invalidField = firstInvalidField(state)
+    const invalidField = firstInvalidField(state, !metadataOnly)
     if (invalidField) {
       const invalidStep = stepForInvalidField(invalidField)
       setShowErrors(true)
@@ -705,9 +707,7 @@ export function StackItemWizard({
                     type="date"
                     aria-label={String(t('my_stack_plan_effective_date', { defaultValue: 'Ab Datum' }))}
                     value={planEffective.localDate ?? ''}
-                    min={planEditContext.target.mode === 'replace_future'
-                      ? nextLocalDate(planEditContext.timeZone)
-                      : undefined}
+                    min={nextLocalDate(planEditContext.timeZone)}
                     onChange={event => setPlanEffective({
                       kind: 'date',
                       localDate: event.target.value || null,
@@ -718,7 +718,8 @@ export function StackItemWizard({
                 )}
               </fieldset>
             )}
-            <IntakePlanEditor
+            {!metadataOnly && <IntakePlanEditor
+              scheduleOnly={Boolean(planEditContext)}
               trackingLevel={state.draft.trackingLevel}
               plan={state.draft.plan}
               dosageForm={state.draft.dosageForm}
@@ -728,8 +729,8 @@ export function StackItemWizard({
                 dispatch({ type: 'plan_changed', changes })
                 setPkIntentError(null)
               }}
-            />
-            {state.draft.trackingLevel === 'complete' && selectedPkCatalogEntry?.pk_profile_id && (
+            />}
+            {!planEditContext && state.draft.trackingLevel === 'complete' && selectedPkCatalogEntry?.pk_profile_id && (
               <fieldset
                 data-field="pkProfileMethod"
                 tabIndex={-1}
@@ -872,14 +873,18 @@ export function StackItemWizard({
                   <dt className="text-slate-400">{t('my_stack_dosage_form', { defaultValue: 'Darreichungsform' })}</dt>
                   <dd className="font-medium text-slate-200">{state.draft.dosageForm && t(`dosage_form_${state.draft.dosageForm}`)}</dd>
                 </div>
-                <div className="flex flex-wrap justify-between gap-2">
+                {!metadataOnly && <><div className="flex flex-wrap justify-between gap-2">
                   <dt className="text-slate-400">{t('my_stack_plan_rhythm', { defaultValue: 'An welchen Tagen?' })}</dt>
                   <dd data-review-rhythm className="font-medium text-slate-200">{rhythmText(rhythmSummary(state.draft.plan.rhythm), t)}</dd>
                 </div>
                 <div className="flex flex-wrap justify-between gap-2">
-                  <dt className="text-slate-400">{t('my_stack_plan_end_date', { defaultValue: 'Ende (optional)' })}</dt>
+                  <dt className="text-slate-400">{planEditContext
+                    ? t('my_stack_plan_effective', { defaultValue: 'Gültig ab' })
+                    : t('my_stack_plan_end_date', { defaultValue: 'Ende (optional)' })}</dt>
                   <dd data-review-end-date className="font-medium text-slate-200">
-                    {state.draft.plan.endDate || t('my_stack_plan_end_open', { defaultValue: 'Offen' })}
+                    {planEditContext
+                      ? planEffective.kind === 'now' ? t('my_stack_plan_effective_now', { defaultValue: 'Ab sofort' }) : planEffective.localDate
+                      : state.draft.plan.endDate || t('my_stack_plan_end_open', { defaultValue: 'Offen' })}
                   </dd>
                 </div>
                 {/* Je Einnahmezeitpunkt eine Zeile. Vorher stand hier eine
@@ -918,6 +923,7 @@ export function StackItemWizard({
                       : `${fuehrendeMenge(state.draft.plan.slots) ?? ''} ${state.draft.plan.unit ?? ''}`.trim()}
                   </dd>
                 </div>
+                </>}
                 {state.draft.trackingLevel === 'complete' && (
                   <div className="flex flex-wrap justify-between gap-2">
                     <dt className="text-slate-400">{t('my_stack_pk_status', { defaultValue: 'PK-Status' })}</dt>

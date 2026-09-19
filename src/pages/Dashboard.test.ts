@@ -168,6 +168,17 @@ afterEach(() => {
 })
 
 describe('Dashboard normalized timeline path', () => {
+  it.each([false, true])('keeps a decided V2 log immutable in the calendar (%s)', async taken => {
+    const fixtures = startFixFixture()
+    fixtures.dose_logs = [{ ...pendingLog(), taken }]
+    renderDashboard(createDashboardClient(fixtures))
+    fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
+    await screen.findByText('Vitamin D3')
+    await waitFor(() => expect(screen.queryByText('Lädt…')).toBeNull())
+    expect(screen.queryByRole('button', { name: 'Doch eingenommen' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Rückgängig' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'eintrag_loeschen' })).toBeNull()
+  })
   it.each([
     { archived: true, configuration_status: 'complete', migration_conflicts: [] },
     { archived: false, configuration_status: 'needs_review', migration_conflicts: [] },
