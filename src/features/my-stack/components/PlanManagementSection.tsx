@@ -206,7 +206,7 @@ export function PlanManagementSection({
       setPauseEnd(currentEnd
         ? localDateTimeKey(new Date(currentEnd), timeZone).replace('|', 'T').slice(0, 16)
         : '')
-    } else if (next.kind === 'pause') {
+    } else {
       setPauseEnd('')
     }
     setDialog(next)
@@ -214,6 +214,8 @@ export function PlanManagementSection({
 
   const closeDialog = () => {
     if (pendingRef.current) return
+    setPauseEnd('')
+    setInlineError(null)
     setDialog(null)
   }
 
@@ -277,11 +279,14 @@ export function PlanManagementSection({
     setPending(true)
     setInlineError(null)
     try {
-      const pauseEndInstant = pauseEnd ? wallClockToIso(pauseEnd, timeZone) : null
-      if (dialog.kind === 'pause') await onPause(pauseEndInstant)
-      if (dialog.kind === 'pause_end') await onSetPauseEnd(pauseEndInstant)
+      if (dialog.kind === 'pause' || dialog.kind === 'pause_end') {
+        const pauseEndInstant = pauseEnd ? wallClockToIso(pauseEnd, timeZone) : null
+        if (dialog.kind === 'pause') await onPause(pauseEndInstant)
+        else await onSetPauseEnd(pauseEndInstant)
+      }
       if (dialog.kind === 'remove') await onRemoveFuture(dialog.version)
       if (dialog.kind === 'end') await onEnd()
+      setPauseEnd('')
       setDialog(null)
     } catch {
       setInlineError(String(t('my_stack_plan_action_error', {

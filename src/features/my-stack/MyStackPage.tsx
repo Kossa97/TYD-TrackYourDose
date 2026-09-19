@@ -483,6 +483,31 @@ interface RecoverableMutation {
   committed: boolean
 }
 
+function planChangeSubmissionIdentity(submission: PlanChangeSubmission): string {
+  const { target, effective, snapshot } = submission
+  return JSON.stringify({
+    target: [target.mode, target.cycleId, target.versionId],
+    effective: [effective.kind, effective.localDate],
+    snapshot: [
+      snapshot.frequency,
+      snapshot.x_days_interval,
+      snapshot.interval_unit,
+      snapshot.cycle_on_days,
+      snapshot.cycle_off_days,
+      snapshot.schedule_days,
+      snapshot.intake_time,
+      snapshot.intake_time_custom,
+      snapshot.slot_doses,
+      snapshot.slot_days,
+      snapshot.dose,
+      snapshot.unit,
+      snapshot.method,
+    ],
+    changeKind: submission.changeKind,
+    timeZone: submission.timeZone,
+  })
+}
+
 function versionAsIntakePlanDraft(
   timeline: CycleTimeline,
   version: CyclePlanVersion,
@@ -1251,14 +1276,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           : { kind: 'now', localDate: null },
       })
       setWizardCycleId(null)
-      const identity = versionId ? `replace:${versionId}` : `change:${cycleId}`
-      if (planSaveRecoveryRef.current?.identity !== identity) {
-        planSaveRecoveryRef.current = {
-          identity,
-          key: globalThis.crypto.randomUUID(),
-          committed: false,
-        }
-      }
     } else {
       if (!cycles.some(cycle => cycle.id === cycleId && cycle.stack_item_id === p.id)) return
       setWizardCycleId(cycleId)
@@ -1292,9 +1309,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   }
 
   const saveVersionChange = async (submission: PlanChangeSubmission) => {
-    const identity = submission.target.mode === 'replace_future'
-      ? `replace:${submission.target.versionId}`
-      : `change:${submission.target.cycleId}`
+    const identity = planChangeSubmissionIdentity(submission)
     let recovery = planSaveRecoveryRef.current
     if (!recovery || recovery.identity !== identity) {
       recovery = { identity, key: globalThis.crypto.randomUUID(), committed: false }

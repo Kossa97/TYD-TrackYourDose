@@ -182,6 +182,40 @@ describe('PlanManagementSection', () => {
     expect(screen.getByRole('dialog', { name: 'Plan pausieren' })).toBeTruthy()
   })
 
+  it('does not let a canceled invalid pause value block ending the plan', async () => {
+    const onEnd = vi.fn(async () => undefined)
+    render(<PlanManagementSection {...callbacks({ onEnd })} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pausieren' }))
+    fireEvent.change(screen.getByLabelText('Pausieren bis (optional)'), {
+      target: { value: '2026-03-29T02:30' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Beenden' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Plan beenden' }))
+
+    await waitFor(() => expect(onEnd).toHaveBeenCalledTimes(1))
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('does not let a canceled invalid pause value block removing a future version', async () => {
+    const onRemoveFuture = vi.fn(async () => undefined)
+    render(<PlanManagementSection {...callbacks({ onRemoveFuture })} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pausieren' }))
+    fireEvent.change(screen.getByLabelText('Pausieren bis (optional)'), {
+      target: { value: '2026-03-29T02:30' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Geplante Änderung vom 21.09.2026 entfernen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Änderung entfernen' }))
+
+    await waitFor(() => expect(onRemoveFuture).toHaveBeenCalledTimes(1))
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
   it('describes a pause neutrally without due, missed, or skipped language', () => {
     const paused = timeline({
       pauses: [{

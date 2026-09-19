@@ -16,6 +16,7 @@ import { FEATURES } from '../../config/features'
 const qaName = 'Codex QA Stack Lifecycle 2026-07-24'
 const visibilityMocks = vi.hoisted(() => ({
   escalations: [] as Array<Record<string, unknown>>,
+  realWizard: false,
 }))
 
 type LoadedLegacyStackItem = LoadedStackItem & { default_method?: string }
@@ -245,11 +246,15 @@ vi.mock('./components/StackStage', () => ({
   ),
 }))
 
-vi.mock('./components/StackItemWizard', () => ({
-  StackItemWizard: ({ catalogEntries, existingItem, existingPlan, planEditContext, intent, onClose, onSave, onSavePlanChange }: StackItemWizardProps) => {
-    const selectedPlan = planEditContext?.snapshot ?? existingPlan
-    return (
-      <div role="dialog" aria-label="stack-item-wizard">
+vi.mock('./components/StackItemWizard', async importOriginal => {
+  const original = await importOriginal<typeof import('./components/StackItemWizard')>()
+  return {
+    StackItemWizard: (props: StackItemWizardProps) => {
+      if (visibilityMocks.realWizard) return <original.StackItemWizard {...props} />
+      const { catalogEntries, existingItem, existingPlan, planEditContext, intent, onClose, onSave, onSavePlanChange } = props
+      const selectedPlan = planEditContext?.snapshot ?? existingPlan
+      return (
+        <div role="dialog" aria-label="stack-item-wizard">
       <span data-testid="wizard-catalog-ids">{catalogEntries.map(entry => entry.id).join(',')}</span>
       <span data-testid="wizard-intent">{intent ?? ''}</span>
       <span data-testid="wizard-item-id">{existingItem?.id ?? ''}</span>
@@ -356,10 +361,11 @@ vi.mock('./components/StackItemWizard', () => ({
           save version change
         </button>
       )}
-      </div>
-    )
-  },
-}))
+        </div>
+      )
+    },
+  }
+})
 
 vi.mock('./components/StackArchive', () => ({
   StackArchive: () => null,
@@ -449,6 +455,7 @@ describe('MyStackPage non-vial visibility', () => {
     localStorage.clear()
     localStorage.setItem('tyd_peptide_view', 'vials')
     visibilityMocks.escalations = []
+    visibilityMocks.realWizard = false
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
       configurable: true,
       value: vi.fn(),
@@ -879,6 +886,63 @@ describe('MyStackPage non-vial visibility', () => {
     expect(createCalls).toHaveLength(2)
     expect(createCalls[0].p_idempotency_key).toBe(createCalls[1].p_idempotency_key)
     expect(timelineQuery).toHaveBeenCalledTimes(3)
+  })
+
+  it('writes an edited real-wizard submission after refresh-only retrying the unchanged one', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    visibilityMocks.realWizard = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const current = timelineRow('cycle-real-wizard')
+    const requestedDoses: number[] = []
+    const requestedKeys: string[] = []
+    const rpc = vi.fn(async (name: string, params: Record<string, unknown>) => {
+      if (name !== 'create_plan_version') {
+        return { data: null, error: { message: `Unexpected RPC: ${name}` } }
+      }
+      requestedDoses.push((params.p_schedule as { dose: number }).dose)
+      requestedKeys.push(params.p_idempotency_key as string)
+      return { data: normalizedVersion(`version-${requestedDoses.length}`, 'cycle-real-wizard'), error: null }
+    })
+    const { client, timelineQuery } = v2Client({
+      timelineResults: [
+        { data: [current], error: null },
+        { data: null, error: { message: 'first refresh failed' } },
+        { data: null, error: { message: 'unchanged retry refresh failed' } },
+        { data: [current], error: null },
+      ],
+      rpc,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+    const card = visibleCardFor(qaName)!
+    fireEvent.click(within(card).getAllByRole('button')[0])
+    const section = await screen.findByTestId('plan-management-cycle-real-wizard')
+    fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_dose' }))
+
+    const dose = screen.getByLabelText('my_stack_plan_quantity')
+    fireEvent.change(dose, { target: { value: '125' } })
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    expect(await screen.findByText('my_stack_save_error')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    await waitFor(() => expect(timelineQuery).toHaveBeenCalledTimes(3))
+    expect(requestedDoses).toEqual([125])
+
+    fireEvent.click(screen.getByRole('button', { name: 'cancel' }))
+    await waitFor(() => expect(screen.queryByLabelText('my_stack_plan_quantity')).toBeNull())
+    fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_dose' }))
+    fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '150' } })
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    await waitFor(() => expect(screen.queryByLabelText('my_stack_plan_quantity')).toBeNull())
+
+    expect(requestedDoses).toEqual([125, 150])
+    expect(requestedKeys[1]).not.toBe(requestedKeys[0])
+    expect(timelineQuery).toHaveBeenCalledTimes(4)
   })
 
   it('does not repeat a committed future removal when only canonical refresh failed', async () => {
