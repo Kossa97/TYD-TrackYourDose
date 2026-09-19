@@ -947,6 +947,7 @@ declare
   entry_unit text;
   entry_method text;
   entry_logged_at timestamptz;
+  entry_taken boolean;
   cycle_started_at timestamptz;
   cycle_ended_at timestamptz;
   item_tracking_level text;
@@ -1017,6 +1018,14 @@ begin
     entry_unit := nullif(btrim(entry ->> 'unit'), '');
     entry_method := coalesce(entry ->> 'method', '');
     entry_logged_at := nullif(btrim(entry ->> 'logged_at'), '')::timestamptz;
+
+    if not (entry ? 'taken') then
+      entry_taken := true;
+    elsif jsonb_typeof(entry -> 'taken') = 'boolean' then
+      entry_taken := (entry ->> 'taken')::boolean;
+    else
+      raise exception 'Taken must be a boolean';
+    end if;
 
     if entry -> 'dose' is null or entry -> 'dose' = 'null'::jsonb then
       entry_dose := null;
@@ -1104,9 +1113,9 @@ begin
 
     if found then
       if saved_log.stack_item_id <> entry_stack_item_id
-        or saved_log.taken is false
+        or (saved_log.taken is not null and saved_log.taken is distinct from entry_taken)
         or (saved_log.cycle_id is not null and saved_log.cycle_id <> entry_cycle_id)
-        or (saved_log.taken is true and (
+        or (saved_log.taken is not null and (
           saved_log.logged_at <> entry_logged_at
           or saved_log.cycle_id is distinct from entry_cycle_id
           or saved_log.plan_version_id is distinct from expected_plan_version_id
@@ -1131,7 +1140,8 @@ begin
 
     validated_entries := validated_entries || jsonb_build_array(
       entry || jsonb_build_object(
-        '_resolved_plan_version_id', expected_plan_version_id
+        '_resolved_plan_version_id', expected_plan_version_id,
+        '_taken', entry_taken
       )
     );
   end loop;
@@ -1148,6 +1158,7 @@ begin
     entry_unit := nullif(btrim(entry ->> 'unit'), '');
     entry_method := coalesce(entry ->> 'method', '');
     entry_logged_at := nullif(btrim(entry ->> 'logged_at'), '')::timestamptz;
+    entry_taken := (entry ->> '_taken')::boolean;
     if entry -> 'dose' is null or entry -> 'dose' = 'null'::jsonb then
       entry_dose := null;
     else
@@ -1179,7 +1190,7 @@ begin
         method = entry_method,
         logged_at = entry_logged_at,
         routine_slot_key = entry_slot_key,
-        taken = true
+        taken = entry_taken
       where id = entry_dose_log_id
         and user_id = owner_id
         and stack_item_id = entry_stack_item_id
@@ -1209,7 +1220,7 @@ begin
         entry_method,
         entry_logged_at,
         entry_slot_key,
-        true
+        entry_taken
       )
       on conflict (user_id, routine_slot_key)
         where routine_slot_key is not null
@@ -1231,9 +1242,9 @@ begin
     end if;
 
     if saved_log.stack_item_id <> entry_stack_item_id
-      or saved_log.taken is false
+      or (saved_log.taken is not null and saved_log.taken is distinct from entry_taken)
       or (saved_log.cycle_id is not null and saved_log.cycle_id <> entry_cycle_id)
-      or (saved_log.taken is true and (
+      or (saved_log.taken is not null and (
         saved_log.logged_at <> entry_logged_at
         or saved_log.cycle_id is distinct from entry_cycle_id
         or saved_log.plan_version_id is distinct from expected_plan_version_id
@@ -1252,7 +1263,7 @@ begin
         method = entry_method,
         logged_at = entry_logged_at,
         routine_slot_key = entry_slot_key,
-        taken = true
+        taken = entry_taken
       where id = saved_log.id
         and user_id = owner_id
       returning * into saved_log;
@@ -1291,6 +1302,7 @@ declare
   prior_result jsonb;
   current_boundary timestamptz;
   replacement_boundary timestamptz;
+  mutation_now timestamptz;
   operation_name constant text := 'replace_future_plan_version';
 begin
   if owner_id is null then
@@ -1340,7 +1352,8 @@ begin
   if not found then
     raise exception 'Plan version not found';
   end if;
-  if cycle_row.ended_at is not null and cycle_row.ended_at <= clock_timestamp() then
+  mutation_now := clock_timestamp();
+  if cycle_row.ended_at is not null and cycle_row.ended_at <= mutation_now then
     raise exception 'Cycle is already ended';
   end if;
   if nullif(btrim(p_timezone), '') is null then
@@ -1351,7 +1364,7 @@ begin
     when 'instant' then version_row.effective_at
     else version_row.effective_local_date::timestamp at time zone p_timezone
   end;
-  if current_boundary <= transaction_timestamp() then
+  if current_boundary <= mutation_now then
     raise exception 'Plan version is already effective';
   end if;
 
@@ -1368,8 +1381,22 @@ begin
     when 'instant' then p_effective_at
     else p_effective_local_date::timestamp at time zone p_timezone
   end;
-  if replacement_boundary <= transaction_timestamp() then
+  if replacement_boundary <= mutation_now then
     raise exception 'Plan version is already effective';
+  end if;
+  if cycle_row.started_at is not null
+    and replacement_boundary > cycle_row.started_at
+    and not exists (
+      select 1
+      from public.cycle_plan_versions covering
+      where covering.cycle_id = version_row.cycle_id
+        and covering.id <> version_row.id
+        and case covering.effective_kind
+          when 'instant' then covering.effective_at
+          else covering.effective_local_date::timestamp at time zone p_timezone
+        end <= cycle_row.started_at
+    ) then
+    raise exception 'Initial plan coverage cannot be moved after cycle start';
   end if;
 
   select tracking_level into item_tracking_level
@@ -1432,6 +1459,7 @@ declare
   prior_result jsonb;
   mutation_result jsonb;
   current_boundary timestamptz;
+  mutation_now timestamptz;
   operation_name constant text := 'remove_future_plan_version';
 begin
   if owner_id is null then
@@ -1479,7 +1507,8 @@ begin
   if not found then
     raise exception 'Plan version not found';
   end if;
-  if cycle_row.ended_at is not null and cycle_row.ended_at <= clock_timestamp() then
+  mutation_now := clock_timestamp();
+  if cycle_row.ended_at is not null and cycle_row.ended_at <= mutation_now then
     raise exception 'Cycle is already ended';
   end if;
   if nullif(btrim(p_timezone), '') is null then
@@ -1490,7 +1519,7 @@ begin
     when 'instant' then version_row.effective_at
     else version_row.effective_local_date::timestamp at time zone p_timezone
   end;
-  if current_boundary <= transaction_timestamp() then
+  if current_boundary <= mutation_now then
     raise exception 'Plan version is already effective';
   end if;
 

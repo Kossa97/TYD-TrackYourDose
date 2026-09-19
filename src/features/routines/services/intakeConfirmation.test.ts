@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RoutineConfirmationEntry } from '../intakeGroups'
-import { confirmIntakeGroup, quantifiedVialEntries, type IntakeConfirmationClient } from './intakeConfirmation'
+import { confirmIntakeGroup, quantifiedVialEntries, skipIntakeGroup, type IntakeConfirmationClient } from './intakeConfirmation'
 
 function entry(overrides: Partial<RoutineConfirmationEntry> = {}): RoutineConfirmationEntry {
   return {
@@ -78,6 +78,7 @@ describe('confirmIntakeGroup', () => {
             unit: null,
             method: 'Oral',
             logged_at: '2026-07-29T08:00:00.000Z',
+            taken: true,
           },
           {
             cycle_id: 'cycle-zinc',
@@ -90,6 +91,7 @@ describe('confirmIntakeGroup', () => {
             unit: 'mg',
             method: 'Oral',
             logged_at: '2026-07-29T08:00:00.000Z',
+            taken: true,
           },
         ],
       },
@@ -114,6 +116,24 @@ describe('confirmIntakeGroup', () => {
     await confirmIntakeGroup(client, [entry({ planVersionId: null })])
 
     expect(calls[0].params.p_entries[0].timezone).toBe('UTC')
+  })
+
+  it('routes a skipped intake through the same authoritative RPC decision path', async () => {
+    const rpc = vi.fn(async () => ({ data: [{ id: 'skipped-log' }], error: null }))
+
+    await expect(skipIntakeGroup({ rpc }, [entry({
+      pendingLogId: 'pending-d3',
+      actualLoggedAt: '2026-07-29T08:15:00.000Z',
+    })])).resolves.toEqual(['skipped-log'])
+
+    expect(rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: [expect.objectContaining({
+        dose_log_id: 'pending-d3',
+        slot_key: 'cycle-d3@2026-07-29T08:00:00.000Z',
+        logged_at: '2026-07-29T08:15:00.000Z',
+        taken: false,
+      })],
+    })
   })
 
   it('keeps occurrence identity while sending an edited actual log time', async () => {

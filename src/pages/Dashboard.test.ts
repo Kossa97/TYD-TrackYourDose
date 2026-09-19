@@ -407,6 +407,25 @@ describe('Dashboard normalized timeline path', () => {
     expect(client.rpc).toHaveBeenCalledWith('apply_inventory_confirmation', { p_dose_log_id: 'saved-log-1' })
   })
 
+  it.each([false, true])('skips a normalized single intake through the lifecycle-locked RPC (pending=%s)', async pending => {
+    const fixtures = startFixFixture()
+    if (pending) fixtures.dose_logs = [pendingLog()]
+    const client = createDashboardClient(fixtures)
+    renderDashboard(client)
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'uebersprungen' }))
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: [expect.objectContaining({
+        dose_log_id: pending ? 'pending-exact' : null,
+        plan_version_id: 'timeline-version',
+        slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+        logged_at: pending ? '2026-09-18T07:00:00.000Z' : '2026-09-18T06:00:00.000Z',
+        taken: false,
+      })],
+    }))
+    expect(client.mutations).toEqual([])
+  })
+
   it('surfaces a rejected pending provenance change without a legacy write', async () => {
     const fixtures = startFixFixture()
     fixtures.dose_logs = [pendingLog()]

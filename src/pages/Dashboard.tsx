@@ -42,7 +42,7 @@ import {
   type RoutineGroupModel,
   type RoutineIntake,
 } from '../features/routines/intakeGroups'
-import { confirmIntakeGroup, quantifiedVialEntries, type IntakeConfirmationClient } from '../features/routines/services/intakeConfirmation'
+import { confirmIntakeGroup, quantifiedVialEntries, skipIntakeGroup, type IntakeConfirmationClient } from '../features/routines/services/intakeConfirmation'
 import { RoutineConfirmationSheet } from '../features/routines/components/RoutineConfirmationSheet'
 import {
   applyInventoryConfirmation,
@@ -1063,6 +1063,37 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     let quantity = resolveDashboardCycleQuantity(cycle, selectedDay, escalations, slotDose)
     const actualLoggedAt = loggedAt ?? cycleLogTimestamp(cycle, selectedDay)
     const scheduledAt = occurrenceAt ?? actualLoggedAt
+    if (FEATURES.planTimelineV2 && !taken) {
+      const timeline = timelines.find(item => item.cycle.id === cycle.id)
+      const resolved = timeline && resolveCycleAt(timeline, new Date(actualLoggedAt), timeZone)
+      const entry = buildConfirmationEntry(buildDashboardRoutineIntake({
+        key: `${cycle.id}@${new Date(scheduledAt).toISOString()}`,
+        cycleId: cycle.id,
+        planVersionId: pendingLog?.plan_version_id ?? resolved?.planVersion?.id ?? cycle.planVersionId ?? null,
+        pendingLogId: pendingLog?.id ?? null,
+        stackItemId: cycle.stack_item_id,
+        stackItemName: cycle.stack_items.display_name,
+        trackingLevel: cycle.stack_items.tracking_level,
+        routineGroup: routineGroupFromMinutes(new Date(scheduledAt).getHours() * 60 + new Date(scheduledAt).getMinutes()),
+        minutes: 0,
+        scheduledAt,
+        dose: quantity.dose,
+        unit: quantity.unit,
+        method: cycle.method,
+      }))
+      try {
+        await skipIntakeGroup(
+          dashboardDataClient as unknown as IntakeConfirmationClient,
+          [{ ...entry, actualLoggedAt }],
+        )
+      } catch {
+        toast.error(t('fehler_speichern'))
+        return
+      }
+      loadLogs(); loadStackItems()
+      toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
+      return
+    }
     if (FEATURES.planTimelineV2 && taken) {
       const timeline = timelines.find(item => item.cycle.id === cycle.id)
       const resolved = timeline && resolveCycleAt(timeline, new Date(actualLoggedAt), timeZone)
@@ -1502,9 +1533,11 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
                 <Check size={11} /> <span className="truncate">{isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}</span>
               </button>
               <button
-                onClick={() => pendingLog
-                  ? confirmDose(pendingLog, false, undefined, resolveDashboardCycleQuantity(c, selectedDay, escalations, slot.dose))
-                  : confirmCycleDose(c, false, slot.scheduledAt, slot.dose)}
+                onClick={() => FEATURES.planTimelineV2
+                  ? confirmCycleDose(c, false, pendingLog?.logged_at ?? slot.scheduledAt, slot.dose, slot.scheduledAt, pendingLog ?? undefined)
+                  : pendingLog
+                    ? confirmDose(pendingLog, false, undefined, resolveDashboardCycleQuantity(c, selectedDay, escalations, slot.dose))
+                    : confirmCycleDose(c, false, slot.scheduledAt, slot.dose)}
                 className="flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-red-500/25 bg-red-500/15 px-2 py-1 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/25">
                 <XCircle size={11} /> <span className="truncate">{t('uebersprungen')}</span>
               </button>

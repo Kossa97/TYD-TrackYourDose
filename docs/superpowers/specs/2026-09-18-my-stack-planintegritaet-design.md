@@ -781,3 +781,36 @@ Dateien, **5.296 Nodes / 9.160 Edges / 852 Communities**; Restart/Recurrence/
 Datumsgrenzen-Query 160 Nodes, Sofortänderungs-Query 168 Nodes. Direkte Call-Kanten
 für TS/Node-Datumsgrenzen und Management zusätzlich geprüft. Generierte Ausgaben
 bleiben committed; bekannte Build-Warnungen, Lint-Backlog und HTML-Limit bleiben.
+
+### Final-Gate-Nachweis: Abdeckung, Lock-Zeit und Skip-Entscheidungen (2026-09-19)
+
+**Nur lokal; keine Produktionsmigration, kein Push.** Eine zukünftige Version darf
+beim Ersetzen nicht hinter `cycle.started_at` verschoben werden, wenn danach keine
+andere Version den Zyklusstart abdeckt. Die geprüfte Reproduktion mit geplantem
+Start am 1. Januar und Ersatzgrenze am 3. Januar wird nun atomar abgelehnt; der
+Resolver liefert am 2. Januar weiterhin die unveränderte initiale Version. Eine
+gleichzeitige Änderung des Zyklusstarts gehört nicht zu dieser Operation.
+
+`replace_future_plan_version` und `remove_future_plan_version` erfassen nach den
+Locks auf Zyklus und Zielversion exakt einen `clock_timestamp()` und verwenden
+ihn für alle End-/Wirksamkeitsprüfungen. Der PostgreSQL-16-Test eröffnet echte
+Remote-Transaktionen nachweislich vor der Zukunftsgrenze, blockiert beide am
+Zyklus-Lock bis nach der Grenze und erwartet anschließend für Remove und Replace
+`Plan version is already effective`; beide Zielversionen bleiben unverändert.
+
+Normalisierte Home-/Dashboard-Skips laufen nicht mehr über direkte `dose_logs`-
+Writes. Das bestehende lifecycle-gesperrte `confirm_intake_group` verarbeitet mit
+dem optionalen strikten Boolean `taken` nun beide Entscheidungen; fehlend bleibt
+für bestehende Clients gleichbedeutend mit `true`. Pending-Zeilen werden weiter
+wiederverwendet, entschiedene Zeilen akzeptieren nur identische idempotente
+Wiederholungen. Ein gültiger Skip speichert `false` mit exaktem Zyklus-/Versions-
+Bezug; ein während eines konkurrierend committen Pause-Vorgangs wartender Skip
+wird danach ohne Zeile abgewiesen. V1 bleibt unverändert.
+
+Gemessene Gates: fokussiert **109/109**, Vollsuite **1.931/1.931 Tests in 162
+Dateien**, Build Exit 0 (4.050 Module, 134 PWA-Einträge), Lint unverändert **145
+Fehler / 17 Warnungen**. Verhaltensfixture plus neue Final-Gate-SQL-Regressionen
+und produktionsnaher Double-Migration-/Double-Enforcement-Dry-Run bestanden.
+Graphify wurde nach den Quelländerungen aktualisiert und fokussiert abgefragt;
+generierte Ausgaben bleiben im Commit. Bestehende Build-Warnungen und Lint-Schuld
+bleiben; der SQL-Rollout erfordert weiterhin separate Produktionsfreigabe.

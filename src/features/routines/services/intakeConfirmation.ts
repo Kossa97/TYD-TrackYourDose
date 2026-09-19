@@ -20,6 +20,7 @@ interface ConfirmIntakeGroupRpcEntry {
   unit: string | null
   method: string
   logged_at: string
+  taken: boolean
 }
 
 interface ConfirmIntakeGroupRpcParams {
@@ -49,9 +50,10 @@ export function quantifiedVialEntries(
   ))
 }
 
-export async function confirmIntakeGroup(
+async function decideIntakeGroup(
   client: IntakeConfirmationClient,
   entries: RoutineConfirmationEntry[],
+  taken: boolean,
 ): Promise<string[]> {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
   const p_entries = entries
@@ -67,10 +69,25 @@ export async function confirmIntakeGroup(
       unit: entry.trackingLevel === 'intake_only' ? null : entry.actualUnit,
       method: entry.method,
       logged_at: entry.actualLoggedAt ?? entry.scheduledAt,
+      taken,
     }))
 
   const { data, error } = await client.rpc('confirm_intake_group', { p_entries })
   if (error) throw new Error(error.message)
   if (!data) throw new Error('confirm_intake_group returned no data')
   return data.map(row => row.id)
+}
+
+export function confirmIntakeGroup(
+  client: IntakeConfirmationClient,
+  entries: RoutineConfirmationEntry[],
+): Promise<string[]> {
+  return decideIntakeGroup(client, entries, true)
+}
+
+export function skipIntakeGroup(
+  client: IntakeConfirmationClient,
+  entries: RoutineConfirmationEntry[],
+): Promise<string[]> {
+  return decideIntakeGroup(client, entries, false)
 }

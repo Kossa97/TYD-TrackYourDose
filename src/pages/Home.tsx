@@ -47,7 +47,7 @@ import {
   type RoutineGroupModel,
   type RoutineIntake,
 } from '../features/routines/intakeGroups'
-import { confirmIntakeGroup, quantifiedVialEntries, type IntakeConfirmationClient } from '../features/routines/services/intakeConfirmation'
+import { confirmIntakeGroup, quantifiedVialEntries, skipIntakeGroup, type IntakeConfirmationClient } from '../features/routines/services/intakeConfirmation'
 import { RoutineConfirmationSheet } from '../features/routines/components/RoutineConfirmationSheet'
 import {
   applyInventoryConfirmation,
@@ -811,28 +811,14 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
           routineSlotKey: FEATURES.planTimelineV2 ? intake.key : null,
         })
         if (FEATURES.planTimelineV2) {
-          const columns = 'id, user_id, stack_item_id, cycle_id, plan_version_id, routine_slot_key, logged_at, taken'
-          const result = intake.pendingLogId
-            ? await homeDataClient.from('dose_logs').update(payload).eq('id', intake.pendingLogId)
-              .eq('user_id', user.id).eq('stack_item_id', intake.stackItemId).is('taken', null).select(columns).maybeSingle()
-            : await homeDataClient.from('dose_logs').insert(payload).select(columns).single()
-          const stableRetry = result.error?.code === '23505'
-            && result.error.message.includes('dose_logs_routine_slot_unique')
-          if (result.error && !stableRetry) throw result.error
-          let saved = result.data
-          if (stableRetry || !saved) {
-            const existing = await homeDataClient.from('dose_logs').select(columns)
-              .eq('user_id', user.id).eq('routine_slot_key', intake.key).maybeSingle()
-            if (existing.error) throw existing.error
-            saved = existing.data
-          }
-          if (!saved || (intake.pendingLogId && saved.id !== intake.pendingLogId)
-            || saved.user_id !== payload.user_id || saved.stack_item_id !== payload.stack_item_id
-            || saved.cycle_id !== payload.cycle_id || saved.plan_version_id !== payload.plan_version_id
-            || saved.routine_slot_key !== payload.routine_slot_key || saved.taken !== false
-            || Date.parse(saved.logged_at) !== Date.parse(payload.logged_at)) {
-            throw new Error('Skipped intake conflicts with the saved row')
-          }
+          await skipIntakeGroup(
+            homeDataClient as unknown as IntakeConfirmationClient,
+            [{
+              ...buildConfirmationEntry(buildHomeRoutineIntake(intake)),
+              planVersionId: skipPlanVersionId ?? null,
+              actualLoggedAt: skippedAt,
+            }],
+          )
         } else {
           const { error } = await homeDataClient.from('dose_logs').insert(payload)
           if (error) throw error

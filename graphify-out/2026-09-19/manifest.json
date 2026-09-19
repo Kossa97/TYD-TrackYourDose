@@ -885,13 +885,13 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.test.ts": {
-    "mtime": 1789839169.7005887,
-    "ast_hash": "4b1d1cea78704da5ef51a963d41a5842",
+    "mtime": 1789853273.2792428,
+    "ast_hash": "410f4be11a577c1f2433a6eb9012dfe9",
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
-    "mtime": 1789839193.1050692,
-    "ast_hash": "7b8f9a044fcda2e15aa7b2e3a39c4ef9",
+    "mtime": 1789853751.785823,
+    "ast_hash": "e6df5f32f681c337c1b406dd8bded0db",
     "semantic_hash": ""
   },
   "src/pages/FAQ.tsx": {
@@ -905,13 +905,13 @@
     "semantic_hash": ""
   },
   "src/pages/Home.test.ts": {
-    "mtime": 1789836819.533515,
-    "ast_hash": "af62c0561181439f91b0d5f957486147",
+    "mtime": 1789853234.3146574,
+    "ast_hash": "6927ba7b4dac1a5013ac4d29b03fe156",
     "semantic_hash": ""
   },
   "src/pages/Home.tsx": {
-    "mtime": 1789823069.1046603,
-    "ast_hash": "855199b352833de00404e409e4fd7f03",
+    "mtime": 1789853540.5406532,
+    "ast_hash": "f9c212f10bacbe7df394d5dc1ce3807f",
     "semantic_hash": ""
   },
   "src/pages/InjektionsTracker.test.ts": {
@@ -2690,13 +2690,13 @@
     "semantic_hash": ""
   },
   "src/features/routines/services/intakeConfirmation.test.ts": {
-    "mtime": 1789820569.67537,
-    "ast_hash": "348b315d41724e7efffcb10e11b7fcad",
+    "mtime": 1789853185.2841733,
+    "ast_hash": "f14a9b1e2cee52a9edf8fc2d9a884f4e",
     "semantic_hash": ""
   },
   "src/features/routines/services/intakeConfirmation.ts": {
-    "mtime": 1789820946.4563375,
-    "ast_hash": "68547119a7c997febfd0971ead6092e8",
+    "mtime": 1789853510.292194,
+    "ast_hash": "5444fd69d95eef6491b5c1886d978718",
     "semantic_hash": ""
   },
   "src/i18n/data/my-stack-i18n.json": {
@@ -3458,7 +3458,7 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789850610.2882943,
+    "mtime": 1789853791.150495,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -3783,8 +3783,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/planIntegritySchema.test.ts": {
-    "mtime": 1789831116.1879675,
-    "ast_hash": "8a2ca1bf23f532300311972017b5d7cc",
+    "mtime": 1789853690.1226964,
+    "ast_hash": "1e9126a7c54e53ccd592062a01d3f96e",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/planLifecycle.test.ts": {
@@ -3823,8 +3823,8 @@
     "semantic_hash": ""
   },
   "supabase-my-stack-plan-integrity.sql": {
-    "mtime": 1789850418.3067706,
-    "ast_hash": "d544f635a757032d151ff6a9a00b9c27",
+    "mtime": 1789853498.9112358,
+    "ast_hash": "3b1ad0594ad930e8f27f84c754e4fcf8",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-09-18-my-stack-planintegritaet.md": {
@@ -3833,8 +3833,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-18-my-stack-planintegritaet-design.md": {
-    "mtime": 1789841445.5559268,
-    "ast_hash": "56995d9b971034e4e3966eaea182f540",
+    "mtime": 1789851160.7691233,
+    "ast_hash": "d6cfc2b3803cf9faf214fd3887741fd3",
     "semantic_hash": ""
   },
   "scripts/sql/my-stack-final-boundaries.test.sql": {
@@ -3868,13 +3868,18 @@
     "semantic_hash": ""
   },
   "scripts/sql/my-stack-temporal-policy.test.sql": {
-    "mtime": 1789850570.3601458,
-    "ast_hash": "59e9382f0235034f60cde7ba997dcf0f",
+    "mtime": 1789851932.4324193,
+    "ast_hash": "96013cb140c032f0ea492e4a7694831a",
     "semantic_hash": ""
   },
   "scripts/verify-my-stack-restart.mjs": {
     "mtime": 1789850312.1372747,
     "ast_hash": "066bbcc8ca64e8eb628a14c2a1eedd69",
+    "semantic_hash": ""
+  },
+  "scripts/sql/my-stack-final-gate-regressions.test.sql": {
+    "mtime": 1789853357.6434207,
+    "ast_hash": "2ff3eee67f18339eddacd0e80f8e4701",
     "semantic_hash": ""
   }
 }
