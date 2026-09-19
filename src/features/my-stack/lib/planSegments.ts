@@ -1,5 +1,11 @@
 import { format } from 'date-fns'
 import type { ScheduleCycle, ScheduleSegment } from '../../../lib/intakeSchedule'
+import {
+  localDateTimeKey,
+  resolveCycleAt,
+  type CyclePlanVersion,
+  type CycleTimeline,
+} from '../../../lib/planTimeline'
 
 /**
  * Was ab wann gilt.
@@ -18,6 +24,44 @@ export interface PlanSegment {
   segment: ScheduleSegment
   effectiveFrom: string
   status: SegmentStatus
+}
+
+export interface PlanVersionSegment {
+  version: CyclePlanVersion
+  effectiveFrom: string
+  status: SegmentStatus
+}
+
+function versionBoundary(version: CyclePlanVersion, timeZone: string): string {
+  if (version.effective_kind === 'local_date' && version.effective_local_date) {
+    return `${version.effective_local_date}|00:00:00`
+  }
+  if (version.effective_kind === 'instant' && version.effective_at) {
+    return localDateTimeKey(new Date(version.effective_at), timeZone)
+  }
+  throw new Error(`Invalid boundary for plan version ${version.id}`)
+}
+
+export function planVersionSegments(
+  timeline: CycleTimeline,
+  day: Date = new Date(),
+  timeZone = 'UTC',
+): PlanVersionSegment[] {
+  const currentId = resolveCycleAt(timeline, day, timeZone).planVersion?.id ?? null
+  const nowKey = localDateTimeKey(day, timeZone)
+  return timeline.versions
+    .map(version => ({ version, effectiveFrom: versionBoundary(version, timeZone) }))
+    .sort((left, right) => (
+      left.effectiveFrom.localeCompare(right.effectiveFrom)
+      || left.version.id.localeCompare(right.version.id)
+    ))
+    .map(({ version, effectiveFrom }) => ({
+      version,
+      effectiveFrom,
+      status: version.id === currentId
+        ? 'current'
+        : effectiveFrom > nowKey ? 'future' : 'past',
+    }))
 }
 
 /** Der flache Zyklus als Stufe — der Zustand vor der ersten Aenderung. */

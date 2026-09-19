@@ -167,6 +167,42 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_plan_step_remove',
   'my_stack_plan_step_removed',
   'my_stack_plan_step_remove_failed',
+  'my_stack_plan_management',
+  'my_stack_plan_status_planned',
+  'my_stack_plan_status_active',
+  'my_stack_plan_status_paused',
+  'my_stack_plan_status_ended',
+  'my_stack_plan_history',
+  'my_stack_plan_restart',
+  'my_stack_plan_dose',
+  'my_stack_plan_rhythm_label',
+  'my_stack_plan_next_intake',
+  'my_stack_plan_next_intake_none',
+  'my_stack_plan_next_change',
+  'my_stack_plan_adjust_dose',
+  'my_stack_plan_adjust_schedule',
+  'my_stack_plan_future_changes',
+  'my_stack_plan_edit_future',
+  'my_stack_plan_remove_future',
+  'my_stack_plan_pause',
+  'my_stack_plan_resume',
+  'my_stack_plan_pause_end',
+  'my_stack_plan_end',
+  'my_stack_plan_action_error',
+  'my_stack_plan_restart_error',
+  'my_stack_plan_pause_title',
+  'my_stack_plan_pause_end_title',
+  'my_stack_plan_remove_future_title',
+  'my_stack_plan_end_title',
+  'my_stack_plan_pause_confirm',
+  'my_stack_plan_pause_end_confirm',
+  'my_stack_plan_remove_future_confirm',
+  'my_stack_plan_end_confirm',
+  'my_stack_plan_pause_neutral',
+  'my_stack_plan_pause_until_optional',
+  'my_stack_plan_pause_until',
+  'my_stack_plan_end_copy',
+  'my_stack_plan_remove_future_copy',
   'my_stack_plan_section_period',
   'my_stack_plan_section_when',
   'my_stack_plan_section_each',
@@ -433,6 +469,21 @@ describe('My Stack DE/EN locale contract', () => {
     }
     expect(MY_STACK_EN.kein_peptid).toBe('No substance assigned')
     expect(MY_STACK_DE.kein_peptid).toBe('Keine Substanz zugeordnet')
+  })
+
+  it('ships polished German and English plan lifecycle copy', async () => {
+    const { MY_STACK_DE, MY_STACK_EN } = await loadSource()
+
+    expect(MY_STACK_DE.my_stack_plan_adjust_dose).toBe('Dosis anpassen')
+    expect(MY_STACK_DE.my_stack_plan_adjust_schedule).toBe('Plan anpassen')
+    expect(MY_STACK_DE.my_stack_plan_pause_neutral).toBe('Während der Pause ist keine Einnahme fällig.')
+    expect(MY_STACK_DE.my_stack_plan_end_copy).toContain('Verlauf bleibt erhalten')
+    expect(MY_STACK_DE.my_stack_plan_action_error).toContain('Bitte versuche es erneut')
+    expect(MY_STACK_EN.my_stack_plan_adjust_dose).toBe('Adjust dose')
+    expect(MY_STACK_EN.my_stack_plan_adjust_schedule).toBe('Adjust schedule')
+    expect(MY_STACK_EN.my_stack_plan_pause_neutral).toBe('No intake is due while the plan is paused.')
+    expect(MY_STACK_EN.my_stack_plan_end_copy).toContain('history remains available')
+    expect(MY_STACK_EN.my_stack_plan_action_error).toContain('Please try again')
   })
 
   it.each(localeCodes)('keeps locale %s complete, token-safe, and unchanged outside the overlay', async (code) => {

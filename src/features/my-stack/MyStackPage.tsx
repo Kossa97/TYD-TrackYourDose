@@ -31,7 +31,7 @@ import { produktAngaben, type Angabe, type Zutat } from './lib/produktAngaben'
 import { StageFit } from './components/StageFit'
 import { StackStage } from './components/StackStage'
 import { StackArchive } from './components/StackArchive'
-import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, saveStackItemSetup, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
+import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, savePlanChange, saveStackItemSetup, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
@@ -45,6 +45,26 @@ import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMi
 import { backfillMessageKey, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
 import { DoseUnitControl } from './components/DoseUnitControl'
 import { VialTrackingEditor, emptyVialTrackingDraft, type PkProfileOption, type VialTrackingDraft } from './extensions/peptide/VialTrackingEditor'
+import { FEATURES } from '../../config/features'
+import { PlanManagementSection } from './components/PlanManagementSection'
+import {
+  endCycle as endTimelineCycle,
+  loadCycleTimelines,
+  pauseCycle,
+  removeFuturePlanVersion,
+  restartCycle,
+  resumeCycle,
+  setPauseEnd,
+} from './services/planLifecycle'
+import {
+  localDateTimeKey,
+  resolveCycleAt,
+  type CyclePlanVersion,
+  type CycleTimeline,
+  type PlanChangeKind,
+  type PlanScheduleSnapshot,
+} from '../../lib/planTimeline'
+import type { PlanChangeSubmission, PlanEditContext } from './lib/wizardState'
 
 interface InventoryItem {
   id: string; user_id: string; name: string
@@ -458,6 +478,77 @@ function cycleAsIntakePlanDraft(cycle: Cycle, day: Date): IntakePlanDraft {
   }
 }
 
+function versionAsIntakePlanDraft(
+  timeline: CycleTimeline,
+  version: CyclePlanVersion,
+  timeZone: string,
+): IntakePlanDraft {
+  const slotKeys = version.intake_time.split(',').map(key => key.trim()).filter(Boolean)
+  const slotTimes = (version.intake_time_custom ?? '').split(',').map(time => time.trim())
+  const slotDoses = (version.slot_doses ?? '').split(',').map(value => value.trim())
+  const slotDays = (version.slot_days ?? '').split(',')
+  const slots: IntakeSlotDraft[] = slotKeys.map((key, index) => {
+    const ownDose = Number(slotDoses[index])
+    return {
+      routineGroup: INTAKE_TIME_TO_ROUTINE_GROUP[key] ?? 'morning',
+      time: slotTimes[index] || null,
+      dose: (slotDoses[index] ?? '') !== '' && Number.isFinite(ownDose) ? ownDose : version.dose,
+      weekdays: (slotDays[index] ?? '').split('|').map(day => day.trim()).filter(Boolean),
+    }
+  })
+  const frequency = {
+    daily: 'Täglich',
+    weekdays: 'Wochentage wählen',
+    interval: 'Alle X Tage',
+    cycle: 'Im Wechsel',
+    on_demand: 'Bei Bedarf',
+  }[version.frequency] ?? version.frequency
+  const startDate = version.effective_kind === 'local_date'
+    ? version.effective_local_date ?? localDateTimeKey(new Date(timeline.cycle.started_at), timeZone).slice(0, 10)
+    : localDateTimeKey(new Date(version.effective_at ?? timeline.cycle.started_at), timeZone).slice(0, 10)
+
+  return {
+    id: version.id,
+    name: 'Einnahmeplan',
+    unit: version.unit,
+    method: version.method,
+    rhythm: rhythmFromStorage({
+      frequency,
+      x_days_interval: version.x_days_interval,
+      interval_unit: version.interval_unit,
+      cycle_on_days: version.cycle_on_days,
+      cycle_off_days: version.cycle_off_days,
+      schedule_days: version.schedule_days,
+    }),
+    startDate,
+    endDate: timeline.cycle.ended_at
+      ? localDateTimeKey(new Date(timeline.cycle.ended_at), timeZone).slice(0, 10)
+      : null,
+    slots: slots.length > 0
+      ? slots
+      : [{ routineGroup: 'morning', time: null, dose: version.dose, weekdays: [] }],
+    reminders: [],
+  }
+}
+
+function versionSnapshot(version: CyclePlanVersion): PlanScheduleSnapshot {
+  return {
+    frequency: version.frequency,
+    x_days_interval: version.x_days_interval,
+    interval_unit: version.interval_unit,
+    cycle_on_days: version.cycle_on_days,
+    cycle_off_days: version.cycle_off_days,
+    schedule_days: version.schedule_days,
+    intake_time: version.intake_time,
+    intake_time_custom: version.intake_time_custom,
+    slot_doses: version.slot_doses,
+    slot_days: version.slot_days,
+    dose: version.dose,
+    unit: version.unit,
+    method: version.method,
+  }
+}
+
 // Empty "ghost" vial that adds a new substance when clicked.
 function AddVialTile({ onClick, label, active = false, obKey }: { onClick: () => void; label: string; active?: boolean; obKey?: string }) {
   return (
@@ -514,6 +605,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [initialLoad, setInitialLoad]         = useState(true)
   const [loaderFading, setLoaderFading]       = useState(false)
   const [cycles, setCycles]                   = useState<Cycle[]>([])
+  const [cycleTimelines, setCycleTimelines]   = useState<CycleTimeline[]>([])
   const [expandedId, setExpandedId]           = useState<string | null>(null)
   const [showPeptideForm, setShowPeptideForm] = useState(false)
   const [editingPeptideId, setEditingPeptideId] = useState<string | null>(null)
@@ -521,6 +613,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [catalogUnavailable, setCatalogUnavailable] = useState(false)
   const [wizardInitialColor, setWizardInitialColor] = useState('')
   const [wizardIntent, setWizardIntent] = useState<'pk' | 'plan' | undefined>()
+  const [wizardCycleId, setWizardCycleId] = useState<string | null>(null)
+  const [planEditContext, setPlanEditContext] = useState<PlanEditContext | null>(null)
+  const planSaveIdempotencyKeyRef = useRef<string | null>(null)
+  const lifecycleIdempotencyKeysRef = useRef(new Map<string, string>())
   // Ein zweiter Plan statt einer Aenderung am bestehenden.
   const [wizardNeuerZyklus, setWizardNeuerZyklus] = useState(false)
   const [infoPeptide, setInfoPeptide]         = useState<Peptide | null>(null)
@@ -563,6 +659,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const vialLastScrollLeftRef = useRef(0)
   const vialLastScrollTimeRef = useRef(0)
   const [animationEpoch, setAnimationEpoch] = useState(0)
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
 
   // ── Zyklen ────────────────────────────────────────────────────────────────
   const [cycleManagerPeptide, setCycleManagerPeptide] = useState<Peptide | null>(null)
@@ -688,6 +785,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const { data } = await stackDataClient.from('cycles').select('*').eq('user_id', user!.id)
     if (data) setCycles(data as Cycle[])
   }
+  const loadTimelines = async () => {
+    if (!FEATURES.planTimelineV2) return
+    setCycleTimelines(await loadCycleTimelines(stackDataClient as never, user!.id))
+  }
   const loadEscalations = async () => {
     const { data } = await supabase.from('dose_escalations').select('*').eq('user_id', user!.id).order('start_after_days').order('start_date')
     if (data) setEscalations(data as Escalation[])
@@ -699,7 +800,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     let cancelled = false
     let fadeTimer: number | undefined
 
-    Promise.all([loadInventory(), loadPeptides(), loadCycles(), loadEscalations(), searchSubstanceCatalog(supabase as never, '').then(result => { setCatalogEntries(current => mergeCatalogEntries(current, result.entries)); setCatalogUnavailable(result.unavailable) })])
+    Promise.all([loadInventory(), loadPeptides(), loadCycles(), loadTimelines(), loadEscalations(), searchSubstanceCatalog(supabase as never, '').then(result => { setCatalogEntries(current => mergeCatalogEntries(current, result.entries)); setCatalogUnavailable(result.unavailable) })])
       .finally(() => {
         if (cancelled) return
         setLoading(false)
@@ -722,6 +823,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   useEffect(() => {
     if (location.hash !== '#new-substance') return
     setEditingPeptideId(null)
+    setWizardCycleId(null)
+    setPlanEditContext(null)
     setWizardIntent(undefined)
     setWizardInitialColor(getRandomStackItemColor())
     setShowPeptideForm(true)
@@ -736,6 +839,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     if (!stackItemId || !peptides.some(item => item.id === stackItemId)) return
 
     setEditingPeptideId(stackItemId)
+    setWizardCycleId(null)
+    setPlanEditContext(null)
     setWizardInitialColor('')
     setWizardIntent('pk')
     setShowPeptideForm(true)
@@ -827,12 +932,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         ? b.created_at.localeCompare(a.created_at)
         : (a.active ? -1 : 1))
   const escalationsOf = (cid: string) => escalations.filter(e => e.cycle_id === cid)
-  const activePlanFor = (stackItemId: string): IntakePlanDraft | undefined => {
-    const activeCycle = cycles
-      .filter(cycle => cycle.stack_item_id === stackItemId && cycle.active)
-      .sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
-    return activeCycle ? cycleAsIntakePlanDraft(activeCycle, new Date()) : undefined
-  }
+  const timelinesOf = (stackItemId: string) => cycleTimelines.filter(
+    timeline => timeline.cycle.stack_item_id === stackItemId,
+  )
 
   // ── Inventar Bestand anpassen ─────────────────────────────────────────────
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -874,6 +976,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   // ── Peptid CRUD ───────────────────────────────────────────────────────────
   const handleNewPeptide = () => {
     setEditingPeptideId(null)
+    setWizardCycleId(null)
+    setPlanEditContext(null)
     setWizardIntent(undefined)
     setWizardInitialColor(getRandomStackItemColor())
     setShowPeptideForm(true)
@@ -881,6 +985,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
   const openEditPeptide = (p: Peptide) => {
     setEditingPeptideId(p.id)
+    setWizardCycleId(null)
+    setPlanEditContext(null)
     setWizardIntent(undefined)
     setWizardInitialColor('')
     setShowPeptideForm(true)
@@ -1061,6 +1167,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
    */
   const openNewCycle = (p: Peptide) => {
     setEditingPeptideId(p.id)
+    setWizardCycleId(null)
+    setPlanEditContext(null)
     setWizardInitialColor('')
     setWizardIntent('plan')
     setWizardNeuerZyklus(true)
@@ -1099,13 +1207,171 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
    * `save_stack_item_with_plan`: ein Schreibweg, eine Pruefung, eine
    * Segmentlogik.
    */
-  const openEditCycle = (p: Peptide) => {
+  const openEditCycle = (
+    p: Peptide,
+    cycleId: string,
+    versionId?: string,
+    changeKind: Exclude<PlanChangeKind, 'initial'> = 'schedule',
+  ) => {
+    const timeline = cycleTimelines.find(candidate => candidate.cycle.id === cycleId)
+    if (FEATURES.planTimelineV2 && timeline) {
+      const selectedVersion = versionId
+        ? timeline.versions.find(version => version.id === versionId)
+        : resolveCycleAt(timeline, new Date(), timeZone).planVersion
+      if (!selectedVersion) return
+      setPlanEditContext({
+        target: versionId
+          ? { cycleId, versionId, mode: 'replace_future' }
+          : { cycleId, versionId: null, mode: 'new_change' },
+        snapshot: versionAsIntakePlanDraft(timeline, selectedVersion, timeZone),
+        changeKind,
+        timeZone,
+        initialEffective: versionId
+          ? { kind: 'date', localDate: selectedVersion.effective_local_date }
+          : { kind: 'now', localDate: null },
+      })
+      setWizardCycleId(null)
+      planSaveIdempotencyKeyRef.current = globalThis.crypto.randomUUID()
+    } else {
+      if (!cycles.some(cycle => cycle.id === cycleId && cycle.stack_item_id === p.id)) return
+      setWizardCycleId(cycleId)
+      setPlanEditContext(null)
+    }
     setEditingPeptideId(p.id)
     setWizardInitialColor('')
     setWizardNeuerZyklus(false)
     setWizardIntent('plan')
     setShowPeptideForm(true)
   }
+
+  const replaceTimeline = (next: CycleTimeline) => {
+    setCycleTimelines(current => current.map(timeline => (
+      timeline.cycle.id === next.cycle.id ? next : timeline
+    )))
+  }
+
+  const lifecycleKey = (action: string, targetId: string) => {
+    const identity = `${action}:${targetId}`
+    const existing = lifecycleIdempotencyKeysRef.current.get(identity)
+    if (existing) return { identity, key: existing }
+    const key = globalThis.crypto.randomUUID()
+    lifecycleIdempotencyKeysRef.current.set(identity, key)
+    return { identity, key }
+  }
+
+  const completeLifecycleMutation = (identity: string, next: CycleTimeline) => {
+    lifecycleIdempotencyKeysRef.current.delete(identity)
+    replaceTimeline(next)
+  }
+
+  const saveVersionChange = async (submission: PlanChangeSubmission) => {
+    await savePlanChange(
+      stackDataClient as never,
+      submission.target,
+      submission.snapshot,
+      submission.effective,
+      {
+        changeKind: submission.changeKind,
+        idempotencyKey: planSaveIdempotencyKeyRef.current ?? globalThis.crypto.randomUUID(),
+        timeZone: submission.timeZone,
+      },
+    )
+    planSaveIdempotencyKeyRef.current = null
+    await loadTimelines()
+  }
+
+  const removeFutureVersion = async (version: CyclePlanVersion) => {
+    const mutation = lifecycleKey('remove-version', version.id)
+    await removeFuturePlanVersion(stackDataClient as never, {
+      versionId: version.id,
+      timeZone,
+      idempotencyKey: mutation.key,
+    })
+    lifecycleIdempotencyKeysRef.current.delete(mutation.identity)
+    await loadTimelines()
+  }
+
+  const pauseTimeline = async (timeline: CycleTimeline, endsAt: string | null) => {
+    const mutation = lifecycleKey('pause', timeline.cycle.id)
+    const next = await pauseCycle(stackDataClient as never, {
+      cycleId: timeline.cycle.id,
+      endsAt,
+      idempotencyKey: mutation.key,
+    })
+    completeLifecycleMutation(mutation.identity, next)
+  }
+
+  const setTimelinePauseEnd = async (timeline: CycleTimeline, endsAt: string | null) => {
+    const pause = resolveCycleAt(timeline, new Date(), timeZone).pause
+    if (!pause || !endsAt) throw new Error('An active pause and end date are required')
+    const mutation = lifecycleKey('pause-end', pause.id)
+    const next = await setPauseEnd(stackDataClient as never, {
+      pauseId: pause.id,
+      endsAt,
+      idempotencyKey: mutation.key,
+    })
+    completeLifecycleMutation(mutation.identity, next)
+  }
+
+  const resumeTimeline = async (timeline: CycleTimeline) => {
+    const mutation = lifecycleKey('resume', timeline.cycle.id)
+    const next = await resumeCycle(stackDataClient as never, {
+      cycleId: timeline.cycle.id,
+      idempotencyKey: mutation.key,
+    })
+    completeLifecycleMutation(mutation.identity, next)
+  }
+
+  const finishTimeline = async (timeline: CycleTimeline) => {
+    const mutation = lifecycleKey('end', timeline.cycle.id)
+    const next = await endTimelineCycle(stackDataClient as never, {
+      cycleId: timeline.cycle.id,
+      idempotencyKey: mutation.key,
+    })
+    completeLifecycleMutation(mutation.identity, next)
+  }
+
+  const restartTimeline = async (timeline: CycleTimeline) => {
+    const source = resolveCycleAt(timeline, new Date(), timeZone).planVersion
+    if (!source) return
+    const mutation = lifecycleKey('restart', timeline.cycle.id)
+    try {
+      const next = await restartCycle(stackDataClient as never, {
+        sourceCycleId: timeline.cycle.id,
+        startedAt: new Date().toISOString(),
+        initialSchedule: versionSnapshot(source),
+        idempotencyKey: mutation.key,
+      })
+      completeLifecycleMutation(mutation.identity, next)
+    } catch {
+      toast.error(String(t('my_stack_plan_restart_error', {
+        defaultValue: 'Der Plan konnte nicht neu gestartet werden. Bitte versuche es erneut.',
+      })))
+    }
+  }
+
+  const planManagementSection = (p: Peptide, timeline: CycleTimeline) => (
+    <PlanManagementSection
+      key={timeline.cycle.id}
+      timeline={timeline}
+      now={new Date()}
+      timeZone={timeZone}
+      onAdjustDose={() => openEditCycle(p, timeline.cycle.id, undefined, 'dose')}
+      onAdjustSchedule={() => openEditCycle(p, timeline.cycle.id, undefined, 'schedule')}
+      onEditFuture={version => openEditCycle(
+        p,
+        timeline.cycle.id,
+        version.id,
+        version.change_kind === 'initial' ? 'schedule' : version.change_kind,
+      )}
+      onRemoveFuture={removeFutureVersion}
+      onPause={endsAt => pauseTimeline(timeline, endsAt)}
+      onSetPauseEnd={endsAt => setTimelinePauseEnd(timeline, endsAt)}
+      onResume={() => resumeTimeline(timeline)}
+      onEnd={() => finishTimeline(timeline)}
+      onRestart={() => { void restartTimeline(timeline) }}
+    />
+  )
   const toggleCycleActive = async (c: Cycle) => {
     await supabase.from('cycles').update({ active: !c.active }).eq('id', c.id)
     toast.success(c.active ? t('zyklus_deaktiviert') : t('zyklus_aktiviert'))
@@ -2516,6 +2782,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             <SloshProvider engine={sloshEngine}>
             {listPeptides.map(p => {
               const pCycles   = cyclesOf(p.id)
+              const pTimelines = timelinesOf(p.id)
+              const planCount = FEATURES.planTimelineV2 ? pTimelines.length : pCycles.length
               const isOpen    = expandedId === p.id
               const hasActive = pCycles.some(c => c.active)
               const stageRenderable = isStageRenderable(p.dosage_form)
@@ -2649,7 +2917,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                       onClick={() => setExpandedId(isOpen ? null : p.id)}
                       className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors">
                       {isOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                      {pCycles.length > 0 ? (pCycles.length === 1 ? t('zyklus_count_one') : t('zyklus_count_many', { n: pCycles.length })) : t('keine_zyklen')}
+                      {planCount > 0 ? (planCount === 1 ? t('zyklus_count_one') : t('zyklus_count_many', { n: planCount })) : t('keine_zyklen')}
                     </button>
                     <button
                       data-ob="btn-zyklus-add"
@@ -2668,15 +2936,16 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                           <CalendarDays size={14} className="text-violet-400" /> {t('zyklen_header')}
                         </span>
                       </div>
-                      {pCycles.length === 0 && (
+                      {planCount === 0 && (
                         <p className="text-slate-500 text-sm text-center py-4">
                           {t('noch_kein_zyklus')}
                         </p>
                       )}
-                      {pCycles.map(c => {
+                      {FEATURES.planTimelineV2 && pTimelines.map(timeline => planManagementSection(p, timeline))}
+                      {!FEATURES.planTimelineV2 && pCycles.map(c => {
                         const pEscs = escalationsOf(c.id)
                         return (
-                          <div key={c.id} className={`rounded-xl border ${c.active ? 'border-violet-500/30 bg-violet-500/5' : 'border-slate-800 opacity-60'}`}>
+                          <div data-cycle-id={c.id} key={c.id} className={`rounded-xl border ${c.active ? 'border-violet-500/30 bg-violet-500/5' : 'border-slate-800 opacity-60'}`}>
                             <div className="flex items-start justify-between gap-2 p-3">
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-white truncate">{c.name}</p>
@@ -2711,8 +2980,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                     <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-200 ${c.active ? 'left-4' : 'left-0.5'}`} />
                                   </div>
                                 </button>
-                                <button className="p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
-                                  onClick={() => openEditCycle(p)}><Pencil size={13} /></button>
+                                <button
+                                  className="p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
+                                  aria-label={t('bearbeiten')}
+                                  onClick={() => openEditCycle(p, c.id)}
+                                ><Pencil size={13} /></button>
                                 <button className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"
                                   onClick={() => removeCycle(c.id)}><Trash2 size={13} /></button>
                               </div>
@@ -2758,7 +3030,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                               <div className="mt-2">
                                 <DosePlanActions
                                   trackingLevel={p.tracking_level}
-                                  onPermanent={() => openEditCycle(p)}
+                                  onPermanent={() => openEditCycle(p, c.id)}
                                   onTitration={() => openNewEsc(c)}
                                 />
                               </div>
@@ -2777,7 +3049,42 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       </div>
 
       {/* ZYKLUS-MANAGER */}
-      {cycleManagerPeptide && (() => {
+      {cycleManagerPeptide && FEATURES.planTimelineV2 && (
+        <div className="fixed inset-0 z-50 flex justify-center bg-slate-950" data-app-modal>
+          <div className="flex h-full w-full max-w-lg flex-col overflow-hidden bg-slate-950">
+            <div className="shrink-0 border-b border-slate-800 px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-violet-300">
+                    {t('my_stack_plan_management', { defaultValue: 'Einnahmeplan' })}
+                  </p>
+                  <h2 className="mt-1 truncate text-lg font-bold text-white">{cycleManagerPeptide.name}</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCycleManagerPeptide(null)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 transition-colors hover:border-slate-600 hover:text-white"
+                  aria-label={t('close')}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+              {timelinesOf(cycleManagerPeptide.id).map(timeline => (
+                planManagementSection(cycleManagerPeptide, timeline)
+              ))}
+              {timelinesOf(cycleManagerPeptide.id).length === 0 && (
+                <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
+                  <p className="text-sm font-semibold text-white">{t('noch_kein_zyklus')}</p>
+                  <p className="mt-1 text-xs text-slate-500">{t('noch_kein_zyklus_desc')}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {cycleManagerPeptide && !FEATURES.planTimelineV2 && (() => {
         const managerCycles = cyclesOf(cycleManagerPeptide.id)
         const activeCycles = managerCycles.filter(c => c.active)
         const inactiveCycles = managerCycles.filter(c => !c.active)
@@ -2786,7 +3093,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
-              onClick={() => { openEditCycle(cycleManagerPeptide); setCycleManagerPeptide(null) }}
+              onClick={() => { openEditCycle(cycleManagerPeptide, c.id); setCycleManagerPeptide(null) }}
               aria-label={t('bearbeiten')}
               className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-800 bg-slate-950 text-slate-400 transition-colors hover:border-sky-500/40 hover:text-sky-300"
             >
@@ -2915,7 +3222,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   })}
                   <DosePlanActions
                     trackingLevel={cycleManagerPeptide.tracking_level}
-                    onPermanent={() => { openEditCycle(cycleManagerPeptide); setCycleManagerPeptide(null) }}
+                    onPermanent={() => { openEditCycle(cycleManagerPeptide, c.id); setCycleManagerPeptide(null) }}
                     onTitration={() => { openNewEsc(c); setCycleManagerPeptide(null) }}
                   />
                 </div>
@@ -3091,13 +3398,27 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           catalogUnavailable={catalogUnavailable}
           existingItems={peptides}
           existingItem={editingPeptideId ? peptides.find(item => item.id === editingPeptideId) : undefined}
-          existingPlan={editingPeptideId && !wizardNeuerZyklus ? activePlanFor(editingPeptideId) : undefined}
+          {...(planEditContext
+            ? { planEditContext, onSavePlanChange: saveVersionChange }
+            : {
+                existingPlan: editingPeptideId && wizardCycleId && !wizardNeuerZyklus
+                  ? cycles.find(cycle => cycle.id === wizardCycleId && cycle.stack_item_id === editingPeptideId)
+                    ? cycleAsIntakePlanDraft(
+                        cycles.find(cycle => cycle.id === wizardCycleId && cycle.stack_item_id === editingPeptideId)!,
+                        new Date(),
+                      )
+                    : undefined
+                  : undefined,
+              })}
           initialColorHex={wizardInitialColor}
           intent={wizardIntent}
           onClose={() => {
             setShowPeptideForm(false)
             setWizardIntent(undefined)
             setWizardNeuerZyklus(false)
+            setWizardCycleId(null)
+            setPlanEditContext(null)
+            planSaveIdempotencyKeyRef.current = null
           }}
           onSave={handleSaveStackItem}
           onOpenExisting={openExistingStackItem}

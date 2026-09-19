@@ -130,7 +130,7 @@ describe('My Stack page vial view', () => {
     // was die Form ohnehin über sich sagt.
     const text = source()
 
-    expect(text).toContain("import {\n  detailAbschnitte, produktTitel, wirkstoffBezug, zeigtFeld,")
+    expect(text).toContain('detailAbschnitte, produktTitel, wirkstoffBezug, zeigtFeld,')
     expect(text).toContain('detailAbschnitte(form).map(abschnitt => (')
     expect(text).toContain('data-stack-detail={abschnitt.id}')
     expect(text).toContain('data-stack-detail-field={feld}')
@@ -461,7 +461,7 @@ describe('My Stack page vial view', () => {
     // „Stufe zurücknehmen" hängt am RPC `remove_plan_segment`; es ist eine
     // Funktion, keine tote Zeile.
     const text = source()
-    const verwalter = text.slice(text.indexOf('{cycleManagerPeptide && (() => {'))
+    const verwalter = text.slice(text.indexOf('{cycleManagerPeptide && !FEATURES.planTimelineV2 && (() => {'))
 
     expect(text).toContain('const planStufenListe = (c: Cycle) => {')
     expect(verwalter).toContain('{planStufenListe(c)}')
@@ -631,7 +631,7 @@ describe('My Stack page vial view', () => {
     expect(text).toContain("t('zyklen_verwalten')")
     expect(text).toContain('toggleManagerCard(c.id)')
     expect(text).toContain('cyclesOf(cycleManagerPeptide.id)')
-    expect(text).toContain('openEditCycle(cycleManagerPeptide)')
+    expect(text).toContain('openEditCycle(cycleManagerPeptide, c.id)')
     expect(text).toContain('toggleCycleActive(c)')
     expect(text).toContain('removeCycle(c.id)')
     expect(text).toContain('openNewEsc(c)')
@@ -776,7 +776,7 @@ describe('My Stack page vial view', () => {
   test('führt beide Zyklus-Wege durch den Assistenten', () => {
     const text = source()
     const abschnitt = (name: string) => {
-      const start = text.indexOf(`const ${name} = (p: Peptide) => {`)
+      const start = text.indexOf(`const ${name} = (`)
       expect(start, name).toBeGreaterThan(-1)
       return text.slice(start, text.indexOf('\n  }', start))
     }
@@ -784,10 +784,13 @@ describe('My Stack page vial view', () => {
     // „Plan ändern" nimmt den bestehenden Plan mit …
     expect(abschnitt('openEditCycle')).toContain("setWizardIntent('plan')")
     expect(abschnitt('openEditCycle')).toContain('setWizardNeuerZyklus(false)')
+    expect(abschnitt('openEditCycle')).toContain('setWizardCycleId(cycleId)')
     // … ein zweiter Zyklus nicht: ohne `p_plan.id` legt der RPC einen neuen an.
     expect(abschnitt('openNewCycle')).toContain("setWizardIntent('plan')")
     expect(abschnitt('openNewCycle')).toContain('setWizardNeuerZyklus(true)')
-    expect(text).toContain('existingPlan={editingPeptideId && !wizardNeuerZyklus ? activePlanFor(editingPeptideId) : undefined}')
+    expect(abschnitt('openNewCycle')).toContain('setWizardCycleId(null)')
+    expect(text).not.toContain('activePlanFor')
+    expect(text).toContain('cycles.find(cycle => cycle.id === wizardCycleId && cycle.stack_item_id === editingPeptideId)')
   })
 
   test('centers Neue Substanz field editors for mobile thumb reach', () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { planSegments, kuenftigeStufen, stufenText } from './planSegments'
+import { planSegments, planVersionSegments, kuenftigeStufen, stufenText } from './planSegments'
 import type { ScheduleCycle, ScheduleSegment } from '../../../lib/intakeSchedule'
+import type { CycleTimeline } from '../../../lib/planTimeline'
 
 const stufe = (effective_from: string, slot_doses: string): ScheduleSegment => ({
   effective_from,
@@ -32,6 +33,42 @@ const zyklus = (teile: Partial<ScheduleCycle> = {}): ScheduleCycle => ({
 })
 
 describe('planSegments', () => {
+  it('classifies normalized versions without merging equal-looking cycles', () => {
+    const timeline: CycleTimeline = {
+      cycle: {
+        id: 'cycle-normalized',
+        stack_item_id: 'stack-normalized',
+        started_at: '2026-09-01T08:00:00.000Z',
+        ended_at: null,
+      },
+      versions: [
+        {
+          id: 'version-current', cycle_id: 'cycle-normalized', change_kind: 'initial',
+          effective_kind: 'local_date', effective_at: null, effective_local_date: '2026-09-01',
+          frequency: 'daily', x_days_interval: null, interval_unit: null,
+          cycle_on_days: null, cycle_off_days: null, schedule_days: [],
+          intake_time: 'abends', intake_time_custom: '20:00', slot_doses: null,
+          slot_days: null, dose: 5, unit: 'mg', method: 'Oral',
+        },
+        {
+          id: 'version-future', cycle_id: 'cycle-normalized', change_kind: 'dose',
+          effective_kind: 'local_date', effective_at: null, effective_local_date: '2026-09-21',
+          frequency: 'daily', x_days_interval: null, interval_unit: null,
+          cycle_on_days: null, cycle_off_days: null, schedule_days: [],
+          intake_time: 'abends', intake_time_custom: '20:00', slot_doses: null,
+          slot_days: null, dose: 10, unit: 'mg', method: 'Oral',
+        },
+      ],
+      pauses: [],
+    }
+
+    expect(planVersionSegments(timeline, new Date('2026-09-19T08:00:00.000Z'), 'Europe/Berlin'))
+      .toEqual([
+        expect.objectContaining({ version: expect.objectContaining({ id: 'version-current' }), status: 'current' }),
+        expect.objectContaining({ version: expect.objectContaining({ id: 'version-future' }), status: 'future' }),
+      ])
+  })
+
   it('sieht in einem Plan ohne Historie genau eine Stufe: ihn selbst', () => {
     // So steht jeder Plan da, der nie geändert wurde — und so muss er
     // dastehen, sonst wäre die Liste bei 148 von 148 Zyklen leer.

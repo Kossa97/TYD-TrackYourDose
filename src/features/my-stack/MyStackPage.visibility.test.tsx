@@ -11,6 +11,7 @@ import { MyStackPage } from './MyStackPage'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getDosageForm } from './lib/dosageForms'
+import { FEATURES } from '../../config/features'
 
 const qaName = 'Codex QA Stack Lifecycle 2026-07-24'
 const visibilityMocks = vi.hoisted(() => ({
@@ -122,7 +123,7 @@ const activeCycle = {
 }
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'de' } }),
 }))
 
 vi.mock('../../context/AuthContext', () => ({
@@ -163,18 +164,23 @@ vi.mock('./components/StackStage', () => ({
 }))
 
 vi.mock('./components/StackItemWizard', () => ({
-  StackItemWizard: ({ catalogEntries, existingItem, existingPlan, intent, onClose, onSave }: StackItemWizardProps) => (
-    <div role="dialog" aria-label="stack-item-wizard">
+  StackItemWizard: ({ catalogEntries, existingItem, existingPlan, planEditContext, intent, onClose, onSave }: StackItemWizardProps) => {
+    const selectedPlan = planEditContext?.snapshot ?? existingPlan
+    return (
+      <div role="dialog" aria-label="stack-item-wizard">
       <span data-testid="wizard-catalog-ids">{catalogEntries.map(entry => entry.id).join(',')}</span>
       <span data-testid="wizard-intent">{intent ?? ''}</span>
       <span data-testid="wizard-item-id">{existingItem?.id ?? ''}</span>
-      <span data-testid="wizard-plan-id">{existingPlan?.id ?? ''}</span>
-      <span data-testid="wizard-plan-method">{existingPlan?.method ?? ''}</span>
-      <span data-testid="wizard-plan-dose">{existingPlan?.slots[0]?.dose ?? ''}</span>
-      <span data-testid="wizard-plan-unit">{existingPlan?.unit ?? ''}</span>
-      <span data-testid="wizard-plan-frequency">{existingPlan?.rhythm.kind ?? ''}</span>
-      <span data-testid="wizard-plan-routine-group">{existingPlan?.slots[0]?.routineGroup ?? ''}</span>
-      <span data-testid="wizard-plan-time">{existingPlan?.slots[0]?.time ?? ''}</span>
+      <span data-testid="wizard-plan-id">{selectedPlan?.id ?? ''}</span>
+      <span data-testid="wizard-plan-method">{selectedPlan?.method ?? ''}</span>
+      <span data-testid="wizard-plan-dose">{selectedPlan?.slots[0]?.dose ?? ''}</span>
+      <span data-testid="wizard-plan-unit">{selectedPlan?.unit ?? ''}</span>
+      <span data-testid="wizard-plan-frequency">{selectedPlan?.rhythm.kind ?? ''}</span>
+      <span data-testid="wizard-plan-routine-group">{selectedPlan?.slots[0]?.routineGroup ?? ''}</span>
+      <span data-testid="wizard-plan-time">{selectedPlan?.slots[0]?.time ?? ''}</span>
+      <span data-testid="wizard-target-cycle-id">{planEditContext?.target.cycleId ?? ''}</span>
+      <span data-testid="wizard-target-version-id">{planEditContext?.target.versionId ?? ''}</span>
+      <span data-testid="wizard-change-kind">{planEditContext?.changeKind ?? ''}</span>
       <button
         type="button"
         onClick={() => {
@@ -238,8 +244,9 @@ vi.mock('./components/StackItemWizard', () => ({
       >
         save hydrated plan
       </button>
-    </div>
-  ),
+      </div>
+    )
+  },
 }))
 
 vi.mock('./components/StackArchive', () => ({
@@ -293,6 +300,15 @@ async function renderPage(): Promise<void> {
   await waitFor(() => expect(screen.getAllByText('Existing Premium Vial').length).toBeGreaterThan(0))
 }
 
+function openLegacyCycleEditor(cycleId: string): void {
+  const card = visibleCardFor(qaName)
+  if (!card) throw new Error('Expected visible stack card')
+  fireEvent.click(within(card).getAllByRole('button')[0])
+  const cycleRow = card.querySelector<HTMLElement>(`[data-cycle-id="${cycleId}"]`)
+  if (!cycleRow) throw new Error(`Expected cycle row ${cycleId}`)
+  fireEvent.click(within(cycleRow).getByRole('button', { name: 'bearbeiten' }))
+}
+
 function LocationProbe() {
   const location = useLocation()
   return <span data-testid="location-search">{location.search}</span>
@@ -317,6 +333,7 @@ function versionedCycle(effectiveFrom: string) {
 
 describe('MyStackPage non-vial visibility', () => {
   beforeEach(() => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false
     localStorage.clear()
     localStorage.setItem('tyd_peptide_view', 'vials')
     visibilityMocks.escalations = []
@@ -327,6 +344,7 @@ describe('MyStackPage non-vial visibility', () => {
   })
 
   afterEach(() => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false
     cleanup()
     vi.clearAllMocks()
   })
@@ -364,7 +382,7 @@ describe('MyStackPage non-vial visibility', () => {
     expect(screen.queryByText('kein_peptid_gefunden_msg')).toBeNull()
   })
 
-  it('opens a PK deep link with the existing item and its active plan', async () => {
+  it('opens a PK deep link without guessing a newest active plan', async () => {
     const cyclesEq = vi.fn(async () => ({ data: [activeCycle], error: null }))
     const stackDataClient = {
       from: vi.fn(() => ({ select: vi.fn(() => ({ eq: cyclesEq })) })),
@@ -380,10 +398,7 @@ describe('MyStackPage non-vial visibility', () => {
     await waitFor(() => expect(screen.getByRole('dialog', { name: 'stack-item-wizard' })).toBeTruthy())
     expect(screen.getByTestId('wizard-intent').textContent).toBe('pk')
     expect(screen.getByTestId('wizard-item-id').textContent).toBe('other-1')
-    expect(screen.getByTestId('wizard-plan-id').textContent).toBe('cycle-active-1')
-    expect(screen.getByTestId('wizard-plan-method').textContent).toBe('Oral')
-    expect(screen.getByTestId('wizard-plan-dose').textContent).toBe('100')
-    expect(screen.getByTestId('wizard-plan-unit').textContent).toBe('mg')
+    expect(screen.getByTestId('wizard-plan-id').textContent).toBe('')
     expect(screen.getByTestId('wizard-catalog-ids').textContent).toContain('vitamin-d3')
     await waitFor(() => expect(screen.getByTestId('location-search').textContent).toBe(''))
   })
@@ -412,7 +427,7 @@ describe('MyStackPage non-vial visibility', () => {
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
 
-    fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'bearbeiten' }))
+    openLegacyCycleEditor(cycle.id)
 
     expect(screen.getByTestId('wizard-plan-id').textContent).toBe(cycle.id)
     expect(screen.getByTestId('wizard-plan-method').textContent).toBe(cycle.method)
@@ -466,7 +481,7 @@ describe('MyStackPage non-vial visibility', () => {
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
 
-    fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'bearbeiten' }))
+    openLegacyCycleEditor(cycle.id)
 
     expect(screen.getByTestId('wizard-plan-dose').textContent).toBe('5')
     expect(screen.getByTestId('wizard-plan-unit').textContent).toBe('mg')
@@ -523,7 +538,7 @@ describe('MyStackPage non-vial visibility', () => {
     )
     await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
 
-    fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'bearbeiten' }))
+    openLegacyCycleEditor(cycle.id)
 
     expect(screen.getByTestId('wizard-plan-dose').textContent).toBe('100')
     // Die Harness zeigt die Form des Rhythmus, nicht mehr den Frequenztext.
@@ -560,6 +575,62 @@ describe('MyStackPage non-vial visibility', () => {
     }))
     expect(screen.queryByText('Substanz gespeichert')).toBeNull()
     expect(screen.queryByText('Zyklus anlegen')).toBeNull()
+  })
+
+  it('targets the selected future V2 version instead of another active cycle', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const currentVersion = {
+      id: 'version-current', cycle_id: activeCycle.id, change_kind: 'initial' as const,
+      effective_kind: 'local_date' as const, effective_at: null, effective_local_date: '2026-07-24',
+      frequency: 'daily', x_days_interval: null, interval_unit: null,
+      cycle_on_days: null, cycle_off_days: null, schedule_days: [],
+      intake_time: 'abends', intake_time_custom: '20:30', slot_doses: null,
+      slot_days: null, dose: 100, unit: 'mg', method: 'Oral',
+    }
+    const futureVersion = {
+      ...currentVersion,
+      id: 'version-future-exact',
+      change_kind: 'schedule' as const,
+      effective_local_date: '2099-10-01',
+      dose: 150,
+    }
+    const timelineRow = {
+      id: activeCycle.id,
+      stack_item_id: activeCycle.stack_item_id,
+      started_at: '2026-07-24T00:30:00.000Z',
+      ended_at: null,
+      versions: [currentVersion, futureVersion],
+      pauses: [],
+    }
+    const stackDataClient = {
+      from: vi.fn(() => ({
+        select: vi.fn((columns: string) => ({
+          eq: vi.fn(() => columns === '*'
+            ? Promise.resolve({ data: [activeCycle], error: null })
+            : { order: vi.fn(async () => ({ data: [timelineRow], error: null })) }),
+        })),
+      })),
+      rpc: vi.fn(),
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={stackDataClient as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+    const card = visibleCardFor(qaName)!
+    fireEvent.click(within(card).getAllByRole('button')[0])
+
+    const section = await screen.findByTestId(`plan-management-${activeCycle.id}`)
+    fireEvent.click(within(section).getByRole('button', {
+      name: 'my_stack_plan_edit_future',
+    }))
+
+    expect(screen.getByTestId('wizard-target-cycle-id').textContent).toBe(activeCycle.id)
+    expect(screen.getByTestId('wizard-target-version-id').textContent).toBe('version-future-exact')
+    expect(screen.getByTestId('wizard-change-kind').textContent).toBe('schedule')
   })
 })
 
