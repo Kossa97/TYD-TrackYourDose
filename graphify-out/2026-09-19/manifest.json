@@ -65,8 +65,8 @@
     "semantic_hash": ""
   },
   "api/_lib/reminderSchedule.test.js": {
-    "mtime": 1789834689.128233,
-    "ast_hash": "085cc7d0e0c4a1e0bfbbaf302fcc448e",
+    "mtime": 1789835520.3535051,
+    "ast_hash": "928214e19e7b02ab17f7beb8ab1131b7",
     "semantic_hash": ""
   },
   "api/peptide-ai.js": {
@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "api/send-reminders.js": {
-    "mtime": 1789834709.6657019,
-    "ast_hash": "70fdbd76258fe60e32a87cfb36f154c6",
+    "mtime": 1789835659.7080677,
+    "ast_hash": "3dffd438f87ce58167e087bf85ce4eda",
     "semantic_hash": ""
   },
   "api/test-push.js": {
@@ -885,8 +885,8 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.test.ts": {
-    "mtime": 1789833943.807265,
-    "ast_hash": "d520a56a29ab9ab7d210fb597650d95a",
+    "mtime": 1789835651.1968093,
+    "ast_hash": "b503597a7e33e96116cf78caea0d07f5",
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
@@ -905,8 +905,8 @@
     "semantic_hash": ""
   },
   "src/pages/Home.test.ts": {
-    "mtime": 1789823261.559471,
-    "ast_hash": "c9fa7ce2633e6afb2e53a508b212d8a6",
+    "mtime": 1789835580.5435236,
+    "ast_hash": "c0169faf07bc93566d789f9ac24b88fa",
     "semantic_hash": ""
   },
   "src/pages/Home.tsx": {
@@ -2325,13 +2325,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1789778566.4777846,
-    "ast_hash": "0118491eb98626dbbef2baba5c8bf164",
+    "mtime": 1789836032.1620052,
+    "ast_hash": "9c2ce6791875ec9e2a76dadcb22f7051",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1789832977.0676694,
-    "ast_hash": "1a82bd16589d835a88dcaab9e20fdc4a",
+    "mtime": 1789835739.2398121,
+    "ast_hash": "9cd1366afe885177046d96198372ebe1",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
@@ -2560,8 +2560,8 @@
     "semantic_hash": "63a8011686ab717b60d7bc387d28a314"
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
-    "mtime": 1789832814.168073,
-    "ast_hash": "51ef4872619b1f75c97061259ef053fa",
+    "mtime": 1789835718.1714053,
+    "ast_hash": "c6c3e8a559b26c97f78d0a3e53049760",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DoseUnitControl.test.tsx": {
@@ -3458,7 +3458,7 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789834719.6174028,
+    "mtime": 1789836066.2376833,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -3788,13 +3788,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/services/planLifecycle.test.ts": {
-    "mtime": 1789831050.752733,
-    "ast_hash": "9fd9a067dc0f901b265a832ef0b5e96a",
+    "mtime": 1789835520.123661,
+    "ast_hash": "983a6c98ce9287d51d17a5015da1f55f",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/planLifecycle.ts": {
-    "mtime": 1789831222.5771499,
-    "ast_hash": "92ec1d7f9a1bc6f20acbd2c734b75d77",
+    "mtime": 1789835659.26159,
+    "ast_hash": "a7ed7b01ae9e810d7fa8c85cf32b6cbe",
     "semantic_hash": ""
   },
   "src/lib/legacyPlanTimeline.test.ts": {
@@ -3833,8 +3833,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-18-my-stack-planintegritaet-design.md": {
-    "mtime": 1789769119.3603945,
-    "ast_hash": "dde10cb7d7ba043321bdb8e44aea7efe",
+    "mtime": 1789834938.144366,
+    "ast_hash": "5238c8561d90784317184b4a2439d376",
     "semantic_hash": ""
   }
 }

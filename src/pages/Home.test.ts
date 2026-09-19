@@ -534,9 +534,20 @@ describe('Home normalized timeline path', () => {
     await waitFor(() => expect(screen.queryByRole('status')).toBeNull())
     expect(screen.queryByRole('button', { name: /Vitamin D3/ })).toBeNull()
     page.unmount()
-    fixtures.cycles = [normalizedCycle()]
+    vi.setSystemTime(new Date('2026-09-18T08:05:00Z'))
+    const selected = normalizedCycle()
+    Object.assign(selected.stack_items, { archived: false, configuration_status: 'complete', migration_conflicts: [] })
+    selected.versions[0].dose = 20
+    const rejected = Object.assign(normalizedCycle(), {
+      id: 'competing-cycle', active: false, end_date: '2026-09-18',
+      ended_at: '2026-09-18T08:00:00Z', closed_by_migration_resolution: true,
+    })
+    rejected.versions[0] = { ...rejected.versions[0], id: 'rejected-version', cycle_id: rejected.id, dose: 10 }
+    rejected.stack_items = selected.stack_items
+    fixtures.cycles = [selected, rejected]
     renderNormalized(client)
-    expect(await screen.findByRole('button', { name: /Vitamin D3/ })).not.toBeNull()
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /Vitamin D3/ })).toHaveLength(1))
+    expect(screen.getByRole('button', { name: /Vitamin D3/ }).textContent).toContain('20 mg')
   })
 
   function startFixFixture() {
@@ -751,7 +762,7 @@ describe('Home normalized timeline path', () => {
       id: 'timeline-cycle',
       stack_item_id: 'stack-1',
       start_date: localDate,
-      end_date: null,
+      end_date: null as string | null,
       active: true,
       frequency: 'Täglich',
       x_days_interval: null,
@@ -766,7 +777,7 @@ describe('Home normalized timeline path', () => {
         display_name: 'Vitamin D3', tracking_level: 'complete', dosage_form: 'capsule',
       },
       started_at: new Date(today.getTime() - 86_400_000).toISOString(),
-      ended_at: null,
+      ended_at: null as string | null,
       versions: [{
         id: 'timeline-version',
         cycle_id: 'timeline-cycle',

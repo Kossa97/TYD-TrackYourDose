@@ -26,6 +26,7 @@ interface QueryResult<T> {
 }
 
 interface CycleTimelineRow extends TimelineCycle {
+  closed_by_migration_resolution?: boolean
   versions: CyclePlanVersion[] | null
   pauses: CyclePausePeriod[] | null
   stack_items?: {
@@ -80,6 +81,7 @@ const TIMELINE_SELECT = `
   stack_item_id,
   started_at,
   ended_at,
+  closed_by_migration_resolution,
   stack_items(archived, configuration_status, migration_conflicts:cycle_migration_conflicts(resolved_at)),
   versions:cycle_plan_versions (
     id,
@@ -173,7 +175,8 @@ export async function loadCycleTimelines(
   // Management keeps unavailable timelines for conflict resolution; scheduling
   // must not offer archived or contradictory plans. Archiving does not end them.
   return (data ?? []).filter(row => options.includeUnavailable || (
-    row.stack_items?.archived !== true
+    row.closed_by_migration_resolution !== true
+    && row.stack_items?.archived !== true
     && row.stack_items?.configuration_status !== 'needs_review'
     && !row.stack_items?.migration_conflicts?.some(conflict => conflict.resolved_at === null)
   )).map(mapTimeline)

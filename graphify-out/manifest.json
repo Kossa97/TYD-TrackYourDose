@@ -885,8 +885,8 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.test.ts": {
-    "mtime": 1789835651.1968093,
-    "ast_hash": "b503597a7e33e96116cf78caea0d07f5",
+    "mtime": 1789836819.7691302,
+    "ast_hash": "e11b479306ced0eea1f124ac81d40d26",
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
@@ -905,8 +905,8 @@
     "semantic_hash": ""
   },
   "src/pages/Home.test.ts": {
-    "mtime": 1789835580.5435236,
-    "ast_hash": "c0169faf07bc93566d789f9ac24b88fa",
+    "mtime": 1789836819.533515,
+    "ast_hash": "af62c0561181439f91b0d5f957486147",
     "semantic_hash": ""
   },
   "src/pages/Home.tsx": {
@@ -3458,7 +3458,7 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789836066.2376833,
+    "mtime": 1789836831.5670147,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -3788,13 +3788,13 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/services/planLifecycle.test.ts": {
-    "mtime": 1789835520.123661,
-    "ast_hash": "983a6c98ce9287d51d17a5015da1f55f",
+    "mtime": 1789836674.7248516,
+    "ast_hash": "dad90b0f822fe69aafe16d32bd5d3c0d",
     "semantic_hash": ""
   },
   "src/features/my-stack/services/planLifecycle.ts": {
-    "mtime": 1789835659.26159,
-    "ast_hash": "a7ed7b01ae9e810d7fa8c85cf32b6cbe",
+    "mtime": 1789836726.0674558,
+    "ast_hash": "c32979e7de5b1b1e9c43e6b2472936d2",
     "semantic_hash": ""
   },
   "src/lib/legacyPlanTimeline.test.ts": {
@@ -3833,8 +3833,8 @@
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-09-18-my-stack-planintegritaet-design.md": {
-    "mtime": 1789834938.144366,
-    "ast_hash": "5238c8561d90784317184b4a2439d376",
+    "mtime": 1789836239.4491389,
+    "ast_hash": "51ba08e7d2af9f3be1a7ed9ced089ff4",
     "semantic_hash": ""
   }
 }

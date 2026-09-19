@@ -592,3 +592,33 @@ Frische finale Messungen nach allen Code-/Teständerungen:
 In dieser Korrekturrunde wurden keine SQL-Dateien geändert und keine Datenbanken
 ausgeführt. Die oben dokumentierten PostgreSQL-16-Dry-Runs bleiben die lokale
 SQL-Evidenz. V2 bleibt aktiviert. Keine Produktionsmigration, kein Push.
+
+### Review-Korrektur 2: verworfener Cycle bleibt Historie (2026-09-19)
+
+Die erneute Prüfung zeigte, dass der Konflikt-RPC verworfene Cycles korrekt
+aufbewahrt und mit `closed_by_migration_resolution=true` sowie dem
+Auflösungszeitpunkt als `ended_at` markiert. Nach Auflösung konnten deren
+frühere Tagesslots trotzdem erneut als fällig erscheinen. Der gemeinsame
+Scheduling-Loader liest nun den Marker und schließt ausschließlich diese
+verworfenen Cycles aus. Explizite Management-/Historien-Reads behalten sie mit
+allen Versionen und Pausen; normale beendete Cycles werden nicht herausgefiltert.
+
+Die Home-/Dashboard-Tests behalten jetzt beide echten Post-RPC-Zeilen: offener
+ausgewählter Cycle mit 20 mg und verworfener Cycle mit 10 mg, beendet um 10:00
+lokal. Um 10:05 darf nur der ausgewählte 08:00-Slot eine Aktion anbieten.
+RED: 99 bestanden, sieben erwartete Fehler (je drei Home/Dashboard-Fälle mit
+zwei statt einer Aktion und ein Service-Fall). GREEN: 240 fokussierte Tests in
+neun Dateien, inklusive Legacy-Flag-off-Pfade, My-Stack-Konflikt-UI und Parität.
+Der neue Service-Test prüft zusätzlich unveränderte normale Ended-Cycle-Reads
+und die vollständigen verworfenen Management-Snapshots.
+
+Final nach allen Code-/Teständerungen: 1.911/1.911 Tests in 160 Dateien bestanden;
+Build Exit 0 (4.049 Module, 134 PWA-Einträge); Lint unverändert 145 Fehler/17
+Warnungen, keine neue Diagnose auf geänderten Zeilen. Ein zwischenzeitlicher
+Build-Fehler betraf zu eng als null typisierte Testdaten; die Fixtures erlauben
+nun die realen nullable Datumswerte. Graphify erneut ausgeführt und geprüft:
+5.282 Nodes, 9.118 Edges, 842 Communities; fokussierte Query 313 Nodes. Der letzte
+Update-Lauf meldete keine weitere Topologieänderung. Die zuvor dokumentierten
+Service-/Resolver-Verbindungen bleiben erhalten, generierte Ausgaben werden
+mit committed. Keine SQL-Änderung, kein neuer Datenbanklauf, keine
+Produktionsmigration, kein Push. V2 bleibt aktiviert.

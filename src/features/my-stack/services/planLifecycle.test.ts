@@ -86,6 +86,18 @@ function rpcClient(
 }
 
 describe('plan lifecycle service', () => {
+  it('retains rejected migration history only for management without hiding ordinary ended cycles', async () => {
+    const rejected = { ...databaseRow(), ended_at: '2026-10-01T08:00:00Z', closed_by_migration_resolution: true }
+    const ordinaryEnded = { ...databaseRow(), id: 'ordinary-ended', ended_at: '2026-10-01T08:00:00Z', closed_by_migration_resolution: false }
+    const query = queryClient([rejected, ordinaryEnded])
+    const actionable = await loadCycleTimelines(query.client, 'user-1')
+    expect(actionable.map(item => item.cycle.id)).toEqual(['ordinary-ended'])
+    expect(query.select).toHaveBeenCalledWith(expect.stringContaining('closed_by_migration_resolution'))
+    const history = await loadCycleTimelines(query.client, 'user-1', { includeUnavailable: true })
+    expect(history.map(item => item.cycle.id)).toEqual(['cycle-1', 'ordinary-ended'])
+    expect(history[0]).toEqual({ ...timeline, cycle: { ...timeline.cycle, ended_at: '2026-10-01T08:00:00Z' } })
+  })
+
   it.each([
     { archived: true, configuration_status: 'complete', migration_conflicts: [] },
     { archived: false, configuration_status: 'needs_review', migration_conflicts: [] },
