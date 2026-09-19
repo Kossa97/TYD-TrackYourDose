@@ -84,7 +84,10 @@ function resolvePlanVersion(versions, target, timeZone) {
         throw new Error(`Invalid local-date boundary for plan version ${version.id}`)
       }
       const key = localDateKey(version.effective_local_date, `plan version ${version.id}`)
-      if (key <= target.localKey) eligible.push({ version, key, instantMs: localSlotInstant(version.effective_local_date, 0, timeZone).getTime() })
+      const instantMs = localDateBoundaryInstant(version.effective_local_date, timeZone).getTime()
+      if (target.instantMs !== null ? instantMs <= target.instantMs : key <= target.localKey) {
+        eligible.push({ version, key, instantMs })
+      }
       continue
     }
 
@@ -250,7 +253,7 @@ function cycleAppliesToDay(cycle, day) {
   return false
 }
 
-function localSlotInstant(localDate, minutes, timeZone) {
+function localTimeCandidates(localDate, minutes, timeZone) {
   const [year, month, day] = localDate.split('-').map(Number)
   const hour = Math.floor(minutes / 60)
   const minute = minutes % 60
@@ -262,13 +265,28 @@ function localSlotInstant(localDate, minutes, timeZone) {
     const sample = desiredLocalMillis + dayOffset * 86_400_000
     return desiredLocalMillis - (wallMillis(sample) - sample)
   }))].sort((left, right) => left - right)
-  const exact = candidates.find(candidate => wallMillis(candidate) === desiredLocalMillis)
+  return { desiredLocalMillis, wallMillis, candidates }
+}
+
+// PostgreSQL's date boundary policy: later instant for a fold; pre-transition
+// offset for a gap. Keep this in parity with src/lib/planTimeline.ts.
+export function localDateBoundaryInstant(localDate, timeZone) {
+  localDateKey(localDate, 'date boundary')
+  const { desiredLocalMillis, wallMillis, candidates } = localTimeCandidates(localDate, 0, timeZone)
+  const exact = candidates.filter(candidate => wallMillis(candidate) === desiredLocalMillis)
+  return new Date(exact.at(-1) ?? candidates[candidates.length - 1])
+}
+
+function localSlotInstant(localDate, minutes, timeZone) {
+  const { desiredLocalMillis, wallMillis, candidates } = localTimeCandidates(localDate, minutes, timeZone)
+  const dayBoundary = localDateBoundaryInstant(localDate, timeZone).getTime()
+  const exact = candidates.find(candidate => candidate >= dayBoundary && wallMillis(candidate) === desiredLocalMillis)
   if (exact !== undefined) return new Date(exact)
 
-  for (let instant = candidates[0]; instant <= candidates[candidates.length - 1]; instant += 60_000) {
+  for (let instant = Math.max(candidates[0], dayBoundary); instant <= candidates[candidates.length - 1]; instant += 60_000) {
     if (wallMillis(instant) >= desiredLocalMillis) return new Date(instant)
   }
-  throw new Error(`Could not resolve local intake slot: ${localDate} ${hour}:${minute} ${timeZone}`)
+  throw new Error(`Could not resolve local intake slot: ${localDate} ${minutes} ${timeZone}`)
 }
 
 export function resolveTimelineIntakesForDay(timeline, localDate, timeZone) {

@@ -69,7 +69,7 @@ interface VersionCandidate {
   instantMs: number | null
 }
 
-export function localSlotInstant(localDate: string, minutes: number, timeZone: string): Date {
+function localTimeCandidates(localDate: string, minutes: number, timeZone: string) {
   const [year, month, day] = localDate.split('-').map(Number)
   const desired = Date.UTC(year, month - 1, day, Math.floor(minutes / 60), minutes % 60)
   const wallMillis = (instant: number) => Date.parse(localDateTimeKey(new Date(instant), timeZone).replace('|', 'T') + 'Z')
@@ -77,9 +77,26 @@ export function localSlotInstant(localDate: string, minutes: number, timeZone: s
     const sample = desired + offset * 86_400_000
     return desired - (wallMillis(sample) - sample)
   }))].sort((a, b) => a - b)
-  const exact = candidates.find(candidate => wallMillis(candidate) === desired)
+  return { desired, wallMillis, candidates }
+}
+
+// Match PostgreSQL `date::timestamp AT TIME ZONE`: use the post-transition
+// offset in a fold (later instant), and the pre-transition offset in a gap.
+export function localDateBoundaryInstant(localDate: string, timeZone: string): Date {
+  localDateKey(localDate, 'date boundary')
+  const { desired, wallMillis, candidates } = localTimeCandidates(localDate, 0, timeZone)
+  const exact = candidates.filter(candidate => wallMillis(candidate) === desired)
+  return new Date(exact.at(-1) ?? candidates[candidates.length - 1])
+}
+
+export function localSlotInstant(localDate: string, minutes: number, timeZone: string): Date {
+  const { desired, wallMillis, candidates } = localTimeCandidates(localDate, minutes, timeZone)
+  const dayBoundary = localDateBoundaryInstant(localDate, timeZone).getTime()
+  // Keep the earlier ordinary fold occurrence, but never schedule before the
+  // canonical start of its local day (notably Havana's repeated midnight).
+  const exact = candidates.find(candidate => candidate >= dayBoundary && wallMillis(candidate) === desired)
   if (exact !== undefined) return new Date(exact)
-  for (let instant = candidates[0]; instant <= candidates[candidates.length - 1]; instant += 60_000) {
+  for (let instant = Math.max(candidates[0], dayBoundary); instant <= candidates[candidates.length - 1]; instant += 60_000) {
     if (wallMillis(instant) >= desired) return new Date(instant)
   }
   throw new Error(`Could not resolve local intake slot: ${localDate} ${minutes} ${timeZone}`)
@@ -139,7 +156,10 @@ function resolvePlanVersion(
         throw new Error(`Invalid local-date boundary for plan version ${version.id}`)
       }
       const key = localDateKey(version.effective_local_date, `plan version ${version.id}`)
-      if (key <= target.localKey) eligible.push({ version, key, instantMs: localSlotInstant(version.effective_local_date, 0, timeZone).getTime() })
+      const instantMs = localDateBoundaryInstant(version.effective_local_date, timeZone).getTime()
+      if (target.instantMs !== null ? instantMs <= target.instantMs : key <= target.localKey) {
+        eligible.push({ version, key, instantMs })
+      }
       continue
     }
 
@@ -267,12 +287,5 @@ export function resolveCycleAtLocalSlot(
     throw new Error(`Invalid local slot minutes: ${minutes}`)
   }
 
-  // Validate the IANA zone even when the timeline contains no instant boundary.
-  localDateTimeKey(new Date(0), timeZone)
-  const hour = String(Math.floor(minutes / 60)).padStart(2, '0')
-  const minute = String(minutes % 60).padStart(2, '0')
-  return resolveTimeline(timeline, {
-    localKey: `${localDate}|${hour}:${minute}:00`,
-    instantMs: null,
-  }, timeZone)
+  return resolveCycleAt(timeline, localSlotInstant(localDate, minutes, timeZone), timeZone)
 }

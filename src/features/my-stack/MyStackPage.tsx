@@ -1416,6 +1416,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const next = await restartCycle(stackDataClient as never, {
       sourceCycleId: timeline.cycle.id,
       startedAt: new Date().toISOString(),
+      timeZone,
       initialSchedule: versionSnapshot(source),
       idempotencyKey: mutation.mutation.key,
     })

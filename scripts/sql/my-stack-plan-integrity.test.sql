@@ -2625,13 +2625,13 @@ begin
   restart_result := public.restart_cycle(
     lifecycle_cycle_id,
     clock_timestamp(),
-    daily_schedule || jsonb_build_object('dose', 3),
+    daily_schedule || jsonb_build_object('dose', 3, '_timezone', 'UTC'),
     'restart-cycle'
   );
   restart_retry := public.restart_cycle(
     lifecycle_cycle_id,
     clock_timestamp(),
-    daily_schedule || jsonb_build_object('dose', 3),
+    daily_schedule || jsonb_build_object('dose', 3, '_timezone', 'UTC'),
     'restart-cycle'
   );
   if restart_result is distinct from restart_retry then
@@ -2661,7 +2661,7 @@ begin
     perform public.restart_cycle(
       lifecycle_cycle_id,
       clock_timestamp(),
-      daily_schedule,
+      daily_schedule || jsonb_build_object('_timezone', 'UTC'),
       'restart-conflict'
     );
     raise exception 'restart_cycle accepted a second open cycle';

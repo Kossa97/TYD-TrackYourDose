@@ -303,6 +303,7 @@ describe('plan lifecycle service', () => {
     await expect(restartCycle(restarting.client, {
       sourceCycleId: 'cycle-1',
       startedAt: '2026-10-01T06:00:00.000Z',
+      timeZone: 'America/New_York',
       initialSchedule: schedule,
       idempotencyKey: 'mutation-restart',
     })).resolves.toEqual(restartedTimeline)
@@ -314,7 +315,7 @@ describe('plan lifecycle service', () => {
     expect(restarting.rpc).toHaveBeenCalledWith('restart_cycle', {
       p_source_cycle_id: 'cycle-1',
       p_started_at: '2026-10-01T06:00:00.000Z',
-      p_initial_schedule: schedule,
+      p_initial_schedule: { ...schedule, _timezone: 'America/New_York' },
       p_idempotency_key: 'mutation-restart',
     })
     expect(restarting.query.eq).toHaveBeenLastCalledWith('id', 'cycle-2')

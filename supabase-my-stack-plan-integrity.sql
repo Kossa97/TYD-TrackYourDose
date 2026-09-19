@@ -776,6 +776,7 @@ declare
   saved_version public.cycle_plan_versions;
   prior_result jsonb;
   operation_name constant text := 'create_plan_version';
+  mutation_time timestamptz;
 begin
   if owner_id is null then
     raise exception 'Authentication required';
@@ -806,7 +807,8 @@ begin
   if not found then
     raise exception 'Cycle not found';
   end if;
-  if cycle_row.ended_at is not null and cycle_row.ended_at <= clock_timestamp() then
+  mutation_time := clock_timestamp();
+  if cycle_row.ended_at is not null and cycle_row.ended_at <= mutation_time then
     raise exception 'Cycle is already ended';
   end if;
   if p_effective_kind not in ('instant', 'local_date')
@@ -832,9 +834,9 @@ begin
     select 1 from public.cycle_plan_versions where cycle_id = p_cycle_id
   ) then
     if p_effective_kind = 'instant' and coalesce((p_schedule ->> '_effective_now')::boolean, false) then
-      p_effective_at := transaction_timestamp();
+      p_effective_at := mutation_time;
     elsif (case p_effective_kind when 'instant' then p_effective_at
-      else p_effective_local_date::timestamp at time zone coalesce(p_schedule ->> '_timezone', 'UTC') end) <= transaction_timestamp() then
+      else p_effective_local_date::timestamp at time zone coalesce(p_schedule ->> '_timezone', 'UTC') end) <= mutation_time then
       raise exception 'Plan changes require a future boundary or now';
     end if;
   end if;
@@ -1883,6 +1885,8 @@ declare
   prior_result jsonb;
   mutation_result jsonb;
   operation_name constant text := 'restart_cycle';
+  restart_timezone text := p_initial_schedule ->> '_timezone';
+  recurrence_date date;
 begin
   if owner_id is null then
     raise exception 'Authentication required';
@@ -1917,6 +1921,10 @@ begin
   if p_started_at is null then
     raise exception 'Cycle start is required';
   end if;
+  if restart_timezone is null or not exists (select 1 from pg_timezone_names where name = restart_timezone) then
+    raise exception 'Valid restart timezone is required';
+  end if;
+  recurrence_date := (p_started_at at time zone restart_timezone)::date;
 
   perform 1
   from public.stack_items
@@ -1950,7 +1958,7 @@ begin
     x_days_interval, interval_unit, cycle_on_days, cycle_off_days,
     schedule_days, start_date, end_date, notes, active, intake_time,
     intake_time_custom, slot_doses, slot_days, reminder, schedule_history,
-    started_at, ended_at, closed_by_migration_resolution
+    started_at, ended_at, closed_by_migration_resolution, start_local_date, lifecycle_timezone
   ) values (
     owner_id,
     source_cycle.stack_item_id,
@@ -1964,7 +1972,7 @@ begin
     (normalized ->> 'cycle_on_days')::integer,
     (normalized ->> 'cycle_off_days')::integer,
     array(select jsonb_array_elements_text(normalized -> 'schedule_days')),
-    p_started_at::date,
+    recurrence_date,
     null,
     source_cycle.notes,
     true,
@@ -1976,7 +1984,9 @@ begin
     null,
     p_started_at,
     null,
-    false
+    false,
+    recurrence_date,
+    restart_timezone
   )
   returning * into new_cycle;
 

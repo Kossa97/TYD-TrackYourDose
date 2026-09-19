@@ -1,6 +1,7 @@
 import { addDays, addMonths, differenceInCalendarMonths, differenceInDays, format, parseISO, startOfDay, subDays } from 'date-fns'
 import {
   localDateTimeKey,
+  localSlotInstant,
   resolveCycleAt,
   type CyclePlanVersion,
   type CycleTimeline,
@@ -201,31 +202,6 @@ function routineGroupForMinutes(minutes: number): ResolvedRoutineGroup {
   if (hour < 12) return 'morning'
   if (hour < 18) return 'midday'
   return 'evening'
-}
-
-function localSlotInstant(localDate: string, minutes: number, timeZone: string): Date {
-  const [year, month, day] = localDate.split('-').map(Number)
-  const hour = Math.floor(minutes / 60)
-  const minute = minutes % 60
-  const desiredLocalMillis = Date.UTC(year, month - 1, day, hour, minute)
-  const wallMillis = (instantMillis: number) => Date.parse(
-    localDateTimeKey(new Date(instantMillis), timeZone).replace('|', 'T') + 'Z',
-  )
-  // Try the offsets on both sides of a transition. A fold has two exact
-  // candidates; its earlier absolute instant is the single occurrence.
-  const candidates = [...new Set([-1, 0, 1].map(dayOffset => {
-    const sample = desiredLocalMillis + dayOffset * 86_400_000
-    return desiredLocalMillis - (wallMillis(sample) - sample)
-  }))].sort((left, right) => left - right)
-  const exact = candidates.find(candidate => wallMillis(candidate) === desiredLocalMillis)
-  if (exact !== undefined) return new Date(exact)
-
-  // In a gap, use the first representable wall minute, not "plus gap length".
-  for (let instant = candidates[0]; instant <= candidates[candidates.length - 1]; instant += 60_000) {
-    if (wallMillis(instant) >= desiredLocalMillis) return new Date(instant)
-  }
-
-  throw new Error(`Could not resolve local intake slot: ${localDate} ${hour}:${minute} ${timeZone}`)
 }
 
 /**

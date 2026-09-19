@@ -5,6 +5,7 @@ import {
 } from './planTimeline.js'
 import { resolveCycleAt as resolveCycleAtTypeScript } from '../../src/lib/planTimeline.ts'
 import { resolveTimelineIntakesForDay as resolveIntakesTypeScript } from '../../src/lib/intakeSchedule.ts'
+import { dueReminders } from './reminderSchedule.js'
 
 function version(id, overrides = {}) {
   return {
@@ -61,6 +62,58 @@ function summary(intakes) {
     method: intake.method,
   }))
 }
+
+describe('PostgreSQL local-date boundary policy', () => {
+  const midnightSchedule = { intake_time: 'custom', intake_time_custom: '00:30' }
+  it.each([
+    ['Node', resolveCycleAtNode, resolveIntakesNode],
+    ['TypeScript', resolveCycleAtTypeScript, resolveIntakesTypeScript],
+  ])('%s uses the second Havana midnight for eligibility, ordering and occurrences', (_name, resolve, intakes) => {
+    const value = timeline({ versions: [
+      version('old', midnightSchedule),
+      version('instant', { ...midnightSchedule, effective_kind: 'instant', effective_at: '2026-11-01T04:45:00Z', effective_local_date: null, dose: 20 }),
+      version('date', { ...midnightSchedule, effective_local_date: '2026-11-01', dose: 30 }),
+    ] })
+    for (const [at, expected] of [
+      ['2026-11-01T04:30:00Z', 'old'],
+      ['2026-11-01T04:50:00Z', 'instant'],
+      ['2026-11-01T04:59:59.999Z', 'instant'],
+      ['2026-11-01T05:00:00Z', 'date'],
+      ['2026-11-01T05:30:00Z', 'date'],
+    ]) expect(resolve(value, new Date(at), 'America/Havana').planVersion.id).toBe(expected)
+    expect(intakes(value, '2026-11-01', 'America/Havana')).toMatchObject([
+      { scheduledAt: '2026-11-01T05:30:00.000Z', planVersionId: 'date', dose: 30 },
+    ])
+  })
+
+  it.each([resolveIntakesNode, resolveIntakesTypeScript])('does not emit next-day slots beyond the exclusive Havana course end', intakes => {
+    const course = timeline({
+      cycle: { ended_at: '2026-11-01T05:00:00Z', end_local_date: '2026-11-01', lifecycle_timezone: 'America/Havana' },
+      versions: [version('course', midnightSchedule)],
+    })
+    expect(intakes(course, '2026-10-31', 'America/Havana')).toHaveLength(1)
+    expect(intakes(course, '2026-11-01', 'America/Havana')).toHaveLength(0)
+    expect(dueReminders(course, 'on_time', new Date('2026-11-01T04:31:00Z'), 'America/Havana', 5)).toEqual([])
+    expect(dueReminders(course, 'on_time', new Date('2026-11-01T05:31:00Z'), 'America/Havana', 5)).toEqual([])
+  })
+
+  it.each([
+    ['America/Havana', '2026-03-08', '2026-03-08T05:00:00.000Z', '01:00'],
+    ['America/Santiago', '2026-09-06', '2026-09-06T04:00:00.000Z', '01:00'],
+  ])('agrees at skipped midnight in %s', (zone, date, boundary, wallTime) => {
+    const value = timeline({
+      cycle: { started_at: boundary },
+      versions: [version('gap', { effective_local_date: date, intake_time: 'custom', intake_time_custom: '00:00' })],
+    })
+    for (const resolve of [resolveCycleAtNode, resolveCycleAtTypeScript]) {
+      expect(resolve(value, new Date(new Date(boundary).getTime() - 1), zone).status).toBe('planned')
+      expect(resolve(value, new Date(boundary), zone).planVersion.id).toBe('gap')
+    }
+    for (const intakes of [resolveIntakesNode, resolveIntakesTypeScript]) {
+      expect(intakes(value, date, zone)).toMatchObject([{ scheduledAt: boundary, time: wallTime }])
+    }
+  })
+})
 
 describe('local-date lifecycle and recurrence anchors', () => {
   it.each(['America/New_York', 'Asia/Tokyo'])('preserves the declared day in %s', timeZone => {

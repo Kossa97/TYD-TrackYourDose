@@ -278,7 +278,7 @@
   "276": "public.dose_logs",
   "277": "vialStock.ts",
   "278": "stackSort.ts",
-  "279": "handler",
+  "279": "normalizeMarker",
   "280": "planDataErrors.test.ts",
   "281": "wizardState.ts",
   "282": "public.peptide_library",
@@ -335,8 +335,10 @@
   "333": "StageDetailSheet.tsx",
   "334": "StageFit.test.tsx",
   "335": "Replace-on-re-extract merge (build_merge)",
+  "336": "StageLabel.tsx",
   "337": "@testing-library/react",
   "338": "konzentration.ts",
+  "339": "PublicProfile.tsx",
   "340": "trackingDepthSchema.test.ts",
   "341": "Synthetischer Jahresverlauf fuer den Testaccount",
   "342": "Substanz archivieren/löschen + Zyklus beenden — Design",
@@ -845,5 +847,8 @@
   "845": "FortschrittHeader.test.ts",
   "846": "TodayLogSheet.test.ts",
   "847": "InjektionsTracker.test.ts",
-  "848": "vite.config.ts"
+  "848": "vite.config.ts",
+  "849": "TrackingLevel",
+  "850": "handler",
+  "851": "referenceBar.ts"
 }

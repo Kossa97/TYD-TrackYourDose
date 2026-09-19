@@ -313,7 +313,7 @@ export async function restartCycle(
   const result = await callRpc<{ cycle_id: string }>(client, 'restart_cycle', {
     p_source_cycle_id: input.sourceCycleId,
     p_started_at: input.startedAt,
-    p_initial_schedule: input.initialSchedule,
+    p_initial_schedule: { ...input.initialSchedule, _timezone: input.timeZone },
     p_idempotency_key: input.idempotencyKey,
   })
   return loadCycleTimeline(client, result.cycle_id)

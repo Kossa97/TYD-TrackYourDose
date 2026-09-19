@@ -719,3 +719,65 @@ Reminder-Adapter, Injection und PK wurden zusätzlich direkt in `graph.json`
 geprüft. Kein aktiver V2-Konsument ist ausschließlich an die Legacy-Planquellen
 gebunden; Legacy-Pfade bleiben vorhanden. Generierte Ausgaben bleiben im Commit.
 Das unveränderte 5.000-Node-HTML-Limit verhindert nur die optionale HTML-Ausgabe.
+
+### Task 15: drei verbleibende temporale Grenzen (2026-09-19)
+
+**Nur lokale Prüfung; keine Produktionsmigration, kein Push.** Die folgenden
+Korrekturen ersetzen die oben dokumentierte zeitzonenlose Restart-Schnittstelle
+und den Transaktionsstart als Sofortgrenze. V2 bleibt nach den lokalen Gates aktiv.
+
+`restart_cycle` erhält die ausdrücklich gewählte IANA-Zone als
+`p_initial_schedule._timezone`; der Client verlangt `timeZone`. Der Server lehnt
+fehlende/ungültige Zonen und fremde Eigentümer ab. Er speichert das lokale Datum
+des angeforderten Instants separat in `start_local_date` (auch im Legacy-
+`start_date`) und die Zone in `lifecycle_timezone`. `started_at` und die initiale
+Instant-Version bleiben exakt der angeforderte Zeitpunkt; deren
+`effective_local_date` bleibt null. Bereits datumsbasierte Starts bleiben unverändert.
+Der Live-RPC-Test mit Start `2026-09-18T00:30Z` in New York reproduzierte zuvor
+19./21. September in New York, aber 20. September in Berlin/Tokio. Danach liefern
+beide echten Resolver in allen drei Zonen 19./21. September; Monatsrhythmus ergibt
+17. Oktober, On/Off wieder 19./21. September. Exakte Aktivierung und unveränderte
+idempotente Rückgabe sind separat geprüft.
+
+Lokale Datumsgrenzen folgen in TS und Node nun PostgreSQL: bei doppelter
+Mitternacht der spätere Instant, bei übersprungener Mitternacht der Offset vor
+dem Sprung. Dieselbe Grenze entscheidet über Eligibility und Versionsreihenfolge.
+Die lokale Slotauflösung erzeugt keine Einnahme vor dieser Tagesgrenze; außerhalb
+dieses Sonderfalls bleibt die frühere gewöhnliche Fold-Einnahme erhalten und ein
+Gap wird weiterhin auf die erste darstellbare Minute gelegt. Intake- und
+Management-Code nutzen dieselben TS-Helfer, Reminder den geprüften Node-Zwilling.
+SQL-Erstellung, exklusives Kursende und Zeitzonen-Review materialisieren weiterhin
+die unveränderte native PostgreSQL-Konvertierung. Gemessene Parität:
+
+| Zone / lokales Datum | Tagesgrenze UTC |
+| --- | --- |
+| America/Havana / 2026-11-01 (doppelt) | 2026-11-01 05:00Z |
+| America/Havana / 2026-03-08 (übersprungen) | 2026-03-08 05:00Z |
+| America/Santiago / 2026-09-06 (übersprungen) | 2026-09-06 04:00Z |
+
+Die konkurrierende Havana-Instant-Version um 04:45Z gilt bis unmittelbar vor
+05:00Z, danach die lokale Datums-Version. Ein Kurs mit letztem Datum 31. Oktober
+erzeugt weder einen 00:30-Slot noch einen Reminder am 1. November; RED hatte noch
+einen solchen Slot geliefert. Bestehende Berlin-/New-York-/Tokio-Parität besteht.
+
+`create_plan_version` erfasst einen einzigen `clock_timestamp()` erst nach dem
+Eigentümer-Cycle-Lock. Lifecycle-/Future-Prüfung und Sofortgrenze verwenden diesen
+Wert; Receipt und Rückgabe enthalten dieselbe gespeicherte Grenze. Im echten
+Zwei-Verbindungs-RED lag die Grenze 20:38:42.223991Z vor dem während des Wartens
+bestätigten Log 20:38:42.235004Z; dessen spätere Auflösung wählte die falsche neue
+Version. GREEN: Log 20:42:58.622121Z, Grenze 20:42:58.631339Z, gespeicherte und
+aufgelöste alte Version identisch. Nachfolgende Bestätigung verwendet die neue
+Version; Retry behält die vollständige ursprüngliche Rückgabe.
+
+Verifikation: beide PostgreSQL-16-Fixtures mit additiver Migration und Enforcement
+je zweimal bestanden; produktionsnahe Counts bleiben 4 Items / 6 Cycles /
+10 Versionen / 1 Pause / 3 Escalations / 3 Logs, final 1 Receipt / 0 Konflikte.
+Zusätzliche SQL-Suites prüfen temporale Policy, Restart-Validierung und Race sowie
+die bisherigen Provenienz-/Berechtigungs-/Review-Grenzen. Vollsuite: **1.948 Tests
+in 162 Dateien**, Build Exit 0 (4.050 Module; 134 PWA-Einträge); Lint unverändert
+**145 Fehler / 17 Warnungen**. Sieben geänderte TS-Dateien gegen HEAD verglichen:
+19 bestehende Diagnosen, keine neue. Graphify nach allen Codeänderungen: 726
+Dateien, **5.296 Nodes / 9.160 Edges / 852 Communities**; Restart/Recurrence/
+Datumsgrenzen-Query 160 Nodes, Sofortänderungs-Query 168 Nodes. Direkte Call-Kanten
+für TS/Node-Datumsgrenzen und Management zusätzlich geprüft. Generierte Ausgaben
+bleiben committed; bekannte Build-Warnungen, Lint-Backlog und HTML-Limit bleiben.

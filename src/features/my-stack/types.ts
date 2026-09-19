@@ -254,5 +254,6 @@ export interface EndCycleInput extends PlanMutationInput {
 export interface RestartCycleInput extends PlanMutationInput {
   sourceCycleId: string
   startedAt: string
+  timeZone: string
   initialSchedule: PlanScheduleSnapshot
 }

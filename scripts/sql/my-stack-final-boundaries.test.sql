@@ -128,7 +128,7 @@ insert into public.cycle_plan_versions(id,user_id,cycle_id,effective_kind,effect
  ('99000000-0000-0000-0000-000000000013','30000000-0000-0000-0000-000000000003','99000000-0000-0000-0000-000000000012','local_date','2050-01-01','initial','Täglich','morgens',1,'mg','Oral');
 set role authenticated;
 select set_config('request.jwt.claim.sub','30000000-0000-0000-0000-000000000003',true);
-do $$ declare immediate cycle_plan_versions; zone text; begin
+do $$ declare immediate cycle_plan_versions; zone text; before_immediate timestamptz; begin
   begin
     perform public.remove_future_plan_version('99000000-0000-0000-0000-000000000013','UTC','sole-removal');
     raise exception 'sole initial version removed';
@@ -150,9 +150,12 @@ do $$ declare immediate cycle_plan_versions; zone text; begin
       raise exception 'already-started local day accepted';
     exception when others then if sqlerrm <> 'Plan changes require a future boundary or now' then raise; end if; end;
   end loop;
+  before_immediate := clock_timestamp();
   immediate := public.create_plan_version('99000000-0000-0000-0000-000000000012','instant','2000-01-01',null,'dose',
     jsonb_build_object('frequency','Täglich','intake_time','morgens','dose',1,'unit','mg','method','Oral','_timezone','Asia/Tokyo','_effective_now',true),'server-now');
-  if immediate.effective_at <> transaction_timestamp() then raise exception 'immediate trusted client clock'; end if;
+  if immediate.effective_at < before_immediate or immediate.effective_at > clock_timestamp() then
+    raise exception 'immediate trusted client or transaction-start clock';
+  end if;
 end $$;
 reset role;
 rollback;
