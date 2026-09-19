@@ -1921,7 +1921,12 @@ begin
   if p_started_at is null then
     raise exception 'Cycle start is required';
   end if;
-  if restart_timezone is null or not exists (select 1 from pg_timezone_names where name = restart_timezone) then
+  -- Catalog membership alone also admits server-local and placeholder zones
+  -- that Intl cannot resolve. Keep explicit IANA zones and supported aliases.
+  if restart_timezone is null
+    or restart_timezone in ('localtime', 'Factory', 'posixrules')
+    or restart_timezone ~ '^(posix|right)/'
+    or not exists (select 1 from pg_timezone_names where name = restart_timezone) then
     raise exception 'Valid restart timezone is required';
   end if;
   recurrence_date := (p_started_at at time zone restart_timezone)::date;
