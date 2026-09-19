@@ -20,7 +20,7 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 import { findDuplicate, planScheduleSnapshot } from '../services/stackItems'
-import type { PlanChangeKind } from '../../../lib/planTimeline'
+import { localDateTimeKey } from '../../../lib/planTimeline'
 import type { StackItem, StackItemSetupDraft, SubstanceCatalogEntry } from '../types'
 import {
   didIdentityChange,
@@ -31,7 +31,8 @@ import {
   zutatenAusDemKatalog,
   type WizardSaveMode,
   type WizardStep,
-  type PlanEditTarget,
+  type PlanChangeSubmission,
+  type PlanEditContext,
   type PlanEffectiveDraft,
 } from '../lib/wizardState'
 import { bestandteileAufloesen } from '../lib/kombination'
@@ -51,25 +52,19 @@ import { StrengthEditor } from './StrengthEditor'
 import { TrackingLevelPicker } from './TrackingLevelPicker'
 import { SubstanceSearch } from './SubstanceSearch'
 
-export interface StackItemWizardProps {
+interface StackItemWizardBaseProps {
   catalogEntries: SubstanceCatalogEntry[]
   existingItems: StackItem[]
   existingItem?: StackItem
-  existingPlan?: StackItemSetupDraft['plan']
   initialColorHex?: string
   catalogUnavailable?: boolean
   onClose: () => void
-  onSave: (draft: StackItemSetupDraft, mode: WizardSaveMode) => Promise<void>
-  onSavePlanChange?: (
-    target: PlanEditTarget,
-    snapshot: ReturnType<typeof planScheduleSnapshot>,
-    effective: PlanEffectiveDraft,
-    changeKind: Exclude<PlanChangeKind, 'initial'>,
+  onSave: (
+    draft: StackItemSetupDraft,
+    mode: WizardSaveMode,
+    idempotencyKey: string,
   ) => Promise<void>
   onOpenExisting: (item: StackItem) => void
-  planEditTarget?: PlanEditTarget
-  initialPlanEffective?: PlanEffectiveDraft
-  planChangeKind?: Exclude<PlanChangeKind, 'initial'>
   /**
    * Womit der Assistent geoeffnet wird.
    *
@@ -79,6 +74,19 @@ export interface StackItemWizardProps {
    */
   intent?: 'pk' | 'plan'
 }
+
+export type StackItemWizardProps = StackItemWizardBaseProps & (
+  | {
+      existingPlan?: StackItemSetupDraft['plan']
+      planEditContext?: never
+      onSavePlanChange?: never
+    }
+  | {
+      existingPlan?: never
+      planEditContext: PlanEditContext
+      onSavePlanChange: (submission: PlanChangeSubmission) => Promise<void>
+    }
+)
 
 function pkIntentSteps(
   item: StackItem,
@@ -143,6 +151,13 @@ function stepForInvalidField(field: string): WizardStep {
   return 'strength'
 }
 
+function nextLocalDate(timeZone: string, now = new Date()): string {
+  const today = localDateTimeKey(now, timeZone).slice(0, 10)
+  const tomorrow = new Date(`${today}T00:00:00.000Z`)
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
+  return tomorrow.toISOString().slice(0, 10)
+}
+
 export function StackItemWizard({
   catalogEntries,
   existingItems,
@@ -154,21 +169,20 @@ export function StackItemWizard({
   onSave,
   onSavePlanChange,
   onOpenExisting,
-  planEditTarget,
-  initialPlanEffective,
-  planChangeKind = 'schedule',
+  planEditContext,
   intent,
 }: StackItemWizardProps) {
   const { t } = useTranslation()
+  const selectedPlan = planEditContext?.snapshot ?? existingPlan
   const pkIntentStepsRef = useRef<WizardStep[] | null>(null)
   const [state, dispatch] = useReducer(
     wizardReducer,
     undefined,
     () => {
-      const initial = initialWizardState(existingItem, initialColorHex, existingPlan)
+      const initial = initialWizardState(existingItem, initialColorHex, selectedPlan)
       if (intent === 'plan') initial.step = 'plan'
       if (intent === 'pk' && existingItem) {
-        const intentSteps = pkIntentSteps(existingItem, existingPlan)
+        const intentSteps = pkIntentSteps(existingItem, selectedPlan)
         pkIntentStepsRef.current = intentSteps
         initial.step = intentSteps[0]
       }
@@ -184,11 +198,20 @@ export function StackItemWizard({
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [planEffective, setPlanEffective] = useState<PlanEffectiveDraft>(() => (
-    initialPlanEffective
-    ?? (planEditTarget?.mode === 'replace_future'
-      ? { kind: 'date', localDate: existingPlan?.startDate ?? null }
-      : { kind: 'now', localDate: null })
+    planEditContext?.target.mode === 'replace_future'
+      ? {
+          kind: 'date',
+          localDate: [
+            planEditContext.initialEffective?.kind === 'date'
+              ? planEditContext.initialEffective.localDate
+              : null,
+            planEditContext.snapshot.startDate,
+          ].find(candidate => candidate && candidate >= nextLocalDate(planEditContext.timeZone))
+            ?? nextLocalDate(planEditContext.timeZone),
+        }
+      : planEditContext?.initialEffective ?? { kind: 'now', localDate: null }
   ))
+  const [setupIdempotencyKey] = useState(() => globalThis.crypto.randomUUID())
   const dialogRef = useRef<HTMLDivElement>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const duplicateActionRef = useRef<HTMLButtonElement>(null)
@@ -500,16 +523,17 @@ export function StackItemWizard({
     setSaving(true)
     setSaveError(null)
     try {
-      if (planEditTarget) {
+      if (planEditContext) {
         if (!onSavePlanChange) throw new Error('Plan change handler is required')
-        await onSavePlanChange(
-          planEditTarget,
-          planScheduleSnapshot(draftForSave.plan, draftForSave.trackingLevel),
-          planEffective,
-          planChangeKind,
-        )
+        await onSavePlanChange({
+          target: planEditContext.target,
+          snapshot: planScheduleSnapshot(draftForSave.plan, draftForSave.trackingLevel),
+          effective: planEffective,
+          changeKind: planEditContext.changeKind,
+          timeZone: planEditContext.timeZone,
+        })
       } else {
-        await onSave(draftForSave, mode)
+        await onSave(draftForSave, mode, setupIdempotencyKey)
       }
       onClose()
     } catch {
@@ -644,41 +668,46 @@ export function StackItemWizard({
       case 'plan':
         return state.draft.dosageForm ? (
           <div className="space-y-5">
-            {planEditTarget && (
+            {planEditContext && (
               <fieldset className="rounded-2xl border border-white/10 bg-white/[0.025] p-4">
                 <legend className="px-1 text-sm font-semibold text-slate-200">
                   {t('my_stack_plan_effective_title', { defaultValue: 'Gültig ab' })}
                 </legend>
-                <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                  <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-white/10 px-3 text-sm font-semibold text-slate-200">
-                    <input
-                      type="radio"
-                      name="plan-effective-kind"
-                      checked={planEffective.kind === 'now'}
-                      onChange={() => setPlanEffective({ kind: 'now', localDate: null })}
-                      className="h-5 w-5 accent-sky-400"
-                    />
-                    {t('my_stack_plan_effective_now', { defaultValue: 'Ab sofort' })}
-                  </label>
-                  <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-white/10 px-3 text-sm font-semibold text-slate-200">
-                    <input
-                      type="radio"
-                      name="plan-effective-kind"
-                      checked={planEffective.kind === 'date'}
-                      onChange={() => setPlanEffective({
-                        kind: 'date',
-                        localDate: planEffective.localDate ?? state.draft.plan.startDate,
-                      })}
-                      className="h-5 w-5 accent-sky-400"
-                    />
-                    {t('my_stack_plan_effective_date', { defaultValue: 'Ab Datum' })}
-                  </label>
-                </div>
-                {planEffective.kind === 'date' && (
+                {planEditContext.target.mode === 'new_change' && (
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-white/10 px-3 text-sm font-semibold text-slate-200">
+                      <input
+                        type="radio"
+                        name="plan-effective-kind"
+                        checked={planEffective.kind === 'now'}
+                        onChange={() => setPlanEffective({ kind: 'now', localDate: null })}
+                        className="h-5 w-5 accent-sky-400"
+                      />
+                      {t('my_stack_plan_effective_now', { defaultValue: 'Ab sofort' })}
+                    </label>
+                    <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-white/10 px-3 text-sm font-semibold text-slate-200">
+                      <input
+                        type="radio"
+                        name="plan-effective-kind"
+                        checked={planEffective.kind === 'date'}
+                        onChange={() => setPlanEffective({
+                          kind: 'date',
+                          localDate: planEffective.localDate ?? state.draft.plan.startDate,
+                        })}
+                        className="h-5 w-5 accent-sky-400"
+                      />
+                      {t('my_stack_plan_effective_date', { defaultValue: 'Ab Datum' })}
+                    </label>
+                  </div>
+                )}
+                {(planEditContext.target.mode === 'replace_future' || planEffective.kind === 'date') && (
                   <input
                     type="date"
                     aria-label={String(t('my_stack_plan_effective_date', { defaultValue: 'Ab Datum' }))}
                     value={planEffective.localDate ?? ''}
+                    min={planEditContext.target.mode === 'replace_future'
+                      ? nextLocalDate(planEditContext.timeZone)
+                      : undefined}
                     onChange={event => setPlanEffective({
                       kind: 'date',
                       localDate: event.target.value || null,

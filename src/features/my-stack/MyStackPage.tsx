@@ -35,6 +35,7 @@ import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackIte
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
 import { getDosageForm, isStageRenderable } from './lib/dosageForms'
+import type { WizardSaveMode } from './lib/wizardState'
 import { rhythmFromStorage } from './lib/intakeRhythm'
 import { STACK_TABS, filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
 import { sortAbilities, type SortAbility } from './lib/stackSort'
@@ -984,8 +985,12 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     }
   }
 
-  const handleSaveStackItem = async (draft: StackItemSetupDraft) => {
-    const savedRow = await saveStackItemSetup(stackDataClient as never, draft)
+  const handleSaveStackItem = async (
+    draft: StackItemSetupDraft,
+    _mode: WizardSaveMode,
+    idempotencyKey: string,
+  ) => {
+    const savedRow = await saveStackItemSetup(stackDataClient as never, draft, idempotencyKey)
     await Promise.all([loadPeptides(), loadCycles()])
     setExpandedId(savedRow.id)
     toast.success(draft.id ? t('peptid_aktualisiert') : t('peptid_hinzugefuegt'))

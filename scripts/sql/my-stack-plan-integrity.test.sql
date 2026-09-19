@@ -569,6 +569,7 @@ do $$
 declare
   required_rpc regprocedure;
   required_rpcs constant regprocedure[] := array[
+    'public.save_stack_item_with_plan(jsonb,jsonb,jsonb,text)'::regprocedure,
     'public.create_plan_version(uuid,text,timestamp with time zone,date,text,jsonb,text)'::regprocedure,
     'public.replace_future_plan_version(uuid,text,timestamp with time zone,date,text,jsonb,text,text)'::regprocedure,
     'public.remove_future_plan_version(uuid,text,text)'::regprocedure,
@@ -615,6 +616,19 @@ begin
 end
 $$;
 
+create or replace function public.test_plan_integrity_counts()
+returns table (item_count bigint, cycle_count bigint, version_count bigint)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    (select count(*) from public.stack_items),
+    (select count(*) from public.cycles),
+    (select count(*) from public.cycle_plan_versions)
+$$;
+grant execute on function public.test_plan_integrity_counts() to authenticated;
+
 create trigger reject_atomic_initial_version
 before insert on public.cycle_plan_versions
 for each row execute function public.reject_atomic_initial_version();
@@ -625,9 +639,20 @@ set local request.jwt.claim.sub = '10000000-0000-0000-0000-000000000001';
 do $$
 declare
   saved_item public.stack_items;
+  retried_item public.stack_items;
   created_cycle public.cycles;
   row_count integer;
+  item_count_before bigint;
+  cycle_count_before bigint;
+  version_count_before bigint;
+  rollback_item_count bigint;
+  rollback_cycle_count bigint;
+  rollback_version_count bigint;
 begin
+  select item_count, cycle_count, version_count
+  into item_count_before, cycle_count_before, version_count_before
+  from public.test_plan_integrity_counts();
+
   select * into saved_item
   from public.save_stack_item_with_plan(
     jsonb_build_object('tracking_level', 'complete'),
@@ -646,8 +671,54 @@ begin
       'slot_doses', null,
       'slot_days', null,
       'reminder', 'on_time'
-    )
+    ),
+    'initial-setup-key'
   );
+
+  select * into retried_item
+  from public.save_stack_item_with_plan(
+    jsonb_build_object('tracking_level', 'complete'),
+    jsonb_build_array(jsonb_build_object('position', 0)),
+    jsonb_build_object(
+      'name', 'Atomic initial setup',
+      'dose', 1.5,
+      'unit', 'mg',
+      'method', 'Oral',
+      'frequency', 'Täglich',
+      'schedule_days', jsonb_build_array(),
+      'start_date', '2026-09-19',
+      'end_date', null,
+      'intake_time', 'morgens',
+      'intake_time_custom', '08:00',
+      'slot_doses', null,
+      'slot_days', null,
+      'reminder', 'on_time'
+    ),
+    'initial-setup-key'
+  );
+
+  if to_jsonb(retried_item) <> to_jsonb(saved_item) then
+    raise exception 'initial setup retry returned a different canonical item';
+  end if;
+  select item_count, cycle_count, version_count
+  into rollback_item_count, rollback_cycle_count, rollback_version_count
+  from public.test_plan_integrity_counts();
+  if rollback_item_count <> item_count_before + 1 then
+    raise exception 'initial setup retry did not leave exactly one new item';
+  end if;
+  if rollback_cycle_count <> cycle_count_before + 1 then
+    raise exception 'initial setup retry did not leave exactly one new cycle';
+  end if;
+  if rollback_version_count <> version_count_before + 1 then
+    raise exception 'initial setup retry did not leave exactly one new version';
+  end if;
+  select count(*) into row_count
+  from public.plan_mutation_receipts
+  where idempotency_key = 'initial-setup-key'
+    and operation = 'save_stack_item_with_plan';
+  if row_count <> 1 then
+    raise exception 'initial setup retry wrote % receipts instead of 1', row_count;
+  end if;
 
   select * into strict created_cycle
   from public.cycles
@@ -672,6 +743,10 @@ begin
     raise exception 'initial setup did not retain legacy cycle fields';
   end if;
 
+  select item_count, cycle_count, version_count
+  into rollback_item_count, rollback_cycle_count, rollback_version_count
+  from public.test_plan_integrity_counts();
+
   begin
     perform public.save_stack_item_with_plan(
       jsonb_build_object('tracking_level', 'complete'),
@@ -686,7 +761,8 @@ begin
         'start_date', '2026-09-19',
         'intake_time', 'morgens',
         'reminder', 'none'
-      )
+      ),
+      'atomic-rollback-key'
     );
     raise exception 'forced initial version failure was not raised';
   exception
@@ -696,12 +772,17 @@ begin
       end if;
   end;
 
-  if exists (
-    select 1
-    from public.cycles
-    where name = 'Atomic rollback setup'
-  ) then
-    raise exception 'failed initial version left a legacy cycle behind';
+  select item_count, cycle_count, version_count
+  into item_count_before, cycle_count_before, version_count_before
+  from public.test_plan_integrity_counts();
+  if item_count_before <> rollback_item_count then
+    raise exception 'failed initial version left a stack item behind';
+  end if;
+  if cycle_count_before <> rollback_cycle_count then
+    raise exception 'failed initial version left a cycle behind';
+  end if;
+  if version_count_before <> rollback_version_count then
+    raise exception 'failed initial version left a plan version behind';
   end if;
 end
 $$;

@@ -1,7 +1,12 @@
 import { buildDuplicateFingerprint } from '../lib/duplicateFingerprint'
 import { fuehrendeMenge, rhythmToStorage } from '../lib/intakeRhythm'
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
-import type { CyclePlanVersion, PlanChangeKind, PlanScheduleSnapshot } from '../../../lib/planTimeline'
+import {
+  localDateTimeKey,
+  type CyclePlanVersion,
+  type PlanChangeKind,
+  type PlanScheduleSnapshot,
+} from '../../../lib/planTimeline'
 import type { PlanEditTarget, PlanEffectiveDraft } from '../lib/wizardState'
 import {
   createPlanVersion,
@@ -143,6 +148,7 @@ interface SaveIntakePlanParams {
 
 export interface SaveStackItemSetupRpcParams extends SaveStackItemRpcParams {
   p_plan: SaveIntakePlanParams
+  p_idempotency_key: string
 }
 
 export interface StackItemRpcClient {
@@ -384,6 +390,20 @@ export async function savePlanChange(
   effective: PlanEffectiveDraft,
   options: SavePlanChangeOptions,
 ): Promise<CyclePlanVersion> {
+  if (target.mode === 'replace_future') {
+    const localDate = effective.kind === 'date' ? effective.localDate : null
+    const parsedDate = localDate && /^\d{4}-\d{2}-\d{2}$/.test(localDate)
+      ? new Date(`${localDate}T00:00:00.000Z`)
+      : null
+    const validDate = parsedDate
+      && !Number.isNaN(parsedDate.getTime())
+      && parsedDate.toISOString().slice(0, 10) === localDate
+    const today = localDateTimeKey(new Date(), options.timeZone).slice(0, 10)
+    if (!validDate || localDate <= today) {
+      throw new Error('Future plan replacement requires a future local date')
+    }
+  }
+
   const boundary = effective.kind === 'now'
     ? {
         effectiveKind: 'instant' as const,
@@ -477,6 +497,7 @@ export async function saveStackItem(
 export async function saveStackItemSetup(
   client: StackItemSetupRpcClient,
   draft: StackItemSetupDraft,
+  idempotencyKey: string,
 ): Promise<SavedStackItemRow> {
   const itemErrors = validateStackItemDraft(draft)
   const planErrors = validateIntakePlan(draft.plan, draft.trackingLevel)
@@ -497,6 +518,7 @@ export async function saveStackItemSetup(
     || Object.keys(itemErrors).length > 0
     || Object.keys(planErrors).length > 0
     || invalidInventory
+    || !idempotencyKey.trim()
   ) {
     throw new Error('Invalid stack item setup draft')
   }
@@ -505,6 +527,7 @@ export async function saveStackItemSetup(
     p_item: itemParams(draft, draft.pkProfileMethod, draft.inventory),
     p_ingredients: draft.ingredients.map(ingredientForSave),
     p_plan: planParams(draft.plan, draft.trackingLevel),
+    p_idempotency_key: idempotencyKey,
   }
   const { data, error } = await client.rpc('save_stack_item_with_plan', params)
   throwIfError(error)

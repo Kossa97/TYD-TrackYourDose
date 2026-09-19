@@ -12,6 +12,7 @@ import type {
   SubstanceCatalogEntry,
   TrackingLevel,
 } from '../types'
+import type { PlanChangeKind, PlanScheduleSnapshot } from '../../../lib/planTimeline'
 import { format } from 'date-fns'
 import { buildDuplicateFingerprint } from './duplicateFingerprint'
 import {
@@ -38,15 +39,29 @@ export type WizardStep =
 
 export type WizardSaveMode = 'create' | 'update' | 'duplicate'
 
-export interface PlanEditTarget {
-  cycleId: string
-  versionId: string | null
-  mode: 'new_change' | 'replace_future'
-}
+export type PlanEditTarget =
+  | { cycleId: string; versionId: null; mode: 'new_change' }
+  | { cycleId: string; versionId: string; mode: 'replace_future' }
 
 export interface PlanEffectiveDraft {
   kind: 'now' | 'date'
   localDate: string | null
+}
+
+export interface PlanEditContext {
+  target: PlanEditTarget
+  snapshot: IntakePlanDraft
+  changeKind: Exclude<PlanChangeKind, 'initial'>
+  timeZone: string
+  initialEffective?: PlanEffectiveDraft
+}
+
+export interface PlanChangeSubmission {
+  target: PlanEditTarget
+  snapshot: PlanScheduleSnapshot
+  effective: PlanEffectiveDraft
+  changeKind: Exclude<PlanChangeKind, 'initial'>
+  timeZone: string
 }
 
 export interface WizardState {

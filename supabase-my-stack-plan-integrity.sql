@@ -318,10 +318,13 @@ $$;
 revoke all on function public.normalize_plan_schedule(jsonb, text)
   from public, anon, authenticated;
 
+drop function if exists public.save_stack_item_with_plan(jsonb, jsonb, jsonb);
+
 create or replace function public.save_stack_item_with_plan(
   p_item jsonb,
   p_ingredients jsonb,
-  p_plan jsonb
+  p_plan jsonb,
+  p_idempotency_key text default null
 )
 returns public.stack_items
 language plpgsql
@@ -343,10 +346,35 @@ declare
   next_history jsonb;
   previous_segment jsonb;
   next_segment jsonb;
+  mutation_key text;
+  operation_name constant text := 'save_stack_item_with_plan';
+  receipt_result jsonb;
 begin
   if owner_id is null then
     raise exception 'Authentication required';
   end if;
+  if p_idempotency_key is null then
+    mutation_key := gen_random_uuid()::text;
+  elsif nullif(btrim(p_idempotency_key), '') is null then
+    raise exception 'Idempotency key is required';
+  else
+    mutation_key := p_idempotency_key;
+  end if;
+
+  perform pg_advisory_xact_lock(
+    hashtextextended(owner_id::text || ':' || operation_name || ':' || mutation_key, 0)
+  );
+  select result into receipt_result
+  from public.plan_mutation_receipts
+  where user_id = owner_id
+    and idempotency_key = mutation_key
+    and operation = operation_name;
+  if found then
+    select * into saved_item
+    from jsonb_populate_record(null::public.stack_items, receipt_result);
+    return saved_item;
+  end if;
+
   if p_plan is null or jsonb_typeof(p_plan) <> 'object' then
     raise exception 'Invalid plan';
   end if;
@@ -410,6 +438,11 @@ begin
       (normalized ->> 'dose')::numeric,
       normalized ->> 'unit',
       normalized ->> 'method'
+    );
+    insert into public.plan_mutation_receipts (
+      user_id, idempotency_key, operation, result
+    ) values (
+      owner_id, mutation_key, operation_name, to_jsonb(saved_item)
     );
     return saved_item;
   end if;
@@ -511,13 +544,18 @@ begin
     and stack_item_id = saved_item.id
     and user_id = owner_id;
 
+  insert into public.plan_mutation_receipts (
+    user_id, idempotency_key, operation, result
+  ) values (
+    owner_id, mutation_key, operation_name, to_jsonb(saved_item)
+  );
   return saved_item;
 end
 $$;
 
-revoke execute on function public.save_stack_item_with_plan(jsonb, jsonb, jsonb)
+revoke execute on function public.save_stack_item_with_plan(jsonb, jsonb, jsonb, text)
   from public, anon;
-grant execute on function public.save_stack_item_with_plan(jsonb, jsonb, jsonb)
+grant execute on function public.save_stack_item_with_plan(jsonb, jsonb, jsonb, text)
   to authenticated;
 
 create or replace function public.try_legacy_local_date(p_value text)

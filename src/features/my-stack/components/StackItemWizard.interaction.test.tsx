@@ -3,7 +3,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IntakePlanDraft, StackItem, StackItemSetupDraft, SubstanceCatalogEntry } from '../types'
-import type { WizardSaveMode } from '../lib/wizardState'
+import type { PlanChangeSubmission, WizardSaveMode } from '../lib/wizardState'
 import { emptyRhythm } from '../lib/intakeRhythm'
 import type { PlanRpcClient } from '../services/planLifecycle'
 import { savePlanChange } from '../services/stackItems'
@@ -101,19 +101,22 @@ function deferred<T>() {
 function renderWizard(overrides: Partial<StackItemWizardProps> = {}) {
   const onClose = vi.fn()
   const onOpenExisting = vi.fn()
-  const onSave = vi.fn<(draft: StackItemSetupDraft, mode: WizardSaveMode) => Promise<void>>(
+  const onSave = vi.fn<(
+    draft: StackItemSetupDraft,
+    mode: WizardSaveMode,
+    idempotencyKey: string,
+  ) => Promise<void>>(
     async () => undefined,
   )
-  const result = render(
-    <StackItemWizard
-      catalogEntries={[vitaminD3, vitaminK2]}
-      existingItems={[]}
-      onClose={onClose}
-      onOpenExisting={onOpenExisting}
-      onSave={onSave}
-      {...overrides}
-    />,
-  )
+  const props = {
+    catalogEntries: [vitaminD3, vitaminK2],
+    existingItems: [],
+    onClose,
+    onOpenExisting,
+    onSave,
+    ...overrides,
+  } as StackItemWizardProps
+  const result = render(<StackItemWizard {...props} />)
 
   return { ...result, onClose, onOpenExisting, onSave }
 }
@@ -427,35 +430,63 @@ describe('StackItemWizard interactions', () => {
     }))
     const client = { rpc, from: vi.fn() } as unknown as PlanRpcClient
     const onSave = vi.fn(async () => undefined)
-    const onSavePlanChange: NonNullable<StackItemWizardProps['onSavePlanChange']> = (
-      target,
-      snapshot,
-      effective,
-      changeKind,
-    ) => savePlanChange(client, target, snapshot, effective, {
-      changeKind,
-      idempotencyKey: 'current-dose-change',
-      timeZone: 'Europe/Berlin',
-    }).then(() => undefined)
+    const onSavePlanChange = vi.fn(async (submission: PlanChangeSubmission) => {
+      await savePlanChange(
+        client,
+        submission.target,
+        submission.snapshot,
+        submission.effective,
+        {
+          changeKind: submission.changeKind,
+          idempotencyKey: 'current-dose-change',
+          timeZone: submission.timeZone,
+        },
+      )
+    })
 
     renderWizard({
       existingItem: existingVitaminD,
-      existingPlan,
       intent: 'plan',
-      planEditTarget: { cycleId: 'cycle-1', versionId: null, mode: 'new_change' },
-      planChangeKind: 'dose',
+      planEditContext: {
+        target: { cycleId: 'cycle-1', versionId: null, mode: 'new_change' },
+        snapshot: existingPlan,
+        changeKind: 'dose',
+        timeZone: 'Europe/Berlin',
+      },
       onSave,
       onSavePlanChange,
-    })
+    } as Partial<StackItemWizardProps>)
 
+    expect((screen.getByRole('radio', {
+      name: 'my_stack_plan_effective_now',
+    }) as HTMLInputElement).checked).toBe(true)
+    expect(screen.getByRole('radio', { name: 'my_stack_plan_effective_date' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
 
     await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1))
     expect(rpc.mock.calls[0][0]).toBe('create_plan_version')
-    expect(rpc.mock.calls[0][1]).toMatchObject({
+    expect(rpc.mock.calls[0][1]).toEqual({
       p_cycle_id: 'cycle-1',
       p_effective_kind: 'instant',
+      p_effective_at: expect.any(String),
+      p_effective_local_date: null,
       p_change_kind: 'dose',
+      p_schedule: {
+        frequency: 'Täglich',
+        x_days_interval: null,
+        interval_unit: null,
+        cycle_on_days: null,
+        cycle_off_days: null,
+        schedule_days: [],
+        intake_time: 'morgens',
+        intake_time_custom: '08:30',
+        slot_doses: null,
+        slot_days: null,
+        dose: 5000,
+        unit: 'IU',
+        method: 'Oral',
+      },
+      p_idempotency_key: 'current-dose-change',
     })
     expect(onSave).not.toHaveBeenCalled()
     expect(rpc.mock.calls.some(([name]) => name === 'save_stack_item_with_plan')).toBe(false)
@@ -464,7 +495,7 @@ describe('StackItemWizard interactions', () => {
   it('routes the selected future snapshot to replacement with its exact version id and date', async () => {
     const futurePlan: IntakePlanDraft = {
       ...existingPlan,
-      startDate: '2026-10-01',
+      startDate: '2099-10-01',
       slots: [{ ...existingPlan.slots[0], dose: 7000 }],
     }
     const rpc = vi.fn(async (_name: string, _params: Record<string, unknown>) => ({
@@ -472,39 +503,85 @@ describe('StackItemWizard interactions', () => {
       error: null,
     }))
     const client = { rpc, from: vi.fn() } as unknown as PlanRpcClient
-    const onSavePlanChange: NonNullable<StackItemWizardProps['onSavePlanChange']> = (
-      target,
-      snapshot,
-      effective,
-      changeKind,
-    ) => savePlanChange(client, target, snapshot, effective, {
-      changeKind,
-      idempotencyKey: 'future-change',
-      timeZone: 'Europe/Berlin',
-    }).then(() => undefined)
+    const onSavePlanChange = vi.fn(async (submission: PlanChangeSubmission) => {
+      await savePlanChange(
+        client,
+        submission.target,
+        submission.snapshot,
+        submission.effective,
+        {
+          changeKind: submission.changeKind,
+          idempotencyKey: 'future-change',
+          timeZone: submission.timeZone,
+        },
+      )
+    })
 
     renderWizard({
       existingItem: existingVitaminD,
-      existingPlan: futurePlan,
       intent: 'plan',
-      planEditTarget: {
-        cycleId: 'cycle-1',
-        versionId: 'future-version-2',
-        mode: 'replace_future',
+      planEditContext: {
+        target: {
+          cycleId: 'cycle-1',
+          versionId: 'future-version-2',
+          mode: 'replace_future',
+        },
+        snapshot: futurePlan,
+        changeKind: 'schedule',
+        timeZone: 'Europe/Berlin',
       },
-      planChangeKind: 'schedule',
       onSavePlanChange,
-    })
+    } as Partial<StackItemWizardProps>)
+
+    expect(screen.queryByRole('radio', { name: 'my_stack_plan_effective_now' })).toBeNull()
+    const boundaryDate = screen.getByLabelText('my_stack_plan_effective_date') as HTMLInputElement
+    expect(boundaryDate.value).toBe('2099-10-01')
+    expect(boundaryDate.min).not.toBe('')
+    expect(boundaryDate.value >= boundaryDate.min).toBe(true)
 
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
 
     await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1))
-    expect(rpc).toHaveBeenCalledWith('replace_future_plan_version', expect.objectContaining({
+    expect(rpc).toHaveBeenCalledWith('replace_future_plan_version', {
       p_version_id: 'future-version-2',
       p_effective_kind: 'local_date',
-      p_effective_local_date: '2026-10-01',
-      p_schedule: expect.objectContaining({ dose: 7000 }),
-    }))
+      p_effective_at: null,
+      p_effective_local_date: '2099-10-01',
+      p_change_kind: 'schedule',
+      p_schedule: {
+        frequency: 'Täglich',
+        x_days_interval: null,
+        interval_unit: null,
+        cycle_on_days: null,
+        cycle_off_days: null,
+        schedule_days: [],
+        intake_time: 'morgens',
+        intake_time_custom: '08:30',
+        slot_doses: null,
+        slot_days: null,
+        dose: 7000,
+        unit: 'IU',
+        method: 'Oral',
+      },
+      p_timezone: 'Europe/Berlin',
+      p_idempotency_key: 'future-change',
+    })
+  })
+
+  it('reuses the same setup key after a visible save failure', async () => {
+    const onSave = vi.fn()
+      .mockRejectedValueOnce(new Error('RPC failed'))
+      .mockResolvedValueOnce(undefined)
+    renderWizard({ onSave })
+    completeCustomFlow('Stable Retry Product')
+
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    expect(await screen.findByText('my_stack_save_error')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2))
+    expect(onSave.mock.calls[0][2]).toEqual(expect.any(String))
+    expect(onSave.mock.calls[1][2]).toBe(onSave.mock.calls[0][2])
   })
 
   it('uses the first profile-bearing ingredient by position for PK confirmation and save', async () => {

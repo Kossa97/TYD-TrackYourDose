@@ -201,7 +201,7 @@ vi.mock('./components/StackItemWizard', () => ({
               pkProfileMethod: existingItem.pk_profile_method,
               plan: existingPlan,
               inventory,
-            }, 'update').then(onClose)
+            }, 'update', 'wizard-save-key').then(onClose)
             return
           }
           void onSave({
@@ -233,7 +233,7 @@ vi.mock('./components/StackItemWizard', () => ({
               reminders: [],
             },
             inventory,
-          }, 'create').then(onClose)
+          }, 'create', 'wizard-save-key').then(onClose)
         }}
       >
         save hydrated plan
@@ -556,6 +556,7 @@ describe('MyStackPage non-vial visibility', () => {
     expect(rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
       p_item: expect.objectContaining({ id: null }),
       p_plan: expect.objectContaining({ id: null }),
+      p_idempotency_key: 'wizard-save-key',
     }))
     expect(screen.queryByText('Substanz gespeichert')).toBeNull()
     expect(screen.queryByText('Zyklus anlegen')).toBeNull()

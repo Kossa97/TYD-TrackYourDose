@@ -140,6 +140,8 @@ function setupRpcClient() {
   return { client, rpc }
 }
 
+const setupTestKey = 'setup-test-action'
+
 function planRpcClient() {
   const rpc = vi.fn(async (_name: string, _params: Record<string, unknown>) => ({
     data: [{
@@ -244,10 +246,82 @@ describe('stack item service', () => {
     })
   })
 
+  it('rejects now, today, and past boundaries before replacing a future version', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-19T22:30:00.000Z'))
+    const target: PlanEditTarget = {
+      cycleId: 'cycle-1',
+      versionId: 'future-version-2',
+      mode: 'replace_future',
+    }
+
+    try {
+      for (const effective of [
+        { kind: 'now', localDate: null },
+        { kind: 'date', localDate: '2026-09-20' },
+        { kind: 'date', localDate: '2026-09-19' },
+      ] satisfies PlanEffectiveDraft[]) {
+        const mockClient = planRpcClient()
+        await expect(savePlanChange(mockClient.client, target, planSnapshot, effective, {
+          changeKind: 'schedule',
+          idempotencyKey: `invalid-${effective.kind}-${effective.localDate ?? 'now'}`,
+          timeZone: 'Europe/Berlin',
+        })).rejects.toThrow('Future plan replacement requires a future local date')
+        expect(mockClient.rpc).not.toHaveBeenCalled()
+      }
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('accepts a replacement date after today in the supplied timezone', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-19T22:30:00.000Z'))
+    const mockClient = planRpcClient()
+
+    try {
+      await savePlanChange(mockClient.client, {
+        cycleId: 'cycle-1',
+        versionId: 'future-version-2',
+        mode: 'replace_future',
+      }, planSnapshot, { kind: 'date', localDate: '2026-09-21' }, {
+        changeKind: 'schedule',
+        idempotencyKey: 'valid-future-boundary',
+        timeZone: 'Europe/Berlin',
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+
+    expect(mockClient.rpc).toHaveBeenCalledWith(
+      'replace_future_plan_version',
+      expect.objectContaining({ p_effective_local_date: '2026-09-21' }),
+    )
+  })
+
+  it('passes one caller key unchanged when initial setup is retried', async () => {
+    const mockClient = setupRpcClient()
+
+    await saveStackItemSetup(mockClient.client, completeSetupDraft, 'setup-action-1')
+    await saveStackItemSetup(mockClient.client, completeSetupDraft, 'setup-action-1')
+
+    expect(mockClient.rpc).toHaveBeenCalledTimes(2)
+    expect(mockClient.rpc).toHaveBeenNthCalledWith(
+      1,
+      'save_stack_item_with_plan',
+      expect.objectContaining({ p_idempotency_key: 'setup-action-1' }),
+    )
+    expect(mockClient.rpc).toHaveBeenNthCalledWith(
+      2,
+      'save_stack_item_with_plan',
+      expect.objectContaining({ p_idempotency_key: 'setup-action-1' }),
+    )
+  })
+
   it('sends item, ingredients, and the initial plan to one RPC', async () => {
     const mockClient = setupRpcClient()
 
-    await saveStackItemSetup(mockClient.client, completeSetupDraft)
+    await saveStackItemSetup(mockClient.client, completeSetupDraft, setupTestKey)
 
     expect(mockClient.rpc).toHaveBeenCalledTimes(1)
     expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', {
@@ -274,6 +348,7 @@ describe('stack item service', () => {
         intake_time_custom: '08:30',
         reminder: 'on_time',
       }),
+      p_idempotency_key: setupTestKey,
     })
   })
 
@@ -294,7 +369,7 @@ describe('stack item service', () => {
           { routineGroup: 'evening', time: '20:00', dose: 500, weekdays: [] },
         ],
       },
-    })
+    }, setupTestKey)
 
     expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
       p_plan: expect.objectContaining({
@@ -323,7 +398,7 @@ describe('stack item service', () => {
         // Ein Zeitpunkt bleibt: er trägt die Menge je Einnahme.
         slots: [{ routineGroup: 'morning', time: '08:30', dose: 400, weekdays: [] }],
       },
-    })
+    }, setupTestKey)
 
     expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
       p_plan: expect.objectContaining({
@@ -347,7 +422,7 @@ describe('stack item service', () => {
         ...completeSetupDraft.plan,
         rhythm: { ...emptyRhythm(), kind: 'interval', intervalValue: 10, intervalUnit: 'week' },
       },
-    })
+    }, setupTestKey)
     expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
       p_plan: expect.objectContaining({
         frequency: 'Alle X Tage',
@@ -364,7 +439,7 @@ describe('stack item service', () => {
         ...completeSetupDraft.plan,
         rhythm: { ...emptyRhythm(), kind: 'cycle', onDays: 21, offDays: 7 },
       },
-    })
+    }, setupTestKey)
     expect(mockClient.rpc).toHaveBeenLastCalledWith('save_stack_item_with_plan', expect.objectContaining({
       p_plan: expect.objectContaining({
         frequency: 'Im Wechsel',
@@ -389,7 +464,7 @@ describe('stack item service', () => {
           { routineGroup: 'evening', time: '20:00', dose: 1000, weekdays: [] },
         ],
       },
-    })
+    }, setupTestKey)
 
     expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
       p_plan: expect.objectContaining({ slot_doses: null, dose: 1000 }),
@@ -412,7 +487,7 @@ describe('stack item service', () => {
           { routineGroup: 'morning', time: '08:00', dose: 1000, weekdays: ['Mi'] },
         ],
       },
-    })
+    }, setupTestKey)
 
     expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
       p_plan: expect.objectContaining({
@@ -429,7 +504,7 @@ describe('stack item service', () => {
     // Sonst trüge jeder gewöhnliche Plan eine Spalte mit, die nichts sagt.
     const mockClient = setupRpcClient()
 
-    await saveStackItemSetup(mockClient.client, completeSetupDraft)
+    await saveStackItemSetup(mockClient.client, completeSetupDraft, setupTestKey)
 
     expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
       p_plan: expect.objectContaining({ slot_days: null }),
@@ -444,7 +519,7 @@ describe('stack item service', () => {
     await saveStackItemSetup(mockClient.client, {
       ...completeSetupDraft,
       plan: { ...completeSetupDraft.plan, reminders: ['on_time', '2h'] },
-    })
+    }, setupTestKey)
 
     expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
       p_plan: expect.objectContaining({ reminder: 'on_time,2h' }),
@@ -457,7 +532,7 @@ describe('stack item service', () => {
     await saveStackItemSetup(mockClient.client, {
       ...completeSetupDraft,
       plan: { ...completeSetupDraft.plan, endDate: '2026-08-23' },
-    })
+    }, setupTestKey)
 
     expect(mockClient.rpc).toHaveBeenCalledWith('save_stack_item_with_plan', expect.objectContaining({
       p_plan: expect.objectContaining({ end_date: '2026-08-23' }),
@@ -467,7 +542,7 @@ describe('stack item service', () => {
   it('sends null dose and unit for intake_only', async () => {
     const mockClient = setupRpcClient()
 
-    await saveStackItemSetup(mockClient.client, intakeOnlySetupDraft)
+    await saveStackItemSetup(mockClient.client, intakeOnlySetupDraft, setupTestKey)
 
     expect(mockClient.rpc).toHaveBeenCalledWith(
       'save_stack_item_with_plan',
@@ -493,7 +568,7 @@ describe('stack item service', () => {
         remainingQuantity: 42,
         batchNumber: ' A-42 ',
       },
-    })
+    }, setupTestKey)
 
     expect(mockClient.rpc).toHaveBeenCalledWith(
       'save_stack_item_with_plan',
@@ -519,7 +594,7 @@ describe('stack item service', () => {
       ...completeSetupDraft,
       id: 'stack-item-1',
       plan: { ...completeSetupDraft.plan, id: 'cycle-1' },
-    })
+    }, setupTestKey)
 
     expect(mockClient.rpc).toHaveBeenCalledWith(
       'save_stack_item_with_plan',
@@ -536,7 +611,7 @@ describe('stack item service', () => {
     await expect(saveStackItemSetup(mockClient.client, {
       ...completeSetupDraft,
       plan: { ...completeSetupDraft.plan, ...changes },
-    })).rejects.toThrow('Invalid stack item setup draft')
+    }, setupTestKey)).rejects.toThrow('Invalid stack item setup draft')
     expect(mockClient.rpc).not.toHaveBeenCalled()
   })
 
