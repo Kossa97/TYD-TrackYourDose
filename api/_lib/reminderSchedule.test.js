@@ -33,7 +33,7 @@ function cycleRow(overrides = {}) {
   return {
     id: 'c1', user_id: 'u1', stack_item_id: 's1', name: 'Cycle name', reminder: 'on_time',
     started_at: '2026-01-01T00:00:00.000Z', ended_at: null,
-    versions: [version()], pauses: [], peptides: { name: 'Exact peptide' },
+    versions: [version()], pauses: [], stack_items: { display_name: 'Exact peptide' },
     ...overrides,
   }
 }
@@ -134,6 +134,8 @@ describe('reminder worker boundary', () => {
     const url = decodeURIComponent(buildCyclesUrl('https://example.supabase.co', ['u1', 'u2']))
     expect(url).toContain('/rest/v1/cycles?ended_at=is.null&user_id=in.("u1","u2")')
     expect(url).toContain('started_at,ended_at')
+    expect(url).toContain('stack_items(display_name)')
+    expect(url).not.toContain('peptides(')
     expect(url).toContain('versions:cycle_plan_versions')
     expect(url).toContain('pauses:cycle_pause_periods')
     expect(url).not.toContain('active=eq.true')

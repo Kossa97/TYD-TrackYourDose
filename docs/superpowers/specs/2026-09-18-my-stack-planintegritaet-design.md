@@ -471,3 +471,82 @@ Das Teilprojekt ist abgeschlossen, wenn:
 10. Datenbankfehler keine halbfertigen Zustände hinterlassen,
 11. die Migration keine vorhandenen Logs löscht oder inhaltlich erfindet,
 12. automatisierte Tests alle vereinbarten Übergänge und Zeitgrenzen abdecken.
+
+## 16. Gemessene Abschlussprüfung — 2026-09-19 (Task 14)
+
+**Nur lokaler Dry-run; keine Produktionsmigration, kein Push.** Der interne
+Schalter `planTimelineV2` ist auf diesem Branch nach bestandenen lokalen Gates
+aktiviert. Legacy-Tabellen und -Spalten bleiben für Rollback erhalten. Die
+Produktionsfreigabe und die Migration in Supabase sind weiterhin separat nötig.
+
+### PostgreSQL 16.15: produktionsnaher synthetischer Datenbestand
+
+`scripts/sql/my-stack-plan-integrity-dry-run.test.sql` lädt die eingecheckten
+Legacy-, Foundation- und Tracking-Depth-Schemata einschließlich Constraints,
+Indizes, RLS und der echten Completeness-/Review-Trigger. Nur Auth/Storage werden
+lokal nachgebildet. Vier vollständig konfigurierte synthetische Einträge haben
+sechs Cycles: zwei konkurrierende offene Cycles, einen beendeten Cycle mit
+anschließendem Neustart, PRN und eine 72-Stunden-Pause über mehrere Tage. Enthalten
+sind schedule_history, alle drei Escalation-Startarten, bestätigte/übersprungene
+Logs sowie ein bestätigter PRN-Log. Es wurden keine echten Nutzerdaten kopiert.
+
+| Tabelle | Vorher | Additiv 1 | Additiv 2 | Konflikt aufgelöst + Enforcement 2× |
+| --- | ---: | ---: | ---: | ---: |
+| stack_items | 4 | 4 | 4 | 4 |
+| cycles | 6 | 6 | 6 | 6 |
+| cycle_plan_versions | nicht vorhanden (0) | 10 | 10 | 10 |
+| cycle_pause_periods | 1 | 1 | 1 | 1 |
+| dose_escalations | 3 | 3 | 3 | 3 |
+| dose_logs | 3 | 3 | 3 | 3 |
+| plan_mutation_receipts | nicht vorhanden (0) | 0 | 0 | 1 |
+| cycle_migration_conflicts | nicht vorhanden (0) | 1 | 1 | 0 |
+
+Beide additiven Läufe und beide Enforcement-Läufe mit `ON_ERROR_STOP=1` bestanden.
+Die vorbestehende Pause prüft zusätzlich einen partiell additiven Installationsstand.
+Der zweite Lauf änderte weder Counts noch Versions-/Pausen-Snapshots. Alle alten
+Log-Felder blieben in kanonisch serialisierten Snapshots bytegleich; neue
+Provenienzfelder blieben null. Jeder Cycle hat eine initiale Version zum Start.
+Genau der erwartete Konflikt wurde mit beiden Cycle-IDs angezeigt und über
+`resolve_cycle_migration_conflict` als `authenticated` aufgelöst. Der anschließende
+Versuch eines zweiten offenen Cycles scheiterte am Unique-Index. Auch die bisherige
+SQL-Verhaltenssuite `scripts/sql/my-stack-plan-integrity.test.sql` bestand vollständig.
+
+Der produktionsnahe RED-Lauf fand einen zuvor verdeckten Fehler: Der
+Foundation-Trigger verweigerte `complete → needs_review`, sodass die additive
+Migration beim Markieren des Konflikts mit `Complete stack items cannot return to
+needs_review` vollständig zurückrollte. Die gezielte Korrektur erlaubt den Wechsel
+nur bei einem bereits vorhandenen, ungelösten Konflikt derselben Eintrag-/User-ID.
+Negative Tests für fehlende, fremde und bereits gelöste Konflikte sowie das
+INSERT-Verbot bestanden weiterhin. Kein Trigger wurde deaktiviert.
+
+### Parität, Anwendung und Abhängigkeitsprüfung
+
+- Finale Parität: 7 Dateien, 111 Tests bestanden (Legacy-/V2-Vergleich über 60 Tage,
+  TypeScript-/Node-Timeline, Intake-Rhythmus und Reminder). SQL prüft unabhängig
+  die erwarteten historischen Dosen `[10,11,13,16,26]`. Keine ungeklärte Abweichung.
+- `npm test`: Exit 0, 160 Dateien, 1.896 Tests bestanden.
+- `npm run build`: Exit 0, 4.049 Module, PWA mit 134 Precache-Einträgen. Vorhandene
+  Warnungen zu großen Chunks und `inlineDynamicImports` bleiben bestehen.
+- `npm run lint`: Exit 1, genau 145 Fehler und 17 Warnungen — identisch mit der
+  Task-13-Baseline, kein Anstieg. Alle fünf geänderten TS-/JS-Dateien separat ohne
+  Diagnostik geprüft. Keine neue Diagnose betrifft Task-14-Änderungen.
+- TDD: Der CRLF/LF-Quellreihenfolgetest wurde erst reproduziert (26/27), dann nur
+  durch Zeilenendennormalisierung korrigiert (27/27). Die Rollout-Erwartung wurde
+  zuerst auf true geändert und scheiterte vor der Aktivierung, danach bestand sie.
+- Die abschließende Reminder-Prüfung entdeckte noch `peptides(name)` statt der
+  realen Foundation-Relation `stack_items(display_name)`. Zwei echte
+  Query-/Payload-Grenztests schlugen zuerst fehl; nach der minimalen Korrektur
+  bestanden sie samt sämtlicher oben genannter finalen Gates.
+- `graphify update .` und `graphify query "plan timeline cycle versions pauses Home
+  Dashboard reminders"` wurden nach allen Code-/Teständerungen erneut ausgeführt:
+  5.278 Nodes, 9.114 Edges, 849 Communities; fokussierte Query: 313 Nodes.
+  Resolver/Service sind mit My Stack, Home, Dashboard, Routinen, Reminder,
+  Injektionen und PK verbunden. Kein geprüfter Live-V2-Pfad hängt ausschließlich
+  an dose_escalations/schedule_history; Legacy-Fallbacks bleiben erhalten.
+  Graph-JSON/Report/Cache-Ausgaben werden mit committed. Das alte HTML wurde vom
+  Generator entfernt und wegen des 5.000-Node-Limits nicht neu generiert (aus Git
+  wiederherstellbar); der letzte Lauf meldete unveränderte
+  Topologie und ließ die zuvor aktualisierten Graph-Ausgaben bestehen.
+
+Die lokale Prüfung ersetzt weder einen Produktions-Recount noch die gesonderte
+Freigabe für die beiden SQL-Dateien. Es wurde kein Produktionssystem verändert.

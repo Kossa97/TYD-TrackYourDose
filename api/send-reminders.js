@@ -34,7 +34,7 @@ export function buildCyclesUrl(base, userIds) {
   const userFilter = userIds.map(id => `"${id}"`).join(',')
   const select = [
     'id', 'user_id', 'stack_item_id', 'name', 'reminder', 'started_at', 'ended_at',
-    'peptides(name)',
+    'stack_items(display_name)',
     'versions:cycle_plan_versions(id,cycle_id,effective_kind,effective_at,effective_local_date,change_kind,frequency,x_days_interval,interval_unit,cycle_on_days,cycle_off_days,schedule_days,intake_time,intake_time_custom,slot_doses,slot_days,dose,unit,method)',
     'pauses:cycle_pause_periods(id,cycle_id,paused_at,ends_at)',
   ].join(',')
@@ -47,7 +47,7 @@ function formattedQuantity(dose, unit) {
 }
 
 export function payloadFor(cycle, due) {
-  const name = cycle.peptides?.name ?? cycle.name
+  const name = cycle.stack_items?.display_name ?? cycle.name
   const quantity = formattedQuantity(due.dose, due.unit)
   const timing = due.offset === '1day'
     ? `morgen um ${due.time} Uhr`

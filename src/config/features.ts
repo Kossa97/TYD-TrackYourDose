@@ -4,7 +4,7 @@
 
 export const FEATURES = {
   // Interner Rollout-Schalter: wird erst nach bestaetigter Leseparitaet aktiviert.
-  planTimelineV2: false,
+  planTimelineV2: true,
 
   // ✅ Release v1.0 — aktiv
   SIMULATION_SINGLE_DOSE: true,

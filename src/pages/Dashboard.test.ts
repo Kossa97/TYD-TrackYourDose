@@ -540,9 +540,9 @@ describe('Dashboard normalized timeline path', () => {
     }
   }
 
-  it('keeps the timeline rollout flag disabled by default', () => {
+  it('enables the verified timeline rollout by default', () => {
     const source = readFileSync('src/config/features.ts', 'utf8')
-    expect(source).toMatch(/planTimelineV2:\s*false/)
+    expect(source).toMatch(/planTimelineV2:\s*true/)
   })
 
   it('uses timeline slots without dose escalations and confirms the exact version', async () => {

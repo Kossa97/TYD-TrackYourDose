@@ -89,7 +89,7 @@ describe('My Stack tracking depth schema', () => {
   it('prevalidates a supplied pending log against ownership, state, stack item, and exact slot before writes', () => {
     const rpcStart = migration.indexOf('create or replace function public.confirm_intake_group')
     const rpcEnd = migration.indexOf('revoke execute on function public.confirm_intake_group', rpcStart)
-    const rpc = migration.slice(rpcStart, rpcEnd)
+    const rpc = migration.slice(rpcStart, rpcEnd).replace(/\r\n/g, '\n')
     const pendingValidation = rpc.indexOf('perform 1\n      from public.dose_logs')
     const firstWrite = rpc.indexOf('update public.dose_logs')
 

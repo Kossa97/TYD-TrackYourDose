@@ -127,6 +127,33 @@ create table if not exists public.cycle_migration_conflicts (
   unique (user_id, stack_item_id)
 );
 
+-- Keep the foundation guard, allowing only a recorded migration conflict.
+create or replace function public.enforce_stack_item_review_status()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' and new.configuration_status = 'needs_review' then
+    raise exception 'New stack items cannot start as needs_review';
+  end if;
+
+  if tg_op = 'UPDATE'
+    and old.configuration_status = 'complete'
+    and new.configuration_status = 'needs_review'
+    and not exists (
+      select 1 from public.cycle_migration_conflicts conflict
+      where conflict.stack_item_id = new.id
+        and conflict.user_id = new.user_id
+        and conflict.resolved_at is null
+    ) then
+    raise exception 'Complete stack items cannot return to needs_review';
+  end if;
+
+  return new;
+end;
+$$;
+
 alter table public.dose_logs
   add column if not exists cycle_id uuid
     references public.cycles(id) on delete set null,
