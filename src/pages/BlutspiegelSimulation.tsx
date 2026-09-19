@@ -17,7 +17,7 @@ import {
   type CurrentBlutspiegelLevel,
   type DoseEvent,
 } from '../services/blutspiegelHistory'
-import { loadAllCycleChartData, type CycleChartData } from '../services/liveBlutspiegelChart'
+import { loadAllCycleChartData, loadNormalizedPkCycles, type CycleChartData } from '../services/liveBlutspiegelChart'
 import { LiveBlutspiegelChart } from '../components/LiveBlutspiegelChart'
 import { LiveCycleChartCanvas, type LiveCycleChartHandle } from '../components/liveCycleChart/LiveCycleChartCanvas'
 import { SimulationChartCanvas } from '../components/liveCycleChart/SimulationChartCanvas'
@@ -864,6 +864,7 @@ export function BlutspiegelSimulation() {
   const [numDoses, setNumDoses]           = useState('3')
   const [simResult, setSimResult]         = useState<PkResult | null>(null)
   const [simOpen, setSimOpen]             = useState(false)
+  const [pkLoadError, setPkLoadError] = useState(false)
 
   // Live-Übersicht für alle aktiven Zyklen
   const [liveData, setLiveData]           = useState<Map<string, CurrentBlutspiegelLevel>>(new Map())
@@ -891,6 +892,16 @@ export function BlutspiegelSimulation() {
 
   useEffect(() => {
     if (!user) return
+    if (FEATURES.planTimelineV2) {
+      void loadNormalizedPkCycles(user.id).then(cycles => {
+        // Resolve before publishing state so an invalid timeline becomes an explicit load error.
+        cycles.forEach(cycle => resolvePkScheduleForDay(cycle, [], new Date()))
+        setProtocolCycles(cycles as unknown as ProtocolCycle[])
+        setProtocolEscalations([])
+        setPkLoadError(false)
+      }).catch(() => setPkLoadError(true))
+      return
+    }
     void Promise.all([
       supabase
         .from('cycles')
@@ -962,14 +973,14 @@ export function BlutspiegelSimulation() {
 
   // Initial laden sobald Zyklen da sind
   useEffect(() => {
-    if (readyProtocolCycles.length > 0) void loadLiveLevels()
+    if (readyProtocolCycles.length > 0) void loadLiveLevels().catch(() => { setPkLoadError(true); setLiveLoading(false) })
   }, [readyProtocolCycles.length, loadLiveLevels])
 
   // Auto-Refresh alle 5 Sekunden
   useEffect(() => {
     if (liveIntervalRef.current) window.clearInterval(liveIntervalRef.current)
     if (!readyProtocolCycles.length) return
-    liveIntervalRef.current = window.setInterval(() => void loadLiveLevels(true), 5000)
+    liveIntervalRef.current = window.setInterval(() => void loadLiveLevels(true).catch(() => { setPkLoadError(true); setLiveRefreshing(false) }), 5000)
     return () => { if (liveIntervalRef.current) window.clearInterval(liveIntervalRef.current) }
   }, [readyProtocolCycles, loadLiveLevels])
 
@@ -980,7 +991,7 @@ export function BlutspiegelSimulation() {
     const load = () => loadAllCycleChartData(user.id).then(data => {
       setChartData(data)
       setChartLoading(false)
-    })
+    }).catch(() => { setPkLoadError(true); setChartLoading(false) })
     void load()
     chartIntervalRef.current = window.setInterval(() => void load(), 10_000)
     return () => { if (chartIntervalRef.current) window.clearInterval(chartIntervalRef.current) }
@@ -1043,6 +1054,7 @@ export function BlutspiegelSimulation() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 8 }}>
+      {pkLoadError && <p role="alert">PK-Daten konnten nicht geladen werden.</p>}
 
       {/* Header */}
       <div style={{ ...PANEL, position: 'relative', overflow: 'hidden' }}>

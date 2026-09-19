@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { format, parseISO } from 'date-fns'
 import { ArrowLeft, AlertTriangle, Copy, Minimize2, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { FEATURES } from '../config/features'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { InjectionMapCanvas, type InjectionFocusRequest } from '../components/injection3d/InjectionMapCanvas'
@@ -123,6 +124,7 @@ export function InjektionsTracker() {
   const [openIntakes, setOpenIntakes] = useState<OpenInjectionIntake[]>([])
   const [loading, setLoading] = useState(true)
   const [tableError, setTableError] = useState(false)
+  const [timelineLoadError, setTimelineLoadError] = useState(false)
 
   const [draftPin, setDraftPin] = useState<InjectionPinDraft | null>(null)
   const [showLogSheet, setShowLogSheet] = useState(false)
@@ -149,8 +151,13 @@ export function InjektionsTracker() {
       setLogs(loadedLogs)
       setOpenIntakes(loadedIntakes)
       setTableError(false)
+      setTimelineLoadError(false)
     } catch (error) {
       console.error('[InjektionsTracker] loadData error:', error)
+      if (FEATURES.planTimelineV2) {
+        setTimelineLoadError(true)
+        setOpenIntakes([])
+      }
       if (isTableMissingError(error as { message?: string; code?: string })) setTableError(true)
     } finally {
       setLoading(false)
@@ -246,6 +253,10 @@ export function InjektionsTracker() {
           method: input.method ?? input.intake!.method,
           loggedAt: input.loggedAt,
           doseLogId: input.intake!.doseLogId,
+          cycleId: input.intake!.cycleId,
+          planVersionId: input.intake!.planVersionId,
+          routineSlotKey: input.intake!.routineSlotKey,
+          scheduledAt: input.intake!.scheduledAt,
           debitVialStock: false,
         }))
         try {
@@ -258,16 +269,18 @@ export function InjektionsTracker() {
         }
       }
 
+      const confirmedSnapshot = FEATURES.planTimelineV2 && input.mode === 'intake' && input.intake?.status === 'confirmed'
+        ? input.intake : null
       await saveInjectionLog(supabase, {
         userId: user.id,
         doseLogId,
         stackItemId,
         cycleId,
-        dose: input.dose,
-        unit: input.unit,
-        method: input.method,
+        dose: confirmedSnapshot?.dose ?? input.dose,
+        unit: confirmedSnapshot?.unit ?? input.unit,
+        method: confirmedSnapshot?.method ?? input.method,
         notes: input.notes,
-        loggedAt: input.loggedAt,
+        loggedAt: confirmedSnapshot?.scheduledAt ?? input.loggedAt,
         warningState: warning.level === 'none' ? null : warning.level,
         substanceLabel: input.substanceLabel,
         pin: draftPin,
@@ -302,6 +315,10 @@ export function InjektionsTracker() {
     }
   }
 
+  if (timelineLoadError) return <div role="alert">
+    Einnahmeplan konnte nicht geladen werden.
+    <button type="button" onClick={() => void loadData()}>Erneut versuchen</button>
+  </div>
   if (tableError) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 8 }}>

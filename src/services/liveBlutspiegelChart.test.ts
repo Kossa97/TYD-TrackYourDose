@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { loadAllCycleChartData } from './liveBlutspiegelChart'
+import { FEATURES } from '../config/features'
+vi.mock('../config/features', () => ({ FEATURES: { planTimelineV2: false } }))
 
 const fixtures = vi.hoisted(() => ({
   cycles: [] as Array<Record<string, unknown>>,
   escalations: [] as Array<Record<string, unknown>>,
+  tables: [] as string[],
 }))
 
 const cycle = {
@@ -61,9 +64,11 @@ const cycle = {
 vi.mock('../lib/supabase', () => ({
   supabase: {
     from: (table: string) => {
+      fixtures.tables.push(table)
       const builder: Record<string, unknown> = {}
       builder.select = () => builder
       builder.eq = () => builder
+      builder.order = () => builder
       builder.then = (resolve: (value: { data: unknown[]; error: null }) => unknown) => Promise.resolve({
         data: table === 'cycles' ? fixtures.cycles : fixtures.escalations,
         error: null,
@@ -95,11 +100,13 @@ describe('loadAllCycleChartData date-effective readiness', () => {
     vi.setSystemTime(new Date('2026-08-20T12:00:00.000Z'))
     fixtures.cycles = [{ ...cycle, dose: null, unit: null, intake_time_custom: null }]
     fixtures.escalations = []
+    fixtures.tables = []
   })
 
   afterEach(() => {
     vi.useRealTimers()
     vi.clearAllMocks()
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false
   })
 
   it('uses the schedule segment effective today for chart readiness and units', async () => {
@@ -107,6 +114,19 @@ describe('loadAllCycleChartData date-effective readiness', () => {
 
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({ cycleId: 'cycle-1', unit: 'mg' })
+  })
+
+  it('loads a normalized current version without querying legacy escalations', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    fixtures.cycles = [{ ...cycle, dose: null, unit: null, schedule_history: null,
+      started_at: '2026-08-01T00:00:00Z', ended_at: null, pauses: [], versions: [{
+        id: 'v1', cycle_id: 'cycle-1', effective_kind: 'local_date', effective_at: null, effective_local_date: '2026-08-01',
+        change_kind: 'initial', frequency: 'Täglich', x_days_interval: null, interval_unit: null,
+        cycle_on_days: null, cycle_off_days: null, schedule_days: [], intake_time: 'custom', intake_time_custom: '08:00',
+        slot_doses: null, slot_days: null, dose: 2, unit: 'mg', method: 'Subkutan',
+      }] }]
+    expect(await loadAllCycleChartData('user-1')).toEqual([expect.objectContaining({ cycleId: 'cycle-1', unit: 'mg' })])
+    expect(fixtures.tables).not.toContain('dose_escalations')
   })
 
   it('omits a cycle when an active escalation has a mismatched unit', async () => {

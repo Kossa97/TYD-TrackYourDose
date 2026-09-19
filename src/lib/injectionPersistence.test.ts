@@ -1,6 +1,9 @@
 // src/lib/injectionPersistence.test.ts
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { FEATURES } from '../config/features'
+import type { CycleTimeline } from './planTimeline'
+vi.mock('../config/features', () => ({ FEATURES: { planTimelineV2: false } }))
 import {
   assertInjectionProSchema,
   buildSelectableInjectionIntakes,
@@ -10,8 +13,92 @@ import {
   isInjectionProSchemaError,
   injectionIntakeLookbackStart,
   loadInjectionLogs,
+  loadSelectableInjectionIntakes,
+  loadSelectableInjectionCycles,
   resolveInjectionDoseLogId,
 } from './injectionPersistence'
+
+describe('normalized injection provenance', () => {
+  afterEach(() => { (FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false; vi.useRealTimers() })
+  const timeline: CycleTimeline = {
+    cycle: { id: 'c1', stack_item_id: 's1', started_at: '2026-09-19T00:00:00Z', ended_at: null },
+    versions: [{ id: 'v1', cycle_id: 'c1', effective_kind: 'local_date', effective_at: null,
+      effective_local_date: '2026-09-19', change_kind: 'initial', frequency: 'Täglich',
+      x_days_interval: null, interval_unit: null, cycle_on_days: null, cycle_off_days: null,
+      schedule_days: [], intake_time: 'custom', intake_time_custom: '08:00', slot_doses: null,
+      slot_days: null, dose: 1, unit: 'mg', method: 'Subkutan' }], pauses: [],
+  }
+  const pending = { id: 'log-1', stack_item_id: 's1', cycle_id: 'c1', plan_version_id: 'v1',
+    routine_slot_key: 'c1@2026-09-19T06:00:00.000Z', logged_at: '2026-09-19T06:15:00.000Z',
+    taken: null, dose: 250, unit: 'mcg', method: 'Intramuskulaer' }
+  function build(logs: any[] = [], timelines = [timeline]) {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    return buildSelectableInjectionIntakes({ cycles: [], timelines, logs, linkedDoseLogIds: new Set(), escalations: [],
+      now: new Date('2026-09-19T12:00:00Z'), lookbackDays: 0, timeZone: 'Europe/Berlin' } as never)
+  }
+  it('carries exact version and stable slot identity for an open normalized occurrence', () => {
+    expect(build()).toEqual([expect.objectContaining({ cycleId: 'c1', planVersionId: 'v1',
+      routineSlotKey: 'c1@2026-09-19T06:00:00.000Z', scheduledAt: '2026-09-19T06:00:00.000Z', dose: 1, unit: 'mg' })])
+  })
+  it('keeps pending snapshot quantity and method without changing occurrence identity', () => {
+    expect(build([pending])).toEqual([expect.objectContaining({ doseLogId: 'log-1', dose: 250, unit: 'mcg',
+      method: 'Intramuskulaer', cycleId: 'c1', planVersionId: 'v1', scheduledAt: '2026-09-19T06:00:00.000Z' })])
+  })
+  it('does not reassign a confirmed log to a different cycle of the same stack item', () => {
+    const other = { ...timeline, cycle: { ...timeline.cycle, id: 'c2' }, versions: timeline.versions.map(v => ({ ...v, id: 'v2', cycle_id: 'c2' })) }
+    const confirmed = build([{ ...pending, taken: true }], [other]).find(row => row.status === 'confirmed')
+    expect(confirmed).toMatchObject({ cycleId: 'c1', planVersionId: 'v1', dose: 250, unit: 'mcg', scheduledAt: pending.logged_at })
+  })
+  it('confirms through the authoritative RPC without direct dose-log writes', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const rpc = vi.fn().mockResolvedValue({ data: [{ id: 'saved' }], error: null })
+    const from = vi.fn(() => { throw new Error('Direct write forbidden') })
+    await expect(confirmIntakeDoseLog({ rpc, from } as never, { userId: 'u', stackItemId: 's1', dose: 250, unit: 'mcg',
+      method: 'Subkutan', loggedAt: '2026-09-19T06:15:00Z', scheduledAt: '2026-09-19T06:00:00.000Z',
+      cycleId: 'c1', planVersionId: 'v1', routineSlotKey: 'c1@2026-09-19T06:00:00.000Z',
+      doseLogId: 'pending', debitVialStock: false } as never)).resolves.toBe('saved')
+    expect(rpc).toHaveBeenCalledWith('confirm_intake_group', { p_entries: [expect.objectContaining({ cycle_id: 'c1',
+      plan_version_id: 'v1', slot_key: 'c1@2026-09-19T06:00:00.000Z', dose_log_id: 'pending', logged_at: '2026-09-19T06:15:00Z' })] })
+    expect(from).not.toHaveBeenCalled()
+  })
+  it('loads normalized rows without querying escalations', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const tables: string[] = []
+    const from = (table: string) => {
+      tables.push(table)
+      const query: any = { select: () => query, eq: () => query, in: () => query, gte: () => query,
+        not: () => query, order: () => query, then: (resolve: any) => Promise.resolve({ data: [], error: null }).then(resolve) }
+      return query
+    }
+    await loadSelectableInjectionIntakes({ from } as never, 'u', new Date('2026-09-19T12:00:00Z'))
+    expect(tables).not.toContain('dose_escalations')
+  })
+  it('keeps the requested local day even in UTC+14', () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const value = { ...timeline, cycle: { ...timeline.cycle, started_at: '2026-09-18T00:00:00Z' } }
+    const result = buildSelectableInjectionIntakes({ cycles: [], timelines: [value], logs: [], linkedDoseLogIds: new Set(),
+      escalations: [], now: new Date('2026-09-18T20:00:00Z'), lookbackDays: 0, timeZone: 'Pacific/Kiritimati' })
+    expect(result.map(row => row.scheduledAt)).toEqual(['2026-09-18T18:00:00.000Z'])
+  })
+  it('includes the correctly encoded intramuscular method from a normalized snapshot', () => {
+    const value = { ...timeline, versions: [{ ...timeline.versions[0], method: 'Intramuskulär' }] }
+    expect(build([], [value])).toEqual([expect.objectContaining({ method: 'Intramuskulär' })])
+  })
+  it('keeps the older cycle selector on normalized quantities when V2 is enabled', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    vi.useFakeTimers(); vi.setSystemTime(new Date('2026-09-19T12:00:00Z'))
+    const row = { ...timeline.cycle, versions: timeline.versions, pauses: [], name: 'Plan',
+      dose: 99, unit: 'IU', method: 'Oral', active: true, stack_items: { display_name: 'Item' } }
+    const from = (table: string) => {
+      const query: any = { select: () => query, eq: () => query, in: () => query, gte: () => query, not: () => query,
+        order: () => query, then: (resolve: any) => Promise.resolve({ data: table === 'cycles' ? [row] : [], error: null }).then(resolve) }
+      return query
+    }
+    expect(await loadSelectableInjectionCycles({ from } as never, 'u')).toEqual([
+      { id: 'c1', stack_item_id: 's1', stack_item_name: 'Item', cycle_name: 'Plan', dose: 1, unit: 'mg', method: 'Subkutan' },
+    ])
+  })
+})
 
 describe('buildInjectionInsertPayload', () => {
   it('keeps dose_log_id when linking to an existing confirmation', () => {

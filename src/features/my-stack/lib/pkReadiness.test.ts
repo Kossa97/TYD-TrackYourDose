@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { FEATURES } from '../../../config/features'
+import type { CycleTimeline } from '../../../lib/planTimeline'
+vi.mock('../../../config/features', () => ({ FEATURES: { planTimelineV2: false } }))
 import { evaluatePkReadiness, mgPerMlFromStrength, resolvePkScheduleForDay, toPkMilligrams } from './pkReadiness'
 import type { EscalationRow, ScheduleCycle } from '../../../lib/intakeSchedule'
 
@@ -11,6 +14,33 @@ const readyInput = {
   unit: 'mg',
   scheduledAt: '08:00',
 }
+
+describe('normalized PK readiness', () => {
+  afterEach(() => { (FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false })
+  const timeline: CycleTimeline = {
+    cycle: { id: 'c', stack_item_id: 's', started_at: '2026-09-01T00:00:00Z', ended_at: null },
+    versions: [{ id: 'v1', cycle_id: 'c', effective_kind: 'local_date', effective_at: null,
+      effective_local_date: '2026-09-01', change_kind: 'initial', frequency: 'Täglich',
+      x_days_interval: null, interval_unit: null, cycle_on_days: null, cycle_off_days: null,
+      schedule_days: [], intake_time: 'custom', intake_time_custom: '08:00', slot_doses: null,
+      slot_days: null, dose: 1, unit: 'mg', method: 'Subkutan' }], pauses: [],
+  }
+  const cycle = { ...timeline.versions[0], id: 'c', stack_item_id: 's', start_date: '2026-09-01', end_date: null,
+    dose: 99, unit: 'IU', intake_time: 'custom', intake_time_custom: '22:00', timeline }
+  it('uses the version effective now, not a future version or legacy fields', () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const withFuture = { ...timeline, versions: [...timeline.versions, { ...timeline.versions[0], id: 'v2', effective_local_date: '2026-10-01', dose: 9 }] }
+    expect(resolvePkScheduleForDay({ ...cycle as object, timeline: withFuture } as never, [], new Date('2026-09-19T12:00:00Z'))).toMatchObject({ dose: 1, unit: 'mg', method: 'Subkutan' })
+  })
+  it.each(['pause', 'ended', 'prn'])('does not fabricate scheduled readiness for %s', state => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const value = structuredClone(timeline)
+    if (state === 'pause') value.pauses = [{ id: 'p', cycle_id: 'c', paused_at: '2026-09-18T00:00:00Z', ends_at: null }]
+    if (state === 'ended') value.cycle.ended_at = '2026-09-18T00:00:00Z'
+    if (state === 'prn') value.versions[0].frequency = 'Bei Bedarf'
+    expect(resolvePkScheduleForDay({ ...cycle as object, timeline: value } as never, [], new Date('2026-09-19T12:00:00Z'))).toMatchObject({ dose: null, scheduledAt: null })
+  })
+})
 
 describe('evaluatePkReadiness', () => {
   it('requires complete tracking', () => {

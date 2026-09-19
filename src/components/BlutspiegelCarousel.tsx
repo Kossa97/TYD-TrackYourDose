@@ -4,6 +4,8 @@ import { format } from 'date-fns'
 import { Activity, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { FEATURES } from '../config/features'
+import { loadNormalizedPkCycles } from '../services/liveBlutspiegelChart'
 import { useAuth } from '../context/AuthContext'
 import {
   getCurrentBlutspiegelLevel,
@@ -529,6 +531,7 @@ export function BlutspiegelCarousel() {
   const { t } = useTranslation()
   const [cards, setCards] = useState<CarouselCard[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [dragPx, setDragPx] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
@@ -550,10 +553,13 @@ export function BlutspiegelCarousel() {
     }
 
     if (showLoader) setLoading(true)
+    try {
 
     const todayKey = format(new Date(), 'yyyy-MM-dd')
 
-    const [{ data, error }, { data: escalationRows }] = await Promise.all([
+    const [{ data, error }, { data: escalationRows }] = FEATURES.planTimelineV2
+      ? [{ data: await loadNormalizedPkCycles(user.id), error: null }, { data: [] }]
+      : await Promise.all([
       supabase
         .from('cycles')
         .select(`
@@ -611,13 +617,15 @@ export function BlutspiegelCarousel() {
     ])
 
     if (error || !data) {
+      if (FEATURES.planTimelineV2) throw error ?? new Error('PK data unavailable')
       setCards([])
       setLoading(false)
       return
     }
 
     const eligible = (data as unknown as CycleWithPk[])
-      .filter(cycle => isCycleActiveForCarousel(cycle, todayKey))
+      .filter(cycle => FEATURES.planTimelineV2 || isCycleActiveForCarousel(cycle, todayKey))
+    setLoadError(false)
 
     if (!eligible.length) {
       setCards([])
@@ -686,7 +694,7 @@ export function BlutspiegelCarousel() {
           profileName: pk.name,
           category,
           accent: CATEGORY_ACCENT[category],
-          dose: Number(cycle.dose),
+          dose: Number(schedule.dose),
           halfLifeHours: pk.half_life_hours,
           level,
           weitere: spiegel.slice(1),
@@ -700,6 +708,10 @@ export function BlutspiegelCarousel() {
     nextRefreshAt.current = Date.now() + REFRESH_INTERVAL_MS
     flashTriggeredRef.current = false
     setLoading(false)
+    } catch {
+      setLoadError(true)
+      setLoading(false)
+    }
   }, [user])
 
   useEffect(() => {
@@ -767,6 +779,7 @@ export function BlutspiegelCarousel() {
     setDragPx(delta)
   }
 
+  if (loadError) return <div role="alert" className={shellClassName}>PK-Daten konnten nicht geladen werden.</div>
   if (loading) {
     return (
       <div

@@ -4,7 +4,18 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { createElement, type ComponentType } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
-import { PkReadinessPanel } from './BlutspiegelSimulation'
+import { BlutspiegelSimulation, PkReadinessPanel } from './BlutspiegelSimulation'
+import { FEATURES } from '../config/features'
+vi.mock('../config/features', () => ({ FEATURES: { planTimelineV2: false } }))
+const pageDb = vi.hoisted(() => ({ tables: [] as string[], cycles: [] as any[] }))
+vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: pageUser }) }))
+const pageUser = { id: 'user-1' }
+vi.mock('../lib/supabase', () => ({ supabase: { from: (table: string) => {
+  pageDb.tables.push(table)
+  const query: any = { select: () => query, eq: () => query, order: () => query,
+    then: (resolve: any) => Promise.resolve({ data: table === 'cycles' ? pageDb.cycles : [], error: null }).then(resolve) }
+  return query
+} } }))
 
 const i18nTestState = vi.hoisted(() => ({ translations: {} as Record<string, string> }))
 
@@ -21,12 +32,26 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-afterEach(cleanup)
+afterEach(() => { cleanup(); (FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false })
 beforeEach(() => {
   i18nTestState.translations = {}
 })
 
 describe('PkReadinessPanel', () => {
+  it('loads normalized page readiness without querying escalations', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    pageDb.tables = []
+    pageDb.cycles = [{ id: 'c1', stack_item_id: 's1', started_at: '2026-08-01T00:00:00Z', ended_at: null,
+      pauses: [], versions: [{ id: 'v1', cycle_id: 'c1', effective_kind: 'local_date', effective_at: null,
+        effective_local_date: '2026-08-01', change_kind: 'initial', frequency: 'Täglich', x_days_interval: null,
+        interval_unit: null, cycle_on_days: null, cycle_off_days: null, schedule_days: [], intake_time: 'custom',
+        intake_time_custom: '08:00', slot_doses: null, slot_days: null, dose: 1, unit: 'mg', method: 'Subkutan' }],
+      stack_items: { id: 's1', display_name: 'Normalized item', tracking_level: 'with_amount', pk_profile_method: 'Subkutan',
+        ingredients: [{ position: 0, substance_catalog: { pk_profile_id: 'pk1', pk_profiles: { name: 'Profile', half_life_hours: 4, tmax_hours: 1, bioavailability_sc: 1, category: 'peptide' } } }] } }]
+    render(<MemoryRouter><BlutspiegelSimulation /></MemoryRouter>)
+    await screen.findByText(/Normalized item: PK-Daten unvollständig/)
+    expect(pageDb.tables).not.toContain('dose_escalations')
+  })
   it('explains missing PK data and links directly to the existing stack item', () => {
     render(
       <MemoryRouter>

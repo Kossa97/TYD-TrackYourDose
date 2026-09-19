@@ -1,4 +1,6 @@
 import { supabase } from '../lib/supabase'
+import { FEATURES } from '../config/features'
+import { loadCycleTimelines } from '../features/my-stack/services/planLifecycle'
 import {
   loadDoseHistory,
   calculateHistoryBlutspiegelCurve,
@@ -106,8 +108,31 @@ function detectPeaks(pts: ChartPoint[]): PeakMarker[] {
 
 // ── Public loader ────────────────────────────────────────────────────────────
 
+/** Shared normalized reader for the chart, simulation page, and carousel. */
+export async function loadNormalizedPkCycles(userId: string): Promise<CycleRow[]> {
+  const [timelines, metadata] = await Promise.all([
+    loadCycleTimelines(supabase as never, userId),
+    supabase.from('cycles').select(`id, stack_items (
+      id, display_name, tracking_level, pk_profile_method,
+      ingredients:stack_item_ingredients ( position, custom_name, amount_value, amount_unit, basis_value, basis_unit,
+        substance_catalog ( canonical_name, pk_profile_id,
+          pk_profiles ( name, half_life_hours, tmax_hours, bioavailability_sc, iu_per_mg, vd_l_kg, category )
+        )
+      )
+    )`).eq('user_id', userId),
+  ])
+  if (metadata.error) throw metadata.error
+  return timelines.filter(timeline => timeline.cycle.ended_at === null).map(timeline => {
+    const row = metadata.data?.find(candidate => candidate.id === timeline.cycle.id)
+    if (!row) throw new Error('PK cycle metadata unavailable')
+    return { ...row, ...timeline.cycle, timeline } as unknown as CycleRow
+  })
+}
+
 export async function loadAllCycleChartData(userId: string): Promise<CycleChartData[]> {
-  const [{ data: cycles }, { data: escalationRows }] = await Promise.all([
+  const [{ data: cycles }, { data: escalationRows }] = FEATURES.planTimelineV2
+    ? [{ data: await loadNormalizedPkCycles(userId) }, { data: [] }]
+    : await Promise.all([
     supabase
       .from('cycles')
       .select(`id, stack_item_id, start_date, end_date, dose, unit, method,

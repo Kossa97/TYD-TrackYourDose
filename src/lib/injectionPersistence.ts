@@ -1,9 +1,15 @@
 // src/lib/injectionPersistence.ts
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { FEATURES } from '../config/features'
+import { loadCycleTimelines } from '../features/my-stack/services/planLifecycle'
+import { confirmIntakeGroup } from '../features/routines/services/intakeConfirmation'
+import { localDateTimeKey, resolveCycleAt, type CycleTimeline } from './planTimeline'
 import { differenceInCalendarDays, format, parseISO, startOfDay, subDays } from 'date-fns'
 import {
   AUTO_MISSED_NOTE,
   collectOpenIntakes,
+  collectOpenTimelineIntakes,
+  resolveTimelineIntakesForDay,
   cycleAppliesToDay,
   effectiveQuantity,
   type EscalationRow,
@@ -14,6 +20,7 @@ import { debitPeptideStockForDoseById as debitVialStockForDoseById } from '../fe
 import type { InjectionLog3D, InjectionPinDraft, SelectableInjectionCycle } from './injectionLogTypes'
 
 const INJECTABLE_METHODS = ['Subkutan', 'IntramuskulÃ¤r', 'Intramuskulaer']
+const NORMALIZED_INJECTABLE_METHODS = [...INJECTABLE_METHODS, 'Intramuskulär']
 
 interface SaveInjectionInput {
   userId: string
@@ -162,6 +169,14 @@ export async function loadSelectableInjectionCycles(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<SelectableInjectionCycle[]> {
+  if (FEATURES.planTimelineV2) {
+    const intakes = await loadSelectableInjectionIntakes(supabase, userId)
+    return [...new Map(intakes.filter(intake => intake.status === 'open' && intake.cycleId)
+      .map(intake => [intake.cycleId, {
+        id: intake.cycleId!, stack_item_id: intake.stackItemId, stack_item_name: intake.stackItemName,
+        cycle_name: intake.cycleName, dose: intake.dose, unit: intake.unit, method: intake.method,
+      }])).values()]
+  }
   const { data, error } = await supabase
     .from('cycles')
     .select('id, stack_item_id, name, dose, unit, method, active, stack_items(display_name)')
@@ -184,6 +199,8 @@ export type InjectionIntakeStatus = 'open' | 'confirmed'
 
 export interface OpenInjectionIntake {
   cycleId: string | null
+  planVersionId?: string | null
+  routineSlotKey?: string | null
   stackItemId: string
   stackItemName: string
   cycleName: string
@@ -255,6 +272,8 @@ export function buildSelectableInjectionIntakes({
   escalations,
   now,
   lookbackDays = 90,
+  timelines,
+  timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone,
 }: {
   cycles: InjectionCycleRow[]
   logs: InjectionDoseLog[]
@@ -262,7 +281,13 @@ export function buildSelectableInjectionIntakes({
   escalations: EscalationRow[]
   now: Date
   lookbackDays?: number
+  timelines?: CycleTimeline[]
+  timeZone?: string
 }): OpenInjectionIntake[] {
+  if (FEATURES.planTimelineV2) {
+    if (!timelines) throw new Error('Cycle timelines unavailable')
+    return buildTimelineInjectionIntakes(timelines, cycles, logs, linkedDoseLogIds, now, lookbackDays, timeZone)
+  }
   const activeCycles = cycles.filter(cycle => cycle.active !== false)
   const openDoseLogBySlot = new Map(
     logs
@@ -341,11 +366,81 @@ export function buildSelectableInjectionIntakes({
   return [...openIntakes, ...confirmedIntakes]
 }
 
+function buildTimelineInjectionIntakes(
+  timelines: CycleTimeline[], cycles: InjectionCycleRow[], logs: InjectionDoseLog[],
+  linkedIds: Set<string>, now: Date, lookbackDays: number, timeZone: string,
+): OpenInjectionIntake[] {
+  const todayKey = localDateTimeKey(now, timeZone).slice(0, 10)
+  const today = parseISO(todayKey)
+  const firstKey = format(subDays(today, lookbackDays), 'yyyy-MM-dd')
+  const result: OpenInjectionIntake[] = []
+  for (const timeline of timelines) {
+    const resolved = resolveCycleAt(timeline, now, timeZone)
+    if (resolved.status === 'active' && !resolved.planVersion) throw new Error('Cycle plan version unavailable')
+  }
+  const openLogs = logs.map(log => isAutoMissedDoseLog(log) ? { ...log, taken: null } : log)
+  for (let back = lookbackDays; back >= 0; back--) {
+    const day = subDays(today, back)
+    const localDate = format(day, 'yyyy-MM-dd')
+    const firstOccurrence = timelines.flatMap(timeline => resolveTimelineIntakesForDay(timeline, localDate, timeZone))[0]
+    if (!firstOccurrence) continue
+    for (const occurrence of collectOpenTimelineIntakes(timelines, openLogs, new Date(firstOccurrence.scheduledAt), timeZone)) {
+      const log = logs.find(row => row.id === occurrence.pendingLogId)
+      if (log && linkedIds.has(log.id)) continue
+      const dose = log ? injectionDoseValue(log.dose) : occurrence.dose
+      const unit = log ? log.unit : occurrence.unit
+      const method = log ? log.method : occurrence.method
+      if (dose == null || !unit?.trim() || !NORMALIZED_INJECTABLE_METHODS.includes(method)) continue
+      const cycle = cycles.find(row => row.id === occurrence.cycleId)
+      result.push({ cycleId: occurrence.cycleId, planVersionId: log?.plan_version_id ?? occurrence.planVersionId,
+        routineSlotKey: occurrence.routineSlotKey, stackItemId: occurrence.stackItemId,
+        stackItemName: stackItemName(cycle), cycleName: cycleName(cycle), dose, unit, method,
+        scheduledAt: occurrence.scheduledAt, daysOverdue: back, status: 'open', doseLogId: log?.id ?? null })
+    }
+  }
+  for (const log of logs) {
+    if (log.taken !== true || linkedIds.has(log.id)) continue
+    const dateKey = localDateTimeKey(new Date(log.logged_at), timeZone).slice(0, 10)
+    if (dateKey < firstKey || dateKey > todayKey) continue
+    const exact = Boolean(log.cycle_id || log.plan_version_id)
+    const timeline = log.cycle_id ? timelines.find(row => row.cycle.id === log.cycle_id)
+      : !exact ? timelines.find(row => row.cycle.stack_item_id === log.stack_item_id
+        && new Date(log.logged_at) >= new Date(row.cycle.started_at)
+        && (!row.cycle.ended_at || new Date(log.logged_at) < new Date(row.cycle.ended_at))) : undefined
+    const cycleId = log.cycle_id ?? timeline?.cycle.id ?? null
+    const cycle = cycles.find(row => row.id === cycleId)
+    const item = Array.isArray(log.stack_items) ? log.stack_items[0] : log.stack_items
+    const method = exact ? log.method : log.method || item?.default_method || ''
+    const dose = injectionDoseValue(log.dose)
+    if (dose == null || !log.unit?.trim() || !NORMALIZED_INJECTABLE_METHODS.includes(method)) continue
+    result.push({ cycleId, planVersionId: log.plan_version_id ?? null, routineSlotKey: log.routine_slot_key ?? null,
+      stackItemId: log.stack_item_id, stackItemName: item?.display_name ?? stackItemName(cycle), cycleName: cycleName(cycle),
+      dose, unit: log.unit, method, scheduledAt: log.logged_at,
+      daysOverdue: differenceInCalendarDays(today, parseISO(dateKey)), status: 'confirmed', doseLogId: log.id })
+  }
+  return result
+}
+
 export async function loadSelectableInjectionIntakes(
   supabase: SupabaseClient,
   userId: string,
   now: Date = new Date(),
 ): Promise<OpenInjectionIntake[]> {
+  if (FEATURES.planTimelineV2) {
+    const [timelines, cyclesRes, logsRes, linkedRes] = await Promise.all([
+      loadCycleTimelines(supabase as never, userId),
+      supabase.from('cycles').select('id, name, stack_item_id, stack_items(display_name)').eq('user_id', userId),
+      supabase.from('dose_logs')
+        .select('id, stack_item_id, cycle_id, plan_version_id, routine_slot_key, dose, unit, method, logged_at, taken, notes, stack_items(display_name, default_method)')
+        .eq('user_id', userId).gte('logged_at', injectionIntakeLookbackStart(now).toISOString())
+        .order('logged_at', { ascending: false }),
+      supabase.from('injection_logs').select('dose_log_id').eq('user_id', userId).not('dose_log_id', 'is', null),
+    ])
+    for (const result of [cyclesRes, logsRes, linkedRes]) if (result.error) throw result.error
+    return buildSelectableInjectionIntakes({ timelines, cycles: (cyclesRes.data ?? []) as InjectionCycleRow[],
+      logs: (logsRes.data ?? []) as InjectionDoseLog[], escalations: [], now,
+      linkedDoseLogIds: new Set((linkedRes.data ?? []).map(row => row.dose_log_id as string)) })
+  }
   const [cyclesRes, logsRes, escRes, linkedRes] = await Promise.all([
     supabase.from('cycles').select('*, stack_items(display_name, default_method)').eq('user_id', userId).in('method', INJECTABLE_METHODS),
     supabase
@@ -427,9 +522,29 @@ export async function confirmIntakeDoseLog(
     method: string
     loggedAt: string
     doseLogId?: string | null
+    cycleId?: string | null
+    planVersionId?: string | null
+    routineSlotKey?: string | null
+    scheduledAt?: string
     debitVialStock?: boolean
   },
 ): Promise<string> {
+  if (FEATURES.planTimelineV2) {
+    if (!input.cycleId || !input.planVersionId || !input.scheduledAt
+      || input.routineSlotKey !== `${input.cycleId}@${new Date(input.scheduledAt).toISOString()}`) {
+      throw new Error('Injection occurrence provenance unavailable')
+    }
+    const [id] = await confirmIntakeGroup(supabase, [{
+      key: input.routineSlotKey, cycleId: input.cycleId, planVersionId: input.planVersionId,
+      pendingLogId: input.doseLogId ?? null, stackItemId: input.stackItemId, stackItemName: '',
+      trackingLevel: 'with_amount', group: 'morning', scheduledAt: input.scheduledAt,
+      actualLoggedAt: input.loggedAt, dose: input.dose, unit: input.unit, method: input.method,
+      injectable: true, selected: true, actualDose: input.dose, actualUnit: input.unit,
+    }])
+    if (!id) throw new Error('Injection confirmation returned no dose log')
+    if (input.debitVialStock !== false) await debitVialStockForDoseById(supabase, id)
+    return id
+  }
   if (input.doseLogId) {
     const { error } = await supabase
       .from('dose_logs')

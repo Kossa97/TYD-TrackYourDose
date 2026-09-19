@@ -1,4 +1,5 @@
 import { addDays, format, parseISO } from 'date-fns'
+import { FEATURES } from '../config/features'
 import { effectiveQuantity, type EscalationRow, type ScheduleCycle } from './intakeSchedule'
 
 export interface DoseAdjustmentBackfillLog {
@@ -35,6 +36,7 @@ function logDay(log: DoseAdjustmentBackfillLog): string {
   return format(parseISO(log.logged_at), 'yyyy-MM-dd')
 }
 
+/** Legacy migration-verification utility; never part of normalized live mutations. */
 export function buildDoseAdjustmentBackfillUpdates(
   cycle: ScheduleCycle,
   adjustments: EscalationRow[],
@@ -42,6 +44,7 @@ export function buildDoseAdjustmentBackfillUpdates(
   affectedAdjustments: EscalationRow[] = adjustments,
   affectedFromDay?: string,
 ): DoseAdjustmentBackfillUpdate[] {
+  if (FEATURES.planTimelineV2) throw new Error('Dose adjustment backfill is legacy-only')
   const fromDay = [earliestAdjustmentStartDay(cycle, affectedAdjustments), affectedFromDay]
     .filter((day): day is string => !!day)
     .sort()[0] ?? null

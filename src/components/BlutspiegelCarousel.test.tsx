@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { BlutspiegelCarousel } from './BlutspiegelCarousel'
 import { getCurrentBlutspiegelLevel } from '../services/blutspiegelHistory'
+import { FEATURES } from '../config/features'
+vi.mock('../config/features', () => ({ FEATURES: { planTimelineV2: false } }))
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -20,6 +22,8 @@ vi.mock('react-i18next', () => ({
 
 const carouselMocks = vi.hoisted(() => ({
   escalations: [] as Array<Record<string, unknown>>,
+  tables: [] as string[],
+  normalized: null as Record<string, unknown> | null,
 }))
 
 const cycles = [{
@@ -75,12 +79,15 @@ vi.mock('../context/AuthContext', () => {
 vi.mock('../lib/supabase', () => ({
   supabase: {
     from: (table: string) => {
+      carouselMocks.tables.push(table)
       const builder: Record<string, unknown> = {}
       builder.select = () => builder
-      builder.eq = () => Promise.resolve({
-        data: table === 'cycles' ? cycles : carouselMocks.escalations,
+      builder.eq = () => builder
+      builder.order = () => builder
+      builder.then = (resolve: any) => Promise.resolve({
+        data: table === 'cycles' ? (carouselMocks.normalized ? [carouselMocks.normalized] : cycles) : carouselMocks.escalations,
         error: null,
-      })
+      }).then(resolve)
       return builder
     },
   },
@@ -98,6 +105,9 @@ afterEach(() => {
   cleanup()
   vi.clearAllMocks()
   carouselMocks.escalations = []
+  carouselMocks.tables = []
+  carouselMocks.normalized = null
+  ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false
   cycles[0].dose = null
   cycles[0].unit = null
   cycles[0].intake_time_custom = null
@@ -105,6 +115,20 @@ afterEach(() => {
 })
 
 describe('BlutspiegelCarousel PK readiness', () => {
+  it('renders normalized readiness without legacy escalation reads', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    carouselMocks.normalized = { ...cycles[0], active: false, schedule_history: null,
+      started_at: '2026-08-01T00:00:00Z', ended_at: null, pauses: [], versions: [{
+        id: 'v1', cycle_id: 'cycle-1', effective_kind: 'local_date', effective_at: null, effective_local_date: '2026-08-01',
+        change_kind: 'initial', frequency: 'Täglich', x_days_interval: null, interval_unit: null, cycle_on_days: null,
+        cycle_off_days: null, schedule_days: [], intake_time: 'custom', intake_time_custom: '08:00',
+        slot_doses: null, slot_days: null, dose: 5, unit: 'mg', method: 'Subkutan',
+      }] }
+    render(<MemoryRouter><BlutspiegelCarousel /></MemoryRouter>)
+    await screen.findByText(/PK-Daten unvollständig/)
+    expect(screen.queryByText(/Fehlend:.*Dosis/)).toBeNull()
+    expect(carouselMocks.tables).not.toContain('dose_escalations')
+  })
   it('shows an incomplete card and does not calculate a live curve', async () => {
     render(
       <MemoryRouter>

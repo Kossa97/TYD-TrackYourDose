@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { FEATURES } from '../config/features'
+vi.mock('../config/features', () => ({ FEATURES: { planTimelineV2: false } }))
 import { buildDoseAdjustmentBackfillUpdates, type DoseAdjustmentBackfillLog } from './doseAdjustmentBackfill'
 import type { EscalationRow, ScheduleCycle } from './intakeSchedule'
 
@@ -43,6 +45,15 @@ const log = (
 })
 
 describe('buildDoseAdjustmentBackfillUpdates', () => {
+  it('refuses normalized live backfill for both pending and confirmed snapshots', () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const logs = [log('pending', '2026-06-11T08:00:00Z', null), log('confirmed', '2026-06-11T09:00:00Z', true)]
+    const before = structuredClone(logs)
+    try {
+      expect(() => buildDoseAdjustmentBackfillUpdates(cycle, [adjustment], logs)).toThrow(/legacy/i)
+      expect(logs).toEqual(before)
+    } finally { (FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false }
+  })
   it('updates non-confirmed affected logs and leaves confirmed intakes untouched', () => {
     const updates = buildDoseAdjustmentBackfillUpdates(cycle, [adjustment], [
       log('before-adjustment', '2026-06-09T08:00:00.000Z', false),

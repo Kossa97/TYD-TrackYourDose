@@ -3,12 +3,40 @@ import type { RoutineConfirmationEntry } from '../../routines/intakeGroups'
 import type { ScheduleCycle } from '../../../lib/intakeSchedule'
 import { effectiveQuantity, scheduleForDay } from '../../../lib/intakeSchedule'
 import {
+  buildDosePlanVersion,
   buildOneOffActualDose,
   buildPermanentScheduleChange,
   buildTitrationStep,
   dosePlanQuantitiesForDay,
   dosePlanCapabilities,
 } from './dosePlan'
+
+describe('buildDosePlanVersion', () => {
+  const source = { id: 'v1', cycle_id: 'c1', effective_kind: 'local_date' as const, effective_at: null,
+    effective_local_date: '2026-09-01', change_kind: 'initial' as const, frequency: 'Täglich',
+    x_days_interval: null, interval_unit: null, cycle_on_days: null, cycle_off_days: null,
+    schedule_days: ['Mo'], intake_time: 'custom,custom', intake_time_custom: '08:00,20:00',
+    slot_doses: '1,2', slot_days: 'Mo,Mo', dose: 1, unit: 'mg', method: 'Subkutan' }
+  const change = { trackingLevel: 'complete' as const, dose: 3, unit: 'mg', changeKind: 'titration' as const,
+    effectiveKind: 'instant' as const, effectiveAt: '2026-09-19T12:00:00Z', effectiveLocalDate: null, idempotencyKey: 'request-1' }
+  it('creates a complete immutable version input, preserving unchanged schedule fields', () => {
+    const before = structuredClone(source)
+    const result = buildDosePlanVersion(source, change)
+    expect(result).toEqual({ cycleId: 'c1', idempotencyKey: 'request-1', changeKind: 'titration',
+      effectiveKind: 'instant', effectiveAt: '2026-09-19T12:00:00Z', effectiveLocalDate: null,
+      schedule: { frequency: 'Täglich', x_days_interval: null, interval_unit: null, cycle_on_days: null,
+        cycle_off_days: null, schedule_days: ['Mo'], intake_time: 'custom,custom', intake_time_custom: '08:00,20:00',
+        slot_doses: '1,2', slot_days: 'Mo,Mo', dose: 3, unit: 'mg', method: 'Subkutan' } })
+    result.schedule.schedule_days.push('Di')
+    expect(source).toEqual(before)
+  })
+  it.each([
+    { dose: 0 }, { dose: NaN }, { unit: 'IU' }, { trackingLevel: 'intake_only' },
+    { effectiveAt: 'invalid' }, { effectiveKind: 'local_date', effectiveAt: null, effectiveLocalDate: '2026-02-30' },
+  ])('rejects an invalid quantity, capability, unit or boundary: %j', invalid => {
+    expect(() => buildDosePlanVersion(source, { ...change, ...invalid } as never)).toThrow(/Dosisplanung|Einheit|Datum|Zeitpunkt/)
+  })
+})
 
 const entry: RoutineConfirmationEntry = {
   key: 'stack-1:2026-08-20T08:00:00.000Z',

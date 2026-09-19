@@ -3,13 +3,15 @@
 
 import { addDays, format, parseISO } from 'date-fns'
 import { supabase } from '../lib/supabase'
+import { FEATURES } from '../config/features'
 import {
   resolvePkScheduleForDay,
   toPkMilligrams,
   type PkScheduleCycle,
   type ResolvedPkSchedule,
 } from '../features/my-stack/lib/pkReadiness'
-import { cycleAppliesToDay, type EscalationRow } from '../lib/intakeSchedule'
+import { cycleAppliesToDay, findNextTimelineIntake, type EscalationRow } from '../lib/intakeSchedule'
+import { resolveCycleAt } from '../lib/planTimeline'
 
 export type BlutspiegelTrend = 'rising' | 'falling' | 'stable'
 
@@ -18,13 +20,15 @@ export interface CurrentBlutspiegelLevel {
   trend: BlutspiegelTrend
   sparkData: number[]
   nextDoseIn: string
-  levelAfterNextDose: number
+  levelAfterNextDose: number | null
   peakLabel: string
   unit: string
   interruptedAt: string | null
 }
 
 export interface DoseEvent {
+  cycleId?: string | null
+  planVersionId?: string | null
   timestamp: Date   // Zeitpunkt der Einnahme
   dose: number
   unit: string
@@ -90,6 +94,7 @@ interface DoseLogRow {
  * Verknüpfung zum Zyklus über `stack_item_id` + Datumsbereich des Zyklus.
  */
 export async function loadDoseHistory(cycleId: string): Promise<DoseHistory> {
+  if (FEATURES.planTimelineV2) return loadNormalizedDoseHistory(cycleId)
   // 1. Zyklus laden
   const { data: cycle, error: cycleError } = await supabase
     .from('cycles')
@@ -132,6 +137,35 @@ export async function loadDoseHistory(cycleId: string): Promise<DoseHistory> {
     })),
     interruptedAt: split.interruptedAt,
   }
+}
+
+async function loadNormalizedDoseHistory(cycleId: string): Promise<DoseHistory> {
+  const { data: cycle, error } = await supabase.from('cycles')
+    .select('id, stack_item_id, started_at, ended_at').eq('id', cycleId).maybeSingle()
+  if (error) throw error
+  if (!cycle?.started_at) throw new Error('Cycle history boundary unavailable')
+  const now = new Date().toISOString()
+  const upper = cycle.ended_at && cycle.ended_at < now ? cycle.ended_at : now
+  const fields = 'logged_at, dose, unit, taken, cycle_id, plan_version_id'
+  const [exact, legacy] = await Promise.all([
+    supabase.from('dose_logs').select(fields).eq('cycle_id', cycleId).eq('taken', true)
+      .lte('logged_at', now).order('logged_at', { ascending: true }),
+    supabase.from('dose_logs').select(fields).eq('stack_item_id', cycle.stack_item_id)
+      .is('cycle_id', null).is('plan_version_id', null).eq('taken', true)
+      .gte('logged_at', cycle.started_at).lt('logged_at', upper).order('logged_at', { ascending: true }),
+  ])
+  if (exact.error) throw exact.error
+  if (legacy.error) throw legacy.error
+  const rows = [...(exact.data ?? []), ...(legacy.data ?? [])]
+    .sort((a, b) => a.logged_at.localeCompare(b.logged_at))
+  const events: DoseEvent[] = []
+  for (const row of rows) {
+    const dose = row.dose == null ? null : Number(row.dose)
+    if (dose == null || !Number.isFinite(dose) || !row.unit?.trim()) return { events, interruptedAt: row.logged_at }
+    events.push({ timestamp: new Date(row.logged_at), dose, unit: row.unit, status: 'taken',
+      cycleId: row.cycle_id, planVersionId: row.plan_version_id })
+  }
+  return { events, interruptedAt: null }
 }
 
 export interface BlutspiegelCurvePoint {
@@ -271,6 +305,8 @@ function cycleIntakeMinutes(cycle: ResolvedPkSchedule): number {
 }
 
 export interface NextPkDose {
+  cycleId?: string
+  planVersionId?: string
   timestamp: Date
   dose: number | null
   unit: string | null
@@ -280,7 +316,16 @@ export function findNextPkDose(
   cycle: PkScheduleCycle,
   escalations: EscalationRow[],
   now: Date,
-): NextPkDose {
+  timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone,
+): NextPkDose | null {
+  if (FEATURES.planTimelineV2) {
+    if (!cycle.timeline) throw new Error('Cycle timeline unavailable')
+    const resolved = resolveCycleAt(cycle.timeline, now, timeZone)
+    if (resolved.status === 'active' && !resolved.planVersion) throw new Error('Cycle plan version unavailable')
+    const next = findNextTimelineIntake(cycle.timeline, now, timeZone)
+    return next ? { timestamp: new Date(next.scheduledAt), dose: next.dose, unit: next.unit,
+      cycleId: next.cycleId, planVersionId: next.planVersionId } : null
+  }
   const todayStart = new Date(now)
   todayStart.setHours(0, 0, 0, 0)
 
@@ -435,13 +480,13 @@ export async function getCurrentBlutspiegelLevel(
   const schedule = resolvePkScheduleForDay(cycle, escalations, now)
   const cycleUnit = schedule.unit ?? 'mcg'
   const nextDose = findNextPkDose(cycle, escalations, now)
-  const nextDoseIn = formatDurationShort(nextDose.timestamp.getTime() - now.getTime())
+  const nextDoseIn = nextDose ? formatDurationShort(nextDose.timestamp.getTime() - now.getTime()) : '—'
 
   if (!takenEvents.length) {
     return {
       ...EMPTY_CURRENT_LEVEL,
       nextDoseIn,
-      levelAfterNextDose: 0,
+      levelAfterNextDose: nextDose ? 0 : null,
       unit: cycleUnit,
       interruptedAt,
     }
@@ -461,6 +506,7 @@ export async function getCurrentBlutspiegelLevel(
     return {
       ...EMPTY_CURRENT_LEVEL,
       nextDoseIn,
+      levelAfterNextDose: nextDose ? 0 : null,
       unit: cycleUnit,
       interruptedAt,
     }
@@ -486,7 +532,7 @@ export async function getCurrentBlutspiegelLevel(
     20,
   )
 
-  const futureCurve = interruptedAt || nextDose.dose == null || nextDose.unit == null
+  const futureCurve = interruptedAt || !nextDose || nextDose.dose == null || nextDose.unit == null
     ? []
     : calculateCurveTo(
         [...takenEvents, {
@@ -502,8 +548,8 @@ export async function getCurrentBlutspiegelLevel(
         30,
         umrechnung,
       )
-  const afterNext = futureCurve.filter(p => p.time.getTime() >= nextDose.timestamp.getTime())
-  const levelAfterNextDose = afterNext.length
+  const afterNext = nextDose ? futureCurve.filter(p => p.time.getTime() >= nextDose.timestamp.getTime()) : []
+  const levelAfterNextDose = !nextDose ? null : afterNext.length
     ? Math.max(...afterNext.map(p => p.level))
     : currentLevel
 

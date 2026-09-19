@@ -5,6 +5,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { InjektionsTracker } from './InjektionsTracker'
+import { FEATURES } from '../config/features'
+vi.mock('../config/features', () => ({ FEATURES: { planTimelineV2: false } }))
 
 const trackerMocks = vi.hoisted(() => {
   const intake = {
@@ -17,12 +19,13 @@ const trackerMocks = vi.hoisted(() => {
     method: 'Subkutan',
     scheduledAt: '2026-08-26T08:00:00.000Z',
     daysOverdue: 0,
-    status: 'open' as const,
-    doseLogId: null,
+    status: 'open' as 'open' | 'confirmed',
+    doseLogId: null as string | null,
   }
   return {
     user: { id: 'user-1' },
     intake,
+    loadError: false,
     confirmIntakeDoseLog: vi.fn(async () => 'committed-dose-log'),
     debitStock: vi.fn()
       .mockRejectedValueOnce(new Error('stock offline'))
@@ -38,14 +41,17 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (_key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? _key }),
 }))
 vi.mock('react-hot-toast', () => ({ default: trackerMocks.toast }))
-vi.mock('../lib/injectionPersistence', () => ({
+vi.mock('../lib/injectionPersistence', async importOriginal => ({
   assertInjectionProSchema: vi.fn(async () => undefined),
   confirmIntakeDoseLog: trackerMocks.confirmIntakeDoseLog,
   loadInjectionLogs: vi.fn(async () => []),
-  loadSelectableInjectionIntakes: vi.fn(async () => [trackerMocks.intake]),
+  loadSelectableInjectionIntakes: vi.fn(async () => {
+    if (trackerMocks.loadError) throw new Error('Timeline unavailable')
+    return [trackerMocks.intake]
+  }),
   isDoseLogAlreadyLinkedError: vi.fn(() => false),
   isInjectionProSchemaError: vi.fn(() => false),
-  resolveInjectionDoseLogId: vi.fn(async (_intake, confirm: () => Promise<string>) => confirm()),
+  resolveInjectionDoseLogId: (await importOriginal<typeof import('../lib/injectionPersistence')>()).resolveInjectionDoseLogId,
   saveInjectionLog: trackerMocks.saveInjectionLog,
 }))
 vi.mock('../features/my-stack/extensions/peptide/vialStock', () => ({
@@ -90,12 +96,35 @@ vi.mock('../components/injection3d/InjectionIntroSheet', () => ({
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false
+  trackerMocks.loadError = false
+  Object.assign(trackerMocks.intake, { status: 'open', doseLogId: null, dose: 1, unit: 'mg', method: 'Subkutan', scheduledAt: '2026-08-26T08:00:00.000Z' })
   trackerMocks.debitStock
+    .mockReset()
     .mockRejectedValueOnce(new Error('stock offline'))
     .mockResolvedValueOnce(0.9)
 })
 
 describe('InjektionsTracker committed stock retry', () => {
+  it('shows a visible unavailable state when normalized timeline loading fails', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    trackerMocks.loadError = true
+    render(createElement(MemoryRouter, null, createElement(InjektionsTracker)))
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringMatching(/nicht geladen/))
+  })
+  it('pins a confirmed V2 intake using its persisted snapshot rather than editable sheet values', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    Object.assign(trackerMocks.intake, { status: 'confirmed', doseLogId: 'confirmed-log', dose: 250, unit: 'mcg',
+      method: 'Intramuskulaer', scheduledAt: '2026-08-25T09:15:00.000Z' })
+    render(createElement(MemoryRouter, null, createElement(InjektionsTracker)))
+    fireEvent.click(await screen.findByRole('button', { name: 'Pin setzen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Position übernehmen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Einnahme speichern' }))
+    await waitFor(() => expect(trackerMocks.saveInjectionLog).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      doseLogId: 'confirmed-log', cycleId: 'cycle-1', dose: 250, unit: 'mcg', method: 'Intramuskulaer', loggedAt: '2026-08-25T09:15:00.000Z',
+    })))
+    expect(trackerMocks.confirmIntakeDoseLog).not.toHaveBeenCalled()
+  })
   it('saves the injection and retries stock with the committed log id without confirming again', async () => {
     render(createElement(MemoryRouter, null, createElement(InjektionsTracker)))
 

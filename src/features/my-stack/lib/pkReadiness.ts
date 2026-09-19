@@ -1,4 +1,6 @@
 import type { TrackingLevel } from '../types'
+import { FEATURES } from '../../../config/features'
+import { resolveCycleAt, type CycleTimeline } from '../../../lib/planTimeline'
 import {
   effectiveQuantity,
   resolveScheduleSlots,
@@ -58,7 +60,7 @@ export function mgPerMlFromStrength(
   return proEinheit / basisValue
 }
 
-export type PkScheduleCycle = ScheduleCycle & { method: string | null }
+export type PkScheduleCycle = ScheduleCycle & { method: string | null; timeline?: CycleTimeline }
 
 export type ResolvedPkSchedule = ScheduleSegment & {
   method: string | null
@@ -111,6 +113,21 @@ export function resolvePkScheduleForDay(
   escalations: EscalationRow[],
   day: Date,
 ): ResolvedPkSchedule {
+  if (FEATURES.planTimelineV2) {
+    if (!cycle.timeline) throw new Error('Cycle timeline unavailable')
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const resolved = resolveCycleAt(cycle.timeline, day, timeZone)
+    const version = resolved.planVersion
+    if (!version) throw new Error('Cycle plan version unavailable')
+    const automatic = resolved.status === 'active' && version.frequency !== 'Bei Bedarf'
+    const slot = automatic ? resolveScheduleSlots(version)[0] : null
+    return {
+      ...version,
+      effective_from: version.effective_local_date ?? version.effective_at!,
+      dose: slot ? slot.dose ?? version.dose : null,
+      scheduledAt: slot?.time ?? null,
+    }
+  }
   const segment = scheduleForDay(cycle, day)
   const quantity = effectiveQuantity(cycle, day, escalations)
   return {

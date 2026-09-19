@@ -1,7 +1,8 @@
 import { format, isValid, parseISO } from 'date-fns'
 import { effectiveQuantity, scheduleForDay, type EscalationRow, type ScheduleCycle, type ScheduleSegment } from '../../../lib/intakeSchedule'
 import type { RoutineConfirmationEntry } from '../../routines/intakeGroups'
-import type { TrackingLevel } from '../types'
+import type { CreatePlanVersionInput, TrackingLevel } from '../types'
+import type { CyclePlanVersion } from '../../../lib/planTimeline'
 import { trackingCapabilities } from './trackingDepth'
 
 export interface DosePlanCapabilitySet {
@@ -194,4 +195,36 @@ export function buildTitrationStep(step: TitrationStep) {
     start_date: step.startDate,
     start_after_days: step.startAfterDays,
   }
+}
+
+/** Normalized mutation input only. Existing dose logs are never backfilled. */
+export function buildDosePlanVersion(
+  source: CyclePlanVersion,
+  change: Omit<CreatePlanVersionInput, 'cycleId' | 'schedule' | 'changeKind'> & {
+    trackingLevel: TrackingLevel
+    dose: number
+    unit: string
+    changeKind: 'dose' | 'titration'
+  },
+): CreatePlanVersionInput {
+  assertPlannable(change.trackingLevel, source.dose)
+  assertPositiveDose(change.dose)
+  assertMatchingUnit(source.unit, change.unit)
+  if (change.changeKind === 'titration' && !dosePlanCapabilities(change.trackingLevel).titration) {
+    throw new Error('Für diese Einnahme ist keine Dosisplanung verfügbar.')
+  }
+  if (change.effectiveKind === 'local_date') {
+    assertIsoDay(change.effectiveLocalDate)
+    if (change.effectiveAt !== null) throw new Error('Ein gültiges Datum ist erforderlich.')
+  } else if (change.effectiveKind !== 'instant' || change.effectiveLocalDate !== null
+    || !change.effectiveAt || !isValid(parseISO(change.effectiveAt)) || !/(Z|[+-]\d{2}:\d{2})$/.test(change.effectiveAt)) {
+    throw new Error('Ein gültiger Zeitpunkt ist erforderlich.')
+  }
+  const { id: _id, cycle_id, effective_kind: _kind, effective_at: _at,
+    effective_local_date: _date, change_kind: _change, ...schedule } = source
+  const boundary = change.effectiveKind === 'instant'
+    ? { effectiveKind: 'instant' as const, effectiveAt: change.effectiveAt!, effectiveLocalDate: null }
+    : { effectiveKind: 'local_date' as const, effectiveAt: null, effectiveLocalDate: change.effectiveLocalDate! }
+  return { cycleId: cycle_id, idempotencyKey: change.idempotencyKey, changeKind: change.changeKind,
+    ...boundary, schedule: { ...schedule, schedule_days: [...schedule.schedule_days], dose: change.dose, unit: change.unit } }
 }
