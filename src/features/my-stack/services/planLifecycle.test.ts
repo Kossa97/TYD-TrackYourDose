@@ -86,6 +86,21 @@ function rpcClient(
 }
 
 describe('plan lifecycle service', () => {
+  it.each([
+    { archived: true, configuration_status: 'complete', migration_conflicts: [] },
+    { archived: false, configuration_status: 'needs_review', migration_conflicts: [] },
+    { archived: false, configuration_status: 'complete', migration_conflicts: [{ resolved_at: null }] },
+  ])('suppresses unavailable item timelines but retains management access: %j', async item => {
+    const row = { ...databaseRow(), stack_items: item }
+    const query = queryClient([row])
+    await expect(loadCycleTimelines(query.client, 'user-1')).resolves.toEqual([])
+    await expect(loadCycleTimelines(query.client, 'user-1', { includeUnavailable: true })).resolves.toEqual([timeline])
+    expect(query.select).toHaveBeenCalledWith(expect.stringContaining('stack_items'))
+    expect(query.select).toHaveBeenCalledWith(expect.stringContaining('migration_conflicts:cycle_migration_conflicts'))
+    row.stack_items = { archived: false, configuration_status: 'complete', migration_conflicts: [] }
+    await expect(loadCycleTimelines(query.client, 'user-1')).resolves.toEqual([timeline])
+  })
+
   it('loads complete cycle timelines through relational versions and pauses', async () => {
     const secondVersion = {
       ...version,

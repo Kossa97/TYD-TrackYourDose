@@ -520,6 +520,25 @@ describe('Home upcoming intake confirmation flow', () => {
 })
 
 describe('Home normalized timeline path', () => {
+  it.each([
+    { archived: true, configuration_status: 'complete', migration_conflicts: [] },
+    { archived: false, configuration_status: 'needs_review', migration_conflicts: [] },
+    { archived: false, configuration_status: 'complete', migration_conflicts: [{ resolved_at: null }] },
+  ])('offers no dues for an unavailable item and resumes after resolution: %j', async item => {
+    const fixtures = startFixFixture()
+    Object.assign(fixtures.cycles[0].stack_items, item)
+    fixtures.cycles.push({ ...fixtures.cycles[0], id: 'competing-cycle' })
+    const client = createHomeClient(fixtures)
+    const page = renderNormalized(client)
+    await waitFor(() => expect(client.selectCounts.get('cycles')).toBe(1))
+    await waitFor(() => expect(screen.queryByRole('status')).toBeNull())
+    expect(screen.queryByRole('button', { name: /Vitamin D3/ })).toBeNull()
+    page.unmount()
+    fixtures.cycles = [normalizedCycle()]
+    renderNormalized(client)
+    expect(await screen.findByRole('button', { name: /Vitamin D3/ })).not.toBeNull()
+  })
+
   function startFixFixture() {
     vi.stubEnv('TZ', 'Europe/Berlin')
     vi.useFakeTimers({ toFake: ['Date'] })

@@ -550,3 +550,45 @@ INSERT-Verbot bestanden weiterhin. Kein Trigger wurde deaktiviert.
 
 Die lokale Prüfung ersetzt weder einen Produktions-Recount noch die gesonderte
 Freigabe für die beiden SQL-Dateien. Es wurde kein Produktionssystem verändert.
+
+### Review-Korrektur 1: archivierte und ungeklärte Einträge (2026-09-19)
+
+Die unabhängige Prüfung zeigte zwei zusätzliche Cutover-Lücken: archivierte
+Einträge blieben im V2-Due-Pfad sichtbar, und konkurrierende Cycles eines
+ungeklärten Migrationseintrags konnten widersprüchliche Reminder erzeugen.
+Die gemeinsame Read-Policy unterdrückt jetzt geplante Aktionen für archivierte
+Einträge, `needs_review` und vorhandene ungelöste Konflikte. Der Reminder-Worker
+liest dieselben Metadaten aus `stack_items` samt Konfliktrelation. My Stack lädt
+die ausgeblendeten Timelines ausdrücklich weiter für die Konfliktauflösung.
+Archivieren beendet keinen Cycle; unter V2 entfällt der abgewiesene Legacy-Write.
+Mutationsfehler werden angezeigt, auch der Legacy-Cycle-Write wird geprüft.
+
+RED/GREEN wurde an Service, Home, Dashboard, Reminder-Worker und Archiv-Dialog
+nachgewiesen. Je drei Fälle prüfen Archivierung, `needs_review` und ungelöste
+Konflikte samt anschließender Freigabe. Zwei Dialogfälle prüfen erfolgreichen
+Archiv-Write ohne Cycle-Mutation und den Fehlerpfad. Die bestehende
+Konfliktauflösungs-UI bleibt mit realistischen Statusmetadaten getestet. Ein alter
+Quellreihenfolgetest wurde an den nun gemeinsam geprüften Fehlerpfad angepasst;
+sein zuvor fehlgeschlagener Lauf wurde nicht übergangen.
+
+Frische finale Messungen nach allen Code-/Teständerungen:
+
+- Fokussierte Grenz-/Paritätssuiten: 9 Dateien, 239 Tests bestanden.
+- Vollsuite: 160 Dateien, 1.910 Tests bestanden, 0 Fehler (`npm test` mit
+  JSON-Reporter, Exit 0).
+- `npm run build`: Exit 0, 4.049 Module, 134 PWA-Precache-Einträge; bekannte
+  Chunk-/`inlineDynamicImports`-Warnungen unverändert.
+- `npm run lint`: Exit 1, 145 Fehler und 17 Warnungen, unveränderte Baseline.
+  Keine neue Diagnose betrifft die Korrektur; vorhandene Diagnosen in
+  MyStackPage und planLifecycle.test bleiben unverändert.
+- `graphify update .` nach den Änderungen und fokussierte Query bestanden:
+  5.281 Nodes, 9.117 Edges, 844 Communities, Query 313 Nodes. Der abschließende
+  Update-Lauf meldete keine weitere Topologieänderung. Importkanten und
+  Quellprüfung verbinden weiterhin My Stack, Home, Dashboard, Routinen,
+  Reminder, Injektionen und PK mit Service/Resolver; kein geprüfter Live-V2-Pfad
+  liest ausschließlich Legacy-Escalations/History. Generierte Ausgaben bleiben
+  Bestandteil des Fix-Commits; HTML-Limit unverändert.
+
+In dieser Korrekturrunde wurden keine SQL-Dateien geändert und keine Datenbanken
+ausgeführt. Die oben dokumentierten PostgreSQL-16-Dry-Runs bleiben die lokale
+SQL-Evidenz. V2 bleibt aktiviert. Keine Produktionsmigration, kein Push.

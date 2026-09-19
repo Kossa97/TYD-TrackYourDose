@@ -590,8 +590,12 @@ describe('My Stack page vial view', () => {
     const archiveHandler = text.slice(text.indexOf('const archivePeptide'), text.indexOf('const hardDeletePeptide'))
 
     expect(archiveHandler).toContain('await archiveStackItem')
-    expect(archiveHandler).toContain('catch')
-    expect(archiveHandler.indexOf('catch')).toBeLessThan(archiveHandler.indexOf("from('cycles').update"))
+    expect(archiveHandler).toContain('if (!FEATURES.planTimelineV2)')
+    expect(archiveHandler).toContain('if (error) throw error')
+    expect(archiveHandler.indexOf('await archiveStackItem')).toBeLessThan(archiveHandler.indexOf("from('cycles').update"))
+    const failureHandler = archiveHandler.slice(archiveHandler.indexOf('catch'), archiveHandler.indexOf('toast.success'))
+    expect(failureHandler).toContain('toast.error')
+    expect(failureHandler).toContain('return')
   })
 
   test('keeps archive-origin deletion separate from archiving again', () => {

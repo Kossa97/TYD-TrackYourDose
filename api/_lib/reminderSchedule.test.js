@@ -121,6 +121,28 @@ describe('reminder evaluation from normalized occurrences', () => {
 })
 
 describe('reminder worker boundary', () => {
+  it.each([
+    { archived: true, configuration_status: 'complete', migration_conflicts: [] },
+    { archived: false, configuration_status: 'needs_review', migration_conflicts: [] },
+    { archived: false, configuration_status: 'complete', migration_conflicts: [{ resolved_at: null }] },
+  ])('sends no contradictory or archived dues, then resumes the selected cycle: %j', async item => {
+    const sendNotification = vi.fn().mockResolvedValue(undefined)
+    const cycles = [1, 2].map(dose => cycleRow({
+      id: `c${dose}`, active: false, stack_items: { display_name: 'Exact peptide', ...item },
+      versions: [version({ dose })],
+    }))
+    const input = {
+      subscriptions: [{ user_id: 'u1', endpoint: 'test', subscription: {}, timezone: 'Europe/Berlin' }],
+      cycles, now: new Date('2026-06-29T06:30:00.000Z'), windowMin: 60, sendNotification,
+    }
+    await expect(sendRemindersForSubscriptions(input)).resolves.toMatchObject({ sent: 0 })
+    expect(sendNotification).not.toHaveBeenCalled()
+    cycles[0].ended_at = '2026-06-28T00:00:00Z'
+    cycles[1].stack_items = { display_name: 'Exact peptide', archived: false, configuration_status: 'complete', migration_conflicts: [] }
+    await expect(sendRemindersForSubscriptions(input)).resolves.toMatchObject({ sent: 1 })
+    expect(JSON.parse(sendNotification.mock.calls[0][1])).toMatchObject({ title: '💊 Exact peptide', body: '2 mg · 08:00 Uhr – jetzt einnehmen' })
+  })
+
   it('maps relational rows to the client timeline shape', () => {
     const row = cycleRow()
     expect(mapTimelineRow(row)).toEqual({
@@ -134,7 +156,7 @@ describe('reminder worker boundary', () => {
     const url = decodeURIComponent(buildCyclesUrl('https://example.supabase.co', ['u1', 'u2']))
     expect(url).toContain('/rest/v1/cycles?ended_at=is.null&user_id=in.("u1","u2")')
     expect(url).toContain('started_at,ended_at')
-    expect(url).toContain('stack_items(display_name)')
+    expect(url).toContain('stack_items(display_name,archived,configuration_status,migration_conflicts:cycle_migration_conflicts(resolved_at))')
     expect(url).not.toContain('peptides(')
     expect(url).toContain('versions:cycle_plan_versions')
     expect(url).toContain('pauses:cycle_pause_periods')

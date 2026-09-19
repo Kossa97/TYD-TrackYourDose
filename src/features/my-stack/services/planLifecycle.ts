@@ -28,6 +28,11 @@ interface QueryResult<T> {
 interface CycleTimelineRow extends TimelineCycle {
   versions: CyclePlanVersion[] | null
   pauses: CyclePausePeriod[] | null
+  stack_items?: {
+    archived: boolean
+    configuration_status: string
+    migration_conflicts: Array<{ resolved_at: string | null }>
+  } | null
 }
 
 interface CycleFilter {
@@ -75,6 +80,7 @@ const TIMELINE_SELECT = `
   stack_item_id,
   started_at,
   ended_at,
+  stack_items(archived, configuration_status, migration_conflicts:cycle_migration_conflicts(resolved_at)),
   versions:cycle_plan_versions (
     id,
     cycle_id,
@@ -156,6 +162,7 @@ async function callRpc<T>(
 export async function loadCycleTimelines(
   client: PlanQueryClient,
   userId: string,
+  options: { includeUnavailable?: boolean } = {},
 ): Promise<CycleTimeline[]> {
   const { data, error } = await client
     .from('cycles')
@@ -163,7 +170,13 @@ export async function loadCycleTimelines(
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
   throwIfError(error)
-  return (data ?? []).map(mapTimeline)
+  // Management keeps unavailable timelines for conflict resolution; scheduling
+  // must not offer archived or contradictory plans. Archiving does not end them.
+  return (data ?? []).filter(row => options.includeUnavailable || (
+    row.stack_items?.archived !== true
+    && row.stack_items?.configuration_status !== 'needs_review'
+    && !row.stack_items?.migration_conflicts?.some(conflict => conflict.resolved_at === null)
+  )).map(mapTimeline)
 }
 
 export async function createPlanVersion(

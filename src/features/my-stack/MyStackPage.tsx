@@ -834,7 +834,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     setTimelineLoading(true)
     setTimelineLoadError(false)
     try {
-      setCycleTimelines(await loadCycleTimelines(stackDataClient as never, user!.id))
+      setCycleTimelines(await loadCycleTimelines(stackDataClient as never, user!.id, { includeUnavailable: true }))
     } catch (error) {
       setTimelineLoadError(true)
       if (throwOnError) throw error
@@ -1177,17 +1177,20 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   }
 
   // „Behalten": Substanz aus My Stack ausblenden, alle Daten bleiben verknüpft.
-  // Aktive Zyklen werden deaktiviert, damit keine Erinnerungen mehr entstehen.
+  // V2 unterdrueckt archivierte Eintraege beim Lesen, ohne ihre Cycles zu beenden.
   const archivePeptide = async (p: Peptide) => {
     setDeletingPeptide(true)
     try {
       await archiveStackItem(supabase as never, p.id)
+      if (!FEATURES.planTimelineV2) {
+        const { error } = await supabase.from('cycles').update({ active: false }).eq('stack_item_id', p.id).eq('active', true)
+        if (error) throw error
+      }
     } catch {
       toast.error(t('error'))
       setDeletingPeptide(false)
       return
     }
-    await supabase.from('cycles').update({ active: false }).eq('stack_item_id', p.id).eq('active', true)
     toast.success(t('substanz_archiviert'))
     setDeletePromptFromArchive(false)
     setDeletePromptPeptide(null); setDeletingPeptide(false)
@@ -1433,7 +1436,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     setTimelineLoadError(false)
     try {
       const [nextTimelines, nextPeptides] = await Promise.all([
-        loadCycleTimelines(stackDataClient as never, user!.id),
+        loadCycleTimelines(stackDataClient as never, user!.id, { includeUnavailable: true }),
         loadPeptides(false),
       ])
       setCycleTimelines(nextTimelines)

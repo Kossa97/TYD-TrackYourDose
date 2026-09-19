@@ -12,11 +12,14 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getDosageForm } from './lib/dosageForms'
 import { FEATURES } from '../../config/features'
+import toast from 'react-hot-toast'
 
 const qaName = 'Codex QA Stack Lifecycle 2026-07-24'
 const visibilityMocks = vi.hoisted(() => ({
   escalations: [] as Array<Record<string, unknown>>,
   realWizard: false,
+  mutations: [] as Array<{ table: string; values: unknown }>,
+  archiveError: null as string | null,
 }))
 
 type LoadedLegacyStackItem = LoadedStackItem & { default_method?: string }
@@ -219,9 +222,15 @@ vi.mock('../../lib/supabase', () => {
     builder.select = () => builder
     builder.eq = () => builder
     builder.order = () => builder
-    builder.then = (resolve: (value: { data: unknown[]; error: null }) => unknown) => Promise.resolve({
+    let updating = false
+    builder.update = (values: unknown) => {
+      updating = true
+      visibilityMocks.mutations.push({ table, values })
+      return builder
+    }
+    builder.then = (resolve: (value: { data: unknown[]; error: { message: string } | null }) => unknown) => Promise.resolve({
       data: table === 'dose_escalations' ? visibilityMocks.escalations : [],
-      error: null,
+      error: updating && visibilityMocks.archiveError ? { message: visibilityMocks.archiveError } : null,
     }).then(resolve)
     return builder
   } } }
@@ -456,6 +465,8 @@ describe('MyStackPage non-vial visibility', () => {
     localStorage.setItem('tyd_peptide_view', 'vials')
     visibilityMocks.escalations = []
     visibilityMocks.realWizard = false
+    visibilityMocks.mutations = []
+    visibilityMocks.archiveError = null
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
       configurable: true,
       value: vi.fn(),
@@ -696,6 +707,26 @@ describe('MyStackPage non-vial visibility', () => {
     expect(screen.queryByText('Zyklus anlegen')).toBeNull()
   })
 
+  it.each([null, 'archive rejected'])('archives under V2 without ending or updating a cycle (%s)', async error => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    visibilityMocks.archiveError = error
+    await renderPage()
+    fireEvent.click(within(visibleCardFor(qaName)!).getByRole('button', { name: 'loeschen' }))
+    const dialog = await screen.findByRole('dialog', { name: 'substanz_entfernen_title' })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'archivieren_behalten' }))
+    if (error) {
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('error'))
+      expect(screen.getByRole('dialog', { name: 'substanz_entfernen_title' })).not.toBeNull()
+      expect(toast.success).not.toHaveBeenCalled()
+    } else {
+      await waitFor(() => expect(toast.success).toHaveBeenCalledWith('substanz_archiviert'))
+      expect(screen.queryByRole('dialog', { name: 'substanz_entfernen_title' })).toBeNull()
+    }
+    expect(visibilityMocks.mutations).toEqual([{ table: 'stack_items', values: {
+      archived: true, archived_at: expect.any(String),
+    } }])
+  })
+
   it('targets the selected future V2 version instead of another active cycle', async () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
     localStorage.setItem('tyd_peptide_view', 'list')
@@ -760,12 +791,13 @@ describe('MyStackPage non-vial visibility', () => {
     vi.mocked(loadStackItems)
       .mockResolvedValueOnce([needsReviewItem, loadedItems[1]])
       .mockResolvedValueOnce([resolvedItem, loadedItems[1]])
-    const first = timelineRow('cycle-conflict-first')
+    const conflictItem = { archived: false, configuration_status: 'needs_review', migration_conflicts: [{ resolved_at: null }] }
+    const first = timelineRow('cycle-conflict-first', undefined, { stack_items: conflictItem })
     const kept = timelineRow('cycle-conflict-kept', [normalizedVersion(
       'cycle-conflict-kept-version',
       'cycle-conflict-kept',
       { dose: 250 },
-    )])
+    )], { stack_items: conflictItem })
     const closed = timelineRow('cycle-conflict-first', first.versions, {
       ended_at: '2026-09-19T08:00:00.000Z',
     })
