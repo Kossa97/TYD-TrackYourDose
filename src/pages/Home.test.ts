@@ -49,13 +49,13 @@ vi.stubGlobal('ResizeObserver', class {
   disconnect() {}
 })
 
-function resolvedQuery(data: unknown) {
+function resolvedQuery(data: unknown, error: { message: string; code?: string } | null = null) {
   const query: Record<string, unknown> = {}
-  for (const method of ['select', 'eq', 'gte', 'lte', 'order', 'limit', 'single']) {
+  for (const method of ['select', 'eq', 'is', 'gte', 'lte', 'order', 'limit', 'single']) {
     query[method] = vi.fn(() => query)
   }
   query.then = (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => (
-    Promise.resolve({ data, error: null }).then(resolve, reject)
+    Promise.resolve({ data, error }).then(resolve, reject)
   )
   return query
 }
@@ -66,28 +66,32 @@ function createHomeClient(
     data: unknown
     error: { message: string } | null
   }> = async () => ({ data: [{ id: 'saved-log-1' }, { id: 'saved-log-2' }], error: null }),
+  errors: Record<string, { message: string; code?: string } | null> = {},
 ) {
   const selectCounts = new Map<string, number>()
   const selectCalls: Array<{ table: string; columns: string }> = []
   const mutationCalls: Array<{ table: string; operation: 'insert' | 'update'; values: unknown }> = []
+  const mutationQueries: ReturnType<typeof resolvedQuery>[] = []
   const rpc = vi.fn(rpcImplementation)
   const from = vi.fn((table: string) => ({
     select: vi.fn((columns: string) => {
       selectCounts.set(table, (selectCounts.get(table) ?? 0) + 1)
       selectCalls.push({ table, columns })
-      return resolvedQuery(fixtures[table] ?? [])
+      return resolvedQuery(fixtures[table] ?? [], errors[table] ?? null)
     }),
     insert: vi.fn((values: unknown) => {
       mutationCalls.push({ table, operation: 'insert', values })
-      return resolvedQuery(table === 'dose_logs' ? { id: 'saved-single-log' } : null)
+      return resolvedQuery(table === 'dose_logs' ? { id: 'saved-single-log' } : null, errors.insert ?? null)
     }),
     update: vi.fn((values: unknown) => {
       mutationCalls.push({ table, operation: 'update', values })
-      return resolvedQuery(null)
+      const query = resolvedQuery(null)
+      mutationQueries.push(query)
+      return query
     }),
     delete: vi.fn(() => resolvedQuery(null)),
   }))
-  return { from, rpc, selectCounts, selectCalls, mutationCalls }
+  return { from, rpc, selectCounts, selectCalls, mutationCalls, mutationQueries }
 }
 
 function intakeOnlyHomeCycle() {
@@ -131,6 +135,8 @@ afterEach(() => {
   localStorage.clear()
   ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false
   vi.clearAllMocks()
+  vi.useRealTimers()
+  vi.unstubAllEnvs()
 })
 
 describe('Home upcoming intake confirmation flow', () => {
@@ -503,6 +509,145 @@ describe('Home upcoming intake confirmation flow', () => {
 })
 
 describe('Home normalized timeline path', () => {
+  function startFixFixture() {
+    vi.stubEnv('TZ', 'Europe/Berlin')
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-09-18T14:00:00Z'))
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    return {
+      cycles: [normalizedCycle()], dose_logs: [] as unknown[],
+      stack_items: [{ id: 'stack-1', display_name: 'Vitamin D3', tracking_level: 'complete', dosage_form: 'capsule' }],
+      inventory_items: [], injection_logs: [],
+    }
+  }
+
+  function renderNormalized(client: ReturnType<typeof createHomeClient>) {
+    const TestHome = Home as ComponentType<{ homeDataClient: unknown }>
+    return render(createElement(MemoryRouter, null, createElement(TestHome, { homeDataClient: client })))
+  }
+
+  it('reuses the exact pending row when skipping a normalized Home intake', async () => {
+    const fixtures = startFixFixture()
+    fixtures.dose_logs = [{ id: 'pending-exact', stack_item_id: 'stack-1', taken: null,
+      logged_at: '2026-09-18T07:00:00.000Z', cycle_id: 'timeline-cycle',
+      plan_version_id: 'timeline-version', routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z' }]
+    const client = createHomeClient(fixtures)
+    renderNormalized(client)
+    fireEvent.click(await screen.findByRole('button', { name: /Vitamin D3/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Übersprungen' }))
+    await waitFor(() => expect(client.mutationCalls).toContainEqual({
+      table: 'dose_logs', operation: 'update', values: expect.objectContaining({
+        cycle_id: 'timeline-cycle', plan_version_id: 'timeline-version',
+        routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+        logged_at: '2026-09-18T07:00:00.000Z', dose: 25, unit: 'mg', method: 'Oral', taken: false,
+      }),
+    }))
+    expect(client.mutationQueries[0].eq).toHaveBeenCalledWith('id', 'pending-exact')
+    expect(client.mutationCalls.filter(call => call.operation === 'insert')).toEqual([])
+  })
+
+  it('treats a stable-key duplicate skip as an idempotent completion', async () => {
+    const client = createHomeClient(startFixFixture(), undefined, {
+      insert: { code: '23505', message: 'duplicate key violates dose_logs_routine_slot_unique' },
+    })
+    renderNormalized(client)
+    fireEvent.click(await screen.findByRole('button', { name: /Vitamin D3/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Übersprungen' }))
+    await waitFor(() => expect(pageMocks.toast).toHaveBeenCalledWith('Einnahme übersprungen'))
+    expect(pageMocks.toast.error).not.toHaveBeenCalled()
+  })
+
+  it('sends edited Home time with its actual-time version and original occurrence key', async () => {
+    const fixtures = startFixFixture()
+    fixtures.cycles[0].versions.push({ ...fixtures.cycles[0].versions[0], id: 'version-afternoon',
+      effective_kind: 'instant', effective_at: '2026-09-18T13:00:00Z', effective_local_date: null } as never)
+    const client = createHomeClient(fixtures)
+    renderNormalized(client)
+    fireEvent.click(await screen.findByRole('button', { name: /Vitamin D3/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Eingenommen' }))
+    fireEvent.change(document.querySelector('input[type="time"]')!, { target: { value: '16:00' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: [expect.objectContaining({ plan_version_id: 'version-afternoon',
+        slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z', logged_at: '2026-09-18T14:00:00.000Z' })],
+    }))
+  })
+
+  it('preserves the pending actual-time provenance when skipping after a version change', async () => {
+    const fixtures = startFixFixture()
+    fixtures.cycles[0].versions.push({ ...fixtures.cycles[0].versions[0], id: 'version-afternoon',
+      effective_kind: 'instant', effective_at: '2026-09-18T13:00:00Z', effective_local_date: null } as never)
+    fixtures.dose_logs = [{ id: 'pending-exact', stack_item_id: 'stack-1', taken: null,
+      logged_at: '2026-09-18T14:00:00.000Z', cycle_id: 'timeline-cycle',
+      plan_version_id: 'version-afternoon', routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z' }]
+    const client = createHomeClient(fixtures)
+    renderNormalized(client)
+    fireEvent.click(await screen.findByRole('button', { name: /Vitamin D3/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Übersprungen' }))
+    await waitFor(() => expect(client.mutationCalls[0]?.values).toMatchObject({
+      plan_version_id: 'version-afternoon', logged_at: '2026-09-18T14:00:00.000Z',
+      routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z', taken: false,
+    }))
+  })
+
+  it('keeps normalized group inventory retry available across the post-confirm reload', async () => {
+    const fixtures = startFixFixture()
+    let inventoryAttempts = 0
+    const client = createHomeClient(fixtures, async name => {
+      if (name === 'apply_inventory_confirmation' && ++inventoryAttempts === 1) {
+        return { data: null, error: { message: 'retry inventory' } }
+      }
+      return { data: [{ id: 'saved' }], error: null }
+    })
+    renderNormalized(client)
+    fireEvent.click(await screen.findByRole('button', { name: /Alle als eingenommen markieren/ }))
+    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Alle als eingenommen markieren' }))
+    await waitFor(() => expect(client.selectCounts.get('dose_logs')).toBe(2))
+    await screen.findByRole('button', { name: /Vitamin D3/ })
+    fireEvent.click(await screen.findByRole('button', { name: 'Bestand erneut versuchen' }))
+    await waitFor(() => expect(inventoryAttempts).toBe(2))
+    expect(client.rpc.mock.calls.filter(call => call[0] === 'confirm_intake_group')).toHaveLength(1)
+  })
+
+  it('shows an explicit normalized loading/error state and restores the schedule on retry', async () => {
+    const errors = { cycles: { message: 'timeline unavailable' } as { message: string } | null }
+    const client = createHomeClient(startFixFixture(), undefined, errors)
+    renderNormalized(client)
+    expect(screen.getByRole('status').textContent).toContain('Lädt')
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /Vitamin D3/ })).toBeNull()
+    errors.cycles = null
+    fireEvent.click(screen.getByRole('button', { name: 'Erneut versuchen' }))
+    expect(await screen.findByRole('button', { name: /Vitamin D3/ })).toBeTruthy()
+  })
+
+  it('removes stale Home actions when a post-confirm reload fails', async () => {
+    const errors = { cycles: null as { message: string } | null }
+    const client = createHomeClient(startFixFixture(), async () => {
+      errors.cycles = { message: 'reload unavailable' }
+      return { data: [{ id: 'saved' }], error: null }
+    }, errors)
+    renderNormalized(client)
+    await confirmSingleHomeIntake('Vitamin D3')
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /Vitamin D3/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Alle als eingenommen/ })).toBeNull()
+  })
+
+  it('counts only current active or paused timelines in the Home statistic', async () => {
+    const fixtures = startFixFixture()
+    fixtures.cycles.push(
+      { ...normalizedCycle(), id: 'paused', pauses: [{ id: 'p', cycle_id: 'paused', paused_at: '2026-09-17T00:00:00Z', ends_at: null }] },
+      { ...normalizedCycle(), id: 'future', started_at: '2026-09-19T00:00:00Z' },
+      { ...normalizedCycle(), id: 'ended', ended_at: '2026-09-18T12:00:00Z' } as never,
+    )
+    renderNormalized(createHomeClient(fixtures))
+    await screen.findAllByRole('button', { name: /Vitamin D3/ })
+    const stat = screen.getByText('stat_active_cycles').closest('button')!
+    expect(stat.textContent).toMatch(/2/)
+    expect(stat.textContent).not.toMatch(/4/)
+  })
+
   function normalizedCycle(pauses: unknown[] = []) {
     const today = new Date()
     today.setHours(12, 0, 0, 0)

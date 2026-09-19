@@ -124,6 +124,32 @@ const planTimeline: CycleTimeline = {
 }
 
 describe('versioned timeline occurrences', () => {
+  const dstTimeline: CycleTimeline = {
+    ...planTimeline,
+    cycle: { ...planTimeline.cycle, started_at: '2026-01-01T00:00:00Z' },
+    versions: [{ ...planTimeline.versions[0], effective_local_date: '2026-01-01',
+      intake_time: 'custom', intake_time_custom: '02:30' }],
+  }
+
+  it.each([
+    ['2026-03-29', '2026-03-29T01:00:00.000Z', '03:00'],
+    ['2026-10-25', '2026-10-25T00:30:00.000Z', '02:30'],
+    ['2026-03-28', '2026-03-28T01:30:00.000Z', '02:30'],
+  ])('resolves Berlin %s once with deterministic DST policy', (day, instant, time) => {
+    expect(resolveTimelineIntakesForDay(dstTimeline, day, 'Europe/Berlin'))
+      .toMatchObject([{ scheduledAt: instant, time, routineSlotKey: `timeline-cycle@${instant}` }])
+    expect(resolveTimelineIntakesForDay(dstTimeline, day, 'Europe/Berlin')).toHaveLength(1)
+  })
+
+  it('collects missed slots across the Berlin spring gap without aborting', () => {
+    expect(collectMissedTimelineIntakes([dstTimeline], [], new Date('2026-03-30T12:00:00Z'), 'Europe/Berlin', 1))
+      .toMatchObject([{ scheduledAt: '2026-03-29T01:00:00.000Z' }])
+  })
+
+  it('does not offer the first fold occurrence again during the repeated hour', () => {
+    expect(findNextTimelineIntake(dstTimeline, new Date('2026-10-25T01:15:00Z'), 'Europe/Berlin', 1)).toBeNull()
+  })
+
   it('uses the old morning plan and the new evening plan after a noon change', () => {
     expect(
       resolveTimelineIntakesForDay(planTimeline, '2026-09-18', 'Europe/Berlin')
@@ -201,7 +227,7 @@ describe('versioned timeline collectors', () => {
       ])
   })
 
-  it('does not let an explicitly mismatched plan-version log consume another slot', () => {
+  it('does not let an unkeyed mismatched plan-version log consume another slot', () => {
     const logs: IntakeLog[] = [{
       id: 'wrong-version',
       stack_item_id: 'timeline-stack-item',
@@ -209,11 +235,22 @@ describe('versioned timeline collectors', () => {
       taken: true,
       cycle_id: 'timeline-cycle',
       plan_version_id: 'timeline-v2',
-      routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+      routine_slot_key: null,
     }]
 
     expect(collectOpenTimelineIntakes([planTimeline], logs, berlinDay, 'Europe/Berlin'))
-      .toHaveLength(2)
+      .toMatchObject([{ planVersionId: 'timeline-v1', time: '08:00' }])
+  })
+
+  it('uses exact stable coverage even when the actual-time version differs', () => {
+    const logs: IntakeLog[] = [{
+      id: 'edited', stack_item_id: 'timeline-stack-item', taken: true,
+      logged_at: '2026-09-18T14:00:00.000Z', cycle_id: 'timeline-cycle',
+      plan_version_id: 'timeline-v2',
+      routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+    }]
+    expect(collectOpenTimelineIntakes([planTimeline], logs, berlinDay, 'Europe/Berlin'))
+      .toMatchObject([{ time: '20:00' }])
   })
 
   it('matches exact stable provenance first and carries a compatible pending log id', () => {

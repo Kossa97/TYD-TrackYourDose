@@ -116,6 +116,21 @@ describe('confirmIntakeGroup', () => {
     expect(calls[0].params.p_entries[0].timezone).toBe('UTC')
   })
 
+  it('keeps occurrence identity while sending an edited actual log time', async () => {
+    const rpc = vi.fn(async () => ({ data: [{ id: 'saved' }], error: null }))
+    await confirmIntakeGroup({ rpc }, [entry({
+      actualLoggedAt: '2026-07-29T16:00:00.000Z',
+      planVersionId: 'version-afternoon',
+    })])
+    expect(rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: [expect.objectContaining({
+        slot_key: 'cycle-d3@2026-07-29T08:00:00.000Z',
+        logged_at: '2026-07-29T16:00:00.000Z',
+        plan_version_id: 'version-afternoon',
+      })],
+    })
+  })
+
   it('surfaces an RPC failure to the confirmation sheet', async () => {
     const client: IntakeConfirmationClient = {
       rpc: async () => ({ data: null, error: { message: 'group rejected' } }),

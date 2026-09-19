@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs'
 import { createElement, type ComponentType } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FEATURES } from '../config/features'
 import { Dashboard, buildDashboardRoutineIntake } from './Dashboard'
@@ -47,17 +47,34 @@ interface RecordedMutation {
   values: unknown
 }
 
-function resolvedQuery(data: unknown) {
+function resolvedQuery(data: unknown, error: { message: string } | null = null, applyFilters = false) {
   const query: Record<string, unknown> = {}
+  const filters: Array<{ method: string; column: string; value: unknown }> = []
   // `select` gehoert dazu, weil ein Insert sein Ergebnis zurueckliest
   // (`.insert(...).select('id').single()`) — ohne das lief die Kette ins Leere
   // und warf eine unbehandelte Ablehnung neben dem gruenen Test.
-  for (const method of ['eq', 'gte', 'lte', 'order', 'limit', 'single', 'select']) {
-    query[method] = vi.fn(() => query)
+  for (const method of ['eq', 'gte', 'lt', 'lte', 'in', 'order', 'limit', 'single', 'select']) {
+    query[method] = vi.fn((column: string, value: unknown) => {
+      filters.push({ method, column, value })
+      return query
+    })
   }
-  query.then = (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => (
-    Promise.resolve({ data, error: null }).then(resolve, reject)
-  )
+  query.then = (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => {
+    const result = applyFilters && Array.isArray(data) ? data.filter(row => filters.every(filter => {
+      if (filter.column === 'logged_at') {
+        const time = Date.parse(row.logged_at)
+        const bound = Date.parse(String(filter.value))
+        if (filter.method === 'gte') return time >= bound
+        if (filter.method === 'lte') return time <= bound
+        if (filter.method === 'lt') return time < bound
+      }
+      if (filter.column === 'routine_slot_key' && filter.method === 'in') {
+        return (filter.value as string[]).includes(row.routine_slot_key)
+      }
+      return true
+    })) : data
+    return Promise.resolve({ data: result, error }).then(resolve, reject)
+  }
   return query
 }
 
@@ -67,16 +84,20 @@ function createDashboardClient(
     data: unknown
     error: { message: string } | null
   }> = async () => ({ data: [{ id: 'saved-log-1' }], error: null }),
+  options: { errors?: Record<string, { message: string } | null>; filterLogs?: boolean } = {},
 ) {
   const selectCounts = new Map<string, number>()
   const selectCalls: Array<{ table: string; columns: string }> = []
   const mutations: RecordedMutation[] = []
+  const logQueries: ReturnType<typeof resolvedQuery>[] = []
   const rpc = vi.fn(rpcImplementation)
   const from = vi.fn((table: string) => ({
     select: vi.fn((columns: string) => {
       selectCounts.set(table, (selectCounts.get(table) ?? 0) + 1)
       selectCalls.push({ table, columns })
-      return resolvedQuery(fixtures[table] ?? [])
+      const query = resolvedQuery(fixtures[table] ?? [], options.errors?.[table] ?? null, table === 'dose_logs' && options.filterLogs)
+      if (table === 'dose_logs') logQueries.push(query)
+      return query
     }),
     insert: vi.fn((values: unknown) => {
       mutations.push({ table, kind: 'insert', values })
@@ -91,7 +112,7 @@ function createDashboardClient(
       return resolvedQuery(null)
     }),
   }))
-  return { from, rpc, selectCounts, selectCalls, mutations }
+  return { from, rpc, selectCounts, selectCalls, mutations, logQueries }
 }
 
 function intakeOnlyCycle() {
@@ -126,9 +147,14 @@ function onDemandCycle() {
   }
 }
 
+function LocationProbe() {
+  const location = useLocation()
+  return createElement('output', { 'data-testid': 'location' }, location.pathname + location.search)
+}
+
 function renderDashboard(client: ReturnType<typeof createDashboardClient>) {
   const TestDashboard = Dashboard as ComponentType<{ dashboardDataClient: unknown }>
-  return render(createElement(MemoryRouter, null, createElement(TestDashboard, { dashboardDataClient: client })))
+  return render(createElement(MemoryRouter, null, createElement(TestDashboard, { dashboardDataClient: client }), createElement(LocationProbe)))
 }
 
 afterEach(() => {
@@ -136,9 +162,202 @@ afterEach(() => {
   ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false
   vi.clearAllMocks()
   vi.unstubAllGlobals()
+  vi.useRealTimers()
+  vi.unstubAllEnvs()
 })
 
 describe('Dashboard normalized timeline path', () => {
+  function startFixFixture(frequency = 'Täglich', instant = '2026-09-18T14:00:00Z') {
+    vi.stubEnv('TZ', 'Europe/Berlin')
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(instant))
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    return {
+      cycles: [normalizedCycle(frequency)], dose_logs: [] as unknown[],
+      stack_items: [{ id: 'stack-1', display_name: 'Vitamin D3', default_method: 'Oral',
+        dosage_form: 'capsule', tracking_level: 'complete' }],
+    }
+  }
+
+  async function openSingle() {
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'eingenommen' }))
+  }
+
+  function pendingLog(keyed = true) {
+    return { id: 'pending-exact', stack_item_id: 'stack-1', taken: null, dose: 25, unit: 'mg',
+      method: 'Oral', notes: null, stack_items: { display_name: 'Vitamin D3' },
+      logged_at: '2026-09-18T07:00:00.000Z', cycle_id: keyed ? 'timeline-cycle' : null,
+      plan_version_id: keyed ? 'timeline-version' : null,
+      routine_slot_key: keyed ? 'timeline-cycle@2026-09-18T06:00:00.000Z' : null }
+  }
+
+  it('keeps the original 08:00 occurrence in a pending group confirmation', async () => {
+    const fixtures = startFixFixture()
+    fixtures.dose_logs = [pendingLog()]
+    const client = createDashboardClient(fixtures)
+    renderDashboard(client)
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Alle als eingenommen markieren' }))
+    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Alle als eingenommen markieren' }))
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: [expect.objectContaining({ dose_log_id: 'pending-exact',
+        slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z', logged_at: '2026-09-18T06:00:00.000Z' })],
+    }))
+  })
+
+  it('keeps the original pending occurrence in the injection deep link', async () => {
+    const fixtures = startFixFixture()
+    fixtures.cycles[0].versions[0].method = 'Subkutan'
+    fixtures.dose_logs = [pendingLog()]
+    renderDashboard(createDashboardClient(fixtures))
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Mit Injektion bestätigen' }))
+    const url = new URL(screen.getByTestId('location').textContent!, 'https://example.test')
+    expect(url.searchParams.get('scheduledAt')).toBe('2026-09-18T06:00:00.000Z')
+  })
+
+  it.each([false, true])('confirms a normalized single intake through exact RPC (pending=%s)', async pending => {
+    const fixtures = startFixFixture()
+    if (pending) fixtures.dose_logs = [pendingLog(false)]
+    fixtures.cycles[0].versions.push({ ...fixtures.cycles[0].versions[0], id: 'afternoon-version',
+      effective_kind: 'instant', effective_at: '2026-09-18T13:00:00Z', effective_local_date: null } as never)
+    const client = createDashboardClient(fixtures)
+    renderDashboard(client)
+    await openSingle()
+    fireEvent.change(document.querySelector('input[type="time"]')!, { target: { value: '16:00' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Eingenommen' }))
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: [expect.objectContaining({ dose_log_id: pending ? 'pending-exact' : null,
+        plan_version_id: 'afternoon-version', slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+        logged_at: '2026-09-18T14:00:00.000Z' })],
+    }))
+    expect(client.mutations).toEqual([])
+    expect(client.rpc).toHaveBeenCalledWith('apply_inventory_confirmation', { p_dose_log_id: 'saved-log-1' })
+  })
+
+  it('surfaces a rejected pending provenance change without a legacy write', async () => {
+    const fixtures = startFixFixture()
+    fixtures.dose_logs = [pendingLog()]
+    const client = createDashboardClient(fixtures, async () => ({ data: null, error: { message: 'Existing version mismatch' } }))
+    renderDashboard(client)
+    await openSingle()
+    fireEvent.click(screen.getByRole('button', { name: 'Eingenommen' }))
+    await waitFor(() => expect(pageMocks.toast.error).toHaveBeenCalled())
+    expect(client.mutations).toEqual([])
+    expect(screen.getByRole('button', { name: 'Eingenommen' })).toBeTruthy()
+  })
+
+  it.each(['start', 'resume'])('offers PRN after a 15:00 %s and resolves the submitted 16:00 version', async kind => {
+    const fixtures = startFixFixture('Bei Bedarf')
+    if (kind === 'start') fixtures.cycles[0].started_at = '2026-09-18T13:00:00Z'
+    else fixtures.cycles[0].pauses = [{ id: 'p', cycle_id: 'timeline-cycle',
+      paused_at: '2026-09-17T00:00:00Z', ends_at: '2026-09-18T13:00:00Z' }]
+    fixtures.cycles[0].versions.push({ ...fixtures.cycles[0].versions[0], id: 'prn-afternoon',
+      effective_kind: 'instant', effective_at: '2026-09-18T13:00:00Z', effective_local_date: null } as never)
+    const client = createDashboardClient(fixtures)
+    renderDashboard(client)
+    fireEvent.click(await screen.findByRole('button', { name: 'Eingenommen' }))
+    expect(await screen.findByText('Einnahme bestätigen')).toBeTruthy()
+    fireEvent.change(document.querySelector('input[type="time"]')!, { target: { value: '16:00' } })
+    fireEvent.click(screen.getAllByRole('button', { name: 'Eingenommen' }).at(-1)!)
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: [expect.objectContaining({ plan_version_id: 'prn-afternoon', logged_at: '2026-09-18T14:00:00.000Z' })],
+    }))
+  })
+
+  it('rejects a chosen PRN minute inside a pause before issuing any write', async () => {
+    const fixtures = startFixFixture('Bei Bedarf')
+    fixtures.cycles[0].pauses = [{ id: 'p', cycle_id: 'timeline-cycle',
+      paused_at: '2026-09-18T13:00:00Z', ends_at: '2026-09-18T15:00:00Z' }]
+    const client = createDashboardClient(fixtures)
+    renderDashboard(client)
+    fireEvent.click(await screen.findByRole('button', { name: 'Eingenommen' }))
+    expect(await screen.findByText('Einnahme bestätigen')).toBeTruthy()
+    fireEvent.change(document.querySelector('input[type="time"]')!, { target: { value: '16:00' } })
+    fireEvent.click(screen.getAllByRole('button', { name: 'Eingenommen' }).at(-1)!)
+    await waitFor(() => expect(pageMocks.toast.error).toHaveBeenCalled())
+    expect(client.rpc).not.toHaveBeenCalled()
+    expect(client.mutations).toEqual([])
+  })
+
+  it('renders the Berlin spring-gap day without aborting', async () => {
+    const fixtures = startFixFixture('Täglich', '2026-03-29T12:00:00Z')
+    fixtures.cycles[0].versions[0].intake_time_custom = '02:30'
+    renderDashboard(createDashboardClient(fixtures))
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    expect(await screen.findByRole('button', { name: 'eingenommen' })).toBeTruthy()
+  })
+
+  it('shows normalized load failure instead of empty data and retries safely', async () => {
+    const errors = { cycles: { message: 'timeline unavailable' } as { message: string } | null }
+    const client = createDashboardClient(startFixFixture(), undefined, { errors })
+    renderDashboard(client)
+    expect(screen.getAllByRole('status').some(element => element.textContent?.includes('Lädt'))).toBe(true)
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'eingenommen' })).toBeNull()
+    errors.cycles = null
+    fireEvent.click(screen.getByRole('button', { name: 'Erneut versuchen' }))
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    expect(await screen.findByRole('button', { name: 'eingenommen' })).toBeTruthy()
+  })
+
+  it('removes stale Calendar confirmation actions when a refresh fails', async () => {
+    const errors = { cycles: null as { message: string } | null, dose_logs: null as { message: string } | null }
+    const client = createDashboardClient(startFixFixture(), async () => {
+      errors.dose_logs = { message: 'logs unavailable' }
+      return { data: [{ id: 'saved-log-1' }], error: null }
+    }, { errors })
+    renderDashboard(client)
+    await openSingle()
+    fireEvent.click(screen.getByRole('button', { name: 'Eingenommen' }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'eingenommen' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Alle als eingenommen/ })).toBeNull()
+  })
+
+  it('fetches keyed coverage independently when actual time moved outside the month', async () => {
+    const fixtures = startFixFixture('Täglich', '2026-09-01T14:00:00Z')
+    fixtures.dose_logs = [{ ...pendingLog(), taken: true,
+      logged_at: '2026-08-30T21:00:00.000Z', routine_slot_key: 'timeline-cycle@2026-09-01T06:00:00.000Z' }]
+    const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
+    renderDashboard(client)
+    await waitFor(() => expect(screen.getByText('Alle geplanten Einnahmen sind bestätigt.')).toBeTruthy())
+    expect(screen.queryByRole('button', { name: 'eingenommen' })).toBeNull()
+    expect(client.logQueries.some(query => (query.in as ReturnType<typeof vi.fn>).mock.calls.length > 0)).toBe(true)
+  })
+
+  it('fetches legacy coverage from the positive-offset first local day boundary', async () => {
+    const fixtures = startFixFixture('Täglich', '2026-09-01T14:00:00Z')
+    fixtures.cycles[0].versions[0].intake_time_custom = '00:30'
+    fixtures.dose_logs = [{ ...pendingLog(false), taken: true, logged_at: '2026-08-31T22:30:00.000Z' }]
+    const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
+    renderDashboard(client)
+    expect(await screen.findByText('Bereits protokolliert')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /Alle als eingenommen/ })).toBeNull()
+    expect(client.logQueries[0].gte).toHaveBeenCalledWith('logged_at', '2026-08-30T22:00:00.000Z')
+    expect(client.logQueries[0].lt).toHaveBeenCalledWith('logged_at', '2026-10-04T22:00:00.000Z')
+  })
+
+  it('retries only inventory after a committed normalized pending confirmation', async () => {
+    const fixtures = startFixFixture()
+    fixtures.dose_logs = [pendingLog(false)]
+    let inventoryAttempts = 0
+    const client = createDashboardClient(fixtures, async name => {
+      if (name === 'apply_inventory_confirmation' && ++inventoryAttempts === 1) {
+        return { data: null, error: { message: 'retry inventory' } }
+      }
+      return { data: [{ id: 'pending-exact' }], error: null }
+    })
+    renderDashboard(client)
+    await openSingle()
+    fireEvent.click(screen.getByRole('button', { name: 'Eingenommen' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Bestand erneut versuchen' }))
+    await waitFor(() => expect(inventoryAttempts).toBe(2))
+    expect(client.rpc.mock.calls.filter(call => call[0] === 'confirm_intake_group')).toHaveLength(1)
+    expect(client.mutations).toEqual([])
+  })
+
   function normalizedCycle(frequency = 'Täglich', pauses: unknown[] = []) {
     const today = new Date()
     today.setHours(12, 0, 0, 0)

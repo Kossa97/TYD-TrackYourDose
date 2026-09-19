@@ -1583,6 +1583,169 @@ begin
 end
 $$;
 
+-- Pending actual time is editable; stable occurrence identity and decided history are not.
+do $$
+declare
+  pending_id uuid;
+  slot_key text;
+  case_number integer := 0;
+  test_case jsonb;
+  payload jsonb;
+  changed_payload jsonb;
+  confirmed public.dose_logs;
+  retried public.dose_logs;
+  persisted public.dose_logs;
+  before_row public.dose_logs;
+  outcome text;
+begin
+  for test_case in
+    select value from jsonb_array_elements('[
+      {"keyed":true,"provenance":true,"reference":true,"at":"2026-09-18T09:00:00Z","version":"11110000-0000-0000-0000-000000000001"},
+      {"keyed":true,"provenance":true,"reference":false,"at":"2026-09-18T16:00:00Z","version":"11110000-0000-0000-0000-000000000002"},
+      {"keyed":true,"provenance":false,"reference":true,"at":"2026-09-18T16:01:00Z","version":"11110000-0000-0000-0000-000000000002"},
+      {"keyed":false,"provenance":false,"reference":true,"at":"2026-09-18T16:02:00Z","version":"11110000-0000-0000-0000-000000000002"},
+      {"keyed":false,"provenance":true,"reference":true,"at":"2026-09-18T16:03:00Z","version":"11110000-0000-0000-0000-000000000002"}
+    ]'::jsonb)
+  loop
+    case_number := case_number + 1;
+    pending_id := gen_random_uuid();
+    slot_key := '11100000-0000-0000-0000-000000000001@2026-09-18T08:0' || case_number || ':00.000Z';
+    insert into public.dose_logs (
+      id, user_id, stack_item_id, cycle_id, plan_version_id,
+      routine_slot_key, dose, unit, method, logged_at, taken
+    ) values (
+      pending_id,
+      '10000000-0000-0000-0000-000000000001',
+      '11000000-0000-0000-0000-000000000001',
+      case when (test_case ->> 'provenance')::boolean then '11100000-0000-0000-0000-000000000001'::uuid end,
+      case when (test_case ->> 'provenance')::boolean then '11110000-0000-0000-0000-000000000001'::uuid end,
+      case when (test_case ->> 'keyed')::boolean then slot_key end,
+      1, 'mg', 'Oral', '2026-09-18T08:00:00Z', null
+    ) returning * into before_row;
+
+    payload := jsonb_build_object(
+      'cycle_id', '11100000-0000-0000-0000-000000000001',
+      'plan_version_id', test_case ->> 'version',
+      'timezone', 'Europe/Berlin',
+      'dose_log_id', case when (test_case ->> 'reference')::boolean then pending_id end,
+      'slot_key', slot_key,
+      'stack_item_id', '11000000-0000-0000-0000-000000000001',
+      'dose', 2, 'unit', 'mg', 'method', 'Oral', 'logged_at', test_case ->> 'at'
+    );
+
+    -- The whole group must reject before an earlier valid pending edit is written.
+    outcome := public.test_confirm_intake_error(jsonb_build_array(
+      payload,
+      payload || jsonb_build_object(
+        'dose_log_id', null, 'slot_key', slot_key || ':invalid',
+        'logged_at', '2026-09-18T17:00:00Z',
+        'plan_version_id', '11110000-0000-0000-0000-000000000001'
+      )
+    ));
+    if outcome = 'accepted' then
+      raise exception 'invalid group accepted pending timestamp edit, case %', case_number;
+    end if;
+    select * into strict persisted from public.dose_logs where id = pending_id;
+    if persisted is distinct from before_row then
+      raise exception 'invalid group partially changed pending row, case %', case_number;
+    end if;
+
+    if (test_case ->> 'keyed')::boolean then
+      outcome := public.test_confirm_intake_error(jsonb_build_array(
+        payload || jsonb_build_object('dose_log_id', pending_id, 'slot_key', slot_key || ':wrong')
+      ));
+      if outcome = 'accepted' then
+        raise exception 'pending row was reassigned to a different occurrence, case %', case_number;
+      end if;
+    end if;
+
+    outcome := public.test_confirm_intake_error(jsonb_build_array(
+      payload || jsonb_build_object('dose_log_id', gen_random_uuid())
+    ));
+    if outcome = 'accepted' then
+      raise exception 'pending edit ignored an exact mismatched row ID, case %', case_number;
+    end if;
+
+    for changed_payload in
+      select payload || value from jsonb_array_elements(jsonb_build_array(
+        jsonb_build_object('cycle_id', '13100000-0000-0000-0000-000000000003'),
+        jsonb_build_object('stack_item_id', '13000000-0000-0000-0000-000000000003'),
+        jsonb_build_object('logged_at', '2026-09-19T12:00:00Z', 'plan_version_id', '11110000-0000-0000-0000-000000000002')
+      ))
+    loop
+      outcome := public.test_confirm_intake_error(jsonb_build_array(changed_payload));
+      if outcome = 'accepted' then
+        raise exception 'pending edit bypassed cycle, item, or pause validation, case %', case_number;
+      end if;
+    end loop;
+    perform set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);
+    outcome := public.test_confirm_intake_error(jsonb_build_array(payload));
+    perform set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+    if outcome = 'accepted' then
+      raise exception 'another owner accepted a pending edit, case %', case_number;
+    end if;
+    select * into strict persisted from public.dose_logs where id = pending_id;
+    if persisted is distinct from before_row then
+      raise exception 'rejected pending edit changed the stored row, case %', case_number;
+    end if;
+
+    select * into strict confirmed
+    from public.confirm_intake_group(jsonb_build_array(payload));
+    if confirmed.id is distinct from pending_id
+      or confirmed.user_id is distinct from '10000000-0000-0000-0000-000000000001'::uuid
+      or confirmed.stack_item_id is distinct from '11000000-0000-0000-0000-000000000001'::uuid
+      or confirmed.cycle_id is distinct from '11100000-0000-0000-0000-000000000001'::uuid
+      or confirmed.plan_version_id is distinct from (test_case ->> 'version')::uuid
+      or confirmed.logged_at is distinct from (test_case ->> 'at')::timestamptz
+      or confirmed.routine_slot_key is distinct from slot_key
+      or confirmed.taken is distinct from true
+      or confirmed.dose is distinct from 2::numeric then
+      raise exception 'pending edit lost identity, actual time, or authoritative provenance, case %', case_number;
+    end if;
+    select * into strict persisted from public.dose_logs where id = pending_id;
+    if persisted is distinct from confirmed then
+      raise exception 'pending edit return did not match the persisted row, case %', case_number;
+    end if;
+
+    select * into strict retried
+    from public.confirm_intake_group(jsonb_build_array(payload));
+    if retried is distinct from confirmed then
+      raise exception 'exact decided retry changed the full row, case %', case_number;
+    end if;
+
+    for changed_payload in
+      select payload || value from jsonb_array_elements(jsonb_build_array(
+        jsonb_build_object('logged_at', (test_case ->> 'at')::timestamptz + interval '1 minute'),
+        jsonb_build_object('logged_at', '2026-09-18T08:30:00Z', 'plan_version_id', '11110000-0000-0000-0000-000000000001'),
+        jsonb_build_object('slot_key', slot_key || ':changed', 'dose_log_id', pending_id),
+        jsonb_build_object('cycle_id', '13100000-0000-0000-0000-000000000003'),
+        jsonb_build_object('stack_item_id', '13000000-0000-0000-0000-000000000003'),
+        jsonb_build_object('plan_version_id', '22220000-0000-0000-0000-000000000002'),
+        jsonb_build_object('dose_log_id', gen_random_uuid())
+      ))
+    loop
+      outcome := public.test_confirm_intake_error(jsonb_build_array(changed_payload));
+      if outcome = 'accepted' then
+        raise exception 'decided intake accepted changed identity/time/provenance, case %: %', case_number, changed_payload;
+      end if;
+      select * into strict persisted from public.dose_logs where id = pending_id;
+      if persisted is distinct from confirmed then
+        raise exception 'rejected decided retry changed the stored row, case %', case_number;
+      end if;
+    end loop;
+
+    -- Even an otherwise exact retry must not rewrite the confirmed quantity/method.
+    select * into strict retried from public.confirm_intake_group(jsonb_build_array(
+      payload || jsonb_build_object('dose', 3, 'method', 'Changed')
+    ));
+    select * into strict persisted from public.dose_logs where id = pending_id;
+    if retried is distinct from confirmed or persisted is distinct from confirmed then
+      raise exception 'idempotent retry rewrote decided data, case %', case_number;
+    end if;
+  end loop;
+end
+$$;
+
 do $$
 declare
   saved_item public.stack_items;

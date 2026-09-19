@@ -32,7 +32,7 @@ import {
   type ScheduleCycle,
 } from '../lib/intakeSchedule'
 import { loadCycleTimelines } from '../features/my-stack/services/planLifecycle'
-import { localDateTimeKey, type CycleTimeline } from '../lib/planTimeline'
+import { localDateTimeKey, resolveCycleAt, type CycleTimeline } from '../lib/planTimeline'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
 import { InjectionTrackerHero, type InjectionHeroPin } from '../components/injection3d/InjectionTrackerHero'
@@ -332,6 +332,8 @@ export interface TodayIntake {
   cycleId: string
   planVersionId: string | null
   pendingLogId: string | null
+  pendingLoggedAt?: string
+  pendingPlanVersionId?: string | null
   routineGroup: ResolvedRoutineGroup
   trackingLevel: 'intake_only' | 'with_amount' | 'complete'
   dosageForm: string | null
@@ -400,14 +402,28 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
   const [homeConfirmTime, setHomeConfirmTime] = useState('')
   const [homeReloadKey, setHomeReloadKey] = useState(0)
   const [homeInventoryRetryIds, setHomeInventoryRetryIds] = useState<string[]>([])
+  const [homeTimelines, setHomeTimelines] = useState<CycleTimeline[]>([])
+  const homeRoutineCommitted = useRef(false)
+  const [timelineLoadState, setTimelineLoadState] = useState<'loading' | 'ready' | 'error'>(
+    FEATURES.planTimelineV2 ? 'loading' : 'ready',
+  )
 
   // Rotate study daily
   const todayStudy = TODAY_STUDY
 
   useEffect(() => {
     if (!user) return
+    let cancelled = false
     async function load() {
       const todayKey = format(new Date(), 'yyyy-MM-dd')
+      if (FEATURES.planTimelineV2) {
+        setTimelineLoadState('loading')
+        setTodayIntakes([])
+        setPlannedToday(0)
+        setTodayDone(false)
+        setSelectedHomeIntake(null)
+        if (!homeRoutineCommitted.current) setSelectedHomeRoutine(null)
+      }
 
       try {
         let timelines: CycleTimeline[] = []
@@ -437,6 +453,9 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
               .order('logged_at', { ascending: false })
               .limit(30),
           ])
+          if (cancelled) return
+          if (logsResult.error) throw logsResult.error
+          if (stackItemsResult.error) throw stackItemsResult.error
           timelines = loadedTimelines
           logData = (logsResult.data ?? []) as IntakeLog[]
           stackItemData = (stackItemsResult.data ?? []) as Record<string, unknown>[]
@@ -505,6 +524,8 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
               cycleId: intake.cycleId,
               planVersionId: intake.planVersionId,
               pendingLogId: intake.pendingLogId,
+              pendingLoggedAt: logData.find(log => log.id === intake.pendingLogId)?.logged_at,
+              pendingPlanVersionId: logData.find(log => log.id === intake.pendingLogId)?.plan_version_id,
               routineGroup: intake.routineGroup,
               trackingLevel,
               dosageForm: (stackItem.dosage_form as string | null) ?? null,
@@ -644,6 +665,9 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
             normal: row.normal as InjectionHeroPin['normal'],
           }))
 
+        if (cancelled) return
+        setHomeTimelines(timelines)
+        setTimelineLoadState('ready')
         setPlannedToday(todaySlots.length)
         setTodayIntakes(openSlots)
         setTodayDone(todaySlots.length > 0 && openSlots.length === 0)
@@ -657,19 +681,31 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
         }))))
 
         setOverview({
-          activeCycles: FEATURES.planTimelineV2 ? timelines.length : cycles.length,
+          activeCycles: FEATURES.planTimelineV2 ? timelines.filter(timeline => {
+            const { status } = resolveCycleAt(timeline, now, timeZone)
+            return status === 'active' || status === 'paused'
+          }).length : cycles.length,
           peptides: (stackItemData ?? []).length,
           inventoryVials: (inventoryData ?? []).reduce((sum, item) => sum + Number(item.vials_count ?? 0), 0),
           loggedToday: (logData ?? []).filter((log) => log.taken === true && format(parseISO(log.logged_at), 'yyyy-MM-dd') === todayKey).length,
           lowStock: (stackItemData ?? []).filter((item) => item.vials_in_stock != null && Number(item.vials_in_stock) <= 1).length,
         })
       } catch {
+        if (cancelled) return
+        if (FEATURES.planTimelineV2) {
+          setTimelineLoadState('error')
+          setHomeTimelines([])
+          setTodayIntakes([])
+          setPlannedToday(0)
+          setTodayDone(false)
+        }
         setOverview(EMPTY_OVERVIEW)
         setExpiryAlerts([])
         setInjectionHero(EMPTY_INJECTION_HERO)
       }
     }
     load()
+    return () => { cancelled = true }
   }, [homeDataClient, user, homeReloadKey])
 
   const { t } = useTranslation()
@@ -725,12 +761,18 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
 
   const confirmHomeIntake = async (intake: TodayIntake, taken: boolean, timeValue?: string) => {
     if (!user) return
+    if (FEATURES.planTimelineV2 && timelineLoadState !== 'ready') return
     try {
       const quantity = { dose: intake.doseNumber, unit: intake.unit }
       if (FEATURES.planTimelineV2 && taken) {
+        const actualLoggedAt = buildHomeLoggedAt(intake.scheduledAt, timeValue)
+        const timeline = homeTimelines.find(item => item.cycle.id === intake.cycleId)
+        const resolved = timeline && resolveCycleAt(timeline, new Date(actualLoggedAt), Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC')
+        if (!resolved?.planVersion || resolved.status !== 'active') throw new Error('Intake timestamp is not active')
         const [doseLogId] = await confirmIntakeGroup(
           homeDataClient as unknown as IntakeConfirmationClient,
-          [buildConfirmationEntry(buildHomeRoutineIntake(intake))],
+          [{ ...buildConfirmationEntry(buildHomeRoutineIntake(intake)),
+            planVersionId: resolved.planVersion.id, actualLoggedAt }],
         )
         if (doseLogId && (intake.dosageForm === 'vial' || intake.trackingLevel === 'complete')) {
           await applyHomeSingleInventory(doseLogId)
@@ -750,20 +792,30 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
           await applyHomeSingleInventory(doseLogId)
         }
       } else {
-        const { error } = await homeDataClient.from('dose_logs').insert(buildHomeDoseLogPayload({
+        const skippedAt = intake.pendingLoggedAt ?? intake.scheduledAt
+        const skipTimeline = homeTimelines.find(item => item.cycle.id === intake.cycleId)
+        const skipPlanVersionId = intake.pendingPlanVersionId ?? (skipTimeline
+          ? resolveCycleAt(skipTimeline, new Date(skippedAt), Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC').planVersion?.id
+          : null)
+        const payload = buildHomeDoseLogPayload({
           userId: user.id,
           stackItemId: intake.stackItemId,
           doseNumber: intake.doseNumber,
           unit: intake.unit,
           method: intake.method,
-          scheduledAt: intake.scheduledAt,
+          scheduledAt: FEATURES.planTimelineV2 ? intake.pendingLoggedAt ?? intake.scheduledAt : intake.scheduledAt,
           taken,
           timeValue,
           cycleId: FEATURES.planTimelineV2 ? intake.cycleId : null,
-          planVersionId: FEATURES.planTimelineV2 ? intake.planVersionId : null,
+          planVersionId: FEATURES.planTimelineV2 ? skipPlanVersionId : null,
           routineSlotKey: FEATURES.planTimelineV2 ? intake.key : null,
-        }))
-        if (error) throw error
+        })
+        const { error } = FEATURES.planTimelineV2 && intake.pendingLogId
+          ? await homeDataClient.from('dose_logs').update(payload).eq('id', intake.pendingLogId).eq('user_id', user.id).is('taken', null)
+          : await homeDataClient.from('dose_logs').insert(payload)
+        const stableRetry = FEATURES.planTimelineV2 && !intake.pendingLogId
+          && error?.code === '23505' && error.message.includes('dose_logs_routine_slot_unique')
+        if (error && !stableRetry) throw error
       }
       closeHomeIntakeSheets()
       setHomeReloadKey(value => value + 1)
@@ -777,10 +829,13 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
 
   const confirmHomeRoutine = async (entries: RoutineConfirmationEntry[]): Promise<string[]> => {
     if (!user) return []
-    return confirmIntakeGroup(
+    if (FEATURES.planTimelineV2 && timelineLoadState !== 'ready') throw new Error('Timeline is not current')
+    const ids = await confirmIntakeGroup(
       homeDataClient as unknown as IntakeConfirmationClient,
       entries,
     )
+    homeRoutineCommitted.current = true
+    return ids
   }
 
   const afterHomeRoutineConfirmed = async (
@@ -879,7 +934,19 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
             accent="#8b5cf6"
           />
 
-          {todayIntakes.length === 0 && (
+          {FEATURES.planTimelineV2 && timelineLoadState !== 'ready' && (
+            <div role={timelineLoadState === 'error' ? 'alert' : 'status'} className="text-sm text-slate-400">
+              {timelineLoadState === 'loading'
+                ? t('loading', { defaultValue: 'Lädt…' })
+                : <>
+                    <p>{t('my_stack_plan_load_error', { defaultValue: 'Die Einnahmepläne konnten nicht geladen werden. Deine übrigen Daten bleiben verfügbar.' })}</p>
+                    <button type="button" className="mt-2 min-h-11 text-sky-400" onClick={() => setHomeReloadKey(value => value + 1)}>
+                      {t('routine_confirmation_retry', { defaultValue: 'Erneut versuchen' })}
+                    </button>
+                  </>}
+            </div>
+          )}
+          {todayIntakes.length === 0 && (!FEATURES.planTimelineV2 || timelineLoadState === 'ready') && (
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -943,7 +1010,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
                     <button
                       type="button"
                       aria-label={`${t('routine_confirmation_confirm_all', { defaultValue: 'Alle als eingenommen markieren' })} – ${groupLabel}`}
-                      onClick={() => setSelectedHomeRoutine(group)}
+                      onClick={() => { homeRoutineCommitted.current = false; setSelectedHomeRoutine(group) }}
                       className="flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-emerald-500/25 bg-emerald-500/15 px-3 text-xs font-black text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
                     >
                       <CheckCircle2 size={14} aria-hidden="true" /> {t('routine_confirmation_confirm_all', { defaultValue: 'Alle als eingenommen markieren' })}

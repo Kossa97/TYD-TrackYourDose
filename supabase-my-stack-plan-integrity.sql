@@ -1040,10 +1040,13 @@ begin
 
     if found then
       if saved_log.stack_item_id <> entry_stack_item_id
-        or saved_log.logged_at <> entry_logged_at
         or saved_log.taken is false
-        or saved_log.cycle_id is distinct from entry_cycle_id
-        or saved_log.plan_version_id is distinct from expected_plan_version_id
+        or (saved_log.cycle_id is not null and saved_log.cycle_id <> entry_cycle_id)
+        or (saved_log.taken is true and (
+          saved_log.logged_at <> entry_logged_at
+          or saved_log.cycle_id is distinct from entry_cycle_id
+          or saved_log.plan_version_id is distinct from expected_plan_version_id
+        ))
         or (entry_dose_log_id is not null and saved_log.id <> entry_dose_log_id) then
         raise exception 'Routine slot key belongs to another intake';
       end if;
@@ -1054,9 +1057,8 @@ begin
         and user_id = owner_id
         and stack_item_id = entry_stack_item_id
         and taken is null
-        and logged_at = entry_logged_at
         and (cycle_id is null or cycle_id = entry_cycle_id)
-        and (plan_version_id is null or plan_version_id = expected_plan_version_id);
+        and (routine_slot_key is null or routine_slot_key = entry_slot_key);
 
       if not found then
         raise exception 'Pending dose log not found';
@@ -1118,9 +1120,8 @@ begin
         and user_id = owner_id
         and stack_item_id = entry_stack_item_id
         and taken is null
-        and logged_at = entry_logged_at
         and (cycle_id is null or cycle_id = entry_cycle_id)
-        and (plan_version_id is null or plan_version_id = expected_plan_version_id)
+        and (routine_slot_key is null or routine_slot_key = entry_slot_key)
       returning * into saved_log;
     elsif not found then
       insert into public.dose_logs (
@@ -1166,27 +1167,32 @@ begin
     end if;
 
     if saved_log.stack_item_id <> entry_stack_item_id
-      or saved_log.logged_at <> entry_logged_at
       or saved_log.taken is false
-      or saved_log.cycle_id is distinct from entry_cycle_id
-      or saved_log.plan_version_id is distinct from expected_plan_version_id
+      or (saved_log.cycle_id is not null and saved_log.cycle_id <> entry_cycle_id)
+      or (saved_log.taken is true and (
+        saved_log.logged_at <> entry_logged_at
+        or saved_log.cycle_id is distinct from entry_cycle_id
+        or saved_log.plan_version_id is distinct from expected_plan_version_id
+      ))
       or (entry_dose_log_id is not null and saved_log.id <> entry_dose_log_id) then
       raise exception 'Routine slot key belongs to another intake';
     end if;
 
-    update public.dose_logs
-    set
-      cycle_id = entry_cycle_id,
-      plan_version_id = expected_plan_version_id,
-      dose = entry_dose,
-      unit = entry_unit,
-      method = entry_method,
-      logged_at = entry_logged_at,
-      routine_slot_key = entry_slot_key,
-      taken = true
-    where id = saved_log.id
-      and user_id = owner_id
-    returning * into saved_log;
+    if saved_log.taken is null then
+      update public.dose_logs
+      set
+        cycle_id = entry_cycle_id,
+        plan_version_id = expected_plan_version_id,
+        dose = entry_dose,
+        unit = entry_unit,
+        method = entry_method,
+        logged_at = entry_logged_at,
+        routine_slot_key = entry_slot_key,
+        taken = true
+      where id = saved_log.id
+        and user_id = owner_id
+      returning * into saved_log;
+    end if;
 
     return next saved_log;
   end loop;

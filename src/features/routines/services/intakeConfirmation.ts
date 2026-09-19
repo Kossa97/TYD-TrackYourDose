@@ -66,7 +66,7 @@ export async function confirmIntakeGroup(
       dose: entry.trackingLevel === 'intake_only' ? null : entry.actualDose,
       unit: entry.trackingLevel === 'intake_only' ? null : entry.actualUnit,
       method: entry.method,
-      logged_at: entry.scheduledAt,
+      logged_at: entry.actualLoggedAt ?? entry.scheduledAt,
     }))
 
   const { data, error } = await client.rpc('confirm_intake_group', { p_entries })

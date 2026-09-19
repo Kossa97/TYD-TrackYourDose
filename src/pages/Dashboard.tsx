@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval,
   isSameDay, isToday, startOfWeek, endOfWeek, isSameMonth, addDays,
-  differenceInDays, parseISO,
+  differenceInDays, parseISO, startOfDay,
 } from 'date-fns'
 import {
   Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock,
@@ -30,7 +30,7 @@ import {
   type ScheduleSegment,
 } from '../lib/intakeSchedule'
 import { loadCycleTimelines } from '../features/my-stack/services/planLifecycle'
-import { localDateTimeKey, resolveCycleAtLocalSlot, type CycleTimeline } from '../lib/planTimeline'
+import { localDateTimeKey, resolveCycleAt, resolveCycleAtLocalSlot, type CycleTimeline } from '../lib/planTimeline'
 import { isOnDemand } from '../features/my-stack/lib/intakeFrequency'
 import { debitPeptideStockForDoseById } from '../features/my-stack/extensions/peptide/vialStock'
 import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/quantityPresentation'
@@ -473,6 +473,12 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const [logs, setLogs] = useState<DoseLog[]>([])
   const [cycles, setCycles] = useState<Cycle[]>([])
   const [timelines, setTimelines] = useState<CycleTimeline[]>([])
+  const [timelineLoadState, setTimelineLoadState] = useState<'loading' | 'ready' | 'error'>(
+    FEATURES.planTimelineV2 ? 'loading' : 'ready',
+  )
+  const [timelinePeriod, setTimelinePeriod] = useState('')
+  const timelineRequest = useRef(0)
+  const routineCommitted = useRef(false)
   const [stackItems, setStackItems] = useState<StackItem[]>([])
   const [escalations, setEscalations] = useState<Escalation[]>([])
 
@@ -571,6 +577,53 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
   const loadLogs = useCallback(async () => {
     if (!user) return
+    if (FEATURES.planTimelineV2) {
+      const request = ++timelineRequest.current
+      setTimelineLoadState('loading')
+      setConfirmSheet(null)
+      if (!routineCommitted.current) setRoutineGroupSheet(null)
+      try {
+        const [loadedTimelines, itemsResult] = await Promise.all([
+          loadCycleTimelines(dashboardDataClient as never, user.id),
+          dashboardDataClient.from('stack_items').select('*').eq('user_id', user.id).eq('archived', false).order('display_name'),
+        ])
+        if (itemsResult.error) throw itemsResult.error
+        const rangeStart = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 })
+        const rangeEnd = startOfDay(addDays(endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 }), 1))
+        const columns = 'id, stack_item_id, dose, unit, method, logged_at, notes, taken, cycle_id, plan_version_id, routine_slot_key, stack_items(display_name)'
+        const rangeResult = await dashboardDataClient.from('dose_logs').select(columns)
+          .eq('user_id', user.id).gte('logged_at', rangeStart.toISOString()).lt('logged_at', rangeEnd.toISOString())
+          .order('logged_at', { ascending: true })
+        if (rangeResult.error) throw rangeResult.error
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+        const keys = eachDayOfInterval({ start: rangeStart, end: addDays(rangeEnd, -1) })
+          .flatMap(day => loadedTimelines.flatMap(timeline => resolveTimelineIntakesForDay(
+            timeline, format(day, 'yyyy-MM-dd'), timeZone,
+          ).map(intake => intake.routineSlotKey)))
+        const byId = new Map((rangeResult.data as unknown as DoseLog[] ?? []).map(log => [log.id, log]))
+        // Stable identity is independent of mutable logged_at. Batches keep the
+        // request URL bounded and only fetch occurrences in the displayed grid.
+        for (let offset = 0; offset < keys.length; offset += 100) {
+          const result = await dashboardDataClient.from('dose_logs').select(columns)
+            .eq('user_id', user.id).in('routine_slot_key', keys.slice(offset, offset + 100))
+          if (result.error) throw result.error
+          for (const log of (result.data ?? []) as unknown as DoseLog[]) byId.set(log.id, log)
+        }
+        if (request !== timelineRequest.current) return
+        setTimelines(loadedTimelines)
+        setCycles([])
+        setStackItems(itemsResult.data ?? [])
+        setLogs([...byId.values()])
+        setTimelinePeriod(format(currentDate, 'yyyy-MM'))
+        setTimelineLoadState('ready')
+      } catch {
+        if (request !== timelineRequest.current) return
+        setTimelines([])
+        setLogs([])
+        setTimelineLoadState('error')
+      }
+      return
+    }
     const today = new Date()
     const monthStart = startOfMonth(currentDate)
     const monthEnd = endOfMonth(currentDate)
@@ -592,11 +645,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
   const loadCycles = useCallback(async () => {
     if (!user) return
-    if (FEATURES.planTimelineV2) {
-      setTimelines(await loadCycleTimelines(dashboardDataClient as never, user.id))
-      setCycles([])
-      return
-    }
+    if (FEATURES.planTimelineV2) return
     const { data } = await dashboardDataClient
       .from('cycles')
       .select('*, stack_items(display_name, tracking_level)')
@@ -610,6 +659,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
   const loadStackItems = useCallback(async () => {
     if (!user) return
+    if (FEATURES.planTimelineV2) return
     const { data } = await dashboardDataClient.from('stack_items').select('*').eq('user_id', user.id).eq('archived', false).order('display_name')
     if (data) setStackItems(data)
   }, [dashboardDataClient, user])
@@ -632,7 +682,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         void loadCycles()
       }
     })
-    return () => { cancelled = true }
+    return () => { cancelled = true; timelineRequest.current += 1 }
   }, [loadCycles, loadLogs])
 
   useEffect(() => {
@@ -681,14 +731,17 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     : []
 
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  const timelineReady = timelineLoadState === 'ready' && timelinePeriod === format(currentDate, 'yyyy-MM')
   const stackItemById = new Map(stackItems.map(item => [item.id, item]))
   const timelineOccurrencesForDay = (day: Date) => {
+    if (!timelineReady) return []
     const localDate = localDateTimeKey(day, timeZone).slice(0, 10)
     return timelines.flatMap(timeline => (
       resolveTimelineIntakesForDay(timeline, localDate, timeZone)
     ))
   }
-  const logsForDay = (day: Date) => logs.filter(l => isSameDay(new Date(l.logged_at), day))
+  const logsForDay = (day: Date) => FEATURES.planTimelineV2 && !timelineReady
+    ? [] : logs.filter(l => isSameDay(new Date(l.logged_at), day))
   const cyclesForDay = (day: Date) => {
     if (!FEATURES.planTimelineV2) return cycles.filter(c => cycleAppliesToDay(c, day))
     return timelineOccurrencesForDay(day).flatMap(intake => {
@@ -714,12 +767,19 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         return !cycle.end_date || tag <= cycle.end_date
       })
     }
-    const localDate = localDateTimeKey(day, timeZone).slice(0, 10)
+    if (!timelineReady) return []
     return timelines.flatMap(timeline => {
-      const resolved = resolveCycleAtLocalSlot(timeline, localDate, 12 * 60, timeZone)
-      if (resolved.status !== 'active' || !resolved.planVersion || !isOnDemand(resolved.planVersion.frequency)) {
-        return []
-      }
+      // Offer manual access if any part of this day contains an active PRN
+      // interval. Submission re-resolves the user's chosen exact timestamp.
+      const dayStart = startOfDay(day)
+      const dayEnd = addDays(dayStart, 1)
+      const boundaries = [dayStart, new Date(timeline.cycle.started_at),
+        ...timeline.versions.flatMap(version => version.effective_at ? [new Date(version.effective_at)] : []),
+        ...timeline.pauses.flatMap(pause => pause.ends_at ? [new Date(pause.ends_at)] : [])]
+      const resolved = boundaries.filter(at => at >= dayStart && at < dayEnd)
+        .map(at => resolveCycleAt(timeline, at, timeZone))
+        .find(at => at.status === 'active' && at.planVersion && isOnDemand(at.planVersion.frequency))
+      if (!resolved?.planVersion) return []
       return [dashboardCycleFromTimeline(
         timeline,
         resolved.planVersion,
@@ -733,7 +793,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const selCycles   = cyclesForDay(selectedDay)
   const selOnDemand = onDemandCyclesForDay(selectedDay)
   const selectedLocalDate = localDateTimeKey(selectedDay, timeZone).slice(0, 10)
-  const selectedPause = FEATURES.planTimelineV2
+  const selectedPause = FEATURES.planTimelineV2 && timelineReady
     ? timelines.flatMap(timeline => {
         const start = resolveCycleAtLocalSlot(timeline, selectedLocalDate, 0, timeZone)
         const end = resolveCycleAtLocalSlot(timeline, selectedLocalDate, 24 * 60 - 1, timeZone)
@@ -767,7 +827,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   if (FEATURES.planTimelineV2) {
     const planned = timelineOccurrencesForDay(selectedDay)
     const open = collectOpenTimelineIntakes(
-      timelines, logs as IntakeLog[], selectedDay, timeZone,
+      timelineReady ? timelines : [], logs as IntakeLog[], selectedDay, timeZone,
     )
     totalDaySlots = planned.length
     for (const intake of open) {
@@ -844,7 +904,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       trackingLevel,
       routineGroup: slot.routineGroup,
       minutes: slot.minutes,
-      scheduledAt: slot.pendingLog?.logged_at ?? slot.scheduledAt,
+      scheduledAt: FEATURES.planTimelineV2 ? slot.scheduledAt : slot.pendingLog?.logged_at ?? slot.scheduledAt,
       ...resolveDashboardCycleQuantity(slot.cycle, selectedDay, escalations, slot.dose),
       method: slot.cycle.method,
     })
@@ -971,18 +1031,28 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     toast.success(t('dose_undo_success', { defaultValue: 'Einnahme zurückgesetzt' }))
   }
 
-  const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string, slotDose: number | null = null) => {
+  const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string, slotDose: number | null = null, occurrenceAt?: string, pendingLog?: DoseLog) => {
     if (!user) return
-    const quantity = resolveDashboardCycleQuantity(cycle, selectedDay, escalations, slotDose)
-    const scheduledAt = loggedAt ?? cycleLogTimestamp(cycle, selectedDay)
-    if (FEATURES.planTimelineV2 && taken && cycle.planVersionId) {
+    if (FEATURES.planTimelineV2 && !timelineReady) throw new Error('Timeline is not current')
+    let quantity = resolveDashboardCycleQuantity(cycle, selectedDay, escalations, slotDose)
+    const actualLoggedAt = loggedAt ?? cycleLogTimestamp(cycle, selectedDay)
+    const scheduledAt = occurrenceAt ?? actualLoggedAt
+    if (FEATURES.planTimelineV2 && taken) {
+      const timeline = timelines.find(item => item.cycle.id === cycle.id)
+      const resolved = timeline && resolveCycleAt(timeline, new Date(actualLoggedAt), timeZone)
+      if (!resolved?.planVersion || resolved.status !== 'active') throw new Error('Intake timestamp is not active')
+      if (isOnDemand(cycle.frequency)) {
+        if (!isOnDemand(resolved.planVersion.frequency)) throw new Error('Timestamp is not a PRN plan')
+        cycle = dashboardCycleFromTimeline(timeline!, resolved.planVersion, stackItemById.get(cycle.stack_item_id), timeZone)
+        quantity = resolveDashboardCycleQuantity(cycle, selectedDay, [], null)
+      }
       const [doseLogId] = await confirmIntakeGroup(
         dashboardDataClient as unknown as IntakeConfirmationClient,
-        [buildConfirmationEntry(buildDashboardRoutineIntake({
+        [{ ...buildConfirmationEntry(buildDashboardRoutineIntake({
           key: `${cycle.id}@${new Date(scheduledAt).toISOString()}`,
           cycleId: cycle.id,
-          planVersionId: cycle.planVersionId,
-          pendingLogId: null,
+          planVersionId: resolved.planVersion.id,
+          pendingLogId: pendingLog?.id ?? null,
           stackItemId: cycle.stack_item_id,
           stackItemName: cycle.stack_items.display_name,
           trackingLevel: cycle.stack_items.tracking_level,
@@ -992,7 +1062,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           dose: quantity.dose,
           unit: quantity.unit,
           method: cycle.method,
-        }))],
+        })), actualLoggedAt }],
       )
       const stackItem = stackItems.find(item => item.id === cycle.stack_item_id)
       if (doseLogId && (stackItem?.dosage_form === 'vial' || stackItem?.tracking_level === 'complete')) {
@@ -1055,16 +1125,36 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
   const openInjectionTrackerForSlot = (slot: DueSlot) => {
     const returnTo = `/kalender?date=${format(selectedDay, 'yyyy-MM-dd')}#due-intakes`
-    navigate(buildInjectionTrackerUrl({
-      doseLogId: slot.pendingLog?.id ?? null,
+    const url = buildInjectionTrackerUrl({
+      doseLogId: FEATURES.planTimelineV2 ? null : slot.pendingLog?.id ?? null,
       cycleId: slot.cycle.id,
-      scheduledAt: slot.pendingLog?.logged_at ?? slot.scheduledAt,
+      scheduledAt: FEATURES.planTimelineV2 ? slot.scheduledAt : slot.pendingLog?.logged_at ?? slot.scheduledAt,
       returnTo,
-    }))
+    })
+    navigate(FEATURES.planTimelineV2 && slot.pendingLog
+      ? `${url}&doseLogId=${encodeURIComponent(slot.pendingLog.id)}` : url)
   }
 
   const handleConfirmSheet = async () => {
     if (!confirmSheet) return
+    if (FEATURES.planTimelineV2) {
+      if (!timelineReady) return
+      try {
+        const [hours, minutes] = confirmTime.split(':').map(Number)
+        const actualAt = new Date(selectedDay)
+        actualAt.setHours(hours, minutes, 0, 0)
+        if (confirmSheet.cycle) {
+          await confirmCycleDose(confirmSheet.cycle, true, actualAt.toISOString(),
+            confirmSheet.slotDose ?? null, confirmSheet.scheduledAt, confirmSheet.log)
+        } else if (confirmSheet.log) {
+          await confirmDose(confirmSheet.log, true, actualAt.toISOString())
+        }
+        setConfirmSheet(null)
+      } catch {
+        toast.error(t('fehler_speichern', { defaultValue: 'Fehler beim Speichern' }))
+      }
+      return
+    }
     const [h, m] = confirmTime.split(':').map(Number)
     if (confirmSheet.cycle) {
       const day = new Date(selectedDay)
@@ -1092,10 +1182,13 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   }
 
   const confirmRoutineGroup = async (entries: RoutineConfirmationEntry[]): Promise<string[]> => {
-    return confirmIntakeGroup(
+    if (FEATURES.planTimelineV2 && !timelineReady) throw new Error('Timeline is not current')
+    const ids = await confirmIntakeGroup(
       dashboardDataClient as unknown as IntakeConfirmationClient,
       entries,
     )
+    routineCommitted.current = true
+    return ids
   }
 
   const afterRoutineGroupConfirmed = async (
@@ -1694,6 +1787,16 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           </div>
         </div>
 
+        {FEATURES.planTimelineV2 && !timelineReady && (
+          <div role={timelineLoadState === 'error' ? 'alert' : 'status'} className="mb-3 text-sm text-slate-400">
+            {timelineLoadState === 'error' ? <>
+              <p>{t('my_stack_plan_load_error', { defaultValue: 'Die Einnahmepläne konnten nicht geladen werden. Deine übrigen Daten bleiben verfügbar.' })}</p>
+              <button type="button" className="mt-2 min-h-11 text-sky-400" onClick={() => void loadLogs()}>
+                {t('routine_confirmation_retry', { defaultValue: 'Erneut versuchen' })}
+              </button>
+            </> : t('loading', { defaultValue: 'Lädt…' })}
+          </div>
+        )}
         {selectedPause && (
           <div className="mb-3 rounded-xl border border-sky-500/20 bg-sky-500/[0.07] px-3 py-2.5">
             <p className="text-sm font-bold text-sky-200">
@@ -1763,7 +1866,10 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
               <div className="space-y-2">
                 <button
                   type="button"
-                  onClick={() => activeDuePeriodData.routineGroup && setRoutineGroupSheet(activeDuePeriodData.routineGroup)}
+                  onClick={() => {
+                    routineCommitted.current = false
+                    if (activeDuePeriodData.routineGroup) setRoutineGroupSheet(activeDuePeriodData.routineGroup)
+                  }}
                   className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/15 px-3 text-sm font-black text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
                 >
                   <Check size={15} aria-hidden="true" /> {t('routine_confirmation_confirm_all', { defaultValue: 'Alle als eingenommen markieren' })}
@@ -1815,7 +1921,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
               </div>
             )}
           </div>
-        ) : dueSlots.length === 0 && selCycles.length === 0 && selOnDemand.length === 0 && !selectedPause ? (
+        ) : dueSlots.length === 0 && selCycles.length === 0 && selOnDemand.length === 0 && !selectedPause && (!FEATURES.planTimelineV2 || timelineReady) ? (
           <p className="text-slate-600 text-sm text-center py-4">
             {isTodaySelected ? t('noch_nichts_heute') : t('kein_eintrag_tag')}
           </p>
@@ -1853,7 +1959,9 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
                   </span>
                   <button
                     type="button"
-                    onClick={() => void confirmCycleDose(cycle, true, new Date().toISOString())}
+                    onClick={() => FEATURES.planTimelineV2
+                      ? openConfirmSheet(cycle, undefined, format(new Date(), 'HH:mm'))
+                      : void confirmCycleDose(cycle, true, new Date().toISOString())}
                     className="min-h-11 shrink-0 cursor-pointer rounded-xl border border-emerald-400/30 bg-emerald-400/[0.08] px-3 py-2 text-sm font-semibold text-emerald-200 transition-colors duration-200 hover:bg-emerald-400/[0.14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 motion-reduce:transition-none"
                   >
                     {t('eingenommen', { defaultValue: 'Eingenommen' })}

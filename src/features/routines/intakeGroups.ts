@@ -20,6 +20,8 @@ export interface RoutineConfirmationEntry extends RoutineIntake {
   selected: boolean
   actualDose: number | null
   actualUnit: string | null
+  /** Editable confirmation time; scheduledAt remains the occurrence identity. */
+  actualLoggedAt?: string
 }
 
 export interface RoutineGroupModel {

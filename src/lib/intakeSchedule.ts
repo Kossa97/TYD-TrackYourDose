@@ -1,7 +1,7 @@
 import { addDays, addMonths, differenceInCalendarMonths, differenceInDays, format, parseISO, startOfDay, subDays } from 'date-fns'
 import {
   localDateTimeKey,
-  resolveCycleAtLocalSlot,
+  resolveCycleAt,
   type CyclePlanVersion,
   type CycleTimeline,
 } from './planTimeline'
@@ -208,22 +208,21 @@ function localSlotInstant(localDate: string, minutes: number, timeZone: string):
   const hour = Math.floor(minutes / 60)
   const minute = minutes % 60
   const desiredLocalMillis = Date.UTC(year, month - 1, day, hour, minute)
-  let instantMillis = desiredLocalMillis
+  const wallMillis = (instantMillis: number) => Date.parse(
+    localDateTimeKey(new Date(instantMillis), timeZone).replace('|', 'T') + 'Z',
+  )
+  // Try the offsets on both sides of a transition. A fold has two exact
+  // candidates; its earlier absolute instant is the single occurrence.
+  const candidates = [...new Set([-1, 0, 1].map(dayOffset => {
+    const sample = desiredLocalMillis + dayOffset * 86_400_000
+    return desiredLocalMillis - (wallMillis(sample) - sample)
+  }))].sort((left, right) => left - right)
+  const exact = candidates.find(candidate => wallMillis(candidate) === desiredLocalMillis)
+  if (exact !== undefined) return new Date(exact)
 
-  // Intl exposes offsets only through formatted local parts. Iterating the
-  // difference converges for ordinary offsets and DST boundaries without
-  // assuming that the runtime's own time zone equals the planning zone.
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    const localKey = localDateTimeKey(new Date(instantMillis), timeZone)
-    const [datePart, timePart] = localKey.split('|')
-    const [actualYear, actualMonth, actualDay] = datePart.split('-').map(Number)
-    const [actualHour, actualMinute] = timePart.split(':').map(Number)
-    const actualLocalMillis = Date.UTC(
-      actualYear, actualMonth - 1, actualDay, actualHour, actualMinute,
-    )
-    const correction = desiredLocalMillis - actualLocalMillis
-    if (correction === 0) return new Date(instantMillis)
-    instantMillis += correction
+  // In a gap, use the first representable wall minute, not "plus gap length".
+  for (let instant = candidates[0]; instant <= candidates[candidates.length - 1]; instant += 60_000) {
+    if (wallMillis(instant) >= desiredLocalMillis) return new Date(instant)
   }
 
   throw new Error(`Could not resolve local intake slot: ${localDate} ${hour}:${minute} ${timeZone}`)
@@ -314,7 +313,8 @@ export function resolveTimelineIntakesForDay(
   )
 
   const resolved = [...uniqueCandidates.values()].flatMap(candidate => {
-    const atSlot = resolveCycleAtLocalSlot(timeline, localDate, candidate.minutes, timeZone)
+    const instant = localSlotInstant(localDate, candidate.minutes, timeZone)
+    const atSlot = resolveCycleAt(timeline, instant, timeZone)
     if (atSlot.status !== 'active' || !atSlot.planVersion) return []
 
     const activeCycle = timelineVersionAsCycle(timeline, atSlot.planVersion, timeZone)
@@ -324,11 +324,13 @@ export function resolveTimelineIntakesForDay(
     ))
     if (!activeSlot) return []
 
-    const scheduledAt = localSlotInstant(localDate, activeSlot.minutes, timeZone).toISOString()
+    const scheduledAt = instant.toISOString()
+    const clock = parsedClock(localDateTimeKey(instant, timeZone).slice(11, 16))!
     const routineSlotKey = `${timeline.cycle.id}@${scheduledAt}`
 
     return [{
       ...activeSlot,
+      ...clock,
       key: routineSlotKey,
       slotKey: activeSlot.key,
       cycleId: timeline.cycle.id,
@@ -367,7 +369,7 @@ export function findNextTimelineIntake(
   for (let offset = 0; offset < lookaheadDays; offset += 1) {
     const localDate = format(addDays(firstDate, offset), 'yyyy-MM-dd')
     const next = resolveTimelineIntakesForDay(timeline, localDate, timeZone)
-      .find(intake => `${localDate}|${intake.time}:00` > afterKey)
+      .find(intake => new Date(intake.scheduledAt) > after)
     if (next) return next
   }
   return null
@@ -608,7 +610,7 @@ function matchTimelineLogs(
       && intake.stackItemId === log.stack_item_id
       && (!log.routine_slot_key || intake.routineSlotKey === log.routine_slot_key)
       && (!log.cycle_id || intake.cycleId === log.cycle_id)
-      && (!log.plan_version_id || intake.planVersionId === log.plan_version_id)
+      && (Boolean(log.routine_slot_key) || !log.plan_version_id || intake.planVersionId === log.plan_version_id)
     ))
     if (index < 0) continue
     usedIntakes.add(index)
