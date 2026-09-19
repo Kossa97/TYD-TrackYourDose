@@ -51,12 +51,20 @@ vi.stubGlobal('ResizeObserver', class {
 
 function resolvedQuery(data: unknown, error: { message: string; code?: string } | null = null) {
   const query: Record<string, unknown> = {}
-  for (const method of ['select', 'eq', 'is', 'gte', 'lte', 'order', 'limit', 'single']) {
-    query[method] = vi.fn(() => query)
+  const filters: Array<[string, unknown]> = []
+  let single = false
+  for (const method of ['select', 'eq', 'is', 'gte', 'lte', 'order', 'limit', 'single', 'maybeSingle']) {
+    query[method] = vi.fn((column: string, value: unknown) => {
+      if (method === 'eq') filters.push([column, value])
+      if (method === 'single' || method === 'maybeSingle') single = true
+      return query
+    })
   }
-  query.then = (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => (
-    Promise.resolve({ data, error }).then(resolve, reject)
-  )
+  query.then = (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => {
+    const rows = single && Array.isArray(data)
+      ? data.filter(row => filters.every(([column, value]) => row[column] === value)) : data
+    return Promise.resolve({ data: single && Array.isArray(rows) ? rows[0] ?? null : rows, error }).then(resolve, reject)
+  }
   return query
 }
 
@@ -67,6 +75,7 @@ function createHomeClient(
     error: { message: string } | null
   }> = async () => ({ data: [{ id: 'saved-log-1' }, { id: 'saved-log-2' }], error: null }),
   errors: Record<string, { message: string; code?: string } | null> = {},
+  skipMutation?: (operation: 'insert' | 'update', values: unknown) => unknown[],
 ) {
   const selectCounts = new Map<string, number>()
   const selectCalls: Array<{ table: string; columns: string }> = []
@@ -81,11 +90,13 @@ function createHomeClient(
     }),
     insert: vi.fn((values: unknown) => {
       mutationCalls.push({ table, operation: 'insert', values })
-      return resolvedQuery(table === 'dose_logs' ? { id: 'saved-single-log' } : null, errors.insert ?? null)
+      return resolvedQuery(table === 'dose_logs'
+        ? skipMutation?.('insert', values) ?? { id: 'saved-single-log', ...(values as object) } : null, errors.insert ?? null)
     }),
     update: vi.fn((values: unknown) => {
       mutationCalls.push({ table, operation: 'update', values })
-      const query = resolvedQuery(null)
+      const query = resolvedQuery(table === 'dose_logs'
+        ? skipMutation?.('update', values) ?? [{ id: 'pending-exact', ...(values as object) }] : null)
       mutationQueries.push(query)
       return query
     }),
@@ -547,14 +558,75 @@ describe('Home normalized timeline path', () => {
   })
 
   it('treats a stable-key duplicate skip as an idempotent completion', async () => {
-    const client = createHomeClient(startFixFixture(), undefined, {
+    const fixtures = startFixFixture()
+    const client = createHomeClient(fixtures, undefined, {
       insert: { code: '23505', message: 'duplicate key violates dose_logs_routine_slot_unique' },
+    }, (_operation, values) => {
+      fixtures.dose_logs = [{ id: 'already-skipped', ...(values as object) }]
+      return []
     })
     renderNormalized(client)
     fireEvent.click(await screen.findByRole('button', { name: /Vitamin D3/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Übersprungen' }))
     await waitFor(() => expect(pageMocks.toast).toHaveBeenCalledWith('Einnahme übersprungen'))
     expect(pageMocks.toast.error).not.toHaveBeenCalled()
+  })
+
+  describe.each(['zero-row update', 'stable-key conflict'])('verified skip after %s', path => {
+    it.each([
+      ['another device confirmed first', { taken: true }],
+      ['the row is still pending', { taken: null }],
+      ['the row is absent', null],
+      ['owner differs', { user_id: 'another-user' }],
+      ['item differs', { stack_item_id: 'another-item' }],
+      ['cycle differs', { cycle_id: 'another-cycle' }],
+      ['plan version differs', { plan_version_id: 'another-version' }],
+      ['stable key differs', { routine_slot_key: 'another-slot' }],
+      ['actual timestamp differs', { logged_at: '2026-09-18T07:00:00.000Z' }],
+    ])('rejects false skip success when %s', async (_label, conflict) => {
+      const fixtures = startFixFixture()
+      if (path === 'zero-row update') fixtures.dose_logs = [{
+        id: 'pending-exact', user_id: 'user-1', stack_item_id: 'stack-1', taken: null,
+        cycle_id: 'timeline-cycle', plan_version_id: 'timeline-version',
+        routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z', logged_at: '2026-09-18T06:00:00.000Z',
+      }]
+      const errors: Record<string, { code: string; message: string } | null> = path === 'stable-key conflict'
+        ? { insert: { code: '23505', message: 'duplicate key violates dose_logs_routine_slot_unique' } } : {}
+      const client = createHomeClient(fixtures, undefined, errors, (_operation, values) => {
+        fixtures.dose_logs = conflict === null ? [] : [{ id: 'pending-exact', ...(values as object), ...conflict }]
+        return []
+      })
+      renderNormalized(client)
+      fireEvent.click(await screen.findByRole('button', { name: /Vitamin D3/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Übersprungen' }))
+      await waitFor(() => expect(pageMocks.toast.error).toHaveBeenCalledWith('Fehler beim Speichern'))
+      expect(pageMocks.toast).not.toHaveBeenCalledWith('Einnahme übersprungen')
+      await waitFor(() => expect(client.selectCounts.get('cycles')).toBe(2))
+      expect(client.mutationCalls).toHaveLength(1)
+      expect(client.mutationCalls[0].operation).toBe(path === 'zero-row update' ? 'update' : 'insert')
+    })
+
+    it('accepts an exact already-skipped row only after reading its persistence', async () => {
+      const fixtures = startFixFixture()
+      if (path === 'zero-row update') fixtures.dose_logs = [{
+        id: 'pending-exact', user_id: 'user-1', stack_item_id: 'stack-1', taken: null,
+        cycle_id: 'timeline-cycle', plan_version_id: 'timeline-version',
+        routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z', logged_at: '2026-09-18T06:00:00.000Z',
+      }]
+      const errors: Record<string, { code: string; message: string } | null> = path === 'stable-key conflict'
+        ? { insert: { code: '23505', message: 'duplicate key violates dose_logs_routine_slot_unique' } } : {}
+      const client = createHomeClient(fixtures, undefined, errors, (_operation, values) => {
+        fixtures.dose_logs = [{ id: 'pending-exact', ...(values as object), logged_at: '2026-09-18T08:00:00+02:00' }]
+        return []
+      })
+      renderNormalized(client)
+      fireEvent.click(await screen.findByRole('button', { name: /Vitamin D3/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Übersprungen' }))
+      await waitFor(() => expect(pageMocks.toast).toHaveBeenCalledWith('Einnahme übersprungen'))
+      expect(pageMocks.toast.error).not.toHaveBeenCalled()
+      expect(client.selectCalls.filter(call => call.table === 'dose_logs' && call.columns.includes('user_id'))).toHaveLength(1)
+      expect(client.mutationCalls).toHaveLength(1)
+    })
   })
 
   it('sends edited Home time with its actual-time version and original occurrence key', async () => {

@@ -2,7 +2,7 @@
 
 import { readFileSync } from 'node:fs'
 import { createElement, type ComponentType } from 'react'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FEATURES } from '../config/features'
@@ -47,7 +47,7 @@ interface RecordedMutation {
   values: unknown
 }
 
-function resolvedQuery(data: unknown, error: { message: string } | null = null, applyFilters = false) {
+function resolvedQuery(data: unknown, error: { message: string } | null = null, applyFilters = false, gate?: Promise<void>) {
   const query: Record<string, unknown> = {}
   const filters: Array<{ method: string; column: string; value: unknown }> = []
   // `select` gehoert dazu, weil ein Insert sein Ergebnis zurueckliest
@@ -73,7 +73,7 @@ function resolvedQuery(data: unknown, error: { message: string } | null = null, 
       }
       return true
     })) : data
-    return Promise.resolve({ data: result, error }).then(resolve, reject)
+    return Promise.resolve(gate).then(() => ({ data: result, error })).then(resolve, reject)
   }
   return query
 }
@@ -84,7 +84,7 @@ function createDashboardClient(
     data: unknown
     error: { message: string } | null
   }> = async () => ({ data: [{ id: 'saved-log-1' }], error: null }),
-  options: { errors?: Record<string, { message: string } | null>; filterLogs?: boolean } = {},
+  options: { errors?: Record<string, { message: string } | null>; filterLogs?: boolean; logReadGate?: Promise<void> } = {},
 ) {
   const selectCounts = new Map<string, number>()
   const selectCalls: Array<{ table: string; columns: string }> = []
@@ -95,7 +95,8 @@ function createDashboardClient(
     select: vi.fn((columns: string) => {
       selectCounts.set(table, (selectCounts.get(table) ?? 0) + 1)
       selectCalls.push({ table, columns })
-      const query = resolvedQuery(fixtures[table] ?? [], options.errors?.[table] ?? null, table === 'dose_logs' && options.filterLogs)
+      const query = resolvedQuery(fixtures[table] ?? [], options.errors?.[table] ?? null,
+        table === 'dose_logs' && options.filterLogs, table === 'dose_logs' ? options.logReadGate : undefined)
       if (table === 'dose_logs') logQueries.push(query)
       return query
     }),
@@ -191,6 +192,130 @@ describe('Dashboard normalized timeline path', () => {
       plan_version_id: keyed ? 'timeline-version' : null,
       routine_slot_key: keyed ? 'timeline-cycle@2026-09-18T06:00:00.000Z' : null }
   }
+
+  function browseToNovember() {
+    fireEvent.click(screen.getByRole('button', { name: 'Monat anzeigen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Nächster Monat' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Nächster Monat' }))
+    expect(screen.getByRole('heading', { name: 'November 2026' })).toBeTruthy()
+    expect(screen.getByText('18.09.2026')).toBeTruthy()
+  }
+
+  it.each(['keyed', 'legacy'])('keeps selected-day %s coverage while browsing a distant month', async kind => {
+    const fixtures = startFixFixture()
+    fixtures.dose_logs = [{ ...pendingLog(kind === 'keyed'), taken: true,
+      logged_at: kind === 'keyed' ? '2026-07-01T06:00:00.000Z' : '2026-09-17T22:30:00.000Z' }]
+    const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
+    renderDashboard(client)
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Alle als eingenommen/ })).toBeNull())
+    await screen.findByText(kind === 'keyed' ? 'Alle geplanten Einnahmen sind bestätigt.' : 'Bereits protokolliert')
+    const initialQueries = client.logQueries.length
+    browseToNovember()
+    await waitFor(() => expect(client.logQueries.length).toBeGreaterThan(initialQueries))
+    await waitFor(() => expect(screen.getAllByRole('status').some(element => element.textContent?.includes('Lädt'))).toBe(false))
+    const morningTab = screen.queryByRole('tab', { name: /^morgens/ })
+    if (morningTab) fireEvent.click(morningTab)
+    expect(screen.queryByRole('button', { name: /Alle als eingenommen/ })).toBeNull()
+    const queries = client.logQueries.slice(initialQueries)
+    const keyBatches = queries.flatMap(query => (query.in as ReturnType<typeof vi.fn>).mock.calls.map(call => call[1] as string[]))
+    expect(keyBatches.flat()).toContain('timeline-cycle@2026-09-18T06:00:00.000Z')
+    expect(keyBatches.flat()).toContain('timeline-cycle@2026-11-18T07:00:00.000Z')
+    expect(keyBatches.every(keys => keys.length <= 100)).toBe(true)
+    if (kind === 'legacy') {
+      expect(queries.some(query => (query.gte as ReturnType<typeof vi.fn>).mock.calls
+        .some(call => call[1] === '2026-09-17T22:00:00.000Z'))).toBe(true)
+      expect(queries.some(query => (query.lt as ReturnType<typeof vi.fn>).mock.calls
+        .some(call => call[1] === '2026-09-18T22:00:00.000Z'))).toBe(true)
+    }
+  })
+
+  it('waits for the newly selected-day snapshot before offering due actions', async () => {
+    const fixtures = startFixFixture()
+    const options: { filterLogs: boolean; logReadGate?: Promise<void> } = { filterLogs: true }
+    const client = createDashboardClient(fixtures, undefined, options)
+    renderDashboard(client)
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    await screen.findByRole('button', { name: 'Alle als eingenommen markieren' })
+    fixtures.dose_logs = [{ ...pendingLog(), taken: true,
+      logged_at: '2026-07-01T06:00:00.000Z', routine_slot_key: 'timeline-cycle@2026-09-19T06:00:00.000Z' }]
+    let release!: () => void
+    options.logReadGate = new Promise<void>(resolve => { release = resolve })
+    vi.stubGlobal('PointerEvent', MouseEvent)
+    const nextDay = document.querySelector('[data-calendar-date="2026-09-19"]')!
+    fireEvent.pointerDown(nextDay, { clientX: 30, clientY: 30 })
+    fireEvent.pointerUp(nextDay, { clientX: 30, clientY: 30 })
+    expect(screen.getByText('19.09.2026')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Alle als eingenommen markieren' })).toBeNull()
+    expect(screen.getAllByRole('status').some(element => element.textContent?.includes('Lädt'))).toBe(true)
+    await act(async () => { release() })
+    expect(await screen.findByText('Alle geplanten Einnahmen sind bestätigt.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Alle als eingenommen markieren' })).toBeNull()
+  })
+
+  it.each(['single', 'group'])('refreshes the current union after an older %s confirmation finishes', async kind => {
+    const fixtures = startFixFixture()
+    let finish!: () => void
+    const confirmation = new Promise<void>(resolve => { finish = resolve })
+    const client = createDashboardClient(fixtures, async name => {
+      if (name === 'confirm_intake_group') {
+        await confirmation
+        fixtures.dose_logs = [{ ...pendingLog(), taken: true, logged_at: '2026-07-01T06:00:00.000Z' }]
+      }
+      return { data: [{ id: 'saved-log-1' }], error: null }
+    }, { filterLogs: true })
+    renderDashboard(client)
+    if (kind === 'single') {
+      await openSingle()
+      fireEvent.click(screen.getByRole('button', { name: 'Eingenommen' }))
+    } else {
+      fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Alle als eingenommen markieren' }))
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Alle als eingenommen markieren' }))
+    }
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', expect.anything()))
+    browseToNovember()
+    await screen.findByRole('button', { name: 'Alle als eingenommen markieren' })
+    const queriesBeforeCompletion = client.logQueries.length
+    await act(async () => { finish() })
+    await waitFor(() => expect(client.logQueries.length).toBeGreaterThan(queriesBeforeCompletion))
+    await waitFor(() => expect(screen.getAllByRole('status').some(element => element.textContent?.includes('Lädt'))).toBe(false))
+    expect(await screen.findByText('Alle geplanten Einnahmen sind bestätigt.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /Alle als eingenommen/ })).toBeNull()
+    const refreshedKeys = client.logQueries.slice(queriesBeforeCompletion)
+      .flatMap(query => (query.in as ReturnType<typeof vi.fn>).mock.calls.flatMap(call => call[1] as string[]))
+    expect(refreshedKeys).toContain('timeline-cycle@2026-11-18T07:00:00.000Z')
+    expect(refreshedKeys).toContain('timeline-cycle@2026-09-18T06:00:00.000Z')
+  })
+
+  it('preserves a committed group inventory-only retry after month navigation', async () => {
+    const fixtures = startFixFixture()
+    let finishInventory!: () => void
+    const inventory = new Promise<void>(resolve => { finishInventory = resolve })
+    let inventoryAttempts = 0
+    const client = createDashboardClient(fixtures, async name => {
+      if (name === 'confirm_intake_group') {
+        fixtures.dose_logs = [{ ...pendingLog(), taken: true, logged_at: '2026-07-01T06:00:00.000Z' }]
+      }
+      if (name === 'apply_inventory_confirmation' && ++inventoryAttempts === 1) {
+        await inventory
+        return { data: null, error: { message: 'retry inventory' } }
+      }
+      return { data: [{ id: 'saved-log-1' }], error: null }
+    }, { filterLogs: true })
+    renderDashboard(client)
+    fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Alle als eingenommen markieren' }))
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Alle als eingenommen markieren' }))
+    await screen.findByText('Routine gespeichert')
+    browseToNovember()
+    await screen.findByText('Alle geplanten Einnahmen sind bestätigt.')
+    await act(async () => { finishInventory() })
+    fireEvent.click(await screen.findByRole('button', { name: 'Bestand erneut versuchen' }))
+    await waitFor(() => expect(inventoryAttempts).toBe(2))
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Bestand erneut versuchen' })).toBeNull())
+    expect(client.rpc.mock.calls.filter(call => call[0] === 'confirm_intake_group')).toHaveLength(1)
+    expect(screen.getByText('Alle geplanten Einnahmen sind bestätigt.')).toBeTruthy()
+  })
 
   it('keeps the original 08:00 occurrence in a pending group confirmation', async () => {
     const fixtures = startFixFixture()

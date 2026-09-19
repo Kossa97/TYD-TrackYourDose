@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
@@ -483,6 +483,9 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const [escalations, setEscalations] = useState<Escalation[]>([])
 
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
+  const timelineSelection = FEATURES.planTimelineV2 ? format(selectedDay, 'yyyy-MM-dd') : ''
+  const timelineContext = `${format(currentDate, 'yyyy-MM')}|${timelineSelection}`
+  const latestLogLoader = useRef<(() => Promise<void>) | null>(null)
 
   // Einnahme-Bestätigungs-Sheet
   interface ConfirmSheet { cycle?: Cycle; log?: DoseLog; slotDose?: number | null; scheduledAt?: string }
@@ -575,10 +578,12 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     setPeekDir(0)
   }
 
-  const loadLogs = useCallback(async () => {
+  const loadLogSnapshot = useCallback(async function loadSnapshot(): Promise<void> {
     if (!user) return
     if (FEATURES.planTimelineV2) {
+      if (latestLogLoader.current !== loadSnapshot) return
       const request = ++timelineRequest.current
+      const isCurrent = () => request === timelineRequest.current && latestLogLoader.current === loadSnapshot
       setTimelineLoadState('loading')
       setConfirmSheet(null)
       if (!routineCommitted.current) setRoutineGroupSheet(null)
@@ -587,37 +592,48 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           loadCycleTimelines(dashboardDataClient as never, user.id),
           dashboardDataClient.from('stack_items').select('*').eq('user_id', user.id).eq('archived', false).order('display_name'),
         ])
+        if (!isCurrent()) return
         if (itemsResult.error) throw itemsResult.error
         const rangeStart = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 })
         const rangeEnd = startOfDay(addDays(endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 }), 1))
+        const selectionStart = parseISO(timelineSelection)
+        const ranges = [{ start: rangeStart, end: rangeEnd }]
+        if (selectionStart < rangeStart || selectionStart >= rangeEnd) {
+          ranges.push({ start: selectionStart, end: addDays(selectionStart, 1) })
+        }
         const columns = 'id, stack_item_id, dose, unit, method, logged_at, notes, taken, cycle_id, plan_version_id, routine_slot_key, stack_items(display_name)'
-        const rangeResult = await dashboardDataClient.from('dose_logs').select(columns)
-          .eq('user_id', user.id).gte('logged_at', rangeStart.toISOString()).lt('logged_at', rangeEnd.toISOString())
-          .order('logged_at', { ascending: true })
-        if (rangeResult.error) throw rangeResult.error
-        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
-        const keys = eachDayOfInterval({ start: rangeStart, end: addDays(rangeEnd, -1) })
-          .flatMap(day => loadedTimelines.flatMap(timeline => resolveTimelineIntakesForDay(
-            timeline, format(day, 'yyyy-MM-dd'), timeZone,
-          ).map(intake => intake.routineSlotKey)))
-        const byId = new Map((rangeResult.data as unknown as DoseLog[] ?? []).map(log => [log.id, log]))
-        // Stable identity is independent of mutable logged_at. Batches keep the
-        // request URL bounded and only fetch occurrences in the displayed grid.
-        for (let offset = 0; offset < keys.length; offset += 100) {
+        const byId = new Map<string, DoseLog>()
+        for (const range of ranges) {
           const result = await dashboardDataClient.from('dose_logs').select(columns)
-            .eq('user_id', user.id).in('routine_slot_key', keys.slice(offset, offset + 100))
+            .eq('user_id', user.id).gte('logged_at', range.start.toISOString()).lt('logged_at', range.end.toISOString())
+            .order('logged_at', { ascending: true })
+          if (!isCurrent()) return
           if (result.error) throw result.error
           for (const log of (result.data ?? []) as unknown as DoseLog[]) byId.set(log.id, log)
         }
-        if (request !== timelineRequest.current) return
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+        const keys = ranges.flatMap(range => eachDayOfInterval({ start: range.start, end: addDays(range.end, -1) }))
+          .flatMap(day => loadedTimelines.flatMap(timeline => resolveTimelineIntakesForDay(
+            timeline, format(day, 'yyyy-MM-dd'), timeZone,
+          ).map(intake => intake.routineSlotKey)))
+        // Stable identity is independent of mutable logged_at. Batches keep the
+        // request URL bounded for the displayed grid and independent selection.
+        for (let offset = 0; offset < keys.length; offset += 100) {
+          const result = await dashboardDataClient.from('dose_logs').select(columns)
+            .eq('user_id', user.id).in('routine_slot_key', keys.slice(offset, offset + 100))
+          if (!isCurrent()) return
+          if (result.error) throw result.error
+          for (const log of (result.data ?? []) as unknown as DoseLog[]) byId.set(log.id, log)
+        }
+        if (!isCurrent()) return
         setTimelines(loadedTimelines)
         setCycles([])
         setStackItems(itemsResult.data ?? [])
         setLogs([...byId.values()])
-        setTimelinePeriod(format(currentDate, 'yyyy-MM'))
+        setTimelinePeriod(timelineContext)
         setTimelineLoadState('ready')
       } catch {
-        if (request !== timelineRequest.current) return
+        if (!isCurrent()) return
         setTimelines([])
         setLogs([])
         setTimelineLoadState('error')
@@ -641,7 +657,17 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       .lte('logged_at', end + 'T23:59:59')
       .order('logged_at', { ascending: true })
     if (data) setLogs(data as unknown as DoseLog[])
-  }, [currentDate, dashboardDataClient, user])
+  }, [currentDate, dashboardDataClient, user, timelineSelection, timelineContext])
+
+  useLayoutEffect(() => {
+    latestLogLoader.current = loadLogSnapshot
+    return () => { latestLogLoader.current = null; timelineRequest.current += 1 }
+  }, [loadLogSnapshot])
+
+  // In-flight confirmations can outlive their render; always refresh the latest scope.
+  const loadLogs = useCallback(async () => {
+    await latestLogLoader.current?.()
+  }, [])
 
   const loadCycles = useCallback(async () => {
     if (!user) return
@@ -683,7 +709,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       }
     })
     return () => { cancelled = true; timelineRequest.current += 1 }
-  }, [loadCycles, loadLogs])
+  }, [loadCycles, loadLogs, loadLogSnapshot])
 
   useEffect(() => {
     let cancelled = false
@@ -731,7 +757,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     : []
 
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
-  const timelineReady = timelineLoadState === 'ready' && timelinePeriod === format(currentDate, 'yyyy-MM')
+  const timelineReady = timelineLoadState === 'ready' && timelinePeriod === timelineContext
   const stackItemById = new Map(stackItems.map(item => [item.id, item]))
   const timelineOccurrencesForDay = (day: Date) => {
     if (!timelineReady) return []
