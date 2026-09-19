@@ -65,8 +65,21 @@ create table public.cycles (
 
 create table public.dose_logs (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade
+  user_id uuid not null references auth.users(id) on delete cascade,
+  stack_item_id uuid not null references public.stack_items(id) on delete cascade,
+  dose numeric,
+  unit text,
+  method text not null default '',
+  logged_at timestamptz not null,
+  taken boolean,
+  routine_slot_key text
 );
+
+create unique index dose_logs_routine_slot_unique
+  on public.dose_logs (user_id, routine_slot_key)
+  where routine_slot_key is not null;
+
+grant select, insert, update on public.dose_logs to authenticated;
 
 create table public.dose_escalations (
   id uuid primary key default gen_random_uuid(),
@@ -80,7 +93,7 @@ create table public.dose_escalations (
   created_at timestamptz not null default now()
 );
 
-grant select on public.cycles to authenticated;
+grant select on public.stack_items, public.cycles to authenticated;
 
 create or replace function public.save_stack_item(p_item jsonb, p_ingredients jsonb)
 returns public.stack_items
@@ -455,6 +468,20 @@ values
     'Oral'
   ),
   (
+    '11110000-0000-0000-0000-000000000002',
+    '10000000-0000-0000-0000-000000000001',
+    '11100000-0000-0000-0000-000000000001',
+    'instant',
+    '2026-09-18T12:00:00Z',
+    null,
+    'dose',
+    'Täglich',
+    'morgens',
+    1,
+    'mg',
+    'Oral'
+  ),
+  (
     '22220000-0000-0000-0000-000000000002',
     '20000000-0000-0000-0000-000000000002',
     '22200000-0000-0000-0000-000000000002',
@@ -638,6 +665,198 @@ set local request.jwt.claim.sub = '10000000-0000-0000-0000-000000000001';
 
 do $$
 declare
+  correct_log public.dose_logs;
+  retry_log public.dose_logs;
+  prn_log public.dose_logs;
+  pending_log_id uuid := '11112000-0000-0000-0000-000000000001';
+  completed_pending public.dose_logs;
+  row_count integer;
+begin
+  select * into correct_log
+  from public.confirm_intake_group(jsonb_build_array(jsonb_build_object(
+    'cycle_id', '11100000-0000-0000-0000-000000000001',
+    'plan_version_id', '11110000-0000-0000-0000-000000000001',
+    'timezone', 'Europe/Berlin',
+    'dose_log_id', null,
+    'slot_key', 'routine:correct-version',
+    'stack_item_id', '11000000-0000-0000-0000-000000000001',
+    'dose', 1,
+    'unit', 'mg',
+    'method', 'Oral',
+    'logged_at', '2026-09-18T08:00:00Z'
+  )));
+
+  if correct_log.cycle_id <> '11100000-0000-0000-0000-000000000001'
+    or correct_log.plan_version_id <> '11110000-0000-0000-0000-000000000001' then
+    raise exception 'correct confirmation did not persist exact provenance';
+  end if;
+
+  select * into retry_log
+  from public.confirm_intake_group(jsonb_build_array(jsonb_build_object(
+    'cycle_id', '11100000-0000-0000-0000-000000000001',
+    'plan_version_id', '11110000-0000-0000-0000-000000000001',
+    'timezone', 'Europe/Berlin',
+    'dose_log_id', null,
+    'slot_key', 'routine:correct-version',
+    'stack_item_id', '11000000-0000-0000-0000-000000000001',
+    'dose', 1,
+    'unit', 'mg',
+    'method', 'Oral',
+    'logged_at', '2026-09-18T08:00:00Z'
+  )));
+
+  if retry_log.id <> correct_log.id
+    or retry_log.cycle_id <> correct_log.cycle_id
+    or retry_log.plan_version_id <> correct_log.plan_version_id then
+    raise exception 'idempotent retry changed log identity or provenance';
+  end if;
+
+  begin
+    perform public.confirm_intake_group(jsonb_build_array(
+      jsonb_build_object(
+        'cycle_id', '11100000-0000-0000-0000-000000000001',
+        'plan_version_id', '11110000-0000-0000-0000-000000000001',
+        'timezone', 'Europe/Berlin',
+        'dose_log_id', null,
+        'slot_key', 'routine:mismatch-atomic-first',
+        'stack_item_id', '11000000-0000-0000-0000-000000000001',
+        'dose', 1,
+        'unit', 'mg',
+        'method', 'Oral',
+        'logged_at', '2026-09-18T09:00:00Z'
+      ),
+      jsonb_build_object(
+        'cycle_id', '11100000-0000-0000-0000-000000000001',
+        'plan_version_id', '22220000-0000-0000-0000-000000000002',
+        'timezone', 'Europe/Berlin',
+        'dose_log_id', null,
+        'slot_key', 'routine:mismatch-atomic-second',
+        'stack_item_id', '11000000-0000-0000-0000-000000000001',
+        'dose', 1,
+        'unit', 'mg',
+        'method', 'Oral',
+        'logged_at', '2026-09-18T10:00:00Z'
+      )
+    ));
+    raise exception 'a mismatched plan-version claim was accepted';
+  exception
+    when others then
+      if sqlerrm <> 'Plan version does not match scheduled intake' then
+        raise;
+      end if;
+  end;
+
+  select count(*) into row_count
+  from public.dose_logs
+  where routine_slot_key in (
+    'routine:mismatch-atomic-first',
+    'routine:mismatch-atomic-second'
+  );
+  if row_count <> 0 then
+    raise exception 'mismatched plan-version group wrote % logs', row_count;
+  end if;
+
+  begin
+    perform public.confirm_intake_group(jsonb_build_array(
+      jsonb_build_object(
+        'cycle_id', '11100000-0000-0000-0000-000000000001',
+        'plan_version_id', '11110000-0000-0000-0000-000000000001',
+        'timezone', 'Europe/Berlin',
+        'dose_log_id', null,
+        'slot_key', 'routine:pause-atomic-first',
+        'stack_item_id', '11000000-0000-0000-0000-000000000001',
+        'dose', 1,
+        'unit', 'mg',
+        'method', 'Oral',
+        'logged_at', '2026-09-18T11:00:00Z'
+      ),
+      jsonb_build_object(
+        'cycle_id', '11100000-0000-0000-0000-000000000001',
+        'plan_version_id', '11110000-0000-0000-0000-000000000002',
+        'timezone', 'Europe/Berlin',
+        'dose_log_id', null,
+        'slot_key', 'routine:pause-atomic-second',
+        'stack_item_id', '11000000-0000-0000-0000-000000000001',
+        'dose', 1,
+        'unit', 'mg',
+        'method', 'Oral',
+        'logged_at', '2026-09-19T12:00:00Z'
+      )
+    ));
+    raise exception 'an intake inside a pause was accepted';
+  exception
+    when others then
+      if sqlerrm <> 'Intake falls within a paused cycle' then
+        raise;
+      end if;
+  end;
+
+  select count(*) into row_count
+  from public.dose_logs
+  where routine_slot_key in (
+    'routine:pause-atomic-first',
+    'routine:pause-atomic-second'
+  );
+  if row_count <> 0 then
+    raise exception 'paused intake group wrote % logs', row_count;
+  end if;
+
+  select * into prn_log
+  from public.confirm_intake_group(jsonb_build_array(jsonb_build_object(
+    'cycle_id', '11100000-0000-0000-0000-000000000001',
+    'plan_version_id', null,
+    'timezone', 'Europe/Berlin',
+    'dose_log_id', null,
+    'slot_key', 'manual-prn:unpaused',
+    'stack_item_id', '11000000-0000-0000-0000-000000000001',
+    'dose', 1,
+    'unit', 'mg',
+    'method', 'Oral',
+    'logged_at', '2026-09-18T15:00:00Z'
+  )));
+
+  if prn_log.plan_version_id <> '11110000-0000-0000-0000-000000000002'
+    or prn_log.cycle_id <> '11100000-0000-0000-0000-000000000001' then
+    raise exception 'manual PRN confirmation did not store resolved provenance';
+  end if;
+
+  insert into public.dose_logs (
+    id, user_id, stack_item_id, dose, unit, method, logged_at, taken
+  ) values (
+    pending_log_id,
+    '10000000-0000-0000-0000-000000000001',
+    '11000000-0000-0000-0000-000000000001',
+    1,
+    'mg',
+    'Oral',
+    '2026-09-18T16:00:00Z',
+    null
+  );
+
+  select * into completed_pending
+  from public.confirm_intake_group(jsonb_build_array(jsonb_build_object(
+    'cycle_id', '11100000-0000-0000-0000-000000000001',
+    'plan_version_id', null,
+    'timezone', 'Europe/Berlin',
+    'dose_log_id', pending_log_id,
+    'slot_key', 'routine:pending-completion',
+    'stack_item_id', '11000000-0000-0000-0000-000000000001',
+    'dose', 1,
+    'unit', 'mg',
+    'method', 'Oral',
+    'logged_at', '2026-09-18T16:00:00Z'
+  )));
+
+  if completed_pending.id <> pending_log_id
+    or completed_pending.cycle_id <> '11100000-0000-0000-0000-000000000001'
+    or completed_pending.plan_version_id <> '11110000-0000-0000-0000-000000000002' then
+    raise exception 'pending-log completion did not preserve identity and set provenance';
+  end if;
+end
+$$;
+
+do $$
+declare
   saved_item public.stack_items;
   retried_item public.stack_items;
   created_cycle public.cycles;
@@ -792,8 +1011,8 @@ declare
   visible_count integer;
 begin
   select count(*) into visible_count from public.cycle_plan_versions;
-  if visible_count <> 2 then
-    raise exception 'owner RLS exposed % plan versions instead of 2', visible_count;
+  if visible_count <> 3 then
+    raise exception 'owner RLS exposed % plan versions instead of 3', visible_count;
   end if;
 
   begin

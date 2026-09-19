@@ -3,6 +3,7 @@ import type { RoutineGroup, TrackingLevel } from '../my-stack/types'
 export interface RoutineIntake {
   key: string
   cycleId: string
+  planVersionId: string | null
   pendingLogId: string | null
   stackItemId: string
   stackItemName: string

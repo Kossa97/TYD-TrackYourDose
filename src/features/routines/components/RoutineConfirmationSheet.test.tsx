@@ -22,6 +22,7 @@ function intake(overrides: Partial<RoutineIntake> = {}): RoutineIntake {
   return {
     key: 'd3',
     cycleId: 'cycle-d3',
+    planVersionId: null,
     pendingLogId: null,
     stackItemId: 'stack-d3',
     stackItemName: 'Vitamin D3',

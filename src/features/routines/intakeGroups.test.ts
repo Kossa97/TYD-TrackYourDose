@@ -6,6 +6,7 @@ function intake(overrides: Partial<RoutineIntake> = {}): RoutineIntake {
   return {
     key: 'item-1',
     cycleId: 'cycle-1',
+    planVersionId: 'version-1',
     pendingLogId: null,
     stackItemId: 'stack-1',
     stackItemName: 'Vitamin D3',
@@ -43,6 +44,20 @@ describe('groupRoutineIntakes', () => {
       actualDose: null,
       actualUnit: null,
     })
+  })
+
+  it('preserves the exact plan version through grouping and confirmation', () => {
+    const groups = groupRoutineIntakes([
+      intake({ planVersionId: 'version-exact' }),
+      intake({ key: 'legacy', planVersionId: null }),
+    ])
+
+    expect(groups[0].items.map(item => item.planVersionId)).toEqual([
+      'version-exact',
+      null,
+    ])
+    expect(buildConfirmationEntry(groups[0].items[0]).planVersionId).toBe('version-exact')
+    expect(buildConfirmationEntry(groups[0].items[1]).planVersionId).toBeNull()
   })
 
   it.each([

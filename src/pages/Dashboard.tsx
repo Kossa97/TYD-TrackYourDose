@@ -113,6 +113,7 @@ export function buildDashboardRoutineIntake(input: DashboardRoutineIntakeInput):
   return {
     key: input.key,
     cycleId: input.cycleId,
+    planVersionId: null,
     pendingLogId: input.pendingLogId,
     stackItemId: input.stackItemId,
     stackItemName: input.stackItemName,

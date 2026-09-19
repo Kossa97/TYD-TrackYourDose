@@ -11,6 +11,8 @@ interface SavedDoseLog {
 
 interface ConfirmIntakeGroupRpcEntry {
   cycle_id: string
+  plan_version_id: string | null
+  timezone: string
   dose_log_id: string | null
   slot_key: string
   stack_item_id: string
@@ -51,10 +53,13 @@ export async function confirmIntakeGroup(
   client: IntakeConfirmationClient,
   entries: RoutineConfirmationEntry[],
 ): Promise<string[]> {
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
   const p_entries = entries
     .filter(entry => entry.selected)
     .map(entry => ({
       cycle_id: entry.cycleId,
+      plan_version_id: entry.planVersionId,
+      timezone,
       dose_log_id: entry.pendingLogId,
       slot_key: `${entry.cycleId}@${new Date(entry.scheduledAt).toISOString()}`,
       stack_item_id: entry.stackItemId,

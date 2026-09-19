@@ -152,6 +152,7 @@ describe('Home upcoming intake confirmation flow', () => {
     })
 
     expect(intake).toMatchObject({
+      planVersionId: null,
       pendingLogId: 'pending-1',
       group: 'evening',
       dose: null,

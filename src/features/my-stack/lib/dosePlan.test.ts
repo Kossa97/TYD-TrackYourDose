@@ -13,6 +13,7 @@ import {
 const entry: RoutineConfirmationEntry = {
   key: 'stack-1:2026-08-20T08:00:00.000Z',
   cycleId: 'cycle-1',
+  planVersionId: 'version-1',
   pendingLogId: null,
   stackItemId: 'stack-1',
   stackItemName: 'Test',

@@ -319,6 +319,7 @@ export function buildHomeRoutineIntake(intake: TodayIntake): RoutineIntake {
   return {
     key: intake.key,
     cycleId: intake.cycleId,
+    planVersionId: null,
     pendingLogId: intake.pendingLogId,
     stackItemId: intake.stackItemId,
     stackItemName: intake.substance ?? '',

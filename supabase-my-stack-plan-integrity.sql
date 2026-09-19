@@ -818,6 +818,309 @@ begin
 end
 $$;
 
+create or replace function public.confirm_intake_group(p_entries jsonb)
+returns setof public.dose_logs
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  owner_id uuid := auth.uid();
+  entry jsonb;
+  saved_log public.dose_logs;
+  entry_cycle_id uuid;
+  entry_plan_version_id uuid;
+  expected_plan_version_id uuid;
+  entry_timezone text;
+  entry_dose_log_id uuid;
+  entry_slot_key text;
+  entry_stack_item_id uuid;
+  entry_dose numeric;
+  entry_unit text;
+  entry_method text;
+  entry_logged_at timestamptz;
+  item_tracking_level text;
+begin
+  if owner_id is null then
+    raise exception 'Authentication required';
+  end if;
+
+  if p_entries is null
+    or jsonb_typeof(p_entries) <> 'array'
+    or jsonb_array_length(p_entries) = 0 then
+    raise exception 'At least one intake entry is required';
+  end if;
+
+  if exists (
+    select 1
+    from (
+      select value ->> 'slot_key' as slot_key
+      from jsonb_array_elements(p_entries)
+      group by 1
+      having count(*) > 1
+    ) duplicates
+  ) then
+    raise exception 'Duplicate routine slot key in intake group';
+  end if;
+
+  if exists (
+    select 1
+    from (
+      select
+        (value ->> 'cycle_id')::uuid as cycle_id,
+        (value ->> 'logged_at')::timestamptz as logged_at
+      from jsonb_array_elements(p_entries)
+      group by 1, 2
+      having count(*) > 1
+    ) duplicates
+  ) then
+    raise exception 'Duplicate cycle and logged_at in intake group';
+  end if;
+
+  for entry in
+    select value
+    from jsonb_array_elements(p_entries)
+  loop
+    entry_cycle_id := nullif(btrim(entry ->> 'cycle_id'), '')::uuid;
+    entry_plan_version_id := nullif(btrim(entry ->> 'plan_version_id'), '')::uuid;
+    entry_timezone := nullif(btrim(entry ->> 'timezone'), '');
+    entry_dose_log_id := nullif(btrim(entry ->> 'dose_log_id'), '')::uuid;
+    entry_slot_key := nullif(btrim(entry ->> 'slot_key'), '');
+    entry_stack_item_id := nullif(btrim(entry ->> 'stack_item_id'), '')::uuid;
+    entry_unit := nullif(btrim(entry ->> 'unit'), '');
+    entry_method := coalesce(entry ->> 'method', '');
+    entry_logged_at := nullif(btrim(entry ->> 'logged_at'), '')::timestamptz;
+
+    if entry -> 'dose' is null or entry -> 'dose' = 'null'::jsonb then
+      entry_dose := null;
+    elsif jsonb_typeof(entry -> 'dose') = 'number' then
+      entry_dose := (entry ->> 'dose')::numeric;
+    else
+      raise exception 'Dose must be a number or null';
+    end if;
+
+    if entry_cycle_id is null
+      or entry_timezone is null
+      or entry_slot_key is null
+      or entry_stack_item_id is null
+      or entry_logged_at is null then
+      raise exception 'Cycle, timezone, slot key, stack item, and logged_at are required';
+    end if;
+    if not exists (
+      select 1
+      from pg_timezone_names
+      where name = entry_timezone
+    ) then
+      raise exception 'Invalid timezone';
+    end if;
+    if (entry_dose is null) <> (entry_unit is null) then
+      raise exception 'Dose and unit must both be supplied or both be null';
+    end if;
+    if entry_dose is not null
+      and not (entry_dose > 0 and entry_dose <= '1000000000'::numeric) then
+      raise exception 'Dose must be positive';
+    end if;
+
+    select item.tracking_level
+    into item_tracking_level
+    from public.cycles cycle
+    join public.stack_items item on item.id = cycle.stack_item_id
+    where cycle.id = entry_cycle_id
+      and cycle.stack_item_id = entry_stack_item_id
+      and cycle.user_id = owner_id
+      and item.user_id = owner_id;
+
+    if not found then
+      raise exception 'Intake cycle not found';
+    end if;
+    if item_tracking_level = 'intake_only' then
+      if entry_dose is not null then
+        raise exception 'Intake-only entries cannot store a quantity';
+      end if;
+    elsif entry_dose is null then
+      raise exception 'Tracked entries require dose and unit';
+    end if;
+
+    expected_plan_version_id := public.resolve_plan_version_id(
+      entry_cycle_id,
+      entry_logged_at,
+      entry_timezone
+    );
+    if expected_plan_version_id is null then
+      raise exception 'Plan version not found';
+    end if;
+    if entry_plan_version_id is not null
+      and entry_plan_version_id <> expected_plan_version_id then
+      raise exception 'Plan version does not match scheduled intake';
+    end if;
+
+    if exists (
+      select 1
+      from public.cycle_pause_periods pause
+      where pause.cycle_id = entry_cycle_id
+        and pause.user_id = owner_id
+        and pause.paused_at <= entry_logged_at
+        and (pause.ends_at is null or entry_logged_at < pause.ends_at)
+    ) then
+      raise exception 'Intake falls within a paused cycle';
+    end if;
+
+    select *
+    into saved_log
+    from public.dose_logs
+    where routine_slot_key = entry_slot_key
+      and user_id = owner_id;
+
+    if found then
+      if saved_log.stack_item_id <> entry_stack_item_id
+        or saved_log.logged_at <> entry_logged_at
+        or saved_log.taken is false
+        or saved_log.cycle_id is distinct from entry_cycle_id
+        or saved_log.plan_version_id is distinct from expected_plan_version_id
+        or (entry_dose_log_id is not null and saved_log.id <> entry_dose_log_id) then
+        raise exception 'Routine slot key belongs to another intake';
+      end if;
+    elsif entry_dose_log_id is not null then
+      perform 1
+      from public.dose_logs
+      where id = entry_dose_log_id
+        and user_id = owner_id
+        and stack_item_id = entry_stack_item_id
+        and taken is null
+        and logged_at = entry_logged_at
+        and (cycle_id is null or cycle_id = entry_cycle_id)
+        and (plan_version_id is null or plan_version_id = expected_plan_version_id);
+
+      if not found then
+        raise exception 'Pending dose log not found';
+      end if;
+    end if;
+  end loop;
+
+  for entry in
+    select value
+    from jsonb_array_elements(p_entries)
+  loop
+    entry_cycle_id := nullif(btrim(entry ->> 'cycle_id'), '')::uuid;
+    entry_timezone := nullif(btrim(entry ->> 'timezone'), '');
+    entry_dose_log_id := nullif(btrim(entry ->> 'dose_log_id'), '')::uuid;
+    entry_slot_key := nullif(btrim(entry ->> 'slot_key'), '');
+    entry_stack_item_id := nullif(btrim(entry ->> 'stack_item_id'), '')::uuid;
+    entry_unit := nullif(btrim(entry ->> 'unit'), '');
+    entry_method := coalesce(entry ->> 'method', '');
+    entry_logged_at := nullif(btrim(entry ->> 'logged_at'), '')::timestamptz;
+    if entry -> 'dose' is null or entry -> 'dose' = 'null'::jsonb then
+      entry_dose := null;
+    else
+      entry_dose := (entry ->> 'dose')::numeric;
+    end if;
+
+    expected_plan_version_id := public.resolve_plan_version_id(
+      entry_cycle_id,
+      entry_logged_at,
+      entry_timezone
+    );
+
+    select *
+    into saved_log
+    from public.dose_logs
+    where routine_slot_key = entry_slot_key
+      and user_id = owner_id
+    for update;
+
+    if not found and entry_dose_log_id is not null then
+      update public.dose_logs
+      set
+        cycle_id = entry_cycle_id,
+        plan_version_id = expected_plan_version_id,
+        dose = entry_dose,
+        unit = entry_unit,
+        method = entry_method,
+        logged_at = entry_logged_at,
+        routine_slot_key = entry_slot_key,
+        taken = true
+      where id = entry_dose_log_id
+        and user_id = owner_id
+        and stack_item_id = entry_stack_item_id
+        and taken is null
+        and logged_at = entry_logged_at
+        and (cycle_id is null or cycle_id = entry_cycle_id)
+        and (plan_version_id is null or plan_version_id = expected_plan_version_id)
+      returning * into saved_log;
+    elsif not found then
+      insert into public.dose_logs (
+        user_id,
+        stack_item_id,
+        cycle_id,
+        plan_version_id,
+        dose,
+        unit,
+        method,
+        logged_at,
+        routine_slot_key,
+        taken
+      ) values (
+        owner_id,
+        entry_stack_item_id,
+        entry_cycle_id,
+        expected_plan_version_id,
+        entry_dose,
+        entry_unit,
+        entry_method,
+        entry_logged_at,
+        entry_slot_key,
+        true
+      )
+      on conflict (user_id, routine_slot_key)
+        where routine_slot_key is not null
+        do nothing
+      returning * into saved_log;
+    end if;
+
+    if not found then
+      select *
+      into saved_log
+      from public.dose_logs
+      where routine_slot_key = entry_slot_key
+        and user_id = owner_id
+      for update;
+
+      if not found then
+        raise exception 'Routine intake could not be saved';
+      end if;
+    end if;
+
+    if saved_log.stack_item_id <> entry_stack_item_id
+      or saved_log.logged_at <> entry_logged_at
+      or saved_log.taken is false
+      or saved_log.cycle_id is distinct from entry_cycle_id
+      or saved_log.plan_version_id is distinct from expected_plan_version_id
+      or (entry_dose_log_id is not null and saved_log.id <> entry_dose_log_id) then
+      raise exception 'Routine slot key belongs to another intake';
+    end if;
+
+    update public.dose_logs
+    set
+      cycle_id = entry_cycle_id,
+      plan_version_id = expected_plan_version_id,
+      dose = entry_dose,
+      unit = entry_unit,
+      method = entry_method,
+      logged_at = entry_logged_at,
+      routine_slot_key = entry_slot_key,
+      taken = true
+    where id = saved_log.id
+      and user_id = owner_id
+    returning * into saved_log;
+
+    return next saved_log;
+  end loop;
+end
+$$;
+
+revoke execute on function public.confirm_intake_group(jsonb) from public, anon;
+grant execute on function public.confirm_intake_group(jsonb) to authenticated;
+
 create or replace function public.replace_future_plan_version(
   p_version_id uuid,
   p_effective_kind text,

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RoutineConfirmationEntry } from '../intakeGroups'
 import { confirmIntakeGroup, quantifiedVialEntries, type IntakeConfirmationClient } from './intakeConfirmation'
 
@@ -6,6 +6,7 @@ function entry(overrides: Partial<RoutineConfirmationEntry> = {}): RoutineConfir
   return {
     key: 'd3',
     cycleId: 'cycle-d3',
+    planVersionId: 'version-d3',
     pendingLogId: null,
     stackItemId: 'stack-d3',
     stackItemName: 'Vitamin D3',
@@ -24,7 +25,17 @@ function entry(overrides: Partial<RoutineConfirmationEntry> = {}): RoutineConfir
 }
 
 describe('confirmIntakeGroup', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('saves all selected mixed entries in one RPC call and returns their saved log IDs', async () => {
+    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
+      locale: 'de-DE',
+      calendar: 'gregory',
+      numberingSystem: 'latn',
+      timeZone: 'Europe/Berlin',
+    })
     const calls: Array<{ name: string; params: unknown }> = []
     const client: IntakeConfirmationClient = {
       rpc: async (name, params) => {
@@ -38,6 +49,7 @@ describe('confirmIntakeGroup', () => {
       entry({
         key: 'zinc',
         cycleId: 'cycle-zinc',
+        planVersionId: null,
         pendingLogId: 'pending-zinc',
         stackItemId: 'stack-zinc',
         stackItemName: 'Zink',
@@ -57,6 +69,8 @@ describe('confirmIntakeGroup', () => {
         p_entries: [
           {
             cycle_id: 'cycle-d3',
+            plan_version_id: 'version-d3',
+            timezone: 'Europe/Berlin',
             dose_log_id: null,
             slot_key: 'cycle-d3@2026-07-29T08:00:00.000Z',
             stack_item_id: 'stack-d3',
@@ -67,6 +81,8 @@ describe('confirmIntakeGroup', () => {
           },
           {
             cycle_id: 'cycle-zinc',
+            plan_version_id: null,
+            timezone: 'Europe/Berlin',
             dose_log_id: 'pending-zinc',
             slot_key: 'cycle-zinc@2026-07-29T08:00:00.000Z',
             stack_item_id: 'stack-zinc',
@@ -78,6 +94,26 @@ describe('confirmIntakeGroup', () => {
         ],
       },
     }])
+  })
+
+  it('falls back to UTC only when the runtime supplies no timezone', async () => {
+    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
+      locale: 'en',
+      calendar: 'gregory',
+      numberingSystem: 'latn',
+      timeZone: '',
+    })
+    const calls: Array<{ params: { p_entries: Array<{ timezone: string }> } }> = []
+    const client: IntakeConfirmationClient = {
+      rpc: async (_name, params) => {
+        calls.push({ params })
+        return { data: [{ id: 'log-d3' }], error: null }
+      },
+    }
+
+    await confirmIntakeGroup(client, [entry({ planVersionId: null })])
+
+    expect(calls[0].params.p_entries[0].timezone).toBe('UTC')
   })
 
   it('surfaces an RPC failure to the confirmation sheet', async () => {

@@ -152,6 +152,7 @@ describe('Dashboard intake confirmation actions', () => {
     })
 
     expect(intake).toMatchObject({
+      planVersionId: null,
       pendingLogId: 'pending-1',
       group: 'midday',
       dose: null,
