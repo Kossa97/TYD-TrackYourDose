@@ -3,9 +3,26 @@ import { describe, expect, it } from 'vitest'
 import { CENTER_ACTION_INDEX, TAB_ITEMS, resolveActiveTabId, tabIndex } from './tabModel'
 
 describe('tabModel', () => {
+  it('schickt keinen Reiter auf eine Route, die es nicht gibt', () => {
+    // Genau das war passiert: die Leiste kam von einem Branch, auf dem My
+    // Stack schon unter `/my-stack` lief. Auf main heisst die Seite noch
+    // `/peptide` — der Reiter fiel auf die Catch-all-Route, und weil
+    // `resolveActiveTabId` exakt vergleicht, war auf der Seite selbst kein
+    // Reiter aktiv. Beides sah man erst in der laufenden App.
+    const app = readFileSync(new URL('../../App.tsx', import.meta.url), 'utf8')
+    const vorhanden = new Set(
+      [...app.matchAll(/path="([^"*:]+)"/g)].map(treffer => '/' + treffer[1].replace(/^\//, '')),
+    )
+    vorhanden.add('/')
+
+    for (const tab of TAB_ITEMS) {
+      expect(vorhanden, `Reiter „${tab.fallbackLabel}" zeigt auf ${tab.route}`).toContain(tab.route)
+    }
+  })
+
   it('führt die vier Reiter in der Reihenfolge, in der sie auf dem Schirm stehen', () => {
     expect(TAB_ITEMS.map(t => t.id)).toEqual(['home', 'my-stack', 'kalender', 'profil'])
-    expect(TAB_ITEMS.map(t => t.route)).toEqual(['/', '/my-stack', '/kalender', '/profil'])
+    expect(TAB_ITEMS.map(t => t.route)).toEqual(['/', '/peptide', '/kalender', '/profil'])
   })
 
   it('schiebt die mittlere Schaltfläche zwischen zwei und zwei', () => {
@@ -17,7 +34,7 @@ describe('tabModel', () => {
 
   it('erkennt den aktiven Reiter am genauen Pfad', () => {
     expect(resolveActiveTabId('/')).toBe('home')
-    expect(resolveActiveTabId('/my-stack')).toBe('my-stack')
+    expect(resolveActiveTabId('/peptide')).toBe('my-stack')
     expect(resolveActiveTabId('/kalender')).toBe('kalender')
     expect(resolveActiveTabId('/profil')).toBe('profil')
   })
@@ -27,7 +44,7 @@ describe('tabModel', () => {
     // die Pille unter „Home", obwohl man dort gar nicht ist.
     expect(resolveActiveTabId('/faq')).toBeNull()
     expect(resolveActiveTabId('/rechner')).toBeNull()
-    expect(resolveActiveTabId('/my-stack/irgendwas')).toBeNull()
+    expect(resolveActiveTabId('/peptide/irgendwas')).toBeNull()
   })
 
   it('behält die Anker, auf die das Onboarding zielt', () => {

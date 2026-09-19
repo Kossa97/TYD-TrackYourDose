@@ -29,7 +29,14 @@ export interface TabDefinition {
  */
 export const TAB_ITEMS: readonly TabDefinition[] = [
   { id: 'home',     route: '/',         labelKey: 'nav_home',     fallbackLabel: 'Home',     obKey: 'nav-home' },
-  { id: 'my-stack', route: '/my-stack', labelKey: null,           fallbackLabel: 'My Stack', obKey: 'nav-peptide' },
+  // Die Route heisst hier `/peptide`, der Reiter aber `my-stack`: die Seite
+  // wird gerade umgebaut und zieht dabei auf `/my-stack` um. Der Reiter traegt
+  // schon den kuenftigen Namen, weil sein `id` die Identitaet ist und nicht die
+  // Adresse — an der Adresse haengt nur, wohin geklickt wird. Als die Leiste
+  // von ihrem Branch kam, stand hier `/my-stack`: dort gibt es die Route
+  // schon, hier noch nicht, und der Reiter fiel auf die Catch-all-Route.
+  // Wenn der Umzug ankommt, aendert sich genau diese eine Zeile.
+  { id: 'my-stack', route: '/peptide',  labelKey: null,           fallbackLabel: 'My Stack', obKey: 'nav-peptide' },
   { id: 'kalender', route: '/kalender', labelKey: 'nav_kalender', fallbackLabel: 'Kalender', obKey: 'nav-kalender' },
   { id: 'profil',   route: '/profil',   labelKey: 'nav_profil',   fallbackLabel: 'Profil' },
 ] as const
