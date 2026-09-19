@@ -155,6 +155,15 @@ describe('reminder worker boundary', () => {
     })
   })
 
+  it('preserves a finite positive quantity below two-decimal precision', () => {
+    const payload = payloadFor(cycleRow(), {
+      offset: 'on_time', cycleId: 'c1', routineSlotKey: 'c1@slot', time: '08:00',
+      dose: 0.001, unit: 'mg',
+    })
+
+    expect(payload.body).toBe('0.001 mg · 08:00 Uhr – jetzt einnehmen')
+  })
+
   it('keeps a useful time-only payload when quantity is absent or invalid', () => {
     for (const [dose, unit] of [[null, null], [0, 'mg'], [5, '']]) {
       const payload = payloadFor(cycleRow(), {
@@ -192,10 +201,18 @@ describe('reminder worker boundary', () => {
   it('logs bad subscription zones, sends nothing to them, and continues valid subscriptions', async () => {
     const sendNotification = vi.fn().mockResolvedValue(undefined)
     const logError = vi.fn()
+    const sensitiveEndpoint = 'https://push.example/send/secret-capability-token'
+    const sensitiveUserId = 'user-secret-42'
+    const sensitiveTimeZone = 'Secret/Invalid-Zone'
     const result = await sendRemindersForSubscriptions({
       subscriptions: [
-        { user_id: 'u1', endpoint: 'invalid', subscription: { endpoint: 'invalid' }, timezone: 'Not/AZone' },
-        { user_id: 'u1', endpoint: 'missing', subscription: { endpoint: 'missing' }, timezone: null },
+        {
+          user_id: sensitiveUserId,
+          endpoint: sensitiveEndpoint,
+          subscription: { endpoint: sensitiveEndpoint },
+          timezone: sensitiveTimeZone,
+        },
+        { user_id: 'user-missing-zone', endpoint: 'missing-zone-token', subscription: { endpoint: 'missing-zone-token' }, timezone: null },
         { user_id: 'u1', endpoint: 'valid', subscription: { endpoint: 'valid' }, timezone: 'Europe/Berlin' },
       ],
       cycles: [cycleRow()],
@@ -208,6 +225,14 @@ describe('reminder worker boundary', () => {
     expect(sendNotification).toHaveBeenCalledTimes(1)
     expect(sendNotification).toHaveBeenCalledWith({ endpoint: 'valid' }, expect.any(String))
     expect(logError).toHaveBeenCalledTimes(2)
+    expect(logError).toHaveBeenNthCalledWith(1, 'Reminder subscription skipped: invalid timezone')
+    expect(logError).toHaveBeenNthCalledWith(2, 'Reminder subscription skipped: invalid timezone')
+    const logged = JSON.stringify(logError.mock.calls)
+    expect(logged).not.toContain(sensitiveEndpoint)
+    expect(logged).not.toContain(sensitiveUserId)
+    expect(logged).not.toContain(sensitiveTimeZone)
+    expect(logged).not.toContain('missing-zone-token')
+    expect(logged).not.toContain('user-missing-zone')
     expect(result).toEqual({ sent: 1, failed: 2, dueUsers: 1, stale: [] })
   })
 })

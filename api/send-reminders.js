@@ -43,7 +43,7 @@ export function buildCyclesUrl(base, userIds) {
 
 function formattedQuantity(dose, unit) {
   if (!Number.isFinite(dose) || dose <= 0 || typeof unit !== 'string' || !unit.trim()) return null
-  return `${Math.round(dose * 100) / 100} ${unit.trim()}`
+  return `${dose} ${unit.trim()}`
 }
 
 export function payloadFor(cycle, due) {
@@ -95,14 +95,9 @@ export async function sendRemindersForSubscriptions({
           windowMin,
         ).map(due => payloadFor(cycle, due))
       ))
-    } catch (error) {
+    } catch {
       failed += 1
-      logError('Reminder subscription skipped', {
-        endpoint: subscription.endpoint,
-        userId: subscription.user_id,
-        timezone: subscription.timezone,
-        error: String(error?.message ?? error),
-      })
+      logError('Reminder subscription skipped: invalid timezone')
       continue
     }
 
