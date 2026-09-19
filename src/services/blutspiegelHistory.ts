@@ -305,6 +305,7 @@ function cycleIntakeMinutes(cycle: ResolvedPkSchedule): number {
 }
 
 export interface NextPkDose {
+  method?: string | null
   cycleId?: string
   planVersionId?: string
   timestamp: Date
@@ -323,7 +324,7 @@ export function findNextPkDose(
     const resolved = resolveCycleAt(cycle.timeline, now, timeZone)
     if (resolved.status === 'active' && !resolved.planVersion) throw new Error('Cycle plan version unavailable')
     const next = findNextTimelineIntake(cycle.timeline, now, timeZone)
-    return next ? { timestamp: new Date(next.scheduledAt), dose: next.dose, unit: next.unit,
+    return next ? { timestamp: new Date(next.scheduledAt), dose: next.dose, unit: next.unit, method: next.method,
       cycleId: next.cycleId, planVersionId: next.planVersionId } : null
   }
   const todayStart = new Date(now)
@@ -334,6 +335,7 @@ export function findNextPkDose(
     if (!cycleAppliesToDay(cycle, day)) continue
 
     const schedule = resolvePkScheduleForDay(cycle, escalations, day)
+    if (!schedule) continue
 
     const doseTime = new Date(day)
     doseTime.setHours(0, 0, 0, 0)
@@ -350,6 +352,7 @@ export function findNextPkDose(
   fallback.setDate(fallback.getDate() + 1)
   fallback.setHours(8, 0, 0, 0)
   const schedule = resolvePkScheduleForDay(cycle, escalations, fallback)
+  if (!schedule) return null
   return { timestamp: fallback, dose: schedule.dose, unit: schedule.unit }
 }
 
@@ -472,21 +475,28 @@ export async function getCurrentBlutspiegelLevel(
   tmaxHours: number,
   bioavailability: number = 1.0,
   umrechnung: DoseUmrechnung = {},
+  pkProfileMethod: string | null = null,
 ): Promise<CurrentBlutspiegelLevel> {
   const history = await loadDoseHistory(cycle.id)
   const { events, interruptedAt } = history
   const takenEvents = events.filter(e => e.status === 'taken')
   const now = new Date()
   const schedule = resolvePkScheduleForDay(cycle, escalations, now)
-  const cycleUnit = schedule.unit ?? 'mcg'
+  const cycleUnit = schedule ? schedule.unit ?? 'mcg' : '—'
   const nextDose = findNextPkDose(cycle, escalations, now)
+  const canProject = Boolean(nextDose && (!FEATURES.planTimelineV2 || (
+    schedule && pkProfileMethod?.trim()
+    && nextDose.method?.trim().toLocaleLowerCase() === pkProfileMethod.trim().toLocaleLowerCase()
+    && nextDose.dose != null && nextDose.dose > 0 && nextDose.unit
+    && toPkMilligrams(nextDose.dose, nextDose.unit, umrechnung.iuPerMg ?? null, umrechnung.mgPerMl ?? null) != null
+  )))
   const nextDoseIn = nextDose ? formatDurationShort(nextDose.timestamp.getTime() - now.getTime()) : '—'
 
   if (!takenEvents.length) {
     return {
       ...EMPTY_CURRENT_LEVEL,
       nextDoseIn,
-      levelAfterNextDose: nextDose ? 0 : null,
+      levelAfterNextDose: canProject ? 0 : null,
       unit: cycleUnit,
       interruptedAt,
     }
@@ -506,7 +516,7 @@ export async function getCurrentBlutspiegelLevel(
     return {
       ...EMPTY_CURRENT_LEVEL,
       nextDoseIn,
-      levelAfterNextDose: nextDose ? 0 : null,
+      levelAfterNextDose: canProject ? 0 : null,
       unit: cycleUnit,
       interruptedAt,
     }
@@ -532,7 +542,7 @@ export async function getCurrentBlutspiegelLevel(
     20,
   )
 
-  const futureCurve = interruptedAt || !nextDose || nextDose.dose == null || nextDose.unit == null
+  const futureCurve = interruptedAt || !canProject || !nextDose || nextDose.dose == null || nextDose.unit == null
     ? []
     : calculateCurveTo(
         [...takenEvents, {
@@ -549,7 +559,7 @@ export async function getCurrentBlutspiegelLevel(
         umrechnung,
       )
   const afterNext = nextDose ? futureCurve.filter(p => p.time.getTime() >= nextDose.timestamp.getTime()) : []
-  const levelAfterNextDose = !nextDose ? null : afterNext.length
+  const levelAfterNextDose = !canProject ? null : afterNext.length
     ? Math.max(...afterNext.map(p => p.level))
     : currentLevel
 

@@ -31,6 +31,7 @@ import {
 import { useMediaQuery } from '../lib/useMediaQuery'
 import {
   evaluatePkReadiness,
+  mgPerMlFromStrength,
   resolvePkScheduleForDay,
   type PkReadiness,
   type PkRequirement,
@@ -54,6 +55,7 @@ interface PkProfile {
 }
 
 interface PkProfileEmbed {
+  iu_per_mg?: number | null
   name: string
   half_life_hours: number
   tmax_hours: number
@@ -70,6 +72,10 @@ interface ProtocolCycle extends PkScheduleCycle {
     pk_profile_method: string | null
     ingredients: Array<{
       position: number
+      amount_value?: number | string | null
+      amount_unit?: string | null
+      basis_value?: number | string | null
+      basis_unit?: string | null
       substance_catalog: {
         pk_profile_id: string | null
         pk_profiles: PkProfileEmbed | null
@@ -78,12 +84,16 @@ interface ProtocolCycle extends PkScheduleCycle {
   } | null
 }
 
-function linkedProfile(cycle: ProtocolCycle): { id: string; profile: PkProfileEmbed } | null {
+function linkedProfile(cycle: ProtocolCycle): { id: string; profile: PkProfileEmbed; mgPerMl: number | null } | null {
   const ingredients = cycle.stack_items?.ingredients.slice().sort((a, b) => a.position - b.position) ?? []
   for (const ingredient of ingredients) {
     const catalog = ingredient.substance_catalog
     if (catalog?.pk_profile_id && catalog.pk_profiles) {
-      return { id: catalog.pk_profile_id, profile: catalog.pk_profiles }
+      return { id: catalog.pk_profile_id, profile: catalog.pk_profiles,
+        mgPerMl: mgPerMlFromStrength(
+          ingredient.amount_value == null ? null : Number(ingredient.amount_value), ingredient.amount_unit ?? null,
+          ingredient.basis_value == null ? null : Number(ingredient.basis_value), ingredient.basis_unit ?? null,
+        ) }
     }
   }
   return null
@@ -95,10 +105,10 @@ function readinessForCycle(cycle: ProtocolCycle, escalations: EscalationRow[]): 
     trackingLevel: cycle.stack_items?.tracking_level ?? 'intake_only',
     pkProfileId: linkedProfile(cycle)?.id ?? null,
     pkProfileMethod: cycle.stack_items?.pk_profile_method ?? null,
-    method: schedule.method,
-    dose: schedule.dose,
-    unit: schedule.unit,
-    scheduledAt: schedule.scheduledAt,
+    method: schedule?.method ?? null,
+    dose: schedule?.dose ?? null,
+    unit: schedule?.unit ?? null,
+    scheduledAt: schedule?.scheduledAt ?? null,
   })
 }
 
@@ -954,7 +964,8 @@ export function BlutspiegelSimulation() {
 
     const results = await Promise.all(
       readyProtocolCycles.map(async c => {
-        const pk = linkedProfile(c)!.profile
+        const linked = linkedProfile(c)!
+        const pk = linked.profile
         const cycleEscalations = protocolEscalations.filter(row => row.cycle_id === c.id)
         const level = await getCurrentBlutspiegelLevel(
           c,
@@ -962,6 +973,8 @@ export function BlutspiegelSimulation() {
           pk.half_life_hours,
           pk.tmax_hours,
           pk.bioavailability_sc,
+          FEATURES.planTimelineV2 ? { iuPerMg: pk.iu_per_mg, mgPerMl: linked.mgPerMl } : {},
+          c.stack_items?.pk_profile_method ?? null,
         )
         return [c.id, level] as [string, CurrentBlutspiegelLevel]
       })
@@ -1010,7 +1023,7 @@ export function BlutspiegelSimulation() {
         protocolEscalations.filter(row => row.cycle_id === match.id),
         new Date(),
       )
-      if (schedule.dose != null && schedule.unit) {
+      if (schedule?.dose != null && schedule.unit) {
         setDose(String(schedule.dose))
         setUnit(normalizeUnit(schedule.unit))
       }

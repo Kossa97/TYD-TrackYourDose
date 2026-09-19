@@ -644,10 +644,10 @@ export function BlutspiegelCarousel() {
           trackingLevel: cycle.stack_items?.tracking_level ?? 'intake_only',
           pkProfileId: linked?.id ?? null,
           pkProfileMethod: cycle.stack_items?.pk_profile_method ?? null,
-          method: schedule.method,
-          dose: schedule.dose,
-          unit: schedule.unit,
-          scheduledAt: schedule.scheduledAt,
+          method: schedule?.method ?? null,
+          dose: schedule?.dose ?? null,
+          unit: schedule?.unit ?? null,
+          scheduledAt: schedule?.scheduledAt ?? null,
           // Ohne den Faktor faellt eine in IU geplante Einnahme hier durch
           // und die Karte verschwindet wortlos aus dem Karussell.
           iuPerMg: linked?.profile.iu_per_mg ?? null,
@@ -666,7 +666,7 @@ export function BlutspiegelCarousel() {
             missing: readiness.missing,
           } satisfies IncompleteCarouselCard
         }
-        if (!linked) return null
+        if (!linked || !schedule) return null
         const pk = linked.profile
         const category = normalizeCategory(pk.category)
         // Je Zutat mit Profil ein eigener Spiegel: dieselbe Einnahme, aber
@@ -683,6 +683,7 @@ export function BlutspiegelCarousel() {
             zutat.profile.tmax_hours,
             zutat.profile.bioavailability_sc,
             { iuPerMg: zutat.profile.iu_per_mg, mgPerMl: zutat.mgPerMl },
+            cycle.stack_items?.pk_profile_method ?? null,
           ),
         })))
         const level = spiegel[0].level

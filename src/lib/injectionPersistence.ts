@@ -378,13 +378,12 @@ function buildTimelineInjectionIntakes(
     const resolved = resolveCycleAt(timeline, now, timeZone)
     if (resolved.status === 'active' && !resolved.planVersion) throw new Error('Cycle plan version unavailable')
   }
-  const openLogs = logs.map(log => isAutoMissedDoseLog(log) ? { ...log, taken: null } : log)
   for (let back = lookbackDays; back >= 0; back--) {
     const day = subDays(today, back)
     const localDate = format(day, 'yyyy-MM-dd')
     const firstOccurrence = timelines.flatMap(timeline => resolveTimelineIntakesForDay(timeline, localDate, timeZone))[0]
     if (!firstOccurrence) continue
-    for (const occurrence of collectOpenTimelineIntakes(timelines, openLogs, new Date(firstOccurrence.scheduledAt), timeZone)) {
+    for (const occurrence of collectOpenTimelineIntakes(timelines, logs, new Date(firstOccurrence.scheduledAt), timeZone)) {
       const log = logs.find(row => row.id === occurrence.pendingLogId)
       if (log && linkedIds.has(log.id)) continue
       const dose = log ? injectionDoseValue(log.dose) : occurrence.dose
@@ -534,8 +533,13 @@ export async function confirmIntakeDoseLog(
       || input.routineSlotKey !== `${input.cycleId}@${new Date(input.scheduledAt).toISOString()}`) {
       throw new Error('Injection occurrence provenance unavailable')
     }
+    const timelines = await loadCycleTimelines(supabase as never, input.userId)
+    const timeline = timelines.find(row => row.cycle.id === input.cycleId && row.cycle.stack_item_id === input.stackItemId)
+    if (!timeline) throw new Error('Injection cycle timeline unavailable')
+    const resolved = resolveCycleAt(timeline, new Date(input.loggedAt), Intl.DateTimeFormat().resolvedOptions().timeZone)
+    if (resolved.status !== 'active' || !resolved.planVersion) throw new Error('Injection plan version unavailable at actual time')
     const [id] = await confirmIntakeGroup(supabase, [{
-      key: input.routineSlotKey, cycleId: input.cycleId, planVersionId: input.planVersionId,
+      key: input.routineSlotKey, cycleId: input.cycleId, planVersionId: resolved.planVersion.id,
       pendingLogId: input.doseLogId ?? null, stackItemId: input.stackItemId, stackItemName: '',
       trackingLevel: 'with_amount', group: 'morning', scheduledAt: input.scheduledAt,
       actualLoggedAt: input.loggedAt, dose: input.dose, unit: input.unit, method: input.method,

@@ -112,11 +112,12 @@ export function resolvePkScheduleForDay(
   cycle: PkScheduleCycle,
   escalations: EscalationRow[],
   day: Date,
-): ResolvedPkSchedule {
+): ResolvedPkSchedule | null {
   if (FEATURES.planTimelineV2) {
     if (!cycle.timeline) throw new Error('Cycle timeline unavailable')
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
     const resolved = resolveCycleAt(cycle.timeline, day, timeZone)
+    if (resolved.status === 'planned') return null
     const version = resolved.planVersion
     if (!version) throw new Error('Cycle plan version unavailable')
     const automatic = resolved.status === 'active' && version.frequency !== 'Bei Bedarf'

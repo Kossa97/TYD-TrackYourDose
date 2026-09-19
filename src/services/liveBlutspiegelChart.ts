@@ -163,6 +163,7 @@ export async function loadAllCycleChartData(userId: string): Promise<CycleChartD
       const linked = linkedProfile(cycle)
       const cycleEscalations = escalations.filter(row => row.cycle_id === cycle.id)
       const schedule = resolvePkScheduleForDay(cycle, cycleEscalations, now)
+      if (!schedule) return
       const readiness = evaluatePkReadiness({
         trackingLevel: cycle.stack_items?.tracking_level ?? 'intake_only',
         pkProfileId: linked?.id ?? null,

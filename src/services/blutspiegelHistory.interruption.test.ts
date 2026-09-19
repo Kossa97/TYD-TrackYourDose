@@ -80,6 +80,40 @@ describe('normalized PK history and projection', () => {
     expect(result.nextDoseIn).toBe('—')
     expect(result.levelAfterNextDose).toBeNull()
   })
+  it('keeps a future-planned current-level read unavailable without throwing', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    vi.useFakeTimers(); vi.setSystemTime(new Date('2026-09-19T12:00:00Z'))
+    historyDb.logs = []
+    const future = { ...timeline, cycle: { ...timeline.cycle, started_at: '2026-10-01T00:00:00Z' },
+      versions: [{ ...timeline.versions[0], effective_local_date: '2026-10-01' }] }
+    const result = await getCurrentBlutspiegelLevel({ ...cycle, timeline: future }, [], 4, 1)
+    expect(result.unit).toBe('—')
+    expect(result.levelAfterNextDose).toBeNull()
+  })
+  it.each([
+    { method: 'Oral', unit: 'mg', conversion: {}, available: false },
+    { method: 'Subkutan', unit: 'IU', conversion: {}, available: false },
+    { method: 'Subkutan', unit: 'ml', conversion: {}, available: false },
+    { method: 'Subkutan', unit: 'mg', conversion: {}, available: true },
+    { method: 'Subkutan', unit: 'IU', conversion: { iuPerMg: 3 }, available: true },
+    { method: 'Subkutan', unit: 'ml', conversion: { mgPerMl: 2.5 }, available: true },
+  ])('gates future $method/$unit projection with $conversion', async ({ method, unit, conversion, available }) => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    vi.useFakeTimers(); vi.setSystemTime(new Date('2026-09-19T09:00:00Z'))
+    historyDb.logs = [{ stack_item_id: 's1', cycle_id: 'c1', plan_version_id: 'v1',
+      logged_at: '2026-09-19T06:00:00.000Z', dose: 1, unit: 'mg', taken: true }]
+    const future = { ...timeline, versions: [...timeline.versions, { ...timeline.versions[0], id: 'v2',
+      effective_kind: 'instant' as const, effective_at: '2026-09-19T10:00:00Z', effective_local_date: null,
+      dose: 3, unit, method }] }
+    const input = { ...cycle, timeline: future }
+    const result = await getCurrentBlutspiegelLevel(input, [], 4, 1, 1, conversion, 'Subkutan')
+    expect(result.nextDoseIn).not.toBe('—')
+    expect(result.currentLevel).toBeGreaterThan(0)
+    if (available) expect(result.levelAfterNextDose).toBeGreaterThan(0)
+    else expect(result.levelAfterNextDose).toBeNull()
+    expect(findNextPkDose(input, [], new Date('2026-09-19T09:00:00Z'), 'Europe/Berlin'))
+      .toMatchObject({ method, dose: 3, unit, planVersionId: 'v2', timestamp: new Date('2026-09-19T18:00:00Z') })
+  })
 })
 import type { EscalationRow, ScheduleCycle } from '../lib/intakeSchedule'
 

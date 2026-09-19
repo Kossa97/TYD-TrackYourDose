@@ -24,6 +24,7 @@ const carouselMocks = vi.hoisted(() => ({
   escalations: [] as Array<Record<string, unknown>>,
   tables: [] as string[],
   normalized: null as Record<string, unknown> | null,
+  extraCycles: [] as Record<string, unknown>[],
 }))
 
 const cycles = [{
@@ -85,7 +86,7 @@ vi.mock('../lib/supabase', () => ({
       builder.eq = () => builder
       builder.order = () => builder
       builder.then = (resolve: any) => Promise.resolve({
-        data: table === 'cycles' ? (carouselMocks.normalized ? [carouselMocks.normalized] : cycles) : carouselMocks.escalations,
+        data: table === 'cycles' ? (carouselMocks.normalized ? [carouselMocks.normalized, ...carouselMocks.extraCycles] : cycles) : carouselMocks.escalations,
         error: null,
       }).then(resolve)
       return builder
@@ -107,6 +108,7 @@ afterEach(() => {
   carouselMocks.escalations = []
   carouselMocks.tables = []
   carouselMocks.normalized = null
+  carouselMocks.extraCycles = []
   ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false
   cycles[0].dose = null
   cycles[0].unit = null
@@ -124,10 +126,39 @@ describe('BlutspiegelCarousel PK readiness', () => {
         cycle_off_days: null, schedule_days: [], intake_time: 'custom', intake_time_custom: '08:00',
         slot_doses: null, slot_days: null, dose: 5, unit: 'mg', method: 'Subkutan',
       }] }
+    carouselMocks.extraCycles = [{ ...carouselMocks.normalized, id: 'future', started_at: '2099-01-01T00:00:00Z',
+      versions: [{ ...(carouselMocks.normalized.versions as any[])[0], id: 'future-v', cycle_id: 'future', effective_local_date: '2099-01-01' }],
+      stack_items: { ...cycles[0].stack_items, id: 'future-item', display_name: 'Future item' } }]
     render(<MemoryRouter><BlutspiegelCarousel /></MemoryRouter>)
-    await screen.findByText(/PK-Daten unvollständig/)
-    expect(screen.queryByText(/Fehlend:.*Dosis/)).toBeNull()
+    await screen.findByText('BPC-157')
+    expect(screen.getByText('Future item')).toBeTruthy()
+    expect(screen.getAllByText('PK-Daten unvollständig')).toHaveLength(2)
     expect(carouselMocks.tables).not.toContain('dose_escalations')
+  })
+  it('passes confirmed method and ingredient-specific conversions for normalized projections', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const ingredient = cycles[0].stack_items.ingredients[0]
+    carouselMocks.normalized = { ...cycles[0], started_at: '2026-08-01T00:00:00Z', ended_at: null, pauses: [],
+      versions: [{ ...cycles[0].schedule_history[0], id: 'v1', cycle_id: 'cycle-1',
+        effective_kind: 'local_date', effective_at: null, effective_local_date: '2026-08-01',
+        change_kind: 'initial', method: 'Subkutan', slot_doses: null, slot_days: null }],
+      stack_items: { ...cycles[0].stack_items, tracking_level: 'complete', ingredients: [5, 10].map((amount, position) => ({
+        ...ingredient, position, amount_value: amount, amount_unit: 'mg', basis_value: 2, basis_unit: 'ml',
+        substance_catalog: { pk_profile_id: `pk-${position}`, pk_profiles: {
+          ...ingredient.substance_catalog.pk_profiles, iu_per_mg: position + 3,
+        } },
+      })) } }
+    carouselMocks.extraCycles = [{ ...carouselMocks.normalized, id: 'future', started_at: '2099-01-01T00:00:00Z',
+      versions: [{ ...(carouselMocks.normalized.versions as any[])[0], id: 'future-v', cycle_id: 'future', effective_local_date: '2099-01-01' }],
+      stack_items: { ...carouselMocks.normalized.stack_items as object, id: 'future-item', display_name: 'Future item' } }]
+    vi.mocked(getCurrentBlutspiegelLevel).mockResolvedValue({ currentLevel: 50, trend: 'stable', sparkData: [],
+      nextDoseIn: '1h', levelAfterNextDose: 75, peakLabel: 'in 1h', unit: 'mg', interruptedAt: null })
+    render(<MemoryRouter><BlutspiegelCarousel /></MemoryRouter>)
+    await screen.findByText(/Geschätzter Wirkstoff/)
+    expect(screen.getByText('Future item')).toBeTruthy()
+    expect(vi.mocked(getCurrentBlutspiegelLevel).mock.calls.map(args => [args[5], args[6]])).toEqual([
+      [{ iuPerMg: 3, mgPerMl: 2.5 }, 'Subkutan'], [{ iuPerMg: 4, mgPerMl: 5 }, 'Subkutan'],
+    ])
   })
   it('shows an incomplete card and does not calculate a live curve', async () => {
     render(

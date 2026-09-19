@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FEATURES } from '../config/features'
 import type { CycleTimeline } from './planTimeline'
+import { AUTO_MISSED_NOTE } from './intakeSchedule'
 vi.mock('../config/features', () => ({ FEATURES: { planTimelineV2: false } }))
 import {
   assertInjectionProSchema,
@@ -36,6 +37,15 @@ describe('normalized injection provenance', () => {
     return buildSelectableInjectionIntakes({ cycles: [], timelines, logs, linkedDoseLogIds: new Set(), escalations: [],
       now: new Date('2026-09-19T12:00:00Z'), lookbackDays: 0, timeZone: 'Europe/Berlin' } as never)
   }
+  function timelineReader(timelines = [timeline]) {
+    return vi.fn((table: string) => {
+      if (table !== 'cycles') throw new Error('Only timeline reads allowed')
+      const query: any = { select: () => query, eq: () => query, order: () => query,
+        then: (resolve: any) => Promise.resolve({ data: timelines.map(row => ({ ...row.cycle,
+          versions: row.versions, pauses: row.pauses })), error: null }).then(resolve) }
+      return query
+    })
+  }
   it('carries exact version and stable slot identity for an open normalized occurrence', () => {
     expect(build()).toEqual([expect.objectContaining({ cycleId: 'c1', planVersionId: 'v1',
       routineSlotKey: 'c1@2026-09-19T06:00:00.000Z', scheduledAt: '2026-09-19T06:00:00.000Z', dose: 1, unit: 'mg' })])
@@ -44,6 +54,17 @@ describe('normalized injection provenance', () => {
     expect(build([pending])).toEqual([expect.objectContaining({ doseLogId: 'log-1', dose: 250, unit: 'mcg',
       method: 'Intramuskulaer', cycleId: 'c1', planVersionId: 'v1', scheduledAt: '2026-09-19T06:00:00.000Z' })])
   })
+  it('does not offer a decided auto-missed row for V2 confirmation', async () => {
+    const decided = { ...pending, taken: false, notes: AUTO_MISSED_NOTE }
+    const rpc = vi.fn(() => { throw new Error('Decided rows cannot be reopened') })
+    const selected = build([decided])
+    for (const intake of selected.filter(row => row.status === 'open')) {
+      await confirmIntakeDoseLog({ rpc, from: timelineReader() } as never, { ...intake, userId: 'u', loggedAt: intake.scheduledAt, debitVialStock: false })
+    }
+    expect(selected).toEqual([])
+    expect(rpc).not.toHaveBeenCalled()
+    expect(decided.taken).toBe(false)
+  })
   it('does not reassign a confirmed log to a different cycle of the same stack item', () => {
     const other = { ...timeline, cycle: { ...timeline.cycle, id: 'c2' }, versions: timeline.versions.map(v => ({ ...v, id: 'v2', cycle_id: 'c2' })) }
     const confirmed = build([{ ...pending, taken: true }], [other]).find(row => row.status === 'confirmed')
@@ -51,15 +72,52 @@ describe('normalized injection provenance', () => {
   })
   it('confirms through the authoritative RPC without direct dose-log writes', async () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
-    const rpc = vi.fn().mockResolvedValue({ data: [{ id: 'saved' }], error: null })
-    const from = vi.fn(() => { throw new Error('Direct write forbidden') })
+    const rpc = vi.fn((_name, args) => {
+      if (args.p_entries[0].plan_version_id !== 'v1') throw new Error('Version mismatch')
+      return Promise.resolve({ data: [{ id: 'saved' }], error: null })
+    })
+    const from = timelineReader()
     await expect(confirmIntakeDoseLog({ rpc, from } as never, { userId: 'u', stackItemId: 's1', dose: 250, unit: 'mcg',
       method: 'Subkutan', loggedAt: '2026-09-19T06:15:00Z', scheduledAt: '2026-09-19T06:00:00.000Z',
       cycleId: 'c1', planVersionId: 'v1', routineSlotKey: 'c1@2026-09-19T06:00:00.000Z',
       doseLogId: 'pending', debitVialStock: false } as never)).resolves.toBe('saved')
     expect(rpc).toHaveBeenCalledWith('confirm_intake_group', { p_entries: [expect.objectContaining({ cycle_id: 'c1',
       plan_version_id: 'v1', slot_key: 'c1@2026-09-19T06:00:00.000Z', dose_log_id: 'pending', logged_at: '2026-09-19T06:15:00Z' })] })
-    expect(from).not.toHaveBeenCalled()
+    expect(from.mock.calls.every(([table]) => table === 'cycles')).toBe(true)
+  })
+  it('resolves the version at edited actual time while retaining the morning occurrence key', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const changed = { ...timeline, versions: [...timeline.versions, { ...timeline.versions[0], id: 'v2',
+      effective_kind: 'instant' as const, effective_at: '2026-09-19T10:00:00Z', effective_local_date: null, dose: 2 }] }
+    const foreign = { ...timeline, cycle: { ...timeline.cycle, id: 'other' },
+      versions: [{ ...timeline.versions[0], id: 'foreign', cycle_id: 'other' }] }
+    const rpc = vi.fn((_name, args) => {
+      const entry = args.p_entries[0]
+      if (entry.cycle_id !== 'c1' || entry.plan_version_id !== 'v2') throw new Error('Version mismatch at logged_at')
+      return Promise.resolve({ data: [{ id: 'saved' }], error: null })
+    })
+    await expect(confirmIntakeDoseLog({ rpc, from: timelineReader([foreign, changed]) } as never, {
+      userId: 'u', stackItemId: 's1', dose: 1, unit: 'mg', method: 'Subkutan',
+      loggedAt: '2026-09-19T11:00:00Z', scheduledAt: '2026-09-19T06:00:00.000Z',
+      cycleId: 'c1', planVersionId: 'v1', routineSlotKey: 'c1@2026-09-19T06:00:00.000Z',
+      doseLogId: 'pending', debitVialStock: false,
+    })).resolves.toBe('saved')
+    expect(rpc).toHaveBeenCalledWith('confirm_intake_group', { p_entries: [expect.objectContaining({
+      plan_version_id: 'v2', slot_key: 'c1@2026-09-19T06:00:00.000Z', logged_at: '2026-09-19T11:00:00Z',
+    })] })
+  })
+  it.each(['paused', 'versionless', 'missing'])('rejects actual-time confirmation for a %s timeline', async state => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const value = structuredClone(timeline)
+    if (state === 'paused') value.pauses = [{ id: 'p', cycle_id: 'c1', paused_at: '2026-09-19T10:00:00Z', ends_at: null }]
+    if (state === 'versionless') value.versions = []
+    const rpc = vi.fn().mockResolvedValue({ data: [{ id: 'saved' }], error: null })
+    await expect(confirmIntakeDoseLog({ rpc, from: timelineReader(state === 'missing' ? [] : [value]) } as never, {
+      userId: 'u', stackItemId: 's1', dose: 1, unit: 'mg', method: 'Subkutan', loggedAt: '2026-09-19T11:00:00Z',
+      scheduledAt: '2026-09-19T06:00:00.000Z', cycleId: 'c1', planVersionId: 'v1',
+      routineSlotKey: 'c1@2026-09-19T06:00:00.000Z', debitVialStock: false,
+    })).rejects.toThrow(/timeline|version/)
+    expect(rpc).not.toHaveBeenCalled()
   })
   it('loads normalized rows without querying escalations', async () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true

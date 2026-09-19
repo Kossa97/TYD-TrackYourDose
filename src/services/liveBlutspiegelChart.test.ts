@@ -125,6 +125,8 @@ describe('loadAllCycleChartData date-effective readiness', () => {
         cycle_on_days: null, cycle_off_days: null, schedule_days: [], intake_time: 'custom', intake_time_custom: '08:00',
         slot_doses: null, slot_days: null, dose: 2, unit: 'mg', method: 'Subkutan',
       }] }]
+    fixtures.cycles.push({ ...fixtures.cycles[0], id: 'future', started_at: '2099-01-01T00:00:00Z',
+      versions: [{ ...(fixtures.cycles[0].versions as any[])[0], id: 'future-v', cycle_id: 'future', effective_local_date: '2099-01-01' }] })
     expect(await loadAllCycleChartData('user-1')).toEqual([expect.objectContaining({ cycleId: 'cycle-1', unit: 'mg' })])
     expect(fixtures.tables).not.toContain('dose_escalations')
   })

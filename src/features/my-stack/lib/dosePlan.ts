@@ -210,6 +210,9 @@ export function buildDosePlanVersion(
   assertPlannable(change.trackingLevel, source.dose)
   assertPositiveDose(change.dose)
   assertMatchingUnit(source.unit, change.unit)
+  if (source.slot_doses?.split(',').some(value => value.trim() !== '')) {
+    throw new Error('Bitte alle Slot-Mengen im vollständigen Planeditor bearbeiten.')
+  }
   if (change.changeKind === 'titration' && !dosePlanCapabilities(change.trackingLevel).titration) {
     throw new Error('Für diese Einnahme ist keine Dosisplanung verfügbar.')
   }

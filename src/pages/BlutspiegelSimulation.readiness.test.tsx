@@ -1,11 +1,18 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { createElement, type ComponentType } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { BlutspiegelSimulation, PkReadinessPanel } from './BlutspiegelSimulation'
 import { FEATURES } from '../config/features'
+import { getCurrentBlutspiegelLevel } from '../services/blutspiegelHistory'
+vi.mock('../services/blutspiegelHistory', async importOriginal => ({
+  ...await importOriginal<typeof import('../services/blutspiegelHistory')>(),
+  loadDoseHistory: vi.fn(async () => ({ events: [], interruptedAt: null })),
+  getCurrentBlutspiegelLevel: vi.fn(async () => ({ currentLevel: 0, trend: 'stable', sparkData: [],
+    nextDoseIn: '1h', levelAfterNextDose: null, peakLabel: '—', unit: 'mg', interruptedAt: null })),
+}))
 vi.mock('../config/features', () => ({ FEATURES: { planTimelineV2: false } }))
 const pageDb = vi.hoisted(() => ({ tables: [] as string[], cycles: [] as any[] }))
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: pageUser }) }))
@@ -32,9 +39,10 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-afterEach(() => { cleanup(); (FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false })
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); (FEATURES as { planTimelineV2: boolean }).planTimelineV2 = false })
 beforeEach(() => {
   i18nTestState.translations = {}
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} }))
 })
 
 describe('PkReadinessPanel', () => {
@@ -48,9 +56,36 @@ describe('PkReadinessPanel', () => {
         intake_time_custom: '08:00', slot_doses: null, slot_days: null, dose: 1, unit: 'mg', method: 'Subkutan' }],
       stack_items: { id: 's1', display_name: 'Normalized item', tracking_level: 'with_amount', pk_profile_method: 'Subkutan',
         ingredients: [{ position: 0, substance_catalog: { pk_profile_id: 'pk1', pk_profiles: { name: 'Profile', half_life_hours: 4, tmax_hours: 1, bioavailability_sc: 1, category: 'peptide' } } }] } }]
+    pageDb.cycles.push({ ...pageDb.cycles[0], id: 'future', started_at: '2099-01-01T00:00:00Z',
+      versions: [{ ...pageDb.cycles[0].versions[0], id: 'future-v', cycle_id: 'future', effective_local_date: '2099-01-01' }],
+      stack_items: { ...pageDb.cycles[0].stack_items, id: 'future-item', display_name: 'Future item' } })
     render(<MemoryRouter><BlutspiegelSimulation /></MemoryRouter>)
     await screen.findByText(/Normalized item: PK-Daten unvollständig/)
+    expect(screen.getByText(/Future item: PK-Daten unvollständig/)).toBeTruthy()
     expect(pageDb.tables).not.toContain('dose_escalations')
+  })
+  it('passes the confirmed profile route and conversion factors to live normalized projection', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    vi.mocked(getCurrentBlutspiegelLevel).mockClear()
+    pageDb.cycles = [{ id: 'c1', stack_item_id: 's1', started_at: '2026-08-01T00:00:00Z', ended_at: null,
+      pauses: [], versions: [{ id: 'v1', cycle_id: 'c1', effective_kind: 'local_date', effective_at: null,
+        effective_local_date: '2026-08-01', change_kind: 'initial', frequency: 'Täglich', x_days_interval: null,
+        interval_unit: null, cycle_on_days: null, cycle_off_days: null, schedule_days: [], intake_time: 'custom',
+        intake_time_custom: '08:00', slot_doses: null, slot_days: null, dose: 1, unit: 'mg', method: 'Subkutan' }],
+      stack_items: { id: 's1', display_name: 'Normalized item', tracking_level: 'complete', pk_profile_method: 'Subkutan',
+        ingredients: [{ position: 0, amount_value: 5, amount_unit: 'mg', basis_value: 2, basis_unit: 'ml',
+          substance_catalog: { pk_profile_id: 'pk1', pk_profiles: { name: 'Profile', half_life_hours: 4,
+            tmax_hours: 1, bioavailability_sc: 1, iu_per_mg: 3, category: 'peptide' } } }] } }]
+    pageDb.cycles.push({ ...pageDb.cycles[0], id: 'future', started_at: '2099-01-01T00:00:00Z',
+      versions: [{ ...pageDb.cycles[0].versions[0], id: 'future-v', cycle_id: 'future', effective_local_date: '2099-01-01' }],
+      stack_items: { ...pageDb.cycles[0].stack_items, id: 'future-item', display_name: 'Future item' } })
+    render(<MemoryRouter><BlutspiegelSimulation /></MemoryRouter>)
+    await waitFor(() => expect(getCurrentBlutspiegelLevel).toHaveBeenCalled())
+    expect(screen.getByText(/Future item: PK-Daten unvollständig/)).toBeTruthy()
+    expect(vi.mocked(getCurrentBlutspiegelLevel).mock.calls.every(args => args[0].id === 'c1')).toBe(true)
+    expect(vi.mocked(getCurrentBlutspiegelLevel).mock.calls[0].slice(5)).toEqual([
+      { iuPerMg: 3, mgPerMl: 2.5 }, 'Subkutan',
+    ])
   })
   it('explains missing PK data and links directly to the existing stack item', () => {
     render(

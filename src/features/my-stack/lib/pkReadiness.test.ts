@@ -26,11 +26,22 @@ describe('normalized PK readiness', () => {
       slot_days: null, dose: 1, unit: 'mg', method: 'Subkutan' }], pauses: [],
   }
   const cycle = { ...timeline.versions[0], id: 'c', stack_item_id: 's', start_date: '2026-09-01', end_date: null,
-    dose: 99, unit: 'IU', intake_time: 'custom', intake_time_custom: '22:00', timeline }
+    dose: 99, unit: 'IU', intake_time: 'custom', intake_time_custom: '22:00', schedule_history: null, timeline }
   it('uses the version effective now, not a future version or legacy fields', () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
     const withFuture = { ...timeline, versions: [...timeline.versions, { ...timeline.versions[0], id: 'v2', effective_local_date: '2026-10-01', dose: 9 }] }
     expect(resolvePkScheduleForDay({ ...cycle as object, timeline: withFuture } as never, [], new Date('2026-09-19T12:00:00Z'))).toMatchObject({ dose: 1, unit: 'mg', method: 'Subkutan' })
+  })
+  it('returns no current schedule for a planned cycle whose first version is not effective', () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const future = { ...timeline, cycle: { ...timeline.cycle, started_at: '2026-10-01T00:00:00Z' },
+      versions: [{ ...timeline.versions[0], effective_local_date: '2026-10-01' }] }
+    expect(resolvePkScheduleForDay({ ...cycle, timeline: future }, [], new Date('2026-09-19T12:00:00Z'))).toBeNull()
+  })
+  it('still rejects an active cycle without an effective version', () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    expect(() => resolvePkScheduleForDay({ ...cycle, timeline: { ...timeline, versions: [] } }, [],
+      new Date('2026-09-19T12:00:00Z'))).toThrow('Cycle plan version unavailable')
   })
   it.each(['pause', 'ended', 'prn'])('does not fabricate scheduled readiness for %s', state => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
