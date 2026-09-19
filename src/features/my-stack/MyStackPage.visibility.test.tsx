@@ -809,6 +809,142 @@ describe('MyStackPage non-vial visibility', () => {
     expect(screen.getByTestId('plan-management-cycle-conflict-kept').textContent).toContain('250')
   })
 
+  it('keeps both conflict choices when the timeline refresh fails after resolution', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const needsReviewItem = { ...loadedItems[0], configuration_status: 'needs_review' as const }
+    const resolvedItem = { ...needsReviewItem, configuration_status: 'complete' as const }
+    vi.mocked(loadStackItems)
+      .mockResolvedValueOnce([needsReviewItem, loadedItems[1]])
+      .mockResolvedValueOnce([resolvedItem, loadedItems[1]])
+    const first = timelineRow('cycle-refresh-timeline-first')
+    const kept = timelineRow('cycle-refresh-timeline-kept')
+    const rpc = vi.fn(async (name: string, params: Record<string, unknown>) => {
+      if (name === 'resolve_cycle_migration_conflict') {
+        return { data: { cycle_id: params.p_keep_cycle_id }, error: null }
+      }
+      return { data: null, error: { message: `Unexpected RPC: ${name}` } }
+    })
+    const { client } = v2Client({
+      timelineResults: [
+        { data: [first, kept], error: null },
+        { data: null, error: { message: 'timeline refresh failed' } },
+      ],
+      rpc,
+      singleRows: { 'cycle-refresh-timeline-kept': kept },
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+    fireEvent.click(within(visibleCardFor(qaName)!).getAllByRole('button')[0])
+    fireEvent.click(within(screen.getByTestId('plan-management-cycle-refresh-timeline-kept')).getByRole('button', {
+      name: 'my_stack_plan_conflict_keep',
+    }))
+
+    await screen.findByText('my_stack_plan_conflict_error')
+    expect(screen.getAllByRole('button', { name: 'my_stack_plan_conflict_keep' })).toHaveLength(2)
+    expect(screen.queryByText('my_stack_plan_next_intake')).toBeNull()
+  })
+
+  it('keeps both conflict choices when the item refresh fails after resolution', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const needsReviewItem = { ...loadedItems[0], configuration_status: 'needs_review' as const }
+    vi.mocked(loadStackItems)
+      .mockResolvedValueOnce([needsReviewItem, loadedItems[1]])
+      .mockRejectedValueOnce(new Error('item refresh failed'))
+    const first = timelineRow('cycle-refresh-item-first')
+    const kept = timelineRow('cycle-refresh-item-kept')
+    const closed = timelineRow('cycle-refresh-item-first', first.versions, {
+      ended_at: '2026-09-19T08:00:00.000Z',
+    })
+    const rpc = vi.fn(async (name: string, params: Record<string, unknown>) => {
+      if (name === 'resolve_cycle_migration_conflict') {
+        return { data: { cycle_id: params.p_keep_cycle_id }, error: null }
+      }
+      return { data: null, error: { message: `Unexpected RPC: ${name}` } }
+    })
+    const { client } = v2Client({
+      timelineResults: [
+        { data: [first, kept], error: null },
+        { data: [closed, kept], error: null },
+      ],
+      rpc,
+      singleRows: { 'cycle-refresh-item-kept': kept },
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+    fireEvent.click(within(visibleCardFor(qaName)!).getAllByRole('button')[0])
+    fireEvent.click(within(screen.getByTestId('plan-management-cycle-refresh-item-kept')).getByRole('button', {
+      name: 'my_stack_plan_conflict_keep',
+    }))
+
+    await screen.findByText('my_stack_plan_conflict_error')
+    expect(screen.getAllByRole('button', { name: 'my_stack_plan_conflict_keep' })).toHaveLength(2)
+    expect(screen.queryByText('my_stack_plan_next_intake')).toBeNull()
+  })
+
+  it('uses the refreshed item status after resolving inside the cycle-manager dialog', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    const needsReviewItem = {
+      ...loadedItems[0],
+      dosage_form: 'vial' as const,
+      configuration_status: 'needs_review' as const,
+    }
+    const resolvedItem = { ...needsReviewItem, configuration_status: 'complete' as const }
+    vi.mocked(loadStackItems)
+      .mockResolvedValueOnce([needsReviewItem, loadedItems[1]])
+      .mockResolvedValueOnce([resolvedItem, loadedItems[1]])
+    const first = timelineRow('cycle-manager-first')
+    const kept = timelineRow('cycle-manager-kept')
+    const closed = timelineRow('cycle-manager-first', first.versions, {
+      ended_at: '2026-09-19T08:00:00.000Z',
+    })
+    const rpc = vi.fn(async (name: string, params: Record<string, unknown>) => {
+      if (name === 'resolve_cycle_migration_conflict') {
+        return { data: { cycle_id: params.p_keep_cycle_id }, error: null }
+      }
+      return { data: null, error: { message: `Unexpected RPC: ${name}` } }
+    })
+    const { client } = v2Client({
+      timelineResults: [
+        { data: [first, kept], error: null },
+        { data: [closed, kept], error: null },
+      ],
+      legacyCycles: [activeCycle],
+      rpc,
+      singleRows: { 'cycle-manager-kept': kept },
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+    const stageButton = (await screen.findAllByRole('button', { name: qaName }))
+      .find(button => button.hasAttribute('data-vial-index'))!
+    fireEvent.click(stageButton)
+    if (!screen.queryByText(activeCycle.name)) fireEvent.click(stageButton)
+    fireEvent.click((await screen.findByText(activeCycle.name)).closest('button')!)
+    const managerChoices = await screen.findAllByRole('button', { name: 'my_stack_plan_conflict_keep' })
+    expect(managerChoices).toHaveLength(2)
+    fireEvent.click(within(screen.getByTestId('plan-management-cycle-manager-kept')).getByRole('button', {
+      name: 'my_stack_plan_conflict_keep',
+    }))
+
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'my_stack_plan_conflict_keep' })).toBeNull())
+    expect(screen.getByText('my_stack_plan_next_intake')).toBeTruthy()
+  })
+
   it('keeps safe stack content visible and retries a failed initial V2 timeline load', async () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
     localStorage.setItem('tyd_peptide_view', 'list')

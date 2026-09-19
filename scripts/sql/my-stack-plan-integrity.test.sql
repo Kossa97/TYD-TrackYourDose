@@ -556,6 +556,12 @@ values
     '30000000-0000-0000-0000-000000000003',
     '35000000-0000-0000-0000-000000000005',
     '2026-01-01T08:00:00Z', '2026-02-01T08:00:00Z', '2026-02-01', false
+  ),
+  (
+    '35400000-0000-0000-0000-000000000004',
+    '30000000-0000-0000-0000-000000000003',
+    '35000000-0000-0000-0000-000000000005',
+    '2026-02-01T08:00:00Z', '2026-02-15T08:00:00Z', '2026-02-15', false
   );
 
 insert into public.cycle_plan_versions (
@@ -584,7 +590,8 @@ values (
   '35000000-0000-0000-0000-000000000005',
   array[
     '35100000-0000-0000-0000-000000000001'::uuid,
-    '35200000-0000-0000-0000-000000000002'::uuid
+    '35200000-0000-0000-0000-000000000002'::uuid,
+    '35400000-0000-0000-0000-000000000004'::uuid
   ]
 );
 
@@ -683,6 +690,16 @@ begin
   ) then
     raise exception 'cycle outside the recorded conflict was changed';
   end if;
+  if not exists (
+    select 1 from public.cycles
+    where id = '35400000-0000-0000-0000-000000000004'
+      and ended_at = '2026-02-15T08:00:00Z'
+      and end_date = '2026-02-15'
+      and active is false
+      and closed_by_migration_resolution is false
+  ) then
+    raise exception 'recorded competitor ended before resolution was rewritten';
+  end if;
   if (select count(*) from public.cycles
       where stack_item_id = '35000000-0000-0000-0000-000000000005') <> cycle_count_before
     or (select count(*) from public.cycle_plan_versions
@@ -713,6 +730,90 @@ begin
       and operation = 'resolve_cycle_migration_conflict'
   ) <> 1 then
     raise exception 'migration-conflict retry was not idempotent';
+  end if;
+end
+$$;
+
+insert into public.stack_items (id, user_id, configuration_status)
+values (
+  '36000000-0000-0000-0000-000000000006',
+  '30000000-0000-0000-0000-000000000003',
+  'needs_review'
+);
+
+insert into public.cycles (id, user_id, stack_item_id, started_at)
+values
+  (
+    '36100000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000003',
+    '36000000-0000-0000-0000-000000000006',
+    '2026-05-01T08:00:00Z'
+  ),
+  (
+    '36200000-0000-0000-0000-000000000002',
+    '30000000-0000-0000-0000-000000000003',
+    '36000000-0000-0000-0000-000000000006',
+    '2026-06-01T08:00:00Z'
+  ),
+  (
+    '36300000-0000-0000-0000-000000000003',
+    '30000000-0000-0000-0000-000000000003',
+    '36000000-0000-0000-0000-000000000006',
+    '2026-07-01T08:00:00Z'
+  );
+
+insert into public.cycle_migration_conflicts (user_id, stack_item_id, cycle_ids)
+values (
+  '30000000-0000-0000-0000-000000000003',
+  '36000000-0000-0000-0000-000000000006',
+  array[
+    '36100000-0000-0000-0000-000000000001'::uuid,
+    '36200000-0000-0000-0000-000000000002'::uuid
+  ]
+);
+
+do $$
+begin
+  perform set_config('request.jwt.claim.sub', '30000000-0000-0000-0000-000000000003', true);
+  begin
+    perform public.resolve_cycle_migration_conflict(
+      '36000000-0000-0000-0000-000000000006',
+      '36200000-0000-0000-0000-000000000002',
+      'reject-open-cycle-drift'
+    );
+    raise exception 'unrecorded open cycle was accepted';
+  exception
+    when others then
+      if sqlerrm = 'unrecorded open cycle was accepted'
+        or sqlerrm <> 'Open cycle set changed since migration conflict' then
+        raise;
+      end if;
+  end;
+
+  if (select count(*) from public.cycles
+      where stack_item_id = '36000000-0000-0000-0000-000000000006'
+        and ended_at is null) <> 3 then
+    raise exception 'rejected open-cycle drift changed cycle state';
+  end if;
+  if not exists (
+    select 1 from public.cycle_migration_conflicts
+    where user_id = '30000000-0000-0000-0000-000000000003'
+      and stack_item_id = '36000000-0000-0000-0000-000000000006'
+      and resolved_at is null
+  ) or not exists (
+    select 1 from public.stack_items
+    where id = '36000000-0000-0000-0000-000000000006'
+      and configuration_status = 'needs_review'
+  ) then
+    raise exception 'rejected open-cycle drift cleared conflict state';
+  end if;
+  if exists (
+    select 1 from public.plan_mutation_receipts
+    where user_id = '30000000-0000-0000-0000-000000000003'
+      and idempotency_key = 'reject-open-cycle-drift'
+      and operation = 'resolve_cycle_migration_conflict'
+  ) then
+    raise exception 'rejected open-cycle drift wrote a mutation receipt';
   end if;
 end
 $$;
@@ -2573,4 +2674,101 @@ reset role;
 -- replacement/removal regressions before rolling back this fixture's data.
 set constraints all immediate;
 
+rollback;
+
+select set_config('request.jwt.claim.sub', '30000000-0000-0000-0000-000000000003', false);
+select public.resolve_cycle_migration_conflict(
+  '33000000-0000-0000-0000-000000000003',
+  '33200000-0000-0000-0000-000000000002',
+  'prepare-enforcement-test'
+);
+reset role;
+
+\ir ../../supabase-my-stack-plan-integrity-enforce.sql
+\ir ../../supabase-my-stack-plan-integrity-enforce.sql
+
+begin;
+set role authenticated;
+select set_config('request.jwt.claim.sub', '30000000-0000-0000-0000-000000000003', true);
+
+do $$
+declare
+  saved_item public.stack_items;
+  created_cycle public.cycles;
+begin
+  if not has_function_privilege(
+    'authenticated',
+    'public.save_stack_item_with_plan(jsonb,jsonb,jsonb,text)'::regprocedure,
+    'execute'
+  ) then
+    raise exception 'authenticated lost the required initial-plan RPC';
+  end if;
+  if has_table_privilege('authenticated', 'public.cycles', 'insert')
+    or has_table_privilege('authenticated', 'public.cycles', 'update')
+    or has_table_privilege('authenticated', 'public.cycles', 'delete') then
+    raise exception 'authenticated retained direct legacy cycle writes after enforcement';
+  end if;
+
+  select * into saved_item
+  from public.save_stack_item_with_plan(
+    jsonb_build_object('tracking_level', 'complete'),
+    jsonb_build_array(jsonb_build_object('position', 0)),
+    jsonb_build_object(
+      'name', 'Allowed enforced initial plan',
+      'dose', 1,
+      'unit', 'mg',
+      'method', 'Oral',
+      'frequency', 'Täglich',
+      'schedule_days', jsonb_build_array(),
+      'start_date', '2026-09-19',
+      'intake_time', 'morgens',
+      'reminder', 'none'
+    ),
+    'enforced-initial-plan'
+  );
+  select * into strict created_cycle
+  from public.cycles
+  where stack_item_id = saved_item.id;
+
+  begin
+    perform public.save_stack_item_with_plan(
+      jsonb_build_object('id', saved_item.id, 'tracking_level', 'complete'),
+      jsonb_build_array(jsonb_build_object('position', 0)),
+      jsonb_build_object(
+        'id', created_cycle.id,
+        'name', 'Forbidden enforced edit',
+        'dose', 9,
+        'unit', 'mg',
+        'method', 'Oral',
+        'frequency', 'Täglich',
+        'schedule_days', jsonb_build_array(),
+        'start_date', '2026-09-20',
+        'intake_time', 'abends',
+        'reminder', 'none'
+      ),
+      'enforced-legacy-edit'
+    );
+    raise exception 'legacy editing branch remained usable after enforcement';
+  exception
+    when others then
+      if sqlerrm = 'legacy editing branch remained usable after enforcement'
+        or sqlerrm <> 'Legacy plan editing is disabled' then
+        raise;
+      end if;
+  end;
+
+  if not exists (
+    select 1 from public.cycles
+    where id = created_cycle.id
+      and name = 'Allowed enforced initial plan'
+      and dose = 1
+      and intake_time = 'morgens'
+      and schedule_history is null
+  ) then
+    raise exception 'rejected legacy edit changed the enforced cycle';
+  end if;
+end
+$$;
+
+reset role;
 rollback;

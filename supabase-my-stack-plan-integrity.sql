@@ -410,6 +410,10 @@ begin
   else
     mutation_key := p_idempotency_key;
   end if;
+  if nullif(p_plan ->> 'id', '') is not null
+    and to_regclass('public.cycles_one_open_per_stack_item') is not null then
+    raise exception 'Legacy plan editing is disabled';
+  end if;
 
   perform pg_advisory_xact_lock(
     hashtextextended(owner_id::text || ':' || operation_name || ':' || mutation_key, 0)
@@ -2192,6 +2196,7 @@ declare
   prior_result jsonb;
   mutation_result jsonb;
   mutation_time timestamptz;
+  open_cycle_ids uuid[];
   operation_name constant text := 'resolve_cycle_migration_conflict';
 begin
   if owner_id is null then
@@ -2250,6 +2255,16 @@ begin
     raise exception 'Selected cycle is not an open conflicted cycle';
   end if;
 
+  select coalesce(array_agg(id order by id), '{}'::uuid[])
+  into open_cycle_ids
+  from public.cycles
+  where user_id = owner_id
+    and stack_item_id = p_stack_item_id
+    and ended_at is null;
+  if not open_cycle_ids <@ conflict_row.cycle_ids then
+    raise exception 'Open cycle set changed since migration conflict';
+  end if;
+
   mutation_time := transaction_timestamp();
   update public.cycles
   set
@@ -2260,7 +2275,8 @@ begin
   where user_id = owner_id
     and stack_item_id = p_stack_item_id
     and id = any(conflict_row.cycle_ids)
-    and id <> p_keep_cycle_id;
+    and id <> p_keep_cycle_id
+    and ended_at is null;
 
   delete from public.cycle_migration_conflicts
   where id = conflict_row.id;

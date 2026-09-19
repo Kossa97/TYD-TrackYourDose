@@ -789,20 +789,31 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     const { data } = await supabase.from('inventory_items').select('*').eq('user_id', user!.id).order('name')
     if (data) setInventory(data as InventoryItem[])
   }
-  const loadPeptides = async () => {
+  const publishPeptides = (snapshot: {
+    peptides: Peptide[]
+    catalogEntries: SubstanceCatalogEntry[]
+  }) => {
+    setCatalogEntries(current => mergeCatalogEntries(
+      current,
+      snapshot.catalogEntries,
+    ))
+    setPeptides(snapshot.peptides)
+  }
+  const loadPeptides = async (publish = true) => {
     let data = await loadStackItems(stackDataClient as never, false)
     if (!isLocalColorMigrationComplete(localStorage)) {
       const archived = await loadStackItems(stackDataClient as never, true)
       const migrated = await migrateLocalColors(stackDataClient as never, [...data, ...archived], localStorage)
       if (migrated) data = await loadStackItems(stackDataClient as never, false)
     }
-    setCatalogEntries(current => mergeCatalogEntries(
-      current,
-      data.flatMap(item => item.ingredients.map(ingredient => ingredient.substance_catalog).filter(
+    const snapshot = {
+      peptides: data.map(asPeptide),
+      catalogEntries: data.flatMap(item => item.ingredients.map(ingredient => ingredient.substance_catalog).filter(
         (entry): entry is SubstanceCatalogEntry => entry !== null,
       )),
-    ))
-    setPeptides(data.map(asPeptide))
+    }
+    if (publish) publishPeptides(snapshot)
+    return snapshot
   }
   const loadArchived = async () => {
     try {
@@ -977,6 +988,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const timelinesOf = (stackItemId: string) => cycleTimelines.filter(
     timeline => timeline.cycle.stack_item_id === stackItemId,
   )
+  const currentCycleManagerPeptide = cycleManagerPeptide
+    ? peptides.find(peptide => peptide.id === cycleManagerPeptide.id) ?? cycleManagerPeptide
+    : null
 
   // ── Inventar Bestand anpassen ─────────────────────────────────────────────
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1415,8 +1429,22 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       })
       mutation.mutation.committed = true
     }
-    await Promise.all([loadTimelines(true), loadPeptides()])
-    lifecycleIdempotencyKeysRef.current.delete(mutation.identity)
+    setTimelineLoading(true)
+    setTimelineLoadError(false)
+    try {
+      const [nextTimelines, nextPeptides] = await Promise.all([
+        loadCycleTimelines(stackDataClient as never, user!.id),
+        loadPeptides(false),
+      ])
+      setCycleTimelines(nextTimelines)
+      publishPeptides(nextPeptides)
+      lifecycleIdempotencyKeysRef.current.delete(mutation.identity)
+    } catch (error) {
+      setTimelineLoadError(true)
+      throw error
+    } finally {
+      setTimelineLoading(false)
+    }
   }
 
   const planManagementSection = (p: Peptide, timeline: CycleTimeline) => (
@@ -3137,7 +3165,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       </div>
 
       {/* ZYKLUS-MANAGER */}
-      {cycleManagerPeptide && FEATURES.planTimelineV2 && (
+      {currentCycleManagerPeptide && FEATURES.planTimelineV2 && (
         <div className="fixed inset-0 z-50 flex justify-center bg-slate-950" data-app-modal>
           <div className="flex h-full w-full max-w-lg flex-col overflow-hidden bg-slate-950">
             <div className="shrink-0 border-b border-slate-800 px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))]">
@@ -3146,7 +3174,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   <p className="text-xs font-semibold uppercase tracking-wide text-violet-300">
                     {t('my_stack_plan_management', { defaultValue: 'Einnahmeplan' })}
                   </p>
-                  <h2 className="mt-1 truncate text-lg font-bold text-white">{cycleManagerPeptide.name}</h2>
+                  <h2 className="mt-1 truncate text-lg font-bold text-white">{currentCycleManagerPeptide.name}</h2>
                 </div>
                 <button
                   type="button"
@@ -3159,12 +3187,12 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               </div>
             </div>
             <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-              {timelinesOf(cycleManagerPeptide.id)
-                .filter(timeline => cycleManagerPeptide.configuration_status !== 'needs_review' || timeline.cycle.ended_at === null)
+              {timelinesOf(currentCycleManagerPeptide.id)
+                .filter(timeline => currentCycleManagerPeptide.configuration_status !== 'needs_review' || timeline.cycle.ended_at === null)
                 .map(timeline => (
-                planManagementSection(cycleManagerPeptide, timeline)
+                planManagementSection(currentCycleManagerPeptide, timeline)
               ))}
-              {timelinesOf(cycleManagerPeptide.id).length === 0 && (
+              {timelinesOf(currentCycleManagerPeptide.id).length === 0 && (
                 <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
                   <p className="text-sm font-semibold text-white">{t('noch_kein_zyklus')}</p>
                   <p className="mt-1 text-xs text-slate-500">{t('noch_kein_zyklus_desc')}</p>
