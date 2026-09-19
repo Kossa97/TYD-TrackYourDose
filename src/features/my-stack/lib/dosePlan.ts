@@ -2,7 +2,7 @@ import { format, isValid, parseISO } from 'date-fns'
 import { effectiveQuantity, scheduleForDay, type EscalationRow, type ScheduleCycle, type ScheduleSegment } from '../../../lib/intakeSchedule'
 import type { RoutineConfirmationEntry } from '../../routines/intakeGroups'
 import type { CreatePlanVersionInput, TrackingLevel } from '../types'
-import type { CyclePlanVersion } from '../../../lib/planTimeline'
+import type { CyclePlanVersion, PlanScheduleSnapshot } from '../../../lib/planTimeline'
 import { trackingCapabilities } from './trackingDepth'
 
 export interface DosePlanCapabilitySet {
@@ -223,11 +223,24 @@ export function buildDosePlanVersion(
     || !change.effectiveAt || !isValid(parseISO(change.effectiveAt)) || !/(Z|[+-]\d{2}:\d{2})$/.test(change.effectiveAt)) {
     throw new Error('Ein gültiger Zeitpunkt ist erforderlich.')
   }
-  const { id: _id, cycle_id, effective_kind: _kind, effective_at: _at,
-    effective_local_date: _date, change_kind: _change, ...schedule } = source
+  const schedule: PlanScheduleSnapshot = {
+    frequency: source.frequency,
+    x_days_interval: source.x_days_interval,
+    interval_unit: source.interval_unit,
+    cycle_on_days: source.cycle_on_days,
+    cycle_off_days: source.cycle_off_days,
+    schedule_days: [...source.schedule_days],
+    intake_time: source.intake_time,
+    intake_time_custom: source.intake_time_custom,
+    slot_doses: source.slot_doses,
+    slot_days: source.slot_days,
+    dose: source.dose,
+    unit: source.unit,
+    method: source.method,
+  }
   const boundary = change.effectiveKind === 'instant'
     ? { effectiveKind: 'instant' as const, effectiveAt: change.effectiveAt!, effectiveLocalDate: null }
     : { effectiveKind: 'local_date' as const, effectiveAt: null, effectiveLocalDate: change.effectiveLocalDate! }
-  return { cycleId: cycle_id, idempotencyKey: change.idempotencyKey, changeKind: change.changeKind,
-    ...boundary, schedule: { ...schedule, schedule_days: [...schedule.schedule_days], dose: change.dose, unit: change.unit } }
+  return { cycleId: source.cycle_id, idempotencyKey: change.idempotencyKey, changeKind: change.changeKind,
+    ...boundary, schedule: { ...schedule, dose: change.dose, unit: change.unit } }
 }
