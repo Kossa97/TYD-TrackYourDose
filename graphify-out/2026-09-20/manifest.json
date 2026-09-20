@@ -263,12 +263,6 @@
     "ast_hash": "d8862d1accdcc42a4d5e819163187d96",
     "semantic_hash": ""
   },
-  "src/components/CarouselChrome.tsx": {
-    "mtime": 1788611941.9151807,
-    "seen": 1789927683.0400274,
-    "ast_hash": "b0e607cd4b228cb9ddbb50c753ee384c",
-    "semantic_hash": ""
-  },
   "src/components/ExpiryWarningBanners.tsx": {
     "mtime": 1789927455.5995963,
     "seen": 1789927683.0400307,
@@ -708,87 +702,87 @@
     "semantic_hash": ""
   },
   "src/i18n/locales/ar.json": {
-    "mtime": 1789944598.0494306,
-    "seen": 1789944771.1987238,
-    "ast_hash": "5b0d15e03edda1a9407cc1fdafd9d14d",
+    "mtime": 1789946149.2320712,
+    "seen": 1789946309.091898,
+    "ast_hash": "0033b6cd5f9f3dc0f161cbe6bc525bd4",
     "semantic_hash": ""
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1789944598.0330777,
-    "seen": 1789944771.1987247,
-    "ast_hash": "929dafe5220164860350d433c54342c8",
+    "mtime": 1789946149.213523,
+    "seen": 1789946309.091899,
+    "ast_hash": "91ae3be9fcf541f651bb3e9a9f62cfc3",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1789944598.035793,
-    "seen": 1789944771.198726,
-    "ast_hash": "0b223590954f1de9d7370cef5788f771",
+    "mtime": 1789946149.2166874,
+    "seen": 1789946309.0919,
+    "ast_hash": "3bf2af271ab54620c60abbd7cdedd379",
     "semantic_hash": ""
   },
   "src/i18n/locales/es.json": {
-    "mtime": 1789944598.037664,
-    "seen": 1789944771.1987267,
-    "ast_hash": "49d65f986e0ce78b75dff363900c9f86",
+    "mtime": 1789946149.2175229,
+    "seen": 1789946309.0919013,
+    "ast_hash": "718c552de4c8c3d6fb8aaed78658b2a6",
     "semantic_hash": ""
   },
   "src/i18n/locales/fr.json": {
-    "mtime": 1789944598.0395548,
-    "seen": 1789944771.1987276,
-    "ast_hash": "86f29b9c1b3fc9be517978e7dc47a575",
+    "mtime": 1789946149.2204788,
+    "seen": 1789946309.091902,
+    "ast_hash": "7f0d81098c9502988545eaa4e28e7b19",
     "semantic_hash": ""
   },
   "src/i18n/locales/hi.json": {
-    "mtime": 1789944598.0519626,
-    "seen": 1789944771.1987286,
-    "ast_hash": "13ee6bf03520925cebebbc218eaff71b",
+    "mtime": 1789946149.233523,
+    "seen": 1789946309.091903,
+    "ast_hash": "d95e7f7a8744d81d65e25ccfb553a4f5",
     "semantic_hash": ""
   },
   "src/i18n/locales/id.json": {
-    "mtime": 1789944598.0536706,
-    "seen": 1789944771.1987293,
-    "ast_hash": "2d4f65773b449a979bd6cadee3f84704",
+    "mtime": 1789946149.2364583,
+    "seen": 1789946309.0919042,
+    "ast_hash": "a963ddf91dbcedd70f0c385134b32f41",
     "semantic_hash": ""
   },
   "src/i18n/locales/it.json": {
-    "mtime": 1789944598.0412576,
-    "seen": 1789944771.19873,
-    "ast_hash": "0593f65d5ab45feb03bb7061c831ede8",
+    "mtime": 1789946149.2215228,
+    "seen": 1789946309.091905,
+    "ast_hash": "1e4a4dd6b337bf9b750d59e3f01092b3",
     "semantic_hash": ""
   },
   "src/i18n/locales/ja.json": {
-    "mtime": 1789944598.0553946,
-    "seen": 1789944771.1987307,
-    "ast_hash": "444b66674a0b201b3dc07a4dbbbd28bc",
+    "mtime": 1789946149.2375228,
+    "seen": 1789946309.091906,
+    "ast_hash": "e7181568cd3312c21dfc3b8920c8ae13",
     "semantic_hash": ""
   },
   "src/i18n/locales/ko.json": {
-    "mtime": 1789944598.0572271,
-    "seen": 1789944771.1987314,
-    "ast_hash": "50860eba35d9991d7d4c1486224b1da9",
+    "mtime": 1789946149.2402766,
+    "seen": 1789946309.0919068,
+    "ast_hash": "2d7cdedfdb647d44721c10292ed88e0d",
     "semantic_hash": ""
   },
   "src/i18n/locales/pt.json": {
-    "mtime": 1789944598.043127,
-    "seen": 1789944771.1987326,
-    "ast_hash": "770746d4464deb6c13eeb822cbfcc370",
+    "mtime": 1789946149.2257202,
+    "seen": 1789946309.0919077,
+    "ast_hash": "f2a109b615ccee9acc43d7f25716f915",
     "semantic_hash": ""
   },
   "src/i18n/locales/ru.json": {
-    "mtime": 1789944598.0477335,
-    "seen": 1789944771.1987333,
-    "ast_hash": "a1838b40a1f29798562eacea83c1d18c",
+    "mtime": 1789946149.229523,
+    "seen": 1789946309.0919087,
+    "ast_hash": "aef92d628edb5684c5b2488a737824cd",
     "semantic_hash": ""
   },
   "src/i18n/locales/tr.json": {
-    "mtime": 1789944598.0454133,
-    "seen": 1789944771.1987343,
-    "ast_hash": "4f5f5662a3268ab4e0993b2bc4d9008b",
+    "mtime": 1789946149.2277744,
+    "seen": 1789946309.0919094,
+    "ast_hash": "f7f4f79b5bd73f2b37365d79ee32c497",
     "semantic_hash": ""
   },
   "src/i18n/locales/zh.json": {
-    "mtime": 1789944598.0588188,
-    "seen": 1789944771.198735,
-    "ast_hash": "b1c4f9cee864c20ea8b41d5686a91032",
+    "mtime": 1789946149.2415228,
+    "seen": 1789946309.0919104,
+    "ast_hash": "0f960da043cde2efcd83a3095e9ae1a3",
     "semantic_hash": ""
   },
   "src/lib/dailyLogs.ts": {
@@ -1062,15 +1056,15 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.test.ts": {
-    "mtime": 1789944432.324732,
-    "seen": 1789944771.1987991,
-    "ast_hash": "2fe2f2fbdc03e24cd8e25ae66ed90094",
+    "mtime": 1789946110.0755594,
+    "seen": 1789946309.0919762,
+    "ast_hash": "df7d2f7b894110beae3331e7c9738daa",
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
-    "mtime": 1789944598.0085406,
-    "seen": 1789944771.1987998,
-    "ast_hash": "875bd394ee71d287a4f3633fbe631dd6",
+    "mtime": 1789946134.8575072,
+    "seen": 1789946309.0919771,
+    "ast_hash": "0eb39d9f3518e39e1e0dfe1108e849e1",
     "semantic_hash": ""
   },
   "src/pages/FAQ.tsx": {
@@ -3960,9 +3954,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18n.test.ts": {
-    "mtime": 1789944606.8687623,
-    "seen": 1789944771.198544,
-    "ast_hash": "b9d1246a203c5f8fa792a9b1bdfab3dc",
+    "mtime": 1789946149.2958653,
+    "seen": 1789946309.0917406,
+    "ast_hash": "d8e38a6c03e7c4b838cbf940b7f75907",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18nMerge.test.ts": {
@@ -4860,8 +4854,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789944673.7654352,
-    "seen": 1789944771.1988807,
+    "mtime": 1789946218.621527,
+    "seen": 1789946309.092059,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
