@@ -673,7 +673,6 @@
   "next_month": "Sonraki Ay",
   "geplant": "Planlandı",
   "erfolgreich": "Başarılı",
-  "due_intakes_title": "Bekleyen Alımlar",
   "due_intakes_hint": "Lütfen her madde alımını onaylayın veya atlayın.",
   "dose_confirm_pending_badge": "Onay bekliyor",
   "completed_intakes_title": "Zaten Kaydedilenler",
@@ -1241,5 +1240,14 @@
   "my_stack_calendar_timezone_review": "Existing intake plans still need a time zone confirmation. They will not appear in the calendar until then.",
   "my_stack_calendar_timezone_review_action": "Confirm time zone in My Stack",
   "calendar_day_status": "{{datum}}, {{geplant}} dozdan {{genommen}} tanesi onaylandı",
-  "calendar_open_month": "Aylık görünümü aç"
+  "calendar_open_month": "Aylık görünümü aç",
+  "calendar_day_balance": "{{geplant}} dozdan {{genommen}} tanesi onaylandı",
+  "due_open_count": "{{n}} bekliyor",
+  "due_intakes_count": "{{n}} doz",
+  "due_later_today": "O gün daha sonra",
+  "due_step_through": "Tek tek gözden geçir",
+  "due_check_quantity": "Miktarı kontrol et ve onayla",
+  "due_confirm_with_injection": "Enjeksiyonla onayla",
+  "due_still_open": "Hâlâ bekliyor",
+  "all_intakes_logged": "Bu gün için her şey kayıtlı."
 }

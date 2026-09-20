@@ -673,7 +673,6 @@
   "next_month": "下个月",
   "geplant": "已计划",
   "erfolgreich": "已完成",
-  "due_intakes_title": "待确认",
   "due_intakes_hint": "请确认或跳过每种物质的摄入量。",
   "dose_confirm_pending_badge": "待确认",
   "completed_intakes_title": "已记录",
@@ -1240,5 +1239,14 @@
   "my_stack_calendar_timezone_review": "Existing intake plans still need a time zone confirmation. They will not appear in the calendar until then.",
   "my_stack_calendar_timezone_review_action": "Confirm time zone in My Stack",
   "calendar_day_status": "{{datum}}，{{geplant}} 次中已确认 {{genommen}} 次",
-  "calendar_open_month": "打开月视图"
+  "calendar_open_month": "打开月视图",
+  "calendar_day_balance": "{{geplant}} 次中已确认 {{genommen}} 次",
+  "due_open_count": "待确认 {{n}} 次",
+  "due_intakes_count": "{{n}} 次服用",
+  "due_later_today": "当天稍后",
+  "due_step_through": "逐条确认",
+  "due_check_quantity": "核对用量并确认",
+  "due_confirm_with_injection": "以注射确认",
+  "due_still_open": "仍待确认",
+  "all_intakes_logged": "这一天的记录已完整。"
 }

@@ -673,7 +673,6 @@
   "next_month": "Mes siguiente",
   "geplant": "Planificado",
   "erfolgreich": "Completado",
-  "due_intakes_title": "Pendientes",
   "due_intakes_hint": "Confirme u omita la ingesta de cada sustancia.",
   "dose_confirm_pending_badge": "Confirmación pendiente",
   "completed_intakes_title": "Ya registradas",
@@ -1241,5 +1240,14 @@
   "my_stack_calendar_timezone_review": "Existing intake plans still need a time zone confirmation. They will not appear in the calendar until then.",
   "my_stack_calendar_timezone_review_action": "Confirm time zone in My Stack",
   "calendar_day_status": "{{datum}}, {{genommen}} de {{geplant}} confirmadas",
-  "calendar_open_month": "Abrir vista mensual"
+  "calendar_open_month": "Abrir vista mensual",
+  "calendar_day_balance": "{{genommen}} de {{geplant}} confirmadas",
+  "due_open_count": "{{n}} pendientes",
+  "due_intakes_count": "{{n}} tomas",
+  "due_later_today": "Más tarde ese día",
+  "due_step_through": "Revisar una por una",
+  "due_check_quantity": "Comprobar la cantidad y confirmar",
+  "due_confirm_with_injection": "Confirmar con inyección",
+  "due_still_open": "Aún pendientes",
+  "all_intakes_logged": "Todo está registrado para este día."
 }

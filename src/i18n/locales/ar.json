@@ -673,7 +673,6 @@
   "next_month": "الشهر التالي",
   "geplant": "مخطط",
   "erfolgreich": "ناجح",
-  "due_intakes_title": "لا يزال مستحقاً",
   "due_intakes_hint": "يرجى تأكيد أو تخطي تناول كل مادة.",
   "dose_confirm_pending_badge": "في انتظار التأكيد",
   "completed_intakes_title": "تم تسجيله بالفعل",
@@ -1245,5 +1244,14 @@
   "my_stack_calendar_timezone_review": "Existing intake plans still need a time zone confirmation. They will not appear in the calendar until then.",
   "my_stack_calendar_timezone_review_action": "Confirm time zone in My Stack",
   "calendar_day_status": "{{datum}}، تم تأكيد {{genommen}} من {{geplant}}",
-  "calendar_open_month": "فتح نظرة الشهر"
+  "calendar_open_month": "فتح نظرة الشهر",
+  "calendar_day_balance": "تم تأكيد {{genommen}} من {{geplant}}",
+  "due_open_count": "{{n}} متبقية",
+  "due_intakes_count": "{{n}} جرعات",
+  "due_later_today": "لاحقًا في ذلك اليوم",
+  "due_step_through": "المراجعة واحدة تلو الأخرى",
+  "due_check_quantity": "تحقق من الكمية وأكد",
+  "due_confirm_with_injection": "تأكيد مع الحقن",
+  "due_still_open": "لا تزال متبقية",
+  "all_intakes_logged": "تم تسجيل كل شيء لهذا اليوم."
 }

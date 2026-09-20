@@ -674,7 +674,6 @@
   "next_month": "Bulan berikutnya",
   "geplant": "Direncanakan",
   "erfolgreich": "Berhasil",
-  "due_intakes_title": "Masih jatuh tempo",
   "due_intakes_hint": "Harap konfirmasi atau lewati setiap asupan zat.",
   "dose_confirm_pending_badge": "Konfirmasi tertunda",
   "completed_intakes_title": "Sudah dicatat",
@@ -1241,5 +1240,14 @@
   "my_stack_calendar_timezone_review": "Existing intake plans still need a time zone confirmation. They will not appear in the calendar until then.",
   "my_stack_calendar_timezone_review_action": "Confirm time zone in My Stack",
   "calendar_day_status": "{{datum}}, {{genommen}} dari {{geplant}} dikonfirmasi",
-  "calendar_open_month": "Buka tampilan bulan"
+  "calendar_open_month": "Buka tampilan bulan",
+  "calendar_day_balance": "{{genommen}} dari {{geplant}} dikonfirmasi",
+  "due_open_count": "{{n}} belum",
+  "due_intakes_count": "{{n}} asupan",
+  "due_later_today": "Nanti di hari itu",
+  "due_step_through": "Telusuri satu per satu",
+  "due_check_quantity": "Periksa jumlah lalu konfirmasi",
+  "due_confirm_with_injection": "Konfirmasi dengan suntikan",
+  "due_still_open": "Masih belum",
+  "all_intakes_logged": "Semua sudah tercatat untuk hari ini."
 }

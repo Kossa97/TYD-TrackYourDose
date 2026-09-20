@@ -816,9 +816,7 @@
   "next_month": "Next Month",
   "geplant": "Planned",
   "erfolgreich": "Completed",
-  "due_intakes_title": "Still Due",
   "due_intakes_hint": "Please confirm or skip each substance intake.",
-  "period_no_open_intakes": "No open intakes",
   "calendar_expand_month": "Show month",
   "calendar_day_status": "{{datum}}, {{genommen}} of {{geplant}} confirmed",
   "calendar_open_month": "Open month overview",
@@ -1389,5 +1387,14 @@
   "my_stack_plan_conflict_keep": "Keep this running plan",
   "my_stack_plan_conflict_error": "The conflict could not be resolved. Please try again.",
   "my_stack_calendar_timezone_review": "Existing intake plans still need a time zone confirmation. They will not appear in the calendar until then.",
-  "my_stack_calendar_timezone_review_action": "Confirm time zone in My Stack"
+  "my_stack_calendar_timezone_review_action": "Confirm time zone in My Stack",
+  "calendar_day_balance": "{{genommen}} of {{geplant}} confirmed",
+  "due_open_count": "{{n}} open",
+  "due_intakes_count": "{{n}} intakes",
+  "due_later_today": "Later that day",
+  "due_step_through": "Go through one by one",
+  "due_check_quantity": "Check amount and confirm",
+  "due_confirm_with_injection": "Confirm with injection",
+  "due_still_open": "Still open",
+  "all_intakes_logged": "Everything is logged for this day."
 }

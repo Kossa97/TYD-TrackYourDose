@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
@@ -7,11 +7,11 @@ import { useAuth } from '../context/AuthContext'
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval,
   isSameDay, isToday, startOfWeek, endOfWeek, isSameMonth, addDays,
-  differenceInDays, parseISO, startOfDay,
+  parseISO, startOfDay,
 } from 'date-fns'
 import {
   AlertTriangle, Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock,
-  Moon, Pin, RotateCcw, Sun, Sunrise, Syringe, TrendingUp, X, XCircle,
+  Moon, Pin, RotateCcw, Sun, Sunrise, Syringe, X, XCircle,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -52,7 +52,6 @@ import {
 } from '../features/my-stack/services/stackInventory'
 import { buildInjectionTrackerUrl, isInjectableMethod } from '../lib/injectionDeepLink'
 import { GlassPanel, PageShell } from '../components/ui/DesignSystem'
-import { CarouselCounter, CarouselPagination } from '../components/CarouselChrome'
 
 interface DoseLog {
   id: string
@@ -246,13 +245,6 @@ function dashboardCycleFromTimeline(
 
 type IntakeGroupKey = 'morgens' | 'mittags' | 'abends' | 'custom' | 'later'
 
-function intakePeriodFromMinutes(minutes: number): 'morgens' | 'mittags' | 'abends' {
-  const group = routineGroupFromMinutes(minutes)
-  if (group === 'morning') return 'morgens'
-  if (group === 'midday') return 'mittags'
-  return 'abends'
-}
-
 type PeriodKey = 'morgens' | 'mittags' | 'abends'
 
 const PERIOD_ORDER: PeriodKey[] = ['morgens', 'mittags', 'abends']
@@ -261,17 +253,6 @@ const PERIOD_TO_ROUTINE_GROUP = {
   mittags: 'midday',
   abends: 'evening',
 } as const
-
-function defaultDuePeriod(
-  day: Date,
-  periods: { key: PeriodKey; slots: unknown[] }[],
-): PeriodKey {
-  if (isToday(day)) {
-    const now = new Date()
-    return intakePeriodFromMinutes(now.getHours() * 60 + now.getMinutes())
-  }
-  return periods.find(period => period.slots.length > 0)?.key ?? 'morgens'
-}
 
 function intakeGroupMeta(key: IntakeGroupKey, t: (key: string) => string): { icon: LucideIcon; label: string } {
   if (key === 'morgens') return { icon: Sunrise, label: t('morgens') }
@@ -297,121 +278,6 @@ function cycleLogTimestamp(cycle: Cycle, day: Date): string {
   const safeMinutes = minutes >= 24 * 60 ? 12 * 60 : minutes
   date.setHours(Math.floor(safeMinutes / 60), safeMinutes % 60, 0, 0)
   return date.toISOString()
-}
-
-function IntakePeriodCarousel<T>({
-  items,
-  getKey,
-  renderItem,
-}: {
-  items: T[]
-  getKey: (item: T) => string
-  renderItem: (item: T) => ReactNode
-}) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(0)
-  const hasMultiple = items.length > 1
-
-  const updateScrollHints = useCallback(() => {
-    const el = scrollRef.current
-    if (!el) return
-    const pageWidth = Math.max(1, el.clientWidth)
-    const index = Math.round(el.scrollLeft / pageWidth)
-    setActiveIndex(Math.min(items.length - 1, Math.max(0, index)))
-    setCanScrollLeft(el.scrollLeft > 6)
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 6)
-  }, [items.length])
-
-  useEffect(() => {
-    updateScrollHints()
-  }, [items.length, updateScrollHints])
-
-  const scrollToIndex = (index: number) => {
-    const el = scrollRef.current
-    if (!el) return
-    const next = Math.min(items.length - 1, Math.max(0, index))
-    el.scrollTo({ left: next * el.clientWidth, behavior: 'smooth' })
-  }
-
-  const scrollByPage = (direction: -1 | 1) => {
-    scrollToIndex(activeIndex + direction)
-  }
-
-  const arrowClass = (active: boolean) => [
-    'flex shrink-0 items-center justify-center transition-opacity duration-200',
-    'w-[14px] text-sky-300/25 hover:text-sky-300/55',
-    hasMultiple ? '' : 'invisible pointer-events-none',
-    active ? 'opacity-100' : 'opacity-35 pointer-events-none',
-  ].join(' ')
-
-  const trackRow = (
-    <div className="grid grid-cols-[14px_minmax(0,1fr)_14px] items-stretch gap-0.5">
-      <button
-        type="button"
-        aria-label="Vorherige Einnahme"
-        aria-hidden={!hasMultiple}
-        disabled={!hasMultiple || !canScrollLeft}
-        onClick={() => scrollByPage(-1)}
-        className={arrowClass(canScrollLeft)}
-      >
-        <ChevronLeft size={13} strokeWidth={1.5} />
-      </button>
-      <div
-        ref={scrollRef}
-        onScroll={updateScrollHints}
-        className={[
-          'min-w-0 flex-1 flex overflow-x-auto snap-x snap-mandatory select-none',
-          '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-        ].join(' ')}
-        style={{ touchAction: 'pan-x' }}
-      >
-        {items.map(item => (
-          <div
-            key={getKey(item)}
-            className="w-full shrink-0 snap-center snap-always"
-          >
-            {renderItem(item)}
-          </div>
-        ))}
-      </div>
-      <button
-        type="button"
-        aria-hidden={!hasMultiple}
-        disabled={!hasMultiple || !canScrollRight}
-          aria-label="Nächste Einnahme"
-          onClick={() => scrollByPage(1)}
-        className={arrowClass(canScrollRight)}
-      >
-        <ChevronRight size={13} strokeWidth={1.5} />
-      </button>
-    </div>
-  )
-
-  return (
-    <div className="space-y-2">
-      {trackRow}
-      <div className="relative flex h-5 items-center px-0.5">
-        {hasMultiple && (
-          <>
-            <CarouselCounter activeIndex={activeIndex} count={items.length} tone="amber" />
-            <div className="pointer-events-none absolute inset-x-0 flex justify-center">
-              <div className="pointer-events-auto">
-                <CarouselPagination
-                  count={items.length}
-                  activeIndex={activeIndex}
-                  onSelect={scrollToIndex}
-                  accent="#fbbf24"
-                  label="Einnahme"
-                />
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  )
 }
 
 // Minimum horizontal swipe distance to trigger month change
@@ -475,11 +341,12 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const [routineGroupSheet, setRoutineGroupSheet] = useState<RoutineGroupModel | null>(null)
   const [confirmTime, setConfirmTime]   = useState('')
   const [completedExpanded, setCompletedExpanded] = useState(false)
+  /** Schluessel der Gruppe, die einzeln durchgegangen wird — oder null. */
+  const [gruppeEinzeln, setGruppeEinzeln] = useState<string | null>(null)
   const [inventoryRetryIds, setInventoryRetryIds] = useState<string[]>([])
   const [monatOffen, setMonatOffen] = useState(false)
   const monatsKnopf = useRef<HTMLButtonElement>(null)
   const monatsBlatt = useRef<HTMLDivElement>(null)
-  const [activeDuePeriod, setActiveDuePeriod] = useState<PeriodKey>('morgens')
 
   // Horizontal swipe state
   const calendarSwipeStart = useRef<{ x: number; y: number; pointerId: number } | null>(null)
@@ -1051,6 +918,14 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     }
   }
   const completedDaySlots = totalDaySlots - dueSlots.length
+  // Fuer die Bilanz und die Quittung gilt dieselbe Rechnung wie in der
+  // Tageszelle: bestaetigt heisst GENOMMEN. Eine bewusst ausgelassene Einnahme
+  // ist entschieden, aber nicht genommen — sonst behauptete der Held „4 von 4
+  // bestaetigt" fuer einen Tag, an dem eine ausgelassen wurde.
+  const standHeute = tagesStand.get(selectedLocalDate)
+  const genommeneSlots = FEATURES.planTimelineV2 && standHeute
+    ? standHeute.genommen
+    : completedDaySlots
   const dueSlotByKey = new Map(dueSlots.map(slot => [slot.key, slot]))
   const dueRoutineGroups = groupRoutineIntakes(dueSlots.map(slot => {
     const trackingLevel = slot.cycle.stack_items?.tracking_level ?? 'complete'
@@ -1079,11 +954,29 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       slots: routineGroup?.items.map(item => dueSlotByKey.get(item.key)).filter((slot): slot is DueSlot => Boolean(slot)) ?? [],
     }
   })
-  const activeDuePeriodData = duePeriodCarousels.find(period => period.key === activeDuePeriod)
-    ?? duePeriodCarousels[0]
+  // Statt Reitern: die Tageszeiten in ihrer natuerlichen Reihenfolge, und die
+  // erste, in der noch etwas offen ist, wird der Held. Was danach kommt, steht
+  // darunter als „Spaeter heute".
+  //
+  // Reiter hatten drei Nachteile auf einmal: sie versteckten zwei Drittel des
+  // Tages, sie brauchten einen Tap, bevor man ueberhaupt sah was ansteht, und
+  // nach einem Ladevorgang stand der aktive Reiter gern auf einer leeren
+  // Tageszeit.
+  const offeneGruppen = duePeriodCarousels.filter(periode => periode.slots.length > 0)
+  const heldGruppe = offeneGruppen[0] ?? null
+  const spaetereGruppen = offeneGruppen.slice(1)
+  // Ab zwei Einnahmen im selben Zeitfenster ist die GRUPPE der Held, nicht die
+  // einzelne Substanz — sonst muesste man denselben Knopf zehnmal druecken.
+  // „Einzeln durchgehen" klappt sie auf, und zwar nur fuer diese eine Gruppe.
+  const heldEinzeln = heldGruppe !== null
+    && (heldGruppe.slots.length === 1 || gruppeEinzeln === heldGruppe.key)
+  // Im Einzeln-Modus ist nur die erste Einnahme der Held. Die uebrigen der
+  // GLEICHEN Gruppe muessen darunter auftauchen — `spaetereGruppen` laesst die
+  // Heldengruppe ja aus, sonst stuenden sie nirgends mehr.
+  const restDerHeldenGruppe = heldEinzeln && heldGruppe ? heldGruppe.slots.slice(1) : []
 
   useEffect(() => {
-    setActiveDuePeriod(defaultDuePeriod(selectedDay, duePeriodCarousels))
+    setGruppeEinzeln(null)
   }, [selectedDay])
 
   useEffect(() => {
@@ -1587,113 +1480,124 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     )
   }
 
-  const renderDueSlotCard = (slot: DueSlot) => {
+  /** Die eine Einnahme, gross: Name, Menge, ein Knopf der alles sagt. */
+  const renderHeldEinnahme = (slot: DueSlot) => {
     const c = slot.cycle
-    const segment = scheduleForDay(c, selectedDay)
+    // Nur DIESE Einnahme vorlegen. `heldGruppe.routineGroup` traegt die ganze
+    // Tageszeit, jeder Eintrag vorausgewaehlt — im Einzeln-Modus haette der
+    // Knopf damit bestaetigt, was der Nutzer nie zu Gesicht bekam.
+    const gruppeDieserEinnahme = heldGruppe?.routineGroup
+      ? {
+          ...heldGruppe.routineGroup,
+          items: heldGruppe.routineGroup.items.filter(item => item.key === slot.key),
+        }
+      : null
     const { dose, unit } = resolveDashboardCycleQuantity(c, selectedDay, escalations, slot.dose)
-    const baseDose = c.stack_items?.tracking_level === 'intake_only' ? null : slot.dose ?? segment.dose
-    const isEscalated = dose != null && baseDose != null && dose !== baseDose
-    const doseLabel = formatTrackedQuantity(dose, unit, String(t('quantity_not_tracked', { defaultValue: 'Menge nicht getrackt' })))
-    const pendingLog = slot.pendingLog
-    const cycleEscs = escalations.filter(e => e.cycle_id === c.id)
-    const activeEscCount = cycleEscs.filter(e => {
-      if (e.start_type === 'date' && e.start_date)
-        return selectedDay >= parseISO(e.start_date)
-      if (e.start_after_days != null)
-        return differenceInDays(selectedDay, parseISO(c.start_date)) >= e.start_after_days
-      return false
-    }).length
-    const slotMeta = intakeGroupMeta(slot.groupKey, t)
-    const stackItemColor = getStackItemColor(stackItems.findIndex(item => item.id === c.stack_item_id))
+    const mengeText = formatTrackedQuantity(dose, unit, String(t('quantity_not_tracked', { defaultValue: 'Menge nicht getrackt' })))
+    const farbe = getStackItemColor(stackItems.findIndex(item => item.id === c.stack_item_id))
+
+    return (
+      <div>
+        <div className="flex items-start gap-2.5">
+          <span
+            className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{ background: farbe, boxShadow: `0 0 12px ${farbe}80` }}
+          />
+          <h3 className="min-w-0 text-2xl font-black leading-tight tracking-[-0.035em] text-white [overflow-wrap:anywhere]">
+            {c.stack_items?.display_name}
+          </h3>
+        </div>
+        <p className="mt-1.5 pl-5 text-base font-semibold text-slate-200">
+          {mengeText}
+          <span className="font-normal text-slate-400"> · {c.method}</span>
+        </p>
+
+        <button
+          type="button"
+          onClick={() => openConfirmSheet(c, slot.pendingLog ?? undefined, slot.time || undefined, slot.dose, slot.scheduledAt)}
+          className="mt-4 flex min-h-14 w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.17] text-base font-extrabold text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+        >
+          <Check size={19} aria-hidden="true" />
+          {isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}
+        </button>
+
+        {/* Der Weg in die Gruppenbestaetigung bleibt auch fuer eine einzelne
+            Einnahme offen: dort, und nur dort, laesst sich die Menge einmalig
+            abweichend eintragen. „Alle als eingenommen markieren" waere bei
+            einer Einnahme aber sinnloser Text, also heisst der Knopf hier nach
+            dem, was er tut. */}
+        <button
+          type="button"
+          onClick={() => {
+            routineCommitted.current = false
+            if (gruppeDieserEinnahme?.items.length) setRoutineGroupSheet(gruppeDieserEinnahme)
+          }}
+          className="mt-2 flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] text-[13px] font-semibold text-slate-300 transition-colors hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+        >
+          {t('due_check_quantity', { defaultValue: 'Menge prüfen und bestätigen' })}
+        </button>
+
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {isInjectableMethod(c.method) && (
+            <button
+              type="button"
+              onClick={() => openInjectionTrackerForSlot(slot)}
+              className="flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] text-[13px] font-semibold text-slate-300 transition-colors hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+            >
+              <Syringe size={14} aria-hidden="true" />
+              {t('due_confirm_with_injection', { defaultValue: 'Mit Injektion bestätigen' })}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => FEATURES.planTimelineV2
+              ? confirmCycleDose(c, false, slot.pendingLog?.logged_at ?? slot.scheduledAt, slot.dose, slot.scheduledAt, slot.pendingLog ?? undefined)
+              : slot.pendingLog
+                ? confirmDose(slot.pendingLog, false, undefined, resolveDashboardCycleQuantity(c, selectedDay, escalations, slot.dose))
+                : confirmCycleDose(c, false, slot.scheduledAt, slot.dose)}
+            className={[
+              'flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] text-[13px] font-semibold text-slate-300 transition-colors hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300',
+              isInjectableMethod(c.method) ? '' : 'col-span-2',
+            ].filter(Boolean).join(' ')}
+          >
+            {t('uebersprungen')}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  /** Eine noch offene Einnahme spaeter am Tag: eine Zeile, kein Karussell. */
+  const renderOffeneZeile = (slot: DueSlot, periode: { icon: LucideIcon; label: string }) => {
+    const c = slot.cycle
+    const { dose, unit } = resolveDashboardCycleQuantity(c, selectedDay, escalations, slot.dose)
+    const farbe = getStackItemColor(stackItems.findIndex(item => item.id === c.stack_item_id))
+    const PeriodenIcon = periode.icon
 
     return (
       <div
-        className="h-[188px] w-full rounded-xl border px-3 py-2.5 transition-colors"
-        style={{
-          background: 'var(--surface)',
-          borderColor: 'var(--border)',
-        }}
+        key={slot.key}
+        data-due-row={slot.key}
+        className="flex items-center gap-3 rounded-2xl border px-3 py-2.5"
+        style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
       >
-        <div className="flex items-center gap-2.5">
-          <span
-            className="w-2 h-2 rounded-full shrink-0"
-            style={{ background: stackItemColor, boxShadow: `0 0 10px ${stackItemColor}80` }}
-          />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium text-white">{c.stack_items?.display_name}</span>
-              <span className={`text-xs font-semibold ${isEscalated ? 'text-orange-400' : 'text-slate-300'}`}>
-                {doseLabel}
-              </span>
-              {isEscalated && (
-                <span className="flex items-center gap-0.5 text-orange-400 text-xs">
-                  <TrendingUp size={11} /> {t('stufe_n', { n: activeEscCount })}
-                </span>
-              )}
-              <span className="text-slate-500 text-xs">{c.method}</span>
-            </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-xs text-amber-400 flex items-center gap-1">
-                {(() => { const Ic = slotMeta.icon; return <Ic size={12} /> })()}
-                {slot.time || slotMeta.label}
-              </span>
-              {isEscalated && unit?.trim() && (
-                <span className="text-slate-600 text-xs">
-                  {t('basis_label')} {baseDose} {unit} · +{dose - baseDose} {unit}
-                </span>
-              )}
-            </div>
-          </div>
+        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: farbe }} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-white">{c.stack_items?.display_name}</p>
+          <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-slate-400">
+            <PeriodenIcon size={11} aria-hidden="true" />
+            {slot.time || periode.label}
+            <span>· {formatTrackedQuantity(dose, unit, String(t('quantity_not_tracked', { defaultValue: 'Menge nicht getrackt' })))}</span>
+          </p>
         </div>
-
-        <div
-          className="mt-2 rounded-xl border px-2.5 py-2"
-          style={isPastSelected ? {
-            background: 'linear-gradient(90deg, rgba(239,68,68,0.14), rgba(239,68,68,0.05))',
-            borderColor: 'rgba(239,68,68,0.34)',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
-          } : {
-            background: 'linear-gradient(90deg, rgba(245,158,11,0.14), rgba(245,158,11,0.055))',
-            borderColor: 'rgba(245,158,11,0.34)',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 0 16px rgba(245,158,11,0.12)',
-          }}
+        <button
+          type="button"
+          aria-label={`${c.stack_items?.display_name} ${String(t('eingenommen'))}`}
+          onClick={() => openConfirmSheet(c, slot.pendingLog ?? undefined, slot.time || undefined, slot.dose, slot.scheduledAt)}
+          className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/[0.14] text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
         >
-          <div className={`mb-2 flex items-center gap-2 ${isPastSelected ? 'text-red-300' : 'text-amber-300'}`}>
-            {isPastSelected ? <XCircle size={12} /> : <Bell size={12} className="animate-pulse" />}
-            <span className="text-[11px] font-extrabold uppercase tracking-wide">
-              {isPastSelected
-                ? t('verpasst', { defaultValue: 'Verpasst' })
-                : t('dose_confirm_pending_badge', { defaultValue: 'Bestätigung offen' })}
-            </span>
-          </div>
-          <div className="grid gap-2">
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => openConfirmSheet(c, pendingLog ?? undefined, slot.time || undefined, slot.dose, slot.scheduledAt)}
-                className="flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-emerald-500/25 bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/25">
-                <Check size={11} /> <span className="truncate">{isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}</span>
-              </button>
-              <button
-                onClick={() => FEATURES.planTimelineV2
-                  ? confirmCycleDose(c, false, pendingLog?.logged_at ?? slot.scheduledAt, slot.dose, slot.scheduledAt, pendingLog ?? undefined)
-                  : pendingLog
-                    ? confirmDose(pendingLog, false, undefined, resolveDashboardCycleQuantity(c, selectedDay, escalations, slot.dose))
-                    : confirmCycleDose(c, false, slot.scheduledAt, slot.dose)}
-                className="flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-lg border border-red-500/25 bg-red-500/15 px-2 py-1 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/25">
-                <XCircle size={11} /> <span className="truncate">{t('uebersprungen')}</span>
-              </button>
-            </div>
-            <div className="h-9">
-              {isInjectableMethod(c.method) && (
-              <button
-                onClick={() => openInjectionTrackerForSlot(slot)}
-                className="flex h-full w-full min-w-0 items-center justify-center gap-1 rounded-lg border border-sky-500/25 bg-sky-500/15 px-2.5 py-1 text-xs font-semibold text-sky-300 transition-colors hover:bg-sky-500/25">
-                <Syringe size={11} /> <span className="truncate">Mit Injektion bestätigen</span>
-              </button>
-              )}
-            </div>
-          </div>
-        </div>
+          <Check size={18} aria-hidden="true" />
+        </button>
       </div>
     )
   }
@@ -2067,83 +1971,145 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           </div>
         )}
 
-        {/* Noch fällig */}
-        {dueSlots.length > 0 && (
-          <div className="mb-3 space-y-3">
-            <div className="flex items-center gap-2">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-amber-300/80">
-                {t('due_intakes_title', { defaultValue: 'Noch fällig' })}
-              </p>
-              {totalDaySlots > 0 && (
-                <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-amber-300/80 tabular-nums">
-                  {completedDaySlots}/{totalDaySlots}
-                </span>
-              )}
-            </div>
-
-            <div
-              role="tablist"
-              aria-label={t('due_intakes_title', { defaultValue: 'Noch fällig' })}
-              className="grid grid-cols-3 gap-1 rounded-xl border border-amber-500/15 bg-amber-500/[0.06] p-1"
-            >
-              {duePeriodCarousels.map(period => {
-                const PeriodIcon = period.icon
-                const active = activeDuePeriod === period.key
-                return (
-                  <button
-                    key={period.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => setActiveDuePeriod(period.key)}
-                    className={[
-                      'flex min-w-0 flex-col items-center gap-1 rounded-lg px-2 py-2 text-[10px] font-extrabold uppercase tracking-[0.08em] transition-colors',
-                      active
-                        ? 'bg-amber-400/15 text-amber-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
-                        : 'text-slate-500 hover:text-slate-300',
-                    ].join(' ')}
-                  >
-                    <span className="flex items-center gap-1.5">
-                      <PeriodIcon size={13} />
-                      <span className="truncate">{period.label}</span>
-                    </span>
-                    {period.slots.length > 0 && (
-                      <span className={[
-                        'rounded-full px-1.5 py-0.5 text-[9px] tabular-nums leading-none',
-                        active ? 'bg-amber-400/20 text-amber-100' : 'bg-slate-800 text-slate-400',
-                      ].join(' ')}>
-                        {period.slots.length}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-
-            {activeDuePeriodData.slots.length > 0 ? (
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    routineCommitted.current = false
-                    if (activeDuePeriodData.routineGroup) setRoutineGroupSheet(activeDuePeriodData.routineGroup)
-                  }}
-                  className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/15 px-3 text-sm font-black text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
-                >
-                  <Check size={15} aria-hidden="true" /> {t('routine_confirmation_confirm_all', { defaultValue: 'Alle als eingenommen markieren' })}
-                </button>
-                <IntakePeriodCarousel
-                  key={activeDuePeriod}
-                  items={activeDuePeriodData.slots}
-                  getKey={slot => slot.key}
-                  renderItem={slot => renderDueSlotCard(slot)}
-                />
+        {/* ── Der Held ──────────────────────────────────────────────────
+            Was jetzt dran ist, ohne einen einzigen Tap. Vier Zustaende:
+            eine Einnahme, eine Gruppe, die Bilanz eines vergangenen Tages,
+            und die Quittung, wenn nichts mehr offen ist. */}
+        {dueSlots.length > 0 && heldGruppe && (
+          <div
+            data-due-hero
+            className="mb-3 rounded-2xl border p-4"
+            style={{
+              borderColor: isPastSelected ? 'var(--border-strong)' : 'var(--accent-border)',
+              background: isPastSelected
+                ? 'var(--surface)'
+                : 'linear-gradient(160deg, rgba(0,204,245,0.09), var(--surface) 62%)',
+            }}
+          >
+            {isPastSelected ? (
+              <div className="mb-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="text-xl font-black tracking-[-0.03em] text-white">
+                    {t('calendar_day_balance', {
+                      defaultValue: '{{genommen}} von {{geplant}} bestätigt',
+                      genommen: genommeneSlots, geplant: totalDaySlots,
+                    })}
+                  </h3>
+                  <span className="shrink-0 text-xs font-semibold text-slate-400 tabular-nums">
+                    {t('due_open_count', { defaultValue: '{{n}} offen', n: dueSlots.length })}
+                  </span>
+                </div>
+                <div className="mt-2.5 h-1 overflow-hidden rounded-full" style={{ background: 'var(--border)' }}>
+                  <span
+                    className="block h-full rounded-full bg-emerald-500"
+                    style={{ width: totalDaySlots > 0 ? `${Math.round((genommeneSlots / totalDaySlots) * 100)}%` : '0%' }}
+                  />
+                </div>
               </div>
             ) : (
-              <p className="px-1 text-xs text-slate-600">
-                {t('period_no_open_intakes', { defaultValue: 'Keine offenen Einnahmen' })}
-              </p>
+              <div className="mb-3 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-sky-300">
+                {(() => { const Ic = heldGruppe.icon; return <Ic size={14} aria-hidden="true" /> })()}
+                <span>{heldGruppe.label}</span>
+                {heldGruppe.slots[0]?.time && (
+                  <span className="text-sky-300/70">· {heldGruppe.slots[0].time}</span>
+                )}
+              </div>
             )}
+
+            {heldEinzeln
+              ? renderHeldEinnahme(heldGruppe.slots[0])
+              : (
+                <>
+                  <h3 className="text-2xl font-black leading-tight tracking-[-0.035em] text-white">
+                    {t('due_intakes_count', {
+                      defaultValue: '{{n}} Einnahmen', n: heldGruppe.slots.length,
+                    })}
+                  </h3>
+                  <ul className="mt-3 divide-y rounded-xl" style={{ background: 'var(--surface-raised)', borderColor: 'var(--border)' }}>
+                    {heldGruppe.slots.map(slot => (
+                      <li key={slot.key} className="flex items-center gap-2.5 px-3 py-2.5">
+                        <span
+                          className="h-1.5 w-1.5 shrink-0 rounded-full"
+                          style={{ background: getStackItemColor(stackItems.findIndex(item => item.id === slot.cycle.stack_item_id)) }}
+                        />
+                        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-100">
+                          {slot.cycle.stack_items?.display_name}
+                        </span>
+                        <span className="shrink-0 text-xs text-slate-400">
+                          {formatTrackedQuantity(
+                            resolveDashboardCycleQuantity(slot.cycle, selectedDay, escalations, slot.dose).dose,
+                            resolveDashboardCycleQuantity(slot.cycle, selectedDay, escalations, slot.dose).unit,
+                            String(t('quantity_not_tracked', { defaultValue: 'Menge nicht getrackt' })),
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      routineCommitted.current = false
+                      if (heldGruppe.routineGroup) setRoutineGroupSheet(heldGruppe.routineGroup)
+                    }}
+                    className="mt-3 flex min-h-14 w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.17] text-base font-extrabold text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                  >
+                    <Check size={19} aria-hidden="true" />
+                    {t('routine_confirmation_confirm_all', { defaultValue: 'Alle als eingenommen markieren' })}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGruppeEinzeln(heldGruppe.key)}
+                    className="mt-2 flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] text-sm font-semibold text-slate-300 transition-colors hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+                  >
+                    {t('due_step_through', { defaultValue: 'Einzeln durchgehen' })}
+                  </button>
+                </>
+              )}
+          </div>
+        )}
+
+        {/* Alles bestätigt: eine Quittung, kein leeres Feld. */}
+        {dueSlots.length === 0 && totalDaySlots > 0 && (!FEATURES.planTimelineV2 || timelineReady) && (
+          <div
+            data-due-hero
+            className="mb-3 flex flex-col items-center gap-2.5 rounded-2xl border p-6 text-center"
+            style={{ borderColor: 'rgba(16,185,129,0.24)', background: 'linear-gradient(160deg, rgba(16,185,129,0.10), var(--surface) 62%)' }}
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/15">
+              <Check size={24} className="text-emerald-300" aria-hidden="true" />
+            </span>
+            <h3 className="text-xl font-black tracking-[-0.035em] text-white">
+              {/* „Alle bestaetigt" stimmt nur, wenn auch alle genommen wurden.
+                  Wurde etwas bewusst ausgelassen, ist der Tag vollstaendig
+                  PROTOKOLLIERT — behauptet aber nichts ueber die Einnahme. */}
+              {genommeneSlots === totalDaySlots
+                ? t('all_intakes_done', { defaultValue: 'Alle geplanten Einnahmen sind bestätigt.' })
+                : t('all_intakes_logged', { defaultValue: 'Für diesen Tag ist alles protokolliert.' })}
+            </h3>
+            <p className="text-sm text-slate-400">
+              {t('calendar_day_balance', {
+                defaultValue: '{{genommen}} von {{geplant}} bestätigt',
+                genommen: genommeneSlots, geplant: totalDaySlots,
+              })}
+            </p>
+          </div>
+        )}
+
+        {/* ── Später heute ──────────────────────────────────────────────── */}
+        {(spaetereGruppen.length > 0 || restDerHeldenGruppe.length > 0) && (
+          <div className="mb-3 space-y-2">
+            <p className="px-1 text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-400">
+              {/* An einem vergangenen Tag kommt nichts mehr „später". */}
+              {isPastSelected
+                ? t('due_still_open', { defaultValue: 'Noch offen' })
+                : t('due_later_today', { defaultValue: 'Später an diesem Tag' })}
+            </p>
+            {heldGruppe && restDerHeldenGruppe.map(slot => renderOffeneZeile(slot, heldGruppe))}
+            {spaetereGruppen.map(periode => (
+              <div key={periode.key} className="space-y-2">
+                {periode.slots.map(slot => renderOffeneZeile(slot, periode))}
+              </div>
+            ))}
           </div>
         )}
 
@@ -2183,10 +2149,6 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           && timezoneReviewStackItemIds.length === 0 && (!FEATURES.planTimelineV2 || timelineReady) ? (
           <p className="text-slate-600 text-sm text-center py-4">
             {isTodaySelected ? t('noch_nichts_heute') : t('kein_eintrag_tag')}
-          </p>
-        ) : dueSlots.length === 0 && selCycles.length > 0 ? (
-          <p className="text-slate-600 text-xs text-center py-2">
-            {t('all_intakes_done', { defaultValue: 'Alle geplanten Einnahmen sind bestätigt.' })}
           </p>
         ) : null}
 

@@ -673,7 +673,6 @@
   "next_month": "अगला महीना",
   "geplant": "योजनाबद्ध",
   "erfolgreich": "सफल",
-  "due_intakes_title": "अभी बाकी",
   "due_intakes_hint": "कृपया प्रत्येक पदार्थ के सेवन की पुष्टि करें या छोड़ें।",
   "dose_confirm_pending_badge": "पुष्टि बाकी",
   "completed_intakes_title": "पहले से दर्ज",
@@ -1241,5 +1240,14 @@
   "my_stack_calendar_timezone_review": "Existing intake plans still need a time zone confirmation. They will not appear in the calendar until then.",
   "my_stack_calendar_timezone_review_action": "Confirm time zone in My Stack",
   "calendar_day_status": "{{datum}}, {{geplant}} में से {{genommen}} की पुष्टि हुई",
-  "calendar_open_month": "मासिक दृश्य खोलें"
+  "calendar_open_month": "मासिक दृश्य खोलें",
+  "calendar_day_balance": "{{geplant}} में से {{genommen}} की पुष्टि हुई",
+  "due_open_count": "{{n}} बाकी",
+  "due_intakes_count": "{{n}} खुराक",
+  "due_later_today": "उस दिन बाद में",
+  "due_step_through": "एक-एक करके देखें",
+  "due_check_quantity": "मात्रा जाँचें और पुष्टि करें",
+  "due_confirm_with_injection": "इंजेक्शन के साथ पुष्टि करें",
+  "due_still_open": "अब भी बाकी",
+  "all_intakes_logged": "इस दिन के लिए सब कुछ दर्ज है।"
 }
