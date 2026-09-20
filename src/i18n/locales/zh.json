@@ -667,7 +667,6 @@
   "push_banner_desc": "在设定时间自动接收通知。",
   "push_banner_allow": "启用",
   "stock_update_failed": "库存更新失败",
-  "dose_undo_success": "用药已撤销",
   "calendar_plan_kicker": "实质计划",
   "prev_month": "上个月",
   "next_month": "下个月",
@@ -677,7 +676,6 @@
   "dose_confirm_pending_badge": "待确认",
   "completed_intakes_title": "已记录",
   "completed_intakes_hint": "已确认和已跳过的用药。",
-  "dose_undo": "撤销",
   "all_intakes_done": "所有计划用药均已确认。",
   "home_completion_unit": "已记录用药",
   "home_due_label": "即将到期",
@@ -1248,5 +1246,7 @@
   "due_check_quantity": "核对用量并确认",
   "due_confirm_with_injection": "以注射确认",
   "due_still_open": "仍待确认",
-  "all_intakes_logged": "这一天的记录已完整。"
+  "all_intakes_logged": "这一天的记录已完整。",
+  "dose_reopen": "重新打开",
+  "dose_reopen_success": "已重新打开该次服用"
 }

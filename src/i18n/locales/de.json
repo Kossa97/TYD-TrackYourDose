@@ -810,7 +810,6 @@
   "push_banner_desc": "Zur eingestellten Zeit automatisch benachrichtigt werden.",
   "push_banner_allow": "Aktivieren",
   "stock_update_failed": "Bestand konnte nicht aktualisiert werden",
-  "dose_undo_success": "Einnahme zurückgesetzt",
   "calendar_plan_kicker": "Substanz-Plan",
   "prev_month": "Vorheriger Monat",
   "next_month": "Nächster Monat",
@@ -826,7 +825,6 @@
   "dose_confirm_pending_badge": "Bestätigung offen",
   "completed_intakes_title": "Bereits protokolliert",
   "completed_intakes_hint": "Bestätigte und übersprungene Einnahmen.",
-  "dose_undo": "Rückgängig",
   "all_intakes_done": "Alle geplanten Einnahmen sind bestätigt.",
   "home_completion_unit": "Einnahmen geloggt",
   "home_due_label": "Jetzt fällig",
@@ -1396,5 +1394,7 @@
   "due_check_quantity": "Menge prüfen und bestätigen",
   "due_confirm_with_injection": "Mit Injektion bestätigen",
   "due_still_open": "Noch offen",
-  "all_intakes_logged": "Für diesen Tag ist alles protokolliert."
+  "all_intakes_logged": "Für diesen Tag ist alles protokolliert.",
+  "dose_reopen": "Wieder öffnen",
+  "dose_reopen_success": "Einnahme wieder geöffnet"
 }

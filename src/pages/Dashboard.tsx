@@ -842,6 +842,20 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const selectedDayTitle = isTodaySelected
     ? t('heutige_einnahmen')
     : format(selectedDay, 'EEEE, d. MMMM', { locale })
+  // Wieder oeffnen darf man nur, was danach auch wieder auftaucht.
+  //
+  // `taken = null` nimmt die Zeile aus „Bereits protokolliert" heraus. Steht
+  // ihr Slot nicht im Tagesplan — bei Bedarf genommen, Substanz geloescht,
+  // Zyklus nicht mehr aufloesbar —, erscheint sie danach auch nicht als
+  // faellig: unsichtbar und nicht mehr loeschbar, denn der Loeschknopf sitzt
+  // nur an protokollierten Zeilen.
+  const geplanteSchluesselHeute = new Set(
+    timelineOccurrencesForDay(selectedDay).map(intake => intake.routineSlotKey),
+  )
+  const kannWiederGeoeffnetWerden = (log: DoseLog) => (
+    !FEATURES.planTimelineV2
+    || Boolean(log.routine_slot_key && geplanteSchluesselHeute.has(log.routine_slot_key))
+  )
   const confirmedLogs = selLogs.filter(log => log.taken !== null)
   const confirmedLogsSorted = [...confirmedLogs].sort((a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime())
 
@@ -1077,11 +1091,22 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         return toast.error(t('error'))
       }
     } else {
-      const { error } = await dashboardDataClient.from('dose_logs').update({ taken: null }).eq('id', log.id)
+      // Eine vom Auto-Miss eingetragene Zeile traegt `auto-missed`. Bleibt die
+      // Notiz stehen, heisst die Einnahme nach einem bewussten Auslassen
+      // weiterhin „Verpasst" — und `injectionPersistence` haelt sie weiter
+      // fuer offen. Nur dieser Zweig kann das treffen: eine auto-verpasste
+      // Zeile hat `taken === false` und bucht deshalb keinen Bestand zurueck.
+      const { error } = await dashboardDataClient.from('dose_logs')
+        .update(log.notes === AUTO_MISSED_NOTE ? { taken: null, notes: null } : { taken: null })
+        .eq('id', log.id)
       if (error) return toast.error(t('error'))
     }
+    // Der Bestandshinweis gehoerte zu einer Bestaetigung, die es nicht mehr
+    // gibt. Blieb er stehen, lief jeder weitere Versuch in den
+    // `taken is true`-Filter der RPC und schlug fehl.
+    setInventoryRetryIds(current => current.filter(id => id !== log.id))
     loadLogs(); loadStackItems()
-    toast.success(t('dose_undo_success', { defaultValue: 'Einnahme zurückgesetzt' }))
+    toast.success(t('dose_reopen_success', { defaultValue: 'Einnahme wieder geöffnet' }))
   }
 
   const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string, slotDose: number | null = null, occurrenceAt?: string, pendingLog?: DoseLog) => {
@@ -1662,9 +1687,19 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         </div>
       )}
 
-      {!FEATURES.planTimelineV2 && log.taken !== null && (
+      {/* Eine entschiedene Einnahme laesst sich wieder oeffnen.
+          NUR oeffnen — nicht an Ort und Stelle umschreiben: unter
+          `planTimelineV2` laeuft jede Entscheidung ueber
+          `confirm_intake_group`, das Herkunft und Lebenszyklus prueft. Ein
+          direktes „doch eingenommen" umginge diese Pruefung.
+          `reverse_inventory_confirmation('undo')` setzt `taken` auf null und
+          bucht den Bestand in einer Transaktion zurueck; Zyklus, Planversion,
+          Slot-Schluessel und Menge bleiben unberuehrt. Damit steht die Zeile
+          wieder genau so da, wie die RPC eine offene Einnahme erwartet — und
+          sie taucht oben wieder als faellig auf. */}
+      {log.taken !== null && kannWiederGeoeffnetWerden(log) && (
         <div className="flex gap-2 mt-2 ml-[26px]">
-          {log.taken === false && (
+          {!FEATURES.planTimelineV2 && log.taken === false && (
             <button
               onClick={() => openConfirmSheet(undefined, log)}
               className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/25 transition-colors">
@@ -1672,9 +1707,10 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
             </button>
           )}
           <button
+            type="button"
             onClick={() => undoDose(log)}
-            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-slate-700/60 text-slate-300 border border-slate-600/50 hover:bg-slate-600/60 transition-colors">
-            <RotateCcw size={11} /> {t('dose_undo', { defaultValue: 'Rückgängig' })}
+            className="flex min-h-11 items-center gap-1.5 rounded-lg border border-slate-600/50 bg-slate-700/60 px-3 text-xs font-semibold text-slate-200 transition-colors hover:bg-slate-600/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+            <RotateCcw size={12} aria-hidden="true" /> {t('dose_reopen', { defaultValue: 'Wieder öffnen' })}
           </button>
         </div>
       )}

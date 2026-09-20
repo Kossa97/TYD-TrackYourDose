@@ -267,16 +267,80 @@ describe('Dashboard normalized timeline path', () => {
       .toBe('/my-stack?review=timezone&stackItem=stack-1'))
   })
 
-  it.each([false, true])('keeps a decided V2 log immutable in the calendar (%s)', async taken => {
+  it.each([false, true])('lässt eine entschiedene V2-Einnahme öffnen, aber nicht umschreiben (%s)', async taken => {
+    // Vorher war eine entschiedene Einnahme unter V2 unveränderlich — auch
+    // eine versehentlich bestätigte und alles, was der Auto-Miss rückwirkend
+    // als nicht genommen eingetragen hat. In einer App, die Gesundheitsdaten
+    // protokolliert, ist ein unkorrigierbares Protokoll ein Produktfehler.
+    //
+    // Der Weg zurück ist bewusst schmal: WIEDER ÖFFNEN, nicht umschreiben.
+    // Jede Entscheidung läuft unter V2 über `confirm_intake_group`, das
+    // Herkunft und Lebenszyklus prüft; ein direktes „doch eingenommen" würde
+    // daran vorbeischreiben. Geöffnet steht die Zeile wieder so da, wie die
+    // RPC eine offene Einnahme erwartet.
     const fixtures = startFixFixture()
     fixtures.dose_logs = [{ ...pendingLog(), taken }]
     renderDashboard(createDashboardClient(fixtures))
     fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
     await screen.findByText('Vitamin D3')
     await waitFor(() => expect(screen.queryByText('Lädt…')).toBeNull())
+
+    expect(screen.getByRole('button', { name: 'Wieder öffnen' })).toBeTruthy()
+    // Was daran vorbeischreiben würde, bleibt zu.
     expect(screen.queryByRole('button', { name: 'Doch eingenommen' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Rückgängig' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'eintrag_loeschen' })).toBeNull()
+  })
+
+  it('bietet kein Wiederöffnen für eine Einnahme ohne Platz im Tagesplan', async () => {
+    // „Bei Bedarf" genommen, Substanz gelöscht, Zyklus nicht mehr auflösbar:
+    // solche Zeilen haben keinen geplanten Slot. `taken = null` nähme sie aus
+    // „Bereits protokolliert" heraus, ohne dass sie als fällig zurückkämen —
+    // unsichtbar und nicht mehr löschbar, denn der Löschknopf sitzt nur an
+    // protokollierten Zeilen.
+    const fixtures = startFixFixture()
+    fixtures.dose_logs = [{
+      ...pendingLog(), taken: true,
+      routine_slot_key: 'timeline-cycle@2026-09-18T15:30:00.000Z',
+    }]
+    renderDashboard(createDashboardClient(fixtures))
+    fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
+    await waitFor(() => expect(screen.queryByText('Lädt…')).toBeNull())
+
+    // Die Zeile steht im Protokoll — aber ohne Rückweg.
+    expect(screen.getByRole('button', { name: /Bereits protokolliert/ })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Wieder öffnen' })).toBeNull()
+  })
+
+  it('räumt beim Wiederöffnen die Auto-Miss-Notiz weg', async () => {
+    // Bleibt `auto-missed` stehen, heißt die Einnahme nach einem bewussten
+    // Auslassen weiterhin „Verpasst".
+    const fixtures = startFixFixture()
+    fixtures.dose_logs = [{ ...pendingLog(), taken: false, notes: 'auto-missed' }]
+    const client = createDashboardClient(fixtures)
+    renderDashboard(client)
+    fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Wieder öffnen' }))
+
+    await waitFor(() => {
+      const aufrufe = client.mutations.filter(m => m.table === 'dose_logs' && m.kind === 'update')
+      expect(aufrufe.some(m => JSON.stringify(m.values).includes('"notes":null'))).toBe(true)
+    })
+  })
+
+  it('bucht beim Wiederöffnen den Bestand in derselben Transaktion zurück', async () => {
+    // `taken` von Hand auf null zu setzen und den Bestand separat zu
+    // korrigieren, liesse bei einem Fehler dazwischen einen falschen Bestand
+    // stehen. Die RPC macht beides in einem Zug.
+    const fixtures = startFixFixture()
+    fixtures.dose_logs = [{ ...pendingLog(), taken: true }]
+    const client = createDashboardClient(fixtures)
+    renderDashboard(client)
+    fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Wieder öffnen' }))
+
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('reverse_inventory_confirmation', {
+      p_dose_log_id: 'pending-exact', p_action: 'undo',
+    }))
   })
   it.each([
     { archived: true, configuration_status: 'complete', migration_conflicts: [] },
@@ -1200,7 +1264,7 @@ describe('Dashboard intake confirmation actions', () => {
     renderDashboard(client)
 
     fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Rückgängig' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Wieder öffnen' }))
 
     await waitFor(() => expect(client.mutations).toContainEqual({
       table: 'dose_logs',
@@ -1241,7 +1305,7 @@ describe('Dashboard intake confirmation actions', () => {
     renderDashboard(client)
 
     fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Rückgängig' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Wieder öffnen' }))
 
     await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('reverse_inventory_confirmation', {
       p_dose_log_id: 'completed-generic',
@@ -1324,7 +1388,7 @@ describe('Dashboard intake confirmation actions', () => {
     renderDashboard(client)
 
     fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Rückgängig' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Wieder öffnen' }))
 
     await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('reverse_inventory_confirmation', {
       p_dose_log_id: 'completed-vial',

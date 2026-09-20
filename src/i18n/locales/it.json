@@ -667,7 +667,6 @@
   "push_banner_desc": "Ricevi notifiche automatiche all'orario impostato.",
   "push_banner_allow": "Attiva",
   "stock_update_failed": "Impossibile aggiornare le scorte",
-  "dose_undo_success": "Assunzione annullata",
   "calendar_plan_kicker": "Piano delle sostanze",
   "prev_month": "Mese precedente",
   "next_month": "Mese successivo",
@@ -677,7 +676,6 @@
   "dose_confirm_pending_badge": "Conferma in attesa",
   "completed_intakes_title": "Già registrato",
   "completed_intakes_hint": "Assunzioni confermate e saltate.",
-  "dose_undo": "Annulla",
   "all_intakes_done": "Tutte le assunzioni pianificate sono state confermate.",
   "home_completion_unit": "assunzioni registrate",
   "home_due_label": "In scadenza ora",
@@ -1249,5 +1247,7 @@
   "due_check_quantity": "Controlla la quantità e conferma",
   "due_confirm_with_injection": "Conferma con iniezione",
   "due_still_open": "Ancora in sospeso",
-  "all_intakes_logged": "Tutto è registrato per questo giorno."
+  "all_intakes_logged": "Tutto è registrato per questo giorno.",
+  "dose_reopen": "Riapri",
+  "dose_reopen_success": "Assunzione riaperta"
 }

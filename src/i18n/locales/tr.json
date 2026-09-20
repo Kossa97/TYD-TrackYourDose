@@ -667,7 +667,6 @@
   "push_banner_desc": "Ayarlanan saatte otomatik bildirim al.",
   "push_banner_allow": "Etkinleştir",
   "stock_update_failed": "Stok güncellenemedi",
-  "dose_undo_success": "Alım geri alındı",
   "calendar_plan_kicker": "Madde planı",
   "prev_month": "Önceki Ay",
   "next_month": "Sonraki Ay",
@@ -677,7 +676,6 @@
   "dose_confirm_pending_badge": "Onay bekliyor",
   "completed_intakes_title": "Zaten Kaydedilenler",
   "completed_intakes_hint": "Onaylanan ve atlanan alımlar.",
-  "dose_undo": "Geri al",
   "all_intakes_done": "Planlanan tüm alımlar onaylandı.",
   "home_completion_unit": "alım kaydedildi",
   "home_due_label": "Şimdi vadesi var",
@@ -1249,5 +1247,7 @@
   "due_check_quantity": "Miktarı kontrol et ve onayla",
   "due_confirm_with_injection": "Enjeksiyonla onayla",
   "due_still_open": "Hâlâ bekliyor",
-  "all_intakes_logged": "Bu gün için her şey kayıtlı."
+  "all_intakes_logged": "Bu gün için her şey kayıtlı.",
+  "dose_reopen": "Yeniden aç",
+  "dose_reopen_success": "Doz yeniden açıldı"
 }

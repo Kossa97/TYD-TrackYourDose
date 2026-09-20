@@ -668,7 +668,6 @@
   "push_banner_desc": "Dapatkan notifikasi otomatis pada waktu yang telah diatur.",
   "push_banner_allow": "Aktifkan",
   "stock_update_failed": "Stok gagal diperbarui",
-  "dose_undo_success": "Asupan dibatalkan",
   "calendar_plan_kicker": "Rencana substansi",
   "prev_month": "Bulan sebelumnya",
   "next_month": "Bulan berikutnya",
@@ -678,7 +677,6 @@
   "dose_confirm_pending_badge": "Konfirmasi tertunda",
   "completed_intakes_title": "Sudah dicatat",
   "completed_intakes_hint": "Asupan yang dikonfirmasi dan dilewati.",
-  "dose_undo": "Batalkan",
   "all_intakes_done": "Semua asupan yang direncanakan telah dikonfirmasi.",
   "home_completion_unit": "asupan dicatat",
   "home_due_label": "Jatuh tempo sekarang",
@@ -1249,5 +1247,7 @@
   "due_check_quantity": "Periksa jumlah lalu konfirmasi",
   "due_confirm_with_injection": "Konfirmasi dengan suntikan",
   "due_still_open": "Masih belum",
-  "all_intakes_logged": "Semua sudah tercatat untuk hari ini."
+  "all_intakes_logged": "Semua sudah tercatat untuk hari ini.",
+  "dose_reopen": "Buka lagi",
+  "dose_reopen_success": "Asupan dibuka lagi"
 }

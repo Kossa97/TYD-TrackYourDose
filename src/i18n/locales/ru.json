@@ -667,7 +667,6 @@
   "push_banner_desc": "Получать автоматические уведомления в заданное время.",
   "push_banner_allow": "Включить",
   "stock_update_failed": "Не удалось обновить запас",
-  "dose_undo_success": "Приём отменён",
   "calendar_plan_kicker": "План веществ",
   "prev_month": "Предыдущий месяц",
   "next_month": "Следующий месяц",
@@ -677,7 +676,6 @@
   "dose_confirm_pending_badge": "Ожидает подтверждения",
   "completed_intakes_title": "Уже записано",
   "completed_intakes_hint": "Подтверждённые и пропущенные приёмы.",
-  "dose_undo": "Отменить",
   "all_intakes_done": "Все запланированные приёмы подтверждены.",
   "home_completion_unit": "доз записано",
   "home_due_label": "Сейчас назначено",
@@ -1251,5 +1249,7 @@
   "due_check_quantity": "Проверить дозу и подтвердить",
   "due_confirm_with_injection": "Подтвердить с инъекцией",
   "due_still_open": "Ещё не отмечено",
-  "all_intakes_logged": "За этот день всё записано."
+  "all_intakes_logged": "За этот день всё записано.",
+  "dose_reopen": "Открыть снова",
+  "dose_reopen_success": "Приём снова открыт"
 }

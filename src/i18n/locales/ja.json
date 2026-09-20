@@ -667,7 +667,6 @@
   "push_banner_desc": "設定した時間に自動で通知を受け取る。",
   "push_banner_allow": "有効にする",
   "stock_update_failed": "在庫を更新できませんでした",
-  "dose_undo_success": "投与を取り消しました",
   "calendar_plan_kicker": "物質計画",
   "prev_month": "前の月",
   "next_month": "次の月",
@@ -677,7 +676,6 @@
   "dose_confirm_pending_badge": "確認待ち",
   "completed_intakes_title": "記録済み",
   "completed_intakes_hint": "確認済みおよびスキップした投与。",
-  "dose_undo": "取り消す",
   "all_intakes_done": "予定された投与はすべて確認済みです。",
   "home_completion_unit": "投与を記録済み",
   "home_due_label": "今すぐ実施",
@@ -1249,5 +1247,7 @@
   "due_check_quantity": "量を確認して記録",
   "due_confirm_with_injection": "注射として記録",
   "due_still_open": "未記録",
-  "all_intakes_logged": "この日はすべて記録済みです。"
+  "all_intakes_logged": "この日はすべて記録済みです。",
+  "dose_reopen": "記録を取り消す",
+  "dose_reopen_success": "記録を取り消しました"
 }

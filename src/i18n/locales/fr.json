@@ -667,7 +667,6 @@
   "push_banner_desc": "Être notifié automatiquement à l'heure définie.",
   "push_banner_allow": "Activer",
   "stock_update_failed": "Impossible de mettre à jour le stock",
-  "dose_undo_success": "Prise annulée",
   "calendar_plan_kicker": "Plan substances",
   "prev_month": "Mois précédent",
   "next_month": "Mois suivant",
@@ -677,7 +676,6 @@
   "dose_confirm_pending_badge": "Confirmation en attente",
   "completed_intakes_title": "Déjà enregistré",
   "completed_intakes_hint": "Prises confirmées et ignorées.",
-  "dose_undo": "Annuler",
   "all_intakes_done": "Toutes les prises planifiées sont confirmées.",
   "home_completion_unit": "prises enregistrées",
   "home_due_label": "Dû maintenant",
@@ -1249,5 +1247,7 @@
   "due_check_quantity": "Vérifier la quantité et confirmer",
   "due_confirm_with_injection": "Confirmer avec injection",
   "due_still_open": "Encore en attente",
-  "all_intakes_logged": "Tout est consigné pour cette journée."
+  "all_intakes_logged": "Tout est consigné pour cette journée.",
+  "dose_reopen": "Rouvrir",
+  "dose_reopen_success": "Prise rouverte"
 }

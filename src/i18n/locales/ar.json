@@ -667,7 +667,6 @@
   "push_banner_desc": "تلقّي إشعارات تلقائية في الوقت المحدد.",
   "push_banner_allow": "تفعيل",
   "stock_update_failed": "تعذّر تحديث الرصيد",
-  "dose_undo_success": "تمت استعادة الجرعة",
   "calendar_plan_kicker": "خطة المادة",
   "prev_month": "الشهر السابق",
   "next_month": "الشهر التالي",
@@ -677,7 +676,6 @@
   "dose_confirm_pending_badge": "في انتظار التأكيد",
   "completed_intakes_title": "تم تسجيله بالفعل",
   "completed_intakes_hint": "الجرعات المؤكدة والمتخطاة.",
-  "dose_undo": "تراجع",
   "all_intakes_done": "تم تأكيد جميع الجرعات المخططة.",
   "home_completion_unit": "جرعات مسجلة",
   "home_due_label": "مستحق الآن",
@@ -1253,5 +1251,7 @@
   "due_check_quantity": "تحقق من الكمية وأكد",
   "due_confirm_with_injection": "تأكيد مع الحقن",
   "due_still_open": "لا تزال متبقية",
-  "all_intakes_logged": "تم تسجيل كل شيء لهذا اليوم."
+  "all_intakes_logged": "تم تسجيل كل شيء لهذا اليوم.",
+  "dose_reopen": "إعادة الفتح",
+  "dose_reopen_success": "تم إعادة فتح الجرعة"
 }

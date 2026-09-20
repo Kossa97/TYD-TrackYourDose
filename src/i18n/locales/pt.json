@@ -667,7 +667,6 @@
   "push_banner_desc": "Receba notificações automáticas no horário configurado.",
   "push_banner_allow": "Ativar",
   "stock_update_failed": "Não foi possível atualizar o estoque",
-  "dose_undo_success": "Dose revertida",
   "calendar_plan_kicker": "Plano de substâncias",
   "prev_month": "Mês anterior",
   "next_month": "Próximo mês",
@@ -677,7 +676,6 @@
   "dose_confirm_pending_badge": "Confirmação pendente",
   "completed_intakes_title": "Já registrado",
   "completed_intakes_hint": "Doses confirmadas e ignoradas.",
-  "dose_undo": "Desfazer",
   "all_intakes_done": "Todas as doses planejadas foram confirmadas.",
   "home_completion_unit": "doses registradas",
   "home_due_label": "Vence agora",
@@ -1249,5 +1247,7 @@
   "due_check_quantity": "Verificar a quantidade e confirmar",
   "due_confirm_with_injection": "Confirmar com injeção",
   "due_still_open": "Ainda pendentes",
-  "all_intakes_logged": "Tudo está registado para este dia."
+  "all_intakes_logged": "Tudo está registado para este dia.",
+  "dose_reopen": "Reabrir",
+  "dose_reopen_success": "Toma reaberta"
 }

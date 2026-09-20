@@ -810,7 +810,6 @@
   "push_banner_desc": "Get notified automatically at the scheduled time.",
   "push_banner_allow": "Enable",
   "stock_update_failed": "Stock could not be updated",
-  "dose_undo_success": "Intake reversed",
   "calendar_plan_kicker": "Substance plan",
   "prev_month": "Previous Month",
   "next_month": "Next Month",
@@ -826,7 +825,6 @@
   "dose_confirm_pending_badge": "Confirmation pending",
   "completed_intakes_title": "Already logged",
   "completed_intakes_hint": "Confirmed and skipped intakes.",
-  "dose_undo": "Undo",
   "all_intakes_done": "All scheduled intakes are confirmed.",
   "home_completion_unit": "Intakes logged",
   "home_due_label": "Due now",
@@ -1396,5 +1394,7 @@
   "due_check_quantity": "Check amount and confirm",
   "due_confirm_with_injection": "Confirm with injection",
   "due_still_open": "Still open",
-  "all_intakes_logged": "Everything is logged for this day."
+  "all_intakes_logged": "Everything is logged for this day.",
+  "dose_reopen": "Reopen",
+  "dose_reopen_success": "Intake reopened"
 }

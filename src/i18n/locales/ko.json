@@ -667,7 +667,6 @@
   "push_banner_desc": "설정된 시간에 자동으로 알림을 받으세요.",
   "push_banner_allow": "활성화",
   "stock_update_failed": "재고를 업데이트할 수 없습니다",
-  "dose_undo_success": "복용 취소됨",
   "calendar_plan_kicker": "물질 계획",
   "prev_month": "이전 달",
   "next_month": "다음 달",
@@ -677,7 +676,6 @@
   "dose_confirm_pending_badge": "확인 대기 중",
   "completed_intakes_title": "이미 기록됨",
   "completed_intakes_hint": "확인된 복용 및 건너뛴 복용.",
-  "dose_undo": "되돌리기",
   "all_intakes_done": "예정된 모든 복용이 확인되었습니다.",
   "home_completion_unit": "복용 기록됨",
   "home_due_label": "지금 예정",
@@ -1248,5 +1246,7 @@
   "due_check_quantity": "용량 확인 후 기록",
   "due_confirm_with_injection": "주사로 기록",
   "due_still_open": "아직 남음",
-  "all_intakes_logged": "이 날은 모두 기록되었습니다."
+  "all_intakes_logged": "이 날은 모두 기록되었습니다.",
+  "dose_reopen": "다시 열기",
+  "dose_reopen_success": "복용 기록을 다시 열었습니다"
 }
