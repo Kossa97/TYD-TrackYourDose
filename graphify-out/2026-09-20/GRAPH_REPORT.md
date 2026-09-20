@@ -1,7 +1,7 @@
 # Graph Report - TYD-TrackYourDose  (2026-09-20)
 
 ## Corpus Check
-- 821 files · ~988,198 words
+- 821 files · ~988,585 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
