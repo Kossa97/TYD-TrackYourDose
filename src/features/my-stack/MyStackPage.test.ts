@@ -370,7 +370,8 @@ describe('My Stack page vial view', () => {
       text.indexOf('const handleVialCarouselPointerUp'),
     )
     expect(pointerMove).not.toContain('e.preventDefault()')
-    expect(text).toContain("touchAction: 'pan-x pan-y'")
+    expect(text).toContain("touchAction: 'pan-x'")
+    expect(text).not.toContain("touchAction: 'pan-x pan-y'")
   })
 
   test('keeps programmatic vial selection stable while smooth-scrolling to the target', () => {
@@ -699,7 +700,8 @@ describe('My Stack page vial view', () => {
     // gibt es weder eine gepflegte Pixel-Summe noch vertikalen Seitenscroll.
     const text = source()
 
-    expect(text).toContain('data-my-stack-page className="flex h-full min-h-0 flex-col overflow-hidden"')
+    expect(text).toContain('data-my-stack-page')
+    expect(text).toContain('className={`flex h-full min-h-0 flex-col overflow-hidden')
     expect(text).toContain('data-my-stack-carousel className="flex h-full min-h-0 flex-1 flex-col"')
     expect(text).toContain('className="flex min-h-0 flex-1 flex-col pt-1"')
     expect(text).not.toContain('--buehne-hoehe')

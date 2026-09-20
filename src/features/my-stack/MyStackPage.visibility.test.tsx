@@ -487,14 +487,37 @@ describe('MyStackPage non-vial visibility', () => {
     const page = document.querySelector<HTMLElement>('[data-my-stack-page]')
     const body = document.querySelector<HTMLElement>('[data-my-stack-body]')
     const carousel = document.querySelector<HTMLElement>('[data-my-stack-carousel]')
+    const tabs = document.querySelector<HTMLElement>('[data-stack-tabs]')
+    const strip = document.querySelector<HTMLElement>('[data-vial-carousel-strip]')
 
     expect(page).not.toBeNull()
     expect(page?.className).toContain('h-full')
     expect(page?.className).toContain('overflow-hidden')
+    expect(page?.className).toContain('overscroll-none')
+    expect(page?.className).toContain('touch-pan-x')
     expect(body?.className).toContain('min-h-0')
     expect(body?.className).toContain('overflow-hidden')
+    expect(body?.className).toContain('overscroll-none')
     expect(carousel?.className).toContain('min-h-0')
     expect(carousel?.className).toContain('flex-1')
+    expect(tabs?.className).toContain('overflow-y-hidden')
+    expect(tabs?.className).toContain('touch-pan-x')
+    expect(strip).not.toBeNull()
+    expect(strip?.className).toContain('overflow-y-hidden')
+    expect(strip?.className).toContain('overscroll-none')
+    expect(strip?.className).toContain('touch-pan-x')
+  })
+
+  it('keeps vertical scrolling available in list mode', async () => {
+    localStorage.setItem('tyd_peptide_view', 'list')
+    await renderPage()
+
+    const page = document.querySelector<HTMLElement>('[data-my-stack-page]')
+    const body = document.querySelector<HTMLElement>('[data-my-stack-body]')
+
+    expect(page?.className).not.toContain('touch-pan-x')
+    expect(body?.className).toContain('overflow-y-auto')
+    expect(body?.className).toContain('overscroll-contain')
   })
 
   it('keeps an active non-vial item visible and editable beside the premium vial stage', async () => {

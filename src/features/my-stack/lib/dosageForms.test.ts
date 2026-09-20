@@ -30,6 +30,7 @@ describe('DOSAGE_FORMS', () => {
     }
 
     expect(ratio('pen')).toBeGreaterThan(ratio('ampoule')!)
+    expect(ratio('pen')).toBeLessThanOrEqual(0.94)
     expect(ratio('ampoule')).toBeGreaterThan(ratio('vial')!)
     expect(ratio('vial')).toBeGreaterThan(ratio('capsule')!)
     expect(ratio('capsule')).toBeGreaterThan(ratio('tablet')!)

@@ -2381,7 +2381,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   )
 
   return (
-    <div data-my-stack-page className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div
+      data-my-stack-page
+      className={`flex h-full min-h-0 flex-col overflow-hidden ${viewMode === 'vials' && activePeptide ? 'overscroll-none touch-pan-x' : ''}`}
+    >
       {/* ── Header (single row): Titel · Suche · Ansicht/Filter ─────────── */}
       <div className="relative mb-4 flex shrink-0 items-center gap-2">
         {/* Titel — kollabiert smooth, sobald die Suche geöffnet wird */}
@@ -2515,7 +2518,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
       <div
         data-my-stack-body
-        className={`min-h-0 flex-1 ${viewMode === 'vials' && activePeptide ? 'flex flex-col overflow-hidden' : 'overflow-y-auto overscroll-contain'}`}
+        className={`min-h-0 flex-1 ${viewMode === 'vials' && activePeptide ? 'flex flex-col overflow-hidden overscroll-none' : 'overflow-y-auto overscroll-contain'}`}
       >
           {initialLoad && <LabLoader fadingOut={loaderFading} />}
 
@@ -2570,7 +2573,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   data-stack-tabs
                   role="tablist"
                   aria-label={String(t('my_stack_category', { defaultValue: 'Kategorie' }))}
-                  className="no-scrollbar -mx-3 mb-2 flex shrink-0 snap-x gap-2 overflow-x-auto px-3 pb-1"
+                  className="no-scrollbar -mx-3 mb-2 flex shrink-0 snap-x gap-2 overflow-x-auto overflow-y-hidden overscroll-none touch-pan-x px-3 pb-1"
                 >
                   {STACK_TABS.map(reiter => {
                     const anzahl = reiterZaehler.get(reiter.key) ?? 0
@@ -2661,6 +2664,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   />
                 <SloshProvider engine={sloshEngine}>
                 <div
+                  data-vial-carousel-strip
                   ref={vialCarouselRef}
                   onScroll={handleVialCarouselScroll}
                   onPointerDown={handleVialCarouselPointerDown}
@@ -2668,15 +2672,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   onPointerUp={handleVialCarouselPointerUp}
                   onPointerCancel={handleVialCarouselPointerUp}
                   onWheel={handleVialCarouselWheel}
-                  className={`relative z-10 flex min-h-0 flex-1 ${vialSnapClassName} gap-2 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                  className={`relative z-10 flex min-h-0 flex-1 ${vialSnapClassName} gap-2 overflow-x-auto overflow-y-hidden overscroll-none touch-pan-x pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
                     isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
                   }`}
                   style={{
-                    // Horizontal ziehen gehoert dem Karussell, vertikales
-                    // Wischen bleibt nativer Seitenscroll. Touch nutzt den
-                    // nativen overflow-x-Scroll; der JS-Drag-Pfad gilt nur
-                    // fuer die Maus. Deshalb muss touch-action beides erlauben.
-                    touchAction: 'pan-x pan-y',
+                    // Die Vollbildbuehne besitzt nur die waagerechte Geste.
+                    // Vertikales Wischen darf weder die Seite verschieben
+                    // noch auf iOS den Gummiband-Effekt ausloesen.
+                    touchAction: 'pan-x',
                     // Die Buehne beherrscht den Bildschirm; die Nachbarn lugen
                     // nur noch herein. Damit man trotzdem weiss, wie viele es
                     // sind, stehen die Punkte darunter — sie sind hier keine
