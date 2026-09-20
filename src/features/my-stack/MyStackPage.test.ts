@@ -365,6 +365,12 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('handleVialCarouselItemClick(index)')
     expect(text).toContain("isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'")
     expect(text).not.toContain('setPointerCapture(e.pointerId)\n    e.preventDefault()')
+    const pointerMove = text.slice(
+      text.indexOf('const handleVialCarouselPointerMove'),
+      text.indexOf('const handleVialCarouselPointerUp'),
+    )
+    expect(pointerMove).not.toContain('e.preventDefault()')
+    expect(text).toContain("touchAction: 'pan-y'")
   })
 
   test('keeps programmatic vial selection stable while smooth-scrolling to the target', () => {

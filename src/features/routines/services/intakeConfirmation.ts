@@ -91,3 +91,21 @@ export function skipIntakeGroup(
 ): Promise<string[]> {
   return decideIntakeGroup(client, entries, false)
 }
+
+export async function skipIntakeGroupsInBatches(
+  client: IntakeConfirmationClient,
+  entries: RoutineConfirmationEntry[],
+  batchSize = 20,
+): Promise<string[]> {
+  if (!Number.isInteger(batchSize) || batchSize < 1) {
+    throw new Error('Batch size must be a positive integer')
+  }
+
+  const selectedEntries = entries.filter(entry => entry.selected)
+  const savedIds: string[] = []
+  for (let start = 0; start < selectedEntries.length; start += batchSize) {
+    const batchIds = await skipIntakeGroup(client, selectedEntries.slice(start, start + batchSize))
+    savedIds.push(...batchIds)
+  }
+  return savedIds
+}

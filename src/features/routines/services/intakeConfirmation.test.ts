@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RoutineConfirmationEntry } from '../intakeGroups'
-import { confirmIntakeGroup, quantifiedVialEntries, skipIntakeGroup, type IntakeConfirmationClient } from './intakeConfirmation'
+import {
+  confirmIntakeGroup,
+  quantifiedVialEntries,
+  skipIntakeGroup,
+  skipIntakeGroupsInBatches,
+  type IntakeConfirmationClient,
+} from './intakeConfirmation'
 
 function entry(overrides: Partial<RoutineConfirmationEntry> = {}): RoutineConfirmationEntry {
   return {
@@ -134,6 +140,29 @@ describe('confirmIntakeGroup', () => {
         taken: false,
       })],
     })
+  })
+
+  it('splits a large automatic missed-intake backlog into sequential bounded RPC calls', async () => {
+    const rpc = vi.fn(async (_name, params) => ({
+      data: params.p_entries.map((item: { stack_item_id: string }) => ({ id: `log-${item.stack_item_id}` })),
+      error: null,
+    }))
+    const entries = Array.from({ length: 5 }, (_, index) => entry({
+      key: `entry-${index}`,
+      cycleId: `cycle-${index}`,
+      stackItemId: `stack-${index}`,
+      scheduledAt: `2026-07-${String(20 + index).padStart(2, '0')}T08:00:00.000Z`,
+    }))
+
+    await expect(skipIntakeGroupsInBatches({ rpc }, entries, 2)).resolves.toEqual([
+      'log-stack-0',
+      'log-stack-1',
+      'log-stack-2',
+      'log-stack-3',
+      'log-stack-4',
+    ])
+    expect(rpc.mock.calls.map(([, params]) => params.p_entries)).toHaveLength(3)
+    expect(rpc.mock.calls.map(([, params]) => params.p_entries.length)).toEqual([2, 2, 1])
   })
 
   it('keeps occurrence identity while sending an edited actual log time', async () => {

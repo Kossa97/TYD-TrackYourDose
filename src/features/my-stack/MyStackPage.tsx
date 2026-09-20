@@ -2023,7 +2023,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     vialDragLastXRef.current = e.clientX
     vialDragLastTimeRef.current = now
     carousel.scrollLeft = vialDragStartScrollLeftRef.current - delta
-    e.preventDefault()
   }
   const handleVialCarouselPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!vialDraggingRef.current) return
@@ -2701,6 +2700,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
                   }`}
                   style={{
+                    // Horizontal ziehen gehoert dem Karussell, vertikales
+                    // Wischen bleibt nativer Seitenscroll. Dadurch braucht der
+                    // passive Pointer-Listener kein preventDefault().
+                    touchAction: 'pan-y',
                     // Die Buehne beherrscht den Bildschirm; die Nachbarn lugen
                     // nur noch herein. Damit man trotzdem weiss, wie viele es
                     // sind, stehen die Punkte darunter — sie sind hier keine

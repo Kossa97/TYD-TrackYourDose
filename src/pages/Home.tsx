@@ -48,7 +48,13 @@ import {
   type RoutineGroupModel,
   type RoutineIntake,
 } from '../features/routines/intakeGroups'
-import { confirmIntakeGroup, quantifiedVialEntries, skipIntakeGroup, type IntakeConfirmationClient } from '../features/routines/services/intakeConfirmation'
+import {
+  confirmIntakeGroup,
+  quantifiedVialEntries,
+  skipIntakeGroup,
+  skipIntakeGroupsInBatches,
+  type IntakeConfirmationClient,
+} from '../features/routines/services/intakeConfirmation'
 import { RoutineConfirmationSheet } from '../features/routines/components/RoutineConfirmationSheet'
 import {
   applyInventoryConfirmation,
@@ -639,9 +645,10 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
               } satisfies RoutineConfirmationEntry]
             })
             // Idempotent in Postgres: mehrere offene Tabs duerfen denselben
-            // ueberfaelligen Slot gleichzeitig abschliessen, ohne 409.
+            // ueberfaelligen Slot gleichzeitig abschliessen, ohne 409. Kleine
+            // Pakete verhindern ein Statement-Timeout bei laengerem Rueckstand.
             if (entries.length > 0) {
-              void skipIntakeGroup(homeDataClient as unknown as IntakeConfirmationClient, entries)
+              void skipIntakeGroupsInBatches(homeDataClient as unknown as IntakeConfirmationClient, entries)
                 .catch(error => console.error('[Home] auto-miss error:', error))
             }
           } else {
