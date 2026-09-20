@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
+  LOCAL_DATE_TIME_KEY_CACHE_MAX,
   localDateTimeKey,
   resolveCycleAt,
   resolveCycleAtLocalSlot,
@@ -124,5 +125,34 @@ describe('localDateTimeKey', () => {
   it('rejects invalid dates and IANA time zones instead of falling back', () => {
     expect(() => localDateTimeKey(new Date('invalid'), 'Europe/Berlin')).toThrow(/invalid date/i)
     expect(() => localDateTimeKey(new Date(), 'Not/A_Zone')).toThrow(/time zone/i)
+  })
+
+  // The cache is keyed by an exact instant, so a long session would otherwise
+  // grow it without end. The bound is what keeps that from happening, and this
+  // is the only way to see it from outside: count the formatting calls.
+  it('forgets its oldest entry instead of growing without end', () => {
+    const instant = new Date('2031-07-04T09:08:07Z')
+    const expected = '2031-07-04|11:08:07'
+    const formatToParts = vi.spyOn(Intl.DateTimeFormat.prototype, 'formatToParts')
+
+    try {
+      expect(localDateTimeKey(instant, 'Europe/Berlin')).toBe(expected)
+      const afterFirst = formatToParts.mock.calls.length
+
+      // A second look at the same instant is a lookup, not a computation.
+      expect(localDateTimeKey(instant, 'Europe/Berlin')).toBe(expected)
+      expect(formatToParts.mock.calls.length).toBe(afterFirst)
+
+      // Enough distinct instants to push that entry out of the cache.
+      for (let step = 1; step <= LOCAL_DATE_TIME_KEY_CACHE_MAX; step += 1) {
+        localDateTimeKey(new Date(instant.getTime() + step), 'Europe/Berlin')
+      }
+
+      const beforeReturn = formatToParts.mock.calls.length
+      expect(localDateTimeKey(instant, 'Europe/Berlin')).toBe(expected)
+      expect(formatToParts.mock.calls.length).toBe(beforeReturn + 1)
+    } finally {
+      formatToParts.mockRestore()
+    }
   })
 })

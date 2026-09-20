@@ -70,6 +70,12 @@ interface VersionCandidate {
 }
 
 const localDateTimeFormatters = new Map<string, Intl.DateTimeFormat>()
+// Unlike the caches below it, this one is keyed by an exact instant, so it has
+// no natural ceiling: every distinct millisecond that ever gets formatted would
+// stay forever. A month grid with fifteen plans needs roughly 1300 entries, so
+// the bound is months of browsing away; past it the oldest entry is dropped and
+// its next use costs one `formatToParts` again instead of a lookup.
+export const LOCAL_DATE_TIME_KEY_CACHE_MAX = 8000
 const localDateTimeKeyCache = new Map<string, string>()
 const localDateBoundaryCache = new Map<string, number>()
 const localSlotInstantCache = new Map<string, number>()
@@ -299,6 +305,11 @@ export function localDateTimeKey(instant: Date, timeZone: string): string {
   }
 
   const key = `${year}-${month}-${day}|${hour}:${minute}:${second}`
+  if (localDateTimeKeyCache.size >= LOCAL_DATE_TIME_KEY_CACHE_MAX) {
+    // Maps iterate in insertion order, so the first key is the oldest.
+    const oldest = localDateTimeKeyCache.keys().next().value
+    if (oldest !== undefined) localDateTimeKeyCache.delete(oldest)
+  }
   localDateTimeKeyCache.set(cacheKey, key)
   return key
 }
