@@ -10,6 +10,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <title>TYD · Track Your Dose</title>
+    <!-- Die Verbindung zu Supabase VOR der ersten Abfrage aufbauen.
+         Im Netzwerkprofil brauchten die ersten drei Datenabfragen 840-865 ms,
+         waehrend der Server dafuer nur 180 ms meldete: die Differenz war DNS,
+         TCP und TLS, weil der Browser den Handschlag erst beginnt, wenn die
+         erste Abfrage losgeht. Mit diesem Hinweis laeuft er parallel zum
+         Laden der Skripte. -->
+    <link rel="preconnect" href="https://xcskcojakolphtbuqfbw.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="https://xcskcojakolphtbuqfbw.supabase.co">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;900&family=IBM+Plex+Mono:wght@700&display=swap" rel="stylesheet">
