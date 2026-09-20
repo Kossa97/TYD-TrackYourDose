@@ -1,3 +1,45 @@
-# graphify
-- **graphify** (`.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
-When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
+# Werkzeugregel
+
+**Für jede Arbeit wird das dafür vorgesehene Plugin/Skill benutzt — auch mehrere,
+wenn die Aufgabe mehrere berührt.** Erst prüfen, welches Werkzeug zuständig ist,
+dann arbeiten. Passt keins, normal arbeiten und das in der Antwort sagen.
+
+Mehrere kombinieren ist der Normalfall, nicht die Ausnahme: eine Änderung am Code
+ist typischerweise `graphify` (orientieren) → arbeiten → `graphify update .` →
+`code-review`; ein Artefakt mit Diagrammen ist `artifact-design` +
+`artifact-diagramming`.
+
+## Zuordnung
+
+| Arbeit | Werkzeug |
+|---|---|
+| Frage zur Codebasis, Architektur, „wo liegt X", „was hängt woran" | `graphify` (`query` / `path` / `explain`) — **vor** grep/read |
+| nach jeder Codeänderung | `graphify update .` |
+| Code auf Fehler prüfen (Diff, Branch, PR, Pfad) | `code-review` |
+| Code aufräumen: Wiederverwendung, Vereinfachung, Effizienz | `simplify` |
+| Sicherheitsprüfung der Änderungen | `security-review` |
+| App starten, ansehen, Screenshot, „läuft das wirklich?" | `run` |
+| Diagramm, Chart, Dashboard, Datenvisualisierung | `dataviz` |
+| geteilte Seite / Artefakt bauen | `artifact-design`, dazu `artifact-diagramming` (Diagramme) und `artifact-capabilities` (Eingaben, gespeicherter Zustand) |
+| geteiltes, kommentierbares Dokument | `anthropic-skills:docs` |
+| Word / PowerPoint / Excel / PDF als Datei | `anthropic-skills:docx` / `:pptx` / `:xlsx` / `:pdf` |
+| Claude-Code-Konfiguration: Hooks, Permissions, Env, Regeln festlegen | `update-config` |
+| weniger Berechtigungs-Nachfragen | `fewer-permission-prompts` |
+| Tastenkürzel | `keybindings-help` |
+| wiederkehrende Aufgabe, Intervall, „alle N Minuten prüfen" | `loop` |
+| Claude-API, Modell-IDs, Preise, Token, Caching | `claude-api` |
+| neuen Skill bauen oder verbessern | `anthropic-skills:skill-creator` |
+| Startup-Hook für Web-Sessions | `session-start-hook` |
+| CLAUDE.md neu anlegen | `init` |
+
+Die Liste ist nicht abschließend. Steht ein Skill in der Sitzungsliste und passt
+er auf die Aufgabe, wird er benutzt, auch wenn er hier fehlt.
+
+## graphify
+
+- **graphify** (`.claude/skills/graphify/SKILL.md`) — beliebige Eingabe in einen
+  Wissensgraphen. Auslöser: `/graphify`
+- Tippt der Nutzer `/graphify`, zuerst den installierten graphify-Skill benutzen.
+- Die PreToolUse-Hooks in `.claude/settings.json` erinnern zusätzlich daran,
+  `graphify query` vor grep/read zu stellen. Das gilt auch für Subagenten — die
+  Regel gehört in jeden Subagenten-Prompt, der Code erkundet.
