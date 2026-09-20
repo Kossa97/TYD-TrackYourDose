@@ -1062,15 +1062,15 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.test.ts": {
-    "mtime": 1789927455.72352,
-    "seen": 1789927683.040381,
-    "ast_hash": "395c573e88b4f1d5349971cdbae98fa0",
+    "mtime": 1789928210.1387393,
+    "seen": 1789928372.7256413,
+    "ast_hash": "070e4a590f78684ad6ed0c2bfe27a7d5",
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
-    "mtime": 1789927455.7238047,
-    "seen": 1789927683.0403814,
-    "ast_hash": "394340d5482f1b27dfb0dcdb0e37d1dd",
+    "mtime": 1789928210.1394062,
+    "seen": 1789928372.725642,
+    "ast_hash": "71eb691341aa4dbe4410b9a330e35cd4",
     "semantic_hash": ""
   },
   "src/pages/FAQ.tsx": {
@@ -4860,8 +4860,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789927550.6667998,
-    "seen": 1789927683.0404356,
+    "mtime": 1789928282.9891596,
+    "seen": 1789928372.7257142,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5271,6 +5271,18 @@
     "mtime": 1789927455.6407425,
     "seen": 1789927683.0404334,
     "ast_hash": "9bc27851aaea1b55c7b8711c37832b1a",
+    "semantic_hash": ""
+  },
+  "src/features/routines/lib/slotKeyRange.test.ts": {
+    "mtime": 1789928210.1371553,
+    "seen": 1789928372.7255218,
+    "ast_hash": "d39fbff56021fa5f3ed4c35cb04d0f4e",
+    "semantic_hash": ""
+  },
+  "src/features/routines/lib/slotKeyRange.ts": {
+    "mtime": 1789928210.1381812,
+    "seen": 1789928372.7255237,
+    "ast_hash": "326937998ec898995032bed3285b675a",
     "semantic_hash": ""
   }
 }
