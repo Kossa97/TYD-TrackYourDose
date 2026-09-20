@@ -6,9 +6,9 @@
     "semantic_hash": ""
   },
   ".claude/settings.json": {
-    "mtime": 1788611941.3896909,
-    "seen": 1789927683.03993,
-    "ast_hash": "e51077b6a7f1f67afc748f1a32a1557d",
+    "mtime": 1789932284.6545067,
+    "seen": 1789939043.8012633,
+    "ast_hash": "1fa1790cddc8d2673ab0567842ed169d",
     "semantic_hash": ""
   },
   "android/app/build.gradle": {
@@ -708,87 +708,87 @@
     "semantic_hash": ""
   },
   "src/i18n/locales/ar.json": {
-    "mtime": 1789927455.624382,
-    "seen": 1789927683.0403306,
-    "ast_hash": "610c3378f5eeb1e8c5c352cb9c80c60b",
+    "mtime": 1789940975.5900872,
+    "seen": 1789941454.6230497,
+    "ast_hash": "039cd2a154bd354423faa9cf1f5f50bd",
     "semantic_hash": ""
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1789927455.624382,
-    "seen": 1789927683.0403314,
-    "ast_hash": "aef1a498d0eea3b21705034bf04ef1b0",
+    "mtime": 1789940975.5675497,
+    "seen": 1789941454.6230507,
+    "ast_hash": "2c76bfbaf2f99a1aa0cc85e8c907f21f",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1789927455.624382,
-    "seen": 1789927683.040332,
-    "ast_hash": "86fc8fe4b4eb2dfc25b27ff5c35c9e66",
+    "mtime": 1789940975.5747771,
+    "seen": 1789941454.623052,
+    "ast_hash": "171c528645fec33d450115088ccf6119",
     "semantic_hash": ""
   },
   "src/i18n/locales/es.json": {
-    "mtime": 1789927455.6263285,
-    "seen": 1789927683.0403326,
-    "ast_hash": "15e6a018bad85cfdaeea5684b3c89b4d",
+    "mtime": 1789940975.5769916,
+    "seen": 1789941454.6230526,
+    "ast_hash": "984fcdc6ac6681f4f52ef9ac7115e206",
     "semantic_hash": ""
   },
   "src/i18n/locales/fr.json": {
-    "mtime": 1789927455.6266463,
-    "seen": 1789927683.0403333,
-    "ast_hash": "623c6d9a74863b057c5a25668dae4db2",
+    "mtime": 1789940975.5792038,
+    "seen": 1789941454.6230533,
+    "ast_hash": "bd4173a9d4b1ca7512c6c4c1ffffcf1b",
     "semantic_hash": ""
   },
   "src/i18n/locales/hi.json": {
-    "mtime": 1789927455.6266463,
-    "seen": 1789927683.0403337,
-    "ast_hash": "f94a10e91856109b1164f99198d13210",
+    "mtime": 1789940975.5923965,
+    "seen": 1789941454.6230543,
+    "ast_hash": "40bde75f3075da90c605489519a5e672",
     "semantic_hash": ""
   },
   "src/i18n/locales/id.json": {
-    "mtime": 1789927455.626794,
-    "seen": 1789927683.0403347,
-    "ast_hash": "b19bc5237b1a625ab01cd85fb7b132a9",
+    "mtime": 1789940975.594464,
+    "seen": 1789941454.6230552,
+    "ast_hash": "bb0e7afa5e77e4d6a5ab9563a549e55d",
     "semantic_hash": ""
   },
   "src/i18n/locales/it.json": {
-    "mtime": 1789927455.626794,
-    "seen": 1789927683.0403352,
-    "ast_hash": "e74319d8df1b65c63b533761cc48765b",
+    "mtime": 1789940975.5812378,
+    "seen": 1789941454.6230562,
+    "ast_hash": "096786fa1a5534cd54f8e5f80ce71439",
     "semantic_hash": ""
   },
   "src/i18n/locales/ja.json": {
-    "mtime": 1789927455.626794,
-    "seen": 1789927683.040336,
-    "ast_hash": "1d3f6e37ee8e2a695a7fe033a7b70c4d",
+    "mtime": 1789940975.5964515,
+    "seen": 1789941454.623057,
+    "ast_hash": "8d83998a2aeb44b65a5c8099dba26681",
     "semantic_hash": ""
   },
   "src/i18n/locales/ko.json": {
-    "mtime": 1789927455.626794,
-    "seen": 1789927683.0403364,
-    "ast_hash": "64c99957391925c16233e4ad295fffff",
+    "mtime": 1789940975.5984054,
+    "seen": 1789941454.6230578,
+    "ast_hash": "bff402160f57260ce2b7da91f68978d7",
     "semantic_hash": ""
   },
   "src/i18n/locales/pt.json": {
-    "mtime": 1789927455.626794,
-    "seen": 1789927683.0403368,
-    "ast_hash": "4086e8cbba7c43d5391bae39ea49538f",
+    "mtime": 1789940975.5832863,
+    "seen": 1789941454.623059,
+    "ast_hash": "d9dd3ca6b53a3584373af78566bca058",
     "semantic_hash": ""
   },
   "src/i18n/locales/ru.json": {
-    "mtime": 1789927455.626794,
-    "seen": 1789927683.0403376,
-    "ast_hash": "acf8657746f318e0e8166e3f47f34710",
+    "mtime": 1789940975.5876791,
+    "seen": 1789941454.6230597,
+    "ast_hash": "e4ae2a14f0708c3a3527fb62c3bd8a38",
     "semantic_hash": ""
   },
   "src/i18n/locales/tr.json": {
-    "mtime": 1789927455.6293795,
-    "seen": 1789927683.0403383,
-    "ast_hash": "96502170fc0a998c6518017b1cfaf0c3",
+    "mtime": 1789940975.585514,
+    "seen": 1789941454.6230605,
+    "ast_hash": "a8d18244f8e4a25f5da6b98772cd081d",
     "semantic_hash": ""
   },
   "src/i18n/locales/zh.json": {
-    "mtime": 1789927455.6297424,
-    "seen": 1789927683.0403392,
-    "ast_hash": "d1d30ec1175178fdefb3a3f7cf925c5e",
+    "mtime": 1789940975.6007447,
+    "seen": 1789941454.6230614,
+    "ast_hash": "08a6f90bc4fa0ce17fe1c2a700352b44",
     "semantic_hash": ""
   },
   "src/lib/dailyLogs.ts": {
@@ -1062,15 +1062,15 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.test.ts": {
-    "mtime": 1789929482.4507577,
-    "seen": 1789929655.1724513,
-    "ast_hash": "6004a7e94a9d9aee659000d163a53d5c",
+    "mtime": 1789941005.497154,
+    "seen": 1789941454.6231399,
+    "ast_hash": "bfe9dcd5d81058306f93133f78af0ee5",
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
-    "mtime": 1789929228.218426,
-    "seen": 1789929655.172453,
-    "ast_hash": "ff0d49b30b624be132cb0e45783823c4",
+    "mtime": 1789941022.6333885,
+    "seen": 1789941454.6231415,
+    "ast_hash": "0229c8abf98f3964d662c81c13fc8223",
     "semantic_hash": ""
   },
   "src/pages/FAQ.tsx": {
@@ -1464,9 +1464,9 @@
     "semantic_hash": ""
   },
   ".claude/CLAUDE.md": {
-    "mtime": 1788611941.3873546,
-    "seen": 1789927683.040448,
-    "ast_hash": "9b31786b637be3c13978bec4c2330752",
+    "mtime": 1789932308.4499416,
+    "seen": 1789939043.8020282,
+    "ast_hash": "764ffacfb971b588e3749e58c91ba5ea",
     "semantic_hash": ""
   },
   ".claude/skills/graphify/SKILL.md": {
@@ -3960,9 +3960,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18n.test.ts": {
-    "mtime": 1789927455.6143806,
-    "seen": 1789927683.040232,
-    "ast_hash": "4a47f85b88f60c6ee4b28f4a4eea5e54",
+    "mtime": 1789941284.6064157,
+    "seen": 1789941454.622866,
+    "ast_hash": "c201a3ca3dccbdb49550059ba0c7d881",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18nMerge.test.ts": {
@@ -4860,8 +4860,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789929557.387767,
-    "seen": 1789929655.1725342,
+    "mtime": 1789941359.4395726,
+    "seen": 1789941454.62323,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
