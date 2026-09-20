@@ -399,5 +399,7 @@
   "397": "TodayLogSheet.test.ts",
   "398": "planDataErrors.test.ts",
   "399": "InjektionsTracker.test.ts",
-  "400": "vite.config.ts"
+  "400": "vite.config.ts",
+  "401": "stackTabs.ts",
+  "402": "stackSort.ts"
 }
