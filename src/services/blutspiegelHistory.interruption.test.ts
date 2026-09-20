@@ -9,20 +9,32 @@ import {
 import { FEATURES } from '../config/features'
 import type { CycleTimeline } from '../lib/planTimeline'
 vi.mock('../config/features', () => ({ FEATURES: { planTimelineV2: false } }))
-const historyDb = vi.hoisted(() => ({ logs: [] as any[], filters: [] as unknown[][], error: null as null | { message: string } }))
+const historyDb = vi.hoisted(() => ({ logs: [] as any[], filters: [] as unknown[][], zugriffe: [] as string[], error: null as null | { message: string } }))
+// Der Zyklus, den beide Pfade sehen. Seit die Historie gebuendelt geladen
+// wird, kommt er als LISTE aus `.in('id', [...])` statt einzeln aus
+// `.maybeSingle()` — der alte Pfad hinter dem Feature-Schalter nutzt weiter
+// `maybeSingle`, deshalb kann der Mock beides.
+const zyklus = { id: 'c1', stack_item_id: 's1', start_date: '2026-09-01', end_date: null,
+  stack_items: { pk_profile_method: 'Subkutan' },
+  started_at: '2026-09-01T00:00:00.000Z', ended_at: null }
 vi.mock('../lib/supabase', () => ({ supabase: { from: (table: string) => {
-  let rows = historyDb.logs
+  historyDb.zugriffe.push(table)
+  let rows = table === 'cycles' ? [zyklus] as any[] : historyDb.logs
   const query: any = {
     select: () => query, eq: (key: string, value: unknown) => {
       historyDb.filters.push([table, key, value]); if (table === 'dose_logs') rows = rows.filter(row => row[key] === value); return query
-    }, is: (key: string, value: unknown) => { rows = rows.filter(row => row[key] === value); return query },
+    },
+    in: (key: string, values: unknown[]) => {
+      historyDb.filters.push([table, key, values])
+      if (table === 'dose_logs') rows = rows.filter(row => values.includes(row[key]))
+      return query
+    },
+    is: (key: string, value: unknown) => { rows = rows.filter(row => row[key] === value); return query },
     gte: (key: string, value: string) => { rows = rows.filter(row => row[key] >= value); return query },
     lt: (key: string, value: string) => { rows = rows.filter(row => row[key] < value); return query },
     lte: (key: string, value: string) => { rows = rows.filter(row => row[key] <= value); return query },
     not: () => query, order: () => query,
-    maybeSingle: async () => ({ data: { id: 'c1', stack_item_id: 's1', start_date: '2026-09-01', end_date: null,
-      stack_items: { pk_profile_method: 'Subkutan' },
-      started_at: '2026-09-01T00:00:00.000Z', ended_at: null }, error: historyDb.error }),
+    maybeSingle: async () => ({ data: zyklus, error: historyDb.error }),
     then: (resolve: any) => Promise.resolve({ data: rows, error: historyDb.error }).then(resolve),
   }; return query
 } } }))
@@ -59,8 +71,44 @@ describe('normalized PK history and projection', () => {
       { timestamp: new Date('2026-09-18T08:00:00.000Z'), dose: 250, unit: 'mcg', status: 'taken', cycleId: 'c1', planVersionId: 'old-version', method: 'Subkutan' },
       { timestamp: new Date('2026-09-18T09:00:00.000Z'), dose: 2, unit: 'mg', status: 'taken', cycleId: null, planVersionId: null, method: 'Subkutan' },
     ])
-    expect(historyDb.filters).toContainEqual(['dose_logs', 'cycle_id', 'c1'])
+    expect(historyDb.filters).toContainEqual(['dose_logs', 'cycle_id', ['c1']])
   })
+  it('fragt fuer viele Zyklen gleich oft wie fuer einen', async () => {
+    // Vorher: drei Abfragen JE Zyklus — den Zyklus selbst und zweimal
+    // `dose_logs`. Bei 153 Zyklen waren das ueber 450 Rundreisen je
+    // Seitenaufruf, und weil auf `dose_logs.cycle_id` kein Index lag, las
+    // jede davon die ganze Tabelle. Die Aufrufer fragen alle Zyklen im
+    // selben Zug (`cycles.map(...)`), also gehoeren sie in einen Bund.
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    vi.useFakeTimers(); vi.setSystemTime(new Date('2026-09-19T12:00:00Z'))
+    historyDb.logs = []
+    historyDb.filters = []
+    historyDb.zugriffe = []
+
+    const viele = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8']
+    await Promise.all(viele.map(id => loadDoseHistory(id).catch(() => null)))
+
+    // Eine Abfrage auf `cycles`, zwei auf `dose_logs` — unabhaengig davon,
+    // wie viele Zyklen gefragt wurden. Drei statt vierundzwanzig.
+    expect(historyDb.zugriffe.filter(tabelle => tabelle === 'cycles')).toHaveLength(1)
+    expect(historyDb.zugriffe.filter(tabelle => tabelle === 'dose_logs')).toHaveLength(2)
+    // Und alle acht standen in EINER Bedingung.
+    expect(historyDb.filters).toContainEqual(['cycles', 'id', viele])
+  })
+
+  it('bittet denselben Zyklus im selben Bund nur einmal ab', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    vi.useFakeTimers(); vi.setSystemTime(new Date('2026-09-19T12:00:00Z'))
+    historyDb.logs = []
+    historyDb.filters = []
+    historyDb.zugriffe = []
+
+    await Promise.all([loadDoseHistory('c1'), loadDoseHistory('c1'), loadDoseHistory('c1')])
+
+    expect(historyDb.filters).toContainEqual(['cycles', 'id', ['c1']])
+    expect(historyDb.zugriffe.filter(tabelle => tabelle === 'cycles')).toHaveLength(1)
+  })
+
   it('surfaces normalized history query failure', async () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
     historyDb.error = { message: 'history unavailable' }

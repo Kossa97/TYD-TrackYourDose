@@ -95,7 +95,7 @@ interface DoseLogRow {
  * Verknüpfung zum Zyklus über `stack_item_id` + Datumsbereich des Zyklus.
  */
 export async function loadDoseHistory(cycleId: string): Promise<DoseHistory> {
-  if (FEATURES.planTimelineV2) return loadNormalizedDoseHistory(cycleId)
+  if (FEATURES.planTimelineV2) return sammelDoseHistory(cycleId)
   // 1. Zyklus laden
   const { data: cycle, error: cycleError } = await supabase
     .from('cycles')
@@ -140,38 +140,173 @@ export async function loadDoseHistory(cycleId: string): Promise<DoseHistory> {
   }
 }
 
-async function loadNormalizedDoseHistory(cycleId: string): Promise<DoseHistory> {
-  const { data: cycle, error } = await supabase.from('cycles')
-    .select('id, stack_item_id, started_at, ended_at, start_local_date, end_local_date, stack_items(pk_profile_method)').eq('id', cycleId).maybeSingle()
-  if (error) throw error
-  if (!cycle?.started_at) throw new Error('Cycle history boundary unavailable')
-  const now = new Date().toISOString()
-  const upper = cycle.ended_at && cycle.ended_at < now ? cycle.ended_at : now
-  const fields = 'logged_at, dose, unit, method, taken, cycle_id, plan_version_id'
-  const [exact, legacy] = await Promise.all([
-    supabase.from('dose_logs').select(fields).eq('cycle_id', cycleId).eq('taken', true)
-      .lte('logged_at', now).order('logged_at', { ascending: true }),
-    supabase.from('dose_logs').select(fields).eq('stack_item_id', cycle.stack_item_id)
-      .is('cycle_id', null).is('plan_version_id', null).eq('taken', true)
-      .gte('logged_at', cycle.started_at).lt('logged_at', upper).order('logged_at', { ascending: true }),
-  ])
-  if (exact.error) throw exact.error
-  if (legacy.error) throw legacy.error
-  const rows = [...(exact.data ?? []), ...(legacy.data ?? [])]
-    .sort((a, b) => a.logged_at.localeCompare(b.logged_at))
+/**
+ * Der Sammelabruf.
+ *
+ * Vorher holte diese Datei je Zyklus DREI Abfragen: den Zyklus selbst (den der
+ * Aufrufer meist schon hatte) und zweimal `dose_logs` — einmal ueber
+ * `cycle_id`, einmal ueber `stack_item_id` fuer die Altzeilen ohne Zyklusbezug.
+ * Die Aufrufer fragen aber nie EINEN Zyklus, sondern alle auf einmal
+ * (`cycles.map(...)` in `liveBlutspiegelChart` und im Karussell). Bei 153
+ * Zyklen waren das ueber 450 Rundreisen je Seitenaufruf, und weil auf
+ * `dose_logs.cycle_id` kein Index lag, las jede davon die ganze Tabelle.
+ *
+ * Gemessen am 2026-09-20: 5159 Anfragen an `/rest/v1/dose_logs` und 2792 an
+ * `/rest/v1/cycles` an einem Tag — bei 238 Ladevorgaengen von `stack_items`.
+ * Das Verhaeltnis 1,85 zu 1 ist genau dieses Zweier-Paar je Zyklus.
+ *
+ * `loadDoseHistory(cycleId)` bleibt unveraendert, damit kein Aufrufer sich
+ * aendern muss. Was sich aendert: die Aufrufe, die im selben Zug entstehen,
+ * werden gesammelt und als DREI Abfragen fuer alle Zyklen gestellt statt als
+ * drei je Zyklus. Gesammelt wird ueber einen Microtask — `Promise.all` legt
+ * seine Aufrufe synchron an, also liegen sie alle im selben Bund.
+ */
+interface WartendeAnfrage {
+  aufloesen: (history: DoseHistory) => void
+  ablehnen: (fehler: unknown) => void
+}
+
+const wartendeZyklen = new Map<string, WartendeAnfrage[]>()
+let sammlungGeplant = false
+
+function sammelDoseHistory(cycleId: string): Promise<DoseHistory> {
+  return new Promise<DoseHistory>((aufloesen, ablehnen) => {
+    const vorhanden = wartendeZyklen.get(cycleId)
+    if (vorhanden) {
+      // Derselbe Zyklus zweimal im selben Bund — eine Abfrage reicht.
+      vorhanden.push({ aufloesen, ablehnen })
+      return
+    }
+    wartendeZyklen.set(cycleId, [{ aufloesen, ablehnen }])
+    if (sammlungGeplant) return
+    sammlungGeplant = true
+    queueMicrotask(() => {
+      sammlungGeplant = false
+      void bundAbarbeiten()
+    })
+  })
+}
+
+async function bundAbarbeiten(): Promise<void> {
+  const bund = new Map(wartendeZyklen)
+  wartendeZyklen.clear()
+  if (bund.size === 0) return
+  try {
+    const ergebnisse = await ladeDoseHistories([...bund.keys()])
+    for (const [cycleId, anfragen] of bund) {
+      const ergebnis = ergebnisse.get(cycleId)
+      for (const anfrage of anfragen) {
+        // Ein Zyklus ohne Startzeitpunkt hat keine Historie — dieselbe
+        // Aussage wie vorher, nur nicht mehr je Zyklus erfragt.
+        if (ergebnis) anfrage.aufloesen(ergebnis)
+        else anfrage.ablehnen(new Error('Cycle history boundary unavailable'))
+      }
+    }
+  } catch (fehler) {
+    for (const anfragen of bund.values()) {
+      for (const anfrage of anfragen) anfrage.ablehnen(fehler)
+    }
+  }
+}
+
+interface NormalisierteZeile {
+  logged_at: string
+  dose: number | string | null
+  unit: string | null
+  method: string | null
+  taken: boolean | null
+  cycle_id: string | null
+  plan_version_id: string | null
+  stack_item_id?: string | null
+}
+
+/**
+ * Aus Zeilen werden Ereignisse — unveraendert die alte Regel: sobald eine
+ * Zeile nicht zur Methode des PK-Profils passt oder keine brauchbare Menge
+ * traegt, bricht die Historie dort ab.
+ */
+function zuEreignissen(
+  zeilen: NormalisierteZeile[],
+  profileMethod: string | undefined,
+): DoseHistory {
   const events: DoseEvent[] = []
-  for (const row of rows) {
+  for (const row of zeilen) {
     const dose = row.dose == null ? null : Number(row.dose)
-    const profileMethod = (cycle.stack_items as unknown as { pk_profile_method?: string } | null)?.pk_profile_method
     if (!row.method?.trim() || !profileMethod?.trim()
       || row.method.trim().toLocaleLowerCase() !== profileMethod.trim().toLocaleLowerCase()) {
       return { events, interruptedAt: row.logged_at }
     }
-    if (dose == null || !Number.isFinite(dose) || !row.unit?.trim()) return { events, interruptedAt: row.logged_at }
+    if (dose == null || !Number.isFinite(dose) || !row.unit?.trim()) {
+      return { events, interruptedAt: row.logged_at }
+    }
     events.push({ timestamp: new Date(row.logged_at), dose, unit: row.unit, status: 'taken',
       cycleId: row.cycle_id, planVersionId: row.plan_version_id, method: row.method })
   }
   return { events, interruptedAt: null }
+}
+
+async function ladeDoseHistories(cycleIds: string[]): Promise<Map<string, DoseHistory>> {
+  const { data: cycleRows, error } = await supabase.from('cycles')
+    .select('id, stack_item_id, started_at, ended_at, start_local_date, end_local_date, stack_items(pk_profile_method)')
+    .in('id', cycleIds)
+  if (error) throw error
+
+  const now = new Date().toISOString()
+  const zyklen = (cycleRows ?? []).filter(zyklus => Boolean(zyklus.started_at))
+  const ergebnisse = new Map<string, DoseHistory>()
+  if (zyklen.length === 0) return ergebnisse
+
+  const stackItemIds = [...new Set(zyklen.map(zyklus => zyklus.stack_item_id).filter(Boolean))]
+  // Die Altzeilen brauchen je Zyklus ein eigenes Zeitfenster. Geholt wird
+  // einmal ab dem fruehesten Start; zugeordnet wird danach hier.
+  const fruehesterStart = zyklen.reduce(
+    (fruehester, zyklus) => (zyklus.started_at! < fruehester ? zyklus.started_at! : fruehester),
+    now,
+  )
+  const fields = 'logged_at, dose, unit, method, taken, cycle_id, plan_version_id'
+
+  const [exact, legacy] = await Promise.all([
+    supabase.from('dose_logs').select(fields)
+      .in('cycle_id', cycleIds).eq('taken', true)
+      .lte('logged_at', now).order('logged_at', { ascending: true }),
+    stackItemIds.length > 0
+      ? supabase.from('dose_logs').select(`${fields}, stack_item_id`)
+        .in('stack_item_id', stackItemIds)
+        .is('cycle_id', null).is('plan_version_id', null).eq('taken', true)
+        .gte('logged_at', fruehesterStart).lt('logged_at', now)
+        .order('logged_at', { ascending: true })
+      : Promise.resolve({ data: [] as NormalisierteZeile[], error: null }),
+  ])
+  if (exact.error) throw exact.error
+  if (legacy.error) throw legacy.error
+
+  const exaktNachZyklus = new Map<string, NormalisierteZeile[]>()
+  for (const zeile of (exact.data ?? []) as NormalisierteZeile[]) {
+    if (!zeile.cycle_id) continue
+    const liste = exaktNachZyklus.get(zeile.cycle_id)
+    if (liste) liste.push(zeile)
+    else exaktNachZyklus.set(zeile.cycle_id, [zeile])
+  }
+  const altNachSubstanz = new Map<string, NormalisierteZeile[]>()
+  for (const zeile of (legacy.data ?? []) as NormalisierteZeile[]) {
+    const schluessel = zeile.stack_item_id
+    if (!schluessel) continue
+    const liste = altNachSubstanz.get(schluessel)
+    if (liste) liste.push(zeile)
+    else altNachSubstanz.set(schluessel, [zeile])
+  }
+
+  for (const zyklus of zyklen) {
+    const obergrenze = zyklus.ended_at && zyklus.ended_at < now ? zyklus.ended_at : now
+    const alt = (altNachSubstanz.get(zyklus.stack_item_id) ?? []).filter(
+      zeile => zeile.logged_at >= zyklus.started_at! && zeile.logged_at < obergrenze,
+    )
+    const zeilen = [...(exaktNachZyklus.get(zyklus.id) ?? []), ...alt]
+      .sort((a, b) => a.logged_at.localeCompare(b.logged_at))
+    const profileMethod = (zyklus.stack_items as unknown as { pk_profile_method?: string } | null)?.pk_profile_method
+    ergebnisse.set(zyklus.id, zuEreignissen(zeilen, profileMethod))
+  }
+  return ergebnisse
 }
 
 export interface BlutspiegelCurvePoint {
