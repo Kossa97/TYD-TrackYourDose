@@ -59,6 +59,14 @@ function resolvedQuery(data: unknown, error: { message: string } | null = null, 
       return query
     })
   }
+  // `or` nimmt EINEN Ausdruck statt Spalte und Wert. Der Mock filtert damit
+  // echt, sonst bewiesen die Abdeckungstests nichts mehr: sie pruefen, dass
+  // der gewaehlte Tag auch beim Bloettern in einen fernen Monat mitgeladen
+  // wird -- ein `or`, das alles durchlaesst, wuerde das immer bestehen.
+  query.or = vi.fn((ausdruck: string) => {
+    filters.push({ method: 'or', column: 'routine_slot_key', value: ausdruck })
+    return query
+  })
   query.then = (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => {
     const result = applyFilters && Array.isArray(data) ? data.filter(row => filters.every(filter => {
       if (filter.column === 'logged_at') {
@@ -71,11 +79,32 @@ function resolvedQuery(data: unknown, error: { message: string } | null = null, 
       if (filter.column === 'routine_slot_key' && filter.method === 'in') {
         return (filter.value as string[]).includes(row.routine_slot_key)
       }
+      if (filter.method === 'or') {
+        // `and(routine_slot_key.gte."A",routine_slot_key.lt."B"),and(...)`
+        const bereiche = [...String(filter.value).matchAll(
+          /and\(routine_slot_key\.gte\."([^"]+)",routine_slot_key\.lt\."([^"]+)"\)/g,
+        )]
+        if (bereiche.length === 0) return true
+        const schluessel = String(row.routine_slot_key ?? '')
+        return bereiche.some(([, von, bis]) => schluessel >= von && schluessel < bis)
+      }
       return true
     })) : data
     return Promise.resolve(gate).then(() => ({ data: result, error })).then(resolve, reject)
   }
   return query
+}
+
+/**
+ * Faengt einer der `or`-Ausdruecke diesen Slot-Schluessel?
+ *
+ * Bildet nach, was PostgREST mit der Bedingung tut -- damit die
+ * Abdeckungstests weiter das pruefen, was sie vorher geprueft haben.
+ */
+function faengtSchluessel(bereiche: string[], schluessel: string): boolean {
+  return bereiche.some(ausdruck => [...ausdruck.matchAll(
+    /routine_slot_key\.gte\."([^"]+)",routine_slot_key\.lt\."([^"]+)"/g,
+  )].some(([, von, bis]) => schluessel >= von && schluessel < bis))
 }
 
 function createDashboardClient(
@@ -181,7 +210,10 @@ describe('Dashboard normalized timeline path', () => {
     )
 
     expect(lader).toContain('await Promise.all(ranges.map(range =>')
-    expect(lader).toContain('await Promise.all(paeckchen.map(schluessel =>')
+    expect(lader).toContain('slotKeyBereiche(cycleIds, slotFenster).map(bereich =>')
+    // Keine Aufzaehlung der Schluessel mehr -- die machte jede Adresse neu
+    // und damit jeden Preflight unbrauchbar.
+    expect(lader).not.toContain("in('routine_slot_key'")
     // Kein `await` mehr innerhalb einer Schleife in diesem Abschnitt.
     const schleifenZeilen = lader.split('\n')
     const inSchleife = schleifenZeilen.some((zeile, i) => (
@@ -307,10 +339,16 @@ describe('Dashboard normalized timeline path', () => {
     if (morningTab) fireEvent.click(morningTab)
     expect(screen.queryByRole('button', { name: /Alle als eingenommen/ })).toBeNull()
     const queries = client.logQueries.slice(initialQueries)
-    const keyBatches = queries.flatMap(query => (query.in as ReturnType<typeof vi.fn>).mock.calls.map(call => call[1] as string[]))
-    expect(keyBatches.flat()).toContain('timeline-cycle@2026-09-18T06:00:00.000Z')
-    expect(keyBatches.flat()).toContain('timeline-cycle@2026-11-18T07:00:00.000Z')
-    expect(keyBatches.every(keys => keys.length <= 100)).toBe(true)
+    // Dieselbe Zusage wie vorher, nur anders formuliert: der gewaehlte Tag im
+    // September bleibt abgedeckt, waehrend man den November ansieht. Frueher
+    // stand jeder Schluessel einzeln in der Adresse; jetzt faengt ihn ein
+    // Bereich, und der Test prueft genau das.
+    const bereiche = queries.flatMap(query =>
+      (query.or as ReturnType<typeof vi.fn>).mock.calls.map(call => call[0] as string))
+    expect(faengtSchluessel(bereiche, 'timeline-cycle@2026-09-18T06:00:00.000Z')).toBe(true)
+    expect(faengtSchluessel(bereiche, 'timeline-cycle@2026-11-18T07:00:00.000Z')).toBe(true)
+    // Und die Adresse bleibt handhabbar.
+    expect(bereiche.every(ausdruck => ausdruck.length <= 8000)).toBe(true)
     if (kind === 'legacy') {
       expect(queries.some(query => (query.gte as ReturnType<typeof vi.fn>).mock.calls
         .some(call => call[1] === '2026-09-17T22:00:00.000Z'))).toBe(true)
@@ -371,10 +409,10 @@ describe('Dashboard normalized timeline path', () => {
     await waitFor(() => expect(screen.getAllByRole('status').some(element => element.textContent?.includes('Lädt'))).toBe(false))
     expect(await screen.findByText('Alle geplanten Einnahmen sind bestätigt.')).toBeTruthy()
     expect(screen.queryByRole('button', { name: /Alle als eingenommen/ })).toBeNull()
-    const refreshedKeys = client.logQueries.slice(queriesBeforeCompletion)
-      .flatMap(query => (query.in as ReturnType<typeof vi.fn>).mock.calls.flatMap(call => call[1] as string[]))
-    expect(refreshedKeys).toContain('timeline-cycle@2026-11-18T07:00:00.000Z')
-    expect(refreshedKeys).toContain('timeline-cycle@2026-09-18T06:00:00.000Z')
+    const refreshedKeys: string[] = client.logQueries.slice(queriesBeforeCompletion)
+      .flatMap(query => (query.or as ReturnType<typeof vi.fn>).mock.calls.map(call => call[0] as string))
+    expect(faengtSchluessel(refreshedKeys, 'timeline-cycle@2026-11-18T07:00:00.000Z')).toBe(true)
+    expect(faengtSchluessel(refreshedKeys, 'timeline-cycle@2026-09-18T06:00:00.000Z')).toBe(true)
   })
 
   it('preserves a committed group inventory-only retry after month navigation', async () => {
@@ -558,7 +596,9 @@ describe('Dashboard normalized timeline path', () => {
     renderDashboard(client)
     await waitFor(() => expect(screen.getByText('Alle geplanten Einnahmen sind bestätigt.')).toBeTruthy())
     expect(screen.queryByRole('button', { name: 'eingenommen' })).toBeNull()
-    expect(client.logQueries.some(query => (query.in as ReturnType<typeof vi.fn>).mock.calls.length > 0)).toBe(true)
+    // Die Abdeckung wird ueber den Schluesselbereich geholt, unabhaengig von
+    // `logged_at` -- frueher ueber eine Aufzaehlung mit `in`.
+    expect(client.logQueries.some(query => (query.or as ReturnType<typeof vi.fn>).mock.calls.length > 0)).toBe(true)
   })
 
   it('fetches legacy coverage from the positive-offset first local day boundary', async () => {

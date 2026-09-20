@@ -43,6 +43,7 @@ import {
   type RoutineIntake,
 } from '../features/routines/intakeGroups'
 import { confirmIntakeGroup, quantifiedVialEntries, skipIntakeGroup, type IntakeConfirmationClient } from '../features/routines/services/intakeConfirmation'
+import { slotKeyBereiche } from '../features/routines/lib/slotKeyRange'
 import { RoutineConfirmationSheet } from '../features/routines/components/RoutineConfirmationSheet'
 import {
   applyInventoryConfirmation,
@@ -582,26 +583,32 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           if (result.error) throw result.error
           for (const log of (result.data ?? []) as unknown as DoseLog[]) byId.set(log.id, log)
         }
-        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
-        const keys = ranges.flatMap(range => eachDayOfInterval({ start: range.start, end: addDays(range.end, -1) }))
-          .flatMap(day => loadedTimelines.flatMap(timeline => resolveTimelineIntakesForDay(
-            timeline, format(day, 'yyyy-MM-dd'), timeZone,
-          ).map(intake => intake.routineSlotKey)))
-        // Stable identity is independent of mutable logged_at. Batches keep the
-        // request URL bounded for the displayed grid and independent selection.
+        // Die Slots dieses Fensters werden ueber ihren SCHLUESSELBEREICH
+        // gesucht, nicht mehr aufgezaehlt.
         //
-        // Die Paeckchen begrenzen die LAENGE der Adresse -- sie sind kein
-        // Grund, auch nacheinander zu warten. Bei einem Monatsraster mit
-        // mehreren Plaenen sind das schnell ein halbes Dutzend Rundreisen,
-        // jede hinter der vorigen.
-        const paeckchen: string[][] = []
-        for (let offset = 0; offset < keys.length; offset += 100) {
-          paeckchen.push(keys.slice(offset, offset + 100))
-        }
-        const slotResults = await Promise.all(paeckchen.map(schluessel =>
-          dashboardDataClient.from('dose_logs').select(columns)
-            .eq('user_id', user.id).in('routine_slot_key', schluessel),
-        ))
+        // Vorher entstanden hier bis zu hundert Schluessel je Abfrage, als
+        // Liste in der Adresse -- siebentausend Zeichen, und mit jedem
+        // angezeigten Tag eine andere. Der Browser fuehrt seinen
+        // Preflight-Cache je Adresse, also war jede Anfrage eine neue
+        // Verhandlung: 2751 verschiedene Adressen auf 3031 Anfragen, davon
+        // 2383 mit eigenem Preflight davor. Jetzt haengt die Adresse nur noch
+        // an den Zyklus-ids und am Fenster, und beide bleiben gleich, solange
+        // man denselben Monat ansieht.
+        //
+        // Warum der Bereich dieselbe Menge trifft, steht in `slotKeyRange.ts`.
+        // Ein Tag Luft an beiden Enden, weil ein lokaler Tag je nach Zeitzone
+        // etwas ueber die Fenstergrenze hinausragen kann.
+        const slotFenster = ranges.map(range => ({
+          start: addDays(range.start, -1),
+          end: addDays(range.end, 1),
+        }))
+        const cycleIds = [...new Set(loadedTimelines.map(timeline => timeline.cycle.id))]
+        const slotResults = await Promise.all(
+          slotKeyBereiche(cycleIds, slotFenster).map(bereich =>
+            dashboardDataClient.from('dose_logs').select(columns)
+              .eq('user_id', user.id).or(bereich),
+          ),
+        )
         if (!isCurrent()) return
         for (const result of slotResults) {
           if (result.error) throw result.error
