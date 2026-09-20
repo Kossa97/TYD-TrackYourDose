@@ -6,9 +6,9 @@ import {
   CalendarDays, FlaskConical, Archive, Calculator,
   BookHeart, Star, HelpCircle, User, ChevronRight,
   Microscope, Library, Droplets, Heart, FileText, type LucideIcon,
-  Activity, ArrowUpRight, Camera, CheckCircle2, ClipboardList,
+  Activity, ArrowUpRight, CheckCircle2, ClipboardList,
   Clock3, Flame, Package, Plus, ShieldCheck, Sparkles,
-  Syringe,
+  Syringe, TrendingUp,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -140,13 +140,13 @@ const QUICK_ACTIONS: QuickActionDef[] = [
     accent: '#3b82f6',
   },
   {
-    icon: Camera,
+    icon: TrendingUp,
     labelKey: 'home_action_progress',
-    label: 'Foto-Fortschritt',
+    label: 'Fortschritt',
     descKey: 'home_action_progress_desc',
-    desc: 'Körper-Entwicklung tracken',
+    desc: 'Gewicht, Befinden & Fotos',
     path: '/progress',
-    accent: '#8b5cf6',
+    accent: '#10b981',
   },
   {
     icon: Activity,
