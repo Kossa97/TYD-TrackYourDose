@@ -263,12 +263,6 @@
     "ast_hash": "d8862d1accdcc42a4d5e819163187d96",
     "semantic_hash": ""
   },
-  "src/components/CarouselChrome.tsx": {
-    "mtime": 1788611941.9151807,
-    "seen": 1789927683.0400274,
-    "ast_hash": "b0e607cd4b228cb9ddbb50c753ee384c",
-    "semantic_hash": ""
-  },
   "src/components/ExpiryWarningBanners.tsx": {
     "mtime": 1789927455.5995963,
     "seen": 1789927683.0400307,
@@ -708,87 +702,87 @@
     "semantic_hash": ""
   },
   "src/i18n/locales/ar.json": {
-    "mtime": 1789942699.0398574,
-    "seen": 1789942877.7375638,
-    "ast_hash": "0d75766e3325c43c4feac9d3c30def21",
+    "mtime": 1789945570.811492,
+    "seen": 1789945776.7357545,
+    "ast_hash": "eb511dcaf0de2785bf28e88f94c9b24a",
     "semantic_hash": ""
   },
   "src/i18n/locales/de.json": {
-    "mtime": 1789942699.0173178,
-    "seen": 1789942877.737565,
-    "ast_hash": "bb9434872b46e041e9486776122f5f5f",
+    "mtime": 1789945570.7934885,
+    "seen": 1789945776.7357557,
+    "ast_hash": "d3ef399a479802d2e4405f3776726a10",
     "semantic_hash": ""
   },
   "src/i18n/locales/en.json": {
-    "mtime": 1789942699.0210884,
-    "seen": 1789942877.737566,
-    "ast_hash": "6972f1e5a65450f8f9ca970a6fb5ef1c",
+    "mtime": 1789945570.7976522,
+    "seen": 1789945776.7357569,
+    "ast_hash": "f5c084866c456a08640901508406596d",
     "semantic_hash": ""
   },
   "src/i18n/locales/es.json": {
-    "mtime": 1789942699.0239658,
-    "seen": 1789942877.7375667,
-    "ast_hash": "173041ef35e331dcc8c0b260458dcf39",
+    "mtime": 1789945570.79972,
+    "seen": 1789945776.7357576,
+    "ast_hash": "773213f109e5e374ed1773ff6544dc22",
     "semantic_hash": ""
   },
   "src/i18n/locales/fr.json": {
-    "mtime": 1789942699.026748,
-    "seen": 1789942877.7375674,
-    "ast_hash": "98e35398a776588d9080ff3f144c8a9c",
+    "mtime": 1789945570.8015814,
+    "seen": 1789945776.7357585,
+    "ast_hash": "128089bf5af80a8e878a1d1788f67e5c",
     "semantic_hash": ""
   },
   "src/i18n/locales/hi.json": {
-    "mtime": 1789942699.042745,
-    "seen": 1789942877.7375686,
-    "ast_hash": "8badd2e8042e1c15e141e40e78292fd7",
+    "mtime": 1789945570.813709,
+    "seen": 1789945776.7357593,
+    "ast_hash": "d326555f14ad58b6737d6930df012d83",
     "semantic_hash": ""
   },
   "src/i18n/locales/id.json": {
-    "mtime": 1789942699.0453396,
-    "seen": 1789942877.7375693,
-    "ast_hash": "94078b0852d42ce6c77c55700d791f9d",
+    "mtime": 1789945570.8155394,
+    "seen": 1789945776.7357602,
+    "ast_hash": "d7ceb66ffd623fb852e845355229e0d9",
     "semantic_hash": ""
   },
   "src/i18n/locales/it.json": {
-    "mtime": 1789942699.0289009,
-    "seen": 1789942877.73757,
-    "ast_hash": "e196b2cbfa2bb119b4562ed17f8342da",
+    "mtime": 1789945570.803317,
+    "seen": 1789945776.735761,
+    "ast_hash": "eb2b413d36f3d4bb01216c77c81e911d",
     "semantic_hash": ""
   },
   "src/i18n/locales/ja.json": {
-    "mtime": 1789942699.0485842,
-    "seen": 1789942877.7375708,
-    "ast_hash": "7fcf6df8e8c1aa89a0faa31f4413e811",
+    "mtime": 1789945570.817231,
+    "seen": 1789945776.735762,
+    "ast_hash": "c40fde7b2b91983841a3afc429ff9da4",
     "semantic_hash": ""
   },
   "src/i18n/locales/ko.json": {
-    "mtime": 1789942699.0514648,
-    "seen": 1789942877.737572,
-    "ast_hash": "3459bcc87590d3008ec88e34706fc2e5",
+    "mtime": 1789945570.8191426,
+    "seen": 1789945776.7357626,
+    "ast_hash": "c203b81cc2e5c5b4e9224241d006f2d5",
     "semantic_hash": ""
   },
   "src/i18n/locales/pt.json": {
-    "mtime": 1789942699.0312786,
-    "seen": 1789942877.7375727,
-    "ast_hash": "493eddfd07107c09fee1214770eefd2a",
+    "mtime": 1789945570.805121,
+    "seen": 1789945776.7357638,
+    "ast_hash": "93b232d88f56efa5c579379137c866a2",
     "semantic_hash": ""
   },
   "src/i18n/locales/ru.json": {
-    "mtime": 1789942699.0367658,
-    "seen": 1789942877.7375734,
-    "ast_hash": "e2d0e7d9ad5b95d7a5a14465dc0b1afc",
+    "mtime": 1789945570.8093114,
+    "seen": 1789945776.7357645,
+    "ast_hash": "7f02f4ac6c85e4f4a7bba061abba7410",
     "semantic_hash": ""
   },
   "src/i18n/locales/tr.json": {
-    "mtime": 1789942699.03373,
-    "seen": 1789942877.737574,
-    "ast_hash": "05bc5ab6f7360f6a03da8de834b7bc07",
+    "mtime": 1789945570.8069954,
+    "seen": 1789945776.7357652,
+    "ast_hash": "26617a67969d3c7766c4df726962b01b",
     "semantic_hash": ""
   },
   "src/i18n/locales/zh.json": {
-    "mtime": 1789942699.0533178,
-    "seen": 1789942877.7375748,
-    "ast_hash": "697dc81a9303093752900212c80d54a8",
+    "mtime": 1789945570.8208027,
+    "seen": 1789945776.7357662,
+    "ast_hash": "478f42d562bc730b66e8983bc9ece9f4",
     "semantic_hash": ""
   },
   "src/lib/dailyLogs.ts": {
@@ -1062,15 +1056,15 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.test.ts": {
-    "mtime": 1789943423.2805927,
-    "seen": 1789943631.8177247,
-    "ast_hash": "18722a3e1e04c9fc7bf43282f3c68870",
+    "mtime": 1789945570.77116,
+    "seen": 1789945776.7358308,
+    "ast_hash": "bd6ef3f373bd77e8f103b9b638139734",
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
-    "mtime": 1789943463.7604103,
-    "seen": 1789943631.8177261,
-    "ast_hash": "768ae8f55c49b7296c38168a9a3a71de",
+    "mtime": 1789945608.7136626,
+    "seen": 1789945776.7358317,
+    "ast_hash": "472a64633e9ab42088e874127bc1639a",
     "semantic_hash": ""
   },
   "src/pages/FAQ.tsx": {
@@ -3960,9 +3954,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18n.test.ts": {
-    "mtime": 1789942709.6008172,
-    "seen": 1789942877.7374115,
-    "ast_hash": "273abfab999fc7d6acda65fe8b59cd38",
+    "mtime": 1789945617.728481,
+    "seen": 1789945776.7355876,
+    "ast_hash": "5d10649c27a1e8fba37b7a30612e3b31",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/i18nMerge.test.ts": {
@@ -4860,8 +4854,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789943540.4533677,
-    "seen": 1789943631.817847,
+    "mtime": 1789945686.7054954,
+    "seen": 1789945776.735927,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
