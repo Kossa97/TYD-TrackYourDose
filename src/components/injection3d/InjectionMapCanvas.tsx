@@ -1,7 +1,7 @@
 // src/components/injection3d/InjectionMapCanvas.tsx
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { ContactShadows, OrbitControls, useGLTF } from '@react-three/drei'
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import * as THREE from 'three'
 import { inferBodyRegion } from '../../lib/injectionGeometry'
 import { prepareInjectionTorsoModel } from '../../lib/injectionModelMaterial'
@@ -290,12 +290,62 @@ export function InjectionMapCanvas({
   minHeight?: CSSProperties['minHeight']
   resetRequestId?: number
 }) {
+  const huelle = useRef<HTMLDivElement | null>(null)
+  const renderer = useRef<THREE.WebGLRenderer | null>(null)
+  // `always` ist der Standard: 60 Bilder je Sekunde, auch wenn nichts
+  // passiert und auch, wenn niemand hinsieht. Die Szene animiert ueber
+  // `useFrame`, also kann sie nicht auf `demand` -- sie darf nur ruhen,
+  // solange sie nicht zu sehen ist.
+  const [sichtbar, setSichtbar] = useState(true)
+
+  useEffect(() => {
+    const element = huelle.current
+    if (!element || typeof IntersectionObserver === 'undefined') return
+    const beobachter = new IntersectionObserver(
+      ([eintrag]) => setSichtbar(eintrag.isIntersecting),
+      { rootMargin: '64px' },
+    )
+    beobachter.observe(element)
+    const beiTabwechsel = () => setSichtbar(
+      document.visibilityState === 'visible' && Boolean(element.getBoundingClientRect().height),
+    )
+    document.addEventListener('visibilitychange', beiTabwechsel)
+    return () => {
+      beobachter.disconnect()
+      document.removeEventListener('visibilitychange', beiTabwechsel)
+    }
+  }, [])
+
+  /**
+   * Den WebGL-Kontext beim Ausbauen wirklich hergeben.
+   *
+   * react-three-fiber raeumt seine Objekte auf, ruft aber kein
+   * `forceContextLoss()`. Der Kontext haengt dann bis zur Garbage Collection
+   * am Leben -- und Browser erlauben nur rund sechzehn gleichzeitig. Wer
+   * zwischen Startseite und Kalender hin und her geht, sammelt sie also an,
+   * bis der Browser die aeltesten entzieht: in der Konsole stand reihenweise
+   * „THREE.WebGLRenderer: Context Lost." auf Seiten, die selbst kein 3D
+   * zeigen.
+   */
+  useEffect(() => () => {
+    const gl = renderer.current
+    if (!gl) return
+    renderer.current = null
+    try {
+      gl.forceContextLoss()
+    } catch {
+      // Ein bereits verlorener Kontext ist genau das, was wir wollten.
+    }
+    gl.dispose()
+  }, [])
+
   return (
-    <div style={{ position: 'relative', height, minHeight, borderRadius: 24, overflow: 'hidden', touchAction: 'none', overscrollBehavior: 'none', userSelect: 'none', background: 'radial-gradient(circle at 50% 20%, rgba(0,204,245,0.16), transparent 42%), #07111d' }}>
+    <div ref={huelle} style={{ position: 'relative', height, minHeight, borderRadius: 24, overflow: 'hidden', touchAction: 'none', overscrollBehavior: 'none', userSelect: 'none', background: 'radial-gradient(circle at 50% 20%, rgba(0,204,245,0.16), transparent 42%), #07111d' }}>
       <Canvas
         camera={{ position: [0, DEFAULT_CAMERA_TARGET_Y, CAMERA_DISTANCE], fov: CAMERA_FOV, near: 0.05, far: 50 }}
         dpr={[1, 1.35]}
-        onCreated={({ camera }) => resetCameraFrame(camera, null)}
+        frameloop={sichtbar ? 'always' : 'never'}
+        onCreated={({ camera, gl }) => { renderer.current = gl; resetCameraFrame(camera, null) }}
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
       >
         <Scene {...props} resetRequestId={resetRequestId} />
