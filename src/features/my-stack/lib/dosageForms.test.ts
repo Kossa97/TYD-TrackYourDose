@@ -21,6 +21,21 @@ describe('DOSAGE_FORMS', () => {
     expect(DOSAGE_FORMS.filter(form => form.stageRenderer).map(form => form.key)).toEqual(['vial', 'ampoule', 'pen', 'tablet', 'capsule', 'drops', 'powder', 'nasal_spray', 'spray', 'gel', 'patch', 'tube'])
   })
 
+  it('bewahrt eine komprimierte, aber reale Groessenhierarchie auf der Buehne', () => {
+    const ratio = (key: DosageFormKey) => getDosageForm(key).stageHeightRatio
+
+    for (const form of DOSAGE_FORMS.filter(candidate => candidate.stageRenderer)) {
+      expect(form.stageHeightRatio, form.key).toBeGreaterThan(0)
+      expect(form.stageHeightRatio, form.key).toBeLessThanOrEqual(1)
+    }
+
+    expect(ratio('pen')).toBeGreaterThan(ratio('ampoule')!)
+    expect(ratio('ampoule')).toBeGreaterThan(ratio('vial')!)
+    expect(ratio('vial')).toBeGreaterThan(ratio('capsule')!)
+    expect(ratio('capsule')).toBeGreaterThan(ratio('tablet')!)
+    expect(getDosageForm('other').stageHeightRatio).toBeUndefined()
+  })
+
   it('gibt jeder freigeschalteten Form ihre Bühnenbeschreibung mit', () => {
     for (const form of DOSAGE_FORMS.filter(f => f.stageRenderer)) {
       expect(form.stageForm, form.key).toBeDefined()

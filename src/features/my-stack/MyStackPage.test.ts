@@ -71,7 +71,7 @@ describe('My Stack page vial view', () => {
   })
 
   test('stellt die Bühne groß und alle Objekte auf eine Standlinie', () => {
-    // Die Mitte beherrscht den Bildschirm (62 % statt 25 %), die Nachbarn
+    // Die Mitte beherrscht den Bildschirm (70 % statt 25 %), die Nachbarn
     // lugen herein — zurückgesetzt über Größe, Deckkraft und Sättigung, aber
     // nicht so weit, dass man nicht mehr erkennt, WAS dort steht (vorher 0,82
     // / 45 % / 50 %). `origin-bottom` ist dabei das Entscheidende: ohne das
@@ -79,7 +79,7 @@ describe('My Stack page vial view', () => {
     // nach oben UND unten weg und schweben über dem Boden.
     const text = source()
 
-    expect(text).toContain('min(15rem, 62vw)')
+    expect(text).toContain('min(17rem, 70vw)')
     expect(text).toContain('snap-center')
     expect(text).toContain('origin-bottom')
     expect(text).toContain("isActive ? 'scale-100' : 'scale-[0.88] opacity-65 saturate-75'")
@@ -107,8 +107,8 @@ describe('My Stack page vial view', () => {
     // Wischen aus: 25 bis 33 px daneben, und beim nächsten Anlass zurück.
     const text = source()
 
-    expect(text).toContain("paddingInline: 'calc((100% - min(15rem, 62vw)) / 2)'")
-    expect(text).toContain("scrollPaddingInline: 'calc((100% - min(15rem, 62vw)) / 2 - 8px)'")
+    expect(text).toContain("paddingInline: 'calc((100% - min(17rem, 70vw)) / 2)'")
+    expect(text).toContain("scrollPaddingInline: 'calc((100% - min(17rem, 70vw)) / 2 - 8px)'")
   })
 
   test('gibt einen haptischen Klick je Eintrag, den das Karussell passiert', () => {
@@ -224,7 +224,7 @@ describe('My Stack page vial view', () => {
   })
 
   test('zeigt an, wo im Karussell man steht', () => {
-    // Bei 62 % Breite sind die Nachbarn nur noch angeschnitten — ohne diese
+    // Bei 70 % Breite sind die Nachbarn nur noch angeschnitten — ohne diese
     // Zeile weiß niemand, ob nach dem dritten Wisch noch fünf kommen.
     const text = source()
 
@@ -240,7 +240,7 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('data-vial-add-slot')
     // Dieselbe Höhe wie die Standplätze der Objekte, damit die Kachel auf
     // derselben Linie steht statt daneben zu schweben.
-    expect(text).toContain('min-h-[var(--buehne-hoehe)]')
+    expect(text).toContain('flex h-full min-h-0 origin-bottom items-end')
 
     expect(text).toContain('flex items-center')
   })
@@ -258,7 +258,7 @@ describe('My Stack page vial view', () => {
 
     // still under the active item — but only for forms whose fill level says
     // something, so a sealed ampoule does not read "100 %" forever
-    expect(text).toContain('mt-1 text-center')
+    expect(text).toContain('mt-1 shrink-0 text-center')
     expect(text).toContain('{isActive && showsFillPct ? `${Math.round(vialPct)}%`')
   })
 
@@ -282,7 +282,7 @@ describe('My Stack page vial view', () => {
     // the outer wrapper no longer draws a bordered/tinted card around the carousel
     expect(text).not.toContain('overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/40 px-2 py-5 sm:px-5')
     // the carousel row cancels the page's own horizontal padding to reach full viewport width
-    expect(text).toContain('className="relative -mx-3"')
+    expect(text).toContain('className="relative -mx-3 flex min-h-0 flex-1 flex-col"')
   })
 
   test('ordnet das Vollbild von „was ist das" nach „was ändere ich"', () => {
@@ -689,22 +689,21 @@ describe('My Stack page vial view', () => {
     // nicht — derselbe, der die Kapsel füllt, schöbe den Pen über den Rand.
     const text = source()
 
-    expect(text).toContain('<StageFit className="h-[var(--buehne-hoehe)] w-full" maxScale={1.6}>')
+    expect(text).toContain('className="min-h-0 w-full flex-1"')
+    expect(text).toContain('targetHeightRatio={getDosageForm(p.dosage_form).stageHeightRatio ?? 1}')
   })
 
-  test('gibt der Bühne, was übrig ist, statt einer geratenen Bildschirmhöhe', () => {
-    // Vorher 46vh mit Deckel bei 26rem. Auf einem großen Telefon blieb darunter
-    // ein totes Feld: 46 % einer hohen Anzeige sind weniger als das, was
-    // zwischen Reitern und Fußleiste frei ist. Die 208 px sind die Summe
-    // dessen, was ober- und unterhalb der Bühne fest steht — jede Zahl aus
-    // einer Klasse in diesem Bildschirm, nicht geschätzt.
+  test('gibt der Bühne den verbleibenden Flex-Raum statt einer geratenen Bildschirmhöhe', () => {
+    // Die Seite besitzt den Viewport; Kopf, Reiter und Status sind feste
+    // Zeilen, waehrend die Buehne den Rest als Flex-Flaeche bekommt. Dadurch
+    // gibt es weder eine gepflegte Pixel-Summe noch vertikalen Seitenscroll.
     const text = source()
 
-    expect(text).toContain("'calc(100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 208px)'")
-    // Die Abstände, aus denen die 208 px bestehen, dürfen sich nicht ändern,
-    // ohne dass die Zahl mitgeht.
-    expect(text).toContain('-mx-3 mb-2 flex snap-x gap-2 overflow-x-auto px-3 pb-1')
-    expect(text).toContain('<div className="mb-1 flex items-center justify-between px-3">')
+    expect(text).toContain('data-my-stack-page className="flex h-full min-h-0 flex-col overflow-hidden"')
+    expect(text).toContain('data-my-stack-carousel className="flex h-full min-h-0 flex-1 flex-col"')
+    expect(text).toContain('className="flex min-h-0 flex-1 flex-col pt-1"')
+    expect(text).not.toContain('--buehne-hoehe')
+    expect(text).not.toContain('208px')
     expect(text).not.toContain('h-[46vh]')
     expect(text).not.toContain('max-h-[26rem]')
   })

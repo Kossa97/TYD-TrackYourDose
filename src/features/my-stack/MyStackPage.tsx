@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type UIEvent as ReactUIEvent, type WheelEvent as ReactWheelEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type UIEvent as ReactUIEvent, type WheelEvent as ReactWheelEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
@@ -2381,9 +2381,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   )
 
   return (
-    <div>
+    <div data-my-stack-page className="flex h-full min-h-0 flex-col overflow-hidden">
       {/* ── Header (single row): Titel · Suche · Ansicht/Filter ─────────── */}
-      <div className="relative flex items-center gap-2 mb-4">
+      <div className="relative mb-4 flex shrink-0 items-center gap-2">
         {/* Titel — kollabiert smooth, sobald die Suche geöffnet wird */}
         <div className={`flex min-w-0 items-center gap-2 overflow-hidden transition-all duration-300 ${searchOpen ? 'max-w-0 opacity-0' : 'max-w-[70%] opacity-100'}`}>
           <FlaskConical size={18} className="shrink-0 text-sky-400" />
@@ -2513,7 +2513,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       </div>
 
       {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
-      <div>
+      <div
+        data-my-stack-body
+        className={`min-h-0 flex-1 ${viewMode === 'vials' && activePeptide ? 'flex flex-col overflow-hidden' : 'overflow-y-auto overscroll-contain'}`}
+      >
           {initialLoad && <LabLoader fadingOut={loaderFading} />}
 
           {FEATURES.planTimelineV2 && timelineLoadError && (
@@ -2555,39 +2558,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           )}
 
           {!loading && viewMode === 'vials' && activePeptide && (
-            <div className="space-y-4">
-              <div
-                className="pt-1"
-                style={{
-                  /*
-                   * Die Buehne bekommt, was uebrig ist — statt einer geratenen
-                   * Bildschirmhoehe.
-                   *
-                   * Vorher standen dort 46vh mit Deckel bei 26rem. Auf einem
-                   * grossen Telefon blieb darunter ein totes Feld: 46 % einer
-                   * hohen Anzeige sind weniger als das, was zwischen Reitern
-                   * und Fussleiste frei ist. Jetzt wird abgezogen statt
-                   * geschaetzt. Die 208 px sind die Summe dessen, was ober- und
-                   * unterhalb der Buehne FEST steht, jede Zahl aus einer Klasse
-                   * in diesem Bildschirm:
-                   *
-                   *   16  pt-4 am Seiteninhalt (Layout)
-                   *   52  Kopfzeile: h-9 plus mb-4
-                   *    4  pt-1 hier
-                   *   48  Reiter: min-h-9, pb-1, mb-2
-                   *   40  Zeile mit Pfeilen und Kennzeichen: h-9 plus mb-1
-                   *    8  pb-2 am Streifen
-                   *   20  Zeile fuer den Fuellstand: eine Zeile text-xs, mt-1
-                   *   14  Positionsleiste: h-2.5 plus mt-1
-                   *    6  Reserve gegen Rundung und andere Schriftgroessen
-                   *
-                   * dvh und nicht vh: auf dem Telefon zaehlt die Flaeche, die
-                   * gerade zu sehen ist, nicht die ohne Adressleiste.
-                   */
-                  '--buehne-hoehe':
-                    'calc(100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom) - 208px)',
-                } as CSSProperties}
-              >
+            <div data-my-stack-carousel className="flex h-full min-h-0 flex-1 flex-col">
+              <div className="flex min-h-0 flex-1 flex-col pt-1">
                 {/* Die Reiter: „Alle" und alle sechs Kategorien, feste Plaetze.
                     Leere bleiben stehen und sind gedimmt — „Medikamente" ohne
                     Inhalt sagt, dass die App das auch kann; versteckt saehe
@@ -2598,7 +2570,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   data-stack-tabs
                   role="tablist"
                   aria-label={String(t('my_stack_category', { defaultValue: 'Kategorie' }))}
-                  className="no-scrollbar -mx-3 mb-2 flex snap-x gap-2 overflow-x-auto px-3 pb-1"
+                  className="no-scrollbar -mx-3 mb-2 flex shrink-0 snap-x gap-2 overflow-x-auto px-3 pb-1"
                 >
                   {STACK_TABS.map(reiter => {
                     const anzahl = reiterZaehler.get(reiter.key) ?? 0
@@ -2630,7 +2602,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   })}
                 </div>
 
-                <div className="mb-1 flex items-center justify-between px-3">
+                <div className="mb-1 flex shrink-0 items-center justify-between px-3">
                   <button
                     type="button"
                     onClick={() => selectPeptideOffset(-1)}
@@ -2671,7 +2643,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   </button>
                 </div>
 
-                <div className="relative -mx-3">
+                <div className="relative -mx-3 flex min-h-0 flex-1 flex-col">
                   {/* Der breite, weichgezeichnete Spot ueber der ganzen
                       Flaeche liess das Objekt in Dunst schweben. Was „steht
                       auf etwas" macht, ist ein SCHMALER Schatten direkt unter
@@ -2696,7 +2668,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   onPointerUp={handleVialCarouselPointerUp}
                   onPointerCancel={handleVialCarouselPointerUp}
                   onWheel={handleVialCarouselWheel}
-                  className={`relative z-10 flex ${vialSnapClassName} gap-2 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                  className={`relative z-10 flex min-h-0 flex-1 ${vialSnapClassName} gap-2 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
                     isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
                   }`}
                   style={{
@@ -2710,7 +2682,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     // sind, stehen die Punkte darunter — sie sind hier keine
                     // Zierde, sondern der Ersatz fuer das, was die Breite
                     // verdeckt.
-                    paddingInline: 'calc((100% - min(15rem, 62vw)) / 2)',
+                    paddingInline: 'calc((100% - min(17rem, 70vw)) / 2)',
                     // Acht Pixel Schlupf, und zwar mit Absicht: ohne sie waere
                     // das Fangfenster (Streifenbreite minus diesem Rand) genau
                     // so breit wie ein Eintrag. Bei Gleichstand faellt das
@@ -2719,16 +2691,16 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     // welche der beiden Regeln gerade gilt. Genau so sah der
                     // Sprung aus, der nach dem Wischen kam: 25 bis 33 px
                     // daneben, und beim naechsten Anlass zurueck.
-                    scrollPaddingInline: 'calc((100% - min(15rem, 62vw)) / 2 - 8px)',
+                    scrollPaddingInline: 'calc((100% - min(17rem, 70vw)) / 2 - 8px)',
                   }}
                 >
                   <div
                     data-vial-add
                     data-vial-add-slot
-                    className={`${vialItemSnapClassName} flex origin-bottom items-end min-h-[var(--buehne-hoehe)] shrink-0 rounded-2xl px-2 py-2 ${
+                    className={`${vialItemSnapClassName} flex h-full min-h-0 origin-bottom items-end shrink-0 rounded-2xl px-2 py-2 ${
                       isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
                     } ${addTileActive ? 'scale-100' : 'scale-[0.82] opacity-45'}`}
-                    style={{ width: 'min(15rem, 62vw)' }}
+                    style={{ width: 'min(17rem, 70vw)' }}
                   >
                     <AddVialTile
                       active={addTileActive}
@@ -2753,13 +2725,13 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         // Mitte, also schrumpfen die Nachbarn nach oben UND
                         // unten weg und schweben ueber dem Boden. Beim
                         // Formular-Karussell war das laengst entschieden; hier
-                        // fehlte es, und bei 62 % Breite faellt es auf.
-                        className={`${vialItemSnapClassName} origin-bottom shrink-0 rounded-2xl px-2 py-2 ${
+                        // fehlte es, und bei 70 % Breite faellt es auf.
+                        className={`${vialItemSnapClassName} flex h-full min-h-0 origin-bottom shrink-0 flex-col rounded-2xl px-2 py-2 ${
                           isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
                         } ${
                           isActive ? 'scale-100' : 'scale-[0.88] opacity-65 saturate-75'
                         }`}
-                        style={{ width: 'min(15rem, 62vw)' }}
+                        style={{ width: 'min(17rem, 70vw)' }}
                         aria-label={p.name}
                         role="button"
                         tabIndex={0}
@@ -2787,7 +2759,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                             1,3 (Vial) — meist also VERKLEINERN, und das ist
                             immer scharf. Die Groesse auf dem Schirm aendert
                             sich nicht: eingepasst wird in dieselbe Flaeche. */}
-                        <StageFit className="h-[var(--buehne-hoehe)] w-full" maxScale={1.6}>
+                        <StageFit
+                          className="min-h-0 w-full flex-1"
+                          maxScale={1.6}
+                          targetHeightRatio={getDosageForm(p.dosage_form).stageHeightRatio ?? 1}
+                        >
                           <StackStage
                             key={animationEpoch}
                             item={{ ...p, color_hex: peptideColor }}
@@ -2810,7 +2786,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                             einem geschuetzten Leerzeichen; fuer die Vorlesung
                             ist die leere Zeile ausgeblendet. */}
                         <p
-                          className="mt-1 text-center text-xs font-semibold tabular-nums text-slate-400"
+                          className="mt-1 shrink-0 text-center text-xs font-semibold tabular-nums text-slate-400"
                           aria-hidden={isActive && showsFillPct ? undefined : true}
                         >
                           {isActive && showsFillPct ? `${Math.round(vialPct)}%` : '\u00a0'}
@@ -2822,13 +2798,13 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 </SloshProvider>
                 </div>
 
-                {/* Wo bin ich. Bei 62 % Breite sind die Nachbarn nur noch
+                {/* Wo bin ich. Bei 70 % Breite sind die Nachbarn nur noch
                     angeschnitten — ohne diese Zeile wuesste niemand, ob nach
                     dem dritten Wisch noch fuenf kommen oder einer. Bis zu
                     sieben Eintraege als Punkte zum Antippen, darueber eine
                     Leiste, weil fuenfzehn Punkte niemand mehr zaehlt. */}
                 {stagePeptides.length > 1 && (
-                  <div data-vial-position className="mt-1 flex items-center justify-center gap-1.5">
+                  <div data-vial-position className="mt-1 flex shrink-0 items-center justify-center gap-1.5">
                     {stagePeptides.length <= 7 ? stagePeptides.map((p, index) => (
                       <button
                         key={p.id}

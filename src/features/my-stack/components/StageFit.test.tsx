@@ -47,6 +47,16 @@ describe('StageFit', () => {
     expect(skalaVon()).toBe('scale(2.608695652173913)')
   })
 
+  it('belegt nur den formspezifischen Anteil der Buehnenhoehe', () => {
+    // Zwei gleich hohe Darreichungsformen duerfen nicht automatisch gleich
+    // gross erscheinen. Die halbe Zielhoehe bildet hier eine bewusst kleinere
+    // reale Form ab, obwohl auf der Buehne noch mehr Platz vorhanden waere.
+    masse({ width: 400, height: 400 }, { width: 100, height: 200 })
+    render(<StageFit maxScale={4} targetHeightRatio={0.5}><div /></StageFit>)
+
+    expect(skalaVon()).toBe('scale(1)')
+  })
+
   it('vergroessert von sich aus hoechstens um zwei Drittel', () => {
     // Skalieren vergroessert das fertige Bild, nicht die Zeichnung: laufende
     // Animationen und SVG-Filter legen eine Form auf eine eigene Ebene, die in

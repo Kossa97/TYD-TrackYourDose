@@ -481,6 +481,22 @@ describe('MyStackPage non-vial visibility', () => {
     vi.clearAllMocks()
   })
 
+  it('owns the available viewport and keeps the primary carousel inside it', async () => {
+    await renderPage()
+
+    const page = document.querySelector<HTMLElement>('[data-my-stack-page]')
+    const body = document.querySelector<HTMLElement>('[data-my-stack-body]')
+    const carousel = document.querySelector<HTMLElement>('[data-my-stack-carousel]')
+
+    expect(page).not.toBeNull()
+    expect(page?.className).toContain('h-full')
+    expect(page?.className).toContain('overflow-hidden')
+    expect(body?.className).toContain('min-h-0')
+    expect(body?.className).toContain('overflow-hidden')
+    expect(carousel?.className).toContain('min-h-0')
+    expect(carousel?.className).toContain('flex-1')
+  })
+
   it('keeps an active non-vial item visible and editable beside the premium vial stage', async () => {
     await renderPage()
 
