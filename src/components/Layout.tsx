@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext'
 import { usePushNotifications } from '../lib/usePushNotifications'
 import { PushNotificationListener } from './PushNotificationListener'
 import { BottomNavigation } from './navigation/BottomNavigation'
+import { routeLayoutMode } from './layoutMode'
 
 const QUICK_ACTIONS = [
   { icon: CheckCircle2, label: 'Einnahme bestätigen', path: '/kalender#due-intakes', color: '#10b981' },
@@ -81,11 +82,10 @@ export function Layout() {
     navigate(path)
   }
 
-  const hideBottomNav = pathname === '/injektionen'
-  const hideFloatingFaq = pathname === '/injektionen'
+  const { lockViewport, hideBottomNav, hideFloatingFaq } = routeLayoutMode(pathname)
 
   return (
-    <div className="flex flex-col min-h-dvh w-full overflow-x-hidden" style={{ maxWidth: '100vw' }}>
+    <div className={`flex w-full flex-col overflow-x-hidden ${lockViewport ? 'h-dvh overflow-y-hidden' : 'min-h-dvh'}`} style={{ maxWidth: '100vw' }}>
 
       {/* ── iOS install guide banner ── */}
       {showIOSBanner && (
@@ -118,7 +118,7 @@ export function Layout() {
       )}
 
       <main
-        className={`flex-1 w-full overflow-x-hidden ${hideBottomNav ? 'h-dvh px-0 pt-0 overflow-hidden overscroll-none' : 'px-3 pt-4'}`}
+        className={`min-h-0 flex-1 w-full overflow-x-hidden ${hideBottomNav ? 'h-dvh px-0 pt-0 overflow-hidden overscroll-none' : lockViewport ? 'overflow-y-hidden px-3 pt-4' : 'px-3 pt-4'}`}
         style={{
           paddingBottom: hideBottomNav ? 0 : 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))',
           paddingTop: hideBottomNav ? 0 : (showPushBanner || showIOSBanner)

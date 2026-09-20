@@ -9,10 +9,11 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
  * schoebe den Pen weit ueber den Rand.
  *
  * Statt in elf Dateien elf neue Zahlen zu setzen, wird hier GEMESSEN und
- * skaliert: `scale = min(Breite/Objektbreite, Hoehe/Objekthoehe)`. Die
- * Groessenverhaeltnisse ZWISCHEN den Formen bleiben damit erhalten — ein Pen
- * steht weiterhin hoeher da als eine Kapsel —, und jede neue Form passt von
- * selbst.
+ * skaliert. Die verfuegbare Hoehe wird dabei mit dem Groessenanteil der Form
+ * gewichtet: grosse Darreichungsformen nutzen fast die ganze Buehne, kleine
+ * bewusst nur einen Teil. So bleiben die Formen untereinander proportional,
+ * ohne echte Millimeter 1:1 abzubilden und kleine Tabletten unbedienbar zu
+ * machen.
  *
  * WICHTIG fuer die Bildqualitaet: eine CSS-Skalierung vergroessert nicht die
  * Zeichnung, sondern das fertige Bild. Der Aufrufer muss deshalb die groesste
@@ -70,6 +71,8 @@ export interface StageFitProps {
    * gezogen, und jedes Vergroessern kostet Schaerfe (siehe oben).
    */
   maxScale?: number
+  /** Anteil der Buehnenhoehe, den diese Darreichungsform belegen soll. */
+  targetHeightRatio?: number
 }
 
 /**
@@ -92,7 +95,7 @@ interface Einpassung {
   hoehe: number
 }
 
-export function StageFit({ children, className, maxScale = 1.6 }: StageFitProps) {
+export function StageFit({ children, className, maxScale = 1.6, targetHeightRatio = 1 }: StageFitProps) {
   const flaecheRef = useRef<HTMLDivElement>(null)
   const objektRef = useRef<HTMLDivElement>(null)
   const [fit, setFit] = useState<Einpassung | null>(null)
@@ -114,7 +117,11 @@ export function StageFit({ children, className, maxScale = 1.6 }: StageFitProps)
       const breite = objekt.offsetWidth
       const hoehe = objekt.offsetHeight
       if (!platzBreite || !platzHoehe || !breite || !hoehe) return
-      const skala = einrasten(Math.min(maxScale, platzBreite / breite, platzHoehe / hoehe))
+      const skala = einrasten(Math.min(
+        maxScale,
+        platzBreite / breite,
+        (platzHoehe * targetHeightRatio) / hoehe,
+      ))
       setFit(vorher => (
         vorher && vorher.skala === skala && vorher.breite === breite && vorher.hoehe === hoehe
           ? vorher
@@ -128,7 +135,7 @@ export function StageFit({ children, className, maxScale = 1.6 }: StageFitProps)
     beobachter.observe(flaeche)
     beobachter.observe(objekt)
     return () => beobachter.disconnect()
-  }, [maxScale])
+  }, [maxScale, targetHeightRatio])
 
   const skala = fit?.skala ?? 1
   return (
