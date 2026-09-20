@@ -1,6 +1,40 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
+describe('InjectionMapCanvas WebGL-Haushalt', () => {
+  const quelle = () => readFileSync(new URL('./InjectionMapCanvas.tsx', import.meta.url), 'utf8')
+
+  it('gibt den WebGL-Kontext beim Ausbauen wieder her', () => {
+    // react-three-fiber raeumt seine Objekte auf, ruft aber kein
+    // `forceContextLoss()`. Der Kontext haengt dann bis zur Garbage
+    // Collection, und Browser erlauben nur rund sechzehn gleichzeitig. In der
+    // Konsole stand deshalb reihenweise „THREE.WebGLRenderer: Context Lost."
+    // -- auf Kalender und My Stack, also auf Seiten ganz ohne 3D.
+    const source = quelle()
+
+    expect(source).toContain('gl.forceContextLoss()')
+    expect(source).toContain('gl.dispose()')
+    // Der Renderer muss beim Erzeugen gemerkt werden, sonst gibt es beim
+    // Ausbauen nichts herzugeben.
+    expect(source).toContain('renderer.current = gl')
+  })
+
+  it('rendert nicht weiter, wenn niemand hinsieht', () => {
+    // Ohne `frameloop` rendert der Canvas dauerhaft mit 60 Bildern je
+    // Sekunde -- auch ausserhalb des Blickfelds und im Hintergrundtab. Die
+    // Szene animiert ueber `useFrame`, kann also nicht auf `demand`; sie darf
+    // nur ruhen, solange sie nicht zu sehen ist.
+    const source = quelle()
+
+    expect(source).toContain("frameloop={sichtbar ? 'always' : 'never'}")
+    expect(source).toContain('IntersectionObserver')
+    expect(source).toContain("document.addEventListener('visibilitychange'")
+    // Und aufgeraeumt wird auch hier.
+    expect(source).toContain('beobachter.disconnect()')
+    expect(source).toContain("document.removeEventListener('visibilitychange'")
+  })
+})
+
 describe('InjectionMapCanvas external assets', () => {
   it('does not use drei Environment presets that fetch remote HDR files', () => {
     const source = readFileSync(new URL('./InjectionMapCanvas.tsx', import.meta.url), 'utf8')
