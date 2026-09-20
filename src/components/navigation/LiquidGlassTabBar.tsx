@@ -176,7 +176,6 @@ export function LiquidGlassTabBar({
     ziehtRef.current = true
     gewandertRef.current = false
     zugBreiteRef.current = pillenBreite(auf.offsetWidth)
-    e.currentTarget.setPointerCapture(e.pointerId)
     setGedrueckt(true)
     setzeVorschau(id)
     // Die Pille springt auf den gedrueckten Platz — von dort aus haengt sie
@@ -210,12 +209,9 @@ export function LiquidGlassTabBar({
     onPreviewChange?.(naechster)
   }
 
-  const beiZeigerAuf = (e: ReactPointerEvent<HTMLElement>) => {
+  const beiZeigerAuf = () => {
     if (!ziehtRef.current) return
     ziehtRef.current = false
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId)
-    }
     const ziel = vorschauRef.current
     const kapsel = kapselRef.current
     setGedrueckt(false)

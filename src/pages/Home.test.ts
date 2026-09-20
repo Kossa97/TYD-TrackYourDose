@@ -818,7 +818,7 @@ describe('Home normalized timeline path', () => {
       .toHaveLength(0)
   })
 
-  it('auto-marks a closed normalized slot with exact version and stable provenance', async () => {
+  it('auto-marks a closed normalized slot through the idempotent RPC', async () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
     const now = new Date()
     const yesterday = new Date(now)
@@ -846,22 +846,19 @@ describe('Home normalized timeline path', () => {
     const TestHome = Home as ComponentType<{ homeDataClient: unknown }>
     render(createElement(MemoryRouter, null, createElement(TestHome, { homeDataClient: client })))
 
-    await waitFor(() => expect(
-      client.mutationCalls.filter(call => call.table === 'dose_logs' && call.operation === 'insert'),
-    ).toHaveLength(1))
-    const missedRows = client.mutationCalls.find(
-      call => call.table === 'dose_logs' && call.operation === 'insert',
-    )?.values
-    expect(missedRows).toEqual([expect.objectContaining({
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
+      p_entries: [expect.objectContaining({
       stack_item_id: 'stack-1',
       cycle_id: 'timeline-cycle',
       plan_version_id: 'timeline-version',
-      routine_slot_key: expect.stringMatching(/^timeline-cycle@/),
+      slot_key: expect.stringMatching(/^timeline-cycle@/),
       logged_at: expect.any(String),
       dose: 25,
       unit: 'mg',
       method: 'Oral',
       taken: false,
-    })])
+      })],
+    }))
+    expect(client.mutationCalls.filter(call => call.table === 'dose_logs')).toHaveLength(0)
   })
 })

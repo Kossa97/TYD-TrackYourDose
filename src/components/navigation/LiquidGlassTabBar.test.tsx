@@ -182,6 +182,21 @@ describe('LiquidGlassTabBar', () => {
     expect(geoeffnet).toEqual([])
   })
 
+  it('laesst einen Tipp ohne Pointer-Capture beim eigentlichen Link', () => {
+    masse({ home: { links: 8, breite: 70 } })
+    bauen('home')
+    const link = reiter('home')
+    const linkCapture = vi.fn()
+    const navCapture = vi.fn()
+    link.setPointerCapture = linkCapture
+    leiste().setPointerCapture = navCapture
+
+    zeiger('pointerdown', link, 40)
+
+    expect(linkCapture).not.toHaveBeenCalled()
+    expect(navCapture).not.toHaveBeenCalled()
+  })
+
   it('lässt sich auch auf die mittlere Schaltfläche schieben und loslassen', () => {
     // Sie führt zu keiner Seite, ist aber ein Ort wie jeder andere: wer auf
     // ihr loslässt, löst sie aus. Vorher übersprang die Pille sie, und das

@@ -43,6 +43,7 @@ import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/
 import {
   buildConfirmationEntry,
   groupRoutineIntakes,
+  routineGroupFromMinutes,
   type RoutineConfirmationEntry,
   type RoutineGroupModel,
   type RoutineIntake,
@@ -611,44 +612,61 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
             )
           : collectMissedIntakes(cycles, logData, now, parseISO(autoMissSince))
         if (missed.length > 0) {
-          const cycleById = new Map(cycles.map(c => [c.id, c]))
-          const rows = missed.map(m => {
-            if (FEATURES.planTimelineV2) {
-              const stackItem = stackItemData.find(item => item.id === m.stackItemId)
-              const intakeOnly = stackItem?.tracking_level === 'intake_only'
-              return {
-                user_id: user!.id,
-                stack_item_id: m.stackItemId,
-                cycle_id: m.cycleId,
-                plan_version_id: m.planVersionId,
-                routine_slot_key: m.routineSlotKey,
+          if (FEATURES.planTimelineV2) {
+            const stackItemById = new Map(stackItemData.map(item => [item.id as string, item]))
+            const entries = missed.flatMap(m => {
+              if (!m.routineSlotKey || !m.planVersionId || !m.scheduledAt) return []
+              const stackItem = stackItemById.get(m.stackItemId)
+              const trackingLevel = (stackItem?.tracking_level ?? 'intake_only') as TodayIntake['trackingLevel']
+              const intakeOnly = trackingLevel === 'intake_only'
+              return [{
+                key: m.routineSlotKey,
+                cycleId: m.cycleId,
+                planVersionId: m.planVersionId,
+                pendingLogId: null,
+                stackItemId: m.stackItemId,
+                stackItemName: String(stackItem?.display_name ?? ''),
+                trackingLevel,
+                group: routineGroupFromMinutes(m.minutes),
+                scheduledAt: m.scheduledAt,
                 dose: intakeOnly ? null : m.slotDose,
                 unit: intakeOnly ? null : m.unit ?? null,
                 method: m.method ?? '',
-                logged_at: m.scheduledAt,
+                injectable: isInjectableMethod(m.method),
+                selected: true,
+                actualDose: intakeOnly ? null : m.slotDose,
+                actualUnit: intakeOnly ? null : m.unit ?? null,
+              } satisfies RoutineConfirmationEntry]
+            })
+            // Idempotent in Postgres: mehrere offene Tabs duerfen denselben
+            // ueberfaelligen Slot gleichzeitig abschliessen, ohne 409.
+            if (entries.length > 0) {
+              void skipIntakeGroup(homeDataClient as unknown as IntakeConfirmationClient, entries)
+                .catch(error => console.error('[Home] auto-miss error:', error))
+            }
+          } else {
+            const cycleById = new Map(cycles.map(c => [c.id, c]))
+            const rows = missed.map(m => {
+              const c = cycleById.get(m.cycleId)!
+              const at = startOfDay(parseISO(m.dateKey))
+              at.setHours(Math.floor(m.minutes / 60), m.minutes % 60, 0, 0)
+              const intakeOnly = c.stack_items.tracking_level === 'intake_only'
+              // Die Menge DIESES Zeitpunkts, nicht die des Zyklus: sonst stuende
+              // bei „morgens 1000, abends 500" an beiden 1000 im Protokoll.
+              const quantity = intakeOnly ? null : effectiveSlotQuantity(c, parseISO(m.dateKey), escalations, m.slotDose)
+              return {
+                user_id: user!.id,
+                stack_item_id: c.stack_item_id,
+                dose: quantity?.dose ?? null,
+                unit: quantity?.unit ?? null,
+                method: c.method ?? '',
+                logged_at: at.toISOString(),
                 taken: false,
                 notes: AUTO_MISSED_NOTE,
               }
-            }
-            const c = cycleById.get(m.cycleId)!
-            const at = startOfDay(parseISO(m.dateKey))
-            at.setHours(Math.floor(m.minutes / 60), m.minutes % 60, 0, 0)
-            const intakeOnly = c.stack_items.tracking_level === 'intake_only'
-            // Die Menge DIESES Zeitpunkts, nicht die des Zyklus: sonst stuende
-            // bei „morgens 1000, abends 500" an beiden 1000 im Protokoll.
-            const quantity = intakeOnly ? null : effectiveSlotQuantity(c, parseISO(m.dateKey), escalations, m.slotDose)
-            return {
-              user_id: user!.id,
-              stack_item_id: c.stack_item_id,
-              dose: quantity?.dose ?? null,
-              unit: quantity?.unit ?? null,
-              method: c.method ?? '',
-              logged_at: at.toISOString(),
-              taken: false,
-              notes: AUTO_MISSED_NOTE,
-            }
-          })
-          await homeDataClient.from('dose_logs').insert(rows)
+            })
+            await homeDataClient.from('dose_logs').insert(rows)
+          }
         }
 
         const injectionRows = injectionData ?? []

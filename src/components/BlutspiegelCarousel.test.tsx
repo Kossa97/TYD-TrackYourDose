@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { BlutspiegelCarousel } from './BlutspiegelCarousel'
@@ -103,6 +103,7 @@ vi.mock('../services/blutspiegelHistory', async importOriginal => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   cleanup()
   vi.clearAllMocks()
   carouselMocks.escalations = []
@@ -194,6 +195,33 @@ describe('BlutspiegelCarousel PK readiness', () => {
 
     expect(await screen.findByText(/Geschätzter Wirkstoff/)).toBeTruthy()
     expect(screen.queryByText(/PK-Daten unvollständig/)).toBeNull()
+  })
+
+  it('does not poll PK data again before one minute has passed', async () => {
+    vi.useFakeTimers()
+    cycles[0].stack_items.tracking_level = 'complete'
+    vi.mocked(getCurrentBlutspiegelLevel).mockResolvedValue({
+      currentLevel: 50,
+      trend: 'stable',
+      sparkData: Array(20).fill(50),
+      nextDoseIn: '1h',
+      levelAfterNextDose: 75,
+      peakLabel: 'in 1h',
+      unit: 'mg',
+      interruptedAt: null,
+    })
+
+    render(<MemoryRouter><BlutspiegelCarousel /></MemoryRouter>)
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    expect(getCurrentBlutspiegelLevel).toHaveBeenCalledTimes(1)
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(59_999) })
+
+    expect(getCurrentBlutspiegelLevel).toHaveBeenCalledTimes(1)
   })
 
   it('does not calculate when an active escalation unit mismatches the segment', async () => {

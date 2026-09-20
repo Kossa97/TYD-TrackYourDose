@@ -156,7 +156,9 @@ function linkedProfiles(cycle: CycleWithPk): VerknuepfteZutat[] {
   return verknuepft
 }
 
-const REFRESH_INTERVAL_MS = 5000
+// PK curves change on a minutes/hours scale. Five-second refreshes multiplied
+// database reads and rerendered the entire carousel 20 times per second.
+const REFRESH_INTERVAL_MS = 60_000
 
 const TREND_DISPLAY: Record<BlutspiegelTrend, { label: string; color: string }> = {
   rising: { label: '↑ STEIGEND', color: '#10b981' },
@@ -323,10 +325,8 @@ function LevelDisplay({
 }
 
 function LiveStatusBar({
-  remainingMs,
   refreshFlashing,
 }: {
-  remainingMs: number
   refreshFlashing: boolean
 }) {
   const monoRed: CSSProperties = {
@@ -349,12 +349,10 @@ function LiveStatusBar({
         }}
       />
       <span style={{ ...monoRed, fontWeight: 700, textTransform: 'uppercase' }}>LIVE</span>
-      {refreshFlashing ? (
+      {refreshFlashing && (
         <span className="blutspiegel-refresh-spin" style={monoRed}>
           ↻
         </span>
-      ) : (
-        <span style={monoRed}>{(remainingMs / 1000).toFixed(2)}</span>
       )}
     </div>
   )
@@ -364,11 +362,9 @@ function LiveStatusBar({
 
 function BlutspiegelCard({
   card,
-  remainingMs,
   refreshFlashing,
 }: {
   card: ReadyCarouselCard
-  remainingMs: number
   refreshFlashing: boolean
 }) {
   const navigate = useNavigate()
@@ -418,7 +414,7 @@ function BlutspiegelCard({
             {peptideName}
           </p>
           <div style={{ flexShrink: 0 }}>
-            <LiveStatusBar remainingMs={remainingMs} refreshFlashing={refreshFlashing} />
+            <LiveStatusBar refreshFlashing={refreshFlashing} />
           </div>
         </div>
 
@@ -539,11 +535,8 @@ export function BlutspiegelCarousel() {
   const dragStartX = useRef(0)
   const dragPxRef = useRef(0)
   const pointerActive = useRef(false)
-  const [remainingMs, setRemainingMs] = useState(REFRESH_INTERVAL_MS)
   const [refreshFlashing, setRefreshFlashing] = useState(false)
-  const flashTriggeredRef = useRef(false)
   const refreshInFlightRef = useRef(false)
-  const nextRefreshAt = useRef(Date.now() + REFRESH_INTERVAL_MS)
 
   const loadLevels = useCallback(async (showLoader: boolean) => {
     if (!user) {
@@ -706,8 +699,6 @@ export function BlutspiegelCarousel() {
     const visibleLevels = levels.filter((card): card is CarouselCard => card !== null)
     setCards(visibleLevels)
     setActiveIndex((prev) => (visibleLevels.length ? Math.min(prev, visibleLevels.length - 1) : 0))
-    nextRefreshAt.current = Date.now() + REFRESH_INTERVAL_MS
-    flashTriggeredRef.current = false
     setLoading(false)
     } catch {
       setLoadError(true)
@@ -722,15 +713,11 @@ export function BlutspiegelCarousel() {
   useEffect(() => {
     if (!user || !cards.length) return
 
-    const tickId = window.setInterval(() => {
-      const remaining = Math.max(0, nextRefreshAt.current - Date.now())
-      setRemainingMs(remaining)
-
-      if (remaining > 0 || refreshInFlightRef.current) return
+    const refreshId = window.setInterval(() => {
+      if (refreshInFlightRef.current) return
 
       refreshInFlightRef.current = true
       setRefreshFlashing(true)
-      nextRefreshAt.current = Date.now() + REFRESH_INTERVAL_MS
 
       void loadLevels(false).finally(() => {
         window.setTimeout(() => {
@@ -738,9 +725,9 @@ export function BlutspiegelCarousel() {
           refreshInFlightRef.current = false
         }, 1000)
       })
-    }, 50)
+    }, REFRESH_INTERVAL_MS)
 
-    return () => window.clearInterval(tickId)
+    return () => window.clearInterval(refreshId)
   }, [user, cards.length, loadLevels])
 
   const finishDrag = useCallback(() => {
@@ -862,7 +849,6 @@ export function BlutspiegelCarousel() {
               ) : (
                 <BlutspiegelCard
                   card={card}
-                  remainingMs={remainingMs}
                   refreshFlashing={refreshFlashing}
                 />
               )}
