@@ -332,6 +332,32 @@ describe('Dashboard normalized timeline path', () => {
     expect(screen.getByText('18.09.2026')).toBeTruthy()
   }
 
+  it('lädt beim Ausklappen nicht neu, solange derselbe Monat sichtbar bleibt', async () => {
+    // Das Monatsraster war schon geladen -- die Wochenansicht liest denselben
+    // Bereich. Trotzdem lief beim Ausklappen der ganze Ladevorgang noch
+    // einmal, weil `setCurrentDate` ein neues `Date` anlegte und damit den
+    // Lader neu erzeugte. Sichtbar war das als leere Tage fuer die Dauer
+    // einer Runde zum Server.
+    const fixtures = startFixFixture()
+    const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
+    renderDashboard(client)
+    await waitFor(() => expect(client.logQueries.length).toBeGreaterThan(0))
+    await waitFor(() => expect(screen.getAllByRole('status')
+      .some(element => element.textContent?.includes('Lädt'))).toBe(false))
+    const geladen = client.logQueries.length
+
+    fireEvent.click(screen.getByRole('button', { name: 'Monat anzeigen' }))
+    expect(screen.getByRole('heading', { name: 'September 2026' })).toBeTruthy()
+    // „Heute" setzt beide Daten neu -- auf denselben Tag.
+    fireEvent.click(screen.getAllByRole('button', { name: 'heute_link' })[0])
+    await act(async () => { await Promise.resolve() })
+
+    expect(client.logQueries.length).toBe(geladen)
+    // Und es bleibt beim Ausklappen: kein Ladehinweis dazwischen.
+    expect(screen.getAllByRole('status')
+      .some(element => element.textContent?.includes('Lädt'))).toBe(false)
+  })
+
   it.each(['keyed', 'legacy'])('keeps selected-day %s coverage while browsing a distant month', async kind => {
     const fixtures = startFixFixture()
     fixtures.dose_logs = [{ ...pendingLog(kind === 'keyed'), taken: true,
@@ -366,27 +392,45 @@ describe('Dashboard normalized timeline path', () => {
     }
   })
 
-  it('waits for the newly selected-day snapshot before offering due actions', async () => {
+  it('beantwortet einen geladenen Tag sofort und wartet nur auf einen ungeladenen', async () => {
+    // Zwei Zusagen in einem Fall, weil sie zusammengehoeren.
+    //
+    // Der Monat wird in einem Zug geholt -- das Raster reicht von der ersten
+    // bis zur letzten angezeigten Woche. Ein Tag DARIN ist also schon
+    // beantwortet, und die Seite darf ihn nicht noch einmal erfragen; genau
+    // das war der Grund, warum das Ausklappen und jeder Tagwechsel sich wie
+    // ein Neuladen anfuehlten.
+    //
+    // Ein Monat, der noch NICHT geholt wurde, ist der andere Fall: dort darf
+    // die Seite nichts anbieten, was auf den alten Zahlen beruht, und zeigt
+    // bis zur Antwort den Ladehinweis.
     const fixtures = startFixFixture()
     const options: { filterLogs: boolean; logReadGate?: Promise<void> } = { filterLogs: true }
     const client = createDashboardClient(fixtures, undefined, options)
     renderDashboard(client)
     fireEvent.click(await screen.findByRole('tab', { name: /^morgens/ }))
     await screen.findByRole('button', { name: 'Alle als eingenommen markieren' })
-    fixtures.dose_logs = [{ ...pendingLog(), taken: true,
-      logged_at: '2026-07-01T06:00:00.000Z', routine_slot_key: 'timeline-cycle@2026-09-19T06:00:00.000Z' }]
-    let release!: () => void
-    options.logReadGate = new Promise<void>(resolve => { release = resolve })
+
+    const abfragen = client.logQueries.length
     vi.stubGlobal('PointerEvent', MouseEvent)
     const nextDay = document.querySelector('[data-calendar-date="2026-09-19"]')!
     fireEvent.pointerDown(nextDay, { clientX: 30, clientY: 30 })
     fireEvent.pointerUp(nextDay, { clientX: 30, clientY: 30 })
     expect(screen.getByText('19.09.2026')).toBeTruthy()
+    expect(screen.getAllByRole('status').some(element => element.textContent?.includes('Lädt'))).toBe(false)
+    expect(client.logQueries.length).toBe(abfragen)
+
+    let release!: () => void
+    options.logReadGate = new Promise<void>(resolve => { release = resolve })
+    fireEvent.click(screen.getByRole('button', { name: 'Monat anzeigen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Nächster Monat' }))
+    expect(screen.getByRole('heading', { name: 'October 2026' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Alle als eingenommen markieren' })).toBeNull()
     expect(screen.getAllByRole('status').some(element => element.textContent?.includes('Lädt'))).toBe(true)
     await act(async () => { release() })
-    expect(await screen.findByText('Alle geplanten Einnahmen sind bestätigt.')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Alle als eingenommen markieren' })).toBeNull()
+    await waitFor(() => expect(screen.getAllByRole('status')
+      .some(element => element.textContent?.includes('Lädt'))).toBe(false))
+    expect(client.logQueries.length).toBeGreaterThan(abfragen)
   })
 
   it.each(['single', 'group'])('refreshes the current union after an older %s confirmation finishes', async kind => {

@@ -449,7 +449,30 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
   const timelineSelection = FEATURES.planTimelineV2 ? format(selectedDay, 'yyyy-MM-dd') : ''
-  const timelineContext = `${format(currentDate, 'yyyy-MM')}|${timelineSelection}`
+
+  // Der Ausschnitt, den die Abfrage wirklich liest -- als Text, nicht als
+  // `Date`.
+  //
+  // `currentDate` und `selectedDay` sind Objekte, und jedes `setCurrentDate`
+  // legt ein neues an, auch wenn es denselben Tag meint. Das allein reichte,
+  // um `loadLogSnapshot` neu zu erzeugen, und damit lief der ganze Ladevorgang
+  // noch einmal: Zyklen, Substanzen, Dosen, Slots. Zu sehen war das beim
+  // Ausklappen des Kalenders -- der Monat war laengst geladen, trotzdem
+  // standen die Tage wieder leer, bis die Runde zurueckkam.
+  //
+  // Diese drei Zeichenketten aendern sich nur, wenn sich der gelesene Bereich
+  // aendert. Derselbe Monat, ein anderer Tag darin: alles bleibt gleich.
+  const fensterStart = format(startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 }), 'yyyy-MM-dd')
+  const fensterEnde = format(addDays(endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 }), 1), 'yyyy-MM-dd')
+  // Der ausgewaehlte Tag kostet nur dann eine eigene Abfrage, wenn er
+  // ausserhalb des Rasters liegt. ISO-Daten vergleichen sich als Text
+  // chronologisch, gleiche Breite vorausgesetzt -- die haben sie.
+  const tagAusserhalbDesRasters = timelineSelection
+    && (timelineSelection < fensterStart || timelineSelection >= fensterEnde)
+    ? timelineSelection
+    : ''
+  const monatsSchluessel = format(currentDate, 'yyyy-MM')
+  const timelineContext = `${fensterStart}|${fensterEnde}|${tagAusserhalbDesRasters}`
   const latestLogLoader = useRef<(() => Promise<void>) | null>(null)
 
   // Einnahme-Bestätigungs-Sheet
@@ -561,11 +584,11 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         if (!isCurrent()) return
         if (itemsResult.error) throw itemsResult.error
         if (timezoneReviewResult.error) throw timezoneReviewResult.error
-        const rangeStart = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 })
-        const rangeEnd = startOfDay(addDays(endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 }), 1))
-        const selectionStart = parseISO(timelineSelection)
+        const rangeStart = parseISO(fensterStart)
+        const rangeEnd = parseISO(fensterEnde)
         const ranges = [{ start: rangeStart, end: rangeEnd }]
-        if (selectionStart < rangeStart || selectionStart >= rangeEnd) {
+        if (tagAusserhalbDesRasters) {
+          const selectionStart = parseISO(tagAusserhalbDesRasters)
           ranges.push({ start: selectionStart, end: addDays(selectionStart, 1) })
         }
         const columns = 'id, stack_item_id, dose, unit, method, logged_at, notes, taken, cycle_id, plan_version_id, routine_slot_key, stack_items(display_name)'
@@ -634,8 +657,8 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       return
     }
     const today = new Date()
-    const monthStart = startOfMonth(currentDate)
-    const monthEnd = endOfMonth(currentDate)
+    const monthStart = parseISO(`${monatsSchluessel}-01`)
+    const monthEnd = endOfMonth(monthStart)
     const rangeStart = monthStart < today ? monthStart : today
     const rangeEnd = monthEnd > today ? monthEnd : today
     const start = format(rangeStart, 'yyyy-MM-dd')
@@ -650,7 +673,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       .lte('logged_at', end + 'T23:59:59')
       .order('logged_at', { ascending: true })
     if (data) setLogs(data as unknown as DoseLog[])
-  }, [currentDate, dashboardDataClient, user, timelineSelection, timelineContext])
+  }, [dashboardDataClient, user, fensterStart, fensterEnde, tagAusserhalbDesRasters, monatsSchluessel, timelineContext])
 
   useLayoutEffect(() => {
     latestLogLoader.current = loadLogSnapshot
