@@ -421,7 +421,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
   useEffect(() => {
     if (!user) return
     let cancelled = false
-    let missedTimer: ReturnType<typeof setTimeout> | undefined
+    let missedTimer: number | undefined
     async function load() {
       const todayKey = format(new Date(), 'yyyy-MM-dd')
       const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
