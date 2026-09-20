@@ -63,7 +63,9 @@ describe('Maße der Bottom-Navigation', () => {
   it('nimmt die Wege heraus, wenn jemand Bewegung abbestellt hat', () => {
     // Die Datei hat mehrere solche Blöcke; gemeint ist der der Leiste.
     const block = css().slice(css().lastIndexOf('@media (prefers-reduced-motion: reduce)'))
-    const bis = block.slice(0, block.indexOf('\n}\n') + 3)
+    const bis = block.match(
+      /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\}\s*(?=\/\* Im hellen Thema)/,
+    )?.[0] ?? ''
 
     expect(bis).toContain('.tyd-tabbar-pill')
     // Auch das Anheben beim Drücken und das Aufblähen der Blase.
