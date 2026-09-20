@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
@@ -9,7 +9,7 @@ import {
   CalendarDays, ChevronDown, ChevronUp,
   TrendingUp, Search, Bell, Check,
   Package, FileUp, Droplets, X, FileText, ExternalLink,
-  Archive, Lock, Minus, RefreshCw,
+  Archive, RefreshCw,
 } from 'lucide-react'
 import { getPeptideColor } from '../lib/peptideColors'
 import { useNew } from '../lib/useNew'
@@ -416,32 +416,13 @@ export function Peptide() {
   const [skipRekonstitution]   = useState(() => !!localStorage.getItem('_skip_rekonstitution'))
 
   // ── Neu-Signale ───────────────────────────────────────────────────────────
-  const [inventarTabNew, dismissInventarTab]   = useNew('inventar_tab')
   const [infoBtnNew,     dismissInfoBtn]       = useNew('peptide_info')
   const [zyklusBtnNew,   dismissZyklusBtn]     = useNew('zyklus_btn')
-  const [anlegenBtnNew,  dismissAnlegenBtn]    = useNew('peptid_anlegen')
-
-  // ── Tab (per URL-Parameter: ?tab=inventar) ───────────────────────────────
-  const [searchParams] = useSearchParams()
-  const [activeTab, setActiveTab] = useState<'inventar' | 'peptide'>(
-    searchParams.get('tab') === 'inventar' ? 'inventar' : 'peptide'
-  )
-  useEffect(() => {
-    setActiveTab(searchParams.get('tab') === 'inventar' ? 'inventar' : 'peptide')
-  }, [searchParams])
 
   // ── Inventar ─────────────────────────────────────────────────────────────
   const [inventory, setInventory]             = useState<InventoryItem[]>([])
-  const [showInvForm, setShowInvForm]         = useState(false)
-  const [editingInvId, setEditingInvId]       = useState<string | null>(null)
-  const [iForm, setIForm]                     = useState<InventoryForm>(emptyInventoryForm())
-  const [savingInv, setSavingInv]             = useState(false)
-  const [invBatchFile, setInvBatchFile]       = useState<File | null>(null)
-  const [uploadingInvFile, setUploadingInvFile] = useState(false)
-  const [showInvDropdown, setShowInvDropdown] = useState(false)
   const [pkProfileCatalog, setPkProfileCatalog]   = useState<PkProfileOption[]>([])
-  const [invPkProfileId, setInvPkProfileId]       = useState<string | null>(null)
-  const [invPkSuggestOpen, setInvPkSuggestOpen]   = useState(false)
+  const [pkSuggestOpen, setPkSuggestOpen]         = useState(false)
 
   // ── Peptide ───────────────────────────────────────────────────────────────
   const [peptides, setPeptides]               = useState<Peptide[]>([])
@@ -493,13 +474,13 @@ export function Peptide() {
   useEffect(() => { loadInventory(); loadPeptides(); loadCycles(); loadEscalations() }, [])
 
   useEffect(() => {
-    if (!showInvForm) return
+    if (!showPeptideForm) return
     supabase.from('pk_profiles').select('id, name, aliases').order('name')
       .then(({ data }) => setPkProfileCatalog((data as PkProfileOption[]) ?? []))
-  }, [showInvForm])
+  }, [showPeptideForm])
 
-  const invPkSuggestions = useMemo(() => {
-    const q = iForm.name.trim().toLowerCase()
+  const pepPkSuggestions = useMemo(() => {
+    const q = pForm.name.trim().toLowerCase()
     if (!q) return []
     return pkProfileCatalog
       .filter(p =>
@@ -507,34 +488,24 @@ export function Peptide() {
         p.aliases.some(a => a.toLowerCase().includes(q)),
       )
       .slice(0, 5)
-  }, [iForm.name, pkProfileCatalog])
+  }, [pForm.name, pkProfileCatalog])
 
-  const linkedPkProfile = useMemo(
-    () => pkProfileCatalog.find(p => p.id === invPkProfileId) ?? null,
-    [pkProfileCatalog, invPkProfileId],
+  const pepLinkedPkProfile = useMemo(
+    () => pkProfileCatalog.find(p => p.id === pForm.pk_profile_id) ?? null,
+    [pkProfileCatalog, pForm.pk_profile_id],
   )
 
-  const resetInvFormState = () => {
-    setEditingInvId(null)
-    setIForm(emptyInventoryForm())
-    setInvBatchFile(null)
-    setShowInvDropdown(false)
-    setInvPkProfileId(null)
-    setInvPkSuggestOpen(false)
-  }
-
-  const handleInvNameChange = (value: string) => {
-    setIForm(f => ({ ...f, name: value }))
-    setInvPkSuggestOpen(true)
-    if (invPkProfileId && linkedPkProfile && value.trim().toLowerCase() !== linkedPkProfile.name.toLowerCase()) {
-      setInvPkProfileId(null)
+  const handlePepNameChange = (value: string) => {
+    setPForm(f => ({ ...f, name: value }))
+    setPkSuggestOpen(true)
+    if (pForm.pk_profile_id && pepLinkedPkProfile && value.trim().toLowerCase() !== pepLinkedPkProfile.name.toLowerCase()) {
+      setPForm(f => ({ ...f, pk_profile_id: '' }))
     }
   }
 
-  const selectInvPkProfile = (profile: PkProfileOption) => {
-    setIForm(f => ({ ...f, name: profile.name }))
-    setInvPkProfileId(profile.id)
-    setInvPkSuggestOpen(false)
+  const selectPepPkProfile = (profile: PkProfileOption) => {
+    setPForm(f => ({ ...f, name: profile.name, pk_profile_id: profile.id }))
+    setPkSuggestOpen(false)
   }
 
   const displayPeptides = peptides
@@ -544,92 +515,8 @@ export function Peptide() {
   const cyclesOf      = (pid: string) => cycles.filter(c => c.peptide_id === pid)
   const escalationsOf = (cid: string) => escalations.filter(e => e.cycle_id === cid)
 
-  // ── Inventar CRUD ─────────────────────────────────────────────────────────
-  const saveInventory = async () => {
-    if (!iForm.name.trim())  return toast.error(t('peptidname_erforderlich'))
-    if (!iForm.mg_per_vial)  return toast.error(t('wirkstoff_erforderlich'))
-    if (!iForm.vials_count)  return toast.error(t('anzahl_erforderlich'))
-    setSavingInv(true)
-
-    let fileUrl = iForm.batch_file_url
-    if (invBatchFile) {
-      setUploadingInvFile(true)
-      const ext  = invBatchFile.name.split('.').pop()?.toLowerCase()
-      const path = `${user!.id}/inv_${Date.now()}.${ext}`
-      const { error: upErr } = await supabase.storage.from('batch-files').upload(path, invBatchFile)
-      if (upErr) toast.error(t('datei_upload_fehler'))
-      else { const { data } = supabase.storage.from('batch-files').getPublicUrl(path); fileUrl = data.publicUrl }
-      setUploadingInvFile(false)
-    }
-
-    const currentCount = parseInt(iForm.vials_count) || 1
-    const existingInitial = editingInvId
-      ? (inventory.find(i => i.id === editingInvId)?.vials_initial ?? 0)
-      : 0
-    const initialCount = existingInitial > 0 ? existingInitial : currentCount
-
-    const payload = {
-      user_id:        user!.id,
-      name:           iForm.name.trim(),
-      batch_number:   iForm.batch_number  || null,
-      batch_source:   iForm.batch_source  || null,
-      batch_file_url: fileUrl             || null,
-      vials_count:    currentCount,
-      vials_initial:  initialCount,
-      mg_per_vial:    parseFloat(iForm.mg_per_vial),
-      pk_profile_id:  invPkProfileId,
-    }
-    const { error, data: savedInv } = editingInvId
-      ? await supabase.from('inventory_items').update(payload).eq('id', editingInvId).select('id').single()
-      : await supabase.from('inventory_items').insert(payload).select('id').single()
-    if (error) toast.error(t('fehler_speichern'))
-    else {
-      const invId = editingInvId ?? savedInv?.id
-      if (invId) {
-        await supabase.from('peptides')
-          .update({ pk_profile_id: invPkProfileId })
-          .eq('inventory_item_id', invId)
-      }
-      toast.success(editingInvId ? t('inventar_aktualisiert') : t('ins_lager_eingetragen'))
-    }
-    setSavingInv(false); setShowInvForm(false); setInvBatchFile(null); loadInventory()
-  }
-
-  const openEditInv = (item: InventoryItem) => {
-    setEditingInvId(item.id)
-    setIForm({
-      name: item.name, batch_number: item.batch_number ?? '',
-      batch_source: item.batch_source ?? '', batch_file_url: item.batch_file_url ?? '',
-      vials_count: item.vials_count.toString(), mg_per_vial: item.mg_per_vial.toString(),
-    })
-    setInvPkProfileId(item.pk_profile_id ?? null)
-    setInvPkSuggestOpen(false)
-    setInvBatchFile(null); setShowInvForm(true)
-  }
-
-  const removeInventory = async (id: string) => {
-    if (!confirm(t('inventar_eintrag_loeschen'))) return
-    await supabase.from('inventory_items').delete().eq('id', id)
-    toast.success(t('geloescht')); loadInventory()
-  }
-
-  const createPeptideFromInventory = (item: InventoryItem) => {
-    setEditingPeptideId(null)
-    setPForm({
-      ...emptyPeptideForm(),
-      inventory_item_id: item.id,
-      pk_profile_id:  item.pk_profile_id ?? '',
-      name:           item.name,
-      vial_amount_mg: item.mg_per_vial.toString(),
-      vials_in_stock: item.vials_count.toString(),
-      batch_number:   item.batch_number  ?? '',
-      batch_source:   item.batch_source  ?? '',
-      batch_file_url: item.batch_file_url ?? '',
-    })
-    setBatchFile(null); setActiveTab('peptide'); setShowPeptideForm(true)
-  }
-
-  // ── Inventar Bestand anpassen ─────────────────────────────────────────────
+  // ── Inventar Bestand anpassen (dead code — kept for reconstitution logic) ──
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const adjustInventoryCount = async (id: string, delta: number, current: number) => {
     const newCount = Math.max(0, current + delta)
     await supabase.from('inventory_items').update({ vials_count: newCount }).eq('id', id)
@@ -694,17 +581,12 @@ export function Peptide() {
 
   // ── Peptid CRUD ───────────────────────────────────────────────────────────
   const handleNewPeptide = () => {
-    if (inventory.length === 0) {
-      setActiveTab('inventar')
-      toast(t('zuerst_ins_inventar'), { icon: '📦' })
-      return
-    }
-    setEditingPeptideId(null); setPForm(emptyPeptideForm()); setBatchFile(null); setShowPeptideForm(true)
+    setEditingPeptideId(null); setPForm(emptyPeptideForm()); setBatchFile(null)
+    setPkSuggestOpen(false); setShowPeptideForm(true)
   }
 
   const savePeptide = async () => {
     if (!pForm.name.trim()) return toast.error(t('peptidname_erforderlich'))
-    if (!editingPeptideId && !pForm.inventory_item_id) return toast.error(t('bitte_inventar_auswaehlen'))
     setSavingPeptide(true)
 
     let fileUrl = pForm.batch_file_url
@@ -716,6 +598,28 @@ export function Peptide() {
       if (upErr) toast.error(t('datei_upload_fehler'))
       else { const { data } = supabase.storage.from('batch-files').getPublicUrl(path); fileUrl = data.publicUrl }
       setUploadingFile(false)
+    }
+
+    // Auto-create or update inventory_item
+    let invItemId = pForm.inventory_item_id || null
+    if (pForm.vial_amount_mg && pForm.vials_in_stock) {
+      const invPayload = {
+        user_id: user!.id,
+        name: pForm.name.trim(),
+        mg_per_vial: parseFloat(pForm.vial_amount_mg),
+        vials_count: parseFloat(pForm.vials_in_stock) || 0,
+        vials_initial: parseFloat(pForm.vials_in_stock) || 0,
+        batch_number: pForm.batch_number || null,
+        batch_source: pForm.batch_source || null,
+        batch_file_url: fileUrl || null,
+        pk_profile_id: pForm.pk_profile_id || null,
+      }
+      if (invItemId) {
+        await supabase.from('inventory_items').update(invPayload).eq('id', invItemId)
+      } else {
+        const { data: newInv } = await supabase.from('inventory_items').insert(invPayload).select('id').single()
+        invItemId = newInv?.id ?? null
+      }
     }
 
     const stock = parseFloat(pForm.vials_in_stock) || 0
@@ -739,7 +643,7 @@ export function Peptide() {
       batch_number:   pForm.batch_number   || null,
       batch_source:   pForm.batch_source   || null,
       batch_file_url: fileUrl              || null,
-      inventory_item_id: pForm.inventory_item_id || null,
+      inventory_item_id: invItemId,
       pk_profile_id:     pForm.pk_profile_id || null,
     }
     const { error, data: savedRow } = editingPeptideId
@@ -751,7 +655,7 @@ export function Peptide() {
       const savedId = editingPeptideId ?? savedRow?.id
       if (savedId) setExpandedId(savedId)
     }
-    setSavingPeptide(false); setShowPeptideForm(false); setBatchFile(null); loadPeptides()
+    setSavingPeptide(false); setShowPeptideForm(false); setBatchFile(null); loadPeptides(); loadInventory()
   }
 
   const openEditPeptide = (p: Peptide) => {
@@ -951,143 +855,25 @@ export function Peptide() {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  const reconstitutedItemIds = new Set(
-    peptides.map(p => p.inventory_item_id).filter((id): id is string => !!id)
-  )
-  const isLinked = !!pForm.inventory_item_id
 
   return (
     <div>
-      {/* ── Tab-Switcher + Aktions-Button ───────────────────────────────── */}
+      {/* ── Header + Aktions-Button ─────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex bg-slate-800 rounded-xl p-1 gap-1">
-          <button
-            data-ob="tab-inventar"
-            onClick={() => { setActiveTab('inventar'); dismissInventarTab() }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === 'inventar' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-300'
-            }`}>
-            <Archive size={14} /> {t('inventar')}
-            {inventory.length > 0 ? (
-              <span className="ml-0.5 bg-slate-600 text-slate-300 text-xs rounded-full px-1.5 py-px leading-none">
-                {inventory.length}
-              </span>
-            ) : inventarTabNew ? (
-              <NewDot />
-            ) : null}
-          </button>
-          <button
-            data-ob="tab-peptide"
-            onClick={() => setActiveTab('peptide')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === 'peptide' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-300'
-            }`}>
-            <FlaskConical size={14} /> {t('meine_peptide')}
-            {peptides.length > 0 && (
-              <span className="ml-0.5 bg-slate-600 text-slate-300 text-xs rounded-full px-1.5 py-px leading-none">
-                {peptides.length}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {activeTab === 'inventar' ? (
-          <button data-ob="btn-einlagern" className="btn-primary flex items-center gap-1.5 text-sm py-2"
-            onClick={() => { resetInvFormState(); setShowInvForm(true) }}>
-            <Plus size={15} /> {t('einlagern')}
-          </button>
-        ) : (
-          <button className="btn-primary flex items-center gap-1.5 text-sm py-2" onClick={handleNewPeptide}>
-            <Plus size={15} /> {t('new')}
-          </button>
-        )}
-      </div>
-
-      {/* ══ INVENTAR TAB ═════════════════════════════════════════════════════ */}
-      {activeTab === 'inventar' && (
-        <div>
-          {inventory.length === 0 ? (
-            <div className="card text-center py-12 text-slate-500">
-              <Archive size={36} className="mx-auto mb-3 opacity-30" />
-              <p className="font-semibold text-slate-400 mb-1">{t('kein_inventar')}</p>
-              <p className="text-xs text-slate-600 mb-5 px-6 leading-relaxed">
-                {t('kein_inventar_desc')}
-              </p>
-              <button className="btn-primary flex items-center gap-2 mx-auto"
-                onClick={() => { resetInvFormState(); setShowInvForm(true) }}>
-                <Plus size={16} /> {t('einlagern')}
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {inventory.map(item => {
-                const isUsed     = reconstitutedItemIds.has(item.id)
-                const inUseCount = peptides.filter(p => p.inventory_item_id === item.id).length
-                const isDepleted = item.vials_count === 0
-                return (
-                <div key={item.id} className="card transition-opacity" style={isDepleted ? { opacity: 0.5 } : {}}>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <p className="font-semibold text-white">{item.name}</p>
-                        <span className="badge bg-sky-500/10 text-sky-400">{item.mg_per_vial} mg/Vial</span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => adjustInventoryCount(item.id, -1, item.vials_count)}
-                            className="w-5 h-5 rounded bg-slate-700 text-slate-300 hover:bg-slate-600 flex items-center justify-center transition-colors">
-                            <Minus size={10} />
-                          </button>
-                          <span className={`badge ${item.vials_count <= 1 ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
-                            {item.vials_count} Vial{item.vials_count !== 1 ? 's' : ''}
-                          </span>
-                          <button
-                            onClick={() => adjustInventoryCount(item.id, +1, item.vials_count)}
-                            className="w-5 h-5 rounded bg-slate-700 text-slate-300 hover:bg-slate-600 flex items-center justify-center transition-colors">
-                            <Plus size={10} />
-                          </button>
-                        </div>
-                      </div>
-                      {(item.batch_number || item.batch_source) && (
-                        <div className="flex gap-x-3 text-xs text-slate-500 flex-wrap">
-                          {item.batch_number && <span>{t('batch')}: {item.batch_number}</span>}
-                          {item.batch_source && <span>{t('quelle')}: {item.batch_source}</span>}
-                        </div>
-                      )}
-                      {item.batch_file_url && (
-                        <a href={item.batch_file_url} target="_blank" rel="noopener noreferrer"
-                          className="text-xs text-sky-400 hover:underline flex items-center gap-1 mt-0.5">
-                          <FileText size={10} /> {t('dokument_link')}
-                        </a>
-                      )}
-                      <VialStockDisplay current={item.vials_count} initial={item.vials_initial} inUse={inUseCount} />
-                    </div>
-                    <div className="flex flex-col gap-1.5 shrink-0 items-end">
-                      <button
-                        data-ob="btn-peptid-anlegen"
-                        onClick={() => { createPeptideFromInventory(item); dismissAnlegenBtn() }}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-500/15 border border-sky-500/30 text-sky-400 hover:bg-sky-500/25 transition-colors text-xs font-medium">
-                        <FlaskConical size={11} /> {t('peptid_anlegen')}
-                        {anlegenBtnNew && <NewDot />}
-                      </button>
-                      <div className="flex gap-1">
-                        <button className="p-1.5 text-slate-400 hover:text-sky-400 transition-colors"
-                          onClick={() => openEditInv(item)}><Pencil size={14} /></button>
-                        <button className="p-1.5 text-slate-400 hover:text-red-400 transition-colors"
-                          onClick={() => removeInventory(item.id)}><Trash2 size={14} /></button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )
-              })}
-            </div>
+        <div className="flex items-center gap-2">
+          <FlaskConical size={16} className="text-sky-400" />
+          <h2 className="font-semibold text-white">{t('meine_peptide')}</h2>
+          {peptides.length > 0 && (
+            <span className="badge bg-slate-700 text-slate-400">{peptides.length}</span>
           )}
         </div>
-      )}
+        <button className="btn-primary flex items-center gap-1.5 text-sm py-2" onClick={handleNewPeptide}>
+          <Plus size={15} /> {t('new')}
+        </button>
+      </div>
 
-      {/* ══ MEINE PEPTIDE TAB ════════════════════════════════════════════════ */}
-      {activeTab === 'peptide' && (
-        <div>
+      {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
+      <div>
           <p className="text-xs text-slate-500 mb-3 flex items-center gap-1.5">
             <FlaskConical size={12} className="text-sky-400" />
             {t('fertig_rekonst')}
@@ -1112,19 +898,10 @@ export function Peptide() {
             <div className="card text-center py-10 text-slate-500">
               <FlaskConical size={32} className="mx-auto mb-2 opacity-40" />
               <p className="mb-1">{t('keine_peptide')}</p>
-              {inventory.length === 0 ? (
-                <>
-                  <p className="text-xs text-slate-600 mb-4">{t('lege_inv_an_zuerst')}</p>
-                  <button className="btn-secondary flex items-center gap-2 mx-auto"
-                    onClick={() => setActiveTab('inventar')}>
-                    <Archive size={14} /> {t('zum_inventar_btn')}
-                  </button>
-                </>
-              ) : (
-                <p className="text-xs text-slate-600">
-                  {t(inventory.length === 1 ? 'inv_n_items_desc' : 'inv_n_items_desc_pl', { n: inventory.length })}
-                </p>
-              )}
+              <p className="text-xs text-slate-600 mb-4">{t('keine_peptide')}</p>
+              <button className="btn-primary flex items-center gap-2 mx-auto" onClick={handleNewPeptide}>
+                <Plus size={14} /> {t('new')}
+              </button>
             </div>
           )}
 
@@ -1325,162 +1102,7 @@ export function Peptide() {
               )
             })}
           </div>
-        </div>
-      )}
-
-      {/* ══ INVENTAR-FORMULAR ════════════════════════════════════════════════ */}
-      {showInvForm && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
-          onClick={() => setShowInvForm(false)}>
-          <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg overflow-y-auto max-h-[90vh]"
-            onClick={e => e.stopPropagation()}>
-
-            <div className="sticky top-0 bg-slate-900 border-b border-slate-800 px-5 py-4 flex items-center justify-between z-10">
-              <div className="flex items-center gap-2">
-                <Archive size={18} className="text-sky-400" />
-                <h2 className="font-bold text-white text-lg">
-                  {editingInvId ? t('inventar_bearbeiten') : t('einlagern')}
-                </h2>
-              </div>
-              <button onClick={() => setShowInvForm(false)} className="p-1.5 text-slate-400 hover:text-white">
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="px-5 py-4 space-y-4">
-
-              {/* Name */}
-              <div data-ob="inv-name">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <label className="label mb-0">{t('peptidname_star')}</label>
-                  {invPkProfileId && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                      style={{ color: '#00ccf5', background: 'rgba(0,204,245,0.12)', border: '1px solid rgba(0,204,245,0.28)' }}>
-                      ✓ PK-Profil verknüpft
-                    </span>
-                  )}
-                </div>
-                <div className="relative flex gap-2">
-                  <div className="relative flex-1 min-w-0">
-                    <input
-                      className="input w-full"
-                      placeholder={t('eg_bpc157')}
-                      value={iForm.name}
-                      onChange={e => handleInvNameChange(e.target.value)}
-                      onFocus={() => setInvPkSuggestOpen(true)}
-                      onBlur={() => { setTimeout(() => setInvPkSuggestOpen(false), 150) }}
-                      autoComplete="off"
-                    />
-                    {invPkSuggestOpen && invPkSuggestions.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-20 overflow-hidden">
-                        {invPkSuggestions.map(profile => (
-                          <button
-                            key={profile.id}
-                            type="button"
-                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-700 transition-colors border-b border-slate-700/50 last:border-0"
-                            onMouseDown={e => e.preventDefault()}
-                            onClick={() => selectInvPkProfile(profile)}
-                          >
-                            <span className="text-white font-medium">{profile.name}</span>
-                            {profile.aliases.length > 0 && (
-                              <span className="block text-xs text-slate-500 mt-0.5 truncate">
-                                {profile.aliases.join(', ')}
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <button className="btn-secondary flex items-center gap-1 shrink-0 text-sm px-3"
-                    onClick={() => { setShowInvDropdown(d => !d); setInvPkSuggestOpen(false) }}>
-                    {t('bekannte_btn')} <ChevronDown size={14} />
-                  </button>
-                  {showInvDropdown && (
-                    <div className="absolute top-full right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-10 w-56 max-h-52 overflow-y-auto">
-                      {POPULAR_PEPTIDES.map(name => (
-                        <button key={name} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-700 transition-colors first:rounded-t-xl last:rounded-b-xl"
-                          onClick={() => { handleInvNameChange(name); setInvPkProfileId(null); setShowInvDropdown(false) }}>
-                          {name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Anzahl + Wirkstoff */}
-              <div className="grid grid-cols-2 gap-3" data-ob="inv-amounts">
-                <div>
-                  <label className="label">{t('anzahl_vials_star')}</label>
-                  <input className="input" type="number" min="1" placeholder={t('eg_5')}
-                    value={iForm.vials_count} onChange={e => setIForm(f => ({ ...f, vials_count: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="label">{t('wirkstoff_pro_vial_pflicht')}</label>
-                  <input className="input" type="number" step="0.1" placeholder={t('eg_10')}
-                    value={iForm.mg_per_vial} onChange={e => setIForm(f => ({ ...f, mg_per_vial: e.target.value }))} />
-                </div>
-              </div>
-
-              {/* Batch & Herkunft */}
-              <div className="grid grid-cols-2 gap-3" data-ob="inv-batch">
-                <div>
-                  <label className="label">{t('batch')}</label>
-                  <input className="input" placeholder={t('eg_batch_nr')}
-                    value={iForm.batch_number} onChange={e => setIForm(f => ({ ...f, batch_number: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="label">{t('quelle')}</label>
-                  <input className="input" placeholder={t('eg_source_name')}
-                    value={iForm.batch_source} onChange={e => setIForm(f => ({ ...f, batch_source: e.target.value }))} />
-                </div>
-              </div>
-
-              {/* Datei */}
-              <div>
-                <label className="label">{t('analyse_dok_optional')}</label>
-                <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
-                  invBatchFile ? 'border-sky-500/50 bg-sky-500/5' : 'border-slate-700 hover:border-slate-600'
-                }`}>
-                  <FileUp size={18} className={invBatchFile ? 'text-sky-400' : 'text-slate-500'} />
-                  <div className="flex-1 min-w-0">
-                    {invBatchFile
-                      ? <p className="text-sky-400 text-sm font-medium truncate">{invBatchFile.name}</p>
-                      : iForm.batch_file_url
-                        ? <p className="text-slate-300 text-sm">{t('datei_vorhanden_text')}</p>
-                        : <p className="text-slate-500 text-sm">{t('pdf_bild_auswaehlen')}</p>
-                    }
-                    <p className="text-slate-600 text-xs">{t('coa_label')}</p>
-                  </div>
-                  <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp"
-                    onChange={e => { if (e.target.files?.[0]) setInvBatchFile(e.target.files[0]) }} />
-                </label>
-                {iForm.batch_file_url && !invBatchFile && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <a href={iForm.batch_file_url} target="_blank" rel="noopener noreferrer"
-                      className="text-sky-400 text-xs hover:underline flex-1 truncate">
-                      {t('dokument_anzeigen')}
-                    </a>
-                    <button className="text-red-400 text-xs hover:text-red-300"
-                      onClick={() => setIForm(f => ({ ...f, batch_file_url: '' }))}>
-                      {t('entfernen')}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="px-5 py-4 flex gap-3">
-              <button className="btn-secondary flex-1" onClick={() => setShowInvForm(false)}>{t('cancel')}</button>
-              <button data-ob="btn-inv-save" className="btn-primary flex-1" onClick={saveInventory}
-                disabled={savingInv || uploadingInvFile}>
-                {uploadingInvFile ? t('laedt_hoch') : savingInv ? t('loading') : t('einlagern')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* ══ PEPTID-FORMULAR ══════════════════════════════════════════════════ */}
       {showPeptideForm && (
@@ -1501,79 +1123,68 @@ export function Peptide() {
               </button>
             </div>
 
-            {/* ── Aus Inventar (nur bei neuen Peptiden) ────────────────── */}
-            {!editingPeptideId && (
-              <div className="px-5 py-4 border-b border-slate-800 space-y-3">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                  <Archive size={12} /> {t('aus_inventar_section')}
-                </p>
-                <select className="select"
-                  value={pForm.inventory_item_id}
-                  onChange={e => {
-                    const item = inventory.find(i => i.id === e.target.value)
-                    if (item) {
-                      setPForm(f => ({
-                        ...f,
-                        inventory_item_id: item.id,
-                        name:           item.name,
-                        vial_amount_mg: item.mg_per_vial.toString(),
-                        vials_in_stock: item.vials_count.toString(),
-                        batch_number:   item.batch_number  ?? '',
-                        batch_source:   item.batch_source  ?? '',
-                        batch_file_url: item.batch_file_url ?? '',
-                      }))
-                    } else {
-                      setPForm(f => ({ ...f, inventory_item_id: '' }))
-                    }
-                  }}>
-                  <option value="">{t('inventar_select_ph')}</option>
-                  {inventory.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} · {item.mg_per_vial} mg · {item.vials_count} Vials
-                    </option>
-                  ))}
-                </select>
-                {!pForm.inventory_item_id && (
-                  <p className="text-xs text-amber-400/80">{t('inventar_auswahl_hinweis')}</p>
-                )}
-              </div>
-            )}
-
-            {/* Inventar-Badge bei Bearbeitung */}
-            {editingPeptideId && pForm.inventory_item_id && (() => {
-              const item = inventory.find(i => i.id === pForm.inventory_item_id)
-              return item ? (
-                <div className="px-5 pt-4">
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-500/10 border border-sky-500/20">
-                    <Archive size={13} className="text-sky-400 shrink-0" />
-                    <p className="text-sky-400 text-xs">{t('aus_inventar_badge')} <span className="font-medium">{item.name}</span></p>
-                  </div>
-                </div>
-              ) : null
-            })()}
-
             {/* ── 1. Peptid ──────────────────────────────────────────────── */}
             <div className="px-5 py-4 border-b border-slate-800 space-y-3">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                 <FlaskConical size={12} /> {t('peptid_section')}
               </p>
-              <div className="relative flex gap-2">
-                <input className="input flex-1" placeholder={t('peptidname_star')}
-                  value={pForm.name} onChange={e => setPForm(f => ({ ...f, name: e.target.value }))} />
-                <button className="btn-secondary flex items-center gap-1 shrink-0 text-sm px-3"
-                  onClick={() => setShowDropdown(d => !d)}>
-                  {t('bekannte_btn')} <ChevronDown size={14} />
-                </button>
-                {showDropdown && (
-                  <div className="absolute top-full right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-10 w-56 max-h-52 overflow-y-auto">
-                    {POPULAR_PEPTIDES.map(name => (
-                      <button key={name} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-700 transition-colors first:rounded-t-xl last:rounded-b-xl"
-                        onClick={() => { setPForm(f => ({ ...f, name })); setShowDropdown(false) }}>
-                        {name}
-                      </button>
-                    ))}
+              <div>
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <label className="label mb-0">{t('peptidname_star')}</label>
+                  {pForm.pk_profile_id && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      style={{ color: '#00ccf5', background: 'rgba(0,204,245,0.12)', border: '1px solid rgba(0,204,245,0.28)' }}>
+                      ✓ PK-Profil verknüpft
+                    </span>
+                  )}
+                </div>
+                <div className="relative flex gap-2">
+                  <div className="relative flex-1 min-w-0">
+                    <input
+                      className="input w-full"
+                      placeholder={t('peptidname_star')}
+                      value={pForm.name}
+                      onChange={e => handlePepNameChange(e.target.value)}
+                      onFocus={() => setPkSuggestOpen(true)}
+                      onBlur={() => { setTimeout(() => setPkSuggestOpen(false), 150) }}
+                      autoComplete="off"
+                    />
+                    {pkSuggestOpen && pepPkSuggestions.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-20 overflow-hidden">
+                        {pepPkSuggestions.map(profile => (
+                          <button
+                            key={profile.id}
+                            type="button"
+                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-700 transition-colors border-b border-slate-700/50 last:border-0"
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={() => selectPepPkProfile(profile)}
+                          >
+                            <span className="text-white font-medium">{profile.name}</span>
+                            {profile.aliases.length > 0 && (
+                              <span className="block text-xs text-slate-500 mt-0.5 truncate">
+                                {profile.aliases.join(', ')}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
+                  <button className="btn-secondary flex items-center gap-1 shrink-0 text-sm px-3"
+                    onClick={() => { setShowDropdown(d => !d); setPkSuggestOpen(false) }}>
+                    {t('bekannte_btn')} <ChevronDown size={14} />
+                  </button>
+                  {showDropdown && (
+                    <div className="absolute top-full right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-10 w-56 max-h-52 overflow-y-auto">
+                      {POPULAR_PEPTIDES.map(name => (
+                        <button key={name} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-700 transition-colors first:rounded-t-xl last:rounded-b-xl"
+                          onClick={() => { handlePepNameChange(name); setShowDropdown(false) }}>
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1586,15 +1197,8 @@ export function Peptide() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="label">{t('wirkstoff_pro_vial_form')}</label>
-                  {isLinked ? (
-                    <div className="input bg-slate-800/30 text-slate-300 flex items-center justify-between cursor-default">
-                      <span>{pForm.vial_amount_mg || '—'}</span>
-                      <span className="text-xs text-slate-600 flex items-center gap-0.5 shrink-0 ml-1"><Lock size={9}/> {t('nav_lager')}</span>
-                    </div>
-                  ) : (
-                    <input className="input" type="number" placeholder={t('eg_10')}
-                      value={pForm.vial_amount_mg} onChange={e => setPForm(f => ({ ...f, vial_amount_mg: e.target.value }))} />
-                  )}
+                  <input className="input" type="number" placeholder={t('eg_10')}
+                    value={pForm.vial_amount_mg} onChange={e => setPForm(f => ({ ...f, vial_amount_mg: e.target.value }))} />
                 </div>
                 <div data-ob="pep-liquid">
                   <label className="label">{t('zugefuegte_fl_ml')}</label>
@@ -1647,20 +1251,9 @@ export function Peptide() {
               </p>
               <div>
                 <label className="label">{t('vorraetige_vials')}</label>
-                {isLinked ? (
-                  <div className="input bg-slate-800/30 text-slate-300 flex items-center justify-between cursor-default">
-                    <span>{pForm.vials_in_stock}</span>
-                    <span className="text-xs text-slate-600 flex items-center gap-0.5 shrink-0 ml-1"><Lock size={9}/> {t('aus_inventar_vials')}</span>
-                  </div>
-                ) : (
-                  <input className="input" type="number" min="0" step="0.5" placeholder="0"
-                    value={pForm.vials_in_stock} onChange={e => setPForm(f => ({ ...f, vials_in_stock: e.target.value }))} />
-                )}
-                <p className="text-slate-600 text-xs mt-1">
-                  {isLinked
-                    ? t('inventar_uebernommen_hint')
-                    : t('basis_info')}
-                </p>
+                <input className="input" type="number" min="0" step="0.5" placeholder="0"
+                  value={pForm.vials_in_stock} onChange={e => setPForm(f => ({ ...f, vials_in_stock: e.target.value }))} />
+                <p className="text-slate-600 text-xs mt-1">{t('basis_info')}</p>
               </div>
             </div>
 
@@ -1669,79 +1262,49 @@ export function Peptide() {
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                 <FileUp size={12} /> {t('batch_herkunft_section')}
               </p>
-              {isLinked ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="label">{t('batch')}</label>
-                    <div className="input bg-slate-800/30 text-slate-300 flex items-center justify-between cursor-default">
-                      <span className="truncate">{pForm.batch_number || '—'}</span>
-                      <Lock size={9} className="text-slate-600 shrink-0 ml-1"/>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="label">{t('quelle')}</label>
-                    <div className="input bg-slate-800/30 text-slate-300 flex items-center justify-between cursor-default">
-                      <span className="truncate">{pForm.batch_source || '—'}</span>
-                      <Lock size={9} className="text-slate-600 shrink-0 ml-1"/>
-                    </div>
-                  </div>
-                  {pForm.batch_file_url && (
-                    <div className="col-span-2">
-                      <a href={pForm.batch_file_url} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sky-400 text-xs hover:underline">
-                        <ExternalLink size={12} /> {t('analyse_inventar_link')}
-                      </a>
-                    </div>
-                  )}
-                  <p className="col-span-2 text-xs text-slate-600">{t('batch_uebernommen_text')}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">{t('batch')}</label>
+                  <input className="input" placeholder={t('eg_batch_nr')}
+                    value={pForm.batch_number} onChange={e => setPForm(f => ({ ...f, batch_number: e.target.value }))} />
                 </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="label">{t('batch')}</label>
-                      <input className="input" placeholder={t('eg_batch_nr')}
-                        value={pForm.batch_number} onChange={e => setPForm(f => ({ ...f, batch_number: e.target.value }))} />
-                    </div>
-                    <div>
-                      <label className="label">{t('quelle')}</label>
-                      <input className="input" placeholder={t('eg_source_name')}
-                        value={pForm.batch_source} onChange={e => setPForm(f => ({ ...f, batch_source: e.target.value }))} />
-                    </div>
+                <div>
+                  <label className="label">{t('quelle')}</label>
+                  <input className="input" placeholder={t('eg_source_name')}
+                    value={pForm.batch_source} onChange={e => setPForm(f => ({ ...f, batch_source: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <label className="label">{t('analyse_dok_pdf_bild')}</label>
+                <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
+                  batchFile ? 'border-sky-500/50 bg-sky-500/5' : 'border-slate-700 hover:border-slate-600'
+                }`}>
+                  <FileUp size={18} className={batchFile ? 'text-sky-400' : 'text-slate-500'} />
+                  <div className="flex-1 min-w-0">
+                    {batchFile
+                      ? <p className="text-sky-400 text-sm font-medium truncate">{batchFile.name}</p>
+                      : pForm.batch_file_url
+                        ? <p className="text-slate-300 text-sm truncate">{t('datei_vorhanden_text')}</p>
+                        : <p className="text-slate-500 text-sm">{t('pdf_bild_auswaehlen')}</p>
+                    }
+                    <p className="text-slate-600 text-xs">{t('coa_rechnung_label')}</p>
                   </div>
-                  <div>
-                    <label className="label">{t('analyse_dok_pdf_bild')}</label>
-                    <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
-                      batchFile ? 'border-sky-500/50 bg-sky-500/5' : 'border-slate-700 hover:border-slate-600'
-                    }`}>
-                      <FileUp size={18} className={batchFile ? 'text-sky-400' : 'text-slate-500'} />
-                      <div className="flex-1 min-w-0">
-                        {batchFile
-                          ? <p className="text-sky-400 text-sm font-medium truncate">{batchFile.name}</p>
-                          : pForm.batch_file_url
-                            ? <p className="text-slate-300 text-sm truncate">{t('datei_vorhanden_text')}</p>
-                            : <p className="text-slate-500 text-sm">{t('pdf_bild_auswaehlen')}</p>
-                        }
-                        <p className="text-slate-600 text-xs">{t('coa_rechnung_label')}</p>
-                      </div>
-                      <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp"
-                        onChange={e => { if (e.target.files?.[0]) setBatchFile(e.target.files[0]) }} />
-                    </label>
-                    {pForm.batch_file_url && !batchFile && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <a href={pForm.batch_file_url} target="_blank" rel="noopener noreferrer"
-                          className="text-sky-400 text-xs hover:underline flex-1 truncate">
-                          {t('dokument_anzeigen')}
-                        </a>
-                        <button className="text-red-400 text-xs hover:text-red-300"
-                          onClick={() => setPForm(f => ({ ...f, batch_file_url: '' }))}>
-                          {t('entfernen')}
-                        </button>
-                      </div>
-                    )}
+                  <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    onChange={e => { if (e.target.files?.[0]) setBatchFile(e.target.files[0]) }} />
+                </label>
+                {pForm.batch_file_url && !batchFile && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <a href={pForm.batch_file_url} target="_blank" rel="noopener noreferrer"
+                      className="text-sky-400 text-xs hover:underline flex-1 truncate">
+                      {t('dokument_anzeigen')}
+                    </a>
+                    <button className="text-red-400 text-xs hover:text-red-300"
+                      onClick={() => setPForm(f => ({ ...f, batch_file_url: '' }))}>
+                      {t('entfernen')}
+                    </button>
                   </div>
-                </>
-              )}
+                )}
+              </div>
             </div>
 
             {/* ── 5. Dosierung & Applikation ──────────────────────────────── */}
