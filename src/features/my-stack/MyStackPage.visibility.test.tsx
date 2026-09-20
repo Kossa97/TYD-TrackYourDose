@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { addDays, format } from 'date-fns'
@@ -1134,6 +1135,48 @@ describe('MyStackPage non-vial visibility', () => {
     const card = visibleCardFor(qaName)!
     fireEvent.click(within(card).getAllByRole('button')[0])
     expect(await screen.findByTestId('plan-management-cycle-recovered')).toBeTruthy()
+  })
+
+  it('shows the stack without waiting for secondary timeline data', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const neverResolvingTimeline = new Promise<never>(() => undefined)
+    const client = {
+      from: vi.fn((table: string) => {
+        if (table !== 'cycles') throw new Error(`Unexpected table: ${table}`)
+        return {
+          select: vi.fn((columns: string) => ({
+            eq: vi.fn(() => columns === '*'
+              ? Promise.resolve({ data: [activeCycle], error: null })
+              : { order: vi.fn(() => neverResolvingTimeline) }),
+          })),
+        }
+      }),
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull(), { timeout: 500 })
+  })
+
+  it('does not duplicate initial stack queries under StrictMode', async () => {
+    localStorage.setItem('tyd_peptide_view', 'list')
+
+    render(
+      <StrictMode>
+        <MemoryRouter initialEntries={['/my-stack']}>
+          <MyStackPage />
+        </MemoryRouter>
+      </StrictMode>,
+    )
+
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+    const activeItemLoads = vi.mocked(loadStackItems).mock.calls.filter(([, archived]) => archived === false)
+    expect(activeItemLoads).toHaveLength(1)
   })
 
   it('refreshes canonical V2 timelines after creating a new setup', async () => {

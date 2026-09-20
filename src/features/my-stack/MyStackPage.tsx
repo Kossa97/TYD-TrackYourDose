@@ -568,6 +568,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   const [searchOpen, setSearchOpen]           = useState(false)
   const [filterOpen, setFilterOpen]           = useState(false)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
+  const initialLoadPromiseRef = useRef<Promise<void> | null>(null)
   const [sortBy, setSortBy]                   = useState<PeptideSortKey>('active_name')
   const [activeTab, setActiveTab]             = useState<StackTabKey>('all')
   const [viewMode, setViewModeState]          = useState<'vials' | 'list'>(() =>
@@ -758,7 +759,24 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     let cancelled = false
     let fadeTimer: number | undefined
 
-    Promise.all([loadInventory(), loadPeptides(), loadCycles(), loadTimelines(), loadEscalations(), searchSubstanceCatalog(supabase as never, '').then(result => { setCatalogEntries(current => mergeCatalogEntries(current, result.entries)); setCatalogUnavailable(result.unavailable) })])
+    if (!initialLoadPromiseRef.current) {
+      initialLoadPromiseRef.current = Promise.all([
+        loadPeptides(),
+        loadCycles(),
+      ]).then(() => undefined)
+
+      void Promise.allSettled([
+        loadInventory(),
+        loadTimelines(),
+        loadEscalations(),
+        searchSubstanceCatalog(supabase as never, '').then(result => {
+          setCatalogEntries(current => mergeCatalogEntries(current, result.entries))
+          setCatalogUnavailable(result.unavailable)
+        }),
+      ])
+    }
+
+    initialLoadPromiseRef.current
       .finally(() => {
         if (cancelled) return
         setLoading(false)
