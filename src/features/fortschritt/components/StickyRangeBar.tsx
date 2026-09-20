@@ -70,7 +70,7 @@ export function StickyRangeBar({ value, onChange }: Props) {
             lineHeight: 1.3,
             opacity: 0.75,
           }}>
-            Passe hier den Zeitraum für deinen gesamten Fortschritt an
+            Zeitraum für Veränderungen, Fotos und Werte
           </p>
         </div>
       </div>

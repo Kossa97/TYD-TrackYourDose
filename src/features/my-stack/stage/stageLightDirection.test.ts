@@ -58,7 +58,6 @@ function lies(html: string, form: string): Map<string, Probe> {
   return treffer
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Visual = ComponentType<any>
 
 const FORMEN: Array<{ form: string; Visual: Visual; props: Record<string, unknown> }> = [

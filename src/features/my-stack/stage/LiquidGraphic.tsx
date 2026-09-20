@@ -1,11 +1,19 @@
-import { useCallback, useEffect, useImperativeHandle, useRef } from 'react'
-import type { CSSProperties, Ref } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react'
+import type { Ref } from 'react'
 import { buildLiquid, LIQUID_VB_H, LIQUID_VB_W } from './liquidGeometry'
 import { useSloshSubscribe } from '../../../components/SloshContext'
 import type { SloshState } from '../../../components/sloshEngine'
 
 function clamp01(wert: number): number {
   return Number.isFinite(wert) ? Math.max(0, Math.min(1, wert)) : 0
+}
+
+function easeOutCubic(value: number): number {
+  return 1 - Math.pow(1 - value, 3)
+}
+
+function levelChangeDurationMs(from: number, to: number): number {
+  return Math.round(600 + Math.abs(to - from) * 2200)
 }
 
 // A few rising bubbles give the liquid life. Positions are in viewBox units and
@@ -39,11 +47,6 @@ export interface LiquidGraphicProps {
   reducedMotion?: boolean
   seedFocus?: number
   seedLightOffset?: number
-  motionKey?: number
-  motionClass?: string
-  motionStyle?: CSSProperties
-  introReveal?: boolean
-  introDurationMs?: number
   handleRef?: Ref<LiquidGraphicHandle>
 }
 
@@ -65,11 +68,6 @@ export function LiquidGraphic({
   reducedMotion = false,
   seedFocus = 1,
   seedLightOffset = 0,
-  motionKey,
-  motionClass = '',
-  motionStyle,
-  introReveal = false,
-  introDurationMs = 900,
   handleRef,
 }: LiquidGraphicProps) {
   const subscribe = useSloshSubscribe()
@@ -87,13 +85,25 @@ export function LiquidGraphic({
   const rightGlintRef = useRef<SVGEllipseElement | null>(null)
   const refractLeftRef = useRef<SVGRectElement | null>(null)
   const refractRightRef = useRef<SVGRectElement | null>(null)
+  const previousFillRef = useRef(fill)
+  const fillTweenRef = useRef<{ from: number; to: number; start: number; duration: number } | null>(null)
 
   const draw = useCallback(
     (s: SloshState) => {
       const stage = stageRef.current
       const stageFocus = stage.focus
       const stageShift = stage.lightOffset * 10
-      const g = buildLiquid({ fill, tilt: s.tilt, energy: s.energy, time: s.time, chamberAspect })
+      let animatedFill = fill
+      const tween = fillTweenRef.current
+      if (tween) {
+        const progress = Math.max(0, (performance.now() - tween.start) / tween.duration)
+        if (progress >= 1) {
+          fillTweenRef.current = null
+        } else {
+          animatedFill = tween.from + (tween.to - tween.from) * easeOutCubic(progress)
+        }
+      }
+      const g = buildLiquid({ fill: animatedFill, tilt: s.tilt, energy: s.energy, time: s.time, chamberAspect })
       bodyRef.current?.setAttribute('d', g.body)
       surfaceRef.current?.setAttribute('d', g.surface)
       glowRef.current?.setAttribute('d', g.glow)
@@ -120,6 +130,21 @@ export function LiquidGraphic({
     return subscribe(draw)
   }, [subscribe, draw])
 
+  useEffect(() => {
+    const previousFill = previousFillRef.current
+    if (Math.abs(previousFill - fill) < 0.001) return
+
+    fillTweenRef.current = reducedMotion
+      ? null
+      : {
+          from: previousFill,
+          to: fill,
+          start: performance.now(),
+          duration: levelChangeDurationMs(previousFill, fill),
+        }
+    previousFillRef.current = fill
+  }, [fill, reducedMotion])
+
   const applyStageLight = useCallback((focus: number, lightOffset: number) => {
     stageRef.current = { focus, lightOffset }
     refractLeftRef.current?.setAttribute('x', (5 + lightOffset * 8).toFixed(2))
@@ -129,21 +154,24 @@ export function LiquidGraphic({
     surfaceRef.current?.setAttribute('opacity', (0.4 + focus * 0.14).toFixed(3))
   }, [])
 
+  useLayoutEffect(() => {
+    applyStageLight(stageRef.current.focus, stageRef.current.lightOffset)
+  })
+
   useImperativeHandle(handleRef, () => ({ applyStageLight }), [applyStageLight])
 
   return (
     <svg
-      key={motionKey}
       data-vial-detail="liquid-graphic"
       x={x}
       y={y}
       width={width}
       height={height}
-      className={`overflow-visible ${motionClass}`}
+      className="overflow-visible"
       viewBox={`0 0 ${LIQUID_VB_W} ${LIQUID_VB_H}`}
       preserveAspectRatio="none"
       aria-hidden="true"
-      style={{ color, ...motionStyle }}
+      style={{ color }}
     >
     <defs>
     {/* one template path drives the body fills and the clip together */}
@@ -151,18 +179,6 @@ export function LiquidGraphic({
     <clipPath id={`${uid}-clip`}>
     <use href={`#${uid}-bodyPath`} />
     </clipPath>
-    {introReveal && (
-    <clipPath id={`${uid}-introClip`} clipPathUnits="userSpaceOnUse">
-      <rect data-vial-detail="liquid-intro-reveal-clip" x="0" y={reducedMotion ? 0 : LIQUID_VB_H} width={LIQUID_VB_W} height={reducedMotion ? LIQUID_VB_H : 0}>
-        {!reducedMotion && (
-          <>
-            <animate attributeName="y" from={LIQUID_VB_H} to="0" dur={`${introDurationMs}ms`} begin="0s" fill="freeze" calcMode="spline" keySplines=".22 1 .36 1" />
-            <animate attributeName="height" from="0" to={LIQUID_VB_H} dur={`${introDurationMs}ms`} begin="0s" fill="freeze" calcMode="spline" keySplines=".22 1 .36 1" />
-          </>
-        )}
-      </rect>
-    </clipPath>
-    )}
     <linearGradient id={`${uid}-depth`} x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stopColor="rgba(255,255,255,0.26)" />
     <stop offset="18%" stopColor="rgba(255,255,255,0.05)" />
@@ -208,7 +224,7 @@ export function LiquidGraphic({
     </radialGradient>
     </defs>
 
-    <g clipPath={introReveal ? `url(#${uid}-introClip)` : undefined}>
+    <g>
     <use data-vial-detail="liquid-body" href={`#${uid}-bodyPath`} fill="currentColor" fillOpacity="0.8" />
     <g clipPath={`url(#${uid}-clip)`}>
     <use href={`#${uid}-bodyPath`} fill={`url(#${uid}-depth)`} />

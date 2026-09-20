@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Area, ResponsiveContainer, AreaChart } from 'recharts'
 import { FEATURES } from '../config/features'
-import { format } from 'date-fns'
-import { de as deLocale } from 'date-fns/locale'
 import { Activity, ChevronDown, ChevronUp, Info, Loader2 } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -226,13 +224,6 @@ function normalizeUnit(unit: string): 'mg' | 'mcg' | 'IU' {
   if (u === 'mg') return 'mg'
   if (u === 'iu') return 'IU'
   return 'mcg'
-}
-
-function methodToRoute(method: string): 'SC' | 'IM' | 'oral' {
-  const m = method.trim().toLowerCase()
-  if (m.includes('intramuskul')) return 'IM'
-  if (m === 'oral' || m.includes('oral')) return 'oral'
-  return 'SC'
 }
 
 // ── PK-Mathematik ─────────────────────────────────────────────────────────

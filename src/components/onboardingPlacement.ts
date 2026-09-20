@@ -69,7 +69,7 @@ export function computeCalloutLayout(
 
   const spaceBelow = viewportH - target.bottom - GAP - bottomReserve
   const spaceAbove = target.top - GAP - topReserve
-  let placement: CalloutPlacement = 'bottom'
+  let placement: CalloutPlacement
 
   if (prefer === 'top') placement = spaceAbove >= calloutH ? 'top' : (spaceBelow >= calloutH ? 'bottom' : 'top')
   else if (prefer === 'bottom') placement = spaceBelow >= calloutH ? 'bottom' : (spaceAbove >= calloutH ? 'top' : 'bottom')

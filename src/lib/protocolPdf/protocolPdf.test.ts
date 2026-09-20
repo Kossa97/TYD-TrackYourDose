@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { visibleSections, defaultSelection, resolveSubject } from './sections'
+import { applyPreset, matchPreset } from './presets'
+import { loadPdfExportPrefs, savePdfExportPrefs } from './persistence'
 import { buildProtocolPdf } from './renderProtocolPdf'
 import type { ProtocolData, PdfBuildOptions } from './types'
 
@@ -162,5 +164,127 @@ describe('buildProtocolPdf (Runtime-Smoke)', () => {
   it('funktioniert auf Englisch', async () => {
     const doc = await buildProtocolPdf(makeData(), { ...opts, lang: 'en' })
     expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2)
+  })
+})
+
+describe('presets', () => {
+  it('Arzt enthält Blutwerte und persönliche Angaben, kein Forum-Stil', () => {
+    const sel = applyPreset('arzt', makeData())
+    expect(sel).toContain('personal')
+    expect(sel).toContain('bloodwork')
+    expect(sel).toContain('effects')
+    expect(sel).not.toContain('reviews')
+    expect(sel).not.toContain('wellness')
+  })
+
+  it('Coach lässt Blutwerte weg und behält Wellness/Reviews', () => {
+    const sel = applyPreset('coach', makeData())
+    expect(sel).toContain('personal')
+    expect(sel).toContain('wellness')
+    expect(sel).toContain('reviews')
+    expect(sel).not.toContain('bloodwork')
+  })
+
+  it('Forum anonymisiert (kein personal), ohne Labor und Notizen', () => {
+    const sel = applyPreset('forum', makeData())
+    expect(sel).not.toContain('personal')
+    expect(sel).not.toContain('bloodwork')
+    expect(sel).not.toContain('notes')
+    expect(sel).toContain('summary')
+    expect(sel).toContain('wellness')
+  })
+
+  it('filtert Sektionen ohne Daten heraus, behält Notizen im Arzt-Muster', () => {
+    const empty: ProtocolData = {
+      profile: null, cycles: [], doseLogs: [], weightLogs: [], bloodwork: [],
+      effects: [], reviews: [], dailyLogs: [], stackItemNames: new Map(),
+    }
+    expect(applyPreset('arzt', empty)).toEqual(['notes'])
+  })
+
+  it('matchPreset erkennt Muster und Custom', () => {
+    const data = makeData()
+    const arzt = applyPreset('arzt', data)
+    expect(matchPreset(arzt, data)).toBe('arzt')
+    const withReviews = [...arzt, 'reviews' as const]
+    expect(matchPreset(withReviews, data)).toBe('custom')
+    const withoutBloodwork = arzt.filter(id => id !== 'bloodwork')
+    expect(matchPreset(withoutBloodwork, data)).toBe('custom')
+  })
+})
+
+describe('persistence', () => {
+  const store = new Map<string, string>()
+
+  beforeEach(() => {
+    store.clear()
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => { store.set(k, v) },
+        removeItem: (k: string) => { store.delete(k) },
+      },
+    })
+  })
+
+  it('speichert und lädt die letzte Auswahl', () => {
+    const prefs = {
+      preset: 'coach' as const,
+      sections: applyPreset('coach', makeData()),
+      lang: 'en' as const,
+    }
+    savePdfExportPrefs('user-1', prefs)
+    expect(loadPdfExportPrefs('user-1')).toEqual(prefs)
+  })
+
+  it('verwirft kaputte localStorage-Einträge', () => {
+    localStorage.setItem('tyd_pdf_export_prefs_user-2', '{not-json')
+    expect(loadPdfExportPrefs('user-2')).toBeNull()
+  })
+})
+
+
+describe('Einheitliches Report-Layout', () => {
+  it('erzeugt ein PDF mit preset arzt', async () => {
+    const doc = await buildProtocolPdf(makeData(), {
+      lang: 'de',
+      range: { from: '2026-06-01', to: '2026-06-30' },
+      sections: ['personal', 'summary', 'cycles', 'adherence', 'bloodwork', 'weight', 'effects', 'notes'],
+      note: 'Frage an den Arzt',
+      preset: 'arzt',
+    })
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2)
+    const bytes = doc.output('arraybuffer') as ArrayBuffer
+    expect(bytes.byteLength).toBeGreaterThan(3000)
+  })
+})
+
+
+describe('Presets mit gleichem Layout', () => {
+  it('erzeugt ein Coaching-PDF mit gleichem Layout', async () => {
+    const doc = await buildProtocolPdf(makeData(), {
+      lang: 'de',
+      range: { from: '2026-06-01', to: '2026-06-30' },
+      sections: ['personal', 'summary', 'cycles', 'adherence', 'weight', 'wellness', 'effects', 'reviews', 'notes'],
+      note: 'Frage an den Coach',
+      preset: 'coach',
+    })
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2)
+    const bytes = doc.output('arraybuffer') as ArrayBuffer
+    expect(bytes.byteLength).toBeGreaterThan(3000)
+  })
+
+  it('erzeugt ein anonymes Forum-PDF mit gleichem Layout', async () => {
+    const doc = await buildProtocolPdf(makeData(), {
+      lang: 'de',
+      range: { from: '2026-06-01', to: '2026-06-30' },
+      sections: ['summary', 'cycles', 'adherence', 'weight', 'wellness', 'effects', 'reviews'],
+      note: '',
+      preset: 'forum',
+    })
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2)
+    const bytes = doc.output('arraybuffer') as ArrayBuffer
+    expect(bytes.byteLength).toBeGreaterThan(2500)
   })
 })

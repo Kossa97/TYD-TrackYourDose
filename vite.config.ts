@@ -1,8 +1,14 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = { ...loadEnv(mode, process.cwd(), ''), ...process.env }
+  const publicHost = env.VERCEL_PROJECT_PRODUCTION_URL || env.VERCEL_URL
+  return {
+  define: {
+    'import.meta.env.VITE_PUBLIC_SITE_URL': JSON.stringify(env.VITE_PUBLIC_SITE_URL || (publicHost ? `https://${publicHost}` : '')),
+  },
   server: {
     proxy: {
       '/ncbi': {
@@ -36,4 +42,5 @@ export default defineConfig({
       },
     }),
   ],
+  }
 })

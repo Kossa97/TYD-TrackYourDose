@@ -378,8 +378,8 @@ const EXPECTED_MY_STACK_KEYS = [
 // „Bei Bedarf" ist `freq_bei_bedarf` dazugekommen, ein Schluessel ausserhalb
 // des Blocks, und die Zahlen mussten deshalb bewusst neu gesetzt werden.
 const MANUAL_OUTSIDE_OVERLAY_HASHES = {
-  de: '46212e2d24da60b387e5f3f80fe3887ae7ea53edd7d088a455e1847a6c7681b9',
-  en: 'e340b56298e5bc47f368deb82cec55687d1ef5476f9c7e224fefb3e8755fd954',
+  de: '62be074f903708bb050b4bf39fb5b728859c007b7c3cb3a3f67626cb0aba506d',
+  en: 'e46c7f2ef93b717725977eb0aa0c6eec08c1e35f46f4aab69c2ad3f8d6482112',
 } as const
 const TRANSLATED_OUTSIDE_OVERLAY_HASHES = {
   ar: '45167d07462705a9d069e63944f685b3c9a7b9bfa353f552be75d9c74b41c48e',

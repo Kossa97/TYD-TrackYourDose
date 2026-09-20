@@ -97,22 +97,16 @@ describe('PeptideVialVisual', () => {
       animateOnMount: true,
     }))
 
-    expect(html).toContain('data-vial-detail="liquid-motion-viewport" class="pointer-events-none absolute inset-0"')
+    expect(html).toContain('data-vial-detail="liquid-motion-viewport" class="pointer-events-none absolute inset-0 vial-liquid-fill-reveal"')
     expect(html).toContain('data-vial-detail="liquid-graphic"')
-    expect(html).toContain('class="overflow-visible vial-liquid-fill-reveal"')
+    expect(html).toContain('class="overflow-visible"')
     expect(html).not.toContain('data-vial-detail="liquid-motion-viewport" class="pointer-events-none absolute inset-0 vial-liquid-rise"')
-    expect(liquidGraphicSource()).toContain('data-vial-detail="liquid-intro-reveal-clip"')
-    expect(liquidGraphicSource()).toContain('y={reducedMotion ? 0 : LIQUID_VB_H}')
-    expect(liquidGraphicSource()).toContain('height={reducedMotion ? LIQUID_VB_H : 0}')
-    expect(liquidGraphicSource()).toContain('<animate attributeName="y"')
-    expect(liquidGraphicSource()).toContain('<animate attributeName="height"')
-    expect(liquidGraphicSource()).toContain('from={LIQUID_VB_H}')
-    expect(liquidGraphicSource()).toContain('to="0"')
-    expect(liquidGraphicSource()).toContain('from="0"')
-    expect(liquidGraphicSource()).toContain('to={LIQUID_VB_H}')
-    expect(liquidGraphicSource()).not.toContain('scaleY(0)')
-    expect(liquidGraphicSource()).not.toContain('scaleY(1)')
-    expect(liquidGraphicSource()).not.toContain('clip-path: inset(100% 0 0 0)')
+    expect(source()).toContain('@keyframes vial-liquid-fill-reveal')
+    expect(source()).toContain('clip-path: inset(100% 0 0 0)')
+    expect(source()).toContain('clip-path: inset(0 0 0 0)')
+    expect(liquidGraphicSource()).not.toContain('data-vial-detail="liquid-intro-reveal-clip"')
+    expect(liquidGraphicSource()).not.toContain('<animate attributeName="y"')
+    expect(liquidGraphicSource()).not.toContain('<animate attributeName="height"')
   })
 
   test('uses a visible but fill-dependent intro duration', () => {
@@ -133,9 +127,9 @@ describe('PeptideVialVisual', () => {
       animateOnMount: true,
     }))
 
-    expect(low).toContain('--vial-fill-intro-duration:1060ms')
-    expect(high).toContain('--vial-fill-intro-duration:1620ms')
-    expect(liquidGraphicSource()).toContain('dur={`${introDurationMs}ms`}')
+    expect(low).toContain('--vial-fill-intro-duration:1300ms')
+    expect(high).toContain('--vial-fill-intro-duration:2350ms')
+    expect(source()).toContain('var(--vial-fill-intro-duration')
   })
   test('keeps the cap and label while removing split glass body seams', () => {
     const html = renderToStaticMarkup(createElement(PeptideVialVisual, {
@@ -353,10 +347,11 @@ describe('PeptideVialVisual', () => {
   test('animates fill-level changes inside the integrated glass window', () => {
     const text = source()
 
-    expect(text).toContain('liquidSurfaceY')
-    expect(text).toContain('previousFillRef')
-    expect(text).toContain('vial-liquid-level-motion')
-    expect(text).toContain('--vial-fill-motion-shift')
+    expect(liquidGraphicSource()).toContain('fillTweenRef')
+    expect(liquidGraphicSource()).toContain('levelChangeDurationMs')
+    expect(liquidGraphicSource()).toContain('tween.from + (tween.to - tween.from)')
+    expect(text).not.toContain('vial-liquid-level-motion')
+    expect(text).not.toContain('--vial-fill-motion-shift')
     expect(text).toContain('data-vial-detail="liquid-motion-viewport"')
   })
 

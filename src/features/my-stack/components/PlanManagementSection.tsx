@@ -191,7 +191,10 @@ export function PlanManagementSection({
   const dialogRef = useRef<HTMLDivElement>(null)
   const pauseInputRef = useRef<HTMLInputElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
-  pendingRef.current = pending
+  const changePending = (value: boolean) => {
+    pendingRef.current = value
+    setPending(value)
+  }
 
   const statusCopy = {
     planned: t('my_stack_plan_status_planned', { defaultValue: 'Geplant' }),
@@ -280,7 +283,7 @@ export function PlanManagementSection({
 
   const submitDialog = async () => {
     if (!dialog) return
-    setPending(true)
+    changePending(true)
     setInlineError(null)
     try {
       if (dialog.kind === 'pause' || dialog.kind === 'pause_end') {
@@ -297,12 +300,12 @@ export function PlanManagementSection({
         defaultValue: 'Die Änderung konnte nicht gespeichert werden. Bitte versuche es erneut.',
       })))
     } finally {
-      setPending(false)
+      changePending(false)
     }
   }
 
   const resume = async () => {
-    setPending(true)
+    changePending(true)
     setInlineError(null)
     try {
       await onResume()
@@ -311,12 +314,12 @@ export function PlanManagementSection({
         defaultValue: 'Die Änderung konnte nicht gespeichert werden. Bitte versuche es erneut.',
       })))
     } finally {
-      setPending(false)
+      changePending(false)
     }
   }
 
   const restart = async () => {
-    setPending(true)
+    changePending(true)
     setInlineError(null)
     try {
       await onRestart(timeline.cycle.id)
@@ -325,13 +328,13 @@ export function PlanManagementSection({
         defaultValue: 'Der Plan konnte nicht neu gestartet werden. Bitte versuche es erneut.',
       })))
     } finally {
-      setPending(false)
+      changePending(false)
     }
   }
 
   const resolveConflict = async () => {
     if (!onResolveConflict) return
-    setPending(true)
+    changePending(true)
     setInlineError(null)
     try {
       await onResolveConflict()
@@ -340,7 +343,7 @@ export function PlanManagementSection({
         defaultValue: 'Der Konflikt konnte nicht aufgelöst werden. Bitte versuche es erneut.',
       })))
     } finally {
-      setPending(false)
+      changePending(false)
     }
   }
 

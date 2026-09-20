@@ -37,6 +37,41 @@ interface SaveInjectionInput {
   pin: InjectionPinDraft
 }
 
+interface InjectionLogRow {
+  id: string
+  user_id: string
+  logged_at: string
+  dose_log_id?: string | null
+  stack_item_id?: string | null
+  cycle_id?: string | null
+  dose?: number | string | null
+  unit?: string | null
+  method?: string | null
+  notes?: string | null
+  created_at?: string | null
+  model_version?: string | null
+  body_region?: InjectionLog3D['body_region'] | null
+  body_side?: InjectionLog3D['body_side'] | null
+  position?: InjectionLog3D['position'] | null
+  normal?: InjectionLog3D['normal'] | null
+  uv?: InjectionLog3D['uv']
+  camera_state?: InjectionLog3D['camera_state']
+  warning_state?: string | null
+  substance_label?: string | null
+  stack_items?: { display_name?: string } | Array<{ display_name?: string }> | null
+  cycles?: { name?: string } | Array<{ name?: string }> | null
+}
+
+interface SelectableCycleRow {
+  id: string
+  stack_item_id: string
+  name: string
+  dose: number | string
+  unit: string
+  method: string
+  stack_items?: { display_name?: string } | Array<{ display_name?: string }> | null
+}
+
 export function buildInjectionInsertPayload(input: SaveInjectionInput) {
   return {
     user_id: input.userId,
@@ -91,7 +126,7 @@ export async function loadInjectionLogs(
     .order('logged_at', { ascending: false })
     .limit(300)
 
-  let data = enrichedResult.data as any[] | null
+  let data = enrichedResult.data as InjectionLogRow[] | null
   let error = enrichedResult.error
 
   if (error?.code === 'PGRST200') {
@@ -101,7 +136,7 @@ export async function loadInjectionLogs(
       .eq('user_id', userId)
       .order('logged_at', { ascending: false })
       .limit(300)
-    data = plainResult.data as any[] | null
+    data = plainResult.data as InjectionLogRow[] | null
     error = plainResult.error
   }
 
@@ -110,7 +145,7 @@ export async function loadInjectionLogs(
   const rows = data ?? []
   const linkedDoseLogIds = Array.from(new Set(
     rows
-      .map((row: any) => row.dose_log_id as string | null | undefined)
+      .map(row => row.dose_log_id)
       .filter((id): id is string => Boolean(id)),
   ))
   const doseTakenById = new Map<string, boolean | null>()
@@ -125,7 +160,7 @@ export async function loadInjectionLogs(
     }
   }
 
-  return rows.map((row: any) => ({
+  return rows.map(row => ({
     id: row.id,
     user_id: row.user_id,
     dose_log_id: row.dose_log_id ?? null,
@@ -184,7 +219,7 @@ export async function loadSelectableInjectionCycles(
     .eq('active', true)
     .in('method', INJECTABLE_METHODS)
   if (error) throw error
-  return (data ?? []).map((row: any) => ({
+  return ((data ?? []) as SelectableCycleRow[]).map(row => ({
     id: row.id,
     stack_item_id: row.stack_item_id,
     stack_item_name: Array.isArray(row.stack_items) ? row.stack_items[0]?.display_name ?? row.name : row.stack_items?.display_name ?? row.name,

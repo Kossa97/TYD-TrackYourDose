@@ -155,7 +155,6 @@ describe('pickSixHourScrollingTicks', () => {
     const viewStart1 = viewEnd - LIVE_CHART_WINDOW_MS_MOBILE
     const viewStart2 = viewStart1 + 3 * HOUR
     const ticks1 = pickSixHourScrollingTicks(viewStart1, viewEnd)
-    const ticks2 = pickSixHourScrollingTicks(viewStart2, viewEnd)
     const shared = ticks1.filter(t => t >= viewStart2)
     expect(shared.length).toBeGreaterThan(0)
     const t = shared[0]

@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useId, useRef, useState } from 'react'
 import type { CSSProperties, Ref, RefObject } from 'react'
-import { LIQUID_VB_H, liquidSurfaceY } from '../features/my-stack/stage/liquidGeometry'
 import { usePrefersReducedMotion } from '../features/my-stack/stage/usePrefersReducedMotion'
 import { useStageLight, type StageLightHandle } from '../features/my-stack/stage/useStageLight'
 import { LiquidGraphic, type LiquidGraphicHandle } from '../features/my-stack/stage/LiquidGraphic'
@@ -43,12 +42,6 @@ function clampSlosh(slosh: number): number {
 function clamp01(value: number): number {
   if (!Number.isFinite(value)) return 0
   return Math.max(0, Math.min(1, value))
-}
-
-function fillMotionShiftPct(previousFill: number, nextFill: number): number {
-  const previousY = liquidSurfaceY(previousFill)
-  const nextY = liquidSurfaceY(nextFill)
-  return Number((((previousY - nextY) / LIQUID_VB_H) * 100).toFixed(2))
 }
 
 // Die zweite Zeile auf dem Etikett — die Wirkstoffmenge.
@@ -165,11 +158,10 @@ export function PeptideVialVisual({
   const shellGlowOpacity = 0.2 + visualFocus * 0.42
   const shellEdgeOpacity = 0.36 + visualFocus * 0.28
   const shadowOpacity = 0.2 + visualFocus * 0.28
-  const previousFillRef = useRef(fillFrac)
-  const [fillMotion, setFillMotion] = useState<{ epoch: number; shiftPct: number; mode: 'none' | 'reveal' | 'shift' }>(() => (
+  const [fillMotion] = useState<{ mode: 'none' | 'reveal' }>(() => (
     animateOnMount && fillFrac > 0.001
-      ? { epoch: 1, shiftPct: 0, mode: 'reveal' }
-      : { epoch: 0, shiftPct: 0, mode: 'none' }
+      ? { mode: 'reveal' }
+      : { mode: 'none' }
   ))
 
   const rootRef = useRef<HTMLDivElement | null>(null)
@@ -217,31 +209,11 @@ export function PeptideVialVisual({
 
   useStageLight(applyStageLight, { focus: visualFocus, lightOffset: visualLightOffset }, stageLightRef)
 
-  useEffect(() => {
-    const previousFill = previousFillRef.current
-    if (Math.abs(previousFill - fillFrac) < 0.001) return
-
-    const shiftPct = fillMotionShiftPct(previousFill, fillFrac)
-
-    previousFillRef.current = fillFrac
-    setFillMotion(current => ({
-      epoch: current.epoch + 1,
-      shiftPct,
-      mode: 'shift',
-    }))
-  }, [fillFrac])
-
-  const liquidMotionClass = fillMotion.mode === 'reveal'
-    ? 'vial-liquid-fill-reveal'
-    : fillMotion.mode === 'shift'
-      ? 'vial-liquid-level-motion'
-      : ''
-  const fillIntroDurationMs = Math.round(900 + fillFrac * 800)
-  const liquidMotionStyle = {
-    color,
-    '--vial-fill-motion-shift': `${fillMotion.shiftPct}%`,
-    '--vial-fill-intro-duration': `${fillIntroDurationMs}ms`,
-  } as CSSProperties
+  const viewportRevealClass = fillMotion.mode === 'reveal' ? 'vial-liquid-fill-reveal' : ''
+  const fillIntroDurationMs = Math.round(1000 + fillFrac * 1500)
+  const viewportRevealStyle = fillMotion.mode === 'reveal'
+    ? { '--vial-fill-intro-duration': `${fillIntroDurationMs}ms` } as CSSProperties
+    : undefined
   const labelName = name?.trim() || 'Peptidname'
   // 'large' = detail views (edit form, previews); 'carousel' = the My Stack
   // carousel, sized so several vials can peek in side by side; 'compact' =
@@ -292,17 +264,16 @@ export function PeptideVialVisual({
           0%, 100% { transform: translateX(0); opacity: .35; }
           50% { transform: translateX(14%); opacity: .7; }
         }
-        @keyframes vial-liquid-level-motion {
-          from { transform: translateY(var(--vial-fill-motion-shift, 0%)); }
-          to { transform: translateY(0); }
+        @keyframes vial-liquid-fill-reveal {
+          from { clip-path: inset(100% 0 0 0); }
+          to { clip-path: inset(0 0 0 0); }
         }
-        .vial-liquid-level-motion {
-          animation: vial-liquid-level-motion 760ms cubic-bezier(.22,1,.36,1) both;
-          transform-box: fill-box;
-          transform-origin: center bottom;
+        .vial-liquid-fill-reveal {
+          animation: vial-liquid-fill-reveal var(--vial-fill-intro-duration, 1200ms) cubic-bezier(.22,1,.36,1) both;
+          will-change: clip-path;
         }
         @media (prefers-reduced-motion: reduce) {
-          .vial-shimmer, .vial-liquid-level-motion { animation: none !important; }
+          .vial-shimmer, .vial-liquid-fill-reveal { animation: none !important; }
         }
       `}</style>
 
@@ -448,7 +419,8 @@ export function PeptideVialVisual({
               highlight all derive from one geometry so they move as one. */}
           <div
             data-vial-detail="liquid-motion-viewport"
-            className="pointer-events-none absolute inset-0"
+            className={`pointer-events-none absolute inset-0 ${viewportRevealClass}`.trim()}
+            style={viewportRevealStyle}
           >
             <svg
               data-vial-detail="liquid-vial-chamber"
@@ -479,11 +451,6 @@ export function PeptideVialVisual({
                   reducedMotion={reducedMotion}
                   seedFocus={visualFocus}
                   seedLightOffset={visualLightOffset}
-                  motionKey={fillMotion.epoch}
-                  motionClass={liquidMotionClass}
-                  motionStyle={liquidMotionStyle}
-                  introReveal={fillMotion.mode === 'reveal'}
-                  introDurationMs={fillIntroDurationMs}
                   handleRef={liquidRef}
                 />
               </g>

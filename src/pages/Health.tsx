@@ -519,7 +519,7 @@ function StatCell({ label, value, color, note }: { label: string; value: string;
   return (
     <div className="rounded-2xl p-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
       <p className="text-[0.62rem] font-bold uppercase tracking-[0.08em] text-slate-500 mb-1">{label}</p>
-      <p className="text-xl font-black leading-tight" style={{ color: value === '—' ? 'var(--text-muted)' : 'var(--text)' }}>{value}</p>
+      <p className="text-xl font-black leading-tight" style={{ color: value === '—' ? 'var(--text-muted)' : color }}>{value}</p>
       {note && <p className="text-[0.58rem] text-slate-600 mt-0.5">{note}</p>}
     </div>
   )

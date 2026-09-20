@@ -8,7 +8,7 @@ import {
   Plus, Minus, Trash2, Pencil, FlaskConical, Activity,
   CalendarDays, CalendarRange, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, List,
   TrendingUp, TrendingDown, Search, Bell, SlidersHorizontal,
-  Package, FileUp, Droplets, X, FileText, ExternalLink,
+  X, FileText, ExternalLink,
   Archive, Info, RefreshCw, Sunrise, Sun, Moon, Clock, AlertTriangle,
   RotateCcw, Flag, Pause, Play, CalendarPlus, type LucideIcon,
 } from 'lucide-react'
@@ -75,15 +75,6 @@ interface InventoryItem {
   vials_count: number; vials_initial: number | null; mg_per_vial: number; created_at: string
   pk_profile_id: string | null
 }
-interface InventoryForm {
-  name: string; batch_number: string; batch_source: string
-  batch_file_url: string; vials_count: string; mg_per_vial: string
-}
-const emptyInventoryForm = (): InventoryForm => ({
-  name: '', batch_number: '', batch_source: '', batch_file_url: '',
-  vials_count: '1', mg_per_vial: '',
-})
-
 // ─── Peptid-Typen ─────────────────────────────────────────────────────────────
 interface Peptide extends StackItem {
   name: string; default_method: string
@@ -134,18 +125,11 @@ type InfoRow = {
   wide?: boolean
 }
 // ─── Konstanten ───────────────────────────────────────────────────────────────
-const POPULAR_PEPTIDES = [
-  'BPC-157','TB-500','Ipamorelin','CJC-1295','GHK-Cu','Epitalon',
-  'Selank','Semax','PT-141','Retatrutide','Semaglutid','Tirzepatid',
-  'IGF-1 LR3','GHRP-2','GHRP-6','Sermorelin','AOD 9604',
-  'Thymosin Alpha-1','LL-37','Hexarelin','MGF',
-]
 const UNITS   = ['mcg','mg','IU','ml','nmol']
 const METHOD_KEYS: Record<string,string> = {
   'Subkutan':'method_subkutan','Intramuskulär':'method_intramusk','Nasal':'method_nasal',
   'Oral':'method_oral','Transdermal':'method_transdermal','Intravenös':'method_intravenoese','Andere':'method_andere',
 }
-const EXPIRY_PRESETS = [10, 14, 21, 28, 42, 90]
 
 type PeptideSortKey =
   | 'active_name'
@@ -266,14 +250,6 @@ function sortPeptides(list: Peptide[], sortBy: PeptideSortKey, activeIds: Set<st
   })
 }
 
-const SYRINGE_PRESETS = [
-  { label: '1 mL · 100 Einh. (U-100)',  ml: '1',   units: '100' },
-  { label: '0,5 mL · 50 Einh. (U-100)', ml: '0.5', units: '50'  },
-  { label: '0,3 mL · 30 Einh. (U-100)', ml: '0.3', units: '30'  },
-  { label: '0,5 mL · 100 Einh. (U-100)',ml: '0.5', units: '100' },
-  { label: '2 mL · 200 Einh. (U-100)',  ml: '2',   units: '200' },
-  { label: '1 mL · 40 Einh. (U-40)',    ml: '1',   units: '40'  },
-]
 const FREQ_KEYS: Record<string,string> = {
   'Täglich':'freq_taeglich','2x täglich':'freq_2x','3x täglich':'freq_3x',
   'Jeden 2. Tag':'freq_jeden2',
@@ -359,79 +335,6 @@ export function DosePlanActions({
       >
         <Plus size={13} aria-hidden="true" /> {t('dose_plan_add_titration', { defaultValue: 'Titrationsschritt hinzufügen' })}
       </button>
-    </div>
-  )
-}
-
-// ─── Inventar-Bestand-Grafik ─────────────────────────────────────────────────
-function VialStockDisplay({ current, initial, inUse = 0 }: {
-  current: number; initial: number | null; inUse?: number
-}) {
-  const { t } = useTranslation()
-  if (!initial || initial <= 0) return null
-  const available = Math.max(0, current - inUse)
-  const lowStock  = available <= 2
-  const color     = lowStock ? '#ef4444' : '#10b981'
-
-  if (initial > 10) {
-    const availPct = (available / initial) * 100
-    const inUsePct = (Math.min(inUse, current) / initial) * 100
-    const barColor = lowStock ? '#ff3355' : '#00ccf5'
-    const barGlow  = lowStock ? 'rgba(255,40,80,0.35)' : 'rgba(0,204,245,0.35)'
-    return (
-      <div className="mt-2.5">
-        <div className="flex items-center justify-between mb-1.5" style={{ fontSize: '10px' }}>
-          <span style={{ color: lowStock ? '#ff4466' : 'rgba(0,204,245,0.60)', fontWeight: 600, letterSpacing: '0.04em' }}>
-            {available} {t('verfuegbar')}{lowStock ? ' · ' + t('bestand_niedrig') : ''}
-          </span>
-          {inUse > 0 && <span style={{ color: 'rgba(245,160,0,0.75)', fontWeight: 600 }}>{inUse} {t('in_verwendung')}</span>}
-        </div>
-        <div className="overflow-hidden flex" style={{
-          height: '6px', borderRadius: '3px',
-          background: 'rgba(0,0,0,0.7)',
-          border: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.8)',
-        }}>
-          <div className="transition-all duration-500" style={{
-            width: `${availPct}%`,
-            background: `linear-gradient(90deg, ${barColor}aa, ${barColor})`,
-            boxShadow: `0 0 8px ${barGlow}`,
-          }} />
-          {inUse > 0 && (
-            <div className="transition-all duration-500" style={{
-              width: `${inUsePct}%`,
-              background: 'linear-gradient(90deg, #e09000aa, #f5a000)',
-              opacity: 0.75,
-            }} />
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  // Nur current Vials anzeigen (keine verbrauchten)
-  return (
-    <div className="mt-2.5 flex items-end gap-1 flex-wrap">
-      {Array.from({ length: current }, (_, i) => {
-        const isInUse = i >= available
-        const fill    = isInUse ? '#f59e0b' : color
-        return (
-          <svg key={i} width="13" height="28" viewBox="0 0 13 28">
-            <rect x="4" y="0" width="5" height="3" rx="1" fill={fill} opacity={isInUse ? 0.85 : 1} />
-            <rect x="3" y="3" width="7" height="2" rx="0.5" fill={fill} opacity={isInUse ? 0.75 : 0.85} />
-            <rect x="1" y="5" width="11" height="22" rx="3"
-              fill={fill} stroke={fill} strokeWidth="1.5" opacity={isInUse ? 0.4 : 0.65} />
-          </svg>
-        )
-      })}
-      <div className="flex flex-col ml-1 self-center gap-0.5">
-        {inUse > 0 && (
-          <span className="text-xs text-amber-400/70 leading-none">{inUse} {t('in_verwendung')}</span>
-        )}
-        {lowStock && (
-          <span className="text-xs text-red-400 font-medium leading-none">{t('bestand_niedrig')}</span>
-        )}
-      </div>
     </div>
   )
 }
@@ -1014,7 +917,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     : null
 
   // ── Inventar Bestand anpassen ─────────────────────────────────────────────
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const adjustInventoryCount = async (id: string, delta: number, current: number) => {
     const newCount = Math.max(0, current + delta)
     await supabase.from('inventory_items').update({ vials_count: newCount }).eq('id', id)

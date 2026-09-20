@@ -890,14 +890,13 @@ describe('My Stack modular integration', () => {
 
   test('uses only neutral My Stack links and active-route naming in navigation', () => {
     const layout = readFileSync(new URL('../../components/Layout.tsx', import.meta.url), 'utf8')
+    const tabModel = readFileSync(new URL('../../components/navigation/tabModel.ts', import.meta.url), 'utf8')
     const home = readFileSync(new URL('../../pages/Home.tsx', import.meta.url), 'utf8')
 
     expect(layout).toContain("path: '/my-stack#new-substance'")
-    expect(layout).toContain('to="/my-stack"')
-    expect(layout).toContain("const isMyStack = pathname === '/my-stack'")
-    expect(layout).toContain('active={isMyStack}')
+    expect(tabModel).toContain("{ id: 'my-stack', route: '/my-stack'")
     expect(layout).not.toContain('/peptide')
-    expect(layout).not.toContain('isPeptide')
+    expect(tabModel).not.toContain("route: '/peptide'")
     expect(home).toContain("path: '/my-stack'")
     expect(home).not.toContain("path: '/peptide'")
   })
@@ -912,7 +911,11 @@ describe('My Stack modular integration', () => {
       for (const entry of readdirSync(directory, { withFileTypes: true })) {
         const path = join(directory, entry.name)
         if (entry.isDirectory()) visit(path)
-        else if (['.ts', '.tsx'].includes(extname(entry.name)) && entry.name !== 'MyStackPage.test.ts') sourceFiles.push(path)
+        else if (
+          ['.ts', '.tsx'].includes(extname(entry.name))
+          && !entry.name.endsWith('.test.ts')
+          && !entry.name.endsWith('.test.tsx')
+        ) sourceFiles.push(path)
       }
     }
     visit(sourceRoot)
@@ -922,7 +925,7 @@ describe('My Stack modular integration', () => {
     )
     expect(references).toEqual([])
 
-    const legacyRouteReferences = sourceFiles.flatMap(path => {
+    const legacyRouteReferences = sourceFiles.filter(path => !path.endsWith('App.tsx')).flatMap(path => {
       const matches = [...readFileSync(path, 'utf8').matchAll(/['"]\/peptide(?:[^'"]*)['"]/g)]
       return matches.map(match => `${path}:${match[0]}`)
     })

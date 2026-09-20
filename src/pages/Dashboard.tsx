@@ -254,13 +254,6 @@ function intakePeriodFromMinutes(minutes: number): 'morgens' | 'mittags' | 'aben
 
 type PeriodKey = 'morgens' | 'mittags' | 'abends'
 
-function slotPeriod(slot: { groupKey: IntakeGroupKey; minutes: number }): PeriodKey {
-  if (slot.groupKey === 'morgens' || slot.groupKey === 'mittags' || slot.groupKey === 'abends') {
-    return slot.groupKey
-  }
-  return intakePeriodFromMinutes(slot.minutes)
-}
-
 const PERIOD_ORDER: PeriodKey[] = ['morgens', 'mittags', 'abends']
 const PERIOD_TO_ROUTINE_GROUP = {
   morgens: 'morning',
@@ -309,36 +302,6 @@ const calendarLegendText: CSSProperties = {
   fontSize: '0.66rem',
   color: 'var(--text-dim)',
   fontWeight: 700,
-}
-
-function CalendarInfoPill({
-  label,
-  value,
-  accent,
-}: {
-  label: string
-  value: number | string
-  accent: string
-}) {
-  return (
-    <div
-      style={{
-        minWidth: 0,
-        borderRadius: 14,
-        border: `1px solid ${accent}2d`,
-        background: `linear-gradient(145deg, ${accent}14, rgba(6,10,24,0.72))`,
-        padding: '8px 10px',
-        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04), 0 0 14px ${accent}10`,
-      }}
-    >
-      <p style={{ color: accent, fontWeight: 900, fontSize: '0.95rem', lineHeight: 1 }}>
-        {value}
-      </p>
-      <p style={{ color: 'var(--text-dim)', fontSize: '0.6rem', fontWeight: 780, marginTop: 4 }}>
-        {label}
-      </p>
-    </div>
-  )
 }
 
 function IntakePeriodCarousel<T>({

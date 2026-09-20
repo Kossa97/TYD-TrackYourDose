@@ -382,7 +382,7 @@ describe('plan lifecycle service', () => {
   })
 })
 
-if (false) {
+function assertInvalidBoundaryTypes() {
   // @ts-expect-error An instant boundary requires an instant and forbids a local date.
   const invalidInstantBoundary: CreatePlanVersionInput = {
     cycleId: 'cycle-1',
@@ -413,3 +413,4 @@ if (false) {
   }
   void rpcOnlyClient
 }
+void assertInvalidBoundaryTypes

@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { format, parseISO, subDays, differenceInCalendarDays } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import {
-  Activity,
   BarChart3,
   CalendarDays,
   CheckCircle2,
@@ -16,15 +15,12 @@ import {
   Link2,
   Scale,
   Syringe,
-  TestTube2,
   XCircle,
   Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
   Area,
-  Bar,
-  BarChart,
   CartesianGrid,
   ComposedChart,
   Legend,
@@ -349,11 +345,6 @@ function formatNumber(value: number, language: string, maximumFractionDigits = 1
   return new Intl.NumberFormat(language, { maximumFractionDigits }).format(value)
 }
 
-function formatTooltipValue(value: unknown, language: string, unit: string, maximumFractionDigits = 1) {
-  const number = typeof value === 'number' ? value : Number(value)
-  return `${Number.isFinite(number) ? formatNumber(number, language, maximumFractionDigits) : String(value)}${unit ? ` ${unit}` : ''}`
-}
-
 function cycleEnd(cycle: Cycle) {
   return cycle.end_date ?? todayIso()
 }
@@ -402,33 +393,6 @@ function EmptyChart({ label }: { label: string }) {
     <div className="h-56 rounded-2xl border border-white/[0.06] bg-white/[0.025] flex items-center justify-center text-sm text-slate-500">
       {label}
     </div>
-  )
-}
-
-function ChartCard({
-  title,
-  icon,
-  action,
-  children,
-}: {
-  title: string
-  icon: ReactNode
-  action?: ReactNode
-  children: ReactNode
-}) {
-  return (
-    <section className="card">
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-sky-400/10 border border-sky-400/20 flex items-center justify-center text-sky-400">
-            {icon}
-          </div>
-          <h2 className="text-base font-bold text-white">{title}</h2>
-        </div>
-        {action}
-      </div>
-      {children}
-    </section>
   )
 }
 
@@ -687,7 +651,7 @@ export function Protokoll() {
       const color = getSeriesColor(marker)
       const { min: normalMin, max: normalMax } = getNormalRange(marker)
       let data: { date: string; label: string; value: number | null }[]
-      let unit = ''
+      let unit: string
 
       if (marker === 'Gewicht') {
         data = [...weightLogs]

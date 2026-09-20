@@ -1,0 +1,62 @@
+import type { PeptipediaEntry } from '../types'
+import { PEPTIPEDIA_EDITORIAL_POLICY } from '../editorialPolicy'
+
+export const bpc157: PeptipediaEntry = {
+  slug: 'bpc-157',
+  name: 'BPC-157',
+  fullName: 'Body Protection Compound 157',
+  category: 'heilung',
+  researchStatus: 'human_research',
+  identity: { status: 'ambiguous', description: { de: 'BPC-157 bezeichnet ein synthetisches Pentadecapeptid. Freie Base, Acetat und andere Handelsformen sind ohne Produktspezifikation nicht austauschbar.', en: 'BPC-157 denotes a synthetic pentadecapeptide. Free base, acetate and other marketed forms are not interchangeable without product specifications.' } },
+  evidenceMatrix: { human: 'very_limited', replication: 'none', endpoints: 'none', safety: 'insufficient' },
+  editorialReview: PEPTIPEDIA_EDITORIAL_POLICY,
+  evidence: { human: 'limited', animal: 'moderate', clinical: 'sparse' },
+  reviewedAt: '2026-09-14',
+  contentVersion: 2,
+  sources: [
+    { id: 'lee-2025-pilot', kind: 'human_study', title: 'Safety of Intravenous Infusion of BPC157 in Humans: A Pilot Study', publisherOrAuthors: 'U.S. National Library of Medicine (PubMed)', year: 2025, accessedAt: '2026-09-14', url: 'https://pubmed.ncbi.nlm.nih.gov/40131143/' },
+    {
+      id: 'fda-bpc-risk',
+      kind: 'regulator',
+      title: 'FDA: Safety risks associated with BPC-157 in compounding',
+      publisherOrAuthors: 'U.S. Food and Drug Administration',
+      year: 2024,
+      accessedAt: '2026-09-14', url: 'https://www.fda.gov/drugs/human-drug-compounding/certain-bulk-drug-substances-use-compounding-may-present-significant-safety-risks',
+    },
+    {
+      id: 'staresinic-2003',
+      kind: 'animal_study',
+      title: 'BPC 157 accelerates healing of transected rat Achilles tendon and stimulates tendocyte growth',
+      publisherOrAuthors: 'U.S. National Library of Medicine (PubMed)',
+      year: 2003,
+      accessedAt: '2026-09-14', url: 'https://pubmed.ncbi.nlm.nih.gov/14554208/',
+      doi: '10.1016/S0736-0266(03)00110-4',
+    },
+  ],
+  mechanismSourceIds: ['staresinic-2003'],
+  safetySourceIds: ['lee-2025-pilot', 'fda-bpc-risk'],
+  copy: {
+    de: {
+      tldr: 'BPC-157 ist ein synthetisches Peptid, dessen beworbene Regenerationseffekte fast ausschließlich aus Tier- und Laborforschung stammen. Belastbare Wirksamkeits- und Sicherheitsdaten am Menschen fehlen.',
+      mechanism: 'In Tier- und Zellmodellen wurden Effekte auf Tendonzyten, Kollagenorganisation und Gefäßbildung beobachtet. Daraus lässt sich weder ein gesicherter Wirkmechanismus noch ein Nutzen beim Menschen ableiten.',
+      researchAreas: ['Sehnen- und Bandheilung in Tiermodellen', 'Zelluläre Reparaturprozesse'],
+      overviewFacts: [{ id: 'evidence-base', label: 'Evidenzbasis', value: 'Überwiegend präklinische Forschung; kleine Humanpilotstudien reichen für einen Sicherheitsnachweis nicht aus.', sourceIds: ['fda-bpc-risk', 'staresinic-2003', 'lee-2025-pilot'] }],
+      researchGaps: ['Die unkontrollierte Pilotstudie von 2025 umfasst nur zwei bereits zuvor exponierte Personen.', 'Keine belastbaren kontrollierten Wirksamkeitsstudien am Menschen', 'Keine ausreichend charakterisierte klinische Pharmakokinetik', 'Unklare Langzeitsicherheit und Produktqualität'],
+      sideEffects: ['Immunogenität und Produktverunreinigungen sind ungeklärt; die Zwei-Personen-Infusionsstudie schließt Risiken nicht aus.'],
+      contraindications: ['Mangels ausreichender Humandaten sind Gegenanzeigen nicht zuverlässig bestimmt.'],
+      interactions: ['Wechselwirkungen sind für die hier beschriebenen Forschungs- oder Produktformen nicht ausreichend untersucht.'],
+      protocols: [],
+    },
+    en: {
+      tldr: 'BPC-157 is a synthetic peptide whose promoted regenerative effects come almost entirely from animal and laboratory research. Reliable human efficacy and safety data are lacking.',
+      mechanism: 'Animal and cell models have reported effects on tendon cells, collagen organization and blood-vessel formation. These findings do not establish a mechanism or benefit in humans.',
+      researchAreas: ['Tendon and ligament healing in animal models', 'Cellular repair processes'],
+      overviewFacts: [{ id: 'evidence-base', label: 'Evidence base', value: 'Mainly preclinical research; small human pilots cannot establish safety.', sourceIds: ['fda-bpc-risk', 'staresinic-2003', 'lee-2025-pilot'] }],
+      researchGaps: ['The uncontrolled 2025 pilot includes only two previously exposed participants.', 'No robust controlled human efficacy trials', 'No adequately characterized clinical pharmacokinetics', 'Uncertain long-term safety and product quality'],
+      sideEffects: ['Immunogenicity and product impurities remain unresolved; the two-person infusion study does not exclude risks.'],
+      contraindications: ['Contraindications cannot be determined reliably because adequate human data are unavailable.'],
+      interactions: ['Interactions for the research or product forms described here have not been adequately studied.'],
+      protocols: [],
+    },
+  },
+}

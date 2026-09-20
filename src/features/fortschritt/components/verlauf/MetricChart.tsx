@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import type { DotItemDotProps } from 'recharts'
 import type { CycleSubstance, DateRange, MetricKey, OngoingSubstance } from '../../types'
 import type { MetricDefinition } from '../../lib/metricDefinitions'
 import { buildMetricSeries, computeDelta } from '../../lib/metrics'
@@ -214,6 +215,7 @@ function AnimatedMetricDot({
     />
   )
 }
+
 function MetricChartBody({
   lineData,
   visibleLineData,
@@ -299,14 +301,15 @@ function MetricChartBody({
         name="value"
         stroke={metric.color}
         strokeWidth={2.5}
-        dot={showPersistentDots ? (dotProps: any) => {
+        dot={showPersistentDots ? (dotProps: DotItemDotProps) => {
           const animationIndex = dotProps.payload?.ts != null
             ? visiblePointIndex.get(dotProps.payload.ts)
             : undefined
           if (animationIndex == null) return null
           return (
             <AnimatedMetricDot
-              {...dotProps}
+              cx={dotProps.cx}
+              cy={dotProps.cy}
               fill="#07091a"
               stroke={metric.color}
               animationIndex={animationIndex}
@@ -402,7 +405,13 @@ function MetricChartInner({
   useImperativeHandle(ref, () => ({ jumpToNow, jumpToTs }), [jumpToNow, jumpToTs])
 
   // Serie über den vollen Bereich — die Domain schneidet die Anzeige zu.
-  const series = buildMetricSeries(metric.key, dataRange, weights, dailyLogs, bloodwork)
+  // Memoisiert, weil das Sichtfenster beim Wischen pro Frame neu gesetzt wird:
+  // die Serie hängt nicht daran, die Memos darunter (lineData, snapDates) aber
+  // an ihrer Referenz.
+  const series = useMemo(
+    () => buildMetricSeries(metric.key, dataRange, weights, dailyLogs, bloodwork),
+    [metric.key, dataRange, weights, dailyLogs, bloodwork],
+  )
 
   const { bands, lanes } = useMemo(() => {
     const substances = [
@@ -516,7 +525,7 @@ function MetricChartInner({
     [metricSnapDates, bands],
   )
 
-  const delta = computeDelta(series)
+  const delta = useMemo(() => computeDelta(series), [series])
   const latest = series[series.length - 1]
 
   const metricBar = (

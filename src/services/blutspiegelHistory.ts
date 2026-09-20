@@ -1,7 +1,7 @@
 // Lädt alle bestätigten Einnahmen eines Zyklus aus der Datenbank
 // und gibt sie als sortierte Liste von { timestamp, dose, status } zurück.
 
-import { addDays, format, parseISO } from 'date-fns'
+import { addDays, format } from 'date-fns'
 import { supabase } from '../lib/supabase'
 import { FEATURES } from '../config/features'
 import {

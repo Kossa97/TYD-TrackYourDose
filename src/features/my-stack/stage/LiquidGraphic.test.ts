@@ -93,7 +93,7 @@ describe('LiquidGraphic', () => {
 
   it('carries the colour through so each item keeps its own liquid', () => {
     const html = renderToStaticMarkup(createElement(LiquidGraphic, {
-      ...base, motionStyle: { color: '#e0a23f' },
+      ...base, color: '#e0a23f',
     }))
 
     expect(html).toContain('#e0a23f')
