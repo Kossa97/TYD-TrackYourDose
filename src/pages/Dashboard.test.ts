@@ -168,6 +168,29 @@ afterEach(() => {
 })
 
 describe('Dashboard normalized timeline path', () => {
+  it('holt die Tageslogs nebeneinander statt nacheinander', () => {
+    // Die Seite lud ihre Zeitbereiche und danach die Slot-Schluessel in
+    // 100er-Paeckchen -- jedes mit `await` hinter dem vorigen, obwohl keines
+    // vom anderen abhaengt. Bei einem Monatsraster mit mehreren Plaenen sind
+    // das schnell ein halbes Dutzend Rundreisen in Reihe. Die Paeckchen
+    // bleiben (sie begrenzen die Laenge der Adresse), nur das Warten nicht.
+    const quelle = readFileSync('src/pages/Dashboard.tsx', 'utf8')
+    const lader = quelle.slice(
+      quelle.indexOf('const byId = new Map<string, DoseLog>()'),
+      quelle.indexOf('setTimelines(loadedTimelines)'),
+    )
+
+    expect(lader).toContain('await Promise.all(ranges.map(range =>')
+    expect(lader).toContain('await Promise.all(paeckchen.map(schluessel =>')
+    // Kein `await` mehr innerhalb einer Schleife in diesem Abschnitt.
+    const schleifenZeilen = lader.split('\n')
+    const inSchleife = schleifenZeilen.some((zeile, i) => (
+      /^\s*for \(/.test(zeile)
+      && schleifenZeilen.slice(i, i + 8).some(folge => /await dashboardDataClient/.test(folge))
+    ))
+    expect(inSchleife, 'ein `await` steckt wieder in einer Schleife').toBe(false)
+  })
+
   it('explains blocked migrated plans and links to their timezone review', async () => {
     const fixtures = startFixFixture()
     fixtures.cycles.unshift({

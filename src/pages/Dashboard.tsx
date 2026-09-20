@@ -570,11 +570,15 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         }
         const columns = 'id, stack_item_id, dose, unit, method, logged_at, notes, taken, cycle_id, plan_version_id, routine_slot_key, stack_items(display_name)'
         const byId = new Map<string, DoseLog>()
-        for (const range of ranges) {
-          const result = await dashboardDataClient.from('dose_logs').select(columns)
+        // Nebeneinander, nicht nacheinander: die Zeitbereiche wissen nichts
+        // voneinander, gewartet wurde trotzdem der Reihe nach.
+        const rangeResults = await Promise.all(ranges.map(range =>
+          dashboardDataClient.from('dose_logs').select(columns)
             .eq('user_id', user.id).gte('logged_at', range.start.toISOString()).lt('logged_at', range.end.toISOString())
-            .order('logged_at', { ascending: true })
-          if (!isCurrent()) return
+            .order('logged_at', { ascending: true }),
+        ))
+        if (!isCurrent()) return
+        for (const result of rangeResults) {
           if (result.error) throw result.error
           for (const log of (result.data ?? []) as unknown as DoseLog[]) byId.set(log.id, log)
         }
@@ -585,10 +589,21 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           ).map(intake => intake.routineSlotKey)))
         // Stable identity is independent of mutable logged_at. Batches keep the
         // request URL bounded for the displayed grid and independent selection.
+        //
+        // Die Paeckchen begrenzen die LAENGE der Adresse -- sie sind kein
+        // Grund, auch nacheinander zu warten. Bei einem Monatsraster mit
+        // mehreren Plaenen sind das schnell ein halbes Dutzend Rundreisen,
+        // jede hinter der vorigen.
+        const paeckchen: string[][] = []
         for (let offset = 0; offset < keys.length; offset += 100) {
-          const result = await dashboardDataClient.from('dose_logs').select(columns)
-            .eq('user_id', user.id).in('routine_slot_key', keys.slice(offset, offset + 100))
-          if (!isCurrent()) return
+          paeckchen.push(keys.slice(offset, offset + 100))
+        }
+        const slotResults = await Promise.all(paeckchen.map(schluessel =>
+          dashboardDataClient.from('dose_logs').select(columns)
+            .eq('user_id', user.id).in('routine_slot_key', schluessel),
+        ))
+        if (!isCurrent()) return
+        for (const result of slotResults) {
           if (result.error) throw result.error
           for (const log of (result.data ?? []) as unknown as DoseLog[]) byId.set(log.id, log)
         }
