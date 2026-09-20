@@ -820,6 +820,7 @@
   "due_intakes_hint": "Bitte jede Einnahme pro Substanz bestätigen oder überspringen.",
   "period_no_open_intakes": "Keine offenen Einnahmen",
   "calendar_expand_month": "Monat anzeigen",
+  "calendar_day_status": "{{datum}}, {{genommen}} von {{geplant}} bestätigt",
   "calendar_collapse_week": "Wochenansicht",
   "prev_week": "Vorherige Woche",
   "next_week": "Nächste Woche",

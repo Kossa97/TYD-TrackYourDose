@@ -1239,5 +1239,6 @@
   "my_stack_plan_conflict_keep": "Keep this running plan",
   "my_stack_plan_conflict_error": "The conflict could not be resolved. Please try again.",
   "my_stack_calendar_timezone_review": "Existing intake plans still need a time zone confirmation. They will not appear in the calendar until then.",
-  "my_stack_calendar_timezone_review_action": "Confirm time zone in My Stack"
+  "my_stack_calendar_timezone_review_action": "Confirm time zone in My Stack",
+  "calendar_day_status": "{{datum}}, {{genommen}} dari {{geplant}} dikonfirmasi"
 }

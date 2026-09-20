@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
@@ -299,12 +299,6 @@ function cycleLogTimestamp(cycle: Cycle, day: Date): string {
   return date.toISOString()
 }
 
-const calendarLegendText: CSSProperties = {
-  fontSize: '0.66rem',
-  color: 'var(--text-dim)',
-  fontWeight: 700,
-}
-
 function IntakePeriodCarousel<T>({
   items,
   getKey,
@@ -487,6 +481,30 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
   // Horizontal swipe state
   const calendarSwipeStart = useRef<{ x: number; y: number; pointerId: number } | null>(null)
+  // Ein Wisch endet auf einer Tageszelle und loest dort ein `click` aus. Ohne
+  // diesen Merker waehlte das Blaettern den Tag unter dem Finger aus.
+  //
+  // Er wird verzoegert geloescht, nicht sofort: der `click` kommt NACH
+  // `pointerup`, muesste also noch geschluckt werden. Bliebe der Merker aber
+  // bis zur naechsten Zeigergeste stehen, verschluckte er danach jedes Enter
+  // und jeden VoiceOver-Doppeltipp — also genau den Weg, den die Zelle neu
+  // bekommen hat.
+  const wurdeGewischt = useRef(false)
+  const wischMerkerTimer = useRef<number | null>(null)
+  const merkeWisch = () => {
+    wurdeGewischt.current = true
+    if (wischMerkerTimer.current !== null) window.clearTimeout(wischMerkerTimer.current)
+  }
+  const wischMerkerLoesen = () => {
+    if (wischMerkerTimer.current !== null) window.clearTimeout(wischMerkerTimer.current)
+    wischMerkerTimer.current = window.setTimeout(() => {
+      wurdeGewischt.current = false
+      wischMerkerTimer.current = null
+    }, 0)
+  }
+  useEffect(() => () => {
+    if (wischMerkerTimer.current !== null) window.clearTimeout(wischMerkerTimer.current)
+  }, [])
   const [calendarDragX, setCalendarDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [peekDir, setPeekDir] = useState<-1 | 0 | 1>(0)
@@ -514,6 +532,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const handleCalendarPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
     calendarSwipeStart.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId }
+    wurdeGewischt.current = false
     setIsDragging(true)
   }
 
@@ -525,6 +544,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     // Only track if horizontal movement is meaningful and dominant
     if (Math.abs(deltaX) < 6) return
     if (Math.abs(deltaY) > Math.abs(deltaX) * 0.8) return
+    merkeWisch()
     setCalendarDragX(deltaX)
     const dir = (deltaX < 0 ? 1 : -1) as -1 | 1
     if (peekDir !== dir) setPeekDir(dir)
@@ -536,20 +556,14 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     setIsDragging(false)
     setCalendarDragX(0)
     setPeekDir(0)
+    wischMerkerLoesen()
     if (!start || start.pointerId !== event.pointerId) return
     const deltaX = event.clientX - start.x
     const deltaY = event.clientY - start.y
 
-    // Tap: select day
-    if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) {
-      const button = (event.target as Element | null)?.closest<HTMLButtonElement>('[data-calendar-date]')
-      const dateKey = button?.dataset.calendarDate
-      if (dateKey) {
-        const [year, month, date] = dateKey.split('-').map(Number)
-        selectCalendarDay(new Date(year, month - 1, date))
-      }
-      return
-    }
+    // Die Tagesauswahl haengt am `onClick` der Zelle, nicht mehr hier. Ein
+    // `<button>` ohne `onClick` ist fuer Tastatur und Screenreader kein Knopf:
+    // Enter und der VoiceOver-Doppeltipp senden `click`, nie `pointerup`.
 
     // Swipe: require horizontal dominance + minimum distance
     if (Math.abs(deltaX) >= SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
@@ -560,6 +574,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
   const handleCalendarPointerCancel = () => {
     calendarSwipeStart.current = null
+    wischMerkerLoesen()
     setIsDragging(false)
     setCalendarDragX(0)
     setPeekDir(0)
@@ -784,6 +799,59 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   }
   const logsForDay = (day: Date) => FEATURES.planTimelineV2 && !timelineReady
     ? [] : logs.filter(l => isSameDay(new Date(l.logged_at), day))
+
+  // Der Stand eines Tages: wie viele Slots geplant sind, wie viele davon
+  // genommen wurden, wie viele noch offen sind.
+  //
+  // JE SLOT, nicht je Substanz. Vorher fragte die Zelle „gibt es zu dieser
+  // Substanz eine genommene Dosis?" — bei „morgens und abends" stand der Tag
+  // damit schon nach der Morgendosis auf gruen.
+  //
+  // Gemerkt, nicht bei jedem Rendern neu: `matchTimelineLogs` sortiert je Tag
+  // die ganze Logliste, und `setCalendarDragX` feuert bei jeder Zeigerbewegung.
+  // Ohne das Merken sortierte ein Wisch die Logs zweiundvierzigmal pro Bild.
+  interface TagesStand { geplant: number; genommen: number; offen: number }
+  const wochenStartSchluessel = format(weekStart, 'yyyy-MM-dd')
+  const tagesStand = useMemo(() => {
+    const stand = new Map<string, TagesStand>()
+    if (!FEATURES.planTimelineV2 || !timelineReady) return stand
+    // Nur die wirklich gezeigten Tage. Die Vorschau beim Wischen bekommt
+    // keinen Balken: ihre Logs liegen ausserhalb des geladenen Fensters, ein
+    // Balken waere geraten.
+    const tage = calendarExpanded
+      ? eachDayOfInterval({ start: parseISO(fensterStart), end: addDays(parseISO(fensterEnde), -1) })
+      : eachDayOfInterval({
+          start: parseISO(wochenStartSchluessel),
+          end: addDays(parseISO(wochenStartSchluessel), 6),
+        })
+    for (const day of tage) {
+      const tag = localDateTimeKey(day, timeZone).slice(0, 10)
+      if (stand.has(tag)) continue
+      const geplant = timelines.flatMap(timeline => (
+        resolveTimelineIntakesForDay(timeline, tag, timeZone)
+      ))
+      if (geplant.length === 0) {
+        stand.set(tag, { geplant: 0, genommen: 0, offen: 0 })
+        continue
+      }
+      const schluessel = new Set(geplant.map(intake => intake.routineSlotKey))
+      const substanzen = new Set(geplant.map(intake => intake.stackItemId))
+      // Zeilen von vor der Umstellung tragen keinen Slot-Schluessel.
+      // `matchTimelineLogs` faengt sie ueber Substanz und lokalen Tag — hier
+      // gilt dieselbe Regel, sonst zeigte ein damals vollstaendig bestaetigter
+      // Tag einen leeren Balken.
+      const genommen = Math.min(geplant.length, logs.filter(log => {
+        if (log.taken !== true) return false
+        if (log.routine_slot_key) return schluessel.has(log.routine_slot_key)
+        return substanzen.has(log.stack_item_id)
+          && localDateTimeKey(new Date(log.logged_at), timeZone).slice(0, 10) === tag
+      }).length)
+      const offen = collectOpenTimelineIntakes(timelines, logs as IntakeLog[], day, timeZone).length
+      stand.set(tag, { geplant: geplant.length, genommen, offen })
+    }
+    return stand
+  }, [calendarExpanded, fensterStart, fensterEnde, wochenStartSchluessel, timelines, logs, timeZone, timelineReady])
+
   const cyclesForDay = (day: Date) => {
     if (!FEATURES.planTimelineV2) return cycles.filter(c => cycleAppliesToDay(c, day))
     return timelineOccurrencesForDay(day).flatMap(intake => {
@@ -1343,61 +1411,74 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     // Tag-genau vergleichen (nicht mit Uhrzeit) — sonst gilt „morgen" < 24h als heute/vergangen.
     const dayKey = format(day, 'yyyy-MM-dd')
     const todayKey = format(today, 'yyyy-MM-dd')
-    const isFuture = dayKey > todayKey
-
-    const dayCycles = isPeek ? [] : cyclesForDay(day)
-    const dayLogsList = isPeek ? [] : logsForDay(day)
-
-    // Status nur für Tage des angezeigten Monats — Füll-Tage des Vor-/Folgemonats
-    // bleiben neutral (deren Logs sind im aktuellen Bereich nicht geladen → sonst
-    // fälschlich „verpasst"/rot).
-    const hasCycle = inMonth && dayCycles.length > 0
-
-    // All planned cycles for this day have been taken
-    const fullyTracked = !isFuture && hasCycle
-      && dayCycles.every(c => dayLogsList.some(l => l.stack_item_id === c.stack_item_id && l.taken === true))
-
-    // At least one escalation is active on this day
-    const hasEscalation = hasCycle && dayCycles.some(c => {
-      const cycleStart = parseISO(c.start_date)
-      return escalations.some(e => {
-        if (e.cycle_id !== c.id) return false
-        if (e.start_type === 'date' && e.start_date) return day >= parseISO(e.start_date)
-        if (e.start_after_days != null)
-          return differenceInDays(day, cycleStart) >= e.start_after_days
-        return false
-      })
-    })
-
-    // Vergangener Tag mit geplanter, aber nicht (vollständig) genommener Einnahme → verpasst.
     const isPastDay = dayKey < todayKey
-    const hasMissed = isPastDay && hasCycle && !fullyTracked
+
+    // Fuelltage des Vor-/Folgemonats bleiben neutral: ihre Logs liegen
+    // ausserhalb des geladenen Fensters, ein Balken waere geraten.
+    const stand = !isPeek && inMonth ? tagesStand.get(dayKey) : undefined
+    const geplant = stand?.geplant ?? 0
+    const anteil = geplant > 0 ? stand!.genommen / geplant : 0
+    const vollstaendig = geplant > 0 && stand!.genommen === geplant
+    // Ein vergangener Tag, an dem noch etwas unentschieden ist. Bewusst
+    // ausgelassene Einnahmen zaehlen NICHT hierher — das war eine Entscheidung
+    // des Nutzers, kein Versaeumnis.
+    const offenVergangen = isPastDay && (stand?.offen ?? 0) > 0
+
+    // Drei Bedeutungen, drei Spuren — und keine davon rot. Rot hiesse
+    // „etwas ist schiefgegangen"; ein Protokoll stellt das nicht fest.
+    const spurFarbe = geplant === 0 || vollstaendig
+      ? 'transparent'
+      // Vergangen und noch unentschieden: sichtbar, aber warnfrei. Vorher war
+      // das ein 14%-Weiss und damit von „nichts geplant" kaum zu unterscheiden.
+      : offenVergangen ? 'rgba(245,158,11,0.32)'
+      // Vergangen und entschieden, aber nicht genommen — bewusst ausgelassen.
+      : isPastDay ? 'rgba(255,255,255,0.16)'
+      // Heute oder kuenftig: steht noch an.
+      : 'var(--accent-weak)'
+
+    const beschriftung = geplant === 0
+      ? format(day, 'd. MMMM', { locale })
+      : t('calendar_day_status', {
+          defaultValue: '{{datum}}, {{genommen}} von {{geplant}} bestätigt',
+          datum: format(day, 'd. MMMM', { locale }),
+          genommen: stand!.genommen,
+          geplant,
+        })
 
     return (
       <button
         key={key}
-        data-calendar-date={!isPeek ? format(day, 'yyyy-MM-dd') : undefined}
+        type="button"
+        data-calendar-date={!isPeek ? dayKey : undefined}
         {...(isTodayDay && !isPeek ? { 'data-ob': 'ob-cal-today' } : {})}
+        aria-label={beschriftung}
+        aria-pressed={!isPeek ? isSelected : undefined}
+        aria-current={isTodayDay && !isPeek ? 'date' : undefined}
+        tabIndex={isPeek ? -1 : undefined}
+        onClick={() => {
+          // Ein Wisch endet mit einem `click` auf der Zelle unter dem Finger.
+          if (wurdeGewischt.current) return
+          selectCalendarDay(new Date(day.getFullYear(), day.getMonth(), day.getDate()))
+        }}
         className={[
-          'relative flex flex-col items-center border-r border-b last:border-r-0 transition-all duration-150 select-none',
+          'relative flex flex-col items-center gap-1.5 border-r border-b last:border-r-0 transition-all duration-150 select-none',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-300',
           !inMonth ? 'opacity-20' : '',
           isPeek ? 'pointer-events-none' : '',
         ].filter(Boolean).join(' ')}
         style={{
-          padding: '8px 0 6px',
+          padding: '9px 0 8px',
           minHeight: 52,
           borderColor: 'var(--border)',
           background: isSelected
             ? 'linear-gradient(145deg, rgba(0,190,240,0.85), rgba(0,120,210,0.75))'
-            : hasMissed ? 'rgba(239,68,68,0.10)'
-            : fullyTracked ? 'rgba(16,185,129,0.10)'
             : 'transparent',
           boxShadow: isSelected
             ? 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 16px rgba(0,200,240,0.25)'
             : undefined,
         }}
       >
-        {/* Today ring */}
+        {/* Heute-Ring */}
         {isTodayDay && !isSelected && (
           <span
             className="absolute inset-0.5 rounded-xl pointer-events-none"
@@ -1405,59 +1486,32 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           />
         )}
 
-        {/* Date number */}
         <span className={`text-sm font-black leading-none ${
           isSelected ? 'text-white' :
           isTodayDay ? 'text-sky-400' :
-          hasMissed ? 'text-red-400' :
           inMonth ? 'text-slate-200' : 'text-slate-600'
         }`}>
           {format(day, 'd')}
         </span>
 
-        {/* Three markers */}
-        <div className="flex gap-0.5 mt-1.5 h-1.5 items-center">
-          {/* Cyan: dose planned but not yet fully tracked (heute/zukünftig) */}
-          {hasCycle && !fullyTracked && !hasMissed && (
+        {/* Der Balken IST die Legende: halb gefuellt heisst halb erledigt.
+            Deshalb gibt es darunter keine mehr. */}
+        <span
+          aria-hidden="true"
+          className="block h-[3px] w-[18px] rounded-full overflow-hidden shrink-0"
+          style={{ background: isSelected && geplant > 0 ? 'rgba(255,255,255,0.28)' : spurFarbe }}
+        >
+          {anteil > 0 && (
             <span
-              className="w-1.5 h-1.5 rounded-full shrink-0"
+              className="block h-full rounded-full"
               style={{
-                background: isSelected ? 'rgba(255,255,255,0.85)' : 'var(--accent)',
-                boxShadow: isSelected ? undefined : '0 0 4px #00ccf555',
-              }}
-            />
-          )}
-          {/* Rot: vergangener Tag mit verpasster Einnahme */}
-          {hasMissed && (
-            <span
-              className="w-1.5 h-1.5 rounded-full shrink-0"
-              style={{
-                background: isSelected ? 'rgba(255,255,255,0.85)' : '#ef4444',
-                boxShadow: isSelected ? undefined : '0 0 4px #ef444455',
-              }}
-            />
-          )}
-          {/* Orange: escalation active */}
-          {hasEscalation && (
-            <span
-              className="w-1.5 h-1.5 rounded-full shrink-0"
-              style={{
-                background: isSelected ? 'rgba(255,255,255,0.85)' : '#f97316',
-                boxShadow: isSelected ? undefined : '0 0 4px #f9731655',
-              }}
-            />
-          )}
-          {/* Green: all doses taken */}
-          {fullyTracked && (
-            <span
-              className="w-1.5 h-1.5 rounded-full shrink-0"
-              style={{
-                background: isSelected ? 'rgba(255,255,255,0.85)' : '#10b981',
+                width: `${Math.round(anteil * 100)}%`,
+                background: isSelected ? 'rgba(255,255,255,0.95)' : '#10b981',
                 boxShadow: isSelected ? undefined : '0 0 4px #10b98155',
               }}
             />
           )}
-        </div>
+        </span>
       </button>
     )
   }
@@ -1811,29 +1865,6 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
             className={`transition-transform duration-200 ${calendarExpanded ? 'rotate-180' : ''}`}
           />
         </button>
-
-        {/* Legend */}
-        <div className="flex flex-wrap gap-3 px-4 py-3" style={{
-          borderTop: '1px solid var(--border)',
-          background: 'var(--surface)',
-        }}>
-          <div className="flex items-center gap-1.5" style={calendarLegendText}>
-            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--accent)', boxShadow: '0 0 4px #00ccf555' }} />
-            {t('geplant', { defaultValue: 'Geplant' })}
-          </div>
-          <div className="flex items-center gap-1.5" style={calendarLegendText}>
-            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#f97316', boxShadow: '0 0 4px #f9731655' }} />
-            {t('erhoehung')}
-          </div>
-          <div className="flex items-center gap-1.5" style={calendarLegendText}>
-            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#10b981', boxShadow: '0 0 4px #10b98155' }} />
-            {t('erfolgreich', { defaultValue: 'Erfolgreich' })}
-          </div>
-          <div className="flex items-center gap-1.5" style={calendarLegendText}>
-            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#ef4444', boxShadow: '0 0 4px #ef444455' }} />
-            {t('verpasst', { defaultValue: 'Verpasst' })}
-          </div>
-        </div>
 
       </GlassPanel>
       </div>

@@ -392,6 +392,93 @@ describe('Dashboard normalized timeline path', () => {
     }
   })
 
+  function zweiSlotsFixture() {
+    const fixtures = startFixFixture()
+    fixtures.cycles = [{
+      ...normalizedCycle(),
+      intake_time: 'morgens,abends',
+      intake_time_custom: '08:00,20:00',
+      versions: normalizedCycle().versions.map(version => ({
+        ...version, intake_time: 'morgens,abends', intake_time_custom: '08:00,20:00',
+      })),
+    }]
+    return fixtures
+  }
+
+  function tagesBalken(tag: string) {
+    const zelle = document.querySelector(`[data-calendar-date="${tag}"]`)
+    const fuellung = zelle?.querySelector('span[aria-hidden="true"] > span')
+    return (fuellung as HTMLElement | null)?.style.width ?? null
+  }
+
+  it('zählt den Tagesbalken je Slot, nicht je Substanz', async () => {
+    // Der Fehler, den dieser Fall festhält: die Zelle fragte „gibt es zu
+    // dieser Substanz eine genommene Dosis?". Bei „morgens und abends" stand
+    // der Tag damit schon nach der Morgendosis auf grün — in einer App für
+    // Hormone und Peptide die falscheste aller Auskünfte.
+    const fixtures = zweiSlotsFixture()
+    fixtures.dose_logs = [{
+      ...pendingLog(), taken: true, logged_at: '2026-09-18T06:05:00.000Z',
+      routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+    }]
+    const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
+    renderDashboard(client)
+    await waitFor(() => expect(screen.getAllByRole('status')
+      .some(element => element.textContent?.includes('Lädt'))).toBe(false))
+
+    // Eine von zwei geplanten Einnahmen: halb, nicht voll.
+    await waitFor(() => expect(tagesBalken('2026-09-18')).toBe('50%'))
+  })
+
+  it('macht die Tageszelle ohne Zeigergesten bedienbar', async () => {
+    // Die Zelle war ein `<button>` ohne `onClick`; ausgewählt wurde über
+    // `pointerup` am Raster. Enter und der VoiceOver-Doppeltipp senden aber
+    // `click` — Tastatur und Screenreader konnten also keinen Tag wählen.
+    const fixtures = startFixFixture()
+    const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
+    renderDashboard(client)
+    await waitFor(() => expect(screen.getAllByRole('status')
+      .some(element => element.textContent?.includes('Lädt'))).toBe(false))
+
+    const zelle = document.querySelector('[data-calendar-date="2026-09-19"]') as HTMLElement
+    expect(zelle.tagName).toBe('BUTTON')
+    expect(zelle.getAttribute('aria-label')).toBeTruthy()
+    expect(zelle.getAttribute('aria-pressed')).toBe('false')
+
+    // Nur ein `click`, keine Zeigerereignisse.
+    fireEvent.click(zelle)
+    expect(screen.getByText('19.09.2026')).toBeTruthy()
+    expect(zelle.getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('lässt nach einem Wisch wieder mit der Tastatur wählen', async () => {
+    // Der Merker, der den Tag unter dem wischenden Finger schützt, blieb
+    // stehen. Danach verschluckte er jedes Enter und jeden
+    // VoiceOver-Doppeltipp — also genau den Zugang, den die Zelle bekommen
+    // hat. Er muss den unmittelbar folgenden `click` schlucken und sich
+    // danach lösen.
+    const fixtures = startFixFixture()
+    const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
+    renderDashboard(client)
+    await waitFor(() => expect(screen.getAllByRole('status')
+      .some(element => element.textContent?.includes('Lädt'))).toBe(false))
+
+    vi.stubGlobal('PointerEvent', MouseEvent)
+    const zelle = document.querySelector('[data-calendar-date="2026-09-19"]') as HTMLElement
+    fireEvent.pointerDown(zelle, { clientX: 200, clientY: 40, pointerId: 1 })
+    fireEvent.pointerMove(zelle, { clientX: 140, clientY: 42, pointerId: 1 })
+    fireEvent.pointerUp(zelle, { clientX: 140, clientY: 42, pointerId: 1 })
+
+    // Der `click`, den der Wisch selbst auslöst, wird geschluckt.
+    fireEvent.click(zelle)
+    expect(screen.queryByText('19.09.2026')).toBeNull()
+
+    // Eine Runde später ist der Merker gelöst.
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
+    fireEvent.click(zelle)
+    expect(screen.getByText('19.09.2026')).toBeTruthy()
+  })
+
   it('beantwortet einen geladenen Tag sofort und wartet nur auf einen ungeladenen', async () => {
     // Zwei Zusagen in einem Fall, weil sie zusammengehoeren.
     //
@@ -412,10 +499,8 @@ describe('Dashboard normalized timeline path', () => {
     await screen.findByRole('button', { name: 'Alle als eingenommen markieren' })
 
     const abfragen = client.logQueries.length
-    vi.stubGlobal('PointerEvent', MouseEvent)
     const nextDay = document.querySelector('[data-calendar-date="2026-09-19"]')!
-    fireEvent.pointerDown(nextDay, { clientX: 30, clientY: 30 })
-    fireEvent.pointerUp(nextDay, { clientX: 30, clientY: 30 })
+    fireEvent.click(nextDay)
     expect(screen.getByText('19.09.2026')).toBeTruthy()
     expect(screen.getAllByRole('status').some(element => element.textContent?.includes('Lädt'))).toBe(false)
     expect(client.logQueries.length).toBe(abfragen)
