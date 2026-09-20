@@ -382,6 +382,55 @@ describe('versioned timeline collectors', () => {
     }])
   })
 
+  it('resolves a 90-day auto-miss lookback without a 50ms long task', () => {
+    const longTimeline = (id: string): CycleTimeline => ({
+      cycle: {
+        id,
+        stack_item_id: `stack-${id}`,
+        started_at: '2026-01-01T00:00:00Z',
+        ended_at: null,
+      },
+      versions: [{
+        id: `${id}-v1`,
+        cycle_id: id,
+        effective_kind: 'local_date',
+        effective_at: null,
+        effective_local_date: '2026-01-01',
+        change_kind: 'initial',
+        ...timelineSchedule(0.25),
+      }],
+      pauses: [],
+    })
+    const timelines = Array.from({ length: 15 }, (_, index) => longTimeline(`perf-${index}`))
+    const now = new Date('2026-09-19T10:00:00.000Z')
+    const firstStarted = performance.now()
+    const missed = collectMissedTimelineIntakes(timelines, [], now, 'Europe/Berlin', 90)
+    const firstMs = performance.now() - firstStarted
+    const repeatStarted = performance.now()
+    collectMissedTimelineIntakes(timelines, [], now, 'Europe/Berlin', 90)
+    const repeatMs = performance.now() - repeatStarted
+    expect(missed.length).toBeGreaterThan(0)
+    // Uncached formatter construction cost 2370ms for this same 15×90 case.
+    expect(firstMs).toBeLessThan(150)
+    expect(repeatMs).toBeLessThan(16)
+  })
+
+  it('can slice a lookback window without walking older days', () => {
+    const daily: CycleTimeline = {
+      ...planTimeline,
+      cycle: { ...planTimeline.cycle, started_at: '2026-09-01T00:00:00Z' },
+      versions: [{
+        ...planTimeline.versions[0],
+        effective_local_date: '2026-09-01',
+      }],
+    }
+    const now = new Date('2026-09-19T10:00:00.000Z')
+    const sliced = collectMissedTimelineIntakes([daily], [], now, 'Europe/Berlin', 3, 2)
+    expect([...new Set(sliced.map(item => item.dateKey))].sort()).toEqual(['2026-09-16', '2026-09-17'])
+    expect(sliced.some(item => item.dateKey === '2026-09-18')).toBe(false)
+    expect(sliced.some(item => item.dateKey === '2026-09-15')).toBe(false)
+  })
+
   it('finds the oldest overdue normalized slot with its exact cycle', () => {
     expect(findOldestOverdueTimelineIntake(
       [planTimeline], [], new Map([['timeline-stack-item', 'Vitamin D3']]),

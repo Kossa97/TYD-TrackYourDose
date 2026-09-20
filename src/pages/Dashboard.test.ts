@@ -191,6 +191,15 @@ describe('Dashboard normalized timeline path', () => {
     expect(inSchleife, 'ein `await` steckt wieder in einer Schleife').toBe(false)
   })
 
+  it('does not call preventDefault from the calendar pointer-move handler', () => {
+    const quelle = readFileSync('src/pages/Dashboard.tsx', 'utf8')
+    const handler = quelle.slice(
+      quelle.indexOf('const handleCalendarPointerMove'),
+      quelle.indexOf('const handleCalendarPointerUp'),
+    )
+    expect(handler).not.toContain('preventDefault')
+  })
+
   it('explains blocked migrated plans and links to their timezone review', async () => {
     const fixtures = startFixFixture()
     fixtures.cycles.unshift({

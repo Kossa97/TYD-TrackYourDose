@@ -69,6 +69,35 @@ interface VersionCandidate {
   instantMs: number | null
 }
 
+const localDateTimeFormatters = new Map<string, Intl.DateTimeFormat>()
+const localDateTimeKeyCache = new Map<string, string>()
+const localDateBoundaryCache = new Map<string, number>()
+const localSlotInstantCache = new Map<string, number>()
+
+function localDateTimeFormatter(timeZone: string): Intl.DateTimeFormat {
+  const cached = localDateTimeFormatters.get(timeZone)
+  if (cached) return cached
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA-u-ca-iso8601-nu-latn', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    })
+    localDateTimeFormatters.set(timeZone, formatter)
+    return formatter
+  } catch (error) {
+    if (error instanceof RangeError) {
+      throw new Error(`Invalid IANA time zone: ${timeZone}`, { cause: error })
+    }
+    throw error
+  }
+}
+
 function localTimeCandidates(localDate: string, minutes: number, timeZone: string) {
   const [year, month, day] = localDate.split('-').map(Number)
   const desired = Date.UTC(year, month - 1, day, Math.floor(minutes / 60), minutes % 60)
@@ -84,22 +113,39 @@ function localTimeCandidates(localDate: string, minutes: number, timeZone: strin
 // offset in a fold (later instant), and the pre-transition offset in a gap.
 export function localDateBoundaryInstant(localDate: string, timeZone: string): Date {
   localDateKey(localDate, 'date boundary')
+  const cacheKey = `${timeZone}|${localDate}`
+  const cached = localDateBoundaryCache.get(cacheKey)
+  if (cached !== undefined) return new Date(cached)
   const { desired, wallMillis, candidates } = localTimeCandidates(localDate, 0, timeZone)
   const exact = candidates.filter(candidate => wallMillis(candidate) === desired)
-  return new Date(exact.at(-1) ?? candidates[candidates.length - 1])
+  const millis = exact.at(-1) ?? candidates[candidates.length - 1]
+  localDateBoundaryCache.set(cacheKey, millis)
+  return new Date(millis)
 }
 
 export function localSlotInstant(localDate: string, minutes: number, timeZone: string): Date {
+  const cacheKey = `${timeZone}|${localDate}|${minutes}`
+  const cached = localSlotInstantCache.get(cacheKey)
+  if (cached !== undefined) return new Date(cached)
   const { desired, wallMillis, candidates } = localTimeCandidates(localDate, minutes, timeZone)
   const dayBoundary = localDateBoundaryInstant(localDate, timeZone).getTime()
   // Keep the earlier ordinary fold occurrence, but never schedule before the
   // canonical start of its local day (notably Havana's repeated midnight).
   const exact = candidates.find(candidate => candidate >= dayBoundary && wallMillis(candidate) === desired)
-  if (exact !== undefined) return new Date(exact)
-  for (let instant = Math.max(candidates[0], dayBoundary); instant <= candidates[candidates.length - 1]; instant += 60_000) {
-    if (wallMillis(instant) >= desired) return new Date(instant)
+  let millis = exact
+  if (millis === undefined) {
+    for (let instant = Math.max(candidates[0], dayBoundary); instant <= candidates[candidates.length - 1]; instant += 60_000) {
+      if (wallMillis(instant) >= desired) {
+        millis = instant
+        break
+      }
+    }
   }
-  throw new Error(`Could not resolve local intake slot: ${localDate} ${minutes} ${timeZone}`)
+  if (millis === undefined) {
+    throw new Error(`Could not resolve local intake slot: ${localDate} ${minutes} ${timeZone}`)
+  }
+  localSlotInstantCache.set(cacheKey, millis)
+  return new Date(millis)
 }
 
 const LOCAL_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
@@ -227,18 +273,13 @@ export function localDateTimeKey(instant: Date, timeZone: string): string {
     throw new Error('Invalid date for local date-time key')
   }
 
+  const cacheKey = `${timeZone}|${instant.getTime()}`
+  const cached = localDateTimeKeyCache.get(cacheKey)
+  if (cached) return cached
+
   let parts: Intl.DateTimeFormatPart[]
   try {
-    parts = new Intl.DateTimeFormat('en-CA-u-ca-iso8601-nu-latn', {
-      timeZone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hourCycle: 'h23',
-    }).formatToParts(instant)
+    parts = localDateTimeFormatter(timeZone).formatToParts(instant)
   } catch (error) {
     if (error instanceof RangeError) {
       throw new Error(`Invalid IANA time zone: ${timeZone}`, { cause: error })
@@ -257,7 +298,9 @@ export function localDateTimeKey(instant: Date, timeZone: string): string {
     throw new Error(`Could not format local date-time in time zone: ${timeZone}`)
   }
 
-  return `${year}-${month}-${day}|${hour}:${minute}:${second}`
+  const key = `${year}-${month}-${day}|${hour}:${minute}:${second}`
+  localDateTimeKeyCache.set(cacheKey, key)
+  return key
 }
 
 export function resolveCycleAt(

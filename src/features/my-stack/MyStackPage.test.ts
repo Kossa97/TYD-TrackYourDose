@@ -370,7 +370,7 @@ describe('My Stack page vial view', () => {
       text.indexOf('const handleVialCarouselPointerUp'),
     )
     expect(pointerMove).not.toContain('e.preventDefault()')
-    expect(text).toContain("touchAction: 'pan-y'")
+    expect(text).toContain("touchAction: 'pan-x pan-y'")
   })
 
   test('keeps programmatic vial selection stable while smooth-scrolling to the target', () => {

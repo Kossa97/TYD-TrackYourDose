@@ -32,7 +32,7 @@ import {
   type ScheduleCycle,
 } from '../lib/intakeSchedule'
 import { loadCycleTimelines } from '../features/my-stack/services/planLifecycle'
-import { localDateTimeKey, resolveCycleAt, type CycleTimeline } from '../lib/planTimeline'
+import { localDateBoundaryInstant, localDateTimeKey, resolveCycleAt, type CycleTimeline } from '../lib/planTimeline'
 import { ExpiryWarningBanners } from '../components/ExpiryWarningBanners'
 import { WorkflowBanner } from '../components/WorkflowBanner'
 import { InjectionTrackerHero, type InjectionHeroPin } from '../components/injection3d/InjectionTrackerHero'
@@ -421,8 +421,13 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
   useEffect(() => {
     if (!user) return
     let cancelled = false
+    let missedTimer: ReturnType<typeof setTimeout> | undefined
     async function load() {
       const todayKey = format(new Date(), 'yyyy-MM-dd')
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+      let autoMissSince = localStorage.getItem('tyd_automiss_since')
+      if (!autoMissSince) { autoMissSince = todayKey; localStorage.setItem('tyd_automiss_since', autoMissSince) }
+      const logsSince = localDateBoundaryInstant(autoMissSince, timeZone).toISOString()
       if (FEATURES.planTimelineV2) {
         setTimelineLoadState('loading')
         setTodayIntakes([])
@@ -447,6 +452,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
             homeDataClient.from('dose_logs')
               .select('id, logged_at, stack_item_id, taken, cycle_id, plan_version_id, routine_slot_key')
               .eq('user_id', user!.id)
+              .gte('logged_at', logsSince)
               .order('logged_at', { ascending: false }),
             homeDataClient.from('stack_items')
               .select('id, display_name, tracking_level, dosage_form, vials_in_stock, reconstitution_date, expiry_days')
@@ -477,6 +483,7 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
             homeDataClient.from('dose_logs')
               .select('id, logged_at, stack_item_id, taken')
               .eq('user_id', user!.id)
+              .gte('logged_at', logsSince)
               .order('logged_at', { ascending: false }),
             homeDataClient.from('stack_items')
               .select('id, display_name, tracking_level, dosage_form, vials_in_stock, reconstitution_date, expiry_days')
@@ -505,7 +512,6 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
 
         // ── Next intake time ─────────────────────────────────────────
         const now = new Date()
-        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
         let todaySlots: TodayIntake[] = []
         let openSlots: TodayIntake[] = []
 
@@ -603,78 +609,6 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
             openSlots.push(slot)
           }
         }
-        // Frist = Tagesende: nicht bestätigte Slots vergangener Tage automatisch als
-        // „verpasst" (taken=false) in die Historie schreiben, damit sie sich nicht stapeln.
-        // Nur ab Aktivierung (localStorage) — kein rückwirkendes Backfill der Historie.
-        let autoMissSince = localStorage.getItem('tyd_automiss_since')
-        if (!autoMissSince) { autoMissSince = todayKey; localStorage.setItem('tyd_automiss_since', autoMissSince) }
-        const missed = FEATURES.planTimelineV2
-          ? collectMissedTimelineIntakes(
-              timelines,
-              logData,
-              now,
-              timeZone,
-              Math.max(0, differenceInDays(startOfDay(now), startOfDay(parseISO(autoMissSince)))),
-            )
-          : collectMissedIntakes(cycles, logData, now, parseISO(autoMissSince))
-        if (missed.length > 0) {
-          if (FEATURES.planTimelineV2) {
-            const stackItemById = new Map(stackItemData.map(item => [item.id as string, item]))
-            const entries = missed.flatMap(m => {
-              if (!m.routineSlotKey || !m.planVersionId || !m.scheduledAt) return []
-              const stackItem = stackItemById.get(m.stackItemId)
-              const trackingLevel = (stackItem?.tracking_level ?? 'intake_only') as TodayIntake['trackingLevel']
-              const intakeOnly = trackingLevel === 'intake_only'
-              return [{
-                key: m.routineSlotKey,
-                cycleId: m.cycleId,
-                planVersionId: m.planVersionId,
-                pendingLogId: null,
-                stackItemId: m.stackItemId,
-                stackItemName: String(stackItem?.display_name ?? ''),
-                trackingLevel,
-                group: routineGroupFromMinutes(m.minutes),
-                scheduledAt: m.scheduledAt,
-                dose: intakeOnly ? null : m.slotDose,
-                unit: intakeOnly ? null : m.unit ?? null,
-                method: m.method ?? '',
-                injectable: isInjectableMethod(m.method),
-                selected: true,
-                actualDose: intakeOnly ? null : m.slotDose,
-                actualUnit: intakeOnly ? null : m.unit ?? null,
-              } satisfies RoutineConfirmationEntry]
-            })
-            // Idempotent in Postgres: mehrere offene Tabs duerfen denselben
-            // ueberfaelligen Slot gleichzeitig abschliessen, ohne 409. Kleine
-            // Pakete verhindern ein Statement-Timeout bei laengerem Rueckstand.
-            if (entries.length > 0) {
-              void skipIntakeGroupsInBatches(homeDataClient as unknown as IntakeConfirmationClient, entries)
-                .catch(error => console.error('[Home] auto-miss error:', error))
-            }
-          } else {
-            const cycleById = new Map(cycles.map(c => [c.id, c]))
-            const rows = missed.map(m => {
-              const c = cycleById.get(m.cycleId)!
-              const at = startOfDay(parseISO(m.dateKey))
-              at.setHours(Math.floor(m.minutes / 60), m.minutes % 60, 0, 0)
-              const intakeOnly = c.stack_items.tracking_level === 'intake_only'
-              // Die Menge DIESES Zeitpunkts, nicht die des Zyklus: sonst stuende
-              // bei „morgens 1000, abends 500" an beiden 1000 im Protokoll.
-              const quantity = intakeOnly ? null : effectiveSlotQuantity(c, parseISO(m.dateKey), escalations, m.slotDose)
-              return {
-                user_id: user!.id,
-                stack_item_id: c.stack_item_id,
-                dose: quantity?.dose ?? null,
-                unit: quantity?.unit ?? null,
-                method: c.method ?? '',
-                logged_at: at.toISOString(),
-                taken: false,
-                notes: AUTO_MISSED_NOTE,
-              }
-            })
-            await homeDataClient.from('dose_logs').insert(rows)
-          }
-        }
 
         const injectionRows = injectionData ?? []
         const recentInjectionRows = injectionRows.filter(row => {
@@ -715,6 +649,82 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
           loggedToday: (logData ?? []).filter((log) => log.taken === true && format(parseISO(log.logged_at), 'yyyy-MM-dd') === todayKey).length,
           lowStock: (stackItemData ?? []).filter((item) => item.vials_in_stock != null && Number(item.vials_in_stock) <= 1).length,
         })
+
+        // Auto-miss is secondary: today's slots must paint first. The lookback
+        // walks every plan for every past day and was measured at >2s on the
+        // main thread when it ran before setTimelineLoadState('ready').
+        const lookbackDays = Math.max(0, differenceInDays(startOfDay(now), startOfDay(parseISO(autoMissSince))))
+        const AUTO_MISS_DAY_BATCH = 7
+        let oldestRemaining = lookbackDays
+        const runAutoMissBatch = () => {
+          if (cancelled) return
+          if (FEATURES.planTimelineV2) {
+            if (oldestRemaining < 1) return
+            const newest = Math.max(1, oldestRemaining - AUTO_MISS_DAY_BATCH + 1)
+            const missed = collectMissedTimelineIntakes(
+              timelines, logData, now, timeZone, oldestRemaining, newest,
+            )
+            if (missed.length > 0) {
+              const stackItemById = new Map(stackItemData.map(item => [item.id as string, item]))
+              const entries = missed.flatMap(m => {
+                if (!m.routineSlotKey || !m.planVersionId || !m.scheduledAt) return []
+                const stackItem = stackItemById.get(m.stackItemId)
+                const trackingLevel = (stackItem?.tracking_level ?? 'intake_only') as TodayIntake['trackingLevel']
+                const intakeOnly = trackingLevel === 'intake_only'
+                return [{
+                  key: m.routineSlotKey,
+                  cycleId: m.cycleId,
+                  planVersionId: m.planVersionId,
+                  pendingLogId: null,
+                  stackItemId: m.stackItemId,
+                  stackItemName: String(stackItem?.display_name ?? ''),
+                  trackingLevel,
+                  group: routineGroupFromMinutes(m.minutes),
+                  scheduledAt: m.scheduledAt,
+                  dose: intakeOnly ? null : m.slotDose,
+                  unit: intakeOnly ? null : m.unit ?? null,
+                  method: m.method ?? '',
+                  injectable: isInjectableMethod(m.method),
+                  selected: true,
+                  actualDose: intakeOnly ? null : m.slotDose,
+                  actualUnit: intakeOnly ? null : m.unit ?? null,
+                } satisfies RoutineConfirmationEntry]
+              })
+              // Idempotent in Postgres: mehrere offene Tabs duerfen denselben
+              // ueberfaelligen Slot gleichzeitig abschliessen, ohne 409. Kleine
+              // Pakete verhindern ein Statement-Timeout bei laengerem Rueckstand.
+              if (entries.length > 0) {
+                void skipIntakeGroupsInBatches(homeDataClient as unknown as IntakeConfirmationClient, entries)
+                  .catch(error => console.error('[Home] auto-miss error:', error))
+              }
+            }
+            oldestRemaining = newest - 1
+            if (oldestRemaining >= 1) missedTimer = window.setTimeout(runAutoMissBatch, 0)
+            return
+          }
+          const missed = collectMissedIntakes(cycles, logData, now, parseISO(autoMissSince))
+          if (missed.length === 0) return
+          const cycleById = new Map(cycles.map(c => [c.id, c]))
+          const rows = missed.map(m => {
+            const c = cycleById.get(m.cycleId)!
+            const at = startOfDay(parseISO(m.dateKey))
+            at.setHours(Math.floor(m.minutes / 60), m.minutes % 60, 0, 0)
+            const intakeOnly = c.stack_items.tracking_level === 'intake_only'
+            const quantity = intakeOnly ? null : effectiveSlotQuantity(c, parseISO(m.dateKey), escalations, m.slotDose)
+            return {
+              user_id: user!.id,
+              stack_item_id: c.stack_item_id,
+              dose: quantity?.dose ?? null,
+              unit: quantity?.unit ?? null,
+              method: c.method ?? '',
+              logged_at: at.toISOString(),
+              taken: false,
+              notes: AUTO_MISSED_NOTE,
+            }
+          })
+          void homeDataClient.from('dose_logs').insert(rows)
+        }
+        missedTimer = window.setTimeout(runAutoMissBatch, 0)
       } catch {
         if (cancelled) return
         if (FEATURES.planTimelineV2) {
@@ -729,8 +739,11 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
         setInjectionHero(EMPTY_INJECTION_HERO)
       }
     }
-    load()
-    return () => { cancelled = true }
+    void load()
+    return () => {
+      cancelled = true
+      if (missedTimer !== undefined) window.clearTimeout(missedTimer)
+    }
   }, [homeDataClient, user, homeReloadKey])
 
   const { t } = useTranslation()

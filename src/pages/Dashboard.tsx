@@ -501,7 +501,6 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     // Only track if horizontal movement is meaningful and dominant
     if (Math.abs(deltaX) < 6) return
     if (Math.abs(deltaY) > Math.abs(deltaX) * 0.8) return
-    event.preventDefault()
     setCalendarDragX(deltaX)
     const dir = (deltaX < 0 ? 1 : -1) as -1 | 1
     if (peekDir !== dir) setPeekDir(dir)

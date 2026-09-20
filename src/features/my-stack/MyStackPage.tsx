@@ -2701,9 +2701,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   }`}
                   style={{
                     // Horizontal ziehen gehoert dem Karussell, vertikales
-                    // Wischen bleibt nativer Seitenscroll. Dadurch braucht der
-                    // passive Pointer-Listener kein preventDefault().
-                    touchAction: 'pan-y',
+                    // Wischen bleibt nativer Seitenscroll. Touch nutzt den
+                    // nativen overflow-x-Scroll; der JS-Drag-Pfad gilt nur
+                    // fuer die Maus. Deshalb muss touch-action beides erlauben.
+                    touchAction: 'pan-x pan-y',
                     // Die Buehne beherrscht den Bildschirm; die Nachbarn lugen
                     // nur noch herein. Damit man trotzdem weiss, wie viele es
                     // sind, stehen die Punkte darunter — sie sind hier keine

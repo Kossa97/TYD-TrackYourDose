@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { createElement, type ComponentType } from 'react'
+import { readFileSync } from 'node:fs'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -81,12 +82,21 @@ function createHomeClient(
   const selectCalls: Array<{ table: string; columns: string }> = []
   const mutationCalls: Array<{ table: string; operation: 'insert' | 'update'; values: unknown }> = []
   const mutationQueries: ReturnType<typeof resolvedQuery>[] = []
+  const queryFilters: Array<{ table: string; method: string; column: string; value: unknown }> = []
   const rpc = vi.fn(rpcImplementation)
   const from = vi.fn((table: string) => ({
     select: vi.fn((columns: string) => {
       selectCounts.set(table, (selectCounts.get(table) ?? 0) + 1)
       selectCalls.push({ table, columns })
-      return resolvedQuery(fixtures[table] ?? [], errors[table] ?? null)
+      const query = resolvedQuery(fixtures[table] ?? [], errors[table] ?? null)
+      for (const method of ['eq', 'gte', 'lte', 'lt'] as const) {
+        const inner = query[method] as (column: string, value: unknown) => unknown
+        query[method] = vi.fn((column: string, value: unknown) => {
+          queryFilters.push({ table, method, column, value })
+          return inner(column, value)
+        })
+      }
+      return query
     }),
     insert: vi.fn((values: unknown) => {
       mutationCalls.push({ table, operation: 'insert', values })
@@ -102,7 +112,7 @@ function createHomeClient(
     }),
     delete: vi.fn(() => resolvedQuery(null)),
   }))
-  return { from, rpc, selectCounts, selectCalls, mutationCalls, mutationQueries }
+  return { from, rpc, selectCounts, selectCalls, queryFilters, mutationCalls, mutationQueries }
 }
 
 function intakeOnlyHomeCycle() {
@@ -777,6 +787,9 @@ describe('Home normalized timeline path', () => {
       .toContain('cycle_plan_versions')
     expect(client.selectCalls.find(call => call.table === 'dose_logs')?.columns)
       .toContain('routine_slot_key')
+    expect(client.queryFilters.some(filter => (
+      filter.table === 'dose_logs' && filter.method === 'gte' && filter.column === 'logged_at'
+    ))).toBe(true)
   })
 
   it('does not render or auto-insert an intake during a full-day pause', async () => {
@@ -860,5 +873,15 @@ describe('Home normalized timeline path', () => {
       })],
     }))
     expect(client.mutationCalls.filter(call => call.table === 'dose_logs')).toHaveLength(0)
+  })
+
+  it('bounds dose history and defers auto-miss until after today is painted', () => {
+    const source = readFileSync('src/pages/Home.tsx', 'utf8')
+    const loader = source.slice(source.indexOf('async function load()'), source.indexOf('void load()'))
+    expect(loader).toContain(".gte('logged_at', logsSince)")
+    expect(loader).toContain('missedTimer = window.setTimeout')
+    expect(loader).toContain('AUTO_MISS_DAY_BATCH')
+    expect(loader.indexOf("setTimelineLoadState('ready')"))
+      .toBeLessThan(loader.indexOf('collectMissedTimelineIntakes'))
   })
 })

@@ -271,6 +271,8 @@ function timelineVersionAsCycle(
   }
 }
 
+const resolvedIntakeDayCache = new WeakMap<CycleTimeline, Map<string, ResolvedTimelineIntake[]>>()
+
 export function resolveTimelineIntakesForDay(
   timeline: CycleTimeline,
   localDate: string,
@@ -280,6 +282,11 @@ export function resolveTimelineIntakesForDay(
   if (!Number.isFinite(day.getTime()) || format(day, 'yyyy-MM-dd') !== localDate) {
     throw new Error(`Invalid local intake date: ${localDate}`)
   }
+
+  const cacheKey = `${timeZone}|${localDate}`
+  const cachedDays = resolvedIntakeDayCache.get(timeline)
+  const cached = cachedDays?.get(cacheKey)
+  if (cached) return cached
 
   const candidates = timeline.versions.flatMap(version => {
     const cycle = timelineVersionAsCycle(timeline, version, timeZone)
@@ -328,7 +335,11 @@ export function resolveTimelineIntakesForDay(
     const key = intake.routineSlotKey
     if (!uniqueIntakes.has(key)) uniqueIntakes.set(key, intake)
   }
-  return [...uniqueIntakes.values()].sort((left, right) => left.minutes - right.minutes)
+  const intakes = [...uniqueIntakes.values()].sort((left, right) => left.minutes - right.minutes)
+  const days = cachedDays ?? new Map<string, ResolvedTimelineIntake[]>()
+  days.set(cacheKey, intakes)
+  if (!cachedDays) resolvedIntakeDayCache.set(timeline, days)
+  return intakes
 }
 
 export function findNextTimelineIntake(
@@ -640,15 +651,19 @@ export function collectMissedTimelineIntakes(
   now: Date,
   timeZone: string,
   lookbackDays = 90,
+  lookbackEndDays = 1,
 ): MissedIntake[] {
   if (!Number.isInteger(lookbackDays) || lookbackDays < 0) {
     throw new Error(`Invalid timeline lookback: ${lookbackDays}`)
+  }
+  if (!Number.isInteger(lookbackEndDays) || lookbackEndDays < 1) {
+    throw new Error(`Invalid timeline lookback end: ${lookbackEndDays}`)
   }
   const todayKey = localDateTimeKey(now, timeZone).slice(0, 10)
   const today = parseISO(todayKey)
   const missed: MissedIntake[] = []
 
-  for (let back = lookbackDays; back >= 1; back -= 1) {
+  for (let back = lookbackDays; back >= lookbackEndDays; back -= 1) {
     const localDate = format(subDays(today, back), 'yyyy-MM-dd')
     const intakes = timelineIntakesForDate(timelines, localDate, timeZone)
     const coveredKeys = new Set(
