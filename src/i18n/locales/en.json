@@ -821,6 +821,7 @@
   "period_no_open_intakes": "No open intakes",
   "calendar_expand_month": "Show month",
   "calendar_day_status": "{{datum}}, {{genommen}} of {{geplant}} confirmed",
+  "calendar_open_month": "Open month overview",
   "calendar_collapse_week": "Week view",
   "prev_week": "Previous week",
   "next_week": "Next week",

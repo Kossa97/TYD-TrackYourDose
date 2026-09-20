@@ -325,7 +325,7 @@ describe('Dashboard normalized timeline path', () => {
   }
 
   function browseToNovember() {
-    fireEvent.click(screen.getByRole('button', { name: 'Monat anzeigen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Monatsübersicht öffnen' }))
     fireEvent.click(screen.getByRole('button', { name: 'Nächster Monat' }))
     fireEvent.click(screen.getByRole('button', { name: 'Nächster Monat' }))
     expect(screen.getByRole('heading', { name: 'November 2026' })).toBeTruthy()
@@ -346,10 +346,8 @@ describe('Dashboard normalized timeline path', () => {
       .some(element => element.textContent?.includes('Lädt'))).toBe(false))
     const geladen = client.logQueries.length
 
-    fireEvent.click(screen.getByRole('button', { name: 'Monat anzeigen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Monatsübersicht öffnen' }))
     expect(screen.getByRole('heading', { name: 'September 2026' })).toBeTruthy()
-    // „Heute" setzt beide Daten neu -- auf denselben Tag.
-    fireEvent.click(screen.getAllByRole('button', { name: 'heute_link' })[0])
     await act(async () => { await Promise.resolve() })
 
     expect(client.logQueries.length).toBe(geladen)
@@ -479,6 +477,68 @@ describe('Dashboard normalized timeline path', () => {
     expect(screen.getByText('19.09.2026')).toBeTruthy()
   })
 
+  async function blattOeffnen(client: ReturnType<typeof createDashboardClient>) {
+    renderDashboard(client)
+    await waitFor(() => expect(screen.getAllByRole('status')
+      .some(element => element.textContent?.includes('Lädt'))).toBe(false))
+    fireEvent.click(screen.getByRole('button', { name: 'Monatsübersicht öffnen' }))
+    return screen.getByRole('dialog')
+  }
+
+  it('schließt das Monatsblatt mit Escape und gibt den Fokus zurück', async () => {
+    // `aria-modal` allein macht keinen Dialog. Der Escape-Handler hing vorher
+    // an einem `div`, das nie den Fokus bekam — er lief nie.
+    const client = createDashboardClient(startFixFixture(), undefined, { filterLogs: true })
+    const blatt = await blattOeffnen(client)
+    expect(document.activeElement).toBe(blatt)
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect((document.activeElement as HTMLElement)?.getAttribute('aria-label'))
+      .toBe('Monatsübersicht öffnen')
+  })
+
+  it('schließt das Monatsblatt, sobald ein Tag gewählt ist', async () => {
+    // Das Blatt liegt über dem Tagesbereich. Einen Tag zu wählen und ihn dann
+    // verdeckt zu bekommen, ist eine Sackgasse.
+    const client = createDashboardClient(startFixFixture(), undefined, { filterLogs: true })
+    const blatt = await blattOeffnen(client)
+    const zelle = blatt.querySelector('[data-calendar-date="2026-09-22"]') as HTMLElement
+    fireEvent.click(zelle)
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(screen.getByText('22.09.2026')).toBeTruthy()
+  })
+
+  it('holt den Monat zurück zum gewählten Tag, wenn das Blatt ohne Auswahl zugeht', async () => {
+    // Sonst hängt der Ladebereich an einem Monat, den niemand mehr ansieht —
+    // und der Streifen meldet „0 von N bestätigt" für Tage, an denen alles
+    // bestätigt war.
+    const fixtures = startFixFixture()
+    // Der Standardzyklus beginnt erst gestern — an einem Tag mitten in der
+    // Woche waere dann nichts geplant und der Balken saehe so oder so leer aus.
+    const basis = normalizedCycle()
+    fixtures.cycles = [{
+      ...basis,
+      started_at: '2026-09-14T00:00:00.000Z',
+      versions: basis.versions.map(version => ({ ...version, effective_local_date: '2026-09-14' })),
+    }]
+    fixtures.dose_logs = [{ ...pendingLog(), taken: true, logged_at: '2026-09-16T06:05:00.000Z',
+      routine_slot_key: 'timeline-cycle@2026-09-16T06:00:00.000Z' }]
+    const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
+    await blattOeffnen(client)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nächster Monat' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Nächster Monat' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Schließen' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+
+    // Der Streifen zeigt weiter die Woche des gewählten Tages — und deren
+    // Logs sind geladen, nicht die eines fremden Monats.
+    await waitFor(() => expect(screen.getByRole('heading', { name: /September/ })).toBeTruthy())
+    await waitFor(() => expect(tagesBalken('2026-09-16')).toBe('100%'))
+  })
+
   it('beantwortet einen geladenen Tag sofort und wartet nur auf einen ungeladenen', async () => {
     // Zwei Zusagen in einem Fall, weil sie zusammengehoeren.
     //
@@ -507,7 +567,7 @@ describe('Dashboard normalized timeline path', () => {
 
     let release!: () => void
     options.logReadGate = new Promise<void>(resolve => { release = resolve })
-    fireEvent.click(screen.getByRole('button', { name: 'Monat anzeigen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Monatsübersicht öffnen' }))
     fireEvent.click(screen.getByRole('button', { name: 'Nächster Monat' }))
     expect(screen.getByRole('heading', { name: 'October 2026' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Alle als eingenommen markieren' })).toBeNull()
@@ -1416,13 +1476,15 @@ describe('Dashboard intake confirmation actions', () => {
     expect(source).toContain('className="relative flex h-5 items-center px-0.5"')
   })
 
-  it('defaults to week view with expandable month calendar', () => {
+  it('führt die Woche als Streifen und den Monat als Blatt darüber', () => {
     const source = readFileSync('src/pages/Dashboard.tsx', 'utf8')
 
-    expect(source).toContain('calendarExpanded')
-    expect(source).toContain('const [calendarExpanded, setCalendarExpanded] = useState(false)')
-    expect(source).toContain('visibleCalendarDays')
+    // Der Streifen ist Navigation, kein Inhalt: kein eigenes Panel, immer die
+    // Woche. Der Monat liegt hinter einem Knopf statt hinter einem Ausklapper.
+    expect(source).toContain('const [monatOffen, setMonatOffen] = useState(false)')
+    expect(source).toContain('const streifenTage = weekDays')
     expect(source).toContain('changeWeek')
-    expect(source).toContain('calendar_expand_month')
+    expect(source).toContain('calendar_open_month')
+    expect(source).toContain('aria-modal="true"')
   })
 })

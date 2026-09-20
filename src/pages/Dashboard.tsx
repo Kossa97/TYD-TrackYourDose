@@ -476,7 +476,9 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const [confirmTime, setConfirmTime]   = useState('')
   const [completedExpanded, setCompletedExpanded] = useState(false)
   const [inventoryRetryIds, setInventoryRetryIds] = useState<string[]>([])
-  const [calendarExpanded, setCalendarExpanded] = useState(false)
+  const [monatOffen, setMonatOffen] = useState(false)
+  const monatsKnopf = useRef<HTMLButtonElement>(null)
+  const monatsBlatt = useRef<HTMLDivElement>(null)
   const [activeDuePeriod, setActiveDuePeriod] = useState<PeriodKey>('morgens')
 
   // Horizontal swipe state
@@ -527,7 +529,50 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     if (day.getMonth() !== currentDate.getMonth() || day.getFullYear() !== currentDate.getFullYear()) {
       setCurrentDate(new Date(day.getFullYear(), day.getMonth(), 1))
     }
+    // Einen Tag zu waehlen heisst, ihn sehen zu wollen. Das Blatt liegt aber
+    // ueber dem Tagesbereich, also macht es Platz.
+    setMonatOffen(false)
   }, [currentDate])
+
+  // Im Blatt darf man Monate durchblaettern, ohne einen Tag zu waehlen.
+  // `currentDate` steht danach auf einem Monat, den niemand mehr ansieht — und
+  // der Ladebereich haengt daran. Der Streifen zeigte dann „0 von N
+  // bestaetigt" fuer Tage, an denen alles bestaetigt war: eine falsche Auskunft
+  // ueber Gesundheitsdaten, auf der Hauptflaeche.
+  //
+  // Als eigener Effekt, damit es fuer alle vier Wege nach draussen gilt:
+  // Kreuz, Hintergrund, Escape und die Tagesauswahl.
+  useEffect(() => {
+    if (monatOffen) return
+    setCurrentDate(current => (
+      current.getMonth() === selectedDay.getMonth()
+        && current.getFullYear() === selectedDay.getFullYear()
+        ? current
+        : new Date(selectedDay.getFullYear(), selectedDay.getMonth(), 1)
+    ))
+  }, [monatOffen, selectedDay])
+
+  // Befund: `aria-modal` allein macht keinen Dialog. Escape muss am Dokument
+  // haengen (das Blatt selbst bekommt keinen Fokus), und der Fokus muss hinein
+  // und danach zurueck auf den Knopf.
+  useEffect(() => {
+    if (!monatOffen) return
+    const vorher = document.activeElement as HTMLElement | null
+    // Den Knopf JETZT festhalten, nicht erst beim Aufraeumen nachschlagen.
+    const knopf = monatsKnopf.current
+    monatsBlatt.current?.focus()
+    const beiTaste = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation()
+        setMonatOffen(false)
+      }
+    }
+    document.addEventListener('keydown', beiTaste)
+    return () => {
+      document.removeEventListener('keydown', beiTaste)
+      ;(knopf ?? vorher)?.focus()
+    }
+  }, [monatOffen])
 
   const handleCalendarPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
@@ -567,7 +612,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
     // Swipe: require horizontal dominance + minimum distance
     if (Math.abs(deltaX) >= SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
-      if (calendarExpanded) changeMonth(deltaX < 0 ? 1 : -1)
+      if (monatOffen) changeMonth(deltaX < 0 ? 1 : -1)
       else changeWeek(deltaX < 0 ? 1 : -1)
     }
   }
@@ -761,22 +806,22 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const weekStart = startOfWeek(selectedDay, { weekStartsOn: 1 })
   const weekEnd = endOfWeek(selectedDay, { weekStartsOn: 1 })
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
-  const visibleCalendarDays = calendarExpanded ? calendarDays : weekDays
+  const streifenTage = weekDays
 
   const weekTitle = isSameMonth(weekStart, weekEnd)
     ? `${format(weekStart, 'd.', { locale })}–${format(weekEnd, 'd. MMMM yyyy', { locale })}`
     : `${format(weekStart, 'd. MMM', { locale })} – ${format(weekEnd, 'd. MMM yyyy', { locale })}`
   const monthTitle = format(currentDate, 'MMMM yyyy', { locale })
-  const calendarTitle = calendarExpanded ? monthTitle : weekTitle
+  // Zwei Titel statt einem: der Streifen nennt die Woche, das Blatt den Monat.
 
   // Peek month/week (adjacent period shown while swiping)
   const peekDate = peekDir !== 0
-    ? calendarExpanded
+    ? monatOffen
       ? new Date(currentDate.getFullYear(), currentDate.getMonth() + peekDir, 1)
       : addDays(selectedDay, peekDir * 7)
     : null
   const peekCalendarDays = peekDate
-    ? calendarExpanded
+    ? monatOffen
       ? eachDayOfInterval({
           start: startOfWeek(startOfMonth(peekDate), { weekStartsOn: 1 }),
           end: endOfWeek(endOfMonth(peekDate), { weekStartsOn: 1 }),
@@ -818,12 +863,17 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     // Nur die wirklich gezeigten Tage. Die Vorschau beim Wischen bekommt
     // keinen Balken: ihre Logs liegen ausserhalb des geladenen Fensters, ein
     // Balken waere geraten.
-    const tage = calendarExpanded
-      ? eachDayOfInterval({ start: parseISO(fensterStart), end: addDays(parseISO(fensterEnde), -1) })
-      : eachDayOfInterval({
-          start: parseISO(wochenStartSchluessel),
-          end: addDays(parseISO(wochenStartSchluessel), 6),
-        })
+    const tage = [
+      // Der Streifen ist immer da.
+      ...eachDayOfInterval({
+        start: parseISO(wochenStartSchluessel),
+        end: addDays(parseISO(wochenStartSchluessel), 6),
+      }),
+      // Das Monatsraster nur, solange das Blatt offen ist.
+      ...(monatOffen
+        ? eachDayOfInterval({ start: parseISO(fensterStart), end: addDays(parseISO(fensterEnde), -1) })
+        : []),
+    ]
     for (const day of tage) {
       const tag = localDateTimeKey(day, timeZone).slice(0, 10)
       if (stand.has(tag)) continue
@@ -850,7 +900,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       stand.set(tag, { geplant: geplant.length, genommen, offen })
     }
     return stand
-  }, [calendarExpanded, fensterStart, fensterEnde, wochenStartSchluessel, timelines, logs, timeZone, timelineReady])
+  }, [monatOffen, fensterStart, fensterEnde, wochenStartSchluessel, timelines, logs, timeZone, timelineReady])
 
   const cyclesForDay = (day: Date) => {
     if (!FEATURES.planTimelineV2) return cycles.filter(c => cycleAppliesToDay(c, day))
@@ -1404,8 +1454,21 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
   // ── Day cell renderer ─────────────────────────────────────────────────────
   const today = new Date()
-  const renderDayCell = (day: Date, monthDate: Date, key: number, isPeek: boolean, weekMode = false) => {
-    const inMonth = weekMode || day.getMonth() === monthDate.getMonth()
+  interface ZellenOptionen {
+    day: Date
+    /** Der Monat, gegen den „gehoert dieser Tag dazu?" geprueft wird. */
+    monatsBezug: Date
+    key: number
+    /** Vorschau beim Wischen: nicht anklickbar, ohne Balken. */
+    vorschau?: boolean
+    /** Im Streifen steht der Wochentag in der Zelle; im Monatsblatt ueber dem Raster. */
+    mitWochentag?: boolean
+    /** Der Onboarding-Anker fuer „heute" darf es nur einmal geben. */
+    ohneAnker?: boolean
+  }
+  const renderDayCell = ({ day, monatsBezug, key, vorschau = false, mitWochentag = false, ohneAnker = false }: ZellenOptionen) => {
+    const isPeek = vorschau
+    const inMonth = mitWochentag || day.getMonth() === monatsBezug.getMonth()
     const isSelected = !isPeek && isSameDay(day, selectedDay)
     const isTodayDay = isToday(day)
     // Tag-genau vergleichen (nicht mit Uhrzeit) — sonst gilt „morgen" < 24h als heute/vergangen.
@@ -1450,7 +1513,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         key={key}
         type="button"
         data-calendar-date={!isPeek ? dayKey : undefined}
-        {...(isTodayDay && !isPeek ? { 'data-ob': 'ob-cal-today' } : {})}
+        {...(isTodayDay && !isPeek && !ohneAnker ? { 'data-ob': 'ob-cal-today' } : {})}
         aria-label={beschriftung}
         aria-pressed={!isPeek ? isSelected : undefined}
         aria-current={isTodayDay && !isPeek ? 'date' : undefined}
@@ -1484,6 +1547,14 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
             className="absolute inset-0.5 rounded-xl pointer-events-none"
             style={{ boxShadow: '0 0 0 1.5px rgba(0,204,245,0.60), 0 0 6px rgba(0,204,245,0.12)' }}
           />
+        )}
+
+        {mitWochentag && (
+          <span className={`text-[9.5px] font-bold uppercase leading-none tracking-[0.06em] ${
+            isSelected ? 'text-white/80' : isTodayDay ? 'text-sky-300' : 'text-slate-500'
+          }`}>
+            {format(day, 'EEEEEE', { locale })}
+          </span>
         )}
 
         <span className={`text-sm font-black leading-none ${
@@ -1748,126 +1819,195 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
       {/* ── Kalender ──────────────────────────────────────────────────────── */}
       <div data-ob="calendar-main" data-ob-self>
-      <GlassPanel accent="#00ccf5" padding="sm" style={{ padding: 0 }}>
+        {/* Der Streifen traegt keinen eigenen Rahmen mehr. Er ist Navigation,
+            nicht Inhalt — der Tag darunter ist der Inhalt. */}
+        <div className="flex flex-col gap-2">
 
-        {/* Header */}
-        <div style={{ padding: '12px 12px 10px' }}>
           <div className="flex items-center justify-between gap-2">
-            {/* Month title with arrow buttons */}
-            <div className="flex items-center gap-0.5">
+            <div className="flex min-w-0 items-center gap-0.5">
               <button
-                onClick={() => calendarExpanded ? changeMonth(-1) : changeWeek(-1)}
-                aria-label={calendarExpanded
-                  ? t('prev_month', { defaultValue: 'Vorheriger Monat' })
-                  : t('prev_week', { defaultValue: 'Vorherige Woche' })}
-                className="p-1.5 rounded-xl text-sky-400 hover:bg-sky-400/10 transition-colors"
+                type="button"
+                onClick={() => changeWeek(-1)}
+                aria-label={t('prev_week', { defaultValue: 'Vorherige Woche' })}
+                className="shrink-0 rounded-xl p-1.5 text-sky-400 transition-colors hover:bg-sky-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
               >
                 <ChevronLeft size={18} />
               </button>
-              <h2
-                className="text-base font-black tracking-[-0.03em] text-white text-center"
-                style={{ minWidth: calendarExpanded ? 140 : 168 }}
-              >
-                {calendarTitle}
+              <h2 className="truncate text-[15px] font-black tracking-[-0.03em] text-white">
+                {weekTitle}
               </h2>
               <button
-                onClick={() => calendarExpanded ? changeMonth(1) : changeWeek(1)}
-                aria-label={calendarExpanded
-                  ? t('next_month', { defaultValue: 'Nächster Monat' })
-                  : t('next_week', { defaultValue: 'Nächste Woche' })}
-                className="p-1.5 rounded-xl text-sky-400 hover:bg-sky-400/10 transition-colors"
+                type="button"
+                onClick={() => changeWeek(1)}
+                aria-label={t('next_week', { defaultValue: 'Nächste Woche' })}
+                className="shrink-0 rounded-xl p-1.5 text-sky-400 transition-colors hover:bg-sky-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
               >
                 <ChevronRight size={18} />
               </button>
             </div>
-            <button
-              className="shrink-0 rounded-xl border px-2.5 py-1.5 text-xs font-bold text-sky-200"
-              onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
-              style={{ borderColor: 'var(--accent-border)', background: 'var(--accent-weak)' }}
-            >
-              {t('heute_link')}
-            </button>
+            <div className="flex shrink-0 items-center gap-1.5">
+              {/* „Heute" nur, wenn man nicht schon dort ist. Vorher stand der
+                  Knopf zweimal auf der Seite, einmal hier und einmal im Tag. */}
+              {!isTodaySelected && (
+                <button
+                  type="button"
+                  className="rounded-xl border px-2.5 py-1.5 text-xs font-bold text-sky-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+                  onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
+                  style={{ borderColor: 'var(--accent-border)', background: 'var(--accent-weak)' }}
+                >
+                  {t('heute_link')}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentDate(new Date(selectedDay.getFullYear(), selectedDay.getMonth(), 1))
+                  setMonatOffen(true)
+                }}
+                ref={monatsKnopf}
+                aria-label={t('calendar_open_month', { defaultValue: 'Monatsübersicht öffnen' })}
+                aria-haspopup="dialog"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+              >
+                <CalendarDays size={17} />
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* Weekday header */}
-        <div className="grid grid-cols-7 border-y border-slate-800">
-          {[t('mon'),t('tue'),t('wed'),t('thu'),t('fri'),t('sat'),t('sun')].map(d => (
-            <div key={d} className="py-2 text-center text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-500">{d}</div>
-          ))}
-        </div>
-
-        {/* Calendar grid — horizontal swipe to change month */}
-        <div
-          className="relative overflow-hidden"
-          style={{ touchAction: 'pan-y', cursor: isDragging ? 'grabbing' : 'default' }}
-          onPointerDown={handleCalendarPointerDown}
-          onPointerMove={handleCalendarPointerMove}
-          onPointerUp={handleCalendarPointerUp}
-          onPointerCancel={handleCalendarPointerCancel}
-        >
-          {/* Current month */}
           <div
-            className="grid grid-cols-7 select-none"
-            style={{
-              transform: `translateX(${calendarDragX}px)`,
-              transition: isDragging ? 'none' : 'transform 0.26s cubic-bezier(0.4,0,0.2,1)',
-              willChange: 'transform',
-            }}
+            className="relative overflow-hidden"
+            style={{ touchAction: 'pan-y', cursor: isDragging ? 'grabbing' : 'default' }}
+            onPointerDown={handleCalendarPointerDown}
+            onPointerMove={handleCalendarPointerMove}
+            onPointerUp={handleCalendarPointerUp}
+            onPointerCancel={handleCalendarPointerCancel}
           >
-            {visibleCalendarDays.map((day, i) => renderDayCell(
-              day,
-              calendarExpanded ? currentDate : selectedDay,
-              i,
-              false,
-              !calendarExpanded,
-            ))}
-          </div>
-
-          {/* Peek period — slides in from the side while swiping */}
-          {peekDir !== 0 && (
             <div
-              className="absolute inset-x-0 top-0 grid grid-cols-7 select-none pointer-events-none"
+              className="grid select-none grid-cols-7 gap-1"
               style={{
-                transform: `translateX(calc(${peekDir === 1 ? '100%' : '-100%'} + ${calendarDragX}px))`,
-                transition: isDragging ? 'none' : 'transform 0.26s cubic-bezier(0.4,0,0.2,1)',
+                // Wischt man IM Blatt, rutschte sonst der Streifen dahinter mit.
+                transform: `translateX(${monatOffen ? 0 : calendarDragX}px)`,
+                transition: isDragging && !monatOffen ? 'none' : 'transform 0.26s cubic-bezier(0.4,0,0.2,1)',
                 willChange: 'transform',
               }}
             >
-              {peekCalendarDays.map((day, i) => renderDayCell(
-                day,
-                calendarExpanded ? peekDate! : peekDate!,
-                i,
-                true,
-                !calendarExpanded,
+              {streifenTage.map((day, i) => renderDayCell({
+                day, monatsBezug: selectedDay, key: i, mitWochentag: true,
+              }))}
+            </div>
+
+            {peekDir !== 0 && !monatOffen && (
+              <div
+                className="pointer-events-none absolute inset-x-0 top-0 grid select-none grid-cols-7 gap-1"
+                style={{
+                  transform: `translateX(calc(${peekDir === 1 ? '100%' : '-100%'} + ${calendarDragX}px))`,
+                  transition: isDragging ? 'none' : 'transform 0.26s cubic-bezier(0.4,0,0.2,1)',
+                  willChange: 'transform',
+                }}
+              >
+                {peekCalendarDays.map((day, i) => renderDayCell({
+                  day, monatsBezug: peekDate!, key: i, vorschau: true, mitWochentag: true,
+                }))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Monatsblatt ───────────────────────────────────────────────────
+          Der Monat bleibt ein vollwertiger Kalender — er ist nur nicht mehr
+          das Erste, was man sieht. */}
+      {monatOffen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/60"
+            onClick={() => setMonatOffen(false)}
+            aria-hidden="true"
+          />
+          <div
+            ref={monatsBlatt}
+            role="dialog"
+            aria-modal="true"
+            aria-label={monthTitle}
+            tabIndex={-1}
+            className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border border-b-0 px-4 pb-8 pt-3 focus:outline-none"
+            style={{ borderColor: 'var(--accent-border)', background: 'var(--surface)', boxShadow: '0 -12px 48px rgba(0,0,0,0.8)' }}
+          >
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" />
+
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="truncate text-lg font-black tracking-[-0.03em] text-white">{monthTitle}</h2>
+              <div className="flex shrink-0 items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => changeMonth(-1)}
+                  aria-label={t('prev_month', { defaultValue: 'Vorheriger Monat' })}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-sky-400 transition-colors hover:bg-sky-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => changeMonth(1)}
+                  aria-label={t('next_month', { defaultValue: 'Nächster Monat' })}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-sky-400 transition-colors hover:bg-sky-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+                >
+                  <ChevronRight size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMonatOffen(false)}
+                  aria-label={t('close', { defaultValue: 'Schließen' })}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7">
+              {[t('mon'), t('tue'), t('wed'), t('thu'), t('fri'), t('sat'), t('sun')].map(d => (
+                <div key={d} className="pb-2 text-center text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-500">{d}</div>
               ))}
             </div>
-          )}
-        </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            setCalendarExpanded(expanded => {
-              if (!expanded) {
-                setCurrentDate(new Date(selectedDay.getFullYear(), selectedDay.getMonth(), 1))
-              }
-              return !expanded
-            })
-          }}
-          className="flex w-full items-center justify-center gap-1.5 border-t border-slate-800 px-4 py-2.5 text-xs font-bold text-sky-300/90 transition-colors hover:bg-sky-400/5"
-        >
-          {calendarExpanded
-            ? t('calendar_collapse_week', { defaultValue: 'Wochenansicht' })
-            : t('calendar_expand_month', { defaultValue: 'Monat anzeigen' })}
-          <ChevronDown
-            size={14}
-            className={`transition-transform duration-200 ${calendarExpanded ? 'rotate-180' : ''}`}
-          />
-        </button>
+            <div
+              className="relative overflow-hidden"
+              style={{ touchAction: 'pan-y' }}
+              onPointerDown={handleCalendarPointerDown}
+              onPointerMove={handleCalendarPointerMove}
+              onPointerUp={handleCalendarPointerUp}
+              onPointerCancel={handleCalendarPointerCancel}
+            >
+              <div
+                className="grid select-none grid-cols-7 gap-1"
+                style={{
+                  transform: `translateX(${calendarDragX}px)`,
+                  transition: isDragging ? 'none' : 'transform 0.26s cubic-bezier(0.4,0,0.2,1)',
+                }}
+              >
+                {calendarDays.map((day, i) => renderDayCell({
+                  day, monatsBezug: currentDate, key: i, ohneAnker: true,
+                }))}
+              </div>
 
-      </GlassPanel>
-      </div>
+              {peekDir !== 0 && (
+                <div
+                  className="pointer-events-none absolute inset-x-0 top-0 grid select-none grid-cols-7 gap-1"
+                  style={{
+                    transform: `translateX(calc(${peekDir === 1 ? '100%' : '-100%'} + ${calendarDragX}px))`,
+                    transition: isDragging ? 'none' : 'transform 0.26s cubic-bezier(0.4,0,0.2,1)',
+                  }}
+                >
+                  {peekCalendarDays.map((day, i) => renderDayCell({
+                    day, monatsBezug: peekDate!, key: i, vorschau: true, ohneAnker: true,
+                  }))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ── Tages-Panel ───────────────────────────────────────────────────── */}
       <div id="due-intakes">
@@ -1880,13 +2020,6 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
             </h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {!isTodaySelected && (
-              <button
-                onClick={() => { setSelectedDay(new Date()); setCurrentDate(new Date()) }}
-                className="text-xs text-sky-400 hover:text-sky-300 transition-colors">
-                {t('heute_link')}
-              </button>
-            )}
             <span className="text-xs font-semibold text-slate-400 tabular-nums">
               {format(selectedDay, 'dd.MM.yyyy')}
             </span>
