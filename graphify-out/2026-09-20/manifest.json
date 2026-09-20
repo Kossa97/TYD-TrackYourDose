@@ -885,13 +885,13 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.test.ts": {
-    "mtime": 1789864623.7582326,
-    "ast_hash": "0d2c26a9fd6b347ebe8fb2a3ca09fdf1",
+    "mtime": 1789864464.0302062,
+    "ast_hash": "d019928c40585373e764ca193f3ea9cc",
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
-    "mtime": 1789864646.248488,
-    "ast_hash": "2386d8bfdf68c65cd9039b8c0c4368f7",
+    "mtime": 1789864078.4018724,
+    "ast_hash": "ce2d9cf9ccd438ae4729d2f6134f423e",
     "semantic_hash": ""
   },
   "src/pages/FAQ.tsx": {
@@ -2330,8 +2330,8 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1789865031.8733945,
-    "ast_hash": "b0dd1c67800169e80d12996c0b7d8aca",
+    "mtime": 1789864464.2697372,
+    "ast_hash": "1623d89f5e2b66f2b6740cbd03fb8672",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DosageFormPicker.tsx": {
@@ -2560,8 +2560,8 @@
     "semantic_hash": "63a8011686ab717b60d7bc387d28a314"
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
-    "mtime": 1789865013.535424,
-    "ast_hash": "ab3c6b00716939acaebee759a1ae3448",
+    "mtime": 1789863949.3063078,
+    "ast_hash": "67190eac688c67b183b8579fbfdb3bd0",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/DoseUnitControl.test.tsx": {
@@ -3458,7 +3458,7 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789864702.3577223,
+    "mtime": 1789864377.366181,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },

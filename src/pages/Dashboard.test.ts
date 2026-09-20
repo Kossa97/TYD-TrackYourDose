@@ -168,6 +168,27 @@ afterEach(() => {
 })
 
 describe('Dashboard normalized timeline path', () => {
+  it('explains blocked migrated plans and links to their timezone review', async () => {
+    const fixtures = startFixFixture()
+    fixtures.cycles.unshift({
+      ...fixtures.cycles[0],
+      id: 'archived-review-cycle',
+      stack_item_id: 'archived-stack-item',
+      timezone_review_required: true,
+    })
+    fixtures.cycles[1].timezone_review_required = true
+    const client = createDashboardClient(fixtures)
+
+    renderDashboard(client)
+
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toContain('Existing intake plans still need a time zone confirmation.')
+    expect(screen.queryByText('Noch nichts für heute protokolliert')).toBeNull()
+    fireEvent.click(within(alert).getByRole('button', { name: 'Confirm time zone in My Stack' }))
+    await waitFor(() => expect(screen.getByTestId('location').textContent)
+      .toBe('/my-stack?review=timezone&stackItem=stack-1'))
+  })
+
   it.each([false, true])('keeps a decided V2 log immutable in the calendar (%s)', async taken => {
     const fixtures = startFixFixture()
     fixtures.dose_logs = [{ ...pendingLog(), taken }]
@@ -189,7 +210,7 @@ describe('Dashboard normalized timeline path', () => {
     fixtures.cycles.push({ ...fixtures.cycles[0], id: 'competing-cycle' })
     const client = createDashboardClient(fixtures)
     const page = renderDashboard(client)
-    await waitFor(() => expect(client.selectCounts.get('cycles')).toBe(1))
+    await waitFor(() => expect(client.selectCounts.get('cycles')).toBe(2))
     await waitFor(() => expect(screen.queryByText('Lädt…')).toBeNull())
     const morningTab = screen.queryByRole('tab', { name: /^morgens/ })
     if (morningTab) fireEvent.click(morningTab)
@@ -578,6 +599,7 @@ describe('Dashboard normalized timeline path', () => {
       method: 'Oral',
       schedule_history: null,
       stack_items: { display_name: 'Vitamin D3', tracking_level: 'complete' },
+      timezone_review_required: false,
       started_at: new Date(today.getTime() - 86_400_000).toISOString(),
       ended_at: null as string | null,
       versions: [{

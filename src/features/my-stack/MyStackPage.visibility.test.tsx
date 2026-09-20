@@ -912,6 +912,66 @@ describe('MyStackPage non-vial visibility', () => {
     expect(screen.getByTestId('plan-management-unknown-zone')).toBeTruthy()
   })
 
+  it('opens one timezone review per stack item from the calendar deep link', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    vi.mocked(loadStackItems).mockResolvedValueOnce([
+      { ...loadedItems[0], configuration_status: 'needs_review' }, loadedItems[1],
+    ])
+    const firstUnknown = timelineRow('unknown-zone-first', undefined, {
+      started_at: null, ended_at: null, timezone_review_required: true,
+      stack_items: { archived: false, configuration_status: 'needs_review', migration_conflicts: [] },
+    })
+    const secondUnknown = timelineRow('unknown-zone-second', undefined, {
+      started_at: null, ended_at: null, timezone_review_required: true,
+      stack_items: { archived: false, configuration_status: 'needs_review', migration_conflicts: [] },
+    })
+    const { client } = v2Client({
+      timelineResults: [{ data: [firstUnknown, secondUnknown], error: null }],
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack?review=timezone&stackItem=other-1']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(screen.getAllByLabelText('my_stack_course_timezone')).toHaveLength(1))
+    expect(screen.getByRole('heading', { name: qaName })).toBeTruthy()
+  })
+
+  it('keeps the timezone deep link until a failed timeline load is retried', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    vi.mocked(loadStackItems).mockResolvedValueOnce([
+      { ...loadedItems[0], configuration_status: 'needs_review' }, loadedItems[1],
+    ])
+    const unknown = timelineRow('unknown-zone-retry', undefined, {
+      started_at: null, ended_at: null, timezone_review_required: true,
+      stack_items: { archived: false, configuration_status: 'needs_review', migration_conflicts: [] },
+    })
+    const { client, timelineQuery } = v2Client({
+      timelineResults: [
+        { data: null, error: { message: 'offline' } },
+        { data: [unknown], error: null },
+      ],
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack?review=timezone&stackItem=other-1']}>
+        <LocationProbe />
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('my_stack_plan_load_error'))
+    expect(screen.getByTestId('location-search').textContent).toContain('review=timezone')
+    fireEvent.click(screen.getByRole('button', { name: 'lab_retry' }))
+    await waitFor(() => expect(timelineQuery).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.getAllByLabelText('my_stack_course_timezone')).toHaveLength(1))
+    await waitFor(() => expect(screen.getByTestId('location-search').textContent).toBe(''))
+  })
+
   it('keeps both conflict choices when the timeline refresh fails after resolution', async () => {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
     localStorage.setItem('tyd_peptide_view', 'list')

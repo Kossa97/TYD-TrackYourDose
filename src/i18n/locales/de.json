@@ -1385,5 +1385,7 @@
   "my_stack_plan_conflict_copy": "Wähle den Plan, der gerade tatsächlich läuft. Deine bisherigen Einnahmen und der gesamte Verlauf bleiben erhalten.",
   "my_stack_plan_conflict_started": "Gestartet am {{date}}",
   "my_stack_plan_conflict_keep": "Diesen laufenden Plan behalten",
-  "my_stack_plan_conflict_error": "Der Konflikt konnte nicht aufgelöst werden. Bitte versuche es erneut."
+  "my_stack_plan_conflict_error": "Der Konflikt konnte nicht aufgelöst werden. Bitte versuche es erneut.",
+  "my_stack_calendar_timezone_review": "Bestehende Einnahmepläne benötigen noch eine Zeitzonenbestätigung. Bis dahin erscheinen sie nicht im Kalender.",
+  "my_stack_calendar_timezone_review_action": "Zeitzone in My Stack bestätigen"
 }

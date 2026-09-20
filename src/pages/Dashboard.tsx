@@ -10,7 +10,7 @@ import {
   differenceInDays, parseISO, startOfDay,
 } from 'date-fns'
 import {
-  Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock,
+  AlertTriangle, Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock,
   Moon, Pin, RotateCcw, Sun, Sunrise, Syringe, TrendingUp, X, XCircle,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -477,6 +477,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     FEATURES.planTimelineV2 ? 'loading' : 'ready',
   )
   const [timelinePeriod, setTimelinePeriod] = useState('')
+  const [timezoneReviewStackItemIds, setTimezoneReviewStackItemIds] = useState<string[]>([])
   const timelineRequest = useRef(0)
   const routineCommitted = useRef(false)
   const [stackItems, setStackItems] = useState<StackItem[]>([])
@@ -588,12 +589,15 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       setConfirmSheet(null)
       if (!routineCommitted.current) setRoutineGroupSheet(null)
       try {
-        const [loadedTimelines, itemsResult] = await Promise.all([
+        const [loadedTimelines, itemsResult, timezoneReviewResult] = await Promise.all([
           loadCycleTimelines(dashboardDataClient as never, user.id),
           dashboardDataClient.from('stack_items').select('*').eq('user_id', user.id).eq('archived', false).order('display_name'),
+          dashboardDataClient.from('cycles').select('stack_item_id, timezone_review_required')
+            .eq('user_id', user.id).eq('timezone_review_required', true),
         ])
         if (!isCurrent()) return
         if (itemsResult.error) throw itemsResult.error
+        if (timezoneReviewResult.error) throw timezoneReviewResult.error
         const rangeStart = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 })
         const rangeEnd = startOfDay(addDays(endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 }), 1))
         const selectionStart = parseISO(timelineSelection)
@@ -629,6 +633,10 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         setTimelines(loadedTimelines)
         setCycles([])
         setStackItems(itemsResult.data ?? [])
+        const visibleStackItemIds = new Set((itemsResult.data ?? []).map(item => item.id))
+        setTimezoneReviewStackItemIds([...new Set((timezoneReviewResult.data ?? [])
+          .filter(row => row.timezone_review_required === true && visibleStackItemIds.has(row.stack_item_id))
+          .map(row => row.stack_item_id))])
         setLogs([...byId.values()])
         setTimelinePeriod(timelineContext)
         setTimelineLoadState('ready')
@@ -636,6 +644,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         if (!isCurrent()) return
         setTimelines([])
         setLogs([])
+        setTimezoneReviewStackItemIds([])
         setTimelineLoadState('error')
       }
       return
@@ -1856,6 +1865,25 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
             </> : t('loading', { defaultValue: 'Lädt…' })}
           </div>
         )}
+        {FEATURES.planTimelineV2 && timelineReady && timezoneReviewStackItemIds.length > 0 && (
+          <div role="alert" className="mb-3 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle size={17} className="mt-0.5 shrink-0 text-amber-300" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold leading-5 text-amber-100">
+                  {t('my_stack_calendar_timezone_review', { defaultValue: 'Existing intake plans still need a time zone confirmation. They will not appear in the calendar until then.' })}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/my-stack?review=timezone&stackItem=${encodeURIComponent(timezoneReviewStackItemIds[0])}`)}
+                  className="mt-2 min-h-11 cursor-pointer rounded-lg border border-amber-300/25 bg-amber-300/10 px-3 py-2 text-sm font-bold text-amber-200 transition-colors hover:bg-amber-300/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                >
+                  {t('my_stack_calendar_timezone_review_action', { defaultValue: 'Confirm time zone in My Stack' })}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {selectedPause && (
           <div className="mb-3 rounded-xl border border-sky-500/20 bg-sky-500/[0.07] px-3 py-2.5">
             <p className="text-sm font-bold text-sky-200">
@@ -1980,7 +2008,8 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
               </div>
             )}
           </div>
-        ) : dueSlots.length === 0 && selCycles.length === 0 && selOnDemand.length === 0 && !selectedPause && (!FEATURES.planTimelineV2 || timelineReady) ? (
+        ) : dueSlots.length === 0 && selCycles.length === 0 && selOnDemand.length === 0 && !selectedPause
+          && timezoneReviewStackItemIds.length === 0 && (!FEATURES.planTimelineV2 || timelineReady) ? (
           <p className="text-slate-600 text-sm text-center py-4">
             {isTodaySelected ? t('noch_nichts_heute') : t('kein_eintrag_tag')}
           </p>

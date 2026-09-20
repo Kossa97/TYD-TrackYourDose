@@ -1,11 +1,11 @@
 # Graph Report - my-stack-foundation  (2026-09-20)
 
 ## Corpus Check
-- 727 files · ~888,204 words
+- 727 files · ~888,184 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 5300 nodes · 9171 edges · 852 communities (286 shown, 566 thin omitted)
+- 5300 nodes · 9171 edges · 851 communities (285 shown, 566 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 84 edges (avg confidence: 0.71)
 - Token cost: 0 input · 0 output
 
@@ -242,7 +242,6 @@
 - [[_COMMUNITY_graphify reference transcribe video and audio|graphify reference: transcribe video and audio]]
 - [[_COMMUNITY_Blutwerte-Feinschliff Implementation Plan|Blutwerte-Feinschliff Implementation Plan]]
 - [[_COMMUNITY_Fortschritt-Werteübersicht Implementation Plan|Fortschritt-Werteübersicht Implementation Plan]]
-- [[_COMMUNITY_SloshContext.tsx|SloshContext.tsx]]
 - [[_COMMUNITY_public.is_admin|public.is_admin]]
 - [[_COMMUNITY_tsconfig.json|tsconfig.json]]
 - [[_COMMUNITY_vercel.json|vercel.json]]
@@ -869,7 +868,7 @@
 ## Hyperedges (group relationships)
 - **The Lab Design Exploration** — _superpowers_brainstorm_1918_1779323004_content_layout_options_the_lab_layout_konzept, _superpowers_brainstorm_1918_1779323004_content_charts_options_grafik_statistik_bereich, _superpowers_brainstorm_1918_1779323004_content_filter_options_filter_sortierung, _superpowers_brainstorm_1918_1779323004_content_full_design_the_lab_design_mockup, handoff_studies_pubmed [INFERRED 0.85]
 
-## Communities (852 total, 566 thin omitted)
+## Communities (851 total, 566 thin omitted)
 
 ### Community 0 - "blutspiegelHistory.ts"
 Cohesion: 0.09
@@ -892,8 +891,8 @@ Cohesion: 0.06
 Nodes (57): DailyLogField, DailyLogRow, isWellnessMarker(), WELLNESS_MARKER_FIELD, WELLNESS_MARKERS, WellnessMarker, wellnessMarkersWithData(), wellnessSeries() (+49 more)
 
 ### Community 5 - "react"
-Cohesion: 0.11
-Nodes (42): VialStageLightHandle, SloshProvider(), SloshEngine, StackStageProps, AmpouleRenderer(), AmpouleRendererProps, strengthLabel(), CapsuleRenderer() (+34 more)
+Cohesion: 0.10
+Nodes (47): VialStageLightHandle, SloshContext, SloshProvider(), clamp(), createSloshEngine(), SloshEngine, SloshState, SpringState (+39 more)
 
 ### Community 6 - "faq/types.ts"
 Cohesion: 0.07
@@ -968,8 +967,8 @@ Cohesion: 0.15
 Nodes (28): buildSubstancesSummary(), CycleRow(), CycleSection(), formatCycleLabel(), groupDefaultCounts(), Props, VerlaufSetup(), inventoryKey() (+20 more)
 
 ### Community 26 - "PenVisual.tsx"
-Cohesion: 0.23
-Nodes (16): PEN_BODY, PEN_BODY_SHOULDER_X, PEN_DOSE_WINDOW, PEN_DOSE_WINDOW_PCT, PEN_KNOB, PEN_KNOB_RIB_XS, PEN_KNOB_RIB_YS, PEN_KNOB_SHOULDER (+8 more)
+Cohesion: 0.17
+Nodes (20): PEN_BODY, PEN_BODY_SHOULDER_X, PEN_DOSE_WINDOW, PEN_DOSE_WINDOW_PCT, PEN_KNOB, PEN_KNOB_RIB_XS, PEN_KNOB_RIB_YS, PEN_KNOB_SHOULDER (+12 more)
 
 ### Community 27 - "chartMath.ts"
 Cohesion: 0.14
@@ -1032,8 +1031,8 @@ Cohesion: 0.18
 Nodes (18): BlutwertePage(), Props, Props, emptyDraft(), GridControls(), Props, SORT_LABELS, auffaelligeWerte() (+10 more)
 
 ### Community 45 - "PowderVisual.tsx"
-Cohesion: 0.14
-Nodes (20): POWDER_BODY, POWDER_LABEL, POWDER_LABEL_BOX, POWDER_LID, POWDER_LID_RIB_YS, POWDER_LID_RIBS, POWDER_SPEC, POWDER_VIEWBOX (+12 more)
+Cohesion: 0.15
+Nodes (19): POWDER_BODY, POWDER_LABEL, POWDER_LABEL_BOX, POWDER_LID, POWDER_LID_RIB_YS, POWDER_LID_RIBS, POWDER_SPEC, POWDER_VIEWBOX (+11 more)
 
 ### Community 46 - "StackItemWizard.tsx"
 Cohesion: 0.04
@@ -1076,8 +1075,8 @@ Cohesion: 0.08
 Nodes (26): devDependencies, autoprefixer, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, jsdom (+18 more)
 
 ### Community 58 - "valueOverview.ts"
-Cohesion: 0.13
-Nodes (22): Props, ARROWS, number(), Props, TONE_COLORS, valueWithUnit(), WerteCard(), average() (+14 more)
+Cohesion: 0.14
+Nodes (20): ARROWS, number(), Props, TONE_COLORS, valueWithUnit(), WerteCard(), average(), buildValueOverview() (+12 more)
 
 ### Community 59 - "gelShape.ts"
 Cohesion: 0.13
@@ -1328,8 +1327,8 @@ Cohesion: 0.21
 Nodes (10): buildDuplicateFingerprint(), ingredientFingerprint(), normalizeNumber(), normalizeText(), d3Capsule1000, d3Capsule5000, d3Drops1000, WizardState (+2 more)
 
 ### Community 134 - "Archive Substance Info"
-Cohesion: 0.12
-Nodes (15): clamp01(), clampFill(), clampSlosh(), fillMotionShiftPct(), PeptideVialVisual(), PeptideVialVisualProps, vialAmountLabel(), VialTop() (+7 more)
+Cohesion: 0.27
+Nodes (7): buildMarqueeMotion(), MarqueeMotion, marqueeRestOffset(), DivProps, StageLabel(), StageLabelProps, StageMarquee()
 
 ### Community 135 - "2. Datenbankschema (Supabase)"
 Cohesion: 0.15
@@ -1400,8 +1399,8 @@ Cohesion: 0.10
 Nodes (20): Abgenommene Produktentscheidungen, Architektur, Ausgangslage, Bühne und Größen, Datenanbindung, Etikett, Fehler- und Grenzfälle, Flüssigkeit (+12 more)
 
 ### Community 154 - "Injektionstracker Pro 3D Implementation Plan"
-Cohesion: 0.08
-Nodes (31): ampouleAmountLabel(), AmpouleVisual(), AmpouleVisualProps, clamp01(), clampOffset(), SIZE_CLASS, base, render() (+23 more)
+Cohesion: 0.06
+Nodes (45): clamp01(), clampFill(), clampSlosh(), fillMotionShiftPct(), PeptideVialVisual(), PeptideVialVisualProps, vialAmountLabel(), VialTop() (+37 more)
 
 ### Community 155 - "My Stack Backup Gate"
 Cohesion: 0.29
@@ -1655,10 +1654,6 @@ Nodes (18): Blutwerte-Feinschliff Implementation Plan, File Structure, Rollout-R
 Cohesion: 0.25
 Nodes (7): File Structure, Final Verification, Fortschritt-Werteübersicht Implementation Plan, Global Constraints, Task 1: Reine Halbzeitraum-Vergleichslogik, Task 2: Kompakte Wertekarte, Task 3: Dashboard-Ersatz und Abschlussverifikation
 
-### Community 228 - "SloshContext.tsx"
-Cohesion: 0.17
-Nodes (14): SloshContext, useSloshSubscribe(), clamp(), createSloshEngine(), SloshState, SpringState, stepSlosh(), Subscriber (+6 more)
-
 ### Community 229 - "public.is_admin"
 Cohesion: 0.33
 Nodes (11): buildLiquid(), clamp(), fillSloshResponse(), finite(), LiquidGeometry, LiquidParams, liquidSurfaceY(), moveTo() (+3 more)
@@ -1892,8 +1887,8 @@ Cohesion: 0.10
 Nodes (23): ActiveSubstancesSection(), Props, isLegacyPhotoUrl(), mapDailyLogs(), resolvePhotoDisplayUrls(), useFortschrittData(), substanceColor(), buildCycleLegendItems() (+15 more)
 
 ### Community 855 - "metricDefaults.ts"
-Cohesion: 0.11
-Nodes (31): buildDecimalRange(), formatDecimal(), indexForValue(), MetricWheelPicker(), Props, nullableNumber(), readStoredSavedValues(), TodayLogSheet() (+23 more)
+Cohesion: 0.10
+Nodes (33): buildDecimalRange(), formatDecimal(), indexForValue(), MetricWheelPicker(), Props, nullableNumber(), Props, readStoredSavedValues() (+25 more)
 
 ### Community 859 - "stackTabs.ts"
 Cohesion: 0.21

@@ -196,6 +196,8 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_plan_end',
   'my_stack_plan_action_error',
   'my_stack_plan_load_error',
+  'my_stack_calendar_timezone_review',
+  'my_stack_calendar_timezone_review_action',
   'my_stack_plan_restart_error',
   'my_stack_plan_pause_title',
   'my_stack_plan_pause_end_title',

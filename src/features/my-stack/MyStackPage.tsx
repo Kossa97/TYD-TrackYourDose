@@ -903,6 +903,25 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   }, [loading, location.pathname, location.search, navigate, peptides])
 
   useEffect(() => {
+    if (loading || timelineLoading || timelineLoadError || !FEATURES.planTimelineV2) return
+    const params = new URLSearchParams(location.search)
+    if (params.get('review') !== 'timezone') return
+    const requestedStackItemId = params.get('stackItem')
+    const pendingStackItemIds = new Set(cycleTimelines
+      .filter(timeline => timeline.cycle.timezone_review_required)
+      .map(timeline => timeline.cycle.stack_item_id))
+    const targetId = requestedStackItemId && pendingStackItemIds.has(requestedStackItemId)
+      ? requestedStackItemId
+      : pendingStackItemIds.values().next().value
+    const target = peptides.find(item => item.id === targetId)
+    const frame = window.requestAnimationFrame(() => {
+      if (target) setCycleManagerPeptide(target)
+      navigate(location.pathname, { replace: true })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [cycleTimelines, loading, location.pathname, location.search, navigate, peptides, timelineLoadError, timelineLoading])
+
+  useEffect(() => {
     if (!showTrackingForm) return
     supabase.from('pk_profiles').select('id, name, aliases').order('name')
       .then(({ data }) => setPkProfileCatalog((data as PkProfileOption[]) ?? []))
@@ -1495,6 +1514,12 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       onResolveConflict={() => resolveTimelineConflict(p, timeline)}
     />
   )
+  const planManagementSections = (p: Peptide, timelines: CycleTimeline[]) => {
+    const reviewTimeline = timelines.find(timeline => timeline.cycle.timezone_review_required)
+    return reviewTimeline
+      ? planManagementSection(p, reviewTimeline)
+      : timelines.map(timeline => planManagementSection(p, timeline))
+  }
   const toggleCycleActive = async (c: Cycle) => {
     await supabase.from('cycles').update({ active: !c.active }).eq('id', c.id)
     toast.success(c.active ? t('zyklus_deaktiviert') : t('zyklus_aktiviert'))
@@ -3081,7 +3106,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                           {t('noch_kein_zyklus')}
                         </p>
                       )}
-                      {FEATURES.planTimelineV2 && presentedTimelines.map(timeline => planManagementSection(p, timeline))}
+                      {FEATURES.planTimelineV2 && planManagementSections(p, presentedTimelines)}
                       {!FEATURES.planTimelineV2 && pCycles.map(c => {
                         const pEscs = escalationsOf(c.id)
                         return (
@@ -3211,11 +3236,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               </div>
             </div>
             <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-              {timelinesOf(currentCycleManagerPeptide.id)
-                .filter(timeline => currentCycleManagerPeptide.configuration_status !== 'needs_review' || timeline.cycle.timezone_review_required || timeline.cycle.ended_at === null || new Date(timeline.cycle.ended_at) > new Date())
-                .map(timeline => (
-                planManagementSection(currentCycleManagerPeptide, timeline)
-              ))}
+              {planManagementSections(
+                currentCycleManagerPeptide,
+                timelinesOf(currentCycleManagerPeptide.id)
+                  .filter(timeline => currentCycleManagerPeptide.configuration_status !== 'needs_review' || timeline.cycle.timezone_review_required || timeline.cycle.ended_at === null || new Date(timeline.cycle.ended_at) > new Date()),
+              )}
               {timelinesOf(currentCycleManagerPeptide.id).length === 0 && (
                 <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
                   <p className="text-sm font-semibold text-white">{t('noch_kein_zyklus')}</p>
