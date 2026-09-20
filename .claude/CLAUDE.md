@@ -40,6 +40,19 @@ er auf die Aufgabe, wird er benutzt, auch wenn er hier fehlt.
 - **graphify** (`.claude/skills/graphify/SKILL.md`) — beliebige Eingabe in einen
   Wissensgraphen. Auslöser: `/graphify`
 - Tippt der Nutzer `/graphify`, zuerst den installierten graphify-Skill benutzen.
-- Die PreToolUse-Hooks in `.claude/settings.json` erinnern zusätzlich daran,
-  `graphify query` vor grep/read zu stellen. Das gilt auch für Subagenten — die
-  Regel gehört in jeden Subagenten-Prompt, der Code erkundet.
+- **Vor der Arbeit:** `graphify query` statt blind grep/read. Erinnert wird per
+  `PreToolUse` auf `Bash` (grep/rg/find/fd/ack/ag) und auf `Read|Glob|Grep`.
+- **Nach der Arbeit:** `graphify update .`, sobald die Änderung steht und geprüft
+  ist, dann `graphify-out` in einem eigenen Commit. Erinnert wird zweifach:
+  `PostToolUse` auf `Write|Edit` meldet sich direkt nach einer geschriebenen
+  Quelldatei; der `Stop`-Hook blockt am Ende der Runde, wenn eine Datei unter
+  `src/` oder `scripts/` jünger ist als `graphify-out/graph.json` — der fängt
+  auch Änderungen über die Shell (sed, heredoc, Skript).
+- Alles in `.claude/settings.json`. Die Regel gilt auch für Subagenten — sie
+  gehört in jeden Subagenten-Prompt, der Code erkundet.
+
+> Hinweis für spätere Änderungen an diesen Hooks: die Hinweistexte dürfen keine
+> Backticks, `$` oder einfachen Anführungszeichen enthalten. Das `echo` im Hook
+> ist einfach gequotet; ein Backtick darin würde von der Shell ausgeführt statt
+> ausgegeben. Genau das ist beim Bau einmal passiert und hat ungefragt
+> `graphify update` gestartet.

@@ -11,7 +11,7 @@
         ]
       },
       {
-        "matcher": "Read|Glob",
+        "matcher": "Read|Glob|Grep",
         "hooks": [
           {
             "type": "command",
@@ -26,6 +26,27 @@
           {
             "type": "command",
             "command": "echo \"{\\\"hookSpecificOutput\\\": {\\\"hookEventName\\\": \\\"UserPromptSubmit\\\", \\\"additionalContext\\\": \\\"WERKZEUGREGEL (.claude/CLAUDE.md): Fuer jede Arbeit das dafuer vorgesehene Plugin/Skill benutzen, auch mehrere wenn noetig. Erst pruefen welches zustaendig ist, dann arbeiten. Code aendern = graphify orientieren -> arbeiten -> graphify update . -> code-review. Artefakt = artifact-design. App ansehen = run. Konfiguration = update-config. Passt keins: normal arbeiten und das in der Antwort sagen.\\\"}}\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "HIT=$(python3 -c \"import json,sys;d=json.load(sys.stdin);t=d.get('tool_input',d);p=str(t.get('file_path') or '').lower().replace(chr(92),'/');exts=('.ts','.tsx','.js','.jsx','.mjs','.cjs','.vue','.svelte','.astro','.py','.go','.rs');sys.stdout.write('1' if 'graphify-out/' not in p and p.endswith(exts) else '')\" 2>/dev/null || true); if [ \"$HIT\" = 1 ] && [ -f graphify-out/graph.json ]; then echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PostToolUse\", \"additionalContext\": \"Quelldatei geaendert. Sobald die Aenderung steht und geprueft ist: graphify update . laufen lassen und den Graphen in einem eigenen Commit nachziehen.\"}}'; fi || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v graphify >/dev/null 2>&1 && [ -f graphify-out/graph.json ] && [ -n \"$(find src scripts -type f \\( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.mjs' \\) -newer graphify-out/graph.json -print -quit 2>/dev/null)\" ]; then echo '{\"decision\": \"block\", \"reason\": \"Der Wissensgraph ist aelter als der geaenderte Code. Jetzt graphify update . laufen lassen und graphify-out in einem eigenen Commit nachziehen. Schlaegt der Lauf fehl: dem Nutzer sagen, statt es zu umgehen.\"}'; fi || true"
           }
         ]
       }
