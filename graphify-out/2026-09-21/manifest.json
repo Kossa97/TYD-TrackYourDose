@@ -1056,15 +1056,15 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.test.ts": {
-    "mtime": 1789996257.6693332,
-    "seen": 1789996453.5576012,
-    "ast_hash": "3437a69ca82a98e4ea3c36bd23bb2bc4",
+    "mtime": 1789996906.9963865,
+    "seen": 1789997085.824157,
+    "ast_hash": "ddba95231a3ccacc45f592312fc98cb8",
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
-    "mtime": 1789996279.831162,
-    "seen": 1789996453.5576022,
-    "ast_hash": "85ccea4c9d60e626eff23464a448c36b",
+    "mtime": 1789996934.4619048,
+    "seen": 1789997085.8241582,
+    "ast_hash": "d1176738cae2c3792cef9e6282edbc9c",
     "semantic_hash": ""
   },
   "src/pages/FAQ.tsx": {
@@ -4854,8 +4854,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789996366.9516008,
-    "seen": 1789996453.557664,
+    "mtime": 1789997000.9116385,
+    "seen": 1789997085.8242207,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
