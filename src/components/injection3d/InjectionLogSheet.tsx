@@ -163,6 +163,10 @@ export function InjectionLogSheet({
     <>
       <div className="fixed inset-0 z-50 bg-black/70" />
       <div
+        data-app-modal
+        data-app-back-dirty-on-interaction
+        role="dialog"
+        aria-modal="true"
         className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-hidden overflow-x-hidden overscroll-y-contain"
         style={{
           background: 'linear-gradient(180deg, rgba(7,11,24,0.96), var(--surface))',
@@ -189,6 +193,7 @@ export function InjectionLogSheet({
               type="button"
               aria-label={String(t('injection_position_cancel', { defaultValue: 'Abbrechen' }))}
               onClick={onCancel}
+              data-app-back-close
               className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-400"
             >
               <X size={16} aria-hidden="true" />

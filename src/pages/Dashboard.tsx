@@ -1957,6 +1957,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
                 <button
                   type="button"
                   onClick={() => setMonatOffen(false)}
+                  data-app-back-close
                   aria-label={t('close', { defaultValue: 'Schließen' })}
                   className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
                 >
@@ -2251,6 +2252,10 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         <>
           <div className="fixed inset-0 z-40 bg-black/60" onClick={() => setConfirmSheet(null)} />
           <div
+            data-app-modal
+            data-app-back-dirty-on-interaction
+            role="dialog"
+            aria-modal="true"
             className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border border-white/10 pb-10"
             style={{ background: 'var(--surface)' }}
           >
@@ -2284,7 +2289,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
                 style={{ background: 'var(--surface-input)', colorScheme: 'dark' }}
               />
               <div className="flex gap-3">
-                <button onClick={() => setConfirmSheet(null)} className="btn-secondary flex-1">
+                <button onClick={() => setConfirmSheet(null)} data-app-back-close className="btn-secondary flex-1">
                   Abbrechen
                 </button>
                 <button

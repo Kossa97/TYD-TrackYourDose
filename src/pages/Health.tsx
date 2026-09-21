@@ -445,7 +445,7 @@ export function Health() {
 
       {/* ── Gewicht-Modal ────────────────────────────────────────────────── */}
       {showWeightForm && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center" onClick={() => setShowWeightForm(false)}>
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center" data-app-modal onClick={() => setShowWeightForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-bold">Neues Gewicht</h2>
             <div>
@@ -459,7 +459,7 @@ export function Health() {
                 onChange={e => setWeightForm(f => ({ ...f, weight_kg: e.target.value }))} />
             </div>
             <div className="flex gap-3 pt-2">
-              <button className="btn-secondary flex-1" onClick={() => setShowWeightForm(false)}>Abbrechen</button>
+              <button className="btn-secondary flex-1" data-app-back-close onClick={() => setShowWeightForm(false)}>Abbrechen</button>
               <button className="btn-primary flex-1" onClick={saveWeight} disabled={savingWeight}>
                 {savingWeight ? 'Speichern...' : 'Speichern'}
               </button>
@@ -470,7 +470,7 @@ export function Health() {
 
       {/* ── Körperprofil-Modal ───────────────────────────────────────────── */}
       {showProfileForm && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center" onClick={() => setShowProfileForm(false)}>
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center" data-app-modal onClick={() => setShowProfileForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-bold">Körperprofil bearbeiten</h2>
             <div className="grid grid-cols-2 gap-3">
@@ -501,7 +501,7 @@ export function Health() {
                 value={profileForm.notes} onChange={e => setProfileForm(f => ({ ...f, notes: e.target.value }))} />
             </div>
             <div className="flex gap-3 pt-2">
-              <button className="btn-secondary flex-1" onClick={() => setShowProfileForm(false)}>Abbrechen</button>
+              <button className="btn-secondary flex-1" data-app-back-close onClick={() => setShowProfileForm(false)}>Abbrechen</button>
               <button className="btn-primary flex-1" onClick={saveProfile} disabled={savingProfile}>
                 {savingProfile ? 'Speichern...' : 'Speichern'}
               </button>

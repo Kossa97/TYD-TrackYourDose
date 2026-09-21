@@ -62,7 +62,14 @@ export function FilterSheet({
 
       {/* Sheet panel — NO backdrop-filter on this element or its children */}
       <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
-        <div className="w-full max-w-lg bg-slate-900 border border-slate-700/60 border-b-0 rounded-t-2xl pointer-events-auto shadow-card">
+        <div
+          data-app-modal
+          data-app-back-dirty-on-interaction
+          role="dialog"
+          aria-modal="true"
+          aria-label={String(t('lab_filter_title'))}
+          className="w-full max-w-lg bg-slate-900 border border-slate-700/60 border-b-0 rounded-t-2xl pointer-events-auto shadow-card"
+        >
           {/* Drag handle */}
           <div className="flex justify-center pt-3 pb-1">
             <div className="w-8 h-1 bg-slate-700 rounded-full" />
@@ -74,6 +81,7 @@ export function FilterSheet({
             <button
               type="button"
               onClick={onClose}
+              data-app-back-close
               className="text-slate-500 hover:text-slate-300 transition-colors p-1"
             >
               <X size={16} />

@@ -227,7 +227,7 @@ export function Tagebuch() {
 
       {/* ══ FORMULAR ══════════════════════════════════════════════════════════ */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center"
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center" data-app-modal data-app-back-dirty-on-interaction
           onClick={() => setShowForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4
             overflow-y-auto max-h-[92vh]" onClick={e => e.stopPropagation()}>
@@ -326,7 +326,7 @@ export function Tagebuch() {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button className="btn-secondary flex-1" onClick={() => setShowForm(false)}>{t('cancel')}</button>
+              <button className="btn-secondary flex-1" data-app-back-close onClick={() => setShowForm(false)}>{t('cancel')}</button>
               <button className="btn-primary flex-1" onClick={save} disabled={saving}>
                 {saving ? t('saving') : t('save')}
               </button>

@@ -104,6 +104,7 @@ export function StageDetailSheet({
         <button
           type="button"
           onClick={onClose}
+          data-app-back-close
           aria-label="Schließen"
           className="grid min-h-11 min-w-11 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-slate-300 transition-colors hover:text-white"
         >

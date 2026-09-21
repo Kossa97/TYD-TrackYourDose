@@ -2252,7 +2252,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                       {activeCycle ? (
                         <button
                           type="button"
-                          onClick={() => setCycleManagerPeptide(activePeptide)}
+                          onClick={() => {
+                            setDetailUrsprung(null)
+                            setCycleManagerPeptide(activePeptide)
+                          }}
                           className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-violet-500/25 bg-slate-950/55 px-3 text-left transition-colors hover:border-violet-400/45"
                         >
                           <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">
@@ -2263,7 +2266,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                       ) : (
                         <button
                           type="button"
-                          onClick={() => (pCycles.length > 0 ? setCycleManagerPeptide(activePeptide) : openNewCycle(activePeptide))}
+                          onClick={() => {
+                            if (pCycles.length > 0) {
+                              setDetailUrsprung(null)
+                              setCycleManagerPeptide(activePeptide)
+                              return
+                            }
+                            openNewCycle(activePeptide)
+                          }}
                           className="flex min-h-14 w-full items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/55 px-3 text-left transition-colors hover:border-violet-400/35"
                         >
                           <Activity size={16} className="shrink-0 text-slate-600" />
@@ -3099,6 +3109,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 <button
                   type="button"
                   onClick={() => setCycleManagerPeptide(null)}
+                  data-app-back-close
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 transition-colors hover:border-slate-600 hover:text-white"
                   aria-label={t('close')}
                 >
@@ -3344,6 +3355,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   <button
                     type="button"
                     onClick={() => setCycleManagerPeptide(null)}
+                    data-app-back-close
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-400 transition-colors hover:border-slate-600 hover:text-white"
                     aria-label={t('close')}
                   >
@@ -3558,6 +3570,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               <button
                 type="button"
                 onClick={() => { setDeletePromptFromArchive(false); setDeletePromptPeptide(null); window.requestAnimationFrame(() => archiveCloseButtonRef.current?.focus()) }}
+                data-app-back-close
                 disabled={deletingPeptide}
                 className="min-h-11 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 text-sm font-semibold text-slate-300 transition-colors hover:border-slate-500 hover:text-white disabled:opacity-50"
               >
@@ -3586,6 +3599,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 type="button"
                 ref={archiveCloseButtonRef}
                 onClick={() => setArchiveViewOpen(false)}
+                data-app-back-close
                 className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-400 transition-colors hover:border-slate-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
                 aria-label={t('close')}
                 title={t('close')}
@@ -3759,6 +3773,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             return (
               <div
                 data-archive-info-detail={p.id}
+                data-app-modal
                 className="fixed inset-0 z-[60] flex min-h-dvh flex-col bg-slate-950"
                 role="dialog"
                 aria-modal="true"
@@ -3775,6 +3790,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                           document.querySelector<HTMLButtonElement>(`[data-archive-info-button="${p.id}"]`)?.focus()
                         })
                       }}
+                      data-app-back-close
                       className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-300 transition-colors hover:border-slate-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
                       aria-label={t('back')}
                       title={t('back')}
@@ -3914,7 +3930,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
 
       {/* DOSISANPASSUNG-FORMULAR */}
       {showEscForm && eForm && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" data-app-modal data-app-back-dirty-on-interaction
           onClick={() => setShowEscForm(false)}>
           <div className="bg-slate-900 rounded-t-2xl w-full max-w-lg p-6 pb-8 space-y-4 overflow-y-auto max-h-[90vh]"
             onClick={e => e.stopPropagation()}>
@@ -4026,7 +4042,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
             </div>{/* /esc-core */}
 
             <div className="flex gap-3 pt-2">
-              <button className="btn-secondary flex-1" onClick={() => setShowEscForm(false)}>{t('cancel')}</button>
+              <button className="btn-secondary flex-1" data-app-back-close onClick={() => setShowEscForm(false)}>{t('cancel')}</button>
               <button data-ob="btn-esc-save" className="btn-primary flex-1" onClick={saveEsc} disabled={savingEsc}>
                 {savingEsc ? t('loading') : t('save')}
               </button>
@@ -4050,7 +4066,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               {t('nicht_mehr_fragen')}
             </label>
             <div className="flex gap-3 pt-1">
-              <button className="btn-secondary flex-1" onClick={() => setRekonstitutionTarget(null)}>{t('no')}</button>
+              <button className="btn-secondary flex-1" data-app-back-close onClick={() => setRekonstitutionTarget(null)}>{t('no')}</button>
               <button onClick={confirmRekonstitution}
                 className="flex-1 py-2.5 px-4 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-semibold transition-colors text-sm">
                 {t('yes')}
@@ -4090,7 +4106,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   <FileText size={18} className="text-sky-400" />
                   <h2 className="font-bold text-white text-lg">{p.name}</h2>
                 </div>
-                <button onClick={() => setInfoPeptide(null)} className="p-1.5 text-slate-400 hover:text-white">
+                <button onClick={() => setInfoPeptide(null)} data-app-back-close className="p-1.5 text-slate-400 hover:text-white">
                   <X size={18} />
                 </button>
               </div>

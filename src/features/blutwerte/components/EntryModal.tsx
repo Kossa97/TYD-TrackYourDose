@@ -54,6 +54,7 @@ export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, on
   return (
     <div
       className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center"
+      data-app-modal
       onClick={onCancel}
     >
       <div
@@ -128,7 +129,7 @@ export function EntryModal({ draft, markerLocked, saving, onChange, onCancel, on
         })()}
 
         <div className="flex gap-3 pt-2">
-          <button className="btn-secondary flex-1" onClick={onCancel}>Abbrechen</button>
+          <button className="btn-secondary flex-1" data-app-back-close onClick={onCancel}>Abbrechen</button>
           <button className="btn-primary flex-1" onClick={save} disabled={saving}>
             {saving ? 'Speichern...' : 'Speichern'}
           </button>

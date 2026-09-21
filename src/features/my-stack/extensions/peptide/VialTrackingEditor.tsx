@@ -559,7 +559,7 @@ export function VialTrackingEditor({
               {editingPeptideId ? t('peptid_bearbeiten_title') : t('neues_peptid_title')}
             </h2>
           </div>
-          <button type="button" onClick={onClose} className="p-1.5 text-slate-400 hover:text-white">
+          <button type="button" onClick={onClose} data-app-back-close className="p-1.5 text-slate-400 hover:text-white">
             <X size={18} />
           </button>
         </div>
