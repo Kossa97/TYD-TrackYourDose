@@ -168,6 +168,9 @@ const SORT_OPTION_LABEL_KEYS: Record<PeptideSortKey, string> = {
   stock_desc: 'sort_option_stock_desc',
 }
 
+const vialCarouselItemWidth = 'min(17rem, 70vw)'
+const vialCarouselItemGap = '0.75rem'
+
 function asPeptide(item: LoadedStackItem): Peptide {
   const legacy = item as LoadedStackItem & Partial<Peptide>
   return {
@@ -2097,16 +2100,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   const invItem = activePeptide.inventory_item_id ? inventory.find(i => i.id === activePeptide.inventory_item_id) : null
                   const pCycles = cyclesOf(activePeptide.id)
                   const activeCycle = pCycles.find(c => c.active) ?? null
-                  const activeQuantity = activeCycle ? dosePlanViewFor(activeCycle).current : null
-                  const cycleStart = activeCycle ? parseISO(activeCycle.start_date) : null
-                  const cycleEnd = activeCycle?.end_date ? parseISO(activeCycle.end_date) : null
-                  const cycleDay = cycleStart ? Math.max(1, differenceInDays(new Date(), cycleStart) + 1) : null
-                  const cycleTotalDays = cycleStart && cycleEnd ? Math.max(1, differenceInDays(cycleEnd, cycleStart) + 1) : null
-                  const cycleDayLabel = cycleDay ? `${cycleDay} / ${cycleTotalDays ?? t('ende_offen')}` : '-'
-                  const activeIntake = activeCycle ? intakeLabel(activeCycle) : null
-                  const activeFrequency = activeCycle
-                    ? [freqLabel(activeCycle), activeIntake].filter(Boolean).join(' · ')
-                    : null
                   const notSet = 'Nicht gesetzt'
                   /**
                    * Die Angaben, nach Form ausgesucht.
@@ -2194,7 +2187,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     const wert = angabeText(feld, a)
                     // Ueber zwei Spalten, wo eine Zeile sonst abgeschnitten
                     // waere: ein Kombipraeparat, ein Dateiname, eine Notiz.
-                    const wide = feld === 'analyse' || feld === 'notizen'
+                    const wide = feld === 'notizen'
                       || (a.art === 'zutaten' && a.zutaten.length > 1)
                     if (a.art === 'datei') {
                       return {
@@ -2210,15 +2203,15 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   }
                   // Wie der Produktabschnitt heisst, folgt seinem INHALT —
                   // „Rekonstitution", wo eine Fluessigkeit zugefuegt wird,
-                  // sonst „Bestand". Siehe `produktTitel`.
-                  const ABSCHNITT_TITEL: Record<'substanz' | 'rekonstitution' | 'bestand', string> = {
+                  // sonst „Zusammensetzung". Siehe `produktTitel`.
+                  const ABSCHNITT_TITEL: Record<'substanz' | 'rekonstitution' | 'zusammensetzung', string> = {
                     substanz: 'Substanz',
                     rekonstitution: 'Rekonstitution',
-                    bestand: 'Bestand',
+                    zusammensetzung: 'Zusammensetzung',
                   }
                   return (
                     <>
-                    {/* Bestand und Substanz: offen, nicht hinter einem
+                    {/* Zusammensetzung und Substanz: offen, nicht hinter einem
                         Akkordeon. Wer das Vollbild oeffnet, will sie sehen —
                         ein Klappknopf davor war eine Huerde ohne Gegenwert.
                         Die Darreichungsform entscheidet, welche Zeilen es
@@ -2231,8 +2224,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         <div className="grid grid-cols-2 gap-2 p-2 text-xs">
                           {abschnitt.felder.map(feld => {
                             const zeile = zeileFuer(feld)
+                            const vollbreit = ('wide' in zeile && zeile.wide)
+                              || (abschnitt.id === 'produkt' && feld === 'wirkstoff' && abschnitt.felder.length % 2 === 1)
                             return (
-                              <div key={feld} data-stack-detail-field={feld} className={`min-h-14 rounded-lg border border-slate-800 bg-slate-900/55 px-2.5 py-2 ${'wide' in zeile && zeile.wide ? 'col-span-2' : ''}`}>
+                              <div key={feld} data-stack-detail-field={feld} className={`min-h-14 rounded-lg border border-slate-800 bg-slate-900/55 px-2.5 py-2 ${vollbreit ? 'col-span-2' : ''}`}>
                                 <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-slate-500">{zeile.label}</p>
                                 <div className="mt-1 truncate text-sm font-semibold text-slate-200">
                                   {'valueNode' in zeile ? zeile.valueNode : zeile.value}
@@ -2249,50 +2244,22 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         Angaben, nicht davor: erst was das IST (Substanz,
                         Zusammensetzung), dann was damit LAEUFT.
                         
-                        Alles, was hier frueher ausgebreitet stand — Frequenz,
-                        Start und Ende, Erinnerung, geplante Mengen,
-                        Dosisanpassungen samt Bearbeiten und Loeschen —, zeigt
-                        der Zyklusverwalter ohnehin. Es stand also zweimal da,
-                        und die Vollbildseite wurde davon lang. Was bleibt, ist
-                        die Zeile, die man im Vorbeigehen liest: wo im Zyklus
-                        man steht, und ob er laeuft.
-
-                        Der Schalter legt `active` um, der Punkt daneben zeigt
-                        es. Beides nur, wenn es einen aktiven Zyklus gibt —
-                        ohne einen waere ein Schalter ohne Gegenstueck.
+                        Alles Weitere — Frequenz, Dosis, Laufzeit und Aktionen —
+                        zeigt erst der Zyklusverwalter nach dem Antippen. Die
+                        Uebersicht bleibt dadurch bei einem einzigen Einstieg.
                     */}
                     <div data-stack-detail="zyklus" className="mx-1 mt-2">
                       {activeCycle ? (
-                        <div className="flex items-stretch gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setCycleManagerPeptide(activePeptide)}
-                            className="flex min-h-14 flex-1 items-center gap-3 rounded-xl border border-violet-500/25 bg-slate-950/55 px-3 text-left transition-colors hover:border-violet-400/45"
-                          >
-                            <span className="relative flex h-2.5 w-2.5 shrink-0" data-zyklus-live>
-                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/70" />
-                              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm font-bold text-white">{activeCycle.name}</span>
-                              <span className="mt-0.5 block truncate text-xs text-slate-400">
-                                {[t('tag') + ' ' + cycleDayLabel, activeQuantity ? `${activeQuantity.dose} ${activeQuantity.unit}` : null, activeFrequency]
-                                  .filter(Boolean).join(' · ')}
-                              </span>
-                            </span>
-                            <ChevronRight size={16} className="shrink-0 text-slate-600" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleCycleActive(activeCycle)}
-                            aria-pressed={activeCycle.active}
-                            aria-label={String(t('deaktivieren_title'))}
-                            className="flex min-h-14 w-14 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-[10px] font-bold uppercase tracking-wide text-emerald-300 transition-colors hover:border-emerald-400/45"
-                          >
-                            <Pause size={15} />
-                            {t('aktiv_badge')}
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setCycleManagerPeptide(activePeptide)}
+                          className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-violet-500/25 bg-slate-950/55 px-3 text-left transition-colors hover:border-violet-400/45"
+                        >
+                          <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">
+                            • {activeCycle.name} {t('zyklus')}
+                          </span>
+                          <ChevronRight size={16} className="shrink-0 text-slate-600" />
+                        </button>
                       ) : (
                         <button
                           type="button"
@@ -2381,7 +2348,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
   )
 
   return (
-    <div data-my-stack-page className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div
+      data-my-stack-page
+      className={`flex h-full min-h-0 flex-col overflow-hidden ${viewMode === 'vials' && activePeptide ? 'overscroll-none touch-pan-x' : ''}`}
+    >
       {/* ── Header (single row): Titel · Suche · Ansicht/Filter ─────────── */}
       <div className="relative mb-4 flex shrink-0 items-center gap-2">
         {/* Titel — kollabiert smooth, sobald die Suche geöffnet wird */}
@@ -2515,7 +2485,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       {/* ══ MEINE PEPTIDE ════════════════════════════════════════════════════ */}
       <div
         data-my-stack-body
-        className={`min-h-0 flex-1 ${viewMode === 'vials' && activePeptide ? 'flex flex-col overflow-hidden' : 'overflow-y-auto overscroll-contain'}`}
+        className={`min-h-0 flex-1 ${viewMode === 'vials' && activePeptide ? 'flex flex-col overflow-hidden overscroll-none' : 'overflow-y-auto overscroll-contain'}`}
       >
           {initialLoad && <LabLoader fadingOut={loaderFading} />}
 
@@ -2570,7 +2540,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   data-stack-tabs
                   role="tablist"
                   aria-label={String(t('my_stack_category', { defaultValue: 'Kategorie' }))}
-                  className="no-scrollbar -mx-3 mb-2 flex shrink-0 snap-x gap-2 overflow-x-auto px-3 pb-1"
+                  className="no-scrollbar -mx-3 mb-2 flex shrink-0 snap-x gap-2 overflow-x-auto overflow-y-hidden overscroll-none touch-pan-x px-3 pb-1"
                 >
                   {STACK_TABS.map(reiter => {
                     const anzahl = reiterZaehler.get(reiter.key) ?? 0
@@ -2661,6 +2631,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   />
                 <SloshProvider engine={sloshEngine}>
                 <div
+                  data-vial-carousel-strip
                   ref={vialCarouselRef}
                   onScroll={handleVialCarouselScroll}
                   onPointerDown={handleVialCarouselPointerDown}
@@ -2668,21 +2639,21 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   onPointerUp={handleVialCarouselPointerUp}
                   onPointerCancel={handleVialCarouselPointerUp}
                   onWheel={handleVialCarouselWheel}
-                  className={`relative z-10 flex min-h-0 flex-1 ${vialSnapClassName} gap-2 overflow-x-auto pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                  className={`relative z-10 flex min-h-0 flex-1 ${vialSnapClassName} overflow-x-auto overflow-y-hidden overscroll-none touch-pan-x pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
                     isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
                   }`}
                   style={{
-                    // Horizontal ziehen gehoert dem Karussell, vertikales
-                    // Wischen bleibt nativer Seitenscroll. Touch nutzt den
-                    // nativen overflow-x-Scroll; der JS-Drag-Pfad gilt nur
-                    // fuer die Maus. Deshalb muss touch-action beides erlauben.
-                    touchAction: 'pan-x pan-y',
+                    gap: vialCarouselItemGap,
+                    // Die Vollbildbuehne besitzt nur die waagerechte Geste.
+                    // Vertikales Wischen darf weder die Seite verschieben
+                    // noch auf iOS den Gummiband-Effekt ausloesen.
+                    touchAction: 'pan-x',
                     // Die Buehne beherrscht den Bildschirm; die Nachbarn lugen
                     // nur noch herein. Damit man trotzdem weiss, wie viele es
                     // sind, stehen die Punkte darunter — sie sind hier keine
                     // Zierde, sondern der Ersatz fuer das, was die Breite
                     // verdeckt.
-                    paddingInline: 'calc((100% - min(17rem, 70vw)) / 2)',
+                    paddingInline: `calc((100% - ${vialCarouselItemWidth}) / 2)`,
                     // Acht Pixel Schlupf, und zwar mit Absicht: ohne sie waere
                     // das Fangfenster (Streifenbreite minus diesem Rand) genau
                     // so breit wie ein Eintrag. Bei Gleichstand faellt das
@@ -2691,7 +2662,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     // welche der beiden Regeln gerade gilt. Genau so sah der
                     // Sprung aus, der nach dem Wischen kam: 25 bis 33 px
                     // daneben, und beim naechsten Anlass zurueck.
-                    scrollPaddingInline: 'calc((100% - min(17rem, 70vw)) / 2 - 8px)',
+                    scrollPaddingInline: `calc((100% - ${vialCarouselItemWidth}) / 2 - 8px)`,
                   }}
                 >
                   <div
@@ -2700,7 +2671,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     className={`${vialItemSnapClassName} flex h-full min-h-0 origin-bottom items-end shrink-0 rounded-2xl px-2 py-2 ${
                       isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
                     } ${addTileActive ? 'scale-100' : 'scale-[0.82] opacity-45'}`}
-                    style={{ width: 'min(17rem, 70vw)' }}
+                    style={{ width: vialCarouselItemWidth }}
                   >
                     <AddVialTile
                       active={addTileActive}
@@ -2731,7 +2702,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         } ${
                           isActive ? 'scale-100' : 'scale-[0.88] opacity-65 saturate-75'
                         }`}
-                        style={{ width: 'min(17rem, 70vw)' }}
+                        style={{ width: vialCarouselItemWidth }}
                         aria-label={p.name}
                         role="button"
                         tabIndex={0}
@@ -2804,7 +2775,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     sieben Eintraege als Punkte zum Antippen, darueber eine
                     Leiste, weil fuenfzehn Punkte niemand mehr zaehlt. */}
                 {stagePeptides.length > 1 && (
-                  <div data-vial-position className="mt-1 flex shrink-0 items-center justify-center gap-1.5">
+                  <div data-vial-position className="mb-2 mt-1 flex shrink-0 items-center justify-center gap-1.5">
                     {stagePeptides.length <= 7 ? stagePeptides.map((p, index) => (
                       <button
                         key={p.id}
@@ -3436,12 +3407,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           onClose={() => setDetailUrsprung(null)}
           onFlightChange={imFlug => sloshEngine.setEnabled(!imFlug)}
           title={activePeptide.name}
-          subtitle={(() => {
-            // Die eine Zeile unter dem Namen: was der laufende Plan sagt.
-            const laufend = cyclesOf(activePeptide.id).find(c => c.active)
-            if (!laufend) return null
-            return [freqLabel(laufend), intakeLabel(laufend)].filter(Boolean).join(' · ')
-          })()}
           stage={(
             <SloshProvider engine={sloshEngine}>
               <div style={{ width: 'min(9rem, 38vw)' }}>

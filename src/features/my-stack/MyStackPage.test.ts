@@ -107,8 +107,8 @@ describe('My Stack page vial view', () => {
     // Wischen aus: 25 bis 33 px daneben, und beim nächsten Anlass zurück.
     const text = source()
 
-    expect(text).toContain("paddingInline: 'calc((100% - min(17rem, 70vw)) / 2)'")
-    expect(text).toContain("scrollPaddingInline: 'calc((100% - min(17rem, 70vw)) / 2 - 8px)'")
+    expect(text).toContain('paddingInline: `calc((100% - ${vialCarouselItemWidth}) / 2)`')
+    expect(text).toContain('scrollPaddingInline: `calc((100% - ${vialCarouselItemWidth}) / 2 - 8px)`')
   })
 
   test('gibt einen haptischen Klick je Eintrag, den das Karussell passiert', () => {
@@ -234,6 +234,21 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('stagePeptides.length <= 7')
   })
 
+  test('hält die Positionsleiste sichtbar über der Navigation', () => {
+    const text = source()
+
+    expect(text).toContain('data-vial-position className="mb-2 mt-1')
+  })
+
+  test('gibt jeder Darreichungsform denselben Karussellplatz und Abstand', () => {
+    const text = source()
+
+    expect(text).toContain("const vialCarouselItemWidth = 'min(17rem, 70vw)'")
+    expect(text).toContain("const vialCarouselItemGap = '0.75rem'")
+    expect(text).toContain("gap: vialCarouselItemGap")
+    expect(text).toContain("style={{ width: vialCarouselItemWidth }}")
+  })
+
   test('aligns the Neue Substanz tile with the vial carousel axis', () => {
     const text = source()
 
@@ -312,26 +327,20 @@ describe('My Stack page vial view', () => {
     expect(text).not.toContain('<span>Info</span>')
   })
 
-  test('zeigt den Zyklus als einen Knopf mit Live-Punkt und Schalter', () => {
-    // Frequenz, Start und Ende, Erinnerung, geplante Mengen und
-    // Dosisanpassungen standen hier ausgebreitet — und im Zyklusverwalter
-    // noch einmal. Geblieben ist die Zeile, die man im Vorbeigehen liest:
-    // wo im Zyklus man steht, ob er läuft, und ein Weg hinein.
+  test('zeigt den aktiven Zyklus als einen ruhigen Einstieg', () => {
+    // Alle Einzelheiten und Aktionen gehoeren in den Zyklusverwalter. In der
+    // Uebersicht bleibt nur der Name mit einem eindeutigen Weg hinein.
     const text = source()
     const knopf = text.slice(
       text.indexOf('data-stack-detail="zyklus"'),
       text.indexOf('data-stack-detail="verwalten"'),
     )
 
-    expect(knopf).toContain('data-zyklus-live')
-    expect(knopf).toContain('animate-ping')
-    // Die Zusammenfassung: Tag im Zyklus, Dosis, Frequenz — mehr nicht.
-    expect(knopf).toContain("[t('tag') + ' ' + cycleDayLabel")
-    expect(knopf).toContain('activeFrequency')
-    // Der Schalter legt `active` um, statt in den Verwalter zu führen.
-    expect(knopf).toContain('onClick={() => toggleCycleActive(activeCycle)}')
-    expect(knopf).toContain('aria-pressed={activeCycle.active}')
-    // Der Knopf selbst öffnet den Verwalter.
+    expect(knopf).toContain("• {activeCycle.name} {t('zyklus')}")
+    expect(knopf).not.toContain('data-zyklus-live')
+    expect(knopf).not.toContain('activeQuantity')
+    expect(knopf).not.toContain('activeFrequency')
+    expect(knopf).not.toContain('toggleCycleActive(activeCycle)')
     expect(knopf).toContain('setCycleManagerPeptide(activePeptide)')
 
     // Zwei Leerzustände, je nachdem ob es überhaupt Zyklen gibt.
@@ -370,7 +379,8 @@ describe('My Stack page vial view', () => {
       text.indexOf('const handleVialCarouselPointerUp'),
     )
     expect(pointerMove).not.toContain('e.preventDefault()')
-    expect(text).toContain("touchAction: 'pan-x pan-y'")
+    expect(text).toContain("touchAction: 'pan-x'")
+    expect(text).not.toContain("touchAction: 'pan-x pan-y'")
   })
 
   test('keeps programmatic vial selection stable while smooth-scrolling to the target', () => {
@@ -699,7 +709,8 @@ describe('My Stack page vial view', () => {
     // gibt es weder eine gepflegte Pixel-Summe noch vertikalen Seitenscroll.
     const text = source()
 
-    expect(text).toContain('data-my-stack-page className="flex h-full min-h-0 flex-col overflow-hidden"')
+    expect(text).toContain('data-my-stack-page')
+    expect(text).toContain('className={`flex h-full min-h-0 flex-col overflow-hidden')
     expect(text).toContain('data-my-stack-carousel className="flex h-full min-h-0 flex-1 flex-col"')
     expect(text).toContain('className="flex min-h-0 flex-1 flex-col pt-1"')
     expect(text).not.toContain('--buehne-hoehe')

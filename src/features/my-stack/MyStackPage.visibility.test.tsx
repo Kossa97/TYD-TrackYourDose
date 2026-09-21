@@ -487,14 +487,37 @@ describe('MyStackPage non-vial visibility', () => {
     const page = document.querySelector<HTMLElement>('[data-my-stack-page]')
     const body = document.querySelector<HTMLElement>('[data-my-stack-body]')
     const carousel = document.querySelector<HTMLElement>('[data-my-stack-carousel]')
+    const tabs = document.querySelector<HTMLElement>('[data-stack-tabs]')
+    const strip = document.querySelector<HTMLElement>('[data-vial-carousel-strip]')
 
     expect(page).not.toBeNull()
     expect(page?.className).toContain('h-full')
     expect(page?.className).toContain('overflow-hidden')
+    expect(page?.className).toContain('overscroll-none')
+    expect(page?.className).toContain('touch-pan-x')
     expect(body?.className).toContain('min-h-0')
     expect(body?.className).toContain('overflow-hidden')
+    expect(body?.className).toContain('overscroll-none')
     expect(carousel?.className).toContain('min-h-0')
     expect(carousel?.className).toContain('flex-1')
+    expect(tabs?.className).toContain('overflow-y-hidden')
+    expect(tabs?.className).toContain('touch-pan-x')
+    expect(strip).not.toBeNull()
+    expect(strip?.className).toContain('overflow-y-hidden')
+    expect(strip?.className).toContain('overscroll-none')
+    expect(strip?.className).toContain('touch-pan-x')
+  })
+
+  it('keeps vertical scrolling available in list mode', async () => {
+    localStorage.setItem('tyd_peptide_view', 'list')
+    await renderPage()
+
+    const page = document.querySelector<HTMLElement>('[data-my-stack-page]')
+    const body = document.querySelector<HTMLElement>('[data-my-stack-body]')
+
+    expect(page?.className).not.toContain('touch-pan-x')
+    expect(body?.className).toContain('overflow-y-auto')
+    expect(body?.className).toContain('overscroll-contain')
   })
 
   it('keeps an active non-vial item visible and editable beside the premium vial stage', async () => {
@@ -507,6 +530,50 @@ describe('MyStackPage non-vial visibility', () => {
     const actions = within(card!)
     expect(actions.getByRole('button', { name: 'bearbeiten' })).not.toBeNull()
     expect(actions.getByRole('button', { name: 'loeschen' })).not.toBeNull()
+  })
+
+  it('groups strength with reconstruction and keeps the remaining detail grid balanced', async () => {
+    await renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Existing Premium Vial' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Existing Premium Vial' })
+    const substance = dialog.querySelector<HTMLElement>('[data-stack-detail="substanz"]')
+    const product = dialog.querySelector<HTMLElement>('[data-stack-detail="produkt"]')
+
+    expect(substance?.querySelector('[data-stack-detail-field="wirkstoff"]')).toBeNull()
+    expect(product?.querySelector('[data-stack-detail-field="wirkstoff"]')?.className).toContain('col-span-2')
+    expect(within(product!).getByRole('heading', { name: 'Rekonstitution' })).not.toBeNull()
+    expect(substance?.querySelector('[data-stack-detail-field="analyse"]')?.className).not.toContain('col-span-2')
+    expect(substance?.querySelector('[data-stack-detail-field="notizen"]')?.className).toContain('col-span-2')
+  })
+
+  it('shows the active cycle as one quiet entry and reveals its details after tapping it', async () => {
+    const vialCycle = { ...activeCycle, stack_item_id: 'vial-1' }
+    const cyclesEq = vi.fn(async () => ({ data: [vialCycle], error: null }))
+    const stackDataClient = {
+      from: vi.fn(() => ({ select: vi.fn(() => ({ eq: cyclesEq })) })),
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={stackDataClient as never} />
+      </MemoryRouter>,
+    )
+    const stackObject = await screen.findByRole('button', { name: 'Existing Premium Vial' })
+    fireEvent.click(stackObject)
+
+    const dialog = await screen.findByRole('dialog', { name: 'Existing Premium Vial' })
+    const cycleSection = dialog.querySelector<HTMLElement>('[data-stack-detail="zyklus"]')
+    expect(cycleSection).not.toBeNull()
+    const cycleButton = within(cycleSection!).getByRole('button', { name: '• Abendplan zyklus' })
+    expect(cycleSection?.textContent).toBe('• Abendplan zyklus')
+    expect(within(cycleSection!).queryByRole('button', { name: 'deaktivieren_title' })).toBeNull()
+
+    fireEvent.click(cycleButton)
+
+    expect(await screen.findByText('zyklen_verwalten')).not.toBeNull()
+    expect(screen.getByText('100 mg')).not.toBeNull()
+    expect(screen.getByText('daily')).not.toBeNull()
   })
 
 
@@ -1113,8 +1180,8 @@ describe('MyStackPage non-vial visibility', () => {
     const stageButton = (await screen.findAllByRole('button', { name: qaName }))
       .find(button => button.hasAttribute('data-vial-index'))!
     fireEvent.click(stageButton)
-    if (!screen.queryByText(activeCycle.name)) fireEvent.click(stageButton)
-    fireEvent.click((await screen.findByText(activeCycle.name)).closest('button')!)
+    if (!screen.queryByRole('button', { name: '• Abendplan zyklus' })) fireEvent.click(stageButton)
+    fireEvent.click(await screen.findByRole('button', { name: '• Abendplan zyklus' }))
     const managerChoices = await screen.findAllByRole('button', { name: 'my_stack_plan_conflict_keep' })
     expect(managerChoices).toHaveLength(2)
     fireEvent.click(within(screen.getByTestId('plan-management-cycle-manager-kept')).getByRole('button', {

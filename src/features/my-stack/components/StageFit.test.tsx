@@ -149,6 +149,16 @@ describe('StageFit', () => {
     expect(skalaVon()).toBe('scale(1)')
   })
 
+  it('respektiert eine kleine Verkleinerung als Sicherheitsabstand', () => {
+    // Ein bewusst kleineres Ziel ist kein unnoetiges Hochskalieren: bei einer
+    // hohen Form wie dem Pen ist dieser Abstand das, was die Oberkante auf
+    // kurzen Displays voll sichtbar haelt.
+    masse({ width: 95, height: 1000 }, { width: 100, height: 100 })
+    render(<StageFit><div /></StageFit>)
+
+    expect(skalaVon()).toBe('scale(0.95)')
+  })
+
   it('laesst einen Faktor ausserhalb der Totzone stehen', () => {
     masse({ width: 120, height: 1000 }, { width: 100, height: 100 })
     render(<StageFit><div /></StageFit>)

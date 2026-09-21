@@ -85,7 +85,10 @@ export interface StageFitProps {
  */
 const EINRASTEN = 0.08
 function einrasten(skala: number) {
-  return Math.abs(skala - 1) < EINRASTEN ? 1 : skala
+  // Nur eine kleine VERGROESSERUNG wird vermieden: sie kostet Schaerfe und
+  // bringt kaum sichtbaren Nutzen. Eine Verkleinerung ist dagegen oft
+  // absichtlich als Sicherheitsabstand gesetzt und darf nicht verschwinden.
+  return skala >= 1 && skala - 1 < EINRASTEN ? 1 : skala
 }
 
 interface Einpassung {
