@@ -85,7 +85,15 @@ export function Layout() {
   const { lockViewport, hideBottomNav, hideFloatingFaq } = routeLayoutMode(pathname)
 
   return (
-    <div className={`flex w-full flex-col overflow-x-hidden ${lockViewport ? 'h-dvh overflow-y-hidden' : 'min-h-dvh'}`} style={{ maxWidth: '100vw' }}>
+    <div
+      className={`flex w-full flex-col overflow-x-hidden ${lockViewport ? 'overflow-y-hidden' : 'min-h-dvh'}`}
+      style={{
+        maxWidth: '100vw',
+        height: lockViewport
+          ? 'calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))'
+          : undefined,
+      }}
+    >
 
       {/* ── iOS install guide banner ── */}
       {showIOSBanner && (
@@ -120,7 +128,11 @@ export function Layout() {
       <main
         className={`min-h-0 flex-1 w-full overflow-x-hidden ${hideBottomNav ? 'h-dvh px-0 pt-0 overflow-hidden overscroll-none' : lockViewport ? 'overflow-y-hidden px-3 pt-4' : 'px-3 pt-4'}`}
         style={{
-          paddingBottom: hideBottomNav ? 0 : 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))',
+          paddingBottom: hideBottomNav
+            ? 0
+            : lockViewport
+              ? 'var(--bottom-nav-height)'
+              : 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))',
           paddingTop: hideBottomNav ? 0 : (showPushBanner || showIOSBanner)
             ? 'calc(1rem + 72px + env(safe-area-inset-top))'
             : undefined,
