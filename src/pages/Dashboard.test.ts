@@ -1790,38 +1790,50 @@ describe('Dashboard intake confirmation actions', () => {
 
   it('kennt jeden Uebersetzungsschluessel der Seite in de und en', () => {
     // Ein `defaultValue` ist deutscher Text. Fehlt der Schluessel in en.json,
-    // faellt i18next darauf zurueck -- die englische App zeigt Deutsch, und
-    // nichts schlaegt fehl. Genau so standen `verpasst` und `dose_mark_taken`
-    // monatelang in beiden Sprachdateien nicht drin.
+    // faellt i18next auf `fallbackLng: 'de'` zurueck -- die englische App
+    // zeigt Deutsch, und nichts schlaegt fehl. Genau so standen `verpasst`
+    // und `dose_mark_taken` monatelang in beiden Sprachdateien nicht drin.
     const source = readFileSync('src/pages/Dashboard.tsx', 'utf8')
     const de = JSON.parse(readFileSync('src/i18n/locales/de.json', 'utf8')) as Record<string, unknown>
     const en = JSON.parse(readFileSync('src/i18n/locales/en.json', 'utf8')) as Record<string, unknown>
 
-    const schluessel = [...new Set([...source.matchAll(/\bt\(\s*'([a-z0-9_]+)'/g)].map(m => m[1]))]
+    // Der Schluessel darf alles sein, was i18next erlaubt -- nicht nur
+    // Kleinbuchstaben. Sonst rutscht `t('confirmSheetFooter')` an der
+    // Pruefung vorbei, weil sie ihn gar nicht erst sieht.
+    const schluessel = [...new Set([...source.matchAll(/\bt\(\s*'([^']+)'/g)].map(m => m[1]))]
     expect(schluessel.length).toBeGreaterThan(60)
-    expect(schluessel.filter(k => de[k] === undefined)).toEqual([])
-    expect(schluessel.filter(k => en[k] === undefined)).toEqual([])
 
-    // Und kein `t(` mit etwas anderem als einem Literal -- sonst greift die
-    // Pruefung oben an der Stelle nicht mehr.
+    // Leer zaehlt nicht als uebersetzt: i18next liefert den leeren String
+    // aus (`returnEmptyString` steht per Voreinstellung auf true) statt den
+    // `defaultValue` zu nehmen -- die Ueberschrift waere dann schlicht weg.
+    const fehlt = (datei: Record<string, unknown>) => schluessel.filter(key => (
+      typeof datei[key] !== 'string' || (datei[key] as string).trim() === ''
+    ))
+    expect(fehlt(de)).toEqual([])
+    expect(fehlt(en)).toEqual([])
+
+    // Und kein `t(` mit etwas anderem als einem Literal -- ein
+    // zusammengesetzter Schluessel waere hier nicht mehr nachzulesen.
     expect(source.match(/\bt\(\s*[^'\s)]/g)).toBeNull()
   })
 
   it('haelt das Bestaetigungs-Sheet frei von fest verdrahtetem Deutsch', () => {
     const source = readFileSync('src/pages/Dashboard.tsx', 'utf8')
-    const sheet = source.slice(
-      source.indexOf('{confirmSheet && ('),
-      source.indexOf('</>\n  )\n}'),
-    )
+    const anfang = source.indexOf('{confirmSheet && (')
+    expect(anfang).toBeGreaterThan(0)
+    const sheet = source.slice(anfang, source.indexOf('</>\n  )\n}', anfang))
     expect(sheet.length).toBeGreaterThan(500)
 
-    // Ein `defaultValue` DARF deutsch sein -- er ist der Fallback, kein
-    // Anzeigetext. Darum erst die Fallbacks herausschneiden und dann das
-    // suchen, was uebrig bleibt: Text direkt im JSX.
-    const ohneFallbacks = sheet.replace(/defaultValue: '(?:[^'\\]|\\.)*'/g, 'defaultValue: ...')
-    for (const deutsch of ['Einnahme bestätigen', 'Uhrzeit', 'Abbrechen', 'Eingenommen', 'Wann hast du tatsächlich']) {
-      expect(ohneFallbacks, `\`${deutsch}\` steht als Text im Sheet statt als t()`).not.toContain(deutsch)
-    }
+    // Keine Liste verbotener Woerter -- die faengt nur, was schon einmal
+    // schiefging. Der Vertrag ist staerker und einfacher: im Sheet steht
+    // ueberhaupt kein Text direkt im JSX. Alles Sichtbare kommt aus einem
+    // `{t(...)}`, und ein `defaultValue` faellt nicht darunter, weil er in
+    // geschweiften Klammern steht.
+    const textknoten = [...sheet.matchAll(/>([^<>{}]*[A-Za-zÄÖÜäöüß][^<>{}]*)</g)]
+      .map(treffer => treffer[1].trim())
+      .filter(Boolean)
+    expect(textknoten, 'Text steht direkt im JSX statt in einem t()').toEqual([])
+
     for (const key of ['confirm_sheet_title', 'confirm_sheet_hint', 'confirm_sheet_time_label', "t('cancel'", "t('eingenommen'"]) {
       expect(sheet).toContain(key)
     }
