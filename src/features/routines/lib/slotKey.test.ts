@@ -69,6 +69,32 @@ describe('slotSchluesselGrenze', () => {
   })
 })
 
+describe('geplante Minute gegen aufgeloeste', () => {
+  it('weicht an der Zeitumstellung voneinander ab', () => {
+    // Warum ein Aufrufer, der einen geplanten Slot hat, dessen Schluessel
+    // durchreichen MUSS statt ihn aus dem Zeitpunkt nachzurechnen.
+    //
+    // Am 29.03.2026 springt Berlin von 02:00 auf 03:00. Ein geplanter
+    // 02:30-Slot bekommt deshalb den Zeitpunkt 01:00Z -- lokal 03:00. Aus
+    // diesem Zeitpunkt zurueckgelesen hiesse der Platz `@03:00`; geplant ist
+    // er aber `@02:30`. Der erste passt auf keinen Plantag mehr und
+    // kollidiert mit einem tatsaechlich geplanten 03:00-Slot.
+    const geplant = slotSchluessel(ZYKLUS, '2026-03-29', 2 * 60 + 30)
+    const ausDemZeitpunkt = slotSchluesselFuerZeitpunkt(ZYKLUS, '2026-03-29T01:00:00.000Z', 'Europe/Berlin')
+
+    expect(geplant).toBe(`${ZYKLUS}@2026-03-29T02:30`)
+    expect(ausDemZeitpunkt).toBe(`${ZYKLUS}@2026-03-29T03:00`)
+    expect(ausDemZeitpunkt).not.toBe(geplant)
+  })
+
+  it('stimmt an jedem gewoehnlichen Tag ueberein', () => {
+    // Deshalb faellt der Unterschied im Alltag nicht auf -- und deshalb ist
+    // er als Fehler so langlebig.
+    const geplant = slotSchluessel(ZYKLUS, '2026-09-22', 8 * 60)
+    expect(slotSchluesselFuerZeitpunkt(ZYKLUS, '2026-09-22T06:00:00.000Z', 'Europe/Berlin')).toBe(geplant)
+  })
+})
+
 describe('der Schluessel reist mit', () => {
   /**
    * Der Grund fuer das ganze Format. Derselbe Plan, derselbe Dienstag, zwei

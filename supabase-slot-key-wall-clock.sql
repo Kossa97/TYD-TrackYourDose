@@ -52,6 +52,18 @@ from (
 -- ausgewiesen, statt dass der ganze Lauf daran scheitert oder -- schlimmer --
 -- eine von beiden verschwindet. Was mit ihnen geschieht, entscheidet ein
 -- Mensch, der die Eintraege sieht.
+--
+-- Was das fuer die App heisst -- und was es NICHT heisst: eine Zeile, die
+-- ihren alten Schluessel behaelt, passt auf keinen geplanten Slot mehr. Die
+-- Einnahme taucht wieder als faellig auf, und die Zeile laesst sich nicht
+-- wieder oeffnen. Das ist unschoen, aber es ist kein neuer Schaden: damit
+-- zwei Zeilen ueberhaupt auf denselben neuen Namen fallen konnten, muss
+-- schon vorher hoechstens eine von ihnen auf den geplanten Schluessel
+-- gepasst haben -- die andere war bereits verwaist. Die Migration haelt
+-- diesen Zustand, sie erzeugt ihn nicht.
+--
+-- Schritt 5 listet die betroffenen Zeilen-ids, damit sie jemand ansehen
+-- kann. Nur ids, kein Inhalt.
 -- ---------------------------------------------------------------------------
 create temporary table slot_key_neu on commit drop as
 select
@@ -109,5 +121,13 @@ select
     where routine_slot_key ~ '^[^@]+@\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$'
   )                                              as nachher_wanduhr
 from slot_key_migration_report r;
+
+-- ---------------------------------------------------------------------------
+-- 5. Was liegen blieb -- zum Ansehen, nicht zum Automatisieren.
+-- ---------------------------------------------------------------------------
+select k.id as kollidierende_zeile, n.neuer_schluessel as haette_geheissen
+from slot_key_kollision k
+join slot_key_neu n on n.id = k.id
+order by n.neuer_schluessel, k.id;
 
 commit;

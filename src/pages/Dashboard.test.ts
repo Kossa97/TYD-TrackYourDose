@@ -1788,6 +1788,30 @@ describe('Dashboard intake confirmation actions', () => {
     expect(source).toContain('aria-modal="true"')
   })
 
+  it('reicht den geplanten Slot-Schluessel durch, statt ihn nachzurechnen', () => {
+    const source = readFileSync('src/pages/Dashboard.tsx', 'utf8')
+    const confirm = source.slice(
+      source.indexOf('const confirmCycleDose = async ('),
+      source.indexOf('const openConfirmSheet = ('),
+    )
+    expect(confirm.length).toBeGreaterThan(500)
+
+    // Genau einmal nachrechnen -- als Rueckfall fuer Einnahmen ohne
+    // geplanten Slot (Bei Bedarf). Jede weitere Stelle waere die alte
+    // Fassung: ein geplanter 02:30-Slot landet am Tag der Zeitumstellung auf
+    // 03:00, und aus dem Zeitpunkt zurueckgelesen hiesse er dann `@03:00` --
+    // passt auf keinen Plantag und kollidiert mit einem geplanten 03:00-Slot.
+    // Warum die beiden auseinanderlaufen, steht in `slotKey.test.ts`.
+    expect(confirm.match(/slotSchluesselFuerZeitpunkt\(/g)).toHaveLength(1)
+    expect(confirm).toContain('const slotSchluessel = geplanterSchluessel ?? slotSchluesselFuerZeitpunkt(')
+    // Die drei Stellen, die den Schluessel in die Datenbank tragen, nehmen
+    // den durchgereichten Wert.
+    expect(confirm.match(/(key|routine_slot_key): slotSchluessel,/g)).toHaveLength(3)
+
+    // Und die Liste gibt ihn mit: ohne das kaeme oben immer der Rueckfall an.
+    expect(source).toContain('slot.dose, slot.scheduledAt, slot.key)')
+  })
+
   it('kennt jeden Uebersetzungsschluessel der Seite in de und en', () => {
     // Ein `defaultValue` ist deutscher Text. Fehlt der Schluessel in en.json,
     // faellt i18next auf `fallbackLng: 'de'` zurueck -- die englische App

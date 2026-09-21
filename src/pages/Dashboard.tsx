@@ -337,7 +337,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const latestLogLoader = useRef<(() => Promise<void>) | null>(null)
 
   // Einnahme-Bestätigungs-Sheet
-  interface ConfirmSheet { cycle?: Cycle; log?: DoseLog; slotDose?: number | null; scheduledAt?: string }
+  interface ConfirmSheet { cycle?: Cycle; log?: DoseLog; slotDose?: number | null; scheduledAt?: string; slotKey?: string }
   const [confirmSheet, setConfirmSheet] = useState<ConfirmSheet | null>(null)
   const [routineGroupSheet, setRoutineGroupSheet] = useState<RoutineGroupModel | null>(null)
   const [confirmTime, setConfirmTime]   = useState('')
@@ -1134,17 +1134,26 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     toast.success(t('dose_reopen_success', { defaultValue: 'Einnahme wieder geöffnet' }))
   }
 
-  const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string, slotDose: number | null = null, occurrenceAt?: string, pendingLog?: DoseLog) => {
+  const confirmCycleDose = async (cycle: Cycle, taken: boolean, loggedAt?: string, slotDose: number | null = null, occurrenceAt?: string, pendingLog?: DoseLog, geplanterSchluessel?: string) => {
     if (!user) return
     if (FEATURES.planTimelineV2 && !timelineReady) throw new Error('Timeline is not current')
     let quantity = resolveDashboardCycleQuantity(cycle, selectedDay, escalations, slotDose)
     const actualLoggedAt = loggedAt ?? cycleLogTimestamp(cycle, selectedDay)
     const scheduledAt = occurrenceAt ?? actualLoggedAt
+    // Kommt die Einnahme aus einem geplanten Slot, traegt sie dessen
+    // Schluessel schon -- und der ist die geplante Minute. Ihn hier aus dem
+    // Zeitpunkt nachzurechnen faellt genau an der Zeitumstellung auseinander:
+    // ein geplanter 02:30-Slot landet am 29.03. auf 03:00, und aus dem
+    // Zeitpunkt zurueckgelesen hiesse er dann `@03:00`. Damit passte er auf
+    // keinen Plantag mehr -- und kollidierte mit einem tatsaechlich
+    // geplanten 03:00-Slot. Ohne Slot (Bei Bedarf) gibt es nichts zu erben,
+    // dort ist der Zeitpunkt der Platz.
+    const slotSchluessel = geplanterSchluessel ?? slotSchluesselFuerZeitpunkt(cycle.id, scheduledAt, timeZone)
     if (FEATURES.planTimelineV2 && !taken) {
       const timeline = timelines.find(item => item.cycle.id === cycle.id)
       const resolved = timeline && resolveCycleAt(timeline, new Date(actualLoggedAt), timeZone)
       const entry = buildConfirmationEntry(buildDashboardRoutineIntake({
-        key: slotSchluesselFuerZeitpunkt(cycle.id, scheduledAt, timeZone),
+        key: slotSchluessel,
         cycleId: cycle.id,
         planVersionId: pendingLog?.plan_version_id ?? resolved?.planVersion?.id ?? cycle.planVersionId ?? null,
         pendingLogId: pendingLog?.id ?? null,
@@ -1183,7 +1192,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       const [doseLogId] = await confirmIntakeGroup(
         dashboardDataClient as unknown as IntakeConfirmationClient,
         [{ ...buildConfirmationEntry(buildDashboardRoutineIntake({
-          key: slotSchluesselFuerZeitpunkt(cycle.id, scheduledAt, timeZone),
+          key: slotSchluessel,
           cycleId: cycle.id,
           planVersionId: resolved.planVersion.id,
           pendingLogId: pendingLog?.id ?? null,
@@ -1217,7 +1226,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       ...(FEATURES.planTimelineV2 ? {
         cycle_id: cycle.id,
         plan_version_id: cycle.planVersionId ?? null,
-        routine_slot_key: slotSchluesselFuerZeitpunkt(cycle.id, scheduledAt, timeZone),
+        routine_slot_key: slotSchluessel,
       } : {}),
     }).select('id').single()
     if (error) return toast.error(t('fehler_speichern'))
@@ -1238,7 +1247,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   }
 
   // ── Bestätigungs-Sheet ───────────────────────────────────────────────────
-  const openConfirmSheet = (cycle?: Cycle, log?: DoseLog, slotTime?: string, slotDose: number | null = null, scheduledAt?: string) => {
+  const openConfirmSheet = (cycle?: Cycle, log?: DoseLog, slotTime?: string, slotDose: number | null = null, scheduledAt?: string, slotKey?: string) => {
     let defaultTime: string
     if (cycle && slotTime) {
       defaultTime = slotTime
@@ -1254,7 +1263,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       defaultTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
     }
     setConfirmTime(defaultTime)
-    setConfirmSheet({ cycle, log, slotDose, scheduledAt })
+    setConfirmSheet({ cycle, log, slotDose, scheduledAt, slotKey })
   }
 
   const openInjectionTrackerForSlot = (slot: DueSlot) => {
@@ -1279,7 +1288,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         actualAt.setHours(hours, minutes, 0, 0)
         if (confirmSheet.cycle) {
           await confirmCycleDose(confirmSheet.cycle, true, actualAt.toISOString(),
-            confirmSheet.slotDose ?? null, confirmSheet.scheduledAt, confirmSheet.log)
+            confirmSheet.slotDose ?? null, confirmSheet.scheduledAt, confirmSheet.log, confirmSheet.slotKey)
         } else if (confirmSheet.log) {
           await confirmDose(confirmSheet.log, true, actualAt.toISOString())
         }
@@ -1627,7 +1636,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
             <button
               type="button"
               aria-label={`${c.stack_items?.display_name} ${String(t('eingenommen'))}`}
-              onClick={() => openConfirmSheet(c, slot.pendingLog ?? undefined, slot.time || undefined, slot.dose, slot.scheduledAt)}
+              onClick={() => openConfirmSheet(c, slot.pendingLog ?? undefined, slot.time || undefined, slot.dose, slot.scheduledAt, slot.key)}
               className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/[0.14] text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
             >
               <Check size={18} aria-hidden="true" />
@@ -1645,7 +1654,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
             <button
               type="button"
               tabIndex={offen ? undefined : -1}
-              onClick={() => openConfirmSheet(c, slot.pendingLog ?? undefined, slot.time || undefined, slot.dose, slot.scheduledAt)}
+              onClick={() => openConfirmSheet(c, slot.pendingLog ?? undefined, slot.time || undefined, slot.dose, slot.scheduledAt, slot.key)}
               className="flex min-h-14 w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.17] text-base font-extrabold text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
             >
               <Check size={19} aria-hidden="true" />
@@ -1668,10 +1677,10 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
               type="button"
               tabIndex={offen ? undefined : -1}
               onClick={() => FEATURES.planTimelineV2
-                ? confirmCycleDose(c, false, slot.pendingLog?.logged_at ?? slot.scheduledAt, slot.dose, slot.scheduledAt, slot.pendingLog ?? undefined)
+                ? confirmCycleDose(c, false, slot.pendingLog?.logged_at ?? slot.scheduledAt, slot.dose, slot.scheduledAt, slot.pendingLog ?? undefined, slot.key)
                 : slot.pendingLog
                   ? confirmDose(slot.pendingLog, false, undefined, resolveDashboardCycleQuantity(c, selectedDay, escalations, slot.dose))
-                  : confirmCycleDose(c, false, slot.scheduledAt, slot.dose)}
+                  : confirmCycleDose(c, false, slot.scheduledAt, slot.dose, slot.scheduledAt, undefined, slot.key)}
               className={zweitKnopf}
             >
               {t('uebersprungen')}
