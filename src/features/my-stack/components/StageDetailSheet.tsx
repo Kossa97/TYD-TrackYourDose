@@ -98,7 +98,7 @@ export function StageDetailSheet({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-slate-950"
+      className="fixed inset-0 z-50 flex touch-pan-y flex-col overflow-x-hidden overflow-y-auto overscroll-x-none bg-slate-950"
     >
       <div className="flex items-center justify-end p-3">
         <button
