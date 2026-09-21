@@ -326,6 +326,7 @@ export function TodayLogSheet({ logs, weightLogs, open, onClose, onSaved }: Prop
           <button
             type="button"
             onClick={onClose}
+            data-app-back-close
             aria-label="Schließen"
             style={{
               display: 'flex',

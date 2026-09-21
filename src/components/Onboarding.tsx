@@ -527,6 +527,7 @@ export function Onboarding() {
           <button
             type="button"
             onClick={prev}
+            data-app-back-close
             disabled={isFirst}
             className="ob-nav-btn"
             aria-label={t('back')}

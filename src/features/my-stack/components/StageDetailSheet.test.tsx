@@ -76,6 +76,16 @@ describe('StageDetailSheet', () => {
     expect(screen.getByRole('heading', { name: 'Semaglutid' })).not.toBeNull()
   })
 
+  it('erlaubt im Vollbild nur vertikales Scrollen', () => {
+    zeichne()
+
+    const dialog = screen.getByRole('dialog', { name: 'Semaglutid' })
+    expect(dialog.className).toContain('overflow-y-auto')
+    expect(dialog.className).toContain('overflow-x-hidden')
+    expect(dialog.className).toContain('overscroll-x-none')
+    expect(dialog.className).toContain('touch-pan-y')
+  })
+
   it('verzichtet auf den Flug, wenn weniger Bewegung gewünscht ist', () => {
     window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia
     zeichne()

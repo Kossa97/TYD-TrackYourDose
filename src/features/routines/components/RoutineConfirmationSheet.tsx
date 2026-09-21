@@ -115,6 +115,7 @@ export function RoutineConfirmationSheet({
       <section
         role="dialog"
         aria-modal="true"
+        data-app-back-dirty-on-interaction
         aria-labelledby={titleId}
         className="fixed inset-x-3 bottom-3 z-[60] max-h-[calc(100vh-1.5rem)] overflow-y-auto rounded-3xl border border-white/10 bg-[var(--surface)] p-4 shadow-[0_-16px_48px_rgba(0,0,0,0.55)]"
       >
@@ -136,6 +137,7 @@ export function RoutineConfirmationSheet({
           <button
             ref={closeButtonRef}
             type="button"
+            data-app-back-close
             aria-label={String(t('close', { defaultValue: 'Schließen' }))}
             onClick={onClose}
             className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-300 transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"

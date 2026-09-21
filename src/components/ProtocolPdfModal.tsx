@@ -407,7 +407,7 @@ export function ProtocolPdfModal({ userId, initialRange, uiLang, onClose, previe
           </div>
           <div className="flex items-center gap-1 shrink-0">
             {langToggle}
-            <button type="button" onClick={onClose} className="p-1.5 text-slate-400 hover:text-white">
+            <button type="button" onClick={onClose} data-app-back-close className="p-1.5 text-slate-400 hover:text-white">
               <X size={18} />
             </button>
           </div>

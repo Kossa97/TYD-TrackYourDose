@@ -1016,7 +1016,7 @@ export function StackItemWizard({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-black/80 p-0 sm:items-center sm:p-3" data-app-modal>
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-black/80 p-0 sm:items-center sm:p-3" data-app-modal data-app-back-dirty-on-interaction>
       <div
         ref={dialogRef}
         role="dialog"
@@ -1044,6 +1044,7 @@ export function StackItemWizard({
             <button
               type="button"
               onClick={() => { if (!saving) onClose() }}
+              data-app-back-close
               disabled={saving}
               aria-label={String(t('close', { defaultValue: 'Schließen' }))}
               className="grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-xl text-slate-400 transition-colors duration-200 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"

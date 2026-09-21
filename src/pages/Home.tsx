@@ -1520,7 +1520,7 @@ function HomeIntakeConfirmSheet({
         onClick={onClose}
         className="fixed inset-0 z-50 bg-black/70"
       />
-      <div className="fixed inset-x-3 bottom-3 z-[60] rounded-3xl border border-white/10 bg-[var(--surface)] p-4 shadow-[0_-16px_48px_rgba(0,0,0,0.55)]">
+      <div data-app-modal role="dialog" aria-modal="true" className="fixed inset-x-3 bottom-3 z-[60] rounded-3xl border border-white/10 bg-[var(--surface)] p-4 shadow-[0_-16px_48px_rgba(0,0,0,0.55)]">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[0.62rem] font-black uppercase tracking-[0.13em] text-cyan-300">Anstehende Einnahme</p>
@@ -1532,6 +1532,7 @@ function HomeIntakeConfirmSheet({
           <button
             type="button"
             onClick={onClose}
+            data-app-back-close
             className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-400"
           >
             <XCircle size={17} aria-hidden="true" />
@@ -1582,7 +1583,7 @@ function HomeIntakeTimeSheet({
         onClick={onClose}
         className="fixed inset-0 z-50 bg-black/70"
       />
-      <div className="fixed inset-x-3 bottom-3 z-[60] rounded-3xl border border-white/10 bg-[var(--surface)] p-4 shadow-[0_-16px_48px_rgba(0,0,0,0.55)]">
+      <div data-app-modal data-app-back-dirty-on-interaction role="dialog" aria-modal="true" className="fixed inset-x-3 bottom-3 z-[60] rounded-3xl border border-white/10 bg-[var(--surface)] p-4 shadow-[0_-16px_48px_rgba(0,0,0,0.55)]">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[0.62rem] font-black uppercase tracking-[0.13em] text-emerald-300">Einnahme bestätigen</p>
@@ -1621,7 +1622,7 @@ function HomeIntakeTimeSheet({
           style={{ background: 'var(--surface-input)', colorScheme: 'dark' }}
         />
         <div className="grid grid-cols-2 gap-2">
-          <button type="button" onClick={onBack} className="min-h-11 rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-sm font-black text-slate-300">
+          <button type="button" onClick={onBack} data-app-back-close className="min-h-11 rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-sm font-black text-slate-300">
             Zurück
           </button>
           <button type="button" onClick={onSave} className="flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-emerald-500/25 bg-emerald-500/15 px-3 text-sm font-black text-emerald-300">

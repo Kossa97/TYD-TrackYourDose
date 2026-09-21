@@ -16,15 +16,23 @@ export function InjectionIntroSheet({
   return (
     <>
       <div className="fixed inset-0 z-50 bg-black/60" onClick={onClose} />
-      <div className="fixed bottom-0 left-0 right-0 z-[60] rounded-t-3xl border border-white/10 p-5 pb-8" style={{ background: 'var(--surface)' }}>
+      <div
+        data-app-modal
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="injection-intro-title"
+        className="fixed bottom-0 left-0 right-0 z-[60] rounded-t-3xl border border-white/10 p-5 pb-8"
+        style={{ background: 'var(--surface)' }}
+      >
         <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Hand size={17} color="var(--accent)" aria-hidden="true" />
-            <h2 className="text-base font-black text-white">{t('injection_intro_title', { defaultValue: 'Markierung setzen' })}</h2>
+            <h2 id="injection-intro-title" className="text-base font-black text-white">{t('injection_intro_title', { defaultValue: 'Markierung setzen' })}</h2>
           </div>
           <button
             type="button"
+            data-app-back-close
             aria-label={String(t('injection_close_hint', { defaultValue: 'Hinweis schließen' }))}
             onClick={onClose}
             className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 text-slate-400"

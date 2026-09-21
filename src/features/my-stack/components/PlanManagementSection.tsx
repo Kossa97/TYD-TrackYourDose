@@ -619,6 +619,7 @@ export function PlanManagementSection({
                 type="button"
                 disabled={pending}
                 onClick={closeDialog}
+                data-app-back-close
                 aria-label={String(t('close', { defaultValue: 'Schließen' }))}
                 className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50"
               >

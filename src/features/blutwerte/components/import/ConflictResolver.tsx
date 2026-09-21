@@ -20,7 +20,7 @@ export function ConflictResolver({ conflicts, onResolve, onCancel }: Props) {
     onResolve(Object.fromEntries(conflicts.map(c => [c.key, choices[c.key] ?? false])))
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-[60] flex items-end justify-center" onClick={onCancel}>
+    <div className="fixed inset-0 bg-black/70 z-[60] flex items-end justify-center" data-app-modal data-app-back-close data-app-back-dirty-on-interaction onClick={onCancel}>
       <div
         className="w-full max-w-lg p-6 pb-8 space-y-4 overflow-y-auto max-h-[90vh] rounded-t-2xl"
         style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}

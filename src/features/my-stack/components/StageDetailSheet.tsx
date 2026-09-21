@@ -98,12 +98,13 @@ export function StageDetailSheet({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-slate-950"
+      className="fixed inset-0 z-50 flex touch-pan-y flex-col overflow-x-hidden overflow-y-auto overscroll-x-none bg-slate-950"
     >
       <div className="flex items-center justify-end p-3">
         <button
           type="button"
           onClick={onClose}
+          data-app-back-close
           aria-label="Schließen"
           className="grid min-h-11 min-w-11 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-slate-300 transition-colors hover:text-white"
         >

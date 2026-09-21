@@ -93,6 +93,10 @@ export function InjectionTrackerTabs({
 
       {activeSheet === 'open' && (
         <section
+          data-app-modal
+          data-app-back-dirty-on-interaction
+          role="dialog"
+          aria-modal="true"
           className="fixed inset-0 z-[60] flex min-h-dvh flex-col overflow-hidden overscroll-y-contain"
           style={{
             background: 'linear-gradient(180deg, rgba(7,11,24,0.96), var(--surface))',
@@ -107,6 +111,7 @@ export function InjectionTrackerTabs({
                 type="button"
                 aria-label={String(t('close', { defaultValue: 'Schließen' }))}
                 onClick={closeSheet}
+                data-app-back-close
                 className="grid min-h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-300 transition-colors hover:text-white"
               >
                 <X size={17} aria-hidden="true" />
@@ -158,6 +163,9 @@ export function InjectionTrackerTabs({
 
       {activeSheet === 'history' && (
         <section
+          data-app-modal
+          role="dialog"
+          aria-modal="true"
           className="absolute bottom-0 left-0 right-0 z-40 max-h-[48dvh] overflow-hidden border-t border-white/10 px-4 pt-3"
           style={{
             background: 'linear-gradient(180deg, rgba(7, 11, 24, 0.92), var(--surface))',
@@ -172,6 +180,7 @@ export function InjectionTrackerTabs({
               type="button"
               aria-label={String(t('close', { defaultValue: 'Schließen' }))}
               onClick={closeSheet}
+              data-app-back-close
               className="grid min-h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-300 transition-colors hover:text-white"
             >
               <X size={17} aria-hidden="true" />

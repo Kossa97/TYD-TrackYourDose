@@ -571,6 +571,7 @@ describe('MyStackPage non-vial visibility', () => {
 
     fireEvent.click(cycleButton)
 
+    expect(screen.queryByRole('dialog', { name: 'Existing Premium Vial' })).toBeNull()
     expect(await screen.findByText('zyklen_verwalten')).not.toBeNull()
     expect(screen.getByText('100 mg')).not.toBeNull()
     expect(screen.getByText('daily')).not.toBeNull()

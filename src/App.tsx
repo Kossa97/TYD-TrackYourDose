@@ -12,6 +12,7 @@ import { PeptipediaAppPage } from './features/peptipedia/PeptipediaAppPage'
 import { PdfPreview } from './pages/__PdfPreview'
 import { BefundPreview } from './pages/__BefundPreview'
 import { PdfThemesPreview } from './pages/__PdfThemesPreview'
+import { AppBackNavigation } from './components/navigation/AppBackNavigation'
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })))
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })))
@@ -93,8 +94,8 @@ function PersonalApp() {
 }
 
 export default function App() {
-  return <BrowserRouter><Routes>
-    {publicPeptipediaRoutes()}
-    <Route path="*" element={<PersonalApp />} />
-  </Routes></BrowserRouter>
+  return <BrowserRouter><AppBackNavigation><Routes>
+      {publicPeptipediaRoutes()}
+      <Route path="*" element={<PersonalApp />} />
+    </Routes></AppBackNavigation></BrowserRouter>
 }

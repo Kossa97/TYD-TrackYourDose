@@ -21,6 +21,10 @@ export function VerlaufSetupSheet({ open, onClose, children }: Props) {
 
   return createPortal(
     <div
+      data-app-modal
+      role="dialog"
+      aria-modal="true"
+      aria-label="Verlauf einstellen"
       style={{
         position: 'fixed',
         inset: 0,
@@ -51,6 +55,7 @@ export function VerlaufSetupSheet({ open, onClose, children }: Props) {
         <button
           type="button"
           onClick={onClose}
+          data-app-back-close
           aria-label="Schließen"
           style={{
             display: 'flex',

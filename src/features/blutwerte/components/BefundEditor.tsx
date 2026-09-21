@@ -245,7 +245,7 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center" data-app-modal onClick={onClose}>
       <div
         className="w-full max-w-lg p-6 pb-8 space-y-4 overflow-y-auto max-h-[90vh] rounded-t-2xl"
         style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
@@ -303,7 +303,7 @@ export function BefundEditor({ report, entries, onClose, onSaved }: Props) {
         </div>
 
         <div className="flex gap-3 pt-2">
-          <button className="btn-secondary flex-1" onClick={onClose} disabled={saving}>Abbrechen</button>
+          <button className="btn-secondary flex-1" data-app-back-close onClick={onClose} disabled={saving}>Abbrechen</button>
           <button className="btn-primary flex-1" onClick={handleSave} disabled={saving || rescanning}>
             {saving ? 'Speichern...' : 'Speichern'}
           </button>
