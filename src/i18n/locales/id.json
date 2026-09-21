@@ -1241,14 +1241,9 @@
   "calendar_open_month": "Buka tampilan bulan",
   "calendar_day_balance": "{{genommen}} dari {{geplant}} dikonfirmasi",
   "due_open_count": "{{n}} belum",
-  "due_intakes_count": "{{n}} asupan",
-  "due_later_today": "Nanti di hari itu",
-  "due_step_through": "Telusuri satu per satu",
   "due_confirm_with_injection": "Lacak dengan suntikan",
-  "due_still_open": "Masih belum",
   "all_intakes_logged": "Semua sudah tercatat untuk hari ini.",
   "dose_reopen": "Buka lagi",
   "dose_reopen_success": "Asupan dibuka lagi",
-  "due_dose_override": "Perubahan dosis sekali",
-  "due_back_to_overview": "Kembali ke ringkasan"
+  "due_dose_override": "Perubahan dosis sekali"
 }

@@ -1241,14 +1241,9 @@
   "calendar_open_month": "Abrir vista mensual",
   "calendar_day_balance": "{{genommen}} de {{geplant}} confirmadas",
   "due_open_count": "{{n}} pendientes",
-  "due_intakes_count": "{{n}} tomas",
-  "due_later_today": "Más tarde ese día",
-  "due_step_through": "Revisar una por una",
   "due_confirm_with_injection": "Registrar con inyección",
-  "due_still_open": "Aún pendientes",
   "all_intakes_logged": "Todo está registrado para este día.",
   "dose_reopen": "Volver a abrir",
   "dose_reopen_success": "Toma reabierta",
-  "due_dose_override": "Cambio de dosis puntual",
-  "due_back_to_overview": "Volver al resumen"
+  "due_dose_override": "Cambio de dosis puntual"
 }

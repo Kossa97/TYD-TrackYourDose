@@ -1240,14 +1240,9 @@
   "calendar_open_month": "打开月视图",
   "calendar_day_balance": "{{geplant}} 次中已确认 {{genommen}} 次",
   "due_open_count": "待确认 {{n}} 次",
-  "due_intakes_count": "{{n}} 次服用",
-  "due_later_today": "当天稍后",
-  "due_step_through": "逐条确认",
   "due_confirm_with_injection": "以注射记录",
-  "due_still_open": "仍待确认",
   "all_intakes_logged": "这一天的记录已完整。",
   "dose_reopen": "重新打开",
   "dose_reopen_success": "已重新打开该次服用",
-  "due_dose_override": "仅此次调整剂量",
-  "due_back_to_overview": "返回概览"
+  "due_dose_override": "仅此次调整剂量"
 }

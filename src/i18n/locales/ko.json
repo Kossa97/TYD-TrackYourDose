@@ -1240,14 +1240,9 @@
   "calendar_open_month": "월별 보기 열기",
   "calendar_day_balance": "{{geplant}}건 중 {{genommen}}건 확인",
   "due_open_count": "{{n}}건 남음",
-  "due_intakes_count": "{{n}}회 복용",
-  "due_later_today": "그날 늦게",
-  "due_step_through": "하나씩 확인",
   "due_confirm_with_injection": "주사로 기록",
-  "due_still_open": "아직 남음",
   "all_intakes_logged": "이 날은 모두 기록되었습니다.",
   "dose_reopen": "다시 열기",
   "dose_reopen_success": "복용 기록을 다시 열었습니다",
-  "due_dose_override": "이번만 용량 변경",
-  "due_back_to_overview": "목록으로 돌아가기"
+  "due_dose_override": "이번만 용량 변경"
 }

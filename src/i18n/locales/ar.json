@@ -1245,14 +1245,9 @@
   "calendar_open_month": "فتح نظرة الشهر",
   "calendar_day_balance": "تم تأكيد {{genommen}} من {{geplant}}",
   "due_open_count": "{{n}} متبقية",
-  "due_intakes_count": "{{n}} جرعات",
-  "due_later_today": "لاحقًا في ذلك اليوم",
-  "due_step_through": "المراجعة واحدة تلو الأخرى",
   "due_confirm_with_injection": "التتبع مع الحقن",
-  "due_still_open": "لا تزال متبقية",
   "all_intakes_logged": "تم تسجيل كل شيء لهذا اليوم.",
   "dose_reopen": "إعادة الفتح",
   "dose_reopen_success": "تم إعادة فتح الجرعة",
-  "due_dose_override": "تغيير الجرعة لمرة واحدة",
-  "due_back_to_overview": "العودة إلى النظرة العامة"
+  "due_dose_override": "تغيير الجرعة لمرة واحدة"
 }

@@ -1241,14 +1241,9 @@
   "calendar_open_month": "Apri la vista mensile",
   "calendar_day_balance": "{{genommen}} su {{geplant}} confermate",
   "due_open_count": "{{n}} in sospeso",
-  "due_intakes_count": "{{n}} assunzioni",
-  "due_later_today": "Più tardi quel giorno",
-  "due_step_through": "Scorrere una per una",
   "due_confirm_with_injection": "Traccia con iniezione",
-  "due_still_open": "Ancora in sospeso",
   "all_intakes_logged": "Tutto è registrato per questo giorno.",
   "dose_reopen": "Riapri",
   "dose_reopen_success": "Assunzione riaperta",
-  "due_dose_override": "Modifica una tantum della dose",
-  "due_back_to_overview": "Torna alla panoramica"
+  "due_dose_override": "Modifica una tantum della dose"
 }

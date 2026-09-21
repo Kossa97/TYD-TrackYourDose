@@ -1241,14 +1241,9 @@
   "calendar_open_month": "मासिक दृश्य खोलें",
   "calendar_day_balance": "{{geplant}} में से {{genommen}} की पुष्टि हुई",
   "due_open_count": "{{n}} बाकी",
-  "due_intakes_count": "{{n}} खुराक",
-  "due_later_today": "उस दिन बाद में",
-  "due_step_through": "एक-एक करके देखें",
   "due_confirm_with_injection": "इंजेक्शन के साथ ट्रैक करें",
-  "due_still_open": "अब भी बाकी",
   "all_intakes_logged": "इस दिन के लिए सब कुछ दर्ज है।",
   "dose_reopen": "फिर से खोलें",
   "dose_reopen_success": "खुराक फिर से खोली गई",
-  "due_dose_override": "एक बार की खुराक बदलें",
-  "due_back_to_overview": "अवलोकन पर वापस"
+  "due_dose_override": "एक बार की खुराक बदलें"
 }

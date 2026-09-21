@@ -370,8 +370,10 @@ describe('Dashboard normalized timeline path', () => {
     fixtures.cycles = [selected, rejected]
     renderDashboard(client)
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'eingenommen' })).toHaveLength(1))
-    expect(screen.getByText('20 mg')).not.toBeNull()
-    expect(screen.queryByText('10 mg')).toBeNull()
+    // Menge und Methode stehen jetzt in EINER Zeichenkette, damit die Zeile
+    // sauber abschneidet — deshalb Teilstring statt exaktem Text.
+    expect(screen.getByText(/20 mg/)).not.toBeNull()
+    expect(screen.queryByText(/10 mg/)).toBeNull()
   })
 
   function startFixFixture(frequency = 'Täglich', instant = '2026-09-18T14:00:00Z') {
@@ -611,6 +613,22 @@ describe('Dashboard normalized timeline path', () => {
     await waitFor(() => expect(tagesBalken('2026-09-16')).toBe('100%'))
   })
 
+  /** Zwei morgens, eine abends — der Fall, in dem eine leergeräumte
+   *  Tageszeit die ganze Liste zuklappen ließ. */
+  function morgensUndAbendsFixture() {
+    const fixtures = zweiMorgensFixture()
+    const basis = normalizedCycle()
+    fixtures.cycles.push({
+      ...basis, id: 'zyklus-abend', stack_item_id: 'stack-3', name: 'Magnesium',
+      intake_time: 'abends', intake_time_custom: '20:00',
+      versions: basis.versions.map(v => ({ ...v, id: 'version-abend', cycle_id: 'zyklus-abend',
+        intake_time: 'abends', intake_time_custom: '20:00' })),
+    })
+    fixtures.stack_items.push({ id: 'stack-3', display_name: 'Magnesium', default_method: 'Oral',
+      dosage_form: 'capsule', tracking_level: 'complete' })
+    return fixtures
+  }
+
   /** Drei Einnahmen morgens. Mit zweien maskiert der `slots.length === 1`-
    *  Rückfall jeden Fehler beim Weiterrücken. */
   function dreiMorgensFixture() {
@@ -641,117 +659,165 @@ describe('Dashboard normalized timeline path', () => {
     return fixtures
   }
 
-  it('führt beim Einzeln-Durchgehen durch alle, nicht nur durch eine', async () => {
-    // Nach der ersten Bestätigung zeigte der Merker auf einen Slot, den es
-    // nicht mehr gibt — die Ansicht sprang zur Gruppenkarte zurück, und man
-    // musste „Einzeln durchgehen" für jede weitere erneut drücken.
-    // Drei, nicht zwei: bei zweien deckt der Rückfall auf „eine offene
-    // Einnahme" den Fehler zu, und der Test wäre leer.
+  it('rückt nach einer Entscheidung auf die nächste offene Einnahme weiter', async () => {
+    // Drei, nicht zwei: bei zweien bliebe nur eine übrig und die Voreinstellung
+    // deckte jeden Fehler beim Weiterrücken zu.
     const fixtures = dreiMorgensFixture()
     const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
     renderDashboard(client)
-    fireEvent.click(await screen.findByRole('button', { name: 'Einzeln durchgehen' }))
-    const ersterName = document.querySelector('[data-due-hero] h3')?.textContent
-    expect(ersterName).toBeTruthy()
+    await waitFor(() => expect(document.querySelectorAll('[data-due-row]').length).toBe(3))
+    const offen = () => document.querySelector('[data-due-open]')?.getAttribute('data-due-row')
 
-    // Die erste ist entschieden und fällt aus den offenen Slots. Es bleiben
-    // zwei — die Gruppenkarte wäre wieder möglich, ist aber nicht gemeint.
-    fixtures.dose_logs = [{ ...pendingLog(), taken: false,
-      routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z' }]
-    fireEvent.click(within(document.querySelector('[data-due-hero]') as HTMLElement)
-      .getByRole('button', { name: 'uebersprungen' }))
+    // Eine andere antippen, damit die Voreinstellung nicht mehr greift.
+    const zweite = document.querySelectorAll('[data-due-row]')[1] as HTMLElement
+    fireEvent.click(zweite.querySelector('[data-due-item]') as HTMLElement)
+    const angetippt = offen()
+    expect(angetippt).toBe(zweite.getAttribute('data-due-row'))
 
-    await waitFor(() => expect(document.querySelector('[data-due-hero] h3')?.textContent)
-      .not.toBe(ersterName))
-    // Weiter in derselben Tageszeit, nicht zurück zur Gruppenkarte.
-    expect(screen.queryByRole('button', { name: 'Einzeln durchgehen' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Alle als eingenommen markieren' })).toBeNull()
+    // Sie wird entschieden und fällt aus den offenen Slots.
+    fixtures.dose_logs = [{ ...pendingLog(), taken: false, stack_item_id: 'stack-2',
+      cycle_id: 'zyklus-zwei', plan_version_id: 'version-zwei',
+      routine_slot_key: 'zyklus-zwei@2026-09-18T06:00:00.000Z' }]
+    fireEvent.click(within(zweite).getByRole('button', { name: 'uebersprungen' }))
+
+    // Es bleibt eine aufgeklappt, und zwar eine andere — nicht keine.
+    await waitFor(() => expect(offen()).not.toBe(angetippt))
+    expect(offen()).toBeTruthy()
   })
 
-  it('lässt aus der großen Ansicht wieder zur Übersicht zurück', async () => {
-    // Ohne Rückweg wären „Alle als eingenommen markieren" und „Einzeln
-    // durchgehen" nach einem Tipp für den Rest des Tages unerreichbar.
+  it('geht zur nächsten Tageszeit über, wenn die angetippte leer ist', async () => {
+    // Der Merker zeigte auf eine Tageszeit, in der nichts mehr offen war —
+    // und die ganze Liste klappte zu, obwohl abends noch etwas anstand.
+    const fixtures = morgensUndAbendsFixture()
+    const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
+    renderDashboard(client)
+    await waitFor(() => expect(document.querySelectorAll('[data-due-row]').length).toBe(3))
+
+    // Eine morgendliche antippen, dann BEIDE morgendlichen entscheiden.
+    const morgens = [...document.querySelectorAll('[data-due-row]')].slice(0, 2)
+    fireEvent.click(morgens[1].querySelector('[data-due-item]') as HTMLElement)
+    fixtures.dose_logs = [
+      { ...pendingLog(), taken: false, routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z' },
+      { ...pendingLog(), id: 'pending-zwei', stack_item_id: 'stack-2', taken: false,
+        cycle_id: 'zyklus-zwei', plan_version_id: 'version-zwei',
+        routine_slot_key: 'zyklus-zwei@2026-09-18T06:00:00.000Z' },
+    ]
+    fireEvent.click(within(morgens[1] as HTMLElement).getByRole('button', { name: 'uebersprungen' }))
+
+    // Es bleibt genau eine übrig — und die steht offen da, nicht zugeklappt.
+    await waitFor(() => expect(document.querySelectorAll('[data-due-row]').length).toBe(1))
+    expect(document.querySelector('[data-due-open]')).toBeTruthy()
+  })
+
+  it('nennt in der aufgeklappten Einnahme ihre eigene Uhrzeit', async () => {
+    // Die Kopfzeile der Tageszeit kann das nicht: „morgens" fasst alles vor
+    // zwölf zusammen. Stünde dort die Zeit der ersten, zeigte eine 11:00er
+    // Einnahme dem Nutzer 06:00 an — direkt über dem Bestätigen-Knopf.
+    const client = createDashboardClient(startFixFixture(), undefined, { filterLogs: true })
+    renderDashboard(client)
+    await waitFor(() => expect(document.querySelector('[data-due-open]')).toBeTruthy())
+
+    const offen = document.querySelector('[data-due-open]') as HTMLElement
+    expect(within(offen).getByText('08:00')).toBeTruthy()
+  })
+
+  it('klappt eine aufgeklappte Einnahme auf erneutes Antippen wieder zu', async () => {
     const client = createDashboardClient(zweiMorgensFixture(), undefined, { filterLogs: true })
     renderDashboard(client)
-    const zeile = await screen.findByRole('button', { name: 'Einzeln durchgehen' })
-    fireEvent.click(zeile)
-    expect(screen.queryByRole('button', { name: 'Alle als eingenommen markieren' })).toBeNull()
+    await waitFor(() => expect(document.querySelectorAll('[data-due-row]').length).toBe(2))
 
-    fireEvent.click(screen.getByRole('button', { name: 'Zurück zur Übersicht' }))
-    expect(await screen.findByRole('button', { name: 'Alle als eingenommen markieren' })).toBeTruthy()
+    const erste = document.querySelector('[data-due-row]') as HTMLElement
+    expect(erste.getAttribute('data-due-open')).toBe('true')
+    fireEvent.click(erste.querySelector('[data-due-item]') as HTMLElement)
+
+    await waitFor(() => expect(document.querySelector('[data-due-open]')).toBeNull())
   })
 
-  it('setzt den Fokus auf die große Ansicht, statt ihn fallen zu lassen', async () => {
-    // Der angetippte Knopf verschwindet mit dem Antippen. Ohne Nachführung
-    // landet der Fokus auf `body`: die nächste Tab-Taste fängt oben an.
+  it('behält den Fokus auf der angetippten Einnahme', async () => {
+    // Vorher wanderte die Zeile beim Antippen nach oben, der Knopf verschwand
+    // und der Fokus fiel auf `body`. Jetzt klappt sie an Ort und Stelle auf:
+    // derselbe Knopf bleibt stehen und behält den Fokus.
     const client = createDashboardClient(zweiMorgensFixture(), undefined, { filterLogs: true })
     renderDashboard(client)
-    fireEvent.click(await screen.findByRole('button', { name: 'Einzeln durchgehen' }))
-    const zeile = document.querySelector('[data-due-row] [data-due-item]') as HTMLElement
-    fireEvent.click(zeile)
+    await waitFor(() => expect(document.querySelectorAll('[data-due-row]').length).toBe(2))
 
-    await waitFor(() => expect(document.activeElement)
-      .toBe(document.querySelector('[data-due-hero]')))
+    const zweite = document.querySelectorAll('[data-due-row]')[1] as HTMLElement
+    const knopf = zweite.querySelector('[data-due-item]') as HTMLElement
+    knopf.focus()
+    fireEvent.click(knopf)
+
+    await waitFor(() => expect(zweite.getAttribute('data-due-open')).toBe('true'))
+    expect(document.activeElement).toBe(knopf)
   })
 
-  it('holt jede angetippte Einnahme groß heraus, und immer nur eine', async () => {
-    // Die große Ansicht steht voreingestellt auf der ersten offenen Einnahme.
-    // Jede andere bekommt sie auf Antippen — und die bisherige wird zur Zeile,
-    // damit nie zwei große Ansichten übereinander stehen.
+  it('hält immer höchstens eine Einnahme aufgeklappt', async () => {
     const client = createDashboardClient(zweiMorgensFixture(), undefined, { filterLogs: true })
     renderDashboard(client)
-    fireEvent.click(await screen.findByRole('button', { name: 'Einzeln durchgehen' }))
+    await waitFor(() => expect(document.querySelectorAll('[data-due-row]').length).toBe(2))
 
-    const held = () => document.querySelector('[data-due-hero] h3')?.textContent
-    const ersterName = held()
-    expect(ersterName).toBeTruthy()
-    expect(document.querySelectorAll('[data-due-row]').length).toBe(1)
+    // Voreingestellt ist die erste offene aufgeklappt — ohne Zutun.
+    const zeilen = () => [...document.querySelectorAll('[data-due-row]')]
+    expect(zeilen()[0].getAttribute('data-due-open')).toBe('true')
 
-    // Die Zeile darunter antippen.
-    const zeile = document.querySelector('[data-due-row] [data-due-item]') as HTMLElement
-    fireEvent.click(zeile)
+    fireEvent.click(zeilen()[1].querySelector('[data-due-item]') as HTMLElement)
+    await waitFor(() => expect(zeilen()[1].getAttribute('data-due-open')).toBe('true'))
+    expect(zeilen()[0].getAttribute('data-due-open')).toBeNull()
+    expect(document.querySelectorAll('[data-due-open]').length).toBe(1)
 
-    await waitFor(() => expect(held()).not.toBe(ersterName))
-    expect(document.querySelectorAll('[data-due-hero]').length).toBe(1)
-    expect(document.querySelectorAll('[data-due-row]').length).toBe(1)
+    // Und die zugeklappte ist WIRKLICH zu, nicht nur anders beschriftet: ihre
+    // Knöpfe dürfen weder sichtbar noch für Screenreader oder Tab erreichbar
+    // sein. Das Attribut allein zu prüfen ließe einen Fehler in der Höhe durch.
+    const feld = (zeile: Element) => zeile.querySelector('[data-due-panel]') as HTMLElement
+    expect(feld(zeilen()[0]).style.maxHeight).toBe('0px')
+    expect(feld(zeilen()[0]).getAttribute('aria-hidden')).toBe('true')
+    expect(feld(zeilen()[1]).getAttribute('aria-hidden')).toBe('false')
+    // Für Screenreader existiert der Knopf der zugeklappten Zeile nicht …
+    expect(within(zeilen()[0] as HTMLElement)
+      .queryByRole('button', { name: 'uebersprungen' })).toBeNull()
+    // … und die Tab-Taste läuft nicht hinein.
+    expect([...feld(zeilen()[0]).querySelectorAll('button')]
+      .every(knopf => knopf.tabIndex === -1)).toBe(true)
+    // In der aufgeklappten ist er da.
+    expect(within(zeilen()[1] as HTMLElement)
+      .getByRole('button', { name: 'uebersprungen' })).toBeTruthy()
   })
 
-  it('zeigt in der großen Ansicht alle vier Wege mit einer Einnahme umzugehen', async () => {
+  it('zeigt in der aufgeklappten Einnahme alle vier Wege damit umzugehen', async () => {
     const fixtures = startFixFixture()
     fixtures.cycles[0].versions[0].method = 'Subkutan'
     const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
     renderDashboard(client)
-    await screen.findByRole('button', { name: 'eingenommen' })
+    await waitFor(() => expect(document.querySelector('[data-due-open]')).toBeTruthy())
 
-    const held = document.querySelector('[data-due-hero]') as HTMLElement
-    expect(within(held).getByRole('button', { name: 'eingenommen' })).toBeTruthy()
-    expect(within(held).getByRole('button', { name: 'Einmalige Dosisänderung' })).toBeTruthy()
-    expect(within(held).getByRole('button', { name: 'uebersprungen' })).toBeTruthy()
-    expect(within(held).getByRole('button', { name: 'Mit Injektion tracken' })).toBeTruthy()
+    const offen = document.querySelector('[data-due-open]') as HTMLElement
+    expect(within(offen).getByRole('button', { name: 'eingenommen' })).toBeTruthy()
+    expect(within(offen).getByRole('button', { name: 'Einmalige Dosisänderung' })).toBeTruthy()
+    expect(within(offen).getByRole('button', { name: 'uebersprungen' })).toBeTruthy()
+    expect(within(offen).getByRole('button', { name: 'Mit Injektion tracken' })).toBeTruthy()
   })
 
-  it('legt beim Einzeln-Durchgehen nur diese eine Einnahme zur Bestätigung vor', async () => {
-    // Der Knopf öffnete die GANZE Tageszeit, jeden Eintrag vorausgewählt.
-    // Beim Einzeln-Durchgehen hätte er damit Einnahmen bestätigt, die der
-    // Nutzer nie zu Gesicht bekommen hat.
+  it('legt aus einer aufgeklappten Einnahme nur diese eine zur Bestätigung vor', async () => {
+    // Der Knopf öffnete die GANZE Tageszeit, jeden Eintrag vorausgewählt —
+    // er hätte damit Einnahmen bestätigt, die niemand gesehen hat.
     const client = createDashboardClient(zweiMorgensFixture(), undefined, { filterLogs: true })
     renderDashboard(client)
-    fireEvent.click(await screen.findByRole('button', { name: 'Einzeln durchgehen' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Einmalige Dosisänderung' }))
+    await waitFor(() => expect(document.querySelector('[data-due-open]')).toBeTruthy())
+
+    const offen = document.querySelector('[data-due-open]') as HTMLElement
+    fireEvent.click(within(offen).getByRole('button', { name: 'Einmalige Dosisänderung' }))
 
     const dialog = await screen.findByRole('dialog')
-    const namen = within(dialog).queryAllByText(/Vitamin D3|Magnesium/)
-    expect(namen).toHaveLength(1)
+    expect(within(dialog).queryAllByText(/Vitamin D3|Magnesium/)).toHaveLength(1)
   })
 
-  it('verliert die übrigen Einnahmen der Gruppe beim Einzeln-Durchgehen nicht', async () => {
-    // `spaetereGruppen` lässt die Heldengruppe aus. Ohne eigene Liste stünden
-    // die restlichen Einnahmen derselben Tageszeit nirgends mehr.
-    const client = createDashboardClient(zweiMorgensFixture(), undefined, { filterLogs: true })
+  it('zeigt jede offene Einnahme, auch die derselben Tageszeit', async () => {
+    // Im alten Modell stand eine Gruppe entweder als Karte oder aufgeklappt
+    // da, und die übrigen ihrer Tageszeit konnten dabei verloren gehen. Jetzt
+    // ist jede eine eigene Zeile — sichtbar, egal welche aufgeklappt ist.
+    const client = createDashboardClient(dreiMorgensFixture(), undefined, { filterLogs: true })
     renderDashboard(client)
-    fireEvent.click(await screen.findByRole('button', { name: 'Einzeln durchgehen' }))
-
-    await waitFor(() => expect(document.querySelectorAll('[data-due-row]').length).toBe(1))
+    await waitFor(() => expect(document.querySelectorAll('[data-due-row]').length).toBe(3))
+    expect(document.querySelectorAll('[data-due-open]').length).toBe(1)
   })
 
   it('zählt eine ausgelassene Einnahme nicht als bestätigt', async () => {
@@ -1301,7 +1367,7 @@ describe('Dashboard intake confirmation actions', () => {
     })
     renderDashboard(client)
 
-    expect(await screen.findByText('Menge nicht getrackt')).toBeTruthy()
+    expect(await screen.findByText(/Menge nicht getrackt/)).toBeTruthy()
     expect(screen.queryByText('100 mcg')).toBeNull()
     expect(screen.getByRole('button', { name: 'uebersprungen' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'eingenommen' }))
@@ -1687,9 +1753,13 @@ describe('Dashboard intake confirmation actions', () => {
     // Tap, und nach einem Ladevorgang stand der aktive gern auf einer leeren
     // Tageszeit.
     expect(source).toContain("PERIOD_ORDER: PeriodKey[] = ['morgens', 'mittags', 'abends']")
-    expect(source).toContain('const heldGruppe = offeneGruppen[0] ?? null')
     expect(source).not.toContain('role="tablist"')
-    expect(source).toContain('due_later_today')
+    // Eine Liste, genau eine aufgeklappt — und das Aufklappen passiert dort,
+    // wo die Einnahme steht, nicht auf einer Bühne oben.
+    expect(source).toContain("const [aufgeklappt, setAufgeklappt] = useState<Aufgeklappt>({ art: 'voreingestellt' })")
+    expect(source).toContain('slot.key === offenerSlot')
+    expect(source).toContain('transition-[max-height,opacity]')
+    expect(source).not.toContain('data-due-hero')
     expect(source).toContain('completedExpanded')
     expect(source).toContain('renderConfirmedLog')
   })

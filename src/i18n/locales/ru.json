@@ -1243,14 +1243,9 @@
   "calendar_open_month": "Открыть обзор месяца",
   "calendar_day_balance": "подтверждено {{genommen}} из {{geplant}}",
   "due_open_count": "{{n}} не отмечено",
-  "due_intakes_count": "{{n}} приёма",
-  "due_later_today": "Позже в этот день",
-  "due_step_through": "Пройти по одной",
   "due_confirm_with_injection": "Отметить с инъекцией",
-  "due_still_open": "Ещё не отмечено",
   "all_intakes_logged": "За этот день всё записано.",
   "dose_reopen": "Открыть снова",
   "dose_reopen_success": "Приём снова открыт",
-  "due_dose_override": "Разовое изменение дозы",
-  "due_back_to_overview": "Назад к обзору"
+  "due_dose_override": "Разовое изменение дозы"
 }

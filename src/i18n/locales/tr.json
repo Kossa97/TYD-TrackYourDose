@@ -1241,14 +1241,9 @@
   "calendar_open_month": "Aylık görünümü aç",
   "calendar_day_balance": "{{geplant}} dozdan {{genommen}} tanesi onaylandı",
   "due_open_count": "{{n}} bekliyor",
-  "due_intakes_count": "{{n}} doz",
-  "due_later_today": "O gün daha sonra",
-  "due_step_through": "Tek tek gözden geçir",
   "due_confirm_with_injection": "Enjeksiyonla takip et",
-  "due_still_open": "Hâlâ bekliyor",
   "all_intakes_logged": "Bu gün için her şey kayıtlı.",
   "dose_reopen": "Yeniden aç",
   "dose_reopen_success": "Doz yeniden açıldı",
-  "due_dose_override": "Tek seferlik doz değişikliği",
-  "due_back_to_overview": "Genel görünüme dön"
+  "due_dose_override": "Tek seferlik doz değişikliği"
 }
