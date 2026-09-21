@@ -168,6 +168,9 @@ const SORT_OPTION_LABEL_KEYS: Record<PeptideSortKey, string> = {
   stock_desc: 'sort_option_stock_desc',
 }
 
+const vialCarouselItemWidth = 'min(17rem, 70vw)'
+const vialCarouselItemGap = '0.75rem'
+
 function asPeptide(item: LoadedStackItem): Peptide {
   const legacy = item as LoadedStackItem & Partial<Peptide>
   return {
@@ -2672,10 +2675,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   onPointerUp={handleVialCarouselPointerUp}
                   onPointerCancel={handleVialCarouselPointerUp}
                   onWheel={handleVialCarouselWheel}
-                  className={`relative z-10 flex min-h-0 flex-1 ${vialSnapClassName} gap-2 overflow-x-auto overflow-y-hidden overscroll-none touch-pan-x pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                  className={`relative z-10 flex min-h-0 flex-1 ${vialSnapClassName} overflow-x-auto overflow-y-hidden overscroll-none touch-pan-x pb-2 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
                     isVialCarouselDragging ? 'cursor-grabbing' : 'cursor-grab'
                   }`}
                   style={{
+                    gap: vialCarouselItemGap,
                     // Die Vollbildbuehne besitzt nur die waagerechte Geste.
                     // Vertikales Wischen darf weder die Seite verschieben
                     // noch auf iOS den Gummiband-Effekt ausloesen.
@@ -2685,7 +2689,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     // sind, stehen die Punkte darunter — sie sind hier keine
                     // Zierde, sondern der Ersatz fuer das, was die Breite
                     // verdeckt.
-                    paddingInline: 'calc((100% - min(17rem, 70vw)) / 2)',
+                    paddingInline: `calc((100% - ${vialCarouselItemWidth}) / 2)`,
                     // Acht Pixel Schlupf, und zwar mit Absicht: ohne sie waere
                     // das Fangfenster (Streifenbreite minus diesem Rand) genau
                     // so breit wie ein Eintrag. Bei Gleichstand faellt das
@@ -2694,7 +2698,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     // welche der beiden Regeln gerade gilt. Genau so sah der
                     // Sprung aus, der nach dem Wischen kam: 25 bis 33 px
                     // daneben, und beim naechsten Anlass zurueck.
-                    scrollPaddingInline: 'calc((100% - min(17rem, 70vw)) / 2 - 8px)',
+                    scrollPaddingInline: `calc((100% - ${vialCarouselItemWidth}) / 2 - 8px)`,
                   }}
                 >
                   <div
@@ -2703,7 +2707,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     className={`${vialItemSnapClassName} flex h-full min-h-0 origin-bottom items-end shrink-0 rounded-2xl px-2 py-2 ${
                       isVialCarouselDragging ? 'transition-none' : 'transition-all duration-300'
                     } ${addTileActive ? 'scale-100' : 'scale-[0.82] opacity-45'}`}
-                    style={{ width: 'min(17rem, 70vw)' }}
+                    style={{ width: vialCarouselItemWidth }}
                   >
                     <AddVialTile
                       active={addTileActive}
@@ -2734,7 +2738,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         } ${
                           isActive ? 'scale-100' : 'scale-[0.88] opacity-65 saturate-75'
                         }`}
-                        style={{ width: 'min(17rem, 70vw)' }}
+                        style={{ width: vialCarouselItemWidth }}
                         aria-label={p.name}
                         role="button"
                         tabIndex={0}
@@ -2807,7 +2811,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     sieben Eintraege als Punkte zum Antippen, darueber eine
                     Leiste, weil fuenfzehn Punkte niemand mehr zaehlt. */}
                 {stagePeptides.length > 1 && (
-                  <div data-vial-position className="mt-1 flex shrink-0 items-center justify-center gap-1.5">
+                  <div data-vial-position className="mb-2 mt-1 flex shrink-0 items-center justify-center gap-1.5">
                     {stagePeptides.length <= 7 ? stagePeptides.map((p, index) => (
                       <button
                         key={p.id}

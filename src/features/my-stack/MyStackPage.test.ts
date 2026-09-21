@@ -107,8 +107,8 @@ describe('My Stack page vial view', () => {
     // Wischen aus: 25 bis 33 px daneben, und beim nächsten Anlass zurück.
     const text = source()
 
-    expect(text).toContain("paddingInline: 'calc((100% - min(17rem, 70vw)) / 2)'")
-    expect(text).toContain("scrollPaddingInline: 'calc((100% - min(17rem, 70vw)) / 2 - 8px)'")
+    expect(text).toContain('paddingInline: `calc((100% - ${vialCarouselItemWidth}) / 2)`')
+    expect(text).toContain('scrollPaddingInline: `calc((100% - ${vialCarouselItemWidth}) / 2 - 8px)`')
   })
 
   test('gibt einen haptischen Klick je Eintrag, den das Karussell passiert', () => {
@@ -232,6 +232,21 @@ describe('My Stack page vial view', () => {
     expect(text).toContain('data-vial-dot={index}')
     // Ab acht Einträgen eine Leiste: fünfzehn Punkte zählt niemand mehr.
     expect(text).toContain('stagePeptides.length <= 7')
+  })
+
+  test('hält die Positionsleiste sichtbar über der Navigation', () => {
+    const text = source()
+
+    expect(text).toContain('data-vial-position className="mb-2 mt-1')
+  })
+
+  test('gibt jeder Darreichungsform denselben Karussellplatz und Abstand', () => {
+    const text = source()
+
+    expect(text).toContain("const vialCarouselItemWidth = 'min(17rem, 70vw)'")
+    expect(text).toContain("const vialCarouselItemGap = '0.75rem'")
+    expect(text).toContain("gap: vialCarouselItemGap")
+    expect(text).toContain("style={{ width: vialCarouselItemWidth }}")
   })
 
   test('aligns the Neue Substanz tile with the vial carousel axis', () => {
