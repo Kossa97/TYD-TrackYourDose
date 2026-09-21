@@ -78,9 +78,9 @@
     "semantic_hash": ""
   },
   "api/_lib/reminderSchedule.test.js": {
-    "mtime": 1789927455.498794,
-    "seen": 1789927683.0399535,
-    "ast_hash": "7784ec525a8de1ea86ef86fbf87695ba",
+    "mtime": 1790017001.8549263,
+    "seen": 1790018152.6759088,
+    "ast_hash": "3323d274a4a0d5145b7705b3bccd1121",
     "semantic_hash": ""
   },
   "api/peptide-ai.js": {
@@ -882,15 +882,15 @@
     "semantic_hash": ""
   },
   "src/lib/injectionPersistence.test.ts": {
-    "mtime": 1789927455.6297424,
-    "seen": 1789927683.040352,
-    "ast_hash": "11647f53c5e090e4145c59067f83e9de",
+    "mtime": 1790017001.8509264,
+    "seen": 1790018152.6765697,
+    "ast_hash": "b838db2b3fbcb74f9b648d3d5132376e",
     "semantic_hash": ""
   },
   "src/lib/injectionPersistence.ts": {
-    "mtime": 1789927455.6297424,
-    "seen": 1789927683.0403526,
-    "ast_hash": "4f4fac11ce08a1d717cab65da4662b25",
+    "mtime": 1790016548.1283658,
+    "seen": 1790018152.6765707,
+    "ast_hash": "8d5339e0a8f3098b6e92bba56dded07e",
     "semantic_hash": ""
   },
   "src/lib/injectionPinPresentation.test.ts": {
@@ -924,15 +924,15 @@
     "semantic_hash": ""
   },
   "src/lib/intakeSchedule.test.ts": {
-    "mtime": 1789927455.7229395,
-    "seen": 1789927683.0403566,
-    "ast_hash": "12bdc3ea18177f739b2b32cfe01f95cd",
+    "mtime": 1790017144.0085976,
+    "seen": 1790018152.676578,
+    "ast_hash": "1733fc873cd3ebabdd2a224129d10309",
     "semantic_hash": ""
   },
   "src/lib/intakeSchedule.ts": {
-    "mtime": 1789927455.7231424,
-    "seen": 1789927683.0403574,
-    "ast_hash": "aa9c9e5173e2cb8c6a2d5cc9b36857df",
+    "mtime": 1790017218.7390635,
+    "seen": 1790018152.676579,
+    "ast_hash": "fda6c1ce58a6700b134fcc03c8c8d567",
     "semantic_hash": ""
   },
   "src/lib/openInjectionIntakeFilters.test.ts": {
@@ -1056,15 +1056,15 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.test.ts": {
-    "mtime": 1790012789.2833679,
-    "seen": 1790013031.5013926,
-    "ast_hash": "4a5872de6d977a6288a36ff045a7bcd8",
+    "mtime": 1790017001.8509264,
+    "seen": 1790018152.6766198,
+    "ast_hash": "2b44446e1a6e988f1a5ffad709b962d8",
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
-    "mtime": 1790013061.9637594,
-    "seen": 1790013226.284045,
-    "ast_hash": "6adf774bc23e3b72eea367067a9e4e8e",
+    "mtime": 1790016695.2574441,
+    "seen": 1790018152.6766207,
+    "ast_hash": "61f9bdde78062a84dcc4e69c0410c6fd",
     "semantic_hash": ""
   },
   "src/pages/FAQ.tsx": {
@@ -1080,9 +1080,9 @@
     "semantic_hash": ""
   },
   "src/pages/Home.test.ts": {
-    "mtime": 1789927455.7242668,
-    "seen": 1789927683.0403833,
-    "ast_hash": "cf9c860cc86f3baef3b0c48f566d2cce",
+    "mtime": 1790017001.8549263,
+    "seen": 1790018152.6766236,
+    "ast_hash": "53b2419620881583c2df93b7ec243248",
     "semantic_hash": ""
   },
   "src/pages/Home.tsx": {
@@ -3012,21 +3012,21 @@
     "semantic_hash": ""
   },
   "api/_lib/planTimeline.js": {
-    "mtime": 1789927455.4987028,
-    "seen": 1789927683.039947,
-    "ast_hash": "e27b9e05fa126dda87b84e0e5d5d23bf",
+    "mtime": 1790016937.3892128,
+    "seen": 1790018152.675899,
+    "ast_hash": "675c6efb8e81e51b3ea79e03abdc4241",
     "semantic_hash": ""
   },
   "api/_lib/planTimeline.parity.test.js": {
-    "mtime": 1789927455.4987028,
-    "seen": 1789927683.0399485,
-    "ast_hash": "a1f9046683291750e1a8e92f4cd5ca2c",
+    "mtime": 1790017144.0089264,
+    "seen": 1790018152.6759021,
+    "ast_hash": "38eafdf12db2bf8d33d8995e493f19f7",
     "semantic_hash": ""
   },
   "api/_lib/reminderSchedule.parity.test.js": {
-    "mtime": 1789927455.498794,
-    "seen": 1789927683.0399516,
-    "ast_hash": "01b044ac27b61b93c93b1dc75a3c6933",
+    "mtime": 1790017001.8549263,
+    "seen": 1790018152.6759067,
+    "ast_hash": "b103c3271f4783749b55ba4e10971d15",
     "semantic_hash": ""
   },
   "backups/substance_catalog-2026-09-12.sql": {
@@ -4650,15 +4650,15 @@
     "semantic_hash": ""
   },
   "src/features/routines/services/intakeConfirmation.test.ts": {
-    "mtime": 1789927455.6231875,
-    "seen": 1789927683.0403063,
-    "ast_hash": "ec792971e7c46018f669816fba62d95b",
+    "mtime": 1790017862.758475,
+    "seen": 1790018152.6764953,
+    "ast_hash": "50eae21f5d3948c3878c19e639f078a2",
     "semantic_hash": ""
   },
   "src/features/routines/services/intakeConfirmation.ts": {
-    "mtime": 1789927455.623273,
-    "seen": 1789927683.040307,
-    "ast_hash": "963341fe337b1a2b7b053222bc75e59b",
+    "mtime": 1790017733.9876816,
+    "seen": 1790018152.6764963,
+    "ast_hash": "9574582a1259dc9fcf6d35b510e538e3",
     "semantic_hash": ""
   },
   "src/i18n/data/my-stack-i18n.json": {
@@ -4854,8 +4854,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790013177.099963,
-    "seen": 1790013226.284141,
+    "mtime": 1790018027.330903,
+    "seen": 1790018152.6767108,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5268,15 +5268,15 @@
     "semantic_hash": ""
   },
   "src/features/routines/lib/slotKeyRange.test.ts": {
-    "mtime": 1789928210.1371553,
-    "seen": 1789928372.7255218,
-    "ast_hash": "d39fbff56021fa5f3ed4c35cb04d0f4e",
+    "mtime": 1790016744.2393808,
+    "seen": 1790018152.6764908,
+    "ast_hash": "2e1c6ba57ef6166a44d81a99e22fd161",
     "semantic_hash": ""
   },
   "src/features/routines/lib/slotKeyRange.ts": {
-    "mtime": 1789928210.1381812,
-    "seen": 1789928372.7255237,
-    "ast_hash": "326937998ec898995032bed3285b675a",
+    "mtime": 1790016695.2567458,
+    "seen": 1790018152.6764922,
+    "ast_hash": "5e85f64b9270e4c79a8a6df4d6ddc879",
     "semantic_hash": ""
   },
   "src/components/layoutMode.ts": {
@@ -5295,6 +5295,24 @@
     "mtime": 1790013049.5450134,
     "seen": 1790013226.2834406,
     "ast_hash": "d6d68cdfe13fda19e0643f80fbb4b66b",
+    "semantic_hash": ""
+  },
+  "src/features/routines/lib/slotKey.test.ts": {
+    "mtime": 1790016812.282706,
+    "seen": 1790018152.676488,
+    "ast_hash": "c51b529174b2a50bf082803a1a42bae9",
+    "semantic_hash": ""
+  },
+  "src/features/routines/lib/slotKey.ts": {
+    "mtime": 1790017397.9147954,
+    "seen": 1790018152.676489,
+    "ast_hash": "82ecb096ef260613f463222b2e70e925",
+    "semantic_hash": ""
+  },
+  "supabase-slot-key-wall-clock.sql": {
+    "mtime": 1790017845.1429071,
+    "seen": 1790018152.6767192,
+    "ast_hash": "a1ca9c6f3fcb4241d140eb425e9aa6a6",
     "semantic_hash": ""
   }
 }
