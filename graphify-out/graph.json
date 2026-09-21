@@ -4681,7 +4681,7 @@
       "file_type": "code",
       "norm_label": "einpassung",
       "source_file": "src/features/my-stack/components/StageFit.tsx",
-      "source_location": "L91"
+      "source_location": "L94"
     },
     {
       "id": "src_features_my_stack_components_stagefit_stagefitprops",
@@ -7320,7 +7320,7 @@
       "file_type": "code",
       "norm_label": "mystackpageprops",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L514"
+      "source_location": "L517"
     },
     {
       "id": "src_features_my_stack_mystackpage_peptide",
@@ -7359,7 +7359,7 @@
       "file_type": "code",
       "norm_label": "recoverablemutation",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L387"
+      "source_location": "L390"
     },
     {
       "id": "src_lib_protocolpdf_chartdata_chartpoint",
@@ -13808,7 +13808,7 @@
       "file_type": "code",
       "norm_label": "pushbanner()",
       "source_file": "src/components/Layout.tsx",
-      "source_location": "L257"
+      "source_location": "L269"
     },
     {
       "id": "src_lib_pushlocal_showpagenotification",
@@ -14972,7 +14972,7 @@
       "file_type": "code",
       "norm_label": "produkttitel()",
       "source_file": "src/features/my-stack/lib/stackDetailSections.ts",
-      "source_location": "L108"
+      "source_location": "L104"
     },
     {
       "id": "src_features_my_stack_lib_stackdetailsections_zeigtfeld",
@@ -14984,7 +14984,7 @@
       "file_type": "code",
       "norm_label": "zeigtfeld()",
       "source_file": "src/features/my-stack/lib/stackDetailSections.ts",
-      "source_location": "L113"
+      "source_location": "L109"
     },
     {
       "id": "src_components_colorfield_colorfield",
@@ -20672,7 +20672,7 @@
       "file_type": "code",
       "norm_label": "stagefit()",
       "source_file": "src/features/my-stack/components/StageFit.tsx",
-      "source_location": "L98"
+      "source_location": "L101"
     },
     {
       "id": "src_features_my_stack_components_stagefit_test_disconnect",
@@ -21872,7 +21872,7 @@
       "file_type": "code",
       "norm_label": "magbewegen()",
       "source_file": "src/features/my-stack/components/StageDetailSheet.tsx",
-      "source_location": "L32"
+      "source_location": "L31"
     },
     {
       "id": "src_features_my_stack_components_stagedetailsheet_stagedetailsheet",
@@ -21884,7 +21884,7 @@
       "file_type": "code",
       "norm_label": "stagedetailsheet()",
       "source_file": "src/features/my-stack/components/StageDetailSheet.tsx",
-      "source_location": "L37"
+      "source_location": "L36"
     },
     {
       "id": "src_features_my_stack_components_stagedetailsheet_test_rechteck",
@@ -25068,7 +25068,7 @@
       "file_type": "code",
       "norm_label": "addvialtile()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L489"
+      "source_location": "L492"
     },
     {
       "id": "src_features_my_stack_mystackpage_aspeptide",
@@ -25080,7 +25080,7 @@
       "file_type": "code",
       "norm_label": "aspeptide()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L171"
+      "source_location": "L174"
     },
     {
       "id": "src_features_my_stack_mystackpage_comparenullabledate",
@@ -25092,7 +25092,7 @@
       "file_type": "code",
       "norm_label": "comparenullabledate()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L216"
+      "source_location": "L219"
     },
     {
       "id": "src_features_my_stack_mystackpage_comparenullablenum",
@@ -25104,7 +25104,7 @@
       "file_type": "code",
       "norm_label": "comparenullablenum()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L206"
+      "source_location": "L209"
     },
     {
       "id": "src_features_my_stack_mystackpage_cycleasintakeplandraft",
@@ -25116,7 +25116,7 @@
       "file_type": "code",
       "norm_label": "cycleasintakeplandraft()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L344"
+      "source_location": "L347"
     },
     {
       "id": "src_features_my_stack_mystackpage_doseplanactions",
@@ -25128,7 +25128,7 @@
       "file_type": "code",
       "norm_label": "doseplanactions()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L309"
+      "source_location": "L312"
     },
     {
       "id": "src_features_my_stack_mystackpage_emptyescalationform",
@@ -25152,7 +25152,7 @@
       "file_type": "code",
       "norm_label": "escalationformstartdate()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L297"
+      "source_location": "L300"
     },
     {
       "id": "src_features_my_stack_mystackpage_expirydaysleft",
@@ -25164,7 +25164,7 @@
       "file_type": "code",
       "norm_label": "expirydaysleft()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L193"
+      "source_location": "L196"
     },
     {
       "id": "src_features_my_stack_mystackpage_getvialfillpct",
@@ -25176,7 +25176,7 @@
       "file_type": "code",
       "norm_label": "getvialfillpct()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L199"
+      "source_location": "L202"
     },
     {
       "id": "src_features_my_stack_mystackpage_mergecatalogentries",
@@ -25188,7 +25188,7 @@
       "file_type": "code",
       "norm_label": "mergecatalogentries()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L288"
+      "source_location": "L291"
     },
     {
       "id": "src_features_my_stack_mystackpage_mystackpage",
@@ -25200,7 +25200,7 @@
       "file_type": "code",
       "norm_label": "mystackpage()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L518"
+      "source_location": "L521"
     },
     {
       "id": "src_features_my_stack_mystackpage_parsestoredday",
@@ -25212,7 +25212,7 @@
       "file_type": "code",
       "norm_label": "parsestoredday()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L282"
+      "source_location": "L285"
     },
     {
       "id": "src_features_my_stack_mystackpage_planchangesubmissionidentity",
@@ -25224,7 +25224,7 @@
       "file_type": "code",
       "norm_label": "planchangesubmissionidentity()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L392"
+      "source_location": "L395"
     },
     {
       "id": "src_features_my_stack_mystackpage_sortpeptides",
@@ -25236,7 +25236,7 @@
       "file_type": "code",
       "norm_label": "sortpeptides()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L226"
+      "source_location": "L229"
     },
     {
       "id": "src_features_my_stack_mystackpage_versionasintakeplandraft",
@@ -25248,7 +25248,7 @@
       "file_type": "code",
       "norm_label": "versionasintakeplandraft()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L417"
+      "source_location": "L420"
     },
     {
       "id": "src_features_my_stack_mystackpage_versionsnapshot",
@@ -25260,7 +25260,7 @@
       "file_type": "code",
       "norm_label": "versionsnapshot()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L470"
+      "source_location": "L473"
     },
     {
       "id": "src_features_my_stack_mystackpage_witheffectiveescalationunit",
@@ -25272,7 +25272,7 @@
       "file_type": "code",
       "norm_label": "witheffectiveescalationunit()",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L304"
+      "source_location": "L307"
     },
     {
       "id": "src_lib_usenew_usenew",
@@ -62222,7 +62222,7 @@
       "file_type": "code",
       "norm_label": "freq_keys",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L253"
+      "source_location": "L256"
     },
     {
       "id": "src_features_my_stack_mystackpage_intake_time_config",
@@ -62233,7 +62233,7 @@
       "file_type": "code",
       "norm_label": "intake_time_config",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L260"
+      "source_location": "L263"
     },
     {
       "id": "src_features_my_stack_mystackpage_intake_time_to_routine_group",
@@ -62244,7 +62244,7 @@
       "file_type": "code",
       "norm_label": "intake_time_to_routine_group",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L271"
+      "source_location": "L274"
     },
     {
       "id": "src_features_my_stack_mystackpage_method_keys",
@@ -62277,7 +62277,7 @@
       "file_type": "code",
       "norm_label": "reminder_options",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L274"
+      "source_location": "L277"
     },
     {
       "id": "src_features_my_stack_mystackpage_routine_group_to_intake_time",
@@ -62288,7 +62288,7 @@
       "file_type": "code",
       "norm_label": "routine_group_to_intake_time",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L266"
+      "source_location": "L269"
     },
     {
       "id": "src_features_my_stack_mystackpage_sort_option_label_keys",
@@ -76118,7 +76118,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/StageDetailSheet.tsx",
-      "source_location": "L42",
+      "source_location": "L41",
       "weight": 1.0
     },
     {
@@ -76142,7 +76142,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/StageFit.tsx",
-      "source_location": "L120",
+      "source_location": "L123",
       "weight": 1.0
     },
     {
@@ -78014,7 +78014,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/lib/stackDetailSections.ts",
-      "source_location": "L114",
+      "source_location": "L110",
       "weight": 1.0
     },
     {
@@ -78482,7 +78482,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L345",
+      "source_location": "L348",
       "weight": 1.0
     },
     {
@@ -78494,7 +78494,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L375",
+      "source_location": "L378",
       "weight": 1.0
     },
     {
@@ -78506,7 +78506,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L319",
+      "source_location": "L322",
       "weight": 1.0
     },
     {
@@ -78518,7 +78518,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L298",
+      "source_location": "L301",
       "weight": 1.0
     },
     {
@@ -78530,7 +78530,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1012",
+      "source_location": "L1015",
       "weight": 1.0
     },
     {
@@ -78542,7 +78542,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1059",
+      "source_location": "L1062",
       "weight": 1.0
     },
     {
@@ -78554,7 +78554,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1097",
+      "source_location": "L1100",
       "weight": 1.0
     },
     {
@@ -78566,7 +78566,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1098",
+      "source_location": "L1101",
       "weight": 1.0
     },
     {
@@ -78578,7 +78578,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1127",
+      "source_location": "L1130",
       "weight": 1.0
     },
     {
@@ -78590,7 +78590,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1152",
+      "source_location": "L1155",
       "weight": 1.0
     },
     {
@@ -78602,7 +78602,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1161",
+      "source_location": "L1164",
       "weight": 1.0
     },
     {
@@ -78614,7 +78614,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1192",
+      "source_location": "L1195",
       "weight": 1.0
     },
     {
@@ -78626,7 +78626,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1226",
+      "source_location": "L1229",
       "weight": 1.0
     },
     {
@@ -78638,7 +78638,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1232",
+      "source_location": "L1235",
       "weight": 1.0
     },
     {
@@ -78650,7 +78650,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1273",
+      "source_location": "L1276",
       "weight": 1.0
     },
     {
@@ -78662,7 +78662,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1280",
+      "source_location": "L1283",
       "weight": 1.0
     },
     {
@@ -78674,7 +78674,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1300",
+      "source_location": "L1303",
       "weight": 1.0
     },
     {
@@ -78686,7 +78686,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1313",
+      "source_location": "L1316",
       "weight": 1.0
     },
     {
@@ -78698,7 +78698,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1325",
+      "source_location": "L1328",
       "weight": 1.0
     },
     {
@@ -78710,7 +78710,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1335",
+      "source_location": "L1338",
       "weight": 1.0
     },
     {
@@ -78722,7 +78722,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1355",
+      "source_location": "L1358",
       "weight": 1.0
     },
     {
@@ -78734,7 +78734,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1359",
+      "source_location": "L1362",
       "weight": 1.0
     },
     {
@@ -78746,7 +78746,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1372",
+      "source_location": "L1375",
       "weight": 1.0
     },
     {
@@ -78758,7 +78758,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1401",
+      "source_location": "L1404",
       "weight": 1.0
     },
     {
@@ -78770,7 +78770,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1450",
+      "source_location": "L1453",
       "weight": 1.0
     },
     {
@@ -78782,7 +78782,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1476",
+      "source_location": "L1479",
       "weight": 1.0
     },
     {
@@ -78794,7 +78794,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1477",
+      "source_location": "L1480",
       "weight": 1.0
     },
     {
@@ -78806,7 +78806,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1479",
+      "source_location": "L1482",
       "weight": 1.0
     },
     {
@@ -78818,7 +78818,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1479",
+      "source_location": "L1482",
       "weight": 1.0
     },
     {
@@ -78830,7 +78830,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1517",
+      "source_location": "L1520",
       "weight": 1.0
     },
     {
@@ -78842,7 +78842,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1568",
+      "source_location": "L1571",
       "weight": 1.0
     },
     {
@@ -78854,7 +78854,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1625",
+      "source_location": "L1628",
       "weight": 1.0
     },
     {
@@ -78866,7 +78866,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1673",
+      "source_location": "L1676",
       "weight": 1.0
     },
     {
@@ -78878,7 +78878,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1700",
+      "source_location": "L1703",
       "weight": 1.0
     },
     {
@@ -78890,7 +78890,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1713",
+      "source_location": "L1716",
       "weight": 1.0
     },
     {
@@ -78902,7 +78902,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1739",
+      "source_location": "L1742",
       "weight": 1.0
     },
     {
@@ -78914,7 +78914,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1782",
+      "source_location": "L1785",
       "weight": 1.0
     },
     {
@@ -78926,7 +78926,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1968",
+      "source_location": "L1971",
       "weight": 1.0
     },
     {
@@ -78938,7 +78938,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2119",
+      "source_location": "L2112",
       "weight": 1.0
     },
     {
@@ -78950,7 +78950,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2126",
+      "source_location": "L2119",
       "weight": 1.0
     },
     {
@@ -78962,7 +78962,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2138",
+      "source_location": "L2131",
       "weight": 1.0
     },
     {
@@ -78974,7 +78974,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2226",
+      "source_location": "L2219",
       "weight": 1.0
     },
     {
@@ -78986,7 +78986,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2229",
+      "source_location": "L2222",
       "weight": 1.0
     },
     {
@@ -78998,7 +78998,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2331",
+      "source_location": "L2298",
       "weight": 1.0
     },
     {
@@ -79010,7 +79010,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2615",
+      "source_location": "L2585",
       "weight": 1.0
     },
     {
@@ -79022,7 +79022,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2714",
+      "source_location": "L2685",
       "weight": 1.0
     },
     {
@@ -79034,7 +79034,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L3225",
+      "source_location": "L3196",
       "weight": 1.0
     },
     {
@@ -79046,7 +79046,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L3483",
+      "source_location": "L3448",
       "weight": 1.0
     },
     {
@@ -79058,7 +79058,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L520",
+      "source_location": "L523",
       "weight": 1.0
     },
     {
@@ -79070,7 +79070,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L530",
+      "source_location": "L533",
       "weight": 1.0
     },
     {
@@ -79082,7 +79082,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L563",
+      "source_location": "L566",
       "weight": 1.0
     },
     {
@@ -79094,7 +79094,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L586",
+      "source_location": "L589",
       "weight": 1.0
     },
     {
@@ -79106,7 +79106,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L702",
+      "source_location": "L705",
       "weight": 1.0
     },
     {
@@ -79118,7 +79118,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L709",
+      "source_location": "L712",
       "weight": 1.0
     },
     {
@@ -79130,7 +79130,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L710",
+      "source_location": "L713",
       "weight": 1.0
     },
     {
@@ -79142,7 +79142,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L712",
+      "source_location": "L715",
       "weight": 1.0
     },
     {
@@ -79154,7 +79154,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L743",
+      "source_location": "L746",
       "weight": 1.0
     },
     {
@@ -79166,7 +79166,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L772",
+      "source_location": "L775",
       "weight": 1.0
     },
     {
@@ -79178,7 +79178,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L805",
+      "source_location": "L808",
       "weight": 1.0
     },
     {
@@ -79190,7 +79190,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L888",
+      "source_location": "L891",
       "weight": 1.0
     },
     {
@@ -79202,7 +79202,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L889",
+      "source_location": "L892",
       "weight": 1.0
     },
     {
@@ -79214,7 +79214,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L891",
+      "source_location": "L894",
       "weight": 1.0
     },
     {
@@ -79226,7 +79226,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L902",
+      "source_location": "L905",
       "weight": 1.0
     },
     {
@@ -79238,7 +79238,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L903",
+      "source_location": "L906",
       "weight": 1.0
     },
     {
@@ -79250,7 +79250,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L951",
+      "source_location": "L954",
       "weight": 1.0
     },
     {
@@ -79262,7 +79262,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L240",
+      "source_location": "L243",
       "weight": 1.0
     },
     {
@@ -79274,7 +79274,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L240",
+      "source_location": "L243",
       "weight": 1.0
     },
     {
@@ -79286,7 +79286,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L242",
+      "source_location": "L245",
       "weight": 1.0
     },
     {
@@ -79298,7 +79298,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L244",
+      "source_location": "L247",
       "weight": 1.0
     },
     {
@@ -79310,7 +79310,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L443",
+      "source_location": "L446",
       "weight": 1.0
     },
     {
@@ -79322,7 +79322,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L451",
+      "source_location": "L454",
       "weight": 1.0
     },
     {
@@ -79346,7 +79346,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L305",
+      "source_location": "L308",
       "weight": 1.0
     },
     {
@@ -79358,7 +79358,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L306",
+      "source_location": "L309",
       "weight": 1.0
     },
     {
@@ -88202,7 +88202,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L896",
+      "source_location": "L899",
       "weight": 1.0
     },
     {
@@ -90146,7 +90146,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L515",
+      "source_location": "L518",
       "weight": 1.0
     },
     {
@@ -170081,7 +170081,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Layout.tsx",
-      "source_location": "L257",
+      "source_location": "L269",
       "weight": 1.0
     },
     {
@@ -178177,7 +178177,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/components/StageDetailSheet.tsx",
-      "source_location": "L32",
+      "source_location": "L31",
       "weight": 1.0
     },
     {
@@ -178188,7 +178188,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/components/StageDetailSheet.tsx",
-      "source_location": "L37",
+      "source_location": "L36",
       "weight": 1.0
     },
     {
@@ -178211,6 +178211,17 @@
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/components/StageDetailSheet.test.tsx",
       "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "src_features_my_stack_components_stagefit",
+      "target": "src_features_my_stack_components_stagefit_stagefit",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/features/my-stack/components/StageFit.tsx",
+      "source_location": "L101",
       "weight": 1.0
     },
     {
@@ -178243,18 +178254,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/components/StageFit.tsx",
-      "source_location": "L91",
-      "weight": 1.0
-    },
-    {
-      "source": "src_features_my_stack_components_stagefit",
-      "target": "src_features_my_stack_components_stagefit_stagefit",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/features/my-stack/components/StageFit.tsx",
-      "source_location": "L98",
+      "source_location": "L94",
       "weight": 1.0
     },
     {
@@ -184513,7 +184513,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/stackDetailSections.ts",
-      "source_location": "L108",
+      "source_location": "L104",
       "weight": 1.0
     },
     {
@@ -184524,7 +184524,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/lib/stackDetailSections.ts",
-      "source_location": "L113",
+      "source_location": "L109",
       "weight": 1.0
     },
     {
@@ -185492,7 +185492,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L171",
+      "source_location": "L174",
       "weight": 1.0
     },
     {
@@ -185503,7 +185503,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L193",
+      "source_location": "L196",
       "weight": 1.0
     },
     {
@@ -185514,7 +185514,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L199",
+      "source_location": "L202",
       "weight": 1.0
     },
     {
@@ -185525,7 +185525,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L206",
+      "source_location": "L209",
       "weight": 1.0
     },
     {
@@ -185536,7 +185536,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L216",
+      "source_location": "L219",
       "weight": 1.0
     },
     {
@@ -185547,7 +185547,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L226",
+      "source_location": "L229",
       "weight": 1.0
     },
     {
@@ -185558,7 +185558,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L253",
+      "source_location": "L256",
       "weight": 1.0
     },
     {
@@ -185569,7 +185569,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L260",
+      "source_location": "L263",
       "weight": 1.0
     },
     {
@@ -185580,7 +185580,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L266",
+      "source_location": "L269",
       "weight": 1.0
     },
     {
@@ -185591,7 +185591,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L271",
+      "source_location": "L274",
       "weight": 1.0
     },
     {
@@ -185602,7 +185602,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L274",
+      "source_location": "L277",
       "weight": 1.0
     },
     {
@@ -185613,7 +185613,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L282",
+      "source_location": "L285",
       "weight": 1.0
     },
     {
@@ -185624,7 +185624,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L288",
+      "source_location": "L291",
       "weight": 1.0
     },
     {
@@ -185635,7 +185635,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L297",
+      "source_location": "L300",
       "weight": 1.0
     },
     {
@@ -185646,7 +185646,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L304",
+      "source_location": "L307",
       "weight": 1.0
     },
     {
@@ -185657,7 +185657,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L309",
+      "source_location": "L312",
       "weight": 1.0
     },
     {
@@ -185668,7 +185668,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L344",
+      "source_location": "L347",
       "weight": 1.0
     },
     {
@@ -185679,7 +185679,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L387",
+      "source_location": "L390",
       "weight": 1.0
     },
     {
@@ -185690,7 +185690,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L392",
+      "source_location": "L395",
       "weight": 1.0
     },
     {
@@ -185701,7 +185701,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L417",
+      "source_location": "L420",
       "weight": 1.0
     },
     {
@@ -185712,7 +185712,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L470",
+      "source_location": "L473",
       "weight": 1.0
     },
     {
@@ -185723,7 +185723,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L489",
+      "source_location": "L492",
       "weight": 1.0
     },
     {
@@ -185734,7 +185734,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L514",
+      "source_location": "L517",
       "weight": 1.0
     },
     {
@@ -185745,7 +185745,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L518",
+      "source_location": "L521",
       "weight": 1.0
     },
     {
@@ -202532,7 +202532,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L716",
+      "source_location": "L719",
       "weight": 1.0
     },
     {
@@ -202894,5 +202894,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "9e8749e745b7410c2b68766ad8881fccbf073f52"
+  "built_at_commit": "9742e3a9221cd9a361d818f9f292b5f023d7ffb6"
 }

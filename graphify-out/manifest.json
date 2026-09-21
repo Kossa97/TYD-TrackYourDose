@@ -282,15 +282,15 @@
     "semantic_hash": ""
   },
   "src/components/Layout.test.ts": {
-    "mtime": 1789947101.9255795,
-    "seen": 1789947276.4101098,
-    "ast_hash": "067ae12f1f5ba125b0aaf98d1df700ec",
+    "mtime": 1789992927.0795994,
+    "seen": 1789993086.2074726,
+    "ast_hash": "2d4fed0154b7ef6288d6eff4ccdc78e2",
     "semantic_hash": ""
   },
   "src/components/Layout.tsx": {
-    "mtime": 1789947101.927946,
-    "seen": 1789947276.4101112,
-    "ast_hash": "ee40c3e7a25be8fcc3f84dce4ba9e7f8",
+    "mtime": 1789992927.0795994,
+    "seen": 1789993086.2074757,
+    "ast_hash": "1e8b9db4156e0fd1b6c9f4b32fc888cc",
     "semantic_hash": ""
   },
   "src/components/LiveBlutspiegelChart.tsx": {
@@ -3240,21 +3240,21 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1789947101.927946,
-    "seen": 1789947276.4103835,
-    "ast_hash": "76502b1690e3a063ef6e9bc3c7f53232",
+    "mtime": 1789992927.0845199,
+    "seen": 1789993086.2077172,
+    "ast_hash": "bdc2f11349c70f1b99e4237cb080c72b",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1789947101.9295795,
-    "seen": 1789947276.4103854,
-    "ast_hash": "66450cc5614be3a0bd59296240e685b7",
+    "mtime": 1789992927.084775,
+    "seen": 1789993086.2077186,
+    "ast_hash": "5a8b47dfca6643ef853232f8c5ef619c",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
-    "mtime": 1789947101.9302197,
-    "seen": 1789947276.410387,
-    "ast_hash": "064de7f83f1ec748839e9a7bad0efe40",
+    "mtime": 1789992927.0860963,
+    "seen": 1789993086.2077196,
+    "ast_hash": "d70debbd3510f41f057296af3b66d6bf",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/CourseTimezoneReview.test.tsx": {
@@ -3414,27 +3414,27 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageDetailSheet.test.tsx": {
-    "mtime": 1789927455.60745,
-    "seen": 1789927683.0401733,
-    "ast_hash": "77af51cdc2629f94101f6b5cb3e41354",
+    "mtime": 1789992927.0860963,
+    "seen": 1789993086.2077448,
+    "ast_hash": "190f553a6700560c4d856d3d1c271828",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageDetailSheet.tsx": {
-    "mtime": 1789927455.60745,
-    "seen": 1789927683.040174,
-    "ast_hash": "25d0bbb6b263e1719e3a146d50a2328e",
+    "mtime": 1789992927.0860963,
+    "seen": 1789993086.2077458,
+    "ast_hash": "0220f81533373003d39e448181968e58",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageFit.test.tsx": {
-    "mtime": 1789947101.9305866,
-    "seen": 1789947276.410448,
-    "ast_hash": "f9b33dd3597ed09f7b50c998ac02b705",
+    "mtime": 1789992927.0860963,
+    "seen": 1789993086.2077467,
+    "ast_hash": "00beb9410fe4d919bfdd060ef3f8af43",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StageFit.tsx": {
-    "mtime": 1789947101.9307363,
-    "seen": 1789947276.41045,
-    "ast_hash": "193b7303bda80c53a1806171f9de570b",
+    "mtime": 1789992927.086727,
+    "seen": 1789993086.2077477,
+    "ast_hash": "cab6d6449bcdfd955218e40cbd432dd8",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StrengthEditor.test.tsx": {
@@ -3912,15 +3912,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.test.ts": {
-    "mtime": 1789947101.9309006,
-    "seen": 1789947276.4106083,
-    "ast_hash": "0d9a14ce073a18095a042a3da0eed756",
+    "mtime": 1789992927.0868626,
+    "seen": 1789993086.2078288,
+    "ast_hash": "1ef09343930b674218889dbf2c10997a",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.ts": {
-    "mtime": 1789947101.9310567,
-    "seen": 1789947276.41061,
-    "ast_hash": "2e9ca37c7bda98e0618324200e694c58",
+    "mtime": 1789992927.0870962,
+    "seen": 1789993086.2078295,
+    "ast_hash": "9a8383afd2a752b3657faebc590518f9",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosePlan.test.ts": {
@@ -4098,15 +4098,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/stackDetailSections.test.ts": {
-    "mtime": 1789927455.6158457,
-    "seen": 1789927683.0402465,
-    "ast_hash": "5dfeea1c40363e6c498f14eeb4424e08",
+    "mtime": 1789992927.0872068,
+    "seen": 1789993086.207853,
+    "ast_hash": "7dafa54a4d285341dd3a2c4c12931a25",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/stackDetailSections.ts": {
-    "mtime": 1789927455.6158457,
-    "seen": 1789927683.040247,
-    "ast_hash": "2c8684f15ef3602639a5e01e95385da4",
+    "mtime": 1789992927.087324,
+    "seen": 1789993086.2078538,
+    "ast_hash": "4bad9dd51a746c82a30770c5d2f271c1",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/stackSort.test.ts": {
@@ -4854,8 +4854,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1789992793.5675914,
-    "seen": 1789992892.7529173,
+    "mtime": 1789992996.8556035,
+    "seen": 1789993086.2080975,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
