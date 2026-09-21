@@ -33,7 +33,7 @@ export type DetailFeld =
   | 'notizen'
 
 /**
- * `substanz` sagt, WAS das ist — Wirkstoff, Methode, Herkunft. Das gilt fuer
+ * `substanz` sagt, WAS das ist — Kategorie, Methode, Herkunft. Das gilt fuer
  * jede Packung derselben Substanz gleich.
  *
  * `produkt` sagt, was DIESE Packung ist: angemischt, haltbar, wie viel noch da.
@@ -68,7 +68,10 @@ export function wirkstoffBezug(form: DosageFormDefinition | undefined): Wirkstof
 export function detailAbschnitte(form: DosageFormDefinition | undefined): DetailAbschnitt[] {
   const kann = (faehigkeit: string) => form?.capabilities.includes(faehigkeit as never) ?? false
 
-  const produkt: DetailFeld[] = []
+  // Die Wirkstoffmenge beschreibt die Zusammensetzung dieser Darreichung,
+  // nicht die Identitaet der Substanz. Beim Vial gehoert sie deshalb zur
+  // Rekonstitution, bei allen anderen Formen zur Zusammensetzung.
+  const produkt: DetailFeld[] = ['wirkstoff']
   // Aufloesen heisst: Pulver im Glas, das man selbst anmischt. Nur dort gibt es
   // eine zugefuegte Fluessigkeit, ein Datum dafuer und eine Haltbarkeit DANACH.
   if (kann('reconstitutable')) produkt.push('fluessigkeit', 'rekonstituiert_am', 'haltbarkeit')
@@ -81,32 +84,25 @@ export function detailAbschnitte(form: DosageFormDefinition | undefined): Detail
   // die Ueberschrift des Wirkstoffs („Wirkstoff pro Pflaster"), und der Name
   // steht auf dem Objekt darueber.
   const substanz: DetailFeld[] = [
-    'wirkstoff', 'kategorie', 'applikation', 'marke',
+    'kategorie', 'applikation', 'marke',
     'batch', 'quelle', 'analyse', 'notizen',
   ]
 
   // Zuerst WAS es ist, dann was DIESE Packung ist.
   const abschnitte: DetailAbschnitt[] = [{ id: 'substanz', felder: substanz }]
-  // Ein Abschnitt ohne Felder erscheint gar nicht — eine leere Ueberschrift
-  // ist schlimmer als eine fehlende.
-  if (produkt.length > 0) abschnitte.push({ id: 'produkt', felder: produkt })
+  abschnitte.push({ id: 'produkt', felder: produkt })
   return abschnitte
 }
 
 /**
  * Wie der Produktabschnitt heisst.
  *
- * Der Name folgt dem INHALT, nicht der Form: wo eine Fluessigkeit zugefuegt
- * wird, heisst er „Rekonstitution", sonst „Bestand". Ihn stattdessen aus
- * `strengthShape` abzuleiten waere verlockend — dann hiesse er beim Pen
- * „Zusammensetzung", obwohl dort nur „Vorrat" steht. Eine Ueberschrift, die
- * mehr verspricht als darunter steht, ist schlimmer als eine schlichte.
- *
- * „Zusammensetzung" wird erst wahr, wenn dort auch die Konzentration steht —
- * die rechnet `konzentration.ts` heute nur waehrend der Eingabe aus.
+ * Wo eine Fluessigkeit zugefuegt wird, beschreibt der Abschnitt die
+ * Rekonstitution. Bei allen anderen Formen beschreibt er die Zusammensetzung:
+ * die formgerechte Wirkstoffstaerke und, sofern erfasst, den Vorrat.
  */
-export function produktTitel(abschnitt: DetailAbschnitt): 'rekonstitution' | 'bestand' {
-  return abschnitt.felder.includes('fluessigkeit') ? 'rekonstitution' : 'bestand'
+export function produktTitel(abschnitt: DetailAbschnitt): 'rekonstitution' | 'zusammensetzung' {
+  return abschnitt.felder.includes('fluessigkeit') ? 'rekonstitution' : 'zusammensetzung'
 }
 
 /** Kommt dieses Feld bei dieser Form vor? */

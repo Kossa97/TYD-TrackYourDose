@@ -24,22 +24,25 @@ describe('detailAbschnitte', () => {
     }
   })
 
-  it('zeigt Wirkstoff, Applikation und Herkunft bei jeder Form', () => {
+  it('zeigt Applikation und Herkunft bei jeder Form', () => {
     for (const form of DOSAGE_FORMS) {
-      for (const feld of ['wirkstoff', 'applikation', 'batch', 'quelle', 'analyse', 'notizen'] as const) {
+      for (const feld of ['applikation', 'batch', 'quelle', 'analyse', 'notizen'] as const) {
         expect(zeigtFeld(form, feld), `${form.key} / ${feld}`).toBe(true)
       }
     }
   })
 
-  it('lässt einen Abschnitt ohne Felder ganz weg', () => {
-    // Eine leere Überschrift ist schlimmer als eine fehlende.
-    const ohne = { key: 'other', capabilities: [], strengthShape: 'free' } as never
-    expect(detailAbschnitte(ohne).map(a => a.id)).toEqual(['substanz'])
+  it('ordnet den Wirkstoff bei jeder Form der Zusammensetzung zu', () => {
+    for (const form of DOSAGE_FORMS) {
+      const abschnitte = detailAbschnitte(form)
+      expect(abschnitte.find(a => a.id === 'substanz')?.felder, form.key).not.toContain('wirkstoff')
+      expect(abschnitte.find(a => a.id === 'produkt')?.felder, form.key).toContain('wirkstoff')
+    }
   })
 
   it('verträgt eine unbekannte Form', () => {
-    expect(detailAbschnitte(undefined).map(a => a.id)).toEqual(['substanz'])
+    expect(detailAbschnitte(undefined).map(a => a.id)).toEqual(['substanz', 'produkt'])
+    expect(detailAbschnitte(undefined).find(a => a.id === 'produkt')?.felder).toContain('wirkstoff')
   })
 
   it('nennt zuerst, WAS es ist, dann was diese Packung ist', () => {
@@ -71,13 +74,10 @@ describe('produktTitel', () => {
     expect(produktTitel(vial)).toBe('rekonstitution')
   })
 
-  it('heißt sonst „Bestand" — auch beim Pen', () => {
-    // Aus `strengthShape` abgeleitet hieße er beim Pen „Zusammensetzung",
-    // obwohl dort nur „Vorrat" steht. Eine Überschrift, die mehr verspricht
-    // als darunter steht, ist schlimmer als eine schlichte.
+  it('heißt sonst „Zusammensetzung" — auch beim Pen', () => {
     for (const key of ['pen', 'tablet', 'patch', 'gel'] as const) {
       const abschnitt = detailAbschnitte(getDosageForm(key)).find(a => a.id === 'produkt')!
-      expect(produktTitel(abschnitt), key).toBe('bestand')
+      expect(produktTitel(abschnitt), key).toBe('zusammensetzung')
     }
   })
 })

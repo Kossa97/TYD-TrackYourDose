@@ -17,7 +17,6 @@ function zeichne(teile: Partial<Parameters<typeof StageDetailSheet>[0]> = {}) {
       originRect={rechteck()}
       stage={<div data-testid="objekt" />}
       title="Semaglutid"
-      subtitle="0,5 mg · morgens"
       onClose={onClose}
       onFlightChange={onFlightChange}
       {...teile}
@@ -68,6 +67,13 @@ describe('StageDetailSheet', () => {
     expect(koerper().className).toContain('opacity-0')
     act(() => { vi.advanceTimersByTime(400) })
     expect(koerper().className).toContain('opacity-100')
+  })
+
+  it('zeigt unter dem Namen keine zweite Rhythmuszeile', () => {
+    zeichne()
+
+    expect(screen.queryByText('0,5 mg · morgens')).toBeNull()
+    expect(screen.getByRole('heading', { name: 'Semaglutid' })).not.toBeNull()
   })
 
   it('verzichtet auf den Flug, wenn weniger Bewegung gewünscht ist', () => {

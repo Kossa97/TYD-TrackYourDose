@@ -2197,7 +2197,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     const wert = angabeText(feld, a)
                     // Ueber zwei Spalten, wo eine Zeile sonst abgeschnitten
                     // waere: ein Kombipraeparat, ein Dateiname, eine Notiz.
-                    const wide = feld === 'analyse' || feld === 'notizen'
+                    const wide = feld === 'notizen'
                       || (a.art === 'zutaten' && a.zutaten.length > 1)
                     if (a.art === 'datei') {
                       return {
@@ -2213,15 +2213,15 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   }
                   // Wie der Produktabschnitt heisst, folgt seinem INHALT —
                   // „Rekonstitution", wo eine Fluessigkeit zugefuegt wird,
-                  // sonst „Bestand". Siehe `produktTitel`.
-                  const ABSCHNITT_TITEL: Record<'substanz' | 'rekonstitution' | 'bestand', string> = {
+                  // sonst „Zusammensetzung". Siehe `produktTitel`.
+                  const ABSCHNITT_TITEL: Record<'substanz' | 'rekonstitution' | 'zusammensetzung', string> = {
                     substanz: 'Substanz',
                     rekonstitution: 'Rekonstitution',
-                    bestand: 'Bestand',
+                    zusammensetzung: 'Zusammensetzung',
                   }
                   return (
                     <>
-                    {/* Bestand und Substanz: offen, nicht hinter einem
+                    {/* Zusammensetzung und Substanz: offen, nicht hinter einem
                         Akkordeon. Wer das Vollbild oeffnet, will sie sehen —
                         ein Klappknopf davor war eine Huerde ohne Gegenwert.
                         Die Darreichungsform entscheidet, welche Zeilen es
@@ -2234,8 +2234,10 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         <div className="grid grid-cols-2 gap-2 p-2 text-xs">
                           {abschnitt.felder.map(feld => {
                             const zeile = zeileFuer(feld)
+                            const vollbreit = ('wide' in zeile && zeile.wide)
+                              || (abschnitt.id === 'produkt' && feld === 'wirkstoff' && abschnitt.felder.length % 2 === 1)
                             return (
-                              <div key={feld} data-stack-detail-field={feld} className={`min-h-14 rounded-lg border border-slate-800 bg-slate-900/55 px-2.5 py-2 ${'wide' in zeile && zeile.wide ? 'col-span-2' : ''}`}>
+                              <div key={feld} data-stack-detail-field={feld} className={`min-h-14 rounded-lg border border-slate-800 bg-slate-900/55 px-2.5 py-2 ${vollbreit ? 'col-span-2' : ''}`}>
                                 <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-slate-500">{zeile.label}</p>
                                 <div className="mt-1 truncate text-sm font-semibold text-slate-200">
                                   {'valueNode' in zeile ? zeile.valueNode : zeile.value}
@@ -3443,12 +3445,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           onClose={() => setDetailUrsprung(null)}
           onFlightChange={imFlug => sloshEngine.setEnabled(!imFlug)}
           title={activePeptide.name}
-          subtitle={(() => {
-            // Die eine Zeile unter dem Namen: was der laufende Plan sagt.
-            const laufend = cyclesOf(activePeptide.id).find(c => c.active)
-            if (!laufend) return null
-            return [freqLabel(laufend), intakeLabel(laufend)].filter(Boolean).join(' · ')
-          })()}
           stage={(
             <SloshProvider engine={sloshEngine}>
               <div style={{ width: 'min(9rem, 38vw)' }}>

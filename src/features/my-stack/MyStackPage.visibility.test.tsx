@@ -532,6 +532,21 @@ describe('MyStackPage non-vial visibility', () => {
     expect(actions.getByRole('button', { name: 'loeschen' })).not.toBeNull()
   })
 
+  it('groups strength with reconstruction and keeps the remaining detail grid balanced', async () => {
+    await renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Existing Premium Vial' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Existing Premium Vial' })
+    const substance = dialog.querySelector<HTMLElement>('[data-stack-detail="substanz"]')
+    const product = dialog.querySelector<HTMLElement>('[data-stack-detail="produkt"]')
+
+    expect(substance?.querySelector('[data-stack-detail-field="wirkstoff"]')).toBeNull()
+    expect(product?.querySelector('[data-stack-detail-field="wirkstoff"]')?.className).toContain('col-span-2')
+    expect(within(product!).getByRole('heading', { name: 'Rekonstitution' })).not.toBeNull()
+    expect(substance?.querySelector('[data-stack-detail-field="analyse"]')?.className).not.toContain('col-span-2')
+    expect(substance?.querySelector('[data-stack-detail-field="notizen"]')?.className).toContain('col-span-2')
+  })
+
 
   it('summarizes a non-vial item with dosage form and ingredient strength', async () => {
     await renderPage()

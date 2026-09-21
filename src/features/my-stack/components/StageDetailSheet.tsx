@@ -20,7 +20,6 @@ export interface StageDetailSheetProps {
   /** Das Objekt selbst — dieselbe Buehne, nur kleiner. */
   stage: ReactNode
   title: string
-  subtitle?: string | null
   children: ReactNode
   onClose: () => void
   /** Waehrend des Flugs still: schwappende Fluessigkeit im Flug wirkt falsch. */
@@ -35,7 +34,7 @@ function magBewegen(): boolean {
 }
 
 export function StageDetailSheet({
-  originRect, stage, title, subtitle, children, onClose, onFlightChange,
+  originRect, stage, title, children, onClose, onFlightChange,
 }: StageDetailSheetProps) {
   const objektRef = useRef<HTMLDivElement>(null)
   const [gelandet, setGelandet] = useState(false)
@@ -117,7 +116,6 @@ export function StageDetailSheet({
           {stage}
         </div>
         <h2 className="mt-3 text-center text-xl font-bold text-white">{title}</h2>
-        {subtitle && <p className="mt-0.5 text-center text-sm text-slate-400">{subtitle}</p>}
       </div>
 
       {/* Erst wenn das Objekt steht, kommen die Angaben — gestaffelt, damit
