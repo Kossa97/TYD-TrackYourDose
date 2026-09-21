@@ -1245,5 +1245,10 @@
   "all_intakes_logged": "Tutto è registrato per questo giorno.",
   "dose_reopen": "Riapri",
   "dose_reopen_success": "Assunzione riaperta",
-  "due_dose_override": "Modifica una tantum della dose"
+  "due_dose_override": "Modifica una tantum della dose",
+  "confirm_sheet_title": "Conferma assunzione",
+  "confirm_sheet_hint": "Quando l'hai assunto davvero? Precompilato con l'orario previsto del ciclo.",
+  "confirm_sheet_time_label": "Ora",
+  "verpasst": "Mancata",
+  "dose_mark_taken": "Presa comunque"
 }

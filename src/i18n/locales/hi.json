@@ -1245,5 +1245,10 @@
   "all_intakes_logged": "इस दिन के लिए सब कुछ दर्ज है।",
   "dose_reopen": "फिर से खोलें",
   "dose_reopen_success": "खुराक फिर से खोली गई",
-  "due_dose_override": "एक बार की खुराक बदलें"
+  "due_dose_override": "एक बार की खुराक बदलें",
+  "confirm_sheet_title": "खुराक की पुष्टि करें",
+  "confirm_sheet_hint": "आपने वास्तव में कब लिया? नियोजित चक्र समय से पहले से भरा हुआ।",
+  "confirm_sheet_time_label": "समय",
+  "verpasst": "छूट गई",
+  "dose_mark_taken": "फिर भी लिया"
 }

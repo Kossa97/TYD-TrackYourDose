@@ -1245,5 +1245,10 @@
   "all_intakes_logged": "この日はすべて記録済みです。",
   "dose_reopen": "記録を取り消す",
   "dose_reopen_success": "記録を取り消しました",
-  "due_dose_override": "今回だけ用量を変更"
+  "due_dose_override": "今回だけ用量を変更",
+  "confirm_sheet_title": "摂取を確認",
+  "confirm_sheet_hint": "実際に摂取したのはいつですか？予定されたサイクル時刻が入力されています。",
+  "confirm_sheet_time_label": "時刻",
+  "verpasst": "未実施",
+  "dose_mark_taken": "やはり摂取した"
 }

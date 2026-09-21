@@ -1244,5 +1244,10 @@
   "all_intakes_logged": "这一天的记录已完整。",
   "dose_reopen": "重新打开",
   "dose_reopen_success": "已重新打开该次服用",
-  "due_dose_override": "仅此次调整剂量"
+  "due_dose_override": "仅此次调整剂量",
+  "confirm_sheet_title": "确认服用",
+  "confirm_sheet_hint": "你实际是什么时候服用的？已预填计划的周期时间。",
+  "confirm_sheet_time_label": "时间",
+  "verpasst": "已错过",
+  "dose_mark_taken": "其实已服用"
 }

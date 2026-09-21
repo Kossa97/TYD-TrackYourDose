@@ -1245,5 +1245,10 @@
   "all_intakes_logged": "Todo está registrado para este día.",
   "dose_reopen": "Volver a abrir",
   "dose_reopen_success": "Toma reabierta",
-  "due_dose_override": "Cambio de dosis puntual"
+  "due_dose_override": "Cambio de dosis puntual",
+  "confirm_sheet_title": "Confirmar toma",
+  "confirm_sheet_hint": "¿Cuándo la tomaste realmente? Rellenado con la hora prevista del ciclo.",
+  "confirm_sheet_time_label": "Hora",
+  "verpasst": "Omitida",
+  "dose_mark_taken": "Sí la tomé"
 }

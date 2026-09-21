@@ -1245,5 +1245,10 @@
   "all_intakes_logged": "Semua sudah tercatat untuk hari ini.",
   "dose_reopen": "Buka lagi",
   "dose_reopen_success": "Asupan dibuka lagi",
-  "due_dose_override": "Perubahan dosis sekali"
+  "due_dose_override": "Perubahan dosis sekali",
+  "confirm_sheet_title": "Konfirmasi asupan",
+  "confirm_sheet_hint": "Kapan kamu benar-benar mengonsumsinya? Terisi otomatis dengan waktu siklus yang direncanakan.",
+  "confirm_sheet_time_label": "Waktu",
+  "verpasst": "Terlewat",
+  "dose_mark_taken": "Ternyata diminum"
 }

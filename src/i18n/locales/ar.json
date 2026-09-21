@@ -1249,5 +1249,10 @@
   "all_intakes_logged": "تم تسجيل كل شيء لهذا اليوم.",
   "dose_reopen": "إعادة الفتح",
   "dose_reopen_success": "تم إعادة فتح الجرعة",
-  "due_dose_override": "تغيير الجرعة لمرة واحدة"
+  "due_dose_override": "تغيير الجرعة لمرة واحدة",
+  "confirm_sheet_title": "تأكيد الجرعة",
+  "confirm_sheet_hint": "متى تناولتها فعليًا؟ مُعبَّأ مسبقًا بوقت الدورة المخطط له.",
+  "confirm_sheet_time_label": "الوقت",
+  "verpasst": "فائتة",
+  "dose_mark_taken": "تم تناولها بالفعل"
 }

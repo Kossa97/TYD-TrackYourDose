@@ -1244,5 +1244,10 @@
   "all_intakes_logged": "이 날은 모두 기록되었습니다.",
   "dose_reopen": "다시 열기",
   "dose_reopen_success": "복용 기록을 다시 열었습니다",
-  "due_dose_override": "이번만 용량 변경"
+  "due_dose_override": "이번만 용량 변경",
+  "confirm_sheet_title": "복용 확인",
+  "confirm_sheet_hint": "실제로 언제 복용했나요? 계획된 주기 시간이 미리 입력되어 있습니다.",
+  "confirm_sheet_time_label": "시간",
+  "verpasst": "놓침",
+  "dose_mark_taken": "결국 복용함"
 }

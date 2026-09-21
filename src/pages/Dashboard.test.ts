@@ -1787,4 +1787,43 @@ describe('Dashboard intake confirmation actions', () => {
     expect(source).toContain('calendar_open_month')
     expect(source).toContain('aria-modal="true"')
   })
+
+  it('kennt jeden Uebersetzungsschluessel der Seite in de und en', () => {
+    // Ein `defaultValue` ist deutscher Text. Fehlt der Schluessel in en.json,
+    // faellt i18next darauf zurueck -- die englische App zeigt Deutsch, und
+    // nichts schlaegt fehl. Genau so standen `verpasst` und `dose_mark_taken`
+    // monatelang in beiden Sprachdateien nicht drin.
+    const source = readFileSync('src/pages/Dashboard.tsx', 'utf8')
+    const de = JSON.parse(readFileSync('src/i18n/locales/de.json', 'utf8')) as Record<string, unknown>
+    const en = JSON.parse(readFileSync('src/i18n/locales/en.json', 'utf8')) as Record<string, unknown>
+
+    const schluessel = [...new Set([...source.matchAll(/\bt\(\s*'([a-z0-9_]+)'/g)].map(m => m[1]))]
+    expect(schluessel.length).toBeGreaterThan(60)
+    expect(schluessel.filter(k => de[k] === undefined)).toEqual([])
+    expect(schluessel.filter(k => en[k] === undefined)).toEqual([])
+
+    // Und kein `t(` mit etwas anderem als einem Literal -- sonst greift die
+    // Pruefung oben an der Stelle nicht mehr.
+    expect(source.match(/\bt\(\s*[^'\s)]/g)).toBeNull()
+  })
+
+  it('haelt das Bestaetigungs-Sheet frei von fest verdrahtetem Deutsch', () => {
+    const source = readFileSync('src/pages/Dashboard.tsx', 'utf8')
+    const sheet = source.slice(
+      source.indexOf('{confirmSheet && ('),
+      source.indexOf('</>\n  )\n}'),
+    )
+    expect(sheet.length).toBeGreaterThan(500)
+
+    // Ein `defaultValue` DARF deutsch sein -- er ist der Fallback, kein
+    // Anzeigetext. Darum erst die Fallbacks herausschneiden und dann das
+    // suchen, was uebrig bleibt: Text direkt im JSX.
+    const ohneFallbacks = sheet.replace(/defaultValue: '(?:[^'\\]|\\.)*'/g, 'defaultValue: ...')
+    for (const deutsch of ['Einnahme bestätigen', 'Uhrzeit', 'Abbrechen', 'Eingenommen', 'Wann hast du tatsächlich']) {
+      expect(ohneFallbacks, `\`${deutsch}\` steht als Text im Sheet statt als t()`).not.toContain(deutsch)
+    }
+    for (const key of ['confirm_sheet_title', 'confirm_sheet_hint', 'confirm_sheet_time_label', "t('cancel'", "t('eingenommen'"]) {
+      expect(sheet).toContain(key)
+    }
+  })
 })

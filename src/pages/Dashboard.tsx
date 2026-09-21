@@ -2258,14 +2258,14 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
               <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
               <div className="flex items-center gap-2 mb-1">
                 <Check size={15} className="text-emerald-400" />
-                <h2 className="text-base font-black text-white">Einnahme bestätigen</h2>
+                <h2 className="text-base font-black text-white">{t('confirm_sheet_title', { defaultValue: 'Einnahme bestätigen' })}</h2>
               </div>
               <p className="text-xs text-slate-500 mb-5">
-                Wann hast du tatsächlich eingenommen? Vorausgefüllt mit der geplanten Zykluszeit.
+                {t('confirm_sheet_hint', { defaultValue: 'Wann hast du tatsächlich eingenommen? Vorausgefüllt mit der geplanten Zykluszeit.' })}
               </p>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <label className="text-[0.6rem] font-bold uppercase tracking-widest text-slate-500">
-                  Uhrzeit
+                  {t('confirm_sheet_time_label', { defaultValue: 'Uhrzeit' })}
                 </label>
                 <button
                   type="button"
@@ -2285,13 +2285,13 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
               />
               <div className="flex gap-3">
                 <button onClick={() => setConfirmSheet(null)} className="btn-secondary flex-1">
-                  Abbrechen
+                  {t('cancel', { defaultValue: 'Abbrechen' })}
                 </button>
                 <button
                   onClick={() => void handleConfirmSheet()}
                   className="btn-primary flex-1 flex items-center justify-center gap-2"
                 >
-                  <Check size={14} /> Eingenommen
+                  <Check size={14} /> {t('eingenommen', { defaultValue: 'Eingenommen' })}
                 </button>
               </div>
             </div>

@@ -1247,5 +1247,10 @@
   "all_intakes_logged": "За этот день всё записано.",
   "dose_reopen": "Открыть снова",
   "dose_reopen_success": "Приём снова открыт",
-  "due_dose_override": "Разовое изменение дозы"
+  "due_dose_override": "Разовое изменение дозы",
+  "confirm_sheet_title": "Подтвердить приём",
+  "confirm_sheet_hint": "Когда вы приняли на самом деле? Предзаполнено запланированным временем цикла.",
+  "confirm_sheet_time_label": "Время",
+  "verpasst": "Пропущено",
+  "dose_mark_taken": "Всё же принято"
 }

@@ -1245,5 +1245,10 @@
   "all_intakes_logged": "Bu gün için her şey kayıtlı.",
   "dose_reopen": "Yeniden aç",
   "dose_reopen_success": "Doz yeniden açıldı",
-  "due_dose_override": "Tek seferlik doz değişikliği"
+  "due_dose_override": "Tek seferlik doz değişikliği",
+  "confirm_sheet_title": "Alımı onayla",
+  "confirm_sheet_hint": "Gerçekte ne zaman aldın? Planlanan döngü saatiyle önceden dolduruldu.",
+  "confirm_sheet_time_label": "Saat",
+  "verpasst": "Kaçırıldı",
+  "dose_mark_taken": "Yine de alındı"
 }
