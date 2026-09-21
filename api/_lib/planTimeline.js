@@ -11,6 +11,27 @@ const WEEKDAYS_DE = { 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 6: 'Sa', 0: '
 const SLOT_TIMES = { morgens: '08:00', mittags: '12:00', abends: '20:00' }
 const SLOT_GROUPS = { morgens: 'morning', mittags: 'midday', abends: 'evening' }
 
+/**
+ * Der Name eines Platzes im Einnahmeplan -- `<cycle-uuid>@2026-09-22T08:00`.
+ *
+ * Zwillingsstueck zu `src/features/routines/lib/slotKey.ts`, wo auch steht,
+ * warum der Schluessel die Wanduhr traegt und nicht den Zeitpunkt. Hier muss
+ * er dupliziert stehen, weil diese Datei zur Laufzeit als reines JavaScript
+ * laeuft und nichts aus `src/` laden kann; `planTimeline.parity.test.js`
+ * vergleicht beide Seiten gegeneinander und schlaegt fehl, sobald sie
+ * auseinanderlaufen.
+ */
+function slotSchluessel(cycleId, localDate, minutes) {
+  if (!LOCAL_DATE_PATTERN.test(localDate)) {
+    throw new Error(`Slot-Schluessel braucht ein lokales Datum: ${localDate}`)
+  }
+  if (!Number.isInteger(minutes) || minutes < 0 || minutes > 1439) {
+    throw new Error(`Slot-Schluessel braucht eine Minute des Tages: ${minutes}`)
+  }
+  const zweistellig = wert => String(wert).padStart(2, '0')
+  return `${cycleId}@${localDate}T${zweistellig(Math.floor(minutes / 60))}:${zweistellig(minutes % 60)}`
+}
+
 function instantMillis(value, label) {
   const millis = new Date(value).getTime()
   if (!Number.isFinite(millis)) throw new Error(`Invalid date for ${label}: ${value}`)
@@ -315,7 +336,7 @@ export function resolveTimelineIntakesForDay(timeline, localDate, timeZone) {
 
     const scheduledAt = instant.toISOString()
     const clock = parsedClock(localDateTimeKey(instant, timeZone).slice(11, 16))
-    const routineSlotKey = `${timeline.cycle.id}@${scheduledAt}`
+    const routineSlotKey = slotSchluessel(timeline.cycle.id, localDate, candidate.minutes)
     return [{
       ...activeSlot,
       ...clock,

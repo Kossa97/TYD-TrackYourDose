@@ -1,8 +1,8 @@
 /**
  * Routine-Slots ueber ihren Schluesselbereich suchen statt sie aufzuzaehlen.
  *
- * Ein Slot-Schluessel ist `<cycle-uuid>@<ISO-Zeitstempel>` (siehe
- * `intakeSchedule.ts`). Der Kalender hat bisher alle sichtbaren Schluessel im
+ * Ein Slot-Schluessel ist `<cycle-uuid>@<lokale Wanduhr>` (siehe
+ * `slotKey.ts`). Der Kalender hat bisher alle sichtbaren Schluessel im
  * Browser erzeugt und sie der Datenbank als Liste uebergeben -- bis zu hundert
  * Stueck, siebentausend Zeichen Adresse. Gemessen am 2026-09-20:
  *
@@ -14,23 +14,30 @@
  * Verhandlung wiederverwendbar. Zum Vergleich: `/rest/v1/cycles` kam mit 17
  * Adressen auf 3138 Anfragen aus und brauchte 45 Preflights.
  *
- * Dieselbe Menge laesst sich ohne Aufzaehlung treffen. `toISOString()` hat feste
- * Breite, also ist der Zeitteil lexikografisch chronologisch; und weil Anfang
- * und Ende eines Bereichs denselben UUID-Praefix tragen, kann kein fremder
- * Zyklus hineinfallen -- ein anderer Schluessel unterscheidet sich schon im
- * Praefix und liegt damit ganz ausserhalb.
+ * Dieselbe Menge laesst sich ohne Aufzaehlung treffen. `YYYY-MM-DDTHH:MM` hat
+ * feste Breite, also ist der Zeitteil lexikografisch chronologisch; und weil
+ * Anfang und Ende eines Bereichs denselben UUID-Praefix tragen, kann kein
+ * fremder Zyklus hineinfallen -- ein anderer Schluessel unterscheidet sich
+ * schon im Praefix und liegt damit ganz ausserhalb.
+ *
+ * Die Grenzen sind **lokale Tage**, keine Zeitpunkte. Das ist kein Detail,
+ * sondern dieselbe Entscheidung wie im Schluessel selbst: ein Bereich, der
+ * aus Instants gebaut waere, verschoebe sich beim Reisen gegen die Menge,
+ * die er treffen soll.
  *
  * Was daran haengt: die Adresse ergibt sich nur noch aus den Zyklus-ids und dem
  * Zeitfenster. Beide bleiben gleich, solange man denselben Monat ansieht -- die
  * Verhandlung von eben gilt also noch.
  */
 
+import { slotSchluesselGrenze } from './slotKey'
+
 /** Ein Zeitfenster, fuer das Slots gesucht werden. */
 export interface SchluesselFenster {
-  /** Einschliesslich. */
-  start: Date
-  /** Ausschliesslich. */
-  end: Date
+  /** Lokaler Tag `YYYY-MM-DD`, einschliesslich. */
+  start: string
+  /** Lokaler Tag `YYYY-MM-DD`, ausschliesslich. */
+  end: string
 }
 
 /**
@@ -66,14 +73,14 @@ export function slotKeyBereiche(
   const ids = [...new Set(cycleIds)].sort()
   const fensterSortiert = [...fenster]
     .filter(f => f.end > f.start)
-    .sort((a, b) => a.start.getTime() - b.start.getTime())
+    .sort((a, b) => a.start.localeCompare(b.start))
 
   const bedingungen: string[] = []
   for (const id of ids) {
     if (GEFAEHRLICH.test(id)) throw new Error(`Unzulaessige Zyklus-id: ${id}`)
     for (const f of fensterSortiert) {
-      const von = `${id}@${f.start.toISOString()}`
-      const bis = `${id}@${f.end.toISOString()}`
+      const von = slotSchluesselGrenze(id, f.start)
+      const bis = slotSchluesselGrenze(id, f.end)
       // Die Werte tragen `:` und `.`; ohne Anfuehrungszeichen liest PostgREST
       // den Punkt als Trennzeichen und der Ausdruck zerfaellt.
       bedingungen.push(
@@ -101,7 +108,7 @@ export function imBereich(
   cycleId: string,
   fenster: SchluesselFenster,
 ): boolean {
-  const von = `${cycleId}@${fenster.start.toISOString()}`
-  const bis = `${cycleId}@${fenster.end.toISOString()}`
+  const von = slotSchluesselGrenze(cycleId, fenster.start)
+  const bis = slotSchluesselGrenze(cycleId, fenster.end)
   return schluessel >= von && schluessel < bis
 }

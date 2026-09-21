@@ -44,6 +44,7 @@ import {
 } from '../features/routines/intakeGroups'
 import { confirmIntakeGroup, quantifiedVialEntries, skipIntakeGroup, type IntakeConfirmationClient } from '../features/routines/services/intakeConfirmation'
 import { slotKeyBereiche } from '../features/routines/lib/slotKeyRange'
+import { slotSchluesselFuerZeitpunkt } from '../features/routines/lib/slotKey'
 import { RoutineConfirmationSheet } from '../features/routines/components/RoutineConfirmationSheet'
 import {
   applyInventoryConfirmation,
@@ -554,11 +555,17 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         // man denselben Monat ansieht.
         //
         // Warum der Bereich dieselbe Menge trifft, steht in `slotKeyRange.ts`.
-        // Ein Tag Luft an beiden Enden, weil ein lokaler Tag je nach Zeitzone
-        // etwas ueber die Fenstergrenze hinausragen kann.
+        // Die Grenzen sind lokale Tage, weil der Schluessel die Wanduhr traegt.
+        //
+        // Ein Tag Luft an beiden Enden: den brauchte frueher die Zeitzone, weil
+        // ein lokaler Tag ueber die aus Instants gebaute Fenstergrenze
+        // hinausragen konnte. Der Grund ist weg, die Luft bleibt -- Zeilen aus
+        // der Zeit vor der Umstellung tragen einen Schluessel, der aus der
+        // Zeitzone des Zyklus zurueckgerechnet wurde, und der kann bei jemandem,
+        // der unterwegs bestaetigt hat, einen Tag daneben liegen.
         const slotFenster = ranges.map(range => ({
-          start: addDays(range.start, -1),
-          end: addDays(range.end, 1),
+          start: format(addDays(range.start, -1), 'yyyy-MM-dd'),
+          end: format(addDays(range.end, 1), 'yyyy-MM-dd'),
         }))
         const cycleIds = [...new Set(loadedTimelines.map(timeline => timeline.cycle.id))]
         const slotResults = await Promise.all(
@@ -1137,7 +1144,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       const timeline = timelines.find(item => item.cycle.id === cycle.id)
       const resolved = timeline && resolveCycleAt(timeline, new Date(actualLoggedAt), timeZone)
       const entry = buildConfirmationEntry(buildDashboardRoutineIntake({
-        key: `${cycle.id}@${new Date(scheduledAt).toISOString()}`,
+        key: slotSchluesselFuerZeitpunkt(cycle.id, scheduledAt, timeZone),
         cycleId: cycle.id,
         planVersionId: pendingLog?.plan_version_id ?? resolved?.planVersion?.id ?? cycle.planVersionId ?? null,
         pendingLogId: pendingLog?.id ?? null,
@@ -1176,7 +1183,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       const [doseLogId] = await confirmIntakeGroup(
         dashboardDataClient as unknown as IntakeConfirmationClient,
         [{ ...buildConfirmationEntry(buildDashboardRoutineIntake({
-          key: `${cycle.id}@${new Date(scheduledAt).toISOString()}`,
+          key: slotSchluesselFuerZeitpunkt(cycle.id, scheduledAt, timeZone),
           cycleId: cycle.id,
           planVersionId: resolved.planVersion.id,
           pendingLogId: pendingLog?.id ?? null,
@@ -1210,7 +1217,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       ...(FEATURES.planTimelineV2 ? {
         cycle_id: cycle.id,
         plan_version_id: cycle.planVersionId ?? null,
-        routine_slot_key: `${cycle.id}@${new Date(scheduledAt).toISOString()}`,
+        routine_slot_key: slotSchluesselFuerZeitpunkt(cycle.id, scheduledAt, timeZone),
       } : {}),
     }).select('id').single()
     if (error) return toast.error(t('fehler_speichern'))

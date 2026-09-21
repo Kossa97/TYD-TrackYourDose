@@ -300,7 +300,7 @@ describe('Dashboard normalized timeline path', () => {
     const fixtures = startFixFixture()
     fixtures.dose_logs = [{
       ...pendingLog(), taken: true,
-      routine_slot_key: 'timeline-cycle@2026-09-18T15:30:00.000Z',
+      routine_slot_key: 'timeline-cycle@2026-09-18T17:30',
     }]
     renderDashboard(createDashboardClient(fixtures))
     fireEvent.click(await screen.findByRole('button', { name: /Bereits protokolliert/ }))
@@ -397,7 +397,7 @@ describe('Dashboard normalized timeline path', () => {
       method: 'Oral', notes: null, stack_items: { display_name: 'Vitamin D3' },
       logged_at: '2026-09-18T07:00:00.000Z', cycle_id: keyed ? 'timeline-cycle' : null,
       plan_version_id: keyed ? 'timeline-version' : null,
-      routine_slot_key: keyed ? 'timeline-cycle@2026-09-18T06:00:00.000Z' : null }
+      routine_slot_key: keyed ? 'timeline-cycle@2026-09-18T08:00' : null }
   }
 
   function browseToNovember() {
@@ -452,8 +452,8 @@ describe('Dashboard normalized timeline path', () => {
     // Bereich, und der Test prueft genau das.
     const bereiche = queries.flatMap(query =>
       (query.or as ReturnType<typeof vi.fn>).mock.calls.map(call => call[0] as string))
-    expect(faengtSchluessel(bereiche, 'timeline-cycle@2026-09-18T06:00:00.000Z')).toBe(true)
-    expect(faengtSchluessel(bereiche, 'timeline-cycle@2026-11-18T07:00:00.000Z')).toBe(true)
+    expect(faengtSchluessel(bereiche, 'timeline-cycle@2026-09-18T08:00')).toBe(true)
+    expect(faengtSchluessel(bereiche, 'timeline-cycle@2026-11-18T08:00')).toBe(true)
     // Und die Adresse bleibt handhabbar.
     expect(bereiche.every(ausdruck => ausdruck.length <= 8000)).toBe(true)
     if (kind === 'legacy') {
@@ -491,7 +491,7 @@ describe('Dashboard normalized timeline path', () => {
     const fixtures = zweiSlotsFixture()
     fixtures.dose_logs = [{
       ...pendingLog(), taken: true, logged_at: '2026-09-18T06:05:00.000Z',
-      routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+      routine_slot_key: 'timeline-cycle@2026-09-18T08:00',
     }]
     const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
     renderDashboard(client)
@@ -598,7 +598,7 @@ describe('Dashboard normalized timeline path', () => {
       versions: basis.versions.map(version => ({ ...version, effective_local_date: '2026-09-14' })),
     }]
     fixtures.dose_logs = [{ ...pendingLog(), taken: true, logged_at: '2026-09-16T06:05:00.000Z',
-      routine_slot_key: 'timeline-cycle@2026-09-16T06:00:00.000Z' }]
+      routine_slot_key: 'timeline-cycle@2026-09-16T08:00' }]
     const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
     await blattOeffnen(client)
 
@@ -677,7 +677,7 @@ describe('Dashboard normalized timeline path', () => {
     // Sie wird entschieden und fällt aus den offenen Slots.
     fixtures.dose_logs = [{ ...pendingLog(), taken: false, stack_item_id: 'stack-2',
       cycle_id: 'zyklus-zwei', plan_version_id: 'version-zwei',
-      routine_slot_key: 'zyklus-zwei@2026-09-18T06:00:00.000Z' }]
+      routine_slot_key: 'zyklus-zwei@2026-09-18T08:00' }]
     fireEvent.click(within(zweite).getByRole('button', { name: 'uebersprungen' }))
 
     // Es bleibt eine aufgeklappt, und zwar eine andere — nicht keine.
@@ -697,10 +697,10 @@ describe('Dashboard normalized timeline path', () => {
     const morgens = [...document.querySelectorAll('[data-due-row]')].slice(0, 2)
     fireEvent.click(morgens[1].querySelector('[data-due-item]') as HTMLElement)
     fixtures.dose_logs = [
-      { ...pendingLog(), taken: false, routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z' },
+      { ...pendingLog(), taken: false, routine_slot_key: 'timeline-cycle@2026-09-18T08:00' },
       { ...pendingLog(), id: 'pending-zwei', stack_item_id: 'stack-2', taken: false,
         cycle_id: 'zyklus-zwei', plan_version_id: 'version-zwei',
-        routine_slot_key: 'zyklus-zwei@2026-09-18T06:00:00.000Z' },
+        routine_slot_key: 'zyklus-zwei@2026-09-18T08:00' },
     ]
     fireEvent.click(within(morgens[1] as HTMLElement).getByRole('button', { name: 'uebersprungen' }))
 
@@ -826,10 +826,10 @@ describe('Dashboard normalized timeline path', () => {
     // Tag, an dem eine Einnahme bewusst ausgelassen wurde.
     const fixtures = zweiMorgensFixture()
     fixtures.dose_logs = [
-      { ...pendingLog(), taken: true, routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z' },
+      { ...pendingLog(), taken: true, routine_slot_key: 'timeline-cycle@2026-09-18T08:00' },
       { ...pendingLog(), id: 'pending-zwei', stack_item_id: 'stack-2', taken: false,
         cycle_id: 'zyklus-zwei', plan_version_id: 'version-zwei',
-        routine_slot_key: 'zyklus-zwei@2026-09-18T06:00:00.000Z' },
+        routine_slot_key: 'zyklus-zwei@2026-09-18T08:00' },
     ]
     const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
     renderDashboard(client)
@@ -911,8 +911,8 @@ describe('Dashboard normalized timeline path', () => {
     expect(screen.queryByRole('button', { name: /Alle als eingenommen/ })).toBeNull()
     const refreshedKeys: string[] = client.logQueries.slice(queriesBeforeCompletion)
       .flatMap(query => (query.or as ReturnType<typeof vi.fn>).mock.calls.map(call => call[0] as string))
-    expect(faengtSchluessel(refreshedKeys, 'timeline-cycle@2026-11-18T07:00:00.000Z')).toBe(true)
-    expect(faengtSchluessel(refreshedKeys, 'timeline-cycle@2026-09-18T06:00:00.000Z')).toBe(true)
+    expect(faengtSchluessel(refreshedKeys, 'timeline-cycle@2026-11-18T08:00')).toBe(true)
+    expect(faengtSchluessel(refreshedKeys, 'timeline-cycle@2026-09-18T08:00')).toBe(true)
   })
 
   it('preserves a committed group inventory-only retry after month navigation', async () => {
@@ -953,7 +953,7 @@ describe('Dashboard normalized timeline path', () => {
     fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Alle als eingenommen markieren' }))
     await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
       p_entries: [expect.objectContaining({ dose_log_id: 'pending-exact',
-        slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z', logged_at: '2026-09-18T06:00:00.000Z' })],
+        slot_key: 'timeline-cycle@2026-09-18T08:00', logged_at: '2026-09-18T06:00:00.000Z' })],
     }))
   })
 
@@ -979,7 +979,7 @@ describe('Dashboard normalized timeline path', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Eingenommen' }))
     await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
       p_entries: [expect.objectContaining({ dose_log_id: pending ? 'pending-exact' : null,
-        plan_version_id: 'afternoon-version', slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+        plan_version_id: 'afternoon-version', slot_key: 'timeline-cycle@2026-09-18T08:00',
         logged_at: '2026-09-18T14:00:00.000Z' })],
     }))
     expect(client.mutations).toEqual([])
@@ -996,7 +996,7 @@ describe('Dashboard normalized timeline path', () => {
       p_entries: [expect.objectContaining({
         dose_log_id: pending ? 'pending-exact' : null,
         plan_version_id: 'timeline-version',
-        slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+        slot_key: 'timeline-cycle@2026-09-18T08:00',
         logged_at: pending ? '2026-09-18T07:00:00.000Z' : '2026-09-18T06:00:00.000Z',
         taken: false,
       })],
@@ -1085,7 +1085,7 @@ describe('Dashboard normalized timeline path', () => {
   it('fetches keyed coverage independently when actual time moved outside the month', async () => {
     const fixtures = startFixFixture('Täglich', '2026-09-01T14:00:00Z')
     fixtures.dose_logs = [{ ...pendingLog(), taken: true,
-      logged_at: '2026-08-30T21:00:00.000Z', routine_slot_key: 'timeline-cycle@2026-09-01T06:00:00.000Z' }]
+      logged_at: '2026-08-30T21:00:00.000Z', routine_slot_key: 'timeline-cycle@2026-09-01T08:00' }]
     const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
     renderDashboard(client)
     await waitFor(() => expect(screen.getByText('Alle geplanten Einnahmen sind bestätigt.')).toBeTruthy())

@@ -7,10 +7,11 @@ import {
   skipIntakeGroupsInBatches,
   type IntakeConfirmationClient,
 } from './intakeConfirmation'
+import { slotSchluesselFuerZeitpunkt } from '../lib/slotKey'
 
 function entry(overrides: Partial<RoutineConfirmationEntry> = {}): RoutineConfirmationEntry {
-  return {
-    key: 'd3',
+  const basis: RoutineConfirmationEntry = {
+    key: '',
     cycleId: 'cycle-d3',
     planVersionId: 'version-d3',
     pendingLogId: null,
@@ -27,6 +28,15 @@ function entry(overrides: Partial<RoutineConfirmationEntry> = {}): RoutineConfir
     actualDose: null,
     actualUnit: null,
     ...overrides,
+  }
+  // `key` ist die Identitaet des Platzes im Plan, und `confirmIntakeGroup`
+  // weist alles zurueck, was kein Slot-Schluessel dieses Zyklus ist. Hier
+  // stand frueher ein Kuerzel wie `d3` -- damit prueften die Faelle unten
+  // etwas, das es in der App nie gab, und die Ecke, an der eine falsche
+  // Identitaet eine zweite Zeile anlegt, blieb ungedeckt.
+  return {
+    ...basis,
+    key: overrides.key ?? slotSchluesselFuerZeitpunkt(basis.cycleId, basis.scheduledAt, 'Europe/Berlin'),
   }
 }
 
@@ -53,7 +63,6 @@ describe('confirmIntakeGroup', () => {
     const result = await confirmIntakeGroup(client, [
       entry(),
       entry({
-        key: 'zinc',
         cycleId: 'cycle-zinc',
         planVersionId: null,
         pendingLogId: 'pending-zinc',
@@ -65,7 +74,7 @@ describe('confirmIntakeGroup', () => {
         actualDose: 30,
         actualUnit: 'mg',
       }),
-      entry({ key: 'off', cycleId: 'cycle-off', selected: false }),
+      entry({ cycleId: 'cycle-off', selected: false }),
     ])
 
     expect(result).toEqual(['log-d3', 'log-zinc'])
@@ -78,7 +87,7 @@ describe('confirmIntakeGroup', () => {
             plan_version_id: 'version-d3',
             timezone: 'Europe/Berlin',
             dose_log_id: null,
-            slot_key: 'cycle-d3@2026-07-29T08:00:00.000Z',
+            slot_key: 'cycle-d3@2026-07-29T10:00',
             stack_item_id: 'stack-d3',
             dose: null,
             unit: null,
@@ -91,7 +100,7 @@ describe('confirmIntakeGroup', () => {
             plan_version_id: null,
             timezone: 'Europe/Berlin',
             dose_log_id: 'pending-zinc',
-            slot_key: 'cycle-zinc@2026-07-29T08:00:00.000Z',
+            slot_key: 'cycle-zinc@2026-07-29T10:00',
             stack_item_id: 'stack-zinc',
             dose: 30,
             unit: 'mg',
@@ -135,11 +144,35 @@ describe('confirmIntakeGroup', () => {
     expect(rpc).toHaveBeenCalledWith('confirm_intake_group', {
       p_entries: [expect.objectContaining({
         dose_log_id: 'pending-d3',
-        slot_key: 'cycle-d3@2026-07-29T08:00:00.000Z',
+        slot_key: 'cycle-d3@2026-07-29T10:00',
         logged_at: '2026-07-29T08:15:00.000Z',
         taken: false,
       })],
     })
+  })
+
+  it('nimmt den geplanten Schluessel und baut ihn nur fuer den alten Zweig', async () => {
+    // Zwei Herkuenfte, zwei Regeln. Unter der Zeitleiste traegt `key` die
+    // geplante Wanduhr -- die reist mit und muss unveraendert durchgereicht
+    // werden. Der alte Home-Zweig baut statt eines Schluessels ein Kuerzel
+    // aus Zyklus und Minute; dort wird der Schluessel aus dem Zeitpunkt
+    // gebaut, sonst landete `cycle-1-480` in einer Spalte mit Unique-Index.
+    const gesendet: string[] = []
+    const rpc = vi.fn(async (_name: string, params: { p_entries: { slot_key: string }[] }) => {
+      gesendet.push(params.p_entries[0]!.slot_key)
+      return { data: [{ id: 'log-1' }], error: null }
+    })
+
+    await confirmIntakeGroup({ rpc } as never, [entry({ key: 'cycle-d3@2026-07-29T08:00' })])
+    expect(gesendet.at(-1)).toBe('cycle-d3@2026-07-29T08:00')
+
+    await confirmIntakeGroup({ rpc } as never, [entry({ key: 'cycle-d3-480' })])
+    // 2026-07-29T08:00Z ist in Berlin 10:00 -- aus dem Zeitpunkt gebaut.
+    expect(gesendet.at(-1)).toBe('cycle-d3@2026-07-29T10:00')
+
+    // Auch ein Schluessel mit fremdem Zyklus gilt nicht als Planung.
+    await confirmIntakeGroup({ rpc } as never, [entry({ key: 'cycle-fremd@2026-07-29T08:00' })])
+    expect(gesendet.at(-1)).toBe('cycle-d3@2026-07-29T10:00')
   })
 
   it('splits a large automatic missed-intake backlog into sequential bounded RPC calls', async () => {
@@ -148,7 +181,6 @@ describe('confirmIntakeGroup', () => {
       error: null,
     }))
     const entries = Array.from({ length: 5 }, (_, index) => entry({
-      key: `entry-${index}`,
       cycleId: `cycle-${index}`,
       stackItemId: `stack-${index}`,
       scheduledAt: `2026-07-${String(20 + index).padStart(2, '0')}T08:00:00.000Z`,
@@ -173,7 +205,7 @@ describe('confirmIntakeGroup', () => {
     })])
     expect(rpc).toHaveBeenCalledWith('confirm_intake_group', {
       p_entries: [expect.objectContaining({
-        slot_key: 'cycle-d3@2026-07-29T08:00:00.000Z',
+        slot_key: 'cycle-d3@2026-07-29T10:00',
         logged_at: '2026-07-29T16:00:00.000Z',
         plan_version_id: 'version-afternoon',
       })],
@@ -204,8 +236,8 @@ describe('confirmIntakeGroup', () => {
     await expect(confirmIntakeGroup(client, [entry()])).rejects.toThrow('response lost')
     await expect(confirmIntakeGroup(client, [entry()])).resolves.toEqual(['committed-log'])
     expect(slotKeys).toEqual([
-      'cycle-d3@2026-07-29T08:00:00.000Z',
-      'cycle-d3@2026-07-29T08:00:00.000Z',
+      'cycle-d3@2026-07-29T10:00',
+      'cycle-d3@2026-07-29T10:00',
     ])
   })
 

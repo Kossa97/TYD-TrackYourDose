@@ -18,6 +18,7 @@ import {
 } from './intakeSchedule'
 import { debitPeptideStockForDoseById as debitVialStockForDoseById } from '../features/my-stack/extensions/peptide/vialStock'
 import type { InjectionLog3D, InjectionPinDraft, SelectableInjectionCycle } from './injectionLogTypes'
+import { istSlotSchluessel } from '../features/routines/lib/slotKey'
 
 const INJECTABLE_METHODS = ['Subkutan', 'IntramuskulÃ¤r', 'Intramuskulaer']
 const NORMALIZED_INJECTABLE_METHODS = [...INJECTABLE_METHODS, 'Intramuskulär']
@@ -564,8 +565,16 @@ export async function confirmIntakeDoseLog(
   },
 ): Promise<string> {
   if (FEATURES.planTimelineV2) {
+    // Frueher stand hier ein Vergleich gegen den aus `scheduledAt`
+    // gerechneten Zeitpunkt. Der Schluessel traegt jetzt die Wanduhr der
+    // Planung, und die stimmt unterwegs bewusst nicht mit der Uhr am
+    // Aufenthaltsort ueberein -- der Vergleich haette genau die Reise
+    // blockiert, deretwegen das Format gewechselt ist. Geprueft wird, was
+    // hier zu pruefen ist: dass der Schluessel zu diesem Zyklus gehoert und
+    // nicht erfunden ist. Ob er einen offenen Platz trifft, entscheidet der
+    // Upsert in der Datenbank.
     if (!input.cycleId || !input.planVersionId || !input.scheduledAt
-      || input.routineSlotKey !== `${input.cycleId}@${new Date(input.scheduledAt).toISOString()}`) {
+      || !istSlotSchluessel(input.routineSlotKey, input.cycleId)) {
       throw new Error('Injection occurrence provenance unavailable')
     }
     const timelines = await loadCycleTimelines(supabase as never, input.userId)

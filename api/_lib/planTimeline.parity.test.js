@@ -153,7 +153,7 @@ const CASES = [
     expected: [{
       cycleId: 'c1', stackItemId: 's1', planVersionId: 'newer-fold',
       scheduledAt: '2026-10-25T02:00:00.000Z',
-      routineSlotKey: 'c1@2026-10-25T02:00:00.000Z', slotKey: 'custom',
+      routineSlotKey: 'c1@2026-10-25T03:00', slotKey: 'custom',
       localDate: '2026-10-25', time: '03:00', minutes: 180,
       dose: 20, unit: 'mg', method: 'oral',
     }],
@@ -169,7 +169,7 @@ const CASES = [
     expected: [{
       cycleId: 'c1', stackItemId: 's1', planVersionId: 'new',
       scheduledAt: '2026-06-15T06:00:00.000Z',
-      routineSlotKey: 'c1@2026-06-15T06:00:00.000Z', slotKey: 'morgens',
+      routineSlotKey: 'c1@2026-06-15T08:00', slotKey: 'morgens',
       localDate: '2026-06-15', time: '08:00', minutes: 480,
       dose: 20, unit: 'mg', method: 'oral',
     }],
@@ -190,14 +190,14 @@ const CASES = [
       {
         cycleId: 'c1', stackItemId: 's1', planVersionId: 'old',
         scheduledAt: '2026-06-15T06:00:00.000Z',
-        routineSlotKey: 'c1@2026-06-15T06:00:00.000Z', slotKey: 'morgens',
+        routineSlotKey: 'c1@2026-06-15T08:00', slotKey: 'morgens',
         localDate: '2026-06-15', time: '08:00', minutes: 480,
         dose: 5, unit: 'mg', method: 'oral',
       },
       {
         cycleId: 'c1', stackItemId: 's1', planVersionId: 'new',
         scheduledAt: '2026-06-15T18:00:00.000Z',
-        routineSlotKey: 'c1@2026-06-15T18:00:00.000Z', slotKey: 'abends',
+        routineSlotKey: 'c1@2026-06-15T20:00', slotKey: 'abends',
         localDate: '2026-06-15', time: '20:00', minutes: 1200,
         dose: 16, unit: 'ml', method: 'injection',
       },
@@ -224,7 +224,7 @@ const CASES = [
     expected: [{
       cycleId: 'c1', stackItemId: 's1', planVersionId: 'v1',
       scheduledAt: '2026-06-15T18:00:00.000Z',
-      routineSlotKey: 'c1@2026-06-15T18:00:00.000Z', slotKey: 'abends',
+      routineSlotKey: 'c1@2026-06-15T20:00', slotKey: 'abends',
       localDate: '2026-06-15', time: '20:00', minutes: 1200,
       dose: 10, unit: 'mg', method: 'oral',
     }],
@@ -244,7 +244,7 @@ const CASES = [
     expected: [{
       cycleId: 'c1', stackItemId: 's1', planVersionId: 'berlin',
       scheduledAt: '2026-06-15T06:15:00.000Z',
-      routineSlotKey: 'c1@2026-06-15T06:15:00.000Z', slotKey: 'custom',
+      routineSlotKey: 'c1@2026-06-15T08:15', slotKey: 'custom',
       localDate: '2026-06-15', time: '08:15', minutes: 495,
       dose: 10, unit: 'mg', method: 'oral',
     }],
@@ -257,7 +257,7 @@ const CASES = [
     expected: [{
       cycleId: 'c1', stackItemId: 's1', planVersionId: 'new-york',
       scheduledAt: '2026-06-15T12:15:00.000Z',
-      routineSlotKey: 'c1@2026-06-15T12:15:00.000Z', slotKey: 'custom',
+      routineSlotKey: 'c1@2026-06-15T08:15', slotKey: 'custom',
       localDate: '2026-06-15', time: '08:15', minutes: 495,
       dose: 10, unit: 'mg', method: 'oral',
     }],
@@ -270,7 +270,7 @@ const CASES = [
     expected: [{
       cycleId: 'c1', stackItemId: 's1', planVersionId: 'spring',
       scheduledAt: '2026-03-29T01:00:00.000Z',
-      routineSlotKey: 'c1@2026-03-29T01:00:00.000Z', slotKey: 'custom',
+      routineSlotKey: 'c1@2026-03-29T02:30', slotKey: 'custom',
       localDate: '2026-03-29', time: '03:00', minutes: 180,
       dose: 10, unit: 'mg', method: 'oral',
     }],
@@ -283,7 +283,7 @@ const CASES = [
     expected: [{
       cycleId: 'c1', stackItemId: 's1', planVersionId: 'fold',
       scheduledAt: '2026-10-25T00:30:00.000Z',
-      routineSlotKey: 'c1@2026-10-25T00:30:00.000Z', slotKey: 'custom',
+      routineSlotKey: 'c1@2026-10-25T02:30', slotKey: 'custom',
       localDate: '2026-10-25', time: '02:30', minutes: 150,
       dose: 10, unit: 'mg', method: 'oral',
     }],

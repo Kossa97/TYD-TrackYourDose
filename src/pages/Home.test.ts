@@ -581,7 +581,7 @@ describe('Home normalized timeline path', () => {
     const fixtures = startFixFixture()
     fixtures.dose_logs = [{ id: 'pending-exact', stack_item_id: 'stack-1', taken: null,
       logged_at: '2026-09-18T07:00:00.000Z', cycle_id: 'timeline-cycle',
-      plan_version_id: 'timeline-version', routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z' }]
+      plan_version_id: 'timeline-version', routine_slot_key: 'timeline-cycle@2026-09-18T08:00' }]
     const client = createHomeClient(fixtures)
     renderNormalized(client)
     fireEvent.click(await screen.findByRole('button', { name: /Vitamin D3/ }))
@@ -589,7 +589,7 @@ describe('Home normalized timeline path', () => {
     await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
       p_entries: [expect.objectContaining({
         cycle_id: 'timeline-cycle', plan_version_id: 'timeline-version',
-        dose_log_id: 'pending-exact', slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+        dose_log_id: 'pending-exact', slot_key: 'timeline-cycle@2026-09-18T08:00',
         logged_at: '2026-09-18T07:00:00.000Z', dose: 25, unit: 'mg', method: 'Oral', taken: false,
       })],
     }))
@@ -621,7 +621,7 @@ describe('Home normalized timeline path', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
     await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
       p_entries: [expect.objectContaining({ plan_version_id: 'version-afternoon',
-        slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z', logged_at: '2026-09-18T14:00:00.000Z' })],
+        slot_key: 'timeline-cycle@2026-09-18T08:00', logged_at: '2026-09-18T14:00:00.000Z' })],
     }))
   })
 
@@ -631,7 +631,7 @@ describe('Home normalized timeline path', () => {
       effective_kind: 'instant', effective_at: '2026-09-18T13:00:00Z', effective_local_date: null } as never)
     fixtures.dose_logs = [{ id: 'pending-exact', stack_item_id: 'stack-1', taken: null,
       logged_at: '2026-09-18T14:00:00.000Z', cycle_id: 'timeline-cycle',
-      plan_version_id: 'version-afternoon', routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z' }]
+      plan_version_id: 'version-afternoon', routine_slot_key: 'timeline-cycle@2026-09-18T08:00' }]
     const client = createHomeClient(fixtures)
     renderNormalized(client)
     fireEvent.click(await screen.findByRole('button', { name: /Vitamin D3/ }))
@@ -639,7 +639,7 @@ describe('Home normalized timeline path', () => {
     await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', {
       p_entries: [expect.objectContaining({
         plan_version_id: 'version-afternoon', logged_at: '2026-09-18T14:00:00.000Z',
-        slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z', taken: false,
+        slot_key: 'timeline-cycle@2026-09-18T08:00', taken: false,
       })],
     }))
     expect(client.mutationCalls).toEqual([])

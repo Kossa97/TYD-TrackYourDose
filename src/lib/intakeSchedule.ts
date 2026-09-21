@@ -6,6 +6,7 @@ import {
   type CyclePlanVersion,
   type CycleTimeline,
 } from './planTimeline'
+import { slotSchluessel } from '../features/routines/lib/slotKey'
 
 // Maps JS getDay() (0 = Sunday) to the German weekday codes stored on cycles.
 const WEEKDAYS_DE: Record<number, string> = { 1: 'Mo', 2: 'Di', 3: 'Mi', 4: 'Do', 5: 'Fr', 6: 'Sa', 0: 'So' }
@@ -38,7 +39,7 @@ export interface ResolvedTimelineIntake extends ResolvedScheduleSlot {
   method: string
   localDate: string
   scheduledAt: string
-  /** Stable confirmation key: `${cycleId}@${scheduledAt.toISOString()}`. */
+  /** Stable confirmation key: `${cycleId}@${localDate}T${HH:MM}` -- see `slotKey.ts`. */
   routineSlotKey: string
   pendingLogId: string | null
 }
@@ -310,7 +311,7 @@ export function resolveTimelineIntakesForDay(
 
     const scheduledAt = instant.toISOString()
     const clock = parsedClock(localDateTimeKey(instant, timeZone).slice(11, 16))!
-    const routineSlotKey = `${timeline.cycle.id}@${scheduledAt}`
+    const routineSlotKey = slotSchluessel(timeline.cycle.id, localDate, candidate.minutes)
 
     return [{
       ...activeSlot,

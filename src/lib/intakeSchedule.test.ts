@@ -136,9 +136,25 @@ describe('versioned timeline occurrences', () => {
     ['2026-10-25', '2026-10-25T00:30:00.000Z', '02:30'],
     ['2026-03-28', '2026-03-28T01:30:00.000Z', '02:30'],
   ])('resolves Berlin %s once with deterministic DST policy', (day, instant, time) => {
+    // Der Schluessel traegt die GEPLANTE Minute (02:30), nicht die
+    // aufgeloeste. Am 29.03. gibt es 02:30 lokal nicht, der Zeitpunkt landet
+    // auf 03:00 -- der Platz im Plan bleibt aber der 02:30-Slot. Trueg der
+    // Schluessel die aufgeloeste Uhrzeit, faende ein zusaetzlich geplanter
+    // 03:00-Slot an diesem einen Tag denselben Namen, und der Unique-Index
+    // machte aus zwei Einnahmen eine.
     expect(resolveTimelineIntakesForDay(dstTimeline, day, 'Europe/Berlin'))
-      .toMatchObject([{ scheduledAt: instant, time, routineSlotKey: `timeline-cycle@${instant}` }])
+      .toMatchObject([{ scheduledAt: instant, time, routineSlotKey: `timeline-cycle@${day}T02:30` }])
     expect(resolveTimelineIntakesForDay(dstTimeline, day, 'Europe/Berlin')).toHaveLength(1)
+  })
+
+  it('gibt dem 02:30-Slot ueber die Zeitumstellung hinweg immer denselben Namen', () => {
+    // Dieselbe Aussage noch einmal als eine Zeile: drei Tage, von denen einer
+    // die Stunde verliert und einer sie doppelt hat -- der Zeitteil des
+    // Schluessels ist an allen dreien 02:30.
+    const zeitteile = ['2026-03-28', '2026-03-29', '2026-10-25'].map(tag => (
+      resolveTimelineIntakesForDay(dstTimeline, tag, 'Europe/Berlin')[0]!.routineSlotKey.slice(-5)
+    ))
+    expect(zeitteile).toEqual(['02:30', '02:30', '02:30'])
   })
 
   it('collects missed slots across the Berlin spring gap without aborting', () => {
@@ -213,13 +229,13 @@ describe('versioned timeline collectors', () => {
     expect(collectOpenTimelineIntakes([planTimeline], [], berlinDay, 'Europe/Berlin'))
       .toMatchObject([
         {
-          key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+          key: 'timeline-cycle@2026-09-18T08:00',
           scheduledAt: '2026-09-18T06:00:00.000Z',
           planVersionId: 'timeline-v1',
           time: '08:00',
         },
         {
-          key: 'timeline-cycle@2026-09-18T18:00:00.000Z',
+          key: 'timeline-cycle@2026-09-18T20:00',
           scheduledAt: '2026-09-18T18:00:00.000Z',
           planVersionId: 'timeline-v2',
           time: '20:00',
@@ -247,7 +263,7 @@ describe('versioned timeline collectors', () => {
       id: 'edited', stack_item_id: 'timeline-stack-item', taken: true,
       logged_at: '2026-09-18T14:00:00.000Z', cycle_id: 'timeline-cycle',
       plan_version_id: 'timeline-v2',
-      routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+      routine_slot_key: 'timeline-cycle@2026-09-18T08:00',
     }]
     expect(collectOpenTimelineIntakes([planTimeline], logs, berlinDay, 'Europe/Berlin'))
       .toMatchObject([{ time: '20:00' }])
@@ -261,7 +277,7 @@ describe('versioned timeline collectors', () => {
       taken: null,
       cycle_id: 'timeline-cycle',
       plan_version_id: 'timeline-v2',
-      routine_slot_key: 'timeline-cycle@2026-09-18T18:00:00.000Z',
+      routine_slot_key: 'timeline-cycle@2026-09-18T20:00',
     }, {
       id: 'taken-morning',
       stack_item_id: 'timeline-stack-item',
@@ -269,7 +285,7 @@ describe('versioned timeline collectors', () => {
       taken: true,
       cycle_id: 'timeline-cycle',
       plan_version_id: 'timeline-v1',
-      routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+      routine_slot_key: 'timeline-cycle@2026-09-18T08:00',
     }]
 
     expect(collectOpenTimelineIntakes([planTimeline], logs, berlinDay, 'Europe/Berlin'))
@@ -287,7 +303,7 @@ describe('versioned timeline collectors', () => {
       taken: true,
       cycle_id: 'timeline-cycle',
       plan_version_id: 'timeline-v1',
-      routine_slot_key: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+      routine_slot_key: 'timeline-cycle@2026-09-18T08:00',
     }]
 
     expect(collectOpenTimelineIntakes([planTimeline], logs, berlinDay, 'Europe/Berlin'))
@@ -376,7 +392,7 @@ describe('versioned timeline collectors', () => {
     )).toMatchObject([{
       cycleId: 'timeline-cycle',
       planVersionId: 'timeline-v1',
-      routineSlotKey: 'timeline-cycle@2026-09-18T06:00:00.000Z',
+      routineSlotKey: 'timeline-cycle@2026-09-18T08:00',
       scheduledAt: '2026-09-18T06:00:00.000Z',
       minutes: 480,
     }])

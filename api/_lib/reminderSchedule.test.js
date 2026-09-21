@@ -94,7 +94,7 @@ describe('reminder evaluation from normalized occurrences', () => {
     expect(due).toEqual([expect.objectContaining({
       offset: 'on_time', cycleId: 'c1', stackItemId: 's1', planVersionId: 'old',
       scheduledAt: '2026-06-29T06:00:00.000Z',
-      routineSlotKey: 'c1@2026-06-29T06:00:00.000Z', slotKey: 'morgens',
+      routineSlotKey: 'c1@2026-06-29T08:00', slotKey: 'morgens',
       dose: 5, unit: 'mg', method: 'oral',
     })])
   })
@@ -178,14 +178,14 @@ describe('reminder worker boundary', () => {
   it('builds payload quantity and tag from the exact normalized occurrence', () => {
     const due = {
       offset: 'on_time', cycleId: 'c1', planVersionId: 'old',
-      routineSlotKey: 'c1@2026-06-29T06:00:00.000Z', time: '08:00',
+      routineSlotKey: 'c1@2026-06-29T08:00', time: '08:00',
       dose: 5, unit: 'mg',
     }
     expect(payloadFor(cycleRow(), due)).toEqual({
       title: '💊 Exact peptide',
       body: '5 mg · 08:00 Uhr – jetzt einnehmen',
       url: '/kalender',
-      tag: 'dose-c1@2026-06-29T06:00:00.000Z-on_time',
+      tag: 'dose-c1@2026-06-29T08:00-on_time',
     })
   })
 

@@ -1,5 +1,6 @@
 import type { RoutineConfirmationEntry } from '../intakeGroups'
 import { hasTrackedQuantity } from '../quantityPresentation'
+import { istSlotSchluessel, slotSchluesselFuerZeitpunkt } from '../lib/slotKey'
 
 interface ServiceError {
   message: string
@@ -63,7 +64,21 @@ async function decideIntakeGroup(
       plan_version_id: entry.planVersionId,
       timezone,
       dose_log_id: entry.pendingLogId,
-      slot_key: `${entry.cycleId}@${new Date(entry.scheduledAt).toISOString()}`,
+      // Der Schluessel kommt aus der Planung, wenn es eine gibt.
+      //
+      // Unter der Zeitleiste IST `key` der Slot-Schluessel -- er traegt die
+      // geplante Wanduhr, und die ist unabhaengig davon, wo das Geraet
+      // gerade steht. Genau das soll hier ankommen: wer unterwegs bestaetigt,
+      // trifft denselben Platz wie zu Hause.
+      //
+      // Der alte Zweig in `Home.tsx` (ohne Planversionen) baut dagegen ein
+      // Kuerzel aus Zyklus und Minute -- `cycle-1-480`. Das ist kein
+      // Schluessel, also wird er dort aus dem Zeitpunkt gebaut. Der Fall
+      // stirbt mit dem alten Zweig; bis dahin darf er nicht mitgerissen
+      // werden.
+      slot_key: istSlotSchluessel(entry.key, entry.cycleId)
+        ? entry.key
+        : slotSchluesselFuerZeitpunkt(entry.cycleId, entry.scheduledAt, timezone),
       stack_item_id: entry.stackItemId,
       dose: entry.trackingLevel === 'intake_only' ? null : entry.actualDose,
       unit: entry.trackingLevel === 'intake_only' ? null : entry.actualUnit,

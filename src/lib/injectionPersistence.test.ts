@@ -30,7 +30,7 @@ describe('normalized injection provenance', () => {
       slot_days: null, dose: 1, unit: 'mg', method: 'Subkutan' }], pauses: [],
   }
   const pending = { id: 'log-1', stack_item_id: 's1', cycle_id: 'c1', plan_version_id: 'v1',
-    routine_slot_key: 'c1@2026-09-19T06:00:00.000Z', logged_at: '2026-09-19T06:15:00.000Z',
+    routine_slot_key: 'c1@2026-09-19T08:00', logged_at: '2026-09-19T06:15:00.000Z',
     taken: null, dose: 250, unit: 'mcg', method: 'Intramuskulaer' }
   function build(logs: any[] = [], timelines = [timeline]) {
     ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
@@ -48,7 +48,7 @@ describe('normalized injection provenance', () => {
   }
   it('carries exact version and stable slot identity for an open normalized occurrence', () => {
     expect(build()).toEqual([expect.objectContaining({ cycleId: 'c1', planVersionId: 'v1',
-      routineSlotKey: 'c1@2026-09-19T06:00:00.000Z', scheduledAt: '2026-09-19T06:00:00.000Z', dose: 1, unit: 'mg' })])
+      routineSlotKey: 'c1@2026-09-19T08:00', scheduledAt: '2026-09-19T06:00:00.000Z', dose: 1, unit: 'mg' })])
   })
   it('keeps pending snapshot quantity and method without changing occurrence identity', () => {
     expect(build([pending])).toEqual([expect.objectContaining({ doseLogId: 'log-1', dose: 250, unit: 'mcg',
@@ -79,10 +79,10 @@ describe('normalized injection provenance', () => {
     const from = timelineReader()
     await expect(confirmIntakeDoseLog({ rpc, from } as never, { userId: 'u', stackItemId: 's1', dose: 250, unit: 'mcg',
       method: 'Subkutan', loggedAt: '2026-09-19T06:15:00Z', scheduledAt: '2026-09-19T06:00:00.000Z',
-      cycleId: 'c1', planVersionId: 'v1', routineSlotKey: 'c1@2026-09-19T06:00:00.000Z',
+      cycleId: 'c1', planVersionId: 'v1', routineSlotKey: 'c1@2026-09-19T08:00',
       doseLogId: 'pending', debitVialStock: false } as never)).resolves.toBe('saved')
     expect(rpc).toHaveBeenCalledWith('confirm_intake_group', { p_entries: [expect.objectContaining({ cycle_id: 'c1',
-      plan_version_id: 'v1', slot_key: 'c1@2026-09-19T06:00:00.000Z', dose_log_id: 'pending', logged_at: '2026-09-19T06:15:00Z' })] })
+      plan_version_id: 'v1', slot_key: 'c1@2026-09-19T08:00', dose_log_id: 'pending', logged_at: '2026-09-19T06:15:00Z' })] })
     expect(from.mock.calls.every(([table]) => table === 'cycles')).toBe(true)
   })
   it('resolves the version at edited actual time while retaining the morning occurrence key', async () => {
@@ -99,11 +99,11 @@ describe('normalized injection provenance', () => {
     await expect(confirmIntakeDoseLog({ rpc, from: timelineReader([foreign, changed]) } as never, {
       userId: 'u', stackItemId: 's1', dose: 1, unit: 'mg', method: 'Subkutan',
       loggedAt: '2026-09-19T11:00:00Z', scheduledAt: '2026-09-19T06:00:00.000Z',
-      cycleId: 'c1', planVersionId: 'v1', routineSlotKey: 'c1@2026-09-19T06:00:00.000Z',
+      cycleId: 'c1', planVersionId: 'v1', routineSlotKey: 'c1@2026-09-19T08:00',
       doseLogId: 'pending', debitVialStock: false,
     })).resolves.toBe('saved')
     expect(rpc).toHaveBeenCalledWith('confirm_intake_group', { p_entries: [expect.objectContaining({
-      plan_version_id: 'v2', slot_key: 'c1@2026-09-19T06:00:00.000Z', logged_at: '2026-09-19T11:00:00Z',
+      plan_version_id: 'v2', slot_key: 'c1@2026-09-19T08:00', logged_at: '2026-09-19T11:00:00Z',
     })] })
   })
   it.each(['paused', 'versionless', 'missing'])('rejects actual-time confirmation for a %s timeline', async state => {
@@ -115,7 +115,7 @@ describe('normalized injection provenance', () => {
     await expect(confirmIntakeDoseLog({ rpc, from: timelineReader(state === 'missing' ? [] : [value]) } as never, {
       userId: 'u', stackItemId: 's1', dose: 1, unit: 'mg', method: 'Subkutan', loggedAt: '2026-09-19T11:00:00Z',
       scheduledAt: '2026-09-19T06:00:00.000Z', cycleId: 'c1', planVersionId: 'v1',
-      routineSlotKey: 'c1@2026-09-19T06:00:00.000Z', debitVialStock: false,
+      routineSlotKey: 'c1@2026-09-19T08:00', debitVialStock: false,
     })).rejects.toThrow(/timeline|version/)
     expect(rpc).not.toHaveBeenCalled()
   })

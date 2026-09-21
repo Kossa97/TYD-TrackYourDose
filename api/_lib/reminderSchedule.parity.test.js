@@ -59,7 +59,7 @@ describe('normalized app/reminder parity', () => {
       60,
     )
 
-    expect(appOccurrence.routineSlotKey).toBe('c1@2026-10-25T00:30:00.000Z')
+    expect(appOccurrence.routineSlotKey).toBe('c1@2026-10-25T02:30')
     expect(reminders).toEqual([{ ...appOccurrence, offset: 'on_time' }])
   })
 })
