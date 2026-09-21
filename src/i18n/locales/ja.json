@@ -1244,10 +1244,11 @@
   "due_intakes_count": "{{n}} 件の記録",
   "due_later_today": "その日の後半",
   "due_step_through": "1件ずつ確認",
-  "due_check_quantity": "量を確認して記録",
   "due_confirm_with_injection": "注射として記録",
   "due_still_open": "未記録",
   "all_intakes_logged": "この日はすべて記録済みです。",
   "dose_reopen": "記録を取り消す",
-  "dose_reopen_success": "記録を取り消しました"
+  "dose_reopen_success": "記録を取り消しました",
+  "due_dose_override": "今回だけ用量を変更",
+  "due_back_to_overview": "一覧に戻る"
 }

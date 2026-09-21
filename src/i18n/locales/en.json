@@ -1391,10 +1391,11 @@
   "due_intakes_count": "{{n}} intakes",
   "due_later_today": "Later that day",
   "due_step_through": "Go through one by one",
-  "due_check_quantity": "Check amount and confirm",
-  "due_confirm_with_injection": "Confirm with injection",
+  "due_confirm_with_injection": "Track with injection",
   "due_still_open": "Still open",
   "all_intakes_logged": "Everything is logged for this day.",
   "dose_reopen": "Reopen",
-  "dose_reopen_success": "Intake reopened"
+  "dose_reopen_success": "Intake reopened",
+  "due_dose_override": "One-time dose change",
+  "due_back_to_overview": "Back to overview"
 }

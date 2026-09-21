@@ -1244,10 +1244,11 @@
   "due_intakes_count": "{{n}} tomas",
   "due_later_today": "Mais tarde nesse dia",
   "due_step_through": "Rever uma a uma",
-  "due_check_quantity": "Verificar a quantidade e confirmar",
-  "due_confirm_with_injection": "Confirmar com injeção",
+  "due_confirm_with_injection": "Registar com injeção",
   "due_still_open": "Ainda pendentes",
   "all_intakes_logged": "Tudo está registado para este dia.",
   "dose_reopen": "Reabrir",
-  "dose_reopen_success": "Toma reaberta"
+  "dose_reopen_success": "Toma reaberta",
+  "due_dose_override": "Alteração pontual da dose",
+  "due_back_to_overview": "Voltar à vista geral"
 }

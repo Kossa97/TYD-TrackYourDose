@@ -341,8 +341,10 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const [routineGroupSheet, setRoutineGroupSheet] = useState<RoutineGroupModel | null>(null)
   const [confirmTime, setConfirmTime]   = useState('')
   const [completedExpanded, setCompletedExpanded] = useState(false)
-  /** Schluessel der Gruppe, die einzeln durchgegangen wird — oder null. */
-  const [gruppeEinzeln, setGruppeEinzeln] = useState<string | null>(null)
+  /** Die gross gezeigte Einnahme — oder null fuer die voreingestellte.
+   *  Mit Gruppe, damit nach einer Bestaetigung klar ist, wo es weitergeht. */
+  const [grossAngezeigt, setGrossAngezeigt] = useState<{ slot: string; gruppe: string } | null>(null)
+  const heldFlaeche = useRef<HTMLDivElement>(null)
   const [inventoryRetryIds, setInventoryRetryIds] = useState<string[]>([])
   const [monatOffen, setMonatOffen] = useState(false)
   const monatsKnopf = useRef<HTMLButtonElement>(null)
@@ -978,20 +980,52 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   // Tageszeit.
   const offeneGruppen = duePeriodCarousels.filter(periode => periode.slots.length > 0)
   const heldGruppe = offeneGruppen[0] ?? null
-  const spaetereGruppen = offeneGruppen.slice(1)
-  // Ab zwei Einnahmen im selben Zeitfenster ist die GRUPPE der Held, nicht die
-  // einzelne Substanz — sonst muesste man denselben Knopf zehnmal druecken.
-  // „Einzeln durchgehen" klappt sie auf, und zwar nur fuer diese eine Gruppe.
-  const heldEinzeln = heldGruppe !== null
-    && (heldGruppe.slots.length === 1 || gruppeEinzeln === heldGruppe.key)
-  // Im Einzeln-Modus ist nur die erste Einnahme der Held. Die uebrigen der
-  // GLEICHEN Gruppe muessen darunter auftauchen — `spaetereGruppen` laesst die
-  // Heldengruppe ja aus, sonst stuenden sie nirgends mehr.
-  const restDerHeldenGruppe = heldEinzeln && heldGruppe ? heldGruppe.slots.slice(1) : []
+  // Jede offene Einnahme kann die grosse Ansicht bekommen — aber nur eine auf
+  // einmal, und nur auf Antippen. Voreingestellt ist die erste offene; tippt
+  // man eine andere an, wandert die grosse Ansicht dorthin und die bisherige
+  // wird zur Zeile.
+  const alleOffenenSlots = offeneGruppen.flatMap(gruppe => (
+    gruppe.slots.map(slot => ({ slot, gruppe }))
+  ))
+  const angetippt = grossAngezeigt
+    ? alleOffenenSlots.find(eintrag => eintrag.slot.key === grossAngezeigt.slot)
+      // Ist sie entschieden, ruecken wir in derselben Tageszeit weiter, statt
+      // zur Gruppenkarte zurueckzuspringen: „Einzeln durchgehen" soll durch
+      // ALLE gehen, nicht durch eine.
+      ?? alleOffenenSlots.find(eintrag => eintrag.gruppe.key === grossAngezeigt.gruppe)
+      ?? null
+    : null
+  // Ab zwei Einnahmen im selben Zeitfenster bleibt die GRUPPE voreingestellt
+  // — sonst muesste man denselben Knopf zehnmal druecken. Erst ein Tipp auf
+  // eine einzelne holt sie gross heraus.
+  const grossEintrag = angetippt
+    ?? (heldGruppe && heldGruppe.slots.length === 1
+      ? { slot: heldGruppe.slots[0], gruppe: heldGruppe }
+      : null)
+  // Alles, was nicht gross dasteht, steht als Zeile darunter — auch die
+  // uebrigen derselben Gruppe, die sonst nirgends mehr stuenden.
+  const uebrigeOffene = grossEintrag
+    ? alleOffenenSlots.filter(eintrag => eintrag.slot.key !== grossEintrag.slot.key)
+    : alleOffenenSlots.filter(eintrag => eintrag.gruppe.key !== heldGruppe?.key)
+  // Holt man eine Abendeinnahme gross heraus, stehen die Morgendlichen
+  // darunter — „später an diesem Tag" waere dann schlicht falsch.
+  const heldPosition = offeneGruppen.findIndex(
+    gruppe => gruppe.key === (grossEintrag?.gruppe ?? heldGruppe)?.key,
+  )
+  const allesUebrigeSpaeter = uebrigeOffene.every(eintrag => (
+    offeneGruppen.findIndex(gruppe => gruppe.key === eintrag.gruppe.key) > heldPosition
+  ))
 
   useEffect(() => {
-    setGruppeEinzeln(null)
+    setGrossAngezeigt(null)
   }, [selectedDay])
+
+  // Der angetippte Knopf verschwindet mit dem Antippen — die Zeile wandert ja
+  // nach oben. Ohne dies faellt der Fokus auf `body`: die naechste Tab-Taste
+  // faengt von vorn an, und nichts sagt an, was jetzt dasteht.
+  useEffect(() => {
+    if (grossAngezeigt) heldFlaeche.current?.focus()
+  }, [grossAngezeigt])
 
   useEffect(() => {
     if (location.hash !== '#due-intakes') return
@@ -1505,21 +1539,20 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     )
   }
 
-  /** Die eine Einnahme, gross: Name, Menge, ein Knopf der alles sagt. */
-  const renderHeldEinnahme = (slot: DueSlot) => {
+  /** Die eine Einnahme, gross: Name, Menge, und die vier Wege damit umzugehen. */
+  const renderHeldEinnahme = (slot: DueSlot, gruppe: { routineGroup: RoutineGroupModel | null }) => {
     const c = slot.cycle
-    // Nur DIESE Einnahme vorlegen. `heldGruppe.routineGroup` traegt die ganze
-    // Tageszeit, jeder Eintrag vorausgewaehlt — im Einzeln-Modus haette der
-    // Knopf damit bestaetigt, was der Nutzer nie zu Gesicht bekam.
-    const gruppeDieserEinnahme = heldGruppe?.routineGroup
-      ? {
-          ...heldGruppe.routineGroup,
-          items: heldGruppe.routineGroup.items.filter(item => item.key === slot.key),
-        }
-      : null
     const { dose, unit } = resolveDashboardCycleQuantity(c, selectedDay, escalations, slot.dose)
     const mengeText = formatTrackedQuantity(dose, unit, String(t('quantity_not_tracked', { defaultValue: 'Menge nicht getrackt' })))
     const farbe = getStackItemColor(stackItems.findIndex(item => item.id === c.stack_item_id))
+    // Nur DIESE Einnahme vorlegen. Die Gruppe traegt die ganze Tageszeit, jeder
+    // Eintrag vorausgewaehlt — sonst bestaetigte der Knopf mit, was man nie zu
+    // Gesicht bekam.
+    const nurDiese = gruppe.routineGroup
+      ? { ...gruppe.routineGroup, items: gruppe.routineGroup.items.filter(item => item.key === slot.key) }
+      : null
+
+    const zweitKnopf = 'flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] text-sm font-semibold text-slate-300 transition-colors hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300'
 
     return (
       <div>
@@ -1537,42 +1570,27 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           <span className="font-normal text-slate-400"> · {c.method}</span>
         </p>
 
-        <button
-          type="button"
-          onClick={() => openConfirmSheet(c, slot.pendingLog ?? undefined, slot.time || undefined, slot.dose, slot.scheduledAt)}
-          className="mt-4 flex min-h-14 w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.17] text-base font-extrabold text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
-        >
-          <Check size={19} aria-hidden="true" />
-          {isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}
-        </button>
+        <div className="mt-4 space-y-2">
+          <button
+            type="button"
+            onClick={() => openConfirmSheet(c, slot.pendingLog ?? undefined, slot.time || undefined, slot.dose, slot.scheduledAt)}
+            className="flex min-h-14 w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.17] text-base font-extrabold text-emerald-300 transition-colors hover:bg-emerald-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+          >
+            <Check size={19} aria-hidden="true" />
+            {isPastSelected ? t('dose_mark_taken', { defaultValue: 'Doch eingenommen' }) : t('eingenommen')}
+          </button>
 
-        {/* Der Weg in die Gruppenbestaetigung bleibt auch fuer eine einzelne
-            Einnahme offen: dort, und nur dort, laesst sich die Menge einmalig
-            abweichend eintragen. „Alle als eingenommen markieren" waere bei
-            einer Einnahme aber sinnloser Text, also heisst der Knopf hier nach
-            dem, was er tut. */}
-        <button
-          type="button"
-          onClick={() => {
-            routineCommitted.current = false
-            if (gruppeDieserEinnahme?.items.length) setRoutineGroupSheet(gruppeDieserEinnahme)
-          }}
-          className="mt-2 flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] text-[13px] font-semibold text-slate-300 transition-colors hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
-        >
-          {t('due_check_quantity', { defaultValue: 'Menge prüfen und bestätigen' })}
-        </button>
+          <button
+            type="button"
+            onClick={() => {
+              routineCommitted.current = false
+              if (nurDiese?.items.length) setRoutineGroupSheet(nurDiese)
+            }}
+            className={zweitKnopf}
+          >
+            {t('due_dose_override', { defaultValue: 'Einmalige Dosisänderung' })}
+          </button>
 
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          {isInjectableMethod(c.method) && (
-            <button
-              type="button"
-              onClick={() => openInjectionTrackerForSlot(slot)}
-              className="flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] text-[13px] font-semibold text-slate-300 transition-colors hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
-            >
-              <Syringe size={14} aria-hidden="true" />
-              {t('due_confirm_with_injection', { defaultValue: 'Mit Injektion bestätigen' })}
-            </button>
-          )}
           <button
             type="button"
             onClick={() => FEATURES.planTimelineV2
@@ -1580,20 +1598,28 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
               : slot.pendingLog
                 ? confirmDose(slot.pendingLog, false, undefined, resolveDashboardCycleQuantity(c, selectedDay, escalations, slot.dose))
                 : confirmCycleDose(c, false, slot.scheduledAt, slot.dose)}
-            className={[
-              'flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] text-[13px] font-semibold text-slate-300 transition-colors hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300',
-              isInjectableMethod(c.method) ? '' : 'col-span-2',
-            ].filter(Boolean).join(' ')}
+            className={zweitKnopf}
           >
             {t('uebersprungen')}
           </button>
+
+          {isInjectableMethod(c.method) && (
+            <button
+              type="button"
+              onClick={() => openInjectionTrackerForSlot(slot)}
+              className={zweitKnopf}
+            >
+              <Syringe size={15} aria-hidden="true" />
+              {t('due_confirm_with_injection', { defaultValue: 'Mit Injektion tracken' })}
+            </button>
+          )}
         </div>
       </div>
     )
   }
 
-  /** Eine noch offene Einnahme spaeter am Tag: eine Zeile, kein Karussell. */
-  const renderOffeneZeile = (slot: DueSlot, periode: { icon: LucideIcon; label: string }) => {
+  /** Eine andere offene Einnahme: eine Zeile. Antippen holt sie gross heraus. */
+  const renderOffeneZeile = (slot: DueSlot, periode: { icon: LucideIcon; label: string; key: string }) => {
     const c = slot.cycle
     const { dose, unit } = resolveDashboardCycleQuantity(c, selectedDay, escalations, slot.dose)
     const farbe = getStackItemColor(stackItems.findIndex(item => item.id === c.stack_item_id))
@@ -1603,18 +1629,25 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       <div
         key={slot.key}
         data-due-row={slot.key}
-        className="flex items-center gap-3 rounded-2xl border px-3 py-2.5"
+        className="flex items-center gap-2 rounded-2xl border pr-2"
         style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
       >
-        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: farbe }} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-white">{c.stack_items?.display_name}</p>
-          <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-slate-400">
-            <PeriodenIcon size={11} aria-hidden="true" />
-            {slot.time || periode.label}
-            <span>· {formatTrackedQuantity(dose, unit, String(t('quantity_not_tracked', { defaultValue: 'Menge nicht getrackt' })))}</span>
-          </p>
-        </div>
+        <button
+          type="button"
+          data-due-item={slot.key}
+          onClick={() => setGrossAngezeigt({ slot: slot.key, gruppe: periode.key })}
+          className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-300"
+        >
+          <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: farbe }} />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold text-white">{c.stack_items?.display_name}</span>
+            <span className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-slate-400">
+              <PeriodenIcon size={11} aria-hidden="true" />
+              {slot.time || periode.label}
+              <span>· {formatTrackedQuantity(dose, unit, String(t('quantity_not_tracked', { defaultValue: 'Menge nicht getrackt' })))}</span>
+            </span>
+          </span>
+        </button>
         <button
           type="button"
           aria-label={`${c.stack_items?.display_name} ${String(t('eingenommen'))}`}
@@ -2013,8 +2046,10 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
             und die Quittung, wenn nichts mehr offen ist. */}
         {dueSlots.length > 0 && heldGruppe && (
           <div
+            ref={heldFlaeche}
+            tabIndex={-1}
             data-due-hero
-            className="mb-3 rounded-2xl border p-4"
+            className="mb-3 rounded-2xl border p-4 focus:outline-none"
             style={{
               borderColor: isPastSelected ? 'var(--border-strong)' : 'var(--accent-border)',
               background: isPastSelected
@@ -2044,16 +2079,29 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
               </div>
             ) : (
               <div className="mb-3 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-sky-300">
-                {(() => { const Ic = heldGruppe.icon; return <Ic size={14} aria-hidden="true" /> })()}
-                <span>{heldGruppe.label}</span>
-                {heldGruppe.slots[0]?.time && (
-                  <span className="text-sky-300/70">· {heldGruppe.slots[0].time}</span>
+                {(() => { const Ic = (grossEintrag?.gruppe ?? heldGruppe).icon; return <Ic size={14} aria-hidden="true" /> })()}
+                <span>{(grossEintrag?.gruppe ?? heldGruppe).label}</span>
+                {(grossEintrag?.slot ?? heldGruppe.slots[0])?.time && (
+                  <span className="text-sky-300/70">· {(grossEintrag?.slot ?? heldGruppe.slots[0]).time}</span>
                 )}
               </div>
             )}
 
-            {heldEinzeln
-              ? renderHeldEinnahme(heldGruppe.slots[0])
+            {/* Wer eine Einnahme angetippt hat, muss auch wieder zurueck
+                koennen — sonst sind „Alle bestaetigen" und „Einzeln
+                durchgehen" fuer den Rest des Tages unerreichbar. */}
+            {angetippt && alleOffenenSlots.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setGrossAngezeigt(null)}
+                className="mb-3 flex min-h-11 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-slate-300 transition-colors hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+              >
+                <ChevronLeft size={14} aria-hidden="true" />
+                {t('due_back_to_overview', { defaultValue: 'Zurück zur Übersicht' })}
+              </button>
+            )}
+            {grossEintrag
+              ? renderHeldEinnahme(grossEintrag.slot, grossEintrag.gruppe)
               : (
                 <>
                   <h3 className="text-2xl font-black leading-tight tracking-[-0.035em] text-white">
@@ -2061,25 +2109,32 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
                       defaultValue: '{{n}} Einnahmen', n: heldGruppe.slots.length,
                     })}
                   </h3>
+                  {/* Antippen holt diese eine Einnahme gross heraus. */}
                   <ul className="mt-3 divide-y rounded-xl" style={{ background: 'var(--surface-raised)', borderColor: 'var(--border)' }}>
-                    {heldGruppe.slots.map(slot => (
-                      <li key={slot.key} className="flex items-center gap-2.5 px-3 py-2.5">
-                        <span
-                          className="h-1.5 w-1.5 shrink-0 rounded-full"
-                          style={{ background: getStackItemColor(stackItems.findIndex(item => item.id === slot.cycle.stack_item_id)) }}
-                        />
-                        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-100">
-                          {slot.cycle.stack_items?.display_name}
-                        </span>
-                        <span className="shrink-0 text-xs text-slate-400">
-                          {formatTrackedQuantity(
-                            resolveDashboardCycleQuantity(slot.cycle, selectedDay, escalations, slot.dose).dose,
-                            resolveDashboardCycleQuantity(slot.cycle, selectedDay, escalations, slot.dose).unit,
-                            String(t('quantity_not_tracked', { defaultValue: 'Menge nicht getrackt' })),
-                          )}
-                        </span>
-                      </li>
-                    ))}
+                    {heldGruppe.slots.map(slot => {
+                      const menge = resolveDashboardCycleQuantity(slot.cycle, selectedDay, escalations, slot.dose)
+                      return (
+                        <li key={slot.key}>
+                          <button
+                            type="button"
+                            data-due-item={slot.key}
+                            onClick={() => setGrossAngezeigt({ slot: slot.key, gruppe: heldGruppe.key })}
+                            className="flex min-h-11 w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-300"
+                          >
+                            <span
+                              className="h-1.5 w-1.5 shrink-0 rounded-full"
+                              style={{ background: getStackItemColor(stackItems.findIndex(item => item.id === slot.cycle.stack_item_id)) }}
+                            />
+                            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-100">
+                              {slot.cycle.stack_items?.display_name}
+                            </span>
+                            <span className="shrink-0 text-xs text-slate-400">
+                              {formatTrackedQuantity(menge.dose, menge.unit, String(t('quantity_not_tracked', { defaultValue: 'Menge nicht getrackt' })))}
+                            </span>
+                          </button>
+                        </li>
+                      )
+                    })}
                   </ul>
                   <button
                     type="button"
@@ -2094,7 +2149,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setGruppeEinzeln(heldGruppe.key)}
+                    onClick={() => setGrossAngezeigt({ slot: heldGruppe.slots[0].key, gruppe: heldGruppe.key })}
                     className="mt-2 flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] text-sm font-semibold text-slate-300 transition-colors hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
                   >
                     {t('due_step_through', { defaultValue: 'Einzeln durchgehen' })}
@@ -2132,20 +2187,15 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         )}
 
         {/* ── Später heute ──────────────────────────────────────────────── */}
-        {(spaetereGruppen.length > 0 || restDerHeldenGruppe.length > 0) && (
+        {uebrigeOffene.length > 0 && (
           <div className="mb-3 space-y-2">
             <p className="px-1 text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-400">
               {/* An einem vergangenen Tag kommt nichts mehr „später". */}
-              {isPastSelected
+              {isPastSelected || !allesUebrigeSpaeter
                 ? t('due_still_open', { defaultValue: 'Noch offen' })
                 : t('due_later_today', { defaultValue: 'Später an diesem Tag' })}
             </p>
-            {heldGruppe && restDerHeldenGruppe.map(slot => renderOffeneZeile(slot, heldGruppe))}
-            {spaetereGruppen.map(periode => (
-              <div key={periode.key} className="space-y-2">
-                {periode.slots.map(slot => renderOffeneZeile(slot, periode))}
-              </div>
-            ))}
+            {uebrigeOffene.map(({ slot, gruppe }) => renderOffeneZeile(slot, gruppe))}
           </div>
         )}
 

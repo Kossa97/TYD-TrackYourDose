@@ -1391,10 +1391,11 @@
   "due_intakes_count": "{{n}} Einnahmen",
   "due_later_today": "Später an diesem Tag",
   "due_step_through": "Einzeln durchgehen",
-  "due_check_quantity": "Menge prüfen und bestätigen",
-  "due_confirm_with_injection": "Mit Injektion bestätigen",
+  "due_confirm_with_injection": "Mit Injektion tracken",
   "due_still_open": "Noch offen",
   "all_intakes_logged": "Für diesen Tag ist alles protokolliert.",
   "dose_reopen": "Wieder öffnen",
-  "dose_reopen_success": "Einnahme wieder geöffnet"
+  "dose_reopen_success": "Einnahme wieder geöffnet",
+  "due_dose_override": "Einmalige Dosisänderung",
+  "due_back_to_overview": "Zurück zur Übersicht"
 }
