@@ -2100,16 +2100,6 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   const invItem = activePeptide.inventory_item_id ? inventory.find(i => i.id === activePeptide.inventory_item_id) : null
                   const pCycles = cyclesOf(activePeptide.id)
                   const activeCycle = pCycles.find(c => c.active) ?? null
-                  const activeQuantity = activeCycle ? dosePlanViewFor(activeCycle).current : null
-                  const cycleStart = activeCycle ? parseISO(activeCycle.start_date) : null
-                  const cycleEnd = activeCycle?.end_date ? parseISO(activeCycle.end_date) : null
-                  const cycleDay = cycleStart ? Math.max(1, differenceInDays(new Date(), cycleStart) + 1) : null
-                  const cycleTotalDays = cycleStart && cycleEnd ? Math.max(1, differenceInDays(cycleEnd, cycleStart) + 1) : null
-                  const cycleDayLabel = cycleDay ? `${cycleDay} / ${cycleTotalDays ?? t('ende_offen')}` : '-'
-                  const activeIntake = activeCycle ? intakeLabel(activeCycle) : null
-                  const activeFrequency = activeCycle
-                    ? [freqLabel(activeCycle), activeIntake].filter(Boolean).join(' · ')
-                    : null
                   const notSet = 'Nicht gesetzt'
                   /**
                    * Die Angaben, nach Form ausgesucht.
@@ -2254,50 +2244,22 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         Angaben, nicht davor: erst was das IST (Substanz,
                         Zusammensetzung), dann was damit LAEUFT.
                         
-                        Alles, was hier frueher ausgebreitet stand — Frequenz,
-                        Start und Ende, Erinnerung, geplante Mengen,
-                        Dosisanpassungen samt Bearbeiten und Loeschen —, zeigt
-                        der Zyklusverwalter ohnehin. Es stand also zweimal da,
-                        und die Vollbildseite wurde davon lang. Was bleibt, ist
-                        die Zeile, die man im Vorbeigehen liest: wo im Zyklus
-                        man steht, und ob er laeuft.
-
-                        Der Schalter legt `active` um, der Punkt daneben zeigt
-                        es. Beides nur, wenn es einen aktiven Zyklus gibt —
-                        ohne einen waere ein Schalter ohne Gegenstueck.
+                        Alles Weitere — Frequenz, Dosis, Laufzeit und Aktionen —
+                        zeigt erst der Zyklusverwalter nach dem Antippen. Die
+                        Uebersicht bleibt dadurch bei einem einzigen Einstieg.
                     */}
                     <div data-stack-detail="zyklus" className="mx-1 mt-2">
                       {activeCycle ? (
-                        <div className="flex items-stretch gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setCycleManagerPeptide(activePeptide)}
-                            className="flex min-h-14 flex-1 items-center gap-3 rounded-xl border border-violet-500/25 bg-slate-950/55 px-3 text-left transition-colors hover:border-violet-400/45"
-                          >
-                            <span className="relative flex h-2.5 w-2.5 shrink-0" data-zyklus-live>
-                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/70" />
-                              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm font-bold text-white">{activeCycle.name}</span>
-                              <span className="mt-0.5 block truncate text-xs text-slate-400">
-                                {[t('tag') + ' ' + cycleDayLabel, activeQuantity ? `${activeQuantity.dose} ${activeQuantity.unit}` : null, activeFrequency]
-                                  .filter(Boolean).join(' · ')}
-                              </span>
-                            </span>
-                            <ChevronRight size={16} className="shrink-0 text-slate-600" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleCycleActive(activeCycle)}
-                            aria-pressed={activeCycle.active}
-                            aria-label={String(t('deaktivieren_title'))}
-                            className="flex min-h-14 w-14 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-[10px] font-bold uppercase tracking-wide text-emerald-300 transition-colors hover:border-emerald-400/45"
-                          >
-                            <Pause size={15} />
-                            {t('aktiv_badge')}
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setCycleManagerPeptide(activePeptide)}
+                          className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-violet-500/25 bg-slate-950/55 px-3 text-left transition-colors hover:border-violet-400/45"
+                        >
+                          <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">
+                            • {activeCycle.name} {t('zyklus')}
+                          </span>
+                          <ChevronRight size={16} className="shrink-0 text-slate-600" />
+                        </button>
                       ) : (
                         <button
                           type="button"

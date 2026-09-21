@@ -547,6 +547,35 @@ describe('MyStackPage non-vial visibility', () => {
     expect(substance?.querySelector('[data-stack-detail-field="notizen"]')?.className).toContain('col-span-2')
   })
 
+  it('shows the active cycle as one quiet entry and reveals its details after tapping it', async () => {
+    const vialCycle = { ...activeCycle, stack_item_id: 'vial-1' }
+    const cyclesEq = vi.fn(async () => ({ data: [vialCycle], error: null }))
+    const stackDataClient = {
+      from: vi.fn(() => ({ select: vi.fn(() => ({ eq: cyclesEq })) })),
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={stackDataClient as never} />
+      </MemoryRouter>,
+    )
+    const stackObject = await screen.findByRole('button', { name: 'Existing Premium Vial' })
+    fireEvent.click(stackObject)
+
+    const dialog = await screen.findByRole('dialog', { name: 'Existing Premium Vial' })
+    const cycleSection = dialog.querySelector<HTMLElement>('[data-stack-detail="zyklus"]')
+    expect(cycleSection).not.toBeNull()
+    const cycleButton = within(cycleSection!).getByRole('button', { name: '• Abendplan zyklus' })
+    expect(cycleSection?.textContent).toBe('• Abendplan zyklus')
+    expect(within(cycleSection!).queryByRole('button', { name: 'deaktivieren_title' })).toBeNull()
+
+    fireEvent.click(cycleButton)
+
+    expect(await screen.findByText('zyklen_verwalten')).not.toBeNull()
+    expect(screen.getByText('100 mg')).not.toBeNull()
+    expect(screen.getByText('daily')).not.toBeNull()
+  })
+
 
   it('summarizes a non-vial item with dosage form and ingredient strength', async () => {
     await renderPage()
@@ -1151,8 +1180,8 @@ describe('MyStackPage non-vial visibility', () => {
     const stageButton = (await screen.findAllByRole('button', { name: qaName }))
       .find(button => button.hasAttribute('data-vial-index'))!
     fireEvent.click(stageButton)
-    if (!screen.queryByText(activeCycle.name)) fireEvent.click(stageButton)
-    fireEvent.click((await screen.findByText(activeCycle.name)).closest('button')!)
+    if (!screen.queryByRole('button', { name: '• Abendplan zyklus' })) fireEvent.click(stageButton)
+    fireEvent.click(await screen.findByRole('button', { name: '• Abendplan zyklus' }))
     const managerChoices = await screen.findAllByRole('button', { name: 'my_stack_plan_conflict_keep' })
     expect(managerChoices).toHaveLength(2)
     fireEvent.click(within(screen.getByTestId('plan-management-cycle-manager-kept')).getByRole('button', {

@@ -327,26 +327,20 @@ describe('My Stack page vial view', () => {
     expect(text).not.toContain('<span>Info</span>')
   })
 
-  test('zeigt den Zyklus als einen Knopf mit Live-Punkt und Schalter', () => {
-    // Frequenz, Start und Ende, Erinnerung, geplante Mengen und
-    // Dosisanpassungen standen hier ausgebreitet — und im Zyklusverwalter
-    // noch einmal. Geblieben ist die Zeile, die man im Vorbeigehen liest:
-    // wo im Zyklus man steht, ob er läuft, und ein Weg hinein.
+  test('zeigt den aktiven Zyklus als einen ruhigen Einstieg', () => {
+    // Alle Einzelheiten und Aktionen gehoeren in den Zyklusverwalter. In der
+    // Uebersicht bleibt nur der Name mit einem eindeutigen Weg hinein.
     const text = source()
     const knopf = text.slice(
       text.indexOf('data-stack-detail="zyklus"'),
       text.indexOf('data-stack-detail="verwalten"'),
     )
 
-    expect(knopf).toContain('data-zyklus-live')
-    expect(knopf).toContain('animate-ping')
-    // Die Zusammenfassung: Tag im Zyklus, Dosis, Frequenz — mehr nicht.
-    expect(knopf).toContain("[t('tag') + ' ' + cycleDayLabel")
-    expect(knopf).toContain('activeFrequency')
-    // Der Schalter legt `active` um, statt in den Verwalter zu führen.
-    expect(knopf).toContain('onClick={() => toggleCycleActive(activeCycle)}')
-    expect(knopf).toContain('aria-pressed={activeCycle.active}')
-    // Der Knopf selbst öffnet den Verwalter.
+    expect(knopf).toContain("• {activeCycle.name} {t('zyklus')}")
+    expect(knopf).not.toContain('data-zyklus-live')
+    expect(knopf).not.toContain('activeQuantity')
+    expect(knopf).not.toContain('activeFrequency')
+    expect(knopf).not.toContain('toggleCycleActive(activeCycle)')
     expect(knopf).toContain('setCycleManagerPeptide(activePeptide)')
 
     // Zwei Leerzustände, je nachdem ob es überhaupt Zyklen gibt.
