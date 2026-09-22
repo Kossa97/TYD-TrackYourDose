@@ -888,9 +888,9 @@
     "semantic_hash": ""
   },
   "src/lib/injectionPersistence.ts": {
-    "mtime": 1790040972.2787962,
-    "seen": 1790041870.4063923,
-    "ast_hash": "f6dc441c713cecce8719fd01d7ff0b82",
+    "mtime": 1790016548.1283658,
+    "seen": 1790018152.6765707,
+    "ast_hash": "8d5339e0a8f3098b6e92bba56dded07e",
     "semantic_hash": ""
   },
   "src/lib/injectionPinPresentation.test.ts": {
@@ -1056,15 +1056,15 @@
     "semantic_hash": ""
   },
   "src/pages/Dashboard.test.ts": {
-    "mtime": 1790041669.4020731,
-    "seen": 1790041870.406425,
-    "ast_hash": "0f4a4f2b17433f0f0561842d28e4b291",
+    "mtime": 1790018758.3349545,
+    "seen": 1790019040.1423438,
+    "ast_hash": "06b7dfc32bcdf7cd8ffb1f2a2dad3776",
     "semantic_hash": ""
   },
   "src/pages/Dashboard.tsx": {
-    "mtime": 1790041696.6199415,
-    "seen": 1790041870.406426,
-    "ast_hash": "087cfe57196ceea147a2b6c7e5e4823a",
+    "mtime": 1790018788.3281856,
+    "seen": 1790019040.142345,
+    "ast_hash": "f6094e46bd29812a74ed8cbe6c114172",
     "semantic_hash": ""
   },
   "src/pages/FAQ.tsx": {
@@ -1086,9 +1086,9 @@
     "semantic_hash": ""
   },
   "src/pages/Home.tsx": {
-    "mtime": 1790040979.5731072,
-    "seen": 1790041870.4064283,
-    "ast_hash": "34d476b31f8c7e1cc72f5380837d8aa8",
+    "mtime": 1790013049.5507445,
+    "seen": 1790013226.2840497,
+    "ast_hash": "bdd655851417327e5e4266b86c71b723",
     "semantic_hash": ""
   },
   "src/pages/InjektionsTracker.test.ts": {
@@ -4650,15 +4650,15 @@
     "semantic_hash": ""
   },
   "src/features/routines/services/intakeConfirmation.test.ts": {
-    "mtime": 1790041373.4589627,
-    "seen": 1790041870.4063168,
-    "ast_hash": "b2a27dc324167ed87aa146e9f29161ad",
+    "mtime": 1790017862.758475,
+    "seen": 1790018152.6764953,
+    "ast_hash": "50eae21f5d3948c3878c19e639f078a2",
     "semantic_hash": ""
   },
   "src/features/routines/services/intakeConfirmation.ts": {
-    "mtime": 1790040963.7023852,
-    "seen": 1790041870.4063182,
-    "ast_hash": "939b68f684ee24e934aaf226d8aebfeb",
+    "mtime": 1790017733.9876816,
+    "seen": 1790018152.6764963,
+    "ast_hash": "9574582a1259dc9fcf6d35b510e538e3",
     "semantic_hash": ""
   },
   "src/i18n/data/my-stack-i18n.json": {
@@ -4854,8 +4854,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790041803.0790362,
-    "seen": 1790041870.4064841,
+    "mtime": 1790018932.2148824,
+    "seen": 1790019040.142438,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
