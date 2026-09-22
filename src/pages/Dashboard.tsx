@@ -1087,22 +1087,31 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
   const uebernehmeGespeicherteZeile = (row: SavedDoseLog) => {
     const stackItem = row.stack_item_id ? stackItemById.get(row.stack_item_id) : undefined
+    // `?? vorherige` heisst hier: das Feld FEHLT in der Antwort (echte
+    // Zeilen der RPC haben es immer, ein schmaler Test-Mock manchmal nicht).
+    // Das ist etwas anderes als `null`, und `??` unterscheidet das nicht --
+    // ein `in row`-Test davor tut es. Ohne den waere ein echtes `dose: null`
+    // (Intake-Only-Substanz, gerade so von der RPC bestaetigt) durch den
+    // alten Wert ueberschrieben worden, statt geloescht zu werden.
+    const feld = <K extends keyof SavedDoseLog>(schluessel: K, altwert: DoseLog[K]): DoseLog[K] => (
+      schluessel in row ? (row[schluessel] as DoseLog[K] ?? null as DoseLog[K]) : altwert
+    )
     setLogs(current => {
       const index = current.findIndex(l => l.id === row.id)
       const vorherige = index === -1 ? undefined : current[index]
       const naechste: DoseLog = {
         id: row.id,
         stack_item_id: row.stack_item_id ?? vorherige?.stack_item_id ?? '',
-        dose: row.dose ?? vorherige?.dose ?? null,
-        unit: row.unit ?? vorherige?.unit ?? null,
+        dose: feld('dose', vorherige?.dose ?? null),
+        unit: feld('unit', vorherige?.unit ?? null),
         method: row.method ?? vorherige?.method ?? '',
         logged_at: row.logged_at ?? vorherige?.logged_at ?? '',
-        notes: 'notes' in row ? row.notes ?? null : vorherige?.notes ?? null,
-        taken: 'taken' in row ? row.taken ?? null : vorherige?.taken ?? null,
+        notes: feld('notes', vorherige?.notes ?? null),
+        taken: feld('taken', vorherige?.taken ?? null),
         stack_items: { display_name: stackItem?.display_name ?? vorherige?.stack_items?.display_name ?? '' },
-        cycle_id: row.cycle_id ?? vorherige?.cycle_id ?? null,
-        plan_version_id: row.plan_version_id ?? vorherige?.plan_version_id ?? null,
-        routine_slot_key: row.routine_slot_key ?? vorherige?.routine_slot_key ?? null,
+        cycle_id: feld('cycle_id', vorherige?.cycle_id ?? null),
+        plan_version_id: feld('plan_version_id', vorherige?.plan_version_id ?? null),
+        routine_slot_key: feld('routine_slot_key', vorherige?.routine_slot_key ?? null),
       }
       if (index === -1) return [...current, naechste]
       const kopie = [...current]
@@ -1126,7 +1135,12 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       const { error } = await dashboardDataClient.from('dose_logs').delete().eq('id', log.id)
       if (error) return toast.error(t('error'))
     }
-    toast.success(t('deleted')); entferneLog(log.id)
+    // `loadStackItems()` ist unter der Zeitleiste ein Leerlauf (die
+    // Funktion kehrt sofort zurueck, siehe ihre eigene Definition) -- hier
+    // trotzdem drin, weil sie das nur ist, SOLANGE der Rollout-Schalter
+    // steht. Kippt er zurueck, greift sie wieder wie vor dieser Aenderung,
+    // ohne dass hier etwas nachgezogen werden muesste.
+    toast.success(t('deleted')); entferneLog(log.id); loadStackItems()
   }
 
   const confirmDose = async (log: DoseLog, taken: boolean, loggedAt?: string, quantity?: DashboardQuantity) => {
@@ -1164,6 +1178,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     // die nie an die Datenbank gingen und hier auch nicht ins lokale Bild
     // duerfen.
     patcheLog(log.id, (reversesInventory ? { taken: false } : update) as Partial<DoseLog>)
+    loadStackItems()
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
   }
@@ -1196,6 +1211,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     patcheLog(log.id, reversesInventory
       ? { taken: null }
       : (log.notes === AUTO_MISSED_NOTE ? { taken: null, notes: null } : { taken: null }))
+    loadStackItems()
     toast.success(t('dose_reopen_success', { defaultValue: 'Einnahme wieder geöffnet' }))
   }
 
@@ -1246,6 +1262,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         if (sichtbaresFenster.current === timelineContext) uebernehmeGespeicherteZeile(uebersprungeneZeile)
         else await loadLogs()
       }
+      loadStackItems()
       toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
       return
     }
@@ -1285,6 +1302,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         if (sichtbaresFenster.current === timelineContext) uebernehmeGespeicherteZeile(gespeicherteZeile)
         else await loadLogs()
       }
+      loadStackItems()
       toast.success(t('einnahme_bestaetigt'))
       return
     }

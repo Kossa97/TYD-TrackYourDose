@@ -1041,6 +1041,27 @@ describe('Dashboard normalized timeline path', () => {
     })
   })
 
+  it('loescht eine bestaetigte Menge lokal, statt den alten Wert zu behalten', async () => {
+    // `?? vorherige` sollte nur greifen, wenn ein Feld in der Antwort FEHLT
+    // (ein schmaler Test-Mock, nie eine echte Zeile). Ein echtes `dose: null`
+    // ist etwas anderes -- die Substanz ist jetzt Intake-Only, die Menge
+    // zaehlt nicht mehr. Verwechselt der lokale Patch die beiden, blieb der
+    // alte Wert stehen, obwohl die Datenbank ihn gerade geloescht hat.
+    const fixtures = startFixFixture()
+    fixtures.stack_items[0]!.tracking_level = 'intake_only'
+    fixtures.dose_logs = [pendingLog()] // traegt noch die alte Menge: 25 mg
+    const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
+    renderDashboard(client)
+    await openSingle()
+    fireEvent.click(screen.getByRole('button', { name: 'Eingenommen' }))
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', expect.anything()))
+    await screen.findByText('Alle geplanten Einnahmen sind bestätigt.')
+
+    fireEvent.click(screen.getByRole('button', { name: /Bereits protokolliert/ }))
+    expect(screen.getByText('Menge nicht getrackt')).toBeTruthy()
+    expect(screen.queryByText('25 mg')).toBeNull()
+  })
+
   it('bestaetigt einen einzelnen Slot ohne einen weiteren dose_logs-Rundgang', async () => {
     // Der Punkt der ganzen Umstellung: eine Bestaetigung patcht lokal aus
     // der Antwort der RPC (`returns setof dose_logs`), statt den sichtbaren
