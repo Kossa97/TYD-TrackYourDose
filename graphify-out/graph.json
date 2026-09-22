@@ -18789,7 +18789,7 @@
       "file_type": "code",
       "norm_label": "normalizedcycle()",
       "source_file": "src/pages/Dashboard.test.ts",
-      "source_location": "L1207"
+      "source_location": "L1228"
     },
     {
       "id": "src_pages_dashboard_test_ondemandcycle",
@@ -84739,7 +84739,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1121",
+      "source_location": "L1130",
       "weight": 1.0
     },
     {
@@ -84751,7 +84751,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1155",
+      "source_location": "L1169",
       "weight": 1.0
     },
     {
@@ -84763,7 +84763,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1206",
+      "source_location": "L1222",
       "weight": 1.0
     },
     {
@@ -84775,7 +84775,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1216",
+      "source_location": "L1232",
       "weight": 1.0
     },
     {
@@ -84787,7 +84787,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1220",
+      "source_location": "L1236",
       "weight": 1.0
     },
     {
@@ -84799,7 +84799,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1228",
+      "source_location": "L1244",
       "weight": 1.0
     },
     {
@@ -84811,7 +84811,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1237",
+      "source_location": "L1253",
       "weight": 1.0
     },
     {
@@ -84823,7 +84823,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1261",
+      "source_location": "L1278",
       "weight": 1.0
     },
     {
@@ -84835,7 +84835,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1328",
+      "source_location": "L1346",
       "weight": 1.0
     },
     {
@@ -84847,7 +84847,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1344",
+      "source_location": "L1362",
       "weight": 1.0
     },
     {
@@ -84859,7 +84859,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1423",
+      "source_location": "L1441",
       "weight": 1.0
     },
     {
@@ -84871,7 +84871,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1426",
+      "source_location": "L1444",
       "weight": 1.0
     },
     {
@@ -84883,7 +84883,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1459",
+      "source_location": "L1477",
       "weight": 1.0
     },
     {
@@ -84895,7 +84895,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1635",
+      "source_location": "L1653",
       "weight": 1.0
     },
     {
@@ -84907,7 +84907,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1636",
+      "source_location": "L1654",
       "weight": 1.0
     },
     {
@@ -84919,7 +84919,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1766",
+      "source_location": "L1784",
       "weight": 1.0
     },
     {
@@ -84931,7 +84931,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/Dashboard.tsx",
-      "source_location": "L1818",
+      "source_location": "L1836",
       "weight": 1.0
     },
     {
@@ -196030,7 +196030,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/Dashboard.test.ts",
-      "source_location": "L1207",
+      "source_location": "L1228",
       "weight": 1.0
     },
     {
@@ -204137,5 +204137,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "9ca41d3b31d220bb4b84f2ce5694259dd0a7cd4a"
+  "built_at_commit": "813cff10bb31599f0543aa5f5d06a0c6dbf08e7f"
 }
