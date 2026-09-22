@@ -3240,21 +3240,21 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.test.ts": {
-    "mtime": 1789992927.0845199,
-    "seen": 1789993086.2077172,
-    "ast_hash": "bdc2f11349c70f1b99e4237cb080c72b",
+    "mtime": 1790043639.36075,
+    "seen": 1790043800.7232087,
+    "ast_hash": "2e3b8420bd74456fb5cb41af3b4bb03b",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790013049.546472,
-    "seen": 1790013226.2835946,
-    "ast_hash": "a5cc4c3f010609662c2f6fcc89a7eaa4",
+    "mtime": 1790043639.3610754,
+    "seen": 1790043800.72321,
+    "ast_hash": "2fb2b4c38125b77e0d0ef489603e6c3c",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
-    "mtime": 1790013049.5476723,
-    "seen": 1790013226.2835953,
-    "ast_hash": "e038b0473033b3907ebc06251cc989a8",
+    "mtime": 1790043639.362197,
+    "seen": 1790043800.7232106,
+    "ast_hash": "5f8399469399fa48c648e3b999868499",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/CourseTimezoneReview.test.tsx": {
@@ -3354,15 +3354,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/PlanManagementSection.test.tsx": {
-    "mtime": 1789927455.6061532,
-    "seen": 1789927683.0401669,
-    "ast_hash": "fcd8a1c06adf5ad44bc1d2568f513d09",
+    "mtime": 1790043639.362552,
+    "seen": 1790043800.723223,
+    "ast_hash": "12d0f08fae2b808780bbab0cd46d2c2f",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/PlanManagementSection.tsx": {
-    "mtime": 1790013049.5481462,
-    "seen": 1790013226.2836142,
-    "ast_hash": "4e473bc4690e084fb20f86dc02f119e3",
+    "mtime": 1790043639.3627172,
+    "seen": 1790043800.7232242,
+    "ast_hash": "828b7b3e7759b4be295711b5e2ca0ab2",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/ProductInventorySection.test.tsx": {
@@ -4854,8 +4854,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790043541.3911395,
-    "seen": 1790043625.0159283,
+    "mtime": 1790043728.5311506,
+    "seen": 1790043800.7236075,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },

@@ -75619,7 +75619,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L214",
+      "source_location": "L215",
       "weight": 1.0
     },
     {
@@ -75631,7 +75631,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L290",
+      "source_location": "L291",
       "weight": 1.0
     },
     {
@@ -75643,7 +75643,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L291",
+      "source_location": "L292",
       "weight": 1.0
     },
     {
@@ -75655,7 +75655,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L292",
+      "source_location": "L293",
       "weight": 1.0
     },
     {
@@ -75667,7 +75667,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L294",
+      "source_location": "L295",
       "weight": 1.0
     },
     {
@@ -75679,7 +75679,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L295",
+      "source_location": "L296",
       "weight": 1.0
     },
     {
@@ -75691,7 +75691,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L311",
+      "source_location": "L312",
       "weight": 1.0
     },
     {
@@ -75703,7 +75703,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L325",
+      "source_location": "L326",
       "weight": 1.0
     },
     {
@@ -75715,7 +75715,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L340",
+      "source_location": "L341",
       "weight": 1.0
     },
     {
@@ -75727,7 +75727,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L383",
+      "source_location": "L384",
       "weight": 1.0
     },
     {
@@ -75739,7 +75739,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L443",
+      "source_location": "L454",
       "weight": 1.0
     },
     {
@@ -75751,7 +75751,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L447",
+      "source_location": "L458",
       "weight": 1.0
     },
     {
@@ -75763,7 +75763,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L486",
+      "source_location": "L497",
       "weight": 1.0
     },
     {
@@ -75775,7 +75775,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L494",
+      "source_location": "L505",
       "weight": 1.0
     },
     {
@@ -75787,7 +75787,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/components/PlanManagementSection.tsx",
-      "source_location": "L522",
+      "source_location": "L533",
       "weight": 1.0
     },
     {
@@ -79147,7 +79147,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1453",
+      "source_location": "L1464",
       "weight": 1.0
     },
     {
@@ -79159,7 +79159,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1479",
+      "source_location": "L1490",
       "weight": 1.0
     },
     {
@@ -79171,7 +79171,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1480",
+      "source_location": "L1491",
       "weight": 1.0
     },
     {
@@ -79183,7 +79183,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1482",
+      "source_location": "L1493",
       "weight": 1.0
     },
     {
@@ -79195,7 +79195,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1482",
+      "source_location": "L1493",
       "weight": 1.0
     },
     {
@@ -79207,7 +79207,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1520",
+      "source_location": "L1531",
       "weight": 1.0
     },
     {
@@ -79219,7 +79219,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1571",
+      "source_location": "L1582",
       "weight": 1.0
     },
     {
@@ -79231,7 +79231,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1628",
+      "source_location": "L1639",
       "weight": 1.0
     },
     {
@@ -79243,7 +79243,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1676",
+      "source_location": "L1687",
       "weight": 1.0
     },
     {
@@ -79255,7 +79255,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1703",
+      "source_location": "L1714",
       "weight": 1.0
     },
     {
@@ -79267,7 +79267,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1716",
+      "source_location": "L1727",
       "weight": 1.0
     },
     {
@@ -79279,7 +79279,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1742",
+      "source_location": "L1753",
       "weight": 1.0
     },
     {
@@ -79291,7 +79291,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1785",
+      "source_location": "L1796",
       "weight": 1.0
     },
     {
@@ -79303,7 +79303,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L1971",
+      "source_location": "L1982",
       "weight": 1.0
     },
     {
@@ -79315,7 +79315,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2112",
+      "source_location": "L2123",
       "weight": 1.0
     },
     {
@@ -79327,7 +79327,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2119",
+      "source_location": "L2130",
       "weight": 1.0
     },
     {
@@ -79339,7 +79339,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2131",
+      "source_location": "L2142",
       "weight": 1.0
     },
     {
@@ -79351,7 +79351,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2219",
+      "source_location": "L2230",
       "weight": 1.0
     },
     {
@@ -79363,7 +79363,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2222",
+      "source_location": "L2233",
       "weight": 1.0
     },
     {
@@ -79375,7 +79375,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2308",
+      "source_location": "L2328",
       "weight": 1.0
     },
     {
@@ -79387,7 +79387,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2595",
+      "source_location": "L2615",
       "weight": 1.0
     },
     {
@@ -79399,7 +79399,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L2695",
+      "source_location": "L2715",
       "weight": 1.0
     },
     {
@@ -79411,7 +79411,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L3207",
+      "source_location": "L3227",
       "weight": 1.0
     },
     {
@@ -79423,7 +79423,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/features/my-stack/MyStackPage.tsx",
-      "source_location": "L3460",
+      "source_location": "L3480",
       "weight": 1.0
     },
     {
@@ -204173,5 +204173,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "fd26ddf940b34fbcfd0ba59be70356dba159651e"
+  "built_at_commit": "4e533ddcfb8e0a67ce91a71cc76ee82f18069a28"
 }
