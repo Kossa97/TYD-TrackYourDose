@@ -198,10 +198,11 @@ export function PlanManagementSection({
 
   const statusCopy = {
     planned: t('my_stack_plan_status_planned', { defaultValue: 'Geplant' }),
-    active: t('my_stack_plan_status_active', { defaultValue: 'Aktiv' }),
+    active: t('aktiver_zyklus', { defaultValue: 'Aktiver Zyklus' }),
     paused: t('my_stack_plan_status_paused', { defaultValue: 'Pausiert' }),
     ended: t('my_stack_plan_status_ended', { defaultValue: 'Beendet' }),
   }[resolved.status]
+  const isActive = resolved.status === 'active'
 
   const openDialog = (next: DialogState) => {
     previousFocusRef.current = document.activeElement instanceof HTMLElement
@@ -399,14 +400,24 @@ export function PlanManagementSection({
   return (
     <section
       data-testid={`plan-management-${timeline.cycle.id}`}
-      className="rounded-2xl border border-white/10 bg-slate-900/55 p-4 shadow-[0_18px_60px_rgba(2,6,23,0.28)] backdrop-blur-xl"
+      data-cycle-status={resolved.status}
+      className={`rounded-2xl border p-4 backdrop-blur-xl ${isActive
+        ? 'border-emerald-400/35 bg-emerald-950/20 shadow-[0_18px_60px_rgba(16,185,129,0.10)]'
+        : 'border-white/10 bg-slate-900/55 shadow-[0_18px_60px_rgba(2,6,23,0.28)]'}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300">
+          <p className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${isActive ? 'text-emerald-300' : 'text-cyan-300'}`}>
             {t('my_stack_plan_management', { defaultValue: 'Einnahmeplan' })}
           </p>
-          <span className="mt-2 inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-2.5 py-1 text-[11px] font-bold text-cyan-100">
+          <span
+            role="status"
+            aria-label={String(statusCopy)}
+            className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold ${isActive
+              ? 'border-emerald-400/35 bg-emerald-400/10 text-emerald-200'
+              : 'border-cyan-300/25 bg-cyan-300/10 text-cyan-100'}`}
+          >
+            {isActive && <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.75)]" />}
             {statusCopy}
           </span>
         </div>

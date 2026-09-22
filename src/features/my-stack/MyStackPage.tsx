@@ -1438,10 +1438,21 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     />
   )
   const planManagementSections = (p: Peptide, timelines: CycleTimeline[]) => {
-    const reviewTimeline = timelines.find(timeline => timeline.cycle.timezone_review_required)
+    const now = new Date()
+    const statusPriority = { active: 0, paused: 1, planned: 2, ended: 3 } as const
+    const orderedTimelines = timelines.map(timeline => ({
+      timeline,
+      status: resolveCycleAt(timeline, now, timeZone).status,
+    })).sort((left, right) => {
+      const statusOrder = statusPriority[left.status] - statusPriority[right.status]
+      if (statusOrder !== 0) return statusOrder
+      const startedOrder = String(right.timeline.cycle.started_at ?? '').localeCompare(String(left.timeline.cycle.started_at ?? ''))
+      return startedOrder !== 0 ? startedOrder : right.timeline.cycle.id.localeCompare(left.timeline.cycle.id)
+    }).map(entry => entry.timeline)
+    const reviewTimeline = orderedTimelines.find(timeline => timeline.cycle.timezone_review_required)
     return reviewTimeline
       ? planManagementSection(p, reviewTimeline)
-      : timelines.map(timeline => planManagementSection(p, timeline))
+      : orderedTimelines.map(timeline => planManagementSection(p, timeline))
   }
   const toggleCycleActive = async (c: Cycle) => {
     await supabase.from('cycles').update({ active: !c.active }).eq('id', c.id)
@@ -2252,14 +2263,23 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                       {activeCycle ? (
                         <button
                           type="button"
+                          aria-label={`${String(t('aktiv_badge'))} ${activeCycle.name} ${String(t('zyklus'))}`}
                           onClick={() => {
                             setDetailUrsprung(null)
                             setCycleManagerPeptide(activePeptide)
                           }}
                           className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-violet-500/25 bg-slate-950/55 px-3 text-left transition-colors hover:border-violet-400/45"
                         >
+                          <span
+                            aria-hidden="true"
+                            data-active-cycle-indicator
+                            className="relative flex h-3 w-3 shrink-0 items-center justify-center"
+                          >
+                            <span className="absolute h-3 w-3 rounded-full bg-emerald-400/20 shadow-[0_0_10px_rgba(52,211,153,0.45)]" />
+                            <span className="relative h-2 w-2 rounded-full bg-emerald-400" />
+                          </span>
                           <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">
-                            • {activeCycle.name} {t('zyklus')}
+                            {activeCycle.name} {t('zyklus')}
                           </span>
                           <ChevronRight size={16} className="shrink-0 text-slate-600" />
                         </button>

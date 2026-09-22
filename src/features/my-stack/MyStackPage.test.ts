@@ -336,8 +336,8 @@ describe('My Stack page vial view', () => {
       text.indexOf('data-stack-detail="verwalten"'),
     )
 
-    expect(knopf).toContain("• {activeCycle.name} {t('zyklus')}")
-    expect(knopf).not.toContain('data-zyklus-live')
+    expect(knopf).toContain("{activeCycle.name} {t('zyklus')}")
+    expect(knopf).toContain('data-active-cycle-indicator')
     expect(knopf).not.toContain('activeQuantity')
     expect(knopf).not.toContain('activeFrequency')
     expect(knopf).not.toContain('toggleCycleActive(activeCycle)')

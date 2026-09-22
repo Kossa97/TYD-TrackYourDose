@@ -127,6 +127,14 @@ describe('PlanManagementSection', () => {
     expect(within(section).queryByRole('button', { name: 'Bearbeiten' })).toBeNull()
   })
 
+  it('identifies the running plan as the active cycle instead of a generic status', () => {
+    render(<PlanManagementSection {...callbacks()} />)
+
+    const section = screen.getByTestId('plan-management-cycle-1')
+    expect(section.dataset.cycleStatus).toBe('active')
+    expect(within(section).getByRole('status', { name: 'Aktiver Zyklus' })).toBeTruthy()
+  })
+
   it('allows edit and removal only for the selected future version', async () => {
     const onEditFuture = vi.fn()
     const onRemoveFuture = vi.fn(async () => undefined)
