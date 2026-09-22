@@ -2,6 +2,7 @@ import { format, parseISO } from 'date-fns'
 import { CalendarClock, CheckCircle2, ClipboardList, History, Syringe, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { methodLabel } from '../../lib/intakeMethods'
 import { type InjectionHistoryDays } from '../../lib/injectionHistory'
 import type { OpenInjectionIntake } from '../../lib/injectionPersistence'
 import type { InjectionTrackerTab } from '../../lib/injectionTrackerTabs'
@@ -291,7 +292,7 @@ function OpenIntakeRow({ intake, onSelect }: { intake: OpenInjectionIntake; onSe
         </div>
         <div className="shrink-0 text-right">
           <p className="text-sm font-black text-sky-300">{intake.dose} {intake.unit}</p>
-          <p className="text-[0.62rem] text-slate-500">{intake.method}</p>
+          <p className="text-[0.62rem] text-slate-500">{methodLabel(t, intake.method)}</p>
         </div>
       </div>
       <div className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-sky-300/20 bg-sky-400/10 px-3 py-2 text-xs font-black text-sky-200">

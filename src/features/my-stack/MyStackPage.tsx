@@ -34,7 +34,8 @@ import { StackArchive } from './components/StackArchive'
 import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, savePlanChange, saveStackItem, saveStackItemSetup, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
-import { getDosageForm, isStageRenderable, METHOD_LABEL_KEYS as METHOD_KEYS } from './lib/dosageForms'
+import { getDosageForm, isStageRenderable } from './lib/dosageForms'
+import { methodLabel } from '../../lib/intakeMethods'
 import type { WizardSaveMode } from './lib/wizardState'
 import { rhythmFromStorage } from './lib/intakeRhythm'
 import { STACK_TABS, filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
@@ -2214,7 +2215,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                     vorratsposten: invItem,
                     zyklusMethode: activeCycle?.method ?? null,
                   })
-                  const methodeText = (m: string) => String(t(METHOD_KEYS[m] ?? m))
+                  const methodeText = (m: string) => methodLabel(t, m)
                   const zutatText = (z: Zutat, mitNamen: boolean) => [
                     mitNamen ? z.name : null,
                     `${z.wert ?? '-'} ${z.einheit ?? ''}`.trim(),
@@ -2965,7 +2966,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                         <div className="flex flex-wrap gap-x-3 text-slate-400 text-xs mt-1">
                           {stageRenderable ? (
                             <>
-                              <span>{t(METHOD_KEYS[p.default_method] ?? p.default_method)}</span>
+                              <span>{methodLabel(t, p.default_method)}</span>
                               {p.vial_amount_mg && <span>Vial: {p.vial_amount_mg} {p.vial_amount_unit ?? 'mg'}</span>}
                             </>
                           ) : (
@@ -3090,7 +3091,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                   {dosePlanCapabilities(p.tracking_level).permanent && (
                                     <span className="font-medium text-slate-300">{currentQuantityLabel(c)}</span>
                                   )}
-                                  <span>{t(METHOD_KEYS[c.method] ?? c.method)}</span>
+                                  <span>{methodLabel(t, c.method)}</span>
                                   <span>{freqLabel(c)}</span>
                                   {(() => { const lbl = intakeLabel(c); const firstKey = c.intake_time?.split(',')[0] ?? ''; const SlotIcon = (INTAKE_TIME_CONFIG as Record<string,{icon:LucideIcon}>)[firstKey]?.icon ?? Clock; return lbl ? <span className="text-amber-400 inline-flex items-center gap-1"><SlotIcon size={12} /> {lbl}</span> : null })()}
                                   <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
@@ -3257,7 +3258,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                 <span className="font-semibold text-slate-200">{currentQuantityLabel(c)}</span>
               )}
               <span>{freqLabel(c)}</span>
-              <span>{t(METHOD_KEYS[c.method] ?? c.method)}</span>
+              <span>{methodLabel(t, c.method)}</span>
               <span>{t('ab_datum', { date: format(parseISO(c.start_date), 'dd.MM.yyyy') })}</span>
               {c.end_date ? (
                 <span>{t('bis_datum', { date: format(parseISO(c.end_date), 'dd.MM.yyyy') })}</span>
@@ -3800,7 +3801,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
               },
               {
                 label: t('applikation_info'),
-                value: p.default_method ? t(METHOD_KEYS[p.default_method] ?? p.default_method) : '-',
+                value: p.default_method ? methodLabel(t, p.default_method) : '-',
               },
               {
                 label: t('spritzen_typ'),
@@ -3993,7 +3994,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                                 <div>
                                   <dt className="text-xs text-slate-500">{t('methode')}</dt>
                                   <dd className="mt-0.5 text-sm font-medium text-slate-200">
-                                    {t(METHOD_KEYS[c.method] ?? c.method)}
+                                    {methodLabel(t, c.method)}
                                   </dd>
                                 </div>
                               </dl>
@@ -4218,7 +4219,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
                   <div className="grid grid-cols-1 gap-2">
                     <div className="bg-slate-800/60 border border-slate-800 rounded-xl p-3">
                       <p className="text-slate-400 text-xs">{t('applikation_info')}</p>
-                      <p className="text-white font-semibold mt-0.5">{t(METHOD_KEYS[p.default_method] ?? p.default_method)}</p>
+                      <p className="text-white font-semibold mt-0.5">{methodLabel(t, p.default_method)}</p>
                     </div>
                   </div>
                 </div>

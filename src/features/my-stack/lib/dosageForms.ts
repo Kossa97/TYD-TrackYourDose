@@ -10,6 +10,7 @@ import { DROPS_SPEC } from '../extensions/drops/dropsShape'
 import { PATCH_SPEC } from '../extensions/patch/patchShape'
 import { TUBE_SPEC } from '../extensions/tube/tubeShape'
 import { VIAL_SPEC } from '../extensions/peptide/vialShape'
+import { INTAKE_METHODS } from '../../../lib/intakeMethods'
 import type { StageFormSpec } from '../stage/types'
 import type { DosageFormCapability, DosageFormKey, IntakeUnitKey, StackCategory, StrengthShape } from '../types'
 
@@ -194,15 +195,7 @@ export function showsColor(key: DosageFormKey): boolean {
 // Nur wo es wirklich mehrere gibt (was man spritzt, kann subkutan,
 // intramuskulaer oder intravenoes gehen), bleibt die Wahl stehen.
 
-export const INTAKE_METHODS = [
-  'Subkutan',
-  'Intramuskulär',
-  'Nasal',
-  'Oral',
-  'Transdermal',
-  'Intravenös',
-  'Andere',
-] as const
+export { INTAKE_METHODS }
 
 const METHOD_CHOICES: Partial<Record<DosageFormKey, readonly string[]>> = {
   vial: ['Subkutan', 'Intramuskulär', 'Intravenös'],
@@ -219,25 +212,6 @@ const METHOD_CHOICES: Partial<Record<DosageFormKey, readonly string[]>> = {
   // Ein Spray kann ein Rachenspray sein oder ein Dosieraerosol. Die Liste
   // kennt keine Inhalation, deshalb bleibt hier die Wahl offen.
   spray: ['Oral', 'Nasal', 'Andere'],
-}
-
-/**
- * Gespeichert wird die Route als deutsches Wort ('Subkutan'), angezeigt in der
- * App-Sprache. Unbekannte Werte (frei getippte aus alten Zeilen) bleiben, wie
- * sie sind.
- */
-export const METHOD_LABEL_KEYS: Readonly<Record<string, string>> = {
-  Subkutan: 'method_subkutan',
-  Intramuskulär: 'method_intramusk',
-  Nasal: 'method_nasal',
-  Oral: 'method_oral',
-  Transdermal: 'method_transdermal',
-  Intravenös: 'method_intravenoese',
-  Andere: 'method_andere',
-}
-
-export function methodLabelKey(method: string): string {
-  return METHOD_LABEL_KEYS[method] ?? method
 }
 
 /** Die Routen, die zu dieser Form ueberhaupt in Frage kommen. */

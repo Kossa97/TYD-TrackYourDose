@@ -1,6 +1,7 @@
 import { format, isToday, isYesterday, parseISO } from 'date-fns'
 import { AlertCircle, Eye, EyeOff, History, LocateFixed } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { methodLabel } from '../../lib/intakeMethods'
 import {
   filterInjectionHistory,
   formatInjectionSite,
@@ -69,7 +70,7 @@ export function InjectionHistorySheet({
                 const exactPosition = hasExactInjectionPosition(log)
                 const substance = log.stack_item_name ?? log.substance_label ?? t('injection_default_label', { defaultValue: 'Injektion' })
                 const dose = [log.dose, log.unit].filter(value => value != null && value !== '').join(' ')
-                const metadata = [format(parseISO(log.logged_at), 'HH:mm'), dose, log.method].filter(Boolean).join(' - ')
+                const metadata = [format(parseISO(log.logged_at), 'HH:mm'), dose, methodLabel(t, log.method)].filter(Boolean).join(' - ')
                 const confirmationOpen = isDoseConfirmationOpen(log)
                 const pinLabel = visible
                   ? t('injection_pin_hide', { defaultValue: 'Pin ausblenden' })

@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { addDays, differenceInDays, format, parseISO } from 'date-fns'
 import { STACK_ITEM_COLORS } from '../../lib/colors'
-import { METHOD_LABEL_KEYS as METHOD_KEYS } from '../../lib/dosageForms'
+import { INTAKE_METHODS, methodLabel } from '../../../../lib/intakeMethods'
 import { PeptideColorPalette } from '../../../../components/PeptideColorPalette'
 import { PeptideVialVisual } from '../../../../components/PeptideVialVisual'
 
@@ -64,7 +64,6 @@ const POPULAR_PEPTIDES = [
   'Thymosin Alpha-1', 'LL-37', 'Hexarelin', 'MGF',
 ]
 const UNITS = ['mcg', 'mg', 'IU', 'ml', 'nmol']
-const METHODS = ['Subkutan', 'Intramuskulär', 'Nasal', 'Oral', 'Transdermal', 'Intravenös', 'Andere']
 type FieldId =
   | 'name' | 'color' | 'vial_amount_mg' | 'reconstitution_ml'
   | 'reconstitution_date' | 'expiry_days' | 'vials_in_stock'
@@ -233,7 +232,7 @@ export function VialTrackingEditor({
         ? t('datei_vorhanden_text')
         : notSet,
     default_method: pForm.default_method
-      ? String(t(METHOD_KEYS[pForm.default_method] ?? pForm.default_method))
+      ? methodLabel(t, pForm.default_method)
       : notSet,
     notes: pForm.notes.trim()
       ? (pForm.notes.length > 28 ? `${pForm.notes.slice(0, 28)}…` : pForm.notes)
@@ -491,8 +490,8 @@ export function VialTrackingEditor({
             autoFocus
           >
             <option value="">{notSet}</option>
-            {METHODS.map(m => (
-              <option key={m} value={m}>{t(METHOD_KEYS[m] ?? m)}</option>
+            {INTAKE_METHODS.map(m => (
+              <option key={m} value={m}>{methodLabel(t, m)}</option>
             ))}
           </select>
         )

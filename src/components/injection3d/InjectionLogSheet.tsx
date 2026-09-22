@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { AlertTriangle, Check, Clock, Info, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { methodLabel } from '../../lib/intakeMethods'
 import type { InjectionPinDraft, InjectionProximityWarning } from '../../lib/injectionLogTypes'
 import type { OpenInjectionIntake } from '../../lib/injectionPersistence'
 import { getOpenInjectionIntakeKey } from '../../lib/injectionDeepLink'
@@ -154,7 +155,7 @@ export function InjectionLogSheet({
       </div>
       <div className="shrink-0 text-right">
         <p className="text-sm font-bold text-sky-300">{selectedIntake.dose} {selectedIntake.unit}</p>
-        <p className="text-[0.62rem] text-slate-500">{selectedIntake.method}</p>
+        <p className="text-[0.62rem] text-slate-500">{methodLabel(t, selectedIntake.method)}</p>
       </div>
     </div>
   ) : null
@@ -341,7 +342,7 @@ export function InjectionLogSheet({
                             </div>
                             <div className="shrink-0 text-right">
                               <p className="text-sm font-bold text-sky-300">{intake.dose} {intake.unit}</p>
-                              <p className="text-[0.62rem] text-slate-500">{intake.method}</p>
+                              <p className="text-[0.62rem] text-slate-500">{methodLabel(t, intake.method)}</p>
                             </div>
                           </button>
                         )

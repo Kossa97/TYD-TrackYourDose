@@ -42,7 +42,8 @@ import { fuehrendeMenge, rhythmSummary, rhythmText } from '../lib/intakeRhythm'
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
 import { evaluatePkReadiness, toPkMilligrams } from '../lib/pkReadiness'
 import { useSloshEngine } from '../../../components/SloshContext'
-import { isStageRenderable, methodLabelKey } from '../lib/dosageForms'
+import { isStageRenderable } from '../lib/dosageForms'
+import { methodLabel } from '../../../lib/intakeMethods'
 import { objektSkala } from '../lib/objektSkala'
 import { DosageFormPicker } from './DosageFormPicker'
 import { DosageFormPreview } from './DosageFormPreview'
@@ -804,7 +805,7 @@ export function StackItemWizard({
                     {state.draft.plan.method.trim()
                       ? t('my_stack_pk_method_confirm_copy', {
                           defaultValue: 'Ich bestätige {{method}} als Route für das verknüpfte PK-Profil.',
-                          method: t(methodLabelKey(state.draft.plan.method), { defaultValue: state.draft.plan.method }),
+                          method: methodLabel(t, state.draft.plan.method),
                         })
                       : t('my_stack_pk_method_choose_first', {
                           defaultValue: 'Wähle zuerst eine Route im Einnahmeplan.',

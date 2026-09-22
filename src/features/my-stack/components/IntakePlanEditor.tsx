@@ -5,8 +5,8 @@ import {
   getDosageForm,
   getIntakePlanUnitSuggestions,
   methodChoicesFor,
-  methodLabelKey,
 } from '../lib/dosageForms'
+import { methodLabel } from '../../../lib/intakeMethods'
 import { MAX_INTAKE_SLOTS } from '../lib/intakeFrequency'
 import {
   INTERVAL_BOUNDS,
@@ -389,7 +389,7 @@ export function IntakePlanEditor({
           >
             <option value="">{t('my_stack_plan_method_placeholder', { defaultValue: 'Methode wählen' })}</option>
             {methodChoices.map(method => (
-              <option key={method} value={method}>{t(methodLabelKey(method), { defaultValue: method })}</option>
+              <option key={method} value={method}>{methodLabel(t, method)}</option>
             ))}
           </select>
           {errors.method && (

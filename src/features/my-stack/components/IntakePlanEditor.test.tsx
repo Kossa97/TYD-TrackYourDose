@@ -354,7 +354,7 @@ describe('IntakePlanEditor', () => {
     // Denosumab alle sechs Monate. „Alle X Tage" war auf 30 Tage begrenzt.
     render(<PlanHarness trackingLevel="intake_only" dosageForm="vial" />)
 
-    fireEvent.click(screen.getByRole('button', { name: /Im Abstand/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Im Abstand' }))
     const abstand = screen.getByLabelText('Abstand') as HTMLInputElement
     const einheit = screen.getByLabelText('Einheit des Abstands') as HTMLSelectElement
 
@@ -717,7 +717,7 @@ describe('IntakePlanEditor', () => {
     expect(screen.getByRole('button', { name: 'Mo' })).toBeTruthy()
     expect(screen.queryByLabelText('Abstand')).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: /Im Abstand/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Im Abstand' }))
     expect(screen.getByLabelText('Abstand')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Mo' })).toBeNull()
     expect(screen.queryByLabelText('Tage an')).toBeNull()
