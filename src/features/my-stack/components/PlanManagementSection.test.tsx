@@ -272,7 +272,14 @@ describe('PlanManagementSection', () => {
     })
     render(<PlanManagementSection {...callbacks({ timeline: ended })} />)
 
-    expect(screen.getByText('Verlauf')).toBeTruthy()
+    const section = screen.getByTestId('plan-management-cycle-1')
+    expect(section.textContent).toContain('01.09.2026 – 18.09.2026')
+    expect(section.textContent).toContain('18 Tage')
+    expect(screen.getByText('Zuletzt')).toBeTruthy()
+    expect(section.textContent).toContain('5 mg')
+    // Die Stufe vom 21.09. lag nach dem Ende und galt nie.
+    expect(section.textContent).not.toContain('10 mg')
+    expect(screen.queryByText('Dosisverlauf')).toBeNull()
     expect(screen.getByRole('button', { name: 'Neu starten' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Dosis anpassen' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Plan anpassen' })).toBeNull()
@@ -298,12 +305,12 @@ describe('PlanManagementSection', () => {
     const restart = screen.getByRole('button', { name: 'Neu starten' }) as HTMLButtonElement
     fireEvent.click(restart)
     expect(restart.disabled).toBe(true)
-    expect(screen.getByText('Verlauf')).toBeTruthy()
+    expect(screen.getByText('Zuletzt')).toBeTruthy()
 
     rejectRestart?.(new Error('network'))
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Bitte versuche es erneut'))
     expect(restart.disabled).toBe(false)
-    expect(screen.getByText('Verlauf')).toBeTruthy()
+    expect(screen.getByText('Zuletzt')).toBeTruthy()
   })
 
   it('treats a planned initial version as an editable future preview with its next intake', async () => {
@@ -327,6 +334,107 @@ describe('PlanManagementSection', () => {
     expect(screen.queryByRole('dialog', { name: 'Geplante Änderung entfernen' })).toBeNull()
     expect(within(section).queryByRole('button', { name: 'Dosis anpassen' })).toBeNull()
     expect(within(section).queryByRole('button', { name: 'Plan anpassen' })).toBeNull()
+  })
+
+  it('shows the cycle period with its running day and an open end', () => {
+    render(<PlanManagementSection {...callbacks()} />)
+
+    const section = screen.getByTestId('plan-management-cycle-1')
+    expect(section.textContent).toContain('01.09.2026 – Ende offen')
+    expect(section.textContent).toContain('Tag 19')
+    expect(section.textContent).toContain('gilt seit 01.09.2026')
+  })
+
+  it('counts the running day against a scheduled end', () => {
+    const scheduled = timeline({
+      cycle: {
+        id: 'cycle-1',
+        stack_item_id: 'stack-1',
+        started_at: '2026-09-01T08:00:00.000Z',
+        ended_at: '2026-10-01T08:00:00.000Z',
+        start_local_date: '2026-09-01',
+        end_local_date: '2026-10-01',
+      },
+    })
+    render(<PlanManagementSection {...callbacks({ timeline: scheduled })} />)
+
+    const section = screen.getByTestId('plan-management-cycle-1')
+    expect(section.textContent).toContain('01.09.2026 – 30.09.2026')
+    expect(section.textContent).toContain('Tag 19 von 30')
+  })
+
+  it('lists every intake time with its own weekdays and dose', () => {
+    const twoSlots = timeline({
+      versions: [version('version-current', 5, '2026-09-01', {
+        intake_time: 'morgens,abends',
+        intake_time_custom: '08:00,20:00',
+        slot_doses: '500,250',
+        slot_days: ',Mo|Mi|Fr',
+        unit: 'mcg',
+      })],
+    })
+    render(<PlanManagementSection {...callbacks({ timeline: twoSlots })} />)
+
+    const section = screen.getByTestId('plan-management-cycle-1')
+    const rows = within(section).getAllByRole('listitem')
+    expect(rows[0].textContent).toContain('Morgens · 08:00')
+    expect(rows[0].textContent).toContain('500 mcg')
+    expect(rows[1].textContent).toContain('Abends · 20:00')
+    expect(rows[1].textContent).toContain('250 mcg')
+    expect(rows[1].textContent).toContain('Mo, Mi, Fr')
+    expect(section.textContent).toContain('2 Einnahmezeiten')
+    // Eine einzige Stufe steht schon oben.
+    expect(screen.queryByText('Dosisverlauf')).toBeNull()
+  })
+
+  it('shows the whole plan in every step and marks what changed', () => {
+    const slots = {
+      intake_time: 'morgens,abends',
+      intake_time_custom: '08:00,20:00',
+      slot_days: ',Mo|Mi|Fr',
+      unit: 'mcg',
+    }
+    const titrated = timeline({
+      versions: [
+        version('version-current', 250, '2026-07-15', { ...slots, slot_doses: '250,250' }),
+        version('version-step', 500, '2026-09-01', { ...slots, slot_doses: '500,250', change_kind: 'titration' }),
+        version('version-future', 750, '2026-10-01', { ...slots, slot_doses: '750,250' }),
+      ],
+    })
+    render(<PlanManagementSection {...callbacks({ timeline: titrated })} />)
+
+    expect(screen.getByText('Dosisverlauf')).toBeTruthy()
+    const steps = within(screen.getByText('Dosisverlauf').closest('div')!.parentElement!).getAllByRole('listitem')
+      .filter(item => item.parentElement?.tagName === 'OL')
+    expect(steps).toHaveLength(3)
+
+    expect(steps[0].textContent).toContain('15.07.2026 · Start')
+    expect(steps[0].textContent).not.toContain('gleich')
+
+    expect(steps[1].textContent).toContain('01.09.2026 · Titration')
+    expect(steps[1].textContent).toContain('gilt jetzt')
+    expect(steps[1].textContent).toContain('250 mcg →500 mcg')
+    expect(steps[1].textContent).toContain('erhöht')
+    expect(steps[1].textContent).toContain('Abends · 20:00')
+    expect(steps[1].textContent).toContain('gleich')
+
+    expect(steps[2].textContent).toContain('geplant')
+    expect(steps[2].textContent).toContain('500 mcg →750 mcg')
+    expect(within(steps[2]).getByRole('button', { name: 'Geplante Änderung vom 01.10.2026 bearbeiten' })).toBeTruthy()
+  })
+
+  it('marks an added and a dropped intake time', () => {
+    const changed = timeline({
+      versions: [
+        version('version-current', 5, '2026-08-01', { intake_time: 'morgens', intake_time_custom: '08:00' }),
+        version('version-step', 5, '2026-09-01', { intake_time: 'abends', intake_time_custom: '20:00', change_kind: 'schedule' }),
+      ],
+    })
+    render(<PlanManagementSection {...callbacks({ timeline: changed })} />)
+
+    const history = screen.getByText('Dosisverlauf').closest('div')!.parentElement!
+    expect(history.textContent).toContain('neu')
+    expect(history.textContent).toContain('entfällt')
   })
 
   it.each([

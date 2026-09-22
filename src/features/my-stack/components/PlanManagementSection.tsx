@@ -1,16 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { CalendarDays, Clock, Flag, Pause, Pencil, Play, RotateCcw, Trash2, X } from 'lucide-react'
+import { CalendarDays, Clock, Flag, Moon, Pause, Pencil, Play, RotateCcw, Sun, Sunrise, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { findNextTimelineIntake } from '../../../lib/intakeSchedule'
+import { findNextTimelineIntake, type ResolvedRoutineGroup } from '../../../lib/intakeSchedule'
 import {
   localDateTimeKey,
   resolveCycleAt,
   type CyclePlanVersion,
   type CycleTimeline,
 } from '../../../lib/planTimeline'
-import { planVersionSegments, type PlanVersionSegment } from '../lib/planSegments'
-import { rhythmFromStorage, rhythmSummary, rhythmText } from '../lib/intakeRhythm'
+import { planVersionSegments } from '../lib/planSegments'
+import {
+  WEEKDAY_KEYS,
+  isOnDemandRhythm,
+  rhythmFromStorage,
+  rhythmSummary,
+  rhythmText,
+} from '../lib/intakeRhythm'
+import type { IntakeRhythm } from '../types'
+import {
+  inclusiveDayCount,
+  planCardSlots,
+  planStepRows,
+  type PlanCardSlot,
+  type PlanStepRow,
+} from '../lib/planCard'
 
 export interface PlanManagementSectionProps {
   timeline: CycleTimeline
@@ -35,15 +49,9 @@ type DialogState =
   | { kind: 'remove'; version: CyclePlanVersion }
   | { kind: 'end' }
 
-function doseLabel(version: CyclePlanVersion): string {
-  if (version.dose == null) return '–'
-  return `${version.dose} ${version.unit ?? ''}`.trim()
-}
+type Translate = (key: string, options?: Record<string, unknown>) => unknown
 
-function rhythmLabel(
-  version: CyclePlanVersion,
-  t: (key: string, options?: Record<string, unknown>) => unknown,
-): string {
+function versionRhythm(version: CyclePlanVersion): IntakeRhythm {
   const legacyFrequency: Record<string, string> = {
     daily: 'Täglich',
     weekdays: 'Wochentage wählen',
@@ -51,7 +59,7 @@ function rhythmLabel(
     cycle: 'Im Wechsel',
     on_demand: 'Bei Bedarf',
   }
-  const rhythm = rhythmFromStorage({
+  return rhythmFromStorage({
     frequency: legacyFrequency[version.frequency] ?? version.frequency,
     x_days_interval: version.x_days_interval,
     interval_unit: version.interval_unit,
@@ -59,7 +67,71 @@ function rhythmLabel(
     cycle_off_days: version.cycle_off_days,
     schedule_days: version.schedule_days,
   })
-  return rhythmText(rhythmSummary(rhythm), t)
+}
+
+function rhythmLabel(version: CyclePlanVersion, t: Translate): string {
+  return rhythmText(rhythmSummary(versionRhythm(version)), t)
+}
+
+/** „Bei Bedarf" hat keine Einnahmezeiten — die gespeicherte Tageszeit bedeutet dort nichts. */
+function versionSlots(version: CyclePlanVersion): PlanCardSlot[] {
+  return isOnDemandRhythm(versionRhythm(version)) ? [] : planCardSlots(version)
+}
+
+function slotDoseLabel(slot: PlanCardSlot): string | null {
+  if (slot.dose == null) return null
+  return `${slot.dose} ${slot.unit ?? ''}`.trim()
+}
+
+// Ein beliebiger Montag (UTC), um Wochentagsnamen in der App-Sprache zu bilden.
+const WEEKDAY_REFERENCE_UTC = Date.UTC(2026, 0, 5)
+
+function weekdayLabel(day: string, language: string): string {
+  const index = WEEKDAY_KEYS.indexOf(day as (typeof WEEKDAY_KEYS)[number])
+  if (index < 0) return day
+  return new Intl.DateTimeFormat(language, { weekday: 'short', timeZone: 'UTC' })
+    .format(new Date(WEEKDAY_REFERENCE_UTC + index * 86_400_000))
+    .replace(/\.$/, '')
+}
+
+const ROUTINE_LABEL: Record<ResolvedRoutineGroup, { key: string; defaultValue: string }> = {
+  morning: { key: 'my_stack_routine_morning', defaultValue: 'Morgens' },
+  midday: { key: 'my_stack_routine_midday', defaultValue: 'Mittags' },
+  evening: { key: 'my_stack_routine_evening', defaultValue: 'Abends' },
+}
+
+function RoutineIcon({ group }: { group: ResolvedRoutineGroup }) {
+  if (group === 'morning') return <Sunrise size={16} aria-hidden="true" className="shrink-0 text-amber-300" />
+  if (group === 'midday') return <Sun size={16} aria-hidden="true" className="shrink-0 text-yellow-200" />
+  return <Moon size={16} aria-hidden="true" className="shrink-0 text-indigo-300" />
+}
+
+function routineLabel(slot: PlanCardSlot, t: Translate): string {
+  const label = ROUTINE_LABEL[slot.routineGroup]
+  return String(t(label.key, { defaultValue: label.defaultValue }))
+}
+
+function localDay(value: string, timeZone: string): string {
+  return localDateTimeKey(new Date(value), timeZone).slice(0, 10)
+}
+
+function shiftLocalDay(day: string, offset: number): string {
+  const [year, month, date] = day.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, date + offset)).toISOString().slice(0, 10)
+}
+
+/**
+ * Erster und letzter Tag des Zyklus. Das Ende ist in der Datenbank eine
+ * Grenze („ab hier nicht mehr") — der letzte Einnahmetag ist der Tag davor.
+ */
+function cyclePeriod(timeline: CycleTimeline, timeZone: string): { first: string; last: string | null } {
+  const { cycle } = timeline
+  const first = cycle.start_local_date ?? localDay(cycle.started_at, timeZone)
+  if (cycle.end_local_date) return { first, last: shiftLocalDay(cycle.end_local_date, -1) }
+  if (cycle.ended_at) {
+    return { first, last: localDay(new Date(new Date(cycle.ended_at).getTime() - 1).toISOString(), timeZone) }
+  }
+  return { first, last: null }
 }
 
 function timelineForIntakeResolution(timeline: CycleTimeline): CycleTimeline {
@@ -130,27 +202,130 @@ function wallClockToIso(value: string, timeZone: string): string {
   throw new Error(`Local date-time does not exist in ${timeZone}`)
 }
 
-function HistoryRow({
-  segment,
-  language,
-  timeZone,
-  t,
-}: {
-  segment: PlanVersionSegment
-  language: string
-  timeZone: string
-  t: (key: string, options?: Record<string, unknown>) => unknown
-}) {
+// Einzahl und Mehrzahl waehlt der Code, nicht i18next: Sprachen mit mehr
+// Pluralformen (ru, ar) faenden sonst keinen Schluessel und zeigten ihn roh.
+function durationLabel(days: number, t: Translate): string {
+  return String(days === 1
+    ? t('my_stack_plan_duration_single', { days, defaultValue: '{{days}} Tag' })
+    : t('my_stack_plan_duration_multiple', { days, defaultValue: '{{days}} Tage' }))
+}
+
+function slotCountLabel(slots: number, t: Translate): string {
+  return String(slots === 1
+    ? t('my_stack_plan_slot_count_single', { slots, defaultValue: '{{slots}} Einnahmezeit' })
+    : t('my_stack_plan_slot_count_multiple', { slots, defaultValue: '{{slots}} Einnahmezeiten' }))
+}
+
+function stepKindLabel(version: CyclePlanVersion, t: Translate): string {
+  const copy = {
+    initial: { key: 'my_stack_plan_step_start', defaultValue: 'Start' },
+    dose: { key: 'my_stack_plan_step_dose', defaultValue: 'Dosis' },
+    schedule: { key: 'my_stack_plan_step_schedule', defaultValue: 'Plan' },
+    titration: { key: 'my_stack_plan_step_titration', defaultValue: 'Titration' },
+  }[version.change_kind]
+  return String(t(copy.key, { defaultValue: copy.defaultValue }))
+}
+
+function DayChips({ days, language }: { days: string[]; language: string }) {
   return (
-    <li className="flex items-center justify-between gap-3 rounded-xl border border-slate-800/80 bg-slate-950/45 px-3 py-2.5">
+    <span aria-hidden="true" className="mt-1.5 flex flex-wrap gap-0.5">
+      {WEEKDAY_KEYS.map(day => {
+        const active = days.includes(day)
+        return (
+          <span
+            key={day}
+            className={`grid h-5 min-w-5 place-items-center rounded-full px-0.5 text-[10px] font-bold ${active
+              ? 'bg-cyan-300/15 text-cyan-100'
+              : 'border border-white/10 text-slate-600'}`}
+          >
+            {weekdayLabel(day, language).slice(0, 2)}
+          </span>
+        )
+      })}
+    </span>
+  )
+}
+
+function CurrentSlotRow({ slot, language, t }: { slot: PlanCardSlot; language: string; t: Translate }) {
+  const dose = slotDoseLabel(slot)
+  return (
+    <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
+      <RoutineIcon group={slot.routineGroup} />
       <div className="min-w-0">
-        <p className="text-xs font-semibold text-slate-200">
-          {dateLabel(segment.effectiveFrom, language, timeZone)}
+        <p className="text-sm font-semibold text-slate-100">
+          {routineLabel(slot, t)} · {slot.time}
         </p>
-        <p className="mt-0.5 truncate text-xs text-slate-500">
-          {doseLabel(segment.version)} · {rhythmLabel(segment.version, t)}
+        {slot.days.length > 0 && (
+          <span className="sr-only">{slot.days.map(day => weekdayLabel(day, language)).join(', ')}</span>
+        )}
+      </div>
+      {dose && <p className="whitespace-nowrap text-base font-bold text-white">{dose}</p>}
+      {slot.days.length > 0 && (
+        <div className="col-span-2 col-start-2 -mt-1.5">
+          <DayChips days={slot.days} language={language} />
+        </div>
+      )}
+    </li>
+  )
+}
+
+function ChangeMarker({ change, t }: { change: PlanStepRow['change']; t: Translate }) {
+  if (change === 'initial') return null
+  if (change === 'same') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-slate-500/25 px-1.5 py-px text-[10.5px] font-semibold text-slate-400">
+        <span aria-hidden="true" className="text-xs leading-none">=</span>
+        {String(t('my_stack_plan_change_same', { defaultValue: 'gleich' }))}
+      </span>
+    )
+  }
+  const copy = {
+    increased: { text: t('my_stack_plan_change_increased', { defaultValue: 'erhöht' }), arrow: '↑', tone: 'bg-emerald-400/15 text-emerald-200' },
+    decreased: { text: t('my_stack_plan_change_decreased', { defaultValue: 'reduziert' }), arrow: '↓', tone: 'bg-amber-300/15 text-amber-100' },
+    changed: { text: t('my_stack_plan_change_changed', { defaultValue: 'geändert' }), arrow: '', tone: 'bg-violet-300/15 text-violet-100' },
+    new: { text: t('my_stack_plan_change_new', { defaultValue: 'neu' }), arrow: '', tone: 'bg-cyan-300/15 text-cyan-100' },
+    removed: { text: t('my_stack_plan_change_removed', { defaultValue: 'entfällt' }), arrow: '', tone: 'bg-rose-300/10 text-rose-200' },
+  }[change]
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-px text-[10.5px] font-bold ${copy.tone}`}>
+      {copy.arrow && <span aria-hidden="true">{copy.arrow}</span>}
+      {String(copy.text)}
+    </span>
+  )
+}
+
+function StepSlotRow({ row, language, t }: { row: PlanStepRow; language: string; t: Translate }) {
+  const { slot, previous, change } = row
+  const quiet = change === 'same' || change === 'removed'
+  const dose = slotDoseLabel(slot)
+  const previousDose = previous ? slotDoseLabel(previous) : null
+  const doseMoved = previous != null && change !== 'removed' && previousDose !== dose
+  const timeMoved = previous != null && change !== 'removed' && previous.time !== slot.time
+  const days = slot.days.map(day => weekdayLabel(day, language)).join(', ')
+  return (
+    <li
+      className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-lg border px-2.5 py-2 ${quiet
+        ? 'border-white/[0.04]'
+        : 'border-white/[0.08] bg-white/[0.045]'}`}
+    >
+      <RoutineIcon group={slot.routineGroup} />
+      <div className="min-w-0">
+        <p className={`text-[13px] font-semibold ${quiet ? 'text-slate-400' : 'text-slate-100'}`}>
+          {routineLabel(slot, t)} · {timeMoved && <span className="font-medium text-slate-500">{previous.time} → </span>}{slot.time}
+        </p>
+        <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11.5px] text-slate-400">
+          {days && <span>{days}</span>}
+          <ChangeMarker change={change} t={t} />
         </p>
       </div>
+      {dose && (
+        <p className={`flex flex-col items-end whitespace-nowrap text-sm font-bold ${quiet ? 'text-slate-400' : 'text-white'} ${change === 'removed' ? 'line-through' : ''}`}>
+          {doseMoved && previousDose && (
+            <span className="text-[11px] font-medium text-slate-500">{previousDose} →</span>
+          )}
+          <span>{dose}</span>
+        </p>
+      )}
     </li>
   )
 }
@@ -178,11 +353,21 @@ export function PlanManagementSection({
   const currentVersion = resolved.planVersion
   const futureSegments = segments.filter(segment => segment.status === 'future')
   const displayVersion = currentVersion ?? futureSegments[0]?.version ?? null
-  const historySegments = segments.filter(segment => segment.status !== 'future')
+  const isEnded = resolved.status === 'ended'
+  // Ein beendeter Zyklus zeigt nur, was wirklich galt: eine Stufe nach dem
+  // Ende wurde nie erreicht.
+  const steps = isEnded ? segments.filter(segment => segment.status !== 'future') : segments
+  const panelVersion = isEnded ? steps[steps.length - 1]?.version ?? null : displayVersion
+  const panelSlots = panelVersion ? versionSlots(panelVersion) : []
+  const currentSegment = segments.find(segment => segment.status === 'current') ?? null
+  // Eine einzige Stufe steht schon oben — der Verlauf lohnt erst ab zwei. Eine
+  // geplante Stufe zeigt er immer, denn nur dort laesst sie sich bearbeiten.
+  const showHistory = steps.length >= 2 || steps.some(segment => segment.status === 'future')
+  const period = cyclePeriod(timeline, timeZone)
+  const today = localDateTimeKey(now, timeZone).slice(0, 10)
   const nextIntake = resolved.status === 'active' || resolved.status === 'planned'
     ? findNextTimelineIntake(timelineForIntakeResolution(timeline), now, timeZone)
     : null
-  const nextFuture = futureSegments[0] ?? null
   const [dialog, setDialog] = useState<DialogState | null>(null)
   const [pauseEnd, setPauseEnd] = useState('')
   const [pending, setPending] = useState(false)
@@ -423,110 +608,141 @@ export function PlanManagementSection({
         </div>
       </div>
 
-      {resolved.status === 'ended' ? (
+      {!isEnded && !displayVersion ? null : (
         <>
-          <div className="mt-4">
-            <h3 className="text-sm font-bold text-white">
-              {t('my_stack_plan_history', { defaultValue: 'Verlauf' })}
-            </h3>
-            <ul className="mt-2 space-y-2">
-              {segments.map(segment => (
-                <HistoryRow key={segment.version.id} segment={segment} language={language} timeZone={timeZone} t={t} />
-              ))}
-            </ul>
-          </div>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => void restart()}
-            className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-4 text-sm font-bold text-cyan-100 transition-colors hover:bg-cyan-300/15"
-          >
-            <RotateCcw size={15} /> {t('my_stack_plan_restart', { defaultValue: 'Neu starten' })}
-          </button>
-          {inlineError && <p role="alert" className="mt-3 text-sm text-rose-200">{inlineError}</p>}
-        </>
-      ) : displayVersion ? (
-        <>
-          <div className="mt-4 rounded-2xl border border-cyan-300/20 bg-slate-950/45 p-4">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-xs text-slate-500">{t('my_stack_plan_dose', { defaultValue: 'Dosis' })}</p>
-                <p className="mt-1 font-semibold text-white">{doseLabel(displayVersion)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">{t('my_stack_plan_rhythm_label', { defaultValue: 'Rhythmus' })}</p>
-                <p className="mt-1 font-semibold text-white">{rhythmLabel(displayVersion, t)}</p>
-              </div>
-            </div>
-
-            {resolved.status === 'paused' ? (
-              <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/5 px-3 py-2.5 text-sm text-amber-100">
-                {t('my_stack_plan_pause_neutral', { defaultValue: 'Während der Pause ist keine Einnahme fällig.' })}
+          <div className="mt-4 flex items-center gap-2.5">
+            <CalendarDays size={16} aria-hidden="true" className={`shrink-0 ${isActive ? 'text-emerald-300' : 'text-cyan-300'}`} />
+            <div className="min-w-0">
+              <p className="text-[15px] font-semibold text-white">
+                {dateLabel(`${period.first}|00:00:00`, language, timeZone)}
+                {' – '}
+                {period.last
+                  ? dateLabel(`${period.last}|00:00:00`, language, timeZone)
+                  : t('my_stack_plan_open_end', { defaultValue: 'Ende offen' })}
               </p>
-            ) : (
-              <div className="mt-4 flex items-start gap-2 rounded-xl border border-slate-700/70 bg-slate-900/70 px-3 py-2.5">
-                <Clock size={15} className="mt-0.5 shrink-0 text-cyan-300" />
-                <div>
-                  <p className="text-xs text-slate-500">{t('my_stack_plan_next_intake', { defaultValue: 'Nächste Einnahme' })}</p>
-                  <p className="mt-0.5 text-sm font-semibold text-slate-100">
-                    {nextIntake
-                      ? `${dateLabel(`${nextIntake.localDate}|00:00:00`, language, timeZone)} · ${nextIntake.time}`
-                      : t('my_stack_plan_next_intake_none', { defaultValue: 'Keine feste Einnahme geplant' })}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {nextFuture && (
-              <div className="mt-3 flex items-start gap-2 rounded-xl border border-violet-300/20 bg-violet-300/5 px-3 py-2.5">
-                <CalendarDays size={15} className="mt-0.5 shrink-0 text-violet-300" />
-                <div>
-                  <p className="text-xs text-slate-500">{t('my_stack_plan_next_change', { defaultValue: 'Nächste Änderung' })}</p>
-                  <p className="mt-0.5 text-sm font-semibold text-slate-100">
-                    {dateLabel(nextFuture.effectiveFrom, language, timeZone)} · {doseLabel(nextFuture.version)}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {currentVersion && (
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => onAdjustDose(currentVersion)}
-                  className="min-h-11 rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-3 text-sm font-semibold text-cyan-100 disabled:opacity-50"
-                >
-                  {t('my_stack_plan_adjust_dose', { defaultValue: 'Dosis anpassen' })}
-                </button>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => onAdjustSchedule(currentVersion)}
-                  className="min-h-11 rounded-xl border border-violet-300/25 bg-violet-300/10 px-3 text-sm font-semibold text-violet-100 disabled:opacity-50"
-                >
-                  {t('my_stack_plan_adjust_schedule', { defaultValue: 'Plan anpassen' })}
-                </button>
-              </div>
-            )}
+              {isEnded && period.last ? (
+                <p className="mt-0.5 text-xs text-slate-400">
+                  {durationLabel(Math.max(1, inclusiveDayCount(period.first, period.last)), t)}
+                </p>
+              ) : !isEnded && today >= period.first ? (
+                <p className="mt-0.5 text-xs text-slate-400">
+                  {period.last
+                    ? t('my_stack_plan_day_of', {
+                      day: Math.min(inclusiveDayCount(period.first, today), inclusiveDayCount(period.first, period.last)),
+                      total: inclusiveDayCount(period.first, period.last),
+                      defaultValue: 'Tag {{day}} von {{total}}',
+                    })
+                    : t('my_stack_plan_day', {
+                      day: inclusiveDayCount(period.first, today),
+                      defaultValue: 'Tag {{day}}',
+                    })}
+                </p>
+              ) : null}
+            </div>
           </div>
 
-          {futureSegments.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-sm font-bold text-white">
-                {t('my_stack_plan_future_changes', { defaultValue: 'Geplante Änderungen' })}
-              </h3>
-              <ul className="mt-2 space-y-2">
-                {futureSegments.map(segment => {
+          {panelVersion && (
+            <div className="mt-4 rounded-2xl border border-cyan-300/20 bg-slate-950/45 p-4">
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-sm font-bold text-white">
+                  {isEnded
+                    ? t('my_stack_plan_last_plan', { defaultValue: 'Zuletzt' })
+                    : resolved.status === 'planned' && futureSegments[0]
+                      ? t('my_stack_plan_from_date', {
+                        date: dateLabel(futureSegments[0].effectiveFrom, language, timeZone),
+                        defaultValue: 'Ab {{date}}',
+                      })
+                      : t('my_stack_plan_now', { defaultValue: 'Jetzt' })}
+                </h3>
+                {!isEnded && currentSegment && (
+                  <p className="text-xs text-slate-400">
+                    {t('my_stack_plan_valid_since', {
+                      date: dateLabel(currentSegment.effectiveFrom, language, timeZone),
+                      defaultValue: 'gilt seit {{date}}',
+                    })}
+                  </p>
+                )}
+              </div>
+              <p className="mt-2 text-[13px] text-slate-300">
+                {rhythmLabel(panelVersion, t)}
+                {panelSlots.length > 0 && ` · ${slotCountLabel(panelSlots.length, t)}`}
+              </p>
+              {panelSlots.length > 0 && (
+                <ul className="mt-3 space-y-2">
+                  {panelSlots.map(slot => (
+                    <CurrentSlotRow key={slot.id} slot={slot} language={language} t={t} />
+                  ))}
+                </ul>
+              )}
+
+              {isEnded ? null : resolved.status === 'paused' ? (
+                <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/5 px-3 py-2.5 text-sm text-amber-100">
+                  {t('my_stack_plan_pause_neutral', { defaultValue: 'Während der Pause ist keine Einnahme fällig.' })}
+                </p>
+              ) : (
+                <div className="mt-3 flex items-start gap-2 rounded-xl border border-slate-700/70 bg-slate-900/70 px-3 py-2.5">
+                  <Clock size={15} className="mt-0.5 shrink-0 text-cyan-300" />
+                  <div>
+                    <p className="text-xs text-slate-500">{t('my_stack_plan_next_intake', { defaultValue: 'Nächste Einnahme' })}</p>
+                    <p className="mt-0.5 text-sm font-semibold text-slate-100">
+                      {nextIntake
+                        ? `${dateLabel(`${nextIntake.localDate}|00:00:00`, language, timeZone)} · ${nextIntake.time}`
+                        : t('my_stack_plan_next_intake_none', { defaultValue: 'Keine feste Einnahme geplant' })}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {!isEnded && currentVersion && (
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => onAdjustDose(currentVersion)}
+                    className="min-h-11 rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-3 text-sm font-semibold text-cyan-100 disabled:opacity-50"
+                  >
+                    {t('my_stack_plan_adjust_dose', { defaultValue: 'Dosis anpassen' })}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => onAdjustSchedule(currentVersion)}
+                    className="min-h-11 rounded-xl border border-violet-300/25 bg-violet-300/10 px-3 text-sm font-semibold text-violet-100 disabled:opacity-50"
+                  >
+                    {t('my_stack_plan_adjust_schedule', { defaultValue: 'Plan anpassen' })}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {showHistory && (
+            <div className="mt-5">
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-sm font-bold text-white">
+                  {t('my_stack_plan_dose_history', { defaultValue: 'Dosisverlauf' })}
+                </h3>
+                {futureSegments.length > 0 && !isEnded && (
+                  <p className="text-[11.5px] text-slate-500">
+                    {t('my_stack_plan_planned_count', {
+                      planned: futureSegments.length,
+                      defaultValue: '{{planned}} geplant',
+                    })}
+                  </p>
+                )}
+              </div>
+              <ol className="mt-3">
+                {steps.map((segment, index) => {
+                  const previous = steps[index - 1]?.version ?? null
                   const effectiveDate = dateLabel(segment.effectiveFrom, language, timeZone)
-                  return (
-                    <li key={segment.version.id} className="flex items-center gap-3 rounded-xl border border-violet-300/15 bg-violet-300/5 px-3 py-2.5">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-violet-100">{effectiveDate}</p>
-                        <p className="mt-0.5 truncate text-xs text-slate-400">
-                          {doseLabel(segment.version)} · {rhythmLabel(segment.version, t)}
-                        </p>
-                      </div>
+                  const isLast = index === steps.length - 1
+                  const rhythm = rhythmLabel(segment.version, t)
+                  const previousRhythm = previous ? rhythmLabel(previous, t) : null
+                  const rows = isOnDemandRhythm(versionRhythm(segment.version))
+                    ? []
+                    : planStepRows(segment.version, previous && !isOnDemandRhythm(versionRhythm(previous)) ? previous : null)
+                  const actions = segment.status === 'future' && (
+                    <div className="-my-2.5 -mr-1 flex shrink-0">
                       <button
                         type="button"
                         disabled={pending}
@@ -535,7 +751,7 @@ export function PlanManagementSection({
                           defaultValue: 'Geplante Änderung vom {{date}} bearbeiten',
                           date: effectiveDate,
                         }))}
-                        className="grid h-10 w-10 place-items-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-violet-200 disabled:opacity-50"
+                        className="grid h-11 w-11 place-items-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-violet-200 disabled:opacity-50"
                       >
                         <Pencil size={15} />
                       </button>
@@ -547,72 +763,131 @@ export function PlanManagementSection({
                           defaultValue: 'Geplante Änderung vom {{date}} entfernen',
                           date: effectiveDate,
                         }))}
-                        className="grid h-10 w-10 place-items-center rounded-lg text-slate-400 hover:bg-rose-400/10 hover:text-rose-200 disabled:opacity-50"
+                        className="grid h-11 w-11 place-items-center rounded-lg text-slate-400 hover:bg-rose-400/10 hover:text-rose-200 disabled:opacity-50"
                       >
                         <Trash2 size={15} />
                       </button>
+                    </div>
+                  )
+                  const header = (
+                    <>
+                      <div className="flex items-start gap-2">
+                        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                          <p className={`text-[13px] font-bold ${segment.status === 'future' ? 'text-violet-100' : segment.status === 'current' ? 'text-white' : 'text-slate-300'}`}>
+                            {effectiveDate} · {stepKindLabel(segment.version, t)}
+                          </p>
+                          {segment.status === 'current' && (
+                            <span className="rounded-full bg-emerald-400/15 px-2 py-px text-[11px] font-bold text-emerald-200">
+                              {t('my_stack_plan_step_current', { defaultValue: 'gilt jetzt' })}
+                            </span>
+                          )}
+                          {segment.status === 'future' && (
+                            <span className="rounded-full bg-violet-300/15 px-2 py-px text-[11px] font-bold text-violet-200">
+                              {t('my_stack_plan_step_planned', { defaultValue: 'geplant' })}
+                            </span>
+                          )}
+                        </div>
+                        {actions}
+                      </div>
+                      {(previousRhythm === null || previousRhythm !== rhythm) && (
+                        <p className="mt-1 text-[11.5px] text-slate-400">
+                          {previousRhythm !== null && <span className="text-slate-500">{previousRhythm} → </span>}
+                          {rhythm}
+                        </p>
+                      )}
+                      {rows.length > 0 && (
+                        <ul className="mt-2 space-y-1.5">
+                          {rows.map(row => (
+                            <StepSlotRow key={`${row.change}-${row.slot.id}`} row={row} language={language} t={t} />
+                          ))}
+                        </ul>
+                      )}
+                    </>
+                  )
+                  return (
+                    <li key={segment.version.id} className="flex gap-3">
+                      <div aria-hidden="true" className="flex w-4 shrink-0 flex-col items-center">
+                        {segment.status === 'current' ? (
+                          <span className="mt-0.5 h-3.5 w-3.5 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.18)]" />
+                        ) : segment.status === 'future' ? (
+                          <span className="mt-1 h-3 w-3 rounded-full border-2 border-dashed border-violet-300" />
+                        ) : (
+                          <span className="mt-1 h-3 w-3 rounded-full border-2 border-slate-500" />
+                        )}
+                        {!isLast && <span className={`w-0.5 flex-1 ${steps[index + 1]?.status === 'future' ? 'bg-violet-300/35' : 'bg-slate-400/25'}`} />}
+                      </div>
+                      {segment.status === 'future' ? (
+                        <div className={`-mt-1.5 min-w-0 flex-1 rounded-xl border border-violet-300/20 bg-violet-300/5 p-2.5 pl-3 ${isLast ? '' : 'mb-4'}`}>
+                          {header}
+                        </div>
+                      ) : (
+                        <div className={`min-w-0 flex-1 ${isLast ? '' : 'pb-4'}`}>{header}</div>
+                      )}
                     </li>
                   )
                 })}
-              </ul>
+              </ol>
             </div>
           )}
 
-          {historySegments.some(segment => segment.status === 'past') && (
-            <div className="mt-4">
-              <h3 className="text-sm font-bold text-white">
-                {t('my_stack_plan_history', { defaultValue: 'Verlauf' })}
-              </h3>
-              <ul className="mt-2 space-y-2">
-                {historySegments.filter(segment => segment.status === 'past').map(segment => (
-                  <HistoryRow key={segment.version.id} segment={segment} language={language} timeZone={timeZone} t={t} />
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className="mt-4 flex flex-wrap gap-2 border-t border-white/10 pt-4">
-            {resolved.status === 'paused' ? (
-              <>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => void resume()}
-                  className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-300/25 bg-emerald-300/10 px-3 text-sm font-semibold text-emerald-100 disabled:opacity-50"
-                >
-                  <Play size={14} /> {t('my_stack_plan_resume', { defaultValue: 'Fortsetzen' })}
-                </button>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => openDialog({ kind: 'pause_end' })}
-                  className="min-h-10 flex-1 rounded-xl border border-amber-300/25 bg-amber-300/10 px-3 text-sm font-semibold text-amber-100 disabled:opacity-50"
-                >
-                  {t('my_stack_plan_pause_end', { defaultValue: 'Pausenende festlegen' })}
-                </button>
-              </>
-            ) : (
+          {isEnded ? (
+            <>
               <button
                 type="button"
                 disabled={pending}
-                onClick={() => openDialog({ kind: 'pause' })}
-                className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-amber-300/25 bg-amber-300/10 px-3 text-sm font-semibold text-amber-100 disabled:opacity-50"
+                onClick={() => void restart()}
+                className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-4 text-sm font-bold text-cyan-100 transition-colors hover:bg-cyan-300/15"
               >
-                <Pause size={14} /> {t('my_stack_plan_pause', { defaultValue: 'Pausieren' })}
+                <RotateCcw size={15} /> {t('my_stack_plan_restart', { defaultValue: 'Neu starten' })}
               </button>
-            )}
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => openDialog({ kind: 'end' })}
-              className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-rose-300/25 bg-rose-300/10 px-3 text-sm font-semibold text-rose-100 disabled:opacity-50"
-            >
-              <Flag size={14} /> {t('my_stack_plan_end', { defaultValue: 'Beenden' })}
-            </button>
-          </div>
-          {inlineError && !dialog && <p role="alert" className="mt-3 text-sm text-rose-200">{inlineError}</p>}
+              {inlineError && <p role="alert" className="mt-3 text-sm text-rose-200">{inlineError}</p>}
+            </>
+          ) : (
+            <>
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-white/10 pt-4">
+                {resolved.status === 'paused' ? (
+                  <>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => void resume()}
+                      className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-300/25 bg-emerald-300/10 px-3 text-sm font-semibold text-emerald-100 disabled:opacity-50"
+                    >
+                      <Play size={14} /> {t('my_stack_plan_resume', { defaultValue: 'Fortsetzen' })}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => openDialog({ kind: 'pause_end' })}
+                      className="min-h-10 flex-1 rounded-xl border border-amber-300/25 bg-amber-300/10 px-3 text-sm font-semibold text-amber-100 disabled:opacity-50"
+                    >
+                      {t('my_stack_plan_pause_end', { defaultValue: 'Pausenende festlegen' })}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => openDialog({ kind: 'pause' })}
+                    className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-amber-300/25 bg-amber-300/10 px-3 text-sm font-semibold text-amber-100 disabled:opacity-50"
+                  >
+                    <Pause size={14} /> {t('my_stack_plan_pause', { defaultValue: 'Pausieren' })}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => openDialog({ kind: 'end' })}
+                  className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-rose-300/25 bg-rose-300/10 px-3 text-sm font-semibold text-rose-100 disabled:opacity-50"
+                >
+                  <Flag size={14} /> {t('my_stack_plan_end', { defaultValue: 'Beenden' })}
+                </button>
+              </div>
+              {inlineError && !dialog && <p role="alert" className="mt-3 text-sm text-rose-200">{inlineError}</p>}
+            </>
+          )}
         </>
-      ) : null}
+      )}
 
       {dialog && createPortal((
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/75 p-4 sm:items-center" data-app-modal>
