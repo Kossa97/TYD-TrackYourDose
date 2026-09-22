@@ -42,7 +42,7 @@ import {
   type RoutineGroupModel,
   type RoutineIntake,
 } from '../features/routines/intakeGroups'
-import { confirmIntakeGroup, quantifiedVialEntries, skipIntakeGroup, type IntakeConfirmationClient } from '../features/routines/services/intakeConfirmation'
+import { confirmIntakeGroup, quantifiedVialEntries, skipIntakeGroup, type IntakeConfirmationClient, type SavedDoseLog } from '../features/routines/services/intakeConfirmation'
 import { slotKeyBereiche } from '../features/routines/lib/slotKeyRange'
 import { slotSchluesselFuerZeitpunkt } from '../features/routines/lib/slotKey'
 import { RoutineConfirmationSheet } from '../features/routines/components/RoutineConfirmationSheet'
@@ -335,6 +335,16 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
   const monatsSchluessel = format(currentDate, 'yyyy-MM')
   const timelineContext = `${fensterStart}|${fensterEnde}|${tagAusserhalbDesRasters}`
   const latestLogLoader = useRef<(() => Promise<void>) | null>(null)
+  // Welches Fenster gerade sichtbar ist -- fuer den Wettlauf zwischen einer
+  // laufenden Bestaetigung und einer Monatsnavigation. `confirmCycleDose`
+  // faengt `timelineContext` beim Start in seiner Closure; laeuft die RPC
+  // lange und wechselt der Nutzer inzwischen den Monat, waere ein direktes
+  // Einfuegen der zurueckgegebenen Zeile in `logs` ein fremdes Fenster in der
+  // Liste -- ein Juli-Log mitten im November. Der Ref haelt fest, was JETZT
+  // sichtbar ist, damit die Bestaetigung das beim Zurueckkommen erkennt und
+  // stattdessen neu laedt.
+  const sichtbaresFenster = useRef(timelineContext)
+  useLayoutEffect(() => { sichtbaresFenster.current = timelineContext })
 
   // Einnahme-Bestätigungs-Sheet
   interface ConfirmSheet { cycle?: Cycle; log?: DoseLog; slotDose?: number | null; scheduledAt?: string; slotKey?: string }
@@ -1052,6 +1062,55 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     }
   }
 
+  // Lokale Patches statt vollem Nachladen.
+  //
+  // Jede Bestaetigung, jedes Ueberspringen, jedes Wiederoeffnen und jedes
+  // Loeschen liess bisher `loadLogs()` laufen -- und das laedt Zeitleisten,
+  // Bestandsliste, Zeitzonen-Review und jede Zeile im sichtbaren Fenster neu,
+  // fuer eine einzige Zeile, die sich geaendert hat. Die drei Helfer hier
+  // schreiben stattdessen genau das in `logs`, was gerade erfolgreich in die
+  // Datenbank ging -- nie mehr, nie geraten:
+  //
+  // - Ein direktes `.update(...)`/`.delete()` spiegelt exakt das Objekt, das
+  //   gerade an die Datenbank ging (`patcheLog`/`entferneLog`).
+  // - `reverse_inventory_confirmation` setzt laut Definition nur `taken`
+  //   (`skip` -> false, sonst null) und ruehrt `notes` nie an -- das steht so
+  //   in `supabase-my-stack-tracking-depth.sql`, nicht geraten.
+  // - `confirm_intake_group` gibt die volle Zeile ohnehin zurueck
+  //   (`returns setof dose_logs`); die wurde bisher auf die id
+  //   zusammengestrichen (`uebernehmeGespeicherteZeile`).
+  const entferneLog = (id: string) => setLogs(current => current.filter(l => l.id !== id))
+
+  const patcheLog = (id: string, aenderung: Partial<DoseLog>) => (
+    setLogs(current => current.map(l => l.id === id ? { ...l, ...aenderung } : l))
+  )
+
+  const uebernehmeGespeicherteZeile = (row: SavedDoseLog) => {
+    const stackItem = row.stack_item_id ? stackItemById.get(row.stack_item_id) : undefined
+    setLogs(current => {
+      const index = current.findIndex(l => l.id === row.id)
+      const vorherige = index === -1 ? undefined : current[index]
+      const naechste: DoseLog = {
+        id: row.id,
+        stack_item_id: row.stack_item_id ?? vorherige?.stack_item_id ?? '',
+        dose: row.dose ?? vorherige?.dose ?? null,
+        unit: row.unit ?? vorherige?.unit ?? null,
+        method: row.method ?? vorherige?.method ?? '',
+        logged_at: row.logged_at ?? vorherige?.logged_at ?? '',
+        notes: 'notes' in row ? row.notes ?? null : vorherige?.notes ?? null,
+        taken: 'taken' in row ? row.taken ?? null : vorherige?.taken ?? null,
+        stack_items: { display_name: stackItem?.display_name ?? vorherige?.stack_items?.display_name ?? '' },
+        cycle_id: row.cycle_id ?? vorherige?.cycle_id ?? null,
+        plan_version_id: row.plan_version_id ?? vorherige?.plan_version_id ?? null,
+        routine_slot_key: row.routine_slot_key ?? vorherige?.routine_slot_key ?? null,
+      }
+      if (index === -1) return [...current, naechste]
+      const kopie = [...current]
+      kopie[index] = naechste
+      return kopie
+    })
+  }
+
   const deleteLog = async (log: DoseLog) => {
     if (!confirm(t('eintrag_loeschen'))) return
     const stackItem = stackItems.find(item => item.id === log.stack_item_id)
@@ -1067,7 +1126,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
       const { error } = await dashboardDataClient.from('dose_logs').delete().eq('id', log.id)
       if (error) return toast.error(t('error'))
     }
-    toast.success(t('deleted')); loadLogs(); loadStackItems()
+    toast.success(t('deleted')); entferneLog(log.id)
   }
 
   const confirmDose = async (log: DoseLog, taken: boolean, loggedAt?: string, quantity?: DashboardQuantity) => {
@@ -1100,7 +1159,11 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         await applyGenericInventory(log.id)
       }
     }
-    loadLogs(); loadStackItems()
+    // Der `reverseInventory`-Zweig oben schreibt nur `taken` (siehe die
+    // Erklaerung bei den Helfern) -- `update` traegt dort ungenutzte Werte,
+    // die nie an die Datenbank gingen und hier auch nicht ins lokale Bild
+    // duerfen.
+    patcheLog(log.id, (reversesInventory ? { taken: false } : update) as Partial<DoseLog>)
     if (taken) toast.success(t('einnahme_bestaetigt'))
     else toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
   }
@@ -1130,7 +1193,9 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     // gibt. Blieb er stehen, lief jeder weitere Versuch in den
     // `taken is true`-Filter der RPC und schlug fehl.
     setInventoryRetryIds(current => current.filter(id => id !== log.id))
-    loadLogs(); loadStackItems()
+    patcheLog(log.id, reversesInventory
+      ? { taken: null }
+      : (log.notes === AUTO_MISSED_NOTE ? { taken: null, notes: null } : { taken: null }))
     toast.success(t('dose_reopen_success', { defaultValue: 'Einnahme wieder geöffnet' }))
   }
 
@@ -1167,8 +1232,9 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         unit: quantity.unit,
         method: cycle.method,
       }))
+      let uebersprungeneZeile: SavedDoseLog | undefined
       try {
-        await skipIntakeGroup(
+        [uebersprungeneZeile] = await skipIntakeGroup(
           dashboardDataClient as unknown as IntakeConfirmationClient,
           [{ ...entry, actualLoggedAt }],
         )
@@ -1176,7 +1242,10 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         toast.error(t('fehler_speichern'))
         return
       }
-      loadLogs(); loadStackItems()
+      if (uebersprungeneZeile) {
+        if (sichtbaresFenster.current === timelineContext) uebernehmeGespeicherteZeile(uebersprungeneZeile)
+        else await loadLogs()
+      }
       toast(t('einnahme_uebersp_toast'), { icon: '⏭️' })
       return
     }
@@ -1189,7 +1258,7 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         cycle = dashboardCycleFromTimeline(timeline!, resolved.planVersion, stackItemById.get(cycle.stack_item_id), timeZone)
         quantity = resolveDashboardCycleQuantity(cycle, selectedDay, [], null)
       }
-      const [doseLogId] = await confirmIntakeGroup(
+      const [gespeicherteZeile] = await confirmIntakeGroup(
         dashboardDataClient as unknown as IntakeConfirmationClient,
         [{ ...buildConfirmationEntry(buildDashboardRoutineIntake({
           key: slotSchluessel,
@@ -1207,11 +1276,15 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
           method: cycle.method,
         })), actualLoggedAt }],
       )
+      const doseLogId = gespeicherteZeile?.id
       const stackItem = stackItems.find(item => item.id === cycle.stack_item_id)
       if (doseLogId && (stackItem?.dosage_form === 'vial' || stackItem?.tracking_level === 'complete')) {
         await applyGenericInventory(doseLogId)
       }
-      loadLogs(); loadStackItems()
+      if (gespeicherteZeile) {
+        if (sichtbaresFenster.current === timelineContext) uebernehmeGespeicherteZeile(gespeicherteZeile)
+        else await loadLogs()
+      }
       toast.success(t('einnahme_bestaetigt'))
       return
     }
@@ -1326,12 +1399,12 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
 
   const confirmRoutineGroup = async (entries: RoutineConfirmationEntry[]): Promise<string[]> => {
     if (FEATURES.planTimelineV2 && !timelineReady) throw new Error('Timeline is not current')
-    const ids = await confirmIntakeGroup(
+    const saved = await confirmIntakeGroup(
       dashboardDataClient as unknown as IntakeConfirmationClient,
       entries,
     )
     routineCommitted.current = true
-    return ids
+    return saved.map(row => row.id)
   }
 
   const afterRoutineGroupConfirmed = async (
@@ -1363,8 +1436,12 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         applyGenericInventory(doseLogId, false)
       ))),
     ])
+    // `loadStackItems()` ist unter der Zeitleiste ein Leerlauf (siehe die
+    // Funktion selbst); diese Zeile war hier immer schon wirkungslos.
+    // `loadLogs()` bleibt: eine Gruppenbestaetigung kann mehrere Zeilen auf
+    // einmal aendern, und die Einzelpatches oben decken nur den
+    // Ein-Slot-Weg ab.
     await loadLogs()
-    await loadStackItems()
     toast.success(t('einnahme_bestaetigt', { defaultValue: 'Einnahme bestätigt' }))
     const failedVialIds = quantifiedVialEntries(entries, vialStackItemIds)
       .map(entry => confirmedEntries.find(item => item.entry.key === entry.key)?.doseLogId)

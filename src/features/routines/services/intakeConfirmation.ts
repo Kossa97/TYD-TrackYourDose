@@ -6,8 +6,30 @@ interface ServiceError {
   message: string
 }
 
-interface SavedDoseLog {
+/**
+ * Die Zeile, die `confirm_intake_group` tatsaechlich geschrieben hat.
+ *
+ * Die RPC gibt `setof dose_logs` zurueck -- die volle Zeile, nicht nur die
+ * id. Bis hierher wurde das auf `row.id` zusammengestrichen, und jeder
+ * Aufrufer holte sich den Rest per erneutem Rundgang durch den ganzen
+ * sichtbaren Monat. Die Zeile stand die ganze Zeit schon da.
+ *
+ * Nur `id` ist Pflicht, der Rest optional: ein Test, der nur `{ id }`
+ * zurueckgibt, bleibt gueltig, und ein Aufrufer, der nur die id braucht
+ * (`Home.tsx`, `injectionPersistence.ts`), muss nichts extra angeben.
+ */
+export interface SavedDoseLog {
   id: string
+  stack_item_id?: string
+  dose?: number | null
+  unit?: string | null
+  method?: string
+  logged_at?: string
+  notes?: string | null
+  taken?: boolean | null
+  cycle_id?: string | null
+  plan_version_id?: string | null
+  routine_slot_key?: string | null
 }
 
 interface ConfirmIntakeGroupRpcEntry {
@@ -55,7 +77,7 @@ async function decideIntakeGroup(
   client: IntakeConfirmationClient,
   entries: RoutineConfirmationEntry[],
   taken: boolean,
-): Promise<string[]> {
+): Promise<SavedDoseLog[]> {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
   const p_entries = entries
     .filter(entry => entry.selected)
@@ -90,20 +112,20 @@ async function decideIntakeGroup(
   const { data, error } = await client.rpc('confirm_intake_group', { p_entries })
   if (error) throw new Error(error.message)
   if (!data) throw new Error('confirm_intake_group returned no data')
-  return data.map(row => row.id)
+  return data
 }
 
 export function confirmIntakeGroup(
   client: IntakeConfirmationClient,
   entries: RoutineConfirmationEntry[],
-): Promise<string[]> {
+): Promise<SavedDoseLog[]> {
   return decideIntakeGroup(client, entries, true)
 }
 
 export function skipIntakeGroup(
   client: IntakeConfirmationClient,
   entries: RoutineConfirmationEntry[],
-): Promise<string[]> {
+): Promise<SavedDoseLog[]> {
   return decideIntakeGroup(client, entries, false)
 }
 
@@ -111,16 +133,15 @@ export async function skipIntakeGroupsInBatches(
   client: IntakeConfirmationClient,
   entries: RoutineConfirmationEntry[],
   batchSize = 20,
-): Promise<string[]> {
+): Promise<SavedDoseLog[]> {
   if (!Number.isInteger(batchSize) || batchSize < 1) {
     throw new Error('Batch size must be a positive integer')
   }
 
   const selectedEntries = entries.filter(entry => entry.selected)
-  const savedIds: string[] = []
+  const saved: SavedDoseLog[] = []
   for (let start = 0; start < selectedEntries.length; start += batchSize) {
-    const batchIds = await skipIntakeGroup(client, selectedEntries.slice(start, start + batchSize))
-    savedIds.push(...batchIds)
+    saved.push(...await skipIntakeGroup(client, selectedEntries.slice(start, start + batchSize)))
   }
-  return savedIds
+  return saved
 }

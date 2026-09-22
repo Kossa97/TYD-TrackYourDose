@@ -582,13 +582,14 @@ export async function confirmIntakeDoseLog(
     if (!timeline) throw new Error('Injection cycle timeline unavailable')
     const resolved = resolveCycleAt(timeline, new Date(input.loggedAt), Intl.DateTimeFormat().resolvedOptions().timeZone)
     if (resolved.status !== 'active' || !resolved.planVersion) throw new Error('Injection plan version unavailable at actual time')
-    const [id] = await confirmIntakeGroup(supabase, [{
+    const [saved] = await confirmIntakeGroup(supabase, [{
       key: input.routineSlotKey, cycleId: input.cycleId, planVersionId: resolved.planVersion.id,
       pendingLogId: input.doseLogId ?? null, stackItemId: input.stackItemId, stackItemName: '',
       trackingLevel: 'with_amount', group: 'morning', scheduledAt: input.scheduledAt,
       actualLoggedAt: input.loggedAt, dose: input.dose, unit: input.unit, method: input.method,
       injectable: true, selected: true, actualDose: input.dose, actualUnit: input.unit,
     }])
+    const id = saved?.id
     if (!id) throw new Error('Injection confirmation returned no dose log')
     if (input.debitVialStock !== false) await debitVialStockForDoseById(supabase, id)
     return id

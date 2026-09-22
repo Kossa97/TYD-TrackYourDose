@@ -807,11 +807,12 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
         const timeline = homeTimelines.find(item => item.cycle.id === intake.cycleId)
         const resolved = timeline && resolveCycleAt(timeline, new Date(actualLoggedAt), Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC')
         if (!resolved?.planVersion || resolved.status !== 'active') throw new Error('Intake timestamp is not active')
-        const [doseLogId] = await confirmIntakeGroup(
+        const [savedLog] = await confirmIntakeGroup(
           homeDataClient as unknown as IntakeConfirmationClient,
           [{ ...buildConfirmationEntry(buildHomeRoutineIntake(intake)),
             planVersionId: resolved.planVersion.id, actualLoggedAt }],
         )
+        const doseLogId = savedLog?.id
         if (doseLogId && (intake.dosageForm === 'vial' || intake.trackingLevel === 'complete')) {
           await applyHomeSingleInventory(doseLogId)
         }
@@ -876,12 +877,12 @@ export function Home({ homeDataClient = supabase }: HomeProps = {}) {
   const confirmHomeRoutine = async (entries: RoutineConfirmationEntry[]): Promise<string[]> => {
     if (!user) return []
     if (FEATURES.planTimelineV2 && timelineLoadState !== 'ready') throw new Error('Timeline is not current')
-    const ids = await confirmIntakeGroup(
+    const saved = await confirmIntakeGroup(
       homeDataClient as unknown as IntakeConfirmationClient,
       entries,
     )
     homeRoutineCommitted.current = true
-    return ids
+    return saved.map(row => row.id)
   }
 
   const afterHomeRoutineConfirmed = async (

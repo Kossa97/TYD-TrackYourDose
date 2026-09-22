@@ -77,7 +77,9 @@ describe('confirmIntakeGroup', () => {
       entry({ cycleId: 'cycle-off', selected: false }),
     ])
 
-    expect(result).toEqual(['log-d3', 'log-zinc'])
+    // Die RPC gibt die volle Zeile zurueck (`returns setof dose_logs`), nicht
+    // nur die id -- genau die Zeile, die der Mock oben schickt, unveraendert.
+    expect(result).toEqual([{ id: 'log-d3' }, { id: 'log-zinc' }])
     expect(calls).toEqual([{
       name: 'confirm_intake_group',
       params: {
@@ -139,7 +141,7 @@ describe('confirmIntakeGroup', () => {
     await expect(skipIntakeGroup({ rpc }, [entry({
       pendingLogId: 'pending-d3',
       actualLoggedAt: '2026-07-29T08:15:00.000Z',
-    })])).resolves.toEqual(['skipped-log'])
+    })])).resolves.toEqual([{ id: 'skipped-log' }])
 
     expect(rpc).toHaveBeenCalledWith('confirm_intake_group', {
       p_entries: [expect.objectContaining({
@@ -187,11 +189,11 @@ describe('confirmIntakeGroup', () => {
     }))
 
     await expect(skipIntakeGroupsInBatches({ rpc }, entries, 2)).resolves.toEqual([
-      'log-stack-0',
-      'log-stack-1',
-      'log-stack-2',
-      'log-stack-3',
-      'log-stack-4',
+      { id: 'log-stack-0' },
+      { id: 'log-stack-1' },
+      { id: 'log-stack-2' },
+      { id: 'log-stack-3' },
+      { id: 'log-stack-4' },
     ])
     expect(rpc.mock.calls.map(([, params]) => params.p_entries)).toHaveLength(3)
     expect(rpc.mock.calls.map(([, params]) => params.p_entries.length)).toEqual([2, 2, 1])
@@ -234,7 +236,7 @@ describe('confirmIntakeGroup', () => {
     }
 
     await expect(confirmIntakeGroup(client, [entry()])).rejects.toThrow('response lost')
-    await expect(confirmIntakeGroup(client, [entry()])).resolves.toEqual(['committed-log'])
+    await expect(confirmIntakeGroup(client, [entry()])).resolves.toEqual([{ id: 'committed-log' }])
     expect(slotKeys).toEqual([
       'cycle-d3@2026-07-29T10:00',
       'cycle-d3@2026-07-29T10:00',

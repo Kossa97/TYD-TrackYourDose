@@ -121,19 +121,64 @@ function faengtSchluessel(bereiche: string[], schluessel: string): boolean {
   )].some(([, von, bis]) => schluessel >= von && schluessel < bis))
 }
 
+/**
+ * Die Standard-Antwort auf `confirm_intake_group`, wie die echte RPC sie
+ * gibt: `returns setof dose_logs`, die volle Zeile.
+ *
+ * Erst stand hier immer `{ id: 'saved-log-1' }`, egal was gesendet wurde --
+ * damit konnte kein Test hier je pruefen, ob eine bestehende Zeile
+ * WIEDERVERWENDET (ihre id bleibt) oder eine neue ANGELEGT wird (neue id).
+ * Die RPC upsertet auf `(user_id, routine_slot_key)`: kommt `dose_log_id`
+ * mit, bleibt die id dieselbe; sonst bekommt die Zeile eine neue.
+ */
+function echteGespeicherteZeile(
+  params: unknown,
+  naechsteNeueId: () => string,
+): { data: Array<Record<string, unknown>>; error: null } {
+  const entries = (params as { p_entries: Array<Record<string, unknown>> }).p_entries
+  return {
+    data: entries.map(entry => ({
+      id: (entry.dose_log_id as string | null) ?? naechsteNeueId(),
+      stack_item_id: entry.stack_item_id,
+      dose: entry.dose,
+      unit: entry.unit,
+      method: entry.method,
+      logged_at: entry.logged_at,
+      notes: null,
+      taken: entry.taken,
+      cycle_id: entry.cycle_id,
+      plan_version_id: entry.plan_version_id,
+      routine_slot_key: entry.slot_key,
+    })),
+    error: null,
+  }
+}
+
 function createDashboardClient(
   fixtures: Record<string, unknown[]>,
-  rpcImplementation: (name: string, params: unknown) => Promise<{
+  rpcImplementation?: (name: string, params: unknown) => Promise<{
     data: unknown
     error: { message: string } | null
-  }> = async () => ({ data: [{ id: 'saved-log-1' }], error: null }),
+  }>,
   options: { errors?: Record<string, { message: string } | null>; filterLogs?: boolean; logReadGate?: Promise<void> } = {},
 ) {
+  // Eine neue id je synthetisierter Zeile -- ueber ALLE Aufrufe dieses
+  // Clients hinweg, nicht neu bei jedem einzelnen RPC-Aufruf. Zwei
+  // Bestaetigungen nacheinander sollen zwei verschiedene Zeilen ergeben,
+  // genau wie `gen_random_uuid()` es in der echten Datenbank taete -- sonst
+  // ueberschreibt die zweite Bestaetigung im lokalen Bild die erste.
+  let neueIdZaehler = 0
+  const naechsteNeueId = () => `saved-log-${++neueIdZaehler}`
+  const aufgeloesteRpcImplementation = rpcImplementation ?? (async (name, params) => (
+    name === 'confirm_intake_group'
+      ? echteGespeicherteZeile(params, naechsteNeueId)
+      : { data: [{ id: 'saved-log-1' }], error: null }
+  ))
   const selectCounts = new Map<string, number>()
   const selectCalls: Array<{ table: string; columns: string }> = []
   const mutations: RecordedMutation[] = []
   const logQueries: ReturnType<typeof resolvedQuery>[] = []
-  const rpc = vi.fn(rpcImplementation)
+  const rpc = vi.fn(aufgeloesteRpcImplementation)
   const from = vi.fn((table: string) => ({
     select: vi.fn((columns: string) => {
       selectCounts.set(table, (selectCounts.get(table) ?? 0) + 1)
@@ -688,21 +733,27 @@ describe('Dashboard normalized timeline path', () => {
   it('geht zur nächsten Tageszeit über, wenn die angetippte leer ist', async () => {
     // Der Merker zeigte auf eine Tageszeit, in der nichts mehr offen war —
     // und die ganze Liste klappte zu, obwohl abends noch etwas anstand.
+    //
+    // Echte Klicks statt einer vorgetaeuschten Fixture: eine Bestaetigung
+    // patcht jetzt lokal (siehe die Helfer bei `deleteLog`), ein Neuladen
+    // wie frueher findet nicht mehr statt -- also muss hier auch wirklich
+    // entschieden werden, was am Ende entschieden sein soll.
     const fixtures = morgensUndAbendsFixture()
     const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
     renderDashboard(client)
     await waitFor(() => expect(document.querySelectorAll('[data-due-row]').length).toBe(3))
 
-    // Eine morgendliche antippen, dann BEIDE morgendlichen entscheiden.
+    // Die zweite morgendliche antippen und entscheiden.
     const morgens = [...document.querySelectorAll('[data-due-row]')].slice(0, 2)
     fireEvent.click(morgens[1].querySelector('[data-due-item]') as HTMLElement)
-    fixtures.dose_logs = [
-      { ...pendingLog(), taken: false, routine_slot_key: 'timeline-cycle@2026-09-18T08:00' },
-      { ...pendingLog(), id: 'pending-zwei', stack_item_id: 'stack-2', taken: false,
-        cycle_id: 'zyklus-zwei', plan_version_id: 'version-zwei',
-        routine_slot_key: 'zyklus-zwei@2026-09-18T08:00' },
-    ]
     fireEvent.click(within(morgens[1] as HTMLElement).getByRole('button', { name: 'uebersprungen' }))
+
+    // Der Merker rueckt automatisch weiter (siehe der Test daneben) -- die
+    // erste morgendliche steht jetzt offen da, ohne erneutes Antippen.
+    await waitFor(() => expect(document.querySelectorAll('[data-due-row]').length).toBe(2))
+    const restlicheMorgens = document.querySelector('[data-due-open]') as HTMLElement
+    expect(restlicheMorgens).toBeTruthy()
+    fireEvent.click(within(restlicheMorgens).getByRole('button', { name: 'uebersprungen' }))
 
     // Es bleibt genau eine übrig — und die steht offen da, nicht zugeklappt.
     await waitFor(() => expect(document.querySelectorAll('[data-due-row]').length).toBe(1))
@@ -983,7 +1034,28 @@ describe('Dashboard normalized timeline path', () => {
         logged_at: '2026-09-18T14:00:00.000Z' })],
     }))
     expect(client.mutations).toEqual([])
-    expect(client.rpc).toHaveBeenCalledWith('apply_inventory_confirmation', { p_dose_log_id: 'saved-log-1' })
+    // Der Mock spiegelt die RPC: kam `dose_log_id` mit, bleibt es dieselbe
+    // Zeile (Upsert); ohne, bekommt sie eine neue id.
+    expect(client.rpc).toHaveBeenCalledWith('apply_inventory_confirmation', {
+      p_dose_log_id: pending ? 'pending-exact' : 'saved-log-1',
+    })
+  })
+
+  it('bestaetigt einen einzelnen Slot ohne einen weiteren dose_logs-Rundgang', async () => {
+    // Der Punkt der ganzen Umstellung: eine Bestaetigung patcht lokal aus
+    // der Antwort der RPC (`returns setof dose_logs`), statt den sichtbaren
+    // Monat neu zu laden. Vorher loeste jede Bestaetigung mehrere parallele
+    // Anfragen aus -- Zeitleisten, Bestandsliste, Zeitzonen-Review, jede
+    // Zeile im Fenster -- fuer eine einzige Zeile, die sich geaendert hat.
+    const fixtures = startFixFixture()
+    const client = createDashboardClient(fixtures, undefined, { filterLogs: true })
+    renderDashboard(client)
+    await openSingle()
+    const dosLogsAbfragenVorher = client.selectCounts.get('dose_logs') ?? 0
+    fireEvent.click(screen.getByRole('button', { name: 'Eingenommen' }))
+    await waitFor(() => expect(client.rpc).toHaveBeenCalledWith('confirm_intake_group', expect.anything()))
+    await screen.findByText('Alle geplanten Einnahmen sind bestätigt.')
+    expect(client.selectCounts.get('dose_logs')).toBe(dosLogsAbfragenVorher)
   })
 
   it.each([false, true])('skips a normalized single intake through the lifecycle-locked RPC (pending=%s)', async pending => {
@@ -1069,14 +1141,20 @@ describe('Dashboard normalized timeline path', () => {
   })
 
   it('removes stale Calendar confirmation actions when a refresh fails', async () => {
+    // Der Ein-Slot-Weg laedt nach einer Bestaetigung nicht mehr neu (siehe
+    // die Helfer bei `deleteLog`) -- diese Eigenschaft gilt jetzt nur noch
+    // dort, wo tatsaechlich noch neu geladen wird: der Gruppenbestaetigung.
     const errors = { cycles: null as { message: string } | null, dose_logs: null as { message: string } | null }
-    const client = createDashboardClient(startFixFixture(), async () => {
-      errors.dose_logs = { message: 'logs unavailable' }
+    const client = createDashboardClient(startFixFixture(), async name => {
+      if (name === 'confirm_intake_group') {
+        errors.dose_logs = { message: 'logs unavailable' }
+        return { data: [{ id: 'saved-log-1' }], error: null }
+      }
       return { data: [{ id: 'saved-log-1' }], error: null }
     }, { errors })
     renderDashboard(client)
-    await openSingle()
-    fireEvent.click(screen.getByRole('button', { name: 'Eingenommen' }))
+    await gruppenBestaetigungOeffnen()
+    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Alle als eingenommen markieren' }))
     expect(await screen.findByRole('alert')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'eingenommen' })).toBeNull()
     expect(screen.queryByRole('button', { name: /Alle als eingenommen/ })).toBeNull()
