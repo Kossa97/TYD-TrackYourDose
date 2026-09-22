@@ -802,9 +802,10 @@ describe('My Stack page vial view', () => {
     }
 
     // „Plan ändern" nimmt den bestehenden Plan mit …
-    expect(abschnitt('openEditCycle')).toContain("setWizardIntent('plan')")
-    expect(abschnitt('openEditCycle')).toContain('setWizardNeuerZyklus(false)')
-    expect(abschnitt('openEditCycle')).toContain('setWizardCycleId(cycleId)')
+    expect(abschnitt('openPlanWizard')).toContain("setWizardIntent('plan')")
+    expect(abschnitt('openPlanWizard')).toContain('setWizardNeuerZyklus(false)')
+    expect(abschnitt('openPlanWizard')).toContain('setWizardCycleId(legacyCycleId)')
+    expect(abschnitt('openEditCycle')).toContain('openPlanWizard(p, null, cycleId)')
     // … ein zweiter Zyklus nicht: ohne `p_plan.id` legt der RPC einen neuen an.
     expect(abschnitt('openNewCycle')).toContain("setWizardIntent('plan')")
     expect(abschnitt('openNewCycle')).toContain('setWizardNeuerZyklus(true)')

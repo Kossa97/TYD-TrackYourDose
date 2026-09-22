@@ -1273,5 +1273,8 @@
   "my_stack_plan_change_new": "новый",
   "my_stack_plan_change_removed": "отменён",
   "my_stack_plan_add_step": "Добавить этап",
-  "my_stack_plan_effective_too_early": "Выберите дату не раньше {{date}}."
+  "my_stack_plan_effective_too_early": "Выберите дату не раньше {{date}}.",
+  "my_stack_plan_effective_required": "Выберите дату.",
+  "my_stack_plan_effective_too_late": "Цикл заканчивается {{date}}. Выберите более раннюю дату.",
+  "my_stack_plan_effective_taken": "В этот день уже начинается этап. Выберите другой день."
 }

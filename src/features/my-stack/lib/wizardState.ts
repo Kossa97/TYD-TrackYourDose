@@ -66,6 +66,18 @@ export interface PlanEditContext {
    */
   purpose?: 'adjust' | 'add_step' | 'edit_future'
   minEffectiveDate?: string
+  /** Letzter Tag, an dem eine Stufe noch beginnen kann (festes Zyklusende). */
+  maxEffectiveDate?: string | null
+  /**
+   * Tage, an denen schon eine Stufe beginnt (ohne die gerade bearbeitete).
+   * Eine zweite am selben Tag lehnt die Datenbank ab.
+   */
+  takenEffectiveDates?: string[]
+  /**
+   * Womit `changeKindFor` vergleicht: die Stufe DAVOR. Fehlt sie, der
+   * Ausgangsstand des Editors (`snapshot`).
+   */
+  baseline?: IntakePlanDraft
 }
 
 // Alles am Plan ausser den Mengen. Aendert sich davon nichts, ist die

@@ -1418,5 +1418,8 @@
   "my_stack_plan_change_new": "neu",
   "my_stack_plan_change_removed": "entfällt",
   "my_stack_plan_add_step": "Stufe hinzufügen",
-  "my_stack_plan_effective_too_early": "Wähle ein Datum ab dem {{date}}."
+  "my_stack_plan_effective_too_early": "Wähle ein Datum ab dem {{date}}.",
+  "my_stack_plan_effective_required": "Wähle ein Datum.",
+  "my_stack_plan_effective_too_late": "Der Zyklus endet am {{date}}. Wähle ein früheres Datum.",
+  "my_stack_plan_effective_taken": "An diesem Tag beginnt schon eine Stufe. Wähle einen anderen Tag."
 }

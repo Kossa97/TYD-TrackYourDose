@@ -39,7 +39,8 @@ import type { WizardSaveMode } from './lib/wizardState'
 import { rhythmFromStorage } from './lib/intakeRhythm'
 import { STACK_TABS, filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
 import { sortAbilities, type SortAbility } from './lib/stackSort'
-import { planSegments, stufenText } from './lib/planSegments'
+import { planSegments, planVersionSegments, stufenText } from './lib/planSegments'
+import { cyclePeriod } from './lib/planCard'
 import { getRandomStackItemColor, getStableStackItemColor } from './lib/colors'
 import { isLocalColorMigrationComplete, migrateLocalColors } from './lib/colorMigration'
 import { backfillMessageKey, buildTitrationStep, dosePlanCapabilities, dosePlanQuantitiesForDay } from './lib/dosePlan'
@@ -1227,11 +1228,32 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
    * `save_stack_item_with_plan`: ein Schreibweg, eine Pruefung, eine
    * Segmentlogik.
    */
+  // Oeffnet den Plan-Editor. Alle Wege dorthin setzen denselben Zustand.
+  const openPlanWizard = (p: Peptide, context: PlanEditContext | null, legacyCycleId: string | null) => {
+    setPlanEditContext(context)
+    setWizardCycleId(legacyCycleId)
+    setEditingPeptideId(p.id)
+    setWizardInitialColor('')
+    setWizardNeuerZyklus(false)
+    setWizardIntent('plan')
+    setShowPeptideForm(true)
+  }
+
+  // Was fuer jeden Stichtag im Zyklus gilt: kein Tag, an dem schon eine Stufe
+  // beginnt (ausser der bearbeiteten), und keiner nach einem festen Ende.
+  const effectiveDateLimits = (timeline: CycleTimeline, exceptVersionId: string | null) => ({
+    takenEffectiveDates: timeline.versions
+      .filter(version => version.id !== exceptVersionId && version.effective_kind === 'local_date')
+      .map(version => version.effective_local_date)
+      .filter((day): day is string => Boolean(day)),
+    maxEffectiveDate: cyclePeriod(timeline, timeZone).last,
+  })
+
   const openEditCycle = (
     p: Peptide,
     cycleId: string,
     versionId?: string,
-    changeKind: Exclude<PlanChangeKind, 'initial'> = 'schedule',
+    changeKind: Exclude<PlanChangeKind, 'initial'> = 'dose',
   ) => {
     const timeline = cycleTimelines.find(candidate => candidate.cycle.id === cycleId)
     if (FEATURES.planTimelineV2 && timeline) {
@@ -1239,7 +1261,11 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         ? timeline.versions.find(version => version.id === versionId)
         : resolveCycleAt(timeline, new Date(), timeZone).planVersion
       if (!selectedVersion) return
-      setPlanEditContext({
+      // Eine geplante Stufe wird an der Stufe DAVOR gemessen: was sie
+      // gegenueber ihr aendert, bestimmt, ob sie Dosis- oder Planaenderung ist.
+      const ordered = planVersionSegments(timeline, new Date(), timeZone).map(segment => segment.version)
+      const previous = versionId ? ordered[ordered.findIndex(version => version.id === versionId) - 1] : undefined
+      openPlanWizard(p, {
         target: versionId
           ? { cycleId, versionId, mode: 'replace_future' }
           : { cycleId, versionId: null, mode: 'new_change' },
@@ -1250,18 +1276,13 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
         initialEffective: versionId
           ? { kind: 'date', localDate: selectedVersion.effective_local_date }
           : { kind: 'now', localDate: null },
-      })
-      setWizardCycleId(null)
+        ...effectiveDateLimits(timeline, versionId ?? null),
+        ...(previous ? { baseline: versionAsIntakePlanDraft(timeline, previous, timeZone) } : {}),
+      }, null)
     } else {
       if (!cycles.some(cycle => cycle.id === cycleId && cycle.stack_item_id === p.id)) return
-      setWizardCycleId(cycleId)
-      setPlanEditContext(null)
+      openPlanWizard(p, null, cycleId)
     }
-    setEditingPeptideId(p.id)
-    setWizardInitialColor('')
-    setWizardNeuerZyklus(false)
-    setWizardIntent('plan')
-    setShowPeptideForm(true)
   }
 
   // Eine Stufe hinter der letzten: vorausgefuellt mit ihr, nur mit Datum.
@@ -1270,9 +1291,9 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
     p: Peptide,
     timeline: CycleTimeline,
     template: CyclePlanVersion,
-    dates: { minDate: string; defaultDate: string },
+    dates: { minDate: string; maxDate: string | null; defaultDate: string },
   ) => {
-    setPlanEditContext({
+    openPlanWizard(p, {
       target: { cycleId: timeline.cycle.id, versionId: null, mode: 'new_change' },
       snapshot: versionAsIntakePlanDraft(timeline, template, timeZone),
       changeKind: 'titration',
@@ -1280,13 +1301,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       timeZone,
       initialEffective: { kind: 'date', localDate: dates.defaultDate },
       minEffectiveDate: dates.minDate,
-    })
-    setWizardCycleId(null)
-    setEditingPeptideId(p.id)
-    setWizardInitialColor('')
-    setWizardNeuerZyklus(false)
-    setWizardIntent('plan')
-    setShowPeptideForm(true)
+      ...effectiveDateLimits(timeline, null),
+    }, null)
   }
 
   const replaceTimeline = (next: CycleTimeline) => {
@@ -1456,13 +1472,14 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       timeline={timeline}
       now={new Date()}
       timeZone={timeZone}
-      onAdjustPlan={() => openEditCycle(p, timeline.cycle.id, undefined, 'dose')}
+      onAdjustPlan={() => openEditCycle(p, timeline.cycle.id)}
       onAddStep={(version, dates) => openAddPlanStep(p, timeline, version, dates)}
       onEditFuture={version => openEditCycle(
         p,
         timeline.cycle.id,
         version.id,
-        version.change_kind === 'initial' ? 'schedule' : version.change_kind,
+        // Die erste Stufe behaelt, was sie bisher beim Bearbeiten bekam.
+        version.change_kind === 'initial' ? 'schedule' : version.change_kind === 'titration' ? 'titration' : 'dose',
       )}
       onRemoveFuture={removeFutureVersion}
       onPause={endsAt => pauseTimeline(timeline, endsAt)}

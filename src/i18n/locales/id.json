@@ -1271,5 +1271,8 @@
   "my_stack_plan_change_new": "baru",
   "my_stack_plan_change_removed": "dihapus",
   "my_stack_plan_add_step": "Tambah tahap",
-  "my_stack_plan_effective_too_early": "Pilih tanggal mulai {{date}}."
+  "my_stack_plan_effective_too_early": "Pilih tanggal mulai {{date}}.",
+  "my_stack_plan_effective_required": "Pilih tanggal.",
+  "my_stack_plan_effective_too_late": "Siklus berakhir pada {{date}}. Pilih tanggal lebih awal.",
+  "my_stack_plan_effective_taken": "Sudah ada tahap yang dimulai pada hari ini. Pilih hari lain."
 }

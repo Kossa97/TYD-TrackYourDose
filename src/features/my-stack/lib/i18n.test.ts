@@ -208,6 +208,9 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_plan_adjust_schedule',
   'my_stack_plan_add_step',
   'my_stack_plan_effective_too_early',
+  'my_stack_plan_effective_required',
+  'my_stack_plan_effective_too_late',
+  'my_stack_plan_effective_taken',
   'my_stack_plan_edit_future',
   'my_stack_plan_remove_future',
   'my_stack_plan_pause',
@@ -520,7 +523,7 @@ describe('My Stack DE/EN locale contract', () => {
     expect(MY_STACK_DE.my_stack_plan_action_error).toContain('Bitte versuche es erneut')
     expect(MY_STACK_DE.my_stack_plan_load_error).toContain('nicht geladen')
     expect(MY_STACK_EN.my_stack_plan_add_step).toBe('Add step')
-    expect(MY_STACK_EN.my_stack_plan_adjust_schedule).toBe('Adjust schedule')
+    expect(MY_STACK_EN.my_stack_plan_adjust_schedule).toBe('Adjust plan')
     expect(MY_STACK_EN.my_stack_plan_pause_neutral).toBe('No intake is due while the plan is paused.')
     expect(MY_STACK_EN.my_stack_plan_conflict_title).toBe('Which plan is actually running?')
     expect(MY_STACK_EN.my_stack_plan_conflict_copy).toContain('complete history will be preserved')

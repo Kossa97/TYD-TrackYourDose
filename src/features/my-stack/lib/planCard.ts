@@ -1,6 +1,7 @@
 import { differenceInCalendarDays, parseISO } from 'date-fns'
 import { resolveScheduleSlots, type ResolvedRoutineGroup } from '../../../lib/intakeSchedule'
-import type { PlanScheduleSnapshot } from '../../../lib/planTimeline'
+import { localDateTimeKey, type CycleTimeline, type PlanScheduleSnapshot } from '../../../lib/planTimeline'
+import { shiftLocalDay } from './localDays'
 import { WEEKDAY_KEYS } from './intakeRhythm'
 
 /**
@@ -133,4 +134,31 @@ export function planStepRows(
 /** Kalendertage von `from` bis `to` (beide `YYYY-MM-DD`), beide mitgezaehlt. */
 export function inclusiveDayCount(from: string, to: string): number {
   return differenceInCalendarDays(parseISO(to), parseISO(from)) + 1
+}
+
+function localDay(value: string, timeZone: string): string {
+  return localDateTimeKey(new Date(value), timeZone).slice(0, 10)
+}
+
+/**
+ * Erster und letzter Tag des Zyklus. Das Ende ist in der Datenbank eine
+ * Grenze („ab hier nicht mehr") — der letzte Einnahmetag ist der Tag davor.
+ */
+export function cyclePeriod(
+  timeline: CycleTimeline,
+  timeZone: string,
+): { first: string; last: string | null; endKey: string | null } {
+  const { cycle } = timeline
+  const first = cycle.start_local_date ?? localDay(cycle.started_at, timeZone)
+  if (cycle.end_local_date) {
+    return { first, last: shiftLocalDay(cycle.end_local_date, -1), endKey: `${cycle.end_local_date}|00:00:00` }
+  }
+  if (cycle.ended_at) {
+    return {
+      first,
+      last: localDay(new Date(new Date(cycle.ended_at).getTime() - 1).toISOString(), timeZone),
+      endKey: localDateTimeKey(new Date(cycle.ended_at), timeZone),
+    }
+  }
+  return { first, last: null, endKey: null }
 }

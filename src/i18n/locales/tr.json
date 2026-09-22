@@ -1271,5 +1271,8 @@
   "my_stack_plan_change_new": "yeni",
   "my_stack_plan_change_removed": "kaldırıldı",
   "my_stack_plan_add_step": "Aşama ekle",
-  "my_stack_plan_effective_too_early": "{{date}} veya sonrası bir tarih seç."
+  "my_stack_plan_effective_too_early": "{{date}} veya sonrası bir tarih seç.",
+  "my_stack_plan_effective_required": "Bir tarih seç.",
+  "my_stack_plan_effective_too_late": "Döngü {{date}} tarihinde bitiyor. Daha erken bir tarih seç.",
+  "my_stack_plan_effective_taken": "Bu gün zaten bir aşama başlıyor. Başka bir gün seç."
 }

@@ -37,6 +37,7 @@ import {
   type PlanEffectiveDraft,
 } from '../lib/wizardState'
 import { bestandteileAufloesen } from '../lib/kombination'
+import { formatLocalDay, laterLocalDay, shiftLocalDay } from '../lib/localDays'
 import { fuehrendeMenge, rhythmSummary, rhythmText } from '../lib/intakeRhythm'
 import { validateIntakePlan, validateStackItemDraft } from '../lib/validation'
 import { evaluatePkReadiness, toPkMilligrams } from '../lib/pkReadiness'
@@ -154,10 +155,7 @@ function stepForInvalidField(field: string): WizardStep {
 }
 
 function nextLocalDate(timeZone: string, now = new Date()): string {
-  const today = localDateTimeKey(now, timeZone).slice(0, 10)
-  const tomorrow = new Date(`${today}T00:00:00.000Z`)
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
-  return tomorrow.toISOString().slice(0, 10)
+  return shiftLocalDay(localDateTimeKey(now, timeZone).slice(0, 10), 1)
 }
 
 export function StackItemWizard({
@@ -216,9 +214,9 @@ export function StackItemWizard({
   ))
   const [setupIdempotencyKey] = useState(() => globalThis.crypto.randomUUID())
   const earliestEffectiveDate = planEditContext
-    ? [nextLocalDate(planEditContext.timeZone), planEditContext.minEffectiveDate ?? '']
-      .reduce((spaeter, kandidat) => (kandidat > spaeter ? kandidat : spaeter))
+    ? laterLocalDay(nextLocalDate(planEditContext.timeZone), planEditContext.minEffectiveDate ?? '')
     : null
+  const latestEffectiveDate = planEditContext?.maxEffectiveDate ?? null
   const isAddStep = planEditContext?.purpose === 'add_step'
   const dialogRef = useRef<HTMLDivElement>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
@@ -467,6 +465,33 @@ export function StackItemWizard({
     setIdentityChoiceError(false)
   }
 
+  // Was an einem gewaehlten Stichtag nicht geht — vor dem Speichern gesagt,
+  // statt als allgemeiner Fehler aus der Datenbank.
+  function effectiveDateProblem(localDate: string | null): string | null {
+    const language = i18n?.language || 'de'
+    if (!localDate) {
+      return String(t('my_stack_plan_effective_required', { defaultValue: 'Wähle ein Datum.' }))
+    }
+    if (earliestEffectiveDate && localDate < earliestEffectiveDate) {
+      return String(t('my_stack_plan_effective_too_early', {
+        defaultValue: 'Wähle ein Datum ab dem {{date}}.',
+        date: formatLocalDay(earliestEffectiveDate, language),
+      }))
+    }
+    if (latestEffectiveDate && localDate > latestEffectiveDate) {
+      return String(t('my_stack_plan_effective_too_late', {
+        defaultValue: 'Der Zyklus endet am {{date}}. Wähle ein früheres Datum.',
+        date: formatLocalDay(latestEffectiveDate, language),
+      }))
+    }
+    if (planEditContext?.takenEffectiveDates?.includes(localDate)) {
+      return String(t('my_stack_plan_effective_taken', {
+        defaultValue: 'An diesem Tag beginnt schon eine Stufe. Wähle einen anderen Tag.',
+      }))
+    }
+    return null
+  }
+
   async function handleSave(allowDuplicate = false): Promise<void> {
     if (saving) return
     const invalidField = firstInvalidField(state, !metadataOnly)
@@ -528,16 +553,11 @@ export function StackItemWizard({
       ? { ...draftWithPkMethod, id: undefined, plan: { ...state.draft.plan, id: undefined } }
       : draftWithPkMethod
 
-    if (
-      earliestEffectiveDate
-      && planEffective.kind === 'date'
-      && (!planEffective.localDate || planEffective.localDate < earliestEffectiveDate)
-    ) {
-      setSaveError(String(t('my_stack_plan_effective_too_early', {
-        defaultValue: 'Wähle ein Datum ab dem {{date}}.',
-        date: new Intl.DateTimeFormat(i18n?.language || 'de', { dateStyle: 'medium', timeZone: 'UTC' })
-          .format(new Date(`${earliestEffectiveDate}T00:00:00.000Z`)),
-      })))
+    const effectiveDateError = planEditContext && planEffective.kind === 'date'
+      ? effectiveDateProblem(planEffective.localDate)
+      : null
+    if (effectiveDateError) {
+      setSaveError(effectiveDateError)
       return
     }
 
@@ -552,7 +572,7 @@ export function StackItemWizard({
           snapshot,
           effective: planEffective,
           changeKind: changeKindFor(
-            planScheduleSnapshot(planEditContext.snapshot, draftForSave.trackingLevel),
+            planScheduleSnapshot(planEditContext.baseline ?? planEditContext.snapshot, draftForSave.trackingLevel),
             snapshot,
             planEditContext.changeKind,
           ),
@@ -718,7 +738,7 @@ export function StackItemWizard({
                         checked={planEffective.kind === 'date'}
                         onChange={() => setPlanEffective({
                           kind: 'date',
-                          localDate: planEffective.localDate ?? state.draft.plan.startDate,
+                          localDate: planEffective.localDate ?? earliestEffectiveDate,
                         })}
                         className="h-5 w-5 accent-sky-400"
                       />
@@ -732,6 +752,7 @@ export function StackItemWizard({
                     aria-label={String(t('my_stack_plan_effective_date', { defaultValue: 'Ab Datum' }))}
                     value={planEffective.localDate ?? ''}
                     min={earliestEffectiveDate ?? undefined}
+                    max={latestEffectiveDate ?? undefined}
                     onChange={event => setPlanEffective({
                       kind: 'date',
                       localDate: event.target.value || null,

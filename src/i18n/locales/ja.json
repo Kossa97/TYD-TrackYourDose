@@ -1271,5 +1271,8 @@
   "my_stack_plan_change_new": "新規",
   "my_stack_plan_change_removed": "削除",
   "my_stack_plan_add_step": "段階を追加",
-  "my_stack_plan_effective_too_early": "{{date}}以降の日付を選んでください。"
+  "my_stack_plan_effective_too_early": "{{date}}以降の日付を選んでください。",
+  "my_stack_plan_effective_required": "日付を選んでください。",
+  "my_stack_plan_effective_too_late": "サイクルは{{date}}に終了します。それより前の日付を選んでください。",
+  "my_stack_plan_effective_taken": "この日にはすでに段階が始まります。別の日を選んでください。"
 }

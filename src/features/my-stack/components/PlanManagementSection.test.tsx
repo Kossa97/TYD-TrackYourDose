@@ -388,7 +388,7 @@ describe('PlanManagementSection', () => {
     // Letzte Stufe: 21.09. (geplant). Frühestens am Tag danach, vorgeschlagen eine Woche später.
     expect(onAddStep).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'version-future' }),
-      { minDate: '2026-09-22', defaultDate: '2026-09-28' },
+      { minDate: '2026-09-22', maxDate: null, defaultDate: '2026-09-28' },
     )
   })
 
@@ -401,8 +401,36 @@ describe('PlanManagementSection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Stufe hinzufügen' }))
     expect(onAddStep).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'version-current' }),
-      { minDate: '2026-09-20', defaultDate: '2026-09-26' },
+      { minDate: '2026-09-20', maxDate: null, defaultDate: '2026-09-26' },
     )
+  })
+
+  it('keeps a new step inside a scheduled end, and offers none when no day is left', () => {
+    const cycle = {
+      id: 'cycle-1',
+      stack_item_id: 'stack-1',
+      started_at: '2026-09-01T08:00:00.000Z',
+      ended_at: '2026-09-25T22:00:00.000Z',
+      start_local_date: '2026-09-01',
+      end_local_date: '2026-09-26',
+    }
+    const onAddStep = vi.fn()
+    render(<PlanManagementSection {...callbacks({ timeline: timeline({ cycle }), onAddStep })} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Stufe hinzufügen' }))
+    // Letzte Stufe 21.09., letzter Zyklustag 25.09.: der Vorschlag (28.09.) wird aufs Ende gekürzt.
+    expect(onAddStep).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'version-future' }),
+      { minDate: '2026-09-22', maxDate: '2026-09-25', defaultDate: '2026-09-25' },
+    )
+    cleanup()
+
+    const full = timeline({
+      cycle,
+      versions: [version('version-current', 5, '2026-09-01'), version('version-future', 10, '2026-09-25')],
+    })
+    render(<PlanManagementSection {...callbacks({ timeline: full })} />)
+    expect(screen.queryByRole('button', { name: 'Stufe hinzufügen' })).toBeNull()
   })
 
   it('shows the cycle period with its running day and an open end', () => {

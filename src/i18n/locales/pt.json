@@ -1271,5 +1271,8 @@
   "my_stack_plan_change_new": "nova",
   "my_stack_plan_change_removed": "removida",
   "my_stack_plan_add_step": "Adicionar etapa",
-  "my_stack_plan_effective_too_early": "Escolha uma data a partir de {{date}}."
+  "my_stack_plan_effective_too_early": "Escolha uma data a partir de {{date}}.",
+  "my_stack_plan_effective_required": "Escolha uma data.",
+  "my_stack_plan_effective_too_late": "O ciclo termina em {{date}}. Escolha uma data anterior.",
+  "my_stack_plan_effective_taken": "Já começa uma etapa neste dia. Escolha outro dia."
 }

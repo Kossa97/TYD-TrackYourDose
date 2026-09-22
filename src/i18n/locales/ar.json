@@ -1275,5 +1275,8 @@
   "my_stack_plan_change_new": "جديد",
   "my_stack_plan_change_removed": "محذوف",
   "my_stack_plan_add_step": "إضافة مرحلة",
-  "my_stack_plan_effective_too_early": "اختر تاريخًا من {{date}} فصاعدًا."
+  "my_stack_plan_effective_too_early": "اختر تاريخًا من {{date}} فصاعدًا.",
+  "my_stack_plan_effective_required": "اختر تاريخًا.",
+  "my_stack_plan_effective_too_late": "تنتهي الدورة في {{date}}. اختر تاريخًا أبكر.",
+  "my_stack_plan_effective_taken": "تبدأ مرحلة بالفعل في هذا اليوم. اختر يومًا آخر."
 }

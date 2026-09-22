@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { addDays, format, parseISO } from 'date-fns'
 import { CalendarDays, Clock, Flag, Moon, Pause, Pencil, Play, Plus, RotateCcw, Sun, Sunrise, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { findNextTimelineIntake, type ResolvedRoutineGroup } from '../../../lib/intakeSchedule'
@@ -19,7 +18,9 @@ import {
   rhythmText,
 } from '../lib/intakeRhythm'
 import type { IntakeRhythm } from '../types'
+import { laterLocalDay, shiftLocalDay } from '../lib/localDays'
 import {
+  cyclePeriod,
   inclusiveDayCount,
   planCardSlots,
   planStepRows,
@@ -36,7 +37,7 @@ export interface PlanManagementSectionProps {
    * Neue Stufe hinter der letzten. `version` ist die letzte Stufe (Vorlage),
    * `minDate` der fruehestmoegliche Tag, `defaultDate` der Vorschlag.
    */
-  onAddStep(version: CyclePlanVersion, dates: { minDate: string; defaultDate: string }): void
+  onAddStep(version: CyclePlanVersion, dates: { minDate: string; maxDate: string | null; defaultDate: string }): void
   onEditFuture(version: CyclePlanVersion): void
   onRemoveFuture(version: CyclePlanVersion): Promise<void>
   onPause(endsAt: string | null): Promise<void>
@@ -116,36 +117,6 @@ function routineLabel(slot: PlanCardSlot, t: Translate): string {
   return String(t(label.key, { defaultValue: label.defaultValue }))
 }
 
-function localDay(value: string, timeZone: string): string {
-  return localDateTimeKey(new Date(value), timeZone).slice(0, 10)
-}
-
-function shiftLocalDay(day: string, offset: number): string {
-  return format(addDays(parseISO(day), offset), 'yyyy-MM-dd')
-}
-
-/**
- * Erster und letzter Tag des Zyklus. Das Ende ist in der Datenbank eine
- * Grenze („ab hier nicht mehr") — der letzte Einnahmetag ist der Tag davor.
- */
-function cyclePeriod(
-  timeline: CycleTimeline,
-  timeZone: string,
-): { first: string; last: string | null; endKey: string | null } {
-  const { cycle } = timeline
-  const first = cycle.start_local_date ?? localDay(cycle.started_at, timeZone)
-  if (cycle.end_local_date) {
-    return { first, last: shiftLocalDay(cycle.end_local_date, -1), endKey: `${cycle.end_local_date}|00:00:00` }
-  }
-  if (cycle.ended_at) {
-    return {
-      first,
-      last: localDay(new Date(new Date(cycle.ended_at).getTime() - 1).toISOString(), timeZone),
-      endKey: localDateTimeKey(new Date(cycle.ended_at), timeZone),
-    }
-  }
-  return { first, last: null, endKey: null }
-}
 
 function timelineForIntakeResolution(timeline: CycleTimeline): CycleTimeline {
   const legacyFrequencies: Record<string, string> = {
@@ -400,12 +371,15 @@ export function PlanManagementSection({
   // beginnt fruehestens morgen: am Tag einer bestehenden Stufe kann keine
   // zweite anfangen. Vorgeschlagen wird eine Woche nach der letzten.
   const lastStep = steps[steps.length - 1] ?? null
+  // Ein festes Ende begrenzt sie: eine Stufe ab dem Ende wuerde nie gelten.
   const addStep = !isEnded && lastStep
     ? (() => {
       const lastDay = lastStep.effectiveFrom.slice(0, 10)
-      const minDate = [shiftLocalDay(lastDay, 1), shiftLocalDay(today, 1)].sort().at(-1)!
-      const proposed = shiftLocalDay(lastDay > today ? lastDay : today, 7)
-      return { version: lastStep.version, dates: { minDate, defaultDate: proposed > minDate ? proposed : minDate } }
+      const minDate = laterLocalDay(shiftLocalDay(lastDay, 1), shiftLocalDay(today, 1))
+      if (period.last !== null && minDate > period.last) return null
+      const proposed = laterLocalDay(shiftLocalDay(laterLocalDay(lastDay, today), 7), minDate)
+      const defaultDate = period.last !== null && proposed > period.last ? period.last : proposed
+      return { version: lastStep.version, dates: { minDate, maxDate: period.last, defaultDate } }
     })()
     : null
   // Vor dem Start beendet: der Zyklus lief nie, es gibt keinen Zeitraum.

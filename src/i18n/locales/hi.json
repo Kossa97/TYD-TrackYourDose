@@ -1271,5 +1271,8 @@
   "my_stack_plan_change_new": "नया",
   "my_stack_plan_change_removed": "हटाया गया",
   "my_stack_plan_add_step": "चरण जोड़ें",
-  "my_stack_plan_effective_too_early": "{{date}} या उसके बाद की तारीख चुनें।"
+  "my_stack_plan_effective_too_early": "{{date}} या उसके बाद की तारीख चुनें।",
+  "my_stack_plan_effective_required": "एक तारीख चुनें।",
+  "my_stack_plan_effective_too_late": "चक्र {{date}} को समाप्त होता है। पहले की तारीख चुनें।",
+  "my_stack_plan_effective_taken": "इस दिन पहले से एक चरण शुरू होता है। दूसरा दिन चुनें।"
 }

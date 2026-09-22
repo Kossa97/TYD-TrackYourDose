@@ -1339,7 +1339,7 @@
   "my_stack_plan_restart": "Restart",
   "my_stack_plan_next_intake": "Next intake",
   "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-  "my_stack_plan_adjust_schedule": "Adjust schedule",
+  "my_stack_plan_adjust_schedule": "Adjust plan",
   "my_stack_plan_edit_future": "Edit planned change from {{date}}",
   "my_stack_plan_remove_future": "Remove planned change from {{date}}",
   "my_stack_plan_pause": "Pause",
@@ -1418,5 +1418,8 @@
   "my_stack_plan_change_new": "new",
   "my_stack_plan_change_removed": "dropped",
   "my_stack_plan_add_step": "Add step",
-  "my_stack_plan_effective_too_early": "Choose a date on or after {{date}}."
+  "my_stack_plan_effective_too_early": "Choose a date on or after {{date}}.",
+  "my_stack_plan_effective_required": "Choose a date.",
+  "my_stack_plan_effective_too_late": "The cycle ends on {{date}}. Choose an earlier date.",
+  "my_stack_plan_effective_taken": "A step already starts on this day. Choose another day."
 }

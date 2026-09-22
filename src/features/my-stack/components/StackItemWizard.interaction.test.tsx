@@ -618,6 +618,73 @@ describe('StackItemWizard interactions', () => {
     })
   })
 
+  it.each([
+    ['a day that already has a step', '2099-10-05', 'my_stack_plan_effective_taken'],
+    ['a day after the cycle ends', '2099-10-20', 'my_stack_plan_effective_too_late'],
+    ['no day at all', '', 'my_stack_plan_effective_required'],
+  ])('refuses %s before saving', async (_label, day, message) => {
+    const onSavePlanChange = vi.fn(async (_submission: PlanChangeSubmission) => undefined)
+    renderWizard({
+      existingItem: existingVitaminD,
+      intent: 'plan',
+      planEditContext: {
+        target: { cycleId: 'cycle-1', versionId: null, mode: 'new_change' },
+        snapshot: existingPlan,
+        changeKind: 'dose',
+        purpose: 'adjust',
+        timeZone: 'Europe/Berlin',
+        takenEffectiveDates: ['2099-10-05'],
+        maxEffectiveDate: '2099-10-15',
+      },
+      onSavePlanChange,
+    } as Partial<StackItemWizardProps>)
+
+    fireEvent.click(screen.getByRole('radio', { name: 'my_stack_plan_effective_date' }))
+    const boundaryDate = screen.getByLabelText('my_stack_plan_effective_date', { selector: 'input[type="date"]' }) as HTMLInputElement
+    // Vorbelegt mit dem fruehesten erlaubten Tag, nicht mit dem Zyklusbeginn.
+    expect(boundaryDate.value).toBe(boundaryDate.min)
+    expect(boundaryDate.max).toBe('2099-10-15')
+    fireEvent.change(boundaryDate, { target: { value: day } })
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    expect(await screen.findByText(message)).toBeTruthy()
+    expect(onSavePlanChange).not.toHaveBeenCalled()
+  })
+
+  it('measures an edited future step against the step before it', async () => {
+    const onSavePlanChange = vi.fn(async (_submission: PlanChangeSubmission) => undefined)
+    const previous: IntakePlanDraft = existingPlan
+    const future: IntakePlanDraft = {
+      ...existingPlan,
+      startDate: '2099-10-01',
+      slots: [{ ...existingPlan.slots[0], time: '09:30', dose: 7000 }],
+    }
+    renderWizard({
+      existingItem: existingVitaminD,
+      intent: 'plan',
+      planEditContext: {
+        target: { cycleId: 'cycle-1', versionId: 'future-1', mode: 'replace_future' },
+        snapshot: future,
+        baseline: previous,
+        changeKind: 'dose',
+        purpose: 'edit_future',
+        timeZone: 'Europe/Berlin',
+        initialEffective: { kind: 'date', localDate: '2099-10-01' },
+      },
+      onSavePlanChange,
+    } as Partial<StackItemWizardProps>)
+
+    // Uhrzeit zurueck auf die der Stufe davor: uebrig bleibt eine reine Dosisaenderung.
+    fireEvent.change(screen.getByLabelText('my_stack_plan_time'), { target: { value: '08:30' } })
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await waitFor(() => expect(onSavePlanChange).toHaveBeenCalledTimes(1))
+    expect(onSavePlanChange.mock.calls[0][0]).toMatchObject({
+      changeKind: 'dose',
+      snapshot: { dose: 7000, intake_time_custom: '08:30' },
+    })
+  })
+
   it('reuses the same setup key after a visible save failure', async () => {
     const onSave = vi.fn()
       .mockRejectedValueOnce(new Error('RPC failed'))

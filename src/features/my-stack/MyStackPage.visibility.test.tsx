@@ -997,7 +997,8 @@ describe('MyStackPage non-vial visibility', () => {
 
     expect(screen.getByTestId('wizard-target-cycle-id').textContent).toBe(activeCycle.id)
     expect(screen.getByTestId('wizard-target-version-id').textContent).toBe('version-future-exact')
-    expect(screen.getByTestId('wizard-change-kind').textContent).toBe('schedule')
+    // Die Art bei reinen Mengenaenderungen; mehr entscheidet der Vergleich mit der Stufe davor beim Speichern.
+    expect(screen.getByTestId('wizard-change-kind').textContent).toBe('dose')
   })
 
   it('hides both ordinary schedules for a needs-review item and resolves the chosen running cycle', async () => {
