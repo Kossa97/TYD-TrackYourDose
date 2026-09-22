@@ -5,6 +5,7 @@ import {
   getDosageForm,
   getIntakePlanUnitSuggestions,
   methodChoicesFor,
+  methodLabelKey,
 } from '../lib/dosageForms'
 import { MAX_INTAKE_SLOTS } from '../lib/intakeFrequency'
 import {
@@ -52,7 +53,7 @@ const RHYTHM_OPTIONS: readonly {
 }[] = [
   { kind: 'daily', labelKey: 'my_stack_rhythm_daily', defaultValue: 'Täglich', Icon: CalendarDays },
   { kind: 'weekdays', labelKey: 'my_stack_rhythm_weekdays', defaultValue: 'Wochentage', Icon: CalendarRange },
-  { kind: 'interval', labelKey: 'my_stack_rhythm_interval', defaultValue: 'Im Abstand von', Icon: Repeat },
+  { kind: 'interval', labelKey: 'my_stack_rhythm_interval', defaultValue: 'Im Abstand', Icon: Repeat },
   { kind: 'cycle', labelKey: 'my_stack_rhythm_cycle', defaultValue: 'Im Wechsel', Icon: Repeat },
   // „Nur bei Bedarf" ist die fuenfte Form, nicht ein Haken darunter: erst vier
   // Schalter anzubieten und dann „eigentlich doch nicht" liest sich rueckwaerts.
@@ -387,7 +388,9 @@ export function IntakePlanEditor({
             className="select min-h-11 w-full min-w-0 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
           >
             <option value="">{t('my_stack_plan_method_placeholder', { defaultValue: 'Methode wählen' })}</option>
-            {methodChoices.map(method => <option key={method} value={method}>{method}</option>)}
+            {methodChoices.map(method => (
+              <option key={method} value={method}>{t(methodLabelKey(method), { defaultValue: method })}</option>
+            ))}
           </select>
           {errors.method && (
             <p id="stack-plan-method-error" role="alert" className="mt-2 text-sm text-rose-300">

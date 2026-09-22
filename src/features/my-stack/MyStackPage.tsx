@@ -34,7 +34,7 @@ import { StackArchive } from './components/StackArchive'
 import { archiveStackItem, deleteStackItem, loadStackItems, reconstituteStackItem, removePlanSegment, restoreStackItem, savePlanChange, saveStackItem, saveStackItemSetup, saveVialTracking, type LoadedStackItem, type LoadedStackItemIngredient } from './services/stackItems'
 import { searchSubstanceCatalog } from './services/substanceCatalog'
 import type { IntakePlanDraft, IntakeSlotDraft, RoutineGroup, StackItem, StackItemSetupDraft, SubstanceCatalogEntry, TrackingLevel } from './types'
-import { getDosageForm, isStageRenderable } from './lib/dosageForms'
+import { getDosageForm, isStageRenderable, METHOD_LABEL_KEYS as METHOD_KEYS } from './lib/dosageForms'
 import type { WizardSaveMode } from './lib/wizardState'
 import { rhythmFromStorage } from './lib/intakeRhythm'
 import { STACK_TABS, filterByTab, tabCounts, type StackTabKey } from './lib/stackTabs'
@@ -127,10 +127,6 @@ type InfoRow = {
 }
 // ─── Konstanten ───────────────────────────────────────────────────────────────
 const UNITS   = ['mcg','mg','IU','ml','nmol']
-const METHOD_KEYS: Record<string,string> = {
-  'Subkutan':'method_subkutan','Intramuskulär':'method_intramusk','Nasal':'method_nasal',
-  'Oral':'method_oral','Transdermal':'method_transdermal','Intravenös':'method_intravenoese','Andere':'method_andere',
-}
 
 type PeptideSortKey =
   | 'active_name'

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { addDays, differenceInDays, format, parseISO } from 'date-fns'
 import { STACK_ITEM_COLORS } from '../../lib/colors'
+import { METHOD_LABEL_KEYS as METHOD_KEYS } from '../../lib/dosageForms'
 import { PeptideColorPalette } from '../../../../components/PeptideColorPalette'
 import { PeptideVialVisual } from '../../../../components/PeptideVialVisual'
 
@@ -64,10 +65,6 @@ const POPULAR_PEPTIDES = [
 ]
 const UNITS = ['mcg', 'mg', 'IU', 'ml', 'nmol']
 const METHODS = ['Subkutan', 'Intramuskulär', 'Nasal', 'Oral', 'Transdermal', 'Intravenös', 'Andere']
-const METHOD_KEYS: Record<string, string> = {
-  Subkutan: 'method_subkutan', Intramuskulär: 'method_intramusk', Nasal: 'method_nasal',
-  Oral: 'method_oral', Transdermal: 'method_transdermal', Intravenös: 'method_intravenoese', Andere: 'method_andere',
-}
 type FieldId =
   | 'name' | 'color' | 'vial_amount_mg' | 'reconstitution_ml'
   | 'reconstitution_date' | 'expiry_days' | 'vials_in_stock'

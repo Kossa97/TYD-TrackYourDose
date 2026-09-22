@@ -116,6 +116,17 @@ describe('IntakePlanEditor', () => {
       .toEqual(['', 'Subkutan', 'Intramuskulär', 'Intravenös'])
   })
 
+  it('zeigt die Route in der App-Sprache und speichert weiter den gespeicherten Wert', () => {
+    i18nTestState.translations = { method_subkutan: 'Subcutaneous', method_intramusk: 'Intramuscular' }
+    render(<PlanHarness trackingLevel="intake_only" dosageForm="vial" />)
+
+    const method = screen.getByLabelText('Methode') as HTMLSelectElement
+    const subkutan = Array.from(method.options).find(option => option.value === 'Subkutan')!
+    expect(subkutan.textContent).toBe('Subcutaneous')
+    fireEvent.change(method, { target: { value: 'Subkutan' } })
+    expect(method.value).toBe('Subkutan')
+  })
+
   it('setzt die einzige Route selbst, damit der Schritt nicht lautlos blockiert', () => {
     // Das Feld ist bei der Kapsel unsichtbar — bliebe die Route leer, stünde
     // eine Pflichtangabe im Weg, die niemand sehen und also auch nicht
@@ -343,7 +354,7 @@ describe('IntakePlanEditor', () => {
     // Denosumab alle sechs Monate. „Alle X Tage" war auf 30 Tage begrenzt.
     render(<PlanHarness trackingLevel="intake_only" dosageForm="vial" />)
 
-    fireEvent.click(screen.getByRole('button', { name: /Im Abstand von/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Im Abstand/ }))
     const abstand = screen.getByLabelText('Abstand') as HTMLInputElement
     const einheit = screen.getByLabelText('Einheit des Abstands') as HTMLSelectElement
 
@@ -706,7 +717,7 @@ describe('IntakePlanEditor', () => {
     expect(screen.getByRole('button', { name: 'Mo' })).toBeTruthy()
     expect(screen.queryByLabelText('Abstand')).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: /Im Abstand von/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Im Abstand/ }))
     expect(screen.getByLabelText('Abstand')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Mo' })).toBeNull()
     expect(screen.queryByLabelText('Tage an')).toBeNull()
