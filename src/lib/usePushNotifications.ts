@@ -95,7 +95,13 @@ export function usePushNotifications(user: User | null): UsePushNotificationsRet
         // Deshalb hier bei jedem Start nachziehen, nicht nur beim
         // Abonnieren.
         if (sub) {
-          void supabase.from('push_subscriptions')
+          // `await`, nicht `void`: der PostgREST-Builder von supabase-js ist
+          // ein Thenable, das erst in seiner eigenen `then()`-Methode
+          // ueberhaupt einen Fetch ausloest (`_fetch(...)` steckt dort drin,
+          // nicht im Konstruktor). `void ausdruck` ruft `.then()` nie auf --
+          // die Kette waere nur aufgebaut, nie ausgefuehrt worden, und
+          // `push_subscriptions.timezone` bliebe stumm auf dem alten Wert.
+          await supabase.from('push_subscriptions')
             .update({ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })
             .eq('user_id', user.id)
             .eq('endpoint', sub.endpoint)
