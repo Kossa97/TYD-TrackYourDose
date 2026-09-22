@@ -1067,6 +1067,20 @@ describe('Dashboard normalized timeline path', () => {
     }))
   })
 
+  it('zeigt das Mengenfeld nur unter der Zeitleiste', () => {
+    // `handleConfirmSheet` reicht die Menge nur in ihrem V2-Zweig an
+    // `confirmCycleDose` weiter. Fuellte `openConfirmSheet` das Feld auch
+    // ausserhalb, saehe der Nutzer eine editierbare Menge, deren Eingabe
+    // beim Bestaetigen still verworfen wuerde.
+    const source = readFileSync('src/pages/Dashboard.tsx', 'utf8')
+    const oeffnen = source.slice(
+      source.indexOf('const openConfirmSheet = ('),
+      source.indexOf('const openInjectionTrackerForSlot = ('),
+    )
+    expect(oeffnen.length).toBeGreaterThan(200)
+    expect(oeffnen).toContain('if (FEATURES.planTimelineV2 && cycle && dosePlanCapabilities(')
+  })
+
   it.each([false, true])('confirms a normalized single intake through exact RPC (pending=%s)', async pending => {
     const fixtures = startFixFixture()
     if (pending) fixtures.dose_logs = [pendingLog(false)]

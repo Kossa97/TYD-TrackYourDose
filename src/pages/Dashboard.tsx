@@ -34,7 +34,7 @@ import { localDateTimeKey, resolveCycleAt, resolveCycleAtLocalSlot, type CycleTi
 import { isOnDemand } from '../features/my-stack/lib/intakeFrequency'
 import { debitPeptideStockForDoseById } from '../features/my-stack/extensions/peptide/vialStock'
 import { formatTrackedQuantity, hasTrackedQuantity } from '../features/routines/quantityPresentation'
-import { buildOneOffActualDose, dosePlanCapabilities } from '../features/my-stack/lib/dosePlan'
+import { dosePlanCapabilities } from '../features/my-stack/lib/dosePlan'
 import {
   buildConfirmationEntry,
   groupRoutineIntakes,
@@ -1304,16 +1304,21 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
         unit: quantity.unit,
         method: cycle.method,
       }))
-      // Dieselbe Pruefung wie im Gruppen-Sheet (`buildOneOffActualDose`):
-      // positive Menge. Die Einheit kommt bewusst aus `quantity.unit` --
-      // derselben Quelle, aus der `geplanteEintragung` seine eigene Einheit
-      // hat -- statt aus dem Sheet-Zustand: bei Bei-Bedarf-Substanzen loest
-      // der PRN-Zweig oben `cycle`/`quantity` gerade erst neu auf, und die
-      // Einheit, mit der das Sheet urspruenglich geoeffnet wurde, kann zu
-      // diesem Zeitpunkt schon veraltet sein. Ohne Abweichung bleibt die
+      // Nicht ueber `buildOneOffActualDose` (das Gruppen-Sheet benutzt es
+      // fuer dieselbe Abweichung): das verlangt zusaetzlich, dass die
+      // GEPLANTE Basismenge selbst positiv ist. Bei Bei-Bedarf-Substanzen
+      // loest der PRN-Zweig oben `cycle`/`quantity` gerade erst neu auf --
+      // ohne gesetzte Menge auf der getroffenen Planversion waere das ein
+      // Fehlschlag, obwohl der Nutzer hier eine gueltige eigene Menge
+      // eingegeben hat. Positivitaet der Eingabe ist schon im Sheet
+      // geprueft (`confirmDoseUngueltig` sperrt sonst den Knopf); die
+      // Einheit kommt bewusst aus `quantity.unit` -- derselben Quelle, aus
+      // der `geplanteEintragung` seine eigene Einheit hat, statt aus dem
+      // (zu diesem Zeitpunkt womoeglich veralteten) Sheet-Zustand -- ein
+      // Mismatch kann damit nicht entstehen. Ohne Abweichung bleibt die
       // geplante Menge stehen.
       const eintragung = tatsaechlicheMenge != null && quantity.unit
-        ? buildOneOffActualDose(geplanteEintragung, { dose: tatsaechlicheMenge, unit: quantity.unit })
+        ? { ...geplanteEintragung, actualDose: tatsaechlicheMenge, actualUnit: quantity.unit }
         : geplanteEintragung
       const [gespeicherteZeile] = await confirmIntakeGroup(
         dashboardDataClient as unknown as IntakeConfirmationClient,
@@ -1383,7 +1388,13 @@ export function Dashboard({ dashboardDataClient = supabase }: DashboardProps = {
     // Vorausgefuellt mit der geplanten Menge dieses Slots -- derselbe
     // Resolver, den `confirmCycleDose` selbst benutzt, damit hier steht,
     // was tatsaechlich gilt (Eskalation, Slot-eigene Menge), nicht geraten.
-    if (cycle && dosePlanCapabilities(cycle.stack_items.tracking_level).oneOff) {
+    //
+    // Nur unter der Zeitleiste: `handleConfirmSheet` reicht die Menge nur in
+    // ihrem V2-Zweig an `confirmCycleDose` weiter. Zeigte das Feld auch im
+    // alten Zweig, saehe der Nutzer eine editierbare Menge, deren Eingabe
+    // beim Bestaetigen still verworfen wuerde -- stattdessen bleibt das Feld
+    // dort unsichtbar, wie vor dieser Aenderung.
+    if (FEATURES.planTimelineV2 && cycle && dosePlanCapabilities(cycle.stack_items.tracking_level).oneOff) {
       const geplant = resolveDashboardCycleQuantity(cycle, selectedDay, escalations, slotDose)
       setConfirmDoseText(geplant.dose != null ? String(geplant.dose) : '')
       setConfirmUnit(geplant.unit)
