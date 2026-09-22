@@ -366,9 +366,9 @@
     "semantic_hash": ""
   },
   "src/components/injection3d/InjectionHistorySheet.tsx": {
-    "mtime": 1788611941.9153547,
-    "seen": 1789927683.040048,
-    "ast_hash": "ca6225ef0c2da3f2bcea7c10bec7917d",
+    "mtime": 1790119413.575367,
+    "seen": 1790119569.242933,
+    "ast_hash": "3dae99461f74aeb0a619b8d053b17bc1",
     "semantic_hash": ""
   },
   "src/components/injection3d/InjectionIntroSheet.tsx": {
@@ -378,9 +378,9 @@
     "semantic_hash": ""
   },
   "src/components/injection3d/InjectionLogSheet.tsx": {
-    "mtime": 1790013049.5448022,
-    "seen": 1790013226.2834234,
-    "ast_hash": "6bc487839337b4704288b41a672e14bf",
+    "mtime": 1790119413.5750182,
+    "seen": 1790119569.242937,
+    "ast_hash": "13504d036d8bc261726fc0ae0fd5f7d4",
     "semantic_hash": ""
   },
   "src/components/injection3d/InjectionMapCanvas.test.ts": {
@@ -408,9 +408,9 @@
     "semantic_hash": ""
   },
   "src/components/injection3d/InjectionTrackerTabs.tsx": {
-    "mtime": 1790013049.5450134,
-    "seen": 1790013226.283431,
-    "ast_hash": "ff79b1a39cb1b84eefa1c571cd927b13",
+    "mtime": 1790119413.5751822,
+    "seen": 1790119569.242946,
+    "ast_hash": "b0a272c6d3950d1dd89f6e17d91625c9",
     "semantic_hash": ""
   },
   "src/components/liveCycleChart/LiveCycleChartCanvas.tsx": {
@@ -3246,9 +3246,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790119026.0167768,
-    "seen": 1790119295.2175634,
-    "ast_hash": "aa2a9fb8db2420d5bc3fb5bee22414ce",
+    "mtime": 1790119413.572483,
+    "seen": 1790119569.2431421,
+    "ast_hash": "f5782e73b3793a7d66cd7d7c9048ae7b",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
@@ -3342,15 +3342,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/IntakePlanEditor.test.tsx": {
-    "mtime": 1790119221.4192827,
-    "seen": 1790119295.2175808,
-    "ast_hash": "79bf8307b99385834eb43d34c1927281",
+    "mtime": 1790119447.475154,
+    "seen": 1790119569.2431614,
+    "ast_hash": "e602ab9d9dda105e271245f245f08055",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/IntakePlanEditor.tsx": {
-    "mtime": 1790119081.8803625,
-    "seen": 1790119295.2175817,
-    "ast_hash": "0dc5c5350a3955791def7558ef179595",
+    "mtime": 1790119413.5693188,
+    "seen": 1790119569.2431624,
+    "ast_hash": "92eaf5416cbab108a04422f73e785906",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/PlanManagementSection.test.tsx": {
@@ -3396,9 +3396,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackItemWizard.tsx": {
-    "mtime": 1790119026.0174024,
-    "seen": 1790119295.2175906,
-    "ast_hash": "e95ffc1ea30f0e92834b4eef466f5ba3",
+    "mtime": 1790119413.5699632,
+    "seen": 1790119569.2431722,
+    "ast_hash": "45aedcf6794f95a32ceaabc4236c3c79",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/StackStage.test.ts": {
@@ -3714,9 +3714,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/peptide/VialTrackingEditor.tsx": {
-    "mtime": 1790119033.3955152,
-    "seen": 1790119295.2176487,
-    "ast_hash": "e2d71261c699d976f856d98c99ca4f70",
+    "mtime": 1790119413.5740886,
+    "seen": 1790119569.2432327,
+    "ast_hash": "11d00db35ffec6d0382a2c41d9ed1b38",
     "semantic_hash": ""
   },
   "src/features/my-stack/extensions/peptide/vialShape.test.ts": {
@@ -3918,9 +3918,9 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosageForms.ts": {
-    "mtime": 1790119017.6283948,
-    "seen": 1790119295.2176845,
-    "ast_hash": "be33822619844f62d8f4d75f5e96bcba",
+    "mtime": 1790119413.5687952,
+    "seen": 1790119569.2432692,
+    "ast_hash": "44783ddc5179863abf0fa86e96d32cda",
     "semantic_hash": ""
   },
   "src/features/my-stack/lib/dosePlan.test.ts": {
@@ -4854,8 +4854,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790119245.422315,
-    "seen": 1790119295.2180994,
+    "mtime": 1790119470.4823098,
+    "seen": 1790119569.243635,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5337,6 +5337,18 @@
     "mtime": 1790116619.7595017,
     "seen": 1790117096.9747949,
     "ast_hash": "d812ac17a4705820b4a8c1c7298564a5",
+    "semantic_hash": ""
+  },
+  "src/lib/intakeMethods.test.ts": {
+    "mtime": 1790119447.4772496,
+    "seen": 1790119569.243495,
+    "ast_hash": "6e2086eaaa105daa26a290989e4e58d1",
+    "semantic_hash": ""
+  },
+  "src/lib/intakeMethods.ts": {
+    "mtime": 1790119413.546311,
+    "seen": 1790119569.2434962,
+    "ast_hash": "a84ef991b79413f1a96985b58e70ae1f",
     "semantic_hash": ""
   }
 }
