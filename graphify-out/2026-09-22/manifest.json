@@ -1020,9 +1020,9 @@
     "semantic_hash": ""
   },
   "src/lib/usePushNotifications.ts": {
-    "mtime": 1790097715.6967857,
-    "seen": 1790097894.569977,
-    "ast_hash": "7c104ec0f381f49489152f678ef10a8c",
+    "mtime": 1790098213.5871744,
+    "seen": 1790098427.5195076,
+    "ast_hash": "4c3a82ee1195793486a0284feed5169c",
     "semantic_hash": ""
   },
   "src/main.tsx": {
@@ -4854,8 +4854,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790097834.6551518,
-    "seen": 1790097894.5700688,
+    "mtime": 1790098360.507183,
+    "seen": 1790098427.519595,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
@@ -5316,9 +5316,9 @@
     "semantic_hash": ""
   },
   "src/lib/usePushNotifications.test.ts": {
-    "mtime": 1790097694.9991436,
-    "seen": 1790097894.569975,
-    "ast_hash": "365918cd8671e9c5bf95c80de1871de2",
+    "mtime": 1790098143.1520712,
+    "seen": 1790098427.5195062,
+    "ast_hash": "237f2347759ec170f3e13abd49be89db",
     "semantic_hash": ""
   }
 }
