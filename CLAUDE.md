@@ -13,13 +13,15 @@ Rules:
 Die App wird zunächst **nur auf Deutsch und Englisch** veröffentlicht.
 
 Das heißt für Textänderungen:
-- `de` und `en` sind die einzigen Sprachen, deren Wortlaut zählt. Sie werden
-  sorgfältig geschrieben und gegengelesen.
-- Die zwölf übrigen Sprachdateien bleiben vollständig (der i18n-Vertrag in
-  `src/features/my-stack/lib/i18n.test.ts` verlangt jeden Schlüssel in jeder
-  Sprache), aber ihr Wortlaut ist nicht auslieferungsreif. Sinnvolle
-  Übersetzungen eintragen, nicht daran feilen — und nicht so tun, als wären
-  sie geprüft.
+- **Bearbeitet werden nur `de` und `en`** (Wunsch des Nutzers). Nur sie werden
+  geschrieben, gegengelesen und geändert.
+- Die zwölf übrigen Sprachen werden **nicht bearbeitet**: kein Übersetzen,
+  kein Umformulieren bestehender Texte, auch nicht „nebenbei".
+- Der i18n-Vertrag in `src/features/my-stack/lib/i18n.test.ts` verlangt
+  trotzdem jeden Schlüssel in jeder Sprache. Ein **neuer** Schlüssel bekommt
+  dort deshalb den englischen Text als Platzhalter — mehr nicht. Ändert sich
+  nur der Wortlaut eines bestehenden Schlüssels, bleiben die zwölf Sprachen,
+  wie sie sind.
 - Vor dem Start weiterer Sprachen muss jemand mit der Sprache drüberlesen.
 
 ## Datenbankänderungen (Supabase)
