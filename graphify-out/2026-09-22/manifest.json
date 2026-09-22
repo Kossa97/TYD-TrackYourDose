@@ -3246,15 +3246,15 @@
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.tsx": {
-    "mtime": 1790043639.3610754,
-    "seen": 1790043800.72321,
-    "ast_hash": "2fb2b4c38125b77e0d0ef489603e6c3c",
+    "mtime": 1790098445.9361775,
+    "seen": 1790098623.6608195,
+    "ast_hash": "4743e06261470b86c67095760bb5ce31",
     "semantic_hash": ""
   },
   "src/features/my-stack/MyStackPage.visibility.test.tsx": {
-    "mtime": 1790043639.362197,
-    "seen": 1790043800.7232106,
-    "ast_hash": "5f8399469399fa48c648e3b999868499",
+    "mtime": 1790098445.9361775,
+    "seen": 1790098623.660821,
+    "ast_hash": "16d696ad44f9150945f93ae9d5fc4828",
     "semantic_hash": ""
   },
   "src/features/my-stack/components/CourseTimezoneReview.test.tsx": {
@@ -4854,8 +4854,8 @@
     "semantic_hash": ""
   },
   "supabase-pk-profiles-expansion.sql": {
-    "mtime": 1790098360.507183,
-    "seen": 1790098427.519595,
+    "mtime": 1790098545.6391943,
+    "seen": 1790098623.6611838,
     "ast_hash": "aaeeb56080dc463ef4befc66f9696cfc",
     "semantic_hash": ""
   },
