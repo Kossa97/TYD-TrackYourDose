@@ -85,6 +85,21 @@ export function usePushNotifications(user: User | null): UsePushNotificationsRet
         await reg.update().catch(() => {})
         const sub = await reg.pushManager.getSubscription()
         setState(sub ? 'subscribed' : 'default')
+        // Die serverseitige Erinnerung (`api/send-reminders.js`) fragt
+        // `push_subscriptions.timezone` ab -- eine gespeicherte Spalte, kein
+        // Live-Wert. Geschrieben wurde sie bisher nur beim Abonnieren
+        // selbst. Reist jemand, ohne die Push-Benachrichtigungen neu zu
+        // verbinden, bliebe die Erinnerung auf der Zeitzone von damals
+        // stehen -- genau der Ausnahme von „wo immer ich bin", die der
+        // Kalender selbst nicht hat (der liest bei jedem Rendern live).
+        // Deshalb hier bei jedem Start nachziehen, nicht nur beim
+        // Abonnieren.
+        if (sub) {
+          void supabase.from('push_subscriptions')
+            .update({ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })
+            .eq('user_id', user.id)
+            .eq('endpoint', sub.endpoint)
+        }
       })
       .catch(() => setState('default'))
   }, [user])
