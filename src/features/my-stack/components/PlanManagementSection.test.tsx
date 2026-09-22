@@ -289,6 +289,48 @@ describe('PlanManagementSection', () => {
     expect(screen.queryByRole('button', { name: /entfernen/i })).toBeNull()
   })
 
+  it('never shows a step dated after the end, even once that date has passed', () => {
+    const ended = timeline({
+      cycle: {
+        id: 'cycle-1',
+        stack_item_id: 'stack-1',
+        started_at: '2026-09-01T08:00:00.000Z',
+        ended_at: '2026-09-18T08:00:00.000Z',
+      },
+      versions: [
+        version('version-current', 5, '2026-09-01'),
+        version('version-mid', 7, '2026-09-10'),
+        version('version-future', 10, '2026-09-21'),
+      ],
+    })
+    render(<PlanManagementSection {...callbacks({ timeline: ended, now: new Date('2026-09-25T08:00:00.000Z') })} />)
+
+    const section = screen.getByTestId('plan-management-cycle-1')
+    expect(section.textContent).toContain('Dosisverlauf')
+    expect(section.textContent).toContain('7 mg')
+    expect(section.textContent).not.toContain('10 mg')
+    expect(section.textContent).not.toContain('gilt jetzt')
+  })
+
+  it('shows only the start date for a cycle ended before it began', () => {
+    const neverRan = timeline({
+      cycle: {
+        id: 'cycle-1',
+        stack_item_id: 'stack-1',
+        started_at: '2026-09-30T22:00:00.000Z',
+        ended_at: '2026-09-18T08:00:00.000Z',
+        start_local_date: '2026-10-01',
+      },
+      versions: [version('version-planned', 5, '2026-10-01', { change_kind: 'initial' })],
+    })
+    render(<PlanManagementSection {...callbacks({ timeline: neverRan })} />)
+
+    const section = screen.getByTestId('plan-management-cycle-1')
+    expect(section.textContent).toContain('01.10.2026')
+    expect(section.textContent).not.toContain('18.09.2026')
+    expect(section.textContent).not.toMatch(/\d+ Tage?\b/)
+  })
+
   it('keeps ended history visible while restart is pending and retryable after failure', async () => {
     let rejectRestart: ((error: Error) => void) | undefined
     const onRestart = vi.fn(() => new Promise<void>((_resolve, reject) => { rejectRestart = reject }))

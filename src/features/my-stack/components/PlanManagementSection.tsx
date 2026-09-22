@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { addDays, format, parseISO } from 'date-fns'
 import { CalendarDays, Clock, Flag, Moon, Pause, Pencil, Play, RotateCcw, Sun, Sunrise, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { findNextTimelineIntake, type ResolvedRoutineGroup } from '../../../lib/intakeSchedule'
@@ -116,22 +117,30 @@ function localDay(value: string, timeZone: string): string {
 }
 
 function shiftLocalDay(day: string, offset: number): string {
-  const [year, month, date] = day.split('-').map(Number)
-  return new Date(Date.UTC(year, month - 1, date + offset)).toISOString().slice(0, 10)
+  return format(addDays(parseISO(day), offset), 'yyyy-MM-dd')
 }
 
 /**
  * Erster und letzter Tag des Zyklus. Das Ende ist in der Datenbank eine
  * Grenze („ab hier nicht mehr") — der letzte Einnahmetag ist der Tag davor.
  */
-function cyclePeriod(timeline: CycleTimeline, timeZone: string): { first: string; last: string | null } {
+function cyclePeriod(
+  timeline: CycleTimeline,
+  timeZone: string,
+): { first: string; last: string | null; endKey: string | null } {
   const { cycle } = timeline
   const first = cycle.start_local_date ?? localDay(cycle.started_at, timeZone)
-  if (cycle.end_local_date) return { first, last: shiftLocalDay(cycle.end_local_date, -1) }
-  if (cycle.ended_at) {
-    return { first, last: localDay(new Date(new Date(cycle.ended_at).getTime() - 1).toISOString(), timeZone) }
+  if (cycle.end_local_date) {
+    return { first, last: shiftLocalDay(cycle.end_local_date, -1), endKey: `${cycle.end_local_date}|00:00:00` }
   }
-  return { first, last: null }
+  if (cycle.ended_at) {
+    return {
+      first,
+      last: localDay(new Date(new Date(cycle.ended_at).getTime() - 1).toISOString(), timeZone),
+      endKey: localDateTimeKey(new Date(cycle.ended_at), timeZone),
+    }
+  }
+  return { first, last: null, endKey: null }
 }
 
 function timelineForIntakeResolution(timeline: CycleTimeline): CycleTimeline {
@@ -226,10 +235,23 @@ function stepKindLabel(version: CyclePlanVersion, t: Translate): string {
   return String(t(copy.key, { defaultValue: copy.defaultValue }))
 }
 
+/**
+ * Kurze Beschriftung fuer die Tages-Chips. Zwei Zeichen der Kurzform, solange
+ * das die Tage unterscheidet („Mo", „Di"); sonst die schmale Form — im
+ * Arabischen etwa beginnt jeder Kurzname mit demselben Artikel.
+ */
+function chipLabels(language: string): string[] {
+  const kurz = WEEKDAY_KEYS.map(day => weekdayLabel(day, language).slice(0, 2))
+  if (new Set(kurz).size === kurz.length) return kurz
+  const schmal = new Intl.DateTimeFormat(language, { weekday: 'narrow', timeZone: 'UTC' })
+  return WEEKDAY_KEYS.map((_, index) => schmal.format(new Date(WEEKDAY_REFERENCE_UTC + index * 86_400_000)))
+}
+
 function DayChips({ days, language }: { days: string[]; language: string }) {
+  const labels = chipLabels(language)
   return (
     <span aria-hidden="true" className="mt-1.5 flex flex-wrap gap-0.5">
-      {WEEKDAY_KEYS.map(day => {
+      {WEEKDAY_KEYS.map((day, index) => {
         const active = days.includes(day)
         return (
           <span
@@ -238,7 +260,7 @@ function DayChips({ days, language }: { days: string[]; language: string }) {
               ? 'bg-cyan-300/15 text-cyan-100'
               : 'border border-white/10 text-slate-600'}`}
           >
-            {weekdayLabel(day, language).slice(0, 2)}
+            {labels[index]}
           </span>
         )
       })}
@@ -354,16 +376,23 @@ export function PlanManagementSection({
   const futureSegments = segments.filter(segment => segment.status === 'future')
   const displayVersion = currentVersion ?? futureSegments[0]?.version ?? null
   const isEnded = resolved.status === 'ended'
-  // Ein beendeter Zyklus zeigt nur, was wirklich galt: eine Stufe nach dem
-  // Ende wurde nie erreicht.
-  const steps = isEnded ? segments.filter(segment => segment.status !== 'future') : segments
+  const period = cyclePeriod(timeline, timeZone)
+  // Ein beendeter Zyklus zeigt nur, was wirklich galt: eine Stufe ab dem Ende
+  // wurde nie erreicht — auch nicht, wenn ihr Datum inzwischen vorbei ist.
+  // Und nichts an ihm „gilt jetzt".
+  const steps = isEnded
+    ? segments
+      .filter(segment => period.endKey === null || segment.effectiveFrom < period.endKey)
+      .map(segment => ({ ...segment, status: 'past' as const }))
+    : segments
   const panelVersion = isEnded ? steps[steps.length - 1]?.version ?? null : displayVersion
   const panelSlots = panelVersion ? versionSlots(panelVersion) : []
   const currentSegment = segments.find(segment => segment.status === 'current') ?? null
   // Eine einzige Stufe steht schon oben — der Verlauf lohnt erst ab zwei. Eine
   // geplante Stufe zeigt er immer, denn nur dort laesst sie sich bearbeiten.
   const showHistory = steps.length >= 2 || steps.some(segment => segment.status === 'future')
-  const period = cyclePeriod(timeline, timeZone)
+  // Vor dem Start beendet: der Zyklus lief nie, es gibt keinen Zeitraum.
+  const neverRan = period.last !== null && period.last < period.first
   const today = localDateTimeKey(now, timeZone).slice(0, 10)
   const nextIntake = resolved.status === 'active' || resolved.status === 'planned'
     ? findNextTimelineIntake(timelineForIntakeResolution(timeline), now, timeZone)
@@ -615,12 +644,14 @@ export function PlanManagementSection({
             <div className="min-w-0">
               <p className="text-[15px] font-semibold text-white">
                 {dateLabel(`${period.first}|00:00:00`, language, timeZone)}
-                {' – '}
-                {period.last
-                  ? dateLabel(`${period.last}|00:00:00`, language, timeZone)
-                  : t('my_stack_plan_open_end', { defaultValue: 'Ende offen' })}
+                {!neverRan && ' – '}
+                {neverRan
+                  ? null
+                  : period.last
+                    ? dateLabel(`${period.last}|00:00:00`, language, timeZone)
+                    : t('my_stack_plan_open_end', { defaultValue: 'Ende offen' })}
               </p>
-              {isEnded && period.last ? (
+              {neverRan ? null : isEnded && period.last ? (
                 <p className="mt-0.5 text-xs text-slate-400">
                   {durationLabel(Math.max(1, inclusiveDayCount(period.first, period.last)), t)}
                 </p>
@@ -647,9 +678,9 @@ export function PlanManagementSection({
                 <h3 className="text-sm font-bold text-white">
                   {isEnded
                     ? t('my_stack_plan_last_plan', { defaultValue: 'Zuletzt' })
-                    : resolved.status === 'planned' && futureSegments[0]
+                    : resolved.status === 'planned'
                       ? t('my_stack_plan_from_date', {
-                        date: dateLabel(futureSegments[0].effectiveFrom, language, timeZone),
+                        date: dateLabel(`${period.first}|00:00:00`, language, timeZone),
                         defaultValue: 'Ab {{date}}',
                       })
                       : t('my_stack_plan_now', { defaultValue: 'Jetzt' })}

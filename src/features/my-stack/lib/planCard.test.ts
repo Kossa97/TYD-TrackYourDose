@@ -38,7 +38,23 @@ describe('planCardSlots', () => {
   it('numbers repeated times of day so two mornings stay apart', () => {
     const slots = planCardSlots(snapshot({ intake_time: 'morgens,morgens', intake_time_custom: '10:00,07:00' }))
 
-    expect(slots.map(slot => [slot.id, slot.time])).toEqual([['morgens#0', '07:00'], ['morgens#1', '10:00']])
+    // Gezaehlt wird in gespeicherter Reihenfolge, nicht nach Uhrzeit.
+    expect(slots.map(slot => [slot.id, slot.time])).toEqual([['morgens#1', '07:00'], ['morgens#0', '10:00']])
+  })
+
+  it('keeps two intakes at the same time apart, each with its own weekdays', () => {
+    const slots = planCardSlots(snapshot({
+      intake_time: 'morgens,morgens',
+      intake_time_custom: '08:00,08:00',
+      slot_doses: '500,250',
+      slot_days: 'Mo|Mi,Fr',
+    }))
+
+    expect(slots.map(slot => [slot.dose, slot.days])).toEqual([[500, ['Mo', 'Mi']], [250, ['Fr']]])
+  })
+
+  it('leaves out an intake the calendar never schedules instead of calling it daily', () => {
+    expect(planCardSlots(snapshot({ slot_days: ',monday' })).map(slot => slot.id)).toEqual(['morgens#0'])
   })
 })
 
@@ -64,6 +80,16 @@ describe('planStepRows', () => {
     expect(planStepRows(snapshot({ intake_time_custom: '09:00,20:00' }), before)[0].change).toBe('changed')
     expect(planStepRows(snapshot({ slot_days: 'Mo|Di,' }), before)[0].change).toBe('changed')
     expect(planStepRows(snapshot({ dose: 1, unit: 'mg' }), before)[0].change).toBe('changed')
+  })
+
+  it('follows an intake whose time moved past its sibling', () => {
+    const before = snapshot({ intake_time: 'morgens,morgens', intake_time_custom: '07:00,10:00', slot_doses: '250,500' })
+    const after = snapshot({ intake_time: 'morgens,morgens', intake_time_custom: '11:00,10:00', slot_doses: '250,500' })
+
+    expect(planStepRows(after, before).map(row => [row.slot.time, row.previous?.time, row.change])).toEqual([
+      ['10:00', '10:00', 'same'],
+      ['11:00', '07:00', 'changed'],
+    ])
   })
 
   it('lists added intake times as new and dropped ones last', () => {

@@ -1,3 +1,4 @@
+import { differenceInCalendarDays, parseISO } from 'date-fns'
 import { resolveScheduleSlots, type ResolvedRoutineGroup } from '../../../lib/intakeSchedule'
 import type { PlanScheduleSnapshot } from '../../../lib/planTimeline'
 import { WEEKDAY_KEYS } from './intakeRhythm'
@@ -14,6 +15,7 @@ export interface PlanCardSlot {
   id: string
   key: string
   time: string
+  minutes: number
   routineGroup: ResolvedRoutineGroup
   dose: number | null
   unit: string | null
@@ -21,47 +23,54 @@ export interface PlanCardSlot {
 }
 
 // Ein beliebiger Montag; die sieben Tage ab dort decken jede Woche ab.
-const REFERENZ_MONTAG = new Date(2026, 0, 5, 12)
-const REFERENZ_TAGE = WEEKDAY_KEYS.map((tag, index) => ({
-  tag,
-  datum: new Date(REFERENZ_MONTAG.getFullYear(), REFERENZ_MONTAG.getMonth(), REFERENZ_MONTAG.getDate() + index, 12),
-}))
+const REFERENZ_TAGE = WEEKDAY_KEYS.map((tag, index) => ({ tag, datum: new Date(2026, 0, 5 + index, 12) }))
 
 /**
  * Die Einnahmezeiten einer Stufe, nach Uhrzeit sortiert.
  *
- * Die Wochentage kommen aus `resolveScheduleSlots` selbst — je Wochentag
- * einmal gefragt, welche Einnahmen an ihm liegen. So gilt hier genau die
- * Regel, nach der der Kalender plant, statt einer zweiten Lesart von
- * `slot_days`.
+ * Jede gespeicherte Stelle wird einzeln durch `resolveScheduleSlots` geschickt
+ * — einmal ohne Tag, dann je Wochentag. So gilt hier genau die Regel, nach der
+ * der Kalender plant, statt einer zweiten Lesart von `slot_days`, und zwei
+ * Einnahmen mit derselben Uhrzeit bleiben getrennt.
+ *
+ * Die `id` zaehlt in GESPEICHERTER Reihenfolge je Tageszeit („der zweite
+ * Morgen"). Verschiebt sich eine Uhrzeit, bleibt sie dieselbe Einnahme.
  */
 export function planCardSlots(version: PlanScheduleSnapshot): PlanCardSlot[] {
-  const alle = resolveScheduleSlots(version)
-  const identitaet = (slot: { key: string; time: string }) => `${slot.key}|${slot.time}`
-  const tageJeSlot = new Map<string, string[]>()
-  for (const { tag, datum } of REFERENZ_TAGE) {
-    for (const slot of resolveScheduleSlots(version, datum)) {
-      const tage = tageJeSlot.get(identitaet(slot)) ?? []
-      tage.push(tag)
-      tageJeSlot.set(identitaet(slot), tage)
-    }
-  }
-
+  const stelle = (wert: string | null, index: number) => (wert ?? '').split(',')[index] ?? ''
+  const tageszeiten = (version.intake_time ?? '').split(',')
   const laufendeNummer = new Map<string, number>()
-  return alle.map(slot => {
-    const nummer = laufendeNummer.get(slot.key) ?? 0
-    laufendeNummer.set(slot.key, nummer + 1)
-    const tage = tageJeSlot.get(identitaet(slot)) ?? []
-    return {
-      id: `${slot.key}#${nummer}`,
-      key: slot.key,
+
+  return tageszeiten.flatMap((key, index) => {
+    if (!key) return []
+    const nummer = laufendeNummer.get(key) ?? 0
+    laufendeNummer.set(key, nummer + 1)
+    const einzeln = {
+      intake_time: key,
+      intake_time_custom: stelle(version.intake_time_custom, index),
+      slot_doses: stelle(version.slot_doses, index),
+      slot_days: stelle(version.slot_days, index),
+    }
+    const [slot] = resolveScheduleSlots(einzeln)
+    if (!slot) return []
+    const tage = REFERENZ_TAGE
+      .filter(({ datum }) => resolveScheduleSlots(einzeln, datum).length > 0)
+      .map(({ tag }) => tag)
+    // An keinem Tag faellig heisst: der Kalender plant sie nie. Dann zeigt
+    // die Karte sie auch nicht — sonst stuende sie als „jeden Tag" da.
+    if (tage.length === 0) return []
+    return [{
+      id: `${key}#${nummer}`,
+      key,
       time: slot.time,
+      minutes: slot.minutes,
       routineGroup: slot.routineGroup,
       dose: slot.dose ?? version.dose,
       unit: version.unit,
       days: tage.length === WEEKDAY_KEYS.length ? [] : tage,
-    }
+    }]
   })
+    .sort((links, rechts) => links.minutes - rechts.minutes)
 }
 
 export type PlanSlotChange = 'initial' | 'same' | 'increased' | 'decreased' | 'changed' | 'new' | 'removed'
@@ -123,9 +132,5 @@ export function planStepRows(
 
 /** Kalendertage von `from` bis `to` (beide `YYYY-MM-DD`), beide mitgezaehlt. */
 export function inclusiveDayCount(from: string, to: string): number {
-  const tag = (wert: string) => {
-    const [jahr, monat, tagImMonat] = wert.split('-').map(Number)
-    return Date.UTC(jahr, monat - 1, tagImMonat)
-  }
-  return Math.round((tag(to) - tag(from)) / 86_400_000) + 1
+  return differenceInCalendarDays(parseISO(to), parseISO(from)) + 1
 }
