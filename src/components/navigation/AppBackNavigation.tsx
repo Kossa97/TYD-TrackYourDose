@@ -108,6 +108,10 @@ export function AppBackNavigation({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    const claimEdgeTouch = (event: TouchEvent) => {
+      if (event.touches.length !== 1 || event.touches[0].clientX > EDGE_WIDTH_PX) return
+      if (event.cancelable) event.preventDefault()
+    }
     const onPointerDown = (event: PointerEvent) => {
       if (event.pointerType === 'mouse' || event.clientX > EDGE_WIDTH_PX) return
       gesture.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY }
@@ -120,10 +124,12 @@ export function AppBackNavigation({ children }: { children: ReactNode }) {
     }
     const cancel = () => { gesture.current = null }
 
+    window.addEventListener('touchstart', claimEdgeTouch, { passive: false })
     window.addEventListener('pointerdown', onPointerDown, { passive: true })
     window.addEventListener('pointerup', onPointerUp, { passive: true })
     window.addEventListener('pointercancel', cancel, { passive: true })
     return () => {
+      window.removeEventListener('touchstart', claimEdgeTouch)
       window.removeEventListener('pointerdown', onPointerDown)
       window.removeEventListener('pointerup', onPointerUp)
       window.removeEventListener('pointercancel', cancel)
