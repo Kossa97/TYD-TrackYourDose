@@ -1194,7 +1194,6 @@
   "my_stack_plan_restart": "Restart",
   "my_stack_plan_next_intake": "Next intake",
   "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-  "my_stack_plan_adjust_dose": "Adjust dose",
   "my_stack_plan_adjust_schedule": "Adjust schedule",
   "my_stack_plan_edit_future": "Edit planned change from {{date}}",
   "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -1274,5 +1273,7 @@
   "my_stack_plan_change_decreased": "تخفيض",
   "my_stack_plan_change_changed": "تغيير",
   "my_stack_plan_change_new": "جديد",
-  "my_stack_plan_change_removed": "محذوف"
+  "my_stack_plan_change_removed": "محذوف",
+  "my_stack_plan_add_step": "إضافة مرحلة",
+  "my_stack_plan_effective_too_early": "اختر تاريخًا من {{date}} فصاعدًا."
 }

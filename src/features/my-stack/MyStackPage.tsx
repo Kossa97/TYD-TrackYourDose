@@ -1245,6 +1245,7 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
           : { cycleId, versionId: null, mode: 'new_change' },
         snapshot: versionAsIntakePlanDraft(timeline, selectedVersion, timeZone),
         changeKind,
+        purpose: versionId ? 'edit_future' : 'adjust',
         timeZone,
         initialEffective: versionId
           ? { kind: 'date', localDate: selectedVersion.effective_local_date }
@@ -1256,6 +1257,31 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       setWizardCycleId(cycleId)
       setPlanEditContext(null)
     }
+    setEditingPeptideId(p.id)
+    setWizardInitialColor('')
+    setWizardNeuerZyklus(false)
+    setWizardIntent('plan')
+    setShowPeptideForm(true)
+  }
+
+  // Eine Stufe hinter der letzten: vorausgefuellt mit ihr, nur mit Datum.
+  // Aendern sich nur Mengen, ist es eine Titrationsstufe.
+  const openAddPlanStep = (
+    p: Peptide,
+    timeline: CycleTimeline,
+    template: CyclePlanVersion,
+    dates: { minDate: string; defaultDate: string },
+  ) => {
+    setPlanEditContext({
+      target: { cycleId: timeline.cycle.id, versionId: null, mode: 'new_change' },
+      snapshot: versionAsIntakePlanDraft(timeline, template, timeZone),
+      changeKind: 'titration',
+      purpose: 'add_step',
+      timeZone,
+      initialEffective: { kind: 'date', localDate: dates.defaultDate },
+      minEffectiveDate: dates.minDate,
+    })
+    setWizardCycleId(null)
     setEditingPeptideId(p.id)
     setWizardInitialColor('')
     setWizardNeuerZyklus(false)
@@ -1430,8 +1456,8 @@ export function MyStackPage({ stackDataClient = supabase }: MyStackPageProps = {
       timeline={timeline}
       now={new Date()}
       timeZone={timeZone}
-      onAdjustDose={() => openEditCycle(p, timeline.cycle.id, undefined, 'dose')}
-      onAdjustSchedule={() => openEditCycle(p, timeline.cycle.id, undefined, 'schedule')}
+      onAdjustPlan={() => openEditCycle(p, timeline.cycle.id, undefined, 'dose')}
+      onAddStep={(version, dates) => openAddPlanStep(p, timeline, version, dates)}
       onEditFuture={version => openEditCycle(
         p,
         timeline.cycle.id,

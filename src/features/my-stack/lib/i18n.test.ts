@@ -205,8 +205,9 @@ const EXPECTED_MY_STACK_KEYS = [
   'my_stack_plan_change_changed',
   'my_stack_plan_change_new',
   'my_stack_plan_change_removed',
-  'my_stack_plan_adjust_dose',
   'my_stack_plan_adjust_schedule',
+  'my_stack_plan_add_step',
+  'my_stack_plan_effective_too_early',
   'my_stack_plan_edit_future',
   'my_stack_plan_remove_future',
   'my_stack_plan_pause',
@@ -512,13 +513,13 @@ describe('My Stack DE/EN locale contract', () => {
   it('ships polished German and English plan lifecycle copy', async () => {
     const { MY_STACK_DE, MY_STACK_EN } = await loadSource()
 
-    expect(MY_STACK_DE.my_stack_plan_adjust_dose).toBe('Dosis anpassen')
+    expect(MY_STACK_DE.my_stack_plan_add_step).toBe('Stufe hinzufügen')
     expect(MY_STACK_DE.my_stack_plan_adjust_schedule).toBe('Plan anpassen')
     expect(MY_STACK_DE.my_stack_plan_pause_neutral).toBe('Während der Pause ist keine Einnahme fällig.')
     expect(MY_STACK_DE.my_stack_plan_end_copy).toContain('Verlauf bleibt erhalten')
     expect(MY_STACK_DE.my_stack_plan_action_error).toContain('Bitte versuche es erneut')
     expect(MY_STACK_DE.my_stack_plan_load_error).toContain('nicht geladen')
-    expect(MY_STACK_EN.my_stack_plan_adjust_dose).toBe('Adjust dose')
+    expect(MY_STACK_EN.my_stack_plan_add_step).toBe('Add step')
     expect(MY_STACK_EN.my_stack_plan_adjust_schedule).toBe('Adjust schedule')
     expect(MY_STACK_EN.my_stack_plan_pause_neutral).toBe('No intake is due while the plan is paused.')
     expect(MY_STACK_EN.my_stack_plan_conflict_title).toBe('Which plan is actually running?')

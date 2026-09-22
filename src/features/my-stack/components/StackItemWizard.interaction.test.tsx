@@ -577,6 +577,47 @@ describe('StackItemWizard interactions', () => {
     })
   })
 
+  it('adds a step behind the last one: date only, never before its minimum, dose-only as titration', async () => {
+    const onSavePlanChange = vi.fn(async (_submission: PlanChangeSubmission) => undefined)
+    renderWizard({
+      existingItem: existingVitaminD,
+      intent: 'plan',
+      planEditContext: {
+        target: { cycleId: 'cycle-1', versionId: null, mode: 'new_change' },
+        snapshot: existingPlan,
+        changeKind: 'titration',
+        purpose: 'add_step',
+        timeZone: 'Europe/Berlin',
+        initialEffective: { kind: 'date', localDate: '2099-10-08' },
+        minEffectiveDate: '2099-10-02',
+      },
+      onSavePlanChange,
+    } as Partial<StackItemWizardProps>)
+
+    expect(screen.getByRole('heading', { name: 'my_stack_plan_add_step' })).toBeTruthy()
+    expect(screen.queryByRole('radio', { name: 'my_stack_plan_effective_now' })).toBeNull()
+    const boundaryDate = screen.getByLabelText('my_stack_plan_effective_date') as HTMLInputElement
+    expect(boundaryDate.value).toBe('2099-10-08')
+    expect(boundaryDate.min).toBe('2099-10-02')
+
+    fireEvent.change(boundaryDate, { target: { value: '2099-10-01' } })
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+    expect(await screen.findByText('my_stack_plan_effective_too_early')).toBeTruthy()
+    expect(onSavePlanChange).not.toHaveBeenCalled()
+
+    fireEvent.change(boundaryDate, { target: { value: '2099-10-02' } })
+    fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '10000' } })
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await waitFor(() => expect(onSavePlanChange).toHaveBeenCalledTimes(1))
+    expect(onSavePlanChange.mock.calls[0][0]).toMatchObject({
+      target: { cycleId: 'cycle-1', versionId: null, mode: 'new_change' },
+      effective: { kind: 'date', localDate: '2099-10-02' },
+      changeKind: 'titration',
+      snapshot: { dose: 10000, intake_time_custom: '08:30' },
+    })
+  })
+
   it('reuses the same setup key after a visible save failure', async () => {
     const onSave = vi.fn()
       .mockRejectedValueOnce(new Error('RPC failed'))

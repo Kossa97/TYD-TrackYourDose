@@ -51,9 +51,39 @@ export interface PlanEffectiveDraft {
 export interface PlanEditContext {
   target: PlanEditTarget
   snapshot: IntakePlanDraft
+  /**
+   * Die Art, wenn sich nur Mengen aendern. Aendert sich mehr — Zeiten, Tage,
+   * Rhythmus, Anwendung —, wird beim Speichern 'schedule' daraus
+   * (`changeKindFor`).
+   */
   changeKind: Exclude<PlanChangeKind, 'initial'>
   timeZone: string
   initialEffective?: PlanEffectiveDraft
+  /**
+   * 'add_step' haengt eine Stufe hinter die letzte: nur mit Datum, fruehestens
+   * `minEffectiveDate` — an einem Tag, der schon eine Stufe hat, kann keine
+   * zweite beginnen.
+   */
+  purpose?: 'adjust' | 'add_step' | 'edit_future'
+  minEffectiveDate?: string
+}
+
+// Alles am Plan ausser den Mengen. Aendert sich davon nichts, ist die
+// Aenderung eine Dosisaenderung (oder Titrationsstufe), sonst eine Planaenderung.
+const SCHEDULE_FIELDS = [
+  'frequency', 'x_days_interval', 'interval_unit', 'cycle_on_days', 'cycle_off_days',
+  'schedule_days', 'intake_time', 'intake_time_custom', 'slot_days', 'method',
+] as const satisfies readonly (keyof PlanScheduleSnapshot)[]
+
+export function changeKindFor(
+  before: PlanScheduleSnapshot,
+  after: PlanScheduleSnapshot,
+  doseOnlyKind: Exclude<PlanChangeKind, 'initial'>,
+): Exclude<PlanChangeKind, 'initial'> {
+  const scheduleChanged = SCHEDULE_FIELDS.some(field => (
+    JSON.stringify(before[field] ?? null) !== JSON.stringify(after[field] ?? null)
+  ))
+  return scheduleChanged ? 'schedule' : doseOnlyKind
 }
 
 export interface PlanChangeSubmission {

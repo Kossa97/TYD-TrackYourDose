@@ -148,7 +148,6 @@
     "my_stack_plan_restart": "Restart",
     "my_stack_plan_next_intake": "Next intake",
     "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-    "my_stack_plan_adjust_dose": "Adjust dose",
     "my_stack_plan_adjust_schedule": "Adjust schedule",
     "my_stack_plan_edit_future": "Edit planned change from {{date}}",
     "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -381,7 +380,9 @@
     "my_stack_plan_change_decreased": "تخفيض",
     "my_stack_plan_change_changed": "تغيير",
     "my_stack_plan_change_new": "جديد",
-    "my_stack_plan_change_removed": "محذوف"
+    "my_stack_plan_change_removed": "محذوف",
+    "my_stack_plan_add_step": "إضافة مرحلة",
+    "my_stack_plan_effective_too_early": "اختر تاريخًا من {{date}} فصاعدًا."
   },
   "es": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -532,7 +533,6 @@
     "my_stack_plan_restart": "Restart",
     "my_stack_plan_next_intake": "Next intake",
     "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-    "my_stack_plan_adjust_dose": "Adjust dose",
     "my_stack_plan_adjust_schedule": "Adjust schedule",
     "my_stack_plan_edit_future": "Edit planned change from {{date}}",
     "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -765,7 +765,9 @@
     "my_stack_plan_change_decreased": "reducida",
     "my_stack_plan_change_changed": "cambiada",
     "my_stack_plan_change_new": "nueva",
-    "my_stack_plan_change_removed": "eliminada"
+    "my_stack_plan_change_removed": "eliminada",
+    "my_stack_plan_add_step": "Añadir etapa",
+    "my_stack_plan_effective_too_early": "Elige una fecha a partir del {{date}}."
   },
   "fr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -916,7 +918,6 @@
     "my_stack_plan_restart": "Restart",
     "my_stack_plan_next_intake": "Next intake",
     "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-    "my_stack_plan_adjust_dose": "Adjust dose",
     "my_stack_plan_adjust_schedule": "Adjust schedule",
     "my_stack_plan_edit_future": "Edit planned change from {{date}}",
     "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -1149,7 +1150,9 @@
     "my_stack_plan_change_decreased": "réduite",
     "my_stack_plan_change_changed": "modifiée",
     "my_stack_plan_change_new": "nouvelle",
-    "my_stack_plan_change_removed": "supprimée"
+    "my_stack_plan_change_removed": "supprimée",
+    "my_stack_plan_add_step": "Ajouter une étape",
+    "my_stack_plan_effective_too_early": "Choisis une date à partir du {{date}}."
   },
   "hi": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1300,7 +1303,6 @@
     "my_stack_plan_restart": "Restart",
     "my_stack_plan_next_intake": "Next intake",
     "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-    "my_stack_plan_adjust_dose": "Adjust dose",
     "my_stack_plan_adjust_schedule": "Adjust schedule",
     "my_stack_plan_edit_future": "Edit planned change from {{date}}",
     "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -1533,7 +1535,9 @@
     "my_stack_plan_change_decreased": "घटाई गई",
     "my_stack_plan_change_changed": "बदली गई",
     "my_stack_plan_change_new": "नया",
-    "my_stack_plan_change_removed": "हटाया गया"
+    "my_stack_plan_change_removed": "हटाया गया",
+    "my_stack_plan_add_step": "चरण जोड़ें",
+    "my_stack_plan_effective_too_early": "{{date}} या उसके बाद की तारीख चुनें।"
   },
   "id": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -1684,7 +1688,6 @@
     "my_stack_plan_restart": "Restart",
     "my_stack_plan_next_intake": "Next intake",
     "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-    "my_stack_plan_adjust_dose": "Adjust dose",
     "my_stack_plan_adjust_schedule": "Adjust schedule",
     "my_stack_plan_edit_future": "Edit planned change from {{date}}",
     "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -1917,7 +1920,9 @@
     "my_stack_plan_change_decreased": "turun",
     "my_stack_plan_change_changed": "diubah",
     "my_stack_plan_change_new": "baru",
-    "my_stack_plan_change_removed": "dihapus"
+    "my_stack_plan_change_removed": "dihapus",
+    "my_stack_plan_add_step": "Tambah tahap",
+    "my_stack_plan_effective_too_early": "Pilih tanggal mulai {{date}}."
   },
   "it": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2068,7 +2073,6 @@
     "my_stack_plan_restart": "Restart",
     "my_stack_plan_next_intake": "Next intake",
     "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-    "my_stack_plan_adjust_dose": "Adjust dose",
     "my_stack_plan_adjust_schedule": "Adjust schedule",
     "my_stack_plan_edit_future": "Edit planned change from {{date}}",
     "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -2301,7 +2305,9 @@
     "my_stack_plan_change_decreased": "ridotta",
     "my_stack_plan_change_changed": "modificata",
     "my_stack_plan_change_new": "nuova",
-    "my_stack_plan_change_removed": "rimossa"
+    "my_stack_plan_change_removed": "rimossa",
+    "my_stack_plan_add_step": "Aggiungi fase",
+    "my_stack_plan_effective_too_early": "Scegli una data dal {{date}} in poi."
   },
   "ja": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2452,7 +2458,6 @@
     "my_stack_plan_restart": "Restart",
     "my_stack_plan_next_intake": "Next intake",
     "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-    "my_stack_plan_adjust_dose": "Adjust dose",
     "my_stack_plan_adjust_schedule": "Adjust schedule",
     "my_stack_plan_edit_future": "Edit planned change from {{date}}",
     "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -2685,7 +2690,9 @@
     "my_stack_plan_change_decreased": "減量",
     "my_stack_plan_change_changed": "変更",
     "my_stack_plan_change_new": "新規",
-    "my_stack_plan_change_removed": "削除"
+    "my_stack_plan_change_removed": "削除",
+    "my_stack_plan_add_step": "段階を追加",
+    "my_stack_plan_effective_too_early": "{{date}}以降の日付を選んでください。"
   },
   "ko": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -2836,7 +2843,6 @@
     "my_stack_plan_restart": "Restart",
     "my_stack_plan_next_intake": "Next intake",
     "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-    "my_stack_plan_adjust_dose": "Adjust dose",
     "my_stack_plan_adjust_schedule": "Adjust schedule",
     "my_stack_plan_edit_future": "Edit planned change from {{date}}",
     "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -3069,7 +3075,9 @@
     "my_stack_plan_change_decreased": "감량",
     "my_stack_plan_change_changed": "변경",
     "my_stack_plan_change_new": "신규",
-    "my_stack_plan_change_removed": "삭제"
+    "my_stack_plan_change_removed": "삭제",
+    "my_stack_plan_add_step": "단계 추가",
+    "my_stack_plan_effective_too_early": "{{date}} 이후 날짜를 선택하세요."
   },
   "pt": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3220,7 +3228,6 @@
     "my_stack_plan_restart": "Restart",
     "my_stack_plan_next_intake": "Next intake",
     "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-    "my_stack_plan_adjust_dose": "Adjust dose",
     "my_stack_plan_adjust_schedule": "Adjust schedule",
     "my_stack_plan_edit_future": "Edit planned change from {{date}}",
     "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -3453,7 +3460,9 @@
     "my_stack_plan_change_decreased": "reduzida",
     "my_stack_plan_change_changed": "alterada",
     "my_stack_plan_change_new": "nova",
-    "my_stack_plan_change_removed": "removida"
+    "my_stack_plan_change_removed": "removida",
+    "my_stack_plan_add_step": "Adicionar etapa",
+    "my_stack_plan_effective_too_early": "Escolha uma data a partir de {{date}}."
   },
   "ru": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3604,7 +3613,6 @@
     "my_stack_plan_restart": "Restart",
     "my_stack_plan_next_intake": "Next intake",
     "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-    "my_stack_plan_adjust_dose": "Adjust dose",
     "my_stack_plan_adjust_schedule": "Adjust schedule",
     "my_stack_plan_edit_future": "Edit planned change from {{date}}",
     "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -3837,7 +3845,9 @@
     "my_stack_plan_change_decreased": "снижена",
     "my_stack_plan_change_changed": "изменена",
     "my_stack_plan_change_new": "новый",
-    "my_stack_plan_change_removed": "отменён"
+    "my_stack_plan_change_removed": "отменён",
+    "my_stack_plan_add_step": "Добавить этап",
+    "my_stack_plan_effective_too_early": "Выберите дату не раньше {{date}}."
   },
   "tr": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -3988,7 +3998,6 @@
     "my_stack_plan_restart": "Restart",
     "my_stack_plan_next_intake": "Next intake",
     "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-    "my_stack_plan_adjust_dose": "Adjust dose",
     "my_stack_plan_adjust_schedule": "Adjust schedule",
     "my_stack_plan_edit_future": "Edit planned change from {{date}}",
     "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -4221,7 +4230,9 @@
     "my_stack_plan_change_decreased": "azaltıldı",
     "my_stack_plan_change_changed": "değiştirildi",
     "my_stack_plan_change_new": "yeni",
-    "my_stack_plan_change_removed": "kaldırıldı"
+    "my_stack_plan_change_removed": "kaldırıldı",
+    "my_stack_plan_add_step": "Aşama ekle",
+    "my_stack_plan_effective_too_early": "{{date}} veya sonrası bir tarih seç."
   },
   "zh": {
     "my_stack_course_timezone_review": "The original start and end dates need a timezone. Dues and reminders remain blocked until you confirm it.",
@@ -4372,7 +4383,6 @@
     "my_stack_plan_restart": "Restart",
     "my_stack_plan_next_intake": "Next intake",
     "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-    "my_stack_plan_adjust_dose": "Adjust dose",
     "my_stack_plan_adjust_schedule": "Adjust schedule",
     "my_stack_plan_edit_future": "Edit planned change from {{date}}",
     "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -4605,6 +4615,8 @@
     "my_stack_plan_change_decreased": "减少",
     "my_stack_plan_change_changed": "已更改",
     "my_stack_plan_change_new": "新增",
-    "my_stack_plan_change_removed": "已取消"
+    "my_stack_plan_change_removed": "已取消",
+    "my_stack_plan_add_step": "添加阶段",
+    "my_stack_plan_effective_too_early": "请选择{{date}}或之后的日期。"
   }
 }

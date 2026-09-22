@@ -23,6 +23,7 @@ import { findDuplicate, planScheduleSnapshot } from '../services/stackItems'
 import { localDateTimeKey } from '../../../lib/planTimeline'
 import type { StackItem, StackItemSetupDraft, SubstanceCatalogEntry } from '../types'
 import {
+  changeKindFor,
   didIdentityChange,
   firstInvalidField,
   initialWizardState,
@@ -174,7 +175,7 @@ export function StackItemWizard({
   intent,
   metadataOnly = false,
 }: StackItemWizardProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const selectedPlan = planEditContext?.snapshot ?? existingPlan
   const pkIntentStepsRef = useRef<WizardStep[] | null>(null)
   const [state, dispatch] = useReducer(
@@ -214,6 +215,11 @@ export function StackItemWizard({
       : planEditContext?.initialEffective ?? { kind: 'now', localDate: null }
   ))
   const [setupIdempotencyKey] = useState(() => globalThis.crypto.randomUUID())
+  const earliestEffectiveDate = planEditContext
+    ? [nextLocalDate(planEditContext.timeZone), planEditContext.minEffectiveDate ?? '']
+      .reduce((spaeter, kandidat) => (kandidat > spaeter ? kandidat : spaeter))
+    : null
+  const isAddStep = planEditContext?.purpose === 'add_step'
   const dialogRef = useRef<HTMLDivElement>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const duplicateActionRef = useRef<HTMLButtonElement>(null)
@@ -522,16 +528,34 @@ export function StackItemWizard({
       ? { ...draftWithPkMethod, id: undefined, plan: { ...state.draft.plan, id: undefined } }
       : draftWithPkMethod
 
+    if (
+      earliestEffectiveDate
+      && planEffective.kind === 'date'
+      && (!planEffective.localDate || planEffective.localDate < earliestEffectiveDate)
+    ) {
+      setSaveError(String(t('my_stack_plan_effective_too_early', {
+        defaultValue: 'Wähle ein Datum ab dem {{date}}.',
+        date: new Intl.DateTimeFormat(i18n?.language || 'de', { dateStyle: 'medium', timeZone: 'UTC' })
+          .format(new Date(`${earliestEffectiveDate}T00:00:00.000Z`)),
+      })))
+      return
+    }
+
     setSaving(true)
     setSaveError(null)
     try {
       if (planEditContext) {
         if (!onSavePlanChange) throw new Error('Plan change handler is required')
+        const snapshot = planScheduleSnapshot(draftForSave.plan, draftForSave.trackingLevel)
         await onSavePlanChange({
           target: planEditContext.target,
-          snapshot: planScheduleSnapshot(draftForSave.plan, draftForSave.trackingLevel),
+          snapshot,
           effective: planEffective,
-          changeKind: planEditContext.changeKind,
+          changeKind: changeKindFor(
+            planScheduleSnapshot(planEditContext.snapshot, draftForSave.trackingLevel),
+            snapshot,
+            planEditContext.changeKind,
+          ),
           timeZone: planEditContext.timeZone,
         })
       } else {
@@ -675,7 +699,7 @@ export function StackItemWizard({
                 <legend className="px-1 text-sm font-semibold text-slate-200">
                   {t('my_stack_plan_effective_title', { defaultValue: 'Gültig ab' })}
                 </legend>
-                {planEditContext.target.mode === 'new_change' && (
+                {planEditContext.target.mode === 'new_change' && !isAddStep && (
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-white/10 px-3 text-sm font-semibold text-slate-200">
                       <input
@@ -707,7 +731,7 @@ export function StackItemWizard({
                     type="date"
                     aria-label={String(t('my_stack_plan_effective_date', { defaultValue: 'Ab Datum' }))}
                     value={planEffective.localDate ?? ''}
-                    min={nextLocalDate(planEditContext.timeZone)}
+                    min={earliestEffectiveDate ?? undefined}
                     onChange={event => setPlanEffective({
                       kind: 'date',
                       localDate: event.target.value || null,
@@ -1033,9 +1057,13 @@ export function StackItemWizard({
                 {t('my_stack_title', { defaultValue: 'My Stack' })}
               </p>
               <h2 id="stack-item-wizard-title" className="mt-1 text-xl font-bold text-white">
-                {existingItem
-                  ? t('my_stack_edit_item', { defaultValue: 'Eintrag bearbeiten' })
-                  : t('my_stack_add_item', { defaultValue: 'Substanz hinzufügen' })}
+                {planEditContext?.purpose === 'add_step'
+                  ? t('my_stack_plan_add_step', { defaultValue: 'Stufe hinzufügen' })
+                  : planEditContext?.purpose === 'adjust'
+                    ? t('my_stack_plan_adjust_schedule', { defaultValue: 'Plan anpassen' })
+                    : existingItem
+                      ? t('my_stack_edit_item', { defaultValue: 'Eintrag bearbeiten' })
+                      : t('my_stack_add_item', { defaultValue: 'Substanz hinzufügen' })}
               </h2>
               <p id="stack-item-wizard-description" className="mt-1 text-sm leading-relaxed text-slate-400">
                 {t(STEP_LABELS[state.step].key, { defaultValue: STEP_LABELS[state.step].defaultValue })}

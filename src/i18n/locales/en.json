@@ -1339,7 +1339,6 @@
   "my_stack_plan_restart": "Restart",
   "my_stack_plan_next_intake": "Next intake",
   "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-  "my_stack_plan_adjust_dose": "Adjust dose",
   "my_stack_plan_adjust_schedule": "Adjust schedule",
   "my_stack_plan_edit_future": "Edit planned change from {{date}}",
   "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -1417,5 +1416,7 @@
   "my_stack_plan_change_decreased": "reduced",
   "my_stack_plan_change_changed": "changed",
   "my_stack_plan_change_new": "new",
-  "my_stack_plan_change_removed": "dropped"
+  "my_stack_plan_change_removed": "dropped",
+  "my_stack_plan_add_step": "Add step",
+  "my_stack_plan_effective_too_early": "Choose a date on or after {{date}}."
 }

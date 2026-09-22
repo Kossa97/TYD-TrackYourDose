@@ -1190,7 +1190,6 @@
   "my_stack_plan_restart": "Restart",
   "my_stack_plan_next_intake": "Next intake",
   "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-  "my_stack_plan_adjust_dose": "Adjust dose",
   "my_stack_plan_adjust_schedule": "Adjust schedule",
   "my_stack_plan_edit_future": "Edit planned change from {{date}}",
   "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -1270,5 +1269,7 @@
   "my_stack_plan_change_decreased": "घटाई गई",
   "my_stack_plan_change_changed": "बदली गई",
   "my_stack_plan_change_new": "नया",
-  "my_stack_plan_change_removed": "हटाया गया"
+  "my_stack_plan_change_removed": "हटाया गया",
+  "my_stack_plan_add_step": "चरण जोड़ें",
+  "my_stack_plan_effective_too_early": "{{date}} या उसके बाद की तारीख चुनें।"
 }

@@ -1447,7 +1447,7 @@ describe('MyStackPage non-vial visibility', () => {
     const card = visibleCardFor(qaName)!
     fireEvent.click(within(card).getAllByRole('button')[0])
     const section = await screen.findByTestId('plan-management-cycle-plan-change')
-    fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_dose' }))
+    fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_schedule' }))
 
     const save = screen.getByRole('button', { name: 'save version change' })
     fireEvent.click(save)
@@ -1496,7 +1496,7 @@ describe('MyStackPage non-vial visibility', () => {
     const card = visibleCardFor(qaName)!
     fireEvent.click(within(card).getAllByRole('button')[0])
     const section = await screen.findByTestId('plan-management-cycle-real-wizard')
-    fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_dose' }))
+    fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_schedule' }))
 
     const dose = screen.getByLabelText('my_stack_plan_quantity')
     fireEvent.change(dose, { target: { value: '125' } })
@@ -1509,7 +1509,7 @@ describe('MyStackPage non-vial visibility', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'cancel' }))
     await waitFor(() => expect(screen.queryByLabelText('my_stack_plan_quantity')).toBeNull())
-    fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_dose' }))
+    fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_adjust_schedule' }))
     fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '150' } })
     fireEvent.click(screen.getByRole('button', { name: 'save' }))
     await waitFor(() => expect(screen.queryByLabelText('my_stack_plan_quantity')).toBeNull())
@@ -1517,6 +1517,51 @@ describe('MyStackPage non-vial visibility', () => {
     expect(requestedDoses).toEqual([125, 150])
     expect(requestedKeys[1]).not.toBe(requestedKeys[0])
     expect(timelineQuery).toHaveBeenCalledTimes(4)
+  })
+
+  it('adds a titration step behind the last one through the real wizard', async () => {
+    ;(FEATURES as { planTimelineV2: boolean }).planTimelineV2 = true
+    visibilityMocks.realWizard = true
+    localStorage.setItem('tyd_peptide_view', 'list')
+    const current = timelineRow('cycle-add-step')
+    const calls: Record<string, unknown>[] = []
+    const rpc = vi.fn(async (name: string, params: Record<string, unknown>) => {
+      if (name !== 'create_plan_version') {
+        return { data: null, error: { message: `Unexpected RPC: ${name}` } }
+      }
+      calls.push(params)
+      return { data: normalizedVersion('version-step', 'cycle-add-step'), error: null }
+    })
+    const { client } = v2Client({
+      timelineResults: [{ data: [current], error: null }, { data: [current], error: null }],
+      rpc,
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/my-stack']}>
+        <MyStackPage stackDataClient={client as never} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(visibleCardFor(qaName)).not.toBeNull())
+    fireEvent.click(within(visibleCardFor(qaName)!).getAllByRole('button')[0])
+    const section = await screen.findByTestId('plan-management-cycle-add-step')
+    fireEvent.click(within(section).getByRole('button', { name: 'my_stack_plan_add_step' }))
+
+    expect(screen.queryByRole('radio', { name: 'my_stack_plan_effective_now' })).toBeNull()
+    const date = screen.getByLabelText('my_stack_plan_effective_date') as HTMLInputElement
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Berlin' })
+    expect(date.value > today).toBe(true)
+    fireEvent.change(screen.getByLabelText('my_stack_plan_quantity'), { target: { value: '175' } })
+    fireEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await waitFor(() => expect(calls).toHaveLength(1))
+    expect(calls[0]).toMatchObject({
+      p_cycle_id: 'cycle-add-step',
+      p_effective_kind: 'local_date',
+      p_effective_local_date: date.value,
+      p_change_kind: 'titration',
+    })
+    expect((calls[0].p_schedule as { dose: number }).dose).toBe(175)
   })
 
   it('does not repeat a committed future removal when only canonical refresh failed', async () => {

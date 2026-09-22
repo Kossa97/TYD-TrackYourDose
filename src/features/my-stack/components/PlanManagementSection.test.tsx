@@ -77,8 +77,8 @@ function callbacks(overrides: Partial<PlanManagementSectionProps> = {}): PlanMan
     timeline: timeline(),
     now,
     timeZone: 'Europe/Berlin',
-    onAdjustDose: vi.fn(),
-    onAdjustSchedule: vi.fn(),
+    onAdjustPlan: vi.fn(),
+    onAddStep: vi.fn(),
     onEditFuture: vi.fn(),
     onRemoveFuture: vi.fn(async () => undefined),
     onPause: vi.fn(async () => undefined),
@@ -106,8 +106,8 @@ describe('PlanManagementSection', () => {
     expect(section.textContent).not.toContain('5 mg')
     expect(section.textContent).not.toContain('Nächste Einnahme')
     expect(section.textContent).not.toContain('Nächste Änderung')
-    expect(within(section).queryByRole('button', { name: 'Dosis anpassen' })).toBeNull()
     expect(within(section).queryByRole('button', { name: 'Plan anpassen' })).toBeNull()
+    expect(within(section).queryByRole('button', { name: 'Stufe hinzufügen' })).toBeNull()
 
     fireEvent.click(within(section).getByRole('button', { name: 'Diesen laufenden Plan behalten' }))
     await waitFor(() => expect(onResolveConflict).toHaveBeenCalledTimes(1))
@@ -122,7 +122,8 @@ describe('PlanManagementSection', () => {
     expect(section.textContent).toContain('Täglich')
     expect(section.textContent).toContain('20:00')
     expect(section.textContent).toContain('21.09.2026')
-    expect(within(section).getByRole('button', { name: 'Dosis anpassen' })).toBeTruthy()
+    // Ein Knopf fuer jede Aenderung ab jetzt — Dosis oder Plan erkennt das Speichern.
+    expect(within(section).getAllByRole('button', { name: /anpassen/ })).toHaveLength(1)
     expect(within(section).getByRole('button', { name: 'Plan anpassen' })).toBeTruthy()
     expect(within(section).queryByRole('button', { name: 'Bearbeiten' })).toBeNull()
   })
@@ -281,8 +282,8 @@ describe('PlanManagementSection', () => {
     expect(section.textContent).not.toContain('10 mg')
     expect(screen.queryByText('Dosisverlauf')).toBeNull()
     expect(screen.getByRole('button', { name: 'Neu starten' })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Dosis anpassen' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Plan anpassen' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Stufe hinzufügen' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Pausieren' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Beenden' })).toBeNull()
     expect(screen.queryByRole('button', { name: /bearbeiten/i })).toBeNull()
@@ -374,8 +375,34 @@ describe('PlanManagementSection', () => {
     expect(within(section).getByRole('button', { name: 'Geplante Änderung vom 20.09.2026 bearbeiten' })).toBeTruthy()
     fireEvent.click(within(section).getByRole('button', { name: 'Geplante Änderung vom 20.09.2026 entfernen' }))
     expect(screen.queryByRole('dialog', { name: 'Geplante Änderung entfernen' })).toBeNull()
-    expect(within(section).queryByRole('button', { name: 'Dosis anpassen' })).toBeNull()
     expect(within(section).queryByRole('button', { name: 'Plan anpassen' })).toBeNull()
+    // Eine Titration laesst sich schon vor dem Start anlegen.
+    expect(within(section).getByRole('button', { name: 'Stufe hinzufügen' })).toBeTruthy()
+  })
+
+  it('adds a step after the last planned one, a week later by default', () => {
+    const onAddStep = vi.fn()
+    render(<PlanManagementSection {...callbacks({ onAddStep })} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Stufe hinzufügen' }))
+    // Letzte Stufe: 21.09. (geplant). Frühestens am Tag danach, vorgeschlagen eine Woche später.
+    expect(onAddStep).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'version-future' }),
+      { minDate: '2026-09-22', defaultDate: '2026-09-28' },
+    )
+  })
+
+  it('offers a step even with a single one, starting tomorrow at the earliest', () => {
+    const onAddStep = vi.fn()
+    const single = timeline({ versions: [version('version-current', 5, '2026-09-01')] })
+    render(<PlanManagementSection {...callbacks({ timeline: single, onAddStep })} />)
+
+    expect(screen.queryByText('Dosisverlauf')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Stufe hinzufügen' }))
+    expect(onAddStep).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'version-current' }),
+      { minDate: '2026-09-20', defaultDate: '2026-09-26' },
+    )
   })
 
   it('shows the cycle period with its running day and an open end', () => {
@@ -564,13 +591,13 @@ describe('PlanManagementSection', () => {
 
     render(
       <>
-        <PlanManagementSection {...callbacks({ onAdjustDose: firstAdjust })} />
-        <PlanManagementSection {...callbacks({ timeline: second, onAdjustDose: secondAdjust })} />
+        <PlanManagementSection {...callbacks({ onAdjustPlan: firstAdjust })} />
+        <PlanManagementSection {...callbacks({ timeline: second, onAdjustPlan: secondAdjust })} />
       </>,
     )
 
     fireEvent.click(within(screen.getByTestId('plan-management-cycle-2')).getByRole('button', {
-      name: 'Dosis anpassen',
+      name: 'Plan anpassen',
     }))
     expect(secondAdjust).toHaveBeenCalledWith(expect.objectContaining({ cycle_id: 'cycle-2' }))
     expect(firstAdjust).not.toHaveBeenCalled()

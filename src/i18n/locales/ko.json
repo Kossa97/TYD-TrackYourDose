@@ -1189,7 +1189,6 @@
   "my_stack_plan_restart": "Restart",
   "my_stack_plan_next_intake": "Next intake",
   "my_stack_plan_next_intake_none": "No fixed intake scheduled",
-  "my_stack_plan_adjust_dose": "Adjust dose",
   "my_stack_plan_adjust_schedule": "Adjust schedule",
   "my_stack_plan_edit_future": "Edit planned change from {{date}}",
   "my_stack_plan_remove_future": "Remove planned change from {{date}}",
@@ -1269,5 +1268,7 @@
   "my_stack_plan_change_decreased": "감량",
   "my_stack_plan_change_changed": "변경",
   "my_stack_plan_change_new": "신규",
-  "my_stack_plan_change_removed": "삭제"
+  "my_stack_plan_change_removed": "삭제",
+  "my_stack_plan_add_step": "단계 추가",
+  "my_stack_plan_effective_too_early": "{{date}} 이후 날짜를 선택하세요."
 }

@@ -3,8 +3,10 @@ import { bestandteileAufloesen } from './kombination'
 import { naechsterSlot } from './wizardState'
 import { emptyRhythm } from './intakeRhythm'
 import type { DosageFormKey, IntakePlanDraft, StackItem, StackItemIngredient, SubstanceCatalogEntry } from '../types'
+import type { PlanScheduleSnapshot } from '../../../lib/planTimeline'
 import {
   canContinue,
+  changeKindFor,
   didIdentityChange,
   firstInvalidField,
   initialWizardState,
@@ -902,5 +904,39 @@ describe('didIdentityChange', () => {
       ...draft,
       ingredients: [{ ...draft.ingredients[0], amount_value: 10000 }],
     })).toBe(true)
+  })
+})
+
+describe('changeKindFor', () => {
+  const plan: PlanScheduleSnapshot = {
+    frequency: 'Täglich',
+    x_days_interval: null,
+    interval_unit: null,
+    cycle_on_days: null,
+    cycle_off_days: null,
+    schedule_days: [],
+    intake_time: 'morgens,abends',
+    intake_time_custom: '08:00,20:00',
+    slot_doses: '250,250',
+    slot_days: null,
+    dose: 250,
+    unit: 'mcg',
+    method: 'Subkutan',
+  }
+
+  it('keeps the dose-only kind while only amounts change', () => {
+    expect(changeKindFor(plan, { ...plan, dose: 500, slot_doses: '500,250' }, 'titration')).toBe('titration')
+    expect(changeKindFor(plan, { ...plan, dose: 1, unit: 'mg' }, 'dose')).toBe('dose')
+    expect(changeKindFor(plan, plan, 'dose')).toBe('dose')
+  })
+
+  it.each([
+    ['a moved time', { intake_time_custom: '09:00,20:00' }],
+    ['other weekdays', { slot_days: ',Mo|Mi' }],
+    ['another rhythm', { frequency: 'Wochentage wählen', schedule_days: ['Mo', 'Di'] }],
+    ['an added intake', { intake_time: 'morgens,mittags,abends' }],
+    ['another route', { method: 'Oral' }],
+  ])('turns %s into a schedule change', (_label, changes) => {
+    expect(changeKindFor(plan, { ...plan, ...changes }, 'titration')).toBe('schedule')
   })
 })

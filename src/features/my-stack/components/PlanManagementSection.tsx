@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { addDays, format, parseISO } from 'date-fns'
-import { CalendarDays, Clock, Flag, Moon, Pause, Pencil, Play, RotateCcw, Sun, Sunrise, Trash2, X } from 'lucide-react'
+import { CalendarDays, Clock, Flag, Moon, Pause, Pencil, Play, Plus, RotateCcw, Sun, Sunrise, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { findNextTimelineIntake, type ResolvedRoutineGroup } from '../../../lib/intakeSchedule'
 import {
@@ -31,8 +31,12 @@ export interface PlanManagementSectionProps {
   timeline: CycleTimeline
   now: Date
   timeZone: string
-  onAdjustDose(version: CyclePlanVersion): void
-  onAdjustSchedule(version: CyclePlanVersion): void
+  onAdjustPlan(version: CyclePlanVersion): void
+  /**
+   * Neue Stufe hinter der letzten. `version` ist die letzte Stufe (Vorlage),
+   * `minDate` der fruehestmoegliche Tag, `defaultDate` der Vorschlag.
+   */
+  onAddStep(version: CyclePlanVersion, dates: { minDate: string; defaultDate: string }): void
   onEditFuture(version: CyclePlanVersion): void
   onRemoveFuture(version: CyclePlanVersion): Promise<void>
   onPause(endsAt: string | null): Promise<void>
@@ -356,8 +360,8 @@ export function PlanManagementSection({
   timeline,
   now,
   timeZone,
-  onAdjustDose,
-  onAdjustSchedule,
+  onAdjustPlan,
+  onAddStep,
   onEditFuture,
   onRemoveFuture,
   onPause,
@@ -391,9 +395,21 @@ export function PlanManagementSection({
   // Eine einzige Stufe steht schon oben — der Verlauf lohnt erst ab zwei. Eine
   // geplante Stufe zeigt er immer, denn nur dort laesst sie sich bearbeiten.
   const showHistory = steps.length >= 2 || steps.some(segment => segment.status === 'future')
+  const today = localDateTimeKey(now, timeZone).slice(0, 10)
+  // Eine neue Stufe kommt hinter die letzte — geplant oder laufend — und
+  // beginnt fruehestens morgen: am Tag einer bestehenden Stufe kann keine
+  // zweite anfangen. Vorgeschlagen wird eine Woche nach der letzten.
+  const lastStep = steps[steps.length - 1] ?? null
+  const addStep = !isEnded && lastStep
+    ? (() => {
+      const lastDay = lastStep.effectiveFrom.slice(0, 10)
+      const minDate = [shiftLocalDay(lastDay, 1), shiftLocalDay(today, 1)].sort().at(-1)!
+      const proposed = shiftLocalDay(lastDay > today ? lastDay : today, 7)
+      return { version: lastStep.version, dates: { minDate, defaultDate: proposed > minDate ? proposed : minDate } }
+    })()
+    : null
   // Vor dem Start beendet: der Zyklus lief nie, es gibt keinen Zeitraum.
   const neverRan = period.last !== null && period.last < period.first
-  const today = localDateTimeKey(now, timeZone).slice(0, 10)
   const nextIntake = resolved.status === 'active' || resolved.status === 'planned'
     ? findNextTimelineIntake(timelineForIntakeResolution(timeline), now, timeZone)
     : null
@@ -725,24 +741,15 @@ export function PlanManagementSection({
               )}
 
               {!isEnded && currentVersion && (
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => onAdjustDose(currentVersion)}
-                    className="min-h-11 rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-3 text-sm font-semibold text-cyan-100 disabled:opacity-50"
-                  >
-                    {t('my_stack_plan_adjust_dose', { defaultValue: 'Dosis anpassen' })}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => onAdjustSchedule(currentVersion)}
-                    className="min-h-11 rounded-xl border border-violet-300/25 bg-violet-300/10 px-3 text-sm font-semibold text-violet-100 disabled:opacity-50"
-                  >
-                    {t('my_stack_plan_adjust_schedule', { defaultValue: 'Plan anpassen' })}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => onAdjustPlan(currentVersion)}
+                  className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-3 text-sm font-semibold text-cyan-100 disabled:opacity-50"
+                >
+                  <Pencil size={14} aria-hidden="true" />
+                  {t('my_stack_plan_adjust_schedule', { defaultValue: 'Plan anpassen' })}
+                </button>
               )}
             </div>
           )}
@@ -859,6 +866,18 @@ export function PlanManagementSection({
                 })}
               </ol>
             </div>
+          )}
+
+          {addStep && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => onAddStep(addStep.version, addStep.dates)}
+              className={`${showHistory ? 'ml-7 mt-3 w-[calc(100%-1.75rem)]' : 'mt-4 w-full'} flex min-h-11 items-center justify-center gap-2 rounded-xl border border-dashed border-violet-300/30 px-3 text-sm font-semibold text-violet-100 transition-colors hover:border-violet-300/50 hover:bg-violet-300/5 disabled:opacity-50`}
+            >
+              {t('my_stack_plan_add_step', { defaultValue: 'Stufe hinzufügen' })}
+              <Plus size={15} aria-hidden="true" />
+            </button>
           )}
 
           {isEnded ? (
